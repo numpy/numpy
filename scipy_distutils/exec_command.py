@@ -197,7 +197,6 @@ def exec_command( command,
         use_tee = os.name=='posix'
     if use_shell is None:
         use_shell = os.name=='posix'
-
     execute_in = os.path.abspath(execute_in)
     oldcwd = os.path.abspath(os.getcwd())
 
@@ -260,6 +259,7 @@ def _exec_command_posix( command,
         command_str = command
 
     tmpfile = tempfile.mktemp()
+    stsfile = None
     if use_tee:
         stsfile = tempfile.mktemp()
         filter = ''
@@ -268,7 +268,10 @@ def _exec_command_posix( command,
         command_posix = '( %s ; echo $? > %s ) 2>&1 | tee %s %s'\
                       % (command_str,stsfile,tmpfile,filter)
     else:
-        command_posix = '%s > %s 2>&1' % (command_str,tmpfile)
+        stsfile = tempfile.mktemp()
+        command_posix = '( %s ; echo $? > %s ) > %s 2>&1'\
+                        % (command_str,stsfile,tmpfile)
+        #command_posix = '( %s ) > %s 2>&1' % (command_str,tmpfile)
 
     log.debug('Running os.system(%r)' % (command_posix))
     status = os.system(command_posix)
@@ -278,6 +281,7 @@ def _exec_command_posix( command,
             # if command_tee fails then fall back to robust exec_command
             log.warn('_exec_command_posix failed (status=%s)' % status)
             return _exec_command(command, use_shell=use_shell, **env)
+    if stsfile is not None:
         f = open(stsfile,'r')
         status = int(f.read())
         f.close()
@@ -482,55 +486,55 @@ def test_nt():
 
     print 'ok'
 
-def test_posix():
-    s,o=exec_command("echo Hello")
+def test_posix(**kws):
+    s,o=exec_command("echo Hello",**kws)
     assert s==0 and o=='Hello',(s,o)
 
-    s,o=exec_command('echo $AAA')
+    s,o=exec_command('echo $AAA',**kws)
     assert s==0 and o=='',(s,o)
 
-    s,o=exec_command('echo "$AAA"',AAA='Tere')
+    s,o=exec_command('echo "$AAA"',AAA='Tere',**kws)
     assert s==0 and o=='Tere',(s,o)
 
 
-    s,o=exec_command('echo "$AAA"')
+    s,o=exec_command('echo "$AAA"',**kws)
     assert s==0 and o=='',(s,o)
 
     os.environ['BBB'] = 'Hi'
-    s,o=exec_command('echo "$BBB"')
+    s,o=exec_command('echo "$BBB"',**kws)
     assert s==0 and o=='Hi',(s,o)
 
-    s,o=exec_command('echo "$BBB"',BBB='Hey')
+    s,o=exec_command('echo "$BBB"',BBB='Hey',**kws)
     assert s==0 and o=='Hey',(s,o)
 
-    s,o=exec_command('echo "$BBB"')
+    s,o=exec_command('echo "$BBB"',**kws)
     assert s==0 and o=='Hi',(s,o)
 
 
-    s,o=exec_command('this_is_not_a_command')
+    s,o=exec_command('this_is_not_a_command',**kws)
     assert s!=0 and o!='',(s,o)
 
-    s,o=exec_command('echo path=$PATH')
+    s,o=exec_command('echo path=$PATH',**kws)
     assert s==0 and o!='',(s,o)
     
-    s,o=exec_command('python -c "import sys,os;sys.stderr.write(os.name)"')
+    s,o=exec_command('python -c "import sys,os;sys.stderr.write(os.name)"',**kws)
     assert s==0 and o=='posix',(s,o)
 
-    s,o=exec_command('python -c "raise \'Ignore me.\'"')
+    s,o=exec_command('python -c "raise \'Ignore me.\'"',**kws)
     assert s==1 and o,(s,o)
 
-    s,o=exec_command('python -c "import sys;sys.stderr.write(\'0\');sys.stderr.write(\'1\');sys.stderr.write(\'2\')"')
+    s,o=exec_command('python -c "import sys;sys.stderr.write(\'0\');sys.stderr.write(\'1\');sys.stderr.write(\'2\')"',**kws)
     assert s==0 and o=='012',(s,o)
 
-    s,o=exec_command('python -c "import sys;sys.exit(15)"')
+    s,o=exec_command('python -c "import sys;sys.exit(15)"',**kws)
     assert s==15 and o=='',(s,o)
 
-    s,o=exec_command('python -c "print \'Heipa\'"')
+    s,o=exec_command('python -c "print \'Heipa\'"',**kws)
     assert s==0 and o=='Heipa',(s,o)
     
     print 'ok'
 
-def test_execute_in():
+def test_execute_in(**kws):
     pythonexe = get_pythonexe()
     tmpfile = tempfile.mktemp()
     fn = os.path.basename(tmpfile)
@@ -540,10 +544,10 @@ def test_execute_in():
     f.close()
 
     s,o = exec_command('%s -c "print \'Ignore following IOError:\',open(%r,\'r\')"' \
-                       % (pythonexe,fn))
+                       % (pythonexe,fn),**kws)
     assert s and o!='',(s,o)
     s,o = exec_command('%s -c "print open(%r,\'r\').read()"' % (pythonexe,fn),
-                       execute_in = tmpdir)
+                       execute_in = tmpdir,**kws)
     assert s==0 and o=='Hello',(s,o)
     os.remove(tmpfile)
     print 'ok'
@@ -562,5 +566,7 @@ if __name__ == "__main__":
     log.setLevel(logging.DEBUG)
 
     test_splitcmdline()
-    test()
-    test_execute_in()
+    test(use_tee=0)
+    test(use_tee=1)
+    test_execute_in(use_tee=0)
+    test_execute_in(use_tee=1)
