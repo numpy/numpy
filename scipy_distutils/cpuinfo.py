@@ -622,6 +622,8 @@ elif sys.platform[:5] == 'sunos':
     cpuinfo = sunos_cpuinfo
 elif sys.platform[:5] == 'win32':
     cpuinfo = win32_cpuinfo
+elif sys.platform[:6] == 'cygwin':
+    cpuinfo = linux_cpuinfo
 #XXX: other OS's. Eg. use _winreg on Win32. Or os.uname on unices.
 else:
     cpuinfo = cpuinfo_base
