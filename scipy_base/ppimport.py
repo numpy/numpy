@@ -154,7 +154,7 @@ def ppimport(name):
     # module may be imported already
     module = sys.modules.get(fullname)
     if module is not None:
-        if _ppimport_is_enabled or isinstance(module,types.ModuleType):
+        if _ppimport_is_enabled or isinstance(module, types.ModuleType):
             return module
         return module._ppimport_importer()
 
@@ -196,7 +196,7 @@ def ppimport(name):
 
     return loader._ppimport_importer()
 
-def _pprint_frame(frame):
+def _get_frame_code(frame):
     filename = frame.f_code.co_filename
     lineno = frame.f_lineno
     result = '%s in %s:\n' % (filename,frame.f_code.co_name)
@@ -215,6 +215,17 @@ def _pprint_frame(frame):
     f.close()
     return result
 
+def frame_traceback(frame):
+    if not frame:
+        return
+    blocks = []
+    f = frame
+    while f:
+        blocks.insert(0,_get_frame_code(f))
+        f = f.f_back
+    print '='*50
+    print '\n'.join(blocks)
+    print '='*50    
 
 class _ModuleLoader:
     # Don't use it directly. Use ppimport instead.
@@ -256,20 +267,9 @@ class _ModuleLoader:
         try:
             module = __import__(name,None,None,['*'])
         except Exception,msg: # ImportError:
-            p_frame = self.__dict__.get('_ppimport_p_frame',None)
-            if p_frame:
-                if DEBUG:
-                    blocks = []
-                    f = p_frame
-                    while f:
-                        blocks.insert(0,_pprint_frame(f))
-                        f = f.f_back
-                    print '='*50
-                    print '  ppimport(%s) traceback' % (repr(name))
-                    print '-'*50
-                    print '\n'.join(blocks)
-                    print '='*50
-
+            if DEBUG:
+                p_frame = self.__dict__.get('_ppimport_p_frame',None)
+                frame_traceback(p_frame)
             self.__dict__['_ppimport_exc_info'] = sys.exc_info()
             raise
 
@@ -343,7 +343,6 @@ def ppresolve(a,ignore_failure=None):
                 a = a._ppimport_attr
             b.append(ns[0])
             del ns[0]
-            #a = getattr(a,b[-1],ppimport('.'.join(b)))
             if ignore_failure and not hasattr(a, b[-1]):
                 return '.'.join(ns+b)
             a = getattr(a,b[-1])
@@ -391,6 +390,8 @@ if _pydoc is not None:
     import inspect as _inspect
     _old_inspect_getfile = _inspect.getfile
     def _scipy_inspect_getfile(object):
-        return _old_inspect_getfile(ppresolve(object))
+        if isinstance(object,_ModuleLoader):
+            return object.__dict__['__file__']
+        return _old_inspect_getfile(object)
     _inspect.getfile = _scipy_inspect_getfile
 
