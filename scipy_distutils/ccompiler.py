@@ -165,3 +165,5 @@ def new_compiler (plat=None,
     print '*'*80
     return compiler
 
+ccompiler.new_compiler = new_compiler
+
