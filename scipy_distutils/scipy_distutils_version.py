@@ -1,6 +1,6 @@
 major = 0
 minor = 2
-micro = 0
+micro = 1
 release_level = 'alpha'
 
 from __cvs_version__ import cvs_version
