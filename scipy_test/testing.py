@@ -158,7 +158,7 @@ class ScipyTest:
     Also old styled test_suite(level=1) hooks are supported but
     soon to be removed.
     """
-    def __init__(self, package):
+    def __init__(self, package='__main__'):
         self.package = package
 
     def _module_str(self, module):
@@ -229,7 +229,9 @@ class ScipyTest:
             print '   ',
             output_exception()
             return []
+        return self._get_suite_list(test_module, level, module.__name__)
 
+    def _get_suite_list(self, test_module, level, module_name='__main__'):
         if hasattr(test_module,'test_suite'):
             # Using old styled test suite
             try:
@@ -248,7 +250,7 @@ class ScipyTest:
                or obj.__name__[:4] != 'test':
                 continue
             suite_list.extend(map(obj,self._get_method_names(obj,level)))
-        print '  Found',len(suite_list),'tests for',module.__name__
+        print '  Found',len(suite_list),'tests for',module_name
         return suite_list
 
     def _touch_ppimported(self, module):
@@ -283,6 +285,9 @@ class ScipyTest:
                or os.path.basename(os.path.dirname(module.__file__))=='tests':
                 continue
             suites.extend(self._get_module_tests(module, level))
+
+        if package_name == '__main__':
+            suites.extend(self._get_suite_list(sys.modules[package_name], level))
 
         all_tests = unittest.TestSuite(suites)
         runner = unittest.TextTestRunner(verbosity=verbosity)
