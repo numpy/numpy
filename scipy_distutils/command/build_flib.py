@@ -301,6 +301,47 @@ class build_flib (build_clib):
 
     # build_libraries ()
 
+#############################################################
+
+remove_files = []
+def remove_files_atexit(files = remove_files):
+    for f in files:
+        try:
+            os.remove(f)
+        except OSError:
+            pass
+import atexit
+atexit.register(remove_files_atexit)
+
+
+is_f_file = re.compile(r'.*[.](for|ftn|f77|f)\Z',re.I).match
+_has_f_header = re.compile(r'-[*]-\s*fortran\s*-[*]-',re.I).search
+_has_f90_header = re.compile(r'-[*]-\s*f90\s*-[*]-',re.I).search
+_free_f90_start = re.compile(r'[^c*][^\s\d\t]',re.I).match
+
+def is_free_format(file):
+    """Check if file is in free format Fortran."""
+    # f90 allows both fixed and free format, assuming fixed unless
+    # signs of free format are detected.
+    result = 0
+    f = open(file,'r')
+    line = f.readline()
+    n = 15
+    if _has_f_header(line):
+        n = 0
+    elif _has_f90_header(line):
+        n = 0
+        result = 1
+    while n>0 and line:
+        if line[0]!='!':
+            n -= 1
+            if _free_f90_start(line[:5]) or line[-2:-1]=='&':
+                result = 1
+                break
+        line = f.readline()
+    f.close()
+    return result
+
 class fortran_compiler_base(CCompiler):
 
     vendor = None
@@ -330,7 +371,9 @@ class fortran_compiler_base(CCompiler):
         self.f90_switches = ''
         self.f90_opt = ''
         self.f90_debug = ''
-        
+
+        self.f90_fixed_switch = ''
+
         #self.libraries = []
         #self.library_dirs = []
 
@@ -345,18 +388,33 @@ class fortran_compiler_base(CCompiler):
                   dirty_files,
                   module_dirs=None,
                   temp_dir=''):
-        files = string.join(dirty_files)
-        f90_files = get_f90_files(dirty_files)
-        f77_files = get_f77_files(dirty_files)
-        if f90_files != []:
-            obj1 = self.f90_compile(f90_files,module_dirs,temp_dir = temp_dir)
-        else:
-            obj1 = []
-        if f77_files != []:
-            obj2 = self.f77_compile(f77_files, temp_dir = temp_dir)
-        else:
-            obj2 = []
-        return obj1 + obj2
+
+        f77_files,f90_fixed_files,f90_files = [],[],[]
+        objects = []
+
+        for f in dirty_files:
+            if is_f_file(f):
+                f77_files.append(f)
+            elif is_free_format(f):
+                f90_files.append(f)
+            else:
+                f90_fixed_files.append(f)
+
+        #XXX: F90 files containing modules should be compiled
+        #     before F90 files that use these modules.
+        if f77_files:
+            objects.extend(\
+                self.f77_compile(f77_files,temp_dir=temp_dir))
+
+        if f90_fixed_files:
+            objects.extend(\
+                self.f90_fixed_compile(f90_fixed_files,
+                                       module_dirs,temp_dir=temp_dir))
+        if f90_files:
+            objects.extend(\
+                self.f90_compile(f90_files,module_dirs,temp_dir=temp_dir))
+
+        return objects
 
     def source_to_object_names(self,source_files, temp_dir=''):
         file_list = map(lambda x: os.path.basename(x),source_files)
@@ -398,6 +456,13 @@ class fortran_compiler_base(CCompiler):
 
     def f90_compile(self,source_files,module_dirs=None, temp_dir=''):
         switches = string.join((self.f90_switches, self.f90_opt))
+        return self.f_compile(self.f90_compiler,switches,
+                              source_files, module_dirs,temp_dir)
+
+    def f90_fixed_compile(self,source_files,module_dirs=None, temp_dir=''):
+        switches = string.join((self.f90_fixed_switch,
+                                self.f90_switches,
+                                self.f90_opt))
         return self.f_compile(self.f90_compiler,switches,
                               source_files, module_dirs,temp_dir)
 
@@ -473,11 +538,13 @@ class fortran_compiler_base(CCompiler):
             self.create_static_lib(object_list,library_name,temp_dir)
 
     def dummy_fortran_files(self):
+        global remove_files
         import tempfile
         dummy_name = tempfile.mktemp()+'__dummy'
         dummy = open(dummy_name+'.f','w')
         dummy.write("      subroutine dummy()\n      end\n")
         dummy.close()
+        remove_files.extend([dummy_name+'.f',dummy_name+'.o'])
         return (dummy_name+'.f',dummy_name+'.o')
     
     def is_available(self):
@@ -547,23 +614,28 @@ class absoft_fortran_compiler(fortran_compiler_base):
         # of one on the newest version.  Now we use -YEXT_SFX=_ to 
         # specify the output format
         if os.name == 'nt':
-            self.f90_switches = '-f fixed  -YCFRL=1 -YCOM_NAMES=LCS' \
+            self.f90_switches = '-YCFRL=1 -YCOM_NAMES=LCS' \
                                 ' -YCOM_PFX  -YEXT_PFX -YEXT_NAMES=LCS' \
                                 ' -YCOM_SFX=_ -YEXT_SFX=_ -YEXT_NAMES=LCS'        
             self.f90_opt = '-O -Q100'
             self.f77_switches = '-N22 -N90 -N110'
             self.f77_opt = '-O -Q100'
+
+            self.f90_fixed_switch = ' -f fixed '
+            
             self.libraries = ['fio', 'f90math', 'fmath', 'COMDLG32']
         else:
-            self.f90_switches = '-ffixed  -YCFRL=1 -YCOM_NAMES=LCS' \
+            self.f90_switches = '-YCFRL=1 -YCOM_NAMES=LCS' \
                                 ' -YCOM_PFX  -YEXT_PFX -YEXT_NAMES=LCS' \
                                 ' -YCOM_SFX=_ -YEXT_SFX=_ -YEXT_NAMES=LCS'        
             self.f90_opt = '-O -B101'                            
             self.f77_switches = '-N22 -N90 -N110 -B108'
             self.f77_opt = '-O -B101'
 
+            self.f90_fixed_switch = ' -ffixed '
+
             self.libraries = ['fio', 'f77math', 'f90math']
-        
+
         try:
             dir = os.environ['ABSOFT'] 
             self.library_dirs = [os.path.join(dir,'lib')]
@@ -624,9 +696,10 @@ class sun_fortran_compiler(fortran_compiler_base):
         self.f77_opt = ' -fast -dalign -xtarget=generic -R/opt/SUNWspro/lib'
 
         self.f90_compiler = f90c
-        # -fixed specifies fixed-format instead of free-format F90/95 code
         self.f90_switches = ' -pic'
         self.f90_opt = ' -fast -dalign -xtarget=generic -R/opt/SUNWspro/lib'
+
+        self.f90_fixed_switch = ' -fixed '
 
         self.ver_cmd = self.f90_compiler + ' -V'
 
@@ -650,7 +723,8 @@ class sun_fortran_compiler(fortran_compiler_base):
         library_dirs = ["/opt/SUNWspro/prod/lib"]
         lib_match = r'### f90: Note: LD_RUN_PATH\s*= '\
                      '(?P<lib_paths>[^\s.]*).*'
-        cmd = self.f90_compiler + ' -dryrun __dummy.f'
+        dummy_file = self.dummy_fortran_files()[0]
+        cmd = self.f90_compiler + ' -dryrun ' + dummy_file
         self.announce(yellow_text(cmd))
         exit_status, output = run_command(cmd)
         if not exit_status:
@@ -691,8 +765,10 @@ class mips_fortran_compiler(fortran_compiler_base):
         self.f77_opt = ' -O3 '
 
         self.f90_compiler = f90c
-        self.f90_switches = ' -n32 -KPIC -fixedform ' # why fixed ???
+        self.f90_switches = ' -n32 -KPIC '
         self.f90_opt = ' '                            
+
+        self.f90_fixed_switch = ' -fixedform '
 
         self.ver_cmd = self.f77_compiler + ' -version '
 
@@ -733,6 +809,8 @@ class hpux_fortran_compiler(fortran_compiler_base):
         self.f90_compiler = f90c
         self.f90_switches = ' +pic=long +ppu '
         self.f90_opt = ' -O3 '
+
+        self.f90_fixed_switch = '  ' # XXX: need fixed format flag
 
         self.ver_cmd = self.f77_compiler + ' +version '
 
@@ -916,17 +994,15 @@ class intel_ia32_fortran_compiler(fortran_compiler_base):
             switches = switches + ' -0f_check '
         self.f77_switches = self.f90_switches = switches
         self.f77_switches = self.f77_switches + ' -FI -w90 -w95 -cm -c '
+        self.f90_fixed_switch = ' -FI '
 
         self.f77_opt = self.f90_opt = self.get_opt()
         
         debug = ' -g ' # usage of -C sometimes causes segfaults
         self.f77_debug =  self.f90_debug = debug
 
-        #self.f77_switches = self.f77_switches + self.f77_debug
         self.ver_cmd = self.f77_compiler+' -FI -V -c %s -o %s' %\
                        self.dummy_fortran_files()
-
-        #self.libraries = ['imf']
 
     def get_opt(self):
         import cpuinfo
@@ -984,6 +1060,8 @@ class nag_fortran_compiler(fortran_compiler_base):
         self.f77_switches = self.f77_switches + ' -fixed '
         self.f77_debug = self.f90_debug = debug
         self.f77_opt = self.f90_opt = self.get_opt()
+
+        self.f90_fixed_switch = ' -fixed '
 
         self.ver_cmd = self.f77_compiler+' -V '
 
@@ -1050,6 +1128,10 @@ class vast_fortran_compiler(fortran_compiler_base):
     ver_match = r'\s*Pacific-Sierra Research vf90 (Personal|Professional)'\
                 '\s+(?P<version>[^\s]*)'
 
+    # VAST f90 does not support -o with -c. So, object files are created
+    # to the current directory and then moved to build directory
+    object_switch = ' && function _mvfile { mv -v `basename $1` $1 ; } && _mvfile '
+
     def __init__(self, fc=None, f90c=None, verbose=0):
         fortran_compiler_base.__init__(self, verbose=verbose)
 
@@ -1065,8 +1147,9 @@ class vast_fortran_compiler(fortran_compiler_base):
         vf90 = os.path.join(d,'v'+b)
         self.ver_cmd = vf90+' -v '
 
+        # VAST compiler requires g77.
         gnu = gnu_fortran_compiler(fc)
-        if not gnu.is_available(): # VAST compiler requires g77.
+        if not gnu.is_available():
             self.version = ''
             return
         if not self.is_available():
@@ -1076,7 +1159,11 @@ class vast_fortran_compiler(fortran_compiler_base):
         self.f77_debug = gnu.f77_debug
         self.f77_opt = gnu.f77_opt        
 
-        # XXX: need f90 switches, debug, opt
+        self.f90_switches = gnu.f77_switches
+        self.f90_debug = gnu.f77_debug
+        self.f90_opt = gnu.f77_opt
+
+        self.f90_fixed_switch = ' -Wv,-ya '
 
     def get_linker_so(self):
         return [self.f90_compiler,'-shared']
@@ -1104,6 +1191,8 @@ class compaq_fortran_compiler(fortran_compiler_base):
         self.f77_switches = self.f90_switches = switches
         self.f77_debug = self.f90_debug = debug
         self.f77_opt = self.f90_opt = self.get_opt()
+
+        self.f90_fixed_switch = '  ' # XXX: need fixed format flag
 
         # XXX: uncomment if required
         #self.libraries = ' -lUfor -lfor -lFutil -lcpml -lots -lc '
@@ -1159,23 +1248,13 @@ class digital_fortran_compiler(fortran_compiler_base):
         self.f77_debug = self.f90_debug = debug
         self.f77_opt = self.f90_opt = self.get_opt()
 
+        self.f90_fixed_switch = ' /fixed '
+
     def get_opt(self):
         # XXX: use also /architecture, see gnu_fortran_compiler
         return ' /Ox '
 
-
-def match_extension(files,ext):
-    match = re.compile(r'.*[.]('+ext+r')\Z',re.I).match
-    return filter(lambda x,match = match: match(x),files)
-
-def get_f77_files(files):
-    return match_extension(files,'for|f77|ftn|f')
-
-def get_f90_files(files):
-    return match_extension(files,'f90|f95')
-
-def get_fortran_files(files):
-    return match_extension(files,'f90|f95|for|f77|ftn|f')
+##############################################################################
 
 def find_fortran_compiler(vendor=None, fc=None, f90c=None, verbose=0):
     for compiler_class in all_compilers:
