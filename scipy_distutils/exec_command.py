@@ -329,6 +329,10 @@ def _exec_command_python(command,
     
     return status, text
 
+def quote_arg(arg):
+    if arg[0]!='"' and ' ' in arg:
+        return '"%s"' % arg
+    return arg
 
 def _exec_command( command, use_shell=None, **env ):
     log.debug('_exec_command(...)')
@@ -390,9 +394,7 @@ def _exec_command( command, use_shell=None, **env ):
     else:
         os.dup2(fout.fileno(),se_fileno)
 
-    argv0 = argv[0]
-    if ' ' in argv[0]:
-        argv[0] = '"%s"' % (argv[0])
+    argv0 = quote_arg(argv[0])
 
     try:
         status = spawn_command(os.P_WAIT,argv0,argv,os.environ)
