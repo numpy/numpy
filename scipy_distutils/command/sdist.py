@@ -125,7 +125,7 @@ def remove_common_base(files):
     base = find_common_base(abs_files)
     # will leave files with local path unaffected
     # and maintains original file order
-    results = [string.replace(file,base,'') for file in files]
+    results = [file[len(base):] for file in files]
     return results
 
 def find_common_base(files):
