@@ -27,6 +27,7 @@ class Extension(old_Extension):
                   extra_compile_args=None,
                   extra_link_args=None,
                   export_symbols=None,
+                  swig_opts=None,
                   depends=None,
                   language=None,
                   f2py_options=None,
@@ -46,12 +47,18 @@ class Extension(old_Extension):
         # Avoid assert statements checking that sources contains strings:
         self.sources = sources
 
+        # Python 2.4 distutils new features
+        self.swig_opts = swig_opts or []
+
         # Python 2.3 distutils new features
         self.depends = depends or []
         self.language = language
 
+        # scipy_distutils features
         self.f2py_options = f2py_options or []
         self.module_dirs = module_dirs or []
+
+        return
 
     def has_cxx_sources(self):
         for source in self.sources:
