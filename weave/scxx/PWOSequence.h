@@ -5,10 +5,13 @@
 #if !defined(PWOSEQUENCE_H_INCLUDED_)
 #define PWOSEQUENCE_H_INCLUDED_
 
+#include <string>
 #include "PWOBase.h"
 
 // This isn't being picked up out of PWOBase.h for some reason
 void Fail(PyObject*, const char* msg);
+
+class PWOString;
 
 class PWOSequence : public PWOBase
 {
@@ -42,6 +45,7 @@ public:
       Fail(PyExc_TypeError, "Improper rhs for +");
     return LoseRef(rslt);
   };
+
   //PySequence_Count
   int count(const PWOBase& value) const {
     int rslt = PySequence_Count(_obj, value);
@@ -49,6 +53,12 @@ public:
       Fail(PyExc_RuntimeError, "failure in count");
     return rslt;
   };
+
+  int count(int value) const;
+  int count(double value) const;  
+  int count(char* value) const;
+  int count(std::string value) const;
+  
   //PySequence_GetItem  ##lists - return PWOListMmbr (mutable) otherwise just a PWOBase
   PWOBase operator [] (int i) const { //can't be virtual
     PyObject* o = PySequence_GetItem(_obj, i);
@@ -71,6 +81,12 @@ public:
       Fail(PyExc_RuntimeError, "problem in in");
     return (rslt==1);
   };
+  
+  bool in(int value);    
+  bool in(double value);
+  bool in(char* value);
+  bool in(std::string value);
+  
   //PySequence_Index
   int index(const PWOBase& value) const {
     int rslt = PySequence_Index(_obj, value);
@@ -78,6 +94,11 @@ public:
       Fail(PyExc_IndexError, "value not found");
     return rslt;
   };
+  int index(int value) const;
+  int index(double value) const;
+  int index(char* value) const;
+  int index(std::string value) const;    
+  
   //PySequence_Length
   int len() const {
     return PySequence_Length(_obj);
@@ -128,7 +149,34 @@ public:
     if (rslt==-1)
       Fail(PyExc_IndexError, "Index out of range");
   };
+  
+  // ej: additions
+  void setItem(int ndx, int val) {
+    int rslt = PyTuple_SetItem(_obj, ndx, PyInt_FromLong(val));
+    if (rslt==-1)
+      Fail(PyExc_IndexError, "Index out of range");
+  };
+
+  void setItem(int ndx, double val) {
+    int rslt = PyTuple_SetItem(_obj, ndx, PyFloat_FromDouble(val));
+    if (rslt==-1)
+      Fail(PyExc_IndexError, "Index out of range");
+  };
+
+  void setItem(int ndx, char* val) {
+    int rslt = PyTuple_SetItem(_obj, ndx, PyString_FromString(val));
+    if (rslt==-1)
+      Fail(PyExc_IndexError, "Index out of range");
+  };
+
+  void setItem(int ndx, std::string val) {
+    int rslt = PyTuple_SetItem(_obj, ndx, PyString_FromString(val.c_str()));
+    if (rslt==-1)
+      Fail(PyExc_IndexError, "Index out of range");
+  };
+  // ej: end additions
 };
+
 
 class PWOString : public PWOSequence
 {

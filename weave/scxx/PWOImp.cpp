@@ -17,8 +17,107 @@ void PWOBase::GrabRef(PyObject* newObj)
   _own = _obj = newObj;
 }
 
+bool PWOSequence::in(int value) {
+  PWOBase val = PWONumber(value);
+  return in(val);
+};
+  
+bool PWOSequence::in(double value) {
+  PWOBase val = PWONumber(value);
+  return in(val);
+};
+
+bool PWOSequence::in(char* value) {
+  PWOBase val = PWOString(value);
+  return in(val);
+};
+
+bool PWOSequence::in(std::string value) {
+  PWOBase val = PWOString(value.c_str());
+  return in(val);
+};
+  
+int PWOSequence::count(int value) const {
+  PWONumber val = PWONumber(value);
+  return count(val);
+};
+
+int PWOSequence::count(double value) const {
+  PWONumber val = PWONumber(value);
+  return count(val);
+};
+
+int PWOSequence::count(char* value) const {
+  PWOString val = PWOString(value);
+  return count(val);
+};
+
+int PWOSequence::count(std::string value) const {
+  PWOString val = PWOString(value.c_str());
+  return count(val);
+};
+
+int PWOSequence::index(int value) const {
+  PWONumber val = PWONumber(value);
+  return index(val);
+};
+
+int PWOSequence::index(double value) const {
+  PWONumber val = PWONumber(value);
+  return index(val);
+};
+int PWOSequence::index(char* value) const {
+  PWOString val = PWOString(value);
+  return index(val);
+};
+
+int PWOSequence::index(std::string value) const {
+  PWOString val = PWOString(value.c_str());
+  return index(val);
+};
+
 PWOTuple::PWOTuple(const PWOList& list)
   : PWOSequence (PyList_AsTuple(list)) { LoseRef(_obj); }
+  
+PWOList& PWOList::append(int other) {
+  PWONumber oth = PWONumber(other);
+  return append(oth);
+};
+  
+PWOList& PWOList::append(double other) {
+  PWONumber oth = PWONumber(other);
+  return append(oth);
+};
+
+PWOList& PWOList::append(char* other) {
+  PWOString oth = PWOString(other);
+  return append(oth);
+};
+
+PWOList& PWOList::append(std::string other) {
+  PWOString oth = PWOString(other.c_str());
+  return append(oth);
+};
+
+PWOList& PWOList::insert(int ndx, int other) {
+  PWONumber oth = PWONumber(other);
+  return insert(ndx, other);
+};
+
+PWOList& PWOList::insert(int ndx, double other) {
+  PWONumber oth = PWONumber(other);
+  return insert(ndx, other);
+};
+
+PWOList& PWOList::insert(int ndx, char* other) {
+  PWOString oth = PWOString(other);
+  return insert(ndx, other);
+};
+
+PWOList& PWOList::insert(int ndx, std::string other) {
+  PWOString oth = PWOString(other.c_str());
+  return insert(ndx, other);
+};
 
 PWOListMmbr::PWOListMmbr(PyObject* obj, PWOList& parent, int ndx) 
   : PWOBase(obj), _parent(parent), _ndx(ndx) { }

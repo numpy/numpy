@@ -87,12 +87,42 @@ public:
     if (rslt==-1)
       Fail(PyExc_IndexError, "Index out of range");
   };
+
+  void setItem(int ndx, int val) {
+    //int rslt = PySequence_SetItem(_obj, ndx, val); - assumes old item is valid
+    int rslt = PyList_SetItem(_obj, ndx, PyInt_FromLong(val));
+    if (rslt==-1)
+      Fail(PyExc_IndexError, "Index out of range");
+  };
+  
+  void setItem(int ndx, double val) {
+    //int rslt = PySequence_SetItem(_obj, ndx, val); - assumes old item is valid
+    int rslt = PyList_SetItem(_obj, ndx, PyFloat_FromDouble(val));
+    if (rslt==-1)
+      Fail(PyExc_IndexError, "Index out of range");
+  };
+
+  void setItem(int ndx, char* val) {
+    //int rslt = PySequence_SetItem(_obj, ndx, val); - assumes old item is valid
+    int rslt = PyList_SetItem(_obj, ndx, PyString_FromString(val));
+    if (rslt==-1)
+      Fail(PyExc_IndexError, "Index out of range");
+  };
+
+  void setItem(int ndx, std::string val) {
+    //int rslt = PySequence_SetItem(_obj, ndx, val); - assumes old item is valid
+    int rslt = PyList_SetItem(_obj, ndx, PyString_FromString(val.c_str()));
+    if (rslt==-1)
+      Fail(PyExc_IndexError, "Index out of range");
+  };
+
   //PySequence_SetSlice   ##Lists
   void setSlice(int lo, int hi, const PWOSequence& slice) {
     int rslt = PySequence_SetSlice(_obj, lo, hi, slice);
     if (rslt==-1)
       Fail(PyExc_RuntimeError, "Error setting slice");
   };
+  
   //PyList_Append
   PWOList& append(const PWOBase& other) {
     int rslt = PyList_Append(_obj, other);
@@ -102,6 +132,11 @@ public:
     };
     return *this;
   };
+  PWOList& append(int other);
+  PWOList& append(double other);
+  PWOList& append(char* other);
+  PWOList& append(std::string other);
+
   //PyList_AsTuple
   // problem with this is it's created on the heap
   //virtual PWOTuple& asTuple() const {
@@ -121,6 +156,11 @@ public:
     };
     return *this;
   };
+  PWOList& insert(int ndx, int other);
+  PWOList& insert(int ndx, double other);
+  PWOList& insert(int ndx, char* other);  
+  PWOList& insert(int ndx, std::string other);
+
   //PyList_New
   //PyList_Reverse
   PWOList& reverse() {
