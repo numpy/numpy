@@ -1471,7 +1471,7 @@ static void DOUBLE_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((unsigned char *)op)=*((double *)i1) == *((double *)i2);
+	*((unsigned char *)op)= (*((double *)i1) == *((double *)i2));
     }
 }
 static void CFLOAT_equal(char **args, int *dimensions, int *steps, void *func) {

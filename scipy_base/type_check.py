@@ -30,8 +30,7 @@ toComplex64 = lambda x: Numeric.array(x, Numeric.Complex64)
 # This is for pre Numeric 21.x compatiblity. Adding it is harmless.
 if  not hasattr(Numeric,'Character'):
     Numeric.Character = 'c'
-    
-    
+        
 cast = {Numeric.Character: toChar,
         Numeric.Int8: toInt8,
         Numeric.Int16: toInt16,
@@ -92,14 +91,10 @@ def isrealobj(x):
 ##    return results
 
 def isposinf(val):
-    # complex not handled currently (and potentially ambiguous)
-    #return Numeric.logical_and(isinf(val),val > 0)
-    return val == PINF
+    return isinf(val) & (val > 0)
     
 def isneginf(val):
-    # complex not handled currently (and potentially ambiguous)
-    #return Numeric.logical_and(isinf(val),val < 0)
-    return val == NINF
+    return isinf(val) & (val < 0)
     
 ##def isinf(val):
 ##    return Numeric.logical_or(isposinf(val),isneginf(val))

@@ -316,6 +316,18 @@ try:
             print shape(x),shape(y)
             print x, y
             raise ValueError, 'arrays are not almost equal'
+
+    def rand(*args):
+        """ Returns an array of random numbers with the given shape.
+            used for testing
+        """
+        import whrandom
+        results = zeros(args,Float64)
+        f = results.flat
+        for i in range(len(f)):
+            f[i] = whrandom.random()
+        return results        
+
 except:
     pass # Numeric not installed
     
@@ -332,13 +344,3 @@ def output_exception():
     finally:
         type = value = tb = None # clean up
 
-def rand(*args):
-    """ Returns an array of random numbers with the given shape.
-        used for testing
-    """
-    import whrandom
-    results = zeros(args,Float64)
-    f = results.flat
-    for i in range(len(f)):
-        f[i] = whrandom.random()
-    return results        

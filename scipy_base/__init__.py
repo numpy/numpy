@@ -4,9 +4,6 @@ from Numeric import *
 import fastumath
 import limits
 
-#from utility import *
-#from convenience import *
-
 from type_check import *
 from index_tricks import *
 from function_base import *
@@ -20,9 +17,9 @@ from scimath import *
 # needs fastumath
 Inf = inf = fastumath.PINF
 try:
-    NaN = nan = fastumath.NAN
+    NAN = NaN = nan = fastumath.NAN
 except AttributeError:
-    NAN = nan = array(0.0)/array(0.0)
+    NaN = NAN = nan = fastumath.PINF - fastumath.PINF
 
 
 #---- testing ----#
