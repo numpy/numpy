@@ -445,9 +445,9 @@ class fortran_compiler_base(CCompiler):
             return self.version
         self.version = ''
         # works I think only for unix...        
-        #print 'command:', self.ver_cmd
+        print 'command:', self.ver_cmd
         exit_status, out_text = run_command(self.ver_cmd)
-        #print exit_status, out_text
+        print exit_status, out_text
         if not exit_status:
             m = re.match(self.ver_match,out_text)
             if m:
@@ -636,8 +636,9 @@ class mips_fortran_compiler(fortran_compiler_base):
 class gnu_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Gnu'
-    ver_match = r'g77 version (?P<version>[^\s*]*)'
-
+    #ver_match = r'g77 version (?P<version>[^\s*]*)'
+    ver_match = r'GNU Fortran (?P<version>[^\s*]*)'
+    
     def __init__(self, fc = None, f90c = None):
         fortran_compiler_base.__init__(self)
         if sys.platform == 'win32':
@@ -660,7 +661,8 @@ class gnu_fortran_compiler(fortran_compiler_base):
             switches = switches + ' -fpic '
 
         self.f77_switches = switches
-        self.ver_cmd = self.f77_compiler + ' -v '
+        #self.ver_cmd = self.f77_compiler + ' -v '
+        self.ver_cmd = self.f77_compiler + ' --version'
 
         self.f77_opt = self.get_opt()
 
