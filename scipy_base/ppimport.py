@@ -8,7 +8,7 @@ Created: March 2003
 $Revision$
 $Date$
 """
-__all__ = ['ppimport','ppimport_attr']
+__all__ = ['ppimport','ppimport_attr','realize']
 
 import os
 import sys
@@ -289,6 +289,36 @@ class _ModuleLoader:
 
     __str__ = __repr__
 
+def realize(a):
+    """ Return realized object a.
+
+    a can be module name, postponed module, postponed modules
+    attribute, string representing module attribute, or any
+    Python object.
+    """
+    if type(a) is type(''):
+        ns = a.split('.')
+        a = ppimport(ns[0])
+        b = [ns[0]]
+        del ns[0]
+        while ns:
+            if hasattr(a,'_ppimport_importer') or \
+                   hasattr(a,'_ppimport_module'):
+                a = a._ppimport_module
+            if hasattr(a,'_ppimport_attr'):
+                a = a._ppimport_attr
+            b.append(ns[0])
+            del ns[0]
+            a = getattr(a,b[-1],ppimport('.'.join(b)))
+
+    if hasattr(a,'_ppimport_importer') or \
+           hasattr(a,'_ppimport_module'):
+        a = a._ppimport_module
+    if hasattr(a,'_ppimport_attr'):
+        a = a._ppimport_attr
+    return a
+
+
 try:
     import pydoc as _pydoc
 except ImportError:
@@ -297,24 +327,14 @@ if _pydoc is not None:
     # Redefine __call__ method of help.__class__ to
     # support ppimport.
     _old_pydoc_help_call = _pydoc.help.__class__.__call__
+
     def _scipy_pydoc_help_call(self,*args,**kwds):
-        new_args = []
-        for a in args:
-            if type(a) is type(''):
-                a = ppimport(a)
-            if hasattr(a,'_ppimport_importer') or \
-		   hasattr(a,'_ppimport_module'):
-                a = a._ppimport_module
-            if hasattr(a,'_ppimport_attr'):
-                a = a._ppimport_attr
-            new_args.append(a)
-        return _old_pydoc_help_call(self, *new_args, **kwds)
+        return _old_pydoc_help_call(self, *map(realize,args), **kwds)
 
     import new as _new
     _pydoc.help.__class__.__call__ = _new.instancemethod(_scipy_pydoc_help_call,
                                                          None,
                                                          _pydoc.help.__class__)
-
     import inspect as _inspect
     _old_inspect_getfile = _inspect.getfile
     def _inspect_getfile(object):
