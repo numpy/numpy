@@ -17,7 +17,7 @@ from bytecodecompiler import CXXCoder,Type_Descriptor,Function_Descriptor
 
 def CStr(s):
     "Hacky way to get legal C string from Python string"
-    if s == None: return '""'
+    if s is None: return '""'
     assert type(s) == StringType,"Only None and string allowed"
     r = repr('"'+s) # Better for embedded quotes
     return '"'+r[2:-1]+'"'
@@ -198,7 +198,7 @@ class accelerate:
         assert type(function) == FunctionType
         self.function = function
         self.module = inspect.getmodule(function)
-        if self.module == None:
+        if self.module is None:
             import __main__
             self.module = __main__
         self.__call_map = {}

@@ -106,7 +106,7 @@ output_def(dlist, flist, header, file = sys.stdout)"""
 
 if __name__ == '__main__':
     libfile, deffile = parse_cmd()
-    if deffile == None:
+    if deffile is None:
         deffile = sys.stdout
     else:
         deffile = open(deffile, 'w')

@@ -127,10 +127,10 @@ class test_catalog(unittest.TestCase):
     def check_clear_module_directory(self):
         q = catalog.catalog()
         r = q.get_module_directory()
-        assert (r == None)
+        assert (r is None)
         q.set_module_directory('bob')
         r = q.clear_module_directory()
-        assert (r == None)
+        assert (r is None)
     def check_get_environ_path(self):
         if sys.platform == 'win32': sep = ';'
         else: sep = ':'

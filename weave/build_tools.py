@@ -420,7 +420,7 @@ if sys.platform == 'win32':
         """
         import lib2def as lib2def
         #libfile, deffile = parse_cmd()
-        #if deffile == None:
+        #if deffile is None:
         #    deffile = sys.stdout
         #else:
         #    deffile = open(deffile, 'w')

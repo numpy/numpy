@@ -200,7 +200,7 @@ def listing(f):
             lastLine = arg
         else:
             source = ''
-        if arg == None: arg = ''
+        if arg is None: arg = ''
         s += '%3d] %20s %5s : %s\n'%(pc,name,arg,source)
         if op >= haveArgument:
             pc += 3
@@ -225,7 +225,7 @@ class ByteCodeMeaning:
     def execute(self,pc,opcode,argument):
         name = byOpcode[opcode]
         method = getattr(self,name)
-        if argument == None:
+        if argument is None:
             return apply(method,(pc,))
         else:
             return apply(method,(pc,argument,))
@@ -235,7 +235,7 @@ class ByteCodeMeaning:
         goto = self.execute(next,opcode,argument)
         if goto == -1:
             return None # Must be done
-        elif goto == None:
+        elif goto is None:
             return next # Normal
         else:
             raise 'xx'
@@ -690,7 +690,7 @@ class CXXCoder(ByteCodeMeaning):
     def __init__(self,function,signature,name=None):
         assert type(function) == FunctionType,"Arg must be a user function"
         assert not function.func_defaults ,"Function cannot have default args (yet)"
-        if name == None: name = function.func_name
+        if name is None: name = function.func_name
         self.name = name
         self.function = function
         self.signature = signature
@@ -765,7 +765,7 @@ class CXXCoder(ByteCodeMeaning):
         # -----------------------------------------------
         code += '#include "Python.h"\n'
         for T in self.used:
-            if T == None: continue
+            if T is None: continue
             for pre in T.prerequisites:
                 code += pre
                 code += '\n'
@@ -1147,7 +1147,7 @@ class CXXCoder(ByteCodeMeaning):
         print 'LOADFAST',var_num,v,t
         for VV,TT in map(None, self.stack, self.types):
             print VV,':',TT
-        if t == None:
+        if t is None:
             raise TypeError,'%s used before set?'%v
             print self.__body
             print 'PC',pc
@@ -1233,7 +1233,7 @@ class CXXCoder(ByteCodeMeaning):
 
         # See if type is same....
         # Note that None means no assignment made yet
-        if saveT == None or t == saveT:
+        if saveT is None or t == saveT:
             if t.refcount:
                 self.emit('Py_XINCREF(%s);'%v)
                 self.emit('Py_XDECREF(%s);'%save)
