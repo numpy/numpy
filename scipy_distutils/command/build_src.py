@@ -189,8 +189,7 @@ class build_src(build_ext.build_ext):
                 if self.inplace:
                     target_dir = os.path.dirname(base)
                 else:
-                    target_dir = os.path.join(self.build_src,
-                                              os.path.dirname(base))
+                    target_dir = appendpath(self.build_src, os.path.dirname(base))
                 if os.path.isfile(source):
                     name = get_f2py_modulename(source)
                     assert name==ext_name,'mismatch of extension names: '\
@@ -312,8 +311,7 @@ class build_src(build_ext.build_ext):
                     target_dir = os.path.dirname(base)
                     py_target_dir = self.ext_target_dir
                 else:
-                    target_dir = os.path.join(self.build_src,
-                                              os.path.dirname(base))
+                    target_dir = appendpath(self.build_src, os.path.dirname(base))
                     py_target_dir = target_dir
                 if os.path.isfile(source):
                     name = get_swig_modulename(source)
@@ -379,6 +377,15 @@ class build_src(build_ext.build_ext):
                          % (source))
 
         return new_sources + py_files
+
+def appendpath(prefix,path):
+    if os.path.isabs(path):
+        absprefix = os.path.abspath(prefix)
+        d = os.path.commonprefix([absprefix,path])
+        subpath = path[len(d):]
+        assert not os.path.isabs(subpath),`subpath`
+        return os.path.join(prefix,subpath)
+    return os.path.join(prefix, path)
 
 #### SWIG related auxiliary functions ####
 _swig_module_name_match = re.compile(r'\s*%module\s*(?P<name>[\w_]+)',
