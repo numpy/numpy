@@ -479,6 +479,63 @@ static PyObject *scipy_array_subscript_nice(PyArrayObject *self, PyObject *op) {
 }
 
 
+/* Similar to PyArray_PutMask but it doesn't check for contiguous ArrayObject self
+   and uses UBYTE instead of LONG in the mask
+ */
+static PyObject *scipy_PyArray_PutMask(PyArrayObject *self, PyObject *mask0, 
+				       PyObject* values0) {
+    PyArrayObject  *mask, *values;
+    int i, chunk, ni, max_item, nv;
+    char *src, *dest;
+    unsigned char *ptr;
+
+    mask = NULL;
+    values = NULL;
+    max_item = PyArray_SIZE(self);
+    dest = self->data;
+    chunk = self->descr->elsize;
+
+    if (!PyArray_ISCONTIGUOUS(((PyArrayObject *)mask0))) {
+	mask = (PyArrayObject *)PyArray_ContiguousFromObject(mask0, PyArray_UBYTE, 0, 0);
+	if (mask == NULL) goto fail;
+    }
+    else {
+        mask = (PyArrayObject *)mask0;
+	Py_INCREF(mask);
+    }
+    ni = PyArray_SIZE(mask);
+    if (ni != max_item) {
+	PyErr_SetString(PyExc_IndexError, "mask and data must be the same size.");
+	goto fail;
+    }
+
+    values = (PyArrayObject *)PyArray_ContiguousFromObject(values0, 
+							   self->descr->type, 0, 0);
+    if (values == NULL) goto fail;
+    nv = PyArray_SIZE(values);   /* zero if null array */
+    ptr = (unsigned char *)mask->data;
+    if (nv > 0) {
+        for(i=0; i<ni; i++) {
+            src = values->data + chunk * (i % nv);
+            if (*ptr) {
+                memmove(dest + i * chunk, src, chunk);
+            }
+	    ptr++;
+        }
+    }
+
+    Py_XDECREF(values);
+    Py_XDECREF(mask);
+    Py_INCREF(Py_None);
+    return Py_None;
+	
+ fail:
+    Py_XDECREF(mask);
+    Py_XDECREF(values);
+    return NULL;
+}
+
+
 /* Another assignment hacked by using CopyObject.  */
 
 static int scipy_array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op) {
@@ -505,7 +562,7 @@ static int scipy_array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *o
 		if (ret == -1) return -1;
 	    }
 	    /* XXXX This will upcast index to long unnecessarily --- may need to write own XXXX */
-	    tmp = (PyArrayObject *)PyArray_PutMask((PyObject *)self, index, op);
+	    tmp = (PyArrayObject *)scipy_PyArray_PutMask(self, index, op);
 	    if (tmp == NULL) return -1;
 	    Py_DECREF(tmp);
 	    return 0;
