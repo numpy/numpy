@@ -73,7 +73,7 @@ def getmodule(object):
                     if string.find('(built-in)',str(mod)) is -1:
                         break
                     
-            except (TypeError, KeyError):
+            except (TypeError, KeyError, ImportError):
                 pass        
     return value
 
