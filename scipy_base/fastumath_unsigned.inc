@@ -2530,7 +2530,7 @@ static void InitOperators(PyObject *dictionary) {
     divide_data[9] = (void *)c_quot_fast;
     divide_data[10] = (void *)c_quot_fast;
     divide_data[11] = (void *)PyNumber_Divide;
-    /* need to add and worry about c_prod
+    /* need to add and worry 
     divide_safe_data[9] = (void *)c_quot;
     divide_safe_data[10] = (void *)c_quot;
     divide_safe_data[11] = (void *)PyNumber_Divide;
@@ -2586,7 +2586,7 @@ static void InitOperators(PyObject *dictionary) {
     power_functions[7] = PyUFunc_ff_f_As_dd_d;
     power_functions[8] = PyUFunc_dd_d;
     power_functions[9] = fastumath_FF_F_As_DD_D;
-    power_functions[10] = PyUFunc_DD_D;
+    power_functions[10] = fastumath_DD_D;
     power_functions[11] = PyUFunc_OO_O;
     absolute_functions[11] = PyUFunc_O_O;
     negative_functions[11] = PyUFunc_O_O;

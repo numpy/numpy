@@ -2095,23 +2095,25 @@ static void InitOperators(PyObject *dictionary) {
 
     add_data[9] =(void *)PyNumber_Add;
     subtract_data[9] = (void *)PyNumber_Subtract;
-    multiply_data[7] = (void *)c_prod;
-    multiply_data[8] = (void *)c_prod;
+    multiply_data[7] = (void *)c_prod_;
+    multiply_data[8] = (void *)c_prod_;
     multiply_data[9] = (void *)PyNumber_Multiply;
     divide_data[7] = (void *)c_quot_fast;
     divide_data[8] = (void *)c_quot_fast;
     divide_data[9] = (void *)PyNumber_Divide;
+    /*
     divide_safe_data[7] = (void *)c_quot;
     divide_safe_data[8] = (void *)c_quot;
     divide_safe_data[9] = (void *)PyNumber_Divide;
+    */
     conjugate_data[9] = (void *)"conjugate";
     remainder_data[5] = (void *)fmod;
     remainder_data[6] = (void *)fmod;
     remainder_data[7] = (void *)PyNumber_Remainder;
     power_data[5] = (void *)pow;
     power_data[6] = (void *)pow;
-    power_data[7] = (void *)c_pow;
-    power_data[8] = (void *)c_pow;
+    power_data[7] = (void *)c_pow_;
+    power_data[8] = (void *)c_pow_;
     power_data[9] = (void *)PyNumber_Power;
     absolute_data[8] = (void *)PyNumber_Absolute;
     negative_data[8] = (void *)PyNumber_Negative;
