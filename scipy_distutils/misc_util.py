@@ -1,6 +1,7 @@
 import os,sys,string
 import re
 import types
+import glob
 
 if sys.version[:3]<='2.1':
     from distutils import util
@@ -383,6 +384,74 @@ def compiler_to_string(compiler):
     for prop in props:
         lines.append(format % prop)
     return '\n'.join(lines)
+
+def get_subpackages(path,
+                    parent=None,
+                    parent_path=None,
+                    include_packages=[],
+                    ignore_packages=[]):
+
+    """ Return a list of configurations found in a tree of Python
+    packages. It is assumed that each package xxx in path/xxx has
+    file path/xxx/info_xxx.py that follows convention specified
+    in scipy/DEVELOPERS.txt. Packages that do not define info_*.py files
+    must be specified in include_packages list.
+
+    Unless a package xxx is specified standalone, it will be installed
+    as parent.xxx.
+
+    Specifying parent_path is recommended for reducing verbosity of compilations.
+
+    Packages in ignore_packages list will be ignored.
+    """
+
+    config_list = []
+
+    for info_file in glob.glob(os.path.join(path,'*','info_*.py')):
+
+        package_name = os.path.basename(os.path.dirname(info_file))
+        if package_name != os.path.splitext(os.path.basename(info_file))[0][5:]:
+            print '  !! Mismatch of package name %r and %s' \
+                  % (package_name, info_file)
+            continue
+
+        if package_name in ignore_packages:
+            continue
+
+        sys.path.insert(0,os.path.dirname(info_file))
+        try:
+            exec 'import %s as info_module' \
+                 % (os.path.splitext(os.path.basename(info_file))[0])
+            if not getattr(info_module,'ignore',0):
+                exec 'import setup_%s as setup_module' % (package_name)
+                if getattr(info_module,'standalone',0) or not parent:
+                    args = ('',)
+                else:
+                    args = (parent,)
+                if setup_module.configuration.func_code.co_argcount>1:
+                    args = args + (parent_path,)
+                config = setup_module.configuration(*args)
+                config_list.append(config)
+        finally:
+            del sys.path[0]
+
+    for package_name in include_packages:
+        if package_name in ignore_packages:
+            continue
+        sys.path.insert(0,os.path.join(path, package_name))
+        try:
+            exec 'import setup_%s as setup_module' % (package_name)
+            if not parent:
+                args = ('',)
+            else:
+                args = (parent,)
+            if setup_module.configuration.func_code.co_argcount>1:
+                args = args + (parent_path,)
+            config = setup_module.configuration(*args)
+            config_list.append(config)
+        finally:
+            del sys.path[0]
+    return config_list
 
 if __name__ == '__main__':
     print 'terminal_has_colors:',terminal_has_colors()
