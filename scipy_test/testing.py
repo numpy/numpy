@@ -34,11 +34,9 @@ import os,sys,time,glob,string,traceback,unittest
 import types
 import imp
 
-# These are used by Numeric tests.
-# If Numeric and scipy_base  are not available, then some of the
-# functions below will not be available.
-from scipy_base.numerix import alltrue, equal, shape, ravel, around, zeros, Float64, asarray
-from scipy_base.numerix import less_equal, array2string, less, ArrayType
+#
+# Imports from scipy_base must be done at the end of this file.
+#
 
 DEBUG = 0
 
@@ -792,6 +790,9 @@ def output_exception():
               (filename, lineno, type.__name__, str(value), function)
     finally:
         type = value = tb = None # clean up
+
+from scipy_base.numerix import alltrue, equal, shape, ravel, around, zeros,\
+     Float64, asarray, less_equal, array2string, less, ArrayType
 
 try:
     from scipy_base.numerix import fastumath as math
