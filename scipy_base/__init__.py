@@ -2,7 +2,7 @@
 from info_scipy_base import __doc__
 from scipy_base_version import scipy_base_version as __version__
 
-from ppimport import ppimport, ppimport_attr
+from ppimport import ppimport, ppimport_attr, ppresolve
 
 # The following statement is equivalent to
 #

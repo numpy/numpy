@@ -111,6 +111,7 @@ Import tricks
 ppimport         --  Postpone module import until trying to use it
 ppimport_attr    --  Postpone module import until trying to use its
                       attribute
+ppresolve        --  Import postponed module and return it.
 
 Machine arithmetics
 ===================
