@@ -393,7 +393,7 @@ class sfftw_threads_info(fftw_info):
 
 class djbfft_info(system_info):
     section = 'djbfft'
-    dir_env_var = 'DJBFFTW'
+    dir_env_var = 'DJBFFT'
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
