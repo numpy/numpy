@@ -54,6 +54,20 @@ def get_package_config(package_name):
     mod = __import__('setup_'+package_name)
     config = mod.configuration()
     return config
+
+def package_config(primary,dependencies):
+    """ Create a configuration dictionary ready for setup.py from
+        a list of primary and dependent package names.  Each
+        package listed must have a directory with the same name
+        in the current or parent working directory.  Further, it
+        should have a setup_xxx.py module within that directory that
+        has a configuration() file in it. 
+    """
+    config = []
+    config.extend([get_package_config(x) for x in primary])
+    config.extend([get_package_config(x) for x in dependencies])        
+    config_dict = merge_config_dicts(config)
+    return config_dict
         
 list_keys = ['packages', 'ext_modules', 'data_files',
              'include_dirs', 'libraries', 'fortran_libraries',
