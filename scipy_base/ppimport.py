@@ -125,11 +125,12 @@ def ppimport(name):
         p_dir = p_path[0]
         fullname = p_name + '.' + name
     else:
-        # python module, not tested
+        # python module
         p_file = p_frame.f_locals['__file__']
         p_dir = os.path.dirname(p_file)
         fullname = p_name + '.' + name
 
+    # module may be imported already
     module = sys.modules.get(fullname)
     if module is not None:
         return module
@@ -153,10 +154,15 @@ def ppimport(name):
 
     if location is None:
         # name is to be looked in python sys.path.
-        # It is OK if name does not exists. The ImportError is
-        # postponed until trying to use the module.
         fullname = name
         location = 'sys.path'
+        # Try once more if module is imported.
+        # This covers the case when in python module
+        module = sys.modules.get(fullname)
+        if module is not None:
+            return module
+        # It is OK if name does not exists. The ImportError is
+        # postponed until trying to use the module.
 
     return _ModuleLoader(fullname,location)
 
