@@ -10,11 +10,12 @@ classes are available:
   fftw_info
   x11_info
   lapack_src_info
+  blas_src_info
 
 Usage:
     info_dict = get_info(<name>)
   where <name> is a string 'atlas','x11','fftw','lapack','blas',
-  or 'lapack_src'.
+  'lapack_src', or 'blas_src'.
 
   Returned info_dict is a dictionary which is compatible with
   distutils.setup keyword arguments. If info_dict == {}, then the
@@ -114,6 +115,7 @@ def get_info(name):
           'blas':blas_info,
           'lapack':lapack_info,
           'lapack_src':lapack_src_info,
+          'blas_src':blas_src_info,
           }.get(name.lower(),system_info)
     return cl().get_info()
 
@@ -147,6 +149,13 @@ class BlasNotFoundError(NotFoundError):
     Directories to search for the libraries can be specified in the
     scipy_distutils/site.cfg file (section [blas]) or by setting
     the BLAS environment variable."""
+
+class BlasSrcNotFoundError(BlasNotFoundError):
+    """
+    Blas (http://www.netlib.org/blas/) sources not found.
+    Directories to search for the sources can be specified in the
+    scipy_distutils/site.cfg file (section [blas_src]) or by setting
+    the BLAS_SRC environment variable."""
 
 class FFTWNotFoundError(NotFoundError):
     """
@@ -450,59 +459,65 @@ class lapack_src_info(system_info):
             if os.path.isfile(os.path.join(d,'dgesv.f')):
                 src_dir = d
                 break
-        if not src_dir: return
+        if not src_dir:
+            #XXX: Get sources from netlib. May be ask first.
+            return
         # The following is extracted from LAPACK-3.0/SRC/Makefile
         allaux='''
         ilaenv ieeeck lsame lsamen xerbla
         ''' # *.f
         laux = '''
-        bdsdc bdsqr disna labad lacpy ladiv lae2 laebz
-        laed0 laed1 laed2 laed3 laed4 laed5 laed6 laed7 laed8 laed9
-        laeda laev2 lagtf lagts lamch lamrg lanst lapy2 lapy3 larnv
-        larrb larre larrf lartg laruv las2 lascl lasd0 lasd1 lasd2
-        lasd3 lasd4 lasd5 lasd6 lasd7 lasd8 lasd9 lasda lasdq lasdt
-        laset lasq1 lasq2 lasq3 lasq4 lasq5 lasq6 lasr lasrt lassq
-        lasv2 pttrf stebz stedc steqr sterf
+        bdsdc bdsqr disna labad lacpy ladiv lae2 laebz laed0 laed1
+        laed2 laed3 laed4 laed5 laed6 laed7 laed8 laed9 laeda laev2
+        lagtf lagts lamch lamrg lanst lapy2 lapy3 larnv larrb larre
+        larrf lartg laruv las2 lascl lasd0 lasd1 lasd2 lasd3 lasd4
+        lasd5 lasd6 lasd7 lasd8 lasd9 lasda lasdq lasdt laset lasq1
+        lasq2 lasq3 lasq4 lasq5 lasq6 lasr lasrt lassq lasv2 pttrf
+        stebz stedc steqr sterf
         ''' # [s|d]*.f
         lasrc = '''
-        gbbrd gbcon gbequ gbrfs gbsv gbsvx gbtf2 gbtrf gbtrs gebak gebal
-        gebd2 gebrd gecon geequ gees geesx geev geevx gegs gegv gehd2
-        gehrd gelq2 gelqf gels gelsd gelss gelsx gelsy geql2 geqlf geqp3
-        geqpf geqr2 geqrf gerfs gerq2 gerqf gesc2 gesdd gesv gesvd gesvx
-        getc2 getf2 getrf getri getrs ggbak ggbal gges ggesx ggev ggevx
-        ggglm gghrd gglse ggqrf ggrqf ggsvd ggsvp gtcon gtrfs gtsv gtsvx
-        gttrf gttrs gtts2 hgeqz hsein hseqr labrd lacon laein lags2 lagtm
-        lahqr lahrd laic1 lals0 lalsa lalsd langb lange langt lanhs lansb
-        lansp lansy lantb lantp lantr lapll lapmt laqgb laqge laqp2 laqps
-        laqsb laqsp laqsy lar1v lar2v larf larfb larfg larft larfx largv
-        larrv lartv larz larzb larzt laswp lasyf latbs latdf latps latrd
-        latrs latrz latzm lauu2 lauum pbcon pbequ pbrfs pbstf pbsv pbsvx
-        pbtf2 pbtrf pbtrs pocon poequ porfs posv posvx potf2 potrf potri
-        potrs ppcon ppequ pprfs ppsv ppsvx pptrf pptri pptrs ptcon pteqr
-        ptrfs ptsv ptsvx pttrs ptts2 spcon sprfs spsv spsvx sptrf sptri
-        sptrs stegr stein sycon syrfs sysv sysvx sytf2 sytrf sytri sytrs
-        tbcon tbrfs tbtrs tgevc tgex2 tgexc tgsen tgsja tgsna tgsy2 tgsyl
-        tpcon tprfs tptri tptrs trcon trevc trexc trrfs trsen trsna trsyl
-        trti2 trtri trtrs tzrqf tzrzf
+        gbbrd gbcon gbequ gbrfs gbsv gbsvx gbtf2 gbtrf gbtrs gebak
+        gebal gebd2 gebrd gecon geequ gees geesx geev geevx gegs gegv
+        gehd2 gehrd gelq2 gelqf gels gelsd gelss gelsx gelsy geql2
+        geqlf geqp3 geqpf geqr2 geqrf gerfs gerq2 gerqf gesc2 gesdd
+        gesv gesvd gesvx getc2 getf2 getrf getri getrs ggbak ggbal
+        gges ggesx ggev ggevx ggglm gghrd gglse ggqrf ggrqf ggsvd
+        ggsvp gtcon gtrfs gtsv gtsvx gttrf gttrs gtts2 hgeqz hsein
+        hseqr labrd lacon laein lags2 lagtm lahqr lahrd laic1 lals0
+        lalsa lalsd langb lange langt lanhs lansb lansp lansy lantb
+        lantp lantr lapll lapmt laqgb laqge laqp2 laqps laqsb laqsp
+        laqsy lar1v lar2v larf larfb larfg larft larfx largv larrv
+        lartv larz larzb larzt laswp lasyf latbs latdf latps latrd
+        latrs latrz latzm lauu2 lauum pbcon pbequ pbrfs pbstf pbsv
+        pbsvx pbtf2 pbtrf pbtrs pocon poequ porfs posv posvx potf2
+        potrf potri potrs ppcon ppequ pprfs ppsv ppsvx pptrf pptri
+        pptrs ptcon pteqr ptrfs ptsv ptsvx pttrs ptts2 spcon sprfs
+        spsv spsvx sptrf sptri sptrs stegr stein sycon syrfs sysv
+        sysvx sytf2 sytrf sytri sytrs tbcon tbrfs tbtrs tgevc tgex2
+        tgexc tgsen tgsja tgsna tgsy2 tgsyl tpcon tprfs tptri tptrs
+        trcon trevc trexc trrfs trsen trsna trsyl trti2 trtri trtrs
+        tzrqf tzrzf
         ''' # [s|c|d|z]*.f
         sd_lasrc = '''
-        laexc lag2 lagv2 laln2 lanv2 laqtr lasy2 opgtr opmtr org2l org2r orgbr
-        orghr orgl2 orglq orgql orgqr orgr2 orgrq orgtr orm2l orm2r ormbr ormhr
-        orml2 ormlq ormql ormqr ormr2 ormr3 ormrq ormrz ormtr rscl sbev sbevd
-        sbevx sbgst sbgv sbgvd sbgvx sbtrd spev spevd spevx spgst spgv spgvd
-        spgvx sptrd stev stevd stevr stevx syev syevd syevr syevx sygs2 sygst
-        sygv sygvd sygvx sytd2 sytrd
+        laexc lag2 lagv2 laln2 lanv2 laqtr lasy2 opgtr opmtr org2l
+        org2r orgbr orghr orgl2 orglq orgql orgqr orgr2 orgrq orgtr
+        orm2l orm2r ormbr ormhr orml2 ormlq ormql ormqr ormr2 ormr3
+        ormrq ormrz ormtr rscl sbev sbevd sbevx sbgst sbgv sbgvd sbgvx
+        sbtrd spev spevd spevx spgst spgv spgvd spgvx sptrd stev stevd
+        stevr stevx syev syevd syevr syevx sygs2 sygst sygv sygvd
+        sygvx sytd2 sytrd
         ''' # [s|d]*.f
         cz_lasrc = '''
-        bdsqr hbev hbevd hbevx hbgst hbgv hbgvd hbgvx hbtrd hecon heev heevd
-        heevr heevx hegs2 hegst hegv hegvd hegvx herfs hesv hesvx hetd2 hetf2
-        hetrd hetrf hetri hetrs hpcon hpev hpevd hpevx hpgst hpgv hpgvd hpgvx
-        hprfs hpsv hpsvx hptrd hptrf hptri hptrs lacgv lacp2 lacpy lacrm lacrt
-        ladiv laed0 laed7 laed8 laesy laev2 lahef lanhb lanhe lanhp lanht
-        laqhb laqhe laqhp larcm larnv lartg lascl laset lasr lassq pttrf rot
-        spmv spr stedc steqr symv syr ung2l ung2r ungbr unghr ungl2 unglq
-        ungql ungqr ungr2 ungrq ungtr unm2l unm2r unmbr unmhr unml2 unmlq
-        unmql unmqr unmr2 unmr3 unmrq unmrz unmtr upgtr upmtr
+        bdsqr hbev hbevd hbevx hbgst hbgv hbgvd hbgvx hbtrd hecon heev
+        heevd heevr heevx hegs2 hegst hegv hegvd hegvx herfs hesv
+        hesvx hetd2 hetf2 hetrd hetrf hetri hetrs hpcon hpev hpevd
+        hpevx hpgst hpgv hpgvd hpgvx hprfs hpsv hpsvx hptrd hptrf
+        hptri hptrs lacgv lacp2 lacpy lacrm lacrt ladiv laed0 laed7
+        laed8 laesy laev2 lahef lanhb lanhe lanhp lanht laqhb laqhe
+        laqhp larcm larnv lartg lascl laset lasr lassq pttrf rot spmv
+        spr stedc steqr symv syr ung2l ung2r ungbr unghr ungl2 unglq
+        ungql ungqr ungr2 ungrq ungtr unm2l unm2r unmbr unmhr unml2
+        unmlq unmql unmqr unmr2 unmr3 unmrq unmrz unmtr upgtr upmtr
         ''' # [c|z]*.f
         #######
         sclaux = laux + ' econd '                  # s*.f
@@ -541,6 +556,53 @@ class blas_info(system_info):
             return
         self.set_info(**info)
 
+class blas_src_info(system_info):
+    section = 'blas_src'
+    dir_env_var = 'BLAS_SRC'
+
+    def get_paths(self, section, key):
+        pre_dirs = system_info.get_paths(self, section, key)
+        dirs = []
+        for d in pre_dirs:
+            dirs.extend([d] + combine_paths(d,['blas']))
+        return [ d for d in dirs if os.path.isdir(d) ]
+
+    def calc_info(self):
+        src_dirs = self.get_src_dirs()
+        src_dir = ''
+        for d in src_dirs:
+            if os.path.isfile(os.path.join(d,'daxpy.f')):
+                src_dir = d
+                break
+        if not src_dir:
+            #XXX: Get sources from netlib. May be ask first.
+            return
+        blas1 = '''
+        caxpy csscal dnrm2 dzasum saxpy srotg zdotc ccopy cswap drot
+        dznrm2 scasum srotm zdotu cdotc dasum drotg icamax scnrm2
+        srotmg zdrot cdotu daxpy drotm idamax scopy sscal zdscal crotg
+        dcabs1 drotmg isamax sdot sswap zrotg cscal dcopy dscal izamax
+        snrm2 zaxpy zscal csrot ddot dswap sasum srot zcopy zswap
+        '''
+        blas2 = '''
+        cgbmv chpmv ctrsv dsymv dtrsv sspr2 strmv zhemv ztpmv cgemv
+        chpr dgbmv dsyr lsame ssymv strsv zher ztpsv cgerc chpr2 dgemv
+        dsyr2 sgbmv ssyr xerbla zher2 ztrmv cgeru ctbmv dger dtbmv
+        sgemv ssyr2 zgbmv zhpmv ztrsv chbmv ctbsv dsbmv dtbsv sger
+        stbmv zgemv zhpr chemv ctpmv dspmv dtpmv ssbmv stbsv zgerc
+        zhpr2 cher ctpsv dspr dtpsv sspmv stpmv zgeru ztbmv cher2
+        ctrmv dspr2 dtrmv sspr stpsv zhbmv ztbsv
+        '''
+        blas3 = '''
+        cgemm csymm ctrsm dsyrk sgemm strmm zhemm zsyr2k chemm csyr2k
+        dgemm dtrmm ssymm strsm zher2k zsyrk cher2k csyrk dsymm dtrsm
+        ssyr2k zherk ztrmm cherk ctrmm dsyr2k ssyrk zgemm zsymm ztrsm
+        '''
+        sources = [os.path.join(src_dir,f+'.f') \
+                   for f in (blas1+blas2+blas3).split()]
+        #XXX: should we check here actual existence of source files?
+        info = {'sources':sources}
+        self.set_info(**info)
 
 class x11_info(system_info):
     section = 'x11'
