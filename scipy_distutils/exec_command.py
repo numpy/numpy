@@ -346,7 +346,7 @@ def _exec_command( command, use_shell=None, **env ):
         # used.
         sh = os.environ.get('SHELL','/bin/sh')
         if type(command) is type([]):
-            argv = [sh,'-c'] + command
+            argv = [sh,'-c',' '.join(command)]
         else:
             argv = [sh,'-c',command]
     else:
