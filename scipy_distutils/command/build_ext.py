@@ -15,13 +15,16 @@ class build_ext (old_build_ext):
         need_f_libs = 0
         if self.distribution.has_f_libraries():
             build_flib = self.get_finalized_command('build_flib')
-            for lib_name in ext.libraries:
-                if build_flib.has_f_library(lib_name):
-                    need_f_libs = 1
-                    break
+            if build_flib.has_f_library(ext.name):
+                need_f_libs = 1
+            else:
+                for lib_name in ext.libraries:
+                    if build_flib.has_f_library(lib_name):
+                        need_f_libs = 1
+                        break
         if need_f_libs:
             moreargs = build_flib.fcompiler.get_extra_link_args()
-            if moreargs != []:                
+            if moreargs != []:
                 if ext.extra_link_args is None:
                     ext.extra_link_args = moreargs
                 else:
