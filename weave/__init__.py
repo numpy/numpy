@@ -3,6 +3,7 @@
         1. inline() -- a function for including C/C++ code within Python
         2. blitz()  -- a function for compiling Numeric expressions to C++
         3. ext_tools-- a module that helps construct C/C++ extension modules.
+        4. accelerate -- a module that inline accelerates Python functions
 """
 
 try:
@@ -13,6 +14,10 @@ except ImportError:
 from inline_tools import inline
 import ext_tools
 from ext_tools import ext_module, ext_function
+try:
+    from accelerate_tools import accelerate
+except:
+    pass
 
 #---- testing ----#
 
