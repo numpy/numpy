@@ -660,7 +660,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
         msg =  msg \
              + 'DESIRED: ' + repr(desired) \
              + '\nACTUAL: ' + repr(actual)
-    assert all(round(abs(desired - actual),decimal) == 0), msg
+    assert all(around(abs(desired - actual),decimal) == 0), msg
 
 __all__.append('assert_approx_equal')
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
