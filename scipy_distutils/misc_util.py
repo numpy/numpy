@@ -235,6 +235,7 @@ def default_config_dict(name = None, parent_name = None):
     d={}
     for key in list_keys: d[key] = []
     for key in dict_keys: d[key] = {}
+    full_name = ""
 
     if name and parent_name:
         full_name = '%s.%s' % (parent_name,name)
