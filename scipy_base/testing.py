@@ -13,6 +13,21 @@ try:
 except ImportError:
     pass
 
+def get_package_path(testfile):
+    """ Return path to package directory first assuming that testfile
+    satisfies the following tree structure:
+      <somepath>/build/lib.<platform>-<version>
+      <somepath>/<somedir>/testfile
+    If build directory does not exist, then return
+      <somepath>
+    """
+    from distutils.util import get_platform
+    d = os.path.dirname(os.path.dirname(os.path.abspath(testfile)))
+    d1 = os.path.join(d,'build','lib.%s-%s'%(get_platform(),sys.version[:3]))
+    if os.path.isdir(d1):
+        return d1
+    return d
+
 if sys.platform=='linux2':
     def jiffies(_proc_pid_stat = '/proc/%s/stat'%(os.getpid()),
                 _load_time=time.time()):
