@@ -638,9 +638,11 @@ def assert_array_equal(x,y,err_msg=''):
     x,y = asarray(x), asarray(y)
     msg = '\nArrays are not equal'
     try:
-        assert len(shape(x))==len(shape(y)) and \
-               alltrue(equal(shape(x),shape(y))),\
-               msg + ' (shapes %s, %s mismatch):\n\t' % (shape(x),shape(y)) + err_msg
+        assert 0 in [len(shape(x)),len(shape(y))] \
+               or (len(shape(x))==len(shape(y)) and \
+                   alltrue(equal(shape(x),shape(y)))),\
+                   msg + ' (shapes %s, %s mismatch):\n\t' \
+                   % (shape(x),shape(y)) + err_msg
         reduced = ravel(equal(x,y))
         cond = alltrue(reduced)
         if not cond:
