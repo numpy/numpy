@@ -52,6 +52,13 @@ try:
 except IndexError: 
     pass
 
+#------------------------------------------------------------------------
+# Add "sentinal" catchall converter
+#
+# if everything else fails, this one is the last hope (it always works)
+#-----------------------------------------------------------------------
+
+default.append(c_spec.catchall_converter())
 
 standard_info = [common_info.basic_module_info()]
 standard_info += [x.generate_build_info() for x in default]
@@ -64,3 +71,10 @@ standard_info += [x.generate_build_info() for x in default]
 import blitz_spec
 blitz = [blitz_spec.array_converter()] + default
 
+#------------------------------------------------------------------------
+# Add "sentinal" catchall converter
+#
+# if everything else fails, this one is the last hope (it always works)
+#-----------------------------------------------------------------------
+
+blitz.append(c_spec.catchall_converter())
