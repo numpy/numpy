@@ -181,9 +181,18 @@ class ScipyTest:
     def _get_module_tests(self,module,level):
         mstr = self._module_str
         d,f = os.path.split(module.__file__)
+
         short_module_name = os.path.splitext(os.path.basename(f))[0]
         test_dir = os.path.join(d,'tests')
         test_file = os.path.join(test_dir,'test_'+short_module_name+'.py')
+
+        local_test_dir = os.path.join(os.getcwd(),'tests')
+        local_test_file = os.path.join(local_test_dir,
+                                       'test_'+short_module_name+'.py')
+        if os.path.basename(os.path.dirname(local_test_dir)) \
+               == os.path.basename(os.path.dirname(test_dir)) \
+           and os.path.isfile(local_test_file):
+            test_file = local_test_file
 
         if not os.path.isfile(test_file):
             print '   !! No test file %r found for %s' \
