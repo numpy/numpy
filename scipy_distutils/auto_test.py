@@ -711,6 +711,7 @@ def full_scipy_build(build_dir = '.',
             # The change to tmp makes sure there isn't a scipy directory in 
             # the local scope.
             # All tests are run.
+            logger.info('Beginning Test')
             cmd = python_name +' -c "import sys,scipy;suite=scipy.test(%d);"'\
                                 % test_level
             test_results = run_command(cmd, logger=logger,
