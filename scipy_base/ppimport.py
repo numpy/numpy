@@ -131,7 +131,7 @@ def ppimport(name):
     global _ppimport_is_enabled
 
     level = 1
-    p_frame = _get_frame(level)
+    parent_frame = p_frame = _get_frame(level)
     while not p_frame.f_locals.has_key('__name__'):
         level = level + 1
         p_frame = _get_frame(level)
@@ -154,7 +154,7 @@ def ppimport(name):
     # module may be imported already
     module = sys.modules.get(fullname)
     if module is not None:
-        if _ppimport_is_enabled:
+        if _ppimport_is_enabled or isinstance(module,types.ModuleType):
             return module
         return module._ppimport_importer()
 
@@ -184,17 +184,36 @@ def ppimport(name):
     # This covers the case when importing from python module
     module = sys.modules.get(fullname)
     if module is not None:
-        if _ppimport_is_enabled:
+        if _ppimport_is_enabled or isinstance(module,types.ModuleType):
             return module
         return module._ppimport_importer()
     # It is OK if name does not exists. The ImportError is
     # postponed until trying to use the module.
 
-    loader = _ModuleLoader(fullname,location,p_frame=p_frame)
+    loader = _ModuleLoader(fullname,location,p_frame=parent_frame)
     if _ppimport_is_enabled:
         return loader
 
     return loader._ppimport_importer()
+
+def _pprint_frame(frame):
+    filename = frame.f_code.co_filename
+    lineno = frame.f_lineno
+    result = '%s in %s:\n' % (filename,frame.f_code.co_name)
+    if not os.path.isfile(filename):
+        return result
+    f = open(filename)
+    i = 1
+    line = f.readline()
+    while line:
+        line = f.readline()
+        i = i + 1
+        if (abs(i-lineno)<2):
+            result += '#%d: %s\n' % (i,line.rstrip())
+        if i>lineno+3:
+            break
+    f.close()
+    return result
 
 
 class _ModuleLoader:
@@ -239,11 +258,18 @@ class _ModuleLoader:
         except Exception,msg: # ImportError:
             p_frame = self.__dict__.get('_ppimport_p_frame',None)
             if p_frame:
-                print 'ppimport(%s) caller locals:' % (repr(name))
-                for k in ['__name__','__file__']:
-                    v = p_frame.f_locals.get(k,None)
-                    if v is not None:
-                        print '%s=%s' % (k,v)
+                if DEBUG:
+                    blocks = []
+                    f = p_frame
+                    while f:
+                        blocks.insert(0,_pprint_frame(f))
+                        f = f.f_back
+                    print '='*50
+                    print '  ppimport(%s) traceback' % (repr(name))
+                    print '-'*50
+                    print '\n'.join(blocks)
+                    print '='*50
+
             self.__dict__['_ppimport_exc_info'] = sys.exc_info()
             raise
 
@@ -291,13 +317,19 @@ class _ModuleLoader:
 
     __str__ = __repr__
 
-def ppresolve(a):
+def ppresolve(a,ignore_failure=None):
     """ Return resolved object a.
 
     a can be module name, postponed module, postponed modules
     attribute, string representing module attribute, or any
     Python object.
     """
+    global _ppimport_is_enabled
+    if _ppimport_is_enabled:
+        disable()
+        a = ppresolve(a,ignore_failure=ignore_failure)
+        enable()
+        return a
     if type(a) is type(''):
         ns = a.split('.')
         a = ppimport(ns[0])
@@ -311,8 +343,10 @@ def ppresolve(a):
                 a = a._ppimport_attr
             b.append(ns[0])
             del ns[0]
-            a = getattr(a,b[-1],ppimport('.'.join(b)))
-
+            #a = getattr(a,b[-1],ppimport('.'.join(b)))
+            if ignore_failure and not hasattr(a, b[-1]):
+                return '.'.join(ns+b)
+            a = getattr(a,b[-1])
     if hasattr(a,'_ppimport_importer') or \
            hasattr(a,'_ppimport_module'):
         a = a._ppimport_module
@@ -320,6 +354,8 @@ def ppresolve(a):
         a = a._ppimport_attr
     return a
 
+def _ppresolve_ignore_failure(a):
+    return ppresolve(a,ignore_failure=1)
 
 try:
     import pydoc as _pydoc
@@ -333,14 +369,15 @@ if _pydoc is not None:
 
     _old_pydoc_help_call = _pydoc.help.__class__.__call__
     def _scipy_pydoc_help_call(self,*args,**kwds):
-        return _old_pydoc_help_call(self, *map(ppresolve,args), **kwds)
+        return _old_pydoc_help_call(self, *map(_ppresolve_ignore_failure,args),
+                                    **kwds)
     _pydoc.help.__class__.__call__ = _new.instancemethod(_scipy_pydoc_help_call,
                                                          None,
                                                          _pydoc.help.__class__)
 
     _old_pydoc_Doc_document = _pydoc.Doc.document
     def _scipy_pydoc_Doc_document(self,*args,**kwds):
-        args = (ppresolve(args[0]),) + args[1:]
+        args = (_ppresolve_ignore_failure(args[0]),) + args[1:]
         return _old_pydoc_Doc_document(self,*args,**kwds)
     _pydoc.Doc.document = _new.instancemethod(_scipy_pydoc_Doc_document,
                                               None,
@@ -356,3 +393,4 @@ if _pydoc is not None:
     def _scipy_inspect_getfile(object):
         return _old_inspect_getfile(ppresolve(object))
     _inspect.getfile = _scipy_inspect_getfile
+
