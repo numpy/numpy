@@ -242,9 +242,9 @@ def unwrap(p,discont=pi,axis=-1):
     slice1 = [slice(None,None)]*nd     # full slices
     slice1[axis] = slice(1,None)
     ddmod = mod(dd+pi,2*pi)-pi
-    putmask(ddmod,(ddmod==-pi) & (dd > 0),pi)
+    Numeric.putmask(ddmod,(ddmod==-pi) & (dd > 0),pi)
     ph_correct = ddmod - dd;
-    putmask(ph_correct,abs(dd)<discont,0)
+    Numeric.putmask(ph_correct,abs(dd)<discont,0)
     up = array(p,copy=1,typecode='d')
     up[slice1] = p[slice1] + cumsum(ph_correct,axis)
     return up
@@ -342,14 +342,14 @@ def nanmax(x,axis=-1):
     """Find the maximum over the given axis ignoring nans.
     """
     x = asarray(x).copy()
-    putmask(x,isnan(x),-inf)
+    Numeric.putmask(x,isnan(x),-inf)
     return amax(x,axis)
 
 def nanargmax(x,axis=-1):
     """Find the maximum over the given axis ignoring nans.
     """
     x = asarray(x).copy()
-    putmask(x,isnan(x),-inf)
+    Numeric.putmask(x,isnan(x),-inf)
     return argmax(x,axis)
 
 def disp(mesg, device=None, linefeed=1):
