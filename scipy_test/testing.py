@@ -343,8 +343,16 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
     """
     msg = '\nItems are not equal to %d significant digits:\n' % significant
     msg += err_msg
-    sc_desired = desired/pow(10,math.floor(math.log10(abs(desired))))
-    sc_actual = actual/pow(10,math.floor(math.log10(abs(actual))))
+    actual, desired = map(float, (actual, desired))
+    # Normalized the numbers to be in range (-10.0,10.0)
+    try:
+        sc_desired = desired/pow(10,math.floor(math.log10(abs(desired))))
+    except ZeroDivisionError:
+        sc_desired = 0.0
+    try:
+        sc_actual = actual/pow(10,math.floor(math.log10(abs(actual))))
+    except ZeroDivisionError:
+        sc_actual = 0.0
     try:
         if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
             msg =  msg \

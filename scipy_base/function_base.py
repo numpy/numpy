@@ -3,13 +3,15 @@ import Numeric
 N = Numeric
 from Numeric import *
 from scipy_base.fastumath import *
+inf = PINF
 import _compiled_base
 from type_check import ScalarType, isscalar
 
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
            'prod','cumprod','diff','angle','unwrap','sort_complex',
-           'disp','unique']
+           'disp','unique','takemask','nansum','nanmax','nanargmax',
+           'nanargmin','nanmin']
 
 round = Numeric.around
 any = Numeric.sometrue
@@ -263,6 +265,47 @@ def unique(inseq):
     for item in inseq:
         set[item] = None
     return asarray(set.keys())
+
+def takemask(arr,mask):
+    """1D array of those elements of ravel(arr) where ravel(mask) is true.
+    """
+    return N.take(ravel(arr), nonzero(ravel(mask)))
+
+def nansum(x,axis=-1):
+    """Sum the array over the given axis treating nans as missing values.
+    """
+    x = N.asarray(x).copy()
+    N.putmask(x,isnan(x),0)
+    return N.sum(x,axis)
+
+def nanmin(x,axis=-1):
+    """Find the minimium over the given axis ignoring nans.
+    """
+    x = N.asarray(x).copy()
+    N.putmask(x,isnan(x),inf)
+    return amin(x,axis)
+
+def nanargmin(x,axis=-1):
+    """Find the indices of the minimium over the given axis ignoring nans.
+    """
+    x = N.asarray(x).copy()
+    N.putmask(x,isnan(x),inf)
+    return argmin(x,axis)
+    
+
+def nanmax(x,axis=-1):
+    """Find the maximum over the given axis ignoring nans.
+    """
+    x = asarray(x).copy()
+    putmask(x,isnan(x),-inf)
+    return amax(x,axis)
+
+def nanargmax(x,axis=-1):
+    """Find the maximum over the given axis ignoring nans.
+    """
+    x = asarray(x).copy()
+    putmask(x,isnan(x),-inf)
+    return argmax(x,axis)
 
 import sys
 def disp(mesg, device=None, linefeed=1):

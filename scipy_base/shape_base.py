@@ -1,11 +1,73 @@
 import Numeric
 from Numeric import *
+from type_check import isscalar
 
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'column_stack','dstack','array_split','split','hsplit',
-           'vsplit','dsplit','squeeze','apply_over_axes','expand_dims']
+           'vsplit','dsplit','squeeze','apply_over_axes','expand_dims',
+           'apply_along_axis']
 
-
+def apply_along_axis(func1d,axis,arr,*args):
+    """ Execute func1d(arr[i],*args) where func1d takes 1-D arrays
+        and arr is an N-d array.  i varies so as to apply the function
+        along the given axis for each 1-d subarray in arr.
+    """
+    nd = Numeric.rank(arr)
+    if axis < 0: axis += nd
+    if (axis >= nd):
+        raise ValueError, "axis must be less than the rank; "+\
+              "axis=%d, rank=%d." % (axis,)
+    ind = [0]*(nd-1)
+    dims = Numeric.shape(arr)
+    i = zeros(nd,'O')
+    indlist = range(nd)
+    indlist.remove(axis)
+    i[axis] = slice(None,None)
+    outshape = take(shape(arr),indlist)
+    put(i,indlist,ind)
+    res = func1d(arr[i],*args)
+    #  if res is a number, then we have a smaller output array
+    if isscalar(res):
+        outarr = zeros(outshape,asarray(res).typecode())
+        outarr[ind] = res
+        Ntot = product(outshape)
+        k = 1
+        while k < Ntot:
+            # increment the index
+            ind[-1] += 1
+            n = -1
+            while (ind[n] >= outshape[n]) and (n > (1-nd)):
+                ind[n-1] += 1
+                ind[n] = 0
+                n -= 1
+            put(i,indlist,ind)
+            res = func1d(arr[i],*args)
+            outarr[ind] = res
+            k += 1
+        return outarr
+    else:
+        Ntot = product(outshape)
+        holdshape = outshape
+        outshape = list(shape(arr))
+        outshape[axis] = len(res)
+        outarr = zeros(outshape,asarray(res).typecode())
+        outarr[i] = res
+        k = 1
+        while k < Ntot:
+            # increment the index
+            ind[-1] += 1
+            n = -1
+            while (ind[n] >= holdshape[n]) and (n > (1-nd)):
+                ind[n-1] += 1
+                ind[n] = 0
+                n -= 1
+            put(i,indlist,ind)
+            res = func1d(arr[i],*args)
+            outarr[i] = res
+            k += 1
+        return outarr
+        
+     
 def apply_over_axes(func, a, axes):
     """Apply a function over multiple axes, keeping the same shape
     for the resulting array.
@@ -21,8 +83,7 @@ def apply_over_axes(func, a, axes):
     return val
 
 def expand_dims(a, axis):
-    """Expand the shape of a to include a length 1 dimension before the given
-    axis.
+    """Expand the shape of a by including NewAxis before given axis.
     """
     a = asarray(a)
     shape = a.shape
