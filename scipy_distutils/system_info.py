@@ -283,10 +283,10 @@ class system_info:
         defaults['search_static_first'] = str(self.search_static_first)
         self.cp = ConfigParser.ConfigParser(defaults)
         try:
-            __file__
-        except NameError:
-            __file__ = sys.argv[0]
-        cf = os.path.join(os.path.split(os.path.abspath(__file__))[0],
+            f = __file__
+        except NameError,msg:
+            f = sys.argv[0]
+        cf = os.path.join(os.path.split(os.path.abspath(f))[0],
                           'site.cfg')
         self.cp.read([cf])
         if not self.cp.has_section(self.section):
