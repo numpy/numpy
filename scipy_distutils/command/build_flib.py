@@ -1536,7 +1536,7 @@ class compaq_visual_fortran_compiler(fortran_compiler_base):
             from distutils.msvccompiler import MSVCCompiler
             self.lib_ar = '"%s" /OUT:' % (MSVCCompiler().lib)
 
-        switches = ' /nologo /nodebug /MD /WX '\
+        switches = ' /nologo /MD /WX '\
                    ' /iface=(cref,nomixed_str_len_arg) /names:lowercase '\
                    ' /assume:underscore /threads '
         #switches += ' /libs:dll /threads '
