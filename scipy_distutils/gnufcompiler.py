@@ -31,13 +31,10 @@ class GnuFCompiler(FCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
         }
-
-
-    def get_flags(self):
-        opt = FCompiler.get_flags(self)
-        if os.name != 'nt':
-            opt.append('-fPIC')
-        return opt
+    module_dir_switch = None
+    module_include_switch = None
+    if os.name != 'nt':
+        pic_flags = ['-fPIC']
 
     def get_linker_so(self):
         # win32 linking should be handled by standard linker
@@ -115,6 +112,7 @@ class GnuFCompiler(FCompiler):
                     break    
             return opt
         march_flag = 1
+        # 0.5.25 corresponds to 2.95.x
         if self.get_version() == '0.5.26': # gcc 3.0
             if cpu.is_AthlonK6():
                 opt.append('-march=k6')
@@ -166,7 +164,7 @@ class GnuFCompiler(FCompiler):
         return opt
 
 if __name__ == '__main__':
-    from distutils import log
+    from scipy_distutils import log
     log.set_verbosity(2)
     from fcompiler import new_fcompiler
     compiler = new_fcompiler(compiler='gnu')

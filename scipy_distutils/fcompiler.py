@@ -8,20 +8,26 @@ for the Scipy_istutils Fortran compiler abstraction model.
 import re
 import os
 import sys
+import atexit
+from types import StringType, NoneType, ListType, TupleType
+from glob import glob
 
 from distutils.version import StrictVersion
-from distutils.ccompiler import CCompiler
+from distutils.ccompiler import CCompiler, gen_lib_options
 # distutils.ccompiler provides the following functions:
 #   gen_preprocess_options(macros, include_dirs)
 #   gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries)
-from distutils.errors import DistutilsModuleError,DistutilsArgError
+from distutils.errors import DistutilsModuleError,DistutilsArgError,\
+     DistutilsExecError,CompileError,LinkError,DistutilsPlatformError
 from distutils.core import Command
 from distutils.util import split_quoted
 from distutils.fancy_getopt import FancyGetopt
 from distutils.version import LooseVersion
-from distutils import log
 from distutils.sysconfig import get_config_var
 
+from scipy_distutils.command.config_compiler import config_fc
+
+import log
 from exec_command import find_executable, exec_command
 
 
@@ -127,8 +133,6 @@ class FCompiler(CCompiler):
     #   mkpath(name, mode=0777)
     #
 
-    src_extensions = ['.for','.ftn','.f77','.f','.f90','.f95']
-
     language_map = {'.f':'f77',
                     '.for':'f77',
                     '.ftn':'f77',
@@ -145,30 +149,37 @@ class FCompiler(CCompiler):
         'compiler_f90' : ["f90"],
         'compiler_fix' : ["f90","-fixed"],
         'linker_so'    : ["f90","-shared"],
+        #'linker_exe'   : ["f90"],  #  XXX do we need it??
         'archiver'     : ["ar","-cr"],
         'ranlib'       : None,
         }
 
-    compile_switch = "-c " #  Ending space matters!
-    object_switch = "-o " #  Ending space matters!
-    object_extension = ".o"
-    shared_lib_extension = get_config_var('SO')
-    static_lib_extension = ".a"
-    static_lib_format = "lib%s%s"
+    compile_switch = "-c"
+    object_switch = "-o "   # Ending space matters! It will be stripped
+                            # but if it is missing then object_switch
+                            # will be prefixed to object file name by
+                            # string concatenation.
+    library_switch = "-o "  # Ditto!
+
+    # Switch to specify where module files are created and searched
+    # for USE statement.  Normally it is a string and also here ending
+    # space matters. See above.
+    module_dir_switch = None
+
+    # Switch to specify where module files are searched for USE statement.
+    module_include_switch = '-I' 
+
+    pic_flags = []           # Flags to create position-independent code
+
+    src_extensions = ['.for','.ftn','.f77','.f','.f90','.f95']
+    obj_extension = ".o"
+    shared_lib_extension = get_config_var('SO')  # or .dll
+    static_lib_extension = ".a"  # or .lib
+    static_lib_format = "lib%s%s" # or %s%s
     shared_lib_format = "%s%s"
+    exe_extension = ""
 
-    def __init__(self,verbose=0,dry_run=0,force=0):
-        # Set the following attributes (see ccompiler.py for explanations):
-        #   output_dir
-        #   macros
-        #   include_dirs
-        #   libraries
-        #   library_dirs
-        #   runtime_library_dirs
-        #   objects
-        # and call set_executables.
-        CCompiler.__init__(self,verbose,dry_run,force)
-
+    ######################################################################
     ## Methods that subclasses may redefine. But don't call these methods!
     ## They are private to FCompiler class and may return unexpected
     ## results if used elsewhere. So, you have been warned..
@@ -211,7 +222,7 @@ class FCompiler(CCompiler):
 
     def get_flags(self):
         """ List of flags common to all compiler types. """
-        return []
+        return [] + self.pic_flags
     def get_flags_version(self):
         """ List of compiler flags to print out version information. """
         if self.executables['version_cmd']:
@@ -310,8 +321,8 @@ class FCompiler(CCompiler):
         noarch = conf.get('noarch',[None,noopt])[1]
         debug = conf.get('debug',[None,0])[1]
 
-        f77 = self.__get_cmd('compiler_f77','F77',(conf,'f77_exec'))
-        f90 = self.__get_cmd('compiler_f90','F90',(conf,'f90_exec'))
+        f77 = self.__get_cmd('compiler_f77','F77',(conf,'f77exec'))
+        f90 = self.__get_cmd('compiler_f90','F90',(conf,'f90exec'))
         # Temporarily setting f77,f90 compilers so that
         # version_cmd can use their executables.
         if f77:
@@ -334,7 +345,7 @@ class FCompiler(CCompiler):
                                        (conf,'f90flags'))
 
         # XXX Assuming that free format is default for f90 compiler.
-        fix = self.__get_cmd('compiler_fix','F90',(conf,'f90_exec'))
+        fix = self.__get_cmd('compiler_fix','F90',(conf,'f90exec'))
         if fix:
             fixflags = self.__get_flags(self.get_flags_fix) + f90flags
 
@@ -375,6 +386,7 @@ class FCompiler(CCompiler):
         if fix:
             self.set_executables(compiler_fix=[fix]+fixflags+fflags)
 
+        #XXX: Do we need LDSHARED->SOSHARED, LDFLAGS->SOFLAGS
         linker_so = self.__get_cmd(self.get_linker_so,'LDSHARED')
         if linker_so:
             linker_so_flags = self.__get_flags(self.get_flags_linker_so,'LDFLAGS')
@@ -395,7 +407,27 @@ class FCompiler(CCompiler):
         verbose = conf.get('verbose',[None,0])[1]
         if verbose:
             self.dump_properties()
+        return
 
+    def customize_cmd(self, cmd):
+        if cmd.include_dirs is not None:
+            self.set_include_dirs(cmd.include_dirs)
+        if cmd.define is not None:
+            for (name,value) in cmd.define:
+                self.define_macro(name, value)
+        if cmd.undef is not None:
+            for macro in cmd.undef:
+                self.undefine_macro(macro)
+        if cmd.libraries is not None:
+            self.set_libraries(self.get_libraries() + cmd.libraries)
+        if cmd.library_dirs is not None:
+            self.set_library_dirs(self.get_library_dirs() + cmd.library_dirs)
+        if cmd.rpath is not None:
+            self.set_runtime_library_dirs(cmd.rpath)
+        if cmd.link_objects is not None:
+            self.set_link_objects(cmd.link_objects)
+        return
+            
     def dump_properties(self):
         """ Print out the attributes of a compiler instance. """
         props = []
@@ -413,13 +445,160 @@ class FCompiler(CCompiler):
             if l[:4]=='  --':
                 l = '  ' + l[4:]
             print l
+        return
 
     def exec_command(self,*args,**kws):
         """ Return status,output of a command. """
-        log.info('%s.exec_command(*%s,**%s)' % (self.__class__.__name__,args,kws))
+        quiet = kws.get('quiet',1)
+        try: del kws['quiet']
+        except KeyError: pass
+        if not quiet:
+            log.info('%s.exec_command(*%s,**%s)' % (self.__class__.__name__,
+                                                    args,kws))
         status, output = exec_command(*args,**kws)
-        log.info('*****status:%s\n*****output:\n%s\n*****' % (status,output))
+        if not quiet:
+            log.info('*****status:%s\n*****output:\n%s\n*****' % (status,output))
         return status, output
+
+    ###################
+
+    def _get_cc_args(self, pp_opts, debug, before):
+        #XXX
+        print self.__class__.__name__ + '._get_cc_args:',pp_opts, debug, before
+        return []
+
+    def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
+        """Compile 'src' to product 'obj'."""
+        print self.__class__.__name__ + '._compile:',obj, src, ext, cc_args, extra_postargs, pp_opts
+
+        if is_f_file(src):
+            compiler = self.compiler_f77
+        elif is_free_format(src):
+            compiler = self.compiler_f90
+            if compiler is None:
+                raise DistutilsExecError, 'f90 not supported by '\
+                      +self.__class__.__name__
+        else:
+            compiler = self.compiler_fix
+            if compiler is None:
+                raise DistutilsExecError, 'f90 (fixed) not supported by '\
+                      +self.__class__.__name__
+        if self.object_switch[-1]==' ':
+            o_args = [self.object_switch.strip(),obj]
+        else:
+            o_args = [self.object_switch.strip()+obj]
+
+        assert self.compile_switch.strip()
+        s_args = [self.compile_switch, src]
+
+        command = compiler + cc_args + pp_opts + s_args + o_args + extra_postargs
+        log.info(' '.join(command))
+        try:
+            s,o = self.exec_command(command)
+        except DistutilsExecError, msg:
+            raise CompileError, msg
+        if s:
+            raise CompileError, o
+
+        return
+
+    def module_options(self, module_dirs, module_build_dir):
+        options = []
+        if self.module_dir_switch is not None:
+            if self.module_dir_switch[-1]==' ':
+                options.extend([self.module_dir_switch.strip(),module_build_dir])
+            else:
+                options.append(self.module_dir_switch.strip()+module_build_dir)
+        else:
+            print 'XXX: module_build_dir=%r option ignored' % (module_build_dir)
+            print 'XXX: Fix module_dir_switch for ',self.__class__.__name__
+        if self.module_include_switch is not None:
+            for d in [module_build_dir]+module_dirs:
+                options.append('%s%s' % (self.module_include_switch, d))
+        else:
+            print 'XXX: module_dirs=%r option ignored' % (module_dirs)
+            print 'XXX: Fix module_include_switch for ',self.__class__.__name__
+        return options
+
+    def library_option(self, lib):
+        return "-l" + lib
+    def library_dir_option(self, dir):
+        return "-L" + dir
+
+    if sys.version[:3]<'2.3':
+        def compile(self, sources, output_dir=None, macros=None,
+                    include_dirs=None, debug=0, extra_preargs=None,
+                    extra_postargs=None, depends=None):
+            if output_dir is None: output_dir = self.output_dir
+            if macros is None: macros = self.macros
+            elif type(macros) is ListType: macros = macros + (self.macros or [])
+            if include_dirs is None: include_dirs = self.include_dirs
+            elif type(include_dirs) in (ListType, TupleType):
+                include_dirs = list(include_dirs) + (self.include_dirs or [])
+            if extra_preargs is None: extra_preargs=[]
+            from distutils.sysconfig import python_build
+            objects = self.object_filenames(sources,strip_dir=python_build,
+                                            output_dir=output_dir)
+            from distutils.ccompiler import gen_preprocess_options
+            pp_opts = gen_preprocess_options(macros, include_dirs)
+            build = {}
+            for i in range(len(sources)):
+                src,obj = sources[i],objects[i]
+                ext = os.path.splitext(src)[1]
+                self.mkpath(os.path.dirname(obj))
+                build[obj] = src, ext
+            cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+            for obj, (src, ext) in build.items():
+                self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+            return objects
+        def detect_language(self, sources):
+            return
+
+    def link(self, target_desc, objects,
+             output_filename, output_dir=None, libraries=None,
+             library_dirs=None, runtime_library_dirs=None,
+             export_symbols=None, debug=0, extra_preargs=None,
+             extra_postargs=None, build_temp=None, target_lang=None):
+        objects, output_dir = self._fix_object_args(objects, output_dir)
+        libraries, library_dirs, runtime_library_dirs = \
+            self._fix_lib_args(libraries, library_dirs, runtime_library_dirs)
+
+        lib_opts = gen_lib_options(self, library_dirs, runtime_library_dirs,
+                                   libraries)
+        if type(output_dir) not in (StringType, NoneType):
+            raise TypeError, "'output_dir' must be a string or None"
+        if output_dir is not None:
+            output_filename = os.path.join(output_dir, output_filename)
+
+        if self._need_link(objects, output_filename):
+            if self.library_switch[-1]==' ':
+                o_args = [self.library_switch.strip(),output_filename]
+            else:
+                o_args = [self.library_switch.strip()+output_filename]
+            ld_args = (objects + self.objects +
+                       lib_opts + o_args)
+            #if debug:
+            #    ld_args[:0] = ['-g']
+            if extra_preargs:
+                ld_args[:0] = extra_preargs
+            if extra_postargs:
+                ld_args.extend(extra_postargs)
+            self.mkpath(os.path.dirname(output_filename))
+            if target_desc == CCompiler.EXECUTABLE:
+                raise NotImplementedError,self.__class__.__name__+'.linker_exe attribute'
+            else:
+                linker = self.linker_so[:]
+            command = linker + ld_args
+            log.info(' '.join(command))
+            try:
+                s,o = self.exec_command(command)
+            except DistutilsExecError, msg:
+                raise LinkError, msg
+            if s:
+                raise LinkError, o
+        else:
+            log.debug("skipping %s (up-to-date)", output_filename)
+        return
 
     ############################################################
 
@@ -456,6 +635,8 @@ class FCompiler(CCompiler):
         return var
 
     ## class FCompiler
+
+##############################################################################
 
 fcompiler_class = {'gnu':('gnufcompiler','GnuFCompiler',
                           "GNU Fortran Compiler"),
@@ -536,11 +717,13 @@ def new_fcompiler(plat=None,
     except KeyError:
         msg = "don't know how to compile Fortran code on platform '%s'" % plat
         if compiler is not None:
-            msg = msg + " with '%s' compiler" % compiler
+            msg = msg + " with '%s' compiler." % compiler
+            msg = msg + " Supported compilers are: %s)" \
+                  % (','.join(fcompiler_class.keys()))
         raise DistutilsPlatformError, msg
 
     try:
-        module_name = module_name
+        module_name = 'scipy_distutils.'+module_name
         __import__ (module_name)
         module = sys.modules[module_name]
         klass = vars(module)[class_name]
@@ -602,41 +785,12 @@ def show_fcompilers(dist = None):
         pretty_printer.print_help("List of unimplemented Fortran compilers:")
     print "For compiler details, run 'config_fc --verbose' setup command."
 
-class config_fc(Command):
-    """ Distutils command to hold user specified options
-    to Fortran compilers.
-
-    This is used in FCompiler.customize() method.
-    """
-
-    user_options = [
-        ('fcompiler=',None,"specify Fortran compiler type"),
-        ('f77-exec=', None, "specify F77 compiler command"),
-        ('f90-exec=', None, "specify F90 compiler command"),
-        ('f77flags=',None,"specify F77 compiler flags"),
-        ('f90flags=',None,"specify F90 compiler flags"),
-        ('opt=',None,"specify optimization flags"),
-        ('arch=',None,"specify architecture specific optimization flags"),
-        ('debug','g',"compile with debugging information"),
-        ('noopt',None,"compile without optimization"),
-        ('noarch',None,"compile without arch-dependent optimization"),
-        ]
-
-    boolean_options = ['debug','noopt','noarch']
-
-    help_options = [
-        ('help-fcompiler', None,
-         "list available Fortran compilers", show_fcompilers),
-        ]
-
 def dummy_fortran_file():
     import tempfile
     dummy_name = tempfile.mktemp()+'__dummy'
     dummy = open(dummy_name+'.f','w')
     dummy.write("      subroutine dummy()\n      end\n")
     dummy.close()
-    import atexit
-    from distutils import log
     def rm_file(name=dummy_name,log_threshold=log._global_log.threshold):
         save_th = log._global_log.threshold
         log.set_threshold(log_threshold)

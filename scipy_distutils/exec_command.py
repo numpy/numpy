@@ -244,6 +244,11 @@ def _exec_command_posix( command,
                          **env ):
     log.debug('_exec_command_posix(...)')
 
+    if type(command) is type([]):
+        command_str = ' '.join(command)
+    else:
+        command_str = command
+
     tmpfile = tempfile.mktemp()
     if use_tee:
         stsfile = tempfile.mktemp()
@@ -251,9 +256,9 @@ def _exec_command_posix( command,
         if use_tee == 2:
             filter = r'| tr -cd "\n" | tr "\n" "."; echo'
         command_posix = '( %s 2>&1 ; echo $? > %s ) | tee %s %s'\
-                      % (command,stsfile,tmpfile,filter)
+                      % (command_str,stsfile,tmpfile,filter)
     else:
-        command_posix = '%s > %s 2>&1' % (command,tmpfile)
+        command_posix = '%s > %s 2>&1' % (command_str,tmpfile)
 
     log.debug('Running os.system(%r)' % (command_posix))
     status = os.system(command_posix)
@@ -330,12 +335,18 @@ def _exec_command( command, use_shell=None, **env ):
         # We use shell (unless use_shell==0) so that wildcards can be
         # used.
         sh = os.environ.get('SHELL','/bin/sh')
-        argv = [sh,'-c',command]
+        if type(command) is type([]):
+            argv = [sh,'-c'] + command
+        else:
+            argv = [sh,'-c',command]
     else:
         # On NT, DOS we avoid using command.com as it's exit status is
         # not related to the exit status of a command.
-        argv = splitcmdline(command)
-
+        if type(command) is type([]):
+            argv = command[:]
+        else:
+            argv = splitcmdline(command)
+        
     if hasattr(os,'spawnvpe'):
         spawn_command = os.spawnvpe
     else:

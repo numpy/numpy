@@ -24,6 +24,8 @@ class VastFCompiler(GnuFCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
+    module_dir_switch = None  #XXX Fix me
+    module_include_switch = None #XXX Fix me
 
     def get_version_cmd(self):
         f90 = self.compiler_f90[0]

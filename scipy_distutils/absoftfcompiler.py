@@ -1,5 +1,6 @@
 
 # http://www.absoft.com/literature/osxuserguide.pdf
+# http://www.absoft.com/documentation.html
 
 import os
 import sys
@@ -23,6 +24,10 @@ class AbsoftFCompiler(FCompiler):
         'ranlib'       : ["ranlib"]
         }
 
+    if os.name != 'nt':
+        pic_flags = ['-fpic']
+    module_dir_switch = None
+    module_include_switch = '-p '
 
     def get_library_dirs(self):
         opt = FCompiler.get_library_dirs(self)

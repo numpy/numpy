@@ -18,9 +18,10 @@ class SunFCompiler(FCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
+    module_dir_switch = '-moddir='
+    module_include_switch = '-M'
+    pic_flags = ['-xcode=pic32']
 
-    def get_flags(self):
-        return ['-xcode=pic32']
     def get_opt(self):
         return ['-fast','-dalign']
     def get_arch(self):
@@ -31,7 +32,7 @@ class SunFCompiler(FCompiler):
         return opt
 
 if __name__ == '__main__':
-    from distutils import log
+    from scipy_distutils import log
     log.set_verbosity(2)
     from fcompiler import new_fcompiler
     compiler = new_fcompiler(compiler='sun')

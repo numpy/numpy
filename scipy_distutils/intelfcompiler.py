@@ -28,8 +28,12 @@ class IntelFCompiler(FCompiler):
         'ranlib'       : ["ranlib"]
         }
 
+    pic_flags = ['-KPIC']
+    module_dir_switch = '-module ' # Don't remove ending space!
+    module_include_switch = '-I'
+
     def get_flags(self):
-        opt = ["-KPIC","-cm"]
+        opt = self.pic_flags + ["-cm"]
         return opt
 
     def get_flags_opt(self):
@@ -74,7 +78,7 @@ class IntelItaniumFCompiler(IntelFCompiler):
         'version_cmd'  : [fc_exe, "-FI -V -c %(fname)s.f -o %(fname)s.o" \
                           % {'fname':dummy_fortran_file()}],
         'compiler_f77' : [fc_exe,"-FI","-w90","-w95"],
-        'compiler_fix' : [fc_exe,"-FI","-72"],
+        'compiler_fix' : [fc_exe,"-FI"],
         'compiler_f90' : [fc_exe],
         'linker_so'    : [fc_exe,"-shared"],
         'archiver'     : ["ar", "-cr"],
@@ -105,7 +109,10 @@ class IntelVisualFCompiler(FCompiler):
         }
 
     compile_switch = '/c '
-    object_switch = '/Fo' #No space after /Fo!
+    object_switch = '/Fo'     #No space after /Fo!
+    library_switch = '/OUT:'  #No space after /OUT:!
+    module_dir_switch = '/module:' #No space after /module:
+    module_include_switch = '/I'
 
     def get_flags(self):
         opt = ['/nologo','/MD','/nbs','/Qlowercase','/us']

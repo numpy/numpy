@@ -19,6 +19,9 @@ class LaheyFCompiler(FCompiler):
         'ranlib'       : ["ranlib"]
         }
 
+    module_dir_switch = None  #XXX Fix me
+    module_include_switch = None #XXX Fix me
+
     def get_flags_opt(self):
         return ['-O']
     def get_flags_debug(self):

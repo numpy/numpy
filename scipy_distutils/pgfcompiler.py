@@ -21,11 +21,13 @@ class PGroupFCompiler(FCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
+    pic_flags = ['-fpic']
+    module_dir_switch = '-module '
+    module_include_switch = '-I'
 
     def get_flags(self):
         opt = ['-Minform=inform','-Mnosecond_underscore']
-        opt.append('-fpic')
-        return opt
+        return self.pic_flags + opt
     def get_flags_opt(self):
         return ['-fast']
     def get_flags_debug(self):

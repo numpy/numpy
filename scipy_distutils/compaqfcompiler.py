@@ -27,6 +27,9 @@ class CompaqFCompiler(FCompiler):
         'ranlib'       : ["ranlib"]
         }
 
+    module_dir_switch = None  #XXX Fix me
+    module_include_switch = None #XXX Fix me
+
     def get_flags(self):
         return ['-assume no2underscore','-nomixed_str_len_arg']
     def get_flags_debug(self):
@@ -49,9 +52,12 @@ class CompaqVisualFCompiler(FCompiler):
 
     compile_switch = '/c '
     object_switch = '/object:'
+    library_switch = '/OUT:'      #No space after /OUT:!
 
     static_lib_extension = ".lib"
     static_lib_format = "%s%s"
+    module_dir_switch = None  #XXX Fix me
+    module_include_switch = None #XXX Fix me
 
     ar_exe = 'lib.exe'
     fc_exe = 'DF'

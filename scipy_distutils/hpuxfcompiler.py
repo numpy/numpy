@@ -18,9 +18,11 @@ class HPUXFCompiler(FCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
-
+    module_dir_switch = None #XXX: fix me
+    module_include_switch = None #XXX: fix me
+    pic_flags = ['+pic=long']
     def get_flags(self):
-        return ['+pic=long','+ppu']
+        return self.pic_flags + ['+ppu']
     def get_flags_opt(self):
         return ['-O3']
     def get_libraries(self):

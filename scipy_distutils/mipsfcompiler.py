@@ -18,9 +18,12 @@ class MipsFCompiler(FCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : None
         }
+    module_dir_switch = None #XXX: fix me
+    module_include_switch = None #XXX: fix me
+    pic_flags = ['-KPIC']
 
     def get_flags(self):
-        return ['-KPIC','-n32']
+        return self.pic_flags + ['-n32']
     def get_flags_opt(self):
         return ['-O3']
     def get_flags_arch(self):
