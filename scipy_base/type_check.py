@@ -7,7 +7,8 @@ from Numeric import ArrayType, array, multiarray
 __all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isnan','isinf','isfinite',
            'isreal','nan_to_num','real','real_if_close',
-           'typename','cast','common_type','typecodes', 'asarray']
+           'typename','cast','common_type','typecodes', 'asarray',
+           'asfarray']
 
 def asarray(a, typecode=None, savespace=None):
    """asarray(a,typecode=None, savespace=0) returns a as a NumPy array.
@@ -23,6 +24,13 @@ def asarray(a, typecode=None, savespace=None):
             r.savespace(savespace)
          return r
    return multiarray.array(a,typecode,copy=0,savespace=savespace or 0)
+
+def asfarray(a, typecode=None, savespace=None):
+   """asfarray(a,typecode=None, savespace=0) returns a as a NumPy float array."""
+   a = asarray(a,typecode,savespace)
+   if typecode is None and a.typecode() not in 'CFfd':
+      return a.astype('d')
+   return a
 
 ScalarType = [types.IntType, types.LongType, types.FloatType, types.ComplexType]
 
