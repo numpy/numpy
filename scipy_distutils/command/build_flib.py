@@ -50,8 +50,8 @@ Fortran compilers (as to be used with --fcompiler= option):
 """
 
 import distutils
-import distutils.dep_util, distutils.dir_util
-import os,sys,string
+import distutils.dep_util, distutils.dir_util, distutils.file_util
+import os,sys,string,glob
 import commands,re
 from types import *
 from distutils.ccompiler import CCompiler,gen_preprocess_options
@@ -394,7 +394,6 @@ class fortran_compiler_base(CCompiler):
 
         f77_files,f90_fixed_files,f90_files = [],[],[]
         objects = []
-
         for f in dirty_files:
             if is_f_file(f):
                 f77_files.append(f)
@@ -433,16 +432,17 @@ class fortran_compiler_base(CCompiler):
  
     def f_compile(self,compiler,switches, source_files,
                   module_dirs=None, temp_dir=''):
-
+        
         pp_opts = gen_preprocess_options(self.macros,self.include_dirs)
 
         switches = switches + ' ' + string.join(pp_opts,' ')
 
-        module_switch = self.build_module_switch(module_dirs)
+        module_switch = self.build_module_switch(module_dirs,temp_dir)
         file_pairs = self.source_and_object_pairs(source_files,temp_dir)
         object_files = []
         for source,object in file_pairs:
             if distutils.dep_util.newer(source,object):
+                self.find_existing_modules()
                 cmd =  compiler + ' ' + switches + ' '+\
                        module_switch + \
                        self.compile_switch + source + \
@@ -453,6 +453,8 @@ class fortran_compiler_base(CCompiler):
                     raise FortranCompileError,\
                           'failure during compile (exit status = %s)' % failure
                 object_files.append(object)
+                self.cleanup_modules(temp_dir)
+        
         return object_files
         #return all object files to make sure everything is archived 
         #return map(lambda x: x[1], file_pairs)
@@ -474,7 +476,15 @@ class fortran_compiler_base(CCompiler):
         return self.f_compile(self.f77_compiler,switches,
                               source_files, module_dirs,temp_dir)
 
-    def build_module_switch(self, module_dirs):
+    def find_existing_modules(self):
+        # added to handle lack of -moddir flag in absoft
+        pass
+        
+    def cleanup_modules(self,temp_dir):
+        # added to handle lack of -moddir flag in absoft
+        pass
+        
+    def build_module_switch(self, module_dirs,temp_dir):
         return ''
 
     def create_static_lib(self, object_files, library_name,
@@ -665,11 +675,29 @@ class absoft_fortran_compiler(fortran_compiler_base):
         self.ver_cmd = self.f77_compiler + ' -V -c %s -o %s' % \
                        self.dummy_fortran_files()
 
-    def build_module_switch(self,module_dirs):
+    def find_existing_modules(self):
+        self.existing_modules = glob.glob('*.mod')
+        
+    def cleanup_modules(self,temp_dir):
+        all_modules = glob.glob('*.mod')
+        created_modules = [mod for mod in all_modules 
+                            if mod not in self.existing_modules]
+        for mod in created_modules:
+            distutils.file_util.move_file(mod,temp_dir)        
+            
+    def build_module_switch(self,module_dirs,temp_dir):
+        """ Absoft 6.2 is brain dead as far as I can tell and doesn't have
+            a way to specify where to put output directories.  This will have
+            to be handled in f_compile...
+            
+            !! CHECK: does absoft handle multiple -p flags?  if not, does
+            !! it look at the first or last?
+        """
         res = ''
         if module_dirs:
             for mod in module_dirs:
                 res = res + ' -p' + mod
+        res = res + '-p' + temp_dir        
         return res
 
     def get_extra_link_args(self):
@@ -726,7 +754,7 @@ class sun_fortran_compiler(fortran_compiler_base):
 
         self.ver_cmd = self.f90_compiler + ' -V'
 
-        self.libraries = ['fsu','sunmath']
+        self.libraries = ['fsu','sunmath','mvec']
 
         return
 
@@ -749,11 +777,11 @@ class sun_fortran_compiler(fortran_compiler_base):
         if self.is_available():
             self.library_dirs = self.find_lib_dir()
 
-    def build_module_switch(self,module_dirs):
-        res = ''
+    def build_module_switch(self,module_dirs,temp_dir):
+        res = ' -moddir='+temp_dir
         if module_dirs:
             for mod in module_dirs:
-                res = res + ' -M' + mod
+                res = res + ' -M' + mod                
         return res
 
     def find_lib_dir(self):
@@ -833,7 +861,7 @@ class mips_fortran_compiler(fortran_compiler_base):
                     break
         return opt
 
-    def build_module_switch(self,module_dirs):
+    def build_module_switch(self,module_dirs,temp_dir):
         res = ''
         return res 
 
