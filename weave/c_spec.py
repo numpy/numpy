@@ -238,6 +238,17 @@ class unicode_converter(common_base_converter):
         self.to_c_return = "PyUnicode_AS_UNICODE(py_obj)"
         self.matching_types = [UnicodeType]
         #self.headers.append('<string>')
+           
+    def declaration_code(self,templatize = 0,inline=0):
+        # since wstring doesn't seem to work everywhere, we need to provide
+        # the length variable Nxxx for the unicode string xxx.
+        code = '%(py_var)s = %(var_lookup)s;\n'                     \
+               '%(c_type)s %(name)s = %(var_convert)s;\n'           \
+               'int N%(name)s = PyUnicode_GET_SIZE(%(py_var)s);\n'  \
+               % self.template_vars(inline=inline)
+
+
+        return code               
 #----------------------------------------------------------------------------
 # File Converter
 #----------------------------------------------------------------------------
