@@ -966,9 +966,21 @@ class gnu_fortran_compiler(fortran_compiler_base):
         self.f77_compiler = fc
 
         gcc_lib_dir = self.find_lib_directories()
-        if gcc_lib_dir and \
-           os.path.isfile(os.path.join(gcc_lib_dir[0],'libg2c-pic.a')):
-            g2c = 'g2c-pic'
+        if gcc_lib_dir:
+            found_g2c = 0
+            dirs = gcc_lib_dir[:]
+            while not found_g2c and dirs:
+                for d in dirs:
+                    for g2c in ['g2c-pic','g2c']:
+                        f = os.path.join(d,'lib'+g2c+'.a')
+                        if os.path.isfile(f):
+                            found_g2c = 1
+                            if d not in gcc_lib_dir:
+                                gcc_lib_dir.append(d)
+                            break
+                    if found_g2c:
+                        break
+                dirs = [d for d in map(os.path.dirname,dirs) if len(d)>1]
         else:
             g2c = 'g2c'
         if sys.platform == 'win32':
