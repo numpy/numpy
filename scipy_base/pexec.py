@@ -42,7 +42,7 @@ class ParallelExec(threading.Thread):
 
     def shutdown(self):
         """ Shutdown parallel thread."""
-        self.__queue.put((None,None))
+        self.__queue.put((None,None,None))
 
     def run(self):
         """ Called by threading.Thread."""
