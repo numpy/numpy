@@ -256,6 +256,21 @@ def new_compiler (plat=None,
 
 ccompiler.new_compiler = new_compiler
 
+
+_distutils_gen_lib_options = gen_lib_options
+def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
+    r = _distutils_gen_lib_options(compiler, library_dirs,
+                                   runtime_library_dirs, libraries)
+    lib_opts = []
+    for i in r:
+        if type(i) is type([]):
+            lib_opts.extend(i)
+        else:
+            lib_opts.append(i)
+    return lib_opts
+ccompiler.gen_lib_options = gen_lib_options
+
+
 ##Fix distutils.util.split_quoted:
 import re,string
 _wordchars_re = re.compile(r'[^\\\'\"%s ]*' % string.whitespace)

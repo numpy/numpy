@@ -13,8 +13,8 @@ class AbsoftFCompiler(FCompiler):
 
     compiler_type = 'absoft'
     #version_pattern = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
-    version_pattern = r'(f90:.*?Absoft Pro FORTRAN Version (?P<version>[^\s*,]*)'+\
-                      r'|FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp)'
+    version_pattern = r'(f90:.*?Absoft Pro FORTRAN Version|FORTRAN 77 Compiler)'+\
+                      r' (?P<version>[^\s*,]*)(.*?Absoft Corp|)'
 
     # samt5735(8)$ f90 -V -c dummy.f
     # f90: Copyright Absoft Corporation 1994-2002; Absoft Pro FORTRAN Version 8.0
@@ -46,8 +46,13 @@ class AbsoftFCompiler(FCompiler):
 
     def library_dir_option(self, dir):
         if os.name=='nt':
-            return '-link /PATH:"%s"' % (dir)
+            return ['-link','/PATH:"%s"' % (dir)]
         return "-L" + dir
+
+    def library_option(self, lib):
+        if os.name=='nt':
+            return '%s.lib' % (lib)
+        return "-l" + lib
 
     def get_library_dirs(self):
         opt = FCompiler.get_library_dirs(self)
