@@ -13,7 +13,7 @@ import catalog
 restore_path()
 
 add_local_to_path(__name__)
-from compiler_test_utils import *
+from weave_test_utils import *
 restore_path()
 
 

@@ -11,7 +11,7 @@ from scipy_distutils.misc_util import add_local_to_path
 add_grandparent_to_path(__name__)
 import blitz_tools
 from ast_tools import *
-from compiler_test_utils import *
+from weave_test_utils import *
 restore_path()
 
 add_local_to_path(__name__)
