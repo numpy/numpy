@@ -1150,6 +1150,7 @@ class gnu_fortran_compiler(fortran_compiler_base):
 
 
 #http://developer.intel.com/software/products/compilers/f60l/
+#http://developer.intel.com/software/products/compilers/flin/
 class intel_ia32_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Intel' # Intel(R) Corporation 
@@ -1207,7 +1208,10 @@ class intel_ia32_fortran_compiler(fortran_compiler_base):
         return [self.f77_compiler,'-shared']
 
     def build_module_switch(self,module_dirs,temp_dir):
-        res = ' -module '+temp_dir
+        if self.get_version() and self.version >= '7.0':
+            res = ' -module '+temp_dir
+        else:
+            res = ''
         if module_dirs:
             for mod in module_dirs:
                 res = res + ' -I' + mod                
