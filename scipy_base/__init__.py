@@ -37,7 +37,8 @@ index_exp        --  Konrad Hinsen's index_expression class instance which
 Useful functions
 ==================
 select           --  Extension of where to multiple conditions and choices
-unique           --  Pull out unique entries in a sequence
+extract          --  Extract 1d array from flattened array according to mask
+insert           --  Insert 1d array of values into Nd array according to mask
 linspace         --  Evenly spaced samples in linear space
 logspace         --  Evenly spaced samples in logarithmic space
 fix              --  Round x to nearest integer towards zero
@@ -56,9 +57,6 @@ trim_zeros       --  trim the leading and trailing zeros from 1D array.
 
 Shape manipulation
 ===================
-apply_over_axes  --  Apply a function over multiple axes, output is same shape
-apply_along_axis --  Apply a function for 1d arrays repeatedly for Nd array
-expand_dims      --  Return array with NewAxis applied before given axis
 squeeze          --  Return a with length-one dimensions removed.
 atleast_1d       --  Force arrays to be > 1D
 atleast_2d       --  Force arrays to be > 2D
