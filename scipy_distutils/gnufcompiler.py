@@ -151,10 +151,20 @@ class GnuFCompiler(FCompiler):
                 opt.append('-march=pentium2')
             else:
                 march_flag = 0
+            if self.get_version() >= '3.4' and not march_flag:
+                march_flag = 1
+                if cpu.is_Opteron():
+                    opt.append('-march=opteron')
+                elif cpu.is_Athlon64():
+                    opt.append('-march=athlon64')
+                else:
+                    march_flag = 0
             if cpu.has_mmx(): opt.append('-mmmx')      
             if self.get_version() > '3.2.2':
                 if cpu.has_sse2(): opt.append('-msse2')
                 if cpu.has_sse(): opt.append('-msse')
+            if self.get_version() >= '3.4':
+                if cpu.has_sse3(): opt.append('-msse3')
             if cpu.has_3dnow(): opt.append('-m3dnow')
         else:
             march_flag = 0
