@@ -185,7 +185,10 @@ class build_ext (old_build_ext):
         if not f2py_sources:
             return new_sources
 
-        new_sources.append('fortranobject.c')    
+        # a bit of a hack, but I think it'll work.  Just include one of
+        # the fortranobject.c files that was copied into most 
+        d,f = os.path.split(f2py_sources[0])
+        new_sources.append(os.path.join(d,'fortranobject.c'))
 
         f2py_opts = ['--no-wrap-functions', '--no-latex-doc',
                      '--no-makefile','-no-setup']
