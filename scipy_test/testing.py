@@ -133,10 +133,32 @@ class ScipyTest:
             filename = '...'+filename
         return '<module %s from %s>' % (`module.__name__`, `filename`)
 
+    def _get_method_names(self,clsobj,level):
+        names = []
+        for mthname in dir(clsobj):
+            if mthname[:5] not in ['bench','check'] \
+               and mthname[:4] not in ['test']:
+                continue
+            mth = getattr(clsobj, mthname)
+            if type(mth) is not types.MethodType:
+                continue
+            d = mth.im_func.func_defaults
+            if d is not None:
+                mthlevel = d[0]
+            else:
+                mthlevel = 1
+            if level>=mthlevel:
+                names.append(mthname)
+            for base in clsobj.__bases__:
+                for n in self._get_method_names(base,level):
+                    if n not in names:
+                        names.append(n)
+        return names
+
     def _get_module_tests(self,module,level):
         mstr = self._module_str
         d,f = os.path.split(module.__file__)
-        short_module_name = module.__name__.split('.')[-1]
+        short_module_name = os.path.splitext(os.path.basename(f))[0]
         test_dir = os.path.join(d,'tests')
         test_file = os.path.join(test_dir,'test_'+short_module_name+'.py')
 
@@ -159,48 +181,26 @@ class ScipyTest:
         if test_module is None:
             return []
 
-        if not hasattr(test_module,'test_suite_list'):
-            if hasattr(test_module,'test_suite'):
-                # Using old styled test suite
-                try:
-                    total_suite = test_module.test_suite(level)
-                    return total_suite._tests
-                except:
-                    print '   !! FAILURE building tests for ', mstr(module)
-                    print '   ',
-                    output_exception()
-                    return []
-            suite_list = []
-            for name in dir(test_module):
-                obj = getattr(test_module, name)
-
-                if type(obj) is not type(unittest.TestCase) \
-                   or not issubclass(obj, unittest.TestCase) \
-                   or obj.__name__[:5] != 'test_':
-                    continue
-
-                for mthname in dir(obj):
-                    if mthname[:6] not in ['bench_','check_'] \
-                       and mthname[:5] not in ['test_']:
-                        continue
-                    mth = getattr(obj, mthname)
-                    d = mth.im_func.func_defaults
-                    if d is not None:
-                        mthlevel = d[0]
-                    else:
-                        mthlevel = 1
-                    if level>=mthlevel:
-                        suite_list.append((obj,mthname))
-            print '  Found',len(suite_list),'tests for',module.__name__
-            return [unittest.makeSuite(*args) for args in suite_list]
-        try:
-            suite_list = test_module.test_suite_list(level)
-        except:
-            print '   !! FAILURE building tests for ', mstr(module)
-            print '   ',
-            output_exception()
-            return []
-        return [unittest.makeSuite(*args) for args in suite_list]
+        if hasattr(test_module,'test_suite'):
+            # Using old styled test suite
+            try:
+                total_suite = test_module.test_suite(level)
+                return total_suite._tests
+            except:
+                print '   !! FAILURE building tests for ', mstr(module)
+                print '   ',
+                output_exception()
+                return []
+        suite_list = []
+        for name in dir(test_module):
+            obj = getattr(test_module, name)
+            if type(obj) is not type(unittest.TestCase) \
+               or not issubclass(obj, unittest.TestCase) \
+               or obj.__name__[:4] != 'test':
+                continue
+            suite_list.extend(map(obj,self._get_method_names(obj,level)))
+        print '  Found',len(suite_list),'tests for',module.__name__
+        return suite_list
 
     def _touch_ppimported(self, module):
         from scipy_base.ppimport import _ModuleLoader
