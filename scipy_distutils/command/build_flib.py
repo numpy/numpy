@@ -82,8 +82,11 @@ def set_windows_compiler(compiler):
         ('posix', 'unix'),
         ('nt', compiler),
         ('mac', 'mwerks'),
-        
+
         )
+    if compiler=='mingw32':
+        from scipy_distutils.mingw32_support import build_import_library
+        build_import_library()
 
 if os.name == 'nt':
     def run_command(command):
@@ -177,10 +180,14 @@ class build_flib (build_clib):
                   % (self.fcompiler)
         else:
             log.info('using %s Fortran compiler', fc)
+
         if sys.platform=='win32':
-            if fc.vendor in ['Compaq']:
+            #XXX: given fc.vendor, how to decide whether msvc or mingw32
+            #     should be used under win32?
+            if fc.vendor in ['Compaq','Intel']:
                 set_windows_compiler('msvc')
             else:
+                # Is only Gnu compiler used with mingw32??
                 set_windows_compiler('mingw32')
 
         self.fcompiler = fc
@@ -1239,6 +1246,80 @@ class intel_itanium_fortran_compiler(intel_ia32_fortran_compiler):
         intel_ia32_fortran_compiler.__init__(self, fc, f90c, verbose=verbose)
 
 
+class intel_ia32_visual_fortran_compiler(fortran_compiler_base):
+
+    vendor = 'Intel' # Intel(R) Corporation 
+    ver_match = r'Intel\(R\) Fortran Compiler for 32-bit applications, '\
+                'Version (?P<version>[^\s*]*)'
+
+    compile_switch = ' /c '
+    object_switch = ' /Fo '
+    lib_prefix = ''
+    lib_suffix = '.lib'
+    lib_ar = 'lib.exe /OUT:'
+    lib_ranlib = ''
+
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
+
+        if fc is None:
+            fc = 'ifl'
+        if f90c is None:
+            f90c = fc
+
+        self.f77_compiler = fc
+        self.f90_compiler = f90c
+
+        switches = ' /MD '
+
+        import cpuinfo
+        cpu = cpuinfo.cpuinfo()
+        # XXX: are the following switches available under win32??
+        #      Please, fix them!
+        if cpu.has_fdiv_bug():
+            switches = switches + ' -fdiv_check '
+        if cpu.has_f00f_bug():
+            switches = switches + ' -0f_check '
+        self.f77_switches = self.f90_switches = switches
+        self.f77_switches = self.f77_switches + ' -FI -w90 -w95 -cm -c '
+        self.f90_fixed_switch = ' -FI -72 -cm -w '
+
+        self.f77_opt = self.f90_opt = self.get_opt()
+        
+        debug = ' -g ' # usage of -C sometimes causes segfaults
+        self.f77_debug =  self.f90_debug = debug
+
+        self.ver_cmd = self.f77_compiler+' -FI -V -c %s -o %s' %\
+                       self.dummy_fortran_files()
+
+        if self.is_available():
+            from distutils.msvccompiler import MSVCCompiler
+            self.lib_ar = MSVCCompiler().lib + ' /OUT:'
+
+    def build_module_switch(self,module_dirs,temp_dir):
+        if self.get_version() and self.version >= '7.0':
+            res = ' -module '+temp_dir
+        else:
+            res = ''
+        if module_dirs:
+            for mod in module_dirs:
+                res = res + ' -I' + mod                
+        res += ' -I '+temp_dir
+        return res
+
+
+class intel_itanium_visual_fortran_compiler(intel_ia32_visual_fortran_compiler):
+
+    vendor = 'Itanium'
+    ver_match = r'Intel\(R\) Fortran 90 Compiler Itanium\(TM\) Compiler'\
+                ' for the Itanium\(TM\)-based applications,'\
+                ' Version (?P<version>[^\s*]*)'
+
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        if fc is None:
+            fc = 'efl'
+        intel_ia32_visual_fortran_compiler.__init__(self, fc, f90c, verbose=verbose)
+
 class nag_fortran_compiler(fortran_compiler_base):
 
     vendor = 'NAG'
@@ -1440,9 +1521,8 @@ class compaq_visual_fortran_compiler(fortran_compiler_base):
         self.ver_cmd = self.f77_compiler+' /what '
 
         if self.is_available():
-            #XXX: is this really necessary???
-            from distutils.msvccompiler import find_exe
-            self.lib_ar = find_exe("lib.exe", self.version) + ' /OUT:'
+            from distutils.msvccompiler import MSVCCompiler
+            self.lib_ar = MSVCCompiler().lib + ' /OUT:'
 
         switches = ' /nologo /MD /W1 /iface:cref /iface=nomixed_str_len_arg '
         #switches += ' /libs:dll /threads '
@@ -1566,15 +1646,15 @@ def find_fortran_compiler(vendor=None, fc=None, f90c=None, verbose=0):
 
 if sys.platform=='win32':
     all_compilers = [
+        gnu_fortran_compiler,
         pgroup_fortran_compiler,
         absoft_fortran_compiler,
-        intel_ia32_fortran_compiler,
-        intel_itanium_fortran_compiler,
+        intel_ia32_visual_fortran_compiler,
+        intel_itanium_visual_fortran_compiler,
         nag_fortran_compiler,
         compaq_visual_fortran_compiler,
         vast_fortran_compiler,
         f_fortran_compiler,
-        gnu_fortran_compiler,
         ]
 else:
     all_compilers = [
