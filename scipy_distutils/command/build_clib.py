@@ -30,7 +30,6 @@ def get_directories(list_of_sources):
         dir = os.path.split(file)
         if dir[0] != '' and not dir[0] in direcs:
             direcs.append(dir[0])
-
     return direcs
 
 class build_clib(old_build_clib):
@@ -110,12 +109,28 @@ class build_clib(old_build_clib):
         return
 
     def get_source_files(self):
-        if sys.version[:3]>='2.2':
-            filenames = old_build_clib.get_source_files(self)
-        else:
-            for (lib_name, build_info) in self.libraries:
-                filenames.extend(build_info.get('sources',[]))
-        filenames.extend(get_headers(get_directories(filenames)))
+        from build_ext import is_local_src_dir
+        self.check_library_list(self.libraries)
+        filenames = []
+        def visit_func(filenames,dirname,names):
+            if os.path.basename(dirname) in ['CVS','.svn']:
+                names[:] = []
+                return
+            for name in names:
+                fullname = os.path.join(dirname,name)
+                if os.path.isfile(fullname):
+                    filenames.append(fullname)
+        for (lib_name, build_info) in self.libraries:
+            sources = build_info.get('sources',[])
+            sources = filter(lambda s:type(s) is StringType,sources)
+            filenames.extend(sources)
+            filenames.extend(get_headers(get_directories(sources)))
+            depends = build_info.get('depends',[])
+            for d in depends:
+                if is_local_src_dir(d):
+                    os.path.walk(d,visit_func,filenames)
+                elif os.path.isfile(d):
+                    filenames.append(d)
         return filenames
 
     def build_libraries(self, libraries):

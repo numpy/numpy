@@ -281,7 +281,8 @@ class build_ext (old_build_ext):
         self.check_extensions_list(self.extensions)
         filenames = []
         def visit_func(filenames,dirname,names):
-            if os.path.basename(dirname)=='CVS':
+            if os.path.basename(dirname) in ['CVS','.svn']:
+                names[:] = []
                 return
             for name in names:
                 fullname = os.path.join(dirname,name)
