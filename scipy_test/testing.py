@@ -274,7 +274,7 @@ class ScipyTest:
                 total_suite = test_module.test_suite(level)
                 return total_suite._tests
             except:
-                print '   !! FAILURE building tests for ', mstr(module)
+                print '   !! FAILURE building tests for ', mstr(test_module)
                 print '   ',
                 output_exception()
                 return []
