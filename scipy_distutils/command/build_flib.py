@@ -746,7 +746,7 @@ class absoft_fortran_compiler(move_modules_mixin,fortran_compiler_base):
         if module_dirs:
             for mod in module_dirs:
                 res = res + ' -p ' + mod
-            res = res + ' -p ' + temp_dir        
+        res = res + ' -p ' + temp_dir        
         return res
 
     def get_extra_link_args(self):
@@ -803,7 +803,7 @@ class sun_fortran_compiler(fortran_compiler_base):
 
         self.ver_cmd = self.f90_compiler + ' -V'
 
-        self.libraries = ['fsu','sunmath','mvec']
+        self.libraries = ['fsu','sunmath','mvec','f77compat']
 
         return
 
