@@ -33,7 +33,7 @@ except:
 try: 
     # this is currently safe because it doesn't import wxPython.
     import wx_spec
-    default.append(wx_spec.wx_converter())
+    default.insert(0,wx_spec.wx_converter())
 except: 
     pass    
 
