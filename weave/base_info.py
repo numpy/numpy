@@ -94,9 +94,9 @@ class custom_info(base_info):
         self._define_macros.append(define_macro)
     def add_undefine_macro(self,undefine_macro):
         self._undefine_macros.append(undefine_macro)    
-    def add_extra_compile_args(self,compile_arg):
+    def add_extra_compile_arg(self,compile_arg):
         return self._extra_compile_args.append(compile_arg)
-    def add_extra_link_args(self,link_arg):
+    def add_extra_link_arg(self,link_arg):
         return self._extra_link_args.append(link_arg)        
 
 class info_list(UserList.UserList):
