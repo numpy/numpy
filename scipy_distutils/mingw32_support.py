@@ -37,9 +37,10 @@ if sys.platform == 'win32':
         """ Build the import libraries for Mingw32-gcc on Windows
         """
         # lib2def lives in weave
-        sys.path.append(os.path.join('.','weave'))
-
+        sys.path.insert(0,os.path.join('.','weave'))
         import lib2def
+        del sys.path[0]
+
         #libfile, deffile = parse_cmd()
         #if deffile is None:
         #    deffile = sys.stdout
@@ -88,7 +89,7 @@ if sys.platform == 'win32':
         set_windows_compiler('msvc')
     
     def use_gcc(): 
-        set_windows_compiler('mingw32')   
+        set_windows_compiler('mingw32')
     
     standard_compiler_list = build_flib.all_compilers[:]
     def use_g77():
@@ -103,5 +104,3 @@ if sys.platform == 'win32':
     use_g77()
     if not import_library_exists():
         build_import_library()
-
-    
