@@ -240,7 +240,7 @@ def default_config_dict(name = None, parent_name = None):
     if full_name:
         # XXX: The following assumes that default_config_dict is called
         #      only from setup_<name>.configuration().
-        frame = sys._getframe(1)
+        frame = get_frame(1)
         caller_name = eval('__name__',frame.f_globals,frame.f_locals)
         local_path = get_path(caller_name)
         if name and parent_name is None:
@@ -263,6 +263,14 @@ def default_config_dict(name = None, parent_name = None):
                     break
     return d
 
+def get_frame(level=0):
+    try:
+        return sys._getframe(level+1)
+    except AttributeError:
+        frame = sys.exc_info()[2].tb_frame
+        for i in range(level+1):
+            frame = frame.f_back
+        return frame
 def merge_config_dicts(config_list):
     result = default_config_dict()
     for d in config_list:
