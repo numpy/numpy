@@ -7,6 +7,14 @@ __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'vsplit','dsplit','squeeze','apply_over_axes','expand_dims',
            'apply_along_axis']
 
+def put(a,ind,v):
+    # Cannot use Numeric.put because of Issue 202.
+    j = 0
+    for i in ind:
+        a.flat[i] = v[j]
+        j += 1
+    return
+
 def apply_along_axis(func1d,axis,arr,*args):
     """ Execute func1d(arr[i],*args) where func1d takes 1-D arrays
         and arr is an N-d array.  i varies so as to apply the function
