@@ -5,6 +5,7 @@ information about various resources (libraries, library directories,
 include directories, etc.) in the system. Currently, the following
 classes are available:
   atlas_info
+  atlas_threads_info
   blas_info
   lapack_info
   fftw_info,dfftw_info,sfftw_info
@@ -113,6 +114,7 @@ so_ext = get_config_vars('SO')[0] or ''
 
 def get_info(name):
     cl = {'atlas':atlas_info,
+          'atlas_threads':atlas_threads_info,
           'x11':x11_info,
           'fftw':fftw_info,
           'dfftw':dfftw_info,
@@ -434,6 +436,7 @@ class djbfft_info(system_info):
 class atlas_info(system_info):
     section = 'atlas'
     dir_env_var = 'ATLAS'
+    _lib_names = ['f77blas','cblas']
 
     def get_paths(self, section, key):
         pre_dirs = system_info.get_paths(self, section, key)
@@ -447,7 +450,7 @@ class atlas_info(system_info):
         lib_dirs = self.get_lib_dirs()
         info = {}
         atlas_libs = self.get_libs('atlas_libs',
-                                   ['f77blas', 'cblas', 'atlas'])
+                                   self._lib_names + ['atlas'])
         lapack_libs = self.get_libs('lapack_libs',['lapack'])
         atlas = None
         lapack = None
@@ -508,6 +511,9 @@ class atlas_info(system_info):
 """ % (lapack_lib,sz/1024)
                 warnings.warn(message)
         self.set_info(**info)
+
+class atlas_threads_info(atlas_info):
+    _lib_names = ['ptf77blas','ptcblas']
 
 class lapack_info(system_info):
     section = 'lapack'
