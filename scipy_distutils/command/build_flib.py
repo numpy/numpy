@@ -48,6 +48,7 @@ Fortran compilers (as to be used with --fcompiler= option):
       VAST
       F       [unsupported]
       Lahey
+      PG
 """
 
 import distutils
@@ -95,7 +96,7 @@ else:
     run_command = commands.getstatusoutput
 
 fcompiler_vendors = r'Absoft|Forte|Sun|SGI|Intel|Itanium|NAG|Compaq|Gnu|VAST'\
-                    r'|Lahey|F'
+                    r'|Lahey|PG|F'
 
 def show_compilers():
     for compiler_class in all_compilers:
@@ -458,13 +459,16 @@ class fortran_compiler_base(CCompiler):
         return file_pairs
  
     def f_compile(self,compiler,switches, source_files,
-                  module_dirs=None, temp_dir=''):
+                  module_dirs=None, temp_dir='', ignore_modules = 0):
         
         pp_opts = gen_preprocess_options(self.macros,self.include_dirs)
 
         switches = switches + ' ' + string.join(pp_opts,' ')
 
-        module_switch = self.build_module_switch(module_dirs,temp_dir)
+        if ignore_modules:
+            module_switch = ''
+        else:
+            module_switch = self.build_module_switch(module_dirs,temp_dir)
         file_pairs = self.source_and_object_pairs(source_files,temp_dir)
         object_files = []
         for source,object in file_pairs:
@@ -501,7 +505,8 @@ class fortran_compiler_base(CCompiler):
     def f77_compile(self,source_files,module_dirs=None, temp_dir=''):
         switches = string.join((self.f77_switches, self.f77_opt))
         return self.f_compile(self.f77_compiler,switches,
-                              source_files, module_dirs, temp_dir)
+                              source_files, module_dirs, temp_dir,
+                              ignore_modules = 1)
 
     def find_existing_modules(self):
         # added to handle lack of -moddir flag in absoft
@@ -1494,6 +1499,56 @@ class lahey_fortran_compiler(fortran_compiler_base):
     def get_linker_so(self):
         return [self.f77_compiler ,'--shared']
 
+# http://www.pgroup.com
+class pgroup_fortran_compiler(fortran_compiler_base):
+
+    vendor = 'PG' # The Portland Group, Inc 
+    ver_match = r'\s*pg(f77|f90|hpf) (?P<version>[\d.-]+).*'
+
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
+
+        if fc is None:
+            fc = 'pgf77'
+        if f90c is None:
+            f90c = 'pgf90'
+
+        self.f77_compiler = fc
+        self.f90_compiler = f90c
+
+        switches = ' -fpic' # linux only
+        switches = switches + ' -Minform=inform -Mnosecond_underscore' 
+
+        self.f77_switches = self.f90_switches = switches
+        self.f90_fixed_switch = ' -Mfixed'
+
+        self.f77_opt = self.f90_opt = self.get_opt()
+        
+        debug = ' -g '
+        self.f77_debug =  self.f90_debug = debug
+
+        if os.name=='posix':
+            self.ver_cmd = self.f77_compiler+' -V 2>/dev/null '
+        else:
+            self.ver_cmd = self.f90_compiler+' -V '
+
+    def get_opt(self):
+        return ' -fast '
+
+    def get_linker_so(self):
+        return [self.f90_compiler,
+                '-shared', # linux only
+                ]
+
+    def build_module_switch(self,module_dirs,temp_dir):
+        res = ' -module '+temp_dir
+        if module_dirs:
+            for mod in module_dirs:
+                res = res + ' -I' + mod                
+        res += ' -I '+temp_dir
+        return res
+
+
 ##############################################################################
 
 def find_fortran_compiler(vendor=None, fc=None, f90c=None, verbose=0):
@@ -1508,6 +1563,7 @@ def find_fortran_compiler(vendor=None, fc=None, f90c=None, verbose=0):
 
 if sys.platform=='win32':
     all_compilers = [
+        pgroup_fortran_compiler,
         absoft_fortran_compiler,
         intel_ia32_fortran_compiler,
         intel_itanium_fortran_compiler,
@@ -1519,6 +1575,7 @@ if sys.platform=='win32':
         ]
 else:
     all_compilers = [
+        pgroup_fortran_compiler,
         absoft_fortran_compiler,
         mips_fortran_compiler,
         forte_fortran_compiler,
