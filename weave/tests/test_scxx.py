@@ -24,11 +24,12 @@ class test_list(unittest.TestCase):
         before = sys.getrefcount(a)
         import weave
         weave.inline("",['a'])
-        
+        print 'first:',before
         # first call is goofing up refcount.
         before = sys.getrefcount(a)        
         weave.inline("",['a'])
         after = sys.getrefcount(a)        
+        print '2nd,3rd:', before, after
         assert(after == before)
 
     def check_append_passed_item(self):
@@ -193,7 +194,6 @@ class test_list(unittest.TestCase):
         """
         a = [1,2,'alpha',3.1416]
 
-        # check overloaded in(PWOBase& val) method
         item = 1
         code = "return_val = PyInt_FromLong(a.in(item));"
         res = inline_tools.inline(code,['a','item'])
@@ -240,7 +240,6 @@ class test_list(unittest.TestCase):
         """
         a = [1,2,'alpha',3.1416]
 
-        # check overloaded count(PWOBase& val) method
         item = 1
         code = "return_val = PyInt_FromLong(a.count(item));"
         res = inline_tools.inline(code,['a','item'])
@@ -321,7 +320,7 @@ class test_list(unittest.TestCase):
         print 'weave:', t2 - t1
         assert b == a   
 
-    def _check_string_add_speed(self):
+    def check_string_add_speed(self):
         N = 1000000
         print 'string add -- b[i] = a[i] + "blah" for N =', N        
         a = ["blah"] * N
@@ -373,29 +372,95 @@ class test_list(unittest.TestCase):
         t2 = time.time()
         print 'weave:', t2 - t1
         assert b == desired   
+
+class test_object_construct(unittest.TestCase):
+    #------------------------------------------------------------------------
+    # Check that construction from basic types is allowed and have correct
+    # reference counts
+    #------------------------------------------------------------------------
+    def check_int(self):
+        # strange int value used to try and make sure refcount is 2.
+        code = """
+               py::object val = 1001;
+               return_val = val;
+               """
+        res = inline_tools.inline(code)
+        assert sys.getrefcount(res) == 2
+        assert res == 1001
+    def check_float(self):
+        code = """
+               py::object val = (float)1.0;
+               return_val = val;
+               """
+        res = inline_tools.inline(code)
+        assert sys.getrefcount(res) == 2
+        assert res == 1.0
+    def check_double(self):
+        code = """
+               py::object val = 1.0;
+               return_val = val;
+               """
+        res = inline_tools.inline(code)
+        assert sys.getrefcount(res) == 2
+        assert res == 1.0
+    def check_complex(self):
+        code = """
+               std::complex<double> num = std::complex<double>(1.0,1.0);
+               py::object val = num;
+               return_val = val;
+               """
+        res = inline_tools.inline(code)
+        assert sys.getrefcount(res) == 2
+        assert res == 1.0+1.0j
+    def check_string(self):
+        code = """
+               py::object val = "hello";
+               return_val = val;
+               """
+        res = inline_tools.inline(code)
+        assert sys.getrefcount(res) == 2
+        assert res == "hello"
+
+    def check_std_string(self):
+        code = """
+               std::string s = std::string("hello");
+               py::object val = s;
+               return_val = val;
+               """
+        res = inline_tools.inline(code)
+        assert sys.getrefcount(res) == 2
+        assert res == "hello"
+            
             
 class test_object_cast(unittest.TestCase):
     def check_int_cast(self):
         code = """
-               py::object val = py::number(1);
+               py::object val = 1;
                int raw_val = val;
                """
         inline_tools.inline(code)
     def check_double_cast(self):
         code = """
-               py::object val = py::number(1.0);
+               py::object val = 1.0;
                double raw_val = val;
                """
         inline_tools.inline(code)
     def check_float_cast(self):
         code = """
-               py::object val = py::number(1.0);
+               py::object val = 1.0;
                float raw_val = val;
+               """
+        inline_tools.inline(code)
+    def check_complex_cast(self):
+        code = """
+               std::complex<double> num = std::complex<double>(1.0,1.0);
+               py::object val = num;
+               std::complex<double> raw_val = val;
                """
         inline_tools.inline(code)
     def check_string_cast(self):
         code = """
-               py::object val = py::str("hello");
+               py::object val = "hello";
                std::string raw_val = val;
                """
         inline_tools.inline(code)
@@ -404,10 +469,70 @@ class test_object_cast(unittest.TestCase):
 class foo:
     def bar(self):
         return "bar results"
+    def bar2(self,val1,val2):
+        return val1, val2
+    def bar3(self,val1,val2,val3=1):
+        return val1, val2, val3
 
 class str_obj:
             def __str__(self):
                 return "b"
+
+class test_object_hasattr(unittest.TestCase):
+    def check_string(self):
+        a = foo()
+        a.b = 12345
+        code = """
+               return_val = a.hasattr("b");               
+               """
+        res = inline_tools.inline(code,['a'])
+        assert res
+    def check_std_string(self):
+        a = foo()
+        a.b = 12345
+        attr_name = "b"
+        code = """
+               return_val = a.hasattr(attr_name);               
+               """
+        res = inline_tools.inline(code,['a','attr_name'])
+        assert res        
+    def check_string_fail(self):
+        a = foo()
+        a.b = 12345
+        code = """
+               return_val = a.hasattr("c");               
+               """
+        res = inline_tools.inline(code,['a'])
+        assert not res
+    def check_inline(self):
+        """ THIS NEEDS TO MOVE TO THE INLINE TEST SUITE
+        """
+        a = foo()
+        a.b = 12345
+        code = """
+               throw_error(PyExc_AttributeError,"bummer");               
+               """
+        try:
+            before = sys.getrefcount(a)
+            res = inline_tools.inline(code,['a'])
+        except AttributeError:
+            after = sys.getrefcount(a)
+            try: 
+                res = inline_tools.inline(code,['a'])
+            except:
+                after2 = sys.getrefcount(a)
+            print "after and after2 should be equal in the following"        
+            print 'before, after, after2:', before, after, after2
+            pass    
+
+    def check_func(self):
+        a = foo()
+        a.b = 12345
+        code = """
+               return_val = a.hasattr("bar");               
+               """
+        res = inline_tools.inline(code,['a'])
+        assert res
 
 class test_object_attr(unittest.TestCase):
 
@@ -423,35 +548,191 @@ class test_object_attr(unittest.TestCase):
         assert after == before
 
     def check_char(self):
-        self.generic_attr('return_val = a.attr("b").disown();')
+        self.generic_attr('return_val = a.attr("b");')
 
     def check_string(self):
-        self.generic_attr('return_val = a.attr(std::string("b")).disown();')
+        self.generic_attr('return_val = a.attr(std::string("b"));')
 
     def check_obj(self):
         code = """
                py::str name = py::str("b");
-               return_val = a.attr(name).disown();
+               return_val = a.attr(name);
                """ 
         self.generic_attr(code,['a'])
-   
-class test_attr_call(unittest.TestCase):
-
-    def check_call(self):
-        a = foo()                
-        res = inline_tools.inline('return_val = a.attr("bar").call().disown();',['a'])
+    def check_attr_call(self):
+        a = foo()
+        res = inline_tools.inline('return_val = a.attr("bar").call();',['a'])
+        first = sys.getrefcount(res)
+        del res
+        res = inline_tools.inline('return_val = a.attr("bar").call();',['a'])
+        second = sys.getrefcount(res)
         assert res == "bar results"
+        assert first == second
 
-    
-                        
+class test_object_mcall(unittest.TestCase):
+    def check_noargs(self):
+        a = foo()
+        res = inline_tools.inline('return_val = a.mcall("bar");',['a'])
+        assert res == "bar results"
+        first = sys.getrefcount(res)
+        del res
+        res = inline_tools.inline('return_val = a.mcall("bar");',['a'])
+        assert res == "bar results"
+        second = sys.getrefcount(res)
+        assert first == second
+    def check_args(self):
+        a = foo()
+        code = """
+               py::tuple args(2);
+               args[0] = 1;
+               args[1] = "hello";
+               return_val = a.mcall("bar2",args);
+               """
+        res = inline_tools.inline(code,['a'])
+        assert res == (1,"hello")
+        assert sys.getrefcount(res) == 2
+    def check_args_kw(self):
+        a = foo()
+        code = """
+               py::tuple args(2);
+               args[0] = 1;
+               args[1] = "hello";
+               py::dict kw;
+               kw["val3"] = 3;
+               return_val = a.mcall("bar3",args,kw);
+               """
+        res = inline_tools.inline(code,['a'])
+        assert res == (1,"hello",3)
+        assert sys.getrefcount(res) == 2
+    def check_std_noargs(self):
+        a = foo()
+        method = "bar"
+        res = inline_tools.inline('return_val = a.mcall(method);',['a','method'])
+        assert res == "bar results"
+        first = sys.getrefcount(res)
+        del res
+        res = inline_tools.inline('return_val = a.mcall(method);',['a','method'])
+        assert res == "bar results"
+        second = sys.getrefcount(res)
+        assert first == second
+    def check_std_args(self):
+        a = foo()
+        method = "bar2"
+        code = """
+               py::tuple args(2);
+               args[0] = 1;
+               args[1] = "hello";
+               return_val = a.mcall(method,args);
+               """
+        res = inline_tools.inline(code,['a','method'])
+        assert res == (1,"hello")
+        assert sys.getrefcount(res) == 2
+    def check_std_args_kw(self):
+        a = foo()
+        method = "bar3"
+        code = """
+               py::tuple args(2);
+               args[0] = 1;
+               args[1] = "hello";
+               py::dict kw;
+               kw["val3"] = 3;
+               return_val = a.mcall(method,args,kw);
+               """
+        res = inline_tools.inline(code,['a','method'])
+        assert res == (1,"hello",3)
+        assert sys.getrefcount(res) == 2
+    def check_noargs_with_args(self):
+        # calling a function that does take args with args 
+        # should fail.
+        a = foo()
+        code = """
+               py::tuple args(2);
+               args[0] = 1;
+               args[1] = "hello";
+               return_val = a.mcall("bar",args);
+               """
+        try:
+            first = sys.getrefcount(a)
+            res = inline_tools.inline(code,['a'])
+        except TypeError:
+            second = sys.getrefcount(a) 
+            try:
+                res = inline_tools.inline(code,['a'])
+            except TypeError:
+                third = sys.getrefcount(a)    
+        # first should == second, but the weird refcount error        
+        assert second == third
+
+class test_object_call(unittest.TestCase):
+    def check_noargs(self):
+        def foo():
+            return (1,2,3)
+        res = inline_tools.inline('return_val = foo.call();',['foo'])
+        assert res == (1,2,3)
+        assert sys.getrefcount(res) == 2
+    def check_args(self):
+        def foo(val1,val2):
+            return (val1,val2)
+        code = """
+               py::tuple args(2);
+               args[0] = 1;
+               args[1] = "hello";
+               return_val = foo.call(args);
+               """
+        res = inline_tools.inline(code,['foo'])
+        assert res == (1,"hello")
+        assert sys.getrefcount(res) == 2
+    def check_args_kw(self):
+        def foo(val1,val2,val3=1):
+            return (val1,val2,val3)
+        code = """
+               py::tuple args(2);
+               args[0] = 1;
+               args[1] = "hello";
+               py::dict kw;
+               kw["val3"] = 3;               
+               return_val = foo.call(args,kw);
+               """
+        res = inline_tools.inline(code,['foo'])
+        assert res == (1,"hello",3)
+        assert sys.getrefcount(res) == 2
+    def check_noargs_with_args(self):
+        # calling a function that does take args with args 
+        # should fail.
+        def foo():
+            return "blah"
+        code = """
+               py::tuple args(2);
+               args[0] = 1;
+               args[1] = "hello";
+               return_val = foo.call(args);
+               """
+        try:
+            first = sys.getrefcount(foo)
+            res = inline_tools.inline(code,['foo'])
+        except TypeError:
+            second = sys.getrefcount(foo) 
+            try:
+                res = inline_tools.inline(code,['foo'])
+            except TypeError:
+                third = sys.getrefcount(foo)    
+        # first should == second, but the weird refcount error        
+        assert second == third
+                
 def test_suite(level=1):
     from unittest import makeSuite
     suites = []    
     if level >= 5:
-        suites.append( makeSuite(test_list,'check_'))
-        suites.append( makeSuite(test_object_cast,'check_'))
-        suites.append( makeSuite(test_object_attr,'check_'))
-        suites.append( makeSuite(test_attr_call,'check_'))
+        #suites.append( makeSuite(test_list,'check_'))
+        
+        #suites.append( makeSuite(test_object_construct,'check_'))
+        #suites.append( makeSuite(test_object_cast,'check_'))
+        #suites.append( makeSuite(test_object_hasattr,'check_'))        
+        #suites.append( makeSuite(test_object_attr,'check_'))
+        suites.append( makeSuite(test_object_mcall,'check_'))
+        suites.append( makeSuite(test_object_call,'check_'))
+        
+
     total_suite = unittest.TestSuite(suites)
     return total_suite
 

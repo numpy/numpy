@@ -242,7 +242,6 @@ class test_file_converter(unittest.TestCase):
                char* _file_name = (char*) file_name.c_str();
                FILE* file = fopen(_file_name,"w");
                return_val = file_to_py(file,_file_name,"w");
-               Py_XINCREF(return_val);
                """
         file = inline_tools.inline(code,['file_name'], compiler=self.compiler,
                                    force=1)
@@ -275,7 +274,7 @@ class test_callable_converter(unittest.TestCase):
                py::tuple args(2);
                args[0] = search_str;
                args[1] = sub_str;
-               return_val = func.call(args).disown();
+               return_val = func.call(args);
                """
         actual = inline_tools.inline(code,['func','search_str','sub_str'],
                                      compiler=self.compiler,force=1)
@@ -393,7 +392,7 @@ class test_list_converter(unittest.TestCase):
         code = """
                a=py::list();
                a.append("hello");
-               return_val = a.disown();
+               return_val = a;
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
@@ -507,7 +506,7 @@ class test_tuple_converter(unittest.TestCase):
                a=py::tuple(2);
                a[0] = "hello";
                a.set_item(1,py::None);
-               return_val = a.disown();
+               return_val = a;
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
@@ -558,7 +557,7 @@ class test_dict_converter(unittest.TestCase):
         code = """
                a=py::dict();
                a["hello"] = 5;
-               return_val = a.disown();
+               return_val = a;
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)

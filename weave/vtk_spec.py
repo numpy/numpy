@@ -73,6 +73,7 @@ class vtk_converter(common_base_converter):
         # the class level.
         self.type_name = self.class_name
         self.c_type = self.class_name + "*"
+        self.return_type = self.c_type        
         self.to_c_return = None # not used
         self.check_func = None # not used
         hdr = self.class_name + ".h"

@@ -120,6 +120,7 @@ class array_converter(common_base_converter):
         self.type_name = 'numpy'
         self.check_func = 'PyArray_Check'    
         self.c_type = 'PyArrayObject*'
+        self.return_type = 'PyArrayObject*'
         self.to_c_return = '(PyArrayObject*) py_obj'
         self.matching_types = [ArrayType]
         self.headers = ['"Numeric/arrayobject.h"','<complex>','<math.h>']

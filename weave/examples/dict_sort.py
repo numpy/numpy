@@ -21,20 +21,21 @@ def c_sort(adict):
     assert(type(adict) == type({}))
     code = """
            #line 21 "dict_sort.py"     
-           PWOList keys = adict.keys();
+           py::list keys = adict.keys();
            PyObject* py_keys = (PyObject*)keys;
-           PWOList items(keys.len());
+           py::list items(keys.len());
            PyObject* py_items = (PyObject*)items;
            keys.sort(); // surely this isn't any slower than raw API calls
            PyObject* item = NULL;
-           for(int i = 0; i < keys.len();i++)
+           int N = keys.len();
+           for(int i = 0; i < N;i++)
            {
               item = PyList_GET_ITEM(py_keys,i);
               item = PyDict_GetItem(py_adict,item);
               Py_XINCREF(item);
               PyList_SetItem(py_items,i,item);              
            }           
-           return_val = items.disOwn();
+           return_val = items;
            """   
     return inline_tools.inline(code,['adict'],verbose=1)
 
@@ -46,9 +47,10 @@ def c_sort2(adict):
            PWOList items(keys.len());
            keys.sort(); // surely this isn't any slower than raw API calls
            PyObject* item = NULL;
-           for(int i = 0; i < keys.len();i++)
+           int N = keys.length();
+           for(int i = 0; i < N;i++)
               items[i] = adict[keys[i]];
-           return_val = items.disOwn();
+           return_val = items;
            """   
     return inline_tools.inline(code,['adict'],verbose=1)
 

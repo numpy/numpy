@@ -29,7 +29,7 @@ class inline_ext_function(ext_tools.ext_function):
 
             This code got a lot uglier when I added local_dict...
         """
-        declare_return = 'PyObject *return_val = NULL;\n'    \
+        declare_return = 'py::object return_val;\n'    \
                          'int exception_occured = 0;\n'    \
                          'PyObject *py__locals = NULL;\n' \
                          'PyObject *py__globals = NULL;\n'
@@ -96,19 +96,18 @@ class inline_ext_function(ext_tools.ext_function):
                       '    /*I would like to fill in changed    '   \
                               'locals and globals here...*/   \n'   \
                       '\n}                                       \n'
-        catch_code =  "catch(...)                       \n"   \
-                      "{                                \n" + \
-                      "    return_val =  NULL;    \n"   \
-                      "    exception_occured = 1;       \n"   \
-                      "}                                \n"   
+        catch_code =  "catch(...)                        \n"   \
+                      "{                                 \n" + \
+                      "    return_val =  py::object();   \n"   \
+                      "    exception_occured = 1;        \n"   \
+                      "}                                 \n"   
         return_code = "    /* cleanup code */                   \n" + \
                            cleanup_code                             + \
-                      "    if(!return_val && !exception_occured)\n"   \
+                      "    if(!(PyObject*)return_val && !exception_occured)\n"   \
                       "    {\n                                  \n"   \
-                      "        Py_INCREF(Py_None);              \n"   \
                       "        return_val = Py_None;            \n"   \
                       "    }\n                                  \n"   \
-                      "    return return_val;           \n"           \
+                      "    return return_val.disown();          \n"           \
                       "}                                \n"
 
         all_code = self.function_declaration_code()         + \

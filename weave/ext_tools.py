@@ -41,7 +41,7 @@ class ext_function_from_specs:
         """
         join = string.join
 
-        declare_return = 'PyObject *return_val = NULL;\n' \
+        declare_return = 'py::object return_val;\n' \
                          'int exception_occured = 0;\n' \
                          'PyObject *py_local_dict = NULL;\n'
         arg_string_list = self.arg_specs.variable_as_strings() + ['"local_dict"']
@@ -128,18 +128,17 @@ class ext_function_from_specs:
                       "\n}                                \n"
         catch_code =  "catch(...)                       \n"   \
                       "{                                \n" + \
-                      "    return_val =  NULL;          \n"   \
+                      "    return_val =  py::object();      \n"   \
                       "    exception_occured = 1;       \n"   \
                       "}                                \n"
 
         return_code = "    /*cleanup code*/                     \n" + \
                            cleanup_code                             + \
-                      '    if(!return_val && !exception_occured)\n'   \
+                      '    if(!(PyObject*)return_val && !exception_occured)\n'   \
                       '    {\n                                  \n'   \
-                      '        Py_INCREF(Py_None);              \n'   \
                       '        return_val = Py_None;            \n'   \
                       '    }\n                                  \n'   \
-                      '    return return_val;           \n'           \
+                      '    return return_val.disown();           \n'           \
                       '}                                \n'
 
         all_code = self.function_declaration_code()         + \

@@ -52,7 +52,7 @@ def Ramp_list1(result, start, end):
            const int size = result.len();
            const double step = (end-start)/(size-1);
            for (int i = 0; i < size; i++) 
-               result[i] = PWONumber(start + step*i);
+               result[i] = start + step*i;
            """
     weave.inline(code, ["result","start", "end"], verbose=2)
 

@@ -87,7 +87,7 @@ class test_ext_module(unittest.TestCase):
                py::tuple returned(2);
                returned[0] = a;
                returned[1] = b;
-               return_val = returned.disown();
+               return_val = returned;
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)

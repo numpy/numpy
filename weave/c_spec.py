@@ -18,7 +18,7 @@ py_to_c_template = \
 class %(type_name)s_handler
 {
 public:    
-    %(c_type)s convert_to_%(type_name)s(PyObject* py_obj, const char* name)
+    %(return_type)s convert_to_%(type_name)s(PyObject* py_obj, const char* name)
     {
         // Incref occurs even if conversion fails so that
         // the decref in cleanup_code has a matching incref.
@@ -28,7 +28,7 @@ public:
         return %(to_c_return)s;
     }
     
-    %(c_type)s py_to_%(type_name)s(PyObject* py_obj, const char* name)
+    %(return_type)s py_to_%(type_name)s(PyObject* py_obj, const char* name)
     {
         // !! Pretty sure INCREF should only be called on success since
         // !! py_to_xxx is used by the user -- not the code generator.
@@ -81,6 +81,7 @@ class common_base_converter(base_converter):
         self.use_ref_count = 1
         self.name = "no_name"
         self.c_type = 'PyObject*'
+        self.return_type = 'PyObject*'
         self.to_c_return = 'py_obj'
     
     def info_object(self):
@@ -128,6 +129,7 @@ class common_base_converter(base_converter):
         d['type_name'] = self.type_name
         d['check_func'] = self.check_func
         d['c_type'] = self.c_type
+        d['return_type'] = self.return_type
         d['to_c_return'] = self.to_c_return
         d['name'] = self.name
         d['py_var'] = self.py_variable()
@@ -193,6 +195,7 @@ class string_converter(common_base_converter):
         self.type_name = 'string'
         self.check_func = 'PyString_Check'    
         self.c_type = 'std::string'
+        self.return_type = 'std::string'
         self.to_c_return = "std::string(PyString_AsString(py_obj))"
         self.matching_types = [StringType]
         self.headers.append('<string>')
@@ -218,6 +221,7 @@ class unicode_converter(common_base_converter):
         #self.c_type = 'std::wstring'
         #self.to_c_return = "std::wstring(PyUnicode_AS_UNICODE(py_obj))"
         self.c_type = 'Py_UNICODE*'
+        self.return_type = self.c_type
         self.to_c_return = "PyUnicode_AS_UNICODE(py_obj)"
         self.matching_types = [UnicodeType]
         #self.headers.append('<string>')
@@ -230,6 +234,7 @@ class file_converter(common_base_converter):
         self.type_name = 'file'
         self.check_func = 'PyFile_Check'    
         self.c_type = 'FILE*'
+        self.return_type = self.c_type
         self.to_c_return = "PyFile_AsFile(py_obj)"
         self.headers = ['<stdio.h>']
         self.matching_types = [FileType]
@@ -295,6 +300,7 @@ class int_converter(scalar_converter):
         self.type_name = 'int'
         self.check_func = 'PyInt_Check'    
         self.c_type = 'int'
+        self.return_type = 'int'
         self.to_c_return = "(int) PyInt_AsLong(py_obj)"
         self.matching_types = [IntType]
 
@@ -305,6 +311,7 @@ class long_converter(scalar_converter):
         self.type_name = 'long'
         self.check_func = 'PyLong_Check'    
         self.c_type = 'int'
+        self.return_type = 'int'
         self.to_c_return = "(int) PyLong_AsLong(py_obj)"
         self.matching_types = [LongType]
 
@@ -315,6 +322,7 @@ class float_converter(scalar_converter):
         self.type_name = 'float'
         self.check_func = 'PyFloat_Check'    
         self.c_type = 'double'
+        self.return_type = 'double'
         self.to_c_return = "PyFloat_AsDouble(py_obj)"
         self.matching_types = [FloatType]
 
@@ -324,6 +332,7 @@ class complex_converter(scalar_converter):
         self.type_name = 'complex'
         self.check_func = 'PyComplex_Check'    
         self.c_type = 'std::complex<double>'
+        self.return_type = 'std::complex<double>'
         self.to_c_return = "std::complex<double>(PyComplex_RealAsDouble(py_obj),"\
                                                 "PyComplex_ImagAsDouble(py_obj))"
         self.matching_types = [ComplexType]
@@ -353,6 +362,7 @@ class list_converter(scxx_converter):
         self.type_name = 'list'
         self.check_func = 'PyList_Check'    
         self.c_type = 'py::list'
+        self.return_type = 'py::list'
         self.to_c_return = 'py::list(py_obj)'
         self.matching_types = [ListType]
         # ref counting handled by py::list
@@ -364,6 +374,7 @@ class tuple_converter(scxx_converter):
         self.type_name = 'tuple'
         self.check_func = 'PyTuple_Check'    
         self.c_type = 'py::tuple'
+        self.return_type = 'py::tuple'
         self.to_c_return = 'py::tuple(py_obj)'
         self.matching_types = [TupleType]
         # ref counting handled by py::tuple
@@ -375,6 +386,7 @@ class dict_converter(scxx_converter):
         self.type_name = 'dict'
         self.check_func = 'PyDict_Check'    
         self.c_type = 'py::dict'
+        self.return_type = 'py::dict'
         self.to_c_return = 'py::dict(py_obj)'
         self.matching_types = [DictType]
         # ref counting handled by py::dict
@@ -389,6 +401,7 @@ class instance_converter(scxx_converter):
         self.type_name = 'instance'
         self.check_func = 'PyInstance_Check'    
         self.c_type = 'py::object'
+        self.return_type = 'py::object'
         self.to_c_return = 'py::object(py_obj)'
         self.matching_types = [InstanceType]
         # ref counting handled by py::object
@@ -405,6 +418,7 @@ class catchall_converter(scxx_converter):
         self.type_name = 'catchall'
         self.check_func = ''    
         self.c_type = 'py::object'
+        self.return_type = 'py::object'
         self.to_c_return = 'py::object(py_obj)'
         # ref counting handled by py::object
         self.use_ref_count = 0

@@ -8,10 +8,10 @@ def multi_return():
 def c_multi_return():
 
     code =  """
- 	        PWOTuple results(2);
- 	        results.setItem(0, PWONumber(1));
- 	        results.setItem(1, PWOString("2nd"));
- 	        return_val = results.disOwn(); 	        
+ 	        py::tuple results(2);
+ 	        results[0] = 1;
+ 	        results[1] = "2nd";
+ 	        return_val = results; 	        
             """
     return inline_tools.inline(code,[])
 

@@ -31,7 +31,7 @@ object object::mcall(const char* nm)
   PyObject* result = PyEval_CallObjectWithKeywords(method,NULL,NULL);
   if (!result)
     throw 1; // signal exception has occured.
-  return object(result);
+  return object(LoseRef(result));
 }
 
 object object::mcall(const char* nm, tuple& args)
@@ -40,7 +40,7 @@ object object::mcall(const char* nm, tuple& args)
   PyObject* result = PyEval_CallObjectWithKeywords(method,args,NULL);
   if (!result)
     throw 1; // signal exception has occured.
-  return object(result);
+  return object(LoseRef(result));
 }
 
 object object::mcall(const char* nm, tuple& args, dict& kwargs)
@@ -49,26 +49,26 @@ object object::mcall(const char* nm, tuple& args, dict& kwargs)
   PyObject* result = PyEval_CallObjectWithKeywords(method,args,kwargs);
   if (!result)
     throw 1; // signal exception has occured.
-  return object(result);
+  return object(LoseRef(result));
 }
 
 object object::call() const {
   PyObject *rslt = PyEval_CallObjectWithKeywords(*this, NULL, NULL);
   if (rslt == 0)
     throw 1;
-  return object(rslt);
+  return object(LoseRef(rslt));
 }
 object object::call(tuple& args) const {
   PyObject *rslt = PyEval_CallObjectWithKeywords(*this, args, NULL);
   if (rslt == 0)
     throw 1;
-  return object(rslt);
+  return object(LoseRef(rslt));
 }
 object object::call(tuple& args, dict& kws) const {
   PyObject *rslt = PyEval_CallObjectWithKeywords(*this, args, kws);
   if (rslt == 0)
     throw 1;
-  return object(rslt);
+  return object(LoseRef(rslt));
 }
 
 //---------------------------------------------------------------------------

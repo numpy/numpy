@@ -1,3 +1,19 @@
+For release:
+    1.  Change return_val to be an py::object.  This will get rid of 
+        of the need to handle incref/decref on your own most of the time.
+        DONE
+    2.  Flesh out object to handle all types of values in a generic way:
+        a. sequence access.
+        b. casting from/to standard types
+            int, float, double, std::complex, char*, std::string.
+           DONE
+        c. attr should return a reference?  Not sure about this.
+           I DONT THINK SO
+    3.  Tests that always through exceptions aren't getting cataloged.
+        This isn't a big deal in practice, but it needs to be cleaned up.
+    4.  Test file conversion for ref counts
+    5.  Examine all examples and make sure they make sense (and work).            
+        
 base package
     scipy_base
     scipy_distutils
@@ -9,6 +25,18 @@ weave
 chaco
     
 weave
+
+Note on ref counts:
+There is some ref count strangness in inline() *if it is called from
+a function*.  When called from the command line, the ref counts behave
+correctly.  When called from a function, the first call to a
+inline() causes the ref count goes up an extra count.  However,
+subsequent calls don't cause any further refcount increases.  Checks
+put in py::object creation and destruction look like the C++ code is
+not loosing a ref count.  I'm thinking that some of the stack frame
+limbo played in inline() might be to blame???  Anyway, this needs
+further investigation.  I'm not sure if the issue is leading to leaks
+or not.
 
 Proposed changes to weave:
 

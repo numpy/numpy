@@ -19,14 +19,15 @@ def c_list_map(func,seq):
     assert(type(func) in [FunctionType,MethodType,type(len)])
     code = """
            #line 12 "functional.py"
-           PWOTuple args(1);    
-           PWOList result(seq.len());
-           for(int i = 0; i < seq.len();i++)
+           py::tuple = args(1);
+           int N = seq.len();    
+           py::list result(N);
+           for(int i = 0; i < N;i++)
            {
-              args.setItem(0,seq[i]);
+              args[0] = seq[i];
               result[i] = func.call(args);
            }           
-           return_val = result.disOwn();
+           return_val = result;
            """   
     return inline_tools.inline(code,['func','seq'])
 
@@ -37,13 +38,14 @@ def c_list_map2(func,seq):
     assert(type(func) in [FunctionType,MethodType,type(len)])
     code = """
            #line 32 "functional.py"
-           PWOTuple args(1);    
+           py::tuple args(1);    
            PyObject* py_args = (PyObject*)args;
-           PWOList result(seq.len());
+           py::list result(seq.len());
            PyObject* py_result = (PyObject*)result;
            PyObject* item = NULL;
            PyObject* this_result = NULL;
-           for(int i = 0; i < seq.len();i++)
+           int N = seq.len();
+           for(int i = 0; i < N;i++)
            {
               item = PyList_GET_ITEM(py_seq,i);
               Py_INCREF(item);
@@ -51,7 +53,7 @@ def c_list_map2(func,seq):
               this_result = PyEval_CallObject(py_func,py_args);
               PyList_SetItem(py_result,i,this_result);              
            }           
-           return_val = result.disOwn();
+           return_val = result;
            """   
     return inline_tools.inline(code,['func','seq'])
     
