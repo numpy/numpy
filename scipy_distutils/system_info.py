@@ -903,7 +903,7 @@ def get_atlas_version(**config):
     s,o = exec_command(cmd,execute_in=os.path.dirname(target),use_tee=0)
     atlas_version = None
     if not s:
-        m = re.match(r'ATLAS version (?P<version>\d+[.]\d+[.]\d+)',o)
+        m = re.search(r'ATLAS version (?P<version>\d+[.]\d+[.]\d+)',o)
         if m:
             atlas_version = m.group('version')
     if atlas_version is None:
