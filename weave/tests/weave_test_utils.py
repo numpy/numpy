@@ -51,7 +51,9 @@ def clear_temp_catalog():
     backup_dir =tempfile.mktemp()
     os.mkdir(backup_dir)
     for file in temp_catalog_files():
-        move_file(file,backup_dir)
+        d,f = os.path.split(file)
+        backup = os.path.join(backup_dir,f)
+        os.rename(file,backup)
 
 def restore_temp_catalog():
     """ Remove any catalog from the temp dir
@@ -64,7 +66,7 @@ def restore_temp_catalog():
         dst_file = os.path.join(cat_dir, f)
         if os.path.exists(dst_file):
             os.remove(dst_file)
-        move_file(file,dst_file)
+        os.rename(file,dst_file)
     os.rmdir(backup_dir)
     backup_dir = None
          
