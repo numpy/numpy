@@ -14,11 +14,15 @@ class NAGFCompiler(FCompiler):
         'compiler_f77' : ["f95", "-fixed"],
         'compiler_fix' : ["f95", "-fixed"],
         'compiler_f90' : ["f95"],
-        'linker_so'    : ["f95","-Wl,shared"],
+        'linker_so'    : ["f95"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
 
+    def get_flags_linker_so(self):
+        if sys.platform=='darwin':
+            return ['-Wl,-bundle,-flat_namespace,-undefined,suppress']
+        return ["-Wl,shared"]
     def get_flags_opt(self):
         return ['-O4']
     def get_flags_arch(self):
