@@ -32,18 +32,14 @@
 """       
 
 import os,sys,string
-#import shelve
 import pickle
-#import simple_shelve as shelve
-import dumb_shelve as shelve
-dumb = 1
-#try:
-#    import dbhash
-#    import shelve
-#    dumb = 0
-#except ImportError:
-#    import dumb_shelve as shelve
-#    dumb == 1
+try:
+    import dbhash
+    import shelve
+    dumb = 0
+except ImportError:
+    import dumb_shelve as shelve
+    dumb == 1
     
 def getmodule(object):
     """ Discover the name of the module where object was defined.
