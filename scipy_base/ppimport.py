@@ -399,13 +399,6 @@ if _pydoc is not None:
         return _old_pydoc_describe(_ppresolve_ignore_failure(object))
     _pydoc.describe = _scipy_pydoc_describe
 
-    _old_pydoc_locate = _pydoc.locate
-    def _scipy_pydoc_locate(thing, forceload=0):
-        _old_pydoc_locate.__doc__
-        return _old_pydoc_locate(_ppresolve_ignore_failure(thing),
-                                 forceload=forceload)
-    _pydoc.locate = _scipy_pydoc_locate
-
     import inspect as _inspect
     _old_inspect_getfile = _inspect.getfile
     def _scipy_inspect_getfile(object):
