@@ -2,7 +2,7 @@
 import types
 import Numeric
 from Numeric import ravel, asarray, nonzero, array, choose, ones, zeros, sometrue, alltrue
-from type_check import ScalarType
+from type_check import ScalarType, isscalar
 from shape_base import squeeze, atleast_1d
 from fastumath import PINF as inf
 from fastumath import *
@@ -413,28 +413,35 @@ class vectorize:
                 raise ValueError, "Output types must be a string."
 
     def __call__(self,*args):
-        for arg in args:
-            try:
-                n = len(arg)
-                if (n==0):
-                    return self.zerocall(args)
-            except (AttributeError, TypeError):
-                pass
-        return squeeze(arraymap(self.thefunc,args,self.otypes))
+        try:
+            return squeeze(arraymap(self.thefunc,args,self.otypes))
+        except IndexError:
+            return self.zerocall(*args)
 
-    def zerocall(self,args):
+    def zerocall(self,*args):
         # one of the args was a zeros array
         #  return zeros for each output
         #  first --- find number of outputs
+        #  get it from self.otypes if possible
+        #  otherwise evaluate function at 0.9
+        N = len(self.otypes)
+        if N==1:
+            return zeros((0,),'d')
+        elif N !=0:
+            return (zeros((0,),'d'),)*N
         newargs = []
-        args = atleast_1d(*args)
+        args = atleast_1d(args)
         for arg in args:
             if arg.typecode() != 'O':
-                newargs.append(1.1)
+                newargs.append(0.9)
             else:
                 newargs.append(arg[0])
         newargs = tuple(newargs)
-        res = self.thefunc(*newargs)
+        try:
+            res = self.thefunc(*newargs)
+        except:
+            raise ValueError, "Zerocall is failing.  "\
+                  "Try using otypes in vectorize."
         if isscalar(res):
             return zeros((0,),'d')
         else:

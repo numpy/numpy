@@ -239,7 +239,7 @@ static int setup_input_arrays(PyTupleObject *inputs, PyArrayObject **inputarrays
     }
     if (PyArray_SIZE(ain)==0) {
       cleanup_arrays(inputarrays,i);
-      PyErr_SetString(PyExc_ValueError,"arraymap: Input arrays of zero-dimensions not supported.");
+      PyErr_SetString(PyExc_IndexError,"arraymap: Input arrays of zero-dimensions not supported.");
       return -1;
     }
     if (ain->nd > maxrank) maxrank = ain->nd;
