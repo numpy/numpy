@@ -170,9 +170,13 @@ class _ModuleLoader:
         self.__dict__['__file__'] = location
 
         if location != 'sys.path':
+            from scipy_test.testing import ScipyTest
+            self.__dict__['test'] = ScipyTest(self).test
+
             # get additional attributes (doc strings, etc)
-            # from pre_<name>.py file.
-            #filename = os.path.splitext(location)[0] + '.py'
+            # from pre_<name>.py file. XXX: remove this code
+            # when new style packaging is implemented.
+            filename = os.path.splitext(location)[0] + '.py'
             filename = location
             dirname,basename = os.path.split(filename)
             preinit = os.path.join(dirname,'pre_'+basename)
@@ -184,6 +188,7 @@ class _ModuleLoader:
 
     def _ppimport_importer(self):
         name = self.__name__
+
         try:
             module = sys.modules[name]
 	except KeyError:
@@ -210,6 +215,11 @@ class _ModuleLoader:
 
         self.__dict__ = module.__dict__
         self.__dict__['_ppimport_module'] = module
+
+        # XXX: Should we check the existence of module.test? Warn?
+        from scipy_test.testing import ScipyTest
+        module.test = ScipyTest(module).test
+
         return module
 
     def __setattr__(self, name, value):

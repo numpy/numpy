@@ -2,6 +2,7 @@
 __all__ = []
 
 import os,sys,time,glob,string,traceback,unittest
+import types
 
 try:
     # These are used by Numeric tests.
@@ -107,9 +108,11 @@ class ScipyTest:
     """ Scipy tests site manager.
 
     Usage:
-      >>> ScipyTest(<packagename>).test(level=1,verbosity=2)
+      >>> ScipyTest(<package>).test(level=1,verbosity=2)
 
-    Package <packagename> is supposed to contain a directory tests/
+    <package> is package name or its module object.
+
+    Package is supposed to contain a directory tests/
     with test_*.py files where * refers to the names of submodules.
 
     test_*.py files are supposed to define a function
@@ -121,14 +124,14 @@ class ScipyTest:
 
     Also old styled test_suite(level=1) hooks are supported.
     """
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, package):
+        self.package = package
 
     def _module_str(self, module):
         filename = module.__file__[-30:]
         if filename!=module.__file__:
             filename = '...'+filename
-        return 'module %s from %s' % (`module.__name__`, `filename`)
+        return '<module %s from %s>' % (`module.__name__`, `filename`)
 
     def _get_module_tests(self,module,level):
         mstr = self._module_str
@@ -138,7 +141,8 @@ class ScipyTest:
         test_file = os.path.join(test_dir,'test_'+short_module_name+'.py')
 
         if not os.path.isfile(test_file):
-            print '   !! No test file found for', mstr(module)
+            print '   !! No test file %r found for %s' \
+                  % (os.path.basename(test_file), mstr(module))
             return []
 
         sys.path.insert(0,test_dir)
@@ -166,10 +170,27 @@ class ScipyTest:
                     print '   ',
                     output_exception()
                     return []
-            print '   !! test_suite_list|test_suite not defined in',\
-                  mstr(test_module)
-            return []
+            suite_list = []
+            for name in dir(test_module):
+                obj = getattr(test_module, name)
 
+                if type(obj) is not type(unittest.TestCase) \
+                   or not issubclass(obj, unittest.TestCase):
+                    continue
+
+                for mthname in dir(obj):
+                    if mthname[:6] not in ['bench_','check_'] \
+                       and mthname[:5] not in ['test_']:
+                        continue
+                    mth = getattr(obj, mthname)
+                    d = mth.im_func.func_defaults
+                    if d is not None:
+                        mthlevel = d[0]
+                    else:
+                        mthlevel = 1
+                    if level>=mthlevel:
+                        suite_list.append((obj,mthname))
+            return [unittest.makeSuite(*args) for args in suite_list]
         try:
             suite_list = test_module.test_suite_list(level)
         except:
@@ -179,13 +200,26 @@ class ScipyTest:
             return []
         return [unittest.makeSuite(*args) for args in suite_list]
 
+    def _touch_ppimported(self, module):
+        from scipy_base.ppimport import _ModuleLoader
+        try: module._pliuh_plauh
+        except AttributeError: pass
+        for name in dir(module):
+            obj = getattr(module,name)
+            if isinstance(obj,_ModuleLoader) \
+               and not hasattr(obj,'_ppimport_module') \
+               and not hasattr(obj,'_ppimport_exc_info'):
+                self._touch_ppimported(obj)
+
     def test(self,level=1,verbosity=1):
         """ Run Scipy module test suite with level and verbosity.
         """
-        exec 'import %s as this_package' % (self.name)
+        if type(self.package) is type(''):
+            exec 'import %s as this_package' % (self.package)
+        else:
+            this_package = self.package
 
-        # Force importing Postponed modules:
-        hasattr(this_package,'_pliuh_plauh')
+        self._touch_ppimported(this_package)
 
         package_name = this_package.__name__
         suites = []
@@ -198,6 +232,30 @@ class ScipyTest:
         runner = unittest.TextTestRunner(verbosity=verbosity)
         runner.run(all_tests)
         return runner
+
+    def run(self):
+        """ Run Scipy module test suite with level and verbosity
+        taken from sys.argv. Requires optparse module.
+        """
+        try:
+            from optparse import OptionParser
+        except ImportError:
+            print 'Failed to import optparse module, ignoring.'
+            return self.test()
+        usage = r'usage: %prog [<options>]'
+        parser = OptionParser(usage)
+        parser.add_option("-v", "--verbosity",
+                          action="store",
+                          dest="verbosity",
+                          default=1,
+                          type='int')
+        parser.add_option("-l", "--level",
+                          action="store",
+                          dest="level",
+                          default=1,
+                          type='int')
+        (options, args) = parser.parse_args()
+        self.test(options.level,options.verbosity)
 
 #------------
         
