@@ -12,7 +12,28 @@ try:
     import scipy_base.fastumath
 except ImportError:
     pass
-    
+
+if sys.platform=='linux2':
+    def jiffies(_proc_pid_stat = '/proc/%s/stat'%(os.getpid()),
+                _load_time=time.time()):
+        """ Return number of jiffies (1/100ths of a second) that this
+    process has been scheduled in user mode. See man 5 proc. """
+        try:
+            f=open(_proc_pid_stat,'r')
+            l = f.readline().split(' ')
+            f.close()
+            return int(l[13])
+        except:
+            return int(100*(time.time()-_load_time))
+else:
+    # os.getpid is not in all platforms available.
+    # Using time is safe but inaccurate, especially when process
+    # was suspended or sleeping.
+    def jiffies(_load_time=time.time()):
+        """ Return number of jiffies (1/100ths of a second) that this
+    process has been scheduled in user mode. See man 5 proc. """
+        return int(100*(time.time()-_load_time))
+
 __all__.append('ScipyTestCase')
 class ScipyTestCase (unittest.TestCase):
 
@@ -26,12 +47,12 @@ class ScipyTestCase (unittest.TestCase):
                        'ScipyTestCase runner for '+self.__class__.__name__,
                        'exec')
         i = 0
-        elapsed = time.time()
+        elapsed = jiffies()
         while i<times:
             i += 1
             exec code in locs,globs
-        elapsed = time.time() - elapsed
-        return elapsed
+        elapsed = jiffies() - elapsed
+        return 0.01*elapsed
 
 def remove_ignored_patterns(files,pattern):
     from fnmatch import fnmatch
