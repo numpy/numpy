@@ -1,6 +1,11 @@
 import os,sys,string
 import types
 
+if sys.version[:3]<='2.1':
+    from distutils import util
+    util_get_platform = util.get_platform
+    util.get_platform = lambda : util_get_platform().replace(' ','_')
+
 # Hooks for colored terminal output.
 # See also http://www.livinglogic.de/Python/ansistyle
 def terminal_has_colors():
