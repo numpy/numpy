@@ -21,6 +21,8 @@ classes are available:
   blas_src_info
   numpy_info
   numarray_info
+  boost_python
+  agg2
 
 Usage:
     info_dict = get_info(<name>)
@@ -99,7 +101,7 @@ from distutils.sysconfig import get_config_vars
 if sys.platform == 'win32':
     default_lib_dirs = ['C:\\'] # probably not very helpful...
     default_include_dirs = []
-    default_src_dirs = []
+    default_src_dirs = ['.']
     default_x11_lib_dirs = []
     default_x11_include_dirs = []
 else:
@@ -108,7 +110,7 @@ else:
     default_include_dirs = ['/usr/local/include',
                             '/opt/include', '/usr/include',
                             '/sw/include']
-    default_src_dirs = ['/usr/local/src', '/opt/src','/sw/src']
+    default_src_dirs = ['.','/usr/local/src', '/opt/src','/sw/src']
     default_x11_lib_dirs = ['/usr/X11R6/lib','/usr/X11/lib','/usr/lib']
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include',
                                 '/usr/include']
@@ -153,6 +155,8 @@ def get_info(name,notfound_action=0):
           'numarray':numarray_info,
           'lapack_opt':lapack_opt_info,
           'blas_opt':blas_opt_info,
+          'boost_python':boost_python_info,
+          'agg2':agg2_info,
           }.get(name.lower(),system_info)
     return cl().get_info(notfound_action)
 
@@ -1118,6 +1122,74 @@ class numpy_info(system_info):
 class numarray_info(numpy_info):
     section = 'numarray'
     modulename = 'numarray'
+
+class boost_python_info(system_info):
+    section = 'boost_python'
+    dir_env_var = 'BOOST'
+
+    def get_paths(self, section, key):
+        pre_dirs = system_info.get_paths(self, section, key)
+        dirs = []
+        for d in pre_dirs:
+            dirs.extend([d] + self.combine_paths(d,['boost*']))
+        return [ d for d in dirs if os.path.isdir(d) ]
+
+    def calc_info(self):
+        from distutils.sysconfig import get_python_inc
+        src_dirs = self.get_src_dirs()
+        src_dir = ''
+        for d in src_dirs:
+            if os.path.isfile(os.path.join(d,'libs','python','src','module.cpp')):
+                src_dir = d
+                break
+        if not src_dir:
+            return
+        py_incl_dir = get_python_inc()
+        srcs_dir = os.path.join(src_dir,'libs','python','src')
+        bpl_srcs = glob(os.path.join(srcs_dir,'*.cpp'))
+        bpl_srcs += glob(os.path.join(srcs_dir,'*','*.cpp'))
+        info = {'libraries':[('boost_python_src',{'include_dirs':[src_dir,py_incl_dir],
+                                                  'sources':bpl_srcs})],
+                'include_dirs':[src_dir],
+                }
+        if info:
+            self.set_info(**info)
+        return
+
+class agg2_info(system_info):
+    section = 'agg2'
+    dir_env_var = 'AGG2'
+
+    def get_paths(self, section, key):
+        pre_dirs = system_info.get_paths(self, section, key)
+        dirs = []
+        for d in pre_dirs:
+            dirs.extend([d] + self.combine_paths(d,['agg2*']))
+        return [ d for d in dirs if os.path.isdir(d) ]
+
+    def calc_info(self):
+        src_dirs = self.get_src_dirs()
+        src_dir = ''
+        for d in src_dirs:
+            if os.path.isfile(os.path.join(d,'src','agg_affine_matrix.cpp')):
+                src_dir = d
+                break
+        if not src_dir:
+            return
+        if sys.platform=='win32':
+            agg2_srcs = glob(os.path.join(src_dir,'src','platform','win32','agg_win32_bmp.cpp'))
+        else:
+            agg2_srcs = glob(os.path.join(src_dir,'src','*.cpp'))
+        
+        info = {'libraries':[('agg2_src',{'sources':agg2_srcs,
+                                          'include_dirs':[os.path.join(src_dir,'include')],
+                                          })],
+                'include_dirs':[os.path.join(src_dir,'include')],
+                }
+        if info:
+            self.set_info(**info)
+        return
+
 
 ## def vstr2hex(version):
 ##     bits = []
