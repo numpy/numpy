@@ -13,7 +13,7 @@ def stand_alone_package(with_dependencies = 0):
     old_path = os.getcwd()
     os.chdir(path)
     try:
-        primary =     ['compiler']
+        primary =     ['weave']
         if with_dependencies:
             dependencies= ['scipy_distutils', 'scipy_test']       
         else:
@@ -22,7 +22,7 @@ def stand_alone_package(with_dependencies = 0):
         print 'dep:', dependencies
         config_dict = package_config(primary,dependencies)
 
-        setup (name = "compiler",
+        setup (name = "weave",
                version = version,
                description = "Tools for inlining C/C++ in Python",
                author = "Eric Jones",

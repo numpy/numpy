@@ -1,6 +1,6 @@
 # examples/increment_example.py
 
-#from compiler import ext_tools
+#from weave import ext_tools
 
 # use the following so that development version is used.
 import sys

@@ -1,6 +1,6 @@
 """ 
 """
-# C:\home\ej\wrk\scipy\compiler\examples>python vq.py
+# C:\home\ej\wrk\scipy\weave\examples>python vq.py
 # vq with 1000 observation, 10 features and 30 codes fo 100 iterations
 #  speed in python: 0.150119999647
 # [25 29] [ 2.49147266  3.83021032]

@@ -1,6 +1,6 @@
 # This tests the amount of overhead added for inline() function calls.
 # It isn't a "real world" test, but is somewhat informative.
-# C:\home\ej\wrk\scipy\compiler\examples>python py_none.py
+# C:\home\ej\wrk\scipy\weave\examples>python py_none.py
 # python: 0.0199999809265
 # inline: 0.160000085831
 # speed up: 0.124999813736 (this is about a factor of 8 slower)
