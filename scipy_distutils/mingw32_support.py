@@ -67,7 +67,7 @@ if sys.platform == 'win32':
         #    msg = "Couldn't find import library, and failed to build it."
         #    raise DistutilsPlatformError, msg
 
-    if 0:
+    if 1:
         # See build_flib.finalize_options method in build_flib.py
         # where set_windows_compiler is called with proper
         # compiler (there gcc/g77 is still default).
