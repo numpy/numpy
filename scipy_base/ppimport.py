@@ -8,7 +8,7 @@ Created: March 2003
 $Revision$
 $Date$
 """
-__all__ = ['ppimport','ppimport_attr','realize']
+__all__ = ['ppimport','ppimport_attr','ppresolve']
 
 import os
 import sys
@@ -289,8 +289,8 @@ class _ModuleLoader:
 
     __str__ = __repr__
 
-def realize(a):
-    """ Return realized object a.
+def ppresolve(a):
+    """ Return resolved object a.
 
     a can be module name, postponed module, postponed modules
     attribute, string representing module attribute, or any
@@ -323,28 +323,29 @@ try:
     import pydoc as _pydoc
 except ImportError:
     _pydoc = None
+
 if _pydoc is not None:
     # Redefine __call__ method of help.__class__ to
     # support ppimport.
-    _old_pydoc_help_call = _pydoc.help.__class__.__call__
-
-    def _scipy_pydoc_help_call(self,*args,**kwds):
-        return _old_pydoc_help_call(self, *map(realize,args), **kwds)
-
     import new as _new
+
+    _old_pydoc_help_call = _pydoc.help.__class__.__call__
+    def _scipy_pydoc_help_call(self,*args,**kwds):
+        return _old_pydoc_help_call(self, *map(ppresolve,args), **kwds)
     _pydoc.help.__class__.__call__ = _new.instancemethod(_scipy_pydoc_help_call,
                                                          None,
                                                          _pydoc.help.__class__)
+
+    _old_pydoc_Doc_document = _pydoc.Doc.document
+    def _scipy_pydoc_Doc_document(self,*args,**kwds):
+        args = (ppresolve(args[0]),) + args[1:]
+        return _old_pydoc_Doc_document(self,*args,**kwds)
+    _pydoc.Doc.document = _new.instancemethod(_scipy_pydoc_Doc_document,
+                                              None,
+                                              _pydoc.Doc)
+
     import inspect as _inspect
     _old_inspect_getfile = _inspect.getfile
     def _inspect_getfile(object):
-	try:
-	    if hasattr(object,'_ppimport_importer') or \
-	       hasattr(object,'_ppimport_module'):
-                object = object._ppimport_module
-            if hasattr(object,'_ppimport_attr'):
-		object = object._ppimport_attr
-	except ImportError:
-	    object = object.__class__
-	return _old_inspect_getfile(object)
+	return _old_inspect_getfile(ppresolve(object))
     _inspect.getfile = _inspect_getfile
