@@ -560,7 +560,9 @@ class fortran_compiler_base(CCompiler):
         # a lot when builds fail once and are restarted).
         object_list = self.source_to_object_names(source_list, temp_dir)
 
-        if os.name == 'nt' or sys.platform[:4] == 'irix':
+        if os.name == 'nt' \
+           or sys.platform[:4] == 'irix' \
+           or sys.platform[:3] == 'osf':
             # I (pearu) had the same problem on irix646 ...
             # I think we can make this "bunk" default as skip_ranlib
             # feature speeds things up.
