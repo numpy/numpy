@@ -241,6 +241,10 @@ def cumprod(m,axis=-1):
 def diff(x, n=1,axis=-1):
     """Calculates the nth order, discrete difference along given axis.
     """
+    if n==0:
+        return x
+    if n<0:
+        raise ValueError,'Order must be non-negative but got ' + `n`
     x = _asarray1d(x)
     nd = len(x.shape)
     slice1 = [slice(None)]*nd
