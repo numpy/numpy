@@ -142,7 +142,11 @@ class ScipyTestCase (unittest.TestCase):
         unittest.TestCase.__call__(self, result)
         if nof_errors != len(result.errors):
             test, errstr = result.errors[-1]
-            if errstr.split('\n')[-2].startswith('IgnoreException:'):
+            if type(errstr) is type(()):
+                errstr = str(errstr[0])
+            else:
+                errstr = errstr.split('\n')[-2]
+            if errstr.startswith('IgnoreException:'):
                 assert result.stream.data[-1]=='E',`result.stream.data`
                 result.stream.data[-1] = 'i'
                 del result.errors[-1]
