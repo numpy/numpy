@@ -173,7 +173,7 @@ def module_test(mod_name,mod_file,level=10):
     short_mod_name = string.split(mod_name,'.')[-1]
     test_module = 'test_' + short_mod_name
     test_string = 'import %s;reload(%s);%s.test(%d)' % \
-                  ((test_module)*3 + (level,))
+                  ((test_module,)*3 + (level,))
 
     # This would be better cause it forces a reload of the orginal
     # module.  It doesn't behave with packages however.
