@@ -20,6 +20,7 @@ except AttributeError:
 toChar = lambda x: Numeric.asarray(x).astype(Char)
 toInt8 = lambda x: Numeric.asarray(x).astype(Numeric.Int8)# or use variable names such as Byte
 toUInt8 = lambda x: Numeric.asarray(x).astype(Numeric.UnsignedInt8)
+_unsigned = 0
 if hasattr(Numeric,'UnsignedInt16'):
    toUInt16 = lambda x: Numeric.asarray(x).astype(Numeric.UnsignedInt16)
    toUInt32 = lambda x: Numeric.asarray(x).astype(Numeric.UnsignedInt32)
