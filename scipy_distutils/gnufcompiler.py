@@ -85,15 +85,16 @@ class GnuFCompiler(FCompiler):
         opt = []
         d = self.get_libgcc_dir()
         if d is not None:
-            for g2c in ['g2c-pic','g2c']:
-                f = self.static_lib_format % (g2c, self.static_lib_extension)
-                if os.path.isfile(os.path.join(d,f)):
-                    break
+            g2c = 'g2c-pic'
+            f = self.static_lib_format % (g2c, self.static_lib_extension)
+            if not os.path.isfile(os.path.join(d,f)):
+                g2c = 'g2c'
         else:
             g2c = 'g2c'
+        
         if sys.platform=='win32':
-            opt.extend(['gcc',g2c])
-        else:
+            opt.append('gcc')
+        if g2c is not None:
             opt.append(g2c)
         return opt
 
