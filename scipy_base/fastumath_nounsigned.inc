@@ -1598,63 +1598,63 @@ static void UBYTE_logical_xor(char **args, int *dimensions, int *steps, void *fu
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((unsigned char *)op)=(*((unsigned char *)i1) || *((unsigned char *)i2)) && !(*((unsigned char *)i1) && *((unsigned char *)i2));
+	*((unsigned char *)op)=((*((unsigned char *)i1) || *((unsigned char *)i2)) && !(*((unsigned char *)i1) && *((unsigned char *)i2)));
     }
 }
 static void SBYTE_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((unsigned char *)op)=(*((signed char *)i1) || *((signed char *)i2)) && !(*((signed char *)i1) && *((signed char *)i2));
+	*((unsigned char *)op)=(unsigned char)((*((signed char *)i1) || *((signed char *)i2)) && !(*((signed char *)i1) && *((signed char *)i2)));
     }
 }
 static void SHORT_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((unsigned char*)op)=(*((short *)i1) || *((short *)i2)) && !(*((short *)i1) && *((short *)i2));
+	*((unsigned char*)op)=(unsigned char)((*((short *)i1) || *((short *)i2)) && !(*((short *)i1) && *((short *)i2)));
     }
 }
 static void INT_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((unsigned char*)op)=(*((int *)i1) || *((int *)i2)) && !(*((int *)i1) && *((int *)i2));
+	*((unsigned char*)op)=(unsigned char)((*((int *)i1) || *((int *)i2)) && !(*((int *)i1) && *((int *)i2)));
     }
 }
 static void LONG_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((unsigned char*)op)=(*((long *)i1) || *((long *)i2)) && !(*((long *)i1) && *((long *)i2));
+	*((unsigned char*)op)=(unsigned char)((*((long *)i1) || *((long *)i2)) && !(*((long *)i1) && *((long *)i2)));
     }
 }
 static void FLOAT_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((unsigned char*)op)=((*((float *)i1) || *((float *)i2)) && !(*((float *)i1) && *((float *)i2)));
+	*((unsigned char*)op)=(unsigned char)(((*((float *)i1) || *((float *)i2)) && !(*((float *)i1) && *((float *)i2))));
     }
 }
 static void DOUBLE_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((unsigned char*)op)=(*((double *)i1) || *((double *)i2)) && !(*((double *)i1) && *((double *)i2));
+	*((unsigned char*)op)=(unsigned char)((*((double *)i1) || *((double *)i2)) && !(*((double *)i1) && *((double *)i2)));
     }
 }
 static void CFLOAT_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((unsigned char*)op)=((*((float *)i1) || *((float *)i2)) && !(*((float *)i1) && *((float *)i2)));
+	*((unsigned char*)op)=(unsigned char)(((*((float *)i1) || *((float *)i2)) && !(*((float *)i1) && *((float *)i2))));
     }
 }
 static void CDOUBLE_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((unsigned char*)op)=(*((double *)i1) || *((double *)i2)) && !(*((double *)i1) && *((double *)i2));
+	*((unsigned char*)op)=(unsigned char)((*((double *)i1) || *((double *)i2)) && !(*((double *)i1) && *((double *)i2)));
     }
 }
 static void UBYTE_logical_not(char **args, int *dimensions, int *steps, void *func) 
