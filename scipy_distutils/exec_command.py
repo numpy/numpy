@@ -120,6 +120,10 @@ def find_executable(exe, path=None):
     log.debug('find_executable(%r)' % exe)
     if path is None:
         path = os.environ.get('PATH',os.defpath)
+    if os.name=='posix':
+        realpath = os.path.realpath
+    else:
+        realpath = lambda a:a
 
     suffices = ['']
     if os.name in ['nt','dos','os2']:
@@ -144,11 +148,11 @@ def find_executable(exe, path=None):
     for path in paths:
         fn = os.path.join(path,exe)
         for s in suffices:
-            f_ext = os.path.realpath(fn+s)
+            f_ext = realpath(fn+s)
             if os.path.isfile(f_ext) and os.access(f_ext,os.X_OK):
                 log.debug('Found executable %s' % f_ext)
                 return f_ext
-    exe = os.path.realpath(exe)
+    exe = realpath(exe)
     if not os.path.isfile(exe) or os.access(exe,os.X_OK):
         log.warn('Could not locate executable %s' % exe)
     return exe
