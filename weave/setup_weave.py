@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+#
+# NOTE: to create a weave distribution with its dependencies
+#       is equivalent to creating a Scipy_core distribution
+#       that contains exactly weave and its dependencies.
+#
 
 import os
 from glob import glob
@@ -42,13 +47,15 @@ def configuration(parent_package='',parent_path=None):
     install_path = os.path.join(parent_path,'weave','doc')
     config['data_files'].extend( [(install_path,doc_files)])
 
-    example_files = glob(os.path.join(local_path,'examples','*.py'))
+    example_files = glob(os.path.join(local_path,'examples','*.[c,h,i]')) + \
+                    glob(os.path.join(local_path,'examples','*.py'))
     install_path = os.path.join(parent_path,'weave','examples')
     config['data_files'].extend( [(install_path,example_files)])
     
     return config
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
+    config = configuration(parent_path='')
     from scipy_distutils.core import setup
     setup(version = "0.3.2",
           description = "Tools for inlining C/C++ in Python",
@@ -56,4 +63,4 @@ if __name__ == '__main__':
           author_email = "eric@enthought.com",
           licence = "SciPy License (BSD Style)",
           url = 'http://www.scipy.org',
-          **configuration(parent_path=''))
+          **config)
