@@ -23,7 +23,8 @@ classes are available:
   numarray_info
   boost_python
   agg2
-
+  wx_info
+  
 Usage:
     info_dict = get_info(<name>)
   where <name> is a string 'atlas','x11','fftw','lapack','blas',
@@ -95,6 +96,7 @@ import warnings
 from distutils.errors import DistutilsError
 from glob import glob
 import ConfigParser
+from exec_command import find_executable, exec_command
 
 from distutils.sysconfig import get_config_vars
 
@@ -157,6 +159,7 @@ def get_info(name,notfound_action=0):
           'blas_opt':blas_opt_info,
           'boost_python':boost_python_info,
           'agg2':agg2_info,
+          'wx':wx_info,
           }.get(name.lower(),system_info)
     return cl().get_info(notfound_action)
 
@@ -1194,6 +1197,64 @@ class agg2_info(system_info):
             self.set_info(**info)
         return
 
+class wx_info(system_info):
+    section = 'wx'
+    config_env_var = 'WX_CONFIG'
+
+    def get_config_exe(self):
+        if os.environ.has_key(self.config_env_var):
+            return os.environ[self.config_env_var]
+        return 'wx-config'
+    def get_config_output(self, wx_config, option):
+        s,o = exec_command(wx_config+' '+option,use_tee=0)
+        if not s:
+            return o
+    def calc_info(self):
+        wx_config = find_executable(self.get_config_exe())
+        if not os.path.isfile(wx_config):
+            print 'File not found: %s. Cannot determine wx info.' % (wx_config)
+            return
+        info = {}
+        macros = []
+        libraries = []
+        library_dirs = []
+        include_dirs = []
+        extra_link_args = []
+        extra_compile_args = []
+        version = self.get_config_output(wx_config,'--version')
+        if version:
+            macros.append(('WX_VERSION','"\\"%s\\""' % (version)))
+        opts = self.get_config_output(wx_config,'--libs')
+        if opts:
+            for opt in opts.split():
+                if opt[:2]=='-l':
+                    libraries.append(opt[2:])
+                elif opt[:2]=='-L':
+                    library_dirs.append(opt[2:])
+                else:
+                    extra_link_args.append(opt)
+        opts = self.get_config_output(wx_config,'--cxxflags')
+        if opts:
+            for opt in opts.split():
+                if opt[:2]=='-I':
+                    include_dirs.append(opt[2:])
+                elif opt[:2]=='-D':
+                    if '=' in opt:
+                        n,v = opt[2:].split('=')
+                        macros.append((n,v))
+                    else:
+                        macros.append((opt[2:],None))
+                else:
+                    extra_compile_args.append(opt)
+        if macros: dict_append(info, define_macros = macros)
+        if libraries: dict_append(info, libraries = libraries)
+        if library_dirs: dict_append(info, library_dirs = library_dirs)
+        if include_dirs: dict_append(info, include_dirs = include_dirs)
+        if extra_link_args: dict_append(info, extra_link_args = extra_link_args)
+        if extra_compile_args: dict_append(info, extra_compile_args = extra_compile_args)
+        if info:
+            self.set_info(**info)
+        return
 
 ## def vstr2hex(version):
 ##     bits = []
@@ -1265,6 +1326,6 @@ def show_all():
 if __name__ == "__main__":
     show_all()
     if 0:
-        c = lapack_opt_info()
+        c = wx_info()
         c.verbosity = 2
         c.get_info()
