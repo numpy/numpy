@@ -43,6 +43,7 @@ Fortran compilers (as to be used with --fcompiler= option):
       Itanium
       NAG
       Compaq
+      Digital
       Gnu
       VAST
       F       [unsupported]
@@ -324,7 +325,13 @@ class fortran_compiler_base(CCompiler):
 
     compiler_type = 'fortran'
     executables = {}
-    
+
+    compile_switch = ' -c '
+    object_switch = ' -o '
+    lib_prefix = 'lib'
+    lib_suffix = '.a'
+    lib_ar = 'ar -curs '
+
     def __init__(self,verbose=0,dry_run=0,force=0):
         # Default initialization. Constructors of derived classes MUST
         # call this function.
@@ -393,7 +400,8 @@ class fortran_compiler_base(CCompiler):
             if distutils.dep_util.newer(source,object):
                 cmd =  compiler + ' ' + switches + ' '+\
                        module_switch + \
-                       ' -c ' + source + ' -o ' + object 
+                       self.compile_switch + source + \
+                       self.object_switch + object 
                 print yellow_text(cmd)
                 failure = os.system(cmd)
                 if failure:
@@ -419,19 +427,17 @@ class fortran_compiler_base(CCompiler):
 
     def create_static_lib(self, object_files, library_name,
                           output_dir='', debug=None):
-        lib_file = os.path.join(output_dir,'lib'+library_name+'.a')
-        newer = distutils.dep_util.newer
-        # This doesn't work -- no way to know if the file is in the archive
-        #object_files = filter(lambda o,lib=lib_file:\
-        #                 distutils.dep_util.newer(o,lib),object_files)
+        lib_file = os.path.join(output_dir,
+                                self.lib_prefix+library_name+self.lib_suffix)
         objects = string.join(object_files)
         if objects:
-            cmd = 'ar -cur  %s %s' % (lib_file,objects)
+            cmd = '%s%s %s' % (self.lib_ar,lib_file,objects)
             print yellow_text(cmd)
             os.system(cmd)
-            cmd = 'ranlib %s ' % lib_file
-            print yellow_text(cmd)
-            os.system(cmd)
+            # `ranlib' is equivalent to `ar -s'
+            #cmd = 'ranlib %s ' % lib_file 
+            #print yellow_text(cmd)
+            #os.system(cmd)
 
     def build_library(self,library_name,source_list,module_dirs=None,
                       temp_dir = ''):
@@ -910,6 +916,7 @@ class nag_fortran_compiler(fortran_compiler_base):
     def get_linker_so(self):
         return [self.f77_compiler,'-Wl,-shared']
 
+
 # http://www.fortran.com/F/compilers.html
 #
 # We define F compiler here but it is quite useless
@@ -957,6 +964,7 @@ WARNING: F compiler is unsupported due to its incompleteness.
     def get_linker_so(self):
         return ['gcc','-shared']
 
+
 class vast_fortran_compiler(fortran_compiler_base):
 
     vendor = 'VAST'
@@ -993,6 +1001,7 @@ class vast_fortran_compiler(fortran_compiler_base):
     def get_linker_so(self):
         return [self.f90_compiler,'-shared']
 
+
 class compaq_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Compaq'
@@ -1027,8 +1036,49 @@ class compaq_fortran_compiler(fortran_compiler_base):
         return opt
 
     def get_linker_so(self):
-        # XXX: is -shared needed?
         return [self.f77_compiler,'-shared']
+
+
+#http://www.compaq.com/fortran
+class digital_fortran_compiler(fortran_compiler_base):
+
+    vendor = 'Digital'
+    ver_match = r'DIGITAL Visual Fortran Optimizing Compiler Version (?P<version>[^\s]*).*'
+
+    compile_switch = ' /c '
+    object_switch = ' /object:'
+    lib_prefix = ''
+    lib_suffix = '.lib'
+    lib_ar = 'lib.exe /OUT:'
+
+    def __init__(self, fc = None, f90c = None):
+        fortran_compiler_base.__init__(self)
+
+        if fc is None:
+            fc = 'DF'
+        if f90c is None:
+            f90c = fc
+
+        self.f77_compiler = fc
+        self.f90_compiler = f90c
+        self.ver_cmd = self.f77_compiler+' /what '
+
+        if self.is_available():
+            #XXX: is this really necessary???
+            from distutils.msvccompiler import find_exe
+            self.lib_ar = find_exe("lib.exe", self.version) + ' /OUT:'
+
+        switches = ' /nologo /MD /W1 /iface:cref /iface=nomixed_str_len_arg '
+        debug = ' '
+
+        self.f77_switches = ' /f77rtl /fixed ' + switches
+        self.f90_switches = switches
+        self.f77_debug = self.f90_debug = debug
+        self.f77_opt = self.f90_opt = self.get_opt()
+
+    def get_opt(self):
+        # XXX: use also /architecture, see gnu_fortran_compiler
+        return ' /Ox '
 
 
 def match_extension(files,ext):
@@ -1063,6 +1113,7 @@ all_compilers = [absoft_fortran_compiler,
                  intel_itanium_fortran_compiler,
                  nag_fortran_compiler,
                  compaq_fortran_compiler,
+                 digital_fortran_compiler,
                  vast_fortran_compiler,
                  hpux_fortran_compiler,
                  f_fortran_compiler,
