@@ -49,6 +49,14 @@ def configuration(parent_package='',parent_path=None):
     ext = Extension(dot_join(package,'_compiled_base'),sources)
     config['ext_modules'].append(ext)
 
+    # display_test module
+    sources = [os.path.join(local_path,'src','display_test.c')]
+    x11 = get_info('x11')
+    if x11:
+        x11['define_macros'] = [('HAVE_X11',None)]
+    ext = Extension(dot_join(package,'display_test'), sources, **x11)
+    config['ext_modules'].append(ext)
+
     return config
 
 if __name__ == '__main__':
