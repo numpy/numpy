@@ -177,6 +177,9 @@ def get_info(name,notfound_action=0):
           'gdk-pixbuf-xlib-2.0':gdk_pixbuf_xlib_2_info,
           'gdk_pixbuf_2':gdk_pixbuf_2_info,
           'gdk-pixbuf-2.0':gdk_pixbuf_2_info,
+          'gdk':gdk_info,
+          'gdk_2':gdk_2_info,
+          'gdk-2.0':gdk_2_info,
           'gdk_x11_2':gdk_x11_2_info,
           'gdk-x11-2.0':gdk_x11_2_info,
           'gtkp_x11_2':gtkp_x11_2_info,
@@ -1324,6 +1327,16 @@ class gdk_x11_2_info(_pkg_config_info):
     section = 'gdk_x11_2'
     append_config_exe = 'gdk-x11-2.0'
     version_macro_name = 'GDK_X11_VERSION'
+
+class gdk_2_info(_pkg_config_info):
+    section = 'gdk_2'
+    append_config_exe = 'gdk-2.0'
+    version_macro_name = 'GDK_VERSION'
+
+class gdk_info(_pkg_config_info):
+    section = 'gdk'
+    append_config_exe = 'gdk'
+    version_macro_name = 'GDK_VERSION'
 
 class gtkp_x11_2_info(_pkg_config_info):
     section = 'gtkp_x11_2'
