@@ -78,6 +78,7 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 
 import sys,os,re,types
+import warnings
 from distutils.errors import DistutilsError
 from glob import glob
 import ConfigParser
@@ -420,32 +421,55 @@ class atlas_info(system_info):
         pre_dirs = system_info.get_paths(self, section, key)
         dirs = []
         for d in pre_dirs:
-            dirs.extend(combine_paths(d,['atlas*','ATLAS*']) + [d])
+            dirs.extend(combine_paths(d,['atlas*','ATLAS*',
+                                         'sse*','3dnow'])+[d])
         return [ d for d in dirs if os.path.isdir(d) ]
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
-        include_dirs = self.get_include_dirs()
-
-        h = (combine_paths(lib_dirs+include_dirs,'cblas.h') or [None])[0]
-        if h: h = os.path.dirname(h)
-        info = None
-
+        info = {}
         atlas_libs = self.get_libs('atlas_libs',
-                                   ['lapack','f77blas', 'cblas', 'atlas'])
+                                   ['f77blas', 'cblas', 'atlas'])
+        lapack_libs = self.get_libs('lapack_libs',['lapack'])
+        atlas = None
+        lapack = None
         for d in lib_dirs:
             atlas = self.check_libs(d,atlas_libs,[])
             if atlas is not None:
-                info = atlas
-                break
-        else:
+                lib_dirs2 = combine_paths(d,['atlas*','ATLAS*'])+[d]
+                for d2 in lib_dirs2:
+                    lapack = self.check_libs(d2,lapack_libs,[])
+                    if lapack is not None:
+                        break
+                else:
+                    lapack = None
+                if lapack is not None:
+                    break
+        if atlas is None:
             return
+        include_dirs = self.get_include_dirs()
+        h = (combine_paths(lib_dirs+include_dirs,'cblas.h') or [None])[0]
+        if h:
+            h = os.path.dirname(h)
+            dict_append(info,include_dirs=[h])
 
-        if h: dict_append(info,include_dirs=[h])
-
+        if lapack is not None:
+            dict_append(info,**lapack)
+            dict_append(info,**atlas)
+        else:
+            dict_append(info,**atlas)
+            dict_append(define_macros=[('ATLAS_WITHOUT_LAPACK',None)])
+            message = """
+*********************************************************************
+    Could not find lapack library within the ATLAS installation.
+*********************************************************************
+"""
+            warnings.warn(message)
+            self.set_info(**info)
+            return
         # Check if lapack library is complete, only warn if it is not.
-        lapack_dir = info['library_dirs'][0]
-        lapack_name = info['libraries'][0]
+        lapack_dir = lapack['library_dirs'][0]
+        lapack_name = lapack['libraries'][0]
         lapack_lib = None
         for e in ['.a',so_ext]:
             fn = os.path.join(lapack_dir,'lib'+lapack_name+e)
@@ -454,7 +478,6 @@ class atlas_info(system_info):
                 break
         if lapack_lib is not None:
             sz = os.stat(lapack_lib)[6]
-            import warnings
             if sz <= 4000*1024:
                 message = """
 *********************************************************************
@@ -466,21 +489,7 @@ class atlas_info(system_info):
 *********************************************************************
 """ % (lapack_lib,sz/1024)
                 warnings.warn(message)
-            #info['size_liblapack'] = sz
-            flag = 0 #os.system('nm %s | grep clapack_sgetri '%lapack_lib)
-            #info['has_clapack_sgetri'] = not flag
-            if flag:
-                message = """
-*********************************************************************
-    Using probably old ATLAS version (<3.3.??):
-      nm %s | grep clapack_sgetri
-    returned %s
-    ATLAS update is recommended. See scipy/INSTALL.txt.
-*********************************************************************
-""" % (lapack_lib,flag)
-                warnings.warn(message)
         self.set_info(**info)
-
 
 class lapack_info(system_info):
     section = 'lapack'
