@@ -8,7 +8,7 @@ import log
 class IbmFCompiler(FCompiler):
 
     compiler_type = 'ibm'
-    version_pattern =  r'xlf\(1\)\s*IBM XL Fortran Version (?P<version>[^\s*]*)'
+    version_pattern =  r'xlf\(1\)\s*IBM XL Fortran (Advanced Edition |)Version (?P<version>[^\s*]*)'
 
     executables = {
         'version_cmd'  : ["xlf"],
