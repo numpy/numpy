@@ -172,6 +172,17 @@ def get_line_header(str,beg):
         ind = ind - 1
         char = str[ind]
     return ''.join(extra)
+
+maxre = re.compile(r"max[(](.+),(.+)[)]")
+minre = re.compile(r"min[(](.+),(.+)[)]")
+
+def fix_capitals(astr):
+    # Need to convert max(x,x) to MAX(x,x)
+    #  and min(x,x) to MIN(x,x)
+    astr = maxre.sub(r"MAX(\g<1>,\g<2>)",astr)
+    astr = minre.sub(r"MIN(\g<1>,\g<2>)",astr)
+    return astr
+    
     
 def process_str(allstr):
     newstr = allstr.lower()
@@ -183,12 +194,13 @@ def process_str(allstr):
     
     oldend = 0
     for sub in struct:
-        writestr += newstr[oldend:sub[0]]
+        writestr += fix_capitals(newstr[oldend:sub[0]])
         expanded = expand_sub(newstr[sub[0]:sub[1]],get_line_header(newstr,sub[0]))
-        writestr += expanded
+        writestr += fix_capitals(expanded)
         oldend =  sub[1]
 
-    writestr += newstr[oldend:]
+
+    writestr += fix_capitals(newstr[oldend:])
     return writestr
 
 
