@@ -308,7 +308,7 @@ class FCompiler(CCompiler):
 
         conf = dist.get_option_dict('config_fc')
         noopt = conf.get('noopt',[None,0])[1]
-        if 1: # change to `if 1:` when making release.
+        if 0: # change to `if 1:` when making release.
             # Don't use architecture dependent compiler flags:
             noarch = 1
         else:
