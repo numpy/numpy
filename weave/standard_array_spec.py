@@ -4,12 +4,15 @@ from Numeric import *
 from types import *
 import os
 
+
 num_typecode = {}
 num_typecode['c'] = 'PyArray_CHAR'
 num_typecode['1'] = 'PyArray_SBYTE'
 num_typecode['b'] = 'PyArray_UBYTE'
 num_typecode['s'] = 'PyArray_SHORT'
+num_typecode['w'] = 'PyArray_USHORT'
 num_typecode['i'] = 'PyArray_INT' # PyArray_INT has troubles ?? What does this note mean ??
+num_typecode['u'] = 'PyArray_UINT'
 num_typecode['l'] = 'PyArray_LONG'
 num_typecode['f'] = 'PyArray_FLOAT'
 num_typecode['d'] = 'PyArray_DOUBLE'
@@ -34,9 +37,11 @@ public:
             !(numeric_type == PyArray_INT   && arr_type == PyArray_LONG)  &&
             !(numeric_type == PyArray_LONG  && arr_type == PyArray_INT)) 
         {
-            char* type_names[20] = {"char","unsigned byte","byte", "short", "int", 
-                                    "long", "float", "double", "complex float",
-                                    "complex double", "object","ntype","unkown"};
+
+            char* type_names[20] = {"char","unsigned byte","byte", "short", "unsigned short",
+                                    "int", "unsigned int", "long", "float", "double", 
+                                    "complex float","complex double", "object","ntype",
+                                    "unkown"};
             char msg[500];
             sprintf(msg,"Conversion Error: received '%s' typed array instead of '%s' typed array for variable '%s'",
                     type_names[arr_type],type_names[numeric_type],name);
@@ -54,9 +59,11 @@ public:
             !(numeric_type == PyArray_INT   && arr_type == PyArray_LONG)  &&
             !(numeric_type == PyArray_LONG  && arr_type == PyArray_INT)) 
         {
-            char* type_names[13] = {"char","unsigned byte","byte", "short", "int", 
-                                    "long", "float", "double", "complex float",
-                                    "complex double", "object","ntype","unkown"};
+            char* type_names[20] = {"char","unsigned byte","byte", "short", 
+                                    "unsigned short", "int", "unsigned int",
+                                    "long", "float", "double", 
+                                    "complex float", "complex double", 
+                                    "object","ntype","unkown"};
             char msg[500];
             sprintf(msg,"received '%s' typed array instead of '%s' typed array for variable '%s'",
                     type_names[arr_type],type_names[numeric_type],name);

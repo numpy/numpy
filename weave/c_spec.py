@@ -295,7 +295,10 @@ num_to_c_types['d'] = 'double'
 num_to_c_types['1'] = 'char'
 num_to_c_types['b'] = 'unsigned char'
 num_to_c_types['s'] = 'short'
+num_to_c_types['w'] = 'unsigned short'
 num_to_c_types['i'] = 'int'
+num_to_c_types['u'] = 'unsigned int'
+
 # not strictly correct, but shoulld be fine fo numeric work.
 # add test somewhere to make sure long can be cast to int before using.
 num_to_c_types['l'] = 'int'

@@ -13,7 +13,6 @@ def get_wxconfig(flag):
     wxconfig = os.path.join(wx_base,'bin','wx-config')
     import commands
     res,settings = commands.getstatusoutput(wxconfig + ' --' + flag)
-    print 'wx:', flag, settings
     if res:
         msg = wxconfig + ' failed. Impossible to learn wxPython settings'
         raise RuntimeError, msg
@@ -103,12 +102,19 @@ class wx_converter(common_base_converter):
             self.include_dirs.append(os.path.join(wx_base,'lib','mswdlluh'))
             self.define_macros.append(('UNICODE', '1'))
         else:
+            # make sure the gtk files are available 
+            # ?? Do I need to link to them?
+            self.headers.append('"gdk/gdk.h"')
+            # !! This shouldn't be hard coded.
+            self.include_dirs.append("/usr/include/gtk-1.2")
+            self.include_dirs.append("/usr/include/glib-1.2")
+            self.include_dirs.append("/usr/lib/glib/include")
             cxxflags = get_wxconfig('cxxflags')
             libflags = get_wxconfig('libs') + get_wxconfig('gl-libs')
             ldflags = get_wxconfig('ldflags')
             self.extra_compile_args.extend(cxxflags)
             self.extra_link_args.extend(libflags)
-            self.extra_link_args.extend(ldflags)
+            self.extra_link_args.extend(ldflags)            
         self.support_code.append(common_info.swig_support_code)
     
     def type_match(self,value):
