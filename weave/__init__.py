@@ -28,10 +28,10 @@ def test(level=10):
     return runner
 
 def test_suite(level=1):
-    import scipy_base.testing
+    import scipy_test.testing
     try:
         import scipy.weave as this_mod
     except ImportError:
         # punt -- assume we're a stand alone package
         this_mod = weave
-    return scipy_base.testing.harvest_test_suites(this_mod,level=level)
+    return scipy_test.testing.harvest_test_suites(this_mod,level=level)

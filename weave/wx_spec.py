@@ -106,10 +106,10 @@ class wx_converter(common_base_converter):
 # this should only be enabled on machines with access to a display device
 # It'll cause problems otherwise.
 def test(level=10):
-    from scipy_base.testing import module_test
+    from scipy_test.testing import module_test
     module_test(__name__,__file__,level=level)
 
 def test_suite(level=1):
-    from scipy_base.testing import module_test_suite
+    from scipy_test.testing import module_test_suite
     return module_test_suite(__name__,__file__,level=level)
 """        

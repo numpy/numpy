@@ -22,7 +22,7 @@ def remove_whitespace(in_str):
     return out
     
 def print_assert_equal(test_string,actual,desired):
-    """this should probably be in scipy_base.testing
+    """this should probably be in scipy_test.testing
     """
     import pprint
     try:

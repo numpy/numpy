@@ -6,7 +6,7 @@ from scipy_distutils.misc_util import package_config
 
 # Enough changes to bump the number.  We need a global method for
 # versioning
-version = "0.2.3"
+version = "0.3.0.alpha"
    
 def stand_alone_package(with_dependencies = 0):
     path = get_path(__name__)
@@ -15,7 +15,7 @@ def stand_alone_package(with_dependencies = 0):
     try:
         primary =     ['weave']
         if with_dependencies:
-            dependencies= ['scipy_distutils', 'scipy_base.testing']       
+            dependencies= ['scipy_distutils','scipy_test']       
         else:
             dependencies = []    
         
