@@ -8,7 +8,52 @@ from scipy_distutils import log
 
 #install support for Numeric.pth setup
 
+def _quote_name_when_has_spaces(name):
+    if ' ' in name and name[0] not in ['"',"'"]:
+        name = '"%s"' % (name)
+    return name
+
 class install(old_install):
+
+    def run (self):
+
+        # Obviously have to build before we can install
+        if not self.skip_build:
+            self.run_command('build')
+
+        # Run all sub-commands (at least those that need to be run)
+        for cmd_name in self.get_sub_commands():
+            self.run_command(cmd_name)
+
+        if self.path_file:
+            self.create_path_file()
+
+        # write list of installed files, if requested.
+        if self.record:
+            outputs = self.get_outputs()
+            if self.root:               # strip any package prefix
+                root_len = len(self.root)
+                for counter in xrange(len(outputs)):
+                    outputs[counter] = outputs[counter][root_len:]
+            outputs = map(_quote_name_when_has_spaces,outputs)
+            self.execute(write_file,
+                         (self.record, outputs),
+                         "writing list of installed files to '%s'" %
+                         self.record)
+
+        sys_path = map(os.path.normpath, sys.path)
+        sys_path = map(os.path.normcase, sys_path)
+        install_lib = os.path.normcase(os.path.normpath(self.install_lib))
+        if (self.warn_dir and
+            not (self.path_file and self.install_path_file) and
+            install_lib not in sys_path):
+            log.debug(("modules installed to '%s', which is not in "
+                       "Python's module search path (sys.path) -- " 
+                       "you'll have to change the search path yourself"),
+                       self.install_lib)
+
+    # run ()
+
 
     def finalize_options (self):
         old_install.finalize_options(self)
