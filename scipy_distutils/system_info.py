@@ -50,8 +50,8 @@ src_dirs = /usr/local/src:/opt/src
 search_static_first = 0
 
 [fftw]
-fftw_libs = fftw, rfftw
-fftw_opt_libs = fftw_threaded, rfftw_threaded
+fftw_libs = rfftw, fftw
+fftw_opt_libs = rfftw_threaded, fftw_threaded
 # if the above aren't found, look for {s,d}fftw_libs and {s,d}fftw_opt_libs
 
 [atlas]
@@ -321,7 +321,7 @@ class system_info:
 class fftw_info(system_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['fftw','rfftw']
+    libs = ['rfftw', 'fftw']
     includes = ['fftw.h','rfftw.h']
     macros = [('SCIPY_FFTW_H',None)]
 
