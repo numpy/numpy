@@ -84,10 +84,10 @@ class test_ext_module(unittest.TestCase):
         code = """
                int b;
                b = a + 1;
-               PWOTuple returned(2);
-               returned.setItem(0,PWONumber(a));
-               returned.setItem(1,PWONumber(b));
-               return_val = returned.disOwn();
+               py::tuple returned(2);
+               returned[0] = a;
+               returned[1] = b;
+               return_val = returned.disown();
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)

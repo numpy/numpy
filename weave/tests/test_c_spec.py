@@ -272,10 +272,10 @@ class test_callable_converter(unittest.TestCase):
         # * Not sure about ref counts on search_str and sub_str.
         # * Is the Py::String necessary? (it works anyways...)
         code = """
-               PWOTuple args(2);
-               args.setItem(0,search_str);
-               args.setItem(1,sub_str);
-               return_val = PyObject_CallObject(func,args);
+               py::tuple args(2);
+               args[0] = search_str;
+               args[1] = sub_str;
+               return_val = func.call(args).disown();
                """
         actual = inline_tools.inline(code,['func','search_str','sub_str'],
                                      compiler=self.compiler,force=1)
@@ -367,7 +367,7 @@ class test_list_converter(unittest.TestCase):
         mod_name = unique_mod(test_dir,mod_name)
         mod = ext_tools.ext_module(mod_name)
         a = [1]
-        code = 'a=PWOList();'
+        code = 'a=py::list();'
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
         mod.compile(location = test_dir, compiler = self.compiler)
@@ -391,9 +391,9 @@ class test_list_converter(unittest.TestCase):
         mod = ext_tools.ext_module(mod_name)
         a = [1]
         code = """
-               a=PWOList();
+               a=py::list();
                a.append("hello");
-               return_val = a.disOwn();
+               return_val = a.disown();
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
@@ -409,7 +409,7 @@ class test_list_converter(unittest.TestCase):
         mod = ext_tools.ext_module(mod_name)
         a = range(1e6);
         code = """
-               PWONumber v = PWONumber();
+               py::number v = py::number();
                int vv, sum = 0;            
                for(int i = 0; i < a.len(); i++)
                {
@@ -480,7 +480,7 @@ class test_tuple_converter(unittest.TestCase):
         mod_name = unique_mod(test_dir,mod_name)
         mod = ext_tools.ext_module(mod_name)
         a = (1,)
-        code = 'a=PWOTuple();'
+        code = 'a=py::tuple();'
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
         mod.compile(location = test_dir, compiler = self.compiler)
@@ -504,10 +504,10 @@ class test_tuple_converter(unittest.TestCase):
         mod = ext_tools.ext_module(mod_name)
         a = (1,)
         code = """
-               a=PWOTuple(2);
-               a.setItem(0,"hello");
-               a.setItem(1,PWONone);
-               return_val = a.disOwn();
+               a=py::tuple(2);
+               a[0] = "hello";
+               a.set_item(1,py::None);
+               return_val = a.disown();
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
@@ -532,7 +532,7 @@ class test_dict_converter(unittest.TestCase):
         mod_name = unique_mod(test_dir,mod_name)
         mod = ext_tools.ext_module(mod_name)
         a = {'z':1}
-        code = 'a=PWODict();' # This just checks to make sure the type is correct
+        code = 'a=py::dict();' # This just checks to make sure the type is correct
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
         mod.compile(location = test_dir, compiler = self.compiler)
@@ -556,9 +556,9 @@ class test_dict_converter(unittest.TestCase):
         mod = ext_tools.ext_module(mod_name)
         a = {'z':1}
         code = """
-               a=PWODict();
-               a["hello"] = PWONumber(5);
-               return_val = a.disOwn();
+               a=py::dict();
+               a["hello"] = 5;
+               return_val = a.disown();
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)

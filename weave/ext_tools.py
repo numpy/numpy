@@ -115,7 +115,7 @@ class ext_function_from_specs:
 
         dict_code = "if(py_local_dict)                                  \n"   \
                     "{                                                  \n"   \
-                    "    PWODict local_dict = PWODict(py_local_dict); \n" + \
+                    "    py::dict local_dict = py::dict(py_local_dict); \n" + \
                          local_dict_code                                    + \
                     "}                                                  \n"
 

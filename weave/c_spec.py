@@ -185,27 +185,6 @@ class module_converter(common_base_converter):
         self.matching_types = [ModuleType]
 
 #----------------------------------------------------------------------------
-# Instance Converter
-#----------------------------------------------------------------------------
-class instance_converter(common_base_converter):
-    def init_info(self):
-        common_base_converter.init_info(self)
-        self.type_name = 'instance'
-        self.check_func = 'PyInstance_Check'    
-        self.matching_types = [InstanceType]
-
-#----------------------------------------------------------------------------
-# Catchall Converter
-#----------------------------------------------------------------------------
-class catchall_converter(common_base_converter):
-    def init_info(self):
-        common_base_converter.init_info(self)
-        self.type_name = 'catchall'
-        self.check_func = ''    
-    def type_match(self,value):
-        return 1
-
-#----------------------------------------------------------------------------
 # String Converter
 #----------------------------------------------------------------------------
 class string_converter(common_base_converter):
@@ -357,27 +336,26 @@ class complex_converter(scalar_converter):
 #----------------------------------------------------------------------------
 import os, c_spec # yes, I import myself to find out my __file__ location.
 local_dir,junk = os.path.split(os.path.abspath(c_spec.__file__))   
-scxx_dir = os.path.join(local_dir,'scxx')
+scxx_dir = os.path.join(local_dir,'scxx2')
 
 class scxx_converter(common_base_converter):
     def init_info(self):
         common_base_converter.init_info(self)
-        self.headers = ['"scxx/PWOBase.h"','"scxx/PWOSequence.h"',
-                        '"scxx/PWOCallable.h"','"scxx/PWOMapping.h"',
-                        '"scxx/PWOSequence.h"','"scxx/PWOMSequence.h"',
-                        '"scxx/PWONumber.h"','<iostream>']
+        self.headers = ['"scxx/object.h"','"scxx/list.h"','"scxx/tuple.h"',
+                        '"scxx/number.h"','"scxx/dict.h"','"scxx/str.h"',
+                        '"scxx/callable.h"','<iostream>']
         self.include_dirs = [local_dir,scxx_dir]
-        self.sources = [os.path.join(scxx_dir,'PWOImp.cpp'),]
+        self.sources = [os.path.join(scxx_dir,'weave_imp.cpp'),]
 
 class list_converter(scxx_converter):
     def init_info(self):
         scxx_converter.init_info(self)
         self.type_name = 'list'
         self.check_func = 'PyList_Check'    
-        self.c_type = 'PWOList'
-        self.to_c_return = 'PWOList(py_obj)'
+        self.c_type = 'py::list'
+        self.to_c_return = 'py::list(py_obj)'
         self.matching_types = [ListType]
-        # ref counting handled by PWOList
+        # ref counting handled by py::list
         self.use_ref_count = 0
 
 class tuple_converter(scxx_converter):
@@ -385,23 +363,51 @@ class tuple_converter(scxx_converter):
         scxx_converter.init_info(self)
         self.type_name = 'tuple'
         self.check_func = 'PyTuple_Check'    
-        self.c_type = 'PWOTuple'
-        self.to_c_return = 'PWOTuple(py_obj)'
+        self.c_type = 'py::tuple'
+        self.to_c_return = 'py::tuple(py_obj)'
         self.matching_types = [TupleType]
-        # ref counting handled by PWOTuple
+        # ref counting handled by py::tuple
         self.use_ref_count = 0
 
 class dict_converter(scxx_converter):
     def init_info(self):
         scxx_converter.init_info(self)
-        self.support_code.append("#define PWODict PWOMapping")
         self.type_name = 'dict'
         self.check_func = 'PyDict_Check'    
-        self.c_type = 'PWODict'
-        self.to_c_return = 'PWODict(py_obj)'
+        self.c_type = 'py::dict'
+        self.to_c_return = 'py::dict(py_obj)'
         self.matching_types = [DictType]
-        # ref counting handled by PWODict
+        # ref counting handled by py::dict
         self.use_ref_count = 0
+
+#----------------------------------------------------------------------------
+# Instance Converter
+#----------------------------------------------------------------------------
+class instance_converter(scxx_converter):
+    def init_info(self):
+        scxx_converter.init_info(self)
+        self.type_name = 'instance'
+        self.check_func = 'PyInstance_Check'    
+        self.c_type = 'py::object'
+        self.to_c_return = 'py::object(py_obj)'
+        self.matching_types = [InstanceType]
+        # ref counting handled by py::object
+        self.use_ref_count = 0
+
+#----------------------------------------------------------------------------
+# Catchall Converter
+#----------------------------------------------------------------------------
+class catchall_converter(scxx_converter):
+    def init_info(self):
+        scxx_converter.init_info(self)
+        self.type_name = 'catchall'
+        self.check_func = ''    
+        self.c_type = 'py::object'
+        self.to_c_return = 'py::object(py_obj)'
+        # ref counting handled by py::object
+        self.use_ref_count = 0
+    def type_match(self,value):
+        return 1
 
 #----------------------------------------------------------------------------
 # Callable Converter
@@ -413,9 +419,9 @@ class callable_converter(scxx_converter):
         self.check_func = 'PyCallable_Check'    
         # probably should test for callable classes here also.
         self.matching_types = [FunctionType,MethodType,type(len)]
-        self.c_type = 'PWOCallable'
-        self.to_c_return = 'PWOCallable(py_obj)'
-        # ref counting handled by PWOCallable
+        self.c_type = 'py::callable'
+        self.to_c_return = 'py::callable(py_obj)'
+        # ref counting handled by py::callable
         self.use_ref_count = 0
 
 def test(level=10):
