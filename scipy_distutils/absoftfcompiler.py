@@ -7,6 +7,7 @@ import sys
 
 from cpuinfo import cpu
 from fcompiler import FCompiler, dummy_fortran_file
+from misc_util import cyg2win32
 
 class AbsoftFCompiler(FCompiler):
 
@@ -19,7 +20,7 @@ class AbsoftFCompiler(FCompiler):
 
     executables = {
         'version_cmd'  : ["f77", "-V -c %(fname)s.f -o %(fname)s.o" \
-                          % {'fname':dummy_fortran_file()}],
+                          % {'fname':cyg2win32(dummy_fortran_file())}],
         'compiler_f77' : ["f77"],
         'compiler_fix' : ["f90"],
         'compiler_f90' : ["f90"],

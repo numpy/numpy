@@ -9,6 +9,11 @@ if sys.version[:3]<='2.1':
     util_get_platform = util.get_platform
     util.get_platform = lambda : util_get_platform().replace(' ','_')
 
+def cyg2win32(path)
+    if sys.platform=='cygwin' and path.startswith('/cygdrive'):
+        path = path[10] + ':' + os.path.normcase(path[11:])
+    return path
+
 # Hooks for colored terminal output.
 # See also http://www.livinglogic.de/Python/ansistyle
 def terminal_has_colors():
