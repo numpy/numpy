@@ -85,6 +85,9 @@ public:
   object(int val) { 
     _obj = _own = PyInt_FromLong((int)val); 
   };
+  object(unsigned int val) { 
+    _obj = _own = PyLong_FromUnsignedLong(val); 
+  };  
   object(long val) { 
     _obj = _own = PyInt_FromLong((int)val); 
   };  
@@ -562,6 +565,8 @@ public:
 
   //-------------------------------------------------------------------------
   // string representations
+  //
+  // !! Should these return std::string instead?
   //-------------------------------------------------------------------------
   object repr() const {    
     object result = PyObject_Repr(_obj);
@@ -775,7 +780,15 @@ public:
   // iter methods
   // !! NOT TESTED
   //-------------------------------------------------------------------------
-          
+  
+  //-------------------------------------------------------------------------
+  //  iostream operators
+  //-------------------------------------------------------------------------
+  friend std::ostream& operator <<(std::ostream& os, py::object& obj);
+  //-------------------------------------------------------------------------
+  //  refcount utilities 
+  //-------------------------------------------------------------------------
+        
   PyObject* disown() {
     _own = 0;
     return _obj;
@@ -785,6 +798,12 @@ public:
     return _obj->ob_refcnt;
   }
 };
+
+std::ostream& operator <<(std::ostream& os, py::object& obj)
+{
+    os << (std::string)obj.repr();
+    return os;
+}
 
 //---------------------------------------------------------------------------
 // keyed_ref
@@ -834,5 +853,6 @@ public:
   }
 };
 } // namespace
+
 
 #endif // !defined(OBJECT_H_INCLUDED_)
