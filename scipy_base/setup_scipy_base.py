@@ -5,7 +5,8 @@ from glob import glob
 import shutil
 
 def configuration(parent_package='',parent_path=None):
-    from scipy_distutils.system_info import get_info, NumericNotFoundError
+    from scipy_distutils.system_info import get_info, NumericNotFoundError,\
+         dict_append
     from scipy_distutils.core import Extension
     from scipy_distutils.misc_util import get_path,default_config_dict,dot_join
     from scipy_distutils.misc_util import get_path,default_config_dict,\
@@ -44,14 +45,15 @@ def configuration(parent_package='',parent_path=None):
     else:
         libraries.append('m')
         define_macros.append(('HAVE_INVERSE_HYPERBOLIC',None))
-
-    ext = Extension(dot_join(package,'fastumath'),sources,
-                    define_macros = define_macros,
-                    undef_macros = undef_macros,
-                    libraries = libraries,
-                    extra_compile_args=extra_compile_args,
-                    depends = umath_c_sources)
-    config['ext_modules'].append(ext)
+    ext_args = {'name':dot_join(package,'fastumath'),
+                 'sources':sources,
+                 'define_macros': define_macros,
+                 'undef_macros': undef_macros,
+                 'libraries': libraries,
+                 'extra_compile_args': extra_compile_args,
+                 'depends': umath_c_sources}
+    dict_append(ext_args,**numpy_info)
+    config['ext_modules'].append(Extension(**ext_args))
  
     # _compiled_base module
     sources = ['_compiled_base.c']
@@ -59,9 +61,11 @@ def configuration(parent_package='',parent_path=None):
     depends = ['_scipy_mapping.c','_scipy_number.c']
     depends = [os.path.join(local_path,x) for x in depends]
 
-    ext = Extension(dot_join(package,'_compiled_base'),sources,
-                    depends = depends)
-    config['ext_modules'].append(ext)
+    ext_args = {'name':dot_join(package,'_compiled_base'),
+                'sources':sources,
+                'depends':depends}
+    dict_append(ext_args,**numpy_info)
+    config['ext_modules'].append(Extension(**ext_args))
 
     # display_test module
     sources = [os.path.join(local_path,'src','display_test.c')]
