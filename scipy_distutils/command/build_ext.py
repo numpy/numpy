@@ -146,6 +146,7 @@ class build_ext (old_build_ext):
             kws = {'depends':ext.depends}
         else:
             kws = {}
+
         c_objects = self.compiler.compile(c_sources,
                                           output_dir=self.build_temp,
                                           macros=macros,
