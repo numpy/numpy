@@ -433,7 +433,7 @@ class scipy_installation(package_installation):
             file_time = os.stat(file)[stat.ST_MTIME]        
             fyear,fmonth,fday = time.localtime(file_time)[:3]
             year,month,day = time.localtime()[:3]
-            if year == year and month == month and day == day:
+            if fyear == year and fmonth == month and fday == day:
                 up_to_date = 1
                 self.logger.info("Repository file up to date: %s" % file)
         except OSError, msg:
@@ -753,8 +753,8 @@ def full_scipy_build(build_dir = '.',
 
 if __name__ == '__main__':
     build_dir = '/tmp/scipy_test'
-    level = 1
-    """
+    level = 10
+
     full_scipy_build(build_dir = build_dir,
                      test_level = level,
                      python_version  = '2.2.1',
@@ -762,6 +762,7 @@ if __name__ == '__main__':
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
+    """
     # an older python
     full_scipy_build(build_dir = build_dir,
                      test_level = level,
@@ -779,9 +780,10 @@ if __name__ == '__main__':
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
-
+    """
     # This fails because multiarray doesn't have 
     # arange defined.
+    """
     full_scipy_build(build_dir = build_dir,
                      test_level = level,
                      python_version  = '2.1.3',
@@ -797,7 +799,7 @@ if __name__ == '__main__':
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
-    """
+
     full_scipy_build(build_dir = build_dir,
                      test_level = level,
                      python_version  = '2.1.3',
@@ -805,4 +807,4 @@ if __name__ == '__main__':
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
-
+    """
