@@ -13,12 +13,24 @@ __all__ = ['ppimport','ppimport_attr']
 import os
 import sys
 import string
-try:
-    from distutils.sysconfig import get_config_vars
-    so_ext = get_config_vars('SO')[0] or ''
-except ImportError:
-    #XXX: implement hooks for .sl, .dll to fully support Python 1.5
-    so_ext = '.so'
+import types
+
+def _get_so_ext(_cache={}):
+    so_ext = _cache.get('so_ext')
+    if so_ext is None:
+        if sys.platform[:5]=='linux':
+            so_ext = '.so'
+        else:
+            try:
+                # if possible, avoid expensive get_config_vars call
+                from distutils.sysconfig import get_config_vars
+                so_ext = get_config_vars('SO')[0] or ''
+            except ImportError:
+                #XXX: implement hooks for .sl, .dll to fully support
+                #     Python 1.5.x   
+                so_ext = '.so'
+        _cache['so_ext'] = so_ext
+    return so_ext
 
 def _get_frame(level=0):
     try:
@@ -33,23 +45,43 @@ def _get_frame(level=0):
 def ppimport_attr(module, name):
     """ ppimport(module, name) is 'postponed' getattr(module, name)
     """
-    if not isinstance(module, _ModuleLoader):
-        return getattr(module, name)
-    return _AttrLoader(module, name)
+    if isinstance(module, _ModuleLoader):
+        return _AttrLoader(module, name)
+    return getattr(module, name)
 
 class _AttrLoader:
     def __init__(self, module, name):
-        self._ppimport_attr_module = module
-        self._ppimport_attr_name = name
-        self._ppimport_attr = None       
+        self.__dict__['_ppimport_attr_module'] = module
+        self.__dict__['_ppimport_attr_name'] = name
+
+    def _ppimport_attr_getter(self):
+        attr = getattr(self.__dict__['_ppimport_attr_module'],
+                       self.__dict__['_ppimport_attr_name'])
+        self.__dict__ = attr.__dict__
+        self.__dict__['_ppimport_attr'] = attr
+        return attr
 
     def __getattr__(self, name):
-        a = self._ppimport_attr
-        if a is None:
-            a = getattr(self.__dict__['_ppimport_attr_module'],
-                        self.__dict__['_ppimport_attr_name'])
-            self._ppimport_attr = a
-        return getattr(a, name)
+        try:
+            attr = self.__dict__['_ppimport_attr']
+        except KeyError:
+            attr = self._ppimport_attr_getter()
+        return getattr(attr, name)
+
+    def __repr__(self):
+        if self.__dict__.has_key('_ppimport_attr'):
+            return repr(self._ppimport_attr)
+        module = self.__dict__['_ppimport_attr_module']
+        name = self.__dict__['_ppimport_attr_name']
+        return "<attribute %s of %s>" % (`name`,`module`)
+
+    __str__ = __repr__
+
+    # For function and class attributes.
+    def __call__(self, *args, **kwds):
+        return self._ppimport_attr(*args,**kwds)
+
+
 
 def _is_local_module(p_dir,name,suffices):
     base = os.path.join(p_dir,name)
@@ -77,14 +109,18 @@ def ppimport(name):
         p_dir = p_path[0]
         fullname = p_name + '.' + name
 
-    try:
-        return sys.modules[fullname]
-    except KeyError:
-        pass
+    module = sys.modules.get(fullname)
+    if module is not None:
+        return module
 
-    # name is local python or extension module
+    # name is local python module
     location = _is_local_module(p_dir, name,
-                                ('.py','.pyc','.pyo',so_ext,'module'+so_ext))
+                                ('.py','.pyc','.pyo'))
+    if location is None:
+        # name is local extension module
+        so_ext = _get_so_ext()
+        location = _is_local_module(p_dir, name,
+                                    (so_ext,'module'+so_ext))
     if location is None:
         # name is local package
         location = _is_local_module(os.path.join(p_dir, name), '__init__',
@@ -114,14 +150,30 @@ class _ModuleLoader:
     def _ppimport_importer(self):
         name = self.__name__
         module = sys.modules[name]
+        assert module is self,`module`
         if module is self:
             # uninstall loader
             del sys.modules[name]
-        #print 'Executing postponed import for %s' %(name)
-        module = __import__(name,None,None,['*'])
+            #print 'Executing postponed import for %s' %(name)
+            module = __import__(name,None,None,['*'])
+        assert isinstance(module,types.ModuleType)
         self.__dict__ = module.__dict__
         self.__dict__['_ppimport_module'] = module
         return module
+
+    def __setattr__(self, name, value):
+        try:
+            module = self.__dict__['_ppimport_module']
+        except KeyError:
+            module = self._ppimport_importer()
+        return setattr(module, name, value)
+
+    def __getattr__(self, name):
+        try:
+            module = self.__dict__['_ppimport_module']
+        except KeyError:
+            module = self._ppimport_importer()
+        return getattr(module, name)
 
     def __repr__(self):
         if self.__dict__.has_key('_ppimport_module'):
@@ -133,12 +185,3 @@ class _ModuleLoader:
 
     __str__ = __repr__
 
-    def __setattr__(self, name, value):
-        module = self.__dict__.get('_ppimport_module',
-                                   self._ppimport_importer())
-        return setattr(module, name, value)
-
-    def __getattr__(self, name):
-        module = self.__dict__.get('_ppimport_module',
-                                   self._ppimport_importer())
-        return getattr(module, name)
