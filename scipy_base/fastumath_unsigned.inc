@@ -1509,7 +1509,7 @@ static void LONG_power(char **args, int *dimensions, int *steps, void *func) {
 }
 
 static void UBYTE_absolute(char **args, int *dimensions, int *steps, void *func)
-{int i; char *i1=args[0], *op=args[1]; for (i=0; i<*dimensions; i++, i+=steps[0], op+=steps[1]) {*((unsigned char *)op) = *((unsigned char *)i1);}}
+{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char *)op) = *((unsigned char *)i1);}}
 static void SBYTE_absolute(char **args, int *dimensions, int *steps, void *func) 
 {int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((signed char *)op)=*((signed char *)i1)<0 ? -*((signed char *)i1) : *((signed char *)i1);}}
 static void SHORT_absolute(char **args, int *dimensions, int *steps, void *func) 

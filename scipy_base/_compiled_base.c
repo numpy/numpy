@@ -1,6 +1,7 @@
 
 #include "Python.h"
 #include "Numeric/arrayobject.h"
+#include "Numeric/ufuncobject.h"
 
 
 static char doc_base_unique[] = "Return the unique elements of a 1-D sequence.";
@@ -678,24 +679,32 @@ static PyObject *map_PyFunc(PyObject *self, PyObject *args)
   return out;
 }
 
-/* Update Numeric object behavior */
+/*  CODE BELOW is used to Update Numeric object behavior */
 
 /* A copy of the original PyArrayType structure is kept and can be used
    to restore the original Numeric behavior at any time. 
 */
 
 static PyTypeObject BackupPyArray_Type;
+static PyTypeObject BackupPyUFunc_Type;
 static PyNumberMethods backup_array_as_number;
 static PySequenceMethods backup_array_as_sequence;
 static PyMappingMethods backup_array_as_mapping;
 static PyBufferProcs backup_array_as_buffer;
 static int scipy_numeric_stored = 0;
 
+#ifndef PyUFunc_Type
+#define PyUFunc_Type PyUfunc_Type   /* fix bug in Numeric < 23.3 */
+#endif
+
 /* make sure memory copy is going on with this */
 void scipy_numeric_save() {
 
     /* we just save copies of things we may alter.  */
     if (!scipy_numeric_stored) {
+        BackupPyUFunc_Type.tp_name = (PyUFunc_Type).tp_name;
+        BackupPyUFunc_Type.tp_call = (PyUFunc_Type).tp_call;
+
 	BackupPyArray_Type.tp_name = (PyArray_Type).tp_name;
 	memcpy(&backup_array_as_number, (PyArray_Type).tp_as_number,
 	       sizeof(PyNumberMethods));
@@ -712,7 +721,10 @@ void scipy_numeric_save() {
 void scipy_numeric_restore() {
 
     /* restore only what was copied */
-    if (scipy_numeric_stored) {       
+    if (scipy_numeric_stored) {
+	(PyUFunc_Type).tp_name = BackupPyUFunc_Type.tp_name;
+	(PyUFunc_Type).tp_call = BackupPyUFunc_Type.tp_call;
+
 	(PyArray_Type).tp_name = BackupPyArray_Type.tp_name;
 	memcpy((PyArray_Type).tp_as_number, &backup_array_as_number, 
 	       sizeof(PyNumberMethods));
@@ -725,7 +737,8 @@ void scipy_numeric_restore() {
     }
 }
 
-static const char *_scipystr = "array (scipy)";
+static const char *_scipy_array_str = "array (scipy)";
+static const char *_scipy_ufunc_str = "ufunc (scipy)";
 
 #define MAX_DIMS 30
 #include "_scipy_mapping.c"
@@ -736,14 +749,70 @@ static PyMappingMethods scipy_array_as_mapping = {
     (objobjargproc)scipy_array_ass_sub,	        /*mp_ass_subscript*/
 };
 
+#define MAX_ARGS 10
+#include "_scipy_number.c"
+
+static PyNumberMethods array_as_number = {
+    (binaryfunc)scipy_array_add,                  /*nb_add*/
+    (binaryfunc)scipy_array_subtract,             /*nb_subtract*/
+    (binaryfunc)scipy_array_multiply,             /*nb_multiply*/
+    (binaryfunc)scipy_array_divide,               /*nb_divide*/
+    (binaryfunc)scipy_array_remainder,            /*nb_remainder*/
+    (binaryfunc)scipy_array_divmod,               /*nb_divmod*/
+    (ternaryfunc)scipy_array_power,               /*nb_power*/
+    (unaryfunc)scipy_array_negative,  
+    (unaryfunc)scipy_array_copy,                      /*nb_pos*/ 
+    (unaryfunc)scipy_array_absolute,              /*(unaryfunc)scipy_array_abs,*/
+    (inquiry)scipy_array_nonzero,                 /*nb_nonzero*/
+    (unaryfunc)scipy_array_invert,                /*nb_invert*/
+    (binaryfunc)scipy_array_left_shift,           /*nb_lshift*/
+    (binaryfunc)scipy_array_right_shift,          /*nb_rshift*/
+    (binaryfunc)scipy_array_bitwise_and,          /*nb_and*/
+    (binaryfunc)scipy_array_bitwise_xor,          /*nb_xor*/
+    (binaryfunc)scipy_array_bitwise_or,           /*nb_or*/
+    (coercion)scipy_array_coerce,                 /*nb_coerce*/
+    (unaryfunc)scipy_array_int,                   /*nb_int*/
+    (unaryfunc)scipy_array_long,                  /*nb_long*/
+    (unaryfunc)scipy_array_float,                 /*nb_float*/
+    (unaryfunc)scipy_array_oct,	            /*nb_oct*/
+    (unaryfunc)scipy_array_hex,	            /*nb_hex*/
+
+    /*This code adds augmented assignment functionality*/
+    /*that was made available in Python 2.0*/
+    (binaryfunc)scipy_array_inplace_add,          /*inplace_add*/
+    (binaryfunc)scipy_array_inplace_subtract,     /*inplace_subtract*/
+    (binaryfunc)scipy_array_inplace_multiply,     /*inplace_multiply*/
+    (binaryfunc)scipy_array_inplace_divide,       /*inplace_divide*/
+    (binaryfunc)scipy_array_inplace_remainder,    /*inplace_remainder*/
+    (ternaryfunc)scipy_array_inplace_power,       /*inplace_power*/
+    (binaryfunc)scipy_array_inplace_left_shift,   /*inplace_lshift*/
+    (binaryfunc)scipy_array_inplace_right_shift,  /*inplace_rshift*/
+    (binaryfunc)scipy_array_inplace_bitwise_and,  /*inplace_and*/
+    (binaryfunc)scipy_array_inplace_bitwise_xor,  /*inplace_xor*/
+    (binaryfunc)scipy_array_inplace_bitwise_or,   /*inplace_or*/
+
+        /* Added in release 2.2 */
+	/* The following require the Py_TPFLAGS_HAVE_CLASS flag */
+#if PY_VERSION_HEX >= 0x02020000
+	(binaryfunc)scipy_array_floor_divide,          /*nb_floor_divide*/
+	(binaryfunc)scipy_array_true_divide,           /*nb_true_divide*/
+	(binaryfunc)scipy_array_inplace_floor_divide,  /*nb_inplace_floor_divide*/
+	(binaryfunc)scipy_array_inplace_true_divide,   /*nb_inplace_true_divide*/
+#endif
+};
+
+
 void scipy_numeric_alter() {
     
-    (PyArray_Type).tp_name = _scipystr;
+    (PyArray_Type).tp_name = _scipy_array_str;
     memcpy((PyArray_Type).tp_as_mapping, &scipy_array_as_mapping,
 	   sizeof(PyMappingMethods));
+
+    (PyUFunc_Type).tp_call = (ternaryfunc)scipy_ufunc_call;
+    (PyUFunc_Type).tp_name = _scipy_ufunc_str;
 }
 
-static char numeric_alter_doc[] = "alter_numeric() update the behavior of Numeric objects.\n\n  1. Change coercion rules so that multiplying by a scalar does not upcast.\n  2. Add index and mask slicing capability to Numeric arrays.\n  3. (Someday) Speed up inner loops.\n\nThis call changes the behavior for ALL Numeric arrays currently defined\n  and to be defined in the future.  The old behavior can be restored for ALL\n  arrays using numeric_restore().";
+static char numeric_alter_doc[] = "alter_numeric() update the behavior of Numeric objects.\n\n  1. Change coercion rules so that multiplying by a scalar does not upcast.\n  2. Add index and mask slicing capability to Numeric arrays.\n  3. (Someday) Speed enhancements.\n\nThis call changes the behavior for ALL Numeric arrays currently defined\n  and to be defined in the future.  The old behavior can be restored for ALL\n  arrays using numeric_restore().";
 
 static PyObject *numeric_behavior_alter(PyObject *self, PyObject *args)
 {
@@ -756,13 +825,12 @@ static PyObject *numeric_behavior_alter(PyObject *self, PyObject *args)
     return Py_None;
 }
 
-static char numeric_restore_doc[] = "restore_numeric() restore the default behavior of Numeric objects.\n\n  SEE slter_numeric.\n";
+static char numeric_restore_doc[] = "restore_numeric() restore the default behavior of Numeric objects.\n\n  SEE alter_numeric.\n";
 
 static PyObject *numeric_behavior_restore(PyObject *self, PyObject *args)
 {
 
     if (!PyArg_ParseTuple ( args, "")) return NULL;
-    
     scipy_numeric_restore();
     Py_INCREF(Py_None);
     return Py_None;
@@ -785,16 +853,24 @@ static struct PyMethodDef methods[] = {
 /* Initialization function for the module (*must* be called initArray) */
 
 DL_EXPORT(void) init_compiled_base(void) {
-    PyObject *m, *d, *s;
+    PyObject *m, *d, *s, *fm=NULL, *fd=NULL;
   
     /* Create the module and add the functions */
     m = Py_InitModule("_compiled_base", methods); 
 
     /* Import the array and ufunc objects */
     import_array();
+    import_ufunc();
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
+
+    /* Import Fastumath module */
+    fm = PyImport_ImportModule("fastumath");
+    fd = PyModule_GetDict(fm);
+    scipy_SetNumericOps(fd);
+    Py_XDECREF(fm);
+    Py_XDECREF(fd);
 
     s = PyString_FromString("0.2");
     PyDict_SetItemString(d, "__version__", s);
@@ -804,4 +880,3 @@ DL_EXPORT(void) init_compiled_base(void) {
     if (PyErr_Occurred())
 	Py_FatalError("can't initialize module _compiled_base");
 }
-
