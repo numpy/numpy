@@ -1358,17 +1358,20 @@ class vast_fortran_compiler(fortran_compiler_base):
     def get_linker_so(self):
         return [self.f90_compiler,'-shared']
 
-
+#http://www.compaq.com/fortran/docs/
 class compaq_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Compaq'
-    ver_match = r'Compaq Fortran (?P<version>[^\s]*)'
+    ver_match = r'Compaq Fortran (?P<version>[^\s]*).*'
 
     def __init__(self, fc=None, f90c=None, verbose=0):
         fortran_compiler_base.__init__(self, verbose=verbose)
 
         if fc is None:
-            fc = 'fort'
+            if sys.platform[:5]=='linux':
+                fc = 'fort'
+            else:
+                fc = 'f90'
         if f90c is None:
             f90c = fc
 
@@ -1376,19 +1379,16 @@ class compaq_fortran_compiler(fortran_compiler_base):
         self.f90_compiler = f90c
 
         switches = ' -assume no2underscore -nomixed_str_len_arg '
-        debug = ' -g -check_bounds '
+        debug = ' -g -check bounds '
 
-        self.f77_switches = self.f90_switches = switches
+        self.f77_switches = ' -f77rtl -fixed ' + switches
+        self.f90_switches = switches
         self.f77_debug = self.f90_debug = debug
         self.f77_opt = self.f90_opt = self.get_opt()
 
-        self.f90_fixed_switch = '  ' # XXX: need fixed format flag
+        self.f90_fixed_switch = ' -fixed '
 
-        # XXX: uncomment if required
-        #self.libraries = ' -lUfor -lfor -lFutil -lcpml -lots -lc '
-
-        # XXX: fix the version showing flag
-        self.ver_cmd = self.f77_compiler+' -V '
+        self.ver_cmd = self.f77_compiler+' -version'
 
     def get_opt(self):
         opt = ' -O4 -align dcommons -arch host -assume bigarrays'\
@@ -1396,7 +1396,10 @@ class compaq_fortran_compiler(fortran_compiler_base):
         return opt
 
     def get_linker_so(self):
-        return [self.f77_compiler,'-shared']
+        if sys.platform[:5]=='linux':
+            return [self.f77_compiler,'-shared']
+        else:
+            return [self.f77_compiler,'-shared','-Wl,-expect_unresolved,*']
 
 #http://www.compaq.com/fortran
 class compaq_visual_fortran_compiler(fortran_compiler_base):
