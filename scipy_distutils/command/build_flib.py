@@ -343,14 +343,14 @@ class fortran_compiler_base(CCompiler):
 
         pp_opts = gen_preprocess_options(self.macros,self.include_dirs)
 
-        switches = switches + string.join(pp_opts,' ')
+        switches = switches + ' ' + string.join(pp_opts,' ')
 
         module_switch = self.build_module_switch(module_dirs)
         file_pairs = self.source_and_object_pairs(source_files,temp_dir)
         object_files = []
         for source,object in file_pairs:
             if distutils.dep_util.newer(source,object):
-                cmd =  compiler + ' ' + switches + \
+                cmd =  compiler + ' ' + switches + ' '+\
                        module_switch + \
                        ' -c ' + source + ' -o ' + object 
                 print cmd
