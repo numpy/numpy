@@ -1,3 +1,12 @@
+""" Auto test tools for SciPy
+
+    Do not run this as root!  If you enter something
+    like /usr as your test directory, it'll delete
+    /usr/bin, usr/lib, etc.  So don't do it!!!
+    
+    
+    Author: Eric Jones (eric@enthought.com)
+"""
 from distutils import file_util
 from distutils import dir_util
 from distutils.errors import DistutilsFileError
@@ -15,6 +24,8 @@ elif sys.platform == 'win32':
 else:
     local_repository = "/home/shared/tarballs"
 
+local_mail_server = "enthought.com"
+
 python_ftp_url = "ftp://ftp.python.org/pub/python"
 numeric_url = "http://prdownloads.sourceforge.net/numpy"
 f2py_url = "http://cens.ioc.ee/projects/f2py2e/2.x"
@@ -23,6 +34,7 @@ blas_url = "http://www.netlib.org/blas"
 lapack_url = "http://www.netlib.org/lapack"
 #atlas_url = "http://prdownloads.sourceforge.net/math-atlas"
 atlas_url = "http://www.scipy.org/Members/eric"
+
 
 #-----------------------------------------------------------------------------
 # Generic installation class. 
@@ -457,6 +469,16 @@ def copy_tree(src,dst,logger=None):
         logger.exception("Copy Failed")        
         raise
 
+def remove_tree(directory,logger=None):
+    if not logger:
+        logger = logging
+    logger.info("Removing directory tree %s" % directory)        
+    try:
+        dir_util.remove_tree(directory)
+    except Exception, e:     
+        logger.exception("Remove failed")        
+        raise
+
 def remove_file(file,logger=None):
     if not logger:
         logger = logging
@@ -564,15 +586,40 @@ def run_command(cmd,directory='.',logger=None,silent_failure = 0):
         logger.info(msg)    
         if status and not silent_failure:
             logger.error('command failed with status: %d' % status)    
-        #if text:
-        #    logger.info('Command Output:\n'+text)
+        if text  and not silent_failure:
+            logger.info('Command Output:\n'+text)
     finally:
         unchange_dir(logger)
     if status:
-        raise ValueError,'Command had non-zero exit status'
+        raise ValueError,status
     return text            
 
+def mail_report(from_addr,to_addr,subject,mail_server,
+                build_log, test_results,info):
+    
+    msg = ''
+    msg = msg + 'To: %s\n'   % to_addr
+    msg = msg + 'Subject: %s\n' % subject
+    msg = msg + '\r\n\r\n'
+
+    for k,v in info.items():   
+        msg = msg + '%s: %s\n' % (k,v)
+    msg = msg + test_results    
+    msg = msg + '-----------------------------\n' 
+    msg = msg + '--------  BUILD LOG   -------\n' 
+    msg = msg + '-----------------------------\n' 
+    msg = msg + build_log
+    print msg
+    
+    # mail results
+    import smtplib 
+    server = smtplib.SMTP(mail_server)    
+    server.sendmail(from_addr, to_addr, msg)
+    server.quit()
+    
+
 def full_scipy_build(build_dir = '.',
+                     test_level = 10,
                      python_version  = '2.2.1',
                      numeric_version = '21.0',
                      f2py_version    = '2.13.175-1250',
@@ -581,7 +628,14 @@ def full_scipy_build(build_dir = '.',
     
     # for now the atlas version is ignored.  Only the 
     # binaries for RH are supported at the moment.
-    
+
+    build_info = {'python_version' : python_version,
+                  'test_level'     : test_level,
+                  'numeric_version': numeric_version,
+                  'f2py_version'   : f2py_version,
+                  'atlas_version'  : atlas_version,
+                  'scipy_version'  : scipy_version}
+                    
     dst_dir = os.path.join(build_dir,sys.platform)
 
     logger = logging.Logger("SciPy Test")
@@ -594,101 +648,99 @@ def full_scipy_build(build_dir = '.',
     stderr = logging.StreamHandler()
     stderr.setFormatter(fmt)
     logger.addHandler(stderr)
-    
-    python = python_installation(version=python_version,
-                                 logger = logger,
-                                 dst_dir = dst_dir)
-    python.install()
-    
-    python_name = python.get_exe_name()
 
-    numeric = numeric_installation(version=numeric_version,
-                                   dst_dir = dst_dir,
-                                   logger = logger,
-                                   python_exe=python_name)
-    numeric.install()
-    
-    f2py =  f2py_installation(version=f2py_version,
-                              logger = logger,
-                              dst_dir = dst_dir,
-                              python_exe=python_name)
-    f2py.install()                                
+    try:
+        try:    
+        
+            # before doing anything, we need to wipe the 
+            # /bin, /lib, /man, and /include directories
+            # in dst_dir.  Don't run as root.
+            change_dir(dst_dir   , logger)
+            remove_tree('bin'    , logger)
+            remove_tree('lib'    , logger)
+            remove_tree('man'    , logger)
+            remove_tree('include', logger)
+            unchange_dir(logger)
+            
+            python = python_installation(version=python_version,
+                                         logger = logger,
+                                         dst_dir = dst_dir)
+            python.install()
+            
+            python_name = python.get_exe_name()
+        
+            numeric = numeric_installation(version=numeric_version,
+                                           dst_dir = dst_dir,
+                                           logger = logger,
+                                           python_exe=python_name)
+            numeric.install()
+            
+            f2py =  f2py_installation(version=f2py_version,
+                                      logger = logger,
+                                      dst_dir = dst_dir,
+                                      python_exe=python_name)
+            f2py.install()                                
+        
+            # download files don't have a version specified    
+            #lapack =  lapack_installation(version='',
+            #                              dst_dir = dst_dir
+            #                              python_exe=python_name)
+            #lapack.install()                                
+        
+            # download files don't have a version specified    
+            #blas =  blas_installation(version='',
+            #                          logger = logger,
+            #                          dst_dir = dst_dir,
+            #                          python_exe=python_name)
+            #blas.install()                                
+            
+            # ATLAS
+            atlas =  atlas_installation(version=atlas_version,
+                                        logger = logger,
+                                        dst_dir = dst_dir,
+                                        python_exe=python_name)
+            atlas.install()
+            
+            # version not currently used -- need to fix this.
+            scipy =  scipy_installation(version=scipy_version,
+                                        logger = logger,
+                                        dst_dir = dst_dir,
+                                        python_exe=python_name)
+            scipy.install()                                
+        
+            # The change to tmp makes sure there isn't a scipy directory in 
+            # the local scope.
+            # All tests are run.
+            cmd = python_name +' -c "import sys,scipy;suite=scipy.test(%d);"'\
+                                % test_level
+            test_results = run_command(cmd, logger=logger,
+                                       directory = tempfile.gettempdir())
+            build_info['results'] = 'test completed (check below for pass/fail)'
+        except Exception, msg:
+            test_results = ''
+            build_info['results'] = 'build failed: %s' % msg
+    finally:    
+        to_addr = "scipy-testlog@scipy.org"
+        from_addr = "scipy-test@enthought.com"
+        subject = '%s,py%s,num%s,scipy%s' % (sys.platform,python_version,
+                                            numeric_version,scipy_version) 
+        build_log = log_stream.getvalue()
+        mail_report(from_addr,to_addr,subject,local_mail_server,
+                    build_log,test_results,build_info)
 
-    # download files don't have a version specified    
-    #lapack =  lapack_installation(version='',
-    #                              dst_dir = dst_dir
-    #                              python_exe=python_name)
-    #lapack.install()                                
-
-    # download files don't have a version specified    
-    #blas =  blas_installation(version='',
-    #                          logger = logger,
-    #                          dst_dir = dst_dir,
-    #                          python_exe=python_name)
-    #blas.install()                                
-    
-    # ATLAS
-    atlas =  atlas_installation(version=atlas_version,
-                                logger = logger,
-                                dst_dir = dst_dir,
-                                python_exe=python_name)
-    atlas.install()
-    
-    # version not currently used -- need to fix this.
-    scipy =  scipy_installation(version=scipy_version,
-                                logger = logger,
-                                dst_dir = dst_dir,
-                                python_exe=python_name)
-    scipy.install()                                
-
-    # The change to tmp makes sure there isn't a scipy directory in 
-    # the local scope.
-    # All tests are run.
-    lvl = 1
-    cmd = python_name + ' -c "import sys,scipy;suite=scipy.test(%d);"' % lvl
-    test_results = run_command(cmd, logger=logger,
-                               directory = tempfile.gettempdir())
-    
-    vitals = '%s,py%s,num%s,scipy%s' % (sys.platform,python_version,
-                                        numeric_version,scipy_version) 
-                                 
-    msg =       'From: scipy-test@enthought.com\n'
-    msg = msg + 'To: knucklehead@enthought.com\n'
-    msg = msg + 'Subject: %s\n'                     % vitals
-    msg = msg + '\r\n\r\n'
-    msg = msg + 'platform:                  %s,%s\n' % (sys.platform,os.name)
-    msg = msg + 'python_version:            %s\n' % python_version
-    msg = msg + 'numeric_version:           %s\n' % numeric_version
-    msg = msg + 'f2py_version:              %s\n' % f2py_version
-    msg = msg + 'atlas_version(hard coded): %s\n' % atlas_version
-    msg = msg + 'scipy_version:             %s\n' % scipy_version
-    msg = msg + test_results    
-    msg = msg + '-----------------------------\n' 
-    msg = msg + '--------  BUILD LOG   -------\n' 
-    msg = msg + '-----------------------------\n' 
-    msg = msg + log_stream.getvalue()
-    # mail results
-    import smtplib 
-    toaddrs = "eric@enthought.com"
-    fromaddr = "eric@enthought.com"
-    server = smtplib.SMTP('enthought.com')    
-    server.sendmail(fromaddr, toaddrs, msg)
-    server.quit()
-    print msg
-
-    
 if __name__ == '__main__':
     build_dir = '/tmp/scipy_test'
-
+    level = 10
     full_scipy_build(build_dir = build_dir,
+                     test_level = level,
                      python_version  = '2.2.1',
                      numeric_version = '21.0',
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
-
     # an older python
     full_scipy_build(build_dir = build_dir,
+                     test_level = level,
                      python_version  = '2.1.3',
                      numeric_version = '21.0',
                      f2py_version    = '2.13.175-1250',
@@ -697,29 +749,36 @@ if __name__ == '__main__':
 
     # an older numeric
     full_scipy_build(build_dir = build_dir,
+                     test_level = level,
                      python_version  = '2.1.3',
                      numeric_version = '20.3',
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
 
+    # This fails because multiarray doesn't have 
+    # arange defined.
     full_scipy_build(build_dir = build_dir,
+                     test_level = level,
                      python_version  = '2.1.3',
-                     numeric_version = '20.0',
+                     numeric_version = '20.0.0',
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
 
     full_scipy_build(build_dir = build_dir,
+                     test_level = level,
                      python_version  = '2.1.3',
-                     numeric_version = '19.0',
+                     numeric_version = '19.0.0',
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
 
     full_scipy_build(build_dir = build_dir,
+                     test_level = level,
                      python_version  = '2.1.3',
-                     numeric_version = '18.0',
+                     numeric_version = '18.4.1',
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
+
