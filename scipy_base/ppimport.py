@@ -174,14 +174,21 @@ class _ModuleLoader:
 
     def _ppimport_importer(self):
         name = self.__name__
-        module = sys.modules[name]
+	try:
+	    module = sys.modules[name]
+	except KeyError:
+	    raise ImportError,self.__dict__.get('_ppimport_exc_value')
         assert module is self,`module`
 
         # uninstall loader
         del sys.modules[name]
 
         #print 'Executing postponed import for %s' %(name)
-        module = __import__(name,None,None,['*'])
+	try:
+	    module = __import__(name,None,None,['*'])
+	except ImportError:
+	    self.__dict__['_ppimport_exc_value'] = str(sys.exc_value)
+	    raise
         assert isinstance(module,types.ModuleType),`module`
 
         self.__dict__ = module.__dict__
