@@ -10,8 +10,14 @@ from exec_command import find_executable
 class GnuFCompiler(FCompiler):
 
     compiler_type = 'gnu'
-    version_pattern = r'GNU Fortran (\(GCC\)|\(GCC.*\)|)\s*'\
+    version_pattern = r'GNU Fortran ((\(GCC\)|\(GCC .*(\)\)|\)))|)\s*'\
                       '(?P<version>[^\s*\)]+)'
+
+    # 'g77 --version' results
+    # SunOS: GNU Fortran (GCC 3.2) 3.2 20020814 (release)
+    # Debian: GNU Fortran (GCC) 3.3.3 20040110 (prerelease) (Debian)
+    #         GNU Fortran 0.5.25 20010319 (prerelease)
+    # Redhat: GNU Fortran (GCC 3.2.2 20030222 (Red Hat Linux 3.2.2-5)) 3.2.2 20030222 (Red Hat Linux 3.2.2-5)
 
     for fc_exe in map(find_executable,['g77','f77']):
         if os.path.isfile(fc_exe):
