@@ -722,17 +722,11 @@ class hpux_fortran_compiler(fortran_compiler_base):
 class gnu_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Gnu'
-    #ver_match = r'g77 version (?P<version>[^\s*]*)'
     ver_match = r'GNU Fortran (?P<version>[^\s*]*)'
+    gcc_lib_dir = None
     
     def __init__(self, fc = None, f90c = None):
         fortran_compiler_base.__init__(self)
-        if sys.platform == 'win32':
-            self.libraries = ['gcc','g2c']
-            self.library_dirs = self.find_lib_directories()
-        else:
-            # On linux g77 does not need lib_directories to be specified.
-            self.libraries = ['g2c']
 
         if fc is None:
             fc = 'g77'
@@ -741,14 +735,26 @@ class gnu_fortran_compiler(fortran_compiler_base):
 
         self.f77_compiler = fc
 
+        gcc_lib_dir = self.find_lib_directories()
+        if gcc_lib_dir and \
+           os.path.isfile(os.path.join(gcc_lib_dir[0],'libg2c-pic.a')):
+            g2c = 'g2c-pic'
+        else:
+            g2c = 'g2c'
+        if sys.platform == 'win32':
+            self.libraries = ['gcc',g2c]
+            self.library_dirs = gcc_lib_dir
+        else:
+            # On linux g77 does not need lib_directories to be specified.
+            self.libraries = [g2c]
+
         switches = ' -Wall -fno-second-underscore '
 
         if os.name != 'nt':
-            switches = switches + ' -fpic '
+            switches = switches + ' -fPIC '
 
         self.f77_switches = switches
-        #self.ver_cmd = self.f77_compiler + ' -v '
-        self.ver_cmd = self.f77_compiler + ' --version'
+        self.ver_cmd = self.f77_compiler + ' --version '
 
         self.f77_opt = self.get_opt()
 
@@ -757,10 +763,9 @@ class gnu_fortran_compiler(fortran_compiler_base):
         cpu = cpuinfo.cpuinfo()
         opt = ' -O3 -funroll-loops '
         
-        # only check for more optimization if g77 can handle
-        # it.
+        # only check for more optimization if g77 can handle it.
         if self.get_version():
-            if self.version[0]=='3': # is g77 3.x.x
+            if self.version >= '0.5.26': # is gcc >= 3.x.x
                 if cpu.is_AthlonK6():
                     opt = opt + ' -march=k6 '
                 elif cpu.is_AthlonK7():
@@ -778,6 +783,9 @@ class gnu_fortran_compiler(fortran_compiler_base):
         return opt
         
     def find_lib_directories(self):
+        if self.gcc_lib_dir is not None:
+            return self.gcc_lib_dir
+        self.gcc_lib_dir = []
         lib_dir = []
         match = r'Reading specs from (.*)/specs'
 
@@ -786,8 +794,9 @@ class gnu_fortran_compiler(fortran_compiler_base):
         if not exit_status:
             m = re.findall(match,out_text)
             if m:
-                lib_dir= m #m[0]          
-        return lib_dir
+                assert len(m)==1,`m`
+                self.gcc_lib_dir = m
+        return self.gcc_lib_dir
 
     def get_linker_so(self):
         # win32 linking should be handled by standard linker
