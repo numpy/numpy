@@ -24,5 +24,5 @@ def test():
 
 def test_suite():
     import scipy_test
-    import compiler
-    return scipy_test.harvest_test_suites(compiler)
+    import weave
+    return scipy_test.harvest_test_suites(weave)
