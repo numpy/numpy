@@ -10,7 +10,7 @@ from types import *
 from distutils.command.build_clib import build_clib as old_build_clib
 from distutils.command.build_clib import show_compilers
 
-from scipy_distutils import log
+from scipy_distutils import log, misc_util
 from distutils.dep_util import newer_group
 from scipy_distutils.misc_util import filter_sources, has_f_sources
 
@@ -71,7 +71,19 @@ class build_clib(old_build_clib):
     def run(self):
         if not self.libraries:
             return
+
+        # Make sure that library sources are complete.
+        # XXX: btw, support for building build_clib sources is not
+        #      implemented in build_src yet, I'll do it as soon as
+        #      such a need first raises [pearu].
+        for (lib_name, build_info) in self.libraries:
+            if not misc_util.all_strings(build_info.get('sources',[])):
+                raise TypeError,'Library "%s" sources contains unresolved'\
+                      ' items (call build_src before built_clib).' % (lib_name)
+
         old_build_clib.run(self)   # sets self.compiler
+        log.info(misc_util.compiler_to_string(self.compiler))
+
         if self.have_f_sources():
             from scipy_distutils.fcompiler import new_fcompiler
             self.fcompiler = new_fcompiler(compiler=self.fcompiler,
@@ -79,8 +91,9 @@ class build_clib(old_build_clib):
                                            dry_run=self.dry_run,
                                            force=self.force)
             self.fcompiler.customize(self.distribution)
+            log.info(misc_util.compiler_to_string(self.fcompiler))
 
-        #XXX: C++ linker support, see build_ext2.py
+        #XXX: C++ linker support, see build_ext.py
 
         self.build_libraries2(self.libraries)
         return

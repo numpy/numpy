@@ -47,18 +47,7 @@ import tempfile
 
 ############################################################
 
-try:
-    import logging
-    log = logging.getLogger('exec_command')
-except ImportError:
-    class logging:
-        DEBUG = 0
-        def info(self,message): print 'info:',message
-        def warn(self,message): print 'warn:',message
-        def debug(self,message): print 'debug:',message
-        def basicConfig(self): pass
-        def setLevel(self,level): pass
-    log = logging = logging()
+from log import _global_log as log
 
 ############################################################
 
@@ -190,8 +179,8 @@ def exec_command( command,
     On NT, DOS systems the returned status is correct for external commands.
     Wild cards will not work for non-posix systems or when use_shell=0.
     """
-    log.info('exec_command(%r,%s)' % (command,\
-                ','.join(['%s=%r'%kv for kv in env.items()])))
+    log.debug('exec_command(%r,%s)' % (command,\
+         ','.join(['%s=%r'%kv for kv in env.items()])))
 
     if use_tee is None:
         use_tee = os.name=='posix'
@@ -543,8 +532,8 @@ def test_execute_in(**kws):
     f.write('Hello')
     f.close()
 
-    s,o = exec_command('%s -c "print \'Ignore following IOError:\',open(%r,\'r\')"' \
-                       % (pythonexe,fn),**kws)
+    s,o = exec_command('%s -c "print \'Ignore the following IOError:\','\
+                       'open(%r,\'r\')"' % (pythonexe,fn),**kws)
     assert s and o!='',(s,o)
     s,o = exec_command('%s -c "print open(%r,\'r\').read()"' % (pythonexe,fn),
                        execute_in = tmpdir,**kws)
@@ -562,8 +551,6 @@ else:
 ############################################################
 
 if __name__ == "__main__":
-    logging.basicConfig()
-    log.setLevel(logging.DEBUG)
 
     test_splitcmdline()
     test(use_tee=0)

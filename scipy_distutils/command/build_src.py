@@ -10,7 +10,7 @@ from distutils.util import convert_path
 from distutils.dep_util import newer_group, newer
 
 from scipy_distutils import log
-from scipy_distutils.misc_util import fortran_ext_match
+from scipy_distutils.misc_util import fortran_ext_match, all_strings
 
 
 class build_src(build_ext.build_ext):
@@ -85,11 +85,14 @@ class build_src(build_ext.build_ext):
         return
 
     def build_extension_sources(self, ext):
+        sources = list(ext.sources)
+
+        log.info('building "%s" sources' % (ext.name))
+
         fullname = self.get_ext_fullname(ext.name)
+
         modpath = fullname.split('.')
         package = '.'.join(modpath[0:-1])
-
-        sources = list(ext.sources)
 
         sources = self.generate_sources(sources, ext)
 
@@ -128,10 +131,10 @@ class build_src(build_ext.build_ext):
         for func in func_sources:
             source = func(extension, build_dir)
             if type(source) is type([]):
-                [log.info('  adding %s to sources.' % (s)) for s in source]
+                [log.info("  adding '%s' to sources." % (s)) for s in source]
                 new_sources.extend(source)
             else:
-                log.info('  adding %s to sources.' % (source))
+                log.info("  adding '%s' to sources." % (source))
                 new_sources.append(source)
         return new_sources
 
@@ -170,21 +173,21 @@ class build_src(build_ext.build_ext):
                            ' '+`name`+' but expected '+`ext_name`
                     target_file = os.path.join(target_dir,name+'module.c')
                 else:
-                    log.info('  source %s does not exist: skipping f2py\'ing.' \
-                             % (source))
+                    log.debug('  source %s does not exist: skipping f2py\'ing.' \
+                              % (source))
                     name = ext_name
                     skip_f2py = 1
                     target_file = os.path.join(target_dir,name+'module.c')
                     if not os.path.isfile(target_file):
-                        log.info('  target %s does not exist:\n   '\
-                                 'Assuming %smodule.c was generated with '\
-                                 '"build_src --inplace" command.' \
-                                 % (target_file, name))
+                        log.debug('  target %s does not exist:\n   '\
+                                  'Assuming %smodule.c was generated with '\
+                                  '"build_src --inplace" command.' \
+                                  % (target_file, name))
                         target_dir = os.path.dirname(base)
                         target_file = os.path.join(target_dir,name+'module.c')
                         assert os.path.isfile(target_file),`target_file`+' missing'
-                        log.info('   Yes! Using %s as up-to-date target.' \
-                                 % (target_file))
+                        log.debug('   Yes! Using %s as up-to-date target.' \
+                                  % (target_file))
                 target_dirs.append(target_dir)
                 f2py_sources.append(source)
                 f2py_targets[source] = target_file
@@ -210,11 +213,11 @@ class build_src(build_ext.build_ext):
             depends = [source] + extension.depends
             if (self.force or newer_group(depends, target_file,'newer')) \
                    and not skip_f2py:
-                log.info("  f2py'ing %s", source)
+                log.info("f2py: %s" % (source))
                 import f2py2e
                 f2py2e.run_main(f2py_options + ['--build-dir',target_dir,source])
             else:
-                log.info("  skipping '%s' f2py interface (up-to-date)" % (source))
+                log.debug("  skipping '%s' f2py interface (up-to-date)" % (source))
         else:
             #XXX TODO: --inplace support for sdist command
             target_dir = self.build_src
@@ -224,23 +227,24 @@ class build_src(build_ext.build_ext):
             if (self.force or newer_group(depends, target_file, 'newer')) \
                    and not skip_f2py:
                 import f2py2e
-                log.info("  f2py'ing fortran files for '%s'" % (target_file))
+                log.info("f2py:> %s" % (target_file))
                 self.mkpath(target_dir)
                 f2py2e.run_main(f2py_options + ['--lower',
                                                 '--build-dir',target_dir]+\
                                 ['-m',ext_name]+f_sources)
             else:
-                log.info("  skipping f2py fortran files for '%s' (up-to-date)" % (target_file))
+                log.debug("  skipping f2py fortran files for '%s' (up-to-date)"\
+                          % (target_file))
 
         assert os.path.isfile(target_file),`target_file`+' missing'
 
         target_c = os.path.join(self.build_src,'fortranobject.c')
         target_h = os.path.join(self.build_src,'fortranobject.h')
-        log.info('  adding %s to sources.' % (target_c))
+        log.info("  adding '%s' to sources." % (target_c))
         new_sources.append(target_c)
         if self.build_src not in extension.include_dirs:
-            log.info("  adding %s to extension '%s' include_dirs."\
-                     % (self.build_src,extension.name))
+            log.info("  adding '%s' to include_dirs." \
+                     % (self.build_src))
             extension.include_dirs.append(self.build_src)
 
         if not skip_f2py:
@@ -259,7 +263,7 @@ class build_src(build_ext.build_ext):
         for name_ext in ['-f2pywrappers.f','-f2pywrappers2.f90']:
             filename = os.path.join(target_dir,ext_name + name_ext)
             if os.path.isfile(filename):
-                log.info('  adding %s to sources.' % (filename))
+                log.info("  adding '%s' to sources." % (filename))
                 f_sources.append(filename)
 
         return new_sources + f_sources
@@ -299,21 +303,21 @@ class build_src(build_ext.build_ext):
                     target_file = os.path.join(target_dir,'%s_wrap%s' \
                                                % (name, target_ext))
                 else:
-                    log.info('  source %s does not exist: skipping swig\'ing.' \
+                    log.debug('  source %s does not exist: skipping swig\'ing.' \
                              % (source))
                     name = ext_name[1:]
                     skip_swig = 1
                     target_file = _find_swig_target(target_dir, name)
                     if not os.path.isfile(target_file):
-                        log.info('  target %s does not exist:\n   '\
-                                 'Assuming %s_wrap.{c,cpp} was generated with '\
-                                 '"build_src --inplace" command.' \
+                        log.debug('  target %s does not exist:\n   '\
+                                  'Assuming %s_wrap.{c,cpp} was generated with '\
+                                  '"build_src --inplace" command.' \
                                  % (target_file, name))
                         target_dir = os.path.dirname(base)
                         target_file = _find_swig_target(target_dir, name)
                         assert os.path.isfile(target_file),`target_file`+' missing'
-                        log.info('   Yes! Using %s as up-to-date target.' \
-                                 % (target_file))
+                        log.debug('   Yes! Using %s as up-to-date target.' \
+                                  % (target_file))
                 target_dirs.append(target_dir)
                 new_sources.append(target_file)
                 py_files.append(os.path.join(target_dir,name+'.py'))
@@ -340,10 +344,11 @@ class build_src(build_ext.build_ext):
             target = swig_targets[source]
             depends = [source] + extension.depends
             if self.force or newer_group(depends, target, 'newer'):
-                log.info("  swigging %s to %s", source, target)
+                log.info("%s: %s" % (os.path.basename(swig) \
+                                     + (is_cpp and '++' or ''), source))
                 self.spawn(swig_cmd + self.swigflags + ["-o", target, source])
             else:
-                log.info("  skipping '%s' swig interface (up-to-date)" \
+                log.debug("  skipping '%s' swig interface (up-to-date)" \
                          % (source))
 
         return new_sources + py_files

@@ -12,7 +12,8 @@ from distutils.command.build_ext import build_ext as old_build_ext
 
 from scipy_distutils.command.build_clib import get_headers,get_directories
 from scipy_distutils import misc_util, log
-from scipy_distutils.misc_util import filter_sources, has_f_sources, has_cxx_sources
+from scipy_distutils.misc_util import filter_sources, has_f_sources, \
+     has_cxx_sources
 
 class build_ext (old_build_ext):
 
@@ -32,6 +33,12 @@ class build_ext (old_build_ext):
         if not self.extensions:
             return
 
+        # Make sure that extension sources are complete.
+        for ext in self.extensions:
+            if not misc_util.all_strings(ext.sources):
+                raise TypeError,'Extension "%s" sources contains unresolved'\
+                      ' items (call build_src before built_ext).' % (ext.name)
+
         if self.distribution.has_c_libraries():
             build_clib = self.get_finalized_command('build_clib')
             self.library_dirs.append(build_clib.build_clib)
@@ -46,6 +53,7 @@ class build_ext (old_build_ext):
         save_mth = self.distribution.has_c_libraries
         self.distribution.has_c_libraries = self.distribution.return_false
         old_build_ext.run(self)   # sets self.compiler
+        log.info(misc_util.compiler_to_string(self.compiler))
         self.distribution.has_c_libraries = save_mth
         
         # Determine if Fortran compiler is needed.
@@ -80,6 +88,7 @@ class build_ext (old_build_ext):
                                            force=self.force)
             self.fcompiler.customize(self.distribution)
             self.fcompiler.customize_cmd(self)
+            log.info(misc_util.compiler_to_string(self.fcompiler))
         if need_cxx_compiler:
             c = self.compiler
             if c.compiler[0].find('gcc')>=0:

@@ -321,6 +321,13 @@ def get_f90_modules(source):
     f.close()
     return modules
 
+def all_strings(lst):
+    """ Return True if all items in lst are string objects. """
+    for item in lst:
+        if type(item) is not types.StringType:
+            return 0
+    return 1
+
 def has_f_sources(sources):
     """ Return True if sources contains Fortran files """
     for source in sources:
@@ -356,6 +363,22 @@ def filter_sources(sources):
         else:
             c_sources.append(source)            
     return c_sources, cxx_sources, f_sources, fmodule_sources
+
+def compiler_to_string(compiler):
+    props = []
+    mx = 0
+    for key in compiler.executables.keys() + \
+            ['version','libraries','library_dirs',
+             'object_switch','compile_switch']:
+        if hasattr(compiler,key):
+            v = getattr(compiler,key)
+            mx = max(mx,len(key))
+            props.append((key,`v`))
+    lines = []
+    format = '%-' +`mx+1`+ 's = %s'
+    for prop in props:
+        lines.append(format % prop)
+    return '\n'.join(lines)
 
 if __name__ == '__main__':
     print 'terminal_has_colors:',terminal_has_colors()

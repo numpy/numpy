@@ -185,10 +185,10 @@ def build_import_library():
     out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
     out_file = os.path.join(sys.prefix,'libs',out_name)
     if not os.path.isfile(lib_file):
-        log.info('Cannot build import library: "%s" not found' % (lib_file))
+        log.warn('Cannot build import library: "%s" not found' % (lib_file))
         return
     if os.path.isfile(out_file):
-        log.info('Skip building import library: "%s" exists' % (out_file))
+        log.debug('Skip building import library: "%s" exists' % (out_file))
         return
     log.info('Building import library: "%s"' % (out_file))
 

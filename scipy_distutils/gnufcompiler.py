@@ -5,7 +5,7 @@ import sys
 
 from cpuinfo import cpu
 from fcompiler import FCompiler
-from exec_command import find_executable
+from exec_command import exec_command, find_executable
 
 class GnuFCompiler(FCompiler):
 
@@ -60,8 +60,8 @@ class GnuFCompiler(FCompiler):
         return opt
 
     def get_libgcc_dir(self):
-        status, output = self.exec_command('%s -print-libgcc-file-name' \
-                                           % (self.compiler_f77[0]),use_tee=0)        
+        status, output = exec_command('%s -print-libgcc-file-name' \
+                                      % (self.compiler_f77[0]),use_tee=0)        
         if not status:
             return os.path.dirname(output)
         return

@@ -30,7 +30,6 @@ from scipy_distutils.command.config_compiler import config_fc
 import log
 from exec_command import find_executable, exec_command
 
-
 class FCompiler(CCompiler):
     """ Abstract base class to define the interface that must be implemented
     by real Fortran compiler classes.
@@ -279,7 +278,7 @@ class FCompiler(CCompiler):
             return self.version
 
         cmd = ' '.join(self.version_cmd)
-        status, output = self.exec_command(cmd,use_tee=0)
+        status, output = exec_command(cmd,use_tee=0)
         version = None
         if status in ok_status:
             m = re.match(self.version_pattern,output)
@@ -427,7 +426,7 @@ class FCompiler(CCompiler):
         if cmd.link_objects is not None:
             self.set_link_objects(cmd.link_objects)
         return
-            
+
     def dump_properties(self):
         """ Print out the attributes of a compiler instance. """
         props = []
@@ -447,23 +446,13 @@ class FCompiler(CCompiler):
             print l
         return
 
-    def exec_command(self,*args,**kws):
-        """ Return status,output of a command. """
-        quiet = kws.get('quiet',1)
-        try: del kws['quiet']
-        except KeyError: pass
-        if not quiet:
-            log.info('%s.exec_command(*%s,**%s)' % (self.__class__.__name__,
-                                                    args,kws))
-        status, output = exec_command(*args,**kws)
-        if not quiet:
-            log.info('*****status:%s\n*****output:\n%s\n*****' % (status,output))
-        return status, output
-
     def spawn(self, cmd):
-        s,o = self.exec_command(cmd)
-        assert not s,`s`
-
+        s,o = exec_command(cmd)
+        if s:
+            if type(cmd) is type([]):
+                cmd = ' '.join(cmd)
+            raise DistutilsExecError,\
+                  'Command "%s" failed with exit status %d' % (cmd, s)
 
     ###################
 
@@ -474,8 +463,6 @@ class FCompiler(CCompiler):
 
     def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
         """Compile 'src' to product 'obj'."""
-        #print self.__class__.__name__ + '._compile:',obj, src, ext, cc_args, extra_postargs, pp_opts
-
         if is_f_file(src):
             compiler = self.compiler_f77
         elif is_free_format(src):
@@ -497,13 +484,13 @@ class FCompiler(CCompiler):
         s_args = [self.compile_switch, src]
 
         command = compiler + cc_args + pp_opts + s_args + o_args + extra_postargs
-        log.info(' '.join(command))
+        log.info('%s: %s' % (os.path.basename(compiler[0]) \
+                             + (compiler is self.compiler_fix and ':fix' or ''),
+                             src))
         try:
-            s,o = self.exec_command(command)
+            self.spawn(command)
         except DistutilsExecError, msg:
             raise CompileError, msg
-        if s:
-            raise CompileError, o
 
         return
 
@@ -594,13 +581,12 @@ class FCompiler(CCompiler):
             else:
                 linker = self.linker_so[:]
             command = linker + ld_args
-            log.info(' '.join(command))
+            log.info('%s:> %s' % (os.path.basename(linker[0]),
+                                 output_filename))
             try:
-                s,o = self.exec_command(command)
+                self.spawn(command)
             except DistutilsExecError, msg:
                 raise LinkError, msg
-            if s:
-                raise LinkError, o
         else:
             log.debug("skipping %s (up-to-date)", output_filename)
         return

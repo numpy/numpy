@@ -37,7 +37,7 @@ class Log:
 
     def debug(self, msg, *args):
         self._log(DEBUG, msg, args)
-    
+
     def info(self, msg, *args):
         self._log(INFO, msg, args)
     
@@ -79,4 +79,4 @@ _global_color_map = {
     FATAL:red_text
 }
 
-set_verbosity(2)
+set_verbosity(1)
