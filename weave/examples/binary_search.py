@@ -20,34 +20,38 @@ sys.path.insert(0,'..')
 #from compiler import inline_tools
 import inline_tools
 from bisect import bisect
+import types
 
 def c_int_search(seq,t,chk=1):
     # do partial type checking in Python.
     # checking that list items are ints should happen in py_to_scalar<int>
-    if chk:
-        assert(type(t) == type(1))
-        assert(type(seq) == type([]))
+    #if chk:
+    #    assert(type(t) is int)
+    #    assert(type(seq) is list)
     code = """     
-           #line 29 "binary_search.py"
+           #line 33 "binary_search.py"
+           if (!PyList_Check(py_seq))
+               py::fail(PyExc_TypeError, "seq must be a list");
+           if (!PyInt_Check(py_t))
+               py::fail(PyExc_TypeError, "t must be an integer");               
            int val, m, min = 0; 
            int max = seq.len()- 1;
-           PyObject *py_val;
            for(;;) 
            { 
                if (max < min )
                {
-                   return_val = PyInt_FromLong(-1);
+                   return_val = -1;
                    break;
                }
                m = (min + max) / 2;
-               val = py_to_int(PyList_GetItem(py_seq,m),"val");
+               val = py_to_int(PyList_GET_ITEM(py_seq,m),"val");
                if (val < t)     
                    min = m + 1;
                else if (val > t)    
                    max = m - 1;
                else
                {
-                   return_val = PyInt_FromLong(m);
+                   return_val = m;
                    break;
                }
            }      
@@ -59,10 +63,10 @@ def c_int_search_scxx(seq,t,chk=1):
     # do partial type checking in Python.
     # checking that list items are ints should happen in py_to_scalar<int>
     if chk:
-        assert(type(t) == type(1))
-        assert(type(seq) == type([]))
+        assert(type(t) is int)
+        assert(type(seq) is list)
     code = """     
-           #line 29 "binary_search.py"
+           #line 67 "binary_search.py"
            int val, m, min = 0; 
            int max = seq.len()- 1;
            for(;;) 

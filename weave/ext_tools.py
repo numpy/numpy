@@ -307,10 +307,15 @@ class ext_module:
         
         # add internally specified macros, includes, etc. to the key words
         # values of the same names so that distutils will use them.
-        kw['define_macros'] = kw.get('define_macros',[]) + info.define_macros()
+        kw['define_macros'] = kw.get('define_macros',[]) + \
+                              info.define_macros()
         kw['include_dirs'] = kw.get('include_dirs',[]) + info.include_dirs()
         kw['libraries'] = kw.get('libraries',[]) + info.libraries()
         kw['library_dirs'] = kw.get('library_dirs',[]) + info.library_dirs()
+        kw['extra_compile_args'] = kw.get('extra_compile_args',[]) + \
+                                   info.extra_compile_args()
+        kw['extra_link_args'] = kw.get('extra_link_args',[]) + \
+                                   info.extra_link_args()
         
         file = self.generate_file(location=location)
         # This is needed so that files build correctly even when different

@@ -696,6 +696,34 @@ public:
     return lose_ref(result);
   };
 
+  object is_int() const {
+    return PyInt_Check(_obj) == 1;
+  };
+
+  object is_float() const {
+    return PyFloat_Check(_obj) == 1;
+  };
+
+  object is_complex() const {
+    return PyComplex_Check(_obj) == 1;
+  };
+  
+  object is_list() const {
+    return PyList_Check(_obj) == 1;
+  };
+  
+  object is_tuple() const {
+    return PyDict_Check(_obj) == 1;
+  };
+  
+  object is_dict() const {
+    return PyDict_Check(_obj) == 1;
+  };
+  
+  object is_string() const {
+    return PyString_Check(_obj) == 1;
+  };
+  
   //-------------------------------------------------------------------------
   // size, len, and length are all synonyms.
   // 

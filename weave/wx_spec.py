@@ -1,7 +1,23 @@
 import common_info
 from c_spec import common_base_converter
+import sys,os
 
-wx_dir = 'C:\\wx232\\include'
+# these may need user configuration.
+if sys.platform == "win32":
+    wx_base = r'c:\wxpython-2.3.3.1'
+else:
+    # probably should do some more discovery here.
+    wx_base = '/usr/lib/wxPython'
+
+def get_wxconfig(flag):
+    wxconfig = os.path.join(wx_base,'bin','wx-config')
+    import commands
+    res,settings = commands.getstatusoutput(wxconfig + ' --' + flag)
+    print 'wx:', flag, settings
+    if res:
+        msg = wxconfig + ' failed. Impossible to learn wxPython settings'
+        raise RuntimeError, msg
+    return settings.split()
 
 wx_to_c_template = \
 """
@@ -51,12 +67,48 @@ class wx_converter(common_base_converter):
         self.return_type = self.class_name + "*"
         self.to_c_return = None # not used
         self.check_func = None # not used
-        self.headers.extend(['"wx/wx.h"','<windows.h>'])
-        self.include_dirs.append(wx_dir)
-        self.define_macros.append(('wxUSE_GUI', '1'))
-        self.library_dirs.append('c:\wx232\lib')
-        self.libraries.append('gdi32')
-        self.libraries.append('wxmsw232')
+        self.headers.append('"wx/wx.h"')
+        if sys.platform == "win32":        
+            # These will be used in many cases
+            self.headers.append('<windows.h>')        
+            
+            # These are needed for linking.
+            self.libraries.extend(['kernel32','user32','gdi32','comdlg32',
+                                   'winspool', 'winmm', 'shell32', 
+                                   'oldnames', 'comctl32', 'ctl3d32',
+                                   'odbc32', 'ole32', 'oleaut32', 
+                                   'uuid', 'rpcrt4', 'advapi32', 'wsock32'])
+                                   
+            # not sure which of these macros are needed.
+            self.define_macros.append(('WIN32', '1'))
+            self.define_macros.append(('__WIN32__', '1'))
+            self.define_macros.append(('_WINDOWS', '1'))
+            self.define_macros.append(('STRICT', '1'))
+            # I think this will only work on NT/2000/XP set
+            # set to 0x0400 for earlier versions.
+            # Hmmm.  setting this breaks stuff
+            #self.define_macros.append(('WINVER', '0x0350'))
+
+            self.library_dirs.append(os.path.join(wx_base,'lib'))
+            self.include_dirs.append(os.path.join(wx_base,'include'))            
+            
+
+            # how do I discover unicode or not unicode??            
+            # non-unicode            
+            #self.libraries.append('wxmswh')
+            #self.include_dirs.append(os.path.join(wx_base,'lib','mswdllh'))
+            
+            # unicode
+            self.libraries.append('wxmswuh')
+            self.include_dirs.append(os.path.join(wx_base,'lib','mswdlluh'))
+            self.define_macros.append(('UNICODE', '1'))
+        else:
+            cxxflags = get_wxconfig('cxxflags')
+            libflags = get_wxconfig('libs') + get_wxconfig('gl-libs')
+            ldflags = get_wxconfig('ldflags')
+            self.extra_compile_args.extend(cxxflags)
+            self.extra_link_args.extend(libflags)
+            self.extra_link_args.extend(ldflags)
         self.support_code.append(common_info.swig_support_code)
     
     def type_match(self,value):

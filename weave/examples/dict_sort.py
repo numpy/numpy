@@ -18,34 +18,32 @@ sys.path.insert(0,'..')
 import inline_tools
 
 def c_sort(adict):
-    assert(type(adict) == type({}))
+    assert(type(adict) is dict)
     code = """
-           #line 21 "dict_sort.py"     
+           #line 24 "dict_sort.py" 
            py::list keys = adict.keys();
-           PyObject* py_keys = (PyObject*)keys;
-           py::list items(keys.len());
-           PyObject* py_items = (PyObject*)items;
-           keys.sort(); // surely this isn't any slower than raw API calls
+           py::list items(keys.length());
+           keys.sort(); 
            PyObject* item = NULL;
-           int N = keys.len();
+           int N = keys.length();
            for(int i = 0; i < N;i++)
            {
-              item = PyList_GET_ITEM(py_keys,i);
-              item = PyDict_GetItem(py_adict,item);
+              item = PyList_GetItem(keys,i);
+              item = PyDict_GetItem(adict,item);
               Py_XINCREF(item);
-              PyList_SetItem(py_items,i,item);              
+              PyList_SetItem(items,i,item);              
            }           
            return_val = items;
            """   
-    return inline_tools.inline(code,['adict'],verbose=1)
+    return inline_tools.inline(code,['adict'])
 
 def c_sort2(adict):
-    assert(type(adict) == type({}))
+    assert(type(adict) is dict)
     code = """
-           #line 21 "dict_sort.py"     
+           #line 44 "dict_sort.py"     
            py::list keys = adict.keys();
            py::list items(keys.len());
-           keys.sort(); // surely this isn't any slower than raw API calls
+           keys.sort(); 
            int N = keys.length();
            for(int i = 0; i < N;i++)
               items[i] = adict[keys[i]];
@@ -91,7 +89,7 @@ def sort_compare(a,n):
     for i in range(n):
         b=c_sort(a)
     t2 = time.time()
-    print ' speed in c:',(t2 - t1)    
+    print ' speed in c (Python API):',(t2 - t1)    
     print ' speed up: %3.2f' % (py/(t2-t1))
     print b[:5]
 
@@ -117,5 +115,5 @@ def setup_dict(m):
 if __name__ == "__main__":
     m = 1000
     a = setup_dict(m)
-    n = 300
+    n = 3000
     sort_compare(a,n)    

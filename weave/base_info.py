@@ -22,6 +22,8 @@ class base_info:
     _sources = []
     _define_macros = []
     _undefine_macros = []
+    _extra_compile_args = []
+    _extra_link_args = []
     compiler = ''
     def set_compiler(self,compiler):
         self.check_compiler(compiler)
@@ -52,7 +54,11 @@ class base_info:
         return self._define_macros
     def undefine_macros(self):
         return self._undefine_macros
-
+    def extra_compile_args(self):
+        return self._extra_compile_args
+    def extra_link_args(self):
+        return self._extra_link_args        
+        
 class custom_info(base_info):
     def __init__(self):
         self._warnings =[]
@@ -65,6 +71,8 @@ class custom_info(base_info):
         self._sources = []
         self._define_macros = []
         self._undefine_macros = []
+        self._extra_compile_args = []
+        self._extra_link_args = []
 
     def add_warning(self,warning):
         self._warnings.append(warning)
@@ -86,6 +94,10 @@ class custom_info(base_info):
         self._define_macros.append(define_macro)
     def add_undefine_macro(self,undefine_macro):
         self._undefine_macros.append(undefine_macro)    
+    def add_extra_compile_args(self,compile_arg):
+        return self._extra_compile_args.append(compile_arg)
+    def add_extra_link_args(self,link_arg):
+        return self._extra_link_args.append(link_arg)        
 
 class info_list(UserList.UserList):
     def get_unique_values(self,attribute):
@@ -94,7 +106,13 @@ class info_list(UserList.UserList):
             vals = eval('info.'+attribute+'()')
             all_values.extend(vals)
         return unique_values(all_values)
-    
+
+    def extra_compile_args(self):
+        return self.get_unique_values('extra_compile_args')
+    def extra_link_args(self):
+        return self.get_unique_values('extra_link_args')
+    def sources(self):
+        return self.get_unique_values('sources')    
     def define_macros(self):
         return self.get_unique_values('define_macros')
     def sources(self):

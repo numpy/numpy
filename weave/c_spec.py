@@ -85,6 +85,8 @@ class common_base_converter(base_converter):
         self.module_init_code = []
         self.warnings = []
         self.define_macros = []
+        self.extra_compile_args = []
+        self.extra_link_args = []
         self.use_ref_count = 1
         self.name = "no_name"
         self.c_type = 'PyObject*'
@@ -116,6 +118,10 @@ class common_base_converter(base_converter):
             info.add_define_macro(macro)
         for warning in self.warnings:
             info.add_warning(warning)
+        for arg in self.extra_compile_args:
+            info.add_extra_compile_args(arg)
+        for arg in self.extra_link_args:
+            info.add_extra_link_args(arg)
         return info
 
     def type_match(self,value):
