@@ -71,7 +71,7 @@ class build_ext (old_build_ext):
                 #self.compiler.libraries = self.compiler.libraries + l
                 lib_dirs = build_flib.get_fcompiler_library_dirs()
                 for lib_dir in lib_dirs:
-                    if lib_dir not in self.compiler.libraries_dirs:
+                    if lib_dir not in self.compiler.library_dirs:
                         self.compiler.libraries.append(lib_dir)
                 #self.compiler.library_dirs = self.compiler.library_dirs + l
                 
