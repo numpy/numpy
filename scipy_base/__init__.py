@@ -96,7 +96,14 @@ from scipy_base_version import scipy_base_version as __version__
 
 import Numeric
 from Numeric import *
-import fastumath
+try:
+    import fastumath
+except ImportError,mess:
+    if __file__[:22]=='scipy_base/__init__.py':
+        raise ImportError,str(mess)+\
+              "\n  scipy cannot be imported from its source directory."\
+              "\n  Change to another directory and try again."
+    raise ImportError,mess
 import limits
 
 from type_check import *
