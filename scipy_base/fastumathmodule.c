@@ -36,7 +36,10 @@ static struct PyMethodDef methods[] = {
 
 DL_EXPORT(void) initfastumath(void) {
     PyObject *m, *d, *s, *f1;
-  
+    /* MSVC compiler complained about divide by 0 when 1/0.0
+       was used.  changing it to 1.0/0.0 fixed the compile error. */    
+    double zero = 0.0;
+    
     /* Create the module and add the functions */
     m = Py_InitModule("fastumath", methods); 
 
@@ -53,14 +56,14 @@ DL_EXPORT(void) initfastumath(void) {
 
     /* Load the ufunc operators into the array module's namespace */
     InitOperators(d); 
-
+    
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(atan(1.0) * 4.0));
     Py_DECREF(s);
     PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(exp(1.0)));
     Py_DECREF(s);
-    PyDict_SetItemString(d, "PINF", s = PyFloat_FromDouble(1.0/0.0));
+    PyDict_SetItemString(d, "PINF", s = PyFloat_FromDouble(1.0/zero));
     Py_DECREF(s);
-    PyDict_SetItemString(d, "NINF", s = PyFloat_FromDouble(-1.0/0.0));
+    PyDict_SetItemString(d, "NINF", s = PyFloat_FromDouble(-1.0/zero));
     Py_DECREF(s);
     PyDict_SetItemString(d, "PZERO", s = PyFloat_FromDouble(0.0));
     Py_DECREF(s);
