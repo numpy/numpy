@@ -6,7 +6,7 @@ from scipy_distutils.misc_util import package_config
 
 # Enough changes to bump the number.  We need a global method for
 # versioning
-version = "0.3.0"
+version = "0.3.2"
    
 def stand_alone_package(with_dependencies = 0):
     path = get_path(__name__)
