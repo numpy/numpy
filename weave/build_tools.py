@@ -30,7 +30,16 @@ old_init_posix = distutils.sysconfig._init_posix
 def _init_posix():
     old_init_posix()
     ld = distutils.sysconfig._config_vars['LDSHARED']
-    distutils.sysconfig._config_vars['LDSHARED'] = ld.replace('gcc','g++')
+    #distutils.sysconfig._config_vars['LDSHARED'] = ld.replace('gcc','g++')
+    # FreeBSD names gcc as cc, so the above find and replace doesn't work.    
+    # So, assume first entry in ld is the name of the linker -- gcc or cc or 
+    # whatever.  This is a sane assumption, correct?
+    # If the linker is gcc, set it to g++
+    link_cmds = ld.split()    
+    if gcc_exists(link_cmds[0]):
+        link_cmds[0] = 'g++'
+        ld = ' '.join(link_cmds)
+        distutils.sysconfig._config_vars['LDSHARED'] = ld   
 
 distutils.sysconfig._init_posix = _init_posix    
 # end force g++
@@ -258,14 +267,15 @@ def choose_compiler(compiler_name=''):
                 compiler_name = 'unix'                    
     return compiler_name
     
-def gcc_exists():
+def gcc_exists(name = 'gcc'):
     """ Test to make sure gcc is found 
        
         Does this return correct value on win98???
     """
     result = 0
+    cmd = '%s -v' % name
     try:
-        w,r=os.popen4('gcc -v')
+        w,r=os.popen4(cmd)
         w.close()
         str_result = r.read()
         #print str_result
@@ -276,7 +286,7 @@ def gcc_exists():
         # the path variable. and will occasionlly mess things up
         # so much that gcc is lost in the path. (Occurs in test
         # scripts)
-        result = not os.system('gcc -v')
+        result = not os.system(cmd)
     return result
 
 def msvc_exists():
