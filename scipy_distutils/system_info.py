@@ -1052,7 +1052,7 @@ class numpy_info(system_info):
             return
         info = {}
         macros = [(self.modulename.upper()+'_VERSION',
-                   '"%s"' % (module.__version__))]
+                   '"\\"%s\\""' % (module.__version__))]
 ##         try:
 ##             macros.append(
 ##                 (self.modulename.upper()+'_VERSION_HEX',
