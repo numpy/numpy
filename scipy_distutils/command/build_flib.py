@@ -330,7 +330,8 @@ class fortran_compiler_base(CCompiler):
     object_switch = ' -o '
     lib_prefix = 'lib'
     lib_suffix = '.a'
-    lib_ar = 'ar -curs '
+    lib_ar = 'ar -cur '
+    lib_ranlib = 'ranlib '
 
     def __init__(self,verbose=0,dry_run=0,force=0):
         # Default initialization. Constructors of derived classes MUST
@@ -421,7 +422,6 @@ class fortran_compiler_base(CCompiler):
         return self.f_compile(self.f77_compiler,switches,
                               source_files, module_dirs,temp_dir)
 
-
     def build_module_switch(self, module_dirs):
         return ''
 
@@ -434,10 +434,11 @@ class fortran_compiler_base(CCompiler):
             cmd = '%s%s %s' % (self.lib_ar,lib_file,objects)
             print yellow_text(cmd)
             os.system(cmd)
-            # `ranlib' is equivalent to `ar -s'
-            #cmd = 'ranlib %s ' % lib_file 
-            #print yellow_text(cmd)
-            #os.system(cmd)
+            if self.lib_ranlib:
+                # Digital compiler does not have ranlib (?).
+                cmd = '%s %s' %(self.lib_ranlib,lib_file)
+                print yellow_text(cmd)
+                os.system(cmd)
 
     def build_library(self,library_name,source_list,module_dirs=None,
                       temp_dir = ''):
@@ -1050,6 +1051,7 @@ class digital_fortran_compiler(fortran_compiler_base):
     lib_prefix = ''
     lib_suffix = '.lib'
     lib_ar = 'lib.exe /OUT:'
+    lib_ranlib = ''
 
     def __init__(self, fc = None, f90c = None):
         fortran_compiler_base.__init__(self)
