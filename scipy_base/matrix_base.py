@@ -10,7 +10,7 @@ from Numeric import *
 from fastumath import *
 from type_check import isscalar
 from index_tricks import mgrid,r_,c_
-# Elementary Matrices
+# Elementary matrices
 
 # zeros is from matrixmodule in C
 # ones is from Numeric.py

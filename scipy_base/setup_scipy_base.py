@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-import os
+import os, sys
 from glob import glob
 from scipy_distutils.core import Extension
 from scipy_distutils.misc_util import get_path, default_config_dict,dot_join
+import shutil
 
 def configuration(parent_package=''):
     parent_path = parent_package
@@ -20,11 +21,19 @@ def configuration(parent_package=''):
     config['package_dir']['scipy_base.tests'] = test_path
 
     # fastumath module
-    sources = ['fastumathmodule.c']
+    sources = ['fastumathmodule.c','isnan.c']
     sources = [os.path.join(local_path,x) for x in sources]
     ext = Extension('scipy_base.fastumath',sources,libraries=[])
     config['ext_modules'].append(ext)
-    
+
+    # Test to see if big or little-endian machine and get correct default
+    #   mconf.h module.
+    if sys.byteorder == "little":
+        print "### Little Endian detected ####"
+        shutil.copy2(os.path.join(local_path,'mconf_lite_LE.h'),os.path.join(local_path,'mconf_lite.h'))
+    else:
+        print "### Big Endian detected ####"
+        shutil.copy2(os.path.join(local_path,'mconf_lite_BE.h'),os.path.join(local_path,'mconf_lite.h'))
 
     return config
 

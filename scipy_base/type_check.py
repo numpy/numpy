@@ -5,18 +5,19 @@ from fastumath import *
 
 import limits
 
-# For now, we'll use Tim Peter's IEEE module for NaN, Inf, -Inf comparison
-# stuff.  Perhaps move to cephes in the future??
-from ieee_754 import PINF,MINF,NAN
-
-__all__ = ['ScalarType','array_iscomplex','array_isreal','imag','iscomplex',
+__all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isnan','isinf','isfinite',
            'isreal','isscalar','nan_to_num','real','real_if_close',
-           'typename']
+           'typename','cast']
 
 ScalarType = [types.IntType, types.LongType, types.FloatType, types.ComplexType]
 
-toChar = lambda x: Numeric.array(x, Numeric.Character)
+try:
+   Char = Numeric.Character
+except AttributeError:
+   Char = 'c'
+
+toChar = lambda x: Numeric.array(x, Char)
 toInt8 = lambda x: Numeric.array(x, Numeric.Int8)# or use variable names such as Byte
 toInt16 = lambda x: Numeric.array(x, Numeric.Int16)
 toInt32 = lambda x: Numeric.array(x, Numeric.Int32)
@@ -66,29 +67,29 @@ def iscomplex(x):
 def isreal(x):
     return imag(x) == Numeric.zeros(asarray(x).shape)
 
-def array_iscomplex(x):
+def iscomplexobj(x):
     return asarray(x).typecode() in ['F', 'D']
 
-def array_isreal(x):
+def isrealobj(x):
     return not asarray(x).typecode() in ['F', 'D']
 
 #-----------------------------------------------------------------------------
 
-def isnan(val):
-    # fast, but apparently not portable (according to notes by Tim Peters)
-    #return val != val
-    # very slow -- should really use cephes methods or *something* different
-    import ieee_754
-    vals = ravel(val)
-    if array_iscomplex(vals):
-        r = array(map(ieee_754.isnan,real(vals)))        
-        i = array(map(ieee_754.isnan,imag(vals)))
-        results = Numeric.logical_or(r,i)
-    else:        
-        results = array(map(ieee_754.isnan,vals))
-    if isscalar(val):
-        results = results[0]
-    return results
+##def isnan(val):
+##    # fast, but apparently not portable (according to notes by Tim Peters)
+##    #return val != val
+##    # very slow -- should really use cephes methods or *something* different
+##    import ieee_754
+##    vals = ravel(val)
+##    if array_iscomplex(vals):
+##        r = array(map(ieee_754.isnan,real(vals)))        
+##        i = array(map(ieee_754.isnan,imag(vals)))
+##        results = Numeric.logical_or(r,i)
+##    else:        
+##        results = array(map(ieee_754.isnan,vals))
+##    if isscalar(val):
+##        results = results[0]
+##    return results
 
 def isposinf(val):
     # complex not handled currently (and potentially ambiguous)
@@ -98,22 +99,23 @@ def isposinf(val):
 def isneginf(val):
     # complex not handled currently (and potentially ambiguous)
     #return Numeric.logical_and(isinf(val),val < 0)
-    return val == MINF
+    return val == NINF
     
-def isinf(val):
-    return Numeric.logical_or(isposinf(val),isneginf(val))
+##def isinf(val):
+##    return Numeric.logical_or(isposinf(val),isneginf(val))
 
-def isfinite(val):
-    vals = asarray(val)
-    if array_iscomplex(vals):
-        r = isfinite(real(vals))
-        i = isfinite(imag(vals))
-        results = Numeric.logical_and(r,i)
-    else:    
-        fin = Numeric.logical_not(isinf(val))
-        an = Numeric.logical_not(isnan(val))
-        results = Numeric.logical_and(fin,an)
-    return results        
+##def isfinite(val):
+##    vals = asarray(val)
+##    if iscomplexobj(vals):
+##        r = isfinite(real(vals))
+##        i = isfinite(imag(vals))
+##        results = Numeric.logical_and(r,i)
+##    else:    
+##        fin = Numeric.logical_not(isinf(val))
+##        an = Numeric.logical_not(isnan(val))
+##        results = Numeric.logical_and(fin,an)
+##    return results        
+
 def nan_to_num(x):
     # mapping:
     #    NaN -> 0

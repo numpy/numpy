@@ -57,19 +57,19 @@ class test_isreal(unittest.TestCase):
         res = isreal(z)
         assert_array_equal(res,[0,1,1])
 
-class test_array_iscomplex(unittest.TestCase):
+class test_iscomplexobj(unittest.TestCase):
     def check_basic(self):
         z = array([-1,0,1])
-        assert(not array_iscomplex(z))
+        assert(not iscomplexobj(z))
         z = array([-1j,0,-1])
-        assert(array_iscomplex(z))
+        assert(iscomplexobj(z))
 
-class test_array_isreal(unittest.TestCase):
+class test_isrealobj(unittest.TestCase):
     def check_basic(self):
         z = array([-1,0,1])
-        assert(array_isreal(z))
+        assert(isrealobj(z))
         z = array([-1j,0,-1])
-        assert(not array_isreal(z))
+        assert(not isrealobj(z))
 
 class test_isnan(unittest.TestCase):
     def check_goodvalues(self):
@@ -178,12 +178,12 @@ class test_real_if_close(unittest.TestCase):
     def check_basic(self):
         a = rand(10)
         b = real_if_close(a+1e-15j)
-        assert(array_isreal(b))
+        assert(isrealobj(b))
         assert_array_equal(a,b)
         b = real_if_close(a+1e-7j)
-        assert(array_iscomplex(b))
+        assert(iscomplexobj(b))
         b = real_if_close(a+1e-7j,tol=1e-6)
-        assert(array_isreal(b))
+        assert(isrealobj(b))
 
 
 #-----------------------------------------------------------------------------
@@ -195,8 +195,8 @@ def test_suite(level=1):
         suites.append( unittest.makeSuite(test_real_if_close,'check_') )
         suites.append( unittest.makeSuite(test_real,'check_') )
         suites.append( unittest.makeSuite(test_imag,'check_') )
-        suites.append( unittest.makeSuite(test_array_iscomplex,'check_') )
-        suites.append( unittest.makeSuite(test_array_isreal,'check_') )        
+        suites.append( unittest.makeSuite(test_iscomplexobj,'check_') )
+        suites.append( unittest.makeSuite(test_isrealobj,'check_') )        
         suites.append( unittest.makeSuite(test_iscomplex,'check_') )
         suites.append( unittest.makeSuite(test_isreal,'check_') )    
         suites.append( unittest.makeSuite(test_isnan,'check_') )

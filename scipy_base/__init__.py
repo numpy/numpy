@@ -12,13 +12,17 @@ from index_tricks import *
 from function_base import *
 from shape_base import *
 from matrix_base import *
+from transform_base import *
 
 from polynomial import *
 from scimath import *
 
 # needs fastumath
-Inf = inf = Numeric.array(1e308)**10
-NaN = nan = Numeric.array(0.0) / Numeric.array(0.0)
+Inf = inf = fastumath.PINF
+try:
+    NaN = nan = fastumath.NAN
+except AttributeError:
+    NAN = nan = array(0.0)/array(0.0)
 
 
 #---- testing ----#
@@ -33,9 +37,8 @@ def test_suite(level=1):
     import scipy_base.testing
     import scipy_base
     this_mod = scipy_base
-    # ieee_754 gets tested in the type_check module.
     # testing is the module that actually does all the testing...
-    ignore = ['ieee_754','testing']
+    ignore = ['testing']
     return scipy_base.testing.harvest_test_suites(this_mod,ignore = ignore,
                                                   level=level)
 

@@ -4,12 +4,12 @@
 #include "Numeric/ufuncobject.h"
 #include "abstract.h"
 #include <math.h>
+#include "mconf_lite.h"
 
 /* Fast umath module whose functions do not check for range and domain errors.
 
-   Replacement for umath
+   Replacement for umath + additions for isnan, isfinite, and isinf
  */
-
 
 #ifndef CHAR_BIT
 #define CHAR_BIT 8
@@ -37,8 +37,121 @@ extern double modf (double, double *);
 #endif
 
 #ifndef M_PI
-#define M_PI 3.14159265359
+#define M_PI 3.1415926535897931
 #endif
+
+
+#define ABS(x) ((x) < 0 ? -(x) : (x))
+
+/* isnan and isinf and isfinite functions */
+static void FLOAT_isnan(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op) = (unsigned char) ABS(isnan((double)(*((float *)i1))));
+    }
+}
+
+static void DOUBLE_isnan(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op) = (unsigned char) ABS(isnan((double)(*((double *)i1))));
+    }
+}
+
+static void CFLOAT_isnan(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op) = (unsigned char) isnan((double)((float *)i1)[0]) || isnan((double)((float *)i1)[1]);
+    }
+}
+
+static void CDOUBLE_isnan(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op) = (unsigned char) isnan((double)((double *)i1)[0]) || isnan((double)((double *)i1)[1]);
+    }
+}
+
+
+static void FLOAT_isinf(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op) = (unsigned char) !(isfinite((double)(*((float *)i1))) || isnan((double)(*((float *)i1))));
+    }
+}
+
+static void DOUBLE_isinf(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op)= (unsigned char) !(isfinite((double)(*((double *)i1))) || isnan((double)(*((double *)i1))));
+    }
+}
+
+static void CFLOAT_isinf(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op)= (unsigned char) !((isfinite((double)(((float *)i1)[0])) && isfinite((double)(((float *)i1)[1]))) || isnan((double)(((float *)i1)[0])) || isnan((double)(((float *)i1)[1])));
+    }
+}
+
+static void CDOUBLE_isinf(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op)= (unsigned char) !((isfinite((double)(((double *)i1)[0])) && isfinite((double)(((double *)i1)[1]))) || isnan((double)(((double *)i1)[0])) || isnan((double)(((double *)i1)[1])));
+    }
+}
+
+
+static void FLOAT_isfinite(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op) = (unsigned char) isfinite((double)(*((float *)i1)));
+    }
+}
+
+static void DOUBLE_isfinite(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op) = (unsigned char) isfinite((double)(*((double *)i1)));
+    }
+}
+
+static void CFLOAT_isfinite(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op) = (unsigned char) isfinite((double)((float *)i1)[0]) && isfinite((double)((float *)i1)[1]);
+    }
+}
+
+static void CDOUBLE_isfinite(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for (i=0; i < n; i++, i1+=is1, op+=os) {
+	*((unsigned char *)op) = (unsigned char) isfinite((double)((double *)i1)[0]) && isfinite((double)((double *)i1)[1]);
+    }
+}
+
+static PyUFuncGenericFunction isnan_functions[] = {FLOAT_isnan, DOUBLE_isnan, CFLOAT_isnan, CDOUBLE_isnan, NULL};
+static PyUFuncGenericFunction isinf_functions[] = {FLOAT_isinf, DOUBLE_isinf, CFLOAT_isinf, CDOUBLE_isinf, NULL};
+static PyUFuncGenericFunction isfinite_functions[] = {FLOAT_isfinite, DOUBLE_isfinite, CFLOAT_isfinite, CDOUBLE_isfinite, NULL};
+
+static char isinf_signatures[] = { PyArray_FLOAT, PyArray_UBYTE, PyArray_DOUBLE, PyArray_UBYTE, PyArray_CFLOAT, PyArray_UBYTE,  PyArray_CDOUBLE, PyArray_UBYTE, };
+
+static void * isnan_data[] = {(void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL};
+static void * isinf_data[] = {(void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL};
+static void * isfinite_data[] = {(void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL};
+
 
 #if !defined(HAVE_INVERSE_HYPERBOLIC)
 static double acosh(double x)
@@ -347,6 +460,7 @@ static long powll(long x, long n, int nbits)
     }
     return r;
 }
+
 
 static void UBYTE_add(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
@@ -1058,343 +1172,404 @@ static void SBYTE_greater(char **args, int *dimensions, int *steps, void *func) 
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((signed char *)i1) > *((signed char *)i2);
+	*((unsigned char *)op)=*((signed char *)i1) > *((signed char *)i2);
     }
 }
 static void SHORT_greater(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((short *)i1) > *((short *)i2);
+	*((unsigned char *)op)=*((short *)i1) > *((short *)i2);
     }
 }
 static void INT_greater(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((int *)i1) > *((int *)i2);
+	*((unsigned char *)op)=*((int *)i1) > *((int *)i2);
     }
 }
 static void LONG_greater(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((long *)i1) > *((long *)i2);
+	*((unsigned char *)op)=*((long *)i1) > *((long *)i2);
     }
 }
 static void FLOAT_greater(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((float *)i1) > *((float *)i2);
+	*((unsigned char *)op)=*((float *)i1) > *((float *)i2);
     }
 }
 static void DOUBLE_greater(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((double *)i1) > *((double *)i2);
+	*((unsigned char *)op)=*((double *)i1) > *((double *)i2);
     }
 }
+
+/* complex numbers are compared by there real parts. */
+static void CFLOAT_greater(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((unsigned char *)op)= ((float *)i1)[0] > ((float *)i2)[0];
+    }
+}
+static void CDOUBLE_greater(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((unsigned char *)op)= ((double *)i1)[0] > ((double *)i2)[0];
+    }
+}
+
 static void UBYTE_greater_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((unsigned char *)i1) >= *((unsigned char *)i2);
+	*((unsigned char *)op)=*((unsigned char *)i1) >= *((unsigned char *)i2);
     }
 }
 static void SBYTE_greater_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((signed char *)i1) >= *((signed char *)i2);
+	*((unsigned char *)op)=*((signed char *)i1) >= *((signed char *)i2);
     }
 }
 static void SHORT_greater_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((short *)i1) >= *((short *)i2);
+	*((unsigned char *)op)=*((short *)i1) >= *((short *)i2);
     }
 }
 static void INT_greater_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((int *)i1) >= *((int *)i2);
+	*((unsigned char *)op)=*((int *)i1) >= *((int *)i2);
     }
 }
 static void LONG_greater_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((long *)i1) >= *((long *)i2);
+	*((unsigned char *)op)=*((long *)i1) >= *((long *)i2);
     }
 }
 static void FLOAT_greater_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((float *)i1) >= *((float *)i2);
+	*((unsigned char *)op)=*((float *)i1) >= *((float *)i2);
     }
 }
 static void DOUBLE_greater_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((double *)i1) >= *((double *)i2);
+	*((unsigned char *)op)=*((double *)i1) >= *((double *)i2);
     }
 }
+static void CFLOAT_greater_equal(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char *)op)=*((float *)i1) >= *((float *)i2);
+    }
+}
+static void CDOUBLE_greater_equal(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char *)op)=*((double *)i1) >= *((double *)i2);
+    }
+}
+
 static void UBYTE_less(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((unsigned char *)i1) < *((unsigned char *)i2);
+	*((unsigned char *)op)=*((unsigned char *)i1) < *((unsigned char *)i2);
     }
 }
 static void SBYTE_less(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((signed char *)i1) < *((signed char *)i2);
+	*((unsigned char *)op)=*((signed char *)i1) < *((signed char *)i2);
     }
 }
 static void SHORT_less(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((short *)i1) < *((short *)i2);
+	*((unsigned char *)op)=*((short *)i1) < *((short *)i2);
     }
 }
 static void INT_less(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((int *)i1) < *((int *)i2);
+	*((unsigned char *)op)=*((int *)i1) < *((int *)i2);
     }
 }
 static void LONG_less(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((long *)i1) < *((long *)i2);
+	*((unsigned char *)op)=*((long *)i1) < *((long *)i2);
     }
 }
 static void FLOAT_less(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((float *)i1) < *((float *)i2);
+	*((unsigned char *)op)=*((float *)i1) < *((float *)i2);
     }
 }
 static void DOUBLE_less(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((double *)i1) < *((double *)i2);
+	*((unsigned char *)op)=*((double *)i1) < *((double *)i2);
     }
 }
+static void CFLOAT_less(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char *)op)=*((float *)i1) < *((float *)i2);
+    }
+}
+static void CDOUBLE_less(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char *)op)=*((double *)i1) < *((double *)i2);
+    }
+}
+
 static void UBYTE_less_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((unsigned char *)i1) <= *((unsigned char *)i2);
+	*((unsigned char *)op)=*((unsigned char *)i1) <= *((unsigned char *)i2);
     }
 }
 static void SBYTE_less_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((signed char *)i1) <= *((signed char *)i2);
+	*((unsigned char *)op)=*((signed char *)i1) <= *((signed char *)i2);
     }
 }
 static void SHORT_less_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((short *)i1) <= *((short *)i2);
+	*((unsigned char *)op)=*((short *)i1) <= *((short *)i2);
     }
 }
 static void INT_less_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((int *)i1) <= *((int *)i2);
+	*((unsigned char *)op)=*((int *)i1) <= *((int *)i2);
     }
 }
 static void LONG_less_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((long *)i1) <= *((long *)i2);
+	*((unsigned char *)op)=*((long *)i1) <= *((long *)i2);
     }
 }
 static void FLOAT_less_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((float *)i1) <= *((float *)i2);
+	*((unsigned char *)op)=*((float *)i1) <= *((float *)i2);
     }
 }
 static void DOUBLE_less_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((double *)i1) <= *((double *)i2);
+	*((unsigned char *)op)=*((double *)i1) <= *((double *)i2);
+    }
+}
+static void CFLOAT_less_equal(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char *)op)=*((float *)i1) <= *((float *)i2);
+    }
+}
+static void CDOUBLE_less_equal(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char *)op)=*((double *)i1) <= *((double *)i2);
     }
 }
 static void CHAR_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((char *)i1) == *((char *)i2);
+	*((unsigned char *)op)=*((char *)i1) == *((char *)i2);
     }
 }
 static void UBYTE_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((unsigned char *)i1) == *((unsigned char *)i2);
+	*((unsigned char *)op)=*((unsigned char *)i1) == *((unsigned char *)i2);
     }
 }
 static void SBYTE_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((signed char *)i1) == *((signed char *)i2);
+	*((unsigned char *)op)=*((signed char *)i1) == *((signed char *)i2);
     }
 }
 static void SHORT_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((short *)i1) == *((short *)i2);
+	*((unsigned char *)op)=*((short *)i1) == *((short *)i2);
     }
 }
 static void INT_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((int *)i1) == *((int *)i2);
+	*((unsigned char *)op)=*((int *)i1) == *((int *)i2);
     }
 }
 static void LONG_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((long *)i1) == *((long *)i2);
+	*((unsigned char *)op)=*((long *)i1) == *((long *)i2);
     }
 }
 static void FLOAT_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((float *)i1) == *((float *)i2);
+	*((unsigned char *)op)=*((float *)i1) == *((float *)i2);
     }
 }
 static void DOUBLE_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((double *)i1) == *((double *)i2);
+	*((unsigned char *)op)=*((double *)i1) == *((double *)i2);
     }
 }
 static void CFLOAT_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-      *((long *)op)=(((float *)i1)[0] == ((float *)i2)[0]) && (((float *)i1)[1] == ((float *)i2)[1]);
+      *((unsigned char *)op)=(((float *)i1)[0] == ((float *)i2)[0]) && (((float *)i1)[1] == ((float *)i2)[1]);
     }
 }
 static void CDOUBLE_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-      *((long *)op)=(((double *)i1)[0] == ((double *)i2)[0]) && (((double *)i1)[1] == ((double *)i2)[1]);
+      *((unsigned char *)op)=(((double *)i1)[0] == ((double *)i2)[0]) && (((double *)i1)[1] == ((double *)i2)[1]);
     }
 }
 static void OBJECT_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-      *((long *)op)=(PyObject_Compare(*((PyObject **)i1),*((PyObject **)i2)) == 0);
+      *((unsigned char *)op)=(PyObject_Compare(*((PyObject **)i1),*((PyObject **)i2)) == 0);
     }
 }
 static void CHAR_not_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((char *)i1) != *((char *)i2);
+	*((unsigned char *)op)=*((char *)i1) != *((char *)i2);
     }
 }
 static void UBYTE_not_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((unsigned char *)i1) != *((unsigned char *)i2);
+	*((unsigned char *)op)=*((unsigned char *)i1) != *((unsigned char *)i2);
     }
 }
 static void SBYTE_not_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((signed char *)i1) != *((signed char *)i2);
+	*((unsigned char *)op)=*((signed char *)i1) != *((signed char *)i2);
     }
 }
 static void SHORT_not_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((short *)i1) != *((short *)i2);
+	*((unsigned char *)op)=*((short *)i1) != *((short *)i2);
     }
 }
 static void INT_not_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((int *)i1) != *((int *)i2);
+	*((unsigned char *)op)=*((int *)i1) != *((int *)i2);
     }
 }
 static void LONG_not_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((long *)i1) != *((long *)i2);
+	*((unsigned char *)op)=*((long *)i1) != *((long *)i2);
     }
 }
 static void FLOAT_not_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((float *)i1) != *((float *)i2);
+	*((unsigned char *)op)=*((float *)i1) != *((float *)i2);
     }
 }
 static void DOUBLE_not_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((double *)i1) != *((double *)i2);
+	*((unsigned char *)op)=*((double *)i1) != *((double *)i2);
     }
 }
 static void CFLOAT_not_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-      *((long *)op)=(((float *)i1)[0] != ((float *)i2)[0]) || (((float *)i1)[1] != ((float *)i2)[1]);
+      *((unsigned char *)op)=(((float *)i1)[0] != ((float *)i2)[0]) || (((float *)i1)[1] != ((float *)i2)[1]);
     }
 }
 static void CDOUBLE_not_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-      *((long *)op)=(((double *)i1)[0] != ((double *)i2)[0]) || (((double *)i1)[1] != ((double *)i2)[1]);
+      *((unsigned char *)op)=(((double *)i1)[0] != ((double *)i2)[0]) || (((double *)i1)[1] != ((double *)i2)[1]);
     }
 }
 static void OBJECT_not_equal(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-      *((long *)op)=(PyObject_Compare(*((PyObject **)i1),*((PyObject **)i2)) != 0);
+      *((unsigned char *)op)=(PyObject_Compare(*((PyObject **)i1),*((PyObject **)i2)) != 0);
     }
 }
 static void UBYTE_logical_and(char **args, int *dimensions, int *steps, void *func) {
@@ -1408,42 +1583,56 @@ static void SBYTE_logical_and(char **args, int *dimensions, int *steps, void *fu
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((signed char *)op)=*((signed char *)i1) && *((signed char *)i2);
+	*((unsigned char *)op)=*((signed char *)i1) && *((signed char *)i2);
     }
 }
 static void SHORT_logical_and(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((short *)op)=*((short *)i1) && *((short *)i2);
+	*((unsigned char *)op)=*((short *)i1) && *((short *)i2);
     }
 }
 static void INT_logical_and(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((int *)op)=*((int *)i1) && *((int *)i2);
+	*((unsigned char *)op)=*((int *)i1) && *((int *)i2);
     }
 }
 static void LONG_logical_and(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((long *)i1) && *((long *)i2);
+	*((unsigned char *)op)=*((long *)i1) && *((long *)i2);
     }
 }
 static void FLOAT_logical_and(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((float *)op)=(float)(*((float *)i1) && *((float *)i2));
+	*((unsigned char *)op)=(*((float *)i1) && *((float *)i2));
     }
 }
 static void DOUBLE_logical_and(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((double *)op)=(double)(*((double *)i1) && *((double *)i2));
+	*((unsigned char *)op)=(*((double *)i1) && *((double *)i2));
+    }
+}
+static void CFLOAT_logical_and(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char *)op)=*((float *)i1) && *((float *)i2);
+    }
+}
+static void CDOUBLE_logical_and(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char *)op)=(*((double *)i1) && *((double *)i2));
     }
 }
 static void UBYTE_logical_or(char **args, int *dimensions, int *steps, void *func) {
@@ -1457,42 +1646,56 @@ static void SBYTE_logical_or(char **args, int *dimensions, int *steps, void *fun
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((signed char *)op)=*((signed char *)i1) || *((signed char *)i2);
+	*((unsigned char *)op)=*((signed char *)i1) || *((signed char *)i2);
     }
 }
 static void SHORT_logical_or(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((short *)op)=*((short *)i1) || *((short *)i2);
+	*((unsigned char *)op)=*((short *)i1) || *((short *)i2);
     }
 }
 static void INT_logical_or(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((int *)op)=*((int *)i1) || *((int *)i2);
+	*((unsigned char *)op)=*((int *)i1) || *((int *)i2);
     }
 }
 static void LONG_logical_or(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=*((long *)i1) || *((long *)i2);
+	*((unsigned char *)op)=*((long *)i1) || *((long *)i2);
     }
 }
 static void FLOAT_logical_or(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((float *)op)=(float)(*((float *)i1) || *((float *)i2));
+	*((unsigned char *)op)=(*((float *)i1) || *((float *)i2));
     }
 }
 static void DOUBLE_logical_or(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((double *)op)=*((double *)i1) || *((double *)i2);
+	*((unsigned char *)op)=(*((double *)i1) || *((double *)i2));
+    }
+}
+static void CFLOAT_logical_or(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char *)op)=(*((float *)i1) || *((float *)i2));
+    }
+}
+static void CDOUBLE_logical_or(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char *)op)=(*((double *)i1) || *((double *)i2));
     }
 }
 static void UBYTE_logical_xor(char **args, int *dimensions, int *steps, void *func) {
@@ -1506,58 +1709,76 @@ static void SBYTE_logical_xor(char **args, int *dimensions, int *steps, void *fu
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((signed char *)op)=(*((signed char *)i1) || *((signed char *)i2)) && !(*((signed char *)i1) && *((signed char *)i2));
+	*((unsigned char *)op)=(*((signed char *)i1) || *((signed char *)i2)) && !(*((signed char *)i1) && *((signed char *)i2));
     }
 }
 static void SHORT_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((short *)op)=(*((short *)i1) || *((short *)i2)) && !(*((short *)i1) && *((short *)i2));
+	*((unsigned char*)op)=(*((short *)i1) || *((short *)i2)) && !(*((short *)i1) && *((short *)i2));
     }
 }
 static void INT_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((int *)op)=(*((int *)i1) || *((int *)i2)) && !(*((int *)i1) && *((int *)i2));
+	*((unsigned char*)op)=(*((int *)i1) || *((int *)i2)) && !(*((int *)i1) && *((int *)i2));
     }
 }
 static void LONG_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((long *)op)=(*((long *)i1) || *((long *)i2)) && !(*((long *)i1) && *((long *)i2));
+	*((unsigned char*)op)=(*((long *)i1) || *((long *)i2)) && !(*((long *)i1) && *((long *)i2));
     }
 }
 static void FLOAT_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((float *)op)=(float)((*((float *)i1) || *((float *)i2)) && !(*((float *)i1) && *((float *)i2)));
+	*((unsigned char*)op)=((*((float *)i1) || *((float *)i2)) && !(*((float *)i1) && *((float *)i2)));
     }
 }
 static void DOUBLE_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((double *)op)=(*((double *)i1) || *((double *)i2)) && !(*((double *)i1) && *((double *)i2));
+	*((unsigned char*)op)=(*((double *)i1) || *((double *)i2)) && !(*((double *)i1) && *((double *)i2));
+    }
+}
+static void CFLOAT_logical_xor(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char*)op)=((*((float *)i1) || *((float *)i2)) && !(*((float *)i1) && *((float *)i2)));
+    }
+}
+static void CDOUBLE_logical_xor(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((unsigned char*)op)=(*((double *)i1) || *((double *)i2)) && !(*((double *)i1) && *((double *)i2));
     }
 }
 static void UBYTE_logical_not(char **args, int *dimensions, int *steps, void *func) 
 {int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char *)op)=!*((unsigned char *)i1);}}
 static void SBYTE_logical_not(char **args, int *dimensions, int *steps, void *func) 
-{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((signed char *)op)=!*((signed char *)i1);}}
+{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char *)op)=!*((signed char *)i1);}}
 static void SHORT_logical_not(char **args, int *dimensions, int *steps, void *func) 
-{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((short *)op)=!*((short *)i1);}}
+{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char *)op)=!*((short *)i1);}}
 static void INT_logical_not(char **args, int *dimensions, int *steps, void *func) 
-{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((int *)op)=!*((int *)i1);}}
+{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char *)op)=!*((int *)i1);}}
 static void LONG_logical_not(char **args, int *dimensions, int *steps, void *func) 
-{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((long *)op)=!*((long *)i1);}}
+{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char *)op)=!*((long *)i1);}}
 static void FLOAT_logical_not(char **args, int *dimensions, int *steps, void *func) 
-{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((float *)op)=(float)(!*((float *)i1));}}
+{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char*)op)=(!*((float *)i1));}}
 static void DOUBLE_logical_not(char **args, int *dimensions, int *steps, void *func) 
-{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((double *)op)=!*((double *)i1);}}
+{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char *)op)=!*((double *)i1);}}
+static void CFLOAT_logical_not(char **args, int *dimensions, int *steps, void *func) 
+{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char*)op)=(!*((float *)i1));}}
+static void CDOUBLE_logical_not(char **args, int *dimensions, int *steps, void *func) 
+{int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char *)op)=!*((double *)i1);}}
 static void UBYTE_maximum(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
@@ -1607,6 +1828,22 @@ static void DOUBLE_maximum(char **args, int *dimensions, int *steps, void *func)
 	*((double *)op)=*((double *)i1) > *((double *)i2) ? *((double *)i1) : *((double *)i2);
     }
 }
+static void CFLOAT_maximum(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((float *)op)=*((float *)i1) > *((float *)i2) ? *((float *)i1) : *((float *)i2);
+	((float *)op)[1]=*((float *)i1) > *((float *)i2) ? ((float *)i1)[1] : ((float *)i2)[1];
+    }
+}
+static void CDOUBLE_maximum(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((double *)op)=*((double *)i1) > *((double *)i2) ? *((double *)i1) : *((double *)i2);
+	((double *)op)[1]=*((double *)i1) > *((double *)i2) ? ((double *)i1)[1] : ((double *)i2)[1];
+    }
+}
 static void UBYTE_minimum(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
@@ -1654,6 +1891,22 @@ static void DOUBLE_minimum(char **args, int *dimensions, int *steps, void *func)
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
 	*((double *)op)=*((double *)i1) < *((double *)i2) ? *((double *)i1) : *((double *)i2);
+    }
+}
+static void CFLOAT_minimum(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((float *)op)=*((float *)i1) < *((float *)i2) ? *((float *)i1) : *((float *)i2);
+	((float *)op)[1]=*((float *)i1) < *((float *)i2) ? ((float *)i1)[1] : ((float *)i2)[1];
+    }
+}
+static void CDOUBLE_minimum(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+	*((double *)op)=*((double *)i1) < *((double *)i2) ? *((double *)i1) : *((double *)i2);
+	((double *)op)[1]=*((double *)i1) < *((double *)i2) ? ((double *)i1)[1] : ((double *)i2)[1];
     }
 }
 static void UBYTE_bitwise_and(char **args, int *dimensions, int *steps, void *func) {
@@ -1852,18 +2105,18 @@ static PyUFuncGenericFunction remainder_functions[] = { UBYTE_remainder,  SBYTE_
 static PyUFuncGenericFunction power_functions[] = { UBYTE_power,  SBYTE_power,  SHORT_power,  INT_power,  LONG_power,  NULL,  NULL,  NULL,  NULL,  NULL,  };
 static PyUFuncGenericFunction absolute_functions[] = { SBYTE_absolute,  SHORT_absolute,  INT_absolute,  LONG_absolute,  FLOAT_absolute,  DOUBLE_absolute,  CFLOAT_absolute,  CDOUBLE_absolute,  NULL,  };
 static PyUFuncGenericFunction negative_functions[] = { SBYTE_negative,  SHORT_negative,  INT_negative,  LONG_negative,  FLOAT_negative,  DOUBLE_negative,  CFLOAT_negative,  CDOUBLE_negative,  NULL,  };
-static PyUFuncGenericFunction greater_functions[] = { UBYTE_greater,  SBYTE_greater,  SHORT_greater,  INT_greater,  LONG_greater,  FLOAT_greater,  DOUBLE_greater,  };
-static PyUFuncGenericFunction greater_equal_functions[] = { UBYTE_greater_equal,  SBYTE_greater_equal,  SHORT_greater_equal,  INT_greater_equal,  LONG_greater_equal,  FLOAT_greater_equal,  DOUBLE_greater_equal,  };
-static PyUFuncGenericFunction less_functions[] = { UBYTE_less,  SBYTE_less,  SHORT_less,  INT_less,  LONG_less,  FLOAT_less,  DOUBLE_less,  };
-static PyUFuncGenericFunction less_equal_functions[] = { UBYTE_less_equal,  SBYTE_less_equal,  SHORT_less_equal,  INT_less_equal,  LONG_less_equal,  FLOAT_less_equal,  DOUBLE_less_equal,  };
+static PyUFuncGenericFunction greater_functions[] = { UBYTE_greater,  SBYTE_greater,  SHORT_greater,  INT_greater,  LONG_greater,  FLOAT_greater,  DOUBLE_greater, CFLOAT_greater, CDOUBLE_greater, };
+static PyUFuncGenericFunction greater_equal_functions[] = { UBYTE_greater_equal,  SBYTE_greater_equal,  SHORT_greater_equal,  INT_greater_equal,  LONG_greater_equal,  FLOAT_greater_equal,  DOUBLE_greater_equal, CFLOAT_greater_equal,  CDOUBLE_greater_equal,  };
+static PyUFuncGenericFunction less_functions[] = { UBYTE_less,  SBYTE_less,  SHORT_less,  INT_less,  LONG_less,  FLOAT_less,  DOUBLE_less, CFLOAT_less,  CDOUBLE_less, };
+static PyUFuncGenericFunction less_equal_functions[] = { UBYTE_less_equal,  SBYTE_less_equal,  SHORT_less_equal,  INT_less_equal,  LONG_less_equal,  FLOAT_less_equal,  DOUBLE_less_equal, CFLOAT_less_equal,  CDOUBLE_less_equal,  };
 static PyUFuncGenericFunction equal_functions[] = { CHAR_equal, UBYTE_equal,  SBYTE_equal,  SHORT_equal,  INT_equal,  LONG_equal,  FLOAT_equal,  DOUBLE_equal, CFLOAT_equal, CDOUBLE_equal, OBJECT_equal};
 static PyUFuncGenericFunction not_equal_functions[] = { CHAR_not_equal, UBYTE_not_equal,  SBYTE_not_equal,  SHORT_not_equal,  INT_not_equal,  LONG_not_equal,  FLOAT_not_equal,  DOUBLE_not_equal,  CFLOAT_not_equal, CDOUBLE_not_equal, OBJECT_not_equal};
-static PyUFuncGenericFunction logical_and_functions[] = { UBYTE_logical_and,  SBYTE_logical_and,  SHORT_logical_and,  INT_logical_and,  LONG_logical_and,  FLOAT_logical_and,  DOUBLE_logical_and,  };
-static PyUFuncGenericFunction logical_or_functions[] = { UBYTE_logical_or,  SBYTE_logical_or,  SHORT_logical_or,  INT_logical_or,  LONG_logical_or,  FLOAT_logical_or,  DOUBLE_logical_or,  };
-static PyUFuncGenericFunction logical_xor_functions[] = { UBYTE_logical_xor,  SBYTE_logical_xor,  SHORT_logical_xor,  INT_logical_xor,  LONG_logical_xor,  FLOAT_logical_xor,  DOUBLE_logical_xor,  };
-static PyUFuncGenericFunction logical_not_functions[] = { UBYTE_logical_not,  SBYTE_logical_not,  SHORT_logical_not,  INT_logical_not,  LONG_logical_not,  FLOAT_logical_not,  DOUBLE_logical_not,  };
-static PyUFuncGenericFunction maximum_functions[] = { UBYTE_maximum,  SBYTE_maximum,  SHORT_maximum,  INT_maximum,  LONG_maximum,  FLOAT_maximum,  DOUBLE_maximum,  };
-static PyUFuncGenericFunction minimum_functions[] = { UBYTE_minimum,  SBYTE_minimum,  SHORT_minimum,  INT_minimum,  LONG_minimum,  FLOAT_minimum,  DOUBLE_minimum,  };
+static PyUFuncGenericFunction logical_and_functions[] = { UBYTE_logical_and,  SBYTE_logical_and,  SHORT_logical_and,  INT_logical_and,  LONG_logical_and,  FLOAT_logical_and,  DOUBLE_logical_and,  CFLOAT_logical_and,  CDOUBLE_logical_and, };
+static PyUFuncGenericFunction logical_or_functions[] = { UBYTE_logical_or,  SBYTE_logical_or,  SHORT_logical_or,  INT_logical_or,  LONG_logical_or,  FLOAT_logical_or,  DOUBLE_logical_or,  CFLOAT_logical_or,  CDOUBLE_logical_or, };
+static PyUFuncGenericFunction logical_xor_functions[] = { UBYTE_logical_xor,  SBYTE_logical_xor,  SHORT_logical_xor,  INT_logical_xor,  LONG_logical_xor,  FLOAT_logical_xor,  DOUBLE_logical_xor, CFLOAT_logical_xor,  CDOUBLE_logical_xor,  };
+static PyUFuncGenericFunction logical_not_functions[] = { UBYTE_logical_not,  SBYTE_logical_not,  SHORT_logical_not,  INT_logical_not,  LONG_logical_not,  FLOAT_logical_not,  DOUBLE_logical_not, CFLOAT_logical_xor,  CDOUBLE_logical_xor,  };
+static PyUFuncGenericFunction maximum_functions[] = { UBYTE_maximum,  SBYTE_maximum,  SHORT_maximum,  INT_maximum,  LONG_maximum,  FLOAT_maximum,  DOUBLE_maximum,  CFLOAT_maximum,  CDOUBLE_maximum,};
+static PyUFuncGenericFunction minimum_functions[] = { UBYTE_minimum,  SBYTE_minimum,  SHORT_minimum,  INT_minimum,  LONG_minimum,  FLOAT_minimum,  DOUBLE_minimum,  CFLOAT_minimum,  CDOUBLE_minimum,  };
 static PyUFuncGenericFunction bitwise_and_functions[] = { UBYTE_bitwise_and,  SBYTE_bitwise_and,  SHORT_bitwise_and,  INT_bitwise_and,  LONG_bitwise_and,  NULL,  };
 static PyUFuncGenericFunction bitwise_or_functions[] = { UBYTE_bitwise_or,  SBYTE_bitwise_or,  SHORT_bitwise_or,  INT_bitwise_or,  LONG_bitwise_or,  NULL,  };
 static PyUFuncGenericFunction bitwise_xor_functions[] = { UBYTE_bitwise_xor,  SBYTE_bitwise_xor,  SHORT_bitwise_xor,  INT_bitwise_xor,  LONG_bitwise_xor,  NULL,  };
@@ -1918,9 +2171,10 @@ static char conjugate_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_S
 static char remainder_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  PyArray_OBJECT,  };
 static char absolute_signatures[] = { PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_CFLOAT,  PyArray_FLOAT,  PyArray_CDOUBLE,  PyArray_DOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  };
 static char negative_signatures[] = { PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  };
-static char equal_signatures[] = { PyArray_CHAR, PyArray_CHAR, PyArray_LONG, PyArray_UBYTE,  PyArray_UBYTE,  PyArray_LONG,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_LONG,  PyArray_SHORT,  PyArray_SHORT,  PyArray_LONG,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_LONG,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_LONG, PyArray_CFLOAT, PyArray_CFLOAT, PyArray_LONG, PyArray_CDOUBLE, PyArray_CDOUBLE, PyArray_LONG, PyArray_OBJECT, PyArray_OBJECT, PyArray_LONG};
-static char greater_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_LONG,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_LONG,  PyArray_SHORT,  PyArray_SHORT,  PyArray_LONG,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_LONG,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_LONG,  };
-static char logical_not_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  };
+static char equal_signatures[] = { PyArray_CHAR, PyArray_CHAR, PyArray_UBYTE, PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_UBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_UBYTE,  PyArray_INT,  PyArray_INT,  PyArray_UBYTE,  PyArray_LONG,  PyArray_LONG,  PyArray_UBYTE,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_UBYTE,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_UBYTE, PyArray_CFLOAT, PyArray_CFLOAT, PyArray_UBYTE, PyArray_CDOUBLE, PyArray_CDOUBLE, PyArray_UBYTE, PyArray_OBJECT, PyArray_OBJECT, PyArray_UBYTE};
+static char greater_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_UBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_UBYTE,  PyArray_INT,  PyArray_INT,  PyArray_UBYTE,  PyArray_LONG,  PyArray_LONG,  PyArray_UBYTE,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_UBYTE,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_UBYTE, PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_UBYTE,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_UBYTE };
+static char logical_not_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_UBYTE,  PyArray_SHORT,  PyArray_UBYTE,  PyArray_INT,  PyArray_UBYTE,  PyArray_LONG,  PyArray_UBYTE,  PyArray_FLOAT,  PyArray_UBYTE,  PyArray_DOUBLE, PyArray_UBYTE, PyArray_CFLOAT, PyArray_UBYTE,  PyArray_CDOUBLE,  PyArray_UBYTE,  };
+static char maximum_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE, PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CFLOAT, PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_CDOUBLE, };
 static char bitwise_and_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_OBJECT,  PyArray_OBJECT,  PyArray_OBJECT,  };
 static char invert_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG, PyArray_OBJECT,  PyArray_OBJECT,  };
 static char arccos_signatures[] = { PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  };
@@ -1999,6 +2253,25 @@ static void InitOperators(PyObject *dictionary) {
     arctan2_functions[1] = PyUFunc_dd_d;
     arctan2_functions[2] = PyUFunc_O_O_method;
 
+
+    f = PyUFunc_FromFuncAndData(isinf_functions, isinf_data, isinf_signatures, 
+                                4, 1, 1, PyUFunc_None, "isinf", 
+                                "isinf(x) returns non-zero if x is infinity.", 0);
+    PyDict_SetItemString(dictionary, "isinf", f);
+    Py_DECREF(f);
+
+    f = PyUFunc_FromFuncAndData(isfinite_functions, isfinite_data, isinf_signatures, 
+                                4, 1, 1, PyUFunc_None, "isfinite", 
+                                "isfinite(x) returns non-zero if x is not infinity or not a number.", 0);
+    PyDict_SetItemString(dictionary, "isfinite", f);
+    Py_DECREF(f);
+
+    f = PyUFunc_FromFuncAndData(isnan_functions, isnan_data, isinf_signatures, 
+                                4, 1, 1, PyUFunc_None, "isnan", 
+                                "isnan(x) returns non-zero if x is not a number.", 0);
+    PyDict_SetItemString(dictionary, "isnan", f);
+    Py_DECREF(f);
+
     f = PyUFunc_FromFuncAndData(add_functions, add_data, add_signatures, 10, 
 				2, 1, PyUFunc_Zero, "add", 
 				"Add the arguments elementwise.", 0);
@@ -2050,22 +2323,22 @@ static void InitOperators(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "negative", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndData(greater_functions, divide_safe_data, greater_signatures, 
-				7, 2, 1, PyUFunc_None, "greater", 
+				9, 2, 1, PyUFunc_None, "greater", 
 				"greater(x,y) is array of 1's where x > y, 0 otherwise.",1);
     PyDict_SetItemString(dictionary, "greater", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndData(greater_equal_functions, divide_safe_data, greater_signatures, 
-				7, 2, 1, PyUFunc_None, "greater_equal", 
+				9, 2, 1, PyUFunc_None, "greater_equal", 
 				"greater_equal(x,y) is array of 1's where x >=y, 0 otherwise.", 0);
     PyDict_SetItemString(dictionary, "greater_equal", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndData(less_functions, divide_safe_data, greater_signatures, 
-				7, 2, 1, PyUFunc_None, "less", 
+				9, 2, 1, PyUFunc_None, "less", 
 				"less(x,y) is array of 1's where x < y, 0 otherwise.", 0);
     PyDict_SetItemString(dictionary, "less", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndData(less_equal_functions, divide_safe_data, greater_signatures, 
-				7, 2, 1, PyUFunc_None, "less_equal", 
+				9, 2, 1, PyUFunc_None, "less_equal", 
 				"less_equal(x,y) is array of 1's where x <= y, 0 otherwise.", 0);
     PyDict_SetItemString(dictionary, "less_equal", f);
     Py_DECREF(f);
@@ -2079,33 +2352,33 @@ static void InitOperators(PyObject *dictionary) {
 				"not_equal(x,y) is array of 0's where x == y, 1 otherwise.", 0);
     PyDict_SetItemString(dictionary, "not_equal", f);
     Py_DECREF(f);
-    f = PyUFunc_FromFuncAndData(logical_and_functions, divide_safe_data, divide_safe_signatures, 
-				7, 2, 1, PyUFunc_One, "logical_and", 
+    f = PyUFunc_FromFuncAndData(logical_and_functions, divide_safe_data, greater_signatures, 
+				9, 2, 1, PyUFunc_One, "logical_and", 
 				"logical_and(x,y) returns array of 1's where x and y both true.", 0);
     PyDict_SetItemString(dictionary, "logical_and", f);
     Py_DECREF(f);
-    f = PyUFunc_FromFuncAndData(logical_or_functions, divide_safe_data, divide_safe_signatures, 
-				7, 2, 1, PyUFunc_Zero, "logical_or", 
+    f = PyUFunc_FromFuncAndData(logical_or_functions, divide_safe_data, greater_signatures, 
+				9, 2, 1, PyUFunc_Zero, "logical_or", 
 				"logical_or(x,y) returns array of 1's where x or y or both are true.", 0);
     PyDict_SetItemString(dictionary, "logical_or", f);
     Py_DECREF(f);
-    f = PyUFunc_FromFuncAndData(logical_xor_functions, divide_safe_data, divide_safe_signatures, 
-				7, 2, 1, PyUFunc_None, "logical_xor", 
+    f = PyUFunc_FromFuncAndData(logical_xor_functions, divide_safe_data, greater_signatures, 
+				9, 2, 1, PyUFunc_None, "logical_xor", 
 				"logical_xor(x,y) returns array of 1's where exactly one of x or y is true.", 0);
     PyDict_SetItemString(dictionary, "logical_xor", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndData(logical_not_functions, divide_safe_data, logical_not_signatures, 
-				7, 1, 1, PyUFunc_None, "logical_not", 
+				9, 1, 1, PyUFunc_None, "logical_not", 
 				"logical_not(x) returns array of 1's where x is false, 0 otherwise.", 0);
     PyDict_SetItemString(dictionary, "logical_not", f);
     Py_DECREF(f);
-    f = PyUFunc_FromFuncAndData(maximum_functions, divide_safe_data, divide_safe_signatures, 
-				7, 2, 1, PyUFunc_None, "maximum", 
+    f = PyUFunc_FromFuncAndData(maximum_functions, divide_safe_data, maximum_signatures, 
+				9, 2, 1, PyUFunc_None, "maximum", 
 				"maximum(x,y) returns maximum of x and y taken elementwise.", 0);
     PyDict_SetItemString(dictionary, "maximum", f);
     Py_DECREF(f);
-    f = PyUFunc_FromFuncAndData(minimum_functions, divide_safe_data, divide_safe_signatures,
-				7, 2, 1, PyUFunc_None, "minimum", 
+    f = PyUFunc_FromFuncAndData(minimum_functions, divide_safe_data, maximum_signatures,
+				9, 2, 1, PyUFunc_None, "minimum", 
 				"minimum(x,y) returns minimum of x and y taken elementwise.", 0);
     PyDict_SetItemString(dictionary, "minimum", f);
     Py_DECREF(f);
@@ -2272,7 +2545,7 @@ DL_EXPORT(void) initfastumath() {
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
 
-    s = PyString_FromString("1.0");
+    s = PyString_FromString("2.0");
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
@@ -2283,7 +2556,18 @@ DL_EXPORT(void) initfastumath() {
     Py_DECREF(s);
     PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(exp(1.0)));
     Py_DECREF(s);
-
+    PyDict_SetItemString(d, "PINF", s = PyFloat_FromDouble(1.0/0.0));
+    Py_DECREF(s);
+    PyDict_SetItemString(d, "NINF", s = PyFloat_FromDouble(-1.0/0.0));
+    Py_DECREF(s);
+    PyDict_SetItemString(d, "PZERO", s = PyFloat_FromDouble(0.0));
+    Py_DECREF(s);
+    PyDict_SetItemString(d, "NZERO", s = PyFloat_FromDouble(-0.0));
+    Py_DECREF(s);
+#if defined(NAN) 
+    PyDict_SetItemString(d, "NAN", s = PyFloat_FromDouble(NAN));
+    Py_DECREF(s);
+#endif
 
     /* Temporarily set "invert" to "conjugate" in the dictionary so the call
        to SetNumericOps will make ~ do complex conjugation */

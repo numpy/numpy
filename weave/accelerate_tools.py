@@ -94,7 +94,7 @@ class Vector(Type_Descriptor):
     def setitem(self,A,v,t):
         return self.getitem(A,v,t)
 
-class Matrix(Vector):
+class matrix(Vector):
     dims = 2
 
 class IntegerVector(Vector):
@@ -102,7 +102,7 @@ class IntegerVector(Vector):
     cxxbase = 'int'
     pybase = Integer
 
-class IntegerMatrix(Matrix):
+class Integermatrix(matrix):
     typecode = 'PyArray_INT'
     cxxbase = 'int'
     pybase = Integer
@@ -112,7 +112,7 @@ class LongVector(Vector):
     cxxbase = 'long'
     pybase = Integer
 
-class LongMatrix(Matrix):
+class Longmatrix(matrix):
     typecode = 'PyArray_LONG'
     cxxbase = 'long'
     pybase = Integer
@@ -122,7 +122,7 @@ class DoubleVector(Vector):
     cxxbase = 'double'
     pybase = Double
 
-class DoubleMatrix(Matrix):
+class Doublematrix(matrix):
     typecode = 'PyArray_DOUBLE'
     cxxbase = 'double'
     pybase = Double
@@ -145,11 +145,11 @@ class XRange(Type_Descriptor):
 # Singletonize the type names
 # -----------------------------------------------
 IntegerVector = IntegerVector()
-IntegerMatrix = IntegerMatrix()
+Integermatrix = Integermatrix()
 LongVector = LongVector()
-LongMatrix = LongMatrix()
+Longmatrix = Longmatrix()
 DoubleVector = DoubleVector()
-DoubleMatrix = DoubleMatrix()
+Doublematrix = Doublematrix()
 XRange = XRange()
 
 typedefs = {
@@ -157,11 +157,11 @@ typedefs = {
     FloatType: Double,
     StringType: String,
     (Numeric.ArrayType,1,'i'): IntegerVector,
-    (Numeric.ArrayType,2,'i'): IntegerMatrix,
+    (Numeric.ArrayType,2,'i'): Integermatrix,
     (Numeric.ArrayType,1,'l'): LongVector,
-    (Numeric.ArrayType,2,'l'): LongMatrix,
+    (Numeric.ArrayType,2,'l'): Longmatrix,
     (Numeric.ArrayType,1,'d'): DoubleVector,
-    (Numeric.ArrayType,2,'d'): DoubleMatrix,
+    (Numeric.ArrayType,2,'d'): Doublematrix,
     XRangeType : XRange,
     }
 

@@ -146,7 +146,7 @@ def harvest_variables(ast_list):
     return variables
 
 def match(pattern, data, vars=None):
-    """Match `data' to `pattern', with variable extraction.
+    """match `data' to `pattern', with variable extraction.
 
     pattern
         Pattern to match against, possibly containing variables.

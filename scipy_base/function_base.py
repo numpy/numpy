@@ -1,6 +1,7 @@
 import types
 import Numeric
 from Numeric import *
+from fastumath import *
 
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
