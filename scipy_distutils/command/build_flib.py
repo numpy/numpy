@@ -724,11 +724,11 @@ class hpux_fortran_compiler(fortran_compiler_base):
             f90c = 'f90'
 
         self.f77_compiler = fc
-        self.f77_switches = ' +pic=long  '
+        self.f77_switches = ' +pic=long +ppu '
         self.f77_opt = ' -O3 '
 
         self.f90_compiler = f90c
-        self.f90_switches = ' +pic=long  '
+        self.f90_switches = ' +pic=long +ppu '
         self.f90_opt = ' -O3 '
 
         self.ver_cmd = self.f77_compiler + ' +version '
