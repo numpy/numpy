@@ -148,19 +148,23 @@ public:
       fail(PyExc_RuntimeError, "problem in in");
     return (rslt==1);
   };  
-  bool sequence::in(int value) {
+  bool sequence::in(int value) const {
     object val = value;
     return in(val);
   };
-  bool sequence::in(double value) {
+  bool sequence::in(double value) const {
     object val = value;
     return in(val);
   };
-  bool sequence::in(const char* value) {
+  bool sequence::in(const std::complex<double>& value) const {
     object val = value;
     return in(val);
   };
-  bool sequence::in(std::string& value) {
+  bool sequence::in(const char* value) const {
+    object val = value;
+    return in(val);
+  };
+  bool sequence::in(const std::string& value) const {
     object val = value.c_str();
     return in(val);
   };
