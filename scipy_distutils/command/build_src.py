@@ -3,6 +3,7 @@
 
 import os
 import re
+import copy
 
 from distutils.cmd import Command
 from distutils.command import build_ext, build_py
@@ -13,6 +14,7 @@ from scipy_distutils import log
 from scipy_distutils.misc_util import fortran_ext_match, all_strings, dot_join
 from scipy_distutils.from_template import process_file
 from scipy_distutils.extension import Extension
+from scipy_distutils.system_info import get_info, dict_append
 
 _split_ext_template = '''
 import os
@@ -48,6 +50,8 @@ else:
     del ___a, ___m
 '''
 
+def _get_constructor_argnames(obj):
+    return obj.__init__.im_func.func_code.co_varnames[1:]
 
 class build_src(build_ext.build_ext):
 
@@ -120,13 +124,35 @@ class build_src(build_ext.build_ext):
             return
         if self.backends is not None:
             self.backend_split()
+        else:
+            self.apply_backend_info('numeric')
         self.build_sources()
         return
 
+    def apply_backend_info(self,backend):
+        log.info('applying backend (%s) info to extensions'\
+                 % (backend))
+        backend_info = get_info(backend,notfound_action=1)
+        if not backend_info:
+            return
+        extensions = []
+        for ext in self.extensions:
+            ext_args = {}
+            for a in _get_constructor_argnames(ext):
+                ext_args[a] = copy.copy(getattr(ext,a))
+            dict_append(ext_args,**backend_info)
+            new_ext = Extension(**ext_args)
+            extensions.append(new_ext) 
+        self.extensions[:] = extensions
+        return
+
     def backend_split(self):
+        backends = self.backends.split(',')
+        if len(backends)==1:
+            self.apply_backend_info(backends[0])
+            return
         log.info('splitting extensions for backends: %s' % (self.backends))
         extensions = []
-        backends = self.backends.split(',')
         for ext in self.extensions:
             name = ext.name.split('.')[-1]
             fullname = self.get_ext_fullname(ext.name)
@@ -162,31 +188,23 @@ class build_src(build_ext.build_ext):
             ext.sources = [func]
             extensions.append(ext)
         self.extensions[:] = extensions
+        return
 
     def split_extension(self, ext, backend):
         fullname = self.get_ext_fullname(ext.name)
         modpath = fullname.split('.')
         package = '.'.join(modpath[0:-1])
         name = modpath[-1]
-        macros = []
-        macros.append((backend.upper(),None))
-        new_ext = Extension(name = dot_join(package,'_%s.%s' % (backend,name)),
-                            sources = ext.sources,
-                            include_dirs = ext.include_dirs,
-                            define_macros = ext.define_macros + macros,
-                            undef_macros = ext.undef_macros,
-                            library_dirs = ext.library_dirs,
-                            libraries = ext.libraries,
-                            runtime_library_dirs = ext.runtime_library_dirs,
-                            extra_objects = ext.extra_objects,
-                            extra_compile_args = ext.extra_compile_args,
-                            extra_link_args = ext.extra_link_args,
-                            export_symbols = ext.export_symbols,
-                            depends = ext.depends,
-                            language = ext.language,
-                            f2py_options = ext.f2py_options,
-                            module_dirs = ext.module_dirs
-                            )
+        ext_args = {}
+        for a in _get_constructor_argnames(ext):
+            if a=='name':
+                ext_args[a] = dot_join(package,'_%s.%s' % (backend,name))
+            else:
+                ext_args[a] = copy.copy(getattr(ext,a))
+        backend_info = get_info(backend,notfound_action=1)
+        if backend_info:
+            dict_append(ext_args,**backend_info)
+        new_ext = Extension(**ext_args)
         new_ext.backend = backend
         return new_ext
         

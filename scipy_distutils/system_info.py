@@ -166,6 +166,7 @@ def get_info(name,notfound_action=0):
           'lapack_src':lapack_src_info,
           'blas_src':blas_src_info,
           'numpy':numpy_info,
+          'numeric':numpy_info, # alias to numpy, for build_ext --backends support
           'numarray':numarray_info,
           'lapack_opt':lapack_opt_info,
           'blas_opt':blas_opt_info,
@@ -1187,7 +1188,8 @@ class numpy_info(system_info):
             return
         info = {}
         macros = [(self.modulename.upper()+'_VERSION',
-                   '"\\"%s\\""' % (module.__version__))]
+                   '"\\"%s\\""' % (module.__version__)),
+                  (self.modulename.upper(),None)]
 ##         try:
 ##             macros.append(
 ##                 (self.modulename.upper()+'_VERSION_HEX',

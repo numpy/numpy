@@ -16,7 +16,6 @@ from scipy_distutils.misc_util import filter_sources, has_f_sources, \
      has_cxx_sources
 from distutils.errors import DistutilsFileError
 
-
 class build_ext (old_build_ext):
 
     description = "build C/C++/F extensions (compile/link to build directory)"
