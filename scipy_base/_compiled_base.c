@@ -172,11 +172,11 @@ static PyObject *base_insert(PyObject *self, PyObject *args, PyObject *kwdict)
        */
       rem_indx = mindx;
       indx = 0;
-      for(i=0; i < nd-1; ++i) {
-        indx += (rem_indx / inshape[i]) * instrides[i];
-        rem_indx %= inshape[i];
+      for(i=nd-1; i > 0; --i) {
+        indx += (rem_indx % inshape[i]) * instrides[i];
+        rem_indx /= inshape[i];
       }
-      indx += rem_indx * instrides[nd-1];
+      indx += rem_indx * instrides[0];
       /* fprintf(stderr, "mindx = %d, indx=%d\n", mindx, indx); */
       /* Copy value element over to input array */
       memcpy(input_data+indx,vptr,delsize);
