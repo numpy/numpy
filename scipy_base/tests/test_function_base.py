@@ -198,16 +198,23 @@ class test_trim_zeros(unittest.TestCase):
                 
 # Utility
 
-class test_find_repeats(unittest.TestCase):
-    def check_basic(self):
-        a = array([1,2,3,4,1,2,3,4,1,2,5])
-        res,nums = find_repeats(a)
-        assert_array_equal(res,[1,2,3,4])
-        assert_array_equal(nums,[3,3,2])
+class test_vectorize(unittest.TestCase):
+    def check_simple(self):
+        def addsubtract(a,b):
+            if a > b:
+                return a - b
+            else:
+                return a + b
+        f = vectorize(addsubtract)
+        r = f([0,3,6,9],[1,3,5,7])
+        assert_array_equal(r,[1,6,1,2])
+        
 
 def compare_results(res,desired):
     for i in range(len(desired)):
         assert_array_equal(res[i],desired[i])
+
+
 
 
 #-----------------------------------------------------------------------------
@@ -232,6 +239,8 @@ def test_suite(level=1):
         suites.append( unittest.makeSuite(test_angle,'check_') )
         
         suites.append( unittest.makeSuite(test_trim_zeros,'check_') )
+        suites.append( unittest.makeSuite(test_vectorize,'check_') )
+
 
     total_suite = unittest.TestSuite(suites)
     return total_suite

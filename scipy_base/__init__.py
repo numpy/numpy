@@ -55,6 +55,11 @@ unwrap           --  Unwrap phase along given axis (1-d algorithm)
 sort_complex     --  Sort a complex-array (based on real, then imaginary)
 trim_zeros       --  trim the leading and trailing zeros from 1D array.
 
+vectorize        -- a class that wraps a Python function taking scalar
+                         arguments into a generalized function which
+                         can handle arrays of arguments using the broadcast
+                         rules of Numeric Python.
+
 Shape manipulation
 ===================
 squeeze          --  Return a with length-one dimensions removed.

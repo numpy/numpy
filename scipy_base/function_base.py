@@ -3,6 +3,7 @@ import types
 import Numeric
 from Numeric import *
 from type_check import ScalarType
+from shape_base import squeeze
 from fastumath import PINF as inf
 import _compiled_base
 
@@ -10,11 +11,12 @@ __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
            'prod','cumprod','diff','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
-           'nanargmin','nanmin','sum']
+           'nanargmin','nanmin','sum','vectorize']
 
 round = Numeric.around
 any = Numeric.sometrue
 all = Numeric.alltrue
+
 
 # Need this to change array type for low precision values
 def sum(x,axis=0):  # could change default axis here
@@ -331,6 +333,82 @@ def disp(mesg, device=None, linefeed=1):
         device.write('%s' % mesg)
     device.flush()
     return
+
+from _compiled_base import arraymap
+class vectorize:
+    """
+ vectorize(somefunction)  Genearlized Function class.
+
+  Description:
+ 
+    Define a vectorized function which takes nested sequence
+    objects or Numeric arrays as inputs and returns a
+    Numeric array as output, evaluating the function over successive
+    tuples of the input arrays like the python map function except it uses
+    the broadcasting rules of Numeric Python.
+
+  Input:
+
+    somefunction -- a Python function or method
+
+  Example:
+
+    def myfunc(a,b):
+        if a > b:
+            return a-b
+        else
+            return a+b
+
+    vfunc = vectorize(myfunc)
+
+    >>> vfunc([1,2,3,4],2)
+    array([3,4,1,2])
+
+    """
+    def __init__(self,pyfunc,otypes=None,doc=None):
+        if not callable(pyfunc) or type(pyfunc) is types.ClassType:
+            raise TypeError, "Object is not a callable Python object."
+        self.thefunc = pyfunc
+        if doc is None:
+            self.__doc__ = pyfunc.__doc__
+        else:
+            self.__doc__ = doc
+        if otypes is None:
+            self.otypes=''
+        else:
+            if isinstance(otypes,types.StringType):
+                self.otypes=otypes
+            else:
+                raise ValueError, "Output types must be a string."
+
+    def __call__(self,*args):
+        for arg in args:
+            try:
+                n = len(arg)
+                if (n==0):
+                    return self.zerocall(args)
+            except (AttributeError, TypeError):
+                pass
+        return squeeze(arraymap(self.thefunc,args,self.otypes))
+
+    def zerocall(self,args):
+        # one of the args was a zeros array
+        #  return zeros for each output
+        #  first --- find number of outputs
+        newargs = []
+        args = atleast_1d(*args)
+        for arg in args:
+            if arg.typecode() != 'O':
+                newargs.append(1.1)
+            else:
+                newargs.append(arg[0])
+        newargs = tuple(newargs)
+        res = self.thefunc(*newargs)
+        if isscalar(res):
+            return zeros((0,),'d')
+        else:
+            return (zeros((0,),'d'),)*len(res)
+
 
     
 
