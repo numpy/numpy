@@ -36,7 +36,7 @@
 #   nt      | win32        | Cygwin 98-4.10, Python 2.1.1(MSC) - echo tests
 #                            fail i.e. redefining environment variables may
 #                            not work.
-#
+#   posix   | cygwin       | Cygwin 98-4.10, Python 2.3.3(cygming special)
 
 __all__ = ['exec_command','find_executable']
 
@@ -467,7 +467,7 @@ def test_nt():
     s,o=exec_command('%s -c "import sys;sys.exit(15)"' % pythonexe)
     assert s==15 and o=='',(s,o)
 
-    s,o=exec_command('python -c "print \'Heipa\'"')
+    s,o=exec_command('%s -c "print \'Heipa\'"' % pythonexe)
     assert s==0 and o=='Heipa',(s,o)
 
     print 'ok'
