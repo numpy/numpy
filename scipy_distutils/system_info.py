@@ -189,7 +189,8 @@ class fftw_info(system_info):
             lib_dirs = filter(os.path.isdir,
                               combine_paths(prefix,['lib','fftw*','FFTW*']))
                                                           
-        if not lib_dirs: return
+        if not lib_dirs:
+            lib_dirs = [prefix]
         incl_dirs = filter(os.path.isdir,
                            combine_paths(prefix,'include',['fftw*','FFTW*']))
         if not incl_dirs:
@@ -198,7 +199,8 @@ class fftw_info(system_info):
         if not incl_dirs:
             incl_dirs = filter(os.path.isdir,
                                combine_paths(prefix,['include','fftw*','FFTW*']))
-        if not incl_dirs: return
+        if not incl_dirs:
+            incl_dirs = [prefix]
         incl_dir = None
 
         libs = ['fftw','rfftw']
