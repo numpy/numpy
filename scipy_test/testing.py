@@ -5,7 +5,6 @@ Unit-testing
   ScipyTest -- Scipy tests site manager
   ScipyTestCase -- unittest.TestCase with measure method
   IgnoreException -- raise when checking disabled feature ('ignoring' is displayed)
-  HideException -- raise when checking irrelevant feature (nothing is displayed)
   set_package_path -- prepend package build directory to path
   set_local_path -- prepend local directory (to tests files) to path
   restore_path -- restore path after set_package_path
@@ -169,7 +168,7 @@ class ScipyTestCase (unittest.TestCase):
 
         nof_errors = len(result.errors)
         save_stream = result.stream
-        result.stream = _dummy_stream()
+        result.stream = _dummy_stream(save_stream)
         unittest.TestCase.__call__(self, result)
         if nof_errors != len(result.errors):
             test, errstr = result.errors[-1]
@@ -186,33 +185,25 @@ class ScipyTestCase (unittest.TestCase):
                     assert result.stream.data[-1]=='ERROR\n',`result.stream.data`
                     result.stream.data[-1] = 'ignoring\n'
                 del result.errors[-1]
-            elif errstr.startswith('HideException:'):
-                if l==1:
-                    assert result.stream.data[-1]=='E',`result.stream.data`
-                    result.stream.data[-1] = ''
-                else:
-                    assert result.stream.data[-1]=='ERROR\n',`result.stream.data`
-                    result.stream.data = []
-                del result.errors[-1]
-                result.testsRun = result.testsRun - 1
         map(save_stream.write, result.stream.data)
         result.stream = save_stream
 
 class _dummy_stream:
-    def __init__(self):
+    def __init__(self,stream):
         self.data = []
+        self.stream = stream
     def write(self,message):
+        if not self.data and not message.startswith('E'):
+            self.stream.write(message)
+            self.stream.flush()
+            message = ''
         self.data.append(message)
     def writeln(self,message):
-        self.data.append(message+'\n')
+        self.write(message+'\n')
 
 __all__.append('IgnoreException')
 class IgnoreException(Exception):
     "Ignoring this exception due to disabled feature"
-
-__all__.append('HideException')
-class HideException(Exception):
-    "Hide this exception due to disabled feature"
 
 #------------
 
@@ -276,7 +267,7 @@ class ScipyTest:
             for base in clsobj.__bases__:
                 for n in self._get_method_names(base,level):
                     if n not in names:
-                        names.append(n)
+                        names.append(n)        
         return names
 
     def _get_module_tests(self,module,level):
@@ -351,7 +342,10 @@ class ScipyTest:
                or not issubclass(obj, unittest.TestCase) \
                or obj.__name__[:4] != 'test':
                 continue
-            suite_list.extend(map(obj,self._get_method_names(obj,level)))
+            for mthname in self._get_method_names(obj,level):
+                suite = obj(mthname)
+                if getattr(suite,'isrunnable',lambda mthname:1)(mthname):
+                    suite_list.append(suite)
         print '  Found',len(suite_list),'tests for',module_name
         return suite_list
 
