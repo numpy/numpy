@@ -4,6 +4,8 @@ Unit-testing
 
   ScipyTest -- Scipy tests site manager
   ScipyTestCase -- unittest.TestCase with measure method
+  IgnoreException -- raise when checking disabled feature ('ignoring' is displayed)
+  HideException -- raise when checking disabled feature (nothing is displayed)
   set_package_path -- prepend package build directory to path
   set_local_path -- prepend local directory (to tests files) to path
   restore_path -- restore path after set_package_path
@@ -17,12 +19,12 @@ Timing tools
 Utility functions
 -----------------
 
-  assert_equal --
-  assert_almost_equal --
-  assert_approx_equal --
-  assert_array_equal --
-  assert_array_almost_equal --
-  assert_array_less --
+  assert_equal -- assert equality
+  assert_almost_equal -- assert equality with decimal tolerance
+  assert_approx_equal -- assert equality with significant digits tolerance
+  assert_array_equal -- assert arrays equality
+  assert_array_almost_equal -- assert arrays equality with decimal tolerance
+  assert_array_less -- assert arrays less-ordering
   rand -- array of random numbers from given shape
 
 """
@@ -175,10 +177,25 @@ class ScipyTestCase (unittest.TestCase):
                 errstr = str(errstr[0])
             else:
                 errstr = errstr.split('\n')[-2]
+            l = len(result.stream.data)
             if errstr.startswith('IgnoreException:'):
-                assert result.stream.data[-1]=='E',`result.stream.data`
-                result.stream.data[-1] = 'i'
-                del result.errors[-1]
+                if l==1:
+                    assert result.stream.data[-1]=='E',`result.stream.data`
+                    result.stream.data[-1] = 'i'
+                    del result.errors[-1]
+                else:
+                    assert result.stream.data[-1]=='ERROR\n',`result.stream.data`
+                    result.stream.data[-1] = 'ignoring\n'
+                    del result.errors[-1]
+            elif errstr.startswith('HideException:'):
+                if l==1:
+                    assert result.stream.data[-1]=='E',`result.stream.data`
+                    result.stream.data[-1] = ''
+                    del result.errors[-1]
+                else:
+                    assert result.stream.data[-1]=='ERROR\n',`result.stream.data`
+                    result.stream.data = []
+                    del result.errors[-1]
         map(save_stream.write, result.stream.data)
         result.stream = save_stream
 
@@ -193,6 +210,10 @@ class _dummy_stream:
 __all__.append('IgnoreException')
 class IgnoreException(Exception):
     "Ignoring this exception due to disabled feature"
+
+__all__.append('HideException')
+class HideException(Exception):
+    "Hide this exception due to disabled feature"
 
 #------------
 
