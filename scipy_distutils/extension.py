@@ -29,7 +29,8 @@ class Extension(old_Extension):
                   export_symbols=None,
                   depends=None,
                   language=None,
-                  f2py_options=None
+                  f2py_options=None,
+                  module_dirs=None,
                  ):
         old_Extension.__init__(self,name, [],
                                include_dirs,
@@ -50,6 +51,7 @@ class Extension(old_Extension):
         self.language = language
 
         self.f2py_options = f2py_options or []
+        self.module_dirs = module_dirs or []
 
     def has_cxx_sources(self):
         for source in self.sources:

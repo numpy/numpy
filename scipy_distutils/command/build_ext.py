@@ -180,7 +180,7 @@ class build_ext (old_build_ext):
         if f_sources or fmodule_sources:
             extra_postargs = []
             include_dirs = ext.include_dirs[:]
-            module_dirs = [] # XXX Figure out how users could change this?
+            module_dirs = ext.module_dirs[:]
 
             if check_for_f90_modules:
                 module_build_dir = os.path.join(\
