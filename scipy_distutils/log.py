@@ -2,6 +2,13 @@
 
 import sys
 
+def _fix_args(args,flag=1):
+    if type(args) is type(''):
+        return args.replace('%','%%')
+    if flag and type(args) is type(()):
+        return tuple([_fix_args(a,flag=0) for a in args])
+    return args
+
 if sys.version[:3]>='2.3':
     from distutils.log import *
     from distutils.log import Log as old_Log
@@ -10,7 +17,7 @@ if sys.version[:3]>='2.3':
         def _log(self, level, msg, args):
             if level>= self.threshold:
                 if args:
-                    print _global_color_map[level](msg % args)
+                    print _global_color_map[level](msg % _fix_args(args))
                 else:
                     print _global_color_map[level](msg)
                 sys.stdout.flush()
@@ -32,7 +39,7 @@ class Log:
 
     def _log(self, level, msg, args):
         if level >= self.threshold:
-            print _global_color_map[level](msg % args)
+            print _global_color_map[level](msg % _fix_args(args))
             sys.stdout.flush()
 
     def log(self, level, msg, *args):
