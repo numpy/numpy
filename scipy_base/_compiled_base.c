@@ -689,13 +689,13 @@ static PyNumberMethods backup_array_as_number;
 static PySequenceMethods backup_array_as_sequence;
 static PyMappingMethods backup_array_as_mapping;
 static PyBufferProcs backup_array_as_buffer;
-static int numeric_stored = 0;
+static int scipy_numeric_stored = 0;
 
 /* make sure memory copy is going on with this */
 void scipy_numeric_save() {
 
     /* we just save copies of things we may alter.  */
-    if (!numeric_stored) {
+    if (!scipy_numeric_stored) {
 	BackupPyArray_Type.tp_name = (PyArray_Type).tp_name;
 	memcpy(&backup_array_as_number, (PyArray_Type).tp_as_number,
 	       sizeof(PyNumberMethods));
@@ -705,14 +705,14 @@ void scipy_numeric_save() {
 	       sizeof(PyMappingMethods));
 	memcpy(&backup_array_as_buffer, (PyArray_Type).tp_as_buffer,
 	       sizeof(PyBufferProcs));
-	numeric_stored = 1;
+	scipy_numeric_stored = 1;
     }
 }
 
 void scipy_numeric_restore() {
 
     /* restore only what was copied */
-    if (numeric_stored) {       
+    if (scipy_numeric_stored) {       
 	(PyArray_Type).tp_name = BackupPyArray_Type.tp_name;
 	memcpy((PyArray_Type).tp_as_number, &backup_array_as_number, 
 	       sizeof(PyNumberMethods));
@@ -727,13 +727,23 @@ void scipy_numeric_restore() {
 
 static const char *_scipystr = "array (scipy)";
 
+#define MAX_DIMS 30
+#include "_scipy_mapping.c"
+
+static PyMappingMethods scipy_array_as_mapping = {
+    (inquiry)scipy_array_length,		/*mp_length*/
+    (binaryfunc)scipy_array_subscript_nice,     /*mp_subscript*/
+    (objobjargproc)scipy_array_ass_sub,	        /*mp_ass_subscript*/
+};
+
 void scipy_numeric_alter() {
     
     (PyArray_Type).tp_name = _scipystr;
-
+    memcpy((PyArray_Type).tp_as_mapping, &scipy_array_as_mapping,
+	   sizeof(PyMappingMethods));
 }
 
-static char numeric_alter_doc[] = "alter_numeric() update the behavior of Numeric objects.\n\n  1. Change coercion rules so that multiplying by a scalar does not upcast.\n  2. Add index slicing capability to Numeric arrays.\n  3. Speed up inner loops.\n\nThis call changes the behavior for ALL Numeric arrays currently defined\n  and to be defined in the future.  The old behavior can be restored for ALL\n  arrays using numeric_restore().";
+static char numeric_alter_doc[] = "alter_numeric() update the behavior of Numeric objects.\n\n  1. Change coercion rules so that multiplying by a scalar does not upcast.\n  2. Add index and mask slicing capability to Numeric arrays.\n  3. (Someday) Speed up inner loops.\n\nThis call changes the behavior for ALL Numeric arrays currently defined\n  and to be defined in the future.  The old behavior can be restored for ALL\n  arrays using numeric_restore().";
 
 static PyObject *numeric_behavior_alter(PyObject *self, PyObject *args)
 {
