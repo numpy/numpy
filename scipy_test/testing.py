@@ -1,3 +1,30 @@
+"""
+Unit-testing
+------------
+
+  ScipyTest - Scipy tests site manager
+  ScipyTestCase - unittest.TestCase with measure method
+  set_package_path - use it before importing a module to be tested
+  restore_path - restore path after set_package_path
+
+Timing tools
+------------
+
+  jiffies - return 1/100ths of a second that the current process has used
+  memusage - virtual memory size in bytes of the running python [linux]
+
+Utility functions
+-----------------
+
+  assert_equal
+  assert_almost_equal
+  assert_approx_equal
+  assert_array_equal
+  assert_array_almost_equal
+  assert_array_less
+  rand - array of random numbers from given shape
+
+"""
 
 __all__ = []
 
