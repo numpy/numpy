@@ -148,43 +148,43 @@ if sys.platform == 'win32':
                                build_temp,
                                target_lang)
 
-    def object_filenames (self,
-                          source_filenames,
-                          strip_dir=0,
-                          output_dir=''):
-        if output_dir is None: output_dir = ''
-        print 'cygiwn_output_dir:', output_dir
-        obj_names = []
-        for src_name in source_filenames:
-            # use normcase to make sure '.rc' is really '.rc' and not '.RC'
-            (base, ext) = os.path.splitext (os.path.normcase(src_name))
-            
-            # added these lines to strip off windows drive letters
-            # without it, .o files are placed next to .c files
-            # instead of the build directory
-            drv,base = os.path.splitdrive(base)
-            if drv:
-                base = base[1:]
-            
-            if ext not in (self.src_extensions + ['.rc','.res']):
-                raise UnknownFileError, \
-                      "unknown file type '%s' (from '%s')" % \
-                      (ext, src_name)
-            if strip_dir:
-                base = os.path.basename (base)
-            if ext == '.res' or ext == '.rc':
-                # these need to be compiled to object files
-                obj_names.append (os.path.join (output_dir,
-                                            base + ext + self.obj_extension))
-            else:
-                print 'here', os.path.join (output_dir,
-                                            base + self.obj_extension)
-                print '...:', output_dir, base + self.obj_extension                                            
-                obj_names.append (os.path.join (output_dir,
-                                            base + self.obj_extension))
-        return obj_names
-
-    # object_filenames ()
+        def object_filenames (self,
+                              source_filenames,
+                              strip_dir=0,
+                              output_dir=''):
+            if output_dir is None: output_dir = ''
+            print 'cygiwn_output_dir:', output_dir
+            obj_names = []
+            for src_name in source_filenames:
+                # use normcase to make sure '.rc' is really '.rc' and not '.RC'
+                (base, ext) = os.path.splitext (os.path.normcase(src_name))
+                
+                # added these lines to strip off windows drive letters
+                # without it, .o files are placed next to .c files
+                # instead of the build directory
+                drv,base = os.path.splitdrive(base)
+                if drv:
+                    base = base[1:]
+                
+                if ext not in (self.src_extensions + ['.rc','.res']):
+                    raise UnknownFileError, \
+                          "unknown file type '%s' (from '%s')" % \
+                          (ext, src_name)
+                if strip_dir:
+                    base = os.path.basename (base)
+                if ext == '.res' or ext == '.rc':
+                    # these need to be compiled to object files
+                    obj_names.append (os.path.join (output_dir,
+                                                base + ext + self.obj_extension))
+                else:
+                    print 'here', os.path.join (output_dir,
+                                                base + self.obj_extension)
+                    print '...:', output_dir, base + self.obj_extension                                            
+                    obj_names.append (os.path.join (output_dir,
+                                                base + self.obj_extension))
+            return obj_names
+    
+        # object_filenames ()
 
         
     # On windows platforms, we want to default to mingw32 (gcc)
