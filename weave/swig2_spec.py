@@ -3,9 +3,16 @@ This module allows one to use SWIG2 (SWIG version >= 1.3) wrapped
 objects from Weave.  SWIG-1.3 wraps objects differently from SWIG-1.1.
 
 The code here is based on wx_spec.py.  However, this module is more
-like a template for any SWIG2 wrapped converter.  To wrap specific
+like a template for any SWIG2 wrapped converter.  To wrap any special
 code that uses SWIG the user simply needs to override the defaults in
-the swig2_converter class.
+the swig2_converter class.  These special circumstances arise when one
+has wrapped code that uses C++ namespaces.  However, for most
+straightforward SWIG wrappers this converter should fine out of the
+box.
+
+This code also has support to automatically handle SWIG wrapped
+objects that use SWIG_COBJECT_TYPES.  These use a PyCObject instead of
+a string to store the opaque pointer.
 
 By default this code assumes that the user will not link with the SWIG
 runtime library (libswigpy under *nix).  In this case no type checking
@@ -97,8 +104,13 @@ PyObject* %(type_name)s_to_py(void *obj)
 
 class swig2_converter(common_base_converter):
     """ A converter for SWIG >= 1.3 wrapped objects."""
-    def __init__(self,class_name="undefined"):
+    def __init__(self, class_name="undefined", pycobj=0):
+        """If `pycobj` is True, then code is generated to deal with a
+        PyCObject.
+
+        """
         self.class_name = class_name
+        self.pycobj = pycobj # This is on if a PyCObject has been used.
         common_base_converter.__init__(self)
 
     def init_info(self, runtime=0):
@@ -110,6 +122,7 @@ class swig2_converter(common_base_converter):
           the swipy runtime library and in this case type checking
           will be performed.  This option is useful when you derive a
           subclass of this one for your object converters.          
+
         """
         common_base_converter.init_info(self)
         # These are generated on the fly instead of defined at 
@@ -120,20 +133,31 @@ class swig2_converter(common_base_converter):
         self.to_c_return = None # not used
         self.check_func = None # not used
 
+        if self.pycobj:
+            self.define_macros.append(("SWIG_COBJECT_TYPES", None))
+
         if runtime:
             self.define_macros.append(("SWIG_NOINCLUDE", None))
         self.support_code.append(swigptr2.swigptr2_code)
     
-    def type_match(self,value):        
+    def type_match(self,value):
         """ This is a generic type matcher for SWIG-1.3 objects.  For
-        specific instances, override this function."""
+        specific instances, override this method.  The method also
+        handles cases where SWIG uses a PyCObject for the `this`
+        attribute and not a string.
+
+        """
         is_match = 0
-        try:
-            data = value.this.split('_')
-            if data[2] == 'p':
+        if hasattr(value, 'this'):
+            if type(value.this) == type('str'):
+                try:
+                    data = value.this.split('_')
+                    if data[2] == 'p':
+                        is_match = 1
+                except AttributeError:
+                    pass
+            elif str(type(value.this)) == "<type 'PyCObject'>":
                 is_match = 1
-        except AttributeError:
-            pass
         return is_match
 
     def generate_build_info(self):
@@ -155,11 +179,18 @@ class swig2_converter(common_base_converter):
     def type_spec(self,name,value):
         """ This returns a generic type converter for SWIG-1.3
         objects.  For specific instances, override this function if
-        necessary."""        
+        necessary."""
         # factory
-        class_name = value.this.split('_')[-1]
-        new_spec = self.__class__(class_name)
-        new_spec.name = name        
+        pycobj = 0
+        if type(value.this) == type('str'):
+            class_name = value.this.split('_')[-1]
+        else: # PyCObject case
+            class_name = value.__class__.__name__
+            if class_name[-3:] == 'Ptr':
+                class_name = class_name[:-3]
+            pycobj = 1
+        new_spec = self.__class__(class_name, pycobj)
+        new_spec.name = name
         return new_spec
 
     def __cmp__(self,other):
