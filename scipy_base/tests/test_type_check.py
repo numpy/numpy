@@ -3,10 +3,59 @@ import unittest
 import sys
 from scipy_test.testing import *
 set_package_path()
-import scipy_base;reload(scipy_base)
+import scipy_base;reload(scipy_base);reload(scipy_base.type_check)
 from scipy_base import *
 del sys.path[0]
-       
+
+class test_mintypecode(ScipyTestCase):
+
+    def check_default_1(self):
+        for itype in '1bcsuwil':
+            assert_equal(mintypecode(itype),'d')
+        assert_equal(mintypecode('f'),'f')
+        assert_equal(mintypecode('d'),'d')
+        assert_equal(mintypecode('F'),'F')
+        assert_equal(mintypecode('D'),'D')
+
+    def check_default_2(self):
+        for itype in '1bcsuwil':
+            assert_equal(mintypecode(itype+'f'),'f')
+            assert_equal(mintypecode(itype+'d'),'d')
+            assert_equal(mintypecode(itype+'F'),'F')
+            assert_equal(mintypecode(itype+'D'),'D')
+        assert_equal(mintypecode('ff'),'f')
+        assert_equal(mintypecode('fd'),'d')
+        assert_equal(mintypecode('fF'),'F')
+        assert_equal(mintypecode('fD'),'D')
+        assert_equal(mintypecode('df'),'d')
+        assert_equal(mintypecode('dd'),'d')
+        assert_equal(mintypecode('dF',savespace=1),'F')
+        assert_equal(mintypecode('dF'),'D')
+        assert_equal(mintypecode('dD'),'D')
+        assert_equal(mintypecode('Ff'),'F')
+        assert_equal(mintypecode('Fd',savespace=1),'F')
+        assert_equal(mintypecode('Fd'),'D')
+        assert_equal(mintypecode('FF'),'F')
+        assert_equal(mintypecode('FD'),'D')
+        assert_equal(mintypecode('Df'),'D')
+        assert_equal(mintypecode('Dd'),'D')
+        assert_equal(mintypecode('DF'),'D')
+        assert_equal(mintypecode('DD'),'D')
+
+    def check_default_3(self):
+        assert_equal(mintypecode('fdF'),'D')
+        assert_equal(mintypecode('fdF',savespace=1),'F')
+        assert_equal(mintypecode('fdD'),'D')
+        assert_equal(mintypecode('fFD'),'D')
+        assert_equal(mintypecode('dFD'),'D')
+
+        assert_equal(mintypecode('ifd'),'d')
+        assert_equal(mintypecode('ifF'),'F')
+        assert_equal(mintypecode('ifD'),'D')
+        assert_equal(mintypecode('idF'),'D')
+        assert_equal(mintypecode('idF',savespace=1),'F')
+        assert_equal(mintypecode('idD'),'D')
+        
 class test_isscalar(unittest.TestCase):
     def check_basic(self):
         assert(isscalar(3))

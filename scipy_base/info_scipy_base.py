@@ -21,6 +21,7 @@ typename         --  Return english name for given typecode character
 cast             --  Dictionary of functions to force cast to each type
 common_type      --  Determine the 'minimum common type code' for a group
                        of arrays
+mintypecode      --  Return minimal allowed common typecode.
 
 Index tricks
 ==================

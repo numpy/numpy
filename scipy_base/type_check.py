@@ -13,7 +13,30 @@ __all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isnan','isinf','isfinite',
            'isreal','nan_to_num','real','real_if_close',
            'typename','cast','common_type','typecodes', 'asarray',
-           'asfarray', 'ArrayType', 'UfuncType']
+           'asfarray', 'ArrayType', 'UfuncType','mintypecode']
+
+_typecodes_by_elsize = 'DFdfluiwsb1c'
+def mintypecode(typecodes,typeset='DFdf',default='d',savespace=0):
+   """ Return a typecode in typeset such that for each
+   t in typecodes
+     array(typecode=typecode)[:] = array(typecode=t)
+   is valid, looses no information, and array(typecode=typecode)
+   element size is minimal unless when typecodes does not
+   intersect with typeset then default is returned.
+   As a special case, if savespace is False then 'D' is returned
+   whenever typecodes contain 'F' and 'd'.
+   """
+   intersection = [t for t in typecodes if t in typeset]
+   if not intersection:
+      return default
+   if not savespace and 'F' in intersection and 'd' in intersection:
+      return 'D'
+   l = []
+   for t in intersection:
+      i = _typecodes_by_elsize.index(t)
+      l.append((i,t))
+   l.sort()
+   return l[0][1]
 
 def asarray(a, typecode=None, savespace=None):
    """asarray(a,typecode=None, savespace=0) returns a as a NumPy array.
