@@ -25,7 +25,7 @@ class string_specification(base_cxx_specification):
 
     def declaration_code(self,templatize = 0,inline=0):
         var_name = self.retrieve_py_variable(inline)
-        code = 'Py::String %s = py_to_string(%s,"%s");\n' % \
+        code = 'Py::String %s = convert_to_string(%s,"%s");\n' % \
                (self.name,var_name,self.name)
         return code       
     def local_dict_code(self):
@@ -40,7 +40,7 @@ class list_specification(base_cxx_specification):
 
     def declaration_code(self,templatize = 0,inline=0):
         var_name = self.retrieve_py_variable(inline)
-        code = 'Py::List %s = py_to_list(%s,"%s");\n' % \
+        code = 'Py::List %s = convert_to_list(%s,"%s");\n' % \
                (self.name,var_name,self.name)
         return code       
     def local_dict_code(self):
@@ -54,7 +54,7 @@ class dict_specification(base_cxx_specification):
 
     def declaration_code(self,templatize = 0,inline=0):
         var_name = self.retrieve_py_variable(inline)
-        code = 'Py::Dict %s = py_to_dict(%s,"%s");\n' % \
+        code = 'Py::Dict %s = convert_to_dict(%s,"%s");\n' % \
                (self.name,var_name,self.name)               
         return code
                
@@ -69,7 +69,7 @@ class tuple_specification(base_cxx_specification):
 
     def declaration_code(self,templatize = 0,inline=0):
         var_name = self.retrieve_py_variable(inline)
-        code = 'Py::Tuple %s = py_to_tuple(%s,"%s");\n' % \
+        code = 'Py::Tuple %s = convert_to_tuple(%s,"%s");\n' % \
                (self.name,var_name,self.name)
         return code       
     def local_dict_code(self):

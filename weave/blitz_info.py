@@ -36,6 +36,28 @@ class py_type<complex<float> >{public: enum { code = PyArray_CFLOAT};};
 class py_type<complex<double> >{public: enum { code = PyArray_CDOUBLE};};
 
 template<class T, int N>
+static blitz::Array<T,N> convert_to_blitz(PyObject* py_obj,char* name)
+{
+
+    PyArrayObject* arr_obj = convert_to_numpy(py_obj,name);
+    conversion_numpy_check_size(arr_obj,N,name);
+    conversion_numpy_check_type(arr_obj,py_type<T>::code,name);
+    
+    blitz::TinyVector<int,N> shape(0);
+    blitz::TinyVector<int,N> strides(0);
+    int stride_acc = 1;
+    //for (int i = N-1; i >=0; i--)
+    for (int i = 0; i < N; i++)
+    {
+        shape[i] = arr_obj->dimensions[i];
+        strides[i] = arr_obj->strides[i]/sizeof(T);
+    }
+    //return blitz::Array<T,N>((T*) arr_obj->data,shape,        
+    return blitz::Array<T,N>((T*) arr_obj->data,shape,strides,
+                             blitz::neverDeleteData);
+}
+
+template<class T, int N>
 static blitz::Array<T,N> py_to_blitz(PyObject* py_obj,char* name)
 {
 

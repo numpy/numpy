@@ -33,6 +33,7 @@
 
 import os,sys,string
 import pickle
+
 try:
     import dbhash
     import shelve
@@ -40,6 +41,13 @@ try:
 except ImportError:
     import dumb_shelve as shelve
     dumb == 1
+
+#For testing...
+#import dumb_shelve as shelve
+#dumb = 1
+
+#import shelve
+#dumb = 0
     
 def getmodule(object):
     """ Discover the name of the module where object was defined.
@@ -220,16 +228,14 @@ def get_catalog(module_path,mode='r'):
         msg = " mode must be 'c', 'n', 'r', or 'w'.  See anydbm for more info"
         raise ValueError, msg
     catalog_file = catalog_path(module_path)
-    # code reliant on the fact that we are using dumbdbm
-    if dumb and mode == 'r' and not os.path.exists(catalog_file+'.dat'):
-        sh = None
-    elif dumb:
-        sh = shelve.open(catalog_file)
-    else:
-        try:
-            sh = shelve.open(catalog_file,mode)
-        except: # not sure how to pin down which error to catch yet
+    try:
+        # code reliant on the fact that we are using dumbdbm
+        if dumb and mode == 'r' and not os.path.exists(catalog_file+'.dat'):
             sh = None
+        else:
+            sh = shelve.open(catalog_file,mode)
+    except: # not sure how to pin down which error to catch yet
+        sh = None
     return sh
 
 class catalog:
@@ -590,7 +596,10 @@ class catalog:
             cat_dir = default_dir()                            
             cat_file = catalog_path(cat_dir)
             print 'problems with default catalog -- removing'
-            os.remove(cat_file)
+            import glob
+            files = glob.glob(cat_file+'*')
+            for f in files:
+                os.remove(f)
             cat = get_catalog(cat_dir,mode)
         if cat is None:
             raise ValueError, 'Failed to access a catalog for storing functions'    

@@ -333,8 +333,16 @@ def attempt_function_call(code,local_dict,global_dict):
             function_catalog.fast_cache(code,func)
             function_cache[code] = func
             return results
-        except: # should specify argument types here.
-            pass
+        except TypeError, msg: # should specify argument types here.
+            # This should really have its own error type, instead of
+            # checking the beginning of the message, but I don't know
+            # how to define that yet.
+            msg = str(msg)
+            if msg[:16] == "Conversion Error":
+                pass
+            else:
+                raise TypeError, msg
+                
     # 3. try persistent catalog
     module_dir = global_dict.get('__file__',None)
     function_list = function_catalog.get_functions(code,module_dir)
@@ -411,105 +419,13 @@ def compile_function(code,arg_names,local_dict,global_dict,
         del sys.path[0]
     return func
 
+def test():
+    from scipy_test import module_test
+    module_test(__name__,__file__)
 
-def test1(n=1000):
-    a = 2;b = 'string'
-    code = """
-           int a=b.length();
-           return_val = Py::new_reference_to(Py::Int(a));
-           """
-    #result = inline(code,['a','b'])
-    result = inline(code,['b'])
-    print result
-    print 'should be %d. It is ---> %d' % (len(b),result)
-    import time
-    t1 = time.time()
-    for i in range(n):
-        result = inline(code,['b'])
-        #result = inline(code,['a','b'])
-    t2 = time.time()
-    print 'inline call(sec per call,total):', (t2 - t1) / n, t2-t1
-    t1 = time.time()
-    for i in range(n):
-        result = len(b)
-    t2 = time.time()
-    print 'standard call(sec per call,total):', (t2 - t1) / n, t2-t1
-    bb=[b]*n
-    t1 = time.time()
-    result_list = [len(b) for b in bb]
-    t2 = time.time()
-    print 'new fangled list thing(sec per call, total):', (t2 - t1) / n, t2-t1
-def test2(m=1,n=1000):
-    import time
-    lst = ['string']*n
-    code = """
-           int sum = 0;
-           PyObject* raw_list = lst.ptr();
-           PyObject* str;
-           for(int i=0; i < lst.length(); i++)
-           {
-               str = PyList_GetItem(raw_list,i);
-               if (!PyString_Check(str))
-               {
-                   char msg[500];
-                   sprintf(msg,"Element %d of the list is not a string\n", i);
-                   throw Py::TypeError(msg);
-               }
-               sum += PyString_Size(str);
-           }
-           return_val = Py::new_reference_to(Py::Int(sum));
-           """
-    result = inline(code,['lst'])
-    t1 = time.time()
-    for i in range(m):
-        result = inline(code,['lst'])
-    t2 = time.time()
-    print 'inline call(sec per call,total,result):', (t2 - t1) / n, t2-t1, result
+def test_suite():
+    from scipy_test import module_test_suite
+    return module_test_suite(__name__,__file__)    
 
-    lst = ['string']*n
-    code = """
-           #line 280 "inline_expr.py"
-           int sum = 0;
-           Py::String str;
-           for(int i=0; i < lst.length(); i++)
-           {
-               str = lst[i];
-               sum += str.length();
-           }
-           return_val = Py::new_reference_to(Py::Int(sum));
-           """
-    result = inline(code,['lst'])
-    t1 = time.time()
-    for i in range(m):
-        result = inline(code,['lst'])
-    t2 = time.time()
-    print 'cxx inline call(sec per call,total,result):', (t2 - t1) / n, t2-t1,result
-
-    lst = ['string']*n
-    t1 = time.time()
-    for i in range(m):
-        result = 0
-        for i in lst:
-            result += len(i)
-    t2 = time.time()
-    print 'python call(sec per call,total,result):', (t2 - t1) / n, t2-t1, result
-
-    lst = ['string']*n
-    t1 = time.time()
-    for i in range(m):
-        result = reduce(lambda x,y: x + len(y),lst[1:],len(lst[0]))
-    t2 = time.time()
-    print 'reduce(sec per call,total,result):', (t2 - t1) / n, t2-t1, result
-
-    import operator
-    lst = ['string']*n
-    t1 = time.time()
-    for i in range(m):
-        l = map(len,lst)
-        result = reduce(operator.add,l)
-    t2 = time.time()
-    print 'reduce2(sec per call,total,result):', (t2 - t1) / n, t2-t1, result
-
-if __name__ == '__main__':
-    test2(10000,100)
-    test1(100000)
+if __name__ == "__main__":
+    test_function()

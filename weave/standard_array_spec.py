@@ -33,7 +33,7 @@ class array_specification(base_specification):
         var_name = self.retrieve_py_variable(inline=1)
         templ = '// %(name)s array declaration\n' \
                 'py_%(name)s= %(var_name)s;\n' \
-                'PyArrayObject* %(name)s = py_to_numpy(py_%(name)s,"%(name)s");\n' \
+                'PyArrayObject* %(name)s = convert_to_numpy(py_%(name)s,"%(name)s");\n' \
                 'int* _N%(name)s = %(name)s->dimensions;\n' \
                 'int* _S%(name)s = %(name)s->strides;\n' \
                 'int _D%(name)s = %(name)s->nd;\n' \
@@ -45,7 +45,7 @@ class array_specification(base_specification):
         type = numeric_to_blitz_type_mapping[self.numeric_type]
         name = self.name
         templ = '// %(name)s array declaration\n' \
-                'PyArrayObject* %(name)s = py_to_numpy(py_%(name)s,"%(name)s");\n' \
+                'PyArrayObject* %(name)s = convert_to_numpy(py_%(name)s,"%(name)s");\n' \
                 'int* _N%(name)s = %(name)s->dimensions;\n' \
                 'int* _S%(name)s = %(name)s->strides;\n' \
                 'int _D%(name)s = %(name)s->nd;\n' \

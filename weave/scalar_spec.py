@@ -50,7 +50,7 @@ class scalar_specification(base_specification):
         name = self.name
         var_name = self.retrieve_py_variable(inline)
         template = '%(type)s %(name)s = '\
-                   'py_to_scalar<%(type)s >(%(var_name)s,"%(name)s");\n'
+                   'convert_to_scalar<%(type)s >(%(var_name)s,"%(name)s");\n'
         code = template % locals()
         return code
         
@@ -64,7 +64,7 @@ class scalar_specification(base_specification):
         name = self.name
         var_name = self.retrieve_py_variable(inline)
         template = '%(type)s %(name)s = '\
-                   'py_to_%(func_type)s (%(var_name)s,"%(name)s");\n'
+                   'convert_to_%(func_type)s (%(var_name)s,"%(name)s");\n'
         code = template % locals()
         return code
 

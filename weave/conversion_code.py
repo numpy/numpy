@@ -75,7 +75,7 @@ file_convert_code =  \
 FILE* convert_to_file(PyObject* py_obj, char* name)
 {
     if (!py_obj || !PyFile_Check(py_obj))
-        handle_conversion_error_type(py_obj,"file", name);
+        handle_conversion_error(py_obj,"file", name);
 
     // Cleanup code should call DECREF
     Py_INCREF(py_obj);

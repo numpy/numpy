@@ -38,7 +38,7 @@ class array_specification(base_specification):
         templ = '// blitz_array_declaration\n' \
                 'py_%(name)s= %(var_name)s;\n' \
                 'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
-                ' py_to_blitz<%(type)s,%(dims)d>(py_%(name)s,"%(name)s");\n' \
+                ' convert_to_blitz<%(type)s,%(dims)d>(py_%(name)s,"%(name)s");\n' \
                 'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
         code = templ % locals()
         return code
@@ -50,7 +50,7 @@ class array_specification(base_specification):
         var_name = self.retrieve_py_variable(inline=0)
         templ = '// blitz_array_declaration\n' \
                 'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
-                ' py_to_blitz<%(type)s,%(dims)d>(%(var_name)s,"%(name)s");\n' \
+                ' convert_to_blitz<%(type)s,%(dims)d>(%(var_name)s,"%(name)s");\n' \
                 'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
         code = templ % locals()
         return code

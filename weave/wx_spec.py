@@ -6,6 +6,16 @@ import os
 
 wx_support_template = \
 """
+static %(wx_class)s* convert_to_%(wx_class)s(PyObject* py_obj,char* name)
+{
+    %(wx_class)s *wx_ptr;
+    
+    // work on this error reporting...
+    if (SWIG_GetPtrObj(py_obj,(void **) &wx_ptr,"_%(wx_class)s_p"))
+        handle_conversion_error(py_obj,"%(wx_class)s", name);
+    return wx_ptr;
+}    
+
 static %(wx_class)s* py_to_%(wx_class)s(PyObject* py_obj,char* name)
 {
     %(wx_class)s *wx_ptr;
@@ -50,7 +60,7 @@ class wx_specification(base_specification):
         name = self.name
         var_name = self.retrieve_py_variable(inline)
         template = '%(type)s *%(name)s = '\
-                   'py_to_%(type)s(%(var_name)s,"%(name)s");\n'
+                   'convert_to_%(type)s(%(var_name)s,"%(name)s");\n'
         code = template % locals()
         return code
         
