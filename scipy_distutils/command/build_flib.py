@@ -619,18 +619,19 @@ class sun_fortran_compiler(fortran_compiler_base):
 
         self.f90_compiler = f90c
         # -fixed specifies fixed-format instead of free-format F90/95 code
-        self.f90_switches = ' -fixed -pic'
+        self.f90_switches = ' -pic'
         self.f90_opt = ' -fast -dalign -xtarget=generic -R/opt/SUNWspro/lib'
 
         self.ver_cmd = self.f90_compiler + ' -V'
 
         self.libraries = ['fsu', 'F77', 'M77', 'sunmath',
                           'mvec', 'f77compat', 'm']
-        
+
         #threaded
         #self.libraries = ['f90', 'F77_mt', 'sunmath_mt', 'm', 'thread']
         #self.libraries = []
-        self.library_dirs = self.find_lib_dir()
+        if self.is_available():
+            self.library_dirs = self.find_lib_dir()
 
     def build_module_switch(self,module_dirs):
         res = ''
@@ -648,14 +649,14 @@ class sun_fortran_compiler(fortran_compiler_base):
         exit_status, output = run_command(cmd)
         if not exit_status:
             libs = re.findall(lib_match,output)
-            if libs[0] == "(null)":
+            if libs and libs[0] == "(null)":
                 del libs[0]
             if libs:
                 library_dirs = string.split(libs[0],':')
                 self.get_version() # force version calculation
                 compiler_home = os.path.dirname(library_dirs[0])
                 library_dirs.append(os.path.join(compiler_home,
-                                               self.version,'lib'))
+                                                 self.version,'lib'))
         return library_dirs
 
     def get_runtime_library_dirs(self):
