@@ -1,7 +1,7 @@
 
 __all__ = []
 
-import os,sys,time,glob,string,traceback,unittest
+import os,sys,time,glob,string,traceback,unittest,math
 
 try:
     # These are used by Numeric tests.
