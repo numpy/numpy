@@ -99,8 +99,10 @@ from Numeric import *
 try:
     import fastumath
 except ImportError,mess:
-    if __file__[:22]=='scipy_base/__init__.py':
-        raise ImportError,str(mess)+\
+    mess_str = str(mess)
+    if mess_str=='No module named fastumath':
+        print '__file__=',__file__
+        raise ImportError,mess_str+\
               "\n  scipy cannot be imported from its source directory."\
               "\n  Change to another directory and try again."
     raise ImportError,mess
