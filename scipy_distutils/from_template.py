@@ -89,9 +89,8 @@ def parse_structure(astr):
         spanlist.append((start,end))
     return spanlist
 
-template_re = re.compile(r"<\s*(\w*)\s*>")
-named_re = re.compile(r"<\s*([\w]+)\s*=\s*(.*?)\s*>")
-#list_re = re.compile(r"<([\w ]+(,\s*[\w\\]+)+)>")
+template_re = re.compile(r"<\s*(\w[\w\d]*)\s*>")
+named_re = re.compile(r"<\s*(\w[\w\d]*)\s*=\s*(.*?)\s*>")
 list_re = re.compile(r"<\s*((.*?))\s*>")
 
 def find_repl_patterns(astr):
@@ -129,7 +128,7 @@ def unique_key(adict):
     return newkey
 
 
-template_name_re = re.compile(r'\A\s*(\w*)\s*\Z')
+template_name_re = re.compile(r'\A\s*(\w[\w\d]*)\s*\Z')
 def expand_sub(substr,names):
     substr = substr.replace('\>','@rightarrow@')
     substr = substr.replace('\<','@leftarrow@')
@@ -153,6 +152,7 @@ def expand_sub(substr,names):
                                            # newnames are constructed as needed
 
     numsubs = None
+    base_rule = None
     rules = {}
     for r in template_re.findall(substr):
         if not rules.has_key(r):
@@ -161,14 +161,20 @@ def expand_sub(substr,names):
                 raise ValueError,'No replicates found for <%s>' % (r)
             if not names.has_key(r) and not thelist.startswith('_'):
                 names[r] = thelist
-            rules[r] = [i.replace('@comma@',',') for i in thelist.split(',')]
-            num = len(rules[r])
+            rule = [i.replace('@comma@',',') for i in thelist.split(',')]
+            num = len(rule)
+
             if numsubs is None:
                 numsubs = num
-            elif num != numsubs:
-                print num,rules[r]
-                raise ValueError,"Mismatch in number of replacements (%s)"\
-                      " for <%s=%s>" % (numsubs,r,thelist) 
+                rules[r] = rule
+                base_rule = r
+            elif num == numsubs:
+                rules[r] = rule
+            else:
+                print "Mismatch in number of replacements (base <%s=%s>)"\
+                      " for <%s=%s>. Ignoring." % (base_rule,
+                                                  ','.join(rules[base_rule]),
+                                                  r,thelist)
     if not rules:
         return substr
 
