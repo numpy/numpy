@@ -44,7 +44,8 @@ def unix2dos(file):
         print file, "Binary!"
         return
         
-    newdata = re.sub("\n", "\r\n", data)
+    newdata = re.sub("\r\n", "\n", data)
+    newdata = re.sub("\n", "\r\n", newdata)
     if newdata != data:
         print 'unix2dos:', file
         f = open(file, "wb")
