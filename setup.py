@@ -45,12 +45,17 @@ def setup_package():
         minor = max([v.minor for v in versions])
         micro = max([v.micro for v in versions])
         release_level = min([v.release_level for v in versions])
+        release_level = ''
         cvs_minor = reduce(lambda a,b:a+b,[v.cvs_minor for v in versions],0)
         cvs_serial = reduce(lambda a,b:a+b,[v.cvs_serial for v in versions],0)
 
-        scipy_core_version = '%(major)d.%(minor)d.%(micro)d'\
-                             '_%(release_level)s'\
-                             '_%(cvs_minor)d.%(cvs_serial)d' % (locals ())
+        if release_level:
+            scipy_core_version = '%(major)d.%(minor)d.%(micro)d'\
+                                 '_%(release_level)s'\
+                                 '_%(cvs_minor)d.%(cvs_serial)d' % (locals ())
+        else:
+            scipy_core_version = '%(major)d.%(minor)d.%(micro)d'\
+                                 '_%(cvs_minor)d.%(cvs_serial)d' % (locals ())
 
         print 'SciPy Core Version %s' % scipy_core_version
         setup( version = scipy_core_version,
