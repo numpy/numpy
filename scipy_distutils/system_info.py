@@ -277,6 +277,7 @@ class system_info:
         self.__class__.info = {}
         self.local_prefixes = []
         defaults = {}
+        defaults['libraries'] = ''
         defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
         defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
@@ -295,7 +296,26 @@ class system_info:
                                                       'search_static_first')
         assert isinstance(self.search_static_first, type(0))
 
+    def calc_libraries_info(self):
+        libs = self.get_libraries()
+        dirs = self.get_lib_dirs()
+        info = {}
+        for lib in libs:
+            i = None
+            for d in dirs:
+                i = self.check_libs(d,[lib])        
+                if i is not None:
+                    break
+            if i is not None:
+                dict_append(info,**i)
+            else:
+                print 'Library %s was not found. Ignoring' % (lib)
+        return info
+
     def set_info(self,**info):
+        if info:       
+            lib_info = self.calc_libraries_info()
+            dict_append(info,**lib_info)
         self.saved_results[self.__class__.__name__] = info
 
     def has_info(self):
@@ -399,8 +419,15 @@ class system_info:
         try:
             libs = self.cp.get(self.section, key)
         except ConfigParser.NoOptionError:
+            if not default:
+                return []
+            if type(default) is type(''):
+                return [default]
             return default
-        return [a.strip() for a in libs.split(',')]
+        return [b for b in [a.strip() for a in libs.split(',')] if b]
+
+    def get_libraries(self, key='libraries'):
+        return self.get_libs(key,'')
 
     def check_libs(self,lib_dir,libs,opt_libs =[]):
         """ If static or shared libraries are available then return
@@ -414,6 +441,7 @@ class system_info:
         for ext in exts:
             info = self._check_libs(lib_dir,libs,opt_libs,ext)
             if info is not None: return info
+        return
 
     def _lib_list(self, lib_dir, libs, ext):
         assert type(lib_dir) is type('')
@@ -549,7 +577,7 @@ class djbfft_info(system_info):
                             define_macros=[('SCIPY_DJBFFT_H',None)])
                 self.set_info(**info)
                 return
-
+        return
 
 class atlas_info(system_info):
     section = 'atlas'
@@ -626,6 +654,7 @@ class atlas_info(system_info):
             warnings.warn(message)
             self.set_info(**info)
             return
+        
         # Check if lapack library is complete, only warn if it is not.
         lapack_dir = lapack['library_dirs'][0]
         lapack_name = lapack['libraries'][0]
@@ -916,7 +945,6 @@ class lapack_opt_info(system_info):
         info = {}
         if atlas_info:
             version_info = atlas_info.copy()
-            version_info['libraries'] = [version_info['libraries'][-1]]
             atlas_version = get_atlas_version(**version_info)
             if not atlas_info.has_key('define_macros'):
                 atlas_info['define_macros'] = []
@@ -995,7 +1023,6 @@ class blas_opt_info(system_info):
         info = {}
         if atlas_info:
             version_info = atlas_info.copy()
-            version_info['libraries'] = [version_info['libraries'][-1]]
             atlas_version = get_atlas_version(**version_info)
             if not atlas_info.has_key('define_macros'):
                 atlas_info['define_macros'] = []
