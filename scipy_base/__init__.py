@@ -9,7 +9,6 @@ from index_tricks import *
 from function_base import *
 from shape_base import *
 from matrix_base import *
-from transform_base import *
 
 from polynomial import *
 from scimath import *

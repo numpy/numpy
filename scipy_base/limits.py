@@ -14,6 +14,7 @@ __all__ = ['epsilon','tiny','float_epsilon','float_tiny','float_min',
            'double_epsilon','double_tiny','double_min','double_max',
            'double_precision','double_resolution']
 
+
 def epsilon(typecode):
     if typecode == Numeric.Float32: cast = toFloat32
     elif typecode == Numeric.Float64: cast = toFloat64
