@@ -55,6 +55,9 @@ class ParallelExec(threading.Thread):
             try:
                 exec (code, frame.f_globals,frame.f_locals)
             except Exception:
-                traceback.print_exc()
+                try:
+                    traceback.print_exc()
+                except AttributeError:
+                    pass
             if wait_for_code is not None:
                 wait_for_code.set()
