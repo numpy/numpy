@@ -14,6 +14,10 @@ import os
 import sys
 import string
 import types
+import traceback
+
+class PPImportError(ImportError):
+    pass
 
 def _get_so_ext(_cache={}):
     so_ext = _cache.get('so_ext')
@@ -176,21 +180,28 @@ class _ModuleLoader:
 
     def _ppimport_importer(self):
         name = self.__name__
-	try:
-	    module = sys.modules[name]
+        try:
+            module = sys.modules[name]
 	except KeyError:
-	    raise ImportError,self.__dict__.get('_ppimport_exc_value')
-        assert module is self,`(module, self)`
+            raise ImportError,self.__dict__.get('_ppimport_exc_info')[1]
+        if module is not self:
+            exc_info = self.__dict__.get('_ppimport_exc_info')
+            if exc_info is not None:
+                raise PPImportError,\
+                      ''.join(traceback.format_exception(*exc_info))
+            else:
+                assert module is self,`(module, self)`
 
         # uninstall loader
         del sys.modules[name]
 
         #print 'Executing postponed import for %s' %(name)
-	try:
-	    module = __import__(name,None,None,['*'])
-	except ImportError:
-	    self.__dict__['_ppimport_exc_value'] = str(sys.exc_value)
-	    raise
+        try:
+            module = __import__(name,None,None,['*'])
+        except: # ImportError:
+            self.__dict__['_ppimport_exc_info'] = sys.exc_info()
+            raise
+
         assert isinstance(module,types.ModuleType),`module`
 
         self.__dict__ = module.__dict__
@@ -214,7 +225,7 @@ class _ModuleLoader:
     def __repr__(self):
         if self.__dict__.has_key('_ppimport_module'):
             status = 'imported'
-        elif self.__dict__.has_key('_ppimport_exc_value'):
+        elif self.__dict__.has_key('_ppimport_exc_info'):
             status = 'import error'
         else:
             status = 'import postponed'
