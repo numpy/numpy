@@ -315,16 +315,17 @@ class atlas_info(system_info):
 
     def calc_info_debian(self,prefix):
         print 'Trying Debian setup'
-        info = self.check_libs(os.path.join(prefix,'lib'),
+        atlas = self.check_libs(os.path.join(prefix,'lib'),
                                 ['cblas','f77blas','atlas'],[])
-        if not info: return
+        if not atlas: return
         lapack = self.check_libs(os.path.join(prefix,'lib','atlas'),['lapack'],[])
         if not lapack:
             lapack = self.check_libs(os.path.join(prefix,'lib'),['lapack'],[])
         if not lapack: return
+        info = lapack
         h = (combine_paths(prefix,'include','cblas.h') or [None])[0]
         if h: dict_append(info,include_dirs=[os.path.dirname(h)])
-        dict_append(info,**lapack)
+        dict_append(info,**atlas)
         self.set_info(**info)
         
 class blas_info(system_info):
