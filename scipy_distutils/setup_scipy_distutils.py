@@ -11,6 +11,8 @@ def configuration(parent_package=''):
     sub_package = dot_join(package,'command')
     config['packages'].append(dot_join(parent_package,sub_package))
     config['package_dir'][sub_package] = os.path.join(local_path,'command')
+
+    config['data_files'].append((package,[os.path.join(local_path,'sample_site.cfg')]))
     return config
 
 if __name__ == '__main__':
