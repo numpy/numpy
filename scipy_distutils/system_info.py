@@ -732,24 +732,9 @@ extern "C" {
 #include "Python.h"
 static PyMethodDef module_methods[] = { {NULL,NULL} };
 DL_EXPORT(void) initatlas_version(void) {
-  PyObject *m = NULL;
-#if defined(NO_ATLAS_INFO)
-  printf("NO ATLAS INFO AVAILABLE\n");
-#else
-#if defined(ATLAS_INFO)
-  printf("ATLAS_VERSION=" ATLAS_INFO "\n");
-#else
   void ATL_buildinfo(void);
   ATL_buildinfo();
-#endif
-#endif
-  m = Py_InitModule("atlas_version", module_methods);
-#if defined(ATLAS_INFO)
-  {
-    PyObject *d = PyModule_GetDict(m);
-    PyDict_SetItemString(d,"ATLAS_VERSION",PyString_FromString(ATLAS_INFO));
-  }
-#endif
+  Py_InitModule("atlas_version", module_methods);
 }
 #ifdef __CPLUSCPLUS__
 }
@@ -816,6 +801,7 @@ class lapack_opt_info(system_info):
         atlas_info = get_info('atlas_threads')
         if not atlas_info:
             atlas_info = get_info('atlas')
+        #atlas_info = {} ## uncomment for testing
         atlas_version = None
         need_lapack = 0
         need_blas = 0
@@ -840,9 +826,11 @@ class lapack_opt_info(system_info):
             warnings.warn(AtlasNotFoundError.__doc__)
             need_blas = 1
             need_lapack = 1
+            dict_append(info,define_macros=[('NO_ATLAS_INFO',1)])
 
         if need_lapack:
             lapack_info = get_info('lapack')
+            #lapack_info = {} ## uncomment for testing
             if lapack_info:
                 dict_append(info,**lapack_info)
             else:
@@ -851,10 +839,11 @@ class lapack_opt_info(system_info):
                 if not lapack_src_info:
                     warnings.warn(LapackSrcNotFoundError.__doc__)
                     return
-                dict_append(info,**lapack_src_info)
+                dict_append(info,libraries=[('flapack_src',lapack_src_info)])
 
         if need_blas:
             blas_info = get_info('blas')
+            #blas_info = {} ## uncomment for testing
             if blas_info:
                 dict_append(info,**blas_info)
             else:
@@ -863,7 +852,7 @@ class lapack_opt_info(system_info):
                 if not blas_src_info:
                     warnings.warn(BlasSrcNotFoundError.__doc__)
                     return
-                dict_append(info,**blas_src_info)
+                dict_append(info,libraries=[('fblas_src',blas_src_info)])
 
         self.set_info(**info)
         return
@@ -904,6 +893,7 @@ class blas_opt_info(system_info):
         else:
             warnings.warn(AtlasNotFoundError.__doc__)
             need_blas = 1
+            dict_append(info,define_macros=[('NO_ATLAS_INFO',1)])
 
         if need_blas:
             blas_info = get_info('blas')
@@ -915,7 +905,7 @@ class blas_opt_info(system_info):
                 if not blas_src_info:
                     warnings.warn(BlasSrcNotFoundError.__doc__)
                     return
-                dict_append(info,**blas_src_info)
+                dict_append(info,libraries=[('fblas_src',blas_src_info)])
 
         self.set_info(**info)
         return

@@ -50,4 +50,19 @@ def setup(**attr):
         new_attr['libraries'].extend(fortran_libraries)
         del new_attr['fortran_libraries']
 
+    # Move extension source libraries to libraries
+    libraries = []
+    for ext in new_attr.get('ext_modules',[]):
+        new_libraries = []
+        for item in ext.libraries:
+            if type(item) is type(()):
+                lib_name,build_info = item
+                libraries.append(item)
+                new_libraries.append(lib_name)
+            else:
+                assert type(item) is type(''),`item`
+                new_libraries.append(item)
+        ext.libraries = new_libraries
+    new_attr['libraries'].extend(libraries)
+
     return old_setup(**new_attr)
