@@ -31,6 +31,12 @@ def configuration(parent_package=''):
     ext = Extension('scipy_base.fastumath',sources,libraries=[],
                     extra_compile_args=extra_compile_args)
     config['ext_modules'].append(ext)
+ 
+    # _compiled_base module
+    sources = ['_compiled_base.c']
+    sources = [os.path.join(local_path,x) for x in sources]
+    ext = Extension('scipy_base._compiled_base',sources,libraries=[])
+    config['ext_modules'].append(ext)
 
     # Test to see if big or little-endian machine and get correct default
     #   mconf.h module.

@@ -27,3 +27,60 @@
 #else
 #include "fastumath_nounsigned.inc"
 #endif
+
+/* Initialization function for the module (*must* be called initArray) */
+
+static struct PyMethodDef methods[] = {
+    {NULL,		NULL, 0}		/* sentinel */
+};
+
+DL_EXPORT(void) initfastumath(void) {
+    PyObject *m, *d, *s, *f1;
+  
+    /* Create the module and add the functions */
+    m = Py_InitModule("fastumath", methods); 
+
+    /* Import the array and ufunc objects */
+    import_array();
+    import_ufunc();
+
+    /* Add some symbolic constants to the module */
+    d = PyModule_GetDict(m);
+
+    s = PyString_FromString("2.2");
+    PyDict_SetItemString(d, "__version__", s);
+    Py_DECREF(s);
+
+    /* Load the ufunc operators into the array module's namespace */
+    InitOperators(d); 
+
+    PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(atan(1.0) * 4.0));
+    Py_DECREF(s);
+    PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(exp(1.0)));
+    Py_DECREF(s);
+    PyDict_SetItemString(d, "PINF", s = PyFloat_FromDouble(1.0/0.0));
+    Py_DECREF(s);
+    PyDict_SetItemString(d, "NINF", s = PyFloat_FromDouble(-1.0/0.0));
+    Py_DECREF(s);
+    PyDict_SetItemString(d, "PZERO", s = PyFloat_FromDouble(0.0));
+    Py_DECREF(s);
+    PyDict_SetItemString(d, "NZERO", s = PyFloat_FromDouble(-0.0));
+    Py_DECREF(s);
+#if defined(NAN) 
+    PyDict_SetItemString(d, "NAN", s = PyFloat_FromDouble(NAN));
+    Py_DECREF(s);
+#endif
+
+
+    f1 = PyDict_GetItemString(d, "conjugate");  /* Borrowed reference */
+
+    /* Setup the array object's numerical structures */
+    PyArray_SetNumericOps(d);
+
+    PyDict_SetItemString(d, "conj", f1); /* shorthand for conjugate */
+  
+    /* Check for errors */
+    if (PyErr_Occurred())
+	Py_FatalError("can't initialize module fastumath");
+}
+
