@@ -242,6 +242,9 @@ class FCompiler(CCompiler):
         if self.executables['compiler_f90']:
             return self.executables['compiler_f90'][1:]
         return []
+    def get_flags_free(self):
+        """ List of Fortran 90 free format specific flags. """
+        return []
     def get_flags_fix(self):
         """ List of Fortran 90 fixed format specific flags. """
         if self.executables['compiler_fix']:
@@ -334,7 +337,8 @@ class FCompiler(CCompiler):
         if f90:
             f90flags = self.__get_flags(self.get_flags_f90,'F90FLAGS',
                                        (conf,'f90flags'))
-
+            freeflags = self.__get_flags(self.get_flags_free,'FREEFLAGS',
+                                         (conf,'freeflags'))
         # XXX Assuming that free format is default for f90 compiler.
         fix = self.__get_cmd('compiler_fix','F90',(conf,'f90exec'))
         if fix:
@@ -373,7 +377,7 @@ class FCompiler(CCompiler):
         if f77:
             self.set_executables(compiler_f77=[f77]+f77flags+fflags)
         if f90:
-            self.set_executables(compiler_f90=[f90]+f90flags+fflags)
+            self.set_executables(compiler_f90=[f90]+freeflags+f90flags+fflags)
         if fix:
             self.set_executables(compiler_fix=[fix]+fixflags+fflags)
 
@@ -423,7 +427,7 @@ class FCompiler(CCompiler):
 
     def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
         """Compile 'src' to product 'obj'."""
-        if is_f_file(src):
+        if is_f_file(src) and not has_f90_header(src):
             flavor = ':f77'
             compiler = self.compiler_f77
         elif is_free_format(src):
@@ -792,6 +796,7 @@ def dummy_fortran_file():
 is_f_file = re.compile(r'.*[.](for|ftn|f77|f)\Z',re.I).match
 _has_f_header = re.compile(r'-[*]-\s*fortran\s*-[*]-',re.I).search
 _has_f90_header = re.compile(r'-[*]-\s*f90\s*-[*]-',re.I).search
+_has_fix_header = re.compile(r'-[*]-\s*fix\s*-[*]-',re.I).search
 _free_f90_start = re.compile(r'[^c*]\s*[^\s\d\t]',re.I).match
 def is_free_format(file):
     """Check if file is in free format Fortran."""
@@ -816,5 +821,10 @@ def is_free_format(file):
     f.close()
     return result
 
+def has_f90_header(src):
+    f = open(src,'r')
+    line = f.readline()
+    f.close()
+    return _has_f90_header(line) or _has_fix_header(line)
 if __name__ == '__main__':
     show_fcompilers()

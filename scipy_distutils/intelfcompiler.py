@@ -36,6 +36,9 @@ class IntelFCompiler(FCompiler):
         opt = self.pic_flags + ["-cm"]
         return opt
 
+    def get_flags_free(self):
+        return ["-FR"]
+
     def get_flags_opt(self):
         return ['-O3','-unroll']
 
@@ -117,6 +120,9 @@ class IntelVisualFCompiler(FCompiler):
     def get_flags(self):
         opt = ['/nologo','/MD','/nbs','/Qlowercase','/us']
         return opt
+
+    def get_flags_free(self):
+        return ["-FR"]
 
     def get_flags_debug(self):
         return ['/4Yb','/d2']
