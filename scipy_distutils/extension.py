@@ -6,8 +6,6 @@ modules in setup scripts.
 Overridden to support f2py and SourceGenerator.
 """
 
-# created 2000/05/30, Greg Ward
-
 __revision__ = "$Id$"
 
 from distutils.extension import Extension as old_Extension

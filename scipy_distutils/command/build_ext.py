@@ -50,11 +50,13 @@ class build_ext (old_build_ext):
         # bogus linking commands. Extensions must
         # explicitly specify the C libraries that they use.
 
-        save_mth = self.distribution.has_c_libraries
-        self.distribution.has_c_libraries = self.distribution.return_false
-        old_build_ext.run(self)   # sets self.compiler
-        log.info(misc_util.compiler_to_string(self.compiler))
-        self.distribution.has_c_libraries = save_mth
+        from distutils.ccompiler import new_compiler
+        self.compiler = new_compiler(compiler=self.compiler,
+                                     verbose=self.verbose,
+                                     dry_run=self.dry_run,
+                                     force=self.force)
+        self.compiler.customize(self.distribution)
+        self.compiler.customize_cmd(self)
         
         # Determine if Fortran compiler is needed.
         if build_clib and build_clib.fcompiler is not None:
@@ -88,7 +90,6 @@ class build_ext (old_build_ext):
                                            force=self.force)
             self.fcompiler.customize(self.distribution)
             self.fcompiler.customize_cmd(self)
-            log.info(misc_util.compiler_to_string(self.fcompiler))
         if need_cxx_compiler:
             c = self.compiler
             if c.compiler[0].find('gcc')>=0:
@@ -103,17 +104,7 @@ class build_ext (old_build_ext):
                 print 'XXX: Fix compiler_cxx for',c.__class__.__name__
 
         # Build extensions
-        self.build_extensions2()
-        return
-
-    def build_extensions(self):
-        # Hold on building extensions in old_build_ext.run()
-        # until Fortran/C++ compilers are set. Building will be
-        # carried out in build_extensions2()
-        return
-
-    def build_extensions2(self):
-        old_build_ext.build_extensions(self)
+        self.build_extensions()
         return
 
     def swig_sources(self, sources):
@@ -172,6 +163,7 @@ class build_ext (old_build_ext):
         if cxx_sources:
             old_compiler = self.compiler.compiler_so[0]
             self.compiler.compiler_so[0] = self.compiler.compiler_cxx[0]
+
             c_objects += self.compiler.compile(cxx_sources,
                                               output_dir=self.build_temp,
                                               macros=macros,

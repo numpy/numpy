@@ -28,6 +28,7 @@ from distutils.sysconfig import get_config_var
 from scipy_distutils.command.config_compiler import config_fc
 
 import log
+from misc_util import compiler_to_string
 from exec_command import find_executable, exec_command
 
 class FCompiler(CCompiler):
@@ -304,6 +305,7 @@ class FCompiler(CCompiler):
         compiler instance. But not in __init__ because Distribution
         instance is needed for (iii) and (iv).
         """
+        log.info('customize %s' % (self.__class__.__name__))
         if dist is None:
             # These hooks are for testing only!
             from dist import Distribution
@@ -408,25 +410,6 @@ class FCompiler(CCompiler):
             self.dump_properties()
         return
 
-    def customize_cmd(self, cmd):
-        if cmd.include_dirs is not None:
-            self.set_include_dirs(cmd.include_dirs)
-        if cmd.define is not None:
-            for (name,value) in cmd.define:
-                self.define_macro(name, value)
-        if cmd.undef is not None:
-            for macro in cmd.undef:
-                self.undefine_macro(macro)
-        if cmd.libraries is not None:
-            self.set_libraries(self.get_libraries() + cmd.libraries)
-        if cmd.library_dirs is not None:
-            self.set_library_dirs(self.get_library_dirs() + cmd.library_dirs)
-        if cmd.rpath is not None:
-            self.set_runtime_library_dirs(cmd.rpath)
-        if cmd.link_objects is not None:
-            self.set_link_objects(cmd.link_objects)
-        return
-
     def dump_properties(self):
         """ Print out the attributes of a compiler instance. """
         props = []
@@ -446,20 +429,7 @@ class FCompiler(CCompiler):
             print l
         return
 
-    def spawn(self, cmd):
-        s,o = exec_command(cmd)
-        if s:
-            if type(cmd) is type([]):
-                cmd = ' '.join(cmd)
-            raise DistutilsExecError,\
-                  'Command "%s" failed with exit status %d' % (cmd, s)
-
     ###################
-
-    def _get_cc_args(self, pp_opts, debug, before):
-        #XXX
-        #print self.__class__.__name__ + '._get_cc_args:',pp_opts, debug, before
-        return []
 
     def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
         """Compile 'src' to product 'obj'."""
@@ -483,12 +453,13 @@ class FCompiler(CCompiler):
         assert self.compile_switch.strip()
         s_args = [self.compile_switch, src]
 
-        command = compiler + cc_args + pp_opts + s_args + o_args + extra_postargs
-        log.info('%s: %s' % (os.path.basename(compiler[0]) \
-                             + (compiler is self.compiler_fix and ':fix' or ''),
-                             src))
+        command = compiler + cc_args + s_args + o_args + extra_postargs
+
+        display = '%s: %s' % (os.path.basename(compiler[0]) \
+                              + (compiler is self.compiler_fix and ':fix' or ''),
+                              src)
         try:
-            self.spawn(command)
+            self.spawn(command,display=display)
         except DistutilsExecError, msg:
             raise CompileError, msg
 
@@ -516,6 +487,9 @@ class FCompiler(CCompiler):
         return "-l" + lib
     def library_dir_option(self, dir):
         return "-L" + dir
+
+    def _get_cc_args(self, pp_opts, debug, extra_preargs):
+        return []
 
     if sys.version[:3]<'2.3':
         def compile(self, sources, output_dir=None, macros=None,
@@ -569,8 +543,8 @@ class FCompiler(CCompiler):
                 o_args = [self.library_switch.strip()+output_filename]
             ld_args = (objects + self.objects +
                        lib_opts + o_args)
-            #if debug:
-            #    ld_args[:0] = ['-g']
+            if debug:
+                ld_args[:0] = ['-g']
             if extra_preargs:
                 ld_args[:0] = extra_preargs
             if extra_postargs:
@@ -581,8 +555,7 @@ class FCompiler(CCompiler):
             else:
                 linker = self.linker_so[:]
             command = linker + ld_args
-            log.info('%s:> %s' % (os.path.basename(linker[0]),
-                                 output_filename))
+
             try:
                 self.spawn(command)
             except DistutilsExecError, msg:
@@ -726,10 +699,12 @@ def new_fcompiler(plat=None,
         raise DistutilsModuleError, \
               ("can't compile Fortran code: unable to find class '%s' " +
                "in module '%s'") % (class_name, module_name)
+    compiler = klass(None, dry_run, force)
     print '*'*80
     print klass
+    print compiler_to_string(compiler)
     print '*'*80
-    return klass(None, dry_run, force)
+    return compiler
 
 
 def show_fcompilers(dist = None):

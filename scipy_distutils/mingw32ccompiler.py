@@ -144,7 +144,6 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                           strip_dir=0,
                           output_dir=''):
         if output_dir is None: output_dir = ''
-        print 'cygiwn_output_dir:', output_dir
         obj_names = []
         for src_name in source_filenames:
             # use normcase to make sure '.rc' is really '.rc' and not '.RC'

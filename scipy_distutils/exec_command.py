@@ -115,7 +115,7 @@ def test_splitcmdline():
 def find_executable(exe, path=None):
     """ Return full path of a executable.
     """
-    log.info('find_executable(%r)' % exe)
+    log.debug('find_executable(%r)' % exe)
     if path is None:
         path = os.environ.get('PATH',os.defpath)
     suffices = ['']

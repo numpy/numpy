@@ -81,8 +81,16 @@ class build_clib(old_build_clib):
                 raise TypeError,'Library "%s" sources contains unresolved'\
                       ' items (call build_src before built_clib).' % (lib_name)
 
-        old_build_clib.run(self)   # sets self.compiler
-        log.info(misc_util.compiler_to_string(self.compiler))
+        from distutils.ccompiler import new_compiler
+        self.compiler = new_compiler(compiler=self.compiler,
+                                     dry_run=self.dry_run,
+                                     force=self.force)
+        self.compiler.customize(self.distribution)
+
+        libraries = self.libraries
+        self.libraries = None
+        self.compiler.customize_cmd(self)
+        self.libraries = libraries
 
         if self.have_f_sources():
             from scipy_distutils.fcompiler import new_fcompiler
@@ -91,17 +99,14 @@ class build_clib(old_build_clib):
                                            dry_run=self.dry_run,
                                            force=self.force)
             self.fcompiler.customize(self.distribution)
-            log.info(misc_util.compiler_to_string(self.fcompiler))
+
+            libraries = self.libraries
+            self.libraries = None
+            self.fcompiler.customize_cmd(self)
+            self.libraries = libraries
 
         #XXX: C++ linker support, see build_ext.py
-
-        self.build_libraries2(self.libraries)
-        return
-
-    def build_libraries(self, libraries):
-        # Hold on building libraries in old_build_clib.run()
-        # until Fortran/C++ compilers are set. Building will be
-        # carried out in build_libraries2()
+        self.build_libraries(self.libraries)
         return
 
     def get_source_files(self):
@@ -113,7 +118,7 @@ class build_clib(old_build_clib):
         filenames.extend(get_headers(get_directories(filenames)))
         return filenames
 
-    def build_libraries2(self, libraries):
+    def build_libraries(self, libraries):
 
         compiler = self.compiler
         fcompiler = self.fcompiler
@@ -149,6 +154,7 @@ class build_clib(old_build_clib):
 
             if cxx_sources:
                 print 'XXX: C++ linker support not implemented or tested'
+
             objects = compiler.compile(c_sources+cxx_sources,
                                        output_dir=self.build_temp,
                                        macros=macros,
