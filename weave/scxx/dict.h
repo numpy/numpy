@@ -155,10 +155,11 @@ public:
   //-------------------------------------------------------------------------
   // update
   //-------------------------------------------------------------------------  
+#if PY_VERSION_HEX >= 0x02020000
   void update(dict& other) {
     PyDict_Merge(_obj,other,1);
   };
-  
+#endif
   //-------------------------------------------------------------------------
   // del -- remove key from dictionary
   //        overloaded to take all common weave types
