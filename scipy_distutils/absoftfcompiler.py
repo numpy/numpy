@@ -13,6 +13,10 @@ class AbsoftFCompiler(FCompiler):
     compiler_type = 'absoft'
     version_pattern = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
 
+    # samt5735(8)$ f90 -V -c dummy.f
+    # f90: Copyright Absoft Corporation 1994-2002; Absoft Pro FORTRAN Version 8.0
+    # Note that fink installs g77 as f77, so need to use f90 for detection.
+
     executables = {
         'version_cmd'  : ["f77", "-V -c %(fname)s.f -o %(fname)s.o" \
                           % {'fname':dummy_fortran_file()}],

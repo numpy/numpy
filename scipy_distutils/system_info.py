@@ -824,12 +824,16 @@ class lapack_opt_info(system_info):
 
         if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
             args = []
+            link_args = []
             if os.path.exists('/System/Library/Frameworks/Accelerate.framework/'):
                 args.extend(['-faltivec','-framework','Accelerate'])
+                link_args.extend(['-Wl,-framework','-Wl,Accelerate'])
             elif os.path.exists('/System/Library/Frameworks/vecLib.framework/'):
                 args.extend(['-faltivec','-framework','vecLib'])
+                link_args.extend(['-Wl,-framework','-Wl,vecLib'])
             if args:
-                self.set_info(extra_compile_args=args)
+                self.set_info(extra_compile_args=args,
+                              extra_link_args=link_args)
                 return
 
         atlas_info = get_info('atlas_threads')
@@ -896,14 +900,17 @@ class blas_opt_info(system_info):
     
     def calc_info(self):
 
-        if sys.platform=='darwin':
+        if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
             args = []
             if os.path.exists('/System/Library/Frameworks/Accelerate.framework/'):
                 args.extend(['-faltivec','-framework','Accelerate'])
+                link_args.extend(['-Wl,-framework','-Wl,Accelerate'])
             elif os.path.exists('/System/Library/Frameworks/vecLib.framework/'):
                 args.extend(['-faltivec','-framework','vecLib'])
+                link_args.extend(['-Wl,-framework','-Wl,vecLib'])
             if args:
-                self.set_info(extra_compile_args=args)
+                self.set_info(extra_compile_args=args,
+                              extra_link_args=link_args)
                 return
 
         atlas_info = get_info('atlas_blas_threads')
