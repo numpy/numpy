@@ -13,7 +13,7 @@ from types import StringType, NoneType, ListType, TupleType
 from glob import glob
 
 from distutils.version import StrictVersion
-from distutils.ccompiler import CCompiler, gen_lib_options
+from scipy_distutils.ccompiler import CCompiler, gen_lib_options
 # distutils.ccompiler provides the following functions:
 #   gen_preprocess_options(macros, include_dirs)
 #   gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries)
@@ -460,6 +460,11 @@ class FCompiler(CCompiler):
             log.info('*****status:%s\n*****output:\n%s\n*****' % (status,output))
         return status, output
 
+    def spawn(self, cmd):
+        s,o = self.exec_command(cmd)
+        assert not s,`s`
+
+
     ###################
 
     def _get_cc_args(self, pp_opts, debug, before):
@@ -735,7 +740,9 @@ def new_fcompiler(plat=None,
         raise DistutilsModuleError, \
               ("can't compile Fortran code: unable to find class '%s' " +
                "in module '%s'") % (class_name, module_name)
-
+    print '*'*80
+    print klass
+    print '*'*80
     return klass(None, dry_run, force)
 
 

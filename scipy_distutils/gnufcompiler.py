@@ -33,19 +33,21 @@ class GnuFCompiler(FCompiler):
         }
     module_dir_switch = None
     module_include_switch = None
-    if os.name != 'nt':
+
+    # Cygwin: f771: warning: -fPIC ignored for target (all code is position independent)
+    if os.name != 'nt' and sys.platform!='cygwin':
         pic_flags = ['-fPIC']
 
     def get_linker_so(self):
         # win32 linking should be handled by standard linker
         # Darwin g77 cannot be used as a linker.
-        if re.match(r'(win32|cygwin.*|darwin)', sys.platform):
+        if re.match(r'(darwin)', sys.platform):
             return
         return FCompiler.get_linker_so(self)
 
     def get_flags_linker_so(self):
         opt = FCompiler.get_flags_linker_so(self)
-        if not re.match(r'(win32|cygwin.*|darwin)', sys.platform):
+        if not re.match(r'(darwin)', sys.platform):
             opt.append("-shared")
         if sys.platform[:5]=='sunos':
             # SunOS often has dynamically loaded symbols defined in the
@@ -167,6 +169,7 @@ if __name__ == '__main__':
     from scipy_distutils import log
     log.set_verbosity(2)
     from fcompiler import new_fcompiler
-    compiler = new_fcompiler(compiler='gnu')
+    #compiler = new_fcompiler(compiler='gnu')
+    compiler = GnuFCompiler()
     compiler.customize()
     print compiler.get_version()

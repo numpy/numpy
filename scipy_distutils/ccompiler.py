@@ -7,6 +7,7 @@ from distutils.ccompiler import *
 from distutils import ccompiler
 
 import log
+from exec_command import exec_command
 
 if sys.platform == 'win32':
     compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
@@ -58,6 +59,7 @@ def new_compiler (plat=None,
               ("can't compile C/C++ code: unable to find class '%s' " +
                "in module '%s'") % (class_name, module_name)
     print '*'*80
-    print module_name,klass
+    print klass
     print '*'*80
     return klass(None, dry_run, force)
+

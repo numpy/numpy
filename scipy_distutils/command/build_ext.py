@@ -218,6 +218,8 @@ class build_ext (old_build_ext):
         old_linker_so_0 = self.compiler.linker_so[0]
 
         use_fortran_linker = 0
+        c_libraries = []
+        c_library_dirs = []
         if f_sources:
             use_fortran_linker = 1
         elif self.distribution.has_c_libraries():            
@@ -226,6 +228,11 @@ class build_ext (old_build_ext):
             for (lib_name, build_info) in build_clib.libraries:
                 if has_f_sources(build_info.get('sources',[])):
                     f_libs.append(lib_name)
+                if lib_name in ext.libraries:
+                    # XXX: how to determine if c_libraries contain
+                    # fortran compiled sources?
+                    c_libraries.extend(build_info.get('libraries',[]))
+                    c_library_dirs.extend(build_info.get('library_dirs',[]))
             for l in ext.libraries:
                 if l in f_libs:
                     use_fortran_linker = 1
@@ -250,9 +257,10 @@ class build_ext (old_build_ext):
             kws = {'target_lang':language}
         else:
             kws = {}
+
         link(objects, ext_filename,
-             libraries=self.get_libraries(ext),
-             library_dirs=ext.library_dirs,
+             libraries=self.get_libraries(ext) + c_libraries,
+             library_dirs=ext.library_dirs + c_library_dirs,
              runtime_library_dirs=ext.runtime_library_dirs,
              extra_postargs=extra_args,
              export_symbols=self.get_export_symbols(ext),
