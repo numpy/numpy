@@ -56,6 +56,17 @@ if sys.platform[:5]=='linux':
             return int(l[13])
         except:
             return int(100*(time.time()-_load_time))
+
+    def memusage(_proc_pid_stat = '/proc/%s/stat'%(os.getpid())):
+        """ Return virtual memory size in bytes of the running python.
+        """
+        try:
+            f=open(_proc_pid_stat,'r')
+            l = f.readline().split(' ')
+            f.close()
+            return int(l[22])
+        except:
+            return
 else:
     # os.getpid is not in all platforms available.
     # Using time is safe but inaccurate, especially when process
@@ -65,6 +76,9 @@ else:
     process has been scheduled in user mode. [Emulation with time.time]. """
         return int(100*(time.time()-_load_time))
 
+    def memusage():
+        """ Return memory usage of running python. [Not implemented]"""
+        return
 
 __all__.append('ScipyTestCase')
 class ScipyTestCase (unittest.TestCase):
