@@ -898,6 +898,11 @@ class intel_ia32_fortran_compiler(fortran_compiler_base):
         self.ver_cmd = self.f77_compiler+' -FI -V -c %s -o %s' %\
                        self.dummy_fortran_files()
 
+        gnuc = gnu_fortran_compiler()
+        if gnuc.is_available():
+            self.library_dirs = gnuc.gcc_lib_dir
+            self.libraries = gnuc.libraries
+
     def get_opt(self):
         import cpuinfo
         cpu = cpuinfo.cpuinfo()
