@@ -2765,7 +2765,7 @@ static void * divide_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (vo
 static void * floor_divide_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL, (void *)NULL};
 static void * true_divide_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL, (void *)NULL };
 #endif
-static void * divide_safe_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL, (void *)NULL };
+static void * divide_safe_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL, (void *)NULL, (void *)NULL, (void *) NULL, (void *) NULL };
 static void * conjugate_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL };
 static void * remainder_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL, (void *)NULL, };
 static void * power_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,};
