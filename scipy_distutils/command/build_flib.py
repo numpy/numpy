@@ -675,6 +675,9 @@ class sun_fortran_compiler(fortran_compiler_base):
     Note also that the 'Forte' name is passe.  Sun's latest compiler is
     named 'Sun ONE Studio 7, Compiler Collection'.  Heaven only knows what
     the version string for that baby will be.
+
+    Consider renaming this class to forte_fortran_compiler and define
+    sun_fortran_compiler separately for older Sun f77 compilers.
     """
     
     vendor = 'Sun'
@@ -687,12 +690,12 @@ class sun_fortran_compiler(fortran_compiler_base):
         fortran_compiler_base.__init__(self, verbose=verbose)
 
         if fc is None:
-            fc = 'f77'
+            fc = 'f90'
         if f90c is None:
             f90c = 'f90'
 
         self.f77_compiler = fc
-        self.f77_switches = ' -pic'
+        self.f77_switches = ' -pic -f77 -ftrap=%none '
         self.f77_opt = ' -fast -dalign -xtarget=generic -R/opt/SUNWspro/lib'
 
         self.f90_compiler = f90c
@@ -703,8 +706,20 @@ class sun_fortran_compiler(fortran_compiler_base):
 
         self.ver_cmd = self.f90_compiler + ' -V'
 
+        return
+
+        # When using f90 as a linker, nothing from below is needed.
+        # Tested against:
+        #   Forte Developer 7 Fortran 95 7.0 2002/03/09
+        # If there are issues with older Sun compilers, then these must be
+        # solved explicitly (possibly defining separate Sun compiler class)
+        # while keeping this simple/minimal configuration
+        # for the latest Forte compilers.
+
         self.libraries = ['fsu', 'F77', 'M77', 'sunmath',
                           'mvec', 'f77compat', 'm']
+
+        #self.libraries = ['fsu','sunmath']
 
         #threaded
         #self.libraries = ['f90', 'F77_mt', 'sunmath_mt', 'm', 'thread']
@@ -743,7 +758,7 @@ class sun_fortran_compiler(fortran_compiler_base):
         return ["-Bdynamic", "-G"]
 
     def get_linker_so(self):
-        return [self.f77_compiler]
+        return [self.f90_compiler]
 
 
 class mips_fortran_compiler(fortran_compiler_base):
@@ -963,6 +978,9 @@ class gnu_fortran_compiler(fortran_compiler_base):
         return args
 
     def f90_compile(self,source_files,module_files,temp_dir=''):
+        raise DistutilsExecError, 'f90 not supported by Gnu'
+
+    def f90_fixed_compile(self,source_files,module_files,temp_dir=''):
         raise DistutilsExecError, 'f90 not supported by Gnu'
 
 
