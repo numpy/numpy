@@ -23,7 +23,7 @@ def _tocomplex(arr):
 
 def _fix_real_lt_zero(x):
     x = asarray(x)
-    if any(isreal(x) & x<0):
+    if any(isreal(x) & (x<0)):
         x = _tocomplex(x)
     return x
 
