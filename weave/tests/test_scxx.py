@@ -320,7 +320,60 @@ class test_list(unittest.TestCase):
         t2 = time.time()
         print 'weave:', t2 - t1
         assert b == a   
+
+    def _check_string_add_speed(self):
+        N = 1000000
+        print 'string add -- b[i] = a[i] + "blah" for N =', N        
+        a = ["blah"] * N
+        desired = [1] * N
+        t1 = time.time()
+        for i in xrange(N):
+            desired[i] = a[i] + 'blah'
+        t2 = time.time()
+        print 'python:', t2 - t1
         
+        a = ["blah"] * N
+        b = [1] * N     
+        code = """
+               const int N = a.length();
+               std::string blah = std::string("blah");
+               for(int i=0; i < N; i++)
+                   b[i] = (std::string)a[i] + blah;       
+               """
+        # compile not included in timing
+        inline_tools.inline(code,['a','b'])           
+        t1 = time.time()
+        inline_tools.inline(code,['a','b'])           
+        t2 = time.time()
+        print 'weave:', t2 - t1
+        assert b == desired   
+
+    def check_int_add_speed(self):
+        N = 1000000
+        print 'int add -- b[i] = a[i] + 1 for N =', N        
+        a = [0] * N
+        desired = [1] * N
+        t1 = time.time()
+        for i in xrange(N):
+            desired[i] = a[i] + 1
+        t2 = time.time()
+        print 'python:', t2 - t1
+        
+        a = [0] * N
+        b = [0] * N     
+        code = """
+               const int N = a.length();
+               for(int i=0; i < N; i++)
+                   b[i] = (int)a[i] + 1;       
+               """
+        # compile not included in timing
+        inline_tools.inline(code,['a','b'])           
+        t1 = time.time()
+        inline_tools.inline(code,['a','b'])           
+        t2 = time.time()
+        print 'weave:', t2 - t1
+        assert b == desired   
+            
 class test_object_cast(unittest.TestCase):
     def check_int_cast(self):
         code = """
