@@ -5,13 +5,7 @@ from glob import glob
 import shutil
 
 def configuration(parent_package='',parent_path=None):
-    try:
-        import Numeric
-    except ImportError,msg:
-        print msg
-        print 'Working Numeric is required to build scipy_base'
-        return {}
-
+    from scipy_distutils.system_info import get_info, NumericNotFoundError
     from scipy_distutils.core import Extension
     from scipy_distutils.misc_util import get_path,default_config_dict,dot_join
     from scipy_distutils.misc_util import get_path,default_config_dict,\
@@ -20,6 +14,10 @@ def configuration(parent_package='',parent_path=None):
     package = 'scipy_base'
     local_path = get_path(__name__,parent_path)
     config = default_config_dict(package,parent_package)
+
+    numpy_info = get_info('numpy')
+    if not numpy_info:
+        raise NumericNotFoundError, NumericNotFoundError.__doc__
 
     # extra_compile_args -- trying to find something that is binary compatible
     #                       with msvc for returning Py_complex from functions
