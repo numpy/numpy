@@ -196,11 +196,13 @@ def get_frame(level=0):
 def merge_config_dicts(config_list):
     result = default_config_dict()
     for d in config_list:
+        if not d: continue
         name = d.get('name',None)
         if name is not None:
             result['name'] = name
             break
     for d in config_list:
+        if not d: continue
         for key in list_keys:
             result[key].extend(d.get(key,[]))
         for key in dict_keys:
