@@ -420,7 +420,7 @@ class atlas_info(system_info):
         pre_dirs = system_info.get_paths(self, section, key)
         dirs = []
         for d in pre_dirs:
-            dirs.extend([d] + combine_paths(d,['atlas*','ATLAS*']))
+            dirs.extend(combine_paths(d,['atlas*','ATLAS*']) + [d])
         return [ d for d in dirs if os.path.isdir(d) ]
 
     def calc_info(self):
