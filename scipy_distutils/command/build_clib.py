@@ -255,7 +255,14 @@ class build_clib (Command):
                                             output_dir=self.build_clib,
                                             debug=self.debug)
             #XXX: ranlib may not be available on non-GNU platforms.
-            cmd = 'ranlib '+os.path.join(self.build_clib,'lib%s.a' % lib_name)
+            lib_file = None
+            if sys.platform=='win32':
+                lib_file = os.path.join(self.build_clib,'%s.lib' % lib_name)
+                if not os.path.isfile(lib_file):
+                    lib_file = None
+            if lib_file is None:
+                lib_file = os.path.join(self.build_clib,'lib%s.a' % lib_name)
+            cmd = 'ranlib '+lib_file
             log.debug(cmd)
             failure = os.system(cmd)
             if failure:
