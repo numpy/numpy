@@ -36,10 +36,7 @@ if sys.platform == 'win32':
     def build_import_library():
         """ Build the import libraries for Mingw32-gcc on Windows
         """
-        # lib2def lives in weave
-        sys.path.insert(0,os.path.join('.','weave'))
         import lib2def
-        del sys.path[0]
 
         #libfile, deffile = parse_cmd()
         #if deffile is None:
