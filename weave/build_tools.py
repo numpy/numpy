@@ -428,7 +428,7 @@ if sys.platform == 'win32':
     def build_import_library():
         """ Build the import libraries for Mingw32-gcc on Windows
         """
-        import lib2def as lib2def
+        import scipy_distutils import lib2def
         #libfile, deffile = parse_cmd()
         #if deffile is None:
         #    deffile = sys.stdout
