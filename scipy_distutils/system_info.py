@@ -26,7 +26,7 @@ Usage:
 Global parameters:
   system_info.search_static_first - search static libraries (.a)
              in precedence to shared ones (.so, .sl) if enabled.
-  system_info.verbose - output the results to stdout if enabled.
+  system_info.verbosity - output the results to stdout if enabled.
 
 The file 'site.cfg' in the same directory as this module is read
 for configuration options. The format is that used by ConfigParser (i.e.,
@@ -201,12 +201,13 @@ class system_info:
     dir_env_var = None
     search_static_first = 0 # XXX: disabled by default, may disappear in
                             # future unless it is proved to be useful.
-    verbose = 1
+    verbosity = 1
     saved_results = {}
 
     def __init__ (self,
                   default_lib_dirs=default_lib_dirs,
                   default_include_dirs=default_include_dirs,
+                  verbosity = 1,
                   ):
         self.__class__.info = {}
         self.local_prefixes = []
@@ -238,18 +239,18 @@ class system_info:
         flag = 0
         if not self.has_info():
             flag = 1
-            if self.verbose:
+            if self.verbosity>0:
                 print self.__class__.__name__ + ':'
             if hasattr(self, 'calc_info'):
                 self.calc_info()
-            if self.verbose:
+            if self.verbosity>0:
                 if not self.has_info():
                     print '  NOT AVAILABLE'
                     self.set_info()
                 else:
                     print '  FOUND:'
         res = self.saved_results.get(self.__class__.__name__)
-        if self.verbose and flag:
+        if self.verbosity>0 and flag:
             for k,v in res.items():
                 v = str(v)
                 if k=='sources' and len(v)>200: v = v[:60]+' ...\n... '+v[-60:]
@@ -265,6 +266,8 @@ class system_info:
         dirs.extend(default_dirs)
         ret = []
         [ret.append(d) for d in dirs if os.path.isdir(d) and d not in ret]
+        if self.verbosity>1:
+            print '(',key,'=',':'.join(ret),')'
         return ret
 
     def get_lib_dirs(self, key='library_dirs'):
@@ -298,7 +301,7 @@ class system_info:
         assert type(lib_dir) is type('')
         liblist = []
         for l in libs:
-            p = combine_paths(lib_dir, 'lib'+l+ext)
+            p = self.combine_paths(lib_dir, 'lib'+l+ext)
             if p:
                 assert len(p)==1
                 liblist.append(p[0])
@@ -318,6 +321,9 @@ class system_info:
                 opt_found_libs = self._extract_lib_names(opt_found_libs)
                 info['libraries'].extend(opt_found_libs)
             return info
+
+    def combine_paths(self,*args):
+        return combine_paths(*args,**{'verbosity':self.verbosity})
 
 class fftw_info(system_info):
     section = 'fftw'
@@ -343,7 +349,7 @@ class fftw_info(system_info):
         if info is not None:
             flag = 0
             for d in incl_dirs:
-                if len(combine_paths(d,self.includes))==2:
+                if len(self.combine_paths(d,self.includes))==2:
                     dict_append(info,include_dirs=[d])
                     flag = 1
                     incl_dirs = [d]
@@ -395,19 +401,30 @@ class djbfft_info(system_info):
     section = 'djbfft'
     dir_env_var = 'DJBFFT'
 
+    def get_paths(self, section, key):
+        pre_dirs = system_info.get_paths(self, section, key)
+        dirs = []
+        for d in pre_dirs:
+            dirs.extend(self.combine_paths(d,['djbfft'])+[d])
+        return [ d for d in dirs if os.path.isdir(d) ]
+
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
         info = None
         for d in lib_dirs:
-            p = combine_paths (d,['djbfft.a'])
+            p = self.combine_paths (d,['djbfft.a'])
             if p:
                 info = {'extra_objects':p}
+                break
+            p = self.combine_paths (d,['libdjbfft.a'])
+            if p:
+                info = {'libraries':['djbfft'],'library_dirs':[d]}
                 break
         if info is None:
             return
         for d in incl_dirs:
-            if len(combine_paths(d,['fftc8.h','fftfreq.h']))==2:
+            if len(self.combine_paths(d,['fftc8.h','fftfreq.h']))==2:
                 dict_append(info,include_dirs=[d],
                             define_macros=[('SCIPY_DJBFFT_H',None)])
                 self.set_info(**info)
@@ -422,7 +439,7 @@ class atlas_info(system_info):
         pre_dirs = system_info.get_paths(self, section, key)
         dirs = []
         for d in pre_dirs:
-            dirs.extend(combine_paths(d,['atlas*','ATLAS*',
+            dirs.extend(self.combine_paths(d,['atlas*','ATLAS*',
                                          'sse*','3dnow'])+[d])
         return [ d for d in dirs if os.path.isdir(d) ]
 
@@ -437,7 +454,7 @@ class atlas_info(system_info):
         for d in lib_dirs:
             atlas = self.check_libs(d,atlas_libs,[])
             if atlas is not None:
-                lib_dirs2 = combine_paths(d,['atlas*','ATLAS*'])+[d]
+                lib_dirs2 = self.combine_paths(d,['atlas*','ATLAS*'])+[d]
                 for d2 in lib_dirs2:
                     lapack = self.check_libs(d2,lapack_libs,[])
                     if lapack is not None:
@@ -449,7 +466,7 @@ class atlas_info(system_info):
         if atlas is None:
             return
         include_dirs = self.get_include_dirs()
-        h = (combine_paths(lib_dirs+include_dirs,'cblas.h') or [None])[0]
+        h = (self.combine_paths(lib_dirs+include_dirs,'cblas.h') or [None])[0]
         if h:
             h = os.path.dirname(h)
             dict_append(info,include_dirs=[h])
@@ -517,7 +534,7 @@ class lapack_src_info(system_info):
         pre_dirs = system_info.get_paths(self, section, key)
         dirs = []
         for d in pre_dirs:
-            dirs.extend([d] + combine_paths(d,['LAPACK*/SRC','SRC']))
+            dirs.extend([d] + self.combine_paths(d,['LAPACK*/SRC','SRC']))
         return [ d for d in dirs if os.path.isdir(d) ]
 
     def calc_info(self):
@@ -632,7 +649,7 @@ class blas_src_info(system_info):
         pre_dirs = system_info.get_paths(self, section, key)
         dirs = []
         for d in pre_dirs:
-            dirs.extend([d] + combine_paths(d,['blas']))
+            dirs.extend([d] + self.combine_paths(d,['blas']))
         return [ d for d in dirs if os.path.isdir(d) ]
 
     def calc_info(self):
@@ -694,14 +711,14 @@ class x11_info(system_info):
             return
         inc_dir = None
         for d in include_dirs:
-            if combine_paths(d, 'X11/X.h'):
+            if self.combine_paths(d, 'X11/X.h'):
                 inc_dir = d
                 break
         if inc_dir is not None:
             dict_append(info, include_dirs=[inc_dir])
         self.set_info(**info)
 
-def combine_paths(*args):
+def combine_paths(*args,**kws):
     """ Return a list of existing paths composed by all combinations of
         items from arguments.
     """
@@ -722,6 +739,9 @@ def combine_paths(*args):
                 result.extend(glob(os.path.join(a0,a1)))
     else:
         result = combine_paths(*(combine_paths(args[0],args[1])+args[2:]))
+    verbosity = kws.get('verbosity',1)
+    if verbosity>1 and result:
+        print '(','paths:',','.join(result),')'
     return result
 
 def dict_append(d,**kws):
@@ -741,6 +761,7 @@ def show_all():
     for n in filter(match_info,dir(system_info)):
         if n in ['system_info','get_info']: continue
         c = getattr(system_info,n)()
+        c.verbosity = 2
         r = c.get_info()
 
 if __name__ == "__main__":
