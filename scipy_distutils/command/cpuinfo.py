@@ -44,6 +44,8 @@ class cpuinfo_base:
                 return lambda : None
         raise AttributeError,name    
 
+    def _getNCPUs(self):
+        return 1
 
 class linux_cpuinfo(cpuinfo_base):
 
@@ -84,6 +86,18 @@ class linux_cpuinfo(cpuinfo_base):
 
     def _is_AthlonK7(self):
         return re.match(r'.*?AMD-K7',self.info[0]['model name']) is not None
+
+    def _is_AthlonHX(self):
+        return re.match(r'.*?Athlon HX\b',
+                        self.info[0]['model name']) is not None
+
+    def _is_Opteron(self):
+        return re.match(r'.*?Opteron\b',
+                        self.info[0]['model name']) is not None
+
+    def _is_Hammer(self):
+        return re.match(r'.*?Hammer\b',
+                        self.info[0]['model name']) is not None
 
     # Alpha
 
@@ -131,20 +145,35 @@ class linux_cpuinfo(cpuinfo_base):
         return re.match(r'.*?Pentium II\b',
                         self.info[0]['model name']) is not None
 
-    _is_PentiumPro = _not_impl
+    def _is_PentiumPro(self):
+        return re.match(r'.*?PentiumPro\b',
+                        self.info[0]['model name']) is not None
+
+    def _is_PentiumMMX(self):
+        return re.match(r'.*?PentiumMMX\b',
+                        self.info[0]['model name']) is not None
 
     def _is_PentiumIII(self):
         return re.match(r'.*?Pentium III\b',
                         self.info[0]['model name']) is not None
 
     def _is_PentiumIV(self):
-        return re.match(r'.*?Pentium IV\b',
+        return re.match(r'.*?Pentium (IV|4)\b',
                         self.info[0]['model name']) is not None
+
+    def _is_Itanium(self):
+        return re.match(r'.*?Itanium\b',
+                        self.info[0]['model name']) is not None
+
+
 
     # Varia
 
     def _is_singleCPU(self):
         return len(self.info) == 1
+
+    def _getNCPUs(self):
+        return len(self.info)
 
     def _has_fdiv_bug(self):
         return self.info[0]['fdiv_bug']=='yes'
@@ -163,6 +192,9 @@ class linux_cpuinfo(cpuinfo_base):
 
     def _has_3dnow(self):
         return re.match(r'.*?\b3dnow\b',self.info[0]['flags']) is not None
+
+    def _has_3dnowext(self):
+        return re.match(r'.*?\b3dnowext\b',self.info[0]['flags']) is not None
 
 class irix_cpuinfo(cpuinfo_base):
 
@@ -194,6 +226,9 @@ class irix_cpuinfo(cpuinfo_base):
 
     def _is_singleCPU(self):
         return self.info[0].get('NUM_PROCESSORS') == '1'
+
+    def _getNCPUs(self):
+        return int(self.info[0].get('NUM_PROCESSORS'))
 
     def __cputype(self,n):
         return self.info[0].get('PROCESSORS').split()[0].lower() == 'r%s' % (n)
@@ -252,11 +287,27 @@ class darwin_cpuinfo(cpuinfo_base):
             if not status:
                 if not info: info.append({})
                 info[-1]['machine'] = string.strip(output)
+            status,output = commands.getstatusoutput('sysctl hw')
+            if not status:
+                if not info: info.append({})
+                d = {}
+                for l in string.split(output,'\n'):
+                    l = map(string.strip,string.split(l, '='))
+                    if len(l)==2:
+                        d[l[0]]=l[1]
+                info[-1]['sysctl_hw'] = d
         except:
             print sys.exc_value,'(ignoring)'
         self.__class__.info = info
 
     def _not_impl(self): pass
+
+    def _getNCPUs(self):
+        try: return int(self.info[0]['sysctl_hw']['hw.ncpu'])
+        except: return 1
+
+    def _is_Power_Macintosh(self):
+        return self.info[0]['sysctl_hw']['hw.machine']=='Power Macintosh'
 
     def _is_i386(self):
         return self.info[0]['arch']=='i386'
@@ -284,12 +335,124 @@ class darwin_cpuinfo(cpuinfo_base):
     def _is_ppc823(self): return self.__machine(823)
     def _is_ppc860(self): return self.__machine(860)
 
+class sunos_cpuinfo(cpuinfo_base):
+
+    info = None
+    
+    def __init__(self):
+        if self.info is not None:
+            return
+        info = []
+        try:
+            import commands
+            status,output = commands.getstatusoutput('arch')
+            if not status:
+                if not info: info.append({})
+                info[-1]['arch'] = string.strip(output)
+            status,output = commands.getstatusoutput('mach')
+            if not status:
+                if not info: info.append({})
+                info[-1]['mach'] = string.strip(output)
+            status,output = commands.getstatusoutput('uname -i')
+            if not status:
+                if not info: info.append({})
+                info[-1]['uname_i'] = string.strip(output)
+            status,output = commands.getstatusoutput('uname -X')
+            if not status:
+                if not info: info.append({})
+                d = {}
+                for l in string.split(output,'\n'):
+                    l = map(string.strip,string.split(l, '='))
+                    if len(l)==2:
+                        d[l[0]]=l[1]
+                info[-1]['uname_X'] = d
+            status,output = commands.getstatusoutput('isainfo -b')
+            if not status:
+                if not info: info.append({})
+                info[-1]['isainfo_b'] = string.strip(output)
+            status,output = commands.getstatusoutput('isainfo -n')
+            if not status:
+                if not info: info.append({})
+                info[-1]['isainfo_n'] = string.strip(output)
+            status,output = commands.getstatusoutput('psrinfo -v 0')
+            if not status:
+                if not info: info.append({})
+                for l in string.split(output,'\n'):
+                    m = re.match(r'\s*The (?P<p>[\w\d]+) processor operates at',l)
+                    if m:
+                        info[-1]['processor'] = m.group('p')
+                        break
+        except:
+            print sys.exc_value,'(ignoring)'
+        self.__class__.info = info
+
+    def _not_impl(self): pass
+
+    def _is_32bit(self):
+        return self.info[0]['isainfo_b']=='32'
+    def _is_64bit(self):
+        return self.info[0]['isainfo_b']=='64'
+
+    def _is_i386(self):
+        return self.info[0]['isainfo_n']=='i386'
+    def _is_sparc(self):
+        return self.info[0]['isainfo_n']=='sparc'
+    def _is_sparcv9(self):
+        return self.info[0]['isainfo_n']=='sparcv9'
+
+    def _getNCPUs(self):
+        try: return int(self.info[0]['uname_X']['NumCPU'])
+        except: return 1
+
+    def _is_sun4(self):
+        return self.info[0]['arch']=='sun4'
+
+    def _is_SUNW(self):
+        return re.match(r'SUNW',self.info[0]['uname_i']) is not None
+    def _is_sparcstation5(self):
+        return re.match(r'.*SPARCstation-5',self.info[0]['uname_i']) is not None
+    def _is_ultra1(self):
+        return re.match(r'.*Ultra-1',self.info[0]['uname_i']) is not None
+    def _is_ultra250(self):
+        return re.match(r'.*Ultra-250',self.info[0]['uname_i']) is not None
+    def _is_ultra2(self):
+        return re.match(r'.*Ultra-2',self.info[0]['uname_i']) is not None
+    def _is_ultra30(self):
+        return re.match(r'.*Ultra-30',self.info[0]['uname_i']) is not None
+    def _is_ultra4(self):
+        return re.match(r'.*Ultra-4',self.info[0]['uname_i']) is not None
+    def _is_ultra5_10(self):
+        return re.match(r'.*Ultra-5_10',self.info[0]['uname_i']) is not None
+    def _is_ultra5(self):
+        return re.match(r'.*Ultra-5',self.info[0]['uname_i']) is not None
+    def _is_ultra60(self):
+        return re.match(r'.*Ultra-60',self.info[0]['uname_i']) is not None
+    def _is_ultra80(self):
+        return re.match(r'.*Ultra-80',self.info[0]['uname_i']) is not None
+    def _is_ultraenterprice(self):
+        return re.match(r'.*Ultra-Enterprise',self.info[0]['uname_i']) is not None
+    def _is_ultraenterprice10k(self):
+        return re.match(r'.*Ultra-Enterprise-10000',self.info[0]['uname_i']) is not None
+    def _is_sunfire(self):
+        return re.match(r'.*Sun-Fire',self.info[0]['uname_i']) is not None
+    def _is_ultra(self):
+        return re.match(r'.*Ultra',self.info[0]['uname_i']) is not None
+
+    def _is_cpusparcv7(self):
+        return self.info[0]['processor']=='sparcv7'
+    def _is_cpusparcv8(self):
+        return self.info[0]['processor']=='sparcv8'
+    def _is_cpusparcv9(self):
+        return self.info[0]['processor']=='sparcv9'
+
 if sys.platform[:5] == 'linux': # variations: linux2,linux-i386 (any others?)
     cpuinfo = linux_cpuinfo
 elif sys.platform[:4] == 'irix':
     cpuinfo = irix_cpuinfo
 elif sys.platform == 'darwin':
     cpuinfo = darwin_cpuinfo
+elif sys.platform[:5] == 'sunos':
+    cpuinfo = sunos_cpuinfo
 #XXX: other OS's. Eg. use _winreg on Win32. Or os.uname on unices.
 else:
     cpuinfo = cpuinfo_base
@@ -303,6 +466,11 @@ if __name__ == "__main__":
 
     print 'CPU information:',
     for name in dir(cpuinfo):
-        if name[0]=='_' and name[1]!='_' and getattr(cpu,name[1:])():
-            print name[1:],
+        if name[0]=='_' and name[1]!='_':
+            r = getattr(cpu,name[1:])()
+            if r:
+                if r!=1:
+                    print '%s=%s' %(name[1:],r),
+                else:
+                    print name[1:],
     print
