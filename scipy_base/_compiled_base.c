@@ -133,6 +133,7 @@ static PyObject *base_insert(PyObject *self, PyObject *args, PyObject *kwdict)
   if (avals == NULL) goto fail;
   avalscast = (PyArrayObject *)PyArray_Cast(avals, ainput->descr->type_num);
   if (avalscast == NULL) goto fail;
+  Py_DECREF(avals);
 
   numvals = PyArray_SIZE(avalscast);
   nd = ainput->nd;
@@ -152,7 +153,6 @@ static PyObject *base_insert(PyObject *self, PyObject *args, PyObject *kwdict)
       if (objarray) Py_INCREF(*((PyObject **)vptr));
     }
     Py_DECREF(amask);
-    Py_DECREF(avals);
     Py_DECREF(avalscast);
     Py_INCREF(Py_None);
     return Py_None;
@@ -190,7 +190,6 @@ static PyObject *base_insert(PyObject *self, PyObject *args, PyObject *kwdict)
   }
 
   Py_DECREF(amask);
-  Py_DECREF(avals);
   Py_DECREF(avalscast);
   Py_INCREF(Py_None);
   return Py_None;
