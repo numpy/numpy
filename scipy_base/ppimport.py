@@ -344,8 +344,13 @@ if _pydoc is not None:
                                               None,
                                               _pydoc.Doc)
 
+    _old_pydoc_describe = _pydoc.describe
+    def _scipy_pydoc_describe(object):
+        return _old_pydoc_describe(ppresolve(object))
+    _pydoc.describe = _scipy_pydoc_describe
+
     import inspect as _inspect
     _old_inspect_getfile = _inspect.getfile
-    def _inspect_getfile(object):
+    def _scipy_inspect_getfile(object):
 	return _old_inspect_getfile(ppresolve(object))
-    _inspect.getfile = _inspect_getfile
+    _inspect.getfile = _scipy_inspect_getfile
