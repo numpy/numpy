@@ -356,7 +356,16 @@ class system_info:
                               % (self._lib_names[0], b[3:])
                         self._lib_names[0] = b[3:]
             else:
-                dirs = d.split(os.pathsep) + dirs
+                ds = d.split(os.pathsep)
+                ds2 = []
+                for d in ds:
+                    if os.path.isdir(d):
+                        ds2.append(d)
+                        for dd in ['include','lib']:
+                            d1 = os.path.join(d,dd)
+                            if os.path.isdir(d1):
+                                ds2.append(d1)
+                dirs = ds2 + dirs
         default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
         dirs.extend(default_dirs)
         ret = []
@@ -634,16 +643,10 @@ class atlas_blas_info(atlas_info):
         atlas_libs = self.get_libs('atlas_libs',
                                    self._lib_names + ['atlas'])
         atlas = None
-        atlas_1 = None
         for d in lib_dirs:
             atlas = self.check_libs(d,atlas_libs,[])
             if atlas is not None:
-                lib_dirs2 = self.combine_paths(d,['atlas*','ATLAS*'])+[d]
-            if atlas:
-                atlas_1 = atlas
-        print self.__class__
-        if atlas is None:
-            atlas = atlas_1
+                break
         if atlas is None:
             return
         include_dirs = self.get_include_dirs()
