@@ -14,7 +14,7 @@ from scipy_distutils.command import sdist
 from scipy_distutils.command import install_data
 from scipy_distutils.command import install
 from scipy_distutils.command import install_headers
-
+from scipy_distutils.command import bdist_rpm
 
 def setup(**attr):
 
@@ -28,7 +28,8 @@ def setup(**attr):
                 'sdist':            sdist.sdist,
                 'install_data':     install_data.install_data,
                 'install':          install.install,
-                'install_headers':  install_headers.install_headers
+                'install_headers':  install_headers.install_headers,
+                'bdist_rpm':        bdist_rpm.bdist_rpm,
                 }
     new_attr = attr.copy()
     if new_attr.has_key('cmdclass'):

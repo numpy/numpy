@@ -12,7 +12,6 @@ distutils_all = [  'build_py',
                    'install_scripts',
                    'bdist',
                    'bdist_dumb',
-                   'bdist_rpm',
                    'bdist_wininst',
                 ]
 
@@ -26,5 +25,6 @@ __all__ = ['build',
            'install',
            'install_data',
            'install_headers',
+           'bdist_rpm',
            'sdist',
           ] + distutils_all
