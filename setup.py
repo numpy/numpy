@@ -27,7 +27,7 @@ def setup_package():
     sys.path.insert(0, local_path)
 
     try:
-        configs = [{'name':'Scipy_core'}]
+        configs = [{'name':'scipy_core'}]
         versions = []
         for n in bundle_packages:
             sys.path.insert(0,os.path.join(local_path,n))
