@@ -780,8 +780,19 @@ class numpy_info(system_info):
 
     def __init__(self):
         from distutils.sysconfig import get_python_inc
+        include_dirs = []
+        try:
+            module = __import__(self.modulename)
+            prefix = []
+            for name in module.__file__.split(os.sep):
+                if name=='lib':
+                    break
+                prefix.append(name)
+            include_dirs.append(get_python_inc(prefix=os.sep.join(prefix)))
+        except ImportError:
+            pass
         py_incl_dir = get_python_inc()
-        include_dirs = [py_incl_dir]
+        include_dirs.append(py_incl_dir)
         for d in default_include_dirs:
             d = os.path.join(d, os.path.basename(py_incl_dir))
             if d not in include_dirs:
