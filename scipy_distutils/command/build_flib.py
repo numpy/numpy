@@ -771,7 +771,7 @@ class mips_fortran_compiler(fortran_compiler_base):
 
     vendor = 'SGI'
     ver_match =  r'MIPSpro Compilers: Version (?P<version>[^\s*,]*)'
-    lib_ranlib = '' # XXX: should we use `ar -s' here?
+    lib_ranlib = ''
 
     def __init__(self, fc=None, f90c=None, verbose=0):
         fortran_compiler_base.__init__(self, verbose=verbose)
@@ -783,32 +783,46 @@ class mips_fortran_compiler(fortran_compiler_base):
 
         self.f77_compiler = fc
         self.f77_switches = ' -n32 -KPIC '
-        self.f77_opt = ' -O3 '
+
 
         self.f90_compiler = f90c
         self.f90_switches = ' -n32 -KPIC '
-        self.f90_opt = ' '                            
+
 
         self.f90_fixed_switch = ' -fixedform '
+        self.ver_cmd = self.f90_compiler + ' -version '
 
-        self.ver_cmd = self.f77_compiler + ' -version '
+        self.f90_opt = self.get_opt()
+        self.f77_opt = self.get_opt('f77')
 
-        #self.libraries = ['fortran', 'ftn', 'm']
-        # -lfortran is redundant with MIPSPro 7.30
-        self.libraries = ['ftn', 'm']
-        self.library_dirs = self.find_lib_dir()
-
+    def get_opt(self,mode='f90'):
+        import cpuinfo
+        cpu = cpuinfo.cpuinfo()
+        opt = ' -O3 '
+        if self.get_version():
+            r = None
+            if cpu.is_r10000(): r = 10000
+            elif cpu.is_r12000(): r = 12000
+            elif cpu.is_r8000(): r = 8000
+            elif cpu.is_r5000(): r = 5000
+            elif cpu.is_r4000(): r = 4000
+            if r is not None:
+                if mode=='f77':
+                    opt = opt + ' r%s ' % (r)
+                else:
+                    opt = opt + ' -r%s ' % (r)
+            for a in '19 20 21 22_4k 22_5k 24 25 26 27 28 30 32_5k 32_10k'.split():
+                if getattr(cpu,'is_IP%s'%a)():
+                    opt=opt+' -TARG:platform=IP%s ' % a
+                    break
+        return opt
 
     def build_module_switch(self,module_dirs):
         res = ''
         return res 
-    def find_lib_dir(self):
-        library_dirs = []
-        return library_dirs
-    def get_runtime_library_dirs(self):
-	return self.find_lib_dir() 
-    def get_extra_link_args(self):
-	return []
+
+    def get_linker_so(self):
+        return [self.f90_compiler,'-shared']
 
 class hpux_fortran_compiler(fortran_compiler_base):
 

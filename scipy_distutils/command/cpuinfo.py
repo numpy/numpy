@@ -158,8 +158,81 @@ class linux_cpuinfo(cpuinfo_base):
     def _has_3dnow(self):
         return re.match(r'.*?\b3dnow\b',self.info[0]['flags']) is not None
 
+class irix_cpuinfo(cpuinfo_base):
+
+    info = None
+    
+    def __init__(self):
+        if self.info is not None:
+            return
+        info = []
+        try:
+            import commands
+            status,output = commands.getstatusoutput('sysconf')
+            if status not in [0,256]:
+                return
+            for line in output.split('\n'):
+                name_value = map(string.strip,string.split(line,' ',1))
+                if len(name_value)!=2:
+                    continue
+                name,value = name_value
+                if not info:
+                    info.append({})
+                info[-1][name] = value
+        except:
+            print sys.exc_value,'(ignoring)'
+        self.__class__.info = info
+
+        #print info
+    def _not_impl(self): pass
+
+    def _is_singleCPU(self):
+        return self.info[0].get('NUM_PROCESSORS') == '1'
+
+    def __cputype(self,n):
+        return self.info[0].get('PROCESSORS').split()[0].lower() == 'r%s' % (n)
+    def _is_r2000(self): return self.__cputype(2000)
+    def _is_r3000(self): return self.__cputype(3000)
+    def _is_r3900(self): return self.__cputype(3900)
+    def _is_r4000(self): return self.__cputype(4000)
+    def _is_r4100(self): return self.__cputype(4100)
+    def _is_r4300(self): return self.__cputype(4300)
+    def _is_r4400(self): return self.__cputype(4400)
+    def _is_r4600(self): return self.__cputype(4600)
+    def _is_r4650(self): return self.__cputype(4650)
+    def _is_r5000(self): return self.__cputype(5000)
+    def _is_r6000(self): return self.__cputype(6000)
+    def _is_r8000(self): return self.__cputype(8000)
+    def _is_r10000(self): return self.__cputype(10000)
+    def _is_r12000(self): return self.__cputype(12000)
+    def _is_rorion(self): return self.__cputype('orion')
+
+    def get_ip(self):
+        try: return self.info[0].get('MACHINE')
+        except: pass
+    def __machine(self,n):
+        return self.info[0].get('MACHINE').lower() == 'ip%s' % (n)
+    def _is_IP19(self): return self.__machine(19)
+    def _is_IP20(self): return self.__machine(20)
+    def _is_IP21(self): return self.__machine(21)
+    def _is_IP22(self): return self.__machine(22)
+    def _is_IP22_4k(self): return self.__machine(22) and self._is_r4000()
+    def _is_IP22_5k(self): return self.__machine(22)  and self._is_r5000()
+    def _is_IP24(self): return self.__machine(24)
+    def _is_IP25(self): return self.__machine(25)
+    def _is_IP26(self): return self.__machine(26)
+    def _is_IP27(self): return self.__machine(27)
+    def _is_IP28(self): return self.__machine(28)
+    def _is_IP30(self): return self.__machine(30)
+    def _is_IP32(self): return self.__machine(32)
+    def _is_IP32_5k(self): return self.__machine(32) and self._is_r5000()
+    def _is_IP32_10k(self): return self.__machine(32) and self._is_r10000()
+
+
 if sys.platform[:5] == 'linux': # variations: linux2,linux-i386 (any others?)
     cpuinfo = linux_cpuinfo
+elif sys.platform[:4] == 'irix':
+    cpuinfo = irix_cpuinfo
 #XXX: other OS's. Eg. use _winreg on Win32. Or os.uname on unices.
 else:
     cpuinfo = cpuinfo_base
