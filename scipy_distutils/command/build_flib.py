@@ -661,6 +661,49 @@ class mips_fortran_compiler(fortran_compiler_base):
     def get_extra_link_args(self):
 	return []
 
+class hpux_fortran_compiler(fortran_compiler_base):
+
+    vendor = 'HP'
+    ver_match =  r'HP F90 (?P<version>[^\s*,]*)'
+
+    def __init__(self, fc = None, f90c = None):
+        fortran_compiler_base.__init__(self)
+        if fc is None:
+            fc = 'f90'
+        if f90c is None:
+            f90c = 'f90'
+
+        self.f77_compiler = fc
+        self.f77_switches = ' +pic=long  '
+        self.f77_opt = ' -O3 '
+
+        self.f90_compiler = f90c
+        self.f90_switches = ' +pic=long  '
+        self.f90_opt = ' -O3 '
+
+        self.ver_cmd = self.f77_compiler + ' +version '
+
+        self.libraries = ['m']
+        self.library_dirs = []
+
+    def get_version(self):
+        if self.version is not None:
+            return self.version
+        self.version = ''
+        print 'command:', yellow_text(self.ver_cmd)
+        exit_status, out_text = run_command(self.ver_cmd)
+        print exit_status,
+        if exit_status in [0,256]:
+            # 256 seems to indicate success on HP-UX but keeping
+            # also 0. Or does 0 exit status mean something different
+            # in this platform?
+            print green_text(out_text)
+            m = re.match(self.ver_match,out_text)
+            if m:
+                self.version = m.group('version')
+        else:
+            print red_text(out_text)
+        return self.version
 
 class gnu_fortran_compiler(fortran_compiler_base):
 
@@ -997,8 +1040,10 @@ all_compilers = [absoft_fortran_compiler,
                  nag_fortran_compiler,
                  compaq_fortran_compiler,
                  vast_fortran_compiler,
+                 hpux_fortran_compiler,
                  f_fortran_compiler,
                  gnu_fortran_compiler,
+
                  ]
 
 if __name__ == "__main__":
