@@ -9,6 +9,10 @@
 /* Fast umath module whose functions do not check for range and domain errors.
 
    Replacement for umath + additions for isnan, isfinite, and isinf
+   Also allows comparison operations on complex numbers (just compares the real part)
+   and logical operations.
+
+   All logical operations return UBYTE arrays.
  */
 
 #ifndef CHAR_BIT
