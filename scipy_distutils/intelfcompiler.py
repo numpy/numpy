@@ -20,8 +20,8 @@ class IntelFCompiler(FCompiler):
     executables = {
         'version_cmd'  : [fc_exe, "-FI -V -c %(fname)s.f -o %(fname)s.o" \
                           % {'fname':dummy_fortran_file()}],
-        'compiler_f77' : [fc_exe,"-FI","-w90","-w95"],
-        'compiler_fix' : [fc_exe,"-FI","-72"],
+        'compiler_f77' : [fc_exe,"-72","-w90","-w95"],
+        'compiler_fix' : [fc_exe,"-FI"],
         'compiler_f90' : [fc_exe],
         'linker_so'    : [fc_exe,"-shared"],
         'archiver'     : ["ar", "-cr"],
