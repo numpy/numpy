@@ -1,5 +1,6 @@
 import types
 import Numeric
+from function_base import linspace
 
 __all__ = ['mgrid','r_','c_','index_exp']
 

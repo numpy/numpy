@@ -19,6 +19,7 @@ except AttributeError:
 
 toChar = lambda x: Numeric.array(x, Char)
 toInt8 = lambda x: Numeric.array(x, Numeric.Int8)# or use variable names such as Byte
+toUInt8 = lambda x: Numeric.array(x, Numeric.UnsignedInt8)
 toInt16 = lambda x: Numeric.array(x, Numeric.Int16)
 toInt32 = lambda x: Numeric.array(x, Numeric.Int32)
 toInt = lambda x: Numeric.array(x, Numeric.Int)
@@ -32,6 +33,7 @@ if  not hasattr(Numeric,'Character'):
     Numeric.Character = 'c'
         
 cast = {Numeric.Character: toChar,
+        Numeric.UnsignedInt8: toUInt8,
         Numeric.Int8: toInt8,
         Numeric.Int16: toInt16,
         Numeric.Int32: toInt32,

@@ -9,7 +9,9 @@
 import Numeric
 import scipy_base.fastumath
 reload(scipy_base.fastumath)
-from type_check import toFloat32, toFloat64
+from type_check import cast
+toFloat32=cast['f']
+toFloat64=cast['d']
 
 __all__ = ['epsilon','tiny','float_epsilon','float_tiny','float_min',
            'float_max','float_precision','float_resolution',
