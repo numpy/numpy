@@ -32,7 +32,7 @@
 """       
 
 import os,sys,string
-import shelve
+import shelve, pickle
 
 def getmodule(object):
     """ Discover the name of the module where object was defined.
