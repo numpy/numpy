@@ -450,8 +450,14 @@ class catalog:
             return          
         if writable_cat.has_key(code):
             print 'repairing catalog by removing key'
-            del writable_cat[code]   
-            del writable_cat[self.path_key(code)]   
+            del writable_cat[code]
+        
+        # it is possible that the path key doesn't exist (if the function registered
+        # was a built-in function), so we have to check if the path exists before
+        # arbitrarily deleting it.
+        path_key = self.path_key(code)       
+        if writable_cat.has_key(path_key)
+            del writable_cat[path_key]   
             
     def get_functions_fast(self,code):
         """ Return list of functions for code from the cache.
