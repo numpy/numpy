@@ -49,9 +49,11 @@ static PyObject *scipy_array_copy(PyArrayObject *m1) {
 #define MAKEFROMSCALAR(obj) (((PyArrayObject *)(obj))->descr->type_num |= SCALARBIT)
 #define PyArray_ISFROMSCALAR(obj) ((((PyArrayObject*)(obj))->descr->type_num & SCALARBIT))
 #define OFFSCALAR(obj) (((PyArrayObject *)(obj))->descr->type_num &= ~((int) SCALARBIT))
-#define PYINT  1
-#define PYFLOAT  2
-#define PYCOMPLEX 3
+#define PYNOSCALAR 0
+#define PYINTPOS 1
+#define PYINTNEG 2
+#define PYFLOAT  3
+#define PYCOMPLEX 4
 
 
 /* This function is called while searching for an appropriate ufunc
@@ -59,14 +61,17 @@ static PyObject *scipy_array_copy(PyArrayObject *m1) {
    It should return a 0 if coercion of thistype to neededtype is not safe.
 
    It uses PyArray_CanCastSafely but adds special logic to allow Python 
-   scalars to be downcast within the same kind. 
+   scalars to be downcast within the same kind if they are in the presence
+   of arrays.
 
  */
 static int scipy_cancoerce(char thistype, char neededtype, char scalar) {
 
-    if (scalar==0) return PyArray_CanCastSafely(thistype, neededtype);
-    if (scalar==PYINT) 
+    if (scalar==PYNOSCALAR) return PyArray_CanCastSafely(thistype, neededtype);
+    if (scalar==PYINTPOS) 
         return (neededtype >= PyArray_UBYTE);
+    if (scalar==PYINTNEG)
+	return ((neededtype >= PyArray_SBYTE) && (neededtype != PyArray_USHORT) && (neededtype != PyArray_UINT));
     if (scalar==PYFLOAT)
         return (neededtype >= PyArray_FLOAT);
     if (scalar==PYCOMPLEX)
@@ -90,9 +95,14 @@ static int scipy_select_types(PyUFuncObject *self, char *arg_types, void **data,
 
         /* start search for signature at first reasonable choice (first array-based
            type --- won't use scalar for this check)*/
-        while(k<self->nin && scalars[k] > 0) k++;
-        if (k == self->nin) k = 0;  /* no arrays */
-
+        while(k<self->nin && scalars[k] != PYNOSCALAR) k++;
+        if (k == self->nin) {  /* no arrays */
+	    /* so use usual coercion rules -- ignore scalar handling */
+	    for (j=0; j<self->nin; j++) {
+		scalars[j] = PYNOSCALAR;
+	    }
+	    k = 0;
+	}
         while (i<self->ntypes && arg_types[k] > self->types[i*self->nargs+k]) i++;
         
         /* Signature search */
@@ -162,18 +172,26 @@ static int scipy_setup_matrices(PyUFuncObject *self, PyObject *args,
 		arg_types[i] |= SAVESPACEBIT;
 	    else if (PyArray_ISFROMSCALAR(obj)) {
 		temp = OFFSCALAR(obj);
-		if (temp == PyArray_LONG) scalars[i] = PYINT;
+		if (temp == PyArray_LONG) {
+		    if (((long *)(((PyArrayObject *)obj)->data))[0] < 0) 
+			scalars[i] = PYINTNEG;
+		    else scalars[i] = PYINTPOS;
+		}
 		else if (temp == PyArray_DOUBLE) scalars[i] = PYFLOAT;
 		else if (temp == PyArray_CDOUBLE) scalars[i] = PYCOMPLEX;
 	    }
 	}
 	else {
-	    if (PyInt_Check(obj)) scalars[i] = PYINT;
+	    if (PyInt_Check(obj)) {
+		if (PyInt_AS_LONG(obj) < 0) scalars[i] = PYINTNEG;
+		else scalars[i] = PYINTPOS;
+	    }
 	    else if (PyFloat_Check(obj)) scalars[i] = PYFLOAT;
 	    else if (PyComplex_Check(obj)) scalars[i] = PYCOMPLEX;
 	}
     }
 	
+
     /* Select an appropriate function for these argument types. */
     temp = scipy_select_types(self, arg_types, data, function, scalars);
     free(scalars);
