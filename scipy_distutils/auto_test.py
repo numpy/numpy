@@ -762,7 +762,7 @@ if __name__ == '__main__':
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
-    """
+
     # an older python
     full_scipy_build(build_dir = build_dir,
                      test_level = level,
@@ -780,7 +780,7 @@ if __name__ == '__main__':
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
-    """
+
     # This fails because multiarray doesn't have 
     # arange defined.
     """
