@@ -221,7 +221,7 @@ class system_info:
             self.cp.add_section(self.section)
         self.search_static_first = self.cp.getboolean(self.section,
                                                       'search_static_first')
-        assert type(self.search_static_first) is type(0)
+        assert isinstance(self.search_static_first, int)
 
     def set_info(self,**info):
         self.saved_results[self.__class__.__name__] = info
