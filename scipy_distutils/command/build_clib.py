@@ -249,9 +249,13 @@ class build_clib (Command):
             self.compiler.create_static_lib(objects, lib_name,
                                             output_dir=self.build_clib,
                                             debug=self.debug)
+            #XXX: ranlib may not be available on non-GNU platforms.
             cmd = 'ranlib %s/lib%s.a' % (self.build_clib,lib_name)
             print cmd
-            os.system(cmd)
+            failure = os.system(cmd)
+            if failure:
+                print 'Ignoring ',
+                print 'failure during build (exit status = %s)'%failure
 
         # for libraries
 

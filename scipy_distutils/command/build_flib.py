@@ -466,7 +466,7 @@ class fortran_compiler_base(CCompiler):
         # a lot when builds fail once and are restarted).
         object_list = self.source_to_object_names(source_list, temp_dir)
 
-        if 1 or os.name == 'nt' or sys.platform[:4] == 'irix':
+        if os.name == 'nt' or sys.platform[:4] == 'irix':
             # I (pearu) had the same problem on irix646 ...
             # I think we can make this "bunk" default as skip_ranlib
             # feature speeds things up.
@@ -670,7 +670,7 @@ class mips_fortran_compiler(fortran_compiler_base):
 
     vendor = 'SGI'
     ver_match =  r'MIPSpro Compilers: Version (?P<version>[^\s*,]*)'
-    lib_ranlib = ''
+    lib_ranlib = '' # XXX: should we use `ar -s' here?
 
     def __init__(self, fc = None, f90c = None):
         fortran_compiler_base.__init__(self)
@@ -679,7 +679,7 @@ class mips_fortran_compiler(fortran_compiler_base):
         if f90c is None:
             f90c = 'f90'
 
-        self.f77_compiler = fc         # not tested
+        self.f77_compiler = fc
         self.f77_switches = ' -n32 -KPIC '
         self.f77_opt = ' -O3 '
 
@@ -687,9 +687,11 @@ class mips_fortran_compiler(fortran_compiler_base):
         self.f90_switches = ' -n32 -KPIC -fixedform ' # why fixed ???
         self.f90_opt = ' '                            
 
-        self.ver_cmd = self.f77_compiler + ' -version'
-        
-        self.libraries = ['fortran', 'ftn', 'm']
+        self.ver_cmd = self.f77_compiler + ' -version '
+
+        #self.libraries = ['fortran', 'ftn', 'm']
+        # -lfortran is redundant with MIPSPro 7.30
+        self.libraries = ['ftn', 'm']
         self.library_dirs = self.find_lib_dir()
 
 
