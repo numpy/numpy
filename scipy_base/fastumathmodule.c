@@ -12,7 +12,9 @@
    Also allows comparison operations on complex numbers (just compares
    the real part) and logical operations.
 
-   All logical operations return UBYTE arrays.
+   All logical operations return UBYTE arrays except for 
+     logical_and, logical_or, and logical_xor
+     which return their type so that reduce works correctly on them....
 */
 
 #if defined _ISOC99_SOURCE || defined _XOPEN_SOURCE_EXTENDED \
