@@ -211,6 +211,8 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
     success = 0
     try:
         from scipy_distutils.core import setup, Extension
+        from scipy_distutils.log import set_verbosity
+        set_verbosity(-1)
     except ImportError:
         from distutils.core import setup, Extension
     

@@ -259,14 +259,14 @@ def get_catalog(module_path,mode='r'):
         msg = " mode must be 'c', 'n', 'r', or 'w'.  See anydbm for more info"
         raise ValueError, msg
     catalog_file = catalog_path(module_path)
-    try:
-        # code reliant on the fact that we are using dumbdbm
-        if dumb and mode == 'r' and not os.path.exists(catalog_file+'.dat'):
+    if (dumb and os.path.exists(catalog_file+'.dat')) \
+           or os.path.exists(catalog_file):
+        sh = shelve.open(catalog_file,mode)
+    else:
+        if mode=='r':
             sh = None
         else:
             sh = shelve.open(catalog_file,mode)
-    except: # not sure how to pin down which error to catch yet
-        sh = None
     return sh
 
 class catalog:
