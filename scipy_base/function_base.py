@@ -1,5 +1,6 @@
 import types
 import Numeric
+N = Numeric
 from Numeric import *
 from scipy_base.fastumath import *
 from type_check import ScalarType, isscalar
@@ -7,7 +8,7 @@ from type_check import ScalarType, isscalar
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
            'prod','cumprod','diff','angle','unwrap','sort_complex',
-           'disp']
+           'disp','unique']
 
 round = Numeric.around
 any = Numeric.sometrue
@@ -20,6 +21,7 @@ def logspace(start,stop,num=50,endpoint=1):
         Return num evenly spaced samples from 10**start to 10**stop.  If
         endpoint=1 then last sample is 10**stop.
     """
+    if num <= 0: return array([])
     if endpoint:
         step = (stop-start)/float((num-1))
         y = Numeric.arange(0,num) * step + start
@@ -34,6 +36,7 @@ def linspace(start,stop,num=50,endpoint=1,retstep=0):
         Return num evenly spaced samples from start to stop.  If endpoint=1 then
         last sample is stop. If retstep is 1 then return the step value used.
     """
+    if num <= 0: return array([])
     if endpoint:
         step = (stop-start)/float((num-1))
         y = Numeric.arange(0,num) * step + start        
@@ -251,6 +254,45 @@ def trim_zeros(filt,trim='fb'):
             if i != 0.: break
             else: last = last - 1
     return filt[first:last]
+
+# Originally in pstat.py
+def unique(inarray):
+    """Returns unique items in the FIRST dimension of the passed array. Only
+    works on arrays NOT including string items (e.g., type 'O' or 'c').
+    """
+    inarray = asarray(inarray)
+    uniques = N.array([inarray[0]])
+    if len(uniques.shape) == 1:            # IF IT'S A 1D ARRAY
+        for item in inarray[1:]:
+            if N.add.reduce(N.equal(uniques,item).flat) == 0:
+                try:
+                    uniques = N.concatenate([uniques,N.array[N.NewAxis,:]])
+                except TypeError:
+                    uniques = N.concatenate([uniques,N.array([item])])
+    else:                                  # IT MUST BE A 2+D ARRAY
+        if inarray.typecode() != 'O':  # not an Object array
+            for item in inarray[1:]:
+                if not N.sum(N.alltrue(N.equal(uniques,item),1)):
+                    try:
+                        uniques = N.concatenate( [uniques,item[N.NewAxis,:]] )
+                    except TypeError:    # the item to add isn't a list
+                        uniques = N.concatenate([uniques,N.array([item])])
+                else:
+                    pass  # this item is already in the uniques array
+        else:   # must be an Object array, alltrue/equal functions don't work
+            for item in inarray[1:]:
+                newflag = 1
+                for unq in uniques:  # NOTE: cmp --> 0=same, -1=<, 1=>
+                    test = N.sum(abs(N.array(map(cmp,item,unq))))
+                    if test == 0:   # if item identical to any 1 row in uniques
+                        newflag = 0 # then not a novel item to add
+                        break
+                if newflag == 1:
+                    try:
+                        uniques = N.concatenate( [uniques,item[N.NewAxis,:]] )
+                    except TypeError:    # the item to add isn't a list
+                        uniques = N.concatenate([uniques,N.array([item])])
+    return uniques
 
 import sys
 def disp(mesg, device=None, linefeed=1):

@@ -3,7 +3,33 @@ from Numeric import *
 
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'column_stack','dstack','array_split','split','hsplit',
-           'vsplit','dsplit','squeeze']
+           'vsplit','dsplit','squeeze','apply_over_axes','expand_dims']
+
+
+def apply_over_axes(func, a, axes):
+    """Apply a function over multiple axes, keeping the same shape
+    for the resulting array.
+    """
+    val = asarray(a)
+    N = len(val.shape)
+    if not type(axes) in SequenceType:
+        axes = (axes,)
+    for axis in axes:
+        if axis < 0: axis = N + axis
+        args = (val, axis)
+        val = expand_dims(func(*args),axis)
+    return val
+
+def expand_dims(a, axis):
+    """Expand the shape of a to include a length 1 dimension before the given
+    axis.
+    """
+    a = asarray(a)
+    shape = a.shape
+    if axis < 0:
+        axis = axis + len(shape) + 1
+    a.shape = shape[:axis] + (1,) + shape[axis:]
+    return a
 
 def squeeze(a):
     "Returns a with any ones from the shape of a removed"
