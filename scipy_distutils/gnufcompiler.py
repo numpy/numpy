@@ -38,16 +38,18 @@ class GnuFCompiler(FCompiler):
     if os.name != 'nt' and sys.platform!='cygwin':
         pic_flags = ['-fPIC']
 
-    def get_linker_so(self):
-        # win32 linking should be handled by standard linker
-        # Darwin g77 cannot be used as a linker.
-        if re.match(r'(darwin)', sys.platform):
-            return
-        return FCompiler.get_linker_so(self)
+    #def get_linker_so(self):
+    #    # win32 linking should be handled by standard linker
+    #    # Darwin g77 cannot be used as a linker.
+    #    #if re.match(r'(darwin)', sys.platform):
+    #    #    return
+    #    return FCompiler.get_linker_so(self)
 
     def get_flags_linker_so(self):
-        opt = FCompiler.get_flags_linker_so(self)
-        if not re.match(r'(darwin)', sys.platform):
+        opt = []
+        if sys.platform=='darwin':
+            opt.append('-framework','Python')
+        else:
             opt.append("-shared")
         if sys.platform[:5]=='sunos':
             # SunOS often has dynamically loaded symbols defined in the
