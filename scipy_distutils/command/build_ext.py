@@ -29,6 +29,12 @@ class build_ext (old_build_ext):
         self.fcompiler = None
         return
 
+    def finalize_options(self):
+        old_build_ext.finalize_options(self)
+        self.set_undefined_options('config_fc',
+                                   ('fcompiler', 'fcompiler'))
+        return
+
     def run(self):
         if not self.extensions:
             return
