@@ -29,7 +29,6 @@ def test():
 
 def test_suite():
     import scipy_test
-    # this isn't a perfect fix, but it will work for
-    # most cases I think.
-    this_mod = __import__(__name__)
+    import scipy.weave
+    this_mod = scipy.weave
     return scipy_test.harvest_test_suites(this_mod)
