@@ -343,8 +343,8 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
     """
     msg = '\nItems are not equal to %d significant digits:\n' % significant
     msg += err_msg
-    sc_desired = desired/pow(10,math.floor(math.log10(desired)))
-    sc_actual = actual/pow(10,math.floor(math.log10(actual)))
+    sc_desired = desired/pow(10,math.floor(math.log10(abs(desired))))
+    sc_actual = actual/pow(10,math.floor(math.log10(abs(actual))))
     try:
         if ( verbose and len(str(desired)) < 100 and len(str(actual)) ):
             msg =  msg \
