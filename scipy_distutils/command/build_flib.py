@@ -816,17 +816,13 @@ def get_fortran_files(files):
 def find_fortran_compiler(vendor = None, fc = None, f90c = None):
     fcompiler = None
     for compiler_class in all_compilers:
-        print vendor,compiler_class.vendor
         if vendor is not None and vendor != compiler_class.vendor:
-            print 1
             continue
-        print 2
         print compiler_class
         compiler = compiler_class(fc,f90c)
         if compiler.is_available():
             fcompiler = compiler
             break
-    print 3,all_compilers
     return fcompiler
 
 all_compilers = [absoft_fortran_compiler,
