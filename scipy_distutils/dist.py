@@ -4,6 +4,9 @@ from distutils.errors import DistutilsSetupError
 
 from types import *
 
+import re
+fortran_pyf_ext_re = re.compile(r'.*[.](f90|f95|f77|for|ftn|f|pyf)\Z',re.I).match
+
 class Distribution (OldDistribution):
     def __init__ (self, attrs=None):
         self.fortran_libraries = None
@@ -13,8 +16,7 @@ class Distribution (OldDistribution):
         if self.has_ext_modules():
             for ext in self.ext_modules:
                 for source in ext.sources:
-                    (base, file_ext) = os.path.splitext(source)
-                    if file_ext == ".pyf":       # f2py interface file
+                    if fortran_pyf_ext_re(source):
                         return 1
         return 0
 
