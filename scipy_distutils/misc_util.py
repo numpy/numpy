@@ -221,9 +221,18 @@ def get_build_temp():
     return os.path.join('build','temp'+plat_specifier)
 
 class SourceGenerator:
+    """ SourceGenerator
+    func    - creates target, arguments are (target,sources)+args
+    sources - target source files
+    args    - extra arguments to func
+
+    If func is None then target must exist and it is touched whenever
+    sources are newer.
+    """
     def __init__(self,func,target,sources=[],*args):
-        if not os.path.isabs(target):
-            caller_dir = os.path.dirname(sys._getframe(1).f_globals['__file__'])
+        if not os.path.isabs(target) and func is not None:
+            caller_dir = os.path.abspath(os.path.dirname(\
+                sys._getframe(1).f_globals['__file__']))
             prefix = os.path.commonprefix([caller_dir,os.getcwd()])
             target_dir = caller_dir[len(prefix)+1:]
             target = os.path.join(get_build_temp(),target_dir,target)
@@ -245,3 +254,16 @@ class SourceGenerator:
                 self.func(self.target,self.sources,*self.args)
         assert os.path.exists(self.target),`self.target`
         return self.target
+
+class SourceFilter:
+    """ SourceFilter
+    func    - implements criteria to filter sources
+    sources - source files
+    args    - extra arguments to func
+    """
+    def __init__(self,func,sources,*args):
+        self.func = func
+        self.sources = sources
+        self.args = args
+    def filter(self):
+        return self.func(self.sources,*self.args)

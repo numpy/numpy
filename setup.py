@@ -18,11 +18,11 @@ from scipy_distutils.misc_util import get_path, merge_config_dicts
 
 bundle_packages = ['scipy_distutils','scipy_test','scipy_base']
 
-def get_package_config(name):
+def get_package_config(name,parent_path=None):
     sys.path.insert(0,name)
     try:
         mod = __import__('setup_'+name)
-        config = mod.configuration()
+        config = mod.configuration(parent_path=parent_path)
     finally:
         del sys.path[0]
     return config
@@ -42,7 +42,8 @@ def setup_package():
     sys.path.insert(0,path)
 
     try:
-        config = map(get_package_config,bundle_packages)
+        config = map(lambda x:get_package_config(x,parent_path=path),
+                     bundle_packages)
         config_dict = merge_config_dicts(config)
 
         versions = map(get_package_version,bundle_packages)
