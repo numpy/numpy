@@ -1,36 +1,108 @@
 import os,sys,string
 
-def get_version(major,minor,path = '.'):
+def get_version(release_level='alpha', path='.', major=None):
     """
-    Return a version string calculated from a CVS tree starting at
-    path.  The micro version number is found as a sum of the last bits
-    of the revision numbers listed in CVS/Entries.  If <path>/CVS does
-    not exists, get_version tries to get the version from the
-    <path>/__version__.py file where __version__ variable should be
-    defined. If that also fails, then return None.
-    """
-    micro = get_micro_version(os.path.abspath(path))
-    if micro is None:
-        try:
-            return __import__(os.path.join(path,'__version__.py')).__version__
-        except:
-            return
-    return '%s.%s.%s'%(major,minor,micro)
+    Return version string calculated from CVS tree or found in
+    <path>/__version__.py. Automatically update <path>/__version__.py
+    if the version is changed.
+    An attempt is made to guarantee that version is increasing in
+    time. This function always succeeds. None is returned if no
+    version information is available.
 
-def get_micro_version(path):
-    # micro version number should be increasing in time, unless a file
-    # is removed from the CVS source tree. In that case one should
-    # increase the minor version number.
+    Version string is in the form
+
+      <major>.<minor>.<micro>-<release_level>-<serial>
+
+    and its items have the following meanings:
+      serial - shows cumulative changes in all files in the CVS
+               repository
+      micro  - a number that is equivalent to the number of files
+      minor  - indicates the changes in micro value (files are added
+               or removed)
+      release_level - is alpha, beta, canditate, or final
+      major  - indicates changes in release_level.
+    """
+
+    release_level_map = {'alpha':0,
+                         'beta':1,
+                         'canditate':2,
+                         'final':3}
+    release_level_value = release_level_map.get(release_level)
+    if release_level_value is None:
+        print 'Warning: release_level=%s is not %s'\
+              % (release_level,
+                 string.join(release_level_map.keys(),','))
+
+    cwd = os.getcwd()
+    os.chdir(path)
+    try:
+        version_module = __import__('__version__')
+        reload(version_module)
+        old_version_info = version_module.version_info
+        old_version = version_module.version
+    except:
+        print sys.exc_value
+        old_version_info = None
+        old_version = None
+    os.chdir(cwd)
+
+    cvs_revs = get_cvs_version(path)
+    if cvs_revs is None:
+        return old_version
+
+    minor = 1
+    micro,serial = cvs_revs
+    if old_version_info is not None:
+        minor = old_version_info[1]
+        old_release_level_value = release_level_map.get(old_version_info[3])
+        if micro != old_version_info[2]: # files have beed added or removed
+            minor = minor + 1
+        if major is None:
+            major = old_version_info[0]
+            if old_release_level_value is not None:
+                if old_release_level_value > release_level_value:
+                    major = major + 1
+    if major is None:
+        major = 0
+
+    version_info = (major,minor,micro,release_level,serial)
+    version = '%s.%s.%s-%s-%s' % version_info
+
+    if version != old_version:
+        print 'updating version: %s -> %s'%(old_version,version)
+        version_file = os.path.abspath(os.path.join(path,'__version__.py'))
+        f = open(version_file,'w')
+        f.write('# This file is automatically updated with get_version\n'\
+                '# function from scipy_distutils.misc_utils.py\n'\
+                'version = %s\n'\
+                'version_info = %s\n'%(repr(version),version_info))
+        f.close()
+    return version
+
+def get_cvs_version(path):
+    """
+    Return two last cumulative revision numbers of a CVS tree starting
+    at <path>. The first number shows the number of files in the CVS
+    tree (this is often true, but not always) and the second number
+    characterizes the changes in these files.
+    If <path>/CVS/Entries is not existing then return None.
+    """
     entries_file = os.path.join(path,'CVS','Entries')
     if os.path.exists(entries_file):
-        micro = 0
+        rev1,rev2 = 0,0
         for line in open(entries_file).readlines():
             items = string.split(line,'/')
-            if items[0] == 'D' and len(items)>1:
-                micro = micro + get_micro_version(os.path.join(path,items[1]))
-            elif items[0] == '' and len(items)>2:
-                micro = micro + eval(string.split(items[2],'.')[-1])
-        return micro
+            if items[0]=='D' and len(items)>1:
+                try:
+                    d1,d2 = get_cvs_version(os.path.join(path,items[1]))
+                except:
+                    d1,d2 = 0,0
+            elif items[0]=='' and len(items)>3 and items[1]!='__version__.py':
+                d1,d2 = map(eval,string.split(items[2],'.')[-2:])
+            else:
+                continue
+            rev1,rev2 = rev1+d1,rev2+d2
+        return rev1,rev2
 
 def get_path(mod_name):
     """ This function makes sure installation is done from the

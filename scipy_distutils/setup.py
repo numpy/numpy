@@ -14,11 +14,8 @@ def install_package():
     os.chdir(path)
     try:
 
-        version = get_version(0,2)
+        version = get_version('alpha')
         print 'scipy_distutils',version
-        version_file = open('__version__.py','w')
-        version_file.write('__version__ = %s\n'%(repr(version)))
-        version_file.close()
 
         setup (name = "scipy_distutils",
                version = version,
