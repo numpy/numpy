@@ -543,6 +543,13 @@ class atlas_info(system_info):
     section = 'atlas'
     dir_env_var = 'ATLAS'
     _lib_names = ['f77blas','cblas']
+    if sys.platform[:7]=='freebsd':
+        _lib_atlas = ['atlas_r']
+        _lib_lapack = ['alapack_r']
+    else:
+        _lib_atlas = ['atlas']
+        _lib_lapack = ['lapack']
+
     notfounderror = AtlasNotFoundError
 
     def get_paths(self, section, key):
@@ -557,8 +564,8 @@ class atlas_info(system_info):
         lib_dirs = self.get_lib_dirs()
         info = {}
         atlas_libs = self.get_libs('atlas_libs',
-                                   self._lib_names + ['atlas'])
-        lapack_libs = self.get_libs('lapack_libs',['lapack'])
+                                   self._lib_names + self._lib_atlas)
+        lapack_libs = self.get_libs('lapack_libs',self._lib_lapack)
         atlas = None
         lapack = None
         atlas_1 = None
@@ -641,7 +648,7 @@ class atlas_blas_info(atlas_info):
         lib_dirs = self.get_lib_dirs()
         info = {}
         atlas_libs = self.get_libs('atlas_libs',
-                                   self._lib_names + ['atlas'])
+                                   self._lib_names + self._lib_atlas)
         atlas = None
         for d in lib_dirs:
             atlas = self.check_libs(d,atlas_libs,[])
@@ -660,6 +667,7 @@ class atlas_blas_info(atlas_info):
 
         self.set_info(**info)
         return
+
 
 class atlas_threads_info(atlas_info):
     _lib_names = ['ptf77blas','ptcblas']
