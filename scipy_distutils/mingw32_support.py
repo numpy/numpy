@@ -12,10 +12,10 @@ import os, sys
 import distutils.ccompiler
 
 # I'd really like to pull this out of scipy and make it part of distutils...
-import scipy.build_flib as build_flib
+import scipy_distutils.command.build_flib as build_flib
 
 
-if os.name == 'nt':
+if sys.platform == 'win32':
     # NT stuff
     # 1. Make sure libpython<version>.a exists for gcc.  If not, build it.
     # 2. Force windows to use gcc (we're struggling with MSVC and g77 support) 
@@ -25,7 +25,7 @@ if os.name == 'nt':
     def import_library_exists():
             """ on windows platforms, make sure a gcc import library exists
             """
-            if os.name == 'nt':
+            if sys.platform == 'win32':
                 lib_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
                 full_path = os.path.join(sys.prefix,'libs',lib_name)
                 #print full_path

@@ -8,8 +8,9 @@ class Distribution (OldDistribution):
     def __init__ (self, attrs=None):
         self.fortran_libraries = None
         OldDistribution.__init__(self, attrs)
-        
+    
     def has_f_libraries(self):
+        print 'has_f_libraries'
         return self.fortran_libraries and len(self.fortran_libraries) > 0
 
     def check_data_file_list(self):
@@ -18,7 +19,7 @@ class Distribution (OldDistribution):
            2-tuples, where the tuples are (name, list_of_libraries).
            Raise DistutilsSetupError if the structure is invalid anywhere;
            just returns otherwise."""
-
+        print 'check_data_file_list'
         if type(self.data_files) is not ListType:
             raise DistutilsSetupError, \
                   "'data_files' option must be a list of tuples"
@@ -40,9 +41,9 @@ class Distribution (OldDistribution):
         # for lib
 
     # check_data_file_list ()
-        
-
+   
     def get_data_files (self):
+        print 'get_data_files'
         self.check_data_file_list()
         filenames = []
         

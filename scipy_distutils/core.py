@@ -5,27 +5,30 @@ from distutils.cmd import Command
 from distutils.extension import Extension
 
 # Our dist is different than the standard one.
-from dist import Distribution
+from scipy_distutils.dist import Distribution
 
-import command.build
-import command.build_ext
-import command.build_clib
-import command.build_flib
-import command.sdist
-import command.install_data
-import command.install
-import command.install_headers
+from scipy_distutils.command import build
+from scipy_distutils.command import build_py
+from scipy_distutils.command import build_ext
+from scipy_distutils.command import build_clib
+from scipy_distutils.command import build_flib
+from scipy_distutils.command import sdist
+from scipy_distutils.command import install_data
+from scipy_distutils.command import install
+from scipy_distutils.command import install_headers
 
 def setup(**attr):
     distclass = Distribution
-    cmdclass = {'build':command.build.build,
-                'build_flib':command.build_flib.build_flib,
-                'build_ext':command.build_ext.build_ext,
-                'build_clib':command.build_clib.build_clib,
-                'sdist':command.sdist.sdist,
-                'install_data': command.install_data.install_data,
-                'install':command.install.install,
-                'install_headers': command.install_headers.install_headers}
+    cmdclass = {'build':            build.build,
+                'build_flib':       build_flib.build_flib,
+                'build_ext':        build_ext.build_ext,
+                'build_py':         build_py.build_py,                
+                'build_clib':       build_clib.build_clib,
+                'sdist':            sdist.sdist,
+                'install_data':     install_data.install_data,
+                'install':          install.install,
+                'install_headers':  install_headers.install_headers
+                }
                       
     new_attr = attr.copy()
     if new_attr.has_key('cmdclass'):
