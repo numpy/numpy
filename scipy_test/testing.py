@@ -67,7 +67,7 @@ class ScipyTestCase (unittest.TestCase):
             i += 1
             exec code in locs,globs
         elapsed = jiffies() - elapsed
-        return elapsed
+        return 0.01*elapsed
 
 def remove_ignored_patterns(files,pattern):
     from fnmatch import fnmatch
