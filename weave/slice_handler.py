@@ -62,7 +62,7 @@ def build_slice_atom(slice_vars, position):
             #of slice for positive indices.
             slice_vars['end'] = end + '-1'
         if end[0] == '-':
-            slice_vars['end'] = '_N%s[%d]%s-1' % (slice_vars['var'],position,end)
+            slice_vars['end'] = 'N%s[%d]%s-1' % (slice_vars['var'],position,end)
         
         if slice_vars['step'] == '_stp':
             # this if/then isn't strictly necessary, it'll

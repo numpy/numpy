@@ -4,7 +4,7 @@ from scipy_distutils.core import setup
 from scipy_distutils.misc_util import get_path, merge_config_dicts
 from scipy_distutils.misc_util import package_config
 
-# Enought changes to bump the number.  We need a global method for
+# Enough changes to bump the number.  We need a global method for
 # versioning
 version = "0.2.3"
    

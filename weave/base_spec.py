@@ -33,10 +33,14 @@ class base_converter:
         raise NotImplementedError, "You must override method in derived class"
     def build_information(self):
         return self._build_information
-    def type_spec(self,name,value): pass
-    def declaration_code(self,templatize = 0):   return ""
-    def local_dict_code(self): return ""
-    def cleanup_code(self): return ""
+    def type_spec(self,name,value): 
+        pass
+    def declaration_code(self,templatize = 0):   
+        return ""
+    def local_dict_code(self): 
+        return ""
+    def cleanup_code(self): 
+        return ""
     def retrieve_py_variable(self,inline=0):
         # this needs a little coordination in name choices with the
         # ext_inline_function class.
@@ -74,14 +78,21 @@ class arg_spec_list(UserList.UserList):
             all_info.extend(i.build_information())
         return all_info
         
-    def py_references(self): return map(lambda x: x.py_reference(),self)
-    def py_pointers(self): return map(lambda x: x.py_pointer(),self)
-    def py_variables(self): return map(lambda x: x.py_variable(),self)
+    def py_references(self): 
+        return map(lambda x: x.py_reference(),self)
+    def py_pointers(self): 
+        return map(lambda x: x.py_pointer(),self)
+    def py_variables(self): 
+        return map(lambda x: x.py_variable(),self)
 
-    def references(self): return map(lambda x: x.py_reference(),self)
-    def pointers(self): return map(lambda x: x.pointer(),self)    
-    def variables(self): return map(lambda x: x.variable(),self)
-    def init_flags(self): return map(lambda x: x.init_flag(),self)
+    def references(self): 
+        return map(lambda x: x.py_reference(),self)
+    def pointers(self): 
+        return map(lambda x: x.pointer(),self)    
+    def variables(self): 
+        return map(lambda x: x.variable(),self)
+    def init_flags(self): 
+        return map(lambda x: x.init_flag(),self)
     def variable_as_strings(self): 
         return map(lambda x: x.variable_as_string(),self)
 

@@ -115,7 +115,7 @@ class ext_function_from_specs:
 
         dict_code = "if(py_local_dict)                                  \n"   \
                     "{                                                  \n"   \
-                    "    Py::Dict local_dict = Py::Dict(py_local_dict); \n" + \
+                    "    PWODict local_dict = PWODict(py_local_dict); \n" + \
                          local_dict_code                                    + \
                     "}                                                  \n"
 
@@ -128,7 +128,7 @@ class ext_function_from_specs:
                       "\n}                                \n"
         catch_code =  "catch(...)                       \n"   \
                       "{                                \n" + \
-                      "    return_val =  Py::Null();    \n"   \
+                      "    return_val =  NULL;          \n"   \
                       "    exception_occured = 1;       \n"   \
                       "}                                \n"
 
@@ -178,17 +178,11 @@ class ext_function(ext_function_from_specs):
         ext_function_from_specs.__init__(self,name,code_block,arg_specs)
         
             
-import base_info, common_info, cxx_info, scalar_info
+import base_info
 
 class ext_module:
     def __init__(self,name,compiler=''):
-        standard_info = [common_info.basic_module_info(),
-                         common_info.file_info(),  
-                         common_info.instance_info(),  
-                         common_info.callable_info(),  
-                         common_info.module_info(),  
-                         cxx_info.cxx_info(),
-                         scalar_info.scalar_info()]
+        standard_info = converters.standard_info
         self.name = name
         self.functions = []
         self.compiler = compiler

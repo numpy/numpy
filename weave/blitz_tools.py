@@ -117,8 +117,6 @@ def ast_to_blitz_expr(ast_seq):
     return expr + ';\n'
 
 def test_function():
-    from code_blocks import module_header
-
     expr = "ex[:,1:,1:] = k +  ca_x[:,1:,1:] * ex[:,1:,1:]" \
                          "+ cb_y_x[:,1:,1:] * (hz[:,1:,1:] - hz[:,:-1,1:])"\
                          "- cb_z_x[:,1:,1:] * (hy[:,1:,1:] - hy[:,1:,:-1])"        
@@ -132,18 +130,7 @@ def test_function():
     hz = ones((1,1,1),typecode=Float32)
     hy = ones((1,1,1),typecode=Float32)
     blitz(expr)
-    """
-    ast_list = ast.tolist()
-    
-    expr_code = ast_to_blitz_expr(ast_list)
-    arg_list = harvest_variables(ast_list)
-    arg_specs = assign_variable_types(arg_list,locals())
-    
-    func,template_types = create_function('test_function',expr_code,arg_list,arg_specs)
-    init,used_names = create_module_init('compile_sample','test_function',template_types)
-    #wrapper = create_wrapper(mod_name,func_name,used_names)
-    return string.join( [module_header,func,init],'\n')
-    """
+
 def test(level=10):
     from scipy_base.testing import module_test
     module_test(__name__,__file__,level=level)

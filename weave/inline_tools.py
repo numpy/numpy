@@ -4,7 +4,7 @@ import sys,os
 import ext_tools
 import string
 import catalog
-import inline_info, cxx_info
+import common_info
 
 # not an easy way for the user_path_list to come in here.
 # the PYTHONCOMPILED environment variable offers the most hope.
@@ -98,7 +98,7 @@ class inline_ext_function(ext_tools.ext_function):
                       '\n}                                       \n'
         catch_code =  "catch(...)                       \n"   \
                       "{                                \n" + \
-                      "    return_val =  Py::Null();    \n"   \
+                      "    return_val =  NULL;    \n"   \
                       "    exception_occured = 1;       \n"   \
                       "}                                \n"   
         return_code = "    /* cleanup code */                   \n" + \
@@ -127,7 +127,7 @@ class inline_ext_function(ext_tools.ext_function):
 class inline_ext_module(ext_tools.ext_module):
     def __init__(self,name,compiler=''):
         ext_tools.ext_module.__init__(self,name,compiler)
-        self._build_information.append(inline_info.inline_info())
+        self._build_information.append(common_info.inline_info())
 
 function_cache = {}
 def inline(code,arg_names=[],local_dict = None, global_dict = None,

@@ -29,6 +29,9 @@ def test(level=10):
 
 def test_suite(level=1):
     import scipy_base.testing
-    import scipy.weave
-    this_mod = scipy.weave
+    try:
+        this_mod = __import__(__name__)
+    except ImportError:
+        # punt -- assume we're a stand alone package
+        this_mod = weave
     return scipy_base.testing.harvest_test_suites(this_mod,level=level)
