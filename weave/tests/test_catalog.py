@@ -80,7 +80,7 @@ class test_get_catalog(unittest.TestCase):
         # make sure tempdir catalog doesn't exist
         import tempfile
         temp = tempfile.gettempdir()
-        pardir = os.path.join(temp,'catalog_test')
+        pardir = os.path.join(temp,'catalog_test'+tempfile.gettempprefix())
         if not os.path.exists(pardir):
             os.mkdir(pardir)
         catalog_file = os.path.join(pardir,os_dependent_catalog_name()+'.dat')
