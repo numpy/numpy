@@ -6,7 +6,6 @@ from distutils.command.install_data import install_data as old_install_data
 #of willy-nilly
 class install_data (old_install_data):
     def finalize_options (self):
-        print 'hhhhhhhhhhhheeeeeeeeeeerrrrrrrrrrrreeeeeeeeeeeee'
         self.set_undefined_options('install',
                                    ('install_lib', 'install_dir'),
                                    ('root', 'root'),

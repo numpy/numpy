@@ -283,19 +283,8 @@ class ext_module:
         for i in self.functions:
             i.set_compiler(compiler)
         self.compiler = compiler    
-        
-    def compile(self,location='.',compiler=None, verbose = 0, **kw):
-        
-        if compiler is not None:
-            self.compiler = compiler
-        
-        # !! removed -- we don't have any compiler dependent code
-        # currently in spec or info classes    
-        # hmm.  Is there a cleaner way to do this?  Seems like
-        # choosing the compiler spagettis around a little.        
-        #compiler = build_tools.choose_compiler(self.compiler)    
-        #self.set_compiler(compiler)
-        
+
+    def build_kw_and_file(self,location,kw):    
         arg_specs = self.arg_specs()
         info = self.build_information()
         _source_files = info.sources()
@@ -316,8 +305,28 @@ class ext_module:
                                    info.extra_compile_args()
         kw['extra_link_args'] = kw.get('extra_link_args',[]) + \
                                    info.extra_link_args()
-        
+        kw['sources'] = kw.get('sources',[]) + source_files        
         file = self.generate_file(location=location)
+        return kw,file
+    
+    def setup_extension(self,location='.',**kw):
+        kw,file = self.build_kw_and_file(location,kw)
+        return build_tools.create_extension(file, **kw)
+            
+    def compile(self,location='.',compiler=None, verbose = 0, **kw):
+        
+        if compiler is not None:
+            self.compiler = compiler
+        
+        # !! removed -- we don't have any compiler dependent code
+        # currently in spec or info classes    
+        # hmm.  Is there a cleaner way to do this?  Seems like
+        # choosing the compiler spagettis around a little.        
+        #compiler = build_tools.choose_compiler(self.compiler)    
+        #self.set_compiler(compiler)
+        
+        kw,file = self.build_kw_and_file(location,kw)
+        
         # This is needed so that files build correctly even when different
         # versions of Python are running around.
         # Imported at beginning of file now to help with test paths.
@@ -327,7 +336,6 @@ class ext_module:
         temp = catalog.intermediate_dir()
                 
         success = build_tools.build_extension(file, temp_dir = temp,
-                                              sources = source_files,                                              
                                               compiler_name = compiler,
                                               verbose = verbose, **kw)
         if not success:
@@ -338,9 +346,21 @@ def generate_file_name(module_name,module_location):
     return os.path.abspath(module_file)
 
 def generate_module(module_string, module_file):
-    f =open(module_file,'w')
-    f.write(module_string)
-    f.close()
+    """ generate the source code file.  Only overwrite
+        the existing file if the actual source has changed.
+    """
+    file_changed = 1
+    if os.path.exists(module_file):
+        f =open(module_file,'r')
+        old_string = f.read()
+        f.close()
+        if old_string == module_string:
+            file_changed = 0
+    if file_changed:
+        print 'file changed'
+        f =open(module_file,'w')
+        f.write(module_string)
+        f.close()
     return module_file
 
 def assign_variable_types(variables,local_dict = {}, global_dict = {},

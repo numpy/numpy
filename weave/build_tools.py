@@ -66,7 +66,59 @@ distutils.sysconfig._init_posix = _init_posix
 
 class CompileError(exceptions.Exception):
     pass
+
+
+def create_extension(module_path, **kw):
+    """ Create an Extension that can be buil by setup.py
+        
+        See build_extension for information on keyword arguments.
+    """
+    from distutils.core import Extension
     
+    # this is a screwy trick to get rid of a ton of warnings on Unix
+    import distutils.sysconfig
+    distutils.sysconfig.get_config_vars()
+    if distutils.sysconfig._config_vars.has_key('OPT'):
+        flags = distutils.sysconfig._config_vars['OPT']        
+        flags = flags.replace('-Wall','')
+        distutils.sysconfig._config_vars['OPT'] = flags
+    
+    # get the name of the module and the extension directory it lives in.  
+    module_dir,cpp_name = os.path.split(os.path.abspath(module_path))
+    module_name,ext = os.path.splitext(cpp_name)    
+           
+    # the business end of the function
+    sources = kw.get('sources',[])
+    kw['sources'] = [module_path] + sources        
+        
+    #--------------------------------------------------------------------
+    # added access to environment variable that user can set to specify
+    # where python (and other) include files are located.  This is 
+    # very useful on systems where python is installed by the root, but
+    # the user has also installed numerous packages in their own 
+    # location.
+    #--------------------------------------------------------------------
+    if os.environ.has_key('PYTHONINCLUDE'):
+        path_string = os.environ['PYTHONINCLUDE']        
+        if sys.platform == "win32":
+            extra_include_dirs = path_string.split(';')
+        else:  
+            extra_include_dirs = path_string.split(':')
+        include_dirs = kw.get('include_dirs',[])
+        kw['include_dirs'] = include_dirs + extra_include_dirs
+
+    # SunOS specific
+    # fix for issue with linking to libstdc++.a. see:
+    # http://mail.python.org/pipermail/python-dev/2001-March/013510.html
+    platform = sys.platform
+    version = sys.version.lower()
+    if platform[:5] == 'sunos' and version.find('gcc') != -1:
+        extra_link_args = kw.get('extra_link_args',[])
+        kw['extra_link_args'] = ['-mimpure-text'] +  extra_link_args
+        
+    ext = Extension(module_name, **kw)
+    return ext    
+                            
 def build_extension(module_path,compiler_name = '',build_dir = None,
                     temp_dir = None, verbose = 0, **kw):
     """ Build the file given by module_path into a Python extension module.
@@ -197,37 +249,7 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
             verb = 0
         
         t1 = time.time()        
-        # add module to the needed source code files and build extension
-        sources = kw.get('sources',[])
-        kw['sources'] = [module_path] + sources        
-        
-        #--------------------------------------------------------------------
-        # added access to environment variable that user can set to specify
-        # where python (and other) include files are located.  This is 
-        # very useful on systems where python is installed by the root, but
-        # the user has also installed numerous packages in their own 
-        # location.
-        #--------------------------------------------------------------------
-        if os.environ.has_key('PYTHONINCLUDE'):
-            path_string = os.environ['PYTHONINCLUDE']        
-            if sys.platform == "win32":
-                extra_include_dirs = path_string.split(';')
-            else:  
-                extra_include_dirs = path_string.split(':')
-            include_dirs = kw.get('include_dirs',[])
-            kw['include_dirs'] = include_dirs + extra_include_dirs
-
-        # SunOS specific
-        # fix for issue with linking to libstdc++.a. see:
-        # http://mail.python.org/pipermail/python-dev/2001-March/013510.html
-        platform = sys.platform
-        version = sys.version.lower()
-        if platform[:5] == 'sunos' and version.find('gcc') != -1:
-            extra_link_args = kw.get('extra_link_args',[])
-            kw['extra_link_args'] = ['-mimpure-text'] +  extra_link_args
-            
-        ext = Extension(module_name, **kw)
-        
+        ext = create_extension(module_path,**kw)
         # the switcheroo on SystemExit here is meant to keep command line
         # sessions from exiting when compiles fail.
         builtin = sys.modules['__builtin__']
