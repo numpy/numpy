@@ -558,8 +558,12 @@ def generate_svn_version_py(extension, build_dir):
     local_path = extension.local_path
     target = os.path.join(build_dir, '__svn_version__.py')
     entries = os.path.join(local_path,'.svn','entries')
-    if not dep_util.newer(entries, target):
+    if os.path.isfile(entries):
+        if not dep_util.newer(entries, target):
+            return target
+    elif os.path.isfile(target):
         return target
+
     revision = get_svn_revision(local_path)
     f = open(target,'w')
     f.write('revision=%s\n' % (revision))
