@@ -9,6 +9,7 @@ By Eric Jones eric@enthought.com
 <dd> <A href="#Requirements">Requirements</a>
 <dd> <A href="#Installation">Installation</a>
 <dd> <A href="#Testing">Testing</a>
+<dd> <A href="#Benchmarks">Benchmarks</a>
 <dd> <A href="#Inline">Inline</a>
     <dl>
         <dd><A href="#More with printf">More with printf</a>
@@ -174,7 +175,7 @@ scipy import weave</code> and the examples will work identically.</em>
          For <code>blitz()</code>, you'll need a reasonably recent version of 
          gcc. 2.95.2 works on windows and 2.96 looks fine on Linux. Other 
          versions are likely to work.  Its likely that KAI's C++ compiler and 
-         maybe some others will work, but I haven't tried. My advise is to use 
+         maybe some others will work, but I haven't tried. My advice is to use 
          gcc for now unless your willing to tinker with the code some.
          <p>
          On Windows, either MSVC or gcc (<a 
@@ -335,6 +336,38 @@ Testing Notes:
 <p>
 </ul>
 
+<A name="Benchmarks"></a>
+<h1>Benchmarks</h1>
+This section has a few benchmarks -- thats all people want to see anyway right? 
+These are mostly taken from running files in the <code>weave/example</code> 
+directory and also from the test scripts.  Without more information about what 
+the test actually do, their value is limited.  Still, their here for the 
+curious. Look at the example scripts for more specifics about what problem was 
+actually solved by each run.  These examples are run under windows 2000 using 
+Microsoft Visual C++ and python2.1 on a 850 MHz PIII laptop with 320 MB of RAM.
+<p>
+<center>
+<table border=1 style="WIDTH: 420px; HEIGHT: 395px">
+<tr><td colspan="2" width="100%">
+      <P align=center>inline and ext_tools</P>   </td></tr>
+        <tr><td><p align=center>Algorithm</td> <td><p align=center>Speed up </td> </tr>
+        <tr><td>binary search</td> <td> &nbsp&nbsp1.50 </td> </tr>
+        <tr><td>fibonacci (recursive)</td> <td> &nbsp82.10 </td> </tr>
+        <tr><td>fibonacci (loop)</td> <td> &nbsp&nbsp9.17 </td> </tr>
+        <tr><td>return None</td> <td> &nbsp&nbsp0.14 </td> </tr>
+        <tr><td>map</td> <td> &nbsp&nbsp1.20 </td> </tr>
+        <tr><td>dictionary sort</td> <td> &nbsp&nbsp2.54 </td> </tr>
+        <tr><td>vector quantization</td> <td> &nbsp37.40 </td> </tr>
+<tr><td colspan="2" width="100%">
+      <P align=center>blitz -- double precision</P>   </td></tr>
+      <tr><td><p align=center>Algorithm</td> <td><p align=center>Speed up </td> </tr>
+      <tr><td>a = b + c 512x512</td> <td> &nbsp&nbsp3.05 </td> </tr>
+      <tr><td>a = b + c + d 512x512</td> <td> &nbsp&nbsp4.59 </td> </tr>
+      <tr><td>5 pt avg. filter, 2D Image 512x512</td> <td> &nbsp&nbsp9.01 </td> </tr>
+      <tr><td>Electromagnetics (FDTD) 100x100x100</td> <td> &nbsp&nbsp8.61 </td> </tr>
+</table>
+</center>
+<p>
 <a name="Inline"></a>
 <h1>Inline</h1>
 <p>
