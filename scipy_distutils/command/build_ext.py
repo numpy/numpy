@@ -172,7 +172,6 @@ class build_ext (old_build_ext):
             objects.extend(ext.extra_objects)
         extra_args = ext.extra_link_args or []
 
-
         self.compiler.link_shared_object(
             objects, ext_filename, 
             libraries=self.get_libraries(ext),

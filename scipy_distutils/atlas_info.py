@@ -3,7 +3,6 @@ import sys, os
 library_path = ''
 
 def get_atlas_info():
-    print 'atlas_lib:', library_path
     if sys.platform  == 'win32':
         if not library_path:
             atlas_library_dirs=['C:\\atlas\\WinNT_PIIISSE1']
