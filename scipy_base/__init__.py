@@ -123,12 +123,12 @@ def test(level=10):
     return runner
 
 def test_suite(level=1):
-    import scipy_base.testing
+    import scipy_test.testing
     import scipy_base
     this_mod = scipy_base
     # testing is the module that actually does all the testing...
     ignore = ['testing']
-    return scipy_base.testing.harvest_test_suites(this_mod,ignore = ignore,
+    return scipy_test.testing.harvest_test_suites(this_mod,ignore = ignore,
                                                   level=level)
 
 
