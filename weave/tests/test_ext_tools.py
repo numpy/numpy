@@ -111,7 +111,7 @@ class test_ext_function(unittest.TestCase):
 class test_assign_variable_types(unittest.TestCase):            
     def check_assign_variable_types(self):
         try:
-            from Numeric import *
+            from Numeric import arange
         except:
             # skip this test if Numeric not installed
             return
