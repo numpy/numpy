@@ -743,6 +743,7 @@ DL_EXPORT(void) initatlas_version(void) {
 
 def get_atlas_version(**config):
     from scipy_distutils.core import Extension, setup
+    from scipy_distutils import log
     magic = hex(hash(`config`))
     def atlas_version_c(extension, build_dir,macig=magic):
         source = os.path.join(build_dir,'atlas_version_%s.c' % (magic))
@@ -757,9 +758,18 @@ def get_atlas_version(**config):
     ext = Extension('atlas_version',
                     sources=[atlas_version_c],
                     **config)
-    dist = setup(ext_modules=[ext],
-                 script_name = 'get_atlas_version',
-                 script_args = ['build_src','build_ext'])
+    extra_args = []
+    for a in sys.argv:
+        if re.match('[-][-]compiler[=]',a):
+            extra_args.append(a)
+    try:
+        dist = setup(ext_modules=[ext],
+                     script_name = 'get_atlas_version',
+                     script_args = ['build_src','build_ext']+extra_args)
+    except Exception,msg:
+        log.warn(msg)
+        return None
+
     from distutils.sysconfig import get_config_var
     so_ext = get_config_var('SO')
     build_ext = dist.get_command_obj('build_ext')
@@ -788,7 +798,7 @@ class lapack_opt_info(system_info):
     
     def calc_info(self):
 
-        if sys.platform=='darwin':
+        if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
             args = []
             if os.path.exists('/System/Library/Frameworks/Accelerate.framework/'):
                 args.extend(['-faltivec','-framework','Accelerate'])
