@@ -367,11 +367,15 @@ def filter_sources(sources):
 def compiler_to_string(compiler):
     props = []
     mx = 0
-    for key in compiler.executables.keys() + \
-            ['version','libraries','library_dirs',
-             'object_switch','compile_switch']:
+    keys = compiler.executables.keys()
+    for key in ['version','libraries','library_dirs',
+                'object_switch','compile_switch',
+                'include_dirs','define','undef','rpath','link_objects']:
+        if key not in keys:
+            keys.append(key)
+    for key in keys:
         if hasattr(compiler,key):
-            v = getattr(compiler,key)
+            v = getattr(compiler, key)
             mx = max(mx,len(key))
             props.append((key,`v`))
     lines = []

@@ -29,19 +29,22 @@ CCompiler.spawn = new.instancemethod(CCompiler_spawn,None,CCompiler)
 def CCompiler_compile(self, sources, output_dir=None, macros=None,
                       include_dirs=None, debug=0, extra_preargs=None,
                       extra_postargs=None, depends=None):
+    if not sources:
+        return []
     from fcompiler import FCompiler
     if isinstance(self, FCompiler):
         display = []
-        for fcomp in ['f77','f90','fix']:
-            fcomp = getattr(self,'compiler_'+fcomp)
+        for fc in ['f77','f90','fix']:
+            fcomp = getattr(self,'compiler_'+fc)
             if fcomp is None:
                 continue
-            display.append('%s options: "%s"' % (os.path.basename(fcomp[0]),
-                                                 ' '.join(fcomp[1:])))
+            display.append("%s(%s) options: '%s'" % (os.path.basename(fcomp[0]),
+                                                     fc,
+                                                     ' '.join(fcomp[1:])))
         display = '\n'.join(display)
     else:
         ccomp = self.compiler_so
-        display = '%s options: "%s"' % (os.path.basename(ccomp[0]),
+        display = "%s options: '%s'" % (os.path.basename(ccomp[0]),
                                         ' '.join(ccomp[1:]))
     log.info(display)
     macros, objects, extra_postargs, pp_opts, build = \
@@ -87,12 +90,18 @@ CCompiler.customize_cmd = new.instancemethod(\
     CCompiler_customize_cmd,None,CCompiler)
 
 def CCompiler_show_customization(self):
-    for attrname in ['include_dirs','libraries','library_dirs',
-                 'rpath','link_objects']:
-        attr = getattr(self,attrname,None)
-        if not attr:
-            continue
-        log.info("compiler '%s' is set to %s" % (attrname,attr))
+    if 0:
+        for attrname in ['include_dirs','define','undef',
+                         'libraries','library_dirs',
+                         'rpath','link_objects']:
+            attr = getattr(self,attrname,None)
+            if not attr:
+                continue
+            log.info("compiler '%s' is set to %s" % (attrname,attr))
+    print '*'*80
+    print self.__class__
+    print compiler_to_string(self)
+    print '*'*80
 
 CCompiler.show_customization = new.instancemethod(\
     CCompiler_show_customization,None,CCompiler)
@@ -171,10 +180,7 @@ def new_compiler (plat=None,
               ("can't compile C/C++ code: unable to find class '%s' " +
                "in module '%s'") % (class_name, module_name)
     compiler = klass(None, dry_run, force)
-    print '*'*80
-    print klass
-    print compiler_to_string(compiler)
-    print '*'*80
+    log.debug('new_fcompiler returns %s' % (klass))
     return compiler
 
 ccompiler.new_compiler = new_compiler

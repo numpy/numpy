@@ -640,11 +640,11 @@ fcompiler_class = {'gnu':('gnufcompiler','GnuFCompiler',
 
 _default_compilers = (
     # Platform mappings
-    ('win32',('gnu','intelv','absoft','compaqv','intelitanium')),
-    ('cygwin.*',('gnu','intelv','absoft','compaqv','intelitanium')),
+    ('win32',('gnu','intelv','absoft','compaqv','intelev')),
+    ('cygwin.*',('gnu','intelv','absoft','compaqv','intelev')),
     ('linux.*',('gnu','intel','lahey','pg','absoft','nag','vast','compaq',
-                'intelitanium')),
-    ('darwin.*',('nag','ibm','gnu')),
+                'intele')),
+    ('darwin.*',('nag','absoft','ibm','gnu')),
     ('sunos.*',('forte','gnu','sun')),
     ('irix.*',('mips','gnu')),
     ('aix.*',('ibm','gnu')),
@@ -654,19 +654,43 @@ _default_compilers = (
     ('mac',('gnu',)),
     )
 
+def _find_existing_fcompiler(compilers, osname=None, platform=None):
+    for compiler in compilers:
+        v = None
+        try:
+            c = new_fcompiler(plat=platform, compiler=compiler)
+            c.customize()
+            v = c.get_version()
+        except DistutilsModuleError:
+            pass
+        except Exception, msg:
+            log.warn(msg)
+        if v is not None:
+            return compiler
+    return
+
 def get_default_fcompiler(osname=None, platform=None):
     """ Determine the default Fortran compiler to use for the given platform. """
     if osname is None:
         osname = os.name
     if platform is None:
         platform = sys.platform
+    matching_compilers = []
     for pattern, compiler in _default_compilers:
         if re.match(pattern, platform) is not None or \
                re.match(pattern, osname) is not None:
             if type(compiler) is type(()):
-                return compiler[0]
-            return compiler
-    return 'gnu'
+                matching_compilers.extend(list(compiler))
+            else:
+                matching_compilers.append(compiler)
+    if not matching_compilers:
+        matching_compilers.append('gnu')
+    compiler =  _find_existing_fcompiler(matching_compilers,
+                                         osname=osname,
+                                         platform=platform)
+    if compiler is not None:
+        return compiler
+    return matching_compilers[0]
 
 def new_fcompiler(plat=None,
                   compiler=None,
@@ -704,12 +728,8 @@ def new_fcompiler(plat=None,
               ("can't compile Fortran code: unable to find class '%s' " +
                "in module '%s'") % (class_name, module_name)
     compiler = klass(None, dry_run, force)
-    print '*'*80
-    print klass
-    print compiler_to_string(compiler)
-    print '*'*80
+    log.debug('new_fcompiler returns %s' % (klass))
     return compiler
-
 
 def show_fcompilers(dist = None):
     """ Print list of available compilers (used by the "--help-fcompiler"
@@ -736,7 +756,7 @@ def show_fcompilers(dist = None):
         except DistutilsModuleError:
             pass
         except Exception, msg:
-            print msg
+            log.warn(msg)
         if v is None:
             compilers_na.append(("fcompiler="+compiler, None,
                               fcompiler_class[compiler][2]))
