@@ -3,7 +3,7 @@ get_variable_support_code = \
 void handle_variable_not_found(char*  var_name)
 {
     char msg[500];
-    sprintf(msg,"variable '%s' not found in local or global scope.",var_name);
+    sprintf(msg,"Conversion Error: variable '%s' not found in local or global scope.",var_name);
     throw_error(PyExc_NameError,msg);
 }
 PyObject* get_variable(char* name,PyObject* locals, PyObject* globals)

@@ -54,7 +54,7 @@ class dict_specification(base_cxx_specification):
 
     def declaration_code(self,templatize = 0,inline=0):
         var_name = self.retrieve_py_variable(inline)
-        code = 'Py::Dict %s = x__dict_handler.convert_to_dict(%s,"%s");\n' % \
+        code = 'Py::Dict %s = convert_to_dict(%s,"%s");\n' % \
                (self.name,var_name,self.name)               
         return code
                
@@ -75,3 +75,11 @@ class tuple_specification(base_cxx_specification):
     def local_dict_code(self):
         code = 'local_dict["%s"] = %s;\n' % (self.name,self.name)        
         return code
+
+def test():
+    from scipy_test import module_test
+    module_test(__name__,__file__)
+
+def test_suite():
+    from scipy_test import module_test_suite
+    return module_test_suite(__name__,__file__)    

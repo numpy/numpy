@@ -296,12 +296,18 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
         try:
             results = apply(function_cache[code],(local_dict,global_dict))
             return results
-        except TypeError, msg: # should specify argument types here.
-            msg = str(msg)
+        except TypeError, msg: 
+            msg = str(msg).strip()
             if msg[:16] == "Conversion Error":
                 pass
             else:
                 raise TypeError, msg
+        except NameError, msg: 
+            msg = str(msg).strip()
+            if msg[:16] == "Conversion Error":
+                pass
+            else:
+                raise NameError, msg
         except KeyError:
             pass
         # 2. try function catalog
@@ -347,7 +353,12 @@ def attempt_function_call(code,local_dict,global_dict):
                 pass
             else:
                 raise TypeError, msg
-                
+        except NameError, msg: 
+            msg = str(msg).strip()
+            if msg[:16] == "Conversion Error":
+                pass
+            else:
+                raise NameError, msg                
     # 3. try persistent catalog
     module_dir = global_dict.get('__file__',None)
     function_list = function_catalog.get_functions(code,module_dir)
