@@ -796,7 +796,7 @@ def is_free_format(file):
     while n>0 and line:
         if line[0]!='!':
             n -= 1
-            if _free_f90_start(line[:5]) or line[-2:-1]=='&':
+            if (line[0]!='\t' and _free_f90_start(line[:5])) or line[-2:-1]=='&':
                 result = 1
                 break
         line = f.readline()
