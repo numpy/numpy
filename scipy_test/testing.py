@@ -344,7 +344,7 @@ class ScipyTest:
         except ImportError:
             print 'Failed to import optparse module, ignoring.'
             return self.test()
-        usage = r'usage: %prog [<options>]'
+        usage = r'usage: %prog [-v <verbosity>] [-l <level>]'
         parser = OptionParser(usage)
         parser.add_option("-v", "--verbosity",
                           action="store",
