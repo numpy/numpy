@@ -903,6 +903,8 @@ class lapack_opt_info(system_info):
             else:
                 atlas_info['define_macros'].append(('ATLAS_INFO',
                                                     '"\\"%s\\""' % atlas_version))
+		if atlas_version=='3.2.1_pre3.3.6':
+		    atlas_info['define_macros'].append(('NO_ATLAS_INFO',4))
             l = atlas_info.get('define_macros',[])
             if ('ATLAS_WITH_LAPACK_ATLAS',None) in l \
                    or ('ATLAS_WITHOUT_LAPACK',None) in l:
