@@ -469,12 +469,12 @@ class FCompiler(CCompiler):
 
     def _get_cc_args(self, pp_opts, debug, before):
         #XXX
-        print self.__class__.__name__ + '._get_cc_args:',pp_opts, debug, before
+        #print self.__class__.__name__ + '._get_cc_args:',pp_opts, debug, before
         return []
 
     def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
         """Compile 'src' to product 'obj'."""
-        print self.__class__.__name__ + '._compile:',obj, src, ext, cc_args, extra_postargs, pp_opts
+        #print self.__class__.__name__ + '._compile:',obj, src, ext, cc_args, extra_postargs, pp_opts
 
         if is_f_file(src):
             compiler = self.compiler_f77
@@ -770,8 +770,8 @@ def show_fcompilers(dist = None):
             v = c.get_version()
         except DistutilsModuleError:
             pass
-        except:
-            print sys.exc_info()[0],sys.exc_info()[1]
+        except Exception, msg:
+            print msg
         if v is None:
             compilers_na.append(("fcompiler="+compiler, None,
                               fcompiler_class[compiler][2]))
