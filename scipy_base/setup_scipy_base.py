@@ -19,26 +19,20 @@ def configuration(parent_package=''):
     # scipy_base.fastumath module
     sources = ['fastumathmodule.c','isnan.c']
     sources = [os.path.join(local_path,x) for x in sources]
-    ext = Extension(dot_join(package,'fastumath'),sources,libraries=[],
+    define_macros = []
+    if sys.byteorder != "little":
+        define_macros.append(('USE_MCONF_LITE_BE',1))
+    ext = Extension(dot_join(package,'fastumath'),sources,
+                    define_macros = define_macros,
                     extra_compile_args=extra_compile_args)
     config['ext_modules'].append(ext)
  
     # _compiled_base module
     sources = ['_compiled_base.c']
     sources = [os.path.join(local_path,x) for x in sources]
-    ext = Extension(dot_join(package,'_compiled_base'),sources,libraries=[])
+    ext = Extension(dot_join(package,'_compiled_base'),sources)
     config['ext_modules'].append(ext)
 
-    # Test to see if big or little-endian machine and get correct default
-    #   mconf.h module.
-    if sys.byteorder == "little":
-        print "### Little Endian detected ####"
-        shutil.copy2(os.path.join(local_path,'mconf_lite_LE.h'),
-                     os.path.join(local_path,'mconf_lite.h'))
-    else:
-        print "### Big Endian detected ####"
-        shutil.copy2(os.path.join(local_path,'mconf_lite_BE.h'),
-                     os.path.join(local_path,'mconf_lite.h'))
     return config
 
 if __name__ == '__main__':
