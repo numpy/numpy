@@ -176,7 +176,7 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
                       compiling.  On windows, it understands 'msvc' and 'gcc'
                       as well as all the compiler names understood by
                       distutils.  On Unix, it'll only understand the values
-                      understoof by distutils. ( I should add 'gcc' though
+                      understood by distutils. ( I should add 'gcc' though
                       to this).
 
                       On windows, the compiler defaults to the Microsoft C++
@@ -207,7 +207,7 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
                         pasted at the end of a #include statement in the 
                         C++ code.
         customize --   optional. base_info.custom_info object. An alternative
-                       way to specifiy support_code, headers, etc. needed by
+                       way to specify support_code, headers, etc. needed by
                        the function see the compiler.base_info module for more
                        details. (not sure this'll be used much).
         type_converters -- optional. list of type converters. These

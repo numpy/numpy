@@ -135,7 +135,7 @@ class info_list(UserList.UserList):
 def unique_values(lst):
     all_values = []        
     for value in lst:
-        if value not in all_values:
+        if value not in all_values or value == '-framework':
             all_values.append(value)
     return all_values
 

@@ -119,9 +119,9 @@ class common_base_converter(base_converter):
         for warning in self.warnings:
             info.add_warning(warning)
         for arg in self.extra_compile_args:
-            info.add_extra_compile_args(arg)
+            info.add_extra_compile_arg(arg)
         for arg in self.extra_link_args:
-            info.add_extra_link_args(arg)
+            info.add_extra_link_arg(arg)
         return info
 
     def type_match(self,value):
