@@ -24,7 +24,7 @@ except:
 def test(level=10):
     import unittest
     runner = unittest.TextTestRunner()
-    runner.run(test_suite())
+    runner.run(test_suite(level))
     return runner
 
 def test_suite(level=1):
