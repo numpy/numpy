@@ -11,8 +11,8 @@ from distutils.version import LooseVersion
 
 import log
 from exec_command import exec_command
-from misc_util import compiler_to_string
-from distutils.spawn import _nt_quote_args            
+from misc_util import compiler_to_string, cyg2win32
+from distutils.spawn import _nt_quote_args
 
 # Using customized CCompiler.spawn.
 def CCompiler_spawn(self, cmd, display=None):
@@ -95,6 +95,9 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
         for obj in objects:
             if obj in objects_to_build:
                 src, ext = build[obj]
+                if self.compiler_type=='absoft':
+                    obj = cyg2win32(obj)
+                    src = cyg2win32(src)
                 self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
     else:
         for obj, (src, ext) in build.items():
