@@ -304,9 +304,12 @@ class FCompiler(CCompiler):
             dist.parse_command_line()
 
         conf = dist.get_option_dict('config_fc')
-
         noopt = conf.get('noopt',[None,0])[1]
-        noarch = conf.get('noarch',[None,1,noopt])[2]
+        if 0: # change to `if 1:` when making release.
+            # Don't use architecture dependent compiler flags:
+            noarch = 1
+        else:
+            noarch = conf.get('noarch',[None,noopt])[1]
         debug = conf.get('debug',[None,0])[1]
 
         f77 = self.__get_cmd('compiler_f77','F77',(conf,'f77exec'))
