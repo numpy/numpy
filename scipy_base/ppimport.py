@@ -61,7 +61,7 @@ class _AttrLoader:
     def _ppimport_attr_getter(self):
         module = self.__dict__['_ppimport_attr_module']
         if isinstance(module, _ModuleLoader):
-            # in case pp module were loaded by other means
+            # in case pp module was loaded by other means
             module = sys.modules[module.__name__]
         attr = getattr(module,
                        self.__dict__['_ppimport_attr_name'])
