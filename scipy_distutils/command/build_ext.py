@@ -8,6 +8,8 @@ from distutils.dep_util import newer_group, newer
 from distutils.command.build_ext import *
 from distutils.command.build_ext import build_ext as old_build_ext
 
+from scipy_distutils.command.build_clib import get_headers,get_directories
+
 class build_ext (old_build_ext):
 
     def build_extension(self, ext):

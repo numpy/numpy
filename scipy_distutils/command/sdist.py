@@ -29,6 +29,7 @@ class sdist(old_sdist):
         # Create all the directories under 'base_dir' necessary to
         # put 'files' there; the 'mkpath()' is just so we don't die
         # if the manifest happens to be empty.
+
         dest_files = remove_common_base(files)
         self.mkpath(base_dir)
         dir_util.create_tree(base_dir, dest_files,
@@ -90,7 +91,8 @@ class sdist(old_sdist):
         base_dir = self.distribution.get_fullname()
         base_name = os.path.join(self.dist_dir, base_dir)
 
-        self.make_release_tree(base_dir, self.filelist.files)
+        files = map(os.path.abspath, self.filelist.files)
+        self.make_release_tree(base_dir, files)
         archive_files = []              # remember names of files we create
         for fmt in self.formats:            
             self.convert_line_endings(base_dir,fmt)
@@ -130,7 +132,7 @@ def find_common_base(files):
     """ Find the "greatest common base directory" of a list of files
     """
     if not files:
-        return files
+        return ''
     result = ''
     d,f = os.path.split(files[0])
     keep_looking = 1    
