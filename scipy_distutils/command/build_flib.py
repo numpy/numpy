@@ -759,7 +759,7 @@ class hpux_fortran_compiler(fortran_compiler_base):
 class gnu_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Gnu'
-    ver_match = r'GNU Fortran (?P<version>[^\s*]*)'
+    ver_match = r'GNU Fortran (\(GCC\s*|)(?P<version>[^\s*\)]+)'
     gcc_lib_dir = None
 
     def __init__(self, fc=None, f90c=None, verbose=0):
@@ -799,15 +799,39 @@ class gnu_fortran_compiler(fortran_compiler_base):
         import cpuinfo
         cpu = cpuinfo.cpuinfo()
         opt = ' -O3 -funroll-loops '
-        
+
         # only check for more optimization if g77 can handle it.
         if self.get_version():
-            if self.version >= '0.5.26': # is gcc >= 3.x.x
+            cpu_info = 1
+            if self.version == '0.5.26': # gcc 3.0
                 if cpu.is_AthlonK6():
                     opt = opt + ' -march=k6 '
                 elif cpu.is_AthlonK7():
                     opt = opt + ' -march=athlon '
-            if cpu.is_i686():
+                else:
+                    march_flag = 0
+            elif self.version >= '3.1.1': # gcc >= 3.1.1
+                if cpu.is_AthlonK6():
+                    opt = opt + ' -march=k6 '
+                elif cpu.is_AthlonK7():
+                    opt = opt + ' -march=athlon '
+                elif cpu.is_PentiumIV():
+                    opt = opt + ' -march=pentium4 '
+                elif cpu.is_PentiumIII():
+                    opt = opt + ' -march=pentium3 '
+                elif cpu.is_PentiumII():
+                    opt = opt + ' -march=pentium2 '
+                else:
+                    march_flag = 0
+                if cpu.has_mmx(): opt = opt + ' -mmmx '
+                if cpu.has_sse(): opt = opt + ' -msse '
+                if cpu.has_sse2(): opt = opt + ' -msse2 '
+                if cpu.has_3dnow(): opt = opt + ' -m3dnow '
+            else:
+                march_flag = 0
+            if march_flag:
+                pass
+            elif cpu.is_i686():
                 opt = opt + ' -march=i686 '
             elif cpu.is_i586():
                 opt = opt + ' -march=i586 '

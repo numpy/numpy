@@ -117,11 +117,22 @@ class linux_cpuinfo(cpuinfo_base):
         return re.match(r'.*?Celeron',
                         self.info[0]['model name']) is not None
 
-    #XXX
-    _is_Pentium = _is_PentiumPro = _is_PentiumIII = _is_PentiumIV = _not_impl
+    def _is_Pentium(self):
+        return re.match(r'.*?Pentium',
+                        self.info[0]['model name']) is not None
 
     def _is_PentiumII(self):
         return re.match(r'.*?Pentium II\b',
+                        self.info[0]['model name']) is not None
+
+    _is_PentiumPro = _not_impl
+
+    def _is_PentiumIII(self):
+        return re.match(r'.*?Pentium III\b',
+                        self.info[0]['model name']) is not None
+
+    def _is_PentiumIV(self):
+        return re.match(r'.*?Pentium IV\b',
                         self.info[0]['model name']) is not None
 
     # Varia
@@ -136,7 +147,16 @@ class linux_cpuinfo(cpuinfo_base):
         return self.info[0]['f00f_bug']=='yes'
 
     def _has_mmx(self):
-        return re.match(r'.*?\bmmx',self.info[0]['flags']) is not None
+        return re.match(r'.*?\bmmx\b',self.info[0]['flags']) is not None
+
+    def _has_sse(self):
+        return re.match(r'.*?\bsse\b',self.info[0]['flags']) is not None
+
+    def _has_sse2(self):
+        return re.match(r'.*?\bsse2\b',self.info[0]['flags']) is not None
+
+    def _has_3dnow(self):
+        return re.match(r'.*?\b3dnow\b',self.info[0]['flags']) is not None
 
 if sys.platform[:5] == 'linux': # variations: linux2,linux-i386 (any others?)
     cpuinfo = linux_cpuinfo
