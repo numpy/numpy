@@ -30,8 +30,8 @@ defaults are used if nothing is specified.
 Example:
 ----------
 [DEFAULT]
-lib_dir = /usr/lib:/usr/local/lib:/opt/lib
-include_dir = /usr/include:/usr/local/include:/opt/include
+library_dirs = /usr/lib:/usr/local/lib:/opt/lib
+include_dirs = /usr/include:/usr/local/include:/opt/include
 # use static libraries in preference to shared ones
 static_first = 1
 
@@ -41,14 +41,14 @@ fftw_opt_libs = fftw_threaded, rfftw_threaded
 # if the above aren't found, look for {s,d}fftw_libs and {s,d}fftw_opt_libs
 
 [atlas]
-lib_dir = /usr/lib/3dnow:/usr/lib/3dnow/atlas
+library_dirs = /usr/lib/3dnow:/usr/lib/3dnow/atlas
 # for overriding the names of the atlas libraries
 atlas_libs = f77blas, cblas, atlas
 lapack_libs = lapack
 
 [x11]
-lib_dir = /usr/X11R6/lib
-include_dir = /usr/X11R6/include
+library_dirs = /usr/X11R6/lib
+include_dirs = /usr/X11R6/include
 ----------
 
 Authors:
@@ -146,8 +146,8 @@ class system_info:
         self.__class__.info = {}
         self.local_prefixes = []
         defaults = {}
-        defaults['lib_dir'] = os.pathsep.join(default_lib_dirs)
-        defaults['include_dir'] = os.pathsep.join(default_include_dirs)
+        defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
+        defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
         defaults['static_first'] = '1'
         self.cp = ConfigParser.ConfigParser(defaults)
         cf = os.path.join(os.path.split(os.path.abspath(__file__))[0],
@@ -194,9 +194,9 @@ class system_info:
         dirs.extend(default_dirs)
         return [ d for d in dirs if os.path.isdir(d) ]
 
-    def get_lib_dirs(self, key='lib_dir'):
+    def get_lib_dirs(self, key='library_dirs'):
         return self.get_paths(self.section, key)
-    def get_include_dirs(self, key='include_dir'):
+    def get_include_dirs(self, key='include_dirs'):
         return self.get_paths(self.section, key)
 
     def get_libs(self, key, default):

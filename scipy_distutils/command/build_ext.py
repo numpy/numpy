@@ -66,8 +66,8 @@ class build_ext (old_build_ext):
                     l = build_flib.get_fcompiler_library_names()
                     #l = self.compiler.libraries + l
                     self.compiler.libraries = l
-                    l = build_flib.get_fcompiler_library_dirs()
-                    #l = self.compiler.library_dirs + l
+                    l = ( self.compiler.library_dirs +
+                          build_flib.get_fcompiler_library_dirs() )
                     self.compiler.library_dirs = l
             else:
                 libs = build_flib.get_fcompiler_library_names()

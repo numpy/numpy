@@ -777,7 +777,9 @@ class gnu_fortran_compiler(fortran_compiler_base):
 
     def get_linker_so(self):
         # win32 linking should be handled by standard linker
-        if sys.platform != 'win32' and os.uname()[0] != 'Darwin':
+        if ((sys.platform  != 'win32')  and
+            (sys.platform  != 'cygwin') and
+            (os.uname()[0] != 'Darwin')):
             return [self.f77_compiler,'-shared']
  
     def f90_compile(self,source_files,module_files,temp_dir=''):
