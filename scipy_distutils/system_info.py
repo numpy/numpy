@@ -1121,7 +1121,7 @@ class numpy_info(system_info):
                     prefix.append('include')
                 else:
                     prefix.append(name)
-            include_dirs.append(os.sep.join(prefix[:-1]))
+            include_dirs.append(os.sep.join(prefix[:-2]))
             include_dirs.append(d)
         except ImportError:
             pass
