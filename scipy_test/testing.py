@@ -116,14 +116,15 @@ class ScipyTest:
     Package is supposed to contain a directory tests/
     with test_*.py files where * refers to the names of submodules.
 
-    test_*.py files are supposed to define a function
-    test_suite_list(level=1) that returns a list of 2-tuples
-    (<ScipyTestCase class>,<test method pattern>).
+    test_*.py files are supposed to define a classes, derived
+    from ScipyTestCase or unittest.TestCase, with methods having
+    names starting with test or bench or check.
 
     And that is it! No need to implement test or test_suite functions
     in each .py file.
 
-    Also old styled test_suite(level=1) hooks are supported.
+    Also old styled test_suite(level=1) hooks are supported but
+    soon to be removed.
     """
     def __init__(self, package):
         self.package = package
@@ -203,14 +204,16 @@ class ScipyTest:
 
     def _touch_ppimported(self, module):
         from scipy_base.ppimport import _ModuleLoader
-        try: module._pliuh_plauh
-        except AttributeError: pass
-        for name in dir(module):
-            obj = getattr(module,name)
-            if isinstance(obj,_ModuleLoader) \
-               and not hasattr(obj,'_ppimport_module') \
-               and not hasattr(obj,'_ppimport_exc_info'):
-                self._touch_ppimported(obj)
+        if os.path.isdir(os.path.join(os.path.dirname(module.__file__),'tests')):
+            # only touching those modules that have tests/ directory
+            try: module._pliuh_plauh
+            except AttributeError: pass
+            for name in dir(module):
+                obj = getattr(module,name)
+                if isinstance(obj,_ModuleLoader) \
+                   and not hasattr(obj,'_ppimport_module') \
+                   and not hasattr(obj,'_ppimport_exc_info'):
+                    self._touch_ppimported(obj)
 
     def test(self,level=1,verbosity=1):
         """ Run Scipy module test suite with level and verbosity.
