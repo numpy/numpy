@@ -28,8 +28,10 @@ def configuration(parent_package=''):
                               sources = umath_c_sources)
     sources = [umath_c, os.path.join(local_path,'isnan.c')]
     define_macros = []
-    if sys.byteorder != "little":
-        define_macros.append(('USE_MCONF_LITE_BE',1))
+    if sys.byteorder == "little":
+        define_macros.append(('USE_MCONF_LITE_LE',None))
+    else:
+        define_macros.append(('USE_MCONF_LITE_BE',None))
     ext = Extension(dot_join(package,'fastumath'),sources,
                     define_macros = define_macros,
                     extra_compile_args=extra_compile_args)
