@@ -12,10 +12,12 @@ The following environment variables are used if defined:
   FFTW  - path to FFTW library
 
 Usage:
-  For example,
-    info = atlas_info().get_info()
-  info will be a dictionary that is compatible with distutils.setup keyword
-  arguments. If info == {}, then the asked resource is not available.
+    info_dict = get_info(<name>)
+  where <name> is a string 'atlas','x11','fftw'.
+
+  Returned info_dict is a dictionary which is compatible with
+  distutils.setup keyword arguments. If info_dict == {}, then the
+  asked resource is not available (or system_info could not find it).
 
 Global parameters:
   prefixes - a list of prefixes for scanning the location of
@@ -46,6 +48,12 @@ prefixes = filter(os.path.isdir,prefixes) # XXX: Is this ok on win32? Is 'C:' di
 
 so_ext = get_config_vars('SO')[0] or ''
 
+def get_info(name):
+    cl = {'atlas':atlas_info,
+          'x11':x11_info,
+          'fftw':fftw_info}.get(name.lower(),system_info)
+    return cl().get_info()
+
 class system_info:
 
     """ get_info() is the only public method. Don't use others.
@@ -53,37 +61,45 @@ class system_info:
 
     static_first = 1
     verbose = 1
-
+    need_refresh = 1
+    saved_results = {}
+    
     def __init__ (self):
         self.__class__.info = {}
-        self.need_refresh = not self.info
+        #self.__class__.need_refresh = not self.info
         self.local_prefixes = []
 
     def set_info(self,**info):
-        self.__class__.info = info
-
+        #self.__class__.info = info
+        self.saved_results[self.__class__.__name__] = info
+    def has_info(self):
+        return self.saved_results.has_key(self.__class__.__name__)
     def get_info(self):
         """ Return a dictonary with items that are compatible
             with scipy_distutils.setup keyword arguments.
         """
-        if self.need_refresh:
+        flag = 0
+        if not self.has_info():
+            flag = 1
             if self.verbose:
                 print self.__class__.__name__ + ':'
             for p in self.local_prefixes + prefixes:
                 if self.verbose:
                     print '  Looking in',p,'...'
                 self.calc_info(p)
-                if self.info: break
-            self.need_refresh = 0
+                if self.has_info(): break
             if self.verbose:
-                if not self.info:
+                if not self.has_info():
                     print '  NOT AVAILABLE'
+                    self.set_info()
                 else:
                     print '  FOUND:'
-                    for k,v in self.info.items():
-                        print '    %s = %s'%(k,v)
-                print
-        return self.info
+        res = self.saved_results.get(self.__class__.__name__)
+        if self.verbose and flag:
+            for k,v in res.items():
+                print '    %s = %s'%(k,v)
+            print
+        return res
 
     def calc_info(self,prefix):
         """ Calculate info distionary. """
@@ -172,7 +188,7 @@ class fftw_info(system_info):
                     incl_dir = d
                     break
             if flag:
-                dict_append(info,define_macros=('SCIPY_FFTW_H',1))
+                dict_append(info,define_macros=[('SCIPY_FFTW_H',1)])
             else:
                 info = None
 
@@ -195,7 +211,7 @@ class fftw_info(system_info):
                         flag = 1
                         break
                 if flag:
-                    dict_append(info,define_macros=('SCIPY_DFFTW_H',1))
+                    dict_append(info,define_macros=[('SCIPY_DFFTW_H',1)])
                 else:
                     info = None
         
@@ -214,7 +230,7 @@ class fftw_info(system_info):
                 if len(combine_paths(d,['sfftw.h','srfftw.h']))==2:
                     if incl_dir is None:
                         dict_append(info,include_dirs=[d])
-                    dict_append(info,define_macros=('SCIPY_SFFTW_H',1))
+                    dict_append(info,define_macros=[('SCIPY_SFFTW_H',1)])
                     break
         if info is not None:
             self.set_info(**info)
@@ -306,15 +322,15 @@ def combine_paths(*args):
         r.append(a)
     args = r
     if not args: return []
-    if len (args)==1:
-        return [r for r in map(glob,args[0]) if r]
-    if len (args)==2:
+    if len(args)==1:
+        result = reduce(lambda a,b:a+b,map(glob,args[0]),[])
+    elif len (args)==2:
         result = []
         for a0 in args[0]:
             for a1 in args[1]:
                 result.extend(glob(os.path.join(a0,a1)))
-        return result
-    result = combine_paths(*(combine_paths(args[0],args[1])+args[2:]))
+    else:
+        result = combine_paths(*(combine_paths(args[0],args[1])+args[2:]))
     return result
 
 def dict_append(d,**kws):
@@ -329,7 +345,7 @@ def show_all():
     import pprint
     match_info = re.compile(r'.*?_info').match
     for n in filter(match_info,dir(system_info)):
-        if n=='system_info': continue
+        if n in ['system_info','get_info']: continue
         c = getattr(system_info,n)()
         r = c.get_info()
 
