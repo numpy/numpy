@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """
+cpuinfo
 
 Copyright 2001 Pearu Peterson all rights reserved,
 Pearu Peterson <pearu@cens.ioc.ee>          
@@ -17,12 +18,33 @@ Pearu Peterson
 
 __version__ = "$Id$"
 
-import sys,string,re
+__all__ = ['cpuinfo']
 
-class cpuinfo:
+import sys,string,re,types
+
+class cpuinfo_base:
     """Holds CPU information and provides methods for requiring
-    the availability of CPU features.
+    the availability of various CPU features.
     """
+
+    def _try_call(self,func):
+        try:
+            return func()
+        except:
+            pass
+
+    def __getattr__(self,name):
+        if name[0]!='_':
+            if hasattr(self,'_'+name):
+                attr = getattr(self,'_'+name)
+                if type(attr) is types.MethodType:
+                    return lambda func=self._try_call,attr=attr : func(attr)
+            else:
+                return lambda : None
+        raise AttributeError,name    
+
+
+class linux_cpuinfo(cpuinfo_base):
 
     info = None
     
@@ -31,117 +53,96 @@ class cpuinfo:
             return
         info = []
         try:
-            if sys.platform == 'linux2':
-                info.append({})
-                for line in open('/proc/cpuinfo').readlines():
-                    name_value = map(string.strip,string.split(line,':',1))
-                    if len(name_value)!=2:
-                        continue
-                    name,value = name_value
-                    if info[-1].has_key(name): # next processor
-                        info.append({})
-                    info[-1][name] = value
-            #XXX How to obtain CPU information on other platforms?
-        except e,m:
-            print '%s: %s (ignoring)' % (e,m)
-        self.info = info
-
-    def is_Pentium(self):
-        #XXX
-        pass
-
-    def is_PentiumPro(self):
-        #XXX
-        pass
-
-    def is_PentiumII(self):
-        try:
-            return re.match(r'.*?Pentium II[^I]',
-                            self.info[0]['model name']) is not None
+            for line in open('/proc/cpuinfo').readlines():
+                name_value = map(string.strip,string.split(line,':',1))
+                if len(name_value)!=2:
+                    continue
+                name,value = name_value
+                if not info or info[-1].has_key(name): # next processor
+                    info.append({})
+                info[-1][name] = value
         except:
-            pass
+            print sys.exc_value,'(ignoring)'
+        self.__class__.info = info
 
-    def is_PentiumIII(self):
-        #XXX
-        pass
+    def _not_impl(self): pass
 
-    def is_PentiumIV(self):
-        #XXX
-        pass
+    # Athlon
 
-    def is_AthlonK6(self):
-        try:
-            return re.match(r'.*?AMD-K6',self.info[0]['model name']) is not None
-        except:
-            pass
+    def _is_AMD(self):
+        return self.info[0]['vendor_id']=='AuthenticAMD'
 
-    def is_AthlonK7(self):
-        try:
-            return re.match(r'.*?AMD-K7',self.info[0]['model name']) is not None
-        except:
-            pass
+    def _is_AthlonK6(self):
+        return re.match(r'.*?AMD-K6',self.info[0]['model name']) is not None
 
-    def is_AMD(self):
-        try:
-            return self.info[0]['vendor_id']=='AuthenticAMD'
-        except:
-            pass
+    def _is_AthlonK7(self):
+        return re.match(r'.*?AMD-K7',self.info[0]['model name']) is not None
 
-    def is_Intel(self):
-        try:
-            return self.info[0]['vendor_id']=='GenuineIntel'
-        except:
-            pass
+    # Alpha
 
-    def is_Alpha(self):
-        try:
-            return self.info[0]['cpu']=='Alpha'
-        except:
-            pass
+    def _is_Alpha(self):
+        return self.info[0]['cpu']=='Alpha'
 
-    def is_i386(self):
-        #XXX
-        pass
+    def _is_EV4(self):
+        return self.is_Alpha() and self.info[0]['cpu model'] == 'EV4'
 
-    def is_i486(self):
-        #XXX
-        pass
+    def _is_EV5(self):
+        return self.is_Alpha() and self.info[0]['cpu model'] == 'EV5'
 
-    def is_i586(self):
-        if self.is_Intel():
-            try:
-                return self.info[0]['model'] == '5'
-            except:
-                pass
+    def _is_EV56(self):
+        return self.is_Alpha() and self.info[0]['cpu model'] == 'EV56'
 
-    def is_i686(self):
-        if self.is_Intel():
-            try:
-                return self.info[0]['model'] == '6'
-            except:
-                pass
+    def _is_PCA56(self):
+        return self.is_Alpha() and self.info[0]['cpu model'] == 'PCA56'
 
-    def is_singleCPU(self):
-        if self.info:
-            return len(self.info) == 1
+    # Intel
 
-    def has_fdiv_bug(self):
-        try:
-            return self.info[0]['fdiv_bug']=='yes'
-        except:
-            pass
+    #XXX
+    _is_i386 = _not_impl
 
-    def has_f00f_bug(self):
-        try:
-            return self.info[0]['f00f_bug']=='yes'
-        except:
-            pass
+    def _is_Intel(self):
+        return self.info[0]['vendor_id']=='GenuineIntel'
 
-    def has_mmx(self):
-        try:
-            return re.match(r'.*?\bmmx',self.info[0]['flags']) is not None
-        except:
-            pass
+    def _is_i486(self):
+        return self.info[0]['cpu']=='i486'
+
+    def _is_i586(self):
+        return self.is_Intel() and self.info[0]['model'] == '5'
+
+    def _is_i686(self):
+        return self.is_Intel() and self.info[0]['model'] == '6'
+
+    def _is_Celeron(self):
+        return re.match(r'.*?Celeron',
+                        self.info[0]['model name']) is not None
+
+    #XXX
+    _is_Pentium = _is_PentiumPro = _is_PentiumIII = _is_PentiumIV = _not_impl
+
+    def _is_PentiumII(self):
+        return re.match(r'.*?Pentium II\b',
+                        self.info[0]['model name']) is not None
+
+    # Varia
+
+    def _is_singleCPU(self):
+        return len(self.info) == 1
+
+    def _has_fdiv_bug(self):
+        return self.info[0]['fdiv_bug']=='yes'
+
+    def _has_f00f_bug(self):
+        return self.info[0]['f00f_bug']=='yes'
+
+    def _has_mmx(self):
+        return re.match(r'.*?\bmmx',self.info[0]['flags']) is not None
+
+if sys.platform[:5] == 'linux': # variations: linux2,linux-i386 (any others?)
+    cpuinfo = linux_cpuinfo
+#XXX: other OS's. Eg. use _winreg on Win32. Or os.uname on unices.
+else:
+    cpuinfo = cpuinfo_base
+
 
 """
 laptop:
@@ -156,3 +157,16 @@ ath:
 fiasco:
 [{'max. addr. space #': '127', 'cpu': 'Alpha', 'cpu serial number': 'Linux_is_Great!', 'kernel unaligned acc': '0 (pc=0,va=0)', 'system revision': '0', 'system variation': 'LX164', 'cycle frequency [Hz]': '533185472', 'system serial number': 'MILO-2.0.35-c5.', 'timer frequency [Hz]': '1024.00', 'cpu model': 'EV56', 'platform string': 'N/A', 'cpu revision': '0', 'BogoMIPS': '530.57', 'cpus detected': '0', 'phys. address bits': '40', 'user unaligned acc': '1340 (pc=2000000ec90,va=20001156da4)', 'page size [bytes]': '8192', 'system type': 'EB164', 'cpu variation': '0'}]
 """
+
+if __name__ == "__main__":
+    cpu = cpuinfo()
+
+    cpu.is_blaa()
+    cpu.is_Intel()
+    cpu.is_Alpha()
+
+    print 'CPU information:',
+    for name in dir(cpuinfo):
+        if name[0]=='_' and name[1]!='_' and getattr(cpu,name[1:])():
+            print name[1:],
+    print

@@ -13,7 +13,7 @@ def install_package():
     os.chdir(path)
     try:
         setup (name = "scipy_distutils",
-               version = "0.1",
+               version = "0.2",
                description = "Changes to distutils needed for SciPy -- mostly Fortran support",
                author = "Travis Oliphant, Eric Jones, and Pearu Peterson",
                licence = "BSD Style",

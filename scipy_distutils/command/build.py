@@ -8,6 +8,7 @@ from distutils.command.build import build as old_build
 class build(old_build):
     def has_f_libraries(self):
         return self.distribution.has_f_libraries()
+
     sub_commands = [('build_py',      old_build.has_pure_modules),
                     ('build_clib',    old_build.has_c_libraries),
                     ('build_flib',    has_f_libraries), # new feature

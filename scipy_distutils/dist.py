@@ -10,8 +10,50 @@ class Distribution (OldDistribution):
         OldDistribution.__init__(self, attrs)
     
     def has_f_libraries(self):
-        print 'has_f_libraries'
+        if self.fortran_libraries and len(self.fortran_libraries) > 0:
+            return 1
+        if hasattr(self,'_been_here_has_f_libraries'):
+            return 0
+        if self.has_ext_modules():
+            # extension module sources may contain fortran files,
+            # extract them to fortran_libraries.
+            for ext in self.ext_modules:
+                self.fortran_sources_to_flib(ext)
+        self._been_here_has_f_libraries = None
         return self.fortran_libraries and len(self.fortran_libraries) > 0
+
+    def fortran_sources_to_flib(self, ext):
+        """
+        Extract fortran files from ext.sources and append them to
+        fortran_libraries item having the same name as ext.
+        """
+        sources = []
+        f_files = []
+        match = re.compile(r'.*[.](f90|f95|f77|for|ftn|f)\Z',re.I).match
+        for file in ext.sources:
+            if match(file):
+                f_files.append(file)
+            else:
+                sources.append(file)
+        if not f_files:
+            return
+
+        ext.sources = sources
+
+        if self.fortran_libraries is None:
+            self.fortran_libraries = []
+
+        name = ext.name
+        flib = None
+        for n,d in self.fortran_libraries:
+            if n == name:
+                flib = d
+                break
+        if flib is None:
+            flib = {'sources':[]}
+            self.fortran_libraries.append((name,flib))
+
+        flib['sources'].extend(f_files)
 
     def check_data_file_list(self):
         """Ensure that the list of data_files (presumably provided as a

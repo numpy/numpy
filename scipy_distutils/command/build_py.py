@@ -3,6 +3,7 @@ from distutils.command.build_py import build_py as old_build_py
 from fnmatch import fnmatch
 
 def is_setup_script(file):
+    file = os.path.basename(file)
     return (fnmatch(file,"setup.py") or fnmatch(file,"setup_*.py"))
     
 class build_py(old_build_py):

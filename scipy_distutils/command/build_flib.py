@@ -125,21 +125,24 @@ class build_flib (build_clib):
         else:
             self.announce(' using %s Fortran compiler' % fc)
         self.fcompiler = fc
-        self.fortran_libraries = self.distribution.fortran_libraries
-        if self.fortran_libraries:
+        if self.has_f_libraries():
+            self.fortran_libraries = self.distribution.fortran_libraries
             self.check_library_list(self.fortran_libraries)
 
     # finalize_options()
 
+    def has_f_libraries(self):
+        return self.distribution.has_f_libraries()
+
     def run (self):
-        if not self.fortran_libraries:
+        if not self.has_f_libraries():
             return
         self.build_libraries(self.fortran_libraries)
 
     # run ()
 
     def get_library_names(self):
-        if not self.fortran_libraries:
+        if not self.has_f_libraries():
             return None
 
         lib_names = [] 
@@ -155,7 +158,7 @@ class build_flib (build_clib):
     # get_library_names ()
 
     def get_library_dirs(self):
-        if not self.fortran_libraries:
+        if not self.has_f_libraries():
             return []#None
 
         lib_dirs = [] 
@@ -168,7 +171,7 @@ class build_flib (build_clib):
     # get_library_dirs ()
 
     def get_runtime_library_dirs(self):
-        if not self.fortran_libraries:
+        if not self.has_f_libraries():
             return []#None
 
         lib_dirs = [] 
@@ -553,8 +556,9 @@ class gnu_fortran_compiler(fortran_compiler_base):
 
     def __init__(self, fc = None, f90c = None):
         fortran_compiler_base.__init__(self)
-        self.libraries = ['gcc','g2c']
-        self.library_dirs = self.find_lib_directories()
+        if sys.platform == 'win32':
+            self.libraries = ['gcc','g2c']
+            self.library_dirs = self.find_lib_directories()
 
         if fc is None:
             fc = 'g77'
@@ -576,9 +580,9 @@ class gnu_fortran_compiler(fortran_compiler_base):
     def get_opt(self):
         import cpuinfo
         cpu = cpuinfo.cpuinfo()
-        opt = ' -O3 '
+        opt = ' -O3 -funroll-loops '
         
-        # only check for more optimizaiton if g77 can handle
+        # only check for more optimization if g77 can handle
         # it.
         if self.get_version():
             if self.version[0]=='3': # is g77 3.x.x
@@ -594,7 +598,8 @@ class gnu_fortran_compiler(fortran_compiler_base):
                 opt = opt + ' -march=i486 '
             elif cpu.is_i386():
                 opt = opt + ' -march=i386 '
-                
+            if cpu.is_Intel():
+                opt = opt + ' -malign-double '                
         return opt
         
     def find_lib_directories(self):
@@ -606,7 +611,7 @@ class gnu_fortran_compiler(fortran_compiler_base):
         if not exit_status:
             m = re.findall(match,out_text)
             if m:
-				lib_dir= m #m[0]          
+                lib_dir= m #m[0]          
         return lib_dir
 
     def get_linker_so(self):
@@ -666,8 +671,8 @@ class intel_ia32_fortran_compiler(fortran_compiler_base):
             opt = opt + ' -tpp5 '
         elif cpu.is_PentiumIV():
             opt = opt + ' -tpp7 -xW '
-        if cpu.has_mmx():
-            opt = opt + ' -xM '       
+        elif cpu.has_mmx():
+            opt = opt + ' -xM '
         return opt
         
 
@@ -704,14 +709,16 @@ class nag_fortran_compiler(fortran_compiler_base):
 
         switches = ''
         debug = ' -g -gline -g90 -nan -C '
-        opt = ' -O4 '
 
         self.f77_switches = self.f90_switches = switches
         self.f77_switches = self.f77_switches + ' -fixed '
         self.f77_debug = self.f90_debug = debug
-        self.f77_opt = self.f90_opt = opt
+        self.f77_opt = self.f90_opt = self.get_opt()
 
         self.ver_cmd = self.f77_compiler+' -V '
+
+    def get_opt(self):
+        opt = ' -O4 -target=native '
 
     def get_linker_so(self):
         return [self.f77_compiler,'-Wl,-shared']
