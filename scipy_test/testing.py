@@ -31,7 +31,7 @@ def set_package_path(level=1):
     is prepended to sys.path.
     The caller is responsible for removing this path by using
 
-      del sys.path[0]
+      restore_path()
     """
     from distutils.util import get_platform
     from scipy_distutils.misc_util import get_frame
@@ -45,6 +45,27 @@ def set_package_path(level=1):
     if not os.path.isdir(d1):
         d1 = os.path.dirname(d)
     sys.path.insert(0,d1)
+
+__all__.append('set_local_path')
+def set_local_path(level=1):
+    """ Prepend local directory to sys.path.
+
+    The caller is responsible for removing this path by using
+
+      restore_path()
+    """
+    from scipy_distutils.misc_util import get_frame
+    f = get_frame(level)
+    if f.f_locals['__name__']=='__main__':
+        testfile = sys.argv[0]
+    else:
+        testfile = f.f_locals['__file__']
+    local_path = os.path.dirname(os.path.abspath(testfile))
+    sys.path.insert(0,local_path)
+
+__all__.append('restore_path')
+def restore_path():
+    del sys.path[0]
 
 if sys.platform[:5]=='linux':
     def jiffies(_proc_pid_stat = '/proc/%s/stat'%(os.getpid()),
