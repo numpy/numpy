@@ -1180,6 +1180,7 @@ class agg2_info(system_info):
             agg2_srcs = glob(os.path.join(src_dir,'src','platform','win32','agg_win32_bmp.cpp'))
         else:
             agg2_srcs = glob(os.path.join(src_dir,'src','*.cpp'))
+            agg2_srcs += [os.path.join(src_dir,'src','platform','X11','agg_platform_support.cpp')]
         
         info = {'libraries':[('agg2_src',{'sources':agg2_srcs,
                                           'include_dirs':[os.path.join(src_dir,'include')],

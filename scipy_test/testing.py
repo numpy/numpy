@@ -132,6 +132,33 @@ class ScipyTestCase (unittest.TestCase):
         elapsed = jiffies() - elapsed
         return 0.01*elapsed
 
+    def __call__(self, result=None):
+        if result is None:
+            return unittest.TestCase.__call__(self, result)
+
+        nof_errors = len(result.errors)
+        save_stream = result.stream
+        result.stream = _dummy_stream()
+        unittest.TestCase.__call__(self, result)
+        if nof_errors != len(result.errors):
+            test, errstr = result.errors[-1]
+            if errstr.split('\n')[-2].startswith('IgnoreException:'):
+                assert result.stream.data[-1]=='E',`result.stream.data`
+                result.stream.data[-1] = 'i'
+                del result.errors[-1]
+        map(save_stream.write, result.stream.data)
+        result.stream = save_stream
+
+class _dummy_stream:
+    def __init__(self):
+        self.data = []
+    def write(self,message):
+        self.data.append(message)
+
+__all__.append('IgnoreException')
+class IgnoreException(Exception):
+    "Ignoring this exception due to disabled feature"
+
 #------------
 
 def _get_all_method_names(cls):
@@ -611,8 +638,9 @@ def assert_array_equal(x,y,err_msg=''):
     x,y = asarray(x), asarray(y)
     msg = '\nArrays are not equal'
     try:
-        assert alltrue(equal(shape(x),shape(y))),\
-               msg + ' (shapes mismatch):\n\t' + err_msg
+        assert len(shape(x))==len(shape(y)) and \
+               alltrue(equal(shape(x),shape(y))),\
+               msg + ' (shapes %s, %s mismatch):\n\t' % (shape(x),shape(y)) + err_msg
         reduced = ravel(equal(x,y))
         cond = alltrue(reduced)
         if not cond:
@@ -625,8 +653,7 @@ def assert_array_equal(x,y,err_msg=''):
         assert cond,\
                msg + '\n\t' + err_msg
     except ValueError:
-        print shape(x),shape(y)
-        raise ValueError, 'arrays are not equal'
+        raise ValueError, msg
 
 __all__.append('assert_array_almost_equal')
 def assert_array_almost_equal(x,y,decimal=6,err_msg=''):
