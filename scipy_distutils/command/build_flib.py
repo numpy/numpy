@@ -77,7 +77,7 @@ if os.name == 'nt':
 else:
     run_command = commands.getstatusoutput
 
-fcompiler_vendors = r'Absoft|Sun|SGI|Intel|Itanium|NAG|Compaq|Digital|Gnu|VAST|F'
+fcompiler_vendors = r'Absoft|Forte|Sun|SGI|Intel|Itanium|NAG|Compaq|Digital|Gnu|VAST|F'
 
 def show_compilers():
     for compiler_class in all_compilers:
