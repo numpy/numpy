@@ -99,8 +99,12 @@ fcompiler_vendors = r'Absoft|Forte|Sun|SGI|Intel|Itanium|NAG|Compaq|Gnu|VAST'\
                     r'|Lahey|PG|F'
 
 def show_compilers():
+    fcompiler_exec = os.environ.get('F77')
+    f90compiler_exec = os.environ.get('F90')
     for compiler_class in all_compilers:
-        compiler = compiler_class()
+        compiler = compiler_class(fcompiler_exec,f90compiler_exec)
+        if not compiler.is_available():
+            compiler = compiler_class()
         if compiler.is_available():
             print cyan_text(compiler)
         else:
