@@ -49,6 +49,11 @@ def _init_posix():
         # which doesn't seem right.  It omits all kinds of warnings, so 
         # remove it.
         ld = ld.replace('-arch i386','')
+        
+        # The following line is a HACK to fix a problem with building the
+        # freetype shared library under Mac OS X:
+        ld += ' -framework AppKit'
+        
         # 2.3a1 on OS X emits a ton of warnings about long double.  OPT
         # appears to not have all the needed flags set while CFLAGS does.
         cfg_vars = distutils.sysconfig._config_vars
