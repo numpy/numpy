@@ -7,6 +7,7 @@ import new
 from distutils.ccompiler import *
 from distutils import ccompiler
 from distutils.sysconfig import customize_compiler
+from distutils.version import LooseVersion
 
 import log
 from exec_command import exec_command
@@ -98,6 +99,8 @@ def CCompiler_show_customization(self):
             if not attr:
                 continue
             log.info("compiler '%s' is set to %s" % (attrname,attr))
+    try: self.get_version()
+    except: pass
     print '*'*80
     print self.__class__
     print compiler_to_string(self)
@@ -127,6 +130,30 @@ def CCompiler_customize(self, dist, need_cxx=0):
 CCompiler.customize = new.instancemethod(\
     CCompiler_customize,None,CCompiler)
 
+def CCompiler_get_version(self, force=0, ok_status=[0]):
+    """ Compiler version. Returns None if compiler is not available. """
+    if not force and hasattr(self,'version'):
+        return self.version
+    if not (hasattr(self,'version_cmd') and
+            hasattr(self,'version_pattern')):
+        log.warn('%s does not provide version_cmd and version_pattern attributes' \
+                 % (self.__class__))
+        return
+
+    cmd = ' '.join(self.version_cmd)
+    status, output = exec_command(cmd,use_tee=0)
+    version = None
+    if status in ok_status:
+        m = re.match(self.version_pattern,output)
+        if m:
+            version = m.group('version')
+            assert version,`version`
+            version = LooseVersion(version)
+    self.version = version
+    return version
+
+CCompiler.get_version = new.instancemethod(\
+    CCompiler_get_version,None,CCompiler)
 
 if sys.platform == 'win32':
     compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',

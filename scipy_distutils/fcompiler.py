@@ -22,7 +22,6 @@ from distutils.errors import DistutilsModuleError,DistutilsArgError,\
 from distutils.core import Command
 from distutils.util import split_quoted
 from distutils.fancy_getopt import FancyGetopt
-from distutils.version import LooseVersion
 from distutils.sysconfig import get_config_var
 
 from scipy_distutils.command.config_compiler import config_fc
@@ -272,23 +271,6 @@ class FCompiler(CCompiler):
     def get_library_dirs(self):
         """ List of compiler library directories. """
         return self.library_dirs[:]
-
-    def get_version(self, force=0, ok_status=[0]):
-        """ Compiler version. Returns None if compiler is not available. """
-        if not force and hasattr(self,'version'):
-            return self.version
-
-        cmd = ' '.join(self.version_cmd)
-        status, output = exec_command(cmd,use_tee=0)
-        version = None
-        if status in ok_status:
-            m = re.match(self.version_pattern,output)
-            if m:
-                version = m.group('version')
-                assert version,`version`
-                version = LooseVersion(version)
-        self.version = version
-        return version
 
     ############################################################
 
