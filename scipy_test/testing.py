@@ -10,7 +10,7 @@ try:
     # If Numeric and scipy_base  are not available, then some of the
     # functions below will not be available.
     from Numeric import alltrue,equal,shape,ravel,around,zeros,Float64,asarray,\
-         less_equal,array2string
+         less_equal,array2string,less
     import scipy_base.fastumath as math
 except ImportError:
     pass
@@ -639,6 +639,28 @@ def assert_array_almost_equal(x,y,decimal=6,err_msg=''):
         print shape(x),shape(y)
         print x, y
         raise ValueError, 'arrays are not almost equal'
+
+__all__.append('assert_array_less')
+def assert_array_less(x,y,err_msg=''):
+    x,y = asarray(x), asarray(y)
+    msg = '\nArrays are not less-ordered'
+    try:
+        assert alltrue(equal(shape(x),shape(y))),\
+               msg + ' (shapes mismatch):\n\t' + err_msg
+        reduced = ravel(less(x,y))
+        cond = alltrue(reduced)
+        if not cond:
+            s1 = array2string(x,precision=16)
+            s2 = array2string(y,precision=16)
+            if len(s1)>120: s1 = s1[:120] + '...'
+            if len(s2)>120: s2 = s2[:120] + '...'
+            match = 100-100.0*reduced.tolist().count(1)/len(reduced)
+            msg = msg + ' (mismatch %s%%):\n\tArray 1: %s\n\tArray 2: %s' % (match,s1,s2)
+        assert cond,\
+               msg + '\n\t' + err_msg
+    except ValueError:
+        print shape(x),shape(y)
+        raise ValueError, 'arrays are not less-ordered'
 
 __all__.append('rand')
 def rand(*args):
