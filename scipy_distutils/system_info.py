@@ -57,8 +57,7 @@ fftw_opt_libs = fftw_threaded, rfftw_threaded
 [atlas]
 library_dirs = /usr/lib/3dnow:/usr/lib/3dnow/atlas
 # for overriding the names of the atlas libraries
-atlas_libs = f77blas, cblas, atlas
-lapack_libs = lapack
+atlas_libs = lapack, f77blas, cblas, atlas
 
 [x11]
 library_dirs = /usr/X11R6/lib
@@ -427,20 +426,13 @@ class atlas_info(system_info):
         h = (combine_paths(lib_dirs+include_dirs,'cblas.h') or [None])[0]
         if h: h = os.path.dirname(h)
         info = None
-        # lapack must appear before atlas
-        lapack_libs = self.get_libs('lapack_libs', ['lapack'])
-        for d in lib_dirs:
-            lapack = self.check_libs(d,lapack_libs,[])
-            if lapack is not None:
-                info = lapack
-                break
-        else:
-            return
-        atlas_libs = self.get_libs('atlas_libs', ['f77blas', 'cblas', 'atlas'])
+
+        atlas_libs = self.get_libs('atlas_libs',
+                                   ['lapack','f77blas', 'cblas', 'atlas'])
         for d in lib_dirs:
             atlas = self.check_libs(d,atlas_libs,[])
             if atlas is not None:
-                dict_append(info, **atlas)
+                info = atlas
                 break
         else:
             return
