@@ -1,3 +1,4 @@
+
 import os,sys,string
 import re
 import types
@@ -386,11 +387,22 @@ def compiler_to_string(compiler):
         lines.append(format % prop)
     return '\n'.join(lines)
 
+def _get_dirs_with_init((packages,path), dirname, names):
+    """Internal: used by get_subpackages."""
+    if '.svn' in names:
+        del names[names.index('.svn')]
+    if os.path.isfile(os.path.join(dirname,'__init__.py')):
+        if path==dirname: return
+        package_name = '.'.join(dirname.split(os.sep)[len(path.split(os.sep)):])
+        if package_name not in packages:
+            packages.append(package_name)
+
 def get_subpackages(path,
                     parent=None,
                     parent_path=None,
                     include_packages=[],
-                    ignore_packages=[]):
+                    ignore_packages=[],
+                    recursive=None):
 
     """
     Return a list of configurations found in a tree of Python
@@ -412,6 +424,9 @@ def get_subpackages(path,
 
     Packages in ignore_packages list will be ignored unless they are
     also in include_packages.
+
+    If recursive is True then subpackages are searched recursively
+    starting from the path and added to include_packages list.
     """
 
     config_list = []
@@ -444,10 +459,13 @@ def get_subpackages(path,
         finally:
             del sys.path[0]
 
-    for package_name in include_packages:
-        dirname = os.path.join(path, package_name)
+    if recursive:
+        os.path.walk(path,_get_dirs_with_init, (include_packages,path))
 
-        setup_file = os.path.join(dirname,'setup_' + package_name+'.py')
+    for package_name in include_packages:
+        dirname = os.path.join(*([path]+package_name.split('.')))
+        setup_file = os.path.join(dirname,\
+                                  'setup_' + package_name.split('.')[-1]+'.py')
         if not os.path.isfile(setup_file):
             print 'Assuming default configuration (%r was not found)' \
                   % (setup_file)
