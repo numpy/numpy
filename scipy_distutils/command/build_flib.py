@@ -25,6 +25,13 @@ Bugs:
       compilers is based on only checking the availability of the
       corresponding F77 compiler. If it exists, then F90 is assumed
       to exist also.
+ ***  F compiler from Fortran Compiler is _not_ supported, though it
+      is defined below. The reasons is that this F95 compiler is
+      incomplete: it does not compile fixed format sources and
+      that is needed by f2py generated wrappers for F90 modules.
+      To support F as it is, some effort is needed to re-code
+      f2py but it is not clear if this effort is worth.
+      May be in future...
 
 Open issues:
  ***  User-defined compiler flags. Do we need --fflags?
@@ -39,6 +46,7 @@ Fortran compilers (as to be used with --fcompiler= option):
       Compaq
       Gnu
       VAST
+      F       [unsupported]
 """
 
 import distutils
@@ -64,12 +72,29 @@ if os.name == 'nt':
         return 0, text
 else:
     run_command = commands.getstatusoutput
-    
+
+# Hooks for colored terminal output. Could be in a more general use.
+# See also http://www.livinglogic.de/Python/ansistyle
+if os.environ.get('TERM',None) in ['rxvt','xterm']:
+    # Need a better way to determine whether a terminal supports colors
+    def red_text(s): return '\x1b[31m%s\x1b[0m'%s
+    def green_text(s): return '\x1b[32m%s\x1b[0m'%s
+    def yellow_text(s): return '\x1b[33m%s\x1b[0m'%s
+    def blue_text(s): return '\x1b[34m%s\x1b[0m'%s
+    def cyan_text(s): return '\x1b[35m%s\x1b[0m'%s
+else:
+    def red_text(s): return s
+    def green_text(s): return s
+    def yellow_text(s): return s
+    def cyan_text(s): return s
+    def blue_text(s): return s
+
+
 def show_compilers():
     for compiler_class in all_compilers:
         compiler = compiler_class()
         if compiler.is_available():
-            print compiler
+            print cyan_text(compiler)
 
 class build_flib (build_clib):
 
@@ -127,7 +152,7 @@ class build_flib (build_clib):
         if not fc:
             raise DistutilsOptionError, 'Fortran compiler not available: %s'%(self.fcompiler)
         else:
-            self.announce(' using %s Fortran compiler' % fc)
+            self.announce(cyan_text(' using %s Fortran compiler' % fc))
         self.fcompiler = fc
         if self.has_f_libraries():
             self.fortran_libraries = self.distribution.fortran_libraries
@@ -148,6 +173,9 @@ class build_flib (build_clib):
 
     def has_f_library(self,name):
         if self.has_f_libraries():
+            # If self.fortran_libraries is None at this point
+            # then it means that build_flib was called before
+            # build. Always call build before build_flib.
             for (lib_name, build_info) in self.fortran_libraries:
                 if lib_name == name:
                     return 1
@@ -275,7 +303,6 @@ class build_flib (build_clib):
 
     # build_libraries ()
 
-
 class fortran_compiler_base(CCompiler):
 
     vendor = None
@@ -353,7 +380,7 @@ class fortran_compiler_base(CCompiler):
                 cmd =  compiler + ' ' + switches + ' '+\
                        module_switch + \
                        ' -c ' + source + ' -o ' + object 
-                print cmd
+                print yellow_text(cmd)
                 failure = os.system(cmd)
                 if failure:
                     raise FortranCompileError, 'failure during compile' 
@@ -386,10 +413,10 @@ class fortran_compiler_base(CCompiler):
         objects = string.join(object_files)
         if objects:
             cmd = 'ar -cur  %s %s' % (lib_file,objects)
-            print cmd
+            print yellow_text(cmd)
             os.system(cmd)
             cmd = 'ranlib %s ' % lib_file
-            print cmd
+            print yellow_text(cmd)
             os.system(cmd)
 
     def build_library(self,library_name,source_list,module_dirs=None,
@@ -445,13 +472,16 @@ class fortran_compiler_base(CCompiler):
             return self.version
         self.version = ''
         # works I think only for unix...        
-        print 'command:', self.ver_cmd
+        print 'command:', yellow_text(self.ver_cmd)
         exit_status, out_text = run_command(self.ver_cmd)
-        print exit_status, out_text
+        print exit_status,
         if not exit_status:
+            print green_text(out_text)
             m = re.match(self.ver_match,out_text)
             if m:
                 self.version = m.group('version')
+        else:
+            print red_text(out_text)
         return self.version
 
     def get_libraries(self):
@@ -813,6 +843,53 @@ class nag_fortran_compiler(fortran_compiler_base):
     def get_linker_so(self):
         return [self.f77_compiler,'-Wl,-shared']
 
+# http://www.fortran.com/F/compilers.html
+#
+# We define F compiler here but it is quite useless
+# because it does not support for fixed format sources
+# which makes it impossible to use with f2py generated
+# fixed format wrappers to F90 modules.
+class f_fortran_compiler(fortran_compiler_base):
+
+    vendor = 'F'
+    ver_match = r'Fortran Company/NAG F compiler Release (?P<version>[^\s]*)'
+
+    def __init__(self, fc = None, f90c = None):
+        fortran_compiler_base.__init__(self)
+
+        if fc is None:
+            fc = 'F'
+        if f90c is None:
+            f90c = 'F'
+
+        self.f77_compiler = fc
+        self.f90_compiler = f90c
+        self.ver_cmd = self.f90_compiler+' -V '
+
+        gnu = gnu_fortran_compiler('g77')
+        if not gnu.is_available(): # F compiler requires gcc.
+            self.version = ''
+            return
+        if not self.is_available():
+            return
+
+        print red_text("""
+WARNING: F compiler is unsupported due to its incompleteness.
+         Send complaints to its vendor. For adding its support
+         to scipy_distutils, it must be able to compile
+         fixed format Fortran 90.
+""")
+
+        self.f90_switches = ''
+        self.f90_debug = ' -g -gline -g90 -C '
+        self.f90_opt = ' -O '
+
+        #self.f77_switches = gnu.f77_switches
+        #self.f77_debug = gnu.f77_debug
+        #self.f77_opt = gnu.f77_opt
+
+    def get_linker_so(self):
+        return ['gcc','-shared']
 
 class vast_fortran_compiler(fortran_compiler_base):
 
@@ -921,6 +998,7 @@ all_compilers = [absoft_fortran_compiler,
                  nag_fortran_compiler,
                  compaq_fortran_compiler,
                  vast_fortran_compiler,
+                 f_fortran_compiler,
                  gnu_fortran_compiler,
                  ]
 
