@@ -537,8 +537,9 @@ class absoft_fortran_compiler(fortran_compiler_base):
 class sun_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Sun'
-    ver_match =  r'f77: (?P<version>[^\s*,]*)'
-
+    #ver_match =  r'f77: (?P<version>[^\s*,]*)'
+    ver_match = r'f90: Sun (?P<version>[^\s*,]*)'
+    
     def __init__(self, fc = None, f90c = None):
         fortran_compiler_base.__init__(self)
         if fc is None:
@@ -554,14 +555,16 @@ class sun_fortran_compiler(fortran_compiler_base):
         self.f90_switches = ' -fixed ' # ??? why fixed?
         self.f90_opt = ' -fast -dalign '
 
-        self.libraries = ['f90', 'F77', 'M77', 'sunmath', 'm']
+        self.ver_cmd = self.f90_compiler + ' -V'
+
+        #self.libraries = ['f90', 'F77', 'M77', 'sunmath', 'm']
+        self.libraries = ['fsu', 'F77', 'M77', 'sunmath', 'm']
+        
         #threaded
         #self.libraries = ['f90', 'F77_mt', 'sunmath_mt', 'm', 'thread']
         #self.libraries = []
         self.library_dirs = self.find_lib_dir()
         #print 'sun:',self.library_dirs
-
-        self.ver_cmd = self.f77_compiler + ' -V'
 
     def build_module_switch(self,module_dirs):
         res = ''
@@ -610,11 +613,13 @@ class mips_fortran_compiler(fortran_compiler_base):
         self.f90_compiler = f90c
         self.f90_switches = ' -n32 -KPIC -fixedform ' # why fixed ???
         self.f90_opt = ' '                            
+
+        self.ver_cmd = self.f77_compiler + ' -version'
         
         self.libraries = ['fortran', 'ftn', 'm']
         self.library_dirs = self.find_lib_dir()
 
-        self.ver_cmd = self.f77_compiler + ' -version'
+
 
     def build_module_switch(self,module_dirs):
         res = ''
@@ -655,8 +660,8 @@ class gnu_fortran_compiler(fortran_compiler_base):
             switches = switches + ' -fpic '
 
         self.f77_switches = switches
-
         self.ver_cmd = self.f77_compiler + ' -v '
+
         self.f77_opt = self.get_opt()
 
     def get_opt(self):
