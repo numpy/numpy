@@ -73,7 +73,12 @@ def create_extension(module_path, **kw):
         
         See build_extension for information on keyword arguments.
     """
-    from distutils.core import Extension
+    # some (most?) platforms will fail to link C++ correctly
+    # unless scipy_distutils is used.
+    try:
+        from scipy_distutils.core import Extension
+    except ImportError:
+        from distutils.core import Extension
     
     # this is a screwy trick to get rid of a ton of warnings on Unix
     import distutils.sysconfig
@@ -204,7 +209,10 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
           extension_name.
     """
     success = 0
-    from distutils.core import setup, Extension
+    try:
+        from scipy_distutils.core import setup, Extension
+    except ImportError:
+        from distutils.core import setup, Extension
     
     # this is a screwy trick to get rid of a ton of warnings on Unix
     import distutils.sysconfig
