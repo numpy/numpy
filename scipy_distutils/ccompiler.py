@@ -228,16 +228,15 @@ def new_compiler (plat=None,
         if compiler is not None:
             msg = msg + " with '%s' compiler" % compiler
         raise DistutilsPlatformError, msg
-
     module_name = "scipy_distutils." + module_name
     try:
         __import__ (module_name)
     except ImportError, msg:
-        print msg
+        print msg,'in scipy_distutils, trying from distutils..'
         module_name = module_name[6:]
         try:
             __import__(module_name)
-        except ImportError:
+        except ImportError, msg:
             raise DistutilsModuleError, \
                   "can't compile C/C++ code: unable to load module '%s'" % \
                   module_name
