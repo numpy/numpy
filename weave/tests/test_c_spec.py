@@ -408,18 +408,16 @@ class test_list_converter(unittest.TestCase):
         mod = ext_tools.ext_module(mod_name)
         a = range(1e6);
         code = """
-               py::number v = py::number();
-               int vv, sum = 0;            
+               int v, sum = 0;            
                for(int i = 0; i < a.len(); i++)
                {
                    v = a[i];
-                   vv = (int)v;
-                   if (vv % 2)
-                    sum += vv;
+                   if (v % 2)
+                    sum += v;
                    else
-                    sum -= vv; 
+                    sum -= v; 
                }
-               return_val = PyInt_FromLong(sum);
+               return_val = sum;
                """
         with_cxx = ext_tools.ext_function('with_cxx',code,['a'])
         mod.add_function(with_cxx)
@@ -436,7 +434,7 @@ class test_list_converter(unittest.TestCase):
                    else
                     sum -= vv; 
                }
-               return_val = PyInt_FromLong(sum);
+               return_val = sum;
                """
         no_checking = ext_tools.ext_function('no_checking',code,['a'])
         mod.add_function(no_checking)
