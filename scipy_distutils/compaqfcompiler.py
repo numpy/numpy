@@ -27,8 +27,8 @@ class CompaqFCompiler(FCompiler):
         'ranlib'       : ["ranlib"]
         }
 
-    module_dir_switch = None  #XXX Fix me
-    module_include_switch = None #XXX Fix me
+    module_dir_switch = '-module ' # not tested
+    module_include_switch = '-I'
 
     def get_flags(self):
         return ['-assume no2underscore','-nomixed_str_len_arg']
@@ -56,8 +56,8 @@ class CompaqVisualFCompiler(FCompiler):
 
     static_lib_extension = ".lib"
     static_lib_format = "%s%s"
-    module_dir_switch = None  #XXX Fix me
-    module_include_switch = None #XXX Fix me
+    module_dir_switch = '/module:'
+    module_include_switch = '/I'
 
     ar_exe = 'lib.exe'
     fc_exe = 'DF'
