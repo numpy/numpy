@@ -10,7 +10,7 @@ if sys.version[:3]<='2.1':
 # Hooks for colored terminal output.
 # See also http://www.livinglogic.de/Python/ansistyle
 def terminal_has_colors():
-    if sys.platform=='cygwin' and os.environ.has_key('NOCOLOR'):
+    if sys.platform=='cygwin' and not os.environ.has_key('USE_COLOR'):
         # Avoid importing curses that causes illegal operation
         # with a message:
         #  PYTHON2 caused an invalid page fault in

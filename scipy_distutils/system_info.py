@@ -275,7 +275,7 @@ class system_info:
 
     def get_paths(self, section, key):
         dirs = self.cp.get(section, key).split(os.pathsep)
-        if os.environ.has_key(self.dir_env_var):
+        if self.dir_env_var and os.environ.has_key(self.dir_env_var):
             dirs = os.environ[self.dir_env_var].split(os.pathsep) + dirs
         default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
         dirs.extend(default_dirs)
@@ -862,5 +862,3 @@ def show_all():
 
 if __name__ == "__main__":
     show_all()
-    print numpy_info().get_info()
-    print numarray_info().get_info()
