@@ -162,6 +162,7 @@ class build_clib (Command):
         # with only names changed to protect the innocent!
 
         if type(libraries) is not ListType:
+            print type(libraries)
             raise DistutilsSetupError, \
                   "'libraries' option must be a list of tuples"
 

@@ -231,14 +231,18 @@ list_keys = ['packages', 'ext_modules', 'data_files',
              'headers']
 dict_keys = ['package_dir']             
 
-def default_config_dict():
+def default_config_dict(name = None):
     d={}
     for key in list_keys: d[key] = []
     for key in dict_keys: d[key] = {}
+    if name is not None:
+        # Useful for local builds
+        d['name'] = name
+        d['version'] = update_version()    
     return d
 
 def merge_config_dicts(config_list):
-    result = default_config_dict()    
+    result = default_config_dict()
     for d in config_list:
         for key in list_keys:
             result[key].extend(d.get(key,[]))

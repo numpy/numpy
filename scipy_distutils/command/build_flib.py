@@ -224,6 +224,9 @@ class build_flib (build_clib):
     # get_library_dirs ()
 
     def get_source_files (self):
+        if not self.has_f_libraries():
+            return []
+
         self.check_library_list(self.fortran_libraries)
         filenames = []
 
