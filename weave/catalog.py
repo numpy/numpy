@@ -320,7 +320,19 @@ class catalog:
         """ Returns all existing catalog file list in correct search order.
         """
         files = self.get_catalog_files()
-        existing_files = filter(os.path.exists,files)
+        # open every stinking file to check if it exists.
+        # This is because anydbm doesn't provide a consistent naming 
+        # convention across platforms for its files 
+        existing_files = []
+        for file in files:
+            try:
+                x = shelve.open(file,'r')
+                x.close()
+                existing_files.append(file)
+            except:
+                pass
+        # This is the non-portable (and much faster) old code
+        #existing_files = filter(os.path.exists,files)
         return existing_files
 
     def get_writable_file(self,existing_only=0):
@@ -522,6 +534,10 @@ class catalog:
         if self.cache.has_key(code):
             if function not in self.cache[code]:
                 self.cache[code].insert(0,function)
+            else:
+                # if it is in the cache, then it is also
+                # been persisted 
+                return
         else:           
             # Load functions and put this one up front
             self.cache[code] = self.get_functions(code)          

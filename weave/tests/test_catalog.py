@@ -45,7 +45,7 @@ class test_catalog_path(unittest.TestCase):
     def check_user(path):
         if sys.platform != 'win32':
             in_path = '~'
-            path = catalog_path(in_path)
+            path = catalog.catalog_path(in_path)
             d,f = os.path.split(path)
             assert(d == os.path.expanduser(in_path))        
             assert(f == catalog.os_dependent_catalog_name())
@@ -205,7 +205,6 @@ class test_catalog(unittest.TestCase):
         q = catalog.catalog()
         files = q.get_existing_files()
         restore_temp_catalog()
-        print 'files:', files
         assert(len(files) == 1)
                        
     def check_access_writable_file(self):
@@ -314,7 +313,6 @@ class test_catalog(unittest.TestCase):
         # make sure functions occur in correct order for
         # lookup     
         all_funcs = zip(funcs1,funcs2)
-        print all_funcs
         for a,b in all_funcs:
             assert(pfuncs.index(a) > pfuncs.index(b))
     

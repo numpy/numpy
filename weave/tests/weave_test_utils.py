@@ -33,9 +33,11 @@ import catalog
 restore_path()
 
 def temp_catalog_files():
+    # might need to add some more platform specific catalog file
+    # suffixes to remove.  The .pag was recently added for SunOS
     d = catalog.default_dir()
     f = catalog.os_dependent_catalog_name()
-    suffixes = ['.dat','.dir','']
+    suffixes = ['.dat','.dir','.pag','']
     cat_files = [os.path.join(d,f+suffix) for suffix in suffixes]
     return cat_files
 
