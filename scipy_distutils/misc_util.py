@@ -5,8 +5,10 @@ class PostponedException:
     #Example usage:
     #  try: import foo
     #  except ImportError: foo = PostponedException()
+    __all__ = []
     def __init__(self):
         self._info = sys.exc_info()[:2]
+        self.__doc__ = '%s: %s' % tuple(self._info)
     def __getattr__(self,name):
         raise self._info[0],self._info[1]
 
