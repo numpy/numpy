@@ -67,6 +67,8 @@ class run_f2py(Command):
             # for getting extra f2py_options that are specific to
             # a given fortran compiler.
             for ext in self.distribution.ext_modules:
+                if hasattr(ext,'generate_sources'):
+                    ext.generate_sources()
                 ext.sources = self.f2py_sources(ext.sources,ext)
                 self.fortran_sources_to_flib(ext)
     # run()
@@ -225,7 +227,7 @@ class run_f2py(Command):
         f_files = []
 
         for file in ext.sources:
-            if fortran_ext_re(str(file)):
+            if fortran_ext_re(file):
                 f_files.append(file)
             else:
                 sources.append(file)
