@@ -1,5 +1,16 @@
 import os,sys,string
 
+class PostponedException:
+    """Postpone exception until an attempt is made to use a resource.
+    Example usage:
+      try: import foo
+      except ImportError: foo = PostponedException()
+    """
+    def __init__(self):
+        self.info = sys.exc_info()[:2]
+    def __getattr__(self,name):
+        raise self.info[0],self.info[1]
+
 def update_version(release_level='alpha',
                    path='.',
                    version_template = \
