@@ -54,8 +54,6 @@ def configuration(parent_package='',parent_path=None):
 if __name__ == '__main__':
     from scipy_base_version import scipy_base_version
     print 'scipy_base Version',scipy_base_version
-    if sys.platform == 'win32':
-        from scipy_distutils.mingw32_support import *
     from scipy_distutils.core import setup
 
     setup(version = scipy_base_version,
