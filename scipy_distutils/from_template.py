@@ -23,6 +23,7 @@
 #  Note that all <..> forms in a block must have the same number of
 #    comma-separated entries. 
 
+__all__ = ['process_str']
 
 import string,os,sys
 if sys.version[:3]>='2.3':
@@ -142,7 +143,7 @@ C
 
 """
 
-def process_filestr(allstr):
+def process_str(allstr):
     newstr = allstr.lower()
     writestr = _head
 
