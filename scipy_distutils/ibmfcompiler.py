@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 
 from fcompiler import FCompiler
@@ -10,11 +11,11 @@ class IbmFCompiler(FCompiler):
     version_pattern =  r'xlf\(1\)\s*IBM XL Fortran Version (?P<version>[^\s*]*)'
 
     executables = {
-        'version_cmd'  : ["f77"],
-        'compiler_f77' : ["f77"],
-        'compiler_fix' : ["xlf", "-qfixed"],
-        'compiler_f90' : ["xlf"],
-        'linker_so'    : ["xlf"],
+        'version_cmd'  : ["xlf"],
+        'compiler_f77' : ["xlf"],
+        'compiler_fix' : ["xlf90", "-qfixed"],
+        'compiler_f90' : ["xlf90"],
+        'linker_so'    : ["xlf95"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
@@ -31,7 +32,7 @@ class IbmFCompiler(FCompiler):
             opt.append('-Wl,-bundle,-flat_namespace,-undefined,suppress')
         else:
             opt.append('-bshared')
-        version = self.get_version(ok_status=[0,10240])
+        version = self.get_version(ok_status=[0,40])
         if version is not None:
             import tempfile
             xlf_cfg = '/etc/opt/ibmcmp/xlf/%s/xlf.cfg' % version
@@ -39,11 +40,13 @@ class IbmFCompiler(FCompiler):
             log.info('Creating '+new_cfg)
             fi = open(xlf_cfg,'r')
             fo = open(new_cfg,'w')
+            crt1_match = re.compile(r'\s*crt\s*[=]\s*(?P<path>.*)/crt1.o').match
             for line in fi.readlines():
-                #XXX: Is replacing all occurrences of crt1.o the right
-                #     thing to do? What is the pattern of the relevant
-                #     line?
-                fo.write(line.replace('/crt1.o','/bundle1.o'))
+                m = crt1_match(line)
+                if m:
+                    fo.write('crt = %s/bundle1.o\n' % (m.group('path')))
+                else:
+                    fo.write(line)
             fi.close()
             fo.close()
             opt.append('-F'+new_cfg)
