@@ -13,6 +13,7 @@ from scipy_distutils.core import Command
 import re,os
 
 module_name_re = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',re.I).match
+user_module_name_re = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?__user__[\w_]*)',re.I).match
 
 class run_f2py(Command):
 
@@ -96,6 +97,8 @@ class run_f2py(Command):
                 for line in f.xreadlines():
                     m = module_name_re(line)
                     if m:
+                        if user_module_name_re(line): # skip *__user__* names
+                            continue
                         base = m.group('name')
                         break
                 f.close()
