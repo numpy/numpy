@@ -12,6 +12,25 @@
 (PyArrayObject *)(PyArray_ContiguousFromObject((PyObject *)(m), \
 (m)->descr->type_num, 0,0)))
 
+#ifndef max
+#define max(x,y) (x)>(y)?(x):(y)
+#endif
+#ifndef min
+#define min(x,y) (x)>(y)?(y):(x)
+#endif
+
+static int compare_lists(int *l1, int *l2, int n) {
+    int i;
+    for(i=0;i<n;i++) {
+        if (l1[i] != l2[i]) return 0;
+    }
+    return 1;
+}
+
+int get_stride(PyArrayObject *mp, int d) {
+    return mp->strides[d];
+}
+
 
 static PyObject *scipy_array_copy(PyArrayObject *m1) {
     PyArrayObject *ret = 
@@ -247,6 +266,8 @@ static int scipy_PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, Py
     if (PyErr_Occurred()) return -1;
 	
     /* Cleanup the returned matrices so that scalars will be returned as python scalars */
+    /*  We don't use this in SciPy --- will disable checking for all ufuncs */
+    /*
     if (self->check_return) {
         for(i=self->nin; i<self->nout+self->nin; i++) check_array(mps[i]);
         if (errno != 0) {
@@ -254,6 +275,7 @@ static int scipy_PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, Py
             return -1;
         }
     }
+    */
 
     return 0;
 }

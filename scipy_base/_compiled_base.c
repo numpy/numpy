@@ -870,7 +870,6 @@ DL_EXPORT(void) init_compiled_base(void) {
     fd = PyModule_GetDict(fm);
     scipy_SetNumericOps(fd);
     Py_XDECREF(fm);
-    Py_XDECREF(fd);
 
     s = PyString_FromString("0.2");
     PyDict_SetItemString(d, "__version__", s);
