@@ -349,7 +349,7 @@ def ppresolve(a,ignore_failure=None):
         while ns:
             if hasattr(a,'_ppimport_importer') or \
                    hasattr(a,'_ppimport_module'):
-                a = a._ppimport_module
+                a = getattr(a,'_ppimport_module',a)
             if hasattr(a,'_ppimport_attr'):
                 a = a._ppimport_attr
             b.append(ns[0])
@@ -363,7 +363,7 @@ def ppresolve(a,ignore_failure=None):
             a = getattr(a,b[-1])
     if hasattr(a,'_ppimport_importer') or \
            hasattr(a,'_ppimport_module'):
-        a = a._ppimport_module
+        a = getattr(a,'_ppimport_module',a)
     if hasattr(a,'_ppimport_attr'):
         a = a._ppimport_attr
     return a
@@ -382,40 +382,47 @@ if _pydoc is not None:
     import new as _new
 
     _old_pydoc_help_call = _pydoc.help.__class__.__call__
-    def _scipy_pydoc_help_call(self,*args,**kwds):
-        _old_pydoc_help_call.__doc__
+    def _ppimport_pydoc_help_call(self,*args,**kwds):
         return _old_pydoc_help_call(self, *map(_ppresolve_ignore_failure,args),
                                     **kwds)
-    _pydoc.help.__class__.__call__ = _new.instancemethod(_scipy_pydoc_help_call,
+    _ppimport_pydoc_help_call.__doc__ = _old_pydoc_help_call.__doc__
+    _pydoc.help.__class__.__call__ = _new.instancemethod(_ppimport_pydoc_help_call,
                                                          None,
                                                          _pydoc.help.__class__)
 
     _old_pydoc_Doc_document = _pydoc.Doc.document
-    def _scipy_pydoc_Doc_document(self,*args,**kwds):
-        _old_pydoc_Doc_document.__doc__
+    def _ppimport_pydoc_Doc_document(self,*args,**kwds):
         args = (_ppresolve_ignore_failure(args[0]),) + args[1:]
         return _old_pydoc_Doc_document(self,*args,**kwds)
-    _pydoc.Doc.document = _new.instancemethod(_scipy_pydoc_Doc_document,
+    _ppimport_pydoc_Doc_document.__doc__ = _old_pydoc_Doc_document.__doc__
+    _pydoc.Doc.document = _new.instancemethod(_ppimport_pydoc_Doc_document,
                                               None,
                                               _pydoc.Doc)
 
     _old_pydoc_describe = _pydoc.describe
-    def _scipy_pydoc_describe(object):
-        _old_pydoc_describe.__doc__
+    def _ppimport_pydoc_describe(object):
         return _old_pydoc_describe(_ppresolve_ignore_failure(object))
-    _pydoc.describe = _scipy_pydoc_describe
+    _ppimport_pydoc_describe.__doc__ = _old_pydoc_describe.__doc__
+    _pydoc.describe = _ppimport_pydoc_describe
 
-    import inspect as _inspect
-    _old_inspect_getfile = _inspect.getfile
-    def _scipy_inspect_getfile(object):
-        _old_inspect_getfile.__doc__
-        if isinstance(object,_ModuleLoader):
-            return object.__dict__['__file__']
-        return _old_inspect_getfile(object)
-    _inspect.getfile = _scipy_inspect_getfile
+import inspect as _inspect
+_old_inspect_getfile = _inspect.getfile
+def _ppimport_inspect_getfile(object):
+    if isinstance(object,_ModuleLoader):
+        return object.__dict__['__file__']
+    return _old_inspect_getfile(object)
+_ppimport_inspect_getfile.__doc__ = _old_inspect_getfile.__doc__
+_inspect.getfile = _ppimport_inspect_getfile
 
-    _old_inspect_getdoc = _inspect.getdoc
-    def _scipy_inspect_getdoc(object):
-        _old_inspect_getdoc.__doc__
-        return _old_inspect_getdoc(_ppresolve_ignore_failure(object))
-    _inspect.getdoc = _scipy_inspect_getdoc
+_old_inspect_getdoc = _inspect.getdoc
+def _ppimport_inspect_getdoc(object):
+    return _old_inspect_getdoc(_ppresolve_ignore_failure(object))
+_ppimport_inspect_getdoc.__doc__ = _old_inspect_getdoc.__doc__
+_inspect.getdoc = _ppimport_inspect_getdoc
+
+import __builtin__ as _builtin
+_old_builtin_dir = _builtin.dir
+def _ppimport_builtin_dir(*arg):
+    return _old_builtin_dir(*map(_ppresolve_ignore_failure,arg))
+_ppimport_builtin_dir.__doc__ = _old_builtin_dir.__doc__
+_builtin.dir = _ppimport_builtin_dir
