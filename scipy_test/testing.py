@@ -11,7 +11,44 @@ try:
     import scipy_base.fastumath as math
 except ImportError:
     pass
-    
+
+def get_package_path(testfile):
+    """ Return path to package directory first assuming that testfile
+    satisfies the following tree structure:
+      <somepath>/build/lib.<platform>-<version>
+      <somepath>/<somedir>/testfile
+    If build directory does not exist, then return
+      <somepath>/..
+    """
+    from distutils.util import get_platform
+    d = os.path.dirname(os.path.dirname(os.path.abspath(testfile)))
+    d1 = os.path.join(d,'build','lib.%s-%s'%(get_platform(),sys.version[:3]))
+    if os.path.isdir(d1):
+        return d1
+    return os.path.dirname(d)
+
+if sys.platform=='linux2':
+    def jiffies(_proc_pid_stat = '/proc/%s/stat'%(os.getpid()),
+                _load_time=time.time()):
+        """ Return number of jiffies (1/100ths of a second) that this
+    process has been scheduled in user mode. See man 5 proc. """
+        try:
+            f=open(_proc_pid_stat,'r')
+            l = f.readline().split(' ')
+            f.close()
+            return int(l[13])
+        except:
+            return int(100*(time.time()-_load_time))
+else:
+    # os.getpid is not in all platforms available.
+    # Using time is safe but inaccurate, especially when process
+    # was suspended or sleeping.
+    def jiffies(_load_time=time.time()):
+        """ Return number of jiffies (1/100ths of a second) that this
+    process has been scheduled in user mode. [Emulation with time.time]. """
+        return int(100*(time.time()-_load_time))
+
+
 __all__.append('ScipyTestCase')
 class ScipyTestCase (unittest.TestCase):
 
@@ -25,11 +62,11 @@ class ScipyTestCase (unittest.TestCase):
                        'ScipyTestCase runner for '+self.__class__.__name__,
                        'exec')
         i = 0
-        elapsed = time.time()
+        elapsed = jiffies()
         while i<times:
             i += 1
             exec code in locs,globs
-        elapsed = time.time() - elapsed
+        elapsed = jiffies() - elapsed
         return elapsed
 
 def remove_ignored_patterns(files,pattern):
