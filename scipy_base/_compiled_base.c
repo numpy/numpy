@@ -293,7 +293,8 @@ static int setup_input_arrays(PyTupleObject *inputs, PyArrayObject **inputarrays
       cleanup_arrays(inputarrays,nin);
       return -1;
     }
-    memmove(tmparray->strides,ain->strides,sizeof(int)*tmparray->nd);
+    /* tmparray->strides will be zero where new dimensions were added */
+    memmove(tmparray->strides+(maxrank-ain->nd),ain->strides,sizeof(int)*ain->nd);
     tmparray->base = (PyObject *)ain;  /* When tmparray is deallocated ain will be too */
     inputarrays[i] = tmparray;  /* tmparray is new array */
   }
@@ -306,6 +307,7 @@ static int setup_input_arrays(PyTupleObject *inputs, PyArrayObject **inputarrays
       if (inputarrays[i]->dimensions[k] > maxdims[k])
 	maxdims[k] = inputarrays[i]->dimensions[k];
   }
+
 
   /* Now set all lengths for input array dimensions to maxdims 
        and make strides equal to zero for arrays whose
@@ -554,6 +556,7 @@ static int loop_over_arrays(PyObject *func, PyArrayObject **inarr, int nin, PyAr
        arrays 
     */
     for (i=0; i < nin; i++) {
+
       tmparr = inarr[i];
       /* Find linear index into this input array */
       CALCINDEX(indx_in,nd_index,tmparr->strides,in->nd);
@@ -567,12 +570,15 @@ static int loop_over_arrays(PyObject *func, PyArrayObject **inarr, int nin, PyAr
       /* This steals reference of tmpobj */
       PyTuple_SET_ITEM(arglist, i, tmpobj);  
     }
+
     /* Call Python Function for this set of inputs */
     if ((result=PyEval_CallObject(func, arglist))==NULL) {
       Py_DECREF(arglist);
       free(nd_index);
       return -1;
     } 
+
+
 
     /* Find index into (all) output arrays */
     CALCINDEX(indx_out,nd_index,out->strides,out->nd);
@@ -651,13 +657,14 @@ static PyObject *map_PyFunc(PyObject *self, PyObject *args)
     free(inputarrays);
     return NULL;
   }
-
+  
   /* Construct output arrays */
   if (-1 == (nout=setup_output_arrays(Pyfunc,inputarrays,nin,&outputarrays,otypes,numtypes))) {
     cleanup_arrays(inputarrays,nin);
     free(inputarrays);
     return NULL;
   }
+
 
   /* Loop over the input arrays and place in output-arrays */
   if (-1 == loop_over_arrays(Pyfunc,inputarrays,nin,outputarrays,nout)) {
@@ -675,7 +682,9 @@ static PyObject *map_PyFunc(PyObject *self, PyObject *args)
     free(outputarrays);
     return NULL;
   }
+
   free(outputarrays);
+
   return out;
 }
 
