@@ -70,8 +70,7 @@ class test_blitz(unittest.TestCase):
     
          I'd like to benchmark these things somehow.
     *"""
-    def generic_test(self,expr,arg_dict,type,size):
-        mod_location = setup_test_location()
+    def generic_test(self,expr,arg_dict,type,size,mod_location):
         clean_result = array(arg_dict['result'],copy=1)
         t1 = time.time()
         exec expr in globals(),arg_dict
@@ -99,14 +98,13 @@ class test_blitz(unittest.TestCase):
             print diff[-4:,:4]
             print diff[-4:,-4:]
             print sum(abs(diff.flat))            
-            teardown_test_location()
             raise AssertionError        
-        teardown_test_location()                
         return standard,compiled
         
     def generic_2d(self,expr):
         """ The complex testing is pretty lame...
         """
+        mod_location = empty_temp_dir()
         import parser
         ast = parser.suite(expr)
         arg_list = harvest_variables(ast.tolist())
@@ -125,20 +123,23 @@ class test_blitz(unittest.TestCase):
                     try:     arg_dict[arg].imag = arg_dict[arg].real
                     except:  pass  
                 print 'Run:', size,typ
-                standard,compiled = self.generic_test(expr,arg_dict,type,size)
+                standard,compiled = self.generic_test(expr,arg_dict,type,size,
+                                                      mod_location)
                 try:
                     speed_up = standard/compiled
                 except:
                     speed_up = -1.
                 print "1st run(Numeric,compiled,speed up):  %3.4f, %3.4f, " \
                       "%3.4f" % (standard,compiled,speed_up)    
-                standard,compiled = self.generic_test(expr,arg_dict,type,size)
+                standard,compiled = self.generic_test(expr,arg_dict,type,size,
+                                                      mod_location)
                 try:
                     speed_up = standard/compiled
                 except:
                     speed_up = -1.                    
                 print "2nd run(Numeric,compiled,speed up):  %3.4f, %3.4f, " \
-                      "%3.4f" % (standard,compiled,speed_up)    
+                      "%3.4f" % (standard,compiled,speed_up)
+        cleanup_temp_dir(mod_location)                      
     #def check_simple_2d(self):
     #    """ result = a + b""" 
     #    expr = "result = a + b"
@@ -151,66 +152,6 @@ class test_blitz(unittest.TestCase):
                                   "+ b[1:-1,2:] + b[1:-1,:-2]) / 5."
         self.generic_2d(expr)
     
-    def setUp(self):
-        # try and get rid of any shared libraries that currently exist in 
-        # test directory.  If some other program is using them though,
-        # (another process is running exact same tests, this will to 
-        # fail clean-up stuff on NT)        
-        #remove_test_files()
-        pass
-    def tearDown(self):
-        #print '\n\n\ntearing down\n\n\n'
-        #remove_test_files()
-        # Get rid of any files created by the test such as function catalogs
-        # and compiled modules.
-        # We'll assume any .pyd, .so files, .cpp, .def or .o 
-        # in the test directory is a test file.  To make sure we
-        # don't abliterate something desireable, we'll move it
-        # to a file called 'test_trash'
-        teardown_test_location()
-        
-def remove_test_files():
-    import os,glob
-    test_dir = compiler.compile_code.home_dir(__file__)
-    trash = os.path.join(test_dir,'test_trash')
-    files = glob.glob(os.path.join(test_dir,'*.so'))
-    files += glob.glob(os.path.join(test_dir,'*.o'))
-    files += glob.glob(os.path.join(test_dir,'*.a'))
-    files += glob.glob(os.path.join(test_dir,'*.cpp'))
-    files += glob.glob(os.path.join(test_dir,'*.pyd'))
-    files += glob.glob(os.path.join(test_dir,'*.def'))
-    files += glob.glob(os.path.join(test_dir,'*compiled_catalog*'))
-    for i in files:
-        try:
-            #print i
-            os.remove(i)
-        except:    
-            pass        
-        #all this was to handle "saving files in trash, but doesn't fly on NT
-        #d,f=os.path.split(i)
-        #trash_file = os.path.join(trash,f)
-        #print 'tf:',trash_file
-        #if os.path.exists(trash_file):
-        #    os.remove(trash_file)
-        #    print trash_file
-        #os.renames(i,trash_file)
-
-def setup_test_location():
-    import tempfile
-    pth = os.path.join(tempfile.gettempdir(),'test_files')
-    if not os.path.exists(pth):
-        os.mkdir(pth)
-    #sys.path.insert(0,pth)    
-    return pth
-
-def teardown_test_location():
-    pass
-    #import tempfile    
-    #pth = os.path.join(tempfile.gettempdir(),'test_files')
-    #if sys.path[0] == pth:
-    #    sys.path = sys.path[1:]
-    #return pth
-
 def test_suite():
     suites = []
     suites.append( unittest.makeSuite(test_ast_to_blitz_expr,'check_') )

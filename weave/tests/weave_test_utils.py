@@ -79,23 +79,15 @@ def cleanup_temp_dir(d):
     """
     files = map(lambda x,d=d: os.path.join(d,x),os.listdir(d))
     for i in files:
-        if os.path.isdir(i):
-            cleanup_temp_dir(i)
-        else:
-            os.remove(i)
-    os.rmdir(d)
-
-def simple_module(directory,name,function_prefix,count=2):
-    module_name = os.path.join(directory,name+'.py')
-    func = "def %(function_prefix)s%(fid)d():\n    pass\n"
-    code = ''
-    for fid in range(count):
-        code+= func % locals()
-    open(module_name,'w').write(code)
-    sys.path.append(directory)    
-    exec "import " + name
-    funcs = []
-    for i in range(count):
-        funcs.append(eval(name+'.'+function_prefix+`i`))
-    sys.path = sys.path[:-1]    
-    return module_name, funcs        
+        try:
+            if os.path.isdir(i):
+                cleanup_temp_dir(i)
+            else:
+                os.remove(i)
+        except OSError:
+            pass # failed to remove file for whatever reason 
+                 # (maybe it is a DLL Python is currently using)        
+    try:
+        os.rmdir(d)
+    except OSError:
+        pass        

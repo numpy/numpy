@@ -506,8 +506,6 @@ class catalog:
         try:
             self.set_module_directory(module_dir)
             function_list = self.get_cataloged_functions(code)
-            if code:
-                function_list
             # put function_list in cache to save future lookups.
             if function_list:
                 self.cache[code] = function_list
@@ -542,7 +540,6 @@ class catalog:
             # Load functions and put this one up front
             self.cache[code] = self.get_functions(code)          
             self.fast_cache(code,function)
-        
         # 2. Store the function entry to disk.    
         try:
             self.set_module_directory(module_dir)
@@ -574,9 +571,14 @@ class catalog:
             cat = get_catalog(cat_dir,mode)
         if cat is None:
             raise ValueError, 'Failed to access a catalog for storing functions'    
-        function_list = [function] + cat.get(code,[])
+        # Prabhu was getting some corrupt catalog errors.  I'll put a try/except
+        # to protect against this, but should really try and track down the issue.
+        function_list = [function]
+        try:
+            function_list = function_list + cat.get(code,[])
+        except pickle.UnpicklingError:
+            pass
         cat[code] = function_list
-        
         # now add needed path information for loading function
         module = getmodule(function)
         try:

@@ -24,5 +24,7 @@ def test():
 
 def test_suite():
     import scipy_test
-    import weave
-    return scipy_test.harvest_test_suites(weave)
+    # this isn't a perfect fix, but it will work for
+    # most cases I think.
+    this_mod = __import__(__name__)
+    return scipy_test.harvest_test_suites(this_mod)
