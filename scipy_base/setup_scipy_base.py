@@ -57,7 +57,7 @@ def configuration(parent_package='',parent_path=None):
     sources = [os.path.join(local_path,x) for x in sources]
     ext_args = {}
     dict_append(ext_args,
-                name=dot_join(package,'_na_compiled_base'),
+                name=dot_join(package,'_compiled_base'),
                 sources = sources,
                 )
     config['ext_modules'].append(Extension(**ext_args))

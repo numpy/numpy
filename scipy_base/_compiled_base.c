@@ -712,19 +712,11 @@ static struct PyMethodDef methods[] = {
 
 /* Initialization function for the module (*must* be called initArray) */
 
-#if defined(NUMERIC)
-DL_EXPORT(void) init_nc_compiled_base(void) {
-#else
-DL_EXPORT(void) init_na_compiled_base(void) {
-#endif
+DL_EXPORT(void) init_compiled_base(void) {
     PyObject *m, *d, *s;
   
     /* Create the module and add the functions */
-#if defined(NUMERIC)
-    m = Py_InitModule("_nc_compiled_base", methods); 
-#else
-    m = Py_InitModule("_na_compiled_base", methods); 
-#endif
+    m = Py_InitModule("_compiled_base", methods); 
 
     /* Import the array and ufunc objects */
     import_array();

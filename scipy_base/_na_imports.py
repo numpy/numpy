@@ -6,15 +6,18 @@ import numarray as _na
 from numarray.numeric import *
 import numarray.ufunc as fastumath
 
-import _na_compiled_base
-from _na_compiled_base import arraymap, _unique, _insert
+import _compiled_base
+from _compiled_base import arraymap, _unique, _insert
 
-from numarray.ieeespecial import isinf, isnan, isfinite
+try:
+    from numarray.ieeespecial import isinf, isnan, isfinite
+except ImportError,msg:
+    isinf = isnan = isfinite = None
+    print msg
+
 from numarray.ieeespecial import \
      plus_inf as PINF, \
      minus_inf as NINF, \
-     plus_zero as PZERO, \
-     minus_zero as NZERO, \
      inf, \
      inf as infty, \
      inf as Infinity, \
@@ -22,11 +25,22 @@ from numarray.ieeespecial import \
      nan as NAN, \
      nan as Nan
 
+try:
+    from numarray.ieeespecial import \
+         plus_zero as PZERO, \
+         minus_zero as NZERO
+except ImportError,msg:
+    print msg
+
 import numarray.linear_algebra as LinearAlgebra
 import numarray.linear_algebra.mlab as MLab
 import numarray.random_array as RandomArray
 from numarray.fft import fft
-from numarray.matrix import Matrix
+try:
+    from numarray.matrix import Matrix
+except ImportError,msg:
+    Matrix = None
+    print msg
 from numarray.linear_algebra import inverse, eigenvectors
 from numarray.convolve import convolve, cross_correlate
 from numarray.arrayprint import array2string

@@ -9,8 +9,8 @@ from fastumath import *
 from fastumath import PINF as inf
 from fastumath import alter_numeric, restore_numeric
 
-import _nc_compiled_base
-from _nc_compiled_base import arraymap, _unique, _insert
+import _compiled_base
+from _compiled_base import arraymap, _unique, _insert
 
 from ppimport import ppimport, ppimport_attr
 
