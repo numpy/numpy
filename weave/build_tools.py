@@ -43,13 +43,16 @@ def _init_posix():
         link_cmds[0] = 'g++'
         ld = ' '.join(link_cmds)
     
-    # The Jaguar distributed python 2.2 has -arch i386 in the link line
-    # which doesn't seem right.  It omits all kinds of warnings, so 
-    # remove it.
 
     if (sys.platform == 'darwin'):
+        # The Jaguar distributed python 2.2 has -arch i386 in the link line
+        # which doesn't seem right.  It omits all kinds of warnings, so 
+        # remove it.
         ld = ld.replace('-arch i386','')
-
+        # 2.3a1 on OS X emits a ton of warnings about long double.  OPT
+        # appears to not have all the needed flags set while CFLAGS does.
+        cfg_vars = distutils.sysconfig._config_vars
+        cfg_vars['OPT'] = cfg_vars['CFLAGS']        
     distutils.sysconfig._config_vars['LDSHARED'] = ld           
     
 distutils.sysconfig._init_posix = _init_posix    
