@@ -48,7 +48,7 @@ class GnuFCompiler(FCompiler):
     def get_flags_linker_so(self):
         opt = []
         if sys.platform=='darwin':
-            if sys.executable.startswith('/usr/bin'):
+            if os.path.realpath(sys.executable).startswith('/System'):
                 # This is when Python is from Apple framework
                 opt.extend(["-Wl,-framework","-Wl,Python"])
             #else we are running in Fink python.
