@@ -14,7 +14,10 @@ class Distribution (OldDistribution):
     def has_f2py_sources(self):
         if self.has_ext_modules():
             for ext in self.ext_modules:
-                if ext.has_f2py_sources():
+                # check for functions existence so that we can mix distutils
+                # extension with scipy_distutils functions without breakage
+                if (hasattr(ext,'has_f2py_sources') and 
+                    ext.has_f2py_sources()):
                     return 1
         return 0
 

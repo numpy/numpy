@@ -94,7 +94,11 @@ class build_ext (old_build_ext):
                 for lib_dir in lib_dirs:
                     if lib_dir not in self.compiler.library_dirs:
                         self.compiler.library_dirs.append(lib_dir)
-        elif ext.has_cxx_sources():
+        # check for functions existence so that we can mix distutils
+        # extension with scipy_distutils functions without breakage
+        elif (hasattr(ext,'has_cxx_sources') and
+              ext.has_cxx_sources()):
+
             if save_linker_so[0]=='gcc':
                 #XXX: need similar hooks that are in weave.build_tools.py
                 #     Or more generally, implement cxx_compiler_class
