@@ -6,6 +6,7 @@ include directories, etc.) in the system. Currently, the following
 classes are available:
   atlas_info
   atlas_threads_info
+  lapack_atlas_info
   blas_info
   lapack_info
   fftw_info,dfftw_info,sfftw_info
@@ -115,6 +116,8 @@ so_ext = get_config_vars('SO')[0] or ''
 def get_info(name):
     cl = {'atlas':atlas_info,
           'atlas_threads':atlas_threads_info,
+          'lapack_atlas_threads':lapack_atlas_threads_info,
+          'lapack_atlas':lapack_atlas_info,
           'x11':x11_info,
           'fftw':fftw_info,
           'dfftw':dfftw_info,
@@ -443,7 +446,7 @@ class atlas_info(system_info):
         dirs = []
         for d in pre_dirs:
             dirs.extend(self.combine_paths(d,['atlas*','ATLAS*',
-                                         'sse*','3dnow'])+[d])
+                                         'sse','3dnow','sse2'])+[d])
         return [ d for d in dirs if os.path.isdir(d) ]
 
     def calc_info(self):
@@ -454,8 +457,10 @@ class atlas_info(system_info):
         lapack_libs = self.get_libs('lapack_libs',['lapack'])
         atlas = None
         lapack = None
+        atlas_1 = None
         for d in lib_dirs:
             atlas = self.check_libs(d,atlas_libs,[])
+            lapack_atlas = self.check_libs(d,['lapack_atlas'],[])
             if atlas is not None:
                 lib_dirs2 = self.combine_paths(d,['atlas*','ATLAS*'])+[d]
                 for d2 in lib_dirs2:
@@ -466,6 +471,11 @@ class atlas_info(system_info):
                     lapack = None
                 if lapack is not None:
                     break
+            if atlas:
+                atlas_1 = atlas
+        print self.__class__
+        if atlas is None:
+            atlas = atlas_1
         if atlas is None:
             return
         include_dirs = self.get_include_dirs()
@@ -477,9 +487,14 @@ class atlas_info(system_info):
         if lapack is not None:
             dict_append(info,**lapack)
             dict_append(info,**atlas)
+        elif 'lapack_atlas' in atlas['libraries']:
+            dict_append(info,**atlas)
+            dict_append(info,define_macros=[('ATLAS_WITH_LAPACK_ATLAS',None)])
+            self.set_info(**info)
+            return
         else:
             dict_append(info,**atlas)
-            dict_append(define_macros=[('ATLAS_WITHOUT_LAPACK',None)])
+            dict_append(info,define_macros=[('ATLAS_WITHOUT_LAPACK',None)])
             message = """
 *********************************************************************
     Could not find lapack library within the ATLAS installation.
@@ -514,6 +529,12 @@ class atlas_info(system_info):
 
 class atlas_threads_info(atlas_info):
     _lib_names = ['ptf77blas','ptcblas']
+
+class lapack_atlas_info(atlas_info):
+    _lib_names = ['lapack_atlas'] + atlas_info._lib_names
+
+class lapack_atlas_threads_info(atlas_threads_info):
+    _lib_names = ['lapack_atlas'] + atlas_threads_info._lib_names
 
 class lapack_info(system_info):
     section = 'lapack'
