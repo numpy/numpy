@@ -26,8 +26,13 @@ class file_specification(common_base_specification):
 
     def declaration_code(self,templatize = 0,inline=0):
         var_name = self.retrieve_py_variable(inline)
+        #code = 'PyObject* py_%s = %s;\n'   \
+        #       'FILE* %s = convert_to_file(py_%s,"%s");\n' % \
+        #       (self.name,var_name,self.name,self.name,self.name)
         code = 'PyObject* py_%s = %s;\n'   \
-               'FILE* %s = convert_to_file(py_%s,"%s");\n' % \
+               'file_converter x__;\n \
+               'PyObject* py_%s = %s;\n'   \
+               'FILE* %s = x__.convert_to_file(py_%s,"%s");\n' % \
                (self.name,var_name,self.name,self.name,self.name)
         return code       
     def cleanup_code(self):
@@ -44,7 +49,10 @@ class callable_specification(common_base_specification):
 
     def declaration_code(self,templatize = 0,inline=0):
         var_name = self.retrieve_py_variable(inline)
-        code = 'PyObject* %s = convert_to_callable(%s,"%s");\n' % \
+        #code = 'PyObject* %s = convert_to_callable(%s,"%s");\n' % \
+        #       (self.name,var_name,self.name)
+        code = 'callable_converter x__;\n \
+               'PyObject* %s = x__.convert_to_callable(%s,"%s");\n' % \
                (self.name,var_name,self.name)
         return code       
 

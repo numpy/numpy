@@ -2,13 +2,15 @@ import base_info, common_info
 
 string_support_code = \
 """
-static Py::String convert_to_string(PyObject* py_obj,char* name)
+class string_handler
 {
-    if (!py_obj || !PyString_Check(py_obj))
-        handle_conversion_error(py_obj,"string", name);
-    return Py::String(py_obj);
-}
-
+    static Py::String convert_to_string(PyObject* py_obj,char* name)
+    {
+        if (!py_obj || !PyString_Check(py_obj))
+            handle_conversion_error(py_obj,"string", name);
+        return Py::String(py_obj);
+    }
+};
 static Py::String py_to_string(PyObject* py_obj,char* name)
 {
     if (!py_obj || !PyString_Check(py_obj))
@@ -20,12 +22,16 @@ static Py::String py_to_string(PyObject* py_obj,char* name)
 
 list_support_code = \
 """
-static Py::List convert_to_list(PyObject* py_obj,char* name)
+
+class list_handler
 {
-    if (!py_obj || !PyList_Check(py_obj))
-        handle_conversion_error(py_obj,"list", name);
-    return Py::List(py_obj);
-}
+    Py::List convert_to_list(PyObject* py_obj,char* name)
+    {
+        if (!py_obj || !PyList_Check(py_obj))
+            handle_conversion_error(py_obj,"list", name);
+        return Py::List(py_obj);
+    }
+};
 
 static Py::List py_to_list(PyObject* py_obj,char* name)
 {
@@ -37,11 +43,14 @@ static Py::List py_to_list(PyObject* py_obj,char* name)
 
 dict_support_code = \
 """
-static Py::Dict convert_to_dict(PyObject* py_obj,char* name)
+class dict_handler
 {
-    if (!py_obj || !PyDict_Check(py_obj))
-        handle_conversion_error(py_obj,"dict", name);
-    return Py::Dict(py_obj);
+    Py::Dict convert_to_dict(PyObject* py_obj,char* name)
+    {
+        if (!py_obj || !PyDict_Check(py_obj))
+            handle_conversion_error(py_obj,"dict", name);
+        return Py::Dict(py_obj);
+    }
 }
 
 static Py::Dict py_to_dict(PyObject* py_obj,char* name)
@@ -54,12 +63,15 @@ static Py::Dict py_to_dict(PyObject* py_obj,char* name)
 
 tuple_support_code = \
 """
-static Py::Tuple convert_to_tuple(PyObject* py_obj,char* name)
+class tuple_handler
 {
-    if (!py_obj || !PyTuple_Check(py_obj))
-        handle_conversion_error(py_obj,"tuple", name);
-    return Py::Tuple(py_obj);
-}
+    Py::Tuple convert_to_tuple(PyObject* py_obj,char* name)
+    {
+        if (!py_obj || !PyTuple_Check(py_obj))
+            handle_conversion_error(py_obj,"tuple", name);
+        return Py::Tuple(py_obj);
+    }
+};
 
 static Py::Tuple py_to_tuple(PyObject* py_obj,char* name)
 {

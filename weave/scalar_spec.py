@@ -40,10 +40,11 @@ class scalar_specification(base_specification):
         return new_spec
         
     def declaration_code(self,templatize = 0,inline=0):
-        if self.compiler == 'msvc':
-            return self.msvc_decl_code(templatize,inline)
-        else:
-            return self.template_decl_code(templatize,inline)    
+        #if self.compiler == 'msvc':
+        #    return self.msvc_decl_code(templatize,inline)
+        #else:
+        #    return self.template_decl_code(templatize,inline)    \
+        return self.msvc_decl_code(templatize,inline)
 
     def template_decl_code(self,template = 0,inline=0):
         type = numeric_to_blitz_type_mapping[self.numeric_type]
@@ -63,8 +64,9 @@ class scalar_specification(base_specification):
         func_type = self.type_name
         name = self.name
         var_name = self.retrieve_py_variable(inline)
-        template = '%(type)s %(name)s = '\
-                   'convert_to_%(func_type)s (%(var_name)s,"%(name)s");\n'
+        template = 'scalar_handler x__;                       \n' \
+                   '%(type)s %(name)s = '\
+                   'x__convert_to_%(func_type)s (%(var_name)s,"%(name)s");\n'
         code = template % locals()
         return code
 

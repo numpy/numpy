@@ -78,29 +78,25 @@ void handle_conversion_error(PyObject* py_obj, char* good_type, char* var_name)
 file_convert_code =  \
 """
 
-class file_handler
+FILE* convert_to_file(PyObject* py_obj, char* name)
 {
-public:
-    FILE* convert_to_file(PyObject* py_obj, char* name)
-    {
-        if (!py_obj || !PyFile_Check(py_obj))
-            handle_conversion_error(py_obj,"file", name);
-    
-        // Cleanup code should call DECREF
-        Py_INCREF(py_obj);
-        return PyFile_AsFile(py_obj);
-    }
-    
-    FILE* py_to_file(PyObject* py_obj, char* name)
-    {
-        if (!py_obj || !PyFile_Check(py_obj))
-            handle_bad_type(py_obj,"file", name);
-    
-        // Cleanup code should call DECREF
-        Py_INCREF(py_obj);
-        return PyFile_AsFile(py_obj);
-    }
-};
+    if (!py_obj || !PyFile_Check(py_obj))
+        handle_conversion_error(py_obj,"file", name);
+
+    // Cleanup code should call DECREF
+    Py_INCREF(py_obj);
+    return PyFile_AsFile(py_obj);
+}
+
+FILE* py_to_file(PyObject* py_obj, char* name)
+{
+    if (!py_obj || !PyFile_Check(py_obj))
+        handle_bad_type(py_obj,"file", name);
+
+    // Cleanup code should call DECREF
+    Py_INCREF(py_obj);
+    return PyFile_AsFile(py_obj);
+}
 
 PyObject* file_to_py(FILE* file, char* name, char* mode)
 {
@@ -111,7 +107,6 @@ PyObject* file_to_py(FILE* file, char* name, char* mode)
 
 """
 
-
 #############################################################
 # Instance conversion code
 #############################################################
@@ -119,31 +114,27 @@ PyObject* file_to_py(FILE* file, char* name, char* mode)
 instance_convert_code = \
 """
 
-class instance_handler
+PyObject* convert_to_instance(PyObject* py_obj, char* name)
 {
-public:
-    PyObject* convert_to_instance(PyObject* py_obj, char* name)
-    {
-        if (!py_obj || !PyFile_Check(py_obj))
-            handle_conversion_error(py_obj,"instance", name);
-    
-        // Should I INCREF???
-        // Py_INCREF(py_obj);
-        // just return the raw python pointer.
-        return py_obj;
-    }
-    
-    PyObject* py_to_instance(PyObject* py_obj, char* name)
-    {
-        if (!py_obj || !PyFile_Check(py_obj))
-            handle_bad_type(py_obj,"instance", name);
-    
-        // Should I INCREF???
-        // Py_INCREF(py_obj);
-        // just return the raw python pointer.
-        return py_obj;
-    }
-};
+    if (!py_obj || !PyFile_Check(py_obj))
+        handle_conversion_error(py_obj,"instance", name);
+
+    // Should I INCREF???
+    // Py_INCREF(py_obj);
+    // just return the raw python pointer.
+    return py_obj;
+}
+
+PyObject* py_to_instance(PyObject* py_obj, char* name)
+{
+    if (!py_obj || !PyFile_Check(py_obj))
+        handle_bad_type(py_obj,"instance", name);
+
+    // Should I INCREF???
+    // Py_INCREF(py_obj);
+    // just return the raw python pointer.
+    return py_obj;
+}
 
 PyObject* instance_to_py(PyObject* instance)
 {
@@ -160,31 +151,27 @@ PyObject* instance_to_py(PyObject* instance)
 callable_convert_code = \
 """
 
-class callable_handler
+PyObject* convert_to_callable(PyObject* py_obj, char* name)
 {
-public:    
-    PyObject* convert_to_callable(PyObject* py_obj, char* name)
-    {
-        if (!py_obj || !PyCallable_Check(py_obj))
-            handle_conversion_error(py_obj,"callable", name);
-    
-        // Should I INCREF???
-        // Py_INCREF(py_obj);
-        // just return the raw python pointer.
-        return py_obj;
-    }
-    
-    PyObject* py_to_callable(PyObject* py_obj, char* name)
-    {
-        if (!py_obj || !PyCallable_Check(py_obj))
-            handle_bad_type(py_obj,"callable", name);
-    
-        // Should I INCREF???
-        // Py_INCREF(py_obj);
-        // just return the raw python pointer.
-        return py_obj;
-    }
-};
+    if (!py_obj || !PyCallable_Check(py_obj))
+        handle_conversion_error(py_obj,"callable", name);
+
+    // Should I INCREF???
+    // Py_INCREF(py_obj);
+    // just return the raw python pointer.
+    return py_obj;
+}
+
+PyObject* py_to_callable(PyObject* py_obj, char* name)
+{
+    if (!py_obj || !PyCallable_Check(py_obj))
+        handle_bad_type(py_obj,"callable", name);
+
+    // Should I INCREF???
+    // Py_INCREF(py_obj);
+    // just return the raw python pointer.
+    return py_obj;
+}
 
 PyObject* callable_to_py(PyObject* callable)
 {
@@ -200,31 +187,27 @@ PyObject* callable_to_py(PyObject* callable)
 
 module_convert_code = \
 """
-class module_handler
+PyObject* convert_to_module(PyObject* py_obj, char* name)
 {
-public:
-    PyObject* convert_to_module(PyObject* py_obj, char* name)
-    {
-        if (!py_obj || !PyModule_Check(py_obj))
-            handle_conversion_error(py_obj,"module", name);
-    
-        // Should I INCREF???
-        // Py_INCREF(py_obj);
-        // just return the raw python pointer.
-        return py_obj;
-    }
-    
-    PyObject* py_to_module(PyObject* py_obj, char* name)
-    {
-        if (!py_obj || !PyModule_Check(py_obj))
-            handle_bad_type(py_obj,"module", name);
-    
-        // Should I INCREF???
-        // Py_INCREF(py_obj);
-        // just return the raw python pointer.
-        return py_obj;
-    }
-};
+    if (!py_obj || !PyModule_Check(py_obj))
+        handle_conversion_error(py_obj,"module", name);
+
+    // Should I INCREF???
+    // Py_INCREF(py_obj);
+    // just return the raw python pointer.
+    return py_obj;
+}
+
+PyObject* py_to_module(PyObject* py_obj, char* name)
+{
+    if (!py_obj || !PyModule_Check(py_obj))
+        handle_bad_type(py_obj,"module", name);
+
+    // Should I INCREF???
+    // Py_INCREF(py_obj);
+    // just return the raw python pointer.
+    return py_obj;
+}
 
 PyObject* module_to_py(PyObject* module)
 {
@@ -366,38 +349,35 @@ non_template_scalar_support_code = \
 
 // Conversion Errors
 
-class scalar_handler
+static int convert_to_int(PyObject* py_obj,char* name)
 {
-public:    
-    int convert_to_int(PyObject* py_obj,char* name)
-    {
-        if (!py_obj || !PyInt_Check(py_obj))
-            handle_conversion_error(py_obj,"int", name);
-        return (int) PyInt_AsLong(py_obj);
-    }
-    long convert_to_long(PyObject* py_obj,char* name)
-    {
-        if (!py_obj || !PyLong_Check(py_obj))
-            handle_conversion_error(py_obj,"long", name);
-        return (long) PyLong_AsLong(py_obj);
-    }
+    if (!py_obj || !PyInt_Check(py_obj))
+        handle_conversion_error(py_obj,"int", name);
+    return (int) PyInt_AsLong(py_obj);
+}
 
-    double convert_to_float(PyObject* py_obj,char* name)
-    {
-        if (!py_obj || !PyFloat_Check(py_obj))
-            handle_conversion_error(py_obj,"float", name);
-        return PyFloat_AsDouble(py_obj);
-    }
+static long convert_to_long(PyObject* py_obj,char* name)
+{
+    if (!py_obj || !PyLong_Check(py_obj))
+        handle_conversion_error(py_obj,"long", name);
+    return (long) PyLong_AsLong(py_obj);
+}
+
+static double convert_to_float(PyObject* py_obj,char* name)
+{
+    if (!py_obj || !PyFloat_Check(py_obj))
+        handle_conversion_error(py_obj,"float", name);
+    return PyFloat_AsDouble(py_obj);
+}
 
 // complex not checked.
-    std::complex<double> convert_to_complex(PyObject* py_obj,char* name)
-    {
-        if (!py_obj || !PyComplex_Check(py_obj))
-            handle_conversion_error(py_obj,"complex", name);
-        return std::complex<double>(PyComplex_RealAsDouble(py_obj),
-                                    PyComplex_ImagAsDouble(py_obj));    
-    }
-};
+static std::complex<double> convert_to_complex(PyObject* py_obj,char* name)
+{
+    if (!py_obj || !PyComplex_Check(py_obj))
+        handle_conversion_error(py_obj,"complex", name);
+    return std::complex<double>(PyComplex_RealAsDouble(py_obj),
+                                PyComplex_ImagAsDouble(py_obj));    
+}
 
 /////////////////////////////////////
 // The following functions are used for scalar conversions in msvc
