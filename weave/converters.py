@@ -32,14 +32,16 @@ except ImportError:
 
 #----------------------------------------------------------------------------
 # Add wxPython support
+#
+# RuntimeError can occur if wxPython isn't installed.
 #----------------------------------------------------------------------------
 
 try: 
     # this is currently safe because it doesn't import wxPython.
     import wx_spec
     default.insert(0,wx_spec.wx_converter())
-except IndexError: 
-    pass    
+except (RuntimeError,IndexError): 
+    pass
 
 #----------------------------------------------------------------------------
 # Add VTK support
