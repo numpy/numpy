@@ -94,6 +94,10 @@ polymul          --  Multiply polynomials
 polydiv          --  Divide polynomials
 polyval          --  Evaluate polynomial at given argument
 
+General functions
+=================
+general_function -- Generalized Function class
+
 Import tricks
 =============
 ppimport         --  Postpone module import until trying to use it
@@ -130,6 +134,7 @@ from matrix_base import *
 
 from polynomial import *
 from scimath import *
+from general_function import *
 
 Inf = inf = fastumath.PINF
 try:
