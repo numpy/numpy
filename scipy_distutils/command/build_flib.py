@@ -831,6 +831,9 @@ class sun_fortran_compiler(fortran_compiler_base):
     def get_linker_so(self):
         return [self.f90_compiler,'-Bdynamic','-G']
 
+class forte_fortran_compiler(sun_compiler_base):
+    vendor = 'Forte'
+    ver_match = r'(f90|f95): Forte Developer 7 Fortran 95 (?P<version>[^\s]+).*'
 
 class mips_fortran_compiler(move_modules_mixin, fortran_compiler_base):
 
@@ -1419,6 +1422,7 @@ def find_fortran_compiler(vendor=None, fc=None, f90c=None, verbose=0):
 
 all_compilers = [absoft_fortran_compiler,
                  mips_fortran_compiler,
+                 forte_fortran_compiler,
                  sun_fortran_compiler,
                  intel_ia32_fortran_compiler,
                  intel_itanium_fortran_compiler,
