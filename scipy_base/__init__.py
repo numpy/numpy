@@ -101,7 +101,7 @@ polyval          --  Evaluate polynomial at given argument
 
 General functions
 =================
-general_function -- Generalized Function class
+vectorize -- Generalized Function class
 
 Import tricks
 =============
@@ -139,7 +139,6 @@ from matrix_base import *
 
 from polynomial import *
 from scimath import *
-from general_function import *
 
 Inf = inf = fastumath.PINF
 try:

@@ -29,12 +29,6 @@ def configuration(parent_package=''):
     ext = Extension(dot_join(package,'_compiled_base'),sources,libraries=[])
     config['ext_modules'].append(ext)
 
-    # scipy_base.arraymap module
-    sources = ['arraymapmodule.c']
-    sources = [os.path.join(local_path,x) for x in sources]
-    ext = Extension(dot_join(package,'arraymap'),sources,libraries=[])
-    config['ext_modules'].append(ext)
-
     # Test to see if big or little-endian machine and get correct default
     #   mconf.h module.
     if sys.byteorder == "little":
