@@ -792,7 +792,7 @@ class gnu_fortran_compiler(fortran_compiler_base):
             elif cpu.is_i386():
                 opt = opt + ' -march=i386 '
             if cpu.is_Intel():
-                opt = opt + ' -malign-double '                
+                opt = opt + ' -malign-double -fomit-frame-pointer '     
         return opt
         
     def find_lib_directories(self):

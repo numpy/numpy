@@ -315,6 +315,7 @@ def get_frame(level=0):
         for i in range(level+1):
             frame = frame.f_back
         return frame
+
 def merge_config_dicts(config_list):
     result = default_config_dict()
     for d in config_list:
