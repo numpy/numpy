@@ -263,7 +263,7 @@ class build_src(build_ext.build_ext):
                    ' more:'+`f2py_sources`
             source = f2py_sources[0]
             target_file = f2py_targets[source]
-            target_dir = os.path.dirname(target_file)
+            target_dir = os.path.dirname(target_file) or '.'
             depends = [source] + extension.depends
             if (self.force or newer_group(depends, target_file,'newer')) \
                    and not skip_f2py:
