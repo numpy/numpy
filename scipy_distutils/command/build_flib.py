@@ -473,13 +473,12 @@ class fortran_compiler_base(CCompiler):
             self.create_static_lib(object_list,library_name,temp_dir)
 
     def dummy_fortran_files(self):
-        import tempfile 
-        d = tempfile.gettempdir()
-        dummy_name = os.path.join(d,'__dummy.f')
-        dummy = open(dummy_name,'w')
+        import tempfile
+        dummy_name = tempfile.mktemp()+'__dummy'
+        dummy = open(dummy_name+'.f','w')
         dummy.write("      subroutine dummy()\n      end\n")
         dummy.close()
-        return (os.path.join(d,'__dummy.f'),os.path.join(d,'__dummy.o'))
+        return (dummy_name+'.f',dummy_name+'.o')
     
     def is_available(self):
         return self.get_version()
@@ -651,7 +650,7 @@ class sun_fortran_compiler(fortran_compiler_base):
         library_dirs = ["/opt/SUNWspro/prod/lib"]
         lib_match = r'### f90: Note: LD_RUN_PATH\s*= '\
                      '(?P<lib_paths>[^\s.]*).*'
-        cmd = self.f90_compiler + ' -dryrun dummy.f'
+        cmd = self.f90_compiler + ' -dryrun __dummy.f'
         self.announce(yellow_text(cmd))
         exit_status, output = run_command(cmd)
         if not exit_status:
