@@ -23,13 +23,11 @@ class AbsoftFCompiler(FCompiler):
         'compiler_f77' : ["f77"],
         'compiler_fix' : ["f90"],
         'compiler_f90' : ["f90"],
-        'linker_so'    : ["f77","-shared"],
+        'linker_so'    : ["f77","-K","shared"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
 
-    if os.name != 'nt':
-        pic_flags = ['-fpic']
     module_dir_switch = None
     module_include_switch = '-p'
 
@@ -51,6 +49,9 @@ class AbsoftFCompiler(FCompiler):
         opt = FCompiler.get_flags(self)
         if os.name != 'nt':
             opt.extend(['-s'])
+            if self.get_version():
+                if self.get_version()>='8.2':
+                    opt.append('-fpic')
         return opt
 
     def get_flags_f77(self):
