@@ -31,6 +31,33 @@ def CCompiler_spawn(self, cmd, display=None):
               'Command "%s" failed with exit status %d' % (cmd, s)
 CCompiler.spawn = new.instancemethod(CCompiler_spawn,None,CCompiler)
 
+def CCompiler_object_filenames(self, source_filenames, strip_dir=0, output_dir=''):
+    if output_dir is None:
+        output_dir = ''
+    obj_names = []
+    for src_name in source_filenames:
+        base, ext = os.path.splitext(os.path.normpath(src_name))
+        base = os.path.splitdrive(base)[1] # Chop off the drive
+        base = base[os.path.isabs(base):]  # If abs, chop off leading /
+        if base.startswith('..'):
+            # Resolve starting relative path components, middle ones
+            # (if any) have been handled by os.path.normpath above.
+            i = base.rfind('..')+2
+            d = base[:i]
+            d = os.path.basename(os.path.abspath(d))
+            base = d + base[i:]
+        if ext not in self.src_extensions:
+            raise UnknownFileError, \
+                  "unknown file type '%s' (from '%s')" % (ext, src_name)
+        if strip_dir:
+            base = os.path.basename(base)
+        obj_name = os.path.join(output_dir,base + self.obj_extension)
+        obj_names.append(obj_name)
+    return obj_names
+
+CCompiler.object_filenames = new.instancemethod(CCompiler_object_filenames,
+                                                None,CCompiler)
+
 def CCompiler_compile(self, sources, output_dir=None, macros=None,
                       include_dirs=None, debug=0, extra_preargs=None,
                       extra_postargs=None, depends=None):
