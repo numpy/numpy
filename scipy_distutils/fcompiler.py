@@ -641,6 +641,8 @@ class FCompiler(CCompiler):
 
 fcompiler_class = {'gnu':('gnufcompiler','GnuFCompiler',
                           "GNU Fortran Compiler"),
+                   'g95':('g95fcompiler','G95FCompiler',
+                          "GNU Fortran 95 Compiler"),
                    'pg':('pgfcompiler','PGroupFCompiler',
                          "Portland Group Fortran Compiler"),
                    'absoft':('absoftfcompiler','AbsoftFCompiler',
@@ -677,12 +679,12 @@ fcompiler_class = {'gnu':('gnufcompiler','GnuFCompiler',
 
 _default_compilers = (
     # Platform mappings
-    ('win32',('gnu','intelv','absoft','compaqv','intelev')),
-    ('cygwin.*',('gnu','intelv','absoft','compaqv','intelev')),
+    ('win32',('gnu','intelv','absoft','compaqv','intelev','g95')),
+    ('cygwin.*',('gnu','intelv','absoft','compaqv','intelev','g95')),
     ('linux.*',('gnu','intel','lahey','pg','absoft','nag','vast','compaq',
-                'intele')),
-    ('darwin.*',('nag','absoft','ibm','gnu')),
-    ('sunos.*',('forte','gnu','sun')),
+                'intele','g95')),
+    ('darwin.*',('nag','absoft','ibm','gnu','g95')),
+    ('sunos.*',('forte','gnu','sun','g95')),
     ('irix.*',('mips','gnu')),
     ('aix.*',('ibm','gnu')),
     # OS mappings
