@@ -114,7 +114,12 @@ def ppimport(name):
     module import until the first attempt to access module name
     attributes.
     """
-    p_frame = _get_frame(1)
+    level = 1
+    p_frame = _get_frame(level)
+    while not p_frame.f_locals.has_key('__name__'):
+        level = level + 1
+        p_frame = _get_frame(level)
+
     p_name = p_frame.f_locals['__name__']
     if p_name=='__main__':
         p_dir = ''
@@ -260,25 +265,26 @@ try:
 except ImportError:
     _pydoc = None
 if _pydoc is not None:
-    # Define new built-in 'help'.
-    # This is a wrapper around pydoc.help (with a twist
-    # (as in debian site.py) and ppimport support).
-    class _Helper:
-        def __repr__ (self):
-            return "Type help () for interactive help, " \
-                   "or help (object) for help about object."
-        def __call__ (self, *args, **kwds):
-            new_args = []
-            for a in args:
-                if hasattr(a,'_ppimport_importer') or \
+    # Redefine __call__ method of help.__class__ to
+    # support ppimport.
+    _old_pydoc_help_call = _pydoc.help.__class__.__call__
+    def _scipy_pydoc_help_call(self,*args,**kwds):
+        new_args = []
+        for a in args:
+            if type(a) is type(''):
+                a = ppimport(a)
+            if hasattr(a,'_ppimport_importer') or \
 		   hasattr(a,'_ppimport_module'):
-                    a = a._ppimport_module
-                if hasattr(a,'_ppimport_attr'):
-		    a = a._ppimport_attr
-                new_args.append(a)
-            return _pydoc.help(*new_args, **kwds)
-    import __builtin__
-    __builtin__.help = _Helper()
+                a = a._ppimport_module
+            if hasattr(a,'_ppimport_attr'):
+                a = a._ppimport_attr
+            new_args.append(a)
+        return _old_pydoc_help_call(self, *new_args, **kwds)
+
+    import new as _new
+    _pydoc.help.__class__.__call__ = _new.instancemethod(_scipy_pydoc_help_call,
+                                                         None,
+                                                         _pydoc.help.__class__)
 
     import inspect as _inspect
     _old_inspect_getfile = _inspect.getfile
