@@ -175,7 +175,8 @@ class ScipyTest:
                 obj = getattr(test_module, name)
 
                 if type(obj) is not type(unittest.TestCase) \
-                   or not issubclass(obj, unittest.TestCase):
+                   or not issubclass(obj, unittest.TestCase) \
+                   or obj.__name__[:5] != 'test_':
                     continue
 
                 for mthname in dir(obj):
