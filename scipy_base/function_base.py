@@ -23,7 +23,7 @@ def asarray_chkfinite(x):
     """Like asarray except it checks to be sure no NaNs or Infs are present.
     """
     x = asarray(x)
-    if not all(isfinite(x)):
+    if not all(_nx.isfinite(x)):
         raise ValueError, "Array must not contain infs or nans."
     return x    
 
