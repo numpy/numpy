@@ -436,7 +436,7 @@ def _exec_command( command, use_shell=None, **env ):
     return status, text
 
 
-def test_nt():
+def test_nt(**kws):
     pythonexe = get_pythonexe()
 
     if 1: ##  not (sys.platform=='win32' and os.environ.get('OSTYPE','')=='cygwin'):
