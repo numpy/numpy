@@ -11,7 +11,7 @@ from distutils.dep_util import newer
 from scipy_distutils.core import Command
 from scipy_distutils.system_info import F2pyNotFoundError
 
-import re,os
+import re,os,string
 
 module_name_re = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',re.I).match
 user_module_name_re = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?__user__[\w_]*)',re.I).match
@@ -99,6 +99,7 @@ class run_f2py(Command):
         f2py_fortran_targets = {}
         target_ext = 'module.c'
         fortran_target_ext = '-f2pywrappers.f'
+        ext_name = string.split(ext.name,'.')[-1]
 
         for source in sources:
             (base, source_ext) = os.path.splitext(source)
@@ -117,7 +118,7 @@ class run_f2py(Command):
                 f.close()
                 if ext.name == 'untitled':
                     ext.name = base
-                if base != string.split(ext.name,'.')[-1]:
+                if base != ext_name:
                     # XXX: Should we do here more than just warn?
                     self.warn('%s provides %s but this extension is %s' \
                               % (source,`base`,`ext.name`))
@@ -140,14 +141,15 @@ class run_f2py(Command):
 
         if not f2py_sources:
             # creating a temporary pyf file from fortran sources
-            pyf_target = os.path.join(target_dir,ext.name+'.pyf')
-            pyf_target_file = os.path.join(target_dir,ext.name+target_ext)
-            pyf_fortran_target_file = os.path.join(target_dir,ext.name+fortran_target_ext)
-            f2py_opts2 = ['-m',ext.name,'-h',pyf_target,'--overwrite-signature']
+            pyf_target = os.path.join(target_dir,ext_name+'.pyf')
+            pyf_target_file = os.path.join(target_dir,ext_name+target_ext)
+            pyf_fortran_target_file = os.path.join(target_dir,ext_name+fortran_target_ext)
+            f2py_opts2 = ['-m',ext_name,'-h',pyf_target,'--overwrite-signature']
             for source in fortran_sources:
                 if newer(source,pyf_target) or self.force:
                     self.announce("f2py-ing a new %s" % (pyf_target))
-                    self.announce("f2py-opts: %s" % string.join(f2py_opts2,' '))
+                    self.announce("f2py-opts: %s" % \
+                                  string.join(f2py_opts2,' '))
                     f2py2e.run_main(fortran_sources + f2py_opts2)
                     break
             f2py_sources.append(pyf_target)
@@ -204,7 +206,8 @@ class run_f2py(Command):
             self.distribution.fortran_libraries = []
         fortran_libraries = self.distribution.fortran_libraries
 
-        name = ext.name
+        ext_name = string.split(ext.name,'.')[-1]
+        name = ext_name
         flib = None
         for n,d in fortran_libraries:
             if n == name:
