@@ -4,12 +4,11 @@
 
 __all__ = ['diag','eye','fliplr','flipud','rot90','bmat','matrix']
 
-from Numeric import *
+from numerix import *
 from type_check import asarray
-import Matrix
+import sys
 
-matrix = Matrix.Matrix
-
+matrix = Matrix
 
 def fliplr(m):
     """ returns a 2-D matrix m with the rows preserved and columns flipped 
@@ -100,7 +99,6 @@ def _from_string(str,gdict,ldict):
         rowtup.append(concatenate(coltup,axis=-1))
     return concatenate(rowtup,axis=0)
 
-import sys
 def bmat(obj,gdict=None,ldict=None):
     """Build a matrix object from string, nested sequence, or array.
 

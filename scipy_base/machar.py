@@ -7,7 +7,8 @@
 
 __all__ = ['MachAr','machar_double','machar_single']
 
-from Numeric import array
+from numerix import array
+from function_base import any
 
 class MachAr:
     """Diagnosing machine parameters.
@@ -69,14 +70,14 @@ class MachAr:
             a = a + a
             temp = a + one
             temp1 = temp - a
-            if temp1 - one != zero:
+            if any(temp1 - one != zero):
                 break
         b = one
         while 1:
             b = b + b
             temp = a + b
             itemp = int_conv(temp-a)
-            if itemp != 0:
+            if any(itemp != 0):
                 break
         ibeta = itemp
         beta = float_conv(ibeta)
@@ -89,7 +90,7 @@ class MachAr:
             b = b * beta
             temp = b + one
             temp1 = temp - b
-            if temp1 - one != zero:
+            if any(temp1 - one != zero):
                 break
 
         betah = beta / two
@@ -98,15 +99,15 @@ class MachAr:
             a = a + a
             temp = a + one
             temp1 = temp - a
-            if temp1 - one != zero:
+            if any(temp1 - one != zero):
                 break
         temp = a + betah
         irnd = 0
-        if temp-a != zero:
+        if any(temp-a != zero):
             irnd = 1
         tempa = a + beta
         temp = tempa + betah
-        if irnd==0 and temp-tempa != zero:
+        if irnd==0 and any(temp-tempa != zero):
             irnd = 2
 
         # Determine negep and epsneg
@@ -118,7 +119,7 @@ class MachAr:
         b = a
         while 1:
             temp = one - a
-            if temp-one != zero:
+            if any(temp-one != zero):
                 break
             a = a * beta
             negep = negep - 1
@@ -131,7 +132,7 @@ class MachAr:
 
         while 1:
             temp = one + a
-            if temp-one != zero:
+            if any(temp-one != zero):
                 break
             a = a * beta
             machep = machep + 1
@@ -140,7 +141,7 @@ class MachAr:
         # Determine ngrd
         ngrd = 0
         temp = one + eps
-        if irnd==0 and temp*one - one != zero:
+        if irnd==0 and any(temp*one - one != zero):
             ngrd = 1
 
         # Determine iexp
@@ -154,10 +155,10 @@ class MachAr:
             z = y*y
             a = z*one # Check here for underflow
             temp = z*t
-            if a+a == zero or abs(z)>=y:
+            if any(a+a == zero) or any(abs(z)>=y):
                 break
             temp1 = temp * betain
-            if temp1*beta == z:
+            if any(temp1*beta == z):
                 break
             i = i + 1
             k = k + k
@@ -178,10 +179,10 @@ class MachAr:
             y = y * betain
             a = y * one
             temp = y * t
-            if a+a != zero and abs(y) < xmin:
+            if any(a+a != zero) and any(abs(y) < xmin):
                 k = k + 1
                 temp1 = temp * betain
-                if temp1*beta == y and temp != y:
+                if any(temp1*beta == y) and any(temp != y):
                     nxres = 3
                     xmin = y
                     break
@@ -202,10 +203,10 @@ class MachAr:
             maxexp = maxexp - 1
         if i > 20:
             maxexp = maxexp - 1
-        if a != y:
+        if any(a != y):
             maxexp = maxexp - 2
         xmax = one - epsneg
-        if xmax*one != xmax:
+        if any(xmax*one != xmax):
             xmax = one - beta*epsneg
         xmax = xmax / (xmin*beta*beta*beta)
         i = maxexp + minexp + 3
@@ -257,17 +258,24 @@ maxexp=%(maxexp)s    xmax=%(_str_xmax)s ((1-epsneg)*beta**maxexp == huge)
 ---------------------------------------------------------------------
 ''' % self.__dict__
 
+def frz(a):
+    """fix rank-0 --> rank-1"""
+    if len(a.shape) == 0:
+        a = a.copy()
+        a.shape = (1,)
+    return a
+
 machar_double = MachAr(lambda v:array([v],'d'),
-                       lambda v:v.astype('i')[0],
-                       lambda v:array(v[0],'d'),
-                       lambda v:'%24.16e' % array(v[0],'d'),
-                       'Numeric double precision floating point number')
+                       lambda v:frz(v.astype('i'))[0],
+                       lambda v:array(frz(v)[0],'d'),
+                       lambda v:'%24.16e' % array(frz(v)[0],'d'),
+                       'numerix double precision floating point number')
 
 machar_single = MachAr(lambda v:array([v],'f'),
-                       lambda v:v.astype('i')[0],
-                       lambda v:array(v[0],'f'),  #
-                       lambda v:'%15.7e' % array(v[0],'f'),
-                       'Numeric single precision floating point number')
+                       lambda v:frz(v.astype('i'))[0],
+                       lambda v:array(frz(v)[0],'f'),  #
+                       lambda v:'%15.7e' % array(frz(v)[0],'f'),
+                       'numerix single precision floating point number')
 
 if __name__ == '__main__':
     print MachAr()

@@ -319,7 +319,6 @@ static int scipy_array_length(PyArrayObject *self) {
 
 static int scipy_makecontiguous(PyArrayObject *self) {
     PyArrayObject *tmp;
-    int ret;
     
     tmp = (PyArrayObject *)PyArray_ContiguousFromObject((PyObject *)self, 
 							self->descr->type_num, 

@@ -103,7 +103,6 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 
 __revision__ = '$Id$'
-
 import sys,os,re,types
 import warnings
 from distutils.errors import DistutilsError

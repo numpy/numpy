@@ -61,7 +61,7 @@ trim_zeros       --  trim the leading and trailing zeros from 1D array.
 vectorize        --  a class that wraps a Python function taking scalar
                          arguments into a generalized function which
                          can handle arrays of arguments using the broadcast
-                         rules of Numeric Python.
+                         rules of numerix Python.
 
 alter_numeric    --  enhance numeric array behavior
 restore_numeric  --  restore alterations done by alter_numeric

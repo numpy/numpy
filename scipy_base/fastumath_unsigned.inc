@@ -1799,6 +1799,8 @@ static void DOUBLE_logical_and(char **args, int *dimensions, int *steps, void *f
 	*((double *)op)=(double)(*((double *)i1) && *((double *)i2));
     }
 }
+
+#if 0
 static void CFLOAT_logical_and(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
@@ -1813,6 +1815,8 @@ static void CDOUBLE_logical_and(char **args, int *dimensions, int *steps, void *
 	*((double *)op)=(double)(*((double *)i1) && *((double *)i2));
     }
 }
+#endif
+
 static void UBYTE_logical_or(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
@@ -1876,6 +1880,8 @@ static void DOUBLE_logical_or(char **args, int *dimensions, int *steps, void *fu
 	*((double *)op)=(double)(*((double *)i1) || *((double *)i2));
     }
 }
+
+#if 0
 static void CFLOAT_logical_or(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
@@ -1890,6 +1896,8 @@ static void CDOUBLE_logical_or(char **args, int *dimensions, int *steps, void *f
 	*((double *)op)=(double)(*((double *)i1) || *((double *)i2));
     }
 }
+#endif
+
 static void UBYTE_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
@@ -1953,6 +1961,8 @@ static void DOUBLE_logical_xor(char **args, int *dimensions, int *steps, void *f
 	*((double*)op)=(double)(*((double *)i1) || *((double *)i2)) && !(*((double *)i1) && *((double *)i2));
     }
 }
+
+#if 0
 static void CFLOAT_logical_xor(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
@@ -1967,6 +1977,8 @@ static void CDOUBLE_logical_xor(char **args, int *dimensions, int *steps, void *
 	*((double*)op)=(double)(*((double *)i1) || *((double *)i2)) && !(*((double *)i1) && *((double *)i2));
     }
 }
+#endif
+
 static void UBYTE_logical_not(char **args, int *dimensions, int *steps, void *func) 
 {int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char *)op)=!*((unsigned char *)i1);}}
 static void SBYTE_logical_not(char **args, int *dimensions, int *steps, void *func) 
@@ -1985,10 +1997,14 @@ static void FLOAT_logical_not(char **args, int *dimensions, int *steps, void *fu
 {int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char*)op)=(!*((float *)i1));}}
 static void DOUBLE_logical_not(char **args, int *dimensions, int *steps, void *func) 
 {int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char *)op)=!*((double *)i1);}}
+
+#if 0
 static void CFLOAT_logical_not(char **args, int *dimensions, int *steps, void *func) 
 {int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char*)op)=(!*((float *)i1));}}
 static void CDOUBLE_logical_not(char **args, int *dimensions, int *steps, void *func) 
 {int i; char *i1=args[0], *op=args[1]; for(i=0; i<*dimensions; i++, i1+=steps[0], op+=steps[1]) {*((unsigned char *)op)=!*((double *)i1);}}
+#endif
+
 static void UBYTE_maximum(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];

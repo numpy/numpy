@@ -1,11 +1,11 @@
 import types
-import Numeric
+import numerix as _nx
 __all__ = ['mgrid','ogrid','r_', 'row', 'c_', 'col', 'index_exp']
 
 from type_check import ScalarType, asarray
 import function_base
 import matrix_base
-makemat = matrix_base.Matrix.Matrix
+makemat = _nx.Matrix
 
 class nd_grid:
     """ Construct a "meshgrid" in N-dimensions.
@@ -50,7 +50,7 @@ class nd_grid:
     def __getitem__(self,key):
         try:
 	    size = []
-            typecode = Numeric.Int
+            typecode = _nx.Int
 	    for k in range(len(key)):
 	        step = key[k].step
                 start = key[k].start
@@ -58,17 +58,17 @@ class nd_grid:
                 if step is None: step=1
                 if type(step) is type(1j):
                     size.append(int(abs(step)))
-                    typecode = Numeric.Float
+                    typecode = _nx.Float
                 else:
                     size.append(int((key[k].stop - start)/(step*1.0)))
                 if isinstance(step,types.FloatType) or \
                    isinstance(start, types.FloatType) or \
                    isinstance(key[k].stop, types.FloatType):
-                       typecode = Numeric.Float
+                       typecode = _nx.Float
             if self.sparse:
-                nn = map(lambda x,t: Numeric.arange(x,typecode=t),size,(typecode,)*len(size))
+                nn = map(lambda x,t: _nx.arange(x,typecode=t),size,(typecode,)*len(size))
             else:
-                nn = Numeric.indices(size,typecode)
+                nn = _nx.indices(size,typecode)
 	    for k in range(len(size)):
                 step = key[k].step
                 start = key[k].start
@@ -79,11 +79,11 @@ class nd_grid:
                     step = (key[k].stop - start)/float(step-1)
                 nn[k] = (nn[k]*step+start)
             if self.sparse:
-                slobj = [Numeric.NewAxis]*len(size)
+                slobj = [_nx.NewAxis]*len(size)
                 for k in range(len(size)):
                     slobj[k] = slice(None,None)
                     nn[k] = nn[k][slobj]
-                    slobj[k] = Numeric.NewAxis
+                    slobj[k] = _nx.NewAxis
 	    return nn
         except (IndexError, TypeError):
             step = key.step
@@ -95,12 +95,12 @@ class nd_grid:
                 length = int(step)
                 step = (key.stop-start)/float(step-1)
                 stop = key.stop+step
-                return Numeric.arange(0,length,1,Numeric.Float)*step + start
+                return _nx.arange(0,length,1,_nx.Float)*step + start
             else:
-                return Numeric.arange(start, stop, step)
+                return _nx.arange(start, stop, step)
 	    
     def __getslice__(self,i,j):
-        return Numeric.arange(i,j)
+        return _nx.arange(i,j)
 
     def __len__(self):
         return 0
@@ -137,7 +137,7 @@ class concatenator:
         objs = []
         for k in range(len(key)):
             if type(key[k]) is types.SliceType:
-                typecode = Numeric.Int
+                typecode = _nx.Int
 	        step = key[k].step
                 start = key[k].start
                 stop = key[k].stop
@@ -146,20 +146,20 @@ class concatenator:
                     step = 1
                 if type(step) is type(1j):
                     size = int(abs(step))
-                    typecode = Numeric.Float
+                    typecode = _nx.Float
                     newobj = function_base.linspace(start, stop, num=size)
                 else:
-                    newobj = Numeric.arange(start, stop, step)
+                    newobj = _nx.arange(start, stop, step)
             elif type(key[k]) in ScalarType:
                 newobj = asarray([key[k]])
             else:
                 newobj = key[k]
             objs.append(newobj)
-        res = Numeric.concatenate(tuple(objs),axis=self.axis)
+        res = _nx.concatenate(tuple(objs),axis=self.axis)
         return self._retval(res)
-         
+
     def __getslice__(self,i,j):
-        res = Numeric.arange(i,j)
+        res = _nx.arange(i,j)
         return self._retval(res)
 
     def __len__(self):
