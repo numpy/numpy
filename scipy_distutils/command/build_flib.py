@@ -1270,7 +1270,8 @@ class intel_ia32_visual_fortran_compiler(fortran_compiler_base):
         self.f77_compiler = fc
         self.f90_compiler = f90c
 
-        switches = ' /nologo /MD /nbs /Qlowercase /us /Qvc6 '
+        switches = ' /nologo /MD /nbs /Qlowercase /us '
+        # Compatibility problems betwen VC6 and VC7, use /Qvc6 for VC6 conformance
 
         self.f77_switches = self.f90_switches = switches
         self.f77_switches = self.f77_switches + ' -FI -w90 -w95 -cm -c '
@@ -1289,7 +1290,7 @@ class intel_ia32_visual_fortran_compiler(fortran_compiler_base):
             self.lib_ar = MSVCCompiler().lib + ' /OUT:'
 
     def get_opt(self):
-        import cpuinfo # No features on Windows
+        import cpuinfo
         cpu = cpuinfo.cpuinfo()
         opt = ' /O3 /Qip /Qipo /Qipo_obj '
         if cpu.is_PentiumPro() or cpu.is_PentiumII():
