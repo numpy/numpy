@@ -2,6 +2,7 @@ from shelve import Shelf
 import zlib
 from cStringIO import  StringIO
 import  cPickle  
+import dumbdbm_patched
 
 class DbfilenameShelf(Shelf):
     """Shelf implementation using the "anydbm" generic dbm interface.
@@ -11,7 +12,6 @@ class DbfilenameShelf(Shelf):
     """
     
     def __init__(self, filename, flag='c'):
-        import dumbdbm_patched
         Shelf.__init__(self, dumbdbm_patched.open(filename, flag))
 
     def __getitem__(self, key):
