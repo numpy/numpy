@@ -245,3 +245,20 @@ def merge_config_dicts(config_list):
         for key in dict_keys:
             result[key].update(d.get(key,{}))
     return result
+
+def fortran_library_item(lib_name,
+                         sources,
+                         **attrs
+                         ):
+    """ Helper function for creating fortran_libraries items. """
+    build_info = {'sources':sources}
+    known_attrs = ['module_files','module_dirs',
+                   'libraries','library_dirs']
+    for key,value in attrs.items():
+        if key not in known_attrs:
+            raise TypeError,\
+                  "fortran_library_item() got an unexpected keyword "\
+                  "argument '%s'" % key
+        build_info[key] = value
+    
+    return (lib_name,build_info)

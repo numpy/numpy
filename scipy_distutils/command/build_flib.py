@@ -145,40 +145,62 @@ class build_flib (build_clib):
 
     # run ()
 
-    def get_library_names(self):
+    def has_f_library(self,name):
+        if self.has_f_libraries():
+            for (lib_name, build_info) in self.fortran_libraries:
+                if lib_name == name:
+                    return 1
+        
+    def get_library_names(self, name=None):
         if not self.has_f_libraries():
             return None
 
-        lib_names = [] 
+        lib_names = []
 
-        for (lib_name, build_info) in self.fortran_libraries:
-            lib_names.append(lib_name)
+        if name is None:
+            for (lib_name, build_info) in self.fortran_libraries:
+                lib_names.append(lib_name)
 
-        if self.fcompiler is not None:
-            lib_names.extend(self.fcompiler.get_libraries())
-            
+            if self.fcompiler is not None:
+                lib_names.extend(self.fcompiler.get_libraries())
+        else:
+            for (lib_name, build_info) in self.fortran_libraries:
+                if name != lib_name: continue
+                for n in build_info.get('libraries',[]):
+                    lib_names.append(n)
+                    #XXX: how to catch recursive calls here?
+                    lib_names.extend(self.get_library_names(n))
+                break
         return lib_names
 
     # get_library_names ()
 
-    def get_library_dirs(self):
+    def get_library_dirs(self, name=None):
         if not self.has_f_libraries():
-            return []#None
+            return []
 
         lib_dirs = [] 
 
-        if self.fcompiler is not None:
-            lib_dirs.extend(self.fcompiler.get_library_dirs())
-            
+        if name is None:
+            if self.fcompiler is not None:
+                lib_dirs.extend(self.fcompiler.get_library_dirs())
+        else:
+            for (lib_name, build_info) in self.fortran_libraries:
+                if name != lib_name: continue
+                lib_dirs.extend(build_info.get('library_dirs',[]))
+                for n in build_info.get('libraries',[]):
+                    lib_dirs.extend(self.get_library_dirs(n))
+                break
+
         return lib_dirs
 
     # get_library_dirs ()
 
     def get_runtime_library_dirs(self):
         if not self.has_f_libraries():
-            return []#None
+            return []
 
-        lib_dirs = [] 
+        lib_dirs = []
 
         if self.fcompiler is not None:
             lib_dirs.extend(self.fcompiler.get_runtime_library_dirs())
@@ -329,23 +351,28 @@ class fortran_compiler_base:
         #make sure the temp directory exists before trying to build files
         import distutils.dir_util
         distutils.dir_util.mkpath(temp_dir)
+
         #this compiles the files
         object_list = self.to_object(source_list,module_dirs,temp_dir)
+
         # actually we need to use all the object file names here to
         # make sure the library is always built.  It could occur that an
         # object file exists but hasn't been put in the archive. (happens
         # a lot when builds fail once and are restarted).
         object_list = self.source_to_object_names(source_list, temp_dir)
-        #self.create_static_lib(object_list,library_name,temp_dir)           
-        # This is pure bunk...
-        # Windows fails for long argument strings on the command line.
-        # if objects is real long (> 2048 chars or so on my machine),
-        # the command fails (cmd.exe /e:2048 on w2k)
-        # for now we'll split linking into to steps which should work for
-        objects = object_list[:]
-        while objects:
-            obj,objects = objects[:20],objects[20:]
-            self.create_static_lib(obj,library_name,temp_dir)
+
+        if os.name == 'nt':
+            # This is pure bunk...
+            # Windows fails for long argument strings on the command line.
+            # if objects is real long (> 2048 chars or so on my machine),
+            # the command fails (cmd.exe /e:2048 on w2k)
+            # for now we'll split linking into to steps which should work for
+            objects = object_list[:]
+            while objects:
+                obj,objects = objects[:20],objects[20:]
+                self.create_static_lib(obj,library_name,temp_dir)
+        else:
+            self.create_static_lib(object_list,library_name,temp_dir)
 
     def dummy_fortran_files(self):
         import tempfile 

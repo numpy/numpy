@@ -9,37 +9,33 @@ from distutils.command.build_ext import *
 from distutils.command.build_ext import build_ext as old_build_ext
 
 class build_ext (old_build_ext):
-            
-    def run (self):
-        if self.distribution.has_f_libraries():
-            build_flib = self.get_finalized_command('build_flib')
-            self.libraries.extend(build_flib.get_library_names() or [])
-            self.library_dirs.extend(build_flib.get_library_dirs() or [])
-            #self.library_dirs.extend(build_flib.get_library_dirs() or [])
-            #runtime_dirs = build_flib.get_runtime_library_dirs()
-            #self.runtime_library_dirs.extend(runtime_dirs or [])
-            
-            #?? what is this ??
-            self.library_dirs.append(build_flib.build_flib)
-            
-        old_build_ext.run(self)
 
     def build_extension(self, ext):
         # support for building static fortran libraries
+        need_f_libs = 0
         if self.distribution.has_f_libraries():
             build_flib = self.get_finalized_command('build_flib')
+            for lib_name in ext.libraries:
+                if build_flib.has_f_library(lib_name):
+                    need_f_libs = 1
+                    break
+        if need_f_libs:
             moreargs = build_flib.fcompiler.get_extra_link_args()
             if moreargs != []:                
                 if ext.extra_link_args is None:
                     ext.extra_link_args = moreargs
                 else:
                     ext.extra_link_args += moreargs
-            # be sure to include fortran runtime library directory names
+            for lib_name in ext.libraries[:]:
+                ext.libraries.extend(build_flib.get_library_names(lib_name))
+                ext.library_dirs.extend(build_flib.get_library_dirs(lib_name))
+            ext.library_dirs.append(build_flib.build_flib)
             runtime_dirs = build_flib.get_runtime_library_dirs()
             ext.runtime_library_dirs.extend(runtime_dirs or [])
             linker_so = build_flib.fcompiler.get_linker_so()
             if linker_so is not None:
                 self.compiler.linker_so = linker_so
+
         # end of fortran source support
         return old_build_ext.build_extension(self,ext)
 
