@@ -165,7 +165,6 @@ def get_path(mod_name):
         #builtin if/then added by Pearu for use in core.run_setup.        
         d = os.path.dirname(os.path.abspath(sys.argv[0]))
     else:
-        #import scipy_distutils.setup
         mod = __import__(mod_name)
         file = mod.__file__
         d = os.path.dirname(os.path.abspath(file))

@@ -2,7 +2,6 @@
 # This class must be used as the entry for the build key in the cmdclass
 #    dictionary which is given to the setup command.
 
-from distutils.command.build import *
 from distutils.command.build import build as old_build
 
 class build(old_build):

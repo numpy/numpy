@@ -5,7 +5,6 @@ import os, string
 from types import *
 
 from distutils.dep_util import newer_group, newer
-from distutils.command.build_ext import *
 from distutils.command.build_ext import build_ext as old_build_ext
 
 from scipy_distutils.command.build_clib import get_headers,get_directories
@@ -40,7 +39,7 @@ class build_ext (old_build_ext):
         if need_f_libs:
             if build_flib.has_f_library(ext_name) and \
                ext_name not in ext.libraries:
-                ext.libraries.append(ext_name)
+                ext.libraries.insert(0,ext_name)
             for lib_name in ext.libraries[:]:
                 ext.libraries.extend(build_flib.get_library_names(lib_name))
                 ext.library_dirs.extend(build_flib.get_library_dirs(lib_name))
@@ -103,3 +102,5 @@ class build_ext (old_build_ext):
             filenames.extend(get_headers(get_directories(ext.sources)))
 
         return filenames
+
+    

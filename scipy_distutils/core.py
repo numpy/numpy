@@ -31,7 +31,6 @@ def setup(**attr):
                 'install':          install.install,
                 'install_headers':  install_headers.install_headers
                 }
-                      
     new_attr = attr.copy()
     if new_attr.has_key('cmdclass'):
         cmdclass.update(new_attr['cmdclass'])        

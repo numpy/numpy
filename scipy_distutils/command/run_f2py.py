@@ -102,7 +102,8 @@ class run_f2py(Command):
             if source_ext == ".pyf":                  # f2py interface file
                 # get extension module name
                 f = open(source)
-                for line in f.xreadlines():
+                f_readlines = getattr(f,'xreadlines',f.readlines)
+                for line in f_readlines():
                     m = module_name_re(line)
                     if m:
                         if user_module_name_re(line): # skip *__user__* names
@@ -173,7 +174,6 @@ class run_f2py(Command):
             new_sources.append(target)
             if os.path.exists(fortran_target):
                 new_sources.append(fortran_target)
-
         return new_sources
 
     # f2py_sources ()
