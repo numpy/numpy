@@ -21,7 +21,6 @@ from types import *
 from distutils.dep_util import newer_group, newer
 from distutils.command.build_ext import *
 from distutils.command.build_ext import build_ext as old_build_ext
-import f2py2e
 
 class build_ext (old_build_ext):
     def run (self):
@@ -29,9 +28,11 @@ class build_ext (old_build_ext):
             build_flib = self.get_finalized_command('build_flib')
             self.libraries.extend(build_flib.get_library_names() or [])
             self.library_dirs.extend(build_flib.get_library_dirs() or [])
-            self.library_dirs.extend(build_flib.get_library_dirs() or [])
+            #self.library_dirs.extend(build_flib.get_library_dirs() or [])
             #runtime_dirs = build_flib.get_runtime_library_dirs()
             #self.runtime_library_dirs.extend(runtime_dirs or [])
+            
+            #?? what is this ??
             self.library_dirs.append(build_flib.build_flib)
             
         old_build_ext.run(self)
@@ -52,8 +53,11 @@ class build_ext (old_build_ext):
                 else:
                     ext.extra_link_args += moreargs
             # be sure to include fortran runtime library directory names
-            runtime_dirs = build_flib.get_runtime_library_dirs() 
-            ext.runtime_library_dirs.extend(runtime_dirs or [])                   
+            runtime_dirs = build_flib.get_runtime_library_dirs()
+            ext.runtime_library_dirs.extend(runtime_dirs or [])
+            linker_so = build_flib.fcompiler.get_linker_so()
+            if linker_so is not None:
+                self.compiler.linker_so = linker_so
         # end of fortran source support
         # f2py support handled slightly_modified..._extenstion.
         return self.slightly_modified_standard_build_extension(ext)
@@ -157,10 +161,12 @@ class build_ext (old_build_ext):
     def f2py_sources (self, sources):
 
         """Walk the list of source files in 'sources', looking for f2py
-        interface (.i) files.  Run f2py on all that are found, and
+        interface (.pyf) files.  Run f2py on all that are found, and
         return a modified 'sources' list with f2py source files replaced
         by the generated C (or C++) files.
         """
+
+        import f2py2e
 
         new_sources = []
         f2py_sources = []
@@ -191,7 +197,7 @@ class build_ext (old_build_ext):
         new_sources.append(os.path.join(d,'fortranobject.c'))
 
         f2py_opts = ['--no-wrap-functions', '--no-latex-doc',
-                     '--no-makefile','-no-setup']
+                     '--no-makefile','--no-setup']
         for source in f2py_sources:
             target = f2py_targets[source]
             if newer(source,target):

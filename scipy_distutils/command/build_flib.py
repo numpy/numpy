@@ -9,14 +9,47 @@
     It is pretty hard (impossible?) to get gcc to pass the right compiler
     flags on Sun to get the linker to use static libs for the fortran
     stuff.  Investigate further...
+
+Bugs:
+ ***  Options -e and -x have no effect when used with --help-compiler
+       options. E.g. 
+       ./setup.py build_flib --help-compiler -e g77-3.0
+      finds g77-2.95.
+      How to extract these options inside the show_compilers function?
+ ***  Option --force has no effect when switching a compiler. One must
+      manually remove .o files that were generated earlier by a
+      different compiler.
+ ***  compiler.is_available() method may not work correctly on nt
+      because of lack of knowledge how to get exit status in
+      run_command function. However, it may give reasonable results
+      based on a version string.
+ ***  Some vendors provide different compilers for F77 and F90
+      compilations. Currently, checking the availability of these
+      compilers is based on only checking the availability of the
+      corresponding F77 compiler. If it exists, then F90 is assumed
+      to exist also.
+
+Open issues:
+ ***  User-defined compiler flags. Do we need --fflags?
+
+Fortran compilers (as to be used with --fcompiler= option):
+      Absoft
+      Sun
+      SGI
+      Gnu
+      Intel
+      Itanium
+      NAG
+      VAST
 """
 
 import distutils
 import distutils.dep_util, distutils.dir_util
-import os,string
+import os,sys,string
 import commands,re
 from types import *
 from distutils.command.build_clib import build_clib
+from distutils.errors import *
 
 if os.name == 'nt':
     def run_command(command):
@@ -28,9 +61,9 @@ if os.name == 'nt':
 else:
     run_command = commands.getstatusoutput
     
-    
 def show_compilers():
-    for compiler in all_compilers:
+    for compiler_class in all_compilers:
+        compiler = compiler_class()
         if compiler.is_available():
             print compiler
 
@@ -49,8 +82,12 @@ class build_flib (build_clib):
          "forcibly build everything (ignore file timestamps)"),
         ('fcompiler=', 'c',
          "specify the compiler type"),
+        ('fcompiler-exec=', 'e',
+         "specify the path to F77 compiler"),
+        ('f90compiler-exec=', 'x',
+         "specify the path to F90 compiler"),
         ]
-    
+
     boolean_options = ['debug', 'force']
 
     help_options = [
@@ -59,6 +96,7 @@ class build_flib (build_clib):
         ]
 
     def initialize_options (self):
+
         self.build_flib = None
         self.build_temp = None
 
@@ -68,6 +106,8 @@ class build_flib (build_clib):
         self.debug = None
         self.force = 0
         self.fcompiler = None
+        self.fcompiler_exec = None
+        self.f90compiler_exec = None
 
     # initialize_options()
 
@@ -77,13 +117,14 @@ class build_flib (build_clib):
                                    ('build_temp', 'build_temp'),
                                    ('debug', 'debug'),
                                    ('force', 'force'))
-        if self.fcompiler is None:
-            self.fcompiler = find_fortran_compiler()
-            if not self.fcompiler:
-                raise ValueError, 'Fortran compiler not available'
-            else:
-                print self.fcompiler
-        
+        fc = find_fortran_compiler(self.fcompiler,
+                                   self.fcompiler_exec,
+                                   self.f90compiler_exec)
+        if not fc:
+            raise DistutilsOptionError, 'Fortran compiler not available: %s'%(self.fcompiler)
+        else:
+            self.announce(' using %s Fortran compiler' % fc)
+        self.fcompiler = fc
         self.fortran_libraries = self.distribution.fortran_libraries
         if self.fortran_libraries:
             self.check_library_list(self.fortran_libraries)
@@ -93,7 +134,6 @@ class build_flib (build_clib):
     def run (self):
         if not self.fortran_libraries:
             return
-
         self.build_libraries(self.fortran_libraries)
 
     # run ()
@@ -179,6 +219,33 @@ class build_flib (build_clib):
 
 
 class fortran_compiler_base:
+
+    vendor = None
+    ver_match = None
+    
+    def __init__(self):
+        # Default initialization. Constructors of derived classes MUST
+        # call this functions.
+        self.version = None
+        
+        self.f77_switches = ''
+        self.f77_opt = ''
+        self.f77_debug = ''
+        
+        self.f90_switches = ''
+        self.f90_opt = ''
+        self.f90_debug = ''
+        
+        self.libraries = []
+        self.library_dirs = []
+
+        if self.vendor is None:
+            raise DistutilsInternalError,\
+                  '%s must define vendor attribute'%(self.__class__)
+        if self.ver_match is None:
+            raise DistutilsInternalError,\
+                  '%s must define ver_match attribute'%(self.__class__)
+
     def to_object(self,dirty_files,module_dirs=None, temp_dir=''):
         files = string.join(dirty_files)
         f90_files = get_f90_files(dirty_files)
@@ -222,6 +289,7 @@ class fortran_compiler_base:
         return object_files
         #return all object files to make sure everything is archived 
         #return map(lambda x: x[1], file_pairs)
+
     def f90_compile(self,source_files,module_dirs=None, temp_dir=''):
         switches = string.join((self.f90_switches, self.f90_opt))
         return self.f_compile(self.f90_compiler,switches,
@@ -232,13 +300,12 @@ class fortran_compiler_base:
         return self.f_compile(self.f77_compiler,switches,
                               source_files, module_dirs,temp_dir)
 
- 
+
     def build_module_switch(self, module_dirs):
         return ''
 
     def create_static_lib(self, object_files, library_name,
                           output_dir='', debug=None):
-        import string
         lib_file = os.path.join(output_dir,'lib'+library_name+'.a')
         newer = distutils.dep_util.newer
         # This doesn't work -- no way to know if the file is in the archive
@@ -273,18 +340,28 @@ class fortran_compiler_base:
             obj,objects = objects[:20],objects[20:]
             self.create_static_lib(obj,library_name,temp_dir)
 
-                   
     def dummy_fortran_files(self):
         import tempfile 
         d = tempfile.gettempdir()
         dummy_name = os.path.join(d,'__dummy.f')
         dummy = open(dummy_name,'w')
-        dummy.write("\tsubroutine dummy()\n\tend\n")
+        dummy.write("      subroutine dummy()\n      end\n")
         dummy.close()
         return (os.path.join(d,'__dummy.f'),os.path.join(d,'__dummy.o'))
     
-    def is_available(self): 
-        self.version = None
+    def is_available(self):
+        return self.get_version()
+        
+    def get_version(self):
+        """Return the compiler version. If compiler is not available,
+        return empty string."""
+        # XXX: Is there compilers that have no version? If yes,
+        #      this test will fail even if the compiler is available.
+        if self.version is not None:
+            # Finding version is expensive, so return previously found
+            # version string.
+            return self.version
+        self.version = ''
         # works I think only for unix...        
         #print 'command:', self.ver_cmd
         exit_status, out_text = run_command(self.ver_cmd)
@@ -292,7 +369,7 @@ class fortran_compiler_base:
         if not exit_status:
             m = re.match(self.ver_match,out_text)
             if m:
-                self.version = m.group('version')           
+                self.version = m.group('version')
         return self.version
 
     def get_libraries(self):
@@ -303,32 +380,47 @@ class fortran_compiler_base:
         return []
     def get_runtime_library_dirs(self):
         return []
+    def get_linker_so(self):
+        """
+        If a compiler requires specific linker then return a list
+        containing a linker executable name and linker options.
+        Otherwise, return None.
+        """
 
     def __str__(self):
-        return "%s %s" % (self.vendor, self.version)
+        return "%s %s" % (self.vendor, self.get_version())
+
 
 class absoft_fortran_compiler(fortran_compiler_base):
-    def __init__(self):
-        self.vendor = 'Absoft'
-        self.version = '' 
-        
-        self.f90_compiler = 'f90'
-        self.f77_compiler = 'f77'
+
+    vendor = 'Absoft'
+    ver_match = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
+    
+    def __init__(self, fc = None, f90c = None):
+        fortran_compiler_base.__init__(self)
+        if fc is None:
+            fc = 'f77'
+        if f90c is None:
+            f90c = 'f90'
+
+        self.f77_compiler = fc
+        self.f90_compiler = f90c
+
         # got rid of -B108 cause it was generating 2 underscores instead
         # of one on the newest version.  Now we use -YEXT_SFX=_ to 
         # specify the output format
         if os.name == 'nt':
-            self.f90_switches = '-f fixed  -YCFRL=1 -YCOM_NAMES=LCS'\
+            self.f90_switches = '-f fixed  -YCFRL=1 -YCOM_NAMES=LCS' \
                                 ' -YCOM_PFX  -YEXT_PFX -YEXT_NAMES=LCS' \
-    			                ' -YCOM_SFX=_ -YEXT_SFX=_ -YEXT_NAMES=LCS'        
+                                ' -YCOM_SFX=_ -YEXT_SFX=_ -YEXT_NAMES=LCS'        
             self.f90_opt = '-O -Q100'
             self.f77_switches = '-N22 -N90 -N110'
             self.f77_opt = '-O -Q100'
             self.libraries = ['fio', 'fmath', 'f90math', 'COMDLG32']
         else:
-            self.f90_switches = '-ffixed  -YCFRL=1 -YCOM_NAMES=LCS'\
+            self.f90_switches = '-ffixed  -YCFRL=1 -YCOM_NAMES=LCS' \
                                 ' -YCOM_PFX  -YEXT_PFX -YEXT_NAMES=LCS' \
-    			    ' -YCOM_SFX=_ -YEXT_SFX=_ -YEXT_NAMES=LCS'        
+                                ' -YCOM_SFX=_ -YEXT_SFX=_ -YEXT_NAMES=LCS'        
             self.f90_opt = '-O -B101'                            
             self.f77_switches = '-N22 -N90 -N110 -B108'
             self.f77_opt = '-O -B101'
@@ -341,16 +433,16 @@ class absoft_fortran_compiler(fortran_compiler_base):
         except KeyError:
             self.library_dirs = []
 
+        self.ver_cmd = self.f77_compiler + ' -V -c %s -o %s' % \
+                       self.dummy_fortran_files()
 
-
-        self.ver_cmd = 'f77 -V -c %s -o %s' % self.dummy_fortran_files()
-        self.ver_match = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
     def build_module_switch(self,module_dirs):
         res = ''
         if module_dirs:
             for mod in module_dirs:
                 res = res + ' -p' + mod
-        return res 
+        return res
+
     def get_extra_link_args(self):
         return []
         # Couldn't get this to link for anything using gcc.
@@ -359,15 +451,25 @@ class absoft_fortran_compiler(fortran_compiler_base):
         #libs = map(lambda x,dr=dr:os.path.join(dr,x),libs)
         #return libs
 
-class sun_fortran_compiler(fortran_compiler_base):
-    def __init__(self):
-        self.vendor = 'Sun'
-        self.version = ''
-        self.ver_cmd = 'f77 -V'
-        self.ver_match =  r'f77: (?P<version>[^\s*,]*).*'
 
-        self.f90_compiler = 'f90'
-        self.f90_switches = ' -fixed '
+class sun_fortran_compiler(fortran_compiler_base):
+
+    vendor = 'Sun'
+    ver_match =  r'f77: (?P<version>[^\s*,]*)'
+
+    def __init__(self, fc = None, f90c = None):
+        fortran_compiler_base.__init__(self)
+        if fc is None:
+            fc = 'f77'
+        if f90c is None:
+            f90c = 'f90'
+
+        self.f77_compiler = fc # not tested
+        self.f77_switches = ' -pic '
+        self.f77_opt = ' -fast -dalign '
+
+        self.f90_compiler = f90c
+        self.f90_switches = ' -fixed ' # ??? why fixed?
         self.f90_opt = ' -fast -dalign '
 
         self.libraries = ['f90', 'F77', 'M77', 'sunmath', 'm']
@@ -376,11 +478,8 @@ class sun_fortran_compiler(fortran_compiler_base):
         #self.libraries = []
         self.library_dirs = self.find_lib_dir()
         #print 'sun:',self.library_dirs
-        self.f77_compiler = 'f77'
-        # not tested
-        self.f77_switches = ' -pic '
-        #self.f77_switches = ' -fixed '
-        self.f77_opt = ' -fast -dalign '
+
+        self.ver_cmd = self.f77_compiler + ' -V'
 
     def build_module_switch(self,module_dirs):
         res = ''
@@ -399,7 +498,7 @@ class sun_fortran_compiler(fortran_compiler_base):
             libs = re.findall(lib_match,output)
             if libs:
                 library_dirs = string.split(libs[0],':')
-                self.is_available() # force version calculation
+                self.get_version() # force version calculation
                 compiler_home = os.path.dirname(library_dirs[0])
                 library_dirs.append(os.path.join(compiler_home,
                                                self.version,'lib'))
@@ -409,26 +508,31 @@ class sun_fortran_compiler(fortran_compiler_base):
     def get_extra_link_args(self):
         return ['-mimpure-text']
 
+
 class mips_fortran_compiler(fortran_compiler_base):
-    def __init__(self):
-        self.vendor = 'SGI'
-        self.version = '' 
-        self.ver_cmd = 'f90 -version'
-        self.ver_match =  r'MIPSpro Compilers: Version (?P<version>[^\s*,]*).*'
-        
-        self.f90_compiler = 'f90'
-        self.f90_switches = ' -n32 -KPIC -fixedform '
+
+    vendor = 'SGI'
+    ver_match =  r'MIPSpro Compilers: Version (?P<version>[^\s*,]*)'
+    
+    def __init__(self, fc = None, f90c = None):
+        fortran_compiler_base.__init__(self)
+        if fc is None:
+            fc = 'f77'
+        if f90c is None:
+            f90c = 'f90'
+
+        self.f77_compiler = fc         # not tested
+        self.f77_switches = ' -n32 -KPIC '
+        self.f77_opt = ' -O3 '
+
+        self.f90_compiler = f90c
+        self.f90_switches = ' -n32 -KPIC -fixedform ' # why fixed ???
         self.f90_opt = ' '                            
         
         self.libraries = ['fortran', 'ftn', 'm']
-        #self.libraries = []
-        #self.library_dirs = [] 
         self.library_dirs = self.find_lib_dir()
-        
-        self.f77_compiler = 'f77'
-        # not tested
-        self.f77_switches = ' -n32 -KPIC '
-        self.f77_opt = ' -O3 '
+
+        self.ver_cmd = self.f77_compiler + ' -version'
 
     def build_module_switch(self,module_dirs):
         res = ''
@@ -441,25 +545,58 @@ class mips_fortran_compiler(fortran_compiler_base):
     def get_extra_link_args(self):
 	return []
 
+
 class gnu_fortran_compiler(fortran_compiler_base):
-    def __init__(self):
-        self.vendor = 'Gnu'
-        self.version = '' 
-           
-        self.f77_compiler = 'g77'
-        if os.name == 'nt':
-            self.f77_switches = ' -Wall'
-        else:
-            self.f77_switches = ' -fpic -Wall '  
-        self.f77_opt = '-O3'
-        self.libraries = ['g2c','gcc']
+
+    vendor = 'Gnu'
+    ver_match = r'g77 version (?P<version>[^\s*]*)'
+
+    def __init__(self, fc = None, f90c = None):
+        fortran_compiler_base.__init__(self)
+        self.libraries = ['gcc','g2c']
         self.library_dirs = self.find_lib_directories()
-        self.ver_cmd = 'g77 -v'
-        self.ver_match = r'g77 version (?P<version>[^\s*]*)'
- 
-    def f90_compile(self,source_files,module_files,temp_dir=''):
-        raise ValueError, 'f90 not supported by gnu'
-    
+
+        if fc is None:
+            fc = 'g77'
+        if f90c is None:
+            f90c = fc
+
+        self.f77_compiler = fc
+
+        switches = ' -Wall -fno-second-underscore '
+
+        if os.name != 'nt':
+            switches = switches + ' -fpic '
+
+        self.f77_switches = switches
+
+        self.ver_cmd = self.f77_compiler + ' -v '
+        self.f77_opt = self.get_opt()
+
+    def get_opt(self):
+        import cpuinfo
+        cpu = cpuinfo.cpuinfo()
+        opt = ' -O3 '
+        
+        # only check for more optimizaiton if g77 can handle
+        # it.
+        if self.get_version():
+            if self.version[0]=='3': # is g77 3.x.x
+                if cpu.is_AthlonK6():
+                    opt = opt + ' -march=k6 '
+                elif cpu.is_AthlonK7():
+                    opt = opt + ' -march=athlon '
+            if cpu.is_i686():
+                opt = opt + ' -march=i686 '
+            elif cpu.is_i586():
+                opt = opt + ' -march=i586 '
+            elif cpu.is_i486():
+                opt = opt + ' -march=i486 '
+            elif cpu.is_i386():
+                opt = opt + ' -march=i386 '
+                
+        return opt
+        
     def find_lib_directories(self):
         lib_dir = []
         match = r'Reading specs from (.*)/specs'
@@ -472,40 +609,185 @@ class gnu_fortran_compiler(fortran_compiler_base):
 				lib_dir= m #m[0]          
         return lib_dir
 
+    def get_linker_so(self):
+        # win32 linking should be handled by standard linker
+        if sys.platform != 'win32':
+            return [self.f77_compiler,'-shared']
+ 
+    def f90_compile(self,source_files,module_files,temp_dir=''):
+        raise DistutilsExecError, 'f90 not supported by Gnu'
+
+
+#http://developer.intel.com/software/products/compilers/f50/linux/
+class intel_ia32_fortran_compiler(fortran_compiler_base):
+
+    vendor = 'Intel' # Intel(R) Corporation 
+    ver_match = r'Intel\(R\) Fortran Compiler for 32-bit applications, Version (?P<version>[^\s*]*)'
+
+    def __init__(self, fc = None, f90c = None):
+        fortran_compiler_base.__init__(self)
+
+        if fc is None:
+            fc = 'ifc'
+        if f90c is None:
+            f90c = fc
+
+        self.f77_compiler = fc
+        self.f90_compiler = f90c
+
+        switches = ' -KPIC '
+
+        import cpuinfo
+        cpu = cpuinfo.cpuinfo()
+        if cpu.has_fdiv_bug():
+            switches = switches + ' -fdiv_check '
+        if cpu.has_f00f_bug():
+            switches = switches + ' -0f_check '
+        self.f77_switches = self.f90_switches = switches
+        self.f77_switches = self.f77_switches + ' -FI '
+
+        self.f77_opt = self.f90_opt = self.get_opt()
+        
+        debug = ' -g -C '
+        self.f77_debug =  self.f90_debug = debug
+
+        self.ver_cmd = self.f77_compiler+' -FI -V -c %s -o %s' %\
+                       self.dummy_fortran_files()
+
+    def get_opt(self):
+        import cpuinfo
+        cpu = cpuinfo.cpuinfo()
+        opt = ' -O3 '
+        if cpu.is_PentiumPro() or cpu.is_PentiumII():
+            opt = opt + ' -tpp6 -xi '
+        elif cpu.is_PentiumIII():
+            opt = opt + ' -tpp6 '
+        elif cpu.is_Pentium():
+            opt = opt + ' -tpp5 '
+        elif cpu.is_PentiumIV():
+            opt = opt + ' -tpp7 -xW '
+        if cpu.has_mmx():
+            opt = opt + ' -xM '       
+        return opt
+        
+
+    def get_linker_so(self):
+        return [self.f77_compiler,'-shared']
+
+
+class intel_itanium_fortran_compiler(intel_ia32_fortran_compiler):
+
+    vendor = 'Itanium'
+    ver_match = r'Intel\(R\) Fortran 90 Compiler Itanium\(TM\) Compiler for the Itanium\(TM\)-based applications, Version (?P<version>[^\s*]*)'
+
+    def __init__(self, fc = None, f90c = None):
+        if fc is None:
+            fc = 'efc'
+        intel_ia32_fortran_compiler.__init__(self, fc, f90c)
+
+
+class nag_fortran_compiler(fortran_compiler_base):
+
+    vendor = 'NAG'
+    ver_match = r'NAGWare Fortran 95 compiler Release (?P<version>[^\s]*)'
+
+    def __init__(self, fc = None, f90c = None):
+        fortran_compiler_base.__init__(self)
+
+        if fc is None:
+            fc = 'f95'
+        if f90c is None:
+            f90c = fc
+
+        self.f77_compiler = fc
+        self.f90_compiler = f90c
+
+        switches = ''
+        debug = ' -g -gline -g90 -nan -C '
+        opt = ' -O4 '
+
+        self.f77_switches = self.f90_switches = switches
+        self.f77_switches = self.f77_switches + ' -fixed '
+        self.f77_debug = self.f90_debug = debug
+        self.f77_opt = self.f90_opt = opt
+
+        self.ver_cmd = self.f77_compiler+' -V '
+
+    def get_linker_so(self):
+        return [self.f77_compiler,'-Wl,-shared']
+
+
+class vast_fortran_compiler(fortran_compiler_base):
+
+    vendor = 'VAST'
+    ver_match = r'\s*Pacific-Sierra Research vf90 (Personal|Professional)\s+(?P<version>[^\s]*)'
+
+    def __init__(self, fc = None, f90c = None):
+        fortran_compiler_base.__init__(self)
+
+        if fc is None:
+            fc = 'g77'
+        if f90c is None:
+            f90c = 'f90'
+
+        self.f77_compiler = fc
+        self.f90_compiler = f90c
+
+        d,b = os.path.split(f90c)
+        vf90 = os.path.join(d,'v'+b)
+        self.ver_cmd = vf90+' -v '
+
+        gnu = gnu_fortran_compiler(fc)
+        if not gnu.is_available(): # VAST compiler requires g77.
+            self.version = ''
+            return
+        if not self.is_available():
+            return
+
+        self.f77_switches = gnu.f77_switches
+        self.f77_debug = gnu.f77_debug
+        self.f77_opt = gnu.f77_opt        
+
+        # XXX: need f90 switches, debug, opt
+
+    def get_linker_so(self):
+        return [self.f90_compiler,'-shared']
+
 
 def match_extension(files,ext):
-    file_base_ext = map(lambda x: os.path.splitext(x),files)
-    files = filter(lambda x,ext=ext: string.lower(x[1]) == ext,file_base_ext)
-    files = map(lambda x: string.join(x,''), files)
-    return files
-    
+    match = re.compile(r'.*[.]('+ext+r')\Z',re.I).match
+    return filter(lambda x,match = match: match(x),files)
+
 def get_f77_files(files):
-    return match_extension(files,'.f')
+    return match_extension(files,'for|f77|ftn|f')
 
 def get_f90_files(files):
-    return match_extension(files,'.f90')
+    return match_extension(files,'f90|f95')
 
-def get_fortran_files(files):    
-    file_base_ext = map(lambda x: os.path.splitext(x),files)
-    return get_f77_files(files) + get_f90_files(files)
+def get_fortran_files(files):
+    return match_extension(files,'f90|f95|for|f77|ftn|f')
 
-def find_fortran_compiler():
+def find_fortran_compiler(vendor = None, fc = None, f90c = None):
     fcompiler = None
-    for compiler in all_compilers:
+    for compiler_class in all_compilers:
+        if vendor is not None and vendor != compiler_class.vendor:
+            continue
+        print compiler_class
+        compiler = compiler_class(fc,f90c)
         if compiler.is_available():
             fcompiler = compiler
             break
     return fcompiler
 
-all_compilers = [absoft_fortran_compiler(),
-                 mips_fortran_compiler(),
-                 sun_fortran_compiler(),
-                 gnu_fortran_compiler()] 
-
+all_compilers = [absoft_fortran_compiler,
+                 mips_fortran_compiler,
+                 sun_fortran_compiler,
+                 gnu_fortran_compiler,
+                 intel_ia32_fortran_compiler,
+                 intel_itanium_fortran_compiler,
+                 nag_fortran_compiler,
+                 vast_fortran_compiler,
+                 ]
 
 if __name__ == "__main__":
-    for compiler in all_compilers:
-        if compiler.is_available():
-            break
-    print compiler
-
+    show_compilers()
