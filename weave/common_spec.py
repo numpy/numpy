@@ -30,7 +30,6 @@ class file_specification(common_base_specification):
         #       'FILE* %s = convert_to_file(py_%s,"%s");\n' % \
         #       (self.name,var_name,self.name,self.name,self.name)
         code = 'PyObject* py_%s = %s;\n'   \
-               'PyObject* py_%s = %s;\n'   \
                'FILE* %s = x__file_converter.convert_to_file(py_%s,"%s");\n' % \
                (self.name,var_name,self.name,self.name,self.name)
         return code       
