@@ -147,7 +147,10 @@ class build_ext (old_build_ext):
         c_sources, cxx_sources, f_sources, fmodule_sources = \
                    filter_sources(ext.sources)
         if self.compiler.compiler_type=='msvc':
-            # this hack worksaround msvc compiler attributes
+            if cxx_sources:
+                # Needed to compile kiva.agg._agg extension.
+                extra_args.append('/Zm1000')
+            # this hack works around the msvc compiler attributes
             # problem, msvc uses its own convention :(
             c_sources += cxx_sources
             cxx_sources = []
