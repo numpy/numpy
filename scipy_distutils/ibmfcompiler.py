@@ -20,6 +20,22 @@ class IbmFCompiler(FCompiler):
         'ranlib'       : ["ranlib"]
         }
 
+    def get_version(self,*args,**kwds):
+        version = FCompiler.get_version(self,*args,**kwds)
+        xlf_dir = '/etc/opt/ibmcmp/xlf'
+        if version is None and os.path.isdir(xlf_dir):
+            # If the output of xlf does not contain version info
+            # (that's the case with xlf 8.1, for instance) then
+            # let's try another method:
+            l = os.listdir(xlf_dir)
+            l.sort()
+            l.reverse()
+            l = [d for d in l if os.path.isfile(os.path.join(xlf_dir,d,'xlf.cfg'))]
+            if not l:
+                from distutils.version import LooseVersion
+                self.version = version = LooseVersion(l[0])
+        return version
+
     def get_flags(self):
         return ['-qextname']
 
