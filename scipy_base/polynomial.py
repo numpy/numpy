@@ -318,6 +318,9 @@ class poly1d:
         else:
             return Numeric.asarray(self.coeffs)
 
+    def __coerce__(self,other):
+        return None
+    
     def __repr__(self):
         vals = repr(self.coeffs)
         vals = vals[6:-1]
@@ -441,8 +444,6 @@ class poly1d:
         raise ValueError, "Attributes cannot be changed this way."
 
     def __getattr__(self, key):
-        if key == '__coerce__':
-            raise KeyError
         if key in ['r','roots']:
             return roots(self.coeffs)
         elif key in ['c','coef','coefficients']:
