@@ -650,7 +650,6 @@ class mips_fortran_compiler(fortran_compiler_base):
         self.library_dirs = self.find_lib_dir()
 
 
-
     def build_module_switch(self,module_dirs):
         res = ''
         return res 
