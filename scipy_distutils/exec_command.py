@@ -190,6 +190,16 @@ def exec_command( command,
 
     execute_in = os.path.abspath(execute_in)
     oldcwd = os.path.abspath(os.getcwd())
+
+    if __name__[-12:] == 'exec_command':
+        exec_dir = os.path.dirname(os.path.abspath(__file__))
+    elif os.path.isfile('exec_command.py'):
+        exec_dir = os.path.abspath('.')
+    else:
+        exec_dir = os.path.abspath(sys.argv[0])
+        if os.path.isfile(exec_dir):
+            exec_dir = os.path.dirname(exec_dir)
+
     if oldcwd!=execute_in:
         os.chdir(execute_in)
         log.debug('New cwd: %s' % execute_in)
@@ -201,7 +211,7 @@ def exec_command( command,
 
     try:
         # _exec_command is robust but slow, it relies on
-        # usable sys.std*.fileno() descriptors, if they
+        # usable sys.std*.fileno() descriptors. If they
         # are bad (like in win32 Idle, PyCrust environments)
         # then _exec_command_python (even slower)
         # will be used as a last resort.
@@ -209,8 +219,10 @@ def exec_command( command,
         # _exec_command_posix uses os.system and is faster
         # but not on all platforms os.system will return
         # a correct status.
-        if _with_python and sys.__stdout__.fileno()==-1:
-            st = _exec_command_python(command, **env)
+        if _with_python and (0 or sys.__stdout__.fileno()==-1):
+            st = _exec_command_python(command,
+                                      exec_command_dir = exec_dir,
+                                      **env)
         elif os.name=='posix' and sys.platform[:5]!='sunos':
             st = _exec_command_posix(command,
                                      use_shell=use_shell,
@@ -267,7 +279,8 @@ def _exec_command_posix( command,
     return status, text
 
 
-def _exec_command_python(command, **env):
+def _exec_command_python(command,
+                         exec_command_dir='', **env):
     log.debug('_exec_command_python(...)')
 
     python_exe = get_pythonexe()
@@ -275,19 +288,10 @@ def _exec_command_python(command, **env):
     stsfile = tempfile.mktemp()
     outfile = tempfile.mktemp()
 
-    if __name__[-12:] == 'exec_command':
-        exec_dir = os.path.dirname(os.path.abspath(__file__))
-    elif os.path.isfile('exec_command.py'):
-        exec_dir = os.path.abspath('.')
-    else:
-        exec_dir = os.path.abspath(sys.argv[0])
-        if os.path.isfile(exec_dir):
-            exec_dir = os.path.dirname(exec_dir)
-
     f = open(cmdfile,'w')
     f.write('import os\n')
     f.write('import sys\n')
-    f.write('sys.path.insert(0,%r)\n' % (exec_dir))
+    f.write('sys.path.insert(0,%r)\n' % (exec_command_dir))
     f.write('from exec_command import exec_command\n')
     f.write('del sys.path[0]\n')
     f.write('cmd = %r\n' % command)
@@ -505,6 +509,24 @@ def test_posix():
     
     print 'ok'
 
+def test_execute_in():
+    pythonexe = get_pythonexe()
+    tmpfile = tempfile.mktemp()
+    fn = os.path.basename(tmpfile)
+    tmpdir = os.path.dirname(tmpfile)
+    f = open(tmpfile,'w')
+    f.write('Hello')
+    f.close()
+
+    s,o = exec_command('%s -c "print \'Ignore following IOError:\',open(%r,\'r\')"' \
+                       % (pythonexe,fn))
+    assert s and o!='',(s,o)
+    s,o = exec_command('%s -c "print open(%r,\'r\').read()"' % (pythonexe,fn),
+                       execute_in = tmpdir)
+    assert s==0 and o=='Hello',(s,o)
+    os.remove(tmpfile)
+    print 'ok'
+
 if os.name=='posix':
     test = test_posix
 elif os.name in ['nt','dos']:
@@ -520,3 +542,4 @@ if __name__ == "__main__":
 
     test_splitcmdline()
     test()
+    test_execute_in()
