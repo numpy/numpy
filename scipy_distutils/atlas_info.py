@@ -1,7 +1,7 @@
 import sys, os
 from misc_util import get_path
 
-library_path = ['/home/peterson/opt/lib/atlas']
+library_path = None 
 
 def get_atlas_info():
     if sys.platform  == 'win32':

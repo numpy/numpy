@@ -56,7 +56,7 @@ class x11_info(system_info):
             else:
                 shared_libs = combine_paths(lib_dir,'libX11.so*')
                 if not shared_libs: return
-                info['extra_linker_arguments'] = [shared_libs[0]]
+                info['extra_link_args'] = [shared_libs[0]]
             info['include_dirs'] = [inc_dir]
             self.info = info
             return 1
