@@ -1,10 +1,11 @@
 
 import types
 import Numeric
-from Numeric import *
+from Numeric import ravel, asarray, nonzero, array, choose, ones, zeros
 from type_check import ScalarType
 from shape_base import squeeze
 from fastumath import PINF as inf
+from fastumath import *
 import _compiled_base
 
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
@@ -16,7 +17,6 @@ __all__ = ['round','any','all','logspace','linspace','fix','mod',
 round = Numeric.around
 any = Numeric.sometrue
 all = Numeric.alltrue
-
 
 # Need this to change array type for low precision values
 def sum(x,axis=0):  # could change default axis here
@@ -422,9 +422,6 @@ class vectorize:
             return zeros((0,),'d')
         else:
             return (zeros((0,),'d'),)*len(res)
-
-
-    
 
 #-----------------------------------------------------------------------------
 # Test Routines
