@@ -7,7 +7,7 @@ try:
     # These are used by Numeric tests.
     # If Numeric and scipy_base  are not available, then some of the
     # functions below will not be available.
-    from Numeric import alltrue,equal,shape,ravel,around,zeros,Float64
+    from Numeric import alltrue,equal,shape,ravel,around,zeros,Float64,asarray
     import scipy_base.fastumath as math
 except ImportError:
     pass
@@ -381,6 +381,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
 
 __all__.append('assert_array_equal')
 def assert_array_equal(x,y,err_msg=''):
+    x,y = asarray(x), asarray(y)
     msg = '\nArrays are not equal'
     try:
         assert alltrue(equal(shape(x),shape(y))),\
@@ -394,6 +395,8 @@ def assert_array_equal(x,y,err_msg=''):
 
 __all__.append('assert_array_almost_equal')
 def assert_array_almost_equal(x,y,decimal=6,err_msg=''):
+    x = asarray(x)
+    y = asarray(y)
     msg = '\nArrays are not almost equal'
     try:
         assert alltrue(equal(shape(x),shape(y))),\
