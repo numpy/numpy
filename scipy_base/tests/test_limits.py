@@ -9,6 +9,7 @@ import unittest
 import sys
 from scipy_test.testing import set_package_path
 set_package_path()
+import scipy_base;reload(scipy_base)
 from scipy_base import *
 del sys.path[0]
 

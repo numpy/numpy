@@ -6,6 +6,7 @@ from scipy_test.testing import assert_almost_equal, assert_array_almost_equal
 import sys
 from scipy_test.testing import set_package_path
 set_package_path()
+import scipy_base;reload(scipy_base)
 from scipy_base import *
 del sys.path[0]
 
