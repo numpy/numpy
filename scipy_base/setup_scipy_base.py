@@ -46,7 +46,11 @@ def configuration(parent_package='',parent_path=None):
     # _compiled_base module
     sources = ['_compiled_base.c']
     sources = [os.path.join(local_path,x) for x in sources]
-    ext = Extension(dot_join(package,'_compiled_base'),sources)
+    depends = ['_scipy_mapping.c','_scipy_number.c']
+    depends = [os.path.join(local_path,x) for x in depends]
+
+    ext = Extension(dot_join(package,'_compiled_base'),sources,
+                    depends = depends)
     config['ext_modules'].append(ext)
 
     # display_test module
