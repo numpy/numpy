@@ -632,6 +632,8 @@ fcompiler_class = {'gnu':('gnufcompiler','GnuFCompiler',
                            "HP Fortran 90 Compiler"),
                    'lahey':('laheyfcompiler','LaheyFCompiler',
                             "Lahey/Fujitsu Fortran 95 Compiler"),
+                   'ibm':('ibmfcompiler','IbmFCompiler',
+                          "IBM XL Fortran Compiler"),
                    'f':('fcompiler','FFCompiler',
                         "Fortran Company/NAG F Compiler"),
                    }
@@ -642,6 +644,7 @@ _default_compilers = (
     ('cygwin.*',('gnu','intelv','absoft','compaqv','intelitanium')),
     ('linux.*',('gnu','intel','lahey','pg','absoft','nag','vast','compaq',
                 'intelitanium')),
+    ('darwin.*',('gnu','nag','ibm')),
     ('sunos.*',('forte','gnu','sun')),
     ('irix',('mips','gnu')),
     # OS mappings
