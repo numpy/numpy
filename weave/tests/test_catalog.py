@@ -6,10 +6,8 @@ from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
 from scipy_distutils.misc_util import add_local_to_path
 
 add_grandparent_to_path(__name__)
-from catalog import *
-# not sure why, but was having problems with which catalog was being called.
 import catalog
-#catalog = catalog.catalog
+reload(catalog) # this'll pick up any recent code changes
 restore_path()
 
 add_local_to_path(__name__)
@@ -19,7 +17,7 @@ restore_path()
 
 class test_default_dir(unittest.TestCase):
     def check_is_writable(self):
-        path = default_dir()
+        path = catalog.default_dir()
         name = os.path.join(path,'dummy_catalog')
         test_file = open(name,'w')
         try:
@@ -33,17 +31,17 @@ class test_os_dependent_catalog_name(unittest.TestCase):
     
 class test_catalog_path(unittest.TestCase):        
     def check_default(self):
-        in_path = default_dir()
+        in_path = catalog.default_dir()
         path = catalog.catalog_path(in_path)
         d,f = os.path.split(path)
         assert(d == in_path)
-        assert(f == os_dependent_catalog_name())
+        assert(f == catalog.os_dependent_catalog_name())
     def check_current(self):
         in_path = '.'
         path = catalog.catalog_path(in_path)
         d,f = os.path.split(path)
         assert(d == os.path.abspath(in_path))     
-        assert(f == os_dependent_catalog_name())   
+        assert(f == catalog.os_dependent_catalog_name())   
     def check_user(path):
         if sys.platform != 'win32':
             in_path = '~'
@@ -147,20 +145,20 @@ class test_catalog(unittest.TestCase):
         q = catalog.catalog(['first','MODULE','third'])
         q.set_module_directory('second')
         order = q.build_search_order()
-        assert(order == ['first','second','third',default_dir()])
+        assert(order == ['first','second','third',catalog.default_dir()])
     def check_build_search_order2(self):        
         """ MODULE in search path should be removed if module_dir==None.
         """                        
         q = catalog.catalog(['first','MODULE','third'])
         order = q.build_search_order()
-        assert(order == ['first','third',default_dir()])        
+        assert(order == ['first','third',catalog.default_dir()])        
     def check_build_search_order3(self):
         """ If MODULE is absent, module_dir shouldn't be in search path.
         """                        
         q = catalog.catalog(['first','second'])
         q.set_module_directory('third')
         order = q.build_search_order()
-        assert(order == ['first','second',default_dir()])
+        assert(order == ['first','second',catalog.default_dir()])
     def check_build_search_order4(self):
         """ Make sure environment variable is getting used.
         """                        
@@ -170,7 +168,7 @@ class test_catalog(unittest.TestCase):
         os.environ['PYTHONCOMPILED'] = sep.join(('MODULE','fourth','fifth'))
         q.set_module_directory('third')
         order = q.build_search_order()
-        assert(order == ['first','second','third','fourth','fifth',default_dir()])
+        assert(order == ['first','second','third','fourth','fifth',catalog.default_dir()])
     
     def check_catalog_files1(self):
         """ Be sure we get at least one file even without specifying the path.
