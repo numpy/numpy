@@ -7,9 +7,6 @@ classes are available:
   atlas_info
   fftw_info
   x11_info
-The following environment variables are used if defined:
-  ATLAS - path to ATLAS library
-  FFTW  - path to FFTW library
 
 Usage:
     info_dict = get_info(<name>)
@@ -20,32 +17,72 @@ Usage:
   asked resource is not available (or system_info could not find it).
 
 Global parameters:
-  prefixes - a list of prefixes for scanning the location of
-             resources.
   system_info.static_first - a flag for indicating that static
              libraries are searched first than shared ones.
   system_info.verbose - show the results if set.
 
-Author:
+The file 'site.cfg' in the same directory as this module is read
+for configuration options. The format is that used by ConfigParser (i.e.,
+Windows .INI style). The section DEFAULT has options that are the default
+for each section. The available sections are fftw, atlas, and x11. Appropiate
+defaults are used if nothing is specified.
+
+Example:
+----------
+[DEFAULT]
+lib_dir = /usr/lib:/usr/local/lib:/opt/lib
+include_dir = /usr/include:/usr/local/include:/opt/include
+# use static libraries in preference to shared ones
+static_first = 1
+
+[fftw]
+fftw_libs = fftw, rfftw
+fftw_opt_libs = fftw_threaded, rfftw_threaded
+# if the above aren't found, look for {s,d}fftw_libs and {s,d}fftw_opt_libs
+
+[atlas]
+lib_dir = /usr/lib/3dnow:/usr/lib/3dnow/atlas
+# for overriding the names of the atlas libraries
+atlas_libs = f77blas, cblas, atlas
+lapack_libs = lapack
+
+[x11]
+lib_dir = /usr/X11R6/lib
+include_dir = /usr/X11R6/include
+----------
+
+Authors:
   Pearu Peterson <pearu@cens.ioc.ee>, February 2002
+  David M. Cooke <cookedm@physics.mcmaster.ca>, April 2002
 Permission to use, modify, and distribute this software is given under the
 terms of the LGPL.  See http://www.fsf.org
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 
-import sys,os,re,types,pprint
+import sys,os,re,types
 from distutils.errors import DistutilsError
 from glob import glob
+import ConfigParser
 
 from distutils.sysconfig import get_config_vars
 
 if sys.platform == 'win32':
-    prefixes = ['C:\\'] # XXX: what is prefix in win32?
+    default_lib_dirs = ['C:\\'] # probably not very helpful...
+    default_include_dirs = []
+    default_x11_lib_dirs = []
+    default_x11_include_dirs = []
 else:
-    prefixes = ['/usr','/usr/local','/opt']
-if sys.prefix not in prefixes:
-    prefixes.append(sys.prefix)
-prefixes = filter(os.path.isdir,prefixes) # XXX: Is this ok on win32? Is 'C:' dir?
+    default_lib_dirs = ['/usr/local/lib', '/opt/lib', '/usr/lib']
+    default_include_dirs = ['/usr/local/include',
+                            '/opt/include', '/usr/include']
+    default_x11_lib_dirs = ['/usr/X11R6/lib','/usr/X11/lib']
+    default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include']
+
+if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
+    default_lib_dirs.append(os.path.join(sys.prefix, 'lib'))
+    default_include_dirs.append(os.path.join(sys.prefix, 'include'))
+default_lib_dirs = filter(os.path.isdir, default_lib_dirs)
+default_include_dirs = filter(os.path.isdir, default_include_dirs)
 
 so_ext = get_config_vars('SO')[0] or ''
 
@@ -89,16 +126,31 @@ class system_info:
 
     """ get_info() is the only public method. Don't use others.
     """
+    section = 'DEFAULT'
 
     static_first = 1
     verbose = 1
     need_refresh = 1
     saved_results = {}
-    
-    def __init__ (self):
+
+    def __init__ (self,
+                  default_lib_dirs=default_lib_dirs,
+                  default_include_dirs=default_include_dirs,
+                  ):
         self.__class__.info = {}
         #self.__class__.need_refresh = not self.info
         self.local_prefixes = []
+        defaults = {}
+        defaults['lib_dir'] = ':'.join(default_lib_dirs)
+        defaults['include_dir'] = ':'.join(default_include_dirs)
+        defaults['static_first'] = '1'
+        self.cp = ConfigParser.ConfigParser(defaults)
+        cf = os.path.join(os.path.split(os.path.abspath(__file__))[0],
+                          'site.cfg')
+        self.cp.read([cf])
+        if not self.cp.has_section(self.section):
+            self.cp.add_section(self.section)
+        self.static_first = self.cp.getboolean(self.section, 'static_first')
 
     def set_info(self,**info):
         #self.__class__.info = info
@@ -114,15 +166,8 @@ class system_info:
             flag = 1
             if self.verbose:
                 print self.__class__.__name__ + ':'
-            for n in ['calc_info','calc_info_debian']:
-                calc_info = getattr(self,n,None)
-                if calc_info is None: continue
-                for p in self.local_prefixes + prefixes:
-                    if self.verbose:
-                        print '  Looking in',p,'...'
-                    calc_info(p)
-                    if self.has_info(): break
-                if self.has_info(): break
+            if hasattr(self, 'calc_info'):
+                self.calc_info()
             if self.verbose:
                 if not self.has_info():
                     print '  NOT AVAILABLE'
@@ -137,8 +182,26 @@ class system_info:
         return res
 
     def calc_info_template(self,prefix):
-        """ Calculate info distionary. """
-    
+        """ Calculate info dictionary. """
+
+    def get_paths(self, section, key):
+        dirs = self.cp.get(section, key).split(':')
+        default_dirs = self.cp.get('DEFAULT', key).split(':')
+        dirs.extend(default_dirs)
+        return [ d for d in dirs if os.path.isdir(d) ]
+
+    def get_lib_dirs(self, key='lib_dir'):
+        return self.get_paths(self.section, key)
+    def get_include_dirs(self, key='include_dir'):
+        return self.get_paths(self.section, key)
+
+    def get_libs(self, key, default):
+        try:
+            libs = self.cp.get(self.section, key)
+        except ConfigParser.NoOptionError:
+            return default
+        return [a.strip() for a in libs.split(',')]
+
     def check_libs(self,lib_dir,libs,opt_libs =[]):
         """ If static or shared libraries are available then return
             their info dictionary. """
@@ -174,41 +237,19 @@ class system_info:
 
 
 class fftw_info(system_info):
+    section = 'fftw'
 
     def __init__(self):
         system_info.__init__(self)
-        p = os.environ.get('FFTW')
-        if p is not None:
-            p = os.path.abspath(p)
-            if os.path.isdir(p):
-                self.local_prefixes.insert(0,p)
 
-    def calc_info(self,prefix):       
-        lib_dirs = filter(os.path.isdir,
-                          combine_paths(prefix,'lib',['fftw*','FFTW*']))
-        if not lib_dirs:
-            lib_dirs = filter(os.path.isdir,
-                              combine_paths(prefix,['fftw*','FFTW*'],'lib'))
-        if not lib_dirs:
-            lib_dirs = filter(os.path.isdir,
-                              combine_paths(prefix,['lib','fftw*','FFTW*']))
-                                                          
-        if not lib_dirs:
-            lib_dirs = [prefix]
-        incl_dirs = filter(os.path.isdir,
-                           combine_paths(prefix,'include',['fftw*','FFTW*']))
-        if not incl_dirs:
-            incl_dirs = filter(os.path.isdir,
-                               combine_paths(prefix,['fftw*','FFTW*'],'include'))
-        if not incl_dirs:
-            incl_dirs = filter(os.path.isdir,
-                               combine_paths(prefix,['include','fftw*','FFTW*']))
-        if not incl_dirs:
-            incl_dirs = [prefix]
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        incl_dirs = self.get_include_dirs()
         incl_dir = None
 
-        libs = ['fftw','rfftw']
-        opt_libs = ['fftw_threads','rfftw_threads']
+        libs = self.get_libs('fftw_libs', ['fftw','rfftw'])
+        opt_libs = self.get_libs('fftw_opt_libs',
+                                 ['fftw_threads','rfftw_threads'])
         info = None
         for d in lib_dirs:
             r = self.check_libs(d,libs,opt_libs)
@@ -230,8 +271,9 @@ class fftw_info(system_info):
                 info = None
 
         if info is None:
-            libs = ['dfftw','drfftw']
-            opt_libs = ['dfftw_threads','drfftw_threads']
+            libs = self.get_libs('dfftw_libs', ['dfftw', 'drfftw'])
+            opt_libs = self.get_libs('dfftw_opt_libs',
+                                     ['dfftw_threads', 'drfftw_threads'])
             for d in lib_dirs:
                 r = self.check_libs(d,libs,opt_libs)
                 if r is not None:
@@ -251,9 +293,10 @@ class fftw_info(system_info):
                     dict_append(info,define_macros=[('SCIPY_DFFTW_H',1)])
                 else:
                     info = None
-        
-        libs = ['sfftw','srfftw']
-        opt_libs = ['sfftw_threads','srfftw_threads']
+
+        libs = self.get_libs('sfftw_libs', ['sfftw', 'srfftw'])
+        opt_libs = self.get_libs('sfftw_opt_libs',
+                                 ['sfftw_threads', 'srfftw_threads'])
         flag = 0
         for d in lib_dirs:
             r = self.check_libs(d,libs,opt_libs)
@@ -274,89 +317,81 @@ class fftw_info(system_info):
 
 
 class atlas_info(system_info):
+    section = 'atlas'
 
-    def __init__(self):
-        system_info.__init__(self)
-        p = os.environ.get('ATLAS')
-        if p is not None:
-            p = os.path.abspath(p)
-            if os.path.isdir(p):
-                self.local_prefixes.insert(0,p)
+    def get_paths(self, section, key):
+        default_dirs = self.cp.get('DEFAULT', key).split(':')
+        dirs = []
+        for d in self.cp.get(section, key).split(':') + default_dirs:
+            dirs.extend([d]+combine_paths(d,['atlas*','ATLAS*']))
+        return [ d for d in dirs if os.path.isdir(d) ]
 
-    def calc_info(self, prefix):
-        print combine_paths(prefix,'lib',['atlas*','ATLAS*'])
-        lib_dirs = filter(os.path.isdir,combine_paths(prefix,'lib',
-                                                      ['atlas*','ATLAS*']))
-        if lib_dirs:
-            other_dirs = filter(os.path.isdir,combine_paths(lib_dirs,'*'))
-            other_dirs.extend(filter(os.path.isdir,combine_paths(prefix,'lib')))
-            lib_dirs.extend(other_dirs)
-        else:
-            lib_dirs = filter(os.path.isdir,
-                              combine_paths(prefix,['lib','atlas*','ATLAS*']))
-        if not lib_dirs:
-            lib_dirs = [prefix]
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        include_dirs = self.get_include_dirs()
 
-        h = (combine_paths(lib_dirs,'cblas.h') or [None])[0]
-        if not h:
-            h = (combine_paths(lib_dirs,'include','cblas.h') or [None])[0]
+        h = (combine_paths(lib_dirs+include_dirs,'cblas.h') or [None])[0]
         if h: h = os.path.dirname(h)
-
-        libs = ['lapack','f77blas','cblas','atlas']
         info = None
+        # lapack must appear before atlas
+        lapack_libs = self.get_libs('lapack_libs', ['lapack'])
         for d in lib_dirs:
-            r = self.check_libs(d,libs,[])
-            if r is not None:
-                info = r
+            lapack = self.check_libs(d,lapack_libs,[])
+            if lapack is not None:
+                info = lapack                
                 break
-        if info is None: return
+        else:
+            return
+        atlas_libs = self.get_libs('atlas_libs', ['f77blas', 'cblas', 'atlas'])
+        for d in lib_dirs:
+            atlas = self.check_libs(d,atlas_libs,[])
+            if atlas is not None:
+                dict_append(info, **atlas)
+                break
+        else:
+            return
+
         if h: dict_append(info,include_dirs=[h])
         self.set_info(**info)
 
-    def calc_info_debian(self,prefix):
-        print 'Trying Debian setup'
-        atlas = self.check_libs(os.path.join(prefix,'lib'),
-                                ['cblas','f77blas','atlas'],[])
-        if not atlas: return
-        lapack = self.check_libs(os.path.join(prefix,'lib','atlas'),['lapack'],[])
-        if not lapack:
-            lapack = self.check_libs(os.path.join(prefix,'lib'),['lapack'],[])
-        if not lapack: return
-        info = lapack
-        h = (combine_paths(prefix,'include','cblas.h') or [None])[0]
-        if h: dict_append(info,include_dirs=[os.path.dirname(h)])
-        dict_append(info,**atlas)
-        self.set_info(**info)
-        
-class blas_info(system_info):
-    # For Fortran or optimized blas, not atlas.
-    pass
+## class blas_info(system_info):
+##     # For Fortran or optimized blas, not atlas.
+##     pass
 
 
-class lapack_info(system_info):
-    # For Fortran or optimized lapack, not atlas
-    pass
+## class lapack_info(system_info):
+##     # For Fortran or optimized lapack, not atlas
+##     pass
 
 
 class x11_info(system_info):
+    section = 'x11'
 
-    def calc_info(self, prefix):
+    def __init__(self):
+        system_info.__init__(self,
+                             default_lib_dirs=default_x11_lib_dirs,
+                             default_include_dirs=default_x11_include_dirs)
+
+    def calc_info(self):
         if sys.platform  == 'win32':
             return
-        for x11_dir in combine_paths(prefix,['X11R6','X11']):
-            inc_dir = None
-            for d in combine_paths(x11_dir,['include','include/X11']):
-                if combine_paths(d,'X.h'):
-                    inc_dir = d
-                    break
-            if not d: return
-            lib_dir = combine_paths(x11_dir,'lib')
-            if not lib_dir: return
-            info = self.check_libs(lib_dir[0],['X11'],[])
-            if info is None:
-                continue
-            dict_append(info,include_dirs=[inc_dir])
-            self.set_info(**info)
+        lib_dirs = self.get_lib_dirs()
+        include_dirs = self.get_include_dirs()
+        x11_libs = self.get_libs('x11_libs', ['X11'])
+        for lib_dir in lib_dirs:
+            info = self.check_libs(lib_dir, x11_libs, [])
+            if info is not None:
+                break
+        else:
+            return
+        inc_dir = None
+        for d in include_dirs:
+            if combine_paths(d, 'X11/X.h'):
+                inc_dir = d
+                break
+        if inc_dir is not None:
+            dict_append(info, include_dirs=[inc_dir])
+        self.set_info(**info)
 
 def shortest_path(pths):
     pths.sort()
