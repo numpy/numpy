@@ -614,12 +614,13 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
     msg += err_msg
     actual, desired = map(float, (actual, desired))
     # Normalized the numbers to be in range (-10.0,10.0)
+    scale = pow(10,math.floor(math.log10(0.5*(abs(desired)+abs(actual)))))
     try:
-        sc_desired = desired/pow(10,math.floor(math.log10(abs(desired))))
+        sc_desired = desired/scale
     except ZeroDivisionError:
         sc_desired = 0.0
     try:
-        sc_actual = actual/pow(10,math.floor(math.log10(abs(actual))))
+        sc_actual = actual/scale
     except ZeroDivisionError:
         sc_actual = 0.0
     try:
