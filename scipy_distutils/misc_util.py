@@ -231,8 +231,10 @@ class SourceGenerator:
     """
     def __init__(self,func,target,sources=[],*args):
         if not os.path.isabs(target) and func is not None:
-            caller_dir = os.path.abspath(os.path.dirname(\
-                sys._getframe(1).f_globals['__file__']))
+            g = sys._getframe(1).f_globals
+            fn = g.get('__file__',g.get('__name__'))
+            if fn=='__main__': fn = sys.argv[0]
+            caller_dir = os.path.abspath(os.path.dirname(fn))
             prefix = os.path.commonprefix([caller_dir,os.getcwd()])
             target_dir = caller_dir[len(prefix)+1:]
             target = os.path.join(get_build_temp(),target_dir,target)
