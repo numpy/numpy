@@ -4,6 +4,7 @@ Bundle of SciPy core modules:
   scipy_test
   scipy_distutils
   scipy_base
+  weave
 
 Usage:
    python setup.py install
@@ -17,7 +18,7 @@ from scipy_distutils.core import setup
 from scipy_distutils.misc_util import default_config_dict
 from scipy_distutils.misc_util import get_path, merge_config_dicts
 
-bundle_packages = ['scipy_distutils','scipy_test','scipy_base']
+bundle_packages = ['scipy_distutils','scipy_test','scipy_base','weave']
 
 def setup_package():
     old_path = os.getcwd()
