@@ -35,7 +35,7 @@
 #   nt      | win32        | Windows 98, Python 2.1.1. Idle 0.8
 #   nt      | win32        | Cygwin 98-4.10, Python 2.1.1(MSC) - echo tests
 #                            fail i.e. redefining environment variables may
-#                            not work.
+#                            not work. FIXED: don't use cygwin echo!
 #   posix   | cygwin       | Cygwin 98-4.10, Python 2.3.3(cygming special)
 
 __all__ = ['exec_command','find_executable']
@@ -435,7 +435,7 @@ def _exec_command( command, use_shell=None, **env ):
 def test_nt():
     pythonexe = get_pythonexe()
 
-    if not (sys.platform=='win32' and os.environ.get('OSTYPE','')=='cygwin'):
+    if 1: ##  not (sys.platform=='win32' and os.environ.get('OSTYPE','')=='cygwin'):
         s,o=exec_command('echo Hello')
         assert s==0 and o=='Hello',(s,o)
 
