@@ -480,7 +480,7 @@ class fortran_compiler_base(CCompiler):
                        module_switch + \
                        self.compile_switch + source + \
                        self.object_switch + object
-                log.debug(cmd)
+                log.info(cmd)
                 failure = os.system(cmd)
                 if failure:
                     raise FortranCompileError,\
@@ -528,7 +528,7 @@ class fortran_compiler_base(CCompiler):
         objects = string.join(object_files)
         if objects:
             cmd = '%s%s %s' % (self.lib_ar,lib_file,objects)
-            log.debug(cmd)
+            log.info(cmd)
             failure = os.system(cmd)
             if failure:
                 raise FortranBuildError,\
@@ -536,7 +536,7 @@ class fortran_compiler_base(CCompiler):
             if self.lib_ranlib and not skip_ranlib:
                 # Digital,MIPSPro compilers do not have ranlib.
                 cmd = '%s %s' %(self.lib_ranlib,lib_file)
-                log.debug(cmd)
+                log.info(cmd)
                 failure = os.system(cmd)
                 if failure:
                     raise FortranBuildError,\
