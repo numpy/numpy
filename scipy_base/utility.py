@@ -2,7 +2,6 @@ import Numeric
 import types
 import cPickle
 import sys
-import scipy
 
 from Numeric import *
 from fastumath import *
@@ -480,6 +479,7 @@ def vstack(tup):
             tup -- sequence of arrays.  All arrays must have the same 
                    shape.
         Examples:
+            >>> import scipy
             >>> a = array((1,2,3))
             >>> b = array((2,3,4))
             >>> scipy.vstack((a,b))
@@ -510,6 +510,7 @@ def hstack(tup):
             tup -- sequence of arrays.  All arrays must have the same 
                    shape.
         Examples:
+            >>> import scipy
             >>> a = array((1,2,3))
             >>> b = array((2,3,4))
             >>> scipy.hstack((a,b))
@@ -535,6 +536,7 @@ def column_stack(tup):
             tup -- sequence of 1D arrays.  All arrays must have the same 
                    length.
         Examples:
+            >>> import scipy
             >>> a = array((1,2,3))
             >>> b = array((2,3,4))
             >>> scipy.vstack((a,b))
@@ -559,6 +561,7 @@ def dstack(tup):
             tup -- sequence of arrays.  All arrays must have the same 
                    shape.
         Examples:
+            >>> import scipy
             >>> a = array((1,2,3))
             >>> b = array((2,3,4))
             >>> scipy.dstack((a,b))
@@ -714,6 +717,7 @@ def hsplit(ary,indices_or_sections):
         Related:
             hstack, split, array_split, vsplit, dsplit.           
         Examples:
+            >>> import scipy
             >>> a= array((1,2,3,4))
             >>> scipy.hsplit(a,2)
             [array([1, 2]), array([3, 4])]
@@ -761,8 +765,10 @@ def vsplit(ary,indices_or_sections):
         Related:
             vstack, split, array_split, hsplit, dsplit.
         Examples:
+            import scipy
             >>> a = array([[1,2,3,4],
             ...            [1,2,3,4]])
+            >>> scipy.vsplit(a)
             [array([       [1, 2, 3, 4]]), array([       [1, 2, 3, 4]])]
                    
     """
@@ -827,10 +833,10 @@ def trim_zeros(filt,trim='fb'):
     """Trim the leading and trailing zeros from a 1D array.
     
     Example:
-
-     >>> a = array((0,0,0,1,2,3,2,1,0))
-     >>> scipy.trim_zeros(a)
-     array([1, 2, 3, 2, 1])
+        >>> import scipy
+        >>> a = array((0,0,0,1,2,3,2,1,0))
+        >>> scipy.trim_zeros(a)
+        array([1, 2, 3, 2, 1])
     
     """
     first = 0
@@ -847,11 +853,11 @@ def trim_zeros(filt,trim='fb'):
 
     
 ##def test(level=10):
-##    from scipy_test import module_test
+##    from scipy_base.testing import module_test
 ##    module_test(__name__,__file__,level=level)
 
 ##def test_suite(level=1):
-##    from scipy_test import module_test_suite
+##    from scipy_base.testing import module_test_suite
 ##    return module_test_suite(__name__,__file__,level=level)
 
 

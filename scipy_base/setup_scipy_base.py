@@ -3,7 +3,7 @@
 import os
 from glob import glob
 from scipy_distutils.core import Extension
-from scipy_distutils.misc_util import get_path, default_config_dict
+from scipy_distutils.misc_util import get_path, default_config_dict,dot_join
 
 def configuration(parent_package=''):
     parent_path = parent_package
@@ -14,6 +14,10 @@ def configuration(parent_package=''):
     config = default_config_dict()
     config['packages'].append(parent_package+'scipy_base')
     config['package_dir'][parent_package+'scipy_base'] = local_path
+
+    config['packages'].append(dot_join(parent_package,'scipy_base.tests'))
+    test_path = os.path.join(local_path,'tests')
+    config['package_dir']['scipy_base.tests'] = test_path
 
     # fastumath module
     sources = ['fastumathmodule.c']
