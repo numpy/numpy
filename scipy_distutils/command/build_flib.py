@@ -806,12 +806,24 @@ class gnu_fortran_compiler(fortran_compiler_base):
         return self.gcc_lib_dir
 
     def get_linker_so(self):
+        lnk = None
         # win32 linking should be handled by standard linker
         if ((sys.platform  != 'win32')  and
             (sys.platform  != 'cygwin') and
             (os.uname()[0] != 'Darwin')):
-            return [self.f77_compiler,'-shared']
- 
+            lnk = [self.f77_compiler,'-shared']
+        return lnk
+
+    def get_extra_link_args(self):
+        # SunOS often has dynamically loaded symbols defined in the
+        # static library libg2c.a  The linker doesn't like this.  To
+        # ignore the problem, use the -mimpure-text flag.  It isn't
+        # the safest thing, but seems to work.
+        args = []  
+        if ((os.uname()[0] == 'SunOS')):
+            args =  ['-mimpure-text']
+        return args
+
     def f90_compile(self,source_files,module_files,temp_dir=''):
         raise DistutilsExecError, 'f90 not supported by Gnu'
 
