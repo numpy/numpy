@@ -325,6 +325,8 @@ class atlas_info(system_info):
 
     def get_paths(self, section, key):
         default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
+        if os.environ.has_key('ATLAS'):
+            default_dirs.append(os.environ['ATLAS'])
         dirs = []
         for d in self.cp.get(section, key).split(os.pathsep) + default_dirs:
             dirs.extend([d]+combine_paths(d,['atlas*','ATLAS*']))
