@@ -87,7 +87,7 @@ def update_version(release_level='alpha',
                     }
     version = version_template % version_dict
 
-    if version != old_version:
+    if version_info != old_version_info:
         print 'version increase detected: %s -> %s'%(old_version,version)
         version_file = os.path.join(path,'__version__.py')
         if not overwrite_version_py:
@@ -165,7 +165,8 @@ def get_path(mod_name):
 def add_local_to_path(mod_name):
     local_path = get_path(mod_name)
     sys.path.insert(0,local_path)
-    
+
+
 def add_grandparent_to_path(mod_name):
     local_path = get_path(mod_name)
     gp_dir = os.path.split(local_path)[0]

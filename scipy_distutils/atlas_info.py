@@ -16,7 +16,7 @@ def get_atlas_info():
             atlas_library_dirs = unix_atlas_directory(sys.platform)
         else:
             atlas_library_dirs = library_path
-        blas_libraries = ['cblas','f77blas','atlas']
+        blas_libraries = ['cblas','f77blas','atlas','g2c']
         lapack_libraries = ['lapack'] + blas_libraries
     return blas_libraries, lapack_libraries, atlas_library_dirs
 
@@ -42,6 +42,5 @@ def unix_atlas_directory(platform):
     for directory in dir_search:
         if os.path.exists(directory):
             result = [directory]
-
     # we should really do an ftp search or something like that at this point.
     return result   

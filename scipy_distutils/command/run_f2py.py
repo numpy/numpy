@@ -87,7 +87,7 @@ class run_f2py(Command):
         # one extension module.
 
         target_dir = self.build_dir
-
+        
         new_sources = []
         f2py_sources = []
         fortran_sources = []
@@ -127,6 +127,10 @@ class run_f2py(Command):
         if not (f2py_sources or fortran_sources):
             return new_sources
 
+        # make sure the target dir exists
+        from distutils.dir_util import mkpath
+        mkpath(target_dir)
+
         if not f2py_sources:
             # creating a temporary pyf file from fortran sources
             pyf_target = os.path.join(target_dir,ext.name+'.pyf')
@@ -156,10 +160,6 @@ class run_f2py(Command):
         ext.include_dirs.append(os.path.join(d,'src'))
 
         f2py_options = ext.f2py_options + self.f2py_options
-
-        # make sure the target dir exists
-        from distutils.dir_util import mkpath
-        mkpath(target_dir)
 
         for source in f2py_sources:
             target = f2py_targets[source]
