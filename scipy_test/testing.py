@@ -96,7 +96,7 @@ class ScipyTestCase (unittest.TestCase):
         elapsed = jiffies()
         while i<times:
             i += 1
-            exec code in locs,globs
+            exec code in globs,locs
         elapsed = jiffies() - elapsed
         return 0.01*elapsed
 
