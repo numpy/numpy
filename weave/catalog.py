@@ -35,8 +35,14 @@ import os,sys,string
 #import shelve
 import pickle
 #import simple_shelve as shelve
-import dumb_shelve as shelve
-
+try:
+    import dbhash
+    import shelve
+    dumb = 0
+except ImportError:
+    import dumb_shelve as shelve
+    dumb == 1
+    
 def getmodule(object):
     """ Discover the name of the module where object was defined.
     
@@ -216,15 +222,16 @@ def get_catalog(module_path,mode='r'):
         msg = " mode must be 'c', 'n', 'r', or 'w'.  See anydbm for more info"
         raise ValueError, msg
     catalog_file = catalog_path(module_path)
-    #print catalog_file,mode
     try:
         # code reliant on the fact that we are using dumbdbm
-        if mode == 'r' and not os.path.exists(catalog_file+'.dat'):
+        if dumb and mode == 'r' and not os.path.exists(catalog_file+'.dat'):
             sh = None
         else:
-            sh = shelve.open(catalog_file,mode)
+            sh = shelve.open(catalog_file,mode=mode)
     except: # not sure how to pin down which error to catch yet
         sh = None
+    if sh is None:
+        print catalog_file    
     return sh
 
 class catalog:
