@@ -98,7 +98,7 @@ else:
     default_src_dirs = ['/usr/local/src', '/opt/src']
     default_x11_lib_dirs = ['/usr/X11R6/lib','/usr/X11/lib','/usr/lib']
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include',
-                                '/usr/include/X11']
+                                '/usr/include']
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0,os.path.join(sys.prefix, 'lib'))
