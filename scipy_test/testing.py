@@ -2,28 +2,28 @@
 Unit-testing
 ------------
 
-  ScipyTest - Scipy tests site manager
-  ScipyTestCase - unittest.TestCase with measure method
-  set_package_path - prepend package build directory to path
-  set_local_path - prepend local directory (to tests files) to path
-  restore_path - restore path after set_package_path
+  ScipyTest -- Scipy tests site manager
+  ScipyTestCase -- unittest.TestCase with measure method
+  set_package_path -- prepend package build directory to path
+  set_local_path -- prepend local directory (to tests files) to path
+  restore_path -- restore path after set_package_path
 
 Timing tools
 ------------
 
-  jiffies - return 1/100ths of a second that the current process has used
-  memusage - virtual memory size in bytes of the running python [linux]
+  jiffies -- return 1/100ths of a second that the current process has used
+  memusage -- virtual memory size in bytes of the running python [linux]
 
 Utility functions
 -----------------
 
-  assert_equal
-  assert_almost_equal
-  assert_approx_equal
-  assert_array_equal
-  assert_array_almost_equal
-  assert_array_less
-  rand - array of random numbers from given shape
+  assert_equal --
+  assert_almost_equal --
+  assert_approx_equal --
+  assert_array_equal --
+  assert_array_almost_equal --
+  assert_array_less --
+  rand -- array of random numbers from given shape
 
 """
 
@@ -104,6 +104,7 @@ def restore_path():
         print 'Removing %r from sys.path' % (sys.path[0])
     del sys.path[0]
 
+__all__.extend(['jiffies','memusage'])
 if sys.platform[:5]=='linux':
     def jiffies(_proc_pid_stat = '/proc/%s/stat'%(os.getpid()),
                 _load_time=time.time()):

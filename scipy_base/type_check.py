@@ -27,7 +27,8 @@ def mintypecode(typecodes,typeset='DFdf',default='d',savespace=0):
    whenever typecodes contain 'F' and 'd'.
    If t in typecodes is not a string then t=t.typecode() is applied.
    """
-   typecodes = [(type(t) is type('') and t) or t.typecode() for t in typecodes]
+   typecodes = [(type(t) is type('') and t) or asarray(t).typecode()\
+                for t in typecodes]
    intersection = [t for t in typecodes if t in typeset]
    if not intersection:
       return default
