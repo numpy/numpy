@@ -5,7 +5,7 @@ Unit-testing
   ScipyTest -- Scipy tests site manager
   ScipyTestCase -- unittest.TestCase with measure method
   IgnoreException -- raise when checking disabled feature ('ignoring' is displayed)
-  HideException -- raise when checking disabled feature (nothing is displayed)
+  HideException -- raise when checking irrelevant feature (nothing is displayed)
   set_package_path -- prepend package build directory to path
   set_local_path -- prepend local directory (to tests files) to path
   restore_path -- restore path after set_package_path
@@ -182,20 +182,19 @@ class ScipyTestCase (unittest.TestCase):
                 if l==1:
                     assert result.stream.data[-1]=='E',`result.stream.data`
                     result.stream.data[-1] = 'i'
-                    del result.errors[-1]
                 else:
                     assert result.stream.data[-1]=='ERROR\n',`result.stream.data`
                     result.stream.data[-1] = 'ignoring\n'
-                    del result.errors[-1]
+                del result.errors[-1]
             elif errstr.startswith('HideException:'):
                 if l==1:
                     assert result.stream.data[-1]=='E',`result.stream.data`
                     result.stream.data[-1] = ''
-                    del result.errors[-1]
                 else:
                     assert result.stream.data[-1]=='ERROR\n',`result.stream.data`
                     result.stream.data = []
-                    del result.errors[-1]
+                del result.errors[-1]
+                result.testsRun = result.testsRun - 1
         map(save_stream.write, result.stream.data)
         result.stream = save_stream
 
