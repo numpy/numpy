@@ -259,8 +259,9 @@ def trim_zeros(filt,trim='fb'):
 def unique(inseq):
     """Returns unique items in 1-dimensional sequence.
     """
-    ina = asarray(inseq)
-    return _compiled_base._unique(ina)
+    set = {}
+    map(set.__setitem__, inseq, [])
+    return asarray(set.keys())
 
 import sys
 def disp(mesg, device=None, linefeed=1):
