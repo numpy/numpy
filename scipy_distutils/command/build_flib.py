@@ -27,11 +27,10 @@ Bugs:
       to exist also.
  ***  F compiler from Fortran Compiler is _not_ supported, though it
       is defined below. The reasons is that this F95 compiler is
-      incomplete: it does not compile fixed format sources and
-      that is needed by f2py generated wrappers for F90 modules.
-      To support F as it is, some effort is needed to re-code
-      f2py but it is not clear if this effort is worth.
-      May be in future...
+      incomplete: it does not support external procedures
+      that are needed to facilitate calling F90 module routines
+      from C and subsequently from Python. See also
+        http://cens.ioc.ee/pipermail/f2py-users/2002-May/000265.html
 
 Open issues:
  ***  User-defined compiler flags. Do we need --fflags?
@@ -890,9 +889,9 @@ class nag_fortran_compiler(fortran_compiler_base):
 # http://www.fortran.com/F/compilers.html
 #
 # We define F compiler here but it is quite useless
-# because it does not support for fixed format sources
-# which makes it impossible to use with f2py generated
-# fixed format wrappers to F90 modules.
+# because it does not support external procedures
+# which are needed for calling F90 module routines
+# through f2py generated wrappers.
 class f_fortran_compiler(fortran_compiler_base):
 
     vendor = 'F'
@@ -920,8 +919,7 @@ class f_fortran_compiler(fortran_compiler_base):
         print red_text("""
 WARNING: F compiler is unsupported due to its incompleteness.
          Send complaints to its vendor. For adding its support
-         to scipy_distutils, it must be able to compile
-         fixed format Fortran 90.
+         to scipy_distutils, it must support external procedures.
 """)
 
         self.f90_switches = ''
