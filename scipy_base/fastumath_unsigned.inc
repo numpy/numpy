@@ -2838,9 +2838,9 @@ static void InitOperators(PyObject *dictionary) {
     divide_safe_data[10] = (void *)c_quot;
     divide_safe_data[11] = (void *)PyNumber_Divide;
     conjugate_data[11] = (void *)"conjugate";
+    remainder_data[7] = (void *)fmod;
     remainder_data[8] = (void *)fmod;
-    remainder_data[9] = (void *)fmod;
-    remainder_data[10] = (void *)PyNumber_Remainder;
+    remainder_data[9] = (void *)PyNumber_Remainder;
     power_data[7] = (void *)pow;
     power_data[8] = (void *)pow;
     power_data[9] = (void *)c_pow;
@@ -2882,9 +2882,9 @@ static void InitOperators(PyObject *dictionary) {
 #endif
 
     conjugate_functions[11] = PyUFunc_O_O_method;
-    remainder_functions[8] = PyUFunc_ff_f_As_dd_d;
-    remainder_functions[9] = PyUFunc_dd_d;
-    remainder_functions[10] = PyUFunc_OO_O;
+    remainder_functions[7] = PyUFunc_ff_f_As_dd_d;
+    remainder_functions[8] = PyUFunc_dd_d;
+    remainder_functions[9] = PyUFunc_OO_O;
     power_functions[7] = PyUFunc_ff_f_As_dd_d;
     power_functions[8] = PyUFunc_dd_d;
     power_functions[9] = fastumath_FF_F_As_DD_D;
@@ -2975,7 +2975,7 @@ static void InitOperators(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "conjugate", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndData(remainder_functions, remainder_data, remainder_signatures, 
-				11, 2, 1, PyUFunc_Zero, "remainder", 
+				10, 2, 1, PyUFunc_Zero, "remainder", 
 				"returns remainder of division elementwise", 0);
     PyDict_SetItemString(dictionary, "remainder", f);
     Py_DECREF(f);
