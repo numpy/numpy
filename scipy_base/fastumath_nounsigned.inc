@@ -45,6 +45,33 @@ extern double modf (double, double *);
 #define M_PI 3.1415926535897931
 #endif
 
+#if !defined(HAVE_INVERSE_HYPERBOLIC)
+static double acosh(double x)
+{
+    return log(x + sqrt((x-1.0)*(x+1.0)));
+}
+
+static double asinh(double xx)
+{
+    double x;
+    int sign;
+    if (xx < 0.0) {
+        sign = -1;
+        x = -xx;
+    }
+    else {
+        sign = 1;
+        x = xx;
+    }
+    return sign*log(x + sqrt(x*x+1.0));
+}
+
+static double atanh(double x)
+{
+    return 0.5*log((1.0+x)/(1.0-x));
+}
+#endif
+
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
