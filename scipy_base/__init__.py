@@ -92,6 +92,8 @@ polydiv          --  Divide polynomials
 polyval          --  Evaluate polynomial at given argument
 """
 
+from scipy_base_version import scipy_base_version as __version__
+
 import Numeric
 from Numeric import *
 import fastumath
@@ -130,5 +132,3 @@ def test_suite(level=1):
     ignore = ['testing']
     return scipy_test.testing.harvest_test_suites(this_mod,ignore = ignore,
                                                   level=level)
-
-

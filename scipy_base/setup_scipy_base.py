@@ -50,7 +50,17 @@ def configuration(parent_package=''):
     return config
 
 if __name__ == '__main__':    
+    from scipy_base_version import scipy_base_version
+    print 'scipy_base Version',scipy_base_version
     if sys.platform == 'win32':
         from scipy_distutils.mingw32_support import *
     from scipy_distutils.core import setup
-    setup(**configuration())
+    setup(name = 'scipy_base',
+          version = scipy_base_version,
+          maintainer = "SciPy Developers",
+          maintainer_email = "scipy-dev@scipy.org",
+          description = "SciPy base module",
+          url = "http://www.scipy.org",
+          license = "SciPy License (BSD Style)",
+          **configuration()
+          )
