@@ -82,7 +82,7 @@ def get_path(mod_name,parent_path=None):
         pd = os.path.abspath(parent_path)
         if pd==d[:len(pd)]:
             d = d[len(pd)+1:]
-    return d
+    return d or '.'
     
 def add_local_to_path(mod_name):
     local_path = get_path(mod_name)
