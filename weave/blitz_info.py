@@ -32,8 +32,8 @@ class py_type<int>{public: enum { code = PyArray_LONG};};// PyArray_INT has trou
 class py_type<long>{public: enum { code = PyArray_LONG};};
 class py_type<float>{public: enum { code = PyArray_FLOAT};};
 class py_type<double>{public: enum { code = PyArray_DOUBLE};};
-class py_type<complex<float> >{public: enum { code = PyArray_CFLOAT};};
-class py_type<complex<double> >{public: enum { code = PyArray_CDOUBLE};};
+class py_type<std::complex<float> >{public: enum { code = PyArray_CFLOAT};};
+class py_type<std::complex<double> >{public: enum { code = PyArray_CDOUBLE};};
 
 template<class T, int N>
 static blitz::Array<T,N> convert_to_blitz(PyArrayObject* arr_obj,const char* name)
