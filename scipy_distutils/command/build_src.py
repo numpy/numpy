@@ -41,7 +41,11 @@ if _which[0] is None:
 if _which[0] is None:
    _which = _backends[0], "defaulted"
 
-exec "from _" + _which[0] + ".%(name)s import *"
+exec "import _" + _which[0] + ".%(name)s as ___m"
+for ___a in dir(___m):
+    exec ___a + " = getattr(___m,___a)"
+else:
+    del ___a, ___m
 '''
 
 
@@ -126,7 +130,10 @@ class build_src(build_ext.build_ext):
         for ext in self.extensions:
             name = ext.name.split('.')[-1]
             fullname = self.get_ext_fullname(ext.name)
-            def func(extension, src_dir):
+            def func(extension, src_dir,
+                     name=name,
+                     fullname=fullname,
+                     backends=backends):
                 source = os.path.join(os.path.dirname(src_dir),name+'.py')
                 if newer(__file__, source):
                     f = open(source,'w')
