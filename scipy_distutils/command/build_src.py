@@ -11,6 +11,7 @@ from distutils.dep_util import newer_group, newer
 
 from scipy_distutils import log
 from scipy_distutils.misc_util import fortran_ext_match, all_strings
+from scipy_distutils.from_template import process_str
 
 
 class build_src(build_ext.build_ext):
@@ -121,6 +122,8 @@ class build_src(build_ext.build_ext):
 
         sources = self.generate_sources(sources, ext)
 
+        sources = self.template_sources(sources, ext)
+        
         sources = self.swig_sources(sources, ext)
 
         sources = self.f2py_sources(sources, ext)
@@ -174,6 +177,29 @@ class build_src(build_ext.build_ext):
                 new_sources.append(source)
         return new_sources, py_files
 
+    def template_sources(self, sources, extension):
+        new_sources = []
+        for source in sources:
+            (base, ext) = os.path.splitext(source)
+            if ext == '.src':  # Template file
+                if self.inplace:
+                    target_dir = os.path.dirname(base)
+                else:
+                    target_dir = appendpath(self.build_src, os.path.dirname(base))
+                self.mkpath(target_dir)
+                target_file = os.path.join(target_dir,os.path.basename(base))
+                if (self.force or newer(source, target_file)):
+                    fid = open(source)
+                    outstr = process_str(fid.read())
+                    fid.close()
+                    fid = open(target_file,'w')
+                    fid.write(outstr)
+                    fid.close()
+                new_sources.append(target_file)
+            else:
+                new_sources.append(source)
+        return new_sources            
+        
     def f2py_sources(self, sources, extension):
         new_sources = []
         f2py_sources = []

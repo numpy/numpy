@@ -64,7 +64,7 @@ list_re = re.compile(r"<([^,>]+(,\s*[^,>]+)+)>")
 
 def conv(astr):
     b = astr.split(',')
-    return ','.join([x.strip().lower() for x in b]), len(b)
+    return ','.join([x.strip().lower() for x in b])
 
 def unique_key(adict):
     # this obtains a unique key given a dictionary
@@ -83,12 +83,8 @@ def unique_key(adict):
     return newkey
 
 def listrepl(match):
-    global _names, _numsubs
-    thelist,num = conv(match.group(1))
-    if (_numsubs is None):
-        _numsubs = num
-    elif (_numsubs != num):
-        raise ValueError, "subroutine mismatch %s" % substr
+    global _names
+    thelist = conv(match.group(1))
     name = None
     for key in _names.keys():    # see if list is already in dictionary
         if _names[key] == thelist:
@@ -103,20 +99,16 @@ def namerepl(match):
     name = match.group(1)
     return _names[name][_thissub]
 
-def expand_sub(substr):
-    global _names, _numsubs, _thissub
+def expand_sub(substr,extra=''):
+    global _names, _thissub
     # find all named replacements
     reps = named_re.findall(substr)
     _names = {}
     _names.update(_special_names)
-    _numsubs = None
+    numsubs = None
     for rep in reps:
         name = rep[0].strip().lower()
         thelist,num = conv(rep[1])
-        if (_numsubs is None):
-            _numsubs = num
-        elif (_numsubs != _num):
-            raise ValueError, "subroutine mismatch %s" % substr 
         _names[name] = thelist
 
     substr = named_re.sub(r"<\1>",substr)  # get rid of definition templates
@@ -126,14 +118,20 @@ def expand_sub(substr):
     # make lists out of string entries in name dictionary
     for name in _names.keys():
         entry = _names[name]
-        _names[name] = entry.split(',')
+        entrylist = entry.split(',')
+        _names[name] = entrylist
+        num = len(entrylist)
+        if numsubs is None:
+            numsubs = num
+        elif (numsubs != num):
+            raise ValueError, "Mismatch in number to replace"
 
     # now replace all keys for each of the lists
     mystr = ''
-    for k in range(_numsubs):
+    for k in range(numsubs):
         _thissub = k
         mystr += template_re.sub(namerepl, substr)
-        mystr += "\n"
+        mystr += "\n\n" + extra
     return mystr
 
 _head = \
@@ -143,6 +141,16 @@ C
 
 """
 
+def get_line_header(str,beg):
+    extra = []
+    ind = beg-1
+    char = str[ind]
+    while (ind > 0) and (char != '\n'):
+        extra.insert(0,char)
+        ind = ind - 1
+        char = str[ind]
+    return ''.join(extra)
+    
 def process_str(allstr):
     newstr = allstr.lower()
     writestr = _head
@@ -155,13 +163,14 @@ def process_str(allstr):
     for sub in struct:
         writestr += newstr[oldend:sub[0]]
         obj = slice(sub[0],sub[1])
-        expanded = expand_sub(newstr[obj])
+        expanded = expand_sub(newstr[obj],get_line_header(newstr,sub[0]))
         writestr += expanded
         oldend =  sub[1]
 
     writestr += newstr[oldend:]
     return writestr
-    
+
+
 if __name__ == "__main__":
 
     try:
@@ -176,5 +185,5 @@ if __name__ == "__main__":
         outfile = open(newname,'w')
 
     allstr = fid.read()
-    writestr = process_filestr(allstr)
+    writestr = process_str(allstr)
     outfile.write(writestr)
