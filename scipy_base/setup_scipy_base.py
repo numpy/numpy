@@ -21,7 +21,7 @@ def configuration(parent_package=''):
     config['package_dir']['scipy_base.tests'] = test_path
 
     # scipy_base.fastumath module
-    sources = ['scipy_base.fastumathmodule.c','isnan.c']
+    sources = ['fastumathmodule.c','isnan.c']
     sources = [os.path.join(local_path,x) for x in sources]
     ext = Extension('scipy_base.fastumath',sources,libraries=[])
     config['ext_modules'].append(ext)
