@@ -77,6 +77,8 @@ if os.name == 'nt':
 else:
     run_command = commands.getstatusoutput
 
+fcompiler_vendors = r'Absoft|Sun|SGI|Intel|Itanium|NAG|Compaq|Digital|Gnu|VAST|F'
+
 def show_compilers():
     for compiler_class in all_compilers:
         compiler = compiler_class()
@@ -121,9 +123,14 @@ class build_flib (build_clib):
         self.undef = None
         self.debug = None
         self.force = 0
-        self.fcompiler = None
-        self.fcompiler_exec = None
-        self.f90compiler_exec = None
+        self.fcompiler = os.environ.get('FC_VENDOR')
+        if self.fcompiler \
+           and not re.match(r'\A('+fcompiler_vendors+r')\Z',self.fcompiler):
+            self.warn(red_text('Unknown FC_VENDOR=%s (expected %s)'\
+                                   %(self.fcompiler,fcompiler_vendors)))
+            self.fcompiler = None
+        self.fcompiler_exec = os.environ.get('F77')
+        self.f90compiler_exec = os.environ.get('F90')
 
     # initialize_options()
 
