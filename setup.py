@@ -6,8 +6,8 @@ Bundle of SciPy core modules:
   scipy_base
 
 Usage:
-   python setup_scipy_core.py install
-   python setup_scipy_core.py sdist -f -t MANIFEST_scipy_core.in
+   python setup.py install
+   python setup.py sdist -f
 """
 
 import os
