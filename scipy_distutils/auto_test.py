@@ -64,13 +64,13 @@ class package_installation:
         # Directory where package is unpacked/built/installed
         self.dst_dir = os.path.abspath(dst_dir)        
         
-        # make sure the destination exists
-        dir_util.mkpath(self.dst_dir)
-        
         if not logger:
             self.logger = logging
         else:
             self.logger = logger    
+
+        # make sure the destination exists
+        make_dir(self.dst_dir,logger=self.logger)
 
         # Construct any derived names built from the above names.
         self.init_names()
@@ -162,40 +162,44 @@ class package_installation:
             if old_dir:
                 unchange_dir(self.logger)
 
+    #def auto_configure(self):
+    #    cmd = os.path.join('.','configure')
+    #    try:
+    #        text = run_command(cmd,self.package_dir,self.logger,log_output=0)
+    #    except ValueError, e:
+    #        status, text = e
+    #        self.logger.exception('Configuration Error:\n'+text)
     def auto_configure(self):
         cmd = os.path.join('.','configure')
         text = run_command(cmd,self.package_dir,self.logger)
-
+        
     def build_with_make(self):
         cmd = 'make'
         text = run_command(cmd,self.package_dir,self.logger)
-
+        
     def install_with_make(self, prefix = None):
         if prefix is None:
             prefix = os.path.abspath(self.dst_dir)
         cmd = 'make install prefix=%s' % prefix
         text = run_command(cmd,self.package_dir,self.logger)
-
+        
     def python_setup(self):
         cmd = self.python_exe + ' setup.py install'
         text = run_command(cmd,self.package_dir,self.logger)
-    
+        
     def _make(self,**kw):
         """ This generally needs to be overrridden in the derived class,
             but this will suffice for the standard configure/make process.            
         """
-        self.get_source()
-        self.unpack_source()
+        self.logger.info("### Begin Configure: %s" % self.package_base_name)
         self.auto_configure()
+        self.logger.info("### Finished Configure: %s" % self.package_base_name)
+        self.logger.info("### Begin Build: %s" % self.package_base_name)
         self.build_with_make()
+        self.logger.info("### Finished Build: %s" % self.package_base_name)
+        self.logger.info("### Begin Install: %s" % self.package_base_name)
         self.install_with_make()
-
-    def _setup(self):
-        """ Build with Python setup script.
-        """
-        self.get_source()
-        self.unpack_source()
-        self.python_setup()
+        self.logger.info("### Finished Install: %s" % self.package_base_name)
 
     def install(self):
         self.logger.info('####### Building:    %s' % self.package_base_name)
@@ -205,8 +209,14 @@ class package_installation:
         self.logger.info('        Package dir: %s' % self.package_dir)
         self.logger.info('        Suffix:      %s' % self.tarball_suffix)
         self.logger.info('        Build type:  %s' % self.build_type)
+
+        self.logger.info("### Begin Get Source: %s" % self.package_base_name)
+        self.get_source()
+        self.unpack_source()
+        self.logger.info("### Finished Get Source: %s" % self.package_base_name)
+
         if self.build_type == 'setup':
-            self._setup()
+            self.python_setup()
         else:    
             self._make()
         self.logger.info('####### Finished Building: %s' % self.package_base_name)            
@@ -235,15 +245,17 @@ class python_installation(package_installation):
             [install_script]
             install-dir=<directory_name> 
         """
+        self.logger.info('### Writing Install Script Hack')
         text = "[install_scripts]\n"\
                "install-dir='%s'" % os.path.join(self.dst_dir,'bin')
         file = os.path.join(self.package_dir,'setup.cfg')               
         write_file(file,text,self.logger,mode='w')
+        self.logger.info('### Finished writing Install Script Hack')
 
     def install_with_make(self):
         """ Scripts were failing to install correctly, so a setuo.cfg
             file is written to force installation in the correct place.
-        """
+        """        
         self.write_install_config()
         package_installation.install_with_make(self)
 
@@ -286,14 +298,14 @@ class blas_installation(package_installation):
         libname = 'blas_LINUX.a'
         cmd = 'g77 -funroll-all-loops -fno-f2c -O3 -c *.f;ar -cru %s' % libname
         text = run_command(cmd,self.package_dir,self.logger)
-
+        
     def install_with_make(self, **kw):
         # not really using make -- we'll just copy the file over.        
         src_file = os.path.join(self.package_dir,'blas_%s.a' % self.platform)
         dst_file = os.path.join(self.dst_dir,'lib','libblas.a')
         self.logger.info("Installing blas")
         copy_file(src_file,dst_file,self.logger)
-
+        
 #-----------------------------------------------------------------------------
 # Installation class for Lapack.
 #-----------------------------------------------------------------------------
@@ -320,18 +332,17 @@ class lapack_installation(package_installation):
         src_file = os.path.join(self.package_dir,'INSTALL',make_inc)
         dst_file = os.path.join(self.package_dir,'make.inc')
         copy_file(src_file,dst_file,self.logger)
-
+        
     def build_with_make(self, **kw):
         cmd = 'make install lapacklib'
         text = run_command(cmd,self.package_dir,self.logger)
-
+        
     def install_with_make(self, **kw):
         # not really using make -- we'll just copy the file over.
         src_file = os.path.join(self.package_dir,'lapack_%s.a' % self.platform)
-        dst_file = os.path.join(self.dst_dir,'lib','liblapack.a')
-        self.logger.info("Installing lapack")
+        dst_file = os.path.join(self.dst_dir,'lib','liblapack.a')        
         copy_file(src_file,dst_file,self.logger)
-      
+
 #-----------------------------------------------------------------------------
 # Installation class for Numeric
 #-----------------------------------------------------------------------------
@@ -476,7 +487,7 @@ def remove_tree(directory,logger=None):
     try:
         dir_util.remove_tree(directory)
     except Exception, e:     
-        logger.exception("Remove failed")        
+        logger.exception("Remove failed: %s" % e)        
         raise
 
 def remove_file(file,logger=None):
@@ -499,6 +510,16 @@ def write_file(file,contents,logger=None,mode='wb'):
         new_file.close()
     except Exception, e:     
         logger.exception("Write failed")        
+        raise
+
+def make_dir(name,logger=None):
+    if not logger:
+        logger = logging
+    logger.info('Make directory: %s' % name)
+    try:        
+        dir_util.mkpath(os.path.abspath(name))
+    except Exception, e:     
+        logger.exception("Make Directory failed")        
         raise
 
 # I know, I know...
@@ -574,24 +595,24 @@ def unpack_file(file,logger = None):
     untar_file(dst.logger)
     remove_file(dst,logger)        
 
+
 def run_command(cmd,directory='.',logger=None,silent_failure = 0):
     if not logger:
         logger = logging
     change_dir(directory,logger)    
     try:        
-        msg = 'Command: %s' % cmd
-        status,text = exec_command(cmd)
-        if status:
-            msg = msg + ' (failed)'
+        msg = 'Running: %s' % cmd
         logger.info(msg)    
-        if status and not silent_failure:
-            logger.error('command failed with status: %d' % status)    
-        if text  and not silent_failure:
-            logger.info('Command Output:\n'+text)
+        status,text = exec_command(cmd)
+        if status and silent_failure:
+            msg = '(failed silently)'
+            logger.info(msg)    
+        if status and text and not silent_failure:
+            logger.error('Command Failed (status=%d)\n'% status +text)
     finally:
         unchange_dir(logger)
     if status:
-        raise ValueError,status
+        raise ValueError, (status,text)
     return text            
 
 def mail_report(from_addr,to_addr,subject,mail_server,
@@ -604,7 +625,7 @@ def mail_report(from_addr,to_addr,subject,mail_server,
 
     for k,v in info.items():   
         msg = msg + '%s: %s\n' % (k,v)
-    msg = msg + test_results    
+    msg = msg + test_results + '\n'
     msg = msg + '-----------------------------\n' 
     msg = msg + '--------  BUILD LOG   -------\n' 
     msg = msg + '-----------------------------\n' 
@@ -654,12 +675,12 @@ def full_scipy_build(build_dir = '.',
         
             # before doing anything, we need to wipe the 
             # /bin, /lib, /man, and /include directories
-            # in dst_dir.  Don't run as root.
+            # in dst_dir.  Don't run as root.            
+            make_dir(dst_dir,logger=logger)            
             change_dir(dst_dir   , logger)
-            remove_tree('bin'    , logger)
-            remove_tree('lib'    , logger)
-            remove_tree('man'    , logger)
-            remove_tree('include', logger)
+            for d in ['bin','lib','man','include']:
+                try:            remove_tree(d, logger)
+                except OSError: pass                
             unchange_dir(logger)
             
             python = python_installation(version=python_version,
@@ -720,6 +741,7 @@ def full_scipy_build(build_dir = '.',
         except Exception, msg:
             test_results = ''
             build_info['results'] = 'build failed: %s' % msg
+            logger.exception('Build failed')
     finally:    
         to_addr = "scipy-testlog@scipy.org"
         from_addr = "scipy-test@enthought.com"
@@ -731,7 +753,8 @@ def full_scipy_build(build_dir = '.',
 
 if __name__ == '__main__':
     build_dir = '/tmp/scipy_test'
-    level = 10
+    level = 1
+    """
     full_scipy_build(build_dir = build_dir,
                      test_level = level,
                      python_version  = '2.2.1',
@@ -774,7 +797,7 @@ if __name__ == '__main__':
                      f2py_version    = '2.13.175-1250',
                      atlas_version   = '3.3.14',
                      scipy_version   = 'snapshot')
-
+    """
     full_scipy_build(build_dir = build_dir,
                      test_level = level,
                      python_version  = '2.1.3',
