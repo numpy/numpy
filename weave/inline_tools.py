@@ -130,7 +130,7 @@ class inline_ext_module(ext_tools.ext_module):
         self._build_information.append(inline_info.inline_info())
 
 function_cache = {}
-def inline(code,arg_names,local_dict = None, global_dict = None,
+def inline(code,arg_names=[],local_dict = None, global_dict = None,
            force = 0,
            compiler='',
            verbose = 0,
@@ -157,8 +157,9 @@ def inline(code,arg_names,local_dict = None, global_dict = None,
         code -- string. A string of valid C++ code.  It should not specify a
                 return statement.  Instead it should assign results that
                 need to be returned to Python in the return_val.
-        arg_names -- list of strings. A list of Python variable names that
-                     should be transferred from Python into the C/C++ code.
+        arg_names -- optional. list of strings. A list of Python variable names 
+                     that should be transferred from Python into the C/C++ 
+                     code.  It defaults to an empty string.
         local_dict -- optional. dictionary. If specified, it is a dictionary
                       of values that should be used as the local scope for the
                       C/C++ code.  If local_dict is not specified the local
