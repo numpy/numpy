@@ -715,6 +715,8 @@ void scipy_numeric_save() {
         BackupPyUFunc_Type.tp_call = (PyUFunc_Type).tp_call;
 
 	BackupPyArray_Type.tp_name = (PyArray_Type).tp_name;
+	BackupPyArray_Type.tp_getattr = (PyArray_Type).tp_getattr;
+
 	memcpy(&backup_array_as_number, (PyArray_Type).tp_as_number,
 	       sizeof(PyNumberMethods));
 	memcpy(&backup_array_as_sequence, (PyArray_Type).tp_as_sequence,
@@ -732,9 +734,11 @@ void scipy_numeric_restore() {
     /* restore only what was copied */
     if (scipy_numeric_stored) {
 	(PyUFunc_Type).tp_name = BackupPyUFunc_Type.tp_name;
-	(PyUFunc_Type).tp_call = BackupPyUFunc_Type.tp_call;
+	(PyUFunc_Type).tp_call = BackupPyUFunc_Type.tp_call;	
 
 	(PyArray_Type).tp_name = BackupPyArray_Type.tp_name;
+	(PyArray_Type).tp_getattr = BackupPyArray_Type.tp_getattr;
+
 	memcpy((PyArray_Type).tp_as_number, &backup_array_as_number, 
 	       sizeof(PyNumberMethods));
 	memcpy((PyArray_Type).tp_as_sequence, &backup_array_as_sequence,  
@@ -810,10 +814,35 @@ static PyNumberMethods scipy_array_as_number = {
 #endif
 };
 
+static PyObject *_scipy_getattr(PyArrayObject *self, char *name) {
+    PyArrayObject *ret;
+	
+    if (strcmp(name, "M") == 0) {
+	PyObject *fm, *o;
+	
+        /* Call the array constructor registered as matrix_base.matrix
+	   or else raise exception if nothing registered */
+		
+	/* Import matrix_base module */
+	fm = PyImport_ImportModule("scipy_base.matrix_base");
+	o  = PyObject_CallMethod(fm,"matrix","O",(PyObject *)self);
+	if (ret == NULL) {
+	    PyErr_SetString(PyExc_ReferenceError, "Error using scipy_base.matrix_base.matrix to construct matrix representation");
+	    Py_XDECREF(fm);
+	    return NULL;
+	}
+	Py_XDECREF(fm);	
+	return o;
+    }
+
+    return (BackupPyArray_Type.tp_getattr)((void *)self, name);
+}
+
 
 void scipy_numeric_alter() {
     
     (PyArray_Type).tp_name = _scipy_array_str;
+    (PyArray_Type).tp_getattr = (getattrfunc)_scipy_getattr;
     memcpy((PyArray_Type).tp_as_mapping, &scipy_array_as_mapping,
 	   sizeof(PyMappingMethods));
     memcpy((PyArray_Type).tp_as_number, &scipy_array_as_number,
@@ -823,7 +852,7 @@ void scipy_numeric_alter() {
     (PyUFunc_Type).tp_name = _scipy_ufunc_str;
 }
 
-static char numeric_alter_doc[] = "alter_numeric() update the behavior of Numeric objects.\n\n  1. Change coercion rules so that multiplying by a scalar does not upcast.\n  2. Add index and mask slicing capability to Numeric arrays.\n  3. (Someday) Speed enhancements.\n\nThis call changes the behavior for ALL Numeric arrays currently defined\n  and to be defined in the future.  The old behavior can be restored for ALL\n  arrays using numeric_restore().";
+static char numeric_alter_doc[] = "alter_numeric() update the behavior of Numeric objects.\n\n  1. Change coercion rules so that multiplying by a scalar does not upcast.\n  2. Add index and mask slicing capability to Numeric arrays.\n  3. Add .M attribute to Numeric arrays for returning a Matrix  4. (TODO) Speed enhancements.\n\nThis call changes the behavior for ALL Numeric arrays currently defined\n  and to be defined in the future.  The old behavior can be restored for ALL\n  arrays using numeric_restore().";
 
 static PyObject *numeric_behavior_alter(PyObject *self, PyObject *args)
 {

@@ -30,6 +30,8 @@ r_               --  Append and construct arrays: turns slice objects into
                        rows.
 c_               --  Append and construct arrays: for 2d arrays appends
                        columns.
+row              --  Like r_ except ensure (row) Matrix return
+col              --  Like c_ except ensure (column) Matrix return
 
 index_exp        --  Konrad Hinsen's index_expression class instance which
                      can be useful for building complicated slicing syntax.
@@ -55,10 +57,13 @@ unwrap           --  Unwrap phase along given axis (1-d algorithm)
 sort_complex     --  Sort a complex-array (based on real, then imaginary)
 trim_zeros       --  trim the leading and trailing zeros from 1D array.
 
-vectorize        -- a class that wraps a Python function taking scalar
+vectorize        --  a class that wraps a Python function taking scalar
                          arguments into a generalized function which
                          can handle arrays of arguments using the broadcast
                          rules of Numeric Python.
+
+alter_numeric    --  enhance numeric array behavior
+restore_numeric  --  restore alterations done by alter_numeric
 
 Shape manipulation
 ===================
@@ -84,6 +89,7 @@ eye              --  Return a 2D array with ones down a given diagonal
 diag             --  Construct a 2D array from a vector, or return a given
                        diagonal from a 2D array.                       
 mat              --  Construct a Matrix
+bmat             --  Build a Matrix from blocks
 
 Polynomials
 ============
@@ -98,10 +104,6 @@ polysub          --  Substract polynomials
 polymul          --  Multiply polynomials
 polydiv          --  Divide polynomials
 polyval          --  Evaluate polynomial at given argument
-
-General functions
-=================
-vectorize -- Generalized Function class
 
 Import tricks
 =============

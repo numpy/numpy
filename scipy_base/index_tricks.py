@@ -1,10 +1,11 @@
 import types
 import Numeric
-__all__ = ['mgrid','ogrid','r_','c_','index_exp']
+__all__ = ['mgrid','ogrid','r_', 'row', 'c_', 'col', 'index_exp']
 
 from type_check import ScalarType, asarray
 import function_base
 import matrix_base
+makemat = matrix_base.Matrix.Matrix
 
 class nd_grid:
     """ Construct a "meshgrid" in N-dimensions.
@@ -111,12 +112,26 @@ import sys
 class concatenator:
     """ Translates slice objects to concatenation along an axis.
     """
-    def __init__(self, axis=0):
+    def _retval(self, res):
+        if not self.matrix:
+            return res
+        else:
+            if self.axis == 0:
+                return makemat(res)
+            else:
+                return makemat(res).T        
+        
+    def __init__(self, axis=0, matrix=0):
         self.axis = axis
+        self.matrix = matrix
     def __getitem__(self,key):
         if isinstance(key,types.StringType):
             frame = sys._getframe().f_back
-            return array(matrix_base.bmat(key,frame.f_globals,frame.f_locals))
+            mymat = matrix_base.bmat(key,frame.f_globals,frame.f_locals)
+            if self.matrix:
+                return mymat
+            else:
+                return asarray(mymat)
         if type(key) is not types.TupleType:
             key = (key,)
         objs = []
@@ -132,31 +147,28 @@ class concatenator:
                 if type(step) is type(1j):
                     size = int(abs(step))
                     typecode = Numeric.Float
-                    endpoint = 1
+                    newobj = function_base.linspace(start, stop, num=size)
                 else:
-                    size = int((stop - start)/(step*1.0))
-                    endpoint = 0
-                if isinstance(step,types.FloatType) or \
-                   isinstance(start, types.FloatType) or \
-                   isinstance(stop, types.FloatType):
-                       typecode = Numeric.Float
-                newobj = function_base.linspace(start, stop, num=size,
-                                                endpoint=endpoint)
+                    newobj = Numeric.arange(start, stop, step)
             elif type(key[k]) in ScalarType:
                 newobj = asarray([key[k]])
             else:
                 newobj = key[k]
             objs.append(newobj)
-        return Numeric.concatenate(tuple(objs),axis=self.axis)
-        
+        res = Numeric.concatenate(tuple(objs),axis=self.axis)
+        return self._retval(res)
+         
     def __getslice__(self,i,j):
-        return Numeric.arange(i,j)
+        res = Numeric.arange(i,j)
+        return self._retval(res)
 
     def __len__(self):
         return 0
 
 r_=concatenator(0)
 c_=concatenator(-1)
+row = concatenator(0,1)
+col = concatenator(-1,1)
 
 # A nicer way to build up index tuples for arrays.
 #

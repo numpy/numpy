@@ -2,11 +2,14 @@
 
 """
 
-__all__ = ['diag','eye','fliplr','flipud','rot90','bmat']
+__all__ = ['diag','eye','fliplr','flipud','rot90','bmat','matrix']
 
 from Numeric import *
 from type_check import asarray
 import Matrix
+
+matrix = Matrix.Matrix
+
 
 def fliplr(m):
     """ returns a 2-D matrix m with the rows preserved and columns flipped 
