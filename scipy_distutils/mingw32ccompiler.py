@@ -206,8 +206,8 @@ def build_import_library():
     cmd = 'dlltool --dllname %s --def %s --output-lib %s' % args
     status = os.system(cmd)
     # for now, fail silently
-    if not status:
-        print 'WARNING: failed to build import library for gcc. Linking will fail.'
+    if status:
+        log.warn('Failed to build import library for gcc. Linking will fail.')
     #if not success:
     #    msg = "Couldn't find import library, and failed to build it."
     #    raise DistutilsPlatformError, msg
