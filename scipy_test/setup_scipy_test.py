@@ -20,6 +20,7 @@ def install_package():
         scipy_distutils directory even if it was invoked from another script
         located in a different location.
     """
+    print "###################I was called####################"
     path = get_path(__name__)
     old_path = os.getcwd()
     os.chdir(path)
