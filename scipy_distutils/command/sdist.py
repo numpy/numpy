@@ -23,8 +23,6 @@ class sdist(old_sdist):
         # Create all the directories under 'base_dir' necessary to
         # put 'files' there; the 'mkpath()' is just so we don't die
         # if the manifest happens to be empty.
-        print 'common_base_dir:', find_common_base(files)
-        #files = [os.path.abspath(x) for x in files]
         dest_files = remove_common_base(files)
         self.mkpath(base_dir)
         dir_util.create_tree(base_dir, dest_files,
@@ -49,7 +47,6 @@ class sdist(old_sdist):
         else:
             self.announce(msg)
         
-        print 'base:',base_dir, dest_files[0]
         dest_files = [os.path.join(base_dir,file) for file in dest_files]
         file_pairs = zip(files,dest_files)    
         for file,dest in file_pairs:
@@ -65,7 +62,6 @@ class sdist(old_sdist):
                 # old code
                 #dest = os.path.join(base_dir, file)
                 #end old code
-                print dest
                 self.copy_file(file, dest, link=link)
 
         self.distribution.metadata.write_pkg_info(base_dir)
@@ -79,7 +75,6 @@ def remove_common_base(files):
     """
     rel_files = filter(lambda x: not os.path.dirname(x),files)
     abs_files = filter(os.path.dirname,files)
-    print 're files:', rel_files
     base = find_common_base(abs_files)
     # will leave files with local path unaffected
     # and maintains original file order
@@ -96,7 +91,6 @@ def find_common_base(files):
     keep_looking = 1    
     while(keep_looking and d):
         keep_looking = 0
-        print d
         for file in files:
             if string.find('start'+file,'start'+d) == -1:
                 keep_looking = 1
