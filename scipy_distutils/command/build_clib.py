@@ -185,7 +185,7 @@ class build_clib(old_build_clib):
 
             objects = []
             if c_sources:
-                log.info("compling C sources")
+                log.info("compiling C sources")
                 objects = compiler.compile(c_sources,
                                            output_dir=self.build_temp,
                                            macros=macros,
@@ -194,7 +194,7 @@ class build_clib(old_build_clib):
                                            extra_postargs=extra_postargs)
 
             if cxx_sources:
-                log.info("compling C++ sources")
+                log.info("compiling C++ sources")
                 old_compiler = self.compiler.compiler_so[0]
                 self.compiler.compiler_so[0] = self.compiler.compiler_cxx[0]
 
@@ -209,7 +209,7 @@ class build_clib(old_build_clib):
                 self.compiler.compiler_so[0] = old_compiler
 
             if f_sources:
-                log.info("compling Fortran sources")
+                log.info("compiling Fortran sources")
                 f_objects = fcompiler.compile(f_sources,
                                               output_dir=self.build_temp,
                                               macros=macros,

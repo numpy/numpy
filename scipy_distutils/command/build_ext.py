@@ -165,7 +165,7 @@ class build_ext (old_build_ext):
 
         c_objects = []
         if c_sources:
-            log.info("compling C sources")
+            log.info("compiling C sources")
             c_objects = self.compiler.compile(c_sources,
                                               output_dir=self.build_temp,
                                               macros=macros,
@@ -174,7 +174,7 @@ class build_ext (old_build_ext):
                                               extra_postargs=extra_args,
                                               **kws)
         if cxx_sources:
-            log.info("compling C++ sources")
+            log.info("compiling C++ sources")
 
             old_compiler = self.compiler.compiler_so[0]
             self.compiler.compiler_so[0] = self.compiler.compiler_cxx[0]
@@ -211,7 +211,7 @@ class build_ext (old_build_ext):
 
             f_objects = []
             if fmodule_sources:
-                log.info("compling Fortran 90 module sources")
+                log.info("compiling Fortran 90 module sources")
                 f_objects = self.fcompiler.compile(fmodule_sources,
                                                    output_dir=self.build_temp,
                                                    macros=macros,
@@ -231,7 +231,7 @@ class build_ext (old_build_ext):
                         os.remove(f)
                         
             if f_sources:
-                log.info("compling Fortran sources")
+                log.info("compiling Fortran sources")
                 f_objects += self.fcompiler.compile(f_sources,
                                                     output_dir=self.build_temp,
                                                     macros=macros,
