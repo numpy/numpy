@@ -2,6 +2,7 @@
 import Numeric
 from Numeric import *
 import fastumath
+from limits import *
 from utility import *
 from convenience import *
 from polynomial import *
