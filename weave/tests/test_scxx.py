@@ -129,27 +129,27 @@ class test_list(unittest.TestCase):
         a = [1,2,3]
             
         # temporary refcount fix until I understand why it incs by one.
-        inline_tools.inline("a.setItem(1,1234);",['a'])
+        inline_tools.inline("a.set_item(1,1234);",['a'])
         
         before1 = sys.getrefcount(a)
         
         # check overloaded insert(int ndx, int val) method
-        inline_tools.inline("a.setItem(1,1234);",['a'])        
+        inline_tools.inline("a.set_item(1,1234);",['a'])        
         assert sys.getrefcount(a[1]) == 2                
         assert a[1] == 1234
 
         # check overloaded insert(int ndx, double val) method
-        inline_tools.inline("a.setItem(1,123.0);",['a'])
+        inline_tools.inline("a.set_item(1,123.0);",['a'])
         assert sys.getrefcount(a[1]) == 2       
         assert a[1] == 123.0
         
         # check overloaded insert(int ndx, char* val) method        
-        inline_tools.inline('a.setItem(1,"bubba");',['a'])
+        inline_tools.inline('a.set_item(1,"bubba");',['a'])
         assert sys.getrefcount(a[1]) == 2       
         assert a[1] == 'bubba'
         
         # check overloaded insert(int ndx, std::string val) method
-        inline_tools.inline('a.setItem(1,std::string("sissy"));',['a'])
+        inline_tools.inline('a.set_item(1,std::string("sissy"));',['a'])
         assert sys.getrefcount(a[1]) == 2       
         assert a[1] == 'sissy'
                 
