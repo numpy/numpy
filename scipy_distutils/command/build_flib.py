@@ -820,7 +820,7 @@ class gnu_fortran_compiler(fortran_compiler_base):
         # ignore the problem, use the -mimpure-text flag.  It isn't
         # the safest thing, but seems to work.
         args = []  
-        if ((os.uname()[0] == 'SunOS')):
+        if (hasattr(os,'uname') and (os.uname()[0] == 'SunOS')):
             args =  ['-mimpure-text']
         return args
 
