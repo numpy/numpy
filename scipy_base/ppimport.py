@@ -413,3 +413,9 @@ if _pydoc is not None:
             return object.__dict__['__file__']
         return _old_inspect_getfile(object)
     _inspect.getfile = _scipy_inspect_getfile
+
+    _old_inspect_getdoc = _inspect.getdoc
+    def _scipy_inspect_getdoc(object):
+        _old_inspect_getdoc.__doc__
+        return _old_inspect_getdoc(_ppresolve_ignore_failure(object))
+    _inspect.getdoc = _scipy_inspect_getdoc
