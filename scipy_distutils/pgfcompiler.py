@@ -17,7 +17,7 @@ class PGroupFCompiler(FCompiler):
         'compiler_f77' : ["pgf77"],
         'compiler_fix' : ["pgf90", "-Mfixed"],
         'compiler_f90' : ["pgf90"],
-        'linker_so'    : ["pgf90","-shared"],
+        'linker_so'    : ["pgf90","-shared","-fpic"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
