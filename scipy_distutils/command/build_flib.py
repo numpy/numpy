@@ -1287,7 +1287,7 @@ class intel_ia32_visual_fortran_compiler(fortran_compiler_base):
 
         if self.is_available():
             from distutils.msvccompiler import MSVCCompiler
-            self.lib_ar = MSVCCompiler().lib + ' /OUT:'
+            self.lib_ar = '"%s" /OUT:' % (MSVCCompiler().lib)
 
     def get_opt(self):
         import cpuinfo
@@ -1532,7 +1532,7 @@ class compaq_visual_fortran_compiler(fortran_compiler_base):
 
         if self.is_available():
             from distutils.msvccompiler import MSVCCompiler
-            self.lib_ar = MSVCCompiler().lib + ' /OUT:'
+            self.lib_ar = '"%s" /OUT:' % (MSVCCompiler().lib)
 
         switches = ' /nologo /nodebug /MD /WX '\
                    ' /iface=(cref,nomixed_str_len_arg) /names:lowercase '\
