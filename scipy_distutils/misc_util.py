@@ -1,4 +1,5 @@
 import os,sys,string
+import types
 
 # Hooks for colored terminal output.
 # See also http://www.livinglogic.de/Python/ansistyle
@@ -43,7 +44,7 @@ class PostponedException:
     def __getattr__(self,name):
         raise self._info[0],self._info[1]
 
-def get_path(mod_name):
+def get_path(mod_name,parent_path=None):
     """ This function makes sure installation is done from the
         correct directory no matter if it is installed from the
         command line or from another package or run_setup function.
@@ -58,6 +59,10 @@ def get_path(mod_name):
         mod = __import__(mod_name)
         file = mod.__file__
         d = os.path.dirname(os.path.abspath(file))
+    if parent_path is not None:
+        pd = os.path.abspath(parent_path)
+        if pd==d[:len(pd)]:
+            d = d[len(pd)+1:]
     return d
     
 def add_local_to_path(mod_name):

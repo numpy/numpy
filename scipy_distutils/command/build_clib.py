@@ -216,8 +216,9 @@ class build_clib (Command):
         # Gets source files specified and any "*.h" header files in
         # those directories.        
         for ext in self.libraries:
-            filenames.extend(ext[1]['sources'])
-            filenames.extend(get_headers(get_directories(ext[1]['sources'])))
+            sources = ext[1]['sources']
+            filenames.extend(sources)
+            filenames.extend(get_headers(get_directories(sources)))
 
         return filenames
 
