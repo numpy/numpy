@@ -2,18 +2,13 @@
 
 import os
 from glob import glob
-from scipy_distutils.misc_util import get_path, default_config_dict
+from scipy_distutils.misc_util import get_path, default_config_dict, dot_join
 
 def configuration(parent_package=''):
     parent_path = parent_package
-    if parent_package:
-        parent_package += '.'
     local_path = get_path(__name__)
-
-    config = default_config_dict('weave')
-    config['packages'].append(parent_package+'weave')
-    config['packages'].append(parent_package+'weave.tests') 
-    config['package_dir']['weave'] = local_path
+    config = default_config_dict('weave',parent_package)
+    config['packages'].append(dot_join(parent_package,'weave.tests'))
     test_path = os.path.join(local_path,'tests')
     config['package_dir']['weave.tests'] = test_path
     

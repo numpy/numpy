@@ -235,15 +235,8 @@ def default_config_dict(name = None, parent_name = None):
     d={}
     for key in list_keys: d[key] = []
     for key in dict_keys: d[key] = {}
-    full_name = ""
 
-    if name and parent_name:
-        full_name = '%s.%s' % (parent_name,name)
-    else:
-        if name:
-            # Useful for local builds
-            d['version'] = update_version()
-            full_name = name
+    full_name = dot_join(parent_name,name)
 
     if full_name:
         # XXX: The following assumes that default_config_dict is called
@@ -251,8 +244,13 @@ def default_config_dict(name = None, parent_name = None):
         frame = sys._getframe(1)
         caller_name = eval('__name__',frame.f_globals,frame.f_locals)
         local_path = get_path(caller_name)
-        d['packages'].append(full_name)
-        d['package_dir'][full_name] = local_path
+        if name and not parent_name:
+            # Useful for local builds
+            d['version'] = update_version(path=local_path)
+
+        if os.path.exists(os.path.join(local_path,'__init__.py')):
+            d['packages'].append(full_name)
+            d['package_dir'][full_name] = local_path
         d['name'] = full_name
         if not parent_name:
             # Include scipy_distutils to local distributions
@@ -274,6 +272,9 @@ def merge_config_dicts(config_list):
         for key in dict_keys:
             result[key].update(d.get(key,{}))
     return result
+
+def dot_join(*args):
+    return string.join(filter(None,args),'.')
 
 def fortran_library_item(lib_name,
                          sources,

@@ -8,6 +8,7 @@ def is_setup_script(file):
 #    return (fnmatch(file,"setup.py") or fnmatch(file,"setup_*.py"))
     
 class build_py(old_build_py):
+
     def find_package_modules (self, package, package_dir):
         # we filter all files that are setup.py or setup_xxx.py        
         self.check_package(package, package_dir)
@@ -23,4 +24,3 @@ class build_py(old_build_py):
             else:
                 self.debug_print("excluding %s" % setup_script)
         return modules
-

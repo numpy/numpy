@@ -112,7 +112,7 @@ class run_f2py(Command):
                 f.close()
                 if ext.name == 'untitled':
                     ext.name = base
-                if base != ext.name:
+                if base != string.split(ext.name,'.')[-1]:
                     # XXX: Should we do here more than just warn?
                     self.warn('%s provides %s but this extension is %s' \
                               % (source,`base`,`ext.name`))

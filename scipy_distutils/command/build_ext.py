@@ -13,6 +13,11 @@ from scipy_distutils.command.build_clib import get_headers,get_directories
 class build_ext (old_build_ext):
 
     def build_extension(self, ext):
+        #XXX: anything else we need to save?
+        save_linker_so = self.compiler.linker_so
+        save_compiler_libs = self.compiler.libraries
+        save_compiler_libs_dirs = self.compiler.library_dirs
+        
         # support for building static fortran libraries
         need_f_libs = 0
         ext_name = string.split(ext.name,'.')[-1]
@@ -39,21 +44,33 @@ class build_ext (old_build_ext):
             for lib_name in ext.libraries[:]:
                 ext.libraries.extend(build_flib.get_library_names(lib_name))
                 ext.library_dirs.extend(build_flib.get_library_dirs(lib_name))
-
-            ext.libraries.extend(build_flib.get_fcompiler_library_names())
-            ext.library_dirs.extend(build_flib.get_fcompiler_library_dirs())
-
-            print ext.libraries
             
             ext.library_dirs.append(build_flib.build_flib)
             runtime_dirs = build_flib.get_runtime_library_dirs()
             ext.runtime_library_dirs.extend(runtime_dirs or [])
+            
             linker_so = build_flib.fcompiler.get_linker_so()
             if linker_so is not None:
-                self.compiler.linker_so = linker_so
+                if linker_so is not save_linker_so:
+                    print 'replacing linker_so %s with %s' %(save_linker_so,linker_so)
+                    self.compiler.linker_so = linker_so
+                    l = build_flib.get_fcompiler_library_names()
+                    #l = self.compiler.libraries + l
+                    self.compiler.libraries = l
+                    l = build_flib.get_fcompiler_library_dirs()
+                    #l = self.compiler.library_dirs + l
+                    self.compiler.library_dirs = l
 
         # end of fortran source support
-        return old_build_ext.build_extension(self,ext)
+        res = old_build_ext.build_extension(self,ext)
+
+        if save_linker_so is not self.compiler.linker_so:
+            print 'restoring linker_so',save_linker_so
+            self.compiler.linker_so = save_linker_so
+            self.compiler.libraries = save_compiler_libs
+            self.compiler.library_dirs = save_compiler_libs_dirs
+
+        return res
 
     def get_source_files (self):
         self.check_extensions_list(self.extensions)
