@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Bundle of SciPy core modules:
+Bundle of Scipy core modules:
   scipy_test
   scipy_distutils
   scipy_base
@@ -49,20 +49,29 @@ def setup_package():
         cvs_minor = reduce(lambda a,b:a+b,[v.cvs_minor for v in versions],0)
         cvs_serial = reduce(lambda a,b:a+b,[v.cvs_serial for v in versions],0)
 
-        if release_level:
-            scipy_core_version = '%(major)d.%(minor)d.%(micro)d'\
-                                 '_%(release_level)s'\
-                                 '_%(cvs_minor)d.%(cvs_serial)d' % (locals ())
+        if cvs_minor or cvs_serial:
+            if release_level:
+                scipy_core_version = '%(major)d.%(minor)d.%(micro)d'\
+                                     '_%(release_level)s'\
+                                     '_%(cvs_minor)d.%(cvs_serial)d' % (locals ())
+            else:
+                scipy_core_version = '%(major)d.%(minor)d.%(micro)d'\
+                                     '_%(cvs_minor)d.%(cvs_serial)d' % (locals ())
         else:
-            scipy_core_version = '%(major)d.%(minor)d.%(micro)d'\
-                                 '_%(cvs_minor)d.%(cvs_serial)d' % (locals ())
+            if release_level:
+                scipy_core_version = '%(major)d.%(minor)d.%(micro)d'\
+                                     '_%(release_level)s'\
+                                     % (locals ())
+            else:
+                scipy_core_version = '%(major)d.%(minor)d.%(micro)d'\
+                                     % (locals ())
 
-        print 'SciPy Core Version %s' % scipy_core_version
+        print 'Scipy Core Version %s' % scipy_core_version
         setup( version = scipy_core_version,
-               maintainer = "SciPy Developers",
+               maintainer = "Scipy Developers",
                maintainer_email = "scipy-dev@scipy.org",
-               description = "SciPy core modules: scipy_{distutils,test,base}",
-               license = "SciPy License (BSD Style)",
+               description = "Scipy core modules: scipy_{distutils,test,base}, weave",
+               license = "Scipy License (BSD Style)",
                url = "http://www.scipy.org",
                **config_dict
                )
