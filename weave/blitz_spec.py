@@ -42,10 +42,10 @@ class array_specification(base_specification):
         templ = '// blitz_array_declaration\n' \
                 'py_%(name)s= %(var_name)s;\n' \
                 'PyArrayObject* %(arr_name)s = convert_to_numpy(py_%(name)s,"%(name)s");\n' \
-                'conversion_numpy_check_size(%(arr_name)s,%(dims)s,%(name)s);\n' \
-                'conversion_numpy_check_type(%(arr_name)s,py_type<%(type)s>::code,%(name)s)\n' \
+                'conversion_numpy_check_size(%(arr_name)s,%(dims)s,"%(name)s");\n' \
+                'conversion_numpy_check_type(%(arr_name)s,py_type<%(type)s>::code,"%(name)s");\n' \
                 'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
-                ' convert_to_blitz<%(type)s,%(dims)d>(py_%(name)s,"%(name)s");\n' \
+                ' convert_to_blitz<%(type)s,%(dims)d>(%(arr_name)s,"%(name)s");\n' \
                 'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
         # old version
         #templ = '// blitz_array_declaration\n' \
@@ -66,9 +66,9 @@ class array_specification(base_specification):
         # caused by exceptions.  The templates made the easy fix (with MACROS) for all
         # other types difficult here.  Oh well.
         templ = '// blitz_array_declaration\n' \
-                'PyArrayObject* %(arr_name)s = convert_to_numpy(%(var_name)s,"%(name)s");' \
-                'conversion_numpy_check_size(%(arr_name)s,%(dims)s,%(name)s);' \
-                'conversion_numpy_check_type(%(arr_name)s,py_type<%(type)s>::code,%(name)s)' \
+                'PyArrayObject* %(arr_name)s = convert_to_numpy(%(var_name)s,"%(name)s");\n' \
+                'conversion_numpy_check_size(%(arr_name)s,%(dims)s,"%(name)s");\n' \
+                'conversion_numpy_check_type(%(arr_name)s,py_type<%(type)s>::code,"%(name)s");\n' \
                 'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
                 ' convert_to_blitz<%(type)s,%(dims)d>(%(arr_name)s,"%(name)s");\n' \
                 'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
