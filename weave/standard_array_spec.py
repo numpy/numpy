@@ -48,8 +48,8 @@ class array_specification(base_specification):
                 'PyArrayObject* %(name)s = py_to_numpy(py_%(name)s,"%(name)s");\n' \
                 'int* _N%(name)s = %(name)s->dimensions;\n' \
                 'int* _S%(name)s = %(name)s->strides;\n' \
-                'int* _D%(name)s = %(name)s->nd;\n' \
-                '%(type)s* %(name)s_data = %(name)s->data;\n' 
+                'int _D%(name)s = %(name)s->nd;\n' \
+                '%(type)s* %(name)s_data = (%(type)s*) %(name)s->data;\n' 
         code = templ % locals()
         return code
     #def c_function_declaration_code(self):
