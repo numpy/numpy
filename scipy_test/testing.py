@@ -12,20 +12,37 @@ try:
 except ImportError:
     pass
 
-def get_package_path(testfile):
-    """ Return path to package directory first assuming that testfile
+__all__.append('set_package_path')
+def set_package_path():
+    """ Prepend package directory to sys.path.
+
+    set_package_path should be called from a test_file.py that
     satisfies the following tree structure:
+
+      <somepath>/<somedir>/test_file.py
+
+    Then the first existing path name from the following list
+
       <somepath>/build/lib.<platform>-<version>
-      <somepath>/<somedir>/testfile
-    If build directory does not exist, then return
       <somepath>/..
+
+    is prepended to sys.path.
+    The caller is responsible for removing this path by using
+
+      del sys.path[0]
     """
     from distutils.util import get_platform
+    from scipy_distutils.misc_util import get_frame
+    f = get_frame(1)
+    if f.f_locals['__name__']=='__main__':
+        testfile = sys.argv[0]
+    else:
+        testfile = f.f_locals['__file__']
     d = os.path.dirname(os.path.dirname(os.path.abspath(testfile)))
     d1 = os.path.join(d,'build','lib.%s-%s'%(get_platform(),sys.version[:3]))
-    if os.path.isdir(d1):
-        return d1
-    return os.path.dirname(d)
+    if not os.path.isdir(d1):
+        d1 = os.path.dirname(d)
+    sys.path.insert(0,d1)
 
 if sys.platform[:5]=='linux':
     def jiffies(_proc_pid_stat = '/proc/%s/stat'%(os.getpid()),
