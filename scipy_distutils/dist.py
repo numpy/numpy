@@ -8,10 +8,21 @@ class Distribution (OldDistribution):
     def __init__ (self, attrs=None):
         self.fortran_libraries = None
         OldDistribution.__init__(self, attrs)
+
+    def has_f2py_sources (self):
+        if self.has_ext_modules():
+            for ext in self.ext_modules:
+                for source in ext.sources:
+                    (base, file_ext) = os.path.splitext(source)
+                    if file_ext == ".pyf":       # f2py interface file
+                        return 1
+        return 0
     
     def has_f_libraries(self):
         if self.fortran_libraries and len(self.fortran_libraries) > 0:
             return 1
+        return self.has_f2py_sources() # f2py might generate fortran sources.
+
         if hasattr(self,'_been_here_has_f_libraries'):
             return 0
         if self.has_ext_modules():

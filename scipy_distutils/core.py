@@ -12,6 +12,7 @@ from scipy_distutils.command import build_py
 from scipy_distutils.command import build_ext
 from scipy_distutils.command import build_clib
 from scipy_distutils.command import build_flib
+from scipy_distutils.command import run_f2py
 from scipy_distutils.command import sdist
 from scipy_distutils.command import install_data
 from scipy_distutils.command import install
@@ -24,6 +25,7 @@ def setup(**attr):
                 'build_ext':        build_ext.build_ext,
                 'build_py':         build_py.build_py,                
                 'build_clib':       build_clib.build_clib,
+                'run_f2py':       run_f2py.run_f2py,
                 'sdist':            sdist.sdist,
                 'install_data':     install_data.install_data,
                 'install':          install.install,

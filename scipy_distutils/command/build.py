@@ -8,10 +8,13 @@ from distutils.command.build import build as old_build
 class build(old_build):
     def has_f_libraries(self):
         return self.distribution.has_f_libraries()
+    def has_f2py_sources(self):
+        return self.distribution.has_f2py_sources()
 
     sub_commands = [('build_py',      old_build.has_pure_modules),
                     ('build_clib',    old_build.has_c_libraries),
-                    ('build_flib',    has_f_libraries), # new feature
+                    ('run_f2py',      has_f2py_sources), # new feature
+                    ('build_flib',    has_f_libraries),  # new feature
                     ('build_ext',     old_build.has_ext_modules),
                     ('build_scripts', old_build.has_scripts),
                    ]

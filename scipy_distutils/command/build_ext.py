@@ -81,6 +81,8 @@ class build_ext (old_build_ext):
             if linker_so is not None:
                 self.compiler.linker_so = linker_so
         # end of fortran source support
+        return old_build_ext.build_extension(self,ext)
+        
         # f2py support handled slightly_modified..._extenstion.
         return self.slightly_modified_standard_build_extension(ext)
         
@@ -266,8 +268,10 @@ class build_ext (old_build_ext):
             if newer(source,target):
                 self.announce("f2py-ing %s to %s" % (source, target))
                 self.announce("f2py-args: %s" % f2py_options)
-                f2py2e.run_main(f2py_opts + [source])
-                
+                f2py2e.run_main(f2py_opts + [source])                
+                #ext.sources.extend(pyf.data[ext.name].get('fsrc') or [])
+                #self.distribution.fortran_sources_to_flib(ext)
+        print new_sources
         return new_sources
     # f2py_sources ()
 

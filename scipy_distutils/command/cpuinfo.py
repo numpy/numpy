@@ -107,10 +107,10 @@ class linux_cpuinfo(cpuinfo_base):
         return self.info[0]['cpu']=='i486'
 
     def _is_i586(self):
-        return self.is_Intel() and self.info[0]['model'] == '5'
+        return self.is_Intel() and self.info[0]['cpu family'] == '5'
 
     def _is_i686(self):
-        return self.is_Intel() and self.info[0]['model'] == '6'
+        return self.is_Intel() and self.info[0]['cpu family'] == '6'
 
     def _is_Celeron(self):
         return re.match(r'.*?Celeron',
