@@ -687,7 +687,7 @@ public:
   //-------------------------------------------------------------------------
   // return the variable type for the object
   //-------------------------------------------------------------------------
-  PyObject* type() const {
+  object type() const {
     PyObject* result = PyObject_Type(_obj);
     if (!result)
         throw 1;
