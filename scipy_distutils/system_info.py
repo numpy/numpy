@@ -179,7 +179,7 @@ class fftw_info(system_info):
             if os.path.isdir(p):
                 self.local_prefixes.insert(0,p)
 
-    def calc_info(self,prefix):
+    def calc_info(self,prefix):       
         lib_dirs = filter(os.path.isdir,
                           combine_paths(prefix,'lib',['fftw*','FFTW*']))
         if not lib_dirs:
@@ -280,6 +280,7 @@ class atlas_info(system_info):
                 self.local_prefixes.insert(0,p)
 
     def calc_info(self, prefix):
+        print combine_paths(prefix,'lib',['atlas*','ATLAS*'])
         lib_dirs = filter(os.path.isdir,combine_paths(prefix,'lib',
                                                       ['atlas*','ATLAS*']))
         if lib_dirs:
@@ -305,7 +306,7 @@ class atlas_info(system_info):
                 info = r
                 break
         if info is None: return
-        if h: dict_append(info,include_dirs=h)
+        if h: dict_append(info,include_dirs=[h])
         self.set_info(**info)
 
 
