@@ -21,6 +21,7 @@ class build_ext (old_build_ext):
         # support for building static fortran libraries
         need_f_libs = 0
         ext_name = string.split(ext.name,'.')[-1]
+
         if self.distribution.has_f_libraries():
             build_flib = self.get_finalized_command('build_flib')
             if build_flib.has_f_library(ext_name):
@@ -31,6 +32,7 @@ class build_ext (old_build_ext):
                         need_f_libs = 1
                         break
         print ext.name,ext_name,'needs fortran libraries',need_f_libs
+        
         if need_f_libs:
             moreargs = build_flib.fcompiler.get_extra_link_args()
             if moreargs != []:
@@ -50,6 +52,7 @@ class build_ext (old_build_ext):
             ext.runtime_library_dirs.extend(runtime_dirs or [])
             
             linker_so = build_flib.fcompiler.get_linker_so()
+
             if linker_so is not None:
                 if linker_so is not save_linker_so:
                     print 'replacing linker_so %s with %s' %(save_linker_so,linker_so)
@@ -60,7 +63,18 @@ class build_ext (old_build_ext):
                     l = build_flib.get_fcompiler_library_dirs()
                     #l = self.compiler.library_dirs + l
                     self.compiler.library_dirs = l
-
+            else:
+                libs = build_flib.get_fcompiler_library_names()
+                for lib in libs:
+                    if lib not in self.compiler.libraries:
+                        self.compiler.libraries.append(lib)
+                #self.compiler.libraries = self.compiler.libraries + l
+                lib_dirs = build_flib.get_fcompiler_library_dirs()
+                for lib_dir in lib_dirs:
+                    if lib_dir not in self.compiler.libraries_dirs:
+                        self.compiler.libraries.append(lib_dir)
+                #self.compiler.library_dirs = self.compiler.library_dirs + l
+                
         # end of fortran source support
         res = old_build_ext.build_extension(self,ext)
 
