@@ -20,6 +20,8 @@ def CCompiler_spawn(self, cmd, display=None):
         if type(display) is type([]): display = ' '.join(display)
     log.info(display)
     s,o = exec_command(cmd)
+    print s
+    print o
     if s:
         if type(cmd) is type([]):
             cmd = ' '.join(cmd)
@@ -56,8 +58,22 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     if extra_postargs:
         display += "\nextra options: '%s'" % (' '.join(extra_postargs))
     log.info(display)
-    for obj, (src, ext) in build.items():
-        self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+
+    # build any sources in same order as they were originally specified
+    #   especially important for fortran .f90 files using modules
+    if isinstance(self, FCompiler):
+        from distutils.sysconfig import python_build
+        objects = self.object_filenames(sources,
+                                        strip_dir=python_build,
+                                        output_dir=output_dir)
+        objects_to_build = build.keys()
+        for obj in objects:
+            if obj in objects_to_build:
+                src, ext = build[obj]
+                self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+    else:
+        for obj, (src, ext) in build.items():
+            self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
         
     # Return *all* object filenames, not just the ones we just built.
     return objects
