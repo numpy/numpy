@@ -123,7 +123,7 @@ class GnuFCompiler(FCompiler):
             else:
                 march_flag = 0
         # Note: gcc 3.2 on win32 has breakage with -march specified
-        elif self.get_version() >= '3.1.1' 
+        elif self.get_version() >= '3.1.1' \
             and not sys.platform=='win32': # gcc >= 3.1.1
             if cpu.is_AthlonK6():
                 opt.append('-march=k6')

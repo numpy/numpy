@@ -2,7 +2,7 @@
 import types
 import Numeric
 from Numeric import ravel, nonzero, array, choose, ones, zeros, \
-     sometrue, alltrue
+     sometrue, alltrue, reshape
 from type_check import ScalarType, isscalar, asarray
 from shape_base import squeeze, atleast_1d
 from fastumath import PINF as inf
@@ -10,8 +10,8 @@ from fastumath import *
 import _compiled_base
 
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
-           'select','trim_zeros','amax','amin','ptp','cumsum',
-           'prod','cumprod','diff','angle','unwrap','sort_complex',
+           'select','trim_zeros','amax','amin', 'alen', 'ptp','cumsum','take',
+           'copy', 'prod','cumprod','diff','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
            'nanargmin','nanmin','sum','vectorize','asarray_chkfinite']
 
@@ -140,6 +140,28 @@ def select(condlist, choicelist, default=0):
         S = S*ones(asarray(pfac).shape)
     return choose(S, tuple(choicelist))
 
+def _asarray1d(arr):
+    """Ensure 1d array for one array.
+    """
+    m = asarray(arr)
+    if len(m.shape)==0:
+        m = reshape(m,(1,))
+    return m
+
+def copy(a):
+    """Return an array copy of the object.
+    """
+    return array(a,copy=1)
+
+def take(a, indices, axis=0):
+    """Selects the elements in indices from array a along given axis.
+    """
+    try:
+        a = Numeric.take(a,indices,axis)
+    except ValueError:  # a is scalar
+        pass
+    return a
+    
 # Basic operations
 def amax(m,axis=-1):
     """Returns the maximum of m along dimension axis. 
@@ -148,7 +170,7 @@ def amax(m,axis=-1):
         m = ravel(m)
         axis = 0
     else:
-        m = asarray(m)
+        m = _asarray1d(m)
     return maximum.reduce(m,axis)
 
 def amin(m,axis=-1):
@@ -158,8 +180,13 @@ def amin(m,axis=-1):
         m = ravel(m)
         axis = 0
     else:        
-        m = asarray(m)
+        m = _asarray1d(m)
     return minimum.reduce(m,axis)
+
+def alen(m):
+    """Returns the length of a Python object interpreted as an array
+    """
+    return len(asarray(m))
 
 # Actually from Basis, but it fits in so naturally here...
 
@@ -170,7 +197,7 @@ def ptp(m,axis=-1):
         m = ravel(m)
         axis = 0
     else:
-        m = asarray(m)
+        m = _asarray1d(m)
     return amax(m,axis)-amin(m,axis)
 
 def cumsum(m,axis=-1):
@@ -180,7 +207,7 @@ def cumsum(m,axis=-1):
         m = ravel(m)
         axis = 0
     else:
-        m = asarray(m)
+        m = _asarray1d(m)
     return add.accumulate(m,axis)
 
 def prod(m,axis=-1):
@@ -190,7 +217,7 @@ def prod(m,axis=-1):
         m = ravel(m)
         axis = 0
     else:
-        m = asarray(m)
+        m = _asarray1d(m)
     return multiply.reduce(m,axis)
 
 def cumprod(m,axis=-1):
@@ -200,13 +227,13 @@ def cumprod(m,axis=-1):
         m = ravel(m)
         axis = 0
     else:
-        m = asarray(m)
+        m = _asarray1d(m)
     return multiply.accumulate(m,axis)
 
 def diff(x, n=1,axis=-1):
     """Calculates the nth order, discrete difference along given axis.
     """
-    x = asarray(x)
+    x = _asarray1d(x)
     nd = len(x.shape)
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
@@ -320,21 +347,21 @@ def insert(arr, mask, vals):
 def nansum(x,axis=-1):
     """Sum the array over the given axis treating nans as missing values.
     """
-    x = asarray(x).copy()
+    x = _asarray1d(x).copy()
     Numeric.putmask(x,isnan(x),0)
     return Numeric.sum(x,axis)
 
 def nanmin(x,axis=-1):
     """Find the minimium over the given axis ignoring nans.
     """
-    x = asarray(x).copy()
+    x = _asarray1d(x).copy()
     Numeric.putmask(x,isnan(x),inf)
     return amin(x,axis)
 
 def nanargmin(x,axis=-1):
     """Find the indices of the minimium over the given axis ignoring nans.
     """
-    x = asarray(x).copy()
+    x = _asarray1d(x).copy()
     Numeric.putmask(x,isnan(x),inf)
     return argmin(x,axis)
     
@@ -342,14 +369,14 @@ def nanargmin(x,axis=-1):
 def nanmax(x,axis=-1):
     """Find the maximum over the given axis ignoring nans.
     """
-    x = asarray(x).copy()
+    x = _asarray1d(x).copy()
     Numeric.putmask(x,isnan(x),-inf)
     return amax(x,axis)
 
 def nanargmax(x,axis=-1):
     """Find the maximum over the given axis ignoring nans.
     """
-    x = asarray(x).copy()
+    x = _asarray1d(x).copy()
     Numeric.putmask(x,isnan(x),-inf)
     return argmax(x,axis)
 
@@ -369,7 +396,7 @@ def disp(mesg, device=None, linefeed=1):
 from _compiled_base import arraymap
 class vectorize:
     """
- vectorize(somefunction)  Genearlized Function class.
+ vectorize(somefunction)  Generalized Function class.
 
   Description:
  
