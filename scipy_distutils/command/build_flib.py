@@ -388,6 +388,9 @@ class fortran_compiler_base(CCompiler):
             cmd = 'ar -cur  %s %s' % (lib_file,objects)
             print cmd
             os.system(cmd)
+            cmd = 'ranlib %s ' % lib_file
+            print cmd
+            os.system(cmd)
 
     def build_library(self,library_name,source_list,module_dirs=None,
                       temp_dir = ''):
@@ -695,7 +698,7 @@ class gnu_fortran_compiler(fortran_compiler_base):
 
     def get_linker_so(self):
         # win32 linking should be handled by standard linker
-        if sys.platform != 'win32':
+        if sys.platform != 'win32' and os.uname()[0] != 'Darwin':
             return [self.f77_compiler,'-shared']
  
     def f90_compile(self,source_files,module_files,temp_dir=''):

@@ -249,6 +249,9 @@ class build_clib (Command):
             self.compiler.create_static_lib(objects, lib_name,
                                             output_dir=self.build_clib,
                                             debug=self.debug)
+            cmd = 'ranlib %s/lib%s.a' % (self.build_clib,lib_name)
+            print cmd
+            os.system(cmd)
 
         # for libraries
 
