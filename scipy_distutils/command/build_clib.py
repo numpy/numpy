@@ -117,6 +117,9 @@ class build_clib (Command):
             self.include_dirs = string.split(self.include_dirs,
                                              os.pathsep)
 
+        from scipy_distutils import misc_util
+        extra_includes = misc_util.get_environ_include_dirs()
+        self.include_dirs.extend(extra_includes)
         # XXX same as for build_ext -- what about 'self.define' and
         # 'self.undef' ?
 

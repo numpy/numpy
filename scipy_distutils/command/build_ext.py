@@ -8,9 +8,16 @@ from distutils.dep_util import newer_group, newer
 from distutils.command.build_ext import build_ext as old_build_ext
 
 from scipy_distutils.command.build_clib import get_headers,get_directories
+from scipy_distutils import misc_util
+
 
 class build_ext (old_build_ext):
 
+    def finalize_options (self):
+        old_build_ext.finalize_options(self)
+        extra_includes = misc_util.get_environ_include_dirs()
+        self.include_dirs.extend(extra_includes)
+        
     def build_extension(self, ext):
         
         # The MSVC compiler doesn't have a linker_so attribute.

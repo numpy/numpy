@@ -359,3 +359,9 @@ def fortran_library_item(lib_name,
         build_info[key] = value
     
     return (lib_name,build_info)
+
+def get_environ_include_dirs():
+    includes = []
+    if os.environ.has_key('PYTHONINCLUDE'):
+        includes = os.environ['PYTHONINCLUDE'].split(os.pathsep)
+    return includes
