@@ -7,7 +7,8 @@ By Eric Jones eric@enthought.com
 <dl> 
 <dd> <A href="#Introduction">Introduction</a>
 <dd> <A href="#Requirements">Requirements</a>
-<dd> <A href="#Installation">Installation and Testing</a>
+<dd> <A href="#Installation">Installation</a>
+<dd> <A href="#Testing">Testing</a>
 <dd> <A href="#Inline">Inline</a>
     <dl>
         <dd><A href="#More with printf">More with printf</a>
@@ -162,13 +163,13 @@ scipy import weave</code> and the examples will work identically.</em>
          build Python.  <code>weave</code> itself requires a C++ compiler.  If 
          you used a C++ compiler to build Python, your probably fine.
          <p>
-         On Unix gcc is the preferred choice, because I've done a little 
+         On Unix gcc is the preferred choice because I've done a little 
          testing with it.  All testing has been done with gcc, but I expect the 
          majority of compilers should work for <code>inline</code> and 
          <code>ext_tools</code>.  The one issue I'm not sure about is that I've 
          hard coded things so that compilations are linked with the 
-         <code>stdc++</code> library.  Is this standard across 
-         Unix compilers, or is this a gcc-ism?
+         <code>stdc++</code> library.  <em>Is this standard across 
+         Unix compilers, or is this a gcc-ism?</em>
          <p>
          For <code>blitz()</code>, you'll need a reasonably recent version of 
          gcc. 2.95.2 works on windows and 2.96 looks fine on Linux. Other 
@@ -190,7 +191,8 @@ scipy import weave</code> and the examples will work identically.</em>
          The python Numeric module from <a 
          href="http://www.pfdubois.com/numpy/">here</a>. is required for 
          <code>blitz()</code> to work. Be sure and get NumPy, not NumArray
-         which is the "next generation" implementation.
+         which is the "next generation" implementation.  This is <em>not</em>
+         required for using <code>inline()</code> or <code>ext_tools</code>.
          <p>
     </li>
     <li> scipy_distutils and scipy_test (packaged with <code>weave</code>)
@@ -205,7 +207,7 @@ scipy import weave</code> and the examples will work identically.</em>
 <p>
 
 <a name="Installation"></a>
-<h1>Installation and Testing</h1>
+<h1>Installation</h1>
 <p>
 There are currently two ways to get <code>weave</code>. Fist, 
 <code>weave</code> is part of SciPy and installed automatically (as a sub-
@@ -216,7 +218,7 @@ used as a stand-alone module.
 
 <p>
 The stand-alone version can be downloaded from <a 
-href="www.scipy.org/weave">here</a>.  Unix users should grab the 
+href="http://www.scipy.org/weave">here</a>.  Unix users should grab the 
 tar ball (.tgz file) and install it using the following commands.
 
     <blockquote><pre><code>
@@ -227,31 +229,54 @@ tar ball (.tgz file) and install it using the following commands.
 
 This will also install two other packages, <code>scipy_distutils</code> and 
 <code>scipy_test</code>.  The first is needed by the setup process itself and 
-both are used in the unit-testing process. For Windows users, it's even easier. 
-They can download the click-install .exe file and run it for automatic 
-installation.  Numeric is required if you want to use <code>blitz()</code>, but
-isn't necessary for <code>inline()</code> or <code>ext_tools</code>
+both are used in the unit-testing process.  Numeric is required if you want to 
+use <code>blitz()</code>, but isn't necessary for <code>inline()</code> or 
+<code>ext_tools</code>
 <p>
-If you're using the CVS version, you'll need to install scipy_distutils and 
-scipy_test modules (also available from CVS) on your own.
+For Windows users, it's even easier. You can download the click-install .exe 
+file and run it for automatic installation.  There is also a .zip file of the
+source for those interested.  It also includes a setup.py file to simplify
+installation.  
 <p>
-<em> Note: The dependency issue here is a little sticky.  I hate to make people 
+If you're using the CVS version, you'll need to install 
+<code>scipy_distutils</code> and <code>scipy_test</code> packages (also 
+available from CVS) on your own.
+<p>
+<em> 
+Note: The dependency issue here is a little sticky.  I hate to make people 
 download more than one file (and so I haven't), but distutils doesn't have a 
 way to do conditional installation -- at least that I know about.  This can 
-lead to undesired clobbering of modules.  What to do, what to do...</em>
+lead to undesired clobbering of the scipy_test and scipy_distutils modules. 
+What to do, what to do...  Right now it is a very minor issue.
+</em>
 <p>
+<a name="Testing"></a>
+<h1>Testing</h1>
 Once <code>weave</code> is installed, fire up python and run its unit tests.
 
     <blockquote><pre><code>
     >>> import weave
     >>> weave.test()
-    runs long time... spews tons of output
+    runs long time... spews tons of output and a few warnings
+    .
+    .
+    .
+    ..............................................................
+    ................................................................
+    ..................................................
+    ----------------------------------------------------------------------
+    Ran 184 tests in 158.418s
+
+    OK
+    <unittest.TextTestRunner instance at 01562934>
+    >>> 
     </code></pre></blockquote>        
 
 This takes a loooong time.  On windows, it is usually several minutes.  On Unix 
 with remote file systems, I've had it take 15 or so minutes.  In the end, it 
 should run about 180 tests and spew some speed results along the way.  If you 
-get errors, please let me know.
+get errors, they'll be reported at the end of the output.  Please let me know
+what if this occurs.
 
 If you don't have Numeric installed, you'll get some module import errors 
 during the test setup phase for modules that are Numeric specific (blitz_spec, 
@@ -269,25 +294,46 @@ running test() for that specific module.
     Ran 7 tests in 23.284s
     </code></pre></blockquote>        
 <em>
-Windows Note: I've had some test fail on windows machines where I have msvc, 
-gcc-2.95.2 (in c:\gcc-2.95.2), and gcc-2.95.3-6 (in c:\gcc) all installed. My 
-environment has c:\gcc in the path and does not have c:\gcc-2.95.2 in the path. 
-The test process runs very smoothly until the end where several test using gcc 
-fail with cpp0 not found by g++.  If I check os.system('gcc -v') before running 
-tests, I get gcc-2.95.3-6.  If I check after running tests (and after failure), 
-I get gcc-2.95.2. ??huh??.  The os.environ['PATH'] still has c:\gcc first in it 
-and is not corrupted (msvc/distutils messes with the environment variables, so 
-we have to undo its work in some places).  If anyone else sees this, let me 
-know - - it may just be an quirk on my machine (unlikely).  Testing with the 
-gcc- 2.95.2 installation always works.
+Testing Notes:
+<ul>
+    <li>
+    Windows 1
+    <p>
+    I've had some test fail on windows machines where I have msvc, gcc-2.95.2 
+    (in c:\gcc-2.95.2), and gcc-2.95.3-6 (in c:\gcc) all installed. My 
+    environment has c:\gcc in the path and does not have c:\gcc-2.95.2 in the 
+    path. The test process runs very smoothly until the end where several test 
+    using gcc fail with cpp0 not found by g++.  If I check os.system('gcc -v') 
+    before running tests, I get gcc-2.95.3-6.  If I check after running tests 
+    (and after failure), I get gcc-2.95.2. ??huh??.  The os.environ['PATH'] 
+    still has c:\gcc first in it and is not corrupted (msvc/distutils messes 
+    with the environment variables, so we have to undo its work in some 
+    places).  If anyone else sees this, let me know - - it may just be an quirk 
+    on my machine (unlikely).  Testing with the gcc- 2.95.2 installation always 
+    works.
+    <p>
+    </li>
+    <li>
+    Windows 2
+    <p>
+    If you run the tests from PythonWin or some other GUI tool, you'll get a
+    ton of DOS windows popping up periodically as <code>weave</code> spawns
+    the compiler multiple times.  Very annoying.  Anyone know how to fix this?
+    <p>
+    </li>
+    <li>
+    wxPython
+    <p>
+    wxPython tests are not enabled by default because importing wxPython on a 
+    Unix machine without access to a X-term will cause the program to exit. 
+    Anyone know of a safe way to detect whether wxPython can be imported and 
+    whether a display exists on a machine?    
+    <p>
+    </li>
 </em>
+
 <p>
-<em>
-wxPython Note: wxPython tests are not enabled by default because importing
-wxPython on a Unix machine without access to a X-term will cause the 
-program to exit.  Anyone know of a safe way to detect whether wxPython
-can be imported and whether a display exists on a machine?
-</em>
+</ul>
 
 <a name="Inline"></a>
 <h1>Inline</h1>
@@ -366,7 +412,7 @@ supress the first time the code executes:
     1
     </code></pre></blockquote>
 <p>
-Nothing bead is happening, its just a bit annoying. <em> Anyone know how to 
+Nothing bad is happening, its just a bit annoying. <em> Anyone know how to 
 turn this off?</em>    
 <p>
 This example also demonstrates using 'raw strings'. The <code>r</code> 
@@ -1031,7 +1077,9 @@ run on Windows machine that has Microsoft VC++ installed.
     
 When <code>inline</code> is first run, you'll notice that pause and some 
 trash printed to the screen.  The "trash" is acutually part of the compilers
-output that distutils does not supress.  On Unix or windows machines with only
+output that distutils does not supress.  The name of the extension file, 
+<code>sc_bighonkingnumber.cpp</code>, is generated from the md5 check sum
+of the C/C++ code fragment.  On Unix or windows machines with only
 gcc installed, the trash will not appear.  On the second call, the code 
 fragment is not compiled since it already exists, and only the answer is 
 returned. Now kill the interpreter and restart, and run the same code with
@@ -1140,7 +1188,7 @@ time.
     </code></pre></blockquote>
 
 <p>
-<em> Note: I've only used the <code>weave</code> option for switching between 'msvc'
+<em> Note: I've only used the <code>compiler</code> option for switching between 'msvc'
 and 'gcc' on windows.  It may have use on Unix also, but I don't know yet.
 </em>
 
@@ -1439,7 +1487,7 @@ after errors.
 <a name="inline_technical_details"></a>
 <h2> Technical Details </h2>
 <p>
-There are 
+There are several main steps to using C/C++ code withing Python:
 <ol>
     <li>Type conversion 
     <li>Generating C/C++ code 
@@ -2454,7 +2502,7 @@ See the <a href="#The Catalog">Cataloging functions</a> section in the
 
 Surprisingly, one of the big initial problems with compiled code was making
 sure all the arrays in an operation were of compatible type.  The following
-case, is of course, trivially easy:
+case is trivially easy:
 
     <blockquote><pre><code>
     a = b + c
@@ -2658,7 +2706,7 @@ If the module didn't exist before it was run, the module is created.  If it did
 exist, it is just imported and used.
 
 <a name="Fibonacci Example"></a>
-<h1> Fibonacci Example </h1>
+<h2> Fibonacci Example </h2>
 <code>examples/fibonacci.py</code> provides a little more complex example of 
 how to use <code>ext_tools</code>.  Fibonacci numbers are a series of numbers 
 where each number in the series is the sum of the previous two: 1, 1, 2, 3, 5, 
