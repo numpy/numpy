@@ -85,19 +85,35 @@ static PyObject *base_insert(PyObject *self, PyObject *args, PyObject *kwdict)
    */
 
   PyObject *mask=NULL, *vals=NULL;
-  PyArrayObject *ainput=NULL, *amask=NULL, *avals=NULL, *avalscast=NULL;
+  PyArrayObject *ainput=NULL, *amask=NULL, *avals=NULL, *avalscast=NULL, *tmp=NULL;
   int numvals, totmask, sameshape;
   char *input_data, *mptr, *vptr, *zero;
   int melsize, delsize, copied, nd;
   int *instrides, *inshape;
-  int mindx, rem_indx, indx, i, k;
+  int mindx, rem_indx, indx, i, k, objarray;
   
   static char *kwlist[] = {"input","mask","vals",NULL};
 
   if (!PyArg_ParseTupleAndKeywords(args, kwdict, "O!OO", kwlist, &PyArray_Type, &ainput, &mask, &vals))
     return NULL;
 
+  /* Fixed problem with OBJECT ARRAYS
+  if (ainput->descr->type_num == PyArray_OBJECT) {
+    PyErr_SetString(PyExc_ValueError, "Not currently supported for Object arrays.");
+    return NULL;
+  }
+  */
+
   amask = (PyArrayObject *)PyArray_ContiguousFromObject(mask, PyArray_NOTYPE, 0, 0);
+  if (amask == NULL) return NULL;
+  /* Cast an object array */
+  if (amask->descr->type_num == PyArray_OBJECT) {
+    tmp = (PyArrayObject *)PyArray_Cast(amask, PyArray_LONG);
+    if (tmp == NULL) goto fail;
+    Py_DECREF(amask);
+    amask = tmp;
+  }
+
   sameshape = 1;
   if (amask->nd == ainput->nd) {
     for (k=0; k < amask->nd; k++) 
@@ -106,6 +122,7 @@ static PyObject *base_insert(PyObject *self, PyObject *args, PyObject *kwdict)
   }
   else { /* Test to see if amask is 1d */
     if (amask->nd != 1) sameshape = 0;
+    else if ((PyArray_SIZE(ainput)) != PyArray_SIZE(amask)) sameshape = 0;
   }
   if (!sameshape) {
     PyErr_SetString(PyExc_ValueError, "Mask array must be 1D or same shape as input array.");
@@ -125,18 +142,20 @@ static PyObject *base_insert(PyObject *self, PyObject *args, PyObject *kwdict)
   vptr = avalscast->data;
   delsize = avalscast->descr->elsize;
   zero = amask->descr->zero;
+  objarray = (ainput->descr->type_num == PyArray_OBJECT);
   
   /* Handle zero-dimensional case separately */
   if (nd == 0) {
     if (memcmp(mptr,zero,melsize) != 0) {
       /* Copy value element over to input array */
       memcpy(input_data,vptr,delsize);
+      if (objarray) Py_INCREF(*((PyObject **)vptr));
     }
-      Py_DECREF(amask);
-      Py_DECREF(avals);
-      Py_DECREF(avalscast);
-      Py_INCREF(Py_None);
-      return Py_None;
+    Py_DECREF(amask);
+    Py_DECREF(avals);
+    Py_DECREF(avalscast);
+    Py_INCREF(Py_None);
+    return Py_None;
   }
 
   /* Walk through mask array, when non-zero is encountered
@@ -161,6 +180,7 @@ static PyObject *base_insert(PyObject *self, PyObject *args, PyObject *kwdict)
       /* fprintf(stderr, "mindx = %d, indx=%d\n", mindx, indx); */
       /* Copy value element over to input array */
       memcpy(input_data+indx,vptr,delsize);
+      if (objarray) Py_INCREF(*((PyObject **)vptr));
       vptr += delsize;
       copied += 1;
       /* If we move past value data.  Reset */
