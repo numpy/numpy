@@ -12,8 +12,8 @@ def configuration(parent_package=''):
     test_path = os.path.join(local_path,'tests')
     config['package_dir']['weave.tests'] = test_path
     
-    scxx_files = glob(os.path.join(local_path,'scxx2','*.*'))
-    install_path = os.path.join(parent_path,'weave','scxx2')
+    scxx_files = glob(os.path.join(local_path,'scxx','*.*'))
+    install_path = os.path.join(parent_path,'weave','scxx')
     config['data_files'].extend( [(install_path,scxx_files)])
     
     blitz_files = glob(os.path.join(local_path,'blitz-20001213','blitz','*.*'))
