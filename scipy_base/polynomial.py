@@ -82,7 +82,7 @@ def roots(p):
     trailing_zeros = len(p) - non_zero[-1] - 1
 
     # strip leading and trailing zeros
-    p = p[int(non_zero[0]):int(non_zero[-1])+1]
+     p = p[int(non_zero[0]):int(non_zero[-1])+1]
     
     # casting: if incoming array isn't floating point, make it floating point.
     if p.typecode() not in ['f','d','F','D']:
@@ -94,6 +94,8 @@ def roots(p):
         A = diag(ones((N-2,),p.typecode()),-1)
         A[0,:] = -p[1:] / p[0]
         roots = eig(A)
+    else:
+        return array([])
 
     # tack any zeros onto the back of the array    
     roots = hstack((roots,zeros(trailing_zeros,roots.typecode())))
