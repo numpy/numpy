@@ -7,16 +7,12 @@
 """
 
 import Numeric
+from utility import toFloat32, toFloat64
 
-toChar = lambda x: Numeric.array(x, Numeric.Character)
-toInt8 = lambda x: Numeric.array(x, Numeric.Int8)# or use variable names such as Byte
-toInt16 = lambda x: Numeric.array(x, Numeric.Int16)
-toInt32 = lambda x: Numeric.array(x, Numeric.Int32)
-toFloat32 = lambda x: Numeric.array(x, Numeric.Float32)
-toFloat64 = lambda x: Numeric.array(x, Numeric.Float64)
-
-#cast[Float32] = toFloat32
-#cast[Float64] = toFloat64
+__all__ = ['epsilon','tiny','float_epsilon','float_tiny','float_min',
+           'float_max','float_precision','float_resolution',
+           'double_epsilon','double_tiny','double_min','double_max',
+           'double_precision','double_resolution']
 
 def epsilon(typecode):
     if typecode == Numeric.Float32: cast = toFloat32

@@ -3,7 +3,7 @@ Wrapper functions to more user-friendly calling of certain math functions whose 
 different than the input under certain conditions.
 """
 
-__all__ = ['sqrt', 'log', 'log10', 'power', 'arccos', 'arcsin', 'arctanh']
+__all__ = ['sqrt', 'log', 'log2','logn','log10', 'power', 'arccos', 'arcsin', 'arctanh']
 
 from convenience import any, isreal
 import fastumath
