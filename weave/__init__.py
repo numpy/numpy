@@ -28,7 +28,7 @@ def test(level=10):
     return runner
 
 def test_suite(level=1):
-    import scipy_test
+    import scipy_base.testing
     import scipy.weave
     this_mod = scipy.weave
-    return scipy_test.harvest_test_suites(this_mod,level=level)
+    return scipy_base.testing.harvest_test_suites(this_mod,level=level)

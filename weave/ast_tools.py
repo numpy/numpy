@@ -198,11 +198,11 @@ def tuples_to_lists(ast_tuple):
     return new_list
 
 def test(level=10):
-    from scipy_test import module_test
+    from scipy_base.testing import module_test
     module_test(__name__,__file__,level=level)
 
 def test_suite(level=1):
-    from scipy_test import module_test_suite
+    from scipy_base.testing import module_test_suite
     return module_test_suite(__name__,__file__,level=level)
     
 """

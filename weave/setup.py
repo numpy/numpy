@@ -15,7 +15,7 @@ def stand_alone_package(with_dependencies = 0):
     try:
         primary =     ['weave']
         if with_dependencies:
-            dependencies= ['scipy_distutils', 'scipy_test']       
+            dependencies= ['scipy_distutils', 'scipy_base.testing']       
         else:
             dependencies = []    
         

@@ -16,7 +16,7 @@ restore_path()
 empty = array(())
  
 def array_assert_equal(test_string,actual,desired):
-    """this should probably be in scipy_test
+    """this should probably be in scipy_base.testing
     """
     import pprint        
     try:
@@ -128,7 +128,7 @@ class test_binary_op_size(unittest.TestCase):
 
 class test_dummy_array(test_binary_op_size):
     def array_assert_equal(self,test_string,actual,desired):
-        """this should probably be in scipy_test
+        """this should probably be in scipy_base.testing
         """
         import pprint        
         try:
@@ -165,7 +165,7 @@ class test_dummy_array(test_binary_op_size):
 
 class test_dummy_array_indexing(unittest.TestCase):
     def array_assert_equal(self,test_string,actual,desired):
-        """this should probably be in scipy_test
+        """this should probably be in scipy_base.testing
         """
         import pprint        
         try:
@@ -363,7 +363,7 @@ class test_reduction(unittest.TestCase):
 
 class test_expressions(unittest.TestCase):        
     def array_assert_equal(self,test_string,actual,desired):
-        """this should probably be in scipy_test
+        """this should probably be in scipy_base.testing
         """
         import pprint        
         try:
