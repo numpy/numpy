@@ -565,7 +565,7 @@ def get_svn_revision(path):
         f.close()
         if m:
             revision = m.group('revision')
-    return revision
+    return int(revision)
 
 if __name__ == '__main__':
     print 'terminal_has_colors:',terminal_has_colors()
