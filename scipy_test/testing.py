@@ -38,11 +38,10 @@ try:
     # These are used by Numeric tests.
     # If Numeric and scipy_base  are not available, then some of the
     # functions below will not be available.
-    from Numeric import alltrue,equal,shape,ravel,around,zeros,Float64,asarray,\
-         less_equal,array2string,less
-    # `import scipy_base.fastumath as math` must be at the end of this file.
-except ImportError,msg:
-    print msg
+    from scipy_base.numerix import all, equal, shape, ravel, around, zeros, Float64, asarray
+    from scipy_base.numerix import less_equal, array2string, less
+except ImportError:
+    pass
 
 DEBUG = 0
 
@@ -644,7 +643,7 @@ def assert_equal(actual,desired,err_msg='',verbose=1):
         msg =  msg \
              + 'DESIRED: ' + repr(desired) \
              + '\nACTUAL: ' + repr(actual)
-    assert desired == actual, msg
+    assert all(desired == actual), msg
 
 __all__.append('assert_almost_equal')
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
@@ -661,7 +660,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
         msg =  msg \
              + 'DESIRED: ' + repr(desired) \
              + '\nACTUAL: ' + repr(actual)
-    assert round(abs(desired - actual),decimal) == 0, msg
+    assert all(round(abs(desired - actual),decimal) == 0), msg
 
 __all__.append('assert_approx_equal')
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
@@ -692,7 +691,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
         msg =  msg \
              + 'DESIRED: ' + repr(desired) \
              + '\nACTUAL: ' + repr(actual)
-    assert math.fabs(sc_desired - sc_actual) < pow(10.,-1*significant), msg
+    assert all(math.fabs(sc_desired - sc_actual) < pow(10.,-1*significant)), msg
 
 
 __all__.append('assert_array_equal')
@@ -702,11 +701,11 @@ def assert_array_equal(x,y,err_msg=''):
     try:
         assert 0 in [len(shape(x)),len(shape(y))] \
                or (len(shape(x))==len(shape(y)) and \
-                   alltrue(equal(shape(x),shape(y)))),\
+                   all(equal(shape(x),shape(y)))),\
                    msg + ' (shapes %s, %s mismatch):\n\t' \
                    % (shape(x),shape(y)) + err_msg
         reduced = ravel(equal(x,y))
-        cond = alltrue(reduced)
+        cond = all(reduced)
         if not cond:
             s1 = array2string(x,precision=16)
             s2 = array2string(y,precision=16)
@@ -725,13 +724,13 @@ def assert_array_almost_equal(x,y,decimal=6,err_msg=''):
     y = asarray(y)
     msg = '\nArrays are not almost equal'
     try:
-        cond = alltrue(equal(shape(x),shape(y)))
+        cond = all(equal(shape(x),shape(y)))
         if not cond:
             msg = msg + ' (shapes mismatch):\n\t'\
                   'Shape of array 1: %s\n\tShape of array 2: %s' % (shape(x),shape(y))
         assert cond, msg + '\n\t' + err_msg
         reduced = ravel(equal(less_equal(around(abs(x-y),decimal),10.0**(-decimal)),1))
-        cond = alltrue(reduced)
+        cond = all(reduced)
         if not cond:
             s1 = array2string(x,precision=decimal+1)
             s2 = array2string(y,precision=decimal+1)
@@ -752,10 +751,10 @@ def assert_array_less(x,y,err_msg=''):
     x,y = asarray(x), asarray(y)
     msg = '\nArrays are not less-ordered'
     try:
-        assert alltrue(equal(shape(x),shape(y))),\
+        assert all(equal(shape(x),shape(y))),\
                msg + ' (shapes mismatch):\n\t' + err_msg
         reduced = ravel(less(x,y))
-        cond = alltrue(reduced)
+        cond = all(reduced)
         if not cond:
             s1 = array2string(x,precision=16)
             s2 = array2string(y,precision=16)
@@ -794,7 +793,7 @@ def output_exception():
         type = value = tb = None # clean up
 
 try:
-    import scipy_base.fastumath as math
+    from scipy_base.numerix import fastumath as math
 except ImportError,msg:
     print msg
     import math

@@ -759,7 +759,11 @@ static PyObject *scipy_ufunc_call(PyUFuncObject *self, PyObject *args) {
     for(i=0; i<self->nargs; i++) mps[i] = NULL;
 	
     if (scipy_PyUFunc_GenericFunction(self, args, mps) == -1) {
-	for(i=0; i<self->nargs; i++) if (mps[i] != NULL) Py_DECREF(mps[i]);
+	    for(i=0; i<self->nargs; i++) { 
+		    if (mps[i] != NULL) { 
+			    Py_DECREF(mps[i]); 
+		    }
+	    }
 	return NULL;
     }
 	

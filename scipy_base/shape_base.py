@@ -1,5 +1,6 @@
-import Numeric
-from Numeric import *
+import numerix as _nx
+from numerix import *
+
 from type_check import isscalar, asarray
 
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
@@ -20,20 +21,20 @@ def apply_along_axis(func1d,axis,arr,*args):
         and arr is an N-d array.  i varies so as to apply the function
         along the given axis for each 1-d subarray in arr.
     """
-    nd = Numeric.rank(arr)
+    nd = _nx.rank(arr)
     if axis < 0: axis += nd
     if (axis >= nd):
         raise ValueError, "axis must be less than the rank; "+\
               "axis=%d, rank=%d." % (axis,)
     ind = [0]*(nd-1)
-    dims = Numeric.shape(arr)
+    dims = _nx.shape(arr)
     i = zeros(nd,'O')
     indlist = range(nd)
     indlist.remove(axis)
     i[axis] = slice(None,None)
     outshape = take(shape(arr),indlist)
     put(i,indlist,ind)
-    res = func1d(arr[i],*args)
+    res = func1d(arr[tuple(i)],*args)
     #  if res is a number, then we have a smaller output array
     if isscalar(res):
         outarr = zeros(outshape,asarray(res).typecode())
@@ -49,7 +50,7 @@ def apply_along_axis(func1d,axis,arr,*args):
                 ind[n] = 0
                 n -= 1
             put(i,indlist,ind)
-            res = func1d(arr[i],*args)
+            res = func1d(arr[tuple(i)],*args)
             outarr[ind] = res
             k += 1
         return outarr
@@ -59,7 +60,7 @@ def apply_along_axis(func1d,axis,arr,*args):
         outshape = list(shape(arr))
         outshape[axis] = len(res)
         outarr = zeros(outshape,asarray(res).typecode())
-        outarr[i] = res
+        outarr[tuple(i)] = res
         k = 1
         while k < Ntot:
             # increment the index
@@ -70,8 +71,8 @@ def apply_along_axis(func1d,axis,arr,*args):
                 ind[n] = 0
                 n -= 1
             put(i,indlist,ind)
-            res = func1d(arr[i],*args)
-            outarr[i] = res
+            res = func1d(arr[tuple(i)],*args)
+            outarr[tuple(i)] = res
             k += 1
         return outarr
         
@@ -122,11 +123,9 @@ def atleast_1d(*arys):
     res = []
     for ary in arys:
         ary = asarray(ary)
-        if len(ary.shape) == 0: 
-            result = Numeric.array([ary[0]])
-        else:
-            result = ary
-        res.append(result)
+        if len(ary.shape) == 0:
+            ary.shape = (1,)
+        res.append(ary)
     if len(res) == 1:
         return res[0]
     else:
@@ -147,8 +146,8 @@ def atleast_2d(*arys):
     res = []
     for ary in arys:
         ary = asarray(ary)
-        if len(ary.shape) == 0: 
-            ary = Numeric.array([ary[0]])
+        if len(ary.shape) == 0:
+            ary.shape = (1,)
         if len(ary.shape) == 1: 
             result = ary[NewAxis,:]
         else: 
@@ -178,7 +177,7 @@ def atleast_3d(*arys):
     for ary in arys:
         ary = asarray(ary)
         if len(ary.shape) == 0:
-            ary = Numeric.array([ary[0]])
+            ary.shape = (1,)
         if len(ary.shape) == 1:
             result = ary[NewAxis,:,NewAxis]
         elif len(ary.shape) == 2:
@@ -221,7 +220,7 @@ def vstack(tup):
                    [4]])
 
     """
-    return Numeric.concatenate(map(atleast_2d,tup),0)
+    return _nx.concatenate(map(atleast_2d,tup),0)
 
 def hstack(tup):
     """ Stack arrays in sequence horizontally (column wise)
@@ -248,7 +247,7 @@ def hstack(tup):
                    [3, 4]])
 
     """
-    return Numeric.concatenate(map(atleast_1d,tup),1)
+    return _nx.concatenate(map(atleast_1d,tup),1)
 
 def column_stack(tup):
     """ Stack 1D arrays as columns into a 2D array
@@ -270,8 +269,8 @@ def column_stack(tup):
                    [3, 4]])
 
     """
-    arrays = map(Numeric.transpose,map(atleast_2d,tup))
-    return Numeric.concatenate(arrays,1)
+    arrays = map(_nx.transpose,map(atleast_2d,tup))
+    return _nx.concatenate(arrays,1)
     
 def dstack(tup):
     """ Stack arrays in sequence depth wise (along third dimension)
@@ -300,14 +299,14 @@ def dstack(tup):
                    [        [2, 3]],
                    [        [3, 4]]])
     """
-    return Numeric.concatenate(map(atleast_3d,tup),2)
+    return _nx.concatenate(map(atleast_3d,tup),2)
 
 def _replace_zero_by_x_arrays(sub_arys):
     for i in range(len(sub_arys)):
-        if len(Numeric.shape(sub_arys[i])) == 0:
-            sub_arys[i] = Numeric.array([])
-        elif Numeric.sometrue(Numeric.equal(Numeric.shape(sub_arys[i]),0)):
-            sub_arys[i] = Numeric.array([])   
+        if len(_nx.shape(sub_arys[i])) == 0:
+            sub_arys[i] = _nx.array([])
+        elif _nx.sometrue(_nx.equal(_nx.shape(sub_arys[i]),0)):
+            sub_arys[i] = _nx.array([])   
     return sub_arys
     
 def array_split(ary,indices_or_sections,axis = 0):
@@ -358,13 +357,13 @@ def array_split(ary,indices_or_sections,axis = 0):
         section_sizes = [0] + \
                         extras * [Neach_section+1] + \
                         (Nsections-extras) * [Neach_section]
-        div_points = Numeric.add.accumulate(Numeric.array(section_sizes))
+        div_points = _nx.add.accumulate(_nx.array(section_sizes))
 
     sub_arys = []
-    sary = Numeric.swapaxes(ary,axis,0)
+    sary = _nx.swapaxes(ary,axis,0)
     for i in range(Nsections):
         st = div_points[i]; end = div_points[i+1]
-        sub_arys.append(Numeric.swapaxes(sary[st:end],axis,0))
+        sub_arys.append(_nx.swapaxes(sary[st:end],axis,0))
 
     # there is a wierd issue with array slicing that allows
     # 0x10 arrays and other such things.  The following cluge is needed
@@ -452,7 +451,7 @@ def hsplit(ary,indices_or_sections):
                    [3, 4]])]
                    
     """
-    if len(Numeric.shape(ary)) == 0:
+    if len(_nx.shape(ary)) == 0:
         raise ValueError, 'hsplit only works on arrays of 1 or more dimensions'
     if len(ary.shape) > 1:
         return split(ary,indices_or_sections,1)
@@ -497,7 +496,7 @@ def vsplit(ary,indices_or_sections):
             [array([       [1, 2, 3, 4]]), array([       [1, 2, 3, 4]])]
                    
     """
-    if len(Numeric.shape(ary)) < 2:
+    if len(_nx.shape(ary)) < 2:
         raise ValueError, 'vsplit only works on arrays of 2 or more dimensions'
     return split(ary,indices_or_sections,0)
 
@@ -534,7 +533,7 @@ def dsplit(ary,indices_or_sections):
                     [3, 4]]])]
                                        
     """
-    if len(Numeric.shape(ary)) < 3:
+    if len(_nx.shape(ary)) < 3:
         raise ValueError, 'vsplit only works on arrays of 3 or more dimensions'
     return split(ary,indices_or_sections,2)
 

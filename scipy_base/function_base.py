@@ -1,13 +1,10 @@
-
 import types
-import Numeric
-from Numeric import ravel, nonzero, array, choose, ones, zeros, \
-     sometrue, alltrue, reshape
+import numerix as _nx
+from numerix import ravel, nonzero, array, choose, ones, zeros, \
+     sometrue, alltrue, reshape, alter_numeric, restore_numeric, arraymap, \
+     pi, _insert, multiply, add, arctan2, maximum, minimum
 from type_check import ScalarType, isscalar, asarray
 from shape_base import squeeze, atleast_1d
-from fastumath import PINF as inf
-from fastumath import *
-import _compiled_base
 
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin', 'alen', 'ptp','cumsum','take',
@@ -16,14 +13,11 @@ __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'nanargmin','nanmin','sum','vectorize','asarray_chkfinite',
            'alter_numeric', 'restore_numeric','isaltered']
 
-alter_numeric = _compiled_base.alter_numeric
-restore_numeric = _compiled_base.restore_numeric
-
 def isaltered():
-    val = str(type(array([1])))
+    val = str(type(_nx.array([1])))
     return 'scipy' in val
 
-round = Numeric.around
+round = _nx.around
 
 def asarray_chkfinite(x):
     """Like asarray except it checks to be sure no NaNs or Infs are present.
@@ -49,7 +43,7 @@ def sum(x,axis=0):  # could change default axis here
     x = asarray(x)
     if x.typecode() in ['1','s','b','w']:
         x = x.astype('l')
-    return Numeric.sum(x,axis)
+    return _nx.sum(x,axis)
     
 
 def logspace(start,stop,num=50,endpoint=1):
@@ -61,11 +55,11 @@ def logspace(start,stop,num=50,endpoint=1):
     if num <= 0: return array([])
     if endpoint:
         step = (stop-start)/float((num-1))
-        y = Numeric.arange(0,num) * step + start
+        y = _nx.arange(0,num) * step + start
     else:
         step = (stop-start)/float(num)
-        y = Numeric.arange(0,num) * step + start
-    return Numeric.power(10.0,y)
+        y = _nx.arange(0,num) * step + start
+    return _nx.power(10.0,y)
 
 def linspace(start,stop,num=50,endpoint=1,retstep=0):
     """ Evenly spaced samples.
@@ -76,10 +70,10 @@ def linspace(start,stop,num=50,endpoint=1,retstep=0):
     if num <= 0: return array([])
     if endpoint:
         step = (stop-start)/float((num-1))
-        y = Numeric.arange(0,num) * step + start        
+        y = _nx.arange(0,num) * step + start        
     else:
         step = (stop-start)/float(num)
-        y = Numeric.arange(0,num) * step + start
+        y = _nx.arange(0,num) * step + start
     if retstep:
         return y, step
     else:
@@ -89,8 +83,8 @@ def fix(x):
     """ Round x to nearest integer towards zero.
     """
     x = asarray(x)
-    y = Numeric.floor(x)
-    return Numeric.where(x<0,y+1,y)
+    y = _nx.floor(x)
+    return _nx.where(x<0,y+1,y)
 
 def mod(x,y):
     """ x - y*floor(x/y)
@@ -98,7 +92,7 @@ def mod(x,y):
         For numeric arrays, x % y has the same sign as x while
         mod(x,y) has the same sign as y.
     """
-    return x - y*Numeric.floor(x*1.0/y)
+    return x - y*_nx.floor(x*1.0/y)
 
 def select(condlist, choicelist, default=0):
     """ Returns an array comprised from different elements of choicelist
@@ -165,31 +159,38 @@ def take(a, indices, axis=0):
     """Selects the elements in indices from array a along given axis.
     """
     try:
-        a = Numeric.take(a,indices,axis)
+        a = _nx.take(a,indices,axis)
     except ValueError:  # a is scalar
         pass
     return a
-    
-# Basic operations
-def amax(m,axis=-1):
-    """Returns the maximum of m along dimension axis. 
-    """
+
+def _no_axis_is_all(function, m, axis):
     if axis is None:
         m = ravel(m)
         axis = 0
     else:
         m = _asarray1d(m)
-    return maximum.reduce(m,axis)
+    if _nx.which[0] == "numeric":
+        r = function(m, axis)
+    else:
+        import numarray as _na
+        _na.Error.pushMode(overflow="raise")
+        try:
+            r = function(m, axis)
+        finally:
+            _na.Error.popMode()
+    return r
+    
+# Basic operations
+def amax(m,axis=-1): 
+    """Returns the maximum of m along dimension axis. 
+    """
+    return _no_axis_is_all(maximum.reduce, m, axis)
 
 def amin(m,axis=-1):
     """Returns the minimum of m along dimension axis.
     """
-    if axis is None:
-        m = ravel(m)
-        axis = 0
-    else:        
-        m = _asarray1d(m)
-    return minimum.reduce(m,axis)
+    return _no_axis_is_all(minimum.reduce, m, axis)
 
 def alen(m):
     """Returns the length of a Python object interpreted as an array
@@ -198,45 +199,28 @@ def alen(m):
 
 # Actually from Basis, but it fits in so naturally here...
 
+def _amin_amax(m, axis):
+    return amax(m,axis)-amin(m,axis)
+
 def ptp(m,axis=-1):
     """Returns the maximum - minimum along the the given dimension
     """
-    if axis is None:
-        m = ravel(m)
-        axis = 0
-    else:
-        m = _asarray1d(m)
-    return amax(m,axis)-amin(m,axis)
+    return _no_axis_is_all(_amin_amax, m, axis)
 
 def cumsum(m,axis=-1):
     """Returns the cumulative sum of the elements along the given axis
     """
-    if axis is None:
-        m = ravel(m)
-        axis = 0
-    else:
-        m = _asarray1d(m)
-    return add.accumulate(m,axis)
+    return _no_axis_is_all(add.accumulate, m, axis)
 
 def prod(m,axis=-1):
     """Returns the product of the elements along the given axis
     """
-    if axis is None:
-        m = ravel(m)
-        axis = 0
-    else:
-        m = _asarray1d(m)
-    return multiply.reduce(m,axis)
+    return _no_axis_is_all(multiply.reduce, m, axis)
 
 def cumprod(m,axis=-1):
     """Returns the cumulative product of the elments along the given axis
     """
-    if axis is None:
-        m = ravel(m)
-        axis = 0
-    else:
-        m = _asarray1d(m)
-    return multiply.accumulate(m,axis)
+    return _no_axis_is_all(multiply.accumulate, m, axis)
 
 def diff(x, n=1,axis=-1):
     """Calculates the nth order, discrete difference along given axis.
@@ -255,7 +239,6 @@ def diff(x, n=1,axis=-1):
         return diff(x[slice1]-x[slice2], n-1, axis=axis)
     else:
         return x[slice1]-x[slice2]
-
     
 def angle(z,deg=0):
     """Return the angle of complex argument z."""
@@ -282,9 +265,9 @@ def unwrap(p,discont=pi,axis=-1):
     slice1 = [slice(None,None)]*nd     # full slices
     slice1[axis] = slice(1,None)
     ddmod = mod(dd+pi,2*pi)-pi
-    Numeric.putmask(ddmod,(ddmod==-pi) & (dd > 0),pi)
+    _nx.putmask(ddmod,(ddmod==-pi) & (dd > 0),pi)
     ph_correct = ddmod - dd;
-    Numeric.putmask(ph_correct,abs(dd)<discont,0)
+    _nx.putmask(ph_correct,abs(dd)<discont,0)
     up = array(p,copy=1,typecode='d')
     up[slice1] = p[slice1] + cumsum(ph_correct,axis)
     return up
@@ -348,33 +331,33 @@ def extract(condition, arr):
 
     Equivalent of compress(ravel(condition), ravel(arr))
     """
-    return Numeric.take(ravel(arr), nonzero(ravel(condition)))
+    return _nx.take(ravel(arr), nonzero(ravel(condition)))
 
 def insert(arr, mask, vals):
     """Similar to putmask arr[mask] = vals but 1d array vals has the
     same number of elements as the non-zero values of mask. Inverse of extract.
     """
-    return _compiled_base._insert(arr, mask, vals)
+    return _nx._insert(arr, mask, vals)
 
 def nansum(x,axis=-1):
     """Sum the array over the given axis treating nans as missing values.
     """
     x = _asarray1d(x).copy()
-    Numeric.putmask(x,isnan(x),0)
-    return Numeric.sum(x,axis)
+    _nx.putmask(x,isnan(x),0)
+    return _nx.sum(x,axis)
 
 def nanmin(x,axis=-1):
     """Find the minimium over the given axis ignoring nans.
     """
     x = _asarray1d(x).copy()
-    Numeric.putmask(x,isnan(x),inf)
+    _nx.putmask(x,isnan(x),inf)
     return amin(x,axis)
 
 def nanargmin(x,axis=-1):
     """Find the indices of the minimium over the given axis ignoring nans.
     """
     x = _asarray1d(x).copy()
-    Numeric.putmask(x,isnan(x),inf)
+    _nx.putmask(x,isnan(x),inf)
     return argmin(x,axis)
     
 
@@ -382,14 +365,14 @@ def nanmax(x,axis=-1):
     """Find the maximum over the given axis ignoring nans.
     """
     x = _asarray1d(x).copy()
-    Numeric.putmask(x,isnan(x),-inf)
+    _nx.putmask(x,isnan(x),-inf)
     return amax(x,axis)
 
 def nanargmax(x,axis=-1):
     """Find the maximum over the given axis ignoring nans.
     """
     x = _asarray1d(x).copy()
-    Numeric.putmask(x,isnan(x),-inf)
+    _nx.putmask(x,isnan(x),-inf)
     return argmax(x,axis)
 
 def disp(mesg, device=None, linefeed=1):
@@ -405,7 +388,6 @@ def disp(mesg, device=None, linefeed=1):
     device.flush()
     return
 
-from _compiled_base import arraymap
 class vectorize:
     """
  vectorize(somefunction)  Generalized Function class.
@@ -413,10 +395,10 @@ class vectorize:
   Description:
  
     Define a vectorized function which takes nested sequence
-    objects or Numeric arrays as inputs and returns a
-    Numeric array as output, evaluating the function over successive
+    objects or numerix arrays as inputs and returns a
+    numerix array as output, evaluating the function over successive
     tuples of the input arrays like the python map function except it uses
-    the broadcasting rules of Numeric Python.
+    the broadcasting rules of numerix Python.
 
   Input:
 

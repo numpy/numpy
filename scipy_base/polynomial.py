@@ -1,5 +1,5 @@
-import Numeric
-from Numeric import *
+import numerix as _nx
+from numerix import *
 from scimath import *
 
 from type_check import isscalar, asarray
@@ -55,7 +55,6 @@ def poly(seq_of_zeros):
     a = [1]
     for k in range(len(seq_of_zeros)):
         a = convolve(a,[1, -seq_of_zeros[k]], mode=2)
-
         
     if a.typecode() in ['F','D']:
         # if complex roots are all complex conjugates, the roots are real.
@@ -119,10 +118,10 @@ def polyint(p,m=1,k=None):
     if m < 0:
         raise ValueError, "Order of integral must be positive (see polyder)"
     if k is None:
-        k = Numeric.zeros(m)
+        k = _nx.zeros(m)
     k = atleast_1d(k)
     if len(k) == 1 and m > 1:
-        k = k[0]*Numeric.ones(m)
+        k = k[0]*_nx.ones(m)
     if len(k) < m:
         raise ValueError, \
               "k must be a scalar or a rank-1 array of length 1 or >m."
@@ -131,8 +130,8 @@ def polyint(p,m=1,k=None):
     else:
         truepoly = isinstance(p,poly1d)
         p = asarray(p)
-        y = Numeric.zeros(len(p)+1,'d')
-        y[:-1] = p*1.0/Numeric.arange(len(p),0,-1)
+        y = _nx.zeros(len(p)+1,'d')
+        y[:-1] = p*1.0/_nx.arange(len(p),0,-1)
         y[-1] = k[0]        
         val = polyint(y,m-1,k=k[1:])
         if truepoly:
@@ -146,7 +145,7 @@ def polyder(p,m=1):
     truepoly = isinstance(p,poly1d)
     p = asarray(p)
     n = len(p)-1
-    y = p[:-1] * Numeric.arange(n,0,-1)
+    y = p[:-1] * _nx.arange(n,0,-1)
     if m < 0:
         raise ValueError, "Order of derivative must be positive (see polyint)"
     if m == 0:
@@ -174,7 +173,7 @@ def polyval(p,x):
         y = 0
     else:
         x = asarray(x)
-        y = Numeric.zeros(x.shape,x.typecode())
+        y = _nx.zeros(x.shape,x.typecode())
     for i in range(len(p)):
         y = x * y + p[i]
     return y
@@ -188,11 +187,11 @@ def polyadd(a1,a2):
     if diff == 0:
         return a1 + a2
     elif diff > 0:
-        zr = Numeric.zeros(diff)
-        val = Numeric.concatenate((zr,a1)) + a2
+        zr = _nx.zeros(diff)
+        val = _nx.concatenate((zr,a1)) + a2
     else:
-        zr = Numeric.zeros(abs(diff))
-        val = a1 + Numeric.concatenate((zr,a2))
+        zr = _nx.zeros(abs(diff))
+        val = a1 + _nx.concatenate((zr,a2))
     if truepoly:
         val = poly1d(val)
     return val
@@ -206,11 +205,11 @@ def polysub(a1,a2):
     if diff == 0:
         return a1 - a2
     elif diff > 0:
-        zr = Numeric.zeros(diff)
-        val = Numeric.concatenate((zr,a1)) - a2
+        zr = _nx.zeros(diff)
+        val = _nx.concatenate((zr,a1)) - a2
     else:
-        zr = Numeric.zeros(abs(diff))
-        val = a1 - Numeric.concatenate((zr,a2))
+        zr = _nx.zeros(abs(diff))
+        val = a1 - _nx.concatenate((zr,a2))
     if truepoly:
         val = poly1d(val)
     return val
@@ -220,7 +219,7 @@ def polymul(a1,a2):
     """Multiplies two polynomials represented as lists.
     """
     truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
-    val = Numeric.convolve(a1,a2)
+    val = _nx.convolve(a1,a2)
     if truepoly:
         val = poly1d(val)
     return val
@@ -230,7 +229,7 @@ def polydiv(a1,a2):
     """
     truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
     q, r = deconvolve(a1,a2)
-    while Numeric.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
+    while _nx.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
         r = r[1:]
     if truepoly:
         q, r = map(poly1d,(q,r))
@@ -251,10 +250,10 @@ def deconvolve(signal, divisor):
         quot = [];
         rem = num;
     else:
-        input = Numeric.ones(N-D+1,Numeric.Float)
+        input = _nx.ones(N-D+1,_nx.Float)
         input[1:] = 0
         quot = scipy.signal.lfilter(num, den, input)
-        rem = num - Numeric.convolve(den,quot,mode=2)
+        rem = num - _nx.convolve(den,quot,mode=2)
     return quot, rem
 
 import re
@@ -315,7 +314,7 @@ class poly1d:
             raise ValueError, "Polynomial must be 1d only."
         c_or_r = trim_zeros(c_or_r, trim='f')
         if len(c_or_r) == 0:
-            c_or_r = Numeric.array([0])
+            c_or_r = _nx.array([0])
         self.__dict__['coeffs'] = c_or_r
         self.__dict__['order'] = len(c_or_r) - 1
 
@@ -461,8 +460,8 @@ class poly1d:
         if key < 0:
             raise ValueError, "Does not support negative powers."
         if key > self.order:
-            zr = Numeric.zeros(key-self.order,self.coeffs.typecode())
-            self.__dict__['coeffs'] = Numeric.concatenate((zr,self.coeffs))
+            zr = _nx.zeros(key-self.order,self.coeffs.typecode())
+            self.__dict__['coeffs'] = _nx.concatenate((zr,self.coeffs))
             self.__dict__['order'] = key
             ind = 0
         self.__dict__['coeffs'][ind] = val

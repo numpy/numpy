@@ -1,19 +1,12 @@
-
 import types
-import Numeric
-from fastumath import isinf, isnan, isfinite
-from Numeric import ArrayType, array, multiarray
-
-try:
-   from Numeric import UfuncType
-except ImportError:
-   UfuncType = type(Numeric.sin)
+import numerix as _nx
+from numerix import ArrayType, array, isinf, isnan, isfinite, UfuncType
 
 __all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isnan','isinf','isfinite',
            'isreal','nan_to_num','real','real_if_close',
            'typename','cast','common_type','typecodes', 'asarray',
-           'asfarray', 'ArrayType', 'UfuncType','mintypecode']
+           'asfarray','ArrayType','UfuncType','mintypecode']
 
 _typecodes_by_elsize = 'DFdfluiwsb1c'
 def mintypecode(typecodes,typeset='DFdf',default='d',savespace=0):
@@ -54,7 +47,7 @@ def asarray(a, typecode=None, savespace=None):
          if not (savespace is None or a.spacesaver()==savespace):
             r.savespace(savespace)
          return r
-   return multiarray.array(a,typecode,copy=0,savespace=savespace or 0)
+   return array(a,typecode,copy=0,savespace=savespace or 0)
 
 def asfarray(a, typecode=None, savespace=None):
    """asfarray(a,typecode=None, savespace=0) returns a as a NumPy float array."""
@@ -65,49 +58,49 @@ def asfarray(a, typecode=None, savespace=None):
 
 ScalarType = [types.IntType, types.LongType, types.FloatType, types.ComplexType]
 
-typecodes = Numeric.typecodes
+typecodes = _nx.typecodes
 typecodes['AllInteger'] = '1silbwu'
 
 try:
-   Char = Numeric.Character
+   Char = _nx.Character
 except AttributeError:
    Char = 'c'
 
 toChar = lambda x: asarray(x).astype(Char)
-toInt8 = lambda x: asarray(x).astype(Numeric.Int8)# or use variable names such as Byte
-toUInt8 = lambda x: asarray(x).astype(Numeric.UnsignedInt8)
+toInt8 = lambda x: asarray(x).astype(_nx.Int8)# or use variable names such as Byte
+toUInt8 = lambda x: asarray(x).astype(_nx.UnsignedInt8)
 _unsigned = 0
-if hasattr(Numeric,'UnsignedInt16'):
-   toUInt16 = lambda x: asarray(x).astype(Numeric.UnsignedInt16)
-   toUInt32 = lambda x: asarray(x).astype(Numeric.UnsignedInt32)
+if hasattr(_nx,'UnsignedInt16'):
+   toUInt16 = lambda x: asarray(x).astype(_nx.UnsignedInt16)
+   toUInt32 = lambda x: asarray(x).astype(_nx.UnsignedInt32)
    _unsigned = 1
    
-toInt16 = lambda x: asarray(x).astype(Numeric.Int16)
-toInt32 = lambda x: asarray(x).astype(Numeric.Int32)
-toInt = lambda x: asarray(x).astype(Numeric.Int)
-toFloat32 = lambda x: asarray(x).astype(Numeric.Float32)
-toFloat64 = lambda x: asarray(x).astype(Numeric.Float64)
-toComplex32 = lambda x: asarray(x).astype(Numeric.Complex32)
-toComplex64 = lambda x: asarray(x).astype(Numeric.Complex64)
+toInt16 = lambda x: asarray(x).astype(_nx.Int16)
+toInt32 = lambda x: asarray(x).astype(_nx.Int32)
+toInt = lambda x: asarray(x).astype(_nx.Int)
+toFloat32 = lambda x: asarray(x).astype(_nx.Float32)
+toFloat64 = lambda x: asarray(x).astype(_nx.Float64)
+toComplex32 = lambda x: asarray(x).astype(_nx.Complex32)
+toComplex64 = lambda x: asarray(x).astype(_nx.Complex64)
 
-# This is for pre Numeric 21.x compatiblity. Adding it is harmless.
-if  not hasattr(Numeric,'Character'):
-    Numeric.Character = 'c'
+# This is for pre _nx 21.x compatiblity. Adding it is harmless.
+if  not hasattr(_nx,'Character'):
+    _nx.Character = 'c'
         
-cast = {Numeric.Character: toChar,
-        Numeric.UnsignedInt8: toUInt8,
-        Numeric.Int8: toInt8,
-        Numeric.Int16: toInt16,
-        Numeric.Int32: toInt32,
-        Numeric.Int: toInt,
-        Numeric.Float32: toFloat32,
-        Numeric.Float64: toFloat64,
-        Numeric.Complex32: toComplex32,
-        Numeric.Complex64: toComplex64}
+cast = {_nx.Character: toChar,
+        _nx.UnsignedInt8: toUInt8,
+        _nx.Int8: toInt8,
+        _nx.Int16: toInt16,
+        _nx.Int32: toInt32,
+        _nx.Int: toInt,
+        _nx.Float32: toFloat32,
+        _nx.Float64: toFloat64,
+        _nx.Complex32: toComplex32,
+        _nx.Complex64: toComplex64}
 
 if _unsigned:
-   cast[Numeric.UnsignedInt16] = toUInt16
-   cast[Numeric.UnsignedInt32] = toUInt32
+   cast[_nx.UnsignedInt16] = toUInt16
+   cast[_nx.UnsignedInt32] = toUInt32
    
 
 def isscalar(num):
@@ -130,10 +123,10 @@ def imag(val):
         return array(0,aval.typecode())*aval
 
 def iscomplex(x):
-    return imag(x) != Numeric.zeros(asarray(x).shape)
+    return imag(x) != _nx.zeros(asarray(x).shape)
 
 def isreal(x):
-    return imag(x) == Numeric.zeros(asarray(x).shape)
+    return imag(x) == _nx.zeros(asarray(x).shape)
 
 def iscomplexobj(x):
     return asarray(x).typecode() in ['F', 'D']
@@ -152,7 +145,7 @@ def isrealobj(x):
 ##    if array_iscomplex(vals):
 ##        r = array(map(ieee_754.isnan,real(vals)))        
 ##        i = array(map(ieee_754.isnan,imag(vals)))
-##        results = Numeric.logical_or(r,i)
+##        results = _nx.logical_or(r,i)
 ##    else:        
 ##        results = array(map(ieee_754.isnan,vals))
 ##    if isscalar(val):
@@ -166,18 +159,18 @@ def isneginf(val):
     return isinf(val) & (val < 0)
     
 ##def isinf(val):
-##    return Numeric.logical_or(isposinf(val),isneginf(val))
+##    return _nx.logical_or(isposinf(val),isneginf(val))
 
 ##def isfinite(val):
 ##    vals = asarray(val)
 ##    if iscomplexobj(vals):
 ##        r = isfinite(real(vals))
 ##        i = isfinite(imag(vals))
-##        results = Numeric.logical_and(r,i)
+##        results = _nx.logical_and(r,i)
 ##    else:    
-##        fin = Numeric.logical_not(isinf(val))
-##        an = Numeric.logical_not(isnan(val))
-##        results = Numeric.logical_and(fin,an)
+##        fin = _nx.logical_not(isinf(val))
+##        an = _nx.logical_not(isnan(val))
+##        results = _nx.logical_and(fin,an)
 ##    return results        
 
 def nan_to_num(x):
@@ -199,7 +192,7 @@ def nan_to_num(x):
         are_neg_inf = isneginf(x)
         are_nan = isnan(x)
         choose_array = are_neg_inf + are_nan * 2 + are_inf * 3
-        y = Numeric.choose(choose_array,
+        y = _nx.choose(choose_array,
                    (x,limits.double_min, 0., limits.double_max))
     return y
 
@@ -207,7 +200,7 @@ def nan_to_num(x):
 
 def real_if_close(a,tol=1e-13):
     a = asarray(a)
-    if a.typecode() in ['F','D'] and Numeric.allclose(a.imag, 0, atol=tol):
+    if a.typecode() in ['F','D'] and _nx.allclose(a.imag, 0, atol=tol):
         a = a.real
     return a
 
