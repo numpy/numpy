@@ -33,7 +33,7 @@ def setup_package():
             sys.path.insert(0,os.path.join(local_path,n))
             try:
                 mod = __import__('setup_'+n)
-                configs.append(mod.configuration())
+                configs.append(mod.configuration(parent_path=local_path))
                 mod = __import__(n+'_version')
                 versions.append(mod)
             finally:
