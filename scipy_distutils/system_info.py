@@ -468,9 +468,9 @@ class atlas_info(system_info):
 *********************************************************************
 """ % (lapack_lib,sz/1024)
                 warnings.warn(message)
-            info['size_liblapack'] = sz
+            #info['size_liblapack'] = sz
             flag = os.system('nm %s | grep clapack_sgetri '%lapack_lib)
-            info['has_clapack_sgetri'] = not flag
+            #info['has_clapack_sgetri'] = not flag
             if flag:
                 message = """
 *********************************************************************
