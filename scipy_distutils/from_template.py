@@ -165,8 +165,7 @@ def process_str(allstr):
     oldend = 0
     for sub in struct:
         writestr += newstr[oldend:sub[0]]
-        obj = slice(sub[0],sub[1])
-        expanded = expand_sub(newstr[obj],get_line_header(newstr,sub[0]))
+        expanded = expand_sub(newstr[sub[0]:sub[1]],get_line_header(newstr,sub[0]))
         writestr += expanded
         oldend =  sub[1]
 
