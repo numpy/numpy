@@ -14,6 +14,7 @@ import re,os
 
 module_name_re = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',re.I).match
 user_module_name_re = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?__user__[\w_]*)',re.I).match
+fortran_ext_re = re.compile(r'.*[.](f90|f95|f77|for|ftn|f)\Z',re.I).match
 
 class run_f2py(Command):
 
@@ -24,6 +25,8 @@ class run_f2py(Command):
                      "directory to build fortran wrappers to"),
                     ('debug-capi', None,
                      "generate C/API extensions with debugging code"),
+                    ('no-wrap-functions', None,
+                     "do not generate wrappers for Fortran functions,etc."),
                     ('force', 'f',
                      "forcibly build everything (ignore file timestamps)"),
                    ]
@@ -32,6 +35,7 @@ class run_f2py(Command):
         self.build_dir = None
         self.debug_capi = None
         self.force = None
+        self.no_wrap_functions = None
         self.f2py_options = []
     # initialize_options()
 
@@ -45,14 +49,21 @@ class run_f2py(Command):
 
         if self.debug_capi is not None:
             self.f2py_options.append('--debug-capi')
+        if self.no_wrap_functions is not None:
+            self.f2py_options.append('--no-wrap-functions')
 
     # finalize_options()
 
     def run (self):
         if self.distribution.has_ext_modules():
+            # XXX: might need also
+            #  build_flib = self.get_finalized_command('build_flib')
+            #  ...
+            # for getting extra f2py_options that are specific to
+            # the given fortran compiler.
             for ext in self.distribution.ext_modules:
                 ext.sources = self.f2py_sources(ext.sources,ext)
-                self.distribution.fortran_sources_to_flib(ext)
+                self.fortran_sources_to_flib(ext)
     # run()
 
     def f2py_sources (self, sources, ext):
@@ -78,11 +89,6 @@ class run_f2py(Command):
         f2py_targets = {}
         f2py_fortran_targets = {}
 
-        # XXX this drops generated C/C++ files into the source tree, which
-        # is fine for developers who want to distribute the generated
-        # source -- but there should be an option to put f2py output in
-        # the temp dir.
-
         target_ext = 'module.c'
         fortran_target_ext = '-f2pywrappers.f'
         target_dir = self.build_dir
@@ -91,7 +97,7 @@ class run_f2py(Command):
         for source in sources:
             (base, source_ext) = os.path.splitext(source)
             (source_dir, base) = os.path.split(base)
-            if source_ext == ".pyf":             # f2py interface file
+            if source_ext == ".pyf":                  # f2py interface file
                 # get extension module name
                 f = open(source)
                 for line in f.xreadlines():
@@ -144,8 +150,42 @@ class run_f2py(Command):
             if os.path.exists(fortran_target):
                 new_sources.append(fortran_target)
 
-        print new_sources
         return new_sources
+
     # f2py_sources ()
+
+    def fortran_sources_to_flib(self, ext):
+        """
+        Extract fortran files from ext.sources and append them to
+        fortran_libraries item having the same name as ext.
+        """
+        sources = []
+        f_files = []
+
+        for file in ext.sources:
+            if fortran_ext_re(file):
+                f_files.append(file)
+            else:
+                sources.append(file)
+        if not f_files:
+            return
+
+        ext.sources = sources
+
+        if self.distribution.fortran_libraries is None:
+            self.distribution.fortran_libraries = []
+        fortran_libraries = self.distribution.fortran_libraries
+
+        name = ext.name
+        flib = None
+        for n,d in fortran_libraries:
+            if n == name:
+                flib = d
+                break
+        if flib is None:
+            flib = {'sources':[]}
+            fortran_libraries.append((name,flib))
+
+        flib['sources'].extend(f_files)
         
-# class x
+# class run_f2py

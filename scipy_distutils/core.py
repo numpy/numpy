@@ -25,7 +25,7 @@ def setup(**attr):
                 'build_ext':        build_ext.build_ext,
                 'build_py':         build_py.build_py,                
                 'build_clib':       build_clib.build_clib,
-                'run_f2py':       run_f2py.run_f2py,
+                'run_f2py':         run_f2py.run_f2py,
                 'sdist':            sdist.sdist,
                 'install_data':     install_data.install_data,
                 'install':          install.install,

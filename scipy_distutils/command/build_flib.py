@@ -16,9 +16,6 @@ Bugs:
        ./setup.py build_flib --help-compiler -e g77-3.0
       finds g77-2.95.
       How to extract these options inside the show_compilers function?
- ***  Option --force has no effect when switching a compiler. One must
-      manually remove .o files that were generated earlier by a
-      different compiler.
  ***  compiler.is_available() method may not work correctly on nt
       because of lack of knowledge how to get exit status in
       run_command function. However, it may give reasonable results
@@ -133,7 +130,8 @@ class build_flib (build_clib):
     # finalize_options()
 
     def has_f_libraries(self):
-        return self.distribution.has_f_libraries()
+        return self.distribution.fortran_libraries \
+               and len(self.distribution.fortran_libraries) > 0
 
     def run (self):
         if not self.has_f_libraries():

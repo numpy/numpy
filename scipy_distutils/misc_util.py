@@ -97,7 +97,7 @@ def update_version(release_level='alpha',
         print 'updating version in %s' % version_file
         version_file = os.path.abspath(version_file)
         f = open(version_file,'w')
-        f.write('# This file is automatically updated with get_version\n'\
+        f.write('# This file is automatically updated with update_version\n'\
                 '# function from scipy_distutils.misc_utils.py\n'\
                 'version = %s\n'\
                 'version_info = %s\n'%(repr(version),version_info))
