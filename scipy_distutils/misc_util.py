@@ -545,7 +545,6 @@ def generate_svn_version_py(extension, build_dir):
     """
     from distutils import dep_util
     local_path = extension.local_path
-    print extension.name
     target = os.path.join(build_dir, '__svn_version__.py')
     entries = os.path.join(local_path,'.svn','entries')
     if not dep_util.newer(entries, target):

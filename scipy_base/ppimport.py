@@ -211,16 +211,6 @@ class _ModuleLoader:
             from scipy_test.testing import ScipyTest
             self.__dict__['test'] = ScipyTest(self).test
 
-            # get additional attributes (doc strings, etc)
-            # from pre_<name>.py file. XXX: remove this code
-            # when new style packaging is implemented.
-            filename = os.path.splitext(location)[0] + '.py'
-            filename = location
-            dirname,basename = os.path.split(filename)
-            preinit = os.path.join(dirname,'pre_'+basename)
-            if os.path.isfile(preinit):
-                execfile(preinit, self.__dict__)
-
         # install loader
         sys.modules[name] = self
 
