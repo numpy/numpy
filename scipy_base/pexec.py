@@ -5,7 +5,7 @@
 # Created: October, 2003
 #
 
-__all__ = ['ParallelExec','migrate']
+__all__ = ['ParallelExec']
 
 import sys
 import threading
@@ -58,39 +58,3 @@ class ParallelExec(threading.Thread):
                 traceback.print_exc()
             if wait_for_code is not None:
                 wait_for_code.set()
-
-def migrate(obj, caller):
-    """ Return obj wrapper that facilitates accessing object
-    from another thread."""
-    if inspect.isroutine(obj):
-        return MigratedRoutine(obj, caller)
-    raise NotImplementedError,`type(obj)`
-
-class Attrs:
-    def __init__(self,**kws):
-        for k,v in kws.items():
-            setattr(self,k,v)
-
-class MigratedRoutine:
-    """ Wrapper for calling routines from another thread.
-
-    func   - function or built-in or method
-    caller('<command>',<frame>) - executes command in another thread
-    """
-    def __init__(self, func, caller):
-        self.__attrs = Attrs(func=func, caller=caller, finished=threading.Event())
-        for n,v in inspect.getmembers(func):
-            if n in ['__dict__','__class__','__call__','__attrs']:
-                continue
-            setattr(self,n,v)
-
-    def __call__(self, *args, **kws):
-        attrs = self.__attrs
-        frame = sys._getframe(0)
-        attrs.finished.clear()
-        attrs.caller('attrs.result = attrs.func(*args, **kws)',frame)
-        attrs.caller('attrs.finished.set()',frame)
-        attrs.finished.wait()
-        result = attrs.result
-        attrs.result = None
-        return result
