@@ -80,15 +80,19 @@ class run_f2py(Command):
         .pyf file from the Fortran files found in 'sources'.
         """
         try:
-            import f2py2e
-            self.announce('using F2PY %s' % (f2py2e.f2py2e.f2py_version))
+            if sys.modules.has_key('f2py2e'):
+                import f2py2e
+            else:
+                import f2py2e
+                self.announce('using F2PY %s' % (f2py2e.f2py2e.f2py_version))
         except ImportError:
             print sys.exc_value
             raise F2pyNotFoundError,F2pyNotFoundError.__doc__
         # f2py generates the following files for an extension module
         # with a name <modulename>:
         #   <modulename>module.c
-        #   <modulename>-f2pywrappers.f  [occasionally]
+        #   <modulename>-f2pywrappers.f     [occasionally]
+        #   <modulename>-f2pywrappers2.f90  [occasionally]
         # In addition, <f2py2e-dir>/src/fortranobject.{c,h} are needed
         # for building f2py generated extension modules.
         # It is assumed that one pyf file contains definitions for exactly
@@ -103,6 +107,7 @@ class run_f2py(Command):
         f2py_fortran_targets = {}
         target_ext = 'module.c'
         fortran_target_ext = '-f2pywrappers.f'
+        fortran90_target_ext = '-f2pywrappers2.f90'
         ext_name = string.split(ext.name,'.')[-1]
 
         for source in sources:
@@ -129,9 +134,12 @@ class run_f2py(Command):
                 target_file = os.path.join(target_dir,base+target_ext)
                 fortran_target_file = os.path.join(target_dir,
                                                    base+fortran_target_ext)
+                fortran90_target_file = os.path.join(target_dir,
+                                                     base+fortran90_target_ext)
                 f2py_sources.append(source)
                 f2py_targets[source] = target_file
-                f2py_fortran_targets[source] = fortran_target_file
+                f2py_fortran_targets[source] = [fortran_target_file,
+                                                fortran90_target_file]
             elif fortran_ext_re(source_ext):
                 fortran_sources.append(source)                
             else:
@@ -148,8 +156,6 @@ class run_f2py(Command):
             # creating a temporary pyf file from fortran sources
             pyf_target = os.path.join(target_dir,ext_name+'.pyf')
             pyf_target_file = os.path.join(target_dir,ext_name+target_ext)
-            pyf_fortran_target_file = os.path.join(target_dir,
-                                                   ext_name+fortran_target_ext)
             f2py_opts2 = ['-m',ext_name,'-h',pyf_target,'--overwrite-signature']
             if not self.verbose:
                 if f2py2e.f2py2e.f2py_version>'2.21.184-1312':
@@ -160,9 +166,14 @@ class run_f2py(Command):
                                   string.join(fortran_sources + f2py_opts2,' ')))
                     f2py2e.run_main(fortran_sources + f2py_opts2)
                     break
+            pyf_fortran_target_file = os.path.join(target_dir,
+                                                   ext_name+fortran_target_ext)
+            pyf_fortran90_target_file = os.path.join(target_dir,
+                                                     ext_name+fortran90_target_ext)
             f2py_sources.append(pyf_target)
             f2py_targets[pyf_target] = pyf_target_file
-            f2py_fortran_targets[pyf_target] = pyf_fortran_target_file
+            f2py_fortran_targets[pyf_target] = [pyf_fortran_target_file,
+                                                pyf_fortran90_target_file]
 
         new_sources.extend(fortran_sources)
 
@@ -185,14 +196,14 @@ class run_f2py(Command):
                 f2py_options.append('--quiet')
         for source in f2py_sources:
             target = f2py_targets[source]
-            fortran_target = f2py_fortran_targets[source]
             if newer(source,target) or self.force:
                 self.announce(yellow_text("f2py %s" % \
                               string.join(f2py_options+[source],' ')))
                 f2py2e.run_main(f2py_options + [source])
             new_sources.append(target)
-            if os.path.exists(fortran_target):
-                new_sources.append(fortran_target)
+            for fortran_target in f2py_fortran_targets[source]:
+                if os.path.exists(fortran_target):
+                    new_sources.append(fortran_target)
         return new_sources
 
     # f2py_sources ()
