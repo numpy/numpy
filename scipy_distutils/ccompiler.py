@@ -54,7 +54,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
     display = "compile options: '%s'" % (' '.join(cc_args))
     if extra_postargs:
-        display += "extra: '%s'" % (' '.join(extra_postargs))
+        display += "\nextra options: '%s'" % (' '.join(extra_postargs))
     log.info(display)
     for obj, (src, ext) in build.items():
         self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)

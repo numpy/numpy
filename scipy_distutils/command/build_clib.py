@@ -175,14 +175,18 @@ class build_clib(old_build_clib):
                 print 'XXX: Fortran 90 module support not implemented or tested'
                 f_sources.extend(fmodule_sources)
 
-            objects = compiler.compile(c_sources,
-                                       output_dir=self.build_temp,
-                                       macros=macros,
-                                       include_dirs=include_dirs,
-                                       debug=self.debug,
-                                       extra_postargs=extra_postargs)
+            objects = []
+            if c_sources:
+                log.info("compling C sources")
+                objects = compiler.compile(c_sources,
+                                           output_dir=self.build_temp,
+                                           macros=macros,
+                                           include_dirs=include_dirs,
+                                           debug=self.debug,
+                                           extra_postargs=extra_postargs)
 
             if cxx_sources:
+                log.info("compling C++ sources")
                 old_compiler = self.compiler.compiler_so[0]
                 self.compiler.compiler_so[0] = self.compiler.compiler_cxx[0]
 
@@ -197,6 +201,7 @@ class build_clib(old_build_clib):
                 self.compiler.compiler_so[0] = old_compiler
 
             if f_sources:
+                log.info("compling Fortran sources")
                 f_objects = fcompiler.compile(f_sources,
                                               output_dir=self.build_temp,
                                               macros=macros,

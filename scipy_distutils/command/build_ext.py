@@ -150,14 +150,19 @@ class build_ext (old_build_ext):
         else:
             kws = {}
 
-        c_objects = self.compiler.compile(c_sources,
-                                          output_dir=self.build_temp,
-                                          macros=macros,
-                                          include_dirs=ext.include_dirs,
-                                          debug=self.debug,
-                                          extra_postargs=extra_args,
-                                          **kws)
+        c_objects = []
+        if c_sources:
+            log.info("compling C sources")
+            c_objects = self.compiler.compile(c_sources,
+                                              output_dir=self.build_temp,
+                                              macros=macros,
+                                              include_dirs=ext.include_dirs,
+                                              debug=self.debug,
+                                              extra_postargs=extra_args,
+                                              **kws)
         if cxx_sources:
+            log.info("compling C++ sources")
+
             old_compiler = self.compiler.compiler_so[0]
             self.compiler.compiler_so[0] = self.compiler.compiler_cxx[0]
 
@@ -188,13 +193,16 @@ class build_ext (old_build_ext):
                 extra_postargs += self.fcompiler.module_options(\
                     module_dirs,module_build_dir)
 
-            f_objects = self.fcompiler.compile(fmodule_sources,
-                                               output_dir=self.build_temp,
-                                               macros=macros,
-                                               include_dirs=include_dirs,
-                                               debug=self.debug,
-                                               extra_postargs=extra_postargs,
-                                               depends=ext.depends)
+            f_objects = []
+            if fmodule_sources:
+                log.info("compling Fortran 90 module sources")
+                f_objects = self.fcompiler.compile(fmodule_sources,
+                                                   output_dir=self.build_temp,
+                                                   macros=macros,
+                                                   include_dirs=include_dirs,
+                                                   debug=self.debug,
+                                                   extra_postargs=extra_postargs,
+                                                   depends=ext.depends)
 
             if check_for_f90_modules \
                    and self.fcompiler.module_dir_switch is None:
@@ -203,13 +211,15 @@ class build_ext (old_build_ext):
                         continue
                     self.move_file(f, module_build_dir)
 
-            f_objects += self.fcompiler.compile(f_sources,
-                                                output_dir=self.build_temp,
-                                                macros=macros,
-                                                include_dirs=include_dirs,
-                                                debug=self.debug,
-                                                extra_postargs=extra_postargs,
-                                                depends=ext.depends)
+            if f_sources:
+                log.info("compling Fortran sources")
+                f_objects += self.fcompiler.compile(f_sources,
+                                                    output_dir=self.build_temp,
+                                                    macros=macros,
+                                                    include_dirs=include_dirs,
+                                                    debug=self.debug,
+                                                    extra_postargs=extra_postargs,
+                                                    depends=ext.depends)
         else:
             f_objects = []
 

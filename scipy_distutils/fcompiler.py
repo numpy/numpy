@@ -416,13 +416,16 @@ class FCompiler(CCompiler):
     def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
         """Compile 'src' to product 'obj'."""
         if is_f_file(src):
+            flavor = ':f77'
             compiler = self.compiler_f77
         elif is_free_format(src):
+            flavor = ':f90'
             compiler = self.compiler_f90
             if compiler is None:
                 raise DistutilsExecError, 'f90 not supported by '\
                       +self.__class__.__name__
         else:
+            flavor = ':fix'
             compiler = self.compiler_fix
             if compiler is None:
                 raise DistutilsExecError, 'f90 (fixed) not supported by '\
@@ -437,8 +440,7 @@ class FCompiler(CCompiler):
 
         command = compiler + cc_args + s_args + o_args + extra_postargs
 
-        display = '%s: %s' % (os.path.basename(compiler[0]) \
-                              + (compiler is self.compiler_fix and ':fix' or ''),
+        display = '%s: %s' % (os.path.basename(compiler[0]) + flavor,
                               src)
         try:
             self.spawn(command,display=display)
