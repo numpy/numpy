@@ -22,11 +22,12 @@ import tempfile
 import exceptions
 import commands
 
+import find_compiler
+
 # If linker is 'gcc', this will convert it to 'g++'
 # necessary to make sure stdc++ is linked in cross-platform way.
 import distutils.sysconfig
 import distutils.dir_util
-
 old_init_posix = distutils.sysconfig._init_posix
 
 def _init_posix():
@@ -156,9 +157,12 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
     # dag. We keep having to add directories to the path to keep 
     # object files separated from each other.  gcc2.x and gcc3.x C++ 
     # object files are not compatible, so we'll stick them in a sub
-    # dir based on their version.  This will add gccX.X to the 
-    # path.
-    compiler_dir = get_compiler_dir(compiler_name)
+    # dir based on their version.  This will add an md5 check sum
+    # of the compiler binary to the directory name to keep objects
+    # from different compilers in different locations.
+    
+    compiler_dir = find_compiler.get_compiler_dir(compiler_name)
+    print 'cd:',compiler_dir
     temp_dir = os.path.join(temp_dir,compiler_dir)
     distutils.dir_util.mkpath(temp_dir)
     
@@ -172,8 +176,10 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
             print 'Compiling code...'
             
         # set compiler verboseness 2 or more makes it output results
-        if verbose > 1:  verb = 1                
-        else:            verb = 0
+        if verbose > 1:
+            verb = 1                
+        else:
+            verb = 0
         
         t1 = time.time()        
         # add module to the needed source code files and build extension
@@ -218,7 +224,10 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
         import copy
         environ = copy.deepcopy(os.environ)
         try:
+            print ext.sources
+            print 'argv:',sys.argv
             setup(name = module_name, ext_modules = [ext],verbose=verb)
+            print 'setup done'
         finally:
             # restore state
             os.environ = environ        
@@ -235,7 +244,7 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
             
     # restore argv after our trick...            
     restore_sys_argv()
-    
+
     return success
 
 old_argv = []
@@ -336,25 +345,6 @@ if os.name == 'nt':
 else:
     run_command = commands.getstatusoutput
 
-def get_compiler_dir(compiler_name):
-    """ Try to figure out the compiler directory based on the
-        input compiler name.  This is fragile and really should
-        be done at the distutils level inside the compiler.  I
-        think it is only useful on windows at the moment.
-    """
-    if compiler_name is None:
-        compiler_dir =  ''
-    elif compiler_name == 'gcc':        
-        status, text = run_command(compiler_name + ' --version')
-        try:
-            import re
-            version = re.findall('\d\.\d',text)[0]
-        except IndexError:
-            version = ''
-        compiler_dir = compiler_name + version
-    else:    
-        compiler_dir = compiler_name
-    return compiler_dir
         
 def configure_temp_dir(temp_dir=None):
     if temp_dir is None:         
