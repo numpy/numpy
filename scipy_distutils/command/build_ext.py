@@ -315,6 +315,8 @@ class build_ext (old_build_ext):
                 names[:] = []
                 return
             for name in names:
+                if name[-1] in "~#":
+                    continue
                 fullname = os.path.join(dirname,name)
                 if os.path.isfile(fullname):
                     filenames.append(fullname)
