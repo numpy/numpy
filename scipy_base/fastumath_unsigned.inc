@@ -352,6 +352,20 @@ static Py_complex c_quot_fast(Py_complex a, Py_complex b)
     return r;
 }
 
+static Py_complex c_quot_floor_fast(Py_complex a, Py_complex b)
+{
+  /* Not really sure what to do here, but it looks like Python takes the 
+     floor of the real part and returns that as the answer.  So, we will do the same.
+  */
+  Py_complex r;
+
+  r = c_quot_fast(a, b);
+  r.imag = 0.0;
+  r.real = floor(r.real);
+  return r;
+}
+
+
 static Py_complex c_sqrt(Py_complex x)
 {
     Py_complex r;
@@ -1248,49 +1262,49 @@ static void UBYTE_true_divide(char **args, int *dimensions, int *steps, void *fu
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((float *)op)=*((unsigned char *)i2) == 0 ? PyErr_SetString(PyExc_ZeroDivisionError, "UB divide by zero"),0 : ((float)*((unsigned char *)i1)) / ((float)*((unsigned char *)i2));
+	*((float *)op)= ((float)*((unsigned char *)i1)) / ((float)*((unsigned char *)i2));
     }
 }
 static void SBYTE_true_divide(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((float *)op)=*((signed char *)i2) == 0 ? PyErr_SetString(PyExc_ZeroDivisionError, "SB divide by zero"),0 : ((float)*((signed char *)i1)) / ((float)*((signed char *)i2));
+	*((float *)op)= ((float)*((signed char *)i1)) / ((float)*((signed char *)i2));
     }
 }
 static void SHORT_true_divide(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((float *)op)=*((short *)i2) == 0 ? PyErr_SetString(PyExc_ZeroDivisionError, "S divide by zero"),0 : ((float)*((short *)i1)) / ((float)*((short *)i2));
+	*((float *)op)= ((float)*((short *)i1)) / ((float)*((short *)i2));
     }
 }
 static void USHORT_true_divide(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((float *)op)=*((unsigned short *)i2) == 0 ? PyErr_SetString(PyExc_ZeroDivisionError, "S divide by zero"),0 : ((float)*((unsigned short *)i1)) / ((float)*((unsigned short *)i2));
+	*((float *)op)= ((float)*((unsigned short *)i1)) / ((float)*((unsigned short *)i2));
     }
 }
 static void INT_true_divide(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((double *)op)=*((int *)i2) == 0 ? PyErr_SetString(PyExc_ZeroDivisionError, "I divide by zero"),0 : ((double)*((int *)i1)) / ((double)*((int *)i2));
+	*((double *)op)= ((double)*((int *)i1)) / ((double)*((int *)i2));
     }
 }
 static void UINT_true_divide(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((float *)op)=*((unsigned int *)i2) == 0 ? PyErr_SetString(PyExc_ZeroDivisionError, "I divide by zero"),0 : ((float)*((int *)i1)) / ((float)*((int *)i2));
+	*((double *)op)= ((double)*((int *)i1)) / ((double)*((int *)i2));
     }
 }
 static void LONG_true_divide(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-	*((double *)op)=*((long *)i2) == 0 ? PyErr_SetString(PyExc_ZeroDivisionError, "L divide by zero"),0 : ((double)*((long *)i1)) / ((double)*((long *)i2));
+	*((double *)op)= ((double)*((long *)i1)) / ((double)*((long *)i2));
     }
 }
 static void FLOAT_true_divide(char **args, int *dimensions, int *steps, void *func) {
@@ -2783,7 +2797,7 @@ static void * hypot_data[] = { (void *)hypot,  (void *)hypot,  (void *)"hypot", 
 
 static char add_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_SHORT,  PyArray_USHORT,  PyArray_USHORT,  PyArray_USHORT,  PyArray_INT,  PyArray_INT,  PyArray_INT,  PyArray_UINT, PyArray_UINT, PyArray_UINT, PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  PyArray_OBJECT,  };
 static char floor_divide_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_SHORT,  PyArray_USHORT,  PyArray_USHORT,  PyArray_USHORT,  PyArray_INT,  PyArray_INT,  PyArray_INT, PyArray_UINT, PyArray_UINT, PyArray_UINT, PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  };
-static char true_divide_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_FLOAT,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_FLOAT,  PyArray_SHORT,  PyArray_SHORT, PyArray_FLOAT,  PyArray_USHORT,  PyArray_USHORT,  PyArray_FLOAT,  PyArray_INT,  PyArray_INT,  PyArray_FLOAT,  PyArray_UINT, PyArray_UINT, PyArray_FLOAT, PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  PyArray_OBJECT,  };
+static char true_divide_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_FLOAT,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_FLOAT,  PyArray_SHORT,  PyArray_SHORT, PyArray_FLOAT,  PyArray_USHORT,  PyArray_USHORT,  PyArray_FLOAT,  PyArray_INT,  PyArray_INT,  PyArray_DOUBLE,  PyArray_UINT, PyArray_UINT, PyArray_DOUBLE, PyArray_LONG,  PyArray_LONG,  PyArray_DOUBLE,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  PyArray_OBJECT,  };
 static char divide_safe_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_SHORT, PyArray_USHORT,  PyArray_USHORT,  PyArray_USHORT,  PyArray_INT,  PyArray_INT,  PyArray_INT,  PyArray_UINT, PyArray_UINT, PyArray_UINT,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  };
 static char conjugate_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_USHORT,  PyArray_USHORT,  PyArray_INT,  PyArray_INT,  PyArray_UINT, PyArray_UINT, PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  };
 static char remainder_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_SHORT, PyArray_USHORT,  PyArray_USHORT,  PyArray_USHORT,  PyArray_INT,  PyArray_INT,  PyArray_INT,  PyArray_UINT, PyArray_UINT, PyArray_UINT,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  PyArray_OBJECT,  };
@@ -2841,9 +2855,20 @@ static void InitOperators(PyObject *dictionary) {
     divide_functions[10] = fastumath_DD_D;
     divide_functions[11] = PyUFunc_OO_O;
 
+    true_divide_data[9] = (void *)c_quot_fast;
+    true_divide_data[10] = (void *)c_quot_fast;
+    true_divide_data[11] = (void *)PyNumber_TrueDivide;
     true_divide_functions[9] = fastumath_FF_F_As_DD_D;
     true_divide_functions[10] = fastumath_DD_D;
     true_divide_functions[11] = PyUFunc_OO_O;
+
+    floor_divide_data[9] = (void *)c_quot_floor_fast;
+    floor_divide_data[10] = (void *)c_quot_floor_fast;
+    floor_divide_data[11] = (void *)PyNumber_FloorDivide;
+    floor_divide_functions[9] = fastumath_FF_F_As_DD_D;
+    floor_divide_functions[10] = fastumath_DD_D;
+    floor_divide_functions[11] = PyUFunc_OO_O;
+
 
     conjugate_functions[11] = PyUFunc_O_O_method;
     remainder_functions[8] = PyUFunc_ff_f_As_dd_d;
