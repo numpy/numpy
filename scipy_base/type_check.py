@@ -86,6 +86,8 @@ def isnan(val):
         results = Numeric.logical_or(r,i)
     else:        
         results = array(map(ieee_754.isnan,vals))
+    if isscalar(val):
+        results = results[0]
     return results
 
 def isposinf(val):
