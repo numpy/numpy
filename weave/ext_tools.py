@@ -191,12 +191,12 @@ class ext_module:
     def add_function(self,func):
         self.functions.append(func)
     def module_code(self):
-        code = self.warning_code() + \
-               self.header_code()  + \
-               self.support_code() + \
-               self.function_code() + \
-               self.python_function_definition_code() + \
-               self.module_init_code()
+        code = '\n'.join([self.warning_code(),
+               self.header_code(),
+               self.support_code(),
+               self.function_code(),
+               self.python_function_definition_code(),
+               self.module_init_code()])
         return code
 
     def arg_specs(self):
