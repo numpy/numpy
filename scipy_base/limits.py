@@ -7,7 +7,7 @@
 """
 
 import Numeric
-from utility import toFloat32, toFloat64
+from type_check import toFloat32, toFloat64
 
 __all__ = ['epsilon','tiny','float_epsilon','float_tiny','float_min',
            'float_max','float_precision','float_resolution',
