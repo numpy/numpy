@@ -10,7 +10,7 @@ from exec_command import find_executable
 class GnuFCompiler(FCompiler):
 
     compiler_type = 'gnu'
-    version_pattern = r'GNU Fortran ((\(GCC\)|\(GCC .*(\)\)|\)))|)\s*'\
+    version_pattern = r'GNU Fortran ((\(GCC[^\)]*(\)\)|\)))|)\s*'\
                       '(?P<version>[^\s*\)]+)'
 
     # 'g77 --version' results
@@ -76,7 +76,7 @@ class GnuFCompiler(FCompiler):
         return opt
 
     def get_libraries(self):
-        opt = FCompiler.get_library_dirs(self)
+        opt = FCompiler.get_libraries(self)
         d = self.get_libgcc_dir()
         if d is not None:
             for g2c in ['g2c-pic','g2c']:
