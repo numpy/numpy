@@ -3,7 +3,7 @@ import types
 import Numeric
 from Numeric import ravel, asarray, nonzero, array, choose, ones, zeros, sometrue, alltrue
 from type_check import ScalarType
-from shape_base import squeeze
+from shape_base import squeeze, atleast_1d
 from fastumath import PINF as inf
 from fastumath import *
 import _compiled_base
