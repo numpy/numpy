@@ -2,8 +2,7 @@
 
 """
 
-__all__ = ['diag','eye','fliplr','flipud','hankel','rot90','tri',
-           'tril','triu','toeplitz','all_mat']
+__all__ = ['diag','eye','fliplr','flipud','rot90']
            
 # These are from Numeric
 import Matrix
@@ -49,20 +48,6 @@ def rot90(m, k=1):
     elif k == 1: return transpose(fliplr(m))
     elif k == 2: return fliplr(flipud(m))
     else: return fliplr(transpose(m))  # k==3
-
-def tri(N, M=None, k=0, typecode=None):
-    """ returns a N-by-M matrix where all the diagonals starting from 
-        lower left corner up to the k-th are all ones.
-    """
-    if M is None: M = N
-    if type(M) == type('d'): 
-        typecode = M
-        M = N
-    m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
-    if typecode is None:
-        return m
-    else:
-        return m.astype(typecode)
     
 def eye(N, M=None, k=0, typecode=None):
     """ eye returns a N-by-M matrix where the  k-th diagonal is all ones, 
@@ -99,92 +84,6 @@ def diag(v, k=0):
     else:
             raise ValueError, "Input must be 1- or 2-D."
 
-#-----------------------------------------------------------------------------
-# move all these
-#-----------------------------------------------------------------------------
-
-def tril(m, k=0):
-    """ returns the elements on and below the k-th diagonal of m.  k=0 is the
-        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
-    """
-    svsp = m.spacesaver()
-    m = asarray(m,savespace=1)
-    out = tri(m.shape[0], m.shape[1], k=k, typecode=m.typecode())*m
-    out.savespace(svsp)
-    return out
-
-def triu(m, k=0):
-    """ returns the elements on and above the k-th diagonal of m.  k=0 is the
-        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
-    """
-    svsp = m.spacesaver()
-    m = asarray(m,savespace=1)
-    out = (1-tri(m.shape[0], m.shape[1], k-1, m.typecode()))*m
-    out.savespace(svsp)
-    return out
-
-def toeplitz(c,r=None):
-    """Construct a toeplitz matrix (i.e. a matrix with constant diagonals).
-
-    Description:
-
-       toeplitz(c,r) is a non-symmetric Toeplitz matrix with c as its first
-       column and r as its first row.
-
-       toeplitz(c) is a symmetric (Hermitian) Toeplitz matrix (r=c). 
-
-    See also: hankel
-    """
-    if isscalar(c) or isscalar(r):
-        return c   
-    if r is None:
-        r = c
-        r[0] = conjugate(r[0])
-        c = conjugate(c)
-    r,c = map(asarray,(r,c))
-    r,c = map(ravel,(r,c))
-    rN,cN = map(len,(r,c))
-    if r[0] != c[0]:
-        print "Warning: column and row values don't agree; column value used."
-    vals = r_[r[rN-1:0:-1], c]
-    cols = mgrid[0:cN]
-    rows = mgrid[rN:0:-1]
-    indx = cols[:,NewAxis]*ones((1,rN)) + \
-           rows[NewAxis,:]*ones((cN,1)) - 1
-    return take(vals, indx)
-
-
-def hankel(c,r=None):
-    """Construct a hankel matrix (i.e. matrix with constant anti-diagonals).
-
-    Description:
-
-      hankel(c,r) is a Hankel matrix whose first column is c and whose
-      last row is r.
-
-      hankel(c) is a square Hankel matrix whose first column is C.
-      Elements below the first anti-diagonal are zero.
-
-    See also:  toeplitz
-    """
-    if isscalar(c) or isscalar(r):
-        return c   
-    if r is None:
-        r = zeros(len(c))
-    elif r[0] != c[-1]:
-        print "Warning: column and row values don't agree; column value used."
-    r,c = map(asarray,(r,c))
-    r,c = map(ravel,(r,c))
-    rN,cN = map(len,(r,c))
-    vals = r_[c, r[1:rN]]
-    cols = mgrid[1:cN+1]
-    rows = mgrid[0:rN]
-    indx = cols[:,NewAxis]*ones((1,rN)) + \
-           rows[NewAxis,:]*ones((cN,1)) - 1
-    return take(vals, indx)
-
-def all_mat(args):
-    return map(Matrix.Matrix,args)
 
 #-----------------------------------------------------------------------------
 # Test Routines
