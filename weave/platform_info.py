@@ -8,10 +8,17 @@
 import os, sys
 
 import distutils
-from distutils.core import Extension, setup
-from distutils.command.build_ext import build_ext
 from distutils.sysconfig import customize_compiler
-from distutils.ccompiler import new_compiler
+
+
+try:
+    from scipy_distutils.ccompiler import new_compiler
+    from scipy_distutils.core import Extension, setup
+    from scipy_distutils.command.build_ext import build_ext
+except ImportError:
+    from distutils.ccompiler import new_compiler
+    from distutils.core import Extension, setup
+    from distutils.command.build_ext import build_ext
 
 import distutils.bcppcompiler
 
@@ -47,6 +54,7 @@ def create_compiler_instance(dist):
     # and return it. 
     if not compiler_name:
         compiler_name = None
+    print compiler_name    
     compiler = new_compiler(compiler=compiler_name)
     customize_compiler(compiler)
     return compiler
