@@ -10,16 +10,33 @@ from types import *
 import string
 import inspect
 
-
 ##################################################################
-#                    CLASS CXXTYPEDESCRIPTION                    #
+#                       CLASS __DESCRIPTOR                       #
 ##################################################################
-class Type_Descriptor:
+class __Descriptor:
     prerequisites = []
     refcount = 0
     def __repr__(self):
         return self.__module__+'.'+self.__class__.__name__
 
+##################################################################
+#                     CLASS TYPE_DESCRIPTOR                      #
+##################################################################
+class Type_Descriptor(__Descriptor):
+    module_init_code = ''
+
+##################################################################
+#                   CLASS FUNCTION_DESCRIPTOR                    #
+##################################################################
+class Function_Descriptor(__Descriptor):
+    def __init__(self,code,return_type,support=''):
+	self.code	= code
+	self.return_type	= return_type
+        self.support = support
+	return
+
+        
+            
 
 haveArgument = 90 # Opcodes greater-equal to this have argument
 byName = {
@@ -1050,11 +1067,10 @@ class CXXCoder(ByteCodeMeaning):
         try:
             F = self.function.func_globals[self.codeobject.co_names[var_num]]
         except:
-            F = getattr(__builtins__,self.codeobject.co_names[var_num])
+            F = __builtins__[self.codeobject.co_names[var_num]]
 
         # For functions, we see if we know about this function
         if callable(F):
-            assert functiondefs.has_key(F),"Function %s is known"%F
             self.push(F,type(F))
             return
 
@@ -1082,6 +1098,32 @@ class CXXCoder(ByteCodeMeaning):
 
         self.push(native,t)
         return
+
+    def SETUP_LOOP(self,pc,delta):
+        "Pushes a block for a loop onto the block stack. The block spans from the current instruction with a size of delta bytes."
+        return
+
+    def FOR_LOOP(self,pc,delta):
+        "Iterate over a sequence. TOS is the current index, TOS1 the sequence. First, the next element is computed. If the sequence is exhausted, increment byte code counter by delta. Otherwise, push the sequence, the incremented counter, and the current item onto the stack."
+        # Pull off control variable and range info
+        v2,t2 = self.pop()
+        v1,t1 = self.pop()
+        self.emit('for(%s=%s.low; %s<%s.high; %s += %s.step) {'%(
+            v2,v1,v2,v1,v2,v1))
+
+        # Put range back on for assignment
+        self.push(v2,t2)
+        return
+
+    def JUMP_ABSOLUTE(self,pc,target):
+        "Set byte code counter to target."
+        self.emit('}')
+        return
+
+    def POP_BLOCK(self,pc):
+        "Removes one block from the block stack. Per frame, there is a stack of blocks, denoting nested loops, try statements, and such."
+        return
+
 
     ##################################################################
     #                       MEMBER STORE_FAST                        #
@@ -1145,30 +1187,21 @@ class CXXCoder(ByteCodeMeaning):
  
         # Pull function object off stack and get descriptor
         f,t = self.pop()
-        descriptor = functiondefs[f]
+        signature = (f,tuple(types))
+        descriptor = self.function_by_signature(signature)
         #self.prerequisites += descriptor['prerequisite']+'\n'
         
-        # Look through descriptors for a match
-        for inputs,outputs,format in descriptor:
-            if inputs == types:
-                break
-        else:
-            raise TypeError,f
-
         # Build a rhs
-        rhs = format%string.join(args,',')
+        rhs = descriptor.code%string.join(args,',')
 
         # Build a statement
-        assert len(outputs) == 1,"Single valued return"
-        assert typedefs.has_key(outputs[0]),"Know about type %s"%outputs[0]
-        description = typedefs[outputs[0]]
         temp = self.unique()
         self.emit('%s %s = %s;\n'%(
-            description.cxxtype,
+            descriptor.return_type.cxxtype,
             temp,
             rhs))
 
-        self.push(temp,outputs[0])
+        self.push(temp,descriptor.return_type)
         return
 
 
