@@ -644,7 +644,7 @@ _default_compilers = (
     ('cygwin.*',('gnu','intelv','absoft','compaqv','intelitanium')),
     ('linux.*',('gnu','intel','lahey','pg','absoft','nag','vast','compaq',
                 'intelitanium')),
-    ('darwin.*',('gnu','nag','ibm')),
+    ('darwin.*',('nag','ibm','gnu')),
     ('sunos.*',('forte','gnu','sun')),
     ('irix.*',('mips','gnu')),
     ('aix.*',('ibm','gnu')),
