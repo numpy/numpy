@@ -30,10 +30,12 @@ class array_converter(base_converter):
     def inline_decl_code(self):
         type = numeric_to_c_type_mapping[self.numeric_type]
         name = self.name
+        #dims = self.dims
         var_name = self.retrieve_py_variable(inline=1)
         templ = '// %(name)s array declaration\n' \
                 'py_%(name)s= %(var_name)s;\n' \
                 'PyArrayObject* %(name)s = convert_to_numpy(py_%(name)s,"%(name)s");\n' \
+                'conversion_numpy_check_type(%(name)s,py_type<%(type)s>::code,"%(name)s");\n' \
                 'int* _N%(name)s = %(name)s->dimensions;\n' \
                 'int* _S%(name)s = %(name)s->strides;\n' \
                 'int _D%(name)s = %(name)s->nd;\n' \
@@ -46,6 +48,7 @@ class array_converter(base_converter):
         name = self.name
         templ = '// %(name)s array declaration\n' \
                 'PyArrayObject* %(name)s = convert_to_numpy(py_%(name)s,"%(name)s");\n' \
+                'conversion_numpy_check_type(%(name)s,py_type<%(type)s>::code,"%(name)s");\n' \
                 'int* _N%(name)s = %(name)s->dimensions;\n' \
                 'int* _S%(name)s = %(name)s->strides;\n' \
                 'int _D%(name)s = %(name)s->nd;\n' \

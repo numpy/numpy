@@ -21,20 +21,6 @@ int _beg = blitz::fromStart;
 int _end = blitz::toEnd;
 blitz::Range _all = blitz::Range::all();
 
-// simple meta-program templates to specify python typecodes
-// for each of the numeric types.
-template<class T>
-class py_type{public: enum {code = 100};};
-class py_type<char>{public: enum {code = PyArray_CHAR};};
-class py_type<unsigned char>{public: enum { code = PyArray_UBYTE};};
-class py_type<short>{public:  enum { code = PyArray_SHORT};};
-class py_type<int>{public: enum { code = PyArray_LONG};};// PyArray_INT has troubles;
-class py_type<long>{public: enum { code = PyArray_LONG};};
-class py_type<float>{public: enum { code = PyArray_FLOAT};};
-class py_type<double>{public: enum { code = PyArray_DOUBLE};};
-class py_type<std::complex<float> >{public: enum { code = PyArray_CFLOAT};};
-class py_type<std::complex<double> >{public: enum { code = PyArray_CDOUBLE};};
-
 template<class T, int N>
 static blitz::Array<T,N> convert_to_blitz(PyArrayObject* arr_obj,const char* name)
 {
