@@ -4,6 +4,9 @@ import unittest
 class ScipyTestCase (unittest.TestCase):
 
     def measure(self,code_str,times=1):
+        """ Return elapsed time for executing code_str in the
+        namespace of the caller for given times.
+        """
         frame = sys._getframe(1)
         locs,globs = frame.f_locals,frame.f_globals
         code = compile(code_str,
@@ -179,9 +182,9 @@ def module_test(mod_name,mod_file,level=10):
     #print 'testing', mod_name
     d,f = os.path.split(mod_file)
 
-    # add the tests directory to the python path
+    # insert the tests directory to the python path
     test_dir = os.path.join(d,'tests')
-    sys.path.append(test_dir)
+    sys.path.insert(0,test_dir)
 
     # call the "test_xxx.test()" function for the appropriate
     # module.
@@ -199,7 +202,7 @@ def module_test(mod_name,mod_file,level=10):
     exec(test_string)
 
     # remove test directory from python path.
-    sys.path = sys.path[:-1]
+    sys.path = sys.path[1:]
 
 def module_test_suite(mod_name,mod_file,level=10):
     #try:
@@ -207,9 +210,9 @@ def module_test_suite(mod_name,mod_file,level=10):
         print ' creating test suite for:', mod_name
         d,f = os.path.split(mod_file)
 
-        # add the tests directory to the python path
+        # insert the tests directory to the python path
         test_dir = os.path.join(d,'tests')
-        sys.path.append(test_dir)
+        sys.path.insert(0,test_dir)
 
         # call the "test_xxx.test()" function for the appropriate
         # module.
@@ -223,7 +226,7 @@ def module_test_suite(mod_name,mod_file,level=10):
         exec(test_string)
 
         # remove test directory from python path.
-        sys.path = sys.path[:-1]
+        sys.path = sys.path[1:]
         return suite
     #except:
     #    print '    !! FAILURE loading test suite from', test_module, ':'
