@@ -189,7 +189,7 @@ def exec_command( command,
     if use_tee is None:
         use_tee = os.name=='posix'
     if use_shell is None:
-        use_shell = os.name=='posix' and sys.platform[:5]!='sunos'
+        use_shell = os.name=='posix'
     execute_in = os.path.abspath(execute_in)
     oldcwd = os.path.abspath(os.getcwd())
 
@@ -225,7 +225,7 @@ def exec_command( command,
             st = _exec_command_python(command,
                                       exec_command_dir = exec_dir,
                                       **env)
-        elif os.name=='posix' and sys.platform[:5]!='sunos':
+        elif os.name=='posix':
             st = _exec_command_posix(command,
                                      use_shell=use_shell,
                                      use_tee=use_tee,
