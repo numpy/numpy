@@ -116,7 +116,7 @@ class F2pyNotFoundError(NotFoundError):
 
 class NumericNotFoundError(NotFoundError):
     """
-    Numeric (http://pfdubois.com/numpy/) module not found.
+    Numeric (http://www.numpy.org/) module not found.
     Get it from above location, install it, and retry setup.py."""
 
 class X11NotFoundError(NotFoundError):
@@ -138,7 +138,6 @@ class system_info:
                   default_include_dirs=default_include_dirs,
                   ):
         self.__class__.info = {}
-        #self.__class__.need_refresh = not self.info
         self.local_prefixes = []
         defaults = {}
         defaults['lib_dir'] = os.pathsep.join(default_lib_dirs)
@@ -153,7 +152,6 @@ class system_info:
         self.static_first = self.cp.getboolean(self.section, 'static_first')
 
     def set_info(self,**info):
-        #self.__class__.info = info
         self.saved_results[self.__class__.__name__] = info
     def has_info(self):
         return self.saved_results.has_key(self.__class__.__name__)
