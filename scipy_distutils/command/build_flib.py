@@ -973,7 +973,8 @@ class gnu_fortran_compiler(fortran_compiler_base):
             self.libraries = ['gcc',g2c]
             self.library_dirs = gcc_lib_dir
         elif sys.platform == 'darwin':
-            pass
+            self.libraries = [g2c]
+            self.library_dirs = gcc_lib_dir
         else:
             # On linux g77 does not need lib_directories to be specified.
             self.libraries = [g2c]
