@@ -345,6 +345,9 @@ the test actually do, their value is limited.  Still, their here for the
 curious. Look at the example scripts for more specifics about what problem was 
 actually solved by each run.  These examples are run under windows 2000 using 
 Microsoft Visual C++ and python2.1 on a 850 MHz PIII laptop with 320 MB of RAM.
+Speed up is the improvement (degredation) factor of <code>weave</code> compared to 
+conventional Python functions.  <code>The blitz()</code> comparisons are shown
+compared to Numeric.
 <p>
 <center>
 <table border=1 style="WIDTH: 420px; HEIGHT: 395px">
@@ -365,6 +368,13 @@ Microsoft Visual C++ and python2.1 on a 850 MHz PIII laptop with 320 MB of RAM.
       <tr><td>a = b + c + d 512x512</td> <td> &nbsp&nbsp4.59 </td> </tr>
       <tr><td>5 pt avg. filter, 2D Image 512x512</td> <td> &nbsp&nbsp9.01 </td> </tr>
       <tr><td>Electromagnetics (FDTD) 100x100x100</td> <td> &nbsp&nbsp8.61 </td> </tr>
+      
+The benchmarks shown <code>blitz</code> in the best possible light.  Numeric 
+(at least on my machine) is significantly worse for double precision than it is 
+for single precision calculations.  If your interested in single precision 
+results, you can pretty much divide the double precision speed up by 3 and you'll
+be close.
+
 </table>
 </center>
 <p>
