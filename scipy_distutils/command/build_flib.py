@@ -686,10 +686,10 @@ class absoft_fortran_compiler(move_modules_mixin,fortran_compiler_base):
                                 ' -YCOM_PFX  -YEXT_PFX -YEXT_NAMES=LCS' \
                                 ' -YCOM_SFX=_ -YEXT_SFX=_ -YEXT_NAMES=LCS'        
             self.f90_opt = ' -O -B101'                            
-            self.f77_switches = ' -N22 -N90 -N110 -B108'
+            self.f77_switches = ' -N22 -N90 -N110 -B108 -f -s'
             self.f77_opt = ' -O -B101'
 
-            self.f90_fixed_switch = ' -ffixed '
+            self.f90_fixed_switch = ' -f fixed '
 
             self.libraries = ['fio', 'f77math', 'f90math']
 
