@@ -41,9 +41,9 @@ try:
 except IndexError: 
     pass    
 
-#------------------------------------------------------------------------
+#----------------------------------------------------------------------------
 # Add VTK support
-#-----------------------------------------------------------------------
+#----------------------------------------------------------------------------
 
 try: 
     import vtk_spec
@@ -51,11 +51,11 @@ try:
 except IndexError: 
     pass
 
-#------------------------------------------------------------------------
+#----------------------------------------------------------------------------
 # Add "sentinal" catchall converter
 #
 # if everything else fails, this one is the last hope (it always works)
-#-----------------------------------------------------------------------
+#----------------------------------------------------------------------------
 
 default.append(c_spec.catchall_converter())
 
@@ -66,14 +66,18 @@ standard_info += [x.generate_build_info() for x in default]
 # Blitz conversion classes
 #
 # same as default, but will convert Numeric arrays to blitz C++ classes 
+# !! only available if Numeric is installed !!
 #----------------------------------------------------------------------------
-import blitz_spec
-blitz = [blitz_spec.array_converter()] + default
+try:
+    import blitz_spec
+    blitz = [blitz_spec.array_converter()] + default
+    #-----------------------------------
+    # Add "sentinal" catchall converter
+    #
+    # if everything else fails, this one 
+    # is the last hope (it always works)
+    #-----------------------------------
+    blitz.append(c_spec.catchall_converter())
+except:
+    pass
 
-#------------------------------------------------------------------------
-# Add "sentinal" catchall converter
-#
-# if everything else fails, this one is the last hope (it always works)
-#-----------------------------------------------------------------------
-
-blitz.append(c_spec.catchall_converter())
