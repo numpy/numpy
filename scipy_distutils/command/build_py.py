@@ -1,4 +1,6 @@
+
 import os
+import sys
 from glob import glob
 #from distutils.command.build_py import *
 from distutils.command.build_py import build_py as old_build_py
@@ -24,9 +26,12 @@ def in_build_py_ignore(file, _cache={}):
 
 class build_py(old_build_py):
 
-    def find_package_modules (self, package, package_dir):
+    def find_package_modules(self, package, package_dir):
         # we filter all files that are setup.py or setup_xxx.py
         # or listed in .build_py_ignore file of files base directory.
+        if 'sdist' in sys.argv:
+            return old_build_py.find_package_modules(self,package,package_dir)
+
         self.check_package(package, package_dir)
         module_files = glob(os.path.join(package_dir, "*.py"))
         modules = []
