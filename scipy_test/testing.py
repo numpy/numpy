@@ -9,7 +9,8 @@ try:
     # These are used by Numeric tests.
     # If Numeric and scipy_base  are not available, then some of the
     # functions below will not be available.
-    from Numeric import alltrue,equal,shape,ravel,around,zeros,Float64,asarray
+    from Numeric import alltrue,equal,shape,ravel,around,zeros,Float64,asarray,\
+         less_equal,array2string
     import scipy_base.fastumath as math
 except ImportError:
     pass
@@ -582,9 +583,17 @@ def assert_array_equal(x,y,err_msg=''):
     try:
         assert alltrue(equal(shape(x),shape(y))),\
                msg + ' (shapes mismatch):\n\t' + err_msg
-        reduced = equal(x,y)
-        assert alltrue(ravel(reduced)),\
-               msg + ':\n\t' + err_msg
+        reduced = ravel(equal(x,y))
+        cond = alltrue(reduced)
+        if not cond:
+            s1 = array2string(x,precision=16)
+            s2 = array2string(y,precision=16)
+            if len(s1)>120: s1 = s1[:120] + '...'
+            if len(s2)>120: s2 = s2[:120] + '...'
+            match = 100-100.0*reduced.tolist().count(1)/len(reduced)
+            msg = msg + ' (mismatch %s%%):\n\tArray 1: %s\n\tArray 2: %s' % (match,s1,s2)
+        assert cond,\
+               msg + '\n\t' + err_msg
     except ValueError:
         print shape(x),shape(y)
         raise ValueError, 'arrays are not equal'
@@ -597,9 +606,17 @@ def assert_array_almost_equal(x,y,decimal=6,err_msg=''):
     try:
         assert alltrue(equal(shape(x),shape(y))),\
                msg + ' (shapes mismatch):\n\t' + err_msg
-        reduced = equal(around(abs(x-y),decimal),0)
-        assert alltrue(ravel(reduced)),\
-               msg + ':\n\t' + err_msg
+        reduced = ravel(equal(less_equal(around(abs(x-y),decimal),10.0**(-decimal)),1))
+        cond = alltrue(reduced)
+        if not cond:
+            s1 = array2string(x,precision=decimal+1)
+            s2 = array2string(y,precision=decimal+1)
+            if len(s1)>120: s1 = s1[:120] + '...'
+            if len(s2)>120: s2 = s2[:120] + '...'
+            match = 100-100.0*reduced.tolist().count(1)/len(reduced)
+            msg = msg + ' (mismatch %s%%):\n\tArray 1: %s\n\tArray 2: %s' % (match,s1,s2)
+        assert cond,\
+               msg + '\n\t' + err_msg
     except ValueError:
         print sys.exc_value
         print shape(x),shape(y)
