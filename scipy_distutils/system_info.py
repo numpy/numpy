@@ -768,8 +768,8 @@ DL_EXPORT(void) initatlas_version(void) {
 '''
 
 def get_atlas_version(**config):
-    from scipy_distutils.core import Extension, setup
-    from scipy_distutils import log
+    from core import Extension, setup
+    import log
     magic = hex(hash(`config`))
     def atlas_version_c(extension, build_dir,macig=magic):
         source = os.path.join(build_dir,'atlas_version_%s.c' % (magic))
