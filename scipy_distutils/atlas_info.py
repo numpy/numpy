@@ -1,7 +1,7 @@
 import sys, os
 from misc_util import get_path
 
-library_path = None 
+library_path = None
 
 def dir_exists(dir_list):
     if dir_list:
