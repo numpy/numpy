@@ -4,6 +4,7 @@ This file defines a set of system_info classes for getting
 information about various resources (libraries, library directories,
 include directories, etc.) in the system. Currently, the following
 classes are available:
+
   atlas_info
   atlas_threads_info
   atlas_blas_info
@@ -21,8 +22,8 @@ classes are available:
   blas_src_info
   numpy_info
   numarray_info
-  boost_python
-  agg2
+  boost_python_info
+  agg2_info
   wx_info
   gdk_pixbuf_xlib_2_info
   gdk_pixbuf_2_info
@@ -41,6 +42,11 @@ Usage:
   Returned info_dict is a dictionary which is compatible with
   distutils.setup keyword arguments. If info_dict == {}, then the
   asked resource is not available (system_info could not find it).
+
+  Several *_info classes specify an environment variable to specify
+  the locations of software. When setting the corresponding environment
+  variable to 'None' then the software will be ignored, even when it
+  is available in system.
 
 Global parameters:
   system_info.search_static_first - search static libraries (.a)
@@ -333,6 +339,9 @@ class system_info:
         dirs = self.cp.get(section, key).split(os.pathsep)
         if self.dir_env_var and os.environ.has_key(self.dir_env_var):
             d = os.environ[self.dir_env_var]
+            if d=='None':
+                print 'Disabled',self.__class__.__name__,'(%s is None)' % (self.dir_env_var)
+                return []
             if os.path.isfile(d):
                 dirs = [os.path.dirname(d)] + dirs
                 l = getattr(self,'_lib_names',[])
