@@ -214,11 +214,27 @@ class build_ext (old_build_ext):
         target_ext = 'module.c'
         target_dir = self.build_temp
         print 'target_dir', target_dir
+
+        match_module = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
+                                  re.I).match
         
         for source in sources:
             (base, source_ext) = os.path.splitext(source)
             (source_dir, base) = os.path.split(base)
             if source_ext == ".pyf":             # f2py interface file
+                # get extension module name
+                f = open(source)
+                for line in f.xreadlines():
+                    m = match_module(line)
+                    if m:
+                        base = m.group('name')
+                        break
+                f.close()
+                if base != ext.name:
+                    # XXX: Should we do here more than just warn?
+                    print 'Warning: %s provides %s but this extension is %s' \
+                          % (source,`base`,`ext`)
+
                 target_file = os.path.join(target_dir,base+target_ext)
                 new_sources.append(target_file)
                 f2py_sources.append(source)
