@@ -43,7 +43,7 @@ class build_ext (old_build_ext):
         for ext in self.extensions:
             if not misc_util.all_strings(ext.sources):
                 raise TypeError,'Extension "%s" sources contains unresolved'\
-                      ' items (call build_src before built_ext).' % (ext.name)
+                      ' items (call build_src before build_ext).' % (ext.name)
 
         if self.distribution.has_c_libraries():
             build_clib = self.get_finalized_command('build_clib')
