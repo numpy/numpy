@@ -969,6 +969,7 @@ static void UINT_multiply(char **args, int *dimensions, int *steps, void *func) 
 	bh = b >> (INT_BIT/2);
 	/* Quick test for common case: two small positive ints */
 	if (ah == 0 && bh == 0) {  /* result should fit into bits available. */
+	    x = a*b;
             *((unsigned int *)op)=x;
             continue;
         }
