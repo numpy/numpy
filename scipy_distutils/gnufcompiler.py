@@ -67,7 +67,7 @@ class GnuFCompiler(FCompiler):
         return
 
     def get_library_dirs(self):
-        opt = FCompiler.get_library_dirs(self)
+        opt = []
         if sys.platform[:5] != 'linux':
             d = self.get_libgcc_dir()
             if d:
@@ -75,7 +75,7 @@ class GnuFCompiler(FCompiler):
         return opt
 
     def get_libraries(self):
-        opt = FCompiler.get_libraries(self)
+        opt = []
         d = self.get_libgcc_dir()
         if d is not None:
             for g2c in ['g2c-pic','g2c']:

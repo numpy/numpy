@@ -57,11 +57,17 @@ class build_ext (old_build_ext):
                 if has_f_sources(ext.sources):
                     need_f_compiler = 1
                     break
+                if getattr(ext,'language','c') in ['f77','f90']:
+                    need_f_compiler = 1
+                    break
 
         # Determine if C++ compiler is needed.
         need_cxx_compiler = 0
         for ext in self.extensions:
             if has_cxx_sources(ext.sources):
+                need_cxx_compiler = 1
+                break
+            if getattr(ext,'language','c')=='c++':
                 need_cxx_compiler = 1
                 break
 
@@ -217,10 +223,10 @@ class build_ext (old_build_ext):
 
         old_linker_so_0 = self.compiler.linker_so[0]
 
-        use_fortran_linker = 0
+        use_fortran_linker = getattr(ext,'language','c') in ['f77','f90']
         c_libraries = []
         c_library_dirs = []
-        if f_sources:
+        if use_fortran_linker or f_sources:
             use_fortran_linker = 1
         elif self.distribution.has_c_libraries():            
             build_clib = self.get_finalized_command('build_clib')

@@ -27,7 +27,7 @@ class SunFCompiler(FCompiler):
     def get_arch(self):
         return ['-xtarget=generic']
     def get_libraries(self):
-        opt = FCompiler.get_libraries(self)
+        opt = []
         opt.extend(['fsu','sunmath','mvec','f77compat'])
         return opt
 

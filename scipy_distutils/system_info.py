@@ -271,6 +271,7 @@ class system_info:
                 if k=='sources' and len(v)>200: v = v[:60]+' ...\n... '+v[-60:]
                 print '    %s = %s'%(k,v)
             print
+        
         return res
 
     def get_paths(self, section, key):
@@ -505,7 +506,7 @@ class atlas_info(system_info):
         if h:
             h = os.path.dirname(h)
             dict_append(info,include_dirs=[h])
-
+        info['language'] = 'c'
         if lapack is not None:
             dict_append(info,**lapack)
             dict_append(info,**atlas)
@@ -547,6 +548,9 @@ class atlas_info(system_info):
 *********************************************************************
 """ % (lapack_lib,sz/1024)
                 warnings.warn(message)
+            else:
+                info['language'] = 'f77'
+
         self.set_info(**info)
 
 class atlas_threads_info(atlas_info):
@@ -573,6 +577,7 @@ class lapack_info(system_info):
                 break
         else:
             return
+        info['language'] = 'f77'
         self.set_info(**info)
 
 class lapack_src_info(system_info):
@@ -669,7 +674,7 @@ class lapack_src_info(system_info):
                   + ['%s.f'%f for f in (allaux+oclasrc+ozlasrc).split()]
         sources = [os.path.join(src_dir,f) for f in sources]
         #XXX: should we check here actual existence of source files?
-        info = {'sources':sources}
+        info = {'sources':sources,'language':'f77'}
         self.set_info(**info)
 
 
@@ -689,6 +694,7 @@ class blas_info(system_info):
                 break
         else:
             return
+        info['language'] = 'f77'  # XXX: is it generally true?
         self.set_info(**info)
 
 class blas_src_info(system_info):
@@ -736,7 +742,7 @@ class blas_src_info(system_info):
         sources = [os.path.join(src_dir,f+'.f') \
                    for f in (blas1+blas2+blas3).split()]
         #XXX: should we check here actual existence of source files?
-        info = {'sources':sources}
+        info = {'sources':sources,'language':'f77'}
         self.set_info(**info)
 
 class x11_info(system_info):
@@ -853,8 +859,14 @@ def combine_paths(*args,**kws):
         print '(','paths:',','.join(result),')'
     return result
 
+language_map = {'c':0,'c++':1,'f77':2,'f90':3}
+inv_language_map = {0:'c',1:'c++',2:'f77',3:'f90'}
 def dict_append(d,**kws):
+    languages = []
     for k,v in kws.items():
+        if k=='language':
+            languages.append(v)
+            continue
         if d.has_key(k):
             if k in ['library_dirs','include_dirs','define_macros']:
                 [d[k].append(vv) for vv in v if vv not in d[k]]
@@ -862,6 +874,10 @@ def dict_append(d,**kws):
                 d[k].extend(v)
         else:
             d[k] = v
+    if languages:
+        l = inv_language_map[max([language_map.get(l,0) for l in languages])]
+        d['language'] = l
+    return
 
 def show_all():
     import system_info
