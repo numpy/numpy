@@ -715,16 +715,18 @@ class sun_fortran_compiler(fortran_compiler_base):
             f90c = 'f90'
 
         self.f77_compiler = fc
-        self.f77_switches = ' -pic -f77 -ftrap=%none '
-        self.f77_opt = ' -fast -dalign -xtarget=generic -R/opt/SUNWspro/lib'
+        self.f77_switches = ' -xcode=pic32 -f77 -ftrap=%none '
+        self.f77_opt = ' -fast -dalign -xtarget=generic '
 
         self.f90_compiler = f90c
-        self.f90_switches = ' -pic'
-        self.f90_opt = ' -fast -dalign -xtarget=generic -R/opt/SUNWspro/lib'
+        self.f90_switches = ' -xcode=pic32 '
+        self.f90_opt = ' -fast -dalign -xtarget=generic '
 
         self.f90_fixed_switch = ' -fixed '
 
         self.ver_cmd = self.f90_compiler + ' -V'
+
+        self.libraries = ['fsu','sunmath']
 
         return
 
@@ -774,11 +776,11 @@ class sun_fortran_compiler(fortran_compiler_base):
                                                  self.version,'lib'))
         return library_dirs
 
-    def get_extra_link_args(self):
-        return ["-Bdynamic", "-G"]
+    #def get_extra_link_args(self):
+    #    return ["-Bdynamic", "-G"]
 
     def get_linker_so(self):
-        return [self.f90_compiler]
+        return [self.f90_compiler,'-Bdynamic','-G']
 
 
 class mips_fortran_compiler(fortran_compiler_base):
