@@ -408,7 +408,7 @@ class atlas_info(system_info):
         for d in lib_dirs:
             lapack = self.check_libs(d,lapack_libs,[])
             if lapack is not None:
-                info = lapack                
+                info = lapack
                 break
         else:
             return
@@ -423,6 +423,32 @@ class atlas_info(system_info):
 
         if h: dict_append(info,include_dirs=[h])
         self.set_info(**info)
+
+        # Check if lapack library is complete, only warn if it is not.
+        lapack_dir = info['library_dirs'][0]
+        lapack_name = info['libraries'][0]
+        lapack_lib = None
+        for e in ['.a',so_ext]:
+            fn = os.path.join(lapack_dir,'lib'+lapack_name+e)
+            if os.path.exists(fn):
+                lapack_lib = fn
+                break
+        if lapack_lib is not None:
+            fd = os.open(lapack_lib,os.O_RDONLY)
+            sz = os.fstat(fd)[6]
+            os.close(fd)
+            if sz <= 4000*1024:
+                import warnings
+                message = """
+*********************************************************************
+    Lapack library (from ATLAS) is probably incomplete:
+      size of %s is %sk (expected >4000k)
+
+    Follow the instructions in the KNOWN PROBLEMS section of the file
+    scipy/INSTALL.txt.
+*********************************************************************
+""" % (lapack_lib,sz/1024)
+                warnings.warn(message)
 
 class lapack_info(system_info):
     section = 'lapack'
