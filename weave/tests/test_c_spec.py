@@ -2,6 +2,14 @@ import unittest
 import time
 import os,sys
 
+# Note: test_dir is global to this file.  
+#       It is made by setup_test_location()
+
+
+#globals
+global test_dir 
+test_dir = ''
+
 from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
 
 add_grandparent_to_path(__name__)
@@ -59,7 +67,6 @@ class test_int_converter(unittest.TestCase):
         s = c_spec.int_converter()        
         assert(not s.type_match(5.+1j))
     def check_var_in(self):
-        test_dir = setup_test_location()
         mod_name = 'int_var_in' + self.compiler
         mod_name = unique_mod(test_dir,mod_name)
         mod = ext_tools.ext_module(mod_name)
@@ -81,10 +88,8 @@ class test_int_converter(unittest.TestCase):
             test(b)
         except TypeError:
             pass
-        teardown_test_location()
                     
     def check_int_return(self):
-        test_dir = setup_test_location()        
         mod_name = sys._getframe().f_code.co_name + self.compiler
         mod_name = unique_mod(test_dir,mod_name)
         mod = ext_tools.ext_module(mod_name)
@@ -99,7 +104,7 @@ class test_int_converter(unittest.TestCase):
         exec 'from ' + mod_name + ' import test'
         b=1
         c = test(b)
-        teardown_test_location()
+
         assert( c == 3)
 
 class test_float_converter(unittest.TestCase):    
@@ -117,11 +122,9 @@ class test_float_converter(unittest.TestCase):
         s = c_spec.float_converter()        
         assert(not s.type_match(5.+1j))
     def check_float_var_in(self):
-        test_dir = setup_test_location()                
         mod_name = sys._getframe().f_code.co_name + self.compiler
         mod_name = unique_mod(test_dir,mod_name)
         mod = ext_tools.ext_module(mod_name)
-
         a = 1.
         code = "a=2.;"
         test = ext_tools.ext_function('test',code,['a'])
@@ -140,10 +143,9 @@ class test_float_converter(unittest.TestCase):
             test(b)
         except TypeError:
             pass
-        teardown_test_location()
 
-    def check_float_return(self):
-        test_dir = setup_test_location()        
+
+    def check_float_return(self):   
         mod_name = sys._getframe().f_code.co_name + self.compiler
         mod_name = unique_mod(test_dir,mod_name)
         mod = ext_tools.ext_module(mod_name)
@@ -158,7 +160,6 @@ class test_float_converter(unittest.TestCase):
         exec 'from ' + mod_name + ' import test'
         b=1.
         c = test(b)
-        teardown_test_location()
         assert( c == 3.)
         
 class test_complex_converter(unittest.TestCase):    
@@ -176,7 +177,6 @@ class test_complex_converter(unittest.TestCase):
         s = c_spec.complex_converter()        
         assert(s.type_match(5.+1j))
     def check_complex_var_in(self):
-        test_dir = setup_test_location()        
         mod_name = sys._getframe().f_code.co_name + self.compiler
         mod_name = unique_mod(test_dir,mod_name)
         mod = ext_tools.ext_module(mod_name)
@@ -198,10 +198,8 @@ class test_complex_converter(unittest.TestCase):
             test(b)
         except TypeError:
             pass
-        teardown_test_location()
 
     def check_complex_return(self):
-        test_dir = setup_test_location()        
         mod_name = sys._getframe().f_code.co_name + self.compiler
         mod_name = unique_mod(test_dir,mod_name)
         mod = ext_tools.ext_module(mod_name)
@@ -216,53 +214,14 @@ class test_complex_converter(unittest.TestCase):
         exec 'from ' + mod_name + ' import test'
         b=1.+1j
         c = test(b)
-        teardown_test_location()        
         assert( c == 3.+3j)
-
-class test_msvc_int_converter(test_int_converter):    
-    compiler = 'msvc'
-class test_msvc_float_converter(test_float_converter):    
-    compiler = 'msvc'
-class test_msvc_complex_converter(test_complex_converter):    
-    compiler = 'msvc'
-
-class test_unix_int_converter(test_int_converter):    
-    compiler = ''
-class test_unix_float_converter(test_float_converter):    
-    compiler = ''
-class test_unix_complex_converter(test_complex_converter):    
-    compiler = ''
-
-class test_gcc_int_converter(test_int_converter):    
-    compiler = 'gcc'
-class test_gcc_float_converter(test_float_converter):    
-    compiler = 'gcc'
-class test_gcc_complex_converter(test_complex_converter):    
-    compiler = 'gcc'
-    
-def setup_test_location():
-    import tempfile
-    test_dir = os.path.join(tempfile.gettempdir(),'test_files')
-    if not os.path.exists(test_dir):
-        os.mkdir(test_dir)
-    sys.path.insert(0,test_dir)    
-    return test_dir
-
-def teardown_test_location():
-    import tempfile
-    test_dir = os.path.join(tempfile.gettempdir(),'test_files')
-    if sys.path[0] == test_dir:
-        sys.path = sys.path[1:]
-    return test_dir
-
-def remove_file(name):
-    test_dir = os.path.abspath(name)
 
 #----------------------------------------------------------------------------
 # File conversion tests
 #----------------------------------------------------------------------------
 
 class test_file_converter(unittest.TestCase):    
+    compiler = ''
     def check_py_to_file(self):
         import tempfile
         file_name = tempfile.mktemp()        
@@ -270,7 +229,7 @@ class test_file_converter(unittest.TestCase):
         code = """
                fprintf(file,"hello bob");
                """
-        inline_tools.inline(code,['file']) 
+        inline_tools.inline(code,['file'],compiler=self.compiler,force=1) 
         file.close()
         file = open(file_name,'r')
         assert(file.read() == "hello bob")
@@ -285,7 +244,8 @@ class test_file_converter(unittest.TestCase):
                return_val = file_to_py(file,_file_name,"w");
                Py_XINCREF(return_val);
                """
-        file = inline_tools.inline(code,['file_name'])
+        file = inline_tools.inline(code,['file_name'], compiler=self.compiler,
+                                   force=1)
         file.write("hello fred")        
         file.close()
         file = open(file_name,'r')
@@ -303,6 +263,7 @@ class test_instance_converter(unittest.TestCase):
 #----------------------------------------------------------------------------
     
 class test_callable_converter(unittest.TestCase):        
+    compiler=''
     def check_call_function(self):
         import string
         func = string.find
@@ -312,30 +273,32 @@ class test_callable_converter(unittest.TestCase):
         # * Is the Py::String necessary? (it works anyways...)
         code = """
                PWOTuple args(2);
-               args.setItem(0,PWOString(search_str.c_str()));
-               args.setItem(1,PWOString(sub_str.c_str()));
+               args.setItem(0,search_str);
+               args.setItem(1,sub_str);
                return_val = PyObject_CallObject(func,args);
                """
-        actual = inline_tools.inline(code,['func','search_str','sub_str'])
+        actual = inline_tools.inline(code,['func','search_str','sub_str'],
+                                     compiler=self.compiler,force=1)
         desired = func(search_str,sub_str)        
         assert(desired == actual)
 
-
 class test_sequence_converter(unittest.TestCase):    
+    compiler = ''
     def check_convert_to_dict(self):
         d = {}
-        inline_tools.inline("",['d']) 
+        inline_tools.inline("",['d'],compiler=self.compiler,force=1) 
     def check_convert_to_list(self):        
         l = []
-        inline_tools.inline("",['l']) 
+        inline_tools.inline("",['l'],compiler=self.compiler,force=1)
     def check_convert_to_string(self):        
         s = 'hello'
-        inline_tools.inline("",['s']) 
+        inline_tools.inline("",['s'],compiler=self.compiler,force=1)
     def check_convert_to_tuple(self):        
         t = ()
-        inline_tools.inline("",['t']) 
+        inline_tools.inline("",['t'],compiler=self.compiler,force=1)
 
 class test_string_converter(unittest.TestCase):    
+    compiler = ''
     def check_type_match_string(self):
         s = c_spec.string_converter()
         assert( s.type_match('string') )
@@ -349,28 +312,33 @@ class test_string_converter(unittest.TestCase):
         s = c_spec.string_converter()        
         assert(not s.type_match(5.+1j))
     def check_var_in(self):
-        mod = ext_tools.ext_module('string_var_in')
+        mod_name = 'string_var_in'+self.compiler
+        mod_name = unique_mod(test_dir,mod_name)
+        mod = ext_tools.ext_module(mod_name)
         a = 'string'
         code = 'a=std::string("hello");'
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
-        mod.compile()
-        import string_var_in
+        mod.compile(location = test_dir, compiler = self.compiler)
+
+        exec 'from ' + mod_name + ' import test'
         b='bub'
-        string_var_in.test(b)
+        test(b)
         try:
             b = 1.
-            string_var_in.test(b)
+            test(b)
         except TypeError:
             pass
         try:
             b = 1
-            string_var_in.test(b)
+            test(b)
         except TypeError:
             pass
             
     def check_return(self):
-        mod = ext_tools.ext_module('string_return')
+        mod_name = 'string_return'+self.compiler
+        mod_name = unique_mod(test_dir,mod_name)
+        mod = ext_tools.ext_module(mod_name)
         a = 'string'
         code = """
                a= std::string("hello");
@@ -378,13 +346,14 @@ class test_string_converter(unittest.TestCase):
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
-        mod.compile()
-        import string_return
+        mod.compile(location = test_dir, compiler = self.compiler)
+        exec 'from ' + mod_name + ' import test'
         b='bub'
-        c = string_return.test(b)
+        c = test(b)
         assert( c == 'hello')
 
 class test_list_converter(unittest.TestCase):    
+    compiler = ''
     def check_type_match_bad(self):
         s = c_spec.list_converter()
         objs = [{},(),'',1,1.,1+1j]
@@ -394,44 +363,50 @@ class test_list_converter(unittest.TestCase):
         s = c_spec.list_converter()        
         assert(s.type_match([]))
     def check_var_in(self):
-        mod = ext_tools.ext_module('list_var_in')
+        mod_name = 'list_var_in'+self.compiler
+        mod_name = unique_mod(test_dir,mod_name)
+        mod = ext_tools.ext_module(mod_name)
         a = [1]
         code = 'a=PWOList();'
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
-        mod.compile()
-        import list_var_in
+        mod.compile(location = test_dir, compiler = self.compiler)
+        exec 'from ' + mod_name + ' import test'
         b=[1,2]
-        list_var_in.test(b)
+        test(b)
         try:
             b = 1.
-            list_var_in.test(b)
+            test(b)
         except TypeError:
             pass
         try:
             b = 'string'
-            list_var_in.test(b)
+            test(b)
         except TypeError:
             pass
             
     def check_return(self):
-        mod = ext_tools.ext_module('list_return')
+        mod_name = 'list_return'+self.compiler
+        mod_name = unique_mod(test_dir,mod_name)
+        mod = ext_tools.ext_module(mod_name)
         a = [1]
         code = """
                a=PWOList();
-               a.append(PWOString("hello"));
+               a.append("hello");
                return_val = a.disOwn();
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
-        mod.compile()
-        import list_return
+        mod.compile(location = test_dir, compiler = self.compiler)
+        exec 'from ' + mod_name + ' import test'
         b=[1,2]
-        c = list_return.test(b)
+        c = test(b)
         assert( c == ['hello'])
         
     def check_speed(self):
-        mod = ext_tools.ext_module('list_speed')
+        mod_name = 'list_speed'+self.compiler
+        mod_name = unique_mod(test_dir,mod_name)
+        mod = ext_tools.ext_module(mod_name)
         a = range(1e6);
         code = """
                PWONumber v = PWONumber();
@@ -466,15 +441,17 @@ class test_list_converter(unittest.TestCase):
                """
         no_checking = ext_tools.ext_function('no_checking',code,['a'])
         mod.add_function(no_checking)
-        mod.compile()
-        import list_speed
+        mod.compile(location = test_dir, compiler = self.compiler)
+        exec 'from ' + mod_name + ' import with_cxx, no_checking'
         import time
         t1 = time.time()
-        sum1 = list_speed.with_cxx(a)
+        sum1 = with_cxx(a)
         t2 = time.time()
+        print 'speed test for list access'
+        print 'compiler:',  self.compiler
         print 'scxx:',  t2 - t1
         t1 = time.time()
-        sum2 = list_speed.no_checking(a)
+        sum2 = no_checking(a)
         t2 = time.time()
         print 'C, no checking:',  t2 - t1
         sum3 = 0
@@ -489,6 +466,7 @@ class test_list_converter(unittest.TestCase):
         assert( sum1 == sum2 and sum1 == sum3)
 
 class test_tuple_converter(unittest.TestCase):    
+    compiler = ''
     def check_type_match_bad(self):
         s = c_spec.tuple_converter()
         objs = [{},[],'',1,1.,1+1j]
@@ -498,41 +476,45 @@ class test_tuple_converter(unittest.TestCase):
         s = c_spec.tuple_converter()        
         assert(s.type_match((1,)))
     def check_var_in(self):
-        mod = ext_tools.ext_module('tuple_var_in')
+        mod_name = 'tuple_var_in'+self.compiler
+        mod_name = unique_mod(test_dir,mod_name)
+        mod = ext_tools.ext_module(mod_name)
         a = (1,)
         code = 'a=PWOTuple();'
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
-        mod.compile()
-        import tuple_var_in
+        mod.compile(location = test_dir, compiler = self.compiler)
+        exec 'from ' + mod_name + ' import test'
         b=(1,2)
-        tuple_var_in.test(b)
+        test(b)
         try:
             b = 1.
-            tuple_var_in.test(b)
+            test(b)
         except TypeError:
             pass
         try:
             b = 'string'
-            tuple_var_in.test(b)
+            test(b)
         except TypeError:
             pass
             
     def check_return(self):
-        mod = ext_tools.ext_module('tuple_return')
+        mod_name = 'tuple_return'+self.compiler
+        mod_name = unique_mod(test_dir,mod_name)
+        mod = ext_tools.ext_module(mod_name)
         a = (1,)
         code = """
                a=PWOTuple(2);
-               a.setItem(0,PWOString("hello"));
-               a.setItem(1,PWOBase(Py_None));
+               a.setItem(0,"hello");
+               a.setItem(1,PWONone);
                return_val = a.disOwn();
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
-        mod.compile()
-        import tuple_return
+        mod.compile(location = test_dir, compiler = self.compiler)
+        exec 'from ' + mod_name + ' import test'
         b=(1,2)
-        c = tuple_return.test(b)
+        c = test(b)
         assert( c == ('hello',None))
 
 
@@ -546,28 +528,32 @@ class test_dict_converter(unittest.TestCase):
         s = c_spec.dict_converter()        
         assert(s.type_match({}))
     def check_var_in(self):
-        mod = ext_tools.ext_module('dict_var_in')
+        mod_name = 'dict_var_in'+self.compiler
+        mod_name = unique_mod(test_dir,mod_name)
+        mod = ext_tools.ext_module(mod_name)
         a = {'z':1}
         code = 'a=PWODict();' # This just checks to make sure the type is correct
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
-        mod.compile()
-        import dict_var_in
+        mod.compile(location = test_dir, compiler = self.compiler)
+        exec 'from ' + mod_name + ' import test'
         b={'y':2}
-        dict_var_in.test(b)
+        test(b)
         try:
             b = 1.
-            dict_var_in.test(b)
+            test(b)
         except TypeError:
             pass
         try:
             b = 'string'
-            dict_var_in.test(b)
+            test(b)
         except TypeError:
             pass
             
     def check_return(self):
-        mod = ext_tools.ext_module('dict_return')
+        mod_name = 'dict_return'+self.compiler
+        mod_name = unique_mod(test_dir,mod_name)
+        mod = ext_tools.ext_module(mod_name)
         a = {'z':1}
         code = """
                a=PWODict();
@@ -576,52 +562,157 @@ class test_dict_converter(unittest.TestCase):
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
-        mod.compile()
-        import dict_return
+        mod.compile(location = test_dir, compiler = self.compiler)
+        exec 'from ' + mod_name + ' import test'
         b = {'z':2}
-        c = dict_return.test(b)
+        c = test(b)
         assert( c['hello'] == 5)
+
+class test_msvc_int_converter(test_int_converter):    
+    compiler = 'msvc'
+class test_unix_int_converter(test_int_converter):    
+    compiler = ''
+class test_gcc_int_converter(test_int_converter):    
+    compiler = 'gcc'
+
+class test_msvc_float_converter(test_float_converter):    
+    compiler = 'msvc'
+
+class test_msvc_float_converter(test_float_converter):    
+    compiler = 'msvc'
+class test_unix_float_converter(test_float_converter):    
+    compiler = ''
+class test_gcc_float_converter(test_float_converter):    
+    compiler = 'gcc'
+
+class test_msvc_complex_converter(test_complex_converter):    
+    compiler = 'msvc'
+class test_unix_complex_converter(test_complex_converter):    
+    compiler = ''
+class test_gcc_complex_converter(test_complex_converter):    
+    compiler = 'gcc'
+
+class test_msvc_file_converter(test_file_converter):    
+    compiler = 'msvc'
+class test_unix_file_converter(test_file_converter):    
+    compiler = ''
+class test_gcc_file_converter(test_file_converter):    
+    compiler = 'gcc'
+
+class test_msvc_callable_converter(test_callable_converter):    
+    compiler = 'msvc'
+class test_unix_callable_converter(test_callable_converter):    
+    compiler = ''
+class test_gcc_callable_converter(test_callable_converter):    
+    compiler = 'gcc'
+
+class test_msvc_sequence_converter(test_sequence_converter):    
+    compiler = 'msvc'
+class test_unix_sequence_converter(test_sequence_converter):    
+    compiler = ''
+class test_gcc_sequence_converter(test_sequence_converter):    
+    compiler = 'gcc'
+
+class test_msvc_string_converter(test_string_converter):    
+    compiler = 'msvc'
+class test_unix_string_converter(test_string_converter):    
+    compiler = ''
+class test_gcc_string_converter(test_string_converter):    
+    compiler = 'gcc'
+
+class test_msvc_list_converter(test_list_converter):    
+    compiler = 'msvc'
+class test_unix_list_converter(test_list_converter):    
+    compiler = ''
+class test_gcc_list_converter(test_list_converter):    
+    compiler = 'gcc'
+
+class test_msvc_tuple_converter(test_tuple_converter):    
+    compiler = 'msvc'
+class test_unix_tuple_converter(test_tuple_converter):    
+    compiler = ''
+class test_gcc_tuple_converter(test_tuple_converter):    
+    compiler = 'gcc'
+
+class test_msvc_dict_converter(test_dict_converter):    
+    compiler = 'msvc'
+class test_unix_dict_converter(test_dict_converter):    
+    compiler = ''
+class test_gcc_dict_converter(test_dict_converter):    
+    compiler = 'gcc'
+
+class test_msvc_instance_converter(test_instance_converter):    
+    compiler = 'msvc'
+class test_unix_instance_converter(test_instance_converter):    
+    compiler = ''
+class test_gcc_instance_converter(test_instance_converter):    
+    compiler = 'gcc'
+    
+def setup_test_location():
+    import tempfile
+    #test_dir = os.path.join(tempfile.gettempdir(),'test_files')
+    test_dir = tempfile.mktemp()
+    if not os.path.exists(test_dir):
+        os.mkdir(test_dir)
+    sys.path.insert(0,test_dir)    
+    return test_dir
+
+test_dir = setup_test_location()
+
+def teardown_test_location():
+    import tempfile
+    test_dir = os.path.join(tempfile.gettempdir(),'test_files')
+    if sys.path[0] == test_dir:
+        sys.path = sys.path[1:]
+    return test_dir
+
+def remove_file(name):
+    test_dir = os.path.abspath(name)
                   
 def test_suite(level=1):
+    from unittest import makeSuite
+    global test_dir
+    test_dir = setup_test_location()
     suites = []    
     if level >= 5:
-        """
         if msvc_exists():
-            suites.append( unittest.makeSuite(test_msvc_int_converter,
-                           'check_'))
-            suites.append( unittest.makeSuite(test_msvc_float_converter,
-                           'check_'))    
-            suites.append( unittest.makeSuite(test_msvc_complex_converter,
-                           'check_'))
-            pass
+            suites.append( makeSuite(test_msvc_file_converter,'check_'))
+            suites.append( makeSuite(test_msvc_instance_converter,'check_'))
+            suites.append( makeSuite(test_msvc_callable_converter,'check_'))
+            suites.append( makeSuite(test_msvc_sequence_converter,'check_'))
+            suites.append( makeSuite(test_msvc_string_converter,'check_'))
+            suites.append( makeSuite(test_msvc_list_converter,'check_'))
+            suites.append( makeSuite(test_msvc_tuple_converter,'check_'))
+            suites.append( makeSuite(test_msvc_dict_converter,'check_'))
+            suites.append( makeSuite(test_msvc_int_converter,'check_'))
+            suites.append( makeSuite(test_msvc_float_converter,'check_'))    
+            suites.append( makeSuite(test_msvc_complex_converter,'check_'))
         else: # unix
-            suites.append( unittest.makeSuite(test_unix_int_converter,
-                           'check_'))
-            suites.append( unittest.makeSuite(test_unix_float_converter,
-                           'check_'))    
-            suites.append( unittest.makeSuite(test_unix_complex_converter,
-                           'check_'))
-        
-        if gcc_exists():        
-            suites.append( unittest.makeSuite(test_gcc_int_converter,
-                           'check_'))
-            suites.append( unittest.makeSuite(test_gcc_float_converter,
-                           'check_'))
-            suites.append( unittest.makeSuite(test_gcc_complex_converter,
-                           'check_'))
+            suites.append( makeSuite(test_unix_file_converter,'check_'))
+            suites.append( makeSuite(test_unix_instance_converter,'check_'))
+            suites.append( makeSuite(test_unix_callable_converter,'check_'))
+            suites.append( makeSuite(test_unix_sequence_converter,'check_'))
+            suites.append( makeSuite(test_unix_string_converter,'check_'))
+            suites.append( makeSuite(test_unix_list_converter,'check_'))
+            suites.append( makeSuite(test_unix_tuple_converter,'check_'))
+            suites.append( makeSuite(test_unix_dict_converter,'check_'))
+            suites.append( makeSuite(test_unix_int_converter,'check_'))
+            suites.append( makeSuite(test_unix_float_converter,'check_'))    
+            suites.append( makeSuite(test_unix_complex_converter,'check_'))        
+        # run gcc tests also on windows
+        if gcc_exists() and sys.platform == 'win32':         
+            suites.append( makeSuite(test_gcc_file_converter,'check_'))
+            suites.append( makeSuite(test_gcc_instance_converter,'check_'))
+            suites.append( makeSuite(test_gcc_callable_converter,'check_'))
+            suites.append( makeSuite(test_gcc_sequence_converter,'check_'))
+            suites.append( makeSuite(test_gcc_string_converter,'check_'))
+            suites.append( makeSuite(test_gcc_list_converter,'check_'))
+            suites.append( makeSuite(test_gcc_tuple_converter,'check_'))
+            suites.append( makeSuite(test_gcc_dict_converter,'check_'))
+            suites.append( makeSuite(test_gcc_int_converter,'check_'))
+            suites.append( makeSuite(test_gcc_float_converter,'check_'))                
+            suites.append( makeSuite(test_gcc_complex_converter,'check_'))
 
-        # file, instance, callable object tests
-        suites.append( unittest.makeSuite(test_file_converter,'check_'))
-        suites.append( unittest.makeSuite(test_instance_converter,'check_'))
-        suites.append( unittest.makeSuite(test_callable_converter,'check_'))
-        """
-        # sequenc conversion tests
-        suites.append( unittest.makeSuite(test_sequence_converter,'check_'))
-        suites.append( unittest.makeSuite(test_string_converter,'check_'))
-        suites.append( unittest.makeSuite(test_list_converter,'check_'))
-        suites.append( unittest.makeSuite(test_tuple_converter,'check_'))
-        suites.append( unittest.makeSuite(test_dict_converter,'check_'))
-        
     total_suite = unittest.TestSuite(suites)
     return total_suite
 
