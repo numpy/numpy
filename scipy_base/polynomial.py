@@ -158,7 +158,7 @@ def polyder(p,m=1):
         return val
 
 def polyval(p,x):
-    """Evaluate the polymnomial p at x.
+    """Evaluate the polynomial p at x.
 
     Description:
 
