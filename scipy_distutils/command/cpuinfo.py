@@ -142,7 +142,7 @@ class linux_cpuinfo(cpuinfo_base):
                         self.info[0]['model name']) is not None
 
     def _is_PentiumII(self):
-        return re.match(r'.*?Pentium II\b',
+        return re.match(r'.*?Pentium.*?II\b',
                         self.info[0]['model name']) is not None
 
     def _is_PentiumPro(self):
@@ -150,15 +150,15 @@ class linux_cpuinfo(cpuinfo_base):
                         self.info[0]['model name']) is not None
 
     def _is_PentiumMMX(self):
-        return re.match(r'.*?PentiumMMX\b',
+        return re.match(r'.*?Pentium.*?MMX\b',
                         self.info[0]['model name']) is not None
 
     def _is_PentiumIII(self):
-        return re.match(r'.*?Pentium III\b',
+        return re.match(r'.*?Pentium.*?III\b',
                         self.info[0]['model name']) is not None
 
     def _is_PentiumIV(self):
-        return re.match(r'.*?Pentium (IV|4)\b',
+        return re.match(r'.*?Pentium.*?(IV|4)\b',
                         self.info[0]['model name']) is not None
 
     def _is_Itanium(self):
