@@ -275,7 +275,7 @@ class system_info:
 
     def get_paths(self, section, key):
         dirs = self.cp.get(section, key).split(os.pathsep)
-        if os.environ.has_key(self.dir_env_var):
+        if self.dir_env_var and os.environ.has_key(self.dir_env_var):
             dirs = os.environ[self.dir_env_var].split(os.pathsep) + dirs
         default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
         dirs.extend(default_dirs)
@@ -763,10 +763,11 @@ class numpy_info(system_info):
         from distutils.sysconfig import get_python_inc
         py_incl_dir = get_python_inc()
         include_dirs = [py_incl_dir]
-        for d in default_include_dirs:
-            d = os.path.join(d, os.path.basename(py_incl_dir))
-            if d not in include_dirs:
-                include_dirs.append(d)
+        if os.name=='posix':
+            for d in default_include_dirs:
+                d = os.path.join(d, os.path.basename(py_incl_dir))
+                if d not in include_dirs:
+                    include_dirs.append(d)
         system_info.__init__(self,
                              default_lib_dirs=[],
                              default_include_dirs=include_dirs)
@@ -862,5 +863,3 @@ def show_all():
 
 if __name__ == "__main__":
     show_all()
-    print numpy_info().get_info()
-    print numarray_info().get_info()
