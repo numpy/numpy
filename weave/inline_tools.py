@@ -134,6 +134,7 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
            compiler='',
            verbose = 0,
            support_code = None,
+           headers = [],
            customize=None,
            type_converters = None,
            auto_downcast=1,
@@ -199,6 +200,12 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
                         extra code that might be needed by your compiled
                         function.  This could be declarations of functions,
                         classes, or structures.
+        headers      -- optional. list of strings.  A list of strings specifying
+                        header files to use when compiling the code.  The list 
+                        might look like ["<vector>","'my_header'"].  Note that 
+                        the header strings need to be in a form than can be 
+                        pasted at the end of a #include statement in the 
+                        C++ code.
         customize --   optional. base_info.custom_info object. An alternative
                        way to specifiy support_code, headers, etc. needed by
                        the function see the compiler.base_info module for more
@@ -283,6 +290,7 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
                                 compiler=compiler,
                                 verbose=verbose,
                                 support_code = support_code,
+                                headers = headers,
                                 customize=customize,
                                 type_converters = type_converters,
                                 auto_downcast = auto_downcast,
@@ -321,6 +329,7 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
                                     compiler=compiler,
                                     verbose=verbose,
                                     support_code = support_code,
+                                    headers = headers,
                                     customize=customize,
                                     type_converters = type_converters,
                                     auto_downcast = auto_downcast,
@@ -393,6 +402,7 @@ def compile_function(code,arg_names,local_dict,global_dict,
                      compiler='',
                      verbose = 0,
                      support_code = None,
+                     headers = [],
                      customize = None,
                      type_converters = None,
                      auto_downcast=1,
@@ -419,6 +429,10 @@ def compile_function(code,arg_names,local_dict,global_dict,
     if support_code:
         mod.customize.add_support_code(support_code)
     
+    # add the extra headers needed by the function to the module.
+    for header in headers:
+        mod.customize.add_header(header)
+        
     # compile code in correct location, with the given compiler and verbosity
     # setting.  All input keywords are passed through to distutils
     mod.compile(location=storage_dir,compiler=compiler,
