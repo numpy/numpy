@@ -16,11 +16,11 @@ def build_increment_ext():
     a = 1 # effectively a type declaration for 'a' in the 
           # following functions.
 
-    ext_code = "return_val = Py::new_reference_to(Py::Int(a+1));"    
+    ext_code = "return_val = PyInt_FromLong(a+1);"    
     func = ext_tools.ext_function('increment',ext_code,['a'])
     mod.add_function(func)
     
-    ext_code = "return_val = Py::new_reference_to(Py::Int(a+2));"    
+    ext_code = "return_val = PyInt_FromLong(a+2);"    
     func = ext_tools.ext_function('increment_by_2',ext_code,['a'])
     mod.add_function(func)
             

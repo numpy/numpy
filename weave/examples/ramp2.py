@@ -1,3 +1,11 @@
+#
+#        C:\home\eric\wrk\scipy\weave\examples>python ramp2.py
+#        python (seconds): 2.94499993324
+#        arr[500]: 0.0500050005001
+#        
+#        compiled numeric (seconds, speed up): 3.47500002384 42.3740994682
+#        arr[500]: 0.0500050005001
+
 import time
 from weave import ext_tools
 from Numeric import *
@@ -12,17 +20,18 @@ def build_ramp_ext():
     
     # type declarations
     result = array([0],Float64)
-    size,start,end = 0,0.,0.
+    start,end = 0.,0.
     code = """
-           double step = (end-start)/(size-1);
+           const int size = Nresult[0];
+           const double step = (end-start)/(size-1);
            double val = start;
            for (int i = 0; i < size; i++)
            {
-              result_data[i] = val;
+              result[i] = val;
               val += step; 
            }
            """
-    func = ext_tools.ext_function('Ramp',code,['result','size','start','end'])
+    func = ext_tools.ext_function('Ramp',code,['result','start','end'])
     mod.add_function(func)
     mod.compile(compiler='gcc')
          
@@ -44,7 +53,7 @@ def main():
         import ramp_ext
     arr = array([0]*10000,Float64)
     for i in xrange(10000):
-        ramp_ext.Ramp(arr, 10000, 0.0, 1.0)
+        ramp_ext.Ramp(arr, 0.0, 1.0)
     t2 = time.time()
     c_time = (t2 - t1)    
     print 'compiled numeric (seconds, speed up):', c_time, (py_time*10000/200.)/ c_time

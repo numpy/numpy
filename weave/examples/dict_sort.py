@@ -2,14 +2,17 @@
 # 2x over fastest Python version -- again, maybe not worth the effort...
 # Then again, 2x is 2x...
 #
-#    C:\home\ej\wrk\scipy\compiler\examples>python dict_sort.py
+#    C:\home\eric\wrk\scipy\weave\examples>python dict_sort.py
 #    Dict sort of 1000 items for 300 iterations:
-#     speed in python: 0.319999933243
-#     [0, 1, 2, 3, 4]
-#     speed in c: 0.159999966621
-#     speed up: 2.00
-#     [0, 1, 2, 3, 4]
- 
+#     speed in python: 0.250999927521
+#    [0, 1, 2, 3, 4]
+#     speed in c: 0.110000014305
+#     speed up: 2.28
+#    [0, 1, 2, 3, 4]
+#     speed in c (scxx): 0.200000047684
+#     speed up: 1.25
+#    [0, 1, 2, 3, 4] 
+
 import sys
 sys.path.insert(0,'..')
 import inline_tools
@@ -18,21 +21,36 @@ def c_sort(adict):
     assert(type(adict) == type({}))
     code = """
            #line 21 "dict_sort.py"     
-           Py::List keys = adict.keys();
-           Py::List items(keys.length());
+           PWOList keys = adict.keys();
+           PyObject* py_keys = (PyObject*)keys;
+           PWOList items(keys.len());
+           PyObject* py_items = (PyObject*)items;
            keys.sort(); // surely this isn't any slower than raw API calls
            PyObject* item = NULL;
-           for(int i = 0; i < keys.length();i++)
+           for(int i = 0; i < keys.len();i++)
            {
-              item = PyList_GET_ITEM(keys.ptr(),i);
-              item = PyDict_GetItem(adict.ptr(),item);
+              item = PyList_GET_ITEM(py_keys,i);
+              item = PyDict_GetItem(py_adict,item);
               Py_XINCREF(item);
-              PyList_SetItem(items.ptr(),i,item);              
+              PyList_SetItem(py_items,i,item);              
            }           
-           return_val = Py::new_reference_to(items);
+           return_val = items.disOwn();
            """   
     return inline_tools.inline(code,['adict'],verbose=1)
 
+def c_sort2(adict):
+    assert(type(adict) == type({}))
+    code = """
+           #line 21 "dict_sort.py"     
+           PWOList keys = adict.keys();
+           PWOList items(keys.len());
+           keys.sort(); // surely this isn't any slower than raw API calls
+           PyObject* item = NULL;
+           for(int i = 0; i < keys.len();i++)
+              items[i] = adict[keys[i]];
+           return_val = items.disOwn();
+           """   
+    return inline_tools.inline(code,['adict'],verbose=1)
 
 # (IMHO) the simplest approach:
 def sortedDictValues1(adict):
@@ -75,6 +93,16 @@ def sort_compare(a,n):
     print ' speed in c:',(t2 - t1)    
     print ' speed up: %3.2f' % (py/(t2-t1))
     print b[:5]
+
+    b=c_sort2(a)
+    t1 = time.time()
+    for i in range(n):
+        b=c_sort2(a)
+    t2 = time.time()
+    print ' speed in c (scxx):',(t2 - t1)    
+    print ' speed up: %3.2f' % (py/(t2-t1))
+    print b[:5]
+
 def setup_dict(m):
     " does insertion order matter?"
     import whrandom

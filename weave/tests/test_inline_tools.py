@@ -20,7 +20,7 @@ class test_inline(unittest.TestCase):
                   throw_error(PyExc_ValueError,
                               "the variable 'a' should not be less than 2");
                else    
-                   return_val = Py::new_reference_to(Py::Int(a+1));
+                   return_val = PyInt_FromLong(a+1);
                """
         result = inline_tools.inline(code,['a'])
         assert(result == 4)

@@ -18,10 +18,6 @@ from ast_tools import *
 from weave_test_utils import *
 restore_path()
 
-add_local_to_path(__name__)
-import test_scalar_spec
-restore_path()
-
 class test_ast_to_blitz_expr(unittest.TestCase):
 
     def generic_test(self,expr,desired):
@@ -59,10 +55,10 @@ class test_ast_to_blitz_expr(unittest.TestCase):
                   ' *ex(_all,blitz::Range(1,_end),blitz::Range(1,_end))'\
                   '+cb_y_x(_all,blitz::Range(1,_end),blitz::Range(1,_end))'\
                   '*(hz(_all,blitz::Range(1,_end),blitz::Range(1,_end))'\
-                  '  -hz(_all,blitz::Range(_beg,_Nhz(1)-1-1),_all))'\
+                  '  -hz(_all,blitz::Range(_beg,Nhz(1)-1-1),_all))'\
                   ' -cb_z_x(_all,blitz::Range(1,_end),blitz::Range(1,_end))'\
                   '*(hy(_all,blitz::Range(1,_end),blitz::Range(1,_end))'\
-                  '-hy(_all,blitz::Range(1,_end),blitz::Range(_beg,_Nhy(2)-1-1)));'
+                  '-hy(_all,blitz::Range(1,_end),blitz::Range(_beg,Nhy(2)-1-1)));'
         self.generic_test(expr,desired)
 
 class test_blitz(unittest.TestCase):
@@ -169,4 +165,4 @@ def test(level=10):
     return runner
 
 if __name__ == "__main__":
-    test()
+    test(10)

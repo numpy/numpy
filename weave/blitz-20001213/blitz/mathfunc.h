@@ -4,7 +4,7 @@
 #define BZ_MATHFUNC_H
 
 #ifndef BZ_APPLICS_H
- #error <blitz/mathfunc.h> should be included via <blitz/applics.h>
+ #include <blitz/applics.h>
 #endif
 
 
@@ -1264,7 +1264,6 @@ public:
 };
 
 // fmod(P_numtype1, P_numtype2)    Modulo remainder
-#ifdef BZ_HAVE_SYSTEM_V_MATH
 template<class P_numtype1, class P_numtype2>
 class _bz_fmod : public TwoOperandApplicativeTemplatesBase {
 public:
@@ -1286,7 +1285,6 @@ public:
         str += ")";
     }
 };
-#endif
 
 // hypot(P_numtype1, P_numtype2)    sqrt(x*x+y*y)
 #ifdef BZ_HAVE_SYSTEM_V_MATH
@@ -1314,7 +1312,7 @@ public:
 #endif
 
 // ilogb(P_numtype1)    Integer unbiased exponent
-#ifdef BZ_HAVE_SYSTEM_V_MATH
+#ifdef BZ_HAVE_IEEE_MATH
 template<class P_numtype1>
 class _bz_ilogb : public OneOperandApplicativeTemplatesBase {
 public:
@@ -1335,22 +1333,30 @@ public:
 };
 #endif
 
-// isnan(P_numtype1)    Nonzero if NaNS or NaNQ
+// blitz_isnan(P_numtype1)    Nonzero if NaNS or NaNQ
 #ifdef BZ_HAVE_IEEE_MATH
 template<class P_numtype1>
-class _bz_isnan : public OneOperandApplicativeTemplatesBase {
+class _bz_blitz_isnan : public OneOperandApplicativeTemplatesBase {
 public:
     typedef P_numtype1 T_numtype1;
     typedef int T_numtype;
 
     static inline T_numtype apply(T_numtype1 x)
-    { return BZ_IEEEMATHFN_SCOPE(isnan)(x); }
+    { 
+#ifdef isnan
+        // Some platforms define isnan as a macro, which causes the
+        // BZ_IEEEMATHFN_SCOPE macro to break.
+        return isnan(x); 
+#else
+        return BZ_IEEEMATHFN_SCOPE(isnan)(x);
+#endif
+    }
 
     template<class T1>
     static void prettyPrint(string& str, prettyPrintFormat& format,
         const T1& a)
     {
-        str += "isnan(";
+        str += "blitz_isnan(";
         a.prettyPrint(str,format);
         str += ")";
     }
@@ -1729,6 +1735,14 @@ public:
 
     static inline T_numtype apply(T_numtype x)
     { return -x; }
+
+		template<class T1>
+		static void prettyPrint(string& str, prettyPrintFormat& format, const T1& a)
+		{
+		    str += "-(";
+			  a.prettyPrint(str,format);
+			  str += ")";
+		}
 };
 
 // norm(P_numtype1)

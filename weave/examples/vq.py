@@ -93,13 +93,13 @@ def vq2(obs,code_book):
             %(type)s* raw_code_book = code_book.data(); 
             %(type)s* this_obs = NULL;
             %(type)s* this_code = NULL; 
-            int Nfeatures = _Nobs[1];
+            int Nfeatures = Nobs[1];
             float diff,dist;
-            for(int i=0; i < _Nobs[0]; i++)
+            for(int i=0; i < Nobs[0]; i++)
             {
                 this_obs = &raw_obs[i*Nfeatures];
                 raw_min_dist[i] = (%(type)s)10000000.; // big number
-                for(int j=0; j < _Ncode_book[0]; j++)
+                for(int j=0; j < Ncode_book[0]; j++)
                 {
                     this_code = &raw_code_book[j*Nfeatures];
                     dist = 0;

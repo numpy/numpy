@@ -29,8 +29,8 @@ def _cast_copy_transpose(type,a_2d):
     #trans_a_2d = transpose(a_2d)
     numeric_type = scalar_spec.numeric_to_c_type_mapping[type]
     code = """
-           for(int i = 0; i < _Na_2d[0]; i++)
-               for(int j = 0; j < _Na_2d[1]; j++)
+           for(int i = 0; i < Na_2d[0]; i++)
+               for(int j = 0; j < Na_2d[1]; j++)
                    new_array(i,j) = (%s) a_2d(j,i);
            """ % numeric_type
     inline_tools.inline(code,['new_array','a_2d'],

@@ -4,10 +4,10 @@ import inline_tools
 
 
 support_code = """
-               PyObject* length(Py::String a)
+               PyObject* length(std::string a)
                {
                    int l = a.length();
-                   return Py::new_reference_to(Py::Int(l));
+                   return PyInt_FromLong(l);
                }
                """
 a='some string'

@@ -2,11 +2,79 @@
  * $Id$
  *
  * $Log$
- * Revision 1.1  2002/01/03 19:50:36  eric
- * renaming compiler to weave
+ * Revision 1.2  2002/09/12 07:02:06  eric
+ * major rewrite of weave.
  *
- * Revision 1.1  2001/04/27 17:25:28  ej
- * Looks like I need all the .cc files for blitz also
+ * 0.
+ * The underlying library code is significantly re-factored and simpler. There used to be a xxx_spec.py and xxx_info.py file for every group of type conversion classes.  The spec file held the python code that handled the conversion and the info file had most of the C code templates that were generated.  This proved pretty confusing in practice, so the two files have mostly been merged into the spec file.
+ *
+ * Also, there was quite a bit of code duplication running around.  The re-factoring was able to trim the standard conversion code base (excluding blitz and accelerate stuff) by about 40%.  This should be a huge maintainability and extensibility win.
+ *
+ * 1.
+ * With multiple months of using Numeric arrays, I've found some of weave's "magic variable" names unwieldy and want to change them.  The following are the old declarations for an array x of Float32 type:
+ *
+ *         PyArrayObject* x = convert_to_numpy(...);
+ *         float* x_data = (float*) x->data;
+ *         int*   _Nx = x->dimensions;
+ *         int*   _Sx = x->strides;
+ *         int    _Dx = x->nd;
+ *
+ * The new declaration looks like this:
+ *
+ *         PyArrayObject* x_array = convert_to_numpy(...);
+ *         float* x = (float*) x->data;
+ *         int*   Nx = x->dimensions;
+ *         int*   Sx = x->strides;
+ *         int    Dx = x->nd;
+ *
+ * This is obviously not backward compatible, and will break some code (including a lot of mine).  It also makes inline() code more readable and natural to write.
+ *
+ * 2.
+ * I've switched from CXX to Gordon McMillan's SCXX for list, tuples, and dictionaries.  I like CXX pretty well, but its use of advanced C++ (templates, etc.) caused some portability problems.  The SCXX library is similar to CXX but doesn't use templates at all.  This, like (1) is not an
+ * API compatible change and requires repairing existing code.
+ *
+ * I have also thought about boost python, but it also makes heavy use of templates.  Moving to SCXX gets rid of almost all template usage for the standard type converters which should help portability.  std::complex and std::string from the STL are the only templates left.  Of course blitz still uses templates in a major way so weave.blitz will continue to be hard on compilers.
+ *
+ * I've actually considered scrapping the C++ classes for list, tuples, and
+ * dictionaries, and just fall back to the standard Python C API because the classes are waaay slower than the raw API in many cases.  They are also more convenient and less error prone in many cases, so I've decided to stick with them.  The PyObject variable will always be made available for variable "x" under the name "py_x" for more speedy operations.  You'll definitely want to use these for anything that needs to be speedy.
+ *
+ * 3.
+ * strings are converted to std::string now.  I found this to be the most useful type in for strings in my code.  Py::String was used previously.
+ *
+ * 4.
+ * There are a number of reference count "errors" in some of the less tested conversion codes such as instance, module, etc.  I've cleaned most of these up.  I put errors in quotes here because I'm actually not positive that objects passed into "inline" really need reference counting applied to them.  The dictionaries passed in by inline() hold references to these objects so it doesn't seem that they could ever be garbage collected inadvertently.  Variables used by ext_tools, though, definitely need the reference counting done.  I don't think this is a major cost in speed, so it probably isn't worth getting rid of the ref count code.
+ *
+ * 5.
+ * Unicode objects are now supported.  This was necessary to support rendering Unicode strings in the freetype wrappers for Chaco.
+ *
+ * 6.
+ * blitz++ was upgraded to the latest CVS.  It compiles about twice as fast as the old blitz and looks like it supports a large number of compilers (though only gcc 2.95.3 is tested).  Compile times now take about 9 seconds on my 850 MHz PIII laptop.
+ *
+ * Revision 1.6  2002/05/27 19:48:57  jcumming
+ * Removed use of this->.  Member data_ of templated base class is now declared
+ * in derived class Array.
+ *
+ * Revision 1.5  2002/05/23 00:15:43  jcumming
+ * Fixed bug in Array::evaluateWithIndexTraversal1() by removing cast of
+ * second argument to T_numtype in call to T_update::update().  This cast
+ * will occur automatically when the update operation is performed.  This
+ * fixes a problem reported by Masahiro Tatsumi <tatsumi@nfi.co.jp> in
+ * which one could not assign a double to an Array of TinyVectors of double
+ * without explicitly constructing a TinyVector of doubles on the right-hand
+ * side.  Also fixed an unused variable warning emanating from the function
+ * Array::evaluateWithFastTraversal() by moving the definition of local
+ * variable "last" so that it is only seen if it is used.
+ *
+ * Revision 1.4  2002/03/06 16:18:34  patricg
+ *
+ * data_ replaced by this->data_
+ *
+ * Revision 1.3  2001/01/26 18:30:50  tveldhui
+ * More source code reorganization to reduce compile times.
+ *
+ * Revision 1.2  2001/01/24 22:51:51  tveldhui
+ * Reorganized #include orders to avoid including the huge Vector e.t.
+ * implementation when using Array.
  *
  * Revision 1.1.1.1  2000/06/19 12:26:13  tveldhui
  * Imported sources
@@ -56,6 +124,7 @@ BZ_NAMESPACE(blitz)
 
 // Fast traversals require <set> from the ISO/ANSI C++ standard library
 #ifdef BZ_HAVE_STD
+#ifdef BZ_ARRAY_SPACE_FILLING_TRAVERSAL
 
 template<_bz_bool canTryFastTraversal>
 struct _bz_tryFastTraversal {
@@ -106,6 +175,7 @@ cout.flush();
     }
 };
 
+#endif // BZ_ARRAY_SPACE_FILLING_TRAVERSAL
 #endif // BZ_HAVE_STD
 
 template<class T_numtype, int N_rank> template<class T_expr, class T_update>
@@ -198,6 +268,7 @@ cout << "T_expr::numIndexPlaceholders = " << T_expr::numIndexPlaceholders
         // library.
 
 #ifdef BZ_HAVE_STD
+#ifdef BZ_ARRAY_SPACE_FILLING_TRAVERSAL
 
         enum { isStencil = (N_rank >= 3) && (T_expr::numArrayOperands > 6)
             && (T_expr::numIndexPlaceholders == 0) };
@@ -205,6 +276,7 @@ cout << "T_expr::numIndexPlaceholders = " << T_expr::numIndexPlaceholders
         if (_bz_tryFastTraversal<isStencil>::tryFast(*this, expr, T_update()))
             return *this;
 
+#endif
 #endif
 
 #ifdef BZ_ARRAY_2D_STENCIL_TILING
@@ -420,7 +492,7 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
      */
 
     const int maxRank = ordering(0);
-    // const int secondLastRank = ordering(1);
+    const int secondLastRank = ordering(1);
 
     // Create an iterator for the array receiving the result
     FastArrayIterator<T_numtype, N_rank> iter(*this);
@@ -543,6 +615,9 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
 
         if ((useUnitStride) || (useCommonStride))
         {
+            T_numtype * _bz_restrict end = const_cast<T_numtype*>(iter.data()) 
+                + lastLength;
+
 #ifdef BZ_USE_FAST_READ_ARRAY_EXPR
 
             /*
@@ -590,9 +665,6 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
             // !BZ_USE_FAST_READ_ARRAY_EXPR
             // This bit of code not really needed; should remove at some
             // point, along with the test for BZ_USE_FAST_READ_ARRAY_EXPR 
-
-            T_numtype * _bz_restrict end = const_cast<T_numtype*>(iter.data())
-                + lastLength;
 
             while (iter.data() != end) 
             {
@@ -683,7 +755,7 @@ Array<T_numtype, N_rank>::evaluateWithIndexTraversal1(
         for (index[0] = lbound(firstRank); index[0] <= last;
             ++index[0])
         {
-            T_update::update(iter[index[0]], T_numtype(expr(index)));
+            T_update::update(iter[index[0]], expr(index));
         }
     }
     else {
@@ -712,10 +784,9 @@ Array<T_numtype, N_rank>::evaluateWithIndexTraversalN(
     // index traversal for the source expression
    
     const int maxRank = ordering(0);
-
-#ifdef BZ_DEBUG_TRAVERSE
     const int secondLastRank = ordering(1);
 
+#ifdef BZ_DEBUG_TRAVERSE
 cout << "Index traversal: N_rank = " << N_rank << endl;
 cout << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
      << endl;
@@ -731,9 +802,11 @@ cout.flush();
     TinyVector<int,N_rank> index, last;
 
     index = storage_.base();
-    last = storage_.base() + length_;
 
-    // int lastLength = length(maxRank);
+    for (int i=0; i < N_rank; ++i)
+      last(i) = storage_.base(i) + length_(i);
+
+    int lastLength = length(maxRank);
 
     while (true) {
 
@@ -781,6 +854,7 @@ cout.flush();
 // Fast traversals require <set> from the ISO/ANSI C++ standard library
 
 #ifdef BZ_HAVE_STD
+#ifdef BZ_ARRAY_SPACE_FILLING_TRAVERSAL
 
 template<class T_numtype, int N_rank> template<class T_expr, class T_update>
 inline Array<T_numtype, N_rank>&
@@ -790,10 +864,9 @@ Array<T_numtype, N_rank>::evaluateWithFastTraversal(
     T_update)
 {
     const int maxRank = ordering(0);
-
-#ifdef BZ_DEBUG_TRAVERSE
     const int secondLastRank = ordering(1);
 
+#ifdef BZ_DEBUG_TRAVERSE
 cerr << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
      << endl;
 #endif
@@ -844,9 +917,6 @@ cerr << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
 
         if ((useUnitStride) || (useCommonStride))
         {
-            T_numtype* _bz_restrict last = const_cast<T_numtype*>(iter.data()) 
-                + lastLength * commonStride;
-
 #ifdef BZ_USE_FAST_READ_ARRAY_EXPR
             int ubound = lastLength * commonStride;
             T_numtype* _bz_restrict data = const_cast<T_numtype*>(iter.data());
@@ -881,6 +951,9 @@ cerr << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
             iter.advance(lastLength * commonStride);
             expr.advance(lastLength * commonStride);
 #else   // ! BZ_USE_FAST_READ_ARRAY_EXPR
+            T_numtype* _bz_restrict last = const_cast<T_numtype*>(iter.data()) 
+                + lastLength * commonStride;
+
             while (iter.data() != last)
             {
                 T_update::update(*const_cast<T_numtype*>(iter.data()), *expr);
@@ -907,6 +980,8 @@ cerr << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
 
     return *this;
 }
+
+#endif // BZ_ARRAY_SPACE_FILLING_TRAVERSAL
 #endif // BZ_HAVE_STD
 
 #ifdef BZ_ARRAY_2D_NEW_STENCIL_TILING

@@ -1,3 +1,13 @@
+#       C:\home\eric\wrk\scipy\weave\examples>python functional.py
+#       desired: [2, 3, 4]
+#       actual: [2, 3, 4]
+#       actual2: [2, 3, 4]
+#       python speed: 0.039999961853
+#       SCXX speed: 0.0599999427795
+#       speed up: 0.666666666667
+#       c speed: 0.0200001001358
+#       speed up: 1.99998807913
+
 import sys
 sys.path.insert(0,'..')
 import inline_tools
@@ -9,16 +19,14 @@ def c_list_map(func,seq):
     assert(type(func) in [FunctionType,MethodType,type(len)])
     code = """
            #line 12 "functional.py"
-           Py::Tuple args(1);    
-           Py::List result(seq.length());
-           PyObject* this_result = NULL;
-           for(int i = 0; i < seq.length();i++)
+           PWOTuple args(1);    
+           PWOList result(seq.len());
+           for(int i = 0; i < seq.len();i++)
            {
-              args[0] = seq[i];
-              this_result = PyEval_CallObject(func,args.ptr());
-              result[i] = Py::Object(this_result);
+              args.setItem(0,seq[i]);
+              result[i] = func.call(args);
            }           
-           return_val = Py::new_reference_to(result);
+           return_val = result.disOwn();
            """   
     return inline_tools.inline(code,['func','seq'])
 
@@ -29,19 +37,21 @@ def c_list_map2(func,seq):
     assert(type(func) in [FunctionType,MethodType,type(len)])
     code = """
            #line 32 "functional.py"
-           Py::Tuple args(1);    
-           Py::List result(seq.length());
+           PWOTuple args(1);    
+           PyObject* py_args = (PyObject*)args;
+           PWOList result(seq.len());
+           PyObject* py_result = (PyObject*)result;
            PyObject* item = NULL;
            PyObject* this_result = NULL;
-           for(int i = 0; i < seq.length();i++)
+           for(int i = 0; i < seq.len();i++)
            {
-              item = PyList_GET_ITEM(seq.ptr(),i);
+              item = PyList_GET_ITEM(py_seq,i);
               Py_INCREF(item);
-              PyTuple_SetItem(args.ptr(),0,item);
-              this_result = PyEval_CallObject(func,args.ptr());
-              PyList_SetItem(result.ptr(),i,this_result);              
+              PyTuple_SetItem(py_args,0,item);
+              this_result = PyEval_CallObject(py_func,py_args);
+              PyList_SetItem(py_result,i,this_result);              
            }           
-           return_val = Py::new_reference_to(result);
+           return_val = result.disOwn();
            """   
     return inline_tools.inline(code,['func','seq'])
     
@@ -68,7 +78,7 @@ def time_it(m,n):
         result = c_list_map(len,seq)
     t2 = time.time()
     c = t2-t1
-    print 'CXX speed:', c
+    print 'SCXX speed:', c
     print 'speed up:', py / c
 
     #load cache

@@ -2,7 +2,7 @@
  * promote.h   Arithmetic type promotion trait class
  * Author: Todd Veldhuizen         (tveldhui@oonumerics.org)
  *
- * Copyright (C) 1997-1999 Todd Veldhuizen <tveldhui@oonumerics.org>
+ * Copyright (C) 1997-2001 Todd Veldhuizen <tveldhui@oonumerics.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

@@ -86,4 +86,4 @@ def run(m=200,n=10):
     md5_dict(lst)
     std_dict(lst)
 
-run()    
+run(2000,100)    

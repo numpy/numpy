@@ -66,7 +66,7 @@ class test_ext_module(unittest.TestCase):
         mod = ext_tools.ext_module('ext_string_and_int')
         code = """
                a=b.length();
-               return_val = Py::new_reference_to(Py::Int(a));
+               return_val = PyInt_FromLong(a);
                """
         test = ext_tools.ext_function('test',code,['a','b'])
         mod.add_function(test)
@@ -84,10 +84,10 @@ class test_ext_module(unittest.TestCase):
         code = """
                int b;
                b = a + 1;
-               Py::Tuple returned(2);
-               returned[0] = Py::Int(a);
-               returned[1] = Py::Int(b);
-               return_val = Py::new_reference_to(returned);
+               PWOTuple returned(2);
+               returned.setItem(0,PWONumber(a));
+               returned.setItem(1,PWONumber(b));
+               return_val = returned.disOwn();
                """
         test = ext_tools.ext_function('test',code,['a'])
         mod.add_function(test)
@@ -126,12 +126,12 @@ class test_assign_variable_types(unittest.TestCase):
         #desired = {'a':(Float32,1),'b':(Float32,1),'i':(Int32,0)}
         
         ad = array_converter()
-        ad.name, ad.numeric_type, ad.dims = 'a', Float32, 1
+        ad.name, ad.var_type, ad.dims = 'a', Float32, 1
         bd = array_converter()
-        bd.name, bd.numeric_type, bd.dims = 'b', Float64, 1
-        import scalar_spec
-        cd = scalar_spec.int_converter()
-        cd.name, cd.numeric_type = 'c', types.IntType        
+        bd.name, bd.var_type, bd.dims = 'b', Float64, 1
+        import c_spec
+        cd = c_spec.int_converter()
+        cd.name, cd.var_type = 'c', types.IntType        
         desired = [ad,bd,cd]
         expr = ""
         print_assert_equal(expr,actual,desired)

@@ -2,11 +2,85 @@
  * $Id$
  *
  * $Log$
- * Revision 1.1  2002/01/03 19:50:36  eric
- * renaming compiler to weave
+ * Revision 1.2  2002/09/12 07:02:06  eric
+ * major rewrite of weave.
  *
- * Revision 1.1  2001/04/27 17:25:28  ej
- * Looks like I need all the .cc files for blitz also
+ * 0.
+ * The underlying library code is significantly re-factored and simpler. There used to be a xxx_spec.py and xxx_info.py file for every group of type conversion classes.  The spec file held the python code that handled the conversion and the info file had most of the C code templates that were generated.  This proved pretty confusing in practice, so the two files have mostly been merged into the spec file.
+ *
+ * Also, there was quite a bit of code duplication running around.  The re-factoring was able to trim the standard conversion code base (excluding blitz and accelerate stuff) by about 40%.  This should be a huge maintainability and extensibility win.
+ *
+ * 1.
+ * With multiple months of using Numeric arrays, I've found some of weave's "magic variable" names unwieldy and want to change them.  The following are the old declarations for an array x of Float32 type:
+ *
+ *         PyArrayObject* x = convert_to_numpy(...);
+ *         float* x_data = (float*) x->data;
+ *         int*   _Nx = x->dimensions;
+ *         int*   _Sx = x->strides;
+ *         int    _Dx = x->nd;
+ *
+ * The new declaration looks like this:
+ *
+ *         PyArrayObject* x_array = convert_to_numpy(...);
+ *         float* x = (float*) x->data;
+ *         int*   Nx = x->dimensions;
+ *         int*   Sx = x->strides;
+ *         int    Dx = x->nd;
+ *
+ * This is obviously not backward compatible, and will break some code (including a lot of mine).  It also makes inline() code more readable and natural to write.
+ *
+ * 2.
+ * I've switched from CXX to Gordon McMillan's SCXX for list, tuples, and dictionaries.  I like CXX pretty well, but its use of advanced C++ (templates, etc.) caused some portability problems.  The SCXX library is similar to CXX but doesn't use templates at all.  This, like (1) is not an
+ * API compatible change and requires repairing existing code.
+ *
+ * I have also thought about boost python, but it also makes heavy use of templates.  Moving to SCXX gets rid of almost all template usage for the standard type converters which should help portability.  std::complex and std::string from the STL are the only templates left.  Of course blitz still uses templates in a major way so weave.blitz will continue to be hard on compilers.
+ *
+ * I've actually considered scrapping the C++ classes for list, tuples, and
+ * dictionaries, and just fall back to the standard Python C API because the classes are waaay slower than the raw API in many cases.  They are also more convenient and less error prone in many cases, so I've decided to stick with them.  The PyObject variable will always be made available for variable "x" under the name "py_x" for more speedy operations.  You'll definitely want to use these for anything that needs to be speedy.
+ *
+ * 3.
+ * strings are converted to std::string now.  I found this to be the most useful type in for strings in my code.  Py::String was used previously.
+ *
+ * 4.
+ * There are a number of reference count "errors" in some of the less tested conversion codes such as instance, module, etc.  I've cleaned most of these up.  I put errors in quotes here because I'm actually not positive that objects passed into "inline" really need reference counting applied to them.  The dictionaries passed in by inline() hold references to these objects so it doesn't seem that they could ever be garbage collected inadvertently.  Variables used by ext_tools, though, definitely need the reference counting done.  I don't think this is a major cost in speed, so it probably isn't worth getting rid of the ref count code.
+ *
+ * 5.
+ * Unicode objects are now supported.  This was necessary to support rendering Unicode strings in the freetype wrappers for Chaco.
+ *
+ * 6.
+ * blitz++ was upgraded to the latest CVS.  It compiles about twice as fast as the old blitz and looks like it supports a large number of compilers (though only gcc 2.95.3 is tested).  Compile times now take about 9 seconds on my 850 MHz PIII laptop.
+ *
+ * Revision 1.7  2002/08/30 22:14:23  jcumming
+ * Added definition of setStorage() method, which lets user set Array storage
+ * format after construction.  We check that Array is not allocated first.
+ *
+ * Revision 1.6  2002/06/27 00:15:35  jcumming
+ * Changed T_numtype to P_numtype when used outside the argument list or body
+ * of a member function definition (i.e., outside the class scope).  Inside
+ * the class scope, we can use the typedef T_numtype.  The IBM xlC compiler
+ * gets confused if P_numtype is used as a template parameter name in a member
+ * function declaration and then T_numtype is used as the parameter name in
+ * the member function definition.  Fixed usage to be more consistent.
+ *
+ * Revision 1.5  2002/05/27 19:47:22  jcumming
+ * Removed use of this->.  Members of templated base class are now declared
+ * in derived class Array.
+ *
+ * Revision 1.4  2002/03/06 16:16:18  patricg
+ *
+ * data_ replaced by this->data_ everywhere
+ * numReferences() replaced by this->numReferences()
+ *
+ * Revision 1.3  2001/01/26 18:30:50  tveldhui
+ * More source code reorganization to reduce compile times.
+ *
+ * Revision 1.2  2001/01/24 23:41:53  tveldhui
+ * Widespread changes to reduce compile time.  For backwards
+ * compatibility, #include <blitz/array.h> enables BZ_GANG_INCLUDE
+ * mode which includes all array and vector functionality (about
+ * 120000 lines of code).  #include <blitz/Array.h> includes
+ * a minimal subset of Array funcitonality; other features must
+ * be included explicitly.
  *
  * Revision 1.1.1.1  2000/06/19 12:26:13  tveldhui
  * Imported sources
@@ -63,14 +137,14 @@ Array<P_numtype,N_rank>::Array(_bz_ArrayExpr<T_expr> expr)
 #endif
     }
 
-    Array<P_numtype,N_rank> A(lbound,extent,
+    Array<T_numtype,N_rank> A(lbound,extent,
         GeneralArrayStorage<N_rank>(ordering,ascendingFlag));
     A = expr;
     reference(A);
 }
 
-template<class T_numtype, int N_rank>
-Array<T_numtype,N_rank>::Array(const TinyVector<int, N_rank>& lbounds,
+template<class P_numtype, int N_rank>
+Array<P_numtype,N_rank>::Array(const TinyVector<int, N_rank>& lbounds,
     const TinyVector<int, N_rank>& extent,
     const GeneralArrayStorage<N_rank>& storage)
     : storage_(storage)
@@ -133,8 +207,8 @@ _bz_inline2 void Array<P_numtype, N_rank>::computeStrides()
     calculateZeroOffset();
 }
 
-template<class T_numtype, int N_rank>
-void Array<T_numtype, N_rank>::calculateZeroOffset()
+template<class P_numtype, int N_rank>
+void Array<P_numtype, N_rank>::calculateZeroOffset()
 {
     // Calculate the offset of (0,0,...,0)
     zeroOffset_ = 0;
@@ -150,8 +224,8 @@ void Array<T_numtype, N_rank>::calculateZeroOffset()
     }
 }
 
-template<class T_numtype, int N_rank>
-_bz_bool Array<T_numtype, N_rank>::isStorageContiguous() const
+template<class P_numtype, int N_rank>
+_bz_bool Array<P_numtype, N_rank>::isStorageContiguous() const
 {
     // The storage is contiguous if for the set
     // { | stride[i] * extent[i] | }, i = 0..N_rank-1,
@@ -221,6 +295,22 @@ void Array<P_numtype, N_rank>::reference(const Array<P_numtype, N_rank>& array)
 }
 
 /*
+ * Modify the Array storage.  Array must be unallocated.
+ */
+template<class P_numtype, int N_rank>
+void Array<P_numtype, N_rank>::setStorage(GeneralArrayStorage<N_rank> x)
+{
+#ifdef BZ_DEBUG
+    if (size() != 0) {
+        BZPRECHECK(0,"Cannot modify storage format of an Array that has already been allocated!" << endl);
+        return;
+    }
+#endif
+    storage_ = x;
+    return;
+}
+
+/*
  * This method is called to allocate memory for a new array.  
  */
 template<class P_numtype, int N_rank>
@@ -253,8 +343,8 @@ _bz_inline2 void Array<P_numtype, N_rank>::setupStorage(int lastRankInitialized)
     data_ += zeroOffset_;
 }
 
-template<class T_numtype, int N_rank>
-Array<T_numtype, N_rank> Array<T_numtype, N_rank>::copy() const
+template<class P_numtype, int N_rank>
+Array<P_numtype, N_rank> Array<P_numtype, N_rank>::copy() const
 {
     if (numElements())
     {
@@ -268,8 +358,8 @@ Array<T_numtype, N_rank> Array<T_numtype, N_rank>::copy() const
     }
 }
 
-template<class T_numtype, int N_rank>
-void Array<T_numtype, N_rank>::makeUnique()
+template<class P_numtype, int N_rank>
+void Array<P_numtype, N_rank>::makeUnique()
 {
     if (numReferences() > 1)
     {
@@ -278,8 +368,8 @@ void Array<T_numtype, N_rank>::makeUnique()
     }
 }
 
-template<class T_numtype, int N_rank>
-Array<T_numtype, N_rank> Array<T_numtype, N_rank>::transpose(int r0, int r1, 
+template<class P_numtype, int N_rank>
+Array<P_numtype, N_rank> Array<P_numtype, N_rank>::transpose(int r0, int r1, 
     int r2, int r3, int r4, int r5, int r6, int r7, int r8, int r9, int r10)
 {
     T_array B(*this);
@@ -287,8 +377,8 @@ Array<T_numtype, N_rank> Array<T_numtype, N_rank>::transpose(int r0, int r1,
     return B;
 }
 
-template<class T_numtype, int N_rank>
-void Array<T_numtype, N_rank>::transposeSelf(int r0, int r1, int r2, int r3,
+template<class P_numtype, int N_rank>
+void Array<P_numtype, N_rank>::transposeSelf(int r0, int r1, int r2, int r3,
     int r4, int r5, int r6, int r7, int r8, int r9, int r10)
 {
     BZPRECHECK(r0+r1+r2+r3+r4+r5+r6+r7+r8+r9+r10 == N_rank * (N_rank-1) / 2,
@@ -313,8 +403,8 @@ void Array<T_numtype, N_rank>::transposeSelf(int r0, int r1, int r2, int r3,
     doTranspose(10, r10, x);
 }
 
-template<class T_numtype, int N_rank>
-void Array<T_numtype, N_rank>::doTranspose(int destRank, int sourceRank,
+template<class P_numtype, int N_rank>
+void Array<P_numtype, N_rank>::doTranspose(int destRank, int sourceRank,
     Array<T_numtype, N_rank>& array)
 {
     // BZ_NEEDS_WORK: precondition check
@@ -341,8 +431,8 @@ void Array<T_numtype, N_rank>::doTranspose(int destRank, int sourceRank,
     storage_.setOrdering(i, destRank);
 }
 
-template<class T_numtype, int N_rank>
-void Array<T_numtype, N_rank>::reverseSelf(int rank)
+template<class P_numtype, int N_rank>
+void Array<P_numtype, N_rank>::reverseSelf(int rank)
 {
     BZPRECONDITION(rank < N_rank);
 
@@ -354,26 +444,27 @@ void Array<T_numtype, N_rank>::reverseSelf(int rank)
     stride_[rank] *= -1;
 }
 
-template<class T_numtype, int N_rank>
-Array<T_numtype, N_rank> Array<T_numtype,N_rank>::reverse(int rank)
+template<class P_numtype, int N_rank>
+Array<P_numtype, N_rank> Array<P_numtype,N_rank>::reverse(int rank)
 {
     T_array B(*this);
     B.reverseSelf(rank);
     return B;
 }
 
-template<class T_numtype, int N_rank> template<class T_numtype2>
-Array<T_numtype2,N_rank> Array<T_numtype,N_rank>::extractComponent(T_numtype2, 
+template<class P_numtype, int N_rank> template<class P_numtype2>
+Array<P_numtype2,N_rank> Array<P_numtype,N_rank>::extractComponent(P_numtype2, 
     int componentNumber, int numComponents) const
 {
     BZPRECONDITION((componentNumber >= 0) 
         && (componentNumber < numComponents));
 
     TinyVector<int,N_rank> stride2;
-    stride2 = stride_ * numComponents;
-    const T_numtype2* dataFirst2 = 
-        ((const T_numtype2*)dataFirst()) + componentNumber;
-    return Array<T_numtype2,N_rank>(const_cast<T_numtype2*>(dataFirst2), 
+    for (int i=0; i < N_rank; ++i)
+      stride2(i) = stride_(i) * numComponents;
+    const P_numtype2* dataFirst2 = 
+        ((const P_numtype2*)dataFirst()) + componentNumber;
+    return Array<P_numtype2,N_rank>(const_cast<P_numtype2*>(dataFirst2), 
         length_, stride2, storage_);
 }
 
@@ -387,7 +478,14 @@ template<class P_numtype, int N_rank>
 _bz_inline2 void Array<P_numtype, N_rank>::reindexSelf(const 
     TinyVector<int, N_rank>& newBase) 
 {
-    data_ += dot(base() - newBase, stride_);
+    int delta = 0;
+    for (int i=0; i < N_rank; ++i)
+      delta += (base(i) - newBase(i)) * stride_(i);
+
+    data_ += delta;
+
+    // WAS: dot(base() - newBase, stride_);
+
     storage_.setBase(newBase);
     calculateZeroOffset();
 }

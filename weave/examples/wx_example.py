@@ -101,7 +101,7 @@ class MyCanvas(wxScrolledWindow):
         grey_brush = wxLIGHT_GREY_BRUSH;
         code = \
         """
-        #line 108 "wx_example.py"
+        //#line 108 "wx_example.py"
         dc->BeginDrawing();
         dc->SetPen(wxPen(*red,4,wxSOLID));
         dc->DrawRectangle(5, 5, 50, 50);
@@ -110,7 +110,7 @@ class MyCanvas(wxScrolledWindow):
         dc->SetPen(wxPen(*blue, 4,wxSOLID));
         dc->DrawRectangle(15, 15, 50, 50);
         """
-        inline_tools.inline(code,['dc','red','blue','grey_brush'],compiler='msvc')
+        inline_tools.inline(code,['dc','red','blue','grey_brush'],verbose=2)
         
         dc.SetFont(wxFont(14, wxSWISS, wxNORMAL, wxNORMAL))
         dc.SetTextForeground(wxColour(0xFF, 0x20, 0xFF))

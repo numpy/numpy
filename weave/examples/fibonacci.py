@@ -32,7 +32,7 @@ def build_fibonacci():
                """
     ext_code = """
                    int val = fib1(a);
-                   return_val = Py::new_reference_to(Py::Int(val));
+                   return_val = PyInt_FromLong(val);
                """    
     fib = ext_tools.ext_function('c_fib1',ext_code,['a'])
     fib.customize.add_support_code(fib_code)
@@ -59,7 +59,7 @@ def build_fibonacci():
                """
     ext_code = """
                    int val = fib2(a);
-                   return_val = Py::new_reference_to(Py::Int(val));
+                   return_val = PyInt_FromLong(val);
                """    
     fib = ext_tools.ext_function('c_fib2',ext_code,['a'])
     fib.customize.add_support_code(fib_code)
@@ -118,7 +118,7 @@ def recurse_compare(n):
     print ' speed up: %3.2f' % (py/(t2-t1))
 
 def loop_compare(m,n):
-    print 'Loopin to compute the first %d fibonacci numbers:' % n
+    print 'Looping to compute the first %d fibonacci numbers:' % n
     t1 = time.time()
     for i in range(m):
         for i in range(n):
