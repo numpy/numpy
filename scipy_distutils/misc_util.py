@@ -391,8 +391,9 @@ def compiler_to_string(compiler):
 
 def _get_dirs_with_init((packages,path), dirname, names):
     """Internal: used by get_subpackages."""
-    if '.svn' in names:
-        del names[names.index('.svn')]
+    for bad in ['.svn','build']:
+        if bad in names:
+            del names[names.index(bad)]
     if os.path.isfile(os.path.join(dirname,'__init__.py')):
         if path==dirname: return
         package_name = '.'.join(dirname.split(os.sep)[len(path.split(os.sep)):])
