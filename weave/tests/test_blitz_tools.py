@@ -192,8 +192,8 @@ def remove_test_files():
         #os.renames(i,trash_file)
 
 def setup_test_location():
-    d,f = os.path.split(os.path.abspath(test_scalar_spec.__file__))
-    pth = os.path.join(d,'test_files')
+    import tempfile
+    pth = os.path.join(tempfile.tempdir,'test_files')
     if not os.path.exists(pth):
         os.mkdir(pth)
     #sys.path.insert(0,pth)    
@@ -202,8 +202,7 @@ def setup_test_location():
 def teardown_test_location():
     pass
     #import test_scalar_spec    
-    #d,f = os.path.split(os.path.abspath(test_scalar_spec.__file__))
-    #pth = os.path.join(d,'test_files')
+    pth = os.path.join(tempfile.tempdir,'test_files')
     #if sys.path[0] == pth:
     #    sys.path = sys.path[1:]
     #return pth
