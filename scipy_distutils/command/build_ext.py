@@ -29,6 +29,9 @@ class build_ext (old_build_ext):
                     ext.extra_link_args = moreargs
                 else:
                     ext.extra_link_args += moreargs
+            if build_flib.has_f_library(ext.name) and \
+               ext.name not in ext.libraries:
+                ext.libraries.append(ext.name)
             for lib_name in ext.libraries[:]:
                 ext.libraries.extend(build_flib.get_library_names(lib_name))
                 ext.library_dirs.extend(build_flib.get_library_dirs(lib_name))
