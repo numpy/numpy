@@ -6,6 +6,8 @@
         4. accelerate -- a module that inline accelerates Python functions
 """
 
+from weave_version import weave_version as __version__
+
 try:
     from blitz_tools import blitz
 except ImportError:
