@@ -87,6 +87,10 @@ class linux_cpuinfo(cpuinfo_base):
     def _is_AthlonK7(self):
         return re.match(r'.*?AMD-K7',self.info[0]['model name']) is not None
 
+    def _is_AthlonMP(self):
+        return re.match(r'.*?Athlon\(tm\) MP\b',
+                        self.info[0]['model name']) is not None
+
     def _is_AthlonHX(self):
         return re.match(r'.*?Athlon HX\b',
                         self.info[0]['model name']) is not None

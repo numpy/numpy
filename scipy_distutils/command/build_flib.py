@@ -1094,6 +1094,9 @@ class gnu_fortran_compiler(fortran_compiler_base):
                     opt = opt + ' -march=k6-3 '
                 elif cpu.is_AthlonK7():
                     opt = opt + ' -march=athlon '
+                elif cpu.is_AthlonMP():
+                    opt = opt + ' -march=athlon-mp '
+                # there's also: athlon-tbird, athlon-4, athlon-xp
                 elif cpu.is_PentiumIV():
                     opt = opt + ' -march=pentium4 '
                 elif cpu.is_PentiumIII():
@@ -1103,9 +1106,9 @@ class gnu_fortran_compiler(fortran_compiler_base):
                 else:
                     march_flag = 0
                 if cpu.has_mmx(): opt = opt + ' -mmmx '      
-                if self.version > '3.2.2' and cpu.has_sse2():
-                    opt = opt + ' -msse2 '
-                elif cpu.has_sse(): opt = opt + ' -msse '
+                if self.version > '3.2.2':
+                    if cpu.has_sse2(): opt = opt + ' -msse2 '
+                    if cpu.has_sse(): opt = opt + ' -msse '
                 if cpu.has_3dnow(): opt = opt + ' -m3dnow '
             else:
                 march_flag = 0
@@ -1217,11 +1220,13 @@ class intel_ia32_fortran_compiler(fortran_compiler_base):
             opt = opt + ' -tpp5 '
         elif cpu.is_PentiumIV():
             opt = opt + ' -tpp7 -xW '
-        elif cpu.has_mmx():
+        if cpu.has_mmx():
             opt = opt + ' -xM '
         return opt
 
     def get_linker_so(self):
+        if self.get_version() and self.version >= '8.0':
+            return [self.f77_compiler,'-shared','-nofor_main']
         return [self.f77_compiler,'-shared']
 
     def build_module_switch(self,module_dirs,temp_dir):
