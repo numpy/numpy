@@ -273,6 +273,13 @@ def merge_config_dicts(config_list):
             result[key].update(d.get(key,{}))
     return result
 
+def dict_append(d,**kws):
+    for k,v in kws.items():
+        if d.has_key(k):
+            d[k].extend(v)
+        else:
+            d[k] = v
+
 def dot_join(*args):
     return string.join(filter(None,args),'.')
 
