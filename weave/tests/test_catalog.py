@@ -326,7 +326,7 @@ class test_catalog(unittest.TestCase):
         #assert(funcs2 == [os.chdir,os.abort,string.replace,string.find])
         #assert(funcs3 == [re.purge,re.match,os.open,
         #                  os.access,string.atoi,string.atof])
-        assert(funcs1[:2] == [string.lower,string.upper])
+        assert(funcs1[:2] == [string.lower,string.upper]),`funcs1`
         assert(funcs2[:4] == [os.chdir,os.abort,string.replace,string.find])
         assert(funcs3[:6] == [re.purge,re.match,os.open,
                           os.access,string.atoi,string.atof])
