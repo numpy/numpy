@@ -7,7 +7,9 @@ classes are available:
   atlas_info
   blas_info
   lapack_info
-  fftw_info
+  fftw_info,dfftw_info,sfftw_info
+  fftw_threads_info,dfftw_threads_info,sfftw_threads_info
+  djbfft_info
   x11_info
   lapack_src_info
   blas_src_info
@@ -112,6 +114,12 @@ def get_info(name):
     cl = {'atlas':atlas_info,
           'x11':x11_info,
           'fftw':fftw_info,
+          'dfftw':dfftw_info,
+          'sfftw':sfftw_info,
+          'fftw_threads':fftw_threads_info,
+          'dfftw_threads':dfftw_threads_info,
+          'sfftw_threads':sfftw_threads_info,
+          'djbfft':djbfft_info,
           'blas':blas_info,
           'lapack':lapack_info,
           'lapack_src':lapack_src_info,
@@ -163,6 +171,13 @@ class FFTWNotFoundError(NotFoundError):
     Directories to search for the libraries can be specified in the
     scipy_distutils/site.cfg file (section [fftw]) or by setting
     the FFTW environment variable."""
+
+class DJBFFTNotFoundError(NotFoundError):
+    """
+    DJBFFT (http://cr.yp.to/djbfft.html) libraries not found.
+    Directories to search for the libraries can be specified in the
+    scipy_distutils/site.cfg file (section [djbfft]) or by setting
+    the DJBFFT environment variable."""
 
 class F2pyNotFoundError(NotFoundError):
     """
@@ -303,10 +318,12 @@ class system_info:
                 info['libraries'].extend(opt_found_libs)
             return info
 
-
 class fftw_info(system_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
+    libs = ['fftw','rfftw']
+    includes = ['fftw.h','rfftw.h']
+    macros = [('SCIPY_FFTW_H',1)]
 
     def __init__(self):
         system_info.__init__(self)
@@ -315,75 +332,82 @@ class fftw_info(system_info):
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
         incl_dir = None
-
-        libs = self.get_libs('fftw_libs', ['fftw','rfftw'])
-        opt_libs = self.get_libs('fftw_opt_libs',
-                                 ['fftw_threads','rfftw_threads'])
+        libs = self.get_libs(self.section+'_libs', self.libs)
         info = None
         for d in lib_dirs:
-            r = self.check_libs(d,libs,opt_libs)
+            r = self.check_libs(d,libs)
             if r is not None:
                 info = r
                 break
         if info is not None:
             flag = 0
             for d in incl_dirs:
-                if len(combine_paths(d,['fftw.h','rfftw.h']))==2:
+                if len(combine_paths(d,self.includes))==2:
                     dict_append(info,include_dirs=[d])
                     flag = 1
                     incl_dirs = [d]
                     incl_dir = d
                     break
             if flag:
-                dict_append(info,define_macros=[('SCIPY_FFTW_H',1)])
+                dict_append(info,define_macros=self.macros)
             else:
                 info = None
-
-        if info is None:
-            libs = self.get_libs('dfftw_libs', ['dfftw', 'drfftw'])
-            opt_libs = self.get_libs('dfftw_opt_libs',
-                                     ['dfftw_threads', 'drfftw_threads'])
-            for d in lib_dirs:
-                r = self.check_libs(d,libs,opt_libs)
-                if r is not None:
-                    info = r
-                    break
-            if info is not None:
-                flag = 0
-                for d in incl_dirs:
-                    if len(combine_paths(d,['dfftw.h','drfftw.h']))==2:
-                        if incl_dir is None:
-                            dict_append(info,include_dirs=[d])
-                            incl_dirs = [d]
-                            incl_dir = d
-                        flag = 1
-                        break
-                if flag:
-                    dict_append(info,define_macros=[('SCIPY_DFFTW_H',1)])
-                else:
-                    info = None
-
-        libs = self.get_libs('sfftw_libs', ['sfftw', 'srfftw'])
-        opt_libs = self.get_libs('sfftw_opt_libs',
-                                 ['sfftw_threads', 'srfftw_threads'])
-        flag = 0
-        for d in lib_dirs:
-            r = self.check_libs(d,libs,opt_libs)
-            if r is not None:
-                if info is None: info = r
-                else: dict_append(info,**r)
-                flag = 1
-                break
-        if info is not None and flag:
-            for d in incl_dirs:
-                if len(combine_paths(d,['sfftw.h','srfftw.h']))==2:
-                    if incl_dir is None:
-                        dict_append(info,include_dirs=[d])
-                    dict_append(info,define_macros=[('SCIPY_SFFTW_H',1)])
-                    break
         if info is not None:
             self.set_info(**info)
 
+class dfftw_info(fftw_info):
+    section = 'fftw'
+    dir_env_var = 'FFTW'
+    libs = ['dfftw','drfftw']
+    includes = ['dfftw.h','drfftw.h']
+    macros = [('SCIPY_DFFTW_H',1)]
+
+class sfftw_info(fftw_info):
+    section = 'fftw'
+    dir_env_var = 'FFTW'
+    libs = ['sfftw','srfftw']
+    includes = ['sfftw.h','srfftw.h']
+    macros = [('SCIPY_SFFTW_H',1)]
+
+class fftw_threads_info(fftw_info):
+    section = 'fftw'
+    dir_env_var = 'FFTW'
+    libs = ['fftw_threads','rfftw_threads']
+    includes = ['fftw_threads.h','rfftw_threads.h']
+    macros = [('SCIPY_FFTW_THREADS_H',1)]
+
+class dfftw_threads_info(fftw_info):
+    section = 'fftw'
+    dir_env_var = 'FFTW'
+    libs = ['dfftw_threads','drfftw_threads']
+    includes = ['dfftw_threads.h','drfftw_threads.h']
+    macros = [('SCIPY_DFFTW_THREADS_H',1)]
+
+class sfftw_threads_info(fftw_info):
+    section = 'fftw'
+    dir_env_var = 'FFTW'
+    libs = ['sfftw_threads','srfftw_threads']
+    includes = ['sfftw_threads.h','srfftw_threads.h']
+    macros = [('SCIPY_SFFTW_THREADS_H',1)]
+
+class djbfft_info(fftw_info):
+    section = 'djbfft'
+    dir_env_var = 'DJBFFTW'
+    libs = ['djbfft']
+    includes = ['fftc8.h','fftfreq.h']
+    macros = [('SCIPY_DJBFFT_H',1)]
+
+    def _lib_list(self, lib_dir, libs, ext):
+        assert type(lib_dir) is type('')
+        liblist = []
+        for l in libs:
+            p = combine_paths(lib_dir, 'lib'+l+ext)
+            if not p:
+                p = combine_paths(lib_dir, l+ext)
+            if p:
+                assert len(p)==1
+                liblist.append(p[0])
+        return liblist
 
 class atlas_info(system_info):
     section = 'atlas'
