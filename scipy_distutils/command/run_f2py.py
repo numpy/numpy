@@ -60,7 +60,7 @@ class run_f2py(Command):
             #  build_flib = self.get_finalized_command('build_flib')
             #  ...
             # for getting extra f2py_options that are specific to
-            # the given fortran compiler.
+            # a given fortran compiler.
             for ext in self.distribution.ext_modules:
                 ext.sources = self.f2py_sources(ext.sources,ext)
                 self.fortran_sources_to_flib(ext)

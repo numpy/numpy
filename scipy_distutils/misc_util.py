@@ -31,7 +31,7 @@ def update_version(release_level='alpha',
       major  - indicates changes in release_level.
 
     """
-    # Open issues:
+    # Issues:
     # *** Recommend or not to add __version__.py file to CVS
     #     repository? If it is in CVS, then when commiting, the
     #     version information will change, but __version__.py
@@ -98,7 +98,7 @@ def update_version(release_level='alpha',
         version_file = os.path.abspath(version_file)
         f = open(version_file,'w')
         f.write('# This file is automatically updated with update_version\n'\
-                '# function from scipy_distutils.misc_utils.py\n'\
+                '# function from scipy_distutils.misc_util.py\n'\
                 'version = %s\n'\
                 'version_info = %s\n'%(repr(version),version_info))
         f.close()
@@ -134,7 +134,11 @@ def get_cvs_revision(path):
                 except:
                     d1,d2 = 0,0
             elif items[0]=='' and len(items)>3 and items[1]!='__version__.py':
-                d1,d2 = map(eval,string.split(items[2],'.')[-2:])
+		last_numbers = map(eval,string.split(items[2],'.')[-2:])
+		if len(last_numbers)==2:
+		    d1,d2 = last_numbers
+		else: # this is when 'cvs add' but not yet 'cvs commit'
+		    d1,d2 = 0,0
             else:
                 continue
             rev1,rev2 = rev1+d1,rev2+d2
@@ -231,69 +235,3 @@ def merge_config_dicts(config_list):
         for key in dict_keys:
             result[key].update(d.get(key,{}))
     return result
-
-def pyf_extensions(parent_package = '',
-                   sources = [],
-                   include_dirs = [],
-                   define_macros = [],
-                   undef_macros = [],
-                   library_dirs = [],
-                   libraries = [],
-                   runtime_library_dirs = [],
-                   extra_objects = [],
-                   extra_compile_args = [],
-                   extra_link_args = [],
-                   export_symbols = [],
-                   f2py_options = [],
-                   f2py_wrap_functions = 1,
-                   f2py_debug_capi = 0,
-                   f2py_build_dir = '.',
-                   ):
-    """ Return a list of Extension instances defined by .pyf files listed
-        in sources list.
-    
-        f2py_opts is a list of options passed to the f2py runner.
-        Option --no-setup is forced. Other possible options are
-          --build-dir <dirname>
-          --[no-]wrap-functions
-        
-        Note: This requires that f2py2e is installed on your machine
-    """
-    from scipy_distutils.core import Extension
-    import f2py2e    
-    
-    if parent_package:
-        parent_package = parent_package + '.'        
-    
-    f2py_opts = f2py_options or []
-    if not f2py_wrap_functions:
-        f2py_opts.append('--no-wrap-functions')
-    if f2py_debug_capi:
-        f2py_opts.append('--debug-capi')
-    if '--setup' not in f2py_opts:
-        f2py_opts.append('--no-setup')
-    f2py_opts.extend(['--build-dir',f2py_build_dir])
-
-    pyf_files, sources = f2py2e.f2py2e.filter_files('(?i)','[.]pyf',sources)
-
-    pyf = f2py2e.run_main(pyf_files+f2py_opts)
-
-    include_dirs = include_dirs + pyf.get_include_dirs()
-    ext_modules = []
-
-    for name in pyf.get_names():
-        ext = Extension(parent_package+name,
-                        pyf.get_sources(name) + sources,
-                        include_dirs = include_dirs,
-                        library_dirs = library_dirs,
-                        libraries = libraries,
-                        define_macros = define_macros,
-                        undef_macros = undef_macros,
-                        extra_objects = extra_objects,
-                        extra_compile_args = extra_compile_args,
-                        extra_link_args = extra_link_args,
-                        export_symbols = export_symbols,
-                        )
-        ext_modules.append(ext)
-
-    return ext_modules

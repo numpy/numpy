@@ -17,7 +17,7 @@ class Distribution (OldDistribution):
                     if file_ext == ".pyf":       # f2py interface file
                         return 1
         return 0
-    
+
     def has_f_libraries(self):
         if self.fortran_libraries and len(self.fortran_libraries) > 0:
             return 1
