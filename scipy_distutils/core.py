@@ -63,6 +63,9 @@ def setup(**attr):
                 assert type(item) is type(''),`item`
                 new_libraries.append(item)
         ext.libraries = new_libraries
-    new_attr['libraries'].extend(libraries)
+    if libraries:
+        if not new_attr.has_key('libraries'):
+            new_attr['libraries'] = []
+        new_attr['libraries'].extend(libraries)
 
     return old_setup(**new_attr)
