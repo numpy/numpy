@@ -15,6 +15,8 @@ classes are available:
   x11_info
   lapack_src_info
   blas_src_info
+  numpy_info
+  numarray_info
 
 Usage:
     info_dict = get_info(<name>)
@@ -79,6 +81,8 @@ this distribution for specifics.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 
+__revision__ = '$Id$'
+
 import sys,os,re,types
 import warnings
 from distutils.errors import DistutilsError
@@ -130,6 +134,8 @@ def get_info(name):
           'lapack':lapack_info,
           'lapack_src':lapack_src_info,
           'blas_src':blas_src_info,
+          'numpy':numpy_info,
+          'numarray':numarray_info,
           }.get(name.lower(),system_info)
     return cl().get_info()
 
@@ -222,6 +228,10 @@ class system_info:
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
         defaults['search_static_first'] = str(self.search_static_first)
         self.cp = ConfigParser.ConfigParser(defaults)
+        try:
+            __file__
+        except NameError:
+            __file__ = sys.argv[0]
         cf = os.path.join(os.path.split(os.path.abspath(__file__))[0],
                           'site.cfg')
         self.cp.read([cf])
@@ -745,6 +755,65 @@ class x11_info(system_info):
             dict_append(info, include_dirs=[inc_dir])
         self.set_info(**info)
 
+class numpy_info(system_info):
+    section = 'numpy'
+    modulename = 'Numeric'
+
+    def __init__(self):
+        from distutils.sysconfig import get_python_inc
+        py_incl_dir = get_python_inc()
+        include_dirs = [py_incl_dir]
+        for d in default_include_dirs:
+            d = os.path.join(d, os.path.basename(py_incl_dir))
+            if d not in include_dirs:
+                include_dirs.append(d)
+        system_info.__init__(self,
+                             default_lib_dirs=[],
+                             default_include_dirs=include_dirs)
+
+    def calc_info(self):
+        try:
+            module = __import__(self.modulename)
+        except ImportError:
+            return
+        info = {}
+        macros = [(self.modulename.upper()+'_VERSION',
+                   '"%s"' % (module.__version__))]
+##         try:
+##             macros.append(
+##                 (self.modulename.upper()+'_VERSION_HEX',
+##                  hex(vstr2hex(module.__version__))),
+##                 )
+##         except Exception,msg:
+##             print msg
+        dict_append(info, define_macros = macros)
+        include_dirs = self.get_include_dirs()
+        inc_dir = None
+        for d in include_dirs:
+            if self.combine_paths(d,
+                                  os.path.join(self.modulename,
+                                               'arrayobject.h')):
+                inc_dir = d
+                break
+        if inc_dir is not None:
+            dict_append(info, include_dirs=[inc_dir])
+        if info:
+            self.set_info(**info)
+        return
+
+class numarray_info(numpy_info):
+    section = 'numarray'
+    modulename = 'numarray'
+
+## def vstr2hex(version):
+##     bits = []
+##     n = [24,16,8,4,0]
+##     r = 0
+##     for s in version.split('.'):
+##         r |= int(s) << n[0]
+##         del n[0]
+##     return r
+
 def combine_paths(*args,**kws):
     """ Return a list of existing paths composed by all combinations of
         items from arguments.
@@ -793,3 +862,5 @@ def show_all():
 
 if __name__ == "__main__":
     show_all()
+    print numpy_info().get_info()
+    print numarray_info().get_info()
