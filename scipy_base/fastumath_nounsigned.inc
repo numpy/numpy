@@ -1,4 +1,3 @@
-
 #include "Python.h"
 #include "Numeric/arrayobject.h"
 #include "Numeric/ufuncobject.h"
@@ -230,7 +229,7 @@ static double asinh(double xx)
 {
     double x;
     int sign;
-    if (x < 0.0) {
+    if (xx < 0.0) {
 	sign = -1;
 	x = -xx;
     }
