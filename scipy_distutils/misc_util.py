@@ -231,3 +231,69 @@ def merge_config_dicts(config_list):
         for key in dict_keys:
             result[key].update(d.get(key,{}))
     return result
+
+def pyf_extensions(parent_package = '',
+                   sources = [],
+                   include_dirs = [],
+                   define_macros = [],
+                   undef_macros = [],
+                   library_dirs = [],
+                   libraries = [],
+                   runtime_library_dirs = [],
+                   extra_objects = [],
+                   extra_compile_args = [],
+                   extra_link_args = [],
+                   export_symbols = [],
+                   f2py_options = [],
+                   f2py_wrap_functions = 1,
+                   f2py_debug_capi = 0,
+                   f2py_build_dir = '.',
+                   ):
+    """ Return a list of Extension instances defined by .pyf files listed
+        in sources list.
+    
+        f2py_opts is a list of options passed to the f2py runner.
+        Option --no-setup is forced. Other possible options are
+          --build-dir <dirname>
+          --[no-]wrap-functions
+        
+        Note: This requires that f2py2e is installed on your machine
+    """
+    from scipy_distutils.core import Extension
+    import f2py2e    
+    
+    if parent_package:
+        parent_package = parent_package + '.'        
+    
+    f2py_opts = f2py_options or []
+    if not f2py_wrap_functions:
+        f2py_opts.append('--no-wrap-functions')
+    if f2py_debug_capi:
+        f2py_opts.append('--debug-capi')
+    if '--setup' not in f2py_opts:
+        f2py_opts.append('--no-setup')
+    f2py_opts.extend(['--build-dir',f2py_build_dir])
+
+    pyf_files, sources = f2py2e.f2py2e.filter_files('(?i)','[.]pyf',sources)
+
+    pyf = f2py2e.run_main(pyf_files+f2py_opts)
+
+    include_dirs = include_dirs + pyf.get_include_dirs()
+    ext_modules = []
+
+    for name in pyf.get_names():
+        ext = Extension(parent_package+name,
+                        pyf.get_sources(name) + sources,
+                        include_dirs = include_dirs,
+                        library_dirs = library_dirs,
+                        libraries = libraries,
+                        define_macros = define_macros,
+                        undef_macros = undef_macros,
+                        extra_objects = extra_objects,
+                        extra_compile_args = extra_compile_args,
+                        extra_link_args = extra_link_args,
+                        export_symbols = export_symbols,
+                        )
+        ext_modules.append(ext)
+
+    return ext_modules
