@@ -94,6 +94,16 @@ class build_ext (old_build_ext):
                 for lib_dir in lib_dirs:
                     if lib_dir not in self.compiler.library_dirs:
                         self.compiler.library_dirs.append(lib_dir)
+        elif ext.has_cxx_sources():
+            if save_linker_so[0]=='gcc':
+                #XXX: need similar hooks that are in weave.build_tools.py
+                #     Or more generally, implement cxx_compiler_class
+                #     hooks similar to fortran_compiler_class.
+                linker_so = ['g++'] + save_linker_so[1:]
+                self.compiler.linker_so = linker_so
+                self.announce('replacing linker_so %r with %r' %(\
+                        ' '.join(save_linker_so),
+                        ' '.join(linker_so)))
 
         # end of fortran source support
         res = old_build_ext.build_extension(self,ext)

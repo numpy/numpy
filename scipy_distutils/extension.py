@@ -12,6 +12,10 @@ __revision__ = "$Id$"
 
 from distutils.extension import Extension as old_Extension
 
+import re
+cxx_ext_re = re.compile(r'.*[.](cpp|cxx|cc)\Z',re.I).match
+fortran_pyf_ext_re = re.compile(r'.*[.](f90|f95|f77|for|ftn|f|pyf)\Z',re.I).match
+
 class Extension(old_Extension):
     def __init__ (self, name, sources,
                   include_dirs=None,
@@ -38,5 +42,17 @@ class Extension(old_Extension):
                                extra_link_args,
                                export_symbols)
         self.f2py_options = f2py_options or []
-        
+
+    def has_cxx_sources(self):
+        for source in self.sources:
+            if cxx_ext_re(source):
+                return 1
+        return 0
+
+    def has_f2py_sources(self):
+        for source in self.sources:
+            if fortran_pyf_ext_re(source):
+                return 1
+        return 0
+
 # class Extension
