@@ -55,7 +55,7 @@ def get_package_config(package_name):
     config = mod.configuration()
     return config
 
-def package_config(primary,dependencies):
+def package_config(primary,dependencies=[]):
     """ Create a configuration dictionary ready for setup.py from
         a list of primary and dependent package names.  Each
         package listed must have a directory with the same name
