@@ -5,3 +5,5 @@
 """
 
 # Need to do something here to get distutils subsumed...
+
+from scipy_distutils_version import scipy_distutils_version as __version__
