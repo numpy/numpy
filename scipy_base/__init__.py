@@ -34,6 +34,9 @@ from scimath import *
 from machar import *
 from pexec import *
 
+if Numeric.__version__ < '23.5':
+    matrixmultiply=dot
+
 Inf = inf = fastumath.PINF
 try:
     NAN = NaN = nan = fastumath.NAN
@@ -46,3 +49,4 @@ test = ScipyTest('scipy_base').test
 if _sys.modules.has_key('scipy_base.Matrix') \
    and _sys.modules['scipy_base.Matrix'] is None:
     del _sys.modules['scipy_base.Matrix']
+
