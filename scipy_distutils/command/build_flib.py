@@ -173,6 +173,20 @@ class build_flib (build_clib):
                 break
         return lib_names
 
+    def get_fcompiler_library_names(self):
+        if not self.has_f_libraries():
+            return None
+        if self.fcompiler is not None:
+            return self.fcompiler.get_libraries()
+        return []
+
+    def get_fcompiler_library_dirs(self):
+        if not self.has_f_libraries():
+            return None
+        if self.fcompiler is not None:
+            return self.fcompiler.get_library_dirs()
+        return []
+
     # get_library_names ()
 
     def get_library_dirs(self, name=None):
@@ -590,6 +604,9 @@ class gnu_fortran_compiler(fortran_compiler_base):
         if sys.platform == 'win32':
             self.libraries = ['gcc','g2c']
             self.library_dirs = self.find_lib_directories()
+        else:
+            # On linux g77 does not need lib_directories to be specified.
+            self.libraries = ['g2c']
 
         if fc is None:
             fc = 'g77'
