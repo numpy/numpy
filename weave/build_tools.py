@@ -403,6 +403,8 @@ def configure_build_dir(build_dir=None):
     
 if sys.platform == 'win32':
     import distutils.cygwinccompiler
+    from distutils.ccompiler import gen_preprocess_options, gen_lib_options
+    from distutils.errors import DistutilsExecError, CompileError, UnknownFileError
     # the same as cygwin plus some additional parameters
     class Mingw32CCompiler (distutils.cygwinccompiler.CygwinCCompiler):
         """ A modified MingW32 compiler compatible with an MSVC built Python.
@@ -442,8 +444,8 @@ if sys.platform == 'win32':
             #                     linker_exe='gcc -mno-cygwin',
             #                     linker_so='%s --driver-name g++ -mno-cygwin -mdll -static %s' 
             #                                % (self.linker, entry_point))
-            self.set_executables(compiler='g++ -mno-cygwin -O2 -w',
-                                 compiler_so='g++ -mno-cygwin -mdll -O2 -w -Wstrict-prototypes',
+            self.set_executables(compiler='gcc -mno-cygwin -O2 -w',
+                                 compiler_so='gcc -mno-cygwin -mdll -O2 -w -Wstrict-prototypes',
                                  linker_exe='g++ -mno-cygwin',
                                  linker_so='%s -mno-cygwin -mdll -static %s' 
                                             % (self.linker, entry_point))
@@ -456,7 +458,8 @@ if sys.platform == 'win32':
             self.dll_libraries=[]
             
         # __init__ ()
-    
+
+        
     # On windows platforms, we want to default to mingw32 (gcc)
     # because msvc can't build blitz stuff.
     # We should also check the version of gcc available...
