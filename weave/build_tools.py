@@ -179,7 +179,23 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
         # add module to the needed source code files and build extension
         sources = kw.get('sources',[])
         kw['sources'] = [module_path] + sources        
-                
+        
+        #--------------------------------------------------------------------
+        # added access to environment variable that user can set to specify
+        # where python (and other) include files are located.  This is 
+        # very useful on systems where python is installed by the root, but
+        # the user has also installed numerous packages in their own 
+        # location.
+        #--------------------------------------------------------------------
+        if os.environ.has_key('PYTHONINCLUDE'):
+            path_string = os.environ['PYTHONINCLUDE']        
+            if sys.platform == "win32":
+                extra_include_dirs = path_string.split(';')
+            else:  
+                extra_include_dirs = path_string.split(':')
+            include_dirs = kw.get('include_dirs',[])
+            kw['include_dirs'] = include_dirs + extra_include_dirs
+
         # SunOS specific
         # fix for issue with linking to libstdc++.a. see:
         # http://mail.python.org/pipermail/python-dev/2001-March/013510.html
