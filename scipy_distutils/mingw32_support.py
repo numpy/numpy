@@ -1,5 +1,5 @@
 
-__revision__ = "$Id:"
+__revision__ = "$Id$"
 import warnings
 warnings.warn("""
 *******************************************************************
