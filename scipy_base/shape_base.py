@@ -1,6 +1,6 @@
 import Numeric
 from Numeric import *
-from type_check import isscalar
+from type_check import isscalar, asarray
 
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'column_stack','dstack','array_split','split','hsplit',

@@ -8,7 +8,7 @@ __all__ = ['sqrt', 'log', 'log2','logn','log10', 'power', 'arccos',
 
 import Numeric
 
-from type_check import isreal
+from type_check import isreal, asarray
 from function_base import any
 import fastumath
 from fastumath import *
@@ -23,19 +23,19 @@ def _tocomplex(arr):
         return arr.astype('D')
 
 def sqrt(x):
-    x = Numeric.asarray(x)
+    x = asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
     return fastumath.sqrt(x)
 
 def log(x):
-    x = Numeric.asarray(x)
+    x = asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
     return fastumath.log(x)
 
 def log10(x):
-    x = Numeric.asarray(x)
+    x = asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
     return fastumath.log10(x)    
@@ -43,7 +43,7 @@ def log10(x):
 def logn(n,x):
     """ Take log base n of x.
     """
-    x = Numeric.asarray(x)
+    x = asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
     if isreal(n) and (n<0):
@@ -53,32 +53,32 @@ def logn(n,x):
 def log2(x):
     """ Take log base 2 of x.
     """
-    x = Numeric.asarray(x)
+    x = asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
     return fastumath.log(x)/fastumath.log(2)
 
 
 def power(x, p):
-    x = Numeric.asarray(x)
+    x = asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
     return fastumath.power(x, p)
     
 def arccos(x):
-    x = Numeric.asarray(x)
+    x = asarray(x)
     if isreal(x) and any(abs(x)>1):
         x = _tocomplex(x)
     return fastumath.arccos(x)
 
 def arcsin(x):
-    x = Numeric.asarray(x)
+    x = asarray(x)
     if isreal(x) and any(abs(x)>1):
         x = _tocomplex(x)
     return fastumath.arcsin(x)
 
 def arctanh(x):
-    x = Numeric.asarray(x)
+    x = asarray(x)
     if isreal(x) and any(abs(x)>1):
         x = _tocomplex(x)
     return fastumath.arctanh(x)

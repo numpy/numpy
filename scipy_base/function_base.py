@@ -1,8 +1,9 @@
 
 import types
 import Numeric
-from Numeric import ravel, asarray, nonzero, array, choose, ones, zeros, sometrue, alltrue
-from type_check import ScalarType, isscalar
+from Numeric import ravel, nonzero, array, choose, ones, zeros, \
+     sometrue, alltrue
+from type_check import ScalarType, isscalar, asarray
 from shape_base import squeeze, atleast_1d
 from fastumath import PINF as inf
 from fastumath import *
@@ -79,7 +80,7 @@ def linspace(start,stop,num=50,endpoint=1,retstep=0):
 def fix(x):
     """ Round x to nearest integer towards zero.
     """
-    x = Numeric.asarray(x)
+    x = asarray(x)
     y = Numeric.floor(x)
     return Numeric.where(x<0,y+1,y)
 
@@ -319,21 +320,21 @@ def insert(arr, mask, vals):
 def nansum(x,axis=-1):
     """Sum the array over the given axis treating nans as missing values.
     """
-    x = Numeric.asarray(x).copy()
+    x = asarray(x).copy()
     Numeric.putmask(x,isnan(x),0)
     return Numeric.sum(x,axis)
 
 def nanmin(x,axis=-1):
     """Find the minimium over the given axis ignoring nans.
     """
-    x = Numeric.asarray(x).copy()
+    x = asarray(x).copy()
     Numeric.putmask(x,isnan(x),inf)
     return amin(x,axis)
 
 def nanargmin(x,axis=-1):
     """Find the indices of the minimium over the given axis ignoring nans.
     """
-    x = Numeric.asarray(x).copy()
+    x = asarray(x).copy()
     Numeric.putmask(x,isnan(x),inf)
     return argmin(x,axis)
     

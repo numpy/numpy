@@ -5,6 +5,7 @@
 __all__ = ['diag','eye','fliplr','flipud','rot90','bmat']
 
 from Numeric import *
+from type_check import asarray
 import Matrix
 
 def fliplr(m):

@@ -2,12 +2,27 @@
 import types
 import Numeric
 from fastumath import isinf, isnan, isfinite
-from Numeric import asarray, ArrayType, array
+from Numeric import ArrayType, array, multiarray
 
 __all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isnan','isinf','isfinite',
            'isreal','nan_to_num','real','real_if_close',
-           'typename','cast','common_type','typecodes']
+           'typename','cast','common_type','typecodes', 'asarray']
+
+def asarray(a, typecode=None, savespace=None):
+   """asarray(a,typecode=None, savespace=0) returns a as a NumPy array.
+   Unlike array(), no copy is performed if a is already an array.
+   """
+   if type(a) is ArrayType:
+      if typecode is None or typecode == a.typecode():
+         if savespace is None or a.spacesaver()==savespace:
+            return a
+      else:
+         r = a.astype(typecode)
+         if not (savespace is None or a.spacesaver()==savespace):
+            r.savespace(savespace)
+         return r
+   return multiarray.array(a,typecode,copy=0,savespace=savespace or 0)
 
 ScalarType = [types.IntType, types.LongType, types.FloatType, types.ComplexType]
 
@@ -19,22 +34,22 @@ try:
 except AttributeError:
    Char = 'c'
 
-toChar = lambda x: Numeric.asarray(x).astype(Char)
-toInt8 = lambda x: Numeric.asarray(x).astype(Numeric.Int8)# or use variable names such as Byte
-toUInt8 = lambda x: Numeric.asarray(x).astype(Numeric.UnsignedInt8)
+toChar = lambda x: asarray(x).astype(Char)
+toInt8 = lambda x: asarray(x).astype(Numeric.Int8)# or use variable names such as Byte
+toUInt8 = lambda x: asarray(x).astype(Numeric.UnsignedInt8)
 _unsigned = 0
 if hasattr(Numeric,'UnsignedInt16'):
-   toUInt16 = lambda x: Numeric.asarray(x).astype(Numeric.UnsignedInt16)
-   toUInt32 = lambda x: Numeric.asarray(x).astype(Numeric.UnsignedInt32)
+   toUInt16 = lambda x: asarray(x).astype(Numeric.UnsignedInt16)
+   toUInt32 = lambda x: asarray(x).astype(Numeric.UnsignedInt32)
    _unsigned = 1
    
-toInt16 = lambda x: Numeric.asarray(x).astype(Numeric.Int16)
-toInt32 = lambda x: Numeric.asarray(x).astype(Numeric.Int32)
-toInt = lambda x: Numeric.asarray(x).astype(Numeric.Int)
-toFloat32 = lambda x: Numeric.asarray(x).astype(Numeric.Float32)
-toFloat64 = lambda x: Numeric.asarray(x).astype(Numeric.Float64)
-toComplex32 = lambda x: Numeric.asarray(x).astype(Numeric.Complex32)
-toComplex64 = lambda x: Numeric.asarray(x).astype(Numeric.Complex64)
+toInt16 = lambda x: asarray(x).astype(Numeric.Int16)
+toInt32 = lambda x: asarray(x).astype(Numeric.Int32)
+toInt = lambda x: asarray(x).astype(Numeric.Int)
+toFloat32 = lambda x: asarray(x).astype(Numeric.Float32)
+toFloat64 = lambda x: asarray(x).astype(Numeric.Float64)
+toComplex32 = lambda x: asarray(x).astype(Numeric.Complex32)
+toComplex64 = lambda x: asarray(x).astype(Numeric.Complex64)
 
 # This is for pre Numeric 21.x compatiblity. Adding it is harmless.
 if  not hasattr(Numeric,'Character'):
@@ -140,7 +155,7 @@ def nan_to_num(x):
     if t in [types.ComplexType,'F','D']:    
         y = nan_to_num(x.real) + 1j * nan_to_num(x.imag)
     else:    
-        x = Numeric.asarray(x)
+        x = asarray(x)
         are_inf = isposinf(x)
         are_neg_inf = isneginf(x)
         are_nan = isnan(x)
@@ -152,7 +167,7 @@ def nan_to_num(x):
 #-----------------------------------------------------------------------------
 
 def real_if_close(a,tol=1e-13):
-    a = Numeric.asarray(a)
+    a = asarray(a)
     if a.typecode() in ['F','D'] and Numeric.allclose(a.imag, 0, atol=tol):
         a = a.real
     return a

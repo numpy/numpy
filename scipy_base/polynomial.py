@@ -2,7 +2,7 @@ import Numeric
 from Numeric import *
 from scimath import *
 
-from type_check import isscalar
+from type_check import isscalar, asarray
 from matrix_base import diag
 from shape_base import hstack, atleast_1d
 from function_base import trim_zeros, sort_complex
@@ -130,7 +130,7 @@ def polyint(p,m=1,k=None):
         return p
     else:
         truepoly = isinstance(p,poly1d)
-        p = Numeric.asarray(p)
+        p = asarray(p)
         y = Numeric.zeros(len(p)+1,'d')
         y[:-1] = p*1.0/Numeric.arange(len(p),0,-1)
         y[-1] = k[0]        
@@ -144,7 +144,7 @@ def polyder(p,m=1):
     """
     m = int(m)
     truepoly = isinstance(p,poly1d)
-    p = Numeric.asarray(p)
+    p = asarray(p)
     n = len(p)-1
     y = p[:-1] * Numeric.arange(n,0,-1)
     if m < 0:
@@ -169,11 +169,11 @@ def polyval(p,x):
       or x can be another polynomial and the composite polynomial p(x) will be
       returned.
     """
-    p = Numeric.asarray(p)
+    p = asarray(p)
     if isinstance(x,poly1d):
         y = 0
     else:
-        x = Numeric.asarray(x)
+        x = asarray(x)
         y = Numeric.zeros(x.shape,x.typecode())
     for i in range(len(p)):
         y = x * y + p[i]
@@ -321,9 +321,9 @@ class poly1d:
 
     def __array__(self,t=None):
         if t:
-            return Numeric.asarray(self.coeffs,t)
+            return asarray(self.coeffs,t)
         else:
-            return Numeric.asarray(self.coeffs)
+            return asarray(self.coeffs)
 
     def __coerce__(self,other):
         return None

@@ -2,7 +2,7 @@ import types
 import Numeric
 __all__ = ['mgrid','ogrid','r_','c_','index_exp']
 
-from type_check import ScalarType
+from type_check import ScalarType, asarray
 import function_base
 import matrix_base
 
@@ -143,7 +143,7 @@ class concatenator:
                 newobj = function_base.linspace(start, stop, num=size,
                                                 endpoint=endpoint)
             elif type(key[k]) in ScalarType:
-                newobj = Numeric.asarray([key[k]])
+                newobj = asarray([key[k]])
             else:
                 newobj = key[k]
             objs.append(newobj)
