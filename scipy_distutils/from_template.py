@@ -40,9 +40,10 @@ comment_block_exp = re.compile(r'/\*.*?\*/',re.DOTALL)
 # These don't work with Python2.3 : maximum recursion limit exceeded.
 #subroutine_exp = re.compile(r'subroutine (?:\s|.)*?end subroutine.*')
 #function_exp = re.compile(r'function (?:\s|.)*?end function.*')
-reg = re.compile(r"\ssubroutine\s(.+)\(.*\)")
+#reg = re.compile(r"\ssubroutine\s(.+)\(.*\)")
 
 def parse_structure(astr):
+    astr = astr.lower()
     spanlist = []
     # subroutines
     ind = 0
@@ -86,7 +87,7 @@ list_re = re.compile(r"<([\w ]+(,\s*[\w]+)+)>")
 
 def conv(astr):
     b = astr.split(',')
-    return ','.join([x.strip().lower() for x in b])
+    return ','.join([x.strip() for x in b])
 
 def unique_key(adict):
     # this obtains a unique key given a dictionary
@@ -129,7 +130,7 @@ def expand_sub(substr,extra=''):
     _names.update(_special_names)
     numsubs = None
     for rep in reps:
-        name = rep[0].strip().lower()
+        name = rep[0].strip()
         thelist = conv(rep[1])
         _names[name] = thelist
 
@@ -172,20 +173,9 @@ def get_line_header(str,beg):
         ind = ind - 1
         char = str[ind]
     return ''.join(extra)
-
-maxre = re.compile(r"max[(](.+),(.+)[)]")
-minre = re.compile(r"min[(](.+),(.+)[)]")
-
-def fix_capitals(astr):
-    # Need to convert max(x,x) to MAX(x,x)
-    #  and min(x,x) to MIN(x,x)
-    astr = maxre.sub(r"MAX(\g<1>,\g<2>)",astr)
-    astr = minre.sub(r"MIN(\g<1>,\g<2>)",astr)
-    return astr
-    
     
 def process_str(allstr):
-    newstr = allstr.lower()
+    newstr = allstr
     writestr = _head
 
     struct = parse_structure(newstr)
@@ -194,13 +184,13 @@ def process_str(allstr):
     
     oldend = 0
     for sub in struct:
-        writestr += fix_capitals(newstr[oldend:sub[0]])
+        writestr += newstr[oldend:sub[0]]
         expanded = expand_sub(newstr[sub[0]:sub[1]],get_line_header(newstr,sub[0]))
-        writestr += fix_capitals(expanded)
+        writestr += expanded
         oldend =  sub[1]
 
 
-    writestr += fix_capitals(newstr[oldend:])
+    writestr += newstr[oldend:]
     return writestr
 
 
