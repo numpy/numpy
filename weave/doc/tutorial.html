@@ -2226,6 +2226,58 @@ efficient data structures or algorithms.  For maximum speed in these cases,
 hand-coded C or Fortran code is the only way to go.
 </li>
 <li>
+<code>weave.blitz</code> can produce different results than Numeric in certain 
+situations.  It can happen when the array receiving the results of a 
+calculation is also used during the calculation.  The Numeric behavior is to 
+carry out the entire calculation on the right hand side of an equation and 
+store it in a temporary array.  This temprorary array is assigned to the array 
+on the left hand side of the equation.  blitz, on the other hand, does a 
+"running" calculation of the array elements assigning values from the right hand
+side to the elements on the left hand side immediately after they are calculated.
+Here is an example, provided by Prabhu Ramachandran, where this happens:
+
+        <blockquote><pre><code>
+        # 4 point average.
+        >>> expr = "u[1:-1, 1:-1] = (u[0:-2, 1:-1] + u[2:, 1:-1] + "\
+        ...                "u[1:-1,0:-2] + u[1:-1, 2:])*0.25"
+        >>> u = zeros((5, 5), 'd'); u[0,:] = 100
+        >>> exec (expr)
+        >>> u
+        array([[ 100.,  100.,  100.,  100.,  100.],
+               [   0.,   25.,   25.,   25.,    0.],
+               [   0.,    0.,    0.,    0.,    0.],
+               [   0.,    0.,    0.,    0.,    0.],
+               [   0.,    0.,    0.,    0.,    0.]])
+        
+        >>> u = zeros((5, 5), 'd'); u[0,:] = 100
+        >>> weave.blitz (expr)
+        >>> u
+        array([[ 100.  ,  100.       ,  100.       ,  100.       ,  100. ],
+               [   0.  ,   25.       ,   31.25     ,   32.8125   ,    0. ],
+               [   0.  ,    6.25     ,    9.375    ,   10.546875 ,    0. ],
+               [   0.  ,    1.5625   ,    2.734375 ,    3.3203125,    0. ],
+               [   0.  ,    0.       ,    0.       ,    0.       ,    0. ]])    
+        </code></pre></blockquote>            
+    
+    You can prevent this behavior by using a temporary array.
+    
+        <blockquote><pre><code>
+        >>> u = zeros((5, 5), 'd'); u[0,:] = 100
+        >>> temp = zeros((4, 4), 'd');
+        >>> expr = "temp = (u[0:-2, 1:-1] + u[2:, 1:-1] + "\
+        ...        "u[1:-1,0:-2] + u[1:-1, 2:])*0.25;"\
+        ...        "u[1:-1,1:-1] = temp"
+        >>> weave.blitz (expr)
+        >>> u
+        array([[ 100.,  100.,  100.,  100.,  100.],
+               [   0.,   25.,   25.,   25.,    0.],
+               [   0.,    0.,    0.,    0.,    0.],
+               [   0.,    0.,    0.,    0.,    0.],
+               [   0.,    0.,    0.,    0.,    0.]])
+        </code></pre></blockquote>                   
+    
+</li>
+<li>
 One other point deserves mention lest people be confused. 
 <code>weave.blitz</code> is not a general purpose Python->C compiler.  It 
 only works for expressions that contain Numeric arrays and/or 
