@@ -39,7 +39,7 @@ from glob import glob
 from distutils.sysconfig import get_config_vars
 
 if sys.platform == 'win32':
-    prefixes = ['C:'] # XXX: what is prefix in win32?
+    prefixes = ['C:\\'] # XXX: what is prefix in win32?
 else:
     prefixes = ['/usr','/usr/local','/opt']
 if sys.prefix not in prefixes:

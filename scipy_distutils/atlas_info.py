@@ -1,5 +1,6 @@
 import sys, os
 from misc_util import get_path
+from system_info import get_info
 
 library_path = None
 
@@ -16,8 +17,15 @@ def get_atlas_info():
         else:
             atlas_library_dirs = library_path
         blas_libraries = ['f77blas', 'cblas', 'atlas', 'g2c']
-        lapack_libraries = ['lapack'] + blas_libraries 
+        lapack_libraries = ['lapack'] + blas_libraries
+        #XXX: need to use `atlas_info = get_info('atlas')'
+        atlas_info = {'libraries':lapack_libraries,
+                      'library_dirs':atlas_library_dirs}
+        return atlas_info
     else:
+        atlas_info = get_info('atlas')
+        return atlas_info
+
         if not dir_exists(library_path):
             atlas_library_dirs = unix_atlas_directory(sys.platform)
         else:

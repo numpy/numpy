@@ -174,15 +174,15 @@ class build_flib (build_clib):
         return lib_names
 
     def get_fcompiler_library_names(self):
-        if not self.has_f_libraries():
-            return None
+        #if not self.has_f_libraries():
+        #    return None
         if self.fcompiler is not None:
             return self.fcompiler.get_libraries()
         return []
 
     def get_fcompiler_library_dirs(self):
-        if not self.has_f_libraries():
-            return None
+        #if not self.has_f_libraries():
+        #    return None
         if self.fcompiler is not None:
             return self.fcompiler.get_library_dirs()
         return []
@@ -211,8 +211,8 @@ class build_flib (build_clib):
     # get_library_dirs ()
 
     def get_runtime_library_dirs(self):
-        if not self.has_f_libraries():
-            return []
+        #if not self.has_f_libraries():
+        #    return []
 
         lib_dirs = []
 

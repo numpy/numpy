@@ -20,6 +20,7 @@ class build_ext (old_build_ext):
         
         # support for building static fortran libraries
         need_f_libs = 0
+        need_f_opts = getattr(ext,'need_fcompiler_opts',0)
         ext_name = string.split(ext.name,'.')[-1]
 
         if self.distribution.has_f_libraries():
@@ -31,15 +32,12 @@ class build_ext (old_build_ext):
                     if build_flib.has_f_library(lib_name):
                         need_f_libs = 1
                         break
-        print ext.name,ext_name,'needs fortran libraries',need_f_libs
+        elif need_f_opts:
+            build_flib = self.get_finalized_command('build_flib')
+        print ext.name,ext_name,'needs fortran libraries',\
+              need_f_libs,need_f_opts
         
         if need_f_libs:
-            moreargs = build_flib.fcompiler.get_extra_link_args()
-            if moreargs != []:
-                if ext.extra_link_args is None:
-                    ext.extra_link_args = moreargs
-                else:
-                    ext.extra_link_args += moreargs
             if build_flib.has_f_library(ext_name) and \
                ext_name not in ext.libraries:
                 ext.libraries.append(ext_name)
@@ -48,9 +46,18 @@ class build_ext (old_build_ext):
                 ext.library_dirs.extend(build_flib.get_library_dirs(lib_name))
             
             ext.library_dirs.append(build_flib.build_flib)
+
+        if need_f_libs or need_f_opts:
+            moreargs = build_flib.fcompiler.get_extra_link_args()
+            if moreargs != []:
+                if ext.extra_link_args is None:
+                    ext.extra_link_args = moreargs
+                else:
+                    ext.extra_link_args += moreargs
+
             runtime_dirs = build_flib.get_runtime_library_dirs()
             ext.runtime_library_dirs.extend(runtime_dirs or [])
-            
+
             linker_so = build_flib.fcompiler.get_linker_so()
 
             if linker_so is not None:
