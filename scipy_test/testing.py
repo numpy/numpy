@@ -39,7 +39,7 @@ try:
     # If Numeric and scipy_base  are not available, then some of the
     # functions below will not be available.
     from Numeric import alltrue,equal,shape,ravel,around,zeros,Float64,asarray,\
-         less_equal,array2string,less
+         less_equal,array2string,less,ArrayType
     # `import scipy_base.fastumath as math` must be at the end of this file.
 except ImportError,msg:
     print msg
@@ -634,6 +634,8 @@ def assert_equal(actual,desired,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
     """
+    if isinstance(actual, ArrayType) or isinstance(desired, ArrayType):
+        return assert_array_equal(actual, desired, err_msg)
     msg = '\nItems are not equal:\n' + err_msg
     try:
         if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
@@ -651,6 +653,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
     """
+    if isinstance(actual, ArrayType) or isinstance(desired, ArrayType):
+        return assert_array_almost_equal(actual, desired, decimal, err_msg)
     msg = '\nItems are not equal:\n' + err_msg
     try:
         if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
