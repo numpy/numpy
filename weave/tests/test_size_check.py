@@ -2,7 +2,7 @@ import unittest, os
 from Numeric import *
 # The following try/except so that non-SciPy users can still use blitz
 try:
-    from fastumath import *
+    from scipy_base.fastumath import *
 except:
     pass # fastumath not available    
 
