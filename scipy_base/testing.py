@@ -3,9 +3,15 @@ __all__ = []
 
 import os,sys,time,glob,string,traceback,unittest
 
-from Numeric import alltrue,equal,shape,ravel,around,zeros,Float64
-import scipy_base.fastumath
-
+try:
+    # These are used by Numeric tests.
+    # If Numeric and scipy_base  are not available, then some of the
+    # functions below will not be available.
+    from Numeric import alltrue,equal,shape,ravel,around,zeros,Float64
+    import scipy_base.fastumath
+except ImportError:
+    pass
+    
 __all__.append('ScipyTestCase')
 class ScipyTestCase (unittest.TestCase):
 
