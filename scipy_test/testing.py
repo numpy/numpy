@@ -52,7 +52,7 @@ def set_package_path(level=1):
     sys.path.insert(0,d1)
 
 __all__.append('set_local_path')
-def set_local_path(level=1):
+def set_local_path(reldir='', level=1):
     """ Prepend local directory to sys.path.
 
     The caller is responsible for removing this path by using
@@ -65,7 +65,7 @@ def set_local_path(level=1):
         testfile = sys.argv[0]
     else:
         testfile = f.f_locals['__file__']
-    local_path = os.path.dirname(os.path.abspath(testfile))
+    local_path = os.path.join(os.path.dirname(os.path.abspath(testfile)),reldir)
     if DEBUG:
         print 'Inserting %r to sys.path' % (local_path)
     sys.path.insert(0,local_path)
