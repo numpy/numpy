@@ -335,7 +335,6 @@ static Py_complex c_quot_fast(Py_complex a, Py_complex b)
 /* 	else if (a.imag > 0.0) {r.imag = 1.0/0.0;} */
 	return r;
     }
-    
     if (abs_breal >= abs_bimag) {
 	/* divide tops and bottom by b.real */
 	const double ratio = b.imag / b.real;
@@ -2835,15 +2834,15 @@ static void InitOperators(PyObject *dictionary) {
 
     add_functions[11] = PyUFunc_OO_O;
     subtract_functions[11] = PyUFunc_OO_O;
-    multiply_functions[9] = PyUFunc_FF_F_As_DD_D;
-    multiply_functions[10] = PyUFunc_DD_D;
+    multiply_functions[9] = fastumath_FF_F_As_DD_D;
+    multiply_functions[10] = fastumath_DD_D;
     multiply_functions[11] = PyUFunc_OO_O;
-    divide_functions[9] = PyUFunc_FF_F_As_DD_D;
-    divide_functions[10] = PyUFunc_DD_D;
+    divide_functions[9] = fastumath_FF_F_As_DD_D;
+    divide_functions[10] = fastumath_DD_D;
     divide_functions[11] = PyUFunc_OO_O;
 
-    true_divide_functions[9] = PyUFunc_FF_F_As_DD_D;
-    true_divide_functions[10] = PyUFunc_DD_D;
+    true_divide_functions[9] = fastumath_FF_F_As_DD_D;
+    true_divide_functions[10] = fastumath_DD_D;
     true_divide_functions[11] = PyUFunc_OO_O;
 
     conjugate_functions[11] = PyUFunc_O_O_method;
@@ -2852,7 +2851,7 @@ static void InitOperators(PyObject *dictionary) {
     remainder_functions[10] = PyUFunc_OO_O;
     power_functions[7] = PyUFunc_ff_f_As_dd_d;
     power_functions[8] = PyUFunc_dd_d;
-    power_functions[9] = PyUFunc_FF_F_As_DD_D;
+    power_functions[9] = fastumath_FF_F_As_DD_D;
     power_functions[10] = PyUFunc_DD_D;
     power_functions[11] = PyUFunc_OO_O;
     absolute_functions[11] = PyUFunc_O_O;
