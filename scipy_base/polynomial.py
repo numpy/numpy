@@ -9,12 +9,12 @@ from function_base import trim_zeros, sort_complex
 
 __all__ = ['poly','roots','polyint','polyder','polyadd','polysub','polymul',
            'polydiv','polyval','poly1d']
-           
+ 
 def get_eigval_func():
     try:
         import scipy.linalg
         eigvals = scipy.linalg.eigvals
-    except:
+    except ImportError:
         try:
             import LinearAlgebra
             eigvals = LinearAlgebra.eigenvalues

@@ -3,19 +3,9 @@
 """
 
 __all__ = ['diag','eye','fliplr','flipud','rot90']
-           
-# These are from Numeric
-import Matrix
+
 from Numeric import *
-from scipy_base.fastumath import *
-from type_check import isscalar
-from index_tricks import mgrid,r_,c_
-# Elementary matrices
 
-# zeros is from matrixmodule in C
-# ones is from Numeric.py
-
-    
 def fliplr(m):
     """ returns a 2-D matrix m with the rows preserved and columns flipped 
         in the left/right direction.  Only works with 2-D arrays.
@@ -96,9 +86,3 @@ def test(level=10):
 def test_suite(level=1):
     from scipy_test.testing import module_test_suite
     return module_test_suite(__name__,__file__,level=level)
-
-if __name__ == '__main__':
-    print 'float epsilon:',float_epsilon
-    print 'float tiny:',float_tiny
-    print 'double epsilon:',double_epsilon
-    print 'double tiny:',double_tiny

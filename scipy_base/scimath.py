@@ -6,15 +6,15 @@ whose output is different than the input in certain domains of the input.
 __all__ = ['sqrt', 'log', 'log2','logn','log10', 'power', 'arccos',
            'arcsin', 'arctanh']
 
+import Numeric
+
 from type_check import isreal
 from function_base import any
-import scipy_base.fastumath
-import Numeric
-from scipy_base.fastumath import *
-toextend = scipy_base.fastumath.__dict__.keys()
-for key in toextend:
-    if key not in __all__ and key[0] != '_':
-       __all__.append(key)
+import fastumath
+from fastumath import *
+
+__all__.extend([key for key in dir(fastumath) \
+                if key[0]!='_' and key not in __all__])
 
 def _tocomplex(arr):
     if arr.typecode() in ['f', 's', 'b', '1','w']:
@@ -26,19 +26,19 @@ def sqrt(x):
     x = Numeric.asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
-    return scipy_base.fastumath.sqrt(x)
+    return fastumath.sqrt(x)
 
 def log(x):
     x = Numeric.asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
-    return scipy_base.fastumath.log(x)
+    return fastumath.log(x)
 
 def log10(x):
     x = Numeric.asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
-    return scipy_base.fastumath.log10(x)    
+    return fastumath.log10(x)    
 
 def logn(n,x):
     """ Take log base n of x.
@@ -48,7 +48,7 @@ def logn(n,x):
         x = _tocomplex(x)
     if isreal(n) and (n<0):
         n = _tocomplex(n)
-    return scipy_base.fastumath.log(x)/scipy_base.fastumath.log(n)
+    return fastumath.log(x)/fastumath.log(n)
 
 def log2(x):
     """ Take log base 2 of x.
@@ -56,31 +56,29 @@ def log2(x):
     x = Numeric.asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
-    return scipy_base.fastumath.log(x)/scipy_base.fastumath.log(2)
+    return fastumath.log(x)/fastumath.log(2)
 
 
 def power(x, p):
     x = Numeric.asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
-    return scipy_base.fastumath.power(x, p)
+    return fastumath.power(x, p)
     
 def arccos(x):
     x = Numeric.asarray(x)
     if isreal(x) and any(abs(x)>1):
         x = _tocomplex(x)
-    return scipy_base.fastumath.arccos(x)
+    return fastumath.arccos(x)
 
 def arcsin(x):
     x = Numeric.asarray(x)
     if isreal(x) and any(abs(x)>1):
         x = _tocomplex(x)
-    return scipy_base.fastumath.arcsin(x)
+    return fastumath.arcsin(x)
 
 def arctanh(x):
     x = Numeric.asarray(x)
     if isreal(x) and any(abs(x)>1):
         x = _tocomplex(x)
-    return scipy_base.fastumath.arctanh(x)
-
-
+    return fastumath.arctanh(x)

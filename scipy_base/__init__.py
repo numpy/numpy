@@ -78,6 +78,7 @@ rot90            --  Rotate a 2D array a multiple of 90 degrees
 eye              --  Return a 2D array with ones down a given diagonal
 diag             --  Construct a 2D array from a vector, or return a given
                        diagonal from a 2D array.                       
+mat              --  Construct a Matrix
 
 Polynomials
 ============
@@ -92,26 +93,35 @@ polysub          --  Substract polynomials
 polymul          --  Multiply polynomials
 polydiv          --  Divide polynomials
 polyval          --  Evaluate polynomial at given argument
+
+Import tricks
+=============
+ppimport         --  Postpone module import until trying to use it
+ppimport_attr    --  Postpone module import until trying to use its
+                      attribute
 """
 
 from scipy_base_version import scipy_base_version as __version__
 
-from ppimport import ppimport,ppimport_attr
+from ppimport import ppimport, ppimport_attr
+
+# The following statement is equivalent to
+#
+#   from Matrix import Matrix as mat
+#
+# but avoids expensive LinearAlgebra import when
+# Matrix is not used.
+mat = ppimport_attr(ppimport('Matrix'), 'Matrix')
+
+# Force Numeric to use scipy_base.fastumath instead of Numeric.umath.
+import fastumath  # no need to use scipy_base.fastumath
+import sys as _sys
+_sys.modules['umath'] = fastumath
 
 import Numeric
 from Numeric import *
-try:
-    import fastumath
-except ImportError,mess:
-    mess_str = str(mess)
-    if mess_str=='No module named fastumath':
-        print '__file__=',__file__
-        raise ImportError,mess_str+\
-              "\n  scipy cannot be imported from its source directory."\
-              "\n  Change to another directory and try again."
-    raise ImportError,mess
-import limits
 
+import limits
 from type_check import *
 from index_tricks import *
 from function_base import *
@@ -121,13 +131,11 @@ from matrix_base import *
 from polynomial import *
 from scimath import *
 
-# needs scipy_base.fastumath
 Inf = inf = fastumath.PINF
 try:
     NAN = NaN = nan = fastumath.NAN
 except AttributeError:
     NaN = NAN = nan = fastumath.PINF/fastumath.PINF
-
 
 #---- testing ----#
 

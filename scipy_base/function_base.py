@@ -1,11 +1,10 @@
+
 import types
 import Numeric
-N = Numeric
 from Numeric import *
-from scipy_base.fastumath import *
-inf = PINF
+from type_check import ScalarType
+from fastumath import PINF as inf
 import _compiled_base
-from type_check import ScalarType, isscalar
 
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
@@ -23,7 +22,7 @@ def sum(x,axis=0):  # could change default axis here
     x = asarray(x)
     if x.typecode() in ['1','s','b','w']:
         x = x.astype('l')
-    return N.sum(x,axis)
+    return Numeric.sum(x,axis)
     
 
 def logspace(start,stop,num=50,endpoint=1):
@@ -277,7 +276,7 @@ def unique(inseq):
 def extract(arr,mask):
     """1D array of those elements of ravel(arr) where ravel(mask) is true.
     """
-    return N.take(ravel(arr), nonzero(ravel(mask)))
+    return Numeric.take(ravel(arr), nonzero(ravel(mask)))
 
 def insert(arr, mask, vals):
     """Similar to putmask arr[mask] = vals but 1d array vals has the
@@ -288,22 +287,22 @@ def insert(arr, mask, vals):
 def nansum(x,axis=-1):
     """Sum the array over the given axis treating nans as missing values.
     """
-    x = N.asarray(x).copy()
-    N.putmask(x,isnan(x),0)
-    return N.sum(x,axis)
+    x = Numeric.asarray(x).copy()
+    Numeric.putmask(x,isnan(x),0)
+    return Numeric.sum(x,axis)
 
 def nanmin(x,axis=-1):
     """Find the minimium over the given axis ignoring nans.
     """
-    x = N.asarray(x).copy()
-    N.putmask(x,isnan(x),inf)
+    x = Numeric.asarray(x).copy()
+    Numeric.putmask(x,isnan(x),inf)
     return amin(x,axis)
 
 def nanargmin(x,axis=-1):
     """Find the indices of the minimium over the given axis ignoring nans.
     """
-    x = N.asarray(x).copy()
-    N.putmask(x,isnan(x),inf)
+    x = Numeric.asarray(x).copy()
+    Numeric.putmask(x,isnan(x),inf)
     return argmin(x,axis)
     
 
@@ -321,11 +320,11 @@ def nanargmax(x,axis=-1):
     putmask(x,isnan(x),-inf)
     return argmax(x,axis)
 
-import sys
 def disp(mesg, device=None, linefeed=1):
     """Display a message to device (default is sys.stdout) with(out) linefeed.
     """
     if device is None:
+        import sys
         device = sys.stdout
     if linefeed:
         device.write('%s\n' % mesg)

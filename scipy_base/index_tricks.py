@@ -135,7 +135,8 @@ class concatenator:
                    isinstance(start, types.FloatType) or \
                    isinstance(stop, types.FloatType):
                        typecode = Numeric.Float
-                newobj = function_base.linspace(start, stop, num=size, endpoint=endpoint)
+                newobj = function_base.linspace(start, stop, num=size,
+                                                endpoint=endpoint)
             elif type(key[k]) in ScalarType:
                 newobj = Numeric.asarray([key[k]])
             else:

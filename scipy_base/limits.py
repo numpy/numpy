@@ -7,8 +7,6 @@
 """
 
 import Numeric
-import scipy_base.fastumath
-reload(scipy_base.fastumath)
 from type_check import cast
 toFloat32=cast['f']
 toFloat64=cast['d']
@@ -39,8 +37,6 @@ def tiny(typecode):
         d2 = d1
         d1 = d1 * cast(.5)
     return d2
-
-        
 
 float_epsilon = epsilon(Numeric.Float32)
 float_tiny = tiny(Numeric.Float32)

@@ -1,9 +1,8 @@
+
 import types
 import Numeric
-from Numeric import *
-from scipy_base.fastumath import *
-
-import limits
+from fastumath import isinf, isnan, isfinite
+from Numeric import asarray, ArrayType, array
 
 __all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isnan','isinf','isfinite',

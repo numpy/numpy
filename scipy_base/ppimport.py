@@ -151,12 +151,14 @@ class _ModuleLoader:
         name = self.__name__
         module = sys.modules[name]
         assert module is self,`module`
-        if module is self:
-            # uninstall loader
-            del sys.modules[name]
-            #print 'Executing postponed import for %s' %(name)
-            module = __import__(name,None,None,['*'])
-        assert isinstance(module,types.ModuleType)
+
+        # uninstall loader
+        del sys.modules[name]
+
+        #print 'Executing postponed import for %s' %(name)
+        module = __import__(name,None,None,['*'])
+        assert isinstance(module,types.ModuleType),`module`
+
         self.__dict__ = module.__dict__
         self.__dict__['_ppimport_module'] = module
         return module
