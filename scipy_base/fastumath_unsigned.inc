@@ -1,11 +1,4 @@
 /* -*- c -*- */
-#include "Python.h"
-#include "Numeric/arrayobject.h"
-#include "Numeric/ufuncobject.h"
-#include "abstract.h"
-#include <math.h>
-#include "mconf_lite.h"
-
 /* Fast umath module whose functions do not check for range and domain errors.
 
    Replacement for umath + additions for isnan, isfinite, and isinf
@@ -53,34 +46,6 @@ extern double modf (double, double *);
 #ifndef M_PI
 #define M_PI 3.1415926535897931
 #endif
-
-#if !defined(HAVE_INVERSE_HYPERBOLIC)
-static double acosh(double x)
-{
-    return log(x + sqrt((x-1.0)*(x+1.0)));
-}
-
-static double asinh(double xx)
-{
-    double x;
-    int sign;
-    if (xx < 0.0) {
-        sign = -1;
-        x = -xx;
-    }
-    else {
-        sign = 1;
-        x = xx;
-    }
-    return sign*log(x + sqrt(x*x+1.0));
-}
-
-static double atanh(double x)
-{
-    return 0.5*log((1.0+x)/(1.0-x));
-}
-#endif
-
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
