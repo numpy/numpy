@@ -53,6 +53,7 @@ class build_src(build_ext.build_ext):
         if self.package is None:
             self.package = self.distribution.ext_package
         self.extensions = self.distribution.ext_modules
+        self.libraries = self.distribution.libraries
         self.py_modules = self.distribution.py_modules
         if self.build_src is None:
             self.build_src = os.path.join(self.build_base, 'src')
@@ -72,7 +73,7 @@ class build_src(build_ext.build_ext):
         return
 
     def run(self):
-        if not self.extensions:
+        if not (self.extensions or self.libraries):
             return
         self.build_sources()
         return
@@ -82,12 +83,29 @@ class build_src(build_ext.build_ext):
 
         for ext in self.extensions:
             self.build_extension_sources(ext)
+
+        for libname_info in self.libraries:
+            self.build_library_sources(*libname_info)
+
+        return
+
+    def build_library_sources(self, lib_name, build_info):
+        sources = list(build_info.get('sources',[]))
+
+        if not sources:
+            return
+
+        log.info('building library "%s" sources' % (lib_name))
+
+        sources = self.generate_sources(sources, (lib_name, build_info))
+
+        build_info['sources'] = sources
         return
 
     def build_extension_sources(self, ext):
         sources = list(ext.sources)
 
-        log.info('building "%s" sources' % (ext.name))
+        log.info('building extension "%s" sources' % (ext.name))
 
         fullname = self.get_ext_fullname(ext.name)
 
