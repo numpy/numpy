@@ -29,7 +29,7 @@ class GnuFCompiler(FCompiler):
         'compiler_f77' : [fc_exe,"-Wall","-fno-second-underscore"],
         'compiler_f90' : None,
         'compiler_fix' : None,
-        'linker_so'    : [fc_exe],
+        'linker_so'    : [fc_exe,"-Wall"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
         }
@@ -50,27 +50,18 @@ class GnuFCompiler(FCompiler):
     def get_flags_linker_so(self):
         opt = []
         if sys.platform=='darwin':
-            try:
-                import MacOS
-            except ImportError:
-                is_framework = False
-            else:
-                is_framework = (MacOS.linkmodel == 'framework')
-            if is_framework:
-                # This is when Python is from Apple framework
-                target = os.environ.get('MACOSX_DEPLOYMENT_TARGET', None)
-                if target is None:
-                    target = '10.3'
-                major, minor = target.split('.')
-                if int(minor) < 3:
-                    minor = '3'
-                    warnings.warn('Environment variable ' 
-                        'MACOSX_DEPLOYMENT_TARGET reset to 10.3')
-                os.environ['MACOSX_DEPLOYMENT_TARGET'] = '%s.%s' % (major,
-                    minor)
-                
-                opt.extend(['-undefined', 'dynamic_lookup'])
-            opt.append('-bundle')
+            target = os.environ.get('MACOSX_DEPLOYMENT_TARGET', None)
+            if target is None:
+                target = '10.3'
+            major, minor = target.split('.')
+            if int(minor) < 3:
+                minor = '3'
+                warnings.warn('Environment variable ' 
+                    'MACOSX_DEPLOYMENT_TARGET reset to 10.3')
+            os.environ['MACOSX_DEPLOYMENT_TARGET'] = '%s.%s' % (major,
+                minor)
+            
+            opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
             opt.append("-shared")
         if sys.platform[:5]=='sunos':
