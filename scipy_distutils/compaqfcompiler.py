@@ -50,7 +50,7 @@ class CompaqVisualFCompiler(FCompiler):
     version_pattern = r'(DIGITAL|Compaq) Visual Fortran Optimizing Compiler'\
                       ' Version (?P<version>[^\s]*).*'
 
-    compile_switch = '/compile_only '
+    compile_switch = '/compile_only'
     object_switch = '/object:'
     library_switch = '/OUT:'      #No space after /OUT:!
 
