@@ -250,13 +250,13 @@ Once <code>weave</code> is installed, fire up python and run its unit tests.
 
 This takes a loooong time.  On windows, it is usually several minutes.  On Unix 
 with remote file systems, I've had it take 15 or so minutes.  In the end, it 
-should run about 150 tests and spew some speed results along the way.  If you 
+should run about 180 tests and spew some speed results along the way.  If you 
 get errors, please let me know.
 
 If you don't have Numeric installed, you'll get some module import errors 
 during the test setup phase for modules that are Numeric specific (blitz_spec, 
 blitz_tools, size_check, standard_array_spec, ast_tools), but all test should
-pass (about 60 and the run time should be quite a bit less).
+pass (about 100 and they should complete in several minutes).
 <p>
 If you only want to test a single module of the package, you can do this by
 running test() for that specific module.
@@ -269,17 +269,24 @@ running test() for that specific module.
     Ran 7 tests in 23.284s
     </code></pre></blockquote>        
 <em>
-Note: I've had some test fail on windows machines where I have msvc, gcc-2.95.2 
-(in c:\gcc-2.95.2), and gcc-2.95.3-6 (in c:\gcc) all installed. My environment 
-has c:\gcc in the path and does not have c:\gcc-2.95.2 in the path.  The test 
-process runs very smoothly until the end where several test using gcc fail with 
-cpp0 not found by g++.  If I check os.system('gcc -v') before running tests, I 
-get gcc-2.95.3-6.  If I check after running tests (and after failure), I get 
-gcc-2.95.2. ??huh??.  The os.environ['PATH'] still has c:\gcc first in it and 
-is not corrupted (msvc/distutils messes with the environment variables, so we 
-have to undo its work in some places).  If anyone else sees this, let me know -
-- it may just be an quirk on my machine (unlikely).  Testing with the gcc-
-2.95.2 installation always works.
+Windows Note: I've had some test fail on windows machines where I have msvc, 
+gcc-2.95.2 (in c:\gcc-2.95.2), and gcc-2.95.3-6 (in c:\gcc) all installed. My 
+environment has c:\gcc in the path and does not have c:\gcc-2.95.2 in the path. 
+The test process runs very smoothly until the end where several test using gcc 
+fail with cpp0 not found by g++.  If I check os.system('gcc -v') before running 
+tests, I get gcc-2.95.3-6.  If I check after running tests (and after failure), 
+I get gcc-2.95.2. ??huh??.  The os.environ['PATH'] still has c:\gcc first in it 
+and is not corrupted (msvc/distutils messes with the environment variables, so 
+we have to undo its work in some places).  If anyone else sees this, let me 
+know - - it may just be an quirk on my machine (unlikely).  Testing with the 
+gcc- 2.95.2 installation always works.
+</em>
+<p>
+<em>
+wxPython Note: wxPython tests are not enabled by default because importing
+wxPython on a Unix machine without access to a X-term will cause the 
+program to exit.  Anyone know of a safe way to detect whether wxPython
+can be imported and whether a display exists on a machine?
 </em>
 
 <a name="Inline"></a>
@@ -513,6 +520,17 @@ provides C++ class equivalents for Python objects that simplify, or at
 least object orientify, working with Python objects in C/C++.  For example, 
 <code>seq.length()</code> returns the length of the list. A little more about
 CXX and its class methods, etc. is in the ** type conversions ** section.
+<p>
+<em>
+Note: CXX uses templates and therefore may be a little less portable than 
+another alternative by Gordan McMillan called SCXX which was inspired by
+CXX.  It doesn't use templates so it should compile faster and be more portable.
+SCXX has a few less features, but it appears to me that it would mesh with
+the needs of weave quite well.  Hopefully xxx_spec files will be written
+for SCXX in the future, and we'll be able to compare on a more empirical
+basis.  Both sets of spec files will probably stick around, it just a question
+of which becomes the default.
+</em>
 <p>
 Most of the algorithm above looks similar in C to the original Python code. 
 There are two main differences.  The first is the setting of 
@@ -1435,26 +1453,28 @@ pretty important for anything beyond trivial uses of <code>inline</code>.
 Generating the C/C++ code is handled by <code>ext_function</code> and 
 <code>ext_module</code> classes and . For the most part, compiling the code is 
 handled by distutils.  Some customizations were needed, but they were 
-relatively minor and do not require changes to distutils itself (although a few 
-changes would be nice...). Cataloging is pretty simple in concept, but surprisingly
-required the most code to implement (and still likely needs some work).  So,
-this section covers items 1 and 4 from the list.  Item 2 is covered later in
-the chapter covering the <code>ext_tools</code> module, and distutils is covered
-by a completely separate document xxx.
-    
+relatively minor and do not require changes to distutils itself. Cataloging is 
+pretty simple in concept, but surprisingly required the most code to implement 
+(and still likely needs some work).  So, this section covers items 1 and 4 from 
+the list.  Item 2 is covered later in the chapter covering the 
+<code>ext_tools</code> module, and distutils is covered by a completely 
+separate document xxx.
+
 <h2>Passing Variables in/out of the C/C++ code</h2>
 <em>
 Note: Passing variables into the C code is pretty straight forward, but there 
-are subtlties to how variable modifications in C are returned to Python. see 
-xxx for a more thorough discussion of this issue.
+are subtlties to how variable modifications in C are returned to Python. see <a 
+href="#Returning Values">Returning Values</a> for a more thorough discussion of 
+this issue.
 </em> 
-
+    
 <A name="Converting Types"></a>
 <h2>Type Conversions</h2>
 
 <em>
-Note: Maybe xxx_converter instead of xxx_specification is a more descriptive 
-name.
+Note: Maybe <code>xxx_converter</code> instead of 
+<code>xxx_specification</code> is a more descriptive name.  Might change in 
+future version?
 </em>
 
 <p>
@@ -1498,7 +1518,6 @@ Note:
 <li>
 Hopefully VTK will be added to the list soon</li>
         </ul>
-<UL></UL>
 </em>
 <p>
 

@@ -64,8 +64,8 @@ class wx_specification(base_specification):
                cmp(self.type_name,other.type_name)
 
 """
-# this should only be inabled on machines with wx installed
-# It'll cause major problems otherwise.
+# this should only be enabled on machines with access to a display device
+# It'll cause problems otherwise.
 def test():
     from scipy_test import module_test
     module_test(__name__,__file__)
