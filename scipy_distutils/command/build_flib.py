@@ -554,7 +554,7 @@ class absoft_fortran_compiler(fortran_compiler_base):
             self.f90_opt = '-O -Q100'
             self.f77_switches = '-N22 -N90 -N110'
             self.f77_opt = '-O -Q100'
-            self.libraries = ['fio', 'fmath', 'f90math', 'COMDLG32']
+            self.libraries = ['fio', 'f90math', 'fmath', 'COMDLG32']
         else:
             self.f90_switches = '-ffixed  -YCFRL=1 -YCOM_NAMES=LCS' \
                                 ' -YCOM_PFX  -YEXT_PFX -YEXT_NAMES=LCS' \
