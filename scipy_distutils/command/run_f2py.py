@@ -125,7 +125,7 @@ class run_f2py(Command):
                 if base != ext_name:
                     # XXX: Should we do here more than just warn?
                     self.warn(red_text('%s provides %s but this extension is %s' \
-                              % (source,`base`,`ext.name`)))
+                              % (source,`base`,`ext_name`)))
                 target_file = os.path.join(target_dir,base+target_ext)
                 fortran_target_file = os.path.join(target_dir,
                                                    base+fortran_target_ext)
@@ -227,16 +227,12 @@ class run_f2py(Command):
                 flib = d
                 break
         if flib is None:
-            flib = {'sources':[],
-                    'define_macros':[],
-                    'undef_macros':[],
-                    'include_dirs':[],
-                    }
+            flib = {}
             fortran_libraries.append((name,flib))
             
-        flib['sources'].extend(f_files)
-        flib['define_macros'].extend(ext.define_macros)
-        flib['undef_macros'].extend(ext.undef_macros)
-        flib['include_dirs'].extend(ext.include_dirs)
+        flib.setdefault('sources',[]).extend(f_files)
+        flib.setdefault('define_macros',[]).extend(ext.define_macros)
+        flib.setdefault('undef_macros',[]).extend(ext.undef_macros)
+        flib.setdefault('include_dirs',[]).extend(ext.include_dirs)
         
 # class run_f2py
