@@ -17,7 +17,7 @@ isinf            --  Tests for infinity             |
 isfinite         --  Tests for finite numbers    ---| 
 isscalar         --  True if argument is a scalar
 nan_to_num       --  Replaces NaN's with 0 and infinities with large numbers
-typename         --  Return english nmae for given typecode character
+typename         --  Return english name for given typecode character
 cast             --  Dictionary of functions to force cast to each type
 common_type      --  Determine the 'minimum common type code' for a group
                        of arrays

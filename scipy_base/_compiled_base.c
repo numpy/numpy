@@ -15,8 +15,8 @@ static PyObject *base_unique(PyObject *self, PyObject *args, PyObject *kwdict)
   int asize, abytes, new;
   int copied=0, nd;
   int instride=0, elsize, k, j, dims[1];
-  void *ip, *op; /* Current memory buffer */
-  void *op2;
+  char *ip, *op; /* Current memory buffer */
+  char *op2;
   
   static char *kwlist[] = {"input", NULL};
 
@@ -84,7 +84,7 @@ static struct PyMethodDef methods[] = {
 };
 
 DL_EXPORT(void) init_compiled_base(void) {
-    PyObject *m, *d, *s, *f1;
+    PyObject *m, *d, *s;
   
     /* Create the module and add the functions */
     m = Py_InitModule("_compiled_base", methods); 
