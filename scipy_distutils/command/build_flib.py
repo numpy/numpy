@@ -719,6 +719,7 @@ class nag_fortran_compiler(fortran_compiler_base):
 
     def get_opt(self):
         opt = ' -O4 -target=native '
+        return opt
 
     def get_linker_so(self):
         return [self.f77_compiler,'-Wl,-shared']
