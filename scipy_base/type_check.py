@@ -8,9 +8,12 @@ import limits
 __all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isnan','isinf','isfinite',
            'isreal','nan_to_num','real','real_if_close',
-           'typename','cast','common_type']
+           'typename','cast','common_type','typecodes']
 
 ScalarType = [types.IntType, types.LongType, types.FloatType, types.ComplexType]
+
+typecodes = Numeric.typecodes
+typecodes['AllInteger'] = '1silbwu'
 
 try:
    Char = Numeric.Character
