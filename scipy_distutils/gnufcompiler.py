@@ -48,7 +48,7 @@ class GnuFCompiler(FCompiler):
     def get_flags_linker_so(self):
         opt = []
         if sys.platform=='darwin':
-            opt.append('-framework','Python')
+            opt.extend(['-framework','Python'])
         else:
             opt.append("-shared")
         if sys.platform[:5]=='sunos':
