@@ -2,131 +2,259 @@
   copyright 1999 McMillan Enterprises, Inc.
   www.mcmillan-inc.com
   
-  modified heavily for weave by eric jones
+  modified for weave by eric jones
 *********************************************/
 #if !defined(SEQUENCE_H_INCLUDED_)
 #define SEQUENCE_H_INCLUDED_
 
 #include <string>
+#include <complex>
+
 #include "object.h"
 
 namespace py {
     
-// This isn't being picked up out of object.h for some reason
-void Fail(PyObject*, const char* msg);
+//---------------------------------------------------------------------------
+// !! This isn't being picked up out of object.h for some reason, so I'll 
+// !! redeclare it.
+//---------------------------------------------------------------------------
+void fail(PyObject*, const char* msg);
 
-// pre-declared.  needed by other include files
-class str;
-class tuple;
-class list;
-
+//---------------------------------------------------------------------------
+// base class for list and tuple objects.
+//---------------------------------------------------------------------------
 class sequence : public object
 {
 public:
+  //-------------------------------------------------------------------------
+  // constructors
+  //-------------------------------------------------------------------------
   sequence() : object() {};
   sequence(const sequence& other) : object(other) {};
   sequence(PyObject* obj) : object(obj) {
     _violentTypeCheck();
   };
+
+  //-------------------------------------------------------------------------
+  // destructors
+  //-------------------------------------------------------------------------  
   virtual ~sequence() {}
 
+  //-------------------------------------------------------------------------
+  // operator=
+  //-------------------------------------------------------------------------
   virtual sequence& operator=(const sequence& other) {
-    GrabRef(other);
+    grab_ref(other);
     return *this;
   };
   /*virtual*/ sequence& operator=(const object& other) {
-    GrabRef(other);
+    grab_ref(other);
     _violentTypeCheck();
     return *this;
   };
+  
+  //-------------------------------------------------------------------------
+  // type checking.
+  //-------------------------------------------------------------------------  
   virtual void _violentTypeCheck() {
     if (!PySequence_Check(_obj)) {
-      GrabRef(0);
-      Fail(PyExc_TypeError, "Not a sequence");
+      grab_ref(0);
+      fail(PyExc_TypeError, "Not a sequence");
     }
   };
-  //PySequence_Concat
+  
+  //-------------------------------------------------------------------------
+  // operator+ -- concatenation
+  //-------------------------------------------------------------------------
   sequence operator+(const sequence& rhs) const {
     PyObject*  rslt = PySequence_Concat(_obj, rhs);
     if (rslt==0)
-      Fail(PyExc_TypeError, "Improper rhs for +");
-    return LoseRef(rslt);
+      fail(PyExc_TypeError, "Improper rhs for +");
+    return lose_ref(rslt);
   };
 
-  //PySequence_Count
+  //-------------------------------------------------------------------------
+  // count -- count the number of objects in a sequence.
+  //-------------------------------------------------------------------------
   int count(const object& value) const {
     int rslt = PySequence_Count(_obj, value);
     if (rslt == -1)
-      Fail(PyExc_RuntimeError, "failure in count");
+      fail(PyExc_RuntimeError, "failure in count");
     return rslt;
   };
-
-  int count(int value) const;
-  int count(double value) const;  
-  int count(char* value) const;
-  int count(std::string value) const;
-  
-  //PySequence_GetItem  
-  // ## lists - return list_member (mutable) 
-  // ## tuples - return tuple_member (mutable)
-  // ## otherwise just a object
-  object operator [] (int i) const { //can't be virtual
-    PyObject* o = PySequence_GetItem(_obj, i);
-    if (o == 0)
-      Fail(PyExc_IndexError, "index out of range");
-    return LoseRef(o);
+  int count(int value) const {
+    object val = value;
+    return count(val);
   };
-  //PySequence_GetSlice
-  //virtual sequence& operator [] (PWSlice& x) {...};
+  int count(double value) const {
+    object val = value;
+    return count(val);
+  };
+  int count(char* value) const {
+    object val = value;
+    return count(val);
+  };
+  int count(std::string& value) const {
+    object val = value.c_str();
+    return count(val);
+  };
+
+  //-------------------------------------------------------------------------
+  // set_item -- virtual so that set_item for tuple and list use 
+  //             type specific xxx_SetItem function calls.
+  //-------------------------------------------------------------------------
+  virtual void set_item(int ndx, object& val) {
+    int rslt = PySequence_SetItem(_obj, ndx, val);
+    if (rslt==-1)
+      fail(PyExc_IndexError, "Index out of range");
+  };
+
+
+  //-------------------------------------------------------------------------
+  // operator[] -- non-const version defined in list and tuple sub-types.
+  //-------------------------------------------------------------------------
+  object operator [] (int i) {
+    PyObject* o = PySequence_GetItem(_obj, i);
+    // don't throw error for when [] fails because it might be on left hand 
+    // side (a[0] = 1).  If the sequence was just created, it will be filled 
+    // with NULL values, and setting the values should be ok.  However, we
+    // do want to catch index errors that might occur on the right hand side
+    // (obj = a[4] when a has len==3).
+    if (!o) {
+      if (PyErr_ExceptionMatches(PyExc_IndexError))
+        throw 1;
+    }
+    return lose_ref(o);
+  };
+  
+  //-------------------------------------------------------------------------
+  // slice -- handles slice operations.
+  // !! NOT TESTED
+  //-------------------------------------------------------------------------
   sequence slice(int lo, int hi) const {
     PyObject* o = PySequence_GetSlice(_obj, lo, hi);
     if (o == 0)
-      Fail(PyExc_IndexError, "could not obtain slice");
-    return LoseRef(o);
+      fail(PyExc_IndexError, "could not obtain slice");
+    return lose_ref(o);
   };
   
-  //PySequence_In
+  //-------------------------------------------------------------------------
+  // in -- find whether a value is in the given sequence.
+  //       overloaded to handle the standard types used in weave.
+  //-------------------------------------------------------------------------
   bool in(const object& value) const {
     int rslt = PySequence_In(_obj, value);
     if (rslt==-1)
-      Fail(PyExc_RuntimeError, "problem in in");
+      fail(PyExc_RuntimeError, "problem in in");
     return (rslt==1);
+  };  
+  bool sequence::in(int value) {
+    object val = value;
+    return in(val);
+  };
+  bool sequence::in(double value) {
+    object val = value;
+    return in(val);
+  };
+  bool sequence::in(const char* value) {
+    object val = value;
+    return in(val);
+  };
+  bool sequence::in(std::string& value) {
+    object val = value.c_str();
+    return in(val);
   };
   
-  bool in(int value);    
-  bool in(double value);
-  bool in(char* value);
-  bool in(std::string value);
-  
-  //PySequence_Index
+  //-------------------------------------------------------------------------
+  // index -- find whether a value is in the given sequence.
+  //          overloaded to handle the standard types used in weave.
+  //-------------------------------------------------------------------------
   int index(const object& value) const {
     int rslt = PySequence_Index(_obj, value);
     if (rslt==-1)
-      Fail(PyExc_IndexError, "value not found");
+      fail(PyExc_IndexError, "value not found");
     return rslt;
   };
-  int index(int value) const;
-  int index(double value) const;
-  int index(char* value) const;
-  int index(std::string value) const;    
+  int sequence::index(int value) const {
+    object val = value;
+    return index(val);
+  };  
+  int sequence::index(double value) const {
+    object val = value;
+    return index(val);
+  };
+  int sequence::index(const std::complex<double>& value) const {
+    object val = value;
+    return index(val);
+  };
+  int sequence::index(const char* value) const {
+    object val = value;
+    return index(val);
+  };  
+  int sequence::index(const std::string& value) const {
+    object val = value;
+    return index(val);
+  };
+
+  //-------------------------------------------------------------------------
+  // len, length, size -- find the length of the sequence.  
+  //                      version inherited from py::object ok.
+  //-------------------------------------------------------------------------
   
-  //PySequence_Length
-  int len() const {
-    return PySequence_Length(_obj);
-  };
-  // added length for compatibility with std::string.
-  int length() const {
-    return PySequence_Length(_obj);
-  };
-  //PySequence_Repeat
+  //-------------------------------------------------------------------------
+  // operator* -- repeat a list multiple times.
+  //-------------------------------------------------------------------------
   sequence operator * (int count) const {
     PyObject* rslt = PySequence_Repeat(_obj, count);
     if (rslt==0)
-      Fail(PyExc_RuntimeError, "sequence repeat failed");
-    return LoseRef(rslt);
+      fail(PyExc_RuntimeError, "sequence repeat failed");
+    return lose_ref(rslt);
   };
-  //PySequence_Tuple
 };
+
+//---------------------------------------------------------------------------
+// indexed_ref -- return reference obj when operator[] is used as an lvalue.
+//
+// list and tuple objects return this for non-const calls to operator[].
+// It is similar to object::keyed_ref, except that it stores an integer
+// index instead of py::object key.
+//---------------------------------------------------------------------------
+class indexed_ref : public object
+{
+  sequence& _parent;
+  int _ndx;
+public:
+  indexed_ref::indexed_ref(PyObject* obj, sequence& parent, int ndx)
+    : object(obj), _parent(parent), _ndx(ndx) { };
+  virtual ~indexed_ref() {};
+  
+  indexed_ref& indexed_ref::operator=(const object& other) {
+    grab_ref(other);
+    _parent.set_item(_ndx, *this);
+    return *this;
+  };
+  indexed_ref& indexed_ref::operator=(int other) {
+    object oth = other;
+    return operator=(oth);
+  };  
+  indexed_ref& indexed_ref::operator=(double other) {
+    object oth = other;
+    return operator=(oth);
+  };  
+  indexed_ref& indexed_ref::operator=(const std::complex<double>& other) {
+    object oth = other;
+    return operator=(oth);
+  };    
+  indexed_ref& indexed_ref::operator=(const char* other) {
+    object oth = other;
+    return operator=(oth);
+  };    
+  indexed_ref& indexed_ref::operator=(const std::string& other) {
+    object oth = other;
+    return operator=(oth);
+  };
+};
+
 
 } // namespace py
 

@@ -43,10 +43,9 @@ def c_sort2(adict):
     assert(type(adict) == type({}))
     code = """
            #line 21 "dict_sort.py"     
-           PWOList keys = adict.keys();
-           PWOList items(keys.len());
+           py::list keys = adict.keys();
+           py::list items(keys.len());
            keys.sort(); // surely this isn't any slower than raw API calls
-           PyObject* item = NULL;
            int N = keys.length();
            for(int i = 0; i < N;i++)
               items[i] = adict[keys[i]];

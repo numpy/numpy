@@ -60,9 +60,11 @@ void handle_conversion_error(PyObject* py_obj, const char* good_type, const char
 }
 
 """
+#include "compile.h" /* Scary dangerous stuff */
+#include "frameobject.h" /* Scary dangerous stuff */
 
 class basic_module_info(base_info.base_info):
-    _headers = ['"Python.h"']
+    _headers = ['"Python.h"','"compile.h"','"frameobject.h"']
     _support_code = [module_support_code]
 
 #----------------------------------------------------------------------------

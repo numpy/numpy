@@ -13,6 +13,13 @@ import base_info
 # a class method to solve this error.
 #----------------------------------------------------------------------------
 
+#----------------------------------------------------------------------------
+# speed note
+# the convert_to_int macro below takes about 25 ns per conversion on my
+# 850 MHz PIII.  A slightly more sophisticated macro version can trim this
+# to 20 ns, but this savings is dang near useless because the other 
+# overhead swamps it...
+#----------------------------------------------------------------------------
 py_to_c_template = \
 """
 class %(type_name)s_handler
@@ -351,8 +358,7 @@ class scxx_converter(common_base_converter):
     def init_info(self):
         common_base_converter.init_info(self)
         self.headers = ['"scxx/object.h"','"scxx/list.h"','"scxx/tuple.h"',
-                        '"scxx/number.h"','"scxx/dict.h"','"scxx/str.h"',
-                        '<iostream>']
+                        '"scxx/dict.h"','<iostream>']
         self.include_dirs = [local_dir,scxx_dir]
         self.sources = [os.path.join(scxx_dir,'weave_imp.cpp'),]
 

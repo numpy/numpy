@@ -55,6 +55,39 @@ def c_int_search(seq,t,chk=1):
     #return inline_tools.inline(code,['seq','t'],compiler='msvc')
     return inline_tools.inline(code,['seq','t'],verbose = 2)
 
+def c_int_search_scxx(seq,t,chk=1):
+    # do partial type checking in Python.
+    # checking that list items are ints should happen in py_to_scalar<int>
+    if chk:
+        assert(type(t) == type(1))
+        assert(type(seq) == type([]))
+    code = """     
+           #line 29 "binary_search.py"
+           int val, m, min = 0; 
+           int max = seq.len()- 1;
+           for(;;) 
+           { 
+               if (max < min )
+               {
+                   return_val = -1;
+                   break;
+               }
+               m = (min + max) / 2;
+               val = seq[m];
+               if (val < t)     
+                   min = m + 1;
+               else if (val > t)    
+                   max = m - 1;
+               else
+               {
+                   return_val = m;
+                   break;
+               }
+           }      
+           """    
+    #return inline_tools.inline(code,['seq','t'],compiler='msvc')
+    return inline_tools.inline(code,['seq','t'],verbose = 2)
+
 try:
     from Numeric import *
     def c_array_int_search(seq,t):
@@ -140,6 +173,26 @@ def search_compare(a,n):
     t2 = time.time()
     sp = (t2-t1)+1e-20 # protect against div by zero
     print ' speed in c(no asserts):',sp    
+    print ' speed up: %3.2f' % (py/sp)
+
+    # get it in cache
+    c_int_search_scxx(a,i)
+    t1 = time.time()
+    for i in range(n):
+        c_int_search_scxx(a,i,chk=1)
+    t2 = time.time()
+    sp = (t2-t1)+1e-20 # protect against div by zero
+    print ' speed for scxx:',sp
+    print ' speed up: %3.2f' % (py/sp)
+
+    # get it in cache
+    c_int_search_scxx(a,i)
+    t1 = time.time()
+    for i in range(n):
+        c_int_search_scxx(a,i,chk=0)
+    t2 = time.time()
+    sp = (t2-t1)+1e-20 # protect against div by zero
+    print ' speed for scxx(no asserts):',sp    
     print ' speed up: %3.2f' % (py/sp)
 
     # get it in cache

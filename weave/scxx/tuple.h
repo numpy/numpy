@@ -6,89 +6,79 @@
 
 namespace py {
 
-
-// added to make tuples mutable.
-class tuple_member : public object
-{
-  tuple& _parent;
-  int _ndx;
-public:
-  tuple_member(PyObject* obj, tuple& parent, int ndx);
-  virtual ~tuple_member() {};
-  tuple_member& operator=(const object& other);
-  tuple_member& operator=(const tuple_member& other);
-  tuple_member& operator=(int other);
-  tuple_member& operator=(double other);
-  tuple_member& operator=(const char* other);
-  tuple_member& operator=(std::string other);
-};
-    
 class tuple : public sequence
-{
+{ 
 public:
-  tuple(int sz=0) : sequence (PyTuple_New(sz))  { LoseRef(_obj); }
+
+  //-------------------------------------------------------------------------
+  // constructors
+  //-------------------------------------------------------------------------
+  tuple(int sz=0) : sequence (PyTuple_New(sz))  { lose_ref(_obj); }
   tuple(const tuple& other) : sequence(other) { }
   tuple(PyObject* obj) : sequence(obj) { _violentTypeCheck(); }
-  tuple(const list& list);
+  tuple::tuple(const list& lst)
+    : sequence (PyList_AsTuple(lst)) { lose_ref(_obj); }
+    
+  //-------------------------------------------------------------------------
+  // destructor
+  //-------------------------------------------------------------------------    
   virtual ~tuple() {};
 
+  //-------------------------------------------------------------------------
+  // operator=
+  //-------------------------------------------------------------------------
   virtual tuple& operator=(const tuple& other) {
-    GrabRef(other);
+    grab_ref(other);
     return *this;
   };
   /*virtual*/ tuple& operator=(const object& other) {
-    GrabRef(other);
+    grab_ref(other);
     _violentTypeCheck();
     return *this;
   };
+
+  //-------------------------------------------------------------------------
+  // type checking
+  //-------------------------------------------------------------------------    
   virtual void _violentTypeCheck() {
     if (!PyTuple_Check(_obj)) {
-      GrabRef(0);
-      Fail(PyExc_TypeError, "Not a Python Tuple");
+      grab_ref(0);
+      fail(PyExc_TypeError, "Not a Python Tuple");
     }
   };
-  void set_item(int ndx, object& val) {
+
+  //-------------------------------------------------------------------------
+  // set_item
+  //
+  // We have to do a little extra checking here, because tuples can only
+  // be assigned to if there is only a single reference to them.
+  //-------------------------------------------------------------------------      
+  virtual void set_item(int ndx, object& val) {
+    if (_obj->ob_refcnt != 1)
+      fail(PyExc_TypeError,"Tuples values can't be set if ref count > 1\n");  
     int rslt = PyTuple_SetItem(_obj, ndx, val);
     val.disown(); //when using PyTuple_SetItem, he steals my reference
     if (rslt==-1)
-      Fail(PyExc_IndexError, "Index out of range");
+      throw 1;
   };
   
-  // ej: additions
-  void set_item(int ndx, int val) {
-    int rslt = PyTuple_SetItem(_obj, ndx, PyInt_FromLong(val));
-    if (rslt==-1)
-      Fail(PyExc_IndexError, "Index out of range");
+  //-------------------------------------------------------------------------
+  // operator[] -- const and non-const versions of element access.
+  //-------------------------------------------------------------------------    
+  indexed_ref tuple::operator [] (int i) {   
+    // get a "borrowed" refcount    
+    PyObject* o = PyTuple_GetItem(_obj, i);  
+    // don't throw error for when [] fails because it might be on left hand 
+    // side (a[0] = 1).  If the tuple was just created, it will be filled 
+    // with NULL values, and setting the values should be ok.  However, we
+    // do want to catch index errors that might occur on the right hand side
+    // (obj = a[4] when a has len==3).
+    if (!o) {
+      if (PyErr_ExceptionMatches(PyExc_IndexError))
+        throw 1;
+    }
+    return indexed_ref(o, *this, i); // this increfs
   };
-
-  void set_item(int ndx, double val) {
-    int rslt = PyTuple_SetItem(_obj, ndx, PyFloat_FromDouble(val));
-    if (rslt==-1)
-      Fail(PyExc_IndexError, "Index out of range");
-  };
-
-  void set_item(int ndx, char* val) {
-    int rslt = PyTuple_SetItem(_obj, ndx, PyString_FromString(val));
-    if (rslt==-1)
-      Fail(PyExc_IndexError, "Index out of range");
-  };
-
-  void set_item(int ndx, std::string val) {
-    int rslt = PyTuple_SetItem(_obj, ndx, PyString_FromString(val.c_str()));
-    if (rslt==-1)
-      Fail(PyExc_IndexError, "Index out of range");
-  };
-
-  tuple_member operator [] (int i) {       // can't be virtual
-    //PyObject* o = PySequence_GetItem(_obj, i); assumes item is valid
-    PyObject* o = PyTuple_GetItem(_obj, i);  // get a "borrowed" refcount
-    //Py_XINCREF(o);
-    //if (o == 0)
-    //      Fail(PyExc_IndexError, "index out of range");
-    return tuple_member(o, *this, i); // this increfs
-  };
-  // ej: end additions
-  
 };// class tuple
 
 } // namespace

@@ -19,20 +19,20 @@ from Numeric import *
 import sys
 sys.path.insert(0,'..')
 import inline_tools
-import scalar_spec
+import c_spec
 import converters
 blitz_type_converters = converters.blitz
 
 def _cast_copy_transpose(type,a_2d):
     assert(len(shape(a_2d)) == 2)
     new_array = zeros(shape(a_2d),type)
+    numeric_type = c_spec.num_to_c_types[a_2d.typecode()]
     #trans_a_2d = transpose(a_2d)
-    numeric_type = scalar_spec.numeric_to_c_type_mapping[type]
     code = """
            for(int i = 0; i < Na_2d[0]; i++)
                for(int j = 0; j < Na_2d[1]; j++)
                    new_array(i,j) = (%s) a_2d(j,i);
-           """ % numeric_type
+           """ % numeric_type 
     inline_tools.inline(code,['new_array','a_2d'],
                         type_converters = blitz_type_converters,
                         compiler='gcc',
@@ -41,11 +41,11 @@ def _cast_copy_transpose(type,a_2d):
 
 def _inplace_transpose(a_2d):
     assert(len(shape(a_2d)) == 2)
-    numeric_type = scalar_spec.numeric_to_c_type_mapping[a_2d.typecode()]
+    numeric_type = c_spec.num_to_c_types[a_2d.typecode()]
     code = """
            %s temp;
-           for(int i = 0; i < _Na_2d[0]; i++)
-               for(int j = 0; j < _Na_2d[1]; j++)
+           for(int i = 0; i < Na_2d[0]; i++)
+               for(int j = 0; j < Na_2d[1]; j++)
                {
                    temp = a_2d(i,j);
                    a_2d(i,j) = a_2d(j,i);
@@ -59,10 +59,10 @@ def _inplace_transpose(a_2d):
     type = a_2d.typecode()
     new_array = zeros(shape(a_2d),type)
     #trans_a_2d = transpose(a_2d)
-    numeric_type = scalar_spec.numeric_to_c_type_mapping[type]
+    numeric_type = c_spec.num_to_c_types[type]
     code = """
-           for(int i = 0; i < _Na_2d[0]; i++)
-               for(int j = 0; j < _Na_2d[1]; j++)
+           for(int i = 0; i < Na_2d[0]; i++)
+               for(int j = 0; j < Na_2d[1]; j++)
                    new_array(i,j) = (%s) a_2d(j,i);
            """ % numeric_type
     inline_tools.inline(code,['new_array','a_2d'],

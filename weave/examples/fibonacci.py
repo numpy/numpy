@@ -1,13 +1,13 @@
 # Typical run:
-# C:\home\ej\wrk\scipy\compiler\examples>python fibonacci.py
+# C:\home\eric\wrk\scipy\weave\examples>python fibonacci.py
 # Recursively computing the first 30 fibonacci numbers:
-#  speed in python: 3.98599994183
-#  speed in c: 0.0800000429153
-#  speed up: 49.82
-# Loopin to compute the first 30 fibonacci numbers:
-#  speed in python: 0.00053100001812
-#  speed in c: 5.99999427795e-005
-#  speed up: 8.85
+#  speed in python: 4.31599998474
+#  speed in c: 0.0499999523163
+#  speed up: 86.32
+# Looping to compute the first 30 fibonacci numbers:
+#  speed in python: 0.000520999908447
+#  speed in c: 5.00000715256e-005
+#  speed up: 10.42
 # fib(30) 832040 832040 832040 832040
 
 import sys
@@ -31,8 +31,7 @@ def build_fibonacci():
                    }                         
                """
     ext_code = """
-                   int val = fib1(a);
-                   return_val = PyInt_FromLong(val);
+                   return_val = fib1(a);
                """    
     fib = ext_tools.ext_function('c_fib1',ext_code,['a'])
     fib.customize.add_support_code(fib_code)
@@ -58,8 +57,7 @@ def build_fibonacci():
                     }    
                """
     ext_code = """
-                   int val = fib2(a);
-                   return_val = PyInt_FromLong(val);
+                   return_val = fib2(a);
                """    
     fib = ext_tools.ext_function('c_fib2',ext_code,['a'])
     fib.customize.add_support_code(fib_code)

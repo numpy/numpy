@@ -1,18 +1,56 @@
+Questions:
+
+    1. sequences (tuples and lists) are empty (full of NULL values)
+       on creation.  On return to Python, nothing is done to check
+       whether a sequence has NULL values in it.  NULL values in 
+       Python will cause problems.  An alternative is to fill created
+       sequences with PyNone.  This is slower, but maybe safer.  I
+       believe this is what CXX does.  I need to ask others what they
+       think about this.
+    2. operator[] presents the biggest problems for C++ Python library
+       as far as I can tell.  The problem is we need a different function
+       called in the following two cases:
+       
+         dict_obj["a"] = 1;
+         obj = dict_obj["a"];
+       
+       In the first case, no KeyError should be thrown.  In the 2nd,
+       the KeyError should be thrown.  Unfortunately, this is not 
+       possible with simple C++.  It may be possible with template
+       expressions, but we aren't using those. So, for now, we will
+       have to deal with KeyErrors not occuring on the RHS of equations.
+       A secondary option here is to have a second argument have a 
+       special function for RHS access to values.  This is likely 
+       what we will do in auto generated code. 
+       
+       In the case that IndexErrors occur, these should always be
+       thrown.
+       
 For release:
     1.  Change return_val to be an py::object.  This will get rid of 
         of the need to handle incref/decref on your own most of the time.
         DONE
     2.  Flesh out object to handle all types of values in a generic way:
         a. sequence access.
+           DONE
         b. casting from/to standard types
             int, float, double, std::complex, char*, std::string.
            DONE
         c. attr should return a reference?  Not sure about this.
            I DONT THINK SO
-    3.  Tests that always through exceptions aren't getting cataloged.
+    3.  Tests that always thrown exceptions aren't getting cataloged.
         This isn't a big deal in practice, but it needs to be cleaned up.
     4.  Test file conversion for ref counts
     5.  Examine all examples and make sure they make sense (and work).            
+    6.  Add iter() and next() to objects.
+    7.  check comparisons
+        DONE.
+    8.  clean up dict objects.
+        DONE.
+    9.  test dict object.
+        DONE 
+    9.  test get_item_operator for object, list, tuples, dicts.
+        DONE -- but I don't really like the operator[] behavior.
         
 base package
     scipy_base
@@ -191,4 +229,3 @@ EVERYTHING BELOW HERE IS DONE.
         
         py::list items() const
         py::list keys() const
-        py::list values() const

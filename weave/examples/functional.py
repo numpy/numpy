@@ -18,8 +18,8 @@ def c_list_map(func,seq):
     """
     assert(type(func) in [FunctionType,MethodType,type(len)])
     code = """
-           #line 12 "functional.py"
-           py::tuple = args(1);
+           #line 22 "functional.py"
+           py::tuple args(1);
            int N = seq.len();    
            py::list result(N);
            for(int i = 0; i < N;i++)
@@ -37,7 +37,7 @@ def c_list_map2(func,seq):
     """
     assert(type(func) in [FunctionType,MethodType,type(len)])
     code = """
-           #line 32 "functional.py"
+           #line 40 "functional.py"
            py::tuple args(1);    
            PyObject* py_args = (PyObject*)args;
            py::list result(seq.len());
