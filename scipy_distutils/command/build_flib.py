@@ -62,6 +62,8 @@ class FortranCompilerError (CCompilerError):
     """Some compile/link operation failed."""
 class FortranCompileError (FortranCompilerError):
     """Failure to compile one or more Fortran source files."""
+class FortranBuildError (FortranCompilerError):
+    """Failure to build Fortran library."""
 
 if os.name == 'nt':
     def run_command(command):
@@ -406,7 +408,8 @@ class fortran_compiler_base(CCompiler):
                 print yellow_text(cmd)
                 failure = os.system(cmd)
                 if failure:
-                    raise FortranCompileError, 'failure during compile' 
+                    raise FortranCompileError,\
+                          'failure during compile (exit status = %s)' % failure 
                 object_files.append(object)
         return object_files
         #return all object files to make sure everything is archived 
@@ -426,19 +429,25 @@ class fortran_compiler_base(CCompiler):
         return ''
 
     def create_static_lib(self, object_files, library_name,
-                          output_dir='', debug=None):
+                          output_dir='', debug=None, skip_ranlib=0):
         lib_file = os.path.join(output_dir,
                                 self.lib_prefix+library_name+self.lib_suffix)
         objects = string.join(object_files)
         if objects:
             cmd = '%s%s %s' % (self.lib_ar,lib_file,objects)
             print yellow_text(cmd)
-            os.system(cmd)
-            if self.lib_ranlib:
-                # Digital compiler does not have ranlib (?).
+            failure = os.system(cmd)
+            if failure:
+                raise FortranBuildError,\
+                      'failure during build (exit status = %s)'%failure 
+            if self.lib_ranlib and not skip_ranlib:
+                # Digital,MIPSPro compilers do not have ranlib.
                 cmd = '%s %s' %(self.lib_ranlib,lib_file)
                 print yellow_text(cmd)
-                os.system(cmd)
+                failure = os.system(cmd)
+                if failure:
+                    raise FortranBuildError,\
+                          'failure during build (exit status = %s)'%failure 
 
     def build_library(self,library_name,source_list,module_dirs=None,
                       temp_dir = ''):
@@ -457,16 +466,28 @@ class fortran_compiler_base(CCompiler):
         # a lot when builds fail once and are restarted).
         object_list = self.source_to_object_names(source_list, temp_dir)
 
-        if os.name == 'nt':
+        if 1 or os.name == 'nt' or sys.platform[:4] == 'irix':
+            # I (pearu) had the same problem on irix646 ...
+            # I think we can make this "bunk" default as skip_ranlib
+            # feature speeds things up.
+            # XXX:Need to check if Digital compiler works here.
+
             # This is pure bunk...
             # Windows fails for long argument strings on the command line.
             # if objects is real long (> 2048 chars or so on my machine),
-            # the command fails (cmd.exe /e:2048 on w2k)
+            # the command fails (cmd.exe /e:2048 on w2k).
             # for now we'll split linking into to steps which should work for
             objects = object_list[:]
             while objects:
-                obj,objects = objects[:20],objects[20:]
-                self.create_static_lib(obj,library_name,temp_dir)
+                #obj,objects = objects[:20],objects[20:]
+                i = 0
+                obj = []
+                while i<1900 and objects:
+                    i = i + len(objects[0]) + 1
+                    obj.append(objects[0])
+                    objects = objects[1:]
+                self.create_static_lib(obj,library_name,temp_dir,
+                                       skip_ranlib = len(objects))
         else:
             self.create_static_lib(object_list,library_name,temp_dir)
 
@@ -649,7 +670,8 @@ class mips_fortran_compiler(fortran_compiler_base):
 
     vendor = 'SGI'
     ver_match =  r'MIPSpro Compilers: Version (?P<version>[^\s*,]*)'
-    
+    lib_ranlib = ''
+
     def __init__(self, fc = None, f90c = None):
         fortran_compiler_base.__init__(self)
         if fc is None:
