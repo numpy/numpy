@@ -37,7 +37,7 @@ public:
 
 numpy_handler x__numpy_handler = numpy_handler();
 #define convert_to_numpy x__numpy_handler.convert_to_numpy
-#define convert_to_numpy x__numpy_handler.py_to_numpy
+#define py_to_numpy x__numpy_handler.py_to_numpy
 """
 
 type_check_code = \

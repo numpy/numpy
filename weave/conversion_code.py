@@ -128,7 +128,7 @@ class instance_handler
 public:
     PyObject* convert_to_instance(PyObject* py_obj, const char* name)
     {
-        if (!py_obj || !PyFile_Check(py_obj))
+        if (!py_obj || !PyInstance_Check(py_obj))
             handle_conversion_error(py_obj,"instance", name);
     
         // Should I INCREF???
@@ -139,7 +139,7 @@ public:
     
     PyObject* py_to_instance(PyObject* py_obj, const char* name)
     {
-        if (!py_obj || !PyFile_Check(py_obj))
+        if (!py_obj || !PyInstance_Check(py_obj))
             handle_bad_type(py_obj,"instance", name);
     
         // Should I INCREF???

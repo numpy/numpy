@@ -47,9 +47,19 @@ class callable_specification(common_base_specification):
 
     def declaration_code(self,templatize = 0,inline=0):
         var_name = self.retrieve_py_variable(inline)
-        #code = 'PyObject* %s = convert_to_callable(%s,"%s");\n' % \
-        #       (self.name,var_name,self.name)
         code = 'PyObject* %s = convert_to_callable(%s,"%s");\n' % \
+               (self.name,var_name,self.name)
+        return code       
+
+class instance_specification(common_base_specification):
+    type_name = 'instance'
+    _build_information = [common_info.instance_info()]
+    def type_match(self,value):
+        return type(value) in [InstanceType]
+
+    def declaration_code(self,templatize = 0,inline=0):
+        var_name = self.retrieve_py_variable(inline)
+        code = 'PyObject* %s = convert_to_instance(%s,"%s");\n' % \
                (self.name,var_name,self.name)
         return code       
 

@@ -18,7 +18,7 @@ default_type_factories = [scalar_spec.int_specification(),
                           sequence_spec.tuple_specification(),
                           common_spec.file_specification(),
                           common_spec.callable_specification()]
-                          #common_spec.instance_specification(),                          
+                          common_spec.instance_specification(),                          
                           #common_spec.module_specification()]
 
 try: 
