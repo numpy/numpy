@@ -60,24 +60,34 @@ public:
   };
 
   // Need to change return type?
-  object attr(const char* nm) const {
-    // do we want the LoseRef
-    return object(LoseRef(PyObject_GetAttrString(_obj, (char*) nm)));
+  object attr(const char* nm) const {    
+    PyObject* val = PyObject_GetAttrString(_obj, (char*) nm);
+    if (!val)
+        throw 1;
+    return object(LoseRef(val));    
   };
+
   object attr(std::string nm) const {
-    // do we want the LoseRef
-    return object(LoseRef(PyObject_GetAttrString(_obj, (char*) nm.c_str())));
+    return attr(nm.c_str());
   };
+
   object attr(const object& nm) const {
-    // do we want the LoseRef
-    return object(LoseRef(PyObject_GetAttr(_obj, nm)));
+    PyObject* val = PyObject_GetAttr(_obj, nm);
+    if (!val)
+        throw 1;
+    return object(LoseRef(val));    
   };  
   
-  int set_attr(const char* nm, object& val) {
-    return PyObject_SetAttrString(_obj, (char*) nm, val);
+  void set_attr(const char* nm, object& val) {
+    int res = PyObject_SetAttrString(_obj, (char*) nm, val);
+    if (res == -1)
+        throw 1;
   };
-  int set_attr(PyObject* nm, object& val) {
-    return PyObject_SetAttr(_obj, nm, val);
+  
+  void set_attr(const object& nm, object& val) {
+    int res = PyObject_SetAttr(_obj, nm, val);
+    if (res == -1)
+        throw 1;
   };
 
   object mcall(const char* nm);

@@ -343,7 +343,7 @@ class scxx_converter(common_base_converter):
         common_base_converter.init_info(self)
         self.headers = ['"scxx/object.h"','"scxx/list.h"','"scxx/tuple.h"',
                         '"scxx/number.h"','"scxx/dict.h"','"scxx/str.h"',
-                        '"scxx/callable.h"','<iostream>']
+                        '<iostream>']
         self.include_dirs = [local_dir,scxx_dir]
         self.sources = [os.path.join(scxx_dir,'weave_imp.cpp'),]
 
@@ -396,6 +396,8 @@ class instance_converter(scxx_converter):
 
 #----------------------------------------------------------------------------
 # Catchall Converter
+#
+# catch all now handles callable objects
 #----------------------------------------------------------------------------
 class catchall_converter(scxx_converter):
     def init_info(self):
@@ -408,21 +410,6 @@ class catchall_converter(scxx_converter):
         self.use_ref_count = 0
     def type_match(self,value):
         return 1
-
-#----------------------------------------------------------------------------
-# Callable Converter
-#----------------------------------------------------------------------------
-class callable_converter(scxx_converter):
-    def init_info(self):
-        scxx_converter.init_info(self)
-        self.type_name = 'callable'
-        self.check_func = 'PyCallable_Check'    
-        # probably should test for callable classes here also.
-        self.matching_types = [FunctionType,MethodType,type(len)]
-        self.c_type = 'py::callable'
-        self.to_c_return = 'py::callable(py_obj)'
-        # ref counting handled by py::callable
-        self.use_ref_count = 0
 
 def test(level=10):
     from scipy_test.testing import module_test

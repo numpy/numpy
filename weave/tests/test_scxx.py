@@ -266,16 +266,58 @@ class test_list(unittest.TestCase):
         res = inline_tools.inline(code,['a'])
         assert res == 1
 
-class test_call:
-    """ Need to test calling routines.
-    """
-    pass
+# test class used for testing python class access from C++.
+class foo:
+    def bar(self):
+        return "bar results"
+
+class str_obj:
+            def __str__(self):
+                return "b"
+
+class test_object_attr(unittest.TestCase):
+
+    def generic_attr(self,code,args=['a']):
+        a = foo()
+        a.b = 12345
+                
+        before = sys.getrefcount(a.b)
+        res = inline_tools.inline(code,args)
+        assert res == a.b
+        del res
+        after = sys.getrefcount(a.b)
+        print before, after
+        assert after == before
+
+    def check_char(self):
+        self.generic_attr('return_val = a.attr("b").disown();')
+
+    def check_string(self):
+        self.generic_attr('return_val = a.attr(std::string("b")).disown();')
+
+    def check_obj(self):
+        code = """
+               py::str name = py::str("b");
+               return_val = a.attr(name).disown();
+               """ 
+        self.generic_attr(code,['a'])
+   
+class test_attr_call(unittest.TestCase):
+
+    def check_call(self):
+        a = foo()                
+        res = inline_tools.inline('return_val = a.attr("bar").call().disown();',['a'])
+        assert res == "bar results"
+
+    
                         
 def test_suite(level=1):
     from unittest import makeSuite
     suites = []    
     if level >= 5:
         suites.append( makeSuite(test_list,'check_'))
+        suites.append( makeSuite(test_object_attr,'check_'))
+        suites.append( makeSuite(test_attr_call,'check_'))
     total_suite = unittest.TestSuite(suites)
     return total_suite
 
