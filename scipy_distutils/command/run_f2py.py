@@ -123,7 +123,7 @@ class run_f2py(Command):
 
         f2py_options = []
         for i in ext.f2py_options:
-            f2py_opts.append('--'+i) # XXX: ???
+            f2py_options.append('--'+i) # XXX: ???
         f2py_options = self.f2py_options + f2py_options
         
         # make sure the target dir exists
