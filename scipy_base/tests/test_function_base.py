@@ -69,7 +69,7 @@ class test_amax(unittest.TestCase):
         b = [[3,6.0, 9.0],
              [4,10.0,5.0],
              [8,3.0,2.0]]
-        assert_equal(amax(b),[8.0,10.0,9.0])
+        assert_equal(amax(b,axis=0),[8.0,10.0,9.0])
         assert_equal(amax(b,axis=1),[9.0,10.0,8.0])
         
 class test_amin(unittest.TestCase):
@@ -79,7 +79,7 @@ class test_amin(unittest.TestCase):
         b = [[3,6.0, 9.0],
              [4,10.0,5.0],
              [8,3.0,2.0]]
-        assert_equal(amin(b),[3.0,3.0,2.0])
+        assert_equal(amin(b,axis=0),[3.0,3.0,2.0])
         assert_equal(amin(b,axis=1),[3.0,4.0,2.0])
 
 class test_ptp(unittest.TestCase):
