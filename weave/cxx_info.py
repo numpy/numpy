@@ -4,6 +4,7 @@ string_support_code = \
 """
 class string_handler
 {
+public:
     static Py::String convert_to_string(PyObject* py_obj,char* name)
     {
         if (!py_obj || !PyString_Check(py_obj))
@@ -11,6 +12,9 @@ class string_handler
         return Py::String(py_obj);
     }
 };
+
+string_handler x__string_handler = string_handler();
+
 static Py::String py_to_string(PyObject* py_obj,char* name)
 {
     if (!py_obj || !PyString_Check(py_obj))
@@ -25,6 +29,7 @@ list_support_code = \
 
 class list_handler
 {
+public:
     Py::List convert_to_list(PyObject* py_obj,char* name)
     {
         if (!py_obj || !PyList_Check(py_obj))
@@ -32,6 +37,8 @@ class list_handler
         return Py::List(py_obj);
     }
 };
+
+list_handler x__list_handler = list_handler();
 
 static Py::List py_to_list(PyObject* py_obj,char* name)
 {
@@ -45,13 +52,16 @@ dict_support_code = \
 """
 class dict_handler
 {
+public:
     Py::Dict convert_to_dict(PyObject* py_obj,char* name)
     {
         if (!py_obj || !PyDict_Check(py_obj))
             handle_conversion_error(py_obj,"dict", name);
         return Py::Dict(py_obj);
     }
-}
+};
+
+dict_handler x__dict_handler = dict_handler();
 
 static Py::Dict py_to_dict(PyObject* py_obj,char* name)
 {
@@ -65,6 +75,7 @@ tuple_support_code = \
 """
 class tuple_handler
 {
+public:
     Py::Tuple convert_to_tuple(PyObject* py_obj,char* name)
     {
         if (!py_obj || !PyTuple_Check(py_obj))
@@ -72,6 +83,8 @@ class tuple_handler
         return Py::Tuple(py_obj);
     }
 };
+
+tuple_handler x__tuple_handler = tuple_handler();
 
 static Py::Tuple py_to_tuple(PyObject* py_obj,char* name)
 {

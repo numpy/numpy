@@ -64,9 +64,8 @@ class scalar_specification(base_specification):
         func_type = self.type_name
         name = self.name
         var_name = self.retrieve_py_variable(inline)
-        template = 'scalar_handler x__;                       \n' \
-                   '%(type)s %(name)s = '\
-                   'x__convert_to_%(func_type)s (%(var_name)s,"%(name)s");\n'
+        template = '%(type)s %(name)s = '\
+                   'x__scalar_handler.convert_to_%(func_type)s (%(var_name)s,"%(name)s");\n'
         code = template % locals()
         return code
 

@@ -102,6 +102,8 @@ public:
     }
 };
 
+file_handler x__file_handler = file_handler();
+
 PyObject* file_to_py(FILE* file, char* name, char* mode)
 {
     PyObject* py_obj = NULL;
@@ -145,6 +147,8 @@ public:
     }
 };
 
+instance_handler x__instance_handler = instance_handler();
+
 PyObject* instance_to_py(PyObject* instance)
 {
     // Don't think I need to do anything...
@@ -186,6 +190,8 @@ public:
     }
 };
 
+callable_handler x__callable_handler = callable_handler();
+
 PyObject* callable_to_py(PyObject* callable)
 {
     // Don't think I need to do anything...
@@ -225,6 +231,8 @@ public:
         return py_obj;
     }
 };
+
+module_handler x__module_handler = module_handler();
 
 PyObject* module_to_py(PyObject* module)
 {
@@ -399,6 +407,7 @@ public:
     }
 };
 
+scalar_handler x__scalar_handler = scalar_handler();
 /////////////////////////////////////
 // The following functions are used for scalar conversions in msvc
 // because it doesn't handle templates as well.
