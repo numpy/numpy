@@ -52,6 +52,29 @@ public:
   operator PyObject* () const {
     return _obj;
   };
+  
+  operator int () const {
+    if (!PyInt_Check(_obj))
+        Fail(PyExc_TypeError, "cannot convert value to integer");
+    return PyInt_AsLong(_obj);
+  };  
+  operator float () const {
+    if (!PyFloat_Check(_obj))
+        Fail(PyExc_TypeError, "cannot convert value to double");
+    return (float) PyFloat_AsDouble(_obj);
+  };  
+  operator double () const {
+    if (!PyFloat_Check(_obj))
+        Fail(PyExc_TypeError, "cannot convert value to double");
+    return PyFloat_AsDouble(_obj);
+  };  
+
+  operator std::string () const {
+    if (!PyString_Check(_obj))
+        Fail(PyExc_TypeError, "cannot convert value to std::string");
+    return std::string(PyString_AsString(_obj));
+  };  
+  
   int print(FILE *f, int flags) const {
     return PyObject_Print(_obj, f, flags);
   };

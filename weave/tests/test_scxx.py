@@ -266,6 +266,87 @@ class test_list(unittest.TestCase):
         res = inline_tools.inline(code,['a'])
         assert res == 1
 
+    def check_access_speed(self):
+        N = 1000000
+        print 'list access -- val = a[i] for N =', N
+        a = [0] * N
+        val = 0
+        t1 = time.time()
+        for i in xrange(N):
+            val = a[i]
+        t2 = time.time()
+        print 'python1:', t2 - t1
+        t1 = time.time()
+        for i in a:
+            val = i
+        t2 = time.time()
+        print 'python2:', t2 - t1
+        
+        code = """
+               const int N = a.length();
+               py::object val;
+               for(int i=0; i < N; i++)
+                   val = a[i];
+               """
+        # compile not included in timing       
+        inline_tools.inline(code,['a'])           
+        t1 = time.time()
+        inline_tools.inline(code,['a'])           
+        t2 = time.time()
+        print 'weave:', t2 - t1
+
+    def check_access_set_speed(self):
+        N = 1000000
+        print 'list access/set -- b[i] = a[i] for N =', N        
+        a = [0] * N
+        b = [1] * N
+        t1 = time.time()
+        for i in xrange(N):
+            b[i] = a[i]
+        t2 = time.time()
+        print 'python:', t2 - t1
+        
+        a = [0] * N
+        b = [1] * N     
+        code = """
+               const int N = a.length();
+               for(int i=0; i < N; i++)
+                   b[i] = a[i];       
+               """
+        # compile not included in timing
+        inline_tools.inline(code,['a','b'])           
+        t1 = time.time()
+        inline_tools.inline(code,['a','b'])           
+        t2 = time.time()
+        print 'weave:', t2 - t1
+        assert b == a   
+        
+class test_object_cast(unittest.TestCase):
+    def check_int_cast(self):
+        code = """
+               py::object val = py::number(1);
+               int raw_val = val;
+               """
+        inline_tools.inline(code)
+    def check_double_cast(self):
+        code = """
+               py::object val = py::number(1.0);
+               double raw_val = val;
+               """
+        inline_tools.inline(code)
+    def check_float_cast(self):
+        code = """
+               py::object val = py::number(1.0);
+               float raw_val = val;
+               """
+        inline_tools.inline(code)
+    def check_string_cast(self):
+        code = """
+               py::object val = py::str("hello");
+               std::string raw_val = val;
+               """
+        inline_tools.inline(code)
+                    
 # test class used for testing python class access from C++.
 class foo:
     def bar(self):
@@ -286,7 +367,6 @@ class test_object_attr(unittest.TestCase):
         assert res == a.b
         del res
         after = sys.getrefcount(a.b)
-        print before, after
         assert after == before
 
     def check_char(self):
@@ -316,6 +396,7 @@ def test_suite(level=1):
     suites = []    
     if level >= 5:
         suites.append( makeSuite(test_list,'check_'))
+        suites.append( makeSuite(test_object_cast,'check_'))
         suites.append( makeSuite(test_object_attr,'check_'))
         suites.append( makeSuite(test_attr_call,'check_'))
     total_suite = unittest.TestSuite(suites)
