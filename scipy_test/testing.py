@@ -154,6 +154,8 @@ class _dummy_stream:
         self.data = []
     def write(self,message):
         self.data.append(message)
+    def writeln(self,message):
+        self.data.append(message+'\n')
 
 __all__.append('IgnoreException')
 class IgnoreException(Exception):
