@@ -12,25 +12,42 @@ from misc_util import cyg2win32
 class AbsoftFCompiler(FCompiler):
 
     compiler_type = 'absoft'
-    version_pattern = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
+    #version_pattern = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
+    version_pattern = r'(f90:.*?Absoft Pro FORTRAN Version (?P<version>[^\s*,]*)'+\
+                      r'|FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp)'
 
     # samt5735(8)$ f90 -V -c dummy.f
     # f90: Copyright Absoft Corporation 1994-2002; Absoft Pro FORTRAN Version 8.0
     # Note that fink installs g77 as f77, so need to use f90 for detection.
 
     executables = {
-        'version_cmd'  : ["f77", "-V -c %(fname)s.f -o %(fname)s.o" \
+        'version_cmd'  : ["f90", "-V -c %(fname)s.f -o %(fname)s.o" \
                           % {'fname':cyg2win32(dummy_fortran_file())}],
         'compiler_f77' : ["f77"],
         'compiler_fix' : ["f90"],
         'compiler_f90' : ["f90"],
-        'linker_so'    : ["f77","-K","shared"],
+        'linker_so'    : ["f90"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
 
+    if os.name=='nt':
+        library_switch = '/out:'      #No space after /out:!
+
     module_dir_switch = None
     module_include_switch = '-p'
+
+    def get_flags_linker_so(self):
+        if os.name=='nt':
+            opt = ['/dll']
+        else:
+            opt = ["-K","shared"]
+        return opt
+
+    def library_dir_option(self, dir):
+        if os.name=='nt':
+            return '-link /PATH:"%s"' % (dir)
+        return "-L" + dir
 
     def get_library_dirs(self):
         opt = FCompiler.get_library_dirs(self)
@@ -58,10 +75,14 @@ class AbsoftFCompiler(FCompiler):
     def get_flags_f77(self):
         opt = FCompiler.get_flags_f77(self)
         opt.extend(['-N22','-N90','-N110'])
-        if os.name != 'nt':
+        v = self.get_version()
+        if os.name == 'nt':
+            if v and v>='8.0':
+                opt.extend(['-f','-N15'])
+        else:
             opt.append('-f')
-            if self.get_version():
-                if self.get_version()<='4.6':
+            if v:
+                if v<='4.6':
                     opt.append('-B108')
                 else:
                     # Though -N15 is undocumented, it works with
