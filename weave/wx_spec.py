@@ -111,7 +111,13 @@ class wx_converter(common_base_converter):
             self.include_dirs.append("/usr/lib/glib/include")
             cxxflags = get_wxconfig('cxxflags')
             libflags = get_wxconfig('libs') + get_wxconfig('gl-libs')
-            ldflags = get_wxconfig('ldflags')
+            
+            #older versions of wx do not support the ldflags.
+            try:
+                ldflags = get_wxconfig('ldflags')
+            except RuntimeError:
+                ldflags = []
+                    
             self.extra_compile_args.extend(cxxflags)
             self.extra_link_args.extend(libflags)
             self.extra_link_args.extend(ldflags)            
