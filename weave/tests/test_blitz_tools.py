@@ -201,8 +201,8 @@ def setup_test_location():
 
 def teardown_test_location():
     pass
-    #import test_scalar_spec    
-    pth = os.path.join(tempfile.tempdir,'test_files')
+    #import tempfile    
+    #pth = os.path.join(tempfile.tempdir,'test_files')
     #if sys.path[0] == pth:
     #    sys.path = sys.path[1:]
     #return pth

@@ -1,5 +1,5 @@
 
-<h1>Compiler Documentation</h1>
+<h1>Weave Documentation</h1>
 <p>
 By Eric Jones eric@enthought.com
 <p>
@@ -81,7 +81,7 @@ By Eric Jones eric@enthought.com
 <h1>Introduction</h1>
 
 <p>
-The <code>compiler</code> package allows the inclusion of C/C++ within 
+The <code>weave</code> package allows the inclusion of C/C++ within 
 Python code.  This offers both another level of optimization to those who need 
 it, and an easy way to modify and extend any supported extension libraries such 
 as wxPython and hopefully VTK soon. Inlining C/C++ code within Python generally
@@ -91,15 +91,15 @@ algorithms that require a large number of calls to the Python API don't benefit
 as much from the conversion to C/C++ as algorithms that have inner loops 
 completely convertable to C.
 <p> 
-There are three basic ways to use <code>compiler</code>. The 
-<code>compiler.inline()</code> function executes C code directly within Python, 
-and <code>compiler.blitz()</code> translates Python Numeric expressions to C++ 
+There are three basic ways to use <code>weave</code>. The 
+<code>weave.inline()</code> function executes C code directly within Python, 
+and <code>weave.blitz()</code> translates Python Numeric expressions to C++ 
 for fast execution.  This was the original functionality for which 
-<code>compiler</code> was built.  For those interested in building extension
+<code>weave</code> was built.  For those interested in building extension
 libraries, the <code>ext_tools</code> module provides classes for building 
 extension modules within Python. 
 <p>
-Most of <code>compiler's</code> functionality should work on Windows and Unix, 
+Most of <code>weave's</code> functionality should work on Windows and Unix, 
 although some of its functionality requires <code>gcc</code> or a similarly 
 modern C++ compiler that handles templates well.  Up to now, most testing has 
 been done on Windows 2000 with Microsoft's C++ compiler (MSVC) and with gcc 
@@ -111,40 +111,40 @@ Python (although I've recently learned about the <a
 href="http://pyinline.sourceforge.net/" >PyInline</a> project which may offer 
 similar functionality to <code>inline</code>).  On the other hand, tools for 
 building Python extension modules already exists (SWIG, SIP, pycpp, CXX, and 
-others). As of yet, I'm not sure where <code>compiler</code> fits in this 
+others). As of yet, I'm not sure where <code>weave</code> fits in this 
 spectrum. It is closest in flavor to CXX in that it makes creating new C/C++ 
 extension modules pretty easy. However, If you're wrapping a gaggle of legacy 
 functions or classes, SWIG and friends are definitely the better choice. 
-<code>compiler</code> is set up so that you can customize how Python types are 
-converted to C types in <code>compiler</code>. This is great for 
+<code>weave</code> is set up so that you can customize how Python types are 
+converted to C types in <code>weave</code>. This is great for 
 <code>inline()</code>, but, for wrapping legacy code, it is generally better to 
 specify things the other way around -- that is how C types map to 
-Python types.  This <code>compiler</code> does not do.  I guess it would be 
-possible to build such a tool on top of <code>compiler</code>, but with good 
+Python types.  This <code>weave</code> does not do.  I guess it would be 
+possible to build such a tool on top of <code>weave</code>, but with good 
 tools like SWIG around, I'm not sure the effort produces any new capabilities. 
 Things like function overloading are probably easily implemented in 
-<code>compiler</code> and it might be easier to mix Python/C code in function 
+<code>weave</code> and it might be easier to mix Python/C code in function 
 calls, but nothing beyond this comes to mind. So, if you're developing new 
 extension modules, or just want to optimize a few functions in C, 
-<code>compiler</code> might be the tool for you. If you're wrapping legacy code, 
+<code>weave</code> might be the tool for you. If you're wrapping legacy code, 
 stick with SWIG.
 <p>
-The next several sections give the basics of how to use <code>compiler</code>.
+The next several sections give the basics of how to use <code>weave</code>.
 We'll discuss what's happening under the covers in more detail later 
 on.  Serious users will need to at least look at the type conversion section to 
 understand how Python variables map to C/C++ types and how to customize this 
 behavior.  One other note.  If you don't know C or C++ then these docs are 
 probably of very little help to you. Further, it'd be helpful if you know 
-something about writing Python extensions. <code>compiler</code> does quite a 
+something about writing Python extensions. <code>weave</code> does quite a 
 bit for you, but for anything complex, you'll need to do some conversions, 
 reference counting, etc.
 <p>
 <em>
-Note: </em><code>compiler</code><em> is actually part of the <a 
+Note: </em><code>weave</code><em> is actually part of the <a 
 href="http://www.scipy.org">SciPy</a> package.  However, it works fine as a 
 standalone package.  The examples here are given as if it is used as a stand 
 alone package.  If you are using from within scipy, you can use <code> from 
-scipy import compiler</code> and the examples will work identically.</em>
+scipy import weave</code> and the examples will work identically.</em>
 
 <a name="Requirements"></a>
 <h1>Requirements</h1>
@@ -157,10 +157,10 @@ scipy import compiler</code> and the examples will work identically.</em>
     
     <li> C++ compiler
          <p>
-         compiler uses <code>distutils</code> to actually build extension modules,
-         so it uses whatever compiler was originally used to build Python.  
-         compiler itself requires a C++ compiler.  If you used a C++ compiler
-         to build Python, your probably fine.
+         <code>weave</code> uses <code>distutils</code> to actually build 
+         extension modules, so it uses whatever compiler was originally used to 
+         build Python.  <code>weave</code> itself requires a C++ compiler.  If 
+         you used a C++ compiler to build Python, your probably fine.
          <p>
          On Unix gcc is the preferred choice, because I've done a little 
          testing with it.  All testing has been done with gcc, but I expect the 
@@ -193,9 +193,9 @@ scipy import compiler</code> and the examples will work identically.</em>
          which is the "next generation" implementation.
          <p>
     </li>
-    <li> scipy_distutils and scipy_test (packaged with compiler)
+    <li> scipy_distutils and scipy_test (packaged with <code>weave</code>)
          <p>
-         These two modules are packaged with <code>compiler</code> in both
+         These two modules are packaged with <code>weave</code> in both
          the windows installer and the source distributions.  If you are using
          CVS, however, you'll need to download these separately (also available
          through CVS at SciPy).
@@ -207,21 +207,21 @@ scipy import compiler</code> and the examples will work identically.</em>
 <a name="Installation"></a>
 <h1>Installation and Testing</h1>
 <p>
-There are currently two ways to get <code>compiler</code>. Fist, 
-<code>compiler</code> is part of SciPy and installed automatically (as a sub-
-package) whenever SciPy is installed (although the latest version isn't in
-SciPy yet, so use this one for now).  Second, since compiler is useful outside 
-of the scientific community, it has been setup so that it can be used as a 
-stand-alone module. 
+There are currently two ways to get <code>weave</code>. Fist, 
+<code>weave</code> is part of SciPy and installed automatically (as a sub-
+package) whenever SciPy is installed (although the latest version isn't in 
+SciPy yet, so use this one for now).  Second, since <code>weave</code> is 
+useful outside of the scientific community, it has been setup so that it can be
+used as a stand-alone module. 
 
 <p>
 The stand-alone version can be downloaded from <a 
-href="http://www.scipy.org/site_content/compiler">here</a>.  Unix users should grab the 
+href="www.scipy.org/weave">here</a>.  Unix users should grab the 
 tar ball (.tgz file) and install it using the following commands.
 
     <blockquote><pre><code>
-    tar -xzvf compiler.tgz
-    cd compiler
+    tar -xzvf weave-0.2.tar.gz
+    cd weave-0.2
     python setup.py install
     </code></pre></blockquote>        
 
@@ -240,11 +240,11 @@ download more than one file (and so I haven't), but distutils doesn't have a
 way to do conditional installation -- at least that I know about.  This can 
 lead to undesired clobbering of modules.  What to do, what to do...</em>
 <p>
-Once <code>compiler</code> is installed, fire up python and run its unit tests.
+Once <code>weave</code> is installed, fire up python and run its unit tests.
 
     <blockquote><pre><code>
-    >>> import compiler
-    >>> compiler.test()
+    >>> import weave
+    >>> weave.test()
     runs long time... spews tons of output
     </code></pre></blockquote>        
 
@@ -262,8 +262,8 @@ If you only want to test a single module of the package, you can do this by
 running test() for that specific module.
 
     <blockquote><pre><code>
-    >>> import compiler.scalar_spec
-    >>> compiler.scalar_spec.test()
+    >>> import weave.scalar_spec
+    >>> weave.scalar_spec.test()
     .......
     ----------------------------------------------------------------------
     Ran 7 tests in 23.284s
@@ -296,9 +296,9 @@ after the C code exits and returns to Python. (more on this later)
 Here's a trivial <code>printf</code> example using <code>inline()</code>:
 
     <blockquote><pre><code>
-    >>> import compiler    
+    >>> import weave    
     >>> a  = 1
-    >>> compiler.inline('printf("%d\\n",a);',['a'])
+    >>> weave.inline('printf("%d\\n",a);',['a'])
     1
     </code></pre></blockquote>        
 <p>
@@ -312,9 +312,9 @@ into an extension module, loaded into Python, cataloged for future use, and
 executed.  On windows (850 MHz PIII), this takes about 1.5 seconds when using 
 Microsoft's C++ compiler (MSVC) and 6-12 seconds using gcc (mingw32 2.95.2). 
 All subsequent executions of the code will happen very quickly because the code 
-only needs to be compiled once.  If you kill and restart the compiler and then 
+only needs to be compiled once.  If you kill and restart the interpreter and then 
 execute the same code fragment again, there will be a much shorter delay in the 
-fractions of seconds range. This is because <code>compiler</code> stores a 
+fractions of seconds range. This is because <code>weave</code> stores a 
 catalog of all previously compiled functions in an on disk cache. When it sees 
 a string that has been compiled, it loads the already compiled module and 
 executes the appropriate function.  
@@ -350,7 +350,7 @@ MSVC users will actually see a bit of compiler output that distutils does not
 supress the first time the code executes:
 
     <blockquote><pre><code>    
-    >>> compiler.inline(r'printf("%d\n",a);',['a'])
+    >>> weave.inline(r'printf("%d\n",a);',['a'])
     sc_e013937dbc8c647ac62438874e5795131.cpp
        Creating library C:\DOCUME~1\eric\LOCALS~1\Temp\python21_compiled\temp
        \Release\sc_e013937dbc8c647ac62438874e5795131.lib and object C:\DOCUME
@@ -379,7 +379,7 @@ and execute the code.  The result?
 
     <blockquote><pre><code>    
     >>> a = 'string'
-    >>> compiler.inline(r'printf("%d\n",a);',['a'])
+    >>> weave.inline(r'printf("%d\n",a);',['a'])
     32956972
     </code></pre></blockquote>      
 <p>
@@ -394,7 +394,7 @@ Python.
     >>> a = 'string'
     >>> def protected_printf(a):    
     ...     assert(type(a) == type(1))
-    ...     compiler.inline(r'printf("%d\n",a);',['a'])
+    ...     weave.inline(r'printf("%d\n",a);',['a'])
     >>> protected_printf(1)
      1
     >>> protected_printf('string')
@@ -406,7 +406,7 @@ For printing strings, the format statement needs to be changed.
 
     <blockquote><pre><code>    
     >>> a = 'string'
-    >>> compiler.inline(r'printf("%s\n",a);',['a'])
+    >>> weave.inline(r'printf("%s\n",a);',['a'])
     string
     </code></pre></blockquote>      
 
@@ -418,10 +418,10 @@ objects live in the std (standard) namespace and thus require the use of
 <code>std::</code>.
 
     <blockquote><pre><code>    
-    >>> compiler.inline('std::cout << a << std::endl;',['a'])
+    >>> weave.inline('std::cout << a << std::endl;',['a'])
     1    
     >>> a = 'string'
-    >>> compiler.inline('std::cout << a << std::endl;',['a'])
+    >>> weave.inline('std::cout << a << std::endl;',['a'])
     string
     </code></pre></blockquote> 
          
@@ -464,7 +464,7 @@ This Python version works for arbitrary Python data types.  The C version below 
 specialized to handle integer values.  There is a little type checking done in 
 Python to assure that we're working with the correct data types before heading 
 into C.  The variables <code>seq</code> and <code>t</code> don't need to be 
-declared beacuse <code>compiler</code> handles converting and declaring them in 
+declared beacuse <code>weave</code> handles converting and declaring them in 
 the C code.  All other temporary variables such as <code>min, max</code>, etc. 
 must be declared -- it is C after all.  Here's the new mixed Python/C function:
 
@@ -559,7 +559,7 @@ we run it on a 1 million element list and run the search 3000 times (for 0-
 2999), here are the results we get:
 
     <blockquote><pre><code>   
-    C:\home\ej\wrk\scipy\compiler\examples> python binary_search.py
+    C:\home\ej\wrk\scipy\weave\examples> python binary_search.py
     Binary search for 3000 items in 1000000 length list of integers:
      speed in python: 0.159999966621
      speed of bisect: 0.121000051498
@@ -626,7 +626,7 @@ their contents.  Again, this choice is made for speed.  The C++ version, while
 more complicated, is about a factor of 2 faster than Python.
 
     <blockquote><pre><code>       
-    C:\home\ej\wrk\scipy\compiler\examples> python dict_sort.py
+    C:\home\ej\wrk\scipy\weave\examples> python dict_sort.py
     Dict sort of 1000 items for 300 iterations:
      speed in python: 0.319999933243
     [0, 1, 2, 3, 4]
@@ -658,9 +658,9 @@ version of the function using standard Numeric operations.
 And the following is a inline C version of the same function:
 
     <blockquote><pre><code>
-    from compiler.blitz_tools import blitz_type_factories
-    from compiler import scalar_spec
-    from compiler import inline
+    from weave.blitz_tools import blitz_type_factories
+    from weave import scalar_spec
+    from weave import inline
     def _cast_copy_transpose(type,a_2d):
         assert(len(shape(a_2d)) == 2)
         new_array = zeros(shape(a_2d),type)
@@ -693,7 +693,7 @@ output of the linear algebra routine can overwrite the original matrix (this is
 often appropriate).  This provides another factor of 2 improvement.
 
     <blockquote><pre><code>
-     #C:\home\ej\wrk\scipy\compiler\examples> python cast_copy_transpose.py
+     #C:\home\ej\wrk\scipy\weave\examples> python cast_copy_transpose.py
     # Cast/Copy/Transposing (150,150)array 1 times
     #  speed in python: 0.870999932289
     #  speed in c: 0.25
@@ -754,7 +754,7 @@ a way to learn this info from the library -- you just have to know.  Also, at le
 on the windows platform, you'll need to install the wxWindows libraries and link to 
 them.  I think there is a way around this, but I haven't found it yet -- I get some
 linking errors dealing with wxString.  One final note.  You'll probably have to
-tweak compiler/wx_spec.py or compiler/wx_info.py for your machine's configuration to
+tweak weave/wx_spec.py or weave/wx_info.py for your machine's configuration to
 point at the correct directories etc.  There.  That should sufficiently scare people
 into not even looking at this... :)
 
@@ -871,7 +871,7 @@ optional. string. A string of valid C++ code
 <dd>
 optional. base_info.custom_info object. An 
     alternative way to specifiy support_code, headers, etc. needed by the 
-    function see the compiler.base_info module for more details. (not sure 
+    function see the weave.base_info module for more details. (not sure 
     this'll be used much). 
     
 </dd>
@@ -994,7 +994,7 @@ are the only arguments that need to be specified.  Here's a simple example
 run on Windows machine that has Microsoft VC++ installed.
 
     <blockquote><pre><code>
-    >>> from compiler import inline
+    >>> from weave import inline
     >>> a = 'string'
     >>> code = """
     ...        int l = a.length();
@@ -1020,7 +1020,7 @@ returned. Now kill the interpreter and restart, and run the same code with
 a different string.
 
     <blockquote><pre><code>
-    >>> from compiler import inline
+    >>> from weave import inline
     >>> a = 'a longer string' 
     >>> code = """ 
     ...        int l = a.length();
@@ -1080,18 +1080,18 @@ using gcc.  The verbose flag is added to show what is printed out:
     running build_ext    
     building 'sc_86e98826b65b047ffd2cd5f479c627f13' extension 
     c:\gcc-2.95.2\bin\g++.exe -mno-cygwin -mdll -O2 -w -Wstrict-prototypes -IC:
-    \home\ej\wrk\scipy\compiler -IC:\Python21\Include -c C:\DOCUME~1\eric\LOCAL
+    \home\ej\wrk\scipy\weave -IC:\Python21\Include -c C:\DOCUME~1\eric\LOCAL
     S~1\Temp\python21_compiled\sc_86e98826b65b047ffd2cd5f479c627f13.cpp -o C:\D
     OCUME~1\eric\LOCALS~1\Temp\python21_compiled\temp\Release\sc_86e98826b65b04
     7ffd2cd5f479c627f13.o    
-    skipping C:\home\ej\wrk\scipy\compiler\CXX\cxxextensions.c (C:\DOCUME~1\eri
+    skipping C:\home\ej\wrk\scipy\weave\CXX\cxxextensions.c (C:\DOCUME~1\eri
     c\LOCALS~1\Temp\python21_compiled\temp\Release\cxxextensions.o up-to-date)
-    skipping C:\home\ej\wrk\scipy\compiler\CXX\cxxsupport.cxx (C:\DOCUME~1\eric
+    skipping C:\home\ej\wrk\scipy\weave\CXX\cxxsupport.cxx (C:\DOCUME~1\eric
     \LOCALS~1\Temp\python21_compiled\temp\Release\cxxsupport.o up-to-date)
-    skipping C:\home\ej\wrk\scipy\compiler\CXX\IndirectPythonInterface.cxx (C:\
+    skipping C:\home\ej\wrk\scipy\weave\CXX\IndirectPythonInterface.cxx (C:\
     DOCUME~1\eric\LOCALS~1\Temp\python21_compiled\temp\Release\indirectpythonin
     terface.o up-to-date)
-    skipping C:\home\ej\wrk\scipy\compiler\CXX\cxx_extensions.cxx (C:\DOCUME~1\
+    skipping C:\home\ej\wrk\scipy\weave\CXX\cxx_extensions.cxx (C:\DOCUME~1\
     eric\LOCALS~1\Temp\python21_compiled\temp\Release\cxx_extensions.o up-to-da
     te)
     writing C:\DOCUME~1\eric\LOCALS~1\Temp\python21_compiled\temp\Release\sc_86
@@ -1122,7 +1122,7 @@ time.
     </code></pre></blockquote>
 
 <p>
-<em> Note: I've only used the <code>compiler</code> option for switching between 'msvc'
+<em> Note: I've only used the <code>weave</code> option for switching between 'msvc'
 and 'gcc' on windows.  It may have use on Unix also, but I don't know yet.
 </em>
 
@@ -1140,7 +1140,7 @@ somewhere.  Here's an example of defining a separate method for calculating
 the string length:
 
     <blockquote><pre><code>
-    >>> from compiler import inline
+    >>> from weave import inline
     >>> a = 'a longer string'
     >>> support_code = """
     ...                PyObject* length(Py::String a)
@@ -1195,7 +1195,7 @@ the desired behavior would be something like:
     <blockquote><pre><code>
     # THIS DOES NOT WORK
     >>> a = 1
-    >>> compiler.inline("a++;",['a'])
+    >>> weave.inline("a++;",['a'])
     >>> a
     2
     </code></pre></blockquote>        
@@ -1204,7 +1204,7 @@ Instead you get:
 
     <blockquote><pre><code>
     >>> a = 1
-    >>> compiler.inline("a++;",['a'])
+    >>> weave.inline("a++;",['a'])
     >>> a
     1
     </code></pre></blockquote>        
@@ -1220,7 +1220,7 @@ of mutable types <em>are</em> reflected in the Python variables.
 
     <blockquote><pre><code>
     >>> a= [1,2]
-    >>> compiler.inline("PyList_SetItem(a.ptr(),0,PyInt_FromLong(3));",['a'])
+    >>> weave.inline("PyList_SetItem(a.ptr(),0,PyInt_FromLong(3));",['a'])
     >>> print a
     [3, 2]
     </code></pre></blockquote>        
@@ -1235,7 +1235,7 @@ value is returned by the <code>inline()</code> function:
 
     <blockquote><pre><code>
     >>> a = 1
-    >>> a = compiler.inline("return_val = Py::new_reference_to(Py::Int(a+1));",['a'])  
+    >>> a = weave.inline("return_val = Py::new_reference_to(Py::Int(a+1));",['a'])  
     >>> a
     2
     </code></pre></blockquote>        
@@ -1297,7 +1297,7 @@ could do that also.
 <a name="inline_quick_look_at_code"></a>
 <h3>A quick look at the code</h3>
 
-<code>compiler</code> generates a C++ file holding an extension function for 
+<code>weave</code> generates a C++ file holding an extension function for 
 each <code>inline</code> code snippet.  These file names are generated using 
 from the md5 signature of the code snippet and saved to a location specified by 
 the PYTHONCOMPILED environment variable (discussed later).  The cpp files are 
@@ -1306,9 +1306,9 @@ type conversions, etc.  However, the actual compiled function is pretty simple.
 Below is the familiar <code>printf</code> example:
 
     <blockquote><pre><code>
-    >>> import compiler    
+    >>> import weave    
     >>> a = 1
-    >>> compiler.inline('printf("%d\\n",a);',['a'])
+    >>> weave.inline('printf("%d\\n",a);',['a'])
     1
     </code></pre></blockquote>        
 
@@ -1505,7 +1505,7 @@ Hopefully VTK will be added to the list soon</li>
 Python to C++ conversions fill in code in several locations in the generated
 <code>inline</code> extension function.  Below is the basic template for the
 function.   This is actually the exact code that is generated by calling
-<code>compiler.inline("",[])</code>.
+<code>weave.inline("",[])</code>.
 
     <blockquote><pre><code>
     static PyObject* compiled_func(PyObject*self, PyObject* args)
@@ -1720,14 +1720,14 @@ stdout and stderr by using <code>fprintf()</code> and passing in
 <code>sys.stdout</code> and <code>sys.stderr</code>.  For example, instead of
 
     <blockquote><pre><code>
-    >>> compiler.inline('printf("hello\\n");',[])
+    >>> weave.inline('printf("hello\\n");',[])
     </code></pre></blockquote>
     
 You might try:
 
     <blockquote><pre><code>
     >>> buf = sys.stdout
-    >>> compiler.inline('fprintf(buf,"hello\\n");',['buf'])
+    >>> weave.inline('fprintf(buf,"hello\\n");',['buf'])
     </code></pre></blockquote>
 
 This will work as expected from a standard python interpreter, but in PythonWin,
@@ -1735,16 +1735,16 @@ the following occurs:
 
     <blockquote><pre><code>
     >>> buf = sys.stdout
-    >>> compiler.inline('fprintf(buf,"hello\\n");',['buf'])
+    >>> weave.inline('fprintf(buf,"hello\\n");',['buf'])
     Traceback (most recent call last):
         File "<interactive input>", line 1, in ?
-        File "C:\Python21\compiler\inline_tools.py", line 315, in inline
+        File "C:\Python21\weave\inline_tools.py", line 315, in inline
             auto_downcast = auto_downcast,
-        File "C:\Python21\compiler\inline_tools.py", line 386, in compile_function
+        File "C:\Python21\weave\inline_tools.py", line 386, in compile_function
             type_factories = type_factories)
-        File "C:\Python21\compiler\ext_tools.py", line 197, in __init__
+        File "C:\Python21\weave\ext_tools.py", line 197, in __init__
             auto_downcast, type_factories)
-        File "C:\Python21\compiler\ext_tools.py", line 390, in assign_variable_types
+        File "C:\Python21\weave\ext_tools.py", line 390, in assign_variable_types
             raise TypeError, format_error_msg(errors)
         TypeError: {'buf': "Unable to convert variable 'buf' to a C++ type."}
     </code></pre></blockquote>
@@ -1759,10 +1759,11 @@ really is:
     pywin.framework.interact.InteractiveView instance at 00EAD014
     </code></pre></blockquote>
 
-PythonWin has reassigned <code>sys.stdout</code> to a special object that implements the Python
-file interface.  This works great in Python, but since the special object doesn't
-have a FILE* pointer underlying it, fprintf doesn't know what to do with it (well this
-will be the problem when instance conversion is implemented...).
+PythonWin has reassigned <code>sys.stdout</code> to a special object that 
+implements the Python file interface.  This works great in Python, but since 
+the special object doesn't have a FILE* pointer underlying it, fprintf doesn't 
+know what to do with it (well this will be the problem when instance conversion 
+is implemented...).
 
 <a name="#inline_callable_argument_conversion"></a>
 <h3> Callable, Instance, and Module Conversion </h3>
@@ -1821,17 +1822,17 @@ When
 
     <blockquote><pre><code>
     >>> a = 1
-    >>> compiler.inline('printf("%d",a);',['a'])
+    >>> weave.inline('printf("%d",a);',['a'])
     </code></pre></blockquote>        
     
 is called for the first time, the code snippet has to be compiled.  In this 
 process, the variable 'a' is tested against a list of type specifications (the 
-default list is stored in compiler/ext_tools.py). The <em>first</em> 
+default list is stored in weave/ext_tools.py). The <em>first</em> 
 specification in the list is used to represent the variable. 
 
 <p>
 Examples of <code>xxx_specification</code> are scattered throughout numerous 
-"xxx_spec.py" files in the <code>compiler</code> package.  Closely related to 
+"xxx_spec.py" files in the <code>weave</code> package.  Closely related to 
 the <code>xxx_specification</code> classes are <code>yyy_info</code> classes. 
 These classes contain compiler, header, and support code information necessary 
 for including a certain set of capabilities (such as blitz++ or CXX support)
@@ -1991,7 +1992,7 @@ Need to check this.
 </em>
 
 <p>
-The in-module cache (in <code>compiler.inline_tools</code> reduces the overhead 
+The in-module cache (in <code>weave.inline_tools</code> reduces the overhead 
 of calling inline functions by about a factor of 2.  It can be reduced a little 
 more for type loop calls where the same function is called over and over again 
 if the cache was a single value instead of a dictionary, but the benefit is 
@@ -2004,7 +2005,7 @@ with a dictionary as the cache.
 <em> Note: most of this section is lifted from old documentation.  It should be
 pretty accurate, but there may be a few discrepancies.</em>
 <p>
-<code>compiler.blitz()</code> compiles Numeric Python expressions for fast 
+<code>weave.blitz()</code> compiles Numeric Python expressions for fast 
 execution.  For most applications, compiled expressions should provide a 
 factor of 2-10 speed-up over Numeric arrays.  Using compiled 
 expressions is meant to be as unobtrusive as possible and works much like 
@@ -2022,16 +2023,16 @@ point average of the 512x512 2d image, b, and stores it in array, a:
     </code></pre></blockquote>            
                        
 To compile the expression, convert the expression to a string by putting
-quotes around it and then use <code>compiler.blitz</code>:
+quotes around it and then use <code>weave.blitz</code>:
 
     <blockquote><pre><code>
-    import compiler
+    import weave
     expr = "a[1:-1,1:-1] =  (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]" \
                           "+ b[1:-1,2:] + b[1:-1,:-2]) / 5."
-    compiler.blitz(expr)
+    weave.blitz(expr)
     </code></pre></blockquote>            
 
-The first time <code>compiler.blitz</code> is run for a given expression and 
+The first time <code>weave.blitz</code> is run for a given expression and 
 set of arguements, C++ code that accomplishes the exact same task as the Python 
 expression is generated and compiled to an extension module.  This can take up 
 to a couple of minutes depending on the complexity of the function.  Subsequent 
@@ -2060,14 +2061,14 @@ processor under RedHat Linux 6.2.
 Because of the slow compile times, its probably most effective to develop 
 algorithms as you usually do using the capabilities of scipy or the Numeric 
 module.  Once the algorithm is perfected, put quotes around it and execute it 
-using <code>compiler.blitz</code>.  This provides the standard rapid 
+using <code>weave.blitz</code>.  This provides the standard rapid 
 prototyping strengths of Python and results in algorithms that run close to 
 that of hand coded C or Fortran.
 
 <a name="blitz_requirements"></a>
 <h2>Requirements</h2>
 
-Currently, the <code>compiler.blitz</code> has only been tested under Linux 
+Currently, the <code>weave.blitz</code> has only been tested under Linux 
 with gcc-2.95-3 and on Windows with Mingw32 (2.95.2).  Its compiler 
 requirements are pretty heavy duty (see the 
 <a href="http://www.oonumerics.org/blitz/">blitz++ home page</a>), so it won't 
@@ -2079,15 +2080,15 @@ will get the most use.
 <h2>Limitations</h2>
 <ol>
 <li>
-Currently, <code>compiler.blitz</code> handles all standard mathematic 
+Currently, <code>weave.blitz</code> handles all standard mathematic 
 operators except for the ** power operator.  The built-in trigonmetric, log, 
 floor/ceil, and fabs functions might work (but haven't been tested). It also 
 handles all types of array indexing supported by the Numeric module.  
 <p>
-<code>compiler.blitz</code> does not currently support operations that use 
+<code>weave.blitz</code> does not currently support operations that use 
 array broadcasting, nor have any of the special purpose functions in Numeric 
 such as take, compress, etc. been implemented.  Note that there are no obvious 
-reasons why most of this functionality cannot be added to scipy.compiler, so it 
+reasons why most of this functionality cannot be added to scipy.weave, so it 
 will likely trickle into future versions.  Using <code>slice()</code> objects 
 directly instead of <code>start:stop:step</code> is also not supported.
 </li>
@@ -2099,14 +2100,14 @@ Currently Python only works on expressions that include assignment such as
     </code></pre></blockquote>            
 
 This means that the result array must exist before calling 
-<code>compiler.blitz</code>.  Future versions will allow the following:
+<code>weave.blitz</code>.  Future versions will allow the following:
 
     <blockquote><pre><code>
-    >>> result = compiler.blitz_eval("b + c + d")
+    >>> result = weave.blitz_eval("b + c + d")
     </code></pre></blockquote>            
 </li>
 <li>    
-<code>compiler.blitz</code> works best when algorithms can be expressed in a 
+<code>weave.blitz</code> works best when algorithms can be expressed in a 
 "vectorized" form.  Algorithms that have a large number of if/thens and other 
 conditions are better hand written in C or Fortran.  Further, the restrictions 
 imposed by requiring vectorized expressions sometimes preclude the use of more 
@@ -2115,7 +2116,7 @@ hand-coded C or Fortran code is the only way to go.
 </li>
 <li>
 One other point deserves mention lest people be confused. 
-<code>compiler.blitz</code> is not a general purpose Python->C compiler.  It 
+<code>weave.blitz</code> is not a general purpose Python->C compiler.  It 
 only works for expressions that contain Numeric arrays and/or 
 Python scalar values. This focused scope concentrates effort on the 
 compuationally intensive regions of the program and sidesteps the difficult 
@@ -2175,7 +2176,7 @@ process.
 <a name="blitz_tools"></a>
 <h2>The Tools</h2>
 
-<code>compiler.blitz</code> relies heavily on several remarkable tools. On the 
+<code>weave.blitz</code> relies heavily on several remarkable tools. On the 
 Python side, the main facilitators are Jermey Hylton's parser module and Jim 
 Huginin's Numeric module.  On the compiled language side, Todd Veldhuizen's 
 blitz++ array library, written in C++ (shhhh. don't tell David Beazley), does 
@@ -2186,7 +2187,7 @@ readable C++ expressions into to code that usually executes within a few
 percentage points of Fortran code for the same problem.  This is good. 
 Unfortunately all the template raz-ma-taz is very expensive to compile, so the 
 200 line extension modules often take 2 or more minutes to compile. This isn't so 
-good. <code>compiler.blitz</code> works to minimize this issue by remembering 
+good. <code>weave.blitz</code> works to minimize this issue by remembering 
 where compiled modules live and reusing them instead of re-compiling every time 
 a program is re-run.
 
@@ -2203,10 +2204,10 @@ representation of the tree.
     
     <blockquote><pre><code>
     >>> import parser
-    >>> import scipy.compiler.misc
+    >>> import scipy.weave.misc
     >>> ast = parser.suite("a = b * c + d")
     >>> ast_list = ast.tolist()
-    >>> sym_list = scipy.compiler.misc.translate_symbols(ast_list)
+    >>> sym_list = scipy.weave.misc.translate_symbols(ast_list)
     >>> pprint.pprint(sym_list)
     ['file_input',
      ['stmt',
@@ -2288,16 +2289,16 @@ In Blitz it is as follows:
 Here the range object works exactly like Python slice objects with the exception
 that the top index (3) is inclusive where as Python's (4) is exclusive.  Other 
 differences include the type declaraions in C++ and parentheses instead of 
-brackets for indexing arrays.  Currently, <code>compiler.blitz</code> handles the 
+brackets for indexing arrays.  Currently, <code>weave.blitz</code> handles the 
 inclusive/exclusive issue by subtracting one from upper indices during the
 translation.  An alternative that is likely more robust/maintainable in the 
 long run, is to write a PyRange class that behaves like Python's range.  
 This is likely very easy.
 <p>
 The stock blitz also doesn't handle negative indices in ranges.  The current 
-implementation of the compiler has a partial solution to this problem.  It 
-calculates and index that starts with a '-' sign by subtracting it from the
-maximum index in the array so that:
+implementation of the <code>blitz()</code> has a partial solution to this 
+problem.  It calculates and index that starts with a '-' sign by subtracting it 
+from the maximum index in the array so that:
 
     <blockquote><pre><code>
                     upper index limit
@@ -2363,17 +2364,17 @@ So far we've glossed over the dynamic vs. static typing issue between Python
 and C++.  In Python, the type of value that a variable holds can change
 through the course of program execution.  C/C++, on the other hand, forces you
 to declare the type of value a variables will hold prior at compile time.
-<code>compiler.blitz</code> handles this issue by examining the types of the
+<code>weave.blitz</code> handles this issue by examining the types of the
 variables in the expression being executed, and compiling a function for those
 explicit types.  For example:
 
     <blockquote><pre><code>
     a = ones((5,5),Float32)
     b = ones((5,5),Float32)
-    compiler.blitz("a = a + b")
+    weave.blitz("a = a + b")
     </code></pre></blockquote>            
 
-When compiling this expression to C++, <code>compiler.blitz</code> sees that the
+When compiling this expression to C++, <code>weave.blitz</code> sees that the
 values for a and b in the local scope have type <code>Float32</code>, or 'float'
 on a 32 bit architecture.  As a result, it compiles the function using 
 the float type (no attempt has been made to deal with 64 bit issues).
@@ -2408,7 +2409,7 @@ In this example,
     <blockquote><pre><code>
     >>> a = ones((5,5),Float32)
     >>> b = ones((5,5),Float32)
-    >>> compiler.blitz("b = a * 2.1")
+    >>> weave.blitz("b = a * 2.1")
     </code></pre></blockquote>            
     
 the <code>2.1</code> is cast down to a <code>float</code> before carrying out 
@@ -2419,7 +2420,7 @@ the operation.  If you really want to force the calculation to be a
 One other point of note.  Currently, you must include both the right hand side 
 and left hand side (assignment side) of your equation in the compiled 
 expression.  Also, the array being assigned to must be created prior to calling 
-<code>compiler.blitz</code>.  I'm pretty sure this is easily changed so that a 
+<code>weave.blitz</code>.  I'm pretty sure this is easily changed so that a 
 compiled_eval expression can be defined, but no effort has been made to 
 allocate new arrays (and decern their type) on the fly.
 
@@ -2427,7 +2428,7 @@ allocate new arrays (and decern their type) on the fly.
 <h2>Cataloging Compiled Functions</h2>
 
 See the <a href="#The Catalog">Cataloging functions</a> section in the 
-<code>compiler.inline()</code> documentation.
+<code>weave.inline()</code> documentation.
 
 <a name="blitz_array_sizes"></a>   
 <h2>Checking Array Sizes</h2>
@@ -2451,13 +2452,13 @@ are not so trivial.  Since slicing is involved, the size of the slices, not the
 input arrays must be checked.  Broadcasting complicates things further because 
 arrays and slices with different dimensions and shapes may be compatible for 
 math operations (broadcasting isn't yet supported by 
-<code>compiler.blitz</code>).  Reductions have a similar effect as their 
+<code>weave.blitz</code>).  Reductions have a similar effect as their 
 results are different shapes than their input operand.  The binary operators in 
 Numeric compare the shapes of their two operands just before they operate on 
 them.  This is possible because Numeric treats each operation independently. 
 The intermediate (temporary) arrays created during sub-operations in an 
 expression are tested for the correct shape before they are combined by another 
-operation.  Because <code>compiler.blitz</code> fuses all operations into a 
+operation.  Because <code>weave.blitz</code> fuses all operations into a 
 single loop, this isn't possible.  The shape comparisons must be done and 
 guaranteed compatible before evaluating the expression.
 <p>
@@ -2468,20 +2469,20 @@ size correct size.  Evaluating an expression of dummy arrays traces the
 changing array sizes through all operations and fails if incompatible array 
 sizes are ever found.  
 <p>
-The machinery for this is housed in <code>compiler.size_check</code>.  It 
+The machinery for this is housed in <code>weave.size_check</code>.  It 
 basically involves writing a new class (dummy array) and overloading it math 
 operators to calculate the new sizes correctly.  All the code is in Python and 
 there is a fair amount of logic (mainly to handle indexing and slicing) so the 
 operation does impose some overhead. For large arrays (ie. 50x50x50), the 
 overhead is negligible compared to evaluating the actual expression.  For small 
 arrays (ie. 16x16), the overhead imposed for checking the shapes with this 
-method can cause the <code>compiler.blitz</code> to be slower than evaluating 
+method can cause the <code>weave.blitz</code> to be slower than evaluating 
 the expression in Python.  
 <p>
 What can be done to reduce the overhead?  (1) The size checking code could be 
 moved into C.  This would likely remove most of the overhead penalty compared 
 to Numeric (although there is also some calling overhead), but no effort has 
-been made to do this. (2) You can also call <code>compiler.blitz</code> with
+been made to do this. (2) You can also call <code>weave.blitz</code> with
 <code>check_size=0</code> and the size checking isn't done.  However, if the 
 sizes aren't compatible, it can cause a core-dump.  So, foregoing size_checking
 isn't advisable until your code is well debugged.
@@ -2489,23 +2490,23 @@ isn't advisable until your code is well debugged.
 <a name="blitz_extension_module"></a>       
 <h2>Creating the Extension Module</h2>
 
-<code>compiler.blitz</code> uses the same machinery as 
-<code>compiler.inline</code> to build the extension module.  The only difference
+<code>weave.blitz</code> uses the same machinery as 
+<code>weave.inline</code> to build the extension module.  The only difference
 is the code included in the function is automatically generated from the
 Numeric array expression instead of supplied by the user.
 
 <a name="#Extension Modules"></a>
 <h1>Extension Modules</h1>
-<code>compiler.inline</code> and <code>compiler.blitz</code> are high level tools
+<code>weave.inline</code> and <code>weave.blitz</code> are high level tools
 that generate extension modules automatically.  Under the covers, they use several
-classes from <code>compiler.ext_tools</code> to help generate the extension module.
+classes from <code>weave.ext_tools</code> to help generate the extension module.
 The main two classes are <code>ext_module</code> and <code>ext_function</code> (I'd
 like to add <code>ext_class</code> and <code>ext_method</code> also).  These classes
 simplify the process of generating extension modules by handling most of the "boiler
 plate" code automatically.
 
 <em>
-Note: <code>inline</code> actually sub-classes <code>compiler.ext_tools.ext_function</code> 
+Note: <code>inline</code> actually sub-classes <code>weave.ext_tools.ext_function</code> 
 to generate slightly different code than the standard <code>ext_function</code>.
 The main difference is that the standard class converts function arguments to
 C types, while inline always has two arguments, the local and global dicts, and
@@ -2519,7 +2520,7 @@ a Python function:
 
     <blockquote><pre><code>
     # examples/increment_example.py
-    from compiler import ext_tools
+    from weave import ext_tools
     
     def build_increment_ext():
         """ Build a simple extension with functions that increment numbers.
@@ -2556,7 +2557,7 @@ The first line of <code>build_increment_ext()</code>,
 creates an <code>ext_module</code> instance that is ready to have 
 <code>ext_function</code> instances added to it.  <code>ext_function</code> 
 instances are created much with a calling convention similar to 
-<code>compiler.inline()</code>. The most common call includes a C/C++ code 
+<code>weave.inline()</code>. The most common call includes a C/C++ code 
 snippet and a list of the arguments for the function.  The following
 
     <blockquote><pre><code>
@@ -2582,7 +2583,7 @@ is called to build the extension module.  By default, the module is created
 in the current working directory.
 
 This example is available in the <code>examples/increment_example.py</code> file
-found in the compiler <code>directory</code>.  At the bottom of the file in the
+found in the <code>weave</code> directory.  At the bottom of the file in the
 module's "main" program, an attempt to import <code>increment_ext</code> without
 building it is made.  If this fails (the module doesn't exist in the PYTHONPATH), 
 the module is built by calling <code>build_increment_ext()</code>.  This approach
@@ -2717,5 +2718,12 @@ approach serves nicely for this example.
 <h1>Customizing Type Conversions -- Type Factories</h1>
 not written
 
-<h1>Things I wish compiler did</h1>
-not written
+<h1>Things I wish <code>weave</code> did</h1>
+
+It is possible to get name clashes if you uses a variable name that is already defined
+in a header automatically included (such as <code>stdio.h</code>) For instance, if you
+try to pass in a variable named <code>stdout</code>, you'll get a cryptic error report
+due to the fact that <code>stdio.h</code> also defines the name.  <code>weave</code>
+should probably try and handle this in some way.
+
+Other things...
