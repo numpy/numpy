@@ -28,12 +28,8 @@ def configuration(parent_package='',parent_path=None):
                        'fastumath_nounsigned.inc',
                        '_scipy_mapping.c',
                        '_scipy_number.c']
-    depends = umath_c_sources  # ????
-    depends = [os.path.join(local_path,x) for x in depends]
     umath_c_sources = [os.path.join(local_path,x) for x in umath_c_sources]
-    umath_c = SourceGenerator(func = None,
-                              target = os.path.join(local_path,'fastumathmodule.c'),
-                              sources = umath_c_sources)
+    umath_c = os.path.join(local_path,'fastumathmodule.c')
     sources = [umath_c, os.path.join(local_path,'isnan.c')]
     define_macros = []
     undef_macros = []
@@ -91,6 +87,7 @@ def configuration(parent_package='',parent_path=None):
                     )
         dict_append(ext_args,**numarray_info)
         config['ext_modules'].append(Extension(**ext_args))
+
 
     # display_test module
     sources = [os.path.join(local_path,'src','display_test.c')]
