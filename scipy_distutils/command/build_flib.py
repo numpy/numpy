@@ -666,9 +666,6 @@ class sun_fortran_compiler(fortran_compiler_base):
                                                  self.version,'lib'))
         return library_dirs
 
-    def get_runtime_library_dirs(self):
-        return self.find_lib_dir()
-
     def get_extra_link_args(self):
         return ["-Bdynamic", "-G"]
 
