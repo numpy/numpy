@@ -2,6 +2,10 @@
 # http://www.absoft.com/literature/osxuserguide.pdf
 # http://www.absoft.com/documentation.html
 
+# Notes:
+# - when using -g77 then use -DUNDERSCORE_G77 to compile f2py
+#   generated extension modules (works for f2py v2.45.241_1936 and up)
+
 import os
 import sys
 
