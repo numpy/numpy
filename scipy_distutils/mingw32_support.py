@@ -93,7 +93,7 @@ if sys.platform == 'win32':
                                      linker_so='g++ -shared')
             # added for python2.3 support
             # we can't pass it through set_executables because pre 2.2 would fail
-            self.compiler_cxx = 'g++'
+            self.compiler_cxx = ['g++']
             
             # Maybe we should also append -mthreads, but then the finished
             # dlls need another dll (mingwm10.dll see Mingw32 docs)
