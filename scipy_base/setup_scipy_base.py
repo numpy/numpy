@@ -2,11 +2,11 @@
 
 import os, sys
 from glob import glob
-from scipy_distutils.core import Extension
-from scipy_distutils.misc_util import get_path,default_config_dict,dot_join
 import shutil
 
 def configuration(parent_package='',parent_path=None):
+    from scipy_distutils.core import Extension
+    from scipy_distutils.misc_util import get_path,default_config_dict,dot_join
     from scipy_distutils.misc_util import get_path,default_config_dict,\
          dot_join,SourceGenerator
 

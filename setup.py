@@ -13,6 +13,7 @@ Usage:
 import os
 import sys
 
+from scipy_distutils.core import setup
 from scipy_distutils.misc_util import default_config_dict
 from scipy_distutils.misc_util import get_path, merge_config_dicts
 
@@ -51,7 +52,6 @@ def setup_package():
                              '_%(cvs_minor)d.%(cvs_serial)d' % (locals ())
 
         print 'SciPy Core Version %s' % scipy_core_version
-        from scipy_distutils.core import setup
         setup( version = scipy_core_version,
                maintainer = "SciPy Developers",
                maintainer_email = "scipy-dev@scipy.org",
