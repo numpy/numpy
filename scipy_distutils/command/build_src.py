@@ -199,7 +199,7 @@ class build_src(build_ext.build_ext):
 
         map(self.mkpath, target_dirs)
 
-        f2py_options = self.f2pyflags[:]
+        f2py_options = extension.f2py_options + self.f2pyflags
         if f2py_sources:
             assert len(f2py_sources)==1,\
                    'only one .pyf file is allowed per extension module but got'\
