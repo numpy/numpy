@@ -12,6 +12,10 @@ from helpmod import help, source
 from Matrix import Matrix as mat
 Mat = mat  # deprecated
 
+# needs fastumath
+Inf = inf = Numeric.array(1e308)**10
+NaN = nan = Numeric.array(0.0) / Numeric.array(0.0)
+
 #---- testing ----#
 
 def test(level=10):

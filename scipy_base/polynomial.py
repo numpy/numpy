@@ -2,7 +2,7 @@ import Numeric
 from Numeric import *
 from scimath import *
 from convenience import diag
-from utility import hstack, r1array, trim_zeros
+from utility import hstack, r1array, trim_zeros, isscalar
 
 __all__ = ['poly','roots','polyint','polyder','polyadd','polysub','polymul',
            'polydiv','polyval','poly1d']
@@ -72,7 +72,7 @@ def roots(p):
         raise ValueError,"Input must be a rank-1 array."
         
     # find non-zero array entries
-    non_zero = nonzero(ravel(a))
+    non_zero = nonzero(ravel(p))
 
     # find the number of trailing zeros -- this is the number of roots at 0.
     trailing_zeros = len(p) - non_zero[-1] - 1

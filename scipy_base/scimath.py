@@ -38,23 +38,23 @@ def log10(x):
         x = _tocomplex(x)
     return fastumath.log10(x)    
 
-def logn(n,s):
-    """ logn(n,s) -- Take log base n of s.
+def logn(n,x):
+    """ Take log base n of x.
     """
     x = Numeric.asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
     if isreal(n) and (n<0):
         n = _tocomplex(n)
-    return fastumath.log(s)/fastumath.log(n)
+    return fastumath.log(x)/fastumath.log(n)
 
-def log2(s):
-    """ log2(s) -- Take log base 2 of s.
+def log2(x):
+    """ Take log base 2 of x.
     """
     x = Numeric.asarray(x)
     if isreal(x) and any(x<0):
         x = _tocomplex(x)
-    return fastumath.log(s)/fastumath.log(2)
+    return fastumath.log(x)/fastumath.log(2)
 
 
 def power(x, p):
