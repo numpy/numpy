@@ -42,7 +42,7 @@ class AbsoftFCompiler(FCompiler):
 
     def get_libraries(self):
         opt = FCompiler.get_libraries(self)
-        opt.extend(['fio','f77math','f90math'])
+        opt.extend(['fio','f90math','fmath'])
         if os.name =='nt':
             opt.append('COMDLG32')
         return opt
