@@ -499,13 +499,21 @@ Python.
     </code></pre></blockquote>      
 
 <p>
-For printing strings, the format statement needs to be changed.
+For printing strings, the format statement needs to be changed.  Also, weave
+doesn't convert strings to char*.  Instead it uses CXX Py::String type, so 
+you have to do a little more work.  Here we convert it to a C++ std::string
+and then ask cor the char* version.
 
     <blockquote><pre><code>    
-    >>> a = 'string'
-    >>> weave.inline(r'printf("%s\n",a);',['a'])
+    >>> a = 'string'    
+    >>> weave.inline(r'printf("%s\n",std::string(a).c_str());',['a'])
     string
     </code></pre></blockquote>      
+<p>
+<em> 
+This is a little convoluted.  Perhaps strings should convert to std::string
+objects instead of CXX objects.  Or maybe to char*.
+</em>
 
 <p>
 As in this case, C/C++ code fragments often have to change to accept different 
