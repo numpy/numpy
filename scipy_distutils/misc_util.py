@@ -548,6 +548,16 @@ def generate_svn_version_py(extension, build_dir):
     entries = os.path.join(local_path,'.svn','entries')
     if not dep_util.newer(entries, target):
         return target
+    revision = get_svn_revision(local_path)
+    f = open(target,'w')
+    f.write('revision=%s\n' % (revision))
+    f.close()
+    return target
+
+def get_svn_revision(path):
+    """ Return path's SVN revision number.
+    """
+    entries = os.path.join(path,'.svn','entries')
     revision = None
     if os.path.isfile(entries):
         f = open(entries)
@@ -555,10 +565,7 @@ def generate_svn_version_py(extension, build_dir):
         f.close()
         if m:
             revision = m.group('revision')
-    f = open(target,'w')
-    f.write('revision=%s\n' % (revision))
-    f.close()
-    return target
+    return revision
 
 if __name__ == '__main__':
     print 'terminal_has_colors:',terminal_has_colors()
