@@ -144,10 +144,11 @@ def find_executable(exe, path=None):
     for path in paths:
         fn = os.path.join(path,exe)
         for s in suffices:
-            f_ext = fn+s
+            f_ext = os.path.realpath(fn+s)
             if os.path.isfile(f_ext) and os.access(f_ext,os.X_OK):
                 log.debug('Found executable %s' % f_ext)
                 return f_ext
+    exe = os.path.realpath(exe)
     if not os.path.isfile(exe) or os.access(exe,os.X_OK):
         log.warn('Could not locate executable %s' % exe)
     return exe
@@ -364,10 +365,11 @@ def _exec_command( command, use_shell=None, **env ):
         argv[0] = find_executable(argv[0])
         if not os.path.isfile(argv[0]):
             log.warn('Executable %s does not exist' % (argv[0]))
-            if os.name in ['nt','dos']:
-                # argv[0] might be internal command
-                argv = [os.environ['COMSPEC'],'/C']+argv
-                using_command = 1
+        argv[0] = quote_arg(argv[0])
+        if os.name in ['nt','dos']:
+            # argv[0] might be internal command
+            argv = [os.environ['COMSPEC'],'/C']+argv
+            using_command = 1
     # sys.__std*__ is used instead of sys.std* because environments
     # like IDLE, PyCrust, etc overwrite sys.std* commands.
     so_fileno = sys.__stdout__.fileno()
@@ -394,10 +396,8 @@ def _exec_command( command, use_shell=None, **env ):
     else:
         os.dup2(fout.fileno(),se_fileno)
 
-    argv0 = quote_arg(argv[0])
-
     try:
-        status = spawn_command(os.P_WAIT,argv0,argv,os.environ)
+        status = spawn_command(os.P_WAIT,argv[0],argv,os.environ)
     except OSError,errmess:
         status = 999
         sys.stderr.write('%s: %s'%(errmess,argv[0]))
