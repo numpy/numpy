@@ -45,7 +45,7 @@ void conversion_numpy_check_type(PyArrayObject* arr_obj, int numeric_type, char*
         char msg[500];
         sprintf(msg,"Conversion Error: received '%s' typed array instead of '%s' typed array for variable '%s'",
                 type_names[arr_obj->descr->type_num],type_names[numeric_type],name);
-        throw Py::TypeError(msg);    
+        throw_error(PyExc_TypeError,msg);    
     }
 }
 
@@ -60,7 +60,7 @@ void numpy_check_type(PyArrayObject* arr_obj, int numeric_type, char* name)
         char msg[500];
         sprintf(msg,"received '%s' typed array instead of '%s' typed array for variable '%s'",
                 type_names[arr_obj->descr->type_num],type_names[numeric_type],name);
-        throw Py::TypeError(msg);    
+        throw_error(PyExc_TypeError,msg);    
     }
 }
 """
@@ -74,7 +74,7 @@ void conversion_numpy_check_size(PyArrayObject* arr_obj, int Ndims, char* name)
         char msg[500];
         sprintf(msg,"Conversion Error: received '%d' dimensional array instead of '%d' dimensional array for variable '%s'",
                 arr_obj->nd,Ndims,name);
-        throw Py::TypeError(msg);
+        throw_error(PyExc_TypeError,msg);
     }    
 }
 
@@ -85,7 +85,7 @@ void numpy_check_size(PyArrayObject* arr_obj, int Ndims, char* name)
         char msg[500];
         sprintf(msg,"received '%d' dimensional array instead of '%d' dimensional array for variable '%s'",
                 arr_obj->nd,Ndims,name);
-        throw Py::TypeError(msg);
+        throw_error(PyExc_TypeError,msg);
     }    
 }
 """

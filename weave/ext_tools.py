@@ -7,6 +7,7 @@ import base_spec
 import scalar_spec
 import sequence_spec
 import common_spec
+import catalog 
 
 default_type_factories = [scalar_spec.int_specification(),
                           scalar_spec.float_specification(),
@@ -146,7 +147,7 @@ class ext_function_from_specs:
                            function_code                    + \
                            indent(dict_code,4)              + \
                       "\n}                                \n"
-        catch_code =  "catch( Py::Exception& e)           \n"   \
+        catch_code =  "catch(...)                       \n"   \
                       "{                                \n" + \
                       "    return_val =  Py::Null();    \n"   \
                       "    exception_occured = 1;       \n"   \
@@ -337,7 +338,8 @@ class ext_module:
         file = self.generate_file(location=location)
         # This is needed so that files build correctly even when different
         # versions of Python are running around.
-        import catalog 
+        # Imported at beginning of file now to help with test paths.
+        # import catalog 
         #temp = catalog.default_temp_dir()
         # for speed, build in the machines temp directory
         temp = catalog.intermediate_dir()

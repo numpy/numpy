@@ -20,8 +20,7 @@ static PyArrayObject* obj_to_numpy(PyObject* py_obj, char* name,
 
     // Make sure input is an array.
     if (!PyArray_Check(py_obj))
-        throw PWException(PyExc_TypeError,
-                          "Input array *name* must be an array.");
+        throw_error(PyExc_TypeError,"Input array *name* must be an array.");
 
     arr_obj = (PyArrayObject*) py_obj;
     
@@ -31,8 +30,8 @@ static PyArrayObject* obj_to_numpy(PyObject* py_obj, char* name,
         // This should be more explicit:
         // Put the desired and actual type in the message.
         // printf("%d,%d",arr_obj->descr->type_num,numeric_type);
-        throw PWException(PyExc_TypeError,
-                          "Input array *name* is the wrong numeric type.");
+        throw_error(PyExc_TypeError,
+                    "Input array *name* is the wrong numeric type.");
     }
     
     // Make sure input has correct rank (defined as number of dimensions).
@@ -43,8 +42,8 @@ static PyArrayObject* obj_to_numpy(PyObject* py_obj, char* name,
     {
         // This should be more explicit:
         // Put the desired and actual dimensionality in message.
-        throw PWException(PyExc_TypeError,
-                         "Input array *name* has wrong number of dimensions.");
+        throw_error(PyExc_TypeError,
+                    "Input array *name* has wrong number of dimensions.");
     }    
     // check the size of arrays.  Acutally, the size of the "views" really
     // needs checking -- not the arrays.

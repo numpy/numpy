@@ -96,11 +96,11 @@ class inline_ext_function(ext_tools.ext_function):
                       '    /*I would like to fill in changed    '   \
                               'locals and globals here...*/   \n'   \
                       '\n}                                       \n'
-        catch_code =  "catch( Py::Exception& e)           \n"   \
+        catch_code =  "catch(...)                       \n"   \
                       "{                                \n" + \
                       "    return_val =  Py::Null();    \n"   \
                       "    exception_occured = 1;       \n"   \
-                      "}                                \n"
+                      "}                                \n"   
         return_code = "    /* cleanup code */                   \n" + \
                            cleanup_code                             + \
                       "    if(!return_val && !exception_occured)\n"   \
@@ -296,9 +296,14 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
         try:
             results = apply(function_cache[code],(local_dict,global_dict))
             return results
-        except:
+        except TypeError, msg: # should specify argument types here.
+            msg = str(msg)
+            if msg[:16] == "Conversion Error":
+                pass
+            else:
+                raise TypeError, msg
+        except KeyError:
             pass
-
         # 2. try function catalog
         try:
             results = attempt_function_call(code,local_dict,global_dict)

@@ -47,12 +47,18 @@ char* find_type(PyObject* py_obj)
     return "unkown type";
 }
 
+void throw_error(PyObject* py_obj, const char* msg)
+{
+  PyErr_SetString(exc, msg);
+  throw 1;
+}
+
 void handle_bad_type(PyObject* py_obj, char* good_type, char* var_name)
 {
     char msg[500];
     sprintf(msg,"received '%s' type instead of '%s' for variable '%s'",
             find_type(py_obj),good_type,var_name);
-    throw Py::TypeError(msg);
+    throw_error(PyExc_TypeError,msg);    
 }
 
 void handle_conversion_error(PyObject* py_obj, char* good_type, char* var_name)
@@ -60,7 +66,7 @@ void handle_conversion_error(PyObject* py_obj, char* good_type, char* var_name)
     char msg[500];
     sprintf(msg,"Conversion Error:, received '%s' type instead of '%s' for variable '%s'",
             find_type(py_obj),good_type,var_name);
-    throw Py::TypeError(msg);
+    throw_error(PyExc_TypeError,msg);
 }
 
 """

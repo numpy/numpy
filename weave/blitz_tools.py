@@ -51,7 +51,7 @@ try:
 except: 
     pass    
    
-def blitz(expr,local_dict=None, global_dict=None,check_size=1,verbose=0):
+def blitz(expr,local_dict=None, global_dict=None,check_size=1,verbose=0,**kw):
     # this could call inline, but making a copy of the
     # code here is more efficient for several reasons.
     global function_catalog
@@ -96,7 +96,8 @@ def blitz(expr,local_dict=None, global_dict=None,check_size=1,verbose=0):
                                              global_dict,module_dir,
                                              compiler='gcc',auto_downcast=1,
                                              verbose = verbose,
-                                             type_factories = blitz_type_factories)
+                                             type_factories = blitz_type_factories,
+                                             **kw)
         function_catalog.add_function(expr,func,module_dir)
         try:                                            
             results = attempt_function_call(expr,local_dict,global_dict)
