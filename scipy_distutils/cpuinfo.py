@@ -47,6 +47,9 @@ class cpuinfo_base:
     def _getNCPUs(self):
         return 1
 
+    def _is_32bit(self):
+        return not self.is_64bit()
+
 class linux_cpuinfo(cpuinfo_base):
 
     info = None
@@ -64,6 +67,11 @@ class linux_cpuinfo(cpuinfo_base):
                 if not info or info[-1].has_key(name): # next processor
                     info.append({})
                 info[-1][name] = value
+            import commands
+            status,output = commands.getstatusoutput('uname -m')
+            if not status:
+                if not info: info.append({})
+                info[-1]['uname_m'] = string.strip(output)
         except:
             print sys.exc_value,'(ignoring)'
         self.__class__.info = info
@@ -89,6 +97,10 @@ class linux_cpuinfo(cpuinfo_base):
 
     def _is_AthlonMP(self):
         return re.match(r'.*?Athlon\(tm\) MP\b',
+                        self.info[0]['model name']) is not None
+
+    def _is_Athlon64(self):
+        return re.match(r'.*?Athlon\(tm\) 64\b',
                         self.info[0]['model name']) is not None
 
     def _is_AthlonHX(self):
@@ -202,6 +214,13 @@ class linux_cpuinfo(cpuinfo_base):
 
     def _has_3dnowext(self):
         return re.match(r'.*?\b3dnowext\b',self.info[0]['flags']) is not None
+
+    def _is_64bit(self):
+        if self.info[0].get('clflush size','')=='64':
+            return 1
+        if self.info[0]['uname_m']=='x86_64':
+            return 1
+        return 0
 
 class irix_cpuinfo(cpuinfo_base):
 
