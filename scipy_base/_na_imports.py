@@ -28,7 +28,8 @@ import numarray.random_array as RandomArray
 from numarray.fft import fft
 from numarray.matrix import Matrix
 from numarray.linear_algebra import inverse, eigenvectors
-from numarray.convolve import convolve
+from numarray.convolve import convolve, cross_correlate
+from numarray.arrayprint import array2string
 
 # LinearAlgebra = ppimport("numarray.linear_algebra")
 # MLab = ppimport("numarray.mlab")
@@ -65,6 +66,8 @@ conj = conjugate
 UnsignedInt8 = UInt8
 UnsignedInt16 = UInt16
 UnsignedInt32 = UInt32
+
+ArrayType = arraytype
 
 NUMERIX_HEADER = "numarray/arrayobject.h"
 
