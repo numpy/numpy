@@ -52,6 +52,12 @@ object::keyed_ref object::operator [] (const std::complex<double>& key) {
   return operator [](_key);
 };
 
+std::ostream& operator <<(std::ostream& os, py::object& obj)
+{
+    os << obj.repr();
+    return os;
+}
+
 //---------------------------------------------------------------------------
 // Fail method for throwing exceptions with a given message.
 //---------------------------------------------------------------------------

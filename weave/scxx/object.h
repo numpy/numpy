@@ -566,22 +566,19 @@ public:
   //-------------------------------------------------------------------------
   // string representations
   //
-  // !! Should these return std::string instead?
   //-------------------------------------------------------------------------
-  object repr() const {    
+  std::string repr() const {    
     object result = PyObject_Repr(_obj);
     if (!(PyObject*)result)
         throw 1;
-    lose_ref(result);    
-    return result;
+    return std::string(PyString_AsString(result));
   };
   
-  object str() const {
+  std::string str() const {
     object result = PyObject_Str(_obj);
     if (!(PyObject*)result)
         throw 1;
-    lose_ref(result);    
-    return result;
+    return std::string(PyString_AsString(result));
   };
 
   // !! Not Tested  
@@ -799,11 +796,6 @@ public:
   }
 };
 
-std::ostream& operator <<(std::ostream& os, py::object& obj)
-{
-    os << (std::string)obj.repr();
-    return os;
-}
 
 //---------------------------------------------------------------------------
 // keyed_ref
