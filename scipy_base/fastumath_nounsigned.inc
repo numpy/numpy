@@ -313,16 +313,11 @@ static Py_complex c_quot_fast(Py_complex a, Py_complex b)
     const double abs_bimag = b.imag < 0 ? -b.imag : b.imag;
 
     if ((b.real == 0.0) && (b.imag == 0.0)) {
-	r.real = a.real / b.real;
-	r.imag = a.imag / b.imag;
-/* 	if (a.real == 0.0) {r.real = a.real/b.real;} */
-/* 	else if (a.real < 0.0) {r.real = -1.0/0.0;} */
-/* 	else if (a.real > 0.0) {r.real = 1.0/0.0;} */
-	
-/* 	if (a.imag == 0.0) {r.imag = a.imag/b.imag;} */
-/* 	else if (a.imag < 0.0) {r.imag = -1.0/0.0;} */
-/* 	else if (a.imag > 0.0) {r.imag = 1.0/0.0;} */
-	return r;
+        r.real = a.real / b.real;
+        r.imag = a.imag / b.imag;
+        if ((a.real == 0.0) && (a.imag != 0.0)) {r.real = 0.0;}
+        else if ((a.real != 0.0) && (a.imag == 0.0)) {r.imag = 0.0;}
+        return r;
     }
     
     if (abs_breal >= abs_bimag) {
