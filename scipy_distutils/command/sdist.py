@@ -68,6 +68,41 @@ class sdist(old_sdist):
         #raise ValueError
     # make_release_tree ()
 
+    def make_distribution (self):
+        """ Overridden to force a build of zip files to have Windows line 
+            endings and tar balls to have Unix line endings.
+            
+            Create the source distribution(s).  First, we create the release
+            tree with 'make_release_tree()'; then, we create all required
+            archive files (according to 'self.formats') from the release tree.
+            Finally, we clean up by blowing away the release tree (unless
+            'self.keep_temp' is true).  The list of archive files created is
+            stored so it can be retrieved later by 'get_archive_files()'.
+        """
+        # Don't warn about missing meta-data here -- should be (and is!)
+        # done elsewhere.
+        base_dir = self.distribution.get_fullname()
+        base_name = os.path.join(self.dist_dir, base_dir)
+
+        self.make_release_tree(base_dir, self.filelist.files)
+        archive_files = []              # remember names of files we create
+        for fmt in self.formats:            
+            self.convert_line_endings(base_dir,fmt)
+            file = self.make_archive(base_name, fmt, base_dir=base_dir)
+            archive_files.append(file)
+                    
+        self.archive_files = archive_files
+
+        if not self.keep_temp:
+            dir_util.remove_tree(base_dir, self.verbose, self.dry_run)
+
+    def convert_line_endings(base_dir,fmt):
+        """ Convert all text files in a tree to have correct line endings.
+            
+            gztar --> \n   (Unix style)
+            zip   --> \r\n (Windows style)
+        """
+        
 def remove_common_base(files):
     """ Remove the greatest common base directory from all the
         absolute file paths in the list of files.  files in the

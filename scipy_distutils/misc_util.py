@@ -178,7 +178,7 @@ def package_config(primary,dependencies=[]):
         
 list_keys = ['packages', 'ext_modules', 'data_files',
              'include_dirs', 'libraries', 'fortran_libraries',
-                 'headers']
+             'headers']
 dict_keys = ['package_dir']             
 
 def default_config_dict():
