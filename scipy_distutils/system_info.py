@@ -6,9 +6,13 @@ include directories, etc.) in the system. Currently, the following
 classes are available:
   atlas_info
   atlas_threads_info
+  atlas_blas_info
+  atlas_blas_threads_info
   lapack_atlas_info
   blas_info
   lapack_info
+  blas_opt_info       # usage recommended
+  lapack_opt_info     # usage recommended
   fftw_info,dfftw_info,sfftw_info
   fftw_threads_info,dfftw_threads_info,sfftw_threads_info
   djbfft_info
@@ -21,7 +25,8 @@ classes are available:
 Usage:
     info_dict = get_info(<name>)
   where <name> is a string 'atlas','x11','fftw','lapack','blas',
-  'lapack_src', or 'blas_src'.
+  'lapack_src', 'blas_src', etc. For a complete list of allowed names,
+  see the definition of get_info() function below.
 
   Returned info_dict is a dictionary which is compatible with
   distutils.setup keyword arguments. If info_dict == {}, then the
@@ -98,10 +103,12 @@ if sys.platform == 'win32':
     default_x11_lib_dirs = []
     default_x11_include_dirs = []
 else:
-    default_lib_dirs = ['/usr/local/lib', '/opt/lib', '/usr/lib']
+    default_lib_dirs = ['/usr/local/lib', '/opt/lib', '/usr/lib',
+                        '/sw/lib']
     default_include_dirs = ['/usr/local/include',
-                            '/opt/include', '/usr/include']
-    default_src_dirs = ['/usr/local/src', '/opt/src']
+                            '/opt/include', '/usr/include',
+                            '/sw/include']
+    default_src_dirs = ['/usr/local/src', '/opt/src','/sw/src']
     default_x11_lib_dirs = ['/usr/X11R6/lib','/usr/X11/lib','/usr/lib']
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include',
                                 '/usr/include']
@@ -118,10 +125,12 @@ default_src_dirs = filter(os.path.isdir, default_src_dirs)
 so_ext = get_config_vars('SO')[0] or ''
 
 def get_info(name):
-    cl = {'atlas':atlas_info,
-          'atlas_threads':atlas_threads_info,
-          'lapack_atlas_threads':lapack_atlas_threads_info,
-          'lapack_atlas':lapack_atlas_info,
+    cl = {'atlas':atlas_info,  # use lapack_opt or blas_opt instead
+          'atlas_threads':atlas_threads_info,                # ditto
+          'atlas_blas':atlas_blas_info,
+          'atlas_blas_threads':atlas_blas_threads_info,
+          'lapack_atlas':lapack_atlas_info,  # use lapack_opt instead
+          'lapack_atlas_threads':lapack_atlas_threads_info,  # ditto
           'x11':x11_info,
           'fftw':fftw_info,
           'dfftw':dfftw_info,
@@ -130,12 +139,14 @@ def get_info(name):
           'dfftw_threads':dfftw_threads_info,
           'sfftw_threads':sfftw_threads_info,
           'djbfft':djbfft_info,
-          'blas':blas_info,
-          'lapack':lapack_info,
+          'blas':blas_info,                  # use blas_opt instead
+          'lapack':lapack_info,              # use lapack_opt instead
           'lapack_src':lapack_src_info,
           'blas_src':blas_src_info,
           'numpy':numpy_info,
           'numarray':numarray_info,
+          'lapack_opt':lapack_opt_info,
+          'blas_opt':blas_opt_info,
           }.get(name.lower(),system_info)
     return cl().get_info()
 
@@ -553,7 +564,43 @@ class atlas_info(system_info):
 
         self.set_info(**info)
 
+class atlas_blas_info(atlas_info):
+    _lib_names = ['f77blas','cblas']
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        info = {}
+        atlas_libs = self.get_libs('atlas_libs',
+                                   self._lib_names + ['atlas'])
+        atlas = None
+        atlas_1 = None
+        for d in lib_dirs:
+            atlas = self.check_libs(d,atlas_libs,[])
+            if atlas is not None:
+                lib_dirs2 = self.combine_paths(d,['atlas*','ATLAS*'])+[d]
+            if atlas:
+                atlas_1 = atlas
+        print self.__class__
+        if atlas is None:
+            atlas = atlas_1
+        if atlas is None:
+            return
+        include_dirs = self.get_include_dirs()
+        h = (self.combine_paths(lib_dirs+include_dirs,'cblas.h') or [None])[0]
+        if h:
+            h = os.path.dirname(h)
+            dict_append(info,include_dirs=[h])
+        info['language'] = 'c'
+
+        dict_append(info,**atlas)
+
+        self.set_info(**info)
+        return
+
 class atlas_threads_info(atlas_info):
+    _lib_names = ['ptf77blas','ptcblas']
+
+class atlas_blas_threads_info(atlas_blas_info):
     _lib_names = ['ptf77blas','ptcblas']
 
 class lapack_atlas_info(atlas_info):
@@ -677,6 +724,202 @@ class lapack_src_info(system_info):
         info = {'sources':sources,'language':'f77'}
         self.set_info(**info)
 
+atlas_version_c_text = r'''
+/* This file is generated from scipy_distutils/system_info.py */
+#ifdef __CPLUSPLUS__
+extern "C" {
+#endif
+#include "Python.h"
+static PyMethodDef module_methods[] = { {NULL,NULL} };
+DL_EXPORT(void) initatlas_version(void) {
+  PyObject *m = NULL;
+#if defined(NO_ATLAS_INFO)
+  printf("NO ATLAS INFO AVAILABLE\n");
+#else
+#if defined(ATLAS_INFO)
+  printf("ATLAS_VERSION=" ATLAS_INFO "\n");
+#else
+  void ATL_buildinfo(void);
+  ATL_buildinfo();
+#endif
+#endif
+  m = Py_InitModule("atlas_version", module_methods);
+#if defined(ATLAS_INFO)
+  {
+    PyObject *d = PyModule_GetDict(m);
+    PyDict_SetItemString(d,"ATLAS_VERSION",PyString_FromString(ATLAS_INFO));
+  }
+#endif
+}
+#ifdef __CPLUSCPLUS__
+}
+#endif
+'''
+
+def get_atlas_version(**config):
+    from scipy_distutils.core import Extension, setup
+    magic = hex(hash(`config`))
+    def atlas_version_c(extension, build_dir,macig=magic):
+        source = os.path.join(build_dir,'atlas_version_%s.c' % (magic))
+        if os.path.isfile(source):
+            from distutils.dep_util import newer
+            if newer(source,__file__):
+                return source
+        f = open(source,'w')
+        f.write(atlas_version_c_text)
+        f.close()
+        return source
+    ext = Extension('atlas_version',
+                    sources=[atlas_version_c],
+                    **config)
+    dist = setup(ext_modules=[ext],
+                 script_name = 'get_atlas_version',
+                 script_args = ['build_src','build_ext'])
+    from distutils.sysconfig import get_config_var
+    so_ext = get_config_var('SO')
+    build_ext = dist.get_command_obj('build_ext')
+    target = os.path.join(build_ext.build_lib,'atlas_version'+so_ext)
+    from exec_command import exec_command,get_pythonexe
+    cmd = [get_pythonexe(),'-c',
+           '"import imp;imp.load_dynamic(\\"atlas_version\\",\\"%s\\")"'\
+           % (target)]
+    s,o = exec_command(cmd,use_tee=0)
+    atlas_version = None
+    if not s:
+        m = re.match(r'ATLAS version (?P<version>\d+[.]\d+[.]\d+)',o)
+        if m:
+            atlas_version = m.group('version')
+    if atlas_version is None:
+        if re.search(r'undefined symbol: ATL_buildinfo',o,re.M):
+            atlas_version = '3.2.1_pre3.3.6'
+        else:
+            print 'Command:',' '.join(cmd)
+            print 'Status:',s
+            print 'Output:',o
+    return atlas_version
+
+
+class lapack_opt_info(system_info):
+    
+    def calc_info(self):
+
+        if sys.platform=='darwin':
+            args = []
+            if os.path.exists('/System/Library/Frameworks/Accelerate.framework/'):
+                args.extend(['-faltivec','-framework','Accelerate'])
+            elif os.path.exists('/System/Library/Frameworks/vecLib.framework/'):
+                args.extend(['-faltivec','-framework','vecLib'])
+            if args:
+                self.set_info(extra_compile_args=args)
+                return
+
+        atlas_info = get_info('atlas_threads')
+        if not atlas_info:
+            atlas_info = get_info('atlas')
+        atlas_version = None
+        need_lapack = 0
+        need_blas = 0
+        info = {}
+        if atlas_info:
+            version_info = atlas_info.copy()
+            version_info['libraries'] = [version_info['libraries'][-1]]
+            atlas_version = get_atlas_version(**version_info)
+            if not atlas_info.has_key('define_macros'):
+                atlas_info['define_macros'] = []
+            if atlas_version is None:
+                atlas_info['define_macros'].append(('NO_ATLAS_INFO',2))
+            else:
+                atlas_info['define_macros'].append(('ATLAS_INFO',
+                                                    '"\\"%s\\""' % atlas_version))
+            l = atlas_info.get('define_macros',[])
+            if ('ATLAS_WITH_LAPACK_ATLAS',None) in l \
+                   or ('ATLAS_WITHOUT_LAPACK',None) in l:
+                need_lapack = 1
+            info = atlas_info
+        else:
+            warnings.warn(AtlasNotFoundError.__doc__)
+            need_blas = 1
+            need_lapack = 1
+
+        if need_lapack:
+            lapack_info = get_info('lapack')
+            if lapack_info:
+                dict_append(info,**lapack_info)
+            else:
+                warnings.warn(LapackNotFoundError.__doc__)
+                lapack_src_info = get_info('lapack_src')
+                if not lapack_src_info:
+                    warnings.warn(LapackSrcNotFoundError.__doc__)
+                    return
+                dict_append(info,**lapack_src_info)
+
+        if need_blas:
+            blas_info = get_info('blas')
+            if blas_info:
+                dict_append(info,**blas_info)
+            else:
+                warnings.warn(BlasNotFoundError.__doc__)
+                blas_src_info = get_info('blas_src')
+                if not blas_src_info:
+                    warnings.warn(BlasSrcNotFoundError.__doc__)
+                    return
+                dict_append(info,**blas_src_info)
+
+        self.set_info(**info)
+        return
+
+
+class blas_opt_info(system_info):
+    
+    def calc_info(self):
+
+        if sys.platform=='darwin':
+            args = []
+            if os.path.exists('/System/Library/Frameworks/Accelerate.framework/'):
+                args.extend(['-faltivec','-framework','Accelerate'])
+            elif os.path.exists('/System/Library/Frameworks/vecLib.framework/'):
+                args.extend(['-faltivec','-framework','vecLib'])
+            if args:
+                self.set_info(extra_compile_args=args)
+                return
+
+        atlas_info = get_info('atlas_blas_threads')
+        if not atlas_info:
+            atlas_info = get_info('atlas_blas')
+        atlas_version = None
+        need_blas = 0
+        info = {}
+        if atlas_info:
+            version_info = atlas_info.copy()
+            version_info['libraries'] = [version_info['libraries'][-1]]
+            atlas_version = get_atlas_version(**version_info)
+            if not atlas_info.has_key('define_macros'):
+                atlas_info['define_macros'] = []
+            if atlas_version is None:
+                atlas_info['define_macros'].append(('NO_ATLAS_INFO',2))
+            else:
+                atlas_info['define_macros'].append(('ATLAS_INFO',
+                                                    '"\\"%s\\""' % atlas_version))
+            info = atlas_info
+        else:
+            warnings.warn(AtlasNotFoundError.__doc__)
+            need_blas = 1
+
+        if need_blas:
+            blas_info = get_info('blas')
+            if blas_info:
+                dict_append(info,**blas_info)
+            else:
+                warnings.warn(BlasNotFoundError.__doc__)
+                blas_src_info = get_info('blas_src')
+                if not blas_src_info:
+                    warnings.warn(BlasSrcNotFoundError.__doc__)
+                    return
+                dict_append(info,**blas_src_info)
+
+        self.set_info(**info)
+        return
+
 
 class blas_info(system_info):
     section = 'blas'
@@ -696,6 +939,7 @@ class blas_info(system_info):
             return
         info['language'] = 'f77'  # XXX: is it generally true?
         self.set_info(**info)
+
 
 class blas_src_info(system_info):
     section = 'blas_src'
@@ -844,6 +1088,8 @@ class numarray_info(numpy_info):
 ##         del n[0]
 ##     return r
 
+#--------------------------------------------------------------------
+
 def combine_paths(*args,**kws):
     """ Return a list of existing paths composed by all combinations of
         items from arguments.
@@ -902,3 +1148,7 @@ def show_all():
 
 if __name__ == "__main__":
     show_all()
+    if 0:
+        c = lapack_opt_info()
+        c.verbosity = 2
+        c.get_info()

@@ -53,7 +53,7 @@ class build_src(build_ext.build_ext):
         if self.package is None:
             self.package = self.distribution.ext_package
         self.extensions = self.distribution.ext_modules
-        self.libraries = self.distribution.libraries
+        self.libraries = self.distribution.libraries or []
         self.py_modules = self.distribution.py_modules
         if self.build_src is None:
             self.build_src = os.path.join(self.build_base, 'src')
