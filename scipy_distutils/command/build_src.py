@@ -13,7 +13,6 @@ from scipy_distutils import log
 from scipy_distutils.misc_util import fortran_ext_match, all_strings
 from scipy_distutils.from_template import process_str
 
-
 class build_src(build_ext.build_ext):
 
     description = "build sources from SWIG, F2PY files or a function"
@@ -154,7 +153,12 @@ class build_src(build_ext.build_ext):
         if self.inplace:
             build_dir = self.ext_target_dir
         else:
-            build_dir = self.build_src
+            if type(extension) is type(()):
+                name = extension[0]
+            else:
+                name = extension.name
+            build_dir = os.path.join(*([self.build_src]\
+                                       +name.split('.')[:-1]))
         self.mkpath(build_dir)
         for func in func_sources:
             source = func(extension, build_dir)
