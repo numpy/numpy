@@ -180,7 +180,7 @@ class _ModuleLoader:
 	    module = sys.modules[name]
 	except KeyError:
 	    raise ImportError,self.__dict__.get('_ppimport_exc_value')
-        assert module is self,`module`
+        assert module is self,`(module, self)`
 
         # uninstall loader
         del sys.modules[name]
