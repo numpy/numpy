@@ -9,14 +9,16 @@ classes are available:
   lapack_info
   fftw_info
   x11_info
+  lapack_src_info
 
 Usage:
     info_dict = get_info(<name>)
-  where <name> is a string 'atlas','x11','fftw','lapack','blas'.
+  where <name> is a string 'atlas','x11','fftw','lapack','blas',
+  or 'lapack_src'.
 
   Returned info_dict is a dictionary which is compatible with
   distutils.setup keyword arguments. If info_dict == {}, then the
-  asked resource is not available (or system_info could not find it).
+  asked resource is not available (system_info could not find it).
 
 Global parameters:
   system_info.search_static_first - search static libraries (.a)
@@ -40,6 +42,7 @@ Example:
 [DEFAULT]
 library_dirs = /usr/lib:/usr/local/lib:/opt/lib
 include_dirs = /usr/include:/usr/local/include:/opt/include
+src_dirs = /usr/local/src:/opt/src
 # search static libraries (.a) in preference to shared ones (.so)
 search_static_first = 0
 
@@ -82,21 +85,25 @@ from distutils.sysconfig import get_config_vars
 if sys.platform == 'win32':
     default_lib_dirs = ['C:\\'] # probably not very helpful...
     default_include_dirs = []
+    default_src_dirs = []
     default_x11_lib_dirs = []
     default_x11_include_dirs = []
 else:
     default_lib_dirs = ['/usr/local/lib', '/opt/lib', '/usr/lib']
     default_include_dirs = ['/usr/local/include',
                             '/opt/include', '/usr/include']
+    default_src_dirs = ['/usr/local/src', '/opt/src']
     default_x11_lib_dirs = ['/usr/X11R6/lib','/usr/X11/lib']
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include']
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0,os.path.join(sys.prefix, 'lib'))
     default_include_dirs.append(os.path.join(sys.prefix, 'include'))
+    default_src_dirs.append(os.path.join(sys.prefix, 'src'))
 
 default_lib_dirs = filter(os.path.isdir, default_lib_dirs)
 default_include_dirs = filter(os.path.isdir, default_include_dirs)
+default_src_dirs = filter(os.path.isdir, default_src_dirs)
 
 so_ext = get_config_vars('SO')[0] or ''
 
@@ -106,6 +113,7 @@ def get_info(name):
           'fftw':fftw_info,
           'blas':blas_info,
           'lapack':lapack_info,
+          'lapack_src':lapack_src_info,
           }.get(name.lower(),system_info)
     return cl().get_info()
 
@@ -116,29 +124,36 @@ class AtlasNotFoundError(NotFoundError):
     """
     Atlas (http://math-atlas.sourceforge.net/) libraries not found.
     Directories to search for the libraries can be specified in the
-    scipy_distutils/site.cfg file or by setting the ATLAS environment
-    variable."""
+    scipy_distutils/site.cfg file (section [atlas]) or by setting
+    the ATLAS environment variable."""
 
 class LapackNotFoundError(NotFoundError):
     """
     Lapack (http://www.netlib.org/lapack/) libraries not found.
     Directories to search for the libraries can be specified in the
-    scipy_distutils/site.cfg file or by setting the LAPACK environment
-    variable."""
+    scipy_distutils/site.cfg file (section [lapack]) or by setting
+    the LAPACK environment variable."""
+
+class LapackSrcNotFoundError(LapackNotFoundError):
+    """
+    Lapack (http://www.netlib.org/lapack/) sources not found.
+    Directories to search for the sources can be specified in the
+    scipy_distutils/site.cfg file (section [lapack_src]) or by setting
+    the LAPACK_SRC environment variable."""
 
 class BlasNotFoundError(NotFoundError):
     """
     Blas (http://www.netlib.org/blas/) libraries not found.
     Directories to search for the libraries can be specified in the
-    scipy_distutils/site.cfg file or by setting the BLAS environment
-    variable."""
+    scipy_distutils/site.cfg file (section [blas]) or by setting
+    the BLAS environment variable."""
 
 class FFTWNotFoundError(NotFoundError):
     """
     FFTW (http://www.fftw.org/) libraries not found.
     Directories to search for the libraries can be specified in the
-    scipy_distutils/site.cfg file or by setting the FFTW environment
-    variable."""
+    scipy_distutils/site.cfg file (section [fftw]) or by setting
+    the FFTW environment variable."""
 
 class F2pyNotFoundError(NotFoundError):
     """
@@ -173,6 +188,7 @@ class system_info:
         defaults = {}
         defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
         defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
+        defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
         defaults['search_static_first'] = str(self.search_static_first)
         self.cp = ConfigParser.ConfigParser(defaults)
         cf = os.path.join(os.path.split(os.path.abspath(__file__))[0],
@@ -210,6 +226,8 @@ class system_info:
         res = self.saved_results.get(self.__class__.__name__)
         if self.verbose and flag:
             for k,v in res.items():
+                v = str(v)
+                if k=='sources' and len(v)>200: v = v[:60]+' ...\n... '+v[-60:]
                 print '    %s = %s'%(k,v)
             print
         return res
@@ -228,6 +246,9 @@ class system_info:
         return self.get_paths(self.section, key)
 
     def get_include_dirs(self, key='include_dirs'):
+        return self.get_paths(self.section, key)
+
+    def get_src_dirs(self, key='src_dirs'):
         return self.get_paths(self.section, key)
 
     def get_libs(self, key, default):
@@ -410,6 +431,98 @@ class lapack_info(system_info):
         else:
             return
         self.set_info(**info)
+
+class lapack_src_info(system_info):
+    section = 'lapack_src'
+    dir_env_var = 'LAPACK_SRC'
+
+    def get_paths(self, section, key):
+        pre_dirs = system_info.get_paths(self, section, key)
+        dirs = []
+        for d in pre_dirs:
+            dirs.extend([d] + combine_paths(d,['LAPACK*/SRC','SRC']))
+        return [ d for d in dirs if os.path.isdir(d) ]
+
+    def calc_info(self):
+        src_dirs = self.get_src_dirs()
+        src_dir = ''
+        for d in src_dirs:
+            if os.path.isfile(os.path.join(d,'dgesv.f')):
+                src_dir = d
+                break
+        if not src_dir: return
+        # The following is extracted from LAPACK-3.0/SRC/Makefile
+        allaux='''
+        ilaenv ieeeck lsame lsamen xerbla
+        ''' # *.f
+        laux = '''
+        bdsdc bdsqr disna labad lacpy ladiv lae2 laebz
+        laed0 laed1 laed2 laed3 laed4 laed5 laed6 laed7 laed8 laed9
+        laeda laev2 lagtf lagts lamch lamrg lanst lapy2 lapy3 larnv
+        larrb larre larrf lartg laruv las2 lascl lasd0 lasd1 lasd2
+        lasd3 lasd4 lasd5 lasd6 lasd7 lasd8 lasd9 lasda lasdq lasdt
+        laset lasq1 lasq2 lasq3 lasq4 lasq5 lasq6 lasr lasrt lassq
+        lasv2 pttrf stebz stedc steqr sterf
+        ''' # [s|d]*.f
+        lasrc = '''
+        gbbrd gbcon gbequ gbrfs gbsv gbsvx gbtf2 gbtrf gbtrs gebak gebal
+        gebd2 gebrd gecon geequ gees geesx geev geevx gegs gegv gehd2
+        gehrd gelq2 gelqf gels gelsd gelss gelsx gelsy geql2 geqlf geqp3
+        geqpf geqr2 geqrf gerfs gerq2 gerqf gesc2 gesdd gesv gesvd gesvx
+        getc2 getf2 getrf getri getrs ggbak ggbal gges ggesx ggev ggevx
+        ggglm gghrd gglse ggqrf ggrqf ggsvd ggsvp gtcon gtrfs gtsv gtsvx
+        gttrf gttrs gtts2 hgeqz hsein hseqr labrd lacon laein lags2 lagtm
+        lahqr lahrd laic1 lals0 lalsa lalsd langb lange langt lanhs lansb
+        lansp lansy lantb lantp lantr lapll lapmt laqgb laqge laqp2 laqps
+        laqsb laqsp laqsy lar1v lar2v larf larfb larfg larft larfx largv
+        larrv lartv larz larzb larzt laswp lasyf latbs latdf latps latrd
+        latrs latrz latzm lauu2 lauum pbcon pbequ pbrfs pbstf pbsv pbsvx
+        pbtf2 pbtrf pbtrs pocon poequ porfs posv posvx potf2 potrf potri
+        potrs ppcon ppequ pprfs ppsv ppsvx pptrf pptri pptrs ptcon pteqr
+        ptrfs ptsv ptsvx pttrs ptts2 spcon sprfs spsv spsvx sptrf sptri
+        sptrs stegr stein sycon syrfs sysv sysvx sytf2 sytrf sytri sytrs
+        tbcon tbrfs tbtrs tgevc tgex2 tgexc tgsen tgsja tgsna tgsy2 tgsyl
+        tpcon tprfs tptri tptrs trcon trevc trexc trrfs trsen trsna trsyl
+        trti2 trtri trtrs tzrqf tzrzf
+        ''' # [s|c|d|z]*.f
+        sd_lasrc = '''
+        laexc lag2 lagv2 laln2 lanv2 laqtr lasy2 opgtr opmtr org2l org2r orgbr
+        orghr orgl2 orglq orgql orgqr orgr2 orgrq orgtr orm2l orm2r ormbr ormhr
+        orml2 ormlq ormql ormqr ormr2 ormr3 ormrq ormrz ormtr rscl sbev sbevd
+        sbevx sbgst sbgv sbgvd sbgvx sbtrd spev spevd spevx spgst spgv spgvd
+        spgvx sptrd stev stevd stevr stevx syev syevd syevr syevx sygs2 sygst
+        sygv sygvd sygvx sytd2 sytrd
+        ''' # [s|d]*.f
+        cz_lasrc = '''
+        bdsqr hbev hbevd hbevx hbgst hbgv hbgvd hbgvx hbtrd hecon heev heevd
+        heevr heevx hegs2 hegst hegv hegvd hegvx herfs hesv hesvx hetd2 hetf2
+        hetrd hetrf hetri hetrs hpcon hpev hpevd hpevx hpgst hpgv hpgvd hpgvx
+        hprfs hpsv hpsvx hptrd hptrf hptri hptrs lacgv lacp2 lacpy lacrm lacrt
+        ladiv laed0 laed7 laed8 laesy laev2 lahef lanhb lanhe lanhp lanht
+        laqhb laqhe laqhp larcm larnv lartg lascl laset lasr lassq pttrf rot
+        spmv spr stedc steqr symv syr ung2l ung2r ungbr unghr ungl2 unglq
+        ungql ungqr ungr2 ungrq ungtr unm2l unm2r unmbr unmhr unml2 unmlq
+        unmql unmqr unmr2 unmr3 unmrq unmrz unmtr upgtr upmtr
+        ''' # [c|z]*.f
+        #######
+        sclaux = laux + ' econd '                  # s*.f
+        dzlaux = laux + ' secnd '                  # d*.f
+        slasrc = lasrc + sd_lasrc                  # s*.f
+        dlasrc = lasrc + sd_lasrc                  # d*.f
+        clasrc = lasrc + cz_lasrc + ' srot srscl ' # c*.f
+        zlasrc = lasrc + cz_lasrc + ' drot drscl ' # z*.f
+        oclasrc = ' icmax1 scsum1 '                # *.f
+        ozlasrc = ' izmax1 dzsum1 '                # *.f
+        sources = ['s%s.f'%f for f in (sclaux+slasrc).split()] \
+                  + ['d%s.f'%f for f in (dzlaux+dlasrc).split()] \
+                  + ['c%s.f'%f for f in (clasrc).split()] \
+                  + ['z%s.f'%f for f in (zlasrc).split()] \
+                  + ['%s.f'%f for f in (allaux+oclasrc+ozlasrc).split()]
+        sources = [os.path.join(src_dir,f) for f in sources]
+        #XXX: should we check here actual existence of source files?
+        info = {'sources':sources}
+        self.set_info(**info)
+
 
 class blas_info(system_info):
     section = 'blas'
