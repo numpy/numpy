@@ -1,51 +1,53 @@
 /******************************************** 
   copyright 1999 McMillan Enterprises, Inc.
   www.mcmillan-inc.com
-*********************************************/
-#if !defined(PWOMSEQUENCE_H_INCLUDED_)
-#define PWOMSEQUENCE_H_INCLUDED_
 
+  modified for weave by eric jones
+*********************************************/
+#if !defined(LIST_H_INCLUDED_)
+#define LIST_H_INCLUDED_
+
+// ej: not sure what this is about, but we'll leave it.
 #if _MSC_VER >= 1000
 #pragma once
 #endif // _MSC_VER >= 1000
 
-#include "PWOBase.h"
-#include "PWOSequence.h"
+#include "object.h"
+#include "sequence.h"
 #include <string>
 
-
-class PWOList;
-
-class PWOListMmbr : public PWOBase
+namespace py {
+    
+class list_member : public object
 {
-  PWOList& _parent;
+  list& _parent;
   int _ndx;
 public:
-  PWOListMmbr(PyObject* obj, PWOList& parent, int ndx);
-  virtual ~PWOListMmbr() {};
-  PWOListMmbr& operator=(const PWOBase& other);
-  PWOListMmbr& operator=(const PWOListMmbr& other);
-  PWOListMmbr& operator=(int other);
-  PWOListMmbr& operator=(double other);
-  PWOListMmbr& operator=(const char* other);
-  PWOListMmbr& operator=(std::string other);
+  list_member(PyObject* obj, list& parent, int ndx);
+  virtual ~list_member() {};
+  list_member& operator=(const object& other);
+  list_member& operator=(const list_member& other);
+  list_member& operator=(int other);
+  list_member& operator=(double other);
+  list_member& operator=(const char* other);
+  list_member& operator=(std::string other);
 };
 
-class PWOList : public PWOSequence
+class list : public sequence
 {
 public:
-  PWOList(int size=0) : PWOSequence (PyList_New(size)) { LoseRef(_obj); }
-  PWOList(const PWOList& other) : PWOSequence(other) {};
-  PWOList(PyObject* obj) : PWOSequence(obj) {
+  list(int size=0) : sequence (PyList_New(size)) { LoseRef(_obj); }
+  list(const list& other) : sequence(other) {};
+  list(PyObject* obj) : sequence(obj) {
     _violentTypeCheck();
   };
-  virtual ~PWOList() {};
+  virtual ~list() {};
 
-  virtual PWOList& operator=(const PWOList& other) {
+  virtual list& operator=(const list& other) {
     GrabRef(other);
     return *this;
   };
-  PWOList& operator=(const PWOBase& other) {
+  list& operator=(const object& other) {
     GrabRef(other);
     _violentTypeCheck();
     return *this;
@@ -57,70 +59,70 @@ public:
     }
   };
   //PySequence_DelItem    ##lists
-  bool delItem(int i) {
+  bool del(int i) {
     int rslt = PySequence_DelItem(_obj, i);
     if (rslt == -1)
       Fail(PyExc_RuntimeError, "cannot delete item");
     return true;
   };
   //PySequence_DelSlice   ##lists
-  bool delSlice(int lo, int hi) {
+  bool del(int lo, int hi) {
     int rslt = PySequence_DelSlice(_obj, lo, hi);
     if (rslt == -1)
       Fail(PyExc_RuntimeError, "cannot delete slice");
     return true;
   };
-  //PySequence_GetItem    ##lists - return PWOListMmbr (mutable) otherwise just a PWOBase
-  PWOListMmbr operator [] (int i) {       // can't be virtual
+  //PySequence_GetItem    ##lists - return list_member (mutable) otherwise just a object
+  list_member operator [] (int i) {       // can't be virtual
     //PyObject* o = PySequence_GetItem(_obj, i); assumes item is valid
     PyObject* o = PyList_GetItem(_obj, i);  // get a "borrowed" refcount
     //Py_XINCREF(o);
     //if (o == 0)
     //      Fail(PyExc_IndexError, "index out of range");
-    return PWOListMmbr(o, *this, i); // this increfs
+    return list_member(o, *this, i); // this increfs
   };
   //PySequence_SetItem    ##Lists
-  void setItem(int ndx, PWOBase& val) {
+  void set_item(int ndx, object& val) {
     //int rslt = PySequence_SetItem(_obj, ndx, val); - assumes old item is valid
     int rslt = PyList_SetItem(_obj, ndx, val);
-    val.disOwn();   //when using PyList_SetItem, he steals my reference
+    val.disown();   //when using PyList_SetItem, he steals my reference
     if (rslt==-1)
       Fail(PyExc_IndexError, "Index out of range");
   };
 
-  void setItem(int ndx, int val) {
+  void set_item(int ndx, int val) {
     int rslt = PyList_SetItem(_obj, ndx, PyInt_FromLong(val));
     if (rslt==-1)
       Fail(PyExc_IndexError, "Index out of range");
   };
   
-  void setItem(int ndx, double val) {
+  void set_item(int ndx, double val) {
     int rslt = PyList_SetItem(_obj, ndx, PyFloat_FromDouble(val));
     if (rslt==-1)
       Fail(PyExc_IndexError, "Index out of range");
   };
 
-  void setItem(int ndx, char* val) {
+  void set_item(int ndx, char* val) {
     int rslt = PyList_SetItem(_obj, ndx, PyString_FromString(val));
     if (rslt==-1)
       Fail(PyExc_IndexError, "Index out of range");
   };
 
-  void setItem(int ndx, std::string val) {
+  void set_item(int ndx, std::string val) {
     int rslt = PyList_SetItem(_obj, ndx, PyString_FromString(val.c_str()));
     if (rslt==-1)
       Fail(PyExc_IndexError, "Index out of range");
   };
 
   //PySequence_SetSlice   ##Lists
-  void setSlice(int lo, int hi, const PWOSequence& slice) {
+  void setSlice(int lo, int hi, const sequence& slice) {
     int rslt = PySequence_SetSlice(_obj, lo, hi, slice);
     if (rslt==-1)
       Fail(PyExc_RuntimeError, "Error setting slice");
   };
 
   //PyList_Append
-  PWOList& append(const PWOBase& other) {
+  list& append(const object& other) {
     int rslt = PyList_Append(_obj, other);
     if (rslt==-1) {
       PyErr_Clear();  //Python sets one 
@@ -129,7 +131,7 @@ public:
     return *this;
   };
 
-  PWOList& append(int other) {
+  list& append(int other) {
     PyObject* oth = PyInt_FromLong(other);
     int rslt = PyList_Append(_obj, oth); 
     Py_XDECREF(oth);
@@ -140,7 +142,7 @@ public:
   return *this;
   };
 
-  PWOList& append(double other) {
+  list& append(double other) {
     PyObject* oth = PyFloat_FromDouble(other);
     int rslt = PyList_Append(_obj, oth); 
     Py_XDECREF(oth);
@@ -151,7 +153,7 @@ public:
   return *this;
   };
 
-  PWOList& append(char* other) {
+  list& append(char* other) {
     PyObject* oth = PyString_FromString(other);
     int rslt = PyList_Append(_obj, oth); 
     Py_XDECREF(oth);
@@ -162,7 +164,7 @@ public:
   return *this;
   };
 
-  PWOList& append(std::string other) {
+  list& append(std::string other) {
     PyObject* oth = PyString_FromString(other.c_str());
     int rslt = PyList_Append(_obj, oth); 
     Py_XDECREF(oth);
@@ -184,7 +186,7 @@ public:
   //PyList_GetItem - inherited OK
   //PyList_GetSlice - inherited OK
   //PyList_Insert
-  PWOList& insert(int ndx, PWOBase& other) {
+  list& insert(int ndx, object& other) {
     int rslt = PyList_Insert(_obj, ndx, other);
     if (rslt==-1) {
       PyErr_Clear();  //Python sets one 
@@ -192,14 +194,14 @@ public:
     };
     return *this;
   };
-  PWOList& insert(int ndx, int other);
-  PWOList& insert(int ndx, double other);
-  PWOList& insert(int ndx, char* other);  
-  PWOList& insert(int ndx, std::string other);
+  list& insert(int ndx, int other);
+  list& insert(int ndx, double other);
+  list& insert(int ndx, char* other);  
+  list& insert(int ndx, std::string other);
 
   //PyList_New
   //PyList_Reverse
-  PWOList& reverse() {
+  list& reverse() {
     int rslt = PyList_Reverse(_obj);
     if (rslt==-1) {
       PyErr_Clear();  //Python sets one 
@@ -211,7 +213,7 @@ public:
   //PyList_SetSlice - using abstract
   //PyList_Size - inherited OK
   //PyList_Sort
-  PWOList& sort() {
+  list& sort() {
     int rslt = PyList_Sort(_obj);
     if (rslt==-1) {
       PyErr_Clear();  //Python sets one 
@@ -219,6 +221,8 @@ public:
     };
     return *this;   //HA HA - Guido can't stop me!!!
   };
-};
+}; // class list
 
-#endif // PWOMSEQUENCE_H_INCLUDED_
+} // namespace py
+
+#endif // LIST_H_INCLUDED_

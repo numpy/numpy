@@ -79,44 +79,24 @@ int PWOSequence::index(std::string value) const {
 PWOTuple::PWOTuple(const PWOList& list)
   : PWOSequence (PyList_AsTuple(list)) { LoseRef(_obj); }
   
-PWOList& PWOList::append(int other) {
-  PWONumber oth = PWONumber(other);
-  return append(oth);
-};
-  
-PWOList& PWOList::append(double other) {
-  PWONumber oth = PWONumber(other);
-  return append(oth);
-};
-
-PWOList& PWOList::append(char* other) {
-  PWOString oth = PWOString(other);
-  return append(oth);
-};
-
-PWOList& PWOList::append(std::string other) {
-  PWOString oth = PWOString(other.c_str());
-  return append(oth);
-};
-
 PWOList& PWOList::insert(int ndx, int other) {
   PWONumber oth = PWONumber(other);
-  return insert(ndx, other);
+  return insert(ndx, oth);
 };
 
 PWOList& PWOList::insert(int ndx, double other) {
   PWONumber oth = PWONumber(other);
-  return insert(ndx, other);
+  return insert(ndx, oth);
 };
 
 PWOList& PWOList::insert(int ndx, char* other) {
   PWOString oth = PWOString(other);
-  return insert(ndx, other);
+  return insert(ndx, oth);
 };
 
 PWOList& PWOList::insert(int ndx, std::string other) {
   PWOString oth = PWOString(other.c_str());
-  return insert(ndx, other);
+  return insert(ndx, oth);
 };
 
 PWOListMmbr::PWOListMmbr(PyObject* obj, PWOList& parent, int ndx) 
@@ -129,13 +109,14 @@ PWOListMmbr& PWOListMmbr::operator=(const PWOBase& other) {
   return *this;
 }
 
-PWOListMmbr& PWOListMmbr::operator=(int other) {
-  GrabRef(PWONumber(other));
+PWOListMmbr& PWOListMmbr::operator=(const PWOListMmbr& other) {
+  GrabRef(other);
+  //Py_XINCREF(_obj); // this one is for setItem to steal
   _parent.setItem(_ndx, *this);
   return *this;
 }
 
-PWOListMmbr& PWOListMmbr::operator=(float other) {
+PWOListMmbr& PWOListMmbr::operator=(int other) {
   GrabRef(PWONumber(other));
   _parent.setItem(_ndx, *this);
   return *this;
@@ -166,12 +147,6 @@ PWOMappingMmbr& PWOMappingMmbr::operator=(const PWOBase& other) {
 }
 
 PWOMappingMmbr& PWOMappingMmbr::operator=(int other) {
-  GrabRef(PWONumber(other));
-  _parent.setItem(_key, *this);
-  return *this;
-}
-
-PWOMappingMmbr& PWOMappingMmbr::operator=(float other) {
   GrabRef(PWONumber(other));
   _parent.setItem(_key, *this);
   return *this;

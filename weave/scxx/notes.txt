@@ -1,0 +1,161 @@
+base package
+    scipy_base
+    scipy_distutils
+    scipy_test
+    gui_thread
+
+scipy
+weave
+chaco
+    
+weave
+
+Proposed changes:
+
+* all classes moved to py:: namespace
+* made tuples mutable with indexing notation. (handy in weave)
+* converted camel case names (setItem -> set_item)
+
+
+* change class names to reflect boost like names and put each 
+  exposed class in its own header file.
+    PWOBase     -> py::object   -- object.h     
+    PWOList     -> py::list     -- list.h       
+    PWOTuple    -> py::tuple    -- tuple.h      
+    PWOMapping  -> py::dict     -- dict.h       
+    PWOCallable -> py::callable -- callable.h   
+    PWOString   -> py::str      -- str.h        
+    PWONumber   -> py::number   -- number.h     
+    
+    py::object public methods:
+        int print(FILE *f, int flags) const DONE
+
+        bool hasattr(const char* nm) const  DONE
+
+        py::object_attr attr(const char* nm) const
+        py::object_attr attr(const py::object& nm) const
+
+        ??
+        int set_attr(const char* nm, py::object& val)
+        int set_attr(PyObject* nm, py::object& val)
+
+        int del(const char* nm)
+        int del(const py::object& nm)
+          
+        int cmp(const py::object& other) const
+
+        bool operator == (const py::object& other) const 
+        bool operator != (const py::object& other) const 
+        bool operator > (const py::object& other) const 
+        bool operator < (const py::object& other) const
+        bool operator >= (const py::object& other) const
+        bool operator <= (const py::object& other) const 
+      
+        PyObject* repr() const
+        /*PyObject* str() const*/ // conflicts with class named str
+        PyObject* type() const
+        
+        int hash() const
+        bool is_true() const
+        bool is_callable() const
+        
+        PyObject* disown() 
+
+
+    py::sequence public methods:
+        PWOSequence operator+(const PWOSequence& rhs) const
+        //count
+        int count(const py::object& value) const
+        int count(int value) const;
+        int count(double value) const;    
+        int count(char* value) const;
+        int count(std::string value) const;
+        
+        py::object operator [] (int i) const
+        py::sequence get_slice(int lo, int hi) const
+        
+        bool in(const py::object& value) const
+        bool in(int value);    
+        bool in(double value);
+        bool in(char* value);
+        bool in(std::string value);
+  
+        int index(const py::object& value) const
+        int index(int value) const;
+        int index(double value) const;
+        int index(char* value) const;
+        int index(std::string value) const;    
+  
+        int len() const
+        int length() const  // compatible with std::string
+
+        py::sequence operator * (int count) const //repeat
+
+    class py::tuple
+        void set_item(int ndx, py::object& val)
+        void set_item(int ndx, int val)
+        void set_item(int ndx, double val)
+        void set_item(int ndx, char* val)
+        void set_item(int ndx, std::string val)
+        
+        // make tuples mutable like lists
+        // much easier to set up call lists, etc.
+        py::tuple_member operator [] (int i)
+        
+    class py::list
+
+        bool del(int i)
+        bool del(int lo, int hi)
+
+        py::list_member operator [] (int i)
+
+        void set_item(int ndx, py::object& val)
+        void set_item(int ndx, int val)
+        void set_item(int ndx, double val)
+        void set_item(int ndx, char* val)
+        void set_item(int ndx, std::string val)
+
+        void set_slice(int lo, int hi, const py::sequence& slice)
+
+        py::list& append(const py::object& other)
+        py::list& append(int other)
+        py::list& append(double other)
+        py::list& append(char* other)
+        py::list& append(std::string other)
+  
+        py::list& insert(int ndx, py::object& other)
+        py::list& insert(int ndx, int other);
+        py::list& insert(int ndx, double other);
+        py::list& insert(int ndx, char* other);  
+        py::list& insert(int ndx, std::string other);
+
+        py::list& reverse()
+        py::list& sort()
+
+    class py::dict
+        py::dict_member operator [] (const char* key)
+        py::dict_member operator [] (std::string key)
+  
+        py::dict_member operator [] (PyObject* key)
+        py::dict_member operator [] (int key)  
+        py::dict_member operator [] (double key)
+    
+        bool has_key(PyObject* key) const
+        bool has_key(const char* key) const
+        // needs int, std::string, and double versions
+  
+        int len() const
+        int length() const
+
+        void set_item(const char* key, PyObject* val)
+        void set_item(PyObject* key, PyObject* val) const
+        // need int, std::string and double versions
+        void clear()
+        
+        void del(PyObject* key)
+        void del(const char* key)
+        // need int, std::string, and double versions
+        
+        py::list items() const
+        py::list keys() const
+        py::list values() const
