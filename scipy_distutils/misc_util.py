@@ -140,7 +140,7 @@ def package_config(primary,dependencies=[]):
         
 list_keys = ['packages', 'ext_modules', 'data_files',
              'include_dirs', 'libraries', 'fortran_libraries',
-             'headers']
+             'headers', 'scripts']
 dict_keys = ['package_dir']
 
 def default_config_dict(name = None, parent_name = None, local_path=None):
