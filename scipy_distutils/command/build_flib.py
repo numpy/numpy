@@ -37,13 +37,13 @@ Open issues:
 
 Fortran compilers (as to be used with --fcompiler= option):
       Absoft
-      Sun
+      Forte
+      (Sun)
       SGI
       Intel
       Itanium
       NAG
       Compaq
-      Digital
       Gnu
       VAST
       F       [unsupported]
@@ -67,6 +67,21 @@ class FortranCompileError (FortranCompilerError):
 class FortranBuildError (FortranCompilerError):
     """Failure to build Fortran library."""
 
+def set_windows_compiler(compiler):
+    distutils.ccompiler._default_compilers = (
+        # Platform string mappings
+        
+        # on a cygwin built python we can use gcc like an ordinary UNIXish
+        # compiler
+        ('cygwin.*', 'unix'),
+        
+        # OS name mappings
+        ('posix', 'unix'),
+        ('nt', compiler),
+        ('mac', 'mwerks'),
+        
+        )
+
 if os.name == 'nt':
     def run_command(command):
         """ not sure how to get exit status on nt. """
@@ -77,7 +92,7 @@ if os.name == 'nt':
 else:
     run_command = commands.getstatusoutput
 
-fcompiler_vendors = r'Absoft|Forte|Sun|SGI|Intel|Itanium|NAG|Compaq|Digital|Gnu|VAST|F'
+fcompiler_vendors = r'Absoft|Forte|Sun|SGI|Intel|Itanium|NAG|Compaq|Gnu|VAST|F'
 
 def show_compilers():
     for compiler_class in all_compilers:
@@ -151,6 +166,12 @@ class build_flib (build_clib):
                   % (self.fcompiler)
         else:
             self.announce('using '+cyan_text('%s Fortran compiler' % fc))
+        if sys.platform=='win32':
+            if fc.vendor in ['Compaq']:
+                set_windows_compiler('msvc')
+            else:
+                set_windows_compiler('mingw32')
+
         self.fcompiler = fc
         if self.has_f_libraries():
             self.fortran_libraries = self.distribution.fortran_libraries
@@ -1362,12 +1383,11 @@ class compaq_fortran_compiler(fortran_compiler_base):
     def get_linker_so(self):
         return [self.f77_compiler,'-shared']
 
-
 #http://www.compaq.com/fortran
-class digital_fortran_compiler(fortran_compiler_base):
+class compaq_visual_fortran_compiler(fortran_compiler_base):
 
-    vendor = 'Digital'
-    ver_match = r'DIGITAL Visual Fortran Optimizing Compiler'\
+    vendor = 'Compaq'
+    ver_match = r'(DIGITAL|Compaq) Visual Fortran Optimizing Compiler'\
                 ' Version (?P<version>[^\s]*).*'
 
     compile_switch = ' /c '
@@ -1395,8 +1415,10 @@ class digital_fortran_compiler(fortran_compiler_base):
             self.lib_ar = find_exe("lib.exe", self.version) + ' /OUT:'
 
         switches = ' /nologo /MD /W1 /iface:cref /iface=nomixed_str_len_arg '
+        #switches += ' /libs:dll /threads '
         debug = ' '
-
+        #debug = ' /debug:full /dbglibs '
+        
         self.f77_switches = ' /f77rtl /fixed ' + switches
         self.f90_switches = switches
         self.f77_debug = self.f90_debug = debug
@@ -1420,20 +1442,32 @@ def find_fortran_compiler(vendor=None, fc=None, f90c=None, verbose=0):
             return compiler
     return None
 
-all_compilers = [absoft_fortran_compiler,
-                 mips_fortran_compiler,
-                 forte_fortran_compiler,
-                 sun_fortran_compiler,
-                 intel_ia32_fortran_compiler,
-                 intel_itanium_fortran_compiler,
-                 nag_fortran_compiler,
-                 compaq_fortran_compiler,
-                 digital_fortran_compiler,
-                 vast_fortran_compiler,
-                 hpux_fortran_compiler,
-                 f_fortran_compiler,
-                 gnu_fortran_compiler,
-                 ]
+if sys.platform=='win32':
+    all_compilers = [
+        absoft_fortran_compiler,
+        intel_ia32_fortran_compiler,
+        intel_itanium_fortran_compiler,
+        nag_fortran_compiler,
+        compaq_visual_fortran_compiler,
+        vast_fortran_compiler,
+        f_fortran_compiler,
+        gnu_fortran_compiler,
+        ]
+else:
+    all_compilers = [
+        absoft_fortran_compiler,
+        mips_fortran_compiler,
+        forte_fortran_compiler,
+        sun_fortran_compiler,
+        intel_ia32_fortran_compiler,
+        intel_itanium_fortran_compiler,
+        nag_fortran_compiler,
+        compaq_fortran_compiler,
+        vast_fortran_compiler,
+        hpux_fortran_compiler,
+        f_fortran_compiler,
+        gnu_fortran_compiler,
+        ]
 
 if __name__ == "__main__":
     show_compilers()
