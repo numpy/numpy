@@ -136,10 +136,13 @@ class FCompiler(CCompiler):
 
     language_map = {'.f':'f77',
                     '.for':'f77',
+                    '.F':'f77',    # XXX: needs preprocessor
                     '.ftn':'f77',
                     '.f77':'f77',
                     '.f90':'f90',
-                    '.f95':'f90'}
+                    '.F90':'f90',  # XXX: needs preprocessor
+                    '.f95':'f90',
+                    }
     language_order = ['f90','f77']
 
     version_pattern = None
@@ -172,7 +175,7 @@ class FCompiler(CCompiler):
 
     pic_flags = []           # Flags to create position-independent code
 
-    src_extensions = ['.for','.ftn','.f77','.f','.f90','.f95']
+    src_extensions = ['.for','.ftn','.f77','.f','.f90','.f95','.F','.F90']
     obj_extension = ".o"
     shared_lib_extension = get_config_var('SO')  # or .dll
     static_lib_extension = ".a"  # or .lib
