@@ -146,6 +146,11 @@ class build_ext (old_build_ext):
 
         c_sources, cxx_sources, f_sources, fmodule_sources = \
                    filter_sources(ext.sources)
+        if self.compiler.compiler_type=='msvc':
+            # this hack worksaround msvc compiler attributes
+            # problem, msvc uses its own convention :(
+            c_sources += cxx_sources
+            cxx_sources = []
 
         if sys.version[:3]>='2.3':
             kws = {'depends':ext.depends}
