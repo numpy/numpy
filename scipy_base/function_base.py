@@ -274,10 +274,24 @@ def unique(inseq):
         set[item] = None
     return asarray(set.keys())
 
-def extract(arr,mask):
-    """1D array of those elements of ravel(arr) where ravel(mask) is true.
+def where(condition,x=None,y=None):
+    """If x and y are both None, then return the (1-d equivalent) indices
+    where condition is true.  Otherwise, return an array shaped like
+    condition with elements of x and y in the places where condition is
+    true or false respectively.
     """
-    return Numeric.take(ravel(arr), nonzero(ravel(mask)))
+    if (x is None) and (y is None):
+             # Needs work for multidimensional arrays
+        return nonzero(ravel(condition))
+    else:
+        return choose(not_equal(condition, 0), (y,x))
+    
+def extract(condition, arr):
+    """Elements of ravel(condition) where ravel(condition) is true (1-d)
+
+    Equivalent of compress(ravel(condition), ravel(arr))
+    """
+    return Numeric.take(ravel(arr), nonzero(ravel(condition)))
 
 def insert(arr, mask, vals):
     """Similar to putmask arr[mask] = vals but 1d array vals has the
