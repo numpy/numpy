@@ -3,10 +3,20 @@ import unittest
 import sys
 from scipy_test.testing import *
 set_package_path()
-import scipy_base;reload(scipy_base)
+import scipy_base; reload(scipy_base)
+reload(scipy_base.shape_base)
 from scipy_base import *
-del sys.path[0]
+restore_path()
 
+class test_apply_along_axis(ScipyTestCase):
+    def check_simple(self):
+        a = ones((20,10),'d')
+        assert_array_equal(apply_along_axis(len,0,a),len(a)*ones(shape(a)[1]))
+    def check_simple101(self,level=11):
+        # This test causes segmentation fault (Numeric 23.3,23.6,Python 2.3.4)
+        # when enabled and shape(a)[1]>100. See Issue 202.
+        a = ones((10,101),'d')
+        assert_array_equal(apply_along_axis(len,0,a),len(a)*ones(shape(a)[1]))
 
 class test_array_split(unittest.TestCase):
     def check_integer_0_split(self):
