@@ -1,4 +1,22 @@
-import os
+
+import os,sys,time
+import unittest
+
+class ScipyTestCase (unittest.TestCase):
+
+    def measure(self,code_str,times=1):
+        frame = sys._getframe(1)
+        locs,globs = frame.f_locals,frame.f_globals
+        code = compile(code_str,
+                       'ScipyTestCase runner for '+self.__class__.__name__,
+                       'exec')
+        i = 0
+        elapsed = time.time()
+        while i<times:
+            i += 1
+            exec code in locs,globs
+        elapsed = time.time() - elapsed
+        return elapsed
 
 def remove_ignored_patterns(files,pattern):
     from fnmatch import fnmatch
