@@ -209,3 +209,29 @@ def get_environ_include_dirs():
     if os.environ.has_key('PYTHONINCLUDE'):
         includes = os.environ['PYTHONINCLUDE'].split(os.pathsep)
     return includes
+
+def get_build_temp():
+    from distutils.util import get_platform
+    plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])
+    return os.path.join('build','temp'+plat_specifier)
+
+class SourceGenerator:
+    def __init__(self,func,target,sources=[]):
+        if not os.path.isabs(target):
+            caller_dir = os.path.dirname(sys._getframe(1).f_globals['__file__'])
+            prefix = os.path.commonprefix([caller_dir,os.getcwd()])
+            target_dir = caller_dir[len(prefix)+1:]
+            target = os.path.join(get_build_temp(),target_dir,target)
+        self.func = func
+        self.target = target
+        self.sources = sources
+    def __str__(self):
+        return str(self.target)
+    def generate(self):
+        from distutils import dep_util,dir_util
+        if dep_util.newer_group(self.sources,self.target):
+            print 'Running generate',self.target
+            dir_util.mkpath(os.path.dirname(self.target),verbose=1)
+            self.func(self.target,self.sources)
+        assert os.path.exists(self.target),`self.target`
+        return self.target

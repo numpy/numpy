@@ -30,7 +30,7 @@ class Extension(old_Extension):
                   export_symbols=None,
                   f2py_options=None
                  ):
-        old_Extension.__init__(self,name, sources,
+        old_Extension.__init__(self,name, [],
                                include_dirs,
                                define_macros,
                                undef_macros,
@@ -41,17 +41,20 @@ class Extension(old_Extension):
                                extra_compile_args,
                                extra_link_args,
                                export_symbols)
+        # Avoid assert statements checking that sources contains strings:
+        self.sources = sources
+        
         self.f2py_options = f2py_options or []
 
     def has_cxx_sources(self):
         for source in self.sources:
-            if cxx_ext_re(source):
+            if cxx_ext_re(str(source)):
                 return 1
         return 0
 
     def has_f2py_sources(self):
         for source in self.sources:
-            if fortran_pyf_ext_re(source):
+            if fortran_pyf_ext_re(str(source)):
                 return 1
         return 0
 

@@ -11,7 +11,7 @@ from distutils.dep_util import newer
 from distutils.cmd import Command
 #from scipy_distutils.core import Command
 from scipy_distutils.system_info import F2pyNotFoundError
-from scipy_distutils.misc_util import red_text,yellow_text
+from scipy_distutils.misc_util import red_text,yellow_text,SourceGenerator
 from scipy_distutils import log
 
 import re,os,sys,string
@@ -111,9 +111,15 @@ class run_f2py(Command):
         ext_name = string.split(ext.name,'.')[-1]
 
         for source in sources:
-            (base, source_ext) = os.path.splitext(source)
-            (source_dir, base) = os.path.split(base)
+            if isinstance(source,SourceGenerator):
+                (base, source_ext) = os.path.splitext(str(source))
+                (source_dir, base) = os.path.split(base)
+            else:
+                (base, source_ext) = os.path.splitext(source)
+                (source_dir, base) = os.path.split(base)
             if source_ext == ".pyf":                  # f2py interface file
+                if isinstance(source,SourceGenerator):
+                    source = source.generate()
                 # get extension module name
                 f = open(source)
                 f_readlines = getattr(f,'xreadlines',f.readlines)
@@ -141,6 +147,8 @@ class run_f2py(Command):
                 f2py_fortran_targets[source] = [fortran_target_file,
                                                 fortran90_target_file]
             elif fortran_ext_re(source_ext):
+                if isinstance(source,SourceGenerator):
+                    source = source.generate()
                 fortran_sources.append(source)                
             else:
                 new_sources.append(source)
