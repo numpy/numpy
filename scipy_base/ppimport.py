@@ -16,6 +16,8 @@ import string
 import types
 import traceback
 
+DEBUG=0
+
 _ppimport_is_enabled = 1
 def enable():
     """ Enable postponed importing."""
@@ -127,6 +129,7 @@ def ppimport(name):
     attributes.
     """
     global _ppimport_is_enabled
+
     level = 1
     p_frame = _get_frame(level)
     while not p_frame.f_locals.has_key('__name__'):
@@ -187,7 +190,7 @@ def ppimport(name):
     # It is OK if name does not exists. The ImportError is
     # postponed until trying to use the module.
 
-    loader = _ModuleLoader(fullname,location)
+    loader = _ModuleLoader(fullname,location,p_frame=p_frame)
     if _ppimport_is_enabled:
         return loader
 
@@ -197,11 +200,12 @@ def ppimport(name):
 class _ModuleLoader:
     # Don't use it directly. Use ppimport instead.
 
-    def __init__(self,name,location):
+    def __init__(self,name,location,p_frame=None):
 
         # set attributes, avoid calling __setattr__
         self.__dict__['__name__'] = name
         self.__dict__['__file__'] = location
+        self.__dict__['_ppimport_p_frame'] = p_frame
 
         if location != 'sys.path':
             from scipy_test.testing import ScipyTest
@@ -238,10 +242,18 @@ class _ModuleLoader:
         # uninstall loader
         del sys.modules[name]
 
-        #print 'Executing postponed import for %s' %(name)
+        if DEBUG:
+            print 'Executing postponed import for %s' %(name)
         try:
             module = __import__(name,None,None,['*'])
-        except: # ImportError:
+        except Exception,msg: # ImportError:
+            p_frame = self.__dict__.get('_ppimport_p_frame',None)
+            if p_frame:
+                print 'ppimport(%s) caller locals:' % (repr(name))
+                for k in ['__name__','__file__']:
+                    v = p_frame.f_locals.get(k,None)
+                    if v is not None:
+                        print '%s=%s' % (k,v)
             self.__dict__['_ppimport_exc_info'] = sys.exc_info()
             raise
 
@@ -352,5 +364,5 @@ if _pydoc is not None:
     import inspect as _inspect
     _old_inspect_getfile = _inspect.getfile
     def _scipy_inspect_getfile(object):
-	return _old_inspect_getfile(ppresolve(object))
+        return _old_inspect_getfile(ppresolve(object))
     _inspect.getfile = _scipy_inspect_getfile
