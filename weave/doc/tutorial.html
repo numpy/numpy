@@ -81,8 +81,8 @@ By Eric Jones eric@enthought.com
 <h1>Introduction</h1>
 
 <p>
-The <code>weave</code> package allows the inclusion of C/C++ within 
-Python code.  This offers both another level of optimization to those who need 
+The <code>weave</code> package provides tools for including C/C++ code within
+in Python code.  This offers both another level of optimization to those who need 
 it, and an easy way to modify and extend any supported extension libraries such 
 as wxPython and hopefully VTK soon. Inlining C/C++ code within Python generally
 results in speed ups of 1.5x to 30x speed-up over algorithms written in pure
@@ -94,7 +94,7 @@ completely convertable to C.
 There are three basic ways to use <code>weave</code>. The 
 <code>weave.inline()</code> function executes C code directly within Python, 
 and <code>weave.blitz()</code> translates Python Numeric expressions to C++ 
-for fast execution.  This was the original functionality for which 
+for fast execution.  <code>blitz()</code> was the original reason 
 <code>weave</code> was built.  For those interested in building extension
 libraries, the <code>ext_tools</code> module provides classes for building 
 extension modules within Python. 
@@ -103,8 +103,9 @@ Most of <code>weave's</code> functionality should work on Windows and Unix,
 although some of its functionality requires <code>gcc</code> or a similarly 
 modern C++ compiler that handles templates well.  Up to now, most testing has 
 been done on Windows 2000 with Microsoft's C++ compiler (MSVC) and with gcc 
-(mingw32 2.95.2 and 2.95.3-6). All tests also seem to pass on Linux (RH 7.1 
-with gcc 2.96).
+(mingw32 2.95.2 and 2.95.3-6). All tests also pass on Linux (RH 7.1 
+with gcc 2.96), and I've had reports that it works on Debian also (thanks 
+Pearu).
 <p>
 The <code>inline</code> and <code>blitz</code> provide new functionality to 
 Python (although I've recently learned about the <a 
@@ -113,21 +114,20 @@ similar functionality to <code>inline</code>).  On the other hand, tools for
 building Python extension modules already exists (SWIG, SIP, pycpp, CXX, and 
 others). As of yet, I'm not sure where <code>weave</code> fits in this 
 spectrum. It is closest in flavor to CXX in that it makes creating new C/C++ 
-extension modules pretty easy. However, If you're wrapping a gaggle of legacy 
+extension modules pretty easy. However, if you're wrapping a gaggle of legacy 
 functions or classes, SWIG and friends are definitely the better choice. 
 <code>weave</code> is set up so that you can customize how Python types are 
 converted to C types in <code>weave</code>. This is great for 
-<code>inline()</code>, but, for wrapping legacy code, it is generally better to 
-specify things the other way around -- that is how C types map to 
-Python types.  This <code>weave</code> does not do.  I guess it would be 
-possible to build such a tool on top of <code>weave</code>, but with good 
-tools like SWIG around, I'm not sure the effort produces any new capabilities. 
-Things like function overloading are probably easily implemented in 
-<code>weave</code> and it might be easier to mix Python/C code in function 
-calls, but nothing beyond this comes to mind. So, if you're developing new 
-extension modules, or just want to optimize a few functions in C, 
-<code>weave</code> might be the tool for you. If you're wrapping legacy code, 
-stick with SWIG.
+<code>inline()</code>, but, for wrapping legacy code, it is more flexible to 
+specify things the other way around -- that is how C types map to Python types. 
+This <code>weave</code> does not do.  I guess it would be possible to build 
+such a tool on top of <code>weave</code>, but with good tools like SWIG around, 
+I'm not sure the effort produces any new capabilities. Things like function 
+overloading are probably easily implemented in <code>weave</code> and it might 
+be easier to mix Python/C code in function calls, but nothing beyond this comes 
+to mind. So, if you're developing new extension modules or optimizing Python 
+functions in C, <code>weave.ext_tools()</code> might be the tool 
+for you. If you're wrapping legacy code, stick with SWIG.
 <p>
 The next several sections give the basics of how to use <code>weave</code>.
 We'll discuss what's happening under the covers in more detail later 
@@ -1257,7 +1257,7 @@ illustrates how this can be done:
      	        results[1] = Py::String("2nd");
      	        return_val = Py::new_reference_to(results); 	        
                 """
-        return inline_tools.inline(code,[])
+        return inline_tools.inline(code)
     </code></pre></blockquote>
 <p> 
 The example is available in <code>examples/tuple_return.py</code>.  It also
@@ -1505,7 +1505,7 @@ Hopefully VTK will be added to the list soon</li>
 Python to C++ conversions fill in code in several locations in the generated
 <code>inline</code> extension function.  Below is the basic template for the
 function.   This is actually the exact code that is generated by calling
-<code>weave.inline("",[])</code>.
+<code>weave.inline("")</code>.
 
     <blockquote><pre><code>
     static PyObject* compiled_func(PyObject*self, PyObject* args)
@@ -1720,7 +1720,7 @@ stdout and stderr by using <code>fprintf()</code> and passing in
 <code>sys.stdout</code> and <code>sys.stderr</code>.  For example, instead of
 
     <blockquote><pre><code>
-    >>> weave.inline('printf("hello\\n");',[])
+    >>> weave.inline('printf("hello\\n");')
     </code></pre></blockquote>
     
 You might try:

@@ -284,7 +284,7 @@ class test_gcc_complex_specification(test_complex_specification):
 
 def setup_test_location():
     import tempfile
-    test_dir = os.path.join(tempfile.tempdir,'test_files')
+    test_dir = os.path.join(tempfile.gettempdir(),'test_files')
     if not os.path.exists(test_dir):
         os.mkdir(test_dir)
     sys.path.insert(0,test_dir)    
@@ -292,7 +292,7 @@ def setup_test_location():
 
 def teardown_test_location():
     import tempfile
-    test_dir = os.path.join(tempfile.tempdir,'test_files')
+    test_dir = os.path.join(tempfile.gettempdir(),'test_files')
     if sys.path[0] == test_dir:
         sys.path = sys.path[1:]
     return test_dir
@@ -303,9 +303,9 @@ def test_suite():
     suites = []
 
     if msvc_exists():
-        #suites.append( unittest.makeSuite(test_msvc_int_specification,'check_'))
-        #suites.append( unittest.makeSuite(test_msvc_float_specification,'check_'))    
-        #suites.append( unittest.makeSuite(test_msvc_complex_specification,'check_'))
+        suites.append( unittest.makeSuite(test_msvc_int_specification,'check_'))
+        suites.append( unittest.makeSuite(test_msvc_float_specification,'check_'))    
+        suites.append( unittest.makeSuite(test_msvc_complex_specification,'check_'))
         pass
     else: # unix
         suites.append( unittest.makeSuite(test_unix_int_specification,'check_'))
@@ -313,8 +313,8 @@ def test_suite():
         suites.append( unittest.makeSuite(test_unix_complex_specification,'check_'))
     
     if gcc_exists():        
-        #suites.append( unittest.makeSuite(test_gcc_int_specification,'check_'))
-        #suites.append( unittest.makeSuite(test_gcc_float_specification,'check_'))    
+        suites.append( unittest.makeSuite(test_gcc_int_specification,'check_'))
+        suites.append( unittest.makeSuite(test_gcc_float_specification,'check_'))    
         suites.append( unittest.makeSuite(test_gcc_complex_specification,'check_'))
 
     total_suite = unittest.TestSuite(suites)

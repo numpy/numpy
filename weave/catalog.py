@@ -218,7 +218,7 @@ class catalog:
         fragment.  A default directory is also searched for catalog functions. 
         On unix, the default directory is usually '~/.pythonxx_compiled' where 
         xx is the version of Python used. On windows, it is the directory 
-        returned by temfile.tempdir().  Functions closer to the front are of 
+        returned by temfile.gettempdir().  Functions closer to the front are of 
         the variable list are guaranteed to be closer to the front of the 
         function list so that they will be called first.  See 
         get_cataloged_functions() for more info on how the search order is 

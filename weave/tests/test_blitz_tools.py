@@ -193,7 +193,7 @@ def remove_test_files():
 
 def setup_test_location():
     import tempfile
-    pth = os.path.join(tempfile.tempdir,'test_files')
+    pth = os.path.join(tempfile.gettempdir(),'test_files')
     if not os.path.exists(pth):
         os.mkdir(pth)
     #sys.path.insert(0,pth)    
@@ -202,7 +202,7 @@ def setup_test_location():
 def teardown_test_location():
     pass
     #import tempfile    
-    #pth = os.path.join(tempfile.tempdir,'test_files')
+    #pth = os.path.join(tempfile.gettempdir(),'test_files')
     #if sys.path[0] == pth:
     #    sys.path = sys.path[1:]
     #return pth
