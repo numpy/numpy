@@ -322,7 +322,7 @@ class fftw_info(system_info):
     dir_env_var = 'FFTW'
     libs = ['fftw','rfftw']
     includes = ['fftw.h','rfftw.h']
-    macros = [('SCIPY_FFTW_H',1)]
+    macros = [('SCIPY_FFTW_H',None)]
 
     def __init__(self):
         system_info.__init__(self)
@@ -359,54 +359,58 @@ class dfftw_info(fftw_info):
     dir_env_var = 'FFTW'
     libs = ['dfftw','drfftw']
     includes = ['dfftw.h','drfftw.h']
-    macros = [('SCIPY_DFFTW_H',1)]
+    macros = [('SCIPY_DFFTW_H',None)]
 
 class sfftw_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
     libs = ['sfftw','srfftw']
     includes = ['sfftw.h','srfftw.h']
-    macros = [('SCIPY_SFFTW_H',1)]
+    macros = [('SCIPY_SFFTW_H',None)]
 
 class fftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
     libs = ['fftw_threads','rfftw_threads']
     includes = ['fftw_threads.h','rfftw_threads.h']
-    macros = [('SCIPY_FFTW_THREADS_H',1)]
+    macros = [('SCIPY_FFTW_THREADS_H',None)]
 
 class dfftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
     libs = ['dfftw_threads','drfftw_threads']
     includes = ['dfftw_threads.h','drfftw_threads.h']
-    macros = [('SCIPY_DFFTW_THREADS_H',1)]
+    macros = [('SCIPY_DFFTW_THREADS_H',None)]
 
 class sfftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
     libs = ['sfftw_threads','srfftw_threads']
     includes = ['sfftw_threads.h','srfftw_threads.h']
-    macros = [('SCIPY_SFFTW_THREADS_H',1)]
+    macros = [('SCIPY_SFFTW_THREADS_H',None)]
 
-class djbfft_info(fftw_info):
+class djbfft_info(system_info):
     section = 'djbfft'
     dir_env_var = 'DJBFFTW'
-    libs = ['djbfft']
-    includes = ['fftc8.h','fftfreq.h']
-    macros = [('SCIPY_DJBFFT_H',1)]
 
-    def _lib_list(self, lib_dir, libs, ext):
-        assert type(lib_dir) is type('')
-        liblist = []
-        for l in libs:
-            p = combine_paths(lib_dir, 'lib'+l+ext)
-            if not p:
-                p = combine_paths(lib_dir, l+ext)
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        incl_dirs = self.get_include_dirs()
+        info = None
+        for d in lib_dirs:
+            p = combine_paths (d,['djbfft.a'])
             if p:
-                assert len(p)==1
-                liblist.append(p[0])
-        return liblist
+                info = {'extra_objects':p}
+                break
+        if info is None:
+            return
+        for d in incl_dirs:
+            if len(combine_paths(d,['fftc8.h','fftfreq.h']))==2:
+                dict_append(info,include_dirs=[d],
+                            define_macros=[('SCIPY_DJBFFT_H',None)])
+                self.set_info(**info)
+                return
+
 
 class atlas_info(system_info):
     section = 'atlas'
