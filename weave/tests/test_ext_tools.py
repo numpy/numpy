@@ -7,7 +7,7 @@ from scipy_distutils.misc_util import add_local_to_path
 add_grandparent_to_path(__name__)
 import ext_tools
 try:
-    from standard_array_spec import array_specification
+    from standard_array_spec import array_converter
 except ImportError:
     pass # requires Numeric    
 restore_path()
@@ -125,12 +125,12 @@ class test_assign_variable_types(unittest.TestCase):
         actual = ext_tools.assign_variable_types(arg_list,locals())        
         #desired = {'a':(Float32,1),'b':(Float32,1),'i':(Int32,0)}
         
-        ad = array_specification()
+        ad = array_converter()
         ad.name, ad.numeric_type, ad.dims = 'a', Float32, 1
-        bd = array_specification()
+        bd = array_converter()
         bd.name, bd.numeric_type, bd.dims = 'b', Float64, 1
         import scalar_spec
-        cd = scalar_spec.int_specification()
+        cd = scalar_spec.int_converter()
         cd.name, cd.numeric_type = 'c', types.IntType        
         desired = [ad,bd,cd]
         expr = ""

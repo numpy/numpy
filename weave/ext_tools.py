@@ -1,38 +1,10 @@
 import os, sys
 import string, re
 
-import build_tools
-
-import base_spec
-import scalar_spec
-import sequence_spec
-import common_spec
 import catalog 
-
-default_type_factories = [scalar_spec.int_specification(),
-                          scalar_spec.float_specification(),
-                          scalar_spec.complex_specification(),
-                          sequence_spec.string_specification(),
-                          sequence_spec.list_specification(),
-                          sequence_spec.dict_specification(),
-                          sequence_spec.tuple_specification(),
-                          common_spec.file_specification(),
-                          common_spec.callable_specification()]
-                          common_spec.instance_specification(),                          
-                          #common_spec.module_specification()]
-
-try: 
-    from standard_array_spec import array_specification
-    default_type_factories.append(array_specification())
-except: 
-    pass    
-
-try: 
-    # this is currently safe because it doesn't import wxPython.
-    import wx_spec
-    default_type_factories.append(wx_spec.wx_specification())
-except: 
-    pass    
+import build_tools
+import converters
+import base_spec
 
 class ext_function_from_specs:
     def __init__(self,name,code_block,arg_specs):
@@ -185,17 +157,17 @@ class ext_function_from_specs:
 
 class ext_function(ext_function_from_specs):
     def __init__(self,name,code_block, args, local_dict=None, global_dict=None,
-                 auto_downcast=1, type_factories=None):
+                 auto_downcast=1, type_converters=None):
                     
         call_frame = sys._getframe().f_back
         if local_dict is None:
             local_dict = call_frame.f_locals
         if global_dict is None:
             global_dict = call_frame.f_globals
-        if type_factories is None:
-            type_factories = default_type_factories
+        if type_converters is None:
+            type_converters = converters.default
         arg_specs = assign_variable_types(args,local_dict, global_dict,
-                                          auto_downcast, type_factories)
+                                          auto_downcast, type_converters)
         ext_function_from_specs.__init__(self,name,code_block,arg_specs)
         
             
@@ -362,7 +334,7 @@ def generate_module(module_string, module_file):
 
 def assign_variable_types(variables,local_dict = {}, global_dict = {},
                           auto_downcast = 1,
-                          type_factories = default_type_factories):
+                          type_converters = converters.default):
     incoming_vars = {}
     incoming_vars.update(global_dict)
     incoming_vars.update(local_dict)
@@ -375,7 +347,7 @@ def assign_variable_types(variables,local_dict = {}, global_dict = {},
             # look through possible type specs to find which one
             # should be used to for example_type
             spec = None
-            for factory in type_factories:
+            for factory in type_converters:
                 if factory.type_match(example_type):
                     spec = factory.type_spec(var,example_type)
                     break

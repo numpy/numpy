@@ -1,9 +1,9 @@
-from base_spec import base_specification
+from base_spec import base_converter
 import common_info
 from types import *
 import os
 
-class common_base_specification(base_specification):
+class common_base_converter(base_converter):
     def type_spec(self,name,value):
         # factory
         new_spec = self.__class__()
@@ -18,7 +18,7 @@ class common_base_specification(base_specification):
                cmp(self.__class__, other.__class__)
         
     
-class file_specification(common_base_specification):
+class file_converter(common_base_converter):
     type_name = 'file'
     _build_information = [common_info.file_info()]
     def type_match(self,value):
@@ -38,7 +38,7 @@ class file_specification(common_base_specification):
         code = "Py_XDECREF(py_%s);\n" % self.name
         return code
 
-class callable_specification(common_base_specification):
+class callable_converter(common_base_converter):
     type_name = 'callable'
     _build_information = [common_info.callable_info()]
     def type_match(self,value):
@@ -51,7 +51,7 @@ class callable_specification(common_base_specification):
                (self.name,var_name,self.name)
         return code       
 
-class instance_specification(common_base_specification):
+class instance_converter(common_base_converter):
     type_name = 'instance'
     _build_information = [common_info.instance_info()]
     def type_match(self,value):

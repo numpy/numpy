@@ -14,18 +14,18 @@ import sys
 sys.path.append('..')
 import ext_tools
 
-class test_string_specification(unittest.TestCase):    
+class test_string_converter(unittest.TestCase):    
     def check_type_match_string(self):
-        s = ext_tools.string_specification()
+        s = ext_tools.string_converter()
         assert( s.type_match('string') )
     def check_type_match_int(self):
-        s = ext_tools.string_specification()        
+        s = ext_tools.string_converter()        
         assert(not s.type_match(5))
     def check_type_match_float(self):
-        s = ext_tools.string_specification()        
+        s = ext_tools.string_converter()        
         assert(not s.type_match(5.))
     def check_type_match_complex(self):
-        s = ext_tools.string_specification()        
+        s = ext_tools.string_converter()        
         assert(not s.type_match(5.+1j))
     def check_var_in(self):
         mod = ext_tools.ext_module('string_var_in')
@@ -78,14 +78,14 @@ class test_string_specification(unittest.TestCase):
         c = string_return.test(b)
         assert( c == 'hello')
 
-class test_list_specification(unittest.TestCase):    
+class test_list_converter(unittest.TestCase):    
     def check_type_match_bad(self):
-        s = ext_tools.list_specification()
+        s = ext_tools.list_converter()
         objs = [{},(),'',1,1.,1+1j]
         for i in objs:
             assert( not s.type_match(i) )
     def check_type_match_good(self):
-        s = ext_tools.list_specification()        
+        s = ext_tools.list_converter()        
         assert(s.type_match([]))
     def check_var_in(self):
         mod = ext_tools.ext_module('list_var_in')
@@ -201,14 +201,14 @@ class test_list_specification(unittest.TestCase):
         print 'python:', t2 - t1        
         assert( sum1 == sum2 and sum1 == sum3)
 
-class test_tuple_specification(unittest.TestCase):    
+class test_tuple_converter(unittest.TestCase):    
     def check_type_match_bad(self):
-        s = ext_tools.tuple_specification()
+        s = ext_tools.tuple_converter()
         objs = [{},[],'',1,1.,1+1j]
         for i in objs:
             assert( not s.type_match(i) )
     def check_type_match_good(self):
-        s = ext_tools.tuple_specification()        
+        s = ext_tools.tuple_converter()        
         assert(s.type_match((1,)))
     def check_var_in(self):
         mod = ext_tools.ext_module('tuple_var_in')
@@ -266,14 +266,14 @@ class test_tuple_specification(unittest.TestCase):
         assert( c == ('hello',None))
 
 
-class test_dict_specification(unittest.TestCase):    
+class test_dict_converter(unittest.TestCase):    
     def check_type_match_bad(self):
-        s = ext_tools.dict_specification()
+        s = ext_tools.dict_converter()
         objs = [[],(),'',1,1.,1+1j]
         for i in objs:
             assert( not s.type_match(i) )
     def check_type_match_good(self):
-        s = ext_tools.dict_specification()        
+        s = ext_tools.dict_converter()        
         assert(s.type_match({}))
     def check_var_in(self):
         mod = ext_tools.ext_module('dict_var_in')
@@ -333,10 +333,10 @@ class test_dict_specification(unittest.TestCase):
 def test_suite():
     suites = []
     
-    #suites.append( unittest.makeSuite(test_string_specification,'check_'))
-    suites.append( unittest.makeSuite(test_list_specification,'check_'))
-    #suites.append( unittest.makeSuite(test_tuple_specification,'check_'))
-    #suites.append( unittest.makeSuite(test_dict_specification,'check_'))
+    #suites.append( unittest.makeSuite(test_string_converter,'check_'))
+    suites.append( unittest.makeSuite(test_list_converter,'check_'))
+    #suites.append( unittest.makeSuite(test_tuple_converter,'check_'))
+    #suites.append( unittest.makeSuite(test_dict_converter,'check_'))
     total_suite = unittest.TestSuite(suites)
     return total_suite
 

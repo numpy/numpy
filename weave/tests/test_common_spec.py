@@ -6,7 +6,7 @@ add_grandparent_to_path(__name__)
 import inline_tools
 restore_path()
     
-class test_file_specification(unittest.TestCase):    
+class test_file_converter(unittest.TestCase):    
     def check_py_to_file(self):
         import tempfile
         file_name = tempfile.mktemp()        
@@ -35,10 +35,10 @@ class test_file_specification(unittest.TestCase):
         file = open(file_name,'r')
         assert(file.read() == "hello fred")
 
-class test_instance_specification(unittest.TestCase):    
+class test_instance_converter(unittest.TestCase):    
     pass
     
-class test_callable_specification(unittest.TestCase):        
+class test_callable_converter(unittest.TestCase):        
     def check_call_function(self):
         import string
         func = string.find
@@ -59,9 +59,9 @@ class test_callable_specification(unittest.TestCase):
 
 def test_suite():
     suites = []   
-    suites.append( unittest.makeSuite(test_file_specification,'check_'))
-    suites.append( unittest.makeSuite(test_instance_specification,'check_'))
-    suites.append( unittest.makeSuite(test_callable_specification,'check_'))
+    suites.append( unittest.makeSuite(test_file_converter,'check_'))
+    suites.append( unittest.makeSuite(test_instance_converter,'check_'))
+    suites.append( unittest.makeSuite(test_callable_converter,'check_'))
     total_suite = unittest.TestSuite(suites)
     return total_suite
 

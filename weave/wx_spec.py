@@ -1,6 +1,6 @@
 import wx_info
 import base_info
-from base_spec import base_specification
+from base_spec import base_converter
 from types import *
 import os
 
@@ -27,7 +27,7 @@ static %(wx_class)s* py_to_%(wx_class)s(PyObject* py_obj,char* name)
 }    
 """        
 
-class wx_specification(base_specification):
+class wx_converter(base_converter):
     _build_information = [wx_info.wx_info()]
     def __init__(self,class_name=None):
         self.type_name = 'unkown wx_object'

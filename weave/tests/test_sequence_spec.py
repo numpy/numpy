@@ -6,7 +6,7 @@ add_grandparent_to_path(__name__)
 import inline_tools
 restore_path()
     
-class test_sequence_specification(unittest.TestCase):    
+class test_sequence_converter(unittest.TestCase):    
     def check_convert_to_dict(self):
         d = {}
         inline_tools.inline("",['d']) 
@@ -22,7 +22,7 @@ class test_sequence_specification(unittest.TestCase):
         
 def test_suite():
     suites = []   
-    suites.append( unittest.makeSuite(test_sequence_specification,'check_'))
+    suites.append( unittest.makeSuite(test_sequence_converter,'check_'))
     total_suite = unittest.TestSuite(suites)
     return total_suite
 

@@ -83,3 +83,4 @@ def test():
 def test_suite():
     from scipy_test import module_test_suite
     return module_test_suite(__name__,__file__)    
+

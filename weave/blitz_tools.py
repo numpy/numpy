@@ -22,35 +22,7 @@ import inline_tools
 from inline_tools import attempt_function_call
 function_catalog = inline_tools.function_catalog
 function_cache = inline_tools.function_cache
-
-# this is pretty much the same as the default factories.
-# We've just replaced the array specification with the blitz
-# specification
-import base_spec
-import scalar_spec
-import sequence_spec
-import common_spec
-from blitz_spec import array_specification
-blitz_type_factories = [sequence_spec.string_specification(),
-                          sequence_spec.list_specification(),
-                          sequence_spec.dict_specification(),
-                          sequence_spec.tuple_specification(),
-                          scalar_spec.int_specification(),
-                          scalar_spec.float_specification(),
-                          scalar_spec.complex_specification(),
-                          common_spec.file_specification(),
-                          common_spec.callable_specification(),
-                          array_specification()]
-                          #common_spec.instance_specification(),                          
-                          #common_spec.module_specification()]
-
-try: 
-    # this is currently safe because it doesn't import wxPython.
-    import wx_spec
-    default_type_factories.append(wx_spec.wx_specification())
-except: 
-    pass    
-   
+  
 def blitz(expr,local_dict=None, global_dict=None,check_size=1,verbose=0,**kw):
     # this could call inline, but making a copy of the
     # code here is more efficient for several reasons.
@@ -96,7 +68,7 @@ def blitz(expr,local_dict=None, global_dict=None,check_size=1,verbose=0,**kw):
                                              global_dict,module_dir,
                                              compiler='gcc',auto_downcast=1,
                                              verbose = verbose,
-                                             type_factories = blitz_type_factories,
+                                             type_converters = converters.blitz,
                                              **kw)
         function_catalog.add_function(expr,func,module_dir)
         try:                                            

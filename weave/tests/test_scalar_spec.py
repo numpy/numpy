@@ -39,19 +39,19 @@ def print_assert_equal(test_string,actual,desired):
         pprint.pprint(desired,msg)
         raise AssertionError, msg.getvalue()
 
-class test_int_specification(unittest.TestCase):
+class test_int_converter(unittest.TestCase):
     compiler = ''    
     def check_type_match_string(self):
-        s = scalar_spec.int_specification()
+        s = scalar_spec.int_converter()
         assert( not s.type_match('string') )
     def check_type_match_int(self):
-        s = scalar_spec.int_specification()        
+        s = scalar_spec.int_converter()        
         assert(s.type_match(5))
     def check_type_match_float(self):
-        s = scalar_spec.int_specification()        
+        s = scalar_spec.int_converter()        
         assert(not s.type_match(5.))
     def check_type_match_complex(self):
-        s = scalar_spec.int_specification()        
+        s = scalar_spec.int_converter()        
         assert(not s.type_match(5.+1j))
     def check_var_in(self):
         test_dir = setup_test_location()
@@ -113,19 +113,19 @@ class test_int_specification(unittest.TestCase):
         teardown_test_location()
         assert( c == 3)
 
-class test_float_specification(unittest.TestCase):    
+class test_float_converter(unittest.TestCase):    
     compiler = ''
     def check_type_match_string(self):
-        s = scalar_spec.float_specification()
+        s = scalar_spec.float_converter()
         assert( not s.type_match('string') )
     def check_type_match_int(self):
-        s = scalar_spec.float_specification()        
+        s = scalar_spec.float_converter()        
         assert(not s.type_match(5))
     def check_type_match_float(self):
-        s = scalar_spec.float_specification()        
+        s = scalar_spec.float_converter()        
         assert(s.type_match(5.))
     def check_type_match_complex(self):
-        s = scalar_spec.float_specification()        
+        s = scalar_spec.float_converter()        
         assert(not s.type_match(5.+1j))
     def check_float_var_in(self):
         test_dir = setup_test_location()                
@@ -187,19 +187,19 @@ class test_float_specification(unittest.TestCase):
         teardown_test_location()
         assert( c == 3.)
         
-class test_complex_specification(unittest.TestCase):    
+class test_complex_converter(unittest.TestCase):    
     compiler = ''
     def check_type_match_string(self):
-        s = scalar_spec.complex_specification()
+        s = scalar_spec.complex_converter()
         assert( not s.type_match('string') )
     def check_type_match_int(self):
-        s = scalar_spec.complex_specification()        
+        s = scalar_spec.complex_converter()        
         assert(not s.type_match(5))
     def check_type_match_float(self):
-        s = scalar_spec.complex_specification()        
+        s = scalar_spec.complex_converter()        
         assert(not s.type_match(5.))
     def check_type_match_complex(self):
-        s = scalar_spec.complex_specification()        
+        s = scalar_spec.complex_converter()        
         assert(s.type_match(5.+1j))
     def check_complex_var_in(self):
         test_dir = setup_test_location()        
@@ -260,25 +260,25 @@ class test_complex_specification(unittest.TestCase):
         teardown_test_location()        
         assert( c == 3.+3j)
 
-class test_msvc_int_specification(test_int_specification):    
+class test_msvc_int_converter(test_int_converter):    
     compiler = 'msvc'
-class test_msvc_float_specification(test_float_specification):    
+class test_msvc_float_converter(test_float_converter):    
     compiler = 'msvc'
-class test_msvc_complex_specification(test_complex_specification):    
+class test_msvc_complex_converter(test_complex_converter):    
     compiler = 'msvc'
 
-class test_unix_int_specification(test_int_specification):    
+class test_unix_int_converter(test_int_converter):    
     compiler = ''
-class test_unix_float_specification(test_float_specification):    
+class test_unix_float_converter(test_float_converter):    
     compiler = ''
-class test_unix_complex_specification(test_complex_specification):    
+class test_unix_complex_converter(test_complex_converter):    
     compiler = ''
 
-class test_gcc_int_specification(test_int_specification):    
+class test_gcc_int_converter(test_int_converter):    
     compiler = 'gcc'
-class test_gcc_float_specification(test_float_specification):    
+class test_gcc_float_converter(test_float_converter):    
     compiler = 'gcc'
-class test_gcc_complex_specification(test_complex_specification):    
+class test_gcc_complex_converter(test_complex_converter):    
     compiler = 'gcc'
     
 
@@ -303,19 +303,19 @@ def test_suite():
     suites = []
 
     if msvc_exists():
-        suites.append( unittest.makeSuite(test_msvc_int_specification,'check_'))
-        suites.append( unittest.makeSuite(test_msvc_float_specification,'check_'))    
-        suites.append( unittest.makeSuite(test_msvc_complex_specification,'check_'))
+        suites.append( unittest.makeSuite(test_msvc_int_converter,'check_'))
+        suites.append( unittest.makeSuite(test_msvc_float_converter,'check_'))    
+        suites.append( unittest.makeSuite(test_msvc_complex_converter,'check_'))
         pass
     else: # unix
-        suites.append( unittest.makeSuite(test_unix_int_specification,'check_'))
-        suites.append( unittest.makeSuite(test_unix_float_specification,'check_'))    
-        suites.append( unittest.makeSuite(test_unix_complex_specification,'check_'))
+        suites.append( unittest.makeSuite(test_unix_int_converter,'check_'))
+        suites.append( unittest.makeSuite(test_unix_float_converter,'check_'))    
+        suites.append( unittest.makeSuite(test_unix_complex_converter,'check_'))
     
     if gcc_exists():        
-        suites.append( unittest.makeSuite(test_gcc_int_specification,'check_'))
-        suites.append( unittest.makeSuite(test_gcc_float_specification,'check_'))    
-        suites.append( unittest.makeSuite(test_gcc_complex_specification,'check_'))
+        suites.append( unittest.makeSuite(test_gcc_int_converter,'check_'))
+        suites.append( unittest.makeSuite(test_gcc_float_converter,'check_'))    
+        suites.append( unittest.makeSuite(test_gcc_complex_converter,'check_'))
 
     total_suite = unittest.TestSuite(suites)
     return total_suite

@@ -1,11 +1,11 @@
-from base_spec import base_specification
-from scalar_spec import numeric_to_blitz_type_mapping
+from base_spec import base_converter
+from scalar_spec import numeric_to_c_type_mapping
 from Numeric import *
 from types import *
 import os
 import standard_array_info
 
-class array_specification(base_specification):
+class array_converter(base_converter):
     _build_information = [standard_array_info.array_info()]
     
     def type_match(self,value):
@@ -13,7 +13,7 @@ class array_specification(base_specification):
 
     def type_spec(self,name,value):
         # factory
-        new_spec = array_specification()
+        new_spec = array_converter()
         new_spec.name = name
         new_spec.numeric_type = value.typecode()
         # dims not used, but here for compatibility with blitz_spec
@@ -28,7 +28,7 @@ class array_specification(base_specification):
         return code
     
     def inline_decl_code(self):
-        type = numeric_to_blitz_type_mapping[self.numeric_type]
+        type = numeric_to_c_type_mapping[self.numeric_type]
         name = self.name
         var_name = self.retrieve_py_variable(inline=1)
         templ = '// %(name)s array declaration\n' \
@@ -42,7 +42,7 @@ class array_specification(base_specification):
         return code
 
     def standard_decl_code(self):    
-        type = numeric_to_blitz_type_mapping[self.numeric_type]
+        type = numeric_to_c_type_mapping[self.numeric_type]
         name = self.name
         templ = '// %(name)s array declaration\n' \
                 'PyArrayObject* %(name)s = convert_to_numpy(py_%(name)s,"%(name)s");\n' \
@@ -58,7 +58,7 @@ class array_specification(base_specification):
     #        be redone in the c function.
     #    """
     #    templ_dict = {}
-    #    templ_dict['type'] = numeric_to_blitz_type_mapping[self.numeric_type]
+    #    templ_dict['type'] = numeric_to_c_type_mapping[self.numeric_type]
     #    templ_dict['dims'] = self.dims
     #    templ_dict['name'] = self.name
     #    code = 'blitz::Array<%(type)s,%(dims)d> &%(name)s' % templ_dict
@@ -85,9 +85,6 @@ class array_specification(base_specification):
                cmp(self.numeric_type,other.numeric_type) or \
                cmp(self.dims, other.dims) or \
                cmp(self.__class__, other.__class__)
-
-import ext_tools
-standard_array_factories = [array_specification()] + ext_tools.default_type_factories
 
 def test():
     from scipy_test import module_test

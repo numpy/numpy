@@ -19,7 +19,7 @@ from Numeric import *
 import sys
 sys.path.insert(0,'..')
 import inline_tools
-from blitz_tools import blitz_type_factories
+from blitz_tools import blitz_type_converters
 import scalar_spec
 
 def vq(obs,code_book):
@@ -31,7 +31,7 @@ def vq(obs,code_book):
     code_book_sh = shape(code_book)
     assert(len(obs_sh) == 2 and len(code_book_sh) == 2)   
     assert(obs_sh[1] == code_book_sh[1])   
-    type = scalar_spec.numeric_to_blitz_type_mapping[obs.typecode()]
+    type = scalar_spec.numeric_to_c_type_mapping[obs.typecode()]
     # band aid for now.
     ar_type = 'PyArray_FLOAT'
     code =  """
@@ -58,7 +58,7 @@ def vq(obs,code_book):
  	        return_val = Py::new_reference_to(results); 	        
             """ % locals()
     code, distortion = inline_tools.inline(code,['obs','code_book'],
-                                           type_factories = blitz_type_factories,
+                                           type_converters = blitz_type_converters,
                                            compiler = 'gcc',
                                            verbose = 1)
     return code, distortion
@@ -76,7 +76,7 @@ def vq2(obs,code_book):
     assert(len(obs_sh) == 2 and len(code_book_sh) == 2)   
     assert(obs_sh[1] == code_book_sh[1])   
     assert(obs.typecode() == code_book.typecode())   
-    type = scalar_spec.numeric_to_blitz_type_mapping[obs.typecode()]
+    type = scalar_spec.numeric_to_c_type_mapping[obs.typecode()]
     # band aid for now.
     ar_type = 'PyArray_FLOAT'
     code =  """
@@ -122,12 +122,11 @@ def vq2(obs,code_book):
  	        return_val = Py::new_reference_to(results); 	        
             """ % locals()
     code, distortion = inline_tools.inline(code,['obs','code_book'],
-                                         type_factories = blitz_type_factories,
+                                         type_converters = blitz_type_converters,
                                          compiler = 'gcc',
                                          verbose = 1)
     return code, distortion
 
-from standard_array_spec import standard_array_factories
 
 def vq3(obs,code_book):
     """ Uses standard array conversion completely bi-passing blitz.
@@ -142,7 +141,7 @@ def vq3(obs,code_book):
     assert(len(obs_sh) == 2 and len(code_book_sh) == 2)   
     assert(obs_sh[1] == code_book_sh[1])   
     assert(obs.typecode() == code_book.typecode())   
-    type = scalar_spec.numeric_to_blitz_type_mapping[obs.typecode()]
+    type = scalar_spec.numeric_to_c_type_mapping[obs.typecode()]
     code =  """
             #line 139 "vq.py"
             // Surely there is a better way to do this...

@@ -19,24 +19,24 @@ restore_path()
 import wxPython
 import wxPython.wx
 
-class test_wx_specification(unittest.TestCase):    
+class test_wx_converter(unittest.TestCase):    
     def check_type_match_string(self):
-        s = wx_spec.wx_specification()
+        s = wx_spec.wx_converter()
         assert(not s.type_match('string') )
     def check_type_match_int(self):
-        s = wx_spec.wx_specification()        
+        s = wx_spec.wx_converter()        
         assert(not s.type_match(5))
     def check_type_match_float(self):
-        s = wx_spec.wx_specification()        
+        s = wx_spec.wx_converter()        
         assert(not s.type_match(5.))
     def check_type_match_complex(self):
-        s = wx_spec.wx_specification()        
+        s = wx_spec.wx_converter()        
         assert(not s.type_match(5.+1j))
     def check_type_match_complex(self):
-        s = wx_spec.wx_specification()        
+        s = wx_spec.wx_converter()        
         assert(not s.type_match(5.+1j))
     def check_type_match_wxframe(self):
-        s = wx_spec.wx_specification()
+        s = wx_spec.wx_converter()
         f=wxPython.wx.wxFrame(wxPython.wx.NULL,-1,'bob')        
         assert(s.type_match(f))
         
@@ -96,7 +96,7 @@ class test_wx_specification(unittest.TestCase):
 def test_suite():
     suites = []
     
-    suites.append( unittest.makeSuite(test_wx_specification,'check_'))
+    suites.append( unittest.makeSuite(test_wx_converter,'check_'))
     total_suite = unittest.TestSuite(suites)
     return total_suite
 

@@ -1,4 +1,4 @@
-from base_spec import base_specification
+from base_spec import base_converter
 import scalar_info
 #from Numeric import *
 from types import *
@@ -7,29 +7,29 @@ from types import *
 # general case? maybe ask numeric types how long they are and base
 # the decisions on that.
 
-numeric_to_blitz_type_mapping = {}
+numeric_to_c_type_mapping = {}
 
-numeric_to_blitz_type_mapping['T'] = 'T' # for templates
-numeric_to_blitz_type_mapping['F'] = 'std::complex<float> '
-numeric_to_blitz_type_mapping['D'] = 'std::complex<double> '
-numeric_to_blitz_type_mapping['f'] = 'float'
-numeric_to_blitz_type_mapping['d'] = 'double'
-numeric_to_blitz_type_mapping['1'] = 'char'
-numeric_to_blitz_type_mapping['b'] = 'unsigned char'
-numeric_to_blitz_type_mapping['s'] = 'short'
-numeric_to_blitz_type_mapping['i'] = 'int'
+numeric_to_c_type_mapping['T'] = 'T' # for templates
+numeric_to_c_type_mapping['F'] = 'std::complex<float> '
+numeric_to_c_type_mapping['D'] = 'std::complex<double> '
+numeric_to_c_type_mapping['f'] = 'float'
+numeric_to_c_type_mapping['d'] = 'double'
+numeric_to_c_type_mapping['1'] = 'char'
+numeric_to_c_type_mapping['b'] = 'unsigned char'
+numeric_to_c_type_mapping['s'] = 'short'
+numeric_to_c_type_mapping['i'] = 'int'
 # not strictly correct, but shoulld be fine fo numeric work.
 # add test somewhere to make sure long can be cast to int before using.
-numeric_to_blitz_type_mapping['l'] = 'int'
+numeric_to_c_type_mapping['l'] = 'int'
 
 # standard Python numeric type mappings.
-numeric_to_blitz_type_mapping[type(1)]  = 'int'
-numeric_to_blitz_type_mapping[type(1.)] = 'double'
-numeric_to_blitz_type_mapping[type(1.+1.j)] = 'std::complex<double> '
+numeric_to_c_type_mapping[type(1)]  = 'int'
+numeric_to_c_type_mapping[type(1.)] = 'double'
+numeric_to_c_type_mapping[type(1.+1.j)] = 'std::complex<double> '
 #hmmm. The following is likely unsafe...
-numeric_to_blitz_type_mapping[type(1L)]  = 'int'
+numeric_to_c_type_mapping[type(1L)]  = 'int'
 
-class scalar_specification(base_specification):
+class scalar_converter(base_converter):
     _build_information = [scalar_info.scalar_info()]        
 
     def type_spec(self,name,value):
@@ -40,7 +40,7 @@ class scalar_specification(base_specification):
         return new_spec
     
     def declaration_code(self,inline=0):
-        type = numeric_to_blitz_type_mapping[self.numeric_type]
+        type = numeric_to_c_type_mapping[self.numeric_type]
         func_type = self.type_name
         name = self.name
         var_name = self.retrieve_py_variable(inline)
@@ -59,7 +59,7 @@ class scalar_specification(base_specification):
                cmp(self.numeric_type,other.numeric_type) or \
                cmp(self.__class__, other.__class__)
 
-class int_specification(scalar_specification):
+class int_converter(scalar_converter):
     type_name = 'int'
     def type_match(self,value):
         return type(value) in [IntType, LongType]
@@ -68,7 +68,7 @@ class int_specification(scalar_specification):
         code = 'local_dict["%s"] = Py::Int(%s);\n' % (self.name,self.name)        
         return code
     
-class float_specification(scalar_specification):
+class float_converter(scalar_converter):
     type_name = 'float'
     def type_match(self,value):
         return type(value) in [FloatType]
@@ -76,7 +76,7 @@ class float_specification(scalar_specification):
         code = 'local_dict["%s"] = Py::Float(%s);\n' % (self.name,self.name)        
         return code
 
-class complex_specification(scalar_specification):
+class complex_converter(scalar_converter):
     type_name = 'complex'
     def type_match(self,value):
         return type(value) in [ComplexType]

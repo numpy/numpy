@@ -1,19 +1,18 @@
-from base_spec import base_specification
-from scalar_spec import numeric_to_blitz_type_mapping
+from base_spec import base_converter
+from scalar_spec import numeric_to_c_type_mapping
 from Numeric import *
 from types import *
 import os
 import blitz_info
 
-class array_specification(base_specification):
+class array_converter(base_converter):
     _build_information = [blitz_info.array_info()]
 
     def type_match(self,value):
         return type(value) is ArrayType
 
     def type_spec(self,name,value):
-        # factory
-        new_spec = array_specification()
+        new_spec = array_converter()
         new_spec.name = name
         new_spec.numeric_type = value.typecode()
         new_spec.dims = len(value.shape)
@@ -31,7 +30,7 @@ class array_specification(base_specification):
         return code
 
     def inline_decl_code(self):
-        type = numeric_to_blitz_type_mapping[self.numeric_type]
+        type = numeric_to_c_type_mapping[self.numeric_type]
         dims = self.dims
         name = self.name
         var_name = self.retrieve_py_variable(inline=1)
@@ -47,17 +46,11 @@ class array_specification(base_specification):
                 'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
                 ' convert_to_blitz<%(type)s,%(dims)d>(%(arr_name)s,"%(name)s");\n' \
                 'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
-        # old version
-        #templ = '// blitz_array_declaration\n' \
-        #        'py_%(name)s= %(var_name)s;\n' \
-        #        'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
-        #        ' convert_to_blitz<%(type)s,%(dims)d>(py_%(name)s,"%(name)s");\n' \
-        #        'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
         code = templ % locals()
         return code
 
     def standard_decl_code(self):
-        type = numeric_to_blitz_type_mapping[self.numeric_type]
+        type = numeric_to_c_type_mapping[self.numeric_type]
         dims = self.dims
         name = self.name
         var_name = self.retrieve_py_variable(inline=0)
@@ -72,24 +65,8 @@ class array_specification(base_specification):
                 'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
                 ' convert_to_blitz<%(type)s,%(dims)d>(%(arr_name)s,"%(name)s");\n' \
                 'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
-        # old version
-        #templ = '// blitz_array_declaration\n' \
-        #        'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
-        #        ' convert_to_blitz<%(type)s,%(dims)d>(%(var_name)s,"%(name)s");\n' \
-        #        'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
         code = templ % locals()
         return code
-    #def c_function_declaration_code(self):
-    #    """
-    #        This doesn't pass the size through.  That info is gonna have to
-    #        be redone in the c function.
-    #    """
-    #    templ_dict = {}
-    #    templ_dict['type'] = numeric_to_blitz_type_mapping[self.numeric_type]
-    #    templ_dict['dims'] = self.dims
-    #    templ_dict['name'] = self.name
-    #    code = 'blitz::Array<%(type)s,%(dims)d> &%(name)s' % templ_dict
-    #    return code
 
     def local_dict_code(self):
         code = '// for now, array "%s" is not returned as arryas are edited' \
@@ -113,6 +90,3 @@ class array_specification(base_specification):
                cmp(self.dims, other.dims) or \
                cmp(self.__class__, other.__class__)
 
-# stick this factory on the front of the type factories
-import ext_tools
-blitz_aware_factories = [array_specification()] + ext_tools.default_type_factories

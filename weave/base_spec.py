@@ -1,4 +1,4 @@
-class base_specification:
+class base_converter:
     """
         Properties:
         headers --  list of strings that name the header files needed by this
