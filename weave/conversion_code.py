@@ -47,7 +47,7 @@ char* find_type(PyObject* py_obj)
     return "unkown type";
 }
 
-void throw_error(PyObject* py_obj, const char* msg)
+void throw_error(PyObject* exc, const char* msg)
 {
   PyErr_SetString(exc, msg);
   throw 1;
