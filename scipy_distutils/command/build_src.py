@@ -39,7 +39,7 @@ class build_src(build_ext.build_ext):
         self.build_lib = None
         self.build_base = None
         self.force = None
-        self.inplace = 0
+        self.inplace = None
         self.package_dir = None
         self.f2pyflags = None
         self.swigflags = None
@@ -57,6 +57,9 @@ class build_src(build_ext.build_ext):
         self.py_modules = self.distribution.py_modules
         if self.build_src is None:
             self.build_src = os.path.join(self.build_base, 'src')
+        if self.inplace is None:
+            build_ext = self.get_finalized_command('build_ext')
+            self.inplace = build_ext.inplace
 
         # py_modules is used in build_py.find_package_modules
         self.py_modules = {}
@@ -112,6 +115,10 @@ class build_src(build_ext.build_ext):
         modpath = fullname.split('.')
         package = '.'.join(modpath[0:-1])
 
+        if self.inplace:
+            build_py = self.get_finalized_command('build_py')
+            self.ext_target_dir = build_py.get_package_dir(package)
+
         sources = self.generate_sources(sources, ext)
 
         sources = self.swig_sources(sources, ext)
@@ -142,7 +149,7 @@ class build_src(build_ext.build_ext):
         if not func_sources:
             return new_sources
         if self.inplace:
-            build_dir = '.'
+            build_dir = self.ext_target_dir
         else:
             build_dir = self.build_src
         self.mkpath(build_dir)
@@ -303,9 +310,11 @@ class build_src(build_ext.build_ext):
             if ext == '.i': # SWIG interface file
                 if self.inplace:
                     target_dir = os.path.dirname(base)
+                    py_target_dir = self.ext_target_dir
                 else:
                     target_dir = os.path.join(self.build_src,
                                               os.path.dirname(base))
+                    py_target_dir = target_dir
                 if os.path.isfile(source):
                     name = get_swig_modulename(source)
                     assert name==ext_name[1:],'mismatch of extension names: '\
@@ -338,10 +347,9 @@ class build_src(build_ext.build_ext):
                                   % (target_file))
                 target_dirs.append(target_dir)
                 new_sources.append(target_file)
-                py_files.append(os.path.join(target_dir,name+'.py'))
+                py_files.append(os.path.join(py_target_dir, name+'.py'))
                 swig_sources.append(source)
                 swig_targets[source] = new_sources[-1]
-
             else:
                 new_sources.append(source)
 
@@ -350,7 +358,7 @@ class build_src(build_ext.build_ext):
 
         if skip_swig:
             return new_sources + py_files
-        
+
         map(self.mkpath, target_dirs)
         swig = self.find_swig()
         swig_cmd = [swig, "-python"]
@@ -364,7 +372,8 @@ class build_src(build_ext.build_ext):
             if self.force or newer_group(depends, target, 'newer'):
                 log.info("%s: %s" % (os.path.basename(swig) \
                                      + (is_cpp and '++' or ''), source))
-                self.spawn(swig_cmd + self.swigflags + ["-o", target, source])
+                self.spawn(swig_cmd + self.swigflags \
+                           + ["-o", target, '-outdir', py_target_dir, source])
             else:
                 log.debug("  skipping '%s' swig interface (up-to-date)" \
                          % (source))
