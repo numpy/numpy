@@ -58,12 +58,20 @@ class String(Basic):
     def literalizer(self,s):
         return CStr(s)
 
+# -----------------------------------------------
+# Singletonize the type names
+# -----------------------------------------------
+Integer = Integer()
+Double = Double()
+String = String()
+
 import Numeric
 
 class Vector(Type_Descriptor):
     cxxtype = 'PyArrayObject*'
     refcount = 1
-    module_init_code = 'import_array'
+    dims = 1
+    module_init_code = 'import_array();'
 
     prerequisites = Type_Descriptor.prerequisites+\
                    ['#include "Numeric/arrayobject.h"']
@@ -75,12 +83,49 @@ class Vector(Type_Descriptor):
         return "(PyArrayObject*)(%s)"%s
     def outbound(self,s):
         return "(PyObject*)(%s)"%s
-    def binopMixed(self,symbol,a,b):
-        return '*((%s*)(%s->data+%s*%s->strides[0]))'%(self.cxxbase,a,b,a),Integer
+    def getitem(self,A,v,t):
+        assert self.dims == len(v),'Expect dimension %d'%self.dims
+        code = '*((%s*)(%s->data'%(self.cxxbase,A)
+        for i in range(self.dims):
+            # assert that ''t[i]'' is an integer
+            code += '+%s*%s->strides[%d]'%(v[i],A,i)
+        code += '))'
+        return code,self.pybase
+    def setitem(self,A,v,t):
+        return self.getitem(A,v,t)
+
+class Matrix(Vector):
+    dims = 2
 
 class IntegerVector(Vector):
     typecode = 'PyArray_INT'
     cxxbase = 'int'
+    pybase = Integer
+
+class IntegerMatrix(Matrix):
+    typecode = 'PyArray_INT'
+    cxxbase = 'int'
+    pybase = Integer
+
+class LongVector(Vector):
+    typecode = 'PyArray_LONG'
+    cxxbase = 'long'
+    pybase = Integer
+
+class LongMatrix(Matrix):
+    typecode = 'PyArray_LONG'
+    cxxbase = 'long'
+    pybase = Integer
+
+class DoubleVector(Vector):
+    typecode = 'PyArray_DOUBLE'
+    cxxbase = 'double'
+    pybase = Double
+
+class DoubleMatrix(Matrix):
+    typecode = 'PyArray_DOUBLE'
+    cxxbase = 'double'
+    pybase = Double
 
 class XRange(Type_Descriptor):
     cxxtype = 'XRange'
@@ -99,17 +144,24 @@ class XRange(Type_Descriptor):
 # -----------------------------------------------
 # Singletonize the type names
 # -----------------------------------------------
-Integer = Integer()
-Double = Double()
-String = String()
 IntegerVector = IntegerVector()
+IntegerMatrix = IntegerMatrix()
+LongVector = LongVector()
+LongMatrix = LongMatrix()
+DoubleVector = DoubleVector()
+DoubleMatrix = DoubleMatrix()
 XRange = XRange()
 
 typedefs = {
     IntType: Integer,
     FloatType: Double,
     StringType: String,
-    (Numeric.ArrayType,1,'l'): IntegerVector,
+    (Numeric.ArrayType,1,'i'): IntegerVector,
+    (Numeric.ArrayType,2,'i'): IntegerMatrix,
+    (Numeric.ArrayType,1,'l'): LongVector,
+    (Numeric.ArrayType,2,'l'): LongMatrix,
+    (Numeric.ArrayType,1,'d'): DoubleVector,
+    (Numeric.ArrayType,2,'d'): DoubleMatrix,
     XRangeType : XRange,
     }
 
@@ -120,6 +172,9 @@ functiondefs = {
 
     (math.sin,(Double,)):
     Function_Descriptor(code='sin(%s)',return_type=Double),
+
+    (math.sqrt,(Double,)):
+    Function_Descriptor(code='sqrt(%s)',return_type=Double),
     }
     
 
@@ -207,6 +262,7 @@ class accelerate:
         f = self.function
         co = f.func_code
         identifier = str(signature)+\
+                     str(co.co_argcount)+\
                      str(co.co_consts)+\
                      str(co.co_varnames)+\
                      co.co_code
@@ -217,6 +273,11 @@ class accelerate:
         return P
 
     def code(self,*args):
+        if len(args) != self.function.func_code.co_argcount:
+            raise TypeError,'%s() takes exactly %d arguments (%d given)'%(
+                self.function.__name__,
+                self.function.func_code.co_argcount,
+                len(args))
         signature = tuple( map(lookup_type,args) )
         ident = self.function.__name__
         return self.accelerate(signature,ident).function_code()

@@ -696,6 +696,7 @@ class CXXCoder(ByteCodeMeaning):
         self.signature = signature
         self.codeobject = function.func_code
         self.__uid = 0 # Builds temps
+        self.__indent = 1
         return
 
     ##################################################################
@@ -721,7 +722,7 @@ class CXXCoder(ByteCodeMeaning):
         # OK, crack open the function object and build
         # initial stack (not a real frame!)
         # -----------------------------------------------
-        arglen = len(self.signature)
+        arglen = self.codeobject.co_argcount
         nlocals = self.codeobject.co_nlocals
 
         self.consts = self.codeobject.co_consts
@@ -821,8 +822,10 @@ class CXXCoder(ByteCodeMeaning):
                 self.codeobject.co_varnames[i],i
                 )
 
-            code += '  if ( !%s ) {\n'% \
+            code += '  if ( !(%s) ) {\n'% \
                     T.check('py_'+self.codeobject.co_varnames[i])
+            #code += '    PyObject_Print(py_A,stdout,0); puts("");\n'
+            #code += '    printf("nd=%d typecode=%d\\n",((PyArrayObject*)py_A)->nd,((PyArrayObject*)py_A)->descr->type_num);\n'
             code += '    PyErr_SetString(PyExc_TypeError,"Bad type for arg %d (expected %s)");\n'%(
                 i+1,
                 T.__class__.__name__)
@@ -865,11 +868,19 @@ class CXXCoder(ByteCodeMeaning):
         code += '}\n'
         return code
 
+    def indent(self):
+        self.__indent += 1
+        return
+
+    def dedent(self):
+        self.__indent -= 1
+        return
 
     ##################################################################
     #                          MEMBER EMIT                           #
     ##################################################################
     def emit(self,s):
+        self.__body += ' '*(3*self.__indent)
         self.__body += s
         self.__body += '\n'
         return
@@ -882,17 +893,46 @@ class CXXCoder(ByteCodeMeaning):
         self.types.append(t)
         return
 
-
     ##################################################################
     #                           MEMBER POP                           #
     ##################################################################
     def pop(self):
         v = self.stack[-1]
+        assert type(v) != TupleType
         del self.stack[-1]
         t = self.types[-1]
+        assert type(t) != TupleType
         del self.types[-1]
         return v,t
 
+    ##################################################################
+    #                        MEMBER PUSHTUPLE                        #
+    ##################################################################
+    def pushTuple(self,V,T):
+        assert type(V) == TupleType
+        self.stack.append(V)
+        assert type(V) == TupleType
+        self.types.append(T)
+        return
+
+
+    ##################################################################
+    #                        MEMBER POPTUPLE                         #
+    ##################################################################
+    def popTuple(self):
+        v = self.stack[-1]
+        assert type(v) == TupleType
+        del self.stack[-1]
+        t = self.types[-1]
+        assert type(t) == TupleType
+        del self.types[-1]
+        return v,t
+    ##################################################################
+    #                        MEMBER MULTIARG                         #
+    ##################################################################
+    def multiarg(self):
+        return type(self.stack[-1]) == TupleType
+    
     ##################################################################
     #                         MEMBER UNIQUE                          #
     ##################################################################
@@ -943,6 +983,21 @@ class CXXCoder(ByteCodeMeaning):
             raise ValueError,'Cannot locate module owning %s'%varname
         return module_name,var_name
 
+
+    ##################################################################
+    #                         MEMBER CODEUP                          #
+    ##################################################################
+    def codeup(self, rhs, rhs_type):
+        lhs = self.unique()
+        self.emit('%s %s = %s;\n'%(
+            rhs_type.cxxtype,
+            lhs,
+            rhs))
+        print self.__body
+        self.push(lhs,rhs_type)
+        return        
+        
+
     ##################################################################
     #                          MEMBER BINOP                          #
     ##################################################################
@@ -953,16 +1008,10 @@ class CXXCoder(ByteCodeMeaning):
         if t1 == t2:
             rhs,rhs_type = t1.binop(symbol,v1,v2)
         else:
-            rhs,rhs_type = t1.binopMixed(symbol,v1,v2)
-        
-        lhs = self.unique()
-        self.emit('%s %s = %s;\n'%(
-            rhs_type.cxxtype,
-            lhs,
-            rhs))
-        print self.__body
-        self.push(lhs,rhs_type)
-        return        
+            rhs,rhs_type = t1.binopMixed(symbol,v1,v2,t2)
+
+        self.codeup(rhs,rhs_type)
+        return
 
     ##################################################################
     #                       MEMBER BINARY_XXX                        #
@@ -972,13 +1021,39 @@ class CXXCoder(ByteCodeMeaning):
     def BINARY_SUBTRACT(self,pc):
         return self.binop(pc,'-')
     def BINARY_MULTIPLY(self,pc):
+        print 'MULTIPLY',self.stack[-2],self.types[-2],'*',self.stack[-1],self.types[-1]
         return self.binop(pc,'*')
     def BINARY_DIVIDE(self,pc):
         return self.binop(pc,'/')
     def BINARY_MODULO(self,pc):
         return self.binop(pc,'%')
     def BINARY_SUBSCR(self,pc):
-        return self.binop(pc,'[]')
+        if self.multiarg():
+            v2,t2 = self.popTuple()
+        else:
+            v2,t2 = self.pop()
+            v2 = (v2,)
+            t2 = (t2,)
+        v1,t1 = self.pop()
+        rhs,rhs_type = t1.getitem(v1,v2,t2)
+        self.codeup(rhs,rhs_type)
+        return
+
+    def STORE_SUBSCR(self,pc):
+        if self.multiarg():
+            v2,t2 = self.popTuple()
+        else:
+            v2,t2 = self.pop()
+            v2 = (v2,)
+            t2 = (t2,)
+        v1,t1 = self.pop()
+        v0,t0 = self.pop()
+        
+        rhs,rhs_type = t1.setitem(v1,v2,t2)
+        assert rhs_type == t0,"Store the right thing"
+        self.emit('%s = %s;'%(rhs,v0))
+        return
+
     def COMPARE_OP(self,pc,opname):
         symbol = self.cmp_op(opname) # convert numeric to name
         return self.binop(pc,symbol)
@@ -1048,14 +1123,34 @@ class CXXCoder(ByteCodeMeaning):
 
 
     ##################################################################
+    #                       MEMBER BUILD_TUPLE                       #
+    ##################################################################
+    def BUILD_TUPLE(self,pc,count):
+        "Creates a tuple consuming count items from the stack, and pushes the resulting tuple onto the stack."
+        V = []
+        T = []
+        for i in range(count):
+            v,t = self.pop()
+            V.append(v)
+            T.append(t)
+        V.reverse()
+        T.reverse()
+        self.pushTuple(tuple(V),tuple(T))
+        return
+
+    ##################################################################
     #                        MEMBER LOAD_FAST                        #
     ##################################################################
     def LOAD_FAST(self,pc,var_num):
         v = self.stack[var_num]
         t = self.types[var_num]
         print 'LOADFAST',var_num,v,t
-        if t.refcount:
-            self.emit('Py_XINCREF(%s);'%v)
+        for VV,TT in map(None, self.stack, self.types):
+            print VV,':',TT
+        if t == None:
+            raise TypeError,'%s used before set?'%v
+            print self.__body
+            print 'PC',pc
         self.push(v,t)
         return
 
