@@ -4,7 +4,8 @@ Unit-testing
 
   ScipyTest - Scipy tests site manager
   ScipyTestCase - unittest.TestCase with measure method
-  set_package_path - use it before importing a module to be tested
+  set_package_path - prepend package build directory to path
+  set_local_path - prepend local directory (to tests files) to path
   restore_path - restore path after set_package_path
 
 Timing tools

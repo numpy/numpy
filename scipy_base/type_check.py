@@ -25,7 +25,9 @@ def mintypecode(typecodes,typeset='DFdf',default='d',savespace=0):
    intersect with typeset then default is returned.
    As a special case, if savespace is False then 'D' is returned
    whenever typecodes contain 'F' and 'd'.
+   If t in typecodes is not a string then t=t.typecode() is applied.
    """
+   typecodes = [(type(t) is type('') and t) or t.typecode() for t in typecodes]
    intersection = [t for t in typecodes if t in typeset]
    if not intersection:
       return default
