@@ -124,7 +124,7 @@ Inf = inf = fastumath.PINF
 try:
     NAN = NaN = nan = fastumath.NAN
 except AttributeError:
-    NaN = NAN = nan = fastumath.PINF - fastumath.PINF
+    NaN = NAN = nan = fastumath.PINF/fastumath.PINF
 
 
 #---- testing ----#

@@ -11,13 +11,20 @@ __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
            'prod','cumprod','diff','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
-           'nanargmin','nanmin']
+           'nanargmin','nanmin','sum']
 
 round = Numeric.around
 any = Numeric.sometrue
 all = Numeric.alltrue
 
 
+# Need this to change array type for low precision values
+def sum(x,axis=0):  # could change default axis here
+    x = asarray(x)
+    if x.typecode() in ['1','s','b','w']:
+        x = x.astype('l')
+    return N.sum(x,axis)
+    
 
 def logspace(start,stop,num=50,endpoint=1):
     """ Evenly spaced samples on a logarithmic scale.

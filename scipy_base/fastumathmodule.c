@@ -20,6 +20,7 @@
 #define HAVE_INVERSE_HYPERBOLIC 1
 #endif
 
+static PyObject *Array0d_FromDouble(double); 
 /* Wrapper to include the correct version */
 
 #ifdef PyArray_UNSIGNED_TYPES
@@ -27,6 +28,41 @@
 #else
 #include "fastumath_nounsigned.inc"
 #endif
+
+static PyObject *Array0d_FromDouble(double val){
+    PyArrayObject *a;
+    a = (PyArrayObject *)PyArray_FromDims(0,NULL,PyArray_DOUBLE);
+    memcpy(a->data,(char *)(&val),a->descr->elsize);
+    return (PyObject *)a;
+}
+
+static double pinf_init() {
+    double mul = 1e10;
+    double tmp, tmp2;
+    double pinf;
+
+    pinf = mul;
+    for (;;) {
+	pinf *= mul;
+	if (pinf == tmp) break;
+	tmp = pinf;
+    }
+    return pinf;
+}
+
+static double pzero_init() {
+    double div = 1e10;
+    double tmp, tmp2;
+    double pinf;
+
+    pinf = div;
+    for (;;) {
+	pinf /= div;
+	if (pinf == tmp) break;
+	tmp = pinf;
+    }
+    return pinf;
+}
 
 /* Initialization function for the module (*must* be called initArray) */
 
@@ -36,9 +72,7 @@ static struct PyMethodDef methods[] = {
 
 DL_EXPORT(void) initfastumath(void) {
     PyObject *m, *d, *s, *f1;
-    /* MSVC compiler complained about divide by 0 when 1/0.0
-       was used.  changing it to 1.0/0.0 fixed the compile error. */    
-    double zero = 0.0;
+    double pinf, pzero, nan;
     
     /* Create the module and add the functions */
     m = Py_InitModule("fastumath", methods); 
@@ -50,7 +84,7 @@ DL_EXPORT(void) initfastumath(void) {
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
 
-    s = PyString_FromString("2.2");
+    s = PyString_FromString("2.3");
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
@@ -61,19 +95,19 @@ DL_EXPORT(void) initfastumath(void) {
     Py_DECREF(s);
     PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(exp(1.0)));
     Py_DECREF(s);
-    PyDict_SetItemString(d, "PINF", s = PyFloat_FromDouble(1.0/zero));
+    pinf = pinf_init();
+    PyDict_SetItemString(d, "PINF", s = PyFloat_FromDouble(pinf));
     Py_DECREF(s);
-    PyDict_SetItemString(d, "NINF", s = PyFloat_FromDouble(-1.0/zero));
+    PyDict_SetItemString(d, "NINF", s = PyFloat_FromDouble(-pinf));
     Py_DECREF(s);
-    PyDict_SetItemString(d, "PZERO", s = PyFloat_FromDouble(0.0));
+    pzero = pzero_init();
+    PyDict_SetItemString(d, "PZERO", s = PyFloat_FromDouble(pzero));
     Py_DECREF(s);
-    PyDict_SetItemString(d, "NZERO", s = PyFloat_FromDouble(-0.0));
+    PyDict_SetItemString(d, "NZERO", s = PyFloat_FromDouble(-pzero));
     Py_DECREF(s);
-#if defined(NAN) 
-    PyDict_SetItemString(d, "NAN", s = PyFloat_FromDouble(NAN));
+    nan = pinf / pinf;
+    PyDict_SetItemString(d, "NAN", s = PyFloat_FromDouble(nan));
     Py_DECREF(s);
-#endif
-
 
     f1 = PyDict_GetItemString(d, "conjugate");  /* Borrowed reference */
 
