@@ -38,8 +38,8 @@ try:
     # These are used by Numeric tests.
     # If Numeric and scipy_base  are not available, then some of the
     # functions below will not be available.
-    from scipy_base.numerix import all, equal, shape, ravel, around, zeros, Float64, asarray
-    from scipy_base.numerix import less_equal, array2string, less
+    from scipy_base.numerix import alltrue, equal, shape, ravel, around, zeros, Float64, asarray
+    from scipy_base.numerix import less_equal, array2string, less, ArrayType
 except ImportError:
     pass
 
@@ -633,6 +633,8 @@ def assert_equal(actual,desired,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
     """
+    if isinstance(actual, ArrayType):
+        return assert_array_equal(actual, desired, err_msg)
     msg = '\nItems are not equal:\n' + err_msg
     try:
         if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
@@ -643,13 +645,15 @@ def assert_equal(actual,desired,err_msg='',verbose=1):
         msg =  msg \
              + 'DESIRED: ' + repr(desired) \
              + '\nACTUAL: ' + repr(actual)
-    assert all(desired == actual), msg
+    assert desired == actual, msg
 
 __all__.append('assert_almost_equal')
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
     """
+    if isinstance(actual, ArrayType):
+        return assert_array_almost_equal(actual, desired, decimal, err_msg)
     msg = '\nItems are not equal:\n' + err_msg
     try:
         if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
@@ -660,7 +664,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
         msg =  msg \
              + 'DESIRED: ' + repr(desired) \
              + '\nACTUAL: ' + repr(actual)
-    assert all(around(abs(desired - actual),decimal) == 0), msg
+    assert round(abs(desired - actual),decimal) == 0, msg
 
 __all__.append('assert_approx_equal')
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
@@ -691,7 +695,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
         msg =  msg \
              + 'DESIRED: ' + repr(desired) \
              + '\nACTUAL: ' + repr(actual)
-    assert all(math.fabs(sc_desired - sc_actual) < pow(10.,-1*significant)), msg
+    assert math.fabs(sc_desired - sc_actual) < pow(10.,-1*significant), msg
 
 
 __all__.append('assert_array_equal')
@@ -701,11 +705,11 @@ def assert_array_equal(x,y,err_msg=''):
     try:
         assert 0 in [len(shape(x)),len(shape(y))] \
                or (len(shape(x))==len(shape(y)) and \
-                   all(equal(shape(x),shape(y)))),\
+                   alltrue(equal(shape(x),shape(y)))),\
                    msg + ' (shapes %s, %s mismatch):\n\t' \
                    % (shape(x),shape(y)) + err_msg
         reduced = ravel(equal(x,y))
-        cond = all(reduced)
+        cond = alltrue(reduced)
         if not cond:
             s1 = array2string(x,precision=16)
             s2 = array2string(y,precision=16)
@@ -724,13 +728,13 @@ def assert_array_almost_equal(x,y,decimal=6,err_msg=''):
     y = asarray(y)
     msg = '\nArrays are not almost equal'
     try:
-        cond = all(equal(shape(x),shape(y)))
+        cond = alltrue(equal(shape(x),shape(y)))
         if not cond:
             msg = msg + ' (shapes mismatch):\n\t'\
                   'Shape of array 1: %s\n\tShape of array 2: %s' % (shape(x),shape(y))
         assert cond, msg + '\n\t' + err_msg
         reduced = ravel(equal(less_equal(around(abs(x-y),decimal),10.0**(-decimal)),1))
-        cond = all(reduced)
+        cond = alltrue(reduced)
         if not cond:
             s1 = array2string(x,precision=decimal+1)
             s2 = array2string(y,precision=decimal+1)
@@ -751,10 +755,10 @@ def assert_array_less(x,y,err_msg=''):
     x,y = asarray(x), asarray(y)
     msg = '\nArrays are not less-ordered'
     try:
-        assert all(equal(shape(x),shape(y))),\
+        assert alltrue(equal(shape(x),shape(y))),\
                msg + ' (shapes mismatch):\n\t' + err_msg
         reduced = ravel(less(x,y))
-        cond = all(reduced)
+        cond = alltrue(reduced)
         if not cond:
             s1 = array2string(x,precision=16)
             s2 = array2string(y,precision=16)
