@@ -4,14 +4,14 @@ string_support_code = \
 """
 static Py::String convert_to_string(PyObject* py_obj,char* name)
 {
-    if (!PyString_Check(py_obj))
+    if (!py_obj || !PyString_Check(py_obj))
         handle_conversion_error(py_obj,"string", name);
     return Py::String(py_obj);
 }
 
 static Py::String py_to_string(PyObject* py_obj,char* name)
 {
-    if (!PyString_Check(py_obj))
+    if (!py_obj || !PyString_Check(py_obj))
         handle_bad_type(py_obj,"string", name);
     return Py::String(py_obj);
 }
