@@ -126,6 +126,15 @@ class ScipyTestCase (unittest.TestCase):
 
 #------------
 
+def _get_all_method_names(cls):
+    names = dir(cls)
+    if sys.version[:3]<='2.1':
+        for b in cls.__bases__:
+            for n in dir(b)+_get_all_method_names(b):
+                if n not in names:
+                    names.append(n)
+    return names
+
 __all__.append('ScipyTest')
 class ScipyTest:
     """ Scipy tests site manager.
@@ -159,7 +168,7 @@ class ScipyTest:
 
     def _get_method_names(self,clsobj,level):
         names = []
-        for mthname in dir(clsobj):
+        for mthname in _get_all_method_names(clsobj):
             if mthname[:5] not in ['bench','check'] \
                and mthname[:4] not in ['test']:
                 continue
