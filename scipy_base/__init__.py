@@ -96,6 +96,8 @@ polyval          --  Evaluate polynomial at given argument
 
 from scipy_base_version import scipy_base_version as __version__
 
+from ppimport import ppimport,ppimport_attr
+
 import Numeric
 from Numeric import *
 try:
