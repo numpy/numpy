@@ -12,6 +12,12 @@ from scipy_distutils.command.build_clib import get_headers,get_directories
 class build_ext (old_build_ext):
 
     def build_extension(self, ext):
+        
+        # The MSVC compiler doesn't have a linker_so attribute.
+        # Giving it a dummy one of None seems to do the trick.
+        if not hasattr(self.compiler,'linker_so'):
+            self.compiler.linker_so = None
+            
         #XXX: anything else we need to save?
         save_linker_so = self.compiler.linker_so
         save_compiler_libs = self.compiler.libraries
