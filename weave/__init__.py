@@ -30,7 +30,7 @@ def test(level=10):
 def test_suite(level=1):
     import scipy_base.testing
     try:
-        this_mod = __import__(__name__)
+        import scipy.weave as this_mod
     except ImportError:
         # punt -- assume we're a stand alone package
         this_mod = weave
