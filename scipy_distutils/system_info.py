@@ -357,35 +357,35 @@ class fftw_info(system_info):
 class dfftw_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['dfftw','drfftw']
+    libs = ['drfftw','dfftw']
     includes = ['dfftw.h','drfftw.h']
     macros = [('SCIPY_DFFTW_H',None)]
 
 class sfftw_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['sfftw','srfftw']
+    libs = ['srfftw','sfftw']
     includes = ['sfftw.h','srfftw.h']
     macros = [('SCIPY_SFFTW_H',None)]
 
 class fftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['fftw_threads','rfftw_threads']
+    libs = ['rfftw_threads','fftw_threads']
     includes = ['fftw_threads.h','rfftw_threads.h']
     macros = [('SCIPY_FFTW_THREADS_H',None)]
 
 class dfftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['dfftw_threads','drfftw_threads']
+    libs = ['drfftw_threads','dfftw_threads']
     includes = ['dfftw_threads.h','drfftw_threads.h']
     macros = [('SCIPY_DFFTW_THREADS_H',None)]
 
 class sfftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['sfftw_threads','srfftw_threads']
+    libs = ['srfftw_threads','sfftw_threads']
     includes = ['sfftw_threads.h','srfftw_threads.h']
     macros = [('SCIPY_SFFTW_THREADS_H',None)]
 
