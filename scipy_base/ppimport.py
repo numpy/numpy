@@ -86,7 +86,11 @@ class _AttrLoader:
         except AttributeError:
             pass
         self.__dict__['_ppimport_attr'] = attr
+
         return attr
+
+    def __nonzero__(self):
+        return 1
 
     def __getattr__(self, name):
         try:
@@ -161,7 +165,7 @@ def ppimport(name):
     so_ext = _get_so_ext()
     py_exts = ('.py','.pyc','.pyo')
     so_exts = (so_ext,'module'+so_ext)
-    
+
     for d,n,fn,e in [\
         # name is local python module or local extension module
         (p_dir, name, fullname, py_exts+so_exts),
@@ -183,6 +187,7 @@ def ppimport(name):
     # Try once more if module is imported.
     # This covers the case when importing from python module
     module = sys.modules.get(fullname)
+
     if module is not None:
         if _ppimport_is_enabled or isinstance(module,types.ModuleType):
             return module
@@ -344,7 +349,11 @@ def ppresolve(a,ignore_failure=None):
             b.append(ns[0])
             del ns[0]
             if ignore_failure and not hasattr(a, b[-1]):
-                return '.'.join(ns+b)
+                a = '.'.join(ns+b)
+                b = '.'.join(b)
+                if sys.modules.has_key(b) and sys.modules[b] is None:
+                    del sys.modules[b]
+                return a
             a = getattr(a,b[-1])
     if hasattr(a,'_ppimport_importer') or \
            hasattr(a,'_ppimport_module'):
@@ -368,6 +377,7 @@ if _pydoc is not None:
 
     _old_pydoc_help_call = _pydoc.help.__class__.__call__
     def _scipy_pydoc_help_call(self,*args,**kwds):
+        _old_pydoc_help_call.__doc__
         return _old_pydoc_help_call(self, *map(_ppresolve_ignore_failure,args),
                                     **kwds)
     _pydoc.help.__class__.__call__ = _new.instancemethod(_scipy_pydoc_help_call,
@@ -376,6 +386,7 @@ if _pydoc is not None:
 
     _old_pydoc_Doc_document = _pydoc.Doc.document
     def _scipy_pydoc_Doc_document(self,*args,**kwds):
+        _old_pydoc_Doc_document.__doc__
         args = (_ppresolve_ignore_failure(args[0]),) + args[1:]
         return _old_pydoc_Doc_document(self,*args,**kwds)
     _pydoc.Doc.document = _new.instancemethod(_scipy_pydoc_Doc_document,
@@ -384,14 +395,22 @@ if _pydoc is not None:
 
     _old_pydoc_describe = _pydoc.describe
     def _scipy_pydoc_describe(object):
-        return _old_pydoc_describe(ppresolve(object))
+        _old_pydoc_describe.__doc__
+        return _old_pydoc_describe(_ppresolve_ignore_failure(object))
     _pydoc.describe = _scipy_pydoc_describe
+
+    _old_pydoc_locate = _pydoc.locate
+    def _scipy_pydoc_locate(thing, forceload=0):
+        _old_pydoc_locate.__doc__
+        return _old_pydoc_locate(_ppresolve_ignore_failure(thing),
+                                 forceload=forceload)
+    _pydoc.locate = _scipy_pydoc_locate
 
     import inspect as _inspect
     _old_inspect_getfile = _inspect.getfile
     def _scipy_inspect_getfile(object):
+        _old_inspect_getfile.__doc__
         if isinstance(object,_ModuleLoader):
             return object.__dict__['__file__']
         return _old_inspect_getfile(object)
     _inspect.getfile = _scipy_inspect_getfile
-

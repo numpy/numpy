@@ -27,6 +27,8 @@ from function_base import *
 from shape_base import *
 from matrix_base import *
 
+
+
 from polynomial import *
 from scimath import *
 from machar import *
@@ -40,3 +42,7 @@ except AttributeError:
 
 from scipy_test.testing import ScipyTest
 test = ScipyTest('scipy_base').test
+
+if _sys.modules.has_key('scipy_base.Matrix') \
+   and _sys.modules['scipy_base.Matrix'] is None:
+    del _sys.modules['scipy_base.Matrix']
