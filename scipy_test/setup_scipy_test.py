@@ -1,8 +1,19 @@
 #!/usr/bin/env python
 import os
 from distutils.core import setup
-from scipy_distutils.misc_util import get_path 
-   
+from scipy_distutils.misc_util import get_path, default_config_dict 
+
+def configuration(parent_package=''):
+    parent_path = parent_package
+    if parent_package:
+        parent_package += '.'
+    local_path = get_path(__name__)
+
+    config = default_config_dict()
+    config['packages'].append(parent_package+'scipy_test')
+    config['package_dir']['scipy_test'] = local_path    
+    return config
+       
 def install_package():
     """ Install the scipy_test module.  The dance with the current directory 
         is done to fool distutils into thinking it is run from the 
