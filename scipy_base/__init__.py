@@ -1,4 +1,4 @@
-""" Basic functions used by several sub-packages and useful to have in the
+"""Basic functions used by several sub-packages and useful to have in the
 main name-space
 
 Type handling
