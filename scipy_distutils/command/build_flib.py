@@ -1105,10 +1105,12 @@ class gnu_fortran_compiler(fortran_compiler_base):
                     opt = opt + ' -march=pentium2 '
                 else:
                     march_flag = 0
-                if cpu.has_mmx(): opt = opt + ' -mmmx '      
+                if sys.platform!='win32':
+                    if cpu.has_mmx(): opt = opt + ' -mmmx '      
                 if self.version > '3.2.2':
                     if cpu.has_sse2(): opt = opt + ' -msse2 '
-                    if cpu.has_sse(): opt = opt + ' -msse '
+                    if sys.platform!='win32':
+                        if cpu.has_sse(): opt = opt + ' -msse '
                 if cpu.has_3dnow(): opt = opt + ' -m3dnow '
             else:
                 march_flag = 0
