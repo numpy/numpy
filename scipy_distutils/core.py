@@ -38,8 +38,9 @@ def setup(**attr):
     if not new_attr.has_key('distclass'):
         new_attr['distclass'] = distclass    
 
-    fortran_libraries = new_attr.get('fortran_libraries',[])
-    if fortran_libraries:
+    fortran_libraries = new_attr.get('fortran_libraries',None)
+
+    if fortran_libraries is not None:
         print 64*'*'+"""
     Using fortran_libraries setup option is depreciated
     ---------------------------------------------------
