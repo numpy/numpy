@@ -23,12 +23,10 @@ def CCompiler_spawn(self, cmd, display=None):
     if type(cmd) is type([]) and os.name == 'nt':
         cmd = _nt_quote_args(cmd)
     s,o = exec_command(cmd)
-    if os.name != 'posix': 
-        print " ".join(cmd)
-        print o
     if s:
         if type(cmd) is type([]):
             cmd = ' '.join(cmd)
+        print o
         raise DistutilsExecError,\
               'Command "%s" failed with exit status %d' % (cmd, s)
 CCompiler.spawn = new.instancemethod(CCompiler_spawn,None,CCompiler)
