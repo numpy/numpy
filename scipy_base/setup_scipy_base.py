@@ -15,8 +15,6 @@ def configuration(parent_package='',parent_path=None):
     local_path = get_path(__name__,parent_path)
     config = default_config_dict(package,parent_package)
 
-    numpy_info = get_info('numpy',notfound_action=2)
-
     # extra_compile_args -- trying to find something that is binary compatible
     #                       with msvc for returning Py_complex from functions
     extra_compile_args=[]
@@ -51,42 +49,18 @@ def configuration(parent_package='',parent_path=None):
                  'libraries': libraries,
                  'extra_compile_args': extra_compile_args,
                  'depends': umath_c_sources}
-    dict_append(ext_args,**numpy_info)
     config['ext_modules'].append(Extension(**ext_args))
 
+    # _compiled_base module
 
-    # _nc_compiled_base and _na_compiled_base modules
-
-    _compiled_base_c = os.path.join(local_path,'_compiled_base.c')
-    def compiled_base_c(ext,src_dir):
-        source = os.path.join(src_dir,ext.name.split('.')[-1] + '.c')
-        if newer(_compiled_base_c,source):
-            copy_file(_compiled_base_c,source)
-        return [source]
-
+    sources = ['_compiled_base.c']
+    sources = [os.path.join(local_path,x) for x in sources]
     ext_args = {}
     dict_append(ext_args,
-                name=dot_join(package,'_nc_compiled_base'),
-                sources = [compiled_base_c],
-                depends = [_compiled_base_c],
-                define_macros = [('NUMERIC',None)],
-                include_dirs = [local_path]
+                name=dot_join(package,'_na_compiled_base'),
+                sources = sources,
                 )
-    dict_append(ext_args,**numpy_info)
     config['ext_modules'].append(Extension(**ext_args))
-
-    numarray_info = get_info('numarray')
-    if numarray_info:
-        ext_args = {}
-        dict_append(ext_args,
-                    name=dot_join(package,'_na_compiled_base'),
-                    sources = [compiled_base_c],
-                    depends = [_compiled_base_c],
-                    define_macros = [('NUMARRAY',None)],
-                    include_dirs = [local_path]
-                    )
-        dict_append(ext_args,**numarray_info)
-        config['ext_modules'].append(Extension(**ext_args))
 
 
     # display_test module
