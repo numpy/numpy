@@ -53,9 +53,8 @@ class nd_grid:
 	    for k in range(len(key)):
 	        step = key[k].step
                 start = key[k].start
-                if start is None: start = 0
-                if step is None:
-                    step = 1
+                if start is None: start=0
+                if step is None: step=1
                 if type(step) is type(1j):
                     size.append(int(abs(step)))
                     typecode = Numeric.Float
@@ -71,12 +70,13 @@ class nd_grid:
                 nn = Numeric.indices(size,typecode)
 	    for k in range(len(size)):
                 step = key[k].step
-                if step is None:
-                    step = 1
+                start = key[k].start
+                if start is None: start=0
+                if step is None: step=1
                 if type(step) is type(1j):
                     step = int(abs(step))
-                    step = (key[k].stop - key[k].start)/float(step-1)
-                nn[k] = (nn[k]*step+key[k].start)
+                    step = (key[k].stop - start)/float(step-1)
+                nn[k] = (nn[k]*step+start)
             if self.sparse:
                 slobj = [Numeric.NewAxis]*len(size)
                 for k in range(len(size)):
