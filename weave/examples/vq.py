@@ -19,7 +19,8 @@ from Numeric import *
 import sys
 sys.path.insert(0,'..')
 import inline_tools
-from blitz_tools import blitz_type_converters
+import converters
+blitz_type_converters = converters.blitz
 import scalar_spec
 
 def vq(obs,code_book):

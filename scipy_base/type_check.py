@@ -8,7 +8,7 @@ import limits
 __all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isnan','isinf','isfinite',
            'isreal','isscalar','nan_to_num','real','real_if_close',
-           'typename','cast']
+           'typename','cast','common_type']
 
 ScalarType = [types.IntType, types.LongType, types.FloatType, types.ComplexType]
 

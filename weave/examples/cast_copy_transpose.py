@@ -20,7 +20,8 @@ import sys
 sys.path.insert(0,'..')
 import inline_tools
 import scalar_spec
-from blitz_tools import blitz_type_converters
+import converters
+blitz_type_converters = converters.blitz
 
 def _cast_copy_transpose(type,a_2d):
     assert(len(shape(a_2d)) == 2)
@@ -53,8 +54,9 @@ def _inplace_transpose(a_2d):
            """ % numeric_type
     inline_tools.inline(code,['a_2d'],
                         type_converters = blitz_type_converters,
-                        compiler='gcc',def _cast_copy_transpose(type,a_2d):
+                        compiler='gcc')
     assert(len(shape(a_2d)) == 2)
+    type = a_2d.typecode()
     new_array = zeros(shape(a_2d),type)
     #trans_a_2d = transpose(a_2d)
     numeric_type = scalar_spec.numeric_to_c_type_mapping[type]
@@ -68,9 +70,6 @@ def _inplace_transpose(a_2d):
                         compiler='gcc',
                         verbose = 1)
     return new_array
-
-                        verbose = 1)
-    return a_2d
 
 def cast_copy_transpose(type,*arrays):
     results = []
