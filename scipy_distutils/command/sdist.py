@@ -38,13 +38,16 @@ class sdist(old_sdist):
         # that's out-of-date in 'base_dir'.  (Usually, all files will be
         # out-of-date, because by default we blow away 'base_dir' when
         # we're done making the distribution archives.)
+
+        
     
-        if hasattr(os, 'link'):        # can make hard links on this system
+        if 0 and hasattr(os, 'link'):        # can make hard links on this system
             link = 'hard'
             msg = "making hard links in %s..." % base_dir
         else:                           # nope, have to copy
             link = None
             msg = "copying files to %s..." % base_dir
+        self._use_hard_link = not not link
 
         if not files:
             log.warn("no files to distribute -- empty manifest?")
@@ -52,7 +55,7 @@ class sdist(old_sdist):
             log.info(msg)
         
         dest_files = [os.path.join(base_dir,file) for file in dest_files]
-        file_pairs = zip(files,dest_files)    
+        file_pairs = zip(files,dest_files)
         for file,dest in file_pairs:
             if not os.path.isfile(file):
                 log.warn("'%s' not a regular file -- skipping", file)
@@ -90,11 +93,13 @@ class sdist(old_sdist):
         files = map(os.path.abspath, self.filelist.files)
         self.make_release_tree(base_dir, files)
         archive_files = []              # remember names of files we create
-        for fmt in self.formats:            
-            self.convert_line_endings(base_dir,fmt)
+        for fmt in self.formats:
+            modified_files,restore_func = self.convert_line_endings(base_dir,fmt)
             file = self.make_archive(base_name, fmt, base_dir=base_dir)
             archive_files.append(file)
-                    
+            if self._use_hard_link:
+                map(restore_func,modified_files)
+
         self.archive_files = archive_files
 
         if not self.keep_temp:
@@ -107,10 +112,11 @@ class sdist(old_sdist):
             zip   --> \r\n (Windows style)
         """
         if fmt == 'gztar':
-            line_endings.dos2unix_dir(base_dir)
+            return line_endings.dos2unix_dir(base_dir),line_endings.unix2dos
         elif fmt == 'zip':
-            line_endings.unix2dos_dir(base_dir)
-            
+            return line_endings.unix2dos_dir(base_dir),line_endings.dos2unix
+        return [],lambda a:None
+
 def remove_common_base(files):
     """ Remove the greatest common base directory from all the
         absolute file paths in the list of files.  files in the

@@ -564,8 +564,8 @@ def get_svn_revision(path):
         m = re.search(r'revision="(?P<revision>\d+)"',f.read())
         f.close()
         if m:
-            revision = m.group('revision')
-    return int(revision)
+            revision = int(m.group('revision'))
+    return revision
 
 if __name__ == '__main__':
     print 'terminal_has_colors:',terminal_has_colors()

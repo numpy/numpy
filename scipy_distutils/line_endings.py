@@ -20,17 +20,21 @@ def dos2unix(file):
         f = open(file, "wb")
         f.write(newdata)
         f.close()
+        return file
     else:
         print file, 'ok'    
 
-def dos2unix_one_dir(args,dir_name,file_names):
+def dos2unix_one_dir(modified_files,dir_name,file_names):
     for file in file_names:
         full_path = os.path.join(dir_name,file)
-        dos2unix(full_path)
-    
-def dos2unix_dir(dir_name):
-    os.path.walk(dir_name,dos2unix_one_dir,[])
+        file = dos2unix(full_path)
+        if file is not None:
+            modified_files.append(file)
 
+def dos2unix_dir(dir_name):
+    modified_files = []
+    os.path.walk(dir_name,dos2unix_one_dir,modified_files)
+    return modified_files
 #----------------------------------
 
 def unix2dos(file):
@@ -43,7 +47,6 @@ def unix2dos(file):
     if '\0' in data:
         print file, "Binary!"
         return
-        
     newdata = re.sub("\r\n", "\n", data)
     newdata = re.sub("\n", "\r\n", newdata)
     if newdata != data:
@@ -51,16 +54,21 @@ def unix2dos(file):
         f = open(file, "wb")
         f.write(newdata)
         f.close()
+        return file
     else:
         print file, 'ok'    
 
-def unix2dos_one_dir(args,dir_name,file_names):
+def unix2dos_one_dir(modified_files,dir_name,file_names):
     for file in file_names:
         full_path = os.path.join(dir_name,file)
         unix2dos(full_path)
-    
+        if file is not None:
+            modified_files.append(file)
+
 def unix2dos_dir(dir_name):
-    os.path.walk(dir_name,unix2dos_one_dir,[])
+    modified_files = []
+    os.path.walk(dir_name,unix2dos_one_dir,modified_files)
+    return modified_files
         
 if __name__ == "__main__":
     import sys
