@@ -660,23 +660,33 @@ class absoft_fortran_compiler(move_modules_mixin,fortran_compiler_base):
         # of one on the newest version.  Now we use -YEXT_SFX=_ to 
         # specify the output format
         if os.name == 'nt':
-            self.f90_switches = '-YCFRL=1 -YCOM_NAMES=LCS' \
+            self.f90_switches = ' -YCFRL=1 -YCOM_NAMES=LCS' \
                                 ' -YCOM_PFX  -YEXT_PFX -YEXT_NAMES=LCS' \
                                 ' -YCOM_SFX=_ -YEXT_SFX=_ -YEXT_NAMES=LCS'        
-            self.f90_opt = '-O -Q100'
-            self.f77_switches = '-N22 -N90 -N110'
-            self.f77_opt = '-O -Q100'
+            self.f90_opt = ' -O -Q100'
+            self.f77_switches = ' -N22 -N90 -N110'
+            self.f77_opt = ' -O -Q100'
 
             self.f90_fixed_switch = ' -f fixed '
             
             self.libraries = ['fio', 'f90math', 'fmath', 'COMDLG32']
+        elif sys.platform=='darwin':
+            self.f90_switches = ' -YCFRL=1 -YCOM_NAMES=LCS' \
+                                ' -YCOM_PFX -YEXT_PFX' \
+                                ' -YCOM_SFX=_ -YEXT_SFX' \
+                                ' -YEXT_NAMES=LCS -s -YEXT_NAMES=_'
+            self.f90_opt = ' -O'                            
+            self.f90_fixed_switch = ' -f fixed '
+            self.f77_switches = ' -N22 -N90 -N110 -f -s -N15'
+            self.f77_opt = ' -O'
+            self.libraries = ['fio', 'f77math', 'f90math']
         else:
-            self.f90_switches = '-YCFRL=1 -YCOM_NAMES=LCS' \
+            self.f90_switches = ' -YCFRL=1 -YCOM_NAMES=LCS' \
                                 ' -YCOM_PFX  -YEXT_PFX -YEXT_NAMES=LCS' \
                                 ' -YCOM_SFX=_ -YEXT_SFX=_ -YEXT_NAMES=LCS'        
-            self.f90_opt = '-O -B101'                            
-            self.f77_switches = '-N22 -N90 -N110 -B108'
-            self.f77_opt = '-O -B101'
+            self.f90_opt = ' -O -B101'                            
+            self.f77_switches = ' -N22 -N90 -N110 -B108'
+            self.f77_opt = ' -O -B101'
 
             self.f90_fixed_switch = ' -ffixed '
 
