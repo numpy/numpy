@@ -10,8 +10,40 @@ from distutils.util import convert_path
 from distutils.dep_util import newer_group, newer
 
 from scipy_distutils import log
-from scipy_distutils.misc_util import fortran_ext_match, all_strings
+from scipy_distutils.misc_util import fortran_ext_match, all_strings, dot_join
 from scipy_distutils.from_template import process_file
+from scipy_distutils.extension import Extension
+
+_split_ext_template = '''
+import os
+import sys
+
+_which = None, None
+_backends =  %(backends)r
+if hasattr(sys, "argv"):
+    i = -1
+    for a in sys.argv:
+        i += 1
+        if a.lower()[2:] in _backends: 
+            _which = a.lower()[2:], "command line"
+            del sys.argv[i]
+            os.environ[_which[0].upper()] = _which[0]
+            break
+        del a
+
+if _which[0] is None:
+    for b in _backends:
+        if os.environ.get(b.upper(),None):
+             _which = b, "environment var"
+             break
+    del b
+
+if _which[0] is None:
+   _which = _backends[0], "defaulted"
+
+exec "from _" + _which[0] + ".%(name)s import *"
+'''
+
 
 class build_src(build_ext.build_ext):
 
@@ -43,6 +75,7 @@ class build_src(build_ext.build_ext):
         self.package_dir = None
         self.f2pyflags = None
         self.swigflags = None
+        self.backends = None
         return
 
     def finalize_options(self):
@@ -60,6 +93,9 @@ class build_src(build_ext.build_ext):
         if self.inplace is None:
             build_ext = self.get_finalized_command('build_ext')
             self.inplace = build_ext.inplace
+        if self.backends is None:
+            build_ext = self.get_finalized_command('build_ext')
+            self.backends = build_ext.backends
 
         # py_modules is used in build_py.find_package_modules
         self.py_modules = {}
@@ -78,9 +114,75 @@ class build_src(build_ext.build_ext):
     def run(self):
         if not (self.extensions or self.libraries):
             return
+        if self.backends is not None:
+            self.backend_split()
         self.build_sources()
         return
 
+    def backend_split(self):
+        log.info('splitting extensions for backends: %s' % (self.backends))
+        extensions = []
+        backends = self.backends.split(',')
+        for ext in self.extensions:
+            name = ext.name.split('.')[-1]
+            fullname = self.get_ext_fullname(ext.name)
+            def func(extension, src_dir):
+                source = os.path.join(os.path.dirname(src_dir),name+'.py')
+                if newer(__file__, source):
+                    f = open(source,'w')
+                    f.write(_split_ext_template \
+                            % {'name':name,'fullname':fullname,
+                               'backends':backends})
+                    f.close()
+                return [ source ]
+            def func_init(extension, src_dir):
+                source = os.path.join(src_dir,'__init__.py')
+                if newer(__file__, source):
+                    f = open(source,'w')
+                    f.close()
+                return [source]
+            for b in backends:
+                new_ext = self.split_extension(ext,b)
+                new_ext.sources.append(func_init)
+                extensions.append(new_ext)
+
+                new_package = dot_join(*(ext.name.split('.')[:-1]+['_'+b]))
+                new_package_dir = os.path.join(*([self.build_src]+ext.name.split('.')[:-1]+['_'+b]))
+                if new_package not in self.distribution.packages:
+                    self.distribution.packages.append(new_package)
+                    self.distribution.package_dir[new_package] = new_package_dir
+
+            ext.sources = [func]
+            extensions.append(ext)
+        self.extensions[:] = extensions
+
+    def split_extension(self, ext, backend):
+        fullname = self.get_ext_fullname(ext.name)
+        modpath = fullname.split('.')
+        package = '.'.join(modpath[0:-1])
+        name = modpath[-1]
+        macros = []
+        macros.append((backend.upper(),None))
+        new_ext = Extension(name = dot_join(package,'_%s.%s' % (backend,name)),
+                            sources = ext.sources,
+                            include_dirs = ext.include_dirs,
+                            define_macros = ext.define_macros + macros,
+                            undef_macros = ext.undef_macros,
+                            library_dirs = ext.library_dirs,
+                            libraries = ext.libraries,
+                            runtime_library_dirs = ext.runtime_library_dirs,
+                            extra_objects = ext.extra_objects,
+                            extra_compile_args = ext.extra_compile_args,
+                            extra_link_args = ext.extra_link_args,
+                            export_symbols = ext.export_symbols,
+                            depends = ext.depends,
+                            language = ext.language,
+                            f2py_options = ext.f2py_options,
+                            module_dirs = ext.module_dirs
+                            )
+        new_ext.backend = backend
+        return new_ext
+        
     def build_sources(self):
         self.check_extensions_list(self.extensions)
 

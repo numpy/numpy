@@ -24,17 +24,22 @@ class build_ext (old_build_ext):
     user_options = old_build_ext.user_options + [
         ('fcompiler=', None,
          "specify the Fortran compiler type"),
+        ('backends=', None,
+         "specify the array backends (numeric,numarray,..) as a comma separated list"),
         ]
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
         self.fcompiler = None
+        self.backends = None
         return
 
     def finalize_options(self):
         old_build_ext.finalize_options(self)
         self.set_undefined_options('config_fc',
                                    ('fcompiler', 'fcompiler'))
+        if self.backends is None:
+            self.backends = None
         return
 
     def run(self):
@@ -163,11 +168,17 @@ class build_ext (old_build_ext):
         else:
             kws = {}
 
+        backend = getattr(ext,'backend',None)
+        if backend is not None:
+            output_dir = os.path.join(self.build_temp,'_'+backend)
+        else:
+            output_dir = self.build_temp
+        
         c_objects = []
         if c_sources:
             log.info("compiling C sources")
             c_objects = self.compiler.compile(c_sources,
-                                              output_dir=self.build_temp,
+                                              output_dir=output_dir,
                                               macros=macros,
                                               include_dirs=ext.include_dirs,
                                               debug=self.debug,
@@ -180,7 +191,7 @@ class build_ext (old_build_ext):
             self.compiler.compiler_so[0] = self.compiler.compiler_cxx[0]
 
             c_objects += self.compiler.compile(cxx_sources,
-                                              output_dir=self.build_temp,
+                                              output_dir=output_dir,
                                               macros=macros,
                                               include_dirs=ext.include_dirs,
                                               debug=self.debug,
