@@ -365,6 +365,8 @@ class system_info:
                             d1 = os.path.join(d,dd)
                             if os.path.isdir(d1):
                                 ds2.append(d1)
+                        if os.path.basename(d)=='lib':
+                            ds2.append(os.path.join(os.path.dirname(d),'include'))
                 dirs = ds2 + dirs
         default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
         dirs.extend(default_dirs)
