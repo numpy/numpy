@@ -123,6 +123,7 @@ def find_executable(exe, path=None):
     """ Return full path of a executable.
     """
     log.debug('find_executable(%r)' % exe)
+    orig_exe = exe
     if path is None:
         path = os.environ.get('PATH',os.defpath)
     if os.name=='posix':
@@ -160,7 +161,8 @@ def find_executable(exe, path=None):
                 return f_ext
     exe = realpath(exe)
     if not os.path.isfile(exe) or os.access(exe,os.X_OK):
-        log.warn('Could not locate executable %s' % exe)
+        log.warn('Could not locate executable %s' % orig_exe)
+        return orig_exe
     return exe
 
 ############################################################
