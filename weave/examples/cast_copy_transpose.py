@@ -53,7 +53,22 @@ def _inplace_transpose(a_2d):
            """ % numeric_type
     inline_tools.inline(code,['a_2d'],
                         type_factories = blitz_type_factories,
+                        compiler='gcc',def _cast_copy_transpose(type,a_2d):
+    assert(len(shape(a_2d)) == 2)
+    new_array = zeros(shape(a_2d),type)
+    #trans_a_2d = transpose(a_2d)
+    numeric_type = scalar_spec.numeric_to_blitz_type_mapping[type]
+    code = """
+           for(int i = 0; i < _Na_2d[0]; i++)
+               for(int j = 0; j < _Na_2d[1]; j++)
+                   new_array(i,j) = (%s) a_2d(j,i);
+           """ % numeric_type
+    inline_tools.inline(code,['new_array','a_2d'],
+                        type_factories = blitz_type_factories,
                         compiler='gcc',
+                        verbose = 1)
+    return new_array
+
                         verbose = 1)
     return a_2d
 

@@ -38,28 +38,9 @@ class scalar_specification(base_specification):
         new_spec.name = name
         new_spec.numeric_type = type(value)
         return new_spec
-        
-    def declaration_code(self,templatize = 0,inline=0):
-        #if self.compiler == 'msvc':
-        #    return self.msvc_decl_code(templatize,inline)
-        #else:
-        #    return self.template_decl_code(templatize,inline)    \
-        return self.msvc_decl_code(templatize,inline)
-
-    def template_decl_code(self,template = 0,inline=0):
-        type = numeric_to_blitz_type_mapping[self.numeric_type]
-        name = self.name
-        var_name = self.retrieve_py_variable(inline)
-        template = '%(type)s %(name)s = '\
-                   'convert_to_scalar<%(type)s >(%(var_name)s,"%(name)s");\n'
-        code = template % locals()
-        return code
-        
-    def msvc_decl_code(self,template = 0,inline=0):
-        # doesn't support template = 1
-        if template:
-            ValueError, 'msvc compiler does not support templated scalar '\
-                        'code. try mingw32 instead (www.mingw.org).'
+    
+    # BEGIN ADDED WHEN TEMPLATE SUPPORT REMOVED
+    def declaration_code(self,inline=0):
         type = numeric_to_blitz_type_mapping[self.numeric_type]
         func_type = self.type_name
         name = self.name
@@ -68,7 +49,41 @@ class scalar_specification(base_specification):
                         'convert_to_%(func_type)s (%(var_name)s,"%(name)s");\n'
         code = template % locals()
         return code
+    # END ADDED WHEN TEMPLATE SUPPORT REMOVED
+    
+    # BEGIN OF THINGS REMOVED FOR TEMPLATES    
+    #def declaration_code(self,templatize = 0,inline=0):
+    #    #if self.compiler == 'msvc':
+    #    #    return self.msvc_decl_code(templatize,inline)
+    #    #else:
+    #    #    return self.template_decl_code(templatize,inline)    \
+    #    return self.msvc_decl_code(templatize,inline)
 
+    # This is no longer used by anything except blitz code.
+    #def template_decl_code(self,template = 0,inline=0):
+    #    type = numeric_to_blitz_type_mapping[self.numeric_type]
+    #    name = self.name
+    #    var_name = self.retrieve_py_variable(inline)
+    #    template = '%(type)s %(name)s = '\
+    #               'convert_to_scalar<%(type)s >(%(var_name)s,"%(name)s");\n'
+    #    code = template % locals()
+    #    return code
+        
+    #def msvc_decl_code(self,template = 0,inline=0):
+    #    # doesn't support template = 1
+    #    if template:
+    #        ValueError, 'msvc compiler does not support templated scalar '\
+    #                    'code. try mingw32 instead (www.mingw.org).'
+    #    type = numeric_to_blitz_type_mapping[self.numeric_type]
+    #    func_type = self.type_name
+    #    name = self.name
+    #    var_name = self.retrieve_py_variable(inline)
+    #    template = '%(type)s %(name)s = '\
+    #                    'convert_to_%(func_type)s (%(var_name)s,"%(name)s");\n'
+    #    code = template % locals()
+    #    return code
+    # END OF THINGS REMOVED FOR TEMPLATES
+    
     #def c_function_declaration_code(self):
     #    code = '%s &%s" % \
     #           (numeric_to_blitz_type_mapping[self.numeric_type], self.name)

@@ -13,7 +13,7 @@ from conversion_code import instance_convert_code
 from conversion_code import callable_convert_code
 from conversion_code import module_convert_code
 from conversion_code import scalar_support_code
-from conversion_code import non_template_scalar_support_code
+#from conversion_code import non_template_scalar_support_code
 
 class basic_module_info(base_info.base_info):
     _headers = ['"Python.h"']
@@ -36,8 +36,10 @@ class scalar_info(base_info.base_info):
     _warnings = ['disable: 4275', 'disable: 4101']
     _headers = ['<complex>','<math.h>']
     def support_code(self):
-        if self.compiler != 'msvc':
-             # maybe this should only be for gcc...
-            return [scalar_support_code,non_template_scalar_support_code]
-        else:
-            return [non_template_scalar_support_code]
+        return [scalar_support_code]
+    #def support_code(self):
+    #    if self.compiler != 'msvc':
+    #         # maybe this should only be for gcc...
+    #        return [scalar_support_code,non_template_scalar_support_code]
+    #    else:
+    #        return [non_template_scalar_support_code]
