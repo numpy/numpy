@@ -25,10 +25,10 @@ common_type      --  Determine the 'minimum common type code' for a group
 Index tricks
 ==================
 mgrid            --  Method which allows easy construction of N-d 'mesh-grids'
-r_               --  Append and construct arrays -- turns slice objects into
+r_               --  Append and construct arrays: turns slice objects into
                        ranges and concatenates them, for 2d arrays appends
                        rows.
-c_               --  Append and construct arrays -- for 2d arrays appends
+c_               --  Append and construct arrays: for 2d arrays appends
                        columns.
 
 index_exp        --  Konrad Hinsen's index_expression class instance which
