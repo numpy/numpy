@@ -36,6 +36,7 @@ def c_list_map2(func,seq):
            for(int i = 0; i < seq.length();i++)
            {
               item = PyList_GET_ITEM(seq.ptr(),i);
+              Py_INCREF(item);
               PyTuple_SetItem(args.ptr(),0,item);
               this_result = PyEval_CallObject(func,args.ptr());
               PyList_SetItem(result.ptr(),i,this_result);              
@@ -67,7 +68,7 @@ def time_it(m,n):
         result = c_list_map(len,seq)
     t2 = time.time()
     c = t2-t1
-    print 'c speed:', c
+    print 'CXX speed:', c
     print 'speed up:', py / c
 
     #load cache
