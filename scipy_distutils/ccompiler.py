@@ -23,7 +23,9 @@ def CCompiler_spawn(self, cmd, display=None):
     if type(cmd) is type([]) and os.name == 'nt':
         cmd = _nt_quote_args(cmd)
     s,o = exec_command(cmd)
-    if os.name != 'posix': print len(cmd), s, o
+    if os.name != 'posix': 
+        print " ".join(cmd)
+        print o
     if s:
         if type(cmd) is type([]):
             cmd = ' '.join(cmd)
@@ -155,6 +157,12 @@ def CCompiler_customize(self, dist, need_cxx=0):
     # See FCompiler.customize for suggested usage.
     log.info('customize %s' % (self.__class__.__name__))
     customize_compiler(self)
+    
+    # MSVC doesn't appear to have compiler defined??  This
+    # was a hack added by Travis O.
+    if not hasattr(self,'compiler'):
+        return
+        
     if need_cxx:
         if hasattr(self,'compiler') and self.compiler[0].find('gcc')>=0:
             if sys.version[:3]>='2.3':
