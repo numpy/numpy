@@ -260,10 +260,12 @@ class build_ext (old_build_ext):
                     use_fortran_linker = 1
                     break
 
-        # Always use system linker on win32
-        if sys.platform == 'win32':
+        # Always use system linker when using MSVC compiler.
+        if self.compiler.compiler_type=='msvc' and use_fortran_linker:
+            c_libraries.extend(self.fcompiler.libraries)
+            c_library_dirs.extend(self.fcompiler.library_dirs)
             use_fortran_linker = 0
-            
+
         if use_fortran_linker:
             if cxx_sources:
                 # XXX: Which linker should be used, Fortran or C++?

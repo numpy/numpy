@@ -156,7 +156,7 @@ def CCompiler_customize(self, dist, need_cxx=0):
     log.info('customize %s' % (self.__class__.__name__))
     customize_compiler(self)
     if need_cxx:
-        if self.compiler[0].find('gcc')>=0:
+        if hasattr(self,'compiler') and self.compiler[0].find('gcc')>=0:
             if sys.version[:3]>='2.3':
                 if not self.compiler_cxx:
                     self.compiler_cxx = [self.compiler[0].replace('gcc','g++')]\
