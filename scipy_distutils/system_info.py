@@ -214,9 +214,6 @@ class system_info:
             print
         return res
 
-    def calc_info_template(self,prefix):
-        """ Calculate info dictionary. """
-
     def get_paths(self, section, key):
         dirs = self.cp.get(section, key).split(os.pathsep)
         if os.environ.has_key(self.dir_env_var):
@@ -252,12 +249,13 @@ class system_info:
             if info is not None: return info
 
     def _lib_list(self, lib_dir, libs, ext):
+        assert type(lib_dir) is type('')
         liblist = []
         for l in libs:
             p = combine_paths(lib_dir, 'lib'+l+ext)
-            p = shortest_path(p) # needed when e.g. p==[libx.so.6, libx.so]
             if p:
-                liblist.append(p)
+                assert len(p)==1
+                liblist.append(p[0])
         return liblist
 
     def _extract_lib_names(self,libs):
@@ -459,11 +457,6 @@ class x11_info(system_info):
         if inc_dir is not None:
             dict_append(info, include_dirs=[inc_dir])
         self.set_info(**info)
-
-def shortest_path(pths):
-    pths.sort()
-    if pths: return pths[0]
-
 
 def combine_paths(*args):
     """ Return a list of existing paths composed by all combinations of
