@@ -51,7 +51,13 @@
 #define BZ_ENUM_COMPUTATIONS
 #define BZ_ENUM_COMPUTATIONS_WITH_CAST
 #define BZ_HAVE_COMPLEX
-#undef  BZ_HAVE_NUMERIC_LIMITS
+
+#ifdef __GNUC__ && __GNUC__==3
+    #define  BZ_HAVE_NUMERIC_LIMITS
+#else
+    #undef  BZ_HAVE_NUMERIC_LIMITS
+#endif
+
 #define BZ_HAVE_CLIMITS
 #define BZ_HAVE_VALARRAY
 #undef  BZ_HAVE_COMPLEX_MATH
