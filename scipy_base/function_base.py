@@ -6,7 +6,8 @@ from type_check import ScalarType, isscalar
 
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
-           'prod','cumprod','diff','angle','unwrap','sort_complex']
+           'prod','cumprod','diff','angle','unwrap','sort_complex',
+           'disp']
 
 round = Numeric.around
 any = Numeric.sometrue
@@ -250,6 +251,19 @@ def trim_zeros(filt,trim='fb'):
             if i != 0.: break
             else: last = last - 1
     return filt[first:last]
+
+import sys
+def disp(mesg, device=None, linefeed=1):
+    """Display a message to device (default is sys.stdout) with(out) linefeed.
+    """
+    if device is None:
+        device = sys.stdout
+    if linefeed:
+        device.write('%s\n' % mesg)
+    else:
+        device.write('%s' % mesg)
+    device.flush()
+    return
 
     
 

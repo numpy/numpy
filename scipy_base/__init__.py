@@ -94,7 +94,7 @@ polyval          --  Evaluate polynomial at given argument
 
 import Numeric
 from Numeric import *
-import scipy_base.fastumath
+import fastumath
 import limits
 
 from type_check import *
@@ -107,11 +107,11 @@ from polynomial import *
 from scimath import *
 
 # needs scipy_base.fastumath
-Inf = inf = scipy_base.fastumath.PINF
+Inf = inf = fastumath.PINF
 try:
-    NAN = NaN = nan = scipy_base.fastumath.NAN
+    NAN = NaN = nan = fastumath.NAN
 except AttributeError:
-    NaN = NAN = nan = scipy_base.fastumath.PINF - scipy_base.fastumath.PINF
+    NaN = NAN = nan = fastumath.PINF - fastumath.PINF
 
 
 #---- testing ----#
