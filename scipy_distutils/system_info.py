@@ -1234,6 +1234,7 @@ class _pkg_config_info(system_info):
     version_macro_name = None
     release_macro_name = None
     version_flag = '--modversion'
+    cflags_flag = '--cflags'
 
     def get_config_exe(self):
         if os.environ.has_key(self.config_env_var):
@@ -1276,7 +1277,7 @@ class _pkg_config_info(system_info):
                     library_dirs.append(opt[2:])
                 else:
                     extra_link_args.append(opt)
-        opts = self.get_config_output(config_exe,'--cxxflags')
+        opts = self.get_config_output(config_exe,self.cflags_flag)
         if opts:
             for opt in opts.split():
                 if opt[:2]=='-I':
@@ -1307,6 +1308,7 @@ class wx_info(_pkg_config_info):
     version_macro_name = 'WX_VERSION'
     release_macro_name = 'WX_RELEASE'
     version_flag = '--version'
+    cflags_flag = '--cxxflags'
 
 class gdk_pixbuf_xlib_2_info(_pkg_config_info):
     section = 'gdk_pixbuf_xlib_2'
