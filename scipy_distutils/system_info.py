@@ -680,7 +680,7 @@ class x11_info(system_info):
                              default_include_dirs=default_x11_include_dirs)
 
     def calc_info(self):
-        if sys.platform  == 'win32':
+        if sys.platform  in ['win32','cygwin']:
             return
         lib_dirs = self.get_lib_dirs()
         include_dirs = self.get_include_dirs()
