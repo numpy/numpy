@@ -10,6 +10,9 @@ import base_info
 module_support_code = \
 """
 
+// global None value for use in functions.
+PWOBase PWONone = PWOBase(Py_None);
+
 char* find_type(PyObject* py_obj)
 {
     if(py_obj == NULL) return "C NULL value";
