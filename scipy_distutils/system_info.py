@@ -340,10 +340,22 @@ class system_info:
 
     def get_paths(self, section, key):
         dirs = self.cp.get(section, key).split(os.pathsep)
-        if self.dir_env_var and os.environ.has_key(self.dir_env_var):
-            d = os.environ[self.dir_env_var]
+        env_var = self.dir_env_var
+        if env_var:
+            if type(env_var) is type([]):
+                e0 = env_var[-1]
+                for e in env_var:
+                    if os.environ.has_key(e):
+                        e0 = e
+                        break
+                if not env_var[0]==e0:
+                    print 'Setting %s=%s' % (env_var[0],e0)
+                env_var = e0
+        if env_var and os.environ.has_key(env_var):
+            d = os.environ[env_var]
             if d=='None':
-                print 'Disabled',self.__class__.__name__,'(%s is None)' % (self.dir_env_var)
+                print 'Disabled',self.__class__.__name__,'(%s is None)' \
+                      % (self.dir_env_var)
                 return []
             if os.path.isfile(d):
                 dirs = [os.path.dirname(d)] + dirs
@@ -670,9 +682,11 @@ class atlas_blas_info(atlas_info):
 
 
 class atlas_threads_info(atlas_info):
+    dir_env_var = ['PTATLAS','ATLAS']
     _lib_names = ['ptf77blas','ptcblas']
 
 class atlas_blas_threads_info(atlas_blas_info):
+    dir_env_var = ['PTATLAS','ATLAS']
     _lib_names = ['ptf77blas','ptcblas']
 
 class lapack_atlas_info(atlas_info):
@@ -1433,15 +1447,21 @@ def show_all():
     import system_info
     import pprint
     match_info = re.compile(r'.*?_info').match
+    show_only = []
+    for n in sys.argv[1:]:
+        if n[-5:] != '_info':
+            n = n + '_info'
+        show_only.append(n)
+    show_all = not show_only
     for n in filter(match_info,dir(system_info)):
         if n in ['system_info','get_info']: continue
+        if not show_all:
+            if n not in show_only: continue
+            del show_only[show_only.index(n)]
         c = getattr(system_info,n)()
         c.verbosity = 2
         r = c.get_info()
-
+    if show_only:
+        print 'Info classes not defined:',','.join(show_only)
 if __name__ == "__main__":
     show_all()
-    if 0:
-        c = gdk_pixbuf_2_info()
-        c.verbosity = 2
-        c.get_info()
