@@ -11,6 +11,7 @@
 
 #include "PWOBase.h"
 #include "PWOSequence.h"
+#include <string>
 
 
 class PWOList;
@@ -23,6 +24,11 @@ public:
   PWOListMmbr(PyObject* obj, PWOList& parent, int ndx);
   virtual ~PWOListMmbr() {};
   PWOListMmbr& operator=(const PWOBase& other);
+  PWOListMmbr& operator=(int other);
+  PWOListMmbr& operator=(float other);
+  PWOListMmbr& operator=(double other);
+  PWOListMmbr& operator=(const char* other);
+  PWOListMmbr& operator=(std::string other);
 };
 
 class PWOList : public PWOSequence

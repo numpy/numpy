@@ -6,6 +6,7 @@
 #include "PWOMSequence.h"
 #include "PWOMapping.h"
 #include "PWOCallable.h"
+#include "PWONumber.h"
 
   // incref new owner, and decref old owner, and adjust to new owner
 void PWOBase::GrabRef(PyObject* newObj)
@@ -28,11 +29,73 @@ PWOListMmbr& PWOListMmbr::operator=(const PWOBase& other) {
   _parent.setItem(_ndx, *this);
   return *this;
 }
+
+PWOListMmbr& PWOListMmbr::operator=(int other) {
+  GrabRef(PWONumber(other));
+  _parent.setItem(_ndx, *this);
+  return *this;
+}
+
+PWOListMmbr& PWOListMmbr::operator=(float other) {
+  GrabRef(PWONumber(other));
+  _parent.setItem(_ndx, *this);
+  return *this;
+}
+
+PWOListMmbr& PWOListMmbr::operator=(double other) {
+  GrabRef(PWONumber(other));
+  _parent.setItem(_ndx, *this);
+  return *this;
+}
+
+PWOListMmbr& PWOListMmbr::operator=(const char* other) {
+  GrabRef(PWOString(other));
+  _parent.setItem(_ndx, *this);
+  return *this;
+}
+
+PWOListMmbr& PWOListMmbr::operator=(std::string other) {
+  GrabRef(PWOString(other.c_str()));
+  _parent.setItem(_ndx, *this);
+  return *this;
+}
+
 PWOMappingMmbr& PWOMappingMmbr::operator=(const PWOBase& other) {
   GrabRef(other);
   _parent.setItem(_key, *this);
   return *this;
 }
+
+PWOMappingMmbr& PWOMappingMmbr::operator=(int other) {
+  GrabRef(PWONumber(other));
+  _parent.setItem(_key, *this);
+  return *this;
+}
+
+PWOMappingMmbr& PWOMappingMmbr::operator=(float other) {
+  GrabRef(PWONumber(other));
+  _parent.setItem(_key, *this);
+  return *this;
+}
+
+PWOMappingMmbr& PWOMappingMmbr::operator=(double other) {
+  GrabRef(PWONumber(other));
+  _parent.setItem(_key, *this);
+  return *this;
+}
+
+PWOMappingMmbr& PWOMappingMmbr::operator=(const char* other) {
+  GrabRef(PWOString(other));
+  _parent.setItem(_key, *this);
+  return *this;
+}
+
+PWOMappingMmbr& PWOMappingMmbr::operator=(std::string other) {
+  GrabRef(PWOString(other.c_str()));
+  _parent.setItem(_key, *this);
+  return *this;
+}
+
 PWOBase PWOCallable::call() const {
   static PWOTuple _empty;
   PyObject *rslt = PyEval_CallObjectWithKeywords(*this, _empty, NULL);

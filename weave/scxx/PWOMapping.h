@@ -7,6 +7,8 @@
 
 #include "PWOBase.h"
 #include "PWOMSequence.h"
+#include "PWONumber.h"
+#include <string>
 
 class PWOMapping;
 
@@ -24,6 +26,11 @@ public:
     Py_XDECREF(_key);
   };
   PWOMappingMmbr& operator=(const PWOBase& other);
+  PWOMappingMmbr& operator=(int other);
+  PWOMappingMmbr& operator=(float other);
+  PWOMappingMmbr& operator=(double other);
+  PWOMappingMmbr& operator=(const char* other);
+  PWOMappingMmbr& operator=(std::string other);
 };
 
 class PWOMapping : public PWOBase
@@ -61,6 +68,15 @@ public:
     PWOString _key(key);
     return PWOMappingMmbr(rslt, *this, _key);
   };
+
+  PWOMappingMmbr operator [] (std::string key) {
+    PyObject* rslt = PyMapping_GetItemString(_obj, (char*) key.c_str());
+    if (rslt==0)
+      PyErr_Clear();
+    PWOString _key(key.c_str());
+    return PWOMappingMmbr(rslt, *this, _key);
+  };
+  
   //PyDict_GetItem
   PWOMappingMmbr operator [] (PyObject* key) {
     PyObject* rslt = PyDict_GetItem(_obj, key);
@@ -68,6 +84,33 @@ public:
     //  Fail(PyExc_KeyError, "Key not found");
     return PWOMappingMmbr(rslt, *this, key);
   };
+
+  //PyDict_GetItem
+  PWOMappingMmbr operator [] (int key) {
+    PWONumber _key = PWONumber(key);
+    PyObject* rslt = PyDict_GetItem(_obj, _key);
+    //if (rslt==0)
+    //  Fail(PyExc_KeyError, "Key not found");
+    return PWOMappingMmbr(rslt, *this, _key);
+  };
+  
+    //PyDict_GetItem
+  PWOMappingMmbr operator [] (float key) {
+    PWONumber _key = PWONumber(key);
+    PyObject* rslt = PyDict_GetItem(_obj, _key);
+    //if (rslt==0)
+    //  Fail(PyExc_KeyError, "Key not found");
+    return PWOMappingMmbr(rslt, *this, _key);
+  };
+
+  PWOMappingMmbr operator [] (double key) {
+    PWONumber _key = PWONumber(key);
+    PyObject* rslt = PyDict_GetItem(_obj, _key);
+    //if (rslt==0)
+    //  Fail(PyExc_KeyError, "Key not found");
+    return PWOMappingMmbr(rslt, *this, _key);
+  };
+  
   //PyMapping_HasKey
   bool hasKey(PyObject* key) const {
     return PyMapping_HasKey(_obj, key)==1;

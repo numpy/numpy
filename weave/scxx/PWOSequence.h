@@ -82,6 +82,10 @@ public:
   int len() const {
     return PySequence_Length(_obj);
   };
+  // added length for compatibility with std::string.
+  int length() const {
+    return PySequence_Length(_obj);
+  };
   //PySequence_Repeat
   PWOSequence operator * (int count) const {
     PyObject* rslt = PySequence_Repeat(_obj, count);
