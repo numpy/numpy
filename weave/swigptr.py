@@ -20,13 +20,13 @@ extern "C" {
 /* Definitions for Windows/Unix exporting */
 #if defined(_WIN32) || defined(__WIN32__)
 #   if defined(_MSC_VER)
-#	define SWIGEXPORT(a) __declspec(dllexport) a
+#       define SWIGEXPORT(a) __declspec(dllexport) a
 #   else
-#	if defined(__BORLANDC__)
-#	    define SWIGEXPORT(a) a _export
-#	else
-#	    define SWIGEXPORT(a) a
-#	endif
+#       if defined(__BORLANDC__)
+#           define SWIGEXPORT(a) a _export
+#       else
+#           define SWIGEXPORT(a) a
+#       endif
 #   endif
 #else
 #   define SWIGEXPORT(a) a
@@ -88,7 +88,7 @@ swig_varlink_print(swig_varlinkobject *v, FILE *fp, int flags)
 
 /* --------------------------------------------------------------------
    swig_varlink_getattr
- 
+
    This function gets the value of a variable and returns it as a
    PyObject.   In our case, we'll be looking at the datatype and
    converting into a number or string
@@ -135,17 +135,17 @@ swig_varlink_setattr(swig_varlinkobject *v, char *n, PyObject *p)
 
 statichere PyTypeObject varlinktype = {
 /*  PyObject_HEAD_INIT(&PyType_Type)  Note : This doesn't work on some machines */
-  PyObject_HEAD_INIT(0)              
+  PyObject_HEAD_INIT(0)
   0,
   "varlink",                          /* Type name    */
   sizeof(swig_varlinkobject),         /* Basic size   */
   0,                                  /* Itemsize     */
-  0,                                  /* Deallocator  */ 
+  0,                                  /* Deallocator  */
   (printfunc) swig_varlink_print,     /* Print        */
   (getattrfunc) swig_varlink_getattr, /* get attr     */
   (setattrfunc) swig_varlink_setattr, /* Set attr     */
   0,                                  /* tp_compare   */
-  (reprfunc) swig_varlink_repr,       /* tp_repr      */    
+  (reprfunc) swig_varlink_repr,       /* tp_repr      */
   0,                                  /* tp_as_number */
   0,                                  /* tp_as_mapping*/
   0,                                  /* tp_hash      */
@@ -172,11 +172,11 @@ SWIG_newvarlink(void)
 
 SWIGSTATICRUNTIME(void)
 SWIG_addvarlink(PyObject *p, char *name,
-	   PyObject *(*get_attr)(void), int (*set_attr)(PyObject *p))
+           PyObject *(*get_attr)(void), int (*set_attr)(PyObject *p))
 {
   swig_varlinkobject *v;
   v= (swig_varlinkobject *) p;
-	
+
   if (v->nvars >= v->maxvars -1) {
     v->maxvars = 2*v->maxvars;
     v->vars = (swig_globalvar **) realloc(v->vars,v->maxvars*sizeof(swig_globalvar *));
@@ -223,25 +223,25 @@ static SwigPtrType *SwigPtrTable = 0;  /* Table containing pointer equivalences 
 /* Cached values */
 #define SWIG_CACHESIZE  8
 #define SWIG_CACHEMASK  0x7
-static SwigCacheType SwigCache[SWIG_CACHESIZE];  
+static SwigCacheType SwigCache[SWIG_CACHESIZE];
 static int SwigCacheIndex = 0;
 static int SwigLastCache = 0;
 
 /* Sort comparison function */
 static int swigsort(const void *data1, const void *data2) {
-	SwigPtrType *d1 = (SwigPtrType *) data1;
-	SwigPtrType *d2 = (SwigPtrType *) data2;
-	return strcmp(d1->name,d2->name);
+        SwigPtrType *d1 = (SwigPtrType *) data1;
+        SwigPtrType *d2 = (SwigPtrType *) data2;
+        return strcmp(d1->name,d2->name);
 }
 
 /* Register a new datatype with the type-checker */
-SWIGSTATICRUNTIME(void) 
+SWIGSTATICRUNTIME(void)
 SWIG_RegisterMapping(char *origtype, char *newtype, void *(*cast)(void *)) {
   int i;
   SwigPtrType *t = 0,*t1;
 
   /* Allocate the pointer table if necessary */
-  if (!SwigPtrTable) {     
+  if (!SwigPtrTable) {
     SwigPtrTable = (SwigPtrType *) malloc(SwigPtrMax*sizeof(SwigPtrType));
   }
 
@@ -276,17 +276,17 @@ SWIG_RegisterMapping(char *origtype, char *newtype, void *(*cast)(void *)) {
   t1->name = newtype;
   t1->len = strlen(t1->name);
   t1->cast = cast;
-  t1->next = 0;            
-  t->next = t1;           
+  t1->next = 0;
+  t->next = t1;
   SwigPtrSort = 0;
 }
 
 /* Make a pointer value string */
-SWIGSTATICRUNTIME(void) 
+SWIGSTATICRUNTIME(void)
 SWIG_MakePtr(char *c, const void *ptr, char *type) {
   static char hex[17] = "0123456789abcdef";
   unsigned long p, s;
-  char result[24], *r; 
+  char result[24], *r;
   r = result;
   p = (unsigned long) ptr;
   if (p > 0) {
@@ -305,7 +305,7 @@ SWIG_MakePtr(char *c, const void *ptr, char *type) {
 }
 
 /* Function for getting a pointer value */
-SWIGSTATICRUNTIME(char *) 
+SWIGSTATICRUNTIME(char *)
 SWIG_GetPtr(char *c, void **ptr, char *t)
 {
   //std::cout << t << " " << c << std::endl;
@@ -330,25 +330,25 @@ SWIG_GetPtr(char *c, void **ptr, char *t)
     else if ((d >= 'a') && (d <= 'f'))
       p = (p << 4) + (d - ('a'-10));
     else
-      break; 
+      break;
     c++;
   }
   *ptr = (void *) p;
   //std::cout << t << " " << c << std::endl;
-  if ((!t) || (strcmp(t,c)==0)) 
+  if ((!t) || (strcmp(t,c)==0))
       return (char *) 0;
   else
   {
       // added ej -- if type check fails, its always an error.
-      return (char*) 1;    
-  } 
+      return (char*) 1;
+  }
   if (!SwigPtrSort) {
-    qsort((void *) SwigPtrTable, SwigPtrN, sizeof(SwigPtrType), swigsort); 
+    qsort((void *) SwigPtrTable, SwigPtrN, sizeof(SwigPtrType), swigsort);
     for (i = 0; i < 256; i++) SwigStart[i] = SwigPtrN;
     for (i = SwigPtrN-1; i >= 0; i--) SwigStart[(int) (SwigPtrTable[i].name[1])] = i;
     for (i = 255; i >= 1; i--) {
       if (SwigStart[i-1] > SwigStart[i])
-	SwigStart[i-1] = SwigStart[i];
+        SwigStart[i-1] = SwigStart[i];
     }
     SwigPtrSort = 1;
     for (i = 0; i < SWIG_CACHESIZE; i++) SwigCache[i].stat = 0;
@@ -378,30 +378,30 @@ SWIG_GetPtr(char *c, void **ptr, char *t)
       tp = sp->next;
       /* Try to find entry for our given datatype */
       while(tp) {
-	if (tp->len >= 255) {
-	  return c;	  
-	}
-	strcpy(temp_type,tp->name);
-	strncat(temp_type,t+len,255-tp->len);
-	if (strcmp(c,temp_type) == 0) {
-	  strcpy(SwigCache[SwigCacheIndex].mapped,c);
-	  strcpy(SwigCache[SwigCacheIndex].name,t);
-	  SwigCache[SwigCacheIndex].stat = 1;
-	  SwigCache[SwigCacheIndex].tp = tp;
-	  SwigCacheIndex = SwigCacheIndex & SWIG_CACHEMASK;
-	  /* Get pointer value */
-	  *ptr = (void *) p;
-	  if (tp->cast) *ptr = (*(tp->cast))(*ptr);
-	  return (char *) 0;
-	}
-	tp = tp->next;
+        if (tp->len >= 255) {
+          return c;
+        }
+        strcpy(temp_type,tp->name);
+        strncat(temp_type,t+len,255-tp->len);
+        if (strcmp(c,temp_type) == 0) {
+          strcpy(SwigCache[SwigCacheIndex].mapped,c);
+          strcpy(SwigCache[SwigCacheIndex].name,t);
+          SwigCache[SwigCacheIndex].stat = 1;
+          SwigCache[SwigCacheIndex].tp = tp;
+          SwigCacheIndex = SwigCacheIndex & SWIG_CACHEMASK;
+          /* Get pointer value */
+          *ptr = (void *) p;
+          if (tp->cast) *ptr = (*(tp->cast))(*ptr);
+          return (char *) 0;
+        }
+        tp = tp->next;
       }
     }
     sp++;
     start++;
   }
   return c;
-} 
+}
 
 /* New object-based GetPointer function. This uses the Python abstract
  * object interface to automatically dereference the 'this' attribute
