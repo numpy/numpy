@@ -40,7 +40,7 @@ try:
     dumb = 0
 except ImportError:
     import dumb_shelve as shelve
-    dumb == 1
+    dumb = 1
 
 #For testing...
 #import dumb_shelve as shelve
