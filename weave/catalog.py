@@ -34,7 +34,8 @@
 import os,sys,string
 #import shelve
 import pickle
-import simple_shelve as shelve
+#import simple_shelve as shelve
+import dumb_shelve as shelve
 
 def getmodule(object):
     """ Discover the name of the module where object was defined.
