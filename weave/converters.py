@@ -42,6 +42,17 @@ try:
 except IndexError: 
     pass    
 
+#------------------------------------------------------------------------
+# Add VTK support
+#-----------------------------------------------------------------------
+
+try: 
+    import vtk_spec
+    default.insert(0,vtk_spec.vtk_converter())
+except IndexError: 
+    pass
+
+
 standard_info = [common_info.basic_module_info()]
 standard_info += [x.generate_build_info() for x in default]
 
