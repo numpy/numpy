@@ -197,6 +197,13 @@ class test_trim_zeros(unittest.TestCase):
                 
 # Utility
 
+class test_find_repeats(unittest.TestCase):
+    def check_basic(self):
+        a = array([1,2,3,4,1,2,3,4,1,2,5])
+        res,nums = find_repeats(a)
+        assert_array_equal(res,[1,2,3,4])
+        assert_array_equal(nums,[3,3,2])
+
 def compare_results(res,desired):
     for i in range(len(desired)):
         assert_array_equal(res[i],desired[i])
