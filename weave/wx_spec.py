@@ -4,7 +4,7 @@ import sys,os
 
 # these may need user configuration.
 if sys.platform == "win32":
-    wx_base = r'c:\wxpython-2.3.3.1'
+    wx_base = r'c:\third\wxpython-2.4.0.7'
 else:
     # probably should do some more discovery here.
     wx_base = '/usr/lib/wxPython'
@@ -89,18 +89,19 @@ class wx_converter(common_base_converter):
             #self.define_macros.append(('WINVER', '0x0350'))
 
             self.library_dirs.append(os.path.join(wx_base,'lib'))
+            #self.include_dirs.append(os.path.join(wx_base,'include'))            
+            self.include_dirs.append(wx_base)            
             self.include_dirs.append(os.path.join(wx_base,'include'))            
-            
-
+            self.include_dirs.append(os.path.join(wx_base,'include','msw'))            
             # how do I discover unicode or not unicode??            
             # non-unicode            
-            #self.libraries.append('wxmswh')
-            #self.include_dirs.append(os.path.join(wx_base,'lib','mswdllh'))
+            self.libraries.append('wxmsw24h')
+            self.include_dirs.append(os.path.join(wx_base,'lib'))
             
             # unicode
-            self.libraries.append('wxmswuh')
-            self.include_dirs.append(os.path.join(wx_base,'lib','mswdlluh'))
-            self.define_macros.append(('UNICODE', '1'))
+            #self.libraries.append('wxmswuh')
+            #self.include_dirs.append(os.path.join(wx_base,'lib','mswdlluh'))
+            #self.define_macros.append(('UNICODE', '1'))
         else:
             # make sure the gtk files are available 
             # ?? Do I need to link to them?
