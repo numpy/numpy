@@ -116,7 +116,7 @@ class concatenator:
     def __getitem__(self,key):
         if isinstance(key,types.StringType):
             frame = sys._getframe().f_back
-            return matrix_base.bmat(key,frame.f_globals,frame.f_locals)
+            return array(matrix_base.bmat(key,frame.f_globals,frame.f_locals))
         if type(key) is not types.TupleType:
             key = (key,)
         objs = []
