@@ -16,6 +16,9 @@
 #   <p=d,s,z,c> where anywhere inside a block '<p>' will be replaced with
 #  'd', 's', 'z', and 'c' for each replicate of the block.
 
+#  <_c>  is already defined: <_c=s,d,c,z>
+#  <_t>  is already defined: <_t=real,double precision,complex,double complex>
+
 #short:
 #  <d,s,z,c>, a short form of the named, useful when no <p> appears inside 
 #  a block.
@@ -58,9 +61,9 @@ def parse_structure(astr):
 _special_names = {'_c':'s,d,c,z',
                   '_t':'real,double precision,complex,double complex'
                   }
-template_re = re.compile(r"<([^<>]*)>")
-named_re = re.compile(r"<([^<>]*)=([^<>]*)>")
-list_re = re.compile(r"<([^,>]+(,\s*[^,>]+)+)>")
+template_re = re.compile(r"<([\w]*)>")
+named_re = re.compile(r"<([\w]*)=([, \w]*)>")
+list_re = re.compile(r"<([\w ]+(,\s*[\w]+)+)>")
 
 def conv(astr):
     b = astr.split(',')
