@@ -1,9 +1,13 @@
 /* Numeric's source code for array-object ufuncs
 
-   Only thing changed is coercion model so that scalars (SIZE 1 arrays) do not 
-   cause upcasting.  
+   Only thing changed is the coercion model (select_types and setup_matrices)
+
+   When no savespace bit is present then...
+   Scalars (Python Objects) only change INT to FLOAT or FLOAT to COMPLEX but
+   otherwise do not cause upcasting. 
 
 */
+
 #define SIZE(mp) (_PyArray_multiply_list((mp)->dimensions, (mp)->nd))
 #define NBYTES(mp) ((mp)->descr->elsize * SIZE(mp))
 /* Obviously this needs some work. */
@@ -41,8 +45,34 @@ static PyObject *scipy_array_copy(PyArrayObject *m1) {
     return (PyObject *)ret;
 }
 
-static int select_types(PyUFuncObject *self, char *arg_types, void **data, PyUFuncGenericFunction *function) {
+#define PYINT  1
+#define PYFLOAT  2
+#define PYCOMPLEX 3
+
+/* This function is called while searching for an appropriate ufunc
+
+   It should return a 0 if coercion of thistype to neededtype is not safe.
+
+   It uses PyArray_CanCastSafely but adds special logic to allow Python scalars to 
+   be downcast within the same kind. 
+
+ */
+static int scipy_cancoerce(char thistype, char neededtype, char scalar) {
+
+    if (scalar==0) return PyArray_CanCastSafely(thistype, neededtype);
+    if (scalar==PYINT) 
+        return (neededtype >= PyArray_UBYTE);
+    if (scalar==PYFLOAT)
+        return (neededtype >= PyArray_FLOAT);
+    if (scalar==PYCOMPLEX)
+        return (neededtype >= PyArray_CFLOAT);
+    return 1; /* should never get here... */   
+}
+
+static int select_types(PyUFuncObject *self, char *arg_types, void **data, 
+                        PyUFuncGenericFunction *function, char *scalars) {
     int i=0, j;
+    int k=0;
     char largest_savespace = 0, real_type;
 
     for (j=0; j<self->nin; j++) {
@@ -52,20 +82,36 @@ static int select_types(PyUFuncObject *self, char *arg_types, void **data, PyUFu
     }
 
     if (largest_savespace == 0) {
-	while (i<self->ntypes && arg_types[0] > self->types[i*self->nargs]) i++;
-	for(;i<self->ntypes; i++) {
-	    for(j=0; j<self->nin; j++) {
-		if (!PyArray_CanCastSafely(arg_types[j], self->types[i*self->nargs+j])) break;
-	    }
-	    if (j == self->nin) break;
-	}
-	if(i>=self->ntypes) {
-	    PyErr_SetString(PyExc_TypeError, 
-			    "function not supported for these types, and can't coerce to supported types");
-	    return -1;
-	}
-	for(j=0; j<self->nargs; j++) 
-	    arg_types[j] = (self->types[i*self->nargs+j] & ~((char )SAVESPACEBIT));
+
+        /* start search for signature at first reasonable choice (first array-based
+           type --- won't use scalar for this check)*/
+        while(k<self->nin && scalars[k] > 0) k++;
+        if (k == self->nin) k = 0;  /* no arrays */
+
+        printf("k = %d\n", k);
+
+        while (i<self->ntypes && arg_types[k] > self->types[i*self->nargs]) i++;
+        
+        /* Signature search */
+        for(;i<self->ntypes; i++) {
+            for(j=0; j<self->nin; j++) {
+                printf("arg_types[j]=%d, scalars[j]=%d\n", arg_types[j], scalars[j]);
+                if (!scipy_cancoerce(arg_types[j], self->types[i*self->nargs+j],
+                                     scalars[j])) break;
+            }
+            if (j == self->nin) break; /* Found signature that will work */
+            /* Otherwise, increment i and check next signature */
+        }
+        printf("i=%d\n", i);
+        if(i>=self->ntypes) {
+            PyErr_SetString(PyExc_TypeError, 
+                            "function not supported for these types, and can't coerce to supported types");
+            return -1;
+        }
+
+        /* reset arg_types to those needed for this signature */
+        for(j=0; j<self->nargs; j++) 
+            arg_types[j] = (self->types[i*self->nargs+j] & ~((char )SAVESPACEBIT));
     }
     else {
 	while(i<self->ntypes && largest_savespace > self->types[i*self->nargs]) i++;
@@ -76,36 +122,51 @@ static int select_types(PyUFuncObject *self, char *arg_types, void **data, PyUFu
 	}
 		
 	for(j=0; j<self->nargs; j++)  /* Input arguments */
-	    arg_types[j] = (self->types[i*self->nargs+j] | SAVESPACEBIT);
+	    arg_types[j] = (self->types[i*self->nargs+j] | SAVESPACEBIT);                
     }
-
+    
+    
     *data = self->data[i];
     *function = self->functions[i];
 	
     return 0;
 }
 
+
 static int setup_matrices(PyUFuncObject *self, PyObject *args,  PyUFuncGenericFunction *function, void **data,
 		   PyArrayObject **mps, char *arg_types) {
     int nargs, i;
-	
+    char *scalars=NULL;
+    PyObject *obj;
+    int temp;
+	 
     nargs = PyTuple_Size(args);
     if ((nargs != self->nin) && (nargs != self->nin+self->nout)) {
 	PyErr_SetString(PyExc_ValueError, "invalid number of arguments");
 	return -1;
     }
-	
+
+    scalars = calloc(self->nin, sizeof(char));
+    if (scalars == NULL) {
+      PyErr_NoMemory();
+      return -1;
+    }
+
     /* Determine the types of the input arguments. */
     for(i=0; i<self->nin; i++) {
-	arg_types[i] = (char)PyArray_ObjectType(PyTuple_GET_ITEM(args, i), 0);
-	if (PyArray_Check(PyTuple_GET_ITEM(args,i)) && 
-	    PyArray_ISSPACESAVER(PyTuple_GET_ITEM(args,i)))
-	    arg_types[i] |= SAVESPACEBIT;
+        obj = PyTuple_GET_ITEM(args,i);
+	arg_types[i] = (char)PyArray_ObjectType(obj, 0);
+
+        if (PyInt_Check(obj)) scalars[i] = PYINT;
+        else if (PyFloat_Check(obj)) scalars[i] = PYFLOAT;
+        else if (PyComplex_Check(obj)) scalars[i] = PYCOMPLEX;
     }
 	
     /* Select an appropriate function for these argument types. */
-    if (select_types(self, arg_types, data, function) == -1) return -1;
-	
+    temp = select_types(self, arg_types, data, function, scalars);
+    free(scalars);
+    if (temp == -1) return -1;
+
     /* Coerce input arguments to the right types. */
     for(i=0; i<self->nin; i++) {
 	if ((mps[i] = (PyArrayObject *)PyArray_FromObject(PyTuple_GET_ITEM(args,
@@ -237,6 +298,7 @@ static int scipy_PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, Py
 	return -1;
     }
 	
+    printf("Here..\n");
     n_loops = setup_loop(self, args, &function, &data, steps, loop_n, mps);
     if (n_loops == -1) return -1;
 	

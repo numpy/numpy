@@ -752,7 +752,7 @@ static PyMappingMethods scipy_array_as_mapping = {
 #define MAX_ARGS 10
 #include "_scipy_number.c"
 
-static PyNumberMethods array_as_number = {
+static PyNumberMethods scipy_array_as_number = {
     (binaryfunc)scipy_array_add,                  /*nb_add*/
     (binaryfunc)scipy_array_subtract,             /*nb_subtract*/
     (binaryfunc)scipy_array_multiply,             /*nb_multiply*/
@@ -807,6 +807,8 @@ void scipy_numeric_alter() {
     (PyArray_Type).tp_name = _scipy_array_str;
     memcpy((PyArray_Type).tp_as_mapping, &scipy_array_as_mapping,
 	   sizeof(PyMappingMethods));
+    memcpy((PyArray_Type).tp_as_number, &scipy_array_as_number,
+           sizeof(PyNumberMethods));
 
     (PyUFunc_Type).tp_call = (ternaryfunc)scipy_ufunc_call;
     (PyUFunc_Type).tp_name = _scipy_ufunc_str;
