@@ -338,6 +338,18 @@ class build_ext (old_build_ext):
                     filenames.append(d)
         return filenames
 
+    def get_outputs (self):
+        self.check_extensions_list(self.extensions)
+
+        outputs = []
+        for ext in self.extensions:
+            if not ext.sources:
+                continue
+            fullname = self.get_ext_fullname(ext.name)
+            outputs.append(os.path.join(self.build_lib,
+                                        self.get_ext_filename(fullname)))
+        return outputs
+
 def is_local_src_dir(directory):
     """ Return true if directory is local directory.
     """
