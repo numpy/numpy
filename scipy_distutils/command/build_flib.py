@@ -47,6 +47,7 @@ Fortran compilers (as to be used with --fcompiler= option):
       Gnu
       VAST
       F       [unsupported]
+      Lahey
 """
 
 import distutils
@@ -93,13 +94,17 @@ if os.name == 'nt':
 else:
     run_command = commands.getstatusoutput
 
-fcompiler_vendors = r'Absoft|Forte|Sun|SGI|Intel|Itanium|NAG|Compaq|Gnu|VAST|F'
+fcompiler_vendors = r'Absoft|Forte|Sun|SGI|Intel|Itanium|NAG|Compaq|Gnu|VAST'\
+                    r'|Lahey|F'
 
 def show_compilers():
     for compiler_class in all_compilers:
         compiler = compiler_class()
         if compiler.is_available():
             print cyan_text(compiler)
+        else:
+            print yellow_text('Not found/available: %s Fortran compiler'\
+                              % (compiler.vendor))
 
 class build_flib (build_clib):
 
@@ -609,6 +614,8 @@ class fortran_compiler_base(CCompiler):
             m = re.match(self.ver_match,out_text)
             if m:
                 self.version = m.group('version')
+                if not self.version:
+                    self.announce(red_text('failed to match version!'))
         else:
             self.announce('%s: %s' % (exit_status,red_text(out_text2)))
         return self.version
@@ -1438,6 +1445,48 @@ class compaq_visual_fortran_compiler(fortran_compiler_base):
         # XXX: use also /architecture, see gnu_fortran_compiler
         return ' /Ox '
 
+# fperez
+# Code copied from Pierre Schnizer's tutorial, slightly modified.  Fixed a
+# bug in the version matching regexp and added verbose flag.
+# /fperez
+class lahey_fortran_compiler(fortran_compiler_base):
+    vendor = 'Lahey'
+    ver_match = r'Lahey/Fujitsu Fortran 95 Compiler Release (?P<version>[^\s*]*)'
+
+    def __init__(self, fc = None, f90c = None,verbose=0):
+        fortran_compiler_base.__init__(self,verbose=verbose)
+        
+        if fc is None:
+            fc = 'lf95'
+        if f90c is None:
+            f90c = fc
+
+        self.f77_compiler = fc
+        self.f90_compiler = f90c
+
+        switches = ''
+        debug = ' -g --chk --chkglobal '
+        self.f77_switches = self.f90_switches = switches
+        self.f77_switches = self.f77_switches + ' --fix '
+        self.f77_debug = self.f90_debug = debug
+        self.f77_opt = self.f90_opt = self.get_opt()
+        
+        self.ver_cmd = self.f77_compiler+' --version'
+        try:
+            dir = os.environ['LAHEY']
+            self.library_dirs = [os.path.join(dir,'lib')]
+        except KeyError:
+            self.library_dirs = []
+
+        self.libraries = ['fj9f6', 'fj9i6', 'fj9ipp', 'fj9e6']
+
+    def get_opt(self):
+        opt = ' -O'
+        return opt
+
+    def get_linker_so(self):
+        return [self.f77_compiler ,'--shared']
+
 ##############################################################################
 
 def find_fortran_compiler(vendor=None, fc=None, f90c=None, verbose=0):
@@ -1474,6 +1523,7 @@ else:
         vast_fortran_compiler,
         hpux_fortran_compiler,
         f_fortran_compiler,
+        lahey_fortran_compiler,
         gnu_fortran_compiler,
         ]
 
