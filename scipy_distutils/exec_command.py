@@ -155,11 +155,20 @@ def find_executable(exe, path=None):
     for path in paths:
         fn = os.path.join(path,exe)
         for s in suffices:
-            f_ext = realpath(fn+s)
+            f_ext = fn+s
+            if not os.path.islink(f_ext):
+                # see comment below.
+                f_ext = realpath(f_ext)
             if os.path.isfile(f_ext) and os.access(f_ext,os.X_OK):
                 log.debug('Found executable %s' % f_ext)
                 return f_ext
-    exe = realpath(exe)
+    if os.path.islink(exe):
+        # Don't follow symbolic links. E.g. when using colorgcc then
+        # gcc -> /usr/bin/colorgcc
+        # g77 -> /usr/bin/colorgcc
+        pass
+    else:
+        exe = realpath(exe)
     if not os.path.isfile(exe) or os.access(exe,os.X_OK):
         log.warn('Could not locate executable %s' % orig_exe)
         return orig_exe

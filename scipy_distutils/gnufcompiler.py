@@ -16,6 +16,7 @@ class GnuFCompiler(FCompiler):
     # 'g77 --version' results
     # SunOS: GNU Fortran (GCC 3.2) 3.2 20020814 (release)
     # Debian: GNU Fortran (GCC) 3.3.3 20040110 (prerelease) (Debian)
+    #         GNU Fortran (GCC) 3.3.3 (Debian 20040401)
     #         GNU Fortran 0.5.25 20010319 (prerelease)
     # Redhat: GNU Fortran (GCC 3.2.2 20030222 (Red Hat Linux 3.2.2-5)) 3.2.2 20030222 (Red Hat Linux 3.2.2-5)
 
