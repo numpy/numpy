@@ -81,6 +81,7 @@ class run_f2py(Command):
         """
         try:
             import f2py2e
+            self.announce('using F2PY %s' % (f2py2e.f2py2e.f2py_version))
         except ImportError:
             print sys.exc_value
             raise F2pyNotFoundError,F2pyNotFoundError.__doc__
@@ -150,6 +151,9 @@ class run_f2py(Command):
             pyf_fortran_target_file = os.path.join(target_dir,
                                                    ext_name+fortran_target_ext)
             f2py_opts2 = ['-m',ext_name,'-h',pyf_target,'--overwrite-signature']
+            if not self.verbose:
+                if f2py2e.f2py2e.f2py_version>'2.21.184-1312':
+                    f2py_opts2.append('--quiet')
             for source in fortran_sources:
                 if newer(source,pyf_target) or self.force:
                     self.announce(yellow_text("f2py %s" % \
@@ -176,7 +180,9 @@ class run_f2py(Command):
             f2py_options = ext.f2py_options + self.f2py_options
         else:
             f2py_options = self.f2py_options[:]
-
+        if not self.verbose:
+            if f2py2e.f2py2e.f2py_version>'2.21.184-1312':
+                f2py_options.append('--quiet')
         for source in f2py_sources:
             target = f2py_targets[source]
             fortran_target = f2py_fortran_targets[source]

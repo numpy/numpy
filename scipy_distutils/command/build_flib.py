@@ -489,17 +489,17 @@ class fortran_compiler_base(CCompiler):
         self.version = ''
         # works I think only for unix...
         #if self.verbose:
+        self.announce('detecting %s Fortran compiler...'%(self.vendor))
         self.announce(yellow_text(self.ver_cmd))
         exit_status, out_text = run_command(self.ver_cmd)
-        if self.verbose:
-            out_text = out_text.split('\n')[0]
+        out_text2 = out_text.split('\n')[0]
         if not exit_status:
-            self.announce('found %s' %(green_text(out_text)))
+            self.announce('found %s' %(green_text(out_text2)))
             m = re.match(self.ver_match,out_text)
             if m:
                 self.version = m.group('version')
         else:
-            self.announce('%s: %s' % (exit_status,red_text(out_text)))
+            self.announce('%s: %s' % (exit_status,red_text(out_text2)))
         return self.version
 
     def get_libraries(self):
