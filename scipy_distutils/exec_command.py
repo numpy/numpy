@@ -36,6 +36,8 @@
 #   nt      | win32        | Cygwin 98-4.10, Python 2.1.1(MSC) - echo tests
 #                            fail i.e. redefining environment variables may
 #                            not work. FIXED: don't use cygwin echo!
+#                            Comment: also `cmd /c echo` will not work
+#                            but redefining environment variables do work.
 #   posix   | cygwin       | Cygwin 98-4.10, Python 2.3.3(cygming special)
 
 __all__ = ['exec_command','find_executable']
@@ -118,6 +120,7 @@ def find_executable(exe, path=None):
     log.debug('find_executable(%r)' % exe)
     if path is None:
         path = os.environ.get('PATH',os.defpath)
+
     suffices = ['']
     if os.name in ['nt','dos','os2']:
         fn,ext = os.path.splitext(exe)
@@ -128,16 +131,16 @@ def find_executable(exe, path=None):
         paths = ['']
     else:
         paths = map(os.path.abspath, path.split(os.pathsep))
-        if os.name == 'nt':
-            # Remove cygwin path components
+        if 0 and os.name == 'nt':
             new_paths = []
+            cygwin_paths = []
             for path in paths:
                 d,p = os.path.splitdrive(path)
                 if p.lower().find('cygwin') >= 0:
-                    log.debug('removing "%s" from PATH' % (path))
+                    cygwin_paths.append(path)
                 else:
                     new_paths.append(path)
-            paths = new_paths
+            paths = new_paths + cygwin_paths
     for path in paths:
         fn = os.path.join(path,exe)
         for s in suffices:
@@ -361,7 +364,6 @@ def _exec_command( command, use_shell=None, **env ):
                 # argv[0] might be internal command
                 argv = [os.environ['COMSPEC'],'/C']+argv
                 using_command = 1
-
     # sys.__std*__ is used instead of sys.std* because environments
     # like IDLE, PyCrust, etc overwrite sys.std* commands.
     so_fileno = sys.__stdout__.fileno()
@@ -427,8 +429,35 @@ def _exec_command( command, use_shell=None, **env ):
 
 def test_nt(**kws):
     pythonexe = get_pythonexe()
+    echo = find_executable('echo')
+    using_cygwin_echo = echo != 'echo'
 
-    if 1: ##  not (sys.platform=='win32' and os.environ.get('OSTYPE','')=='cygwin'):
+    if using_cygwin_echo:
+        log.warn('Using cygwin echo in win32 environment is not supported')
+
+        s,o=exec_command(pythonexe\
+                         +' -c "import os;print os.environ.get(\'AAA\',\'\')"')
+        assert s==0 and o=='',(s,o)
+        
+        s,o=exec_command(pythonexe\
+                         +' -c "import os;print os.environ.get(\'AAA\')"',
+                         AAA='Tere')
+        assert s==0 and o=='Tere',(s,o)
+
+        os.environ['BBB'] = 'Hi'
+        s,o=exec_command(pythonexe\
+                         +' -c "import os;print os.environ.get(\'BBB\',\'\')"')
+        assert s==0 and o=='Hi',(s,o)
+
+        s,o=exec_command(pythonexe\
+                         +' -c "import os;print os.environ.get(\'BBB\',\'\')"',
+                         BBB='Hey')
+        assert s==0 and o=='Hey',(s,o)
+
+        s,o=exec_command(pythonexe\
+                         +' -c "import os;print os.environ.get(\'BBB\',\'\')"')
+        assert s==0 and o=='Hi',(s,o)
+    else:
         s,o=exec_command('echo Hello')
         assert s==0 and o=='Hello',(s,o)
 
@@ -447,11 +476,11 @@ def test_nt(**kws):
         s,o=exec_command('echo a%BBB%')
         assert s==0 and o=='aHi',(s,o)
 
-    s,o=exec_command('this_is_not_a_command')
-    assert s and o!='',(s,o)
+        s,o=exec_command('this_is_not_a_command')
+        assert s and o!='',(s,o)
 
-    s,o=exec_command('type not_existing_file')
-    assert s and o!='',(s,o)
+        s,o=exec_command('type not_existing_file')
+        assert s and o!='',(s,o)
 
     s,o=exec_command('echo path=%path%')
     assert s==0 and o!='',(s,o)

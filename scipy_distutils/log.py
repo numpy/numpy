@@ -9,7 +9,10 @@ if sys.version[:3]>='2.3':
     class Log(old_Log):
         def _log(self, level, msg, args):
             if level>= self.threshold:
-                print _global_color_map[level](msg % args)
+                if args:
+                    print _global_color_map[level](msg % args)
+                else:
+                    print _global_color_map[level](msg)
                 sys.stdout.flush()
     _global_log.__class__ = Log
 
