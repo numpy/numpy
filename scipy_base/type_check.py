@@ -4,11 +4,16 @@ import Numeric
 from fastumath import isinf, isnan, isfinite
 from Numeric import ArrayType, array, multiarray
 
+try:
+   from Numeric import UfuncType
+except ImportError:
+   UfuncType = type(Numeric.sin)
+
 __all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isnan','isinf','isfinite',
            'isreal','nan_to_num','real','real_if_close',
            'typename','cast','common_type','typecodes', 'asarray',
-           'asfarray']
+           'asfarray', 'ArrayType', 'UfuncType']
 
 def asarray(a, typecode=None, savespace=None):
    """asarray(a,typecode=None, savespace=0) returns a as a NumPy array.
