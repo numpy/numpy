@@ -235,6 +235,9 @@ class ScipyTest:
         d,f = os.path.split(module.__file__)
 
         short_module_name = os.path.splitext(os.path.basename(f))[0]
+        if short_module_name=='__init__':
+            short_module_name = module.__name__.split('.')[-1]
+
         test_dir = os.path.join(d,'tests')
         test_file = os.path.join(test_dir,'test_'+short_module_name+'.py')
 
@@ -247,6 +250,14 @@ class ScipyTest:
             test_file = local_test_file
 
         if not os.path.isfile(test_file):
+            if short_module_name[:5]=='info_' \
+               and short_module_name[5:]==module.__name__.split('.')[-2]:
+                return []
+            if short_module_name in ['__cvs_version__','__svn_version__']:
+                return []
+            if short_module_name[-8:]=='_version' \
+               and short_module_name[:-8]==module.__name__.split('.')[-2]:
+                return []
             print '   !! No test file %r found for %s' \
                   % (os.path.basename(test_file), mstr(module))
             return []
