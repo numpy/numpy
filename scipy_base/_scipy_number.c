@@ -23,7 +23,7 @@
 #define min(x,y) (x)>(y)?(y):(x)
 #endif
 
-static int compare_lists(int *l1, int *l2, int n) {
+static int scipy_compare_lists(int *l1, int *l2, int n) {
     int i;
     for(i=0;i<n;i++) {
         if (l1[i] != l2[i]) return 0;
@@ -31,7 +31,7 @@ static int compare_lists(int *l1, int *l2, int n) {
     return 1;
 }
 
-int get_stride(PyArrayObject *mp, int d) {
+static int scipy_get_stride(PyArrayObject *mp, int d) {
     return mp->strides[d];
 }
 
@@ -45,16 +45,21 @@ static PyObject *scipy_array_copy(PyArrayObject *m1) {
     return (PyObject *)ret;
 }
 
+#define SCALARBIT 2048
+#define MAKEFROMSCALAR(obj) (((PyArrayObject *)(obj))->descr->type_num |= SCALARBIT)
+#define PyArray_ISFROMSCALAR(obj) ((((PyArrayObject*)(obj))->descr->type_num & SCALARBIT))
+#define OFFSCALAR(obj) (((PyArrayObject *)(obj))->descr->type_num &= ~((int) SCALARBIT))
 #define PYINT  1
 #define PYFLOAT  2
 #define PYCOMPLEX 3
+
 
 /* This function is called while searching for an appropriate ufunc
 
    It should return a 0 if coercion of thistype to neededtype is not safe.
 
-   It uses PyArray_CanCastSafely but adds special logic to allow Python scalars to 
-   be downcast within the same kind. 
+   It uses PyArray_CanCastSafely but adds special logic to allow Python 
+   scalars to be downcast within the same kind. 
 
  */
 static int scipy_cancoerce(char thistype, char neededtype, char scalar) {
@@ -69,8 +74,8 @@ static int scipy_cancoerce(char thistype, char neededtype, char scalar) {
     return 1; /* should never get here... */   
 }
 
-static int select_types(PyUFuncObject *self, char *arg_types, void **data, 
-                        PyUFuncGenericFunction *function, char *scalars) {
+static int scipy_select_types(PyUFuncObject *self, char *arg_types, void **data, 
+			      PyUFuncGenericFunction *function, char *scalars) {
     int i=0, j;
     int k=0;
     char largest_savespace = 0, real_type;
@@ -88,21 +93,17 @@ static int select_types(PyUFuncObject *self, char *arg_types, void **data,
         while(k<self->nin && scalars[k] > 0) k++;
         if (k == self->nin) k = 0;  /* no arrays */
 
-        printf("k = %d\n", k);
-
-        while (i<self->ntypes && arg_types[k] > self->types[i*self->nargs]) i++;
+        while (i<self->ntypes && arg_types[k] > self->types[i*self->nargs+k]) i++;
         
         /* Signature search */
         for(;i<self->ntypes; i++) {
             for(j=0; j<self->nin; j++) {
-                printf("arg_types[j]=%d, scalars[j]=%d\n", arg_types[j], scalars[j]);
                 if (!scipy_cancoerce(arg_types[j], self->types[i*self->nargs+j],
                                      scalars[j])) break;
             }
             if (j == self->nin) break; /* Found signature that will work */
             /* Otherwise, increment i and check next signature */
         }
-        printf("i=%d\n", i);
         if(i>=self->ntypes) {
             PyErr_SetString(PyExc_TypeError, 
                             "function not supported for these types, and can't coerce to supported types");
@@ -132,9 +133,9 @@ static int select_types(PyUFuncObject *self, char *arg_types, void **data,
     return 0;
 }
 
-
-static int setup_matrices(PyUFuncObject *self, PyObject *args,  PyUFuncGenericFunction *function, void **data,
-		   PyArrayObject **mps, char *arg_types) {
+static int scipy_setup_matrices(PyUFuncObject *self, PyObject *args,  
+				PyUFuncGenericFunction *function, void **data,
+				PyArrayObject **mps, char *arg_types) {
     int nargs, i;
     char *scalars=NULL;
     PyObject *obj;
@@ -156,14 +157,25 @@ static int setup_matrices(PyUFuncObject *self, PyObject *args,  PyUFuncGenericFu
     for(i=0; i<self->nin; i++) {
         obj = PyTuple_GET_ITEM(args,i);
 	arg_types[i] = (char)PyArray_ObjectType(obj, 0);
-
-        if (PyInt_Check(obj)) scalars[i] = PYINT;
-        else if (PyFloat_Check(obj)) scalars[i] = PYFLOAT;
-        else if (PyComplex_Check(obj)) scalars[i] = PYCOMPLEX;
+	if (PyArray_Check(obj)) {
+	    if (PyArray_ISSPACESAVER(obj)) 
+		arg_types[i] |= SAVESPACEBIT;
+	    else if (PyArray_ISFROMSCALAR(obj)) {
+		temp = OFFSCALAR(obj);
+		if (temp == PyArray_LONG) scalars[i] = PYINT;
+		else if (temp == PyArray_DOUBLE) scalars[i] = PYFLOAT;
+		else if (temp == PyArray_CDOUBLE) scalars[i] = PYCOMPLEX;
+	    }
+	}
+	else {
+	    if (PyInt_Check(obj)) scalars[i] = PYINT;
+	    else if (PyFloat_Check(obj)) scalars[i] = PYFLOAT;
+	    else if (PyComplex_Check(obj)) scalars[i] = PYCOMPLEX;
+	}
     }
 	
     /* Select an appropriate function for these argument types. */
-    temp = select_types(self, arg_types, data, function, scalars);
+    temp = scipy_select_types(self, arg_types, data, function, scalars);
     free(scalars);
     if (temp == -1) return -1;
 
@@ -193,7 +205,7 @@ static int setup_matrices(PyUFuncObject *self, PyObject *args,  PyUFuncGenericFu
     return nargs;
 }
 
-static int setup_return(PyUFuncObject *self, int nd, int *dimensions, int steps[MAX_DIMS][MAX_ARGS], 
+static int scipy_setup_return(PyUFuncObject *self, int nd, int *dimensions, int steps[MAX_DIMS][MAX_ARGS], 
                         PyArrayObject **mps, char *arg_types) {
     int i, j;
 	
@@ -205,13 +217,13 @@ static int setup_return(PyUFuncObject *self, int nd, int *dimensions, int steps[
 							    arg_types[i])) == NULL)
 		return -1;
 	} else {
-	    if (!compare_lists(mps[i]->dimensions, dimensions, nd)) {
+	    if (!scipy_compare_lists(mps[i]->dimensions, dimensions, nd)) {
 		PyErr_SetString(PyExc_ValueError, "invalid return array shape");
 		return -1;
 	    }
 	}
 	for(j=0; j<mps[i]->nd; j++) {
-	    steps[j][i] = get_stride(mps[i], j+mps[i]->nd-nd);
+	    steps[j][i] = scipy_get_stride(mps[i], j+mps[i]->nd-nd);
 	}
 	/* Small hack to keep purify happy (no UMR's for 0d array's) */
 	if (mps[i]->nd == 0) steps[0][i] = 0;
@@ -219,7 +231,7 @@ static int setup_return(PyUFuncObject *self, int nd, int *dimensions, int steps[
     return 0;
 }
 
-static int optimize_loop(int steps[MAX_DIMS][MAX_ARGS], int *loop_n, int n_loops) {
+static int scipy_optimize_loop(int steps[MAX_DIMS][MAX_ARGS], int *loop_n, int n_loops) {
   int j, tmp;
 	
 #define swap(x, y) tmp = (x), (x) = (y), (y) = tmp
@@ -238,13 +250,13 @@ static int optimize_loop(int steps[MAX_DIMS][MAX_ARGS], int *loop_n, int n_loops
 }
 
 
-static int setup_loop(PyUFuncObject *self, PyObject *args, PyUFuncGenericFunction *function, void **data,
+static int scipy_setup_loop(PyUFuncObject *self, PyObject *args, PyUFuncGenericFunction *function, void **data,
 	       int steps[MAX_DIMS][MAX_ARGS], int *loop_n, PyArrayObject **mps) {
     int i, j, nargs, nd, n_loops, tmp;
     int dimensions[MAX_DIMS];
     char arg_types[MAX_ARGS];
 	
-    nargs = setup_matrices(self, args, function, data, mps, arg_types);
+    nargs = scipy_setup_matrices(self, args, function, data, mps, arg_types);
     if (nargs < 0) return -1;
 	
     /* The return matrices will have the same number of dimensions as the largest input array. */
@@ -267,7 +279,7 @@ static int setup_loop(PyUFuncObject *self, PyObject *args, PyUFuncGenericFunctio
 		    PyErr_SetString(PyExc_ValueError, "frames are not aligned");
 		    return -1;
 		}
-		steps[n_loops][j] = get_stride(mps[j], i + mps[j]->nd-nd);
+		steps[n_loops][j] = scipy_get_stride(mps[j], i + mps[j]->nd-nd);
 	    }
 	}
 	loop_n[n_loops] = dimensions[i];
@@ -279,9 +291,9 @@ static int setup_loop(PyUFuncObject *self, PyObject *args, PyUFuncGenericFunctio
 	for(j=0; j<self->nin; j++) steps[0][j] = 0;
     }
 	
-    if (setup_return(self, nd, dimensions, steps, mps, arg_types) == -1) return -1;
+    if (scipy_setup_return(self, nd, dimensions, steps, mps, arg_types) == -1) return -1;
 	
-    n_loops = optimize_loop(steps, loop_n, n_loops);
+    n_loops = scipy_optimize_loop(steps, loop_n, n_loops);
 	
     return n_loops;
 }
@@ -298,8 +310,7 @@ static int scipy_PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, Py
 	return -1;
     }
 	
-    printf("Here..\n");
-    n_loops = setup_loop(self, args, &function, &data, steps, loop_n, mps);
+    n_loops = scipy_setup_loop(self, args, &function, &data, steps, loop_n, mps);
     if (n_loops == -1) return -1;
 	
     for(i=0; i<self->nargs; i++) pointers[i] = mps[i]->data;
@@ -400,15 +411,22 @@ static int scipy_SetNumericOps(PyObject *dict) {
     return 0;
 }
 
+/* This is getting called */ 
 static int scipy_array_coerce(PyArrayObject **pm, PyObject **pw) {
     PyObject *new_op;
+    char isscalar = 0;
+
+    if (PyInt_Check(*pw) || PyFloat_Check(*pw) || PyComplex_Check(*pw)) {
+	isscalar = 1;
+    }
     if ((new_op = PyArray_FromObject(*pw, PyArray_NOTYPE, 0, 0)) 
 	== NULL) 
 	return -1;
     Py_INCREF(*pm);
     *pw = new_op;
+    if (isscalar) MAKEFROMSCALAR(*pw);
     return 0;
-}
+ }
 
 static PyObject *PyUFunc_BinaryFunction(PyUFuncObject *s, PyArrayObject *mp1, PyObject *mp2) {
     PyObject *arglist;
