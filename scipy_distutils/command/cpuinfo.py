@@ -445,6 +445,169 @@ class sunos_cpuinfo(cpuinfo_base):
     def _is_cpusparcv9(self):
         return self.info[0]['processor']=='sparcv9'
 
+class win32_cpuinfo(cpuinfo_base):
+
+    info = None
+    pkey = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor"
+    # XXX: what does the value of
+    #   HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0
+    # mean?
+
+    def __init__(self):
+        if self.info is not None:
+            return
+        info = []
+        try:
+            #XXX: Bad style to use so long `try:...except:...`. Fix it!
+            import _winreg
+            pkey = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor"
+            prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)"\
+                              "\s+stepping\s+(?P<STP>\d+)",re.IGNORECASE)
+            chnd=_winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,pkey)
+            pnum=0
+            while 1:
+                try:
+                    proc=_winreg.EnumKey(chnd,pnum)
+                except _winreg.error:
+                    break
+                else:
+                    pnum+=1
+                    print proc
+                    info.append({"Processor":proc})
+                    phnd=_winreg.OpenKey(chnd,proc)
+                    pidx=0
+                    while True:
+                        try:
+                            name,value,vtpe=_winreg.EnumValue(phnd,pidx)
+                        except _winreg.error:
+                            break
+                        else:
+                            pidx=pidx+1
+                            info[-1][name]=value
+                            if name=="Identifier":
+                                srch=prgx.search(value)
+                                if srch:
+                                    info[-1]["Family"]=int(srch.group("FML"))
+                                    info[-1]["Model"]=int(srch.group("MDL"))
+                                    info[-1]["Stepping"]=int(srch.group("STP"))
+        except:
+            print sys.exc_value,'(ignoring)'
+        self.__class__.info = info
+
+    def _not_impl(self): pass
+
+    # Athlon
+
+    def _is_AMD(self):
+        return self.info[0]['VendorIdentifier']=='AuthenticAMD'
+
+    def _is_Am486(self):
+        return self.is_AMD() and self.info[0]['Family']==4
+
+    def _is_Am5x86(self):
+        return self.is_AMD() and self.info[0]['Family']==4
+
+    def _is_AMDK5(self):
+        return self.is_AMD() and self.info[0]['Family']==5 \
+               and self.info[0]['Model'] in [0,1,2,3]
+
+    def _is_AMDK6(self):
+        return self.is_AMD() and self.info[0]['Family']==5 \
+               and self.info[0]['Model'] in [6,7]
+
+    def _is_AMDK6_2(self):
+        return self.is_AMD() and self.info[0]['Family']==5 \
+               and self.info[0]['Model']==8
+
+    def _is_AMDK6_3(self):
+        return self.is_AMD() and self.info[0]['Family']==5 \
+               and self.info[0]['Model']==9
+
+    def _is_Athlon(self):
+        return self.is_AMD() and self.info[0]['Family']==6
+
+    def _is_Athlon64(self):
+        return self.is_AMD() and self.info[0]['Family']==15 \
+               and self.info[0]['Model']==4
+
+    def _is_Opteron(self):
+        return self.is_AMD() and self.info[0]['Family']==15 \
+               and self.info[0]['Model']==5
+
+    # Intel
+
+    def _is_Intel(self):
+        return self.info[0]['VendorIdentifier']=='GenuineIntel'
+
+    def _is_i386(self):
+        return self.info[0]['Family']==3
+
+    def _is_i486(self):
+        return self.info[0]['Family']==4
+
+    def _is_i586(self):
+        return self.is_Intel() and self.info[0]['Family']==5
+
+    def _is_i686(self):
+        return self.is_Intel() and self.info[0]['Family']==6
+
+    def _is_Pentium(self):
+        return self.is_Intel() and self.info[0]['Family']==5
+
+    def _is_PentiumMMX(self):
+        return self.is_Intel() and self.info[0]['Family']==5 \
+               and self.info[0]['Model']==4
+
+    def _is_PentiumPro(self):
+        return self.is_Intel() and self.info[0]['Family']==6 \
+               and self.info[0]['Model']==1
+
+    def _is_PentiumII(self):
+        return self.is_Intel() and self.info[0]['Family']==6 \
+               and self.info[0]['Model'] in [3,5,6]
+
+    def _is_PentiumIII(self):
+        return self.is_Intel() and self.info[0]['Family']==6 \
+               and self.info[0]['Model'] in [7,8,9,10,11]
+
+    def _is_PentiumIV(self):
+        return self.is_Intel() and self.info[0]['Family']==15
+
+    # Varia
+
+    def _is_singleCPU(self):
+        return len(self.info) == 1
+
+    def _getNCPUs(self):
+        return len(self.info)
+
+    def _has_mmx(self):
+        if self.is_Intel():
+            return (self.info[0]['Family']==5 and self.info[0]['Model']==4) \
+                   or (self.info[0]['Family'] in [6,15])
+        elif self.is_AMD():
+            return self.info[0]['Family'] in [5,6,15]
+
+    def _has_sse(self):
+        if self.is_Intel():
+            return (self.info[0]['Family']==6 and \
+                    self.info[0]['Model'] in [7,8,9,10,11]) \
+                    or self.info[0]['Family']==15
+        elif self.is_AMD():
+            return (self.info[0]['Family']==6 and \
+                    self.info[0]['Model'] in [6,7,8,10]) \
+                    or self.info[0]['Family']==15
+
+    def _has_sse2(self):
+        return self.info[0]['Family']==15
+
+    def _has_3dnow(self):
+        # XXX: does only AMD have 3dnow??
+        return self.is_AMD() and self.info[0]['Family'] in [5,6,15]
+
+    def _has_3dnowext(self):
+        return self.is_AMD() and self.info[0]['Family'] in [6,15]
+
 if sys.platform[:5] == 'linux': # variations: linux2,linux-i386 (any others?)
     cpuinfo = linux_cpuinfo
 elif sys.platform[:4] == 'irix':
@@ -453,6 +616,8 @@ elif sys.platform == 'darwin':
     cpuinfo = darwin_cpuinfo
 elif sys.platform[:5] == 'sunos':
     cpuinfo = sunos_cpuinfo
+elif sys.platform[:5] == 'win32':
+    cpuinfo = win32_cpuinfo
 #XXX: other OS's. Eg. use _winreg on Win32. Or os.uname on unices.
 else:
     cpuinfo = cpuinfo_base
