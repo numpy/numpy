@@ -147,7 +147,7 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
         # add module to the needed source code files and build extension
         # FIX this is g++ specific. It probably should be fixed for other
         # Unices/compilers.  Find a generic solution
-        if sys.platform[:-1] == 'linux':
+        if compiler_name != 'msvc':
             libraries = kw.get('libraries',[])
             kw['libraries'] = ['stdc++'] +  libraries        
         ext = Extension(module_name, **kw)
