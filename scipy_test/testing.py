@@ -3,6 +3,7 @@ __all__ = []
 
 import os,sys,time,glob,string,traceback,unittest
 import types
+import imp
 
 try:
     # These are used by Numeric tests.
@@ -167,18 +168,16 @@ class ScipyTest:
                   % (os.path.basename(test_file), mstr(module))
             return []
 
-        sys.path.insert(0,test_dir)
         try:
-            exec 'import test_%s as test_module' % (short_module_name)
-            reload(test_module)
+            f = open(test_file,'r')
+            test_module = imp.load_module(\
+                module.__name__+'.test_'+short_module_name,
+                f, test_file,('.py', 'r', 1))
+            f.close()
         except:
-            test_module = None
             print '   !! FAILURE importing tests for ', mstr(module)
             print '   ',
             output_exception()
-        del sys.path[0]
-
-        if test_module is None:
             return []
 
         if hasattr(test_module,'test_suite'):
@@ -224,12 +223,15 @@ class ScipyTest:
         self._touch_ppimported(this_package)
 
         package_name = this_package.__name__
+
         suites = []
         for name, module in sys.modules.items():
-            if package_name!=name[:len(package_name)] \
-               or module is None:
+            if package_name != name[:len(package_name)] \
+               or module is None \
+               or os.path.basename(os.path.dirname(module.__file__))=='tests':
                 continue
             suites.extend(self._get_module_tests(module, level))
+
         all_tests = unittest.TestSuite(suites)
         runner = unittest.TextTestRunner(verbosity=verbosity)
         runner.run(all_tests)
