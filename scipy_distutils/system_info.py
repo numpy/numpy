@@ -442,7 +442,6 @@ class atlas_info(system_info):
             return
 
         if h: dict_append(info,include_dirs=[h])
-        self.set_info(**info)
 
         # Check if lapack library is complete, only warn if it is not.
         lapack_dir = info['library_dirs'][0]
@@ -457,8 +456,8 @@ class atlas_info(system_info):
             fd = os.open(lapack_lib,os.O_RDONLY)
             sz = os.fstat(fd)[6]
             os.close(fd)
+            import warnings
             if sz <= 4000*1024:
-                import warnings
                 message = """
 *********************************************************************
     Lapack library (from ATLAS) is probably incomplete:
@@ -469,6 +468,21 @@ class atlas_info(system_info):
 *********************************************************************
 """ % (lapack_lib,sz/1024)
                 warnings.warn(message)
+            info['size_liblapack'] = sz
+            flag = os.system('nm %s | grep clapack_sgetri '%lapack_lib)
+            info['has_clapack_sgetri'] = not flag
+            if flag:
+                message = """
+*********************************************************************
+    Using probably old ATLAS version (<3.3.??):
+      nm %s | grep clapack_sgetri
+    returned %s
+    ATLAS update is recommended. See scipy/INSTALL.txt.
+*********************************************************************
+""" % (lapack_lib,flag)
+                warnings.warn(message)
+        self.set_info(**info)
+
 
 class lapack_info(system_info):
     section = 'lapack'
