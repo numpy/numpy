@@ -74,8 +74,22 @@ else:
 
 # Hooks for colored terminal output. Could be in a more general use.
 # See also http://www.livinglogic.de/Python/ansistyle
-if os.environ.get('TERM',None) in ['rxvt','xterm']:
-    # Need a better way to determine whether a terminal supports colors
+def terminal_has_colors():
+    if not sys.stdout.isatty(): return 0
+    try:
+        import curses
+        curses.setupterm()
+        return (curses.tigetnum("colors") >= 0
+                and curses.tigetnum("pairs") >= 0
+                and ((curses.tigetstr("setf") is not None 
+                      and curses.tigetstr("setb") is not None) 
+                     or (curses.tigetstr("setaf") is not None
+                         and curses.tigetstr("setab") is not None)
+                     or curses.tigetstr("scp") is not None))
+    except: pass
+    return 0
+
+if terminal_has_colors():
     def red_text(s): return '\x1b[31m%s\x1b[0m'%s
     def green_text(s): return '\x1b[32m%s\x1b[0m'%s
     def yellow_text(s): return '\x1b[33m%s\x1b[0m'%s
@@ -94,6 +108,7 @@ def show_compilers():
         compiler = compiler_class()
         if compiler.is_available():
             print cyan_text(compiler)
+
 
 class build_flib (build_clib):
 
@@ -1043,7 +1058,6 @@ all_compilers = [absoft_fortran_compiler,
                  hpux_fortran_compiler,
                  f_fortran_compiler,
                  gnu_fortran_compiler,
-
                  ]
 
 if __name__ == "__main__":
