@@ -1,6 +1,6 @@
 major = 0
 minor = 3
-micro = 0
+micro = 1
 #release_level = 'alpha'
 release_level = ''
 try:
