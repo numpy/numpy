@@ -16,6 +16,7 @@ import inspect
 ##################################################################
 class Type_Descriptor:
     prerequisites = []
+    refcount = 0
     def __repr__(self):
         return self.__module__+'.'+self.__class__.__name__
 
@@ -184,7 +185,10 @@ def listing(f):
             source = ''
         if arg == None: arg = ''
         s += '%3d] %20s %5s : %s\n'%(pc,name,arg,source)
-        pc += 1
+        if op >= haveArgument:
+            pc += 3
+        else:
+            pc += 1
     return s
 
 ##################################################################
@@ -715,8 +719,9 @@ class CXXCoder(ByteCodeMeaning):
         # the body
         # -----------------------------------------------
         code = self.codeobject.co_code
+        bytes = len(code)
         pc = 0
-        while pc != None:
+        while pc != None and pc < bytes:
             pc = self.evaluate(pc,code)
 
         # -----------------------------------------------
@@ -742,7 +747,7 @@ class CXXCoder(ByteCodeMeaning):
         # -----------------------------------------------
         code += '#include "Python.h"\n'
         for T in self.used:
-            print T.prerequisites
+            if T == None: continue
             for pre in T.prerequisites:
                 code += pre
                 code += '\n'
@@ -764,9 +769,8 @@ class CXXCoder(ByteCodeMeaning):
         for i in range(self.codeobject.co_argcount,
                        self.codeobject.co_nlocals):
             t = self.types[i]
-            descriptor = typedefs[t]
             code += '%s %s;\n'%(
-                descriptor.cxxtype,
+                t.cxxtype,
                 self.codeobject.co_varnames[i],
                 )
 
@@ -932,13 +936,14 @@ class CXXCoder(ByteCodeMeaning):
         if t1 == t2:
             rhs,rhs_type = t1.binop(symbol,v1,v2)
         else:
-            raise NotImplementedError,'mixed types'
+            rhs,rhs_type = t1.binopMixed(symbol,v1,v2)
         
         lhs = self.unique()
         self.emit('%s %s = %s;\n'%(
             rhs_type.cxxtype,
             lhs,
             rhs))
+        print self.__body
         self.push(lhs,rhs_type)
         return        
 
@@ -955,6 +960,8 @@ class CXXCoder(ByteCodeMeaning):
         return self.binop(pc,'/')
     def BINARY_MODULO(self,pc):
         return self.binop(pc,'%')
+    def BINARY_SUBSCR(self,pc):
+        return self.binop(pc,'[]')
     def COMPARE_OP(self,pc,opname):
         symbol = self.cmp_op(opname) # convert numeric to name
         return self.binop(pc,symbol)
@@ -1012,10 +1019,11 @@ class CXXCoder(ByteCodeMeaning):
         # Fetch the constant
         k = self.consts[consti]
         t = type(k)
+        print 'LOAD_CONST',repr(k),t
 
         # Fetch a None is just skipped
         if t == NoneType:
-            self.push('<bogus>',t) 
+            self.push('<void>',t) 
             return
 
         self.emit_value(k)
@@ -1028,6 +1036,9 @@ class CXXCoder(ByteCodeMeaning):
     def LOAD_FAST(self,pc,var_num):
         v = self.stack[var_num]
         t = self.types[var_num]
+        print 'LOADFAST',var_num,v,t
+        if t.refcount:
+            self.emit('Py_XINCREF(%s);'%v)
         self.push(v,t)
         return
 
@@ -1078,6 +1089,7 @@ class CXXCoder(ByteCodeMeaning):
     def STORE_FAST(self,pc,var_num):
 
         v,t = self.pop()
+        print 'STORE FAST',var_num,v,t
 
         save = self.stack[var_num]
         saveT = self.types[var_num]
@@ -1085,6 +1097,9 @@ class CXXCoder(ByteCodeMeaning):
         # See if type is same....
         # Note that None means no assignment made yet
         if saveT == None or t == saveT:
+            if t.refcount:
+                self.emit('Py_XINCREF(%s);'%v)
+                self.emit('Py_XDECREF(%s);'%save)
             self.emit('%s = %s;\n'%(save,v))
             self.types[var_num] = t
             return
@@ -1194,11 +1209,14 @@ class CXXCoder(ByteCodeMeaning):
     def RETURN_VALUE(self,pc):
         v,t = self.pop()
         if hasattr(self,'rtype'):
+            print v,t
+            if t == NoneType: return # just the extra return
             raise ValueError,'multiple returns'
         self.rtype = t
         if t == NoneType:
             self.emit('return;')
         else:
             self.emit('return %s;'%v)
-        return -1
+        print 'return with',v
+        return
 

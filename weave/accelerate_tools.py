@@ -31,6 +31,8 @@ class Basic(bytecodecompiler.Type_Descriptor):
         return "%s(%s)"%(self.outbounder,s)
 
 class Basic_Number(Basic):
+    def literalizer(self,s):
+        return str(s)
     def binop(self,symbol,a,b):
         assert symbol in ['+','-','*','/'],symbol
         return '%s %s %s'%(a,symbol,b),self
@@ -60,22 +62,23 @@ import Numeric
 
 class Vector(bytecodecompiler.Type_Descriptor):
     cxxtype = 'PyArrayObject*'
+    refcount = 1
     prerequisites = bytecodecompiler.Type_Descriptor.prerequisites+\
-                   ['#include "Numeric/arrayobject.h"',
-                    'static PyObject* PyArray_AsPyObject(PyArrayObject* A) { PyObject* X = '
-                    'reinterpret_cast<PyObject*>(A);'
-                    'std::cerr << "Here in cast" << std::endl;'
-                    'Py_XINCREF(X); return X;}']
+                   ['#include "Numeric/arrayobject.h"']
     dims = 1
     def check(self,s):
-        return "PyArray_Check(%s) /* && dims==%d && typecode==%s */"%(s,self.dims,self.typecode)
+        return "PyArray_Check(%s) && ((PyArrayObject*)%s)->nd == %d &&  ((PyArrayObject*)%s)->descr->type_num == %s"%(
+            s,s,self.dims,s,self.typecode)
     def inbound(self,s):
         return "(PyArrayObject*)(%s)"%s
     def outbound(self,s):
         return "(PyObject*)(%s)"%s
+    def binopMixed(self,symbol,a,b):
+        return '*((%s*)(%s->data+%s*%s->strides[0]))'%(self.cxxbase,a,b,a),Integer()
 
 class IntegerVector(Vector):
-    typecode = 'l'
+    typecode = 'PyArray_INT'
+    cxxbase = 'int'
 
 typedefs = {
     IntType: Integer(),
@@ -108,18 +111,24 @@ class accelerate:
             import __main__
             self.module = __main__
         self.__call_map = {}
-        return
+
+    def __cache(self,*args):
+        raise TypeError
 
     def __call__(self,*args):
-        # Figure out type info -- Do as tuple so its hashable
-        signature = tuple( map(lookup_type,args) )
-
-        # If we know the function, call it
         try:
-            return self.__call_map[signature](*args)
-        except:
-            fast = self.singleton(signature)
-            self.__call_map[signature] = fast
+            return self.__cache(*args)
+        except TypeError:
+            # Figure out type info -- Do as tuple so its hashable
+            signature = tuple( map(lookup_type,args) )
+            
+            # If we know the function, call it
+            try:
+                fast = self.__call_map[signature]
+            except:
+                fast = self.singleton(signature)
+                self.__cache = fast
+                self.__call_map[signature] = fast
             return fast(*args)
 
     def signature(self,*args):
@@ -197,6 +206,7 @@ class Python2CXX(bytecodecompiler.CXXCoder):
                       1),'%s not all type objects'%signature
         self.arg_specs = []
         self.customize = weave.base_info.custom_info()
+        self.customize.add_module_init_code('import_array()\n')
 
         bytecodecompiler.CXXCoder.__init__(self,f,signature,name)
         return
