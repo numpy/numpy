@@ -34,10 +34,11 @@ class build_ext (old_build_ext):
         need_f_libs = 0
         need_f_opts = getattr(ext,'need_fcompiler_opts',0)
         ext_name = string.split(ext.name,'.')[-1]
+        flib_name = ext_name + '_f2py'
 
         if self.distribution.has_f_libraries():
             build_flib = self.get_finalized_command('build_flib')
-            if build_flib.has_f_library(ext_name):
+            if build_flib.has_f_library(flib_name):
                 need_f_libs = 1
             else:
                 for lib_name in ext.libraries:
@@ -51,13 +52,15 @@ class build_ext (old_build_ext):
         #    ext.name,ext_name,need_f_libs,need_f_opts))
         
         if need_f_libs:
-            if build_flib.has_f_library(ext_name) and \
-               ext_name not in ext.libraries:
-                ext.libraries.insert(0,ext_name)
+            if build_flib.has_f_library(flib_name) and \
+               flib_name not in ext.libraries:
+                ext.libraries.insert(0,flib_name)
             for lib_name in ext.libraries[:]:
                 ext.libraries.extend(build_flib.get_library_names(lib_name))
                 ext.library_dirs.extend(build_flib.get_library_dirs(lib_name))
-            ext.library_dirs.append(build_flib.build_flib)
+            d = build_flib.build_flib
+            if d not in ext.library_dirs:
+                ext.library_dirs.append(d)
 
         if need_f_libs or need_f_opts:
             moreargs = build_flib.fcompiler.get_extra_link_args()

@@ -230,7 +230,7 @@ class run_f2py(Command):
         fortran_libraries = self.distribution.fortran_libraries
 
         ext_name = string.split(ext.name,'.')[-1]
-        name = ext_name
+        name = ext_name+'_f2py'
         flib = None
         for n,d in fortran_libraries:
             if n == name:
@@ -239,7 +239,7 @@ class run_f2py(Command):
         if flib is None:
             flib = {}
             fortran_libraries.append((name,flib))
-            
+
         flib.setdefault('sources',[]).extend(f_files)
         flib.setdefault('define_macros',[]).extend(ext.define_macros)
         flib.setdefault('undef_macros',[]).extend(ext.undef_macros)
