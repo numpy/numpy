@@ -820,7 +820,7 @@ def get_atlas_version(**config):
     ext = Extension('atlas_version',
                     sources=[atlas_version_c],
                     **config)
-    extra_args = ['-b',os.path.join(get_build_temp())]
+    extra_args = ['--build-lib',get_build_temp()]
     for a in sys.argv:
         if re.match('[-][-]compiler[=]',a):
             extra_args.append(a)
