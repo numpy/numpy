@@ -13,7 +13,7 @@ except ImportError:
     pass
 
 __all__.append('set_package_path')
-def set_package_path():
+def set_package_path(level=1):
     """ Prepend package directory to sys.path.
 
     set_package_path should be called from a test_file.py that
@@ -33,7 +33,7 @@ def set_package_path():
     """
     from distutils.util import get_platform
     from scipy_distutils.misc_util import get_frame
-    f = get_frame(1)
+    f = get_frame(level)
     if f.f_locals['__name__']=='__main__':
         testfile = sys.argv[0]
     else:
@@ -100,6 +100,107 @@ class ScipyTestCase (unittest.TestCase):
         elapsed = jiffies() - elapsed
         return 0.01*elapsed
 
+#------------
+
+__all__.append('ScipyTest')
+class ScipyTest:
+    """ Scipy tests site manager.
+
+    Usage:
+      >>> ScipyTest(<packagename>).test(level=1,verbosity=2)
+
+    Package <packagename> is supposed to contain a directory tests/
+    with test_*.py files where * refers to the names of submodules.
+
+    test_*.py files are supposed to define a function
+    test_suite_list(level=1) that returns a list of 2-tuples
+    (<ScipyTestCase class>,<test method pattern>).
+
+    And that is it! No need to implement test or test_suite functions
+    in each .py file.
+
+    Also old styled test_suite(level=1) hooks are supported.
+    """
+    def __init__(self, name):
+        self.name = name
+
+    def _module_str(self, module):
+        filename = module.__file__[-30:]
+        if filename!=module.__file__:
+            filename = '...'+filename
+        return 'module %s from %s' % (`module.__name__`, `filename`)
+
+    def _get_module_tests(self,module,level):
+        mstr = self._module_str
+        d,f = os.path.split(module.__file__)
+        short_module_name = module.__name__.split('.')[-1]
+        test_dir = os.path.join(d,'tests')
+        test_file = os.path.join(test_dir,'test_'+short_module_name+'.py')
+
+        if not os.path.isfile(test_file):
+            print '   !! No test file found for', mstr(module)
+            return []
+
+        sys.path.insert(0,test_dir)
+        try:
+            exec 'import test_%s as test_module' % (short_module_name)
+            reload(test_module)
+        except:
+            test_module = None
+            print '   !! FAILURE importing tests for ', mstr(module)
+            print '   ',
+            output_exception()
+        del sys.path[0]
+
+        if test_module is None:
+            return []
+
+        if not hasattr(test_module,'test_suite_list'):
+            if hasattr(test_module,'test_suite'):
+                # Using old styled test suite
+                try:
+                    total_suite = test_module.test_suite(level)
+                    return total_suite._tests
+                except:
+                    print '   !! FAILURE building tests for ', mstr(module)
+                    print '   ',
+                    output_exception()
+                    return []
+            print '   !! test_suite_list|test_suite not defined in',\
+                  mstr(test_module)
+            return []
+
+        try:
+            suite_list = test_module.test_suite_list(level)
+        except:
+            print '   !! FAILURE building tests for ', mstr(module)
+            print '   ',
+            output_exception()
+            return []
+        return [unittest.makeSuite(*args) for args in suite_list]
+
+    def test(self,level=1,verbosity=1):
+        """ Run Scipy module test suite with level and verbosity.
+        """
+        exec 'import %s as this_package' % (self.name)
+
+        # Force importing Postponed modules:
+        hasattr(this_package,'_pliuh_plauh')
+
+        package_name = this_package.__name__
+        suites = []
+        for name, module in sys.modules.items():
+            if package_name!=name[:len(package_name)] \
+               or module is None:
+                continue
+            suites.extend(self._get_module_tests(module, level))
+        all_tests = unittest.TestSuite(suites)
+        runner = unittest.TextTestRunner(verbosity=verbosity)
+        runner.run(all_tests)
+        return runner
+
+#------------
+        
 def remove_ignored_patterns(files,pattern):
     from fnmatch import fnmatch
     good_files = []
