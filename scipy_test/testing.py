@@ -27,7 +27,7 @@ def get_package_path(testfile):
         return d1
     return os.path.dirname(d)
 
-if sys.platform=='linux2':
+if sys.platform[:5]=='linux':
     def jiffies(_proc_pid_stat = '/proc/%s/stat'%(os.getpid()),
                 _load_time=time.time()):
         """ Return number of jiffies (1/100ths of a second) that this
