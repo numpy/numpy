@@ -255,7 +255,7 @@ def _exec_command_posix( command,
         filter = ''
         if use_tee == 2:
             filter = r'| tr -cd "\n" | tr "\n" "."; echo'
-        command_posix = '( %s 2>&1 ; echo $? > %s ) | tee %s %s'\
+        command_posix = '( %s ; echo $? > %s ) 2>&1 | tee %s %s'\
                       % (command_str,stsfile,tmpfile,filter)
     else:
         command_posix = '%s > %s 2>&1' % (command_str,tmpfile)
