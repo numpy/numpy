@@ -1,6 +1,6 @@
 import types
 import Numeric
-__all__ = ['mgrid','r_','c_','index_exp']
+__all__ = ['mgrid','ogrid','r_','c_','index_exp']
 
 from type_check import ScalarType
 import function_base
@@ -65,7 +65,7 @@ class nd_grid:
                    isinstance(key[k].stop, types.FloatType):
                        typecode = Numeric.Float
             if self.sparse:
-                nn = map(lambda x,t: arange(x,typecode=t),size,(typecode,)*len(size))
+                nn = map(lambda x,t: Numeric.arange(x,typecode=t),size,(typecode,)*len(size))
             else:
                 nn = Numeric.indices(size,typecode)
 	    for k in range(len(size)):
@@ -77,11 +77,11 @@ class nd_grid:
                     step = (key[k].stop - key[k].start)/float(step-1)
                 nn[k] = (nn[k]*step+key[k].start)
             if self.sparse:
-                slobj = [NewAxis]*len(size)
+                slobj = [Numeric.NewAxis]*len(size)
                 for k in range(len(size)):
                     slobj[k] = slice(None,None)
                     nn[k] = nn[k][slobj]
-                    slobj[k] = NewAxis
+                    slobj[k] = Numeric.NewAxis
 	    return nn
         except (IndexError, TypeError):
             step = key.step
