@@ -1065,10 +1065,11 @@ class gnu_fortran_compiler(fortran_compiler_base):
         # only check for more optimization if g77 can handle it.
         if self.get_version():
             if sys.platform=='darwin':
-                if cpu.is_ppc():
-                    opt = opt + ' -arch ppc '
-                elif cpu.is_i386():
-                    opt = opt + ' -arch i386 '
+                if self.version < '3.4':
+                    if cpu.is_ppc():
+                        opt = opt + ' -arch ppc '
+                    elif cpu.is_i386():
+                        opt = opt + ' -arch i386 '
                 for a in '601 602 603 603e 604 604e 620 630 740 7400 7450 750'\
                     '403 505 801 821 823 860'.split():
                     if getattr(cpu,'is_ppc%s'%a)():
