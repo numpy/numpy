@@ -167,17 +167,7 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
         # add module to the needed source code files and build extension
         sources = kw.get('sources',[])
         kw['sources'] = [module_path] + sources        
-        
-        # ! This was fixed at beginning of file by using g++ on most 
-        # !machines.  We'll have to check how to handle it on non-gcc machines        
-        ## add module to the needed source code files and build extension
-        ## FIX this is g++ specific. It probably should be fixed for other
-        ## Unices/compilers.  Find a generic solution
-        #if compiler_name != 'msvc':
-        #    libraries = kw.get('libraries',[])
-        #    kw['libraries'] = ['stdc++'] +  libraries        
-        # !
-        
+                
         # SunOS specific
         # fix for issue with linking to libstdc++.a. see:
         # http://mail.python.org/pipermail/python-dev/2001-March/013510.html
