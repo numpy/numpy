@@ -4,10 +4,10 @@ import sys
 from cpuinfo import cpu
 from fcompiler import FCompiler
 
-class ForteFCompiler(FCompiler):
+class SunFCompiler(FCompiler):
 
-    compiler_type = 'forte'
-    version_pattern = r'(f90|f95): Forte Developer 7 Fortran 95 (?P<version>[^\s]+).*'
+    compiler_type = 'sun'
+    version_pattern = r'(f90|f95): (Sun|Forte Developer 7) Fortran 95 (?P<version>[^\s]+).*'
 
     executables = {
         'version_cmd'  : ["f90", "-V"],
@@ -31,7 +31,9 @@ class ForteFCompiler(FCompiler):
         return opt
 
 if __name__ == '__main__':
+    from distutils import log
+    log.set_verbosity(2)
     from fcompiler import new_fcompiler
-    compiler = new_fcompiler(compiler='forte')
+    compiler = new_fcompiler(compiler='sun')
     compiler.customize()
     print compiler.get_version()

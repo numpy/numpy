@@ -60,6 +60,27 @@ class IntelFCompiler(FCompiler):
             opt.append('-nofor_main')
         return opt
 
+class IntelItaniumFCompiler(IntelFCompiler):
+    compiler_type = 'intele'
+    version_pattern = r'Intel\(R\) Fortran 90 Compiler Itanium\(TM\) Compiler'\
+                      ' for the Itanium\(TM\)-based applications,'\
+                      ' Version (?P<version>[^\s*]*)'
+
+    for fc_exe in map(find_executable,['efort','efc','ifort']):
+        if os.path.isfile(fc_exe):
+            break
+
+    executables = {
+        'version_cmd'  : [fc_exe, "-FI -V -c %(fname)s.f -o %(fname)s.o" \
+                          % {'fname':dummy_fortran_file()}],
+        'compiler_f77' : [fc_exe,"-FI","-w90","-w95"],
+        'compiler_fix' : [fc_exe,"-FI","-72"],
+        'compiler_f90' : [fc_exe],
+        'linker_so'    : [fc_exe,"-shared"],
+        'archiver'     : ["ar", "-cr"],
+        'ranlib'       : ["ranlib"]
+        }
+
 class IntelVisualFCompiler(FCompiler):
 
     compiler_type = 'intelv'
@@ -109,7 +130,28 @@ class IntelVisualFCompiler(FCompiler):
         if cpu.has_mmx():
             opt.append('/QaxM')
         return opt
-    
+
+class IntelItaniumVisualFCompiler(IntelVisualFCompiler):
+
+    compiler_type = 'intelev'
+    version_pattern = r'Intel\(R\) Fortran 90 Compiler Itanium\(TM\) Compiler'\
+                      ' for the Itanium\(TM\)-based applications,'\
+                      ' Version (?P<version>[^\s*]*)'
+
+    fc_exe = 'efl' # XXX this is a wild guess
+    ar_exe = IntelVisualFCompiler.ar_exe
+
+    executables = {
+        'version_cmd'  : [fc_exe, "-FI -V -c %(fname)s.f -o %(fname)s.o" \
+                          % {'fname':dummy_fortran_file()}],
+        'compiler_f77' : [fc_exe,"-FI","-w90","-w95"],
+        'compiler_fix' : [fc_exe,"-FI","-4L72","-w"],
+        'compiler_f90' : [fc_exe],
+        'linker_so'    : [fc_exe,"-shared"],
+        'archiver'     : [ar_exe, "/verbose", "/OUT:"],
+        'ranlib'       : None
+        }
+
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
