@@ -1,7 +1,7 @@
 from distutils.core import *
 from distutils.core import setup as old_setup
 
-from distutils.cmd import Command
+#from distutils.cmd import Command
 from scipy_distutils.extension import Extension
 
 # Our dist is different than the standard one.

@@ -8,7 +8,8 @@ Implements the Distutils 'run_f2py' command.
 __revision__ = "$Id$"
 
 from distutils.dep_util import newer
-from scipy_distutils.core import Command
+from distutils.cmd import Command
+#from scipy_distutils.core import Command
 from scipy_distutils.system_info import F2pyNotFoundError
 
 import re,os,sys,string
