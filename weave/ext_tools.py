@@ -232,17 +232,17 @@ class ext_module:
     def header_code(self):
         h = self.get_headers()
         h= map(lambda x: '#include ' + x + '\n',h)
-        return ''.join(h)
+        return ''.join(h) + '\n'
 
     def support_code(self):
         code = self.build_information().support_code()
-        return ''.join(code)
+        return ''.join(code) + '\n'
 
     def function_code(self):
         all_function_code = ""
         for func in self.functions:
             all_function_code += func.function_code()
-        return ''.join(all_function_code)
+        return ''.join(all_function_code) + '\n'
 
     def python_function_definition_code(self):
         all_definition_code = ""
