@@ -16,3 +16,7 @@ assert not sys.modules.has_key('distutils.ccompiler'),\
 import ccompiler
 sys.modules['distutils.ccompiler'] = ccompiler
 
+assert not sys.modules.has_key('distutils.unixccompiler'),\
+       'cannot override distutils.unixccompiler'
+import unixccompiler
+sys.modules['distutils.unixccompiler'] = unixccompiler
