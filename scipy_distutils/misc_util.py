@@ -391,18 +391,26 @@ def get_subpackages(path,
                     include_packages=[],
                     ignore_packages=[]):
 
-    """ Return a list of configurations found in a tree of Python
-    packages. It is assumed that each package xxx in path/xxx has
-    file path/xxx/info_xxx.py that follows convention specified
-    in scipy/DEVELOPERS.txt. Packages that do not define info_*.py files
-    must be specified in include_packages list.
+    """
+    Return a list of configurations found in a tree of Python
+    packages.
+
+    It is assumed that each package xxx in path/xxx has file
+    path/xxx/info_xxx.py that follows convention specified in
+    scipy/DEVELOPERS.txt.
+
+    Packages that do not define info_*.py files or should override
+    options in info*_.py files can be specified in include_packages
+    list.
 
     Unless a package xxx is specified standalone, it will be installed
     as parent.xxx.
 
-    Specifying parent_path is recommended for reducing verbosity of compilations.
+    Specifying parent_path is recommended for reducing verbosity of
+    compilations.
 
-    Packages in ignore_packages list will be ignored.
+    Packages in ignore_packages list will be ignored unless they are
+    also in include_packages.
     """
 
     config_list = []
