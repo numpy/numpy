@@ -142,7 +142,7 @@ list_keys = ['packages', 'ext_modules', 'data_files',
              'headers']
 dict_keys = ['package_dir']
 
-def default_config_dict(name = None, parent_name = None):
+def default_config_dict(name = None, parent_name = None, local_path=None):
     """ Return a configuration dictionary for usage in
     configuration() function defined in file setup_<name>.py.
     """
@@ -156,9 +156,10 @@ def default_config_dict(name = None, parent_name = None):
         # XXX: The following assumes that default_config_dict is called
         #      only from setup_<name>.configuration().
         #      Todo: implement check for this assumption.
-        frame = get_frame(1)
-        caller_name = eval('__name__',frame.f_globals,frame.f_locals)
-        local_path = get_path(caller_name)
+        if local_path is None:
+            frame = get_frame(1)
+            caller_name = eval('__name__',frame.f_globals,frame.f_locals)
+            local_path = get_path(caller_name)
         test_path = os.path.join(local_path,'tests')
         if 0 and name and parent_name is None:
             # Useful for local builds
@@ -445,13 +446,17 @@ def get_subpackages(path,
 
     for package_name in include_packages:
         dirname = os.path.join(path, package_name)
+
         setup_file = os.path.join(dirname,'setup_' + package_name+'.py')
         if not os.path.isfile(setup_file):
             print 'Assuming default configuration (%r was not found)' \
                   % (setup_file)
-            config = default_config_dict(package_name, parent or '')
+
+            config = default_config_dict(package_name, parent or '',
+                                         local_path=dirname)
             config_list.append(config)
             continue
+    
         sys.path.insert(0,dirname)
         try:
             exec 'import setup_%s as setup_module' % (package_name)
