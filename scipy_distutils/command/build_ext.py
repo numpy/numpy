@@ -80,7 +80,6 @@ class build_ext (old_build_ext):
                     if lib_dir not in self.compiler.library_dirs:
                         self.compiler.library_dirs.append(lib_dir)
 
-                
         # end of fortran source support
         res = old_build_ext.build_extension(self,ext)
 

@@ -211,9 +211,16 @@ class run_f2py(Command):
                 flib = d
                 break
         if flib is None:
-            flib = {'sources':[]}
+            flib = {'sources':[],
+                    'define_macros':[],
+                    'undef_macros':[],
+                    'include_dirs':[],
+                    }
             fortran_libraries.append((name,flib))
-
+            
         flib['sources'].extend(f_files)
+        flib['define_macros'].extend(ext.define_macros)
+        flib['undef_macros'].extend(ext.undef_macros)
+        flib['include_dirs'].extend(ext.include_dirs)
         
 # class run_f2py

@@ -46,6 +46,7 @@ import distutils.dep_util, distutils.dir_util
 import os,sys,string
 import commands,re
 from types import *
+from distutils.ccompiler import CCompiler,gen_preprocess_options
 from distutils.command.build_clib import build_clib
 from distutils.errors import *
 
@@ -131,7 +132,7 @@ class build_flib (build_clib):
         if self.has_f_libraries():
             self.fortran_libraries = self.distribution.fortran_libraries
             self.check_library_list(self.fortran_libraries)
-
+        
     # finalize_options()
 
     def has_f_libraries(self):
@@ -241,6 +242,8 @@ class build_flib (build_clib):
         fcompiler = self.fcompiler
         
         for (lib_name, build_info) in fortran_libraries:
+            self.announce(" building '%s' library" % lib_name)
+
             sources = build_info.get('sources')
             if sources is None or type(sources) not in (ListType, TupleType):
                 raise DistutilsSetupError, \
@@ -250,8 +253,17 @@ class build_flib (build_clib):
             sources = list(sources)
             module_dirs = build_info.get('module_dirs')
             module_files = build_info.get('module_files')
-            self.announce(" building '%s' library" % lib_name)
-            
+
+
+            include_dirs = build_info.get('include_dirs')
+
+            if include_dirs:
+                fcompiler.set_include_dirs(include_dirs)
+            for n,v in build_info.get('define_macros') or []:
+                fcompiler.define_macro(n,v)
+            for n in build_info.get('undef_macros') or []:
+                fcompiler.undefine_macro(n)
+
             if module_files:
                 fcompiler.build_library(lib_name, module_files,
                                         temp_dir=self.build_temp)
@@ -264,14 +276,19 @@ class build_flib (build_clib):
     # build_libraries ()
 
 
-class fortran_compiler_base:
+class fortran_compiler_base(CCompiler):
 
     vendor = None
     ver_match = None
+
+    compiler_type = 'fortran'
+    executables = {}
     
-    def __init__(self):
+    def __init__(self,verbose=0,dry_run=0,force=0):
         # Default initialization. Constructors of derived classes MUST
-        # call this functions.
+        # call this function.
+        CCompiler.__init__(self,verbose,dry_run,force)
+
         self.version = None
         
         self.f77_switches = ''
@@ -282,8 +299,8 @@ class fortran_compiler_base:
         self.f90_opt = ''
         self.f90_debug = ''
         
-        self.libraries = []
-        self.library_dirs = []
+        #self.libraries = []
+        #self.library_dirs = []
 
         if self.vendor is None:
             raise DistutilsInternalError,\
@@ -292,7 +309,10 @@ class fortran_compiler_base:
             raise DistutilsInternalError,\
                   '%s must define ver_match attribute'%(self.__class__)
 
-    def to_object(self,dirty_files,module_dirs=None, temp_dir=''):
+    def to_object(self,
+                  dirty_files,
+                  module_dirs=None,
+                  temp_dir=''):
         files = string.join(dirty_files)
         f90_files = get_f90_files(dirty_files)
         f77_files = get_f77_files(dirty_files)
@@ -320,13 +340,19 @@ class fortran_compiler_base:
  
     def f_compile(self,compiler,switches, source_files,
                   module_dirs=None, temp_dir=''):
+
+        pp_opts = gen_preprocess_options(self.macros,self.include_dirs)
+
+        switches = switches + string.join(pp_opts,' ')
+
         module_switch = self.build_module_switch(module_dirs)
         file_pairs = self.source_and_object_pairs(source_files,temp_dir)
         object_files = []
         for source,object in file_pairs:
             if distutils.dep_util.newer(source,object):
                 cmd =  compiler + ' ' + switches + \
-                       module_switch + ' -c ' + source + ' -o ' + object 
+                       module_switch + \
+                       ' -c ' + source + ' -o ' + object 
                 print cmd
                 failure = os.system(cmd)
                 if failure:
@@ -370,7 +396,9 @@ class fortran_compiler_base:
         distutils.dir_util.mkpath(temp_dir)
 
         #this compiles the files
-        object_list = self.to_object(source_list,module_dirs,temp_dir)
+        object_list = self.to_object(source_list,
+                                     module_dirs,
+                                     temp_dir)
 
         # actually we need to use all the object file names here to
         # make sure the library is always built.  It could occur that an
