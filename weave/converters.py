@@ -6,6 +6,7 @@ import base_spec
 import scalar_spec
 import sequence_spec
 import common_spec
+import unicode_spec
 
 
 #--------------------------------------------------------
@@ -15,6 +16,7 @@ import common_spec
 default = [scalar_spec.int_converter(),
            scalar_spec.float_converter(),
            scalar_spec.complex_converter(),
+           unicode_spec.unicode_converter(),
            sequence_spec.string_converter(),
            sequence_spec.list_converter(),
            sequence_spec.dict_converter(),
