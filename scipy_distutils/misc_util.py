@@ -35,9 +35,13 @@ def update_version(release_level='alpha',
     # *** Recommend or not to add __version__.py file to CVS
     #     repository? If it is in CVS, then when commiting, the
     #     version information will change, but __version__.py
-    #     is commited with old version information to CVS. To get
-    #     __version__.py also up to date in CVS repository, 
-    #     a second commit of the __version__.py file is required.
+    #     is commited with the old version information. To get
+    #     __version__.py also up to date, a second commit of the
+    #     __version__.py file is required after you re-run
+    #     update_version(..). To summarize:
+    #     1) cvs commit ...
+    #     2) python setup.py  # that should call update_version
+    #     3) cvs commit -m "updating version" __version__.py
 
     release_level_map = {'alpha':0,
                          'beta':1,
@@ -110,6 +114,11 @@ def get_version(release_level='alpha',
                 '%(major)d.%(minor)d.%(micro)d-%(release_level)s-%(serial)d',
                 major=None,
                 ):
+    """
+    Return version string calculated from CVS/Entries file(s) starting
+    at <path>. Does not change <path>/__version__.py.
+    See also update_version(..) function.
+    """
     return update_version(release_level = release_level,path = path,
                           version_template = version_template,
                           major = major,overwrite_version_py = 0)
