@@ -1223,7 +1223,11 @@ class wx_info(system_info):
         extra_compile_args = []
         version = self.get_config_output(wx_config,'--version')
         if version:
-            macros.append(('WX_VERSION','"\\"%s\\""' % (version)))
+            macros.append(('WX_INFO','"\\"%s\\""' % (version)))
+            macros.append(('WX_VERSION_%s' % (version.replace('.','_')),None))
+        release = self.get_config_output(wx_config,'--release')
+        if release:
+            macros.append(('WX_RELEASE_%s' % (release.replace('.','_')),None))
         opts = self.get_config_output(wx_config,'--libs')
         if opts:
             for opt in opts.split():
