@@ -833,7 +833,8 @@ class lapack_opt_info(system_info):
                 link_args.extend(['-Wl,-framework','-Wl,vecLib'])
             if args:
                 self.set_info(extra_compile_args=args,
-                              extra_link_args=link_args)
+                              extra_link_args=link_args,
+                              define_macros=[('NO_ATLAS_INFO',3)])
                 return
 
         atlas_info = get_info('atlas_threads')
@@ -910,7 +911,8 @@ class blas_opt_info(system_info):
                 link_args.extend(['-Wl,-framework','-Wl,vecLib'])
             if args:
                 self.set_info(extra_compile_args=args,
-                              extra_link_args=link_args)
+                              extra_link_args=link_args,
+                              define_macros=[('NO_ATLAS_INFO',3)])
                 return
 
         atlas_info = get_info('atlas_blas_threads')
