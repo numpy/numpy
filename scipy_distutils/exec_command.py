@@ -139,6 +139,16 @@ def find_executable(exe, path=None):
         paths = ['']
     else:
         paths = map(os.path.abspath, path.split(os.pathsep))
+        if os.name == 'nt':
+            # Remove cygwin path components
+            new_paths = []
+            for path in paths:
+                d,p = os.path.splitdrive()
+                if p.lower().find('cygwin') >= 0:
+                    log.debug('removing "%s" from PATH' % (path))
+                else:
+                    new_paths.append(path)
+            paths = new_paths
     for path in paths:
         fn = os.path.join(path,exe)
         for s in suffices:
