@@ -4,6 +4,7 @@ __all__ = ['mgrid','ogrid','r_','c_','index_exp']
 
 from type_check import ScalarType
 import function_base
+import matrix_base
 
 class nd_grid:
     """ Construct a "meshgrid" in N-dimensions.
@@ -106,12 +107,16 @@ class nd_grid:
 mgrid = nd_grid()
 ogrid = nd_grid(1)
 
+import sys
 class concatenator:
     """ Translates slice objects to concatenation along an axis.
     """
     def __init__(self, axis=0):
         self.axis = axis
     def __getitem__(self,key):
+        if isinstance(key,types.StringType):
+            frame = sys._getframe().f_back
+            return matrix_base.bmat(key,frame.f_globals,frame.f_locals)
         if type(key) is not types.TupleType:
             key = (key,)
         objs = []
