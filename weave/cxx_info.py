@@ -37,16 +37,18 @@ public:
             handle_conversion_error(py_obj,"list", name);
         return Py::List(py_obj);
     }
+    Py::List py_to_list(PyObject* py_obj,const char* name)
+    {
+        if (!py_obj || !PyList_Check(py_obj))
+            handle_bad_type(py_obj,"list", name);
+        return Py::List(py_obj);
+    }
 };
 
 list_handler x__list_handler = list_handler();
+#define convert_to_list(py_obj,name) x__list_handler.convert_to_list(py_obj,name)
+#define py_to_list(py_obj,name) x__list_handler.py_to_list(py_obj,name)
 
-static Py::List py_to_list(PyObject* py_obj,const char* name)
-{
-    if (!py_obj || !PyList_Check(py_obj))
-        handle_bad_type(py_obj,"list", name);
-    return Py::List(py_obj);
-}
 """
 
 dict_support_code = \
