@@ -17,8 +17,8 @@ class test_inline(unittest.TestCase):
         a = 3                                  
         code = """
                if (a < 2)
-                   throw throw_error(PyExc_ValueError,
-                                     "the variable 'a' should not be less than 2");
+                  throw_error(PyExc_ValueError,
+                              "the variable 'a' should not be less than 2");
                else    
                    return_val = Py::new_reference_to(Py::Int(a+1));
                """
