@@ -277,13 +277,13 @@ class test_dummy_array_indexing(unittest.TestCase):
     def check_1d_random(self):
         """ through a bunch of different indexes at it for good measure.
         """
-        import whrandom
+        import random
         choices = map(lambda x: `x`,range(50)) + range(50) + ['']*50
         for i in range(100):
             try:
-                beg = whrandom.choice(choices)
-                end = whrandom.choice(choices)
-                step = whrandom.choice(choices)                
+                beg = random.choice(choices)
+                end = random.choice(choices)
+                step = random.choice(choices)                
                 self.generic_1d('a[%s:%s:%s]' %(beg,end,step))        
             except IndexError:
                 pass
@@ -297,16 +297,16 @@ class test_dummy_array_indexing(unittest.TestCase):
     def check_2d_random(self):
         """ through a bunch of different indexes at it for good measure.
         """
-        import whrandom
+        import random
         choices = map(lambda x: `x`,range(50)) + range(50) + ['']*50        
         for i in range(100):
             try:
-                beg = whrandom.choice(choices)
-                end = whrandom.choice(choices)
-                step = whrandom.choice(choices)                
-                beg2 = whrandom.choice(choices)
-                end2 = whrandom.choice(choices)
-                step2 = whrandom.choice(choices)                
+                beg = random.choice(choices)
+                end = random.choice(choices)
+                step = random.choice(choices)                
+                beg2 = random.choice(choices)
+                end2 = random.choice(choices)
+                step2 = random.choice(choices)                
                 expr = 'a[%s:%s:%s,%s:%s:%s]' %(beg,end,step,beg2,end2,step2)
                 self.generic_2d(expr)        
             except IndexError:
@@ -314,13 +314,13 @@ class test_dummy_array_indexing(unittest.TestCase):
     def check_3d_random(self):
         """ through a bunch of different indexes at it for good measure.
         """
-        import whrandom
+        import random
         choices = map(lambda x: `x`,range(50)) + range(50) + ['']*50        
         for i in range(100):
             try:
                 idx = []
                 for i in range(9):
-                    idx.append(whrandom.choice(choices))
+                    idx.append(random.choice(choices))
                 expr = 'a[%s:%s:%s,%s:%s:%s,%s:%s:%s]' % tuple(idx)
                 self.generic_3d(expr)        
             except IndexError:

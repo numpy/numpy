@@ -104,11 +104,11 @@ def sort_compare(a,n):
 
 def setup_dict(m):
     " does insertion order matter?"
-    import whrandom
+    import random
     a = range(m)
     d = {}
     for i in range(m):
-        key = whrandom.choice(a)
+        key = random.choice(a)
         a.remove(key)
         d[key]=key
     return d    

@@ -716,11 +716,11 @@ def rand(*args):
     """ Returns an array of random numbers with the given shape.
     used for testing
     """
-    import whrandom
+    import random
     results = zeros(args,Float64)
     f = results.flat
     for i in range(len(f)):
-        f[i] = whrandom.random()
+        f[i] = random.random()
     return results
 
 def output_exception():
