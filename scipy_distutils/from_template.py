@@ -36,23 +36,42 @@ else:
     False = 0
     True = 1
 
-comment_block_exp = re.compile(r'/\*(?:\s|.)*?\*/')
-subroutine_exp = re.compile(r'subroutine (?:\s|.)*?end subroutine.*')
-function_exp = re.compile(r'function (?:\s|.)*?end function.*')
+comment_block_exp = re.compile(r'/\*.*?\*/',re.DOTALL)
+# These don't work with Python2.3 : maximum recursion limit exceeded.
+#subroutine_exp = re.compile(r'subroutine (?:\s|.)*?end subroutine.*')
+#function_exp = re.compile(r'function (?:\s|.)*?end function.*')
 reg = re.compile(r"\ssubroutine\s(.+)\(.*\)")
 
 def parse_structure(astr):
     spanlist = []
-    for typ in [subroutine_exp, function_exp]:
-        ind = 0
-        while 1:
-            a = typ.search(astr[ind:])
-            if a is None:
-                break
-            tup = a.span()
-            tup = (ind+tup[0],ind+tup[1])
-            spanlist.append(tup)
-            ind  = tup[1]
+    # subroutines
+    ind = 0
+    while 1:
+        start = astr.find("subroutine", ind)
+        if start == -1:
+            break
+        fini1 = astr.find("end subroutine",start)
+        fini2 = astr.find("\n",fini1)
+        spanlist.append((start, fini2))
+        ind = fini2
+
+    # functions
+    ind = 0
+    while 1:
+        start = astr.find("function", ind)
+        if start == -1:
+            break
+        pre = astr.rfind("\n", ind, start)
+        presave = start
+        # look for "$" in previous lines
+        while '$' in astr[pre:presave]:
+            presave = pre
+            pre = astr.rfind("\n", ind, pre-1)
+            
+        fini1 = astr.find("end function",start)
+        fini2 = astr.find("\n",fini1)
+        spanlist.append((pre+1, fini2))
+        ind = fini2
 
     spanlist.sort()
     return spanlist
@@ -111,7 +130,7 @@ def expand_sub(substr,extra=''):
     numsubs = None
     for rep in reps:
         name = rep[0].strip().lower()
-        thelist,num = conv(rep[1])
+        thelist = conv(rep[1])
         _names[name] = thelist
 
     substr = named_re.sub(r"<\1>",substr)  # get rid of definition templates
