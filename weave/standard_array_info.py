@@ -62,7 +62,11 @@ public:
                                      const char* name)
     {
         // Make sure input has correct numeric type.
-        if (arr_obj->descr->type_num != numeric_type)
+        // allow character and byte to match
+        // ?? Should int and long match??
+        if (arr_obj->descr->type_num != numeric_type &&
+            !(numeric_type == 0 && arr_obj->descr->type_num == 2) &&
+            !(numeric_type == 2 && arr_obj->descr->type_num == 0)) 
         {
             char* type_names[13] = {"char","unsigned byte","byte", "short", "int", 
                                     "long", "float", "double", "complex float",
@@ -77,7 +81,9 @@ public:
     void numpy_check_type(PyArrayObject* arr_obj, int numeric_type, const char* name)
     {
         // Make sure input has correct numeric type.
-        if (arr_obj->descr->type_num != numeric_type)
+        if (arr_obj->descr->type_num != numeric_type &&
+            !(numeric_type == 0 && arr_obj->descr->type_num == 2) &&
+            !(numeric_type == 2 && arr_obj->descr->type_num == 0)) 
         {
             char* type_names[13] = {"char","unsigned byte","byte", "short", "int", 
                                     "long", "float", "double", "complex float",
