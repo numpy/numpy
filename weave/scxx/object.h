@@ -681,7 +681,11 @@ public:
    * //-------------------------------------------------------------------------
   // test whether object is not true
   //-------------------------------------------------------------------------
+#if defined(__GNUC__) && __GNUC__ < 3
   bool not() const {
+#else
+  bool operator not() const {
+#endif
     return PyObject_Not(_obj) == 1;
   };
   */
