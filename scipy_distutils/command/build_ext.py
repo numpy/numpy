@@ -19,6 +19,10 @@ class build_ext (old_build_ext):
         self.include_dirs.extend(extra_includes)
         
     def build_extension(self, ext):
+
+        # SourceGenerator support
+        if hasattr(ext,'generate_sources'):
+            ext.generate_sources()
         
         # The MSVC compiler doesn't have a linker_so attribute.
         # Giving it a dummy one of None seems to do the trick.
@@ -113,6 +117,7 @@ class build_ext (old_build_ext):
                           ' '.join(linker_so))
 
         # end of fortran source support
+
         res = old_build_ext.build_extension(self,ext)
 
         if save_linker_so is not self.compiler.linker_so:
@@ -129,7 +134,11 @@ class build_ext (old_build_ext):
 
         # Get sources and any include files in the same directory.
         for ext in self.extensions:
-            filenames.extend(ext.sources)
-            filenames.extend(get_headers(get_directories(ext.sources)))
+            if hasattr(ext,'get_sources'):
+                sources = ext.get_sources()
+            else:
+                sources = ext.sources
+            filenames.extend(sources)
+            filenames.extend(get_headers(get_directories(sources)))
 
         return filenames

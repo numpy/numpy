@@ -7,6 +7,9 @@ from scipy_distutils.misc_util import get_path,default_config_dict,dot_join
 import shutil
 
 def configuration(parent_package=''):
+    from scipy_distutils.misc_util import get_path,default_config_dict,\
+         dot_join,SourceGenerator
+
     package = 'scipy_base'
     local_path = get_path(__name__)
     config = default_config_dict(package,parent_package)
@@ -17,8 +20,13 @@ def configuration(parent_package=''):
     
     # fastumath module
     # scipy_base.fastumath module
-    sources = ['fastumathmodule.c','isnan.c']
-    sources = [os.path.join(local_path,x) for x in sources]
+    umath_c_sources = ['fastumathmodule.c',
+                       'fastumath_unsigned.inc','fastumath_nounsigned.inc']
+    umath_c_sources = [os.path.join(local_path,x) for x in umath_c_sources]
+    umath_c = SourceGenerator(func = None,
+                              target = os.path.join(local_path,'fastumathmodule.c'),
+                              sources = umath_c_sources)
+    sources = [umath_c, os.path.join(local_path,'isnan.c')]
     define_macros = []
     if sys.byteorder != "little":
         define_macros.append(('USE_MCONF_LITE_BE',1))

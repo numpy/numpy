@@ -225,7 +225,7 @@ class run_f2py(Command):
         f_files = []
 
         for file in ext.sources:
-            if fortran_ext_re(file):
+            if fortran_ext_re(str(file)):
                 f_files.append(file)
             else:
                 sources.append(file)

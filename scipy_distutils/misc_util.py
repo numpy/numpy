@@ -216,7 +216,7 @@ def get_build_temp():
     return os.path.join('build','temp'+plat_specifier)
 
 class SourceGenerator:
-    def __init__(self,func,target,sources=[]):
+    def __init__(self,func,target,sources=[],*args):
         if not os.path.isabs(target):
             caller_dir = os.path.dirname(sys._getframe(1).f_globals['__file__'])
             prefix = os.path.commonprefix([caller_dir,os.getcwd()])
@@ -225,6 +225,7 @@ class SourceGenerator:
         self.func = func
         self.target = target
         self.sources = sources
+        self.args = args
     def __str__(self):
         return str(self.target)
     def generate(self):
@@ -232,6 +233,10 @@ class SourceGenerator:
         if dep_util.newer_group(self.sources,self.target):
             print 'Running generate',self.target
             dir_util.mkpath(os.path.dirname(self.target),verbose=1)
-            self.func(self.target,self.sources)
+            if self.func is None:
+                # Touch target
+                os.utime(self.target,None)
+            else:
+                self.func(self.target,self.sources,*self.args)
         assert os.path.exists(self.target),`self.target`
         return self.target

@@ -3,7 +3,7 @@
 Provides the Extension class, used to describe C/C++ extension
 modules in setup scripts.
 
-Overridden to support f2py.
+Overridden to support f2py and SourceGenerator.
 """
 
 # created 2000/05/30, Greg Ward
@@ -11,6 +11,7 @@ Overridden to support f2py.
 __revision__ = "$Id$"
 
 from distutils.extension import Extension as old_Extension
+from scipy_distutils.misc_util import SourceGenerator
 
 import re
 cxx_ext_re = re.compile(r'.*[.](cpp|cxx|cc)\Z',re.I).match
@@ -57,5 +58,19 @@ class Extension(old_Extension):
             if fortran_pyf_ext_re(str(source)):
                 return 1
         return 0
+
+    def generate_sources(self):
+        for i in range(len(self.sources)):
+            if isinstance(self.sources[i],SourceGenerator):
+                self.sources[i] = self.sources[i].generate()
+
+    def get_sources(self):
+        sources = []
+        for source in self.sources:
+            if isinstance(source,SourceGenerator):
+                sources.extend(source.sources)
+            else:
+                sources.append(source)
+        return sources
 
 # class Extension
