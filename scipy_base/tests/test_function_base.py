@@ -1,10 +1,8 @@
 
 import unittest
-from scipy_test.testing import assert_array_equal, assert_equal, rand
-from scipy_test.testing import assert_almost_equal, assert_array_almost_equal    
 
 import sys
-from scipy_test.testing import set_package_path
+from scipy_test.testing import *
 set_package_path()
 import scipy_base;reload(scipy_base)
 from scipy_base import *
@@ -242,47 +240,5 @@ def compare_results(res,desired):
     for i in range(len(desired)):
         assert_array_equal(res[i],desired[i])
 
-
-
-
-#-----------------------------------------------------------------------------
-
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_linspace,'check_') )
-        suites.append( unittest.makeSuite(test_logspace,'check_') )
-        suites.append( unittest.makeSuite(test_all,'check_') )
-        suites.append( unittest.makeSuite(test_any,'check_') )
-
-        suites.append( unittest.makeSuite(test_amax,'check_') )
-        suites.append( unittest.makeSuite(test_amin,'check_') )
-        suites.append( unittest.makeSuite(test_ptp,'check_') )        
-
-        suites.append( unittest.makeSuite(test_cumsum,'check_') )
-        suites.append( unittest.makeSuite(test_prod,'check_') )
-        suites.append( unittest.makeSuite(test_cumprod,'check_') )
-        suites.append( unittest.makeSuite(test_diff,'check_') )
-
-        suites.append( unittest.makeSuite(test_angle,'check_') )
-        
-        suites.append( unittest.makeSuite(test_trim_zeros,'check_') )
-        suites.append( unittest.makeSuite(test_vectorize,'check_') )
-        suites.append( unittest.makeSuite(test_extins,'check_'))
-
-
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
-
 if __name__ == "__main__":
-    if len(sys.argv)>1:
-        level = eval(sys.argv[1])
-    else:
-        level = 1
-    test(level)
+    ScipyTest('scipy_base.function_base').run()

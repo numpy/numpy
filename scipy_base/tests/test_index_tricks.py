@@ -1,9 +1,7 @@
 import unittest
-from scipy_test.testing import assert_array_equal, assert_equal, rand
-from scipy_test.testing import assert_almost_equal, assert_array_almost_equal
 
 import sys
-from scipy_test.testing import set_package_path
+from scipy_test.testing import *
 set_package_path()
 import scipy_base;reload(scipy_base)
 from scipy_base import *
@@ -55,26 +53,5 @@ class test_concatenator(unittest.TestCase):
         assert_array_equal(d[:5,:],b)
         assert_array_equal(d[5:,:],c)
 
-#-----------------------------------------------------------------------------
-
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_grid,'check_') )
-        suites.append( unittest.makeSuite(test_concatenator,'check_') )
-    
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
-
 if __name__ == "__main__":
-    if len(sys.argv)>1:
-        level = eval(sys.argv[1])
-    else:
-        level = 1
-    test(level)
+    ScipyTest('scipy_base.index_tricks').run()

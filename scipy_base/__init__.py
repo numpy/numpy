@@ -38,19 +38,5 @@ try:
 except AttributeError:
     NaN = NAN = nan = fastumath.PINF/fastumath.PINF
 
-#---- testing ----#
-
-def test(level=10):
-    import unittest
-    runner = unittest.TextTestRunner()
-    runner.run(test_suite())
-    return runner
-
-def test_suite(level=1):
-    import scipy_test.testing
-    import scipy_base
-    this_mod = scipy_base
-    # testing is the module that actually does all the testing...
-    ignore = ['testing']
-    return scipy_test.testing.harvest_test_suites(this_mod,ignore = ignore,
-                                                  level=level)
+from scipy_test.testing import ScipyTest
+test = ScipyTest('scipy_base').test

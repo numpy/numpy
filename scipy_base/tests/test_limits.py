@@ -7,7 +7,7 @@
 import unittest
 
 import sys
-from scipy_test.testing import set_package_path
+from scipy_test.testing import *
 set_package_path()
 import scipy_base;reload(scipy_base)
 from scipy_base import *
@@ -24,28 +24,6 @@ class test_double(unittest.TestCase):
     def check_nothing(self):
         pass
 
-##################################################
-
-
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_float,'check_') )
-        suites.append( unittest.makeSuite(test_double,'check_') )
-    
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
-
-
 if __name__ == "__main__":
-    if len(sys.argv)>1:
-        level = eval(sys.argv[1])
-    else:
-        level = 1
-    test(level)
+    ScipyTest('scipy_base.limits').run()
+

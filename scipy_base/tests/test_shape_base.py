@@ -1,9 +1,7 @@
 import unittest
-from scipy_test.testing import assert_array_equal, assert_equal, rand
-from scipy_test.testing import assert_almost_equal, assert_array_almost_equal    
 
 import sys
-from scipy_test.testing import set_package_path
+from scipy_test.testing import *
 set_package_path()
 import scipy_base;reload(scipy_base)
 from scipy_base import *
@@ -355,37 +353,5 @@ def compare_results(res,desired):
         assert_array_equal(res[i],desired[i])
 
 
-#-----------------------------------------------------------------------------
-
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_array_split,'check_') )
-        suites.append( unittest.makeSuite(test_split,'check_') )
-        suites.append( unittest.makeSuite(test_atleast_1d,'check_') )
-        suites.append( unittest.makeSuite(test_atleast_2d,'check_') )
-        suites.append( unittest.makeSuite(test_atleast_3d,'check_') )
-        suites.append( unittest.makeSuite(test_hstack,'check_') )
-        suites.append( unittest.makeSuite(test_vstack,'check_') )
-        suites.append( unittest.makeSuite(test_dstack,'check_') )
-        suites.append( unittest.makeSuite(test_hsplit,'check_') )    
-        suites.append( unittest.makeSuite(test_vsplit,'check_') )
-        suites.append( unittest.makeSuite(test_dsplit,'check_') )
-        suites.append( unittest.makeSuite(test_squeeze,'check_') )
-
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
-
-
 if __name__ == "__main__":
-    if len(sys.argv)>1:
-        level = eval(sys.argv[1])
-    else:
-        level = 1
-    test(level)
+    ScipyTest('scipy_base.shape_base').run()

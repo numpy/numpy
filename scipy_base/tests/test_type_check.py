@@ -1,10 +1,7 @@
 
 import unittest
-from scipy_test.testing import assert_array_equal, assert_equal, rand
-from scipy_test.testing import assert_almost_equal, assert_array_almost_equal    
-
 import sys
-from scipy_test.testing import set_package_path
+from scipy_test.testing import *
 set_package_path()
 import scipy_base;reload(scipy_base)
 from scipy_base import *
@@ -185,40 +182,5 @@ class test_real_if_close(unittest.TestCase):
         b = real_if_close(a+1e-7j,tol=1e-6)
         assert(isrealobj(b))
 
-
-#-----------------------------------------------------------------------------
-
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_isscalar,'check_') )
-        suites.append( unittest.makeSuite(test_real_if_close,'check_') )
-        suites.append( unittest.makeSuite(test_real,'check_') )
-        suites.append( unittest.makeSuite(test_imag,'check_') )
-        suites.append( unittest.makeSuite(test_iscomplexobj,'check_') )
-        suites.append( unittest.makeSuite(test_isrealobj,'check_') )        
-        suites.append( unittest.makeSuite(test_iscomplex,'check_') )
-        suites.append( unittest.makeSuite(test_isreal,'check_') )    
-        suites.append( unittest.makeSuite(test_isnan,'check_') )
-        suites.append( unittest.makeSuite(test_isfinite,'check_') )
-        suites.append( unittest.makeSuite(test_isinf,'check_') )
-        suites.append( unittest.makeSuite(test_isposinf,'check_') )    
-        suites.append( unittest.makeSuite(test_isneginf,'check_') )
-        suites.append( unittest.makeSuite(test_nan_to_num,'check_') )
-
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
-
-
 if __name__ == "__main__":
-    if len(sys.argv)>1:
-        level = eval(sys.argv[1])
-    else:
-        level = 1
-    test(level)
+    ScipyTest('scipy_base.type_check').run()

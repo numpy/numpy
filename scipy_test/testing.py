@@ -191,6 +191,7 @@ class ScipyTest:
                         mthlevel = 1
                     if level>=mthlevel:
                         suite_list.append((obj,mthname))
+            print '  Found',len(suite_list),'tests for',module.__name__
             return [unittest.makeSuite(*args) for args in suite_list]
         try:
             suite_list = test_module.test_suite_list(level)

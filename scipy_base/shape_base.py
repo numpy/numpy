@@ -530,17 +530,3 @@ def dsplit(ary,indices_or_sections):
         raise ValueError, 'vsplit only works on arrays of 3 or more dimensions'
     return split(ary,indices_or_sections,2)
 
-#-----------------------------------------------------------------------------
-# Test Routines
-#-----------------------------------------------------------------------------
-
-def test(level=10):
-    from scipy_test.testing import module_test
-    module_test(__name__,__file__,level=level)
-
-def test_suite(level=1):
-    from scipy_test.testing import module_test_suite
-    return module_test_suite(__name__,__file__,level=level)
-
-if __name__ == '__main__':
-    test()
