@@ -134,13 +134,13 @@ class ext_function_from_specs:
 
         return_code = "    /*cleanup code*/                     \n" + \
                            cleanup_code                             + \
-                      "    if(!return_val && !exception_occured)\n"   \
-                      "    {\n                                  \n"   \
-                      "        Py_INCREF(Py_None);              \n"   \
-                      "        return_val = Py_None;            \n"   \
-                      "    }\n                                  \n"   \
-                      "    return return_val;           \n"           \
-                      "}                                \n"
+                      '    if(!return_val && !exception_occured)\n'   \
+                      '    {\n                                  \n'   \
+                      '        Py_INCREF(Py_None);              \n'   \
+                      '        return_val = Py_None;            \n'   \
+                      '    }\n                                  \n'   \
+                      '    return return_val;           \n'           \
+                      '}                                \n'
 
         all_code = self.function_declaration_code()         + \
                        indent(self.parse_tuple_code(),4)    + \
@@ -276,6 +276,7 @@ class ext_module:
         return generate_module(code,name)
 
     def set_compiler(self,compiler):
+        # This is not used anymore -- I think we should ditch it.
         #for i in self.arg_specs()
         #    i.set_compiler(compiler)
         for i in self.build_information():
@@ -288,10 +289,14 @@ class ext_module:
         
         if compiler is not None:
             self.compiler = compiler
+        
+        # !! removed -- we don't have any compiler dependent code
+        # currently in spec or info classes    
         # hmm.  Is there a cleaner way to do this?  Seems like
-        # choosing the compiler spagettis around a little.
-        compiler = build_tools.choose_compiler(self.compiler)    
-        self.set_compiler(compiler)
+        # choosing the compiler spagettis around a little.        
+        #compiler = build_tools.choose_compiler(self.compiler)    
+        #self.set_compiler(compiler)
+        
         arg_specs = self.arg_specs()
         info = self.build_information()
         _source_files = info.sources()
@@ -316,6 +321,7 @@ class ext_module:
         #temp = catalog.default_temp_dir()
         # for speed, build in the machines temp directory
         temp = catalog.intermediate_dir()
+                
         success = build_tools.build_extension(file, temp_dir = temp,
                                               sources = source_files,                                              
                                               compiler_name = compiler,

@@ -24,6 +24,7 @@ import exceptions
 # If linker is 'gcc', this will convert it to 'g++'
 # necessary to make sure stdc++ is linked in cross-platform way.
 import distutils.sysconfig
+import distutils.dir_util
 
 old_init_posix = distutils.sysconfig._init_posix
 
@@ -146,12 +147,22 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
     # get the name of the module and the extension directory it lives in.  
     module_dir,cpp_name = os.path.split(os.path.abspath(module_path))
     module_name,ext = os.path.splitext(cpp_name)    
-    
+       
     # configure temp and build directories
     temp_dir = configure_temp_dir(temp_dir)    
     build_dir = configure_build_dir(module_dir)
     
+    # dag. We keep having to add directories to the path to keep 
+    # object files separated from each other.  gcc2.x and gcc3.x C++ 
+    # object files are not compatible, so we'll stick them in a sub
+    # dir based on their version.  This will add gccX.X to the 
+    # path.
+    compiler_dir = get_compiler_dir(compiler_name)
+    temp_dir = os.path.join(temp_dir,compiler_dir)
+    distutils.dir_util.mkpath(temp_dir)
+    
     compiler_name = choose_compiler(compiler_name)
+            
     configure_sys_argv(compiler_name,temp_dir,build_dir)
     
     # the business end of the function
@@ -298,6 +309,29 @@ def msvc_exists():
             result = 1
     return result
 
+if os.name == 'nt':
+    def run_command(command):
+        """ not sure how to get exit status on nt. """
+        in_pipe,out_pipe = os.popen4(command)
+        in_pipe.close()
+        text = out_pipe.read()
+        return 0, text
+else:
+    run_command = commands.getstatusoutput
+
+def get_compiler_dir(compiler_name):
+    if compiler_name == 'gcc':        
+        status, text = run_command(compiler_name + ' --version')
+        try:
+            import re
+            version = re.findall('\d\.\d',text)[0]
+        except IndexError:
+            version = ''
+        compiler_dir = compiler_name + version
+    else:    
+        compiler_dir = compiler_name
+    return compiler_dir
+        
 def configure_temp_dir(temp_dir=None):
     if temp_dir is None:         
         temp_dir = tempfile.gettempdir()
@@ -418,7 +452,7 @@ if sys.platform == 'win32':
     def build_import_library():
         """ Build the import libraries for Mingw32-gcc on Windows
         """
-        import scipy_distutils import lib2def
+        from scipy_distutils import lib2def
         #libfile, deffile = parse_cmd()
         #if deffile is None:
         #    deffile = sys.stdout

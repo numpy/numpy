@@ -34,7 +34,7 @@ public:
             !(numeric_type == PyArray_INT   && arr_type == PyArray_LONG)  &&
             !(numeric_type == PyArray_LONG  && arr_type == PyArray_INT)) 
         {
-            char* type_names[13] = {"char","unsigned byte","byte", "short", "int", 
+            char* type_names[20] = {"char","unsigned byte","byte", "short", "int", 
                                     "long", "float", "double", "complex float",
                                     "complex double", "object","ntype","unkown"};
             char msg[500];

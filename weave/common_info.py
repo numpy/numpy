@@ -32,7 +32,9 @@ char* find_type(PyObject* py_obj)
 
 void throw_error(PyObject* exc, const char* msg)
 {
+ //printf("setting python error: %s\\n",msg);
   PyErr_SetString(exc, msg);
+  //printf("throwing error\\n");
   throw 1;
 }
 

@@ -89,7 +89,12 @@ class array_converter(standard_array_spec.array_converter):
         self.headers.extend(blitz_headers)
         self.include_dirs = [blitz_dir]
         self.support_code.append(blitz_support_code)
-        self.type_name = 'blitz'
+        
+        # type_name is used to setup the initial type conversion.  Even
+        # for blitz conversion, the first step is to convert it to a
+        # standard numpy array.
+        #self.type_name = 'blitz'
+        self.type_name = 'numpy'
         
     def info_object(self):
         return array_info()

@@ -52,7 +52,7 @@
 #define BZ_ENUM_COMPUTATIONS_WITH_CAST
 #define BZ_HAVE_COMPLEX
 
-#ifdef __GNUC__ && __GNUC__==3
+#if (__GNUC__ && __GNUC__ == 3)
     #define  BZ_HAVE_NUMERIC_LIMITS
 #else
     #undef  BZ_HAVE_NUMERIC_LIMITS
