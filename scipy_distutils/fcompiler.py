@@ -573,8 +573,12 @@ class FCompiler(CCompiler):
                 o_args = [self.library_switch.strip(),output_filename]
             else:
                 o_args = [self.library_switch.strip()+output_filename]
-            ld_args = (objects + self.objects +
-                       lib_opts + o_args)
+            
+            if type(self.objects) is type(''):
+                ld_args = objects + [self.objects]
+            else:
+                ld_args = objects + self.objects
+            ld_args = ld_args + lib_opts + o_args
             if debug:
                 ld_args[:0] = ['-g']
             if extra_preargs:
