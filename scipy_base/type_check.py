@@ -26,6 +26,11 @@ toFloat64 = lambda x: Numeric.array(x, Numeric.Float64)
 toComplex32 = lambda x: Numeric.array(x, Numeric.Complex32)
 toComplex64 = lambda x: Numeric.array(x, Numeric.Complex64)
 
+# This is for pre Numeric 21.x compatiblity. Adding it is harmless.
+if  not hasattr(Numeric,'Character'):
+    Numeric.Character = 'c'
+    
+    
 cast = {Numeric.Character: toChar,
         Numeric.Int8: toInt8,
         Numeric.Int16: toInt16,
