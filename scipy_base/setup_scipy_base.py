@@ -33,12 +33,19 @@ def configuration(parent_package='',parent_path=None):
                               sources = umath_c_sources)
     sources = [umath_c, os.path.join(local_path,'isnan.c')]
     define_macros = []
+    undef_macros = []
     if sys.byteorder == "little":
         define_macros.append(('USE_MCONF_LITE_LE',None))
     else:
         define_macros.append(('USE_MCONF_LITE_BE',None))
+    if sys.platform in ['freebsd4','win32']:
+        undef_macros.append('HAVE_INVERSE_HYPERBOLIC')
+    else:
+        define_macros.append(('HAVE_INVERSE_HYPERBOLIC',None))
+
     ext = Extension(dot_join(package,'fastumath'),sources,
                     define_macros = define_macros,
+                    undef_macros = undef_macros,
                     extra_compile_args=extra_compile_args,
                     depends = umath_c_sources)
     config['ext_modules'].append(ext)
