@@ -420,7 +420,10 @@ def _exec_command( command, use_shell=None, **env ):
         ferr.close()
         os.remove(errfile)
         if errmess and not status:
-            status = 998
+            # Not sure how to handle the case where errmess
+            # contains only warning messages and that should
+            # be treated as errors.
+            #status = 998
             if text:
                 text = text + '\n'
             text = '%sCOMMAND %r FAILED: %s' %(text,command,errmess)
