@@ -1,6 +1,3 @@
-from Numeric import *
-from fastumath import *
-
 import os
 
 def remove_ignored_patterns(files,pattern):
@@ -236,26 +233,32 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
              + '\nACTUAL: ' + str(actual)
     assert round(abs(desired - actual),decimal) == 0, msg
 
-
-def assert_array_equal(x,y):
-    try:
-        assert(alltrue(equal(shape(x),shape(y))))
-        reduced = equal(x,y)
-        assert(alltrue(ravel(reduced)))
-    except ValueError:
-        print shape(x),shape(y)
-        raise ValueError, 'arrays are not equal'
-
-def assert_array_almost_equal(x,y,decimal=6):
-    try:
-        assert(alltrue(equal(shape(x),shape(y))))
-        reduced = equal(around(abs(x-y),decimal))
-        assert(alltrue(ravel(reduced)))
-    except ValueError:
-        print shape(x),shape(y)
-        print x, y
-        raise ValueError, 'arrays are not almost equal'
-
+try:
+    # Numeric specific tests
+    from Numeric import *
+    from fastumath import *
+    
+    def assert_array_equal(x,y):
+        try:
+            assert(alltrue(equal(shape(x),shape(y))))
+            reduced = equal(x,y)
+            assert(alltrue(ravel(reduced)))
+        except ValueError:
+            print shape(x),shape(y)
+            raise ValueError, 'arrays are not equal'
+    
+    def assert_array_almost_equal(x,y,decimal=6):
+        try:
+            assert(alltrue(equal(shape(x),shape(y))))
+            reduced = equal(around(abs(x-y),decimal))
+            assert(alltrue(ravel(reduced)))
+        except ValueError:
+            print shape(x),shape(y)
+            print x, y
+            raise ValueError, 'arrays are not almost equal'
+except:
+    pass # Numeric not installed
+    
 import traceback,sys
 def output_exception():
     try:
