@@ -171,6 +171,12 @@ class build_clib(old_build_clib):
             c_sources, cxx_sources, f_sources, fmodule_sources \
                        = filter_sources(sources)
 
+            if self.compiler.compiler_type=='msvc':
+                # this hack works around the msvc compiler attributes
+                # problem, msvc uses its own convention :(
+                c_sources += cxx_sources
+                cxx_sources = []
+
             if fmodule_sources:
                 print 'XXX: Fortran 90 module support not implemented or tested'
                 f_sources.extend(fmodule_sources)
