@@ -16,10 +16,16 @@ def get_eigval_func():
         eigvals = scipy.linalg.eigvals
     except ImportError:
         try:
-            import LinearAlgebra
-            eigvals = LinearAlgebra.eigenvalues
-        except:
-            raise ImportError, "You must have scipy.linalg our LinearAlgebra to use this function."
+            import linalg
+            eigvals = linalg.eigvals
+        except ImportError:
+            try:
+                import LinearAlgebra
+                eigvals = LinearAlgebra.eigenvalues
+            except:
+                raise ImportError, \
+                      "You must have scipy.linalg or LinearAlgebra to "\
+                      "use this function."
     return eigvals
 
 def poly(seq_of_zeros):
