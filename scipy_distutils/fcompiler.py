@@ -472,8 +472,8 @@ class FCompiler(CCompiler):
     def library_dir_option(self, dir):
         return "-L" + dir
 
-    def _get_cc_args(self, pp_opts, debug, extra_preargs):
-        return []
+#    def _get_cc_args(self, pp_opts, debug, extra_preargs):
+#        return []
 
     if sys.version[:3]<'2.3':
         def compile(self, sources, output_dir=None, macros=None,

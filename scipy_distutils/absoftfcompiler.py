@@ -23,7 +23,7 @@ class AbsoftFCompiler(FCompiler):
         'compiler_f77' : ["f77"],
         'compiler_fix' : ["f90"],
         'compiler_f90' : ["f90"],
-        'linker_so'    : ["f77","-shared"],
+        'linker_so'    : ["f77","-dll"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }

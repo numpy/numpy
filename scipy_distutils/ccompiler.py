@@ -20,8 +20,7 @@ def CCompiler_spawn(self, cmd, display=None):
         if type(display) is type([]): display = ' '.join(display)
     log.info(display)
     s,o = exec_command(cmd)
-    print s
-    print o
+    if os.name != 'posix': print s, o
     if s:
         if type(cmd) is type([]):
             cmd = ' '.join(cmd)
