@@ -24,7 +24,14 @@ classes are available:
   boost_python
   agg2
   wx_info
-  
+  gdk_pixbuf_xlib_2_info
+  gdk_pixbuf_2_info
+  gdk_x11_2_info
+  gtkp_x11_2_info
+  gtkp_2_info
+  xft_info
+  freetype2_info
+
 Usage:
     info_dict = get_info(<name>)
   where <name> is a string 'atlas','x11','fftw','lapack','blas',
@@ -160,6 +167,18 @@ def get_info(name,notfound_action=0):
           'boost_python':boost_python_info,
           'agg2':agg2_info,
           'wx':wx_info,
+          'gdk_pixbuf_xlib_2':gdk_pixbuf_xlib_2_info,
+          'gdk-pixbuf-xlib-2.0':gdk_pixbuf_xlib_2_info,
+          'gdk_pixbuf_2':gdk_pixbuf_2_info,
+          'gdk-pixbuf-2.0':gdk_pixbuf_2_info,
+          'gdk_x11_2':gdk_x11_2_info,
+          'gdk-x11-2.0':gdk_x11_2_info,
+          'gtkp_x11_2':gtkp_x11_2_info,
+          'gtk+-x11-2.0':gtkp_x11_2_info,
+          'gtkp_2':gtkp_2_info,
+          'gtk+-2.0':gtkp_2_info,
+          'xft':xft_info,
+          'freetype2':freetype2_info,
           }.get(name.lower(),system_info)
     return cl().get_info(notfound_action)
 
@@ -1197,22 +1216,29 @@ class agg2_info(system_info):
             self.set_info(**info)
         return
 
-class wx_info(system_info):
-    section = 'wx'
-    config_env_var = 'WX_CONFIG'
+class _pkg_config_info(system_info):
+    section = None
+    config_env_var = 'PKG_CONFIG'
+    default_config_exe = 'pkg-config'
+    append_config_exe = ''
+    version_macro_name = None
+    release_macro_name = None
+    version_flag = '--modversion'
 
     def get_config_exe(self):
         if os.environ.has_key(self.config_env_var):
             return os.environ[self.config_env_var]
-        return 'wx-config'
-    def get_config_output(self, wx_config, option):
-        s,o = exec_command(wx_config+' '+option,use_tee=0)
+        return self.default_config_exe
+    def get_config_output(self, config_exe, option):
+        s,o = exec_command(config_exe+' '+self.append_config_exe+' '+option,use_tee=0)
         if not s:
             return o
+
     def calc_info(self):
-        wx_config = find_executable(self.get_config_exe())
-        if not os.path.isfile(wx_config):
-            print 'File not found: %s. Cannot determine wx info.' % (wx_config)
+        config_exe = find_executable(self.get_config_exe())
+        if not os.path.isfile(config_exe):
+            print 'File not found: %s. Cannot determine %s info.' \
+                  % (config_exe, self.section)
             return
         info = {}
         macros = []
@@ -1221,14 +1247,17 @@ class wx_info(system_info):
         include_dirs = []
         extra_link_args = []
         extra_compile_args = []
-        version = self.get_config_output(wx_config,'--version')
+        version = self.get_config_output(config_exe,self.version_flag)
         if version:
-            macros.append(('WX_INFO','"\\"%s\\""' % (version)))
-            macros.append(('WX_VERSION_%s' % (version.replace('.','_')),None))
-        release = self.get_config_output(wx_config,'--release')
-        if release:
-            macros.append(('WX_RELEASE_%s' % (release.replace('.','_')),None))
-        opts = self.get_config_output(wx_config,'--libs')
+            macros.append((self.__class__.__name__.split('.')[-1].upper(),
+                           '"\\"%s\\""' % (version)))
+            if self.version_macro_name:
+                macros.append((self.version_macro_name+'_%s' % (version.replace('.','_')),None))
+        if self.release_macro_name:
+            release = self.get_config_output(config_exe,'--release')
+            if release:
+                macros.append((self.release_macro_name+'_%s' % (release.replace('.','_')),None))
+        opts = self.get_config_output(config_exe,'--libs')
         if opts:
             for opt in opts.split():
                 if opt[:2]=='-l':
@@ -1237,7 +1266,7 @@ class wx_info(system_info):
                     library_dirs.append(opt[2:])
                 else:
                     extra_link_args.append(opt)
-        opts = self.get_config_output(wx_config,'--cxxflags')
+        opts = self.get_config_output(config_exe,'--cxxflags')
         if opts:
             for opt in opts.split():
                 if opt[:2]=='-I':
@@ -1259,6 +1288,51 @@ class wx_info(system_info):
         if info:
             self.set_info(**info)
         return
+
+class wx_info(_pkg_config_info):
+    section = 'wx'
+    config_env_var = 'WX_CONFIG'
+    default_config_exe = 'wx-config'
+    append_config_exe = ''
+    version_macro_name = 'WX_VERSION'
+    release_macro_name = 'WX_RELEASE'
+    version_flag = '--version'
+
+class gdk_pixbuf_xlib_2_info(_pkg_config_info):
+    section = 'gdk_pixbuf_xlib_2'
+    append_config_exe = 'gdk-pixbuf-xlib-2.0'
+    version_macro_name = 'GDK_PIXBUF_XLIB_VERSION'
+
+class gdk_pixbuf_2_info(_pkg_config_info):
+    section = 'gdk_pixbuf_2'
+    append_config_exe = 'gdk-pixbuf-2.0'
+    version_macro_name = 'GDK_PIXBUF_VERSION'
+
+class gdk_x11_2_info(_pkg_config_info):
+    section = 'gdk_x11_2'
+    append_config_exe = 'gdk-x11-2.0'
+    version_macro_name = 'GDK_X11_VERSION'
+
+class gtkp_x11_2_info(_pkg_config_info):
+    section = 'gtkp_x11_2'
+    append_config_exe = 'gtk+-x11-2.0'
+    version_macro_name = 'GTK_X11_VERSION'
+
+
+class gtkp_2_info(_pkg_config_info):
+    section = 'gtkp_2'
+    append_config_exe = 'gtk+-2.0'
+    version_macro_name = 'GTK_VERSION'
+
+class xft_info(_pkg_config_info):
+    section = 'xft'
+    append_config_exe = 'xft'
+    version_macro_name = 'XFT_VERSION'
+
+class freetype2_info(_pkg_config_info):
+    section = 'freetype2'
+    append_config_exe = 'freetype2'
+    version_macro_name = 'FREETYPE2_VERSION'
 
 ## def vstr2hex(version):
 ##     bits = []
@@ -1330,6 +1404,6 @@ def show_all():
 if __name__ == "__main__":
     show_all()
     if 0:
-        c = wx_info()
+        c = gdk_pixbuf_2_info()
         c.verbosity = 2
         c.get_info()
