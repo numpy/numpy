@@ -39,6 +39,11 @@
 #                            Comment: also `cmd /c echo` will not work
 #                            but redefining environment variables do work.
 #   posix   | cygwin       | Cygwin 98-4.10, Python 2.3.3(cygming special)
+#   nt      | win32        | Windows XP, Python 2.3.3
+#
+# Known bugs:
+# - Tests, that send messages to stderr, fail when executed from MSYS prompt
+#   because the messages are lost at some point.
 
 __all__ = ['exec_command','find_executable']
 
@@ -124,7 +129,8 @@ def find_executable(exe, path=None):
         realpath = os.path.realpath
     else:
         realpath = lambda a:a
-
+    if exe[0]=='"':
+        exe = exe[1:-1]
     suffices = ['']
     if os.name in ['nt','dos','os2']:
         fn,ext = os.path.splitext(exe)
@@ -235,7 +241,8 @@ def exec_command( command,
                                      use_tee=use_tee,
                                      **env)
         else:
-            st = _exec_command(command, use_shell=use_shell, **env)
+            st = _exec_command(command, use_shell=use_shell,
+                               use_tee=use_tee,**env)
     finally:
         if oldcwd!=execute_in:
             os.chdir(oldcwd)
@@ -339,11 +346,13 @@ def quote_arg(arg):
         return '"%s"' % arg
     return arg
 
-def _exec_command( command, use_shell=None, **env ):
+def _exec_command( command, use_shell=None, use_tee = None, **env ):
     log.debug('_exec_command(...)')
     
     if use_shell is None:
         use_shell = os.name=='posix'
+    if use_tee is None:
+        use_tee = os.name=='posix'
 
     using_command = 0
     if use_shell:
@@ -372,7 +381,7 @@ def _exec_command( command, use_shell=None, **env ):
         argv[0] = quote_arg(argv[0])
         if os.name in ['nt','dos']:
             # argv[0] might be internal command
-            argv = [os.environ['COMSPEC'],'/C']+argv
+            argv = [os.environ['COMSPEC'],'/C'] + argv
             using_command = 1
     # sys.__std*__ is used instead of sys.std* because environments
     # like IDLE, PyCrust, etc overwrite sys.std* commands.
@@ -395,7 +404,9 @@ def _exec_command( command, use_shell=None, **env ):
     so_flush()
     se_flush()
     os.dup2(fout.fileno(),so_fileno)
-    if using_command:
+    if 0 and using_command:
+        #XXX: disabled for now as it does not work from cmd under win32.
+        #     Tests fail on msys
         os.dup2(ferr.fileno(),se_fileno)
     else:
         os.dup2(fout.fileno(),se_fileno)
@@ -426,16 +437,20 @@ def _exec_command( command, use_shell=None, **env ):
         if errmess and not status:
             # Not sure how to handle the case where errmess
             # contains only warning messages and that should
-            # be treated as errors.
+            # not be treated as errors.
             #status = 998
             if text:
                 text = text + '\n'
-            text = '%sCOMMAND %r FAILED: %s' %(text,command,errmess)
-
+            #text = '%sCOMMAND %r FAILED: %s' %(text,command,errmess)
+            text = text + errmess
+            print errmess
     if text[-1:]=='\n':
         text = text[:-1]
     if status is None:
         status = 0
+
+    if use_tee:
+        print text
 
     return status, text
 
@@ -582,9 +597,16 @@ def test_execute_in(**kws):
     os.remove(tmpfile)
     print 'ok'
 
-def test_svn():
-    s,o = exec_command(['svn','status'])
+def test_svn(**kws):
+    s,o = exec_command(['svn','status'],**kws)
     assert s,(s,o)
+    print 'svn ok'
+
+def test_cl(**kws):
+    if os.name=='nt':
+        s,o = exec_command(['cl','/V'],**kws)
+        assert s,(s,o)
+        print 'cl ok'
 
 if os.name=='posix':
     test = test_posix
@@ -602,4 +624,5 @@ if __name__ == "__main__":
     test(use_tee=1)
     test_execute_in(use_tee=0)
     test_execute_in(use_tee=1)
-    test_svn()
+    test_svn(use_tee=1)
+    test_cl(use_tee=1)
