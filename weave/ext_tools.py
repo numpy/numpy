@@ -212,7 +212,7 @@ class ext_module:
             info.append(func.customize)
         #redundant, but easiest place to make sure compiler is set
         for i in info:
-            i.set_compiler(self.compiler
+            i.set_compiler(self.compiler)
         return info
         
     def get_headers(self):
