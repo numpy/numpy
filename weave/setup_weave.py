@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 from glob import glob
 from scipy_distutils.misc_util import get_path, default_config_dict
@@ -8,7 +10,7 @@ def configuration(parent_package=''):
         parent_package += '.'
     local_path = get_path(__name__)
 
-    config = default_config_dict()
+    config = default_config_dict('weave')
     config['packages'].append(parent_package+'weave')
     config['packages'].append(parent_package+'weave.tests') 
     config['package_dir']['weave'] = local_path
@@ -53,3 +55,7 @@ def configuration(parent_package=''):
     config['data_files'].extend( [(install_path,example_files)])
     
     return config
+
+if __name__ == '__main__':    
+    from scipy_distutils.core import setup
+    setup(**configuration())
