@@ -192,7 +192,8 @@ if sys.platform == 'win32':
     # because msvc can't build blitz stuff.
     # We should also check the version of gcc available...
     #distutils.ccompiler._default_compilers['nt'] = 'mingw32'
-    #distutils.ccompiler._default_compilers = (('nt', 'mingw32'))
+    distutils.ccompiler._default_compilers = (('nt', 'mingw32'),) + \
+                                distutils.ccompiler._default_compilers
     # reset the Mingw32 compiler in distutils to the one defined above
     distutils.cygwinccompiler.Mingw32CCompiler = Mingw32CCompiler
     
