@@ -189,7 +189,8 @@ class ScipyTest:
             else:
                 mthlevel = 1
             if level>=mthlevel:
-                names.append(mthname)
+                if mthname not in names:
+                    names.append(mthname)
             for base in clsobj.__bases__:
                 for n in self._get_method_names(base,level):
                     if n not in names:
@@ -288,13 +289,12 @@ class ScipyTest:
         suites = []
         for name, module in sys.modules.items():
             if package_name != name[:len(package_name)] \
-               or module is None \
-               or os.path.basename(os.path.dirname(module.__file__))=='tests':
+                   or module is None \
+                   or os.path.basename(os.path.dirname(module.__file__))=='tests':
                 continue
             suites.extend(self._get_module_tests(module, level))
 
-        if package_name == '__main__':
-            suites.extend(self._get_suite_list(sys.modules[package_name], level))
+        suites.extend(self._get_suite_list(sys.modules[package_name], level))
 
         all_tests = unittest.TestSuite(suites)
         runner = unittest.TextTestRunner(verbosity=verbosity)
