@@ -32,7 +32,9 @@
 """       
 
 import os,sys,string
-import shelve, pickle
+#import shelve
+import pickle
+from scipy import dumb_shelve as shelve
 
 def getmodule(object):
     """ Discover the name of the module where object was defined.
@@ -558,11 +560,11 @@ class catalog:
         """       
         # add function to data in first writable catalog
         mode = 'c' # create if doesn't exist, otherwise, use existing
-        cat_file = self.get_writable_dir()
-        cat = get_catalog(cat_file,mode)
+        cat_dir = self.get_writable_dir()
+        cat = get_catalog(cat_dir,mode)
         if cat is None:
             cat_dir = default_dir()
-            cat = get_catalog(cat_file,mode)
+            cat = get_catalog(cat_dir,mode)
         if cat is None:
             cat_dir = default_dir()                            
             cat_file = catalog_path(cat_dir)
@@ -576,7 +578,9 @@ class catalog:
         function_list = [function]
         try:
             function_list = function_list + cat.get(code,[])
+            print code, function_list
         except pickle.UnpicklingError:
+            print 'ooooops'
             pass
         cat[code] = function_list
         # now add needed path information for loading function
