@@ -623,8 +623,24 @@ class fortran_compiler_base(CCompiler):
                      ' '.join(['-L%s'%n for n in self.library_dirs]))
         return string.join(s,'\n')
 
+class move_modules_mixin:
+    """ Neither Absoft or MIPS have a flag for specifying the location
+        where module files should be written as far as I can tell.
+        This does the manual movement of the files from the local
+        directory to the build direcotry.
+    """
+    def find_existing_modules(self):
+        self.existing_modules = glob.glob('*.mod')
+        
+    def cleanup_modules(self,temp_dir):
+        all_modules = glob.glob('*.mod')
+        created_modules = [mod for mod in all_modules 
+                            if mod not in self.existing_modules]
+        for mod in created_modules:
+            distutils.file_util.move_file(mod,temp_dir)        
 
-class absoft_fortran_compiler(fortran_compiler_base):
+
+class absoft_fortran_compiler(move_modules_mixin,fortran_compiler_base):
 
     vendor = 'Absoft'
     ver_match = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
@@ -674,16 +690,6 @@ class absoft_fortran_compiler(fortran_compiler_base):
 
         self.ver_cmd = self.f77_compiler + ' -V -c %s -o %s' % \
                        self.dummy_fortran_files()
-
-    def find_existing_modules(self):
-        self.existing_modules = glob.glob('*.mod')
-        
-    def cleanup_modules(self,temp_dir):
-        all_modules = glob.glob('*.mod')
-        created_modules = [mod for mod in all_modules 
-                            if mod not in self.existing_modules]
-        for mod in created_modules:
-            distutils.file_util.move_file(mod,temp_dir)        
             
     def build_module_switch(self,module_dirs,temp_dir):
         """ Absoft 6.2 is brain dead as far as I can tell and doesn't have
@@ -811,7 +817,7 @@ class sun_fortran_compiler(fortran_compiler_base):
         return [self.f90_compiler,'-Bdynamic','-G']
 
 
-class mips_fortran_compiler(fortran_compiler_base):
+class mips_fortran_compiler(move_modules_mixin, fortran_compiler_base):
 
     vendor = 'SGI'
     ver_match =  r'MIPSpro Compilers: Version (?P<version>[^\s*,]*)'
@@ -867,6 +873,18 @@ class mips_fortran_compiler(fortran_compiler_base):
 
     def get_linker_so(self):
         return [self.f90_compiler,'-shared']
+
+    def build_module_switch(self,module_dirs,temp_dir):
+        """ Absoft 6.2 is brain dead as far as I can tell and doesn't have
+            a way to specify where to put output directories.  This will have
+            to be handled in f_compile...
+        """
+        res = ''
+        if module_dirs:
+            for mod in module_dirs:
+                res = res + ' -I ' + mod
+        res = res + '-I ' + temp_dir        
+        return res
 
 class hpux_fortran_compiler(fortran_compiler_base):
 
