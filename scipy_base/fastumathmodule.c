@@ -15,7 +15,8 @@
    All logical operations return UBYTE arrays.
 */
 
-#if defined _GNU_SOURCE
+#if defined _ISOC99_SOURCE || defined _XOPEN_SOURCE_EXTENDED \
+    || defined _BSD_SOURCE || defined _SVID_SOURCE
 #define HAVE_INVERSE_HYPERBOLIC 1
 #endif
 
