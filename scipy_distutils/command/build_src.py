@@ -326,6 +326,9 @@ class build_src(build_ext.build_ext):
         return new_sources + f_sources
 
     def swig_sources(self, sources, extension):
+        # Assuming SWIG 1.3.14 or later. See compatibility note in
+        #   http://www.swig.org/Doc1.3/Python.html#Python_nn6
+
         new_sources = []
         swig_sources = []
         swig_targets = {}
