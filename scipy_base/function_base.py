@@ -260,7 +260,8 @@ def unique(inseq):
     """Returns unique items in 1-dimensional sequence.
     """
     set = {}
-    map(set.__setitem__, inseq, [])
+    for item in inseq:
+        set[item] = None
     return asarray(set.keys())
 
 import sys
