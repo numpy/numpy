@@ -341,6 +341,7 @@ class system_info:
     def get_paths(self, section, key):
         dirs = self.cp.get(section, key).split(os.pathsep)
         if self.dir_env_var and os.environ.has_key(self.dir_env_var):
+            dirs = []
             d = os.environ[self.dir_env_var]
             if d=='None':
                 print 'Disabled',self.__class__.__name__,'(%s is None)' % (self.dir_env_var)
@@ -359,6 +360,9 @@ class system_info:
                 ds = d.split(os.pathsep)
                 ds2 = []
                 for d in ds:
+                    if d.endswith(os.sep):
+                        d = d[:-len(os.sep)]
+                        if not d: d = os.sep
                     if os.path.isdir(d):
                         ds2.append(d)
                         for dd in ['include','lib']:
@@ -368,8 +372,9 @@ class system_info:
                         if os.path.basename(d)=='lib':
                             ds2.append(os.path.join(os.path.dirname(d),'include'))
                 dirs = ds2 + dirs
-        default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
-        dirs.extend(default_dirs)
+        else:
+            default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
+            dirs.extend(default_dirs)
         ret = []
         [ret.append(d) for d in dirs if os.path.isdir(d) and d not in ret]
         if self.verbosity>1:
