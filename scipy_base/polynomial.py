@@ -158,16 +158,23 @@ def polyder(p,m=1):
         return val
 
 def polyval(p,x):
-    """Evaluate the polynomial p at x.
+    """Evaluate the polynomial p at x.  If x is a polynomial then composition.
 
     Description:
 
       If p is of length N, this function returns the value:
       p[0]*(x**N-1) + p[1]*(x**N-2) + ... + p[N-2]*x + p[N-1]
+
+      x can be a sequence and p(x) will be returned for all elements of x.
+      or x can be another polynomial and the composite polynomial p(x) will be
+      returned.
     """
-    x = Numeric.asarray(x)
     p = Numeric.asarray(p)
-    y = Numeric.zeros(x.shape,x.typecode())
+    if isinstance(x,poly1d):
+        y = 0
+    else:
+        x = Numeric.asarray(x)
+        y = Numeric.zeros(x.shape,x.typecode())
     for i in range(len(p)):
         y = x * y + p[i]
     return y
@@ -378,31 +385,25 @@ class poly1d:
 
     def __mul__(self, other):
         if isscalar(other):
-            return poly1d(other*self.coeffs)
+            return poly1d(self.coeffs * other)
         else:
             other = poly1d(other)
             return poly1d(polymul(self.coeffs, other.coeffs))
 
     def __rmul__(self, other):
         if isscalar(other):
-            return poly1d(other*self.coeffs)
+            return poly1d(other * self.coeffs)
         else:
             other = poly1d(other)
             return poly1d(polymul(self.coeffs, other.coeffs))        
-
+    
     def __add__(self, other):
-        if isscalar(other):
-            return poly1d(other+self.coeffs)
-        else:
-            other = poly1d(other)
-            return poly1d(polyadd(self.coeffs, other.coeffs))        
+        other = poly1d(other)
+        return poly1d(polyadd(self.coeffs, other.coeffs))        
         
     def __radd__(self, other):
-        if isscalar(other):
-            return poly1d(other+self.coeffs)
-        else:
-            other = poly1d(other)
-            return poly1d(polyadd(self.coeffs, other.coeffs))
+        other = poly1d(other)
+        return poly1d(polyadd(self.coeffs, other.coeffs))
 
     def __pow__(self, val):
         if not isscalar(val) or int(val) != val or val < 0:
@@ -413,18 +414,12 @@ class poly1d:
         return poly1d(res)
 
     def __sub__(self, other):
-        if isscalar(other):
-            return poly1d(self.coeffs-other)
-        else:
-            other = poly1d(other)
-            return poly1d(polysub(self.coeffs, other.coeffs))
+        other = poly1d(other)
+        return poly1d(polysub(self.coeffs, other.coeffs))
 
     def __rsub__(self, other):
-        if isscalar(other):
-            return poly1d(other-self.coeffs)
-        else:
-            other = poly1d(other)
-            return poly1d(polysub(other.coeffs, self.coeffs))
+        other = poly1d(other)
+        return poly1d(polysub(other.coeffs, self.coeffs))
 
     def __div__(self, other):
         if isscalar(other):
