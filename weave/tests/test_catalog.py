@@ -34,13 +34,13 @@ class test_os_dependent_catalog_name(unittest.TestCase):
 class test_catalog_path(unittest.TestCase):        
     def check_default(self):
         in_path = default_dir()
-        path = catalog_path(in_path)
+        path = catalog.catalog_path(in_path)
         d,f = os.path.split(path)
         assert(d == in_path)
         assert(f == os_dependent_catalog_name())
     def check_current(self):
         in_path = '.'
-        path = catalog_path(in_path)
+        path = catalog.catalog_path(in_path)
         d,f = os.path.split(path)
         assert(d == os.path.abspath(in_path))     
         assert(f == os_dependent_catalog_name())   
@@ -50,24 +50,24 @@ class test_catalog_path(unittest.TestCase):
             path = catalog_path(in_path)
             d,f = os.path.split(path)
             assert(d == os.path.expanduser(in_path))        
-            assert(f == os_dependent_catalog_name())
+            assert(f == catalog.os_dependent_catalog_name())
     def check_module(self):
         # hand it a module and see if it uses the parent directory
         # of the module.
-        path = catalog_path(os.__file__)
+        path = catalog.catalog_path(os.__file__)
         d,f = os.path.split(os.__file__)
         d2,f = os.path.split(path)
         assert (d2 == d)
     def check_path(self):
         # use os.__file__ to get a usable directory.
         in_path,f = os.path.split(os.__file__)
-        path = catalog_path(in_path)
+        path = catalog.catalog_path(in_path)
         d,f = os.path.split(path)
         assert (d == in_path)
     def check_bad_path(self):
         # stupid_path_name
         in_path = 'stupid_path_name'
-        path = catalog_path(in_path)
+        path = catalog.catalog_path(in_path)
         assert (path is None)
 
 class test_get_catalog(unittest.TestCase):
@@ -83,24 +83,27 @@ class test_get_catalog(unittest.TestCase):
         pardir = os.path.join(temp,'catalog_test'+tempfile.gettempprefix())
         if not os.path.exists(pardir):
             os.mkdir(pardir)
-        catalog_file = os.path.join(pardir,os_dependent_catalog_name()+'.dat')
+        catalog_file = os.path.join(pardir,
+                                    catalog.os_dependent_catalog_name()+'.dat')
         if os.path.exists(catalog_file) and erase:
             os.remove(catalog_file)
-        catalog_file = os.path.join(pardir,os_dependent_catalog_name()+'.dir')
+        catalog_file = os.path.join(pardir,
+                                    catalog.os_dependent_catalog_name()+'.dir')
         if os.path.exists(catalog_file) and erase:
             os.remove(catalog_file)
-        catalog_file = os.path.join(pardir,os_dependent_catalog_name())
+        catalog_file = os.path.join(pardir,
+                                    catalog.os_dependent_catalog_name())
         if os.path.exists(catalog_file) and erase:
             os.remove(catalog_file)
         return pardir
     def check_nonexistent_catalog_is_none(self):
         pardir = self.get_test_dir(erase=1)
-        catalog = get_catalog(pardir)
-        assert(catalog is None)
+        cat = catalog.get_catalog(pardir)
+        assert(cat is None)
     def check_create_catalog(self):
         pardir = self.get_test_dir(erase=1)
-        catalog = get_catalog(pardir,'c')
-        assert(catalog is not None)
+        cat = catalog.get_catalog(pardir,'c')
+        assert(cat is not None)
 
 class test_catalog(unittest.TestCase):
 
@@ -293,7 +296,7 @@ class test_catalog(unittest.TestCase):
             q.add_function_persistent('code',i)
         
         d = empty_temp_dir()
-        q = catalog(d)        
+        q = catalog.catalog(d)        
         mod_name = q.unique_module_name('bob')        
         d,f = os.path.split(mod_name)
         module_name2, funcs2 = simple_module(d,f,'f')
