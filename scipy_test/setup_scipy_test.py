@@ -10,8 +10,9 @@ def configuration(parent_package=''):
     local_path = get_path(__name__)
 
     config = default_config_dict()
-    config['packages'].append(parent_package+'scipy_test')
-    config['package_dir']['scipy_test'] = local_path    
+    #config['packages'].append(parent_package+'scipy_test')
+    #config['packages'].append(parent_package)
+    config['package_dir'][''] = local_path
     return config
        
 def install_package():
