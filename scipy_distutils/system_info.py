@@ -124,7 +124,13 @@ default_src_dirs = filter(os.path.isdir, default_src_dirs)
 
 so_ext = get_config_vars('SO')[0] or ''
 
-def get_info(name):
+def get_info(name,notfound_action=0):
+    """
+    notfound_action:
+      0 - do nothing
+      1 - display warning message
+      2 - raise error
+    """
     cl = {'atlas':atlas_info,  # use lapack_opt or blas_opt instead
           'atlas_threads':atlas_threads_info,                # ditto
           'atlas_blas':atlas_blas_info,
@@ -148,7 +154,7 @@ def get_info(name):
           'lapack_opt':lapack_opt_info,
           'blas_opt':blas_opt_info,
           }.get(name.lower(),system_info)
-    return cl().get_info()
+    return cl().get_info(notfound_action)
 
 class NotFoundError(DistutilsError):
     """Some third-party program or library is not found."""
@@ -226,6 +232,8 @@ class system_info:
     verbosity = 1
     saved_results = {}
 
+    notfounderror = NotFoundError
+
     def __init__ (self,
                   default_lib_dirs=default_lib_dirs,
                   default_include_dirs=default_include_dirs,
@@ -258,7 +266,7 @@ class system_info:
     def has_info(self):
         return self.saved_results.has_key(self.__class__.__name__)
 
-    def get_info(self):
+    def get_info(self,notfound_action=0):
         """ Return a dictonary with items that are compatible
             with scipy_distutils.setup keyword arguments.
         """
@@ -269,12 +277,22 @@ class system_info:
                 print self.__class__.__name__ + ':'
             if hasattr(self, 'calc_info'):
                 self.calc_info()
+            if notfound_action:
+                if not self.has_info():
+                    if notfound_action==1:
+                        warnings.warn(self.notfounderror.__doc__)
+                    elif notfound_action==2:
+                        raise self.notfounderror,self.notfounderror.__doc__
+                    else:
+                        raise ValueError,`notfound_action`
+
             if self.verbosity>0:
                 if not self.has_info():
                     print '  NOT AVAILABLE'
                     self.set_info()
                 else:
                     print '  FOUND:'
+            
         res = self.saved_results.get(self.__class__.__name__)
         if self.verbosity>0 and flag:
             for k,v in res.items():
@@ -370,6 +388,7 @@ class fftw_info(system_info):
     libs = ['rfftw', 'fftw']
     includes = ['fftw.h','rfftw.h']
     macros = [('SCIPY_FFTW_H',None)]
+    notfounderror = FFTWNotFoundError
 
     def __init__(self):
         system_info.__init__(self)
@@ -439,6 +458,7 @@ class sfftw_threads_info(fftw_info):
 class djbfft_info(system_info):
     section = 'djbfft'
     dir_env_var = 'DJBFFT'
+    notfounderror = DJBFFTNotFoundError
 
     def get_paths(self, section, key):
         pre_dirs = system_info.get_paths(self, section, key)
@@ -474,6 +494,7 @@ class atlas_info(system_info):
     section = 'atlas'
     dir_env_var = 'ATLAS'
     _lib_names = ['f77blas','cblas']
+    notfounderror = AtlasNotFoundError
 
     def get_paths(self, section, key):
         pre_dirs = system_info.get_paths(self, section, key)
@@ -613,6 +634,8 @@ class lapack_info(system_info):
     section = 'lapack'
     dir_env_var = 'LAPACK'
     _lib_names = ['lapack']
+    notfounderror = LapackNotFoundError
+
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
@@ -630,6 +653,7 @@ class lapack_info(system_info):
 class lapack_src_info(system_info):
     section = 'lapack_src'
     dir_env_var = 'LAPACK_SRC'
+    notfounderror = LapackSrcNotFoundError
 
     def get_paths(self, section, key):
         pre_dirs = system_info.get_paths(self, section, key)
@@ -925,6 +949,7 @@ class blas_info(system_info):
     section = 'blas'
     dir_env_var = 'BLAS'
     _lib_names = ['blas']
+    notfounderror = BlasNotFoundError
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
@@ -944,6 +969,7 @@ class blas_info(system_info):
 class blas_src_info(system_info):
     section = 'blas_src'
     dir_env_var = 'BLAS_SRC'
+    notfounderror = BlasSrcNotFoundError
 
     def get_paths(self, section, key):
         pre_dirs = system_info.get_paths(self, section, key)
@@ -991,6 +1017,7 @@ class blas_src_info(system_info):
 
 class x11_info(system_info):
     section = 'x11'
+    notfounderror = X11NotFoundError
 
     def __init__(self):
         system_info.__init__(self,
@@ -1021,6 +1048,7 @@ class x11_info(system_info):
 class numpy_info(system_info):
     section = 'numpy'
     modulename = 'Numeric'
+    notfounderror = NumericNotFoundError
 
     def __init__(self):
         from distutils.sysconfig import get_python_inc
