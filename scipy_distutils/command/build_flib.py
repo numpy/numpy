@@ -997,7 +997,7 @@ class hpux_fortran_compiler(fortran_compiler_base):
 class gnu_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Gnu'
-    ver_match = r'GNU Fortran (\(GCC\s*|)(?P<version>[^\s*\)]+)'
+    ver_match = r'GNU Fortran (\(GCC\)|\(GCC.*\)\)|)\s*(?P<version>[^\s*\)]+)'
     gcc_lib_dir = None
 
     def __init__(self, fc=None, f90c=None, verbose=0):
