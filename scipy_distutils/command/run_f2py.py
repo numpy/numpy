@@ -11,7 +11,7 @@ from distutils.dep_util import newer
 from scipy_distutils.core import Command
 from scipy_distutils.system_info import F2pyNotFoundError
 
-import re,os,string
+import re,os,sys,string
 
 module_name_re = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',re.I).match
 user_module_name_re = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?__user__[\w_]*)',re.I).match
@@ -76,10 +76,10 @@ class run_f2py(Command):
         If 'sources' contains not .pyf files, then create a temporary
         one from the Fortran files in 'sources'.
         """
-        import string
         try:
             import f2py2e
         except ImportError:
+            print sys.exc_value
             raise F2pyNotFoundError,F2pyNotFoundError.__doc__
         # f2py generates the following files for an extension module
         # with a name <modulename>:

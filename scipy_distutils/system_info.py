@@ -114,10 +114,14 @@ class system_info:
             flag = 1
             if self.verbose:
                 print self.__class__.__name__ + ':'
-            for p in self.local_prefixes + prefixes:
-                if self.verbose:
-                    print '  Looking in',p,'...'
-                self.calc_info(p)
+            for n in ['calc_info','calc_info_debian']:
+                calc_info = getattr(self,n,None)
+                if calc_info is None: continue
+                for p in self.local_prefixes + prefixes:
+                    if self.verbose:
+                        print '  Looking in',p,'...'
+                    calc_info(p)
+                    if self.has_info(): break
                 if self.has_info(): break
             if self.verbose:
                 if not self.has_info():
@@ -132,9 +136,9 @@ class system_info:
             print
         return res
 
-    def calc_info(self,prefix):
+    def calc_info_template(self,prefix):
         """ Calculate info distionary. """
-
+    
     def check_libs(self,lib_dir,libs,opt_libs =[]):
         """ If static or shared libraries are available then return
             their info dictionary. """
@@ -309,7 +313,20 @@ class atlas_info(system_info):
         if h: dict_append(info,include_dirs=[h])
         self.set_info(**info)
 
-
+    def calc_info_debian(self,prefix):
+        print 'Trying Debian setup'
+        info = self.check_libs(os.path.join(prefix,'lib'),
+                                ['cblas','f77blas','atlas'],[])
+        if not info: return
+        lapack = self.check_libs(os.path.join(prefix,'lib','atlas'),['lapack'],[])
+        if not lapack:
+            lapack = self.check_libs(os.path.join(prefix,'lib'),['lapack'],[])
+        if not lapack: return
+        h = (combine_paths(prefix,'include','cblas.h') or [None])[0]
+        if h: dict_append(info,include_dirs=[os.path.dirname(h)])
+        dict_append(info,**lapack)
+        self.set_info(**info)
+        
 class blas_info(system_info):
     # For Fortran or optimized blas, not atlas.
     pass
