@@ -195,7 +195,18 @@ def msvc_exists():
     except:
         #assume we're ok if devstudio exists
         import distutils.msvccompiler
-        version = distutils.msvccompiler.get_devstudio_versions()
+
+        # There was a change to 'distutils.msvccompiler' between Python 2.2
+        # and Python 2.3.
+        #
+        # In Python 2.2 the function is 'get_devstudio_versions'
+        # In Python 2.3 the function is 'get_build_version'
+        try:
+            version = distutils.msvccompiler.get_devstudio_versions()
+            
+        except:
+            version = distutils.msvccompiler.get_build_version()
+            
         if version:
             result = 1
     return result

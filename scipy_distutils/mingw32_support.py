@@ -116,7 +116,8 @@ if sys.platform == 'win32':
                  debug=0,
                  extra_preargs=None,
                  extra_postargs=None,
-                 build_temp=None):
+                 build_temp=None,
+                 target_lang=None):
             if self.gcc_version < "3.0.0":
                 distutils.cygwinccompiler.CygwinCCompiler.link(self,
                                target_desc,
