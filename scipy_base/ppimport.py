@@ -57,7 +57,10 @@ class _AttrLoader:
     def _ppimport_attr_getter(self):
         attr = getattr(self.__dict__['_ppimport_attr_module'],
                        self.__dict__['_ppimport_attr_name'])
-        self.__dict__ = attr.__dict__
+        try:
+            self.__dict__ = attr.__dict__
+        except AttributeError:
+            pass
         self.__dict__['_ppimport_attr'] = attr
         return attr
 
@@ -66,6 +69,8 @@ class _AttrLoader:
             attr = self.__dict__['_ppimport_attr']
         except KeyError:
             attr = self._ppimport_attr_getter()
+        if name=='_ppimport_attr':
+            return attr
         return getattr(attr, name)
 
     def __repr__(self):
@@ -113,18 +118,22 @@ def ppimport(name):
     if module is not None:
         return module
 
-    # name is local python module
-    location = _is_local_module(p_dir, name,
-                                ('.py','.pyc','.pyo'))
-    if location is None:
-        # name is local extension module
-        so_ext = _get_so_ext()
-        location = _is_local_module(p_dir, name,
-                                    (so_ext,'module'+so_ext))
-    if location is None:
+    so_ext = _get_so_ext()
+    py_exts = ('.py','.pyc','.pyo')
+    so_exts = (so_ext,'module'+so_ext)
+    
+    for d,n,fn,e in [\
+        # name is local python module or local extension module
+        (p_dir, name, fullname, py_exts+so_exts),
         # name is local package
-        location = _is_local_module(os.path.join(p_dir, name), '__init__',
-                                    ('.py','.pyc','.pyo'))
+        (os.path.join(p_dir, name), '__init__', fullname, py_exts),
+        # name is package in parent directory (scipy specific)
+        (os.path.join(os.path.dirname(p_dir), name), '__init__', name, py_exts),
+        ]:
+        location = _is_local_module(d, n, e)
+        if location is not None:
+            fullname = fn
+            break
 
     if location is None:
         # name is to be looked in python sys.path.
@@ -143,6 +152,16 @@ class _ModuleLoader:
         # set attributes, avoid calling __setattr__
         self.__dict__['__name__'] = name
         self.__dict__['__file__'] = location
+
+        if location != 'sys.path':
+            # get additional attributes (doc strings, etc)
+            # from pre_<name>.py file.
+            #filename = os.path.splitext(location)[0] + '.py'
+            filename = location
+            dirname,basename = os.path.split(filename)
+            preinit = os.path.join(dirname,'pre_'+basename)
+            if os.path.isfile(preinit):
+                execfile(preinit, self.__dict__)
 
         # install loader
         sys.modules[name] = self
