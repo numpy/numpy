@@ -15,6 +15,8 @@ try:
 except ImportError:
     pass
 
+DEBUG=0
+
 __all__.append('set_package_path')
 def set_package_path(level=1):
     """ Prepend package directory to sys.path.
@@ -45,7 +47,8 @@ def set_package_path(level=1):
     d1 = os.path.join(d,'build','lib.%s-%s'%(get_platform(),sys.version[:3]))
     if not os.path.isdir(d1):
         d1 = os.path.dirname(d)
-    print 'Inserting %r to sys.path' % (d1)
+    if DEBUG:
+        print 'Inserting %r to sys.path' % (d1)
     sys.path.insert(0,d1)
 
 __all__.append('set_local_path')
@@ -63,10 +66,14 @@ def set_local_path(level=1):
     else:
         testfile = f.f_locals['__file__']
     local_path = os.path.dirname(os.path.abspath(testfile))
+    if DEBUG:
+        print 'Inserting %r to sys.path' % (local_path)
     sys.path.insert(0,local_path)
 
 __all__.append('restore_path')
 def restore_path():
+    if DEBUG:
+        print 'Removing %r from sys.path' % (sys.path[0])
     del sys.path[0]
 
 if sys.platform[:5]=='linux':
