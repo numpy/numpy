@@ -10,12 +10,13 @@ from type_check import ScalarType, isscalar
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
            'prod','cumprod','diff','angle','unwrap','sort_complex',
-           'disp','unique','takemask','nansum','nanmax','nanargmax',
+           'disp','unique','extract','insert','nansum','nanmax','nanargmax',
            'nanargmin','nanmin']
 
 round = Numeric.around
 any = Numeric.sometrue
 all = Numeric.alltrue
+
 
 
 def logspace(start,stop,num=50,endpoint=1):
@@ -266,10 +267,16 @@ def unique(inseq):
         set[item] = None
     return asarray(set.keys())
 
-def takemask(arr,mask):
+def extract(arr,mask):
     """1D array of those elements of ravel(arr) where ravel(mask) is true.
     """
     return N.take(ravel(arr), nonzero(ravel(mask)))
+
+def insert(arr, mask, vals):
+    """Similar to putmask arr[mask] = vals but 1d array vals has the
+    same number of elements as the non-zero values of mask. Inverse of extract.
+    """
+    return _compiled_base._insert(arr, mask, vals)
 
 def nansum(x,axis=-1):
     """Sum the array over the given axis treating nans as missing values.

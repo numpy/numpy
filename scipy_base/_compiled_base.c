@@ -76,10 +76,118 @@ static PyObject *base_unique(PyObject *self, PyObject *args, PyObject *kwdict)
 }
 
 
+static char doc_base_insert[] = "Insert vals sequenctially into equivalent 1-d positions indicated by mask.";
+
+static PyObject *base_insert(PyObject *self, PyObject *args, PyObject *kwdict)
+{
+  /* Returns input array with values inserted sequentially into places 
+     indicated by the mask
+   */
+
+  PyObject *mask=NULL, *vals=NULL;
+  PyArrayObject *ainput=NULL, *amask=NULL, *avals=NULL, *avalscast=NULL;
+  int numvals, totmask, sameshape;
+  char *input_data, *mptr, *vptr, *zero;
+  int melsize, delsize, copied, nd;
+  int *instrides, *inshape;
+  int mindx, rem_indx, indx, i, k;
+  
+  static char *kwlist[] = {"input","mask","vals",NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwdict, "O!OO", kwlist, &PyArray_Type, &ainput, &mask, &vals))
+    return NULL;
+
+  amask = (PyArrayObject *)PyArray_ContiguousFromObject(mask, PyArray_NOTYPE, 0, 0);
+  sameshape = 1;
+  if (amask->nd == ainput->nd) {
+    for (k=0; k < amask->nd; k++) 
+      if (amask->dimensions[k] != ainput->dimensions[k])
+        sameshape = 0;
+  }
+  else { /* Test to see if amask is 1d */
+    if (amask->nd != 1) sameshape = 0;
+  }
+  if (!sameshape) {
+    PyErr_SetString(PyExc_ValueError, "Mask array must be 1D or same shape as input array.");
+    goto fail;
+  }
+
+  avals = (PyArrayObject *)PyArray_FromObject(vals, PyArray_NOTYPE, 0, 1);
+  if (avals == NULL) goto fail;
+  avalscast = (PyArrayObject *)PyArray_Cast(avals, ainput->descr->type_num);
+  if (avalscast == NULL) goto fail;
+
+  numvals = PyArray_SIZE(avalscast);
+  nd = ainput->nd;
+  input_data = ainput->data;
+  mptr = amask->data;
+  melsize = amask->descr->elsize;
+  vptr = avalscast->data;
+  delsize = avalscast->descr->elsize;
+  zero = amask->descr->zero;
+  
+  /* Handle zero-dimensional case separately */
+  if (nd == 0) {
+    if (memcmp(mptr,zero,melsize) != 0) {
+      /* Copy value element over to input array */
+      memcpy(input_data,vptr,delsize);
+    }
+      Py_DECREF(amask);
+      Py_DECREF(avals);
+      Py_DECREF(avalscast);
+      Py_INCREF(Py_None);
+      return Py_None;
+  }
+
+  /* Walk through mask array, when non-zero is encountered
+     copy next value in the vals array to the input array.
+     If we get through the value array, repeat it as necessary. 
+  */
+  totmask = PyArray_SIZE(amask);
+  copied = 0;
+  instrides = ainput->strides;
+  inshape = ainput->dimensions;
+  for (mindx = 0; mindx < totmask; mindx++) { 
+    if (memcmp(mptr,zero,melsize) != 0) {      
+      /* compute indx into input array 
+       */
+      rem_indx = mindx;
+      indx = 0;
+      for(i=0; i < nd-1; ++i) {
+        indx += (rem_indx / inshape[i]) * instrides[i];
+        rem_indx %= inshape[i];
+      }
+      indx += rem_indx * instrides[nd-1];
+      /* fprintf(stderr, "mindx = %d, indx=%d\n", mindx, indx); */
+      /* Copy value element over to input array */
+      memcpy(input_data+indx,vptr,delsize);
+      vptr += delsize;
+      copied += 1;
+      /* If we move past value data.  Reset */
+      if (copied >= numvals) vptr = avalscast->data;
+    }
+    mptr += melsize;
+  }
+
+  Py_DECREF(amask);
+  Py_DECREF(avals);
+  Py_DECREF(avalscast);
+  Py_INCREF(Py_None);
+  return Py_None;
+  
+ fail:
+  Py_XDECREF(amask);
+  Py_XDECREF(avals);
+  Py_XDECREF(avalscast);
+  return NULL;
+}
+
+
 /* Initialization function for the module (*must* be called initArray) */
 
 static struct PyMethodDef methods[] = {
     {"_unique",	 (PyCFunction)base_unique, METH_VARARGS | METH_KEYWORDS, doc_base_unique},
+    {"_insert",	 (PyCFunction)base_insert, METH_VARARGS | METH_KEYWORDS, doc_base_insert},
     {NULL, NULL}    /* sentinel */
 };
 
@@ -95,7 +203,7 @@ DL_EXPORT(void) init_compiled_base(void) {
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
 
-    s = PyString_FromString("0.1");
+    s = PyString_FromString("0.2");
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
