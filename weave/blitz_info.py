@@ -36,7 +36,7 @@ class py_type<complex<float> >{public: enum { code = PyArray_CFLOAT};};
 class py_type<complex<double> >{public: enum { code = PyArray_CDOUBLE};};
 
 template<class T, int N>
-static blitz::Array<T,N> convert_to_blitz(PyObject* py_obj,char* name)
+static blitz::Array<T,N> convert_to_blitz(PyObject* py_obj,const char* name)
 {
 
     PyArrayObject* arr_obj = convert_to_numpy(py_obj,name);
@@ -58,7 +58,7 @@ static blitz::Array<T,N> convert_to_blitz(PyObject* py_obj,char* name)
 }
 
 template<class T, int N>
-static blitz::Array<T,N> py_to_blitz(PyObject* py_obj,char* name)
+static blitz::Array<T,N> py_to_blitz(PyObject* py_obj,const char* name)
 {
 
     PyArrayObject* arr_obj = py_to_numpy(py_obj,name);

@@ -53,7 +53,7 @@ void throw_error(PyObject* exc, const char* msg)
   throw 1;
 }
 
-void handle_bad_type(PyObject* py_obj, char* good_type, char* var_name)
+void handle_bad_type(PyObject* py_obj, const char* good_type, const char* var_name)
 {
     char msg[500];
     sprintf(msg,"received '%s' type instead of '%s' for variable '%s'",
@@ -61,7 +61,7 @@ void handle_bad_type(PyObject* py_obj, char* good_type, char* var_name)
     throw_error(PyExc_TypeError,msg);    
 }
 
-void handle_conversion_error(PyObject* py_obj, char* good_type, char* var_name)
+void handle_conversion_error(PyObject* py_obj, const char* good_type, const char* var_name)
 {
     char msg[500];
     sprintf(msg,"Conversion Error:, received '%s' type instead of '%s' for variable '%s'",
@@ -81,7 +81,7 @@ file_convert_code =  \
 class file_handler
 {
 public:
-    FILE* convert_to_file(PyObject* py_obj, char* name)
+    FILE* convert_to_file(PyObject* py_obj, const char* name)
     {
         if (!py_obj || !PyFile_Check(py_obj))
             handle_conversion_error(py_obj,"file", name);
@@ -91,7 +91,7 @@ public:
         return PyFile_AsFile(py_obj);
     }
     
-    FILE* py_to_file(PyObject* py_obj, char* name)
+    FILE* py_to_file(PyObject* py_obj, const char* name)
     {
         if (!py_obj || !PyFile_Check(py_obj))
             handle_bad_type(py_obj,"file", name);
@@ -103,6 +103,8 @@ public:
 };
 
 file_handler x__file_handler = file_handler();
+#define convert_to_file(py_obj,name) x__file_handler.convert_to_file(py_obj,name)
+#define py_to_file(py_obj,name) x__file_handler.py_to_file(py_obj,name)
 
 PyObject* file_to_py(FILE* file, char* name, char* mode)
 {
@@ -124,7 +126,7 @@ instance_convert_code = \
 class instance_handler
 {
 public:
-    PyObject* convert_to_instance(PyObject* py_obj, char* name)
+    PyObject* convert_to_instance(PyObject* py_obj, const char* name)
     {
         if (!py_obj || !PyFile_Check(py_obj))
             handle_conversion_error(py_obj,"instance", name);
@@ -135,7 +137,7 @@ public:
         return py_obj;
     }
     
-    PyObject* py_to_instance(PyObject* py_obj, char* name)
+    PyObject* py_to_instance(PyObject* py_obj, const char* name)
     {
         if (!py_obj || !PyFile_Check(py_obj))
             handle_bad_type(py_obj,"instance", name);
@@ -148,6 +150,8 @@ public:
 };
 
 instance_handler x__instance_handler = instance_handler();
+#define convert_to_instance(py_obj,name) x__instance_handler.convert_to_instance(py_obj,name)
+#define py_to_instance(py_obj,name) x__instance_handler.py_to_instance(py_obj,name)
 
 PyObject* instance_to_py(PyObject* instance)
 {
@@ -167,7 +171,7 @@ callable_convert_code = \
 class callable_handler
 {
 public:    
-    PyObject* convert_to_callable(PyObject* py_obj, char* name)
+    PyObject* convert_to_callable(PyObject* py_obj, const char* name)
     {
         if (!py_obj || !PyCallable_Check(py_obj))
             handle_conversion_error(py_obj,"callable", name);
@@ -178,7 +182,7 @@ public:
         return py_obj;
     }
     
-    PyObject* py_to_callable(PyObject* py_obj, char* name)
+    PyObject* py_to_callable(PyObject* py_obj, const char* name)
     {
         if (!py_obj || !PyCallable_Check(py_obj))
             handle_bad_type(py_obj,"callable", name);
@@ -191,6 +195,8 @@ public:
 };
 
 callable_handler x__callable_handler = callable_handler();
+#define convert_to_callable(py_obj,name) x__callable_handler.convert_to_callable(py_obj,name)
+#define py_to_callable(py_obj,name) x__callable_handler.py_to_callable(py_obj,name)
 
 PyObject* callable_to_py(PyObject* callable)
 {
@@ -209,7 +215,7 @@ module_convert_code = \
 class module_handler
 {
 public:
-    PyObject* convert_to_module(PyObject* py_obj, char* name)
+    PyObject* convert_to_module(PyObject* py_obj, const char* name)
     {
         if (!py_obj || !PyModule_Check(py_obj))
             handle_conversion_error(py_obj,"module", name);
@@ -220,7 +226,7 @@ public:
         return py_obj;
     }
     
-    PyObject* py_to_module(PyObject* py_obj, char* name)
+    PyObject* py_to_module(PyObject* py_obj, const char* name)
     {
         if (!py_obj || !PyModule_Check(py_obj))
             handle_bad_type(py_obj,"module", name);
@@ -233,6 +239,8 @@ public:
 };
 
 module_handler x__module_handler = module_handler();
+#define convert_to_module(py_obj,name) x__module_handler.convert_to_module(py_obj,name)
+#define py_to_module(py_obj,name) x__module_handler.py_to_module(py_obj,name)
 
 PyObject* module_to_py(PyObject* module)
 {
@@ -246,21 +254,102 @@ PyObject* module_to_py(PyObject* module)
 # Scalar conversion code
 #############################################################
 
-import base_info
+# These non-templated version is now used for most scalar conversions.
+non_template_scalar_support_code = \
+"""
+
+class scalar_handler
+{
+public:    
+    int convert_to_int(PyObject* py_obj,const char* name)
+    {
+        if (!py_obj || !PyInt_Check(py_obj))
+            handle_conversion_error(py_obj,"int", name);
+        return (int) PyInt_AsLong(py_obj);
+    }
+    long convert_to_long(PyObject* py_obj,const char* name)
+    {
+        if (!py_obj || !PyLong_Check(py_obj))
+            handle_conversion_error(py_obj,"long", name);
+        return (long) PyLong_AsLong(py_obj);
+    }
+
+    double convert_to_float(PyObject* py_obj,const char* name)
+    {
+        if (!py_obj || !PyFloat_Check(py_obj))
+            handle_conversion_error(py_obj,"float", name);
+        return PyFloat_AsDouble(py_obj);
+    }
+
+    std::complex<double> convert_to_complex(PyObject* py_obj,const char* name)
+    {
+        if (!py_obj || !PyComplex_Check(py_obj))
+            handle_conversion_error(py_obj,"complex", name);
+        return std::complex<double>(PyComplex_RealAsDouble(py_obj),
+                                    PyComplex_ImagAsDouble(py_obj));    
+    }
+
+    int py_to_int(PyObject* py_obj,const char* name)
+    {
+        if (!py_obj || !PyInt_Check(py_obj))
+            handle_bad_type(py_obj,"int", name);
+        return (int) PyInt_AsLong(py_obj);
+    }
+    
+    long py_to_long(PyObject* py_obj,const char* name)
+    {
+        if (!py_obj || !PyLong_Check(py_obj))
+            handle_bad_type(py_obj,"long", name);
+        return (long) PyLong_AsLong(py_obj);
+    }
+    
+    double py_to_float(PyObject* py_obj,const char* name)
+    {
+        if (!py_obj || !PyFloat_Check(py_obj))
+            handle_bad_type(py_obj,"float", name);
+        return PyFloat_AsDouble(py_obj);
+    }
+    
+    std::complex<double> py_to_complex(PyObject* py_obj,const char* name)
+    {
+        if (!py_obj || !PyComplex_Check(py_obj))
+            handle_bad_type(py_obj,"complex", name);
+        return std::complex<double>(PyComplex_RealAsDouble(py_obj),
+                                    PyComplex_ImagAsDouble(py_obj));    
+    }
+
+};
+
+scalar_handler x__scalar_handler = scalar_handler();
+#define convert_to_int(py_obj,name) x__scalar_handler.convert_to_int(py_obj,name)
+#define py_to_int(py_obj,name) x__scalar_handler.py_to_int(py_obj,name)
+
+#define convert_to_long(py_obj,name) x__scalar_handler.convert_to_long(py_obj,name)
+#define py_to_long(py_obj,name) x__scalar_handler.py_to_long(py_obj,name)
+
+#define convert_to_float(py_obj,name) x__scalar_handler.convert_to_float(py_obj,name)
+#define py_to_float(py_obj,name) x__scalar_handler.py_to_float(py_obj,name)
+
+#define convert_to_complex(py_obj,name) x__scalar_handler.convert_to_complex(py_obj,name)
+#define py_to_complex(py_obj,name) x__scalar_handler.py_to_complex(py_obj,name)
+
+"""    
 
 # this code will not build with msvc...
+# This is only used for blitz stuff now.  The non-templated
+# version, defined further down, is now used for most code.
 scalar_support_code = \
 """
 // conversion routines
 
 template<class T> 
-static T convert_to_scalar(PyObject* py_obj,char* name)
+static T convert_to_scalar(PyObject* py_obj,const char* name)
 {
     //never used.
     return (T) 0;
 }
 template<>
-static int convert_to_scalar<int>(PyObject* py_obj,char* name)
+static int convert_to_scalar<int>(PyObject* py_obj,const char* name)
 {
     if (!py_obj || !PyInt_Check(py_obj))
         handle_conversion_error(py_obj,"int", name);
@@ -268,7 +357,7 @@ static int convert_to_scalar<int>(PyObject* py_obj,char* name)
 }
 
 template<>
-static long convert_to_scalar<long>(PyObject* py_obj,char* name)
+static long convert_to_scalar<long>(PyObject* py_obj,const char* name)
 {
     if (!py_obj || !PyLong_Check(py_obj))
         handle_conversion_error(py_obj,"long", name);
@@ -276,7 +365,7 @@ static long convert_to_scalar<long>(PyObject* py_obj,char* name)
 }
 
 template<> 
-static double convert_to_scalar<double>(PyObject* py_obj,char* name)
+static double convert_to_scalar<double>(PyObject* py_obj,const char* name)
 {
     if (!py_obj || !PyFloat_Check(py_obj))
         handle_conversion_error(py_obj,"float", name);
@@ -284,7 +373,7 @@ static double convert_to_scalar<double>(PyObject* py_obj,char* name)
 }
 
 template<> 
-static float convert_to_scalar<float>(PyObject* py_obj,char* name)
+static float convert_to_scalar<float>(PyObject* py_obj,const char* name)
 {
     return (float) convert_to_scalar<double>(py_obj,name);
 }
@@ -292,7 +381,7 @@ static float convert_to_scalar<float>(PyObject* py_obj,char* name)
 // complex not checked.
 template<> 
 static std::complex<float> convert_to_scalar<std::complex<float> >(PyObject* py_obj,
-                                                              char* name)
+                                                              const char* name)
 {
     if (!py_obj || !PyComplex_Check(py_obj))
         handle_conversion_error(py_obj,"complex", name);
@@ -301,7 +390,7 @@ static std::complex<float> convert_to_scalar<std::complex<float> >(PyObject* py_
 }
 template<> 
 static std::complex<double> convert_to_scalar<std::complex<double> >(
-                                            PyObject* py_obj,char* name)
+                                            PyObject* py_obj,const char* name)
 {
     if (!py_obj || !PyComplex_Check(py_obj))
         handle_conversion_error(py_obj,"complex", name);
@@ -313,13 +402,13 @@ static std::complex<double> convert_to_scalar<std::complex<double> >(
 // standard translation routines
 
 template<class T> 
-static T py_to_scalar(PyObject* py_obj,char* name)
+static T py_to_scalar(PyObject* py_obj,const char* name)
 {
     //never used.
     return (T) 0;
 }
 template<>
-static int py_to_scalar<int>(PyObject* py_obj,char* name)
+static int py_to_scalar<int>(PyObject* py_obj,const char* name)
 {
     if (!py_obj || !PyInt_Check(py_obj))
         handle_bad_type(py_obj,"int", name);
@@ -327,7 +416,7 @@ static int py_to_scalar<int>(PyObject* py_obj,char* name)
 }
 
 template<>
-static long py_to_scalar<long>(PyObject* py_obj,char* name)
+static long py_to_scalar<long>(PyObject* py_obj,const char* name)
 {
     if (!py_obj || !PyLong_Check(py_obj))
         handle_bad_type(py_obj,"long", name);
@@ -335,7 +424,7 @@ static long py_to_scalar<long>(PyObject* py_obj,char* name)
 }
 
 template<> 
-static double py_to_scalar<double>(PyObject* py_obj,char* name)
+static double py_to_scalar<double>(PyObject* py_obj,const char* name)
 {
     if (!py_obj || !PyFloat_Check(py_obj))
         handle_bad_type(py_obj,"float", name);
@@ -343,7 +432,7 @@ static double py_to_scalar<double>(PyObject* py_obj,char* name)
 }
 
 template<> 
-static float py_to_scalar<float>(PyObject* py_obj,char* name)
+static float py_to_scalar<float>(PyObject* py_obj,const char* name)
 {
     return (float) py_to_scalar<double>(py_obj,name);
 }
@@ -351,7 +440,7 @@ static float py_to_scalar<float>(PyObject* py_obj,char* name)
 // complex not checked.
 template<> 
 static std::complex<float> py_to_scalar<std::complex<float> >(PyObject* py_obj,
-                                                              char* name)
+                                                              const char* name)
 {
     if (!py_obj || !PyComplex_Check(py_obj))
         handle_bad_type(py_obj,"complex", name);
@@ -360,81 +449,7 @@ static std::complex<float> py_to_scalar<std::complex<float> >(PyObject* py_obj,
 }
 template<> 
 static std::complex<double> py_to_scalar<std::complex<double> >(
-                                            PyObject* py_obj,char* name)
-{
-    if (!py_obj || !PyComplex_Check(py_obj))
-        handle_bad_type(py_obj,"complex", name);
-    return std::complex<double>(PyComplex_RealAsDouble(py_obj),
-                                PyComplex_ImagAsDouble(py_obj));    
-}
-"""    
-
-non_template_scalar_support_code = \
-"""
-
-// Conversion Errors
-
-class scalar_handler
-{
-public:    
-    int convert_to_int(PyObject* py_obj,char* name)
-    {
-        if (!py_obj || !PyInt_Check(py_obj))
-            handle_conversion_error(py_obj,"int", name);
-        return (int) PyInt_AsLong(py_obj);
-    }
-    long convert_to_long(PyObject* py_obj,char* name)
-    {
-        if (!py_obj || !PyLong_Check(py_obj))
-            handle_conversion_error(py_obj,"long", name);
-        return (long) PyLong_AsLong(py_obj);
-    }
-
-    double convert_to_float(PyObject* py_obj,char* name)
-    {
-        if (!py_obj || !PyFloat_Check(py_obj))
-            handle_conversion_error(py_obj,"float", name);
-        return PyFloat_AsDouble(py_obj);
-    }
-
-// complex not checked.
-    std::complex<double> convert_to_complex(PyObject* py_obj,char* name)
-    {
-        if (!py_obj || !PyComplex_Check(py_obj))
-            handle_conversion_error(py_obj,"complex", name);
-        return std::complex<double>(PyComplex_RealAsDouble(py_obj),
-                                    PyComplex_ImagAsDouble(py_obj));    
-    }
-};
-
-scalar_handler x__scalar_handler = scalar_handler();
-/////////////////////////////////////
-// The following functions are used for scalar conversions in msvc
-// because it doesn't handle templates as well.
-
-static int py_to_int(PyObject* py_obj,char* name)
-{
-    if (!py_obj || !PyInt_Check(py_obj))
-        handle_bad_type(py_obj,"int", name);
-    return (int) PyInt_AsLong(py_obj);
-}
-
-static long py_to_long(PyObject* py_obj,char* name)
-{
-    if (!py_obj || !PyLong_Check(py_obj))
-        handle_bad_type(py_obj,"long", name);
-    return (long) PyLong_AsLong(py_obj);
-}
-
-static double py_to_float(PyObject* py_obj,char* name)
-{
-    if (!py_obj || !PyFloat_Check(py_obj))
-        handle_bad_type(py_obj,"float", name);
-    return PyFloat_AsDouble(py_obj);
-}
-
-// complex not checked.
-static std::complex<double> py_to_complex(PyObject* py_obj,char* name)
+                                            PyObject* py_obj,const char* name)
 {
     if (!py_obj || !PyComplex_Check(py_obj))
         handle_bad_type(py_obj,"complex", name);

@@ -58,14 +58,14 @@ class scalar_specification(base_specification):
     def msvc_decl_code(self,template = 0,inline=0):
         # doesn't support template = 1
         if template:
-            ValueError, 'msvc compiler does not support templated scalar code.'\
-                        'try mingw32 instead (www.mingw.org).'
+            ValueError, 'msvc compiler does not support templated scalar '\
+                        'code. try mingw32 instead (www.mingw.org).'
         type = numeric_to_blitz_type_mapping[self.numeric_type]
         func_type = self.type_name
         name = self.name
         var_name = self.retrieve_py_variable(inline)
         template = '%(type)s %(name)s = '\
-                   'x__scalar_handler.convert_to_%(func_type)s (%(var_name)s,"%(name)s");\n'
+                        'convert_to_%(func_type)s (%(var_name)s,"%(name)s");\n'
         code = template % locals()
         return code
 
