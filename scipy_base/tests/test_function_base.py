@@ -227,6 +227,15 @@ class test_vectorize(unittest.TestCase):
         f = vectorize(addsubtract)
         r = f([0,3,6,9],[1,3,5,7])
         assert_array_equal(r,[1,6,1,2])
+    def check_scalar(self):
+        def addsubtract(a,b):
+            if a > b:
+                return a - b
+            else:
+                return a + b
+        f = vectorize(addsubtract)
+        r = f([0,3,6,9],5)
+        assert_array_equal(r,[5,8,1,4])
         
 
 def compare_results(res,desired):

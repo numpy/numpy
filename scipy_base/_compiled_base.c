@@ -243,6 +243,23 @@ static int setup_input_arrays(PyTupleObject *inputs, PyArrayObject **inputarrays
       return -1;
     }
     if (ain->nd > maxrank) maxrank = ain->nd;
+    if (ain->nd == 0) {  /* turn into 1-d array */
+      /* convert to rank-1 array */
+      if ((ain->dimensions = (int *)malloc(sizeof(int))) == NULL) {
+        PyErr_SetString(PyExc_MemoryError, "arraymap: can't allocate memory for input arrays");
+        cleanup_arrays(inputarrays,i);
+        return -1;
+      }
+      if ((ain->strides = (int *)malloc(sizeof(int))) == NULL) {
+        PyErr_SetString(PyExc_MemoryError, "arraymap: can't allocate memory for input arrays");
+        cleanup_arrays(inputarrays,i);
+        free(ain->dimensions);
+        return -1;
+      }
+      ain->nd = 1;
+      ain->dimensions[0] = 1;
+      ain->strides[0] = ain->descr->elsize;
+    }
     inputarrays[i] = ain;
   }
 
