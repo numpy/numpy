@@ -36,12 +36,13 @@ class py_type<complex<float> >{public: enum { code = PyArray_CFLOAT};};
 class py_type<complex<double> >{public: enum { code = PyArray_CDOUBLE};};
 
 template<class T, int N>
-static blitz::Array<T,N> convert_to_blitz(PyObject* py_obj,const char* name)
+static blitz::Array<T,N> convert_to_blitz(PyArrayObject* py_obj,const char* name)
 {
 
-    PyArrayObject* arr_obj = convert_to_numpy(py_obj,name);
-    conversion_numpy_check_size(arr_obj,N,name);
-    conversion_numpy_check_type(arr_obj,py_type<T>::code,name);
+    //This is now handled externally (for now) to deal with exception/Abort issue
+    //PyArrayObject* arr_obj = convert_to_numpy(py_obj,name);
+    //conversion_numpy_check_size(arr_obj,N,name);
+    //conversion_numpy_check_type(arr_obj,py_type<T>::code,name);
     
     blitz::TinyVector<int,N> shape(0);
     blitz::TinyVector<int,N> strides(0);
@@ -58,12 +59,12 @@ static blitz::Array<T,N> convert_to_blitz(PyObject* py_obj,const char* name)
 }
 
 template<class T, int N>
-static blitz::Array<T,N> py_to_blitz(PyObject* py_obj,const char* name)
+static blitz::Array<T,N> py_to_blitz(PyArrayObject* py_obj,const char* name)
 {
-
-    PyArrayObject* arr_obj = py_to_numpy(py_obj,name);
-    numpy_check_size(arr_obj,N,name);
-    numpy_check_type(arr_obj,py_type<T>::code,name);
+    //This is now handled externally (for now) to deal with exception/Abort issue
+    //PyArrayObject* arr_obj = py_to_numpy(py_obj,name);
+    //numpy_check_size(arr_obj,N,name);
+    //numpy_check_type(arr_obj,py_type<T>::code,name);
     
     blitz::TinyVector<int,N> shape(0);
     blitz::TinyVector<int,N> strides(0);

@@ -7,7 +7,7 @@ import blitz_info
 
 class array_specification(base_specification):
     _build_information = [blitz_info.array_info()]
-    
+
     def type_match(self,value):
         return type(value) is ArrayType
 
@@ -29,34 +29,59 @@ class array_specification(base_specification):
         else:
             code = self.standard_decl_code()
         return code
-    
+
     def inline_decl_code(self):
         type = numeric_to_blitz_type_mapping[self.numeric_type]
         dims = self.dims
         name = self.name
         var_name = self.retrieve_py_variable(inline=1)
+        arr_name = name + '_arr_obj'
+        # We've had to inject quite a bit of code in here to handle the Aborted error
+        # caused by exceptions.  The templates made the easy fix (with MACROS) for all
+        # other types difficult here.  Oh well.
         templ = '// blitz_array_declaration\n' \
                 'py_%(name)s= %(var_name)s;\n' \
+                'PyArrayObject* %(arr_name)s = convert_to_numpy(py_%(name)s,"%(name)s");\n' \
+                'conversion_numpy_check_size(%(arr_name)s,%(dims)s,%(name)s);\n' \
+                'conversion_numpy_check_type(%(arr_name)s,py_type<%(type)s>::code,%(name)s)\n' \
                 'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
                 ' convert_to_blitz<%(type)s,%(dims)d>(py_%(name)s,"%(name)s");\n' \
                 'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
+        # old version
+        #templ = '// blitz_array_declaration\n' \
+        #        'py_%(name)s= %(var_name)s;\n' \
+        #        'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
+        #        ' convert_to_blitz<%(type)s,%(dims)d>(py_%(name)s,"%(name)s");\n' \
+        #        'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
         code = templ % locals()
         return code
 
-    def standard_decl_code(self):    
+    def standard_decl_code(self):
         type = numeric_to_blitz_type_mapping[self.numeric_type]
         dims = self.dims
         name = self.name
         var_name = self.retrieve_py_variable(inline=0)
+        arr_name = name + '_arr_obj'
+        # We've had to inject quite a bit of code in here to handle the Aborted error
+        # caused by exceptions.  The templates made the easy fix (with MACROS) for all
+        # other types difficult here.  Oh well.
         templ = '// blitz_array_declaration\n' \
+                'PyArrayObject* %(arr_name)s = convert_to_numpy(%(var_name)s,"%(name)s");' \
+                'conversion_numpy_check_size(%(arr_name)s,%(dims)s,%(name)s);' \
+                'conversion_numpy_check_type(%(arr_name)s,py_type<%(type)s>::code,%(name)s)' \
                 'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
-                ' convert_to_blitz<%(type)s,%(dims)d>(%(var_name)s,"%(name)s");\n' \
+                ' convert_to_blitz<%(type)s,%(dims)d>(%(arr_name)s,"%(name)s");\n' \
                 'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
+        # old version
+        #templ = '// blitz_array_declaration\n' \
+        #        'blitz::Array<%(type)s,%(dims)d> %(name)s =' \
+        #        ' convert_to_blitz<%(type)s,%(dims)d>(%(var_name)s,"%(name)s");\n' \
+        #        'blitz::TinyVector<int,%(dims)d> _N%(name)s = %(name)s.shape();\n'
         code = templ % locals()
         return code
     #def c_function_declaration_code(self):
     #    """
-    #        This doesn't pass the size through.  That info is gonna have to 
+    #        This doesn't pass the size through.  That info is gonna have to
     #        be redone in the c function.
     #    """
     #    templ_dict = {}
@@ -65,10 +90,10 @@ class array_specification(base_specification):
     #    templ_dict['name'] = self.name
     #    code = 'blitz::Array<%(type)s,%(dims)d> &%(name)s' % templ_dict
     #    return code
-        
+
     def local_dict_code(self):
         code = '// for now, array "%s" is not returned as arryas are edited' \
-               ' in place (should this change?)\n' % (self.name)        
+               ' in place (should this change?)\n' % (self.name)
         return code
 
     def cleanup_code(self):
