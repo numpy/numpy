@@ -118,15 +118,13 @@ class inline_info(base_info.base_info):
 # swig pointer support code
 #
 # The support code for swig is just slirped in from the swigptr.c file 
-# from the *old* swig distribution.  New style swig pointers are not
-# yet supported.
+# from the *old* swig distribution.  The code from swigptr.c is now a string
+# in swigptr.py to ease the process of incorporating it into py2exe 
+# installations. New style swig pointers are not yet supported.
 #----------------------------------------------------------------------------
 
-import os, common_info
-local_dir,junk = os.path.split(os.path.abspath(common_info.__file__))   
-f = open(os.path.join(local_dir,'swig','swigptr.c'))
-swig_support_code = f.read()
-f.close()
+import swigptr
+swig_support_code = swigptr.swigptr_code
 
 class swig_info(base_info.base_info):
     _support_code = [swig_support_code]

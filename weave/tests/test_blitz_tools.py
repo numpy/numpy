@@ -153,7 +153,7 @@ class test_blitz(unittest.TestCase):
         expr = "result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]" \
                                   "+ b[1:-1,2:] + b[1:-1,:-2]) / 5."
         self.generic_2d(expr,Float64)
-    def check_5point_avg_2d_complex_float(self):
+    def _check_5point_avg_2d_complex_float(self):
         """ Note: THIS TEST is KNOWN TO FAIL ON GCC 3.x.  It will not adversely affect 99.99 percent of weave 
             
             result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]

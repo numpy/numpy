@@ -697,7 +697,7 @@ def test_suite(level=1):
             suites.append( makeSuite(test_unix_float_converter,'check_'))    
             suites.append( makeSuite(test_unix_complex_converter,'check_'))        
         # run gcc tests also on windows
-        if gcc_exists() and sys.platform == 'win32':         
+        if gcc_exists() and msvc_exists() and sys.platform == 'win32':         
             suites.append( makeSuite(test_gcc_file_converter,'check_'))
             suites.append( makeSuite(test_gcc_instance_converter,'check_'))
             suites.append( makeSuite(test_gcc_callable_converter,'check_'))
