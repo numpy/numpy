@@ -16,6 +16,17 @@ import string
 import types
 import traceback
 
+_ppimport_is_enabled = 1
+def enable():
+    """ Enable postponed importing."""
+    global _ppimport_is_enabled
+    _ppimport_is_enabled = 1
+
+def disable():
+    """ Disable postponed importing."""
+    global _ppimport_is_enabled
+    _ppimport_is_enabled = 0
+
 class PPImportError(ImportError):
     pass
 
@@ -49,7 +60,8 @@ def _get_frame(level=0):
 def ppimport_attr(module, name):
     """ ppimport(module, name) is 'postponed' getattr(module, name)
     """
-    if isinstance(module, _ModuleLoader):
+    global _ppimport_is_enabled
+    if _ppimport_is_enabled and isinstance(module, _ModuleLoader):
         return _AttrLoader(module, name)
     return getattr(module, name)
 
@@ -114,6 +126,7 @@ def ppimport(name):
     module import until the first attempt to access module name
     attributes.
     """
+    global _ppimport_is_enabled
     level = 1
     p_frame = _get_frame(level)
     while not p_frame.f_locals.has_key('__name__'):
@@ -138,7 +151,9 @@ def ppimport(name):
     # module may be imported already
     module = sys.modules.get(fullname)
     if module is not None:
-        return module
+        if _ppimport_is_enabled:
+            return module
+        return module._ppimport_importer()
 
     so_ext = _get_so_ext()
     py_exts = ('.py','.pyc','.pyo')
@@ -166,11 +181,18 @@ def ppimport(name):
     # This covers the case when importing from python module
     module = sys.modules.get(fullname)
     if module is not None:
-        return module
+        if _ppimport_is_enabled:
+            return module
+        return module._ppimport_importer()
     # It is OK if name does not exists. The ImportError is
     # postponed until trying to use the module.
 
-    return _ModuleLoader(fullname,location)
+    loader = _ModuleLoader(fullname,location)
+    if _ppimport_is_enabled:
+        return loader
+
+    return loader._ppimport_importer()
+
 
 class _ModuleLoader:
     # Don't use it directly. Use ppimport instead.
@@ -249,6 +271,13 @@ class _ModuleLoader:
         return getattr(module, name)
 
     def __repr__(self):
+        global _ppimport_is_enabled
+        if not _ppimport_is_enabled:
+            try:
+                module = self.__dict__['_ppimport_module']
+            except KeyError:
+                module = self._ppimport_importer()
+            return module.__repr__()
         if self.__dict__.has_key('_ppimport_module'):
             status = 'imported'
         elif self.__dict__.has_key('_ppimport_exc_info'):
