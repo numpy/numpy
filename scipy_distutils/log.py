@@ -71,14 +71,18 @@ fatal = _global_log.fatal
 def set_threshold(level):
     _global_log.threshold = level
 
+
+"""
+
 def set_verbosity(v):
-    if v <= 0:
+    if v<0:
+        set_threshold(ERROR)
+    elif v == 0:
         set_threshold(WARN)
     elif v == 1:
         set_threshold(INFO)
     elif v >= 2:
         set_threshold(DEBUG)
-"""
 
 from misc_util import red_text, yellow_text, cyan_text
 _global_color_map = {

@@ -142,10 +142,11 @@ def CCompiler_show_customization(self):
             log.info("compiler '%s' is set to %s" % (attrname,attr))
     try: self.get_version()
     except: pass
-    print '*'*80
-    print self.__class__
-    print compiler_to_string(self)
-    print '*'*80
+    if log._global_log.threshold<2:
+        print '*'*80
+        print self.__class__
+        print compiler_to_string(self)
+        print '*'*80
 
 CCompiler.show_customization = new.instancemethod(\
     CCompiler_show_customization,None,CCompiler)
@@ -177,8 +178,8 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
         return self.version
     if not (hasattr(self,'version_cmd') and
             hasattr(self,'version_pattern')):
-        log.warn('%s does not provide version_cmd and version_pattern attributes' \
-                 % (self.__class__))
+        #log.warn('%s does not provide version_cmd and version_pattern attributes' \
+        #         % (self.__class__))
         return
 
     cmd = ' '.join(self.version_cmd)
