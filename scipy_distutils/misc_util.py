@@ -542,9 +542,12 @@ def generate_svn_version_py(extension, build_dir):
       config['ext_modules'].append(ext)
 
     """
+    from distutils import dep_util
     local_path = extension.local_path
     target = os.path.join(build_dir, '__svn_version__.py')
     entries = os.path.join(local_path,'.svn','entries')
+    if not dep_util.newer(entries, target):
+        return target
     revision = None
     if os.path.isfile(entries):
         f = open(entries)
