@@ -10,7 +10,7 @@ from exec_command import find_executable
 class GnuFCompiler(FCompiler):
 
     compiler_type = 'gnu'
-    version_pattern = r'GNU Fortran (\(GCC\)|\(GCC.*\)\)|)\s*'\
+    version_pattern = r'GNU Fortran (\(GCC\)|\(GCC.*\)|)\s*'\
                       '(?P<version>[^\s*\)]+)'
 
     for fc_exe in map(find_executable,['g77','f77']):
