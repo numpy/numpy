@@ -1,5 +1,11 @@
 from Numeric import *
-from fastumath import *
+
+# The following try/except so that non-SciPy users can still use blitz
+try:
+    from fastumath import *
+except:
+    pass # fastumath not available    
+
 from ast_tools import *
 from types import *
 import sys

@@ -8,8 +8,14 @@ import slice_handler
 import size_check
 
 from ast_tools import *
+
 from Numeric import *
-from fastumath import *
+# The following try/except so that non-SciPy users can still use blitz
+try:
+    from fastumath import *
+except:
+    pass # fastumath not available    
+    
 from types import *
 
 import inline_tools
