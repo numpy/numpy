@@ -33,6 +33,7 @@
 
 import os,sys,string
 import pickle
+import tempfile
 
 try:
     import dbhash
@@ -110,7 +111,34 @@ def unique_file(d,expr):
                 fname+'.pyd' in files):
             break
     return os.path.join(d,fname)
-    
+
+def create_dir(p):
+    """ Create a directory and any necessary intermediate directories."""
+    if not os.path.exists(p):
+        try:
+            os.mkdir(p)
+        except OSError:
+            # perhaps one or more intermediate path components don't exist
+            # try to create them
+            base,dir = os.path.split(p)
+            create_dir(base)
+            # don't enclose this one in try/except - we want the user to
+            # get failure info
+            os.mkdir(p)
+
+def is_writable(dir):
+    dummy = os.path.join(dir, "dummy")
+    try:
+        open(dummy, 'w')
+    except IOError:
+        return 0
+    os.unlink(dummy)
+    return 1
+
+def whoami():
+    """return a string identifying the user."""
+    return os.environ.get("USER") or os.environ.get("USERNAME") or "unknown"
+
 def default_dir():
     """ Return a default location to store compiled files and catalogs.
         
@@ -127,7 +155,6 @@ def default_dir():
         to try and keep people from being able to sneak a bad module
         in on you.        
     """
-    import tempfile        
     python_name = "python%d%d_compiled" % tuple(sys.version_info[:2])    
     if sys.platform != 'win32':
         try:
@@ -136,35 +163,34 @@ def default_dir():
             temp_dir = `os.getuid()` + '_' + python_name
             path = os.path.join(tempfile.gettempdir(),temp_dir)        
     else:
-        path = os.path.join(tempfile.gettempdir(),python_name)
+        path = os.path.join(tempfile.gettempdir(),"%s"%whoami(),python_name)
         
     if not os.path.exists(path):
-        os.mkdir(path)
+        create_dir(path)
         os.chmod(path,0700) # make it only accessible by this user.
-    if not os.access(path,os.W_OK):
+    if not is_writable(path):
         print 'warning: default directory is not write accessible.'
-        print 'defualt:', path
+        print 'default:', path
     return path
 
 def intermediate_dir():
     """ Location in temp dir for storing .cpp and .o  files during
         builds.
     """
-    import tempfile        
     python_name = "python%d%d_intermediate" % tuple(sys.version_info[:2])    
-    path = os.path.join(tempfile.gettempdir(),python_name)
+    path = os.path.join(tempfile.gettempdir(),"%s"%whoami(),python_name)
     if not os.path.exists(path):
-        os.mkdir(path)
+        create_dir(path)
     return path
     
 def default_temp_dir():
     path = os.path.join(default_dir(),'temp')
     if not os.path.exists(path):
-        os.mkdir(path)
+        create_dir(path)
         os.chmod(path,0700) # make it only accessible by this user.
-    if not os.access(path,os.W_OK):
+    if not is_writable(path):
         print 'warning: default directory is not write accessible.'
-        print 'defualt:', path
+        print 'default:', path
     return path
 
     
