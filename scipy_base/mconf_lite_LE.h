@@ -86,7 +86,7 @@ Modified to handle just the parts necessary for isnan to work.
           defined(__convex__) || defined(DGUX) || defined(hppa) || \
           defined(apollo) || defined(_CRAY) || defined(__hppa) || \
           defined(__hp9000) || defined(__hp9000s300) || \
-          defined(__hp9000s700) || defined(__AIX) || defined(_AIX) \
+          defined(__hp9000s700) || defined(__AIX) || defined(_AIX) || \
           defined(__pyr__) || defined(__mc68000__) || defined(__sparc) ||\
           defined(_IBMR2) || defined (BIT_ZERO_ON_LEFT) 
 #define MIEEE 1     /* Motorola IEEE, high order words come first */
