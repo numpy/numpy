@@ -195,8 +195,8 @@ class build_ext (old_build_ext):
             include_dirs = ext.include_dirs[:]
             module_dirs = ext.module_dirs[:]
 
-            if self.fcompiler.compiler_type=='ibm':
-                macros = []
+            #if self.fcompiler.compiler_type=='ibm':
+            macros = []
 
             if check_for_f90_modules:
                 module_build_dir = os.path.join(\
