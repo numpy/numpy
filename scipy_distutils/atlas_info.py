@@ -1,12 +1,21 @@
 import sys, os
 
+library_path = ''
+
 def get_atlas_info():
+    print 'atlas_lib:', library_path
     if sys.platform  == 'win32':
-        atlas_library_dirs=['C:\\atlas\\WinNT_PIIISSE1']
+        if not library_path:
+            atlas_library_dirs=['C:\\atlas\\WinNT_PIIISSE1']
+        else:
+            atlas_library_dirs = library_path
         blas_libraries = ['f77blas', 'cblas', 'atlas', 'g2c']
         lapack_libraries = ['lapack'] + blas_libraries 
     else:
-        atlas_library_dirs = unix_atlas_directory(plat)
+        if not library_path:
+            atlas_library_dirs = unix_atlas_directory(sys.platform)
+        else:
+            atlas_library_dirs = library_path
         blas_libraries = ['cblas','f77blas','atlas']
         lapack_libraries = ['lapack'] + blas_libraries
     return blas_libraries, lapack_libraries, atlas_library_dirs
@@ -23,13 +32,13 @@ def unix_atlas_directory(platform):
     """
     result = [] #None
     # do a little looking for the linalg directory for atlas libraries
-    path = get_path(__name__)
-    local_atlas0 = os.path.join(path,platform,'atlas')
-    local_atlas1 = os.path.join(path,platform[:-1],'atlas')
+    #path = get_path(__name__)
+    #local_atlas0 = os.path.join(path,platform,'atlas')
+    #local_atlas1 = os.path.join(path,platform[:-1],'atlas')
  
     # first look for a system defined atlas directory
-    dir_search = ['/usr/local/lib/atlas','/usr/lib/atlas',
-                  local_atlas0, local_atlas1]
+    dir_search = ['/usr/local/lib/atlas','/usr/lib/atlas']#,
+    #              local_atlas0, local_atlas1]
     for directory in dir_search:
         if os.path.exists(directory):
             result = [directory]
