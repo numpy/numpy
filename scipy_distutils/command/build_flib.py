@@ -474,7 +474,7 @@ class fortran_compiler_base(CCompiler):
     def f77_compile(self,source_files,module_dirs=None, temp_dir=''):
         switches = string.join((self.f77_switches, self.f77_opt))
         return self.f_compile(self.f77_compiler,switches,
-                              source_files, module_dirs,temp_dir)
+                              source_files, module_dirs, temp_dir)
 
     def find_existing_modules(self):
         # added to handle lack of -moddir flag in absoft
@@ -671,10 +671,11 @@ class absoft_fortran_compiler(move_modules_mixin,fortran_compiler_base):
             
             self.libraries = ['fio', 'f90math', 'fmath', 'COMDLG32']
         elif sys.platform=='darwin':
+            # http://www.absoft.com/literature/osxuserguide.pdf
             self.f90_switches = ' -YCFRL=1 -YCOM_NAMES=LCS' \
                                 ' -YCOM_PFX -YEXT_PFX' \
-                                ' -YCOM_SFX=_ -YEXT_SFX' \
-                                ' -YEXT_NAMES=LCS -s -YEXT_NAMES=_'
+                                ' -YCOM_SFX=_ -YEXT_SFX=_' \
+                                ' -YEXT_NAMES=LCS -s'
             self.f90_opt = ' -O'                            
             self.f90_fixed_switch = ' -f fixed '
             self.f77_switches = ' -N22 -N90 -N110 -f -s -N15'
@@ -708,12 +709,14 @@ class absoft_fortran_compiler(move_modules_mixin,fortran_compiler_base):
             
             !! CHECK: does absoft handle multiple -p flags?  if not, does
             !! it look at the first or last?
+            # AbSoft f77 v8 doesn't accept -p, f90 requires space
+            # after -p and manual indicates it accepts multiples.
         """
         res = ''
         if module_dirs:
             for mod in module_dirs:
-                res = res + ' -p' + mod
-        res = res + '-p' + temp_dir        
+                res = res + ' -p ' + mod
+            res = res + ' -p ' + temp_dir        
         return res
 
     def get_extra_link_args(self):
