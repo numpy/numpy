@@ -201,11 +201,19 @@ class ScipyTest:
             return []
 
         try:
+            if sys.version[:3]=='2.1':
+                # Workaround for Python 2.1 .pyc file generator bug
+                import random
+                pref = '-nopyc'+`random.randint(1,100)`
+            else:
+                pref = ''
             f = open(test_file,'r')
             test_module = imp.load_module(\
-                module.__name__+'.test_'+short_module_name,
-                f, test_file,('.py', 'r', 1))
+                module.__name__+'.test_'+short_module_name+pref,
+                f, test_file+pref,('.py', 'r', 1))
             f.close()
+            if sys.version[:3]=='2.1' and os.path.isfile(test_file+pref+'c'):
+                os.remove(test_file+pref+'c')
         except:
             print '   !! FAILURE importing tests for ', mstr(module)
             print '   ',
