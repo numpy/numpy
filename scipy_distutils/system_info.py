@@ -141,8 +141,8 @@ class system_info:
         #self.__class__.need_refresh = not self.info
         self.local_prefixes = []
         defaults = {}
-        defaults['lib_dir'] = ':'.join(default_lib_dirs)
-        defaults['include_dir'] = ':'.join(default_include_dirs)
+        defaults['lib_dir'] = os.pathsep.join(default_lib_dirs)
+        defaults['include_dir'] = os.pathsep.join(default_include_dirs)
         defaults['static_first'] = '1'
         self.cp = ConfigParser.ConfigParser(defaults)
         cf = os.path.join(os.path.split(os.path.abspath(__file__))[0],
@@ -185,8 +185,8 @@ class system_info:
         """ Calculate info dictionary. """
 
     def get_paths(self, section, key):
-        dirs = self.cp.get(section, key).split(':')
-        default_dirs = self.cp.get('DEFAULT', key).split(':')
+        dirs = self.cp.get(section, key).split(os.pathsep)
+        default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
         dirs.extend(default_dirs)
         return [ d for d in dirs if os.path.isdir(d) ]
 
@@ -320,9 +320,9 @@ class atlas_info(system_info):
     section = 'atlas'
 
     def get_paths(self, section, key):
-        default_dirs = self.cp.get('DEFAULT', key).split(':')
+        default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
         dirs = []
-        for d in self.cp.get(section, key).split(':') + default_dirs:
+        for d in self.cp.get(section, key).split(os.pathsep) + default_dirs:
             dirs.extend([d]+combine_paths(d,['atlas*','ATLAS*']))
         return [ d for d in dirs if os.path.isdir(d) ]
 
