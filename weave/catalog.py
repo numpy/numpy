@@ -456,7 +456,7 @@ class catalog:
         # was a built-in function), so we have to check if the path exists before
         # arbitrarily deleting it.
         path_key = self.path_key(code)       
-        if writable_cat.has_key(path_key)
+        if writable_cat.has_key(path_key):
             del writable_cat[path_key]   
             
     def get_functions_fast(self,code):
