@@ -56,6 +56,9 @@ class base_converter:
         return "&" + self.name
     def pointer(self):
         return "*" + self.name
+    def init_flag(self):
+        return self.name + "_used"
+    
     def variable(self):
         return self.name
     def variable_as_string(self):
@@ -78,7 +81,7 @@ class arg_spec_list(UserList.UserList):
     def references(self): return map(lambda x: x.py_reference(),self)
     def pointers(self): return map(lambda x: x.pointer(),self)    
     def variables(self): return map(lambda x: x.variable(),self)
-    
+    def init_flags(self): return map(lambda x: x.init_flag(),self)
     def variable_as_strings(self): 
         return map(lambda x: x.variable_as_string(),self)
 

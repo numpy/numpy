@@ -50,15 +50,16 @@ class ext_function_from_specs:
         declare_kwlist = 'static char *kwlist[] = {%s NULL};\n' % arg_strings
 
         py_objects = join(self.arg_specs.py_pointers(),', ')
+        init_flags = join(self.arg_specs.init_flags(),', ')
+        init_flags_init = join(self.arg_specs.init_flags(),'= ')
+        py_vars = join(self.arg_specs.py_variables(),' = ')
         if py_objects:
-            declare_py_objects = 'PyObject ' + py_objects +';\n'
+            declare_py_objects  = 'PyObject ' + py_objects +';\n'
+            declare_py_objects += 'int '+ init_flags + ';\n'            
+            init_values  = py_vars + ' = NULL;\n'
+            init_values += init_flags_init + ' = 0;\n\n'
         else:
             declare_py_objects = ''
-            
-        py_vars = join(self.arg_specs.py_variables(),' = ')
-        if py_vars:
-            init_values = py_vars + ' = NULL;\n\n'
-        else:
             init_values = ''    
 
         #Each variable is in charge of its own cleanup now.
@@ -83,13 +84,19 @@ class ext_function_from_specs:
         arg_strings = []
         for arg in self.arg_specs:
             arg_strings.append(arg.declaration_code())
+            arg_strings.append(arg.init_flag() +" = 1;\n")
         code = string.join(arg_strings,"")
         return code
 
     def arg_cleanup_code(self):
         arg_strings = []
-        for arg in self.arg_specs:
-            arg_strings.append(arg.cleanup_code())
+        have_cleanup = filter(lambda x:x.cleanup_code(),self.arg_specs)
+        for arg in have_cleanup:
+            code  = "if(%s)\n" % arg.init_flag()
+            code += "{\n"
+            code +=     indent(arg.cleanup_code(),4)
+            code += "}\n"
+            arg_strings.append(code)
         code = string.join(arg_strings,"")
         return code
 
@@ -350,7 +357,7 @@ def assign_variable_types(variables,local_dict = {}, global_dict = {},
             for factory in type_converters:
                 if factory.type_match(example_type):
                     spec = factory.type_spec(var,example_type)
-                    break
+                    break                
             if not spec:
                 # should really define our own type.
                 raise IndexError
