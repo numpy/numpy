@@ -5,6 +5,7 @@ from glob import glob
 #from distutils.command.build_py import *
 from distutils.command.build_py import build_py as old_build_py
 from fnmatch import fnmatch
+from scipy_distutils import log
 
 def is_setup_script(file):
     file = os.path.basename(file)
@@ -44,5 +45,5 @@ class build_py(old_build_py):
                 module = os.path.splitext(os.path.basename(f))[0]
                 modules.append((package, module, f))
             else:
-                self.debug_print("excluding %s" % f)
+                log.debug("excluding %s", f)
         return modules

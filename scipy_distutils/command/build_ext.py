@@ -1,14 +1,14 @@
 """ Modified version of build_ext that handles fortran source files.
 """
 
-import os, string
+import os, string, sys
 from types import *
 
 from distutils.dep_util import newer_group, newer
 from distutils.command.build_ext import build_ext as old_build_ext
 
 from scipy_distutils.command.build_clib import get_headers,get_directories
-from scipy_distutils import misc_util
+from scipy_distutils import misc_util, log
 
 
 class build_ext (old_build_ext):
@@ -77,9 +77,9 @@ class build_ext (old_build_ext):
 
             if linker_so is not None:
                 if linker_so is not save_linker_so:
-                    self.announce('replacing linker_so %r with %r' %(\
-                        ' '.join(save_linker_so),
-                        ' '.join(linker_so)))
+                    log.debug('replacing linker_so %r with %r',
+                              ' '.join(save_linker_so),
+                              ' '.join(linker_so))
                     self.compiler.linker_so = linker_so
                     l = build_flib.get_fcompiler_library_names()
                     #l = self.compiler.libraries + l
@@ -108,15 +108,15 @@ class build_ext (old_build_ext):
                 #     hooks similar to fortran_compiler_class.
                 linker_so = ['g++'] + save_linker_so[1:]
                 self.compiler.linker_so = linker_so
-                self.announce('replacing linker_so %r with %r' %(\
-                        ' '.join(save_linker_so),
-                        ' '.join(linker_so)))
+                log.debug('replacing linker_so %r with %r',
+                          ' '.join(save_linker_so),
+                          ' '.join(linker_so))
 
         # end of fortran source support
         res = old_build_ext.build_extension(self,ext)
 
         if save_linker_so is not self.compiler.linker_so:
-            self.announce('restoring linker_so %r' % ' '.join(save_linker_so))
+            log.debug('restoring linker_so %r' % ' '.join(save_linker_so))
             self.compiler.linker_so = save_linker_so
             self.compiler.libraries = save_compiler_libs
             self.compiler.library_dirs = save_compiler_libs_dirs
@@ -133,5 +133,3 @@ class build_ext (old_build_ext):
             filenames.extend(get_headers(get_directories(ext.sources)))
 
         return filenames
-
-    

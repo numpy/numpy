@@ -60,8 +60,8 @@ from distutils.ccompiler import CCompiler,gen_preprocess_options
 from distutils.command.build_clib import build_clib
 from distutils.errors import *
 from distutils.version import LooseVersion
-from scipy_distutils.misc_util import red_text,green_text,yellow_text,\
-     cyan_text
+from scipy_distutils.misc_util import yellow_text, cyan_text
+from scipy_distutils import log
 
 class FortranCompilerError (CCompilerError):
     """Some compile/link operation failed."""
@@ -152,8 +152,8 @@ class build_flib (build_clib):
         self.fcompiler = os.environ.get('FC_VENDOR')
         if self.fcompiler \
            and not re.match(r'\A('+fcompiler_vendors+r')\Z',self.fcompiler):
-            self.warn(red_text('Unknown FC_VENDOR=%s (expected %s)'\
-                                   %(self.fcompiler,fcompiler_vendors)))
+            log.warn('Unknown FC_VENDOR=%s (expected %s)',
+                     self.fcompiler,fcompiler_vendors)
             self.fcompiler = None
         self.fcompiler_exec = os.environ.get('F77')
         self.f90compiler_exec = os.environ.get('F90')
@@ -167,7 +167,7 @@ class build_flib (build_clib):
                                    ('debug', 'debug'),
                                    ('force', 'force'))
 
-        self.announce('running find_fortran_compiler')
+        log.debug('running find_fortran_compiler')
         fc = find_fortran_compiler(self.fcompiler,
                                    self.fcompiler_exec,
                                    self.f90compiler_exec,
@@ -176,7 +176,7 @@ class build_flib (build_clib):
             raise DistutilsOptionError, 'Fortran compiler not available: %s'\
                   % (self.fcompiler)
         else:
-            self.announce('using '+cyan_text('%s Fortran compiler' % fc))
+            log.info('using %s Fortran compiler', fc)
         if sys.platform=='win32':
             if fc.vendor in ['Compaq']:
                 set_windows_compiler('msvc')
@@ -300,7 +300,7 @@ class build_flib (build_clib):
         fcompiler = self.fcompiler
         
         for (lib_name, build_info) in fortran_libraries:
-            self.announce(" building '%s' library" % lib_name)
+            log.info(" building '%s' library" % lib_name)
 
             sources = build_info.get('sources')
             if sources is None or type(sources) not in (ListType, TupleType):
@@ -311,8 +311,6 @@ class build_flib (build_clib):
             sources = list(sources)
             module_dirs = build_info.get('module_dirs')
             module_files = build_info.get('module_files')
-
-
             include_dirs = build_info.get('include_dirs')
 
             if include_dirs:
@@ -482,7 +480,7 @@ class fortran_compiler_base(CCompiler):
                        module_switch + \
                        self.compile_switch + source + \
                        self.object_switch + object
-                self.announce(yellow_text(cmd))
+                log.debug(cmd)
                 failure = os.system(cmd)
                 if failure:
                     raise FortranCompileError,\
@@ -530,7 +528,7 @@ class fortran_compiler_base(CCompiler):
         objects = string.join(object_files)
         if objects:
             cmd = '%s%s %s' % (self.lib_ar,lib_file,objects)
-            self.announce(yellow_text(cmd))
+            log.debug(cmd)
             failure = os.system(cmd)
             if failure:
                 raise FortranBuildError,\
@@ -538,7 +536,7 @@ class fortran_compiler_base(CCompiler):
             if self.lib_ranlib and not skip_ranlib:
                 # Digital,MIPSPro compilers do not have ranlib.
                 cmd = '%s %s' %(self.lib_ranlib,lib_file)
-                self.announce(yellow_text(cmd))
+                log.debug(cmd)
                 failure = os.system(cmd)
                 if failure:
                     raise FortranBuildError,\
@@ -616,19 +614,19 @@ class fortran_compiler_base(CCompiler):
         self.version = ''
         # works I think only for unix...
         #if self.verbose:
-        self.announce('detecting %s Fortran compiler...'%(self.vendor))
-        self.announce(yellow_text(self.ver_cmd))
+        log.info('detecting %s Fortran compiler...'%(self.vendor))
+        log.debug(self.ver_cmd)
         exit_status, out_text = run_command(self.ver_cmd)
         out_text2 = out_text.split('\n')[0]
         if not exit_status:
-            self.announce('found %s' %(green_text(out_text2)))
+            log.info('found %s', out_text2)
             m = re.match(self.ver_match,out_text)
             if m:
                 self.version = m.group('version')
                 if not self.version:
-                    self.announce(red_text('failed to match version!'))
+                    log.warn('failed to match version!')
         else:
-            self.announce('%s: %s' % (exit_status,red_text(out_text2)))
+            log.warn('%s: %s', exit_status,out_text2)
         return self.version
 
     def get_libraries(self):
@@ -857,7 +855,7 @@ class sun_fortran_compiler(fortran_compiler_base):
                      '(?P<lib_paths>[^\s.]*).*'
         dummy_file = self.dummy_fortran_files()[0]
         cmd = self.f90_compiler + ' -dryrun ' + dummy_file
-        self.announce(yellow_text(cmd))
+        log.debug(cmd)
         exit_status, output = run_command(cmd)
         if not exit_status:
             libs = re.findall(lib_match,output)
@@ -982,7 +980,7 @@ class hpux_fortran_compiler(fortran_compiler_base):
         if self.version is not None:
             return self.version
         self.version = ''
-        self.announce(yellow_text(self.ver_cmd))
+        log.debug(self.ver_cmd)
         exit_status, out_text = run_command(self.ver_cmd)
         if self.verbose:
             out_text = out_text.split('\n')[0]
@@ -990,12 +988,12 @@ class hpux_fortran_compiler(fortran_compiler_base):
             # 256 seems to indicate success on HP-UX but keeping
             # also 0. Or does 0 exit status mean something different
             # in this platform?
-            self.announce('found: '+green_text(out_text))
+            log.info('found: '+out_text)
             m = re.match(self.ver_match,out_text)
             if m:
                 self.version = m.group('version')
         else:
-            self.announce('%s: %s' % (exit_status,red_text(out_text)))
+            log.warn('%s: %s', exit_status,out_text)
         return self.version
 
 class gnu_fortran_compiler(fortran_compiler_base):
@@ -1119,14 +1117,13 @@ class gnu_fortran_compiler(fortran_compiler_base):
     def find_lib_directories(self):
         if self.gcc_lib_dir is not None:
             return self.gcc_lib_dir
-        self.announce('running gnu_fortran_compiler.find_lib_directories')
         self.gcc_lib_dir = []
         lib_dir = []
         match = r'Reading specs from (.*)/specs'
 
         # works I think only for unix...
         cmd = '%s -v' % self.f77_compiler
-        self.announce(yellow_text(cmd))
+        log.debug(cmd)
         exit_status, out_text = run_command(cmd)
         if not exit_status:
             m = re.findall(match,out_text)
@@ -1309,7 +1306,7 @@ class f_fortran_compiler(fortran_compiler_base):
             return
 
         if self.verbose:
-            print red_text("""
+            log.warn("""
 WARNING: F compiler is unsupported due to its incompleteness.
          Send complaints to its vendor. For adding its support
          to scipy_distutils, it must support external procedures.

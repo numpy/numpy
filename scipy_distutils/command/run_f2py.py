@@ -12,6 +12,7 @@ from distutils.cmd import Command
 #from scipy_distutils.core import Command
 from scipy_distutils.system_info import F2pyNotFoundError
 from scipy_distutils.misc_util import red_text,yellow_text
+from scipy_distutils import log
 
 import re,os,sys,string
 
@@ -82,7 +83,7 @@ class run_f2py(Command):
         try:
             import f2py2e
             if not hasattr(self,'_f2py_sources_been_here'):
-                self.announce('using F2PY %s' % (f2py2e.f2py2e.f2py_version))
+                log.info('using F2PY %s', f2py2e.f2py2e.f2py_version)
                 setattr(self,'_f2py_sources_been_here',1)
         except ImportError:
             print sys.exc_value
@@ -128,8 +129,8 @@ class run_f2py(Command):
                     ext.name = base
                 if base != ext_name:
                     # XXX: Should we do here more than just warn?
-                    self.warn(red_text('%s provides %s but this extension is %s' \
-                              % (source,`base`,`ext_name`)))
+                    log.warn('%s provides %s but this extension is %s',
+                             source,`base`,`ext_name`)
                 target_file = os.path.join(target_dir,base+target_ext)
                 fortran_target_file = os.path.join(target_dir,
                                                    base+fortran_target_ext)
@@ -161,8 +162,8 @@ class run_f2py(Command):
                     f2py_opts2.append('--quiet')
             for source in fortran_sources:
                 if newer(source,pyf_target) or self.force:
-                    self.announce(yellow_text("f2py %s" % \
-                                  string.join(fortran_sources + f2py_opts2,' ')))
+                    log.debug("f2py %s",
+                              string.join(fortran_sources + f2py_opts2,' '))
                     f2py2e.run_main(fortran_sources + f2py_opts2)
                     break
             pyf_fortran_target_file = os.path.join(target_dir,
@@ -177,8 +178,8 @@ class run_f2py(Command):
         new_sources.extend(fortran_sources)
 
         if len(f2py_sources) > 1:
-            self.warn(red_text('Only one .pyf file can be used per Extension'\
-                               ' but got %s.' % (len(f2py_sources))))
+            log.warn('Only one .pyf file can be used per Extension'\
+                     ' but got %s.', len(f2py_sources))
 
         # a bit of a hack, but I think it'll work.  Just include one of
         # the fortranobject.c files that was copied into most 
@@ -196,8 +197,8 @@ class run_f2py(Command):
         for source in f2py_sources:
             target = f2py_targets[source]
             if newer(source,target) or self.force:
-                self.announce(yellow_text("f2py %s" % \
-                              string.join(f2py_options+[source],' ')))
+                log.debug("f2py %s",
+                          string.join(f2py_options+[source],' '))
                 f2py2e.run_main(f2py_options + [source])
             new_sources.append(target)
             for fortran_target in f2py_fortran_targets[source]:

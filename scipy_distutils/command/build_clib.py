@@ -19,13 +19,14 @@ __revision__ = "$Id$"
 # two modules, mainly because a number of subtle details changed in the
 # cut 'n paste.  Sigh.
 
-import os, string
+import os, string, sys
 from glob import glob
 from types import *
 from distutils.core import Command
 from distutils.errors import *
 from distutils.sysconfig import customize_compiler
 from scipy_distutils.misc_util import red_text,yellow_text
+from scipy_distutils import log
 
 def show_compilers ():
     from distutils.ccompiler import show_compilers
@@ -233,7 +234,7 @@ class build_clib (Command):
                        "a list of source filenames") % lib_name
             sources = list(sources)
 
-            self.announce("building '%s' library" % lib_name)
+            log.info("building '%s' library", lib_name)
 
             # First, compile the source code to object files in the library
             # directory.  (This should probably change to putting object
@@ -254,11 +255,11 @@ class build_clib (Command):
                                             debug=self.debug)
             #XXX: ranlib may not be available on non-GNU platforms.
             cmd = 'ranlib %s/lib%s.a' % (self.build_clib,lib_name)
-            self.announce(yellow_text(cmd))
+            log.debug(cmd)
             failure = os.system(cmd)
             if failure:
-                self.warn(red_text('Ignoring failure during build'\
-                                   ' (exit status = %s)'%failure))
+                log.warn('Ignoring failure during %s, build'\
+                         ' (exit status = %s)', lib_name, failure)
 
         # for libraries
 

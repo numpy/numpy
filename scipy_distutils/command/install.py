@@ -4,6 +4,7 @@ from distutils.command.install import install as old_install
 from distutils.util import convert_path
 from distutils.file_util import write_file
 from distutils.errors import DistutilsOptionError
+from scipy_distutils import log
 
 #install support for Numeric.pth setup
 class install(old_install):
@@ -51,4 +52,4 @@ class install(old_install):
                          (filename, [self.pth_file]),
                          "creating %s" % filename)
         else:
-            self.warn("path file '%s' not created" % filename)
+            log.warn("path file '%s' not created" % filename)

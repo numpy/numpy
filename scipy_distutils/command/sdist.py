@@ -1,5 +1,6 @@
 from distutils.command.sdist import *
 from distutils.command.sdist import sdist as old_sdist
+from scipy_distutils import log
 
 import sys, os
 mod = __import__(__name__)
@@ -50,15 +51,15 @@ class sdist(old_sdist):
             msg = "copying files to %s..." % base_dir
 
         if not files:
-            self.warn("no files to distribute -- empty manifest?")
+            log.warn("no files to distribute -- empty manifest?")
         else:
-            self.announce(msg)
+            log.info(msg)
         
         dest_files = [os.path.join(base_dir,file) for file in dest_files]
         file_pairs = zip(files,dest_files)    
         for file,dest in file_pairs:
             if not os.path.isfile(file):
-                self.warn("'%s' not a regular file -- skipping" % file)
+                log.warn("'%s' not a regular file -- skipping", file)
             else:
                 #ej: here is the only change -- made to handle
                 # absolute paths to files as well as relative
