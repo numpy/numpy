@@ -646,7 +646,8 @@ _default_compilers = (
                 'intelitanium')),
     ('darwin.*',('gnu','nag','ibm')),
     ('sunos.*',('forte','gnu','sun')),
-    ('irix',('mips','gnu')),
+    ('irix.*',('mips','gnu')),
+    ('aix.*',('ibm','gnu')),
     # OS mappings
     ('posix',('gnu',)),
     ('nt',('gnu',)),
