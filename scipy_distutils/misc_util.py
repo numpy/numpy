@@ -244,9 +244,9 @@ def default_config_dict(name = None, parent_name = None):
         frame = sys._getframe(1)
         caller_name = eval('__name__',frame.f_globals,frame.f_locals)
         local_path = get_path(caller_name)
-        if name and not parent_name:
+        if name and parent_name is None:
             # Useful for local builds
-            d['version'] = update_version(path=local_path)
+            d['version'] = get_version(path=local_path)
 
         if os.path.exists(os.path.join(local_path,'__init__.py')):
             d['packages'].append(full_name)
