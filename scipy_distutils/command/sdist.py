@@ -29,7 +29,7 @@ class sdist(old_sdist):
         # Create all the directories under 'base_dir' necessary to
         # put 'files' there; the 'mkpath()' is just so we don't die
         # if the manifest happens to be empty.
-
+        
         dest_files = remove_common_base(files)
         self.mkpath(base_dir)
         dir_util.create_tree(base_dir, dest_files,
@@ -90,7 +90,6 @@ class sdist(old_sdist):
         # done elsewhere.
         base_dir = self.distribution.get_fullname()
         base_name = os.path.join(self.dist_dir, base_dir)
-
         files = map(os.path.abspath, self.filelist.files)
         self.make_release_tree(base_dir, files)
         archive_files = []              # remember names of files we create

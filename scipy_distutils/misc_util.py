@@ -231,14 +231,38 @@ list_keys = ['packages', 'ext_modules', 'data_files',
              'headers']
 dict_keys = ['package_dir']             
 
-def default_config_dict(name = None):
+def default_config_dict(name = None, parent_name = None):
     d={}
     for key in list_keys: d[key] = []
     for key in dict_keys: d[key] = {}
-    if name is not None:
-        # Useful for local builds
-        d['name'] = name
-        d['version'] = update_version()    
+
+    if name and parent_name:
+        full_name = '%s.%s' % (parent_name,name)
+    else:
+        if name:
+            # Useful for local builds
+            d['version'] = update_version()
+            full_name = name
+
+    if full_name:
+        # XXX: The following assumes that default_config_dict is called
+        #      only from setup_<name>.configuration().
+        frame = sys._getframe(1)
+        caller_name = eval('__name__',frame.f_globals,frame.f_locals)
+        local_path = get_path(caller_name)
+        d['packages'].append(full_name)
+        d['package_dir'][full_name] = local_path
+        d['name'] = full_name
+        if not parent_name:
+            # Include scipy_distutils to local distributions
+            for p in ['.','..']:
+                dir_name = os.path.abspath(os.path.join(local_path,
+                                                        p,'scipy_distutils'))
+                if os.path.exists(dir_name):
+                    d['packages'].append('scipy_distutils')
+                    d['packages'].append('scipy_distutils.command')
+                    d['package_dir']['scipy_distutils'] = dir_name
+                    break
     return d
 
 def merge_config_dicts(config_list):
