@@ -93,7 +93,7 @@ Modified to handle just the parts necessary for isnan to work.
 #define BIGENDIAN 1
 
 #else 
-#define UNK 1        /* Machine not known
+#define UNK 1        /* Machine not known */
 #define BIGENDIAN 1   /* This is a BE file */
 #endif
 
