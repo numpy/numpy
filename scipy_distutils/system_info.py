@@ -54,8 +54,13 @@ include_dir = /usr/X11R6/include
 Authors:
   Pearu Peterson <pearu@cens.ioc.ee>, February 2002
   David M. Cooke <cookedm@physics.mcmaster.ca>, April 2002
-Permission to use, modify, and distribute this software is given under the
-terms of the LGPL.  See http://www.fsf.org
+
+Copyright 2002 Pearu Peterson all rights reserved,
+Pearu Peterson <pearu@cens.ioc.ee>          
+Permission to use, modify, and distribute this software is given under the 
+terms of the SciPy (BSD style) license.  See LICENSE.txt that came with
+this distribution for specifics.
+
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 
