@@ -233,8 +233,29 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
              + '\nACTUAL: ' + str(actual)
     assert round(abs(desired - actual),decimal) == 0, msg
 
+def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
+    """ Raise an assertion if two items are not
+        equal.  I think this should be part of unittest.py
+        Approximately equal is defined as the number of significant digits 
+        correct
+    """
+    msg = '\nItems are not equal to %d significant digits:\n' % significant
+    msg += err_msg
+    sc_desired = desired/pow(10,math.floor(math.log10(desired)))
+    sc_actual = actual/pow(10,math.floor(math.log10(actual)))
+    try:
+        if ( verbose and len(str(desired)) < 100 and len(str(actual)) ):
+            msg =  msg \
+                 + 'DESIRED: ' + str(desired) \
+                 + '\nACTUAL: ' + str(actual)
+    except:
+        msg =  msg \
+             + 'DESIRED: ' + str(desired) \
+             + '\nACTUAL: ' + str(actual)
+    assert math.fabs(sc_desired - sc_actual) < pow(10.,-1*significant), msg
+    
 try:
-    # Numeric specific tests
+    # Numeric specific testss
     from Numeric import *
     from fastumath import *
     
