@@ -11,11 +11,11 @@ try:
     # functions below will not be available.
     from Numeric import alltrue,equal,shape,ravel,around,zeros,Float64,asarray,\
          less_equal,array2string,less
-    import scipy_base.fastumath as math
-except ImportError:
-    pass
+    # `import scipy_base.fastumath as math` must be at the end of this file.
+except ImportError,msg:
+    print msg
 
-DEBUG=0
+DEBUG = 0
 
 __all__.append('set_package_path')
 def set_package_path(level=1):
@@ -734,3 +734,9 @@ def output_exception():
               (filename, lineno, type.__name__, str(value), function)
     finally:
         type = value = tb = None # clean up
+
+try:
+    import scipy_base.fastumath as math
+except ImportError,msg:
+    print msg
+    import math

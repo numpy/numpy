@@ -5,8 +5,7 @@ from glob import glob
 import shutil
 
 def configuration(parent_package='',parent_path=None):
-    from scipy_distutils.system_info import get_info, NumericNotFoundError,\
-         dict_append
+    from scipy_distutils.system_info import get_info, dict_append
     from scipy_distutils.core import Extension
     from scipy_distutils.misc_util import get_path,default_config_dict,dot_join
     from scipy_distutils.misc_util import get_path,default_config_dict,\
@@ -16,9 +15,7 @@ def configuration(parent_package='',parent_path=None):
     local_path = get_path(__name__,parent_path)
     config = default_config_dict(package,parent_package)
 
-    numpy_info = get_info('numpy')
-    if not numpy_info:
-        raise NumericNotFoundError, NumericNotFoundError.__doc__
+    numpy_info = get_info('numpy',notfound_action=2)
 
     # extra_compile_args -- trying to find something that is binary compatible
     #                       with msvc for returning Py_complex from functions
@@ -88,5 +85,5 @@ if __name__ == '__main__':
           description = "SciPy base module",
           url = "http://www.scipy.org",
           license = "SciPy License (BSD Style)",
-          **configuration()
+          **configuration(parent_path='')
           )
