@@ -82,7 +82,7 @@ swig_varlink_print(swig_varlinkobject *v, FILE *fp, int flags)
     i++;
     if (v->vars[i]) fprintf(fp,", ");
   }
-  fprintf(fp," }\n");
+  fprintf(fp," }\\n");
   return 0;
 }
 
@@ -181,7 +181,7 @@ SWIG_addvarlink(PyObject *p, char *name,
     v->maxvars = 2*v->maxvars;
     v->vars = (swig_globalvar **) realloc(v->vars,v->maxvars*sizeof(swig_globalvar *));
     if (v->vars == NULL) {
-      fprintf(stderr,"SWIG : Fatal error in initializing Python module.\n");
+      fprintf(stderr,"SWIG : Fatal error in initializing Python module.\\n");
       exit(1);
     }
   }
@@ -416,7 +416,7 @@ SWIG_GetPtrObj(PyObject *obj, void **ptr, char *type) {
     if (!sobj) return "";
   }
   str = PyString_AsString(sobj);
-  //printf("str: %s\n", str);
+  //printf("str: %s\\n", str);
   return SWIG_GetPtr(str,ptr,type);
 }
 
