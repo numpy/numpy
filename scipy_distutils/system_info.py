@@ -84,7 +84,8 @@ else:
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include']
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
-    default_lib_dirs.append(os.path.join(sys.prefix, 'lib'))
+    default_lib_dirs.insert(0,os.path.join(sys.prefix, 'lib'))
+#    default_lib_dirs.append(os.path.join(sys.prefix, 'lib'))
     default_include_dirs.append(os.path.join(sys.prefix, 'include'))
 default_lib_dirs = filter(os.path.isdir, default_lib_dirs)
 default_include_dirs = filter(os.path.isdir, default_include_dirs)
