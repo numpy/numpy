@@ -39,7 +39,10 @@ class Log:
 
     def _log(self, level, msg, args):
         if level >= self.threshold:
-            print _global_color_map[level](msg % _fix_args(args))
+            if args:
+                print _global_color_map[level](msg % _fix_args(args))
+            else:
+                print _global_color_map[level](msg)
             sys.stdout.flush()
 
     def log(self, level, msg, *args):
