@@ -41,7 +41,6 @@ def temp_catalog_files(prefix=''):
     f = catalog.os_dependent_catalog_name()
     return glob.glob(os.path.join(d,prefix+f+'*'))
 
-from distutils.file_util import move_file, copy_file
 import tempfile
 
 def clear_temp_catalog():
@@ -51,9 +50,10 @@ def clear_temp_catalog():
     backup_dir =tempfile.mktemp()
     os.mkdir(backup_dir)
     for file in temp_catalog_files():
-        d,f = os.path.split(file)
-        backup = os.path.join(backup_dir,f)
-        os.rename(file,backup)
+        move_file(file,backup_dir)
+        #d,f = os.path.split(file)
+        #backup = os.path.join(backup_dir,f)
+        #os.rename(file,backup)
 
 def restore_temp_catalog():
     """ Remove any catalog from the temp dir
@@ -66,7 +66,8 @@ def restore_temp_catalog():
         dst_file = os.path.join(cat_dir, f)
         if os.path.exists(dst_file):
             os.remove(dst_file)
-        os.rename(file,dst_file)
+        #os.rename(file,dst_file)
+        move_file(file,dst_file)
     os.rmdir(backup_dir)
     backup_dir = None
          
@@ -100,3 +101,72 @@ def cleanup_temp_dir(d):
         os.rmdir(d)
     except OSError:
         pass        
+        
+
+# from distutils -- old versions had bug, so copying here to make sure 
+# a working version is available.
+from distutils.errors import DistutilsFileError
+import distutils.file_util
+def move_file (src, dst,
+               verbose=0,
+               dry_run=0):
+
+    """Move a file 'src' to 'dst'.  If 'dst' is a directory, the file will
+    be moved into it with the same name; otherwise, 'src' is just renamed
+    to 'dst'.  Return the new full name of the file.
+
+    Handles cross-device moves on Unix using 'copy_file()'.  What about
+    other systems???
+    """
+    from os.path import exists, isfile, isdir, basename, dirname
+    import errno
+
+    if verbose:
+        print "moving %s -> %s" % (src, dst)
+
+    if dry_run:
+        return dst
+
+    if not isfile(src):
+        raise DistutilsFileError, \
+              "can't move '%s': not a regular file" % src
+
+    if isdir(dst):
+        dst = os.path.join(dst, basename(src))
+    elif exists(dst):
+        raise DistutilsFileError, \
+              "can't move '%s': destination '%s' already exists" % \
+              (src, dst)
+
+    if not isdir(dirname(dst)):
+        raise DistutilsFileError, \
+              "can't move '%s': destination '%s' not a valid path" % \
+              (src, dst)
+
+    copy_it = 0
+    try:
+        os.rename(src, dst)
+    except os.error, (num, msg):
+        if num == errno.EXDEV:
+            copy_it = 1
+        else:
+            raise DistutilsFileError, \
+                  "couldn't move '%s' to '%s': %s" % (src, dst, msg)
+
+    if copy_it:
+        distutils.file_util.copy_file(src, dst)
+        try:
+            os.unlink(src)
+        except os.error, (num, msg):
+            try:
+                os.unlink(dst)
+            except os.error:
+                pass
+            raise DistutilsFileError, \
+                  ("couldn't move '%s' to '%s' by copy/delete: " +
+                   "delete '%s' failed: %s") % \
+                  (src, dst, src, msg)
+
+    return dst
+
+        
