@@ -1,23 +1,26 @@
 import types
 import Numeric
-from function_base import linspace
-
 __all__ = ['mgrid','r_','c_','index_exp']
 
 from type_check import ScalarType
+import function_base
 
 class nd_grid:
     """ Construct a "meshgrid" in N-dimensions.
 
         grid = nd_grid() creates an instance which will return a mesh-grid
         when indexed.  The dimension and number of the output arrays are equal
-        to the number of indexing dimensions.  If the step length is not a complex
-        number, then the stop is not inclusive.
+        to the number of indexing dimensions.  If the step length is not a
+        complex number, then the stop is not inclusive.
     
-        However, if the step length is a COMPLEX NUMBER (e.g. 5j), then the integer
-        part of it's magnitude is interpreted as specifying the number of points to
-        create between the start and stop values, where the stop value
-        IS INCLUSIVE.
+        However, if the step length is a COMPLEX NUMBER (e.g. 5j), then the
+        integer part of it's magnitude is interpreted as specifying the
+        number of points to create between the start and stop values, where
+        the stop value IS INCLUSIVE.
+
+        If instantiated with an argument of 1, the mesh-grid is open or not
+        fleshed out so that only one-dimension of each returned argument is
+        greater than 1
     
         Example:
     
@@ -35,7 +38,13 @@ class nd_grid:
                    [0, 1, 2, 3, 4]]])
            >>> mgrid[-1:1:5j]
            array([-1. , -0.5,  0. ,  0.5,  1. ])
+
+           >>> ogrid = nd_grid(1)
+           >>> ogrid[0:5,0:5]
+           [array([[0],[1],[2],[3],[4]]), array([[0, 1, 2, 3, 4]])] 
     """
+    def __init__(self, sparse=0):
+        self.sparse = sparse
     def __getitem__(self,key):
         try:
 	    size = []
@@ -55,7 +64,10 @@ class nd_grid:
                    isinstance(start, types.FloatType) or \
                    isinstance(key[k].stop, types.FloatType):
                        typecode = Numeric.Float
-            nn = Numeric.indices(size,typecode)
+            if self.sparse:
+                nn = map(lambda x,t: arange(x,typecode=t),size,(typecode,)*len(size))
+            else:
+                nn = Numeric.indices(size,typecode)
 	    for k in range(len(size)):
                 step = key[k].step
                 if step is None:
@@ -64,6 +76,12 @@ class nd_grid:
                     step = int(abs(step))
                     step = (key[k].stop - key[k].start)/float(step-1)
                 nn[k] = (nn[k]*step+key[k].start)
+            if self.sparse:
+                slobj = [NewAxis]*len(size)
+                for k in range(len(size)):
+                    slobj[k] = slice(None,None)
+                    nn[k] = nn[k][slobj]
+                    slobj[k] = NewAxis
 	    return nn
         except (IndexError, TypeError):
             step = key.step
@@ -86,6 +104,7 @@ class nd_grid:
         return 0
 
 mgrid = nd_grid()
+ogrid = nd_grid(1)
 
 class concatenator:
     """ Translates slice objects to concatenation along an axis.
@@ -116,7 +135,7 @@ class concatenator:
                    isinstance(start, types.FloatType) or \
                    isinstance(stop, types.FloatType):
                        typecode = Numeric.Float
-                newobj = linspace(start, stop, num=size, endpoint=endpoint)
+                newobj = function_base.linspace(start, stop, num=size, endpoint=endpoint)
             elif type(key[k]) in ScalarType:
                 newobj = Numeric.asarray([key[k]])
             else:

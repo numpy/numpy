@@ -1,9 +1,10 @@
 """
-Wrapper functions to more user-friendly calling of certain math functions whose output is
-different than the input under certain conditions.
+Wrapper functions to more user-friendly calling of certain math functions
+whose output is different than the input in certain domains of the input.
 """
 
-__all__ = ['sqrt', 'log', 'log2','logn','log10', 'power', 'arccos', 'arcsin', 'arctanh']
+__all__ = ['sqrt', 'log', 'log2','logn','log10', 'power', 'arccos',
+           'arcsin', 'arctanh']
 
 from type_check import isreal
 from function_base import any
@@ -16,7 +17,7 @@ for key in toextend:
        __all__.append(key)
 
 def _tocomplex(arr):
-    if arr.typecode() in ['f', 's', 'b', '1']:
+    if arr.typecode() in ['f', 's', 'b', '1','w']:
         return arr.astype('F')
     else:
         return arr.astype('D')

@@ -2,7 +2,7 @@ import types
 import Numeric
 from Numeric import *
 from scipy_base.fastumath import *
-from type_check import ScalarType
+from type_check import ScalarType, isscalar
 
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
@@ -184,6 +184,7 @@ def diff(x, n=1,axis=-1):
     else:
         return x[slice1]-x[slice2]
 
+    
 def angle(z,deg=0):
     """Return the angle of complex argument z."""
     if deg:
@@ -200,10 +201,8 @@ def angle(z,deg=0):
     return arctan2(zimag,zreal) * fact
 
 def unwrap(p,discont=pi,axis=-1):
-    """unwrap(p,discont=pi,axis=-1)
-
-    unwraps radian phase p by changing absolute jumps greater than discont to
-    their 2*pi complement along the given axis.
+    """unwraps radian phase p by changing absolute jumps greater than
+       discont to their 2*pi complement along the given axis.
     """
     p = asarray(p)
     nd = len(p.shape)
@@ -251,6 +250,8 @@ def trim_zeros(filt,trim='fb'):
             if i != 0.: break
             else: last = last - 1
     return filt[first:last]
+
+    
 
 #-----------------------------------------------------------------------------
 # Test Routines

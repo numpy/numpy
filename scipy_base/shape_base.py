@@ -11,7 +11,7 @@ def squeeze(a):
     b = asarray(a.shape)
     return reshape (a, tuple (compress (not_equal (b, 1), b)))
 
-def atleast_1d(ary):
+def atleast_1d(*arys):
     """ Force a sequence of arrays to each be at least 1D.
 
          Description:
@@ -19,18 +19,24 @@ def atleast_1d(ary):
             array is converted to a single row of values.  Otherwise,
             the array is unaltered.
          Arguments:
-            ary -- array to be converted to 1 or more dimensional array.
+            *arys -- arrays to be converted to 1 or more dimensional array.
          Returns:
             input array converted to at least 1D array.
     """
-    ary = asarray(ary)
-    if len(ary.shape) == 0: 
-        result = Numeric.array([ary[0]])
+    res = []
+    for ary in arys:
+        ary = asarray(ary)
+        if len(ary.shape) == 0: 
+            result = Numeric.array([ary[0]])
+        else:
+            result = ary
+        res.append(result)
+    if len(res) == 1:
+        return res[0]
     else:
-        result = ary
-    return result
+        return res
 
-def atleast_2d(ary):
+def atleast_2d(*arys):
     """ Force a sequence of arrays to each be at least 2D.
 
          Description:
@@ -38,20 +44,26 @@ def atleast_2d(ary):
             is 0D or 1D, the array is converted to a single
             row of values.  Otherwise, the array is unaltered.
          Arguments:
-            ary -- array to be converted to 2 or more dimensional array.
+            arys -- arrays to be converted to 2 or more dimensional array.
          Returns:
             input array converted to at least 2D array.
     """
-    ary = asarray(ary)
-    if len(ary.shape) == 0: 
-        ary = Numeric.array([ary[0]])
-    if len(ary.shape) == 1: 
-        result = ary[NewAxis,:]
-    else: 
-        result = ary
-    return result
-
-def atleast_3d(ary):
+    res = []
+    for ary in arys:
+        ary = asarray(ary)
+        if len(ary.shape) == 0: 
+            ary = Numeric.array([ary[0]])
+        if len(ary.shape) == 1: 
+            result = ary[NewAxis,:]
+        else: 
+            result = ary
+        res.append(result)
+    if len(res) == 1:
+        return res[0]
+    else:
+        return res
+        
+def atleast_3d(*arys):
     """ Force a sequence of arrays to each be at least 3D.
 
          Description:
@@ -62,20 +74,27 @@ def atleast_3d(ary):
             is the orginal shape of the array. Otherwise, the array is 
             unaltered.
          Arguments:
-            ary -- array to be converted to 3 or more dimensional array.
+            arys -- arrays to be converted to 3 or more dimensional array.
          Returns:
             input array converted to at least 3D array.
     """
-    ary = asarray(ary)
-    if len(ary.shape) == 0:
-        ary = Numeric.array([ary[0]])
-    if len(ary.shape) == 1:
-        result = ary[NewAxis,:,NewAxis]
-    elif len(ary.shape) == 2:
-        result = ary[:,:,NewAxis]
-    else: 
-        result = ary
-    return result
+    res = []
+    for ary in arys:
+        ary = asarray(ary)
+        if len(ary.shape) == 0:
+            ary = Numeric.array([ary[0]])
+        if len(ary.shape) == 1:
+            result = ary[NewAxis,:,NewAxis]
+        elif len(ary.shape) == 2:
+            result = ary[:,:,NewAxis]
+        else: 
+            result = ary
+        res.append(result)
+    if len(res) == 1:
+        return res[0]
+    else:
+        return res
+
 
 def vstack(tup):
     """ Stack arrays in sequence vertically (row wise)

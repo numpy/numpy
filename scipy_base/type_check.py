@@ -7,7 +7,7 @@ import limits
 
 __all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isnan','isinf','isfinite',
-           'isreal','isscalar','nan_to_num','real','real_if_close',
+           'isreal','nan_to_num','real','real_if_close',
            'typename','cast','common_type']
 
 ScalarType = [types.IntType, types.LongType, types.FloatType, types.ComplexType]
@@ -17,16 +17,21 @@ try:
 except AttributeError:
    Char = 'c'
 
-toChar = lambda x: Numeric.array(x, Char)
-toInt8 = lambda x: Numeric.array(x, Numeric.Int8)# or use variable names such as Byte
-toUInt8 = lambda x: Numeric.array(x, Numeric.UnsignedInt8)
-toInt16 = lambda x: Numeric.array(x, Numeric.Int16)
-toInt32 = lambda x: Numeric.array(x, Numeric.Int32)
-toInt = lambda x: Numeric.array(x, Numeric.Int)
-toFloat32 = lambda x: Numeric.array(x, Numeric.Float32)
-toFloat64 = lambda x: Numeric.array(x, Numeric.Float64)
-toComplex32 = lambda x: Numeric.array(x, Numeric.Complex32)
-toComplex64 = lambda x: Numeric.array(x, Numeric.Complex64)
+toChar = lambda x: Numeric.asarray(x).astype(Char)
+toInt8 = lambda x: Numeric.asarray(x).astype(Numeric.Int8)# or use variable names such as Byte
+toUInt8 = lambda x: Numeric.asarray(x).astype(Numeric.UnsignedInt8)
+if hasattr(Numeric,'UnsignedInt16'):
+   toUInt16 = lambda x: Numeric.asarray(x).astype(Numeric.UnsignedInt16)
+   toUInt32 = lambda x: Numeric.asarray(x).astype(Numeric.UnsignedInt32)
+   _unsigned = 1
+   
+toInt16 = lambda x: Numeric.asarray(x).astype(Numeric.Int16)
+toInt32 = lambda x: Numeric.asarray(x).astype(Numeric.Int32)
+toInt = lambda x: Numeric.asarray(x).astype(Numeric.Int)
+toFloat32 = lambda x: Numeric.asarray(x).astype(Numeric.Float32)
+toFloat64 = lambda x: Numeric.asarray(x).astype(Numeric.Float64)
+toComplex32 = lambda x: Numeric.asarray(x).astype(Numeric.Complex32)
+toComplex64 = lambda x: Numeric.asarray(x).astype(Numeric.Complex64)
 
 # This is for pre Numeric 21.x compatiblity. Adding it is harmless.
 if  not hasattr(Numeric,'Character'):
@@ -42,6 +47,11 @@ cast = {Numeric.Character: toChar,
         Numeric.Float64: toFloat64,
         Numeric.Complex32: toComplex32,
         Numeric.Complex64: toComplex64}
+
+if _unsigned:
+   cast[Numeric.UnsignedInt16] = toUInt16
+   cast[Numeric.UnsignedInt32] = toUInt32
+   
 
 def isscalar(num):
     if isinstance(num, ArrayType):
@@ -151,7 +161,9 @@ _namefromtype = {'c' : 'character',
                  '1' : 'signed char',
                  'b' : 'unsigned char',
                  's' : 'short',
+                 'w' : 'unsigned short',
                  'i' : 'integer',
+                 'u' : 'unsigned integer',
                  'l' : 'long integer',
                  'f' : 'float',
                  'd' : 'double',
