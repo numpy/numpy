@@ -1,10 +1,9 @@
-""" compiler provides several tools:
+#
+# weave - C/C++ integration
+#
 
-        1. inline() -- a function for including C/C++ code within Python
-        2. blitz()  -- a function for compiling Numeric expressions to C++
-        3. ext_tools-- a module that helps construct C/C++ extension modules.
-        4. accelerate -- a module that inline accelerates Python functions
-"""
+import os as _os
+execfile(_os.path.join(__path__[0],'pre___init__.py'),globals(),locals())
 
 from weave_version import weave_version as __version__
 

@@ -109,9 +109,15 @@ def ppimport(name):
     if p_name=='__main__':
         p_dir = ''
         fullname = name
-    else:
+    elif p_frame.f_locals.has_key('__path__'):
+        # python package
         p_path = p_frame.f_locals['__path__']
         p_dir = p_path[0]
+        fullname = p_name + '.' + name
+    else:
+        # python module, not tested
+        p_file = p_frame.f_locals['__file__']
+        p_dir = os.path.dirname(p_file)
         fullname = p_name + '.' + name
 
     module = sys.modules.get(fullname)
