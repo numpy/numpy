@@ -587,7 +587,7 @@ class sun_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Sun'
     #ver_match =  r'f77: (?P<version>[^\s*,]*)'
-    ver_match = r'f90: Sun (?P<version>[^\s*,]*)'
+    ver_match = r'f90: (Forte Developer 7 Fortran 95|Sun) (?P<version>[^\s*,]*)'
 
     def __init__(self, fc=None, f90c=None, verbose=0):
         fortran_compiler_base.__init__(self, verbose=verbose)
@@ -598,23 +598,23 @@ class sun_fortran_compiler(fortran_compiler_base):
             f90c = 'f90'
 
         self.f77_compiler = fc # not tested
-        self.f77_switches = ' -pic '
-        self.f77_opt = ' -fast -dalign '
+        self.f77_switches = ' -pic'
+        self.f77_opt = ' -fast -dalign -xtarget=generic -R/opt/SUNWspro/lib'
 
         self.f90_compiler = f90c
         self.f90_switches = ' -fixed ' # ??? why fixed?
-        self.f90_opt = ' -fast -dalign '
+        self.f90_opt = ' -fast -dalign -xtarget=generic -R/opt/SUNWspro/lib'
 
         self.ver_cmd = self.f90_compiler + ' -V'
 
         #self.libraries = ['f90', 'F77', 'M77', 'sunmath', 'm']
-        self.libraries = ['fsu', 'F77', 'M77', 'sunmath', 'm']
+        self.libraries = ['fsu', 'F77', 'M77', 'sunmath',
+                          'mvec', 'f77compat', 'm']
         
         #threaded
         #self.libraries = ['f90', 'F77_mt', 'sunmath_mt', 'm', 'thread']
         #self.libraries = []
         self.library_dirs = self.find_lib_dir()
-        #print 'sun:',self.library_dirs
 
     def build_module_switch(self,module_dirs):
         res = ''
@@ -624,7 +624,7 @@ class sun_fortran_compiler(fortran_compiler_base):
         return res
 
     def find_lib_dir(self):
-        library_dirs = []
+        library_dirs = ["/opt/SUNWspro/prod/lib"]
         lib_match = r'### f90: Note: LD_RUN_PATH\s*= '\
                      '(?P<lib_paths>[^\s.]*).*'
         cmd = self.f90_compiler + ' -dryrun dummy.f'
@@ -632,6 +632,8 @@ class sun_fortran_compiler(fortran_compiler_base):
         exit_status, output = run_command(cmd)
         if not exit_status:
             libs = re.findall(lib_match,output)
+            if libs[0] == "(null)":
+                del libs[0]
             if libs:
                 library_dirs = string.split(libs[0],':')
                 self.get_version() # force version calculation
@@ -639,10 +641,15 @@ class sun_fortran_compiler(fortran_compiler_base):
                 library_dirs.append(os.path.join(compiler_home,
                                                self.version,'lib'))
         return library_dirs
+
     def get_runtime_library_dirs(self):
         return self.find_lib_dir()
+
     def get_extra_link_args(self):
-        return ['-mimpure-text']
+        return ["-Bdynamic", "-G"]
+
+    def get_linker_so(self):
+        return [self.f77_compiler]
 
 
 class mips_fortran_compiler(fortran_compiler_base):
@@ -1125,16 +1132,14 @@ def get_fortran_files(files):
     return match_extension(files,'f90|f95|for|f77|ftn|f')
 
 def find_fortran_compiler(vendor=None, fc=None, f90c=None, verbose=0):
-    fcompiler = None
     for compiler_class in all_compilers:
         if vendor is not None and vendor != compiler_class.vendor:
             continue
         #print compiler_class
         compiler = compiler_class(fc,f90c,verbose = verbose)
         if compiler.is_available():
-            fcompiler = compiler
-            break
-    return fcompiler
+            return compiler
+    return None
 
 all_compilers = [absoft_fortran_compiler,
                  mips_fortran_compiler,
