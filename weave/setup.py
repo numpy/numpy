@@ -6,7 +6,7 @@ from scipy_distutils.misc_util import package_config
 
 # Enough changes to bump the number.  We need a global method for
 # versioning
-version = "0.3.0.alpha"
+version = "0.3.0"
    
 def stand_alone_package(with_dependencies = 0):
     path = get_path(__name__)
@@ -21,9 +21,8 @@ def stand_alone_package(with_dependencies = 0):
         
         print 'dep:', dependencies
         config_dict = package_config(primary,dependencies)
-
-        setup (name = "weave",
-               version = version,
+        config_dict['name'] = 'weave'
+        setup (version = version,
                description = "Tools for inlining C/C++ in Python",
                author = "Eric Jones",
                author_email = "eric@enthought.com",

@@ -50,4 +50,10 @@ def configuration(parent_package='',parent_path=None):
 
 if __name__ == '__main__':    
     from scipy_distutils.core import setup
-    setup(**configuration())
+    setup(version = "0.3.0",
+          description = "Tools for inlining C/C++ in Python",
+          author = "Eric Jones",
+          author_email = "eric@enthought.com",
+          licence = "SciPy License (BSD Style)",
+          url = 'http://www.scipy.org',
+          **configuration(parent_path=''))
