@@ -667,8 +667,11 @@ def assert_array_almost_equal(x,y,decimal=6,err_msg=''):
     y = asarray(y)
     msg = '\nArrays are not almost equal'
     try:
-        assert alltrue(equal(shape(x),shape(y))),\
-               msg + ' (shapes mismatch):\n\t' + err_msg
+        cond = alltrue(equal(shape(x),shape(y)))
+        if not cond:
+            msg = msg + ' (shapes mismatch):\n\t'\
+                  'Shape of array 1: %s\n\tShape of array 2: %s' % (shape(x),shape(y))
+        assert cond, msg + '\n\t' + err_msg
         reduced = ravel(equal(less_equal(around(abs(x-y),decimal),10.0**(-decimal)),1))
         cond = alltrue(reduced)
         if not cond:
