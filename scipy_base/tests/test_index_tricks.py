@@ -1,7 +1,12 @@
 import unittest
 from scipy_test.testing import assert_array_equal, assert_equal, rand
 from scipy_test.testing import assert_almost_equal, assert_array_almost_equal
+
+import sys
+from scipy_test.testing import set_package_path
+set_package_path()
 from scipy_base import *
+del sys.path[0]
 
 class test_grid(unittest.TestCase):
     def check_basic(self):
@@ -66,6 +71,9 @@ def test(level=10):
     runner.run(all_tests)
     return runner
 
-
 if __name__ == "__main__":
-    test()
+    if len(sys.argv)>1:
+        level = eval(sys.argv[1])
+    else:
+        level = 1
+    test(level)

@@ -4,11 +4,13 @@
     and routines as they are machine dependent.  Suggestions?
 """
 
-from scipy_base import *
 import unittest
-import scipy_base.limits
 
-
+import sys
+from scipy_test.testing import set_package_path
+set_package_path()
+from scipy_base import *
+del sys.path[0]
 
 ##################################################
 ### Test for sum
@@ -41,4 +43,8 @@ def test(level=10):
 
 
 if __name__ == "__main__":
-    test()
+    if len(sys.argv)>1:
+        level = eval(sys.argv[1])
+    else:
+        level = 1
+    test(level)

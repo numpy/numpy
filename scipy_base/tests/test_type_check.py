@@ -1,14 +1,13 @@
-# only for short term testing
-import sys
-sys.path.insert(0,'../..')
 
 import unittest
 from scipy_test.testing import assert_array_equal, assert_equal, rand
 from scipy_test.testing import assert_almost_equal, assert_array_almost_equal    
 
+import sys
+from scipy_test.testing import set_package_path
+set_package_path()
 from scipy_base import *
-# This won't be needed when we get scipy_base finished.
-from scipy_base.type_check import *
+del sys.path[0]
        
 class test_isscalar(unittest.TestCase):
     def check_basic(self):
@@ -217,4 +216,8 @@ def test(level=10):
 
 
 if __name__ == "__main__":
-    test()
+    if len(sys.argv)>1:
+        level = eval(sys.argv[1])
+    else:
+        level = 1
+    test(level)
