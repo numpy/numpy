@@ -49,7 +49,8 @@ class test_ext_module(unittest.TestCase):
         # function 2 --> a little more complex expression
         var_specs = ext_tools.assign_variable_types(['a'],locals(),globals())
         code = """
-               std::cout << "a:" << a << std::endl;
+               std::cout << std::endl;
+               std::cout << "test printing a value:" << a << std::endl;
                """
         test = ext_tools.ext_function_from_specs('test',code,var_specs)
         mod.add_function(test)
