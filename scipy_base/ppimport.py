@@ -59,7 +59,11 @@ class _AttrLoader:
         self.__dict__['_ppimport_attr_name'] = name
 
     def _ppimport_attr_getter(self):
-        attr = getattr(self.__dict__['_ppimport_attr_module'],
+        module = self.__dict__['_ppimport_attr_module']
+        if isinstance(module, _ModuleLoader):
+            # in case pp module were loaded by other means
+            module = sys.modules[module.__name__]
+        attr = getattr(module,
                        self.__dict__['_ppimport_attr_name'])
         try:
             d = attr.__dict__
