@@ -6,7 +6,7 @@ import base_info
 
 array_convert_code = \
 """
-static PyArrayObject* convert_to_numpy(PyObject* py_obj, char* name)
+static PyArrayObject* convert_to_numpy(PyObject* py_obj, const char* name)
 {
     PyArrayObject* arr_obj = NULL;
 
@@ -18,7 +18,7 @@ static PyArrayObject* convert_to_numpy(PyObject* py_obj, char* name)
     return (PyArrayObject*) py_obj;
 }
 
-static PyArrayObject* py_to_numpy(PyObject* py_obj, char* name)
+static PyArrayObject* py_to_numpy(PyObject* py_obj, const char* name)
 {
     PyArrayObject* arr_obj = NULL;
 
@@ -34,7 +34,8 @@ static PyArrayObject* py_to_numpy(PyObject* py_obj, char* name)
 
 type_check_code = \
 """
-void conversion_numpy_check_type(PyArrayObject* arr_obj, int numeric_type, char* name)
+void conversion_numpy_check_type(PyArrayObject* arr_obj, int numeric_type,
+                                 const char* name)
 {
     // Make sure input has correct numeric type.
     if (arr_obj->descr->type_num != numeric_type)
@@ -49,7 +50,7 @@ void conversion_numpy_check_type(PyArrayObject* arr_obj, int numeric_type, char*
     }
 }
 
-void numpy_check_type(PyArrayObject* arr_obj, int numeric_type, char* name)
+void numpy_check_type(PyArrayObject* arr_obj, int numeric_type, const char* name)
 {
     // Make sure input has correct numeric type.
     if (arr_obj->descr->type_num != numeric_type)
@@ -67,7 +68,8 @@ void numpy_check_type(PyArrayObject* arr_obj, int numeric_type, char* name)
 
 size_check_code = \
 """
-void conversion_numpy_check_size(PyArrayObject* arr_obj, int Ndims, char* name)
+void conversion_numpy_check_size(PyArrayObject* arr_obj, int Ndims, 
+                                 const char* name)
 {
     if (arr_obj->nd != Ndims)
     {
@@ -78,7 +80,7 @@ void conversion_numpy_check_size(PyArrayObject* arr_obj, int Ndims, char* name)
     }    
 }
 
-void numpy_check_size(PyArrayObject* arr_obj, int Ndims, char* name)
+void numpy_check_size(PyArrayObject* arr_obj, int Ndims, const char* name)
 {
     if (arr_obj->nd != Ndims)
     {
