@@ -809,7 +809,7 @@ class gnu_fortran_compiler(fortran_compiler_base):
 
         # only check for more optimization if g77 can handle it.
         if self.get_version():
-            cpu_info = 1
+            march_flag = 1
             if self.version == '0.5.26': # gcc 3.0
                 if cpu.is_AthlonK6():
                     opt = opt + ' -march=k6 '
