@@ -14,6 +14,8 @@ from scipy_distutils.command.build_clib import get_headers,get_directories
 from scipy_distutils import misc_util, log
 from scipy_distutils.misc_util import filter_sources, has_f_sources, \
      has_cxx_sources
+from distutils.errors import DistutilsFileError
+
 
 class build_ext (old_build_ext):
 
@@ -209,8 +211,11 @@ class build_ext (old_build_ext):
                 for f in glob('*.mod'):
                     if f in existing_modules:
                         continue
-                    self.move_file(f, module_build_dir)
-
+                    try:
+                        self.move_file(f, module_build_dir)
+                    except DistutilsFileError:  # already exists in destination
+                        os.remove(f)
+                        
             if f_sources:
                 log.info("compling Fortran sources")
                 f_objects += self.fcompiler.compile(f_sources,
