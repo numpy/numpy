@@ -1,4 +1,4 @@
-
+/* -*- c -*- */
 #include "Python.h"
 #include "Numeric/arrayobject.h"
 #include "Numeric/ufuncobject.h"
@@ -240,7 +240,7 @@ static double asinh(double xx)
 {
     double x;
     int sign;
-    if (x < 0.0) {
+    if (xx < 0.0) {
 	sign = -1;
 	x = -xx;
     }
@@ -302,8 +302,10 @@ static Py_complex c_1 = {1., 0.};
 static Py_complex c_half = {0.5, 0.};
 static Py_complex c_i = {0., 1.};
 static Py_complex c_i2 = {0., 0.5};
+/*
 static Py_complex c_mi = {0., -1.};
 static Py_complex c_pi2 = {M_PI/2., 0.};
+*/
 
 static Py_complex c_quot_fast(Py_complex a, Py_complex b)
 {
@@ -3167,7 +3169,7 @@ static struct PyMethodDef methods[] = {
     {NULL,		NULL, 0}		/* sentinel */
 };
 
-DL_EXPORT(void) initfastumath() {
+DL_EXPORT(void) initfastumath(void) {
     PyObject *m, *d, *s, *f1;
   
     /* Create the module and add the functions */

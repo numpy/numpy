@@ -1,3 +1,4 @@
+/* -*- c -*- */
 #include "Python.h"
 #include "Numeric/arrayobject.h"
 #include "Numeric/ufuncobject.h"
@@ -5,14 +6,15 @@
 #include <math.h>
 #include "mconf_lite.h"
 
-/* Fast umath module whose functions do not check for range and domain errors.
+/* Fast umath module whose functions do not check for range and domain
+   errors.
 
    Replacement for umath + additions for isnan, isfinite, and isinf
-   Also allows comparison operations on complex numbers (just compares the real part)
-   and logical operations.
+   Also allows comparison operations on complex numbers (just compares
+   the real part) and logical operations.
 
    All logical operations return UBYTE arrays.
- */
+*/
 
 #ifndef CHAR_BIT
 #define CHAR_BIT 8
@@ -217,8 +219,6 @@ static void fastumath_DD_D(char **args, int *dimensions, int *steps, void *func)
     }
 }
 
-
-
 #if !defined(HAVE_INVERSE_HYPERBOLIC)
 static double acosh(double x)
 {
@@ -291,8 +291,10 @@ static Py_complex c_1 = {1., 0.};
 static Py_complex c_half = {0.5, 0.};
 static Py_complex c_i = {0., 1.};
 static Py_complex c_i2 = {0., 0.5};
+/*
 static Py_complex c_mi = {0., -1.};
 static Py_complex c_pi2 = {M_PI/2., 0.};
+*/
 
 static Py_complex c_quot_fast(Py_complex a, Py_complex b)
 {
@@ -2598,8 +2600,8 @@ static struct PyMethodDef methods[] = {
     {NULL,		NULL, 0}		/* sentinel */
 };
 
-DL_EXPORT(void) initfastumath() {
-    PyObject *m, *d, *s, *f1, *f2;
+DL_EXPORT(void) initfastumath(void) {
+    PyObject *m, *d, *s, *f1 /*, *f2*/;
   
     /* Create the module and add the functions */
     m = Py_InitModule("fastumath", methods); 
