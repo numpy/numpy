@@ -350,10 +350,9 @@ def objload(file, allglobals):
     fid.close()
 
 def isscalar(num):
-    ascalar = 0.0
-    for type in ScalarType:
-        ascalar += isinstance(num, type)
-    return ascalar
+    if isinstance(num, ArrayType):
+        return len(num.shape) == 0 and num.typecode() != 'O'
+    return type(num) in ScalarType
 
 def all_mat(args):
     return map(Matrix.Matrix,args)
