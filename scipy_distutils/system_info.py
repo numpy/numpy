@@ -782,8 +782,8 @@ def get_atlas_version(**config):
     from exec_command import exec_command,get_pythonexe
     cmd = [get_pythonexe(),'-c',
            '"import imp;imp.load_dynamic(\\"atlas_version\\",\\"%s\\")"'\
-           % (target)]
-    s,o = exec_command(cmd,use_tee=0)
+           % (os.path.basename(target))]
+    s,o = exec_command(cmd,execute_in=os.path.dirname(target),use_tee=0)
     atlas_version = None
     if not s:
         m = re.match(r'ATLAS version (?P<version>\d+[.]\d+[.]\d+)',o)
