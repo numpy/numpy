@@ -35,6 +35,8 @@ else:
     import pre as re
     False = 0
     True = 1
+if sys.version[:5]=='2.2.1':
+    import re
 
 comment_block_exp = re.compile(r'/\*.*?\*/',re.DOTALL)
 # These don't work with Python2.3 : maximum recursion limit exceeded.
