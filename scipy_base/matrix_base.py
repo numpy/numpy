@@ -39,7 +39,7 @@ def rot90(m, k=1):
     elif k == 2: return fliplr(flipud(m))
     else: return fliplr(transpose(m))  # k==3
     
-def eye(N, M=None, k=0, typecode=None):
+def eye(N, M=None, k=0, typecode='d'):
     """ eye returns a N-by-M matrix where the  k-th diagonal is all ones, 
         and everything else is zeros.
     """
