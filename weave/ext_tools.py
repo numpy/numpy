@@ -338,7 +338,9 @@ class ext_module:
         # This is needed so that files build correctly even when different
         # versions of Python are running around.
         import catalog 
-        temp = catalog.default_temp_dir()
+        #temp = catalog.default_temp_dir()
+        # for speed, build in the machines temp directory
+        temp = catalog.intermediate_dir()
         success = build_tools.build_extension(file, temp_dir = temp,
                                               sources = source_files,                                              
                                               compiler_name = compiler,

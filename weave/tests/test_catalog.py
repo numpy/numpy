@@ -76,31 +76,30 @@ class test_get_catalog(unittest.TestCase):
     """
     def get_test_dir(self,erase = 0):
         # make sure tempdir catalog doesn't exist
-        import tempfile
-        temp = tempfile.gettempdir()
-        pardir = os.path.join(temp,'catalog_test'+tempfile.gettempprefix())
+        import tempfile, glob
+        #temp = tempfile.gettempdir()
+        pardir = tempfile.mktemp(suffix='cat_test')
         if not os.path.exists(pardir):
             os.mkdir(pardir)
-        catalog_file = os.path.join(pardir,
-                                    catalog.os_dependent_catalog_name()+'.dat')
-        if os.path.exists(catalog_file) and erase:
-            os.remove(catalog_file)
-        catalog_file = os.path.join(pardir,
-                                    catalog.os_dependent_catalog_name()+'.dir')
-        if os.path.exists(catalog_file) and erase:
-            os.remove(catalog_file)
-        catalog_file = os.path.join(pardir,
-                                    catalog.os_dependent_catalog_name())
-        if os.path.exists(catalog_file) and erase:
-            os.remove(catalog_file)
+        cat_glob = os.path.join(pardir,catalog.os_dependent_catalog_name()+'.*')    
+        cat_files = glob.glob(cat_glob)
+        if erase:
+            for cat_file in cat_files:
+                os.remove(cat_file)
         return pardir
+    def remove_dir(self,d):
+        import distutils.dir_util
+        distutils.dir_util.remove_tree(d)
+            
     def check_nonexistent_catalog_is_none(self):
         pardir = self.get_test_dir(erase=1)
-        cat = catalog.get_catalog(pardir)
+        cat = catalog.get_catalog(pardir,'r')
+        self.remove_dir(pardir)
         assert(cat is None)
     def check_create_catalog(self):
         pardir = self.get_test_dir(erase=1)
         cat = catalog.get_catalog(pardir,'c')
+        self.remove_dir(pardir)
         assert(cat is not None)
 
 class test_catalog(unittest.TestCase):

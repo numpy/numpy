@@ -32,35 +32,42 @@ add_grandparent_to_path(__name__)
 import catalog
 restore_path()
 
-def temp_catalog_files():
+import glob
+
+def temp_catalog_files(prefix=''):
     # might need to add some more platform specific catalog file
     # suffixes to remove.  The .pag was recently added for SunOS
     d = catalog.default_dir()
     f = catalog.os_dependent_catalog_name()
-    suffixes = ['.dat','.dir','.pag','']
-    cat_files = [os.path.join(d,f+suffix) for suffix in suffixes]
-    return cat_files
+    return glob.glob(os.path.join(d,prefix+f+'*'))
+
+from distutils.file_util import move_file, copy_file
+import tempfile
 
 def clear_temp_catalog():
     """ Remove any catalog from the temp dir
     """
-    cat_files = temp_catalog_files()
-    for catalog_file in cat_files:
-        if os.path.exists(catalog_file):
-            if os.path.exists(catalog_file+'.bak'):
-                os.remove(catalog_file+'.bak')
-            os.rename(catalog_file,catalog_file+'.bak')
+    global backup_dir 
+    backup_dir =tempfile.mktemp()
+    os.mkdir(backup_dir)
+    for file in temp_catalog_files():
+        move_file(file,backup_dir)
 
 def restore_temp_catalog():
     """ Remove any catalog from the temp dir
     """
-    cat_files = temp_catalog_files()
-    for catalog_file in cat_files:
-        if os.path.exists(catalog_file+'.bak'):
-            if os.path.exists(catalog_file):            
-                os.remove(catalog_file)
-            os.rename(catalog_file+'.bak',catalog_file)
-
+    global backup_dir
+    cat_dir = catalog.default_dir()
+    for file in os.listdir(backup_dir):
+        file = os.path.join(backup_dir,file)
+        d,f = os.path.split(file)
+        dst_file = os.path.join(cat_dir, f)
+        if os.path.exists(dst_file):
+            os.remove(dst_file)
+        move_file(file,dst_file)
+    os.rmdir(backup_dir)
+    backup_dir = None
+         
 def empty_temp_dir():
     """ Create a sub directory in the temp directory for use in tests
     """

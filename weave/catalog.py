@@ -34,7 +34,7 @@
 import os,sys,string
 #import shelve
 import pickle
-from scipy import dumb_shelve as shelve
+import simple_shelve as shelve
 
 def getmodule(object):
     """ Discover the name of the module where object was defined.
@@ -133,6 +133,17 @@ def default_dir():
         print 'defualt:', path
     return path
 
+def intermediate_dir():
+    """ Location in temp dir for storing .cpp and .o  files during
+        builds.
+    """
+    import tempfile        
+    python_name = "python%d%d_intermediate" % tuple(sys.version_info[:2])    
+    path = os.path.join(tempfile.gettempdir(),python_name)
+    if not os.path.exists(path):
+        os.mkdir(path)
+    return path
+    
 def default_temp_dir():
     path = os.path.join(default_dir(),'temp')
     if not os.path.exists(path):
@@ -194,6 +205,10 @@ def get_catalog(module_path,mode='r'):
         mode uses the standard 'c' = create, 'n' = new, 'r' = read, 
         'w' = write file open modes available for anydbm databases.
         
+        Well... it should be.  Stuck with dumbdbm for now and the modes
+        almost don't matter.  We do some checking for 'r' mode, but that
+        is about it.
+        
         See catalog_path() for more information on module_path.
     """
     if mode not in ['c','r','w','n']:
@@ -202,7 +217,11 @@ def get_catalog(module_path,mode='r'):
     catalog_file = catalog_path(module_path)
     #print catalog_file,mode
     try:
-        sh = shelve.open(catalog_file,mode)
+        # code reliant on the fact that we are using dumbdbm
+        if mode == 'r' and not os.path.exists(catalog_file+'.dat'):
+            sh = None
+        else:
+            sh = shelve.open(catalog_file,mode)
     except: # not sure how to pin down which error to catch yet
         sh = None
     return sh
@@ -327,12 +346,8 @@ class catalog:
         # convention across platforms for its files 
         existing_files = []
         for file in files:
-            try:
-                x = shelve.open(file,'r')
-                x.close()
+            if get_catalog(os.path.dirname(file),'r') is not None:
                 existing_files.append(file)
-            except:
-                pass
         # This is the non-portable (and much faster) old code
         #existing_files = filter(os.path.exists,files)
         return existing_files
@@ -578,9 +593,7 @@ class catalog:
         function_list = [function]
         try:
             function_list = function_list + cat.get(code,[])
-            print code, function_list
         except pickle.UnpicklingError:
-            print 'ooooops'
             pass
         cat[code] = function_list
         # now add needed path information for loading function

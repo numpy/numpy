@@ -3,13 +3,13 @@
 import sys,os
 import ext_tools
 import string
-from catalog import catalog
+import catalog
 import inline_info, cxx_info
 
 # not an easy way for the user_path_list to come in here.
 # the PYTHONCOMPILED environment variable offers the most hope.
 
-function_catalog = catalog()
+function_catalog = catalog.catalog()
 
 
 class inline_ext_function(ext_tools.ext_function):
@@ -376,6 +376,7 @@ def compile_function(code,arg_names,local_dict,global_dict,
                      **kw):
     # figure out where to store and what to name the extension module
     # that will contain the function.
+    #storage_dir = catalog.intermediate_dir()
     module_path = function_catalog.unique_module_name(code,module_dir)
     storage_dir, module_name = os.path.split(module_path)
     mod = inline_ext_module(module_name,compiler)
@@ -394,7 +395,7 @@ def compile_function(code,arg_names,local_dict,global_dict,
     # add the extra "support code" needed by the function to the module.
     if support_code:
         mod.customize.add_support_code(support_code)
-
+    
     # compile code in correct location, with the given compiler and verbosity
     # setting.  All input keywords are passed through to distutils
     mod.compile(location=storage_dir,compiler=compiler,

@@ -34,9 +34,9 @@ class _Database:
 
     def __init__(self, file, mode):
         self._mode = mode
-        self._dirfile = file + _os.extsep + 'dir'
-        self._datfile = file + _os.extsep + 'dat'
-        self._bakfile = file + _os.extsep + 'bak'
+        self._dirfile = file + '.dir'
+        self._datfile = file + '.dat'
+        self._bakfile = file + '.bak'
         # Mod by Jack: create data file if needed
         try:
             f = _open(self._datfile, 'r')
@@ -84,7 +84,7 @@ class _Database:
 ## Does not work under MW compiler
 ##              pos = ((pos + _BLOCKSIZE - 1) / _BLOCKSIZE) * _BLOCKSIZE
 ##              f.seek(pos)
-        npos = ((pos + _BLOCKSIZE - 1) // _BLOCKSIZE) * _BLOCKSIZE
+        npos = ((pos + _BLOCKSIZE - 1) / _BLOCKSIZE) * _BLOCKSIZE
         f.write('\0'*(npos-pos))
         pos = npos
 
