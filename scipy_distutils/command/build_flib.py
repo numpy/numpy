@@ -1182,6 +1182,11 @@ class intel_ia32_fortran_compiler(fortran_compiler_base):
 
         if fc is None:
             fc = 'ifc'
+            self.ver_cmd = fc+' -FI -V -c %s -o %s' %\
+                           self.dummy_fortran_files()
+            if not self.get_version():
+                fc = 'ifort'
+                self.version = None
         if f90c is None:
             f90c = fc
 
@@ -1250,6 +1255,11 @@ class intel_itanium_fortran_compiler(intel_ia32_fortran_compiler):
     def __init__(self, fc=None, f90c=None, verbose=0):
         if fc is None:
             fc = 'efc'
+            self.ver_cmd = fc+' -FI -V -c %s -o %s' %\
+                           self.dummy_fortran_files()
+            if not self.get_version():
+                fc = 'ifort'
+                self.version = None
         intel_ia32_fortran_compiler.__init__(self, fc, f90c, verbose=verbose)
 
 
