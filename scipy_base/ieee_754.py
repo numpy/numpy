@@ -65,7 +65,11 @@ MINF = -PINF
 
 NAN = PINF - PINF
 if not isnan(NAN):
-    raise ValueError("This machine doesn't have NaNs, "
+    if NAN != NAN:
+        def isnan(x):
+            return x!= x
+    else:
+        raise ValueError("This machine doesn't have NaNs, "
                      "'overflows' to a finite number, "
                      "suffers a novel way of implementing C comparisons, "
                      "or is 754-conformant but is using " 
