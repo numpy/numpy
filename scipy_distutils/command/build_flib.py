@@ -36,19 +36,19 @@ Open issues:
  ***  User-defined compiler flags. Do we need --fflags?
 
 Fortran compilers (as to be used with --fcompiler= option):
-      Absoft
-      Forte
+      Absoft  [win32,linux]
+      Forte   [sun]
       (Sun)
-      SGI
-      Intel
-      Itanium
-      NAG
-      Compaq
-      Gnu
-      VAST
+      SGI     [irix]
+      Intel   [win32,linux]
+      Itanium [win32,linux]
+      NAG     [linux]
+      Compaq  [win32,linux]
+      Gnu     [win32,linux,..]
+      VAST    [win32??,linux]
       F       [unsupported]
-      Lahey
-      PG
+      Lahey   [win32??,linux]
+      PG      [linux]
 """
 
 import distutils
@@ -1253,10 +1253,10 @@ class intel_ia32_visual_fortran_compiler(fortran_compiler_base):
                 'Version (?P<version>[^\s*]*)'
 
     compile_switch = ' /c '
-    object_switch = ' /Fo '
+    object_switch = ' /Fo' #No space after /Fo !
     lib_prefix = ''
     lib_suffix = '.lib'
-    lib_ar = 'lib.exe /OUT:'
+    lib_ar = 'lib.exe /verbose /OUT:'
     lib_ranlib = ''
 
     def __init__(self, fc=None, f90c=None, verbose=0):
@@ -1270,23 +1270,15 @@ class intel_ia32_visual_fortran_compiler(fortran_compiler_base):
         self.f77_compiler = fc
         self.f90_compiler = f90c
 
-        switches = ' /MD '
+        switches = ' /nologo /MD /nbs /Qlowercase /us /Qvc6 '
 
-        import cpuinfo
-        cpu = cpuinfo.cpuinfo()
-        # XXX: are the following switches available under win32??
-        #      Please, fix them!
-        if cpu.has_fdiv_bug():
-            switches = switches + ' -fdiv_check '
-        if cpu.has_f00f_bug():
-            switches = switches + ' -0f_check '
         self.f77_switches = self.f90_switches = switches
         self.f77_switches = self.f77_switches + ' -FI -w90 -w95 -cm -c '
-        self.f90_fixed_switch = ' -FI -72 -cm -w '
+        self.f90_fixed_switch = ' -FI -4L72 -cm -w '
 
         self.f77_opt = self.f90_opt = self.get_opt()
         
-        debug = ' -g ' # usage of -C sometimes causes segfaults
+        debug = ' /4Yb /d2 '
         self.f77_debug =  self.f90_debug = debug
 
         self.ver_cmd = self.f77_compiler+' -FI -V -c %s -o %s' %\
@@ -1295,6 +1287,23 @@ class intel_ia32_visual_fortran_compiler(fortran_compiler_base):
         if self.is_available():
             from distutils.msvccompiler import MSVCCompiler
             self.lib_ar = MSVCCompiler().lib + ' /OUT:'
+
+    def get_opt(self):
+        import cpuinfo # No features on Windows
+        cpu = cpuinfo.cpuinfo()
+        opt = ' /O3 /Qip /Qipo /Qipo_obj '
+        if cpu.is_PentiumPro() or cpu.is_PentiumII():
+            opt = opt + ' /G6 /Qaxi '
+        elif cpu.is_PentiumIII():
+            opt = opt + ' /G6 /QaxK '
+        elif cpu.is_Pentium():
+            opt = opt + ' /G5 '
+        elif cpu.is_PentiumIV():
+            opt = opt + ' /G7 /QaxW '
+        if cpu.has_mmx():
+            opt = opt + ' /QaxM '
+        return opt
+
 
     def build_module_switch(self,module_dirs,temp_dir):
         if self.get_version() and self.version >= '7.0':
@@ -1317,7 +1326,7 @@ class intel_itanium_visual_fortran_compiler(intel_ia32_visual_fortran_compiler):
 
     def __init__(self, fc=None, f90c=None, verbose=0):
         if fc is None:
-            fc = 'efl'
+            fc = 'efl' #XXX: this is just a wild guess!
         intel_ia32_visual_fortran_compiler.__init__(self, fc, f90c, verbose=verbose)
 
 class nag_fortran_compiler(fortran_compiler_base):
@@ -1524,9 +1533,11 @@ class compaq_visual_fortran_compiler(fortran_compiler_base):
             from distutils.msvccompiler import MSVCCompiler
             self.lib_ar = MSVCCompiler().lib + ' /OUT:'
 
-        switches = ' /nologo /MD /W1 /iface:cref /iface=nomixed_str_len_arg '
+        switches = ' /nologo /nodebug /MD /WX '\
+                   ' /iface=(cref,nomixed_str_len_arg) /names:lowercase '\
+                   ' /assume:underscore /threads '
         #switches += ' /libs:dll /threads '
-        debug = ' '
+        debug = ' /debug '
         #debug = ' /debug:full /dbglibs '
         
         self.f77_switches = ' /f77rtl /fixed ' + switches
@@ -1538,7 +1549,7 @@ class compaq_visual_fortran_compiler(fortran_compiler_base):
 
     def get_opt(self):
         # XXX: use also /architecture, see gnu_fortran_compiler
-        return ' /Ox '
+        return ' /Ox /fast /optimize:5 /unroll:0 /math_library:fast '
 
 # fperez
 # Code copied from Pierre Schnizer's tutorial, slightly modified.  Fixed a
