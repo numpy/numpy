@@ -3,16 +3,22 @@ from misc_util import get_path
 
 library_path = None 
 
+def dir_exists(dir_list):
+    if dir_list:
+        if os.path.exists(dir_list[0]):
+            return 1
+    return 0
+
 def get_atlas_info():
     if sys.platform  == 'win32':
-        if not library_path:
+        if not dir_exists(library_path):
             atlas_library_dirs=['C:\\atlas\\WinNT_PIIISSE1']
         else:
             atlas_library_dirs = library_path
         blas_libraries = ['f77blas', 'cblas', 'atlas', 'g2c']
         lapack_libraries = ['lapack'] + blas_libraries 
     else:
-        if not library_path:
+        if not dir_exists(library_path):
             atlas_library_dirs = unix_atlas_directory(sys.platform)
         else:
             atlas_library_dirs = library_path
