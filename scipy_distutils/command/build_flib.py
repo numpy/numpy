@@ -1257,6 +1257,7 @@ class intel_itanium_fortran_compiler(intel_ia32_fortran_compiler):
             fc = 'efc'
             self.ver_cmd = fc+' -FI -V -c %s -o %s' %\
                            self.dummy_fortran_files()
+            self.version = None
             if not self.get_version():
                 fc = 'ifort'
                 self.version = None
