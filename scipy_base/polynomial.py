@@ -82,7 +82,7 @@ def roots(p):
     trailing_zeros = len(p) - non_zero[-1] - 1
 
     # strip leading and trailing zeros
-     p = p[int(non_zero[0]):int(non_zero[-1])+1]
+    p = p[int(non_zero[0]):int(non_zero[-1])+1]
     
     # casting: if incoming array isn't floating point, make it floating point.
     if p.typecode() not in ['f','d','F','D']:
