@@ -267,6 +267,7 @@ class ScipyTest:
         return self._get_suite_list(test_module, level, module.__name__)
 
     def _get_suite_list(self, test_module, level, module_name='__main__'):
+        mstr = self._module_str
         if hasattr(test_module,'test_suite'):
             # Using old styled test suite
             try:
