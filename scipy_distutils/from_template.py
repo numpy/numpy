@@ -1,32 +1,52 @@
 #!/usr/bin/python
+"""
 
-# takes templated file .xxx.src and produces .xxx file  where .xxx is .pyf .f90 or .f
-#  using the following template rules
+process_file(filename)
 
-# <...>  is the template All blocks in a source file with names that
-#         contain '<..>' will be replicated according to the
-#         rules in '<..>'.
+  takes templated file .xxx.src and produces .xxx file where .xxx
+  is .pyf .f90 or .f using the following template rules:
 
-# The number of comma-separeted words in '<..>' will determine the number of
-#   replicates.
+  '<..>' denotes a template.
+
+  All function and subroutine blocks in a source file with names that
+  contain '<..>' will be replicated according to the rules in '<..>'.
+
+  The number of comma-separeted words in '<..>' will determine the number of
+  replicates.
  
-# '<..>' may have two different forms, named and short. For example,
+  '<..>' may have two different forms, named and short. For example,
 
-#named:
-#   <p=d,s,z,c> where anywhere inside a block '<p>' will be replaced with
-#  'd', 's', 'z', and 'c' for each replicate of the block.
+  named:
+   <p=d,s,z,c> where anywhere inside a block '<p>' will be replaced with
+   'd', 's', 'z', and 'c' for each replicate of the block.
 
-#  <_c>  is already defined: <_c=s,d,c,z>
-#  <_t>  is already defined: <_t=real,double precision,complex,double complex>
+   <_c>  is already defined: <_c=s,d,c,z>
+   <_t>  is already defined: <_t=real,double precision,complex,double complex>
 
-#short:
-#  <d,s,z,c>, a short form of the named, useful when no <p> appears inside 
-#  a block.
+  short:
+   <s,d,c,z>, a short form of the named, useful when no <p> appears inside 
+   a block.
 
-#  Note that all <..> forms in a block must have the same number of
-#    comma-separated entries. 
+  In general, '<..>' contains a comma separated list of arbitrary
+  expressions. If these expression must contain a comma|leftarrow|rightarrow,
+  then prepend the comma|leftarrow|rightarrow with a backslash.
 
-__all__ = ['process_str']
+  If an expression matches '\\<index>' then it will be replaced
+  by <index>-th expression.
+
+  Note that all '<..>' forms in a block must have the same number of
+  comma-separated entries. 
+
+ Predefined named template rules:
+  <prefix=s,d,c,z>
+  <ftype=real,double precision,complex,double complex>
+  <ftypereal=real,double precision,\\0,\\1>
+  <ctype=float,double,complex_float,complex_double>
+  <ctypereal=float,double,\\0,\\1>
+
+"""
+
+__all__ = ['process_str','process_file']
 
 import string,os,sys
 if sys.version[:3]>='2.3':
@@ -38,163 +58,185 @@ else:
 if sys.version[:5]=='2.2.1':
     import re
 
-comment_block_exp = re.compile(r'/\*.*?\*/',re.DOTALL)
-# These don't work with Python2.3 : maximum recursion limit exceeded.
-#subroutine_exp = re.compile(r'subroutine (?:\s|.)*?end subroutine.*')
-#function_exp = re.compile(r'function (?:\s|.)*?end function.*')
-#reg = re.compile(r"\ssubroutine\s(.+)\(.*\)")
+routine_start_re = re.compile(r'(\n|\A)((     (\$|\*))|)\s*(subroutine|function)\b',re.I)
+routine_end_re = re.compile(r'\n\s*end\s*(subroutine|function)\b.*(\n|\Z)',re.I)
+function_start_re = re.compile(r'\n     (\$|\*)\s*function\b',re.I)
 
 def parse_structure(astr):
-    astr = astr.lower()
+    """ Return a list of tuples for each function or subroutine each
+    tuple is the start and end of a subroutine or function to be
+    expanded.
+    """
+
     spanlist = []
-    # subroutines
     ind = 0
     while 1:
-        start = astr.find("subroutine", ind)
-        if start == -1:
+        m = routine_start_re.search(astr,ind)
+        if m is None:
             break
-        fini1 = astr.find("end subroutine",start)
-        fini2 = astr.find("\n",fini1)
-        spanlist.append((start, fini2))
-        ind = fini2
-
-    # functions
-    ind = 0
-    while 1:
-        start = astr.find("function", ind)
-        if start == -1:
-            break
-        pre = astr.rfind("\n", ind, start)
-        presave = start
-        # look for "$" in previous lines
-        while '$' in astr[pre:presave]:
-            presave = pre
-            pre = astr.rfind("\n", ind, pre-1)
-            
-        fini1 = astr.find("end function",start)
-        fini2 = astr.find("\n",fini1)
-        spanlist.append((pre+1, fini2))
-        ind = fini2
-
-    spanlist.sort()
+        start = m.start()
+        if function_start_re.match(astr,start,m.end()):
+            while 1:
+                i = astr.rfind('\n',ind,start)
+                if i==-1:
+                    break
+                start = i
+                if astr[i:i+7]!='\n     $':
+                    break
+        start += 1
+        m = routine_end_re.search(astr,m.end())
+        ind = end = m and m.end()-1 or len(astr)
+        spanlist.append((start,end))
     return spanlist
 
-# return n copies of substr with template replacement
-_special_names = {'_c':'s,d,c,z',
-                  '_t':'real,double precision,complex,double complex'
-                  }
-template_re = re.compile(r"<([\w]*)>")
-named_re = re.compile(r"<([\w]*)=([, \w]*)>")
-list_re = re.compile(r"<([\w ]+(,\s*[\w]+)+)>")
+template_re = re.compile(r"<\s*(\w*)\s*>")
+named_re = re.compile(r"<\s*([\w]+)\s*=\s*(.*?)\s*>")
+#list_re = re.compile(r"<([\w ]+(,\s*[\w\\]+)+)>")
+list_re = re.compile(r"<\s*((.*?))\s*>")
 
+def find_repl_patterns(astr):
+    reps = named_re.findall(astr)
+    names = {}
+    for rep in reps:
+        name = rep[0].strip() or unique_key(names)
+        repl = rep[1].replace('\,','@comma@')
+        thelist = conv(repl)
+        names[name] = thelist
+    return names
+
+item_re = re.compile(r"\A\\(?P<index>\d+)\Z")
 def conv(astr):
     b = astr.split(',')
-    return ','.join([x.strip() for x in b])
+    l = [x.strip() for x in b]
+    for i in range(len(l)):
+        m = item_re.match(l[i])
+        if m:
+            j = int(m.group('index'))
+            l[i] = l[j]
+    return ','.join(l)
 
 def unique_key(adict):
-    # this obtains a unique key given a dictionary
-    # currently it works by appending together n of the letters of the
-    #   current keys and increasing n until a unique key is found
-    # -- not particularly quick
+    """ Obtain a unique key given a dictionary."""
     allkeys = adict.keys()
     done = False
     n = 1
     while not done:
-        newkey = "".join([x[:n] for x in allkeys])
+        newkey = '__l%s' % (n)
         if newkey in allkeys:
             n += 1
         else:
             done = True
     return newkey
 
-def listrepl(match):
-    global _names
-    thelist = conv(match.group(1))
-    name = None
-    for key in _names.keys():    # see if list is already in dictionary
-        if _names[key] == thelist:
-            name = key
-    if name is None:      # this list is not in the dictionary yet
-        name = "%s" % unique_key(_names)
-        _names[name] = thelist
-    return "<%s>" % name
 
-def namerepl(match):
-    global _names, _thissub
-    name = match.group(1)
-    return _names[name][_thissub]
-
-def expand_sub(substr,extra=''):
-    global _names, _thissub
-    # find all named replacements
-    reps = named_re.findall(substr)
-    _names = {}
-    _names.update(_special_names)
-    numsubs = None
-    for rep in reps:
-        name = rep[0].strip()
-        thelist = conv(rep[1])
-        _names[name] = thelist
-
+template_name_re = re.compile(r'\A\s*(\w*)\s*\Z')
+def expand_sub(substr,names):
+    substr = substr.replace('\>','@rightarrow@')
+    substr = substr.replace('\<','@leftarrow@')
+    lnames = find_repl_patterns(substr)
     substr = named_re.sub(r"<\1>",substr)  # get rid of definition templates
+
+    def listrepl(mobj):
+        thelist = conv(mobj.group(1).replace('\,','@comma@'))
+        if template_name_re.match(thelist):
+            return "<%s>" % (thelist)
+        name = None
+        for key in lnames.keys():    # see if list is already in dictionary
+            if lnames[key] == thelist:
+                name = key
+        if name is None:      # this list is not in the dictionary yet
+            name = unique_key(lnames)
+            lnames[name] = thelist
+        return "<%s>" % name
+
     substr = list_re.sub(listrepl, substr) # convert all lists to named templates
-                                           #  newnames are constructed as needed
+                                           # newnames are constructed as needed
 
-    # make lists out of string entries in name dictionary
-    for name in _names.keys():
-        entry = _names[name]
-        entrylist = entry.split(',')
-        _names[name] = entrylist
-        num = len(entrylist)
-        if numsubs is None:
-            numsubs = num
-        elif (numsubs != num):
-            raise ValueError, "Mismatch in number to replace"
+    numsubs = None
+    rules = {}
+    for r in template_re.findall(substr):
+        if not rules.has_key(r):
+            thelist = lnames.get(r,names.get(r,None))
+            if thelist is None:
+                raise ValueError,'No replicates found for <%s>' % (r)
+            if not names.has_key(r) and not thelist.startswith('_'):
+                names[r] = thelist
+            rules[r] = [i.replace('@comma@',',') for i in thelist.split(',')]
+            num = len(rules[r])
+            if numsubs is None:
+                numsubs = num
+            elif num != numsubs:
+                print num,rules[r]
+                raise ValueError,"Mismatch in number of replacements (%s)"\
+                      " for <%s=%s>" % (numsubs,r,thelist) 
+    if not rules:
+        return substr
 
-    # now replace all keys for each of the lists
-    mystr = ''
+    def namerepl(mobj):
+        name = mobj.group(1)
+        return rules.get(name,(k+1)*[name])[k]
+
+    newstr = ''
     for k in range(numsubs):
-        _thissub = k
-        mystr += template_re.sub(namerepl, substr)
-        mystr += "\n\n" + extra
-    return mystr
+        newstr += template_re.sub(namerepl, substr) + '\n\n'
 
-_head = \
-"""C  This file was autogenerated from a template  DO NOT EDIT!!!!
-C     Changes should be made to the original source (.src) file
-C
-
-"""
-
-def get_line_header(str,beg):
-    extra = []
-    ind = beg-1
-    char = str[ind]
-    while (ind > 0) and (char != '\n'):
-        extra.insert(0,char)
-        ind = ind - 1
-        char = str[ind]
-    return ''.join(extra)
+    newstr = newstr.replace('@rightarrow@','>')
+    newstr = newstr.replace('@leftarrow@','<')
+    return newstr
     
 def process_str(allstr):
     newstr = allstr
-    writestr = _head
+    writestr = '' #_head # using _head will break free-format files
 
     struct = parse_structure(newstr)
-    #  return a (sorted) list of tuples for each function or subroutine
-    #  each tuple is the start and end of a subroutine or function to be expanded
-    
+
     oldend = 0
+    names = {}
+    names.update(_special_names)
     for sub in struct:
         writestr += newstr[oldend:sub[0]]
-        expanded = expand_sub(newstr[sub[0]:sub[1]],get_line_header(newstr,sub[0]))
-        writestr += expanded
+        names.update(find_repl_patterns(newstr[oldend:sub[0]]))
+        writestr += expand_sub(newstr[sub[0]:sub[1]],names)
         oldend =  sub[1]
-
-
     writestr += newstr[oldend:]
+
     return writestr
 
+include_src_re = re.compile(r"(\n|\A)\s*include\s*['\"](?P<name>[\w\d./\\]+[.]src)['\"]",re.I)
+
+def resolve_includes(source):
+    d = os.path.dirname(source)
+    fid = open(source)
+    lines = []
+    for line in fid.readlines():
+        m = include_src_re.match(line)
+        if m:
+            fn = m.group('name')
+            if not os.path.isabs(fn):
+                fn = os.path.join(d,fn)
+            if os.path.isfile(fn):
+                print 'Including file',fn
+                lines.extend(resolve_includes(fn))
+            else:
+                lines.append(line)
+        else:
+            lines.append(line)
+    fid.close()
+    return lines
+
+def process_file(source):
+    lines = resolve_includes(source)
+    return process_str(''.join(lines))
+
+_special_names = find_repl_patterns('''
+<_c=s,d,c,z>
+<_t=real,double precision,complex,double complex>
+<prefix=s,d,c,z>
+<ftype=real,double precision,complex,double complex>
+<ctype=float,double,complex_float,complex_double>
+<ftypereal=real,double precision,\\0,\\1>
+<ctypereal=float,double,\\0,\\1>
+''')
 
 if __name__ == "__main__":
 

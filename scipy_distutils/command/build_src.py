@@ -11,7 +11,7 @@ from distutils.dep_util import newer_group, newer
 
 from scipy_distutils import log
 from scipy_distutils.misc_util import fortran_ext_match, all_strings
-from scipy_distutils.from_template import process_str
+from scipy_distutils.from_template import process_file
 
 class build_src(build_ext.build_ext):
 
@@ -192,10 +192,10 @@ class build_src(build_ext.build_ext):
                     target_dir = appendpath(self.build_src, os.path.dirname(base))
                 self.mkpath(target_dir)
                 target_file = os.path.join(target_dir,os.path.basename(base))
-                if (self.force or newer(source, target_file)):
-                    fid = open(source)
-                    outstr = process_str(fid.read())
-                    fid.close()
+                depends = [source] + extension.depends
+                if (self.force or newer_group(depends, target_file)):
+                    log.info("from_template:> %s" % (target_file))
+                    outstr = process_file(source)
                     fid = open(target_file,'w')
                     fid.write(outstr)
                     fid.close()
@@ -420,8 +420,8 @@ def appendpath(prefix,path):
         d = os.path.commonprefix([absprefix,path])
         subpath = path[len(d):]
         assert not os.path.isabs(subpath),`subpath`
-        return os.path.join(prefix,subpath)
-    return os.path.join(prefix, path)
+        return os.path.normpath(os.path.join(prefix,subpath))
+    return os.path.normpath(os.path.join(prefix, path))
 
 #### SWIG related auxiliary functions ####
 _swig_module_name_match = re.compile(r'\s*%module\s*(?P<name>[\w_]+)',
