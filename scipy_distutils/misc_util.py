@@ -247,6 +247,11 @@ def get_build_temp():
     plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])
     return os.path.join('build','temp'+plat_specifier)
 
+def get_build_platlib():
+    from distutils.util import get_platform
+    plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])
+    return os.path.join('build','lib'+plat_specifier)
+
 class SourceGenerator:  #obsolete feature
     """ SourceGenerator
     func    - creates target, arguments are (target,sources)+args
