@@ -262,7 +262,7 @@ def package_config(primary,dependencies=[]):
         package listed must have a directory with the same name
         in the current or parent working directory.  Further, it
         should have a setup_xxx.py module within that directory that
-        has a configuration() file in it. 
+        has a configuration() function in it. 
     """
     config = []
     config.extend([get_package_config(x) for x in primary])
@@ -273,9 +273,12 @@ def package_config(primary,dependencies=[]):
 list_keys = ['packages', 'ext_modules', 'data_files',
              'include_dirs', 'libraries', 'fortran_libraries',
              'headers']
-dict_keys = ['package_dir']             
+dict_keys = ['package_dir']
 
 def default_config_dict(name = None, parent_name = None):
+    """ Return a configuration dictionary for usage in
+    configuration() function defined in file setup_<name>.py.
+    """
     d={}
     for key in list_keys: d[key] = []
     for key in dict_keys: d[key] = {}
@@ -285,18 +288,22 @@ def default_config_dict(name = None, parent_name = None):
     if full_name:
         # XXX: The following assumes that default_config_dict is called
         #      only from setup_<name>.configuration().
+        #      Todo: implement check for this assumption.
         frame = get_frame(1)
         caller_name = eval('__name__',frame.f_globals,frame.f_locals)
         local_path = get_path(caller_name)
-        if name and parent_name is None:
+        test_path = os.path.join(local_path,'tests')
+        if 0 and name and parent_name is None:
             # Useful for local builds
             d['version'] = get_version(path=local_path)
-
         if os.path.exists(os.path.join(local_path,'__init__.py')):
             d['packages'].append(full_name)
             d['package_dir'][full_name] = local_path
+        if os.path.exists(test_path):
+            d['packages'].append(dot_join(full_name,'tests'))
+            d['package_dir'][dot_join(full_name,'tests')] = test_path
         d['name'] = full_name
-        if not parent_name:
+        if 0 and not parent_name:
             # Include scipy_distutils to local distributions
             for p in ['.','..']:
                 dir_name = os.path.abspath(os.path.join(local_path,
