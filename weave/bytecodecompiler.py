@@ -781,6 +781,8 @@ class CXXCoder(ByteCodeMeaning):
             t = self.types[i]
             code += '%s %s'%(t.cxxtype,n)
         code += ') {\n'
+        code += ' PyObject* tempPY= 0;\n'
+
 
         # Add in non-argument temporaries
         # Assuming first argcount locals are positional args
@@ -808,7 +810,6 @@ class CXXCoder(ByteCodeMeaning):
         # Wrapper
         # -----------------------------------------------
         code += 'static PyObject* wrapper_%s(PyObject*,PyObject* args) {\n'%self.name
-
         code += '  // Length check\n'
         code += '  if ( PyTuple_Size(args) != %d ) {\n'%len(self.signature)
         code += '     PyErr_SetString(PyExc_TypeError,"Expected %d arguments");\n'%len(self.signature)
@@ -863,7 +864,9 @@ class CXXCoder(ByteCodeMeaning):
             code += '  Py_INCREF(Py_None);\n'
             code += '  return Py_None;\n'
         else:
-            result = self.rtype.outbound('_result')
+            result,owned = self.rtype.outbound('_result')
+            if not owned:
+                code += '  Py_INCREF(_result);\n'
             code += '  return %s;\n'%result
         code += '}\n'
         return code
@@ -1071,10 +1074,12 @@ class CXXCoder(ByteCodeMeaning):
         v,t = self.pop()
 
         py = self.unique()
-        self.emit('PyObject* %s = %s;'%(py, t.outbound(v)))
+        code,owned = t.outbound(v)
+        self.emit('PyObject* %s = %s;'%(py, code))
         self.emit('PyFile_WriteObject(%s,%s,Py_PRINT_RAW);'%(
             py,w))
-        self.emit('Py_XDECREF(%s);'%py)
+        if owned:
+            self.emit('Py_XDECREF(%s);'%py)
         return
 
 
@@ -1152,6 +1157,43 @@ class CXXCoder(ByteCodeMeaning):
             print self.__body
             print 'PC',pc
         self.push(v,t)
+        return
+
+
+    ##################################################################
+    #                        MEMBER LOAD_ATTR                        #
+    ##################################################################
+    def LOAD_ATTR(self,pc,namei):
+        v,t = self.pop()
+        attr_name = self.codeobject.co_names[namei]
+        print 'LOAD_ATTR',namei,v,t,attr_name
+        aType,aCode = t.get_attribute(attr_name)
+        print 'ATTR',aType
+        print aCode
+        lhs = self.unique()
+        rhs = v
+        lhsType = aType.cxxtype
+        self.emit(aCode%locals())
+        self.push(lhs,aType)
+        return
+
+
+    ##################################################################
+    #                       MEMBER STORE_ATTR                        #
+    ##################################################################
+    def STORE_ATTR(self,pc,namei):
+        v,t = self.pop()
+        attr_name = self.codeobject.co_names[namei]
+        print 'STORE_ATTR',namei,v,t,attr_name
+        v2,t2 = self.pop()
+        print 'SA value',v2,t2
+        aType,aCode = t.set_attribute(attr_name)
+        print 'ATTR',aType
+        print aCode
+        assert t2 is aType
+        rhs = v2
+        lhs = v
+        self.emit(aCode%locals())
         return
 
     ##################################################################
@@ -1257,9 +1299,10 @@ class CXXCoder(ByteCodeMeaning):
         v,t = self.pop()
         descriptor = typedefs[t]
         py = self.unique()
-        self.emit('PyObject* %s = %s;'%(
-            py,
-            descriptor.outbound%v))
+        code,owned = descriptor.outbound(v)
+        self.emit('PyObject* %s = %s;'%(py,code))
+        if not owned:
+            self.emit('Py_INCREF(%s);'%py)
         mod = self.unique()
         self.emit('PyObject* %s = PyImport_ImportModule("%s");'%(
             mod,module_name))

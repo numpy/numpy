@@ -9,10 +9,11 @@ C++ equivalents to Python functions.
 """
 #**************************************************************************#
 
-from types import FunctionType,IntType,FloatType,StringType,TypeType,XRangeType
+from types import InstanceType,FunctionType,IntType,FloatType,StringType,TypeType,XRangeType
 import inspect
 import md5
 import weave
+import imp
 from bytecodecompiler import CXXCoder,Type_Descriptor,Function_Descriptor
 
 def CStr(s):
@@ -22,13 +23,56 @@ def CStr(s):
     r = repr('"'+s) # Better for embedded quotes
     return '"'+r[2:-1]+'"'
 
+
+##################################################################
+#                         CLASS INSTANCE                         #
+##################################################################
+class Instance(Type_Descriptor):
+    cxxtype = 'PyObject*'
+    
+    def __init__(self,prototype):
+	self.prototype	= prototype
+	return
+
+    def check(self,s):
+        return "PyInstance_Check(%s)"%s
+
+    def inbound(self,s):
+        return s
+
+    def outbound(self,s):
+        return s,0
+
+    def get_attribute(self,name):
+        proto = getattr(self.prototype,name)
+        T = lookup_type(proto)
+        code = 'tempPY = PyObject_GetAttrString(%%(rhs)s,"%s");\n'%name
+        convert = T.inbound('tempPY')
+        code += '%%(lhsType)s %%(lhs)s = %s;\n'%convert
+        return T,code
+
+    def set_attribute(self,name):
+        proto = getattr(self.prototype,name)
+        T = lookup_type(proto)
+        convert,owned = T.outbound('%(rhs)s')
+        code = 'tempPY = %s;'%convert
+        if not owned:
+            code += ' Py_INCREF(tempPY);'
+        code += ' PyObject_SetAttrString(%%(lhs)s,"%s",tempPY);'%name
+        code += ' Py_DECREF(tempPY);\n'
+        return T,code
+
+##################################################################
+#                          CLASS BASIC                           #
+##################################################################
 class Basic(Type_Descriptor):
+    owned = 1
     def check(self,s):
         return "%s(%s)"%(self.checker,s)
     def inbound(self,s):
         return "%s(%s)"%(self.inbounder,s)
     def outbound(self,s):
-        return "%s(%s)"%(self.outbounder,s)
+        return "%s(%s)"%(self.outbounder,s),self.owned
 
 class Basic_Number(Basic):
     def literalizer(self,s):
@@ -71,7 +115,10 @@ class Vector(Type_Descriptor):
     cxxtype = 'PyArrayObject*'
     refcount = 1
     dims = 1
-    module_init_code = 'import_array();'
+    module_init_code = 'import_array();\n'
+    inbounder = "(PyArrayObject*)"
+    outbounder = "(PyObject*)"
+    owned = 0 # Convertion is by casting!
 
     prerequisites = Type_Descriptor.prerequisites+\
                    ['#include "Numeric/arrayobject.h"']
@@ -79,10 +126,12 @@ class Vector(Type_Descriptor):
     def check(self,s):
         return "PyArray_Check(%s) && ((PyArrayObject*)%s)->nd == %d &&  ((PyArrayObject*)%s)->descr->type_num == %s"%(
             s,s,self.dims,s,self.typecode)
+
     def inbound(self,s):
-        return "(PyArrayObject*)(%s)"%s
+        return "%s(%s)"%(self.inbounder,s)
     def outbound(self,s):
-        return "(PyObject*)(%s)"%s
+        return "%s(%s)"%(self.outbounder,s),self.owned
+
     def getitem(self,A,v,t):
         assert self.dims == len(v),'Expect dimension %d'%self.dims
         code = '*((%s*)(%s->data'%(self.cxxbase,A)
@@ -127,6 +176,10 @@ class Doublematrix(matrix):
     cxxbase = 'double'
     pybase = Double
 
+
+##################################################################
+#                          CLASS XRANGE                          #
+##################################################################
 class XRange(Type_Descriptor):
     cxxtype = 'XRange'
     prerequisites = ['''
@@ -134,6 +187,10 @@ class XRange(Type_Descriptor):
     public:
     XRange(long aLow, long aHigh, long aStep=1)
     : low(aLow),high(aHigh),step(aStep)
+    {
+    }
+    XRange(long aHigh)
+    : low(0),high(aHigh),step(1)
     {
     }
     long low;
@@ -152,6 +209,7 @@ DoubleVector = DoubleVector()
 Doublematrix = Doublematrix()
 XRange = XRange()
 
+
 typedefs = {
     IntType: Integer,
     FloatType: Double,
@@ -167,11 +225,26 @@ typedefs = {
 
 import math
 functiondefs = {
+    (len,(String,)):
+    Function_Descriptor(code='strlen(%s)',return_type=Integer),
+    
+    (len,(LongVector,)):
+    Function_Descriptor(code='PyArray_Size((PyObject*)%s)',return_type=Integer),
+
+    (float,(Integer,)):
+    Function_Descriptor(code='(double)(%s)',return_type=Double),
+    
     (range,(Integer,Integer)):
+    Function_Descriptor(code='XRange(%s)',return_type=XRange),
+
+    (range,(Integer)):
     Function_Descriptor(code='XRange(%s)',return_type=XRange),
 
     (math.sin,(Double,)):
     Function_Descriptor(code='sin(%s)',return_type=Double),
+
+    (math.cos,(Double,)):
+    Function_Descriptor(code='cos(%s)',return_type=Double),
 
     (math.sqrt,(Double,)):
     Function_Descriptor(code='sqrt(%s)',return_type=Double),
@@ -187,7 +260,13 @@ def lookup_type(x):
     try:
         return typedefs[T]
     except:
-        return typedefs[(T,len(x.shape),x.typecode())]
+        import Numeric
+        if isinstance(T,Numeric.ArrayType):
+            return typedefs[(T,len(x.shape),x.typecode())]
+        elif T == InstanceType:
+            return Instance(x)
+        else:
+            raise NotImplementedError,T
 
 ##################################################################
 #                        class ACCELERATE                        #
@@ -236,11 +315,15 @@ class accelerate:
 
         # See if we have an accelerated version of module
         try:
+            print 'lookup',self.module.__name__+'_weave'
             accelerated_module = __import__(self.module.__name__+'_weave')
+            print 'have accelerated',self.module.__name__+'_weave'
             fast = getattr(accelerated_module,identifier)
             return fast
-        except:
+        except ImportError:
             accelerated_module = None
+        except AttributeError:
+            pass
 
         P = self.accelerate(signature,identifier)
 
@@ -250,7 +333,7 @@ class accelerate:
         weave.build_tools.build_extension(self.module.__name__+'_weave.cpp',verbose=2)
 
         if accelerated_module:
-            accelerated_module = reload(accelerated_module)
+            raise NotImplementedError,'Reload'
         else:
             accelerated_module = __import__(self.module.__name__+'_weave')
 
