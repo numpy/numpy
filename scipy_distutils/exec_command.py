@@ -72,7 +72,7 @@ def get_pythonexe():
 def splitcmdline(line):
     """ Inverse of ' '.join(sys.argv).
     """
-    log.info('splitcmdline(%r)' % (line))
+    log.debug('splitcmdline(%r)' % (line))
     lst = []
     flag = 0
     s,pc,cc = '','',''
@@ -285,9 +285,11 @@ def _exec_command_posix( command,
             # if command_tee fails then fall back to robust exec_command
             log.warn('_exec_command_posix failed (status=%s)' % status)
             return _exec_command(command, use_shell=use_shell, **env)
+
     if stsfile is not None:
         f = open(stsfile,'r')
-        status = int(f.read())
+        status_text = f.read()
+        status = int(status_text)
         f.close()
         os.remove(stsfile)
 
@@ -370,7 +372,7 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
             argv = command[:]
         else:
             argv = splitcmdline(command)
-        
+
     if hasattr(os,'spawnvpe'):
         spawn_command = os.spawnvpe
     else:
@@ -378,11 +380,11 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         argv[0] = find_executable(argv[0])
         if not os.path.isfile(argv[0]):
             log.warn('Executable %s does not exist' % (argv[0]))
-        argv[0] = quote_arg(argv[0])
-        if os.name in ['nt','dos']:
-            # argv[0] might be internal command
-            argv = [os.environ['COMSPEC'],'/C'] + argv
-            using_command = 1
+            if os.name in ['nt','dos']:
+                # argv[0] might be internal command
+                argv = [os.environ['COMSPEC'],'/C'] + argv
+                using_command = 1
+
     # sys.__std*__ is used instead of sys.std* because environments
     # like IDLE, PyCrust, etc overwrite sys.std* commands.
     so_fileno = sys.__stdout__.fileno()
@@ -401,18 +403,21 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
     log.debug('Running %s(%s,%r,%r,os.environ)' \
               % (spawn_command.__name__,os.P_WAIT,argv[0],argv))
 
+    argv0 = argv[0]
+    if not using_command:
+        argv[0] = quote_arg(argv0)
+
     so_flush()
     se_flush()
     os.dup2(fout.fileno(),so_fileno)
-    if 0 and using_command:
+    if using_command:
         #XXX: disabled for now as it does not work from cmd under win32.
         #     Tests fail on msys
         os.dup2(ferr.fileno(),se_fileno)
     else:
         os.dup2(fout.fileno(),se_fileno)
-
     try:
-        status = spawn_command(os.P_WAIT,argv[0],argv,os.environ)
+        status = spawn_command(os.P_WAIT,argv0,argv,os.environ)
     except OSError,errmess:
         status = 999
         sys.stderr.write('%s: %s'%(errmess,argv[0]))
