@@ -57,6 +57,7 @@ from types import *
 from distutils.ccompiler import CCompiler,gen_preprocess_options
 from distutils.command.build_clib import build_clib
 from distutils.errors import *
+from distutils.version import LooseVersion
 from scipy_distutils.misc_util import red_text,green_text,yellow_text,\
      cyan_text
 
@@ -699,7 +700,7 @@ class absoft_fortran_compiler(move_modules_mixin,fortran_compiler_base):
                                 ' -YEXT_NAMES=LCS -s'
             self.f90_opt = ' -O'                            
             self.f90_fixed_switch = ' -f fixed '
-            self.f77_switches = ' -N22 -N90 -N110 -f -s -N15'
+            self.f77_switches = ' -N22 -N90 -N110 -f -s'
             self.f77_opt = ' -O'
             self.libraries = ['fio', 'f77math', 'f90math']
         else:
@@ -707,9 +708,8 @@ class absoft_fortran_compiler(move_modules_mixin,fortran_compiler_base):
                                 ' -YCOM_PFX  -YEXT_PFX' \
                                 ' -YCOM_SFX=_ -YEXT_SFX=_ -YEXT_NAMES=LCS' \
                                 ' -s'
-            self.f90_opt = ' -O'                            
-            self.f77_switches = ' -N22 -N90 -N110 -f -s -N15'
-            # Though -N15 is undocumented, it works with Absoft 8.0 on Linux
+            self.f90_opt = ' -O'   
+            self.f77_switches = ' -N22 -N90 -N110 -f -s'
             self.f77_opt = ' -O'
 
             self.f90_fixed_switch = ' -f fixed '
@@ -724,7 +724,14 @@ class absoft_fortran_compiler(move_modules_mixin,fortran_compiler_base):
 
         self.ver_cmd = self.f77_compiler + ' -V -c %s -o %s' % \
                        self.dummy_fortran_files()
-            
+
+        if os.name != 'nt' and self.is_available():
+            if LooseVersion(self.get_version())<='4.6':
+                self.f77_switches += ' -B108'
+            else:
+                # Though -N15 is undocumented, it works with Absoft 8.0 on Linux
+                self.f77_switches += ' -N15'
+
     def build_module_switch(self,module_dirs,temp_dir):
         """ Absoft 6.2 is brain dead as far as I can tell and doesn't have
             a way to specify where to put output directories.  This will have
