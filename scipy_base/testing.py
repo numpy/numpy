@@ -1,6 +1,12 @@
-import os,sys,time
-import unittest
 
+__all__ = []
+
+import os,sys,time,glob,string,traceback,unittest
+
+from Numeric import alltrue,equal,shape,ravel,around,zeros,Float64
+import scipy_base.fastumath
+
+__all__.append('ScipyTestCase')
 class ScipyTestCase (unittest.TestCase):
 
     def measure(self,code_str,times=1):
@@ -27,7 +33,7 @@ def remove_ignored_patterns(files,pattern):
         if not fnmatch(file,pattern):
             good_files.append(file)
     return good_files        
-    
+
 def remove_ignored_files(original,ignored_files,cur_dir):
     """ This is actually expanded to do pattern matching.
     
@@ -48,7 +54,8 @@ def remove_ignored_files(original,ignored_files,cur_dir):
         good_files = remove_ignored_patterns(good_files,pattern)
         
     return good_files
-                            
+
+__all__.append('harvest_modules')
 def harvest_modules(package,ignore=None):
     """* Retreive a list of all modules that live within a package.
 
@@ -57,12 +64,9 @@ def harvest_modules(package,ignore=None):
          directories.  The returned list contains actual modules, not
          just their names.
     *"""
-    import os,sys
-
     d,f = os.path.split(package.__file__)
 
     # go through the directory and import every py file there.
-    import glob
     common_dir = os.path.join(d,'*.py')
     py_files = glob.glob(common_dir)
     #py_files.remove(os.path.join(d,'__init__.py'))
@@ -90,6 +94,7 @@ def harvest_modules(package,ignore=None):
         
     return all_modules
 
+__all__.append('harvest_packages')
 def harvest_packages(package,ignore = None):
     """ Retreive a list of all sub-packages that live within a package.
 
@@ -98,7 +103,6 @@ def harvest_packages(package,ignore = None):
          directories.  The returned list contains actual package objects, not
          just their names.
     """
-    import os,sys
     join = os.path.join
 
     d,f = os.path.split(package.__file__)
@@ -127,6 +131,7 @@ def harvest_packages(package,ignore = None):
                 output_exception() 
     return all_packages
 
+__all__.append('harvest_modules_and_packages')
 def harvest_modules_and_packages(package,ignore=None):
     """ Retreive list of all packages and modules that live within a package.
 
@@ -135,6 +140,7 @@ def harvest_modules_and_packages(package,ignore=None):
     all = harvest_modules(package,ignore) + harvest_packages(package,ignore)
     return all
 
+__all__.append('harvest_test_suites')
 def harvest_test_suites(package,ignore = None,level=10):
     """
         package -- the module to test.  This is an actual module object 
@@ -144,7 +150,6 @@ def harvest_test_suites(package,ignore = None,level=10):
                    of tests.  This is a fast "smoke test".  Tests that take
                    longer to run should have higher numbers ranging up to 10.
     """
-    import unittest
     suites=[]
     test_modules = harvest_modules_and_packages(package,ignore)
     #for i in test_modules:
@@ -174,11 +179,11 @@ def harvest_test_suites(package,ignore = None,level=10):
     total_suite = unittest.TestSuite(suites)
     return total_suite
 
+__all__.append('module_test')
 def module_test(mod_name,mod_file,level=10):
     """*
 
     *"""
-    import os,sys,string
     #print 'testing', mod_name
     d,f = os.path.split(mod_file)
 
@@ -204,9 +209,9 @@ def module_test(mod_name,mod_file,level=10):
     # remove test directory from python path.
     sys.path = sys.path[1:]
 
+__all__.append('module_test_suite')
 def module_test_suite(mod_name,mod_file,level=10):
     #try:
-        import os,sys,string
         print ' creating test suite for:', mod_name
         d,f = os.path.split(mod_file)
 
@@ -236,6 +241,7 @@ def module_test_suite(mod_name,mod_file,level=10):
 
 # Utility function to facilitate testing.
 
+__all__.append('assert_equal')
 def assert_equal(actual,desired,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
@@ -252,6 +258,7 @@ def assert_equal(actual,desired,err_msg='',verbose=1):
              + '\nACTUAL: ' + str(actual)
     assert desired == actual, msg
 
+__all__.append('assert_almost_equal')
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
@@ -268,6 +275,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
              + '\nACTUAL: ' + str(actual)
     assert round(abs(desired - actual),decimal) == 0, msg
 
+__all__.append('assert_approx_equal')
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
@@ -289,52 +297,47 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
              + '\nACTUAL: ' + str(actual)
     assert math.fabs(sc_desired - sc_actual) < pow(10.,-1*significant), msg
     
-try:
-    # Numeric specific testss
-    from Numeric import *
-    from scipy_base.fastumath import *
-    
-    def assert_array_equal(x,y,err_msg=''):
-        msg = '\nArrays are not equal'
-        try:
-            assert alltrue(equal(shape(x),shape(y))),\
-                   msg + ' (shapes mismatch):\n\t' + err_msg
-            reduced = equal(x,y)
-            assert alltrue(ravel(reduced)),\
-                   msg + ':\n\t' + err_msg
-        except ValueError:
-            print shape(x),shape(y)
-            raise ValueError, 'arrays are not equal'
-    
-    def assert_array_almost_equal(x,y,decimal=6,err_msg=''):
-        msg = '\nArrays are not almost equal'
-        try:
-            assert alltrue(equal(shape(x),shape(y))),\
-                   msg + ' (shapes mismatch):\n\t' + err_msg
-            reduced = equal(around(abs(x-y),decimal),0)
-            assert alltrue(ravel(reduced)),\
-                   msg + ':\n\t' + err_msg
-        except ValueError:
-            print sys.exc_value
-            print shape(x),shape(y)
-            print x, y
-            raise ValueError, 'arrays are not almost equal'
 
-    def rand(*args):
-        """ Returns an array of random numbers with the given shape.
-            used for testing
-        """
-        import whrandom
-        results = zeros(args,Float64)
-        f = results.flat
-        for i in range(len(f)):
-            f[i] = whrandom.random()
-        return results        
+__all__.append('assert_array_equal')
+def assert_array_equal(x,y,err_msg=''):
+    msg = '\nArrays are not equal'
+    try:
+        assert alltrue(equal(shape(x),shape(y))),\
+               msg + ' (shapes mismatch):\n\t' + err_msg
+        reduced = equal(x,y)
+        assert alltrue(ravel(reduced)),\
+               msg + ':\n\t' + err_msg
+    except ValueError:
+        print shape(x),shape(y)
+        raise ValueError, 'arrays are not equal'
 
-except:
-    pass # Numeric not installed
+__all__.append('assert_array_almost_equal')
+def assert_array_almost_equal(x,y,decimal=6,err_msg=''):
+    msg = '\nArrays are not almost equal'
+    try:
+        assert alltrue(equal(shape(x),shape(y))),\
+               msg + ' (shapes mismatch):\n\t' + err_msg
+        reduced = equal(around(abs(x-y),decimal),0)
+        assert alltrue(ravel(reduced)),\
+               msg + ':\n\t' + err_msg
+    except ValueError:
+        print sys.exc_value
+        print shape(x),shape(y)
+        print x, y
+        raise ValueError, 'arrays are not almost equal'
     
-import traceback,sys
+__all__.append('rand')
+def rand(*args):
+    """ Returns an array of random numbers with the given shape.
+    used for testing
+    """
+    import whrandom
+    results = zeros(args,Float64)
+    f = results.flat
+    for i in range(len(f)):
+        f[i] = whrandom.random()
+    return results        
+
 def output_exception():
     try:
         type, value, tb = sys.exc_info()
@@ -346,4 +349,3 @@ def output_exception():
               (filename, lineno, type.__name__, str(value), function)
     finally:
         type = value = tb = None # clean up
-
