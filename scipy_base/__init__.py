@@ -116,6 +116,10 @@ machar_single    --  MachAr instance storing the parameters of system
 machar_double    --  MachAr instance storing the parameters of system
                      double precision floating point arithmetics
 
+Threading tricks
+================
+ParallelExec     --  Execute commands in parallel thread.
+migrate          --  Migrate accessing an object to parallel thread.
 """
 
 from scipy_base_version import scipy_base_version as __version__
@@ -148,6 +152,7 @@ from matrix_base import *
 from polynomial import *
 from scimath import *
 from machar import *
+from pexec import ParallelExec, migrate
 
 Inf = inf = fastumath.PINF
 try:
