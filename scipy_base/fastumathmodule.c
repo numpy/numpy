@@ -36,9 +36,9 @@ static PyObject *Array0d_FromDouble(double val){
     return (PyObject *)a;
 }
 
-static double pinf_init() {
+static double pinf_init(void) {
     double mul = 1e10;
-    double tmp, tmp2;
+    double tmp = 0.0;
     double pinf;
 
     pinf = mul;
@@ -50,9 +50,9 @@ static double pinf_init() {
     return pinf;
 }
 
-static double pzero_init() {
+static double pzero_init(void) {
     double div = 1e10;
-    double tmp, tmp2;
+    double tmp = 0.0;
     double pinf;
 
     pinf = div;

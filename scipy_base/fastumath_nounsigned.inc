@@ -342,6 +342,7 @@ static Py_complex c_quot_fast(Py_complex a, Py_complex b)
     return r;
 }
 
+#if PY_VERSION_HEX >= 0x02020000
 static Py_complex c_quot_floor_fast(Py_complex a, Py_complex b)
 {
   /* Not really sure what to do here, but it looks like Python takes the 
@@ -354,6 +355,7 @@ static Py_complex c_quot_floor_fast(Py_complex a, Py_complex b)
   r.real = floor(r.real);
   return r;
 }
+#endif
 
 static Py_complex c_sqrt(Py_complex x)
 {
@@ -1073,6 +1075,7 @@ static void DOUBLE_divide(char **args, int *dimensions, int *steps, void *func) 
 	*((double *)op)=*((double *)i1) / *((double *)i2);
     }
 }
+#if PY_VERSION_HEX >= 0x02020000
 static void UBYTE_floor_divide(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
@@ -1186,7 +1189,7 @@ static void DOUBLE_true_divide(char **args, int *dimensions, int *steps, void *f
 	*((double *)op)=*((double *)i1) / *((double *)i2);
     }
 }
-
+#endif
 static void UBYTE_divide_safe(char **args, int *dimensions, int *steps, void *func) {
     int i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
@@ -2294,8 +2297,12 @@ static PyUFuncGenericFunction add_functions[] = { UBYTE_add,  SBYTE_add,  SHORT_
 static PyUFuncGenericFunction subtract_functions[] = { UBYTE_subtract,  SBYTE_subtract,  SHORT_subtract,  INT_subtract,  LONG_subtract,  FLOAT_subtract,  DOUBLE_subtract,  CFLOAT_subtract,  CDOUBLE_subtract,  NULL,  };
 static PyUFuncGenericFunction multiply_functions[] = { UBYTE_multiply,  SBYTE_multiply,  SHORT_multiply,  INT_multiply,  LONG_multiply,  FLOAT_multiply,  DOUBLE_multiply,  NULL,  NULL,  NULL,  };
 static PyUFuncGenericFunction divide_functions[] = { UBYTE_divide,  SBYTE_divide,  SHORT_divide,  INT_divide,  LONG_divide,  FLOAT_divide,  DOUBLE_divide,  NULL,  NULL,  NULL,  };
+
+#if PY_VERSION_HEX >= 0x02020000
 static PyUFuncGenericFunction floor_divide_functions[] = { UBYTE_floor_divide,  SBYTE_floor_divide,  SHORT_floor_divide, INT_floor_divide, LONG_floor_divide,  FLOAT_floor_divide,  DOUBLE_floor_divide,  NULL,  NULL,  NULL,  };
 static PyUFuncGenericFunction true_divide_functions[] = { UBYTE_true_divide,  SBYTE_true_divide,  SHORT_true_divide, INT_true_divide, LONG_true_divide,  FLOAT_true_divide,  DOUBLE_true_divide,  NULL,  NULL,  NULL,  };
+#endif
+
 static PyUFuncGenericFunction divide_safe_functions[] = { UBYTE_divide_safe,  SBYTE_divide_safe,  SHORT_divide_safe,  INT_divide_safe,  LONG_divide_safe,  FLOAT_divide_safe,  DOUBLE_divide_safe,  };
 static PyUFuncGenericFunction conjugate_functions[] = { UBYTE_conjugate,  SBYTE_conjugate,  SHORT_conjugate,  INT_conjugate,  LONG_conjugate,  FLOAT_conjugate,  DOUBLE_conjugate,  CFLOAT_conjugate,  CDOUBLE_conjugate,  NULL,  };
 static PyUFuncGenericFunction remainder_functions[] = { UBYTE_remainder,  SBYTE_remainder,  SHORT_remainder,  INT_remainder,  LONG_remainder,  NULL,  NULL,  NULL,  };
@@ -2327,8 +2334,10 @@ static void * add_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void 
 static void * subtract_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  };
 static void * multiply_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  };
 static void * divide_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  };
+#if PY_VERSION_HEX >= 0x02020000
 static void * floor_divide_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,};
 static void * true_divide_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,};
+#endif
 static void * divide_safe_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  };
 static void * conjugate_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  };
 static void * remainder_data[] = { (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  (void *)NULL,  };
@@ -2365,8 +2374,10 @@ static void * arctan2_data[] = { (void *)atan2,  (void *)atan2,  (void *)"arctan
 static void * fmod_data[] = { (void *)fmod,  (void *)fmod,  (void *)"fmod",  };
 static void * hypot_data[] = { (void *)hypot,  (void *)hypot,  (void *)"hypot",  };
 static char add_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  PyArray_OBJECT,  };
+#if PY_VERSION_HEX >= 0x02020000
 static char floor_divide_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_INT, PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  };
 static char true_divide_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_FLOAT,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_FLOAT,  PyArray_SHORT,  PyArray_SHORT, PyArray_FLOAT,  PyArray_INT,  PyArray_INT,  PyArray_DOUBLE, PyArray_LONG,  PyArray_LONG,  PyArray_DOUBLE,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  PyArray_OBJECT,  };
+#endif
 static char divide_safe_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  };
 static char conjugate_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_CFLOAT,  PyArray_CFLOAT,  PyArray_CDOUBLE,  PyArray_CDOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  };
 static char remainder_signatures[] = { PyArray_UBYTE,  PyArray_UBYTE,  PyArray_UBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SBYTE,  PyArray_SHORT,  PyArray_SHORT,  PyArray_SHORT,  PyArray_INT,  PyArray_INT,  PyArray_INT,  PyArray_LONG,  PyArray_LONG,  PyArray_LONG,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_FLOAT,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_DOUBLE,  PyArray_OBJECT,  PyArray_OBJECT,  PyArray_OBJECT,  };
@@ -2412,7 +2423,7 @@ static void InitOperators(PyObject *dictionary) {
     invert_data[5] = (void *)PyNumber_Invert;
     left_shift_data[5] = (void *)PyNumber_Lshift;
     right_shift_data[5] = (void *)PyNumber_Rshift;
-
+#if PY_VERSION_HEX >= 0x02020000
     true_divide_data[7] = (void *)c_quot_fast;
     true_divide_data[8] = (void *)c_quot_fast;
     true_divide_data[9] = (void *)PyNumber_TrueDivide;
@@ -2426,7 +2437,7 @@ static void InitOperators(PyObject *dictionary) {
     floor_divide_functions[7] = fastumath_FF_F_As_DD_D;
     floor_divide_functions[8] = fastumath_DD_D;
     floor_divide_functions[9] = PyUFunc_OO_O;
-
+#endif
 
     add_functions[9] = PyUFunc_OO_O;
     subtract_functions[9] = PyUFunc_OO_O;
@@ -2508,6 +2519,7 @@ static void InitOperators(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "divide", f);
     Py_DECREF(f);
 
+#if PY_VERSION_HEX >= 0x02020000
     f = PyUFunc_FromFuncAndData(floor_divide_functions, floor_divide_data, floor_divide_signatures, 
 				10, 2, 1, PyUFunc_One, "floor_divide", 
 				"Floor divide the arguments elementwise.", 0);
@@ -2518,6 +2530,7 @@ static void InitOperators(PyObject *dictionary) {
 				"True divide the arguments elementwise.", 0);
     PyDict_SetItemString(dictionary, "true_divide", f);
     Py_DECREF(f);
+#endif
 
     f = PyUFunc_FromFuncAndData(divide_safe_functions, divide_safe_data, divide_safe_signatures, 
 				7, 2, 1, PyUFunc_One, "divide_safe", 
