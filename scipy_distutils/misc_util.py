@@ -3,7 +3,8 @@ import os,sys,string
 # Hooks for colored terminal output.
 # See also http://www.livinglogic.de/Python/ansistyle
 def terminal_has_colors():
-    if not sys.stdout.isatty(): return 0
+    if not hasattr(sys.stdout,'isatty') or not sys.stdout.isatty(): 
+        return 0
     try:
         import curses
         curses.setupterm()
