@@ -157,6 +157,69 @@ static void * isinf_data[] = {(void *)NULL, (void *)NULL, (void *)NULL, (void *)
 static void * isfinite_data[] = {(void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL};
 
 
+
+/* Some functions needed from ufunc object, so that Py_complex's aren't being returned 
+between code possibly compiled with different compilers.
+*/
+
+typedef Py_complex ComplexBinaryFunc(Py_complex x, Py_complex y);
+typedef Py_complex ComplexUnaryFunc(Py_complex x);
+
+static void fastumath_F_F_As_D_D(char **args, int *dimensions, int *steps, void *func) {
+    int i; Py_complex x;
+    char *ip1=args[0], *op=args[1];
+    for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
+	x.real = ((float *)ip1)[0]; x.imag = ((float *)ip1)[1];
+	x = ((ComplexUnaryFunc *)func)(x);
+	((float *)op)[0] = (float)x.real;
+	((float *)op)[1] = (float)x.imag;
+    }
+}
+
+static void fastumath_D_D(char **args, int *dimensions, int *steps, void *func) {
+    int i; Py_complex x;
+    char *ip1=args[0], *op=args[1];
+    for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
+	x.real = ((double *)ip1)[0]; x.imag = ((double *)ip1)[1];
+	x = ((ComplexUnaryFunc *)func)(x);
+	((double *)op)[0] = x.real;
+	((double *)op)[1] = x.imag;
+    }
+}
+
+
+static void fastumath_FF_F_As_DD_D(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2];
+    char *ip1=args[0], *ip2=args[1], *op=args[2];
+    int n=dimensions[0];
+    Py_complex x, y;
+	
+    for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
+	x.real = ((float *)ip1)[0]; x.imag = ((float *)ip1)[1];
+	y.real = ((float *)ip2)[0]; y.imag = ((float *)ip2)[1];
+	x = ((ComplexBinaryFunc *)func)(x, y);
+	((float *)op)[0] = (float)x.real;
+	((float *)op)[1] = (float)x.imag;
+    }
+}
+
+static void fastumath_DD_D(char **args, int *dimensions, int *steps, void *func) {
+    int i, is1=steps[0],is2=steps[1],os=steps[2];
+    char *ip1=args[0], *ip2=args[1], *op=args[2];
+    int n=dimensions[0];
+    Py_complex x,y;
+	
+    for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
+	x.real = ((double *)ip1)[0]; x.imag = ((double *)ip1)[1];
+	y.real = ((double *)ip2)[0]; y.imag = ((double *)ip2)[1];
+	x = ((ComplexBinaryFunc *)func)(x, y);
+	((double *)op)[0] = x.real;
+	((double *)op)[1] = x.imag;
+    }
+}
+
+
+
 #if !defined(HAVE_INVERSE_HYPERBOLIC)
 static double acosh(double x)
 {
@@ -2219,14 +2282,14 @@ static void InitOperators(PyObject *dictionary) {
 
     add_functions[9] = PyUFunc_OO_O;
     subtract_functions[9] = PyUFunc_OO_O;
-    multiply_functions[7] = PyUFunc_FF_F_As_DD_D;
-    multiply_functions[8] = PyUFunc_DD_D;
+    multiply_functions[7] = fastumath_FF_F_As_DD_D;
+    multiply_functions[8] = fastumath_DD_D;
     multiply_functions[9] = PyUFunc_OO_O;
-    divide_functions[7] = PyUFunc_FF_F_As_DD_D;
-    divide_functions[8] = PyUFunc_DD_D;
+    divide_functions[7] = fastumath_FF_F_As_DD_D;
+    divide_functions[8] = fastumath_DD_D;
     divide_functions[9] = PyUFunc_OO_O;
-    divide_safe_functions[7] = PyUFunc_FF_F_As_DD_D;
-    divide_safe_functions[8] = PyUFunc_DD_D;
+    divide_safe_functions[7] = fastumath_FF_F_As_DD_D;
+    divide_safe_functions[8] = fastumath_DD_D;
     divide_safe_functions[9] = PyUFunc_OO_O;
     conjugate_functions[9] = PyUFunc_O_O_method;
     remainder_functions[5] = PyUFunc_ff_f_As_dd_d;
@@ -2234,8 +2297,8 @@ static void InitOperators(PyObject *dictionary) {
     remainder_functions[7] = PyUFunc_OO_O;
     power_functions[5] = PyUFunc_ff_f_As_dd_d;
     power_functions[6] = PyUFunc_dd_d;
-    power_functions[7] = PyUFunc_FF_F_As_DD_D;
-    power_functions[8] = PyUFunc_DD_D;
+    power_functions[7] = fastumath_FF_F_As_DD_D;
+    power_functions[8] = fastumath_DD_D;
     power_functions[9] = PyUFunc_OO_O;
     absolute_functions[8] = PyUFunc_O_O;
     negative_functions[8] = PyUFunc_O_O;
@@ -2247,8 +2310,8 @@ static void InitOperators(PyObject *dictionary) {
     right_shift_functions[5] = PyUFunc_OO_O;
     arccos_functions[0] = PyUFunc_f_f_As_d_d;
     arccos_functions[1] = PyUFunc_d_d;
-    arccos_functions[2] = PyUFunc_F_F_As_D_D;
-    arccos_functions[3] = PyUFunc_D_D;
+    arccos_functions[2] = fastumath_F_F_As_D_D;
+    arccos_functions[3] = fastumath_D_D;
     arccos_functions[4] = PyUFunc_O_O_method;
     ceil_functions[0] = PyUFunc_f_f_As_d_d;
     ceil_functions[1] = PyUFunc_d_d;
