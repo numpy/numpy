@@ -96,7 +96,8 @@ def squeeze(a):
     "Returns a with any ones from the shape of a removed"
     a = asarray(a)
     b = asarray(a.shape)
-    return reshape (a, tuple (compress (not_equal (b, 1), b)))
+    val = reshape (a, tuple (compress (not_equal (b, 1), b)))
+    return val
 
 def atleast_1d(*arys):
     """ Force a sequence of arrays to each be at least 1D.
