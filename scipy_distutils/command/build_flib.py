@@ -597,7 +597,21 @@ class fortran_compiler_base(CCompiler):
         """
 
     def __str__(self):
-        return "%s %s" % (self.vendor, self.get_version())
+        s = ["%s\n version=%r" % (self.vendor, self.get_version())]
+        s.extend([' F77=%r' % (self.f77_compiler),
+                  ' F77FLAGS=%r' % (self.f77_switches),
+                  ' F77OPT=%r' % (self.f77_opt)])
+        if hasattr(self,'f90_compiler'):
+            s.extend([' F90=%r' % (self.f90_compiler),
+                      ' F90FLAGS=%r' % (self.f90_switches),
+                      ' F90OPT=%r' % (self.f90_opt),
+                      ' F90FIXED=%r' % (self.f90_fixed_switch)])
+        if self.libraries:
+            s.append(' LIBS=%r' % ' '.join(['-l%s'%n for n in self.libraries]))
+        if self.library_dirs:
+            s.append(' LIBDIRS=%r' % \
+                     ' '.join(['-L%s'%n for n in self.library_dirs]))
+        return string.join(s,'\n')
 
 
 class absoft_fortran_compiler(fortran_compiler_base):
@@ -897,6 +911,8 @@ class gnu_fortran_compiler(fortran_compiler_base):
         if sys.platform == 'win32':
             self.libraries = ['gcc',g2c]
             self.library_dirs = gcc_lib_dir
+        elif sys.platform == 'darwin':
+            pass
         else:
             # On linux g77 does not need lib_directories to be specified.
             self.libraries = [g2c]
@@ -918,6 +934,17 @@ class gnu_fortran_compiler(fortran_compiler_base):
 
         # only check for more optimization if g77 can handle it.
         if self.get_version():
+            if sys.platform=='darwin':
+                if cpu.is_ppc():
+                    opt = opt + ' -arch ppc '
+                elif cpu.is_i386():
+                    opt = opt + ' -arch i386 '
+                for a in '601 602 603 603e 604 604e 620 630 740 7400 7450 750'\
+                    '403 505 801 821 823 860'.split():
+                    if getattr(cpu,'is_ppc%s'%a)():
+                        opt=opt+' -mcpu=%s -mtune=%s ' % (a,a)
+                        break           
+                return opt
             march_flag = 1
             if self.version == '0.5.26': # gcc 3.0
                 if cpu.is_AthlonK6():
@@ -929,6 +956,10 @@ class gnu_fortran_compiler(fortran_compiler_base):
             elif self.version >= '3.1.1': # gcc >= 3.1.1
                 if cpu.is_AthlonK6():
                     opt = opt + ' -march=k6 '
+                elif cpu.is_AthlonK6_2():
+                    opt = opt + ' -march=k6-2 '
+                elif cpu.is_AthlonK6_3():
+                    opt = opt + ' -march=k6-3 '
                 elif cpu.is_AthlonK7():
                     opt = opt + ' -march=athlon '
                 elif cpu.is_PentiumIV():
@@ -956,7 +987,7 @@ class gnu_fortran_compiler(fortran_compiler_base):
             elif cpu.is_i386():
                 opt = opt + ' -march=i386 '
             if cpu.is_Intel():
-                opt = opt + ' -malign-double -fomit-frame-pointer '     
+                opt = opt + ' -malign-double -fomit-frame-pointer '
         return opt
         
     def find_lib_directories(self):
@@ -981,9 +1012,8 @@ class gnu_fortran_compiler(fortran_compiler_base):
     def get_linker_so(self):
         lnk = None
         # win32 linking should be handled by standard linker
-        if ((sys.platform  != 'win32')  and
-            (sys.platform  != 'cygwin') and
-            (os.uname()[0] != 'Darwin')):
+        # Darwin g77 cannot be used as a linker.
+        if sys.platform not in ['win32','cygwin','darwin']:
             lnk = [self.f77_compiler,'-shared']
         return lnk
 

@@ -73,6 +73,12 @@ class linux_cpuinfo(cpuinfo_base):
     def _is_AMD(self):
         return self.info[0]['vendor_id']=='AuthenticAMD'
 
+    def _is_AthlonK6_2(self):
+        return self._is_AMD() and self.info[0]['model'] == '2'
+
+    def _is_AthlonK6_3(self):
+        return self._is_AMD() and self.info[0]['model'] == '3'
+
     def _is_AthlonK6(self):
         return re.match(r'.*?AMD-K6',self.info[0]['model name']) is not None
 
@@ -228,29 +234,65 @@ class irix_cpuinfo(cpuinfo_base):
     def _is_IP32_5k(self): return self.__machine(32) and self._is_r5000()
     def _is_IP32_10k(self): return self.__machine(32) and self._is_r10000()
 
+class darwin_cpuinfo(cpuinfo_base):
+
+    info = None
+    
+    def __init__(self):
+        if self.info is not None:
+            return
+        info = []
+        try:
+            import commands
+            status,output = commands.getstatusoutput('arch')
+            if not status:
+                if not info: info.append({})
+                info[-1]['arch'] = string.strip(output)
+            status,output = commands.getstatusoutput('machine')
+            if not status:
+                if not info: info.append({})
+                info[-1]['machine'] = string.strip(output)
+        except:
+            print sys.exc_value,'(ignoring)'
+        self.__class__.info = info
+
+    def _not_impl(self): pass
+
+    def _is_i386(self):
+        return self.info[0]['arch']=='i386'
+    def _is_ppc(self):
+        return self.info[0]['arch']=='ppc'
+
+    def __machine(self,n):
+        return self.info[0]['machine'] == 'ppc%s'%n
+    def _is_ppc601(self): return self.__machine(601)
+    def _is_ppc602(self): return self.__machine(602)
+    def _is_ppc603(self): return self.__machine(603)
+    def _is_ppc603e(self): return self.__machine('603e')
+    def _is_ppc604(self): return self.__machine(604)
+    def _is_ppc604e(self): return self.__machine('604e')
+    def _is_ppc620(self): return self.__machine(620)
+    def _is_ppc630(self): return self.__machine(630)
+    def _is_ppc740(self): return self.__machine(740)
+    def _is_ppc7400(self): return self.__machine(7400)
+    def _is_ppc7450(self): return self.__machine(7450)
+    def _is_ppc750(self): return self.__machine(750)
+    def _is_ppc403(self): return self.__machine(403)
+    def _is_ppc505(self): return self.__machine(505)
+    def _is_ppc801(self): return self.__machine(801)
+    def _is_ppc821(self): return self.__machine(821)
+    def _is_ppc823(self): return self.__machine(823)
+    def _is_ppc860(self): return self.__machine(860)
 
 if sys.platform[:5] == 'linux': # variations: linux2,linux-i386 (any others?)
     cpuinfo = linux_cpuinfo
 elif sys.platform[:4] == 'irix':
     cpuinfo = irix_cpuinfo
+elif sys.platform == 'darwin':
+    cpuinfo = darwin_cpuinfo
 #XXX: other OS's. Eg. use _winreg on Win32. Or os.uname on unices.
 else:
     cpuinfo = cpuinfo_base
-
-
-"""
-laptop:
-[{'cache size': '256 KB', 'cpu MHz': '399.129', 'processor': '0', 'fdiv_bug': 'no', 'coma_bug': 'no', 'model': '6', 'cpuid level': '2', 'model name': 'Mobile Pentium II', 'fpu_exception': 'yes', 'hlt_bug': 'no', 'bogomips': '796.26', 'vendor_id': 'GenuineIntel', 'fpu': 'yes', 'wp': 'yes', 'cpu family': '6', 'f00f_bug': 'no', 'stepping': '13', 'flags': 'fpu vme de pse tsc msr pae mce cx8 sep mtrr pge mca cmov pat pse36 mmx fxsr'}]
-
-kev:
-[{'cache size': '512 KB', 'cpu MHz': '350.799', 'processor': '0', 'fdiv_bug': 'no', 'coma_bug': 'no', 'model': '5', 'cpuid level': '2', 'model name': 'Pentium II (Deschutes)', 'fpu_exception': 'yes', 'hlt_bug': 'no', 'bogomips': '699.59', 'vendor_id': 'GenuineIntel', 'fpu': 'yes', 'wp': 'yes', 'cpu family': '6', 'f00f_bug': 'no', 'stepping': '3', 'flags': 'fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 mmx fxsr'}, {'cache size': '512 KB', 'cpu MHz': '350.799', 'processor': '1', 'fdiv_bug': 'no', 'coma_bug': 'no', 'model': '5', 'cpuid level': '2', 'model name': 'Pentium II (Deschutes)', 'fpu_exception': 'yes', 'hlt_bug': 'no', 'bogomips': '701.23', 'vendor_id': 'GenuineIntel', 'fpu': 'yes', 'wp': 'yes', 'cpu family': '6', 'f00f_bug': 'no', 'stepping': '3', 'flags': 'fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 mmx fxsr'}]
-
-ath:
-[{'cache size': '512 KB', 'cpu MHz': '503.542', 'processor': '0', 'fdiv_bug': 'no', 'coma_bug': 'no', 'model': '1', 'cpuid level': '1', 'model name': 'AMD-K7(tm) Processor', 'fpu_exception': 'yes', 'hlt_bug': 'no', 'bogomips': '1002.70', 'vendor_id': 'AuthenticAMD', 'fpu': 'yes', 'wp': 'yes', 'cpu family': '6', 'f00f_bug': 'no', 'stepping': '2', 'flags': 'fpu vme de pse tsc msr pae mce cx8 sep mtrr pge mca cmov pat mmx syscall mmxext 3dnowext 3dnow'}]
-
-fiasco:
-[{'max. addr. space #': '127', 'cpu': 'Alpha', 'cpu serial number': 'Linux_is_Great!', 'kernel unaligned acc': '0 (pc=0,va=0)', 'system revision': '0', 'system variation': 'LX164', 'cycle frequency [Hz]': '533185472', 'system serial number': 'MILO-2.0.35-c5.', 'timer frequency [Hz]': '1024.00', 'cpu model': 'EV56', 'platform string': 'N/A', 'cpu revision': '0', 'BogoMIPS': '530.57', 'cpus detected': '0', 'phys. address bits': '40', 'user unaligned acc': '1340 (pc=2000000ec90,va=20001156da4)', 'page size [bytes]': '8192', 'system type': 'EB164', 'cpu variation': '0'}]
-"""
 
 if __name__ == "__main__":
     cpu = cpuinfo()
