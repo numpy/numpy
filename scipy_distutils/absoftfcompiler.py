@@ -23,7 +23,7 @@ class AbsoftFCompiler(FCompiler):
         'compiler_f77' : ["f77"],
         'compiler_fix' : ["f90"],
         'compiler_f90' : ["f90"],
-        'linker_so'    : ["f77","-dll"],
+        'linker_so'    : ["f77","-shared"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
@@ -31,7 +31,7 @@ class AbsoftFCompiler(FCompiler):
     if os.name != 'nt':
         pic_flags = ['-fpic']
     module_dir_switch = None
-    module_include_switch = '-p '
+    module_include_switch = '-p'
 
     def get_library_dirs(self):
         opt = FCompiler.get_library_dirs(self)

@@ -12,6 +12,7 @@ from distutils.version import LooseVersion
 import log
 from exec_command import exec_command
 from misc_util import compiler_to_string
+from distutils.spawn import _nt_quote_args            
 
 # Using customized CCompiler.spawn.
 def CCompiler_spawn(self, cmd, display=None):
@@ -19,8 +20,10 @@ def CCompiler_spawn(self, cmd, display=None):
         display = cmd
         if type(display) is type([]): display = ' '.join(display)
     log.info(display)
+    if type(cmd) is type([]) and os.name == 'nt':
+        cmd = _nt_quote_args(cmd)
     s,o = exec_command(cmd)
-    if os.name != 'posix': print s, o
+    if os.name != 'posix': print len(cmd), s, o
     if s:
         if type(cmd) is type([]):
             cmd = ' '.join(cmd)
@@ -57,14 +60,10 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     if extra_postargs:
         display += "\nextra options: '%s'" % (' '.join(extra_postargs))
     log.info(display)
-
+    
     # build any sources in same order as they were originally specified
     #   especially important for fortran .f90 files using modules
     if isinstance(self, FCompiler):
-        from distutils.sysconfig import python_build
-        objects = self.object_filenames(sources,
-                                        strip_dir=python_build,
-                                        output_dir=output_dir)
         objects_to_build = build.keys()
         for obj in objects:
             if obj in objects_to_build:

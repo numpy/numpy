@@ -229,8 +229,11 @@ class build_ext (old_build_ext):
             objects.extend(ext.extra_objects)
         extra_args = ext.extra_link_args or []
 
-        old_linker_so_0 = self.compiler.linker_so[0]
-
+        try:
+            old_linker_so_0 = self.compiler.linker_so[0]
+        except:
+            pass
+        
         use_fortran_linker = getattr(ext,'language','c') in ['f77','f90']
         c_libraries = []
         c_library_dirs = []
@@ -252,6 +255,10 @@ class build_ext (old_build_ext):
                     use_fortran_linker = 1
                     break
 
+        # Always use system linker on win32
+        if sys.platform == 'win32':
+            use_fortran_linker = 0
+            
         if use_fortran_linker:
             if cxx_sources:
                 # XXX: Which linker should be used, Fortran or C++?
@@ -281,7 +288,11 @@ class build_ext (old_build_ext):
              debug=self.debug,
              build_temp=self.build_temp,**kws)
 
-        self.compiler.linker_so[0] = old_linker_so_0
+        try:
+            self.compiler.linker_so[0] = old_linker_so_0
+        except:
+            pass
+
         return
 
     def get_source_files (self):

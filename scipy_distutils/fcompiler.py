@@ -1,7 +1,7 @@
 """scipy_distutils.fcompiler
 
 Contains FCompiler, an abstract base class that defines the interface
-for the Scipy_istutils Fortran compiler abstraction model.
+for the Scipy_distutils Fortran compiler abstraction model.
 
 """
 
@@ -23,6 +23,8 @@ from distutils.core import Command
 from distutils.util import split_quoted
 from distutils.fancy_getopt import FancyGetopt
 from distutils.sysconfig import get_config_var
+from distutils.spawn import _nt_quote_args            
+
 
 from scipy_distutils.command.config_compiler import config_fc
 
@@ -438,6 +440,8 @@ class FCompiler(CCompiler):
         assert self.compile_switch.strip()
         s_args = [self.compile_switch, src]
 
+        if os.name == 'nt':
+            compiler = _nt_quote_args(compiler)
         command = compiler + cc_args + s_args + o_args + extra_postargs
 
         display = '%s: %s' % (os.path.basename(compiler[0]) + flavor,
@@ -538,8 +542,9 @@ class FCompiler(CCompiler):
                 raise NotImplementedError,self.__class__.__name__+'.linker_exe attribute'
             else:
                 linker = self.linker_so[:]
+            if os.name == 'nt':
+                linker = _nt_quote_args(linker)
             command = linker + ld_args
-
             try:
                 self.spawn(command)
             except DistutilsExecError, msg:
