@@ -274,7 +274,10 @@ class build_src(build_ext.build_ext):
                 log.debug("  skipping '%s' f2py interface (up-to-date)" % (source))
         else:
             #XXX TODO: --inplace support for sdist command
-            target_dir = self.build_src
+            if type(extension) is type(()): name = extension[0]
+            else: name = extension.name
+            target_dir = os.path.join(*([self.build_src]\
+                                        +name.split('.')[:-1]))
             target_file = os.path.join(target_dir,ext_name + 'module.c')
             new_sources.append(target_file)
             depends = f_sources + extension.depends
