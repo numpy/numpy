@@ -337,7 +337,13 @@ def ppresolve(a,ignore_failure=None):
         return a
     if type(a) is type(''):
         ns = a.split('.')
-        a = ppimport(ns[0])
+        if ignore_failure:
+            try:
+                a = ppimport(ns[0])
+            except:
+                return a
+        else:
+            a = ppimport(ns[0])
         b = [ns[0]]
         del ns[0]
         while ns:
