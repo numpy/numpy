@@ -13,7 +13,15 @@ __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin', 'alen', 'ptp','cumsum','take',
            'copy', 'prod','cumprod','diff','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
-           'nanargmin','nanmin','sum','vectorize','asarray_chkfinite']
+           'nanargmin','nanmin','sum','vectorize','asarray_chkfinite',
+           'alter_numeric', 'restore_numeric','isaltered']
+
+alter_numeric = _compiled_base.alter_numeric
+restore_numeric = _compiled_base.restore_numeric
+
+def isaltered():
+    val = str(type(array([1])))
+    return 'scipy' in val
 
 round = Numeric.around
 

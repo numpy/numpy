@@ -678,15 +678,126 @@ static PyObject *map_PyFunc(PyObject *self, PyObject *args)
   return out;
 }
 
+/* Update Numeric object behavior */
 
-/* Initialization function for the module (*must* be called initArray) */
+/* A copy of the original PyArrayType structure is kept and can be used
+   to restore the original Numeric behavior at any time. 
+*/
+
+static PyTypeObject BackupPyArray_Type;
+static PyNumberMethods backup_array_as_number;
+static PySequenceMethods backup_array_as_sequence;
+static PyMappingMethods backup_array_as_mapping;
+static PyBufferProcs backup_array_as_buffer;
+static int numeric_stored = 0;
+
+/* make sure memory copy is going on with this */
+void scipy_numeric_save() {
+
+    PyArrayObject *temp=NULL;
+    int mydims[1]={1};
+    PyTypeObject *obtype;
+
+    if (!numeric_stored) {
+	temp = (PyArrayObject *)PyArray_FromDims(1,mydims,PyArray_SHORT);
+	if (temp==NULL) return;
+	obtype = temp->ob_type;
+
+	memcpy(&BackupPyArray_Type, obtype, sizeof(PyTypeObject));
+	memcpy(&backup_array_as_number, obtype->tp_as_number,
+	       sizeof(PyNumberMethods));
+	memcpy(&backup_array_as_sequence, obtype->tp_as_sequence,
+	       sizeof(PySequenceMethods));
+	memcpy(&backup_array_as_mapping, obtype->tp_as_mapping,
+	       sizeof(PyMappingMethods));
+	memcpy(&backup_array_as_buffer, obtype->tp_as_buffer,
+	       sizeof(PyBufferProcs));
+	numeric_stored = 1;
+	Py_DECREF(temp);
+    }
+
+}
+
+void scipy_numeric_restore() {
+    PyArrayObject *temp=NULL;
+    int mydims[1]={1};
+    PyTypeObject *obtype;
+
+    if (numeric_stored) {
+	temp = (PyArrayObject *)PyArray_FromDims(1,mydims,PyArray_SHORT);
+	if (temp==NULL) return;
+	obtype = temp->ob_type;
+
+	memcpy(obtype, &BackupPyArray_Type, sizeof(PyTypeObject));
+	memcpy(obtype->tp_as_number, &backup_array_as_number, 
+	       sizeof(PyNumberMethods));
+	memcpy(obtype->tp_as_sequence, &backup_array_as_sequence,  
+	       sizeof(PySequenceMethods));
+	memcpy(obtype->tp_as_mapping, &backup_array_as_mapping,
+	       sizeof(PyMappingMethods));
+	memcpy(obtype->tp_as_buffer, &backup_array_as_buffer,
+	       sizeof(PyBufferProcs));
+	Py_DECREF(temp);
+    }
+}
+
+static const char *_scipystr = "array (scipy)";
+
+void scipy_numeric_alter() {
+    PyArrayObject *temp=NULL;
+    int mydims[1]={1};
+    PyTypeObject *obtype;
+    
+
+    temp = (PyArrayObject *)PyArray_FromDims(1,mydims,PyArray_SHORT);
+    if (temp==NULL) return;
+    obtype = temp->ob_type;    
+    
+    obtype->tp_name = _scipystr;
+
+    Py_DECREF(temp);
+}
+
+static char numeric_alter_doc[] = "alter_numeric() update the behavior of Numeric objects.\n\n  1. Change coercion rules so that multiplying by a scalar does not upcast.\n  2. Add index slicing capability to Numeric arrays.\n  3. Speed up inner loops.\n\nThis call changes the behavior for ALL Numeric arrays currently defined\n  and to be defined in the future.  The old behavior can be restored for ALL\n  arrays using numeric_restore().";
+
+static PyObject *numeric_behavior_alter(PyObject *self, PyObject *args)
+{
+
+    if (!PyArg_ParseTuple ( args, "")) return NULL;
+
+    scipy_numeric_save();
+    scipy_numeric_alter();
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static char numeric_restore_doc[] = "restore_numeric() restore the default behavior of Numeric objects.\n\n  SEE slter_numeric.\n";
+
+static PyObject *numeric_behavior_restore(PyObject *self, PyObject *args)
+{
+
+    if (!PyArg_ParseTuple ( args, "")) return NULL;
+    
+    scipy_numeric_restore();
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 
 static struct PyMethodDef methods[] = {
     {"arraymap", map_PyFunc, METH_VARARGS, arraymap_doc},
-    {"_unique",	 (PyCFunction)base_unique, METH_VARARGS | METH_KEYWORDS, doc_base_unique},
-    {"_insert",	 (PyCFunction)base_insert, METH_VARARGS | METH_KEYWORDS, doc_base_insert},
+    {"_unique",	 (PyCFunction)base_unique, METH_VARARGS | METH_KEYWORDS, 
+     doc_base_unique},
+    {"_insert",	 (PyCFunction)base_insert, METH_VARARGS | METH_KEYWORDS, 
+     doc_base_insert},
+    {"alter_numeric", numeric_behavior_alter, METH_VARARGS, 
+     numeric_alter_doc},
+    {"restore_numeric", numeric_behavior_restore, METH_VARARGS, 
+     numeric_restore_doc},
     {NULL, NULL}    /* sentinel */
 };
+
+/* Initialization function for the module (*must* be called initArray) */
 
 DL_EXPORT(void) init_compiled_base(void) {
     PyObject *m, *d, *s;
