@@ -1,6 +1,12 @@
 from distutils.command.sdist import *
 from distutils.command.sdist import sdist as old_sdist
 
+import sys, os
+mod = __import__(__name__)
+sys.path.append(os.path.dirname(mod.__file__))
+import line_endings
+sys.path = sys.path[:-1]
+
 class sdist(old_sdist):
     def add_defaults (self):
         old_sdist.add_defaults(self)
@@ -96,13 +102,17 @@ class sdist(old_sdist):
         if not self.keep_temp:
             dir_util.remove_tree(base_dir, self.verbose, self.dry_run)
 
-    def convert_line_endings(base_dir,fmt):
+    def convert_line_endings(self,base_dir,fmt):
         """ Convert all text files in a tree to have correct line endings.
             
             gztar --> \n   (Unix style)
             zip   --> \r\n (Windows style)
         """
-        
+        if fmt == 'gztar':
+            line_endings.dos2unix_dir(base_dir)
+        elif fmt == 'zip':
+            line_endings.unix2dos_dir(base_dir)
+            
 def remove_common_base(files):
     """ Remove the greatest common base directory from all the
         absolute file paths in the list of files.  files in the
