@@ -436,8 +436,6 @@ def get_subpackages(path,
             del sys.path[0]
 
     for package_name in include_packages:
-        if package_name in ignore_packages:
-            continue
         sys.path.insert(0,os.path.join(path, package_name))
         try:
             exec 'import setup_%s as setup_module' % (package_name)
