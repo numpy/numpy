@@ -2,6 +2,7 @@
 import re
 import os
 import sys
+import warnings
 
 from cpuinfo import cpu
 from fcompiler import FCompiler
@@ -49,11 +50,27 @@ class GnuFCompiler(FCompiler):
     def get_flags_linker_so(self):
         opt = []
         if sys.platform=='darwin':
-            if os.path.realpath(sys.executable).startswith('/System'):
+            try:
+                import MacOS
+            except ImportError:
+                is_framework = False
+            else:
+                is_framework = (MacOS.linkmodel == 'framework')
+            if is_framework:
                 # This is when Python is from Apple framework
-                opt.extend(["-Wl,-framework","-Wl,Python"])
-            #else we are running in Fink python.
-            opt.extend(["-lcc_dynamic","-bundle"])
+                target = os.environ.get('MACOSX_DEPLOYMENT_TARGET', None)
+                if target is None:
+                    target = '10.3'
+                major, minor = target.split('.')
+                if int(minor) < 3:
+                    minor = '3'
+                    warnings.warn('Environment variable ' 
+                        'MACOSX_DEPLOYMENT_TARGET reset to 10.3')
+                os.environ['MACOSX_DEPLOYMENT_TARGET'] = '%s.%s' % (major,
+                    minor)
+                
+                opt.extend(['-undefined', 'dynamic_lookup'])
+            opt.append('-bundle')
         else:
             opt.append("-shared")
         if sys.platform[:5]=='sunos':
@@ -96,6 +113,8 @@ class GnuFCompiler(FCompiler):
             opt.append('gcc')
         if g2c is not None:
             opt.append(g2c)
+        if sys.platform == 'darwin':
+            opt.append('cc_dynamic')
         return opt
 
     def get_flags_debug(self):
