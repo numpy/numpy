@@ -81,8 +81,8 @@ def CCompiler_customize_cmd(self, cmd):
         self.set_runtime_library_dirs(cmd.rpath)
     if getattr(cmd,'link_objects',None) is not None:
         self.set_link_objects(cmd.link_objects)
-    self.show_customization()
     return
+
 CCompiler.customize_cmd = new.instancemethod(\
     CCompiler_customize_cmd,None,CCompiler)
 
@@ -98,11 +98,23 @@ CCompiler.show_customization = new.instancemethod(\
     CCompiler_show_customization,None,CCompiler)
 
 
-def CCompiler_customize(self, dist):
+def CCompiler_customize(self, dist, need_cxx=0):
     # See FCompiler.customize for suggested usage.
     log.info('customize %s' % (self.__class__.__name__))
     customize_compiler(self)
+    if need_cxx:
+        if self.compiler[0].find('gcc')>=0:
+            if sys.version[:3]>='2.3':
+                if not self.compiler_cxx:
+                    self.compiler_cxx = [self.compiler[0].replace('gcc','g++')]\
+                                        + self.compiler[1:]
+            else:
+                self.compiler_cxx = [self.compiler[0].replace('gcc','g++')]\
+                                    + self.compiler[1:]
+        else:
+            log.warn('Missing compiler_cxx fix for '+self.__class__.__name__)
     return
+
 CCompiler.customize = new.instancemethod(\
     CCompiler_customize,None,CCompiler)
 

@@ -50,14 +50,6 @@ class build_ext (old_build_ext):
         # bogus linking commands. Extensions must
         # explicitly specify the C libraries that they use.
 
-        from distutils.ccompiler import new_compiler
-        self.compiler = new_compiler(compiler=self.compiler,
-                                     verbose=self.verbose,
-                                     dry_run=self.dry_run,
-                                     force=self.force)
-        self.compiler.customize(self.distribution)
-        self.compiler.customize_cmd(self)
-        
         # Determine if Fortran compiler is needed.
         if build_clib and build_clib.fcompiler is not None:
             need_f_compiler = 1
@@ -81,6 +73,15 @@ class build_ext (old_build_ext):
                 need_cxx_compiler = 1
                 break
 
+        from distutils.ccompiler import new_compiler
+        self.compiler = new_compiler(compiler=self.compiler,
+                                     verbose=self.verbose,
+                                     dry_run=self.dry_run,
+                                     force=self.force)
+        self.compiler.customize(self.distribution,need_cxx=need_cxx_compiler)
+        self.compiler.customize_cmd(self)
+        self.compiler.show_customization()
+ 
         # Initialize Fortran/C++ compilers if needed.
         if need_f_compiler:
             from scipy_distutils.fcompiler import new_fcompiler
@@ -90,18 +91,7 @@ class build_ext (old_build_ext):
                                            force=self.force)
             self.fcompiler.customize(self.distribution)
             self.fcompiler.customize_cmd(self)
-        if need_cxx_compiler:
-            c = self.compiler
-            if c.compiler[0].find('gcc')>=0:
-                if sys.version[:3]>='2.3':
-                    if not c.compiler_cxx:
-                        c.compiler_cxx = [c.compiler[0].replace('gcc','g++')]\
-                                         + c.compiler[1:]
-                else:
-                    c.compiler_cxx = [c.compiler[0].replace('gcc','g++')]\
-                                     + c.compiler[1:]
-            else:
-                print 'XXX: Fix compiler_cxx for',c.__class__.__name__
+            self.fcompiler.show_customization()
 
         # Build extensions
         self.build_extensions()
@@ -146,7 +136,8 @@ class build_ext (old_build_ext):
         for undef in ext.undef_macros:
             macros.append((undef,))
 
-        c_sources, cxx_sources, f_sources, fmodule_sources = filter_sources(ext.sources)
+        c_sources, cxx_sources, f_sources, fmodule_sources = \
+                   filter_sources(ext.sources)
 
         if sys.version[:3]>='2.3':
             kws = {'depends':ext.depends}

@@ -12,7 +12,8 @@ from distutils.command.build_clib import show_compilers
 
 from scipy_distutils import log, misc_util
 from distutils.dep_util import newer_group
-from scipy_distutils.misc_util import filter_sources, has_f_sources
+from scipy_distutils.misc_util import filter_sources, \
+     has_f_sources, has_cxx_sources
 
 def get_headers(directory_list):
     # get *.h files from list of directories
@@ -67,14 +68,17 @@ class build_clib(old_build_clib):
                 return 1
         return 0
 
+    def have_cxx_sources(self):
+        for (lib_name, build_info) in self.libraries:
+            if has_cxx_sources(build_info.get('sources',[])):
+                return 1
+        return 0
+
     def run(self):
         if not self.libraries:
             return
 
         # Make sure that library sources are complete.
-        # XXX: btw, support for building build_clib sources is not
-        #      implemented in build_src yet, I'll do it as soon as
-        #      such a need first raises [pearu].
         for (lib_name, build_info) in self.libraries:
             if not misc_util.all_strings(build_info.get('sources',[])):
                 raise TypeError,'Library "%s" sources contains unresolved'\
@@ -84,12 +88,14 @@ class build_clib(old_build_clib):
         self.compiler = new_compiler(compiler=self.compiler,
                                      dry_run=self.dry_run,
                                      force=self.force)
-        self.compiler.customize(self.distribution)
+        self.compiler.customize(self.distribution,need_cxx=self.have_cxx_sources())
 
         libraries = self.libraries
         self.libraries = None
         self.compiler.customize_cmd(self)
         self.libraries = libraries
+
+        self.compiler.show_customization()
 
         if self.have_f_sources():
             from scipy_distutils.fcompiler import new_fcompiler
@@ -98,13 +104,14 @@ class build_clib(old_build_clib):
                                            dry_run=self.dry_run,
                                            force=self.force)
             self.fcompiler.customize(self.distribution)
-
+    
             libraries = self.libraries
             self.libraries = None
             self.fcompiler.customize_cmd(self)
             self.libraries = libraries
 
-        #XXX: C++ linker support, see build_ext.py
+            self.fcompiler.show_customization()
+
         self.build_libraries(self.libraries)
         return
 
@@ -159,6 +166,7 @@ class build_clib(old_build_clib):
 
             macros = build_info.get('macros')
             include_dirs = build_info.get('include_dirs')
+            extra_postargs = build_info.get('extra_compiler_args') or []
 
             c_sources, cxx_sources, f_sources, fmodule_sources \
                        = filter_sources(sources)
@@ -167,14 +175,26 @@ class build_clib(old_build_clib):
                 print 'XXX: Fortran 90 module support not implemented or tested'
                 f_sources.extend(fmodule_sources)
 
-            if cxx_sources:
-                print 'XXX: C++ linker support not implemented or tested'
-
-            objects = compiler.compile(c_sources+cxx_sources,
+            objects = compiler.compile(c_sources,
                                        output_dir=self.build_temp,
                                        macros=macros,
                                        include_dirs=include_dirs,
-                                       debug=self.debug)
+                                       debug=self.debug,
+                                       extra_postargs=extra_postargs)
+
+            if cxx_sources:
+                old_compiler = self.compiler.compiler_so[0]
+                self.compiler.compiler_so[0] = self.compiler.compiler_cxx[0]
+
+                cxx_objects = compiler.compile(cxx_sources,
+                                               output_dir=self.build_temp,
+                                               macros=macros,
+                                               include_dirs=include_dirs,
+                                               debug=self.debug,
+                                               extra_postargs=extra_postargs)
+                objects.extend(cxx_objects)
+
+                self.compiler.compiler_so[0] = old_compiler
 
             if f_sources:
                 f_objects = fcompiler.compile(f_sources,
