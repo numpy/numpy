@@ -487,7 +487,7 @@ class fortran_compiler_base(CCompiler):
     def get_version(self):
         """Return the compiler version. If compiler is not available,
         return empty string."""
-        # XXX: Is there compilers that have no version? If yes,
+        # XXX: Are there compilers that have no version? If yes,
         #      this test will fail even if the compiler is available.
         if self.version is not None:
             # Finding version is expensive, so return previously found
@@ -892,7 +892,7 @@ class gnu_fortran_compiler(fortran_compiler_base):
         raise DistutilsExecError, 'f90 not supported by Gnu'
 
 
-#http://developer.intel.com/software/products/compilers/f50/linux/
+#http://developer.intel.com/software/products/compilers/f60l/
 class intel_ia32_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Intel' # Intel(R) Corporation 
@@ -919,25 +919,23 @@ class intel_ia32_fortran_compiler(fortran_compiler_base):
         if cpu.has_f00f_bug():
             switches = switches + ' -0f_check '
         self.f77_switches = self.f90_switches = switches
-        self.f77_switches = self.f77_switches + ' -FI -w90 -w95 '
+        self.f77_switches = self.f77_switches + ' -FI -w90 -w95 -cm -c '
 
         self.f77_opt = self.f90_opt = self.get_opt()
         
-        debug = ' -g -C '
+        debug = ' -g ' # usage of -C sometimes causes segfaults
         self.f77_debug =  self.f90_debug = debug
 
+        #self.f77_switches = self.f77_switches + self.f77_debug
         self.ver_cmd = self.f77_compiler+' -FI -V -c %s -o %s' %\
                        self.dummy_fortran_files()
 
-        gnuc = gnu_fortran_compiler()
-        if gnuc.is_available():
-            self.library_dirs = gnuc.gcc_lib_dir
-            self.libraries = gnuc.libraries
+        #self.libraries = ['imf']
 
     def get_opt(self):
         import cpuinfo
         cpu = cpuinfo.cpuinfo()
-        opt = ' -O3 '
+        opt = ' -O3 -unroll '
         if cpu.is_PentiumPro() or cpu.is_PentiumII():
             opt = opt + ' -tpp6 -xi '
         elif cpu.is_PentiumIII():
@@ -949,7 +947,6 @@ class intel_ia32_fortran_compiler(fortran_compiler_base):
         elif cpu.has_mmx():
             opt = opt + ' -xM '
         return opt
-        
 
     def get_linker_so(self):
         return [self.f77_compiler,'-shared']
