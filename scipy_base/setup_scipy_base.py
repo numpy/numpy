@@ -5,6 +5,13 @@ from glob import glob
 import shutil
 
 def configuration(parent_package='',parent_path=None):
+    try:
+        import Numeric
+    except ImportError,msg:
+        print msg
+        print 'Working Numeric is required to build scipy_base'
+        return {}
+
     from scipy_distutils.core import Extension
     from scipy_distutils.misc_util import get_path,default_config_dict,dot_join
     from scipy_distutils.misc_util import get_path,default_config_dict,\
@@ -34,7 +41,8 @@ def configuration(parent_package='',parent_path=None):
         define_macros.append(('USE_MCONF_LITE_BE',None))
     ext = Extension(dot_join(package,'fastumath'),sources,
                     define_macros = define_macros,
-                    extra_compile_args=extra_compile_args)
+                    extra_compile_args=extra_compile_args,
+                    depends = umath_c_sources)
     config['ext_modules'].append(ext)
  
     # _compiled_base module
@@ -51,6 +59,7 @@ if __name__ == '__main__':
     if sys.platform == 'win32':
         from scipy_distutils.mingw32_support import *
     from scipy_distutils.core import setup
+
     setup(version = scipy_base_version,
           maintainer = "SciPy Developers",
           maintainer_email = "scipy-dev@scipy.org",
