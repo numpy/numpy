@@ -903,6 +903,7 @@ class blas_opt_info(system_info):
 
         if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
             args = []
+            link_args = []
             if os.path.exists('/System/Library/Frameworks/Accelerate.framework/'):
                 args.extend(['-faltivec','-framework','Accelerate'])
                 link_args.extend(['-Wl,-framework','-Wl,Accelerate'])
