@@ -501,7 +501,7 @@ class FCompiler(CCompiler):
                 ext = os.path.splitext(src)[1]
                 self.mkpath(os.path.dirname(obj))
                 build[obj] = src, ext
-            cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+            cc_args = [] #self._get_cc_args(pp_opts, debug, extra_preargs)
             for obj, (src, ext) in build.items():
                 self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
             return objects
