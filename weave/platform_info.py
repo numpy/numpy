@@ -1,3 +1,10 @@
+""" Information about platform and python version and compilers
+
+    This information is manly used to build directory names that
+    keep the object files and shared libaries straight when
+    multiple platforms share the same file system.
+"""
+
 import os, sys
 
 import distutils
@@ -40,7 +47,6 @@ def create_compiler_instance(dist):
     # and return it. 
     if not compiler_name:
         compiler_name = None
-    print "compiler:", compiler_name
     compiler = new_compiler(compiler=compiler_name)
     customize_compiler(compiler)
     return compiler

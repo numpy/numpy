@@ -22,7 +22,7 @@ import tempfile
 import exceptions
 import commands
 
-import find_compiler
+import platform_info
 
 # If linker is 'gcc', this will convert it to 'g++'
 # necessary to make sure stdc++ is linked in cross-platform way.
@@ -42,8 +42,16 @@ def _init_posix():
     if gcc_exists(link_cmds[0]):
         link_cmds[0] = 'g++'
         ld = ' '.join(link_cmds)
-        distutils.sysconfig._config_vars['LDSHARED'] = ld   
+    
+    # The Jaguar distributed python 2.2 has -arch i386 in the link line
+    # which doesn't seem right.  It omits all kinds of warnings, so 
+    # remove it.
 
+    if (sys.platform == 'darwin'):
+        ld = ld.replace('-arch i386','')
+
+    distutils.sysconfig._config_vars['LDSHARED'] = ld           
+    
 distutils.sysconfig._init_posix = _init_posix    
 # end force g++
 
@@ -161,8 +169,7 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
     # of the compiler binary to the directory name to keep objects
     # from different compilers in different locations.
     
-    compiler_dir = find_compiler.get_compiler_dir(compiler_name)
-    print 'cd:',compiler_dir
+    compiler_dir = platform_info.get_compiler_dir(compiler_name)
     temp_dir = os.path.join(temp_dir,compiler_dir)
     distutils.dir_util.mkpath(temp_dir)
     
@@ -224,10 +231,7 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
         import copy
         environ = copy.deepcopy(os.environ)
         try:
-            print ext.sources
-            print 'argv:',sys.argv
             setup(name = module_name, ext_modules = [ext],verbose=verb)
-            print 'setup done'
         finally:
             # restore state
             os.environ = environ        
