@@ -5,7 +5,8 @@ different than the input under certain conditions.
 
 __all__ = ['sqrt', 'log', 'log2','logn','log10', 'power', 'arccos', 'arcsin', 'arctanh']
 
-from convenience import any, isreal
+from type_check import isreal
+from function_base import any
 import fastumath
 import Numeric
 from fastumath import *

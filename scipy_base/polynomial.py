@@ -1,8 +1,11 @@
 import Numeric
 from Numeric import *
 from scimath import *
-from convenience import diag
-from utility import hstack, r1array, trim_zeros, isscalar
+
+from type_check import isscalar
+from matrix_base import diag
+from shape_base import hstack, atleast_1d
+from function_base import trim_zeros
 
 __all__ = ['poly','roots','polyint','polyder','polyadd','polysub','polymul',
            'polydiv','polyval','poly1d']
@@ -30,7 +33,7 @@ def poly(seq_of_zeros):
          >>> poly(b)
          array([1., 3., 1., 5., 6.])
     """
-    seq_of_zeros = r1array(seq_of_zeros)    
+    seq_of_zeros = atleast_1d(seq_of_zeros)    
     sh = shape(seq_of_zeros)
     if len(sh) == 2 and sh[0] == sh[1]:
         seq_of_zeros, vecs = MLab.eig(seq_of_zeros)
@@ -67,7 +70,7 @@ def roots(p):
     """
     # If input is scalar, this makes it an array
     eig = get_eigval_func()
-    p = r1array(p)
+    p = atleast_1d(p)
     if len(p.shape) != 1:
         raise ValueError,"Input must be a rank-1 array."
         
@@ -108,7 +111,7 @@ def polyint(p,m=1,k=None):
         raise ValueError, "Order of integral must be positive (see polyder)"
     if k is None:
         k = Numeric.zeros(m)
-    k = r1array(k)
+    k = atleast_1d(k)
     if len(k) == 1 and m > 1:
         k = k[0]*Numeric.ones(m)
     if len(k) < m:
@@ -164,7 +167,7 @@ def polyadd(a1,a2):
     """Adds two polynomials represented as lists
     """
     truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
-    a1,a2 = map(r1array,(a1,a2))
+    a1,a2 = map(atleast_1d,(a1,a2))
     diff = len(a2) - len(a1)
     if diff == 0:
         return a1 + a2
@@ -182,7 +185,7 @@ def polysub(a1,a2):
     """Subtracts two polynomials represented as lists
     """
     truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
-    a1,a2 = map(r1array,(a1,a2))
+    a1,a2 = map(atleast_1d,(a1,a2))
     diff = len(a2) - len(a1)
     if diff == 0:
         return a1 - a2
@@ -224,8 +227,8 @@ def deconvolve(signal, divisor):
         import scipy.signal
     except:
         print "You need scipy.signal to use this function."
-    num = r1array(signal)
-    den = r1array(divisor)
+    num = atleast_1d(signal)
+    den = atleast_1d(divisor)
     N = len(num)
     D = len(den)
     if D > N:
@@ -291,7 +294,7 @@ class poly1d:
             return
         if r:
             c_or_r = poly(c_or_r)
-        c_or_r = r1array(c_or_r)
+        c_or_r = atleast_1d(c_or_r)
         if len(c_or_r.shape) > 1:
             raise ValueError, "Polynomial must be 1d only."
         c_or_r = trim_zeros(c_or_r, trim='f')

@@ -1,4 +1,3 @@
-
 import os,sys,time
 import unittest
 
@@ -332,3 +331,14 @@ def output_exception():
               (filename, lineno, type.__name__, str(value), function)
     finally:
         type = value = tb = None # clean up
+
+def rand(*args):
+    """ Returns an array of random numbers with the given shape.
+        used for testing
+    """
+    import whrandom
+    results = zeros(args,Float64)
+    f = results.flat
+    for i in range(len(f)):
+        f[i] = whrandom.random()
+    return results        
