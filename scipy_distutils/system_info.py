@@ -1113,11 +1113,16 @@ class numpy_info(system_info):
         try:
             module = __import__(self.modulename)
             prefix = []
+            d = None
             for name in module.__file__.split(os.sep):
                 if name=='lib':
-                    break
-                prefix.append(name)
-            include_dirs.append(get_python_inc(prefix=os.sep.join(prefix)))
+                    if d is None:
+                        d = get_python_inc(prefix=os.sep.join(prefix))
+                    prefix.append('include')
+                else:
+                    prefix.append(name)
+            include_dirs.append(os.sep.join(prefix[:-1]))
+            include_dirs.append(d)
         except ImportError:
             pass
         py_incl_dir = get_python_inc()
