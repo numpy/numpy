@@ -36,10 +36,11 @@ Fortran compilers (as to be used with --fcompiler= option):
       Absoft
       Sun
       SGI
-      Gnu
       Intel
       Itanium
       NAG
+      Compaq
+      Gnu
       VAST
 """
 
@@ -761,6 +762,43 @@ class vast_fortran_compiler(fortran_compiler_base):
     def get_linker_so(self):
         return [self.f90_compiler,'-shared']
 
+class compaq_fortran_compiler(fortran_compiler_base):
+
+    vendor = 'Compaq'
+    ver_match = r'Compaq Fortran (?P<version>[^\s]*)'
+
+    def __init__(self, fc = None, f90c = None):
+        fortran_compiler_base.__init__(self)
+
+        if fc is None:
+            fc = 'fort'
+        if f90c is None:
+            f90c = fc
+
+        self.f77_compiler = fc
+        self.f90_compiler = f90c
+
+        switches = ' -assume no2underscore -nomixed_str_len_arg '
+        debug = ' -g -check_bounds '
+
+        self.f77_switches = self.f90_switches = switches
+        self.f77_debug = self.f90_debug = debug
+        self.f77_opt = self.f90_opt = self.get_opt()
+
+        # XXX: uncomment if required
+        #self.libraries = ' -lUfor -lfor -lFutil -lcpml -lots -lc '
+
+        # XXX: fix the version showing flag
+        self.ver_cmd = self.f77_compiler+' -V '
+
+    def get_opt(self):
+        opt = ' -O4 -align dcommons -arch host -assume bigarrays -assume nozsize -math_library fast -tune host '
+        return opt
+
+    def get_linker_so(self):
+        # XXX: is -shared needed?
+        return [self.f77_compiler,'-shared']
+
 
 def match_extension(files,ext):
     match = re.compile(r'.*[.]('+ext+r')\Z',re.I).match
@@ -790,11 +828,12 @@ def find_fortran_compiler(vendor = None, fc = None, f90c = None):
 all_compilers = [absoft_fortran_compiler,
                  mips_fortran_compiler,
                  sun_fortran_compiler,
-                 gnu_fortran_compiler,
                  intel_ia32_fortran_compiler,
                  intel_itanium_fortran_compiler,
                  nag_fortran_compiler,
+                 compaq_fortran_compiler,
                  vast_fortran_compiler,
+                 gnu_fortran_compiler,
                  ]
 
 if __name__ == "__main__":

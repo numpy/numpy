@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import os
+
 from distutils.core import setup
-from misc_util import get_path 
-   
+from misc_util import get_path, get_version
+
 def install_package():
     """ Install the scipy_distutils.  The dance with the current directory is done
         to fool distutils into thinking it is run from the scipy_distutils directory
@@ -12,10 +13,18 @@ def install_package():
     old_path = os.getcwd()
     os.chdir(path)
     try:
+
+        version = get_version(0,2)
+        print 'scipy_distutils',version
+        version_file = open('__version__.py','w')
+        version_file.write('__version__ = %s\n'%(repr(version)))
+        version_file.close()
+
         setup (name = "scipy_distutils",
-               version = "0.2",
+               version = version,
                description = "Changes to distutils needed for SciPy -- mostly Fortran support",
                author = "Travis Oliphant, Eric Jones, and Pearu Peterson",
+               author_email = "scipy-devel@scipy.org",
                licence = "BSD Style",
                url = 'http://www.scipy.org',
                packages = ['scipy_distutils','scipy_distutils.command'],

@@ -1,4 +1,36 @@
-import os,sys
+import os,sys,string
+
+def get_version(major,minor,path = '.'):
+    """
+    Return a version string calculated from a CVS tree starting at
+    path.  The micro version number is found as a sum of the last bits
+    of the revision numbers listed in CVS/Entries.  If <path>/CVS does
+    not exists, get_version tries to get the version from the
+    <path>/__version__.py file where __version__ variable should be
+    defined. If that also fails, then return None.
+    """
+    micro = get_micro_version(os.path.abspath(path))
+    if micro is None:
+        try:
+            return __import__(os.path.join(path,'__version__.py')).__version__
+        except:
+            return
+    return '%s.%s.%s'%(major,minor,micro)
+
+def get_micro_version(path):
+    # micro version number should be increasing in time, unless a file
+    # is removed from the CVS source tree. In that case one should
+    # increase the minor version number.
+    entries_file = os.path.join(path,'CVS','Entries')
+    if os.path.exists(entries_file):
+        micro = 0
+        for line in open(entries_file).readlines():
+            items = string.split(line,'/')
+            if items[0] == 'D' and len(items)>1:
+                micro = micro + get_micro_version(os.path.join(path,items[1]))
+            elif items[0] == '' and len(items)>2:
+                micro = micro + eval(string.split(items[2],'.')[-1])
+        return micro
 
 def get_path(mod_name):
     """ This function makes sure installation is done from the
