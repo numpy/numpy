@@ -694,68 +694,43 @@ static int numeric_stored = 0;
 /* make sure memory copy is going on with this */
 void scipy_numeric_save() {
 
-    PyArrayObject *temp=NULL;
-    int mydims[1]={1};
-    PyTypeObject *obtype;
-
+    /* we just save copies of things we may alter.  */
     if (!numeric_stored) {
-	temp = (PyArrayObject *)PyArray_FromDims(1,mydims,PyArray_SHORT);
-	if (temp==NULL) return;
-	obtype = temp->ob_type;
-
-	memcpy(&BackupPyArray_Type, obtype, sizeof(PyTypeObject));
-	memcpy(&backup_array_as_number, obtype->tp_as_number,
+	BackupPyArray_Type.tp_name = (PyArray_Type).tp_name;
+	memcpy(&backup_array_as_number, (PyArray_Type).tp_as_number,
 	       sizeof(PyNumberMethods));
-	memcpy(&backup_array_as_sequence, obtype->tp_as_sequence,
+	memcpy(&backup_array_as_sequence, (PyArray_Type).tp_as_sequence,
 	       sizeof(PySequenceMethods));
-	memcpy(&backup_array_as_mapping, obtype->tp_as_mapping,
+	memcpy(&backup_array_as_mapping, (PyArray_Type).tp_as_mapping,
 	       sizeof(PyMappingMethods));
-	memcpy(&backup_array_as_buffer, obtype->tp_as_buffer,
+	memcpy(&backup_array_as_buffer, (PyArray_Type).tp_as_buffer,
 	       sizeof(PyBufferProcs));
 	numeric_stored = 1;
-	Py_DECREF(temp);
     }
-
 }
 
 void scipy_numeric_restore() {
-    PyArrayObject *temp=NULL;
-    int mydims[1]={1};
-    PyTypeObject *obtype;
 
-    if (numeric_stored) {
-	temp = (PyArrayObject *)PyArray_FromDims(1,mydims,PyArray_SHORT);
-	if (temp==NULL) return;
-	obtype = temp->ob_type;
-
-	memcpy(obtype, &BackupPyArray_Type, sizeof(PyTypeObject));
-	memcpy(obtype->tp_as_number, &backup_array_as_number, 
+    /* restore only what was copied */
+    if (numeric_stored) {       
+	(PyArray_Type).tp_name = BackupPyArray_Type.tp_name;
+	memcpy((PyArray_Type).tp_as_number, &backup_array_as_number, 
 	       sizeof(PyNumberMethods));
-	memcpy(obtype->tp_as_sequence, &backup_array_as_sequence,  
+	memcpy((PyArray_Type).tp_as_sequence, &backup_array_as_sequence,  
 	       sizeof(PySequenceMethods));
-	memcpy(obtype->tp_as_mapping, &backup_array_as_mapping,
+	memcpy((PyArray_Type).tp_as_mapping, &backup_array_as_mapping,
 	       sizeof(PyMappingMethods));
-	memcpy(obtype->tp_as_buffer, &backup_array_as_buffer,
+	memcpy((PyArray_Type).tp_as_buffer, &backup_array_as_buffer,
 	       sizeof(PyBufferProcs));
-	Py_DECREF(temp);
     }
 }
 
 static const char *_scipystr = "array (scipy)";
 
 void scipy_numeric_alter() {
-    PyArrayObject *temp=NULL;
-    int mydims[1]={1};
-    PyTypeObject *obtype;
     
+    (PyArray_Type).tp_name = _scipystr;
 
-    temp = (PyArrayObject *)PyArray_FromDims(1,mydims,PyArray_SHORT);
-    if (temp==NULL) return;
-    obtype = temp->ob_type;    
-    
-    obtype->tp_name = _scipystr;
-
-    Py_DECREF(temp);
 }
 
 static char numeric_alter_doc[] = "alter_numeric() update the behavior of Numeric objects.\n\n  1. Change coercion rules so that multiplying by a scalar does not upcast.\n  2. Add index slicing capability to Numeric arrays.\n  3. Speed up inner loops.\n\nThis call changes the behavior for ALL Numeric arrays currently defined\n  and to be defined in the future.  The old behavior can be restored for ALL\n  arrays using numeric_restore().";
