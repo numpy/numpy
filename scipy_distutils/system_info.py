@@ -453,9 +453,7 @@ class atlas_info(system_info):
                 lapack_lib = fn
                 break
         if lapack_lib is not None:
-            fd = os.open(lapack_lib,os.O_RDONLY)
-            sz = os.fstat(fd)[6]
-            os.close(fd)
+            sz = os.stat(lapack_lib)[6]
             import warnings
             if sz <= 4000*1024:
                 message = """
