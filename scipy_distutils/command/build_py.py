@@ -4,7 +4,8 @@ from fnmatch import fnmatch
 
 def is_setup_script(file):
     file = os.path.basename(file)
-    return (fnmatch(file,"setup.py") or fnmatch(file,"setup_*.py"))
+    return fnmatch(file,"setup.py")
+#    return (fnmatch(file,"setup.py") or fnmatch(file,"setup_*.py"))
     
 class build_py(old_build_py):
     def find_package_modules (self, package, package_dir):
