@@ -405,6 +405,7 @@ def get_subpackages(path,
                     parent_path=None,
                     include_packages=[],
                     ignore_packages=[],
+                    include_only=None,
                     recursive=None):
 
     """
@@ -428,6 +429,9 @@ def get_subpackages(path,
     Packages in ignore_packages list will be ignored unless they are
     also in include_packages.
 
+    When include_only is True then only configurations of those
+    packages are returned that are in include_packages list.
+
     If recursive is True then subpackages are searched recursively
     starting from the path and added to include_packages list.
     """
@@ -442,6 +446,8 @@ def get_subpackages(path,
             continue
 
         if package_name in ignore_packages:
+            continue
+        if include_only and package_name not in include_packages:
             continue
 
         sys.path.insert(0,os.path.dirname(info_file))
