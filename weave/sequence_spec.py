@@ -1,9 +1,9 @@
 import cxx_info
-from base_spec import base_specification
+from base_spec import base_converter
 from types import *
 import os
 
-class base_cxx_specification(base_specification):
+class base_cxx_converter(base_converter):
     _build_information = [cxx_info.cxx_info()]
     def type_spec(self,name,value):
         # factory
@@ -18,7 +18,7 @@ class base_cxx_specification(base_specification):
         return cmp(self.name,other.name) or \
                cmp(self.__class__, other.__class__)
         
-class string_specification(base_cxx_specification):
+class string_converter(base_cxx_converter):
     type_name = 'string'
     def type_match(self,value):
         return type(value) in [StringType]
@@ -33,7 +33,7 @@ class string_specification(base_cxx_specification):
         return code
 
 
-class list_specification(base_cxx_specification):
+class list_converter(base_cxx_converter):
     type_name = 'list'
     def type_match(self,value):
         return type(value) in [ListType]
@@ -47,7 +47,7 @@ class list_specification(base_cxx_specification):
         code = 'local_dict["%s"] = %s;\n' % (self.name,self.name)        
         return code
 
-class dict_specification(base_cxx_specification):
+class dict_converter(base_cxx_converter):
     type_name = 'dict'
     def type_match(self,value):
         return type(value) in [DictType]
@@ -62,7 +62,7 @@ class dict_specification(base_cxx_specification):
         code = 'local_dict["%s"] = %s;\n' % (self.name,self.name)        
         return code
 
-class tuple_specification(base_cxx_specification):
+class tuple_converter(base_cxx_converter):
     type_name = 'tuple'
     def type_match(self,value):
         return type(value) in [TupleType]

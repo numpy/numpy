@@ -136,7 +136,7 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
            verbose = 0,
            support_code = None,
            customize=None,
-           type_factories = None,
+           type_converters = None,
            auto_downcast=1,
            **kw):
     """ Inline C/C++ code within Python scripts.
@@ -204,7 +204,7 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
                        way to specifiy support_code, headers, etc. needed by
                        the function see the compiler.base_info module for more
                        details. (not sure this'll be used much).
-        type_factories -- optional. list of type specification factories. These
+        type_converters -- optional. list of type converters. These
                           guys are what convert Python data types to C/C++ data
                           types.  If you'd like to use a different set of type
                           conversions than the default, specify them here. Look
@@ -285,7 +285,7 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
                                 verbose=verbose,
                                 support_code = support_code,
                                 customize=customize,
-                                type_factories = type_factories,
+                                type_converters = type_converters,
                                 auto_downcast = auto_downcast,
                                 **kw)
 
@@ -323,7 +323,7 @@ def inline(code,arg_names=[],local_dict = None, global_dict = None,
                                     verbose=verbose,
                                     support_code = support_code,
                                     customize=customize,
-                                    type_factories = type_factories,
+                                    type_converters = type_converters,
                                     auto_downcast = auto_downcast,
                                     **kw)
 
@@ -375,7 +375,7 @@ def attempt_function_call(code,local_dict,global_dict):
 
 def inline_function_code(code,arg_names,local_dict=None,
                          global_dict=None,auto_downcast = 1,
-                         type_factories=None,compiler=''):
+                         type_converters=None,compiler=''):
     call_frame = sys._getframe().f_back
     if local_dict is None:
         local_dict = call_frame.f_locals
@@ -383,7 +383,7 @@ def inline_function_code(code,arg_names,local_dict=None,
         global_dict = call_frame.f_globals
     ext_func = inline_ext_function('compiled_func',code,arg_names,
                                    local_dict,global_dict,auto_downcast,
-                                   type_factories = type_factories)
+                                   type_converters = type_converters)
     import build_tools
     compiler = build_tools.choose_compiler(compiler)
     ext_func.set_compiler(compiler)
@@ -395,7 +395,7 @@ def compile_function(code,arg_names,local_dict,global_dict,
                      verbose = 0,
                      support_code = None,
                      customize = None,
-                     type_factories = None,
+                     type_converters = None,
                      auto_downcast=1,
                      **kw):
     # figure out where to store and what to name the extension module
@@ -409,7 +409,7 @@ def compile_function(code,arg_names,local_dict,global_dict,
     # type factories setting
     ext_func = inline_ext_function('compiled_func',code,arg_names,
                                    local_dict,global_dict,auto_downcast,
-                                   type_factories = type_factories)
+                                   type_converters = type_converters)
     mod.add_function(ext_func)
 
     # if customize (a custom_info object), then set the module customization.
