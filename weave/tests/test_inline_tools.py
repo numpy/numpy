@@ -14,17 +14,18 @@ class test_inline(unittest.TestCase):
          I'd like to benchmark these things somehow.
     """
     def check_exceptions(self):
-        a = 1                                  
+        a = 3                                  
         code = """
                if (a < 2)
                    Py::ValueError("the variable 'a' should not be less than 2");
-               return_val = Py::new_reference_to(Py::Int(a+1));
+               else    
+                   return_val = Py::new_reference_to(Py::Int(a+1));
                """
         result = inline_tools.inline(code,['a'])
-        assert(result == 2)
+        assert(result == 4)
         
         try:
-            a = 3
+            a = 1
             result = inline_tools.inline(code,['a'])
             assert(1) # should've thrown a ValueError
         except ValueError:
