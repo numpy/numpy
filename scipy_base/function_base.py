@@ -1,7 +1,7 @@
 
 import types
 import Numeric
-from Numeric import ravel, asarray, nonzero, array, choose, ones, zeros
+from Numeric import ravel, asarray, nonzero, array, choose, ones, zeros, sometrue, alltrue
 from type_check import ScalarType
 from shape_base import squeeze
 from fastumath import PINF as inf
@@ -12,11 +12,28 @@ __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
            'prod','cumprod','diff','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
-           'nanargmin','nanmin','sum','vectorize']
+           'nanargmin','nanmin','sum','vectorize','asarray_chkfinite']
 
 round = Numeric.around
-any = Numeric.sometrue
-all = Numeric.alltrue
+
+def asarray_chkfinite(x):
+    """Like asarray except it checks to be sure no NaNs or Infs are present.
+    """
+    x = asarray(x)
+    if not all(isfinite(x)):
+        raise ValueError, "Array must not contain infs or nans."
+    return x    
+
+def any(x):
+    """Return true if any elements of x are true:  sometrue(ravel(x))
+    """
+    return sometrue(ravel(x))
+
+
+def all(x):
+    """Return true if all elements of x are true:  alltrue(ravel(x))
+    """
+    return alltrue(ravel(x))
 
 # Need this to change array type for low precision values
 def sum(x,axis=0):  # could change default axis here
