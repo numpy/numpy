@@ -1,4 +1,5 @@
 import os,sys,string
+import re
 import types
 
 if sys.version[:3]<='2.1':
@@ -205,7 +206,7 @@ def dot_join(*args):
 def fortran_library_item(lib_name,
                          sources,
                          **attrs
-                         ):
+                         ):   #obsolete feature
     """ Helper function for creating fortran_libraries items. """
     build_info = {'sources':sources}
     known_attrs = ['module_files','module_dirs',
@@ -219,7 +220,7 @@ def fortran_library_item(lib_name,
     
     return (lib_name,build_info)
 
-def get_environ_include_dirs():
+def get_environ_include_dirs():  #obsolete feature
     includes = []
     if os.environ.has_key('PYTHONINCLUDE'):
         includes = os.environ['PYTHONINCLUDE'].split(os.pathsep)
@@ -230,7 +231,7 @@ def get_build_temp():
     plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])
     return os.path.join('build','temp'+plat_specifier)
 
-class SourceGenerator:
+class SourceGenerator:  #obsolete feature
     """ SourceGenerator
     func    - creates target, arguments are (target,sources)+args
     sources - target source files
@@ -266,8 +267,10 @@ class SourceGenerator:
                 self.func(self.target,self.sources,*self.args)
         assert os.path.exists(self.target),`self.target`
         return self.target
+    def __call__(self, extension, src_dir):
+        return self.generate()
 
-class SourceFilter:
+class SourceFilter:  #obsolete feature
     """ SourceFilter
     func    - implements criteria to filter sources
     sources - source files
@@ -279,3 +282,66 @@ class SourceFilter:
         self.args = args
     def filter(self):
         return self.func(self.sources,*self.args)
+    def __call__(self, extension, src_dir):
+        return self.filter()
+
+##
+
+#XXX need support for .C that is also C++
+cxx_ext_match = re.compile(r'.*[.](cpp|cxx|cc)\Z',re.I).match
+fortran_ext_match = re.compile(r'.*[.](f90|f95|f77|for|ftn|f)\Z',re.I).match
+f90_ext_match = re.compile(r'.*[.](f90|f95)\Z',re.I).match
+f90_module_name_match = re.compile(r'\s*module\s*(?P<name>[\w_]+)',re.I).match
+def get_f90_modules(source):
+    """ Return a list of Fortran f90 module names that
+    given source file defines.
+    """
+    if not f90_ext_match(source):
+        return []
+    modules = []
+    f = open(source,'r')
+    f_readlines = getattr(f,'xreadlines',f.readlines)
+    for line in f_readlines():
+        m = f90_module_name_match(line)
+        if m:
+            name = m.group('name')
+            modules.append(name)
+            # break  # XXX can we assume that there is one module per file?
+    f.close()
+    return modules
+
+def has_f_sources(sources):
+    """ Return True if sources contains Fortran files """
+    for source in sources:
+        if fortran_ext_match(source):
+            return 1
+    return 0
+
+def has_cxx_sources(sources):
+    """ Return True if sources contains C++ files """
+    for source in sources:
+        if cxx_ext_match(source):
+            return 1
+    return 0
+
+def filter_sources(sources):
+    """ Return four lists of filenames containing
+    C, C++, Fortran, and Fortran 90 module sources,
+    respectively.
+    """
+    c_sources = []
+    cxx_sources = []
+    f_sources = []
+    fmodule_sources = []
+    for source in sources:
+        if fortran_ext_match(source):
+            modules = get_f90_modules(source)
+            if modules:
+                fmodule_sources.append(source)
+            else:
+                f_sources.append(source)
+        elif cxx_ext_match(source):
+            cxx_sources.append(source)
+        else:
+            c_sources.append(source)            
+    return c_sources, cxx_sources, f_sources, fmodule_sources

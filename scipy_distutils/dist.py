@@ -1,30 +1,19 @@
-from distutils.dist import *
+
+import sys
 from distutils.dist import Distribution as OldDistribution
 from distutils.errors import DistutilsSetupError
-
 from types import *
 
-
-
 class Distribution (OldDistribution):
-    def __init__ (self, attrs=None):
-        self.fortran_libraries = None
-        OldDistribution.__init__(self, attrs)
 
-    def has_f2py_sources(self):
-        if self.has_ext_modules():
-            for ext in self.ext_modules:
-                # check for functions existence so that we can mix distutils
-                # extension with scipy_distutils functions without breakage
-                if (hasattr(ext,'has_f2py_sources') and 
-                    ext.has_f2py_sources()):
-                    return 1
+    if sys.version[:3]<'2.2':
+        # For backward compatibility. Use libraries
+        # instead of fortran_libraries.
+        fortran_libraries = None
+
+    def return_false(self):
+        # Used by build_ext.run()
         return 0
-
-    def has_f_libraries(self):
-        if self.fortran_libraries and len(self.fortran_libraries) > 0:
-            return 1
-        return self.has_f2py_sources() # f2py might generate fortran sources.
 
     def check_data_file_list(self):
         """Ensure that the list of data_files (presumably provided as a
@@ -51,9 +40,7 @@ class Distribution (OldDistribution):
                 raise DistutilsSetupError, \
                       "second element of each tuple in 'data_files' " + \
                       "must be a list of files."
-        # for lib
-
-    # check_data_file_list ()
+        return
    
     def get_data_files (self):
         print 'get_data_files'
