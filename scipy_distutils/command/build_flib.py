@@ -90,9 +90,9 @@ class build_flib (build_clib):
     description = "build f77/f90 libraries used by Python extensions"
 
     user_options = [
-        ('build-flib', 'b',
+        ('build-flib=', 'b',
          "directory to build f77/f90 libraries to"),
-        ('build-temp', 't',
+        ('build-temp=', 't',
          "directory to put temporary build by-products"),
         ('debug', 'g',
          "compile with debugging information"),
@@ -295,7 +295,10 @@ class build_flib (build_clib):
                                         temp_dir=self.build_temp)
                 
             fcompiler.build_library(lib_name, sources,
-                                    module_dirs, temp_dir=self.build_temp)
+                                    module_dirs,
+                                    temp_dir=self.build_temp,
+                                    build_dir=self.build_flib,
+                                    )
 
         # for loop
 
@@ -496,10 +499,13 @@ class fortran_compiler_base(CCompiler):
                           'failure during build (exit status = %s)'%failure 
 
     def build_library(self,library_name,source_list,module_dirs=None,
-                      temp_dir = ''):
+                      temp_dir = '', build_dir = ''):
         #make sure the temp directory exists before trying to build files
+        if not build_dir:
+            build_dir = temp_dir
         import distutils.dir_util
         distutils.dir_util.mkpath(temp_dir)
+        distutils.dir_util.mkpath(build_dir)
 
         #this compiles the files
         object_list = self.to_object(source_list,
@@ -532,10 +538,10 @@ class fortran_compiler_base(CCompiler):
                     i = i + len(objects[0]) + 1
                     obj.append(objects[0])
                     objects = objects[1:]
-                self.create_static_lib(obj,library_name,temp_dir,
+                self.create_static_lib(obj,library_name,build_dir,
                                        skip_ranlib = len(objects))
         else:
-            self.create_static_lib(object_list,library_name,temp_dir)
+            self.create_static_lib(object_list,library_name,build_dir)
 
     def dummy_fortran_files(self):
         global remove_files
