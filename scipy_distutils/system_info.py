@@ -351,7 +351,7 @@ class system_info:
         else:
             exts = [so_ext,'.a']
         if sys.platform=='cygwin':
-            exts.append('dll.a')
+            exts.append('.dll.a')
         for ext in exts:
             info = self._check_libs(lib_dir,libs,opt_libs,ext)
             if info is not None: return info
