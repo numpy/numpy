@@ -20,6 +20,7 @@
 import sys,os,string,time
 import tempfile
 import exceptions
+import commands
 
 # If linker is 'gcc', this will convert it to 'g++'
 # necessary to make sure stdc++ is linked in cross-platform way.
