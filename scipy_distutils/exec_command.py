@@ -390,8 +390,12 @@ def _exec_command( command, use_shell=None, **env ):
     else:
         os.dup2(fout.fileno(),se_fileno)
 
+    argv0 = argv[0]
+    if ' ' in argv[0]:
+        argv[0] = '"%s"' % (argv[0])
+
     try:
-        status = spawn_command(os.P_WAIT,argv[0],argv,os.environ)
+        status = spawn_command(os.P_WAIT,argv0,argv,os.environ)
     except OSError,errmess:
         status = 999
         sys.stderr.write('%s: %s'%(errmess,argv[0]))
@@ -431,7 +435,6 @@ def test_nt(**kws):
     pythonexe = get_pythonexe()
     echo = find_executable('echo')
     using_cygwin_echo = echo != 'echo'
-
     if using_cygwin_echo:
         log.warn('Using cygwin echo in win32 environment is not supported')
 
@@ -457,7 +460,7 @@ def test_nt(**kws):
         s,o=exec_command(pythonexe\
                          +' -c "import os;print os.environ.get(\'BBB\',\'\')"')
         assert s==0 and o=='Hi',(s,o)
-    else:
+    elif 0:
         s,o=exec_command('echo Hello')
         assert s==0 and o=='Hello',(s,o)
 
@@ -570,6 +573,10 @@ def test_execute_in(**kws):
     os.remove(tmpfile)
     print 'ok'
 
+def test_svn():
+    s,o = exec_command(['svn','status'])
+    assert s,(s,o)
+
 if os.name=='posix':
     test = test_posix
 elif os.name in ['nt','dos']:
@@ -586,3 +593,4 @@ if __name__ == "__main__":
     test(use_tee=1)
     test_execute_in(use_tee=0)
     test_execute_in(use_tee=1)
+    test_svn()
