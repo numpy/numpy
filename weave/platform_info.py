@@ -128,6 +128,9 @@ def choose_compiler(compiler_name=''):
         
         converts 'gcc' to 'mingw32' on win32
     """
+    if not compiler_name:
+        compiler_name = ''
+        
     if sys.platform == 'win32':        
         if not compiler_name:
             # On Windows, default to MSVC and use gcc if it wasn't found

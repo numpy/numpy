@@ -162,6 +162,11 @@ def default_dir():
         except KeyError:
             temp_dir = `os.getuid()` + '_' + python_name
             path = os.path.join(tempfile.gettempdir(),temp_dir)        
+        
+        # add a subdirectory for the OS.
+        # It might be better to do this at a different location so that
+        # it wasn't only the default directory that gets this behavior.    
+        #path = os.path.join(path,sys.platform)
     else:
         path = os.path.join(tempfile.gettempdir(),"%s"%whoami(),python_name)
         

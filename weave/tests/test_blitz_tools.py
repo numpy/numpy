@@ -98,7 +98,7 @@ class test_blitz(unittest.TestCase):
             raise AssertionError        
         return standard,compiled
         
-    def generic_2d(self,expr):
+    def generic_2d(self,expr,typ):
         """ The complex testing is pretty lame...
         """
         mod_location = empty_temp_dir()
@@ -106,48 +106,77 @@ class test_blitz(unittest.TestCase):
         ast = parser.suite(expr)
         arg_list = harvest_variables(ast.tolist())
         #print arg_list
-        all_types = [Float32,Float64,Complex32,Complex64]
         all_sizes = [(10,10), (50,50), (100,100), (500,500), (1000,1000)]
         print '\nExpression:', expr
-        for typ in all_types:
-            for size in all_sizes:
-                result = zeros(size,typ)
-                arg_dict = {}
-                for arg in arg_list:
-                    arg_dict[arg] = RandomArray.normal(0,1,size).astype(typ)
-                    arg_dict[arg].savespace(1)
-                    # set imag part of complex values to non-zero value
-                    try:     arg_dict[arg].imag = arg_dict[arg].real
-                    except:  pass  
-                print 'Run:', size,typ
-                standard,compiled = self.generic_test(expr,arg_dict,type,size,
-                                                      mod_location)
-                try:
-                    speed_up = standard/compiled
-                except:
-                    speed_up = -1.
-                print "1st run(Numeric,compiled,speed up):  %3.4f, %3.4f, " \
-                      "%3.4f" % (standard,compiled,speed_up)    
-                standard,compiled = self.generic_test(expr,arg_dict,type,size,
-                                                      mod_location)
-                try:
-                    speed_up = standard/compiled
-                except:
-                    speed_up = -1.                    
-                print "2nd run(Numeric,compiled,speed up):  %3.4f, %3.4f, " \
-                      "%3.4f" % (standard,compiled,speed_up)
+        for size in all_sizes:
+            result = zeros(size,typ)
+            arg_dict = {}
+            for arg in arg_list:
+                arg_dict[arg] = RandomArray.normal(0,1,size).astype(typ)
+                arg_dict[arg].savespace(1)
+                # set imag part of complex values to non-zero value
+                try:     arg_dict[arg].imag = arg_dict[arg].real
+                except:  pass  
+            print 'Run:', size,typ
+            standard,compiled = self.generic_test(expr,arg_dict,type,size,
+                                                  mod_location)
+            try:
+                speed_up = standard/compiled
+            except:
+                speed_up = -1.
+            print "1st run(Numeric,compiled,speed up):  %3.4f, %3.4f, " \
+                  "%3.4f" % (standard,compiled,speed_up)    
+            standard,compiled = self.generic_test(expr,arg_dict,type,size,
+                                                  mod_location)
+            try:
+                speed_up = standard/compiled
+            except:
+                speed_up = -1.                    
+            print "2nd run(Numeric,compiled,speed up):  %3.4f, %3.4f, " \
+                  "%3.4f" % (standard,compiled,speed_up)
         cleanup_temp_dir(mod_location)                      
     #def check_simple_2d(self):
     #    """ result = a + b""" 
     #    expr = "result = a + b"
     #    self.generic_2d(expr)
-    def check_5point_avg_2d(self):
+    def check_5point_avg_2d_float(self):
         """ result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]
                                + b[1:-1,2:] + b[1:-1,:-2]) / 5.
         """                                  
         expr = "result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]" \
                                   "+ b[1:-1,2:] + b[1:-1,:-2]) / 5."
-        self.generic_2d(expr)
+        self.generic_2d(expr,Float32)
+    def check_5point_avg_2d_double(self):
+        """ result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]
+                               + b[1:-1,2:] + b[1:-1,:-2]) / 5.
+        """                                  
+        expr = "result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]" \
+                                  "+ b[1:-1,2:] + b[1:-1,:-2]) / 5."
+        self.generic_2d(expr,Float64)
+    def check_5point_avg_2d_complex_float(self):
+        """ Note: THIS TEST is KNOWN TO FAIL ON GCC 3.x.  It will not adversely affect 99.99 percent of weave 
+            
+            result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]
+                               + b[1:-1,2:] + b[1:-1,:-2]) / 5.
+            
+            Note: THIS TEST is KNOWN TO FAIL ON GCC 3.x.  The reason is that 
+            5. is a double and b is a complex32.  blitz doesn't know 
+            how to handle complex32/double.  See:
+            http://www.oonumerics.org/MailArchives/blitz-support/msg00541.php
+            Unfortunately, the fix isn't trivial.  Instead of fixing it, I
+            prefer to wait until we replace blitz++ with Pat Miller's code 
+            that doesn't rely on blitz..
+        """                                  
+        expr = "result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]" \
+                                  "+ b[1:-1,2:] + b[1:-1,:-2]) / 5."
+        self.generic_2d(expr,Complex32)
+    def check_5point_avg_2d_complex_double(self):
+        """ result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]
+                               + b[1:-1,2:] + b[1:-1,:-2]) / 5.
+        """                                  
+        expr = "result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]" \
+                                  "+ b[1:-1,2:] + b[1:-1,:-2]) / 5."
+        self.generic_2d(expr,Complex64)
     
 def test_suite(level=1):
     suites = []
