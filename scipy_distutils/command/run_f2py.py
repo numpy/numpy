@@ -80,11 +80,10 @@ class run_f2py(Command):
         .pyf file from the Fortran files found in 'sources'.
         """
         try:
-            if sys.modules.has_key('f2py2e'):
-                import f2py2e
-            else:
-                import f2py2e
+            import f2py2e
+            if not hasattr(self,'_f2py_sources_been_here'):
                 self.announce('using F2PY %s' % (f2py2e.f2py2e.f2py_version))
+                setattr(self,'_f2py_sources_been_here',1)
         except ImportError:
             print sys.exc_value
             raise F2pyNotFoundError,F2pyNotFoundError.__doc__
