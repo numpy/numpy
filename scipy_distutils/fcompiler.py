@@ -13,7 +13,7 @@ from types import StringType, NoneType, ListType, TupleType
 from glob import glob
 
 from distutils.version import StrictVersion
-from distutils.ccompiler import CCompiler, gen_lib_options
+from scipy_distutils.ccompiler import CCompiler, gen_lib_options
 # distutils.ccompiler provides the following functions:
 #   gen_preprocess_options(macros, include_dirs)
 #   gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries)
@@ -460,16 +460,21 @@ class FCompiler(CCompiler):
             log.info('*****status:%s\n*****output:\n%s\n*****' % (status,output))
         return status, output
 
+    def spawn(self, cmd):
+        s,o = self.exec_command(cmd)
+        assert not s,`s`
+
+
     ###################
 
     def _get_cc_args(self, pp_opts, debug, before):
         #XXX
-        print self.__class__.__name__ + '._get_cc_args:',pp_opts, debug, before
+        #print self.__class__.__name__ + '._get_cc_args:',pp_opts, debug, before
         return []
 
     def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
         """Compile 'src' to product 'obj'."""
-        print self.__class__.__name__ + '._compile:',obj, src, ext, cc_args, extra_postargs, pp_opts
+        #print self.__class__.__name__ + '._compile:',obj, src, ext, cc_args, extra_postargs, pp_opts
 
         if is_f_file(src):
             compiler = self.compiler_f77
@@ -735,7 +740,9 @@ def new_fcompiler(plat=None,
         raise DistutilsModuleError, \
               ("can't compile Fortran code: unable to find class '%s' " +
                "in module '%s'") % (class_name, module_name)
-
+    print '*'*80
+    print klass
+    print '*'*80
     return klass(None, dry_run, force)
 
 
@@ -763,8 +770,8 @@ def show_fcompilers(dist = None):
             v = c.get_version()
         except DistutilsModuleError:
             pass
-        except:
-            print sys.exc_info()[0],sys.exc_info()[1]
+        except Exception, msg:
+            print msg
         if v is None:
             compilers_na.append(("fcompiler="+compiler, None,
                               fcompiler_class[compiler][2]))

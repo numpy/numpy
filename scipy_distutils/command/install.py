@@ -7,7 +7,9 @@ from distutils.errors import DistutilsOptionError
 from scipy_distutils import log
 
 #install support for Numeric.pth setup
+
 class install(old_install):
+
     def finalize_options (self):
         old_install.finalize_options(self)
         self.install_lib = self.install_libbase

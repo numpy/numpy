@@ -1,4 +1,5 @@
 import os,sys,string
+import re
 import types
 
 if sys.version[:3]<='2.1':
@@ -9,19 +10,30 @@ if sys.version[:3]<='2.1':
 # Hooks for colored terminal output.
 # See also http://www.livinglogic.de/Python/ansistyle
 def terminal_has_colors():
-    if not hasattr(sys.stdout,'isatty') or not sys.stdout.isatty(): 
+    if sys.platform=='cygwin' and not os.environ.has_key('USE_COLOR'):
+        # Avoid importing curses that causes illegal operation
+        # with a message:
+        #  PYTHON2 caused an invalid page fault in
+        #  module CYGNURSES7.DLL as 015f:18bbfc28
+        # Details: Python 2.3.3 [GCC 3.3.1 (cygming special)]
+        #          ssh to Win32 machine from debian
+        #          curses.version is 2.2
+        #          CYGWIN_98-4.10, release 1.5.7(0.109/3/2))
         return 0
-    try:
-        import curses
-        curses.setupterm()
-        return (curses.tigetnum("colors") >= 0
+    if hasattr(sys.stdout,'isatty') and sys.stdout.isatty(): 
+        try:
+            import curses
+            curses.setupterm()
+            if (curses.tigetnum("colors") >= 0
                 and curses.tigetnum("pairs") >= 0
                 and ((curses.tigetstr("setf") is not None 
                       and curses.tigetstr("setb") is not None) 
                      or (curses.tigetstr("setaf") is not None
                          and curses.tigetstr("setab") is not None)
-                     or curses.tigetstr("scp") is not None))
-    except: pass
+                     or curses.tigetstr("scp") is not None)):
+                return 1
+        except Exception,msg:
+            pass
     return 0
 
 if terminal_has_colors():
@@ -205,7 +217,7 @@ def dot_join(*args):
 def fortran_library_item(lib_name,
                          sources,
                          **attrs
-                         ):
+                         ):   #obsolete feature
     """ Helper function for creating fortran_libraries items. """
     build_info = {'sources':sources}
     known_attrs = ['module_files','module_dirs',
@@ -219,7 +231,7 @@ def fortran_library_item(lib_name,
     
     return (lib_name,build_info)
 
-def get_environ_include_dirs():
+def get_environ_include_dirs():  #obsolete feature
     includes = []
     if os.environ.has_key('PYTHONINCLUDE'):
         includes = os.environ['PYTHONINCLUDE'].split(os.pathsep)
@@ -230,7 +242,7 @@ def get_build_temp():
     plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])
     return os.path.join('build','temp'+plat_specifier)
 
-class SourceGenerator:
+class SourceGenerator:  #obsolete feature
     """ SourceGenerator
     func    - creates target, arguments are (target,sources)+args
     sources - target source files
@@ -266,8 +278,10 @@ class SourceGenerator:
                 self.func(self.target,self.sources,*self.args)
         assert os.path.exists(self.target),`self.target`
         return self.target
+    def __call__(self, extension, src_dir):
+        return self.generate()
 
-class SourceFilter:
+class SourceFilter:  #obsolete feature
     """ SourceFilter
     func    - implements criteria to filter sources
     sources - source files
@@ -279,3 +293,71 @@ class SourceFilter:
         self.args = args
     def filter(self):
         return self.func(self.sources,*self.args)
+    def __call__(self, extension, src_dir):
+        return self.filter()
+
+##
+
+#XXX need support for .C that is also C++
+cxx_ext_match = re.compile(r'.*[.](cpp|cxx|cc)\Z',re.I).match
+fortran_ext_match = re.compile(r'.*[.](f90|f95|f77|for|ftn|f)\Z',re.I).match
+f90_ext_match = re.compile(r'.*[.](f90|f95)\Z',re.I).match
+f90_module_name_match = re.compile(r'\s*module\s*(?P<name>[\w_]+)',re.I).match
+def get_f90_modules(source):
+    """ Return a list of Fortran f90 module names that
+    given source file defines.
+    """
+    if not f90_ext_match(source):
+        return []
+    modules = []
+    f = open(source,'r')
+    f_readlines = getattr(f,'xreadlines',f.readlines)
+    for line in f_readlines():
+        m = f90_module_name_match(line)
+        if m:
+            name = m.group('name')
+            modules.append(name)
+            # break  # XXX can we assume that there is one module per file?
+    f.close()
+    return modules
+
+def has_f_sources(sources):
+    """ Return True if sources contains Fortran files """
+    for source in sources:
+        if fortran_ext_match(source):
+            return 1
+    return 0
+
+def has_cxx_sources(sources):
+    """ Return True if sources contains C++ files """
+    for source in sources:
+        if cxx_ext_match(source):
+            return 1
+    return 0
+
+def filter_sources(sources):
+    """ Return four lists of filenames containing
+    C, C++, Fortran, and Fortran 90 module sources,
+    respectively.
+    """
+    c_sources = []
+    cxx_sources = []
+    f_sources = []
+    fmodule_sources = []
+    for source in sources:
+        if fortran_ext_match(source):
+            modules = get_f90_modules(source)
+            if modules:
+                fmodule_sources.append(source)
+            else:
+                f_sources.append(source)
+        elif cxx_ext_match(source):
+            cxx_sources.append(source)
+        else:
+            c_sources.append(source)            
+    return c_sources, cxx_sources, f_sources, fmodule_sources
+
+if __name__ == '__main__':
+    print 'terminal_has_colors:',terminal_has_colors()
+    print red_text("This is red text")
+    print yellow_text("This is yellow text")

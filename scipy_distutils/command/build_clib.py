@@ -1,42 +1,24 @@
-"""distutils.command.build_clib
+""" Modified version of build_clib that handles fortran source files.
+"""
 
-Implements the Distutils 'build_clib' command, to build a C/C++ library
-that is included in the module distribution and needed by an extension
-module."""
-
-# created (an empty husk) 1999/12/18, Greg Ward
-# fleshed out 2000/02/03-04
-
-__revision__ = "$Id$"
-
-
-# XXX this module has *lots* of code ripped-off quite transparently from
-# build_ext.py -- not surprisingly really, as the work required to build
-# a static library from a collection of C source files is not really all
-# that different from what's required to build a shared object file from
-# a collection of C source files.  Nevertheless, I haven't done the
-# necessary refactoring to account for the overlap in code between the
-# two modules, mainly because a number of subtle details changed in the
-# cut 'n paste.  Sigh.
-
-import os, string, sys
+import os
+import string
+import sys
+import re
 from glob import glob
 from types import *
-from distutils.core import Command
-from distutils.errors import *
-from distutils.sysconfig import customize_compiler
-from scipy_distutils.misc_util import red_text,yellow_text
-from scipy_distutils import log
+from distutils.command.build_clib import build_clib as old_build_clib
+from distutils.command.build_clib import show_compilers
 
-def show_compilers ():
-    from distutils.ccompiler import show_compilers
-    show_compilers()
+from scipy_distutils import log
+from distutils.dep_util import newer_group
+from scipy_distutils.misc_util import filter_sources, has_f_sources
 
 def get_headers(directory_list):
     # get *.h files from list of directories
     headers = []
     for dir in directory_list:
-        head = glob(os.path.join(dir,"*.h"))
+        head = glob(os.path.join(dir,"*.h")) #XXX: *.hpp files??
         headers.extend(head)
 
     return headers
@@ -51,180 +33,77 @@ def get_directories(list_of_sources):
 
     return direcs
 
+class build_clib(old_build_clib):
 
-class build_clib (Command):
+    description = "build C/C++/F libraries used by Python extensions"
 
-    description = "build C/C++ libraries used by Python extensions"
-
-    user_options = [
-        ('build-clib', 'b',
-         "directory to build C/C++ libraries to"),
-        ('build-temp', 't',
-         "directory to put temporary build by-products"),
-        ('debug', 'g',
-         "compile with debugging information"),
-        ('force', 'f',
-         "forcibly build everything (ignore file timestamps)"),
-        ('compiler=', 'c',
-         "specify the compiler type"),
+    user_options = old_build_clib.user_options + [
+        ('fcompiler=', None,
+         "specify the Fortran compiler type"),
         ]
 
-    boolean_options = ['debug', 'force']
+    def initialize_options(self):
+        old_build_clib.initialize_options(self)
+        self.fcompiler = None
+        return
 
-    help_options = [
-        ('help-compiler', None,
-         "list available compilers", show_compilers),
-        ]
+    def finalize_options(self):
+        old_build_clib.finalize_options(self)
+        self.set_undefined_options('build_ext',
+                                   ('fcompiler', 'fcompiler'))
 
-    def initialize_options (self):
-        self.build_clib = None
-        self.build_temp = None
-
-        # List of libraries to build
-        self.libraries = None
-
-        # Compilation options for all libraries
-        self.include_dirs = None
-        self.define = None
-        self.undef = None
-        self.debug = None
-        self.force = 0
-        self.compiler = None
-
-    # initialize_options()
-
-
-    def finalize_options (self):
-
-        # This might be confusing: both build-clib and build-temp default
-        # to build-temp as defined by the "build" command.  This is because
-        # I think that C libraries are really just temporary build
-        # by-products, at least from the point of view of building Python
-        # extensions -- but I want to keep my options open.
-        self.set_undefined_options('build',
-                                   ('build_temp', 'build_clib'),
-                                   ('build_temp', 'build_temp'),
-                                   ('compiler', 'compiler'),
-                                   ('debug', 'debug'),
-                                   ('force', 'force'))
-
-        self.libraries = self.distribution.libraries
-        if self.libraries:
-            self.check_library_list(self.libraries)
-
-        if self.include_dirs is None:
-            self.include_dirs = self.distribution.include_dirs or []
-        if type(self.include_dirs) is StringType:
-            self.include_dirs = string.split(self.include_dirs,
-                                             os.pathsep)
-
+        #XXX: This is hackish and probably unnecessary,
+        #     could we get rid of this?
         from scipy_distutils import misc_util
         extra_includes = misc_util.get_environ_include_dirs()
+        if extra_includes:
+            print "XXX: are you sure you'll need PYTHONINCLUDES env. variable??"
         self.include_dirs.extend(extra_includes)
-        # XXX same as for build_ext -- what about 'self.define' and
-        # 'self.undef' ?
 
-    # finalize_options()
+        return
 
+    def have_f_sources(self):
+        for (lib_name, build_info) in self.libraries:
+            if has_f_sources(build_info.get('sources',[])):
+                return 1
+        return 0
 
-    def run (self):
-
+    def run(self):
         if not self.libraries:
             return
+        old_build_clib.run(self)   # sets self.compiler
+        if self.have_f_sources():
+            from scipy_distutils.fcompiler import new_fcompiler
+            self.fcompiler = new_fcompiler(compiler=self.fcompiler,
+                                           verbose=self.verbose,
+                                           dry_run=self.dry_run,
+                                           force=self.force)
+            self.fcompiler.customize(self.distribution)
 
-        # Yech -- this is cut 'n pasted from build_ext.py!
-        from distutils.ccompiler import new_compiler
-        self.compiler = new_compiler(compiler=self.compiler,
-                                     verbose=self.verbose,
-                                     dry_run=self.dry_run,
-                                     force=self.force)
-        customize_compiler(self.compiler)
+        #XXX: C++ linker support, see build_ext2.py
 
-        if self.include_dirs is not None:
-            self.compiler.set_include_dirs(self.include_dirs)
-        if self.define is not None:
-            # 'define' option is a list of (name,value) tuples
-            for (name,value) in self.define:
-                self.compiler.define_macro(name, value)
-        if self.undef is not None:
-            for macro in self.undef:
-                self.compiler.undefine_macro(macro)
+        self.build_libraries2(self.libraries)
+        return
 
-        self.build_libraries(self.libraries)
+    def build_libraries(self, libraries):
+        # Hold on building libraries in old_build_clib.run()
+        # until Fortran/C++ compilers are set. Building will be
+        # carried out in build_libraries2()
+        return
 
-    # run()
-
-
-    def check_library_list (self, libraries):
-        """Ensure that the list of libraries (presumably provided as a
-           command option 'libraries') is valid, i.e. it is a list of
-           2-tuples, where the tuples are (library_name, build_info_dict).
-           Raise DistutilsSetupError if the structure is invalid anywhere;
-           just returns otherwise."""
-
-        # Yechh, blecch, ackk: this is ripped straight out of build_ext.py,
-        # with only names changed to protect the innocent!
-
-        if type(libraries) is not ListType:
-            print type(libraries)
-            raise DistutilsSetupError, \
-                  "'libraries' option must be a list of tuples"
-
-        for lib in libraries:
-            if type(lib) is not TupleType and len(lib) != 2:
-                raise DistutilsSetupError, \
-                      "each element of 'libraries' must a 2-tuple"
-
-            if type(lib[0]) is not StringType:
-                raise DistutilsSetupError, \
-                      "first element of each tuple in 'libraries' " + \
-                      "must be a string (the library name)"
-            if '/' in lib[0] or (os.sep != '/' and os.sep in lib[0]):
-                raise DistutilsSetupError, \
-                      ("bad library name '%s': " + 
-                       "may not contain directory separators") % \
-                      lib[0]
-
-            if type(lib[1]) is not DictionaryType:
-                raise DistutilsSetupError, \
-                      "second element of each tuple in 'libraries' " + \
-                      "must be a dictionary (build info)"
-        # for lib
-
-    # check_library_list ()
-
-
-    def get_library_names (self):
-        # Assume the library list is valid -- 'check_library_list()' is
-        # called from 'finalize_options()', so it should be!
-
-        if not self.libraries:
-            return None
-
-        lib_names = []
-        for (lib_name, build_info) in self.libraries:
-            lib_names.append(lib_name)
-        return lib_names
-
-    # get_library_names ()
-
-
-    def get_source_files (self):
-        self.check_library_list(self.libraries)
-        filenames = []
-
-        # Gets source files specified and any "*.h" header files in
-        # those directories.        
-        for ext in self.libraries:
-            sources = ext[1]['sources']
-            filenames.extend(sources)
-            filenames.extend(get_headers(get_directories(sources)))
-
+    def get_source_files(self):
+        if sys.version[:3]>='2.2':
+            filenames = old_build_clib.get_source_files(self)
+        else:
+            for (lib_name, build_info) in self.libraries:
+                filenames.extend(build_info.get('sources',[]))
+        filenames.extend(get_headers(get_directories(filenames)))
         return filenames
 
-    def build_libraries (self, libraries):
+    def build_libraries2(self, libraries):
 
         compiler = self.compiler
+        fcompiler = self.fcompiler
 
         for (lib_name, build_info) in libraries:
             sources = build_info.get('sources')
@@ -235,42 +114,44 @@ class build_clib (Command):
                        "a list of source filenames") % lib_name
             sources = list(sources)
 
-            log.info("building '%s' library", lib_name)
+            lib_file = compiler.library_filename(lib_name,
+                                                 output_dir=self.build_clib)
 
-            # First, compile the source code to object files in the library
-            # directory.  (This should probably change to putting object
-            # files in a temporary build directory.)
+            depends = sources + build_info.get('depends',[])
+            if not (self.force or newer_group(depends, lib_file, 'newer')):
+                log.debug("skipping '%s' library (up-to-date)", lib_name)
+                continue
+            else:
+                log.info("building '%s' library", lib_name)
+
             macros = build_info.get('macros')
             include_dirs = build_info.get('include_dirs')
-            objects = self.compiler.compile(sources,
-                                            output_dir=self.build_temp,
-                                            macros=macros,
-                                            include_dirs=include_dirs,
-                                            debug=self.debug)
 
-            # Now "link" the object files together into a static library.
-            # (On Unix at least, this isn't really linking -- it just
-            # builds an archive.  Whatever.)
+            c_sources, cxx_sources, f_sources, fmodule_sources \
+                       = filter_sources(sources)
+
+            if fmodule_sources:
+                print 'XXX: Fortran 90 module support not implemented or tested'
+                f_sources.extend(fmodule_sources)
+
+            if cxx_sources:
+                print 'XXX: C++ linker support not implemented or tested'
+            objects = compiler.compile(c_sources+cxx_sources,
+                                       output_dir=self.build_temp,
+                                       macros=macros,
+                                       include_dirs=include_dirs,
+                                       debug=self.debug)
+
+            if f_sources:
+                f_objects = fcompiler.compile(f_sources,
+                                              output_dir=self.build_temp,
+                                              macros=macros,
+                                              include_dirs=include_dirs,
+                                              debug=self.debug,
+                                              extra_postargs=[])
+                objects.extend(f_objects)
+
             self.compiler.create_static_lib(objects, lib_name,
                                             output_dir=self.build_clib,
                                             debug=self.debug)
-            #XXX: ranlib may not be available on non-GNU platforms.
-            lib_file = None
-            if sys.platform=='win32':
-                lib_file = os.path.join(self.build_clib,'%s.lib' % lib_name)
-                if not os.path.isfile(lib_file):
-                    lib_file = None
-            if lib_file is None:
-                lib_file = os.path.join(self.build_clib,'lib%s.a' % lib_name)
-            cmd = 'ranlib '+lib_file
-            log.debug(cmd)
-            failure = os.system(cmd)
-            if failure:
-                log.warn('Ignoring failure during %s, build'\
-                         ' (exit status = %s)', lib_name, failure)
-
-        # for libraries
-
-    # build_libraries ()
-
-# class build_lib
+        return

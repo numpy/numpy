@@ -19,10 +19,10 @@ distutils_all = [  'build_py',
 __import__('distutils.command',globals(),locals(),distutils_all)
 
 __all__ = ['build',
+           'config_compiler',
+           'build_src',
            'build_ext',
            'build_clib',
-           'build_flib',
-           'run_f2py',
            'install',
            'install_data',
            'install_headers',

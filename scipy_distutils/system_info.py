@@ -271,12 +271,25 @@ class system_info:
                 if k=='sources' and len(v)>200: v = v[:60]+' ...\n... '+v[-60:]
                 print '    %s = %s'%(k,v)
             print
+        
         return res
 
     def get_paths(self, section, key):
         dirs = self.cp.get(section, key).split(os.pathsep)
         if self.dir_env_var and os.environ.has_key(self.dir_env_var):
-            dirs = os.environ[self.dir_env_var].split(os.pathsep) + dirs
+            d = os.environ[self.dir_env_var]
+            if os.path.isfile(d):
+                dirs = [os.path.dirname(d)] + dirs
+                l = getattr(self,'_lib_names',[])
+                if len(l)==1:
+                    b = os.path.basename(d)
+                    b = os.path.splitext(b)[0]
+                    if b[:3]=='lib':
+                        print 'Replacing _lib_names[0]==%r with %r' \
+                              % (self._lib_names[0], b[3:])
+                        self._lib_names[0] = b[3:]
+            else:
+                dirs = d.split(os.pathsep) + dirs
         default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
         dirs.extend(default_dirs)
         ret = []
@@ -493,7 +506,7 @@ class atlas_info(system_info):
         if h:
             h = os.path.dirname(h)
             dict_append(info,include_dirs=[h])
-
+        info['language'] = 'c'
         if lapack is not None:
             dict_append(info,**lapack)
             dict_append(info,**atlas)
@@ -535,6 +548,9 @@ class atlas_info(system_info):
 *********************************************************************
 """ % (lapack_lib,sz/1024)
                 warnings.warn(message)
+            else:
+                info['language'] = 'f77'
+
         self.set_info(**info)
 
 class atlas_threads_info(atlas_info):
@@ -549,11 +565,11 @@ class lapack_atlas_threads_info(atlas_threads_info):
 class lapack_info(system_info):
     section = 'lapack'
     dir_env_var = 'LAPACK'
-
+    _lib_names = ['lapack']
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
-        lapack_libs = self.get_libs('lapack_libs', ['lapack'])
+        lapack_libs = self.get_libs('lapack_libs', self._lib_names)
         for d in lib_dirs:
             lapack = self.check_libs(d,lapack_libs,[])
             if lapack is not None:
@@ -561,6 +577,7 @@ class lapack_info(system_info):
                 break
         else:
             return
+        info['language'] = 'f77'
         self.set_info(**info)
 
 class lapack_src_info(system_info):
@@ -657,18 +674,19 @@ class lapack_src_info(system_info):
                   + ['%s.f'%f for f in (allaux+oclasrc+ozlasrc).split()]
         sources = [os.path.join(src_dir,f) for f in sources]
         #XXX: should we check here actual existence of source files?
-        info = {'sources':sources}
+        info = {'sources':sources,'language':'f77'}
         self.set_info(**info)
 
 
 class blas_info(system_info):
     section = 'blas'
     dir_env_var = 'BLAS'
+    _lib_names = ['blas']
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
-        blas_libs = self.get_libs('blas_libs', ['blas'])
+        blas_libs = self.get_libs('blas_libs', self._lib_names)
         for d in lib_dirs:
             blas = self.check_libs(d,blas_libs,[])
             if blas is not None:
@@ -676,6 +694,7 @@ class blas_info(system_info):
                 break
         else:
             return
+        info['language'] = 'f77'  # XXX: is it generally true?
         self.set_info(**info)
 
 class blas_src_info(system_info):
@@ -723,7 +742,7 @@ class blas_src_info(system_info):
         sources = [os.path.join(src_dir,f+'.f') \
                    for f in (blas1+blas2+blas3).split()]
         #XXX: should we check here actual existence of source files?
-        info = {'sources':sources}
+        info = {'sources':sources,'language':'f77'}
         self.set_info(**info)
 
 class x11_info(system_info):
@@ -763,11 +782,10 @@ class numpy_info(system_info):
         from distutils.sysconfig import get_python_inc
         py_incl_dir = get_python_inc()
         include_dirs = [py_incl_dir]
-        if os.name=='posix':
-            for d in default_include_dirs:
-                d = os.path.join(d, os.path.basename(py_incl_dir))
-                if d not in include_dirs:
-                    include_dirs.append(d)
+        for d in default_include_dirs:
+            d = os.path.join(d, os.path.basename(py_incl_dir))
+            if d not in include_dirs:
+                include_dirs.append(d)
         system_info.__init__(self,
                              default_lib_dirs=[],
                              default_include_dirs=include_dirs)
@@ -841,8 +859,14 @@ def combine_paths(*args,**kws):
         print '(','paths:',','.join(result),')'
     return result
 
+language_map = {'c':0,'c++':1,'f77':2,'f90':3}
+inv_language_map = {0:'c',1:'c++',2:'f77',3:'f90'}
 def dict_append(d,**kws):
+    languages = []
     for k,v in kws.items():
+        if k=='language':
+            languages.append(v)
+            continue
         if d.has_key(k):
             if k in ['library_dirs','include_dirs','define_macros']:
                 [d[k].append(vv) for vv in v if vv not in d[k]]
@@ -850,6 +874,10 @@ def dict_append(d,**kws):
                 d[k].extend(v)
         else:
             d[k] = v
+    if languages:
+        l = inv_language_map[max([language_map.get(l,0) for l in languages])]
+        d['language'] = l
+    return
 
 def show_all():
     import system_info
