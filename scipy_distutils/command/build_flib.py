@@ -57,6 +57,8 @@ from types import *
 from distutils.ccompiler import CCompiler,gen_preprocess_options
 from distutils.command.build_clib import build_clib
 from distutils.errors import *
+from scipy_distutils.misc_util import red_text,green_text,yellow_text,\
+     cyan_text
 
 class FortranCompilerError (CCompilerError):
     """Some compile/link operation failed."""
@@ -75,43 +77,11 @@ if os.name == 'nt':
 else:
     run_command = commands.getstatusoutput
 
-# Hooks for colored terminal output. Could be in a more general use.
-# See also http://www.livinglogic.de/Python/ansistyle
-def terminal_has_colors():
-    if not sys.stdout.isatty(): return 0
-    try:
-        import curses
-        curses.setupterm()
-        return (curses.tigetnum("colors") >= 0
-                and curses.tigetnum("pairs") >= 0
-                and ((curses.tigetstr("setf") is not None 
-                      and curses.tigetstr("setb") is not None) 
-                     or (curses.tigetstr("setaf") is not None
-                         and curses.tigetstr("setab") is not None)
-                     or curses.tigetstr("scp") is not None))
-    except: pass
-    return 0
-
-if terminal_has_colors():
-    def red_text(s): return '\x1b[31m%s\x1b[0m'%s
-    def green_text(s): return '\x1b[32m%s\x1b[0m'%s
-    def yellow_text(s): return '\x1b[33m%s\x1b[0m'%s
-    def blue_text(s): return '\x1b[34m%s\x1b[0m'%s
-    def cyan_text(s): return '\x1b[35m%s\x1b[0m'%s
-else:
-    def red_text(s): return s
-    def green_text(s): return s
-    def yellow_text(s): return s
-    def cyan_text(s): return s
-    def blue_text(s): return s
-
-
 def show_compilers():
     for compiler_class in all_compilers:
         compiler = compiler_class()
         if compiler.is_available():
             print cyan_text(compiler)
-
 
 class build_flib (build_clib):
 
@@ -163,13 +133,17 @@ class build_flib (build_clib):
                                    ('build_temp', 'build_temp'),
                                    ('debug', 'debug'),
                                    ('force', 'force'))
+
+        self.announce('running find_fortran_compiler')
         fc = find_fortran_compiler(self.fcompiler,
                                    self.fcompiler_exec,
-                                   self.f90compiler_exec)
+                                   self.f90compiler_exec,
+                                   verbose = self.verbose)
         if not fc:
-            raise DistutilsOptionError, 'Fortran compiler not available: %s'%(self.fcompiler)
+            raise DistutilsOptionError, 'Fortran compiler not available: %s'\
+                  % (self.fcompiler)
         else:
-            self.announce(cyan_text(' using %s Fortran compiler' % fc))
+            self.announce('using '+cyan_text('%s Fortran compiler' % fc))
         self.fcompiler = fc
         if self.has_f_libraries():
             self.fortran_libraries = self.distribution.fortran_libraries
@@ -404,12 +378,12 @@ class fortran_compiler_base(CCompiler):
                 cmd =  compiler + ' ' + switches + ' '+\
                        module_switch + \
                        self.compile_switch + source + \
-                       self.object_switch + object 
-                print yellow_text(cmd)
+                       self.object_switch + object
+                self.announce(yellow_text(cmd))
                 failure = os.system(cmd)
                 if failure:
                     raise FortranCompileError,\
-                          'failure during compile (exit status = %s)' % failure 
+                          'failure during compile (exit status = %s)' % failure
                 object_files.append(object)
         return object_files
         #return all object files to make sure everything is archived 
@@ -435,7 +409,7 @@ class fortran_compiler_base(CCompiler):
         objects = string.join(object_files)
         if objects:
             cmd = '%s%s %s' % (self.lib_ar,lib_file,objects)
-            print yellow_text(cmd)
+            self.announce(yellow_text(cmd))
             failure = os.system(cmd)
             if failure:
                 raise FortranBuildError,\
@@ -443,7 +417,7 @@ class fortran_compiler_base(CCompiler):
             if self.lib_ranlib and not skip_ranlib:
                 # Digital,MIPSPro compilers do not have ranlib.
                 cmd = '%s %s' %(self.lib_ranlib,lib_file)
-                print yellow_text(cmd)
+                self.announce(yellow_text(cmd))
                 failure = os.system(cmd)
                 if failure:
                     raise FortranBuildError,\
@@ -513,17 +487,19 @@ class fortran_compiler_base(CCompiler):
             # version string.
             return self.version
         self.version = ''
-        # works I think only for unix...        
-        print 'command:', yellow_text(self.ver_cmd)
+        # works I think only for unix...
+        #if self.verbose:
+        self.announce(yellow_text(self.ver_cmd))
         exit_status, out_text = run_command(self.ver_cmd)
-        print exit_status,
+        if self.verbose:
+            out_text = out_text.split('\n')[0]
         if not exit_status:
-            print green_text(out_text)
+            self.announce('found %s' %(green_text(out_text)))
             m = re.match(self.ver_match,out_text)
             if m:
                 self.version = m.group('version')
         else:
-            print red_text(out_text)
+            self.announce('%s: %s' % (exit_status,red_text(out_text)))
         return self.version
 
     def get_libraries(self):
@@ -549,9 +525,10 @@ class absoft_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Absoft'
     ver_match = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
-    
-    def __init__(self, fc = None, f90c = None):
-        fortran_compiler_base.__init__(self)
+
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
+
         if fc is None:
             fc = 'f77'
         if f90c is None:
@@ -611,9 +588,10 @@ class sun_fortran_compiler(fortran_compiler_base):
     vendor = 'Sun'
     #ver_match =  r'f77: (?P<version>[^\s*,]*)'
     ver_match = r'f90: Sun (?P<version>[^\s*,]*)'
-    
-    def __init__(self, fc = None, f90c = None):
-        fortran_compiler_base.__init__(self)
+
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
+
         if fc is None:
             fc = 'f77'
         if f90c is None:
@@ -650,6 +628,7 @@ class sun_fortran_compiler(fortran_compiler_base):
         lib_match = r'### f90: Note: LD_RUN_PATH\s*= '\
                      '(?P<lib_paths>[^\s.]*).*'
         cmd = self.f90_compiler + ' -dryrun dummy.f'
+        self.announce(yellow_text(cmd))
         exit_status, output = run_command(cmd)
         if not exit_status:
             libs = re.findall(lib_match,output)
@@ -672,8 +651,9 @@ class mips_fortran_compiler(fortran_compiler_base):
     ver_match =  r'MIPSpro Compilers: Version (?P<version>[^\s*,]*)'
     lib_ranlib = '' # XXX: should we use `ar -s' here?
 
-    def __init__(self, fc = None, f90c = None):
-        fortran_compiler_base.__init__(self)
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
+
         if fc is None:
             fc = 'f77'
         if f90c is None:
@@ -711,8 +691,9 @@ class hpux_fortran_compiler(fortran_compiler_base):
     vendor = 'HP'
     ver_match =  r'HP F90 (?P<version>[^\s*,]*)'
 
-    def __init__(self, fc = None, f90c = None):
-        fortran_compiler_base.__init__(self)
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
+
         if fc is None:
             fc = 'f90'
         if f90c is None:
@@ -735,19 +716,20 @@ class hpux_fortran_compiler(fortran_compiler_base):
         if self.version is not None:
             return self.version
         self.version = ''
-        print 'command:', yellow_text(self.ver_cmd)
+        self.announce(yellow_text(self.ver_cmd))
         exit_status, out_text = run_command(self.ver_cmd)
-        print exit_status,
+        if self.verbose:
+            out_text = out_text.split('\n')[0]
         if exit_status in [0,256]:
             # 256 seems to indicate success on HP-UX but keeping
             # also 0. Or does 0 exit status mean something different
             # in this platform?
-            print green_text(out_text)
+            self.announce('found: '+green_text(out_text))
             m = re.match(self.ver_match,out_text)
             if m:
                 self.version = m.group('version')
         else:
-            print red_text(out_text)
+            self.announce('%s: %s' % (exit_status,red_text(out_text)))
         return self.version
 
 class gnu_fortran_compiler(fortran_compiler_base):
@@ -755,9 +737,9 @@ class gnu_fortran_compiler(fortran_compiler_base):
     vendor = 'Gnu'
     ver_match = r'GNU Fortran (?P<version>[^\s*]*)'
     gcc_lib_dir = None
-    
-    def __init__(self, fc = None, f90c = None):
-        fortran_compiler_base.__init__(self)
+
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
 
         if fc is None:
             fc = 'g77'
@@ -816,12 +798,15 @@ class gnu_fortran_compiler(fortran_compiler_base):
     def find_lib_directories(self):
         if self.gcc_lib_dir is not None:
             return self.gcc_lib_dir
+        self.announce('running gnu_fortran_compiler.find_lib_directories')
         self.gcc_lib_dir = []
         lib_dir = []
         match = r'Reading specs from (.*)/specs'
 
-        # works I think only for unix...        
-        exit_status, out_text = run_command(('%s -v' % self.f77_compiler))
+        # works I think only for unix...
+        cmd = '%s -v' % self.f77_compiler
+        self.announce(yellow_text(cmd))
+        exit_status, out_text = run_command(cmd)
         if not exit_status:
             m = re.findall(match,out_text)
             if m:
@@ -856,10 +841,11 @@ class gnu_fortran_compiler(fortran_compiler_base):
 class intel_ia32_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Intel' # Intel(R) Corporation 
-    ver_match = r'Intel\(R\) Fortran Compiler for 32-bit applications, Version (?P<version>[^\s*]*)'
+    ver_match = r'Intel\(R\) Fortran Compiler for 32-bit applications, '\
+                'Version (?P<version>[^\s*]*)'
 
-    def __init__(self, fc = None, f90c = None):
-        fortran_compiler_base.__init__(self)
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
 
         if fc is None:
             fc = 'ifc'
@@ -912,12 +898,14 @@ class intel_ia32_fortran_compiler(fortran_compiler_base):
 class intel_itanium_fortran_compiler(intel_ia32_fortran_compiler):
 
     vendor = 'Itanium'
-    ver_match = r'Intel\(R\) Fortran 90 Compiler Itanium\(TM\) Compiler for the Itanium\(TM\)-based applications, Version (?P<version>[^\s*]*)'
+    ver_match = r'Intel\(R\) Fortran 90 Compiler Itanium\(TM\) Compiler'\
+                ' for the Itanium\(TM\)-based applications,'\
+                ' Version (?P<version>[^\s*]*)'
 
-    def __init__(self, fc = None, f90c = None):
+    def __init__(self, fc=None, f90c=None, verbose=0):
         if fc is None:
             fc = 'efc'
-        intel_ia32_fortran_compiler.__init__(self, fc, f90c)
+        intel_ia32_fortran_compiler.__init__(self, fc, f90c, verbose=verbose)
 
 
 class nag_fortran_compiler(fortran_compiler_base):
@@ -925,8 +913,8 @@ class nag_fortran_compiler(fortran_compiler_base):
     vendor = 'NAG'
     ver_match = r'NAGWare Fortran 95 compiler Release (?P<version>[^\s]*)'
 
-    def __init__(self, fc = None, f90c = None):
-        fortran_compiler_base.__init__(self)
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
 
         if fc is None:
             fc = 'f95'
@@ -965,8 +953,8 @@ class f_fortran_compiler(fortran_compiler_base):
     vendor = 'F'
     ver_match = r'Fortran Company/NAG F compiler Release (?P<version>[^\s]*)'
 
-    def __init__(self, fc = None, f90c = None):
-        fortran_compiler_base.__init__(self)
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
 
         if fc is None:
             fc = 'F'
@@ -984,7 +972,8 @@ class f_fortran_compiler(fortran_compiler_base):
         if not self.is_available():
             return
 
-        print red_text("""
+        if self.verbose:
+            print red_text("""
 WARNING: F compiler is unsupported due to its incompleteness.
          Send complaints to its vendor. For adding its support
          to scipy_distutils, it must support external procedures.
@@ -1005,10 +994,11 @@ WARNING: F compiler is unsupported due to its incompleteness.
 class vast_fortran_compiler(fortran_compiler_base):
 
     vendor = 'VAST'
-    ver_match = r'\s*Pacific-Sierra Research vf90 (Personal|Professional)\s+(?P<version>[^\s]*)'
+    ver_match = r'\s*Pacific-Sierra Research vf90 (Personal|Professional)'\
+                '\s+(?P<version>[^\s]*)'
 
-    def __init__(self, fc = None, f90c = None):
-        fortran_compiler_base.__init__(self)
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
 
         if fc is None:
             fc = 'g77'
@@ -1044,8 +1034,8 @@ class compaq_fortran_compiler(fortran_compiler_base):
     vendor = 'Compaq'
     ver_match = r'Compaq Fortran (?P<version>[^\s]*)'
 
-    def __init__(self, fc = None, f90c = None):
-        fortran_compiler_base.__init__(self)
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
 
         if fc is None:
             fc = 'fort'
@@ -1069,7 +1059,8 @@ class compaq_fortran_compiler(fortran_compiler_base):
         self.ver_cmd = self.f77_compiler+' -V '
 
     def get_opt(self):
-        opt = ' -O4 -align dcommons -arch host -assume bigarrays -assume nozsize -math_library fast -tune host '
+        opt = ' -O4 -align dcommons -arch host -assume bigarrays'\
+              ' -assume nozsize -math_library fast -tune host '
         return opt
 
     def get_linker_so(self):
@@ -1080,7 +1071,8 @@ class compaq_fortran_compiler(fortran_compiler_base):
 class digital_fortran_compiler(fortran_compiler_base):
 
     vendor = 'Digital'
-    ver_match = r'DIGITAL Visual Fortran Optimizing Compiler Version (?P<version>[^\s]*).*'
+    ver_match = r'DIGITAL Visual Fortran Optimizing Compiler'\
+                ' Version (?P<version>[^\s]*).*'
 
     compile_switch = ' /c '
     object_switch = ' /object:'
@@ -1089,8 +1081,8 @@ class digital_fortran_compiler(fortran_compiler_base):
     lib_ar = 'lib.exe /OUT:'
     lib_ranlib = ''
 
-    def __init__(self, fc = None, f90c = None):
-        fortran_compiler_base.__init__(self)
+    def __init__(self, fc=None, f90c=None, verbose=0):
+        fortran_compiler_base.__init__(self, verbose=verbose)
 
         if fc is None:
             fc = 'DF'
@@ -1132,13 +1124,13 @@ def get_f90_files(files):
 def get_fortran_files(files):
     return match_extension(files,'f90|f95|for|f77|ftn|f')
 
-def find_fortran_compiler(vendor = None, fc = None, f90c = None):
+def find_fortran_compiler(vendor=None, fc=None, f90c=None, verbose=0):
     fcompiler = None
     for compiler_class in all_compilers:
         if vendor is not None and vendor != compiler_class.vendor:
             continue
-        print compiler_class
-        compiler = compiler_class(fc,f90c)
+        #print compiler_class
+        compiler = compiler_class(fc,f90c,verbose = verbose)
         if compiler.is_available():
             fcompiler = compiler
             break

@@ -1,5 +1,35 @@
 import os,sys,string
 
+# Hooks for colored terminal output.
+# See also http://www.livinglogic.de/Python/ansistyle
+def terminal_has_colors():
+    if not sys.stdout.isatty(): return 0
+    try:
+        import curses
+        curses.setupterm()
+        return (curses.tigetnum("colors") >= 0
+                and curses.tigetnum("pairs") >= 0
+                and ((curses.tigetstr("setf") is not None 
+                      and curses.tigetstr("setb") is not None) 
+                     or (curses.tigetstr("setaf") is not None
+                         and curses.tigetstr("setab") is not None)
+                     or curses.tigetstr("scp") is not None))
+    except: pass
+    return 0
+
+if terminal_has_colors():
+    def red_text(s): return '\x1b[31m%s\x1b[0m'%s
+    def green_text(s): return '\x1b[32m%s\x1b[0m'%s
+    def yellow_text(s): return '\x1b[33m%s\x1b[0m'%s
+    def blue_text(s): return '\x1b[34m%s\x1b[0m'%s
+    def cyan_text(s): return '\x1b[35m%s\x1b[0m'%s
+else:
+    def red_text(s): return s
+    def green_text(s): return s
+    def yellow_text(s): return s
+    def cyan_text(s): return s
+    def blue_text(s): return s
+
 class PostponedException:
     """Postpone exception until an attempt is made to use a resource."""
     #Example usage:
@@ -12,6 +42,8 @@ class PostponedException:
     def __getattr__(self,name):
         raise self._info[0],self._info[1]
 
+#XXX: update_version and related functions are not used
+#     in the scipy project. Should we remove them?
 def update_version(release_level='alpha',
                    path='.',
                    version_template = \

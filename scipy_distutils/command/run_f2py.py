@@ -11,11 +11,13 @@ from distutils.dep_util import newer
 from distutils.cmd import Command
 #from scipy_distutils.core import Command
 from scipy_distutils.system_info import F2pyNotFoundError
+from scipy_distutils.misc_util import red_text,yellow_text
 
 import re,os,sys,string
 
 module_name_re = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',re.I).match
-user_module_name_re = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?__user__[\w_]*)',re.I).match
+user_module_name_re = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'\
+                                 '__user__[\w_]*)',re.I).match
 fortran_ext_re = re.compile(r'.*[.](f90|f95|f77|for|ftn|f)\Z',re.I).match
 
 class run_f2py(Command):
@@ -70,12 +72,12 @@ class run_f2py(Command):
 
     def f2py_sources (self, sources, ext):
 
-        """Walk the list of source files in 'sources', looking for f2py
+        """ Walk the list of source files in `sources`, looking for f2py
         interface (.pyf) files.  Run f2py on all that are found, and
-        return a modified 'sources' list with f2py source files replaced
+        return the modified `sources` list with f2py source files replaced
         by the generated C (or C++) and Fortran files.
-        If 'sources' contains not .pyf files, then create a temporary
-        one from the Fortran files in 'sources'.
+        If 'sources' contains no .pyf files, then create a temporary
+        .pyf file from the Fortran files found in 'sources'.
         """
         try:
             import f2py2e
@@ -88,7 +90,7 @@ class run_f2py(Command):
         #   <modulename>-f2pywrappers.f  [occasionally]
         # In addition, <f2py2e-dir>/src/fortranobject.{c,h} are needed
         # for building f2py generated extension modules.
-        # It is assumed that one pyf file contains defintions for exactly
+        # It is assumed that one pyf file contains definitions for exactly
         # one extension module.
 
         target_dir = self.build_dir
@@ -121,10 +123,11 @@ class run_f2py(Command):
                     ext.name = base
                 if base != ext_name:
                     # XXX: Should we do here more than just warn?
-                    self.warn('%s provides %s but this extension is %s' \
-                              % (source,`base`,`ext.name`))
+                    self.warn(red_text('%s provides %s but this extension is %s' \
+                              % (source,`base`,`ext.name`)))
                 target_file = os.path.join(target_dir,base+target_ext)
-                fortran_target_file = os.path.join(target_dir,base+fortran_target_ext)
+                fortran_target_file = os.path.join(target_dir,
+                                                   base+fortran_target_ext)
                 f2py_sources.append(source)
                 f2py_targets[source] = target_file
                 f2py_fortran_targets[source] = fortran_target_file
@@ -144,13 +147,13 @@ class run_f2py(Command):
             # creating a temporary pyf file from fortran sources
             pyf_target = os.path.join(target_dir,ext_name+'.pyf')
             pyf_target_file = os.path.join(target_dir,ext_name+target_ext)
-            pyf_fortran_target_file = os.path.join(target_dir,ext_name+fortran_target_ext)
+            pyf_fortran_target_file = os.path.join(target_dir,
+                                                   ext_name+fortran_target_ext)
             f2py_opts2 = ['-m',ext_name,'-h',pyf_target,'--overwrite-signature']
             for source in fortran_sources:
                 if newer(source,pyf_target) or self.force:
-                    self.announce("f2py-ing a new %s" % (pyf_target))
-                    self.announce("f2py-opts: %s" % \
-                                  string.join(f2py_opts2,' '))
+                    self.announce(yellow_text("f2py %s" % \
+                                  string.join(fortran_sources + f2py_opts2,' ')))
                     f2py2e.run_main(fortran_sources + f2py_opts2)
                     break
             f2py_sources.append(pyf_target)
@@ -160,8 +163,8 @@ class run_f2py(Command):
         new_sources.extend(fortran_sources)
 
         if len(f2py_sources) > 1:
-            self.warn('Only one .pyf file can be used per Extension but got %s.'\
-                      % (len(f2py_sources)))
+            self.warn(red_text('Only one .pyf file can be used per Extension'\
+                               ' but got %s.' % (len(f2py_sources))))
 
         # a bit of a hack, but I think it'll work.  Just include one of
         # the fortranobject.c files that was copied into most 
@@ -169,14 +172,17 @@ class run_f2py(Command):
         new_sources.append(os.path.join(d,'src','fortranobject.c'))
         ext.include_dirs.append(os.path.join(d,'src'))
 
-        f2py_options = ext.f2py_options + self.f2py_options
+        if ext.f2py_options != self.f2py_options:
+            f2py_options = ext.f2py_options + self.f2py_options
+        else:
+            f2py_options = self.f2py_options[:]
 
         for source in f2py_sources:
             target = f2py_targets[source]
             fortran_target = f2py_fortran_targets[source]
             if newer(source,target) or self.force:
-                self.announce("f2py-ing %s to %s" % (source, target))
-                self.announce("f2py-opts: %s" % string.join(f2py_options,' '))
+                self.announce(yellow_text("f2py %s" % \
+                              string.join(f2py_options+[source],' ')))
                 f2py2e.run_main(f2py_options + [source])
             new_sources.append(target)
             if os.path.exists(fortran_target):
