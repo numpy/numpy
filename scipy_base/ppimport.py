@@ -58,7 +58,9 @@ class _AttrLoader:
         attr = getattr(self.__dict__['_ppimport_attr_module'],
                        self.__dict__['_ppimport_attr_name'])
         try:
-            self.__dict__ = attr.__dict__
+            d = attr.__dict__
+            if d is not None:
+                self.__dict__ = d
         except AttributeError:
             pass
         self.__dict__['_ppimport_attr'] = attr
@@ -212,6 +214,8 @@ class _ModuleLoader:
     def __repr__(self):
         if self.__dict__.has_key('_ppimport_module'):
             status = 'imported'
+        elif self.__dict__.has_key('_ppimport_exc_value'):
+            status = 'import error'
         else:
             status = 'import postponed'
         return '<module %s from %s [%s]>' \
@@ -219,3 +223,41 @@ class _ModuleLoader:
 
     __str__ = __repr__
 
+try:
+    import pydoc as _pydoc
+except ImportError:
+    _pydoc = None
+if _pydoc is not None:
+    # Define new built-in 'help'.
+    # This is a wrapper around pydoc.help (with a twist
+    # (as in debian site.py) and ppimport support).
+    class _Helper:
+        def __repr__ (self):
+            return "Type help () for interactive help, " \
+                   "or help (object) for help about object."
+        def __call__ (self, *args, **kwds):
+            new_args = []
+            for a in args:
+                if hasattr(a,'_ppimport_importer') or \
+		   hasattr(a,'_ppimport_module'):
+                    a = a._ppimport_module
+                if hasattr(a,'_ppimport_attr'):
+		    a = a._ppimport_attr
+                new_args.append(a)
+            return _pydoc.help(*new_args, **kwds)
+    import __builtin__
+    __builtin__.help = _Helper()
+
+    import inspect as _inspect
+    _old_inspect_getfile = _inspect.getfile
+    def _inspect_getfile(object):
+	try:
+	    if hasattr(object,'_ppimport_importer') or \
+	       hasattr(object,'_ppimport_module'):
+                object = object._ppimport_module
+            if hasattr(object,'_ppimport_attr'):
+		object = object._ppimport_attr
+	except ImportError:
+	    object = object.__class__
+	return _old_inspect_getfile(object)
+    _inspect.getfile = _inspect_getfile
