@@ -1,7 +1,8 @@
 import types
 import Numeric
 from Numeric import *
-from fastumath import *
+from scipy_base.fastumath import *
+from type_check import ScalarType
 
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
@@ -10,6 +11,7 @@ __all__ = ['round','any','all','logspace','linspace','fix','mod',
 round = Numeric.around
 any = Numeric.sometrue
 all = Numeric.alltrue
+
 
 def logspace(start,stop,num=50,endpoint=1):
     """ Evenly spaced samples on a logarithmic scale.

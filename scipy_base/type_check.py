@@ -1,7 +1,7 @@
 import types
 import Numeric
 from Numeric import *
-from fastumath import *
+from scipy_base.fastumath import *
 
 import limits
 

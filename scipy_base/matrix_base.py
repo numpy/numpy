@@ -7,7 +7,7 @@ __all__ = ['diag','eye','fliplr','flipud','rot90']
 # These are from Numeric
 import Matrix
 from Numeric import *
-from fastumath import *
+from scipy_base.fastumath import *
 from type_check import isscalar
 from index_tricks import mgrid,r_,c_
 # Elementary matrices

@@ -7,8 +7,8 @@
 """
 
 import Numeric
-import fastumath
-reload(fastumath)
+import scipy_base.fastumath
+reload(scipy_base.fastumath)
 from type_check import toFloat32, toFloat64
 
 __all__ = ['epsilon','tiny','float_epsilon','float_tiny','float_min',

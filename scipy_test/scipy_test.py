@@ -290,7 +290,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
 try:
     # Numeric specific testss
     from Numeric import *
-    from fastumath import *
+    from scipy_base.fastumath import *
     
     def assert_array_equal(x,y,err_msg=''):
         msg = '\nArrays are not equal'

@@ -1,7 +1,7 @@
 
 import Numeric
 from Numeric import *
-import fastumath
+import scipy_base.fastumath
 import limits
 
 from type_check import *
@@ -13,12 +13,12 @@ from matrix_base import *
 from polynomial import *
 from scimath import *
 
-# needs fastumath
-Inf = inf = fastumath.PINF
+# needs scipy_base.fastumath
+Inf = inf = scipy_base.fastumath.PINF
 try:
-    NAN = NaN = nan = fastumath.NAN
+    NAN = NaN = nan = scipy_base.fastumath.NAN
 except AttributeError:
-    NaN = NAN = nan = fastumath.PINF - fastumath.PINF
+    NaN = NAN = nan = scipy_base.fastumath.PINF - scipy_base.fastumath.PINF
 
 
 #---- testing ----#

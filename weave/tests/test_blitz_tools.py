@@ -4,7 +4,7 @@ from Numeric import *
 try:
     from scipy_base.fastumath import *
 except:
-    pass # fastumath not available    
+    pass # scipy_base.fastumath not available    
 import RandomArray
 import os
 import time
