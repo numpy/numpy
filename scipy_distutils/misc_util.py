@@ -3,18 +3,21 @@ import os,sys
 def get_path(mod_name):
     """ This function makes sure installation is done from the
         correct directory no matter if it is installed from the
-        command line or from another package.
+        command line or from another package or run_setup function.
         
     """
     if mod_name == '__main__':
         d = os.path.abspath('.')
+    elif mod_name == '__builtin__':
+        #builtin if/then added by Pearu for use in core.run_setup.        
+        d = os.path.dirname(os.path.abspath(sys.argv[0]))
     else:
         #import scipy_distutils.setup
         mod = __import__(mod_name)
         file = mod.__file__
-        d,f = os.path.split(os.path.abspath(file))
+        d = os.path.dirname(os.path.abspath(file))
     return d
-
+    
 def add_local_to_path(mod_name):
     local_path = get_path(mod_name)
     sys.path.insert(0,local_path)
