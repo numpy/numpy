@@ -1092,7 +1092,7 @@ class intel_ia32_fortran_compiler(fortran_compiler_base):
             switches = switches + ' -0f_check '
         self.f77_switches = self.f90_switches = switches
         self.f77_switches = self.f77_switches + ' -FI -w90 -w95 -cm -c '
-        self.f90_fixed_switch = ' -FI '
+        self.f90_fixed_switch = ' -FI -72 -cm -w '
 
         self.f77_opt = self.f90_opt = self.get_opt()
         
@@ -1121,6 +1121,13 @@ class intel_ia32_fortran_compiler(fortran_compiler_base):
     def get_linker_so(self):
         return [self.f77_compiler,'-shared']
 
+    def build_module_switch(self,module_dirs,temp_dir):
+        res = ' -module '+temp_dir
+        if module_dirs:
+            for mod in module_dirs:
+                res = res + ' -I' + mod                
+        res += ' -I '+temp_dir
+        return res
 
 class intel_itanium_fortran_compiler(intel_ia32_fortran_compiler):
 
