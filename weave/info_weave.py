@@ -7,3 +7,5 @@ C/C++ integration
         3. ext_tools-- a module that helps construct C/C++ extension modules.
         4. accelerate -- a module that inline accelerates Python functions
 """
+postpone_import = 1
+standalone = 1

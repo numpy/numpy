@@ -5,42 +5,40 @@ check_var_local -- tests wheter a variable is passed in , modified,
                    and returned correctly in the local_dict dictionary
                    argument
 check_return -- test whether a variable is passed in, modified, and
-                then returned as a function return value correctly                                 
+                then returned as a function return value correctly
 """
 import unittest
 
-from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
-
-add_grandparent_to_path(__name__)
-import ext_tools
-import wx_spec
+from scipy_test.testing import *
+set_package_path()
+from weave import ext_tools, wx_spec
 restore_path()
 
 import wxPython
 import wxPython.wx
 
 class test_wx_converter(unittest.TestCase):    
-    def check_type_match_string(self):
+    def check_type_match_string(self,level=5):
         s = wx_spec.wx_converter()
         assert(not s.type_match('string') )
-    def check_type_match_int(self):
+    def check_type_match_int(self,level=5):
         s = wx_spec.wx_converter()        
         assert(not s.type_match(5))
-    def check_type_match_float(self):
+    def check_type_match_float(self,level=5):
         s = wx_spec.wx_converter()        
         assert(not s.type_match(5.))
-    def check_type_match_complex(self):
+    def check_type_match_complex(self,level=5):
         s = wx_spec.wx_converter()        
         assert(not s.type_match(5.+1j))
-    def check_type_match_complex(self):
+    def check_type_match_complex(self,level=5):
         s = wx_spec.wx_converter()        
         assert(not s.type_match(5.+1j))
-    def check_type_match_wxframe(self):
+    def check_type_match_wxframe(self,level=5):
         s = wx_spec.wx_converter()
         f=wxPython.wx.wxFrame(wxPython.wx.NULL,-1,'bob')        
         assert(s.type_match(f))
         
-    def check_var_in(self):
+    def check_var_in(self,level=5):
         mod = ext_tools.ext_module('wx_var_in',compiler='msvc')
         a = wxPython.wx.wxFrame(wxPython.wx.NULL,-1,'bob')        
         code = """
@@ -64,7 +62,7 @@ class test_wx_converter(unittest.TestCase):
         except TypeError:
             pass
             
-    def no_check_var_local(self):
+    def no_check_var_local(self,level=5):
         mod = ext_tools.ext_module('wx_var_local')
         a = 'string'
         var_specs = ext_tools.assign_variable_types(['a'],locals())
@@ -77,7 +75,7 @@ class test_wx_converter(unittest.TestCase):
         q={}
         wx_var_local.test(b,q)
         assert(q['a'] == 'hello')
-    def no_check_return(self):
+    def no_check_return(self,level=5):
         mod = ext_tools.ext_module('wx_return')
         a = 'string'
         var_specs = ext_tools.assign_variable_types(['a'],locals())
@@ -93,18 +91,5 @@ class test_wx_converter(unittest.TestCase):
         c = wx_return.test(b)
         assert( c == 'hello')
 
-def test_suite(level=1):
-    suites = []
-    if level >= 5:
-        suites.append( unittest.makeSuite(test_wx_converter,'check_'))
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
-
 if __name__ == "__main__":
-    test()
+    ScipyTest('weave.wx_spec').run()

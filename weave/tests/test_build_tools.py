@@ -5,10 +5,9 @@
 import unittest
 import os, sys, tempfile
 
-from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
-
-add_grandparent_to_path(__name__)
-import build_tools
+from scipy_test.testing import *
+set_package_path()
+from weave import build_tools
 restore_path()
 
 def is_writable(val):
@@ -63,21 +62,6 @@ class test_configure_sys_argv(unittest.TestCase):
         argv.index('--compiler='+compiler)
         build_tools.restore_sys_argv()
         assert(pre_argv == sys.argv[:])
-        
-def test_suite(level = 1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_configure_build_dir,'check_') )
-        suites.append( unittest.makeSuite(test_configure_temp_dir,'check_') )
-        suites.append( unittest.makeSuite(test_configure_sys_argv,'check_') )
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
 
 if __name__ == "__main__":
-    test()
+    ScipyTest('weave.build_tools').run()

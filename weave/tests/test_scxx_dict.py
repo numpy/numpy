@@ -3,18 +3,19 @@
 import unittest
 import time
 import os,sys
-from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
 
-add_grandparent_to_path(__name__)
-import inline_tools
+from scipy_test.testing import *
+set_package_path()
+from weave import inline_tools
 restore_path()
+
 
 class test_dict_construct(unittest.TestCase):
     #------------------------------------------------------------------------
     # Check that construction from basic types is allowed and have correct
     # reference counts
     #------------------------------------------------------------------------
-    def check_empty(self):
+    def check_empty(self,level=5):
         # strange int value used to try and make sure refcount is 2.
         code = """
                py::dict val;
@@ -26,7 +27,7 @@ class test_dict_construct(unittest.TestCase):
                               
                     
 class test_dict_has_key(unittest.TestCase):
-    def check_obj(self):
+    def check_obj(self,level=5):
         class foo:
             pass
         key = foo()
@@ -37,7 +38,7 @@ class test_dict_has_key(unittest.TestCase):
                """
         res = inline_tools.inline(code,['a','key'])
         assert res
-    def check_int(self):
+    def check_int(self,level=5):
         a = {}
         a[1234] = 12345
         code = """
@@ -45,7 +46,7 @@ class test_dict_has_key(unittest.TestCase):
                """
         res = inline_tools.inline(code,['a'])
         assert res
-    def check_double(self):
+    def check_double(self,level=5):
         a = {}
         a[1234.] = 12345
         code = """
@@ -53,7 +54,7 @@ class test_dict_has_key(unittest.TestCase):
                """
         res = inline_tools.inline(code,['a'])
         assert res
-    def check_complex(self):
+    def check_complex(self,level=5):
         a = {}
         a[1+1j] = 12345
         key = 1+1j
@@ -63,7 +64,7 @@ class test_dict_has_key(unittest.TestCase):
         res = inline_tools.inline(code,['a','key'])
         assert res
         
-    def check_string(self):
+    def check_string(self,level=5):
         a = {}
         a["b"] = 12345
         code = """
@@ -71,7 +72,7 @@ class test_dict_has_key(unittest.TestCase):
                """
         res = inline_tools.inline(code,['a'])
         assert res
-    def check_std_string(self):
+    def check_std_string(self,level=5):
         a = {}
         a["b"] = 12345
         key_name = "b"
@@ -80,7 +81,7 @@ class test_dict_has_key(unittest.TestCase):
                """
         res = inline_tools.inline(code,['a','key_name'])
         assert res        
-    def check_string_fail(self):
+    def check_string_fail(self,level=5):
         a = {}
         a["b"] = 12345
         code = """
@@ -98,10 +99,10 @@ class test_dict_get_item_op(unittest.TestCase):
         res = inline_tools.inline(code,args)
         assert res == a['b']
 
-    def check_char(self):
+    def check_char(self,level=5):
         self.generic_get('return_val = a["b"];')
 
-    def DOESNT_WORK_check_char_fail(self):
+    def DOESNT_WORK_check_char_fail(self,level=5):
         # We can't through a KeyError for dicts on RHS of
         # = but not on LHS.  Not sure how to deal with this.
         try:
@@ -109,18 +110,18 @@ class test_dict_get_item_op(unittest.TestCase):
         except KeyError:
             pass
             
-    def check_string(self):
+    def check_string(self,level=5):
         self.generic_get('return_val = a[std::string("b")];')
 
 
-    def check_obj(self):
+    def check_obj(self,level=5):
         code = """
                py::object name = "b";
                return_val = a[name];
                """ 
         self.generic_get(code,['a'])
 
-    def DOESNT_WORK_check_obj_fail(self):
+    def DOESNT_WORK_check_obj_fail(self,level=5):
         # We can't through a KeyError for dicts on RHS of
         # = but not on LHS.  Not sure how to deal with this.
         try:
@@ -163,37 +164,37 @@ class test_dict_set_operator(unittest.TestCase):
         assert before == after
         assert before_overwritten == after_overwritten
         
-    def check_new_int_int(self):
+    def check_new_int_int(self,level=5):
         key,val = 1234,12345
         self.generic_new(key,val)
-    def check_new_double_int(self):
+    def check_new_double_int(self,level=5):
         key,val = 1234.,12345
         self.generic_new(key,val)
-    def check_new_std_string_int(self):
+    def check_new_std_string_int(self,level=5):
         key,val = "hello",12345
         self.generic_new(key,val)
-    def check_new_complex_int(self):
+    def check_new_complex_int(self,level=5):
         key,val = 1+1j,12345
         self.generic_new(key,val)
-    def check_new_obj_int(self):
+    def check_new_obj_int(self,level=5):
         class foo:
            pass
         key,val = foo(),12345
         self.generic_new(key,val)
 
-    def check_overwrite_int_int(self):
+    def check_overwrite_int_int(self,level=5):
         key,val = 1234,12345
         self.generic_overwrite(key,val)
-    def check_overwrite_double_int(self):
+    def check_overwrite_double_int(self,level=5):
         key,val = 1234.,12345
         self.generic_overwrite(key,val)
-    def check_overwrite_std_string_int(self):
+    def check_overwrite_std_string_int(self,level=5):
         key,val = "hello",12345
         self.generic_overwrite(key,val)
-    def check_overwrite_complex_int(self):
+    def check_overwrite_complex_int(self,level=5):
         key,val = 1+1j,12345
         self.generic_overwrite(key,val)
-    def check_overwrite_obj_int(self):
+    def check_overwrite_obj_int(self,level=5):
         class foo:
            pass
         key,val = foo(),12345
@@ -215,71 +216,51 @@ class test_dict_del(unittest.TestCase):
         after = sys.getrefcount(a), sys.getrefcount(key)
         assert before[0] == after[0]
         assert before[1] == after[1] + 1
-    def check_int(self):
+    def check_int(self,level=5):
         key = 1234
         self.generic(key)
-    def check_double(self):
+    def check_double(self,level=5):
         key = 1234.
         self.generic(key)
-    def check_std_string(self):
+    def check_std_string(self,level=5):
         key = "hello"
         self.generic(key)
-    def check_complex(self):
+    def check_complex(self,level=5):
         key = 1+1j
         self.generic(key)
-    def check_obj(self):
+    def check_obj(self,level=5):
         class foo:
            pass
         key = foo()
         self.generic(key)
 
 class test_dict_others(unittest.TestCase):
-    def check_clear(self):
+    def check_clear(self,level=5):
         a = {}
         a["hello"] = 1
         inline_tools.inline("a.clear();",['a'])
         assert not a
-    def check_items(self):
+    def check_items(self,level=5):
         a = {}
         a["hello"] = 1
         items = inline_tools.inline("return_val = a.items();",['a'])
         assert items == a.items()
-    def check_values(self):
+    def check_values(self,level=5):
         a = {}
         a["hello"] = 1
         values = inline_tools.inline("return_val = a.values();",['a'])
         assert values == a.values()
-    def check_keys(self):
+    def check_keys(self,level=5):
         a = {}
         a["hello"] = 1
         keys = inline_tools.inline("return_val = a.keys();",['a'])
         assert keys == a.keys()
-    def check_update(self):
+    def check_update(self,level=5):
         a,b = {},{}
         a["hello"] = 1
         b["hello"] = 2
         inline_tools.inline("a.update(b);",['a','b'])
         assert a == b
-        
-def test_suite(level=1):
-    from unittest import makeSuite
-    suites = []    
-    if level >= 5:    
-        suites.append( makeSuite(test_dict_construct,'check_'))
-        suites.append( makeSuite(test_dict_has_key,'check_'))      
-        suites.append( makeSuite(test_dict_get_item_op,'check_'))
-        suites.append( makeSuite(test_dict_set_operator,'check_'))
-        suites.append( makeSuite(test_dict_del,'check_'))
-        suites.append( makeSuite(test_dict_others,'check_'))
-
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10,verbose=2):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner(verbosity=verbose)
-    runner.run(all_tests)
-    return runner
 
 if __name__ == "__main__":
-    test()
+    ScipyTest('weave.scxx').run()

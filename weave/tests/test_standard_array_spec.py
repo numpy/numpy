@@ -8,10 +8,9 @@ except:
 import RandomArray
 import time
 
-from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
-
-add_grandparent_to_path(__name__)
-import standard_array_spec
+from scipy_test.testing import *
+set_package_path()
+from weave import standard_array_spec
 restore_path()
 
 def remove_whitespace(in_str):
@@ -48,19 +47,6 @@ class test_array_converter(unittest.TestCase):
         s = standard_array_spec.array_converter()        
         assert(s.type_match(arange(4)))
 
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_array_converter,'check_'))
-
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
-
 if __name__ == "__main__":
-    test()
+    ScipyTest('weave.standard_array_spec').run()
+

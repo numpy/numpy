@@ -6,11 +6,10 @@ try:
 except:
     pass # scipy_base.fastumath not available    
 
-from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
-
-add_grandparent_to_path(__name__)
-import size_check
-from ast_tools import *
+from scipy_test.testing import *
+set_package_path()
+from weave import size_check
+from weave.ast_tools import *
 restore_path()
 
 empty = array(())
@@ -443,23 +442,6 @@ class test_expressions(unittest.TestCase):
         a = ones((10,20,1))
         self.generic_wrap(a,expr)
     
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_make_same_length,'check_') )
-        suites.append( unittest.makeSuite(test_binary_op_size,'check_') )
-        suites.append( unittest.makeSuite(test_dummy_array,'check_') )
-        suites.append( unittest.makeSuite(test_dummy_array_indexing,'check_') )
-        suites.append( unittest.makeSuite(test_reduction,'check_') )
-        suites.append( unittest.makeSuite(test_expressions,'check_') )
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
 
 if __name__ == "__main__":
-    test()
+    ScipyTest('weave.size_check').run()

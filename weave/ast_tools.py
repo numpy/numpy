@@ -197,14 +197,7 @@ def tuples_to_lists(ast_tuple):
         new_list.append(tuples_to_lists(item))
     return new_list
 
-def test(level=10):
-    from scipy_test.testing import module_test
-    module_test(__name__,__file__,level=level)
 
-def test_suite(level=1):
-    from scipy_test.testing import module_test_suite
-    return module_test_suite(__name__,__file__,level=level)
-    
 """
 A little tree I built to help me understand the parse trees.
        -----------303------------------------------

@@ -3,10 +3,10 @@
 import unittest
 import time
 import os,sys
-from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
 
-add_grandparent_to_path(__name__)
-import inline_tools
+from scipy_test.testing import *
+set_package_path()
+from weave import inline_tools
 restore_path()
 
 class test_object_construct(unittest.TestCase):
@@ -14,7 +14,7 @@ class test_object_construct(unittest.TestCase):
     # Check that construction from basic types is allowed and have correct
     # reference counts
     #------------------------------------------------------------------------
-    def check_int(self):
+    def check_int(self,level=5):
         # strange int value used to try and make sure refcount is 2.
         code = """
                py::object val = 1001;
@@ -23,7 +23,7 @@ class test_object_construct(unittest.TestCase):
         res = inline_tools.inline(code)
         assert sys.getrefcount(res) == 2
         assert res == 1001
-    def check_float(self):
+    def check_float(self,level=5):
         code = """
                py::object val = (float)1.0;
                return_val = val;
@@ -31,7 +31,7 @@ class test_object_construct(unittest.TestCase):
         res = inline_tools.inline(code)
         assert sys.getrefcount(res) == 2
         assert res == 1.0
-    def check_double(self):
+    def check_double(self,level=5):
         code = """
                py::object val = 1.0;
                return_val = val;
@@ -39,7 +39,7 @@ class test_object_construct(unittest.TestCase):
         res = inline_tools.inline(code)
         assert sys.getrefcount(res) == 2
         assert res == 1.0
-    def check_complex(self):
+    def check_complex(self,level=5):
         code = """
                std::complex<double> num = std::complex<double>(1.0,1.0);
                py::object val = num;
@@ -48,7 +48,7 @@ class test_object_construct(unittest.TestCase):
         res = inline_tools.inline(code)
         assert sys.getrefcount(res) == 2
         assert res == 1.0+1.0j
-    def check_string(self):
+    def check_string(self,level=5):
         code = """
                py::object val = "hello";
                return_val = val;
@@ -57,7 +57,7 @@ class test_object_construct(unittest.TestCase):
         assert sys.getrefcount(res) == 2
         assert res == "hello"
 
-    def check_std_string(self):
+    def check_std_string(self,level=5):
         code = """
                std::string s = std::string("hello");
                py::object val = s;
@@ -71,14 +71,14 @@ class test_object_print(unittest.TestCase):
     #------------------------------------------------------------------------
     # Check the object print protocol.  
     #------------------------------------------------------------------------
-    def check_stdout(self):
+    def check_stdout(self,level=5):
         code = """
                py::object val = "how now brown cow";
                val.print(stdout);
                """
         res = inline_tools.inline(code)
         # visual check on this one.
-    def check_stringio(self):
+    def check_stringio(self,level=5):
         import cStringIO
         file_imposter = cStringIO.StringIO()
         code = """
@@ -89,7 +89,7 @@ class test_object_print(unittest.TestCase):
         print file_imposter.getvalue()
         assert file_imposter.getvalue() == "'how now brown cow'"
 
-    def check_failure(self):
+    def check_failure(self,level=5):
         code = """
                FILE* file = 0;
                py::object val = "how now brown cow";
@@ -103,32 +103,32 @@ class test_object_print(unittest.TestCase):
 
                     
 class test_object_cast(unittest.TestCase):
-    def check_int_cast(self):
+    def check_int_cast(self,level=5):
         code = """
                py::object val = 1;
                int raw_val = val;
                """
         inline_tools.inline(code)
-    def check_double_cast(self):
+    def check_double_cast(self,level=5):
         code = """
                py::object val = 1.0;
                double raw_val = val;
                """
         inline_tools.inline(code)
-    def check_float_cast(self):
+    def check_float_cast(self,level=5):
         code = """
                py::object val = 1.0;
                float raw_val = val;
                """
         inline_tools.inline(code)
-    def check_complex_cast(self):
+    def check_complex_cast(self,level=5):
         code = """
                std::complex<double> num = std::complex<double>(1.0,1.0);
                py::object val = num;
                std::complex<double> raw_val = val;
                """
         inline_tools.inline(code)
-    def check_string_cast(self):
+    def check_string_cast(self,level=5):
         code = """
                py::object val = "hello";
                std::string raw_val = val;
@@ -149,7 +149,7 @@ class str_obj:
                 return "b"
 
 class test_object_hasattr(unittest.TestCase):
-    def check_string(self):
+    def check_string(self,level=5):
         a = foo()
         a.b = 12345
         code = """
@@ -157,7 +157,7 @@ class test_object_hasattr(unittest.TestCase):
                """
         res = inline_tools.inline(code,['a'])
         assert res
-    def check_std_string(self):
+    def check_std_string(self,level=5):
         a = foo()
         a.b = 12345
         attr_name = "b"
@@ -166,7 +166,7 @@ class test_object_hasattr(unittest.TestCase):
                """
         res = inline_tools.inline(code,['a','attr_name'])
         assert res        
-    def check_string_fail(self):
+    def check_string_fail(self,level=5):
         a = foo()
         a.b = 12345
         code = """
@@ -174,7 +174,7 @@ class test_object_hasattr(unittest.TestCase):
                """
         res = inline_tools.inline(code,['a'])
         assert not res
-    def check_inline(self):
+    def check_inline(self,level=5):
         """ THIS NEEDS TO MOVE TO THE INLINE TEST SUITE
         """
         a = foo()
@@ -195,7 +195,7 @@ class test_object_hasattr(unittest.TestCase):
             print 'before, after, after2:', before, after, after2
             pass    
 
-    def check_func(self):
+    def check_func(self,level=5):
         a = foo()
         a.b = 12345
         code = """
@@ -217,32 +217,32 @@ class test_object_attr(unittest.TestCase):
         after = sys.getrefcount(a.b)
         assert after == before
 
-    def check_char(self):
+    def check_char(self,level=5):
         self.generic_attr('return_val = a.attr("b");')
 
-    def check_char_fail(self):
+    def check_char_fail(self,level=5):
         try:
             self.generic_attr('return_val = a.attr("c");')
         except AttributeError:
             pass
             
-    def check_string(self):
+    def check_string(self,level=5):
         self.generic_attr('return_val = a.attr(std::string("b"));')
 
-    def check_string_fail(self):
+    def check_string_fail(self,level=5):
         try:
             self.generic_attr('return_val = a.attr(std::string("c"));')
         except AttributeError:
             pass    
 
-    def check_obj(self):
+    def check_obj(self,level=5):
         code = """
                py::object name = "b";
                return_val = a.attr(name);
                """ 
         self.generic_attr(code,['a'])
 
-    def check_obj_fail(self):
+    def check_obj_fail(self,level=5):
         try:
             code = """
                    py::object name = "c";
@@ -252,7 +252,7 @@ class test_object_attr(unittest.TestCase):
         except AttributeError:
             pass    
             
-    def check_attr_call(self):
+    def check_attr_call(self,level=5):
         a = foo()
         res = inline_tools.inline('return_val = a.attr("bar").call();',['a'])
         first = sys.getrefcount(res)
@@ -277,27 +277,27 @@ class test_object_set_attr(unittest.TestCase):
         res = inline_tools.inline(code,args)
         assert a.b == desired
 
-    def check_existing_char(self):
+    def check_existing_char(self,level=5):
         self.generic_existing('a.set_attr("b","hello");',"hello")
-    def check_new_char(self):
+    def check_new_char(self,level=5):
         self.generic_new('a.set_attr("b","hello");',"hello")
-    def check_existing_string(self):
+    def check_existing_string(self,level=5):
         self.generic_existing('a.set_attr("b",std::string("hello"));',"hello")
-    def check_new_string(self):
+    def check_new_string(self,level=5):
         self.generic_new('a.set_attr("b",std::string("hello"));',"hello")
-    def check_existing_object(self):
+    def check_existing_object(self,level=5):
         code = """
                py::object obj = "hello";
                a.set_attr("b",obj);
                """
         self.generic_existing(code,"hello")
-    def check_new_object(self):
+    def check_new_object(self,level=5):
         code = """
                py::object obj = "hello";
                a.set_attr("b",obj);
                """
         self.generic_new(code,"hello")
-    def check_new_fail(self):
+    def check_new_fail(self,level=5):
         try:
             code = """
                    py::object obj = 1;
@@ -307,19 +307,19 @@ class test_object_set_attr(unittest.TestCase):
         except:
             pass    
 
-    def check_existing_int(self):
+    def check_existing_int(self,level=5):
         self.generic_existing('a.set_attr("b",1);',1)
-    def check_existing_double(self):
+    def check_existing_double(self,level=5):
         self.generic_existing('a.set_attr("b",1.0);',1.0)
-    def check_existing_complex(self):
+    def check_existing_complex(self,level=5):
         code = """
                std::complex<double> obj = std::complex<double>(1,1);
                a.set_attr("b",obj);
                """
         self.generic_existing(code,1+1j)
-    def check_existing_char1(self):
+    def check_existing_char1(self,level=5):
         self.generic_existing('a.set_attr("b","hello");',"hello")        
-    def check_existing_string1(self):
+    def check_existing_string1(self,level=5):
         code = """
                std::string obj = std::string("hello");
                a.set_attr("b",obj);
@@ -334,15 +334,15 @@ class test_object_del(unittest.TestCase):
         res = inline_tools.inline(code,args)
         assert not hasattr(a,"b")
 
-    def check_char(self):
+    def check_char(self,level=5):
         self.generic('a.del("b");')
-    def check_string(self):
+    def check_string(self,level=5):
         code = """
                std::string name = std::string("b");
                a.del(name);
                """
         self.generic(code)
-    def check_object(self):
+    def check_object(self,level=5):
         code = """
                py::object name = py::object("b");
                a.del(name);
@@ -350,11 +350,11 @@ class test_object_del(unittest.TestCase):
         self.generic(code)
 
 class test_object_cmp(unittest.TestCase):
-    def check_equal(self):
+    def check_equal(self,level=5):
         a,b = 1,1
         res = inline_tools.inline('return_val = (a == b);',['a','b'])
         assert res == (a == b)
-    def check_equal_objects(self):
+    def check_equal_objects(self,level=5):
         class foo:
             def __init__(self,x):
                 self.x = x
@@ -363,47 +363,47 @@ class test_object_cmp(unittest.TestCase):
         a,b = foo(1),foo(2)
         res = inline_tools.inline('return_val = (a == b);',['a','b'])
         assert res == (a == b)
-    def check_lt(self):
+    def check_lt(self,level=5):
         a,b = 1,2
         res = inline_tools.inline('return_val = (a < b);',['a','b'])
         assert res == (a < b)
-    def check_gt(self):
+    def check_gt(self,level=5):
         a,b = 1,2
         res = inline_tools.inline('return_val = (a > b);',['a','b'])
         assert res == (a > b)
-    def check_gte(self):
+    def check_gte(self,level=5):
         a,b = 1,2
         res = inline_tools.inline('return_val = (a >= b);',['a','b'])
         assert res == (a >= b)
-    def check_lte(self):
+    def check_lte(self,level=5):
         a,b = 1,2
         res = inline_tools.inline('return_val = (a <= b);',['a','b'])
         assert res == (a <= b)
-    def check_not_equal(self):
+    def check_not_equal(self,level=5):
         a,b = 1,2
         res = inline_tools.inline('return_val = (a != b);',['a','b'])
         assert res == (a != b)
-    def check_int(self):
+    def check_int(self,level=5):
         a = 1
         res = inline_tools.inline('return_val = (a == 1);',['a'])
         assert res == (a == 1)
-    def check_int2(self):
+    def check_int2(self,level=5):
         a = 1
         res = inline_tools.inline('return_val = (1 == a);',['a'])
         assert res == (a == 1)
-    def check_unsigned_long(self):
+    def check_unsigned_long(self,level=5):
         a = 1
         res = inline_tools.inline('return_val = (a == (unsigned long)1);',['a'])
         assert res == (a == 1)
-    def check_double(self):
+    def check_double(self,level=5):
         a = 1
         res = inline_tools.inline('return_val = (a == 1.0);',['a'])
         assert res == (a == 1.0)
-    def check_char(self):
+    def check_char(self,level=5):
         a = "hello"
         res = inline_tools.inline('return_val = (a == "hello");',['a'])
         assert res == (a == "hello")
-    def check_std_string(self):
+    def check_std_string(self,level=5):
         a = "hello"
         code = """
                std::string hello = std::string("hello");
@@ -413,7 +413,7 @@ class test_object_cmp(unittest.TestCase):
         assert res == (a == "hello")
 
 class test_object_repr(unittest.TestCase):
-    def check_repr(self):
+    def check_repr(self,level=5):
         class foo:
             def __str__(self):
                 return "str return"
@@ -429,7 +429,7 @@ class test_object_repr(unittest.TestCase):
         assert res == "repr return"
 
 class test_object_str(unittest.TestCase):
-    def check_str(self):
+    def check_str(self,level=5):
         class foo:
             def __str__(self):
                 return "str return"
@@ -447,7 +447,7 @@ class test_object_str(unittest.TestCase):
 
 class test_object_unicode(unittest.TestCase):
     # This ain't going to win awards for test of the year...
-    def check_unicode(self):
+    def check_unicode(self,level=5):
         class foo:
             def __repr__(self):
                 return "repr return"
@@ -463,14 +463,14 @@ class test_object_unicode(unittest.TestCase):
         assert res == "unicode"
 
 class test_object_is_callable(unittest.TestCase):
-    def check_true(self):
+    def check_true(self,level=5):
         class foo:
             def __call__(self):
                 return 0
         a= foo()                
         res = inline_tools.inline('return_val = a.is_callable();',['a'])
         assert res
-    def check_false(self):
+    def check_false(self,level=5):
         class foo:
             pass
         a= foo()                
@@ -478,13 +478,13 @@ class test_object_is_callable(unittest.TestCase):
         assert not res
 
 class test_object_call(unittest.TestCase):
-    def check_noargs(self):
+    def check_noargs(self,level=5):
         def foo():
             return (1,2,3)
         res = inline_tools.inline('return_val = foo.call();',['foo'])
         assert res == (1,2,3)
         assert sys.getrefcount(res) == 2
-    def check_args(self):
+    def check_args(self,level=5):
         def foo(val1,val2):
             return (val1,val2)
         code = """
@@ -496,7 +496,7 @@ class test_object_call(unittest.TestCase):
         res = inline_tools.inline(code,['foo'])
         assert res == (1,"hello")
         assert sys.getrefcount(res) == 2
-    def check_args_kw(self):
+    def check_args_kw(self,level=5):
         def foo(val1,val2,val3=1):
             return (val1,val2,val3)
         code = """
@@ -510,7 +510,7 @@ class test_object_call(unittest.TestCase):
         res = inline_tools.inline(code,['foo'])
         assert res == (1,"hello",3)
         assert sys.getrefcount(res) == 2
-    def check_noargs_with_args(self):
+    def check_noargs_with_args(self,level=5):
         # calling a function that does take args with args 
         # should fail.
         def foo():
@@ -534,7 +534,7 @@ class test_object_call(unittest.TestCase):
         assert second == third
         
 class test_object_mcall(unittest.TestCase):
-    def check_noargs(self):
+    def check_noargs(self,level=5):
         a = foo()
         res = inline_tools.inline('return_val = a.mcall("bar");',['a'])
         assert res == "bar results"
@@ -544,7 +544,7 @@ class test_object_mcall(unittest.TestCase):
         assert res == "bar results"
         second = sys.getrefcount(res)
         assert first == second
-    def check_args(self):
+    def check_args(self,level=5):
         a = foo()
         code = """
                py::tuple args(2);
@@ -555,7 +555,7 @@ class test_object_mcall(unittest.TestCase):
         res = inline_tools.inline(code,['a'])
         assert res == (1,"hello")
         assert sys.getrefcount(res) == 2
-    def check_args_kw(self):
+    def check_args_kw(self,level=5):
         a = foo()
         code = """
                py::tuple args(2);
@@ -568,7 +568,7 @@ class test_object_mcall(unittest.TestCase):
         res = inline_tools.inline(code,['a'])
         assert res == (1,"hello",3)
         assert sys.getrefcount(res) == 2
-    def check_std_noargs(self):
+    def check_std_noargs(self,level=5):
         a = foo()
         method = "bar"
         res = inline_tools.inline('return_val = a.mcall(method);',['a','method'])
@@ -579,7 +579,7 @@ class test_object_mcall(unittest.TestCase):
         assert res == "bar results"
         second = sys.getrefcount(res)
         assert first == second
-    def check_std_args(self):
+    def check_std_args(self,level=5):
         a = foo()
         method = "bar2"
         code = """
@@ -591,7 +591,7 @@ class test_object_mcall(unittest.TestCase):
         res = inline_tools.inline(code,['a','method'])
         assert res == (1,"hello")
         assert sys.getrefcount(res) == 2
-    def check_std_args_kw(self):
+    def check_std_args_kw(self,level=5):
         a = foo()
         method = "bar3"
         code = """
@@ -605,7 +605,7 @@ class test_object_mcall(unittest.TestCase):
         res = inline_tools.inline(code,['a','method'])
         assert res == (1,"hello",3)
         assert sys.getrefcount(res) == 2
-    def check_noargs_with_args(self):
+    def check_noargs_with_args(self,level=5):
         # calling a function that does take args with args 
         # should fail.
         a = foo()
@@ -628,7 +628,7 @@ class test_object_mcall(unittest.TestCase):
         assert second == third
 
 class test_object_hash(unittest.TestCase):
-    def check_hash(self):
+    def check_hash(self,level=5):
         class foo:
             def __hash__(self):
                 return 123
@@ -638,31 +638,31 @@ class test_object_hash(unittest.TestCase):
         assert res == 123
 
 class test_object_is_true(unittest.TestCase):
-    def check_true(self):
+    def check_true(self,level=5):
         class foo:
             pass
         a= foo()                
         res = inline_tools.inline('return_val = a.is_true();',['a'])
         assert res == 1
-    def check_false(self):
+    def check_false(self,level=5):
         a= None                
         res = inline_tools.inline('return_val = a.is_true();',['a'])
         assert res == 0
 
 class test_object_is_true(unittest.TestCase):
-    def check_false(self):
+    def check_false(self,level=5):
         class foo:
             pass
         a= foo()                
         res = inline_tools.inline('return_val = a.not();',['a'])
         assert res == 0
-    def check_true(self):
+    def check_true(self,level=5):
         a= None                
         res = inline_tools.inline('return_val = a.not();',['a'])
         assert res == 1    
 
 class test_object_type(unittest.TestCase):
-    def check_type(self):
+    def check_type(self,level=5):
         class foo:
             pass
         a= foo()                
@@ -670,21 +670,21 @@ class test_object_type(unittest.TestCase):
         assert res == type(a)
 
 class test_object_size(unittest.TestCase):
-    def check_size(self):
+    def check_size(self,level=5):
         class foo:
             def __len__(self):
                 return 10
         a= foo()                
         res = inline_tools.inline('return_val = a.size();',['a'])
         assert res == len(a)
-    def check_len(self):
+    def check_len(self,level=5):
         class foo:
             def __len__(self):
                 return 10
         a= foo()                
         res = inline_tools.inline('return_val = a.len();',['a'])
         assert res == len(a)
-    def check_length(self):
+    def check_length(self,level=5):
         class foo:
             def __len__(self):
                 return 10
@@ -694,34 +694,34 @@ class test_object_size(unittest.TestCase):
 
 from UserList import UserList
 class test_object_set_item_op_index(unittest.TestCase):
-    def check_list_refcount(self):
+    def check_list_refcount(self,level=5):
         a = UserList([1,2,3])            
         # temporary refcount fix until I understand why it incs by one.
         inline_tools.inline("a[1] = 1234;",['a'])        
         before1 = sys.getrefcount(a)
         after1 = sys.getrefcount(a)
         assert after1 == before1
-    def check_set_int(self):
+    def check_set_int(self,level=5):
         a = UserList([1,2,3])            
         inline_tools.inline("a[1] = 1234;",['a'])        
         assert sys.getrefcount(a[1]) == 2                
         assert a[1] == 1234
-    def check_set_double(self):
+    def check_set_double(self,level=5):
         a = UserList([1,2,3])            
         inline_tools.inline("a[1] = 123.0;",['a'])
         assert sys.getrefcount(a[1]) == 2       
         assert a[1] == 123.0        
-    def check_set_char(self):
+    def check_set_char(self,level=5):
         a = UserList([1,2,3])            
         inline_tools.inline('a[1] = "bubba";',['a'])
         assert sys.getrefcount(a[1]) == 2       
         assert a[1] == 'bubba'
-    def check_set_string(self):
+    def check_set_string(self,level=5):
         a = UserList([1,2,3])            
         inline_tools.inline('a[1] = std::string("sissy");',['a'])
         assert sys.getrefcount(a[1]) == 2       
         assert a[1] == 'sissy'
-    def check_set_string(self):
+    def check_set_string(self,level=5):
         a = UserList([1,2,3])            
         inline_tools.inline('a[1] = std::complex<double>(1,1);',['a'])
         assert sys.getrefcount(a[1]) == 2       
@@ -729,7 +729,7 @@ class test_object_set_item_op_index(unittest.TestCase):
 
 from UserDict import UserDict
 class test_object_set_item_op_key(unittest.TestCase):
-    def check_key_refcount(self):
+    def check_key_refcount(self,level=5):
         a = UserDict()
         code =  """
                 py::object one = 1;
@@ -760,7 +760,7 @@ class test_object_set_item_op_key(unittest.TestCase):
         assert key[0] + 1 == key[1] and key[1] == key[2]
         assert val[0] + 1 == val[1] and val[1] == val[2]
         
-    def check_set_double_exists(self):
+    def check_set_double_exists(self,level=5):
         a = UserDict()   
         key = 10.0     
         a[key] = 100.0
@@ -773,27 +773,27 @@ class test_object_set_item_op_key(unittest.TestCase):
         assert sys.getrefcount(key) ==  5
         assert sys.getrefcount(a[key]) == 2       
         assert a[key] == 123.0
-    def check_set_double_new(self):
+    def check_set_double_new(self,level=5):
         a = UserDict()        
         key = 1.0
         inline_tools.inline('a[key] = 123.0;',['a','key'])
         assert sys.getrefcount(key) == 4 # should be 3       
         assert sys.getrefcount(a[key]) == 2       
         assert a[key] == 123.0
-    def check_set_complex(self):
+    def check_set_complex(self,level=5):
         a = UserDict()
         key = 1+1j            
         inline_tools.inline("a[key] = 1234;",['a','key'])
         assert sys.getrefcount(key) == 3       
         assert sys.getrefcount(a[key]) == 2                
         assert a[key] == 1234
-    def check_set_char(self):
+    def check_set_char(self,level=5):
         a = UserDict()        
         inline_tools.inline('a["hello"] = 123.0;',['a'])
         assert sys.getrefcount(a["hello"]) == 2       
         assert a["hello"] == 123.0
         
-    def check_set_class(self):
+    def check_set_class(self,level=5):
         a = UserDict()        
         class foo:
             def __init__(self,val):
@@ -811,46 +811,12 @@ class test_object_set_item_op_key(unittest.TestCase):
         assert sys.getrefcount(key) == 4 
         assert sys.getrefcount(a[key]) == 2       
         assert a[key] == 'bubba'
-    def check_set_from_member(self):
+    def check_set_from_member(self,level=5):
         a = UserDict()        
         a['first'] = 1
         a['second'] = 2
         inline_tools.inline('a["first"] = a["second"];',['a'])
         assert a['first'] == a['second']
 
-def test_suite(level=1):
-    from unittest import makeSuite
-    suites = []    
-    if level >= 5:
-        suites.append( makeSuite(test_object_construct,'check_'))
-        suites.append( makeSuite(test_object_print,'check_'))
-        suites.append( makeSuite(test_object_cast,'check_'))
-        suites.append( makeSuite(test_object_hasattr,'check_'))        
-        suites.append( makeSuite(test_object_attr,'check_'))
-        suites.append( makeSuite(test_object_set_attr,'check_'))
-        suites.append( makeSuite(test_object_del,'check_'))
-        suites.append( makeSuite(test_object_cmp,'check_'))
-        suites.append( makeSuite(test_object_repr,'check_'))
-        suites.append( makeSuite(test_object_str,'check_'))
-        suites.append( makeSuite(test_object_unicode,'check_'))
-        suites.append( makeSuite(test_object_is_callable,'check_'))        
-        suites.append( makeSuite(test_object_call,'check_'))
-        suites.append( makeSuite(test_object_mcall,'check_'))
-        suites.append( makeSuite(test_object_hash,'check_'))
-        suites.append( makeSuite(test_object_is_true,'check_'))
-        suites.append( makeSuite(test_object_type,'check_'))
-        suites.append( makeSuite(test_object_size,'check_'))
-        suites.append( makeSuite(test_object_set_item_op_index,'check_'))
-        suites.append( makeSuite(test_object_set_item_op_key,'check_'))
-
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10,verbose=2):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner(verbosity=verbose)
-    runner.run(all_tests)
-    return runner
-
 if __name__ == "__main__":
-    test()
+    ScipyTest('weave.scxx').run()

@@ -1,12 +1,11 @@
 import unittest
 # Was getting a weird "no module named slice_handler error with this.
 
-from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
-
-add_grandparent_to_path(__name__)
-import slice_handler
-from slice_handler import indexed_array_pattern
-from ast_tools import *
+from scipy_test.testing import *
+set_package_path()
+from weave import slice_handler
+from weave.slice_handler import indexed_array_pattern
+from weave.ast_tools import *
 restore_path()
 
 def print_assert_equal(test_string,actual,desired):
@@ -166,20 +165,5 @@ class test_transform_slices(unittest.TestCase):
         self.generic_test(test,desired)
 
 
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_slice,'check_') )
-        suites.append( unittest.makeSuite(test_transform_slices,'check_') )
-        suites.append( unittest.makeSuite(test_build_slice_atom,'check_') )
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
-
 if __name__ == "__main__":
-    test()
+    ScipyTest('weave.slice_handler').run()

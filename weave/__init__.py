@@ -2,7 +2,7 @@
 # weave - C/C++ integration
 #
 
-from pre___init__ import __doc__
+from info_weave import __doc__
 from weave_version import weave_version as __version__
 
 try:
@@ -18,15 +18,5 @@ try:
 except:
     pass
 
-#---- testing ----#
-
-def test(level=10):
-    import unittest
-    runner = unittest.TextTestRunner()
-    runner.run(test_suite(level))
-    return runner
-
-def test_suite(level=1):
-    import scipy_test.testing
-    import weave
-    return scipy_test.testing.harvest_test_suites(weave,level=level)
+from scipy_test.testing import ScipyTest
+test = ScipyTest('weave').test

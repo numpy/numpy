@@ -3,10 +3,10 @@
 import unittest
 import time
 import os,sys
-from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
 
-add_grandparent_to_path(__name__)
-import inline_tools
+from scipy_test.testing import *
+set_package_path()
+from weave import inline_tools
 restore_path()
 
 # Test:
@@ -20,10 +20,10 @@ restore_path()
 
 from UserList import UserList
 
-class test_sequence_base(unittest.TestCase):
+class _test_sequence_base(unittest.TestCase):
     seq_type = None
 
-    def check_conversion(self):
+    def check_conversion(self,level=5):
         a = self.seq_type([])
         before = sys.getrefcount(a)
         import weave
@@ -36,7 +36,7 @@ class test_sequence_base(unittest.TestCase):
         #print '2nd,3rd:', before, after
         assert(after == before)
 
-    def check_in(self):
+    def check_in(self,level=5):
         """ Test the "in" method for lists.  We'll assume
             it works for sequences if it works here.
         """
@@ -88,7 +88,7 @@ class test_sequence_base(unittest.TestCase):
         res = inline_tools.inline(code,['a'])
         assert res == 0
 
-    def check_count(self):
+    def check_count(self,level=5):
         """ Test the "count" method for lists.  We'll assume
             it works for sequences if it works hre.
         """
@@ -122,7 +122,7 @@ class test_sequence_base(unittest.TestCase):
         res = inline_tools.inline(code,['a'])
         assert res == 1
         
-    def check_access_speed(self):
+    def check_access_speed(self,level=5):
         N = 1000000
         print '%s access -- val = a[i] for N =', (self.seq_type, N)
         a = self.seq_type([0]) * N
@@ -151,7 +151,7 @@ class test_sequence_base(unittest.TestCase):
         t2 = time.time()
         print 'weave:', t2 - t1
 
-    def check_access_set_speed(self):
+    def check_access_set_speed(self,level=5):
         N = 1000000
         print '%s access/set -- b[i] = a[i] for N =', (self.seq_type,N)
         a = self.seq_type([0]) * N
@@ -178,10 +178,10 @@ class test_sequence_base(unittest.TestCase):
         print 'weave:', t2 - t1
         assert list(b) == list(a)   
 
-class test_tuple(test_sequence_base):
+class test_tuple(_test_sequence_base):
     seq_type = tuple
 
-    def check_set_item_operator_equal_fail(self):
+    def check_set_item_operator_equal_fail(self,level=5):
         # Tuples should only allow setting of variables 
         # immediately after creation.
         a = (1,2,3)            
@@ -189,7 +189,7 @@ class test_tuple(test_sequence_base):
             inline_tools.inline("a[1] = 1234;",['a'])
         except TypeError:
             pass    
-    def check_set_item_operator_equal(self):     
+    def check_set_item_operator_equal(self,level=5):     
         code = """
                py::tuple a(3);
                a[0] = 1;
@@ -202,7 +202,7 @@ class test_tuple(test_sequence_base):
         # returned value should only have a single refcount
         assert sys.getrefcount(a) == 2
 
-    def check_set_item_index_error(self):     
+    def check_set_item_index_error(self,level=5):     
         code = """
                py::tuple a(3);
                a[4] = 1;
@@ -213,7 +213,7 @@ class test_tuple(test_sequence_base):
             assert 0
         except IndexError:
             pass    
-    def check_get_item_operator_index_error(self):
+    def check_get_item_operator_index_error(self,level=5):
         code = """
                py::tuple a(3);
                py::object b = a[4]; // should fail.
@@ -224,9 +224,9 @@ class test_tuple(test_sequence_base):
         except IndexError:
             pass
                 
-class test_list(test_sequence_base):
+class test_list(_test_sequence_base):
     seq_type = list
-    def check_append_passed_item(self):
+    def check_append_passed_item(self,level=5):
         a = []
         item = 1
         
@@ -243,7 +243,7 @@ class test_list(test_sequence_base):
         after2 = sys.getrefcount(item)
         assert after1 == before1
         assert after2 == before2    
-    def check_append(self):
+    def check_append(self,level=5):
         a = []
         # temporary refcount fix until I understand why it incs by one.
         inline_tools.inline("a.append(1);",['a'])
@@ -277,7 +277,7 @@ class test_list(test_sequence_base):
                 
         after1 = sys.getrefcount(a)
         assert after1 == before1
-    def check_insert(self):
+    def check_insert(self,level=5):
         a = [1,2,3]
     
         a.insert(1,234)
@@ -316,7 +316,7 @@ class test_list(test_sequence_base):
         after1 = sys.getrefcount(a)
         assert after1 == before1
 
-    def check_set_item_operator_equal(self):
+    def check_set_item_operator_equal(self,level=5):
         a = self.seq_type([1,2,3])            
         # temporary refcount fix until I understand why it incs by one.
         inline_tools.inline("a[1] = 1234;",['a'])
@@ -348,7 +348,7 @@ class test_list(test_sequence_base):
                 
         after1 = sys.getrefcount(a)
         assert after1 == before1
-    def check_set_item_operator_equal_created(self):     
+    def check_set_item_operator_equal_created(self,level=5):     
         code = """
                py::list a(3);
                a[0] = 1;
@@ -360,7 +360,7 @@ class test_list(test_sequence_base):
         assert a == [1,2,3]
         # returned value should only have a single refcount
         assert sys.getrefcount(a) == 2
-    def check_set_item_index_error(self):     
+    def check_set_item_index_error(self,level=5):     
         code = """
                py::list a(3);
                a[4] = 1;
@@ -370,7 +370,7 @@ class test_list(test_sequence_base):
             assert 0
         except IndexError:
             pass
-    def check_get_item_index_error(self):     
+    def check_get_item_index_error(self,level=5):     
         code = """
                py::list a(3);
                py::object o = a[4];
@@ -381,7 +381,7 @@ class test_list(test_sequence_base):
         except IndexError:
             pass
 
-    def check_string_add_speed(self):
+    def check_string_add_speed(self,level=5):
         N = 1000000
         print 'string add -- b[i] = a[i] + "blah" for N =', N        
         a = ["blah"] * N
@@ -407,7 +407,7 @@ class test_list(test_sequence_base):
         t2 = time.time()
         print 'weave:', t2 - t1
         assert b == desired   
-    def check_int_add_speed(self):
+    def check_int_add_speed(self,level=5):
         N = 1000000
         print 'int add -- b[i] = a[i] + 1 for N =', N        
         a = [0] * N
@@ -433,20 +433,6 @@ class test_list(test_sequence_base):
         print 'weave:', t2 - t1
         assert b == desired   
 
-def test_suite(level=1):
-    from unittest import makeSuite
-    suites = []    
-    if level >= 5:
-        #suites.append( makeSuite(test_list,'check_'))
-        suites.append( makeSuite(test_tuple,'check_'))
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10,verbose=2):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner(verbosity=verbose)
-    runner.run(all_tests)
-    return runner
-
 if __name__ == "__main__":
-    test()
+    ScipyTest('weave.scxx').run()
+

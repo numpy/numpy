@@ -1,11 +1,12 @@
 import unittest
 from Numeric import *
 
-from scipy_distutils.misc_util import add_grandparent_to_path,restore_path
-from scipy_distutils.misc_util import add_local_to_path
-
-add_grandparent_to_path(__name__)
-import inline_tools
+from scipy_test.testing import *
+set_package_path()
+from weave import inline_tools
+restore_path()
+set_local_path()
+from test_scxx import *
 restore_path()
 
 class test_inline(unittest.TestCase):
@@ -13,7 +14,7 @@ class test_inline(unittest.TestCase):
     
          I'd like to benchmark these things somehow.
     """
-    def check_exceptions(self):
+    def check_exceptions(self,level=5):
         a = 3                                  
         code = """
                if (a < 2)
@@ -40,19 +41,6 @@ class test_inline(unittest.TestCase):
         except: 
             # ?CompileError is the error reported, but catching it doesn't work
             pass
-            
-def test_suite(level=1):
-    suites = []
-    if level >= 5:
-        suites.append( unittest.makeSuite(test_inline,'check_') )    
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
 
 if __name__ == "__main__":
-    test()
+    ScipyTest('weave.inline_tools').run()

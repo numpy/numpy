@@ -9,12 +9,11 @@ import RandomArray
 import os
 import time
 
-from scipy_distutils.misc_util import add_grandparent_to_path,restore_path
-from scipy_distutils.misc_util import add_local_to_path
-
-add_grandparent_to_path(__name__)
-import blitz_tools
-from ast_tools import *
+from scipy_test.testing import *
+set_package_path()
+from weave import blitz_tools
+restore_path()
+set_local_path()
 from weave_test_utils import *
 restore_path()
 
@@ -139,21 +138,21 @@ class test_blitz(unittest.TestCase):
     #    """ result = a + b""" 
     #    expr = "result = a + b"
     #    self.generic_2d(expr)
-    def check_5point_avg_2d_float(self):
+    def check_5point_avg_2d_float(self,level=10):
         """ result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]
                                + b[1:-1,2:] + b[1:-1,:-2]) / 5.
         """                                  
         expr = "result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]" \
                                   "+ b[1:-1,2:] + b[1:-1,:-2]) / 5."
         self.generic_2d(expr,Float32)
-    def check_5point_avg_2d_double(self):
+    def check_5point_avg_2d_double(self,level=10):
         """ result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]
                                + b[1:-1,2:] + b[1:-1,:-2]) / 5.
         """                                  
         expr = "result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]" \
                                   "+ b[1:-1,2:] + b[1:-1,:-2]) / 5."
         self.generic_2d(expr,Float64)
-    def _check_5point_avg_2d_complex_float(self):
+    def _check_5point_avg_2d_complex_float(self,level=10):
         """ Note: THIS TEST is KNOWN TO FAIL ON GCC 3.x.  It will not adversely affect 99.99 percent of weave 
             
             result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]
@@ -170,28 +169,13 @@ class test_blitz(unittest.TestCase):
         expr = "result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]" \
                                   "+ b[1:-1,2:] + b[1:-1,:-2]) / 5."
         self.generic_2d(expr,Complex32)
-    def check_5point_avg_2d_complex_double(self):
+    def check_5point_avg_2d_complex_double(self,level=10):
         """ result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]
                                + b[1:-1,2:] + b[1:-1,:-2]) / 5.
         """                                  
         expr = "result[1:-1,1:-1] = (b[1:-1,1:-1] + b[2:,1:-1] + b[:-2,1:-1]" \
                                   "+ b[1:-1,2:] + b[1:-1,:-2]) / 5."
         self.generic_2d(expr,Complex64)
-    
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_ast_to_blitz_expr,'check_') )
-    if level >= 10:
-        suites.append( unittest.makeSuite(test_blitz,'check_') )    
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
 
 if __name__ == "__main__":
-    test(10)
+    ScipyTest('weave.blitz_tools').run()

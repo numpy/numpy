@@ -4,9 +4,9 @@ import os
 from glob import glob
 from scipy_distutils.misc_util import get_path, default_config_dict, dot_join
 
-def configuration(parent_package=''):
+def configuration(parent_package='',parent_path2=None):
     parent_path = parent_package
-    local_path = get_path(__name__)
+    local_path = get_path(__name__,parent_path2)
     config = default_config_dict('weave',parent_package)
     config['packages'].append(dot_join(parent_package,'weave.tests'))
     test_path = os.path.join(local_path,'tests')

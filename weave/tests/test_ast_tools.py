@@ -8,14 +8,12 @@ except:
 import RandomArray
 import time
 
-from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
-from scipy_distutils.misc_util import add_local_to_path
-
-add_grandparent_to_path(__name__)
-import ast_tools
+from scipy_test.testing import *
+set_package_path()
+from weave import ast_tools
 restore_path()
 
-add_local_to_path(__name__)
+set_local_path()
 from weave_test_utils import *
 restore_path()
 
@@ -38,19 +36,5 @@ class test_harvest_variables(unittest.TestCase):
         desired = ['a','b','i']        
         self.generic_test(expr,desired)
 
-
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_harvest_variables,'check_') )
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
-
 if __name__ == "__main__":
-    test()
+    ScipyTest('weave.ast_tools').run()

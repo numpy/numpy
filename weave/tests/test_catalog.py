@@ -2,18 +2,14 @@ import unittest
 import sys, os
 
 
-from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
-from scipy_distutils.misc_util import add_local_to_path
-
-add_grandparent_to_path(__name__)
-import catalog
-reload(catalog) # this'll pick up any recent code changes
+from scipy_test.testing import *
+set_package_path()
+from weave import catalog
 restore_path()
 
-add_local_to_path(__name__)
+set_local_path()
 from weave_test_utils import *
 restore_path()
-
 
 class test_default_dir(unittest.TestCase):
     def check_is_writable(self):
@@ -332,27 +328,7 @@ class test_catalog(unittest.TestCase):
                           os.access,string.atoi,string.atof])
         cleanup_temp_dir(user_dir)
         cleanup_temp_dir(env_dir)
-        
-    
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_default_dir,'check_'))
-        suites.append( unittest.makeSuite(test_os_dependent_catalog_name,
-                       'check_'))
-        suites.append( unittest.makeSuite(test_catalog_path,'check_'))
-        suites.append( unittest.makeSuite(test_get_catalog,'check_'))
-        suites.append( unittest.makeSuite(test_catalog,'check_'))
-
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
 
 
 if __name__ == '__main__':
-    test()
+    ScipyTest('weave.catalog').run()

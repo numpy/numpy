@@ -1,18 +1,16 @@
 import unittest
 import time
 
-from scipy_distutils.misc_util import add_grandparent_to_path, restore_path
-from scipy_distutils.misc_util import add_local_to_path
-
-add_grandparent_to_path(__name__)
-import ext_tools
+from scipy_test.testing import *
+set_package_path()
+from weave import ext_tools, c_spec
 try:
-    from standard_array_spec import array_converter
+    from weave.standard_array_spec import array_converter
 except ImportError:
     pass # requires Numeric    
 restore_path()
 
-add_local_to_path(__name__)
+set_local_path()
 from weave_test_utils import *
 restore_path()
 
@@ -21,12 +19,12 @@ print 'building extensions here:', build_dir
 
 class test_ext_module(unittest.TestCase):
     #should really do some testing of where modules end up
-    def check_simple(self):
+    def check_simple(self,level=5):
         """ Simplest possible module """
         mod = ext_tools.ext_module('simple_ext_module')
         mod.compile(location = build_dir)
         import simple_ext_module
-    def check_multi_functions(self):
+    def check_multi_functions(self,level=5):
         mod = ext_tools.ext_module('module_multi_function')
         var_specs = []
         code = ""
@@ -38,7 +36,7 @@ class test_ext_module(unittest.TestCase):
         import module_multi_function
         module_multi_function.test()
         module_multi_function.test2()
-    def check_with_include(self):
+    def check_with_include(self,level=5):
         # decalaring variables
         a = 2.;
     
@@ -59,7 +57,7 @@ class test_ext_module(unittest.TestCase):
         import ext_module_with_include
         ext_module_with_include.test(a)
 
-    def check_string_and_int(self):        
+    def check_string_and_int(self,level=5):        
         # decalaring variables
         a = 2;b = 'string'    
         # declare module
@@ -75,7 +73,7 @@ class test_ext_module(unittest.TestCase):
         c = ext_string_and_int.test(a,b)
         assert(c == len(b))
         
-    def check_return_tuple(self):        
+    def check_return_tuple(self,level=5):        
         # decalaring variables
         a = 2    
         # declare module
@@ -98,7 +96,7 @@ class test_ext_module(unittest.TestCase):
            
 class test_ext_function(unittest.TestCase):
     #should really do some testing of where modules end up
-    def check_simple(self):
+    def check_simple(self,level=5):
         """ Simplest possible function """
         mod = ext_tools.ext_module('simple_ext_function')
         var_specs = []
@@ -129,29 +127,12 @@ class test_assign_variable_types(unittest.TestCase):
         ad.name, ad.var_type, ad.dims = 'a', Float32, 1
         bd = array_converter()
         bd.name, bd.var_type, bd.dims = 'b', Float64, 1
-        import c_spec
+
         cd = c_spec.int_converter()
         cd.name, cd.var_type = 'c', types.IntType        
         desired = [ad,bd,cd]
         expr = ""
         print_assert_equal(expr,actual,desired)
 
-
-def test_suite(level=1):
-    suites = []
-    if level > 0:
-        suites.append( unittest.makeSuite(test_assign_variable_types,'check_'))
-    if level >= 5:    
-        suites.append( unittest.makeSuite(test_ext_module,'check_'))
-        suites.append( unittest.makeSuite(test_ext_function,'check_'))      
-    total_suite = unittest.TestSuite(suites)
-    return total_suite
-
-def test(level=10):
-    all_tests = test_suite(level)
-    runner = unittest.TextTestRunner()
-    runner.run(all_tests)
-    return runner
-
 if __name__ == "__main__":
-    test()
+    ScipyTest('weave.ext_tools').run()
