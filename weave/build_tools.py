@@ -321,7 +321,14 @@ else:
     run_command = commands.getstatusoutput
 
 def get_compiler_dir(compiler_name):
-    if compiler_name == 'gcc':        
+    """ Try to figure out the compiler directory based on the
+        input compiler name.  This is fragile and really should
+        be done at the distutils level inside the compiler.  I
+        think it is only useful on windows at the moment.
+    """
+    if compiler_name is None:
+        compiler_dir =  ''
+    elif compiler_name == 'gcc':        
         status, text = run_command(compiler_name + ' --version')
         try:
             import re
