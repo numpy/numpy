@@ -5,23 +5,16 @@ from Numeric import *
 from type_check import ScalarType
 from fastumath import PINF as inf
 import _compiled_base
-import futil
 
 __all__ = ['round','any','all','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin','ptp','cumsum',
            'prod','cumprod','diff','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
-           'nanargmin','nanmin','sum','find_repeats']
+           'nanargmin','nanmin','sum']
 
 round = Numeric.around
 any = Numeric.sometrue
 all = Numeric.alltrue
-
-def find_repeats(arr):
-    """Find repeats in arr and return (repeats, repeat_count)
-    """    
-    v1,v2, n = futil.dfreps(arr)
-    return v1[:n],v2[:n]
 
 # Need this to change array type for low precision values
 def sum(x,axis=0):  # could change default axis here
