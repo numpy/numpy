@@ -206,13 +206,13 @@ class ext_module:
         return all_arg_specs
 
     def build_information(self):
-        info = [self.customize] + self._build_information + \
+        info = self._build_information + [self.customize] + \
                self.arg_specs().build_information()
         for func in self.functions:
             info.append(func.customize)
         #redundant, but easiest place to make sure compiler is set
         for i in info:
-            i.set_compiler(self.compiler)
+            i.set_compiler(self.compiler
         return info
         
     def get_headers(self):
@@ -357,7 +357,6 @@ def generate_module(module_string, module_file):
         if old_string == module_string:
             file_changed = 0
     if file_changed:
-        print 'file changed'
         f =open(module_file,'w')
         f.write(module_string)
         f.close()
