@@ -444,7 +444,15 @@ def get_subpackages(path,
             del sys.path[0]
 
     for package_name in include_packages:
-        sys.path.insert(0,os.path.join(path, package_name))
+        dirname = os.path.join(path, package_name)
+        setup_file = os.path.join(dirname,'setup_' + package_name+'.py')
+        if not os.path.isfile(setup_file):
+            print 'Assuming default configuration (%r was not found)' \
+                  % (setup_file)
+            config = default_config_dict(package_name, parent or '')
+            config_list.append(config)
+            continue
+        sys.path.insert(0,dirname)
         try:
             exec 'import setup_%s as setup_module' % (package_name)
             if not parent:
