@@ -37,7 +37,7 @@ class AbsoftFCompiler(FCompiler):
         opt = FCompiler.get_library_dirs(self)
         d = os.environ.get('ABSOFT')
         if d:
-            opt.append(d)
+            opt.append(os.path.join(d,'LIB'))
         return opt
 
     def get_libraries(self):
