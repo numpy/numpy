@@ -29,8 +29,9 @@ class build(old_build):
         
         #--------------------------------------------------------------------
         # get rid of spaces -- added for OS X support.
+        # Use '_' like python2.3
         #--------------------------------------------------------------------
-        plat_specifier = plat_specifier.replace(' ','')
+        plat_specifier = plat_specifier.replace(' ','_')
         
         #--------------------------------------------------------------------
         # make lower case ?? is this desired'
