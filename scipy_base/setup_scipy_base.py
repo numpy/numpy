@@ -20,10 +20,16 @@ def configuration(parent_package=''):
     test_path = os.path.join(local_path,'tests')
     config['package_dir']['scipy_base.tests'] = test_path
 
+    # extra_compile_args -- trying to find something that is binary compatible
+    #                       with msvc for returning Py_complex from functions
+    extra_compile_args=[]
+    
+    # fastumath module
     # scipy_base.fastumath module
     sources = ['fastumathmodule.c','isnan.c']
     sources = [os.path.join(local_path,x) for x in sources]
-    ext = Extension('scipy_base.fastumath',sources,libraries=[])
+    ext = Extension('scipy_base.fastumath',sources,libraries=[],
+                    extra_compile_args=extra_compile_args)
     config['ext_modules'].append(ext)
 
     # Test to see if big or little-endian machine and get correct default
@@ -38,5 +44,7 @@ def configuration(parent_package=''):
     return config
 
 if __name__ == '__main__':    
+    if sys.platform == 'win32':
+        from scipy_distutils.mingw32_support import *
     from scipy_distutils.core import setup
     setup(**configuration())
