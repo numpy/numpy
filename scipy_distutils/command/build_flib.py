@@ -584,11 +584,27 @@ class absoft_fortran_compiler(fortran_compiler_base):
 
 
 class sun_fortran_compiler(fortran_compiler_base):
+    """specify/detect settings for Sun's Forte compiler
 
+    Recent Sun Fortran compilers are FORTRAN 90/95 beasts.  F77 support is
+    handled by the same compiler, so even if you are asking for F77 you're
+    getting a FORTRAN 95 compiler.  Since most (all?) the code currently
+    being compiled for SciPy is FORTRAN 77 code, the list of libraries
+    contains various F77-related libraries.  Not sure what would happen if
+    you tried to actually compile and link FORTRAN 95 code with these
+    settings.
+
+    Note also that the 'Forte' name is passe.  Sun's latest compiler is
+    named 'Sun ONE Studio 7, Compiler Collection'.  Heaven only knows what
+    the version string for that baby will be.
+    """
+    
     vendor = 'Sun'
-    #ver_match =  r'f77: (?P<version>[^\s*,]*)'
-    ver_match = r'f90: (Forte Developer 7 Fortran 95|Sun) (?P<version>[^\s*,]*)'
 
+    # old compiler - any idea what the proper flags would be?
+    #ver_match =  r'f77: (?P<version>[^\s*,]*)'
+
+    ver_match = r'f90: (Forte Developer 7 Fortran 95|Sun) (?P<version>[^\s*,]*)'
     def __init__(self, fc=None, f90c=None, verbose=0):
         fortran_compiler_base.__init__(self, verbose=verbose)
 
@@ -597,17 +613,17 @@ class sun_fortran_compiler(fortran_compiler_base):
         if f90c is None:
             f90c = 'f90'
 
-        self.f77_compiler = fc # not tested
+        self.f77_compiler = fc
         self.f77_switches = ' -pic'
         self.f77_opt = ' -fast -dalign -xtarget=generic -R/opt/SUNWspro/lib'
 
         self.f90_compiler = f90c
-        self.f90_switches = ' -fixed ' # ??? why fixed?
+        # -fixed specifies fixed-format instead of free-format F90/95 code
+        self.f90_switches = ' -fixed -pic'
         self.f90_opt = ' -fast -dalign -xtarget=generic -R/opt/SUNWspro/lib'
 
         self.ver_cmd = self.f90_compiler + ' -V'
 
-        #self.libraries = ['f90', 'F77', 'M77', 'sunmath', 'm']
         self.libraries = ['fsu', 'F77', 'M77', 'sunmath',
                           'mvec', 'f77compat', 'm']
         
