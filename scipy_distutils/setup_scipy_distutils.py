@@ -18,7 +18,9 @@ if __name__ == '__main__':
     print 'scipy_distutils Version',scipy_distutils_version
     from distutils.core import setup
     config = configuration()
-    [config.__delitem__(k) for k,v in config.items() if not v]
+    for k,v in config.items():
+        if not v:
+            del config[k]
     setup(version = scipy_distutils_version,
           description = "Changes to distutils needed for SciPy "\
           "-- mostly Fortran support",
