@@ -315,8 +315,12 @@ static Py_complex c_quot_fast(Py_complex a, Py_complex b)
     if ((b.real == 0.0) && (b.imag == 0.0)) {
         r.real = a.real / b.real;
         r.imag = a.imag / b.imag;
-        if ((a.real == 0.0) && (a.imag != 0.0)) {r.real = 0.0;}
-        else if ((a.real != 0.0) && (a.imag == 0.0)) {r.imag = 0.0;}
+	/* Using matlab's convention (x+0j is x):
+	   (0+0j)/0 -> nan+0j
+	   (0+xj)/0 -> nan+sign(x)*infj
+	   (x+0j)/0 -> sign(x)*inf+0j
+	*/
+	if (a.imag == 0.0) {r.imag = 0.0;}
         return r;
     }
     
