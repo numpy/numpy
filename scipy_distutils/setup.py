@@ -2,7 +2,7 @@
 import os
 
 from distutils.core import setup
-from misc_util import get_path, get_version
+from misc_util import get_path, update_version
 
 def install_package():
     """ Install the scipy_distutils.  The dance with the current directory is done
@@ -14,7 +14,7 @@ def install_package():
     os.chdir(path)
     try:
 
-        version = get_version('alpha')
+        version = update_version('alpha')
         print 'scipy_distutils',version
 
         setup (name = "scipy_distutils",

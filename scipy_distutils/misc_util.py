@@ -1,19 +1,27 @@
 import os,sys,string
 
-def get_version(release_level='alpha', path='.', major=None):
+def update_version(release_level='alpha',
+                   path='.',
+                   version_template = \
+                   '%(major)d.%(minor)d.%(micro)d-%(release_level)s-%(serial)d',
+                   major=None,
+                   overwrite_version_py = 1):
     """
-    Return version string calculated from CVS tree or found in
-    <path>/__version__.py. Automatically update <path>/__version__.py
-    if the version is changed.
-    An attempt is made to guarantee that version is increasing in
-    time. This function always succeeds. None is returned if no
-    version information is available.
+    Return version string calculated from CVS/Entries file(s) starting
+    at <path>. If the version information is different from the one
+    found in the <path>/__version__.py file, update_version updates
+    the file automatically. The version information will be always
+    increasing in time.
+    If CVS tree does not exist (e.g. as in distribution packages),
+    return the version string found from  <path>/__version__.py.
+    If no version information is available, return None.
 
-    Version string is in the form
+    Default version string is in the form
 
       <major>.<minor>.<micro>-<release_level>-<serial>
 
-    and its items have the following meanings:
+    The items have the following meanings:
+
       serial - shows cumulative changes in all files in the CVS
                repository
       micro  - a number that is equivalent to the number of files
@@ -21,7 +29,15 @@ def get_version(release_level='alpha', path='.', major=None):
                or removed)
       release_level - is alpha, beta, canditate, or final
       major  - indicates changes in release_level.
+
     """
+    # Open issues:
+    # *** Recommend or not to add __version__.py file to CVS
+    #     repository? If it is in CVS, then when commiting, the
+    #     version information will change, but __version__.py
+    #     is commited with old version information to CVS. To get
+    #     __version__.py also up to date in CVS repository, 
+    #     a second commit of the __version__.py file is required.
 
     release_level_map = {'alpha':0,
                          'beta':1,
@@ -46,7 +62,7 @@ def get_version(release_level='alpha', path='.', major=None):
         old_version = None
     os.chdir(cwd)
 
-    cvs_revs = get_cvs_version(path)
+    cvs_revs = get_cvs_revision(path)
     if cvs_revs is None:
         return old_version
 
@@ -66,9 +82,17 @@ def get_version(release_level='alpha', path='.', major=None):
         major = 0
 
     version_info = (major,minor,micro,release_level,serial)
-    version = '%s.%s.%s-%s-%s' % version_info
+    version_dict = {'major':major,'minor':minor,'micro':micro,
+                    'release_level':release_level,'serial':serial
+                    }
+    version = version_template % version_dict
 
     if version != old_version:
+        print 'version increase detected: %s -> %s'%(old_version,version)
+        if not overwrite_version_py:
+            print 'keeping %s with old version, returing new version' \
+                  % (os.path.join(path,'__version__.py'))
+            return version
         print 'updating version: %s -> %s'%(old_version,version)
         version_file = os.path.abspath(os.path.join(path,'__version__.py'))
         f = open(version_file,'w')
@@ -79,7 +103,18 @@ def get_version(release_level='alpha', path='.', major=None):
         f.close()
     return version
 
-def get_cvs_version(path):
+def get_version(release_level='alpha',
+                path='.',
+                version_template = \
+                '%(major)d.%(minor)d.%(micro)d-%(release_level)s-%(serial)d',
+                major=None,
+                ):
+    return update_version(release_level = release_level,path = path,
+                          version_template = version_template,
+                          major = major,overwrite_version_py = 0)
+
+
+def get_cvs_revision(path):
     """
     Return two last cumulative revision numbers of a CVS tree starting
     at <path>. The first number shows the number of files in the CVS
@@ -94,7 +129,7 @@ def get_cvs_version(path):
             items = string.split(line,'/')
             if items[0]=='D' and len(items)>1:
                 try:
-                    d1,d2 = get_cvs_version(os.path.join(path,items[1]))
+                    d1,d2 = get_cvs_revision(os.path.join(path,items[1]))
                 except:
                     d1,d2 = 0,0
             elif items[0]=='' and len(items)>3 and items[1]!='__version__.py':
