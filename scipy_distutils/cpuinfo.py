@@ -169,6 +169,9 @@ class linux_cpuinfo(cpuinfo_base):
         return re.match(r'.*?Itanium\b',
                         self.info[0]['model name']) is not None
 
+    def _is_XEON(self):
+        return re.match(r'.*?XEON\b',
+                        self.info[0]['model name']) is not None
 
 
     # Varia

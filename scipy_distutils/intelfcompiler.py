@@ -54,7 +54,7 @@ class IntelFCompiler(FCompiler):
             opt.append('-tpp6')
         elif cpu.is_Pentium():
             opt.append('-tpp5')
-        elif cpu.is_PentiumIV():
+        elif cpu.is_PentiumIV() or cpu.is_XEON():
             opt.extend(['-tpp7','-xW'])
         if cpu.has_mmx():
             opt.append('-xM')
