@@ -276,7 +276,19 @@ class system_info:
     def get_paths(self, section, key):
         dirs = self.cp.get(section, key).split(os.pathsep)
         if self.dir_env_var and os.environ.has_key(self.dir_env_var):
-            dirs = os.environ[self.dir_env_var].split(os.pathsep) + dirs
+            d = os.environ[self.dir_env_var]
+            if os.path.isfile(d):
+                dirs = [os.path.dirname(d)] + dirs
+                l = getattr(self,'_lib_names',[])
+                if len(l)==1:
+                    b = os.path.basename(d)
+                    b = os.path.splitext(b)[0]
+                    if b[:3]=='lib':
+                        print 'Replacing _lib_names[0]==%r with %r' \
+                              % (self._lib_names[0], b[3:])
+                        self._lib_names[0] = b[3:]
+            else:
+                dirs = d.split(os.pathsep) + dirs
         default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
         dirs.extend(default_dirs)
         ret = []
@@ -549,11 +561,11 @@ class lapack_atlas_threads_info(atlas_threads_info):
 class lapack_info(system_info):
     section = 'lapack'
     dir_env_var = 'LAPACK'
-
+    _lib_names = ['lapack']
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
-        lapack_libs = self.get_libs('lapack_libs', ['lapack'])
+        lapack_libs = self.get_libs('lapack_libs', self._lib_names)
         for d in lib_dirs:
             lapack = self.check_libs(d,lapack_libs,[])
             if lapack is not None:
@@ -664,11 +676,12 @@ class lapack_src_info(system_info):
 class blas_info(system_info):
     section = 'blas'
     dir_env_var = 'BLAS'
+    _lib_names = ['blas']
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
-        blas_libs = self.get_libs('blas_libs', ['blas'])
+        blas_libs = self.get_libs('blas_libs', self._lib_names)
         for d in lib_dirs:
             blas = self.check_libs(d,blas_libs,[])
             if blas is not None:
