@@ -1065,7 +1065,8 @@ class gnu_fortran_compiler(fortran_compiler_base):
         # only check for more optimization if g77 can handle it.
         if self.get_version():
             if sys.platform=='darwin':
-                if self.version < '3.4':
+                if os.name != 'posix':
+                    # this should presumably correspond to Apple
                     if cpu.is_ppc():
                         opt = opt + ' -arch ppc '
                     elif cpu.is_i386():
