@@ -108,6 +108,14 @@ Import tricks
 ppimport         --  Postpone module import until trying to use it
 ppimport_attr    --  Postpone module import until trying to use its
                       attribute
+
+Machine arithmetics
+===================
+machar_single    --  MachAr instance storing the parameters of system
+                     single precision floating point arithmetics
+machar_double    --  MachAr instance storing the parameters of system
+                     double precision floating point arithmetics
+
 """
 
 from scipy_base_version import scipy_base_version as __version__
@@ -139,6 +147,7 @@ from matrix_base import *
 
 from polynomial import *
 from scimath import *
+from machar import *
 
 Inf = inf = fastumath.PINF
 try:
