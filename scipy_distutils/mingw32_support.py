@@ -91,7 +91,7 @@ if sys.platform == 'win32':
         set_windows_compiler('mingw32')   
     
     def use_g77():
-        build_flib.all_compilers = [build_flib.gnu_fortran_compiler()]    
+        build_flib.all_compilers = [build_flib.gnu_fortran_compiler]    
     
     # 2. force the use of gcc on windows platform
     use_gcc()
