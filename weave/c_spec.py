@@ -336,7 +336,7 @@ class complex_converter(scalar_converter):
 #----------------------------------------------------------------------------
 import os, c_spec # yes, I import myself to find out my __file__ location.
 local_dir,junk = os.path.split(os.path.abspath(c_spec.__file__))   
-scxx_dir = os.path.join(local_dir,'scxx2')
+scxx_dir = os.path.join(local_dir,'scxx')
 
 class scxx_converter(common_base_converter):
     def init_info(self):
