@@ -501,6 +501,10 @@ if sys.platform == 'win32':
                                      compiler_so='gcc -O2 -w -Wstrict-prototypes',
                                      linker_exe='g++ ',
                                      linker_so='g++ -shared')
+            # added for python2.3 support
+            # we can't pass it through set_executables because pre 2.2 would fail
+            self.compiler_cxx = ['g++']
+            
             # Maybe we should also append -mthreads, but then the finished
             # dlls need another dll (mingwm10.dll see Mingw32 docs)
             # (-mthreads: Support thread-safe exception handling on `Mingw32')       
@@ -518,11 +522,12 @@ if sys.platform == 'win32':
                  libraries,
                  library_dirs,
                  runtime_library_dirs,
-                 None, # export_symbols, we do this in our def-file
-                 debug,
-                 extra_preargs,
-                 extra_postargs,
-                 build_temp):
+                 export_symbols=None, # export_symbols, we do this in our def-file
+                 debug=0,
+                 extra_preargs=None,
+                 extra_postargs=None,
+                 build_temp=None,
+                 target_lang=None):
             if self.gcc_version < "3.0.0":
                 distutils.cygwinccompiler.CygwinCCompiler.link(self,
                                target_desc,
@@ -536,7 +541,8 @@ if sys.platform == 'win32':
                                debug,
                                extra_preargs,
                                extra_postargs,
-                               build_temp)
+                               build_temp,
+                               target_lang)
             else:
                 UnixCCompiler.link(self,
                                target_desc,
@@ -550,7 +556,8 @@ if sys.platform == 'win32':
                                debug,
                                extra_preargs,
                                extra_postargs,
-                               build_temp)
+                               build_temp,
+                               target_lang)
 
         
     # On windows platforms, we want to default to mingw32 (gcc)
