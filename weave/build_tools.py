@@ -156,7 +156,7 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
         # http://mail.python.org/pipermail/python-dev/2001-March/013510.html
         platform = sys.platform
         version = sys.version.lower()
-        if platform[:5] == 'sunos' version.find('gcc') != -1:
+        if platform[:5] == 'sunos' and version.find('gcc') != -1:
             extra_link_args = kw.get('extra_link_args',[])
             kw['extra_link_args'] = ['-mimpure-text'] +  extra_link_args
             
