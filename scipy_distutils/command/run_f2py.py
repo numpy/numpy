@@ -110,6 +110,8 @@ class run_f2py(Command):
                         base = m.group('name')
                         break
                 f.close()
+                if ext.name == 'untitled':
+                    ext.name = base
                 if base != ext.name:
                     # XXX: Should we do here more than just warn?
                     self.warn('%s provides %s but this extension is %s' \

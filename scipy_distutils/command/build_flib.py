@@ -49,6 +49,11 @@ from types import *
 from distutils.command.build_clib import build_clib
 from distutils.errors import *
 
+class FortranCompilerError (CCompilerError):
+    """Some compile/link operation failed."""
+class FortranCompileError (FortranCompilerError):
+    """Failure to compile one or more Fortran source files."""
+
 if os.name == 'nt':
     def run_command(command):
         """ not sure how to get exit status on nt. """
@@ -286,7 +291,7 @@ class fortran_compiler_base:
                 print cmd
                 failure = os.system(cmd)
                 if failure:
-                    raise ValueError, 'failure during compile' 
+                    raise FortranCompileError, 'failure during compile' 
                 object_files.append(object)
         return object_files
         #return all object files to make sure everything is archived 
