@@ -118,36 +118,25 @@ if sys.platform == 'win32':
                  extra_postargs=None,
                  build_temp=None,
                  target_lang=None):
+            args = (self,
+                    target_desc,
+                    objects,
+                    output_filename,
+                    output_dir,
+                    libraries,
+                    library_dirs,
+                    runtime_library_dirs,
+                    None, #export_symbols, we do this in our def-file
+                    debug,
+                    extra_preargs,
+                    extra_postargs,
+                    build_temp,
+                    target_lang)
             if self.gcc_version < "3.0.0":
-                distutils.cygwinccompiler.CygwinCCompiler.link(self,
-                               target_desc,
-                               objects,
-                               output_filename,
-                               output_dir,
-                               libraries,
-                               library_dirs,
-                               runtime_library_dirs,
-                               None, #export_symbols, we do this in our def-file
-                               debug,
-                               extra_preargs,
-                               extra_postargs,
-                               build_temp,
-                               target_lang)
+                func = distutils.cygwinccompiler.CygwinCCompiler.link
             else:
-                UnixCCompiler.link(self,
-                               target_desc,
-                               objects,
-                               output_filename,
-                               output_dir,
-                               libraries,
-                               library_dirs,
-                               runtime_library_dirs,
-                               None, # export_symbols, we do this in our def-file
-                               debug,
-                               extra_preargs,
-                               extra_postargs,
-                               build_temp,
-                               target_lang)
+                func = UnixCCompiler.link
+            func(*args[:func.im_func.func_code.co_argcount])
 
         def object_filenames (self,
                               source_filenames,
