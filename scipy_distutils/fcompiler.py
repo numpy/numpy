@@ -29,7 +29,7 @@ from distutils.spawn import _nt_quote_args
 from scipy_distutils.command.config_compiler import config_fc
 
 import log
-from misc_util import compiler_to_string
+from misc_util import compiler_to_string, cyg2win32
 from exec_command import find_executable, exec_command
 
 class FCompiler(CCompiler):
@@ -490,6 +490,15 @@ class FCompiler(CCompiler):
 #        return []
 
     if sys.version[:3]<'2.3':
+        def _get_cc_args(self, pp_opts, debug, before):
+            # works for unixccompiler, emxccompiler, cygwinccompiler
+            cc_args = pp_opts + ['-c']
+            if debug:
+                cc_args[:0] = ['-g']
+            if before:
+                cc_args[:0] = before
+            return cc_args
+
         def compile(self, sources, output_dir=None, macros=None,
                     include_dirs=None, debug=0, extra_preargs=None,
                     extra_postargs=None, depends=None):
@@ -500,6 +509,19 @@ class FCompiler(CCompiler):
             elif type(include_dirs) in (ListType, TupleType):
                 include_dirs = list(include_dirs) + (self.include_dirs or [])
             if extra_preargs is None: extra_preargs=[]
+
+            display = []
+            for fc in ['f77','f90','fix']:
+                fcomp = getattr(self,'compiler_'+fc)
+                if fcomp is None:
+                    continue
+                display.append("%s(%s) options: '%s'" \
+                               % (os.path.basename(fcomp[0]),
+                                  fc,
+                                  ' '.join(fcomp[1:])))
+            display = '\n'.join(display)
+            log.info(display)
+            
             from distutils.sysconfig import python_build
             objects = self.object_filenames(sources,strip_dir=python_build,
                                             output_dir=output_dir)
@@ -511,9 +533,21 @@ class FCompiler(CCompiler):
                 ext = os.path.splitext(src)[1]
                 self.mkpath(os.path.dirname(obj))
                 build[obj] = src, ext
-            cc_args = [] #self._get_cc_args(pp_opts, debug, extra_preargs)
-            for obj, (src, ext) in build.items():
-                self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+            cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+
+            display = "compile options: '%s'" % (' '.join(cc_args))
+            if extra_postargs:
+                display += "\nextra options: '%s'" % (' '.join(extra_postargs))
+            log.info(display)
+
+            objects_to_build = build.keys()
+            for obj in objects:
+                if obj in objects_to_build:
+                    src, ext = build[obj]
+                    if self.compiler_type=='absoft':
+                        obj = cyg2win32(obj)
+                        src = cyg2win32(src)
+                    self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
             return objects
         def detect_language(self, sources):
             return

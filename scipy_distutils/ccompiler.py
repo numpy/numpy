@@ -61,6 +61,9 @@ CCompiler.object_filenames = new.instancemethod(CCompiler_object_filenames,
 def CCompiler_compile(self, sources, output_dir=None, macros=None,
                       include_dirs=None, debug=0, extra_preargs=None,
                       extra_postargs=None, depends=None):
+    # This method is effective only with Python >=2.3 distutils.
+    # Any changes here should be applied also to fcompiler.compile
+    # method to support pre Python 2.3 distutils.
     if not sources:
         return []
     from fcompiler import FCompiler
