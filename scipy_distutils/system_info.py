@@ -5,21 +5,23 @@ information about various resources (libraries, library directories,
 include directories, etc.) in the system. Currently, the following
 classes are available:
   atlas_info
+  blas_info
+  lapack_info
   fftw_info
   x11_info
 
 Usage:
     info_dict = get_info(<name>)
-  where <name> is a string 'atlas','x11','fftw'.
+  where <name> is a string 'atlas','x11','fftw','lapack','blas'.
 
   Returned info_dict is a dictionary which is compatible with
   distutils.setup keyword arguments. If info_dict == {}, then the
   asked resource is not available (or system_info could not find it).
 
 Global parameters:
-  system_info.static_first - a flag for indicating that static
-             libraries are searched first than shared ones.
-  system_info.verbose - show the results if set.
+  system_info.search_static_first - search static libraries (.a)
+             in precedence to shared ones (.so, .sl) if enabled.
+  system_info.verbose - output the results to stdout if enabled.
 
 The file 'site.cfg' in the same directory as this module is read
 for configuration options. The format is that used by ConfigParser (i.e.,
@@ -27,13 +29,19 @@ Windows .INI style). The section DEFAULT has options that are the default
 for each section. The available sections are fftw, atlas, and x11. Appropiate
 defaults are used if nothing is specified.
 
+The order of finding the locations of resources is the following:
+ 1. environment variable
+ 2. section in site.cfg
+ 3. DEFAULT section in site.cfg
+Only the first complete match is returned.
+
 Example:
 ----------
 [DEFAULT]
 library_dirs = /usr/lib:/usr/local/lib:/opt/lib
 include_dirs = /usr/include:/usr/local/include:/opt/include
-# use static libraries in preference to shared ones
-static_first = 1
+# search static libraries (.a) in preference to shared ones (.so)
+search_static_first = 0
 
 [fftw]
 fftw_libs = fftw, rfftw
@@ -85,8 +93,8 @@ else:
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0,os.path.join(sys.prefix, 'lib'))
-#    default_lib_dirs.append(os.path.join(sys.prefix, 'lib'))
     default_include_dirs.append(os.path.join(sys.prefix, 'include'))
+
 default_lib_dirs = filter(os.path.isdir, default_lib_dirs)
 default_include_dirs = filter(os.path.isdir, default_include_dirs)
 
@@ -95,7 +103,10 @@ so_ext = get_config_vars('SO')[0] or ''
 def get_info(name):
     cl = {'atlas':atlas_info,
           'x11':x11_info,
-          'fftw':fftw_info}.get(name.lower(),system_info)
+          'fftw':fftw_info,
+          'blas':blas_info,
+          'lapack':lapack_info,
+          }.get(name.lower(),system_info)
     return cl().get_info()
 
 class NotFoundError(DistutilsError):
@@ -104,16 +115,30 @@ class NotFoundError(DistutilsError):
 class AtlasNotFoundError(NotFoundError):
     """
     Atlas (http://math-atlas.sourceforge.net/) libraries not found.
-    Either install them in /usr/local/lib/atlas or /usr/lib/atlas
-    and retry setup.py. One can use also ATLAS environment variable
-    to indicate the location of Atlas libraries."""
+    Directories to search for the libraries can be specified in the
+    scipy_distutils/site.cfg file or by setting the ATLAS environment
+    variable."""
+
+class LapackNotFoundError(NotFoundError):
+    """
+    Lapack (http://www.netlib.org/lapack/) libraries not found.
+    Directories to search for the libraries can be specified in the
+    scipy_distutils/site.cfg file or by setting the LAPACK environment
+    variable."""
+
+class BlasNotFoundError(NotFoundError):
+    """
+    Blas (http://www.netlib.org/blas/) libraries not found.
+    Directories to search for the libraries can be specified in the
+    scipy_distutils/site.cfg file or by setting the BLAS environment
+    variable."""
 
 class FFTWNotFoundError(NotFoundError):
     """
     FFTW (http://www.fftw.org/) libraries not found.
-    Either install them in /usr/local/lib or /usr/lib and retry setup.py.
-    One can use also FFTW environment variable to indicate
-    the location of FFTW libraries."""
+    Directories to search for the libraries can be specified in the
+    scipy_distutils/site.cfg file or by setting the FFTW environment
+    variable."""
 
 class F2pyNotFoundError(NotFoundError):
     """
@@ -133,10 +158,10 @@ class system_info:
     """ get_info() is the only public method. Don't use others.
     """
     section = 'DEFAULT'
-
-    static_first = 1
+    dir_env_var = None
+    search_static_first = 0 # XXX: disabled by default, may disappear in
+                            # future unless it is proved to be useful.
     verbose = 1
-    need_refresh = 1
     saved_results = {}
 
     def __init__ (self,
@@ -148,19 +173,23 @@ class system_info:
         defaults = {}
         defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
         defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
-        defaults['static_first'] = '1'
+        defaults['search_static_first'] = str(self.search_static_first)
         self.cp = ConfigParser.ConfigParser(defaults)
         cf = os.path.join(os.path.split(os.path.abspath(__file__))[0],
                           'site.cfg')
         self.cp.read([cf])
         if not self.cp.has_section(self.section):
             self.cp.add_section(self.section)
-        self.static_first = self.cp.getboolean(self.section, 'static_first')
+        self.search_static_first = self.cp.getboolean(self.section,
+                                                      'search_static_first')
+        assert type(self.search_static_first) is type(0)
 
     def set_info(self,**info):
         self.saved_results[self.__class__.__name__] = info
+
     def has_info(self):
         return self.saved_results.has_key(self.__class__.__name__)
+
     def get_info(self):
         """ Return a dictonary with items that are compatible
             with scipy_distutils.setup keyword arguments.
@@ -190,12 +219,17 @@ class system_info:
 
     def get_paths(self, section, key):
         dirs = self.cp.get(section, key).split(os.pathsep)
+        if os.environ.has_key(self.dir_env_var):
+            dirs = os.environ[self.dir_env_var].split(os.pathsep) + dirs
         default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
         dirs.extend(default_dirs)
-        return [ d for d in dirs if os.path.isdir(d) ]
+        ret = []
+        [ret.append(d) for d in dirs if os.path.isdir(d) and d not in ret]
+        return ret
 
     def get_lib_dirs(self, key='library_dirs'):
         return self.get_paths(self.section, key)
+
     def get_include_dirs(self, key='include_dirs'):
         return self.get_paths(self.section, key)
 
@@ -209,39 +243,42 @@ class system_info:
     def check_libs(self,lib_dir,libs,opt_libs =[]):
         """ If static or shared libraries are available then return
             their info dictionary. """
-        mths = [self.check_static_libs,self.check_shared_libs]
-        if not self.static_first:
-            mths.reverse() # if one prefers shared libraries
-        for m in mths:
-            info = m(lib_dir,libs,opt_libs)
+        if self.search_static_first:
+            exts = ['.a',so_ext]
+        else:
+            exts = [so_ext,'.a']
+        for ext in exts:
+            info = self._check_libs(lib_dir,libs,opt_libs,ext)
             if info is not None: return info
 
-    def check_static_libs(self,lib_dir,libs,opt_libs =[]):
-        #XXX: what are .lib and .dll files under win32?
-        if len(combine_paths(lib_dir,['lib'+l+'.a' for l in libs])) == len(libs):
-            info = {'libraries':libs,'library_dirs':[lib_dir]}
-            if len(combine_paths(lib_dir,['lib'+l+'.a' for l in libs]))\
-               ==len(opt_libs):
-                info['libraries'].extend(opt_libs)
-            return info
-
-    def check_shared_libs(self,lib_dir,libs,opt_libs =[]):
-        shared_libs = []
+    def _lib_list(self, lib_dir, libs, ext):
+        liblist = []
         for l in libs:
-            p = shortest_path(combine_paths(lib_dir,'lib'+l+so_ext+'*'))
-            if p is not None: shared_libs.append(p)
-        if len(shared_libs) == len(libs):
-            info = {'extra_objects':shared_libs}
-            opt_shared_libs = []
-            for l in opt_libs:
-                p = shortest_path(combine_paths(lib_dir,'lib'+l+so_ext+'*'))
-                if p is not None: opt_shared_libs.append(p)
-            info['extra_objects'].extend(opt_shared_libs)
+            p = combine_paths(lib_dir, 'lib'+l+ext)
+            p = shortest_path(p) # needed when e.g. p==[libx.so.6, libx.so]
+            if p:
+                liblist.append(p)
+        return liblist
+
+    def _extract_lib_names(self,libs):
+        return [os.path.splitext(os.path.basename(p))[0][3:] \
+                for p in libs]
+
+    def _check_libs(self,lib_dir,libs, opt_libs, ext):
+        found_libs = self._lib_list(lib_dir, libs, ext)
+        if len(found_libs) == len(libs):
+            found_libs = self._extract_lib_names(found_libs)
+            info = {'libraries' : found_libs, 'library_dirs' : [lib_dir]}
+            opt_found_libs = self._lib_list(lib_dir, opt_libs, ext)
+            if len(opt_found_libs) == len(opt_libs):
+                opt_found_libs = self._extract_lib_names(opt_found_libs)
+                info['libraries'].extend(opt_found_libs)
             return info
 
 
 class fftw_info(system_info):
     section = 'fftw'
+    dir_env_var = 'FFTW'
 
     def __init__(self):
         system_info.__init__(self)
@@ -322,14 +359,13 @@ class fftw_info(system_info):
 
 class atlas_info(system_info):
     section = 'atlas'
+    dir_env_var = 'ATLAS'
 
     def get_paths(self, section, key):
-        default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
-        if os.environ.has_key('ATLAS'):
-            default_dirs.append(os.environ['ATLAS'])
+        pre_dirs = system_info.get_paths(self, section, key)
         dirs = []
-        for d in self.cp.get(section, key).split(os.pathsep) + default_dirs:
-            dirs.extend([d]+combine_paths(d,['atlas*','ATLAS*']))
+        for d in pre_dirs:
+            dirs.extend([d] + combine_paths(d,['atlas*','ATLAS*']))
         return [ d for d in dirs if os.path.isdir(d) ]
 
     def calc_info(self):
@@ -360,14 +396,39 @@ class atlas_info(system_info):
         if h: dict_append(info,include_dirs=[h])
         self.set_info(**info)
 
-## class blas_info(system_info):
-##     # For Fortran or optimized blas, not atlas.
-##     pass
+class lapack_info(system_info):
+    section = 'lapack'
+    dir_env_var = 'LAPACK'
 
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
 
-## class lapack_info(system_info):
-##     # For Fortran or optimized lapack, not atlas
-##     pass
+        lapack_libs = self.get_libs('lapack_libs', ['lapack'])
+        for d in lib_dirs:
+            lapack = self.check_libs(d,lapack_libs,[])
+            if lapack is not None:
+                info = lapack                
+                break
+        else:
+            return
+        self.set_info(**info)
+
+class blas_info(system_info):
+    section = 'blas'
+    dir_env_var = 'BLAS'
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+
+        blas_libs = self.get_libs('blas_libs', ['blas'])
+        for d in lib_dirs:
+            blas = self.check_libs(d,blas_libs,[])
+            if blas is not None:
+                info = blas                
+                break
+        else:
+            return
+        self.set_info(**info)
 
 
 class x11_info(system_info):
@@ -403,6 +464,7 @@ def shortest_path(pths):
     pths.sort()
     if pths: return pths[0]
 
+
 def combine_paths(*args):
     """ Return a list of existing paths composed by all combinations of
         items from arguments.
@@ -429,7 +491,10 @@ def combine_paths(*args):
 def dict_append(d,**kws):
     for k,v in kws.items():
         if d.has_key(k):
-            d[k].extend(v)
+            if k in ['library_dirs','include_dirs','define_macros']:
+                [d[k].append(vv) for vv in v if vv not in d[k]]
+            else:
+                d[k].extend(v)
         else:
             d[k] = v
 

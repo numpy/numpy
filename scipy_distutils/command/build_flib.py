@@ -782,7 +782,7 @@ class gnu_fortran_compiler(fortran_compiler_base):
         match = r'Reading specs from (.*)/specs'
 
         # works I think only for unix...        
-        exit_status, out_text = run_command('g77 -v')
+        exit_status, out_text = run_command(('%s -v' % self.f77_compiler))
         if not exit_status:
             m = re.findall(match,out_text)
             if m:
