@@ -18,35 +18,27 @@ from scipy_distutils.misc_util import get_path, merge_config_dicts
 
 bundle_packages = ['scipy_distutils','scipy_test','scipy_base']
 
-def get_package_config(name,parent_path=None):
-    sys.path.insert(0,name)
-    try:
-        mod = __import__('setup_'+name)
-        config = mod.configuration(parent_path=parent_path)
-    finally:
-        del sys.path[0]
-    return config
-
-def get_package_version(name):
-    sys.path.insert(0,name)
-    try:
-        mod = __import__(name+'_version')
-    finally:
-        del sys.path[0]
-    return mod
-
 def setup_package():
     old_path = os.getcwd()
-    path = get_path(__name__)
-    os.chdir(path)
-    sys.path.insert(0,path)
+    local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    os.chdir(local_path)
+    sys.path.insert(0, local_path)
 
     try:
-        config = map(lambda x:get_package_config(x,parent_path=path),
-                     bundle_packages)
-        config_dict = merge_config_dicts(config)
+        configs = [{'name':'Scipy_core'}]
+        versions = []
+        for n in bundle_packages:
+            sys.path.insert(0,os.path.join(local_path,n))
+            try:
+                mod = __import__('setup_'+n)
+                configs.append(mod.configuration())
+                mod = __import__(n+'_version')
+                versions.append(mod)
+            finally:
+                del sys.path[0]
+   
+        config_dict = merge_config_dicts(configs)
 
-        versions = map(get_package_version,bundle_packages)
         major = max([v.major for v in versions])
         minor = max([v.minor for v in versions])
         micro = max([v.micro for v in versions])
@@ -60,8 +52,7 @@ def setup_package():
 
         print 'SciPy Core Version %s' % scipy_core_version
         from scipy_distutils.core import setup
-        setup (name = "Scipy_core",
-               version = scipy_core_version,
+        setup( version = scipy_core_version,
                maintainer = "SciPy Developers",
                maintainer_email = "scipy-dev@scipy.org",
                description = "SciPy core modules: scipy_{distutils,test,base}",
