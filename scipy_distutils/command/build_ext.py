@@ -118,6 +118,9 @@ class build_ext (old_build_ext):
                    "a list of source filenames") % ext.name
         sources = list(sources)
 
+        if not sources:
+            return
+
         fullname = self.get_ext_fullname(ext.name)
         if self.inplace:
             modpath = string.split(fullname, '.')
