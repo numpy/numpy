@@ -126,7 +126,7 @@ def find_executable(exe, path=None):
     orig_exe = exe
     if path is None:
         path = os.environ.get('PATH',os.defpath)
-    if os.name=='posix':
+    if os.name=='posix' and sys.version[:3]>'2.1':
         realpath = os.path.realpath
     else:
         realpath = lambda a:a
