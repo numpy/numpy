@@ -56,6 +56,36 @@ public:
   };
   
   //-------------------------------------------------------------------------
+  // get -- object, numeric, and string versions
+  //-------------------------------------------------------------------------  
+  object get (object& key) {
+    object rslt = PyDict_GetItem(_obj, key);
+    return rslt;
+  };
+  object get (int key) {
+    object _key = object(key);
+    return get(_key);
+  };
+  object get (double key) {
+    object _key = object(key);
+    return get(_key);
+  };
+  object get (const std::complex<double>& key) {
+    object _key = object(key);
+    return get(_key);
+  };  
+  object get (const char* key) {
+    object rslt = PyDict_GetItemString(_obj, (char*) key);
+    return rslt;
+  };
+  object get (const std::string& key) {
+    return get(key.c_str());
+  };
+  object get (char key) {
+    return get(&key);
+  };
+  
+  //-------------------------------------------------------------------------
   // operator[] -- object and numeric versions
   //-------------------------------------------------------------------------  
   keyed_ref operator [] (object& key) {
@@ -91,6 +121,10 @@ public:
     return operator [](key.c_str());
   };
 
+  keyed_ref operator [] (char key) {
+    return operator [](&key);
+  };
+
   //-------------------------------------------------------------------------
   // has_key -- object and numeric versions
   //-------------------------------------------------------------------------  
@@ -118,6 +152,9 @@ public:
   };
   bool has_key(const std::string& key) const {
     return has_key(key.c_str());
+  };
+  bool has_key(char key) const {
+    return has_key(&key);
   };
 
   //-------------------------------------------------------------------------
