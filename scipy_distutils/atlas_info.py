@@ -34,7 +34,7 @@ def get_atlas_info():
         lapack_libraries = ['lapack'] + blas_libraries
     return blas_libraries, lapack_libraries, atlas_library_dirs
 
-def unix_atlas_directory(platform):
+def unix_atlas_directory(platform): #OBSOLETE (see system_info)
     """ Search a list of common locations looking for the atlas directory.
  
         Return None if the directory isn't found, otherwise return the

@@ -34,6 +34,7 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 
 import sys,os,re,types,pprint
+from distutils.errors import DistutilsError
 from glob import glob
 
 from distutils.sysconfig import get_config_vars
@@ -53,6 +54,36 @@ def get_info(name):
           'x11':x11_info,
           'fftw':fftw_info}.get(name.lower(),system_info)
     return cl().get_info()
+
+class NotFoundError(DistutilsError):
+    """Some third-party program or library is not found."""
+
+class AtlasNotFoundError(NotFoundError):
+    """
+    Atlas (http://math-atlas.sourceforge.net/) libraries not found.
+    Either install them in /usr/local/lib/atlas or /usr/lib/atlas
+    and retry setup.py. One can use also ATLAS environment variable
+    to indicate the location of Atlas libraries."""
+
+class FFTWNotFoundError(NotFoundError):
+    """
+    FFTW (http://www.fftw.org/) libraries not found.
+    Either install them in /usr/local/lib or /usr/lib and retry setup.py.
+    One can use also FFTW environment variable to indicate
+    the location of FFTW libraries."""
+
+class F2pyNotFoundError(NotFoundError):
+    """
+    f2py2e (http://cens.ioc.ee/projects/f2py2e/) module not found.
+    Get it from above location, install it, and retry setup.py."""
+
+class NumericNotFoundError(NotFoundError):
+    """
+    Numeric (http://pfdubois.com/numpy/) module not found.
+    Get it from above location, install it, and retry setup.py."""
+
+class X11NotFoundError(NotFoundError):
+    """X11 libraries not found."""
 
 class system_info:
 

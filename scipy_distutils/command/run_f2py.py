@@ -9,6 +9,7 @@ __revision__ = "$Id$"
 
 from distutils.dep_util import newer
 from scipy_distutils.core import Command
+from scipy_distutils.system_info import F2pyNotFoundError
 
 import re,os
 
@@ -76,7 +77,10 @@ class run_f2py(Command):
         one from the Fortran files in 'sources'.
         """
         import string
-        import f2py2e
+        try:
+            import f2py2e
+        except ImportError:
+            raise F2pyNotFoundError,F2pyNotFoundError.__doc__
         # f2py generates the following files for an extension module
         # with a name <modulename>:
         #   <modulename>module.c
