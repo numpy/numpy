@@ -99,7 +99,7 @@ class test_get_catalog(unittest.TestCase):
         assert(catalog is None)
     def check_create_catalog(self):
         pardir = self.get_test_dir(erase=1)
-        catalog = get_catalog(pardir,'cr')
+        catalog = get_catalog(pardir,'c')
         assert(catalog is not None)
 
 class test_catalog(unittest.TestCase):
@@ -204,6 +204,7 @@ class test_catalog(unittest.TestCase):
         q = catalog.catalog()
         files = q.get_existing_files()
         restore_temp_catalog()
+        print 'files:', files
         assert(len(files) == 1)
                        
     def check_access_writable_file(self):

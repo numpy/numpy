@@ -189,14 +189,16 @@ def get_catalog(module_path,mode='r'):
         If module_path is a directory, the function catalog returned is
         from that directory.  If module_path is an actual module_name,
         then the function catalog returned is from its parent directory.
-        mode uses the standard 'c' = create, 'r' = read, 'w' = write
-        file open modes.
+        mode uses the standard 'c' = create, 'n' = new, 'r' = read, 
+        'w' = write file open modes available for anydbm databases.
         
         See catalog_path() for more information on module_path.
     """
+    if mode not in ['c','r','w','n']:
+        msg = " mode must be 'c', 'n', 'r', or 'w'.  See anydbm for more info"
+        raise ValueError, msg
     catalog_file = catalog_path(module_path)
-    #print catalog_file
-    #sh = shelve.open(catalog_file,mode)
+    #print catalog_file,mode
     try:
         sh = shelve.open(catalog_file,mode)
     except: # not sure how to pin down which error to catch yet
@@ -542,7 +544,7 @@ class catalog:
             matter what the user's Python path is.
         """       
         # add function to data in first writable catalog
-        mode = 'cw' # create, write
+        mode = 'c' # create if doesn't exist, otherwise, use existing
         cat_file = self.get_writable_dir()
         cat = get_catalog(cat_file,mode)
         if cat is None:
