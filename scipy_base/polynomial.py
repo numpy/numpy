@@ -5,7 +5,7 @@ from scimath import *
 from type_check import isscalar
 from matrix_base import diag
 from shape_base import hstack, atleast_1d
-from function_base import trim_zeros
+from function_base import trim_zeros, sort_complex
 
 __all__ = ['poly','roots','polyint','polyder','polyadd','polysub','polymul',
            'polydiv','polyval','poly1d']
@@ -36,7 +36,8 @@ def poly(seq_of_zeros):
     seq_of_zeros = atleast_1d(seq_of_zeros)    
     sh = shape(seq_of_zeros)
     if len(sh) == 2 and sh[0] == sh[1]:
-        seq_of_zeros, vecs = MLab.eig(seq_of_zeros)
+        eig = get_eigval_func()
+        seq_of_zeros=eig(seq_of_zeros)
     elif len(sh) ==1:
         pass
     else:
