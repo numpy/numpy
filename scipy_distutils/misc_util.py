@@ -89,12 +89,13 @@ def update_version(release_level='alpha',
 
     if version != old_version:
         print 'version increase detected: %s -> %s'%(old_version,version)
+        version_file = os.path.join(path,'__version__.py')
         if not overwrite_version_py:
             print 'keeping %s with old version, returing new version' \
-                  % (os.path.join(path,'__version__.py'))
+                  % (version_file)
             return version
-        print 'updating version: %s -> %s'%(old_version,version)
-        version_file = os.path.abspath(os.path.join(path,'__version__.py'))
+        print 'updating version in %s' % version_file
+        version_file = os.path.abspath(version_file)
         f = open(version_file,'w')
         f.write('# This file is automatically updated with get_version\n'\
                 '# function from scipy_distutils.misc_utils.py\n'\
