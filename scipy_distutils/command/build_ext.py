@@ -99,7 +99,7 @@ class build_ext (old_build_ext):
         elif (hasattr(ext,'has_cxx_sources') and
               ext.has_cxx_sources()):
 
-            if save_linker_so[0]=='gcc':
+            if save_linker_so and save_linker_so[0]=='gcc':
                 #XXX: need similar hooks that are in weave.build_tools.py
                 #     Or more generally, implement cxx_compiler_class
                 #     hooks similar to fortran_compiler_class.
