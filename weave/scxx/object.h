@@ -10,10 +10,15 @@
 
 #include <Python.h>
 #include <limits.h>
+#include <string>
 
 namespace py {
 
 void Fail(PyObject*, const char* msg);
+
+// used in method call specification.
+class tuple;
+class dict;
     
 class object  
 {
@@ -55,13 +60,18 @@ public:
   };
 
   // Need to change return type?
-  PyObject* attr(const char* nm) const {
-    return LoseRef(PyObject_GetAttrString(_obj, (char*) nm));
+  object attr(const char* nm) const {
+    // do we want the LoseRef
+    return object(LoseRef(PyObject_GetAttrString(_obj, (char*) nm)));
   };
-  PyObject* attr(const object& nm) const {
-    return LoseRef(PyObject_GetAttr(_obj, nm));
+  object attr(std::string nm) const {
+    // do we want the LoseRef
+    return object(LoseRef(PyObject_GetAttrString(_obj, (char*) nm.c_str())));
   };
-  
+  object attr(const object& nm) const {
+    // do we want the LoseRef
+    return object(LoseRef(PyObject_GetAttr(_obj, nm)));
+  };  
   
   int set_attr(const char* nm, object& val) {
     return PyObject_SetAttrString(_obj, (char*) nm, val);
@@ -69,7 +79,25 @@ public:
   int set_attr(PyObject* nm, object& val) {
     return PyObject_SetAttr(_obj, nm, val);
   };
-  
+
+  object mcall(const char* nm);
+  object mcall(const char* nm, tuple& args);
+  object mcall(const char* nm, tuple& args, dict& kwargs);
+
+  object mcall(std::string nm) {
+    return mcall(nm.c_str());
+  }
+  object mcall(std::string nm, tuple& args) {
+    return mcall(nm.c_str(),args);
+  }
+  object mcall(std::string nm, tuple& args, dict& kwargs) {
+    return mcall(nm.c_str(),args,kwargs);
+  }
+
+  object call() const;
+  object call(tuple& args) const;
+  object call(tuple& args, dict& kws) const;
+
   int del(const char* nm) {
     return PyObject_DelAttrString(_obj, (char*) nm);
   };

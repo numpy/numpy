@@ -25,6 +25,52 @@ void object::GrabRef(PyObject* newObj)
   _own = _obj = newObj;
 }
 
+object object::mcall(const char* nm)
+{
+  object method = attr(nm);
+  PyObject* result = PyEval_CallObjectWithKeywords(method,NULL,NULL);
+  if (!result)
+    throw 1; // signal exception has occured.
+  return object(result);
+}
+
+object object::mcall(const char* nm, tuple& args)
+{
+  object method = attr(nm);
+  PyObject* result = PyEval_CallObjectWithKeywords(method,args,NULL);
+  if (!result)
+    throw 1; // signal exception has occured.
+  return object(result);
+}
+
+object object::mcall(const char* nm, tuple& args, dict& kwargs)
+{
+  object method = attr(nm);
+  PyObject* result = PyEval_CallObjectWithKeywords(method,args,kwargs);
+  if (!result)
+    throw 1; // signal exception has occured.
+  return object(result);
+}
+
+object object::call() const {
+  PyObject *rslt = PyEval_CallObjectWithKeywords(*this, NULL, NULL);
+  if (rslt == 0)
+    throw 1;
+  return object(rslt);
+}
+object object::call(tuple& args) const {
+  PyObject *rslt = PyEval_CallObjectWithKeywords(*this, args, NULL);
+  if (rslt == 0)
+    throw 1;
+  return object(rslt);
+}
+object object::call(tuple& args, dict& kws) const {
+  PyObject *rslt = PyEval_CallObjectWithKeywords(*this, args, kws);
+  if (rslt == 0)
+    throw 1;
+  return object(rslt);
+}
+
 //---------------------------------------------------------------------------
 // sequence
 //---------------------------------------------------------------------------

@@ -10,13 +10,18 @@ chaco
     
 weave
 
-Proposed changes:
+Proposed changes to weave:
 
+* change return_val to a py::object
+    This could remove almost all of the need of handling PyObject*.
+* document changes.    
+* review directory structure.
+* outline method of aggregating functions into a single file.
+
+EVERYTHING BELOW HERE IS DONE.
 * all classes moved to py:: namespace
 * made tuples mutable with indexing notation. (handy in weave)
 * converted camel case names (setItem -> set_item)
-
-
 * change class names to reflect boost like names and put each 
   exposed class in its own header file.
     PWOBase     -> py::object   -- object.h     
