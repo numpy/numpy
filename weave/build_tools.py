@@ -403,10 +403,14 @@ def configure_build_dir(build_dir=None):
     
 if sys.platform == 'win32':
     import distutils.cygwinccompiler
+    from distutils.version import StrictVersion
     from distutils.ccompiler import gen_preprocess_options, gen_lib_options
     from distutils.errors import DistutilsExecError, CompileError, UnknownFileError
+    
+    from distutils.unixccompiler import UnixCCompiler 
+    
     # the same as cygwin plus some additional parameters
-    class Mingw32CCompiler (distutils.cygwinccompiler.CygwinCCompiler):
+    class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         """ A modified MingW32 compiler compatible with an MSVC built Python.
             
         """
@@ -418,9 +422,20 @@ if sys.platform == 'win32':
                       dry_run=0,
                       force=0):
     
-            distutils.cygwinccompiler.CygwinCCompiler.__init__ (self, verbose, 
-                                                                dry_run, force)
+            distutils.cygwinccompiler.CygwinCCompiler.__init__ (self, 
+                                                       verbose,dry_run, force)
             
+            # we need to support 3.2 which doesn't match the standard
+            # get_versions methods regex
+            if self.gcc_version is None:
+                import re
+                out = os.popen('gcc' + ' -dumpversion','r')
+                out_string = out.read()
+                out.close()
+                result = re.search('(\d+\.\d+)',out_string)
+                if result:
+                    self.gcc_version = StrictVersion(result.group(1))            
+
             # A real mingw32 doesn't need to specify a different entry point,
             # but cygwin 2.91.57 in no-cygwin-mode needs it.
             if self.gcc_version <= "2.91.57":
@@ -431,6 +446,7 @@ if sys.platform == 'win32':
                 self.linker = 'dllwrap' + ' --driver-name g++'
             elif self.linker_dll == 'gcc':
                 self.linker = 'g++'    
+
             # **changes: eric jones 4/11/01
             # 1. Check for import library on Windows.  Build if it doesn't exist.
             if not import_library_exists():
@@ -444,12 +460,17 @@ if sys.platform == 'win32':
             #                     linker_exe='gcc -mno-cygwin',
             #                     linker_so='%s --driver-name g++ -mno-cygwin -mdll -static %s' 
             #                                % (self.linker, entry_point))
-            self.set_executables(compiler='gcc -mno-cygwin -O2 -w',
-                                 compiler_so='gcc -mno-cygwin -mdll -O2 -w -Wstrict-prototypes',
-                                 linker_exe='g++ -mno-cygwin',
-                                 linker_so='%s -mno-cygwin -mdll -static %s' 
-                                            % (self.linker, entry_point))
-            
+            if self.gcc_version <= "3.0.0":
+                self.set_executables(compiler='gcc -mno-cygwin -O2 -w',
+                                     compiler_so='gcc -mno-cygwin -mdll -O2 -w -Wstrict-prototypes',
+                                     linker_exe='g++ -mno-cygwin',
+                                     linker_so='%s -mno-cygwin -mdll -static %s' 
+                                                % (self.linker, entry_point))
+            else:            
+                self.set_executables(compiler='gcc -mno-cygwin -O2 -w',
+                                     compiler_so='gcc -O2 -w -Wstrict-prototypes',
+                                     linker_exe='g++ ',
+                                     linker_so='g++ -shared')
             # Maybe we should also append -mthreads, but then the finished
             # dlls need another dll (mingwm10.dll see Mingw32 docs)
             # (-mthreads: Support thread-safe exception handling on `Mingw32')       
@@ -458,6 +479,48 @@ if sys.platform == 'win32':
             self.dll_libraries=[]
             
         # __init__ ()
+
+        def link(self,
+                 target_desc,
+                 objects,
+                 output_filename,
+                 output_dir,
+                 libraries,
+                 library_dirs,
+                 runtime_library_dirs,
+                 None, # export_symbols, we do this in our def-file
+                 debug,
+                 extra_preargs,
+                 extra_postargs,
+                 build_temp):
+            if self.gcc_version < "3.0.0":
+                distutils.cygwinccompiler.CygwinCCompiler.link(self,
+                               target_desc,
+                               objects,
+                               output_filename,
+                               output_dir,
+                               libraries,
+                               library_dirs,
+                               runtime_library_dirs,
+                               None, # export_symbols, we do this in our def-file
+                               debug,
+                               extra_preargs,
+                               extra_postargs,
+                               build_temp)
+            else:
+                UnixCCompiler.link(self,
+                               target_desc,
+                               objects,
+                               output_filename,
+                               output_dir,
+                               libraries,
+                               library_dirs,
+                               runtime_library_dirs,
+                               None, # export_symbols, we do this in our def-file
+                               debug,
+                               extra_preargs,
+                               extra_postargs,
+                               build_temp)
 
         
     # On windows platforms, we want to default to mingw32 (gcc)
