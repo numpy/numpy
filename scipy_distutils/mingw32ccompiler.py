@@ -17,9 +17,9 @@ import scipy_distutils.ccompiler
 # NT stuff
 # 1. Make sure libpython<version>.a exists for gcc.  If not, build it.
 # 2. Force windows to use gcc (we're struggling with MSVC and g77 support) 
+#    --> this is done in scipy_distutils/ccompiler.py
 # 3. Force windows to use g77
 
-# 1.  Build libpython<version> from .lib and .dll if they don't exist.    
 import distutils.cygwinccompiler
 from distutils.version import StrictVersion
 from scipy_distutils.ccompiler import gen_preprocess_options, gen_lib_options
@@ -47,7 +47,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # get_versions methods regex
         if self.gcc_version is None:
             import re
-            out = os.popen('gcc' + ' -dumpversion','r')
+            out = os.popen('gcc -dumpversion','r')
             out_string = out.read()
             out.close()
             result = re.search('(\d+\.\d+)',out_string)
@@ -86,8 +86,8 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                                  linker_so='%s -mno-cygwin -mdll -static %s' 
                                  % (self.linker, entry_point))
         else:            
-            self.set_executables(compiler='gcc -mno-cygwin -O2 -w',
-                                 compiler_so='gcc -O2 -w -Wstrict-prototypes',
+            self.set_executables(compiler='gcc -mno-cygwin -O2 -Wall',
+                                 compiler_so='gcc -O2 -Wall -Wstrict-prototypes',
                                  linker_exe='g++ ',
                                  linker_so='g++ -shared')
         # added for python2.3 support
@@ -100,7 +100,8 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         
         # no additional libraries needed 
         self.dll_libraries=[]
-            
+        return
+
     # __init__ ()
 
     def link(self,
@@ -136,6 +137,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         else:
             func = UnixCCompiler.link
         func(*args[:func.im_func.func_code.co_argcount])
+        return
 
     def object_filenames (self,
                           source_filenames,
@@ -166,9 +168,6 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                 obj_names.append (os.path.join (output_dir,
                                                 base + ext + self.obj_extension))
             else:
-                print 'here', os.path.join (output_dir,
-                                            base + self.obj_extension)
-                print '...:', output_dir, base + self.obj_extension                                            
                 obj_names.append (os.path.join (output_dir,
                                                 base + self.obj_extension))
         return obj_names
@@ -183,10 +182,15 @@ def build_import_library():
         return
     lib_name = "python%d%d.lib" % tuple(sys.version_info[:2])    
     lib_file = os.path.join(sys.prefix,'libs',lib_name)
-    if os.path.isfile(lib_file):
-        log.info('Skip building import library "%s"' % (lib_file))
+    out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
+    out_file = os.path.join(sys.prefix,'libs',out_name)
+    if not os.path.isfile(lib_file):
+        log.info('Cannot build import library: "%s" not found' % (lib_file))
         return
-    log.info('Building import library "%s"' % (lib_file))
+    if os.path.isfile(out_file):
+        log.info('Skip building import library: "%s" exists' % (out_file))
+        return
+    log.info('Building import library: "%s"' % (out_file))
 
     from scipy_distutils import lib2def
 
@@ -197,15 +201,14 @@ def build_import_library():
     dlist, flist = lib2def.parse_nm(nm_output)
     lib2def.output_def(dlist, flist, lib2def.DEF_HEADER, open(def_file, 'w'))
     
-    out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
-    out_file = os.path.join(sys.prefix,'libs',out_name)
     dll_name = "python%d%d.dll" % tuple(sys.version_info[:2])
     args = (dll_name,def_file,out_file)
     cmd = 'dlltool --dllname %s --def %s --output-lib %s' % args
-    success = not os.system(cmd)
+    status = os.system(cmd)
     # for now, fail silently
-    if not success:
+    if not status:
         print 'WARNING: failed to build import library for gcc. Linking will fail.'
     #if not success:
     #    msg = "Couldn't find import library, and failed to build it."
     #    raise DistutilsPlatformError, msg
+    return
