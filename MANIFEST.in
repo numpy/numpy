@@ -1,1 +1,5 @@
 include scipy_base/*.inc
+include scipy_distutils/sample_site.cfg
+include scipy_base/setup_scipy_base.py
+include scipy_distutils/setup_scipy_distutils.py
+include scipy_test/setup_scipy_test.py
