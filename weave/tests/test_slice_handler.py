@@ -166,16 +166,17 @@ class test_transform_slices(unittest.TestCase):
         self.generic_test(test,desired)
 
 
-def test_suite():
+def test_suite(level=1):
     suites = []
-    suites.append( unittest.makeSuite(test_slice,'check_') )
-    suites.append( unittest.makeSuite(test_transform_slices,'check_') )
-    suites.append( unittest.makeSuite(test_build_slice_atom,'check_') )
+    if level > 0:
+        suites.append( unittest.makeSuite(test_slice,'check_') )
+        suites.append( unittest.makeSuite(test_transform_slices,'check_') )
+        suites.append( unittest.makeSuite(test_build_slice_atom,'check_') )
     total_suite = unittest.TestSuite(suites)
     return total_suite
 
-def test():
-    all_tests = test_suite()
+def test(level=10):
+    all_tests = test_suite(level)
     runner = unittest.TextTestRunner()
     runner.run(all_tests)
     return runner

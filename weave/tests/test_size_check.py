@@ -443,19 +443,20 @@ class test_expressions(unittest.TestCase):
         a = ones((10,20,1))
         self.generic_wrap(a,expr)
     
-def test_suite():
+def test_suite(level=1):
     suites = []
-    suites.append( unittest.makeSuite(test_make_same_length,'check_') )
-    suites.append( unittest.makeSuite(test_binary_op_size,'check_') )
-    suites.append( unittest.makeSuite(test_dummy_array,'check_') )
-    suites.append( unittest.makeSuite(test_dummy_array_indexing,'check_') )
-    suites.append( unittest.makeSuite(test_reduction,'check_') )
-    suites.append( unittest.makeSuite(test_expressions,'check_') )
+    if level > 0:
+        suites.append( unittest.makeSuite(test_make_same_length,'check_') )
+        suites.append( unittest.makeSuite(test_binary_op_size,'check_') )
+        suites.append( unittest.makeSuite(test_dummy_array,'check_') )
+        suites.append( unittest.makeSuite(test_dummy_array_indexing,'check_') )
+        suites.append( unittest.makeSuite(test_reduction,'check_') )
+        suites.append( unittest.makeSuite(test_expressions,'check_') )
     total_suite = unittest.TestSuite(suites)
     return total_suite
 
-def test():
-    all_tests = test_suite()
+def test(level=10):
+    all_tests = test_suite(level)
     runner = unittest.TextTestRunner()
     runner.run(all_tests)
     return runner

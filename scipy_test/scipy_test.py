@@ -115,7 +115,15 @@ def harvest_modules_and_packages(package,ignore=None):
     all = harvest_modules(package,ignore) + harvest_packages(package,ignore)
     return all
 
-def harvest_test_suites(package,ignore = None):
+def harvest_test_suites(package,ignore = None,level=10):
+    """
+        package -- the module to test.  This is an actual module object 
+                   (not a string)        
+        ignore  -- a list of module names to omit from the tests
+        level   -- a value between 1 and 10.  1 will run the minimum number
+                   of tests.  This is a fast "smoke test".  Tests that take
+                   longer to run should have higher numbers ranging up to 10.
+    """
     import unittest
     suites=[]
     test_modules = harvest_modules_and_packages(package,ignore)
@@ -124,7 +132,7 @@ def harvest_test_suites(package,ignore = None):
     for module in test_modules:
         if hasattr(module,'test_suite'):
             try:
-                suite = module.test_suite()
+                suite = module.test_suite(level=level)
                 if suite:
                     suites.append(suite)    
                 else:
@@ -136,11 +144,17 @@ def harvest_test_suites(package,ignore = None):
                 print '   ',
                 output_exception()            
         else:
-            print 'No test suite found for ', module.__name__
+            try:
+                print 'No test suite found for ', module.__name__
+            except AttributeError:
+                # __version__.py getting replaced by a string throws a kink
+                # in checking for modules, so we think is a module has 
+                # actually been overwritten
+                print 'No test suite found for ', str(module)
     total_suite = unittest.TestSuite(suites)
     return total_suite
 
-def module_test(mod_name,mod_file):
+def module_test(mod_name,mod_file,level=10):
     """*
 
     *"""
@@ -158,19 +172,19 @@ def module_test(mod_name,mod_file):
     # This should deal with package naming issues correctly
     short_mod_name = string.split(mod_name,'.')[-1]
     test_module = 'test_' + short_mod_name
-    test_string = 'import %s;reload(%s);%s.test()' % \
-                  ((test_module,)*3)
+    test_string = 'import %s;reload(%s);%s.test(%d)' % \
+                  ((test_module)*3 + (level,))
 
     # This would be better cause it forces a reload of the orginal
     # module.  It doesn't behave with packages however.
-    #test_string = 'reload(%s);import %s;reload(%s);%s.test()' % \
+    #test_string = 'reload(%s);import %s;reload(%s);%s.test(%d)' % \
     #              ((mod_name,) + (test_module,)*3)
     exec(test_string)
 
     # remove test directory from python path.
     sys.path = sys.path[:-1]
 
-def module_test_suite(mod_name,mod_file):
+def module_test_suite(mod_name,mod_file,level=10):
     #try:
         import os,sys,string
         print ' creating test suite for:', mod_name
@@ -186,7 +200,8 @@ def module_test_suite(mod_name,mod_file):
         # This should deal with package naming issues correctly
         short_mod_name = string.split(mod_name,'.')[-1]
         test_module = 'test_' + short_mod_name
-        test_string = 'import %s;reload(%s);suite = %s.test_suite()' % ((test_module,)*3)
+        test_string = 'import %s;reload(%s);suite = %s.test_suite(%d)' % \
+                      ((test_module,)*3+(level,))
         #print test_string
         exec(test_string)
 

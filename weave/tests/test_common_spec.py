@@ -57,16 +57,17 @@ class test_callable_converter(unittest.TestCase):
         desired = func(search_str,sub_str)        
         assert(desired == actual)
 
-def test_suite():
-    suites = []   
-    suites.append( unittest.makeSuite(test_file_converter,'check_'))
-    suites.append( unittest.makeSuite(test_instance_converter,'check_'))
-    suites.append( unittest.makeSuite(test_callable_converter,'check_'))
+def test_suite(level=1):
+    suites = []
+    if level >= 5:   
+        suites.append( unittest.makeSuite(test_file_converter,'check_'))
+        suites.append( unittest.makeSuite(test_instance_converter,'check_'))
+        suites.append( unittest.makeSuite(test_callable_converter,'check_'))
     total_suite = unittest.TestSuite(suites)
     return total_suite
 
-def test():
-    all_tests = test_suite()
+def test(level=10):
+    all_tests = test_suite(level)
     runner = unittest.TextTestRunner()
     runner.run(all_tests)
     return runner

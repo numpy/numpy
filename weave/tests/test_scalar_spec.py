@@ -299,29 +299,39 @@ def teardown_test_location():
 
 def remove_file(name):
     test_dir = os.path.abspath(name)
-def test_suite():
-    suites = []
-
-    if msvc_exists():
-        suites.append( unittest.makeSuite(test_msvc_int_converter,'check_'))
-        suites.append( unittest.makeSuite(test_msvc_float_converter,'check_'))    
-        suites.append( unittest.makeSuite(test_msvc_complex_converter,'check_'))
-        pass
-    else: # unix
-        suites.append( unittest.makeSuite(test_unix_int_converter,'check_'))
-        suites.append( unittest.makeSuite(test_unix_float_converter,'check_'))    
-        suites.append( unittest.makeSuite(test_unix_complex_converter,'check_'))
     
-    if gcc_exists():        
-        suites.append( unittest.makeSuite(test_gcc_int_converter,'check_'))
-        suites.append( unittest.makeSuite(test_gcc_float_converter,'check_'))    
-        suites.append( unittest.makeSuite(test_gcc_complex_converter,'check_'))
+def test_suite(level=1):
+    suites = []    
+    if level >= 5:
+        if msvc_exists():
+            suites.append( unittest.makeSuite(test_msvc_int_converter,
+                           'check_'))
+            suites.append( unittest.makeSuite(test_msvc_float_converter,
+                           'check_'))    
+            suites.append( unittest.makeSuite(test_msvc_complex_converter,
+                           'check_'))
+            pass
+        else: # unix
+            suites.append( unittest.makeSuite(test_unix_int_converter,
+                           'check_'))
+            suites.append( unittest.makeSuite(test_unix_float_converter,
+                           'check_'))    
+            suites.append( unittest.makeSuite(test_unix_complex_converter,
+                           'check_'))
+        
+        if gcc_exists():        
+            suites.append( unittest.makeSuite(test_gcc_int_converter,
+                           'check_'))
+            suites.append( unittest.makeSuite(test_gcc_float_converter,
+                           'check_'))
+            suites.append( unittest.makeSuite(test_gcc_complex_converter,
+                           'check_'))
 
     total_suite = unittest.TestSuite(suites)
     return total_suite
 
-def test():
-    all_tests = test_suite()
+def test(level=10):
+    all_tests = test_suite(level)
     runner = unittest.TextTestRunner()
     runner.run(all_tests)
     return runner

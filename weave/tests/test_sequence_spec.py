@@ -20,14 +20,15 @@ class test_sequence_converter(unittest.TestCase):
         t = ()
         inline_tools.inline("",['t']) 
         
-def test_suite():
-    suites = []   
-    suites.append( unittest.makeSuite(test_sequence_converter,'check_'))
+def test_suite(level=1):
+    suites = []
+    if level >= 5:
+        suites.append( unittest.makeSuite(test_sequence_converter,'check_'))
     total_suite = unittest.TestSuite(suites)
     return total_suite
 
-def test():
-    all_tests = test_suite()
+def test(level=10):
+    all_tests = test_suite(level)
     runner = unittest.TextTestRunner()
     runner.run(all_tests)
     return runner

@@ -283,11 +283,11 @@ def reduction(ary,axis=0):
 def take(ary,axis=0): raise NotImplemented
 # and all the rest
     
-def test():
+def test(level=10):
     from scipy_test import module_test
-    module_test(__name__,__file__)
+    module_test(__name__,__file__,level=level)
 
-def test_suite():
+def test_suite(level=1):
     from scipy_test import module_test_suite
-    return module_test_suite(__name__,__file__)    
+    return module_test_suite(__name__,__file__,level=level)
     

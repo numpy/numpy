@@ -334,19 +334,21 @@ class test_catalog(unittest.TestCase):
         cleanup_temp_dir(env_dir)
         
     
-def test_suite():
+def test_suite(level=1):
     suites = []
-    suites.append( unittest.makeSuite(test_default_dir,'check_'))
-    suites.append( unittest.makeSuite(test_os_dependent_catalog_name,'check_'))
-    suites.append( unittest.makeSuite(test_catalog_path,'check_'))
-    suites.append( unittest.makeSuite(test_get_catalog,'check_'))
-    suites.append( unittest.makeSuite(test_catalog,'check_'))
+    if level > 0:
+        suites.append( unittest.makeSuite(test_default_dir,'check_'))
+        suites.append( unittest.makeSuite(test_os_dependent_catalog_name,
+                       'check_'))
+        suites.append( unittest.makeSuite(test_catalog_path,'check_'))
+        suites.append( unittest.makeSuite(test_get_catalog,'check_'))
+        suites.append( unittest.makeSuite(test_catalog,'check_'))
 
     total_suite = unittest.TestSuite(suites)
     return total_suite
 
-def test():
-    all_tests = test_suite()
+def test(level=10):
+    all_tests = test_suite(level)
     runner = unittest.TextTestRunner()
     runner.run(all_tests)
     return runner
