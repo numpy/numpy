@@ -45,6 +45,7 @@ def set_package_path(level=1):
     d1 = os.path.join(d,'build','lib.%s-%s'%(get_platform(),sys.version[:3]))
     if not os.path.isdir(d1):
         d1 = os.path.dirname(d)
+    print 'Inserting %r to sys.path' % (d1)
     sys.path.insert(0,d1)
 
 __all__.append('set_local_path')
