@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from os.path import join
 from scipy_distutils.core      import setup
 from scipy_distutils.misc_util import default_config_dict, get_path, \
      merge_config_dicts, get_subpackages
