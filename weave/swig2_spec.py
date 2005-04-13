@@ -264,6 +264,8 @@ class swig2_converter(common_base_converter):
             self.support_code.append(swigptr2.swigptr2_code_v0)
         elif rv == 1:
             self.support_code.append(swigptr2.swigptr2_code_v1)
+        elif rv == 2:
+            self.support_code.append(swigptr2.swigptr2_code_v2)
         else:
             raise AssertionError, "Unsupported version of the SWIG runtime:", rv
 
