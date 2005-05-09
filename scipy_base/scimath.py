@@ -10,7 +10,6 @@ import numerix as _nx
 from numerix import *
 
 from type_check import isreal, asarray
-from function_base import any
 
 __all__.extend([key for key in dir(_nx.fastumath) \
                 if key[0]!='_' and key not in __all__])
@@ -25,7 +24,7 @@ def _fix_real_lt_zero(x):
     x = asarray(x)
     if any(isreal(x) & (x<0)):
         x = _tocomplex(x)
-    return x
+    return asscalar(x)
 
 def _fix_real_abs_gt_1(x):
     x = asarray(x)

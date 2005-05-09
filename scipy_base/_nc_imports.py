@@ -49,14 +49,11 @@ fft = ppimport_attr(ppimport('FFT'), 'fft')
 RandomArray =  ppimport('RandomArray')
 MLab = ppimport('MLab')
 
-NUMERIX_HEADER = "Numeric/arrayobject.h"
-
 #
 # Force numerix to use scipy_base.fastumath instead of numerix.umath.
 #
 import sys as _sys
 _sys.modules['umath'] = fastumath
-
 
 if Numeric.__version__ < '23.5':
     matrixmultiply=dot
@@ -72,10 +69,20 @@ try:
 except ImportError:
     UfuncType = type(Numeric.sin)
 
+NX_VERSION = 'Numeric %s' % Numeric.__version__
+
+
+def asscalar(a):
+    """Returns Python scalar value corresponding to 'a' for rank-0 arrays
+    or the unaltered array for non-rank-0."""
+    if len(a.shape) == 0:
+        return a[0]
+    else:
+        return a
+
 __all__ = []
 for k in globals().keys():
     if k[0] != "_":
         __all__.append(k)
 __all__.append("_insert")
 __all__.append("_unique")
-

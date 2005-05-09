@@ -7,8 +7,7 @@
 
 __all__ = ['MachAr','machar_double','machar_single']
 
-from numerix import array
-from function_base import any
+from numerix import array, any
 
 class MachAr:
     """Diagnosing machine parameters.

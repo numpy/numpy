@@ -2,13 +2,14 @@ import types
 import numerix as _nx
 from numerix import ravel, nonzero, array, choose, ones, zeros, \
      sometrue, alltrue, reshape, alter_numeric, restore_numeric, arraymap, \
-     pi, _insert, multiply, add, arctan2, maximum, minimum
+     pi, _insert, multiply, add, arctan2, maximum, minimum, any, all
 from type_check import ScalarType, isscalar, asarray
 from shape_base import squeeze, atleast_1d
 
-__all__ = ['round','any','all','logspace','linspace','fix','mod',
-           'select','trim_zeros','amax','amin', 'alen', 'ptp','cumsum','take',
-           'copy', 'prod','cumprod','diff','angle','unwrap','sort_complex',
+__all__ = ['round','logspace','linspace','fix','mod',
+           'select','trim_zeros','amax','amin', 'alen',
+           'ptp','cumsum','take', 'copy',
+           'prod','cumprod','diff','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
            'nanargmin','nanmin','sum','vectorize','asarray_chkfinite',
            'alter_numeric', 'restore_numeric','isaltered']
@@ -26,17 +27,6 @@ def asarray_chkfinite(x):
     if not all(_nx.isfinite(x)):
         raise ValueError, "Array must not contain infs or nans."
     return x    
-
-def any(x):
-    """Return true if any elements of x are true:  sometrue(ravel(x))
-    """
-    return sometrue(ravel(x))
-
-
-def all(x):
-    """Return true if all elements of x are true:  alltrue(ravel(x))
-    """
-    return alltrue(ravel(x))
 
 # Need this to change array type for low precision values
 def sum(x,axis=0):  # could change default axis here

@@ -19,13 +19,7 @@ def get_eigval_func():
             import linalg
             eigvals = linalg.eigvals
         except ImportError:
-            try:
-                import LinearAlgebra
-                eigvals = LinearAlgebra.eigenvalues
-            except:
-                raise ImportError, \
-                      "You must have scipy.linalg or LinearAlgebra to "\
-                      "use this function."
+                from numerix import eigenvalues as eigvals
     return eigvals
 
 def poly(seq_of_zeros):

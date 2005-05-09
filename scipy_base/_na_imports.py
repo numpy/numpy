@@ -83,8 +83,6 @@ UnsignedInt32 = UInt32
 
 ArrayType = arraytype
 
-NUMERIX_HEADER = "numarray/arrayobject.h"
-
 class UfuncType(object):
     """numarray ufuncs work differently than Numeric ufuncs and
     have no single UfuncType... TBD"""
@@ -103,8 +101,15 @@ def zeros(shape, typecode='l', savespace=0):
         z = _na.zeros(shape=shape, type=typecode)
     return z
 
+def asscalar(a):
+    """Returns Python scalar value corresponding to 'a' for rank-0 arrays
+    or the unaltered array for non-rank-0."""
+    return a[()]
+
 # _Error.setMode(dividebyzero="ignore", invalid="ignore")
 Error.setMode(all="ignore")
+
+NX_VERSION = 'numarray %s' % _na.__version__
 
 # Must appear after all public definititions
 __all__ = []
@@ -113,5 +118,4 @@ for k in globals().keys():
         __all__.append(k)
 __all__.append("_insert")
 __all__.append("_unique")
-
 

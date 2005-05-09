@@ -30,6 +30,7 @@ if hasattr(sys, 'argv'):        #Once again, Apache mod_python has no argv
         if a in ["--Numeric", "--numeric", "--NUMERIC",
                  "--Numarray", "--numarray", "--NUMARRAY"]:
             which = a[2:], "command line"
+            sys.argv.remove(a)
             break
         del a
 
@@ -54,16 +55,16 @@ if which[0] not in ["numeric", "numarray"]:
 if which[0] == "numarray":
     from _na_imports import *
     import numarray
-    version = 'numarray %s'%numarray.__version__
-
 elif which[0] == "numeric":
     from _nc_imports import *
     import Numeric
-    version = 'Numeric %s'%Numeric.__version__
 else:
     raise RuntimeError("invalid numerix selector")
 
-print 'numerix %s'%version
+# Tweak the environment for f2py/scipy_distutils, e.g. setenv NUMERIC 1
+os.environ[ which[0].upper() ] = "1"  
+
+print 'numerix %s'% NX_VERSION
 
 # ---------------------------------------------------------------
 # Common imports and fixes
@@ -72,7 +73,16 @@ print 'numerix %s'%version
 # a bug fix for blas numeric suggested by Fernando Perez
 matrixmultiply=dot
 
-from function_base import any, all
+def any(x):
+    """Return true if any elements of x are true:  sometrue(ravel(x))
+    """
+    return sometrue(ravel(x))
+
+
+def all(x):
+    """Return true if all elements of x are true:  alltrue(ravel(x))
+    """
+    return alltrue(ravel(x))
 
 def _import_fail_message(module, version):
     """Prints a message when the array package specific version of an extension
