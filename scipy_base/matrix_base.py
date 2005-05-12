@@ -121,17 +121,17 @@ def bmat(obj,gdict=None,ldict=None):
             glob_dict = gdict
             loc_dict = ldict
         
-        return Matrix.Matrix(_from_string(obj, glob_dict, loc_dict))
+        return Matrix(_from_string(obj, glob_dict, loc_dict))
     
     if isinstance(obj, (types.TupleType, types.ListType)):
         # [[A,B],[C,D]]
         arr_rows = []
         for row in obj:
             if isinstance(row, ArrayType):  # not 2-d
-                return Matrix.Matrix(concatenate(obj,axis=-1))
+                return Matrix(concatenate(obj,axis=-1))
             else:
                 arr_rows.append(concatenate(row,axis=-1))
-        return Matrix.Matrix(concatenate(arr_rows,axis=0))
+        return Matrix(concatenate(arr_rows,axis=0))
     if isinstance(obj, ArrayType):
-        return Matrix.Matrix(obj)
+        return Matrix(obj)
 
