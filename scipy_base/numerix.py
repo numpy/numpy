@@ -52,6 +52,9 @@ if which[0] not in ["numeric", "numarray"]:
     verbose.report_error(__doc__)
     raise ValueError("numerix selector must be either 'Numeric' or 'numarray' but the value obtained from the %s was '%s'." % (which[1], which[0]))
 
+# Tweak the environment for f2py/scipy_distutils, e.g. setenv NUMERIC 1
+os.environ[ which[0].upper() ] = "1"  
+
 if which[0] == "numarray":
     from _na_imports import *
     import numarray
@@ -60,9 +63,6 @@ elif which[0] == "numeric":
     import Numeric
 else:
     raise RuntimeError("invalid numerix selector")
-
-# Tweak the environment for f2py/scipy_distutils, e.g. setenv NUMERIC 1
-os.environ[ which[0].upper() ] = "1"  
 
 print 'numerix %s'% NX_VERSION
 
