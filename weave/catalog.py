@@ -101,7 +101,7 @@ def unique_file(d,expr):
     files = os.listdir(d)
     #base = 'scipy_compile'
     base = expr_to_filename(expr)
-    for i in range(1000000):
+    for i in xrange(1000000):
         fname = base + `i`
         if not (fname+'.cpp' in files or
                 fname+'.o' in files or
@@ -155,6 +155,13 @@ def default_dir():
         to try and keep people from being able to sneak a bad module
         in on you.        
     """
+
+    # Use a cached value for fast return if possible
+    try:
+        return default_dir.cached_path
+    except AttributeError:
+        pass
+    
     python_name = "python%d%d_compiled" % tuple(sys.version_info[:2])    
     if sys.platform != 'win32':
         try:
@@ -176,6 +183,11 @@ def default_dir():
     if not is_writable(path):
         print 'warning: default directory is not write accessible.'
         print 'default:', path
+
+    # Cache the default dir path so that this function returns quickly after
+    # being called once (nothing in it should change after the first call)
+    default_dir.cached_path = path
+
     return path
 
 def intermediate_dir():
@@ -312,6 +324,9 @@ class catalog:
         self.cache = {}
         self.module_dir = None
         self.paths_added = 0
+        # unconditionally append the default dir for auto-generated compiled
+        # extension modules, so that pickle.load()s don't fail.
+        sys.path.append(default_dir())
         
     def set_module_directory(self,module_dir):
         """ Set the path that will replace 'MODULE' in catalog searches.
@@ -389,8 +404,10 @@ class catalog:
         # convention across platforms for its files 
         existing_files = []
         for file in files:
-            if get_catalog(os.path.dirname(file),'r') is not None:
+            cat = get_catalog(os.path.dirname(file),'r')
+            if cat is not None:
                 existing_files.append(file)
+                cat.close()
         # This is the non-portable (and much faster) old code
         #existing_files = filter(os.path.exists,files)
         return existing_files
@@ -492,12 +509,15 @@ class catalog:
                 self.configure_path(cat,code)
                 try:                    
                     function_list += cat[code]
-                except: #SystemError and ImportError so far seen                        
+                except: #SystemError and ImportError so far seen
                     # problems loading a function from the catalog.  Try to
                     # repair the cause.
                     cat.close()
                     self.repair_catalog(path,code)
-                self.unconfigure_path()             
+                self.unconfigure_path()
+            if cat is not None:
+                # ensure that the catalog is properly closed
+                cat.close()
         return function_list
 
 
@@ -521,17 +541,21 @@ class catalog:
         except:
             print 'warning: unable to repair catalog entry\n %s\n in\n %s' % \
                   (code,catalog_path)
+            # shelve doesn't guarantee flushing, so it's safest to explicitly
+            # close the catalog
+            writable_cat.close()
             return          
         if writable_cat.has_key(code):
             print 'repairing catalog by removing key'
             del writable_cat[code]
         
-        # it is possible that the path key doesn't exist (if the function registered
-        # was a built-in function), so we have to check if the path exists before
-        # arbitrarily deleting it.
+        # it is possible that the path key doesn't exist (if the function
+        # registered was a built-in function), so we have to check if the path
+        # exists before arbitrarily deleting it.
         path_key = self.path_key(code)       
         if writable_cat.has_key(path_key):
-            del writable_cat[path_key]   
+            del writable_cat[path_key]
+        writable_cat.close()
             
     def get_functions_fast(self,code):
         """ Return list of functions for code from the cache.
