@@ -1,5 +1,5 @@
-#include <math.h>
 #include "Python.h"
+#include <math.h>
 #include "Numeric/arrayobject.h"
 #include "Numeric/ufuncobject.h"
 #include "abstract.h"
