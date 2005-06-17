@@ -11,7 +11,6 @@ import common_info
 
 function_catalog = catalog.catalog()
 
-
 class inline_ext_function(ext_tools.ext_function):
     # Some specialization is needed for inline extension functions
     def function_declaration_code(self):
@@ -432,7 +431,11 @@ def compile_function(code,arg_names,local_dict,global_dict,
     # add the extra headers needed by the function to the module.
     for header in headers:
         mod.customize.add_header(header)
-        
+
+    # it's nice to let the users know when anything gets compiled, as the
+    # slowdown is very noticeable.
+    print '<weave: compiling>'
+    
     # compile code in correct location, with the given compiler and verbosity
     # setting.  All input keywords are passed through to distutils
     mod.compile(location=storage_dir,compiler=compiler,
@@ -447,4 +450,3 @@ def compile_function(code,arg_names,local_dict,global_dict,
     finally:
         del sys.path[0]
     return func
-
