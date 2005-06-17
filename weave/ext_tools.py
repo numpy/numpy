@@ -214,14 +214,27 @@ class ext_module:
         for i in info:
             i.set_compiler(self.compiler)
         return info
-        
+
     def get_headers(self):
         all_headers = self.build_information().headers()
 
-        # blitz/array.h always needs to be first so we hack that here...
+        # blitz/array.h always needs to go before most other headers, so we
+        # hack that here, but we need to ensure that Python.h is the very
+        # first header included.  As indicated in
+
+        # http://docs.python.org/api/includes.html
+
+        # "Warning:  Since Python may define some pre-processor definitions which
+        # affect the standard headers on some systems, you must include Python.h
+        # before any standard headers are included. "
+
+        # Since blitz/array.h pulls in system headers, we must massage this
+        # list a bit so that the order is Python.h, blitz/array.h, ...
+
         if '"blitz/array.h"' in all_headers:
             all_headers.remove('"blitz/array.h"')
-            all_headers.insert(0,'"blitz/array.h"')
+            # Insert blitz AFTER Python.h, which must remain the first header
+            all_headers.insert(1,'"blitz/array.h"')
         return all_headers
 
     def warning_code(self):
