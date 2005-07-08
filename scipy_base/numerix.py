@@ -64,7 +64,7 @@ elif which[0] == "numeric":
 else:
     raise RuntimeError("invalid numerix selector")
 
-print 'numerix %s'% NX_VERSION
+#print 'numerix %s'% NX_VERSION
 
 # ---------------------------------------------------------------
 # Common imports and fixes
