@@ -9,7 +9,7 @@ from shape_base import squeeze, atleast_1d
 __all__ = ['round','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin', 'alen',
            'ptp','cumsum','take', 'copy',
-           'prod','cumprod','diff','angle','unwrap','sort_complex',
+           'prod','cumprod','diff','gradient','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
            'nanargmin','nanmin','sum','vectorize','asarray_chkfinite',
            'alter_numeric', 'restore_numeric','isaltered']
@@ -211,6 +211,81 @@ def cumprod(m,axis=-1):
     """Returns the cumulative product of the elments along the given axis
     """
     return _no_axis_is_all(multiply.accumulate, m, axis)
+
+def gradient(f,*varargs):
+    """Calculate the gradient of an N-dimensional scalar function.
+
+    Uses central differences on the interior and first differences on boundaries
+    to give the same shape.
+
+    Inputs:
+
+      f -- An N-dimensional array giving samples of a scalar function
+
+      varargs -- 0, 1, or N scalars giving the sample distances in each direction
+
+    Outputs:
+
+      N arrays of the same shape as f giving the derivative of f with respect
+       to each dimension.
+    """
+    N = len(f.shape)  # number of dimensions
+    n = len(varargs)
+    if n==0:
+        dx = [1.0]*N
+    elif n==1:
+        dx = [varargs[0]]*N
+    elif n==N:
+        dx = list(varargs)
+    else:
+        raise SyntaxError, "Invalid number of arguments"
+
+    # use central differences on interior and first differences on endpoints
+
+    print dx
+    outvals = []
+
+    # create slice objects --- initially all are [:,:,...,:]
+    slice1 = [slice(None)]*N
+    slice2 = [slice(None)]*N
+    slice3 = [slice(None)]*N
+
+    otype = f.typecode()
+    if otype not in ['f','d','F','D']:
+        otype = 'd'
+
+    for axis in range(N):
+        # select out appropriate parts for this dimension
+        out = zeros(f.shape, f.typecode())
+        slice1[axis] = slice(1,-1)
+        slice2[axis] = slice(2,None)
+        slice3[axis] = slice(None,-2)
+        # 1d equivalent -- out[1:-1] = (f[2:] - f[:-2])/2.0
+        out[slice1] = (f[slice2] - f[slice3])/2.0   
+        slice1[axis] = 0
+        slice2[axis] = 1
+        slice3[axis] = 0
+        # 1d equivalent -- out[0] = (f[1] - f[0])
+        out[slice1] = (f[slice2] - f[slice3])
+        slice1[axis] = -1
+        slice2[axis] = -1
+        slice3[axis] = -2
+        # 1d equivalent -- out[-1] = (f[-1] - f[-2])
+        out[slice1] = (f[slice2] - f[slice3])
+        
+        # divide by step size
+        outvals.append(out / dx[axis])
+        
+        # reset the slice object in this dimension to ":"
+        slice1[axis] = slice(None)
+        slice2[axis] = slice(None)
+        slice3[axis] = slice(None)
+
+    if N == 1:
+        return outvals[0]
+    else:
+        return outvals
+    
 
 def diff(x, n=1,axis=-1):
     """Calculates the nth order, discrete difference along given axis.
