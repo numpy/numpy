@@ -5,12 +5,12 @@
     such as include files, libraries, and even code snippets.
        
     array_info -- for building functions that use Python
-                  Numeric arrays.
+                  numerix arrays.
 """
 
 import base_info
 import standard_array_spec
-from Numeric import *
+from scipy_base.numerix import *
 from types import *
 import os
 
@@ -84,7 +84,8 @@ class array_info(base_info.custom_info):
 class array_converter(standard_array_spec.array_converter):
     def init_info(self):
         standard_array_spec.array_converter.init_info(self)
-        blitz_headers = ['"blitz/array.h"','"Numeric/arrayobject.h"',
+        blitz_headers = ['"blitz/array.h"',
+                         '"%s/arrayobject.h"' % nx.NX_ARRAYPKG,
                           '<complex>','<math.h>']
         self.headers.extend(blitz_headers)
         self.include_dirs = [blitz_dir]

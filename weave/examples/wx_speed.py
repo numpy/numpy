@@ -21,7 +21,7 @@
 """
 import weave
 from RandomArray import *
-from Numeric import *
+from scipy_base.numerix import *
 from wxPython.wx import *
 
 """
@@ -85,7 +85,7 @@ def polyline(dc,line,xoffset=0,yoffset=0):
 
 #-----------------------------------------------------------------------------
 # Define a new version of DrawLines that calls the optimized
-# version for Numeric arrays when appropriate.
+# version for scipy_base.numerix arrays when appropriate.
 #-----------------------------------------------------------------------------
 def NewDrawLines(dc,line):
     """

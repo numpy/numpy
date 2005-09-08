@@ -10,13 +10,7 @@ import converters
 
 from ast_tools import *
 
-from Numeric import *
-# The following try/except so that non-SciPy users can still use blitz
-try:
-    from scipy_base.fastumath import *
-except:
-    pass # scipy_base.fastumath not available    
-    
+from scipy_base.numerix import *
 from types import *
 
 import inline_tools

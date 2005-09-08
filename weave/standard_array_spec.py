@@ -1,6 +1,6 @@
 from c_spec import common_base_converter
 from c_spec import num_to_c_types
-from Numeric import *
+from scipy_base.numerix import *
 from types import *
 import os
 
@@ -117,8 +117,8 @@ numeric_init_code = \
 """
 Py_Initialize();
 import_array();
-PyImport_ImportModule("Numeric");
-"""
+PyImport_ImportModule("%s");
+""" % NX_ARRAYPKG
     
 class array_converter(common_base_converter):
 
@@ -130,7 +130,8 @@ class array_converter(common_base_converter):
         self.return_type = 'PyArrayObject*'
         self.to_c_return = '(PyArrayObject*) py_obj'
         self.matching_types = [ArrayType]
-        self.headers = ['"Numeric/arrayobject.h"','<complex>','<math.h>']
+        self.headers = ['"%s/arrayobject.h"' % NX_ARRAYPKG,
+                        '<complex>','<math.h>']
         self.support_code = [size_check_code, type_check_code]
         self.module_init_code = [numeric_init_code]    
                

@@ -21,7 +21,7 @@ default = [c_spec.int_converter(),
           #common_spec.module_converter()]
 
 #----------------------------------------------------------------------------
-# If Numeric is installed, add numeric array converters to the default
+# If numerix is installed, add numeric array converters to the default
 # converter list.
 #----------------------------------------------------------------------------
 try: 
@@ -67,8 +67,8 @@ standard_info += [x.generate_build_info() for x in default]
 #----------------------------------------------------------------------------
 # Blitz conversion classes
 #
-# same as default, but will convert Numeric arrays to blitz C++ classes 
-# !! only available if Numeric is installed !!
+# same as default, but will convert numerix arrays to blitz C++ classes 
+# !! only available if numerix is installed !!
 #----------------------------------------------------------------------------
 try:
     import blitz_spec

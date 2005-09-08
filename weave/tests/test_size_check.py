@@ -1,16 +1,12 @@
 import unittest, os
-from Numeric import *
-# The following try/except so that non-SciPy users can still use blitz
-try:
-    from scipy_base.fastumath import *
-except:
-    pass # scipy_base.fastumath not available    
-
+from scipy_base.numerix import *
 from scipy_test.testing import *
 set_package_path()
 from weave import size_check
 from weave.ast_tools import *
 restore_path()
+
+import scipy_base.numerix as nx
 
 empty = array(())
  
@@ -19,10 +15,10 @@ def array_assert_equal(test_string,actual,desired):
     """
     import pprint        
     try:
-        assert(alltrue(equal(actual,desired)))
+        assert(all(equal(actual,desired)))
     except AssertionError:
         try:
-            # kluge for bug in Numeric
+            # kluge for bug in scipy_base.numerix
             assert (len(actual[0]) == len(actual[1]) == 
                     len(desired[0]) == len(desired[1]) == 0)
         except:    
@@ -168,7 +164,7 @@ class test_dummy_array_indexing(unittest.TestCase):
         """
         import pprint        
         try:
-            assert(alltrue(equal(actual,desired)))            
+            assert(all(equal(actual,desired)))            
         except AssertionError:
             import cStringIO
             msg = cStringIO.StringIO()
@@ -226,15 +222,17 @@ class test_dummy_array_indexing(unittest.TestCase):
     def check_1d_2(self):            
         self.generic_1d('a[-1:]')
     def check_1d_3(self):
-        # dummy_array is "bug for bug" equiv to Numeric.array
+        # dummy_array is "bug for bug" equiv to scipy_base.numerix.array
         # on wrapping of indices.
-        self.generic_1d('a[-11:]')
+        if nx.which[0] != "numarray":
+            self.generic_1d('a[-11:]')
     def check_1d_4(self):            
         self.generic_1d('a[:1]')
     def check_1d_5(self):            
         self.generic_1d('a[:-1]')
-    def check_1d_6(self):            
-        self.generic_1d('a[:-11]')
+    def check_1d_6(self):
+        if nx.which[0] != "numarray":
+            self.generic_1d('a[:-11]')
     def check_1d_7(self):            
         self.generic_1d('a[1:5]')
     def check_1d_8(self):            
@@ -366,7 +364,7 @@ class test_expressions(unittest.TestCase):
         """
         import pprint        
         try:
-            assert(alltrue(equal(actual,desired)))            
+            assert(all(equal(actual,desired)))            
         except AssertionError:
             import cStringIO
             msg = cStringIO.StringIO()

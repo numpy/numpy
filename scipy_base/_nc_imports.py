@@ -70,7 +70,8 @@ except ImportError:
     UfuncType = type(Numeric.sin)
 
 NX_VERSION = 'Numeric %s' % Numeric.__version__
-
+NX_INCLUDE = '"Numeric/arrayobject.h"'
+NX_ARRAYPKG = "Numeric"
 
 def asscalar(a):
     """Returns Python scalar value corresponding to 'a' for rank-0 arrays
@@ -86,3 +87,5 @@ for k in globals().keys():
         __all__.append(k)
 __all__.append("_insert")
 __all__.append("_unique")
+
+

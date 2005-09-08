@@ -1,11 +1,7 @@
 import unittest
-from Numeric import *
+from scipy_base.numerix import *
 # The following try/except so that non-SciPy users can still use blitz
-try:
-    from scipy_base.fastumath import *
-except:
-    pass # scipy_base.fastumath not available    
-import RandomArray
+from scipy_base.numerix import RandomArray
 import os
 import time
 
@@ -16,6 +12,8 @@ restore_path()
 set_local_path()
 from weave_test_utils import *
 restore_path()
+
+from weave.ast_tools import harvest_variables
 
 class test_ast_to_blitz_expr(unittest.TestCase):
 
@@ -123,7 +121,7 @@ class test_blitz(unittest.TestCase):
                 speed_up = standard/compiled
             except:
                 speed_up = -1.
-            print "1st run(Numeric,compiled,speed up):  %3.4f, %3.4f, " \
+            print "1st run(scipy_base.numerix,compiled,speed up):  %3.4f, %3.4f, " \
                   "%3.4f" % (standard,compiled,speed_up)    
             standard,compiled = self.generic_test(expr,arg_dict,type,size,
                                                   mod_location)
@@ -131,7 +129,7 @@ class test_blitz(unittest.TestCase):
                 speed_up = standard/compiled
             except:
                 speed_up = -1.                    
-            print "2nd run(Numeric,compiled,speed up):  %3.4f, %3.4f, " \
+            print "2nd run(scipy_base.numerix,compiled,speed up):  %3.4f, %3.4f, " \
                   "%3.4f" % (standard,compiled,speed_up)
         cleanup_temp_dir(mod_location)                      
     #def check_simple_2d(self):

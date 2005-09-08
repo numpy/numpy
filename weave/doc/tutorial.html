@@ -187,13 +187,12 @@ scipy import weave</code> and the examples will work identically.</em>
          <p>
     </li>
 
-    <li> Numeric (optional)
+    <li> Numeric or numarray (optional)
          <p>
-         The python Numeric module from <a 
-         href="http://www.pfdubois.com/numpy/">here</a>. is required for 
-         <code>blitz()</code> to work. Be sure and get NumPy, not NumArray
-         which is the "next generation" implementation.  This is <em>not</em>
-         required for using <code>inline()</code> or <code>ext_tools</code>.
+         The python Numeric module from <a
+         href="http://numeric.scipy.org/">here</a>. is required for
+         <code>blitz()</code> to work. Weave now also works with the
+         second generation array package numarray.
          <p>
     </li>
     <li> scipy_distutils and scipy_test (packaged with <code>weave</code>)
@@ -2195,14 +2194,15 @@ work with just any compiler. Particularly MSVC++ isn't up to snuff.  A number
 of other compilers such as KAI++ will also work, but my suspicions are that gcc 
 will get the most use.
 
-<a name="blitz_limitations"></a>
-<h2>Limitations</h2>
-<ol>
-<li>
-Currently, <code>weave.blitz</code> handles all standard mathematic 
-operators except for the ** power operator.  The built-in trigonmetric, log, 
-floor/ceil, and fabs functions might work (but haven't been tested). It also 
-handles all types of array indexing supported by the Numeric module.  
+<a name="blitz_limitations"></a> <h2>Limitations</h2> <ol> <li>
+Currently, <code>weave.blitz</code> handles all standard mathematic
+operators except for the ** power operator.  The built-in
+trigonmetric, log, floor/ceil, and fabs functions might work (but
+haven't been tested). It also handles all types of array indexing
+supported by the Numeric module.  numarray's Numeric compatible array
+indexing modes are likewise supported, but numarray's enhanced
+(array based) indexing modes are not supported.
+
 <p>
 <code>weave.blitz</code> does not currently support operations that use 
 array broadcasting, nor have any of the special purpose functions in Numeric 

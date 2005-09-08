@@ -7,7 +7,7 @@ from weave import ext_tools, c_spec
 try:
     from weave.standard_array_spec import array_converter
 except ImportError:
-    pass # requires Numeric    
+    pass # requires scipy_base.numerix    
 restore_path()
 
 set_local_path()
@@ -110,9 +110,9 @@ class test_ext_function(unittest.TestCase):
 class test_assign_variable_types(unittest.TestCase):            
     def check_assign_variable_types(self):
         try:
-            from Numeric import arange, Float32, Float64
+            from scipy_base.numerix import arange, Float32, Float64
         except:
-            # skip this test if Numeric not installed
+            # skip this test if scipy_base.numerix not installed
             return
             
         import types

@@ -1,5 +1,5 @@
 import unittest
-from Numeric import *
+from scipy_base.numerix import *
 
 from scipy_test.testing import *
 set_package_path()

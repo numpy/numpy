@@ -93,7 +93,7 @@ def c_int_search_scxx(seq,t,chk=1):
     return inline_tools.inline(code,['seq','t'],verbose = 2)
 
 try:
-    from Numeric import *
+    from scipy_base.numerix import *
     def c_array_int_search(seq,t):
         code = """     
                #line 62 "binary_search.py"
@@ -209,7 +209,7 @@ def search_compare(a,n):
             c_array_int_search(a,i)
         t2 = time.time()
         sp = (t2-t1)+1e-20 # protect against div by zero
-        print ' speed in c(Numeric arrays):',sp    
+        print ' speed in c(scipy_base.numerix arrays):',sp    
         print ' speed up: %3.2f' % (py/sp)
     except:
         pass

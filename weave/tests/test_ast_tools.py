@@ -1,11 +1,7 @@
 import unittest
-from Numeric import *
+from scipy_base.numerix import *
 # The following try/except so that non-SciPy users can still use blitz
-try:
-    from scipy_base.fastumath import *
-except:
-    pass # scipy_base.fastumath not available    
-import RandomArray
+from scipy_base.numeric import RandomArray
 import time
 
 from scipy_test.testing import *

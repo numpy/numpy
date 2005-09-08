@@ -17,7 +17,7 @@
 
 import time
 import weave
-from Numeric import *
+from scipy_base.numerix import *
 
 def Ramp(result, size, start, end):
     step = (end-start)/(size-1)

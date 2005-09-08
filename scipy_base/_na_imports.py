@@ -110,6 +110,8 @@ def asscalar(a):
 Error.setMode(all="ignore")
 
 NX_VERSION = 'numarray %s' % _na.__version__
+NX_INCLUDE = '"numarray/arrayobject.h"'
+NX_ARRAYPKG = "numarray"
 
 # Must appear after all public definititions
 __all__ = []

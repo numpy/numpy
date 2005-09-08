@@ -109,7 +109,7 @@ Integer = Integer()
 Double = Double()
 String = String()
 
-import Numeric
+import scipy_base.numerix as nx
 
 class Vector(Type_Descriptor):
     cxxtype = 'PyArrayObject*'
@@ -121,7 +121,7 @@ class Vector(Type_Descriptor):
     owned = 0 # Convertion is by casting!
 
     prerequisites = Type_Descriptor.prerequisites+\
-                   ['#include "Numeric/arrayobject.h"']
+                   [nx.NX_INCLUDE]
     dims = 1
     def check(self,s):
         return "PyArray_Check(%s) && ((PyArrayObject*)%s)->nd == %d &&  ((PyArrayObject*)%s)->descr->type_num == %s"%(
@@ -214,12 +214,12 @@ typedefs = {
     IntType: Integer,
     FloatType: Double,
     StringType: String,
-    (Numeric.ArrayType,1,'i'): IntegerVector,
-    (Numeric.ArrayType,2,'i'): Integermatrix,
-    (Numeric.ArrayType,1,'l'): LongVector,
-    (Numeric.ArrayType,2,'l'): Longmatrix,
-    (Numeric.ArrayType,1,'d'): DoubleVector,
-    (Numeric.ArrayType,2,'d'): Doublematrix,
+    (nx.ArrayType,1,'i'): IntegerVector,
+    (nx.ArrayType,2,'i'): Integermatrix,
+    (nx.ArrayType,1,'l'): LongVector,
+    (nx.ArrayType,2,'l'): Longmatrix,
+    (nx.ArrayType,1,'d'): DoubleVector,
+    (nx.ArrayType,2,'d'): Doublematrix,
     XRangeType : XRange,
     }
 
@@ -260,8 +260,8 @@ def lookup_type(x):
     try:
         return typedefs[T]
     except:
-        import Numeric
-        if isinstance(T,Numeric.ArrayType):
+        import scipy_base.numerix as nx
+        if isinstance(T,nx.ArrayType):
             return typedefs[(T,len(x.shape),x.typecode())]
         elif T == InstanceType:
             return Instance(x)
