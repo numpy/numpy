@@ -4,9 +4,9 @@ import sys
 
 def setup_package():
 
-    from distutils.core import setup
-    from distutils.misc_util import Configuration
-    from base.core_version import version
+    from scipy.distutils.core import setup
+    from scipy.distutils.misc_util import Configuration
+    from scipy.core_version import version
 
     old_path = os.getcwd()
     local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
