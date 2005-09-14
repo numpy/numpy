@@ -1,5 +1,5 @@
-import numerix as _nx
-from numerix import *
+import scipy.base as _nx
+from numeric import *
 
 from type_check import isscalar, asarray
 
@@ -37,7 +37,7 @@ def apply_along_axis(func1d,axis,arr,*args):
     res = func1d(arr[tuple(i)],*args)
     #  if res is a number, then we have a smaller output array
     if isscalar(res):
-        outarr = zeros(outshape,asarray(res).typecode())
+        outarr = zeros(outshape,asarray(res).dtypechar)
         outarr[ind] = res
         Ntot = product(outshape)
         k = 1
@@ -59,7 +59,7 @@ def apply_along_axis(func1d,axis,arr,*args):
         holdshape = outshape
         outshape = list(shape(arr))
         outshape[axis] = len(res)
-        outarr = zeros(outshape,asarray(res).typecode())
+        outarr = zeros(outshape,asarray(res).dtypechar)
         outarr[tuple(i)] = res
         k = 1
         while k < Ntot:

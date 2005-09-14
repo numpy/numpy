@@ -1,10 +1,13 @@
 import types
-import numerix as _nx
-from numerix import ravel, nonzero, array, choose, ones, zeros, \
-     sometrue, alltrue, reshape, alter_numeric, restore_numeric, arraymap, \
-     pi, _insert, multiply, add, arctan2, maximum, minimum, any, all
-from type_check import ScalarType, isscalar, asarray
+import numeric as _nx
+from numeric import ones, zeros, arange, concatenate
+from umath import pi, multiply, add, arctan2, maximum, minimum
+from oldnumeric import ravel, nonzero, array, choose, \
+     sometrue, alltrue, reshape, any, all 
+from type_check import ScalarType, isscalar
 from shape_base import squeeze, atleast_1d
+from _compiled_base import digitize, bincount, _insert
+from index_tricks import r_
 
 __all__ = ['round','logspace','linspace','fix','mod',
            'select','trim_zeros','amax','amin', 'alen',
@@ -12,29 +15,7 @@ __all__ = ['round','logspace','linspace','fix','mod',
            'prod','cumprod','diff','gradient','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
            'nanargmin','nanmin','sum','vectorize','asarray_chkfinite',
-           'alter_numeric', 'restore_numeric','isaltered']
-
-def isaltered():
-    val = str(type(_nx.array([1])))
-    return 'scipy' in val
-
-round = _nx.around
-
-def asarray_chkfinite(x):
-    """Like asarray except it checks to be sure no NaNs or Infs are present.
-    """
-    x = asarray(x)
-    if not all(_nx.isfinite(x)):
-        raise ValueError, "Array must not contain infs or nans."
-    return x    
-
-# Need this to change array type for low precision values
-def sum(x,axis=0):  # could change default axis here
-    x = asarray(x)
-    if x.typecode() in ['1','s','b','w']:
-        x = x.astype('l')
-    return _nx.sum(x,axis)
-    
+           'average','histogram','bincount','digitize']
 
 def logspace(start,stop,num=50,endpoint=1):
     """ Evenly spaced samples on a logarithmic scale.
@@ -68,6 +49,109 @@ def linspace(start,stop,num=50,endpoint=1,retstep=0):
         return y, step
     else:
         return y
+
+def histogram(x, bins=10, range=None, normed=0):
+    x = asarray(x).ravel()
+    if not iterable(bins):
+        if range is None:
+            range = (x.min(), x.max())
+        mn, mx = [x+0.0 for x in range]
+        if mn == mx:
+            mn -= 0.5
+            mx += 0.5
+        bins = linspace(mn, mx, bins)
+
+    n = x.sort().searchsorted(bins)
+    n = concatenate([n, [len(x)]])
+    n = n[1:]-n[:-1]
+
+    if normed:
+        db = bins[1] - bins[0]
+        return 1.0/(x.size*db) * n, bins
+    else:
+        return n, bins
+
+def average (a, axis=0, weights=None, returned=0):
+    """average(a, axis=0, weights=None)
+       Computes average along indicated axis. 
+       If axis is None, average over the entire array.
+       Inputs can be integer or floating types; result is type Float.
+   
+       If weights are given, result is:
+           sum(a*weights)/(sum(weights))
+       weights must have a's shape or be the 1-d with length the size
+       of a in the given axis. Integer weights are converted to Float.
+
+       Not supplying weights is equivalent to supply weights that are
+       all 1.
+
+       If returned, return a tuple: the result and the sum of the weights 
+       or count of values. The shape of these two results will be the same.
+
+       raises ZeroDivisionError if appropriate when result is scalar.
+       (The version in MA does not -- it returns masked values).
+    """
+    if axis is None:
+        a = array(a).ravel()
+        if weights is None:
+            n = add.reduce(a)
+            d = len(a) * 1.0
+        else:
+            w = array(weights).ravel() * 1.0
+            n = add.reduce(a*w)
+            d = add.reduce(w) 
+    else:
+        a = array(a)
+        ash = a.shape
+        if ash == ():
+            a.shape = (1,)
+        if weights is None:
+            n = add.reduce(a, axis) 
+            d = ash[axis] * 1.0
+            if returned:
+                d = ones(shape(n)) * d
+        else:
+            w = array(weights, copy=0) * 1.0
+            wsh = w.shape
+            if wsh == ():
+                wsh = (1,)
+            if wsh == ash:
+                n = add.reduce(a*w, axis)
+                d = add.reduce(w, axis) 
+            elif wsh == (ash[axis],):
+                ni = ash[axis]
+                r = [newaxis]*ni
+                r[axis] = slice(None,None,1)
+                w1 = eval("w["+repr(tuple(r))+"]*ones(ash, Float)")
+                n = add.reduce(a*w1, axis)
+                d = add.reduce(w1, axis)
+            else:
+                raise ValueError, 'average: weights wrong shape.'
+            
+    if not isinstance(d, ArrayType):
+        if d == 0.0: 
+            raise ZeroDivisionError, 'Numeric.average, zero denominator'
+    if returned:
+        return n/d, d
+    else:
+        return n/d
+
+
+def isaltered():
+    val = str(type(_nx.array([1])))
+    return 'scipy' in val
+
+round = _nx.around
+
+def asarray_chkfinite(x):
+    """Like asarray except it checks to be sure no NaNs or Infs are present.
+    """
+    x = asarray(x)
+    if not all(_nx.isfinite(x)):
+        raise ValueError, "Array must not contain infs or nans."
+    return x    
+
+
 
 def fix(x):
     """ Round x to nearest integer towards zero.
@@ -250,13 +334,13 @@ def gradient(f,*varargs):
     slice2 = [slice(None)]*N
     slice3 = [slice(None)]*N
 
-    otype = f.typecode()
+    otype = f.dtypechar
     if otype not in ['f','d','F','D']:
         otype = 'd'
 
     for axis in range(N):
         # select out appropriate parts for this dimension
-        out = zeros(f.shape, f.typecode())
+        out = zeros(f.shape, f.dtypechar)
         slice1[axis] = slice(1,-1)
         slice2[axis] = slice(2,None)
         slice3[axis] = slice(None,-2)
@@ -312,7 +396,7 @@ def angle(z,deg=0):
     else:
         fact = 1.0
     z = asarray(z)
-    if z.typecode() in ['D','F']:
+    if z.dtypechar in ['D','F']:
        zimag = z.imag
        zreal = z.real
     else:
@@ -340,7 +424,7 @@ def unwrap(p,discont=pi,axis=-1):
 def sort_complex(a):
     """ Doesn't currently work for integer arrays -- only float or complex.
     """
-    a = asarray(a,typecode=a.typecode().upper())
+    a = asarray(a,typecode=a.dtypechar.upper())
     def complex_cmp(x,y):
         res = cmp(x.real,y.real)
         if res == 0:
@@ -365,7 +449,7 @@ def trim_zeros(filt,trim='fb'):
             if i != 0.: break
             else: first = first + 1
     last = len(filt)
-    if 'b' in trim or 'B' in trim:
+    if 'B' in trim or 'B' in trim:
         for i in filt[::-1]:
             if i != 0.: break
             else: last = last - 1
@@ -519,7 +603,7 @@ class vectorize:
         newargs = []
         args = atleast_1d(args)
         for arg in args:
-            if arg.typecode() != 'O':
+            if arg.dtypechar != 'O':
                 newargs.append(0.9)
             else:
                 newargs.append(arg[0])
