@@ -152,7 +152,7 @@ def configuration(parent_package='',top_path=None):
                          )
     config.add_include_dirs(appendpath('build/src',config.local_path))
     config.add_extension('_compiled_base',
-                         sources=['_compiled_base.c'],
+                         sources=[join('src','_compiled_base.c')],
                          )
                          
 
