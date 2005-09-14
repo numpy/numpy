@@ -115,6 +115,10 @@ objectapi_list = [
 
     (r"""
     """,
+     'EnsureArray', 'PyObject *', 'PyObject *'),
+
+    (r"""
+    """,
      'FromFile', 'FILE *, PyArray_Typecode *, intp, char *','PyObject *'),
 
     (r"""

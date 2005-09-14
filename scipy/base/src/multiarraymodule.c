@@ -137,7 +137,7 @@ PyArray_Ravel(PyArrayObject *a)
 
         if (a->nd == 1) {
                 Py_INCREF(a);
-                return a;
+                return (PyObject *)a;
         }
 	newdim.ptr = val;
 	if (PyArray_ISONESEGMENT(a)) 
@@ -208,7 +208,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
                 }
                 if (same) {
                         Py_INCREF(self);
-                        return self;
+                        return (PyObject *)self;
                 }
         }
 
@@ -328,8 +328,8 @@ PyArray_Round(PyArrayObject *self, int decimals)
 		PyObject *onej, *nreal=NULL, *nimag=NULL, *newimag, *ret;
 		PyObject *real, *imag;
 
-		real = PyObject_GetAttrString(oself, "real");
-		imag = PyObject_GetAttrString(oself, "imag");
+		real = PyArray_EnsureArray(PyObject_GetAttrString(oself, "real"));
+		imag = PyArray_EnsureArray(PyObject_GetAttrString(oself, "imag"));
 		nreal = PyArray_Round((PyAO *)real, decimals);
 		Py_DECREF(real);
 		if (nreal == NULL) {
@@ -388,7 +388,7 @@ PyArray_Round(PyArrayObject *self, int decimals)
 	oceil = PyArray_GenericUnaryFunction(self, n_ops.ceil);
 	if (oceil == NULL) goto fail;
 
-	rem = PyNumber_Subtract(oself, ofloor);
+	rem = PyArray_EnsureArray(PyNumber_Subtract(oself, ofloor));
 	if (rem == NULL) goto fail;
 	pt5 = PyFloat_FromDouble((double) 0.5);
 	if (pt5 == NULL) goto fail;
@@ -457,13 +457,12 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype)
 	PyObject *ret=NULL, *newshape=NULL;
 	int i, n;
 	intp val;
-        PyArray_Typecode typecode;
 
 	if ((new = _check_axis(self, &axis, 0))==NULL) return NULL;
 	
 	/* Compute and reshape mean */
-	obj1 = PyArray_Mean((PyAO *)new, axis, rtype);
-	if (obj1 == NULL) {Py_DECREF(new); return NULL;}
+	obj1 = PyArray_EnsureArray(PyArray_Mean((PyAO *)new, axis, rtype));
+	if (obj1 == NULL) {Py_DECREF(new); return NULL;} 
 	n = PyArray_NDIM(new);
 	newshape = PyTuple_New(n);
 	if (newshape == NULL) {Py_DECREF(obj1); Py_DECREF(new); return NULL;}
@@ -472,13 +471,6 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype)
 		else val = PyArray_DIM(new,i);
 		PyTuple_SET_ITEM(newshape, i, PyInt_FromLong((long)val));
 	}
-        if (PyArray_IsScalar(obj1, Generic)) {
-                typecode.type_num = PyArray_TYPE(obj1);
-                typecode.itemsize = PyArray_ITEMSIZE(obj1);
-                obj2 = PyArray_FromScalar(obj1, &typecode);
-                Py_DECREF(obj1);
-                obj1 = obj2;
-        }
 	obj2 = PyArray_Reshape((PyAO *)obj1, newshape);
 	Py_DECREF(obj1);
 	Py_DECREF(newshape);
@@ -505,7 +497,7 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype)
 	if (n==0) n=1;
 	obj2 = PyFloat_FromDouble(1.0/((double )n));
 	if (obj2 == NULL) {Py_DECREF(obj1); return NULL;}
-	ret = PyNumber_Multiply(obj1, obj2);
+	ret = PyArray_EnsureArray(PyNumber_Multiply(obj1, obj2));
 	Py_DECREF(obj1);
 	Py_DECREF(obj2);
 
@@ -699,7 +691,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max)
 	Py_DECREF(res1);
 	if (res3 == NULL) return NULL;
 
-	selector = PyNumber_Add(res2, res3);
+	selector = PyArray_EnsureArray(PyNumber_Add(res2, res3));
 	Py_DECREF(res2);
 	Py_DECREF(res3);
 	if (selector == NULL) return NULL;
@@ -863,7 +855,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 		n1 = self->dimensions[0];
 		for (i=0; i<n1; i++) {
 			new = PyInt_FromLong((long) i);
-			sel = PyObject_GetItem((PyObject *)self, new);
+			sel = PyArray_EnsureArray(PyObject_GetItem((PyObject *)self, new));
 			Py_DECREF(new);
 			if (sel == NULL) {
 				Py_DECREF(self);
@@ -3686,7 +3678,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
 	zero = PyInt_FromLong((long) 0);
 
-	obj = PyArray_GenericBinaryFunction(arr, zero, n_ops.not_equal); 
+	obj = PyArray_EnsureArray(PyArray_GenericBinaryFunction(arr, zero, n_ops.not_equal));
 	Py_DECREF(zero);
 	Py_DECREF(arr);
 	if (obj == NULL) return NULL;

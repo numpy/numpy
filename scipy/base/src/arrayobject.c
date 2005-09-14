@@ -5179,6 +5179,30 @@ PyArray_FromAny(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 				requires);	
 }
 
+/* This is a quick wrapper around PyArray_FromAny(op, NULL, 0, 0, 0) */
+/*  that special cases Arrays and PyArray_Scalars up front */
+/*  it also decrefs op if any conversion needs to take place 
+    -- so it can be used like PyArray_EnsureArray(some_function(...)) */
+
+static PyObject *
+PyArray_EnsureArray(PyObject *op)
+{
+        PyObject *new;
+
+        if (op == NULL) return NULL;
+
+        if (PyArray_Check(op)) return op;
+
+        if (PyArray_IsScalar(op, Generic)) {
+                new = PyArray_FromScalar(op, NULL);
+                Py_DECREF(op);
+                return new;
+        }
+        new = PyArray_FromAny(op, NULL, 0, 0, 0);
+        Py_DECREF(op);
+        return new;
+}
+
 /* These are all compressed into a single API */
 /* Deprecated calls -- Use PyArray_FromAny */
 

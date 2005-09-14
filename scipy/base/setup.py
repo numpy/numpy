@@ -113,7 +113,7 @@ def configuration(parent_package='',top_path=None):
         return []
 
     config.add_include_dirs('include','src')
-    config.add_headers(join('include','scipy','*.h'))
+    config.add_headers(join('include','scipy','*.h'),name='scipy')
     from scipy.distutils.command.build_src import appendpath
     print "****%s****" % config.local_path
     config.add_include_dirs(appendpath('build/src',join(config.local_path,'Src')))

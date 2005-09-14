@@ -389,9 +389,10 @@ class Configuration:
     def add_include_dirs(self,*paths):
         self.include_dirs.extend(self._fix_paths(paths))
 
-    def add_headers(self,*paths):
+    def add_headers(self,*paths,**kwds):
+	name = kwds.get('name') or self.name
         paths = self._fix_paths(paths)
-        self.headers.extend([(self.name,p) for p in paths])
+        self.headers.extend([(name,p) for p in paths])
 
     def _fix_paths(self,paths):
         new_paths = []
