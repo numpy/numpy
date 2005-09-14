@@ -1,0 +1,22 @@
+
+from distutils.command.sdist import *
+from distutils.command.sdist import sdist as old_sdist
+from scipy.distutils.misc_util import get_data_files
+
+class sdist(old_sdist):
+
+    def add_defaults (self):
+        old_sdist.add_defaults(self)
+
+        if self.distribution.has_data_files():
+            for data in self.distribution.data_files:
+                self.filelist.extend(get_data_files(data))
+
+        if self.distribution.has_headers():
+            headers = []
+            for h in self.distribution.headers:
+                if isinstance(h,str): headers.append(h)
+                else: headers.append(h[1])
+            self.filelist.extend(headers)
+
+        return
