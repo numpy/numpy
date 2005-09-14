@@ -84,9 +84,9 @@ More Functions:
 
 """   
 
-import numeric_version
-__version__ = numeric_version.version
-del numeric_version
+import scipy.core_version as sc
+__version__ = sc.version
+del sc
 import multiarray
 import numerictypes as nt
 multiarray.set_typeDict(nt.typeDict)

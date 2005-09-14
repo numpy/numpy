@@ -11,7 +11,7 @@ from scipy.distutils.command.build import build
 def configuration(parent_package='',top_path=None):
     config = Configuration('base',parent_package,top_path)
     local_dir = config.local_path
-    codegen_dir = join(local_dir,'CodeGenerators')
+    codegen_dir = join(local_dir,'code_generators')
 
     generate_umath_py = join(codegen_dir,'generate_umath.py')
     n = dot_join(config.name,'generate_umath')
@@ -112,25 +112,25 @@ def configuration(parent_package='',top_path=None):
             f.close()
         return []
 
-    config.add_include_dirs('Include','Src')
-    config.add_headers(join('Include','scipy','base','*.h'))
+    config.add_include_dirs('include','src')
+    config.add_headers(join('include','scipy','*.h'))
     from scipy.distutils.command.build_src import appendpath
     print "****%s****" % config.local_path
     config.add_include_dirs(appendpath('build/src',join(config.local_path,'Src')))
 
-    deps = [join('Src','umathmodule.c.src'),
-            join('Src','arrayobject.c'),
-            join('Src','arraymethods.c'),
-            join('Src','scalartypes.inc.src'),
-            join('Src','arraytypes.inc.src'),
+    deps = [join('src','umathmodule.c.src'),
+            join('src','arrayobject.c'),
+            join('src','arraymethods.c'),
+            join('src','scalartypes.inc.src'),
+            join('src','arraytypes.inc.src'),
             ]
 
     config.add_extension('multiarray',
-                         sources = [join('Src','multiarraymodule.c'),
+                         sources = [join('src','multiarraymodule.c'),
                                     generate_config_h,
                                     generate_array_api,
-                                    join('Src','scalartypes.inc.src'),
-                                    join('Src','arraytypes.inc.src'),
+                                    join('src','scalartypes.inc.src'),
+                                    join('src','arraytypes.inc.src'),
                                     join(codegen_dir,'generate_array_api.py'),
                                     join('*.py')
                                     ],
@@ -139,13 +139,13 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('umath',
                          sources = [generate_config_h,
-                                    join('Src','umathmodule.c.src'),
+                                    join('src','umathmodule.c.src'),
                                     generate_umath_c,
                                     generate_ufunc_api,
-                                    join('Src','scalartypes.inc.src'),
-                                    join('Src','arraytypes.inc.src'),
+                                    join('src','scalartypes.inc.src'),
+                                    join('src','arraytypes.inc.src'),
                                     ],
-                         depends = [join('Src','ufuncobject.c'),
+                         depends = [join('src','ufuncobject.c'),
                                     generate_umath_py,
                                     join(codegen_dir,'generate_ufunc_api.py')
                                     ]+deps,
