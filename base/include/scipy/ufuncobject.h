@@ -1,0 +1,279 @@
+#ifndef Py_UFUNCOBJECT_H
+#define Py_UFUNCOBJECT_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define MAX_ARGS 40
+
+typedef void (*PyUFuncGenericFunction) (char **, intp *, intp *, void *);
+
+typedef struct {
+	PyObject_HEAD
+	int nin, nout, nargs;
+	int identity;
+	PyUFuncGenericFunction *functions;
+	void **data;
+	int ntypes;
+	int check_return;
+	char *name, *types;
+	char *doc;
+        void *ptr;
+        PyObject *obj;
+} PyUFuncObject;
+
+#include "arrayobject.h"
+
+#define UFUNC_ERR_IGNORE 0
+#define UFUNC_ERR_WARN   1
+#define UFUNC_ERR_RAISE  2
+#define UFUNC_ERR_CALL   3
+
+	/* Python side integer mask */
+
+#define UFUNC_MASK_DIVIDEBYZERO 0x03
+#define UFUNC_MASK_OVERFLOW 0x0c
+#define UFUNC_MASK_UNDERFLOW 0x30
+#define UFUNC_MASK_INVALID 0xc0
+
+#define UFUNC_SHIFT_DIVIDEBYZERO 0
+#define UFUNC_SHIFT_OVERFLOW     2
+#define UFUNC_SHIFT_UNDERFLOW    4
+#define UFUNC_SHIFT_INVALID      6       
+
+
+/* platform-dependent code translates floating point
+   status to an integer sum of these values
+*/
+#define UFUNC_FPE_DIVIDEBYZERO  1
+#define UFUNC_FPE_OVERFLOW      2
+#define UFUNC_FPE_UNDERFLOW     4
+#define UFUNC_FPE_INVALID       8
+	
+#define UFUNC_DEFAULT_ERROR 0  /* Default error mode */
+
+	/* Only internal -- not exported, yet*/
+typedef struct {
+	/* Multi-iterator portion --- needs to be present in this order 
+	   to work with PyArray_Broadcast */
+	PyObject_HEAD
+	int  numiter;
+	intp size;      
+	intp index;    
+	int nd;
+	intp dimensions[MAX_DIMS];	
+	PyArrayIterObject *iters[MAX_ARGS];
+        /*  End of Multi-iterator portion */
+
+	/* The ufunc */
+	PyUFuncObject *ufunc;
+	
+	/* The error handling */
+	int errormask;         /* Integer showing desired error handling */
+	PyObject *errobj;      /* currently a tuple with 
+				  (string, func or None)
+			       */
+
+	/* Specific function and data to use */
+	PyUFuncGenericFunction function;
+	void *funcdata;
+
+	/* Loop method */
+	int meth;
+	
+	/* Whether or not to swap */
+	int swap[MAX_ARGS];
+
+	/* Buffers for the loop */
+	void *buffer[MAX_ARGS];
+	int bufsize;
+	int bufcnt;
+	void *dptr[MAX_ARGS];
+
+	/* For casting */
+	void *castbuf[MAX_ARGS];
+	PyArray_VectorUnaryFunc *cast[MAX_ARGS];
+
+	/* usually points to buffer but when a cast is to be
+	   done it switches for that argument to castbuf.
+	*/
+	void *bufptr[MAX_ARGS];  
+
+	/* Steps filled in from iters or sizeof(item)
+	   depending on loop method. 
+	*/
+	intp steps[MAX_ARGS];
+
+	
+} PyUFuncLoopObject;
+
+/* Could make this more clever someday */
+#define UFUNC_MAXIDENTITY 32
+
+typedef struct {
+        PyObject_HEAD
+        PyArrayIterObject *it;
+        PyArrayObject *ret;
+	PyArrayIterObject *rit;   /* Needed for Accumulate */
+        int  outsize;
+	intp  index;
+	intp  size;
+        char idptr[UFUNC_MAXIDENTITY];
+
+	/* The ufunc */
+	PyUFuncObject *ufunc;
+
+	/* The error handling */
+	int errormask;
+	PyObject *errobj;
+        
+        PyUFuncGenericFunction function;
+        void *funcdata;        
+        int meth;
+        int swap;
+        
+        void *buffer;
+        int bufsize;
+
+        void *castbuf;
+        PyArray_VectorUnaryFunc *cast;
+
+        void *bufptr[3];
+        intp steps[3];
+
+        intp N;
+        int  instrides;
+        int  insize;
+        char *inptr;
+
+	/* For copying small arrays */
+	PyObject *decref;
+        
+} PyUFuncReduceObject;
+
+#define PyUFunc_Unbounded 120
+#define PyUFunc_One 1
+#define PyUFunc_Zero 0
+#define PyUFunc_None -1
+
+
+typedef struct {
+        int nin;
+        int nout;
+        PyObject *callable; 
+} PyUFunc_PyFuncData;
+
+
+
+
+#include "__ufunc_api.h"
+
+#define UFUNC_ERRMASK_NAME "_UFUNC_ERRMASK"
+#define UFUNC_ERRFUNC_NAME "_UFUNC_ERRFUNC"
+#define UFUNC_BUFSIZE_NAME "_UFUNC_BUFSIZE"
+
+#define UFUNC_CHECK_ERROR() \
+	if (loop->errormask &&						\
+	    PyUFunc_checkfperr(loop->errormask,				\
+			       loop->errobj))				\
+		goto fail
+
+/* This code checks the IEEE status flags in a platform-dependent way */
+/* Adapted from Numarray  */
+
+/*  OSF/Alpha (Tru64)  ---------------------------------------------*/
+#if defined(__osf__) && defined(__alpha)
+
+#include <machine/fpu.h>
+
+#define UFUNC_CHECK_STATUS(ret) {		\
+	unsigned long fpstatus;		        \
+						\
+	fpstatus = ieee_get_fp_control();				\
+	/* clear status bits as well as disable exception mode if on */ \
+	ieee_set_fp_control( 0 );					\
+	ret = ((IEEE_STATUS_DZE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+		| ((IEEE_STATUS_OVF & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
+		| ((IEEE_STATUS_UNF & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
+		| ((IEEE_STATUS_INV & fpstatus) ? UFUNC_FPE_INVALID : 0); \
+	}
+	
+/* MS Windows -----------------------------------------------------*/
+#elif defined(_MSC_VER)
+
+#include <float.h>
+
+#define UFUNC_CHECK_STATUS(ret) {		 \
+	int fpstatus = (int) _clear87();			\
+									\
+	ret = ((SW_ZERODIVIDE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0)	\
+		| ((SW_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)	\
+		| ((SW_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0)	\
+		| ((SW_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0);	\
+	}
+	
+
+/* Solaris --------------------------------------------------------*/
+/* --------ignoring SunOS ieee_flags approach, someone else can
+**         deal with that! */
+#elif defined(sun)
+#include <ieeefp.h>
+
+#define UFUNC_CHECK_STATUS(ret) {				\
+	int fpstatus;						\
+								\
+	fpstatus = (int) fpgetsticky();					\
+	ret = ((FP_X_DZ  & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0)	\
+		| ((FP_X_OFL & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)	\
+		| ((FP_X_UFL & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0)	\
+		| ((FP_X_INV & fpstatus) ? UFUNC_FPE_INVALID : 0);	\
+	(void) fpsetsticky(0);						\
+	}
+	
+#elif defined(linux) || defined(darwin) || defined(__CYGWIN__)
+
+#if defined(__GLIBC__) || defined(darwin)
+#include <fenv.h>
+#elif defined(__CYGWIN__)
+#include <mingw/fenv.h>
+#endif
+
+#define UFUNC_CHECK_STATUS(ret) {                                       \
+	int fpstatus = (int) fetestexcept(FE_DIVBYZERO | FE_OVERFLOW |	\
+					  FE_UNDERFLOW | FE_INVALID);	\
+	ret = ((FE_DIVBYZERO  & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+		| ((FE_OVERFLOW   & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)	\
+		| ((FE_UNDERFLOW  & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
+		| ((FE_INVALID    & fpstatus) ? UFUNC_FPE_INVALID : 0);	\
+	(void) feclearexcept(FE_DIVBYZERO | FE_OVERFLOW |		\
+			     FE_UNDERFLOW | FE_INVALID);		\
+}
+	
+#elif defined(AIX)
+
+#include <float.h>
+#include <fpxcp.h>
+
+#define UFUNC_CHECK_STATUS(ret) { \
+	fpflag_t fpstatus; \
+                                                \
+	fpstatus = fp_read_flag();
+	ret = ((FP_DIV_BY_ZERO & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+		| ((FP_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)	\
+		| ((FP_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
+		| ((FP_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0);
+	fp_clr_flag( FP_DIV_BY_ZERO | FP_OVERFLOW | FP_UNDERFLOW | FP_INVALID); \
+}
+
+#else
+
+#define UFUNC_CHECK_STATUS(ret) ret = 0;
+
+#endif
+
+
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* !Py_UFUNCOBJECT_H */
