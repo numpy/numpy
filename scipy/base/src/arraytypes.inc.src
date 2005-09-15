@@ -531,7 +531,7 @@ static void
 #format="%hd","%hu","%d","%u","%ld","%lu",LONGLONG_FMT,ULONGLONG_FMT,"%f","%lf","%Lf"#
 */
 static int
-@fname@_scan (FILE *fp, @type@ *ip, int itemsize, char *sep)
+@fname@_scan (FILE *fp, @type@ *ip, int itemsize, char *sep, PyArrayObject *ao)
 {
 	int endfile;
 	fscanf(fp, @format@, ip);
@@ -550,7 +550,7 @@ static int
 #fname=BOOL,BYTE,UBYTE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
 */
 static int
-@fname@_scan (FILE *fp, void *ip, int itemsize, char *sep)
+@fname@_scan (FILE *fp, void *ip, int itemsize, char *sep, PyArrayObject *ao)
 {
 	PyErr_SetString(PyExc_IOError, "scan not supported for this type");
 	return -1;
@@ -1415,7 +1415,8 @@ static PyArray_Descr @from@_Descr = { {
 		(PyArray_VectorUnaryFunc*)@from@_to_UNICODE, 
 		(PyArray_VectorUnaryFunc*)@from@_to_VOID
 	},
-				      @from@_getitem, @from@_setitem,
+				      (PyArray_GetItemFunc*)@from@_getitem, 
+				      (PyArray_SetItemFunc*)@from@_setitem,
 				      (PyArray_CompareFunc*)@from@_compare, 
 				      (PyArray_ArgFunc*)@from@_argmax,
 				      (PyArray_DotFunc*)NULL, 
@@ -1463,7 +1464,8 @@ static PyArray_Descr @from@_Descr = { {
 		(PyArray_VectorUnaryFunc*)@from@_to_UNICODE, 
 		(PyArray_VectorUnaryFunc*)@from@_to_VOID
 	},
-				      @from@_getitem, @from@_setitem,
+				      (PyArray_GetItemFunc*)@from@_getitem, 
+				      (PyArray_SetItemFunc*)@from@_setitem,
 				      (PyArray_CompareFunc*)@from@_compare, 
 				      (PyArray_ArgFunc*)@from@_argmax,
 				      (PyArray_DotFunc*)@from@_dot, 

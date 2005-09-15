@@ -60,6 +60,10 @@ objectapi_list = [
     """,
      'ObjectType','PyObject *, int','int'),
 
+    (r"""
+    """,
+     'ArrayType','PyObject *, PyArray_Typecode *, PyArray_Typecode *','void'),
+
     (r"""Return type typecode from array scalar.
     """,
      'TypecodeFromScalar','PyObject *, PyArray_Typecode *','void'),

@@ -737,7 +737,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
 	if (typecode.type_num != PyArray_OBJECT) {
 		self->data = datastr;
-		self->base = PyTuple_GET_ITEM(PyTuple_GET_ITEM(args, 0), 3);
+		self->base = rawdata;
 		Py_INCREF(self->base);
 	}
 	else {
@@ -777,7 +777,7 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 		if (file==NULL) return -1;
 	}
 	else Py_INCREF(file);
-	ret = PyObject_CallMethod(cpick, "dump", "NNi", self, 
+	ret = PyObject_CallMethod(cpick, "dump", "OOi", self, 
 				  file, protocol);
 	Py_XDECREF(ret);
 	Py_DECREF(file);
@@ -795,7 +795,7 @@ PyArray_Dumps(PyObject *self, int protocol)
 
 	cpick = PyImport_ImportModule("cPickle");
 	if (cpick==NULL) return NULL;
-	ret = PyObject_CallMethod(cpick, "dumps", "Ni", self, protocol);
+	ret = PyObject_CallMethod(cpick, "dumps", "Oi", self, protocol);
 	Py_DECREF(cpick);
 	return ret;
 }

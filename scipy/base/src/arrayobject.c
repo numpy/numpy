@@ -4309,86 +4309,163 @@ discover_dimensions(PyObject *s, int nd, intp *d, int check_it)
         return 0;
 }
 
+static void
+_array_small_type(int chktype, int mintype, int chksize, int minsize, 
+		  PyArray_Typecode *outtype)
+{
+	outtype->type_num = MAX(chktype, mintype);
+	if (PyTypeNum_ISFLEXIBLE(outtype->type_num) &&	\
+	    PyTypeNum_ISFLEXIBLE(mintype)) {
+		/* Handle string->unicode case separately 
+		   because string itemsize is twice as large */
+		if (outtype->type_num == PyArray_UNICODE && 
+		    mintype == PyArray_STRING) {
+			outtype->itemsize = MAX(chksize, 2*minsize);
+		}
+		else {
+			outtype->itemsize = MAX(chksize, minsize);
+		}
+	}
+	else {
+		outtype->itemsize = chksize;
+	}
+	return;	
+}
 
-static int 
-array_objecttype(PyObject *op, int minimum_type, int max) 
+static void
+_array_find_type(PyObject *op, PyArray_Typecode *minitype, 
+		 PyArray_Typecode *outtype, int max)
 {
         int l;
         PyObject *ip;
-        int result;	
-    
-        if (minimum_type == -1) return -1;
+	int chktype=0;
+	int chksize=0;
+	int mintype, minsize;
 
-	if (max < 0) return PyArray_OBJECT; 
+	if (minitype == NULL) {
+		mintype = PyArray_BOOL;
+		minsize = sizeof(bool);
+	}
+	else {
+		mintype = minitype->type_num;
+		minsize = minitype->itemsize;
+	}
+
+    
+        if (max < 0 || mintype == -1) goto deflt;
 	
-        if (PyArray_Check(op)) 
-		return MAX(PyArray_TYPE(op), minimum_type);
+        if (PyArray_Check(op)) {
+		chktype = PyArray_TYPE(op);
+		chksize = PyArray_ITEMSIZE(op);
+		goto finish;
+	}
 	
+	if (PyArray_IsScalar(op, Generic)) {
+		PyArray_TypecodeFromScalar(op, outtype);
+		chktype = outtype->type_num;
+		chksize = outtype->itemsize;
+		goto finish;
+	}
+	
+
         if (PyObject_HasAttrString(op, "__array__")) {
                 ip = PyObject_CallMethod(op, "__array__", NULL);
-                if(ip != NULL) {
-			result = MAX(minimum_type, PyArray_TYPE(ip));
-			Py_DECREF(ip);
-			return result;
+                if(ip && PyArray_Check(ip)) {
+			chktype = PyArray_TYPE(ip);
+			chksize = PyArray_ITEMSIZE(ip);
+			goto finish;
 		}
         } 
-
+	
 	if (PyObject_HasAttrString(op, "__array_typestr__")) {
-		PyArray_Typecode type = {PyArray_NOTYPE, 0, 0};
 		int swap=0, res;
 		ip = PyObject_GetAttrString(op, "__array_typestr__");
 		if (ip && PyString_Check(ip)) {
 			res = _array_typecode_fromstr(PyString_AS_STRING(ip), 
-						      &swap, &type);   
+						      &swap, outtype);   
 			if (res >= 0) {
 				Py_DECREF(ip);
-				return MAX(minimum_type, type.type_num);
+				chktype = outtype->type_num;
+				chksize = outtype->itemsize;
+				goto finish;
 			}
 		}
 		Py_XDECREF(ip);
 	}
-	
+
         if (PyString_Check(op)) {
-                return MAX(minimum_type, (int)PyArray_STRING);
+		chktype = PyArray_STRING;
+		chksize = PyString_GET_SIZE(op);
+		goto finish;
         }
 
 	if (PyUnicode_Check(op)) {
-		return MAX(minimum_type, (int)PyArray_UNICODE);
+		chktype = PyArray_UNICODE;
+		chksize = PyUnicode_GET_DATA_SIZE(op);
+		goto finish;
 	}
 
-	if (PyInstance_Check(op)) return PyArray_OBJECT;
+	if (PyBuffer_Check(op)) {
+		chktype = PyArray_VOID;
+		chksize = op->ob_type->tp_as_sequence->sq_length(op);
+		PyErr_Clear();
+		goto finish;
+	}
 
+	if (PyInstance_Check(op)) goto deflt;
+	
         if (PySequence_Check(op)) {
+		PyArray_Typecode newtype = {mintype, minsize, 0};
                 l = PyObject_Length(op);
                 if (l < 0 && PyErr_Occurred()) { 
 			PyErr_Clear(); 
-			return (int)PyArray_OBJECT;
+			goto deflt;
 		}
-                if (l == 0 && minimum_type == 0) 
-			minimum_type = PyArray_INTP;
+                if (l == 0 && mintype == 0) {
+			newtype.type_num = PyArray_INTP;
+			newtype.itemsize = sizeof(intp);
+		}
                 while (--l >= 0) {
                         ip = PySequence_GetItem(op, l);
                         if (ip==NULL) {
 				PyErr_Clear(); 
-				return (int) PyArray_OBJECT;
+				goto deflt;
 			}
-                        minimum_type = array_objecttype(ip, minimum_type, 
-							max-1);
+			_array_find_type(ip, &newtype, outtype, max-1);
+			_array_small_type(outtype->type_num,
+					  newtype.type_num, 
+					  outtype->itemsize,
+					  newtype.itemsize,
+					  &newtype);
                         Py_DECREF(ip);
                 }
-                return minimum_type;
+		chktype = newtype.type_num;
+		chksize = newtype.itemsize;
+		goto finish;
         }
 	
-        if (PyInt_Check(op) || PyLong_Check(op)) {
-                return MAX(minimum_type, (int) (PyArray_INTP));
+        if (PyInt_Check(op)) {
+		chktype = PyArray_LONG;
+		chksize = sizeof(long);
+		goto finish;
         } else if (PyFloat_Check(op)) {
-		return MAX(minimum_type, (int) (PyArray_DOUBLE));
+		chktype = PyArray_DOUBLE;
+		chksize = sizeof(double);
+		goto finish;
 	} else if (PyComplex_Check(op)) {
-		return MAX(minimum_type, 
-			   (int)(PyArray_CDOUBLE));
-	} else {
-		return (int)PyArray_OBJECT;
+		chktype = PyArray_CDOUBLE;
+		chksize = sizeof(cdouble);
+		goto finish;
 	}
+
+ deflt:
+	chktype = PyArray_OBJECT;
+	chksize = sizeof(void *);
+
+ finish:
+	_array_small_type(chktype, mintype, chksize, minsize, 
+			  outtype);
+	return;
 }
 
 static int 
@@ -5059,7 +5136,7 @@ array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 	}
 	else {
 		if (type == PyArray_NOTYPE) {
-			typecode->type_num = array_objecttype(op, 0, MAX_DIMS);
+			_array_find_type(op, NULL, typecode, MAX_DIMS);
 		}
 		if (PySequence_Check(op))
 			r = Array_FromSequence(op, typecode, 
@@ -5096,11 +5173,21 @@ array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth,
         return r;
 }
 
+static void
+PyArray_ArrayType(PyObject *op, PyArray_Typecode *intype, 
+		  PyArray_Typecode *outtype) 
+{
+	_array_find_type(op, intype, outtype, MAX_DIMS);
+	return;
+}
 
 static int 
 PyArray_ObjectType(PyObject *op, int minimum_type) 
 {
-        return array_objecttype(op, minimum_type, MAX_DIMS);
+	PyArray_Typecode intype, outtype;
+	intype.type_num = minimum_type;
+	_array_find_type(op, &intype, &outtype, MAX_DIMS);
+	return outtype.type_num;
 }
 
 

@@ -680,33 +680,23 @@ typedef Py_uintptr_t uintp;
 #define PyDimMem_RENEW(ptr,size) ((intp *)realloc(ptr,size*sizeof(intp)))
 
 
-struct PyArrayObject;   /* Forward */
-
-typedef PyObject *(PyArray_UnaryFunc)(struct PyArrayObject *, PyObject *);
-typedef PyObject *(PyArray_BinaryFunc)(struct PyArrayObject *, PyObject *, \
-					 PyObject *);
-
   /* These must deal with unaligned and unbyteswapped data if necessary */
-typedef PyObject * (PyArray_GetItemFunc) (char *, struct PyArrayObject *);
-typedef int (PyArray_SetItemFunc)(PyObject *, char *, struct PyArrayObject *);
+typedef PyObject * (PyArray_GetItemFunc) (char *, void *);
+typedef int (PyArray_SetItemFunc)(PyObject *, char *, void *);
 
-typedef int (PyArray_CompareFunc)(const void *, const void *,
-				  struct PyArrayObject *);
+typedef int (PyArray_CompareFunc)(const void *, const void *, void *);
 typedef int (PyArray_CopySwapNFunc)(void *, void *, intp, int, int);
 typedef int (PyArray_CopySwapFunc)(void *, void *, int, int);
-typedef int (PyArray_NonzeroFunc)(void *, struct PyArrayObject *);
+typedef int (PyArray_NonzeroFunc)(void *, void *);
 
 
   /* These assume aligned and byteswapped data -- a buffer will be
       used before or contiguous data will be obtained
   */
-typedef int (PyArray_ArgFunc)(void*, intp, intp*, struct PyArrayObject *);
-typedef int (PyArray_DotFunc)(char *, int, char *, int,
-			      char *, int, struct PyArrayObject *);
-typedef int (PyArray_VectorUnaryFunc)(void *, void *, intp,
-				      struct PyArrayObject *,
-				      struct PyArrayObject *);
-typedef int (PyArray_ScanFunc)(FILE *, void *, int, char *);
+typedef int (PyArray_ArgFunc)(void*, intp, intp*, void *);
+typedef int (PyArray_DotFunc)(char *, int, char *, int, char *, int, void *);
+typedef int (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
+typedef int (PyArray_ScanFunc)(FILE *, void *, int, char *, void *);
 
 
 typedef struct {
