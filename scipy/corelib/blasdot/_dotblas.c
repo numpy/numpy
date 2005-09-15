@@ -620,13 +620,25 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
     
     if (typenum != PyArray_FLOAT && typenum != PyArray_DOUBLE &&
 	typenum != PyArray_CFLOAT && typenum != PyArray_CDOUBLE) {
-	PyErr_SetString(PyExc_TypeError, "at least one argument must be (possibly complex) float or double");
-	goto fail;
-    }
-
-    if (ap1->nd != 1 || ap2->nd != 1) {
-	PyErr_SetString(PyExc_TypeError, "arguments must be vectors");
-	goto fail;
+	if (!altered) {
+	    /* need to alter dot product */
+	    PyObject *tmp1, *tmp2;
+	    tmp1 = PyTuple_New(0);
+	    tmp2 = dotblas_alterdot(NULL, tmp1);
+	    Py_DECREF(tmp1); 
+	    Py_DECREF(tmp2);
+	}
+	if (PyTypeNum_ISCOMPLEX(typenum)) {
+	    op1 = PyArray_Conjugate(ap1);
+	    if (op1==NULL) goto fail;
+	    Py_DECREF(ap1);
+	    ap1 = (PyArrayObject *)op1;
+	}	
+	ret = (PyArrayObject *)PyArray_InnerProduct((PyObject *)ap1, 
+						    (PyObject *)ap2);
+	Py_DECREF(ap1); 
+	Py_DECREF(ap2);
+	return (PyObject *)ret;
     }
 
     if (ap2->dimensions[0] != ap1->dimensions[ap1->nd-1]) {
