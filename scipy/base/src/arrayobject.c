@@ -5181,7 +5181,9 @@ PyArray_FromAny(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 
 /* This is a quick wrapper around PyArray_FromAny(op, NULL, 0, 0, 0) */
 /*  that special cases Arrays and PyArray_Scalars up front */
-/*  it also decrefs op if any conversion needs to take place 
+/*  It steals a reference to the object */
+
+/*  Because it decrefs op if any conversion needs to take place 
     -- so it can be used like PyArray_EnsureArray(some_function(...)) */
 
 static PyObject *
