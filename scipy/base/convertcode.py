@@ -37,23 +37,37 @@ def replacetypechars(astr):
     astr = astr.replace("'u'","'I'")
     return astr
 
-def changeimports(fstr, name):
+# This function replaces
+#  import x1, x2, x3
+#
+#with
+#  import x1
+#  import x2
+#  import x3
+importre = re.compile('import\s+?(\S+?[^,]+?,\s*)+?')
+def expand_import(astr):
+    
+    return astr
+
+
+def changeimports(fstr, name, newname):
+    fstr = expand_import(fstr)    
     importstr = 'import %s' % name
     importasstr = 'import %s as ' % name
     fromstr = 'from %s import ' % name
     fromallstr = 'from %s import *' % name
     fromall=0
 
-    fstr = fstr.replace(importasstr, 'import scipy.base as ')
-    fstr = fstr.replace(importstr, 'import scipy.base as %s' % name)
+    fstr = fstr.replace(importasstr, 'import %s as ' % newname)
+    fstr = fstr.replace(importstr, 'import %s as %s' % (newname,name))
     if (fstr.find(fromallstr) >= 0):
         warnings.warn('Usage of %s found.' % fromallstr)
-        fstr = fstr.replace(fromallstr, 'from scipy.base import *')
+        fstr = fstr.replace(fromallstr, 'from %s import *' % newname)
         fromall=1
 
     ind = 0
     Nlen = len(fromstr)
-    Nlen2 = len("from scipy.base import ")
+    Nlen2 = len("from %s import " % newname)
     while 1:
         found = fstr.find(fromstr,ind)
         if (found < 0):
@@ -61,7 +75,7 @@ def changeimports(fstr, name):
         ind = found + Nlen
         if fstr[ind] == '*':
             continue
-        fstr = "%sfrom scipy.base import %s" % (fstr[:found], fstr[ind:])
+        fstr = "%sfrom %s import %s" % (fstr[:found], newname, fstr[ind:])
         ind += Nlen2 - Nlen
     return fstr, fromall
 
@@ -80,6 +94,11 @@ def replaceattr(astr):
 
     return astr
 
+def replaceother(astr):
+    astr = astr.replace("typecode=","dtype=")
+    astr = astr.replace("UserArray","ndarray")
+    return astr
+
 def warnofnewtypes(filestr):
     if int_re.search(filestr) or \
        float_re.search(filestr) or \
@@ -95,12 +114,21 @@ def warnofnewtypes(filestr):
 
 def process(filestr):
     filestr = replacetypechars(filestr)
-    filestr, fromall1 = changeimports(filestr, 'Numeric')
-    filestr, fromall2 = changeimports(filestr, 'numerix')
-    filestr, fromall3 = changeimports(filestr, 'scipy_base')
+    filestr, fromall1 = changeimports(filestr, 'Numeric', 'scipy.base')
+    filestr, fromall1 = changeimports(filestr, 'multiarray',
+                                      'scipy.base.multiarray')
+    filestr, fromall1 = changeimports(filestr, 'umath',
+                                          'scipy.base.umath')
+    filestr, fromall2 = changeimports(filestr, 'numerix', 'scipy.base')
+    filestr, fromall3 = changeimports(filestr, 'scipy_base', 'scipy.base')
+    filestr, fromall3 = changeimports(filestr, 'MLab', 'scipy.linalg')
+    filestr, fromall3 = changeimports(filestr, 'LinearAlgebra', 'scipy.linalg')
+    filestr, fromall3 = changeimports(filestr, 'RNG', 'scipy.stats')
+    filestr, fromall3 = changeimports(filestr, 'RandomArray', 'scipy.stats')
+    filestr, fromall3 = changeimports(filestr, 'FFT', 'scipy.fftpack')
     fromall = fromall1 or fromall2 or fromall3
     filestr = replaceattr(filestr)
-    #filestr = convertflat(filestr)
+    filestr = replaceother(filestr)
     if fromall:
         warnofnewtypes(filestr)
     return filestr
