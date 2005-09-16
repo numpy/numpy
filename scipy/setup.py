@@ -7,7 +7,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('distutils')
     config.add_subpackage('base')
     config.add_subpackage('lib',os.path.join(config.local_path,'corelib'))
-    config.add_subpackage('fftfunc')
+    config.add_subpackage('fftpack')
     config.add_subpackage('linalg')
     config.add_subpackage('stats')
     return config.todict()
