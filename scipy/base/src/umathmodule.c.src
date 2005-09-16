@@ -102,39 +102,43 @@ double hypot(double x, double y)
 #if !defined(isnan)
 #include "_isnan.c"
 #endif
+
 #if !defined(isinf)
-#include "_isinf.c"
+#define isinf(x) isnan((x)-(x))
 #endif
 
 #endif /* HAVE_ISNAN */
 #endif /* !defined(isnan) */
 
 
-#if !defined(isfinite)
-#define isfinite(x) (!(isinf(x) || isnan(x)))
-#endif
-#define isfinitef(x) isfinite(x)
-#define isfinitel(x) isfinite(x)
-
 /* Define signbit if needed */
 #if !defined(signbit)
 #include "_signbit.c"
 #endif
 
-/**begin repeat
-#kind=isnan*2, isinf*2#
-#typ=(longdouble, float)*2#
-#c=(l,f)*2#
-#TYPE=(LONGDOUBLE, FLOAT)*2#
-*/
-#if !defined(@kind@)
-#if !defined(HAVE_@TYPE@_FUNCS) || !defined(HAVE_ISNAN)
-#define @kind@@c@(x) ((@typ@) @kind@((double)(x)))
+
+/* Now defined the extended type macros */
+
+#if !defined(isnan)
+
+#if !defined(HAVE_LONGDOUBLE_FUNCS) || !defined(HAVE_ISNAN)
+#define isnanl(x) ((longdouble) isnan((double)(x)))
+#define isinfl(x) ((longdouble) isnan((double)((x)-(x))))
 #endif
-#else
-#define @kind@@c@(x) @kind@(x)
+
+#if !defined(HAVE_FLOAT_FUNCS) || !defined(HAVE_ISNAN)
+#define isnanf(x) ((float) isnan((double)(x)))
+#define isinff(x) ((float) isnan((double)((x)-(x))))
 #endif
-/**end repeat**/
+
+#else /* !defined(isnan) */
+
+#define isnanl(x) isnan(x)
+#define isnanf(x) isnan(x)
+#define isinfl(x) isinf(x)
+#define isinff(x) isinf(x)
+
+#endif /* !defined(isnan) */
 
 
 #if !defined(signbit)
@@ -144,6 +148,12 @@ double hypot(double x, double y)
 #define signbitl(x) signbit(x)
 #define signbitf(x) signbit(x)
 #endif
+
+#if !defined(isfinite)
+#define isfinite(x) (!(isinf(x) || isnan(x)))
+#endif
+#define isfinitef(x) (!(isinff(x) || isnanf(x)))
+#define isfinitel(x) (!(isinfl(x) || isnanl(x)))
 
 
 /* First, the C functions that do the real work */
