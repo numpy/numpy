@@ -104,7 +104,7 @@ double hypot(double x, double y)
 #endif
 
 #if !defined(isinf)
-#define isinf(x) isnan((x)-(x))
+#define isinf(x) (!isnan((x)) && isnan((x)-(x)))
 #endif
 
 #endif /* HAVE_ISNAN */
@@ -119,25 +119,31 @@ double hypot(double x, double y)
 
 /* Now defined the extended type macros */
 
+/* We assume that isnan and isinf are defined in the same 
+   way:  as functions, with extended functions, or macros
+*/
+
 #if !defined(isnan)
 
 #if !defined(HAVE_LONGDOUBLE_FUNCS) || !defined(HAVE_ISNAN)
 #define isnanl(x) isnan((double)(x)))
+#define isinfl(x) (!isnanl((x)) && isnanl((x)-(x)))
 #endif
 
 #if !defined(HAVE_FLOAT_FUNCS) || !defined(HAVE_ISNAN)
 #define isnanf(x) isnan((double)(x)))
+#define isinff(x) (!isnanlf((x)) && isnanf((x)-(x))
 #endif
 
 #else /* !defined(isnan) */
 
 #define isnanl(x) isnan(x)
 #define isnanf(x) isnan(x)
+#define isinfl(x) isinf(x)
+#define isinff(x) isinf(x)
 
 #endif /* !defined(isnan) */
 
-#define isinfl(x) isnanl((x)-(x))
-#define isinff(x) isnanf((x)-(x))
 
 
 #if !defined(signbit)
