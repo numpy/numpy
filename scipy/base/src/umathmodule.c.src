@@ -117,6 +117,24 @@ hypot, atan2, pow
 #endif
 /**end repeat**/
 
+/**begin repeat
+#kind=modf*2#
+#typ=longdouble, float#
+#c=l,f#
+#TYPE=LONGDOUBLE, FLOAT#
+*/
+#ifndef HAVE_@TYPE@_FUNCS
+@typ@ modf@c@(@typ@ x, @typ@ *iptr) {
+        double nx, niptr, y;
+        nx = (double) x;
+        y = modf(nx, &niptr);
+        *iptr = (@typ@) niptr;
+        return (@typ@) y;
+}
+#endif
+/**end repeat**/
+
+
 
 /* Don't pass structures between functions (only pointers) because how
    structures are passed is compiler dependent and could cause
@@ -1128,6 +1146,117 @@ static void
 }
 /**end repeat**/
 
+
+/****** modf ****/
+
+/**begin repeat
+#TYPE=FLOAT, DOUBLE, LONGDOUBLE#
+#typ=float, double, longdouble#
+#c=f,,l#
+*/
+static void
+@TYPE@_modf(char **args, intp *dimensions, intp *steps, void *func)
+{
+        register intp i;
+        intp is1=steps[0],os1=steps[1],os2=steps[2],n=dimensions[0];
+        char *i1=args[0], *op1=args[1], *op2=args[2];
+        @typ@ x1, y1, y2;
+        for (i=0; i<n; i++, i1+=is1, op1+=os1, op2+=os2) {
+                x1 = *((@typ@ *)i1);
+                y1 = modf@c@(x1, &y2);
+                *((@typ@ *)op1) = y1;
+                *((@typ@ *)op2) = y2;
+        }
+}
+/**end repeat**/
+
+#define HAVE_DOUBLE_FUNCS
+/**begin repeat
+#TYPE=FLOAT, DOUBLE, LONGDOUBLE#
+#typ=float, double, longdouble#
+#c=f,,l#
+*/
+#ifdef HAVE_@TYPE@_FUNCS
+static void
+@TYPE@_frexp(char **args, intp *dimensions, intp *steps, void *func)
+{
+        register intp i;
+        intp is1=steps[0],os1=steps[1],os2=steps[2],n=dimensions[0];
+        char *i1=args[0], *op1=args[1], *op2=args[2];
+        @typ@ x1, y1;
+        int y2;
+        for (i=0; i<n; i++, i1+=is1, op1+=os1, op2+=os2) {
+                x1 = *((@typ@ *)i1);
+                y1 = frexp@c@(x1, &y2);
+                *((@typ@ *)op1) = y1;
+                *((int *) op2) = y2;
+        }
+}
+
+static void
+@TYPE@_ldexp(char **args, intp *dimensions, intp *steps, void *func)
+{
+        register intp i;
+        intp is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
+        char *i1=args[0], *i2=args[1], *op=args[2];
+        @typ@ x1, y1;
+        int x2;
+        for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+                x1 = *((@typ@ *)i1);
+                x2 = *((int *)i2);
+                y1 = ldexp@c@(x1, x2);
+                *((@typ@ *)op) = y1;
+        }
+}
+#endif
+/**end repeat**/
+#undef HAVE_DOUBLE_FUNCS
+
+
+static PyUFuncGenericFunction frexp_functions[] = { 
+#ifdef HAVE_FLOAT_FUNCS
+        FLOAT_frexp,
+#endif
+        DOUBLE_frexp
+#ifdef HAVE_LONGDOUBLE_FUNCS
+        ,LONGDOUBLE_frexp
+#endif
+};
+
+static void * blank3_data[] = { (void *)NULL, (void *)NULL, (void *)NULL};
+static char frexp_signatures[] = { 
+#ifdef HAVE_FLOAT_FUNCS
+        PyArray_FLOAT, PyArray_FLOAT, PyArray_INT,
+#endif
+        PyArray_DOUBLE, PyArray_DOUBLE, PyArray_INT
+#ifdef HAVE_LONGDOUBLE_FUNCS
+        ,PyArray_LONGDOUBLE, PyArray_LONGDOUBLE, PyArray_INT
+#endif
+};
+
+
+static PyUFuncGenericFunction ldexp_functions[] = { 
+#ifdef HAVE_FLOAT_FUNCS
+        FLOAT_ldexp,
+#endif
+        DOUBLE_ldexp
+#ifdef HAVE_LONGDOUBLE_FUNCS
+        ,LONGDOUBLE_ldexp
+#endif
+};
+
+static char ldexp_signatures[] = { 
+#ifdef HAVE_FLOAT_FUNCS
+        PyArray_FLOAT, PyArray_INT, PyArray_FLOAT,
+#endif
+        PyArray_DOUBLE, PyArray_INT, PyArray_DOUBLE
+#ifdef HAVE_LONGDOUBLE_FUNCS
+        ,PyArray_LONGDOUBLE, PyArray_INT, PyArray_LONGDOUBLE
+#endif
+};
+
+
+
 #include "__umath_generated.c"
 
 
@@ -1135,7 +1264,35 @@ static void
 
 #include "__ufunc_api.c"
 
-/* Initialization function for the module (*must* be called initumath) */
+
+/* Less automated additions to the ufuncs */
+
+static void
+InitOtherOperators(PyObject *dictionary) {
+        PyObject *f;
+        int num=1;
+     
+#ifdef HAVE_LONGDOUBLE_FUNCS
+        num += 1;
+#endif
+#ifdef HAVE_FLOAT_FUNCS
+        num += 1;
+#endif
+        f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data, frexp_signatures, num,
+                                    1, 2, PyUFunc_None, "frexp",
+                                    "(frac, exp) = frexp(x). Split the number into a "\
+                                    "normalized fraction and exponent",0);
+        PyDict_SetItemString(dictionary, "frexp", f);
+        Py_DECREF(f);
+
+        f = PyUFunc_FromFuncAndData(ldexp_functions, blank3_data, ldexp_signatures, num,
+                                    2, 1, PyUFunc_None, "ldexp",
+                                    "ldexp(x, exp) returns x * 2**exp.",0);
+        PyDict_SetItemString(dictionary, "ldexp", f);
+        Py_DECREF(f);
+        return;
+}
+
 
 static struct PyMethodDef methods[] = {
         {"frompyfunc", (PyCFunction) ufunc_frompyfunc,
@@ -1178,6 +1335,8 @@ DL_EXPORT(void) initumath(void) {
 
 	/* Load the ufunc operators into the array module's namespace */
 	InitOperators(d); 
+
+        InitOtherOperators(d);
 
 	PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(M_PI));
 	Py_DECREF(s);

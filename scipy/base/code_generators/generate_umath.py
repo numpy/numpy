@@ -10,9 +10,11 @@ None_ = "PyUFunc_None"
 #name: [string of chars for which it is defined,
 #	string of characters using func interface,
 #	tuple of strings giving funcs for data,
-#       (in, out),
+#       (in, out), or (instr, outstr) giving the signature as character codes,
 #       identity,
-#	docstring]
+#	docstring,
+#       output specification (optional)
+#       ]
 
 all = '?bBhHiIlLqQfdgFDGO'
 ints = 'bBhHiIlLqQ'
@@ -271,7 +273,12 @@ defdict = {
            ("hypot,"*3, '"hypot"'),
            (2,1), None,
            "sqrt(x**2 + y**2) elementwise"
-           ]
+           ],
+
+'modf' : ['fdg','',
+          (),(1,2),None,
+          "modf breaks argument into integral and fractional parts (each with the same sign as input)"
+          ]
 }
 
 
@@ -337,12 +344,28 @@ def make_arrays(funcdict):
         siglist = []
         k=0;
         sub=0;
-        if vals[3][0] > 1:
-            thedict = chartotype2
+        numin, numout = vals[3]
+
+        if numin > 1:
+            thedict = chartotype2  # two inputs and one output
+        else:                                                   
+            thedict = chartotype1  # one input and one output
+
+        instr = ''.join([x*numin for x in list(vals[0])])
+        if len(vals) > 6:
+            if isinstance(vals[6],type('')):
+                outstr = vals[6]
+            else:                # a tuple specifying input signature, output signature
+                instr, outstr = vals[6]
         else:
-            thedict = chartotype1
+            outstr = ''.join([x*numout for x in list(vals[0])])
+
+        _valslen = len(vals[0])
+        assert _valslen*numout == len(outstr), "input/output signature doesn't match"
+        assert len(instr) == _valslen*numin, "input/output signature doesn't match"
+
         for char in vals[0]:
-            if char in vals[1]:
+            if char in vals[1]:                # use generic function-based interface
                 funclist.append('NULL')
                 astr = '%s_functions[%d] = PyUFunc_%s;' % \
                        (name, k, thedict[char])
@@ -356,16 +379,15 @@ def make_arrays(funcdict):
                 else:
                     datalist.append('(void *)%s' % thisfunc)
                 sub += 1
-            else:
+            else:                              # individual wrapper interface
                 datalist.append('(void *)NULL');                
                 funclist.append('%s_%s' % (chartoname[char].upper(), name))
-            siglist.append('PyArray_%s' % chartoname[char].upper())
-            if vals[3][0] > 1:
-                siglist.append('PyArray_%s' % chartoname[char].upper())
-            if len(vals) > 6: # have output specification
-                siglist.append('PyArray_%s' % chartoname[vals[6][k]].upper())
-            else:
-                siglist.append('PyArray_%s' % chartoname[char].upper())                
+
+            insubstr = instr[numin*k:numin*(k+1)]
+            outsubstr = outstr[numout*k:numout*(k+1)]
+            siglist.extend(['PyArray_%s' % chartoname[x].upper() for x in insubstr])
+            siglist.extend(['PyArray_%s' % chartoname[x].upper() for x in outsubstr])
+            print "*** ", siglist
             k += 1
         funcnames = ', '.join(funclist)
         signames = ', '.join(siglist)
