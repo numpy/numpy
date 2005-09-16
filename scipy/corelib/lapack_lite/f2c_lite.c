@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Numeric/f2c.h"
+#include "f2c.h"
 
 
 extern void s_wsfe(cilist *f) {;}

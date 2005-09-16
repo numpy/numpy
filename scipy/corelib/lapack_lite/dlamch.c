@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "Numeric/f2c.h"
+#include "f2c.h"
 
 /* If config.h is available, we only need dlamc3 */
 #ifndef HAVE_CONFIG
