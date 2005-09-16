@@ -12,7 +12,7 @@
 
 
 #include "Python.h"
-#include "Numeric/arrayobject.h"
+#include "scipy/arrayobject.h"
 
 #include "ranf.h"
 
@@ -614,31 +614,28 @@ static char RNG_module_documentation[] =
 ;
 
 DL_EXPORT(void)
-initRNG(void)
+initrandom_lite(void)
 {
 	PyObject *m, *d;
     distributiontype.ob_type = &PyType_Type;
     rngtype.ob_type = &PyType_Type;
 
 	/* Create the module and add the functions */
-	m = Py_InitModule4("RNG", RNG_methods,
+	m = Py_InitModule4("random_lite", RNG_methods,
 		RNG_module_documentation,
 		(PyObject*)NULL,PYTHON_API_VERSION);
 
-	/* Import array module */
-#ifdef import_array
 	import_array();
-#endif
 
 	/* Add some symbolic constants to the module */
 	d = PyModule_GetDict(m);
-	ErrorObject = PyErr_NewException("RNG.error", NULL, NULL);
+	ErrorObject = PyErr_NewException("random_lite.error", NULL, NULL);
 	PyDict_SetItemString(d, "error", ErrorObject);
 	default_distribution = create_default_distribution();
 	PyDict_SetItemString(d, "default_distribution", default_distribution);
 
 	/* Check for errors */
 	if (PyErr_Occurred())
-		Py_FatalError("can't initialize module RNG");
+		Py_FatalError("can't initialize module random_lite");
 }
 

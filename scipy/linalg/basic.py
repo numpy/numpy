@@ -3,11 +3,10 @@
 # only accesses the following LAPACK functions: dgesv, zgesv, dgeev,
 # zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf, dpotrf.
 
-import Numeric
+import scipy.base as Numeric
 import copy
 import lapack_lite
 import math
-import MLab
 import multiarray
 
 # Error object
@@ -27,7 +26,7 @@ def _commonType(*arrays):
 #   force higher precision in lite version
     precision = 1
     for a in arrays:
-        t = a.typecode()
+        t = a.dtypechar
         kind = max(kind, _array_kind[t])
         precision = max(precision, _array_precision[t])
     return _array_type[kind][precision]
@@ -35,7 +34,7 @@ def _commonType(*arrays):
 def _castCopyAndTranspose(type, *arrays):
     cast_arrays = ()
     for a in arrays:
-        if a.typecode() == type:
+        if a.dtypechar == type:
             cast_arrays = cast_arrays + (copy.copy(Numeric.transpose(a)),)
         else:
             cast_arrays = cast_arrays + (copy.copy(
@@ -53,7 +52,7 @@ _fastCT = multiarray._fastCopyAndTranspose
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
     for a in arrays:
-        if a.typecode() == type:
+        if a.dtypechar == type:
             cast_arrays = cast_arrays + (_fastCT(a),)
         else:
             cast_arrays = cast_arrays + (_fastCT(a.astype(type)),)
@@ -106,6 +105,39 @@ def solve_linear_equations(a, b):
 
 def inverse(a):
     return solve_linear_equations(a, Numeric.identity(a.shape[0]))
+
+def tri(N, M=None, k=0, dtype=None):
+    """ returns a N-by-M matrix where all the diagonals starting from
+        lower left corner up to the k-th are all ones.
+    """
+    if M is None: M = N
+    if type(M) == type('d'):
+        #pearu: any objections to remove this feature?
+        #       As tri(N,'d') is equivalent to tri(N,dtype='d')
+        typecode = M
+        M = N
+    m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
+    if typecode is None:
+        return m
+    else:
+        return m.astype(typecode)
+
+def tril(m, k=0):
+    """ returns the elements on and below the k-th diagonal of m.  k=0 is the
+        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
+    """
+    m = asarray(m)
+    out = tri(m.shape[0], m.shape[1], k=k, dtype=m.dtypechar)*m
+    return out
+
+def triu(m, k=0):
+    """ returns the elements on and above the k-th diagonal of m.  k=0 is the
+        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
+    """
+    m = asarray(m)
+    out = (1-tri(m.shape[0], m.shape[1], k-1, m.dtypechar))*m
+    return out
+
 
 # Cholesky decomposition
 
@@ -350,7 +382,7 @@ def singular_value_decomposition(a, full_matrices = 0):
 
 def generalized_inverse(a, rcond = 1.e-10):
     a = Numeric.array(a, copy=0)
-    if a.typecode() in Numeric.typecodes['Complex']:
+    if a.dtypechar in Numeric.typecodes['Complex']:
         a = Numeric.conjugate(a)
     u, s, vt = singular_value_decomposition(a, 0)
     m = u.shape[0]
@@ -458,7 +490,7 @@ Singular values less than s[0]*rcond are treated as zero.
 
 
 if __name__ == '__main__':
-    from Numeric import *
+    from scipy.base import *
 
     def test(a, b):
 
