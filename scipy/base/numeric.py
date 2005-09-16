@@ -1,7 +1,7 @@
 
 import sys
 import multiarray
-from umath import * 
+from umath import *
 from numerictypes import *
 
 #import _numpy # for freeze dependency resolution (at least on Mac)
@@ -89,6 +89,7 @@ except ImportError:
     def restoredot():
         pass
 
+
 def _move_axis_to_0(a, axis):
     if axis == 0:
         return a
@@ -138,9 +139,10 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1):
     else:
         return cp.swapaxes(0,axisc)
     
-        
+
 #Use numarray's printing function
 from arrayprint import array2string, get_printoptions, set_printoptions
+
 
 _typelessdata = [int, float, complex]
 if issubclass(intc, pyint):
@@ -170,6 +172,7 @@ def array_str(a, max_line_width = None, precision = None, suppress_small = None)
 set_string_function = multiarray.set_string_function
 set_string_function(array_str, 0)
 set_string_function(array_repr, 1)
+
 
 little_endian = (sys.byteorder == 'little')
 
@@ -201,6 +204,7 @@ def load(file):
     if isinstance(file, type("")):
         file = _file(file,"rb")
     return _cload(file)
+
 
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
@@ -290,5 +294,4 @@ def geterr():
     res['invalid'] = _errdict_rev[val]
     return res
 
-    
     

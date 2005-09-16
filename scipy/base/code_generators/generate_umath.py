@@ -275,7 +275,31 @@ defdict = {
            "sqrt(x**2 + y**2) elementwise"
            ],
 
-'modf' : ['fdg','',
+'isnan' : [flts+cmplx, '',
+           (), (1,1), None,
+           "isnan(x) returns True where x is Not-A-Number",
+           '?'*len(flts+cmplx)
+           ],
+
+'isinf' : [flts+cmplx, '',
+           (), (1,1), None,
+           "isinf(x) returns True where x is + or - infinity",
+           '?'*len(flts+cmplx)
+           ],
+
+'isfinite' : [flts+cmplx, '',
+           (), (1,1), None,
+           "isfinite(x) returns True where x is finite",
+           '?'*len(flts+cmplx)
+           ],
+
+'signbit' : [flts,'',
+             (),(1,1),None,
+             "signbit(x) returns True where signbit of x is set (x<0).",
+             '?'*len(flts)
+             ],
+
+'modf' : [flts,'',
           (),(1,2),None,
           "modf breaks argument into integral and fractional parts (each with the same sign as input)"
           ]

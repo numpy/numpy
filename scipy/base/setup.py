@@ -56,6 +56,8 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append('HAVE_FLOAT_FUNCS')
             if config_cmd.check_func('asinh', libraries=libs, decl=1):
                 moredefs.append('HAVE_INVERSE_HYPERBOLIC')
+            if config_cmd.check_func('isnan', libraries=libs, decl=1):
+                moredefs.append('HAVE_ISNAN')
 
             if moredefs:
                 target_f = open(target,'a')
@@ -118,8 +120,7 @@ def configuration(parent_package='',top_path=None):
     print "****%s****" % config.local_path
     config.add_include_dirs(appendpath('build/src',join(config.local_path,'Src')))
 
-    deps = [join('src','umathmodule.c.src'),
-            join('src','arrayobject.c'),
+    deps = [join('src','arrayobject.c'),
             join('src','arraymethods.c'),
             join('src','scalartypes.inc.src'),
             join('src','arraytypes.inc.src'),
