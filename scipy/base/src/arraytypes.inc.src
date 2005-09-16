@@ -1319,7 +1319,8 @@ static int
 */
 
 static void
-@name@_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n)
+@name@_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n, 
+	   void *ignore)
 {
 	@out@ tmp=(@out@)0.0;
 	int i;
@@ -1338,8 +1339,8 @@ static void
 #type= float, double, longdouble#
 */
 
-static void @name@_dot(char *ip1, intp is1, char *ip2, intp is2,		
-		       char *op, intp n) 
+static void @name@_dot(char *ip1, intp is1, char *ip2, intp is2,
+		       char *op, intp n, void *ignore) 
 {				
 	@type@ tmpr=(@type@)0.0, tmpi=(@type@)0.0; 
 	intp i;	
@@ -1355,7 +1356,8 @@ static void @name@_dot(char *ip1, intp is1, char *ip2, intp is2,
 /**end repeat**/
 
 static void 
-OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n) 
+OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
+	   void *ignore) 
 {
 	intp i;
 	PyObject *tmp1, *tmp2, *tmp=NULL;

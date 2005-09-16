@@ -6,6 +6,12 @@ import copy
 import types
 import glob
 
+def allpath(name):
+    "Convert a /-separated pathname to one using the OS's path separator."
+    splitted = name.split('/')
+    return os.path.join(*splitted)
+    
+
 def get_path(mod_name,parent_path=None):
     """ Return path of the module.
 

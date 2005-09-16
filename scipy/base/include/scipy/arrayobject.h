@@ -685,17 +685,18 @@ typedef PyObject * (PyArray_GetItemFunc) (char *, void *);
 typedef int (PyArray_SetItemFunc)(PyObject *, char *, void *);
 
 typedef int (PyArray_CompareFunc)(const void *, const void *, void *);
-typedef int (PyArray_CopySwapNFunc)(void *, void *, intp, int, int);
-typedef int (PyArray_CopySwapFunc)(void *, void *, int, int);
-typedef int (PyArray_NonzeroFunc)(void *, void *);
+typedef void (PyArray_CopySwapNFunc)(void *, void *, intp, int, int);
+typedef void (PyArray_CopySwapFunc)(void *, void *, int, int);
+typedef bool (PyArray_NonzeroFunc)(void *, void *);
 
 
   /* These assume aligned and byteswapped data -- a buffer will be
       used before or contiguous data will be obtained
   */
 typedef int (PyArray_ArgFunc)(void*, intp, intp*, void *);
-typedef int (PyArray_DotFunc)(char *, int, char *, int, char *, int, void *);
-typedef int (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
+typedef void (PyArray_DotFunc)(char *, intp, char *, intp, char *, intp, 
+			       void *);
+typedef void (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
 typedef int (PyArray_ScanFunc)(FILE *, void *, int, char *, void *);
 
 

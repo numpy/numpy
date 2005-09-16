@@ -861,7 +861,7 @@ DL_EXPORT(void) initatlas_version(void) {
 
 def get_atlas_version(**config):
     from core import Extension, setup
-    from misc_util import get_build_temp
+#    from misc_util import get_build_temp
     import log
     magic = hex(hash(`config`))
     def atlas_version_c(extension, build_dir,magic=magic):
@@ -877,7 +877,8 @@ def get_atlas_version(**config):
     ext = Extension('atlas_version',
                     sources=[atlas_version_c],
                     **config)
-    extra_args = ['--build-lib',get_build_temp()]
+#    extra_args = ['--build-lib',get_build_temp_dir()]
+    extra_args = []
     for a in sys.argv:
         if re.match('[-][-]compiler[=]',a):
             extra_args.append(a)

@@ -387,7 +387,6 @@ def make_arrays(funcdict):
             outsubstr = outstr[numout*k:numout*(k+1)]
             siglist.extend(['PyArray_%s' % chartoname[x].upper() for x in insubstr])
             siglist.extend(['PyArray_%s' % chartoname[x].upper() for x in outsubstr])
-            print "*** ", siglist
             k += 1
         funcnames = ', '.join(funclist)
         signames = ', '.join(siglist)

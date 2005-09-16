@@ -1819,14 +1819,14 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	for(i1=0; i1<n1; i1++) {
 		ip2 = ap2->data;
 		for(i2=0; i2<n2; i2++) {
-			if (dot(ip1, is1, ip2, is2, op, l, ret)==-1) 
-				goto fail;
+			dot(ip1, is1, ip2, is2, op, l, ret);
 			ip2 += is2*l;
 			op += os;
 		}
 		ip1 += is1*l;
 	}
-	
+	if (PyErr_Occurred()) goto fail;
+		
 	
 	Py_DECREF(ap1);
 	Py_DECREF(ap2);
@@ -1920,7 +1920,8 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
         subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
 
 	ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
-					   typenum, NULL, NULL, 0, 0, ap1);
+					   typenum, NULL, NULL, 0, 0, 
+					   (prior2 > prior1 ? ap2 : ap1));
 	if (ret == NULL) goto fail;
 
 	dot = ret->descr->dotfunc;
@@ -1943,13 +1944,14 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	for(i1=0; i1<n1; i1++) {
 		ip2 = ap2->data;
 		for(i2=0; i2<n2; i2++) {
-			if (dot(ip1, is1, ip2, is2, op, l, ret) == -1)
-				goto fail;
+			dot(ip1, is1, ip2, is2, op, l, ret);
 			ip2 += is2r;
 			op += os;
 		}
 		ip1 += is1r;
 	}
+	if (PyErr_Occurred()) goto fail;
+
 	
 	
 	Py_DECREF(ap1);
@@ -2071,22 +2073,23 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	ip1 = ap1->data; ip2 = ap2->data+n_left*is2;
 	n = n-n_left;
 	for(i=0; i<n_left; i++) {
-		if (dot(ip1, is1, ip2, is2, op, n, ret) == -1) goto fail;
+		dot(ip1, is1, ip2, is2, op, n, ret);
 		n++;
 		ip2 -= is2;
 		op += os;
 	}
 	for(i=0; i<(n1-n2+1); i++) {
-		if (dot(ip1, is1, ip2, is2, op, n, ret) == -1) goto fail;
+		dot(ip1, is1, ip2, is2, op, n, ret);
 		ip1 += is1;
 		op += os;
 	}
 	for(i=0; i<n_right; i++) {
 		n--;
-		if (dot(ip1, is1, ip2, is2, op, n, ret) == -1) goto fail;
+		dot(ip1, is1, ip2, is2, op, n, ret);
 		ip1 += is1;
 		op += os;
 	}
+	if (PyErr_Occurred()) goto fail;
 	Py_DECREF(ap1);
 	Py_DECREF(ap2);
 	return PyArray_Return(ret);

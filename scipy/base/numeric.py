@@ -82,9 +82,12 @@ def vdot(a, b):
 try:
     # importing this changes the dot function for basic 4 types
     # to blas-optimized versions.
-    from blasdot import dot, vdot, inner
+    from scipy.lib._dotblas import dot, vdot, inner, alterdot, restoredot
 except ImportError:
-    pass
+    def alterdot():
+        pass
+    def restoredot():
+        pass
 
 def _move_axis_to_0(a, axis):
     if axis == 0:

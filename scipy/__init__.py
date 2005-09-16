@@ -1,5 +1,5 @@
 
 try:
     from scipy.base import *
-except ImportError:
+except:
     pass
