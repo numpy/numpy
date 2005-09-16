@@ -271,6 +271,45 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
         return NULL;
 }
 
+/* return a new view of the array object with all of its unit-length 
+   dimensions squeezed out if needed, otherwise
+   return the same array.
+ */
+
+static PyObject *
+PyArray_Squeeze(PyArrayObject *self)
+{
+	int nd = self->nd;
+	int newnd = nd;
+	intp dimensions[MAX_DIMS];
+	intp strides[MAX_DIMS];
+	int i,j;
+	PyObject *ret;
+
+	if (nd == 0) {
+		Py_INCREF(self);
+		return PyArray_Return(self);			
+	}
+	for (j=0, i=0; i<nd; i++) {
+		if (self->dimensions[i] == 1) {
+			newnd -= 1;
+		}
+		else {
+			dimensions[j] = self->dimensions[i];
+			strides[j++] = self->strides[i];
+		}
+	}
+	
+	ret = PyArray_New(self->ob_type, newnd, dimensions, 
+			  self->descr->type_num, strides,
+			  self->data, self->itemsize, self->flags,
+			  self);
+	self->flags &= ~OWN_DATA;
+	self->base = (PyObject *)self;
+	Py_INCREF(self);
+	return PyArray_Return((PyArrayObject *)ret);
+}
+
 static PyObject *
 PyArray_Sign(PyArrayObject *self)
 {
@@ -1738,17 +1777,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	PyArray_DotFunc *dot;
 	PyTypeObject *subtype;
         double prior1, prior2;
-
-	/* 
-	PyObject *args;
-        args = Py_BuildValue("O",op2);
-	Py_DELEGATE_ARGS(op1, innerproduct, args);
-        Py_XDECREF(args);
-        args = Py_BuildValue("O",op1);
-	Py_DELEGATE_ARGS(op2, innerproduct, args);
-        Py_XDECREF(args);
-	*/
-
+	
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);
 		
@@ -1761,8 +1790,9 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	if (ap2 == NULL) goto fail;
 	
 	if (ap1->nd == 0 || ap2->nd == 0) {
-		ret = (PyArrayObject *)PyNumber_Multiply((PyObject *)ap1, 
-							 (PyObject *)ap2);
+		ret = (ap1->nd == 0 ? ap1 : ap2);
+		ret = (PyArrayObject *)ret->ob_type->tp_as_number->\
+			nb_multiply((PyObject *)ap1, (PyObject *)ap2);
 		Py_DECREF(ap1);
 		Py_DECREF(ap2);
 		return PyArray_Return(ret);
@@ -1799,7 +1829,8 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
 
 	ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
-					   typenum, NULL, NULL, 0, 0, ap1);
+					   typenum, NULL, NULL, 0, 0, 
+					   (prior2 > prior1 ? ap2 : ap1));
 	if (ret == NULL) goto fail;
 
 	dot = (ret->descr->dotfunc);
@@ -1839,6 +1870,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	return NULL;
 }
 
+
 /* just like inner product but does the swapaxes stuff on the fly */
 static PyObject *
 PyArray_MatrixProduct(PyObject *op1, PyObject *op2) 
@@ -1866,9 +1898,9 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	if (ap2 == NULL) goto fail;
 	
 	if (ap1->nd == 0 || ap2->nd == 0) {
-		/* handle the use of dot with scalars here */
-		ret = (PyArrayObject *)PyNumber_Multiply((PyObject *)ap1, 
-							 (PyObject *)ap2);
+		ret = (ap1->nd == 0 ? ap1 : ap2);
+		ret = (PyArrayObject *)ret->ob_type->tp_as_number->\
+			nb_multiply((PyObject *)ap1, (PyObject *)ap2);
 		Py_DECREF(ap1);
 		Py_DECREF(ap2);
 		return PyArray_Return(ret);
@@ -1884,7 +1916,6 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 		otherDim = 0;
 	}
 
-	/*fprintf(stderr, "ap1->nd=%d ap2->nd=%d\n", ap1->nd, ap2->nd); */
 	if (ap2->dimensions[matchDim] != l) {
 		PyErr_SetString(PyExc_ValueError, "objects are not aligned");
 		goto fail;

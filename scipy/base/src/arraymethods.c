@@ -69,7 +69,7 @@ array_reshape(PyArrayObject *self, PyObject *args)
 				PyErr_SetString(PyExc_TypeError, 
 						"invalid shape.");
 			} 
-			return NULL;			
+			goto fail;
 		}
 	}
 	
@@ -78,13 +78,26 @@ array_reshape(PyArrayObject *self, PyObject *args)
 	}
 	else {
 		tmp = PyArray_Copy(self);
-		if (tmp==NULL) return NULL;
+		if (tmp==NULL) goto fail;
 		ret = PyArray_Newshape((PyArrayObject *)tmp, &newshape);
 		Py_DECREF(tmp);
 	}
 	PyDimMem_FREE(newshape.ptr);
         return ret;
+ fail:
+	PyDimMem_FREE(newshape.ptr);
+	return NULL;
 }
+
+static char doc_squeeze[] = "m.squeeze() eliminate all length-1 dimensions";
+
+static PyObject *
+array_squeeze(PyArrayObject *self, PyObject *args)
+{
+        if (!PyArg_ParseTuple(args, "")) return NULL;
+        return PyArray_Squeeze(self);
+}
+
 
 
 static char doc_view[] = "a.view(<dtype>) return a new view of array with same data.";
@@ -887,7 +900,7 @@ array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	PyArray_Typecode rtype = {PyArray_NOTYPE, 0, 0};
 	static char *kwlist[] = {"axis", "rtype", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
 					 PyArray_AxisConverter, 
 					 &axis, PyArray_TypecodeConverter,
 					 &rtype)) return NULL;
@@ -904,7 +917,7 @@ array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	PyArray_Typecode rtype = {PyArray_NOTYPE, 0, 0};
 	static char *kwlist[] = {"axis", "rtype", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
 					 PyArray_AxisConverter, 
 					 &axis, PyArray_TypecodeConverter,
 					 &rtype)) return NULL;
@@ -1228,6 +1241,8 @@ static PyMethodDef array_methods[] = {
 	 METH_VARARGS, doc_argmin},
 	{"reshape",	(PyCFunction)array_reshape, 
 	 METH_VARARGS, doc_reshape},
+	{"squeeze",	(PyCFunction)array_squeeze,
+	 METH_VARARGS, doc_squeeze},
 	{"view",  (PyCFunction)array_view, 
 	 METH_VARARGS, doc_view},
 	{"swapaxes", (PyCFunction)array_swapaxes,

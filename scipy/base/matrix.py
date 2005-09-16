@@ -59,10 +59,10 @@ def _binary(num):
 
 
 class matrix(N.ndarray):
-    __array_priority__ = 1.0
+    __array_priority__ = 10.0
     def __new__(self, data, dtype=None, copy=0):
         if isinstance(data, matrix):
-            dtype2 = data.type
+            dtype2 = data.dtype
             if (dtype is None):
                 dtype = dtype2
             if (dtype2 is dtype) and (not copy):
@@ -94,13 +94,14 @@ class matrix(N.ndarray):
         if not (fortran or arr.flags['CONTIGUOUS']):
             arr = arr.copy()
 
-        ret = N.ndarray.__new__(matrix, shape, intype, buffer=arr, fortran=fortran,
-                                swapped=(not arr.flags['NOTSWAPPED']))
+        ret = N.ndarray.__new__(matrix, shape, intype, buffer=arr,
+                                fortran=fortran,
+                                swap=(not arr.flags['NOTSWAPPED']))
         return ret; 
             
     def __array_wrap__(self, obj):
         try:
-            ret = matrix(obj,typecode=obj.type)
+            ret = matrix(obj,dtype=obj.dtype)
         except:
             ret = obj
         return ret
@@ -128,10 +129,16 @@ class matrix(N.ndarray):
         return out
 
     def __mul__(self, other):
-        return N.dot(self, other)
+        if isinstance(other, N.ndarray) and other.ndim == 0:
+            return N.multiply(self, other)
+        else:
+            return N.dot(self, other)
 
     def __rmul__(self, other):
-        return N.dot(other, self)
+        if isinstance(other, N.ndarray) and other.ndim == 0:
+            return N.multiply(other, self)
+        else:
+            return N.dot(other, self)
 
     def __pow__(self, other):
         if len(shape)!=2 or shape[0]!=shape[1]:
@@ -170,6 +177,15 @@ class matrix(N.ndarray):
     def __rpow__(self, other):
         raise NotImplementedError
 
+    def __repr__(self):
+        return repr(self.A).replace('array','matrix')
+
+    def __str__(self):
+        return str(self.A)
+
+    def tolist(self):
+        return self.A.tolist()    
+
     def getA(self):
         arr = self
         fortran = False;
@@ -179,15 +195,18 @@ class matrix(N.ndarray):
         if not (fortran or arr.flags['CONTIGUOUS']):
             arr = arr.copy()
 
-        return N.ndarray.__new__(N.ndarray, self.shape, self.type, buffer=arr,
+        return N.ndarray.__new__(N.ndarray, self.shape, self.dtype, buffer=arr,
                                 fortran=fortran,
-                                swapped=(not arr.flags['NOTSWAPPED']))
+                                swap=(not arr.flags['NOTSWAPPED']))
         
     def getT(self):
-        return N.transpose(self)
+        return self.transpose()
 
     def getH(self):
-        return N.conjugate(N.transpose(self))
+        if issubclass(self.dtype, N.complexfloating):
+            return self.transpose(self.conjugate())
+        else:
+            return self.transpose()
 
     # inverse doesn't work yet....
     def getI(self):

@@ -747,6 +747,9 @@ static PyGetSetDef gentype_getsets[] = {
 	 (getter)gentype_shape_get,
 	 NULL,
 	 "Array protocol: strides"},
+
+	/* Does not have __array_priority__ because it is not a subtype.
+	 */
        	{NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 
@@ -777,6 +780,13 @@ gentype_@name@(PyObject *self, PyObject *args)
 }
 /**end repeat**/
 
+static PyObject *
+gentype_squeeze(PyObject *self, PyObject *args)
+{
+        if (!PyArg_ParseTuple(args, "")) return NULL;
+	Py_INCREF(self);
+	return self;
+}
 
 static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args)
@@ -923,6 +933,8 @@ static PyMethodDef gentype_methods[] = {
 	{"argmin",  (PyCFunction)gentype_argmin,
 	 METH_VARARGS, NULL},
 	{"reshape",	(PyCFunction)gentype_reshape, 
+	 METH_VARARGS, NULL},
+	{"squeeze",	(PyCFunction)gentype_squeeze, 
 	 METH_VARARGS, NULL},
 	{"view",  (PyCFunction)gentype_view, 
 	 METH_VARARGS, NULL},

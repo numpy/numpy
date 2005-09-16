@@ -2112,7 +2112,7 @@ _find_array_wrap(PyObject *args)
 	int argmax = 0;
 	int val;
 	double priority[MAX_ARGS];
-	double maxpriority = 0.0;
+	double maxpriority = PyArray_SUBTYPE_PRIORITY;
 	PyObject *with_wrap[MAX_ARGS];
 	PyObject *attr;
 	PyObject *obj;
@@ -2120,6 +2120,7 @@ _find_array_wrap(PyObject *args)
 	nargs = PyTuple_Size(args);
 	for (i=0; i<nargs; i++) {
 		obj = PyTuple_GET_ITEM(args, i);
+		if (PyArray_CheckExact(obj)) continue;
 		attr = PyObject_GetAttrString(obj, "__array_wrap__");
 		if (attr != NULL) {
 			val = PyCallable_Check(attr);
@@ -2128,12 +2129,13 @@ _find_array_wrap(PyObject *args)
 				attr = PyObject_GetAttrString(obj,
 						     "__array_priority__");
 				if (attr == NULL)
-					priority[np] = 0.0;
+					priority[np] = \
+						PyArray_SUBTYPE_PRIORITY;
 				else {
 					priority[np] = PyFloat_AsDouble(attr);
 					if (PyErr_Occurred()) {
 						PyErr_Clear();
-						priority[np] = 0.0;
+						priority[np] = PyArray_SUBTYPE_PRIORITY;
 					}
 				}
 				with_wrap[np] = obj;

@@ -1,5 +1,5 @@
 static char module_doc[] =
-"This module provides a BLAS optimized\nmatrix multiply, inner product and dot for Numeric arrays";
+"This module provides a BLAS optimized\nmatrix multiply, inner product and dot for scipy arrays";
 
 
 #include "Python.h"
@@ -125,7 +125,7 @@ dotblas_restoredot(PyObject *dummy, PyObject *args)
 }
       
 
-static char doc_matrixproduct[] = "matrixproduct(a,b)\nReturns the dot product of a and b for arrays of floating point types.\nLike the generic Numeric equivalent the product sum is over\nthe last dimension of a and the second-to-last dimension of b.\nNB: The first argument is not conjugated.";
+static char doc_matrixproduct[] = "matrixproduct(a,b)\nReturns the dot product of a and b for arrays of floating point types.\nLike the generic scipy equivalent the product sum is over\nthe last dimension of a and the second-to-last dimension of b.\nNB: The first argument is not conjugated.";
 
 
 static PyObject *
@@ -142,6 +142,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     static const double zeroD[2] = {0.0, 0.0};
     double prior1, prior2;
     PyTypeObject *subtype;
+    PyArray_Typecode dtype;
 
 
     if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) return NULL;
@@ -158,15 +159,15 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     /* This function doesn't handle other types */
     if ((typenum != PyArray_DOUBLE && typenum != PyArray_CDOUBLE &&
 	 typenum != PyArray_FLOAT && typenum != PyArray_CFLOAT)) {
-	return PyArray_InnerProduct(op1, op2);
+	return PyArray_MatrixProduct(op1, op2);
     }
 
     ret = NULL;
-    ap1 = (PyArrayObject *)PyArray_ContiguousFromObject(op1, typenum, 0, 0);
+    dtype.type_num = typenum;
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, &dtype, 0, 0, 0);
     if (ap1 == NULL) return NULL;
-    ap2 = (PyArrayObject *)PyArray_ContiguousFromObject(op2, typenum, 0, 0);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, &dtype, 0, 0, 0);
     if (ap2 == NULL) goto fail;
-
 
     if ((ap1->nd > 2) || (ap2->nd > 2)) {  
 	/* This function doesn't handle dimensions greater than 2 -- other
@@ -185,13 +186,6 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	Py_DECREF(ap1); 
 	Py_DECREF(ap2);
 	return (PyObject *)ret;
-    }
-
-
-    if (typenum != PyArray_FLOAT && typenum != PyArray_DOUBLE &&
-	typenum != PyArray_CFLOAT && typenum != PyArray_CDOUBLE) {
-	PyErr_SetString(PyExc_TypeError, "at least one argument must be (possibly complex) float or double");
-	goto fail;
     }
 
     if (ap1->nd == 0 || ap2->nd == 0) {

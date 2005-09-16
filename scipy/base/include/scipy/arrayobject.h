@@ -101,6 +101,11 @@ enum PyArray_TYPES {    PyArray_BOOL=0,
 			PyArray_NOTYPE,
 };
 
+	/* basetype array priority */
+#define PyArray_PRIORITY 0.0
+	/* default subtype priority */
+#define PyArray_SUBTYPE_PRIORITY 1.0
+
 	/* How many floating point types are there */
 #define PyArray_NUM_FLOATTYPE 3
 

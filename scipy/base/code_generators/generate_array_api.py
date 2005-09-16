@@ -293,6 +293,10 @@ multiapi_list = [
     """,
      'Newshape','PyArrayObject *, PyArray_Dims *','PyObject *'),
 
+    (r"""
+    """,
+     'Squeeze','PyArrayObject *','PyObject *'),
+
     (r"""View
     """,
      'View','PyArrayObject *, PyArray_Typecode *','PyObject *'),

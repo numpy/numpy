@@ -173,7 +173,9 @@ static double
 PyArray_GetPriority(PyObject *obj, double default_) 
 {
         PyObject *ret;
-        double priority=default_;
+        double priority=PyArray_PRIORITY;
+
+	if (PyArray_CheckExact(obj)) return priority;
 
         ret = PyObject_GetAttrString(obj, "__array_priority__");
         if (ret != NULL) priority = PyFloat_AsDouble(ret);
@@ -191,10 +193,12 @@ PyArray_GetPriority(PyObject *obj, double default_)
  ***You must free the memory once you are done with it
     using PyDataMem_FREE(ptr) or you create a memory leak***
 
-    If Object array you are getting a BORROWED reference to Zero or One.
-    Do not DECREF, and INCREF if you will be hanging on to it.     
-    The memory for the ptr still must be freed.
+    If arr is an Object array you are getting a 
+    BORROWED reference to Zero or One.
+    Do not DECREF.
+    Please INCREF if you will be hanging on to it.
 
+    The memory for the ptr still must be freed in any case;
 */
 
 static char *
@@ -1040,6 +1044,13 @@ PyArray_ToList(PyArrayObject *self)
 	
         for (i=0; i<sz; i++) {
                 v=(PyArrayObject *)array_item(self, i);
+		if (v->nd >= self->nd) {
+			PyErr_SetString(PyExc_RuntimeError,
+					"array_item not returning smaller" \
+					" dimensional array");
+			Py_DECREF(lp);
+			return NULL;
+		}
                 PyList_SetItem(lp, i, PyArray_ToList(v));
 		Py_DECREF(v);
         }
@@ -3625,13 +3636,22 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 
 
 static PyObject *
-array_protocal_strides_get(PyArrayObject *self)
+array_protocol_strides_get(PyArrayObject *self)
 {
 	if PyArray_ISCONTIGUOUS(self) {
 		Py_INCREF(Py_None);
 		return Py_None;
 	}
 	return PyArray_IntTupleFromIntp(self->nd, self->strides);
+}
+
+static PyObject *
+array_priority_get(PyArrayObject *self)
+{
+	if (PyArray_CheckExact(self)) 
+		return PyFloat_FromDouble(PyArray_PRIORITY);
+	else
+		return PyFloat_FromDouble(PyArray_SUBTYPE_PRIORITY);
 }
 
 
@@ -4146,9 +4166,13 @@ static PyGetSetDef array_getsetlist[] = {
 	 NULL,
 	 "Array protocol: shape"},
 	{"__array_strides__",
-	 (getter)array_protocal_strides_get,
+	 (getter)array_protocol_strides_get,
 	 NULL,
 	 "Array protocol: strides"},
+	{"__array_priority__",
+	 (getter)array_priority_get,
+	 NULL,
+	 "Array priority"},
        	{NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 
