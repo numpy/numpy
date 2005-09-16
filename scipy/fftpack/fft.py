@@ -19,7 +19,9 @@ inverse_fft2d(a, s=None, axes=(-2, -1))
 real_fft2d(a, s=None, axes=(-2,-1)) 
 inverse_real_fft2d(a, s=None, axes=(-2, -1))
 """
-import Numeric, fftpack, copy
+import scipy.base as Numeric
+import scipy.lib.fftpack_lite as fftpack
+import copy
 
 _fft_cache = {}
 _real_fft_cache = {}
@@ -46,7 +48,7 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
             index = [slice(None)]*len(s)
             index[axis] = slice(0,s[axis])
             s[axis] = n
-            z = Numeric.zeros(s, a.typecode())
+            z = Numeric.zeros(s, a.dtypechar)
             z[index] = a
             a = z
 

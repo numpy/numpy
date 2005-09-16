@@ -239,12 +239,12 @@ static char fftpack_module_documentation[] =
 ;
 
 DL_EXPORT(void)
-initfftpack(void)
+initfftpack_lite(void)
 {
 	PyObject *m, *d;
 
 	/* Create the module and add the functions */
-	m = Py_InitModule4("fftpack", fftpack_methods,
+	m = Py_InitModule4("fftpack_lite", fftpack_methods,
 		fftpack_module_documentation,
 		(PyObject*)NULL,PYTHON_API_VERSION);
 
