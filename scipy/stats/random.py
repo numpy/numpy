@@ -1,6 +1,6 @@
 import ranlib
-import Numeric
-import LinearAlgebra
+import scipy.base as Numeric
+import scipy.linalg as LinearAlgebra
 import sys
 import math
 from types import *

@@ -10,8 +10,9 @@
  ranf() returns a stream of random numbers
  random_sample(n) returns a vector of length n filled with random numbers
 """
-import Numeric
-from RNG import *
+import scipy.base as Numeric
+from scipy.lib.rng import *
+
 
 standard_generator = CreateGenerator(-1)
 
@@ -30,3 +31,4 @@ def random_sample(*n):
                 m = m * i
         return Numeric.reshape (standard_generator.sample(m), n)
 
+from scipy.lib.ranlib import *

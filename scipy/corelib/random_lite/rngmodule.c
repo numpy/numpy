@@ -614,14 +614,14 @@ static char RNG_module_documentation[] =
 ;
 
 DL_EXPORT(void)
-initrandom_lite(void)
+initrng(void)
 {
 	PyObject *m, *d;
     distributiontype.ob_type = &PyType_Type;
     rngtype.ob_type = &PyType_Type;
 
 	/* Create the module and add the functions */
-	m = Py_InitModule4("random_lite", RNG_methods,
+	m = Py_InitModule4("rng", RNG_methods,
 		RNG_module_documentation,
 		(PyObject*)NULL,PYTHON_API_VERSION);
 

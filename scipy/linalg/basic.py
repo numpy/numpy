@@ -5,9 +5,9 @@
 
 import scipy.base as Numeric
 import copy
-import lapack_lite
+import scipy.lib.lapack_lite as lapack_lite
 import math
-import multiarray
+import scipy.base.multiarray as multiarray
 
 # Error object
 class LinAlgError(Exception):
