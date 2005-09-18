@@ -1299,7 +1299,7 @@ _getidentity(PyUFuncObject *self, int otype, char *str)
 
         if (self->identity == PyUFunc_None) {
                 PyErr_Format(PyExc_ValueError, 
-                             "%s called on ufunc "      \
+                             "zero-size array to ufunc.%s "      \
                              "without identity", str);
                 return NULL;
         }
@@ -1324,7 +1324,7 @@ _create_reduce_copy(PyUFuncReduceObject *loop, PyArrayObject **arr, int rtype)
 	maxsize = PyArray_SIZE(*arr);
 	
 	if (maxsize < loop->bufsize) {
-		if (!(PyArray_CHKFLAGS(*arr, BEHAVED_FLAGS_RO)) ||	\
+		if (!(PyArray_ISBEHAVED_RO(*arr)) ||	\
 		    PyArray_TYPE(*arr) != rtype) {
 			new = PyArray_FromAny((PyObject *)(*arr), 
 					      &ntype, 0, 0,
@@ -1431,9 +1431,8 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
                 loop->swap = !(PyArray_ISNOTSWAPPED(aar));
         }
 
-        if (loop->meth == ZERODIM_REDUCELOOP || \
-            loop->meth == BUFFER_UFUNCLOOP) {
-                idarr = _getidentity(self, otype, "reduce");
+        if (loop->meth == ZERODIM_REDUCELOOP) {
+                idarr = _getidentity(self, otype, str);
                 if (idarr == NULL) goto fail;
                 if (idarr->itemsize > UFUNC_MAXIDENTITY) {
                         PyErr_Format(PyExc_RuntimeError, 
@@ -1609,7 +1608,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 		}               
                 break;
         case ONEDIM_REDUCELOOP:
-		fprintf(stderr, "ONEDIM..%d\n", loop->size); 
+		/*fprintf(stderr, "ONEDIM..%d\n", loop->size); */
                 while(loop->index < loop->size) {
                         memcpy(loop->bufptr[1], loop->it->dataptr, 
                                loop->outsize);
@@ -1619,7 +1618,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 		}		
 		break;
         case NOBUFFER_UFUNCLOOP:
-		fprintf(stderr, "NOBUFFER..%d\n", loop->size); 
+		/*fprintf(stderr, "NOBUFFER..%d\n", loop->size); */
                 while(loop->index < loop->size) {
 			/* Copy first element to output */
                         memcpy(loop->bufptr[1], loop->it->dataptr, 
@@ -1642,20 +1641,38 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
                 /* use buffer for arr */
                 /* 
                    For each row to reduce
-                   1. copy identity over to output (casting if necessary)
+                   1. copy first item over to output (casting if necessary)
                    2. Fill inner buffer 
                    3. When buffer is filled or end of row
                       a. Cast input buffers if needed
                       b. Call inner function.
                    4. Repeat 2 until row is done.
                 */
-		fprintf(stderr, "BUFFERED..%d %d\n", loop->size, 
-		   loop->swap); 
+		/* fprintf(stderr, "BUFFERED..%d %d\n", loop->size, 
+		   loop->swap); */
                 while(loop->index < loop->size) {
-                        /* Copy identity over to output */
-                        memcpy(loop->bufptr[1], loop->idptr, loop->outsize);
-                        n = 0;
-                        loop->inptr = loop->it->dataptr;
+                        loop->inptr = loop->it->dataptr;			
+			/* Copy (cast) First term over to output */
+			if (loop->cast) {
+				/* A little tricky because we need to
+				   cast it first */
+				arr->descr->copyswap(loop->buffer,
+						     loop->inptr,
+						     loop->swap,
+						     loop->insize);
+				loop->cast(loop->buffer, loop->castbuf,
+					   1, NULL, NULL);
+				memcpy(loop->bufptr[1], loop->castbuf,
+				       loop->outsize);
+			}
+			else { /* Simple copy */
+				arr->descr->copyswap(loop->bufptr[1], 
+						     loop->inptr,
+						     loop->swap,
+						     loop->insize);
+			}
+			loop->inptr += loop->instrides;
+                        n = 1;
                         while(n < loop->N) {
                                 /* Copy up to loop->bufsize elements to 
                                    buffer */
@@ -2088,6 +2105,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 		break;
         }
         Py_DECREF(mp);
+	if (ret==NULL) return NULL;
 	if (op->ob_type != ret->ob_type) {
 		res = PyObject_CallMethod(op, "__array_wrap__", "O", ret);
 	}
