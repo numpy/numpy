@@ -1415,10 +1415,11 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
         if (loop->N == 0) {
                 loop->meth = ZERODIM_REDUCELOOP;
         }
-        else if (PyArray_CHKFLAGS(aar,BEHAVED_FLAGS_RO) &&     \
+        else if (PyArray_ISBEHAVED_RO(aar) &&		\
                  otype == (aar)->descr->type_num) {
-		if (loop->N == 1) 
+		if (loop->N == 1) {
 			loop->meth = ONEDIM_REDUCELOOP;
+		}
 		else {
 			loop->meth = NOBUFFER_UFUNCLOOP;
 			loop->steps[0] = (aar)->strides[axis];
@@ -1608,7 +1609,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 		}               
                 break;
         case ONEDIM_REDUCELOOP:
-		/* fprintf(stderr, "ONEDIM..%d\n", loop->size); */
+		fprintf(stderr, "ONEDIM..%d\n", loop->size); 
                 while(loop->index < loop->size) {
                         memcpy(loop->bufptr[1], loop->it->dataptr, 
                                loop->outsize);
@@ -1618,7 +1619,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 		}		
 		break;
         case NOBUFFER_UFUNCLOOP:
-		/* fprintf(stderr, "NOBUFFER..%d\n", loop->size); */
+		fprintf(stderr, "NOBUFFER..%d\n", loop->size); 
                 while(loop->index < loop->size) {
 			/* Copy first element to output */
                         memcpy(loop->bufptr[1], loop->it->dataptr, 
@@ -1648,8 +1649,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
                       b. Call inner function.
                    4. Repeat 2 until row is done.
                 */
-		/* fprintf(stderr, "BUFFERED..%d %p\n", loop->size, 
-		   loop->cast);  */
+		fprintf(stderr, "BUFFERED..%d %d\n", loop->size, 
+		   loop->swap); 
                 while(loop->index < loop->size) {
                         /* Copy identity over to output */
                         memcpy(loop->bufptr[1], loop->idptr, loop->outsize);

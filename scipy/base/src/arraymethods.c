@@ -270,13 +270,16 @@ PyArray_Byteswap(PyArrayObject *self, bool inplace)
 			return NULL;
 		
 		size = PyArray_SIZE(self);
-		ret->descr->copyswapn(ret->data, NULL, size, 1, ret->itemsize);
 		
 		/* set the NOTSWAPPED flag to opposite self */
+		/* ret is always notswapped, 
+		   PyArray_Copy has already swapped if self was swapped */
+
 		if (self->flags & NOTSWAPPED) {
 			ret->flags &= ~NOTSWAPPED;
 		}
-		else {
+		else { /* self was swapped, undo the byteswapping. */
+			ret->descr->copyswapn(ret->data, NULL, size, 1, ret->itemsize);
 			ret->flags |= NOTSWAPPED;
 		}
 		

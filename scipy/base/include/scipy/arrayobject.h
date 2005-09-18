@@ -1166,6 +1166,9 @@ typedef struct {
 
         /* C-API that requries previous API to be defined */
 
+/* Backward compatibility only */
+#define PyArray_CopyArray PyArray_CopyInto
+
 #define PyArray_Check(op) (PyObject_TypeCheck((op), &PyArray_Type))
 #define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
 
@@ -1183,6 +1186,7 @@ typedef struct {
 #define PyArray_NBYTES(m) (PyArray_ITEMSIZE(m) * PyArray_SIZE(m))
 #define PyArray_FROM_O(m) PyArray_FromAny(m, NULL, 0, 0, 0)
 #define PyArray_FROM_OF(m,flags) PyArray_FromAny(m, NULL, 0, 0, flags)
+
 #define REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define MAX_ELSIZE 2*SIZEOF_LONGDOUBLE
 

@@ -157,9 +157,9 @@ objectapi_list = [
      'FromDimsAndDataAndDescr','int, int *, PyArray_Descr *, char *',
      'PyObject *'),
 
-    (r"""Copy an Array to another array.
+    (r"""Copy an Array into another array.
     """,
-     'CopyArray','PyArrayObject *dest, PyArrayObject *src','int'),
+     'CopyInto', 'PyArrayObject *dest, PyArrayObject *src', 'int'),
 
     (r"""To List
     """,
