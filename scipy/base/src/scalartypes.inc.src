@@ -164,7 +164,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
 		ret = PyObject_Call(meth, args, kwds);
 	Py_DECREF(meth);
 	Py_DECREF(arr);
-	return ret;
+	return PyArray_Return((PyArrayObject *)ret);
 }
 
 /**begin repeat
@@ -398,8 +398,13 @@ format_longdouble(char *buf, size_t buflen, longdouble val, int precision)
         }
 }
 
-#define PREC_REPR 19
-#define PREC_STR 17
+#if SIZEOF_LONGDOUBLE == SIZEOF_DOUBLE
+#define PREC_REPR 15
+#define PREC_STR 15
+#else
+#define PREC_REPR 21
+#define PREC_STR 21
+#endif
 
 static PyObject *
 longdoubletype_repr(PyObject *self)
@@ -541,7 +546,6 @@ gentype_shape_get(PyObject *self)
 {
 	return PyTuple_New(0);
 }
-
 
 static PyObject *
 gentype_data_get(PyObject *self)

@@ -14,6 +14,7 @@ NewAxis = None
 
 UFuncType = type(um.sin)
 ArrayType = mu.ndarray
+UfuncType = UFuncType
 
 LittleEndian = (sys.byteorder == 'little')
 
@@ -27,7 +28,8 @@ UnsignedInt32 = nt.uint32
 UnsignedInt = nt.uint
 
 typecodes = {'Character':'S1', 'Integer':'bhilqp', 'UnsignedInteger':'BHILQP',
-             'Float':'fdg', 'Complex':'FDG'}
+             'Float':'fdg', 'Complex':'FDG', 'AllInteger':'bBhHiIlLqQ'}
+
 
 def sarray(a, dtype=None, copy=0):
     return array(a, dtype, copy)
@@ -48,7 +50,8 @@ try:
 except AttributeError:
     pass
 
-Int0 = nt.intp
+Int0 = nt.int
+Int = nt.int
 Float0 = nt.float
 Float = nt.float
 Complex0 = nt.complex

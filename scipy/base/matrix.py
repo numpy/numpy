@@ -71,7 +71,7 @@ class matrix(N.ndarray):
 
         if dtype is None:
             dtype = N.intp
-        intype = N.totype(dtype)
+        intype = N.obj2dtype(dtype)
         
         if isinstance(data, types.StringType):
             data = _convert_from_string(data)

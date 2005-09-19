@@ -49,7 +49,7 @@ array_putmask(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_PutMask(self, mask, values);
 }
 
-static char doc_reshape[] = "a.reshape((d1, d2, ..., dn)).  Change the shape of a to be an n-dimensional array with dimensions given by d1...dn.  Note: the size specified for the new array must be exactly equal to the size of the  old one or an error will occur.";
+static char doc_reshape[] = "a.reshape(d1, d2, ..., dn).  Change the shape of a to be an n-dimensional array with dimensions given by d1...dn.  Note: the size specified for the new array must be exactly equal to the size of the  old one or an error will occur.";
 
 static PyObject *
 array_reshape(PyArrayObject *self, PyObject *args) 

@@ -1,3 +1,5 @@
+## Automatically adapted for scipy Sep 19, 2005 by convertcode.py
+
 """MA: a facility for dealing with missing observations
 MA is generally used as a Numeric.array look-alike.
 There are some differences in semantics, see manual.
@@ -9,11 +11,12 @@ by Paul F. Dubois
 Copyright 1999, 2000, 2001 Regents of the University of California.
 Released for unlimited redistribution; see file Legal.htm
 Documentation is in the Numeric manual; see numpy.sourceforge.net
+Adapted for scipy.base 2005
 """
-import Numeric
+import scipy.base as Numeric
 import string, types, sys
 from Precision import *
-from Numeric import e, pi, NewAxis
+from scipy.base import e, pi, NewAxis
 MaskType=Int0
 divide_tolerance = 1.e-35
 
@@ -73,7 +76,7 @@ def default_fill_value (obj):
     elif isinstance(obj, types.ComplexType):
             return default_complex_fill_value
     elif isinstance(obj, MaskedArray) or isinstance(obj, Numeric.arraytype):
-        x = obj.typecode()
+        x = obj.dtypechar
         if x in typecodes['Float']:
             return default_real_fill_value
         if x in typecodes['Integer']:
@@ -95,7 +98,7 @@ def minimum_fill_value (obj):
     elif isinstance(obj, types.IntType) or isinstance(obj, types.LongType):
             return sys.maxint
     elif isinstance(obj, MaskedArray) or isinstance(obj, Numeric.arraytype):
-        x = obj.typecode()
+        x = obj.dtypechar
         if x in typecodes['Float']:
             return default_real_fill_value
         if x in typecodes['Integer']:
@@ -112,7 +115,7 @@ def maximum_fill_value (obj):
     elif isinstance(obj, types.IntType) or isinstance(obj, types.LongType):
             return -default_integer_fill_value
     elif isinstance(obj, MaskedArray) or isinstance(obj, Numeric.arraytype):
-        x = obj.typecode()
+        x = obj.dtypechar
         if x in typecodes['Float']:
             return -default_real_fill_value
         if x in typecodes['Integer']:
@@ -138,8 +141,7 @@ def getmask (a):
 
 def getmaskarray (a):
     """Mask of values in a; an array of zeros if mask is None
-     or not a masked array. Caution: has savespace attribute,
-     and is a byte-sized integer.
+     or not a masked array, and is a byte-sized integer.
      Do not try to add up entries, for example.
     """
     m = getmask(a)
@@ -152,7 +154,7 @@ def is_mask (m):
     """Is m a legal mask? Does not check contents, only type.
     """
     if m is None or (isinstance(m, Numeric.ArrayType) and \
-                     m.typecode() == MaskType):
+                     m.dtypechar == MaskType):
         return 1
     else:
         return 0
@@ -167,13 +169,14 @@ def make_mask (m, copy=0, flag=0):
     if m is None:
         return None
     elif isinstance(m, Numeric.ArrayType):
-        if m.typecode() == MaskType:
+        if m.dtypechar == MaskType:
             if copy:
                 result = Numeric.array(m)
             else:
                 result = Numeric.array(m, copy=0)
         else:
             result = m.astype(MaskType)
+            pass  ## result.savespace(1)
     else:
         result = Numeric.array(filled(m,1), MaskType)
 
@@ -185,6 +188,7 @@ def make_mask (m, copy=0, flag=0):
 def make_mask_none (s):
     "Return a mask of all zeros of shape s."
     result = Numeric.zeros(s, MaskType)
+    pass  ## result.savespace(1)
     result.shape = s
     return result
 
@@ -212,7 +216,7 @@ def filled (a, value = None):
     """
     if isinstance(a, MaskedArray):
         return a.filled(value)
-    elif isinstance(a, Numeric.ArrayType) and a.iscontiguous():
+    elif isinstance(a, Numeric.ArrayType) and a.flags['CONTIGUOUS']:
         return a
     elif isinstance(a, types.DictType):
         return Numeric.array(a, 'O')
@@ -512,7 +516,7 @@ class MaskedArray (object):
     """Arrays with possibly masked values.
        Masked values of 1 exclude element from the computation.
        Construction:
-           x = array(data, dtype=None, copy=1, savespace=0,
+           x = array(data, dtype=None, copy=1, savespace=1,
                      mask = None, fill_value=None)
 
        If copy=0, every effort is made not to copy the data:
@@ -520,12 +524,12 @@ class MaskedArray (object):
            then the candidate data is data.raw_data() and the
            mask used is data.mask(). If data is a Numeric array,
            it is used as the candidate raw data.
-           If savespace != data.spacesaver() or typecode is not None and
-           is != data.typecode() then a data copy is required.
+           If typecode is not None and
+           is != data.dtypechar then a data copy is required.
            Otherwise, the candidate is used.
 
        If a data copy is required, raw data stored is the result of:
-       Numeric.array(data, dtype=typecode, copy=copy, savespace=savespace)
+       Numeric.array(data, dtype=typecode, copy=copy)
 
        If mask is None there are no masked values. Otherwise mask must
        be convertible to an array of integers of typecode MaskType,
@@ -535,28 +539,36 @@ class MaskedArray (object):
        such as when printing and in method/function filled().
        The fill_value is not used for computation within this module.
 
-       If savespace is 1, the data is given the spacesaver property, and
-       the mask is replaced by None if all its elements are true.
+       If savespace is 1, then the mask is replaced by None if all its
+       elements are true.
     """
     handler_cache_key = 'MA.MaskedArray'
 
     def __init__(self, data, dtype=None,
-                  copy=1, mask=None, fill_value=None,
+                  copy=1, savespace=None, mask=None, fill_value=None,
                   ):
         """array(data, dtype=None,copy=1, savespace=None,
                     mask=None, fill_value=None)
-           If data already a Numeric array, its typecode and spacesaver()
-           become the default values for typecode and savespace.
+           If data already a Numeric array, its typecode 
+           becomes the default values for typecode.
         """
         tc = typecode
+        ss = savespace
+        if ss is None:
+            ss = True
         need_data_copied = copy
         if isinstance(data, MaskedArray):
             c = data.raw_data()
-            ctc = c.typecode()
+            ctc = c.dtypechar
             if tc is None:
                 tc = ctc
             elif tc != ctc:
                 need_data_copied = 1
+            css = True
+            if ss is None:
+                ss = css
+            else:
+                ss = 0
             if mask is None:
                 mask = data.mask()
             elif mask is not None: #attempting to change the mask
@@ -564,7 +576,7 @@ class MaskedArray (object):
 
         elif isinstance(data, Numeric.ArrayType):
             c = data
-            ctc = c.typecode()
+            ctc = c.dtypechar
             if tc is None:
                 tc = ctc
             elif tc != ctc:
@@ -630,13 +642,13 @@ class MaskedArray (object):
 
     def _set_shape (self, newshape):
         "Set the array's shape."
-        if not self._data.iscontiguous():
-            self._data = Numeric.array(self._data, self._data.typecode(),
-                                        1)
+        if not self._data.flags['CONTIGUOUS']:
+            self._data = Numeric.array(self._data, self._data.dtypechar,
+                                        1, True)
         self._data.shape = newshape
         if self._mask is not None:
             self.unshare_mask()
-            if not self._mask.iscontiguous():
+            if not self._mask.flags['CONTIGUOUS']:
                 self._mask = Numeric.array(self._mask, MaskType, 1, 1)
             self._mask.shape = newshape
 
@@ -644,16 +656,16 @@ class MaskedArray (object):
         """Calculate the flat value.
         """
         if self._mask is None:
-            return masked_array(self._data.flat, mask=None,
+            return masked_array(self._data.ravel(), mask=None,
                                 fill_value = self.fill_value())
         else:
-            return masked_array(self._data.flat,
-                                mask=self._mask.flat,
+            return masked_array(self._data.ravel(),
+                                mask=self._mask.ravel(),
                                 fill_value = self.fill_value())
 
     def _set_flat (self, value):
         "x.flat = value"
-        y = self.flat
+        y = self.ravel()
         y[:] = value
 
     def _get_real(self):
@@ -662,7 +674,7 @@ class MaskedArray (object):
             return masked_array(self._data.real, mask=None,
                             fill_value = self.fill_value())
         else:
-            return masked_array(self._data.real, mask=self.mask().flat,
+            return masked_array(self._data.real, mask=self.mask().ravel(),
                             fill_value = self.fill_value())
 
     def _set_real (self, value):
@@ -676,7 +688,7 @@ class MaskedArray (object):
             return masked_array(self._data.imaginary, mask=None,
                             fill_value = self.fill_value())
         else:
-            return masked_array(self._data.imaginary, mask=self.mask().flat,
+            return masked_array(self._data.imaginary, mask=self.mask().ravel(),
                             fill_value = self.fill_value())
 
     def _set_imaginary (self, value):
@@ -760,13 +772,14 @@ array(data = %(data)s,
         "Get copy of item described by i."
         m = self._mask
         dout = self._data[i]
-        tc =self._data.typecode()
+        ss = True
+        tc =self._data.dtypechar
         if type(dout) is Numeric.ArrayType:
             if m is None:
                 result = array(dout, dtype=tc, copy = 1)
             else:
-                result = array(dout, dtype=tc, copy = 1,
-                               mask = m[i], fill_value=self.fill_value())
+                result = array(dout, dtype=tc, copy = 1, savespace=ss,
+                          mask = m[i], fill_value=self.fill_value())
             return result
         elif m is None or not m[i]:
             return dout  #scalar
@@ -777,12 +790,12 @@ array(data = %(data)s,
         "Get copy of slice described by i, j"
         m = self._mask
         dout = self._data[i:j]
-        ss = self._data.spacesaver()
-        tc =self._data.typecode()
+        ss = True
+        tc =self._data.dtypechar
         if m is None:
             return array(dout, dtype=tc, copy = 1)
         else:
-            return array(dout, dtype=tc, copy = 1, 
+            return array(dout, dtype=tc, copy = 1, savespace=ss,
                       mask = m[i:j], fill_value=self.fill_value())
 
 # --------
@@ -802,7 +815,7 @@ array(data = %(data)s,
             self._mask[index] = 1
             return
         m = getmask(value)
-        value = filled(value).astype(self._data.typecode())
+        value = filled(value).astype(self._data.dtypechar)
         self._data[index] = value
         if m is None:
             if self._mask is not None:
@@ -827,7 +840,7 @@ array(data = %(data)s,
             self._mask[i:j] = 1
             return
         m = getmask(value)
-        value = filled(value).astype(self._data.typecode())
+        value = filled(value).astype(self._data.dtypechar)
         self._data[i:j] = value
         if m is None:
             if self._mask is not None:
@@ -940,9 +953,9 @@ array(data = %(data)s,
 
     def __iadd__(self, other):
         "Add other to self in place."
-        t = self._data.typecode()
+        t = self._data.dtypechar
         f = filled(other,0)
-        t1 = f.typecode()
+        t1 = f.dtypechar
         if t == t1:
             pass
         elif t in typecodes['Integer']:
@@ -983,9 +996,9 @@ array(data = %(data)s,
 
     def __imul__(self, other):
         "Add other to self in place."
-        t = self._data.typecode()
+        t = self._data.dtypechar
         f = filled(other,0)
-        t1 = f.typecode()
+        t1 = f.dtypechar
         if t == t1:
             pass
         elif t in typecodes['Integer']:
@@ -1026,9 +1039,9 @@ array(data = %(data)s,
 
     def __isub__(self, other):
         "Subtract other from self in place."
-        t = self._data.typecode()
+        t = self._data.dtypechar
         f = filled(other,0)
-        t1 = f.typecode()
+        t1 = f.dtypechar
         if t == t1:
             pass
         elif t in typecodes['Integer']:
@@ -1071,9 +1084,9 @@ array(data = %(data)s,
 
     def __idiv__(self, other):
         "Divide self by other in place."
-        t = self._data.typecode()
+        t = self._data.dtypechar
         f = filled(other,0)
-        t1 = f.typecode()
+        t1 = f.dtypechar
         if t == t1:
             pass
         elif t in typecodes['Integer']:
@@ -1129,6 +1142,7 @@ array(data = %(data)s,
     def astype (self, tc):
         "return self as array of given type."
         d = self._data.astype(tc)
+        pass  ## d.savespace(True)
         return array(d, mask=self._mask)
 
     def byte_swapped(self):
@@ -1195,10 +1209,10 @@ array(data = %(data)s,
         d = self._data
         m = self._mask
         if m is None:
-            if d.iscontiguous():
+            if d.flags['CONTIGUOUS']:
                 return d
             else:
-                return Numeric.array(d, dtype=d.typecode(), copy=1)
+                return Numeric.array(d, dtype=d.dtypechar, copy=1)
         value = fill_value
         if value is None:
             value = self._fill_value
@@ -1207,7 +1221,7 @@ array(data = %(data)s,
             result.shape = d.shape
         else:
             try:
-                result = Numeric.array(d, dtype=d.typecode(), copy=1)
+                result = Numeric.array(d, dtype=d.dtypechar, copy=1)
                 Numeric.putmask(result, m, value)
             except:
                 result = Numeric.choose(m, (d, value))
@@ -1219,18 +1233,18 @@ array(data = %(data)s,
 
     def iscontiguous (self):
         "Is the data contiguous?"
-        return self._data.iscontiguous()
+        return self._data.flags['CONTIGUOUS']
 
     def itemsize(self):
         "Item size of each data item."
-        return self._data.itemsize()
+        return self._data.itemsize
 
     def mask(self):
         "Return the data mask, or None. Result contiguous."
         m = self._mask
         if m is None:
             return m
-        elif m.iscontiguous():
+        elif m.flags['CONTIGUOUS']:
             return m
         else:
             return Numeric.array(self._mask)
@@ -1275,7 +1289,7 @@ array(data = %(data)s,
             May be noncontiguous. Expert use only.
         """
         return self._mask
-    
+
     def set_fill_value (self, v=None):
         "Set the fill value to v. Omit v to restore default."
         if v is None:
@@ -1293,9 +1307,8 @@ array(data = %(data)s,
         else:
             return s[axis]
 
-
     def typecode(self):
-        return self._data.typecode()
+        return self._data.dtypechar
 
     def tolist(self, fill_value=None):
         "Convert to list"
@@ -1402,18 +1415,20 @@ def masked_values (data, value, rtol=1.e-5, atol=1.e-8, copy=1):
     """
     abs = Numeric.absolute
     d = filled(data, value)
-    if d.typecode() in typecodes['Float']:
+    if d.dtypechar in typecodes['Float']:
         m = Numeric.less_equal(abs(d-value), atol+rtol*abs(value))
         m = make_mask(m, flag=1)
-        return array(d, mask = m, copy=copy, fill_value=value)
+        return array(d, mask = m, savespace=savespace, copy=copy,
+                      fill_value=value)
     else:
-        return masked_object(d, value, copy)
+        return masked_object(d, value, copy, savespace)
 
 def masked_object (data, value, copy=1):
     "Create array masked where exactly data equal to value"
     d = filled(data, value)
     dm = make_mask(Numeric.equal(d, value), flag=1)
-    return array(d, mask=dm, copy=copy, fill_value=value)
+    return array(d, mask=dm, copy=copy, savespace=savespace,
+                   fill_value=value)
 
 def arrayrange(start, stop=None, step=1, dtype=None):
     """Just like range() except it returns a array whose type can be specified
@@ -1488,12 +1503,12 @@ def indices (dimensions, dtype=None):
 def zeros (shape, dtype=Int):
     """zeros(n, dtype=Int) =
      an array of all zeros of the given length or shape."""
-    return array(Numeric.zeros(shape, typecode))
+    return array(Numeric.zeros(shape, typecode, savespace))
 
 def ones (shape, dtype=Int):
     """ones(n, dtype=Int) =
      an array of all ones of the given length or shape."""
-    return array(Numeric.ones(shape, typecode))
+    return array(Numeric.ones(shape, typecode, savespace))
 
 
 def count (a, axis = None):
@@ -1510,7 +1525,7 @@ def power (a, b, third=None):
     m = mask_or(ma, mb)
     fa = filled(a, 1)
     fb = filled(b, 1)
-    if fb.typecode() in typecodes["Integer"]:
+    if fb.dtypechar in typecodes["Integer"]:
         return masked_array(Numeric.power(fa, fb), m)
     md = make_mask(Numeric.less_equal (fa, 0), flag=1)
     m = mask_or(m, md)
@@ -1562,22 +1577,22 @@ def average (a, axis=0, weights=None, returned = 0):
     if axis is None:
         if mask is None:
             if weights is None:
-                n = add.reduce(a.raw_data().flat)
+                n = add.reduce(a.raw_data().ravel())
                 d = reduce(lambda x, y: x * y, ash, 1.0)
             else:
-                w = filled(weights, 0.0).flat
-                n = Numeric.add.reduce(a.raw_data().flat * w)
+                w = filled(weights, 0.0).ravel()
+                n = Numeric.add.reduce(a.raw_data().ravel() * w)
                 d = Numeric.add.reduce(w)
                 del w
         else:
             if weights is None:
-                n = add.reduce(a.flat)
-                w = Numeric.choose(mask, (1.0,0.0)).flat
+                n = add.reduce(a.ravel())
+                w = Numeric.choose(mask, (1.0,0.0)).ravel()
                 d = Numeric.add.reduce(w)
                 del w
             else:
-                w = array(filled(weights, 0.0), Numeric.Float, mask=mask).flat
-                n = add.reduce(a.flat * w)
+                w = array(filled(weights, 0.0), Numeric.Float, mask=mask).ravel()
+                n = add.reduce(a.ravel() * w)
                 d = add.reduce(w)
                 del w
     else:
@@ -1848,8 +1863,8 @@ def innerproduct(a,b):
 
 def outerproduct(a, b):
     """outerproduct(a,b) = {a[i]*b[j]}, has shape (len(a),len(b))"""
-    fa = filled(a,0).flat
-    fb = filled(b,0).flat
+    fa = filled(a,0).ravel()
+    fb = filled(b,0).ravel()
     d = Numeric.outerproduct(fa, fb)
     ma = getmask(a)
     mb = getmask(b)
@@ -1891,7 +1906,7 @@ class _minimum_operation:
         if b is None:
             m = getmask(a)
             if m is None:
-                d = min(filled(a).flat)
+                d = min(filled(a).ravel())
                 return d
             ac = a.compressed()
             if len(ac) == 0:
@@ -1940,7 +1955,7 @@ class _maximum_operation:
         if b is None:
             m = getmask(a)
             if m is None:
-                d = max(filled(a).flat)
+                d = max(filled(a).ravel())
                 return d
             ac = a.compressed()
             if len(ac) == 0:
@@ -2049,7 +2064,7 @@ def asarray(data, dtype=None):
        or the same.
     """
     if isinstance(data, MaskedArray) and \
-        (typecode is None or typecode == data.typecode()):
+        (typecode is None or typecode == data.dtypechar):
         return data
     return array(data, dtype=typecode, copy=0)
 
@@ -2064,7 +2079,7 @@ def limitedArrayRepr(a, max_line_width = None, precision = None, suppress_small 
     if elems > __MaxElements:
         if len(s) > 1:
             return 'array (%s) , type = %s, has %d elements' % \
-                 (string.join(map(str, s), ","), a.typecode(), elems)
+                 (string.join(map(str, s), ","), a.dtypechar, elems)
         else:
             return Numeric.array2string (a[:__MaxElements], max_line_width, precision,
                  suppress_small,',',0) + \
@@ -2078,7 +2093,7 @@ __original_repr = Numeric.array_repr
 
 def set_print_limit (m=0):
     "Set the maximum # of elements for printing arrays. <=0  = no limit"
-    import multiarray
+    import scipy.base.multiarray as multiarray
     global __MaxElements
     n = int(m)
     __MaxElements = n

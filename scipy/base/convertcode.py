@@ -12,12 +12,12 @@
 #    - .itemsize()
 #  * Converts .flat to .ravel() except for .flat = xxx or .flat[xxx]
 #  * Change typecode= to dtype=
+#  * Eliminates savespace=xxx
+#  * Replace xxx.spacesaver() with True
+#  * Convert xx.savespace(?) to pass + ## xx.savespace(?)
+#  * Convert a.shape = ? to a.reshape(?) 
 #  * Prints warning for use of bool, int, float, copmlex, object, and unicode
 #
-#  TODO:
-#  + Eliminate savespace= from array, sarray, asarray, ones, and zeros,
-#  + Eliminate the methods  .spacesaver() (replace with True) and .savespace(),
-#     convert xx.savespace(?) to pass
 
 
 import sys
@@ -82,12 +82,19 @@ def replaceattr(astr):
     tmpstr = tmpstr.replace(".flat",".ravel()")
     # put back .flat where it was valid
     astr = tmpstr.replace("@@@@", ".flat")
-
     return astr
 
+svspc = re.compile(r'(\S+\s*[(].+),\s*savespace\s*=.+\s*[)]')
+svspc2 = re.compile(r'([^,(\s]+[.]spacesaver[(][)])')
+svspc3 = re.compile(r'(\S+[.]savespace[(].*[)])')
+shpe = re.compile(r'(\S+\s*)[.]shape\s*=[^=]\s*(.+)')
 def replaceother(astr):
     astr = astr.replace("typecode=","dtype=")
     astr = astr.replace("UserArray","ndarray")
+    astr = svspc.sub('\\1)',astr)
+    astr = svspc2.sub('True',astr)
+    astr = svspc3.sub('pass  ## \\1', astr)
+    astr = shpe.sub('\\1=\\1.reshape(\\2)', astr)
     return astr
 
 def warnofnewtypes(filestr):
@@ -98,11 +105,11 @@ def warnofnewtypes(filestr):
        bool_re.search(filestr):
         warnings.warn("Use of builtin bool, int, float, complex, or unicode\n" \
                       "found when import * used -- these will be handled by\n" \
-                      "new array scalars under scipy.base")
+                      "new array scalars under scipy")
         
     return
     
-
+import datetime
 def process(filestr):
     filestr = replacetypechars(filestr)
     filestr, fromall1 = changeimports(filestr, 'Numeric', 'scipy.base')
@@ -110,6 +117,7 @@ def process(filestr):
                                       'scipy.base.multiarray')
     filestr, fromall1 = changeimports(filestr, 'umath',
                                           'scipy.base.umath')
+    filestr, fromall1 = changeimports(filestr, 'Precision', 'scipy.base')
     filestr, fromall2 = changeimports(filestr, 'numerix', 'scipy.base')
     filestr, fromall3 = changeimports(filestr, 'scipy_base', 'scipy.base')
     filestr, fromall3 = changeimports(filestr, 'MLab', 'scipy.linalg')
@@ -122,6 +130,10 @@ def process(filestr):
     filestr = replaceother(filestr)
     if fromall:
         warnofnewtypes(filestr)
+    today = datetime.date.today().strftime('%b %d, %Y')
+    name = os.path.split(sys.argv[0])[-1]
+    filestr = '## Automatically adapted for '\
+              'scipy %s by %s\n\n%s' % (today, name, filestr)
     return filestr
 
 def makenewfile(name, filestr):

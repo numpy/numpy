@@ -1182,20 +1182,32 @@ static void
 
 
 /**begin repeat
-   #TYPE=BOOL, BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
-   #typ=bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
+   #TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+   #typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
 */
 static void 
 @TYPE@_invert(char **args, intp *dimensions, intp *steps, void *func) 
 {
 	register intp i;
-	intp is1=steps[0], os=steps[2];
+	intp is1=steps[0], os=steps[1], n=dimensions[0];
 	char *i1=args[0], *op=args[1]; 
-	for(i=0; i<*dimensions; i++, i1+=is1, op+=os) {
+	for(i=0; i<n; i++, i1+=is1, op+=os) {
 		*((@typ@ *)op) = ~ *((@typ@*)i1);
 	}
 }
 /**end repeat**/
+
+static void
+BOOL_invert(char **args, intp *dimensions, intp *steps, void *func) 
+{
+	register intp i;
+	intp is1=steps[0], os=steps[1], n=dimensions[0];
+	char *i1=args[0], *op=args[1]; 
+	for(i=0; i<n; i++, i1+=is1, op+=os) {
+		*((bool *)op) = (*((bool *)i1) ? false : true);
+	}
+}
+
 
 /**begin repeat
 
@@ -1542,6 +1554,10 @@ DL_EXPORT(void) initumath(void) {
         PyDict_SetItemString(d, "UFUNC_BUFSIZE_NAME", 
                              s=PyString_FromString(UFUNC_BUFSIZE_NAME));
         Py_DECREF(s);
+        PyDict_SetItemString(d, "UFUNC_BUFSIZE_DEFAULT", 
+			     s=PyInt_FromLong(PyArray_BUFSIZE));
+        Py_DECREF(s);
+
 
         pinf = pinf_init();
         PyDict_SetItemString(d, "PINF", s = PyFloat_FromDouble(pinf));

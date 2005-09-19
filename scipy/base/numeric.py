@@ -240,23 +240,6 @@ def allclose (a, b, rtol=1.e-5, atol=1.e-8):
     return alltrue(ravel(d))
             
 
-# Now a method....
-##def setflags(arr, write=None, swap=None, uic=None, align=None):
-##    if not isinstance(arr, ndarray):
-##        raise ValueError, "first argument must be an array"
-##    sdict = {}
-##    if write is not None:
-##        sdict['WRITEABLE'] = not not write
-##    if swap is not None:
-##        sdict['NOTSWAPPED'] = not swap
-##    if uic is not None:
-##        if (uic):
-##            raise ValueError, "Can only set UPDATEIFCOPY flag to False"
-##        sdict['UPDATEIFCOPY'] = False
-##    if align is not None:
-##        sdict['ALIGNED'] = not not align
-##    arr.flags = sdict
-
 _errdict = {"ignore":ERR_IGNORE,
             "warn":ERR_WARN,
             "raise":ERR_RAISE,
@@ -266,12 +249,24 @@ _errdict_rev = {}
 for key in _errdict.keys():
     _errdict_rev[_errdict[key]] = key
 
-def seterr(divide="ignore", over="ignore", under="ignore", invalid="ignore"):
+def seterr(divide="ignore", over="ignore", under="ignore", invalid="ignore", where=0):
     maskvalue = (_errdict[divide] << SHIFT_DIVIDEBYZERO) + \
                 (_errdict[over] << SHIFT_OVERFLOW ) + \
                 (_errdict[under] << SHIFT_UNDERFLOW) + \
                 (_errdict[invalid] << SHIFT_INVALID)
     frame = sys._getframe().f_back
+    try:
+        where = where.lower()
+    except AttributeError:
+        pass
+    if not where or where[0] == 'l':
+        frame.f_locals[UFUNC_ERRMASK_NAME] = maskvalue
+    elif where == 1 or where[0] == 'g':
+        frame.f_globals[UFUNC_ERRMASK_NAME] = maskvalue
+    elif where == 2 or where[0] == 'b':
+        frame.f_builtins[UFUNC_ERRMASK_NAME] = maskvalue
+    return
+
     frame.f_locals[UFUNC_ERRMASK_NAME] = maskvalue
     return
 
@@ -294,4 +289,35 @@ def geterr():
     res['invalid'] = _errdict_rev[val]
     return res
 
-    
+def setbufsize(size, where=0):
+    frame = sys._getframe().f_back
+    try:
+        wh = where.lower()
+    except AttributError:
+        pass
+    if not where or where[0] == 'l':
+        frame.f_locals[UFUNC_BUFSIZE_NAME] = size
+    elif where == 1 or where[0] == 'g':
+        frame.f_globals[UFUNC_BUFSIZE_NAME] = size
+    elif where == 2 or where[0] == 'b':
+        frame.f_builtins[UFUNC_BUFSIZE_NAME] = size
+    return
+
+def getbufsize(size):
+    frame = sys._getframe().f_back
+    try:
+        retval = frame.f_locals[UFUNC_BUFSIZE_NAME]
+    except KeyError:
+        retval = frame.f_globals[UFUNC_BUFSIZE_NAME]
+    except KeyError:
+        retval = frame.f_builtins[UFUNC_BUFSIZE_NAME]
+    except KeyError:
+        retvalue = UFUNC_BUFSIZE_DEFAULT
+
+    return retval
+
+
+# Set the UFUNC_BUFSIZE_NAME to something
+# Set the UFUNC_ERRMASK_NAME to something
+seterr(where='builtin')
+setbufsize(UFUNC_BUFSIZE_DEFAULT,where='builtin')

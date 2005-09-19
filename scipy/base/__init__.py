@@ -93,6 +93,8 @@ multiarray.set_typeDict(nt.typeDict)
 from numeric import *
 from oldnumeric import *
 from matrix import *
+from type_check import *
+from shape_base import *
 
 del nt
 

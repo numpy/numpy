@@ -79,6 +79,8 @@ $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 
 import multiarray
 typeinfo = multiarray.typeinfo
+ndarray = multiarray.ndarray
+array = multiarray.array
 _I = typeinfo
 
 pybool = bool
@@ -195,6 +197,14 @@ del _thisdict, _tocheck, a, name, typeobj
 del base, bit, char
 
 
+# Now, construct dictionary to lookup character codes from types
+
+_dtype2char_dict = {}
+for name in typeinfo.keys():
+    tup = typeinfo[name]
+    if isinstance(tup,type(())):
+        _dtype2char_dict[tup[-1]] = tup[0]
+
 arraytypes = {'int': [],
               'uint':[],
               'float':[],
@@ -236,19 +246,20 @@ genericTypeRank = ['bool','int8','uint8','int16','uint16',
                    'complex32', 'complex64', 'complex128', 'complex160',
                    'complex192', 'complex256', 'complex512', 'object']
 
-def maximum_type(t):
+def maximum_dtype(t):
     """returns the type of highest precision of the same general kind as 't'"""
-    if not issubclass(t, generic):
+    g = obj2dtype(t)
+    if g is None:
+        return t
+    t = g
+    name = t.__name__[:-8]
+    base, bits = _evalname(name)
+    if bits == 0:
         return t
     else:
-        name = t.__name__[:-8]
-        base, bits = _evalname(name)
-        if bits == 0:
-            return t
-        else:
-            return arraytypes[base][-1]
+        return arraytypes[base][-1]
 
-def python_type(t):
+def _python_type(t):
     """returns the type corresponding to a certain Python type"""
     if not isinstance(t, _types.TypeType):
         t = type(t)
@@ -262,29 +273,50 @@ def python_type(t):
         return string
     elif t == _types.UnicodeType:
         return unicode
+    elif t == _types.BufferType:
+        return void
     else:
         return object
 
-def istype(rep):
+def isdtype(rep):
     """Determines whether the given object represents
     a numeric array type."""
-    return issubclass(rep, generic) or typeDict.has_key(rep)
-
-
-def totype(rep, default=None):
+    try:
+        char = dtype2char(rep)
+        return True
+    except (KeyError, ValueError):
+        return False
+    
+def obj2dtype(rep, default=None):
     try:
         if issubclass(rep, generic):
             return rep
-        if isinstance(rep, type):
-            return python_type(rep)
-        res = typeDict.get(rep, default)
-    except:
-        res = default
+    except TypeError:
+        pass
+        
+    if isinstance(rep, type):
+        return _python_type(rep)
+    if isinstance(rep, ndarray):
+        return rep.dtype    
+    res = typeDict.get(rep, default)
     return res
 
+def dtype2char(dtype):
+    dtype = obj2dtype(dtype)
+    if dtype is None:
+        raise ValueError, "unrecognized type"
+    return _dtype2char_dict[dtype]
+    
 
 del _ibytes, _fbytes, multiarray
 
+# Create dictionary of casting functions that wrap sequences
+# indexed by type or type character
+
+cast = {}
+for key in _dtype2char_dict.keys():
+    cast[key] = lambda x, k=key : array(x,copy=0).astype(k)
+    cast[_dtype2char_dict[key]] = cast[key]
 
 
 

@@ -1,39 +1,32 @@
-import scipy.base as _nx
+import numeric as _nx
 from numeric import *
 
-from type_check import isscalar, asarray
+from type_check import isscalar
 
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'column_stack','dstack','array_split','split','hsplit',
            'vsplit','dsplit','squeeze','apply_over_axes','expand_dims',
            'apply_along_axis']
 
-def put(a,ind,v):
-    # Cannot use Numeric.put because of Issue 202.
-    j = 0
-    for i in ind:
-        a.flat[i] = v[j]
-        j += 1
-    return
-
 def apply_along_axis(func1d,axis,arr,*args):
     """ Execute func1d(arr[i],*args) where func1d takes 1-D arrays
         and arr is an N-d array.  i varies so as to apply the function
         along the given axis for each 1-d subarray in arr.
     """
-    nd = _nx.rank(arr)
+    arr = asarray(arr)
+    nd = arr.ndim
     if axis < 0: axis += nd
     if (axis >= nd):
-        raise ValueError, "axis must be less than the rank; "+\
-              "axis=%d, rank=%d." % (axis,)
+        raise ValueError, "axis must be less than arr.ndim; "+\
+              "axis=%d, rank=%d." % (axis,nd)
     ind = [0]*(nd-1)
-    dims = _nx.shape(arr)
+    dims = arr.shape
     i = zeros(nd,'O')
     indlist = range(nd)
     indlist.remove(axis)
     i[axis] = slice(None,None)
     outshape = take(shape(arr),indlist)
-    put(i,indlist,ind)
+    i.put(indlist, v)
     res = func1d(arr[tuple(i)],*args)
     #  if res is a number, then we have a smaller output array
     if isscalar(res):
@@ -49,7 +42,7 @@ def apply_along_axis(func1d,axis,arr,*args):
                 ind[n-1] += 1
                 ind[n] = 0
                 n -= 1
-            put(i,indlist,ind)
+            i.put(indlist,ind)
             res = func1d(arr[tuple(i)],*args)
             outarr[ind] = res
             k += 1
@@ -70,7 +63,7 @@ def apply_along_axis(func1d,axis,arr,*args):
                 ind[n-1] += 1
                 ind[n] = 0
                 n -= 1
-            put(i,indlist,ind)
+            i.put(indlist,ind)
             res = func1d(arr[tuple(i)],*args)
             outarr[tuple(i)] = res
             k += 1
@@ -98,15 +91,11 @@ def expand_dims(a, axis):
     shape = a.shape
     if axis < 0:
         axis = axis + len(shape) + 1
-    a.shape = shape[:axis] + (1,) + shape[axis:]
-    return a
+    return a.reshape(shape[:axis] + (1,) + shape[axis:])
 
 def squeeze(a):
     "Returns a with any ones from the shape of a removed"
-    a = asarray(a)
-    b = asarray(a.shape)
-    val = reshape (a, tuple (compress (not_equal (b, 1), b)))
-    return val
+    return asarray(a).squeeze()
 
 def atleast_1d(*arys):
     """ Force a sequence of arrays to each be at least 1D.
@@ -124,7 +113,7 @@ def atleast_1d(*arys):
     for ary in arys:
         ary = asarray(ary)
         if len(ary.shape) == 0:
-            ary.shape = (1,)
+            ary = ary.reshape(1)
         res.append(ary)
     if len(res) == 1:
         return res[0]
@@ -147,8 +136,8 @@ def atleast_2d(*arys):
     for ary in arys:
         ary = asarray(ary)
         if len(ary.shape) == 0:
-            ary.shape = (1,)
-        if len(ary.shape) == 1: 
+            result = ary.reshape(1,1)
+        elif len(ary.shape) == 1: 
             result = ary[NewAxis,:]
         else: 
             result = ary
@@ -177,8 +166,8 @@ def atleast_3d(*arys):
     for ary in arys:
         ary = asarray(ary)
         if len(ary.shape) == 0:
-            ary.shape = (1,)
-        if len(ary.shape) == 1:
+            result = ary.reshape(1,1,1)
+        elif len(ary.shape) == 1:
             result = ary[NewAxis,:,NewAxis]
         elif len(ary.shape) == 2:
             result = ary[:,:,NewAxis]
