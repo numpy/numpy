@@ -19,6 +19,7 @@
 #  * Prints warning for use of bool, int, float, copmlex, object, and unicode
 #
 
+__all__ = ['fromfile', 'fromstr']
 
 import sys
 import os
@@ -110,9 +111,9 @@ def warnofnewtypes(filestr):
     return
     
 import datetime
-def process(filestr):
+def fromstr(filestr):
     filestr = replacetypechars(filestr)
-    filestr, fromall1 = changeimports(filestr, 'Numeric', 'scipy.base')
+    filestr, fromall1 = changeimports(filestr, 'Numeric', 'scipy')
     filestr, fromall1 = changeimports(filestr, 'multiarray',
                                       'scipy.base.multiarray')
     filestr, fromall1 = changeimports(filestr, 'umath',
@@ -125,6 +126,7 @@ def process(filestr):
     filestr, fromall3 = changeimports(filestr, 'RNG', 'scipy.stats')
     filestr, fromall3 = changeimports(filestr, 'RandomArray', 'scipy.stats')
     filestr, fromall3 = changeimports(filestr, 'FFT', 'scipy.fftpack')
+    filestr, fromall3 = changeimports(filestr, 'MA', 'scipy.base.ma')
     fromall = fromall1 or fromall2 or fromall3
     filestr = replaceattr(filestr)
     filestr = replaceother(filestr)
@@ -149,14 +151,14 @@ def getandcopy(name):
     makenewfile(base+'.orig', filestr)
     return filestr
        
-def main(args):
+def fromfile(args):
     filename = args[1]
     filestr = getandcopy(filename)
-    filestr = process(filestr)
+    filestr = fromstr(filestr)
     makenewfile(filename, filestr)
 
 if __name__ == '__main__':
-    main(sys.argv)
+    fromfile(sys.argv)
     
              
 

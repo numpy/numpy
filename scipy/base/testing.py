@@ -582,7 +582,7 @@ from scipy.base import alltrue, equal, shape, ravel, around, zeros,\
      Float64, asarray, less_equal, array2string, less, ArrayType
 
 try:
-    from scipy.base import fastumath as math
+    from scipy.base import umath as math
 except ImportError,msg:
     print msg
     import math

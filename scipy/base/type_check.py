@@ -2,7 +2,7 @@
 
 import types
 import numeric as _nx
-from numeric import ndarray, array, isinf, isnan, isfinite, ufunc
+from numeric import ndarray, array, isinf, isnan, isfinite, ufunc, ScalarType
 
 __all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isinf','isfinite',
@@ -43,10 +43,6 @@ def asfarray(a, dtype=None):
     if typecode is None and a.dtypechar not in 'GDFgfd':
        return a.astype('d')
     return a
-
-ScalarType = [types.IntType, types.LongType, types.FloatType,
-              types.StringType, types.UnicodeType, types.ComplexType,
-              types.BufferType]
 
    
 def isscalar(num):

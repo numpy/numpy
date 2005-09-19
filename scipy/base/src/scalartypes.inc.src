@@ -547,6 +547,18 @@ gentype_shape_get(PyObject *self)
 	return PyTuple_New(0);
 }
 
+static int
+gentype_shape_set(PyObject *self, PyObject *val)
+{
+	if (!PyTuple_Check(val) || PyTuple_GET_SIZE(val) > 0) {
+		PyErr_SetString(PyExc_ValueError, \
+				"invalid shape for scalar");
+		return -1;
+	}
+	return 0;
+}
+
+
 static PyObject *
 gentype_data_get(PyObject *self)
 {
@@ -685,7 +697,7 @@ static PyGetSetDef gentype_getsets[] = {
 	 "integer value of flags"},
         {"shape", 
 	 (getter)gentype_shape_get, 
-	 (setter)0, 
+	 (setter)gentype_shape_set, 
 	 "tuple of array dimensions"},
         {"strides", 
 	 (getter)gentype_shape_get, 

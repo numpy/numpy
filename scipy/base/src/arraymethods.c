@@ -1,3 +1,5 @@
+
+#define _ARET(x) PyArray_Return((PyArrayObject *)(x))
 static char doc_take[] = "a.take(indices, axis=None).  Selects the elements "\
 	"in indices from array a along the given axis.";
 
@@ -14,7 +16,7 @@ array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 &dimension))
 		return NULL;
 	
-	return PyArray_Take(self, indices, dimension);
+	return _ARET(PyArray_Take(self, indices, dimension));
 }
 
 static char doc_put[] = "a.put(indices, values) sets a.flat[n] = v[n] "\
@@ -73,7 +75,7 @@ array_reshape(PyArrayObject *self, PyObject *args)
 		}
 	}
 	
-	if (PyArray_ISONESEGMENT(self)) {
+	if (newshape.len == 0 || PyArray_ISONESEGMENT(self)) {
 		ret = PyArray_Newshape(self, &newshape);
 	}
 	else {
@@ -83,7 +85,7 @@ array_reshape(PyArrayObject *self, PyObject *args)
 		Py_DECREF(tmp);
 	}
 	PyDimMem_FREE(newshape.ptr);
-        return ret;
+        return _ARET(ret);
  fail:
 	PyDimMem_FREE(newshape.ptr);
 	return NULL;
@@ -95,7 +97,7 @@ static PyObject *
 array_squeeze(PyArrayObject *self, PyObject *args)
 {
         if (!PyArg_ParseTuple(args, "")) return NULL;
-        return PyArray_Squeeze(self);
+        return _ARET(PyArray_Squeeze(self));
 }
 
 
@@ -110,7 +112,7 @@ array_view(PyArrayObject *self, PyObject *args)
                               PyArray_TypecodeConverter, &type)) 
                 return NULL;
 
-	return PyArray_View(self, &type);
+	return _ARET(PyArray_View(self, &type));
 }
 
 static char doc_argmax[] = "a.argmax(axis=None)";
@@ -123,7 +125,7 @@ array_argmax(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return PyArray_ArgMax(self, axis);
+	return _ARET(PyArray_ArgMax(self, axis));
 }
 
 static char doc_argmin[] = "a.argmin(axis=None)";
@@ -136,7 +138,7 @@ array_argmin(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return PyArray_ArgMin(self, axis);
+	return _ARET(PyArray_ArgMin(self, axis));
 }
 
 static char doc_max[] = "a.max(axis=None)";
@@ -390,9 +392,9 @@ array_cast(PyArrayObject *self, PyObject *args)
 
 	if (typecode.type_num == PyArray_NOTYPE ||	\
 	    typecode.type_num == PyArray_TYPE(self)) {
-		return PyArray_Copy(self);
+		return _ARET(PyArray_Copy(self));
 	}
-	return PyArray_CastToType(self, &typecode);
+	return _ARET(PyArray_CastToType(self, &typecode));
 }	  
 
 static char doc_copy[] = "m.copy(). Return a copy of the array.";
@@ -402,7 +404,7 @@ array_copy(PyArrayObject *self, PyObject *args)
 {
         if (!PyArg_ParseTuple(args, "")) return NULL;
 	
-        return PyArray_Copy(self);
+        return _ARET(PyArray_Copy(self));
 }
 
 static char doc_resize[] = "m.resize(new_shape). Return a resized version "\
@@ -432,7 +434,7 @@ array_resize(PyArrayObject *self, PyObject *args)
 	}
 	ret = PyArray_Resize(self, &newshape);
         PyDimMem_FREE(newshape.ptr);
-        return ret;
+        return _ARET(ret);
 }
 
 static char doc_repeat[] = "a.repeat(repeats=, axis=None)";
@@ -467,7 +469,7 @@ array_choose(PyArrayObject *self, PyObject *args)
 		choices = args;
 	}
 	
-	return PyArray_Choose(self, choices);
+	return _ARET(PyArray_Choose(self, choices));
 }
 
 static char doc_sort[] = "a.sort(<None>)";
@@ -480,7 +482,7 @@ array_sort(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return PyArray_Sort(self, axis);
+	return _ARET(PyArray_Sort(self, axis));
 }
 
 static char doc_argsort[] = "a.argsort(<None>)";
@@ -493,7 +495,7 @@ array_argsort(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return PyArray_ArgSort(self, axis);
+	return _ARET(PyArray_ArgSort(self, axis));
 }
 
 static char doc_searchsorted[] = "a.searchsorted(v)";
@@ -505,7 +507,7 @@ array_searchsorted(PyArrayObject *self, PyObject *args)
 	
 	if (!PyArg_ParseTuple(args, "O", &values)) return NULL;
 	
-	return PyArray_SearchSorted(self, values);
+	return _ARET(PyArray_SearchSorted(self, values));
 }
 
 static char doc_deepcopy[] = "Used if copy.deepcopy is called on an array.";
@@ -543,7 +545,7 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
                 Py_DECREF(deepcopy);
                 Py_DECREF(it);
         }
-        return ret;
+        return _ARET(ret);
 }
 
 /* Convert Object Array to flat list and pickle the flat list string */
@@ -856,7 +858,7 @@ array_transpose(PyArrayObject *self, PyObject *args)
 	if (n > 1) shape = args;
 	else if (n == 1) shape = PyTuple_GET_ITEM(args, 0);
 	
-	return PyArray_Transpose(self, shape);
+	return _ARET(PyArray_Transpose(self, shape));
 }
 
 static char doc_mean[] = "a.mean(axis=None, rtype=None)";
@@ -873,7 +875,7 @@ array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 &axis, PyArray_TypecodeConverter,
 					 &rtype)) return NULL;
 
-	return PyArray_Mean(self, axis, rtype.type_num);
+	return _ARET(PyArray_Mean(self, axis, rtype.type_num));
 }
 
 static char doc_sum[] = "a.sum(axis=None, rtype=None)";
@@ -1004,7 +1006,7 @@ array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 &condition, PyArray_AxisConverter,
 					 &axis)) return NULL;
 
-	return PyArray_Compress(self, condition, axis);
+	return _ARET(PyArray_Compress(self, condition, axis));
 }
 
 static char doc_nonzero[] = "a.nonzero() return a tuple of indices referencing"\
@@ -1015,7 +1017,7 @@ array_nonzero(PyArrayObject *self, PyObject *args)
 {
 	if (!PyArg_ParseTuple(args, "")) return NULL;
 
-	return PyArray_Nonzero(self);
+	return _ARET(PyArray_Nonzero(self));
 }
 
 
@@ -1033,7 +1035,7 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 PyArray_TypecodeConverter, &rtype))
 		return NULL;
 	
-	return PyArray_Trace(self, offset, axis1, axis2, rtype.type_num);
+	return _ARET(PyArray_Trace(self, offset, axis1, axis2, rtype.type_num));
 }
 
 
@@ -1049,7 +1051,7 @@ array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 &min, &max)) 
 		return NULL;
 	
-	return PyArray_Clip(self, min, max);
+	return _ARET(PyArray_Clip(self, min, max));
 }
 
 static char doc_conj[] = "a.conj()";
@@ -1078,7 +1080,7 @@ array_diagonal(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 &offset, &axis1, &axis2))
 		return NULL;
 	
-	return PyArray_Diagonal(self, offset, axis1, axis2);
+	return _ARET(PyArray_Diagonal(self, offset, axis1, axis2));
 }
 
 static char doc_flatten[] = "a.flatten() return a 1-d array (always copy)";
@@ -1298,5 +1300,7 @@ static PyMethodDef array_methods[] = {
 	 METH_VARARGS|METH_KEYWORDS, doc_setflags},
         {NULL,		NULL}		/* sentinel */
 };
+
+#undef _ARET
 
 

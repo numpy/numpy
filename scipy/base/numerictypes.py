@@ -314,9 +314,14 @@ del _ibytes, _fbytes, multiarray
 # indexed by type or type character
 
 cast = {}
+ScalarType = [_types.IntType, _types.LongType, _types.FloatType,
+              _types.StringType, _types.UnicodeType, _types.ComplexType,
+              _types.BufferType]
+ScalarType.extend(_dtype2char_dict.keys())
 for key in _dtype2char_dict.keys():
     cast[key] = lambda x, k=key : array(x,copy=0).astype(k)
     cast[_dtype2char_dict[key]] = cast[key]
+
 
 
 

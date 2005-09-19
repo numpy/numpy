@@ -288,7 +288,7 @@ PyArray_Squeeze(PyArrayObject *self)
 
 	if (nd == 0) {
 		Py_INCREF(self);
-		return PyArray_Return(self);			
+		return (PyObject *)self;
 	}
 	for (j=0, i=0; i<nd; i++) {
 		if (self->dimensions[i] == 1) {
@@ -307,7 +307,7 @@ PyArray_Squeeze(PyArrayObject *self)
 	self->flags &= ~OWN_DATA;
 	self->base = (PyObject *)self;
 	Py_INCREF(self);
-	return PyArray_Return((PyArrayObject *)ret);
+	return (PyObject *)ret;
 }
 
 static PyObject *
@@ -1595,7 +1595,7 @@ PyArray_Sort(PyArrayObject *op, int axis)
  finish:
 	SWAPBACK(op, ap);
 
-	return PyArray_Return(op);
+	return (PyObject *)op;
 }
 
 
@@ -1665,7 +1665,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis)
  finish:
 	Py_DECREF(ap);
 	SWAPBACK(op, ret);
-	return PyArray_Return(op);
+	return (PyObject *)op;
 
  fail:
 	Py_XDECREF(ap);
@@ -1751,7 +1751,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 	
 	Py_DECREF(ap1);
 	Py_DECREF(ap2);
-	return PyArray_Return(ret);
+	return (PyObject *)ret;
 	
  fail:
 	Py_XDECREF(ap1);
@@ -1795,7 +1795,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 			nb_multiply((PyObject *)ap1, (PyObject *)ap2);
 		Py_DECREF(ap1);
 		Py_DECREF(ap2);
-		return PyArray_Return(ret);
+		return (PyObject *)ret;
 	}
 	
 	l = ap1->dimensions[ap1->nd-1];
@@ -1861,7 +1861,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	
 	Py_DECREF(ap1);
 	Py_DECREF(ap2);
-	return PyArray_Return(ret);
+	return (PyObject *)ret;
 	
  fail:
 	Py_XDECREF(ap1);
@@ -1903,7 +1903,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 			nb_multiply((PyObject *)ap1, (PyObject *)ap2);
 		Py_DECREF(ap1);
 		Py_DECREF(ap2);
-		return PyArray_Return(ret);
+		return (PyObject *)ret;
 	}
 	
 	l = ap1->dimensions[ap1->nd-1];
@@ -1987,7 +1987,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	
 	Py_DECREF(ap1);
 	Py_DECREF(ap2);
-	return PyArray_Return(ret);
+	return (PyObject *)ret;
 	
  fail:
 	Py_XDECREF(ap1);
@@ -2009,7 +2009,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 							   0, 0);
 	nd = ap->nd;
 
-	if(nd == 1) {
+	if(nd <= 1) {
 		return PyArray_Copy(ap);
 	}
 
@@ -2031,7 +2031,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 	ap->dimensions[1] = t;
 
 	Py_DECREF(ap);
-	return PyArray_Return(ret);
+	return (PyObject *)ret;
 }
  
 static PyObject *
@@ -2123,7 +2123,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	if (PyErr_Occurred()) goto fail;
 	Py_DECREF(ap1);
 	Py_DECREF(ap2);
-	return PyArray_Return(ret);
+	return (PyObject *)ret;
 	
  fail:
 	Py_XDECREF(ap1);
@@ -2266,7 +2266,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 
 	SWAPBACK(op, rp);     /* op now contains the return */
   
-	return PyArray_Return(op);
+	return (PyObject *)op;
 	
  fail:
 	Py_DECREF(ap);
@@ -2660,7 +2660,7 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
    fills in an intp array with the converted values.
 
    **Remember to free the pointer seq.ptr when done using
-   PyDimMem_FREE(seq.ptr) **
+   PyDimMem_FREE(seq.ptr)**
 */
 
 static int
@@ -2675,9 +2675,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         if (len == -1) { /* Check to see if it is a number */
                 if (PyNumber_Check(obj)) len = 1;
         }
-        if (len <= 0) {
+        if (len < 0) {
                 PyErr_SetString(PyExc_TypeError, 
-                                "Expected sequence object with len > 0");
+                                "Expected sequence object with len >= 0");
                 return PY_FAIL;
         }
         if (len > MAX_DIMS) {
@@ -2685,18 +2685,19 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
                              "must be smaller than %d", MAX_DIMS);
                 return PY_FAIL;
         }
-        seq->ptr = PyDimMem_NEW(len);
+	seq->ptr = PyDimMem_NEW(MIN(1,len));
         if (seq->ptr == NULL) {
                 PyErr_NoMemory();
                 return PY_FAIL;
         }
         seq->len = len;
         nd = PyArray_IntpFromSequence(obj, (intp *)seq->ptr, len);
-        if (nd == -1) return PY_FAIL;
-        if (nd != len) {
-                return PY_FAIL;
-        }
+        if (nd == -1 || nd != len) goto fail;
         return PY_SUCCEED;
+
+ fail:
+	PyDimMem_FREE(seq->ptr);
+	return PY_FAIL;
 }
 
 /* This function takes a Python object representing a type and converts it 
@@ -2889,6 +2890,7 @@ PyArray_EquivArrTypes(PyArrayObject *a1, PyArrayObject *a2)
 /*** END C-API FUNCTIONS **/
 
 
+#define _ARET(x) PyArray_Return((PyArrayObject *)(x))
 
 static char doc_fromobject[] = "array(object, dtype=None, copy=1, fortran=0) will return a new array formed from the given object type given.  Object can anything with an __array__ method, or any (nested) sequence.  If no type is given, then the type will be determined as the minimum type required to hold the objects in the  sequence.  If copy is zero and sequence is already an array with the right type, a reference will be returned.  If the sequence is an array, type can be used only to upcast the array.  For downcasting use .astype(t) method.";
 
@@ -2936,7 +2938,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	if ((ret = PyArray_FromAny(op, &type, 0, 0, flags)) == NULL) 
 		return NULL;
 
-	return PyArray_Return((PyArrayObject *)ret);
+	return _ARET(ret);
 }
 
 static PyObject *
@@ -3056,7 +3058,6 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 	if (alloc) free(dptr);
 	return ret;
 }
-
 
 
 static PyObject *
@@ -3511,7 +3512,7 @@ static PyObject *array_innerproduct(PyObject *dummy, PyObject *args) {
 	
 	if (!PyArg_ParseTuple(args, "OO", &a0, &b0)) return NULL;
 	
-	return PyArray_InnerProduct(a0, b0);
+	return _ARET(PyArray_InnerProduct(a0, b0));
 }
 
 static char doc_matrixproduct[] = \
@@ -3524,7 +3525,7 @@ static PyObject *array_matrixproduct(PyObject *dummy, PyObject *args) {
 	
 	if (!PyArg_ParseTuple(args, "OO", &a, &v)) return NULL;
 	
-	return PyArray_MatrixProduct(a, v);
+	return _ARET(PyArray_MatrixProduct(a, v));
 }
 
 static char doc_fastCopyAndTranspose[] = "_fastCopyAndTranspose(a)";
@@ -3534,7 +3535,7 @@ static PyObject *array_fastCopyAndTranspose(PyObject *dummy, PyObject *args) {
 	
 	if (!PyArg_ParseTuple(args, "O", &a0)) return NULL;
 	
-	return PyArray_CopyAndTranspose(a0);
+	return _ARET(PyArray_CopyAndTranspose(a0));
 }
 
 static char doc_correlate[] = "cross_correlate(a,v, mode=0)";
@@ -3639,8 +3640,9 @@ array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 	}
 
 	return PyArray_Arange(start, stop, step, type_num);
-
 }
+
+#undef _ARET
 
 /*****
       static char doc_arrayMap[] = "arrayMap(func, [a1,...,an])";
@@ -3701,14 +3703,23 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 	PyObject *tup=NULL, *obj=NULL;
 	PyObject *ret=NULL, *zero=NULL;
 
+	if ((x==NULL) || (y==NULL)) {
+		PyErr_SetString(PyExc_ValueError, "either both or neither"
+				"of x and y should be given.");
+		return NULL;
+	}
+
 	arr = (PyArrayObject *)PyArray_FromAny(condition, NULL, 0, 0, 0);
 	if (arr == NULL) return NULL;
 
-	if ((x==NULL) || (y==NULL)) {
+	if ((x==NULL) && (y==NULL)) {
 		ret = PyArray_Nonzero(arr);
 		Py_DECREF(arr);
 		return ret;
 	}
+
+
+
 
 	zero = PyInt_FromLong((long) 0);
 

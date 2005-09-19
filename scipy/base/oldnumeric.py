@@ -14,6 +14,7 @@ NewAxis = None
 
 UFuncType = type(um.sin)
 ArrayType = mu.ndarray
+arraytype = ArrayType
 UfuncType = UFuncType
 
 LittleEndian = (sys.byteorder == 'little')

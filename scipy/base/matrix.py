@@ -1,7 +1,10 @@
 
 import numeric as N
+from numeric import ArrayType, concatenate
 import types
 import string as str_
+
+__all__ = ['matrix', 'bmat', 'mat']
 
 # make translation table
 _table = [None]*256
@@ -215,7 +218,66 @@ class matrix(N.ndarray):
     A = property(getA, None, doc="Get base array")
     T = property(getT, None, doc="transpose")    
     H = property(getH, None, doc="hermitian (conjugate) transpose")
+
+
+def _from_string(str,gdict,ldict):
+    rows = str.split(';')
+    rowtup = []
+    for row in rows:
+        trow = row.split(',')
+        coltup = []
+        for col in trow:
+            col = col.strip()
+            try:
+                thismat = gdict[col]
+            except KeyError:
+                try:
+                    thismat = ldict[col]
+                except KeyError:
+                    raise KeyError, "%s not found" % (col,)
+                                    
+            coltup.append(thismat)
+        rowtup.append(concatenate(coltup,axis=-1))
+    return concatenate(rowtup,axis=0)
+
     
 
+def bmat(obj,gdict=None,ldict=None):
+    """Build a matrix object from string, nested sequence, or array.
+
+    Ex:  F = bmat('A, B; C, D')  
+         F = bmat([[A,B],[C,D]])
+         F = bmat(r_[c_[A,B],c_[C,D]])
+
+        all produce the same Matrix Object    [ A  B ]
+                                              [ C  D ]
+                                      
+        if A, B, C, and D are appropriately shaped 2-d arrays.
+    """
+    if isinstance(obj, types.StringType):
+        if gdict is None:
+            # get previous frame
+            frame = sys._getframe().f_back
+            glob_dict = frame.f_globals
+            loc_dict = frame.f_locals
+        else:
+            glob_dict = gdict
+            loc_dict = ldict
+        
+        return matrix(_from_string(obj, glob_dict, loc_dict))
+    
+    if isinstance(obj, (types.TupleType, types.ListType)):
+        # [[A,B],[C,D]]
+        arr_rows = []
+        for row in obj:
+            if isinstance(row, ArrayType):  # not 2-d
+                return matrix(concatenate(obj,axis=-1))
+            else:
+                arr_rows.append(concatenate(row,axis=-1))
+        return matrix(concatenate(arr_rows,axis=0))
+    if isinstance(obj, ArrayType):
+        return matrix(obj)
+
+mat = matrix
     
         

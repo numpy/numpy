@@ -1,21 +1,22 @@
 import types
 import numeric as _nx
-from numeric import ones, zeros, arange, concatenate
-from umath import pi, multiply, add, arctan2, maximum, minimum
-from oldnumeric import ravel, nonzero, array, choose, \
-     sometrue, alltrue, reshape, any, all 
+from numeric import ones, zeros, arange, concatenate, array, asarray
+from umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc
+from oldnumeric import ravel, nonzero, choose, \
+     sometrue, alltrue, reshape, any, all, typecodes 
 from type_check import ScalarType, isscalar
 from shape_base import squeeze, atleast_1d
 from _compiled_base import digitize, bincount, _insert
-from index_tricks import r_
 
 __all__ = ['round','logspace','linspace','fix','mod',
-           'select','trim_zeros','amax','amin', 'alen',
-           'ptp','cumsum','take', 'copy',
-           'prod','cumprod','diff','gradient','angle','unwrap','sort_complex',
+           'select','trim_zeros','alen','amax', 'amin', 'ptp',
+           'copy',
+           'prod','cumprod', 'diff','gradient','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
-           'nanargmin','nanmin','sum','vectorize','asarray_chkfinite',
+           'nanargmin','nanmin', 'vectorize','asarray_chkfinite',
            'average','histogram','bincount','digitize']
+
+
 
 def logspace(start,stop,num=50,endpoint=1):
     """ Evenly spaced samples on a logarithmic scale.
@@ -216,85 +217,49 @@ def select(condlist, choicelist, default=0):
         S = S*ones(asarray(pfac).shape)
     return choose(S, tuple(choicelist))
 
-def _asarray1d(arr):
+def _asarray1d(arr,copy=0):
     """Ensure 1d array for one array.
     """
-    m = asarray(arr)
-    if len(m.shape)==0:
-        m = reshape(m,(1,))
-    return m
+    if copy:
+        return asarray(arr).flatten()
+    else:
+        return asarray(arr).ravel()
 
 def copy(a):
     """Return an array copy of the object.
     """
     return array(a,copy=1)
-
-def take(a, indices, axis=0):
-    """Selects the elements in indices from array a along given axis.
-    """
-    try:
-        a = _nx.take(a,indices,axis)
-    except ValueError:  # a is scalar
-        pass
-    return a
-
-def _no_axis_is_all(function, m, axis):
-    if axis is None:
-        m = ravel(m)
-        axis = 0
-    else:
-        m = _asarray1d(m)
-    if _nx.which[0] == "numeric":
-        r = function(m, axis)
-    else:
-        import numarray as _na
-        _na.Error.pushMode(overflow="raise")
-        try:
-            r = function(m, axis)
-        finally:
-            _na.Error.popMode()
-    return r
     
 # Basic operations
 def amax(m,axis=-1): 
     """Returns the maximum of m along dimension axis. 
     """
-    return _no_axis_is_all(maximum.reduce, m, axis)
+    return asarray(m).max(axis)
 
 def amin(m,axis=-1):
     """Returns the minimum of m along dimension axis.
     """
-    return _no_axis_is_all(minimum.reduce, m, axis)
+    return asarray(m).min(axis)
 
 def alen(m):
     """Returns the length of a Python object interpreted as an array
     """
     return len(asarray(m))
 
-# Actually from Basis, but it fits in so naturally here...
-
-def _amin_amax(m, axis):
-    return amax(m,axis)-amin(m,axis)
-
 def ptp(m,axis=-1):
     """Returns the maximum - minimum along the the given dimension
     """
-    return _no_axis_is_all(_amin_amax, m, axis)
-
-def cumsum(m,axis=-1):
-    """Returns the cumulative sum of the elements along the given axis
-    """
-    return _no_axis_is_all(add.accumulate, m, axis)
+    return asarray(m).ptp(axis)
 
 def prod(m,axis=-1):
     """Returns the product of the elements along the given axis
     """
-    return _no_axis_is_all(multiply.reduce, m, axis)
+    return asarray(m).prod(axis)
 
 def cumprod(m,axis=-1):
     """Returns the cumulative product of the elments along the given axis
     """
-    return _no_axis_is_all(multiply.accumulate, m, axis)
+    return asarray(m).cumprod(axis)
 
 def gradient(f,*varargs):
     """Calculate the gradient of an N-dimensional scalar function.
@@ -378,7 +343,7 @@ def diff(x, n=1,axis=-1):
         return x
     if n<0:
         raise ValueError,'Order must be non-negative but got ' + `n`
-    x = _asarray1d(x)
+    x = x.ravel()
     nd = len(x.shape)
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
@@ -463,17 +428,6 @@ def unique(inseq):
         set[item] = None
     return asarray(set.keys())
 
-def where(condition,x=None,y=None):
-    """If x and y are both None, then return the (1-d equivalent) indices
-    where condition is true.  Otherwise, return an array shaped like
-    condition with elements of x and y in the places where condition is
-    true or false respectively.
-    """
-    if (x is None) and (y is None):
-             # Needs work for multidimensional arrays
-        return nonzero(ravel(condition))
-    else:
-        return choose(not_equal(condition, 0), (y,x))
     
 def extract(condition, arr):
     """Elements of ravel(condition) where ravel(condition) is true (1-d)
@@ -489,40 +443,44 @@ def insert(arr, mask, vals):
     return _nx._insert(arr, mask, vals)
 
 def nansum(x,axis=-1):
-    """Sum the array over the given axis treating nans as missing values.
+    """Sum the array over the given axis treating nans as 0
     """
-    x = _asarray1d(x).copy()
-    _nx.putmask(x,isnan(x),0)
-    return _nx.sum(x,axis)
+    y = array(x)
+    if not issubclass(y.dtype, _nx.integer):
+        y[isnan(x)] = 0
+    return y.sum(axis)
 
 def nanmin(x,axis=-1):
     """Find the minimium over the given axis ignoring nans.
     """
-    x = _asarray1d(x).copy()
-    _nx.putmask(x,isnan(x),inf)
-    return amin(x,axis)
+    y = array(x)
+    if not issubclass(y.dtype, _nx.integer):
+        y[isnan(x)] = nx.inf
+    return y.min(axis)
 
 def nanargmin(x,axis=-1):
     """Find the indices of the minimium over the given axis ignoring nans.
     """
-    x = _asarray1d(x).copy()
-    _nx.putmask(x,isnan(x),inf)
-    return argmin(x,axis)
-    
+    y = array(x)
+    if not issubclass(y.dtype, _nx.integer):
+        y[isnan(x)] = nx.inf    
+    return y.argmin(axis)    
 
 def nanmax(x,axis=-1):
     """Find the maximum over the given axis ignoring nans.
     """
-    x = _asarray1d(x).copy()
-    _nx.putmask(x,isnan(x),-inf)
-    return amax(x,axis)
+    y = array(x)
+    if not issubclass(y.dtype, _nx.integer):
+        y[isnan(x)] = -nx.inf    
+    return y.max(axis)    
 
 def nanargmax(x,axis=-1):
     """Find the maximum over the given axis ignoring nans.
     """
-    x = _asarray1d(x).copy()
-    _nx.putmask(x,isnan(x),-inf)
-    return argmax(x,axis)
+    y = array(x)
+    if not issubclass(y.dtype, _nx.integer):
+        y[isnan(x)] = -nx.inf    
+    return y.argmax(axis)    
 
 def disp(mesg, device=None, linefeed=1):
     """Display a message to device (default is sys.stdout) with(out) linefeed.
@@ -539,15 +497,16 @@ def disp(mesg, device=None, linefeed=1):
 
 class vectorize:
     """
- vectorize(somefunction)  Generalized Function class.
+ vectorize(somefunction, otypes=None, doc=None)
+ Generalized Function class.
 
   Description:
  
     Define a vectorized function which takes nested sequence
-    objects or numerix arrays as inputs and returns a
-    numerix array as output, evaluating the function over successive
+    objects or scipy arrays as inputs and returns a
+    scipy array as output, evaluating the function over successive
     tuples of the input arrays like the python map function except it uses
-    the broadcasting rules of numerix Python.
+    the broadcasting rules of scipy. 
 
   Input:
 
@@ -568,9 +527,15 @@ class vectorize:
 
     """
     def __init__(self,pyfunc,otypes=None,doc=None):
-        if not callable(pyfunc) or type(pyfunc) is types.ClassType:
-            raise TypeError, "Object is not a callable Python object."
+        try:
+            fcode = pyfunc.func_code
+        except AttributeError:
+            raise TypeError, "Object is not a callable Python object"
+
         self.thefunc = pyfunc
+        self.ufunc = None
+        self.nin = len(fcode.co_varnames)
+        self.nout = None
         if doc is None:
             self.__doc__ = pyfunc.__doc__
         else:
@@ -582,39 +547,35 @@ class vectorize:
                 self.otypes=otypes
             else:
                 raise ValueError, "Output types must be a string."
+        for char in self.otypes:
+            if char not in typecodes:
+                raise ValueError, "Invalid typecode specified"
 
     def __call__(self,*args):
-        try:
-            return squeeze(arraymap(self.thefunc,args,self.otypes))
-        except IndexError:
-            return self.zerocall(*args)
-
-    def zerocall(self,*args):
-        # one of the args was a zeros array
-        #  return zeros for each output
-        #  first --- find number of outputs
-        #  get it from self.otypes if possible
-        #  otherwise evaluate function at 0.9
-        N = len(self.otypes)
-        if N==1:
-            return zeros((0,),'d')
-        elif N !=0:
-            return (zeros((0,),'d'),)*N
-        newargs = []
-        args = atleast_1d(args)
-        for arg in args:
-            if arg.dtypechar != 'O':
-                newargs.append(0.9)
+        # get number of outputs and output types by calling
+        #  the function on the first entries of args
+        if self.nout is None or self.otypes == '':
+            newargs = []
+            for arg in args:
+                newargs.append(asarray(arg).flat[0])
+            theout = self.thefunc(*newargs)
+            if isinstance(theout, types.TupleType):
+                self.nout = len(theout)
             else:
-                newargs.append(arg[0])
-        newargs = tuple(newargs)
-        try:
-            res = self.thefunc(*newargs)
-        except:
-            raise ValueError, "Zerocall is failing.  "\
-                  "Try using otypes in vectorize."
-        if isscalar(res):
-            return zeros((0,),'d')
-        else:
-            return (zeros((0,),'d'),)*len(res)
+                self.nout = 1
+                theout = (theout,)
+            if self.otypes == '':
+                otypes = []
+                for k in range(self.nout):
+                    otypes.append(asarray(theout[k]).dtypechar)
+                self.otypes = ''.join(otypes)
 
+        if self.ufunc is None:
+            self.ufunc = frompyfunc(self.thefunc, self.nin, self.nout)
+
+        if self.nout == 1:
+            return self.ufunc(*args).astype(self.otypes[0])
+        else:
+            return tuple([x.astype(c) for x,c in zip(self.ufunc(*args), self.otypes)])
+            
+            

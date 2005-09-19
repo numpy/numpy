@@ -106,38 +106,6 @@ def solve_linear_equations(a, b):
 def inverse(a):
     return solve_linear_equations(a, Numeric.identity(a.shape[0]))
 
-def tri(N, M=None, k=0, dtype=None):
-    """ returns a N-by-M matrix where all the diagonals starting from
-        lower left corner up to the k-th are all ones.
-    """
-    if M is None: M = N
-    if type(M) == type('d'):
-        #pearu: any objections to remove this feature?
-        #       As tri(N,'d') is equivalent to tri(N,dtype='d')
-        typecode = M
-        M = N
-    m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
-    if typecode is None:
-        return m
-    else:
-        return m.astype(typecode)
-
-def tril(m, k=0):
-    """ returns the elements on and below the k-th diagonal of m.  k=0 is the
-        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
-    """
-    m = asarray(m)
-    out = tri(m.shape[0], m.shape[1], k=k, dtype=m.dtypechar)*m
-    return out
-
-def triu(m, k=0):
-    """ returns the elements on and above the k-th diagonal of m.  k=0 is the
-        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
-    """
-    m = asarray(m)
-    out = (1-tri(m.shape[0], m.shape[1], k-1, m.dtypechar))*m
-    return out
-
 
 # Cholesky decomposition
 

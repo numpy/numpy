@@ -2236,7 +2236,7 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
 static char 
-doc_frompyfunc[] = "frompyfunc(func, nin, nout) take an arbitrary python function that takes nin objects as input and returns nout objects and return a universal function (ufunc).  This ufunc always returns PyObject arrays unless output arguments are provided.";
+doc_frompyfunc[] = "frompyfunc(func, nin, nout) take an arbitrary python function that takes nin objects as input and returns nout objects and return a universal function (ufunc).  This ufunc always returns PyObject arrays";
 
 static PyObject *
 ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {

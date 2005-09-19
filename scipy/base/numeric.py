@@ -1,10 +1,9 @@
 
 import sys
 import multiarray
+import umath
 from umath import *
 from numerictypes import *
-
-#import _numpy # for freeze dependency resolution (at least on Mac)
 
 import types, math
 
@@ -321,3 +320,7 @@ def getbufsize(size):
 # Set the UFUNC_ERRMASK_NAME to something
 seterr(where='builtin')
 setbufsize(UFUNC_BUFSIZE_DEFAULT,where='builtin')
+
+inf = PINF
+nan = NAN
+from oldnumeric import *

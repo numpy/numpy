@@ -2361,6 +2361,11 @@ array_hex(PyArrayObject *v)
         return pv2;	       
 }
 
+static PyObject *
+_array_copy_nice(PyArrayObject *self)
+{
+	return PyArray_Return(self);
+}
 
 static PyNumberMethods array_as_number = {
         (binaryfunc)array_add,		    /*nb_add*/
@@ -2371,7 +2376,7 @@ static PyNumberMethods array_as_number = {
         (binaryfunc)array_divmod,		    /*nb_divmod*/
         (ternaryfunc)array_power,		    /*nb_power*/
         (unaryfunc)array_negative,                  /*nb_neg*/	
-        (unaryfunc)PyArray_Copy,		    /*nb_pos*/ 
+        (unaryfunc)_array_copy_nice,		    /*nb_pos*/ 
         (unaryfunc)array_absolute,		    /*(unaryfunc)array_abs,*/
         (inquiry)array_all_nonzero,		    /*nb_nonzero*/
         (unaryfunc)array_invert,		    /*nb_invert*/

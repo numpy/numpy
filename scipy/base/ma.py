@@ -13,10 +13,11 @@ Released for unlimited redistribution; see file Legal.htm
 Documentation is in the Numeric manual; see numpy.sourceforge.net
 Adapted for scipy.base 2005
 """
-import scipy.base as Numeric
+import numeric as Numeric
 import string, types, sys
-from Precision import *
-from scipy.base import e, pi, NewAxis
+from oldnumeric import *
+from numeric import e, pi, newaxis
+NewAxis = newaxis
 MaskType=Int0
 divide_tolerance = 1.e-35
 
@@ -552,7 +553,7 @@ class MaskedArray (object):
            If data already a Numeric array, its typecode 
            becomes the default values for typecode.
         """
-        tc = typecode
+        tc = dtype
         ss = savespace
         if ss is None:
             ss = True
@@ -1434,7 +1435,7 @@ def arrayrange(start, stop=None, step=1, dtype=None):
     """Just like range() except it returns a array whose type can be specified
     by the keyword argument typecode.
     """
-    return array(Numeric.arrayrange(start, stop, step, typecode))
+    return array(Numeric.arrayrange(start, stop, step, dtype))
 
 arange = arrayrange
 
@@ -1498,17 +1499,17 @@ def indices (dimensions, dtype=None):
     """indices(dimensions,dtype=None) returns an array representing a grid
     of indices with row-only, and column-only variation.
     """
-    return array(Numeric.indices(dimensions, typecode))
+    return array(Numeric.indices(dimensions, dtype))
 
 def zeros (shape, dtype=Int):
     """zeros(n, dtype=Int) =
      an array of all zeros of the given length or shape."""
-    return array(Numeric.zeros(shape, typecode, savespace))
+    return array(Numeric.zeros(shape, dtype, savespace))
 
 def ones (shape, dtype=Int):
     """ones(n, dtype=Int) =
      an array of all ones of the given length or shape."""
-    return array(Numeric.ones(shape, typecode, savespace))
+    return array(Numeric.ones(shape, dtype, savespace))
 
 
 def count (a, axis = None):
@@ -2064,52 +2065,7 @@ def asarray(data, dtype=None):
        or the same.
     """
     if isinstance(data, MaskedArray) and \
-        (typecode is None or typecode == data.dtypechar):
+        (dtype is None or dtype == data.dtypechar):
         return data
-    return array(data, dtype=typecode, copy=0)
+    return array(data, dtype=dtype, copy=0)
 
-# This section is stolen from a post about how to limit array printing.
-__MaxElements = 300     #Maximum size for printing
-
-def limitedArrayRepr(a, max_line_width = None, precision = None, suppress_small = None):
-    "Calculate string representation, limiting size of output."
-    global __MaxElements
-    s = a.shape
-    elems =  Numeric.multiply.reduce(s)
-    if elems > __MaxElements:
-        if len(s) > 1:
-            return 'array (%s) , type = %s, has %d elements' % \
-                 (string.join(map(str, s), ","), a.dtypechar, elems)
-        else:
-            return Numeric.array2string (a[:__MaxElements], max_line_width, precision,
-                 suppress_small,',',0) + \
-               ('\n + %d more elements' % (elems - __MaxElements))
-    else:
-        return Numeric.array2string (a, max_line_width, precision,
-                suppress_small,',',0)
-
-__original_str = Numeric.array_str
-__original_repr = Numeric.array_repr
-
-def set_print_limit (m=0):
-    "Set the maximum # of elements for printing arrays. <=0  = no limit"
-    import scipy.base.multiarray as multiarray
-    global __MaxElements
-    n = int(m)
-    __MaxElements = n
-    if n <= 0:
-        Numeric.array_str = __original_str
-        Numeric.array_repr = __original_repr
-        multiarray.set_string_function(__original_str, 0)
-        multiarray.set_string_function(__original_repr, 1)
-    else:
-        Numeric.array_str = limitedArrayRepr
-        Numeric.array_repr = limitedArrayRepr
-        multiarray.set_string_function(limitedArrayRepr, 0)
-        multiarray.set_string_function(limitedArrayRepr, 1)
-
-def get_print_limit ():
-    "Get the maximum # of elements for printing arrays. "
-    return __MaxElements
-
-set_print_limit(__MaxElements)

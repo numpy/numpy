@@ -2,41 +2,38 @@
 
 """
 
-__all__ = ['diag','eye','fliplr','flipud','rot90','bmat','matrix']
+__all__ = ['diag','eye','fliplr','flipud','rot90','tri','triu','tril']
 
-from numerix import *
-from type_check import asarray
+from numeric import *
 import sys
 
-matrix = Matrix
-
 def fliplr(m):
-    """ returns a 2-D matrix m with the rows preserved and columns flipped 
-        in the left/right direction.  Only works with 2-D arrays.
+    """ returns a 2-d array m with the rows preserved and columns flipped 
+        in the left/right direction.  Only works with 2-d arrays.
     """
     m = asarray(m)
     if len(m.shape) != 2:
-        raise ValueError, "Input must be 2-D."
+        raise ValueError, "Input must be 2-d."
     return m[:, ::-1]
 
 def flipud(m):
-    """ returns a 2-D matrix with the columns preserved and rows flipped in
-        the up/down direction.  Only works with 2-D arrays.
+    """ returns a 2-d array with the columns preserved and rows flipped in
+        the up/down direction.  Only works with 2-d arrays.
     """
     m = asarray(m)
     if len(m.shape) != 2:
-        raise ValueError, "Input must be 2-D."
+        raise ValueError, "Input must be 2-d."
     return m[::-1]
     
 # reshape(x, m, n) is not used, instead use reshape(x, (m, n))
 
 def rot90(m, k=1):
-    """ returns the matrix found by rotating m by k*90 degrees in the 
+    """ returns the 2-d array found by rotating m by k*90 degrees in the 
         counterclockwise direction.
     """
     m = asarray(m)
     if len(m.shape) != 2:
-        raise ValueError, "Input must be 2-D."
+        raise ValueError, "Input must be 2-d."
     k = k % 4
     if k == 0: return m
     elif k == 1: return transpose(fliplr(m))
@@ -44,7 +41,7 @@ def rot90(m, k=1):
     else: return fliplr(transpose(m))  # k==3
     
 def eye(N, M=None, k=0, typecode='d'):
-    """ eye returns a N-by-M matrix where the  k-th diagonal is all ones, 
+    """ eye returns a N-by-M 2-d array where the  k-th diagonal is all ones, 
         and everything else is zeros.
     """
     if M is None: M = N
@@ -58,7 +55,7 @@ def eye(N, M=None, k=0, typecode='d'):
         return m.astype(typecode)
 
 def diag(v, k=0):
-    """ returns the k-th diagonal if v is a matrix or returns a matrix 
+    """ returns the k-th diagonal if v is a array or returns a array 
         with v as the k-th diagonal if v is a vector.
     """
     v = asarray(v)
@@ -76,7 +73,40 @@ def diag(v, k=0):
         elif k < 0: return v[:k]
         else: return v
     else:
-            raise ValueError, "Input must be 1- or 2-D."
+            raise ValueError, "Input must be 1- or 2-d."
+
+
+def tri(N, M=None, k=0, dtype=None):
+    """ returns a N-by-M array where all the diagonals starting from
+        lower left corner up to the k-th are all ones.
+    """
+    if M is None: M = N
+    if type(M) == type('d'):
+        #pearu: any objections to remove this feature?
+        #       As tri(N,'d') is equivalent to tri(N,dtype='d')
+        dtype = M
+        M = N
+    m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
+    if dtype is None:
+        return m
+    else:
+        return m.astype(dtype)
+
+def tril(m, k=0):
+    """ returns the elements on and below the k-th diagonal of m.  k=0 is the
+        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
+    """
+    m = asarray(m)
+    out = tri(m.shape[0], m.shape[1], k=k, dtype=m.dtype)*m
+    return out
+
+def triu(m, k=0):
+    """ returns the elements on and above the k-th diagonal of m.  k=0 is the
+        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
+    """
+    m = asarray(m)
+    out = (1-tri(m.shape[0], m.shape[1], k-1, m.dtype))*m
+    return out
 
 
 def _from_string(str,gdict,ldict):
@@ -99,39 +129,5 @@ def _from_string(str,gdict,ldict):
         rowtup.append(concatenate(coltup,axis=-1))
     return concatenate(rowtup,axis=0)
 
-def bmat(obj,gdict=None,ldict=None):
-    """Build a matrix object from string, nested sequence, or array.
 
-    Ex:  F = bmat('A, B; C, D')  
-         F = bmat([[A,B],[C,D]])
-         F = bmat(r_[c_[A,B],c_[C,D]])
-
-        all produce the same Matrix Object    [ A  B ]
-                                              [ C  D ]
-                                      
-        if A, B, C, and D are appropriately shaped 2-d arrays.
-    """
-    if isinstance(obj, types.StringType):
-        if gdict is None:
-            # get previous frame
-            frame = sys._getframe().f_back
-            glob_dict = frame.f_globals
-            loc_dict = frame.f_locals
-        else:
-            glob_dict = gdict
-            loc_dict = ldict
-        
-        return Matrix(_from_string(obj, glob_dict, loc_dict))
-    
-    if isinstance(obj, (types.TupleType, types.ListType)):
-        # [[A,B],[C,D]]
-        arr_rows = []
-        for row in obj:
-            if isinstance(row, ArrayType):  # not 2-d
-                return Matrix(concatenate(obj,axis=-1))
-            else:
-                arr_rows.append(concatenate(row,axis=-1))
-        return Matrix(concatenate(arr_rows,axis=0))
-    if isinstance(obj, ArrayType):
-        return Matrix(obj)
 

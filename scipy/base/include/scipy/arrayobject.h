@@ -857,8 +857,6 @@ typedef struct {
 #define PyArray_CHKFLAGS(m, FLAGS) \
 	((((PyArrayObject *)(m))->flags & (FLAGS)) == (FLAGS))
 #define PyArray_ISCONTIGUOUS(m) PyArray_CHKFLAGS(m, CONTIGUOUS)
-#define PyArray_ISONESEGMENT(m) (PyArray_CHKFLAGS(m, CONTIGUOUS) ||	\
-				 PyArray_CHKFLAGS(m, FORTRAN))
 #define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, WRITEABLE)
 
 #define PyArray_ISCARRAY(m) PyArray_CHKFLAGS(m, CARRAY_FLAGS)
@@ -1037,6 +1035,8 @@ typedef struct {
 
 
 #define PyArray_NDIM(obj) (((PyArrayObject *)(obj))->nd)
+#define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || PyArray_CHKFLAGS(m, CONTIGUOUS) || \
+				 PyArray_CHKFLAGS(m, FORTRAN))
 #define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, FORTRAN) && (PyArray_NDIM(m) > 1))
 #define PyArray_DATA(obj) (((PyArrayObject *)(obj))->data)
 #define PyArray_DIMS(obj) (((PyArrayObject *)(obj))->dimensions)

@@ -1,9 +1,11 @@
-import numerix as _nx
-from numerix import *
+## Automatically adapted for scipy Sep 19, 2005 by convertcode.py
+
+import numeric
+from numeric import *
 from scimath import *
 
-from type_check import isscalar, asarray
-from matrix_base import diag
+from type_check import isscalar
+from twodim_base import diag
 from shape_base import hstack, atleast_1d
 from function_base import trim_zeros, sort_complex
 
@@ -11,15 +13,8 @@ __all__ = ['poly','roots','polyint','polyder','polyadd','polysub','polymul',
            'polydiv','polyval','poly1d']
  
 def get_eigval_func():
-    try:
-        import scipy.linalg
-        eigvals = scipy.linalg.eigvals
-    except ImportError:
-        try:
-            import linalg
-            eigvals = linalg.eigvals
-        except ImportError:
-                from numerix import eigenvalues as eigvals
+    import scipy.linalg
+    eigvals = scipy.linalg.eigvals
     return eigvals
 
 def poly(seq_of_zeros):
@@ -50,7 +45,7 @@ def poly(seq_of_zeros):
     for k in range(len(seq_of_zeros)):
         a = convolve(a,[1, -seq_of_zeros[k]], mode=2)
         
-    if a.typecode() in ['F','D']:
+    if a.dtypechar in ['F','D']:
         # if complex roots are all complex conjugates, the roots are real.
         roots = asarray(seq_of_zeros,'D')
         pos_roots = sort_complex(compress(roots.imag > 0,roots))
@@ -84,20 +79,20 @@ def roots(p):
     p = p[int(non_zero[0]):int(non_zero[-1])+1]
     
     # casting: if incoming array isn't floating point, make it floating point.
-    if p.typecode() not in ['f','d','F','D']:
+    if p.dtypechar not in ['f','d','F','D']:
         p = p.astype('d')
 
     N = len(p)
     if N > 1:
         # build companion matrix and find its eigenvalues (the roots)
-        A = diag(ones((N-2,),p.typecode()),-1)
+        A = diag(ones((N-2,),p.dtypechar),-1)
         A[0,:] = -p[1:] / p[0]
         roots = eig(A)
     else:
         return array([])
 
     # tack any zeros onto the back of the array    
-    roots = hstack((roots,zeros(trailing_zeros,roots.typecode())))
+    roots = hstack((roots,zeros(trailing_zeros,roots.dtypechar)))
     return roots
 
 def polyint(p,m=1,k=None):
@@ -167,7 +162,7 @@ def polyval(p,x):
         y = 0
     else:
         x = asarray(x)
-        y = _nx.zeros(x.shape,x.typecode())
+        y = _nx.zeros(x.shape,x.dtypechar)
     for i in range(len(p)):
         y = x * y + p[i]
     return y
@@ -348,14 +343,14 @@ class poly1d:
             elif power == 1:
                 if coefstr == '0':
                     newstr = ''
-                elif coefstr == '1':
+                elif coefstr == 'b':
                     newstr = 'x'
                 else:                    
                     newstr = '%s x' % (coefstr,)
             else:
                 if coefstr == '0':
                     newstr = ''
-                elif coefstr == '1':
+                elif coefstr == 'b':
                     newstr = 'x**%d' % (power,)
                 else:                    
                     newstr = '%s x**%d' % (coefstr, power)
@@ -434,7 +429,7 @@ class poly1d:
     def __getattr__(self, key):
         if key in ['r','roots']:
             return roots(self.coeffs)
-        elif key in ['c','coef','coefficients']:
+        elif key in ['S1','coef','coefficients']:
             return self.coeffs
         elif key in ['o']:
             return self.order
@@ -454,7 +449,7 @@ class poly1d:
         if key < 0:
             raise ValueError, "Does not support negative powers."
         if key > self.order:
-            zr = _nx.zeros(key-self.order,self.coeffs.typecode())
+            zr = _nx.zeros(key-self.order,self.coeffs.dtypechar)
             self.__dict__['coeffs'] = _nx.concatenate((zr,self.coeffs))
             self.__dict__['order'] = key
             ind = 0

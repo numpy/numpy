@@ -1,11 +1,14 @@
+## Automatically adapted for scipy Sep 19, 2005 by convertcode.py
+
 import types
-import numerix as _nx
+import numeric as _nx
 __all__ = ['mgrid','ogrid','r_', 'row', 'c_', 'col', 'index_exp']
 
-from type_check import ScalarType, asarray
+from type_check import ScalarType
 import function_base
-import matrix_base
-makemat = _nx.Matrix
+import twodim_base as matrix_base
+import matrix
+makemat = matrix.matrix
 
 class nd_grid:
     """ Construct a "meshgrid" in N-dimensions.
@@ -66,7 +69,7 @@ class nd_grid:
                    isinstance(key[k].stop, types.FloatType):
                        typecode = _nx.Float
             if self.sparse:
-                nn = map(lambda x,t: _nx.arange(x,typecode=t),size,(typecode,)*len(size))
+                nn = map(lambda x,t: _nx.arange(x,dtype=t),size,(typecode,)*len(size))
             else:
                 nn = _nx.indices(size,typecode)
 	    for k in range(len(size)):
