@@ -10,9 +10,14 @@
 #    - .iscontiguous()
 #    - .byteswapped()
 #    - .itemsize()
-#  * Converts useage of .flat.xxx to .ravel().xxx
-#  * Prints warning of other usage of flat.
+#  * Converts .flat to .ravel() except for .flat = xxx or .flat[xxx]
+#  * Change typecode= to dtype=
 #  * Prints warning for use of bool, int, float, copmlex, object, and unicode
+#
+#  TODO:
+#  + Eliminate savespace= from array, sarray, asarray, ones, and zeros,
+#  + Eliminate the methods  .spacesaver() (replace with True) and .savespace(),
+#     convert xx.savespace(?) to pass
 
 
 import sys
@@ -37,21 +42,7 @@ def replacetypechars(astr):
     astr = astr.replace("'u'","'I'")
     return astr
 
-# This function replaces
-#  import x1, x2, x3
-#
-#with
-#  import x1
-#  import x2
-#  import x3
-importre = re.compile('import\s+?(\S+?[^,]+?,\s*)+?')
-def expand_import(astr):
-    
-    return astr
-
-
 def changeimports(fstr, name, newname):
-    fstr = expand_import(fstr)    
     importstr = 'import %s' % name
     importasstr = 'import %s as ' % name
     fromstr = 'from %s import ' % name

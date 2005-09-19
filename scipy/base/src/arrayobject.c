@@ -5615,7 +5615,8 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 	/* Check for Integer or Slice */
 	
 	
-	if (PyLong_Check(ind) || PyInt_Check(ind) || PySlice_Check(ind)) {			start = parse_subindex(ind, &step_size, &n_steps, 
+	if (PyLong_Check(ind) || PyInt_Check(ind) || PySlice_Check(ind)) {
+		start = parse_subindex(ind, &step_size, &n_steps, 
 				       self->size);
 		if (start == -1) 
 			goto fail;
@@ -5674,12 +5675,14 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		}
 		else {
 			PyErr_SetString(PyExc_IndexError, 
-					"unsupported iteration index");
+					"unsupported iterator index");
 			goto fail;
 		}
 		Py_DECREF(obj);
 		return r;
 	}
+
+	PyErr_SetString(PyExc_IndexError, "unsupported iterator index");
 
  fail:
 	Py_XDECREF(obj);
@@ -5878,7 +5881,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 		goto succeed;
 	}
 
-	PyErr_SetString(PyExc_IndexError, "unsupported iteration index");
+	PyErr_SetString(PyExc_IndexError, "unsupported iterator index");
 	goto fail;
 
  succeed:
@@ -5922,13 +5925,16 @@ iter_array(PyArrayIterObject *it, PyObject *op)
 
         size = PyArray_SIZE(it->ao);
         if (PyArray_ISCONTIGUOUS(it->ao)) {
-                r = PyArray_New(it->ao->ob_type, 1, &size, it->ao->descr->type_num,
-                                NULL, it->ao->data, it->ao->itemsize, it->ao->flags,
+                r = PyArray_New(it->ao->ob_type, 1, &size, 
+				it->ao->descr->type_num,
+                                NULL, it->ao->data, it->ao->itemsize, 
+				it->ao->flags,
                                 it->ao);                
 		if (r==NULL) return NULL;
         }
         else {
-                r = PyArray_New(it->ao->ob_type, 1, &size, it->ao->descr->type_num,
+                r = PyArray_New(it->ao->ob_type, 1, &size, 
+				it->ao->descr->type_num,
                                 NULL, NULL, it->ao->itemsize, 0, it->ao);
 		if (r==NULL) return NULL;
 		if (PyArray_CopyInto((PyArrayObject *)r, it->ao) < 0) {
@@ -5964,7 +5970,7 @@ static PyMethodDef iter_methods[] = {
 static PyTypeObject PyArrayIter_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
-        "flatiter",			         /* tp_name */
+        "ndarray_flat_iter",		         /* tp_name */
         sizeof(PyArrayIterObject),               /* tp_basicsize */
         0,					 /* tp_itemsize */
         /* methods */

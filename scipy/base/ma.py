@@ -169,14 +169,13 @@ def make_mask (m, copy=0, flag=0):
     elif isinstance(m, Numeric.ArrayType):
         if m.typecode() == MaskType:
             if copy:
-                result = Numeric.array(m, savespace=1)
+                result = Numeric.array(m)
             else:
-                result = Numeric.array(m, copy=0, savespace=1)
+                result = Numeric.array(m, copy=0)
         else:
             result = m.astype(MaskType)
-            result.savespace(1)
     else:
-        result = Numeric.array(filled(m,1), MaskType, savespace=1)
+        result = Numeric.array(filled(m,1), MaskType)
 
     if flag and not Numeric.sometrue(Numeric.ravel(result)):
         return None
@@ -186,7 +185,6 @@ def make_mask (m, copy=0, flag=0):
 def make_mask_none (s):
     "Return a mask of all zeros of shape s."
     result = Numeric.zeros(s, MaskType)
-    result.savespace(1)
     result.shape = s
     return result
 
@@ -514,7 +512,7 @@ class MaskedArray (object):
     """Arrays with possibly masked values.
        Masked values of 1 exclude element from the computation.
        Construction:
-           x = array(data, typecode=None, copy=1, savespace=0,
+           x = array(data, dtype=None, copy=1, savespace=0,
                      mask = None, fill_value=None)
 
        If copy=0, every effort is made not to copy the data:
@@ -527,7 +525,7 @@ class MaskedArray (object):
            Otherwise, the candidate is used.
 
        If a data copy is required, raw data stored is the result of:
-       Numeric.array(data, typecode=typecode, copy=copy, savespace=savespace)
+       Numeric.array(data, dtype=typecode, copy=copy, savespace=savespace)
 
        If mask is None there are no masked values. Otherwise mask must
        be convertible to an array of integers of typecode MaskType,
@@ -542,16 +540,15 @@ class MaskedArray (object):
     """
     handler_cache_key = 'MA.MaskedArray'
 
-    def __init__(self, data, typecode=None,
-                  copy=1, savespace=None, mask=None, fill_value=None,
+    def __init__(self, data, dtype=None,
+                  copy=1, mask=None, fill_value=None,
                   ):
-        """array(data, typecode=None,copy=1, savespace=None,
+        """array(data, dtype=None,copy=1, savespace=None,
                     mask=None, fill_value=None)
            If data already a Numeric array, its typecode and spacesaver()
            become the default values for typecode and savespace.
         """
         tc = typecode
-        ss = savespace
         need_data_copied = copy
         if isinstance(data, MaskedArray):
             c = data.raw_data()
@@ -560,13 +557,6 @@ class MaskedArray (object):
                 tc = ctc
             elif tc != ctc:
                 need_data_copied = 1
-            css = c.spacesaver()
-            if ss is None:
-                ss = css
-            elif ss != css:
-                need_data_copied = 1
-            else:
-                ss = 0
             if mask is None:
                 mask = data.mask()
             elif mask is not None: #attempting to change the mask
@@ -579,23 +569,15 @@ class MaskedArray (object):
                 tc = ctc
             elif tc != ctc:
                 need_data_copied = 1
-            css = c.spacesaver()
-            if ss is None:
-                ss = css
-            elif ss != css:
-                need_data_copied = 1
         else:
             need_data_copied = 0 #because I'll do it now
-            if ss is None:
-                ss = 0
-            c = Numeric.array(data, tc, savespace=ss)
+            c = Numeric.array(data, tc)
 
         if need_data_copied:
             if tc == ctc:
-                self._data = Numeric.array(c, copy=1, savespace = ss)
+                self._data = Numeric.array(c, copy=1)
             else:
                 self._data = c.astype(tc)
-                self._data.savespace(ss)
         else:
             self._data = c
 
@@ -650,7 +632,7 @@ class MaskedArray (object):
         "Set the array's shape."
         if not self._data.iscontiguous():
             self._data = Numeric.array(self._data, self._data.typecode(),
-                                        1, self._data.spacesaver())
+                                        1)
         self._data.shape = newshape
         if self._mask is not None:
             self.unshare_mask()
@@ -778,14 +760,13 @@ array(data = %(data)s,
         "Get copy of item described by i."
         m = self._mask
         dout = self._data[i]
-        ss = self._data.spacesaver()
         tc =self._data.typecode()
         if type(dout) is Numeric.ArrayType:
             if m is None:
-                result = array(dout, typecode=tc, copy = 1, savespace=ss)
+                result = array(dout, dtype=tc, copy = 1)
             else:
-                result = array(dout, typecode=tc, copy = 1, savespace=ss,
-                          mask = m[i], fill_value=self.fill_value())
+                result = array(dout, dtype=tc, copy = 1,
+                               mask = m[i], fill_value=self.fill_value())
             return result
         elif m is None or not m[i]:
             return dout  #scalar
@@ -799,9 +780,9 @@ array(data = %(data)s,
         ss = self._data.spacesaver()
         tc =self._data.typecode()
         if m is None:
-            return array(dout, typecode=tc, copy = 1, savespace=ss)
+            return array(dout, dtype=tc, copy = 1)
         else:
-            return array(dout, typecode=tc, copy = 1, savespace=ss,
+            return array(dout, dtype=tc, copy = 1, 
                       mask = m[i:j], fill_value=self.fill_value())
 
 # --------
@@ -1148,7 +1129,6 @@ array(data = %(data)s,
     def astype (self, tc):
         "return self as array of given type."
         d = self._data.astype(tc)
-        d.savespace(self._data.spacesaver())
         return array(d, mask=self._mask)
 
     def byte_swapped(self):
@@ -1218,8 +1198,7 @@ array(data = %(data)s,
             if d.iscontiguous():
                 return d
             else:
-                return Numeric.array(d, typecode=d.typecode(), copy=1,
-                                       savespace = d.spacesaver())
+                return Numeric.array(d, dtype=d.typecode(), copy=1)
         value = fill_value
         if value is None:
             value = self._fill_value
@@ -1228,8 +1207,7 @@ array(data = %(data)s,
             result.shape = d.shape
         else:
             try:
-                result = Numeric.array(d, typecode=d.typecode(), copy=1,
-                                           savespace = d.spacesaver())
+                result = Numeric.array(d, dtype=d.typecode(), copy=1)
                 Numeric.putmask(result, m, value)
             except:
                 result = Numeric.choose(m, (d, value))
@@ -1297,15 +1275,7 @@ array(data = %(data)s,
             May be noncontiguous. Expert use only.
         """
         return self._mask
-
-    def spacesaver (self):
-        "Get the spacesaver attribute."
-        return self._data.spacesaver()
-
-    def savespace (self, value):
-        "Set the spacesaver attribute to value"
-        self._data.savespace(value)
-
+    
     def set_fill_value (self, v=None):
         "Set the fill value to v. Omit v to restore default."
         if v is None:
@@ -1323,9 +1293,6 @@ array(data = %(data)s,
         else:
             return s[axis]
 
-    def spacesaver (self):
-        "spacesaver() queries the spacesaver attribute."
-        return self._data.spacesaver()
 
     def typecode(self):
         return self._data.typecode()
@@ -1422,8 +1389,7 @@ def allequal (a, b, fill_value=1):
     else:
         return 0
 
-def masked_values (data, value, rtol=1.e-5, atol=1.e-8, copy=1,
-    savespace=0):
+def masked_values (data, value, rtol=1.e-5, atol=1.e-8, copy=1):
     """
        masked_values(data, value, rtol=1.e-5, atol=1.e-8)
        Create a masked array; mask is None if possible.
@@ -1439,19 +1405,17 @@ def masked_values (data, value, rtol=1.e-5, atol=1.e-8, copy=1,
     if d.typecode() in typecodes['Float']:
         m = Numeric.less_equal(abs(d-value), atol+rtol*abs(value))
         m = make_mask(m, flag=1)
-        return array(d, mask = m, savespace=savespace, copy=copy,
-                      fill_value=value)
+        return array(d, mask = m, copy=copy, fill_value=value)
     else:
-        return masked_object(d, value, copy, savespace)
+        return masked_object(d, value, copy)
 
-def masked_object (data, value, copy=1, savespace=0):
+def masked_object (data, value, copy=1):
     "Create array masked where exactly data equal to value"
     d = filled(data, value)
     dm = make_mask(Numeric.equal(d, value), flag=1)
-    return array(d, mask=dm, copy=copy, savespace=savespace,
-                   fill_value=value)
+    return array(d, mask=dm, copy=copy, fill_value=value)
 
-def arrayrange(start, stop=None, step=1, typecode=None):
+def arrayrange(start, stop=None, step=1, dtype=None):
     """Just like range() except it returns a array whose type can be specified
     by the keyword argument typecode.
     """
@@ -1515,21 +1479,21 @@ def identity(n):
     """
     return array(Numeric.identity(n))
 
-def indices (dimensions, typecode=None):
-    """indices(dimensions,typecode=None) returns an array representing a grid
+def indices (dimensions, dtype=None):
+    """indices(dimensions,dtype=None) returns an array representing a grid
     of indices with row-only, and column-only variation.
     """
     return array(Numeric.indices(dimensions, typecode))
 
-def zeros (shape, typecode=Int, savespace=0):
-    """zeros(n, typecode=Int, savespace=0) =
+def zeros (shape, dtype=Int):
+    """zeros(n, dtype=Int) =
      an array of all zeros of the given length or shape."""
-    return array(Numeric.zeros(shape, typecode, savespace))
+    return array(Numeric.zeros(shape, typecode))
 
-def ones (shape, typecode=Int, savespace=0):
-    """ones(n, typecode=Int, savespace=0) =
+def ones (shape, dtype=Int):
+    """ones(n, dtype=Int) =
      an array of all ones of the given length or shape."""
-    return array(Numeric.ones(shape, typecode, savespace))
+    return array(Numeric.ones(shape, typecode))
 
 
 def count (a, axis = None):
@@ -2079,15 +2043,15 @@ def fromfunction (f, s):
     """apply f to s to create array as in Numeric."""
     return masked_array(Numeric.fromfunction(f,s))
 
-def asarray(data, typecode=None):
-    """asarray(data, typecode=None) = array(data, typecode=None, copy=0)
+def asarray(data, dtype=None):
+    """asarray(data, dtype=None) = array(data, dtype=None, copy=0)
        Returns data if typecode if data is a MaskedArray and typecode None
        or the same.
     """
     if isinstance(data, MaskedArray) and \
         (typecode is None or typecode == data.typecode()):
         return data
-    return array(data, typecode=typecode, copy=0)
+    return array(data, dtype=typecode, copy=0)
 
 # This section is stolen from a post about how to limit array printing.
 __MaxElements = 300     #Maximum size for printing

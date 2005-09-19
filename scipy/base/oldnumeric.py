@@ -26,6 +26,11 @@ UnsignedInt16 = nt.uint16
 UnsignedInt32 = nt.uint32
 UnsignedInt = nt.uint
 
+typecodes = {'Character':'S1', 'Integer':'bhilqp', 'UnsignedInteger':'BHILQP',
+             'Float':'fdg', 'Complex':'FDG'}
+
+def sarray(a, dtype=None, copy=0):
+    return array(a, dtype, copy)
 
 try:
     UnsignedInt64 = nt.uint64
