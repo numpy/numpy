@@ -3718,9 +3718,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 		return ret;
 	}
 
-
-
-
 	zero = PyInt_FromLong((long) 0);
 
 	obj = PyArray_EnsureArray(PyArray_GenericBinaryFunction(arr, zero, n_ops.not_equal));
@@ -3853,10 +3850,9 @@ setup_scalartypes(PyObject *dict)
 			     "Could not initialize Py%sArrType_Type",   \
                              #child);                                   \
                 return -1;                                              \
-        } \
-	Py##child##ArrType_Type.tp_new = Py##parent1##_Type.tp_new;
+        } 
         
-        DUAL_INHERIT(Bool, Bool, Generic);
+        SINGLE_INHERIT(Bool, Generic);
         SINGLE_INHERIT(Byte, SignedInteger);
         SINGLE_INHERIT(Short, SignedInteger);
 #if SIZEOF_INT == SIZEOF_LONG

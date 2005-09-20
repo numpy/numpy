@@ -3525,7 +3525,7 @@ array_shape_set(PyArrayObject *self, PyObject *val)
 	ret = PyArray_Reshape(self, val);
 	if (ret == NULL) return -1;
 	
-	if (self->nd > 0) { /* Free dimensions and strides */
+	if (self->nd > 0) { /* Free old dimensions and strides */
 		PyDimMem_FREE(self->dimensions);
 	}
 	nd = PyArray_NDIM(ret);
@@ -3543,6 +3543,7 @@ array_shape_set(PyArrayObject *self, PyObject *val)
 		memcpy(self->strides, PyArray_STRIDES(ret), 
 		       nd*sizeof(intp));
 	}
+	else self->dimensions=NULL;
 	Py_DECREF(ret);
 	return 0;
 }
