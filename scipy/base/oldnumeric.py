@@ -29,7 +29,8 @@ UnsignedInt32 = nt.uint32
 UnsignedInt = nt.uint
 
 typecodes = {'Character':'S1', 'Integer':'bhilqp', 'UnsignedInteger':'BHILQP',
-             'Float':'fdg', 'Complex':'FDG', 'AllInteger':'bBhHiIlLqQ'}
+             'Float':'fdg', 'Complex':'FDG', 'AllInteger':'bBhHiIlLqQ',
+             'AllFloat':'fdgFDG', 'All':'?bhilqpBHILQPfdgFDGSVUO'}
 
 
 def sarray(a, dtype=None, copy=0):

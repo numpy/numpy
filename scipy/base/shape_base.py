@@ -71,17 +71,30 @@ def apply_along_axis(func1d,axis,arr,*args):
         
      
 def apply_over_axes(func, a, axes):
-    """Apply a function over multiple axes, keeping the same shape
+    """Apply a function repeatedly over multiple axes, keeping the same shape
     for the resulting array.
+
+    func is called as res = func(a, axis).  The result is assumed
+    to be either the same shape as a or have one less dimension.
+    This call is repeated for each axis in the axes sequence.
     """
     val = asarray(a)
-    N = len(val.shape)
-    if not type(axes) in SequenceType:
+    N = a.ndim
+    if array(axes).ndim == 0:
         axes = (axes,)
     for axis in axes:
         if axis < 0: axis = N + axis
         args = (val, axis)
-        val = expand_dims(func(*args),axis)
+        res = func(*args)
+        if res.ndim == val.ndim:
+            val = res
+        else:
+            res = expand_dims(res,axis)
+            if res.ndim == val.ndim:
+                val = res
+            else:
+                raise ValueError, "function is not returning"\
+                      " an array of correct shape"
     return val
 
 def expand_dims(a, axis):

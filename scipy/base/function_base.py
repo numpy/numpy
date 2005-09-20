@@ -149,10 +149,10 @@ def asarray_chkfinite(x):
     """Like asarray except it checks to be sure no NaNs or Infs are present.
     """
     x = asarray(x)
-    if not all(_nx.isfinite(x)):
+    if (x.dtypechar in _nx.typecodes['AllFloat']) \
+           and (_nx.isnan(x).any() or _nx.isinf(x).any()):
         raise ValueError, "Array must not contain infs or nans."
     return x    
-
 
 
 def fix(x):
@@ -362,12 +362,12 @@ def angle(z,deg=0):
     else:
         fact = 1.0
     z = asarray(z)
-    if z.dtypechar in ['D','F']:
-       zimag = z.imag
-       zreal = z.real
+    if (issubclass(z.dtype, _nx.complexfloating)):
+        zimag = z.imag
+        zreal = z.real
     else:
-       zimag = 0
-       zreal = z
+        zimag = 0
+        zreal = z
     return arctan2(zimag,zreal) * fact
 
 def unwrap(p,discont=pi,axis=-1):
@@ -436,7 +436,7 @@ def unique(inseq):
     return asarray(set.keys())
     
 def extract(condition, arr):
-    """Elements of ravel(condition) where ravel(condition) is true (1-d)
+    """Elements of ravel(arr) where ravel(condition) is true (1-d)
 
     Equivalent of compress(ravel(condition), ravel(arr))
     """
@@ -532,7 +532,7 @@ class vectorize:
     array([3,4,1,2])
 
     """
-    def __init__(self,pyfunc,otypes=None,doc=None):
+    def __init__(self,pyfunc,otypes='',doc=None):
         try:
             fcode = pyfunc.func_code
         except AttributeError:
@@ -546,20 +546,20 @@ class vectorize:
             self.__doc__ = pyfunc.__doc__
         else:
             self.__doc__ = doc
-        if otypes is None:
-            self.otypes=''
+        if isinstance(otypes,types.StringType):
+            self.otypes=otypes
         else:
-            if isinstance(otypes,types.StringType):
-                self.otypes=otypes
-            else:
-                raise ValueError, "Output types must be a string."
+            raise ValueError, "Output types must be a string."
         for char in self.otypes:
-            if char not in typecodes:
+            if char not in typecodes['All']:
                 raise ValueError, "Invalid typecode specified"
 
     def __call__(self,*args):
         # get number of outputs and output types by calling
         #  the function on the first entries of args
+        if len(args) != self.nin:
+            raise ValueError, "mismatch between python function inputs"\
+                  " and received arguments"
         if self.nout is None or self.otypes == '':
             newargs = []
             for arg in args:
@@ -583,5 +583,6 @@ class vectorize:
             return self.ufunc(*args).astype(self.otypes[0])
         else:
             return tuple([x.astype(c) for x,c in zip(self.ufunc(*args), self.otypes)])
-            
+
+
             

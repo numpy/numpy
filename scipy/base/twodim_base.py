@@ -109,25 +109,5 @@ def triu(m, k=0):
     return out
 
 
-def _from_string(str,gdict,ldict):
-    rows = str.split(';')
-    rowtup = []
-    for row in rows:
-        trow = row.split(',')
-        coltup = []
-        for col in trow:
-            col = col.strip()
-            try:
-                thismat = gdict[col]
-            except KeyError:
-                try:
-                    thismat = ldict[col]
-                except KeyError:
-                    raise KeyError, "%s not found" % (col,)
-                                    
-            coltup.append(thismat)
-        rowtup.append(concatenate(coltup,axis=-1))
-    return concatenate(rowtup,axis=0)
-
 
 
