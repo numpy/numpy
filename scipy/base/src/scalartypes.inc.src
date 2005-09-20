@@ -547,6 +547,7 @@ gentype_shape_get(PyObject *self)
 	return PyTuple_New(0);
 }
 
+/*
 static int
 gentype_shape_set(PyObject *self, PyObject *val)
 {
@@ -557,12 +558,16 @@ gentype_shape_set(PyObject *self, PyObject *val)
 	}
 	return 0;
 }
+*/
 
 
 static PyObject *
 gentype_data_get(PyObject *self)
 {
-	return PyBuffer_FromObject(self, 0, Py_END_OF_BUFFER);
+	PyArray_Typecode typecode;
+	PyArray_TypecodeFromScalar(self, &typecode);
+
+	return PyBuffer_FromObject(self, 0, typecode.itemsize);
 }
 
 
@@ -644,10 +649,14 @@ gentype_real_get(PyObject *self)
 				      typecode.type_num-PyArray_NUM_FLOATTYPE,
 				      typecode.itemsize >> 1, 0);
 	}
-	else {
-		Py_INCREF(self);
-		return (PyObject *)self;
+	else if PyArray_IsScalar(self, Object) {
+		PyObject *obj = ((PyObjectScalarObject *)self)->obval;
+		PyObject *ret;
+		ret = PyObject_GetAttrString(obj, "real");
+		if (ret != NULL) return ret;
 	}
+	Py_INCREF(self);
+	return (PyObject *)self;
 }
 
 static PyObject *
@@ -661,6 +670,19 @@ gentype_imag_get(PyObject *self)
 				      + typecode.itemsize, 
 				      typecode.type_num-PyArray_NUM_FLOATTYPE,
 				      typecode.itemsize, 0);
+	}
+	else if PyArray_IsScalar(self, Object) {
+		PyObject *obj = ((PyObjectScalarObject *)self)->obval;
+		PyObject *ret;
+		ret = PyObject_GetAttrString(obj, "imag");
+		if (ret == NULL) {
+			PyErr_Clear();
+			obj = PyInt_FromLong(0);
+			ret = PyArray_Scalar((char *)&obj, PyArray_OBJECT, 
+					     sizeof(void *), 0);
+			Py_DECREF(obj);
+		}
+		return ret;
 	}
 	else {
 		PyObject *ret;
@@ -697,7 +719,7 @@ static PyGetSetDef gentype_getsets[] = {
 	 "integer value of flags"},
         {"shape", 
 	 (getter)gentype_shape_get, 
-	 (setter)gentype_shape_set, 
+	 (setter)0, 
 	 "tuple of array dimensions"},
         {"strides", 
 	 (getter)gentype_shape_get, 
@@ -763,7 +785,6 @@ static PyGetSetDef gentype_getsets[] = {
 	 (getter)gentype_shape_get,
 	 NULL,
 	 "Array protocol: strides"},
-
 	/* Does not have __array_priority__ because it is not a subtype.
 	 */
        	{NULL, NULL, NULL, NULL}  /* Sentinel */
@@ -804,6 +825,9 @@ gentype_squeeze(PyObject *self, PyObject *args)
 	return self;
 }
 
+static int
+gentype_getreadbuf(PyObject *, int, void **);
+
 static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args)
 {
@@ -818,7 +842,25 @@ gentype_byteswap(PyObject *self, PyObject *args)
 		return NULL;
 	}
 	else {
-		return gentype_generic_method(self, args, NULL, "byteswap");
+		/* get the data, copyswap it and pass it to a new Array scalar
+		 */
+		char *data;
+		int numbytes;
+		PyArray_Typecode type;
+		PyArray_Descr *descr;
+		PyObject *new;
+		char *newmem;
+
+		numbytes = gentype_getreadbuf(self, 0, (void **)&data);
+		PyArray_TypecodeFromScalar(self, &type);
+		newmem = malloc(type.itemsize);
+		if (newmem == NULL) return PyErr_NoMemory();
+		else memcpy(newmem, data, type.itemsize);
+		descr = PyArray_DescrFromType(type.type_num);
+		descr->copyswap(newmem, NULL, 1, type.itemsize);		
+		new = PyArray_Scalar(newmem, type.type_num, type.itemsize, 0);
+		free(newmem);
+		return new;
 	}
 }
 
@@ -842,9 +884,7 @@ gentype_reduce(PyObject *self, PyObject *args)
 	const char *buffer; 
 	int buflen;
 
-	/* Return a tuple of (callable object, arguments, object's state) */
-	/*  We will put everything in the object's state, so that on UnPickle
-	    it can use the string object as memory without a copy */
+	/* Return a tuple of (callable object, arguments) */
 
 	ret = PyTuple_New(2);
 	if (ret == NULL) return NULL;	
@@ -857,13 +897,26 @@ gentype_reduce(PyObject *self, PyObject *args)
 	Py_DECREF(mod);
 	if (obj == NULL) return NULL;
 	PyTuple_SET_ITEM(ret, 0, obj);
-	PyTuple_SET_ITEM(ret, 1, 
-			 Py_BuildValue("NN", 
-				       PyObject_GetAttrString((PyObject *)self,
-							      "dtypestr"),
-				       PyString_FromStringAndSize(buffer,
-								  buflen)));
+	obj = PyObject_GetAttrString((PyObject *)self, "dtypestr");
+	if PyArray_IsScalar(self, Object) {
+		mod = ((PyObjectScalarObject *)self)->obval;
+		PyTuple_SET_ITEM(ret, 1,
+				 Py_BuildValue("NO", obj, mod));
+	}
+	else {
+		mod = PyString_FromStringAndSize(buffer, buflen);
+		PyTuple_SET_ITEM(ret, 1, 
+				 Py_BuildValue("NN", obj, mod));
+	}
 	return ret;
+}
+
+/* ignores everything */
+static PyObject *
+gentype_setstate(PyObject *self, PyObject *args)
+{
+	Py_INCREF(Py_None);
+	return (Py_None);
 }
 
 static PyObject *
@@ -915,13 +968,17 @@ static PyMethodDef gentype_methods[] = {
         {"copy", (PyCFunction)gentype_copy, 1, NULL},  
         {"resize", (PyCFunction)gentype_resize, 1, NULL}, 
 
+	{"__array__", (PyCFunction)gentype_getarray, 1, doc_getarray},
+
      /* for the copy module */
         {"__copy__", (PyCFunction)gentype_copy, 1, NULL},
         {"__deepcopy__", (PyCFunction)gentype___deepcopy__, 1, NULL},
 
-	{"__array__", (PyCFunction)gentype_getarray, 1, doc_getarray},
 
         {"__reduce__", (PyCFunction) gentype_reduce, 1, NULL},	
+	/* For consistency does nothing */
+	{"__setstate__", (PyCFunction) gentype_setstate, 1, NULL},
+
 	{"dumps", (PyCFunction) gentype_dumps, 1, NULL},
 	{"dump", (PyCFunction) gentype_dump, 1, NULL},
 
@@ -1012,7 +1069,7 @@ gentype_getreadbuf(PyObject *self, int segment, void **ptrptr)
 	int numbytes;
 	PyArray_Typecode outcode;
 	
-	if ((segment < 0) || (segment >= 1)) {
+	if (segment != 0) {
 		PyErr_SetString(PyExc_SystemError, 
 				"Accessing non-existent array segment");
 		return -1;

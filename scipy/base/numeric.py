@@ -32,6 +32,25 @@ def asarray(a, dtype=None):
     """
     return array(a, dtype, copy=0)
 
+def ensure_array(a, dtype=None):
+    """ensure_array(a, dtype=None) always returns an actual ndarray object.
+    No copy is performed if a is already an array.
+    Meant primarily for debugging. 
+    """
+    # exact check
+    while 1:
+        if type(a) is ndarray:
+            return a
+        try:
+            if dtype is None:
+                return a.__array__()
+            else:
+                return a.__array__(dtype)
+        except AttributeError:
+            a = array(a,dtype,copy=1)  # copy irrelevant
+            dtype = None
+            
+
 _mode_from_name_dict = {'v': 0,
                         's' : 1,
                         'f' : 2}

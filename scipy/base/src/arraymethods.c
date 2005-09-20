@@ -208,6 +208,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Typecode *type,
 			  type->type_num, self->strides, 
 			  self->data + offset,
 			  type->itemsize, self->flags, self);
+	if (ret == NULL) return NULL;
 	Py_INCREF(self);
 	((PyArrayObject *)ret)->base = (PyObject *)self;
 	PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
@@ -225,12 +226,13 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 PyArray_TypecodeConverter, 
 					 &typecode, &offset)) return NULL;
 
+	
 	if (typecode.itemsize > self->itemsize) {
 		PyErr_SetString(PyExc_TypeError, "Field itemsize must be <="\
 				"array itemsize.");
 		return NULL;
 	}
-	return PyArray_GetField(self, &typecode, offset);
+	return _ARET(PyArray_GetField(self, &typecode, offset));
 }
 
 static PyObject *
@@ -396,6 +398,28 @@ array_cast(PyArrayObject *self, PyObject *args)
 	}
 	return _ARET(PyArray_CastToType(self, &typecode));
 }	  
+
+static char doc_array_getarray[] = "m.__array__(|type) just returns either a new reference to self if type is not given or a new array of type if type is different from the current type of the array.";
+
+static PyObject *
+array_getarray(PyArrayObject *self, PyObject *args) 
+{
+	PyArray_Typecode newtype = {PyArray_NOTYPE, 0, 0};
+	PyArray_Typecode oldtype = {PyArray_TYPE(self),
+				    PyArray_ITEMSIZE(self),
+				    0};
+
+	if (!PyArg_ParseTuple(args, "|O&", &PyArray_TypecodeConverter,
+			      &newtype)) return NULL;
+	if (newtype.type_num == PyArray_NOTYPE ||
+	    PyArray_EquivalentTypes(&oldtype, &newtype)) {
+		Py_INCREF(self);
+		return (PyObject *)self;
+	}
+	else {
+		return PyArray_CastToType(self, &newtype);
+	}
+}
 
 static char doc_copy[] = "m.copy(). Return a copy of the array.";
 
@@ -1210,6 +1234,9 @@ static PyMethodDef array_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS, doc_getfield},
         {"copy", (PyCFunction)array_copy, 1, doc_copy},  
         {"resize", (PyCFunction)array_resize, 1, doc_resize}, 
+
+	/* for consistency */
+	{"__array__", (PyCFunction)array_getarray, 1, doc_array_getarray},
 	
 	/* for the copy module */
         {"__copy__", (PyCFunction)array_copy, 1, doc_copy},	 
