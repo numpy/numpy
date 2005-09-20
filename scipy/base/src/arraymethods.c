@@ -75,8 +75,6 @@ array_reshape(PyArrayObject *self, PyObject *args)
 		}
 	}
 
-	fprintf(stderr, "&newshape = %p, len = %d, ptr=%p\n", &newshape,
-		newshape.len, newshape.ptr);
 	if ((newshape.len == 0) || PyArray_ISONESEGMENT(self)) {
 		ret = PyArray_Newshape(self, &newshape);
 	}

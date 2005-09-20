@@ -346,7 +346,7 @@ def array_split(ary,indices_or_sections,axis = 0):
         section_sizes = [0] + \
                         extras * [Neach_section+1] + \
                         (Nsections-extras) * [Neach_section]
-        div_points = _nx.add.accumulate(_nx.array(section_sizes))
+        div_points = _nx.array(section_sizes).cumsum()
 
     sub_arys = []
     sary = _nx.swapaxes(ary,axis,0)
