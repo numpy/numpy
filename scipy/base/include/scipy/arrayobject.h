@@ -674,14 +674,12 @@ typedef Py_uintptr_t uintp;
 #define PyDataMem_NEW(size) ((char *)malloc(size))
   /* #define PyArrayMem_NEW(size) PyMem_NEW(char, size)*/
 #define PyDataMem_FREE(ptr)  free(ptr)
-#define PyDataMem_XFREE(ptr) if (ptr) free(ptr)
   /* #define PyArrayMem_FREE(ptr) PyMem_Free(ptr) */
 #define PyDataMem_RENEW(ptr,size) ((char *)realloc(ptr,size))
 
   /* Dimensions and strides */
 #define PyDimMem_NEW(size) ((intp *)malloc(size*sizeof(intp)))
 #define PyDimMem_FREE(ptr) free(ptr)
-#define PyDimMem_XFREE(ptr) if (ptr) free(ptr)
 #define PyDimMem_RENEW(ptr,size) ((intp *)realloc(ptr,size*sizeof(intp)))
 
 

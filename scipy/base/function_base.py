@@ -404,7 +404,6 @@ def sort_complex(a):
     else:
         return b
     
-
 def trim_zeros(filt,trim='fb'):
     """ Trim the leading and trailing zeros from a 1D array.
     
@@ -435,7 +434,6 @@ def unique(inseq):
     for item in inseq:
         set[item] = None
     return asarray(set.keys())
-
     
 def extract(condition, arr):
     """Elements of ravel(condition) where ravel(condition) is true (1-d)

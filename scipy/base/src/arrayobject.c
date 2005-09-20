@@ -3020,7 +3020,7 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 {
 	PyArrayObject *self;
 	PyArray_Descr *descr;
-	int i;
+	register int i;
 	intp sd, temp;
 
 	descr = PyArray_DescrFromType(type_num);

@@ -252,7 +252,7 @@ def column_stack(tup):
             >>> import scipy
             >>> a = array((1,2,3))
             >>> b = array((2,3,4))
-            >>> scipy.vstack((a,b))
+            >>> scipy.column_stack((a,b))
             array([[1, 2],
                    [2, 3],
                    [3, 4]])

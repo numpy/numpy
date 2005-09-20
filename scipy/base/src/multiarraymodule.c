@@ -220,6 +220,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
 	
         s_known = 1;
         i_unknown = -1;
+
         for(i=0; i<n; i++) {
                 if (dimensions[i] < 0) {
                         if (i_unknown == -1) {
@@ -2685,11 +2686,13 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
                              "must be smaller than %d", MAX_DIMS);
                 return PY_FAIL;
         }
-	seq->ptr = PyDimMem_NEW(MIN(1,len));
-        if (seq->ptr == NULL) {
-                PyErr_NoMemory();
-                return PY_FAIL;
-        }
+	if (len > 0) {
+		seq->ptr = PyDimMem_NEW(len);
+		if (seq->ptr == NULL) {
+			PyErr_NoMemory();
+			return PY_FAIL;
+		}
+	}
         seq->len = len;
         nd = PyArray_IntpFromSequence(obj, (intp *)seq->ptr, len);
         if (nd == -1 || nd != len) goto fail;

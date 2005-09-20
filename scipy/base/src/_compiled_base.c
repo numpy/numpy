@@ -284,7 +284,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 	Py_DECREF(amask);
 	Py_DECREF(avalscast);
 	Py_INCREF(Py_None);
-	PyDataMem_XFREE(zero);
+	PyDataMem_FREE(zero);
 	return Py_None;
     }
 
@@ -322,11 +322,11 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     Py_DECREF(amask);
     Py_DECREF(avalscast);
     Py_INCREF(Py_None);
-    PyDataMem_XFREE(zero);
+    PyDataMem_FREE(zero);
     return Py_None;
   
  fail:
-    PyDataMem_XFREE(zero);
+    PyDataMem_FREE(zero);
     Py_XDECREF(amask);
     Py_XDECREF(avals);
     Py_XDECREF(avalscast);

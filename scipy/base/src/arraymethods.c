@@ -74,8 +74,10 @@ array_reshape(PyArrayObject *self, PyObject *args)
 			goto fail;
 		}
 	}
-	
-	if (newshape.len == 0 || PyArray_ISONESEGMENT(self)) {
+
+	fprintf(stderr, "&newshape = %p, len = %d, ptr=%p\n", &newshape,
+		newshape.len, newshape.ptr);
+	if ((newshape.len == 0) || PyArray_ISONESEGMENT(self)) {
 		ret = PyArray_Newshape(self, &newshape);
 	}
 	else {
@@ -762,6 +764,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
         if (self->dimensions != NULL) {
                 PyDimMem_FREE(self->dimensions); 
+		self->dimensions = NULL;
 	}
 
 	self->flags = DEFAULT_FLAGS;
