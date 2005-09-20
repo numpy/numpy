@@ -18,10 +18,8 @@ from twodim_base import *
 import scimath as math
 from polynomial import *
 from ppimport import *
-# machar takes too long
-# limits takes too long
-machar = ppimport('scipy.base.machar')
-limits = ppimport('scipy.base.limits')
+from machar import *
+from limits import *
 from pexec import *
 import ma
 import convertcode

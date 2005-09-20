@@ -1,44 +1,70 @@
 """ Machine limits for Float32 and Float64.
 """
 
-__all__ = ['float_epsilon','float_tiny','float_min',
-           'float_max','float_precision','float_resolution',
-           'single_epsilon','single_tiny','single_min','single_max',
-           'single_precision','single_resolution',
-           'longfloat_epsilon','longfloat_tiny','longfloat_min','longfloat_max',
-           'longfloat_precision','longfloat_resolution']
-           
+__all__ = ['finfo']
 
-from machar import machar_float, machar_single, machar_longfloat
+import sys
+from machar import MachAr
+import numeric
+from numeric import array
 
-single_epsilon = machar_single.epsilon
-single_tiny = machar_single.tiny
-single_max = machar_single.huge
-single_min = -single_max
-single_precision = machar_single.precision
-single_resolution = machar_single.resolution
+def frz(a):
+    """fix rank-0 --> rank-1"""
+    if len(a.shape) == 0:
+        a = a.reshape((1,))
+    return a
 
-float_epsilon = machar_float.epsilon
-float_tiny = machar_float.tiny
-float_max = machar_float.huge
-float_min = -float_max
-float_precision = machar_float.precision
-float_resolution = machar_float.resolution
+_machar_cache = {numeric.float: \
+                 MachAr(lambda v:array([v],'d'),
+                        lambda v:frz(v.astype('i'))[0],
+                        lambda v:array(frz(v)[0],'d'),
+                        lambda v:'%24.16e' % array(frz(v)[0],'d'),
+                        'scipy float precision floating point number')
+                 }
 
-longfloat_epsilon = machar_longfloat.epsilon
-longfloat_tiny = machar_longfloat.tiny
-longfloat_max = machar_longfloat.huge
-longfloat_min = -longfloat_max
-longfloat_precision = machar_longfloat.precision
-longfloat_resolution = machar_longfloat.resolution
+class finfo(object):
+    def __init__(self, dtype):
+        dtype = numeric.obj2dtype(dtype)
+        if not issubclass(dtype, numeric.floating):
+            raise ValueError, "data type not a float"
+        if dtype is numeric.float:
+            self.machar = _machar_cache[numeric.float]
+        elif dtype is numeric.single:
+            try:
+                self.machar = _machar_cache[numeric.single]
+            except KeyError:
+                self.machar =  MachAr(lambda v:array([v],'f'),
+                                      lambda v:frz(v.astype('i'))[0],
+                                      lambda v:array(frz(v)[0],'f'),  #
+                                      lambda v:'%15.7e' % array(frz(v)[0],'f'),
+                                      "scipy single precision floating "\
+                                      "point number")
+                _machar_cache[numeric.single] = self.machar 
+        elif dtype is numeric.longfloat:
+            try:
+                self.machar = _machar_cache[numeric.longfloat]
+            except KeyError:                
+                self.machar = MachAr(lambda v:array([v],'g'),
+                                     lambda v:frz(v.astype('i'))[0],
+                                     lambda v:array(frz(v)[0],'g'),  #
+                                     lambda v:str(array(frz(v)[0],'g')),
+                                     "scipy longfloat precision floating "\
+                                     "point number")
+                _machar_cache[numeric.longfloat] = self.machar
 
-
-
+        for word in ['epsilon', 'tiny', 'precision', 'resolution']:
+            setattr(self,word,getattr(self.machar, word))
+        self.max = self.machar.huge
+        self.min = -self.max
+    
 if __name__ == '__main__':
-    print 'single epsilon:',single_epsilon
-    print 'single tiny:',single_tiny
-    print 'float epsilon:',float_epsilon
-    print 'float tiny:',float_tiny
-    print 'longfloat epsilon:',longfloat_epsilon
-    print 'longfloat tiny:',longfloat_tiny
+    f = finfo(numeric.single)
+    print 'single epsilon:',f.epsilon
+    print 'single tiny:',f.tiny
+    f = finfo(numeric.float)
+    print 'float epsilon:',f.epsilon
+    print 'float tiny:',f.tiney
+    f = finfo(numeric.longfloat)
+    print 'longfloat epsilon:',f.epsilon
+    print 'longfloat tiny:',f.tiny
 

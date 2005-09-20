@@ -1,7 +1,8 @@
 import types
 import numeric as _nx
 from numeric import ones, zeros, arange, concatenate, array, asarray
-from umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc
+from umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc, \
+     isnan
 from oldnumeric import ravel, nonzero, choose, \
      sometrue, alltrue, reshape, any, all, typecodes 
 from type_check import ScalarType, isscalar
@@ -387,17 +388,22 @@ def unwrap(p,discont=pi,axis=-1):
     return up
 
 def sort_complex(a):
-    """ Doesn't currently work for integer arrays -- only float or complex.
+    """ Sort a as a complex array using real part first and then
+    imaginary part if the real part is the same.
+    This is the default for complex arrays and so this is a
+    wrapper ensuring complex return type
     """
-    a = asarray(a,typecode=a.dtypechar.upper())
-    def complex_cmp(x,y):
-        res = cmp(x.real,y.real)
-        if res == 0:
-            res = cmp(x.imag,y.imag)
-        return res
-    l = a.tolist()                
-    l.sort(complex_cmp)
-    return array(l)
+    b = asarray(a).sort()
+    if not issubclass(b.dtype, _nx.complexfloating):
+        if b.dtypechar in 'bhBH':
+            return b.astype('F')
+        elif b.dtypechar == 'g':
+            return b.astype('G')
+        else:
+            return b.astype('D')
+    else:
+        return b
+    
 
 def trim_zeros(filt,trim='fb'):
     """ Trim the leading and trailing zeros from a 1D array.
@@ -409,12 +415,13 @@ def trim_zeros(filt,trim='fb'):
             array([1, 2, 3, 2, 1])
     """
     first = 0
-    if 'f' in trim or 'F' in trim:
+    trim = trim.upper()
+    if 'F' in trim:
         for i in filt:
             if i != 0.: break
             else: first = first + 1
     last = len(filt)
-    if 'B' in trim or 'B' in trim:
+    if 'B' in trim:
         for i in filt[::-1]:
             if i != 0.: break
             else: last = last - 1
@@ -423,6 +430,7 @@ def trim_zeros(filt,trim='fb'):
 def unique(inseq):
     """Returns unique items in 1-dimensional sequence.
     """
+    # Dictionary setting is quite fast.
     set = {}
     for item in inseq:
         set[item] = None

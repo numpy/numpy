@@ -5,12 +5,12 @@
 # Author: Pearu Peterson, September 2003
 #
 
-__all__ = ['MachAr','machar_float','machar_single','machar_longfloat']
+__all__ = ['MachAr']
 
 from numeric import array
 from oldnumeric import any
 
-# Need to speed this up...
+# Need to speed this up...especially for longfloat
 
 class MachAr:
     """Diagnosing machine parameters.
@@ -260,33 +260,6 @@ maxexp=%(maxexp)s    xmax=%(_str_xmax)s ((1-epsneg)*beta**maxexp == huge)
 ---------------------------------------------------------------------
 ''' % self.__dict__
 
-def frz(a):
-    """fix rank-0 --> rank-1"""
-    if len(a.shape) == 0:
-        a = a.reshape((1,))
-    return a
-
-machar_float = MachAr(lambda v:array([v],'d'),
-                       lambda v:frz(v.astype('i'))[0],
-                       lambda v:array(frz(v)[0],'d'),
-                       lambda v:'%24.16e' % array(frz(v)[0],'d'),
-                       'scipy float precision floating point number')
-
-machar_single = MachAr(lambda v:array([v],'f'),
-                       lambda v:frz(v.astype('i'))[0],
-                       lambda v:array(frz(v)[0],'f'),  #
-                       lambda v:'%15.7e' % array(frz(v)[0],'f'),
-                       'scipy single precision floating point number')
-
-machar_longfloat = MachAr(lambda v:array([v],'g'),
-                           lambda v:frz(v.astype('i'))[0],
-                           lambda v:array(frz(v)[0],'g'),  #
-                           lambda v:str(array(frz(v)[0],'g')),
-                           'scipy longfloat precision floating point number')
-
 
 if __name__ == '__main__':
     print MachAr()
-    print machar_float
-    print machar_single
-    print machar_longfloat

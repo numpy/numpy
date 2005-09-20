@@ -2,7 +2,8 @@
 
 import types
 import numeric as _nx
-from numeric import ndarray, array, isinf, isnan, isfinite, ufunc, ScalarType
+from numeric import ndarray, array, isinf, isnan, isfinite, signbit, \
+     ufunc, ScalarType
 
 __all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf','isinf','isfinite',
@@ -76,27 +77,32 @@ def isposinf(val):
     
 def isneginf(val):
     return isinf(val) & signbit(val)
+
+def _getmaxmin(t):
+    import limits
+    f = limits.finfo(t)
+    return f.max, f.min
     
 def nan_to_num(x):
     # mapping:
     #    NaN -> 0
     #    Inf -> limits.double_max
     #   -Inf -> limits.double_min
-    import limits
     try:
-        t = x.dtypechar
+        t = x.dtype
     except AttributeError:
-        t = type(x)
-    if t in [types.ComplexType,'F','D']:    
+        t = obj2dtype(type(x))
+    if issubclass(t, _nx.complexfloating):
         y = nan_to_num(x.real) + 1j * nan_to_num(x.imag)
-    else:    
-        x = asarray(x)
+    else:   
+        y = array(x)
         are_inf = isposinf(x)
         are_neg_inf = isneginf(x)
         are_nan = isnan(x)
-        choose_array = are_neg_inf + are_nan * 2 + are_inf * 3
-        y = _nx.choose(choose_array,
-                   (x,limits.double_min, 0., limits.double_max))
+        maxf, minf = _getmaxmin(y.dtype)
+        y[are_nan] = 0
+        y[are_inf] = maxf
+        y[are_neg_inf] = minf
     return y
 
 #-----------------------------------------------------------------------------
@@ -125,7 +131,7 @@ _namefromtype = {'S1' : 'character',
                  'g' : 'longfloat',
                  'F' : 'complex single',
                  'D' : 'complex float',
-                 'G' : 'complex long float',
+                 'G' : 'complex longfloat',
                  'S' : 'string',
                  'U' : 'unicode',
                  'V' : 'void',
