@@ -2507,24 +2507,129 @@ static struct PyMethodDef ufunc_methods[] = {
 };
 
 
+
+/* construct the string
+ y1,y2,...,yn
+*/
+
+static void
+_makeargs(int num, char ltr, char *str) 
+{
+	int ind=0;
+	int k;
+	static char *digits="123456789ABCDE";
+
+	if (num == 1) {
+		str[0] = ltr;
+		ind = 1;
+	}
+	else {
+		for (k=0; k<num; k++) {
+			str[3*k] = ltr;
+			str[3*k+1] = digits[k];
+			str[3*k+2] = ',';
+		}
+		/* overwrite last comma */
+		ind = 3*k-1;
+	}
+
+	str[ind] = '\0';
+	return;
+}
+
+#define _typecharfromnum(num) (PyArray_DescrFromType((num))->type)
+
 static PyObject *
 ufunc_getattr(PyUFuncObject *self, char *name)
 {
+	PyObject *obj;
+	/* Put docstring first or FindMethod finds it...*/
+	/* could so some introspection on name and nin + nout */
+	/* to automate the first part of it */
+	/* the doc string shouldn't need the calling convention */
 	if (strcmp(name, "__doc__") == 0) {
-		char *doc = self->doc;
-		if (doc != NULL)
-			return PyString_FromString(doc);
-		Py_INCREF(Py_None);
-		return Py_None;
+		static char doc[256];
+		static char tmp1[3*MAX_ARGS+2];
+		static char tmp2[3*MAX_ARGS+2];
+		/* construct 
+		   y1,y2,,... = name(x1,x2,...) __doc__
+		*/		
+		_makeargs(self->nout, 'y', tmp1);
+		_makeargs(self->nin, 'x', tmp2);
+		snprintf(doc, 256, "%s = %s(%s) %s", tmp1, self->name, 
+			 tmp2, self->doc);
+		return PyString_FromString(doc);
 	}
-	/* XXXX Add your own getattr code here */
-	return Py_FindMethod(ufunc_methods, (PyObject *)self, name);
+	obj = Py_FindMethod(ufunc_methods, (PyObject *)self, name);
+	if (obj != NULL) return obj;
+	PyErr_Clear();
+	if (strcmp(name, "nin") == 0) {
+		return PyInt_FromLong(self->nin);
+	}
+	else if (strcmp(name, "nout") == 0) {
+		return PyInt_FromLong(self->nout);
+	}
+	else if (strcmp(name, "nargs") == 0) {
+		return PyInt_FromLong(self->nargs);
+	}
+	else if (strcmp(name, "ntypes") == 0) {
+		return PyInt_FromLong(self->ntypes);
+	}
+	else if (strcmp(name, "types") == 0) {
+		/* return a list with types grouped
+		 input->output */
+		PyObject *list;
+		PyObject *str;
+		int k, j, n, nt=self->ntypes;
+		int ni = self->nin;
+		int no = self->nout;
+		char *t;
+		list = PyList_New(nt);
+		if (list == NULL) return NULL;
+		t = malloc(no+ni+2);
+		n = 0;
+		for (k=0; k<nt; k++) {
+			for (j=0; j<ni; j++) {
+				t[j] = _typecharfromnum(self->types[n]);
+				n++;
+			}
+			t[ni] = '-';
+			t[ni+1] = '>';
+			for (j=0; j<no; j++) {
+				t[ni+2+j] =				\
+					_typecharfromnum(self->types[n]);
+				n++;
+			}
+			str = PyString_FromStringAndSize(t, no+ni+2);
+			PyList_SET_ITEM(list, k, str);
+		}
+		free(t);
+		return list;
+		
+	}
+	else if (strcmp(name, "__name__") == 0) {
+		return PyString_FromString(self->name);
+	}
+	else if (strcmp(name, "identity") == 0) {
+		switch(self->identity) {
+		case PyUFunc_One:
+			return PyInt_FromLong(1);
+		case PyUFunc_Zero:
+			return PyInt_FromLong(0);
+		default:
+			Py_INCREF(Py_None);
+			return Py_None;
+		}
+	}
+	PyErr_SetString(PyExc_AttributeError, name);
+	return NULL;
 }
+
+#undef _typecharfromnum
 
 static int
 ufunc_setattr(PyUFuncObject *self, char *name, PyObject *v) 
 {
-	/* XXXX Add your own setattr code here */
 	return -1;
 }
 
@@ -2540,14 +2645,14 @@ static PyTypeObject PyUFunc_Type = {
 	0,				/*tp_itemsize*/
 	/* methods */
 	(destructor)ufunc_dealloc,	/*tp_dealloc*/
-	(printfunc)0,		/*tp_print*/
+	(printfunc)0,		        /*tp_print*/
 	(getattrfunc)ufunc_getattr,	/*tp_getattr*/
 	(setattrfunc)ufunc_setattr,	/*tp_setattr*/
 	(cmpfunc)0,	          	/*tp_compare*/
 	(reprfunc)ufunc_repr,		/*tp_repr*/
-	0,			/*tp_as_number*/
-	0,		/*tp_as_sequence*/
-	0,		/*tp_as_mapping*/
+	0,			       /*tp_as_number*/
+	0,		               /*tp_as_sequence*/
+	0,		               /*tp_as_mapping*/
 	(hashfunc)0,		/*tp_hash*/
 	(ternaryfunc)ufunc_generic_call,		/*tp_call*/
 	(reprfunc)ufunc_repr,		/*tp_str*/

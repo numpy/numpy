@@ -1452,16 +1452,17 @@ InitOtherOperators(PyObject *dictionary) {
 #ifdef HAVE_FLOAT_FUNCS
         num += 1;
 #endif
-        f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data, frexp_signatures, num,
+        f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data, 
+				    frexp_signatures, num,
                                     1, 2, PyUFunc_None, "frexp",
-                                    "(frac, exp) = frexp(x). Split the number into a "\
-                                    "normalized fraction and exponent",0);
+                                    "Split the number, x, into a normalized"\
+				    " fraction (y1) and exponent (y2)",0);
         PyDict_SetItemString(dictionary, "frexp", f);
         Py_DECREF(f);
 
         f = PyUFunc_FromFuncAndData(ldexp_functions, blank3_data, ldexp_signatures, num,
                                     2, 1, PyUFunc_None, "ldexp",
-                                    "ldexp(x, exp) returns x * 2**exp.",0);
+                                    "Compute y = x1 * 2**x2.",0);
         PyDict_SetItemString(dictionary, "ldexp", f);
         Py_DECREF(f);
         return;

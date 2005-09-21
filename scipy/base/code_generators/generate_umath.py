@@ -40,130 +40,130 @@ noobj = all[:-1]
 defdict = {
 'add': [all,'O',("PyNumber_Add",),
         (2,1), Zero,
-        "Add the arguments elementwise."
+        "addd the arguments elementwise."
         ],
 'subtract' : [all,'O',("PyNumber_Subtract",),
               (2,1), Zero,
-              "Subtract the arguments elementwise."
+              "subtracts the arguments elementwise."
               ],
 'multiply' : [all,cmplxO,
               ("prod,"*3,"PyNumber_Multiply",),
               (2,1), One,
-              "Multiply the arguments elementwise."
+              "multiplies the arguments elementwise."
               ],
 'divide' : [nobool,cmplxO,
             ("quot,"*3,"PyNumber_Divide",),
             (2,1), One,
-            "Divide the arguments elementwise."
+            "divides the arguments elementwise."
             ],
 'floor_divide' : [nobool, cmplxO,
                   ("floor_quot,"*3,
                    "PyNumber_FloorDivide"),
                   (2,1), One,
-                  "Floor divide the arguments elementwise."
+                  "floor divides the arguments elementwise."
                   ],
 'true_divide' : [nobool, cmplxO,
                  ("quot,"*3,"PyNumber_TrueDivide"),
                  (2,1), One,
-                 "True divide the arguments elementwise.",
+                 "true divides the arguments elementwise.",
                  'f'*4+'d'*6+flts+cmplxO
                  ],
 'conjugate' : [nobool_or_obj, 'M',
                ('"conjugate"',),
                (1,1), None,
-               "take the conjugate elementwise."
+               "takes the conjugate of x elementwise."
                ],
 'remainder' : [intflt,fltsO,
                ("fmod,"*3, "PyNumber_Remainder"),
                (2,1), Zero,
-               "remainder(x,y) returns x % y elementwise."
+               "computes x1 % x2 elementwise."
                ],
 'power' : [nobool,noint,
            ("pow,"*6,
             "PyNumber_Power"),
            (2,1), One,
-           "power(x,y) == x**y elementwise."
+           "computes x1**x2 elementwise."
            ],
 'absolute' : [all,'O',
               ("PyNumber_Absolute",),
               (1,1), None,
-              "absolute value elementwise."
+              "takes |x| elementwise."
               ],
 'negative' : [all,cmplxO,
               ("neg,"*3,"PyNumber_Negative"),
               (1,1), None,
-              "negative elements",
+              "determines -x elementwise",
               ],
 'greater' : [all,'',(),(2,1), None,
-             "greater(x,y) is the bool array x > y.",
+             "returns elementwise x1 > x2 in a bool array.",
              '?'*len(all)
              ],
 'greater_equal' : [all,'',(),(2,1), None,
-                   "greater_equal(x,y) is the bool array x >= y.",
+                   "returns elementwise x1 >= x2 in a bool array.",
                    '?'*len(all)
              ],
 'less' : [all,'',(),(2,1), None,
-             "less(x,y) is the bool array x < y.",
+          "returns elementwise x1 < x2 in a bool array.",
           '?'*len(all)
              ],
 'less_equal' : [all,'',(),(2,1), None,
-                "less_equal(x,y) is the bool array x <= y.",
+                "returns elementwise x1 <= x2 in a bool array",
                 '?'*len(all)
              ],
 'equal' : [all, '', (), (2,1), None,
-           "equal(x,y) is the bool array x == y.",
+           "returns elementwise x1 == x2 in a bool array",
            '?'*len(all)
            ],
 'not_equal' : [all, '', (), (2,1), None,
-               "not_equal(x,y) is the bool array x != y.",
+               "returns elementwise x1 |= x2",
                '?'*len(all)
                ],
 'logical_and': [nocmplxM,'M',('"logical_and"',),
-                (2,1), One,               
-                "logical and of arguments elementwise.",
+                (2,1), One,
+                "returns x1 and x2 elementwise.",
                 '?'*len(nocmplxM)
                 ],
 'logical_or': [nocmplxM,'M',('"logical_or"',),
                 (2,1), Zero,               
-                "logical or of arguments elementwise.",
+                "returns x1 or x2 elementwise.",
                '?'*len(nocmplxM)
                ],
 'logical_xor': [nocmplxM, 'M', ('"logical_xor"',),
                 (2,1), None,
-                "logical xor of arguments elementwise.",
+                "returns x1 xor x2 elementwise.",
                 '?'*len(nocmplxM)
                 ],
 'logical_not' : [nocmplxM, 'M', ('"logical_not"',),
                  (1,1), None,
-                 "logical not of argument elementwise.",
+                 "returns not x elementwise.",
                  '?'*len(nocmplxM)
                  ],
 'maximum' : [noobj,'',(),
              (2,1), None,
-             "maximum of two arrays elementwise."],
+             "returns maximum (if x1 > x2: x1;  else: x2) elementwise."],
 'minimum' : [noobj,'',(),
              (2,1), None,
-             "minimum of two arrays elementwise."],
+             "returns minimum (if x1 < x2: x1;  else: x2) elementwise"],
 'bitwise_and' : [bintsO,'O',("PyNumber_And",),
                  (2,1), One,
-                 "bitwise and of two arrays elementwise."],
+                 "computes x1 & x2 elementwise."],
 'bitwise_or' : [bintsO, 'O', ("PyNumber_Or",),
                 (2,1), Zero,
-                "bitwise or of two arrays elementwise."],
+                "computes x1 | x2 elementwise."],
 'bitwise_xor' : [bintsO, 'O', ("PyNumber_Xor",),
                  (2,1), None,
-                 "bitwise xor of two arrays elementwise."],
+                 "computes x1 ^ x2 elementwise."],
 'invert' : [bintsO,'O', ("PyNumber_Invert",),
             (1,1), None,
-            "bit inversion elementwise."
+            "computes ~x (bit inversion) elementwise."
             ],
 'left_shift' : [intsO, 'O', ("PyNumber_Lshift",),
                 (2,1), None,
-                "left_shift(n,m) is n << m (n shifted to left by m bits) elementwise."
+                "computes x1 << x2 (x1 shifted to left by x2 bits) elementwise."
                 ],
 'right_shift' : [intsO, 'O', ("PyNumber_Rshift",),
                 (2,1), None,
-                "right_shift(n,m) is n >> m (n shifted to right by m bits) elementwise."
+                "computes x1 >> x2 (x1 shifted to right by x2 bits) elementwise."
                 ],
 'arccos' : [nointM, nointM,
             ("acos,"*6, '"arccos"'),
@@ -233,17 +233,17 @@ defdict = {
 'log' : [nointM, nointM,
          ("log,"*6, '"log"'),
          (1, 1), None,
-         "log(x) elementwise."
+         "logarithm base e elementwise."
          ],
 'log10' : [nointM, nointM,
          ("log10,"*6, '"log10"'),
          (1, 1), None,
-         "log10(x) elementwise."
+         "logarithm base 10 elementwise."
          ],
 'sqrt' : [nointM, nointM,
           ("sqrt,"*6, '"sqrt"'),
           (1,1), None,
-          "sqrt(x) elementwise."
+          "square-root elementwise."
           ],
 'ceil' : [fltsM, fltsM,
           ("ceil,"*3, '"ceil"'),
@@ -263,45 +263,45 @@ defdict = {
 'arctan2' : [fltsM, fltsM,
              ("atan2,"*3, '"arctan2"'),
              (2,1), None,
-             "arctan2(x,y) is a safe and corrent tan(x/y)"
+             "a safe and correct arctan(x1/x2)"
              ],
 'fmod' : [fltsM, fltsM,
           ("fmod,"*3,'"fmod"'),
           (2,1), None,
-          "fmod(x,y) is remainder(x,y)"],
+          "computes x1-n*x2 where n is the quotient of x1 / x2"],
 'hypot' : [fltsM, fltsM,
            ("hypot,"*3, '"hypot"'),
            (2,1), None,
-           "sqrt(x**2 + y**2) elementwise"
+           "sqrt(x1**2 + x2**2) elementwise"
            ],
 
 'isnan' : [flts+cmplx, '',
            (), (1,1), None,
-           "isnan(x) returns True where x is Not-A-Number",
+           "returns True where x is Not-A-Number",
            '?'*len(flts+cmplx)
            ],
 
 'isinf' : [flts+cmplx, '',
            (), (1,1), None,
-           "isinf(x) returns True where x is + or - infinity",
+           "returns True where x is +inf or -inf",
            '?'*len(flts+cmplx)
            ],
 
 'isfinite' : [flts+cmplx, '',
            (), (1,1), None,
-           "isfinite(x) returns True where x is finite",
+           "returns True where x is finite",
            '?'*len(flts+cmplx)
            ],
 
 'signbit' : [flts,'',
              (),(1,1),None,
-             "signbit(x) returns True where signbit of x is set (x<0).",
+             "returns True where signbit of x is set (x<0).",
              '?'*len(flts)
              ],
 
 'modf' : [flts,'',
           (),(1,2),None,
-          "modf breaks argument into integral and fractional parts (each with the same sign as input)"
+          "breaks x into fractional (y1) and integral (y2) parts.\\n\\n    Each output has the same sign as the input."
           ]
 }
 

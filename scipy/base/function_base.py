@@ -52,6 +52,11 @@ def linspace(start,stop,num=50,endpoint=1,retstep=0):
     else:
         return y
 
+def iterable(y):
+    try: len(y)
+    except: return 0
+    return 1
+
 def histogram(x, bins=10, range=None, normed=0):
     x = asarray(x).ravel()
     if not iterable(bins):
