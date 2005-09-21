@@ -539,11 +539,13 @@ static char
 _lowest_type(char intype)
 {
         switch(intype) {
+	/* case PyArray_BYTE */
 	case PyArray_SHORT:
         case PyArray_INT:
         case PyArray_LONG:
 	case PyArray_LONGLONG:
 		return PyArray_BYTE;
+	/* case PyArray_UBYTE */
         case PyArray_USHORT:
         case PyArray_UINT:
 	case PyArray_ULONG:
