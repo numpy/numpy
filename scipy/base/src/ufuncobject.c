@@ -480,33 +480,22 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj)
 	
 	/* End platform dependent code */
 
+#define HANDLEIT(NAME, str) {if (retstatus & UFUNC_FPE_##NAME) {	\
+			handle = errmask & UFUNC_MASK_##NAME;\
+			if (handle && \
+			    _error_handler(handle >> UFUNC_SHIFT_##NAME, \
+					   errobj, str) < 0) \
+				return -1;		      \
+			}}
 
 	if (errmask && retstatus) {
-		if ((handle = errmask & UFUNC_MASK_DIVIDEBYZERO)) {
-			if (handle &&					\
-			    _error_handler(handle >> UFUNC_SHIFT_DIVIDEBYZERO,
-					   errobj, "divide by zero") < 0)
-				return -1;
-		}
-		if ((handle = errmask & UFUNC_MASK_OVERFLOW)) {
-			if (handle && \
-			    _error_handler(handle >> UFUNC_SHIFT_OVERFLOW,
-					   errobj, "overflow") < 0)
-				return -1;
-		}
-		if ((handle = errmask & UFUNC_MASK_UNDERFLOW)) {
-			if (handle &&					\
-			    _error_handler(handle >> UFUNC_SHIFT_UNDERFLOW, 
-					   errobj, "underflow") < 0)
-				return -1;
-		}		
-		if ((handle = errmask & UFUNC_MASK_INVALID)) {
-			if (handle &&					\
-			    _error_handler(handle >> UFUNC_SHIFT_INVALID, 
-					   errobj, "underflow") < 0)
-				return -1;
-		}
+		HANDLEIT(DIVIDEBYZERO, "divide by zero");
+		HANDLEIT(OVERFLOW, "overflow");
+		HANDLEIT(UNDERFLOW, "underflow");
+		HANDLEIT(INVALID, "invalid");
 	}
+
+#undef HANDLEIT
 
 	return 0;
 }

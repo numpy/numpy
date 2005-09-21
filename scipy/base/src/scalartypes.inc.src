@@ -17,10 +17,9 @@ typedef struct {
 
 /**begin repeat
 
-#name=numeric, integer, signedinteger, unsignedinteger, floating, complexfloating, flexible, 
+#name=numeric, integer, signedinteger, unsignedinteger, inexact, floating, complexfloating, flexible, 
 character#
-#NAME=Numeric, Integer, SignedInteger, UnsignedInteger, Floating, ComplexFloating,
-Flexible, Character#
+#NAME=Numeric, Integer, SignedInteger, UnsignedInteger, Inexact, Floating, ComplexFloating, Flexible, Character#
 */
 
 static PyTypeObject Py@NAME@ArrType_Type = { 
@@ -1419,7 +1418,7 @@ initialize_numeric_types(void)
 	PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
 
 	/**begin repeat
-#NAME=Numeric, Integer, SignedInteger, UnsignedInteger, Floating, 
+#NAME=Numeric, Integer, SignedInteger, UnsignedInteger, Inexact, Floating, 
 ComplexFloating, Flexible, Character#
 	*/
         Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;

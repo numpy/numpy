@@ -308,6 +308,8 @@ def geterr():
     return res
 
 def setbufsize(size, where=0):
+    if size > 10e6:
+        raise ValueError, "Very big buffers.. %s" % size
     frame = sys._getframe().f_back
     try:
         wh = where.lower()

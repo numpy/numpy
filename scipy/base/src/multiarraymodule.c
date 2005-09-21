@@ -3835,10 +3835,11 @@ setup_scalartypes(PyObject *dict)
 
         SINGLE_INHERIT(Numeric, Generic);
         SINGLE_INHERIT(Integer, Numeric);
+        SINGLE_INHERIT(Inexact, Numeric);
         SINGLE_INHERIT(SignedInteger, Integer);
         SINGLE_INHERIT(UnsignedInteger, Integer);
-        SINGLE_INHERIT(Floating, Numeric);
-        SINGLE_INHERIT(ComplexFloating, Numeric);
+        SINGLE_INHERIT(Floating, Inexact);
+        SINGLE_INHERIT(ComplexFloating, Inexact);
         SINGLE_INHERIT(Flexible, Generic);
         SINGLE_INHERIT(Character, Flexible);
 	

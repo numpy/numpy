@@ -101,7 +101,8 @@ class matrix(N.ndarray):
                                 fortran=fortran,
                                 swap=(not arr.flags['NOTSWAPPED']))
         return ret; 
-            
+
+    # special methods 
     def __array_wrap__(self, obj):
         try:
             ret = matrix(obj,dtype=obj.dtype)
