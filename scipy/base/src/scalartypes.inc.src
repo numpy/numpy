@@ -1253,6 +1253,124 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	return PyArray_Return((PyArrayObject *)arr);
 }
 
+
+/****************  Define Hash functions ********************/
+
+/**begin repeat
+#lname=bool,ubyte,ushort#
+#name=Bool,UByte, UShort#
+ */
+static long
+@lname@_arrtype_hash(PyObject *obj)
+{
+        return (long)(((Py@name@ScalarObject *)obj)->obval);
+}
+/**end repeat**/
+
+/**begin repeat
+#lname=byte,short,uint,ulong#
+#name=Byte,Short,UInt,ULong#
+ */
+static long
+@lname@_arrtype_hash(PyObject *obj)
+{
+        long x = (long)(((Py@name@ScalarObject *)obj)->obval);
+        if (x == -1) x=-2;
+        return x;
+}
+/**end repeat**/
+
+#if SIZEOF_INT != SIZEOF_LONG
+static long
+int_arrtype_hash(PyObject *obj)
+{
+        long x = (long)(((PyIntScalarObject *)obj)->obval);
+        if (x == -1) x=-2;
+        return x;
+}
+#endif
+
+/**begin repeat
+#char=,u#
+#Char=,U#
+#ext=&& (x >= LONG_MIN),#
+*/
+#if SIZEOF_LONG == SIZEOF_LONGLONG
+static long
+@char@longlong_arrtype_hash(PyObject *obj)
+{
+        long x = (long)(((Py@Char@LongLongScalarObject *)obj)->obval);
+        if (x == -1) x=-2;
+        return x;
+}
+#else /* we assume SIZEOF_LONGLONG=2*SIZEOF_LONG */
+static long
+@char@longlong_arrtype_hash(PyObject *obj)
+{
+        long y;
+        @char@longlong x = (((Py@Char@LongLongScalarObject *)obj)->obval);
+
+        if ((x <= LONG_MAX)@ext@) {
+                y = (long) x;
+        }
+        else {
+                union Mask {
+                        long hashvals[2];
+                        @char@longlong v;
+                } both;
+
+                both.v = x;
+                y = both.hashvals[0] + (1000003)*both.hashvals[1];
+        }
+        if (y == -1) y = -2;
+        return y;
+}
+#endif
+/**end repeat**/
+
+/* Wrong thing to do for longdouble, but....*/
+/**begin repeat
+#lname=float, longdouble#
+#name=Float, LongDouble#
+ */
+static long
+@lname@_arrtype_hash(PyObject *obj)
+{
+        return _Py_HashDouble((double) ((Py@name@ScalarObject *)obj)->obval);
+}
+
+/* borrowed from complex_hash */
+static long
+c@lname@_arrtype_hash(PyObject *obj)
+{
+        long hashreal, hashimag, combined;
+        hashreal = _Py_HashDouble((double)                              \
+                                  (((PyC@name@ScalarObject *)obj)->obval).real);
+
+        if (hashreal == -1) return -1;
+        hashimag = _Py_HashDouble((double)                              \
+                                  (((PyC@name@ScalarObject *)obj)->obval).imag);
+        if (hashimag == -1) return -1;
+
+        combined = hashreal + 1000003 * hashimag;
+        if (combined == -1) combined = -2;
+        return combined;
+}
+/**end repeat**/
+
+static long
+object_arrtype_hash(PyObject *obj)
+{
+        return PyObject_Hash(((PyObjectScalarObject *)obj)->obval);
+}
+
+/* just hash the pointer */
+static long
+void_arrtype_hash(PyObject *obj)
+{
+        return _Py_HashPointer((void *)(((PyVoidScalarObject *)obj)->obval));
+}
+
 /**begin repeat
 #name=bool, string, unicode, void, object#
 #NAME=Bool, String, Unicode, Void, Object#
@@ -1314,6 +1432,18 @@ ComplexFloating, Flexible, Character#
 	Py@NAME@ArrType_Type.tp_flags = LEAFFLAGS;
 	Py@NAME@ArrType_Type.tp_new = @name@_arrtype_new;
 	/**end repeat**/
+
+        /**begin repeat
+#name=bool, byte, short, longlong, ubyte, ushort, uint, ulong, ulonglong, float, longdouble, cfloat, clongdouble, void, object#
+#NAME=Bool, Byte, Short, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, LongDouble, CFloat, CLongDouble, Void, Object#
+        */
+        Py@NAME@ArrType_Type.tp_hash = @name@_arrtype_hash;
+        /**end repeat**/
+
+        /* We won't be inheriting from Python Int type. */
+#if SIZEOF_INT != SIZEOF_LONG
+        PyIntArrType_Type.tp_hash = int_arrtype_hash;
+#endif
 
 	/* These need to be coded specially because getitem does not
 	   return a normal Python type

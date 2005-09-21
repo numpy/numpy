@@ -3853,7 +3853,8 @@ setup_scalartypes(PyObject *dict)
 			     "Could not initialize Py%sArrType_Type",   \
                              #child);                                   \
                 return -1;                                              \
-        } 
+        }\
+        Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;
         
         SINGLE_INHERIT(Bool, Generic);
         SINGLE_INHERIT(Byte, SignedInteger);

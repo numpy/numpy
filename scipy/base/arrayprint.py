@@ -312,8 +312,13 @@ def _digits(x, precision, format):
     return precision-len(s)+zeros
 
 
+_MAXINT = sys.maxint
+_MININT = -sys.maxint-1
 def _formatInteger(x, format):
-    return format % x
+    if (x < _MAXINT) and (x > _MININT):
+        return format % x
+    else:
+        return "%s" % x
 
 def _formatFloat(x, format, strip_zeros = 1):
     if format[-1] == '3':
