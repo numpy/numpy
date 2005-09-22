@@ -504,7 +504,7 @@ types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger',
 
 # API fixes for __arrayobject_api.h
 
-fixed = 3
+fixed = 4
 numtypes = len(types) + fixed
 numobject = len(objectapi_list) + numtypes
 nummulti = len(multiapi_list) 
@@ -601,6 +601,7 @@ for k, item in enumerate(multiapi_list):
 outstr = r"""
 #ifdef _MULTIARRAYMODULE
 
+static PyTypeObject PyBigArray_Type;
 static PyTypeObject PyArray_Type;
 static PyTypeObject PyArrayIter_Type;
 static PyTypeObject PyArrayMapIter_Type;
@@ -611,9 +612,10 @@ static PyTypeObject PyArrayMapIter_Type;
 
 static void **PyArray_API=NULL;
 
-#define PyArray_Type (*(PyTypeObject *)PyArray_API[0])
-#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[1])
-#define PyArrayMapIter_Type (*(PyTypeObject *)PyArray_API[2])
+#define PyBigArray_Type (*(PyTypeObject *)PyArray_API[0])
+#define PyArray_Type (*(PyTypeObject *)PyArray_API[1])
+#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[2])
+#define PyArrayMapIter_Type (*(PyTypeObject *)PyArray_API[3])
 
 %s
 
@@ -651,6 +653,7 @@ outstr = r"""
 */
 
 void *PyArray_API[] = {
+        (void *) &PyBigArray_Type,
         (void *) &PyArray_Type,
         (void *) &PyArrayIter_Type,
         (void *) &PyArrayMapIter_Type,

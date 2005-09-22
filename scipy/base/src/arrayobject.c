@@ -4136,13 +4136,14 @@ static PyGetSetDef array_getsetlist[] = {
 /****************** end of attribute get and set routines *******************/
 
 
+
 static char Arraytype__doc__[] = 
         "A array object represents a multidimensional, homogeneous array of basic values.  It has the folowing data members, m.shape (the size of each dimension in the array), m.itemsize (the size (in bytes) of each element of the array), and m.typecode (a character representing the type of the array elements).  Arrays are sequence, mapping and numeric objects.  Sequence indexing is similar to lists, with single indices returning a reference that points to the old array data, and slices returning by copy.  A array is also allowed to be indexed by a sequence of items.	 Each member of the sequence indexes the corresponding dimension of the array.";
 
-static PyTypeObject PyArray_Type = { 
+static PyTypeObject PyBigArray_Type = { 
         PyObject_HEAD_INIT(NULL)
         0,					  /*ob_size*/
-        "ndarray",				  /*tp_name*/
+        "ndbigarray",				  /*tp_name*/
         sizeof(PyArrayObject),		          /*tp_basicsize*/
         0,					  /*tp_itemsize*/
         /* methods */
@@ -4153,7 +4154,7 @@ static PyTypeObject PyArray_Type = {
         (cmpfunc)0,     		          /*tp_compare*/
         (reprfunc)array_repr,		          /*tp_repr*/
         &array_as_number,			  /*tp_as_number*/
-        &array_as_sequence,			  /*tp_as_sequence*/
+        NULL, 			                  /*tp_as_sequence*/
         &array_as_mapping,			  /*tp_as_mapping*/
         (hashfunc)0,			          /*tp_hash*/
         (ternaryfunc)0,			          /*tp_call*/
@@ -4161,7 +4162,7 @@ static PyTypeObject PyArray_Type = {
 		
         (getattrofunc)0,			  /*tp_getattro*/
         (setattrofunc)0,			  /*tp_setattro*/
-        (PyBufferProcs *)&array_as_buffer,	  /*tp_as_buffer*/
+        NULL,                            	  /*tp_as_buffer*/
         (Py_TPFLAGS_DEFAULT 
          | Py_TPFLAGS_BASETYPE
          | Py_TPFLAGS_CHECKTYPES),           /*tp_flags*/
@@ -4198,6 +4199,19 @@ static PyTypeObject PyArray_Type = {
         0,					  /* tp_cache */
         0,					  /* tp_subclasses */
         0					  /* tp_weaklist */
+};
+
+/* A standard array will subclass from the Big Array and 
+   add the array_as_sequence table
+   and the array_as_buffer table
+ */
+
+static PyTypeObject PyArray_Type = { 
+        PyObject_HEAD_INIT(NULL)
+        0,					  /*ob_size*/
+        "ndarray",				  /*tp_name*/
+        sizeof(PyArrayObject),		          /*tp_basicsize*/
+        0,					  /*tp_itemsize*/
 };
 
 

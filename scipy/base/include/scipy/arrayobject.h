@@ -1167,7 +1167,8 @@ typedef struct {
 /* Backward compatibility only */
 #define PyArray_CopyArray PyArray_CopyInto
 
-#define PyArray_Check(op) (PyObject_TypeCheck((op), &PyArray_Type))
+#define PyArray_Check(op) (PyObject_TypeCheck((op), &PyBigArray_Type))
+#define PyBigArray_CheckExact(op) ((op)->ob_type == &PyBigArray_Type)
 #define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
 
 #define PyArray_CheckScalar(m) (PyObject_TypeCheck((m),			\

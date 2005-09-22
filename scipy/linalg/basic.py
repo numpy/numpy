@@ -174,7 +174,7 @@ def eigenvalues(a):
         raise LinAlgError, 'Eigenvalues did not converge'
     return w
 
-eigvals = eigenvals;
+eigvals = eigenvalues;
 
 def Heigenvalues(a, UPLO='L'):
     _assertRank2(a)

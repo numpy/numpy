@@ -3939,8 +3939,19 @@ DL_EXPORT(void) initmultiarray(void) {
 	if (!d) goto err; 
 
 	/* Create the module and add the functions */
+	if (PyType_Ready(&PyBigArray_Type) < 0) 
+		return;
+
+        PyArray_Type.tp_base = &PyBigArray_Type;
+	PyArray_Type.tp_as_sequence = &array_as_sequence;
+	PyArray_Type.tp_as_buffer = &array_as_buffer;	
+        PyArray_Type.tp_flags = (Py_TPFLAGS_DEFAULT 
+				 | Py_TPFLAGS_BASETYPE
+				 | Py_TPFLAGS_CHECKTYPES);
+        PyArray_Type.tp_doc = Arraytype__doc__;
+
 	if (PyType_Ready(&PyArray_Type) < 0)
-                return;         
+                return;
 
         if (setup_scalartypes(d) < 0) goto err;
 
@@ -3962,6 +3973,8 @@ DL_EXPORT(void) initmultiarray(void) {
 	s = PyString_FromString("3.0");
 	PyDict_SetItemString(d, "__version__", s);
 	Py_DECREF(s);
+        Py_INCREF(&PyBigArray_Type);
+	PyDict_SetItemString(d, "ndbigarray", (PyObject *)&PyBigArray_Type);
         Py_INCREF(&PyArray_Type);
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
         Py_INCREF(&PyArrayIter_Type);
