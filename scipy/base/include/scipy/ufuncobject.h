@@ -199,7 +199,7 @@ typedef struct {
 	}
 	
 /* MS Windows -----------------------------------------------------*/
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) 
 
 #include <float.h>
 
@@ -230,9 +230,9 @@ typedef struct {
 	(void) fpsetsticky(0);						\
 	}
 	
-#elif defined(linux) || defined(darwin) || defined(__CYGWIN__)
+#elif defined(linux) || defined(darwin) || defined(__CYGWIN__) || defined(__MINGW32__) 
 
-#if defined(__GLIBC__) || defined(darwin)
+#if defined(__GLIBC__) || defined(darwin) || defined(__MINGW32__)
 #include <fenv.h>
 #elif defined(__CYGWIN__)
 #include <mingw/fenv.h>
@@ -267,7 +267,10 @@ typedef struct {
 
 #else
 
-#define UFUNC_CHECK_STATUS(ret) ret = 0;
+#define UFUNC_CHECK_STATUS(ret) { \
+    printf("floating point flags not supported on this platform\n"); \
+    ret = 0;							     \
+  }
 
 #endif
 

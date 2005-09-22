@@ -480,7 +480,7 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj)
 	
 	/* End platform dependent code */
 
-#define HANDLEIT(NAME, str) {if (retstatus & UFUNC_FPE_##NAME) {	\
+#define HANDLEIT(NAME, str) {if (retstatus & UFUNC_FPE_##NAME) { \
 			handle = errmask & UFUNC_MASK_##NAME;\
 			if (handle && \
 			    _error_handler(handle >> UFUNC_SHIFT_##NAME, \
