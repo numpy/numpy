@@ -671,8 +671,7 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
         elsize = dest->itemsize;
 
         if ((PyArray_ISCONTIGUOUS(dest) && PyArray_ISCONTIGUOUS(src)) \
-	    || (PyArray_CHKFLAGS(dest,FORTRAN) && \
-                PyArray_CHKFLAGS(src,FORTRAN))) {
+	    || (PyArray_ISFORTRAN(dest) && PyArray_ISFORTRAN(src))) {
                
                 PyArray_XDECREF(dest);
                 dptr = dest->data;
@@ -777,6 +776,7 @@ PyArray_FromDims(int nd, int *d, int type)
 
 /* end */
 
+/* Copy should always return contiguous array */
 static PyObject *
 PyArray_Copy(PyArrayObject *m1) 
 {
@@ -785,8 +785,7 @@ PyArray_Copy(PyArrayObject *m1)
 					   m1->dimensions,
 					   m1->descr->type_num,
 					   NULL, NULL, m1->itemsize,
-					   PyArray_ISFORTRAN(m1),
-					   m1);
+					   0, m1);
 	
         if (PyArray_CopyInto(ret, m1) == -1) return NULL;
 	
@@ -1101,7 +1100,7 @@ array_length(PyArrayObject *self)
         if (self->nd != 0) {
                 return self->dimensions[0];
         } else {
-                return -1;  /* can't ask for length of length-1 array */
+                return -1;  /* can't ask for length of 0-dim array */
         }
 }
 
@@ -2364,7 +2363,8 @@ array_hex(PyArrayObject *v)
 static PyObject *
 _array_copy_nice(PyArrayObject *self)
 {
-	return PyArray_Return(self);
+	return PyArray_Return((PyArrayObject *)\
+			      PyArray_Copy((PyObject *)self));
 }
 
 static PyNumberMethods array_as_number = {
@@ -2747,7 +2747,7 @@ _check_axis(PyArrayObject *arr, int *axis, int flags)
 	int n = arr->nd;
 
 	if ((*axis >= MAX_DIMS) || (n==0)) {
-		temp = PyArray_Ravel(arr);
+		temp = PyArray_Ravel(arr,0);
 		*axis = 0;
 		return temp;
 	}
@@ -3168,9 +3168,9 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
         intp *dimptr;
         char *new_data;
 	
-        if (!PyArray_ISONESEGMENT(self)) {
+        if (!PyArray_ISCONTIGUOUS(self)) {
                 PyErr_SetString(PyExc_ValueError, 
-                                "resize only works on single-segment arrays");
+                                "resize only works on contiguous arrays");
                 return NULL;
         }
 
@@ -3253,7 +3253,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
         /* make new_strides variable */
         sd = (intp) self->itemsize;
         sd = _array_fill_strides(new_strides, new_dimensions, new_nd, sd,
-                                 PyArray_ISFORTRAN(self), &(self->flags));
+                                 0, &(self->flags));
 
         
         memmove(self->dimensions, new_dimensions, new_nd*sizeof(intp));
@@ -5541,8 +5541,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
 	r = PyArray_New(self->ao->ob_type, ind->nd, ind->dimensions,
 			self->ao->descr->type_num, NULL, 
 			NULL, self->ao->itemsize, 
-			PyArray_ISFORTRAN(self->ao),
-			self->ao);
+			0, self->ao);
 	if (r==NULL) return NULL;
 
 	optr = PyArray_DATA(r);
@@ -5631,7 +5630,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 					"cannot use Ellipsis or NewAxes here");
 			goto fail;
 		}
-		PyArray_ITER_GOTO1D(self, start);
+		PyArray_ITER_GOTO1D(self, start)
 		if (n_steps == SingleIndex) { /* Integer */
 			r = PyArray_ToScalar(self->dataptr, self->ao);
 			PyArray_ITER_RESET(self);
@@ -5962,7 +5961,7 @@ static PyObject *
 iter_copy(PyArrayIterObject *it, PyObject *args)
 {
         if (!PyArg_ParseTuple(args, "")) return NULL;	
-	return PyArray_Flatten(it->ao);
+	return PyArray_Flatten(it->ao, 0);
 }
 
 static PyMethodDef iter_methods[] = {

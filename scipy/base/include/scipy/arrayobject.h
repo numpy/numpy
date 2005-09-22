@@ -959,7 +959,7 @@ typedef struct {
 				it->ao->itemsize;			\
 		else {							\
 			it->dataptr = it->ao->data;			\
-			for (_i_ = it->nd_m1; _i_>=0; _i_--) {		\
+			for (_i_ = 0; _i_<=it->nd_m1; _i_++) {		\
 				it->dataptr += (_lind_ / it->factors[_i_]) \
 					* it->strides[_i_];		\
 				_lind_ %= it->factors[_i_];		\

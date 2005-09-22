@@ -7,7 +7,13 @@ import scipy.base as Numeric
 import copy
 import scipy.lib.lapack_lite as lapack_lite
 import math
-import scipy.base.multiarray as multiarray
+from scipy.base import transpose
+
+# We will need to grab from current scipy the implementation of
+# solve, lu_solve, cho_solve, norm, inv, det, pinv, pinv2, lstsq, and svd
+#  and eig. 
+#
+# Not sure whether to leave this alone or continue. 
 
 # Error object
 class LinAlgError(Exception):
@@ -47,7 +53,7 @@ def _castCopyAndTranspose(type, *arrays):
 # _fastCopyAndTranpose is an optimized version of _castCopyAndTranspose.
 # It assumes the input is 2D (as all the calls in here are).
 
-_fastCT = multiarray._fastCopyAndTranspose
+_fastCT = Numeric.fastCopyAndTranspose
 
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
@@ -98,7 +104,7 @@ def solve_linear_equations(a, b):
     if one_eq:
         return Numeric.ravel(b) # I see no need to copy here
     else:
-        return multiarray.transpose(b) # no need to copy
+        return b.transpose() # no need to copy
 
 
 # Matrix inversion
@@ -168,6 +174,7 @@ def eigenvalues(a):
         raise LinAlgError, 'Eigenvalues did not converge'
     return w
 
+eigvals = eigenvals;
 
 def Heigenvalues(a, UPLO='L'):
     _assertRank2(a)
@@ -343,7 +350,7 @@ def singular_value_decomposition(a, full_matrices = 0):
                                  work, lwork, iwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'SVD did not converge'
-    return multiarray.transpose(u), s, multiarray.transpose(vt) # why copy here?
+    return transpose(u), s, transpose(vt) # why copy here?
 
 
 # Generalized inverse

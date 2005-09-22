@@ -641,14 +641,14 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
     
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, &type, 0, 0, 0);
     if (ap1==NULL) goto fail;
-    op1 = PyArray_Flatten(ap1);
+    op1 = PyArray_Flatten(ap1, 0);
     if (op1==NULL) goto fail;
     Py_DECREF(ap1);
     ap1 = (PyArrayObject *)op1;
     
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, &type, 0, 0, 0);
     if (ap2==NULL) goto fail;
-    op2 = PyArray_Flatten(ap2);
+    op2 = PyArray_Flatten(ap2, 0);
     if (op2 == NULL) goto fail;
     Py_DECREF(ap2);
     ap2 = (PyArrayObject *)op2;

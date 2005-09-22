@@ -130,7 +130,7 @@ PyArray_View(PyArrayObject *self, PyArray_Typecode *type)
 }
 
 static PyObject *
-PyArray_Ravel(PyArrayObject *a)
+PyArray_Ravel(PyArrayObject *a, int fortran)
 {
 	PyArray_Dims newdim = {NULL,1};
 	intp val[1] = {-1};
@@ -140,16 +140,16 @@ PyArray_Ravel(PyArrayObject *a)
                 return (PyObject *)a;
         }
 	newdim.ptr = val;
-	if (PyArray_ISONESEGMENT(a)) 
+	if (!fortran && PyArray_ISCONTIGUOUS(a)) 
 		return PyArray_Newshape(a, &newdim);
 	else
-		return PyArray_Flatten(a);
+	        return PyArray_Flatten(a, fortran);
 }
 
 static PyObject *
-PyArray_Flatten(PyArrayObject *a)
+PyArray_Flatten(PyArrayObject *a, int fortran)
 {
-	PyObject *ret;
+	PyObject *ret, *new;
 	intp size;
 
 	size = PyArray_SIZE(a);
@@ -162,10 +162,23 @@ PyArray_Flatten(PyArrayObject *a)
 			  0, a);
 
 	if (ret== NULL) return NULL;
-        if (PyArray_CopyInto((PyArrayObject *)ret, a) < 0) {
-                Py_DECREF(ret);
-                return NULL;
-        }
+	if (fortran) {
+		new = PyArray_Transpose(a, NULL);
+		if (new == NULL) {
+			Py_DECREF(ret);
+			return NULL;
+		}
+	}
+	else {
+		Py_INCREF(a);
+		new = (PyObject *)a;
+	}
+	if (PyArray_CopyInto((PyArrayObject *)ret, (PyArrayObject *)new) < 0) {
+		Py_DECREF(ret);
+		Py_DECREF(new);
+		return NULL;
+	}
+	Py_DECREF(new);
 	return ret;
 }
 
@@ -212,9 +225,9 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
                 }
         }
 
-        if (!PyArray_ISONESEGMENT(self)) {
+        if (!PyArray_ISCONTIGUOUS(self)) {
                 PyErr_SetString(PyExc_ValueError, 
-				"changing shape only works on single-segment arrays");
+				"changing shape only works on contiguous arrays");
                 return NULL;
         }
 	
@@ -848,7 +861,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 		intp *dptr;
 		n1 = self->dimensions[0];
 		n2 = self->dimensions[1];
-		a = PyArray_Flatten(self);
+		a = PyArray_Flatten(self,0);
 		Py_DECREF(self);
 		if (a == NULL) return NULL;
 		step = n2+1;
@@ -1136,7 +1149,7 @@ PyArray_Concatenate(PyObject *op, int axis)
 			PyArray_FromAny(otmp, &typecode, 0, 0, CARRAY_FLAGS);
 		Py_DECREF(otmp);
 		if (axis >= MAX_DIMS) {
-			otmp = PyArray_Ravel(mps[i]);
+			otmp = PyArray_Ravel(mps[i],0);
 			Py_DECREF(mps[i]);
 			mps[i] = (PyArrayObject *)otmp;
 		}
@@ -1295,7 +1308,7 @@ PyArray_Transpose(PyArrayObject *ap, PyObject *op) {
 	}
 	PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
 	
-	if (op != Py_None)
+	if (op && (op != Py_None))
 		PyArray_Free(op, (char *)axes);
 	free(permutation);
 	return (PyObject *)ret;
@@ -2000,39 +2013,55 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 static PyObject *
 PyArray_CopyAndTranspose(PyObject *op) 
 {
-	PyArrayObject *ap=NULL, *ret=NULL;
-	int typenum, nd;
-	int t;
+	PyObject *ret, *arr;
+	int nd;
+	intp dims[2];
+	intp i,j;
+	int elsize, str2;
+	char *iptr;
+	char *optr;
 
-	typenum = PyArray_ObjectType(op, 0);
-
-	ap = (PyArrayObject *)PyArray_ContiguousFromObject(op, typenum, 
-							   0, 0);
-	nd = ap->nd;
-
-	if(nd <= 1) {
-		return PyArray_Copy(ap);
+	/* make sure it is well-behaved */
+	arr = PyArray_FromAny(op, NULL, 0, 0, CARRAY_FLAGS);
+	nd = PyArray_NDIM(arr);
+	if (nd == 1) {     /* we will give in to old behavior */
+		ret = PyArray_Copy((PyArrayObject *)arr);
+		Py_DECREF(arr);
+		return ret;		
+	}
+	else if (nd != 2) {
+		Py_DECREF(arr);
+		PyErr_SetString(PyExc_ValueError, 
+				"Only 2-d arrays are allowed.");
+		return NULL;
 	}
 
-	/* swap the dimensions and strides so that the copy will transpose */
-	t = ap->strides[0];
-	ap->strides[0] = ap->strides[1];
-	ap->strides[1] = t;
-	t = ap->dimensions[0];
-	ap->dimensions[0] = ap->dimensions[1];
-	ap->dimensions[1] = t;
-	/* create the copy and transposing */
-	ret = (PyArrayObject*)PyArray_Copy(ap);
-	/* swap them back */
-	t = ap->strides[0];
-	ap->strides[0] = ap->strides[1];
-	ap->strides[1] = t;
-	t = ap->dimensions[0];
-	ap->dimensions[0] = ap->dimensions[1];
-	ap->dimensions[1] = t;
+	/* Now construct output array */
+	dims[0] = PyArray_DIM(arr,1);
+	dims[1] = PyArray_DIM(arr,0);
+	elsize = PyArray_ITEMSIZE(arr);
 
-	Py_DECREF(ap);
-	return (PyObject *)ret;
+	ret = PyArray_New(arr->ob_type, 2, dims, PyArray_TYPE(arr),
+			  NULL, NULL, elsize, 0, (PyArrayObject *)arr);
+
+	if (ret == NULL) {
+		Py_DECREF(arr);
+		return NULL;
+	}
+	/* do 2-d loop */
+	optr = PyArray_DATA(ret);
+	str2 = elsize*dims[0];
+	for (i=0; i<dims[0]; i++) {
+		iptr = PyArray_DATA(arr) + i*elsize;
+		for (j=0; j<dims[1]; j++) {
+			/* optr[i,j] = iptr[j,i] */
+			memcpy(optr, iptr, elsize);
+			optr += elsize;
+			iptr += str2;
+		}
+	}
+	Py_DECREF(arr);
+	return ret;
 }
  
 static PyObject *

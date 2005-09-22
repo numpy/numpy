@@ -51,6 +51,24 @@ array_putmask(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_PutMask(self, mask, values);
 }
 
+/* Used to reshape a Fortran Array */
+static void
+_reverse_shape(PyArray_Dims *newshape)
+{
+	int i, n = newshape->len;
+	intp *ptr = newshape->ptr;
+	intp *eptr;
+	intp tmp;
+	int len = n >> 1;
+
+	eptr = ptr+n-1;
+	for(i=0; i<len; i++) {
+		tmp = *eptr;
+		*eptr-- = *ptr;
+		*ptr++ = tmp;
+	}
+}
+
 static char doc_reshape[] = "a.reshape(d1, d2, ..., dn).  Change the shape of a to be an n-dimensional array with dimensions given by d1...dn.  Note: the size specified for the new array must be exactly equal to the size of the  old one or an error will occur.";
 
 static PyObject *
@@ -75,8 +93,22 @@ array_reshape(PyArrayObject *self, PyObject *args)
 		}
 	}
 
-	if ((newshape.len == 0) || PyArray_ISONESEGMENT(self)) {
+	if (newshape.len == 1) return PyArray_Ravel(self, 0);
+
+	if ((newshape.len == 0) || PyArray_ISCONTIGUOUS(self)) {
 		ret = PyArray_Newshape(self, &newshape);
+	}
+	else if PyArray_ISFORTRAN(self) {
+		tmp = PyArray_Transpose(self, NULL);
+		if (tmp == NULL) goto fail;
+		_reverse_shape(&newshape);
+		ret = PyArray_Newshape((PyArrayObject *)tmp, &newshape);
+		Py_DECREF(tmp);
+		if (ret == NULL) goto fail;
+		tmp = PyArray_Transpose((PyArrayObject *)ret, NULL);
+		Py_DECREF(ret);
+		if (tmp == NULL) goto fail;
+		ret = tmp;
 	}
 	else {
 		tmp = PyArray_Copy(self);
@@ -1108,24 +1140,31 @@ array_diagonal(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_Diagonal(self, offset, axis1, axis2));
 }
 
-static char doc_flatten[] = "a.flatten() return a 1-d array (always copy)";
+static char doc_flatten[] = "a.flatten([fortran]) return a 1-d array (always copy)";
 
 static PyObject *
 array_flatten(PyArrayObject *self, PyObject *args)
 {
-	if (!PyArg_ParseTuple(args, "")) return NULL;
+	bool fortran=false;
 
-	return PyArray_Flatten(self);
+	if (!PyArg_ParseTuple(args, "|O&",
+			      PyArray_BoolConverter, &fortran)) 
+		return NULL;
+
+	return PyArray_Flatten(self, (int) fortran);
 }
 
-static char doc_ravel[] = "a.ravel() return a 1-d array (copy only if needed)";
+static char doc_ravel[] = "a.ravel([fortran]) return a 1-d array (copy only if needed)";
 
 static PyObject *
 array_ravel(PyArrayObject *self, PyObject *args)
 {
-	if (!PyArg_ParseTuple(args, "")) return NULL;
+	bool fortran=false;
 
-	return PyArray_Ravel(self);
+	if (!PyArg_ParseTuple(args, "|O&", PyArray_BoolConverter,
+			      &fortran)) return NULL;
+
+	return PyArray_Ravel(self, (int) fortran);
 }
 
 

@@ -375,11 +375,11 @@ multiapi_list = [
 
     (r"""Flatten
     """,
-     'Flatten','PyArrayObject *','PyObject *'),
+     'Flatten','PyArrayObject *, int','PyObject *'),
 
     (r"""Ravel
     """,
-     'Ravel','PyArrayObject *','PyObject *'),
+     'Ravel','PyArrayObject *, int','PyObject *'),
 
     (r"""Sign
     """,

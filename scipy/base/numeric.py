@@ -18,6 +18,7 @@ fromfile = multiarray.fromfile
 frombuffer = multiarray.frombuffer
 where = multiarray.where
 concatenate = multiarray.concatenate
+fastCopyAndTranspose = multiarray._fastCopyAndTranspose
 #def where(condition, x=None, y=None):
 #    """where(condition,x,y) is shaped like condition and has elements of x and
 #    y where condition is respectively true or false.

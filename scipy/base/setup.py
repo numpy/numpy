@@ -169,8 +169,10 @@ int main(int argc, char *argv[])
 }
 """
 
-
+import sys
 def generate_testcode(target):
+    if sys.platform == 'win32':
+        target = target.replace('\\','\\\\')
     testcode = [r'''
 #include <Python.h>
 #include <limits.h>

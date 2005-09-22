@@ -673,12 +673,20 @@ static struct PyMethodDef lapack_lite_module_methods[] = {
     { NULL,NULL,0}
 };
 
-DL_EXPORT(void) initlapack_lite(void)
+static char lapack_lite_module_documentation[] = "";
+
+DL_EXPORT(void) 
+initlapack_lite(void)
 {
     PyObject *m,*d;
-    m = Py_InitModule("lapack_lite", lapack_lite_module_methods);
+    m = Py_InitModule4("lapack_lite", lapack_lite_module_methods,
+		       lapack_lite_module_documentation,
+		       (PyObject*)NULL,PYTHON_API_VERSION);
     import_array();
     d = PyModule_GetDict(m);
     LapackError = PyErr_NewException("lapack_lite.LapackError", NULL, NULL);
     PyDict_SetItemString(d, "LapackError", LapackError);
+
+    if (PyErr_Occurred())
+      Py_FatalError("can't initialize module lapack_lite");
 }
