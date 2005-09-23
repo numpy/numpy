@@ -1,4 +1,4 @@
-""" Machine limits for Float32 and Float64.
+""" Machine limits for Float32 and Float64 and (long double) if available...
 """
 
 __all__ = ['finfo']

@@ -51,7 +51,8 @@ static PyObject *MultiArrayError;
 static intp 
 PyArray_MultiplyList(intp *l1, int n) 
 {
-        intp s=1, i=0;
+	register intp s=1;
+	register int i=0;
         while (i < n) s *= l1[i++];
         return s;
 }

@@ -16,6 +16,12 @@
 
   Original Implementation:  
   Copyright (c) 1995, 1996, 1997 Jim Hugunin, hugunin@mit.edu
+
+  with inspiration and code from
+  Numarray
+  Space Science Telescope Institute
+  J. Todd Miller
+  Perry Greenfield
  
 */
 
@@ -792,6 +798,9 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                                         " flexible arrays");
                         return -1;
                 }
+		/*
+		fprintf(stderr, "array %d has reference %d\n", i, (mps[i])->ob_refcnt);
+		*/
 
 		/* Scalars are 0-dimensional arrays
 		   at this point
