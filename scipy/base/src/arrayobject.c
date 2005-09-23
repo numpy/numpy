@@ -3061,7 +3061,7 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 	}
 	else self->flags = (flags & ~UPDATEIFCOPY);
 	
-	if (PyArray_ISFLEXIBLE(self)) {
+	if (PyTypeNum_ISFLEXIBLE(type_num)) {
 		if (itemsize < 1) {
 			PyErr_SetString(PyExc_ValueError,
 					"Type must provide an itemsize.");
@@ -3072,7 +3072,7 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 		/* Guarantee that these kind of arrays are never byteswapped
 		   unknowingly.  
 		*/
-		if (self->descr->type_num != PyArray_UNICODE)
+		if (type_num != PyArray_UNICODE)
 			self->flags |= NOTSWAPPED;
 	}
 	else self->itemsize = descr->elsize; 
