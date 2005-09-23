@@ -18,7 +18,7 @@ from twodim_base import *
 import scimath as math
 from polynomial import *
 from machar import *
-from limits import *
+from getlimits import *
 import ma
 import convertcode
 

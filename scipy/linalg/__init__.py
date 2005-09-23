@@ -1,1 +1,2 @@
-from basic import *
+from basic_lite import *
+from decomp_lite import *
