@@ -79,8 +79,8 @@ def isneginf(val):
     return isinf(val) & signbit(val)
 
 def _getmaxmin(t):
-    import limits
-    f = limits.finfo(t)
+    import getlimits
+    f = getlimits.finfo(t)
     return f.max, f.min
     
 def nan_to_num(x):
