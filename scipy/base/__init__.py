@@ -17,10 +17,8 @@ from twodim_base import *
 
 import scimath as math
 from polynomial import *
-from ppimport import *
 from machar import *
 from limits import *
-from pexec import *
 import ma
 import convertcode
 
