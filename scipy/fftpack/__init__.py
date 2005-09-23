@@ -19,4 +19,4 @@ inverse_fft2d(a, s=None, axes=(-2, -1))
 real_fft2d(a, s=None, axes=(-2,-1)) 
 inverse_real_fft2d(a, s=None, axes=(-2, -1))
 """
-from fft import *
+from fft_lite import *
