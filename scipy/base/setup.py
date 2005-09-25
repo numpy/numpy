@@ -8,6 +8,7 @@ from distutils.dep_util import newer,newer_group
 
 from scipy.distutils.command.build import build
 
+
 def configuration(parent_package='',top_path=None):
     config = Configuration('base',parent_package,top_path)
     local_dir = config.local_path

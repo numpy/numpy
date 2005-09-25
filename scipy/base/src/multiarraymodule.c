@@ -53,7 +53,7 @@ PyArray_MultiplyList(intp *l1, int n)
 {
 	register intp s=1;
 	register int i=0;
-        while (i < n) s *= l1[i++];
+        while (i++ < n) s *= (*l1++);
         return s;
 }
 
