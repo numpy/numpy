@@ -1431,6 +1431,8 @@ ComplexFloating, Flexible, Character#
 	Py@NAME@ArrType_Type.tp_flags = LEAFFLAGS;
 	Py@NAME@ArrType_Type.tp_new = @name@_arrtype_new;
 	/**end repeat**/
+	/* Allow the Void type to be subclassed -- for adding new types */
+	PyVoidArrType_Type.tp_flags = BASEFLAGS;
 
         /**begin repeat
 #name=bool, byte, short, longlong, ubyte, ushort, uint, ulong, ulonglong, float, longdouble, cfloat, clongdouble, void, object#
@@ -1510,7 +1512,23 @@ PyArray_TypenumFromTypeObject(PyObject *type)
 	if (typenum != PyArray_NOTYPE)
 		return typenum;
 
-	if (type == (PyObject *)&PyBool_Type)
+	/* Convert generic types to specific types */
+	if ((type == (PyObject *) &PyNumericArrType_Type) || \
+	    (type == (PyObject *) &PyInexactArrType_Type) || \
+	    (type == (PyObject *) &PyFloatingArrType_Type))
+		return PyArray_DOUBLE;
+	else if (type == (PyObject *)&PyComplexFloatingArrType_Type)
+		return PyArray_CDOUBLE;
+	else if ((type == (PyObject *)&PyIntegerArrType_Type) ||	\
+		 (type == (PyObject *)&PySignedIntegerArrType_Type))
+		return PyArray_LONG;
+	else if (type == (PyObject *) &PyUnsignedIntegerArrType_Type)
+		return PyArray_ULONG;
+        else if (type == (PyObject *) &PyCharacterArrType_Type)
+		return PyArray_STRING;
+	else if (type == (PyObject *) &PyFlexibleArrType_Type)
+		return PyArray_VOID;
+	else if (type == (PyObject *)&PyBool_Type)
 		typenum = PyArray_BOOL;
 	else if (type == (PyObject *)&PyInt_Type)
 		typenum = PyArray_LONG;

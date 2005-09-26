@@ -1461,7 +1461,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 		goto fail;
 	}
 	
-	/* Make sure all arrays are real array objects. */
+	/* Make sure all arrays are actual array objects. */
 	for(i=0; i<n; i++) {
 		if ((otmp = PySequence_GetItem(op, i)) == NULL) 
 			goto fail;
@@ -1493,11 +1493,13 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 		sizes[i] = PyArray_NBYTES(mps[i]);
 	}
 	
+	/* why not ??? 
 	if (PyTypeNum_ISFLEXIBLE(type_num)) {
 		PyErr_SetString(PyExc_NotImplementedError, 
 				"Not implemented for flexible sizes");
 		return NULL;
 	}
+	*/
 	ret = (PyArrayObject *)PyArray_New(ap->ob_type, ap->nd,
 					   ap->dimensions, type_num,
 					   NULL, NULL, 0, 0, ap);
