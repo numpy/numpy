@@ -73,7 +73,7 @@ class matrix(N.ndarray):
             return data.astype(dtype)
 
         if dtype is None:
-            dtype = N.intp
+            dtype = N.float
         intype = N.obj2dtype(dtype)
         
         if isinstance(data, types.StringType):
@@ -214,11 +214,14 @@ class matrix(N.ndarray):
 
     # inverse doesn't work yet....
     def getI(self):
-        return self
+        from scipy.linalg import inv
+        return matrix(inv(self))
 
-    A = property(getA, None, doc="Get base array")
+    A = property(getA, None, doc="base array")
     T = property(getT, None, doc="transpose")    
     H = property(getH, None, doc="hermitian (conjugate) transpose")
+    I = property(getI, None, doc="inverse")
+
 
 
 def _from_string(str,gdict,ldict):

@@ -32,3 +32,5 @@ def random_sample(*n):
         return Numeric.reshape (standard_generator.sample(m), n)
 
 from scipy.lib.ranlib import *
+
+from random_lite import *

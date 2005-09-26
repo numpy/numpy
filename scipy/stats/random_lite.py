@@ -1,4 +1,4 @@
-import ranlib
+import scipy.lib.ranlib as ranlib
 import scipy.base as Numeric
 import scipy.linalg as LinearAlgebra
 import sys
@@ -55,6 +55,13 @@ def random(shape=[]):
     "random(n) or random([n, m, ...]) returns array of random numbers"
     return _build_random_array(ranlib.sample, (), shape)
 
+def rand(*args):
+    """rand(d1,...,dn) returns a matrix of the given dimensions
+    which is initialized to random numbers from a uniform distribution
+    in the range [0,1).
+    """
+    return _build_random_array(ranlib.sample, (), args)
+
 def uniform(minimum, maximum, shape=[]):
     """uniform(minimum, maximum, shape=[]) returns array of given shape of random reals
     in given range"""
@@ -96,6 +103,11 @@ def normal(mean, std, shape=[]):
            standard deviation"""
         s = standard_normal(shape)
         return s * std + mean
+
+def randn(*args):
+    """u = randn(d0,d1,...,dn) returns zero-mean, unit-variance Gaussian
+    random numbers in an array of size (d0,d1,...,dn)."""
+    return _build_random_array(ranlib.standard_normal, (), args)
 
 def multivariate_normal(mean, cov, shape=[]):
        """multivariate_normal(mean, cov) or multivariate_normal(mean, cov, [m, n, ...])

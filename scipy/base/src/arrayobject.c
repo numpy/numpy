@@ -2363,8 +2363,8 @@ array_hex(PyArrayObject *v)
 static PyObject *
 _array_copy_nice(PyArrayObject *self)
 {
-	return PyArray_Return((PyArrayObject *)\
-			      PyArray_Copy((PyObject *)self));
+	return PyArray_Return((PyArrayObject *)		\
+			      PyArray_Copy(self));
 }
 
 static PyNumberMethods array_as_number = {

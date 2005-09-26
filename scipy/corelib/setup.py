@@ -37,8 +37,8 @@ def configuration(parent_package='',top_path=None):
                          )
 
     # Configure lapack_lite
-    #lapack_info = get_info('lapack_opt')
-    lapack_info = 0
+    lapack_info = get_info('lapack_opt')
+    #lapack_info = 0
     if not lapack_info:
         # use C-sources provided
         print "### Warning:  Using unoptimized lapack ###"

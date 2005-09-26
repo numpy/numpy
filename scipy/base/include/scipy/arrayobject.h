@@ -58,10 +58,11 @@ typedef unsigned long ulonglong;
 #  define ULONGLONG_SUFFIX(x) (x##UL)
 #endif
 
-
+#ifndef __cplusplus
 typedef unsigned char bool;
 #define false 0
 #define true 1
+#endif /* __cplusplus */
 
 #if SIZEOF_LONG_DOUBLE==SIZEOF_DOUBLE
 	typedef double longdouble;

@@ -4,10 +4,8 @@
 # zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf, dpotrf.
 
 import scipy.base as Numeric
-import copy
 import scipy.lib.lapack_lite as lapack_lite
 import math
-import scipy.base.multiarray as multiarray
 
 # Error object
 class LinAlgError(Exception):
@@ -34,11 +32,7 @@ def _commonType(*arrays):
 def _castCopyAndTranspose(type, *arrays):
     cast_arrays = ()
     for a in arrays:
-        if a.dtypechar == type:
-            cast_arrays = cast_arrays + (copy.copy(Numeric.transpose(a)),)
-        else:
-            cast_arrays = cast_arrays + (copy.copy(
-                                       Numeric.transpose(a).astype(type)),)
+        cast_arrays = cast_arrays + (Numeric.transpose(a).astype(type),)
     if len(cast_arrays) == 1:
             return cast_arrays[0]
     else:
@@ -47,7 +41,7 @@ def _castCopyAndTranspose(type, *arrays):
 # _fastCopyAndTranpose is an optimized version of _castCopyAndTranspose.
 # It assumes the input is 2D (as all the calls in here are).
 
-_fastCT = multiarray._fastCopyAndTranspose
+_fastCT = Numeric.fastCopyAndTranspose
 
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
@@ -98,45 +92,13 @@ def solve_linear_equations(a, b):
     if one_eq:
         return Numeric.ravel(b) # I see no need to copy here
     else:
-        return multiarray.transpose(b) # no need to copy
+        return Numeric.transpose(b) # no need to copy
 
 
 # Matrix inversion
 
 def inverse(a):
     return solve_linear_equations(a, Numeric.identity(a.shape[0]))
-
-def tri(N, M=None, k=0, dtype=None):
-    """ returns a N-by-M matrix where all the diagonals starting from
-        lower left corner up to the k-th are all ones.
-    """
-    if M is None: M = N
-    if type(M) == type('d'):
-        #pearu: any objections to remove this feature?
-        #       As tri(N,'d') is equivalent to tri(N,dtype='d')
-        typecode = M
-        M = N
-    m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
-    if typecode is None:
-        return m
-    else:
-        return m.astype(typecode)
-
-def tril(m, k=0):
-    """ returns the elements on and below the k-th diagonal of m.  k=0 is the
-        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
-    """
-    m = asarray(m)
-    out = tri(m.shape[0], m.shape[1], k=k, dtype=m.dtypechar)*m
-    return out
-
-def triu(m, k=0):
-    """ returns the elements on and above the k-th diagonal of m.  k=0 is the
-        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
-    """
-    m = asarray(m)
-    out = (1-tri(m.shape[0], m.shape[1], k-1, m.dtypechar))*m
-    return out
 
 
 # Cholesky decomposition
@@ -155,7 +117,7 @@ def cholesky_decomposition(a):
     results = lapack_routine('L', n, a, m, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Matrix is not positive definite - Cholesky decomposition cannot be computed'
-    return copy.copy(Numeric.transpose(MLab.triu(a,k=0)))
+    return Numeric.transpose(MLab.triu(a,k=0)).copy()
 
 
 # Eigenvalues
@@ -375,7 +337,7 @@ def singular_value_decomposition(a, full_matrices = 0):
                                  work, lwork, iwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'SVD did not converge'
-    return multiarray.transpose(u), s, multiarray.transpose(vt) # why copy here?
+    return Numeric.transpose(u), s, Numeric.transpose(vt) # why copy here?
 
 
 # Generalized inverse
@@ -417,7 +379,7 @@ def determinant(a):
 # Linear Least Squares
 
 def linear_least_squares(a, b, rcond=1.e-10):
-    """solveLinearLeastSquares(a,b) returns x,resids,rank,s
+    """returns x,resids,rank,s
 where x minimizes 2-norm(|b - Ax|)
       resids is the sum square residuals
       rank is the rank of A
@@ -442,7 +404,7 @@ Singular values less than s[0]*rcond are treated as zero.
     t =_commonType(a, b)
     real_t = _array_type[0][_array_precision[t]]
     bstar = Numeric.zeros((ldb,n_rhs),t)
-    bstar[:b.shape[0],:n_rhs] = copy.copy(b)
+    bstar[:b.shape[0],:n_rhs] = b.copy()
     a,bstar = _castCopyAndTranspose(t, a, bstar)
     s = Numeric.zeros((min(m,n),),real_t)
     nlvl = max( 0, int( math.log( float(min( m,n ))/2. ) ) + 1 )
@@ -479,14 +441,14 @@ Singular values less than s[0]*rcond are treated as zero.
         raise LinAlgError, 'SVD did not converge in Linear Least Squares'
     resids = Numeric.array([],t)
     if one_eq:
-        x = copy.copy(Numeric.ravel(bstar)[:n])
+        x = Numeric.ravel(bstar)[:n].copy()
         if (results['rank']==n) and (m>n):
             resids = Numeric.array([Numeric.sum((Numeric.ravel(bstar)[n:])**2)])
     else:
-        x = copy.copy(Numeric.transpose(bstar)[:n,:])
+        x = Numeric.transpose(bstar)[:n,:].copy()
         if (results['rank']==n) and (m>n):
-            resids = copy.copy(Numeric.sum((Numeric.transpose(bstar)[n:,:])**2))
-    return x,resids,results['rank'],copy.copy(s[:min(n,m)])
+            resids = Numeric.sum((Numeric.transpose(bstar)[n:,:])**2).copy()
+    return x,resids,results['rank'],s[:min(n,m)].copy()
 
 
 if __name__ == '__main__':
