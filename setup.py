@@ -22,7 +22,6 @@ def setup_package():
             url = "http://numeric.scipy.org",
             )
         config.add_subpackage('scipy')
-	config.add_subpackage('weave')
         config.name = 'scipy_core'
         print config.name,'version',config.version
         setup( **config.todict() )

@@ -1,42 +1,32 @@
 #!/usr/bin/env python
-import os,sys
-from scipy.distutils.core import setup
-from scipy.distutils.misc_util import get_path, merge_config_dicts
-from scipy.distutils.misc_util import package_config
 
-from weave_version import weave_version
-   
-def stand_alone_package(with_dependencies = 0):
-    path = get_path(__name__)
-    old_path = os.getcwd()
-    os.chdir(path)
-    try:
-        primary =     ['weave']
-        if with_dependencies:
-            dependencies= ['scipy.distutils','scipy.test','scipy.base']
-        else:
-            dependencies = []    
-        
-        print 'dep:', dependencies
-        config_dict = package_config(primary,dependencies)
-        config_dict['name'] = 'weave'
-        setup (version = weave_version,
-               description = "Tools for inlining C/C++ in Python",
-               author = "Eric Jones",
-               author_email = "eric@enthought.com",
-               licence = "SciPy License (BSD Style)",
-               url = 'http://www.scipy.org',
-               **config_dict
-               )        
-    finally:
-        os.chdir(old_path)
+import os
+from glob import glob
+from scipy.distutils.misc_util import get_path, Configuration, dot_join
 
-if __name__ == '__main__':
-    import sys
-    if '--without-dependencies' in sys.argv:
-        with_dependencies = 0
-        sys.argv.remove('--without-dependencies')
-    else:
-        with_dependencies = 1    
-    stand_alone_package(with_dependencies)
-    
+def configuration(parent_package='',parent_path=None):
+    parent_path2 = parent_path
+    parent_path = parent_package
+    local_path = get_path(__name__,parent_path2)
+    config = Configuration('weave',parent_package)
+    config.add_subpackage('tests')
+    scxx_files = glob(os.path.join(local_path,'scxx','*.*'))
+    install_path = os.path.join(parent_path,'weave','scxx')
+    config.add_data_dir('scxx')
+    config.add_data_dir(os.path.join('blitz','blitz'))
+    config.add_data_dir(os.path.join('blitz','blitz','array'))
+    config.add_data_dir(os.path.join('blitz','blitz','meta'))
+    config.add_data_files(*glob(os.path.join(local_path,'doc','*.html')))
+    config.add_data_files(*glob(os.path.join(local_path,'examples','*.py')))    
+    return config
+
+if __name__ == '__main__':    
+    from scipy.distutils.core import setup
+    from weave_version import weave_version
+    setup(version = weave_version,
+          description = "Tools for inlining C/C++ in Python",
+          author = "Eric Jones",
+          author_email = "eric@enthought.com",
+          licence = "SciPy License (BSD Style)",
+          url = 'http://www.scipy.org',
+          **configuration(parent_path=''))
