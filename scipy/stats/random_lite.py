@@ -43,7 +43,6 @@ def _build_random_array(fun, args, shape=[]):
         shape = [shape]
     n = Numeric.multiply.reduce(shape)
     s = apply(fun, args + (n,))
-    print s.shape
     return s.reshape(shape)
 
 def random(shape=[]):

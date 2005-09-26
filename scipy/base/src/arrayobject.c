@@ -3686,7 +3686,11 @@ array_itemsize_get(PyArrayObject *self)
 static PyObject *
 array_size_get(PyArrayObject *self)
 {
-	return PyLong_FromLongLong((longlong) PyArray_SIZE(self));
+	longlong size=PyArray_SIZE(self);
+	if (size > MAX_INT || size < MIN_INT)
+		return PyLong_FromLongLong((longlong) size);
+	else 
+		return PyInt_FromLong((long) size);
 }
 
 

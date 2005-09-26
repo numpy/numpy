@@ -1512,6 +1512,10 @@ PyArray_TypenumFromTypeObject(PyObject *type)
 	if (typenum != PyArray_NOTYPE)
 		return typenum;
 
+	/* Find registered types */
+	
+	/* here */
+
 	/* Convert generic types to specific types */
 	if ((type == (PyObject *) &PyNumericArrType_Type) || \
 	    (type == (PyObject *) &PyInexactArrType_Type) || \
