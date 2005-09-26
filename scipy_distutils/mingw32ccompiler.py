@@ -98,8 +98,9 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # dlls need another dll (mingwm10.dll see Mingw32 docs)
         # (-mthreads: Support thread-safe exception handling on `Mingw32')       
         
-        # no additional libraries needed 
-        self.dll_libraries=[]
+        # no additional libraries needed
+        # This makes sure we link against msvcrt71.dll if needed
+        #self.dll_libraries=[]
         return
 
     # __init__ ()
@@ -132,7 +133,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                 extra_postargs,
                 build_temp,
                 target_lang)
-        if self.gcc_version < "3.0.0":
+        if sys.version[:3]=='2.4' or self.gcc_version < "3.0.0":
             func = distutils.cygwinccompiler.CygwinCCompiler.link
         else:
             func = UnixCCompiler.link
