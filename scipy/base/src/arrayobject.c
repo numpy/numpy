@@ -3694,7 +3694,6 @@ array_size_get(PyArrayObject *self)
 }
 
 
-
 static PyObject *
 array_typechar_get(PyArrayObject *self)
 {
