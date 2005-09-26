@@ -1,334 +1,546 @@
-#
-# Author: Pearu Peterson, March 2002
-#
-# w/ additions by Travis Oliphant, March 2002
-#
-# Back-ported to live on lapack_lite in 2005.
+# This module is a lite version of LinAlg.py module which contains
+# high-level Python interface to the LAPACK library.  The lite version
+# only accesses the following LAPACK functions: dgesv, zgesv, dgeev,
+# zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf, dpotrf.
 
-# Only have dsyevd (zheevd), ?geev, ?gelsd, ?gesv, ?gesdd, ?getrf, ?potrf  where ?=d,z#
+import scipy.base as Numeric
+import copy
+import scipy.lib.lapack_lite as lapack_lite
+import math
+import scipy.base.multiarray as multiarray
 
-__all__ = ['solve','inv','det','lstsq','norm','pinv','pinv2',
-           'tri','tril','triu','toeplitz','hankel','lu_solve',
-           'cho_solve','solve_banded','LinAlgError','kron',
-           'all_mat']
-
-#from blas import get_blas_funcs
-from lapack import get_lapack_funcs
-from flinalg import get_flinalg_funcs
-from scipy_base import asarray,zeros,sum,NewAxis,greater_equal,subtract,arange,\
-     conjugate,ravel,r_,mgrid,take,ones,dot,transpose,diag,sqrt,add,real
-import scipy_base
-from scipy_base import asarray_chkfinite, outerproduct, concatenate, reshape, \
-     Matrix
-import calc_lwork
-
+# Error object
 class LinAlgError(Exception):
     pass
 
+# Helper routines
+_lapack_type = {'f': 0, 'd': 1, 'F': 2, 'D': 3}
+_lapack_letter = ['s', 'd', 'c', 'z']
+_array_kind = {'i':0, 'l': 0, 'f': 0, 'd': 0, 'F': 1, 'D': 1}
+_array_precision = {'i': 1, 'l': 1, 'f': 0, 'd': 1, 'F': 0, 'D': 1}
+_array_type = [['f', 'd'], ['F', 'D']]
+
+def _commonType(*arrays):
+    kind = 0
+#    precision = 0
+#   force higher precision in lite version
+    precision = 1
+    for a in arrays:
+        t = a.dtypechar
+        kind = max(kind, _array_kind[t])
+        precision = max(precision, _array_precision[t])
+    return _array_type[kind][precision]
+
+def _castCopyAndTranspose(type, *arrays):
+    cast_arrays = ()
+    for a in arrays:
+        if a.dtypechar == type:
+            cast_arrays = cast_arrays + (copy.copy(Numeric.transpose(a)),)
+        else:
+            cast_arrays = cast_arrays + (copy.copy(
+                                       Numeric.transpose(a).astype(type)),)
+    if len(cast_arrays) == 1:
+            return cast_arrays[0]
+    else:
+        return cast_arrays
+
+# _fastCopyAndTranpose is an optimized version of _castCopyAndTranspose.
+# It assumes the input is 2D (as all the calls in here are).
+
+_fastCT = multiarray._fastCopyAndTranspose
+
+def _fastCopyAndTranspose(type, *arrays):
+    cast_arrays = ()
+    for a in arrays:
+        if a.dtypechar == type:
+            cast_arrays = cast_arrays + (_fastCT(a),)
+        else:
+            cast_arrays = cast_arrays + (_fastCT(a.astype(type)),)
+    if len(cast_arrays) == 1:
+            return cast_arrays[0]
+    else:
+        return cast_arrays
+
+def _assertRank2(*arrays):
+    for a in arrays:
+        if len(a.shape) != 2:
+            raise LinAlgError, 'Array must be two-dimensional'
+
+def _assertSquareness(*arrays):
+    for a in arrays:
+        if max(a.shape) != min(a.shape):
+            raise LinAlgError, 'Array must be square'
+
+
 # Linear equations
-def solve(a, b, sym_pos=0, lower=0, overwrite_a=0, overwrite_b=0,
-          debug = 0):
-    """ solve(a, b, sym_pos=0, lower=0, overwrite_a=0, overwrite_b=0) -> x
 
-    Solve a linear system of equations a * x = b for x.
-
-    Inputs:
-
-      a -- An N x N matrix.
-      b -- An N x nrhs matrix or N vector.
-      sym_pos -- Assume a is symmetric and positive definite.
-      lower -- Assume a is lower triangular, otherwise upper one.
-               Only used if sym_pos is true.
-      overwrite_y - Discard data in y, where y is a or b.
-
-    Outputs:
-
-      x -- The solution to the system a * x = b
-    """
-    a1, b1 = map(asarray_chkfinite,(a,b))
-    if len(a1.shape) != 2 or a1.shape[0] != a1.shape[1]:
-        raise ValueError, 'expected square matrix'
-    if a1.shape[0] != b1.shape[0]:
-        raise ValueError, 'incompatible dimensions'
-    overwrite_a = overwrite_a or (a1 is not a and not hasattr(a,'__array__'))
-    overwrite_b = overwrite_b or (b1 is not b and not hasattr(b,'__array__'))
-    if debug:
-        print 'solve:overwrite_a=',overwrite_a
-        print 'solve:overwrite_b=',overwrite_b
-    if sym_pos:
-        posv, = get_lapack_funcs(('posv',),(a1,b1),debug=debug)
-        c,x,info = posv(a1,b1,
-                        lower = lower,
-                        overwrite_a=overwrite_a,
-                        overwrite_b=overwrite_b)
+def solve_linear_equations(a, b):
+    one_eq = len(b.shape) == 1
+    if one_eq:
+        b = b[:, Numeric.NewAxis]
+    _assertRank2(a, b)
+    _assertSquareness(a)
+    n_eq = a.shape[0]
+    n_rhs = b.shape[1]
+    if n_eq != b.shape[0]:
+        raise LinAlgError, 'Incompatible dimensions'
+    t =_commonType(a, b)
+#    lapack_routine = _findLapackRoutine('gesv', t)
+    if _array_kind[t] == 1: # Complex routines take different arguments
+        lapack_routine = lapack_lite.zgesv
     else:
-        gesv, = get_lapack_funcs(('gesv',),(a1,b1))
-        lu,piv,x,info = gesv(a1,b1,
-                             overwrite_a=overwrite_a,
-                             overwrite_b=overwrite_b)
-        
-    if info==0:
-        return x
-    if info>0:
-        raise LinAlgError, "singular matrix"
-    raise ValueError,\
-          'illegal value in %-th argument of internal gesv|posv'%(-info)
+        lapack_routine = lapack_lite.dgesv
+    a, b = _fastCopyAndTranspose(t, a, b)
+    pivots = Numeric.zeros(n_eq, 'i')
+    results = lapack_routine(n_eq, n_rhs, a, n_eq, pivots, b, n_eq, 0)
+    if results['info'] > 0:
+        raise LinAlgError, 'Singular matrix'
+    if one_eq:
+        return Numeric.ravel(b) # I see no need to copy here
+    else:
+        return multiarray.transpose(b) # no need to copy
 
-# matrix inversion
-def inv(a, overwrite_a=0):
-    """ inv(a, overwrite_a=0) -> a_inv
 
-    Return inverse of square matrix a.
+# Matrix inversion
+
+def inverse(a):
+    return solve_linear_equations(a, Numeric.identity(a.shape[0]))
+
+def tri(N, M=None, k=0, dtype=None):
+    """ returns a N-by-M matrix where all the diagonals starting from
+        lower left corner up to the k-th are all ones.
     """
-    pass
+    if M is None: M = N
+    if type(M) == type('d'):
+        #pearu: any objections to remove this feature?
+        #       As tri(N,'d') is equivalent to tri(N,dtype='d')
+        typecode = M
+        M = N
+    m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
+    if typecode is None:
+        return m
+    else:
+        return m.astype(typecode)
 
-## matrix and Vector norm
-import decomp
-def norm(x, ord=2):
-    """ norm(x, ord=2) -> n
-
-    Matrix and vector norm.
-
-    Inputs:
-
-      x -- a rank-1 (vector) or rank-2 (matrix) array
-      ord -- the order of norm.
-
-     Comments:
-
-       For vectors ord can be any real number including Inf or -Inf.
-         ord = Inf, computes the maximum of the magnitudes
-         ord = -Inf, computes minimum of the magnitudes
-         ord is finite, computes sum(abs(x)**ord)**(1.0/ord)
-
-       For matrices ord can only be + or - 1, 2, Inf.
-         ord = 2 computes the largest singular value
-         ord = -2 computes the smallest singular value
-         ord = 1 computes the largest column sum of absolute values
-         ord = -1 computes the smallest column sum of absolute values
-         ord = Inf computes the largest row sum of absolute values
-         ord = -Inf computes the smallest row sum of absolute values
-         ord = 'fro' computes the frobenius norm sqrt(sum(diag(X.H * X)))
+def tril(m, k=0):
+    """ returns the elements on and below the k-th diagonal of m.  k=0 is the
+        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
     """
-    x = asarray_chkfinite(x)
-    nd = len(x.shape)
-    Inf = scipy_base.Inf
-    if nd == 1:
-        if ord == Inf:
-            return scipy_base.amax(abs(x))
-        elif ord == -Inf:
-            return scipy_base.amin(abs(x))
+    m = asarray(m)
+    out = tri(m.shape[0], m.shape[1], k=k, dtype=m.dtypechar)*m
+    return out
+
+def triu(m, k=0):
+    """ returns the elements on and above the k-th diagonal of m.  k=0 is the
+        main diagonal, k > 0 is above and k < 0 is below the main diagonal.
+    """
+    m = asarray(m)
+    out = (1-tri(m.shape[0], m.shape[1], k-1, m.dtypechar))*m
+    return out
+
+
+# Cholesky decomposition
+
+def cholesky_decomposition(a):
+    _assertRank2(a)
+    _assertSquareness(a)
+    t =_commonType(a)
+    a = _castCopyAndTranspose(t, a)
+    m = a.shape[0]
+    n = a.shape[1]
+    if _array_kind[t] == 1:
+        lapack_routine = lapack_lite.zpotrf
+    else:
+        lapack_routine = lapack_lite.dpotrf
+    results = lapack_routine('L', n, a, m, 0)
+    if results['info'] > 0:
+        raise LinAlgError, 'Matrix is not positive definite - Cholesky decomposition cannot be computed'
+    return copy.copy(Numeric.transpose(MLab.triu(a,k=0)))
+
+
+# Eigenvalues
+
+def eigenvalues(a):
+    _assertRank2(a)
+    _assertSquareness(a)
+    t =_commonType(a)
+    real_t = _array_type[0][_array_precision[t]]
+    a = _fastCopyAndTranspose(t, a)
+    n = a.shape[0]
+    dummy = Numeric.zeros((1,), t)
+    if _array_kind[t] == 1: # Complex routines take different arguments
+        lapack_routine = lapack_lite.zgeev
+        w = Numeric.zeros((n,), t)
+        rwork = Numeric.zeros((n,),real_t)
+        lwork = 1
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine('N', 'N', n, a, n, w,
+                                 dummy, 1, dummy, 1, work, -1, rwork, 0)
+        lwork = int(abs(work[0]))
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine('N', 'N', n, a, n, w,
+                                 dummy, 1, dummy, 1, work, lwork, rwork, 0)
+    else:
+        lapack_routine = lapack_lite.dgeev
+        wr = Numeric.zeros((n,), t)
+        wi = Numeric.zeros((n,), t)
+        lwork = 1
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine('N', 'N', n, a, n, wr, wi,
+                                 dummy, 1, dummy, 1, work, -1, 0)
+        lwork = int(work[0])
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine('N', 'N', n, a, n, wr, wi,
+                                 dummy, 1, dummy, 1, work, lwork, 0)
+        if Numeric.logical_and.reduce(Numeric.equal(wi, 0.)):
+            w = wr
         else:
-            return scipy_base.sum(abs(x)**ord)**(1.0/ord)
-    elif nd == 2:
-        if ord == 2:
-            return scipy_base.amax(decomp.svd(x,compute_uv=0))
-        elif ord == -2:
-            return scipy_base.amin(decomp.svd(x,compute_uv=0))
-        elif ord == 1:
-            return scipy_base.amax(scipy_base.sum(abs(x)))
-        elif ord == Inf:
-            return scipy_base.amax(scipy_base.sum(abs(x),axis=1))
-        elif ord == -1:
-            return scipy_base.amin(scipy_base.sum(abs(x)))
-        elif ord == -Inf:
-            return scipy_base.amin(scipy_base.sum(abs(x),axis=1))
-        elif ord in ['fro','f']:
-            val = real((conjugate(x)*x).flat)
-            return sqrt(add.reduce(val))
+            w = wr+1j*wi
+    if results['info'] > 0:
+        raise LinAlgError, 'Eigenvalues did not converge'
+    return w
+
+
+def Heigenvalues(a, UPLO='L'):
+    _assertRank2(a)
+    _assertSquareness(a)
+    t =_commonType(a)
+    real_t = _array_type[0][_array_precision[t]]
+    a = _castCopyAndTranspose(t, a)
+    n = a.shape[0]
+    liwork = 5*n+3
+    iwork = Numeric.zeros((liwork,),'i')
+    if _array_kind[t] == 1: # Complex routines take different arguments
+        lapack_routine = lapack_lite.zheevd
+        w = Numeric.zeros((n,), real_t)
+        lwork = 1
+        work = Numeric.zeros((lwork,), t)
+        lrwork = 1
+        rwork = Numeric.zeros((lrwork,),real_t)
+        results = lapack_routine('N', UPLO, n, a, n,w, work, -1, rwork, -1, iwork, liwork,  0)
+        lwork = int(abs(work[0]))
+        work = Numeric.zeros((lwork,), t)
+        lrwork = int(rwork[0])
+        rwork = Numeric.zeros((lrwork,),real_t)
+        results = lapack_routine('N', UPLO, n, a, n,w, work, lwork, rwork, lrwork, iwork, liwork,  0)
+    else:
+        lapack_routine = lapack_lite.dsyevd
+        w = Numeric.zeros((n,), t)
+        lwork = 1
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine('N', UPLO, n, a, n,w, work, -1, iwork, liwork, 0)
+        lwork = int(work[0])
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine('N', UPLO, n, a, n,w, work, lwork, iwork, liwork, 0)
+    if results['info'] > 0:
+        raise LinAlgError, 'Eigenvalues did not converge'
+    return w
+
+# Eigenvectors
+
+def eigenvectors(a):
+    """eigenvectors(a) returns u,v  where u is the eigenvalues and
+v is a matrix of eigenvectors with vector v[i] corresponds to
+eigenvalue u[i].  Satisfies the equation dot(a, v[i]) = u[i]*v[i]
+"""
+    _assertRank2(a)
+    _assertSquareness(a)
+    t =_commonType(a)
+    real_t = _array_type[0][_array_precision[t]]
+    a = _fastCopyAndTranspose(t, a)
+    n = a.shape[0]
+    dummy = Numeric.zeros((1,), t)
+    if _array_kind[t] == 1: # Complex routines take different arguments
+        lapack_routine = lapack_lite.zgeev
+        w = Numeric.zeros((n,), t)
+        v = Numeric.zeros((n,n), t)
+        lwork = 1
+        work = Numeric.zeros((lwork,),t)
+        rwork = Numeric.zeros((2*n,),real_t)
+        results = lapack_routine('N', 'V', n, a, n, w,
+                                  dummy, 1, v, n, work, -1, rwork, 0)
+        lwork = int(abs(work[0]))
+        work = Numeric.zeros((lwork,),t)
+        results = lapack_routine('N', 'V', n, a, n, w,
+                                  dummy, 1, v, n, work, lwork, rwork, 0)
+    else:
+        lapack_routine = lapack_lite.dgeev
+        wr = Numeric.zeros((n,), t)
+        wi = Numeric.zeros((n,), t)
+        vr = Numeric.zeros((n,n), t)
+        lwork = 1
+        work = Numeric.zeros((lwork,),t)
+        results = lapack_routine('N', 'V', n, a, n, wr, wi,
+                                  dummy, 1, vr, n, work, -1, 0)
+        lwork = int(work[0])
+        work = Numeric.zeros((lwork,),t)
+        results = lapack_routine('N', 'V', n, a, n, wr, wi,
+                                  dummy, 1, vr, n, work, lwork, 0)
+        if Numeric.logical_and.reduce(Numeric.equal(wi, 0.)):
+            w = wr
+            v = vr
         else:
-            raise ValueError, "Invalid norm order for matrices."
+            w = wr+1j*wi
+            v = Numeric.array(vr,Numeric.Complex)
+            ind = Numeric.nonzero(
+                          Numeric.equal(
+                              Numeric.equal(wi,0.0) # true for real e-vals
+                                       ,0)          # true for complex e-vals
+                                 )                  # indices of complex e-vals
+            for i in range(len(ind)/2):
+                v[ind[2*i]] = vr[ind[2*i]] + 1j*vr[ind[2*i+1]]
+                v[ind[2*i+1]] = vr[ind[2*i]] - 1j*vr[ind[2*i+1]]
+    if results['info'] > 0:
+        raise LinAlgError, 'Eigenvalues did not converge'
+    return w,v
+
+
+def Heigenvectors(a, UPLO='L'):
+    _assertRank2(a)
+    _assertSquareness(a)
+    t =_commonType(a)
+    real_t = _array_type[0][_array_precision[t]]
+    a = _castCopyAndTranspose(t, a)
+    n = a.shape[0]
+    liwork = 5*n+3
+    iwork = Numeric.zeros((liwork,),'i')
+    if _array_kind[t] == 1: # Complex routines take different arguments
+        lapack_routine = lapack_lite.zheevd
+        w = Numeric.zeros((n,), real_t)
+        lwork = 1
+        work = Numeric.zeros((lwork,), t)
+        lrwork = 1
+        rwork = Numeric.zeros((lrwork,),real_t)
+        results = lapack_routine('V', UPLO, n, a, n,w, work, -1, rwork, -1, iwork, liwork,  0)
+        lwork = int(abs(work[0]))
+        work = Numeric.zeros((lwork,), t)
+        lrwork = int(rwork[0])
+        rwork = Numeric.zeros((lrwork,),real_t)
+        results = lapack_routine('V', UPLO, n, a, n,w, work, lwork, rwork, lrwork, iwork, liwork,  0)
     else:
-        raise ValueError, "Improper number of dimensions to norm."
+        lapack_routine = lapack_lite.dsyevd
+        w = Numeric.zeros((n,), t)
+        lwork = 1
+        work = Numeric.zeros((lwork,),t)
+        results = lapack_routine('V', UPLO, n, a, n,w, work, -1, iwork, liwork, 0)
+        lwork = int(work[0])
+        work = Numeric.zeros((lwork,),t)
+        results = lapack_routine('V', UPLO, n, a, n,w, work, lwork, iwork, liwork, 0)
+    if results['info'] > 0:
+        raise LinAlgError, 'Eigenvalues did not converge'
+    return (w,a)
 
-### Determinant
 
-def det(a, overwrite_a=0):
-    """ det(a, overwrite_a=0) -> d
+# Singular value decomposition
 
-    Return determinant of a square matrix.
-    """
-    a1 = asarray_chkfinite(a)
-    if len(a1.shape) != 2 or a1.shape[0] != a1.shape[1]:
-        raise ValueError, 'expected square matrix'
-    overwrite_a = overwrite_a or (a1 is not a and not hasattr(a,'__array__'))
-    fdet, = get_flinalg_funcs(('det',),(a1,))
-    a_det,info = fdet(a1,overwrite_a=overwrite_a)
-    if info<0: raise ValueError,\
-       'illegal value in %-th argument of internal det.getrf'%(-info)
-    return a_det
-
-### Linear Least Squares
-
-def lstsq(a, b, cond=None, overwrite_a=0, overwrite_b=0):
-    """ lstsq(a, b, cond=None, overwrite_a=0, overwrite_b=0) -> x,resids,rank,s
-
-    Return least-squares solution of a * x = b.
-
-    Inputs:
-
-      a -- An M x N matrix.
-      b -- An M x nrhs matrix or M vector.
-      cond -- Used to determine effective rank of a.
-
-    Outputs:
-
-      x -- The solution (N x nrhs matrix) to the minimization problem:
-                  2-norm(| b - a * x |) -> min
-      resids -- The residual sum-of-squares for the solution matrix x
-                (only if M>N and rank==N).
-      rank -- The effective rank of a.
-      s -- Singular values of a in decreasing order. The condition number
-           of a is abs(s[0]/s[-1]).
-    """
-    a1, b1 = map(asarray_chkfinite,(a,b))
-    if len(a1.shape) != 2:
-        raise ValueError, 'expected matrix'
-    m,n = a1.shape
-    if len(b1.shape)==2: nrhs = b1.shape[1]
-    else: nrhs = 1
-    if m != b1.shape[0]:
-        raise ValueError, 'incompatible dimensions'
-    gelss, = get_lapack_funcs(('gelss',),(a1,b1))
-    if n>m:
-        # need to extend b matrix as it will be filled with
-        # a larger solution matrix
-        b2 = zeros((n,nrhs),gelss.typecode)
-        if len(b1.shape)==2: b2[:m,:] = b1
-        else: b2[:m,0] = b1
-        b1 = b2
-    overwrite_a = overwrite_a or (a1 is not a and not hasattr(a,'__array__'))
-    overwrite_b = overwrite_b or (b1 is not b and not hasattr(b,'__array__'))
-    if gelss.module_name[:7] == 'flapack':
-        lwork = calc_lwork.gelss(gelss.prefix,m,n,nrhs)[1]
-        v,x,s,rank,info = gelss(a1,b1,cond = cond,
-                                lwork = lwork,
-                                overwrite_a = overwrite_a,
-                                overwrite_b = overwrite_b)
+def singular_value_decomposition(a, full_matrices = 0):
+    _assertRank2(a)
+    n = a.shape[1]
+    m = a.shape[0]
+    t =_commonType(a)
+    real_t = _array_type[0][_array_precision[t]]
+    a = _fastCopyAndTranspose(t, a)
+    if full_matrices:
+        nu = m
+        nvt = n
+        option = 'A'
     else:
-        raise NotImplementedError,'calling gelss from %s' % (gelss.module_name)
-    if info>0: raise LinAlgError, "SVD did not converge in Linear Least Squares"
-    if info<0: raise ValueError,\
-       'illegal value in %-th argument of internal gelss'%(-info)
-    resids = asarray([],x.typecode())
-    if n<m:
-        x1 = x[:n]
-        if rank==n: resids = sum(x[n:]**2)
-        x = x1
-    return x,resids,rank,s
+        nu = min(n,m)
+        nvt = min(n,m)
+        option = 'S'
+    s = Numeric.zeros((min(n,m),), real_t)
+    u = Numeric.zeros((nu, m), t)
+    vt = Numeric.zeros((n, nvt), t)
+    iwork = Numeric.zeros((8*min(m,n),), 'i')
+    if _array_kind[t] == 1: # Complex routines take different arguments
+        lapack_routine = lapack_lite.zgesdd
+        rwork = Numeric.zeros((5*min(m,n)*min(m,n) + 5*min(m,n),), real_t)
+        lwork = 1
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
+                                 work, -1, rwork, iwork, 0)
+        lwork = int(abs(work[0]))
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
+                                 work, lwork, rwork, iwork, 0)
+    else:
+        lapack_routine = lapack_lite.dgesdd
+        lwork = 1
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
+                                 work, -1, iwork, 0)
+        lwork = int(work[0])
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
+                                 work, lwork, iwork, 0)
+    if results['info'] > 0:
+        raise LinAlgError, 'SVD did not converge'
+    return multiarray.transpose(u), s, multiarray.transpose(vt) # why copy here?
 
 
-def pinv(a, cond=None):
-    """ pinv(a, cond=None) -> a_pinv
+# Generalized inverse
 
-    Compute generalized inverse of A using least-squares solver.
-    """
-    a = asarray_chkfinite(a)
-    t = a.typecode()
-    b = scipy_base.identity(a.shape[0],t)
-    return lstsq(a, b, cond=cond)[0]
-
-
-eps = scipy_base.limits.double_epsilon
-feps = scipy_base.limits.float_epsilon
-_array_precision = {'f': 0, 'd': 1, 'F': 0, 'D': 1}
-def pinv2(a, cond=None):
-    """ pinv2(a, cond=None) -> a_pinv
-
-    Compute the generalized inverse of A using svd.
-    """
-    a = asarray_chkfinite(a)
-    u, s, vh = decomp.svd(a)
-    t = u.typecode()
-    if cond in [None,-1]:
-        cond = {0: feps*1e3, 1: eps*1e6}[_array_precision[t]]
-    m,n = a.shape
-    cutoff = cond*scipy_base.maximum.reduce(s)
-    psigma = zeros((m,n),t)
-    for i in range(len(s)):
+def generalized_inverse(a, rcond = 1.e-10):
+    a = Numeric.array(a, copy=0)
+    if a.dtypechar in Numeric.typecodes['Complex']:
+        a = Numeric.conjugate(a)
+    u, s, vt = singular_value_decomposition(a, 0)
+    m = u.shape[0]
+    n = vt.shape[1]
+    cutoff = rcond*Numeric.maximum.reduce(s)
+    for i in range(min(n,m)):
         if s[i] > cutoff:
-            psigma[i,i] = 1.0/conjugate(s[i])
-    #XXX: use lapack/blas routines for dot
-    return transpose(conjugate(dot(dot(u,psigma),vh)))
+            s[i] = 1./s[i]
+        else:
+            s[i] = 0.;
+    return Numeric.dot(Numeric.transpose(vt),
+                       s[:, Numeric.NewAxis]*Numeric.transpose(u))
+
+# Determinant
+
+def determinant(a):
+    _assertRank2(a)
+    _assertSquareness(a)
+    t =_commonType(a)
+    a = _fastCopyAndTranspose(t, a)
+    n = a.shape[0]
+    if _array_kind[t] == 1:
+        lapack_routine = lapack_lite.zgetrf
+    else:
+        lapack_routine = lapack_lite.dgetrf
+    pivots = Numeric.zeros((n,), 'i')
+    results = lapack_routine(n, n, a, n, pivots, 0)
+    sign = Numeric.add.reduce(Numeric.not_equal(pivots,
+                                                Numeric.arrayrange(1, n+1))) % 2
+    return (1.-2.*sign)*Numeric.multiply.reduce(Numeric.diagonal(a))
+
+# Linear Least Squares
+
+def linear_least_squares(a, b, rcond=1.e-10):
+    """solveLinearLeastSquares(a,b) returns x,resids,rank,s
+where x minimizes 2-norm(|b - Ax|)
+      resids is the sum square residuals
+      rank is the rank of A
+      s is the rank of the singular values of A in descending order
+
+If b is a matrix then x is also a matrix with corresponding columns.
+If the rank of A is less than the number of columns of A or greater than
+the number of rows, then residuals will be returned as an empty array
+otherwise resids = sum((b-dot(A,x)**2).
+Singular values less than s[0]*rcond are treated as zero.
+"""
+    one_eq = len(b.shape) == 1
+    if one_eq:
+        b = b[:, Numeric.NewAxis]
+    _assertRank2(a, b)
+    m  = a.shape[0]
+    n  = a.shape[1]
+    n_rhs = b.shape[1]
+    ldb = max(n,m)
+    if m != b.shape[0]:
+        raise LinAlgError, 'Incompatible dimensions'
+    t =_commonType(a, b)
+    real_t = _array_type[0][_array_precision[t]]
+    bstar = Numeric.zeros((ldb,n_rhs),t)
+    bstar[:b.shape[0],:n_rhs] = copy.copy(b)
+    a,bstar = _castCopyAndTranspose(t, a, bstar)
+    s = Numeric.zeros((min(m,n),),real_t)
+    nlvl = max( 0, int( math.log( float(min( m,n ))/2. ) ) + 1 )
+    iwork = Numeric.zeros((3*min(m,n)*nlvl+11*min(m,n),), 'i')
+    if _array_kind[t] == 1: # Complex routines take different arguments
+        lapack_routine = lapack_lite.zgelsd
+        lwork = 1
+        rwork = Numeric.zeros((lwork,), real_t)
+        work = Numeric.zeros((lwork,),t)
+        results = lapack_routine( m, n, n_rhs, a, m, bstar,ldb , s, rcond,
+                        0,work,-1,rwork,iwork,0 )
+        lwork = int(abs(work[0]))
+        rwork = Numeric.zeros((lwork,),real_t)
+        a_real = Numeric.zeros((m,n),real_t)
+        bstar_real = Numeric.zeros((ldb,n_rhs,),real_t)
+        results = lapack_lite.dgelsd( m, n, n_rhs, a_real, m, bstar_real,ldb , s, rcond,
+                        0,rwork,-1,iwork,0 )
+        lrwork = int(rwork[0])
+        work = Numeric.zeros((lwork,), t)
+        rwork = Numeric.zeros((lrwork,), real_t)
+        results = lapack_routine( m, n, n_rhs, a, m, bstar,ldb , s, rcond,
+                        0,work,lwork,rwork,iwork,0 )
+    else:
+        lapack_routine = lapack_lite.dgelsd
+        lwork = 1
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine( m, n, n_rhs, a, m, bstar,ldb , s, rcond,
+                        0,work,-1,iwork,0 )
+        lwork = int(work[0])
+        work = Numeric.zeros((lwork,), t)
+        results = lapack_routine( m, n, n_rhs, a, m, bstar,ldb , s, rcond,
+                        0,work,lwork,iwork,0 )
+    if results['info'] > 0:
+        raise LinAlgError, 'SVD did not converge in Linear Least Squares'
+    resids = Numeric.array([],t)
+    if one_eq:
+        x = copy.copy(Numeric.ravel(bstar)[:n])
+        if (results['rank']==n) and (m>n):
+            resids = Numeric.array([Numeric.sum((Numeric.ravel(bstar)[n:])**2)])
+    else:
+        x = copy.copy(Numeric.transpose(bstar)[:n,:])
+        if (results['rank']==n) and (m>n):
+            resids = copy.copy(Numeric.sum((Numeric.transpose(bstar)[n:,:])**2))
+    return x,resids,results['rank'],copy.copy(s[:min(n,m)])
 
 
-def toeplitz(c,r=None):
-    """ Construct a toeplitz matrix (i.e. a matrix with constant diagonals).
+if __name__ == '__main__':
+    from scipy.base import *
 
-        Description:
-    
-           toeplitz(c,r) is a non-symmetric Toeplitz matrix with c as its first
-           column and r as its first row.
-    
-           toeplitz(c) is a symmetric (Hermitian) Toeplitz matrix (r=c). 
-    
-        See also: hankel
-    """
-    isscalar = scipy_base.isscalar
-    if isscalar(c) or isscalar(r):
-        return c   
-    if r is None:
-        r = c
-        r[0] = conjugate(r[0])
-        c = conjugate(c)
-    r,c = map(asarray_chkfinite,(r,c))
-    r,c = map(ravel,(r,c))
-    rN,cN = map(len,(r,c))
-    if r[0] != c[0]:
-        print "Warning: column and row values don't agree; column value used."
-    vals = r_[r[rN-1:0:-1], c]
-    cols = mgrid[0:cN]
-    rows = mgrid[rN:0:-1]
-    indx = cols[:,NewAxis]*ones((1,rN)) + \
-           rows[NewAxis,:]*ones((cN,1)) - 1
-    return take(vals, indx)
+    def test(a, b):
+
+        print "All numbers printed should be (almost) zero:"
+
+        x = solve_linear_equations(a, b)
+        check = b - matrixmultiply(a, x)
+        print check
 
 
-def hankel(c,r=None):
-    """ Construct a hankel matrix (i.e. matrix with constant anti-diagonals).
-    
-        Description:
-    
-          hankel(c,r) is a Hankel matrix whose first column is c and whose
-          last row is r.
-    
-          hankel(c) is a square Hankel matrix whose first column is C.
-          Elements below the first anti-diagonal are zero.
-    
-        See also:  toeplitz
-    """
-    isscalar = scipy_base.isscalar
-    if isscalar(c) or isscalar(r):
-        return c   
-    if r is None:
-        r = zeros(len(c))
-    elif r[0] != c[-1]:
-        print "Warning: column and row values don't agree; column value used."
-    r,c = map(asarray_chkfinite,(r,c))
-    r,c = map(ravel,(r,c))
-    rN,cN = map(len,(r,c))
-    vals = r_[c, r[1:rN]]
-    cols = mgrid[1:cN+1]
-    rows = mgrid[0:rN]
-    indx = cols[:,NewAxis]*ones((1,rN)) + \
-           rows[NewAxis,:]*ones((cN,1)) - 1
-    return take(vals, indx)
+        a_inv = inverse(a)
+        check = matrixmultiply(a, a_inv)-identity(a.shape[0])
+        print check
 
-def all_mat(*args):
-    return map(Matrix,args)
 
-def kron(a,b):
-    """kronecker product of a and b
+        ev = eigenvalues(a)
 
-    Kronecker product of two matrices is block matrix
-    [[ a[ 0 ,0]*b, a[ 0 ,1]*b, ... , a[ 0 ,n-1]*b  ],
-     [ ...                                   ...   ],
-     [ a[m-1,0]*b, a[m-1,1]*b, ... , a[m-1,n-1]*b  ]]
-    """
-    if not a.iscontiguous():
-        a = reshape(a, a.shape)
-    if not b.iscontiguous():
-        b = reshape(b, b.shape)
-    o = outerproduct(a,b)
-    o.shape = a.shape + b.shape
-    return concatenate(concatenate(o, axis=1), axis=1)
+        evalues, evectors = eigenvectors(a)
+        check = ev-evalues
+        print check
+
+        evectors = transpose(evectors)
+        check = matrixmultiply(a, evectors)-evectors*evalues
+        print check
+
+
+        u, s, vt = singular_value_decomposition(a)
+        check = a - Numeric.matrixmultiply(u*s, vt)
+        print check
+
+
+        a_ginv = generalized_inverse(a)
+        check = matrixmultiply(a, a_ginv)-identity(a.shape[0])
+        print check
+
+
+        det = determinant(a)
+        check = det-multiply.reduce(evalues)
+        print check
+
+        x, residuals, rank, sv = linear_least_squares(a, b)
+        check = b - matrixmultiply(a, x)
+        print check
+        print rank-a.shape[0]
+        print sv-s
+
+    a = array([[1.,2.], [3.,4.]])
+    b = array([2., 1.])
+    test(a, b)
+
+    a = a+0j
+    b = b+0j
+    test(a, b)
