@@ -8,7 +8,7 @@ from weave_version import weave_version as __version__
 try:
     from blitz_tools import blitz
 except ImportError:
-    pass # Numeric wasn't available    
+    pass # scipy (core) wasn't available    
     
 from inline_tools import inline
 import ext_tools
@@ -18,5 +18,5 @@ try:
 except:
     pass
 
-from scipy_test.testing import ScipyTest
+from scipy.test.testing import ScipyTest
 test = ScipyTest('weave').test

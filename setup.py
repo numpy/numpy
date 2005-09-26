@@ -16,12 +16,13 @@ def setup_package():
     try:
         config = Configuration(
             version = version,
-            maintainer = "Travis Oliphant",
-            maintainer_email = "oliphant.travis@ieee.org",
+            maintainer = "SciPy Developers",
+            maintainer_email = "scipy-dev@scipy.org",
             description = "Core SciPy",
-            url = "http://numpy.sourceforge.net",
+            url = "http://numeric.scipy.org",
             )
         config.add_subpackage('scipy')
+	config.add_subpackage('weave')
         config.name = 'scipy_core'
         print config.name,'version',config.version
         setup( **config.todict() )

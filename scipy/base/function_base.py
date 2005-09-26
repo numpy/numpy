@@ -1,6 +1,6 @@
 import types
 import numeric as _nx
-from numeric import ones, zeros, arange, concatenate, array, asarray
+from numeric import ones, zeros, arange, concatenate, array, asarray, empty
 from umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc, \
      isnan
 from oldnumeric import ravel, nonzero, choose, \
@@ -10,7 +10,7 @@ from shape_base import squeeze, atleast_1d
 from _compiled_base import digitize, bincount, _insert
 
 __all__ = ['round','logspace','linspace','fix','mod',
-           'select','trim_zeros','alen','amax', 'amin', 'ptp',
+           'select','piecewise','trim_zeros','alen','amax', 'amin', 'ptp',
            'copy',
            'prod','cumprod', 'diff','gradient','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
@@ -175,13 +175,62 @@ def mod(x,y):
     """
     return x - y*_nx.floor(x*1.0/y)
 
+def piecewise(x, condlist, funclist, *args, **kw):
+    """Returns a piecewise-defined function.
+
+    x is the domain
+
+    condlist is a list of boolean arrays or a single boolean array
+      The length of the condition list must be n2 or n2-1 where n2
+      is the length of the function list.  If len(condlist)==n2-1, then
+      an 'otherwise' condition is formed by |'ing all the conditions
+      and inverting. 
+
+    funclist is a list of functions to call of length (n2).
+      Each function should return an array output for an array input
+      Each function can take (the same set) of extra arguments and
+      keyword arguments which are passed in after the function list.
+
+    The output is the same shape and type as x and is found by
+      calling the functions on the appropriate portions of x.
+
+    Note: This is similar to choose or select, except
+          the the functions are only evaluated on elements of x
+          that satisfy the corresponding condition.
+
+    The result is
+           |--
+           |  f1(x)  for condition1
+     y = --|  f2(x)  for condition2
+           |   ...
+           |  fn(x)  for conditionn
+           |--
+        
+    """
+    n2 = len(funclist)
+    if not isinstance(condlist, type([])):
+        condlist = [condlist]
+    n = len(condlist)
+    if n == n2-1:  # compute the "otherwise" condition.
+        totlist = condlist[0]
+        for k in range(1,n):
+            totlist |= condlist
+        condlist.append(~totlist)
+        n += 1
+    if (n != n2):
+        raise ValueError, "function list and condition list must be the same."
+    y = empty(x.shape, x.dtype)
+    for k in range(n):
+        y[condlist[k]] = funclist[k](x[condlist[k]], *args, **kw)
+    return y
+
 def select(condlist, choicelist, default=0):
     """ Returns an array comprised from different elements of choicelist
         depending on the list of conditions.
 
         condlist is a list of condition arrays containing ones or zeros
     
-        choicelist is a list of choice matrices (of the "same" size as the
+        choicelist is a list of choice arrays (of the "same" size as the
         arrays in condlist).  The result array has the "same" size as the
         arrays in choicelist.  If condlist is [c0,...,cN-1] then choicelist
         must be of length N.  The elements of the choicelist can then be

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import os,sys
-from scipy_distutils.core import setup
-from scipy_distutils.misc_util import get_path, merge_config_dicts
-from scipy_distutils.misc_util import package_config
+from scipy.distutils.core import setup
+from scipy.distutils.misc_util import get_path, merge_config_dicts
+from scipy.distutils.misc_util import package_config
 
 from weave_version import weave_version
    
@@ -13,7 +13,7 @@ def stand_alone_package(with_dependencies = 0):
     try:
         primary =     ['weave']
         if with_dependencies:
-            dependencies= ['scipy_distutils','scipy_test','scipy_base']       
+            dependencies= ['scipy.distutils','scipy.test','scipy.base']
         else:
             dependencies = []    
         

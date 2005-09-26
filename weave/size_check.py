@@ -1,4 +1,4 @@
-from scipy_base.numerix import *
+from scipy.base import *
 
 from ast_tools import *
 from types import *

@@ -34,7 +34,6 @@
 import os,sys,string
 import pickle
 import tempfile
-import scipy_base.numerix as nx
 
 try:
     import dbhash
@@ -156,7 +155,6 @@ def default_dir():
         to try and keep people from being able to sneak a bad module
         in on you.        
 
-        NUMERIX adds a suffix of _numeric or _numarray to the dirname.
     """
 
     # Use a cached value for fast return if possible
@@ -168,8 +166,7 @@ def default_dir():
     python_name = "python%d%d_compiled" % tuple(sys.version_info[:2])    
     if sys.platform != 'win32':
         try:
-            path = os.path.join(os.environ['HOME'],'.' + python_name +
-                                "_" + nx.which[0])
+            path = os.path.join(os.environ['HOME'],'.' + python_name)
         except KeyError:
             temp_dir = `os.getuid()` + '_' + python_name
             path = os.path.join(tempfile.gettempdir(),temp_dir)        

@@ -1,18 +1,17 @@
 from c_spec import common_base_converter
 from c_spec import num_to_c_types
-from scipy_base.numerix import *
+from scipy.base import *
 from types import *
 import os
 
 
 num_typecode = {}
-num_typecode['c'] = 'PyArray_CHAR'
-num_typecode['1'] = 'PyArray_SBYTE'
-num_typecode['b'] = 'PyArray_UBYTE'
-num_typecode['s'] = 'PyArray_SHORT'
-num_typecode['w'] = 'PyArray_USHORT'
+num_typecode['b'] = 'PyArray_SBYTE'
+num_typecode['B'] = 'PyArray_UBYTE'
+num_typecode['h'] = 'PyArray_SHORT'
+num_typecode['H'] = 'PyArray_USHORT'
 num_typecode['i'] = 'PyArray_INT' # PyArray_INT has troubles ?? What does this note mean ??
-num_typecode['u'] = 'PyArray_UINT'
+num_typecode['I'] = 'PyArray_UINT'
 num_typecode['l'] = 'PyArray_LONG'
 num_typecode['f'] = 'PyArray_FLOAT'
 num_typecode['d'] = 'PyArray_DOUBLE'
@@ -117,8 +116,8 @@ numeric_init_code = \
 """
 Py_Initialize();
 import_array();
-PyImport_ImportModule("%s");
-""" % NX_ARRAYPKG
+PyImport_ImportModule("scipy");
+""" 
     
 class array_converter(common_base_converter):
 
@@ -130,13 +129,13 @@ class array_converter(common_base_converter):
         self.return_type = 'PyArrayObject*'
         self.to_c_return = '(PyArrayObject*) py_obj'
         self.matching_types = [ArrayType]
-        self.headers = ['"%s/arrayobject.h"' % NX_ARRAYPKG,
+        self.headers = ['"scipy/arrayobject.h"',
                         '<complex>','<math.h>']
         self.support_code = [size_check_code, type_check_code]
         self.module_init_code = [numeric_init_code]    
                
     def get_var_type(self,value):
-        return value.typecode()
+        return value.dtypechar
     
     def template_vars(self,inline=0):
         res = common_base_converter.template_vars(self,inline)    

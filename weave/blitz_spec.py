@@ -4,13 +4,12 @@
     handle different data types.  The information includes
     such as include files, libraries, and even code snippets.
        
-    array_info -- for building functions that use Python
-                  numerix arrays.
+    array_info -- for building functions that use scipy arrays
 """
 
 import base_info
 import standard_array_spec
-from scipy_base.numerix import *
+from scipy.base import *
 from types import *
 import os
 
@@ -85,7 +84,7 @@ class array_converter(standard_array_spec.array_converter):
     def init_info(self):
         standard_array_spec.array_converter.init_info(self)
         blitz_headers = ['"blitz/array.h"',
-                         '"%s/arrayobject.h"' % nx.NX_ARRAYPKG,
+                         '"scipy/arrayobject.h"',
                           '<complex>','<math.h>']
         self.headers.extend(blitz_headers)
         self.include_dirs = [blitz_dir]

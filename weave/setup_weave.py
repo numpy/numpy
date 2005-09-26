@@ -2,54 +2,27 @@
 
 import os
 from glob import glob
-from scipy_distutils.misc_util import get_path, default_config_dict, dot_join
+from scipy.distutils.misc_util import get_path, Configuration, dot_join
 
 def configuration(parent_package='',parent_path=None):
     parent_path2 = parent_path
     parent_path = parent_package
     local_path = get_path(__name__,parent_path2)
-    config = default_config_dict('weave',parent_package)
-    config['packages'].append(dot_join(parent_package,'weave.tests'))
+    config = Configuration('weave',parent_package)
     test_path = os.path.join(local_path,'tests')
-    config['package_dir']['weave.tests'] = test_path
-    
+    config.add_subpackage(dot_join(parent_package, 'tests'),test_path)
     scxx_files = glob(os.path.join(local_path,'scxx','*.*'))
     install_path = os.path.join(parent_path,'weave','scxx')
-    config['data_files'].extend( [(install_path,scxx_files)])
-    
-    blitz_files = glob(os.path.join(local_path,'blitz','blitz','*.*'))
-    install_path = os.path.join(parent_path,'weave','blitz',
-                                'blitz')
-    config['data_files'].extend( [(install_path,blitz_files)])
-    
-    array_files = glob(os.path.join(local_path,'blitz','blitz',
-                                    'array','*.*'))
-    install_path = os.path.join(parent_path,'weave','blitz',
-                                'blitz','array')
-    config['data_files'].extend( [(install_path,array_files)])
-    
-    meta_files = glob(os.path.join(local_path,'blitz','blitz',
-                                    'meta','*.*'))
-    install_path = os.path.join(parent_path,'weave','blitz',
-                                'blitz','meta')
-    config['data_files'].extend( [(install_path,meta_files)])
-
-    swig_files = glob(os.path.join(local_path,'swig','*.c'))
-    install_path = os.path.join(parent_path,'weave','swig')
-    config['data_files'].extend( [(install_path,swig_files)])
-
-    doc_files = glob(os.path.join(local_path,'doc','*.html'))
-    install_path = os.path.join(parent_path,'weave','doc')
-    config['data_files'].extend( [(install_path,doc_files)])
-
-    example_files = glob(os.path.join(local_path,'examples','*.py'))
-    install_path = os.path.join(parent_path,'weave','examples')
-    config['data_files'].extend( [(install_path,example_files)])
-    
+    config.add_data_dir(os.path.join(local_path,'scxx'))
+    config.add_data_dir(os.path.join(local_path,'blitz','blitz'))
+    config.add_data_dir(os.path.join(local_path,'blitz','blitz','array'))
+    config.add_data_dir(os.path.join(local_path,'blitz','blitz','meta'))
+    config.add_data_files(*glob(os.path.join(local_path,'doc','*.html')))
+    config.add_data_files(*glob(os.path.join(local_path,'examples','*.py')))    
     return config
 
 if __name__ == '__main__':    
-    from scipy_distutils.core import setup
+    from scipy.distutils.core import setup
     from weave_version import weave_version
     setup(version = weave_version,
           description = "Tools for inlining C/C++ in Python",

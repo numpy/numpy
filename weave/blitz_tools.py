@@ -10,7 +10,7 @@ import converters
 
 from ast_tools import *
 
-from scipy_base.numerix import *
+from scipy.base import *
 from types import *
 
 import inline_tools
