@@ -17,20 +17,20 @@ def configuration(parent_package='',parent_path=None):
     install_path = os.path.join(parent_path,'weave','scxx')
     config['data_files'].extend( [(install_path,scxx_files)])
     
-    blitz_files = glob(os.path.join(local_path,'blitz-20001213','blitz','*.*'))
-    install_path = os.path.join(parent_path,'weave','blitz-20001213',
+    blitz_files = glob(os.path.join(local_path,'blitz','blitz','*.*'))
+    install_path = os.path.join(parent_path,'weave','blitz',
                                 'blitz')
     config['data_files'].extend( [(install_path,blitz_files)])
     
-    array_files = glob(os.path.join(local_path,'blitz-20001213','blitz',
+    array_files = glob(os.path.join(local_path,'blitz','blitz',
                                     'array','*.*'))
-    install_path = os.path.join(parent_path,'weave','blitz-20001213',
+    install_path = os.path.join(parent_path,'weave','blitz',
                                 'blitz','array')
     config['data_files'].extend( [(install_path,array_files)])
     
-    meta_files = glob(os.path.join(local_path,'blitz-20001213','blitz',
+    meta_files = glob(os.path.join(local_path,'blitz','blitz',
                                     'meta','*.*'))
-    install_path = os.path.join(parent_path,'weave','blitz-20001213',
+    install_path = os.path.join(parent_path,'weave','blitz',
                                 'blitz','meta')
     config['data_files'].extend( [(install_path,meta_files)])
 
