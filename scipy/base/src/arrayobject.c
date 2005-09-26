@@ -771,7 +771,7 @@ PyArray_FromDims(int nd, int *d, int type)
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
 
 	return PyArray_New(&PyArray_Type, nd, newd, type,
-			   NULL, NULL, 0, 0, NULL);
+			   NULL, NULL, 0, CARRAY_FLAGS, NULL);
 }
 
 /* end */

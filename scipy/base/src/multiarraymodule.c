@@ -88,7 +88,11 @@ PyArray_View(PyArrayObject *self, PyArray_Typecode *type)
 {
 	PyObject *new=NULL;
         PyObject *v=NULL;
-        int type_num = type->type_num;
+        int type_num = PyArray_NOTYPE;
+
+	if (type) {
+		type_num = type->type_num;
+	}
 
 	new = PyArray_New(self->ob_type,
 			  self->nd, self->dimensions,
@@ -200,6 +204,10 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
         return ret;
 }
 
+/* Returns a new array 
+   with the a new shape from the data
+   in the old array
+*/
 
 static PyObject * 
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
@@ -220,10 +228,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
                                 same=false;
                         i++;
                 }
-                if (same) {
-                        Py_INCREF(self);
-                        return (PyObject *)self;
-                }
+                if (same) return PyArray_View(self, NULL);
         }
 
         if (!PyArray_ISCONTIGUOUS(self)) {
@@ -1100,6 +1105,7 @@ PyArray_Concatenate(PyObject *op, int axis)
 	char *data;	
 	PyTypeObject *subtype;
 	double prior1, prior2;
+	intp numbytes;
 
 	n = PySequence_Length(op);
 	if (n == -1) {
@@ -1201,8 +1207,9 @@ PyArray_Concatenate(PyObject *op, int axis)
 	
 	data = ret->data;
 	for(i=0; i<n; i++) {
-		memcpy(data, mps[i]->data, PyArray_NBYTES(mps[i]));
-		data += PyArray_NBYTES(mps[i]);
+		numbytes = PyArray_NBYTES(mps[i]);
+		memcpy(data, mps[i]->data, numbytes);
+		data += numbytes;
 	}
 	
 	PyArray_INCREF(ret);

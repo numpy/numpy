@@ -41,15 +41,10 @@ def _build_random_array(fun, args, shape=[]):
 # Allows an integer shape n as a shorthand for (n,).
     if isinstance(shape, IntType):
         shape = [shape]
-    if len(shape) != 0:
-        n = Numeric.multiply.reduce(shape)
-        s = apply(fun, args + (n,))
-        s.shape = shape
-        return s
-    else:
-        n = 1
-        s = apply(fun, args + (n,))
-        return s[0]
+    n = Numeric.multiply.reduce(shape)
+    s = apply(fun, args + (n,))
+    print s.shape
+    return s.reshape(shape)
 
 def random(shape=[]):
     "random(n) or random([n, m, ...]) returns array of random numbers"
