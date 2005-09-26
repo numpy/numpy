@@ -495,7 +495,7 @@ multiapi_list = [
     ]
 
 
-types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger',
+types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger', 'Inexact',
          'Floating', 'Complex', 'Flexible', 'Character',
          'Bool','Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
          'UInt', 'ULong', 'ULongLong', 'Float', 'Double', 'LongDouble',

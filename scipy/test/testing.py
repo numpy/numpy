@@ -791,11 +791,11 @@ def output_exception():
     finally:
         type = value = tb = None # clean up
 
-from scipy_base.numerix import alltrue, equal, shape, ravel, around, zeros,\
+from scipy.base import alltrue, equal, shape, ravel, around, zeros,\
      Float64, asarray, less_equal, array2string, less, ArrayType
 
 try:
-    from scipy_base.numerix import fastumath as math
+    import scipy.base.umath as math
 except ImportError,msg:
     print msg
     import math

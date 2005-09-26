@@ -156,6 +156,7 @@ class build_src(build_ext.build_ext):
 
         sources, h_files = self.filter_h_files(sources)
 
+
         for f in h_files:
             self.distribution.headers.append((package,f))
 

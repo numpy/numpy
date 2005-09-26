@@ -390,6 +390,7 @@ class Configuration:
             else:
                 data_dict[d].append(f)
         self.data_files.extend(data_dict.items())
+        print "########## New data files ################", self.data_files
         return            
         
     def add_include_dirs(self,*paths):
