@@ -918,11 +918,19 @@ PyArray_RegisterDataType(PyTypeObject *type)
 {
 	PyArray_Descr *descr;
 	int typenum;
+	int i;
 	
-	if (!PyArray_IsScalar(type, Void)) {
+	if ((type == &PyVoidArrType_Type) ||			\
+	    !PyType_IsSubtype(type, &PyVoidArrType_Type)) {
 		PyErr_SetString(PyExc_ValueError, 
 				"Can only register void subtypes.");
 		return -1;
+	}
+	/* See if this type is already registered */
+	for (i=0; i<PyArray_NUMUSERTYPES; i++) {
+		descr = userdescrs[i];
+		if (descr->typeobj == type)
+			return descr->type_num;
 	}
 	descr = malloc(sizeof(PyArray_Descr));
 	memcpy(descr, PyArray_DescrFromType(PyArray_VOID), 
@@ -938,6 +946,8 @@ PyArray_RegisterDataType(PyTypeObject *type)
 
 
 /* 
+   copyies over from the old descr table for anything
+   NULL or zero in what is given. 
    frees the copy of the Descr_table already there.
    places a pointer to the new one into the slot.
 */
