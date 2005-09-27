@@ -84,6 +84,14 @@ objectapi_list = [
     """,
      'FromScalar', 'PyObject *, PyArray_Typecode *', 'PyObject *'),
 
+    (r"""Register Data type
+    """,
+     'RegisterDataType', 'PyTypeObject *', 'int'),
+
+    (r"""Insert Descr Table
+    """,
+     'RegisterDescrForType', 'int, PyArray_Descr *', 'int'),
+    
     (r"""Construct an empty array from dimensions and typenum
     """,
      'FromDims','int nd, int *, int typenum','PyObject *'),
@@ -504,7 +512,7 @@ types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger', 'Inexa
 
 # API fixes for __arrayobject_api.h
 
-fixed = 4
+fixed = 5
 numtypes = len(types) + fixed
 numobject = len(objectapi_list) + numtypes
 nummulti = len(multiapi_list) 
@@ -605,6 +613,7 @@ static PyTypeObject PyBigArray_Type;
 static PyTypeObject PyArray_Type;
 static PyTypeObject PyArrayIter_Type;
 static PyTypeObject PyArrayMapIter_Type;
+static int PyArray_NUMUSERTYPES=0;
 
 %s
 
@@ -616,6 +625,7 @@ static void **PyArray_API=NULL;
 #define PyArray_Type (*(PyTypeObject *)PyArray_API[1])
 #define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[2])
 #define PyArrayMapIter_Type (*(PyTypeObject *)PyArray_API[3])
+#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[4])
 
 %s
 
@@ -657,6 +667,7 @@ void *PyArray_API[] = {
         (void *) &PyArray_Type,
         (void *) &PyArrayIter_Type,
         (void *) &PyArrayMapIter_Type,
+        (int *) &PyArray_NUMUSERTYPES,
 %s
 };
 """ % '\n'.join(init_list)

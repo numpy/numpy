@@ -102,6 +102,7 @@ enum PyArray_TYPES {    PyArray_BOOL=0,
 			PyArray_VOID,
 			PyArray_NTYPES,
 			PyArray_NOTYPE,
+			PyArray_USERDEF=256  /* leave room for characters */
 };
 
 	/* basetype array priority */
@@ -1094,6 +1095,11 @@ typedef struct {
 				    (type==PyArray_UNICODE) ||	\
 				    (type==PyArray_VOID))
 
+#define PyTypeNum_ISUSERDEF(type) ((type >= PyArray_USERDEF) && \
+				   (type < PyArray_USERDEF+\
+				    PyArray_NUMUSERTYPES))
+				   
+
 #define PyTypeNum_ISOBJECT(type) ((type) == PyArray_OBJECT)
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
@@ -1106,6 +1112,7 @@ typedef struct {
 #define PyArray_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(PyArray_TYPE(obj))
 #define PyArray_ISPYTHONTYPE(obj) PyTypeNum_ISPYTHONTYPE(PyArray_TYPE(obj))
 #define PyArray_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
+#define PyArray_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyArray_TYPE(obj))
 #define PyArray_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyArray_TYPE(obj))
 
 /* Object arrays ignore notswapped flag */

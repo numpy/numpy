@@ -11,7 +11,6 @@
   Travis E. Oliphant
   Assistant Professor at
   Brigham Young University
-
  
 */
 
@@ -3794,6 +3793,24 @@ array_where(PyObject *ignored, PyObject *args)
 
 }
 
+static char doc_register_dtype[] = \
+	"register_dtype(a) registers a new type object -- gives it a typenum";
+
+static PyObject *
+array_register_dtype(PyObject *dummy, PyObject *args)
+{
+	PyObject *dtype;
+	int ret;
+	
+	if (!PyArg_ParseTuple(args, "O", &dtype)) return NULL;
+	
+	ret = PyArray_RegisterDataType((PyTypeObject *)dtype);
+	if (ret < 0)
+		return NULL;
+	return PyInt_FromLong((long) ret);
+}
+
+
 static struct PyMethodDef array_module_methods[] = {
 	{"set_string_function", (PyCFunction)array_set_string_function, 
 	 METH_VARARGS|METH_KEYWORDS, doc_set_string_function},
@@ -3830,6 +3847,8 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS, doc_frombuffer},
 	{"fromfile", (PyCFunction)array_fromfile,
 	 METH_VARARGS | METH_KEYWORDS, doc_fromfile},
+	{"register_dtype", (PyCFunction)array_register_dtype,
+	 METH_VARARGS, doc_register_dtype},
 	/*  {"arrayMap",	(PyCFunction)array_arrayMap, 
 	    METH_VARARGS, doc_arrayMap},*/
 	

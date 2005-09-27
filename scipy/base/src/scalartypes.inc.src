@@ -616,6 +616,19 @@ gentype_typestr_get(PyObject *self)
 }
 
 static PyObject *
+gentype_descr_get(PyObject *self)
+{
+	PyArrayObject *arr;
+	PyObject *ret;
+
+	arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
+	ret = PyObject_GetAttrString((PyObject *)arr, "__array_descr__");
+	Py_DECREF(arr);
+	return ret;
+}
+
+
+static PyObject *
 gentype_typenum_get(PyObject *self)
 {
 	PyArray_Typecode typecode;
@@ -778,6 +791,10 @@ static PyGetSetDef gentype_getsets[] = {
 	 (getter)gentype_typestr_get,
 	 NULL,
 	 "Array protocol: typestr"},
+	{"__array_descr__",
+	 (getter)gentype_descr_get,
+	 NULL,
+	 "Array protocol: descr"},
 	{"__array_shape__", 
 	 (getter)gentype_shape_get,
 	 NULL,

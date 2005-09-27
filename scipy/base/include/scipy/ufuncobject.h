@@ -20,6 +20,7 @@ typedef struct {
 	char *doc;
         void *ptr;
         PyObject *obj;
+	PyObject *userloops;
 } PyUFuncObject;
 
 #include "arrayobject.h"

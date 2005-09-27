@@ -284,7 +284,8 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         PyObject *pyres=NULL;
 	PyObject *args=NULL;
         int itemsize=ap->itemsize;
-        PyObject *meth=PyObject_GetAttrString((PyObject *)ap, "_getitem");
+        PyObject *meth=PyObject_GetAttrString((PyObject *)ap->descr->typeobj,
+					      "_getitem");
 
 
 	if (PyArray_ISWRITEABLE(ap))
@@ -324,7 +325,8 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         PyObject *args=NULL;
         int itemsize=ap->itemsize;
 	int res;
-        PyObject *meth=PyObject_GetAttrString((PyObject *)ap, "_setitem");
+        PyObject *meth=PyObject_GetAttrString((PyObject *)ap->descr->typeobj,
+					      "_setitem");
 
 	/* Default is to use buffer interface to set item */
         if ((meth == NULL) || (!PyCallable_Check(meth))) {
@@ -1100,7 +1102,8 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
         PyObject *u=NULL;
         int res;
         PyObject *pyres=NULL;
-        PyObject *meth=PyObject_GetAttrString((PyObject *)ap, "_nonzero");
+        PyObject *meth=PyObject_GetAttrString((PyObject *)ap->descr->typeobj, 
+					      "_nonzero");
         PyObject *args=NULL;
 
         if ((meth == NULL) || (!PyCallable_Check(meth))) {
@@ -1239,7 +1242,8 @@ VOID_compare(void *ip1, void *ip2, PyArrayObject *ap)
         int res;
         PyObject *pyres=NULL;
         int itemsize=ap->itemsize;
-        PyObject *meth=PyObject_GetAttrString((PyObject *)ap, "_compare");
+        PyObject *meth=PyObject_GetAttrString((PyObject *)ap->descr->typeobj,
+					      "_compare");
         PyObject *args=NULL;
 
         if ((meth == NULL) || (!PyCallable_Check(meth))) {
@@ -1550,12 +1554,17 @@ static PyArray_Descr *descrs[] = {
 	&VOID_Descr,
 };
 
+static PyArray_Descr **userdescrs=NULL;
 
 static PyArray_Descr *
 PyArray_DescrFromType(int type) {
 	if (type < PyArray_NTYPES) {
 		return descrs[type];
-	} else {
+	}
+	else if PyTypeNum_ISUSERDEF(type) {
+		return userdescrs[type-PyArray_USERDEF];
+	} 
+	else {
 		switch(type) {
                 case PyArray_INTPLTR: return descrs[PyArray_INTP];
 		case PyArray_DOUBLELTR: return descrs[PyArray_DOUBLE];

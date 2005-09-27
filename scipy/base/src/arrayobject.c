@@ -880,6 +880,7 @@ PyArray_ToScalar(char *data, PyArrayObject *arr)
 	return PyArray_Scalar(data, type_num, itemsize, swap);
 }
 
+
 /* Return Python scalar if 0-d array object is encountered */
 
 static PyObject *
@@ -903,6 +904,89 @@ PyArray_Return(PyArrayObject *mp)
 		return (PyObject *)mp;
 	}
 }
+
+/*
+  returns typenum to associate with this type >=PyArray_USERDEF.
+  Also creates a copy of the VOID_DESCR table inserting it's typeobject in
+  and it's typenum in the appropriate place.
+ 
+  needs the userdecrs table and PyArray_NUMUSER variables
+  defined in arratypes.inc
+*/
+static int 
+PyArray_RegisterDataType(PyTypeObject *type)
+{
+	PyArray_Descr *descr;
+	int typenum;
+	
+	if (!PyArray_IsScalar(type, Void)) {
+		PyErr_SetString(PyExc_ValueError, 
+				"Can only register void subtypes.");
+		return -1;
+	}
+	descr = malloc(sizeof(PyArray_Descr));
+	memcpy(descr, PyArray_DescrFromType(PyArray_VOID), 
+	       sizeof(PyArray_Descr));
+	typenum = PyArray_USERDEF + PyArray_NUMUSERTYPES;
+	descr->type_num = typenum;
+	descr->typeobj = type;
+	userdescrs = realloc(userdescrs, 
+			    (PyArray_NUMUSERTYPES+1)*sizeof(void *));
+	userdescrs[PyArray_NUMUSERTYPES++] = descr;
+	return typenum;
+}
+
+
+/* 
+   frees the copy of the Descr_table already there.
+   places a pointer to the new one into the slot.
+*/
+static int
+PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
+{
+	PyArray_Descr *old;
+	int i;
+
+	if (!PyArray_ISUSERDEF(typenum)) {
+		PyErr_SetString(PyExc_TypeError, 
+				"Data type not registered.");
+		return -1;
+	}
+	old = userdescrs[typenum-PyArray_USERDEF];
+	descr->typeobj = old->typeobj;
+	descr->type_num = typenum;
+
+#define _NULL_CHECK(member) \
+	if (descr->member == NULL) descr->member = old->member
+
+	for (i=0; i<PyArray_NTYPES; i++) {
+		_NULL_CHECK(cast[i]);
+	}
+	_NULL_CHECK(getitem);
+	_NULL_CHECK(setitem);
+	_NULL_CHECK(compare);	
+	_NULL_CHECK(argmax);
+	_NULL_CHECK(dotfunc);
+	_NULL_CHECK(scanfunc);
+	_NULL_CHECK(copyswapn);
+	_NULL_CHECK(copyswap);
+	_NULL_CHECK(nonzero);
+#undef _NULL_CHECK
+
+#define _ZERO_CHECK(member) \
+	if (descr->member == 0) descr->member = old->member
+
+	_ZERO_CHECK(kind);
+	_ZERO_CHECK(type);
+	_ZERO_CHECK(elsize);
+	_ZERO_CHECK(alignment);
+#undef _ZERO_CHECK
+
+	free(old);
+	userdescrs[typenum-PyArray_USERDEF] = descr;
+	return 0;
+}
+
 
 static int
 PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format) 
@@ -3732,45 +3816,44 @@ array_typestr_get(PyArrayObject *self)
 	int which;
 	unsigned long val = 1;
 	char *s;
-	char basic_;
+	char basic_=self->descr->kind;
 
 	s = (char *)&val; /* s[0] == 0 implies big-endian */
 	which = (PyArray_ISNOTSWAPPED(self) ? 0 : 1);
 	if (s[0] == 0) which = 1 - which;
 	endian = endians[which];       
 	
-	if PyArray_ISFLEXIBLE(self) 
-		if (self->descr->type_num == PyArray_UNICODE)
-			return PyString_FromFormat("%cU%d", endian,
-						   self->itemsize);
-	        else
-			return PyString_FromFormat("|%c%d", self->descr->type,
-					   self->itemsize);
-	else if PyArray_ISINTEGER(self) 
-		if PyArray_ISSIGNED(self) 
-			basic_ = 'i';
-	        else 
-			basic_ = 'u';
-
-	else if PyArray_ISFLOAT(self)
-		basic_ = 'f';
-
-	else if PyArray_ISCOMPLEX(self)
-		basic_ = 'c';
-
-	else if (self->descr->type_num == PyArray_BOOL) 
-		return PyString_FromFormat("|b%d", self->itemsize);
-	else /* Object */
-		return PyString_FromFormat("|O%d", self->itemsize);
-
-	/* We are here if 'i','u','f', or 'c' */
-	if (self->itemsize > 1)
+	if ((basic_==PyArray_VOIDLTR) || (basic_==PyArray_STRINGLTR) || \
+	    (basic_==PyArray_OBJECTLTR) || (self->itemsize == 1))
+		return PyString_FromFormat("|%c%d", basic_, self->itemsize);
+	else
 		return PyString_FromFormat("%c%c%d", endian, basic_,
 					   self->itemsize);
-	else
- 		return PyString_FromFormat("|%c%d", basic_, self->itemsize);
 }
 
+static PyObject *
+array_descr_get(PyArrayObject *self)
+{
+	PyObject *res;
+	PyObject *dobj;
+
+	/* hand this off to the typeobject */
+	/* or give default */
+
+	res = PyObject_GetAttrString((PyObject *)self->descr->typeobj, 
+				      "__array_descr__");
+	if (res) return res;
+	PyErr_Clear();
+	/* get default */
+	dobj = PyTuple_New(2);
+	if (dobj == NULL) return NULL;
+	PyTuple_SET_ITEM(dobj, 0, PyString_FromString(""));
+	PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
+	res = PyList_New(1);
+	if (res == NULL) {Py_DECREF(dobj); return NULL;}
+	PyList_SET_ITEM(res, 0, dobj);
+	return res;
+}
 
 static PyObject *
 array_typenum_get(PyArrayObject *self)
@@ -4141,6 +4224,10 @@ static PyGetSetDef array_getsetlist[] = {
 	 (getter)array_typestr_get,
 	 NULL,
 	 "Array protocol: typestr"},
+	{"__array_descr__",
+	 (getter)array_descr_get,
+	 NULL,
+	 "Array protocol: descr"},
 	{"__array_shape__", 
 	 (getter)array_shape_get,
 	 NULL,

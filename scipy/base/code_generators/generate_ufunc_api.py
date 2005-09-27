@@ -6,6 +6,11 @@ ufunc_api_list = [
     (r"""
     """,
      'FromFuncAndData', 'PyUFuncGenericFunction *, void **, char *, int, int, int, int, char *, char *, int', 'PyObject *'),
+
+    (r"""
+    """,
+     'RegisterLoopForType','PyUFuncObject *, int, PyUFuncGenericFunction, void *', 'int'),
+    
     (r"""
     """,
      'GenericFunction', 'PyUFuncObject *, PyObject *, PyArrayObject **', 'int'),

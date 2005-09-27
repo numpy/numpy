@@ -596,13 +596,52 @@ _cancoerce(char thistype, char neededtype, char scalar)
 
 
 static int 
-select_types(PyUFuncObject *self, char *arg_types, 
+select_types(PyUFuncObject *self, int *arg_types, 
              PyUFuncGenericFunction *function, void **data,
 	     char *scalars)
 {
 
 	int i=0, j;
-	char start_type;	
+	char start_type;
+	
+	if (PyTypeNum_ISUSERDEF((arg_types[0]))) {
+		PyObject *key, *obj;
+		for (i=0; i<self->nin; i++) {
+			if (arg_types[i] != arg_types[0]) {
+				PyErr_SetString(PyExc_TypeError,
+						"ufuncs on user defined" \
+						" types don't support "\
+						"coercion.");
+				return -1;
+			}
+		}
+		for (i=self->nin; i<self->nargs; i++) {
+			arg_types[i] = arg_types[0];
+		}
+		
+		key = PyInt_FromLong((long) arg_types[0]);
+		if (key == NULL) return -1;
+		obj = PyDict_GetItem(self->userloops, key);
+		if (obj == NULL) {
+			Py_DECREF(key);
+			PyErr_SetString(PyExc_TypeError, 
+					"no registered loop for this "	\
+					"user-defined type.");
+			return -1;			
+		}
+		if PyTuple_Check(obj) {
+			*function = (PyUFuncGenericFunction) \
+				PyCObject_AsVoidPtr(PyTuple_GET_ITEM(obj, 0));
+			*data = PyCObject_AsVoidPtr(PyTuple_GET_ITEM(obj, 1));
+		}
+		else {
+			*function = (PyUFuncGenericFunction)	\
+				PyCObject_AsVoidPtr(obj);
+			*data = NULL;
+		}
+		Py_DECREF(key);
+		return 0;
+	}
 	
 
 	start_type = arg_types[0];
@@ -695,7 +734,7 @@ _getfuncfromvar(char *str, PyObject *deflt)
 
 
 static char
-_scalar_kind(char typenum, PyArrayObject **arr) 
+_scalar_kind(int typenum, PyArrayObject **arr) 
 {
 	PyObject *zero, *ozero, *new;
 	if (PyTypeNum_ISSIGNED(typenum)) {
@@ -733,7 +772,7 @@ _scalar_kind(char typenum, PyArrayObject **arr)
 */
 
 static int
-_create_copies(PyUFuncLoopObject *loop, char *arg_types, PyArrayObject **mps)
+_create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
 {
 	int nin = loop->ufunc->nin;
 	int i;
@@ -750,8 +789,8 @@ _create_copies(PyUFuncLoopObject *loop, char *arg_types, PyArrayObject **mps)
 	if (maxsize < loop->bufsize) {
 		for (i=0; i<nin; i++) {
 			if (!(PyArray_CHKFLAGS(mps[i], BEHAVED_FLAGS_RO)) || \
-			    PyArray_TYPE(mps[i]) != (int) arg_types[i]) {
-				ntype.type_num = (int) arg_types[i];
+			    PyArray_TYPE(mps[i]) != arg_types[i]) {
+				ntype.type_num = arg_types[i];
 				new = PyArray_FromAny((PyObject *)mps[i], 
 						      &ntype, 0, 0,
 						      FORCECAST |	\
@@ -771,7 +810,7 @@ static int
 construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 {
         int nargs, i, cnt, cntcast;
-        char arg_types[MAX_ARGS];
+        int arg_types[MAX_ARGS];
 	char scalars[MAX_ARGS];
 	PyUFuncObject *self=loop->ufunc;
 	Bool allscalars=TRUE;
@@ -1353,7 +1392,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
         PyArrayObject *idarr;
 	PyArrayObject *aar;
         intp loop_i[MAX_DIMS];
-        char arg_types[3] = {(char) otype, (char) otype, (char) otype};
+        int arg_types[3] = {otype, otype, otype};
 	char scalars[3] = {UFUNC_NOSCALAR, UFUNC_NOSCALAR, UFUNC_NOSCALAR};
 	int i, j;
 	int nd = (*arr)->nd;
@@ -1387,9 +1426,9 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 	 and we need to select the reduction function again
 	*/
 	if (otype != arg_types[2]) {
-		otype = (int) arg_types[2];
-		arg_types[0] = (char) otype;
-		arg_types[1] = (char) otype;
+		otype = arg_types[2];
+		arg_types[0] = otype;
+		arg_types[1] = otype;
 		if (select_types(loop->ufunc, arg_types, &(loop->function), 
 				 &(loop->funcdata), scalars) == -1) 
 			goto fail;   		
@@ -2334,6 +2373,7 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
 	self->check_return = check_return;
         self->ptr = NULL;
         self->obj = NULL;
+	self->userloops=NULL;
 	
 	if (name == NULL) self->name = "?";
 	else self->name = name;
@@ -2342,6 +2382,50 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
 	else self->doc = doc;
 	
 	return (PyObject *)self;
+}
+
+static int
+PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc, 
+			    int usertype,
+			    PyUFuncGenericFunction function,
+			    void *data)
+{
+	PyArray_Descr *descr=PyArray_DescrFromType(usertype);
+    	PyObject *key, *cobj;
+	int ret;	
+	
+	if ((usertype < PyArray_USERDEF) || (descr==NULL)) {
+		PyErr_SetString(PyExc_TypeError, 
+				"Cannot register typenumber");
+		return -1;
+	}
+	if (ufunc->userloops == NULL) {
+		ufunc->userloops = PyDict_New();
+	}
+	key = PyInt_FromLong(usertype);
+	if (key == NULL) return -1;
+	cobj = PyCObject_FromVoidPtr((void *)function, NULL);
+	if (cobj == NULL) {Py_DECREF(key); return -1;}
+	if (data == NULL) {
+		ret = PyDict_SetItem(ufunc->userloops, key, cobj);
+		Py_DECREF(cobj);
+		Py_DECREF(key);
+		return ret;
+	}
+	else {
+		PyObject *cobj2, *tmp;
+		cobj2 = PyCObject_FromVoidPtr(data, NULL);
+		if (cobj2 == NULL) {
+			Py_DECREF(cobj); 
+			Py_DECREF(key);
+			return -1;
+		}
+		tmp=Py_BuildValue("NN", cobj, cobj2);
+		ret = PyDict_SetItem(ufunc->userloops, key, tmp);
+		Py_DECREF(tmp);
+		Py_DECREF(key);
+		return ret;
+	}
 }
 
 static void
@@ -2379,6 +2463,7 @@ static void
 ufunc_dealloc(PyUFuncObject *self)
 {
         if (self->ptr) free(self->ptr);
+	Py_XDECREF(self->userloops);
         Py_XDECREF(self->obj);
 	PyObject_DEL(self);
 }
