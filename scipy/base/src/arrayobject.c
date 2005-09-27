@@ -3564,6 +3564,7 @@ array_shape_set(PyArrayObject *self, PyObject *val)
 	}
 	else self->dimensions=NULL;
 	Py_DECREF(ret);
+	PyArray_UpdateFlags(self, CONTIGUOUS | FORTRAN);
 	return 0;
 }
 

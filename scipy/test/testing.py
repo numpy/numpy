@@ -35,7 +35,7 @@ import types
 import imp
 
 #
-# Imports from scipy_base must be done at the end of this file.
+# Imports from scipy.base must be done at the end of this file.
 #
 
 DEBUG = 0
@@ -60,7 +60,7 @@ def set_package_path(level=1):
       restore_path()
     """
     from distutils.util import get_platform
-    from scipy_distutils.misc_util import get_frame
+    from scipy.distutils.misc_util import get_frame
     f = get_frame(level)
     if f.f_locals['__name__']=='__main__':
         testfile = sys.argv[0]
@@ -82,7 +82,7 @@ def set_local_path(reldir='', level=1):
 
       restore_path()
     """
-    from scipy_distutils.misc_util import get_frame
+    from scipy.distutils.misc_util import get_frame
     f = get_frame(level)
     if f.f_locals['__name__']=='__main__':
         testfile = sys.argv[0]
@@ -343,19 +343,6 @@ class ScipyTest:
         print '  Found',len(suite_list),'tests for',module_name
         return suite_list
 
-    def _touch_ppimported(self, module):
-        from scipy_base.ppimport import _ModuleLoader
-        if os.path.isdir(os.path.join(os.path.dirname(module.__file__),'tests')):
-            # only touching those modules that have tests/ directory
-            try: module._pliuh_plauh
-            except AttributeError: pass
-            for name in dir(module):
-                obj = getattr(module,name)
-                if isinstance(obj,_ModuleLoader) \
-                   and not hasattr(obj,'_ppimport_module') \
-                   and not hasattr(obj,'_ppimport_exc_info'):
-                    self._touch_ppimported(obj)
-
     def test(self,level=1,verbosity=1):
         """ Run Scipy module test suite with level and verbosity.
         """
@@ -363,8 +350,6 @@ class ScipyTest:
             exec 'import %s as this_package' % (self.package)
         else:
             this_package = self.package
-
-        self._touch_ppimported(this_package)
 
         package_name = this_package.__name__
 
