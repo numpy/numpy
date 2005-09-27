@@ -1,0 +1,16 @@
+!%f90 -*- f90 -*-
+module data_mod ! in :simple:data_mod.f
+    real allocatable,dimension(*,*) :: data
+    integer :: nj
+    integer :: ni
+end module data_mod
+module simple ! in 
+  use data_mod,only: n=>ni,x,m=>ni
+  interface  ! in :simple
+     subroutine test ! in :simple:test.f
+     end subroutine test
+  end interface
+end module simple
+
+! This file was auto-generated with f2py (version:1.218).
+! See http://cens.ioc.ee/projects/f2py2e/

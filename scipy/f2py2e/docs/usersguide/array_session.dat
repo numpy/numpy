@@ -1,0 +1,65 @@
+>>> import arr
+>>> from Numeric import array
+>>> print arr.foo.__doc__
+foo - Function signature:
+  a = foo(a,[overwrite_a])
+Required arguments:
+  a : input rank-2 array('d') with bounds (n,m)
+Optional arguments:
+  overwrite_a := 0 input int
+Return objects:
+  a : rank-2 array('d') with bounds (n,m)
+
+>>> a=arr.foo([[1,2,3],
+...            [4,5,6]])
+copied an array using PyArray_CopyFromObject: size=6, elsize=8
+>>> print a
+[[ 1.  3.  4.]
+ [ 3.  5.  6.]]
+>>> a.iscontiguous(), arr.has_column_major_storage(a)
+(0, 1)
+>>> b=arr.foo(a)              # even if a is proper-contiguous
+...                           # and has proper type, a copy is made
+...                           # forced by intent(copy) attribute
+...                           # to preserve its original contents
+... 
+copied an array using copy_ND_array: size=6, elsize=8
+>>> print a
+[[ 1.  3.  4.]
+ [ 3.  5.  6.]]
+>>> print b
+[[ 1.  4.  5.]
+ [ 2.  5.  6.]]
+>>> b=arr.foo(a,overwrite_a=1) # a is passed directly to Fortran
+...                            # routine and its contents is discarded
+... 
+>>> print a
+[[ 1.  4.  5.]
+ [ 2.  5.  6.]]
+>>> print b
+[[ 1.  4.  5.]
+ [ 2.  5.  6.]]
+>>> a is b                       # a and b are acctually the same objects
+1
+>>> print arr.foo([1,2,3])       # different rank arrays are allowed
+copied an array using PyArray_CopyFromObject: size=3, elsize=8
+[ 1.  1.  2.]
+>>> print arr.foo([[[1],[2],[3]]])
+copied an array using PyArray_CopyFromObject: size=3, elsize=8
+[ [[ 1.]
+  [ 3.]
+  [ 4.]]]
+>>>
+>>> # Creating arrays with column major data storage order:
+...
+>>> s = arr.as_column_major_storage(array([[1,2,3],[4,5,6]]))
+copied an array using copy_ND_array: size=6, elsize=4
+>>> arr.has_column_major_storage(s)
+1
+>>> print s
+[[1 2 3]
+ [4 5 6]]
+>>> s2 = arr.as_column_major_storage(s)
+>>> s2 is s    # an array with column major storage order 
+               # is returned immediately
+1

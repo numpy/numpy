@@ -1,0 +1,13 @@
+!%f90 -*- f90 -*-
+python module foo
+    interface
+        subroutine exp1(l,u,n)
+            real*8 dimension(2) :: l
+            real*8 dimension(2) :: u
+            integer*4 :: n
+        end subroutine exp1
+    end interface 
+end python module foo
+! This file was auto-generated with f2py 
+! (version:2.298).
+! See http://cens.ioc.ee/projects/f2py2e/

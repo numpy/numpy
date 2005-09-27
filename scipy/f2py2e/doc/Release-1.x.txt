@@ -1,0 +1,27 @@
+
+I am pleased to announce the first public release of f2py 1.116:
+
+Writing Python C/API wrappers for Fortran routines can be a very
+tedious task, especially if a Fortran routine takes more than 20
+arguments but only few of them are relevant for the problems that they
+solve.
+
+The Fortran to Python Interface Generator, or FPIG for short, is a
+command line tool (f2py) for generating Python C/API modules for
+wrapping Fortran 77 routines, accessing common blocks from Python, and
+calling Python functions from Fortran (call-backs).
+
+The tool can be downloaded from
+
+    http://cens.ioc.ee/projects/f2py2e/
+
+where you can find also information about f2py features and its User's
+Guide.
+
+f2py is released under the LGPL license.
+
+With regards,
+     Pearu Peterson <pearu@ioc.ee>
+
+<P><A HREF="http://cens.ioc.ee/projects/f2py2e/">f2py 1.116</A> - The
+Fortran to Python Interface Generator (25-Jan-00)

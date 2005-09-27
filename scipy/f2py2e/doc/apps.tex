@@ -1,0 +1,71 @@
+
+\section{Applications}
+\label{sec:apps}
+
+
+\subsection{Example: wrapping C library \texttt{fftw}}
+\label{sec:wrapfftw}
+
+Here follows a simple example how to use \fpy to generate a wrapper
+for C functions. Let us create a FFT code using the functions in FFTW
+library. I'll assume that the library \texttt{fftw} is configured with
+\texttt{-{}-enable-shared} option. 
+
+Here is the wrapper for the typical usage of FFTW:
+\begin{verbatim}
+/* File: wrap_dfftw.c */
+#include <dfftw.h>
+
+extern void dfftw_one(fftw_complex *in,fftw_complex *out,int *n) {
+  fftw_plan p;
+  p = fftw_create_plan(*n,FFTW_FORWARD,FFTW_ESTIMATE);
+  fftw_one(p,in,out);
+  fftw_destroy_plan(p);
+}
+\end{verbatim}
+and here follows the corresponding siganture file (created manually):
+\begin{verbatim}
+!%f90
+! File: fftw.f90
+module fftw
+  interface
+     subroutine dfftw_one(in,out,n)
+       integer n
+       complex*16 in(n),out(n)
+       intent(out) out
+       intent(hide) n
+     end subroutine dfftw_one
+  end interface
+end module fftw
+\end{verbatim}
+
+Now let us generate the Python C/API module with \fpy:
+\begin{verbatim}
+f2py fftw.f90
+\end{verbatim}
+and compile it
+\begin{verbatim}
+gcc -shared -I/numeric/include -I`f2py -I` -L/numeric/lib -ldfftw \
+    -o fftwmodule.so -DNO_APPEND_FORTRAN fftwmodule.c wrap_dfftw.c
+\end{verbatim}
+
+In Python:
+\begin{verbatim}
+>>> from Numeric import *
+>>> from fftw import *
+>>> print dfftw_one.__doc__
+Function signature:
+  out = dfftw_one(in)
+Required arguments:
+  in : input rank-1 array('D') with bounds (n)
+Return objects:
+  out : rank-1 array('D') with bounds (n)
+>>> print dfftw_one([1,2,3,4])
+[ 10.+0.j  -2.+2.j  -2.+0.j  -2.-2.j]
+>>> 
+\end{verbatim}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "f2py2e"
+%%% End: 

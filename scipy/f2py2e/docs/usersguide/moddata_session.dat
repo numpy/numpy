@@ -1,0 +1,23 @@
+>>> import moddata
+>>> print moddata.mod.__doc__
+i - 'i'-scalar
+x - 'i'-array(4)
+a - 'f'-array(2,3)
+foo - Function signature:
+  foo()
+
+
+>>> moddata.mod.i = 5  
+>>> moddata.mod.x[:2] = [1,2]
+>>> moddata.mod.a = [[1,2,3],[4,5,6]]
+>>> moddata.mod.foo()                
+ i=           5
+ x=[           1           2           0           0 ]
+ a=[
+ [   1.000000     ,   2.000000     ,   3.000000     ]
+ [   4.000000     ,   5.000000     ,   6.000000     ]
+ ]
+ Setting a(1,2)=a(1,2)+3
+>>> moddata.mod.a               # a is Fortran-contiguous
+array([[ 1.,  5.,  3.],
+       [ 4.,  5.,  6.]],'f')

@@ -1,0 +1,11 @@
+!    -*- f90 -*-
+python module var
+  usercode '''
+    int BAR = 5;
+  '''
+  interface
+    usercode '''
+      PyDict_SetItemString(d,"BAR",PyInt_FromLong(BAR));
+    '''
+  end interface
+end python module

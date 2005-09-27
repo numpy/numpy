@@ -1,0 +1,32 @@
+#!/bin/sh
+f2py2e='python ../../f2py2e.py'
+
+$f2py2e scalar.f -m foo -h foo.pyf --overwrite-signature --overwrite-makefile --no-wrap-functions
+gmake -f Makefile-foo clean foo
+
+python -c '
+import foo,Numeric
+print foo.__doc__
+
+x=Numeric.array(3)
+print x,foo.ifoo(1,2,x),x
+x=Numeric.array(5j,"F")
+print x,foo.dfoo(1,2.3,x),x
+x=Numeric.array(5,"b")
+print x,foo.ffoo(1,2.3,x),x
+x=Numeric.array([3.0j,5],"F")
+print x,foo.cfoo(1+2j,2+7j,x),x
+x=Numeric.array([2+3.0j,5],"D")
+print x,foo.dcfoo(1+2j,2,x),x
+x=[[Numeric.array([2,5L])]]
+print x,foo.dcfoo(1+2j,4,x),x
+x=Numeric.array(3L)
+print x,foo.lfoo(1L,2,x),x
+
+x=Numeric.array(3,"F")
+print x,foo.sifoo(1L,2,x),x
+x=Numeric.array([[2L],{1:1}])
+print x,foo.cfoo(3.5,2,x),x
+
+print "ok"
+'

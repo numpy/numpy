@@ -1,0 +1,9 @@
+include README.txt
+include MANIFEST.in
+include *.py
+include f2py.1
+recursive-include src fortranobject.c fortranobject.h
+recursive-include tests *.py
+recursive-include tests/mixed *.f *.f90
+#recursive-include doc *.py *.txt *.tex *.html Makefile
+recursive-include docs *.txt *.html *.dat *.f *.f90 *.pyf setup_example.py f2py_style.css

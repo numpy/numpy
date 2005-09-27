@@ -1,0 +1,50 @@
+\documentclass{article} 
+\usepackage{a4wide}
+  
+\input commands
+ 
+\title{\fpy\\Fortran to Python Interface Generator\\{\large Second Edition}}
+\author{Pearu Peterson \texttt{<pearu@ioc.ee>}}
+\date{$Revision: 1.16 $\\\today} 
+\begin{document}
+\special{html: <font size=-1>If equations does not show Greek letters or large
+  brackets correctly, then your browser configuration needs some
+  adjustment. Read the notes for <A
+  href=http://hutchinson.belmont.ma.us/tth/Xfonts.html>Enabling Symbol
+  Fonts in Netscape under X </A>. In addition, the browser must be set
+  to use document fonts. </font>
+}
+
+\maketitle
+\begin{abstract}
+  \fpy is a Python program that generates Python C/API modules for
+  wrapping Fortran~77/90/95 codes to Python. The user can influence the
+  process by modifying the signature files that \fpy generates when
+  scanning the Fortran codes. This document describes the syntax of
+  the signature files and the ways how the user can dictate the tool
+  to produce wrapper functions with desired Python signatures. Also
+  how to call the wrapper functions from Python is discussed.
+
+  See \texttt{http://cens.ioc.ee/projects/f2py2e/} for updates of this
+  document and the tool. 
+\end{abstract}
+
+\tableofcontents
+
+\input intro
+\input signaturefile
+\input notes
+\input options
+\input bugs
+
+\appendix
+\input ex1/foobarmodule
+\input apps
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
+
+

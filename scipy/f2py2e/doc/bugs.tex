@@ -1,0 +1,109 @@
+
+\section{Bugs, Plans, and Feedback}
+\label{sec:bugs}
+
+Currently no bugs have found that I was not able to fix.  I will be
+happy to receive bug reports from you (so that I could fix them and
+keep the first sentence of this paragraph as true as possible ;-).
+Note that \fpy is developed to work properly with gcc/g77
+compilers. 
+\begin{description}
+\item[NOTE:] Wrapping callback functions returning \texttt{COMPLEX}
+  may fail on some systems. Workaround: avoid it by using callback
+  subroutines.
+\end{description}
+
+Here follows a list of things that I plan to implement in (near) future:
+\begin{enumerate}
+\item recognize file types by their extension (signatures:
+  \texttt{*.pyf}, Fortran 77, Fortran 90 fixed: \texttt{*.f, *.for, *.F, *.FOR},
+  Fortran 90 free: \texttt{*.F90, *.f90, *.m, *.f95, *.F95}); [DONE]
+\item installation using \texttt{distutils} (when it will be stable);
+\item put out to the web examples of \fpy usages in real situations:
+  wrapping \texttt{vode}, for example;
+\item implement support for \texttt{PARAMETER} statement; [DONE]
+\item rewrite test-site;
+\item ...
+\end{enumerate}
+and here are things that I plan to do in future:
+\begin{enumerate}
+\item implement \texttt{intent(cache)} attribute for an optional work
+  arrays with a feature of allocating additional memory if needed;
+\item use \fpy for wrapping Fortran 90/95 codes. \fpy should scan
+  Fortran 90/95 codes with no problems, what needs to be done is find
+  out how to call a Fortran 90/95 function (from a module) from
+  C. Anybody there willing to test \fpy with Fortran 90/95 modules? [DONE]
+\item implement support for Fortran 90/95 module data; [DONE]
+\item implement support for \texttt{BLOCK DATA} blocks (if needed);
+\item test/document \fpy for \texttt{CHARACTER} arrays;
+\item decide whether internal transposition of multi-dimensional
+  arrays is reasonable (need efficient code then), even if this is
+  controlled by the user trough some additional keyword; need
+  consistent and safe policy here;
+\item use \fpy for generating wrapper functions also for C programs (a
+  kind of SWIG, only between Python and C). For that \fpy needs a
+  command line switch to inform itself that C scalars are passed in by
+  their value, not by their reference, for instance;
+\item introduce a counter that counts the number of inefficient usages
+  of wrapper functions (copying caused by type-casting, non-contiguous
+  arrays);
+\item if needed, make \texttt{DATA} statement to work properly for
+  arrays;
+\item rewrite \texttt{COMMON} wrapper; [DONE]
+\item ...
+\end{enumerate}
+I'll appreciate any feedback that will improve \fpy (bug reports,
+suggestions, etc). If you find a correct Fortran code that fails with
+\fpy, try to send me a minimal version of it so that I could track
+down the cause of the failure. Note also that there is no sense to
+send me files that are auto-generated with \fpy (I can generate them
+myself); the version of \fpy that you are using (run \texttt{\fpy\ 
+  -v}), and the relevant fortran codes or modified signature files
+should be enough information to fix the bugs. Also add some
+information on compilers and linkers that you use to the bug report.
+
+
+\section{History of \fpy}
+\label{sec:history}
+
+\begin{enumerate}
+\item I was driven to start developing a tool such as \fpy after I had
+  wrote several Python C/API modules for interfacing various Fortran
+  routines from the Netlib. This work was tedious (some of functions
+  had more than 20 arguments, only few of them made sense for the
+  problems that they solved). I realized that most of the writing
+  could be done automatically.
+\item On 9th of July, 1999, the first lines of the tool was written. A
+  prototype of the tool was ready to use in only three weeks. During
+  this time Travis Oliphant joined to the project and shared his
+  valuable knowledge and experience; the call-back mechanism is his
+  major contribution.  Then I gave the tool to public under the name
+  FPIG --- \emph{Fortran to Python Interface Generator}. The tool contained
+  only one file \texttt{f2py.py}.
+\item By autumn, it was clear that a better implementation was needed
+  as the debugging process became very tedious. So, I reserved some
+  time and rewrote the tool from scratch. The most important result of
+  this rewriting was the code that reads real Fortran codes and
+  determines the signatures of the Fortran routines. The main
+  attention was payed in particular to this part so that the tool
+  could read arbitrary Fortran~77/90/95 codes. As a result, the other
+  side of the tools task, that is, generating Python C/API functions,
+  was not so great. In public, this version of the tool was called
+  \texttt{f2py2e} --- \emph{Fortran to Python C/API generator, the
+    Second Edition}.
+\item So, a month before The New Year 2000, I started the third
+  iteration of the \fpy development. Now the main attention was to
+  have a good C/API module constructing code. By 21st of January,
+  2000, the tool of generating wrapper functions for Fortran routines
+  was ready. It had many new features and was more robust than ever.
+\item In 25th of January, 2000, the first public release of \fpy was
+  announced (version 1.116).
+\item In 12th of September, 2000, the second public release of \fpy was
+  announced (version 2.264). It now has among other changes a support
+  for Fortran 90/95 module routines.
+\end{enumerate}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "f2py2e"
+%%% End: 

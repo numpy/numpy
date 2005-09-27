@@ -1,0 +1,310 @@
+
+\section{Calling wrapper functions from Python}
+\label{sec:notes}
+
+\subsection{Scalar arguments}
+\label{sec:scalars}
+
+In general, for scalar argument you can pass in in
+addition to ordinary Python scalars (like integers, floats, complex
+values) also arbitrary sequence objects (lists, arrays, strings) ---
+then the first element of a sequence is passed in to the Fortran routine.
+
+It is recommended that you always pass in scalars of required type. This
+ensures the correctness as no type-casting is needed.
+However, no exception is raised if type-casting would produce
+inaccurate or incorrect results! For example, in place of an expected
+complex value you can give an integer, or vice-versa (in the latter case only
+a rounded real part of the complex value will be used).
+
+If the argument is \texttt{intent(inout)} then Fortran routine can change the
+value ``in place'' only if you pass in a sequence object, for
+instance, rank-0 array. Also make sure that the type of an array is of
+correct type. Otherwise type-casting will be performed and you may
+get inaccurate or incorrect results. The following example illustrates this
+\begin{verbatim}
+>>> a = array(0)
+>>> calculate_pi(a)
+>>> print a
+3
+\end{verbatim}
+
+If you pass in an ordinary Python scalar in place of
+\texttt{intent(inout)} variable, it will be used as an input argument 
+since
+Python
+scalars cannot not be changed ``in place'' (all Python scalars
+are immutable objects).
+
+\subsection{String arguments}
+\label{sec:strings}
+
+You can pass in strings of arbitrary length. If the length is greater than
+required, only a required part of the string is used. If the length
+is smaller than required, additional memory is allocated and fulfilled
+with `\texttt{\bs0}'s.
+
+Because Python strings are immutable, \texttt{intent(inout)} argument
+expects an array version of a string --- an array of chars:
+\texttt{array("<string>")}. 
+Otherwise, the change ``in place'' has no effect.
+
+
+\subsection{Array arguments}
+\label{sec:arrays}
+
+If the size of an array is relatively large, it is \emph{highly
+  recommended} that you pass in arrays of required type. Otherwise,
+type-casting will be performed which includes the creation of new
+arrays and their copying.  If the argument is also
+\texttt{intent(inout)}, the wasted time is doubled. So, pass in arrays
+of required type!
+
+On the other hand, there are situations where it is perfectly all
+right to ignore this recommendation: if the size of an array is
+relatively small or the actual time spent in Fortran routine takes
+much longer than copying an array.  Anyway, if you want to optimize
+your Python code, start using arrays of required types.
+
+Another source of performance hit is when you use non-contiguous
+arrays. The performance hit will be exactly the same as when using
+incorrect array types.  This is because a contiguous copy is created
+to be passed in to the Fortran routine.
+
+\fpy provides a feature such that the ranks of array arguments need
+not to match --- only the correct total size matters. For example, if
+the wrapper function expects a rank-1 array \texttt{array([...])},
+then it is correct to pass in rank-2 (or higher) arrays
+\texttt{array([[...],...,[...]])} assuming that the sizes will match.
+This is especially useful when the arrays should contain only one
+element (size is 1).  Then you can pass in arrays \texttt{array(0)},
+\texttt{array([0])}, \texttt{array([[0]])}, etc and all cases are
+handled correctly. In this case it is correct to pass in a Python
+scalar in place of an array (but then ``change in place'' is ignored,
+of course).
+
+\subsubsection{Multidimensional arrays}
+
+If you are using rank-2 or higher rank arrays, you must always
+remember that indexing in Fortran starts from the lowest dimension
+while in Python (and in C) the indexing starts from the highest
+dimension (though some compilers have switches to change this).  As a
+result, if you pass in a 2-dimensional array then the Fortran routine
+sees it as the transposed version of the array (in multi-dimensional
+case the indexes are reversed).
+
+You must take this matter into account also when modifying the
+signature file and interpreting the generated Python signatures:
+
+\begin{itemize}
+\item First, when initializing an array using \texttt{init\_expr}, the index
+vector \texttt{\_i[]} changes accordingly to Fortran convention.
+\item Second, the result of CPP-macro \texttt{shape(<array>,0)}
+  corresponds to the last dimension of the Fortran array, etc.
+\end{itemize}
+Let me illustrate this with the following example:\\
+\begin{verbatim}
+! Fortran file: arr.f
+       subroutine arr(l,m,n,a)
+       integer l,m,n
+       real*8 a(l,m,n)
+       ...
+       end
+\end{verbatim}
+\fpy will generate the following signature file:\\
+\begin{verbatim}
+!%f90
+! Signature file: arr.f90
+python module arr ! in 
+  interface  ! in :arr
+    subroutine arr(l,m,n,a) ! in :arr:arr.f
+      integer optional,check(shape(a,2)==l),depend(a) :: l=shape(a,2)
+      integer optional,check(shape(a,1)==m),depend(a) :: m=shape(a,1)
+      integer optional,check(shape(a,0)==n),depend(a) :: n=shape(a,0)
+      real*8 dimension(l,m,n) :: a
+    end subroutine arr
+  end interface 
+end python module arr
+\end{verbatim}
+and the following wrapper function will be produced
+\begin{verbatim}
+None = arr(a,l=shape(a,2),m=shape(a,1),n=shape(a,0))
+\end{verbatim}
+
+In general, I would suggest not to specify the given optional
+variables \texttt{l,m,n} when calling the wrapper function --- let the
+interface find the values of the variables \texttt{l,m,n}. But there
+are occasions when you need to specify the dimensions in Python.
+
+So, in Python a proper way to create an array from the given
+dimensions is
+\begin{verbatim}
+>>> a = zeros(n,m,l,'d')
+\end{verbatim}
+(note that the dimensions are reversed and correct type is specified),
+and then a complete call to \texttt{arr} is
+\begin{verbatim}
+>>> arr(a,l,m,n)
+\end{verbatim}
+
+From the performance point of view, always be consistent with Fortran
+indexing convention, that is, use transposed arrays. But if you do the
+following
+\begin{verbatim}
+>>> a = transpose(zeros(l,m,n,'d'))
+>>> arr(a)
+\end{verbatim}
+then you will get a performance hit! The reason is that here the
+transposition is not actually performed. Instead, the array \texttt{a}
+will be non-contiguous which means that before calling a Fortran
+routine, internally a contiguous array is created which
+includes memory allocation and copying. In addition, if
+the argument array is also \texttt{intent(inout)}, the results are
+copied  back to the initial array which doubles the
+performance hit!
+
+So, to improve the performance: always pass in
+arrays that are contiguous.
+
+\subsubsection{Work arrays}
+
+Often Fortran routines use the so-called work arrays. The
+corresponding arguments can be declared as optional arguments, but be
+sure that all dimensions are specified (bounded) and defined before
+the initialization (dependence relations).
+
+On the other hand, if you call the Fortran routine many times then you
+don't want to allocate/deallocate the memory of the work arrays on
+every call. In this case it is recommended that you create temporary
+arrays with proper sizes in Python and use them as work arrays. But be
+careful when specifying the required type and be sure that the
+temporary arrays are contiguous. Otherwise the performance hit would
+be even harder than the hit when not using the temporary arrays from
+Python!
+
+
+
+\subsection{Call-back arguments}
+\label{sec:cbargs}
+
+\fpy builds a very flexible call-back mechanisms for call-back
+arguments. If the wrapper function expects a call-back function \texttt{fun}
+with the following Python signature to be passed in
+\begin{verbatim}
+def fun(a_1,...,a_n):
+     ...
+     return x_1,...,x_k
+\end{verbatim}
+but the user passes in a function \texttt{gun} with the signature
+\begin{verbatim}
+def gun(b_1,...,b_m):
+     ...
+     return y_1,...,y_l
+\end{verbatim}
+and the following extra arguments (specified as additional optional
+argument for the wrapper function):
+\begin{verbatim}
+fun_extra_args = (e_1,...,e_p)
+\end{verbatim}
+then the actual call-back is constructed accordingly to the following rules:
+\begin{itemize}
+\item if \texttt{p==0} then \texttt{gun(a\_1,...,a\_q)}, where
+  \texttt{q=min(m,n)};
+\item if \texttt{n+p<=m}  then \texttt{gun(a\_1,...,a\_n,e\_1,...,e\_p)};
+\item if \texttt{p<=m<n+p}  then \texttt{gun(a\_1,...,a\_q,e\_1,...,e\_p)},
+  where \texttt{q=m-p};
+\item if \texttt{p>m}  then \texttt{gun(e\_1,...,e\_m)};
+\item if \texttt{n+p}  is less than the number of required arguments
+  of the function \texttt{gun}, an exception is raised.
+\end{itemize}
+
+A call-back function \texttt{gun} may return any number of objects as a tuple:
+if \texttt{k<l}, then objects \texttt{y\_k+1,...,y\_l} are ignored;
+if \texttt{k>l}, then only objects \texttt{x\_1,...,x\_l} are set.
+
+
+\subsection{Obtaining information on wrapper functions}
+\label{sec:info}
+
+From the previous sections we learned that it is useful for the
+performance to pass in arguments of expected type, if possible. To
+know what are the expected types, \fpy generates a complete
+documentation strings for all wrapper functions. You can read them
+from Python by printing out \texttt{\_\_doc\_\_} attributes of the
+wrapper functions.  For the example in Sec.~\ref{sec:intro}:
+\begin{verbatim}
+>>> print foobar.foo.__doc__
+Function signature:
+  foo(a)
+Required arguments:
+  a : in/output rank-0 array(int,'i')
+>>> print foobar.bar.__doc__
+Function signature:
+  bar = bar(a,b)
+Required arguments:
+  a : input int
+  b : input int
+Return objects:
+  bar : int
+\end{verbatim}
+
+In addition, \fpy generates a LaTeX document
+(\texttt{<modulename>module.tex}) containing a bit more information on
+the wrapper functions. See for example Appendix that contains a result
+of the documentation generation for the example module
+\texttt{foobar}.  Here the file \texttt{foobar-smart.f90} (modified
+version of \texttt{foobar.f90}) is used --- it contains
+\texttt{note(<LaTeX text>)} attributes for specifying some additional
+information.
+
+\subsection{Wrappers for common blocks}
+\label{sec:wrapcomblock}
+
+[See examples \texttt{test-site/e/runme*}]
+
+What follows is obsolute for \fpy version higher that 2.264.
+
+\fpy generates wrapper functions for common blocks. For every common
+block with a name \texttt{<commonname>} a function
+\texttt{get\_<commonname>()} is constructed that takes no arguments
+and returns a dictionary. The dictionary represents maps between the
+names of common block fields and the arrays containing the common
+block fields (multi-dimensional arrays are transposed). So, in order
+to access to the common block fields, you must first obtain the
+references
+\begin{verbatim}
+commonblock = get_<commonname>()
+\end{verbatim}
+and then the fields are available through the arrays
+\texttt{commonblock["<fieldname>"]}.
+To change the values of common block fields, you can use for scalars
+\begin{verbatim}
+commonblock["<fieldname>"][0] = <new value>
+\end{verbatim}
+and for arrays
+\begin{verbatim}
+commonblock["<fieldname>"][:] = <new array>
+\end{verbatim}
+for example.
+
+For more  information  on the particular   common block  wrapping, see
+\texttt{get\_<commonname>.\_\_doc\_\_}.
+
+\subsection{Wrappers for F90/95 module data and routines}
+\label{sec:wrapf90modules}
+
+[See example \texttt{test-site/mod/runme\_mod}]
+
+\subsection{Examples}
+\label{sec:examples}
+
+Examples on various aspects of wrapping Fortran routines to Python can
+be  found        in   directories      \texttt{test-site/d/}       and
+\texttt{test-site/e/}: study  the shell scripts \texttt{runme\_*}. See
+also files in \texttt{doc/ex1/}.
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "f2py2e"
+%%% End: 

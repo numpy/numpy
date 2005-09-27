@@ -1,0 +1,89 @@
+!%f90 -*- f90 -*-
+
+!  Example:
+!    Using f2py for wrapping multi-dimensional Fortran and C arrays
+!    [NEW APPROACH, use it with f2py higher than 2.8.x]
+!  $Id: fun.pyf,v 1.3 2002/01/18 10:06:50 pearu Exp $
+
+! Usage (with gcc compiler):
+!   f2py -c fun.pyf foo.f bar.c
+
+python module fun ! in 
+    interface  ! in :fun
+
+! >>> from Numeric import *
+! >>> import fun
+! >>> a=array([[1,2,3],[4,5,6]])
+
+        subroutine foo(a,m,n) ! in :fun:foo.f
+          integer dimension(m,n) :: a
+          intent(in,out,copy) :: a
+          integer optional,check(shape(a,0)==m),depend(a) :: m=shape(a,0)
+          integer optional,check(shape(a,1)==n),depend(a) :: n=shape(a,1)
+        end subroutine foo
+
+! >>> print fun.foo.__doc__
+! foo - Function signature:
+!   a = foo(a,[m,n])
+! Required arguments:
+!   a : input rank-2 array('i') with bounds (m,n)
+! Optional arguments:
+!   m := shape(a,0) input int
+!   n := shape(a,1) input int
+! Return objects:
+!   a : rank-2 array('i') with bounds (m,n)
+
+! >>> print fun.foo(a)
+!  F77:
+!  m= 2, n= 3
+!  Row  1:
+!  a(i= 1,j= 1) =  1
+!  a(i= 1,j= 2) =  2
+!  a(i= 1,j= 3) =  3
+!  Row  2:
+!  a(i= 2,j= 1) =  4
+!  a(i= 2,j= 2) =  5
+!  a(i= 2,j= 3) =  6
+! [[77777     2     3]
+!  [    4     5     6]]
+
+
+        subroutine bar(a,m,n)
+          intent(c)
+          intent(c) bar
+          integer dimension(m,n) :: a
+          intent(in,out) :: a
+          integer optional,check(shape(a,0)==m),depend(a) :: m=shape(a,0)
+          integer optional,check(shape(a,1)==n),depend(a) :: n=shape(a,1)
+          intent(in) m,n
+        end subroutine bar
+
+! >>> print fun.bar.__doc__
+! bar - Function signature:
+!   a = bar(a,[m,n])
+! Required arguments:
+!   a : input rank-2 array('i') with bounds (m,n)
+! Optional arguments:
+!   m := shape(a,0) input int
+!   n := shape(a,1) input int
+! Return objects:
+!   a : rank-2 array('i') with bounds (m,n)
+
+! >>> print fun.bar(a)
+! C:m=2, n=3
+! Row 1:
+! a(i=0,j=0)=1
+! a(i=0,j=1)=2
+! a(i=0,j=2)=3
+! Row 2:
+! a(i=1,j=0)=4
+! a(i=1,j=1)=5
+! a(i=1,j=2)=6
+! [[7777    2    3]
+!  [   4    5    6]]
+
+    end interface 
+end python module fun
+
+! This file was auto-generated with f2py (version:2.9.166).
+! See http://cens.ioc.ee/projects/f2py2e/

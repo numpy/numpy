@@ -1,0 +1,11 @@
+>>> import f2py2e
+>>> fsource = '''
+...       subroutine foo
+...       print*, "Hello world!"
+...       end 
+... '''
+>>> f2py2e.compile(fsource,modulename='hello',verbose=0)
+0
+>>> import hello
+>>> hello.foo()
+ Hello world!

@@ -1,0 +1,55 @@
+December 1, 2002:
+
+C FILE: STRING.F
+      SUBROUTINE FOO
+      END
+C END OF FILE STRING.F
+does not build with
+  f2py -c -m string string.f
+Cause: string is mapped to string_bn
+**************************************************************************
+August 16, 2001:
+1) re in Python 2.x is **three** times slower than the re in Python 1.5.
+**************************************************************************
+HP-UX B.10.20 A 9000/780:
+Fortran function returning character*(*) (id=7) ... failed(core dump)
+Fortran function returning logical*8 (id=21) ... expected .true. but got 0
+Callback function returning real (id=45) ... expected 34.56 but got 14087495680.0
+Callback function returning real*4 (id=46) ... expected 34.56 but got 14087495680.0
+Callback function returning logical*8 (id=55) ... expected .true. but got 0
+        C compiler: gcc ('gcc 2.x.x' 2.95.2) (from .f2py_get_compiler_CC)
+        Fortran compiler: g77 ('g77 2.x.x' 2.95.2) (from .f2py_get_compiler_FC)
+        Linker: ld ('HP-UX ld' 92453-07 linker linker ld B.10.24 961204) (from .f2py_get_compiler_LD)
+**************************************************************************
+Linux 2.2.13-0.9 #1 Thu Dec 9 17:03:57 EST 1999 alpha unknown:
+Fortran function returning character*(*) (id=7) ... expected 'abcdefgh' but got 'abcdefgh  \201' (o?k)
+Callback function returning complex (id=48) ... failed(core dump)
+        Trying with -DF2PY_CB_RETURNCOMPLEX ... failed(core dump)
+Callback function returning complex*8 (id=49) ... failed(core dump)
+        Trying with -DF2PY_CB_RETURNCOMPLEX ... failed(core dump)
+Callback function returning complex*16 (id=50) ... failed(core dump)
+        Trying with -DF2PY_CB_RETURNCOMPLEX ... failed(core dump)
+	C compiler: cc ('Compaq C' V6.2-002) (from .f2py_get_compiler_CC)
+        Fortran compiler: fort ('Compaq Fortran' V1.0-920) (from .f2py_get_compiler_FC)
+        Linker: fort ('Compaq Fortran' V1.0-920) (from .f2py_get_compiler_LD)
+**************************************************************************
+Linux 2.2.14-15mdk #1 Tue Jan 4 22:24:20 CET 2000 i686 unknown:
+Callback function returning logical*8 (id=55) ... failed
+        C compiler: cc ('gcc 2.x.x' 2.95.2)
+        Fortran compiler: f90 ('Absoft F90' 3.0)
+        Linker: ld ('GNU ld' 2.9.5)
+**************************************************************************
+IRIX64 6.5 04151556 IP30:
+Testing integer, intent(inout) ...failed # not f2py problem
+Testing integer, intent(inout,out) ...failed
+Testing integer*1, intent(inout) ...failed
+Testing integer*1, intent(inout,out) ...failed
+Testing integer*8, intent(inout) ...failed
+Testing integer*8, intent(inout,out) ...failed
+cc-1140 cc: WARNING File = genmodule.c, Line = 114
+  A value of type "void *" cannot be used to initialize an entity of type
+          "void (*)()".
+    {"foo",-1,{-1},0,(char *)F_FUNC(foo,FOO),(void *)gen_foo,doc_gen_foo},
+        C compiler: cc ('MIPSpro 7 Compilers' 7.30)
+        Fortran compiler: f77 ('MIPSpro 7 Compilers' 7.30)
+        Linker: ld ('Linker for MIPSpro 7 Compilers' 7.30.)

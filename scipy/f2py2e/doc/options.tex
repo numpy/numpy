@@ -1,0 +1,63 @@
+
+\section{\fpy command line options}
+\label{sec:opts}
+
+\fpy has the following command line syntax (run \fpy without arguments
+to get up to date options!!!):
+\begin{verbatim}
+f2py [<options>] <fortran files> [[[only:]||[skip:]] <fortran functions> ]\
+                 [: <fortran files> ...]
+\end{verbatim}
+where 
+\begin{description}
+\item[\texttt{<options>}] --- the following options are available:
+  \begin{description}
+  \item[\texttt{-f77}]  --- \texttt{<fortran files>} are in Fortran~77
+    fixed format (default).
+  \item[\texttt{-f90}]  --- \texttt{<fortran files>} are in
+    Fortran~90/95 free format (default for signature files).
+  \item[\texttt{-fix}] --- \texttt{<fortran files>} are in
+    Fortran~90/95 fixed format.
+  \item[\texttt{-h <filename>}] --- after scanning the
+    \texttt{<fortran files>} write the signatures of Fortran routines
+    to file \texttt{<filename>} and exit. If \texttt{<filename>}
+    exists, \fpy quits without overwriting the file. Use
+    \texttt{-{}-overwrite-signature} to overwrite.
+  \item[\texttt{-m <modulename>}] --- specify the name of the module
+    when scanning Fortran~77 codes for the first time. \fpy will
+    generate Python C/API module source \texttt{<modulename>module.c}.
+  \item[\texttt{-{}-lower/-{}-no-lower}]  --- lower/do not lower the cases
+    when scanning the \texttt{<fortran files>}. Default when
+    \texttt{-h} flag is specified/unspecified (that is for Fortran~77
+    codes/signature files).
+  \item[\texttt{-{}-short-latex}] --- use this flag when you want to
+    include the generated LaTeX document to another LaTeX document.
+  \item[\texttt{-{}-debug-capi}] --- create a very verbose C/API
+    code. Useful for debbuging.
+%  \item[\texttt{-{}-h-force}] --- if \texttt{-h <filename>} is used then
+%    overwrite the file \texttt{<filename>} (if it exists) and continue
+%    with constructing the C/API module source.
+  \item[\texttt{-makefile <options>}] --- run \fpy without arguments
+    for more information.
+  \item[\texttt{-{}-use-libs}] --- see \texttt{-makefile}.
+  \item[\texttt{-{}-overwrite-makefile}] --- overwrite existing
+    \texttt{Makefile-<modulename>}.
+  \item[\texttt{-v}] --- print \fpy version number and exit.
+  \item[\texttt{-pyinc}] --- print Python include path and exit.
+  \end{description}
+\item[\texttt{<fortran files>}] --- are the paths to Fortran files or
+  to signature files that will be scanned for \texttt{<fortran
+    functions>} in order to determine their signatures.
+\item[\texttt{<fortran functons>}] --- are the names of Fortran
+  routines for which Python C/API wrapper functions will be generated.
+  Default is all that are found in \texttt{<fortran files>}.
+\item[\texttt{only:}/\texttt{skip:}] --- are flags for filtering
+  in/out the names of fortran routines to be wrapped. Run \fpy without
+  arguments for more information about the usage of these flags.
+\end{description}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "f2py2e"
+%%% End: 

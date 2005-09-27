@@ -1,0 +1,2 @@
+        parameter(nn=10,id=1000,jd=100,ii=100000)
+        parameter(ia=1000,nc=100,nl=50)

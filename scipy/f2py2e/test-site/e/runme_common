@@ -1,0 +1,19 @@
+#!/bin/sh
+f2py2e='python ../../f2py2e.py'
+
+$f2py2e common.f -m comfoo -h comfoo.pyf --overwrite-signature --overwrite-makefile
+gmake -f Makefile-comfoo clean comfoo
+
+python -c '
+import comfoo,Numeric
+print comfoo.__doc__
+print "dir(comfoo)=",dir(comfoo)
+print "dir(comfoo.foodata)=",dir(comfoo.foodata) # str,str2,y,z
+print "Calling foo(2): ",comfoo.foo(2)
+for n in dir(comfoo.foodata):
+    print n,"=",comfoo.foodata.__dict__[n]
+comfoo.foodata.str="abcdef"
+print comfoo.foo(5)
+print comfoo.foodata.str
+print "ok"
+'

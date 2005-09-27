@@ -1,0 +1,18 @@
+#!/bin/sh
+
+f2py2e='python ../../f2py2e.py'
+PYINC=`$f2py2e -pyinc`
+$f2py2e foobar-smart.pyf --short-latex --overwrite-makefile -makefile foo.f bar.f
+gmake -f Makefile-foobar
+#gcc -O3 -I$PYINC -I$PYINC/Numeric -shared -o foobarmodule.so foobarmodule.c foo.f bar.f
+python -c '
+import foobar
+print foobar.__doc__
+print foobar.bar(2,3)
+from Numeric import *
+a=array(3)
+print a,foobar.foo(a),a
+print foobar.foo.__doc__
+print foobar.bar.__doc__
+print "ok"
+'

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+FC="/usr/absoft/bin/f90 -V -B108 -YCFRL=1 -YCOM_NAMES=LCS -YCOM_PFX -YCOM_SFX=_ -YEXT_PFX -YEXT_NAMES=LCS"
+CC=gcc
+
+$FC -c sub.f90 wrap.f90 > runme.tmp 2>&1
+cat runme.tmp | grep -v /usr/absoft/bin/ibe
+$CC main.c sub.o wrap.o -L/usr/absoft/lib -lfio -lf77math -lf90math
+./a.out && echo ok || echo failed

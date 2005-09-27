@@ -1,0 +1,158 @@
+
+\section{Introduction}
+\label{sec:intro}
+
+\fpy is a command line tool that generates Python C/API modules for
+interfacing Fortran~77/90/95 codes and Fortran~90/95 modules from
+Python.  In general, using \fpy an
+interface is produced in three steps:
+\begin{itemize}
+\item[(i)] \fpy scans Fortran sources and creates the so-called
+  \emph{signature} file; the signature file contains the signatures of
+  Fortran routines; the signatures are given in the free format of the
+  Fortran~90/95 language specification. Latest version of \fpy
+  generates also a make file for building shared module.  
+  About currently supported compilers see the \fpy home page
+\item[(ii)] Optionally, the signature files can be modified manually
+  in order to dictate how the Fortran routines should be called or
+  seemed from the Python environment.
+\item[(iii)] \fpy reads the signature files and generates Python C/API
+  modules that can be compiled and imported to Python code. In
+  addition, a LaTeX document is generated that contains the
+  documentation of wrapped functions.
+\end{itemize}
+(Note that if you are satisfied with the default signature that \fpy
+generates in step (i), all three steps can be covered with just
+one call to \fpy --- by not specifying `\texttt{-h}' flag).
+Latest versions of \fpy support so-called \fpy directive that allows
+inserting various information about wrapping directly to Fortran
+source code as comments (\texttt{<comment char>f2py  <signature statement>}).
+
+The following diagram illustrates the usage of the tool:
+\begin{verbatim}
+! Fortran file foo.f:
+      subroutine foo(a)
+      integer a
+      a = a + 5
+      end
+\end{verbatim}
+\begin{verbatim}
+! Fortran file bar.f:
+      function bar(a,b)
+      integer a,b,bar
+      bar = a + b
+      end
+\end{verbatim}
+\begin{itemize}
+\item[(i)] \shell{\fpy foo.f bar.f -m foobar -h foobar.pyf}
+\end{itemize}
+\begin{verbatim}
+!%f90
+! Signature file: foobar.pyf
+python module foobar ! in
+    interface  ! in :foobar
+        subroutine foo(a) ! in :foobar:foo.f
+            integer intent(inout) :: a
+        end subroutine foo
+        function bar(a,b) ! in :foobar:bar.f
+            integer :: a
+            integer :: b
+            integer :: bar
+        end function bar
+    end interface
+end python module foobar
+\end{verbatim}
+\begin{itemize}
+\item[(ii)] Edit the signature file (here I made \texttt{foo}s
+  argument \texttt{a} to be \texttt{intent(inout)}, see
+  Sec.~\ref{sec:attributes}).
+\item[(iii)] \shell{\fpy foobar.pyf}
+\end{itemize}
+\begin{verbatim}
+/* Python C/API module: foobarmodule.c */
+...
+\end{verbatim}
+\begin{itemize}
+\item[(iv)] \shell{make -f Makefile-foobar}
+%\shell{gcc -shared -I/usr/include/python1.5/ foobarmodule.c\bs\\
+%foo.f bar.f -o foobarmodule.so}
+\end{itemize}
+\begin{verbatim}
+Python shared module: foobarmodule.so
+\end{verbatim}
+\begin{itemize}
+\item[(v)] Usage in Python:
+\end{itemize}
+\vspace*{-4ex}
+\begin{verbatim}
+>>> import foobar
+>>> print foobar.__doc__
+This module 'foobar' is auto-generated with f2py (version:1.174).
+The following functions are available:
+  foo(a)
+  bar = bar(a,b)
+.
+>>> print foobar.bar(2,3)
+5
+>>> from Numeric import *
+>>> a = array(3)
+>>> print a,foobar.foo(a),a
+3 None 8
+\end{verbatim}
+Information about how to call \fpy (steps (i) and (iii)) can be
+obtained by executing\\
+\shell{\fpy}\\
+This will print the usage instructions.
+ Step (iv) is system dependent
+(compiler and the locations of the header files \texttt{Python.h} and
+\texttt{arrayobject.h}), and so you must know how to compile a shared
+module for Python in you system.
+
+The next Section describes the step (ii) in more detail in order to
+explain how you can influence to the process of interface generation
+so that the users can enjoy more writing Python programs using your
+wrappers that call Fortran routines.  Step (v) is covered in
+Sec.~\ref{sec:notes}.
+
+
+\subsection{Features}
+\label{sec:features}
+
+\fpy has the following features:
+\begin{enumerate}
+\item \fpy scans real Fortran codes and produces the signature files.
+  The syntax of the signature files is borrowed from the Fortran~90/95
+  language specification with some extensions.
+\item \fpy uses the signature files to produce the wrappers for
+  Fortran~77 routines and their \texttt{COMMON} blocks.
+\item For \texttt{external} arguments \fpy constructs a very flexible
+  call-back mechanism so that Python functions can be called from
+  Fortran.
+\item You can pass in almost arbitrary Python objects to wrapper
+  functions.  If needed, \fpy takes care of type-casting and
+  non-contiguous arrays.
+\item You can modify the signature files so that \fpy will generate
+  wrapper functions with desired signatures.  \texttt{depend()}
+  attribute is introduced to control the initialization order of the
+  variables. \fpy introduces \texttt{intent(hide)} attribute to remove
+  the particular argument from the argument list of the wrapper
+  function.  In addition, \texttt{optional} and \texttt{required}
+  attributes are introduced and employed.
+\item \fpy supports almost all standard Fortran~77/90/95 constructs
+  and understands all basic Fortran types, including
+  (multi-dimensional, complex) arrays and character strings with
+  adjustable and assumed sizes/lengths.
+\item \fpy generates a LaTeX document containing the
+  documentations of the wrapped functions (argument types, dimensions,
+  etc). The user can easily add some human readable text to the
+  documentation by inserting \texttt{note(<LaTeX text>)} attribute to
+  the definition of routine signatures.
+\item \fpy generates a GNU make file that can be used for building
+  shared modules calling Fortran functions.
+\item \fpy supports wrapping Fortran 90/95 module routines.
+\end{enumerate}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "f2py2e"
+%%% End: 

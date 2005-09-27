@@ -1,0 +1,27 @@
+#!/bin/sh
+
+f2py=../../f2py2e.py
+#f2py=f2py
+$f2py -m ttt sub.f90 -h ttt.pyf --overwrite-signature --overwrite-makefile
+$f2py ttt.pyf
+gmake -f Makefile-ttt clean test
+
+python -c '
+import ttt,sys
+print ttt.moddata.fun()
+print ttt.moddata.bar()
+ttt.moddata.data=[1,2,3]
+print "ttt.moddata.__doc__:"
+print ttt.moddata.__doc__
+print "In python data=",ttt.moddata.data
+ttt.moddata.data=[5,6]
+print "In python reallocated data=",ttt.moddata.data
+print "In fortran:"
+ttt.moddata.bar()
+ttt.moddata.foo(5)
+print "In python data=",ttt.moddata.data
+print "In fortran:"
+ttt.moddata.bar()
+print "n=",ttt.moddata.n
+print "ok"
+'
