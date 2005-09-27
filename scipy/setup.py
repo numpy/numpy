@@ -6,6 +6,7 @@ def configuration(parent_package='',top_path=None):
     config = Configuration('scipy',parent_package,top_path)
     config.add_subpackage('distutils')
     config.add_subpackage('weave')
+    config.add_subpackage('f2py2e')
     config.add_subpackage('test')
     config.add_subpackage('base')
     config.add_subpackage('lib',os.path.join(config.local_path,'corelib'))
