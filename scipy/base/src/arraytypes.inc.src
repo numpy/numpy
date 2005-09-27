@@ -1429,7 +1429,12 @@ OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 #NAME= Void, String, Unicode#
 */
 
-static PyArray_Descr @from@_Descr = { {
+static PyArray_Descr @from@_Descr = { 
+				      PyArray_@from@, 0,
+				      _ALIGN(@align@),
+                                      &Py@NAME@ArrType_Type,
+				      PyArray_@from@LTR,
+{
 
 		(PyArray_VectorUnaryFunc*)@from@_to_BOOL, 
 		(PyArray_VectorUnaryFunc*)@from@_to_BYTE, 
@@ -1462,10 +1467,7 @@ static PyArray_Descr @from@_Descr = { {
 				      (PyArray_CopySwapNFunc*)@from@_copyswapn,
                                       (PyArray_CopySwapFunc*)@from@_copyswap,
 				      (PyArray_NonzeroFunc*)@from@_nonzero,
-                                      &Py@NAME@ArrType_Type,
-				      PyArray_@from@, 0,
-				      _ALIGN(@align@),
-				      PyArray_@from@LTR};
+};
 
 /**end repeat**/
 
@@ -1478,7 +1480,13 @@ static PyArray_Descr @from@_Descr = { {
 #NAME= Bool, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble, Object#
 */
 
-static PyArray_Descr @from@_Descr = { {
+static PyArray_Descr @from@_Descr = { 
+				      PyArray_@from@, 
+				      @num@*sizeof(@fromtyp@), 
+				      _ALIGN(@fromtyp@),
+				      &Py@NAME@ArrType_Type,
+				      PyArray_@from@LTR,
+{
 
 		(PyArray_VectorUnaryFunc*)@from@_to_BOOL, 
 		(PyArray_VectorUnaryFunc*)@from@_to_BYTE,
@@ -1511,11 +1519,7 @@ static PyArray_Descr @from@_Descr = { {
 				      (PyArray_CopySwapNFunc*)@from@_copyswapn,
 				      (PyArray_CopySwapFunc*)@from@_copyswap,
 				      (PyArray_NonzeroFunc*)@from@_nonzero,
-				      &Py@NAME@ArrType_Type,
-				      PyArray_@from@, 
-				      @num@*sizeof(@fromtyp@), 
-				      _ALIGN(@fromtyp@),
-				      PyArray_@from@LTR};
+};
 
 /**end repeat**/
 

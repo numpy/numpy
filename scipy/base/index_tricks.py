@@ -2,13 +2,44 @@
 
 import types
 import numeric as _nx
-__all__ = ['mgrid','ogrid','r_', 'row', 'c_', 'col', 'index_exp']
+__all__ = ['mgrid','ogrid','r_', 'row', 'c_', 'col', 'index_exp',
+           'ix_']
 
 from type_check import ScalarType
 import function_base
 import twodim_base as matrix_base
 import matrix
 makemat = matrix.matrix
+
+def ix_(*args):
+    """ Construct an open mesh from multiple sequences.
+
+    This function takes n 1-d sequences and returns n outputs with n
+    dimensions each such that the shape is 1 in all but one dimension and
+    the dimension with the non-unit shape value cycles through all n
+    dimensions.
+
+    Using ix_() one can quickly construct index arrays that will index
+    the cross product.
+
+    a[ix_([1,3,7],[2,5,8])]  returns the array
+
+    a[1,2]  a[1,5]  a[1,8]
+    a[3,2]  a[3,5]  a[3,8]
+    a[7,2]  a[7,5]  a[7,8]
+    """
+    out = []
+    nd = len(args)
+    baseshape = [1]*nd
+    for k in range(nd):
+        new = _nx.array(args[k])
+        if (new.ndim <> 1):
+            raise ValueError, "Cross index must be 1 dimensional"
+        baseshape[k] = len(new)
+        new.shape = tuple(baseshape)
+        out.append(new)
+        baseshape[k] = 1
+    return tuple(out)
 
 class nd_grid:
     """ Construct a "meshgrid" in N-dimensions.

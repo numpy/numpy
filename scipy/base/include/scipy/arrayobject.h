@@ -25,7 +25,7 @@ extern "C" {
 #define PY_FAIL 0
 #define PY_SUCCEED 1
 
-#define NUMERIC_VERSION 0x0300
+#define NUMERIC_VERSION 0x0400
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -705,6 +705,13 @@ typedef int (PyArray_ScanFunc)(FILE *, void *, int, char *, void *);
 
 
 typedef struct {
+	int type_num;           /* number representing this type */
+	int elsize;             /* element size for this type -- 
+				   or 0 if variable */
+       	int alignment;          /* alignment needed for this type */
+ 	PyTypeObject *typeobj;  /* the type object for this type */
+	char type;              /* character representing this type */
+
 	/* Functions to cast to all other standard types*/
 	PyArray_VectorUnaryFunc *cast[PyArray_NTYPES];
 
@@ -733,13 +740,6 @@ typedef struct {
 	
 	/* Function to determine if data is zero or not */
 	PyArray_NonzeroFunc *nonzero;
-
- 	PyTypeObject *typeobj;  /* the type object for this type */
-	int type_num;           /* number representing this type */
-	int elsize;             /* element size for this type -- 
-				   or 0 if variable */
-       	int alignment;          /* alignment needed for this type */
-	char type;              /* character representing this type */
 
 } PyArray_Descr;
 
