@@ -740,38 +740,57 @@ static PyObject *
 PyArray_FromDimsAndDataAndDescr(int nd, int *d, 
                                 PyArray_Descr *descr,
                                 char *data) {
-  
-	intp newd[MAX_DIMS];
+
+#if SIZEOF_INTP != SIZEOF_INT
 	int i;
+	intp newd[MAX_DIMS];
 	
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
         return PyArray_New(&PyArray_Type, nd, newd, 
                            descr->type_num, NULL, data, descr->elsize, 
 			   CARRAY_FLAGS, NULL);
+#else
+        return PyArray_New(&PyArray_Type, nd, (intp *)d, 
+                           descr->type_num, NULL, data, descr->elsize, 
+			   CARRAY_FLAGS, NULL);
+#endif
+
 }
 
 
 static PyObject *
 PyArray_FromDimsAndData(int nd, int *d, int type, char *data) 
 {
+#if SIZEOF_INTP != SIZEOF_INT
 	intp newd[MAX_DIMS];
 	int i;	
-	for (i=0; i<nd; i++) newd[i] = (intp) d[i];        
+	for (i=0; i<nd; i++) newd[i] = (intp) d[i]; 
 
 	return PyArray_New(&PyArray_Type, nd, newd, 
 			   type, NULL, data, 0, 
 			   CARRAY_FLAGS, NULL);
+#else
+	return PyArray_New(&PyArray_Type, nd, (intp *)d, 
+			   type, NULL, data, 0, 
+			   CARRAY_FLAGS, NULL);
+#endif
 }
+
 
 static PyObject *
 PyArray_FromDims(int nd, int *d, int type) 
 {
+#if SIZEOF_INTP != SIZEOF_INT
 	intp newd[MAX_DIMS];
 	int i;	
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
 
 	return PyArray_New(&PyArray_Type, nd, newd, type,
 			   NULL, NULL, 0, CARRAY_FLAGS, NULL);
+#else
+	return PyArray_New(&PyArray_Type, nd, (intp *)d, type,
+			   NULL, NULL, 0, CARRAY_FLAGS, NULL);
+#endif
 }
 
 /* end */
@@ -3011,7 +3030,7 @@ _array_fill_strides(intp *strides, intp *dims, int nd, intp itemsize,
 	}
 	return itemsize;
 }
-	
+
 	
 static PyObject *
 PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
