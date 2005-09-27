@@ -58,11 +58,13 @@ typedef unsigned long ulonglong;
 #  define ULONGLONG_SUFFIX(x) (x##UL)
 #endif
 
-#ifndef __cplusplus
-typedef unsigned char bool;
-#define false 0
-#define true 1
-#endif /* __cplusplus */
+typedef unsigned char Bool;
+#ifndef FALSE
+#define FALSE 0
+#endif
+#ifndef TRUE
+#define TRUE 1
+#endif
 
 #if SIZEOF_LONG_DOUBLE==SIZEOF_DOUBLE
 	typedef double longdouble;
@@ -149,10 +151,11 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 			PyArray_INTPLTR = 'p',
 			PyArray_UINTPLTR = 'P',
 
-			PyArray_GENSIGNED = 'i',
-			PyArray_GENUNSIGNED = 'u',
-			PyArray_GENFLOAT = 'f',
-			PyArray_GENCOMPLEX = 'c'
+			PyArray_GENBOOLLTR ='b',
+			PyArray_SIGNEDLTR = 'i',
+			PyArray_UNSIGNEDLTR = 'u',
+			PyArray_FLOATLTR = 'f',
+			PyArray_COMPLEXLTR = 'c'
 };
 
 	/* Define bit-width array types and typedefs */
@@ -177,8 +180,6 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 #define MAX_INT256 LONGLONG_SUFFIX(57896044618658097711785492504343953926634992332820282019728792003956564819967)
 #define MIN_INT256 (-MAX_INT256 - LONGLONG_SUFFIX(1))
 #define MAX_UINT256 ULONGLONG_SUFFIX(115792089237316195423570985008687907853269984665640564039457584007913129639935)
-
-#define Bool bool;
 
 	/* Need to find the number of bits for each type and 
 	   make definitions accordingly. 
@@ -214,7 +215,7 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 
 #define SIZEOF_LONGDOUBLE SIZEOF_LONG_DOUBLE
 #define SIZEOF_LONGLONG SIZEOF_LONG_LONG
-#define BITSOF_BOOL sizeof(bool)*CHAR_BIT
+#define BITSOF_BOOL sizeof(Bool)*CHAR_BIT
 #define BITSOF_CHAR CHAR_BIT
 #define BITSOF_SHORT (SIZEOF_SHORT*CHAR_BIT)
 #define BITSOF_INT (SIZEOF_INT*CHAR_BIT)
@@ -691,7 +692,7 @@ typedef int (PyArray_SetItemFunc)(PyObject *, char *, void *);
 typedef int (PyArray_CompareFunc)(const void *, const void *, void *);
 typedef void (PyArray_CopySwapNFunc)(void *, void *, intp, int, int);
 typedef void (PyArray_CopySwapFunc)(void *, void *, int, int);
-typedef bool (PyArray_NonzeroFunc)(void *, void *);
+typedef Bool (PyArray_NonzeroFunc)(void *, void *);
 
 
   /* These assume aligned and byteswapped data -- a buffer will be
@@ -705,12 +706,13 @@ typedef int (PyArray_ScanFunc)(FILE *, void *, int, char *, void *);
 
 
 typedef struct {
+ 	PyTypeObject *typeobj;  /* the type object for this type */
+	char kind;              /* kind for this type */
+	char type;              /* character representing this type */
 	int type_num;           /* number representing this type */
 	int elsize;             /* element size for this type -- 
 				   or 0 if variable */
        	int alignment;          /* alignment needed for this type */
- 	PyTypeObject *typeobj;  /* the type object for this type */
-	char type;              /* character representing this type */
 
 	/* Functions to cast to all other standard types*/
 	PyArray_VectorUnaryFunc *cast[PyArray_NTYPES];

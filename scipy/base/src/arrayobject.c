@@ -1575,7 +1575,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
      1 - the subscript is a standard view and a reference to the 
          array can be returned
 
-     2 - the subscript uses boolean masks or integer indexing and
+     2 - the subscript uses Boolean masks or integer indexing and
          therefore a new array is created and returned. 
 
 */
@@ -1833,7 +1833,7 @@ typedef struct {
                 *greater,
                 *greater_equal,
                 *floor_divide,
-                *true_divide,
+                *TRUE_divide,
 		*logical_or,
 		*logical_and,
 		*floor,
@@ -1886,7 +1886,7 @@ PyArray_SetNumericOps(PyObject *dict)
         SET(greater);
         SET(greater_equal);
         SET(floor_divide);	
-        SET(true_divide);	
+        SET(TRUE_divide);	
 	SET(logical_or);
 	SET(logical_and);
 	SET(floor);
@@ -1927,7 +1927,7 @@ PyArray_GetNumericOps(void)
         GET(greater);
         GET(greater_equal);
         GET(floor_divide);  
-        GET(true_divide); 
+        GET(TRUE_divide); 
 	GET(logical_or);
 	GET(logical_and);
 	GET(floor);
@@ -2187,9 +2187,9 @@ array_floor_divide(PyArrayObject *m1, PyObject *m2)
 }
 
 static PyObject *
-array_true_divide(PyArrayObject *m1, PyObject *m2) 
+array_TRUE_divide(PyArrayObject *m1, PyObject *m2) 
 {
-        return PyArray_GenericBinaryFunction(m1, m2, n_ops.true_divide);
+        return PyArray_GenericBinaryFunction(m1, m2, n_ops.TRUE_divide);
 }
 
 static PyObject *
@@ -2200,32 +2200,32 @@ array_inplace_floor_divide(PyArrayObject *m1, PyObject *m2)
 }
 
 static PyObject *
-array_inplace_true_divide(PyArrayObject *m1, PyObject *m2) 
+array_inplace_TRUE_divide(PyArrayObject *m1, PyObject *m2) 
 {
         return PyArray_GenericInplaceBinaryFunction(m1, m2, 
-						    n_ops.true_divide);
+						    n_ops.TRUE_divide);
 }
 
-/* Array evaluates as "true" if any of the elements are non-zero */
+/* Array evaluates as "TRUE" if any of the elements are non-zero */
 static int 
 array_all_nonzero(PyArrayObject *mp) 
 {
 	intp index;
 	PyArrayIterObject *it;
-	bool anytrue = 0;
+	Bool anyTRUE = 0;
 	
 	it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
-	if (it==NULL) return anytrue;
+	if (it==NULL) return anyTRUE;
 	index = it->size;
 	while(index--) {
 		if (mp->descr->nonzero(it->dataptr, mp)) {
-			anytrue = 1;
+			anyTRUE = 1;
 			break;
 		}
 		PyArray_ITER_NEXT(it);
 	}
 	Py_DECREF(it);
-	return anytrue;
+	return anyTRUE;
 }
 
 static PyObject *
@@ -2426,9 +2426,9 @@ static PyNumberMethods array_as_number = {
         (binaryfunc)array_inplace_bitwise_or,   /*inplace_or*/
 
         (binaryfunc)array_floor_divide,	     /*nb_floor_divide*/
-        (binaryfunc)array_true_divide,	     /*nb_true_divide*/
+        (binaryfunc)array_TRUE_divide,	     /*nb_TRUE_divide*/
         (binaryfunc)array_inplace_floor_divide,  /*nb_inplace_floor_divide*/
-        (binaryfunc)array_inplace_true_divide,   /*nb_inplace_true_divide*/
+        (binaryfunc)array_inplace_TRUE_divide,   /*nb_inplace_TRUE_divide*/
 
 };
 
@@ -2903,17 +2903,17 @@ _IsAligned(PyArrayObject *ap)
         return aligned != 0;
 }
 
-static bool
+static Bool
 _IsWriteable(PyArrayObject *ap)
 {
 	PyObject *base=ap->base;
 	PyBufferProcs *pb;
 
 	/* If we own our own data, then no-problem */
-	if ((base == NULL) || (ap->flags & OWN_DATA)) return true;
+	if ((base == NULL) || (ap->flags & OWN_DATA)) return TRUE;
 
 	/* Get to the final base object 
-	   If it is a writeable array, then return true
+	   If it is a writeable array, then return TRUE
 	   If we can find an array object 
 	   or a writeable buffer object as the final base object
 	   or a string object (for pickling support memory savings).
@@ -2923,20 +2923,20 @@ _IsWriteable(PyArrayObject *ap)
 
 	while(PyArray_Check(base)) {
 		if (PyArray_CHKFLAGS(base, OWN_DATA)) 
-			return (bool) (PyArray_ISWRITEABLE(base));
+			return (Bool) (PyArray_ISWRITEABLE(base));
 		base = PyArray_BASE(base);
 	}
 
 	/* here so pickle support works seamlessly 
 	   and unpickled array can be set and reset writeable 
 	   -- could be abused -- */
-	if PyString_Check(base) return true;
+	if PyString_Check(base) return TRUE;
 
 	pb = base->ob_type->tp_as_buffer;
 	if (pb == NULL || pb->bf_getwritebuffer == NULL)
-		return false;
+		return FALSE;
 	
-	return true;
+	return TRUE;
 }
 
 
@@ -2969,7 +2969,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
  walk outside of the memory implied by either numbytes or
  a single segment array of the provided dimensions and element size if
  numbytes is 0 */
-static bool
+static Bool
 PyArray_CheckStrides(int elsize, int nd, intp numbytes, 
 		     intp *dims, intp *newstrides)
 {
@@ -2980,10 +2980,10 @@ PyArray_CheckStrides(int elsize, int nd, intp numbytes,
 	
 	for (i=0; i<nd; i++) {
 		if (newstrides[i]*(dims[i]-1)+elsize > numbytes) {
-			return false;
+			return FALSE;
 		}
 	}
-	return true;
+	return TRUE;
 	
 }
 
@@ -4361,7 +4361,7 @@ _array_find_type(PyObject *op, PyArray_Typecode *minitype,
 
 	if (minitype == NULL) {
 		mintype = PyArray_BOOL;
-		minsize = sizeof(bool);
+		minsize = sizeof(Bool);
 	}
 	else {
 		mintype = minitype->type_num;
@@ -4924,7 +4924,7 @@ _array_typecode_fromstr(char *str, int *swap, PyArray_Typecode *type)
     size = atoi(str + 1);
     switch (typechar) {
     case 'b':
-	    if (size == sizeof(bool))
+	    if (size == sizeof(Bool))
 		    type_num = PyArray_BOOL;	    
 	    else _MY_FAIL 
 	    break;		    
@@ -5503,7 +5503,7 @@ iter_length(PyArrayIterObject *self)
 
 
 static PyObject *
-iter_subscript_bool(PyArrayIterObject *self, PyArrayObject *ind)
+iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
 {
 	int index, strides, itemsize;
 	intp count=0;
@@ -5523,7 +5523,7 @@ iter_subscript_bool(PyArrayIterObject *self, PyArrayObject *ind)
 	dptr = ind->data;
 	/* Get size of return array */
 	while(index--) {
-		if (*((bool *)dptr) != 0)
+		if (*((Bool *)dptr) != 0)
 			count++;
 		dptr += strides;
 	}
@@ -5539,10 +5539,10 @@ iter_subscript_bool(PyArrayIterObject *self, PyArrayObject *ind)
 	dptr = ind->data;
 
         copyswap = self->ao->descr->copyswap;
-	/* Loop over boolean array */
+	/* Loop over Boolean array */
 	swap = !(PyArray_ISNOTSWAPPED(self->ao));
 	while(index--) {
-		if (*((bool *)dptr) != 0) {
+		if (*((Bool *)dptr) != 0) {
                         copyswap(optr, self->dataptr, swap, itemsize);
 			optr += itemsize;
 		}
@@ -5635,7 +5635,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 	/* Could implement this with adjusted strides
 	   and dimensions in iterator */
 
-	/* Check for boolean -- this is first becasue
+	/* Check for Boolean -- this is first becasue
 	   Bool is a subclass of Int */
 	PyArray_ITER_RESET(self);
 
@@ -5703,7 +5703,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 	if (PyArray_Check(obj)) {
 		/* Check for Boolean object */
 		if (PyArray_TYPE(obj)==PyArray_BOOL) {
-			r = iter_subscript_bool(self, (PyArrayObject *)obj);
+			r = iter_subscript_Bool(self, (PyArrayObject *)obj);
 		} 
 		/* Check for integer array */
 		else if (PyArray_ISINTEGER(obj)) {
@@ -5733,7 +5733,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 
 
 static int
-iter_ass_sub_bool(PyArrayIterObject *self, PyArrayObject *ind,
+iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
 		  PyArrayIterObject *val, int swap)
 {
 	int index, strides, itemsize;
@@ -5750,10 +5750,10 @@ iter_ass_sub_bool(PyArrayIterObject *self, PyArrayObject *ind,
 	strides = ind->strides[0];
 	dptr = ind->data;
 	PyArray_ITER_RESET(self);
-	/* Loop over boolean array */
+	/* Loop over Boolean array */
         copyswap = self->ao->descr->copyswap;
 	while(index--) {
-		if (*((bool *)dptr) != 0) {
+		if (*((Bool *)dptr) != 0) {
                         copyswap(self->dataptr, val->dataptr, swap,
                                   itemsize);
 		}
@@ -5842,7 +5842,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	val_it = (PyArrayIterObject *)PyArray_IterNew(arrval);
 	if (val_it==NULL) goto fail;
 
-	/* Check for boolean -- this is first becasue
+	/* Check for Boolean -- this is first becasue
 	   Bool is a subclass of Int */
 
         copyswap = PyArray_DESCR(arrval)->copyswap;
@@ -5901,7 +5901,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	if (PyArray_Check(obj)) {
 		/* Check for Boolean object */
 		if (PyArray_TYPE(obj)==PyArray_BOOL) {
-			if (iter_ass_sub_bool(self, (PyArrayObject *)obj,
+			if (iter_ass_sub_Bool(self, (PyArrayObject *)obj,
 					      val_it, swap) < 0)
 				goto fail;
 		} 
@@ -6434,27 +6434,27 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 	return;
 }
 
-/* This function takes a boolean array and constructs index objects and
-   iterators as if nonzero(bool) had been called
+/* This function takes a Boolean array and constructs index objects and
+   iterators as if nonzero(Bool) had been called
 */
 static int
-_nonzero_indices(PyObject *mybool, PyArrayIterObject **iters)
+_nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
 {
 	PyArray_Typecode typecode = {PyArray_BOOL, 0, 0};
 	PyArrayObject *ba =NULL, *new=NULL;
 	int nd, j;
 	intp size, i, count;
-	bool *ptr;
+	Bool *ptr;
 	intp coords[MAX_DIMS], dims_m1[MAX_DIMS];
 	intp *dptr[MAX_DIMS];
 
-	ba = (PyArrayObject *)PyArray_FromAny(mybool, &typecode, 0, 0, 
+	ba = (PyArrayObject *)PyArray_FromAny(myBool, &typecode, 0, 0, 
 					      CARRAY_FLAGS);
 	if (ba == NULL) return -1;
 	nd = ba->nd;
 	for (j=0; j<nd; j++) iters[j] = NULL;
 	size = PyArray_SIZE(ba);
-	ptr = (bool *)ba->data;
+	ptr = (Bool *)ba->data;
 	count = 0;
 
 	/* pre-determine how many nonzero entries there are */
@@ -6476,11 +6476,11 @@ _nonzero_indices(PyObject *mybool, PyArrayIterObject **iters)
 		dims_m1[j] = ba->dimensions[j]-1;
 	}
 
-	ptr = (bool *)ba->data;
+	ptr = (Bool *)ba->data;
 
 	if (count == 0) return nd;
 
-	/* Loop through the boolean array  and copy coordinates
+	/* Loop through the Boolean array  and copy coordinates
 	   for non-zero entries */
 	for (i=0; i<size; i++) {
 		if (*(ptr++)) {
@@ -6550,7 +6550,7 @@ PyArray_MapIterNew(PyObject *indexobj)
 
 	/* Must have some kind of fancy indexing if we are here */
 	/* indexobj is either a list, an arrayobject, or a tuple 
-	   (with at least 1 list or arrayobject or bool object), */
+	   (with at least 1 list or arrayobject or Bool object), */
 	
 	/* convert all inputs to iterators */
 	if (PyArray_Check(indexobj) &&			\

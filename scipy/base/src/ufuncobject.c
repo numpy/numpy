@@ -5,7 +5,7 @@
   
   Full description
   
-  This supports mathematical (and boolean) functions on arrays and other python
+  This supports mathematical (and Boolean) functions on arrays and other python
   objects.  Math on large arrays of basic C types is rather efficient.
 
   Travis E. Oliphant  (2005)
@@ -774,7 +774,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         char arg_types[MAX_ARGS];
 	char scalars[MAX_ARGS];
 	PyUFuncObject *self=loop->ufunc;
-	bool allscalars=true;
+	Bool allscalars=TRUE;
 
         /* Check number of arguments */
         nargs = PyTuple_Size(args);
@@ -807,7 +807,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		*/
 		if (mps[i]->nd > 0) {
 			scalars[i] = UFUNC_NOSCALAR;
-			allscalars=false;
+			allscalars=FALSE;
 		}
 		else scalars[i] = _scalar_kind(arg_types[i], &(mps[i]));
         }

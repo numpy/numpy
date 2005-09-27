@@ -3,7 +3,7 @@
 /**begin repeat
 
 #name=Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble,  CFloat, CDouble, CLongDouble, Object,#
-#type=bool, signed char, short, int, long, longlong, unsigned char, unsigned short, unsigned int, unsigned long, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, PyObject *,char#
+#type=Bool, signed char, short, int, long, longlong, unsigned char, unsigned short, unsigned int, unsigned long, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, PyObject *,char#
 */
 typedef struct {
 	PyObject_HEAD;
@@ -832,7 +832,7 @@ gentype_getreadbuf(PyObject *, int, void **);
 static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args)
 {
-	bool inplace=false;
+	Bool inplace=FALSE;
 	
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_BoolConverter, &inplace))
 		return NULL;
@@ -1190,7 +1190,7 @@ static PyObject *
 }
 /**end repeat**/
 
-/* bool->tp_new only return Py_True or Py_False */
+/* bool->tp_new only returns Py_True or Py_False */
 static PyObject *
 bool_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {

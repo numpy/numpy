@@ -54,7 +54,7 @@ CDOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res,
 
 
 static PyArray_DotFunc *oldFunctions[PyArray_NTYPES];
-static bool altered=false;
+static Bool altered=FALSE;
 
 static char doc_alterdot[] = "alterdot() changes all dot functions to use blas.";
 
@@ -84,7 +84,7 @@ dotblas_alterdot(PyObject *dummy, PyObject *args)
 	oldFunctions[PyArray_CDOUBLE] = descr->dotfunc;
 	descr->dotfunc = (PyArray_DotFunc *)CDOUBLE_dot;
 
-	altered = true;
+	altered = TRUE;
     }
 
     Py_INCREF(Py_None);
@@ -117,7 +117,7 @@ dotblas_restoredot(PyObject *dummy, PyObject *args)
 	descr->dotfunc = oldFunctions[PyArray_CDOUBLE];
 	oldFunctions[PyArray_CDOUBLE] = NULL;
 	
-	altered = false;
+	altered = FALSE;
     }
 
     Py_INCREF(Py_None);

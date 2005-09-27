@@ -37,7 +37,7 @@ MyPyLong_AsUnsignedLongLong(PyObject *vv)
 #TYP=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,LONG,UINT,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE#
 #func1=PyBool_FromLong, PyInt_FromLong*6, PyLong_FromUnsignedLong*2, PyLong_FromLongLong, PyLong_FromUnsignedLongLong, PyFloat_FromDouble*2#
 #func2=PyObject_IsTrue, PyInt_AsLong*6, MyPyLong_AsUnsignedLong*2, PyLong_AsLongLong, MyPyLong_AsUnsignedLongLong, PyFloat_AsDouble*2#
-#typ=bool, byte, ubyte, short, ushort, int, long, uint, ulong, longlong, ulonglong, float, double#
+#typ=Bool, byte, ubyte, short, ushort, int, long, uint, ulong, longlong, ulonglong, float, double#
 #typ1=long*7, ulong*2, longlong, ulonglong, float, double#
 #kind=Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong, LongLong, ULongLong, Float, Double#
 */
@@ -96,7 +96,7 @@ static PyObject *
         }
         else {
 		int size = sizeof(@typ@);
-		bool swap = !PyArray_ISNOTSWAPPED(ap);
+		Bool swap = !PyArray_ISNOTSWAPPED(ap);
                 copy_and_swap(&t1, ip, size, 1, 0, swap);
                 copy_and_swap(&t2, ip+size, size, 1, 0, swap);
                 return PyComplex_FromDoubles((double)t1, (double)t2);
@@ -370,8 +370,8 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 
 #to=(BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*17#
 #from=BOOL*14,BYTE*14,UBYTE*14,SHORT*14,USHORT*14,INT*14,UINT*14,LONG*14,ULONG*14,LONGLONG*14,ULONGLONG*14,FLOAT*14,DOUBLE*14,LONGDOUBLE*14,CFLOAT*14,CDOUBLE*14,CLONGDOUBLE*14#
-#totyp=(bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*17#
-#fromtyp=bool*14,byte*14, ubyte*14, short*14, ushort*14, int*14, uint*14, long*14, ulong*14, longlong*14, ulonglong*14, float*14, double*14, longdouble*14, float*14, double*14, longdouble*14#
+#totyp=(Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*17#
+#fromtyp=Bool*14,byte*14, ubyte*14, short*14, ushort*14, int*14, uint*14, long*14, ulong*14, longlong*14, ulonglong*14, float*14, double*14, longdouble*14, float*14, double*14, longdouble*14#
 #incr= ip++*196,ip+=2*42#
 */
 
@@ -391,7 +391,7 @@ static void
 
 #to=(CFLOAT,CDOUBLE,CLONGDOUBLE)*14#
 #from=BOOL*3,BYTE*3,UBYTE*3,SHORT*3,USHORT*3,INT*3,UINT*3,LONG*3,ULONG*3,LONGLONG*3,ULONGLONG*3,FLOAT*3,DOUBLE*3,LONGDOUBLE*3#
-#fromtyp= bool*3,byte*3, ubyte*3, short*3, ushort*3, int*3, uint*3, long*3, ulong*3, longlong*3, ulonglong*3, float*3, double*3, longdouble*3#
+#fromtyp= Bool*3,byte*3, ubyte*3, short*3, ushort*3, int*3, uint*3, long*3, ulong*3, longlong*3, ulonglong*3, float*3, double*3, longdouble*3#
 #totyp= (float, double, longdouble)*14#
 */
 static void 
@@ -426,7 +426,7 @@ static void
 /**begin repeat 
 
 #from=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE, STRING, UNICODE, VOID, OBJECT#
-#fromtyp=bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char, PyObject *#
+#fromtyp=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char, PyObject *#
 #skip= 1*17, aip->itemsize*3, 1#
 */
 static void 
@@ -445,7 +445,7 @@ static void
 /**begin repeat 
 
 #to=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE, STRING, UNICODE, VOID#
-#totyp=bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char#
+#totyp=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char#
 #skip= 1*17, aip->itemsize*3#
 */
 static void 
@@ -467,7 +467,7 @@ OBJECT_to_@to@(PyObject **ip, @totyp@ *op, intp n, PyArrayObject *aip,
 #from=STRING*20, UNICODE*20, VOID*20#
 #fromtyp=char*60#
 #to=(BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,STRING,UNICODE,VOID)*3#
-#totyp=(bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, void)*3#
+#totyp=(Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, void)*3#
 #oskip=(1*17,aop->itemsize*3)*3#
 */
 
@@ -497,7 +497,7 @@ static void
 #to=STRING*17, UNICODE*17, VOID*17#
 #totyp=char*17, char*17, char*17#
 #from=(BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE)*3#
-#fromtyp=(bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble)*3#
+#fromtyp=(Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble)*3#
 */
 
 static void
@@ -701,7 +701,7 @@ static void
 /**begin repeat
 
 #fname=BOOL, BYTE, UBYTE#
-#type=bool, byte, ubyte#
+#type=Bool, byte, ubyte#
 */
 static void
 @fname@_copyswapn (void *dst, void *src, intp n, int swap, int itemsize)
@@ -1013,19 +1013,19 @@ UNICODE_copyswap (char *dst, char *src, int swap, int itemsize)
 
 /**begin repeat
 #fname=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE#
-#type=bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble#
+#type=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble#
 */
-static bool 
+static Bool 
 @fname@_nonzero (@type@ *ip, PyArrayObject *ap)
 {
 	@type@ t1;
 	if (ap==NULL || PyArray_ISBEHAVED_RO(ap))
-		return (bool) (*ip != 0);
+		return (Bool) (*ip != 0);
 	else {
 		/* don't worry about swap, since we are just testing
 		   whether or not equal to 0 */
 		memcpy(&t1, ip, sizeof(@type@));
-		return (bool) (t1 != 0);
+		return (Bool) (t1 != 0);
 	}
 }
 /**end repeat**/
@@ -1033,31 +1033,31 @@ static bool
 #define WHITESPACE " \t\n\r\v\f"
 #define WHITELEN 6
 
-static bool
+static Bool
 Py_STRING_ISSPACE(char ch) 
 {
 	char white[] = WHITESPACE;
 	int j;
-	bool space=false;
+	Bool space=FALSE;
 	for (j=0; j<WHITELEN; j++) {	
 		if (ch == white[j]) {	
-			space=true;	
+			space=TRUE;	
 			break;		
 		}			
 	}				
 	return space;
 }
 
-static bool
+static Bool
 STRING_nonzero (char *ip, PyArrayObject *ap)
 {
 	int len = ap->itemsize;
 	int i;
-	bool nonz = false;
+	Bool nonz = FALSE;
 
 	for (i=0; i<len; i++) {
 		if (!Py_STRING_ISSPACE(*ip)) {
-			nonz = true;
+			nonz = TRUE;
 			break;
 		}
 		ip++;
@@ -1065,16 +1065,16 @@ STRING_nonzero (char *ip, PyArrayObject *ap)
 	return nonz;
 }
 
-static bool
+static Bool
 UNICODE_nonzero (Py_UNICODE *ip, PyArrayObject *ap)
 {
 	int len = ap->itemsize >> 1;
 	int i;
-	bool nonz = false;
+	Bool nonz = FALSE;
 	
 	for (i=0; i<len; i++) {
 		if (!Py_UNICODE_ISSPACE(*ip)) {
-			nonz = true;
+			nonz = TRUE;
 			break;
 		}
 		ip++;
@@ -1082,21 +1082,21 @@ UNICODE_nonzero (Py_UNICODE *ip, PyArrayObject *ap)
 	return nonz;
 }
 
-static bool
+static Bool
 OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
 {
-	return (bool) PyObject_IsTrue(*ip);
+	return (Bool) PyObject_IsTrue(*ip);
 }
 
 /* If subclass has _nonzero method call it with buffer
    object wrapping current item.  Otherwise, just compare with '\0'.
 */
-static bool
+static Bool
 VOID_nonzero (char *ip, PyArrayObject *ap)
 {
 	int i;
 	int len = ap->itemsize;
-	bool nonz = false;
+	Bool nonz = FALSE;
         PyObject *u=NULL;
         int res;
         PyObject *pyres=NULL;
@@ -1108,7 +1108,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
 		Py_XDECREF(meth);
 		for (i=0; i<len; i++) {
 			if (*ip != '\0') {
-				nonz = true;
+				nonz = TRUE;
 				break;
 			}
 			ip++;
@@ -1116,22 +1116,22 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
 		return nonz;
         }
 
-        if (len < 0) return false;
+        if (len < 0) return FALSE;
 	
         u = PyBuffer_FromMemory(ip, len);
-        if ((u==NULL)) {Py_DECREF(meth); return false;}
+        if ((u==NULL)) {Py_DECREF(meth); return FALSE;}
 
         args = Py_BuildValue("O",u);
         pyres = PyObject_CallObject(meth, args);
 	Py_DECREF(args);
 	Py_DECREF(u);
 	Py_DECREF(meth);
-        if (pyres==NULL) return false;
+        if (pyres==NULL) return FALSE;
         res = (int) PyInt_AsLong(pyres);
 	Py_DECREF(pyres);
-        if (PyErr_Occurred()) return false;
+        if (PyErr_Occurred()) return FALSE;
 
-	return (bool) res;
+	return (Bool) res;
 }
 
 
@@ -1139,7 +1139,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
 
 /**begin repeat
 #fname=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#type=bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+#type=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 
 static int
@@ -1152,7 +1152,7 @@ static int
         }
         else { 
 		int size = ap->itemsize;
-		bool swap = !PyArray_ISNOTSWAPPED(ap);
+		Bool swap = !PyArray_ISNOTSWAPPED(ap);
 		/* copy to local, aligned variable */
                 copy_and_swap(&t1, ip1, size, 1, 0, swap);
 		copy_and_swap(&t2, ip2, size, 1, 0, swap);
@@ -1183,7 +1183,7 @@ static int
         }
         else { 
 		int size = ap->itemsize >> 1;
-		bool swap = !PyArray_ISNOTSWAPPED(ap);
+		Bool swap = !PyArray_ISNOTSWAPPED(ap);
 		/* copy to local, aligned variable */
                 copy_and_swap(&t1, ip1, size, 1, 0, swap);
 		copy_and_swap(&t2, ip2, size, 1, 0, swap);
@@ -1280,7 +1280,7 @@ VOID_compare(void *ip1, void *ip2, PyArrayObject *ap)
 /**begin repeat
 
 #fname= BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE#
-#type= bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble#
 #incr= ip++*14, ip+=2*3#
 */
 
@@ -1350,8 +1350,8 @@ static int
 /**begin repeat
 
 #name=BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
-#type= bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
-#out= bool, intp, uintp, intp, uintp, intp, uintp, intp, uintp, longlong, ulonglong, float, double, longdouble#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+#out= Bool, intp, uintp, intp, uintp, intp, uintp, intp, uintp, longlong, ulonglong, float, double, longdouble#
 */
 
 static void
@@ -1427,13 +1427,15 @@ OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 #from= VOID, STRING, UNICODE#
 #align= char, char, Py_UNICODE#
 #NAME= Void, String, Unicode#
+#kind=V,S,U#
 */
 
 static PyArray_Descr @from@_Descr = { 
+                                      &Py@NAME@ArrType_Type,
+				      '@kind@',
+				      PyArray_@from@LTR,
 				      PyArray_@from@, 0,
 				      _ALIGN(@align@),
-                                      &Py@NAME@ArrType_Type,
-				      PyArray_@from@LTR,
 {
 
 		(PyArray_VectorUnaryFunc*)@from@_to_BOOL, 
@@ -1476,16 +1478,18 @@ static PyArray_Descr @from@_Descr = {
 
 #from= BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT#
 #num= 1*14,2*3,1#
-#fromtyp= bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble, PyObject *#
+#fromtyp= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble, PyObject *#
 #NAME= Bool, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble, Object#
+#kind= b, i, u, i, u, i, u, i, u, i, u, f, f, f, c, c, c, O#
 */
 
 static PyArray_Descr @from@_Descr = { 
+				      &Py@NAME@ArrType_Type,
+				      '@kind@',
+				      PyArray_@from@LTR,
 				      PyArray_@from@, 
 				      @num@*sizeof(@fromtyp@), 
 				      _ALIGN(@fromtyp@),
-				      &Py@NAME@ArrType_Type,
-				      PyArray_@from@LTR,
 {
 
 		(PyArray_VectorUnaryFunc*)@from@_to_BOOL, 
@@ -1606,7 +1610,7 @@ set_typeinfo(PyObject *dict)
 #name=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,INTP,UINTP,LONG,ULONG,LONGLONG,ULONGLONG#
 #uname=BOOL,BYTE*2,SHORT*2,INT*2,INTP*2,LONG*2,LONGLONG*2#
 #Name=Bool,Byte,UByte,Short,UShort,Int,UInt,Intp,UIntp,Long,ULong,LongLong,ULongLong#
-#type=bool,byte,ubyte,short,ushort,int,uint,intp,uintp,long,ulong,longlong,ulonglong#
+#type=Bool,byte,ubyte,short,ushort,int,uint,intp,uintp,long,ulong,longlong,ulonglong#
 #max=1,MAX_BYTE,MAX_UBYTE,MAX_SHORT,MAX_USHORT,MAX_INT,PyLong_FromUnsignedLong(MAX_UINT),PyLong_FromLongLong((longlong) MAX_INTP),PyLong_FromUnsignedLongLong((ulonglong) MAX_UINTP),MAX_LONG,PyLong_FromUnsignedLong((unsigned long) MAX_ULONG),PyLong_FromLongLong((longlong) MAX_LONGLONG), PyLong_FromUnsignedLongLong((ulonglong) MAX_ULONGLONG)#
 #min=0,MIN_BYTE,0,MIN_SHORT,0,MIN_INT,0,PyLong_FromLongLong((longlong) MIN_INTP),0,MIN_LONG,0,PyLong_FromLongLong((longlong) MIN_LONGLONG),0#
 #cx=i*6,N,N,N,l,N,N,N#

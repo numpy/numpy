@@ -140,7 +140,7 @@ objectapi_list = [
 
     (r"""
     """,
-     'Byteswap', 'PyArrayObject *, bool', 'PyObject *'),
+     'Byteswap', 'PyArrayObject *, Bool', 'PyObject *'),
 
     (r"""Resize (reallocate data).  Only works if nothing else is
     referencing this array and it is contiguous.
@@ -236,7 +236,7 @@ objectapi_list = [
 
     (r"""
     """,
-     'CheckStrides', 'int, int, intp, intp *, intp *', 'bool')
+     'CheckStrides', 'int, int, intp, intp *, intp *', 'Bool')
 
     ]
 
@@ -465,15 +465,15 @@ multiapi_list = [
 
     (r"""Convert an object to true / false
     """,
-     'BoolConverter','PyObject *, bool *', 'int'),
+     'BoolConverter','PyObject *, Bool *', 'int'),
 
     (r"""
     """,
-     'EquivalentTypes', 'PyArray_Typecode *, PyArray_Typecode *', 'bool'),
+     'EquivalentTypes', 'PyArray_Typecode *, PyArray_Typecode *', 'Bool'),
 
     (r"""
     """,
-     'EquivArrTypes', 'PyArrayObject *, PyArrayObject *', 'bool'),
+     'EquivArrTypes', 'PyArrayObject *, PyArrayObject *', 'Bool'),
 
     (r"""Zeros
     """,

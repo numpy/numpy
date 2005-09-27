@@ -217,15 +217,15 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
         PyArrayObject *ret;
 	char msg[] = "total size of new array must be unchanged";
 	int n = newdims->len;
-        bool same;
+        Bool same;
 
         /*  Quick check to make sure anything needs to be done */
         if (n == self->nd) {
-                same = true;
+                same = TRUE;
                 i=0;
                 while(same && i<n) {
                         if (PyArray_DIM(self,i) != dimensions[i]) 
-                                same=false;
+                                same=FALSE;
                         i++;
                 }
                 if (same) return PyArray_View(self, NULL);
@@ -954,7 +954,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 
     Especially for 2-d and up, ptr is NOT equivalent to a statically defined
     2-d or 3-d array.  In particular, it cannot be passed into a 
-    function that requires a true pointer to a fixed-size array. 
+    function that requires a TRUE pointer to a fixed-size array. 
 */
 
 static int
@@ -1306,7 +1306,7 @@ PyArray_Transpose(PyArrayObject *ap, PyObject *op) {
 					   ap);
 	if (ret == NULL) goto fail;
 	
-	/* point at true owner of memory: */
+	/* point at TRUE owner of memory: */
 	ret->base = (PyObject *)ap;
 	Py_INCREF(ap);
 	
@@ -2488,7 +2488,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject *mask0, PyObject* values0)
         if (nv > 0) {
 		for(i=0; i<ni; i++) {
 			src = values->data + chunk * (i % nv);
-			tmp = ((bool *)(mask->data))[i];
+			tmp = ((Bool *)(mask->data))[i];
 			if (tmp) {
 				memmove(dest + i * chunk, src, chunk);
 				if (thistype == PyArray_OBJECT)
@@ -2533,21 +2533,21 @@ PyArray_Converter(PyObject *object, PyObject **address)
 }
 
 static int
-PyArray_BoolConverter(PyObject *object, bool *val)
+PyArray_BoolConverter(PyObject *object, Bool *val)
 {
-	if (PyObject_IsTrue(object)) *val=true;
-	else *val=false;
+	if (PyObject_IsTrue(object)) *val=TRUE;
+	else *val=FALSE;
 	if (PyErr_Occurred()) return PY_FAIL;
 	return PY_SUCCEED;
 }
 
 
 static int
-PyArray_TypestrConvert(int itemsize, int gentype) 
+PyArray_TypestrConvert(int itemsize, int gentype)
 {
 	register int newtype = gentype;
 	
-	if (gentype == PyArray_GENSIGNED) {
+	if (gentype == PyArray_SIGNEDLTR) {
 		switch(itemsize) {
 		case 1:
 			newtype = PyArray_INT8;
@@ -2571,7 +2571,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
 		}
 	}
 
-	else if (gentype == PyArray_GENUNSIGNED) {
+	else if (gentype == PyArray_UNSIGNEDLTR) {
 		switch(itemsize) {
 		case 1:
 			newtype = PyArray_UINT8;
@@ -2595,7 +2595,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
 			break;
 		}
 	}
-	else if (gentype == PyArray_GENFLOAT) {
+	else if (gentype == PyArray_FLOATLTR) {
 		switch(itemsize) {
 		case 4:
 			newtype = PyArray_FLOAT32;
@@ -2623,7 +2623,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
 		}		
 	}
 	
-	else if (gentype == PyArray_GENCOMPLEX) {
+	else if (gentype == PyArray_COMPLEXLTR) {
 		switch(itemsize) {
 		case 8:
 			newtype = PyArray_COMPLEX64;
@@ -2885,11 +2885,11 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 }	
 
 
-/* This function returns true if the two typecodes are 
+/* This function returns TRUE if the two typecodes are 
    equivalent (same basic kind and same itemsize).
 */
 
-static bool
+static Bool
 PyArray_EquivalentTypes(PyArray_Typecode *typ1, PyArray_Typecode *typ2)
 {
 	register int typenum1=typ1->type_num;
@@ -2897,29 +2897,29 @@ PyArray_EquivalentTypes(PyArray_Typecode *typ1, PyArray_Typecode *typ2)
 	register int size1=typ1->itemsize;
 	register int size2=typ2->itemsize;
 
-	if (size1 != size2) return false;
-	if (typenum1==typenum2) return true;
+	if (size1 != size2) return FALSE;
+	if (typenum1==typenum2) return TRUE;
 
 	/* If we are here then size1 == size2 */
 	if (typenum1 < PyArray_FLOAT) {
 		if (PyTypeNum_ISBOOL(typenum1))
-			return (bool)(PyTypeNum_ISBOOL(typenum2));
+			return (Bool)(PyTypeNum_ISBOOL(typenum2));
 		else if (PyTypeNum_ISUNSIGNED(typenum1))
-			return (bool)(PyTypeNum_ISUNSIGNED(typenum2));
+			return (Bool)(PyTypeNum_ISUNSIGNED(typenum2));
 		else 
-			return (bool)(PyTypeNum_ISSIGNED(typenum2));
+			return (Bool)(PyTypeNum_ISSIGNED(typenum2));
 	}
 	else {
 		if (PyTypeNum_ISFLOAT(typenum1))
-			return (bool)(PyTypeNum_ISFLOAT(typenum2));
+			return (Bool)(PyTypeNum_ISFLOAT(typenum2));
 		else if (PyTypeNum_ISCOMPLEX(typenum1))
-			return (bool)(PyTypeNum_ISCOMPLEX(typenum2));
+			return (Bool)(PyTypeNum_ISCOMPLEX(typenum2));
 	}
 	/* Default size1 != size2 and typenum1 != typenum2 */
-	return false;	
+	return FALSE;	
 }
 
-static bool 
+static Bool 
 PyArray_EquivArrTypes(PyArrayObject *a1, PyArrayObject *a2)
 {
         PyArray_Typecode type1={PyArray_TYPE(a1), PyArray_ITEMSIZE(a1), 0};
@@ -2941,11 +2941,11 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 {
 	PyObject *op, *ret=NULL;
 	static char *kwd[]= {"object", "dtype", "copy", "fortran", NULL};
-	bool copy=true;
+	Bool copy=TRUE;
 	PyArray_Typecode type = {PyArray_NOTYPE, 0, 0};
 	PyArray_Typecode oldtype = {PyArray_NOTYPE, 0, 0};
 	int type_num;
-	bool fortran=false;
+	Bool fortran=FALSE;
 	int flags=0;
 
 	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&", kwd, &op, 
@@ -3012,7 +3012,7 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
 	static char *kwlist[] = {"shape","dtype","fortran",NULL};
 	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
         PyArray_Dims shape;
-	bool fortran = false;	
+	Bool fortran = FALSE;	
         PyObject *ret;
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&",
@@ -3136,7 +3136,7 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
 	static char *kwlist[] = {"shape","dtype","fortran",NULL};
 	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
         PyArray_Dims shape;
-	bool fortran = false;	
+	Bool fortran = FALSE;	
         PyObject *ret;
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&",
@@ -3185,7 +3185,7 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 	static char *kwlist[] = {"string", "dtype", "count", "swap",NULL};
 	PyArray_Typecode type = {PyArray_INTP, sizeof(intp), 0};
 	int itemsize;
-	int swapped=false;
+	int swapped=FALSE;
 
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "s#|O&LO&", kwlist, 
 					 &data, &s, 
@@ -3778,8 +3778,8 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 }
 
 static char doc_where[] = "where(condition, | x, y) is shaped like condition"\
-	" and has elements of x and y where condition is respectively true or"\
-	" false.  If x or y are not given, then it is equivalent to"\
+	" and has elements of x and y where condition is respectively TRUE or"\
+	" FALSE.  If x or y are not given, then it is equivalent to"\
 	" nonzero(condition).";
 
 static PyObject *
@@ -3841,7 +3841,7 @@ static struct PyMethodDef array_module_methods[] = {
 
 /*  For dual inheritance we need to make sure that the objects being
     inherited from have the tp->mro object initialized.  This is
-    not necessarily true for the basic type objects of Python (it is 
+    not necessarily TRUE for the basic type objects of Python (it is 
     checked for single inheritance but not dual in PyType_Ready).
 
     Thus, we call PyType_Ready on the standard Python Types, here.

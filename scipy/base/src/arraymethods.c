@@ -36,7 +36,7 @@ array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 static char doc_putmask[] = "a.putmask(mask, values) sets a.flat[n] = v[n] "\
-	"for each n where mask.flat[n] is true. v can be scalar.";
+	"for each n where mask.flat[n] is TRUE. v can be scalar.";
 
 static PyObject *
 array_putmask(PyArrayObject *self, PyObject *args, PyObject *kwds) 
@@ -268,7 +268,7 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-PyArray_Byteswap(PyArrayObject *self, bool inplace)
+PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 {
         PyArrayObject *ret;
 	intp size;
@@ -325,12 +325,12 @@ PyArray_Byteswap(PyArrayObject *self, bool inplace)
 
 static char doc_byteswap[] = "m.byteswap(False)  Swap the bytes in"\
 	" the array.  Return the byteswapped array.  If the first argument"\
-	" is true, byteswap in-place and return a reference to self.";
+	" is TRUE, byteswap in-place and return a reference to self.";
 
 static PyObject *
 array_byteswap(PyArrayObject *self, PyObject *args) 
 {
-	bool inplace=false;
+	Bool inplace=FALSE;
 	
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_BoolConverter, &inplace))
 		return NULL;
@@ -655,7 +655,7 @@ static PyObject *
 array_reduce(PyArrayObject *self, PyObject *args)
 {
 	PyObject *ret=NULL, *state=NULL, *obj=NULL, *mod=NULL;
-	PyObject *bool, *thestr=NULL;
+	PyObject *Bool, *thestr=NULL;
 
 	/* Return a tuple of (callable object, arguments, object's state) */
 	/*  We will put everything in the object's state, so that on UnPickle
@@ -698,9 +698,9 @@ array_reduce(PyArrayObject *self, PyObject *args)
 							  "shape"));	
 	PyTuple_SET_ITEM(state, 1, PyObject_GetAttrString((PyObject *)self, 
 							  "dtypestr"));
-	bool = (PyArray_ISFORTRAN(self) ? Py_True : Py_False);
-	Py_INCREF(bool);
-	PyTuple_SET_ITEM(state, 2, bool);
+	Bool = (PyArray_ISFORTRAN(self) ? Py_True : Py_False);
+	Py_INCREF(Bool);
+	PyTuple_SET_ITEM(state, 2, Bool);
 	if (PyArray_ISOBJECT(self)) {
 		thestr = _getobject_pkl(self);
 	}
@@ -1145,7 +1145,7 @@ static char doc_flatten[] = "a.flatten([fortran]) return a 1-d array (always cop
 static PyObject *
 array_flatten(PyArrayObject *self, PyObject *args)
 {
-	bool fortran=false;
+	Bool fortran=FALSE;
 
 	if (!PyArg_ParseTuple(args, "|O&",
 			      PyArray_BoolConverter, &fortran)) 
@@ -1159,7 +1159,7 @@ static char doc_ravel[] = "a.ravel([fortran]) return a 1-d array (copy only if n
 static PyObject *
 array_ravel(PyArrayObject *self, PyObject *args)
 {
-	bool fortran=false;
+	Bool fortran=FALSE;
 
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_BoolConverter,
 			      &fortran)) return NULL;
@@ -1193,7 +1193,7 @@ array_round(PyArrayObject *self, PyObject *args)
 static char doc_setflags[] = "a.setflags(write=None, swap=None, align=None, uic=None)";
 
 static int _IsAligned(PyArrayObject *);
-static bool _IsWriteable(PyArrayObject *);
+static Bool _IsWriteable(PyArrayObject *);
 
 static PyObject *
 array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
