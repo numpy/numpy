@@ -3445,7 +3445,7 @@ array_flags_get(PyArrayObject *self)
 			     self->flags & flag ? Py_True : Py_False)        
 
         ADDFLAG(CONTIGUOUS);
-        ADDFLAG(OWN_DATA);
+        ADDFLAG(OWNDATA);
         ADDFLAG(FORTRAN);
         ADDFLAG(ALIGNED);
         ADDFLAG(NOTSWAPPED);

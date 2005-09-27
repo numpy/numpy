@@ -810,7 +810,8 @@ typedef struct {
 #define OWN_STRIDES    4  
 	*/
 
-#define OWN_DATA       8
+#define OWNDATA        8
+#define OWN_DATA       OWNDATA
 
 #define FORTRAN    0x020    /* set if array is a contiguous Fortran array */
 	                    /*  first index varies the fastest in memory
