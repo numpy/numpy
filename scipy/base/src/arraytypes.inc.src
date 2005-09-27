@@ -1427,12 +1427,11 @@ OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 #from= VOID, STRING, UNICODE#
 #align= char, char, Py_UNICODE#
 #NAME= Void, String, Unicode#
-#kind=V,S,U#
 */
 
 static PyArray_Descr @from@_Descr = { 
                                       &Py@NAME@ArrType_Type,
-				      '@kind@',
+				      PyArray_@from@LTR,
 				      PyArray_@from@LTR,
 				      PyArray_@from@, 0,
 				      _ALIGN(@align@),
@@ -1480,12 +1479,12 @@ static PyArray_Descr @from@_Descr = {
 #num= 1*14,2*3,1#
 #fromtyp= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble, PyObject *#
 #NAME= Bool, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble, Object#
-#kind= b, i, u, i, u, i, u, i, u, i, u, f, f, f, c, c, c, O#
+#kind= GENBOOL, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, FLOATING, FLOATING, FLOATING, COMPLEX, COMPLEX, COMPLEX, OBJECT#
 */
 
 static PyArray_Descr @from@_Descr = { 
 				      &Py@NAME@ArrType_Type,
-				      '@kind@',
+				      PyArray_@kind@LTR,
 				      PyArray_@from@LTR,
 				      PyArray_@from@, 
 				      @num@*sizeof(@fromtyp@), 

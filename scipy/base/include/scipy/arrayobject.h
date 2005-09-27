@@ -154,7 +154,7 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 			PyArray_GENBOOLLTR ='b',
 			PyArray_SIGNEDLTR = 'i',
 			PyArray_UNSIGNEDLTR = 'u',
-			PyArray_FLOATLTR = 'f',
+			PyArray_FLOATINGLTR = 'f',
 			PyArray_COMPLEXLTR = 'c'
 };
 

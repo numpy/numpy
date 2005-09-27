@@ -954,7 +954,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 
     Especially for 2-d and up, ptr is NOT equivalent to a statically defined
     2-d or 3-d array.  In particular, it cannot be passed into a 
-    function that requires a TRUE pointer to a fixed-size array. 
+    function that requires a true pointer to a fixed-size array. 
 */
 
 static int
@@ -1306,7 +1306,7 @@ PyArray_Transpose(PyArrayObject *ap, PyObject *op) {
 					   ap);
 	if (ret == NULL) goto fail;
 	
-	/* point at TRUE owner of memory: */
+	/* point at true owner of memory: */
 	ret->base = (PyObject *)ap;
 	Py_INCREF(ap);
 	
@@ -2595,7 +2595,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
 			break;
 		}
 	}
-	else if (gentype == PyArray_FLOATLTR) {
+	else if (gentype == PyArray_FLOATINGLTR) {
 		switch(itemsize) {
 		case 4:
 			newtype = PyArray_FLOAT32;
@@ -2813,6 +2813,7 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 					PyArray_TypestrConvert(at->itemsize, 
 							       check_num);
 			        at->itemsize = 0;
+				if (check_num == PyArray_NOTYPE) goto fail;
 			}
 		}
 	}
@@ -2849,11 +2850,7 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
                 check_num = PyInt_AsLong(obj);
 	}
 
-	if (PyErr_Occurred()) {
-		PyErr_SetString(PyExc_TypeError, 
-				"data type not understood");
-		return PY_FAIL;
-	}
+	if (PyErr_Occurred()) goto fail;
 
 	/*
 	if (check_num == PyArray_NOTYPE) return PY_FAIL;
@@ -2882,10 +2879,14 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 	if (at->itemsize == 0) at->itemsize = descr->elsize;
 	
         return PY_SUCCEED;
+ fail:
+	PyErr_SetString(PyExc_TypeError, 
+			"data type not understood");
+	return PY_FAIL;
 }	
 
 
-/* This function returns TRUE if the two typecodes are 
+/* This function returns true if the two typecodes are 
    equivalent (same basic kind and same itemsize).
 */
 
@@ -3778,8 +3779,8 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 }
 
 static char doc_where[] = "where(condition, | x, y) is shaped like condition"\
-	" and has elements of x and y where condition is respectively TRUE or"\
-	" FALSE.  If x or y are not given, then it is equivalent to"\
+	" and has elements of x and y where condition is respectively true or"\
+	" false.  If x or y are not given, then it is equivalent to"\
 	" nonzero(condition).";
 
 static PyObject *
@@ -3841,7 +3842,7 @@ static struct PyMethodDef array_module_methods[] = {
 
 /*  For dual inheritance we need to make sure that the objects being
     inherited from have the tp->mro object initialized.  This is
-    not necessarily TRUE for the basic type objects of Python (it is 
+    not necessarily true for the basic type objects of Python (it is 
     checked for single inheritance but not dual in PyType_Ready).
 
     Thus, we call PyType_Ready on the standard Python Types, here.
