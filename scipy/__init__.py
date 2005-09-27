@@ -1,3 +1,12 @@
+"""SciPy 
+
+You can support the development of scipy by purchasing documentation at
+
+http://www.trelgol.com
+
+Ironically, you can help make the documentation free by purchasing a copy today.
+"""
+
 
 try:   # For installation purposes only 
     from scipy.base import *

@@ -1,0 +1,4 @@
+Jim Hugunin, Paul Dubois, Konrad Hinsen, David Ascher, and many others for Numeric
+Perry Greenfield, J Todd Miller, Rick White, Paul Barrett for Numarray which gave much inspiration.
+Pearu Peterson, Robert Kern for bug fixes and help with distutils.
+Fernando Perez and John Hunter for ideas.
