@@ -74,7 +74,9 @@ def configuration(parent_package='',top_path=None):
             for line in target_f.readlines():
                 s = '#define MATHLIB'
                 if line.startswith(s):
-                    mathlibs.extend(line[len(s):].strip().split(','))
+                    value = line[len(s):].strip()
+                    if value:
+                        mathlibs.extend(value.split(','))
             target_f.close()
 
         ext.libraries.extend(mathlibs)
