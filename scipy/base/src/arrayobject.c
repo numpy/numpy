@@ -5888,7 +5888,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
 	}
 	ind_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ind);
 	if (ind_it == NULL) return -1;
-	index = self->size;
+	index = ind_it->size;
 	while(index--) {
 		num = *((intp *)(ind_it->dataptr));
 		if (num < 0) num += self->size;

@@ -46,9 +46,6 @@ def eye(N, M=None, k=0, dtype=float):
         and everything else is zeros.
     """
     if M is None: M = N
-    if isdtype(M):
-        dtype = M
-        M = N
     m = equal(subtract.outer(arange(N), arange(M)),-k)
     if dtype is None:
         return m+0
@@ -63,16 +60,25 @@ def diag(v, k=0):
     s = v.shape
     if len(s)==1:
         n = s[0]+abs(k)
-        if k > 0:
-            v = concatenate((zeros(k, v.dtype),v))
-        elif k < 0:
-            v = concatenate((v,zeros(-k, v.dtype)))
-        return eye(n, k=k)*v
+        res = zeros((n,n), v.dtype)
+        i = arange(0,n-k)
+        if (k>=0):
+            fi = i+k+i*n
+        else:
+            fi = i+(i-k)*n
+        res.flat[fi] = v
+        return res
     elif len(s)==2:
-        v = add.reduce(eye(s[0], s[1], k=k)*v)
-        if k > 0: return v[k:]
-        elif k < 0: return v[:k]
-        else: return v
+        N1,N2 = s
+        if k >= 0:
+            M = min(N1,N2-k)
+            i = arange(0,M)
+            fi = i+k+i*N2
+        else:
+            M = min(N1+k,N2)
+            i = arange(0,M)
+            fi = i + (i-k)*N2
+        return v.flat[fi]
     else:
             raise ValueError, "Input must be 1- or 2-d."
 

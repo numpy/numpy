@@ -2049,7 +2049,7 @@ static PyObject *
 PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args, 
                          PyObject *kwds, int operation) 
 {
-	int axis=-1;
+	int axis=0;
 	PyArrayObject *mp, *ret = NULL;
 	PyObject *op, *res=NULL;
 	PyObject *obj_ind;        
