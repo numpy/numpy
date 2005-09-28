@@ -55,7 +55,8 @@ class matrix(N.ndarray):
             return data.astype(dtype)
 
         if dtype is None:
-            dtype = N.float
+            if isinstance(data, N.ndarray):
+                dtype = data.dtype
         intype = N.obj2dtype(dtype)
         
         if isinstance(data, types.StringType):
@@ -79,7 +80,7 @@ class matrix(N.ndarray):
         if not (fortran or arr.flags['CONTIGUOUS']):
             arr = arr.copy()
 
-        ret = N.ndarray.__new__(matrix, shape, intype, buffer=arr,
+        ret = N.ndarray.__new__(matrix, shape, arr.dtype, buffer=arr,
                                 fortran=fortran,
                                 swap=(not arr.flags['NOTSWAPPED']))
         return ret; 

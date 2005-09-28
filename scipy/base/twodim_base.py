@@ -61,10 +61,11 @@ def diag(v, k=0):
     if len(s)==1:
         n = s[0]+abs(k)
         res = zeros((n,n), v.dtype)
-        i = arange(0,n-k)
         if (k>=0):
+            i = arange(0,n-k)
             fi = i+k+i*n
         else:
+            i = arange(0,n+k)            
             fi = i+(i-k)*n
         res.flat[fi] = v
         return res

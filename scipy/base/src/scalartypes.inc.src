@@ -169,6 +169,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
 /**begin repeat
 
 #name=add, subtract, divide, remainder, divmod, lshift, rshift, and, xor, or, floor_divide, true_divide#
+#PYNAME=Add, Subtract, Divide, Remainder, Divmod, Lshift, Rshift, And, Xor, Or, FloorDivide, TrueDivide#
 */
 
 static PyObject *
@@ -180,7 +181,7 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 		if (PyArray_Check(m1)) {
 			ret = m1->ob_type->tp_as_number->nb_@name@(m1,m2);
 		}
-		else if ((m1->ob_type->tp_as_number == NULL) ||
+                else if ((m1->ob_type->tp_as_number == NULL) ||
 			 (m1->ob_type->tp_as_number->nb_@name@ == NULL)) {
 			arr = PyArray_FromScalar(m2, NULL);
 			if (arr == NULL) return NULL;
@@ -194,7 +195,7 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 						     "toscalar");
 			Py_DECREF(tup);
 			if (arr == NULL) return NULL;
-			ret = m1->ob_type->tp_as_number->nb_@name@(m1,arr);
+                        ret = PyNumber_@PYNAME@(m1, arr);
 			Py_DECREF(arr);
 		}
 		return ret;
@@ -216,8 +217,7 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 			arr = gentype_generic_method(m1, tup, NULL, 
 						     "toscalar");
 			Py_DECREF(tup);
-			if (arr == NULL) return NULL;
-			ret = m2->ob_type->tp_as_number->nb_@name@(arr,m2);
+			ret = PyNumber_@PYNAME@(arr,m2);
 			Py_DECREF(arr);
 		}
 		return ret;
@@ -269,7 +269,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 						     "toscalar");
 			Py_DECREF(tup);
 			if (arr == NULL) return NULL;
-			ret = m1->ob_type->tp_as_number->nb_multiply(m1,arr);
+                        ret = PyNumber_Multiply(m1, arr);
 			Py_DECREF(arr);
 		}
 		return ret;
@@ -301,7 +301,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 						     "toscalar");
 			Py_DECREF(tup);
 			if (arr == NULL) return NULL;
-			ret = m2->ob_type->tp_as_number->nb_multiply(arr, m2);
+                        ret = PyNumber_Multiply(arr, m2);
 			Py_DECREF(arr);
 		}
 		return ret;

@@ -276,19 +276,19 @@ def _python_type(t):
     if not isinstance(t, _types.TypeType):
         t = type(t)
     if t == _types.IntType:
-        return long
+        return aint
     elif t == _types.FloatType:
-        return float
+        return afloat
     elif t == _types.ComplexType:
-        return complex
+        return acomplex
     elif t == _types.StringType:
-        return string
+        return astr
     elif t == _types.UnicodeType:
-        return unicode
+        return aunicode
     elif t == _types.BufferType:
         return void
     else:
-        return object
+        return aobject
 
 def isdtype(rep):
     """Determines whether the given object represents
