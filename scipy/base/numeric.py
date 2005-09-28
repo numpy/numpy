@@ -346,3 +346,9 @@ setbufsize(UFUNC_BUFSIZE_DEFAULT,where='builtin')
 inf = PINF
 nan = NAN
 from oldnumeric import *
+
+def get_scipy_include():
+    import os
+    dir, fn = os.path.split(__file__)
+    return os.path.join(dir, 'include', 'scipy')
+

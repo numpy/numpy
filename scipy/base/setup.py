@@ -20,8 +20,11 @@ def configuration(parent_package='',top_path=None):
                                      open(generate_umath_py,'U'),generate_umath_py,
                                      ('.py','U',1))
 
+    package_include = join(local_dir, 'include', 'scipy')
+
     def generate_config_h(ext, build_dir):
-        target = join(build_dir,'config.h')
+        #target = join(build_dir,'config.h')
+        target = join(package_include, 'config.h')
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
             print 'Generating',target
@@ -81,30 +84,37 @@ def configuration(parent_package='',top_path=None):
 
         ext.libraries.extend(mathlibs)
         ext.include_dirs.append(os.path.dirname(target))
+        config.add_data_files(target)
         return target
 
     def generate_array_api(ext,build_dir):
-        target = join(build_dir,'__multiarray_api.h')
+        #target = join(build_dir,'__multiarray_api.h')
+        target = join(package_include, '__multiarray_api.h')
         script = join(codegen_dir,'generate_array_api.py')
         if newer(script,target):
             script = os.path.abspath(script)
             old_cwd = os.getcwd()
-            os.chdir(build_dir)
+            #os.chdir(build_dir)
+            os.chdir(package_include)
             print 'executing',script
             execfile(script,{},{})
             os.chdir(old_cwd)
+        config.add_data_files(target)
         return target
 
     def generate_ufunc_api(ext,build_dir):
-        target = join(build_dir,'__ufunc_api.h')
+        #target = join(build_dir,'__ufunc_api.h')
+        target = join(package_include, '__ufunc_api.h')
         script = join(codegen_dir,'generate_ufunc_api.py')
         if newer(script,target):
             script = os.path.abspath(script)
             old_cwd = os.getcwd()
-            os.chdir(build_dir)
+            #os.chdir(build_dir)
+            os.chdir(package_include)
             print 'executing',script
             execfile(script,{},{})
             os.chdir(old_cwd)
+        config.add_data_files(target)
         return target
 
     def generate_umath_c(ext,build_dir):
@@ -118,7 +128,8 @@ def configuration(parent_package='',top_path=None):
         return []
 
     config.add_include_dirs('include','src')
-    config.add_headers(join('include','scipy','*.h'),name='scipy')
+    #config.add_headers(join('include','scipy','*.h'),name='scipy')
+    config.add_data_dir(join('include', 'scipy'))
     from scipy.distutils.command.build_src import appendpath
     print "****%s****" % config.local_path
     config.add_include_dirs(appendpath('build/src',join(config.local_path,'Src')))
