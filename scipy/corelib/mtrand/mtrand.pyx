@@ -43,7 +43,7 @@ cdef extern from "randomkit.h":
         RK_ERR_MAX = 2
 
     char *rk_strerror[2]
-
+    
     # 0xFFFFFFFFUL
     unsigned long RK_MAX
 
@@ -254,6 +254,10 @@ cdef class RandomState:
 
         self.seed(seed)
 
+    def __dealloc__(self):
+        if self.internal_state != NULL:
+            PyMem_Free(self.internal_state)
+
     def seed(self, seed=None):
         """Seed the generator.
 
@@ -272,9 +276,6 @@ cdef class RandomState:
             rk_seed(seed, self.internal_state)
         else:
             obj = PyArray_ContiguousFromObject(seed, PyArray_LONG, 1, 1)
-            #if obj == NULL:
-            #    # XXX how do I handle this?
-            #    return NULL
             init_by_array(self.internal_state, <unsigned long *>(obj.data),
                 obj.dimensions[0])
         
@@ -285,9 +286,6 @@ cdef class RandomState:
         """
         cdef ArrayType obj
         obj = PyArray_ContiguousFromObject(state, PyArray_LONG, 1, 1)
-        #if obj == NULL:
-        #    # XXX
-        #    return NULL
         if obj.dimensions[0] != 624:
             raise ValueError("state must be 624 longs")
         memcpy(self.internal_state.key, <void*>(obj.data), 624*sizeof(long))
