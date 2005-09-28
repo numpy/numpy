@@ -16,7 +16,20 @@ import scipy.linalg as LinearAlgebra
 
 # some aliases
 ranf = random_sample
-randn = standard_normal
+random = random_sample
+
+def rand(*args):
+    """rand(d1,...,dn) returns a matrix of the given dimensions
+    which is initialized to random numbers from a uniform distribution
+    in the range [0,1).
+    """
+    return random_sample(size=args)
+    
+def randn(*args):
+    """u = randn(d0,d1,...,dn) returns zero-mean, unit-variance Gaussian
+    random numbers in an array of size (d0,d1,...,dn).
+    """
+    return standard_normal(args)
 
 def multivariate_normal(mean, cov, shape=[]):
        """multivariate_normal(mean, cov) or multivariate_normal(mean, cov, [m, n, ...])
@@ -42,7 +55,7 @@ def multivariate_normal(mean, cov, shape=[]):
        if mean.shape[0] != cov.shape[0]:
               raise ArgumentError, "mean and cov must have same length."
        # Compute shape of output
-       if isinstance(shape, IntType):
+       if isinstance(shape, int):
            shape = [shape]
        final_shape = list(shape[:])
        final_shape.append(mean.shape[0])
@@ -63,7 +76,7 @@ def multivariate_normal(mean, cov, shape=[]):
        # The rows of x now have the correct covariance but mean 0. Add
        # mean to each row. Then each row will have mean mean.
        Numeric.add(mean,x,x)
-       x.shape = final_shape
+       x.shape = tuple(final_shape)
        return x
 
 # XXX: should we also bring over mean_var_test() from random_lite.py? It seems 

@@ -617,11 +617,16 @@ cdef class RandomState:
         return multin
 
     def permutation(self, object x):
-        """Modify the sequence in-place by shuffling its contents.
+        """If given a sequence, modify it in-place by shuffling its contents; 
+        if given an integer, return a shuffled sequence of integers >= 0 and 
+        < x.
 
         permutation(x)
         """
         cdef long i, j
+
+        if type(x) is int:
+            return self.permutation(scipy.arange(x))
 
         # adaptation of random.shuffle()
         i = len(x) - 1
