@@ -49,6 +49,7 @@ def isfortran(a):
     flags = a.flags
     return flags['FORTRAN'] and a.ndim > 1
 
+
 # from Fernando Perez's IPython
 def zeros_like(a):
     """Return an array of zeros of the shape and typecode of a.
@@ -177,7 +178,6 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1):
 
 #Use numarray's printing function
 from arrayprint import array2string, get_printoptions, set_printoptions
-
 
 _typelessdata = [int, float, complex]
 if issubclass(intc, pyint):
@@ -333,7 +333,7 @@ def setbufsize(size, where=0):
     frame = sys._getframe().f_back
     try:
         wh = where.lower()
-    except AttributError:
+    except AttributeError:
         pass
     if not where or where[0] == 'l':
         frame.f_locals[UFUNC_BUFSIZE_NAME] = size

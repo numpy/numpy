@@ -41,17 +41,17 @@ def rot90(m, k=1):
     elif k == 2: return fliplr(flipud(m))
     else: return fliplr(transpose(m))  # k==3
     
-def eye(N, M=None, k=0, dtype='d'):
+def eye(N, M=None, k=0, dtype=float):
     """ eye returns a N-by-M 2-d array where the  k-th diagonal is all ones, 
         and everything else is zeros.
     """
     if M is None: M = N
-    if type(M) == type('d'): 
+    if isdtype(M):
         dtype = M
         M = N
     m = equal(subtract.outer(arange(N), arange(M)),-k)
     if dtype is None:
-        return m
+        return m+0
     else:
         return m.astype(dtype)
 
@@ -110,8 +110,7 @@ def triu(m, k=0):
     return out
 
 
-
-# from matplotlib
+# borrowed from John Hunter and matplotlib
 def vander(x, N=None):
     """
     X = vander(x,N=None)
@@ -121,6 +120,7 @@ def vander(x, N=None):
     None it defaults to len(x).
 
     """
+    x = asarray(x)
     if N is None: N=len(x)
     X = ones( (len(x),N), x.dtypechar)
     for i in range(N-1):
