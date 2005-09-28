@@ -1,4 +1,6 @@
 Jim Hugunin, Paul Dubois, Konrad Hinsen, David Ascher, and many others for Numeric
 Perry Greenfield, J Todd Miller, Rick White, Paul Barrett for Numarray which gave much inspiration.
-Pearu Peterson, Robert Kern for bug fixes and help with distutils.
-Fernando Perez and John Hunter for ideas.
+Pearu Peterson for f2py and distutils
+Eric Jones for weave
+Robert Kern for mtrand, bug fixes and help with distutils.
+Fernando Perez for code snippets and ideas

@@ -3,8 +3,7 @@
 import types
 import numeric as _nx
 from numeric import asarray
-__all__ = ['mgrid','ogrid','r_', 'row', 'c_', 'col', 'index_exp',
-           'ix_']
+__all__ = ['mgrid','ogrid','r_', 'index_exp', 'ix_']
 
 from type_check import ScalarType
 import function_base
@@ -148,25 +147,27 @@ class concatenator:
     """ Translates slice objects to concatenation along an axis.
     """
     def _retval(self, res):
-        if not self.matrix:
-            return res
-        else:
-            if self.axis == 0:
-                return makemat(res)
-            else:
-                return makemat(res).T        
+        if self.matrix:
+            oldndim = res.ndim
+            res = makemat(res)
+            if oldndim == 1 and self.col:
+                res = res.T
+        self.axis=self._axis
+        self.matrix=self._matrix
+        self.col=0
+        return res
         
     def __init__(self, axis=0, matrix=0):
+        self._axis = axis
+        self._matrix = matrix
         self.axis = axis
         self.matrix = matrix
+        self.col = 0
     def __getitem__(self,key):
         if isinstance(key,types.StringType):
             frame = sys._getframe().f_back
-            mymat = matrix_base.bmat(key,frame.f_globals,frame.f_locals)
-            if self.matrix:
-                return mymat
-            else:
-                return asarray(mymat)
+            mymat = matrix.bmat(key,frame.f_globals,frame.f_locals)
+            return mymat
         if type(key) is not types.TupleType:
             key = (key,)
         objs = []
@@ -185,8 +186,18 @@ class concatenator:
                     newobj = function_base.linspace(start, stop, num=size)
                 else:
                     newobj = _nx.arange(start, stop, step)
+            elif type(key[k]) is types.StringType:
+                if (key[k] in 'rc'):
+                    self.matrix = 1
+                    self.col = (key[k] == 'c')
+                    continue
+                try:
+                    self.axis = int(key[k])
+                    continue
+                except:
+                    raise ValueError, "Unknown special directive."
             elif type(key[k]) in ScalarType:
-                newobj = asarray([key[k]])
+                newobj = asarray([key[k]])                
             else:
                 newobj = key[k]
             objs.append(newobj)
@@ -201,9 +212,9 @@ class concatenator:
         return 0
 
 r_=concatenator(0)
-c_=concatenator(-1)
-row = concatenator(0,1)
-col = concatenator(-1,1)
+#c_=concatenator(-1)
+#row = concatenator(0,1)
+#col = concatenator(-1,1)
 
 # A nicer way to build up index tuples for arrays.
 #

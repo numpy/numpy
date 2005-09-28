@@ -1,4 +1,4 @@
-/*
+ /*
   Provide multidimensional arrays as a basic object type in python.  
 
 Based on Original Numeric implementation
@@ -4264,7 +4264,7 @@ static char Arraytype__doc__[] =
 static PyTypeObject PyBigArray_Type = { 
         PyObject_HEAD_INIT(NULL)
         0,					  /*ob_size*/
-        "ndbigarray",				  /*tp_name*/
+        "scipy.ndbigarray",		  /*tp_name*/
         sizeof(PyArrayObject),		          /*tp_basicsize*/
         0,					  /*tp_itemsize*/
         /* methods */
@@ -4330,7 +4330,7 @@ static PyTypeObject PyBigArray_Type = {
 static PyTypeObject PyArray_Type = { 
         PyObject_HEAD_INIT(NULL)
         0,					  /*ob_size*/
-        "ndarray",				  /*tp_name*/
+        "scipy.ndarray",			  /*tp_name*/
         sizeof(PyArrayObject),		          /*tp_basicsize*/
         0,					  /*tp_itemsize*/
 };
@@ -6110,7 +6110,7 @@ static PyMethodDef iter_methods[] = {
 static PyTypeObject PyArrayIter_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
-        "ndarray_flat_iter",		         /* tp_name */
+        "scipy.flatiter",		         /* tp_name */
         sizeof(PyArrayIterObject),               /* tp_basicsize */
         0,					 /* tp_itemsize */
         /* methods */
@@ -6846,7 +6846,7 @@ static PyMethodDef mapiter_methods[] = {
 static PyTypeObject PyArrayMapIter_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
-        "mapiter",		    	         /* tp_name */
+        "scipy.mapiter",		    	/* tp_name */
         sizeof(PyArrayIterObject),               /* tp_basicsize */
         0,					 /* tp_itemsize */
         /* methods */

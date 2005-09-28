@@ -1149,7 +1149,7 @@ static PyBufferProcs gentype_as_buffer = {
 static PyTypeObject PyGenericArrType_Type = { 
         PyObject_HEAD_INIT(NULL)
         0,					  /*ob_size*/
-        "generic_arrtype",		          /*tp_name*/
+        "generic_arrtype",	          /*tp_name*/
         sizeof(PyObject),		          /*tp_basicsize*/
 };
 
@@ -1175,10 +1175,14 @@ object_arrtype_dealloc(PyObject *v)
 	v->ob_type->tp_free(v);
 }
 
+/* string and unicode inherit from Python Type first and so GET_ITEM is different to
+   get to the Python Type.
+ */
 
 /**begin repeat 
 #name=byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, string, unicode, object#
 #TYPE=BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, OBJECT#
+#num=1*16,0,0,1#
 */
 static PyObject *
 @name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -1192,7 +1196,7 @@ static PyObject *
 		PyObject *ret;
 		/* We are inheriting from a Python type as well so
 		   give it first dibs on conversion */
-		sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, 1);
+		sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, @num@);
 		ret = sup->tp_new(type, args, kwds);
 		if (ret) return ret;
 		PyErr_Clear();
@@ -1458,8 +1462,8 @@ ComplexFloating, Flexible, Character#
         Py@NAME@ArrType_Type.tp_hash = @name@_arrtype_hash;
         /**end repeat**/
 
-        /* We won't be inheriting from Python Int type. */
 #if SIZEOF_INT != SIZEOF_LONG
+        /* We won't be inheriting from Python Int type. */
         PyIntArrType_Type.tp_hash = int_arrtype_hash;
 #endif
 

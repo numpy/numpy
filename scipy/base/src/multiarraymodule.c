@@ -1154,6 +1154,7 @@ PyArray_Concatenate(PyObject *op, int axis)
 		mps[i] = (PyArrayObject*)
 			PyArray_FromAny(otmp, &typecode, 0, 0, CARRAY_FLAGS);
 		Py_DECREF(otmp);
+		if (mps[i] == NULL) goto fail;
 		if (axis >= MAX_DIMS) {
 			otmp = PyArray_Ravel(mps[i],0);
 			Py_DECREF(mps[i]);
@@ -3915,7 +3916,21 @@ setup_scalartypes(PyObject *dict)
                 return -1;                                              \
         }\
         Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;
-        
+
+#define DUAL_INHERIT2(child, parent1, parent2)				\
+        Py##child##ArrType_Type.tp_base = &Py##parent1##_Type;		\
+        Py##child##ArrType_Type.tp_bases =                              \
+                Py_BuildValue("(OO)", &Py##parent1##_Type,		\
+			      &Py##parent2##ArrType_Type);		\
+        if (PyType_Ready(&Py##child##ArrType_Type) < 0) {               \
+                PyErr_Print();                                          \
+		PyErr_Format(PyExc_SystemError,                         \
+			     "Could not initialize Py%sArrType_Type",   \
+                             #child);                                   \
+                return -1;                                              \
+        }\
+        Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;
+
         SINGLE_INHERIT(Bool, Generic);
         SINGLE_INHERIT(Byte, SignedInteger);
         SINGLE_INHERIT(Short, SignedInteger);
@@ -3941,16 +3956,23 @@ setup_scalartypes(PyObject *dict)
         DUAL_INHERIT(CDouble, Complex, ComplexFloating);
         SINGLE_INHERIT(CLongDouble, ComplexFloating);
 
-        DUAL_INHERIT(String, String, Character);
-        DUAL_INHERIT(Unicode, Unicode, Character);
-        
+        DUAL_INHERIT2(String, String, Character);
+        DUAL_INHERIT2(Unicode, Unicode, Character);
+	
         SINGLE_INHERIT(Void, Flexible);
         
         SINGLE_INHERIT(Object, Generic);
+
         return 0;
 
 #undef SINGLE_INHERIT
 #undef DUAL_INHERIT
+
+	/* Clean up string and unicode array types so they act more like
+	   strings -- get their tables from the standard types.
+	   
+	   
+	*/
 }
 
 
