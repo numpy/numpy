@@ -22,7 +22,7 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include "Python.pxi"
-include "Numeric.pxi"
+include "scipy.pxi"
 
 cdef extern from "math.h":
     double exp(double x)
@@ -97,10 +97,10 @@ cdef extern from "initarray.h":
    void init_by_array(rk_state *self, unsigned long *init_key, 
                       unsigned long key_length)
 
-# Initialize Numeric
+# Initialize scipy
 import_array()
 
-import Numeric
+import scipy
 
 cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
     cdef double *array_data
@@ -111,7 +111,7 @@ cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
     if size is None:
         return func(state)
     else:
-        array = <ArrayType>Numeric.empty(size, Numeric.Float64)
+        array = <ArrayType>scipy.empty(size, scipy.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -127,7 +127,7 @@ cdef object cont1_array(rk_state *state, rk_cont1 func, object size, double a):
     if size is None:
         return func(state, a)
     else:
-        array = <ArrayType>Numeric.empty(size, Numeric.Float64)
+        array = <ArrayType>scipy.empty(size, scipy.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -144,7 +144,7 @@ cdef object cont2_array(rk_state *state, rk_cont2 func, object size, double a,
     if size is None:
         return func(state, a, b)
     else:
-        array = <ArrayType>Numeric.empty(size, Numeric.Float64)
+        array = <ArrayType>scipy.empty(size, scipy.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -162,7 +162,7 @@ cdef object cont3_array(rk_state *state, rk_cont3 func, object size, double a,
     if size is None:
         return func(state, a, b, c)
     else:
-        array = <ArrayType>Numeric.empty(size, Numeric.Float64)
+        array = <ArrayType>scipy.empty(size, scipy.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -178,7 +178,7 @@ cdef object disc0_array(rk_state *state, rk_disc0 func, object size):
     if size is None:
         return func(state)
     else:
-        array = <ArrayType>Numeric.empty(size, Numeric.Int)
+        array = <ArrayType>scipy.empty(size, scipy.Int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -194,7 +194,7 @@ cdef object discnp_array(rk_state *state, rk_discnp func, object size, long n, d
     if size is None:
         return func(state, n, p)
     else:
-        array = <ArrayType>Numeric.empty(size, Numeric.Int)
+        array = <ArrayType>scipy.empty(size, scipy.Int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -210,7 +210,7 @@ cdef object discd_array(rk_state *state, rk_discd func, object size, double a):
     if size is None:
         return func(state, a)
     else:
-        array = <ArrayType>Numeric.empty(size, Numeric.Int)
+        array = <ArrayType>scipy.empty(size, scipy.Int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -243,8 +243,8 @@ cdef class RandomState:
     from a variety of probability distributions. In addition to the
     distribution-specific arguments, each method takes a keyword argument
     size=None. If size is None, then a single value is generated and returned.
-    If size is an integer, then a 1-D Numeric array filled with generated values
-    is returned. If size is a tuple, then a Numeric array with that shape is
+    If size is an integer, then a 1-D scipy array filled with generated values
+    is returned. If size is a tuple, then a scipy array with that shape is
     filled and returned.
     """
     cdef rk_state *internal_state
@@ -298,7 +298,7 @@ cdef class RandomState:
         get_state() -> array (typecode: Int)
         """
         cdef ArrayType state
-        state = <ArrayType>Numeric.empty(624, Numeric.Int)
+        state = <ArrayType>scipy.empty(624, scipy.Int)
         memcpy(<void*>(state.data), self.internal_state.key, 624*sizeof(long))
         return state
 
@@ -344,7 +344,7 @@ cdef class RandomState:
         if size is None:
             return rk_interval(diff, self.internal_state)
         else:
-            array = <ArrayType>Numeric.empty(size, Numeric.Int)
+            array = <ArrayType>scipy.empty(size, scipy.Int)
             length = PyArray_SIZE(array)
             array_data = <long *>array.data
             for i from 0 <= i < length:
@@ -598,7 +598,7 @@ cdef class RandomState:
         else:
             shape = size + (d,)
 
-        multin = Numeric.zeros(shape, Numeric.Int)
+        multin = scipy.zeros(shape, scipy.Int)
         mnarr = <ArrayType>multin
         mnix = <long*>mnarr.data
         i = 0
