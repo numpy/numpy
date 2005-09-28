@@ -36,6 +36,14 @@ def configuration(parent_package='',top_path=None):
                                    'linpack.c']]
                          )
 
+    config.add_extension('mtrand',
+                         sources=[join('mtrand', x) for x in 
+                                  ['mtrand.c', 'randomkit.c', 'initarray.c',
+                                   'distributions.c', 'gamma.c', 'polevl.c', 
+                                   'isnan.c', 'const.c']],
+                         libraries=['m'],
+                        )
+
     # Configure lapack_lite
     lapack_info = get_info('lapack_opt')
     #lapack_info = 0
