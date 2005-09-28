@@ -2838,13 +2838,17 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 	else if (PyType_Check(obj)) {
 		check_num = PyArray_OBJECT;
 		if (obj == (PyObject *)(&PyInt_Type)) 
-			check_num = PyArray_INTP;
+			check_num = PyArray_LONG;
 		else if (obj == (PyObject *)(&PyBool_Type))
 			check_num = PyArray_BOOL;
 		else if (obj == (PyObject *)(&PyFloat_Type)) 
 			check_num = PyArray_DOUBLE;
 		else if (obj == (PyObject *)(&PyComplex_Type)) 
 			check_num = PyArray_CDOUBLE;
+                else if (obj == (PyObject *)(&PyString_Type))
+                        check_num = PyArray_STRING;
+                else if (obj == (PyObject *)(&PyUnicode_Type))
+                        check_num = PyArray_UNICODE;
 	}	
         else { /* Default -- try integer conversion */
                 check_num = PyInt_AsLong(obj);

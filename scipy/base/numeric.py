@@ -179,8 +179,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1):
 #Use numarray's printing function
 from arrayprint import array2string, get_printoptions, set_printoptions
 
-_typelessdata = [int, float, complex]
-if issubclass(intc, pyint):
+_typelessdata = [aint, afloat, acomplex]
+if issubclass(intc, int):
     _typelessdata.append(intc)
 
 def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):

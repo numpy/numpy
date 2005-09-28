@@ -20,33 +20,33 @@ Exported symbols include:
 
     c-based names 
 
-    bool
+    abool
 
-    object
+    aobject
 
-    void, string, unicode 
+    void, astr, aunicode 
 
     byte, ubyte,
     short, ushort
     intc, uintc,
     intp, uintp,
-    int, uint,
+    aint, uint,
     longlong, ulonglong,
 
     single, csingle,
-    float, complex,
+    afloat, acomplex,
     longfloat, clongfloat,
 
     As part of the type-hierarchy:    xx -- is bit-width
     
      generic
-       bool
+       abool
        numeric
          integer
            signedinteger   (intxx)
              byte
              short
-             int
+             aint
              intp           int0
              longint
              longlong
@@ -59,20 +59,20 @@ Exported symbols include:
              ulonglong
          floating           (floatxx)
              single          
-             float  (double)
+             afloat  (double)
              longfloat
          complexfloating    (complexxx)
              csingle        
-             complex (cfloat, cdouble)
+             acomplex (cfloat, cdouble)
              clongfloat
    
        flexible
          character
-           string
-           unicode
+           astr (string)
+           aunicode
          void
    
-       object
+       aobject
 
 $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
@@ -176,22 +176,34 @@ for a in _tocheck:
 # Rework the Python names (so that float and complex and int are consistent
 #                            with Python usage)
 #
-complex = cdouble
+acomplex = cdouble
 int0 = intp
 uint0 = uintp
 single = float
 csingle = cfloat
-float = double
+afloat = double
 intc = int
 uintc = uint
-int = long
+aint = long
 uint = ulong
 cfloat = cdouble
 longfloat = longdouble
 clongfloat = clongdouble
-long = pylong
 
-del pylong, ulong
+abool = bool
+aunicode = unicode
+astr = string
+aobject = object
+
+object = pyobject
+unicode = pyunicode
+int = pyint
+long = pylong
+float = pyfloat
+complex = pycomplex
+bool = pybool
+
+del ulong, pyobject, pyunicode, pyint, pylong, pyfloat, pycomplex, pybool
 
 del _thisdict, _tocheck, a, name, typeobj
 del base, bit, char
@@ -209,7 +221,7 @@ arraytypes = {'int': [],
               'uint':[],
               'float':[],
               'complex':[],
-              'others':[bool,object,string,unicode,void]}
+              'others':[abool,aobject,string,aunicode,void]}
 
 _ibytes = [1,2,4,8,16,32,64]
 _fbytes = [2,4,8,10,12,16,32,64]

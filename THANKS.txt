@@ -4,3 +4,5 @@ Pearu Peterson for f2py and distutils
 Eric Jones for weave
 Robert Kern for mtrand, bug fixes and help with distutils.
 Fernando Perez for code snippets and ideas
+John Hunter for code snippets (from matplotlib)
+
