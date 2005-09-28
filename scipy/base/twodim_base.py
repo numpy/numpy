@@ -2,7 +2,8 @@
 
 """
 
-__all__ = ['diag','eye','fliplr','flipud','rot90','tri','triu','tril']
+__all__ = ['diag','eye','fliplr','flipud','rot90','tri','triu','tril',
+           'vander']
 
 from numeric import *
 import sys
@@ -40,19 +41,19 @@ def rot90(m, k=1):
     elif k == 2: return fliplr(flipud(m))
     else: return fliplr(transpose(m))  # k==3
     
-def eye(N, M=None, k=0, typecode='d'):
+def eye(N, M=None, k=0, dtype='d'):
     """ eye returns a N-by-M 2-d array where the  k-th diagonal is all ones, 
         and everything else is zeros.
     """
     if M is None: M = N
     if type(M) == type('d'): 
-        typecode = M
+        dtype = M
         M = N
     m = equal(subtract.outer(arange(N), arange(M)),-k)
-    if typecode is None:
+    if dtype is None:
         return m
     else:
-        return m.astype(typecode)
+        return m.astype(dtype)
 
 def diag(v, k=0):
     """ returns the k-th diagonal if v is a array or returns a array 
@@ -63,9 +64,9 @@ def diag(v, k=0):
     if len(s)==1:
         n = s[0]+abs(k)
         if k > 0:
-            v = concatenate((zeros(k, v.typecode()),v))
+            v = concatenate((zeros(k, v.dtype),v))
         elif k < 0:
-            v = concatenate((v,zeros(-k, v.typecode())))
+            v = concatenate((v,zeros(-k, v.dtype)))
         return eye(n, k=k)*v
     elif len(s)==2:
         v = add.reduce(eye(s[0], s[1], k=k)*v)
@@ -108,6 +109,23 @@ def triu(m, k=0):
     out = (1-tri(m.shape[0], m.shape[1], k-1, m.dtype))*m
     return out
 
+
+
+# from matplotlib
+def vander(x, N=None):
+    """
+    X = vander(x,N=None)
+
+    The Vandermonde matrix of vector x.  The i-th column of X is the
+    the i-th power of x.  N is the maximum power to compute; if N is
+    None it defaults to len(x).
+
+    """
+    if N is None: N=len(x)
+    X = ones( (len(x),N), x.dtypechar)
+    for i in range(N-1):
+        X[:,i] = x**(N-i-1)
+    return X
 
 
 

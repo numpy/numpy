@@ -2,6 +2,7 @@
 
 import types
 import numeric as _nx
+from numeric import asarray
 __all__ = ['mgrid','ogrid','r_', 'row', 'c_', 'col', 'index_exp',
            'ix_']
 

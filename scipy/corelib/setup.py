@@ -24,18 +24,6 @@ def configuration(parent_package='',top_path=None):
                                   ['fftpack_litemodule.c', 'fftpack.c']]
                          )
 
-    # Configure random_lite
-    config.add_extension('rng',
-                         sources=[join('random_lite',x) for x in \
-                                  ['rngmodule.c','ranf.c','pmath_rng.c']]
-                         )
-
-    config.add_extension('ranlib',
-                         sources=[join('random_lite',x) for x in \
-                                  ['ranlibmodule.c', 'ranlib.c', 'com.c',
-                                   'linpack.c']]
-                         )
-
     config.add_extension('mtrand',
                          sources=[join('mtrand', x) for x in 
                                   ['mtrand.c', 'randomkit.c', 'initarray.c',

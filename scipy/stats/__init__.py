@@ -17,6 +17,7 @@ import scipy.linalg as LinearAlgebra
 # some aliases
 ranf = random_sample
 random = random_sample
+sample = random_sample
 
 def rand(*args):
     """rand(d1,...,dn) returns a matrix of the given dimensions

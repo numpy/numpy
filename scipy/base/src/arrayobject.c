@@ -3849,11 +3849,12 @@ array_descr_get(PyArrayObject *self)
 
 	/* hand this off to the typeobject */
 	/* or give default */
-
-	res = PyObject_GetAttrString((PyObject *)self->descr->typeobj, 
-				      "__array_descr__");
-	if (res) return res;
-	PyErr_Clear();
+	if (PyArray_ISUSERDEF(self)) {
+		res = PyObject_GetAttrString((PyObject *)self->descr->typeobj, 
+					     "__array_descr__");
+		if (res) return res;
+		PyErr_Clear();
+	}
 	/* get default */
 	dobj = PyTuple_New(2);
 	if (dobj == NULL) return NULL;

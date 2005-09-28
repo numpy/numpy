@@ -1,4 +1,5 @@
 import types
+import math, operator
 import numeric as _nx
 from numeric import ones, zeros, arange, concatenate, array, asarray, empty
 from umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc, \
@@ -11,11 +12,54 @@ from _compiled_base import digitize, bincount, _insert
 
 __all__ = ['round','logspace','linspace','fix','mod',
            'select','piecewise','trim_zeros','alen','amax', 'amin', 'ptp',
-           'copy',
+           'copy', 'iterable', 'base_repr', 'binary_repr', 
            'prod','cumprod', 'diff','gradient','angle','unwrap','sort_complex',
            'disp','unique','extract','insert','nansum','nanmax','nanargmax',
            'nanargmin','nanmin', 'vectorize','asarray_chkfinite',
            'average','histogram','bincount','digitize']
+
+_lkup = {'0':'000',
+         '1':'001',
+         '2':'010',
+         '3':'011',
+         '4':'100',
+         '5':'101',
+         '6':'110',
+         '7':'111',
+         'L':''}
+
+def binary_repr(num):
+    """Return the binary representation of the input number as a string.
+
+    This is abuut 25x faster than using base_repr with base 2.
+    """
+    ostr = oct(num)
+    bin = ''
+    for ch in ostr[1:]:
+        bin += _lkup[ch]
+    ind = 0
+    while bin[ind] == '0':
+        ind += 1
+    return bin[ind:]
+
+def base_repr (number, base=2, padding=0):
+    """Return the representation of a number in any given base.
+    """
+    chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+    lnb = math.log(base)
+    res = padding*chars[0]
+    if number == 0:
+        return res + chars[0]
+    exponent = int (math.log (number)/lnb)
+    while(exponent >= 0):
+        term = long(base)**exponent
+        lead_digit = int(number / term)
+        res += chars[lead_digit]
+        number -= term*lead_digit
+        exponent -= 1
+    return res
+#end Fernando's utilities
 
 
 
@@ -53,7 +97,7 @@ def linspace(start,stop,num=50,endpoint=1,retstep=0):
         return y
 
 def iterable(y):
-    try: len(y)
+    try: iter(y)
     except: return 0
     return 1
 

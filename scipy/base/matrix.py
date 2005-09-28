@@ -1,6 +1,7 @@
 
 import numeric as N
 from numeric import ArrayType, concatenate
+from function_base import binary_repr
 import types
 import string as str_
 
@@ -40,25 +41,6 @@ def _convert_from_string(data):
         count += 1
         newdata.append(newrow)
     return newdata
-
-_lkup = {'0':'000',
-         '1':'001',
-         '2':'010',
-         '3':'011',
-         '4':'100',
-         '5':'101',
-         '6':'110',
-         '7':'111'}
-
-def _binary(num):
-    ostr = oct(num)
-    bin = ''
-    for ch in ostr[1:]:
-        bin += _lkup[ch]
-    ind = 0
-    while bin[ind] == '0':
-        ind += 1
-    return bin[ind:]
 
 
 class matrix(N.ndarray):
@@ -163,7 +145,7 @@ class matrix(N.ndarray):
                 return result
             # binary decomposition to reduce the number of Matrix
             #  Multiplies for other > 3.
-            beta = _binary(other)
+            beta = binary_repr(other)
             t = len(beta)
             Z,q = x.copy(),0
             while beta[t-q-1] == '0':

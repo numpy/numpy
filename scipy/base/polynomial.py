@@ -1,21 +1,43 @@
 ## Automatically adapted for scipy Sep 19, 2005 by convertcode.py
 
 import numeric
+_nx = numeric
 from numeric import *
 from scimath import *
 
+
 from type_check import isscalar
-from twodim_base import diag
+from twodim_base import diag, vander
 from shape_base import hstack, atleast_1d
 from function_base import trim_zeros, sort_complex
+eigvals = None
+lstsq = None
 
-__all__ = ['poly','roots','polyint','polyder','polyadd','polysub','polymul',
-           'polydiv','polyval','poly1d']
- 
-def get_eigval_func():
+def get_linalg_funcs():
+    global eigvals, lstsq
     import scipy.linalg
     eigvals = scipy.linalg.eigvals
-    return eigvals
+    lstsq = scipy.linalg.lstsq
+    return
+
+def _eigvals(arg):
+    try:
+        return eigvals(arg)
+    except TypeError:
+        get_linalg_funcs()
+        return eigvals(arg)
+
+def _lstsq(*args):
+    try:
+        return lstsq(*args)
+    except TypeError:
+        get_linalg_funcs()
+        return lstsq(*args)
+    
+
+__all__ = ['poly','roots','polyint','polyder','polyadd','polysub','polymul',
+           'polydiv','polyval','poly1d','poly1d','polyfit']
+ 
 
 def poly(seq_of_zeros):
     """ Return a sequence representing a polynomial given a sequence of roots.
@@ -31,8 +53,7 @@ def poly(seq_of_zeros):
     seq_of_zeros = atleast_1d(seq_of_zeros)    
     sh = shape(seq_of_zeros)
     if len(sh) == 2 and sh[0] == sh[1]:
-        eig = get_eigval_func()
-        seq_of_zeros=eig(seq_of_zeros)
+        seq_of_zeros=_eigvals(seq_of_zeros)
     elif len(sh) ==1:
         pass
     else:
@@ -64,7 +85,6 @@ def roots(p):
         p[0] * x**n + p[1] * x**(n-1) + ... + p[n-1]*x + p[n]
     """
     # If input is scalar, this makes it an array
-    eig = get_eigval_func()
     p = atleast_1d(p)
     if len(p.shape) != 1:
         raise ValueError,"Input must be a rank-1 array."
@@ -87,7 +107,7 @@ def roots(p):
         # build companion matrix and find its eigenvalues (the roots)
         A = diag(ones((N-2,),p.dtypechar),-1)
         A[0,:] = -p[1:] / p[0]
-        roots = eig(A)
+        roots = _eigvals(A)
     else:
         return array([])
 
@@ -145,6 +165,52 @@ def polyder(p,m=1):
             val = poly1d(val)
         return val
 
+def polyfit(x,y,N):
+    """
+
+    Do a best fit polynomial of order N of y to x.  Return value is a
+    vector of polynomial coefficients [pk ... p1 p0].  Eg, for N=2
+
+      p2*x0^2 +  p1*x0 + p0 = y1
+      p2*x1^2 +  p1*x1 + p0 = y1
+      p2*x2^2 +  p1*x2 + p0 = y2
+      .....
+      p2*xk^2 +  p1*xk + p0 = yk
+
+
+    Method: if X is a the Vandermonde Matrix computed from x (see
+    http://mathworld.wolfram.com/VandermondeMatrix.html), then the
+    polynomial least squares solution is given by the 'p' in
+
+      X*p = y
+
+    where X is a len(x) x N+1 matrix, p is a N+1 length vector, and y
+    is a len(x) x 1 vector
+
+    This equation can be solved as
+
+      p = (XT*X)^-1 * XT * y
+
+    where XT is the transpose of X and -1 denotes the inverse.
+
+    For more info, see
+    http://mathworld.wolfram.com/LeastSquaresFittingPolynomial.html,
+    but note that the k's and n's in the superscripts and subscripts
+    on that page.  The linear algebra is correct, however.
+
+    See also polyval
+
+    """
+    x = asarray(x)+0.
+    y = asarray(y)+0.
+    y = reshape(y, (len(y),1))
+    X = vander(x, N+1)
+    c,resids,rank,s = _lstsq(X,y)
+    c.shape = (N+1,)
+    return c
+
+
+
 def polyval(p,x):
     """Evaluate the polynomial p at x.  If x is a polynomial then composition.
 
@@ -156,6 +222,9 @@ def polyval(p,x):
       x can be a sequence and p(x) will be returned for all elements of x.
       or x can be another polynomial and the composite polynomial p(x) will be
       returned.
+
+      Notice:  This can produce inaccurate results for polynomials with significant
+      variability. Use carefully.
     """
     p = asarray(p)
     if isinstance(x,poly1d):
@@ -168,7 +237,7 @@ def polyval(p,x):
     return y
 
 def polyadd(a1,a2):
-    """Adds two polynomials represented as lists
+    """Adds two polynomials represented as sequences
     """
     truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
     a1,a2 = map(atleast_1d,(a1,a2))
@@ -186,7 +255,7 @@ def polyadd(a1,a2):
     return val
 
 def polysub(a1,a2):
-    """Subtracts two polynomials represented as lists
+    """Subtracts two polynomials represented as sequences
     """
     truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
     a1,a2 = map(atleast_1d,(a1,a2))
@@ -205,7 +274,7 @@ def polysub(a1,a2):
 
 
 def polymul(a1,a2):
-    """Multiplies two polynomials represented as lists.
+    """Multiplies two polynomials represented as sequences.
     """
     truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
     val = _nx.convolve(a1,a2)
@@ -213,19 +282,9 @@ def polymul(a1,a2):
         val = poly1d(val)
     return val
 
-def polydiv(a1,a2):
-    """Computes q and r polynomials so that a1(s) = q(s)*a2(s) + r(s)
-    """
-    truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
-    q, r = deconvolve(a1,a2)
-    while _nx.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
-        r = r[1:]
-    if truepoly:
-        q, r = map(poly1d,(q,r))
-    return q, r
 
 def deconvolve(signal, divisor):
-    """Deconvolves divisor out of signal.
+    """Deconvolves divisor out of signal.  Requires scipy.signal library
     """
     try:
         import scipy.signal
@@ -244,6 +303,18 @@ def deconvolve(signal, divisor):
         quot = scipy.signal.lfilter(num, den, input)
         rem = num - _nx.convolve(den,quot,mode=2)
     return quot, rem
+
+def polydiv(a1,a2):
+    """Computes q and r polynomials so that a1(s) = q(s)*a2(s) + r(s)
+    """
+    truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
+    q, r = deconvolve(a1,a2)
+    while _nx.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
+        r = r[1:]
+    if truepoly:
+        q, r = map(poly1d,(q,r))
+    return q, r
+
 
 import re
 _poly_mat = re.compile(r"[*][*]([0-9]*)")
@@ -429,7 +500,7 @@ class poly1d:
     def __getattr__(self, key):
         if key in ['r','roots']:
             return roots(self.coeffs)
-        elif key in ['S1','coef','coefficients']:
+        elif key in ['c','coef','coefficients']:
             return self.coeffs
         elif key in ['o']:
             return self.order

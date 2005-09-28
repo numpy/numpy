@@ -19,13 +19,7 @@ frombuffer = multiarray.frombuffer
 where = multiarray.where
 concatenate = multiarray.concatenate
 fastCopyAndTranspose = multiarray._fastCopyAndTranspose
-#def where(condition, x=None, y=None):
-#    """where(condition,x,y) is shaped like condition and has elements of x and
-#    y where condition is respectively true or false.
-#    """
-#    if (x is None) or (y is None):
-#        return nonzero(condition)
-#    return choose(not_equal(condition, 0), (y, x))
+register_dtype = multiarray.register_dtype
 
 def asarray(a, dtype=None):
     """asarray(a,dtype=None) returns a as a NumPy array.  Unlike array(),
@@ -50,7 +44,29 @@ def ensure_array(a, dtype=None):
         except AttributeError:
             a = array(a,dtype,copy=1)  # copy irrelevant
             dtype = None
-            
+
+def isfortran(a):
+    flags = a.flags
+    return flags['FORTRAN'] and a.ndim > 1
+
+# from Fernando Perez's IPython
+def zeros_like(a):
+    """Return an array of zeros of the shape and typecode of a.
+
+    If you don't explicitly need the array to be zeroed, you should instead
+    use empty_like(), which is faster as it only allocates memory."""
+
+    return zeros(a.shape,a.dtype,a.flags['FORTRAN'] and a.ndim > 1)
+
+def empty_like(a):
+    """Return an empty (uninitialized) array of the shape and typecode of a.
+
+    Note that this does NOT initialize the returned array.  If you require
+    your array to be initialized, you should use zeros_like().
+
+    """
+    return empty(a.shape,a.dtype,a.flags['FORTRAN'] and a.ndim > 1)
+# end Fernando's utilities
 
 _mode_from_name_dict = {'v': 0,
                         's' : 1,
@@ -205,14 +221,17 @@ def indices(dimensions, dtype=intp):
         lst.append( add.accumulate(tmp, i, )-1 )
     return array(lst)
 
-def fromfunction(function, dimensions):
+def fromfunction(function, dimensions, **kwargs):
     """fromfunction(function, dimensions) returns an array constructed by
     calling function on a tuple of number grids.  The function should
     accept as many arguments as there are dimensions which is a list of
     numbers indicating the length of the desired output for each axis.
+
+    The function can also accept keyword arguments which will be
+    passed in as well. 
     """
     args = indices(dimensions)
-    return function(*args)
+    return function(*args,**kwargs)
     
 
 from cPickle import load, loads

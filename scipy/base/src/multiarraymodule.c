@@ -1117,7 +1117,7 @@ PyArray_Concatenate(PyObject *op, int axis)
 		return NULL;
 	}
 
-	if ((0 < axis) && (axis < MAX_DIMS)) 
+	if ((axis < 0) || ((0 < axis) && (axis < MAX_DIMS)))
 		return _swap_and_concat(op, axis, n);
 	
 	ret = NULL;

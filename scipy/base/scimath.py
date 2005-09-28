@@ -16,6 +16,8 @@ from type_check import isreal
 __all__.extend([key for key in dir(_nx.umath) \
                 if key[0]!='_' and key not in __all__])
 
+_ln2 = log(2.0)
+
 def _tocomplex(arr):
     if arr.dtypechar in ['f', 'h', 'B', 'b','H']:
         return arr.astype('F')
@@ -57,7 +59,7 @@ def log2(x):
     """ Take log base 2 of x.
     """
     x = _fix_real_lt_zero(x)
-    return log(x)/log(2)
+    return log(x)/_ln2
 
 def power(x, p):
     x = _fix_real_lt_zero(x)
