@@ -924,10 +924,10 @@ class lapack_opt_info(system_info):
             args = []
             link_args = []
             if os.path.exists('/System/Library/Frameworks/Accelerate.framework/'):
-                args.extend(['-faltivec','-framework','Accelerate'])
+                args.extend(['-faltivec'])
                 link_args.extend(['-Wl,-framework','-Wl,Accelerate'])
             elif os.path.exists('/System/Library/Frameworks/vecLib.framework/'):
-                args.extend(['-faltivec','-framework','vecLib'])
+                args.extend(['-faltivec'])
                 link_args.extend(['-Wl,-framework','-Wl,vecLib'])
             if args:
                 self.set_info(extra_compile_args=args,
@@ -1004,10 +1004,14 @@ class blas_opt_info(system_info):
             args = []
             link_args = []
             if os.path.exists('/System/Library/Frameworks/Accelerate.framework/'):
-                args.extend(['-faltivec','-framework','Accelerate'])
+                args.extend(['-faltivec',
+                    '-I/System/Library/Frameworks/vecLib.framework/Headers',
+                    ])
                 link_args.extend(['-Wl,-framework','-Wl,Accelerate'])
             elif os.path.exists('/System/Library/Frameworks/vecLib.framework/'):
-                args.extend(['-faltivec','-framework','vecLib'])
+                args.extend(['-faltivec',
+                    '-I/System/Library/Frameworks/vecLib.framework/Headers',
+                    ])
                 link_args.extend(['-Wl,-framework','-Wl,vecLib'])
             if args:
                 self.set_info(extra_compile_args=args,
