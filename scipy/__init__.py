@@ -10,7 +10,7 @@ Ironically, you can help make the documentation free by purchasing a copy today.
 
 try:   # For installation purposes only 
     from scipy.base import *
-    import scipy.linalg as linalg
+    #import scipy.linalg as linalg
     import scipy.fftpack as fftpack
     from scipy.fftpack import fft, ifft
     import scipy.stats as stats
