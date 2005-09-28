@@ -1,0 +1,11 @@
+recursive-include *.txt
+include MANIFEST.in
+include scipy/f2py2e/f2py.1
+recursive-include scipy/f2py2e *.cfg
+recursive-include scipy/f2py2e *.py
+recursive-include scipy/f2py2e/src fortranobject.c fortranobject.h
+recursive-include scipy/f2py2e/tests *.py
+recursive-include scipy/f2py2e/tests/mixed *.f *.f90
+#recursive-include scipy/f2py2e/doc *.py *.txt *.tex *.html Makefile
+recursive-include scipy/f2py2e/docs *.txt *.html *.dat *.f *.f90 *.pyf setup_example.py f2py_style.css
+

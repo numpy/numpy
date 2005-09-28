@@ -35,6 +35,12 @@ def run():
         print 'Failed to import numarray:',sys.exc_value
         has_numarray = 0
     try:
+        import scipy.base
+        has_newscipy = 1
+    except ImportError:
+        print 'Failed to import new scipy:', sys.exc_value
+        has_newscipy = 0
+    try:
         import f2py2e
         has_f2py2e = 1
     except ImportError:
@@ -63,6 +69,13 @@ def run():
                   (numarray.__version__,numarray.__file__)
         except Exception,msg:
             print 'error:',msg
+            print '------'
+    if has_newscipy:
+        try:
+            print 'Found new scipy version %r in %s' % \
+                  (scipy.__version__, scipy.__file__)
+        except Exception,msg:
+            print 'error:', msg
             print '------'
     if has_f2py2e:
         try:

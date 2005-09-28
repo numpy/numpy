@@ -15,6 +15,7 @@ try:   # For installation purposes only
     from scipy.fftpack import fft, ifft
     import scipy.stats as stats
     from scipy.stats import rand, randn
+    from core_version import version as __version__
 except AttributeError, inst:
     if inst.args[0] == "'module' object has no attribute 'typeinfo'":
         pass

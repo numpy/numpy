@@ -20,8 +20,9 @@ __version__ = "$Id: setup.py,v 1.32 2005/01/30 17:22:14 pearu Exp $"
 
 import os
 import sys
-from distutils.core import setup
-from distutils.command.install_data import install_data
+from scipy.distutils.core import setup
+from scipy.distutils.command.install_data import install_data
+from scipy.distutils.misc_util import get_path
 
 from __version__ import version
 
@@ -51,11 +52,19 @@ if not os.path.exists(f2py_exe):
     f.write(f2py_py())
     f.close()
 
+
+def configuration(parent_package='',parent_path=None):
+    parent_path2 = parent_path
+    parent_path = parent_package
+    local_path = get_path(__name__,parent_path2)
+    config = Configuration('f2py2e',parent_package)
+    return config
+
 if __name__ == "__main__":
 
     print 'F2PY Version',version
 
-    config = {}
+    config = configuration(parent_path='')
     if sys.version[:3]>='2.3':
         config['download_url'] = "http://cens.ioc.ee/projects/f2py2e/2.x"\
                                  "/F2PY-2-latest.tar.gz"

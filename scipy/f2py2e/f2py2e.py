@@ -614,8 +614,10 @@ def run_compile():
 
     if scipy_distutils_version[:5]>='0.4.0':
         from scipy.distutils.system_info import get_info
+        using_newscipy=1
     else:
         from scipy_distutils.system_info import get_info
+        using_newscipy=0
     num_include_dir = None
     if using_numarray:
         try:
@@ -628,6 +630,11 @@ def run_compile():
             print 'Failed to import numarray:',sys.exc_value
             raise ImportError,'Must have numarray installed.'
         num_info = get_info('numarray')
+    elif using_newscipy:
+        import scipy
+        n = 'scipy'
+        p = get_prefix(scipy)
+        num_info = get_info('scipy')
     else:
         try:
             import Numeric
