@@ -17,12 +17,12 @@ def mintypecode(typecodes,typeset='DFdf',default='d',savespace=0):
     """ Return a typecode in typeset such that for each
     t in typecodes
     array(typecode=typecode)[:] = array(typecode=t)
-    is valid, looses no information, and array(typecode=typecode)
+    is valid, loses no information, and array(typecode=typecode)
     element size is minimal unless when typecodes does not
     intersect with typeset then default is returned.
     As a special case, if savespace is False then 'D' is returned
     whenever typecodes contain 'F' and 'd'.
-    If t in typecodes is not a string then t=t.typecode() is applied.
+    If t in typecodes is not a string then t=t.dtypechar is applied.
     """
     typecodes = [(type(t) is type('') and t) or asarray(t).dtypechar\
                  for t in typecodes]
@@ -41,7 +41,7 @@ def mintypecode(typecodes,typeset='DFdf',default='d',savespace=0):
 def asfarray(a, dtype=None):
     """asfarray(a,dtype=None) returns a as a float array."""
     a = asarray(a,dtype)
-    if typecode is None and a.dtypechar not in 'GDFgfd':
+    if dtype is None and a.dtypechar not in 'GDFgfd':
        return a.astype('d')
     return a
    
