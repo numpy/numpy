@@ -20,59 +20,59 @@ Exported symbols include:
 
     c-based names 
 
-    abool
+    bool_
 
-    aobject
+    object_
 
-    void, astr, aunicode 
+    void, str_, unicode_
 
     byte, ubyte,
     short, ushort
     intc, uintc,
     intp, uintp,
-    aint, uint,
+    int_, uint,
     longlong, ulonglong,
 
     single, csingle,
-    afloat, acomplex,
+    float_, complex_,
     longfloat, clongfloat,
 
     As part of the type-hierarchy:    xx -- is bit-width
     
      generic
-       abool
+       bool_
        numeric
          integer
            signedinteger   (intxx)
              byte
              short
-             aint
+             intc
              intp           int0
-             longint
+             int_
              longlong
            unsignedinteger  (uintxx)
              ubyte
              ushort
-             uint
+             uintc
              uintp          uint0
-             ulongint
+             uint_
              ulonglong
          floating           (floatxx)
              single          
-             afloat  (double)
+             float_  (double)
              longfloat
          complexfloating    (complexxx)
              csingle        
-             acomplex (cfloat, cdouble)
+             complex_ (cfloat, cdouble)
              clongfloat
    
        flexible
          character
-           astr (string)
-           aunicode
+           str_     (string)
+           unicode_ 
          void
    
-       aobject
+       object_
 
 $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
@@ -176,24 +176,24 @@ for a in _tocheck:
 # Rework the Python names (so that float and complex and int are consistent
 #                            with Python usage)
 #
-acomplex = cdouble
+complex_ = cdouble
 int0 = intp
 uint0 = uintp
 single = float
 csingle = cfloat
-afloat = double
+float_ = double
 intc = int
 uintc = uint
-aint = long
+int_ = long
 uint = ulong
 cfloat = cdouble
 longfloat = longdouble
 clongfloat = clongdouble
 
-abool = bool
-aunicode = unicode
-astr = string
-aobject = object
+bool_ = bool
+unicode_ = unicode
+str_ = string
+object_ = object
 
 object = pyobject
 unicode = pyunicode
@@ -221,7 +221,7 @@ arraytypes = {'int': [],
               'uint':[],
               'float':[],
               'complex':[],
-              'others':[abool,aobject,string,aunicode,void]}
+              'others':[bool_,object_,str_,unicode_,void]}
 
 _ibytes = [1,2,4,8,16,32,64]
 _fbytes = [2,4,8,10,12,16,32,64]
@@ -276,15 +276,15 @@ def _python_type(t):
     if not isinstance(t, _types.TypeType):
         t = type(t)
     if t == _types.IntType:
-        return aint
+        return int_
     elif t == _types.FloatType:
-        return afloat
+        return float_
     elif t == _types.ComplexType:
-        return acomplex
+        return complex_
     elif t == _types.StringType:
-        return astr
+        return str_
     elif t == _types.UnicodeType:
-        return aunicode
+        return unicode_
     elif t == _types.BufferType:
         return void
     else:

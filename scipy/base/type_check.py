@@ -41,11 +41,11 @@ def mintypecode(typechars,typeset='GDFgdf',default='d'):
     l.sort()
     return l[0][1]
 
-def asfarray(a, dtype=_nx.afloat):
+def asfarray(a, dtype=_nx.float_):
     """asfarray(a,dtype=None) returns a as a float array."""
     dtype = _nx.obj2dtype(dtype)
     if not issubclass(dtype, _nx.inexact):
-        dtype = _nx.afloat
+        dtype = _nx.float_
     a = asarray(a,dtype=dtype)
     return a
    

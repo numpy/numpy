@@ -16,7 +16,7 @@ def frz(a):
 
 _convert_to_float = {
     numeric.csingle: numeric.single,
-    numeric.acomplex: numeric.afloat,
+    numeric.complex_: numeric.float_,
     numeric.clongfloat: numeric.longfloat
     }
 
@@ -29,9 +29,9 @@ class finfo(object):
             raise ValueError, "data type not inexact"
         if not issubclass(dtype, numeric.floating):
             dtype = _convert_to_float[dtype]
-        if dtype is numeric.afloat:
+        if dtype is numeric.float_:
             try:
-                self.machar = _machar_cache[numeric.afloat]
+                self.machar = _machar_cache[numeric.float_]
             except KeyError:
                 self.machar = MachAr(lambda v:array([v],'d'),
                                      lambda v:frz(v.astype('i'))[0],
@@ -39,7 +39,7 @@ class finfo(object):
                                      lambda v:'%24.16e' % array(frz(v)[0],'d'),
                                      'scipy float precision floating point '\
                                      'number')
-                _machar_cache[numeric.afloat] = self.machar
+                _machar_cache[numeric.float_] = self.machar
                 
         elif dtype is numeric.single:
             try:

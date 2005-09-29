@@ -40,7 +40,7 @@ def rot90(m, k=1):
     elif k == 2: return fliplr(flipud(m))
     else: return fliplr(transpose(m))  # k==3
     
-def eye(N, M=None, k=0, dtype=aint):
+def eye(N, M=None, k=0, dtype=int_):
     """ eye returns a N-by-M 2-d array where the  k-th diagonal is all ones, 
         and everything else is zeros.
     """
@@ -80,7 +80,7 @@ def diag(v, k=0):
             raise ValueError, "Input must be 1- or 2-d."
 
 
-def tri(N, M=None, k=0, dtype=aint):
+def tri(N, M=None, k=0, dtype=int_):
     """ returns a N-by-M array where all the diagonals starting from
         lower left corner up to the k-th are all ones.
     """
