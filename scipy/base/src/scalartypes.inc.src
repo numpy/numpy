@@ -1451,6 +1451,7 @@ ComplexFloating, Flexible, Character#
 	*/
 	Py@NAME@ArrType_Type.tp_flags = LEAFFLAGS;
 	Py@NAME@ArrType_Type.tp_new = @name@_arrtype_new;
+	Py@NAME@ArrType_Type.tp_richcompare = gentype_richcompare;
 	/**end repeat**/
 	/* Allow the Void type to be subclassed -- for adding new types */
 	PyVoidArrType_Type.tp_flags = BASEFLAGS;
