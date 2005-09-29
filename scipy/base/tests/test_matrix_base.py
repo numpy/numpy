@@ -1,14 +1,14 @@
-""" Test functions for basic module
+""" Test functions for matrix module
 
 """
 
 import unittest
 
 import sys
-from scipy_test.testing import *
+from scipy.test.testing import *
 set_package_path()
-import scipy_base;reload(scipy_base)
-from scipy_base import *
+import scipy.base;reload(scipy.base)
+from scipy.base import *
 del sys.path[0]
 
 ##################################################
@@ -140,4 +140,4 @@ class test_rot90(unittest.TestCase):
             assert_equal(rot90(a,k=k),b4)
 
 if __name__ == "__main__":
-    ScipyTest('scipy_base.matrix_base').run()
+    ScipyTest('scipy.base.matrix').run()

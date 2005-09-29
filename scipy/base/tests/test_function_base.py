@@ -1,11 +1,11 @@
 
 import unittest
-
 import sys
-from scipy_test.testing import *
+
+from scipy.test.testing import *
 set_package_path()
-import scipy_base;reload(scipy_base)
-from scipy_base import *
+import scipy.base;reload(scipy.base)
+from scipy.base import *
 del sys.path[0]
 
 class test_any(unittest.TestCase):
@@ -241,4 +241,4 @@ def compare_results(res,desired):
         assert_array_equal(res[i],desired[i])
 
 if __name__ == "__main__":
-    ScipyTest('scipy_base.function_base').run()
+    ScipyTest('scipy.base.function_base').run()

@@ -1,11 +1,11 @@
 import unittest
-
 import sys
-from scipy_test.testing import *
+
+from scipy.test.testing import *
 set_package_path()
-import scipy_base; reload(scipy_base)
-reload(scipy_base.shape_base)
-from scipy_base import *
+import scipy.base; reload(scipy.base)
+reload(scipy.base.shape_base)
+from scipy.base import *
 restore_path()
 
 class test_apply_along_axis(ScipyTestCase):
@@ -364,4 +364,4 @@ def compare_results(res,desired):
 
 
 if __name__ == "__main__":
-    ScipyTest('scipy_base.shape_base').run()
+    ScipyTest('scipy.base.shape_base').run()

@@ -754,8 +754,9 @@ def assert_array_less(x,y,err_msg=''):
 
 __all__.append('rand')
 def rand(*args):
-    """ Returns an array of random numbers with the given shape.
-    used for testing
+    """Returns an array of random numbers with the given shape.
+    
+    This only uses the standard library, so it is useful for testing purposes. 
     """
     import random
     results = zeros(args,Float64)

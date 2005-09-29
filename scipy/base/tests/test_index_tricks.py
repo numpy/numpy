@@ -1,10 +1,10 @@
 import unittest
-
 import sys
-from scipy_test.testing import *
+
+from scipy.test.testing import *
 set_package_path()
-import scipy_base;reload(scipy_base)
-from scipy_base import *
+import scipy.base;reload(scipy.base)
+from scipy.base import *
 del sys.path[0]
 
 class test_grid(unittest.TestCase):
@@ -54,4 +54,4 @@ class test_concatenator(unittest.TestCase):
         assert_array_equal(d[5:,:],c)
 
 if __name__ == "__main__":
-    ScipyTest('scipy_base.index_tricks').run()
+    ScipyTest('scipy.base.index_tricks').run()

@@ -5,12 +5,12 @@
 """
 
 import unittest
-
 import sys
-from scipy_test.testing import *
+
+from scipy.test.testing import *
 set_package_path()
-import scipy_base;reload(scipy_base)
-from scipy_base import *
+import scipy.base;reload(scipy.base)
+from scipy.base import *
 del sys.path[0]
 
 ##################################################
@@ -25,5 +25,5 @@ class test_double(unittest.TestCase):
         pass
 
 if __name__ == "__main__":
-    ScipyTest('scipy_base.limits').run()
+    ScipyTest('scipy.base.limits').run()
 
