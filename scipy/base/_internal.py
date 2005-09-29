@@ -30,7 +30,7 @@ class flagsobj(dict):
 
     def __getitem__(self, key):
         if not isinstance(key, str):
-            raise KeyError, "Unknown flag", key
+            raise KeyError, "Unknown flag %s" % key
         if len(key) == 1:
             try:
                 return dict.__getitem__(self, _firstltr[key])
@@ -58,7 +58,7 @@ class flagsobj(dict):
                     num = _anum + _nnum + _wnum + _fnum
                     return (self._flagnum & num == num) and not \
                            (self._flagnum & _cnum == _cnum)
-        raise KeyError, "Unknown flag:", key
+        raise KeyError, "Unknown flag: %s" % key
         
     def __setitem__(self, item, val):
         val = not not val  # convert to boolean
