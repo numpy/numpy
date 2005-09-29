@@ -20,6 +20,7 @@ def setup_package():
             maintainer_email = "scipy-dev@scipy.org",
             description = "Core SciPy",
             url = "http://numeric.scipy.org",
+	    license = 'BSD',
             )
         config.add_subpackage('scipy')
         config.name = 'scipy_core'
