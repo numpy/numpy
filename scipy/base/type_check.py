@@ -44,7 +44,6 @@ def asfarray(a, dtype=None):
     if typecode is None and a.dtypechar not in 'GDFgfd':
        return a.astype('d')
     return a
-
    
 def isscalar(num):
     if isinstance(num, _nx.generic):
