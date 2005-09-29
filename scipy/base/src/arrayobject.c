@@ -5506,6 +5506,32 @@ PyArray_CanCastSafely(int fromtype, int totype)
         }
 }
 
+static Bool
+PyArray_CanCastTo(PyArray_Typecode *from, PyArray_Typecode *to)
+{
+	int fromtype=from->type_num;
+	int totype=to->type_num;
+	Bool ret;
+
+	ret = (Bool) PyArray_CanCastSafely(fromtype, totype);
+	if (ret) { /* Check String and Unicode more closely */
+		if (fromtype == PyArray_STRING) {
+			if (totype == PyArray_STRING) {
+				ret = (from->itemsize <= to->itemsize);
+			}
+			else if (totype == PyArray_UNICODE) {
+				ret = (from->itemsize * sizeof(Py_UNICODE)\
+				       <= to->itemsize);
+			}
+		}
+		else if (fromtype == PyArray_UNICODE) {
+			if (totype == PyArray_UNICODE) {
+				ret = (from->itemsize <= to->itemsize);
+			}
+		}
+	}
+	return ret;
+}
 
 
 

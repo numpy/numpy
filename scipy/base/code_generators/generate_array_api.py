@@ -55,6 +55,10 @@ objectapi_list = [
     """,
      'CanCastSafely','int fromtype, int totype','int'),
 
+    (r"""
+    """,
+     'CanCastTo','PyArray_Typecode *, PyArray_Typecode *', 'Bool'),
+
     (r"""Return the typecode of the array a Python object would be
     converted to
     """,

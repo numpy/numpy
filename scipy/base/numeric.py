@@ -20,6 +20,7 @@ where = multiarray.where
 concatenate = multiarray.concatenate
 fastCopyAndTranspose = multiarray._fastCopyAndTranspose
 register_dtype = multiarray.register_dtype
+can_cast = multiarray.can_cast
 
 def asarray(a, dtype=None):
     """asarray(a,dtype=None) returns a as a NumPy array.  Unlike array(),

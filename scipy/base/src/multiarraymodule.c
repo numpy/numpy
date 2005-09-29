@@ -3707,7 +3707,8 @@ static char
 doc_set_string_function[] = "set_string_function(f, repr=1) sets the python function f to be the function used to obtain a pretty printable string version of a array whenever a array is printed.  f(M) should expect a array argument M, and should return a string consisting of the desired representation of M for printing.";
 
 static PyObject *
-array_set_string_function(PyObject *dummy, PyObject *args, PyObject *kwds) {
+array_set_string_function(PyObject *dummy, PyObject *args, PyObject *kwds) 
+{
 	PyObject *op;
 	int repr=1;
 	static char *kwlist[] = {"f", "repr", NULL};
@@ -3815,6 +3816,37 @@ array_register_dtype(PyObject *dummy, PyObject *args)
 	return PyInt_FromLong((long) ret);
 }
 
+static char doc_can_cast_safely[] = \
+	"can_cast_safely(from=d1, to=d2) returns True if data type d1 "\
+	"can be cast to data type d2 without losing precision.";
+
+static PyObject *
+array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
+{
+	PyArray_Typecode d1={PyArray_NOTYPE, 0, 0};
+	PyArray_Typecode d2={PyArray_NOTYPE, 0, 0};
+	Bool ret;
+	PyObject *retobj;
+	static char *kwlist[] = {"from", "to", NULL};
+
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&", kwlist, 
+					PyArray_TypecodeConverter, &d1,
+					PyArray_TypecodeConverter, &d2))
+		return NULL;
+	if (d1.type_num == PyArray_NOTYPE || \
+	    d2.type_num == PyArray_NOTYPE) {
+		PyErr_SetString(PyExc_TypeError, 
+				"did not understand one of the types. "\
+				"'None' not accepted.");
+		return NULL;
+	}
+		
+	ret = PyArray_CanCastTo(&d1, &d2);
+	retobj = (ret ? Py_True : Py_False);
+	Py_INCREF(retobj);
+	return retobj;
+}
+
 
 static struct PyMethodDef array_module_methods[] = {
 	{"set_string_function", (PyCFunction)array_set_string_function, 
@@ -3823,7 +3855,7 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS|METH_KEYWORDS, doc_set_ops_function},
 	{"set_typeDict", (PyCFunction)array_set_typeDict,
 	 METH_VARARGS, doc_set_typeDict},
-	
+
 	{"array",	(PyCFunction)_array_fromobject, 
 	 METH_VARARGS|METH_KEYWORDS, doc_fromobject},
 	{"arange",  (PyCFunction)array_arange, 
@@ -3854,6 +3886,8 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS, doc_fromfile},
 	{"register_dtype", (PyCFunction)array_register_dtype,
 	 METH_VARARGS, doc_register_dtype},
+	{"can_cast", (PyCFunction)array_can_cast_safely,
+	 METH_VARARGS | METH_KEYWORDS, doc_can_cast_safely},		
 	/*  {"arrayMap",	(PyCFunction)array_arrayMap, 
 	    METH_VARARGS, doc_arrayMap},*/
 	
