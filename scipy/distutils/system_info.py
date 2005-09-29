@@ -22,6 +22,7 @@ classes are available:
   blas_src_info
   numpy_info
   numarray_info
+  scipy_info
   boost_python_info
   agg2_info
   wx_info
@@ -168,6 +169,7 @@ def get_info(name,notfound_action=0):
           'numpy':numpy_info,
           'numeric':numpy_info, # alias to numpy, for build_ext --backends support
           'numarray':numarray_info,
+          'scipy':scipy_info,
           'lapack_opt':lapack_opt_info,
           'blas_opt':blas_opt_info,
           'boost_python':boost_python_info,
@@ -859,9 +861,14 @@ DL_EXPORT(void) initatlas_version(void) {
 #endif
 '''
 
+def _get_build_temp():
+    from distutils.util import get_platform
+    plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])
+    return os.path.join('build','temp'+plat_specifier)
+
 def get_atlas_version(**config):
     from core import Extension, setup
-#    from misc_util import get_build_temp
+    from misc_util import get_cmd
     import log
     magic = hex(hash(`config`))
     def atlas_version_c(extension, build_dir,magic=magic):
@@ -877,8 +884,8 @@ def get_atlas_version(**config):
     ext = Extension('atlas_version',
                     sources=[atlas_version_c],
                     **config)
-#    extra_args = ['--build-lib',get_build_temp_dir()]
-    extra_args = []
+    build_dir = _get_build_temp()
+    extra_args = ['--build-lib',build_dir]
     for a in sys.argv:
         if re.match('[-][-]compiler[=]',a):
             extra_args.append(a)
@@ -895,8 +902,7 @@ def get_atlas_version(**config):
 
     from distutils.sysconfig import get_config_var
     so_ext = get_config_var('SO')
-    build_ext = dist.get_command_obj('build_ext')
-    target = os.path.join(build_ext.build_lib,'atlas_version'+so_ext)
+    target = os.path.join(build_dir,'atlas_version'+so_ext)
     cmd = [get_pythonexe(),'-c',
            '"import imp;imp.load_dynamic(\\"atlas_version\\",\\"%s\\")"'\
            % (os.path.basename(target))]
@@ -1191,9 +1197,15 @@ class numpy_info(system_info):
         except ImportError:
             return
         info = {}
-        macros = [(self.modulename.upper()+'_VERSION',
-                   '"\\"%s\\""' % (module.__version__)),
-                  (self.modulename.upper(),None)]
+        macros = []
+        for v in ['__version__','version']:
+            vrs = getattr(module,v,None)
+            if vrs is None:
+                continue
+            macros = [(self.modulename.upper()+'_VERSION',
+                      '"\\"%s\\""' % (vrs)),
+                      (self.modulename.upper(),None)]
+            break
 ##         try:
 ##             macros.append(
 ##                 (self.modulename.upper()+'_VERSION_HEX',
@@ -1219,6 +1231,11 @@ class numpy_info(system_info):
 class numarray_info(numpy_info):
     section = 'numarray'
     modulename = 'numarray'
+
+class scipy_info(numpy_info):
+    section = 'scipy'
+    modulename = 'scipy'
+
 
 class boost_python_info(system_info):
     section = 'boost_python'

@@ -6,7 +6,6 @@ commands."""
 __revision__ = "$Id: __init__.py,v 1.3 2005/05/16 11:08:49 pearu Exp $"
 
 distutils_all = [  'build_py',
-                   'build_scripts',
                    'clean',
                    'install_lib',
                    'install_scripts',
@@ -23,6 +22,7 @@ __all__ = ['build',
            'build_src',
            'build_ext',
            'build_clib',
+           'build_scripts',
            'install',
            'install_data',
            'install_headers',

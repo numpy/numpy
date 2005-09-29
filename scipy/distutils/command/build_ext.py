@@ -12,7 +12,8 @@ from distutils.command.build_ext import build_ext as old_build_ext
 
 from scipy.distutils import log
 from scipy.distutils.misc_util import filter_sources, has_f_sources, \
-     has_cxx_sources, get_ext_source_files, all_strings
+     has_cxx_sources, get_ext_source_files, all_strings, \
+     get_scipy_include_dirs
 from distutils.errors import DistutilsFileError
 
 class build_ext (old_build_ext):
@@ -168,13 +169,15 @@ class build_ext (old_build_ext):
         kws = {'depends':ext.depends}
         output_dir = self.build_temp
 
+        include_dirs = ext.include_dirs + get_scipy_include_dirs()
+
         c_objects = []
         if c_sources:
             log.info("compiling C sources")
             c_objects = self.compiler.compile(c_sources,
                                               output_dir=output_dir,
                                               macros=macros,
-                                              include_dirs=ext.include_dirs,
+                                              include_dirs=include_dirs,
                                               debug=self.debug,
                                               extra_postargs=extra_args,
                                               **kws)
@@ -187,7 +190,7 @@ class build_ext (old_build_ext):
             c_objects += self.compiler.compile(cxx_sources,
                                               output_dir=output_dir,
                                               macros=macros,
-                                              include_dirs=ext.include_dirs,
+                                              include_dirs=include_dirs,
                                               debug=self.debug,
                                               extra_postargs=extra_args,
                                               **kws)
@@ -197,7 +200,6 @@ class build_ext (old_build_ext):
 
         if f_sources or fmodule_sources:
             extra_postargs = []
-            include_dirs = ext.include_dirs[:]
             module_dirs = ext.module_dirs[:]
 
             #if self.fcompiler.compiler_type=='ibm':

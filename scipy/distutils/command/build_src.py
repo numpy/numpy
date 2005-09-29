@@ -179,14 +179,14 @@ class build_src(build_ext.build_ext):
         else:
             if type(extension) is type(()):
                 name = extension[0]
-                if not extension[1].has_key('include_dirs'):
-                    extension[1]['include_dirs'] = []
-                incl_dirs = extension[1]['include_dirs']
+            #    if not extension[1].has_key('include_dirs'):
+            #        extension[1]['include_dirs'] = []
+            #    incl_dirs = extension[1]['include_dirs']
             else:
                 name = extension.name
-                incl_dirs = extension.include_dirs
-            if self.build_src not in incl_dirs:
-                incl_dirs.append(self.build_src)
+            #    incl_dirs = extension.include_dirs
+            #if self.build_src not in incl_dirs:
+            #    incl_dirs.append(self.build_src)
             build_dir = os.path.join(*([self.build_src]\
                                        +name.split('.')[:-1]))
         self.mkpath(build_dir)
@@ -250,6 +250,7 @@ class build_src(build_ext.build_ext):
                 if _header_ext_match(target_file):
                     d = os.path.dirname(target_file)
                     if d not in include_dirs:
+                        log.info("  adding '%s' to include_dirs." % (d))
                         include_dirs.append(d)
                 new_sources.append(target_file)
             else:
@@ -328,7 +329,7 @@ class build_src(build_ext.build_ext):
             if (self.force or newer_group(depends, target_file,'newer')) \
                    and not skip_f2py:
                 log.info("f2py: %s" % (source))
-                import f2py2e
+                import scipy.f2py as f2py2e
                 f2py2e.run_main(f2py_options + ['--build-dir',target_dir,source])
             else:
                 log.debug("  skipping '%s' f2py interface (up-to-date)" % (source))
@@ -343,7 +344,7 @@ class build_src(build_ext.build_ext):
             depends = f_sources + extension.depends
             if (self.force or newer_group(depends, target_file, 'newer')) \
                    and not skip_f2py:
-                import f2py2e
+                import scipy.f2py as f2py2e
                 log.info("f2py:> %s" % (target_file))
                 self.mkpath(target_dir)
                 f2py2e.run_main(f2py_options + ['--lower',
@@ -365,7 +366,7 @@ class build_src(build_ext.build_ext):
             extension.include_dirs.append(self.build_src)
 
         if not skip_f2py:
-            import f2py2e
+            import scipy.f2py as f2py2e
             d = os.path.dirname(f2py2e.__file__)
             source_c = os.path.join(d,'src','fortranobject.c')
             source_h = os.path.join(d,'src','fortranobject.h')

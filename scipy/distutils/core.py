@@ -11,6 +11,7 @@ from scipy.distutils.command import config_compiler
 from scipy.distutils.command import build_ext
 from scipy.distutils.command import build_clib
 from scipy.distutils.command import build_src
+from scipy.distutils.command import build_scripts
 from scipy.distutils.command import sdist
 from scipy.distutils.command import install_data
 from scipy.distutils.command import install_headers
@@ -20,6 +21,7 @@ from scipy.distutils.misc_util import get_data_files
 
 scipy_cmdclass = {'build':            build.build,
                   'build_src':        build_src.build_src,
+                  'build_scripts':    build_scripts.build_scripts,
                   'config_fc':        config_compiler.config_fc,
                   'config':           config.config,
                   'build_ext':        build_ext.build_ext,

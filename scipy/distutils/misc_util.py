@@ -10,7 +10,6 @@ def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."
     splitted = name.split('/')
     return os.path.join(*splitted)
-    
 
 def get_path(mod_name,parent_path=None):
     """ Return path of the module.
@@ -28,7 +27,7 @@ def get_path(mod_name,parent_path=None):
         mod = sys.modules[mod_name]
         file = mod.__file__
         d = os.path.dirname(os.path.abspath(file))
-    if parent_path is not None:
+    if parent_path:
         pd = os.path.abspath(parent_path)
         if pd==d[:len(pd)]:
             d = d[len(pd)+1:]
@@ -176,6 +175,8 @@ def get_dependencies(sources):
 def is_local_src_dir(directory):
     """ Return true if directory is local directory.
     """
+    if type(directory) is not type(''):
+        return False
     abs_dir = os.path.abspath(directory)
     c = os.path.commonprefix([os.getcwd(),abs_dir])
     new_dir = abs_dir[len(c):].split(os.sep)
@@ -213,6 +214,10 @@ def get_ext_source_files(ext):
             filenames.append(d)
     return filenames
 
+def get_script_files(scripts):
+    scripts = filter(lambda s:type(s) is types.StringType,scripts)
+    return scripts
+
 def get_lib_source_files(lib):
     filenames = []
     sources = lib[1].get('sources',[])
@@ -233,10 +238,16 @@ def get_data_files(data):
     sources = data[1]
     filenames = []
     for s in sources:
+        if callable(s):
+            s = s()
+            if s is None:
+                continue
         if is_local_src_dir(s):
             os.path.walk(s,_gsf_visit_func,filenames)
-        elif os.path.isfile(s):
+        elif type(s) is type('') and os.path.isfile(s):
             filenames.append(s)
+        else:
+            raise TypeError,`s`
     return filenames
 
 def dot_join(*args):
@@ -258,7 +269,9 @@ class Configuration:
     _list_keys = ['packages','ext_modules','data_files','include_dirs',
                   'libraries','headers','scripts']
     _dict_keys = ['package_dir']
-    
+
+    scipy_include_dirs = []
+
     def __init__(self,
                  package_name=None,
                  parent_name=None,
@@ -304,7 +317,6 @@ class Configuration:
             else:
                 self.extra_keys.append(n)
 
-
         if os.path.exists(os.path.join(package_path,'__init__.py')):
             self.packages.append(self.name)
             self.package_dir[self.name] = package_path        
@@ -323,12 +335,21 @@ class Configuration:
             d['name'] = self.name
         return d
 
-    def add_subpackage(self,subpackage_name,subpackage_path=None):
-        """ Add subpackage configuration.
+    def __dict__(self):
+        return self.todict()
+
+    def get_subpackage(self,subpackage_name,subpackage_path=None):
+        """ Return subpackage configuration.
         """
+        if subpackage_name is None:
+            assert subpackage_path is not None
+            subpackage_name = os.path.basename(subpackage_path)
         assert '.' not in subpackage_name,`subpackage_name`
         if subpackage_path is None:
             subpackage_path = os.path.join(self.local_path,subpackage_name)
+        else:
+            subpackage_path = self._fix_paths([subpackage_path])[0]
+
         setup_py = os.path.join(subpackage_path,'setup_%s.py' % (subpackage_name))
         if not os.path.isfile(setup_py):
             setup_py = os.path.join(subpackage_path,'setup.py')
@@ -336,38 +357,48 @@ class Configuration:
             print 'Assuming default configuration '\
                   '(%s/{setup_%s,setup}.py was not found)' \
                   % (os.path.dirname(setup_py),subpackage_name)
-            name = dot_join(self.name, subpackage_name)        
-            self.packages.append(name)
-            self.package_dir[name] = subpackage_path
-            return
+            config = Configuration(subpackage_name,self.name,
+                                   self.top_path,subpackage_path)
+        else:
+            # In case setup_py imports local modules:
+            sys.path.insert(0,os.path.dirname(setup_py))
+            try:
+                info = (open(setup_py),setup_py,('.py','U',1))
+                setup_name = os.path.splitext(os.path.basename(setup_py))[0]
+                n = dot_join(self.name,setup_name)
+                setup_module = imp.load_module('_'.join(n.split('.')),*info)
 
-        # In case setup_py imports local modules:
-        sys.path.insert(0,os.path.dirname(setup_py))
-
-        try:
-            info = (open(setup_py),setup_py,('.py','U',1))
-            setup_name = os.path.splitext(os.path.basename(setup_py))[0]
-            n = dot_join(self.name,setup_name)
-            setup_module = imp.load_module('_'.join(n.split('.')),*info)
-            if not hasattr(setup_module,'configuration'):
-                print 'Assuming default configuration '\
-                      '(%s does not define configuration())' % (setup_module)
-                name = dot_join(self.name, subpackage_name)        
-                self.packages.append(name)
-                self.package_dir[name] = subpackage_path
-            else:
-                args = (self.name,)
-                if setup_module.configuration.func_code.co_argcount>1:
-                    args = args + (self.top_path,)
-                config = setup_module.configuration(*args)
-                if not config:
-                    print 'No configuration returned, assuming unavailable.'
+                if not hasattr(setup_module,'configuration'):
+                    print 'Assuming default configuration '\
+                          '(%s does not define configuration())' % (setup_module)
+                    config = Configuration(subpackage_name,self.name,
+                                           self.top_path,subpackage_path)
                 else:
-                    if isinstance(config,Configuration):
-                        config = config.todict()
-                    self.dict_append(**config)
-        finally:
-            del sys.path[0]        
+                    args = (self.name,)
+                    if setup_module.configuration.func_code.co_argcount>1:
+                        args = args + (self.top_path,)
+                    config = setup_module.configuration(*args)
+
+            finally:
+                del sys.path[0]
+
+        return config
+
+    def add_subpackage(self,subpackage_name,subpackage_path=None):
+        """ Add subpackage to configuration.
+        """
+        config = self.get_subpackage(subpackage_name,subpackage_path)
+
+        if not config:
+            print 'No configuration returned, assuming unavailable.'
+        else:
+
+            if isinstance(config,Configuration):
+                print 'Appending %s configuration to %s' % (config.name,self.name)
+                self.dict_append(**config.todict())
+            else:
+                print 'Appending %s configuration to %s' % (config.get('name'),self.name)
+                self.dict_append(**config)        
         return
 
     def add_data_dir(self,data_path):
@@ -380,25 +411,43 @@ class Configuration:
         return
 
     def add_data_files(self,*files):
+        """ Add data files to configuration data_files.
+        """
         data_dict = {}
-        for f in files:
-            lf = f[len(self.local_path)+1:]
-            d = os.path.dirname(lf)
-            d = os.path.join(*(self.name.split('.')+[d]))
+        for f in self._fix_paths(files):
+            if type(f) is type(''):
+                lf = f[len(self.local_path)+1:]
+                d = os.path.dirname(lf)
+                d = os.path.join(*(self.name.split('.')+[d]))
+            else:
+                d = os.path.join(*(self.name.split('.')))
             if not data_dict.has_key(d):
                 data_dict[d] = [f]
             else:
                 data_dict[d].append(f)
+
         self.data_files.extend(data_dict.items())
         return            
         
     def add_include_dirs(self,*paths):
+        """ Add paths to configuration include directories.
+        """
         self.include_dirs.extend(self._fix_paths(paths))
 
-    def add_headers(self,*paths,**kwds):
-	name = kwds.get('name') or self.name
-        paths = self._fix_paths(paths)
-        self.headers.extend([(name,p) for p in paths])
+    def add_headers(self,*files):
+        """ Add installable headers to configuration.
+        Argument(s) can be either
+        - a 2-sequence (<includedir suffix>,<path to header file>)
+        - a path to header file where python includedir suffix defaults
+          to package name.
+        """
+        for path in files:
+            if type(path) is type(''):
+                [self.headers.append((self.name,p)) for p in self.paths(path)]
+            else:
+                assert type(path) in [type(()),type([])] and len(path)==2,`path`
+                [self.headers.append((path[0],p)) for p in self.paths(path[1])]
+        return
 
     def _fix_paths(self,paths):
         new_paths = []
@@ -424,9 +473,13 @@ class Configuration:
         return new_paths
 
     def paths(self,*paths):
+        """ Apply glob to paths and prepend local_path if needed.
+        """
         return self._fix_paths(paths)
 
     def add_extension(self,name,sources,**kw):
+        """ Add extension to configuration.
+        """
         ext_args = copy.copy(kw)
         ext_args['name'] = dot_join(self.name,name)
         ext_args['sources'] = sources
@@ -437,13 +490,39 @@ class Configuration:
                 new_v = self._fix_paths(v)
                 ext_args[k] = new_v
 
+
+        # Resolve out-of-tree dependencies
+        libraries = ext_args.get('libraries',[])
+        libnames = []
+        ext_args['libraries'] = []
+        for libname in libraries:
+            if '@' in libname:
+                lname,lpath = libname.split('@',1)
+                lpath = os.path.abspath(os.path.join(self.local_path,lpath))
+                if os.path.isdir(lpath):
+                    c = self.get_subpackage(None,lpath)
+                    if isinstance(c,Configuration):
+                        c = c.todict()
+                    for l in [l[0] for l in c.get('libraries',[])]:
+                        llname = l.split('__OF__',1)[0]
+                        if llname == lname:
+                            c.pop('name',None)
+                            dict_append(ext_args,**c)
+                            break
+                    continue
+            libnames.append(libname)
+
+        ext_args['libraries'] = libnames + ext_args['libraries']
+
         from scipy.distutils.core import Extension
         ext = Extension(**ext_args)
         self.ext_modules.append(ext)
+
         return ext
 
     def add_library(self,name,sources,**build_info):
-        """
+        """ Add library to configuration.
+        
         Valid keywords for build_info:
           depends
           macros
@@ -452,7 +531,7 @@ class Configuration:
           f2py_options
         """
         build_info = copy.copy(build_info)
-        name = name + '@' + self.name
+        name = name + '__OF__' + self.name
         build_info['sources'] = sources
 
         for k in build_info.keys():
@@ -462,6 +541,11 @@ class Configuration:
                 build_info[k] = new_v
         self.libraries.append((name,build_info))
         return
+
+    def add_scripts(self,*files):
+        """ Add scripts to configuration.
+        """
+        self.scripts.extend(self._fix_paths(files))
 
     def dict_append(self,**dict):
         for key in self.list_keys:
@@ -532,6 +616,114 @@ class Configuration:
         flag = config_cmd.try_compile(simple_fortran_subroutine,lang='f90')
         return flag
 
+    def append_to(self, extlib):
+        """ Append libraries, include_dirs to extension or library item.
+        """
+        if type(extlib) is type(()):
+            lib_name, build_info = extlib
+            dict_append(build_info,
+                        libraries=self.libraries,
+                        include_dirs=self.include_dirs)
+        else:
+            from scipy.distutils.core import Extension
+            assert isinstance(extlib,Extension),`extlib`
+            extlib.libraries.extend(self.libraries)
+            extlib.include_dirs.extend(self.include_dirs)
+        return
+
+    def _get_svn_revision(self,path):
+        """ Return path's SVN revision number.
+        """
+        entries = os.path.join(path,'.svn','entries')
+        revision = None
+        if os.path.isfile(entries):
+            f = open(entries)
+            m = re.search(r'revision="(?P<revision>\d+)"',f.read())
+            f.close()
+            if m:
+                revision = int(m.group('revision'))
+        return revision
+
+    def get_version(self):
+        """ Try to get version string of a package.
+        """
+        version = getattr(self,'version',None)
+        if version is not None:
+            return version
+
+        # Get version from version file.
+        files = ['__version__.py',
+                 self.name.split('.')[-1]+'_version.py',
+                 'version.py',
+                 '__svn_version__.py']
+        version_vars = ['version',
+                        '__version__',
+                        self.name.split('.')[-1]+'_version']
+        for f in files:
+            fn = os.path.join(self.local_path,f)
+            if os.path.isfile(fn):
+                info = (open(fn),fn,('.py','U',1))
+                name = os.path.splitext(os.path.basename(fn))[0]
+                n = dot_join(self.name,name)
+                try:
+                    version_module = imp.load_module('_'.join(n.split('.')),*info)
+                except ImportError,msg:
+                    print msg
+                    version_module = None
+                if version_module is None:
+                    continue
+
+                for a in version_vars:
+                    version = getattr(version_module,a,None)
+                    if version is not None:
+                        break
+                if version is not None:
+                    break
+
+        if version is not None:
+            self.version = version
+            return version
+
+        # Get version as SVN revision number
+        revision = self._get_svn_revision(self.local_path)
+        if revision is not None:
+            version = str(revision)
+            self.version = version
+
+        return version
+
+    def make_svn_version_py(self):
+        """ Generate package __svn_version__.py file from SVN revision number,
+        it will be removed after python exits but will be available
+        when sdist, etc commands are executed.
+
+        If __svn_version__.py existed before, nothing is done.
+        """
+        target = os.path.join(self.local_path,'__svn_version__.py')
+        if os.path.isfile(target):
+            return
+
+        def generate_svn_version_py():
+            if not os.path.isfile(target):
+                revision = self._get_svn_revision(self.local_path)
+                assert revision is not None,'hmm, why I am not inside SVN tree???'
+                version = str(revision)
+                print 'Creating %s (version=%r)' % (target,version)
+                f = open(target,'w')
+                f.write('version = %r\n' % (version))
+                f.close()
+    
+            import atexit
+            def rm_file(f=target):
+                try: os.remove(f); print 'removed',f
+                except OSError: pass
+            atexit.register(rm_file)
+
+            return target
+
+        self.add_data_files(generate_svn_version_py)
+        return
+
 def get_cmd(cmdname,_cache={}):
     if not _cache.has_key(cmdname):
         import distutils.core
@@ -543,6 +735,19 @@ def get_cmd(cmdname,_cache={}):
         cmd = dist.get_command_obj(cmdname)
         _cache[cmdname] = cmd
     return _cache[cmdname]
+
+def get_scipy_include_dirs():
+    include_dirs = Configuration.scipy_include_dirs[:]
+    if not include_dirs:
+        import scipy
+        from distutils.sysconfig import get_python_inc
+        prefix = []
+        for name in scipy.__file__.split(os.sep):
+            if name=='lib':
+                break
+            prefix.append(name)
+        include_dirs.append(get_python_inc(prefix=os.sep.join(prefix)))
+    return include_dirs
 
 #########################
 

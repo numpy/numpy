@@ -20,11 +20,8 @@ def configuration(parent_package='',top_path=None):
                                      open(generate_umath_py,'U'),generate_umath_py,
                                      ('.py','U',1))
 
-    package_include = join(local_dir, 'include', 'scipy')
-
     def generate_config_h(ext, build_dir):
-        #target = join(build_dir,'config.h')
-        target = join(package_include, 'config.h')
+        target = join(build_dir,'config.h')
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
             print 'Generating',target
@@ -83,19 +80,24 @@ def configuration(parent_package='',top_path=None):
             target_f.close()
 
         ext.libraries.extend(mathlibs)
-        ext.include_dirs.append(os.path.dirname(target))
+
+        incl_dir = os.path.dirname(target)
+        if incl_dir not in config.scipy_include_dirs:
+            config.scipy_include_dirs.append(incl_dir)
+
+        #if incl_dir not in ext.include_dirs:
+        #    ext.include_dirs.append(incl_dir)
+
         config.add_data_files(target)
         return target
 
     def generate_array_api(ext,build_dir):
-        #target = join(build_dir,'__multiarray_api.h')
-        target = join(package_include, '__multiarray_api.h')
+        target = join(build_dir,'__multiarray_api.h')
         script = join(codegen_dir,'generate_array_api.py')
         if newer(script,target):
             script = os.path.abspath(script)
             old_cwd = os.getcwd()
-            #os.chdir(build_dir)
-            os.chdir(package_include)
+            os.chdir(build_dir)
             print 'executing',script
             execfile(script,{},{})
             os.chdir(old_cwd)
@@ -103,14 +105,12 @@ def configuration(parent_package='',top_path=None):
         return target
 
     def generate_ufunc_api(ext,build_dir):
-        #target = join(build_dir,'__ufunc_api.h')
-        target = join(package_include, '__ufunc_api.h')
+        target = join(build_dir,'__ufunc_api.h')
         script = join(codegen_dir,'generate_ufunc_api.py')
         if newer(script,target):
             script = os.path.abspath(script)
             old_cwd = os.getcwd()
-            #os.chdir(build_dir)
-            os.chdir(package_include)
+            os.chdir(build_dir)
             print 'executing',script
             execfile(script,{},{})
             os.chdir(old_cwd)
@@ -127,12 +127,10 @@ def configuration(parent_package='',top_path=None):
             f.close()
         return []
 
-    config.add_include_dirs('include','src')
-    #config.add_headers(join('include','scipy','*.h'),name='scipy')
-    config.add_data_dir(join('include', 'scipy'))
-    from scipy.distutils.command.build_src import appendpath
-    print "****%s****" % config.local_path
-    config.add_include_dirs(appendpath('build/src',join(config.local_path,'Src')))
+    config.add_headers(('scipy',join('include','scipy','*.h')))
+    config.add_include_dirs('src')
+
+    config.scipy_include_dirs.extend(config.paths('include'))
 
     deps = [join('src','arrayobject.c'),
             join('src','arraymethods.c'),
@@ -149,7 +147,7 @@ def configuration(parent_package='',top_path=None):
                                     join(codegen_dir,'generate_array_api.py'),
                                     join('*.py')
                                     ],
-                         depends = deps
+                         depends = deps,
                          )
 
     config.add_extension('umath',
@@ -165,10 +163,14 @@ def configuration(parent_package='',top_path=None):
                                     join(codegen_dir,'generate_ufunc_api.py')
                                     ]+deps,
                          )
-    config.add_include_dirs(appendpath('build/src',config.local_path))
+
     config.add_extension('_compiled_base',
-                         sources=[join('src','_compiled_base.c')],
+                         sources=[join('src','_compiled_base.c'),
+                                  generate_config_h,
+                                  generate_array_api,
+                                  ],
                          )
+
     config.add_data_dir('tests')
 
     return config

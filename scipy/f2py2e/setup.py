@@ -20,51 +20,51 @@ __version__ = "$Id: setup.py,v 1.32 2005/01/30 17:22:14 pearu Exp $"
 
 import os
 import sys
+from distutils.dep_util import newer
 from scipy.distutils.core import setup
-from scipy.distutils.command.install_data import install_data
-from scipy.distutils.misc_util import get_path
+from scipy.distutils.misc_util import Configuration
 
 from __version__ import version
 
-class my_install_data (install_data):
-    def finalize_options (self):
-        self.set_undefined_options ('install',
-                                    ('install_lib', 'install_dir'),
-                                    ('root', 'root'),
-                                    ('force', 'force'),
-                                    )
+def configuration(parent_package='',top_path=None):
+    config = Configuration('f2py', parent_package, top_path)
 
-def f2py_py():
-    return '''#!/usr/bin/env %s
+    config.add_data_files('src/fortranobject.c',
+                          'src/fortranobject.h',
+                          'f2py.1'
+                          )
+
+    config.make_svn_version_py()
+
+    def generate_f2py_py(build_dir):
+        f2py_exe = 'f2py'+os.path.basename(sys.executable)[6:]
+        if f2py_exe[-4:]=='.exe':
+            f2py_exe = f2py_exe[:-4] + '.py'
+        if 'bdist_wininst' in sys.argv and f2py_exe[-3:] != '.py':
+            f2py_exe = f2py_exe + '.py'
+        target = os.path.join(build_dir,f2py_exe)
+        if newer(__file__,target):
+            print 'Creating',target
+            f = open(target,'w')
+            f.write('''\
+#!/usr/bin/env %s
 # See http://cens.ioc.ee/projects/f2py2e/
-import f2py2e
-f2py2e.main()
-'''%(os.path.basename(sys.executable))
+import scipy.f2py as f2py
+f2py.main()
+'''%(os.path.basename(sys.executable)))
+            f.close()
+        return target
 
-f2py_exe = 'f2py'+os.path.basename(sys.executable)[6:]
-if f2py_exe[-4:]=='.exe':
-    f2py_exe = f2py_exe[:-4] + '.py'
-if 'bdist_wininst' in sys.argv and f2py_exe[-3:] != '.py':
-    f2py_exe = f2py_exe + '.py'
+    config.add_scripts(generate_f2py_py)
 
-if not os.path.exists(f2py_exe):
-    f = open(f2py_exe,'w')
-    f.write(f2py_py())
-    f.close()
+    print 'F2PY Version',config.get_version()
 
-
-def configuration(parent_package='',parent_path=None):
-    parent_path2 = parent_path
-    parent_path = parent_package
-    local_path = get_path(__name__,parent_path2)
-    config = Configuration('f2py2e',parent_package)
     return config
 
 if __name__ == "__main__":
-
     print 'F2PY Version',version
 
-    config = configuration(parent_path='')
+    config = configuration(top_path='').todict()
     if sys.version[:3]>='2.3':
         config['download_url'] = "http://cens.ioc.ee/projects/f2py2e/2.x"\
                                  "/F2PY-2-latest.tar.gz"
@@ -81,8 +81,7 @@ if __name__ == "__main__":
             'Topic :: Scientific/Engineering',
             'Topic :: Software Development :: Code Generators',
             ]
-    setup(name="F2PY",
-          version=version,
+    setup(version=version,
           description       = "F2PY - Fortran to Python Interface Generaton",
           author            = "Pearu Peterson",
           author_email      = "pearu@cens.ioc.ee",
@@ -97,12 +96,5 @@ wrapping Fortran 77/90/95 subroutines, accessing common blocks from
 Python, and calling Python functions from Fortran (call-backs).
 Interfacing subroutines/data from Fortran 90/95 modules is supported.""",
           url               = "http://cens.ioc.ee/projects/f2py2e/",
-          cmdclass          = {'install_data': my_install_data},
-          scripts           = [f2py_exe],
-          packages          = ['f2py2e'],
-          package_dir       = {'f2py2e':'.'},
-          data_files        = [('f2py2e/src',
-                                ['src/fortranobject.c','src/fortranobject.h'])],
           keywords          = ['Fortran','f2py'],
-          **config
-          )
+          **config)
