@@ -57,11 +57,9 @@ def isscalar(num):
 
 def real(val):
     return asarray(val).real
-    return aval
 
 def imag(val):
     return asarray(val).imag
-    return aval
 
 def iscomplex(x):
     return imag(x) != _nx.zeros_like(x)
