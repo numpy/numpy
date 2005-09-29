@@ -1,11 +1,12 @@
 
 import sys
+import types, math
+
 import multiarray
 import umath
 from umath import *
 from numerictypes import *
-
-import types, math
+from _compiled_base import _insert
 
 newaxis = None
 

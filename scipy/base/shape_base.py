@@ -15,10 +15,11 @@ def apply_along_axis(func1d,axis,arr,*args):
     """
     arr = asarray(arr)
     nd = arr.ndim
-    if axis < 0: axis += nd
+    if axis < 0:
+        axis += nd
     if (axis >= nd):
-        raise ValueError, "axis must be less than arr.ndim; "+\
-              "axis=%d, rank=%d." % (axis,nd)
+        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d." 
+            % (axis,nd))
     ind = [0]*(nd-1)
     dims = arr.shape
     i = zeros(nd,'O')
@@ -26,7 +27,7 @@ def apply_along_axis(func1d,axis,arr,*args):
     indlist.remove(axis)
     i[axis] = slice(None,None)
     outshape = take(shape(arr),indlist)
-    i.put(indlist, v)
+    i.put(indlist, ind)
     res = func1d(arr[tuple(i)],*args)
     #  if res is a number, then we have a smaller output array
     if isscalar(res):

@@ -96,7 +96,8 @@ class test_cumsum(unittest.TestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
-        for ctype in ['1','b','s','i','l','f','d','F','D']:
+        for ctype in [int8,uint8,int16,uint16,int32,uint32,
+                      float32,float64,complex64,complex128]:
             a = array(ba,ctype)
             a2 = array(ba2,ctype)
             assert_array_equal(cumsum(a), array([1,3,13,24,30,35,39],ctype))
@@ -111,14 +112,15 @@ class test_prod(unittest.TestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
-        for ctype in ['1','b','s','i','l','f','d','F','D']:
+        for ctype in [int16,uint16,int32,uint32,
+                      float32,float64,complex64,complex128]:
             a = array(ba,ctype)
             a2 = array(ba2,ctype)
             if ctype in ['1', 'b']:
                 self.failUnlessRaises(ArithmeticError, prod, a)
                 self.failUnlessRaises(ArithmeticError, prod, a2, 1)
                 self.failUnlessRaises(ArithmeticError, prod, a)
-            else:                
+            else:
                 assert_equal(prod(a),26400)
                 assert_array_equal(prod(a2,axis=0), 
                                    array([50,36,84,180],ctype))
@@ -128,7 +130,8 @@ class test_cumprod(unittest.TestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
-        for ctype in ['1','b','s','i','l','f','d','F','D']:
+        for ctype in [int16,uint16,int32,uint32,
+                      float32,float64,complex64,complex128]:
             a = array(ba,ctype)
             a2 = array(ba2,ctype)
             if ctype in ['1', 'b']:

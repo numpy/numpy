@@ -2,8 +2,8 @@
 
 import types
 import numeric as _nx
-from numeric import ndarray, array, isinf, isnan, isfinite, signbit, \
-     ufunc, ScalarType, asarray
+from numeric import ndarray, asarray, array, isinf, isnan, isfinite, signbit, \
+     ufunc, ScalarType, obj2dtype
 
 __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf',
@@ -57,9 +57,11 @@ def isscalar(num):
 
 def real(val):
     return asarray(val).real
+    return aval
 
 def imag(val):
     return asarray(val).imag
+    return aval
 
 def iscomplex(x):
     return imag(x) != _nx.zeros_like(x)
@@ -116,7 +118,7 @@ def real_if_close(a,tol=100):
         return a
     if tol > 1:
         import getlimits
-        f = getlmits.finfo(a.dtypechar.lower())
+        f = getlimits.finfo(a.dtype)
         tol = f.epsilon * tol
     if _nx.allclose(a.imag, 0, atol=tol):
         a = a.real

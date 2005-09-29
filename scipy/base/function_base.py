@@ -447,12 +447,14 @@ def diff(x, n=1,axis=-1):
         return x
     if n<0:
         raise ValueError,'Order must be non-negative but got ' + `n`
-    x = x.ravel()
+    x = asarray(x)
     nd = len(x.shape)
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
     slice1[axis] = slice(1,None)
     slice2[axis] = slice(None,-1)
+    slice1 = tuple(slice1)
+    slice2 = tuple(slice2)
     if n > 1:
         return diff(x[slice1]-x[slice2], n-1, axis=axis)
     else:

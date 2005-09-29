@@ -32,7 +32,7 @@ def rot90(m, k=1):
     dimensions of m. 
     """
     m = asarray(m)
-    if n.ndim < 2:
+    if m.ndim < 2:
         raise ValueError, "Input must >= 2-d."
     k = k % 4
     if k == 0: return m

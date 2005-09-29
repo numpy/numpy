@@ -3,7 +3,7 @@
 import types
 import numeric as _nx
 from numeric import asarray
-__all__ = ['mgrid','ogrid','r_', 'index_exp', 'ix_']
+__all__ = ['mgrid','ogrid','r_', 'c_', 'index_exp', 'ix_']
 
 from type_check import ScalarType
 import function_base
@@ -212,7 +212,7 @@ class concatenator:
         return 0
 
 r_=concatenator(0)
-#c_=concatenator(-1)
+c_=concatenator(-1)
 #row = concatenator(0,1)
 #col = concatenator(-1,1)
 

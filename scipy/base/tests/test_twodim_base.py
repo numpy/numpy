@@ -13,8 +13,6 @@ del sys.path[0]
 
 ##################################################
 
-val = limits.double_resolution
-
 
 def get_mat(n):
     data = arange(n)
@@ -27,7 +25,7 @@ class test_eye(unittest.TestCase):
                                    [0,1,0,0],
                                    [0,0,1,0],
                                    [0,0,0,1]]))
-        assert_equal(eye(4,typecode='f'),array([[1,0,0,0],
+        assert_equal(eye(4,dtype='f'),array([[1,0,0,0],
                                                 [0,1,0,0],
                                                 [0,0,1,0],
                                                 [0,0,0,1]],'f'))
@@ -88,8 +86,7 @@ class test_diag(unittest.TestCase):
 
 class test_fliplr(unittest.TestCase):
     def check_basic(self):
-        self.failUnlessRaises(ValueError, fliplr, ones(4))        
-        self.failUnlessRaises(ValueError, fliplr, ones((4,3,2)))
+        self.failUnlessRaises(ValueError, fliplr, ones(4))
         a = get_mat(4)
         b = a[:,::-1]
         assert_equal(fliplr(a),b)
@@ -101,8 +98,6 @@ class test_fliplr(unittest.TestCase):
 
 class test_flipud(unittest.TestCase):
     def check_basic(self):
-        self.failUnlessRaises(ValueError, flipud, ones(4))
-        self.failUnlessRaises(ValueError, flipud, ones((4,3,2)))
         a = get_mat(4)
         b = a[::-1,:]
         assert_equal(flipud(a),b)
@@ -115,7 +110,6 @@ class test_flipud(unittest.TestCase):
 class test_rot90(unittest.TestCase):
     def check_basic(self):
         self.failUnlessRaises(ValueError, rot90, ones(4))
-        self.failUnlessRaises(ValueError, rot90, ones((4,3,2)))
 
         a = [[0,1,2],
              [3,4,5]]
@@ -140,4 +134,4 @@ class test_rot90(unittest.TestCase):
             assert_equal(rot90(a,k=k),b4)
 
 if __name__ == "__main__":
-    ScipyTest('scipy.base.matrix').run()
+    ScipyTest('scipy.base.twodim_base').run()
