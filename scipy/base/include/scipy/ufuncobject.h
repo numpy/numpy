@@ -51,7 +51,7 @@ typedef struct {
 #define UFUNC_FPE_UNDERFLOW     4
 #define UFUNC_FPE_INVALID       8
 	
-#define UFUNC_DEFAULT_ERROR 0  /* Default error mode */
+#define UFUNC_ERR_DEFAULT 0  /* Default error mode */
 
 	/* Only internal -- not exported, yet*/
 typedef struct {

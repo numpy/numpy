@@ -426,7 +426,7 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
 */	   
 
 static int
-_error_handler(int method, PyObject *errobj, char *errtype)
+_error_handler(int method, PyObject *errobj, char *errtype, int retstatus)
 {
 	PyObject *pyfunc, *ret, *args;
 	char *name=PyString_AS_STRING(PyTuple_GET_ITEM(errobj,0));
@@ -456,7 +456,8 @@ _error_handler(int method, PyObject *errobj, char *errtype)
 				     errtype, name);
 			goto fail;
 		}
-		args = Py_BuildValue("(N)", PyString_FromString(errtype));
+		args = Py_BuildValue("NN", PyString_FromString(errtype), 
+                                     PyInt_FromLong((long) retstatus));
 		if (args == NULL) goto fail;
 		ret = PyObject_CallObject(pyfunc, args);
 		Py_DECREF(args);
@@ -490,7 +491,7 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj)
 			handle = errmask & UFUNC_MASK_##NAME;\
 			if (handle && \
 			    _error_handler(handle >> UFUNC_SHIFT_##NAME, \
-					   errobj, str) < 0) \
+					   errobj, str, retstatus) < 0)  \
 				return -1;		      \
 			}}
 
@@ -1092,7 +1093,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
 	if (construct_matrices(loop, args, mps) < 0) goto fail;
 	
 	loop->errormask = _getintfromvar(UFUNC_ERRMASK_NAME,
-					 UFUNC_DEFAULT_ERROR);
+					 UFUNC_ERR_DEFAULT);
 	if (loop->errormask < 0) {
 		PyErr_Format(PyExc_ValueError, 
 			     "Invalid error mask (%d)", 
@@ -1572,7 +1573,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 	}
 	
 	loop->errormask = _getintfromvar(UFUNC_ERRMASK_NAME,
-					 UFUNC_DEFAULT_ERROR);
+					 UFUNC_ERR_DEFAULT);
 	if (loop->errormask < 0) {
 		PyErr_Format(PyExc_ValueError, \
 			     "Invalid error mask (%d)", 

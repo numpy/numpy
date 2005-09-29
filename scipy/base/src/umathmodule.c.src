@@ -1518,62 +1518,43 @@ DL_EXPORT(void) initumath(void) {
 	Py_DECREF(s);
 	PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(exp(1.0)));
 	Py_DECREF(s);
-        PyDict_SetItemString(d, "ERR_IGNORE", 
-			     s=PyInt_FromLong(UFUNC_ERR_IGNORE));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "ERR_WARN", s=PyInt_FromLong(UFUNC_ERR_WARN));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "ERR_RAISE", 
-			     s=PyInt_FromLong(UFUNC_ERR_RAISE));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "ERR_CALL", s=PyInt_FromLong(UFUNC_ERR_CALL));
-        Py_DECREF(s);
 
-        PyDict_SetItemString(d, "ERR_DEFAULT", 
-			     s=PyInt_FromLong(UFUNC_DEFAULT_ERROR));
-        Py_DECREF(s);
+#define ADDCONST(str) PyModule_AddIntConstant(m, #str, UFUNC_##str)
+#define ADDSCONST(str) PyModule_AddStringConstant(m, "UFUNC_" #str, UFUNC_##str)
 
-        PyDict_SetItemString(d, "SHIFT_DIVIDEBYZERO", 
-			     s=PyInt_FromLong(UFUNC_SHIFT_DIVIDEBYZERO));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "SHIFT_OVERFLOW", 
-			     s=PyInt_FromLong(UFUNC_SHIFT_OVERFLOW));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "SHIFT_UNDERFLOW", 
-			     s=PyInt_FromLong(UFUNC_SHIFT_UNDERFLOW));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "SHIFT_INVALID", 
-			     s=PyInt_FromLong(UFUNC_SHIFT_INVALID));
-        Py_DECREF(s);
+        ADDCONST(ERR_IGNORE);
+        ADDCONST(ERR_WARN);
+        ADDCONST(ERR_CALL);
+        ADDCONST(ERR_RAISE);
+        ADDCONST(ERR_DEFAULT);
 
-        PyDict_SetItemString(d, "UFUNC_ERRMASK_NAME", 
-                             s=PyString_FromString(UFUNC_ERRMASK_NAME));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "UFUNC_ERRFUNC_NAME", 
-                             s=PyString_FromString(UFUNC_ERRFUNC_NAME));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "UFUNC_BUFSIZE_NAME", 
-                             s=PyString_FromString(UFUNC_BUFSIZE_NAME));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "UFUNC_BUFSIZE_DEFAULT", 
-			     s=PyInt_FromLong(PyArray_BUFSIZE));
-        Py_DECREF(s);
+        ADDCONST(SHIFT_DIVIDEBYZERO);
+        ADDCONST(SHIFT_OVERFLOW);
+        ADDCONST(SHIFT_UNDERFLOW);
+        ADDCONST(SHIFT_INVALID);
+                
+        ADDCONST(FPE_DIVIDEBYZERO);
+        ADDCONST(FPE_OVERFLOW);
+        ADDCONST(FPE_UNDERFLOW);
+        ADDCONST(FPE_INVALID);
 
+        ADDSCONST(ERRMASK_NAME);
+        ADDSCONST(ERRFUNC_NAME);
+        ADDSCONST(BUFSIZE_NAME);
 
+#undef ADDCONST
+#undef ADDSCONST
+        PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)PyArray_BUFSIZE);
+        
         pinf = pinf_init();
-        PyDict_SetItemString(d, "PINF", s = PyFloat_FromDouble(pinf));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "NINF", s = PyFloat_FromDouble(-pinf));
-        Py_DECREF(s);
         pzero = pzero_init();
-        PyDict_SetItemString(d, "PZERO", s = PyFloat_FromDouble(pzero));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "NZERO", s = PyFloat_FromDouble(-pzero));
-        Py_DECREF(s);
         mynan = pinf / pinf;
-        PyDict_SetItemString(d, "NAN", s = PyFloat_FromDouble(mynan));
-        Py_DECREF(s);
 
+        PyModule_AddObject(m, "PINF", PyFloat_FromDouble(pinf));
+        PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-pinf));
+        PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(pzero));
+        PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(-pzero));
+        PyModule_AddObject(m, "NAN", PyFloat_FromDouble(mynan));
 
 	s = PyDict_GetItemString(d, "conjugate");
 	/* Setup the array object's numerical structures with appropriate 
