@@ -17,8 +17,8 @@ class AbsoftFCompiler(FCompiler):
 
     compiler_type = 'absoft'
     #version_pattern = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
-    version_pattern = r'(f90:.*?Absoft Pro FORTRAN Version|FORTRAN 77 Compiler)'+\
-                      r' (?P<version>[^\s*,]*)(.*?Absoft Corp|)'
+    version_pattern = r'(f90:.*?(Absoft Pro FORTRAN Version|FORTRAN 77 Compiler|Absoft Fortran Compiler Version))'+\
+                       r' (?P<version>[^\s*,]*)(.*?Absoft Corp|)'
 
     # samt5735(8)$ f90 -V -c dummy.f
     # f90: Copyright Absoft Corporation 1994-2002; Absoft Pro FORTRAN Version 8.0
@@ -44,6 +44,12 @@ class AbsoftFCompiler(FCompiler):
     def get_flags_linker_so(self):
         if os.name=='nt':
             opt = ['/dll']
+        # The "-K shared" switches are being left in for pre-9.0 versions
+        # of Absoft though I don't think versions earlier than 9 can
+        # actually be used to build shared libraries.  In fact, version
+        # 8 of Absoft doesn't recognize "-K shared" and will fail.
+        elif self.get_version() >= '9.0':
+            opt = ['-shared']
         else:
             opt = ["-K","shared"]
         return opt
@@ -62,12 +68,15 @@ class AbsoftFCompiler(FCompiler):
         opt = FCompiler.get_library_dirs(self)
         d = os.environ.get('ABSOFT')
         if d:
-            opt.append(os.path.join(d,'LIB'))
+            opt.append(os.path.join(d,'lib'))
         return opt
 
     def get_libraries(self):
         opt = FCompiler.get_libraries(self)
-        opt.extend(['fio','f90math','fmath'])
+        if self.get_version() >= '8.0':
+	    opt.extend(['f90math','fio','f77math','U77'])
+        else:
+            opt.extend(['fio','f90math','fmath','U77'])
         if os.name =='nt':
             opt.append('COMDLG32')
         return opt
