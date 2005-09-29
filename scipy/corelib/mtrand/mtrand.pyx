@@ -278,28 +278,47 @@ cdef class RandomState:
             obj = PyArray_ContiguousFromObject(seed, PyArray_LONG, 1, 1)
             init_by_array(self.internal_state, <unsigned long *>(obj.data),
                 obj.dimensions[0])
-        
-    def set_state(self, state):
-        """Set the state array from an array of 624 integers.
 
-        set_state(state)
-        """
-        cdef ArrayType obj
-        obj = PyArray_ContiguousFromObject(state, PyArray_LONG, 1, 1)
-        if obj.dimensions[0] != 624:
-            raise ValueError("state must be 624 longs")
-        memcpy(self.internal_state.key, <void*>(obj.data), 624*sizeof(long))
-    
     def get_state(self):
-        """Return a copy of the state array.
+        """Return a tuple representing the internal state of the generator.
 
-        get_state() -> array (typecode: Int)
+        get_state() -> ('MT19937', int key[624], int pos)
         """
         cdef ArrayType state
         state = <ArrayType>scipy.empty(624, scipy.Int)
         memcpy(<void*>(state.data), self.internal_state.key, 624*sizeof(long))
-        return state
+        return ('MT19937', state, self.internal_state.pos)
+        
+    def set_state(self, state):
+        """Set the state from a tuple.
+        
+        state = ('MT19937', int key[624], int pos)
+        
+        set_state(state)
+        """
+        cdef ArrayType obj
+        cdef int pos
+        algorithm_name = state[0]
+        if algorithm_name != 'MT19937':
+            raise ValueError("algorithm must be 'MT19937'")
+        key, pos = state[1:]
+        obj = PyArray_ContiguousFromObject(key, PyArray_LONG, 1, 1)
+        if obj.dimensions[0] != 624:
+            raise ValueError("state must be 624 longs")
+        memcpy(self.internal_state.key, <void*>(obj.data), 624*sizeof(long))
+        self.internal_state.pos = pos
+    
+    # Pickling support:
+    def __getstate__(self):
+        return self.get_state()
 
+    def __setstate__(self, state):
+        self.set_state(state)
+
+    def __reduce__(self):
+        return (scipy.stats.__RandomState_ctor, (), self.get_state())
+
+    # Basic distributions:
     def random_sample(self, size=None):
         """Return random floats in the half-open interval [0.0, 1.0).
 
@@ -308,10 +327,9 @@ cdef class RandomState:
         return cont0_array(self.internal_state, rk_double, size)
 
     def tomaxint(self, size=None):
-        """Returns random integers x such that 0 <= x <= sys.maxint
-        (XXX: verify)
+        """Returns random integers x such that 0 <= x <= sys.maxint.
 
-        tomaxint(size=None) - random values
+        tomaxint(size=None) -> random values
         """
         return disc0_array(self.internal_state, rk_long, size)
 
@@ -369,6 +387,41 @@ cdef class RandomState:
         return cont2_array(self.internal_state, rk_uniform, size, low, 
             high-low)
 
+    def rand(self, *args):
+        """Return an array of the given dimensions which is initialized to 
+        random numbers from a uniform distribution in the range [0,1).
+
+        randn(d0, d1, ..., dn) -> random values
+        """
+        if len(args) == 0:
+            return self.random_sample()
+        else:
+            return self.random_sample(size=args)
+
+    def randn(self, *args):
+        """Returns zero-mean, unit-variance Gaussian random numbers in an 
+        array of shape (d0, d1, ..., dn).
+
+        randn(d0, d1, ..., dn) -> random values
+        """
+        if len(args) == 0:
+            return self.standard_normal()
+        else:
+            return self.standard_normal(args)
+
+    def random_integers(self, low, high=None, size=None):
+        """Return random integers x such that low <= x <= high.
+
+        random_integers(low, high=None, size=None) -> random values.
+
+        If high is None, then 1 <= x <= low.
+        """
+        if high is None:
+            high = low
+            low = 1
+        return self.randint(low, high+1, size)
+
+    # Complicated, continuous distributions:
     def standard_normal(self, size=None):
         """Standard Normal distribution (mean=0, stdev=1).
 
@@ -531,6 +584,7 @@ cdef class RandomState:
             raise ValueError("a <= 0")
         return cont1_array(self.internal_state, rk_power, size, a)
 
+    # Complicated, discrete distributions:
     def binomial(self, long n, double p, size=None):
         """Binomial distribution of n trials and p probability of success.
 
@@ -566,6 +620,62 @@ cdef class RandomState:
         if lam <= 0:
             raise ValueError("lam <= 0")
         return discd_array(self.internal_state, rk_poisson, size, lam)
+
+    # Multivariate distributions:
+    def multivariate_normal(self, mean, cov, size=None):
+        """Return an array containing multivariate normally distributed random numbers
+        with specified mean and covariance.
+
+        multivariate_normal(mean, cov) -> random values
+        multivariate_normal(mean, cov, [m, n, ...]) -> random values
+
+        mean must be a 1 dimensional array. cov must be a square two dimensional
+        array with the same number of rows and columns as mean has elements.
+
+        The first form returns a single 1-D array containing a multivariate
+        normal.
+
+        The second form returns an array of shape (m, n, ..., cov.shape[0]).
+        In this case, output[i,j,...,:] is a 1-D array containing a multivariate
+        normal.
+        """
+        # Check preconditions on arguments
+        mean = scipy.array(mean)
+        cov = scipy.array(cov)
+        if size is None:
+            shape = []
+        else:
+            shape = size
+        if len(mean.shape) != 1:
+               raise ArgumentError("mean must be 1 dimensional")
+        if (len(cov.shape) != 2) or (cov.shape[0] != cov.shape[1]):
+               raise ArgumentError("cov must be 2 dimensional and square")
+        if mean.shape[0] != cov.shape[0]:
+               raise ArgumentError("mean and cov must have same length")
+        # Compute shape of output
+        if isinstance(shape, int):
+            shape = [shape]
+        final_shape = list(shape[:])
+        final_shape.append(mean.shape[0])
+        # Create a matrix of independent standard normally distributed random
+        # numbers. The matrix has rows with the same length as mean and as
+        # many rows are necessary to form a matrix of shape final_shape.
+        x = standard_normal(scipy.multiply.reduce(final_shape))
+        x.shape = (scipy.multiply.reduce(final_shape[0:len(final_shape)-1]),
+                   mean.shape[0])
+        # Transform matrix of standard normals into matrix where each row
+        # contains multivariate normals with the desired covariance.
+        # Compute A such that matrixmultiply(transpose(A),A) == cov.
+        # Then the matrix products of the rows of x and A has the desired
+        # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
+        # decomposition of cov is such an A.
+        (u,s,v) = scipy.linalg.singular_value_decomposition(cov)
+        x = scipy.matrixmultiply(x*Numeric.sqrt(s),v)
+        # The rows of x now have the correct covariance but mean 0. Add
+        # mean to each row. Then each row will have mean mean.
+        scipy.add(mean,x,x)
+        x.shape = tuple(final_shape)
+        return x
 
     def multinomial(self, long n, object pvals, size=None):
         """Multinomial distribution.
@@ -617,6 +727,7 @@ cdef class RandomState:
 
         return multin
 
+    # Shuffling and permutations:
     def shuffle(self, object x):
         """Modify a sequence in-place by shuffling its contents.
         
@@ -630,8 +741,7 @@ cdef class RandomState:
             j = rk_interval(i, self.internal_state)
             x[i], x[j] = x[j], x[i]
             i = i - 1
-        
-        
+               
     def permutation(self, object x):
         """Given an integer, return a shuffled sequence of integers >= 0 and 
         < x.
@@ -650,6 +760,9 @@ random_sample = _rand.random_sample
 randint = _rand.randint
 bytes = _rand.bytes
 uniform = _rand.uniform
+rand = _rand.rand
+randn = _rand.randn
+random_integers = _rand.random_integers
 standard_normal = _rand.standard_normal
 normal = _rand.normal
 beta = _rand.beta
@@ -670,6 +783,7 @@ power = _rand.power
 binomial = _rand.binomial
 negative_binomial = _rand.negative_binomial
 poisson = _rand.poisson
+multivariate_normal = _rand.multivariate_normal
 multinomial = _rand.multinomial
 shuffle = _rand.shuffle
 permutation = _rand.permutation

@@ -70,29 +70,29 @@ typedef struct rk_state_
 	int has_gauss; /* !=0: gauss contains a gaussian deviate */
 	double gauss;
 
-        /* The rk_state structure has been extended to store the following
-         * information for the binomial generator. If the input values of n or p
-         * are different than nsave and psave, then the other parameters will be
-         * recomputed. RTK 2005-09-02 */
+    /* The rk_state structure has been extended to store the following
+     * information for the binomial generator. If the input values of n or p
+     * are different than nsave and psave, then the other parameters will be
+     * recomputed. RTK 2005-09-02 */
 
-        int has_binomial; /* !=0: following parameters initialized for 
-                                  binomial */
-        double psave;
-        long nsave;
-        double r;
-        double q;
-        double fm;
-        long m;
-        double p1;
-        double xm;
-        double xl;
-        double xr;
-        double c;
-        double laml;
-        double lamr;
-        double p2;
-        double p3;
-        double p4;
+    int has_binomial; /* !=0: following parameters initialized for 
+                              binomial */
+    double psave;
+    long nsave;
+    double r;
+    double q;
+    double fm;
+    long m;
+    double p1;
+    double xm;
+    double xl;
+    double xr;
+    double c;
+    double laml;
+    double lamr;
+    double p2;
+    double p3;
+    double p4;
 
 }
 rk_state;
