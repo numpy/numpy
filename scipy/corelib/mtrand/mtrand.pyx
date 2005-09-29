@@ -741,7 +741,7 @@ cdef class RandomState:
             j = rk_interval(i, self.internal_state)
             x[i], x[j] = x[j], x[i]
             i = i - 1
-               
+                
     def permutation(self, object x):
         """Given an integer, return a shuffled sequence of integers >= 0 and 
         < x.
