@@ -361,12 +361,13 @@ cdef class RandomState:
         PyMem_Free(bytes)
         return bytestring
 
-    def uniform(self, double loc=0.0, double scale=1.0, size=None):
-        """Uniform distribution over [loc, loc+scale).
+    def uniform(self, double low=0.0, double high=1.0, size=None):
+        """Uniform distribution over [low, high).
 
-        uniform(loc=0.0, scale=1.0, size=None) -> random values
+        uniform(low=0.0, high=1.0, size=None) -> random values
         """
-        return cont2_array(self.internal_state, rk_uniform, size, loc, scale)
+        return cont2_array(self.internal_state, rk_uniform, size, low, 
+            high-low)
 
     def standard_normal(self, size=None):
         """Standard Normal distribution (mean=0, stdev=1).
@@ -616,17 +617,12 @@ cdef class RandomState:
 
         return multin
 
-    def permutation(self, object x):
-        """If given a sequence, modify it in-place by shuffling its contents; 
-        if given an integer, return a shuffled sequence of integers >= 0 and 
-        < x.
-
-        permutation(x)
+    def shuffle(self, object x):
+        """Modify a sequence in-place by shuffling its contents.
+        
+        shuffle(x)
         """
         cdef long i, j
-
-        if type(x) is int:
-            return self.permutation(scipy.arange(x))
 
         # adaptation of random.shuffle()
         i = len(x) - 1
@@ -634,6 +630,18 @@ cdef class RandomState:
             j = rk_interval(i, self.internal_state)
             x[i], x[j] = x[j], x[i]
             i = i - 1
+        
+        
+    def permutation(self, object x):
+        """Given an integer, return a shuffled sequence of integers >= 0 and 
+        < x.
+
+        permutation(x)
+        """
+        arr = scipy.arange(x)
+        self.shuffle(arr)
+        return arr
+
 
 _rand = RandomState()
 get_state = _rand.get_state
@@ -663,4 +671,5 @@ binomial = _rand.binomial
 negative_binomial = _rand.negative_binomial
 poisson = _rand.poisson
 multinomial = _rand.multinomial
+shuffle = _rand.shuffle
 permutation = _rand.permutation
