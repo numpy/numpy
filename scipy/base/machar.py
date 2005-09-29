@@ -66,6 +66,7 @@ class MachAr:
         two = one + one
         zero = one - one
 
+        # Do we really need to do this?  Aren't they 2 and 2.0?
         # Determine ibeta and beta
         a = one
         while 1:
@@ -85,7 +86,7 @@ class MachAr:
         beta = float_conv(ibeta)
 
         # Determine it and irnd
-        it = 0
+        it = -1
         b = one
         while 1:
             it = it + 1

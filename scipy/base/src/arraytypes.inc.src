@@ -302,7 +302,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 		return u;        
 	}
 
-	args = Py_BuildValue("O",u);
+	args = Py_BuildValue("OO",u, ap);
 	Py_DECREF(u);
 	if (args==0) goto fail;
         pyres = PyObject_CallObject(meth, args);
@@ -341,10 +341,10 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         }
         u = PyBuffer_FromReadWriteMemory(ip, itemsize);
 	if (u==NULL) goto fail;
-	args = Py_BuildValue("OO",op, u);
+	args = Py_BuildValue("OOO",u, op, ap);
         pyres = PyObject_CallObject(meth, args);
         if (pyres==NULL) goto fail;
-        res = PyInt_AsLong(pyres);
+	res = 0;
         if (PyErr_Occurred()) goto fail;        
 
         Py_DECREF(meth);
@@ -1124,7 +1124,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
         u = PyBuffer_FromMemory(ip, len);
         if ((u==NULL)) {Py_DECREF(meth); return FALSE;}
 
-        args = Py_BuildValue("O",u);
+        args = Py_BuildValue("OO",u, ap);
         pyres = PyObject_CallObject(meth, args);
 	Py_DECREF(args);
 	Py_DECREF(u);
@@ -1256,7 +1256,7 @@ VOID_compare(void *ip1, void *ip2, PyArrayObject *ap)
         v = PyBuffer_FromMemory(ip2, itemsize);
         if ((u==NULL) || (v==NULL)) goto fail;        
         
-        args = Py_BuildValue("OO",u,v);
+        args = Py_BuildValue("OOO",u,v,ap);
         
         pyres = PyObject_CallObject(meth, args);
         if (pyres==NULL) goto fail;

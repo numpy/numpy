@@ -736,33 +736,12 @@ _getfuncfromvar(char *str, PyObject *deflt)
 static char
 _scalar_kind(int typenum, PyArrayObject **arr) 
 {
-	PyObject *zero, *ozero, *new;
-	if (PyTypeNum_ISSIGNED(typenum)) {
-		if (!PyArray_ISBEHAVED(*arr)) {
-			new = PyArray_Copy(*arr);
-			Py_DECREF(*arr);
-			*arr = (PyArrayObject *)new;
-		}
-		ozero = PyInt_FromLong((long) 0);
-		if (ozero == NULL) goto fail;
-		zero = PyArray_FromAny(ozero, NULL, 0, 0, CARRAY_FLAGS);
-		Py_DECREF(ozero);
-		if (zero == NULL) goto fail;
-		if ((*arr)->descr->compare(PyArray_DATA(*arr),
-					   PyArray_DATA(zero), NULL) < 0)
-			return UFUNC_INTNEG_SCALAR;
-		else
-			return UFUNC_INTPOS_SCALAR;
-	}
+	if (PyTypeNum_ISSIGNED(typenum)) return UFUNC_INTNEG_SCALAR;
 	if (PyTypeNum_ISFLOAT(typenum)) return UFUNC_FLOAT_SCALAR;
 	if (PyTypeNum_ISCOMPLEX(typenum)) return UFUNC_COMPLEX_SCALAR;
 	if (PyTypeNum_ISUNSIGNED(typenum)) return UFUNC_INTPOS_SCALAR;
 	if (PyTypeNum_ISBOOL(typenum)) return UFUNC_BOOL_SCALAR;
 	return UFUNC_OBJECT_SCALAR;
-	
- fail:
-	PyErr_Clear();
-	return UFUNC_NOSCALAR;
 }
 
 

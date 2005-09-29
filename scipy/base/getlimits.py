@@ -14,13 +14,21 @@ def frz(a):
         a = a.reshape((1,))
     return a
 
+_convert_to_float = {
+    numeric.csingle: numeric.single,
+    numeric.acomplex: numeric.afloat,
+    numeric.clongfloat: numeric.longfloat
+    }
+
 _machar_cache = {}
 
 class finfo(object):
     def __init__(self, dtype):
         dtype = numeric.obj2dtype(dtype)
+        if not issubclass(dtype, numeric.inexact):
+            raise ValueError, "data type not inexact"
         if not issubclass(dtype, numeric.floating):
-            raise ValueError, "data type not a float"
+            dtype = _convert_to_float[dtype]
         if dtype is numeric.afloat:
             try:
                 self.machar = _machar_cache[numeric.afloat]
@@ -56,10 +64,15 @@ class finfo(object):
                                      "point number")
                 _machar_cache[numeric.longfloat] = self.machar
 
-        for word in ['epsilon', 'tiny', 'precision', 'resolution']:
+        for word in ['tiny', 'precision', 'resolution',
+                     'ngrd','maxexp','minexp','epsneg','negep',
+                     'machep']:
             setattr(self,word,getattr(self.machar, word))
         self.max = self.machar.huge
         self.min = -self.max
+        self.eps = self.machar.epsilon
+        self.nexp = self.machar.iexp
+        self.nmant = self.machar.it
     
 if __name__ == '__main__':
     f = finfo(numeric.single)

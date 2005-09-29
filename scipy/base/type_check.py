@@ -3,33 +3,36 @@
 import types
 import numeric as _nx
 from numeric import ndarray, array, isinf, isnan, isfinite, signbit, \
-     ufunc, ScalarType
+     ufunc, ScalarType, asarray
 
 __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar','isneginf','isposinf',
            'isreal','nan_to_num','real','real_if_close',
-           'typename','common_type',
-           'asfarray','mintypecode']
+           'typename','asfarray','mintypecode']
 
-_typecodes_by_elsize = 'GDFgdfQqLlIiHhBb'
+_typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
 
-def mintypecode(typecodes,typeset='DFdf',default='d',savespace=0):
-    """ Return a typecode in typeset such that for each
-    t in typecodes
-    array(typecode=typecode)[:] = array(typecode=t)
-    is valid, loses no information, and array(typecode=typecode)
-    element size is minimal unless when typecodes does not
-    intersect with typeset then default is returned.
-    As a special case, if savespace is False then 'D' is returned
-    whenever typecodes contain 'F' and 'd'.
-    If t in typecodes is not a string then t=t.dtypechar is applied.
+def mintypecode(typechars,typeset='GDFgdf',default='d'):
+    """ Return a minimum data type character from typeset that
+    handles all typechars given
+
+    The returned type character must be the smallest size such that
+    an array of the returned type can handle the data from an array of
+    type t for each t in typechars (or if typechars is an array,
+    then its dtypechar).
+
+    If the typechars does not intersect with the typeset, then default
+    is returned.
+
+    If t in typechars is not a string then t=asarray(t).dtypechar is
+    applied.
     """
     typecodes = [(type(t) is type('') and t) or asarray(t).dtypechar\
                  for t in typecodes]
     intersection = [t for t in typecodes if t in typeset]
     if not intersection:
        return default
-    if not savespace and 'F' in intersection and 'd' in intersection:
+    if 'F' in intersection and 'd' in intersection:
        return 'D'
     l = []
     for t in intersection:
@@ -38,11 +41,12 @@ def mintypecode(typecodes,typeset='DFdf',default='d',savespace=0):
     l.sort()
     return l[0][1]
 
-def asfarray(a, dtype=None):
+def asfarray(a, dtype=_nx.afloat):
     """asfarray(a,dtype=None) returns a as a float array."""
-    a = asarray(a,dtype)
-    if dtype is None and a.dtypechar not in 'GDFgfd':
-       return a.astype('d')
+    dtype = _nx.obj2dtype(dtype)
+    if not issubclass(dtype, _nx.inexact):
+        dtype = _nx.afloat
+    a = asarray(a,dtype=dtype)
     return a
    
 def isscalar(num):
@@ -52,16 +56,16 @@ def isscalar(num):
         return type(num) in ScalarType
 
 def real(val):
-    aval = asarray(val).real
+    return asarray(val).real
 
 def imag(val):
-    aval = asarray(val).imag
+    return asarray(val).imag
 
 def iscomplex(x):
     return imag(x) != _nx.zeros_like(x)
 
 def isreal(x):
-    return imag(x) == _nx.zeros(asarray(x).shape)
+    return imag(x) == _nx.zeros_like(x)
 
 def iscomplexobj(x):
     return issubclass( asarray(x).dtype, _nx.complexfloating)
@@ -108,11 +112,11 @@ def nan_to_num(x):
 
 def real_if_close(a,tol=100):
     a = asarray(a)
-    if not a.dtypechar in 'FDG':
+    if a.dtypechar not in 'FDG':
         return a
     if tol > 1:
         import getlimits
-        f = getlmits.finfo(a.dtype)
+        f = getlmits.finfo(a.dtypechar.lower())
         tol = f.epsilon * tol
     if _nx.allclose(a.imag, 0, atol=tol):
         a = a.real
@@ -146,16 +150,18 @@ _namefromtype = {'S1' : 'character',
                  }
 
 def typename(char):
-    """Return an english description for the given typecode character.
+    """Return an english description for the given data type character.
     """
     return _namefromtype[char]
 
 #-----------------------------------------------------------------------------
 
 #determine the "minimum common type code" for a group of arrays.
-array_kind = {'i':0, 'l': 0, 'f': 0, 'd': 0, 'F': 1, 'D': 1}
-array_precision = {'i': 1, 'l': 1, 'f': 0, 'd': 1, 'F': 0, 'D': 1}
-array_type = [['f', 'd'], ['F', 'D']]
+array_kind = {'i':0, 'l': 0, 'f': 0, 'd': 0, 'g':0, 'F': 1, 'D': 1, 'G':1}
+array_precision = {'i': 1, 'l': 1,
+                   'f': 0, 'd': 1, 'g':2,
+                   'F': 0, 'D': 1, 'G':2}
+array_type = [['f', 'd', 'g'], ['F', 'D', 'G']]
 def common_type(*arrays):
     kind = 0
     precision = 0

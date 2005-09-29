@@ -103,7 +103,6 @@ isinf            --  Tests for infinity             |
 isfinite         --  Tests for finite numbers    ---| 
 isscalar         --  True if argument is a scalar
 nan_to_num       --  Replaces NaN's with 0 and infinities with large numbers
-typename         --  Return english name for given typecode character
 cast             --  Dictionary of functions to force cast to each type
 common_type      --  Determine the 'minimum common type code' for a group
                        of arrays
@@ -115,11 +114,6 @@ mgrid            --  Method which allows easy construction of N-d 'mesh-grids'
 r_               --  Append and construct arrays: turns slice objects into
                        ranges and concatenates them, for 2d arrays appends
                        rows.
-c_               --  Append and construct arrays: for 2d arrays appends
-                       columns.
-row              --  Like r_ except ensure (row) Matrix return
-col              --  Like c_ except ensure (column) Matrix return
-
 index_exp        --  Konrad Hinsen's index_expression class instance which
                      can be useful for building complicated slicing syntax.
 
