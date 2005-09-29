@@ -61,10 +61,11 @@ Copyright 1984, 1995 by Stephen L. Moshier
 
 
 #include "mconf.h"
+#include "pyconfig.h"
 
 #ifdef UNK
 #undef UNK
-#if BIGENDIAN
+#if WORDS_BIGENDIAN
 #define MIEEE 1
 #else
 #define IBMPC 1
