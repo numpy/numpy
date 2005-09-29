@@ -32,10 +32,12 @@ class flagsobj(dict):
         if not isinstance(key, str):
             raise KeyError, "Unknown flag", key
         if len(key) == 1:
-            if (key == 'B'):
-                num = _anum + _nnum + _wnum
-                return self._flagnum & num == num
-            return dict.__getitem__(self, _firstltr[key])
+            try:
+                return dict.__getitem__(self, _firstltr[key])
+            except:
+                if (key == 'B'):
+                    num = _anum + _nnum + _wnum
+                    return self._flagnum & num == num
         else:
             try:
                 return dict.__getitem__(self, key)
@@ -56,7 +58,7 @@ class flagsobj(dict):
                     num = _anum + _nnum + _wnum + _fnum
                     return (self._flagnum & num == num) and not \
                            (self._flagnum & _cnum == _cnum)
-                raise KeyError, "Unknown flag:", key
+        raise KeyError, "Unknown flag:", key
         
     def __setitem__(self, item, val):
         val = not not val  # convert to boolean
