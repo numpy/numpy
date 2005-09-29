@@ -5,8 +5,8 @@ import numeric as _nx
 from numeric import ndarray, array, isinf, isnan, isfinite, signbit, \
      ufunc, ScalarType
 
-__all__ = ['ScalarType','iscomplexobj','isrealobj','imag','iscomplex',
-           'isscalar','isneginf','isposinf','isinf','isfinite',
+__all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
+           'isscalar','isneginf','isposinf',
            'isreal','nan_to_num','real','real_if_close',
            'typename','common_type',
            'asfarray','mintypecode']
@@ -59,7 +59,7 @@ def imag(val):
     aval = asarray(val).imag
 
 def iscomplex(x):
-    return imag(x) != _nx.zeros(asarray(x).shape)
+    return imag(x) != _nx.zeros_like(x)
 
 def isreal(x):
     return imag(x) == _nx.zeros(asarray(x).shape)
@@ -96,9 +96,9 @@ def nan_to_num(x):
         y = nan_to_num(x.real) + 1j * nan_to_num(x.imag)
     else:   
         y = array(x)
-        are_inf = isposinf(x)
-        are_neg_inf = isneginf(x)
-        are_nan = isnan(x)
+        are_inf = isposinf(y)
+        are_neg_inf = isneginf(y)
+        are_nan = isnan(y)
         maxf, minf = _getmaxmin(y.dtype)
         y[are_nan] = 0
         y[are_inf] = maxf
@@ -107,9 +107,15 @@ def nan_to_num(x):
 
 #-----------------------------------------------------------------------------
 
-def real_if_close(a,tol=1e-13):
+def real_if_close(a,tol=100):
     a = asarray(a)
-    if a.dtypechar in ['F','D','G'] and _nx.allclose(a.imag, 0, atol=tol):
+    if not a.dtypechar in 'FDG':
+        return a
+    if tol > 1:
+        import getlimits
+        f = getlmits.finfo(a.dtype)
+        tol = f.epsilon * tol
+    if _nx.allclose(a.imag, 0, atol=tol):
         a = a.real
     return a
 
@@ -126,12 +132,14 @@ _namefromtype = {'S1' : 'character',
                  'I' : 'unsigned integer',
                  'l' : 'long integer',
                  'L' : 'unsigned long integer',
-                 'f' : 'single',
-                 'd' : 'float',
-                 'g' : 'longfloat',
-                 'F' : 'complex single',
-                 'D' : 'complex float',
-                 'G' : 'complex longfloat',
+                 'q' : 'long long integer',
+                 'Q' : 'unsigned long long integer',
+                 'f' : 'single precision',
+                 'd' : 'double precision',
+                 'g' : 'long precision',
+                 'F' : 'complex single precision',
+                 'D' : 'complex double precision',
+                 'G' : 'complex long double precision',
                  'S' : 'string',
                  'U' : 'unicode',
                  'V' : 'void',
@@ -139,7 +147,7 @@ _namefromtype = {'S1' : 'character',
                  }
 
 def typename(char):
-    """Return an english name for the given typecode character.
+    """Return an english description for the given typecode character.
     """
     return _namefromtype[char]
 

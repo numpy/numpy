@@ -3530,26 +3530,17 @@ array_ndim_get(PyArrayObject *self)
 static PyObject *
 array_flags_get(PyArrayObject *self)
 {
-	PyObject *dict;
+        static PyObject *module=NULL;
 
-	dict = PyDict_New();	
-
-#define ADDFLAG(flag)                                                   \
-	PyDict_SetItemString(dict, #flag,                               \
-			     self->flags & flag ? Py_True : Py_False)        
-
-        ADDFLAG(CONTIGUOUS);
-        ADDFLAG(OWNDATA);
-        ADDFLAG(FORTRAN);
-        ADDFLAG(ALIGNED);
-        ADDFLAG(NOTSWAPPED);
-        ADDFLAG(WRITEABLE);
-        ADDFLAG(UPDATEIFCOPY);
-	return dict;
-	/* return PyInt_FromLong(self->flags);*/
-#undef ADDFLAG
+        if (module==NULL) {
+                module = PyImport_ImportModule("scipy.base._internal");
+                if (module == NULL) return NULL;
+        }
+        return PyObject_CallMethod(module, "flagsobj", "Oi", 
+                                   self, self->flags);
 }
 
+/*
 static int
 array_flags_set(PyArrayObject *self, PyObject *obj) 
 {
@@ -3616,6 +3607,7 @@ array_flags_set(PyArrayObject *self, PyObject *obj)
                         "Object must be a dictionary");
         return -1;
 }
+*/
 
 
 static PyObject *
@@ -4173,8 +4165,8 @@ static PyGetSetDef array_getsetlist[] = {
 	 "number of array dimensions"},
         {"flags", 
 	 (getter)array_flags_get, 
-	 (setter)array_flags_set, 
-	 "integer value of flags"},
+         NULL,
+	 "special dictionary of flags"},
         {"shape", 
 	 (getter)array_shape_get, 
 	 (setter)array_shape_set, 

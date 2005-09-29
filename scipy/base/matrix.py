@@ -4,6 +4,7 @@ from numeric import ArrayType, concatenate
 from function_base import binary_repr
 import types
 import string as str_
+import sys
 
 __all__ = ['matrix', 'bmat', 'mat']
 
@@ -212,24 +213,27 @@ def _from_string(str,gdict,ldict):
     rowtup = []
     for row in rows:
         trow = row.split(',')
+        newrow = []
+        for x in trow:
+            newrow.extend(x.split())
+        trow = newrow
         coltup = []
         for col in trow:
             col = col.strip()
             try:
-                thismat = gdict[col]
+                thismat = ldict[col]
             except KeyError:
                 try:
-                    thismat = ldict[col]
+                    thismat = gdict[col]
                 except KeyError:
                     raise KeyError, "%s not found" % (col,)
                                     
             coltup.append(thismat)
         rowtup.append(concatenate(coltup,axis=-1))
     return concatenate(rowtup,axis=0)
-
     
 
-def bmat(obj,gdict=None,ldict=None):
+def bmat(obj,ldict=None, gdict=None):
     """Build a matrix object from string, nested sequence, or array.
 
     Ex:  F = bmat('A, B; C, D')  

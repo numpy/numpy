@@ -14,7 +14,7 @@ def frz(a):
         a = a.reshape((1,))
     return a
 
-_machar_cache = {numeric.float: \
+_machar_cache = {numeric.afloat: \
                  MachAr(lambda v:array([v],'d'),
                         lambda v:frz(v.astype('i'))[0],
                         lambda v:array(frz(v)[0],'d'),
@@ -27,8 +27,8 @@ class finfo(object):
         dtype = numeric.obj2dtype(dtype)
         if not issubclass(dtype, numeric.floating):
             raise ValueError, "data type not a float"
-        if dtype is numeric.float:
-            self.machar = _machar_cache[numeric.float]
+        if dtype is numeric.afloat:
+            self.machar = _machar_cache[numeric.afloat]
         elif dtype is numeric.single:
             try:
                 self.machar = _machar_cache[numeric.single]

@@ -3979,6 +3979,37 @@ setup_scalartypes(PyObject *dict)
 	*/
 }
 
+/* place a flag dictionary in d */
+
+static void
+set_flaginfo(PyObject *d)
+{
+        PyObject *s;
+        PyObject *newd;
+        
+        newd = PyDict_New();
+
+        PyDict_SetItemString(newd, "OWNDATA", s=PyInt_FromLong(OWNDATA));
+        Py_DECREF(s);
+        PyDict_SetItemString(newd, "FORTRAN", s=PyInt_FromLong(FORTRAN));
+        Py_DECREF(s);
+        PyDict_SetItemString(newd, "CONTIGUOUS", s=PyInt_FromLong(CONTIGUOUS));
+        Py_DECREF(s);
+        PyDict_SetItemString(newd, "ALIGNED", s=PyInt_FromLong(ALIGNED));
+        Py_DECREF(s);
+
+        PyDict_SetItemString(newd, "NOTSWAPPED", s=PyInt_FromLong(NOTSWAPPED));
+        Py_DECREF(s);
+        PyDict_SetItemString(newd, "UPDATEIFCOPY", s=PyInt_FromLong(UPDATEIFCOPY));
+        Py_DECREF(s);
+        PyDict_SetItemString(newd, "WRITEABLE", s=PyInt_FromLong(WRITEABLE));
+        Py_DECREF(s);
+        
+        PyDict_SetItemString(d, "_flagdict", newd);
+        Py_DECREF(newd);
+        return;
+}
+
 
 /* Initialization function for the module */
 
@@ -4038,13 +4069,8 @@ DL_EXPORT(void) initmultiarray(void) {
         Py_INCREF(&PyArrayMapIter_Type);
 	PyDict_SetItemString(d, "mapiter", (PyObject *)&PyArrayMapIter_Type);
 
-        PyDict_SetItemString(d, "NOTSWAPPED", s=PyInt_FromLong(NOTSWAPPED));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "UPDATEIFCOPY", s=PyInt_FromLong(UPDATEIFCOPY));
-        Py_DECREF(s);
-        PyDict_SetItemString(d, "WRITEABLE", s=PyInt_FromLong(WRITEABLE));
-        Py_DECREF(s);
-        
+        set_flaginfo(d);
+
 	if (set_typeinfo(d) == 0) 
                 return;  /* otherwise there is an error */
 

@@ -318,21 +318,25 @@ def dtype2char(dtype):
     if dtype is None:
         raise ValueError, "unrecognized type"
     return _dtype2char_dict[dtype]
-    
+
 
 del _ibytes, _fbytes, multiarray
 
 # Create dictionary of casting functions that wrap sequences
 # indexed by type or type character
 
-cast = {}
+# This dictionary allows look up based on any alias for a type
+class _castdict(dict):
+    def __getitem__(self, obj):
+        return dict.__getitem__(self, obj2dtype(obj))
+
+cast = _castdict()
 ScalarType = [_types.IntType, _types.LongType, _types.FloatType,
               _types.StringType, _types.UnicodeType, _types.ComplexType,
               _types.BufferType]
 ScalarType.extend(_dtype2char_dict.keys())
 for key in _dtype2char_dict.keys():
     cast[key] = lambda x, k=key : array(x,copy=0).astype(k)
-    cast[_dtype2char_dict[key]] = cast[key]
 
 
 

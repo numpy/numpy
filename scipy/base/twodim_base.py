@@ -9,48 +9,44 @@ from numeric import *
 import sys
 
 def fliplr(m):
-    """ returns a 2-d array m with the rows preserved and columns flipped 
-        in the left/right direction.  Only works with 2-d arrays.
+    """ returns an array m with the rows preserved and columns flipped 
+        in the left/right direction.  Works on the first two dimensions of m. 
     """
     m = asarray(m)
-    if len(m.shape) != 2:
-        raise ValueError, "Input must be 2-d."
+    if m.ndim < 2:
+        raise ValueError, "Input must be >= 2-d."
     return m[:, ::-1]
 
 def flipud(m):
-    """ returns a 2-d array with the columns preserved and rows flipped in
-        the up/down direction.  Only works with 2-d arrays.
+    """ returns an array with the columns preserved and rows flipped in
+        the up/down direction.  Works on the first dimension of m.
     """
     m = asarray(m)
-    if len(m.shape) != 2:
-        raise ValueError, "Input must be 2-d."
+    if m.ndim < 1:
+        raise ValueError, "Input must be >= 1-d."
     return m[::-1]
     
-# reshape(x, m, n) is not used, instead use reshape(x, (m, n))
-
 def rot90(m, k=1):
-    """ returns the 2-d array found by rotating m by k*90 degrees in the 
-        counterclockwise direction.
+    """ returns the array found by rotating m by k*90
+    degrees in the counterclockwise direction.  Works on the first two
+    dimensions of m. 
     """
     m = asarray(m)
-    if len(m.shape) != 2:
-        raise ValueError, "Input must be 2-d."
+    if n.ndim < 2:
+        raise ValueError, "Input must >= 2-d."
     k = k % 4
     if k == 0: return m
     elif k == 1: return transpose(fliplr(m))
     elif k == 2: return fliplr(flipud(m))
     else: return fliplr(transpose(m))  # k==3
     
-def eye(N, M=None, k=0, dtype=float):
+def eye(N, M=None, k=0, dtype=aint):
     """ eye returns a N-by-M 2-d array where the  k-th diagonal is all ones, 
         and everything else is zeros.
     """
     if M is None: M = N
     m = equal(subtract.outer(arange(N), arange(M)),-k)
-    if dtype is None:
-        return m+0
-    else:
-        return m.astype(dtype)
+    return m.astype(dtype)
 
 def diag(v, k=0):
     """ returns the k-th diagonal if v is a array or returns a array 
@@ -84,21 +80,13 @@ def diag(v, k=0):
             raise ValueError, "Input must be 1- or 2-d."
 
 
-def tri(N, M=None, k=0, dtype=None):
+def tri(N, M=None, k=0, dtype=aint):
     """ returns a N-by-M array where all the diagonals starting from
         lower left corner up to the k-th are all ones.
     """
-    if M is None: M = N
-    if type(M) == type('d'):
-        #pearu: any objections to remove this feature?
-        #       As tri(N,'d') is equivalent to tri(N,dtype='d')
-        dtype = M
-        M = N
+    if M is None: M = N    
     m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
-    if dtype is None:
-        return m
-    else:
-        return m.astype(dtype)
+    return m.astype(dtype)
 
 def tril(m, k=0):
     """ returns the elements on and below the k-th diagonal of m.  k=0 is the

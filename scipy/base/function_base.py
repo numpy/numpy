@@ -2,6 +2,7 @@ import types
 import math, operator
 import numeric as _nx
 from numeric import ones, zeros, arange, concatenate, array, asarray, empty
+from numeric import ScalarType
 from umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc, \
      isnan
 from oldnumeric import ravel, nonzero, choose, \
@@ -265,7 +266,11 @@ def piecewise(x, condlist, funclist, *args, **kw):
         raise ValueError, "function list and condition list must be the same."
     y = empty(x.shape, x.dtype)
     for k in range(n):
-        y[condlist[k]] = funclist[k](x[condlist[k]], *args, **kw)
+        item = funclist[k]
+        if not callable(item):
+            y[condlist[k]] = item
+        else:
+            y[condlist[k]] = item(x[condlist[k]], *args, **kw)
     return y
 
 def select(condlist, choicelist, default=0):

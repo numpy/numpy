@@ -57,6 +57,7 @@ def zeros_like(a):
     If you don't explicitly need the array to be zeroed, you should instead
     use empty_like(), which is faster as it only allocates memory."""
 
+    a = asarray(a)
     return zeros(a.shape,a.dtype,a.flags['FORTRAN'] and a.ndim > 1)
 
 def empty_like(a):
@@ -66,6 +67,7 @@ def empty_like(a):
     your array to be initialized, you should use zeros_like().
 
     """
+    asarray(a)
     return empty(a.shape,a.dtype,a.flags['FORTRAN'] and a.ndim > 1)
 # end Fernando's utilities
 
