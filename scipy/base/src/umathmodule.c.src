@@ -47,6 +47,11 @@ static double atanh(double x)
 }
 #endif
 
+#ifndef HAVE_INVERSE_HYPERBOLIC_FLOAT
+#define acoshf(x) acosh((float)(x))
+#define asinhf(x) asinh((float)(x))
+#define atanhf(x) atanh((float)(x))
+#endif
 
 #ifdef HAVE_HYPOT
 #if !defined(NeXT) && !defined(_MSC_VER)
