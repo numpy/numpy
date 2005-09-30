@@ -642,6 +642,7 @@ static void
 */
 
 static int numeric_zero = 0.0;
+static double numeric_two = 2.0;
 
 #if !defined(generate_divbyzero_error)
 static void generate_divbyzero_error(void) {
@@ -652,9 +653,9 @@ static void generate_divbyzero_error(void) {
 #endif
 
 #if !defined(generate_overflow_error)
-static void generate_overflow_error() {
+static void generate_overflow_error(void) {
 	double dummy;
-	dummy = pow(1.e10, 100);
+	dummy = pow(numeric_two,1000);
 	return;
 }
 #endif
