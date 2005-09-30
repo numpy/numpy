@@ -900,7 +900,15 @@ int copy_ND_array(const PyArrayObject *in, PyArrayObject *out)
 #endif
   return NA_copyArray(out, in);
 } 
-
+#elif defined(NDARRAY_VERSION)
+extern
+int copy_ND_array(const PyArrayObject *in, PyArrayObject *out)
+{
+#ifdef F2PY_REPORT_ON_ARRAY_COPY
+  f2py_report_on_array_copy(out, "CopyInto");
+#endif
+  return PyArray_CopyInto(out, in);
+}
 #else
 /*     Here starts Travis Oliphant's contribution    */
 #define INCREMENT(ret_ind, nd, max_ind) \

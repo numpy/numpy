@@ -1175,9 +1175,6 @@ typedef struct {
 
         /* C-API that requries previous API to be defined */
 
-/* Backward compatibility only */
-#define PyArray_CopyArray PyArray_CopyInto
-
 #define PyArray_Check(op) (PyObject_TypeCheck((op), &PyBigArray_Type))
 #define PyBigArray_CheckExact(op) ((op)->ob_type == &PyBigArray_Type)
 #define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
@@ -1205,7 +1202,9 @@ typedef struct {
 #define PyArray_UNSIGNED_TYPES
 #define PyArray_SBYTE PyArray_BYTE
 #define PyArray_CHAR PyArray_BYTE
-
+#define PyArray_CopyArray PyArray_CopyInto
+#define _PyArray_multiply_list PyArray_MultiplyList
+#define PyArray_Size PyArray_SIZE
 
 #ifdef __cplusplus
 }
