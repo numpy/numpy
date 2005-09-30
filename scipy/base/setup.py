@@ -60,7 +60,7 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append('HAVE_FLOAT_FUNCS')
             if config_cmd.check_func('asinh', **kws_args):
                 moredefs.append('HAVE_INVERSE_HYPERBOLIC')
-            if config_cmd.check_func('asinhf', **kws_args):
+            if config_cmd.check_func('atanhf', **kws_args):
                 moredefs.append('HAVE_INVERSE_HYPERBOLIC_FLOAT')
             if config_cmd.check_func('isnan', **kws_args):
                 moredefs.append('HAVE_ISNAN')

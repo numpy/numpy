@@ -48,9 +48,22 @@ static double atanh(double x)
 #endif
 
 #ifndef HAVE_INVERSE_HYPERBOLIC_FLOAT
-#define acoshf(x) acosh((float)(x))
-#define asinhf(x) asinh((float)(x))
-#define atanhf(x) atanh((float)(x))
+
+static float acoshf(float x)
+{
+  return (double)acosh((double)(x));
+}
+
+static float asinhf(float x)
+{
+  return (double)asinh((double)(x));
+}
+
+static float atanhf(float x)
+{
+  return (double)atanh((double)(x));
+}
+
 #endif
 
 #ifdef HAVE_HYPOT
