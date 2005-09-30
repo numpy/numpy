@@ -512,7 +512,9 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj)
 static void
 PyUFunc_clearfperr()
 {
-	PyUFunc_checkfperr(0, NULL);
+	int retstatus;
+
+	UFUNC_CHECK_STATUS(retstatus)
 }
 
 
@@ -1108,6 +1110,8 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
 						     Py_None));
 	if (loop->errobj == NULL) goto fail;
 
+	PyUFunc_clearfperr();
+
 	return loop;
 
  fail:
@@ -1588,6 +1592,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 						     Py_None));
 	if (loop->errobj == NULL) goto fail;
 
+	PyUFunc_clearfperr();
 	return loop;
 
  fail:

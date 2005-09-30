@@ -47,8 +47,7 @@ static double atanh(double x)
 }
 #endif
 
-#ifndef HAVE_INVERSE_HYPERBOLIC_FLOAT
-
+#if !defined(HAVE_INVERSE_HYPERBOLIC_FLOAT)
 static float acoshf(float x)
 {
   return (float)acosh((double)(x));
@@ -63,7 +62,6 @@ static float atanhf(float x)
 {
   return (float)atanh((double)(x));
 }
-
 #endif
 
 #ifdef HAVE_HYPOT
@@ -638,26 +636,28 @@ static void
 ** should always be 0                                               *
 */
 
+/* These should really be altered to just set the corresponding bit
+   in the floating point status flag.  Need to figure out how to do that
+   on all the platforms...
+*/
+
 static int numeric_zero = 0.0;
 
-static int int_dividebyzero_error(void) {
+#if !defined(generate_divbyzero_error)
+static void generate_divbyzero_error(void) {
 	double dummy;
 	dummy = 1./numeric_zero;
-	if (dummy) /* to prevent optimizer from eliminating expression */
-		return 0;
-	else
-		return 1;
+	return;
 }
+#endif
 
-/* Likewise for Integer overflows */
-static int int_overflow_error(double value) {
+#if !defined(generate_overflow_error)
+static void generate_overflow_error() {
 	double dummy;
-	dummy = pow(1.e10, fabs(value/2));
-	if (dummy) /* to prevent optimizer from eliminating expression */
-		return (int) value;
-	else
-		return 1;
+	dummy = pow(1.e10, 100);
+	return;
 }
+#endif
 
 
 static int ulonglong_overflow(ulonglong a, ulonglong b)
@@ -774,7 +774,7 @@ static void
 	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
 		temp = (@bigtyp@)(*((@typ@ *)i1)) * (@bigtyp@)(*((@typ@ *)i2));
 		if (temp > MAX_@TYP@) 
-			temp = (@bigtyp@)int_overflow_error(MAX_@TYP@);
+			generate_overflow_error();
 		*((@typ@ *)op) = temp;
 	}  
 }
@@ -791,7 +791,7 @@ ULONGLONG_multiply(char **args, intp *dimensions, intp *steps, void *func)
 	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
 		temp = *((ulonglong *)i1) * *((ulonglong *)i2);
 		if (ulonglong_overflow(*((ulonglong *)i1), *((ulonglong *)i2)))
-			temp = (ulonglong )int_overflow_error(MAX_ULONGLONG);
+			generate_overflow_error();
 		*((ulonglong *)op) = temp;
 	}  
 }
@@ -813,9 +813,9 @@ static void
 	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
 		temp = (@bigtyp@)*((@typ@ *)i1) * (@bigtyp@)*((@typ@ *)i2);
 		if (temp > MAX_@TYP@) 
-			temp = (@bigtyp@)int_overflow_error(MAX_@TYP@);
-		if (temp < MIN_@TYP@) 
-			temp = (@bigtyp@)int_overflow_error(MIN_@TYP@);
+			generate_overflow_error();
+		else if (temp < MIN_@TYP@) 
+			generate_overflow_error();
 		*((@typ@ *)op) = temp;
 	}  
 }
@@ -832,7 +832,7 @@ LONGLONG_multiply(char **args, intp *dimensions, intp *steps, void *func)
 	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
 		temp = *((longlong *)i1) * *((longlong *)i2);
 		if (slonglong_overflow(*((longlong *)i1), *((longlong *)i2)))
-			temp = (longlong )int_overflow_error(MAX_LONGLONG);
+			generate_overflow_error();
 		*((longlong *)op) = temp;
 	}  
 }
@@ -868,9 +868,13 @@ static void
 	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
 	char *i1=args[0], *i2=args[1], *op=args[2];
 	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((@typ@ *)op)= ((*((@typ@ *)i2)==0) ? \
-				 int_dividebyzero_error() : \
-				 *((@typ@ *)i1) / *((@typ@ *)i2));
+		if (*((@typ@ *)i2)==0) {
+			generate_divbyzero_error();
+			*((@typ@ *)op)=0;
+		}
+		else {
+			*((@typ@ *)op)= *((@typ@ *)i1) / *((@typ@ *)i2);
+		}
 	}
 }
 static void
@@ -879,9 +883,14 @@ static void
 	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
 	char *i1=args[0], *i2=args[1], *op=args[2];
 	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((@otyp@ *)op)= ((*((@typ@ *)i2)==0) ?	    \
-				  int_dividebyzero_error() :  \
-				  *((@typ@ *)i1) / (double )*((@typ@ *)i2));
+		if (*((@typ@ *)i2)==0) {
+			generate_divbyzero_error();
+			*((@otyp@ *)op)=0;
+		}
+		else {
+			*((@otyp@ *)op)=				\
+				*((@typ@ *)i1) / (double)*((@typ@ *)i2);
+		}
 	}
 }
 #define @TYP@_floor_divide @TYP@_divide

@@ -249,6 +249,9 @@ typedef struct {
 	(void) feclearexcept(FE_DIVBYZERO | FE_OVERFLOW |		\
 			     FE_UNDERFLOW | FE_INVALID);		\
 }
+
+#define generate_divbyzero_error() feraiseexcept(FE_DIVBYZERO)
+#define generate_overflow_error() feraiseexcept(FE_OVERFLOW)
 	
 #elif defined(AIX)
 
