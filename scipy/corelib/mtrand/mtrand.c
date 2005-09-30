@@ -3847,7 +3847,7 @@ static __Pyx_InternTabEntry __pyx_intern_tab[] = {
   {&__pyx_n_Float64, "Float64"},
   {&__pyx_n_Int, "Int"},
   {&__pyx_n_MT19937, "MT19937"},
-  {&__pyx_n_Numeric, "Numeric"},
+  {&__pyx_n_Numeric, "scipy"},
   {&__pyx_n_ValueError, "ValueError"},
   {&__pyx_n___RandomState_ctor, "__RandomState_ctor"},
   {&__pyx_n__rand, "_rand"},
