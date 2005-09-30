@@ -370,18 +370,4 @@ inf = PINF
 nan = NAN
 from oldnumeric import *
 
-def get_scipy_include():
-    """Return the directory in the package that contains the scipy/*.h header 
-    files.
-    
-    Extension modules that need to compile against scipy.base should use this
-    function to locate the appropriate include directory. Using distutils:
-    
-      import scipy
-      Extension('extension_name', ...
-                include_dirs=[scipy.get_scipy_include()])
-    """
-    import os
-    dir, fn = os.path.split(__file__)
-    return os.path.join(dir, 'include')
 

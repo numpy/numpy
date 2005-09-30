@@ -338,6 +338,11 @@ class Configuration:
     def __dict__(self):
         return self.todict()
 
+    def get_distribution(self):
+        import distutils.core
+        dist = distutils.core._setup_distribution        
+        return dist
+
     def get_subpackage(self,subpackage_name,subpackage_path=None):
         """ Return subpackage configuration.
         """
@@ -398,55 +403,95 @@ class Configuration:
                 self.dict_append(**config.todict())
             else:
                 print 'Appending %s configuration to %s' % (config.get('name'),self.name)
-                self.dict_append(**config)        
+                self.dict_append(**config)
+
+        dist = self.get_distribution()
+        if dist is not None:
+            print 'distutils distribution has been initialized, it may be too late to add a subpackage', subpackage_name
         return
 
     def add_data_dir(self,data_path):
         """ Add files under data_path to data_files list.
         """
-        path = os.path.join(self.local_path,data_path)
-        filenames = []
-        os.path.walk(path, _gsf_visit_func,filenames)
-        self.add_data_files(*filenames)
+        for path in self.paths(data_path):
+            filenames = []
+            os.path.walk(path, _gsf_visit_func,filenames)
+            if not os.path.isabs(path):
+                self.add_data_files((path,filenames))
+            else:
+                self.add_data_files(*filenames)
         return
 
     def add_data_files(self,*files):
         """ Add data files to configuration data_files.
+        Argument(s) can be either
+        - 2-sequence (<datadir suffix>,<path to data file(s)>)
+        - paths to data files where python datadir suffix defaults
+          to package dir.
+        If path is not absolute then it's datadir suffix is
+        package dir + dirname of the path.
         """
         data_dict = {}
-        for f in self._fix_paths(files):
-            if type(f) is type(''):
-                lf = f[len(self.local_path)+1:]
-                d = os.path.dirname(lf)
-                d = os.path.join(*(self.name.split('.')+[d]))
-            else:
+        for p in files:
+            if type(p) is type(''):
                 d = os.path.join(*(self.name.split('.')))
-            if not data_dict.has_key(d):
-                data_dict[d] = [f]
+                file_list = self.paths(p)
+                if not os.path.isabs(p):
+                    d = appendpath(d,os.path.dirname(p))
+            elif type(p) is type(()):
+                assert len(p)==2,`p`
+                d = p[0]
+                if type(p[1]) is type(''):
+                    file_list = self.paths(p[1])
+                else:
+                    file_list = self.paths(*p[1])
             else:
-                data_dict[d].append(f)
+                # function
+                d = os.path.join(*(self.name.split('.')))
+                file_list = [p]
+            if not data_dict.has_key(d):
+                data_dict[d] = file_list[:]
+            else:
+                data_dict[d].extend(file_list)
 
-        self.data_files.extend(data_dict.items())
+        dist = self.get_distribution()
+        if dist is not None:
+            dist.data_files.extend(data_dict.items())
+        else:
+            self.data_files.extend(data_dict.items())
+
         return            
         
     def add_include_dirs(self,*paths):
         """ Add paths to configuration include directories.
         """
-        self.include_dirs.extend(self._fix_paths(paths))
+        include_dirs = self._fix_paths(paths)
+        dist = self.get_distribution()
+        if dist is not None:
+            dist.include_dirs.extend(include_dirs)
+        else:
+            self.include_dirs.extend(include_dirs)
+        return
 
     def add_headers(self,*files):
         """ Add installable headers to configuration.
         Argument(s) can be either
-        - a 2-sequence (<includedir suffix>,<path to header file>)
-        - a path to header file where python includedir suffix defaults
+        - 2-sequence (<includedir suffix>,<path to header file(s)>)
+        - path(s) to header file(s) where python includedir suffix will default
           to package name.
         """
+        headers = []
         for path in files:
             if type(path) is type(''):
-                [self.headers.append((self.name,p)) for p in self.paths(path)]
+                [headers.append((self.name,p)) for p in self.paths(path)]
             else:
                 assert type(path) in [type(()),type([])] and len(path)==2,`path`
-                [self.headers.append((path[0],p)) for p in self.paths(path[1])]
+                [headers.append((path[0],p)) for p in self.paths(path[1])]
+        dist = self.get_distribution()
+        if dist is not None:
+            dist.headers.extend(headers)
+        else:
+            self.headers.extend(headers)
         return
 
     def _fix_paths(self,paths):
@@ -518,6 +563,9 @@ class Configuration:
         ext = Extension(**ext_args)
         self.ext_modules.append(ext)
 
+        dist = self.get_distribution()
+        if dist is not None:
+            print 'distutils distribution has been initialized, it may be too late to add an extension', name
         return ext
 
     def add_library(self,name,sources,**build_info):
@@ -540,12 +588,22 @@ class Configuration:
                 new_v = self._fix_paths(v)
                 build_info[k] = new_v
         self.libraries.append((name,build_info))
+
+        dist = self.get_distribution()
+        if dist is not None:
+            print 'distutils distribution has been initialized, it may be too late to add a library', name
         return
 
     def add_scripts(self,*files):
         """ Add scripts to configuration.
         """
-        self.scripts.extend(self._fix_paths(files))
+        scripts = self._fix_paths(files)
+        dist = self.get_distribution()
+        if dist is not None:
+            dist.scripts.extend(scripts)
+        else:
+            self.scripts.extend(scripts)
+        return
 
     def dict_append(self,**dict):
         for key in self.list_keys:
@@ -739,14 +797,15 @@ def get_cmd(cmdname,_cache={}):
 def get_scipy_include_dirs():
     include_dirs = Configuration.scipy_include_dirs[:]
     if not include_dirs:
-        import scipy
-        from distutils.sysconfig import get_python_inc
-        prefix = []
-        for name in scipy.__file__.split(os.sep):
-            if name=='lib':
-                break
-            prefix.append(name)
-        include_dirs.append(get_python_inc(prefix=os.sep.join(prefix)))
+        import scipy.base as base
+        include_dirs.append(os.path.join(os.path.dirname(base.__file__),'include'))
+        #from distutils.sysconfig import get_python_inc
+        #prefix = []
+        #for name in scipy.__file__.split(os.sep):
+        #    if name=='lib':
+        #        break
+        #    prefix.append(name)
+        #include_dirs.append(get_python_inc(prefix=os.sep.join(prefix)))
     return include_dirs
 
 #########################
@@ -757,6 +816,21 @@ def dict_append(d,**kws):
             d[k].extend(v)
         else:
             d[k] = v
+
+def appendpath(prefix,path):
+    if os.path.isabs(path):
+        absprefix = os.path.abspath(prefix)
+        d = os.path.commonprefix([absprefix,path])
+        if os.path.join(absprefix[:len(d)],absprefix[len(d):])!=absprefix \
+           or os.path.join(path[:len(d)],path[len(d):])!=path:
+            # Handle invalid paths
+            d = os.path.dirname(d)
+        subpath = path[len(d):]
+        if os.path.isabs(subpath):
+            subpath = subpath[1:]
+    else:
+        subpath = path
+    return os.path.normpath(os.path.join(prefix, subpath))
 
 def generate_config_py(extension, build_dir):
     """ Generate <package>/config.py file containing system_info

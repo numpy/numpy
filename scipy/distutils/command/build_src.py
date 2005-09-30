@@ -11,7 +11,8 @@ from distutils.util import convert_path
 from distutils.dep_util import newer_group, newer
 
 from scipy.distutils import log
-from scipy.distutils.misc_util import fortran_ext_match, all_strings, dot_join
+from scipy.distutils.misc_util import fortran_ext_match, all_strings, dot_join,\
+     appendpath
 from scipy.distutils.from_template import process_file as process_f_file
 from scipy.distutils.conv_template import process_file as process_c_file
 from scipy.distutils.extension import Extension
@@ -113,8 +114,11 @@ class build_src(build_ext.build_ext):
 
         sources, h_files = self.filter_h_files(sources)
 
-        for f in h_files:
-            self.distribution.headers.append((lib_name,f))
+        if h_files:
+            print package,'- nothing done with h_files=',h_files
+
+        #for f in h_files:
+        #    self.distribution.headers.append((lib_name,f))
 
         build_info['sources'] = sources
         return
@@ -156,9 +160,10 @@ class build_src(build_ext.build_ext):
 
         sources, h_files = self.filter_h_files(sources)
 
-
-        for f in h_files:
-            self.distribution.headers.append((package,f))
+        if h_files:
+            print package,'- nothing done with h_files=',h_files
+        #for f in h_files:
+        #    self.distribution.headers.append((package,f))
 
         ext.sources = sources
 
@@ -474,21 +479,6 @@ class build_src(build_ext.build_ext):
                          % (source))
 
         return new_sources + py_files
-
-def appendpath(prefix,path):
-    if os.path.isabs(path):
-        absprefix = os.path.abspath(prefix)
-        d = os.path.commonprefix([absprefix,path])
-        if os.path.join(absprefix[:len(d)],absprefix[len(d):])!=absprefix \
-           or os.path.join(path[:len(d)],path[len(d):])!=path:
-            # Handle invalid paths
-            d = os.path.dirname(d)
-        subpath = path[len(d):]
-        if os.path.isabs(subpath):
-            subpath = subpath[1:]
-    else:
-        subpath = path
-    return os.path.normpath(os.path.join(prefix, subpath))
 
 _f_pyf_ext_match = re.compile(r'.*[.](f90|f95|f77|for|ftn|f|pyf)\Z',re.I).match
 _header_ext_match = re.compile(r'.*[.](inc|h|hpp)\Z',re.I).match

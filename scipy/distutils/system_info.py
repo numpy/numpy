@@ -889,6 +889,9 @@ def get_atlas_version(**config):
     for a in sys.argv:
         if re.match('[-][-]compiler[=]',a):
             extra_args.append(a)
+    import distutils.core
+    old_dist = distutils.core._setup_distribution
+    distutils.core._setup_distribution = None
     try:
         dist = setup(ext_modules=[ext],
                      script_name = 'get_atlas_version',
@@ -899,6 +902,7 @@ def get_atlas_version(**config):
             msg = "Unknown Exception"
         log.warn(msg)
         return None
+    distutils.core._setup_distribution = old_dist
 
     from distutils.sysconfig import get_config_var
     so_ext = get_config_var('SO')

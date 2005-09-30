@@ -7,12 +7,13 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('distutils')
     config.add_subpackage('weave')
     config.add_subpackage('test')
-    config.add_subpackage('f2py2e')
+    config.add_subpackage('f2py2e') # installed as scipy.f2py
     config.add_subpackage('base')
-    config.add_subpackage('lib',os.path.join(config.local_path,'corelib'))
+    config.add_subpackage('corelib') # installed as scipy.lib
     config.add_subpackage('fftpack')
     config.add_subpackage('linalg')
     config.add_subpackage('stats')
+    config.make_svn_version_py() # installs __svn_version__.py
     return config.todict()
 
 if __name__ == '__main__':

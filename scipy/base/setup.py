@@ -20,6 +20,8 @@ def configuration(parent_package='',top_path=None):
                                      open(generate_umath_py,'U'),generate_umath_py,
                                      ('.py','U',1))
 
+    header_dir = join(*(config.name.split('.')+['include','scipy']))
+
     def generate_config_h(ext, build_dir):
         target = join(build_dir,'config.h')
         if newer(__file__,target):
@@ -85,10 +87,7 @@ def configuration(parent_package='',top_path=None):
         if incl_dir not in config.scipy_include_dirs:
             config.scipy_include_dirs.append(incl_dir)
 
-        #if incl_dir not in ext.include_dirs:
-        #    ext.include_dirs.append(incl_dir)
-
-        config.add_data_files(target)
+        config.add_data_files((header_dir,target))
         return target
 
     def generate_array_api(ext,build_dir):
@@ -101,7 +100,7 @@ def configuration(parent_package='',top_path=None):
             print 'executing',script
             execfile(script,{},{})
             os.chdir(old_cwd)
-        config.add_data_files(target)
+        config.add_data_files((header_dir,target))
         return target
 
     def generate_ufunc_api(ext,build_dir):
@@ -114,7 +113,7 @@ def configuration(parent_package='',top_path=None):
             print 'executing',script
             execfile(script,{},{})
             os.chdir(old_cwd)
-        config.add_data_files(target)
+        config.add_data_files((header_dir,target))
         return target
 
     def generate_umath_c(ext,build_dir):
@@ -127,7 +126,7 @@ def configuration(parent_package='',top_path=None):
             f.close()
         return []
 
-    config.add_headers(('scipy',join('include','scipy','*.h')))
+    config.add_data_files(join('include','scipy','*.h'))
     config.add_include_dirs('src')
 
     config.scipy_include_dirs.extend(config.paths('include'))
@@ -249,3 +248,7 @@ int main(int argc, char **argv)
 ''')
     testcode = '\n'.join(testcode)    
     return testcode
+
+if __name__=='__main__':
+    from scipy.distutils.core import setup
+    setup(**configuration(top_path='').todict())
