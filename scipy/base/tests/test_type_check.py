@@ -236,4 +236,4 @@ class test_real_if_close(unittest.TestCase):
         assert_all(isrealobj(b))
 
 if __name__ == "__main__":
-    ScipyTest('scipy_base.type_check').run()
+    ScipyTest().run()

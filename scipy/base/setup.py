@@ -53,13 +53,14 @@ def configuration(parent_package='',top_path=None):
             moredefs.append(('MATHLIB',','.join(mathlibs)))
 
             libs = mathlibs
-            if config_cmd.check_func('expl', libraries=libs, decl=1):
+            kws_args = {'libraries':libs,'decl':0,'headers':['math.h']}
+            if config_cmd.check_func('expl', **kws_args):
                 moredefs.append('HAVE_LONGDOUBLE_FUNCS')
-            if config_cmd.check_func('expf', libraries=libs, decl=1):
+            if config_cmd.check_func('expf', **kws_args):
                 moredefs.append('HAVE_FLOAT_FUNCS')
-            if config_cmd.check_func('asinh', libraries=libs, decl=1):
+            if config_cmd.check_func('asinh', **kws_args):
                 moredefs.append('HAVE_INVERSE_HYPERBOLIC')
-            if config_cmd.check_func('isnan', libraries=libs, decl=1):
+            if config_cmd.check_func('isnan', **kws_args):
                 moredefs.append('HAVE_ISNAN')
 
             if moredefs:
