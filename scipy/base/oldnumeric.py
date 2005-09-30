@@ -30,7 +30,7 @@ UnsignedInt = nt.uint
 
 typecodes = {'Character':'S1', 'Integer':'bhilq', 'UnsignedInteger':'BHILQ',
              'Float':'fdg', 'Complex':'FDG', 'AllInteger':'bBhHiIlLqQ',
-             'AllFloat':'fdgFDG', 'All':'?bhilqBHILQfdgFDGSVUO'}
+             'AllFloat':'fdgFDG', 'All':'?bhilqBHILQfdgFDGSUVO'}
 
 
 def sarray(a, dtype=None, copy=0):

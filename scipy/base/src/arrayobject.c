@@ -5466,7 +5466,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
 		else if (PyTypeNum_ISCOMPLEX(totype)) {
 			return ((to->elsize >> 1) > from->elsize);
 		}
-		else return 0;
+		else return totype > fromtype;
         case PyArray_UBYTE:
         case PyArray_USHORT:
         case PyArray_UINT:
@@ -5486,7 +5486,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
 		else if (PyTypeNum_ISCOMPLEX(totype)) {
 			return ((to->elsize >> 1) > from->elsize);
 		}
-		else return 0;
+		else return totype > fromtype;
         case PyArray_FLOAT:
         case PyArray_DOUBLE:
 	case PyArray_LONGDOUBLE:

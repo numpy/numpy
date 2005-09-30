@@ -51,17 +51,17 @@ static double atanh(double x)
 
 static float acoshf(float x)
 {
-  return (double)acosh((double)(x));
+  return (float)acosh((double)(x));
 }
 
 static float asinhf(float x)
 {
-  return (double)asinh((double)(x));
+  return (float)asinh((double)(x));
 }
 
 static float atanhf(float x)
 {
-  return (double)atanh((double)(x));
+  return (float)atanh((double)(x));
 }
 
 #endif
