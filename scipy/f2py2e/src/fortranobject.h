@@ -30,7 +30,11 @@ void **libnumarray_API;
 #else
 
 #define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
+#if defined(NUMERIC)
 #include "Numeric/arrayobject.h"
+#else
+#include "scipy/arrayobject.h"
+#endif
 
 #endif
 

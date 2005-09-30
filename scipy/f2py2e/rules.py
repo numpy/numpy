@@ -213,13 +213,15 @@ DL_EXPORT(void) init#modulename#(void) {
 \t\tPy_FatalError(\"can't initialize module #modulename# (failed to import _numpy)\");
 #if defined(NUMARRAY)
 \timport_libnumarray();
-#elseif defined(NDARRAY_VERSION)
+#else
+#if defined(NDARRAY_VERSION)
 \timport_array();
 #else
 \tif (PyImport_ImportModule(\"Numeric\")==NULL) {
 \t\tPyErr_Print();
 \t\tPy_FatalError(\"can't initialize module #modulename#\");
 \t}
+#endif
 #endif
 \td = PyModule_GetDict(m);
 \ts = PyString_FromString(\"$R"""+"""evision: $\");

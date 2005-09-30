@@ -634,8 +634,7 @@ def run_compile():
         import scipy
         n = 'scipy'
         p = get_prefix(scipy)
-        include_dirs.append(scipy.get_scipy_include())
-        num_info = get_info('scipy')
+        num_info = {}
     else:
         try:
             import Numeric
