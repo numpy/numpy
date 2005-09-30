@@ -584,18 +584,19 @@ static PyNumberMethods scipy_array_as_number = {
 };
 
 static PyObject *_scipy_getattr(PyArrayObject *self, char *name) {
-    PyArrayObject *ret;
-	
     if (strcmp(name, "M") == 0) {
 	PyObject *fm, *o;
-	
+
         /* Call the array constructor registered as matrix_base.matrix
 	   or else raise exception if nothing registered */
-		
+
 	/* Import matrix_base module */
 	fm = PyImport_ImportModule("scipy_base.matrix_base");
-	o  = PyObject_CallMethod(fm,"matrix","O",(PyObject *)self);
-	if (ret == NULL) {
+	if (fm == NULL) {
+	    return NULL;
+	}
+	o = PyObject_CallMethod(fm,"matrix","O",(PyObject *)self);
+	if (o == NULL) {
 	    PyErr_SetString(PyExc_ReferenceError, "Error using scipy_base.matrix_base.matrix to construct matrix representation");
 	    Py_XDECREF(fm);
 	    return NULL;
@@ -609,7 +610,7 @@ static PyObject *_scipy_getattr(PyArrayObject *self, char *name) {
 
 
 void scipy_numeric_alter(void) {
-    
+
     (PyArray_Type).tp_name = _scipy_array_str;
     (PyArray_Type).tp_getattr = (getattrfunc)_scipy_getattr;
     memcpy((PyArray_Type).tp_as_mapping, &scipy_array_as_mapping,
