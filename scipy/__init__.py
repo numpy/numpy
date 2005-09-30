@@ -16,6 +16,9 @@ try:   # For installation purposes only
     import scipy.stats as stats
     from scipy.stats import rand, randn
     from core_version import version as __version__
+    from scipy.test.testing import ScipyTest
+    test = ScipyTest('scipy').test
+
 except AttributeError, inst:
     if inst.args[0] == "'module' object has no attribute 'typeinfo'":
         pass

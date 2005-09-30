@@ -45,3 +45,6 @@ def get_scipy_include():
     include_dirs = get_scipy_include_dirs()
     assert len(include_dirs)==1,`include_dirs`
     return include_dirs[0]
+
+from scipy.test.testing import ScipyTest 
+test = ScipyTest('scipy.base').test
