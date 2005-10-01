@@ -320,37 +320,7 @@ def cumsum (x, axis=0, rtype=None):
 def cumproduct (x, axis=0, rtype=None):
     """Sum the array over the given axis."""
     return asarray(x).cumprod(axis, rtype)
-
-def around(m, decimals=0):
-    """around(m, decimals=0) \
-    Round in the same way as standard python performs rounding. Returns 
-    always a float.
-    """
-    return asarray(m).round(decimals)
-##    m = asarray(m)
-##    s = sign(m)
-##    if decimals:
-##        m = absolute(m*10.**decimals)
-##    else:
-##        m = absolute(m)
-##    rem = m-asarray(m).astype(intp)
-##    m = where(less(rem,0.5), floor(m), ceil(m))
-##    # convert back
-##    if decimals:
-##        m = m*s/(10.**decimals)
-##    else:
-##        m = m*s
-##    return m
     
-def sign(m):
-    """sign(m) gives an array with shape of m with elements defined by sign
-    function:  where m is less than 0 return -1, where m greater than 0, a=1,
-    elsewhere a=0.
-    """
-    return asarray(m).sign()
-##    m = asarray(m)
-##    return zeros(shape(m))-less(m,0)+greater(m,0)
-
 def ndim(a):
     try:
         return a.ndim
@@ -380,3 +350,6 @@ def size (a, axis=None):
         return a.size
     else:
         return a.shape[axis]
+
+from function_base import round_
+around = round_            

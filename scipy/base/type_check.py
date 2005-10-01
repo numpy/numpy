@@ -4,9 +4,11 @@ import types
 import numeric as _nx
 from numeric import ndarray, asarray, array, isinf, isnan, isfinite, signbit, \
      ufunc, ScalarType, obj2dtype
+from ufunclike import isneginf, isposinf
+import umath
 
 __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
-           'isscalar','isneginf','isposinf',
+           'isscalar',
            'isreal','nan_to_num','real','real_if_close',
            'typename','asfarray','mintypecode']
 
@@ -74,12 +76,6 @@ def isrealobj(x):
     return not issubclass( asarray(x).dtype, _nx.complexfloating)
 
 #-----------------------------------------------------------------------------
-
-def isposinf(val):
-    return isinf(val) & ~signbit(val)
-    
-def isneginf(val):
-    return isinf(val) & signbit(val)
 
 def _getmaxmin(t):
     import getlimits

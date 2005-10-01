@@ -1168,27 +1168,6 @@ array_ravel(PyArrayObject *self, PyObject *args)
 }
 
 
-static char doc_sign[] = "a.sign() return the sign of the array.";
-
-static PyObject *
-array_sign(PyArrayObject *self, PyObject *args) 
-{
-	if (!PyArg_ParseTuple(args, "")) return NULL;
-	
-	return PyArray_Sign(self);
-}
-	
-static char doc_round[] = "a.round(decimals=0) return a rounded version.";
-
-static PyObject *
-array_round(PyArrayObject *self, PyObject *args)
-{
-	int decimals=0;
-
-	if (!PyArg_ParseTuple(args, "|i", &decimals)) return NULL;
-
-	return PyArray_Round(self, decimals);
-}
 
 static char doc_setflags[] = "a.setflags(write=None, swap=None, align=None, uic=None)";
 
@@ -1359,10 +1338,6 @@ static PyMethodDef array_methods[] = {
 	 METH_VARARGS, doc_flatten},
 	{"ravel", (PyCFunction)array_ravel,
 	 METH_VARARGS, doc_ravel},
-	{"sign", (PyCFunction)array_sign,
-	 METH_VARARGS, doc_sign},
-	{"round", (PyCFunction)array_round,
-	 METH_VARARGS, doc_round},
 	{"setflags", (PyCFunction)array_setflags,
 	 METH_VARARGS|METH_KEYWORDS, doc_setflags},
         {NULL,		NULL}		/* sentinel */

@@ -393,14 +393,6 @@ multiapi_list = [
     """,
      'Ravel','PyArrayObject *, int','PyObject *'),
 
-    (r"""Sign
-    """,
-     'Sign','PyArrayObject *','PyObject *'),
-
-    (r"""Round
-    """,
-     'Round','PyArrayObject *, int','PyObject *'),
-
     (r"""Multiply a List
     """,
      'MultiplyList','intp *lp, int n','intp'),

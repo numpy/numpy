@@ -4,14 +4,15 @@ import numeric as _nx
 from numeric import ones, zeros, arange, concatenate, array, asarray, empty
 from numeric import ScalarType
 from umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc, \
-     isnan
+     isnan, absolute
 from oldnumeric import ravel, nonzero, choose, \
      sometrue, alltrue, reshape, any, all, typecodes 
 from type_check import ScalarType, isscalar
 from shape_base import squeeze, atleast_1d
 from _compiled_base import digitize, bincount, _insert
+from ufunclike import sign
 
-__all__ = ['round','logspace','linspace','fix','mod',
+__all__ = ['logspace','linspace', 'round_',
            'select','piecewise','trim_zeros','alen','amax', 'amin', 'ptp',
            'copy', 'iterable', 'base_repr', 'binary_repr', 
            'prod','cumprod', 'diff','gradient','angle','unwrap','sort_complex',
@@ -193,7 +194,6 @@ def isaltered():
     val = str(type(_nx.array([1])))
     return 'scipy' in val
 
-round = _nx.around
 
 def asarray_chkfinite(x):
     """Like asarray except it checks to be sure no NaNs or Infs are present.
@@ -205,20 +205,7 @@ def asarray_chkfinite(x):
     return x    
 
 
-def fix(x):
-    """ Round x to nearest integer towards zero.
-    """
-    x = asarray(x)
-    y = _nx.floor(x)
-    return _nx.where(x<0,y+1,y)
 
-def mod(x,y):
-    """ x - y*floor(x/y)
-    
-        For numeric arrays, x % y has the same sign as x while
-        mod(x,y) has the same sign as y.
-    """
-    return x - y*_nx.floor(x*1.0/y)
 
 def piecewise(x, condlist, funclist, *args, **kw):
     """Returns a piecewise-defined function.
@@ -690,4 +677,30 @@ class vectorize:
             return tuple([x.astype(c) for x,c in zip(self.ufunc(*args), self.otypes)])
 
 
-            
+def round_(x, decimals=0):
+    """round_(m, decimals=0)  Rounds x to decimplas places.
+
+    Returns x if array is not floating point and rounds both the real
+    and imaginary parts separately if array is complex.  Rounds in the
+    same way as standard Python.
+    """
+    x = asarray(x)
+    if not issubclass(x.dtype, inexact):
+        return x
+    if issubclass(x.dtype, complexfloating):
+        return round_(x.real, decimals) + 1j*round_(x.imag, decimals)
+    if decimals is not 0:
+        decimals = asarray(decimals)
+    s = sign(m)
+    if decimals is not 0:
+        m = absolute(m*10.**decimals)
+    else:
+        m = absolute(m)
+    rem = m-asarray(m).astype(intp)
+    m = where(less(rem,0.5), floor(m), ceil(m))
+    # convert back
+    if decimals is not 0:
+        return m*s/(10.**decimals)
+    else:
+        return m*s
+

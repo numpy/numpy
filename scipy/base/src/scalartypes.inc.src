@@ -825,7 +825,7 @@ gentype_getarray(PyObject *scalar, PyObject *args)
 
 /**begin repeat
 
-#name=tolist, toscalar, tostring, astype, copy, resize, __deepcopy__, choose, sort, argsort, searchsorted, argmax, argmin, reshape, view, swapaxes, max, min, ptp, conj, conjugate, nonzero, all, any, flatten, ravel, sign, round#
+#name=tolist, toscalar, tostring, astype, copy, resize, __deepcopy__, choose, sort, argsort, searchsorted, argmax, argmin, reshape, view, swapaxes, max, min, ptp, conj, conjugate, nonzero, all, any, flatten, ravel#
 */
 
 static PyObject *
@@ -1070,10 +1070,6 @@ static PyMethodDef gentype_methods[] = {
 	{"flatten", (PyCFunction)gentype_flatten,
 	 METH_VARARGS, NULL},
 	{"ravel", (PyCFunction)gentype_ravel,
-	 METH_VARARGS, NULL},
-	{"sign", (PyCFunction)gentype_sign,
-	 METH_VARARGS, NULL},
-	{"round", (PyCFunction)gentype_round,
 	 METH_VARARGS, NULL},
 	{"setflags", (PyCFunction)gentype_setflags,
 	 METH_VARARGS|METH_KEYWORDS, NULL},

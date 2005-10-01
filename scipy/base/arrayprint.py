@@ -14,7 +14,6 @@ __all__ = ["set_summary", "summary_off", "set_precision", "set_line_width",
 
 import sys
 import numeric      as _gen
-import oldnumeric   as _ogen
 import numerictypes as _nt
 import umath        as _uf
 _nc = _gen
@@ -139,7 +138,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         data = _leading_trailing(a)
     else:
         summary_insert = ""
-        data = _ogen.ravel(a)
+        data = a.ravel()
 
 
     
@@ -274,7 +273,7 @@ def _formatArray(a, format_function, rank, max_line_len,
 
 def _floatFormat(data, precision, suppress_small, sign = 0):
     exp_format = 0
-    non_zero = _uf.absolute(_ogen.compress(_uf.not_equal(data, 0), data))
+    non_zero = _uf.absolute(data.compress(_uf.not_equal(data, 0)))
     ##non_zero = _numeric_compress(data) ##
     if len(non_zero) == 0:
         max_val = 0.
