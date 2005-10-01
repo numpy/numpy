@@ -310,7 +310,7 @@ PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func)
 		x1 = *(PyObject **)ip1;
 		if (x1 == NULL) goto done;
 		tmp = ((unaryfunc)func)(x1);
-		if (PyErr_Occurred()) goto done;
+		if ((tmp==NULL) || PyErr_Occurred()) goto done;
                 Py_XDECREF(*((PyObject **)op));
 		*((PyObject **)op) = tmp;
 	}
@@ -338,7 +338,7 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
 			tmp = PyEval_CallObject(meth, arglist);
 			Py_DECREF(arglist);
 			Py_DECREF(meth);
-                        if (PyErr_Occurred()) goto done;
+                        if ((tmp==NULL) || PyErr_Occurred()) goto done;
                         Py_XDECREF(*((PyObject **)op));
 			*((PyObject **)op) = tmp;
 		}

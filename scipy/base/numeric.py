@@ -290,6 +290,7 @@ _errdict = {"ignore":ERR_IGNORE,
 _errdict_rev = {}
 for key in _errdict.keys():
     _errdict_rev[_errdict[key]] = key
+del key
 
 def seterr(divide="ignore", over="ignore", under="ignore", invalid="ignore", where=0):
     maskvalue = (_errdict[divide] << SHIFT_DIVIDEBYZERO) + \

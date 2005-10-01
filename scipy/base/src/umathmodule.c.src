@@ -642,7 +642,6 @@ static void
 */
 
 static int numeric_zero = 0.0;
-static double numeric_two = 2.0;
 
 #if !defined(generate_divbyzero_error)
 static void generate_divbyzero_error(void) {
@@ -653,6 +652,7 @@ static void generate_divbyzero_error(void) {
 #endif
 
 #if !defined(generate_overflow_error)
+static double numeric_two = 2.0;
 static void generate_overflow_error(void) {
 	double dummy;
 	dummy = pow(numeric_two,1000);
@@ -1024,8 +1024,7 @@ static void
 	intp is1=steps[0], os=steps[1];
 	char *i1=args[0], *op=args[1];
 
-    n=dimensions[0]; 
-
+	n=dimensions[0]; 
 	for(i=0; i<n; i++, i1+=is1, op+=os) {
 		*((@typ@ *)op) = *((@typ@ *)i1) < 0 ? -*((@typ@ *)i1) : *((@typ@ *)i1);
 	}

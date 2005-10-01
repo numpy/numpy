@@ -281,6 +281,8 @@ def _python_type(t):
         return float_
     elif t == _types.ComplexType:
         return complex_
+    elif t == _types.BooleanType:
+        return bool_
     elif t == _types.StringType:
         return str_
     elif t == _types.UnicodeType:
@@ -288,7 +290,7 @@ def _python_type(t):
     elif t == _types.BufferType:
         return void
     else:
-        return aobject
+        return object_
 
 def isdtype(rep):
     """Determines whether the given object represents
@@ -338,6 +340,7 @@ ScalarType.extend(_dtype2char_dict.keys())
 for key in _dtype2char_dict.keys():
     cast[key] = lambda x, k=key : array(x,copy=0).astype(k)
 
+del key
 
 
 

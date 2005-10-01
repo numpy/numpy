@@ -174,9 +174,9 @@ typedef struct {
 #define UFUNC_BUFSIZE_NAME "_UFUNC_BUFSIZE"
 
 #define UFUNC_CHECK_ERROR() \
-	if (loop->errormask &&						\
+	if (PyErr_Occurred() || (loop->errormask &&			\
 	    PyUFunc_checkfperr(loop->errormask,				\
-			       loop->errobj))				\
+			       loop->errobj)))				\
 		goto fail
 
 /* This code checks the IEEE status flags in a platform-dependent way */
