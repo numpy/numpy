@@ -11,3 +11,5 @@ def __RandomState_ctor():
     This function exists solely to assist (un)pickling.
     """
     return RandomState()
+
+del scipy

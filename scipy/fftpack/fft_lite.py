@@ -105,7 +105,6 @@ def inverse_fft(a, n=None, axis=-1):
         n = Numeric.shape(a)[axis]
     return _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftb, _fft_cache) / n
 
-ifft = inverse_fft
 
 def real_fft(a, n=None, axis=-1):
     """real_fft(a, n=None, axis=-1) 
@@ -235,8 +234,6 @@ def fftnd(a, s=None, axes=None):
 
     return _raw_fftnd(a,s,axes,fft)
 
-fftn = fftnd
-
 def inverse_fftnd(a, s=None, axes=None):
     """inverse_fftnd(a, s=None, axes=None)
     
@@ -244,7 +241,6 @@ def inverse_fftnd(a, s=None, axes=None):
     
     return _raw_fftnd(a, s, axes, inverse_fft)
 
-ifftn = inverse_fftnd
 
 def fft2d(a, s=None, axes=(-2,-1)):
     """fft2d(a, s=None, axes=(-2,-1)) 
@@ -254,7 +250,6 @@ def fft2d(a, s=None, axes=(-2,-1)):
 
     return _raw_fftnd(a,s,axes,fft)
 
-fft2 = fft2d
 
 def inverse_fft2d(a, s=None, axes=(-2,-1)):
     """inverse_fft2d(a, s=None, axes=(-2, -1))
@@ -264,7 +259,6 @@ def inverse_fft2d(a, s=None, axes=(-2,-1)):
 
     return _raw_fftnd(a, s, axes, inverse_fft)
 
-ifft2 = inverse_fft2d
 
 def real_fftnd(a, s=None, axes=None):
     """real_fftnd(a, s=None, axes=None)
@@ -315,5 +309,4 @@ def inverse_real_fft2d(a, s=None, axes=(-2,-1)):
     different default behavior."""
     
     return inverse_real_fftnd(a, s, axes)
-
 
