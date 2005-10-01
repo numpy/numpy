@@ -1,6 +1,6 @@
 
 import numeric as N
-from numeric import ArrayType, concatenate
+from numeric import ArrayType, concatenate, integer
 from function_base import binary_repr
 import types
 import string as str_
@@ -103,18 +103,20 @@ class matrix(N.ndarray):
         return
 
     def __getitem__(self, index):
-        out = N.ndarray.__getitem__(self, index)
+        out = (self.A)[index]
         # Need to swap if slice is on first index
         try:
             n = len(index)
-            if (n > 1) and isinstance(index[0], types.SliceType) \
-               and (isinstance(index[1], types.IntType) or
-                    isinstance(index[1], types.LongType)):
-                sh = out.shape
-                out.shape = (sh[1], sh[0])
+            if (n > 1) and isinstance(index[0], types.SliceType):
+                if (isinstance(index[1], types.IntType) or
+                    isinstance(index[1], types.LongType) or
+                    isinstance(index[1], integer)):
+                    sh = out.shape
+                    out.shape = (sh[1], sh[0])
+                return matrix(out)
+            return out
         except TypeError:
-            pass
-        return out
+            return matrix(out)
 
     def __mul__(self, other):
         if isinstance(other, N.ndarray) and other.ndim == 0:
