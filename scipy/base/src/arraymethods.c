@@ -69,7 +69,10 @@ _reverse_shape(PyArray_Dims *newshape)
 	}
 }
 
-static char doc_reshape[] = "a.reshape(d1, d2, ..., dn).  Change the shape of a to be an n-dimensional array with dimensions given by d1...dn.  Note: the size specified for the new array must be exactly equal to the size of the  old one or an error will occur.";
+static char doc_reshape[] = \
+	"self.reshape(d1, d2, ..., dn) Return a new array from this one. \n" \
+	"\n  The new array must have the same number of elements as self. "\
+	"Also\n   a copy of the data only occurs if necessary.";
 
 static PyObject *
 array_reshape(PyArrayObject *self, PyObject *args) 
@@ -463,9 +466,10 @@ array_copy(PyArrayObject *self, PyObject *args)
         return _ARET(PyArray_Copy(self));
 }
 
-static char doc_resize[] = "m.resize(new_shape). Return a resized version "\
-	"of the array.\n\nMust own its own memory be single segment and not be referenced by "\
-	"other arrays.";
+static char doc_resize[] = "self.resize(new_shape).  "\
+	"Change size and shape of self inplace.\n"\
+	"\n    Array must own its own memory and not be referenced by other " \
+	"arrays\n    Returns None.";
 
 static PyObject *
 array_resize(PyArrayObject *self, PyObject *args) 
@@ -490,7 +494,9 @@ array_resize(PyArrayObject *self, PyObject *args)
 	}
 	ret = PyArray_Resize(self, &newshape);
         PyDimMem_FREE(newshape.ptr);
-        return _ARET(ret);
+	Py_DECREF(ret);
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 static char doc_repeat[] = "a.repeat(repeats=, axis=None)";

@@ -333,9 +333,9 @@ class _castdict(dict):
         return dict.__getitem__(self, obj2dtype(obj))
 
 cast = _castdict()
-ScalarType = [_types.IntType, _types.LongType, _types.FloatType,
-              _types.StringType, _types.UnicodeType, _types.ComplexType,
-              _types.BufferType]
+ScalarType = [_types.IntType, _types.FloatType,
+              _types.ComplexType, _types.LongType, _types.BooleanType,
+              _types.StringType, _types.UnicodeType, _types.BufferType]
 ScalarType.extend(_dtype2char_dict.keys())
 for key in _dtype2char_dict.keys():
     cast[key] = lambda x, k=key : array(x,copy=0).astype(k)

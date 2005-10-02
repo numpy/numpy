@@ -8,3 +8,4 @@ Fernando Perez for code snippets and ideas
 John Hunter for code snippets (from matplotlib)
 Chris Hanley for help with records.py, testing, and bug fixes.
 Travis Vaught and Joe Cooper for administration of scipy.org web site and SVN 
+Eric Firing for bugfixes.

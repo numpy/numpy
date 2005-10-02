@@ -98,6 +98,7 @@ def convolve(a,v,mode='full'):
     return correlate(a,asarray(v)[::-1],mode)
 
 ndarray = multiarray.ndarray
+ndbigarray = multiarray.ndbigarray
 ufunc = type(sin)
 
 inner = multiarray.inner

@@ -553,7 +553,7 @@ def nanmin(x,axis=-1):
     """
     y = array(x)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(x)] = nx.inf
+        y[isnan(x)] = _nx.inf
     return y.min(axis)
 
 def nanargmin(x,axis=-1):
@@ -561,7 +561,7 @@ def nanargmin(x,axis=-1):
     """
     y = array(x)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(x)] = nx.inf    
+        y[isnan(x)] = _nx.inf    
     return y.argmin(axis)    
 
 def nanmax(x,axis=-1):
@@ -569,7 +569,7 @@ def nanmax(x,axis=-1):
     """
     y = array(x)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(x)] = -nx.inf    
+        y[isnan(x)] = -_nx.inf    
     return y.max(axis)    
 
 def nanargmax(x,axis=-1):
@@ -577,7 +577,7 @@ def nanargmax(x,axis=-1):
     """
     y = array(x)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(x)] = -nx.inf    
+        y[isnan(x)] = -_nx.inf    
     return y.argmax(axis)    
 
 def disp(mesg, device=None, linefeed=1):

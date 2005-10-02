@@ -188,6 +188,9 @@ def resize(a, new_shape):
     """resize(a,new_shape) returns a new array with the specified shape.
     The original array's total size can be any size. It
     fills the new array with repeated copies of a.
+
+    Note that a.resize(new_shape) will fill array with 0's
+    beyond current definition of a. 
     """
 
     a = ravel(a)

@@ -3910,6 +3910,13 @@ DL_EXPORT(void) initmultiarray(void) {
 		return;
 
         PyArray_Type.tp_base = &PyBigArray_Type;
+
+        PyArray_Type.tp_as_mapping = &array_as_mapping;
+	/* Even though, this would be inherited, it needs to be set now
+	   so that the __getitem__ will map to the as_mapping descriptor
+	*/
+        PyArray_Type.tp_as_number = &array_as_number;               
+	/* For good measure */
 	PyArray_Type.tp_as_sequence = &array_as_sequence;
 	PyArray_Type.tp_as_buffer = &array_as_buffer;	
         PyArray_Type.tp_flags = (Py_TPFLAGS_DEFAULT 
