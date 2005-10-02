@@ -5,6 +5,7 @@
 
 import scipy.base as Numeric
 import scipy.lib.lapack_lite as lapack_lite
+MLab = Numeric
 import math
 
 # Error object
@@ -209,7 +210,7 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[i]) = u[i]*v[i]
     _assertSquareness(a)
     t =_commonType(a)
     real_t = _array_type[0][_array_precision[t]]
-    a = _fastCopyAndTranspose(t, a)
+    #a = _fastCopyAndTranspose(t, a)
     n = a.shape[0]
     dummy = Numeric.zeros((1,), t)
     if _array_kind[t] == 1: # Complex routines take different arguments

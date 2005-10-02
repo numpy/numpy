@@ -93,7 +93,7 @@ def tril(m, k=0):
         main diagonal, k > 0 is above and k < 0 is below the main diagonal.
     """
     m = asarray(m)
-    out = tri(m.shape[0], m.shape[1], k=k, dtype=m.dtype)*m
+    out = multiply(tri(m.shape[0], m.shape[1], k=k, dtype=m.dtype),m)
     return out
 
 def triu(m, k=0):
@@ -101,7 +101,7 @@ def triu(m, k=0):
         main diagonal, k > 0 is above and k < 0 is below the main diagonal.
     """
     m = asarray(m)
-    out = (1-tri(m.shape[0], m.shape[1], k-1, m.dtype))*m
+    out = multiply((1-tri(m.shape[0], m.shape[1], k-1, m.dtype)),m)
     return out
 
 
