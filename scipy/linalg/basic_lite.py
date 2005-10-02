@@ -6,6 +6,7 @@
 import scipy.base as Numeric
 import scipy.lib.lapack_lite as lapack_lite
 MLab = Numeric
+from scipy.base import asarray
 import math
 
 # Error object
@@ -199,6 +200,13 @@ def Heigenvalues(a, UPLO='L'):
         raise LinAlgError, 'Eigenvalues did not converge'
     return w
 
+def _convertarray(a):
+    if issubclass(a.dtype, Numeric.complexfloating):
+            a = a.astype('D')
+    else:
+            a = a.astype('d')
+    return a, a.dtypechar
+
 # Eigenvectors
 
 def eigenvectors(a):
@@ -206,14 +214,14 @@ def eigenvectors(a):
 v is a matrix of eigenvectors with vector v[i] corresponds to
 eigenvalue u[i].  Satisfies the equation dot(a, v[i]) = u[i]*v[i]
 """
+    a = asarray(a)    
     _assertRank2(a)
     _assertSquareness(a)
-    t =_commonType(a)
-    real_t = _array_type[0][_array_precision[t]]
-    #a = _fastCopyAndTranspose(t, a)
+    a,t = _convertarray(a) # convert to float_ or complex_ type
+    real_t = 'd'
     n = a.shape[0]
     dummy = Numeric.zeros((1,), t)
-    if _array_kind[t] == 1: # Complex routines take different arguments
+    if t == 'D': # Complex routines take different arguments
         lapack_routine = lapack_lite.zgeev
         w = Numeric.zeros((n,), t)
         v = Numeric.zeros((n,n), t)

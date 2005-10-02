@@ -87,7 +87,8 @@ defdict = {
 'absolute' : [all,'O',
               ("PyNumber_Absolute",),
               (1,1), None,
-              "takes |x| elementwise."
+              "takes |x| elementwise.",
+              nocmplx+fltsO
               ],
 'negative' : [all,cmplxO,
               ("neg,"*3,"PyNumber_Negative"),
