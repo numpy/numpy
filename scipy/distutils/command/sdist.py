@@ -14,7 +14,7 @@ class sdist(old_sdist):
             for data in dist.data_files:
                 self.filelist.extend(get_data_files(data))
 
-        if self.distribution.has_headers():
+        if dist.has_headers():
             headers = []
             for h in dist.headers:
                 if isinstance(h,str): headers.append(h)
