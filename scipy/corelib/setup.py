@@ -13,12 +13,7 @@ def configuration(parent_package='',top_path=None):
     # Configure blasdot
     blas_info = get_info('blas_opt')
     #blas_info = 0
-    if blas_info:
-        config.add_extension('_dotblas',
-                             sources=[join('blasdot','_dotblas.c')],
-                             **blas_info
-                             )
-    elif 'sdist' in sys.argv:
+    if blas_info or 'sdist' in sys.argv:
         config.add_extension('_dotblas',
                              sources=[join('blasdot','_dotblas.c')],
                              **blas_info
@@ -41,17 +36,9 @@ def configuration(parent_package='',top_path=None):
     # Configure lapack_lite
     lapack_info = get_info('lapack_opt')
     #lapack_info = 0
-    if not lapack_info:
+    if not lapack_info or 'sdist' in sys.argv:
         # use C-sources provided
         print "### Warning:  Using unoptimized lapack ###"
-        config.add_extension('lapack_lite',
-                             sources=[join('lapack_lite', x) for x in \
-                                      ['lapack_litemodule.c',
-                                       'zlapack_lite.c', 'dlapack_lite.c',
-                                       'blas_lite.c', 'dlamch.c',
-                                       'f2c_lite.c']]
-                             )
-    elif 'sdist' in sys.argv:        
         config.add_extension('lapack_lite',
                              sources=[join('lapack_lite', x) for x in \
                                       ['lapack_litemodule.c',
