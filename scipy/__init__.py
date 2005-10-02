@@ -21,12 +21,12 @@ try:   # For installation purposes only
 
 except AttributeError, inst:
     if inst.args[0] == "'module' object has no attribute 'typeinfo'":
-        pass
+        print "Not loaded: Are you running from the source directory?"
     else:
         raise
 except ImportError, inst:
     if inst.args[0] == 'No module named multiarray':
-        pass
+        print "Not loaded: Are you running from the source directory?"
     else:
         raise
 

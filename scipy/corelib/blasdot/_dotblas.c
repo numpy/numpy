@@ -142,7 +142,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     static const double zeroD[2] = {0.0, 0.0};
     double prior1, prior2;
     PyTypeObject *subtype;
-    PyArray_Typecode dtype;
+    PyArray_Typecode dtype = {PyArray_NOTYPE, 0, 0};
 
 
     if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) return NULL;
@@ -164,9 +164,9 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 
     ret = NULL;
     dtype.type_num = typenum;
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, &dtype, 0, 0, 0);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, &dtype, 0, 0, CARRAY_FLAGS);
     if (ap1 == NULL) return NULL;
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, &dtype, 0, 0, 0);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, &dtype, 0, 0, CARRAY_FLAGS);
     if (ap2 == NULL) goto fail;
 
     if ((ap1->nd > 2) || (ap2->nd > 2)) {  
@@ -226,8 +226,9 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
 				       typenum, NULL, NULL, 0, 0, 
-				       (prior2 > prior1 ? ap2 : ap1));    
+				       (prior2 > prior1 ? ap2 : ap1));  
     if (ret == NULL) goto fail;
+    memset(ret->data, '\0', PyArray_SIZE(ret));
 
     if (ap2->nd == 0) {
 	/* Multiplication by a scalar -- Level 1 BLAS */
@@ -235,7 +236,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    cblas_daxpy(l, *((double *)ap2->data), (double *)ap1->data, 1,
 			(double *)ret->data, 1);
 	} 
-	else  if (typenum == PyArray_FLOAT) {
+	else if (typenum == PyArray_FLOAT) {
 	    cblas_saxpy(l, *((float *)ap2->data), (float *)ap1->data, 1,
 			(float *)ret->data, 1);
 	}
@@ -267,6 +268,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	else if (typenum == PyArray_CFLOAT) {
 	    cblas_cdotu_sub(l, (float *)ap1->data, 1, 
 			    (float *)ap2->data, 1, (float *)ret->data);
+	    fprintf(stderr, "Here...\n");
 	}
     }
     else if (ap1->nd == 2 && ap2->nd == 1) {
@@ -474,6 +476,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 				       (prior2 > prior1 ? ap2 : ap1));
     
     if (ret == NULL) goto fail;
+    memset(ret->data, 0, PyArray_SIZE(ret));
 
     if (ap2->nd == 0) {
 	/* Multiplication by a scalar -- Level 1 BLAS */

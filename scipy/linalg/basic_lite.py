@@ -202,9 +202,15 @@ def Heigenvalues(a, UPLO='L'):
 
 def _convertarray(a):
     if issubclass(a.dtype, Numeric.complexfloating):
-            a = a.astype('D')
+        if a.dtypechar == 'D':
+            a = _fastCT(a)
+        else:
+            a = _fastCT(a.astype('D'))
     else:
-            a = a.astype('d')
+        if a.dtypechar == 'd':
+            a = _fastCT(a)
+        else:
+            a = _fastCT(a.astype('d'))
     return a, a.dtypechar
 
 # Eigenvectors

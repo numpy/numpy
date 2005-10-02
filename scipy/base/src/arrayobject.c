@@ -734,66 +734,79 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 }
 
 
-/* These are also deprecated calls (should use PyArray_New) */
+/* These are also old calls (should use PyArray_New) */
+
+/* They all zero-out the memory as previously done */
 
 static PyObject *
 PyArray_FromDimsAndDataAndDescr(int nd, int *d, 
                                 PyArray_Descr *descr,
                                 char *data) {
+	PyObject *ret;
 
 #if SIZEOF_INTP != SIZEOF_INT
 	int i;
 	intp newd[MAX_DIMS];
 	
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
-        return PyArray_New(&PyArray_Type, nd, newd, 
+        ret = PyArray_New(&PyArray_Type, nd, newd, 
                            descr->type_num, NULL, data, descr->elsize, 
 			   CARRAY_FLAGS, NULL);
 #else
-        return PyArray_New(&PyArray_Type, nd, (intp *)d, 
+	ret = PyArray_New(&PyArray_Type, nd, (intp *)d, 
                            descr->type_num, NULL, data, descr->elsize, 
 			   CARRAY_FLAGS, NULL);
 #endif
-
+	if (descr->type_num != PyArray_OBJECT)
+		memset(PyArray_DATA(ret), 0, PyArray_SIZE(ret));
+	return ret;
 }
 
 
 static PyObject *
 PyArray_FromDimsAndData(int nd, int *d, int type, char *data) 
 {
+	PyObject *ret;
 #if SIZEOF_INTP != SIZEOF_INT
 	intp newd[MAX_DIMS];
 	int i;	
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i]; 
 
-	return PyArray_New(&PyArray_Type, nd, newd, 
+	ret = PyArray_New(&PyArray_Type, nd, newd, 
 			   type, NULL, data, 0, 
 			   CARRAY_FLAGS, NULL);
 #else
-	return PyArray_New(&PyArray_Type, nd, (intp *)d, 
+	ret = PyArray_New(&PyArray_Type, nd, (intp *)d, 
 			   type, NULL, data, 0, 
 			   CARRAY_FLAGS, NULL);
 #endif
+	if (type != PyArray_OBJECT) 
+		memset(PyArray_DATA(ret), 0, PyArray_SIZE(ret));
+	return ret;
 }
 
 
 static PyObject *
 PyArray_FromDims(int nd, int *d, int type) 
 {
+	PyObject *ret;
 #if SIZEOF_INTP != SIZEOF_INT
 	intp newd[MAX_DIMS];
 	int i;	
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
 
-	return PyArray_New(&PyArray_Type, nd, newd, type,
+	ret = PyArray_New(&PyArray_Type, nd, newd, type,
 			   NULL, NULL, 0, CARRAY_FLAGS, NULL);
 #else
-	return PyArray_New(&PyArray_Type, nd, (intp *)d, type,
+	ret = PyArray_New(&PyArray_Type, nd, (intp *)d, type,
 			   NULL, NULL, 0, CARRAY_FLAGS, NULL);
 #endif
+	if (type != PyArray_OBJECT) 
+		memset(PyArray_DATA(ret), 0, PyArray_SIZE(ret));
+	return ret;
 }
 
-/* end */
+/* end old calls */
 
 /* Copy should always return contiguous array */
 static PyObject *
@@ -5365,7 +5378,7 @@ PyArray_FromAny(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 	/* Ensure that type->fortran and flags & FORTRAN are the
 	   same */
 	if (requires & FORTRAN) typecode->fortran = 1;
-	if (type->fortran) {
+	if (type->fortran == 1) {
 		requires |= FARRAY_FLAGS;
 		if (min_depth > 2) requires &= ~CONTIGUOUS;
 	}
