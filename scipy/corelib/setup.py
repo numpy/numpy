@@ -4,6 +4,7 @@ from os.path import join
 from scipy.distutils.core      import setup
 from scipy.distutils.misc_util import Configuration, allpath
 from scipy.distutils.system_info import get_info
+import sys
 
 def configuration(parent_package='',top_path=None):
     config = Configuration('lib',parent_package,top_path)
@@ -13,6 +14,11 @@ def configuration(parent_package='',top_path=None):
     blas_info = get_info('blas_opt')
     #blas_info = 0
     if blas_info:
+        config.add_extension('_dotblas',
+                             sources=[join('blasdot','_dotblas.c')],
+                             **blas_info
+                             )
+    elif 'sdist' in sys.argv:
         config.add_extension('_dotblas',
                              sources=[join('blasdot','_dotblas.c')],
                              **blas_info
@@ -45,13 +51,20 @@ def configuration(parent_package='',top_path=None):
                                        'blas_lite.c', 'dlamch.c',
                                        'f2c_lite.c']]
                              )
-        
+    elif 'sdist' in sys.argv:        
+        config.add_extension('lapack_lite',
+                             sources=[join('lapack_lite', x) for x in \
+                                      ['lapack_litemodule.c',
+                                       'zlapack_lite.c', 'dlapack_lite.c',
+                                       'blas_lite.c', 'dlamch.c',
+                                       'f2c_lite.c']]
+                             )
     else:
         config.add_extension('lapack_lite',
                              sources=[join('lapack_lite',
                                            'lapack_litemodule.c')],
-                             **lapack_info)        
-    
+                             **lapack_info)
+            
     return config.todict()
 
 if __name__ == '__main__':
