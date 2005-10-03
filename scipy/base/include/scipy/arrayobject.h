@@ -838,7 +838,7 @@ typedef struct {
 
 
 /* Size of internal buffers used for alignment */
-#define PyArray_BUFSIZE 10000*sizeof(double)
+#define PyArray_BUFSIZE 10000
 #define PyArray_MIN_BUFSIZE 5
 #define PyArray_MAX_BUFSIZE MAX_INT32
 #define MAXBUFNUM 1024

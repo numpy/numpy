@@ -206,10 +206,6 @@ objectapi_list = [
     """,
      'GetPriority', 'PyObject *, double', 'double'),
 
-    (r"""Get Buffers.
-    """,
-     'GetBuffer','int num','char *'),
-
     (r"""Get Iterator.
     """,
      'IterNew','PyObject *', 'PyObject *'),

@@ -1,6 +1,6 @@
 
 import numeric as N
-from numeric import ArrayType, concatenate, integer
+from numeric import ArrayType, concatenate, integer, multiply, power
 from type_check import isscalar
 from function_base import binary_repr
 import types
@@ -175,7 +175,7 @@ class matrix(N.ndarray):
     #  to have dimension a.ndim-1
     def tolist(self):
         return self.__array__().tolist()
-
+    
     def getA(self):
         return self.__array__()
         
@@ -196,7 +196,6 @@ class matrix(N.ndarray):
     T = property(getT, None, doc="transpose")    
     H = property(getH, None, doc="hermitian (conjugate) transpose")
     I = property(getI, None, doc="inverse")
-
 
 
 def _from_string(str,gdict,ldict):
@@ -261,5 +260,5 @@ def bmat(obj,ldict=None, gdict=None):
         return matrix(obj)
 
 mat = matrix
-    
+
         

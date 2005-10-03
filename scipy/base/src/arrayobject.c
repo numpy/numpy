@@ -441,39 +441,6 @@ static PyObject *PyArray_New(PyTypeObject *, int nd, intp *,
 
 /* C-API functions */
 
-
-/*  Currently these buffers are created as requested (and once created
-    never freed until Python exits).
-*/
-
-static char *
-PyArray_GetBuffer(int n)
-{
-	static int first_time = 1;
-	static char *buffers[MAXBUFNUM];
-	int i;
-
-	if (n >= MAXBUFNUM) {
-		PyErr_Format(PyExc_ValueError, 
-			     "Only %d buffers available.", MAXBUFNUM);
-		return NULL;
-	}
-
-	if (first_time) {
-		for (i=0; i<MAXBUFNUM; i++) 
-			buffers[i] = NULL;
-		first_time = 0;
-	}
-	
-	if (buffers[n] == NULL) {
-		buffers[n] = PyDataMem_NEW(PyArray_BUFSIZE);
-		if (buffers[n] == NULL) 
-			PyErr_SetString(PyExc_MemoryError, 
-					"Cannot get memory for buffer");
-	}
-	return buffers[n];
-}
-
 /* Used for arrays of python objects to increment the reference count of */
 /* every python object in the array. */
 static int 
@@ -4732,7 +4699,7 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in)
 	register intp i, index;
 	intp ncopies = PyArray_SIZE(out) / PyArray_SIZE(in);
 	int elsize=in->itemsize;
-	int nels = PyArray_BUFSIZE / elsize;
+	int nels = PyArray_BUFSIZE;
 	int el;
 	int inswap, outswap=0;
 	int obuf=!PyArray_ISCARRAY(out);
@@ -4752,7 +4719,7 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in)
 
 	inswap = !(PyArray_ISFLEXIBLE(in) || PyArray_ISNOTSWAPPED(in));
 	
-	inbuffer = PyArray_GetBuffer(0);
+	inbuffer = PyDataMem_NEW(PyArray_BUFSIZE*elsize);
 	if (inbuffer == NULL) return -1;
 	it_in = (PyArrayIterObject *)PyArray_IterNew((PyObject *)in);
 	if (it_in == NULL) goto exit;
@@ -4760,13 +4727,13 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in)
 	if (obuf) {
 		outswap = !(PyArray_ISFLEXIBLE(out) || \
 			    PyArray_ISNOTSWAPPED(out));
-		outbuffer = PyArray_GetBuffer(1);
+		outbuffer = PyDataMem_NEW(PyArray_BUFSIZE*oelsize);
 		if (outbuffer == NULL) goto exit;
 
 		it_out = (PyArrayIterObject *)PyArray_IterNew((PyObject *)out);
 		if (it_out == NULL) goto exit;
 
-		nels = MIN(nels, PyArray_BUFSIZE / oelsize);
+		nels = MIN(nels, PyArray_BUFSIZE);
 	}
 	
 	optr = (obuf) ? outbuffer: out->data;
@@ -4807,6 +4774,8 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in)
 	retval = 0;
  exit:
 	Py_XDECREF(it_in);
+	PyDataMem_FREE(inbuffer);
+	PyDataMem_FREE(outbuffer);	
 	if (obuf) {
 		Py_XDECREF(it_out);
 	}
@@ -4938,7 +4907,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 	typecode->type_num = type;
 	typecode->itemsize = itemsize;
 
-	/* Don't copy if integer sizes are compatible */	
+	/* Don't copy if sizes are compatible */
 	if (PyArray_EquivalentTypes(&oldtype, typecode)) {
 		arrflags = arr->flags;
 
@@ -5388,6 +5357,14 @@ PyArray_FromAny(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 	if (type->fortran == 1) {
 		requires |= FARRAY_FLAGS;
 		if (min_depth > 2) requires &= ~CONTIGUOUS;
+	}
+
+	/* make sure itemsize is not 0 unless warranted. */
+	if ((type->itemsize == 0) && (type->type_num != PyArray_NOTYPE)) {
+		PyArray_Descr *descr;
+		descr = PyArray_DescrFromType(type->type_num);
+		if (descr != NULL) type->itemsize = descr->elsize;
+		else return NULL;
 	}
 	
 	return array_fromobject(op, type, min_depth, max_depth, 

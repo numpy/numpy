@@ -266,7 +266,7 @@ def ones(shape, dtype=intp, fortran=0):
     """
     a=zeros(shape, dtype, fortran)
     a+=1
-    ### a[...]=1  -- slower
+    ### a[...]=1  -- slower?
     return a
  
 def identity(n,dtype=intp):
@@ -359,7 +359,7 @@ def setbufsize(size, where=0):
         frame.f_builtins[UFUNC_BUFSIZE_NAME] = size
     return
 
-setbufsize(80000, 1)
+setbufsize(10000, 1)
 
 def getbufsize(size):
     frame = sys._getframe().f_back

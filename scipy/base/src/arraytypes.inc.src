@@ -382,7 +382,7 @@ static void
 	       PyArrayObject *aop) {
 	register intp i; 
 	for(i=0;i<n;i++,op++) {
-		*op = (@fromtyp@)*ip;
+		*op = (@totyp@)*ip;
 		@incr@;
 	}
 }
@@ -928,6 +928,7 @@ OBJECT_copyswapn (PyObject **dst, PyObject **src, intp n, int swap, int itemsize
 	return;
 }
 
+/* ignore swap */
 static void
 STRING_copyswapn (char *dst, char *src, intp n, int swap, int itemsize)
 {
@@ -1560,6 +1561,11 @@ static PyArray_Descr *
 PyArray_DescrFromType(int type) {
 	if (type < PyArray_NTYPES) {
 		return descrs[type];
+	}
+	else if (type == PyArray_NOTYPE) {
+		PyErr_SetString(PyExc_ValueError, 
+				"Invalid type for array"); 
+		return NULL;
 	}
 	else if PyTypeNum_ISUSERDEF(type) {
 		return userdescrs[type-PyArray_USERDEF];
