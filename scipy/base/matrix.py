@@ -87,15 +87,8 @@ class matrix(N.ndarray):
                                 swap=(not arr.flags['NOTSWAPPED']))
         return ret; 
 
-    # special methods 
-    def __array_wrap__(self, obj):
-        try:
-            ret = matrix(obj,dtype=obj.dtype)
-        except:
-            ret = obj
-        return ret
 
-    def _update_meta(self, obj):
+    def __array_finalize__(self, obj):
         ndim = self.ndim
         if ndim == 0:
             self.shape = (1,1)
@@ -173,26 +166,18 @@ class matrix(N.ndarray):
         raise NotImplementedError
 
     def __repr__(self):
-        return repr(self.A).replace('array','matrix')
+        return repr(self.__array__()).replace('array','matrix')
 
     def __str__(self):
-        return str(self.A)
+        return str(self.__array__())
 
+    # Needed becase tolist method expects a[i] 
+    #  to have dimension a.ndim-1
     def tolist(self):
-        return self.A.tolist()    
+        return self.__array__().tolist()
 
     def getA(self):
-        arr = self
-        fortran = False;
-        if (self.ndim == 2) and arr.flags['FORTRAN']:
-            fortran = True
-
-        if not (fortran or arr.flags['CONTIGUOUS']):
-            arr = arr.copy()
-
-        return N.ndarray.__new__(N.ndarray, self.shape, self.dtype, buffer=arr,
-                                fortran=fortran,
-                                swap=(not arr.flags['NOTSWAPPED']))
+        return self.__array__()
         
     def getT(self):
         return self.transpose()
@@ -203,7 +188,6 @@ class matrix(N.ndarray):
         else:
             return self.transpose()
 
-    # inverse doesn't work yet....
     def getI(self):
         from scipy.linalg import inv
         return matrix(inv(self))

@@ -38,6 +38,8 @@ class flagsobj(dict):
                 if (key == 'B'):
                     num = _anum + _nnum + _wnum
                     return self._flagnum & num == num
+                elif (key == 'S'):
+                    return not (self._flagnum & _nnum == _nnum)
         else:
             try:
                 return dict.__getitem__(self, key)
@@ -48,6 +50,8 @@ class flagsobj(dict):
 	        if (key == 'FORC'):
 		    return (self._flagnum & _fnum == _fnum) or \
                            (self._flagnum & _cnum == _cnum)
+                if (key == 'SWAPPED'):
+                    return not (self._flagnum & _nnum == _nnum)
                 if (key == 'BEHAVED'):
                     num = _anum + _nnum + _wnum
                     return self._flagnum & num == num

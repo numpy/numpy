@@ -107,6 +107,7 @@ enum PyArray_TYPES {    PyArray_BOOL=0,
 
 	/* basetype array priority */
 #define PyArray_PRIORITY 0.0
+#define PyArray_BIG_PRIORITY 0.1
 	/* default subtype priority */
 #define PyArray_SUBTYPE_PRIORITY 1.0
 
@@ -1185,6 +1186,13 @@ typedef struct {
 				    (((PyArrayObject *)(m))->nd == 0)))
 #define PyArray_IsScalar(obj, cls)				\
 	(PyObject_TypeCheck((obj), &Py##cls##ArrType_Type))
+#define PyArray_IsPythonScalar(obj) \
+	(PyInt_Check(obj) || PyFloat_Check(obj) || PyComplex_Check(obj) || \
+	 PyLong_Check(obj) || PyBool_Check(obj) || PyString_Check(obj) || \
+	 PyUnicode_Check(obj))
+#define PyArray_IsAnyScalar(obj) \
+	(PyArray_IsScalar(obj, Generic) || PyArray_IsPythonScalar(obj))
+
 #define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ? Py_INCREF(m), m : \
 	  (PyArrayObject *)(PyArray_ContiguousFromObject((PyObject *)(m), \
 		                      PyArray_TYPE(m), 0, 0))) 

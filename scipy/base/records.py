@@ -189,7 +189,7 @@ class RecArray(sb.ndarray):
         self._attributes = ['_rec_aligned', '_nfields']
         del self.parsed
 
-    def _update_meta(self, obj):
+    def __array_finalize__(self, obj):
         self._attributes = obj._attributes
         for key in self._attributes:
             setattr(self, key, getattr(obj, key))

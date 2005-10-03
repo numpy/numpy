@@ -822,6 +822,29 @@ gentype_getarray(PyObject *scalar, PyObject *args)
 	return PyArray_FromScalar(scalar, &outcode);
 }
 
+static char doc_sc_wraparray[] = "sc.__array_wrap__(obj) return scalar from array";
+
+static PyObject *
+gentype_wraparray(PyObject *scalar, PyObject *args)
+{
+	PyObject *arr;
+
+	if (PyTuple_Size(args) < 1) {
+		PyErr_SetString(PyExc_TypeError,
+				"only accepts 1 argument.");
+		return NULL;
+	}
+	arr = PyTuple_GET_ITEM(args, 0);
+	if (!PyArray_Check(arr)) {
+		PyErr_SetString(PyExc_TypeError,
+				"can only be called with ndarray object");
+		return NULL;
+	}
+
+	return PyArray_Scalar(PyArray_DATA(arr), PyArray_TYPE(arr),
+			      PyArray_ITEMSIZE(arr), !PyArray_ISNOTSWAPPED(arr));
+}
+
 
 /**begin repeat
 
@@ -987,6 +1010,7 @@ static PyMethodDef gentype_methods[] = {
         {"resize", (PyCFunction)gentype_resize, 1, NULL}, 
 
 	{"__array__", (PyCFunction)gentype_getarray, 1, doc_getarray},
+	{"__array_wrap__", (PyCFunction)gentype_wraparray, 1, doc_sc_wraparray},
 
      /* for the copy module */
         {"__copy__", (PyCFunction)gentype_copy, 1, NULL},

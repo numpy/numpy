@@ -434,6 +434,49 @@ array_cast(PyArrayObject *self, PyObject *args)
 	return _ARET(PyArray_CastToType(self, &typecode));
 }	  
 
+/* default sub-type implementation */
+
+static char doc_wraparray[] = "m.__array_wrap__(obj) returns an object of type m"\
+	" from the ndarray object obj";
+
+static PyObject *
+array_wraparray(PyArrayObject *self, PyObject *args)
+{
+	PyObject *arr;
+	PyObject *ret;
+	
+	if (PyTuple_Size(args) < 1) {
+		PyErr_SetString(PyExc_TypeError,
+				"only accepts 1 argument.");
+		return NULL;
+	}
+	arr = PyTuple_GET_ITEM(args, 0);
+	if (!PyArray_Check(arr)) {
+		PyErr_SetString(PyExc_TypeError,
+				"can only be called with ndarray object");
+		return NULL;
+	}	
+
+	ret = PyArray_New(self->ob_type, PyArray_NDIM(arr),
+			  PyArray_DIMS(arr), PyArray_TYPE(arr),
+			  PyArray_STRIDES(arr), PyArray_DATA(arr),
+			  PyArray_ITEMSIZE(arr), 
+			  PyArray_FLAGS(arr), NULL);
+	if (ret == NULL) return NULL;
+	Py_INCREF(arr);
+	PyArray_BASE(ret) = arr;
+	return ret;
+}
+
+/* NO-OP --- just so all subclasses will have one by default. */
+static PyObject *
+array_finalize(PyArrayObject *self, PyObject *args)
+{
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+
 static char doc_array_getarray[] = "m.__array__(|type) just returns either a new reference to self if type is not given or a new array of type if type is different from the current type of the array.";
 
 static PyObject *
@@ -443,16 +486,42 @@ array_getarray(PyArrayObject *self, PyObject *args)
 	PyArray_Typecode oldtype = {PyArray_TYPE(self),
 				    PyArray_ITEMSIZE(self),
 				    0};
+	PyObject *ret;
 
 	if (!PyArg_ParseTuple(args, "|O&", &PyArray_TypecodeConverter,
 			      &newtype)) return NULL;
+
+	/* convert to PyArray_Type or PyBigArray_Type */
+	if (!PyArray_CheckExact(self) || !PyBigArray_CheckExact(self)) {
+		PyObject *new;
+		PyTypeObject *subtype = &PyArray_Type;
+
+		if (!PyType_IsSubtype(self->ob_type, &PyArray_Type)) {
+			subtype = &PyBigArray_Type;
+		}
+		
+		new = PyArray_New(subtype, PyArray_NDIM(self),
+				  PyArray_DIMS(self), PyArray_TYPE(self),
+				  PyArray_STRIDES(self), PyArray_DATA(self),
+				  PyArray_ITEMSIZE(self), 
+				  PyArray_FLAGS(self), NULL);
+		if (new == NULL) return NULL;
+		Py_INCREF(self);
+		PyArray_BASE(new) = (PyObject *)self;
+		self = (PyArrayObject *)new;
+	}
+	else {
+		Py_INCREF(self);
+	}
+		
 	if (newtype.type_num == PyArray_NOTYPE ||
 	    PyArray_EquivalentTypes(&oldtype, &newtype)) {
-		Py_INCREF(self);
 		return (PyObject *)self;
 	}
 	else {
-		return PyArray_CastToType(self, &newtype);
+		ret = PyArray_CastToType(self, &newtype);
+		Py_DECREF(self);
+		return ret;
 	}
 }
 
@@ -1260,8 +1329,12 @@ static PyMethodDef array_methods[] = {
         {"copy", (PyCFunction)array_copy, 1, doc_copy},  
         {"resize", (PyCFunction)array_resize, 1, doc_resize}, 
 
-	/* for consistency */
+	/* for subtypes */
 	{"__array__", (PyCFunction)array_getarray, 1, doc_array_getarray},
+	{"__array_wrap__", (PyCFunction)array_wraparray, 1, doc_wraparray},
+	/* default version so it is found... -- only used for subclasses */
+	{"__array_finalize__", (PyCFunction)array_finalize, 1, NULL},
+	
 	
 	/* for the copy module */
         {"__copy__", (PyCFunction)array_copy, 1, doc_copy},	 

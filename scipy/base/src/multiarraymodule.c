@@ -712,9 +712,6 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 		intp *dptr;
 		n1 = self->dimensions[0];
 		n2 = self->dimensions[1];
-		a = PyArray_Flatten(self,0);
-		Py_DECREF(self);
-		if (a == NULL) return NULL;
 		step = n2+1;
 		if (offset < 0) {
 			start = -n2 * offset;
@@ -731,11 +728,14 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 		indices = PyArray_New(&PyArray_Type, 1, &count, 
 				      PyArray_INTP, NULL, NULL, 0, 0, NULL);
 		if (indices == NULL) {
-			Py_DECREF(a); return NULL;
+			Py_DECREF(self); return NULL;
 		}
 		dptr = (intp *)PyArray_DATA(indices);
 		for (n1=start; n1<stop; n1+=step) *dptr++ = n1;
-		ret = PyArray_Take((PyAO *)a, indices, 0);
+		a = PyArray_IterNew((PyObject *)self);
+		Py_DECREF(self);
+		if (a == NULL) {Py_DECREF(indices); return NULL;}
+		ret = PyObject_GetItem(a, indices);
 		Py_DECREF(a);
 		Py_DECREF(indices);
 		return ret;
@@ -3948,7 +3948,7 @@ DL_EXPORT(void) initmultiarray(void) {
 	PyDict_SetItemString(d, "__version__", s);
 	Py_DECREF(s);
         Py_INCREF(&PyBigArray_Type);
-	PyDict_SetItemString(d, "ndbigarray", (PyObject *)&PyBigArray_Type);
+	PyDict_SetItemString(d, "bigndarray", (PyObject *)&PyBigArray_Type);
         Py_INCREF(&PyArray_Type);
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
         Py_INCREF(&PyArrayIter_Type);

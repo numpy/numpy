@@ -10,6 +10,10 @@ from _compiled_base import _insert
 
 newaxis = None
 
+ndarray = multiarray.ndarray
+bigndarray = multiarray.bigndarray
+ufunc = type(sin)
+
 arange = multiarray.arange
 array = multiarray.array
 zeros = multiarray.zeros
@@ -23,34 +27,38 @@ fastCopyAndTranspose = multiarray._fastCopyAndTranspose
 register_dtype = multiarray.register_dtype
 can_cast = multiarray.can_cast
 
+
 def asarray(a, dtype=None):
-    """asarray(a,dtype=None) returns a as a NumPy array.  Unlike array(),
-    no copy is performed if a is already an array.
+    """asarray(a,dtype=None) returns a as an array.  Unlike array(),
+    no copy is performed if a is already an array.  Will return a subclass
+    of array. 
     """
     return array(a, dtype, copy=0)
 
-def ensure_array(a, dtype=None):
-    """ensure_array(a, dtype=None) always returns an actual ndarray object.
+def asndarray(a, dtype=None):
+    """asndarray(a, dtype=None) always returns an actual ndarray object.
     No copy is performed if a is already an array.
-    Meant primarily for debugging. 
+    Meant primarily for debugging.     
     """
+    dtype = obj2dtype(dtype)
     # exact check
     while 1:
         if type(a) is ndarray:
-            return a
+            if dtype is None or a.dtype is dtype:
+                return a
+            else:
+                return a.astype(dtype)
         try:
             if dtype is None:
                 return a.__array__()
             else:
                 return a.__array__(dtype)
         except AttributeError:
-            a = array(a,dtype,copy=1)  # copy irrelevant
+            a = array(a,dtype)  # copy irrelevant
             dtype = None
 
 def isfortran(a):
-    flags = a.flags
-    return flags['FORTRAN'] and a.ndim > 1
-
+    return a.flags['FNC']
 
 # from Fernando Perez's IPython
 def zeros_like(a):
@@ -60,7 +68,8 @@ def zeros_like(a):
     use empty_like(), which is faster as it only allocates memory."""
 
     a = asarray(a)
-    return zeros(a.shape,a.dtype,a.flags['FORTRAN'] and a.ndim > 1)
+    return a.__array_wrap__(zeros(a.shape,a.dtype,
+                                  a.flags['FORTRAN'] and a.ndim > 1))
 
 def empty_like(a):
     """Return an empty (uninitialized) array of the shape and typecode of a.
@@ -70,7 +79,9 @@ def empty_like(a):
 
     """
     asarray(a)
-    return empty(a.shape,a.dtype,a.flags['FORTRAN'] and a.ndim > 1)
+    return a.__array_wrap__(empty(a.shape,a.dtype,
+                                  a.flags['FORTRAN'] and a.ndim > 1))
+
 # end Fernando's utilities
 
 _mode_from_name_dict = {'v': 0,
@@ -97,9 +108,6 @@ def convolve(a,v,mode='full'):
     mode = _mode_from_name(mode)
     return correlate(a,asarray(v)[::-1],mode)
 
-ndarray = multiarray.ndarray
-ndbigarray = multiarray.ndbigarray
-ufunc = type(sin)
 
 inner = multiarray.inner
 dot = multiarray.dot
@@ -109,8 +117,8 @@ def outer(a,b):
       result(i,j) = a(i)*b(j) when a and b are vectors
       Will accept any arguments that can be made into vectors.
    """
-   a = asarray(a)
-   b = asarray(b)
+   a = asndarray(a)
+   b = asndarray(b)
    return a.ravel()[:,newaxis]*b.ravel()[newaxis,:]
 
 def vdot(a, b):
@@ -148,8 +156,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1):
     the z-component of the equivalent three-dimensional cross product is
     returned.
     """
-    a = _move_axis_to_0(asarray(a), axisa)
-    b = _move_axis_to_0(asarray(b), axisb)
+    a = _move_axis_to_0(asndarray(a), axisa)
+    b = _move_axis_to_0(asndarray(b), axisb)
     msg = "incompatible dimensions for cross product\n"\
           "(dimension must be 2 or 3)"
     if (a.shape[0] not in [2,3]) or (b.shape[0] not in [2,3]):
@@ -300,19 +308,21 @@ def seterr(divide="ignore", over="ignore", under="ignore", invalid="ignore", whe
                 (_errdict[invalid] << SHIFT_INVALID)
     frame = sys._getframe().f_back
     try:
-        where = where.lower()
-    except AttributeError:
-        pass
-    if not where or where[0] == 'l':
+        wh = where.lower()[0]
+    except (AttributeError, TypeError, IndexError):
+        wh = None
+    if where==0 or wh == 'l':
         frame.f_locals[UFUNC_ERRMASK_NAME] = maskvalue
-    elif where == 1 or where[0] == 'g':
+    elif where == 1 or wh == 'g':
         frame.f_globals[UFUNC_ERRMASK_NAME] = maskvalue
-    elif where == 2 or where[0] == 'b':
+    elif where == 2 or wh == 'b':
         frame.f_builtins[UFUNC_ERRMASK_NAME] = maskvalue
     return
 
     frame.f_locals[UFUNC_ERRMASK_NAME] = maskvalue
     return
+
+seterr()
 
 def geterr():
     frame = sys._getframe().f_back
@@ -338,16 +348,18 @@ def setbufsize(size, where=0):
         raise ValueError, "Very big buffers.. %s" % size
     frame = sys._getframe().f_back
     try:
-        wh = where.lower()
-    except AttributeError:
-        pass
-    if not where or where[0] == 'l':
+        wh = where.lower()[0]
+    except (AttributeError, TypeError, IndexError):
+        wh = None
+    if where == 0 or wh == 'l':
         frame.f_locals[UFUNC_BUFSIZE_NAME] = size
-    elif where == 1 or where[0] == 'g':
+    elif where == 1 or wh == 'g':
         frame.f_globals[UFUNC_BUFSIZE_NAME] = size
-    elif where == 2 or where[0] == 'b':
+    elif where == 2 or wh == 'b':
         frame.f_builtins[UFUNC_BUFSIZE_NAME] = size
     return
+
+setbufsize(80000, 1)
 
 def getbufsize(size):
     frame = sys._getframe().f_back

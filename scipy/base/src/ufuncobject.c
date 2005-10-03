@@ -787,7 +787,6 @@ _create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
 	return 0;
 }
 
-
 static int
 construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 {
@@ -796,6 +795,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 	char scalars[MAX_ARGS];
 	PyUFuncObject *self=loop->ufunc;
 	Bool allscalars=TRUE;
+	PyTypeObject *subtype=&PyArray_Type;
 
         /* Check number of arguments */
         nargs = PyTuple_Size(args);
@@ -820,7 +820,8 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                         return -1;
                 }
 		/*
-		fprintf(stderr, "array %d has reference %d\n", i, (mps[i])->ob_refcnt);
+		fprintf(stderr, "array %d has reference %d\n", i, 
+		                (mps[i])->ob_refcnt);
 		*/
 
 		/* Scalars are 0-dimensional arrays
@@ -831,6 +832,11 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 			allscalars=FALSE;
 		}
 		else scalars[i] = _scalar_kind(arg_types[i], &(mps[i]));
+
+		/* If any input is a big-array */
+		if (!PyType_IsSubtype(mps[i]->ob_type, &PyArray_Type)) {
+			subtype = &PyBigArray_Type;
+		}
         }
 
 	/* If everything is a scalar, then use normal coercion rules */
@@ -911,7 +917,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         
         for (i=self->nin; i<self->nargs; i++) {
                 if (mps[i] == NULL) {
-                        mps[i] = (PyArrayObject *)PyArray_New(&PyArray_Type, 
+                        mps[i] = (PyArrayObject *)PyArray_New(subtype,
                                                               loop->nd, 
                                                               loop->dimensions,
                                                               arg_types[i], 
@@ -2163,7 +2169,9 @@ _find_array_wrap(PyObject *args)
 	nargs = PyTuple_Size(args);
 	for (i=0; i<nargs; i++) {
 		obj = PyTuple_GET_ITEM(args, i);
-		if (PyArray_CheckExact(obj)) continue;
+		if (PyArray_CheckExact(obj) || PyBigArray_CheckExact(obj) || \
+		    PyArray_IsAnyScalar(obj))
+			continue;
 		attr = PyObject_GetAttrString(obj, "__array_wrap__");
 		if (attr != NULL) {
 			val = PyCallable_Check(attr);

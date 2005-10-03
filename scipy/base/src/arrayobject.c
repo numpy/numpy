@@ -175,7 +175,8 @@ PyArray_GetPriority(PyObject *obj, double default_)
         PyObject *ret;
         double priority=PyArray_PRIORITY;
 
-	if (PyArray_CheckExact(obj)) return priority;
+	if (PyArray_CheckExact(obj) || PyBigArray_CheckExact(obj)) 
+		return priority;
 
         ret = PyObject_GetAttrString(obj, "__array_priority__");
         if (ret != NULL) priority = PyFloat_AsDouble(ret);
@@ -1226,7 +1227,8 @@ array_length(PyArrayObject *self)
         if (self->nd != 0) {
                 return self->dimensions[0];
         } else {
-                return -1;  /* can't ask for length of 0-dim array */
+		PyErr_SetString(PyExc_TypeError, "len() of unsized object.");
+		return -1;
         }
 }
 
@@ -3268,10 +3270,13 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 	self->base = (PyObject *)NULL;
         self->weakreflist = (PyObject *)NULL;
 
-        /* Get any metadata from obj */
-	if ((obj != NULL) && (subtype != &PyArray_Type)) {
+        /* call the __array_finalize__
+	   method if a subtype and some object passed in */
+	if ((obj != NULL) && (subtype != &PyArray_Type) && 
+	    (subtype != &PyBigArray_Type)) {
 		PyObject *res;
-		res = PyObject_CallMethod((PyObject *)self, "_update_meta",
+		res = PyObject_CallMethod((PyObject *)self, 
+					  "__array_finalize__",
 					  "O", (PyObject *)obj);
 		if (res == NULL) PyErr_Clear();
 		else Py_DECREF(res);
@@ -3726,6 +3731,8 @@ array_priority_get(PyArrayObject *self)
 {
 	if (PyArray_CheckExact(self)) 
 		return PyFloat_FromDouble(PyArray_PRIORITY);
+	else if (PyBigArray_CheckExact(self)) 
+		return PyFloat_FromDouble(PyArray_BIG_PRIORITY);
 	else
 		return PyFloat_FromDouble(PyArray_SUBTYPE_PRIORITY);
 }
@@ -4269,7 +4276,7 @@ static char Arraytype__doc__[] =
 static PyTypeObject PyBigArray_Type = { 
         PyObject_HEAD_INIT(NULL)
         0,					  /*ob_size*/
-        "scipy.ndbigarray",		  /*tp_name*/
+        "scipy.bigndarray",		  /*tp_name*/
         sizeof(PyArrayObject),		          /*tp_basicsize*/
         0,					  /*tp_itemsize*/
         /* methods */

@@ -6,7 +6,7 @@
 import scipy.base as Numeric
 import scipy.lib.lapack_lite as lapack_lite
 MLab = Numeric
-from scipy.base import asarray
+from scipy.base import asarray, multiply
 import math
 
 # Error object
@@ -224,6 +224,7 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[i]) = u[i]*v[i]
     _assertRank2(a)
     _assertSquareness(a)
     a,t = _convertarray(a) # convert to float_ or complex_ type
+    wrap = a.__array_wrap__
     real_t = 'd'
     n = a.shape[0]
     dummy = Numeric.zeros((1,), t)
@@ -269,7 +270,7 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[i]) = u[i]*v[i]
                 v[ind[2*i+1]] = vr[ind[2*i]] - 1j*vr[ind[2*i+1]]
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
-    return w,v
+    return w,wrap(v)
 
 
 def Heigenvectors(a, UPLO='L'):
@@ -278,6 +279,7 @@ def Heigenvectors(a, UPLO='L'):
     t =_commonType(a)
     real_t = _array_type[0][_array_precision[t]]
     a = _castCopyAndTranspose(t, a)
+    wrap = a.__array_wrap__
     n = a.shape[0]
     liwork = 5*n+3
     iwork = Numeric.zeros((liwork,),'i')
@@ -305,7 +307,7 @@ def Heigenvectors(a, UPLO='L'):
         results = lapack_routine('V', UPLO, n, a, n,w, work, lwork, iwork, liwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
-    return (w,a)
+    return w,wrap(a)
 
 
 # Singular value decomposition
@@ -317,6 +319,7 @@ def singular_value_decomposition(a, full_matrices = 0):
     t =_commonType(a)
     real_t = _array_type[0][_array_precision[t]]
     a = _fastCopyAndTranspose(t, a)
+    wrap = a.__array_wrap__
     if full_matrices:
         nu = m
         nvt = n
@@ -352,7 +355,8 @@ def singular_value_decomposition(a, full_matrices = 0):
                                  work, lwork, iwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'SVD did not converge'
-    return Numeric.transpose(u), s, Numeric.transpose(vt) # why copy here?
+    return wrap(Numeric.transpose(u)), s, \
+           wrap(Numeric.transpose(vt)) # why copy here?
 
 
 # Generalized inverse
@@ -370,8 +374,9 @@ def generalized_inverse(a, rcond = 1.e-10):
             s[i] = 1./s[i]
         else:
             s[i] = 0.;
-    return Numeric.dot(Numeric.transpose(vt),
-                       s[:, Numeric.NewAxis]*Numeric.transpose(u))
+    wrap = a.__array_wrap__
+    return wrap(Numeric.dot(Numeric.transpose(vt),                        
+                       multiply(s[:, Numeric.NewAxis],Numeric.transpose(u))))
 
 # Determinant
 
@@ -389,7 +394,7 @@ def determinant(a):
     results = lapack_routine(n, n, a, n, pivots, 0)
     sign = Numeric.add.reduce(Numeric.not_equal(pivots,
                                                 Numeric.arrayrange(1, n+1))) % 2
-    return (1.-2.*sign)*Numeric.multiply.reduce(Numeric.diagonal(a))
+    return (1.-2.*sign)*Numeric.multiply.reduce(Numeric.diagonal(a),axis=-1)
 
 # Linear Least Squares
 
@@ -406,6 +411,8 @@ the number of rows, then residuals will be returned as an empty array
 otherwise resids = sum((b-dot(A,x)**2).
 Singular values less than s[0]*rcond are treated as zero.
 """
+    a = asndarray(a)
+    b = asndarary(b)
     one_eq = len(b.shape) == 1
     if one_eq:
         b = b[:, Numeric.NewAxis]

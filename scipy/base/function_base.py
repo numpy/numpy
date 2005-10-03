@@ -151,7 +151,7 @@ def average (a, axis=0, weights=None, returned=0):
             d = len(a) * 1.0
         else:
             w = array(weights).ravel() * 1.0
-            n = add.reduce(a*w)
+            n = add.reduce(multiply(a,w))
             d = add.reduce(w) 
     else:
         a = array(a)
@@ -685,22 +685,22 @@ def round_(x, decimals=0):
     same way as standard Python.
     """
     x = asarray(x)
-    if not issubclass(x.dtype, inexact):
+    if not issubclass(x.dtype, _nx.inexact):
         return x
-    if issubclass(x.dtype, complexfloating):
+    if issubclass(x.dtype, _nx.complexfloating):
         return round_(x.real, decimals) + 1j*round_(x.imag, decimals)
     if decimals is not 0:
         decimals = asarray(decimals)
-    s = sign(m)
+    s = sign(x)
     if decimals is not 0:
-        m = absolute(m*10.**decimals)
+        x = absolute(multiply(x,10.**decimals))
     else:
-        m = absolute(m)
-    rem = m-asarray(m).astype(intp)
-    m = where(less(rem,0.5), floor(m), ceil(m))
+        x = absolute(x)
+    rem = x-asarray(x).astype(_nx.intp)
+    x = _nx.where(_nx.less(rem,0.5), _nx.floor(x), _nx.ceil(x))
     # convert back
     if decimals is not 0:
-        return m*s/(10.**decimals)
+        return multiply(x,s/(10.**decimals))
     else:
-        return m*s
+        return multiply(x,s)
 

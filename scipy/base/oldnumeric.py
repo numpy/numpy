@@ -3,7 +3,7 @@
 import multiarray as mu
 import umath as um
 import numerictypes as nt
-from numeric import asarray, array, correlate, outer
+from numeric import asarray, array, correlate, outer, concatenate
 import sys
 
 #Use this to add a new axis to an array
@@ -196,8 +196,8 @@ def resize(a, new_shape):
     a = ravel(a)
     Na = len(a)
     if not Na: return zeros(new_shape, a.dtypechar)
-    total_size = up.multiply.reduce(new_shape)
-    n_copies = pyint(total_size / Na)
+    total_size = um.multiply.reduce(new_shape)
+    n_copies = int(total_size / Na)
     extra = total_size % Na
 
     if extra != 0: 

@@ -1,5 +1,6 @@
 
 import numeric as _nx
+from numeric import asarray, empty, empty_like, isinf, signbit
 
 __all__ = ['fix','mod','isneginf','isposinf','sign']
 
