@@ -846,7 +846,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                          &(loop->funcdata), scalars) == -1)
 		return -1;
 
-	/* This is the buffer size in number of elements...*/
+	/* This is the buffer size in number of elements.*/
         loop->bufsize = _getintfromvar(UFUNC_BUFSIZE_NAME, PyArray_BUFSIZE);
 	if ((loop->bufsize < PyArray_MIN_BUFSIZE) ||	\
 	    (loop->bufsize > PyArray_MAX_BUFSIZE)) {
@@ -871,7 +871,6 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         loop->numiter = self->nin;
         if (PyArray_Broadcast((PyArrayMultiIterObject *)loop) < 0)
 		return -1;
-
 	
         /* Get any return arguments */
         for (i=self->nin; i<nargs; i++) {
@@ -974,12 +973,13 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                 for (i=0; i<self->nargs; i++) {
                         if (!(loop->iters[i]->contiguous)) {
 				/* may still have uniform stride
-				   if <= 1-d */
-				if (mps[i]->nd > 1) {
+				   if (broadcated result) <= 1-d */
+				if (mps[i]->nd != 0 &&			\
+				    (loop->iters[i]->nd_m1 > 0)) {
 					loop->meth = NOBUFFER_UFUNCLOOP;
+					break;
 				}
-                                break;
-                        }
+			}
                 }
 		if (loop->meth == ONE_UFUNCLOOP) {
 			for (i=0; i<self->nargs; i++) {
