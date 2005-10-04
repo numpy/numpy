@@ -5,7 +5,7 @@ static char module_doc[] =
 #include "Python.h"
 #include "scipy/arrayobject.h"
 #ifndef CBLAS_HEADER
-#define CBLAS_HEADER <cblas.h>
+#define CBLAS_HEADER "cblas.h"
 #endif
 #include CBLAS_HEADER
 
