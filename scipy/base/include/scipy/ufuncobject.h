@@ -231,9 +231,9 @@ typedef struct {
 	(void) fpsetsticky(0);						\
 	}
 	
-#elif defined(linux) || defined(darwin) || defined(__CYGWIN__) || defined(__MINGW32__) 
+#elif defined(linux) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__) 
 
-#if defined(__GLIBC__) || defined(darwin) || defined(__MINGW32__)
+#if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__)
 #include <fenv.h>
 #elif defined(__CYGWIN__)
 #include <mingw/fenv.h>
