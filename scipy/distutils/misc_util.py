@@ -524,14 +524,33 @@ class Configuration:
 
     def add_extension(self,name,sources,**kw):
         """ Add extension to configuration.
+
+        Keywords:
+          include_dirs, define_macros, undef_macros,
+          library_dirs, libraries, runtime_library_dirs,
+          extra_objects, extra_compile_args, extra_link_args,
+          export_symbols, swig_opts, depends, language,
+          f2py_options, module_dirs
+          extra_info - dict or list of dict of keywords to be
+                       appended to keywords.
         """
         ext_args = copy.copy(kw)
         ext_args['name'] = dot_join(self.name,name)
         ext_args['sources'] = sources
 
+        if ext_args.has_key('extra_info'):
+            extra_info = ext_args['extra_info']
+            del ext_args['extra_info']
+            if type(extra_info) is type({}):
+                extra_info = [extra_info]
+            for info in extra_info:
+                assert type(info) is type({}),`info`
+                dict_append(ext_args,**info)
+
         for k in ext_args.keys():
             v = ext_args[k]
-            if k in ['sources','depends']:
+            if k in ['sources','depends','include_dirs','library_dirs',
+                     'module_dirs','extra_objects']:
                 new_v = self._fix_paths(v)
                 ext_args[k] = new_v
 

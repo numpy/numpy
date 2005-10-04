@@ -12,12 +12,18 @@ def configuration(parent_package='',top_path=None):
 
     # Configure blasdot
     blas_info = get_info('blas_opt')
-    #blas_info = 0
-    if blas_info or 'sdist' in sys.argv:
-        config.add_extension('_dotblas',
-                             sources=[join('blasdot','_dotblas.c')],
-                             **blas_info
-                             )
+    #blas_info = {}
+    def get_dotblas_sources(ext, build_dir):
+        if blas_info:
+            return ext.depends
+        return None # no extension module will be built
+
+    config.add_extension('_dotblas',
+                         sources = [get_dotblas_sources],
+                         depends=[join('blasdot','_dotblas.c')],
+                         include_dirs = ['blasdot'],
+                         extra_info = blas_info
+                         )
 
     # Configure fftpack_lite
     config.add_extension('fftpack_lite',
@@ -25,6 +31,7 @@ def configuration(parent_package='',top_path=None):
                                   ['fftpack_litemodule.c', 'fftpack.c']]
                          )
 
+    # Configure mtrand
     config.add_extension('mtrand',
                          sources=[join('mtrand', x) for x in 
                                   ['mtrand.c', 'randomkit.c', 'initarray.c',
@@ -35,22 +42,22 @@ def configuration(parent_package='',top_path=None):
 
     # Configure lapack_lite
     lapack_info = get_info('lapack_opt')
-    #lapack_info = 0
-    if not lapack_info or 'sdist' in sys.argv:
-        # use C-sources provided
-        print "### Warning:  Using unoptimized lapack ###"
-        config.add_extension('lapack_lite',
-                             sources=[join('lapack_lite', x) for x in \
-                                      ['lapack_litemodule.c',
-                                       'zlapack_lite.c', 'dlapack_lite.c',
-                                       'blas_lite.c', 'dlamch.c',
-                                       'f2c_lite.c']]
-                             )
-    else:
-        config.add_extension('lapack_lite',
-                             sources=[join('lapack_lite',
-                                           'lapack_litemodule.c')],
-                             **lapack_info)
+    def get_lapack_lite_sources(ext, build_dir):
+        if not lapack_info:
+            print "### Warning:  Using unoptimized lapack ###"
+            return ext.depends
+        else:
+            return ext.depends[:1]
+
+    config.add_extension('lapack_lite',
+                         sources = [get_lapack_lite_sources],
+                         depends=[join('lapack_lite', x) for x in \
+                                  ['lapack_litemodule.c',
+                                   'zlapack_lite.c', 'dlapack_lite.c',
+                                   'blas_lite.c', 'dlamch.c',
+                                   'f2c_lite.c']],
+                         extra_info = lapack_info
+                         )
             
     return config.todict()
 
