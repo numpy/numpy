@@ -6179,7 +6179,7 @@ fancy_indexing_check(PyObject *args)
 
 	if (PyTuple_Check(args)) {
 		n = PyTuple_GET_SIZE(args);
-		if (n > MAX_DIMS) return 3;
+		if (n >= MAX_DIMS) return 3;
 		for (i=0; i<n; i++) {
 			obj = PyTuple_GET_ITEM(args,i);
 			if (PyArray_Check(obj)) {
@@ -6200,8 +6200,23 @@ fancy_indexing_check(PyObject *args)
 		else
 			return 2;
 	}
-	else if (PySequence_Check(args)) 
-		return 1;
+	else if (PySequence_Check(args)) {
+		/* Sequences < MAX_DMS with any slice objects
+		   or NewAxis, or Ellipsis is considered standard
+		*/
+		n = PySequence_Size(args);
+		if (n<0 || n>=MAX_DIMS) return 1;
+		for (i=0; i<n; i++) {
+			obj = PySequence_GetItem(args, i);
+			if (obj == NULL) return 1;
+			if (PySlice_Check(obj) || obj == Py_Ellipsis || \
+			    obj == Py_None) {
+				retval = 0;
+			}
+			Py_DECREF(obj);
+			if (retval == 0) return retval;
+		}
+	}
 
 	return retval;
 }
