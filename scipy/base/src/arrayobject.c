@@ -6170,51 +6170,70 @@ static PyTypeObject PyArrayIter_Type = {
 
 /* This checks the args for any fancy indexing objects */
 
+#define SOBJ_NOTFANCY 0 
+#define SOBJ_ISFANCY 1
+#define SOBJ_BADARRAY 2
+#define SOBJ_TOOMANY 3
+#define SOBJ_LISTTUP 4
+
 static int
 fancy_indexing_check(PyObject *args)
 {
 	int i, n;
 	PyObject *obj;
-	int retval = 0;
+	int retval = SOBJ_NOTFANCY;
 
 	if (PyTuple_Check(args)) {
 		n = PyTuple_GET_SIZE(args);
-		if (n >= MAX_DIMS) return 3;
+		if (n >= MAX_DIMS) return SOBJ_TOOMANY;
 		for (i=0; i<n; i++) {
 			obj = PyTuple_GET_ITEM(args,i);
 			if (PyArray_Check(obj)) {
 				if (PyArray_ISINTEGER(obj))
-					retval = 1;
-				else 
-					retval = 2;
+					retval = SOBJ_ISFANCY;
+				else {
+					retval = SOBJ_BADARRAY;
+					break;
+				}
 			}
 			else if (PySequence_Check(obj))
-				retval = 1;
-			if (retval == 2) break;
+				retval = SOBJ_ISFANCY;
 		}
 	}	
 	else if (PyArray_Check(args)) {
 		if ((PyArray_TYPE(args)==PyArray_BOOL) ||
 		    (PyArray_ISINTEGER(args)))
-			return 1;
+			return SOBJ_ISFANCY;
 		else
-			return 2;
+			return SOBJ_BADARRAY;
 	}
 	else if (PySequence_Check(args)) {
 		/* Sequences < MAX_DMS with any slice objects
 		   or NewAxis, or Ellipsis is considered standard
+		   as long as there are also no Arrays and or additional
+		   sequences embedded.
 		*/
+		retval = SOBJ_ISFANCY;
 		n = PySequence_Size(args);
-		if (n<0 || n>=MAX_DIMS) return 1;
+		if (n<0 || n>=MAX_DIMS) return SOBJ_ISFANCY;
 		for (i=0; i<n; i++) {
 			obj = PySequence_GetItem(args, i);
-			if (obj == NULL) return 1;
-			if (PySlice_Check(obj) || obj == Py_Ellipsis || \
+			if (obj == NULL) return SOBJ_ISFANCY;
+			if (PyArray_Check(obj)) {
+				if (PyArray_ISINTEGER(obj))
+					retval = SOBJ_LISTTUP;
+				else
+					retval = SOBJ_BADARRAY;
+			}
+			else if (PySequence_Check(obj)) {
+				retval = SOBJ_LISTTUP;
+			}
+			else if (PySlice_Check(obj) || obj == Py_Ellipsis || \
 			    obj == Py_None) {
-				retval = 0;
+				retval = SOBJ_NOTFANCY;
 			}
 			Py_DECREF(obj);
-			if (retval == 0) return retval;
+			if (retval > SOBJ_ISFANCY) return retval;
 		}
 	}
 
@@ -6661,21 +6680,37 @@ PyArray_MapIterNew(PyObject *indexobj)
 	fancy = fancy_indexing_check(indexobj);
 	Py_INCREF(indexobj);
 	mit->indexobj = indexobj;
-	if (!fancy) { /* bail out */
+	if (fancy == SOBJ_NOTFANCY) { /* bail out */
 		mit->view = 1;
 		goto ret;
 	}
 
-	if (fancy == 2) {
+	if (fancy == SOBJ_BADARRAY) {
 		PyErr_SetString(PyExc_TypeError,			\
 				"Arrays used as indexes must be of "    \
 				"integer type");
 		goto fail;
 	}
-	if (fancy == 3) {
+	if (fancy == SOBJ_TOOMANY) {
 		PyErr_SetString(PyExc_TypeError,"Too many indicies");
 		goto fail;
 	}
+
+	if (fancy == SOBJ_LISTTUP) {
+		PyObject *newobj;
+		newobj = PySequence_Tuple(indexobj);
+		if (newobj == NULL) goto fail;
+		Py_DECREF(indexobj);
+		indexobj = newobj;
+		mit->indexobj = indexobj;
+	}
+
+#undef SOBJ_NOTFANCY 
+#undef SOBJ_ISFANCY 
+#undef SOBJ_BADARRAY 
+#undef SOBJ_TOOMANY 
+#undef SOBJ_LISTTUP 
+
 
 	/* Must have some kind of fancy indexing if we are here */
 	/* indexobj is either a list, an arrayobject, or a tuple 
