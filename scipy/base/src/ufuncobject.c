@@ -942,6 +942,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                         if (mps[i] == NULL) return -1;
                 }
 
+
 		/* reset types for outputs that are equivalent 
 		    -- no sense casting uselessly
 		*/
@@ -954,7 +955,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 				PyArray_DescrFromType(arg_types[i])->elsize;
 			if (PyArray_EquivalentTypes(&atype, &ntype)) {
 				arg_types[i] = PyArray_TYPE(mps[i]);
-			}			
+			}
 		}
 
 		/* still not the same -- or will we have to use buffers?*/
@@ -977,11 +978,10 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 				mps[i] = (PyArrayObject *)new;
 			}
 		}
-
+		
                 loop->iters[i] = (PyArrayIterObject *)		\
 			PyArray_IterNew((PyObject *)mps[i]);
                 if (loop->iters[i] == NULL) return -1;
-		
         }
 
 
@@ -1003,15 +1003,14 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 
                         loop->meth = BUFFER_UFUNCLOOP;
 			descr = PyArray_DescrFromType(arg_types[i]);
+			cntcast += descr->elsize;
                         if (i < self->nin) {
                                 loop->cast[i] = \
 					mps[i]->descr->cast[arg_types[i]];
-				cntcast += descr->elsize;
 			}
                         else {
                                 loop->cast[i] = descr->\
 					cast[mps[i]->descr->type_num];
-				cntcast += mps[i]->itemsize;
 			}
 
                 }
@@ -1113,15 +1112,18 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		char *castptr;
 		int oldsize=0;
 		loop->buffer[0] = (char *)malloc(loop->bufsize*(cnt+cntcast));
+		/* fprintf(stderr, "Allocated buffer at %p of size %d, cnt=%d, cntcast=%d\n", loop->buffer[0], loop->bufsize * (cnt + cntcast), cnt, cntcast); */
 		if (loop->buffer[0] == NULL) return -1;
 		castptr = loop->buffer[0] + loop->bufsize*cnt;
 		for (i=0; i<self->nargs; i++) {
 			if (i > 0)
 				loop->buffer[i] = loop->buffer[i-1] + \
 					loop->bufsize * mps[i-1]->itemsize;
+			/* fprintf(stderr, "buffer[%d] = %p\n", i, loop->buffer[i]); */
 			if (loop->cast[i]) {
 				loop->castbuf[i] = castptr + 
 					loop->bufsize*oldsize;
+				/* fprintf(stderr, "castbuf[%d] = %p\n", i, loop->castbuf[i]); */
 #define _PyD PyArray_DescrFromType
 				oldsize = _PyD(arg_types[i])->elsize;
 #undef _PyD
@@ -1320,10 +1322,12 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		void **buffer = loop->buffer;
 		void **castbuf = loop->castbuf;
 		intp *steps = loop->steps;
+		Bool pyobject[MAX_ARGS];
 		
 		for (i=0; i<self->nargs; i++) {
 			copyswapn[i] = mps[i]->descr->copyswapn;
 			mpselsize[i] = mps[i]->itemsize;
+			pyobject[i] = (mps[i]->descr->type_num == PyArray_OBJECT);
 		}
 		/* Do generic buffered looping here (works for any kind of
 		   arrays):   Everything uses a buffer. 
@@ -1337,12 +1341,23 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
                     3. goto next position
 		*/                
 		fprintf(stderr, "BUFFER...%d\n", loop->size);
+		/*
+		for (i=0; i<self->nargs; i++) {
+			fprintf(stderr, "iters[%d]->dataptr = %p, %p of size %d\n", i, 
+				iters[i], iters[i]->ao->data, PyArray_NBYTES(iters[i]->ao));
+		}
+		*/
 		while (index < size) {
 			/*copy input data */
 			for (i=0; i<self->nin; i++) {
+				if (pyobject[i]) {
+					Py_INCREF(*((PyObject **)iters[i]->dataptr));
+				}
+				/*				fprintf(stderr, "index = %d, i=%d, writing to %p\n", index, i, dptr[i]); */
 				memcpy(dptr[i], iters[i]->dataptr,
 				       mpselsize[i]);
 				dptr[i] += mpselsize[i];
+				PyArray_ITER_NEXT(iters[i]);
 			}
 			bufcnt++;
 			index++; 
@@ -1351,6 +1366,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 				
 				for (i=0; i<self->nin; i++) {
 					if (swap[i]) {
+						/* fprintf(stderr, "swapping...\n");*/
 						copyswapn[i](buffer[i], NULL,
 							     bufcnt, 1, 
 							     mpselsize[i]);
@@ -1377,11 +1393,17 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 							      NULL, NULL);
 					}
 					if (swap[i]) {
+						/* fprintf(stderr, "swapping back...\n"); */
 						copyswapn[i](buffer[i], NULL,
 							     bufcnt, 1, 
 							     mpselsize[i]);
 					}
 					for (temp = 0; temp < bufcnt; temp++) {
+						/* fprintf(stderr, "temp=%d, i=%d; reading from %p\n", temp, i, dptr[i]);*/
+						if (pyobject[i]) {
+							Py_XDECREF(*((PyObject **)iters[i]->dataptr));
+							Py_INCREF(*((PyObject **)dptr[i]));
+						}
 						memcpy(iters[i]->dataptr,
 						       dptr[i], mpselsize[i]);
 						PyArray_ITER_NEXT(iters[i]);
@@ -1390,17 +1412,13 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 				}
 				bufcnt = 0;
 				for (i=0; i<self->nargs; i++) 
-					dptr[i] = loop->buffer[i];
+					dptr[i] = buffer[i];
 				
 			} 
-
-			for (i=0; i<self->nin; i++) {
-				PyArray_ITER_NEXT(iters[i]);
-			}
 		}
 	}
 	}	
-
+	
 	END_THREADS
 	
         Py_DECREF(loop);

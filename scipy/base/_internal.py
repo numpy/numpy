@@ -3,9 +3,9 @@ from multiarray import _flagdict
 
 _defflags = _flagdict.keys()
 
-_setable = ['WRITEABLE', 'NOTSWAPPED', 'UPDATEIFCOPY', 'ALIGNED',
-            'W','N','U','A']
-_setable2 = ['write','swap','uic','align']*2
+_setable = ['WRITEABLE', 'NOTSWAPPED', 'SWAPPED', 'UPDATEIFCOPY', 'ALIGNED',
+            'W','N','S','U','A']
+_setable2 = ['write','swap','swap','uic','align']*2
 _firstltr = {'W':'WRITEABLE',
              'N':'NOTSWAPPED',
              'A':'ALIGNED',
@@ -77,7 +77,7 @@ class flagsobj(dict):
         for k, name in enumerate(_setable):
             if item == name:
                 kwds[_setable2[k]] = val
-        if (item == 'NOTSWAPPED'):
+        if (item == 'NOTSWAPPED' or item == 'N'):
             kwds['swap'] = not val
 
         # now actually update array flags
