@@ -30,7 +30,7 @@ def mintypecode(typechars,typeset='GDFgdf',default='d'):
     applied.
     """
     typecodes = [(type(t) is type('') and t) or asarray(t).dtypechar\
-                 for t in typecodes]
+                 for t in typechars]
     intersection = [t for t in typecodes if t in typeset]
     if not intersection:
        return default
@@ -93,8 +93,15 @@ def nan_to_num(x):
         t = obj2dtype(type(x))
     if issubclass(t, _nx.complexfloating):
         y = nan_to_num(x.real) + 1j * nan_to_num(x.imag)
+    elif issubclass(t, _nx.integer):
+        y = array(x)
     else:   
         y = array(x)
+        if not y.shape:
+            y = array([x])
+            scalar = True
+        else:
+            scalar = False
         are_inf = isposinf(y)
         are_neg_inf = isneginf(y)
         are_nan = isnan(y)
@@ -102,6 +109,8 @@ def nan_to_num(x):
         y[are_nan] = 0
         y[are_inf] = maxf
         y[are_neg_inf] = minf
+        if scalar:
+            y = y[0]
     return y
 
 #-----------------------------------------------------------------------------
@@ -113,7 +122,7 @@ def real_if_close(a,tol=100):
     if tol > 1:
         import getlimits
         f = getlimits.finfo(a.dtype)
-        tol = f.epsilon * tol
+        tol = f.eps * tol
     if _nx.allclose(a.imag, 0, atol=tol):
         a = a.real
     return a

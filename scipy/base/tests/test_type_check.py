@@ -33,11 +33,11 @@ class test_mintypecode(ScipyTestCase):
         assert_equal(mintypecode('fD'),'D')
         assert_equal(mintypecode('df'),'d')
         assert_equal(mintypecode('dd'),'d')
-        assert_equal(mintypecode('dF',savespace=1),'F')
+        #assert_equal(mintypecode('dF',savespace=1),'F')
         assert_equal(mintypecode('dF'),'D')
         assert_equal(mintypecode('dD'),'D')
         assert_equal(mintypecode('Ff'),'F')
-        assert_equal(mintypecode('Fd',savespace=1),'F')
+        #assert_equal(mintypecode('Fd',savespace=1),'F')
         assert_equal(mintypecode('Fd'),'D')
         assert_equal(mintypecode('FF'),'F')
         assert_equal(mintypecode('FD'),'D')
@@ -48,7 +48,7 @@ class test_mintypecode(ScipyTestCase):
 
     def check_default_3(self):
         assert_equal(mintypecode('fdF'),'D')
-        assert_equal(mintypecode('fdF',savespace=1),'F')
+        #assert_equal(mintypecode('fdF',savespace=1),'F')
         assert_equal(mintypecode('fdD'),'D')
         assert_equal(mintypecode('fFD'),'D')
         assert_equal(mintypecode('dFD'),'D')
@@ -57,7 +57,7 @@ class test_mintypecode(ScipyTestCase):
         assert_equal(mintypecode('ifF'),'F')
         assert_equal(mintypecode('ifD'),'D')
         assert_equal(mintypecode('idF'),'D')
-        assert_equal(mintypecode('idF',savespace=1),'F')
+        #assert_equal(mintypecode('idF',savespace=1),'F')
         assert_equal(mintypecode('idD'),'D')
         
 class test_isscalar(unittest.TestCase):
