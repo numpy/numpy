@@ -138,6 +138,7 @@ def configuration(parent_package='',top_path=None):
             join('src','arraymethods.c'),
             join('src','scalartypes.inc.src'),
             join('src','arraytypes.inc.src'),
+            join('include','scipy','*object.h')
             ]
 
     config.add_extension('multiarray',

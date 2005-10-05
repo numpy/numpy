@@ -15,12 +15,14 @@ def configuration(parent_package='',top_path=None):
     #blas_info = {}
     def get_dotblas_sources(ext, build_dir):
         if blas_info:
-            return ext.depends
+            return ext.depends[:1]
         return None # no extension module will be built
 
     config.add_extension('_dotblas',
                          sources = [get_dotblas_sources],
-                         depends=[join('blasdot','_dotblas.c')],
+                         depends=[join('blasdot','_dotblas.c'),
+                                  join('blasdot','cblas.h'),
+                                  ],
                          include_dirs = ['blasdot'],
                          extra_info = blas_info
                          )
@@ -38,6 +40,10 @@ def configuration(parent_package='',top_path=None):
                                    'distributions.c', 'gamma.c', 'polevl.c', 
                                    'isnan.c', 'const.c']],
                          libraries=['m'],
+                         depends = [join('mtrand','*.h'),
+                                    join('mtrand','*.pyx'),
+                                    join('mtrand','*.pxi'),
+                                    ]
                         )
 
     # Configure lapack_lite

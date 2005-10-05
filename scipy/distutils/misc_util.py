@@ -554,7 +554,6 @@ class Configuration:
                 new_v = self._fix_paths(v)
                 ext_args[k] = new_v
 
-
         # Resolve out-of-tree dependencies
         libraries = ext_args.get('libraries',[])
         libnames = []
