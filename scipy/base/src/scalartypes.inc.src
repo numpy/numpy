@@ -196,6 +196,16 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 			Py_DECREF(tup);
 			if (arr == NULL) return NULL;
                         ret = PyNumber_@PYNAME@(m1, arr);
+			if (ret==NULL) {
+				PyObject *newarr;
+				PyErr_Clear();
+				/* Convert object to Array scalar and try again */
+				newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
+				if (newarr!=NULL) {
+					ret = newarr->ob_type->tp_as_number->nb_@name@(m1, newarr);
+					Py_DECREF(newarr);
+				}
+			}
 			Py_DECREF(arr);
 		}
 		return ret;
@@ -218,6 +228,16 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 						     "toscalar");
 			Py_DECREF(tup);
 			ret = PyNumber_@PYNAME@(arr,m2);
+			if (ret==NULL) {
+				PyObject *newarr;
+				PyErr_Clear();
+				/* Convert object to Array and try again */
+				newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
+				if (newarr!=NULL) {
+					ret = newarr->ob_type->tp_as_number->nb_@name@(newarr, m2);
+					Py_DECREF(newarr);
+				}
+			}
 			Py_DECREF(arr);
 		}
 		return ret;

@@ -4544,7 +4544,12 @@ _array_find_type(PyObject *op, PyArray_Typecode *minitype,
 		goto finish;
         }
 	
-        if (PyInt_Check(op)) {
+	if (PyBool_Check(op)) {
+		chktype = PyArray_BOOL;
+		chksize = sizeof(Bool);
+		goto finish;		
+	}
+        else if (PyInt_Check(op)) {
 		chktype = PyArray_LONG;
 		chksize = sizeof(long);
 		goto finish;
