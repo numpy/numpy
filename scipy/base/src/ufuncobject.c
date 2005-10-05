@@ -678,7 +678,7 @@ select_types(PyUFuncObject *self, int *arg_types,
 
 	*data = self->data[i];
 	*function = self->functions[i];
-	
+
 	return 0;
 }
 
@@ -908,6 +908,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 				PyErr_SetString(PyExc_TypeError, 
 						"return arrays must be "\
 						"of ArrayType");
+				Py_DECREF(mps[i]);
 				return -1;
 			}
                 }
@@ -915,11 +916,13 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 					  loop->dimensions, loop->nd)) {
                         PyErr_SetString(PyExc_ValueError, 
                                         "invalid return array shape");
+			Py_DECREF(mps[i]);
                         return -1;
                 }
                 if (!PyArray_ISWRITEABLE(mps[i])) {
                         PyErr_SetString(PyExc_ValueError, 
                                         "return array is not writeable");
+			Py_DECREF(mps[i]);
                         return -1;
                 }
         }
@@ -927,6 +930,8 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         /* construct any missing return arrays and make output iterators */
         
         for (i=self->nin; i<self->nargs; i++) {
+		PyArray_Typecode ntype = {PyArray_NOTYPE, 0, 0};
+
                 if (mps[i] == NULL) {
                         mps[i] = (PyArrayObject *)PyArray_New(subtype,
                                                               loop->nd, 
@@ -937,9 +942,46 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                         if (mps[i] == NULL) return -1;
                 }
 
-                loop->iters[i] = (PyArrayIterObject *)\
+		/* reset types for outputs that are equivalent 
+		    -- no sense casting uselessly
+		*/
+		if (mps[i]->descr->type_num != arg_types[i]) {
+			PyArray_Typecode atype = {PyArray_NOTYPE, 0, 0};
+			ntype.type_num = PyArray_TYPE(mps[i]);
+			ntype.itemsize = PyArray_ITEMSIZE(mps[i]);
+			atype.type_num = arg_types[i];
+			atype.itemsize = \
+				PyArray_DescrFromType(arg_types[i])->elsize;
+			if (PyArray_EquivalentTypes(&atype, &ntype)) {
+				arg_types[i] = PyArray_TYPE(mps[i]);
+			}			
+		}
+
+		/* still not the same -- or will we have to use buffers?*/
+		if (mps[i]->descr->type_num != arg_types[i] ||
+		    !PyArray_ISBEHAVED_RO(mps[i])) {
+			if (loop->size < loop->bufsize) {
+				PyObject *new;
+				/* Copy the array to a temporary copy 
+				   and set the UPDATEIFCOPY flag
+				*/
+				ntype.type_num = arg_types[i];
+				ntype.itemsize = 0;
+				new = PyArray_FromAny((PyObject *)mps[i], 
+						      &ntype, 0, 0,
+						      FORCECAST | 
+						      BEHAVED_FLAGS_RO |
+						      UPDATEIFCOPY);
+				if (new == NULL) return -1;
+				Py_DECREF(mps[i]);
+				mps[i] = (PyArrayObject *)new;
+			}
+		}
+
+                loop->iters[i] = (PyArrayIterObject *)		\
 			PyArray_IterNew((PyObject *)mps[i]);
                 if (loop->iters[i] == NULL) return -1;
+		
         }
 
 
@@ -1294,7 +1336,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 			  d. copy output buffer back to output arrays.
                     3. goto next position
 		*/                
-		/* fprintf(stderr, "BUFFER...%d\n", loop->size);*/
+		fprintf(stderr, "BUFFER...%d\n", loop->size);
 		while (index < size) {
 			/*copy input data */
 			for (i=0; i<self->nin; i++) {
@@ -2290,18 +2332,29 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 	
 	/* wrap outputs */
 	for (i=0; i<self->nout; i++) {
+		int j=self->nin+i;
+		/* check to see if any UPDATEIFCOPY flags are set 
+		   which meant that a temporary output was generated 
+		*/
+		if (mps[j]->flags & UPDATEIFCOPY) {
+			PyObject *old = mps[j]->base;
+			Py_INCREF(old);   /* we want to hang on to this */
+			Py_DECREF(mps[j]); /* should trigger the copy 
+					      back into old */
+			mps[j] = (PyArrayObject *)old;
+		}
 		if (obj != NULL) {
 			res = PyObject_CallMethod(obj, "__array_wrap__",
-						  "O", mps[self->nin+i]);
+						  "O", mps[j]);
 			if (res == NULL) PyErr_Clear();
 			else if (res == Py_None) Py_DECREF(res);
 			else {
-				Py_DECREF(mps[self->nin+i]);
+				Py_DECREF(mps[j]);
 				retobj[i] = res;
 				continue;
 			}
 		}
-		retobj[i] = PyArray_Return(mps[self->nin+i]);
+		retobj[i] = PyArray_Return(mps[j]);
 	}
 	
 	if (self->nout == 1) { 

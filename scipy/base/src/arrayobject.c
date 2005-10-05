@@ -1164,8 +1164,10 @@ array_dealloc(PyArrayObject *self) {
                         ((PyArrayObject *)self->base)->flags |= WRITEABLE;
 			Py_INCREF(self); /* hold on to self in next call */
                         PyArray_CopyInto((PyArrayObject *)self->base, self);
+			/* Don't need to DECREF -- because we are deleting
+			   self already... */
 		}
-		/* Other wise base is pointing to something that we need
+		/* In any case base is pointing to something that we need
 		   to DECREF -- either a view or a buffer object */
                 Py_DECREF(self->base);
         }
@@ -4905,6 +4907,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 	int copy = 0;
 	int arrflags;
 	PyArray_Typecode oldtype={PyArray_TYPE(arr),PyArray_ITEMSIZE(arr),0};
+	char *msg = "Cannot copy-back to a read-only array.";
 	
 	if (type == PyArray_NOTYPE) type = arr->descr->type_num;
 	if (itemsize == 0) itemsize = arr->itemsize;
@@ -4927,9 +4930,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 		if (copy) {
                         if ((flags & UPDATEIFCOPY) && \
                             (!PyArray_ISWRITEABLE(arr))) {
-                                PyErr_SetString(PyExc_ValueError,
-                                                "Cannot copy-back to a read-"\
-                                                "only array.");
+                                PyErr_SetString(PyExc_ValueError, msg);
                                 return NULL;
                         }
 			ret = (PyArrayObject *)\
@@ -4965,8 +4966,19 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 		   behavior with Python scalars */
 		if (flags & FORCECAST || PyArray_NDIM(arr)==0 ||
 		    PyArray_CanCastSafely(PyArray_TYPE(arr), type)) {
+                        if ((flags & UPDATEIFCOPY) && \
+                            (!PyArray_ISWRITEABLE(arr))) {
+                                PyErr_SetString(PyExc_ValueError, msg);
+                                return NULL;
+                        }
 			ret = (PyArrayObject *)\
 				PyArray_CastToType(arr, typecode);
+			if (flags & UPDATEIFCOPY)  {
+				ret->flags |= UPDATEIFCOPY;
+				ret->base = (PyObject *)arr;
+                                PyArray_FLAGS(ret->base) &= ~WRITEABLE;
+				Py_INCREF(arr);
+			}
 		}
 		else {
 			PyErr_SetString(PyExc_TypeError, 
