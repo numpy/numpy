@@ -28,7 +28,7 @@ def apply_along_axis(func1d,axis,arr,*args):
     i[axis] = slice(None,None)
     outshape = asarray(arr.shape).take(indlist)
     i.put(indlist, ind)
-    res = func1d(arr[tuple(i)],*args)
+    res = func1d(arr[tuple(i.tolist())],*args)
     #  if res is a number, then we have a smaller output array
     if isscalar(res):
         outarr = zeros(outshape,asarray(res).dtypechar)
@@ -44,7 +44,7 @@ def apply_along_axis(func1d,axis,arr,*args):
                 ind[n] = 0
                 n -= 1
             i.put(indlist,ind)
-            res = func1d(arr[tuple(i)],*args)
+            res = func1d(arr[tuple(i.tolist())],*args)
             outarr[ind] = res
             k += 1
         return outarr
@@ -54,7 +54,7 @@ def apply_along_axis(func1d,axis,arr,*args):
         outshape = list(shape(arr))
         outshape[axis] = len(res)
         outarr = zeros(outshape,asarray(res).dtypechar)
-        outarr[tuple(i)] = res
+        outarr[tuple(i.tolist())] = res
         k = 1
         while k < Ntot:
             # increment the index
@@ -65,8 +65,8 @@ def apply_along_axis(func1d,axis,arr,*args):
                 ind[n] = 0
                 n -= 1
             i.put(indlist,ind)
-            res = func1d(arr[tuple(i)],*args)
-            outarr[tuple(i)] = res
+            res = func1d(arr[tuple(i.tolist())],*args)
+            outarr[tuple(i.tolist())] = res
             k += 1
         return outarr
         
