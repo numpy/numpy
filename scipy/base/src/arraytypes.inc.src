@@ -1571,7 +1571,6 @@ PyArray_DescrFromType(int type) {
 		return userdescrs[type-PyArray_USERDEF];
 	} 
 	else {
-		fprintf(stderr, "Getting Descr from character code...\n");
 		switch(type) {
                 case PyArray_INTPLTR: return descrs[PyArray_INTP];
 		case PyArray_DOUBLELTR: return descrs[PyArray_DOUBLE];
