@@ -3220,8 +3220,11 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 		self->flags |= OWN_DATA;
 
 		/* It is bad to have unitialized OBJECT pointers */
-		if (type_num == PyArray_OBJECT) {
-			memset(data, '\0', sd);
+		/* We shouldn't need to check for the OBJECT Letter
+		   but perhaps it's best. */
+		if (type_num == PyArray_OBJECT || \
+		    type_num == PyArray_OBJECTLTR) {
+			memset(data, 0, sd);
 		}
 	}
 	else {
@@ -4582,7 +4585,7 @@ Assign_Array(PyArrayObject *self, PyObject *v)
                 {
                         e=PySequence_GetItem(v,l);
                         if (e == NULL) return -1; 
-                        r = PySequence_SetItem((PyObject*)self,l,e);
+			r = PySequence_SetItem((PyObject*)self,l,e);
                         Py_DECREF(e);
                         if(r == -1) return -1;
                 }
@@ -4667,6 +4670,7 @@ Array_FromSequence(PyObject *s, PyArray_Typecode *typecode, int min_depth,
 				      type, NULL, NULL,
 				      itemsize, 
 				      typecode->fortran, NULL);
+
         PyDimMem_FREE(d);
         if(!r) return NULL;
         if(Assign_Array(r,s) == -1) {

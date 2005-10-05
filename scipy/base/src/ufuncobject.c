@@ -1230,7 +1230,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		/* Everything is notswapped, aligned and of the 
 		   right type but not contiguous. -- Almost as fast.
 		*/
-                fprintf(stderr, "NOBUFFER...%d\n", loop->size);
+                /* fprintf(stderr, "NOBUFFER...%d\n", loop->size);*/
 		while (loop->index < loop->size) {
 			for (i=0; i<self->nargs; i++) 
 				loop->bufptr[i] = loop->iters[i]->dataptr;
@@ -1282,7 +1282,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 			  d. copy output buffer back to output arrays.
                     3. goto next position
 		 */                
-		fprintf(stderr, "BUFFER...%d\n", loop->size);
+		/* fprintf(stderr, "BUFFER...%d\n", loop->size);*/
 		while (index < size) {
 			/*copy input data */
 			for (i=0; i<self->nin; i++) {

@@ -2261,14 +2261,15 @@ PyArray_Put(PyArrayObject *self, PyObject *indices0, PyObject* values0)
         if (indices == NULL) goto fail;
         ni = PyArray_SIZE(indices);
 
-        values = (PyArrayObject *)PyArray_ContiguousFromObject(values0, 
-                                                               self->descr->type, 0, 0);
+        values = (PyArrayObject *)\
+		PyArray_ContiguousFromObject(values0, self->descr->type_num, 
+					     0, 0);
         if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);
         if (nv > 0) { /* nv == 0 for a null array */
                 for(i=0; i<ni; i++) {
                         src = values->data + chunk * (i % nv);
-                        tmp = ((long *)(indices->data))[i];
+                        tmp = ((intp *)(indices->data))[i];
                         if (tmp < 0) tmp = tmp+max_item;
                         if ((tmp < 0) || (tmp >= max_item)) {
                                 PyErr_SetString(PyExc_IndexError, "Index out of range for array");
