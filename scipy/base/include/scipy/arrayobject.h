@@ -881,6 +881,7 @@ typedef struct {
 #define tMAX(a,b,typ) {typ _x_=(a); typ _y_=(b); _x_>_y_ ? _x_ : _y_}
 #define tMIN(a,b,typ) {typ _x_=(a); typ _y_=(b); _x_<_y_ ? _x_ : _y_}
 
+        /*  This needs to be check on a threaded system 
 #if defined(ALLOW_THREADS)
 #define BEGIN_THREADS Py_BEGIN_ALLOW_THREADS
 #define END_THREADS   Py_END_ALLOW_THREADS
@@ -889,13 +890,15 @@ typedef struct {
 #define ALLOW_C_API      __save__ = PyGILState_Ensure();
 #define DISABLE_C_API    PyGILState_Release(__save__);
 #else
+        */
 #define BEGIN_THREADS
 #define END_THREADS
 #define END_THREADS_FAIL
 #define ALLOW_C_API_DEF
 #define	ALLOW_C_API    
 #define	DISABLE_C_API  
-#endif
+        /*#endif
+        */
 
 typedef struct {
         PyObject_HEAD

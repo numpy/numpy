@@ -16,7 +16,7 @@ Brigham Young University
 
 maintainer email:  oliphant.travis@ieee.org
 
-Numarray design by 
+Numarray design (which provided guidance) by 
 Space Science Telescope Institute 
   (J. Todd Miller, Perry Greenfield, Rick White)
 
@@ -36,7 +36,7 @@ Space Science Telescope Institute
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
-static int
+static intp
 PyArray_PyIntAsIntp(PyObject *o)
 {
 	longlong long_value = -1;
@@ -1669,6 +1669,15 @@ array_subscript(PyArrayObject *self, PyObject *op)
         PyArrayObject *other;
 	PyArrayMapIterObject *mit;
 
+        if (PyArray_IsScalar(op, Integer) || PyInt_Check(op) || \
+            PyLong_Check(op)) {
+                intp value;
+                value = PyArray_PyIntAsIntp(op);
+                if (PyErr_Occurred())
+                        PyErr_Clear();
+                else if ((value <= MAX_INT) || (value >= -MAX_INT))
+                        return array_item(self, (int) value);
+        }
 
 	if (PyArrayMapIter_Check(op)) {
 		mit = (PyArrayMapIterObject *)op;
