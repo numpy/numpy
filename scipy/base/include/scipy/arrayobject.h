@@ -1099,8 +1099,11 @@ typedef struct {
 #define PyTypeNum_ISUSERDEF(type) ((type >= PyArray_USERDEF) && \
 				   (type < PyArray_USERDEF+\
 				    PyArray_NUMUSERTYPES))
-				   
 
+#define PyTypeNum_ISEXTENDED(type) (((type >= PyArray_STRING) &&   \
+				     (type <= PyArray_VOID)) ||	   \
+				    (type >= PyArray_USERDEF))
+				    
 #define PyTypeNum_ISOBJECT(type) ((type) == PyArray_OBJECT)
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
@@ -1114,6 +1117,7 @@ typedef struct {
 #define PyArray_ISPYTHONTYPE(obj) PyTypeNum_ISPYTHONTYPE(PyArray_TYPE(obj))
 #define PyArray_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
 #define PyArray_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyArray_TYPE(obj))
+#define PyArray_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyArray_TYPE(obj))
 #define PyArray_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyArray_TYPE(obj))
 
 /* Object arrays ignore notswapped flag */

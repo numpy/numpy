@@ -1,0 +1,54 @@
+
+
+X.flat returns an indexable 1-D iterator (mostly similar to an array but always 1-d)
+
+long(<>)     -->  pylong(<>)  if from Numeric * was changed to from scipy.base import *
+
+.typecode()  -->  .dtypechar
+
+.iscontiguous() --> .flags['CONTIGUOUS']
+
+.byteswapped() -> .byteswap()
+
+.itemsize() -> .itemsize
+
+If you used typecode characters:
+
+'c' -> 'S1'
+'b' -> 'B'
+'1' -> 'b'
+'s' -> 'h'
+'w' -> 'H'
+'u' -> 'I'
+
+
+C -level
+
+some API calls that used to take PyObject * now take PyArrayObject * (this should only cause warnings during compile and not actual problems). 
+  PyArray_Take 
+
+These commands now return a buffer that must be freed once it is used
+using PyMemData_FREE(ptr) or PyMemData_XFREE(ptr);
+
+a->descr->zero       -->   PyArray_Zero(a)
+a->descr->one        -->   PyArray_One(a)
+
+Numeric/arrayobject.h  -->  scipy/arrayobject.h
+
+
+# These will actually work and are defines for PyArray_BYTE, 
+#   but you really should change it in your code
+PyArray_CHAR         -->  PyArray_BYTE  (or PyArray_STRING which is more flexible)  
+PyArray_SBYTE        -->  PyArray_BYTE
+
+Any uses of character codes will need adjusting....
+use PyArray_XXXLTR  where XXX is the name of the type.
+
+
+If you used function pointers directly (why did you do that?),
+the arguments have changed. 
+
+a->descr->cast[i](fromdata, fromstep, todata, tostep, n)
+a->descr->cast[i](fromdata, todata, n, PyArrayObject *in, PyArrayObject *out)
+
+
