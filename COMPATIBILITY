@@ -50,5 +50,7 @@ the arguments have changed.
 
 a->descr->cast[i](fromdata, fromstep, todata, tostep, n)
 a->descr->cast[i](fromdata, todata, n, PyArrayObject *in, PyArrayObject *out)
+   anything but single-stepping is not supported by this function
+   use the PyArray_CastXXXX functions.
 
 
