@@ -99,7 +99,7 @@ def apply_over_axes(func, a, axes):
     return val
 
 def expand_dims(a, axis):
-    """Expand the shape of a by including NewAxis before given axis.
+    """Expand the shape of a by including newaxis before given axis.
     """
     a = asarray(a)
     shape = a.shape
@@ -152,7 +152,7 @@ def atleast_2d(*arys):
         if len(ary.shape) == 0:
             result = ary.reshape(1,1)
         elif len(ary.shape) == 1: 
-            result = ary[NewAxis,:]
+            result = ary[newaxis,:]
         else: 
             result = ary
         res.append(result)
@@ -182,9 +182,9 @@ def atleast_3d(*arys):
         if len(ary.shape) == 0:
             result = ary.reshape(1,1,1)
         elif len(ary.shape) == 1:
-            result = ary[NewAxis,:,NewAxis]
+            result = ary[newaxis,:,newaxis]
         elif len(ary.shape) == 2:
-            result = ary[:,:,NewAxis]
+            result = ary[:,:,newaxis]
         else: 
             result = ary
         res.append(result)
