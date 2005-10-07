@@ -678,7 +678,7 @@ class vectorize:
 
 
 def round_(x, decimals=0):
-    """round_(m, decimals=0)  Rounds x to decimplas places.
+    """round_(m, decimals=0)  Rounds x to decimals places.
 
     Returns x if array is not floating point and rounds both the real
     and imaginary parts separately if array is complex.  Rounds in the
