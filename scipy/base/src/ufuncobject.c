@@ -91,7 +91,7 @@ PyUFunc_gg_g(char **args, intp *dimensions, intp *steps, void *func)
 
 
 static void 
-PyUFunc_FF_F_As_DD_D(char **args, int *dimensions, intp *steps, void *func) 
+PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func) 
 {
 	register int i;
 	intp is1=steps[0],is2=steps[1],os=steps[2];
@@ -109,7 +109,7 @@ PyUFunc_FF_F_As_DD_D(char **args, int *dimensions, intp *steps, void *func)
 }
 
 static void 
-PyUFunc_DD_D(char **args, int *dimensions, intp *steps, void *func)
+PyUFunc_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 {
 	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
@@ -125,7 +125,7 @@ PyUFunc_DD_D(char **args, int *dimensions, intp *steps, void *func)
 }
 
 static void 
-PyUFunc_FF_F(char **args, int *dimensions, intp *steps, void *func) 
+PyUFunc_FF_F(char **args, intp *dimensions, intp *steps, void *func) 
 {
 	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
@@ -141,7 +141,7 @@ PyUFunc_FF_F(char **args, int *dimensions, intp *steps, void *func)
 }
 
 static void 
-PyUFunc_GG_G(char **args, int *dimensions, intp *steps, void *func) 
+PyUFunc_GG_G(char **args, intp *dimensions, intp *steps, void *func) 
 {
 	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
@@ -159,7 +159,7 @@ PyUFunc_GG_G(char **args, int *dimensions, intp *steps, void *func)
 }
 
 static void 
-PyUFunc_OO_O(char **args, int *dimensions, intp *steps, void *func) 
+PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func) 
 {
 	int i, is1=steps[0],is2=steps[1],os=steps[2];
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
