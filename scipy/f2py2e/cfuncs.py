@@ -284,7 +284,6 @@ cppmacros['TRYPYARRAYTEMPLATE']="""\
 #else
 #define TRYPYARRAYTEMPLATECHAR
 #endif
-
 #if LP64
 #define TRYPYARRAYTEMPLATELONG case PyArray_LONG: *(long *)(arr->data)=*v; break;
 #else
@@ -294,6 +293,11 @@ cppmacros['TRYPYARRAYTEMPLATE']="""\
 /* XXX: need the corresponding numarray code here */
 #define TRYPYARRAYTEMPLATEOBJECT
 
+#elif defined(NDARRAY_VERSION)
+/* New SciPy */
+#define TRYPYARRAYTEMPLATECHAR case PyArray_STRING: *(char *)(arr->data)=*v; break;
+#define TRYPYARRAYTEMPLATELONG case PyArray_LONG: *(long *)(arr->data)=*v; break;
+#define TRYPYARRAYTEMPLATEOBJECT case PyArray_OBJECT: (arr->descr->setitem)(pyobj_from_ ## ctype ## 1(*v),arr->data); break;
 #else
 /* Numeric */
 
@@ -322,6 +326,28 @@ cppmacros['TRYPYARRAYTEMPLATE']="""\
 		case PyArray_SBYTE: *(signed char *)(arr->data)=*v; break;\\
 		case PyArray_SHORT: *(short *)(arr->data)=*v; break;\\
                 TRYPYARRAYTEMPLATEOBJECT\\
+	default: return -2;\\
+	};\\
+	return 1;
+#elif defined(NDARRAY_VERSION)
+#define TRYPYARRAYTEMPLATE(ctype,typecode) \\
+	PyArrayObject *arr = NULL;\\
+	if (!obj) return -2;\\
+	if (!PyArray_Check(obj)) return -1;\\
+	if (!(arr=(PyArrayObject *)obj)) {fprintf(stderr,\"TRYPYARRAYTEMPLATE:\");PRINTPYOBJERR(obj);return 0;}\\
+	if (arr->descr->type==typecode)  {*(ctype *)(arr->data)=*v; return 1;}\\
+	switch (arr->descr->type_num) {\\
+                TRYPYARRAYTEMPLATELONG\\
+		case PyArray_DOUBLE: *(double *)(arr->data)=*v; break;\\
+		case PyArray_INT: *(int *)(arr->data)=*v; break;\\
+		case PyArray_FLOAT: *(float *)(arr->data)=*v; break;\\
+		case PyArray_CDOUBLE: *(double *)(arr->data)=*v; break;\\
+		case PyArray_CFLOAT: *(float *)(arr->data)=*v; break;\\
+                TRYPYARRAYTEMPLATECHAR\\
+		case PyArray_UBYTE: *(unsigned char *)(arr->data)=*v; break;\\
+		case PyArray_SBYTE: *(signed char *)(arr->data)=*v; break;\\
+		case PyArray_SHORT: *(short *)(arr->data)=*v; break;\\
+                case PyArray_OBJECT: (arr->descr->setitem)(pyobj_from_ ## ctype ## 1(*v),arr->data, arr); break;\\
 	default: return -2;\\
 	};\\
 	return 1;
@@ -365,6 +391,8 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
 #ifdef NUMARRAY
 /* XXX: need the corresponding numarray code here */
 #define TRYCOMPLEXPYARRAYTEMPLATEOBJECT
+#elif defined(NDARRAY_VERSION)
+#define TRYCOMPLEXPYARRAYTEMPLATEOBJECT case PyArray_OBJECT: (arr->descr->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),arr->data, arr); break;
 #else
 #define TRYCOMPLEXPYARRAYTEMPLATEOBJECT case PyArray_OBJECT: (arr->descr->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),arr->data); break;
 #endif
@@ -395,7 +423,33 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
 		default: return -2;\\
 	};\\
 	return -1;
-#else
+#elif defined(NDARRAY_VERSION)
+#define TRYCOMPLEXPYARRAYTEMPLATE(ctype,typecode)\\
+	PyArrayObject *arr = NULL;\\
+	if (!obj) return -2;\\
+	if (!PyArray_Check(obj)) return -1;\\
+        if (!(arr=(PyArrayObject *)obj)) {fprintf(stderr,\"TRYCOMPLEXPYARRAYTEMPLATE:\");PRINTPYOBJERR(obj);return 0;}\\
+	if (arr->descr->type==typecode) {\\
+            *(ctype *)(arr->data)=(*v).r;\\
+            *(ctype *)(arr->data+sizeof(ctype))=(*v).i;\\
+            return 1;\\
+        }\\
+	switch (arr->descr->type_num) {\\
+		case PyArray_CDOUBLE: *(double *)(arr->data)=(*v).r;*(double *)(arr->data+sizeof(double))=(*v).i;break;\\
+		case PyArray_CFLOAT: *(float *)(arr->data)=(*v).r;*(float *)(arr->data+sizeof(float))=(*v).i;break;\\
+		case PyArray_DOUBLE: *(double *)(arr->data)=(*v).r; break;\\
+                TRYCOMPLEXPYARRAYTEMPLATELONG\\
+		case PyArray_FLOAT: *(float *)(arr->data)=(*v).r; break;\\
+		case PyArray_INT: *(int *)(arr->data)=(*v).r; break;\\
+		case PyArray_SHORT: *(short *)(arr->data)=(*v).r; break;\\
+                TRYCOMPLEXPYARRAYTEMPLATECHAR\\
+		case PyArray_UBYTE: *(unsigned char *)(arr->data)=(*v).r; break;\\
+		case PyArray_SBYTE: *(signed char *)(arr->data)=(*v).r; break;\\
+                case PyArray_OBJECT: (arr->descr->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),arr->data, arr); break;\\
+		default: return -2;\\
+	};\\
+	return -1;        
+#else        
 #define TRYCOMPLEXPYARRAYTEMPLATE(ctype,typecode)\\
 	PyArrayObject *arr = NULL;\\
 	if (!obj) return -2;\\

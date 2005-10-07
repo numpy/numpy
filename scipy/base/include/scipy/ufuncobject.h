@@ -157,8 +157,8 @@ typedef struct {
 
 
 #if defined(ALLOW_THREADS)
-#define LOOP_BEGIN_THREADS if (!(loop->obj)) _save = PyEval_SaveThread();
-#define LOOP_END_THREADS   if (!(loop->obj)) PyEval_RestoreThread(_save);
+#define LOOP_BEGIN_THREADS if (!(loop->obj)) {_save = PyEval_SaveThread();}
+#define LOOP_END_THREADS   if (!(loop->obj)) {PyEval_RestoreThread(_save);}
 #else
 #define LOOP_BEGIN_THREADS 
 #define LOOP_END_THREADS   
