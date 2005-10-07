@@ -10,7 +10,7 @@ import umath
 __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar',
            'isreal','nan_to_num','real','real_if_close',
-           'typename','asfarray','mintypecode']
+           'typename','asfarray','mintypecode','asscalar']
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
 
@@ -127,6 +127,9 @@ def real_if_close(a,tol=100):
         a = a.real
     return a
 
+
+def asscalar(a):
+    return a.toscalar()
 
 #-----------------------------------------------------------------------------
 

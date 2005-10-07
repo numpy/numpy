@@ -380,8 +380,8 @@ def getbufsize(size):
 seterr(where='builtin')
 setbufsize(UFUNC_BUFSIZE_DEFAULT,where='builtin')
 
-inf = PINF
-nan = NAN
+Inf = inf = infty = Infinity = PINF
+nan = NaN = NAN
 from oldnumeric import *
 
 
