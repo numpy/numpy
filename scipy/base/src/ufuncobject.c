@@ -1603,12 +1603,12 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 		}
 		loop->ret = (PyArrayObject *)				\
 			PyArray_New(aar->ob_type, aar->nd-1, loop_i, otype, 
-				    NULL, NULL, 0, 0, aar);
+				    NULL, NULL, 0, 0, (PyObject *)aar);
 		break;
 	case UFUNC_ACCUMULATE:
 		loop->ret = (PyArrayObject *)				\
 			PyArray_New(aar->ob_type, aar->nd, aar->dimensions, 
-				    otype, NULL, NULL, 0, 0, aar);
+				    otype, NULL, NULL, 0, 0, (PyObject *)aar);
 		break;
 	case UFUNC_REDUCEAT:
 		memcpy(loop_i, aar->dimensions, nd*sizeof(intp));
@@ -1616,7 +1616,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 		loop_i[axis] = ind_size; 
 		loop->ret = (PyArrayObject *)\
 			PyArray_New(aar->ob_type, aar->nd, loop_i, otype,
-				    NULL, NULL, 0, 0, aar);
+				    NULL, NULL, 0, 0, (PyObject *)aar);
 		if (loop->ret == NULL) goto fail;
 		if (ind_size == 0) {
 			loop->meth = ZERODIM_REDUCELOOP;
