@@ -105,6 +105,7 @@ typedef struct {
 	*/
 	intp steps[MAX_ARGS];
 
+        int obj;  /* This loop calls object functions */
 	
 } PyUFuncLoopObject;
 
@@ -150,7 +151,18 @@ typedef struct {
 	/* For copying small arrays */
 	PyObject *decref;
         
+        int obj;
+        
 } PyUFuncReduceObject;
+
+
+#if defined(ALLOW_THREADS)
+#define LOOP_BEGIN_THREADS if (!(loop->obj)) _save = PyEval_SaveThread();
+#define LOOP_END_THREADS   if (!(loop->obj)) PyEval_RestoreThread(_save);
+#else
+#define LOOP_BEGIN_THREADS 
+#define LOOP_END_THREADS   
+#endif
 
 #define PyUFunc_Unbounded 120
 #define PyUFunc_One 1
@@ -165,8 +177,6 @@ typedef struct {
 } PyUFunc_PyFuncData;
 
 
-
-
 #include "__ufunc_api.h"
 
 #define UFUNC_ERRMASK_NAME "_UFUNC_ERRMASK"
@@ -174,9 +184,10 @@ typedef struct {
 #define UFUNC_BUFSIZE_NAME "_UFUNC_BUFSIZE"
 
 #define UFUNC_CHECK_ERROR() \
-	if (PyErr_Occurred() || (loop->errormask &&			\
-	    PyUFunc_checkfperr(loop->errormask,				\
-			       loop->errobj)))				\
+	if ((loop->obj && PyErr_Occurred()) ||                          \
+            (loop->errormask &&                                         \
+             PyUFunc_checkfperr(loop->errormask,                        \
+                                loop->errobj)))				\
 		goto fail
 
 /* This code checks the IEEE status flags in a platform-dependent way */

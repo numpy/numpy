@@ -1675,8 +1675,16 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 value = PyArray_PyIntAsIntp(op);
                 if (PyErr_Occurred())
                         PyErr_Clear();
-                else if ((value <= MAX_INT) || (value >= -MAX_INT))
-                        return array_item(self, (int) value);
+                else if (value >= 0) {
+                        if (value <= MAX_INT)
+                                return array_item(self, (int) value);
+                }
+                else if (value < 0) {
+                        if (value >= -MAX_INT) {
+                                if (self->nd > 0) value += self->dimensions[0];
+                                return array_item(self, (int) value);
+                        }
+                }
         }
 
 	if (PyArrayMapIter_Check(op)) {
