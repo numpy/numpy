@@ -3,7 +3,7 @@ Discrete Fourier Transforms - helper.py
 """
 # Created by Pearu Peterson, September 2002
 
-__all__ = ['fftshift','ifftshift','fftfreq','rfftfreq']
+__all__ = ['fftshift','ifftshift','fftfreq']
 
 from scipy.base import asarray, concatenate, arange, take, \
 		array, integer
