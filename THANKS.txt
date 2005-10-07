@@ -1,6 +1,8 @@
 Travis Oliphant for the majority of code adaptation
-Jim Hugunin, Paul Dubois, Konrad Hinsen, David Ascher, and many others for Numeric on which the code is based.
-Perry Greenfield, J Todd Miller, Rick White, Paul Barrett for Numarray which gave much inspiration.
+Jim Hugunin, Paul Dubois, Konrad Hinsen, David Ascher, and many others for 
+    Numeric on which the code is based.
+Perry Greenfield, J Todd Miller, Rick White, Paul Barrett for Numarray
+    which gave much inspiration and showed the way forward.
 Pearu Peterson for f2py and distutils
 Eric Jones for weave
 Robert Kern for mtrand, bug fixes and help with distutils.
@@ -9,3 +11,4 @@ John Hunter for code snippets (from matplotlib)
 Chris Hanley for help with records.py, testing, and bug fixes.
 Travis Vaught and Joe Cooper for administration of scipy.org web site and SVN 
 Eric Firing for bugfixes.
+Arnd Baecker for 64-bit testing
