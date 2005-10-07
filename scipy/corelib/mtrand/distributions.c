@@ -773,3 +773,18 @@ double rk_triangular(rk_state *state, double left, double mode, double right)
       return right - sqrt((1.0 - U) * rightprod);  
     }
 }
+
+long rk_logseries(rk_state *state, double p)
+{
+    double q, r, U, V;
+    
+    r = log(1.0 - p);
+    
+    V = rk_double(state);
+    if (V >= p) return 1;
+    U = rk_double(state);
+    q = 1.0 - exp(r*U);
+    if (V <= q*q) return (long)floor(1 + log(V)/log(q));
+    if (V <= q) return 1;
+    return 2;
+}

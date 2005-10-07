@@ -170,6 +170,9 @@ extern long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sa
 /* Triangular distribution */
 extern double rk_triangular(rk_state *state, double left, double mode, double right);
 
+/* Logarithmic series distribution */
+extern long rk_logseries(rk_state *state, double p);
+
 #ifdef __cplusplus
 }
 #endif

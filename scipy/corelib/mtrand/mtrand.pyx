@@ -93,6 +93,7 @@ cdef extern from "distributions.h":
     long rk_zipf(rk_state *state, double a)
     long rk_geometric(rk_state *state, double p)
     long rk_hypergeometric(rk_state *state, long good, long bad, long sample)
+    long rk_logseries(rk_state *state, double p)
     
 ctypedef double (* rk_cont0)(rk_state *state)
 ctypedef double (* rk_cont1)(rk_state *state, double a)
@@ -170,7 +171,7 @@ cdef object cont3_array(rk_state *state, rk_cont3 func, object size, double a,
     cdef ArrayType array
     cdef long length
     cdef long i
-
+    
     if size is None:
         return func(state, a, b, c)
     else:
@@ -345,7 +346,7 @@ cdef class RandomState:
         self.set_state(state)
 
     def __reduce__(self):
-        return (_sp.stats.__RandomState_ctor, (), self.get_state())
+        return (_sp.random.__RandomState_ctor, (), self.get_state())
 
     # Basic distributions:
     def random_sample(self, size=None):
@@ -768,6 +769,17 @@ cdef class RandomState:
         return discnmN_array(self.internal_state, rk_hypergeometric, size,
             ngood, nbad, nsample)
 
+    def logseries(self, double p, size=None):
+        """Logarithmic series distribution.
+        
+        logseries(p, size=None)
+        """
+        if p < 0:
+            raise ValueError("p < 0")
+        elif p > 1:
+            raise ValueError("p > 1")
+        return discd_array(self.internal_state, rk_logseries, size, p)
+
     # Multivariate distributions:
     def multivariate_normal(self, mean, cov, size=None):
         """Return an array containing multivariate normally distributed random numbers
@@ -893,14 +905,16 @@ cdef class RandomState:
                 
     def permutation(self, object x):
         """Given an integer, return a shuffled sequence of integers >= 0 and 
-        < x.
+        < x; given a sequence, return a shuffled array copy.
 
         permutation(x)
         """
-        arr = _sp.arange(x)
+        if type(x) is int:
+            arr = _sp.arange(x)
+        else:
+            arr = _sp.array(x)
         self.shuffle(arr)
-        return arr
-
+        return arr    
 
 _rand = RandomState()
 get_state = _rand.get_state
@@ -943,6 +957,7 @@ poisson = _rand.poisson
 zipf = _rand.zipf
 geometric = _rand.geometric
 hypergeometric = _rand.hypergeometric
+logseries = _rand.logseries
 
 multivariate_normal = _rand.multivariate_normal
 multinomial = _rand.multinomial
