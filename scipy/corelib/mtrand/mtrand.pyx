@@ -79,10 +79,21 @@ cdef extern from "distributions.h":
     double rk_pareto(rk_state *state, double a)
     double rk_weibull(rk_state *state, double a)
     double rk_power(rk_state *state, double a)
+    double rk_laplace(rk_state *state, double loc, double scale)
+    double rk_gumbel(rk_state *state, double loc, double scale)
+    double rk_logistic(rk_state *state, double loc, double scale)
+    double rk_lognormal(rk_state *state, double mode, double sigma)
+    double rk_rayleigh(rk_state *state, double mode)
+    double rk_wald(rk_state *state, double mean, double scale)
+    double rk_triangular(rk_state *state, double left, double mode, double right)
+    
     long rk_binomial(rk_state *state, long n, double p)
     long rk_negative_binomial(rk_state *state, long n, double p)
     long rk_poisson(rk_state *state, double lam)
-
+    long rk_zipf(rk_state *state, double a)
+    long rk_geometric(rk_state *state, double p)
+    long rk_hypergeometric(rk_state *state, long good, long bad, long sample)
+    
 ctypedef double (* rk_cont0)(rk_state *state)
 ctypedef double (* rk_cont1)(rk_state *state, double a)
 ctypedef double (* rk_cont2)(rk_state *state, double a, double b)
@@ -90,6 +101,7 @@ ctypedef double (* rk_cont3)(rk_state *state, double a, double b, double c)
 
 ctypedef long (* rk_disc0)(rk_state *state)
 ctypedef long (* rk_discnp)(rk_state *state, long n, double p)
+ctypedef long (* rk_discnmN)(rk_state *state, long n, long m, long N)
 ctypedef long (* rk_discd)(rk_state *state, double a)
 
 
@@ -100,7 +112,7 @@ cdef extern from "initarray.h":
 # Initialize scipy
 import_array()
 
-import scipy
+import scipy as _sp
 
 cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
     cdef double *array_data
@@ -111,7 +123,7 @@ cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
     if size is None:
         return func(state)
     else:
-        array = <ArrayType>scipy.empty(size, scipy.Float64)
+        array = <ArrayType>_sp.empty(size, _sp.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -127,7 +139,7 @@ cdef object cont1_array(rk_state *state, rk_cont1 func, object size, double a):
     if size is None:
         return func(state, a)
     else:
-        array = <ArrayType>scipy.empty(size, scipy.Float64)
+        array = <ArrayType>_sp.empty(size, _sp.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -144,7 +156,7 @@ cdef object cont2_array(rk_state *state, rk_cont2 func, object size, double a,
     if size is None:
         return func(state, a, b)
     else:
-        array = <ArrayType>scipy.empty(size, scipy.Float64)
+        array = <ArrayType>_sp.empty(size, _sp.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -162,7 +174,7 @@ cdef object cont3_array(rk_state *state, rk_cont3 func, object size, double a,
     if size is None:
         return func(state, a, b, c)
     else:
-        array = <ArrayType>scipy.empty(size, scipy.Float64)
+        array = <ArrayType>_sp.empty(size, _sp.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -178,7 +190,7 @@ cdef object disc0_array(rk_state *state, rk_disc0 func, object size):
     if size is None:
         return func(state)
     else:
-        array = <ArrayType>scipy.empty(size, scipy.Int)
+        array = <ArrayType>_sp.empty(size, _sp.Int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -194,11 +206,28 @@ cdef object discnp_array(rk_state *state, rk_discnp func, object size, long n, d
     if size is None:
         return func(state, n, p)
     else:
-        array = <ArrayType>scipy.empty(size, scipy.Int)
+        array = <ArrayType>_sp.empty(size, _sp.Int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
             array_data[i] = func(state, n, p)
+        return array
+
+cdef object discnmN_array(rk_state *state, rk_discnmN func, object size, 
+    long n, long m, long N):
+    cdef long *array_data
+    cdef ArrayType array
+    cdef long length
+    cdef long i
+
+    if size is None:
+        return func(state, n, m, N)
+    else:
+        array = <ArrayType>_sp.empty(size, _sp.Int)
+        length = PyArray_SIZE(array)
+        array_data = <long *>array.data
+        for i from 0 <= i < length:
+            array_data[i] = func(state, n, m, N)
         return array
 
 cdef object discd_array(rk_state *state, rk_discd func, object size, double a):
@@ -210,7 +239,7 @@ cdef object discd_array(rk_state *state, rk_discd func, object size, double a):
     if size is None:
         return func(state, a)
     else:
-        array = <ArrayType>scipy.empty(size, scipy.Int)
+        array = <ArrayType>_sp.empty(size, _sp.Int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -285,7 +314,7 @@ cdef class RandomState:
         get_state() -> ('MT19937', int key[624], int pos)
         """
         cdef ArrayType state
-        state = <ArrayType>scipy.empty(624, scipy.Int)
+        state = <ArrayType>_sp.empty(624, _sp.Int)
         memcpy(<void*>(state.data), self.internal_state.key, 624*sizeof(long))
         return ('MT19937', state, self.internal_state.pos)
         
@@ -316,7 +345,7 @@ cdef class RandomState:
         self.set_state(state)
 
     def __reduce__(self):
-        return (scipy.stats.__RandomState_ctor, (), self.get_state())
+        return (_sp.stats.__RandomState_ctor, (), self.get_state())
 
     # Basic distributions:
     def random_sample(self, size=None):
@@ -360,7 +389,7 @@ cdef class RandomState:
         if size is None:
             return rk_interval(diff, self.internal_state)
         else:
-            array = <ArrayType>scipy.empty(size, scipy.Int)
+            array = <ArrayType>_sp.empty(size, _sp.Int)
             length = PyArray_SIZE(array)
             array_data = <long *>array.data
             for i from 0 <= i < length:
@@ -584,6 +613,82 @@ cdef class RandomState:
             raise ValueError("a <= 0")
         return cont1_array(self.internal_state, rk_power, size, a)
 
+    def laplace(self, double loc=0.0, double scale=1.0, size=None):
+        """Laplace distribution.
+        
+        laplace(loc=0.0, scale=1.0, size=None)
+        """
+        if scale <= 0.0:
+            raise ValueError("scale <= 0.0")
+        return cont2_array(self.internal_state, rk_laplace, size, loc, scale)
+    
+    def gumbel(self, double loc=0.0, double scale=1.0, size=None):
+        """Gumbel distribution.
+        
+        gumbel(loc=0.0, scale=1.0, size=None)
+        """
+        if scale <= 0.0:
+            raise ValueError("scale <= 0.0")
+        return cont2_array(self.internal_state, rk_gumbel, size, loc, scale)
+    
+    def logistic(self, double loc=0.0, double scale=1.0, size=None):
+        """Logistic distribution.
+        
+        logistic(loc=0.0, scale=1.0, size=None)
+        """
+        if scale <= 0.0:
+            raise ValueError("scale <= 0.0")
+        return cont2_array(self.internal_state, rk_logistic, size, loc, scale)
+
+    def lognormal(self, double mean=0.0, double sigma=1.0, size=None):
+        """Log-normal distribution.
+        
+        Note that the mean parameter is not the mean of this distribution, but 
+        the underlying normal distribution.
+        
+            lognormal(mean, sigma) <=> exp(normal(mean, sigma))
+        
+        lognormal(mean=0.0, sigma=1.0, size=None)
+        """
+        if sigma <= 0.0:
+            raise ValueError("sigma <= 0.0")
+        return cont2_array(self.internal_state, rk_lognormal, size, mean, sigma)
+    
+    def rayleigh(self, double mode, size=None):
+        """Rayleigh distribution.
+        
+        rayleigh(mode, size=None)
+        """
+        if mode <= 0.0:
+            raise ValueError("mode <= 0.0")
+        return cont1_array(self.internal_state, rk_rayleigh, size, mode)
+    
+    def wald(self, double mean, double scale, size=None):
+        """Wald (inverse Gaussian) distribution.
+        
+        wald(mean, scale, size=None)
+        """
+        if mean <= 0.0:
+            raise ValueError("mean <= 0.0")
+        elif scale <= 0.0:
+            raise ValueError("scale <= 0.0")
+        return cont2_array(self.internal_state, rk_wald, size, mean, scale)
+
+    def triangular(self, double left, double mode, double right, size=None):
+        """Triangular distribution starting at left, peaking at mode, and 
+        ending at right (left <= mode <= right).
+        
+        triangular(left, mode, right, size=None)
+        """
+        if left > mode:
+            raise ValueError("left > mode")
+        elif mode > right:
+            raise ValueError("mode > right")
+        elif left == right:
+            raise ValueError("left == right")
+        return cont3_array(self.internal_state, rk_triangular, size, left, 
+            mode, right)
+
     # Complicated, discrete distributions:
     def binomial(self, long n, double p, size=None):
         """Binomial distribution of n trials and p probability of success.
@@ -621,6 +726,48 @@ cdef class RandomState:
             raise ValueError("lam <= 0")
         return discd_array(self.internal_state, rk_poisson, size, lam)
 
+    def zipf(self, double a, size=None):
+        """Zipf distribution.
+        
+        zipf(a, size=None)
+        """
+        if a <= 1.0:
+            raise ValueError("a <= 1.0")
+        return discd_array(self.internal_state, rk_zipf, size, a)
+    
+    def geometric(self, double p, size=None):
+        """Geometric distribution with p being the probability of "success" on
+        an individual trial.
+        
+        geometric(p, size=None)
+        """
+        if p < 0.0:
+            raise ValueError("p < 0.0")
+        elif p > 1.0:
+            raise ValueError("p > 1.0")
+        return discd_array(self.internal_state, rk_geometric, size, p)
+    
+    def hypergeometric(self, long ngood, long nbad, long nsample, size=None):
+        """Hypergeometric distribution.
+        
+        Consider an urn with ngood "good" balls and nbad "bad" balls. If one 
+        were to draw nsample balls from the urn without replacement, then 
+        the hypergeometric distribution describes the distribution of "good" 
+        balls in the sample.
+        
+        hypergeometric(ngood, nbad, nsample, size=None)        
+        """
+        if ngood < 1:
+            raise ValueError("ngood < 1")
+        elif nbad < 1:
+            raise ValueError("nbad < 1")
+        elif ngood + nbad < nsample:
+            raise ValueError("ngood + nbad < nsample")
+        elif nsample < 1:
+            raise ValueError("nsample < 1")
+        return discnmN_array(self.internal_state, rk_hypergeometric, size,
+            ngood, nbad, nsample)
+
     # Multivariate distributions:
     def multivariate_normal(self, mean, cov, size=None):
         """Return an array containing multivariate normally distributed random numbers
@@ -640,8 +787,8 @@ cdef class RandomState:
         normal.
         """
         # Check preconditions on arguments
-        mean = scipy.array(mean)
-        cov = scipy.array(cov)
+        mean = _sp.array(mean)
+        cov = _sp.array(cov)
         if size is None:
             shape = []
         else:
@@ -660,8 +807,8 @@ cdef class RandomState:
         # Create a matrix of independent standard normally distributed random
         # numbers. The matrix has rows with the same length as mean and as
         # many rows are necessary to form a matrix of shape final_shape.
-        x = standard_normal(scipy.multiply.reduce(final_shape))
-        x.shape = (scipy.multiply.reduce(final_shape[0:len(final_shape)-1]),
+        x = standard_normal(_sp.multiply.reduce(final_shape))
+        x.shape = (_sp.multiply.reduce(final_shape[0:len(final_shape)-1]),
                    mean.shape[0])
         # Transform matrix of standard normals into matrix where each row
         # contains multivariate normals with the desired covariance.
@@ -669,11 +816,13 @@ cdef class RandomState:
         # Then the matrix products of the rows of x and A has the desired
         # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
         # decomposition of cov is such an A.
-        (u,s,v) = scipy.linalg.singular_value_decomposition(cov)
-        x = scipy.matrixmultiply(x*scipy.sqrt(s),v)
+        
+        # XXX: we really should be doing this by Cholesky decomposition
+        (u,s,v) = _sp.linalg.singular_value_decomposition(cov)
+        x = _sp.matrixmultiply(x*_sp.sqrt(s),v)
         # The rows of x now have the correct covariance but mean 0. Add
         # mean to each row. Then each row will have mean mean.
-        scipy.add(mean,x,x)
+        _sp.add(mean,x,x)
         x.shape = tuple(final_shape)
         return x
 
@@ -707,7 +856,7 @@ cdef class RandomState:
         else:
             shape = size + (d,)
 
-        multin = scipy.zeros(shape, scipy.Int)
+        multin = _sp.zeros(shape, _sp.Int)
         mnarr = <ArrayType>multin
         mnix = <long*>mnarr.data
         i = 0
@@ -748,7 +897,7 @@ cdef class RandomState:
 
         permutation(x)
         """
-        arr = scipy.arange(x)
+        arr = _sp.arange(x)
         self.shuffle(arr)
         return arr
 
@@ -780,10 +929,23 @@ vonmises = _rand.vonmises
 pareto = _rand.pareto
 weibull = _rand.weibull
 power = _rand.power
+laplace = _rand.laplace
+gumbel = _rand.gumbel
+logistic = _rand.logistic
+lognormal = _rand.lognormal
+rayleigh = _rand.rayleigh
+wald = _rand.wald
+triangular = _rand.triangular
+
 binomial = _rand.binomial
 negative_binomial = _rand.negative_binomial
 poisson = _rand.poisson
+zipf = _rand.zipf
+geometric = _rand.geometric
+hypergeometric = _rand.hypergeometric
+
 multivariate_normal = _rand.multivariate_normal
 multinomial = _rand.multinomial
+
 shuffle = _rand.shuffle
 permutation = _rand.permutation

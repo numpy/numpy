@@ -136,6 +136,40 @@ extern double rk_weibull(rk_state *state, double a);
 /* Power distribution via inversion (Devroye p. 262) */
 extern double rk_power(rk_state *state, double a);
 
+/* Laplace distribution */
+extern double rk_laplace(rk_state *state, double loc, double scale);
+
+/* Gumbel distribution */
+extern double rk_gumbel(rk_state *state, double loc, double scale);
+
+/* Logistic distribution */
+extern double rk_logistic(rk_state *state, double loc, double scale);
+
+/* Log-normal distribution */
+extern double rk_lognormal(rk_state *state, double mean, double sigma);
+
+/* Rayleigh distribution */
+extern double rk_rayleigh(rk_state *state, double mode);
+
+/* Wald distribution */
+extern double rk_wald(rk_state *state, double mean, double scale);
+
+/* Zipf distribution */
+extern long rk_zipf(rk_state *state, double a);
+
+/* Geometric distribution */
+extern long rk_geometric(rk_state *state, double p);
+extern long rk_geometric_search(rk_state *state, double p);
+extern long rk_geometric_inversion(rk_state *state, double p);
+
+/* Hypergeometric distribution */
+extern long rk_hypergeometric(rk_state *state, long good, long bad, long sample);
+extern long rk_hypergeometric_hyp(rk_state *state, long good, long bad, long sample);
+extern long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample);
+
+/* Triangular distribution */
+extern double rk_triangular(rk_state *state, double left, double mode, double right);
+
 #ifdef __cplusplus
 }
 #endif

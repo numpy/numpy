@@ -20,6 +20,27 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/* The implementations of rk_hypergeometric_hyp(), rk_hypergeometric_hrua(),
+ * and rk_triangular() were adapted from Ivan Frohne's rv.py which has this 
+ * license:
+ * 
+ *            Copyright 1998 by Ivan Frohne; Wasilla, Alaska, U.S.A.
+ *                            All Rights Reserved
+ *
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation for any purpose, free of charge, is granted subject to the
+ * following conditions:
+ *   The above copyright notice and this permission notice shall be included in
+ *   all copies or substantial portions of the software.
+ *
+ *   THE SOFTWARE AND DOCUMENTATION IS PROVIDED WITHOUT WARRANTY OF ANY KIND,
+ *   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS
+ *   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHOR
+ *   OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM OR DAMAGES IN A CONTRACT
+ *   ACTION, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *   SOFTWARE OR ITS DOCUMENTATION.
+ */
+
 #include <math.h>
 #include "distributions.h"
 #include "mconf.h"
@@ -526,4 +547,229 @@ double rk_weibull(rk_state *state, double a)
 double rk_power(rk_state *state, double a)
 {
     return pow(1 - exp(-rk_standard_exponential(state)), 1./a);
+}
+
+double rk_laplace(rk_state *state, double loc, double scale)
+{
+    double U;
+    
+    U = rk_double(state);
+    if (U < 0.5)
+    {
+        U = loc + scale * log(U + U);
+    } else 
+    {
+        U = loc - scale * log(2.0 - U - U);
+    }
+    return U;
+}
+
+double rk_gumbel(rk_state *state, double loc, double scale)
+{
+    double U;
+    
+    U = 1.0 - rk_double(state);
+    return loc - scale * log(-log(U));
+}
+
+double rk_logistic(rk_state *state, double loc, double scale)
+{
+    double U;
+    
+    U = rk_double(state);
+    return loc + scale * log(U/(1.0 - U));
+}
+
+double rk_lognormal(rk_state *state, double mean, double sigma)
+{
+    return exp(rk_normal(state, mean, sigma));
+}
+
+double rk_rayleigh(rk_state *state, double mode)
+{
+    return mode*sqrt(-2.0 * log(1.0 - rk_double(state)));
+}
+
+double rk_wald(rk_state *state, double mean, double scale)
+{
+    double U, X, Y;
+    double mu_2l;
+    
+    mu_2l = mean / (2*scale);
+    Y = rk_gauss(state);
+    Y = mean*Y*Y;
+    X = mean + mu_2l*(Y - sqrt(4*scale*Y + Y*Y));
+    U = rk_double(state);
+    if (U <= mean/(mean+X))
+    {
+        return X;
+    } else
+    {
+        return mean*mean/X;
+    }
+}
+
+long rk_zipf(rk_state *state, double a)
+{
+    double T, U, V;
+    long X;
+    double b;
+    
+    b = pow(2.0, a-1.0);
+    do
+    {
+        U = rk_double(state);
+        V = rk_double(state);
+        X = (long)floor(pow(U, -1.0/(a-1.0)));
+        T = pow(1.0 + 1.0/X, a-1.0);  
+    } while ((V *X*(T-1.0)/(b-1.0)) > (T/b));
+    return X;
+}
+
+long rk_geometric_search(rk_state *state, double p)
+{
+    double U;
+    long X;
+    double sum, prod, q;
+    
+    X = 1;
+    sum = prod = p;
+    q = 1.0 - p;
+    U = rk_double(state);
+    while (U > sum)
+    {
+        prod *= q;
+        sum += prod;
+        X++;
+    }
+    return X;
+}
+
+long rk_geometric_inversion(rk_state *state, double p)
+{
+    return (long)ceil(log(1.0-rk_double(state))/log(1.0-p));
+}
+
+long rk_geometric(rk_state *state, double p)
+{
+    if (p >= 0.333333333333333333333333)
+    {
+        return rk_geometric_search(state, p);
+    } else
+    {
+        return rk_geometric_inversion(state, p);
+    }
+}
+
+long rk_hypergeometric_hyp(rk_state *state, long good, long bad, long sample)
+{
+    long d1, K, Z;
+    double d2, U, Y;
+    
+    d1 = bad + good - sample;
+    d2 = (double)min(bad, good);
+    
+    Y = d2;
+    K = sample;
+    while (Y > 0.0)
+    {
+        U = rk_double(state);
+        Y -= (long)floor(U + Y/(d1 + K));
+        K--;
+        if (K == 0) break;
+    }
+    Z = (long)(d2 - Y);
+    if (bad > good) Z = sample - Z;
+    return Z;
+}
+
+/* D1 = 2*sqrt(2/e) */
+/* D2 = 3 - 2*sqrt(3/e) */
+#define D1 1.7155277699214135
+#define D2 0.8989161620588988
+long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample)
+{
+    long mingoodbad, maxgoodbad, popsize, m, d9;
+    double d4, d5, d6, d7, d8, d10, d11;
+    long Z;
+    double T, W, X, Y;
+    
+    mingoodbad = min(good, bad);
+    popsize = good + bad;
+    maxgoodbad = max(good, bad);
+    m = min(sample, popsize - sample);
+    d4 = ((double)mingoodbad) / popsize;
+    d5 = 1.0 - d4;
+    d6 = m*d4 + 0.5;
+    d7 = sqrt((popsize - m) * sample * d4 *d5 / (popsize-1) + 0.5);
+    d8 = D1*d7 + D2;
+    d9 = (long)floor((double)((m+1)*(mingoodbad+1))/(popsize+2));
+    d10 = (lgam(d9+1) + lgam(mingoodbad-d9+1) + lgam(m-d9+1) + 
+           lgam(maxgoodbad-m+d9+1));
+    d11 = min(min(m, mingoodbad)+1.0, floor(d6+16*d7));
+    /* 16 for 16-decimal-digit precision in D1 and D2 */
+    
+    while (1)
+    {
+        X = rk_double(state);
+        Y = rk_double(state);
+        W = d6 + d8*(Y- 0.5)/X;
+        
+        /* fast rejection: */
+        if ((W < 0.0) || (W >= d11)) continue;
+        
+        Z = (long)floor(W);
+        T = d10 - (lgam(Z+1) + lgam(mingoodbad-Z+1) + lgam(m-Z+1) +
+                   lgam(maxgoodbad-m+Z+1));
+        
+        /* fast acceptance: */
+        if ((X*(4.0-X)-3.0) <= T) break;
+        
+        /* fast rejection: */
+        if (X*(X-T) >= 1) continue;
+
+        if (2.0*log(X) <= T) break;  /* acceptance */
+    }
+    
+    /* this is a correction to HRUA* by Ivan Frohne in rv.py */
+    if (bad > good) Z = m - Z;
+    
+    /* another fix from rv.py to allow sample to exceed popsize/2 */
+    if (m < sample) Z = bad - Z;
+    
+    return Z;
+}
+#undef D1
+#undef D2
+
+long rk_hypergeometric(rk_state *state, long good, long bad, long sample)
+{
+    if (sample > 10)
+    {
+        return rk_hypergeometric_hrua(state, good, bad, sample);
+    } else
+    {
+        return rk_hypergeometric_hyp(state, good, bad, sample);
+    }
+}
+
+double rk_triangular(rk_state *state, double left, double mode, double right)
+{
+    double base, leftbase, ratio, leftprod, rightprod;
+    double U;
+    
+    base = right - left;
+    leftbase = mode - left;
+    ratio = leftbase / base;
+    leftprod = leftbase*base;
+    rightprod = (right - mode)*base;
+    
+    U = rk_double(state);
+    if (U <= ratio)
+    {
+        return left + sqrt(U*leftprod);
+    } else 
+    {
+      return right - sqrt((1.0 - U) * rightprod);  
+    }
 }
