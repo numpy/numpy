@@ -4,21 +4,24 @@ The CAPI of SciPy is (mostly) backward compatible with Numeric.
 There are a few non-standard API Numeric usages that will need to be changed:
 
   * If you used any of the function pointers in the PyArray_Descr
-    structure you will have to modify your usage of those.   The casting functions
-    have eliminated the strides argument (use PyArray_CastTo if you need strided casting). 
-    All functions have one or two PyArrayObject * arguments at the end.  This allows
-    the flexible arrays and mis-behaved arrays to be handled. 
+    structure you will have to modify your usage of those.  The
+    casting functions have eliminated the strides argument (use
+    PyArray_CastTo if you need strided casting). All functions have
+    one or two PyArrayObject * arguments at the end.  This allows the
+    flexible arrays and mis-behaved arrays to be handled.
 
   * The descr->zero and descr->one constants have been replaced with
     function calls, PyArray_Zero, and PyArray_One.
 
-  * You should use PyArray_ITEMSIZE(obj) instead of descr->elsize to get the itemsize of an
-    object (for flexible arrays descr->elsize is 0).
+  * You should use PyArray_ITEMSIZE(obj) instead of descr->elsize to
+    get the itemsize of an object (for flexible arrays descr->elsize
+    is 0).
 
 
 The header files arrayobject.h and ufuncobject.h contain many defines
 that you may find useful.  The files __ufunc_api.h and
-__multiarray_api.h contain the available C-API function calls with their function signatures.
+__multiarray_api.h contain the available C-API function calls with
+their function signatures.
 
 All of these headers are installed to 
 
@@ -37,44 +40,62 @@ PyObject * PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type,
          PyObject *obj);
 
 
-subtype : The subtype that should be created (either pass in
-            &PyArray_Type, &PyBigArray_Type, or obj->ob_type,
-            where obj is a subtype (or subclass) of PyBigArray_Type).
+subtype  : The subtype that should be created (either pass in
+             &PyArray_Type, &PyBigArray_Type, or obj->ob_type,
+             where obj is a subtype (or subclass) of PyBigArray_Type).
 
 nd       : The number of dimensions (<MAX_DIMS)
-*dims    : A pointer to the size in each dimension.  Information will be copied from here.
+
+*dims    : A pointer to the size in each dimension.  Information will be
+             copied from here.
+
 type     : An integer specifying the type of the array.
-*strides : The strides this array should have.  For new arrays created by this routine, this
-            should be NULL.  If you pass in memory for this array to use, then you should pass
-            in the strides information as well.  I
-*data    : NULL for creating brand-new memory.  If you want this array to wrap another memory
-            area, then pass the pointer here.  You are responsible for deleting the memory in that
-            case, but do not do so until the new array object has been deleted.  The best way to 
-            handle that is to get the memory from another Python object, 
-            INCREF that Python object after passing it's data pointer to this routine, and 
-            set the ->base member of the returned array to the Python object.  You are 
-            responsible for setting the base object.  Failure to do so will create a memory leak.
+
+*strides : The strides this array should have.  For new arrays created
+             by this routine, this should be NULL.  If you pass in
+             memory for this array to use, then you should pass in the
+             strides information as well.  I
+
+*data    : NULL for creating brand-new memory.  If you want this array
+             to wrap another memory area, then pass the pointer here.
+             You are responsible for deleting the memory in that case,
+             but do not do so until the new array object has been
+             deleted.  The best way to handle that is to get the memory
+             from another Python object, INCREF that Python object after
+             passing it's data pointer to this routine, and set the
+             ->base member of the returned array to the Python object.
+             You are responsible for setting the base object.  Failure
+             to do so will create a memory leak.
             
-            If you pass in a data buffer, the flags argument will be the flags of the new array. 
-            If you create a new array, a non-zero flags argument indicates that you want the
-            array to be in FORTRAN order.
-
-itemsize : Indicates the itemsize for the new array.  This can be 0 if it is a fixed-size array type.
-           It is only used for flexible array types and must be set in that case.
-
-flags  : Either the flags showing how to interpret the data buffer passed in.  Or if a new array 
-         is created, nonzero to indicate a FORTRAN order array.
-
-obj    : If subtypes is &PyArray_Type or &PyBigArray_Type, this argument is ignored.  Otherwise,
-         the __array_finalize__ method of the subtype is called (if present) and passed this
-         object.  This is usually an array of the type to be created (so the __array_finalize__ 
-         method must handle an array argument.  But, it can be anything...)
-
-Note:  The returned array object will be unitialized unless the type is PyArray_OBJECT. 
+            If you pass in a data buffer, the flags argument will be
+              the flags of the new array. If you create a new array, a
+              non-zero flags argument indicates that you want the array
+              to be in FORTRAN order.
 
 
-The PyArray_FromDims and family of functions are still available and are loose wrappers around 
-this function. 
+itemsize : Indicates the itemsize for the new array.  This can be 0
+             if it is a fixed-size array type.  It is only used for
+             flexible array types and must be set in that case.
+
+
+flags    : Either the flags showing how to interpret the data buffer
+             passed in.  Or if a new array is created, nonzero to
+             indicate a FORTRAN order array.
+
+
+obj      : If subtypes is &PyArray_Type or &PyBigArray_Type, this
+             argument is ignored.  Otherwise, the __array_finalize__
+             method of the subtype is called (if present) and passed
+             this object.  This is usually an array of the type to be
+             created (so the __array_finalize__ method must handle an
+             array argument.  But, it can be anything...)
+
+Note: The returned array object will be unitialized unless the type is
+PyArray_OBJECT.
+
+
+The PyArray_FromDims and family of functions are still available and
+are loose wrappers around this function.
 
 
 Getting an arrayobject from an arbitrary Python object:  PyArray_FromAny
@@ -89,12 +110,18 @@ PyArray_FromAny(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 
 
 op        : The Python object to "convert" to an array object
-typecode  : A typecode structure filled with the data type and itemsize of the desired data type.
-              This can be NULL, if the type should be determined from the object.
-              Unless FORCECAST is present in flags, this call will generate an error
-              if the data type cannot be safely obtained from the object.
+
+typecode  : A typecode structure filled with the data type and
+              itemsize of the desired data type.  This can be NULL, if
+              the type should be determined from the object.  Unless
+              FORCECAST is present in flags, this call will generate
+              an error if the data type cannot be safely obtained from
+              the object.
+
 min_depth : The minimum depth of array needed or 0 if doesn't matter
+
 max_depth : The maximum depth of array allowed or 0 if doesn't matter
+
 requires  : A flag indicating the "requirements" of the returned array. 
 
 
