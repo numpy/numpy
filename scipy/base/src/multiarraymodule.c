@@ -3825,7 +3825,11 @@ setup_scalartypes(PyObject *dict)
         SINGLE_INHERIT(Int, SignedInteger);
 #endif
         DUAL_INHERIT(Long, Int, SignedInteger);
+#if SIZEOF_LONGLONG == SIZEOF_LONG
+        DUAL_INHERIT(LongLong, Int, SignedInteger);
+#else
         SINGLE_INHERIT(LongLong, SignedInteger);
+#endif
 
         SINGLE_INHERIT(UByte, UnsignedInteger);
         SINGLE_INHERIT(UShort, UnsignedInteger);

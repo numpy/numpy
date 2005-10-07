@@ -1355,15 +1355,8 @@ int_arrtype_hash(PyObject *obj)
 #Char=,U#
 #ext=&& (x >= LONG_MIN),#
 */
-#if SIZEOF_LONG == SIZEOF_LONGLONG
-static long
-@char@longlong_arrtype_hash(PyObject *obj)
-{
-        long x = (long)(((Py@Char@LongLongScalarObject *)obj)->obval);
-        if (x == -1) x=-2;
-        return x;
-}
-#else /* we assume SIZEOF_LONGLONG=2*SIZEOF_LONG */
+#if SIZEOF_LONG != SIZEOF_LONGLONG
+/* we assume SIZEOF_LONGLONG=2*SIZEOF_LONG */
 static long
 @char@longlong_arrtype_hash(PyObject *obj)
 {
@@ -1387,6 +1380,18 @@ static long
 }
 #endif
 /**end repeat**/
+
+#if SIZEOF_LONG==SIZEOF_LONGLONG
+static long
+ulonglong_arrtype_hash(PyObject *obj)
+{
+        long x = (long)(((PyULongLongScalarObject *)obj)->obval);
+        if (x == -1) x=-2;
+        return x;
+}
+#endif
+
+
 
 /* Wrong thing to do for longdouble, but....*/
 /**begin repeat
@@ -1506,6 +1511,11 @@ ComplexFloating, Flexible, Character#
 #if SIZEOF_INT != SIZEOF_LONG
         /* We won't be inheriting from Python Int type. */
         PyIntArrType_Type.tp_hash = int_arrtype_hash;
+#endif
+
+#if SIZEOF_LONG != SIZEOF_LONGLONG
+        /* We won't be inheriting from Python Int type. */
+        PyLongLongArrType_Type.tp_hash = longlong_arrtype_hash;
 #endif
 
 	/* These need to be coded specially because getitem does not
