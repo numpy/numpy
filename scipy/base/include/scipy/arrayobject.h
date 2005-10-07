@@ -641,6 +641,8 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 typedef Py_intptr_t intp;
 typedef Py_uintptr_t uintp;
 
+#define INTP_STRFORMAT "%d"
+
 #if SIZEOF_PY_INTPTR_T == SIZEOF_INT  
 	#define PyArray_INTP PyArray_INT
 	#define PyArray_UINTP PyArray_UINT
@@ -665,6 +667,8 @@ typedef Py_uintptr_t uintp;
 	#define MAX_INTP MAX_LONGLONG
 	#define MIN_INTP MIN_LONGLONG
 	#define MAX_UINTP MAX_ULONGLONG
+        #undef INTP_STRFORMAT
+        #define INTP_STRFORMAT "%Ld"
 #endif
 
 #define ERR(str) fprintf(stderr, #str); fflush(stderr);

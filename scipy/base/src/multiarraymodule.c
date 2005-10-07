@@ -99,7 +99,7 @@ PyArray_View(PyArrayObject *self, PyArray_Typecode *type)
 			  self->strides,
 			  self->data,
 			  self->itemsize,
-			  self->flags, self);
+			  self->flags, (PyObject *)self);
 
 	if (new==NULL) return NULL;
 	
@@ -163,7 +163,7 @@ PyArray_Flatten(PyArrayObject *a, int fortran)
 			  NULL,
                           NULL,
 			  a->itemsize,
-			  0, a);
+			  0, (PyObject *)a);
 
 	if (ret== NULL) return NULL;
 	if (fortran) {
@@ -275,7 +275,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
 				  NULL,
 				  self->data,
 				  self->itemsize,
-				  self->flags, self);
+				  self->flags, (PyObject *)self);
 
 	if (ret== NULL)
                 goto fail;
@@ -322,7 +322,7 @@ PyArray_Squeeze(PyArrayObject *self)
 	ret = PyArray_New(self->ob_type, newnd, dimensions, 
 			  self->descr->type_num, strides,
 			  self->data, self->itemsize, self->flags,
-			  self);
+			  (PyObject *)self);
 	self->flags &= ~OWN_DATA;
 	self->base = (PyObject *)self;
 	Py_INCREF(self);
@@ -539,7 +539,7 @@ PyArray_Nonzero(PyArrayObject *self)
 	PyArray_ITER_RESET(it);
 	if (n==1) {
 		ret = PyArray_New(self->ob_type, 1, &count, PyArray_INTP, 
-				  NULL, NULL, 0, 0, self);
+				  NULL, NULL, 0, 0, (PyObject *)self);
 		if (ret == NULL) goto fail;
 		dptr[0] = (intp *)PyArray_DATA(ret);
 		
@@ -554,7 +554,7 @@ PyArray_Nonzero(PyArrayObject *self)
 		for (j=0; j<n; j++) {
 			item = PyArray_New(self->ob_type, 1, &count, 
 					   PyArray_INTP, NULL, NULL, 0, 0,
-					   self);
+					   (PyObject *)self);
 			PyTuple_SET_ITEM(ret, j, item);
 			if (item == NULL) goto fail;
 			dptr[j] = (intp *)PyArray_DATA(item);
@@ -1046,7 +1046,8 @@ PyArray_Concatenate(PyObject *op, int axis)
 	mps[0]->dimensions[0] = new_dim;
 	ret = (PyArrayObject *)PyArray_New(subtype, nd,
 					   mps[0]->dimensions, 
-					   type_num, NULL, NULL, 0, 0, ret);
+					   type_num, NULL, NULL, 0, 0,
+                                           (PyObject *)ret);
 	mps[0]->dimensions[0] = tmp;
 	
 	if (ret == NULL) goto fail;
@@ -1149,7 +1150,7 @@ PyArray_Transpose(PyArrayObject *ap, PyObject *op) {
 	ret = (PyArrayObject *)PyArray_New(ap->ob_type, n, permutation, 
 					   ap->descr->type_num, NULL,
 					   ap->data, ap->itemsize, ap->flags,
-					   ap);
+					   (PyObject *)ap);
 	if (ret == NULL) goto fail;
 	
 	/* point at true owner of memory: */
@@ -1231,7 +1232,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis) {
 					   aop->dimensions, 
 					   aop->descr->type_num,
 					   NULL, NULL, aop->itemsize, 0,
-					   aop);
+					   (PyObject *)aop);
 	aop->dimensions[axis] = n;
 	
 	if (ret == NULL) goto fail;
@@ -1348,7 +1349,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	*/
 	ret = (PyArrayObject *)PyArray_New(ap->ob_type, ap->nd,
 					   ap->dimensions, type_num,
-					   NULL, NULL, 0, 0, ap);
+					   NULL, NULL, 0, 0, (PyObject *)ap);
 	if (ret == NULL) goto fail;
 	
 	elsize = ret->itemsize;
@@ -1504,7 +1505,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis)
 	
 	ret = (PyArrayObject *)PyArray_New(ap->ob_type, ap->nd,
 					   ap->dimensions, PyArray_INTP,
-					   NULL, NULL, 0, 0, ap);
+					   NULL, NULL, 0, 0, (PyObject *)ap);
 	if (ret == NULL) goto fail;
 	
 	if (ap->descr->compare == NULL) {
@@ -1608,7 +1609,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 	
 	ret = (PyArrayObject *)PyArray_New(ap2->ob_type, ap2->nd, 
 					   ap2->dimensions, PyArray_INTP,
-					   NULL, NULL, 0, 0, ap2);
+					   NULL, NULL, 0, 0, (PyObject *)ap2);
 	if (ret == NULL) goto fail;
 
 	if (ap2->descr->compare == NULL) {
@@ -1700,6 +1701,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 
 	ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
 					   typenum, NULL, NULL, 0, 0, 
+                                           (PyObject *)
 					   (prior2 > prior1 ? ap2 : ap1));
 	if (ret == NULL) goto fail;
 
@@ -1822,6 +1824,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 
 	ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
 					   typenum, NULL, NULL, 0, 0, 
+                                           (PyObject *)
 					   (prior2 > prior1 ? ap2 : ap1));
 	if (ret == NULL) goto fail;
 
@@ -1898,7 +1901,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 	elsize = PyArray_ITEMSIZE(arr);
 
 	ret = PyArray_New(arr->ob_type, 2, dims, PyArray_TYPE(arr),
-			  NULL, NULL, elsize, 0, (PyArrayObject *)arr);
+			  NULL, NULL, elsize, 0, arr);
 
 	if (ret == NULL) {
 		Py_DECREF(arr);
@@ -1973,7 +1976,8 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	
 	ret = (PyArrayObject *)PyArray_New(ap1->ob_type, 1,
 					   &length, typenum, 
-					   NULL, NULL, 0, 0, ap1);
+					   NULL, NULL, 0, 0, 
+                                           (PyObject *)ap1);
 	if (ret == NULL) goto fail;
 
 	
@@ -2130,7 +2134,8 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 
 	rp = (PyArrayObject *)PyArray_New(ap->ob_type, ap->nd-1,
 					  ap->dimensions, PyArray_INTP,
-					  NULL, NULL, 0, 0, ap);
+					  NULL, NULL, 0, 0, 
+                                          (PyObject *)ap);
 	if (rp == NULL) goto fail;
 
 
@@ -2195,7 +2200,8 @@ PyArray_Take(PyArrayObject *self0, PyObject *indices0, int axis) {
         }
         ret = (PyArrayObject *)PyArray_New(self->ob_type, nd, shape, 
 					   self->descr->type_num,
-					   NULL, NULL, 0, 0, self);
+					   NULL, NULL, 0, 0, 
+                                           (PyObject *)self);
 	
         if (ret == NULL) goto fail;
 	

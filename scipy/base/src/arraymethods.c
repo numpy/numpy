@@ -242,7 +242,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Typecode *type,
 	ret = PyArray_New(self->ob_type, self->nd, self->dimensions,
 			  type->type_num, self->strides, 
 			  self->data + offset,
-			  type->itemsize, self->flags, self);
+			  type->itemsize, self->flags, (PyObject *)self);
 	if (ret == NULL) return NULL;
 	Py_INCREF(self);
 	((PyArrayObject *)ret)->base = (PyObject *)self;

@@ -200,7 +200,7 @@ objectapi_list = [
 
     (r"""Generic new array creation routine.
     """,
-     'New','PyTypeObject *, int nd, intp *dims, int type, intp *strides, char *data, int itemsize, int fortran, PyArrayObject *arr', 'PyObject *'),
+     'New','PyTypeObject *, int nd, intp *dims, int type, intp *strides, char *data, int itemsize, int fortran, PyObject *obj', 'PyObject *'),
 
     (r"""Get Priority from object
     """,

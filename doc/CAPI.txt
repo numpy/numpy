@@ -1,0 +1,187 @@
+
+The CAPI of SciPy is (mostly) backward compatible with Numeric.  
+
+There are a few non-standard API Numeric usages that will need to be changed:
+
+  * If you used any of the function pointers in the PyArray_Descr
+    structure you will have to modify your usage of those.   The casting functions
+    have eliminated the strides argument (use PyArray_CastTo if you need strided casting). 
+    All functions have one or two PyArrayObject * arguments at the end.  This allows
+    the flexible arrays and mis-behaved arrays to be handled. 
+
+  * The descr->zero and descr->one constants have been replaced with
+    function calls, PyArray_Zero, and PyArray_One.
+
+  * You should use PyArray_ITEMSIZE(obj) instead of descr->elsize to get the itemsize of an
+    object (for flexible arrays descr->elsize is 0).
+
+
+The header files arrayobject.h and ufuncobject.h contain many defines
+that you may find useful.  The files __ufunc_api.h and
+__multiarray_api.h contain the available C-API function calls with their function signatures.
+
+All of these headers are installed to 
+
+<YOUR_PYTHON_LOCATION>/site-packages/scipy/base/include
+
+
+Getting arrays in C-code
+=========================
+
+All new arrays can be created using PyArray_New.
+
+This is a very flexible function.  
+
+PyObject * PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type, 
+         intp *strides, char *data, int itemsize, int flags, 
+         PyObject *obj);
+
+
+subtype : The subtype that should be created (either pass in
+            &PyArray_Type, &PyBigArray_Type, or obj->ob_type,
+            where obj is a subtype (or subclass) of PyBigArray_Type).
+
+nd       : The number of dimensions (<MAX_DIMS)
+*dims    : A pointer to the size in each dimension.  Information will be copied from here.
+type     : An integer specifying the type of the array.
+*strides : The strides this array should have.  For new arrays created by this routine, this
+            should be NULL.  If you pass in memory for this array to use, then you should pass
+            in the strides information as well.  I
+*data    : NULL for creating brand-new memory.  If you want this array to wrap another memory
+            area, then pass the pointer here.  You are responsible for deleting the memory in that
+            case, but do not do so until the new array object has been deleted.  The best way to 
+            handle that is to get the memory from another Python object, 
+            INCREF that Python object after passing it's data pointer to this routine, and 
+            set the ->base member of the returned array to the Python object.  You are 
+            responsible for setting the base object.  Failure to do so will create a memory leak.
+            
+            If you pass in a data buffer, the flags argument will be the flags of the new array. 
+            If you create a new array, a non-zero flags argument indicates that you want the
+            array to be in FORTRAN order.
+
+itemsize : Indicates the itemsize for the new array.  This can be 0 if it is a fixed-size array type.
+           It is only used for flexible array types and must be set in that case.
+
+flags  : Either the flags showing how to interpret the data buffer passed in.  Or if a new array 
+         is created, nonzero to indicate a FORTRAN order array.
+
+obj    : If subtypes is &PyArray_Type or &PyBigArray_Type, this argument is ignored.  Otherwise,
+         the __array_finalize__ method of the subtype is called (if present) and passed this
+         object.  This is usually an array of the type to be created (so the __array_finalize__ 
+         method must handle an array argument.  But, it can be anything...)
+
+Note:  The returned array object will be unitialized unless the type is PyArray_OBJECT. 
+
+
+The PyArray_FromDims and family of functions are still available and are loose wrappers around 
+this function. 
+
+
+Getting an arrayobject from an arbitrary Python object:  PyArray_FromAny
+
+This function replaces PyArray_ContiguousFromObject and friends (those
+function calls still remain but they are loose wrappers around the
+PyArray_FromAny call).
+
+static PyObject *
+PyArray_FromAny(PyObject *op, PyArray_Typecode *typecode, int min_depth, 
+		int max_depth, int requires) 
+
+
+op        : The Python object to "convert" to an array object
+typecode  : A typecode structure filled with the data type and itemsize of the desired data type.
+              This can be NULL, if the type should be determined from the object.
+              Unless FORCECAST is present in flags, this call will generate an error
+              if the data type cannot be safely obtained from the object.
+min_depth : The minimum depth of array needed or 0 if doesn't matter
+max_depth : The maximum depth of array allowed or 0 if doesn't matter
+requires  : A flag indicating the "requirements" of the returned array. 
+
+
+From the code comments, the requires flag is explained.
+
+requires can be any of 
+
+  CONTIGUOUS, 
+  FORTRAN, (or set typecode->fortran=1)
+  ALIGNED, 
+  NOTSWAPPED, 
+  WRITEABLE, 
+  ENSURECOPY, 
+  UPDATEIFCOPY,
+  FORCECAST,
+
+   or'd (|) together
+
+   Any of these flags present means that the returned array should 
+   guarantee that aspect of the array.  Otherwise the returned array
+   won't guarantee it -- it will depend on the object as to whether or 
+   not it has such features. 
+
+   Note that ENSURECOPY is enough to guarantee CONTIGUOUS, ALIGNED, NOTSWAPPED, 
+   and WRITEABLE and therefore it is redundant to include those as well. 
+
+   BEHAVED_FLAGS == ALIGNED | NOTSWAPPED | WRITEABLE
+   BEHAVED_FLAGS_RO == ALIGNED | NOTSWAPPED
+   CARRAY_FLAGS = CONTIGUOUS | BEHAVED_FLAGS
+   FARRAY_FLAGS = FORTRAN | BEHAVED_FLAGS
+   
+   By default, if the object is an array and requires is 0, 
+   the array will just be INCREF'd and returned. 
+   
+   typecode->fortran can be set to request a
+   fortran-contiguous  array (or just | FORTRAN to the requires flags).
+   Fortran arrays are always behaved (aligned, 
+   notswapped, and writeable) and not (C) CONTIGUOUS.  Note that either
+   FORTRAN in the flag or typecode->fortran = 1 is enough to request
+   a FORTRAN-style array. 
+
+   UPDATEIFCOPY flag sets this flag in the returned array if a copy is
+   made and the base argument points to the (possibly) misbehaved array.
+   When the new array is deallocated, the original array held in base
+   is updated with the contents of the new array.  This is useful, 
+   if you don't want to deal with a possibly mis-behaved array, but want
+   to update it easily using a local contiguous copy. 
+
+   FORCECAST will cause a cast to occur regardless of whether or not
+   it is safe. 
+
+
+PyArray_Typecode structure
+{
+        int type_num;
+        int itemsize;
+        int fortran --- used to indicate a fortran array is desired.
+}
+
+
+Passing Data Type information to C-code
+============================================
+
+To get a Typecode structure from Python use the
+PyArray_TypecodeConverter function.  This will return a typecode
+structure filled appropriately based on a wide variety of user inputs.
+
+See the arraymethods.c and multiarraymodule.c files for many examples of usage.
+
+
+Getting at the structure of the array.
+
+You should use the #defines provided to access array structure portions:
+
+PyArray_DATA(obj)
+PyArray_ITEMSIZE(obj)
+PyArray_NDIM(obj)
+PyArray_DIMS(obj)
+PyArray_DIM(obj, n)
+PyArray_STRIDES(obj)
+PyArray_STRIDE(obj,n)
+
+
+see more in arrayobject.h
+
+
+There are more C-API enhancements which you can discover in the code, 
+      or buy the book (http://www.trelgol.com)
+
+

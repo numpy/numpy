@@ -46,11 +46,11 @@ use PyArray_XXXLTR  where XXX is the name of the type.
 
 
 If you used function pointers directly (why did you do that?),
-the arguments have changed. 
+the arguments have changed.  Everything that was an int is now an intp.  Also, 
+arrayobjects should be passed in at the end. 
 
 a->descr->cast[i](fromdata, fromstep, todata, tostep, n)
 a->descr->cast[i](fromdata, todata, n, PyArrayObject *in, PyArrayObject *out)
    anything but single-stepping is not supported by this function
    use the PyArray_CastXXXX functions.
-
 
