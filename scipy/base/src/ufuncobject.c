@@ -39,7 +39,7 @@ static void
 PyUFunc_ff_f_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 {
 	register intp i, n=dimensions[0];
-	intp is1=steps[0],is2=steps[1],os=steps[2];
+	register intp is1=steps[0],is2=steps[1],os=steps[2];
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
 	
 	for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
@@ -52,7 +52,7 @@ static void
 PyUFunc_ff_f(char **args, intp *dimensions, intp *steps, void *func) 
 {
 	register intp i, n=dimensions[0];
-	intp is1=steps[0],is2=steps[1],os=steps[2];
+	register intp is1=steps[0],is2=steps[1],os=steps[2];
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
 	
 	
@@ -66,7 +66,7 @@ static void
 PyUFunc_dd_d(char **args, intp *dimensions, intp *steps, void *func) 
 {
 	register intp i, n=dimensions[0];
-	intp is1=steps[0],is2=steps[1],os=steps[2];
+	register intp is1=steps[0],is2=steps[1],os=steps[2];
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
 
 	
@@ -80,7 +80,7 @@ static void
 PyUFunc_gg_g(char **args, intp *dimensions, intp *steps, void *func) 
 {
 	register intp i, n=dimensions[0];
-	intp is1=steps[0],is2=steps[1],os=steps[2];
+	register intp is1=steps[0],is2=steps[1],os=steps[2];
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
 	
 	for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
@@ -93,10 +93,8 @@ PyUFunc_gg_g(char **args, intp *dimensions, intp *steps, void *func)
 static void 
 PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func) 
 {
-	register int i;
-	intp is1=steps[0],is2=steps[1],os=steps[2];
+	register intp i,n=dimensions[0],is1=steps[0],is2=steps[1],os=steps[2];
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
-	intp n=dimensions[0];
 	cdouble x, y, r;
 	
 	for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
@@ -161,9 +159,9 @@ PyUFunc_GG_G(char **args, intp *dimensions, intp *steps, void *func)
 static void 
 PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func) 
 {
-	int i, is1=steps[0],is2=steps[1],os=steps[2];
+	register intp i, is1=steps[0],is2=steps[1],os=steps[2], \
+		n=dimensions[0];
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
-	int n=dimensions[0];
 	PyObject *tmp;
 	PyObject *x1, *x2;
 
