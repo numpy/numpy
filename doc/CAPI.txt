@@ -1,3 +1,6 @@
+Author:          Travis Oliphant
+Discussions to:  scipy-dev@scipy.org
+Created:         October 2005
 
 The CAPI of SciPy is (mostly) backward compatible with Numeric.  
 
