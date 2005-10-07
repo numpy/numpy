@@ -597,7 +597,7 @@ class Configuration:
           f2py_options
         """
         build_info = copy.copy(build_info)
-        name = name + '__OF__' + self.name
+        name = name #+ '__OF__' + self.name
         build_info['sources'] = sources
 
         for k in build_info.keys():
