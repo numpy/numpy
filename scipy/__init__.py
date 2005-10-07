@@ -13,8 +13,8 @@ try:   # For installation purposes only
     import scipy.linalg as linalg
     import scipy.fftpack as fftpack
     from scipy.fftpack import fft, ifft
-    import scipy.stats as stats
-    from scipy.stats import rand, randn
+    import scipy.random as random
+    from scipy.random import rand, randn
     from core_version import version as __version__
     from scipy.test.testing import ScipyTest
     test = ScipyTest('scipy').test

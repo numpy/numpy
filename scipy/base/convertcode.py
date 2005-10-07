@@ -122,8 +122,8 @@ def fromstr(filestr):
     filestr, fromall3 = changeimports(filestr, 'scipy_base', 'scipy.base')
     filestr, fromall3 = changeimports(filestr, 'MLab', 'scipy.linalg')
     filestr, fromall3 = changeimports(filestr, 'LinearAlgebra', 'scipy.linalg')
-    filestr, fromall3 = changeimports(filestr, 'RNG', 'scipy.stats')
-    filestr, fromall3 = changeimports(filestr, 'RandomArray', 'scipy.stats')
+    filestr, fromall3 = changeimports(filestr, 'RNG', 'scipy.random')
+    filestr, fromall3 = changeimports(filestr, 'RandomArray', 'scipy.random')
     filestr, fromall3 = changeimports(filestr, 'FFT', 'scipy.fftpack')
     filestr, fromall3 = changeimports(filestr, 'MA', 'scipy.base.ma')
     fromall = fromall1 or fromall2 or fromall3
