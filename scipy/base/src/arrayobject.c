@@ -408,7 +408,7 @@ contiguous_data(PyArrayObject *src)
         int elsize=src->itemsize;
         int copies=1;
         int ret, i;
-        int stride=elsize;
+        intp stride=elsize;
         char *new_data;
 	
         for(i=dest_nd-1; i>=0; i--) {
@@ -5130,7 +5130,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	char *data;
 	int buffer_len;
 	int res, i, n;
-	int dims[MAX_DIMS], strides[MAX_DIMS];
+	intp dims[MAX_DIMS], strides[MAX_DIMS];
 	int swap;
 
 	/* Get the memory from __array_data__ and __array_offset__ */
