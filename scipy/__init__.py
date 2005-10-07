@@ -1,20 +1,18 @@
-"""SciPy 
+"""SciPy Core
 
-You can support the development of scipy by purchasing documentation at
+You can support the development of SciPy by purchasing documentation at
 
 http://www.trelgol.com
 
-Ironically, you can help make the documentation free by purchasing a copy today.
+It is being distributed for a fee for a limited time to try and raise money for
+development.
 """
-
 
 try:   # For installation purposes only 
     from scipy.base import *
-    import scipy.linalg as linalg
-    import scipy.fftpack as fftpack
-    from scipy.fftpack import fft, ifft
-    import scipy.random as random
-    from scipy.random import rand, randn
+    import scipy.basic as basic
+    from scipy.basic.fft import fft, ifft
+    from scipy.basic.random import rand, randn
     from core_version import version as __version__
     from scipy.test.testing import ScipyTest
     test = ScipyTest('scipy').test
