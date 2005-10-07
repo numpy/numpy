@@ -351,7 +351,7 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
 
 
 
-/* a general-purpose ufunc that deals with general-purpose callable 
+/* a general-purpose ufunc that deals with general-purpose Python callable.
    func is a structure with nin, nout, and a Python callable function
 */
 
@@ -359,6 +359,7 @@ static void
 PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
 {
 	int i, j;
+	intp n=dimensions[0];
         PyUFunc_PyFuncData *data = (PyUFunc_PyFuncData *)func;
         int nin = data->nin, nout=data->nout;
         int ntot;
@@ -370,8 +371,9 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
         ntot = nin+nout;
 
         for (j=0; j < ntot; j++) ptrs[j] = args[j];
-	for(i=0; i<*dimensions; i++) {
-                arglist = PyTuple_New(nin);
+	for(i=0; i<n; i++) {
+		arglist = PyTuple_New(nin);
+		if (arglist == NULL) return;
                 for (j=0; j < nin; j++) {
                         in = *((PyObject **)ptrs[j]);
                         if (in == NULL) {Py_DECREF(arglist); return;}
@@ -379,16 +381,16 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
                         Py_INCREF(in);
                 }                
                 result = PyEval_CallObject(tocall, arglist);
-                Py_DECREF(arglist);
+		Py_DECREF(arglist);
                 if (result == NULL) return;
                 if PyTuple_Check(result) {
                         if (nout != PyTuple_Size(result)) {
                                 Py_DECREF(result);
-                                return;
-                        }
+				return;
+			}
                         for (j=0; j < nout; j++) {
                                 op = (PyObject **)ptrs[j+nin];
-                                if (*op != NULL) {Py_DECREF(*op);}
+				Py_XDECREF(*op);
                                 *op = PyTuple_GET_ITEM(result, j);
                                 Py_INCREF(*op);
                         }
@@ -396,12 +398,12 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
                 }
                 else {
                         op = (PyObject **)ptrs[nin];
-                        if (*op != NULL) {Py_DECREF(*op);}
+			Py_XDECREF(*op);
                         *op = result;
 		}
                 for (j=0; j < ntot; j++) ptrs[j] += steps[j];
-	}        
-
+	}
+	return;
 }
 
 
@@ -872,7 +874,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 			     PyArray_MAX_BUFSIZE);
 		return -1;
 	}
-
+	
 	/* Create copies for some of the arrays if appropriate */
 	if (_create_copies(loop, arg_types, mps) < 0) return -1;
 	
@@ -1275,8 +1277,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 
 	if (!(loop = construct_loop(self, args, mps))) return -1;
 
-        if (!loop->obj)
-                BEGIN_THREADS
+	LOOP_BEGIN_THREADS
 
 	switch(loop->meth) {
 	case ONE_UFUNCLOOP:
@@ -2429,6 +2430,7 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
 		return NULL;
 	
 
+	self->userloops = NULL;
 	self->nin = nin;
 	self->nout = nout;
 	self->nargs = nin+nout;
@@ -2450,10 +2452,11 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
         Py_XDECREF(pyname);
 
 
-        Py_INCREF(function);
-        self->obj = function;
         self->ptr = malloc((self->nargs)+sizeof(PyUFunc_PyFuncData)+sizeof(void *)+(fname_len+14));
         
+	if (self->ptr == NULL) return PyErr_NoMemory();
+        Py_INCREF(function);
+        self->obj = function;
 	fdata = (PyUFunc_PyFuncData *)(self->ptr + (nin+nout) + sizeof(void *));
         fdata->nin = nin;
         fdata->nout = nout;
