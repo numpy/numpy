@@ -196,6 +196,9 @@ _typelessdata = [int_, float_, complex_]
 if issubclass(intc, int):
     _typelessdata.append(intc)
 
+if issubclass(longlong, int):
+    _typelessdata.append(longlong)
+
 def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     if arr.size > 0 or arr.shape==(0,):
         lst = array2string(arr, max_line_width, precision, suppress_small,
@@ -224,8 +227,8 @@ set_string_function(array_repr, 1)
 
 little_endian = (sys.byteorder == 'little')
 
-def indices(dimensions, dtype=intp):
-    """indices(dimensions,dtype=intp) returns an array representing a grid
+def indices(dimensions, dtype=int_):
+    """indices(dimensions,dtype=int_) returns an array representing a grid
     of indices with row-only, and column-only variation.
     """
     tmp = ones(dimensions, dtype)
@@ -260,8 +263,8 @@ def load(file):
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
 
-def ones(shape, dtype=intp, fortran=0):
-    """ones(shape, dtype=intp) returns an array of the given
+def ones(shape, dtype=int_, fortran=0):
+    """ones(shape, dtype=int_) returns an array of the given
     dimensions which is initialized to all ones. 
     """
     a=zeros(shape, dtype, fortran)
@@ -269,7 +272,7 @@ def ones(shape, dtype=intp, fortran=0):
     ### a[...]=1  -- slower?
     return a
  
-def identity(n,dtype=intp):
+def identity(n,dtype=int_):
     """identity(n) returns the identity matrix of shape n x n.
     """
     a = array([1]+n*[0],dtype=dtype)
