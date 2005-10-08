@@ -393,6 +393,11 @@ multiapi_list = [
     """,
      'MultiplyList','intp *lp, int n','intp'),
 
+    (r"""Multiply a List of ints
+    """,
+     'MultiplyIntList','int *lp, int n','int'),
+
+
     (r"""Compare Lists
     """,
      'CompareLists','intp *, intp *, int n','int'),    

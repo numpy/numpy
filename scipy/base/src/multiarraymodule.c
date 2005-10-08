@@ -47,12 +47,19 @@ static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
 /* An Error object -- rarely used? */
 static PyObject *MultiArrayError;
 
+static int
+PyArray_MultiplyIntList(register int *l1, register int n) 
+{
+	register int s=1;
+        while (n--) s *= (*l1++);
+        return s;
+}
+
 static intp 
-PyArray_MultiplyList(intp *l1, int n) 
+PyArray_MultiplyList(register intp *l1, register int n) 
 {
 	register intp s=1;
-	register int i=0;
-        while (i++ < n) s *= (*l1++);
+        while (n--) s *= (*l1++);
         return s;
 }
 

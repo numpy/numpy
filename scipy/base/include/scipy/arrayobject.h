@@ -1219,8 +1219,8 @@ typedef struct {
 #define PyArray_SBYTE PyArray_BYTE
 #define PyArray_CHAR PyArray_BYTE
 #define PyArray_CopyArray PyArray_CopyInto
-#define _PyArray_multiply_list PyArray_MultiplyList
-#define PyArray_ISSPACESAVER(m) TRUE
+#define _PyArray_multiply_list PyArray_MultiplyIntList
+#define PyArray_ISSPACESAVER(m) FALSE
 #define PyScalarArray_Check PyArray_CheckScalar
 
 
