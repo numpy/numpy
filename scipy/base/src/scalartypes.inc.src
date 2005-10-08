@@ -1502,8 +1502,8 @@ ComplexFloating, Flexible, Character#
 	PyVoidArrType_Type.tp_flags = BASEFLAGS;
 
         /**begin repeat
-#name=bool, byte, short, longlong, ubyte, ushort, uint, ulong, ulonglong, float, longdouble, cfloat, clongdouble, void, object#
-#NAME=Bool, Byte, Short, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, LongDouble, CFloat, CLongDouble, Void, Object#
+#name=bool, byte, short, ubyte, ushort, uint, ulong, ulonglong, float, longdouble, cfloat, clongdouble, void, object#
+#NAME=Bool, Byte, Short, UByte, UShort, UInt, ULong, ULongLong, Float, LongDouble, CFloat, CLongDouble, Void, Object#
         */
         Py@NAME@ArrType_Type.tp_hash = @name@_arrtype_hash;
         /**end repeat**/

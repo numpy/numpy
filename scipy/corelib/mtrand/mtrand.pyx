@@ -655,14 +655,14 @@ cdef class RandomState:
             raise ValueError("sigma <= 0.0")
         return cont2_array(self.internal_state, rk_lognormal, size, mean, sigma)
     
-    def rayleigh(self, double mode, size=None):
+    def rayleigh(self, double scale=1.0, size=None):
         """Rayleigh distribution.
         
-        rayleigh(mode, size=None)
+        rayleigh(scale=1.0, size=None)
         """
-        if mode <= 0.0:
-            raise ValueError("mode <= 0.0")
-        return cont1_array(self.internal_state, rk_rayleigh, size, mode)
+        if scale <= 0.0:
+            raise ValueError("scale <= 0.0")
+        return cont1_array(self.internal_state, rk_rayleigh, size, scale)
     
     def wald(self, double mean, double scale, size=None):
         """Wald (inverse Gaussian) distribution.

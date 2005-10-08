@@ -948,7 +948,7 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 	PyArray_Descr *old;
 	int i;
 
-	if (!PyArray_ISUSERDEF(typenum)) {
+	if (!PyTypeNum_ISUSERDEF(typenum)) {
 		PyErr_SetString(PyExc_TypeError, 
 				"Data type not registered.");
 		return -1;
