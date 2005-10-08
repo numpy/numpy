@@ -189,7 +189,7 @@ class matrix(N.ndarray):
             return self.transpose()
 
     def getI(self):
-        from scipy.basic.linalg import inv
+        from scipy.linalg import inv
         return matrix(inv(self))
 
     A = property(getA, None, doc="base array")

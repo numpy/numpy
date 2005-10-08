@@ -13,6 +13,9 @@ try:   # For installation purposes only
     import scipy.basic as basic
     from scipy.basic.fft import fft, ifft
     from scipy.basic.random import rand, randn
+    import scipy.basic.fft as fftpack
+    import scipy.basic.linalg as linalg
+    import scipy.basic.random as random
     from core_version import version as __version__
     from scipy.test.testing import ScipyTest
     test = ScipyTest('scipy').test

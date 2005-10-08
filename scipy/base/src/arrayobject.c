@@ -689,10 +689,13 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 {
         PyArrayObject *src;
         int ret;
-	PyArray_Typecode typecode = {dest->descr->type_num, 
-				     dest->itemsize, 
-				     PyArray_ISFORTRAN(dest)};
-	
+	PyArray_Typecode typecode;
+
+
+	typecode.type_num = dest->descr->type_num;
+	typecode.itemsize = dest->itemsize;
+	typecode.fortran = PyArray_ISFORTRAN(dest);
+			
         src = (PyArrayObject *)PyArray_FromAny(src_object,
 					       &typecode, 0,
 					       dest->nd, 0);
@@ -4043,9 +4046,11 @@ array_imag_get(PyArrayObject *self)
 	PyArrayObject *ret;
 	int itemsize;
 	int typenum;
-        PyArray_Typecode type = {self->descr->type_num, 
-                                 self->itemsize,	 
-                                 PyArray_ISFORTRAN(self)};
+        PyArray_Typecode type;
+	
+	type.type_num = self->descr->type_num;
+	type.itemsize = self->itemsize;
+	type.fortran = PyArray_ISFORTRAN(self);
 	
 	if (PyArray_ISCOMPLEX(self)) {
 		itemsize = self->itemsize >> 1;
@@ -4125,11 +4130,13 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 	PyObject *arr=NULL;
 	int retval = -1;
 	PyArrayIterObject *selfit=NULL, *arrit=NULL;
-	PyArray_Typecode typecode = {self->descr->type_num,
-				     self->itemsize,
-				     PyArray_ISFORTRAN(self)};
+	PyArray_Typecode typecode;
         int swap;
         PyArray_CopySwapFunc *copyswap;
+
+	typecode.type_num = self->descr->type_num;
+	typecode.itemsize = self->itemsize;
+	typecode.fortran = PyArray_ISFORTRAN(self);
 	
 	arr = PyArray_FromAny(val, &typecode, 
 			      0, 0, FORCECAST);
@@ -4539,7 +4546,10 @@ _array_find_type(PyObject *op, PyArray_Typecode *minitype,
 	if (PyInstance_Check(op)) goto deflt;
 	
         if (PySequence_Check(op)) {
-		PyArray_Typecode newtype = {mintype, minsize, 0};
+		PyArray_Typecode newtype;
+		newtype.type_num = mintype;
+		newtype.itemsize = minsize;
+		newtype.fortran = 0;
                 l = PyObject_Length(op);
                 if (l < 0 && PyErr_Occurred()) { 
 			PyErr_Clear(); 
@@ -4935,9 +4945,13 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 	int itemsize = typecode->itemsize;
 	int copy = 0;
 	int arrflags;
-	PyArray_Typecode oldtype={PyArray_TYPE(arr),PyArray_ITEMSIZE(arr),0};
+	PyArray_Typecode oldtype;
 	char *msg = "Cannot copy-back to a read-only array.";
-	
+
+	oldtype.type_num = PyArray_TYPE(arr);
+	oldtype.itemsize = PyArray_ITEMSIZE(arr);
+	oldtype.fortran = 0;
+
 	if (type == PyArray_NOTYPE) type = arr->descr->type_num;
 	if (itemsize == 0) itemsize = arr->itemsize;
 	typecode->type_num = type;
@@ -5448,7 +5462,8 @@ PyArray_EnsureArray(PyObject *op)
 static PyObject *
 PyArray_FromObject(PyObject *op, int type, int min_depth, int max_depth) 
 {
-	PyArray_Typecode typecode = {type, 0, 0};
+	PyArray_Typecode typecode = {0, 0, 0};
+	typecode.type_num = type;
         return PyArray_FromAny(op, &typecode, min_depth,
 			     max_depth, BEHAVED_FLAGS);
 }
@@ -5457,7 +5472,8 @@ static PyObject *
 PyArray_ContiguousFromObject(PyObject *op, int type, int min_depth, 
 			     int max_depth) 
 {
-	PyArray_Typecode typecode = {type, 0, 0};
+	PyArray_Typecode typecode = {0, 0, 0};
+	typecode.type_num = type;
         return PyArray_FromAny(op, &typecode, min_depth,
 			     max_depth, DEFAULT_FLAGS);
 }
@@ -5466,7 +5482,8 @@ static PyObject *
 PyArray_CopyFromObject(PyObject *op, int type, int min_depth, 
 		       int max_depth) 
 {
-	PyArray_Typecode typecode = {type, 0, 0};
+	PyArray_Typecode typecode = {0, 0, 0};
+	typecode.type_num = type;
         return PyArray_FromAny(op, &typecode, min_depth, max_depth,
 			     ENSURECOPY);
 }

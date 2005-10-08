@@ -751,9 +751,12 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 		PyObject *mydiagonal=NULL, *new=NULL, *ret=NULL, *sel=NULL;
 		intp i, n1;
 		int res;
-		PyArray_Typecode typecode = {self->descr->type_num,
-					     self->itemsize, 0};
-		
+		PyArray_Typecode typecode;
+
+		typecode.type_num = self->descr->type_num;
+		typecode.itemsize = self->itemsize;
+		typecode.fortran = 0;
+
 		mydiagonal = PyList_New(0);
 		if (mydiagonal == NULL) {Py_DECREF(self); return NULL;}
 		n1 = self->dimensions[0];
@@ -806,11 +809,12 @@ static int
 PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd, int type_num) 
 {
 	PyArrayObject *ap;
-	PyArray_Typecode typecode = {type_num, 0, 0};
+	PyArray_Typecode typecode = {0, 0, 0};
 	intp n, m, i, j;
 	char **ptr2;
 	char ***ptr3;
 
+	typecode.type_num = type_num;
 	if (PyTypeNum_ISFLEXIBLE(type_num)) {
 		PyErr_SetString(PyExc_TypeError, 
 				"Cannot treat flexible type as C array.");
@@ -995,7 +999,8 @@ PyArray_Concatenate(PyObject *op, int axis)
 	subtype = &PyArray_Type;
 	ret = NULL;
 	for(i=0; i<n; i++) {
-		PyArray_Typecode typecode = {type_num, 0, 0};
+		PyArray_Typecode typecode = {0, 0, 0};
+		typecode.type_num = type_num;
 		if ((otmp = PySequence_GetItem(op, i)) == NULL) goto fail;
 		mps[i] = (PyArrayObject*)
 			PyArray_FromAny(otmp, &typecode, 0, 0, CARRAY_FLAGS);
@@ -2663,7 +2668,7 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 				 (check_num != PyArray_STRING) &&
 				 (check_num != PyArray_VOID)) {
 				check_num = \
-					PyArray_TypestrConvert(at->itemsize, 
+					PyArray_TypestrConvert(at->itemsize,
 							       check_num);
 			        at->itemsize = 0;
 				if (check_num == PyArray_NOTYPE) goto fail;
@@ -2780,9 +2785,14 @@ PyArray_EquivalentTypes(PyArray_Typecode *typ1, PyArray_Typecode *typ2)
 static Bool 
 PyArray_EquivArrTypes(PyArrayObject *a1, PyArrayObject *a2)
 {
-        PyArray_Typecode type1={PyArray_TYPE(a1), PyArray_ITEMSIZE(a1), 0};
-        PyArray_Typecode type2={PyArray_TYPE(a2), PyArray_ITEMSIZE(a2), 0};
-        
+        PyArray_Typecode type1={0,0,0};
+        PyArray_Typecode type2={0,0,0};
+
+	type1.type_num = PyArray_TYPE(a1);
+	type2.type_num = PyArray_TYPE(a2);
+	type1.itemsize = PyArray_ITEMSIZE(a1);
+	type2.itemsize = PyArray_ITEMSIZE(a2);
+			
         return PyArray_EquivalentTypes(&type1, &type2);
 }
 
