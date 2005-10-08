@@ -1027,7 +1027,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                                            1, fp) < 1) {
                                         PyErr_Format(PyExc_IOError, 
                                                      "problem writing element"\
-                                                     " %d to file", it->index);
+                                                     " %d to file", 
+						     (int)it->index);
                                         Py_DECREF(it);
                                         return -1;
                                 }
@@ -1065,7 +1066,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                                       fp)) < n2) {
                                 PyErr_Format(PyExc_IOError,
                                              "problem writing element %d"\
-                                             " to file", it->index);
+                                             " to file", 
+					     (int) it->index);
                                 Py_DECREF(strobj);
                                 Py_DECREF(it);
                                 return -1;
@@ -5768,7 +5770,8 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
 		if (num < 0 || num >= self->size) {
 			PyErr_Format(PyExc_IndexError,
 				     "Index %d out of bounds"		\
-				     " 0<=index<%d", num, self->size);
+				     " 0<=index<%d", (int) num, 
+				     (int) self->size);
 			Py_DECREF(ind_it);
 			Py_DECREF(r);
 			PyArray_ITER_RESET(self);
@@ -5972,7 +5975,8 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
 		if ((num < 0) || (num >= self->size)) {
 			PyErr_Format(PyExc_IndexError,
 				     "Index %d out of bounds"		\
-				     " 0<=index<%d", num, self->size);
+				     " 0<=index<%d", (int) num, 
+				     (int) self->size);
 			Py_DECREF(ind_it);
 			return -1;
 		}
@@ -6628,7 +6632,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 				PyErr_Format(PyExc_IndexError,
 					     "index (%d) out of range "\
 					     "(0<=index<=%d) in dimension %d",
-					     *indptr, dimsize-1, 
+					     (int) *indptr, (int) (dimsize-1), 
 					     mit->iteraxes[i]);
 				goto fail;
 			}
