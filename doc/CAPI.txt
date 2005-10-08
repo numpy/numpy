@@ -4,7 +4,8 @@ Created:         October 2005
 
 The CAPI of SciPy is (mostly) backward compatible with Numeric.  
 
-There are a few non-standard API Numeric usages that will need to be changed:
+There are a few non-standard Numeric usages (that were not really part
+of the API) that will need to be changed:
 
   * If you used any of the function pointers in the PyArray_Descr
     structure you will have to modify your usage of those.  The
@@ -45,19 +46,25 @@ PyObject * PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type,
 
 subtype  : The subtype that should be created (either pass in
              &PyArray_Type, &PyBigArray_Type, or obj->ob_type,
-             where obj is a subtype (or subclass) of PyBigArray_Type).
+             where obj is a subtype (or subclass) of 
+	     of PyArray_Type or PyBigArray_Type).
 
 nd       : The number of dimensions (<MAX_DIMS)
 
 *dims    : A pointer to the size in each dimension.  Information will be
              copied from here.
 
-type     : An integer specifying the type of the array.
+type     : An integer specifying the type of the array 
+             (use the PyArray_XXXX enumerated types).
 
 *strides : The strides this array should have.  For new arrays created
              by this routine, this should be NULL.  If you pass in
              memory for this array to use, then you should pass in the
-             strides information as well.  I
+             strides information as well.  Any strides will be copied into
+	     the array structure.   Do not pass in bad strides information.
+
+	    PyArray_CheckStrides(...) can help but you must call it if you are
+	     unsure.
 
 *data    : NULL for creating brand-new memory.  If you want this array
              to wrap another memory area, then pass the pointer here.
@@ -68,13 +75,12 @@ type     : An integer specifying the type of the array.
              passing it's data pointer to this routine, and set the
              ->base member of the returned array to the Python object.
              You are responsible for setting the base object.  Failure
-             to do so will create a memory leak.
+             to do so will create a memory leak.  
             
             If you pass in a data buffer, the flags argument will be
               the flags of the new array. If you create a new array, a
               non-zero flags argument indicates that you want the array
               to be in FORTRAN order.
-
 
 itemsize : Indicates the itemsize for the new array.  This can be 0
              if it is a fixed-size array type.  It is only used for
@@ -83,7 +89,8 @@ itemsize : Indicates the itemsize for the new array.  This can be 0
 
 flags    : Either the flags showing how to interpret the data buffer
              passed in.  Or if a new array is created, nonzero to
-             indicate a FORTRAN order array.
+             indicate a FORTRAN order array.  See below for an explanation of
+	     the flags.
 
 
 obj      : If subtypes is &PyArray_Type or &PyBigArray_Type, this
@@ -96,10 +103,8 @@ obj      : If subtypes is &PyArray_Type or &PyBigArray_Type, this
 Note: The returned array object will be unitialized unless the type is
 PyArray_OBJECT.
 
-
 The PyArray_FromDims and family of functions are still available and
 are loose wrappers around this function.
-
 
 Getting an arrayobject from an arbitrary Python object:  PyArray_FromAny
 
@@ -209,6 +214,76 @@ PyArray_STRIDE(obj,n)
 
 
 see more in arrayobject.h
+
+
+
+NDArray Flags
+==========================
+
+The flags attribute of the PyArrayObject structure contains important 
+information about the memory used by the array (pointed to by the data member)
+This flags information must be kept accurate or strange results and even
+segfaults may result. 
+
+There are 7 (binary) flags that describe the memory area used by the
+data buffer.  These constants are defined in arrayobject.h and
+determine the bit-position of the flag.  Python exposes a nice dictionary
+interface for getting (and sometimes setting) these flags.
+
+Memory areas of all kinds can be pointed to by an NDArray, necessitating 
+these flags.  If you get a PyArrayObject in C-code, 
+you should be aware of the flags that are set.  
+If you need to guarantee a certain kind of array 
+(like CONTIGUOUS and BEHAVED), then pass these requirements into the 
+PyArray_FromAny function.  
+
+
+CONTIGUOUS  :  True if the array is a (C-style) contiguous in memory.
+FORTRAN     :  True if the array is (Fortran-style) contiguous in memory.
+
+Notice that 1-d arrays are always both FORTRAN contiguous and C contiguous.
+Both of these flags can be checked and are convenience flags.
+
+OWNDATA     :  True if the array owns the memory (it will try and free it
+	        using PyDataMem_FREE() on deallocation --- 
+		so it better really own it).
+
+These three flags facilitate using a data pointer that is a memory-mapped
+array, or part of some larger record array.  But, they may have other uses...
+
+ALIGNED     :  True if the data buffer is aligned for the type.  This
+	        can be checked.
+NOTSWAPPED  :  True if the data is in machine byte order.  Arrays
+	        can be out of machine byte order and will still 
+		work (albeit more slowly).  
+WRITEABLE   :  True only if the data buffer can be "written" to.
+
+
+UPDATEIFCOPY :  This is a special flag that is set if this array represents
+	          a copy made because a user required certain FLAGS in 
+		  PyArray_FromAny  and a copy had to be made of some 
+		  other array.   The base attribute then points to the 
+		  "misbehaved" array and will copy its contents to that 
+		  array when deallocated. 
+
+
+PyArray_UpdateFlags(obj, FLAGS) will update the obj->flags for FLAGS
+                  which can be any of CONTIGUOUS FORTRAN or ALIGNED.
+
+Some useful combinations of these flags:
+
+BEHAVED = ALIGNED | NOTSWAPPED | WRITEABLE
+BEHAVED_RO = ALIGNED | NOTSWAPPED
+CARRAY_FLAGS = CONTIGUOUS | BEHAVED
+FARRAY_FLAGS = FORTRAN | BEHAVED
+
+
+The macro PyArray_CHECKFLAGS(obj, FLAGS)  can test any combination of flags.
+There are several default combinations defined as macros already 
+(see arrayobject.h) 
+
+
+
 
 
 There are more C-API enhancements which you can discover in the code, 
