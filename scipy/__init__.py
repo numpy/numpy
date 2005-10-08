@@ -16,7 +16,7 @@ try:   # For installation purposes only
     import scipy.basic.fft as fftpack
     import scipy.basic.linalg as linalg
     import scipy.basic.random as random
-    from core_version import version as __version__
+    from core_version import version as __core_version__
     from scipy.test.testing import ScipyTest
     test = ScipyTest('scipy').test
 

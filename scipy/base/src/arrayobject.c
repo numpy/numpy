@@ -4279,7 +4279,7 @@ static char Arraytype__doc__[] =
         "A array object represents a multidimensional, homogeneous array\n"
 	"  of basic values.  Arrays are sequence, mapping and numeric\n"
 	"  objects.  More information is available in the scipy module and\n"
-	"  by looking at the methods and attributes of an array."
+	"  by looking at the methods and attributes of an array.";
 
 static PyTypeObject PyBigArray_Type = { 
         PyObject_HEAD_INIT(NULL)
