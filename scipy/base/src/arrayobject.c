@@ -4276,7 +4276,10 @@ static PyGetSetDef array_getsetlist[] = {
 
 
 static char Arraytype__doc__[] = 
-        "A array object represents a multidimensional, homogeneous array of basic values.  It has the folowing data members, m.shape (the size of each dimension in the array), m.itemsize (the size (in bytes) of each element of the array), and m.typecode (a character representing the type of the array elements).  Arrays are sequence, mapping and numeric objects.  Sequence indexing is similar to lists, with single indices returning a reference that points to the old array data, and slices returning by copy.  A array is also allowed to be indexed by a sequence of items.	 Each member of the sequence indexes the corresponding dimension of the array.";
+        "A array object represents a multidimensional, homogeneous array\n"
+	"  of basic values.  Arrays are sequence, mapping and numeric\n"
+	"  objects.  More information is available in the scipy module and\n"
+	"  by looking at the methods and attributes of an array."
 
 static PyTypeObject PyBigArray_Type = { 
         PyObject_HEAD_INIT(NULL)
