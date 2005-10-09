@@ -421,7 +421,7 @@ cdef class RandomState:
         """Return an array of the given dimensions which is initialized to 
         random numbers from a uniform distribution in the range [0,1).
 
-        randn(d0, d1, ..., dn) -> random values
+        rand(d0, d1, ..., dn) -> random values
         """
         if len(args) == 0:
             return self.random_sample()
