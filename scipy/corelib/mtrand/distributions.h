@@ -42,7 +42,7 @@ extern "C" {
  *  Variables, Insurance: Mathematics and Economics, (to appear)
  *  http://citeseer.csail.mit.edu/151115.html
  */
-
+ 
 /* Normal distribution with mean=loc and standard deviation=scale. */
 extern double rk_normal(rk_state *state, double loc, double scale);
 

@@ -94,7 +94,7 @@ cdef extern from "distributions.h":
     long rk_geometric(rk_state *state, double p)
     long rk_hypergeometric(rk_state *state, long good, long bad, long sample)
     long rk_logseries(rk_state *state, double p)
-    
+
 ctypedef double (* rk_cont0)(rk_state *state)
 ctypedef double (* rk_cont1)(rk_state *state, double a)
 ctypedef double (* rk_cont2)(rk_state *state, double a, double b)

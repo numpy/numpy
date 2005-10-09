@@ -43,13 +43,58 @@
 
 #include <math.h>
 #include "distributions.h"
-#include "mconf.h"
 #include <stdio.h>
 
 #ifndef min
 #define min(x,y) ((x<y)?x:y)
 #define max(x,y) ((x>y)?x:y)
 #endif
+
+/* log-gamma function to support some of these distributions. The 
+ * algorithm comes from SPECFUN by Shanjie Zhang and Jianming Jin and their
+ * book "Computation of Special Functions", 1996, John Wiley & Sons, Inc.
+ */
+extern double loggam(double x);
+double loggam(double x)
+{
+    double x0, x2, xp, gl, gl0;
+    long k, n;
+    
+    static double a[10] = {8.333333333333333e-02,-2.777777777777778e-03,
+         7.936507936507937e-04,-5.952380952380952e-04,
+         8.417508417508418e-04,-1.917526917526918e-03,
+         6.410256410256410e-03,-2.955065359477124e-02,
+         1.796443723688307e-01,-1.39243221690590e+00};
+    x0 = x;
+    n = 0;
+    if ((x == 1.0) || (x == 2.0))
+    {
+        return 0.0;
+    }
+    else if (x <= 7.0)
+    {
+        n = (long)(7 - x);
+        x0 = x + n;
+    }
+    x2 = 1.0/(x0*x0);
+    xp = 2*M_PI;
+    gl0 = a[9];
+    for (k=8; k>=0; k--)
+    {
+        gl0 *= x2;
+        gl0 += a[k];
+    }
+    gl = gl0/x0 + 0.5*log(xp) + (x0-0.5)*log(x0) - x0;
+    if (x <= 7.0)
+    {
+        for (k=1; k<=n; k++)
+        {
+            gl -= log(x0-1.0);
+            x0 -= 1.0;
+        }
+    }
+    return gl;
+}
 
 double rk_normal(rk_state *state, double loc, double scale)
 {
@@ -450,7 +495,7 @@ long rk_poisson_ptrs(rk_state *state, double lam)
             continue;
         }
         if ((log(V) + log(invalpha) - log(a/(us*us)+b)) <=
-            (-lam + k*loglam - lgam(k+1)))
+            (-lam + k*loglam - loggam(k+1)))
         {
             return k;
         }
@@ -704,8 +749,8 @@ long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample)
     d7 = sqrt((popsize - m) * sample * d4 *d5 / (popsize-1) + 0.5);
     d8 = D1*d7 + D2;
     d9 = (long)floor((double)((m+1)*(mingoodbad+1))/(popsize+2));
-    d10 = (lgam(d9+1) + lgam(mingoodbad-d9+1) + lgam(m-d9+1) + 
-           lgam(maxgoodbad-m+d9+1));
+    d10 = (loggam(d9+1) + loggam(mingoodbad-d9+1) + loggam(m-d9+1) + 
+           loggam(maxgoodbad-m+d9+1));
     d11 = min(min(m, mingoodbad)+1.0, floor(d6+16*d7));
     /* 16 for 16-decimal-digit precision in D1 and D2 */
     
@@ -719,8 +764,8 @@ long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample)
         if ((W < 0.0) || (W >= d11)) continue;
         
         Z = (long)floor(W);
-        T = d10 - (lgam(Z+1) + lgam(mingoodbad-Z+1) + lgam(m-Z+1) +
-                   lgam(maxgoodbad-m+Z+1));
+        T = d10 - (loggam(Z+1) + loggam(mingoodbad-Z+1) + loggam(m-Z+1) +
+                   loggam(maxgoodbad-m+Z+1));
         
         /* fast acceptance: */
         if ((X*(4.0-X)-3.0) <= T) break;
