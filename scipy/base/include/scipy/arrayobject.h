@@ -1213,6 +1213,9 @@ typedef struct {
 #define REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define MAX_ELSIZE 2*SIZEOF_LONGDOUBLE
 
+#define PyArray_SimpleNew(nd, dims, typenum) \
+	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
+
         /*Compatibility with old Numeric stuff -- don't use in new code */
 
 #define PyArray_UNSIGNED_TYPES

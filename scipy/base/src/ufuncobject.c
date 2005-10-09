@@ -1323,7 +1323,8 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		void **dptr=loop->dptr;
 		int mpselsize[MAX_ARGS];
 		intp index=loop->index, size=loop->size;
-		int bufcnt=loop->bufcnt, bufsize=loop->bufsize;
+		intp bufcnt=loop->bufcnt;
+		int bufsize=loop->bufsize;
 		void **bufptr = loop->bufptr;
 		void **buffer = loop->buffer;
 		void **castbuf = loop->castbuf;
@@ -2034,8 +2035,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 	intp *ptr=(intp *)ind->data;
 	intp nn=ind->dimensions[0];		
 	intp mm=arr->dimensions[axis]-1;
-	intp n, i;
-	int j;
+	intp n, i, j;
 	char *dptr;
 
 	/* Check for out-of-bounds values in indices array */		

@@ -115,7 +115,8 @@ fftpack_rfftf(PyObject *self, PyObject *args)
   if (data == NULL) return NULL;
   npts = data->dimensions[data->nd-1];
   data->dimensions[data->nd-1] = npts/2+1;
-  ret = (PyArrayObject *)PyArray_FromDims(data->nd, data->dimensions, PyArray_CDOUBLE);
+  ret = (PyArrayObject *)PyArray_SimpleNew(data->nd, data->dimensions, 
+					   PyArray_CDOUBLE);
   data->dimensions[data->nd-1] = npts;
   rstep = (ret->dimensions[ret->nd-1])*2;
 
@@ -165,7 +166,8 @@ fftpack_rfftb(PyObject *self, PyObject *args)
   data = (PyArrayObject *)PyArray_ContiguousFromObject(op1, PyArray_CDOUBLE, 1, 0);
   if (data == NULL) return NULL;
   npts = data->dimensions[data->nd-1];
-  ret = (PyArrayObject *)PyArray_FromDims(data->nd, data->dimensions, PyArray_DOUBLE);
+  ret = (PyArrayObject *)PyArray_SimpleNew(data->nd, data->dimensions, 
+					   PyArray_DOUBLE);
 
   if (PyArray_As1D(&op2, (char **)&wsave, &nsave, PyArray_DOUBLE) == -1) 
     goto fail;

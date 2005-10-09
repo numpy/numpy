@@ -88,7 +88,7 @@ typedef struct {
 	/* Buffers for the loop */
 	void *buffer[MAX_ARGS];
 	int bufsize;
-	int bufcnt;
+	intp bufcnt;
 	void *dptr[MAX_ARGS];
 
 	/* For casting */

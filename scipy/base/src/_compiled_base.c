@@ -169,7 +169,7 @@ arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
     dx = (double *)PyArray_DATA(ax);
     lbins = PyArray_SIZE(abins);
     dbins = (double *)PyArray_DATA(abins);
-    Py_Try(aret = PyArray_FromDims(1, &lx, PyArray_INTP));
+    Py_Try(aret = PyArray_SimpleNew(1, &lx, PyArray_INTP));
     iret = (intp *)PyArray_DATA(aret);
 
     Py_Assert(lx > 0 && lbins > 0, 
@@ -221,7 +221,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     int numvals, totmask, sameshape;
     char *input_data, *mptr, *vptr, *zero=NULL;
     int melsize, delsize, copied, nd;
-    int *instrides, *inshape;
+    intp *instrides, *inshape;
     int mindx, rem_indx, indx, i, k, objarray;
   
     static char *kwlist[] = {"input","mask","vals",NULL};
@@ -292,7 +292,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
        copy next value in the vals array to the input array.
        If we get through the value array, repeat it as necessary. 
     */
-    totmask = PyArray_SIZE(amask);
+    totmask = (int) PyArray_SIZE(amask);
     copied = 0;
     instrides = ainput->strides;
     inshape = ainput->dimensions;

@@ -5,42 +5,47 @@
 
 cdef extern from "scipy/arrayobject.h":
     ctypedef enum PyArray_TYPES:
-        PyArray_CHAR
+        PyArray_BOOL
+        PyArray_BYTE
         PyArray_UBYTE
-        PyArray_SBYTE
         PyArray_SHORT
         PyArray_USHORT 
         PyArray_INT
         PyArray_UINT 
         PyArray_LONG
+        PyArray_ULONG
         PyArray_FLOAT
         PyArray_DOUBLE 
+        PyArray_LONGDOUBLE
         PyArray_CFLOAT
         PyArray_CDOUBLE
+        PyArray_CLONGDOUBLE
         PyArray_OBJECT
+        PyArray_STRING
+        PyArray_UNICODE
+        PyArray_VOID
         PyArray_NTYPES
         PyArray_NOTYPE
-        
+
+    ctypedef int intp 
+
     struct PyArray_Descr:
         int type_num, elsize
         char type
-        
+
     ctypedef class scipy.ArrayType [object PyArrayObject]:
         cdef char *data
         cdef int nd
-        cdef int *dimensions
-        cdef int *strides
+        cdef intp *dimensions
+        cdef intp *strides
         cdef object base
         cdef PyArray_Descr *descr
         cdef int flags
 
-    ArrayType PyArray_FromDims(int ndims, int* dims, int item_type)
-    ArrayType PyArray_FromDimsAndData(int ndims, int* dims, int item_type, 
-        char* data)
-    int PyArray_Free(object obj, char* data)
+    ArrayType PyArray_SimpleNew(int ndims, intp* dims, int item_type)
     int PyArray_Check(object obj)
     ArrayType PyArray_ContiguousFromObject(object obj, PyArray_TYPES type, 
         int mindim, int maxdim)
-    int PyArray_SIZE(ArrayType arr)
+    intp PyArray_SIZE(ArrayType arr)
 
     void import_array()

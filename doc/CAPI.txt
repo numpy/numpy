@@ -21,6 +21,11 @@ of the API) that will need to be changed:
     get the itemsize of an object (for flexible arrays descr->elsize
     is 0).
 
+  * If you passed array->dimensions and array->strides around to 
+    functions.  These are now, intp* pointers.  On 32-bit systems
+    there won't be a problem.  However, on 64-bit systems, you will
+    need to make changes.  
+
 
 The header files arrayobject.h and ufuncobject.h contain many defines
 that you may find useful.  The files __ufunc_api.h and
@@ -35,7 +40,8 @@ All of these headers are installed to
 Getting arrays in C-code
 =========================
 
-All new arrays can be created using PyArray_New.
+All new arrays can be created using PyArray_New.  A simple interface 
+equivalent to PyArray_FromDims is PyArray_SimpleNew(nd, dims, typenum)
 
 This is a very flexible function.  
 
@@ -103,10 +109,25 @@ obj      : If subtypes is &PyArray_Type or &PyBigArray_Type, this
 Note: The returned array object will be unitialized unless the type is
 PyArray_OBJECT.
 
-The PyArray_FromDims and family of functions are still available and
-are loose wrappers around this function.
+PyArray_SimpleNew(nd, dims, typenum)  is a drop-in replacement for 
+PyArray_FromDims (except it takes intp* dims instead of int* dims which
+		  matters on 64-bit systems).
 
-Getting an arrayobject from an arbitrary Python object:  PyArray_FromAny
+PyArray_SimpleNew is just a macro for PyArray_New with default arguments.
+
+
+The PyArray_FromDims and family of functions are still available and
+are loose wrappers around this function.  These functions still take
+int * arguments.  This should be fine on 32-bit systems, but on 64-bit
+systems you may run into trouble if you frequently passed 
+PyArray_FromDims the dimensions member of the old PyArrayObject structure
+because sizeof(intp) != sizeof(int).
+
+
+Getting an arrayobject from an arbitrary Python object
+==============================================================
+
+PyArray_FromAny(...)
 
 This function replaces PyArray_ContiguousFromObject and friends (those
 function calls still remain but they are loose wrappers around the
