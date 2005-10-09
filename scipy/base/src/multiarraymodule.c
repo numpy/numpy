@@ -3119,7 +3119,6 @@ sep is a separator string for character-based data (or NULL for binary)
    " " means whitespace
 */
 
-static char doc_fromfile[] = "";
 
 static int
 _fill_in_itemsize(PyArray_Typecode *typecode)
@@ -3275,6 +3274,21 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 	return (PyObject *)r;
 }
 
+static char doc_fromfile[] = \
+	"fromfile(file=, dtype=intp, count=-1, sep='')\n"\
+	"\n"\
+	"  Return an array of the given data type from a \n"\
+	"  (text or binary) file.   The file argument can be an open file\n"\
+	"  or a string with the name of a file to read from.  If\n"\
+	"  count==-1, then the entire file is read, otherwise count is\n"\
+	"  the number of items of the given type read in.  If sep is ''\n"\
+	"  then read a binary file, otherwise it gives the separator\n"\
+	"  between elements in a text file.\n"\
+	"\n"\
+	"  WARNING: This function should be used sparingly, as it is not\n"\
+	"  a robust method of persistence.  But it can be useful to\n"\
+	"  read in simply-formatted or binary data quickly.";
+
 static PyObject *
 array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
@@ -3379,7 +3393,16 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 	return (PyObject *)ret; 	
 }
 
-static char doc_frombuffer[] = "";
+static char doc_frombuffer[] = \
+	"frombuffer(buffer=, dtype=intp, count=-1, swap=0)\n"\
+	"\n"								\
+	"  Returns a 1-d array of data type dtype from buffer. The buffer\n"\
+	"   argument must be an object that exposes the buffer interface.\n"\
+	"   If count is -1 then the entire buffer is used, otherwise, count\n"\
+	"   is the size of the output.  If the buffer has data that is out\n" \
+	"   not in machine byte-order, than set swap=1.  The data will not\n"
+	"   be byteswapped, but the array will manage it in future\n"\
+	"   operations.\n";
 
 static PyObject *
 array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)

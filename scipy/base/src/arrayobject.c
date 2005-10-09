@@ -603,8 +603,8 @@ PyArray_Size(PyObject *op)
 static int
 PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 {
-        intp dsize, ssize, sbytes;
-	int ncopies, elsize, index;
+        intp dsize, ssize, sbytes, ncopies;
+	int elsize, index;
         PyArrayIterObject *dit=NULL;
         PyArrayIterObject *sit=NULL;
 	char *dptr;
@@ -632,7 +632,7 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
                                 "elements.");
                 return -1;
         }
-        ncopies = dsize / ssize;
+        ncopies = (dsize / ssize);
 
 	swap = PyArray_ISNOTSWAPPED(dest) != PyArray_ISNOTSWAPPED(src);
 	copyswap = dest->descr->copyswap;
@@ -741,10 +741,10 @@ PyArray_FromDimsAndData(int nd, int *d, int type, char *data)
 {
 	PyObject *ret;
 #if SIZEOF_INTP != SIZEOF_INT
-	intp newd[MAX_DIMS];
 	int i;	
-	for (i=0; i<nd; i++) newd[i] = (intp) d[i]; 
+	intp newd[MAX_DIMS];
 
+	for (i=0; i<nd; i++) newd[i] = (intp) d[i]; 
 	ret = PyArray_New(&PyArray_Type, nd, newd, 
 			   type, NULL, data, 0, 
 			   0, NULL);
@@ -767,8 +767,8 @@ PyArray_FromDims(int nd, int *d, int type)
 #if SIZEOF_INTP != SIZEOF_INT
 	intp newd[MAX_DIMS];
 	int i;	
-	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
 
+	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
 	ret = PyArray_New(&PyArray_Type, nd, newd, type,
 			   NULL, NULL, 0, 0, NULL);
 #else
@@ -3469,7 +3469,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
         if (buffer.ptr == NULL) {
                 ret = (PyArrayObject *)PyArray_New(subtype, (int)dims.len, 
-                                                   (intp *)dims.ptr, type_num,
+                                                   dims.ptr, type_num,
                                                    NULL, NULL, itemsize, 
                                                    fortran, NULL);
                 
