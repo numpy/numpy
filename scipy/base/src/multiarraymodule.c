@@ -3173,6 +3173,16 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 	else {  /* character reading */
 		intp i;
 		char *dptr;
+		int done=0;
+
+		scan = PyArray_DescrFromType(typecode->type_num)->scanfunc;
+		if (scan == NULL) {
+			PyErr_SetString(PyExc_ValueError, 
+					"Don't know how to read "	\
+					"character files with that "	\
+					"array type");
+			return NULL;
+		}
 
 		if (num != -1) {  /* number to read is known */
 			r = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, 
@@ -3182,19 +3192,11 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 							 typecode->itemsize, 
 							 0, NULL);
 			if (r==NULL) return NULL;
-			scan = r->descr->scanfunc;
-			if (scan == NULL) {
-				PyErr_SetString(PyExc_ValueError, 
-						"Don't know how to read "\
-						"character files with that "\
-						"array type");
-				Py_DECREF(r);
-				return NULL;
-			}
 			dptr = r->data;
-			for (i=0; i < num-1; i++) {
-				if (scan(fp, dptr, r->itemsize, sep, NULL))
-					break;
+			for (i=0; i < num; i++) {
+				if (done) break;
+				done = scan(fp, dptr, r->itemsize, sep, NULL);
+				if (done < -2) break;
 				nread += 1;
 				dptr += r->itemsize;
 			}
@@ -3202,8 +3204,6 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 				Py_DECREF(r);
 				return NULL;
 			}
-			if (!(scan(fp, dptr, r->itemsize, NULL, NULL)))
-				nread += 1;
 		}
 		else { /* we have to watch for the end of the file and 
 			  reallocate at the end */
@@ -3212,7 +3212,7 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 			intp size = _FILEBUFNUM;
 			intp bytes;
 			intp totalbytes;
-			int done=0;
+
 			r = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, 
 							 &size, 
 							 typecode->type_num,
@@ -3222,22 +3222,15 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 			if (r==NULL) return NULL;
 			totalbytes = bytes = size * typecode->itemsize;
 			dptr = r->data;
-			scan = r->descr->scanfunc;
-			if (scan == NULL) {
-				PyErr_SetString(PyExc_ValueError, 
-						"Don't know how to read "\
-						"character files with that "\
-						"array type");
-				Py_DECREF(r);
-				return NULL;
-			}
 			while (!done) {
 				done = scan(fp, dptr, r->itemsize, sep, NULL);
+
 				/* end of file reached trying to 
-				   scan value 
+				   scan value.  done is 1 or 2
+				   if end of file reached trying to
+				   scan separator.  Still good value.
 				*/
-				if (done == 1 || done < 0) break;
-			
+				if (done < -2) break;
 				thisbuf += 1;
 				nread += 1;
 				dptr += r->itemsize;
@@ -3260,14 +3253,8 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 		}
 	}
 	if (nread < num) {
-		char msg[80];
-		snprintf(msg, 80, 
-			 "%ld items requested only %ld read", (long) num, 
-                         (long) nread);
-		if (PyErr_Warn(PyExc_RuntimeWarning, msg) < 0) {
-			Py_DECREF(r);
-			return NULL;
-		}
+		fprintf(stderr, "%ld items requested but only %ld read\n", 
+			(long) num, (long) nread);
 		r->data = PyDataMem_RENEW(r->data, nread * r->itemsize);
 		PyArray_DIM(r,0) = nread;
 	}
