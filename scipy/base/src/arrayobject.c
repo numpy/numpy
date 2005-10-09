@@ -5509,7 +5509,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
 
 	from = PyArray_DescrFromType(fromtype);
 	to = PyArray_DescrFromType(totype);
-       
+
         switch(fromtype) {
         case PyArray_BYTE:
 	case PyArray_SHORT:

@@ -84,8 +84,9 @@ PyUFunc_gg_g(char **args, intp *dimensions, intp *steps, void *func)
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
 	
 	for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
-		*(longdouble *)op = ((LongdoubleBinaryFunc *)func)(*(longdouble *)ip1, 
-								   *(longdouble *)ip2);
+		*(longdouble *)op = \
+			((LongdoubleBinaryFunc *)func)(*(longdouble *)ip1, 
+						       *(longdouble *)ip2);
 	}
 }
 
@@ -164,10 +165,6 @@ PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
 	char *ip1=args[0], *ip2=args[1], *op=args[2];
 	PyObject *tmp;
 	PyObject *x1, *x2;
-
-        ALLOW_C_API_DEF
-
-	ALLOW_C_API
 	
 	for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
 		x1 = *((PyObject **)ip1);
@@ -182,7 +179,6 @@ PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
 		*((PyObject **)op) = tmp;
 	}
  done:
-        DISABLE_C_API
         return;
 }
 
@@ -207,7 +203,7 @@ PyUFunc_f_f_As_d_d(char **args, intp *dimensions, intp *steps, void *func)
 static void 
 PyUFunc_d_d(char **args, intp *dimensions, intp *steps, void *func) 
 {
-	int i;
+	intp i;
 	char *ip1=args[0], *op=args[1];
 	for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
 		*(double *)op = ((DoubleUnaryFunc *)func)(*(double *)ip1);
@@ -217,9 +213,10 @@ PyUFunc_d_d(char **args, intp *dimensions, intp *steps, void *func)
 static void 
 PyUFunc_f_f(char **args, intp *dimensions, intp *steps, void *func) 
 {
-	int i;
+	register intp i;
+	intp n=dimensions[0];
 	char *ip1=args[0], *op=args[1];
-	for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
+	for(i=0; i<n; i++, ip1+=steps[0], op+=steps[1]) {
 		*(float *)op = ((FloatUnaryFunc *)func)(*(float *)ip1);
 	}
 }
@@ -227,9 +224,10 @@ PyUFunc_f_f(char **args, intp *dimensions, intp *steps, void *func)
 static void 
 PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func) 
 {
-	int i;
+	register intp i;
+	intp n=dimensions[0];
 	char *ip1=args[0], *op=args[1];
-	for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
+	for(i=0; i<n; i++, ip1+=steps[0], op+=steps[1]) {
 		*(longdouble *)op = ((LongdoubleUnaryFunc *)func)\
 			(*(longdouble *)ip1);
 	}
@@ -239,7 +237,7 @@ PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func)
 static void 
 PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func) 
 {
-	register int i; cdouble x, res;
+	register intp i; cdouble x, res;
 	intp n=dimensions[0];
 	char *ip1=args[0], *op=args[1];
 	for(i=0; i<n; i++, ip1+=steps[0], op+=steps[1]) {
@@ -253,7 +251,7 @@ PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func)
 static void 
 PyUFunc_F_F(char **args, intp *dimensions, intp *steps, void *func) 
 {
-	int i; cfloat x, res;
+	intp i; cfloat x, res;
 	char *ip1=args[0], *op=args[1];
 	for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
 		x.real = ((float *)ip1)[0]; 
@@ -268,7 +266,7 @@ PyUFunc_F_F(char **args, intp *dimensions, intp *steps, void *func)
 static void 
 PyUFunc_D_D(char **args, intp *dimensions, intp *steps, void *func) 
 {
-	int i; cdouble x, res;
+	intp i; cdouble x, res;
 	char *ip1=args[0], *op=args[1];
 	for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
 		x.real = ((double *)ip1)[0]; 
@@ -283,7 +281,7 @@ PyUFunc_D_D(char **args, intp *dimensions, intp *steps, void *func)
 static void 
 PyUFunc_G_G(char **args, intp *dimensions, intp *steps, void *func) 
 {
-	int i; clongdouble x, res;
+	intp i; clongdouble x, res;
 	char *ip1=args[0], *op=args[1];
 	for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
 		x.real = ((longdouble *)ip1)[0]; 
@@ -297,12 +295,8 @@ PyUFunc_G_G(char **args, intp *dimensions, intp *steps, void *func)
 static void 
 PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func) 
 {
-	int i; PyObject *tmp, *x1;
+	intp i; PyObject *tmp, *x1;
 	char *ip1=args[0], *op=args[1];
-
-        ALLOW_C_API_DEF
-
-	ALLOW_C_API
 
 	for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
 		x1 = *(PyObject **)ip1;
@@ -313,19 +307,14 @@ PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func)
 		*((PyObject **)op) = tmp;
 	}
  done:
-        DISABLE_C_API
         return;
 }
 
 static void 
 PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func) 
 {
-	int i; PyObject *tmp, *meth, *arglist, *x1;
+	intp i; PyObject *tmp, *meth, *arglist, *x1;
 	char *ip1=args[0], *op=args[1];
-
-        ALLOW_C_API_DEF
-
-	ALLOW_C_API
 
 	for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
 		x1 = *(PyObject **)ip1;
@@ -342,7 +331,6 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
 		}
 	}
  done:
-        DISABLE_C_API
         return;
 
 }
@@ -356,7 +344,7 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
 {
-	int i, j;
+	intp i, j;
 	intp n=dimensions[0];
         PyUFunc_PyFuncData *data = (PyUFunc_PyFuncData *)func;
         int nin = data->nin, nout=data->nout;
