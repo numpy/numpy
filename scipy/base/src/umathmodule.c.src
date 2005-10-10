@@ -142,21 +142,21 @@ double hypot(double x, double y)
 #if !defined(isnan)
 
 #if !defined(HAVE_LONGDOUBLE_FUNCS) || !defined(HAVE_ISNAN)
-#define isnanl(x) isnan((double)(x)))
+#define isnanl(x) isnan((double)(x))
 #define isinfl(x) (!isnanl((x)) && isnanl((x)-(x)))
 #endif
 
 #if !defined(HAVE_FLOAT_FUNCS) || !defined(HAVE_ISNAN)
-#define isnanf(x) isnan((double)(x)))
-#define isinff(x) (!isnanlf((x)) && isnanf((x)-(x))
+#define isnanf(x) isnan((double)(x))
+#define isinff(x) (!isnanf((x)) && isnanf((x)-(x)))
 #endif
 
 #else /* !defined(isnan) */
 
-#define isnanl(x) isnan(x)
-#define isnanf(x) isnan(x)
-#define isinfl(x) isinf(x)
-#define isinff(x) isinf(x)
+#define isnanl(x) isnan((x))
+#define isnanf(x) isnan((x))
+#define isinfl(x) isinf((x))
+#define isinff(x) isinf((x))
 
 #endif /* !defined(isnan) */
 
@@ -166,15 +166,15 @@ double hypot(double x, double y)
 #define signbitl(x) ((longdouble) signbit((double)(x)))
 #define signbitf(x) ((float) signbit((double) (x)))
 #else
-#define signbitl(x) signbit(x)
-#define signbitf(x) signbit(x)
+#define signbitl(x) signbit((x))
+#define signbitf(x) signbit((x))
 #endif
 
 #if !defined(isfinite)
-#define isfinite(x) (!(isinf(x) || isnan(x)))
+#define isfinite(x) (!(isinf((x)) || isnan((x))))
 #endif
-#define isfinitef(x) (!(isinff(x) || isnanf(x)))
-#define isfinitel(x) (!(isinfl(x) || isnanl(x)))
+#define isfinitef(x) (!(isinff((x)) || isnanf((x))))
+#define isfinitel(x) (!(isinfl((x)) || isnanl((x))))
 
 
 /* First, the C functions that do the real work */
