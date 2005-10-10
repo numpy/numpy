@@ -106,7 +106,7 @@ static PyObject *
 
 /**begin repeat 
 
-#TYP=CFLOAT,CDOUBLE, CLONGDOUBLE#
+#TYP=CFLOAT, CDOUBLE, CLONGDOUBLE#
 #typ=float, double, longdouble#
 #kind=CFloat, CDouble, CLongDouble#
 */
@@ -180,6 +180,7 @@ CLONGDOUBLE_getitem(char *ip, PyArrayObject *ap)
         return PyArray_Scalar(ip, PyArray_CLONGDOUBLE, sizeof(clongdouble), 
                               !PyArray_ISNOTSWAPPED(ap));
 }
+
 
 
 /* UNICODE */

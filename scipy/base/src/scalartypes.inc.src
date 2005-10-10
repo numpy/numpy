@@ -175,38 +175,20 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
 static PyObject *
 gentype_@name@(PyObject *m1, PyObject *m2)
 {
-	PyObject *arr, *ret, *tup;
-
+	PyObject *arr, *ret=NULL, *tup;
+	
 	if (!PyArray_IsScalar(m1, Generic)) {
 		if (PyArray_Check(m1)) {
 			ret = m1->ob_type->tp_as_number->nb_@name@(m1,m2);
 		}
-                else if ((m1->ob_type->tp_as_number == NULL) ||
-			 (m1->ob_type->tp_as_number->nb_@name@ == NULL)) {
-			arr = PyArray_FromScalar(m2, NULL);
-			if (arr == NULL) return NULL;
-			ret = arr->ob_type->tp_as_number->nb_@name@(m1, arr);
-			Py_DECREF(arr);
-		}
-		else {
-			/* Convert m2 to a Python object and then try */
-			tup = PyTuple_New(0);
-			arr = gentype_generic_method(m2, tup, NULL, 
-						     "toscalar");
-			Py_DECREF(tup);
-			if (arr == NULL) return NULL;
-                        ret = PyNumber_@PYNAME@(m1, arr);
-			if (ret==NULL) {
-				PyObject *newarr;
-				PyErr_Clear();
-				/* Convert object to Array scalar and try again */
-				newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
-				if (newarr!=NULL) {
-					ret = newarr->ob_type->tp_as_number->nb_@name@(m1, newarr);
-					Py_DECREF(newarr);
-				}
+                else {
+			PyObject *newarr;
+			/* Convert object to Array scalar and try again */
+			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
+			if (newarr!=NULL) {
+				ret = newarr->ob_type->tp_as_number->nb_@name@(m1, newarr);
+				Py_DECREF(newarr);
 			}
-			Py_DECREF(arr);
 		}
 		return ret;
 	}
@@ -214,31 +196,14 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 		if (PyArray_Check(m2)) {
 			ret = m2->ob_type->tp_as_number->nb_@name@(m1,m2);
 		}
-		else if ((m2->ob_type->tp_as_number == NULL) ||
-			 (m2->ob_type->tp_as_number->nb_@name@ == NULL)) {
-			arr = PyArray_FromScalar(m1, NULL);
-			if (arr == NULL) return NULL;
-			ret = arr->ob_type->tp_as_number->nb_@name@(arr, m2);
-			Py_DECREF(arr);
-		}
 		else {
-			/* Convert m1 to a Python object and then try */
-			tup = PyTuple_New(0);
-			arr = gentype_generic_method(m1, tup, NULL, 
-						     "toscalar");
-			Py_DECREF(tup);
-			ret = PyNumber_@PYNAME@(arr,m2);
-			if (ret==NULL) {
-				PyObject *newarr;
-				PyErr_Clear();
-				/* Convert object to Array and try again */
-				newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
-				if (newarr!=NULL) {
-					ret = newarr->ob_type->tp_as_number->nb_@name@(newarr, m2);
-					Py_DECREF(newarr);
-				}
+			PyObject *newarr;
+			/* Convert object to Array and try again */
+			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
+			if (newarr!=NULL) {
+				ret = newarr->ob_type->tp_as_number->nb_@name@(newarr, m2);
+				Py_DECREF(newarr);
 			}
-			Py_DECREF(arr);
 		}
 		return ret;
 	}
@@ -259,7 +224,7 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 static PyObject *
 gentype_multiply(PyObject *m1, PyObject *m2)
 {
-	PyObject *arr, *ret, *tup;
+	PyObject *arr, *ret=NULL, *tup;
 	long repeat;
 
 	if (!PyArray_IsScalar(m1, Generic)) {
@@ -283,14 +248,13 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 			}
 		}
 		else {
-			/* Convert m2 to a Python object */
-			tup = PyTuple_New(0);
-			arr = gentype_generic_method(m2, tup, NULL, 
-						     "toscalar");
-			Py_DECREF(tup);
-			if (arr == NULL) return NULL;
-                        ret = PyNumber_Multiply(m1, arr);
-			Py_DECREF(arr);
+			PyObject *newarr;
+			/* Convert object to Array scalar and try again */
+			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
+			if (newarr!=NULL) {
+				ret = newarr->ob_type->tp_as_number->nb_multiply(m1, newarr);
+				Py_DECREF(newarr);
+			}
 		}
 		return ret;
 	}
@@ -315,14 +279,13 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 			}			
 		}
 		else {
-			/* Convert m1 to a Python object */
-			tup = PyTuple_New(0);
-			arr = gentype_generic_method(m1, tup, NULL, 
-						     "toscalar");
-			Py_DECREF(tup);
-			if (arr == NULL) return NULL;
-                        ret = PyNumber_Multiply(arr, m2);
-			Py_DECREF(arr);
+			PyObject *newarr;
+			/* Convert object to Array scalar and try again */
+			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
+			if (newarr!=NULL) {
+				ret = newarr->ob_type->tp_as_number->nb_multiply(m1, newarr);
+				Py_DECREF(newarr);
+			}
 		}
 		return ret;
 	}
