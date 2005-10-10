@@ -3,7 +3,7 @@
 import types
 import numeric as _nx
 from numeric import asarray
-__all__ = ['mgrid','ogrid','r_', 'c_', 'index_exp', 'ix_']
+__all__ = ['mgrid','ogrid','r_', 'c_', 'index_exp', 'ix_','ndenumerate']
 
 from type_check import ScalarType
 import function_base
@@ -215,6 +215,33 @@ r_=concatenator(0)
 c_=concatenator(-1)
 #row = concatenator(0,1)
 #col = concatenator(-1,1)
+
+
+# A simple nd index iterator over an array:
+
+class ndenumerate(enumerate):
+    def __init__(self, arr):
+        arr = asarray(arr)
+        self.iter = enumerate(arr.flat)
+        self.ashape = arr.shape
+        self.nd = arr.ndim
+        self.factors = [None]*(self.nd-1)
+        val = self.ashape[-1]
+        for i in range(self.nd-1,0,-1):
+            self.factors[i-1] = val
+            val *= self.ashape[i-1]
+
+    def next(self):
+        res = self.iter.next()
+        indxs = [None]*self.nd
+        val = res[0]
+        for i in range(self.nd-1):
+            indxs[i] = val / self.factors[i]
+            val = val % self.factors[i]
+        indxs[self.nd-1] = val
+        return tuple(indxs), res[1]
+
+
 
 # A nicer way to build up index tuples for arrays.
 #

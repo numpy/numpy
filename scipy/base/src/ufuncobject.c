@@ -229,12 +229,12 @@ PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func)
 	char *ip1=args[0], *op=args[1];
 	for(i=0; i<n; i++, ip1+=steps[0], op+=steps[1]) {
 		fprintf(stderr, "expl = %p, sqrtl = %p\n", expl, sqrtl);
-		fprintf(stderr, "Called %p with %f:  ",
-			func, (double) *(longdouble *)ip1);
+		fprintf(stderr, "Called %p with %Lf:  ",
+			func, *(longdouble *)ip1);
 		*(longdouble *)op = ((LongdoubleUnaryFunc *)func)	\
 			(*(longdouble *)ip1);
-		fprintf(stderr, "Answer was %f.\n",
-			(double) *(longdouble *)op);
+		fprintf(stderr, "Answer was %Lf.\n",
+			*(longdouble *)op);
 	}
 }
 
