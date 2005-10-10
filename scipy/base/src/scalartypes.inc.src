@@ -186,9 +186,10 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 			/* Convert object to Array scalar and try again */
 			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
 			if (newarr!=NULL) {
-				ret = newarr->ob_type->tp_as_number->nb_@name@(m1, newarr);
+				ret = newarr->ob_type->tp_as_number->nb_@name@(newarr, m2);
 				Py_DECREF(newarr);
 			}
+			else ret=NULL;
 		}
 		return ret;
 	}
@@ -199,11 +200,12 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 		else {
 			PyObject *newarr;
 			/* Convert object to Array and try again */
-			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
+			newarr = PyArray_FromAny(m2, NULL, 0, 0, 0);
 			if (newarr!=NULL) {
-				ret = newarr->ob_type->tp_as_number->nb_@name@(newarr, m2);
+				ret = newarr->ob_type->tp_as_number->nb_@name@(m1, newarr);
 				Py_DECREF(newarr);
 			}
+			else ret=NULL;
 		}
 		return ret;
 	}
@@ -252,9 +254,10 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 			/* Convert object to Array scalar and try again */
 			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
 			if (newarr!=NULL) {
-				ret = newarr->ob_type->tp_as_number->nb_multiply(m1, newarr);
+				ret = newarr->ob_type->tp_as_number->nb_multiply(newarr, m2);
 				Py_DECREF(newarr);
 			}
+			else ret=NULL;
 		}
 		return ret;
 	}
@@ -281,11 +284,12 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 		else {
 			PyObject *newarr;
 			/* Convert object to Array scalar and try again */
-			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
+			newarr = PyArray_FromAny(m2, NULL, 0, 0, 0);
 			if (newarr!=NULL) {
 				ret = newarr->ob_type->tp_as_number->nb_multiply(m1, newarr);
 				Py_DECREF(newarr);
 			}
+			else ret =NULL;
 		}
 		return ret;
 	}
