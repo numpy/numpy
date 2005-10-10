@@ -284,8 +284,9 @@ UPDATEIFCOPY :  This is a special flag that is set if this array represents
 	          a copy made because a user required certain FLAGS in 
 		  PyArray_FromAny  and a copy had to be made of some 
 		  other array.   The base attribute then points to the 
-		  "misbehaved" array and will copy its contents to that 
-		  array when deallocated. 
+		  "misbehaved" array.  When the array with this flag
+                  set is deallocated, it will copy its contents to
+	          the "misbehaved" array (casting if necessary).
 
 
 PyArray_UpdateFlags(obj, FLAGS) will update the obj->flags for FLAGS
