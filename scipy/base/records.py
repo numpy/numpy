@@ -4,8 +4,9 @@ import types
 import re
 
 # formats regular expression
-# allows multidimension spec with a tuple syntax in front of the letter code
-# '(2,3)f4' and ' (  2 ,  3  )  f4  ' are equally allowed
+# allows multidimension spec with a tuple syntax in front 
+# of the letter code '(2,3)f4' and ' (  2 ,  3  )  f4  ' 
+# are equally allowed
 format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[A-Za-z0-9.]*)')
 
 numfmt = sb.typeDict
