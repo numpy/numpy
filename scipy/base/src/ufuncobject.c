@@ -184,8 +184,8 @@ PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
 
 
 typedef double DoubleUnaryFunc(double x);
-typedef double FloatUnaryFunc(float x);
-typedef double LongdoubleUnaryFunc(longdouble x);
+typedef float FloatUnaryFunc(float x);
+typedef longdouble LongdoubleUnaryFunc(longdouble x);
 typedef void CdoubleUnaryFunc(cdouble *x, cdouble *res);
 typedef void CfloatUnaryFunc(cfloat *x, cfloat *res);
 typedef void ClongdoubleUnaryFunc(clongdouble *x, clongdouble *res);
@@ -231,8 +231,7 @@ PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func)
 		fprintf(stderr, "expl = %p, sqrtl = %p\n", expl, sqrtl);
 		fprintf(stderr, "Called %p with %Lf:  ",
 			func, *(longdouble *)ip1);
-		*(longdouble *)op = ((LongdoubleUnaryFunc *)func)	\
-			(*(longdouble *)ip1);
+		*(longdouble *)op = ((LongdoubleUnaryFunc *)func)(*(longdouble *)ip1);
 		fprintf(stderr, "Answer was %Lf.\n",
 			*(longdouble *)op);
 	}
