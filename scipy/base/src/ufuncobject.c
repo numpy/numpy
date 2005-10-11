@@ -1341,7 +1341,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 			  d. copy output buffer back to output arrays.
                     3. goto next position
 		*/                
-		fprintf(stderr, "BUFFER...%d\n", loop->size);
+		/*fprintf(stderr, "BUFFER...%d\n", loop->size);*/
 		/*
 		for (i=0; i<self->nargs; i++) {
 			fprintf(stderr, "iters[%d]->dataptr = %p, %p of size %d\n", i, 
