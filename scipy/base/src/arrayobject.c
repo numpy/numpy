@@ -5201,7 +5201,8 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 
 	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, n, dims, 
 					   type.type_num, 
-					   NULL, data, type.itemsize, 0, NULL);
+					   NULL, data, type.itemsize, 
+                                           BEHAVED_FLAGS, NULL);
 	if (ret == NULL) return NULL;
 	Py_INCREF(input);
 	ret->base = input;
@@ -5234,7 +5235,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 
 	if (swap) {
 		PyObject *tmp;
-		tmp = PyObject_CallMethod((PyObject *)ret, "byteswap", "");
+                tmp = PyArray_Byteswap(ret, TRUE);
 		Py_DECREF(tmp);
 	}
 
