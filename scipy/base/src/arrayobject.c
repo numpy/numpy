@@ -5514,8 +5514,6 @@ PyArray_CanCastSafely(int fromtype, int totype)
         case PyArray_BYTE:
 	case PyArray_SHORT:
         case PyArray_INT:
-        case PyArray_LONG:
-	case PyArray_LONGLONG:
 		if (PyTypeNum_ISINTEGER(totype)) {
 			if (PyTypeNum_ISUNSIGNED(totype)) {
 				return (to->elsize > from->elsize);
@@ -5531,11 +5529,26 @@ PyArray_CanCastSafely(int fromtype, int totype)
 			return ((to->elsize >> 1) > from->elsize);
 		}
 		else return totype > fromtype;
+        case PyArray_LONG:
+	case PyArray_LONGLONG:
+		if (PyTypeNum_ISINTEGER(totype)) {
+			if (PyTypeNum_ISUNSIGNED(totype)) {
+				return (to->elsize > from->elsize);
+			}
+			else {
+				return (to->elsize >= from->elsize);
+			}
+		}
+		else if (PyTypeNum_ISFLOAT(totype)) {
+			return (to->elsize >= from->elsize);
+		}
+		else if (PyTypeNum_ISCOMPLEX(totype)) {
+			return ((to->elsize >> 1) >= from->elsize);
+		}
+		else return totype > fromtype;
         case PyArray_UBYTE:
         case PyArray_USHORT:
         case PyArray_UINT:
-	case PyArray_ULONG:
-	case PyArray_ULONGLONG:
 		if (PyTypeNum_ISINTEGER(totype)) {
 			if (PyTypeNum_ISSIGNED(totype)) {
 				return (to->elsize > from->elsize);
@@ -5549,6 +5562,23 @@ PyArray_CanCastSafely(int fromtype, int totype)
 		}
 		else if (PyTypeNum_ISCOMPLEX(totype)) {
 			return ((to->elsize >> 1) > from->elsize);
+		}
+		else return totype > fromtype;
+	case PyArray_ULONG:
+	case PyArray_ULONGLONG:
+		if (PyTypeNum_ISINTEGER(totype)) {
+			if (PyTypeNum_ISSIGNED(totype)) {
+				return (to->elsize > from->elsize);
+			}
+			else {
+				return (to->elsize >= from->elsize);
+			}
+		}
+		else if (PyTypeNum_ISFLOAT(totype)) {
+			return (to->elsize >= from->elsize);
+		}
+		else if (PyTypeNum_ISCOMPLEX(totype)) {
+			return ((to->elsize >> 1) >= from->elsize);
 		}
 		else return totype > fromtype;
         case PyArray_FLOAT:

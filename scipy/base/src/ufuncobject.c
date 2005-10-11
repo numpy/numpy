@@ -228,12 +228,8 @@ PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func)
 	intp n=dimensions[0];
 	char *ip1=args[0], *op=args[1];
 	for(i=0; i<n; i++, ip1+=steps[0], op+=steps[1]) {
-		fprintf(stderr, "expl = %p, sqrtl = %p\n", expl, sqrtl);
-		fprintf(stderr, "Called %p with %Lf:  ",
-			func, *(longdouble *)ip1);
-		*(longdouble *)op = ((LongdoubleUnaryFunc *)func)(*(longdouble *)ip1);
-		fprintf(stderr, "Answer was %Lf.\n",
-			*(longdouble *)op);
+		*(longdouble *)op = ((LongdoubleUnaryFunc *)func)\
+                        (*(longdouble *)ip1);
 	}
 }
 
@@ -2034,7 +2030,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 	for (i=0; i<nn; i++) {
 		if ((*ptr < 0) || (*ptr > mm)) {
 			PyErr_Format(PyExc_IndexError, 
-				     "index out-of-bounds (0, %d)", mm);
+				     "index out-of-bounds (0, %d)", (int) mm);
 			return NULL;
 		}
 		ptr++;
