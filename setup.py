@@ -18,10 +18,11 @@ def setup_package():
             version = version,
             maintainer = "SciPy Developers",
             maintainer_email = "scipy-dev@scipy.org",
-            description = "Core SciPy",
+            description = "SciPy Core",
             url = "http://numeric.scipy.org",
 	    license = 'BSD',
             )
+	config.add_data_dir('doc')
         config.add_subpackage('scipy')
         config.name = 'scipy_core'
         print config.name,'version',config.version

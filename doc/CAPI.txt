@@ -72,7 +72,8 @@ type     : An integer specifying the type of the array
 	    PyArray_CheckStrides(...) can help but you must call it if you are
 	     unsure.
 
-*data    : NULL for creating brand-new memory.  If you want this array
+*data    : NULL for creating brand-new memory.  IT WILL BE UNITIALIZED
+             EXCEPT FOR AN OBJECT ARRAY.  If you want this array
              to wrap another memory area, then pass the pointer here.
              You are responsible for deleting the memory in that case,
              but do not do so until the new array object has been
@@ -115,6 +116,9 @@ PyArray_FromDims (except it takes intp* dims instead of int* dims which
 
 PyArray_SimpleNew is just a macro for PyArray_New with default arguments.
 
+Note that PyArray_New does not initialize the memory (unless you ask for
+  a PyArray_OBJECT type). 
+
 
 The PyArray_FromDims and family of functions are still available and
 are loose wrappers around this function.  These functions still take
@@ -122,6 +126,8 @@ int * arguments.  This should be fine on 32-bit systems, but on 64-bit
 systems you may run into trouble if you frequently passed 
 PyArray_FromDims the dimensions member of the old PyArrayObject structure
 because sizeof(intp) != sizeof(int).
+
+These functions do initialize the memory to 0 (just like Numeric did).
 
 
 Getting an arrayobject from an arbitrary Python object

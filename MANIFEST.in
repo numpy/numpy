@@ -1,5 +1,6 @@
-recursive-include . *.txt
+recursive-include doc *.txt
 include MANIFEST.in
+include THANKS.txt
 #include scipy/f2py2e/f2py.1
 #recursive-include scipy/f2py2e *.cfg
 #recursive-include scipy/f2py2e *.py
