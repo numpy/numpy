@@ -158,6 +158,32 @@ in writing setup scripts:
 + ``config.add_data_dir(data_path)`` --- add directory ``data_path``
   recursively to ``data_files``. The whole directory tree starting at
   ``data_path`` will be copied under package installation directory.
+  If ``data_path`` is a tuple then its first element defines
+  the suffix of where data files are copied relative to package installation
+  directory and the second element specifies the path to data directory.
+  By default data directory are copied under package installation
+  directory. For example,
+ 
+  ::
+
+    config.add_data_dir('fun')  # fun/ contains foo.dat bar/car.dat
+    config.add_data_dir(('sun','fun'))
+    config.add_data_dir(('gun','/full/path/to/fun'))
+
+  will install data files to the following locations 
+
+    <installation path of config.name package>/
+      fun/
+         foo.dat
+         bar/
+            car.dat
+      sun/
+         foo.dat
+         bar/
+            car.dat
+      gun/
+         foo.dat
+         car.dat
 
 + ``config.add_include_dirs(*paths)`` --- prepend ``paths`` to
   ``include_dirs`` list. This list will be visible to all extension

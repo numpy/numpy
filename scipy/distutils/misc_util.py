@@ -411,15 +411,37 @@ class Configuration:
         return
 
     def add_data_dir(self,data_path):
-        """ Add files under data_path to data_files list.
+        """ Recursively add files under data_path to data_files list.
+        Argument can be either
+        - 2-sequence (<datadir suffix>,<path to data directory>)
+        - path to data directory where python datadir suffix defaults
+          to package dir.
+        If path is not absolute then it's datadir suffix is
+        package dir + subdirname of the path.
         """
+        if type(data_path) is type(()):
+            assert len(data_path)==2,`data_path`
+            d,data_path = data_path
+        else:
+            d = None
+        assert type(data_path) is type(''),`data_path`
         for path in self.paths(data_path):
+            if not os.path.exists(path):
+                print 'Not existing data path',path
+                continue
             filenames = []
             os.path.walk(path, _gsf_visit_func,filenames)
             if not os.path.isabs(path):
-                self.add_data_files((path,filenames))
+                if d is None:
+                    ds = path
+                else:
+                    ds = os.path.join(*([d]+os.path.normpath(path).split()[1:]))
+                self.add_data_files((ds,filenames))
             else:
-                self.add_data_files(*filenames)
+                if d is None:
+                    self.add_data_files(*filenames)
+                else:
+                    self.add_data_files((d,filenames))
         return
 
     def add_data_files(self,*files):
@@ -459,7 +481,6 @@ class Configuration:
             dist.data_files.extend(data_dict.items())
         else:
             self.data_files.extend(data_dict.items())
-
         return            
         
     def add_include_dirs(self,*paths):

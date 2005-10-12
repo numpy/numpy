@@ -292,6 +292,7 @@ class ScipyTest:
             if short_module_name[-8:]=='_version' \
                and short_module_name[:-8]==module.__name__.split('.')[-2]:
                 return []
+            print test_file
             print '   !! No test file %r found for %s' \
                   % (os.path.basename(test_file), mstr(module))
             return []
