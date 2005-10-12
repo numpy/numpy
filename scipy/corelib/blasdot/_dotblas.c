@@ -226,7 +226,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
 				       typenum, NULL, NULL, 0, 0, 
-				       (prior2 > prior1 ? ap2 : ap1));  
+				       (PyObject *)(prior2 > prior1 ? ap2 : ap1));  
     if (ret == NULL) goto fail;
     memset(ret->data, '\0', PyArray_SIZE(ret));
 
@@ -473,7 +473,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
     
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
 				       typenum, NULL, NULL, 0, 0, 
-				       (prior2 > prior1 ? ap2 : ap1));
+				       (PyObject *)(prior2 > prior1 ? ap2 : ap1));
     
     if (ret == NULL) goto fail;
     memset(ret->data, 0, PyArray_SIZE(ret));

@@ -15,7 +15,7 @@ lstsq = None
 
 def get_linalg_funcs():
     global eigvals, lstsq
-    import scipy.linalg
+    import scipy
     eigvals = scipy.linalg.eigvals
     lstsq = scipy.linalg.lstsq
     return
