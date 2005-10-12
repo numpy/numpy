@@ -436,8 +436,8 @@ array_cast(PyArrayObject *self, PyObject *args)
 
 /* default sub-type implementation */
 
-static char doc_wraparray[] = "m.__array_wrap__(obj) returns an object of type m"\
-	" from the ndarray object obj";
+static char doc_wraparray[] = "m.__array_wrap__(obj) returns an object of "\
+	"type m from the ndarray object obj";
 
 static PyObject *
 array_wraparray(PyArrayObject *self, PyObject *args)
@@ -461,7 +461,7 @@ array_wraparray(PyArrayObject *self, PyObject *args)
 			  PyArray_DIMS(arr), PyArray_TYPE(arr),
 			  PyArray_STRIDES(arr), PyArray_DATA(arr),
 			  PyArray_ITEMSIZE(arr), 
-			  PyArray_FLAGS(arr), NULL);
+			  PyArray_FLAGS(arr), (PyObject *)self);
 	if (ret == NULL) return NULL;
 	Py_INCREF(arr);
 	PyArray_BASE(ret) = arr;
@@ -568,7 +568,10 @@ array_resize(PyArrayObject *self, PyObject *args)
 	return Py_None;
 }
 
-static char doc_repeat[] = "a.repeat(repeats=, axis=None)";
+static char doc_repeat[] = "a.repeat(repeats=, axis=None)\n"\
+	"\n"\
+	" Copy elements of a, repeats times.  The repeats argument must\n"\
+	"  be a sequence of length a.shape[axis] or a scalar.";
 
 static PyObject *
 array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
@@ -583,7 +586,12 @@ array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
 	return PyArray_Repeat(self, repeats, axis);
 }
 
-static char doc_choose[] = "a.choose(b1,b2,...)";
+static char doc_choose[] = "self.choose(b0,b1,...,bn)\n"\
+	"\n"\
+	" Self sould be an integer array with entries from 0 to n+1, \n"\
+	"  The bi arrays should be of the same shape as self.  The result\n"\
+	"  will be an array with elements chosen from the bi arrays\n"\
+	"  according to the value at each position of self.";
 
 static PyObject *
 array_choose(PyArrayObject *self, PyObject *args) 
@@ -616,7 +624,10 @@ array_sort(PyArrayObject *self, PyObject *args)
 	return _ARET(PyArray_Sort(self, axis));
 }
 
-static char doc_argsort[] = "a.argsort(<None>)";
+static char doc_argsort[] = "a.argsort(<None>)\n"\
+	"  Return the indexes into a that would sort it along the"\
+	"  given axis (or <None> if the sorting should be done"\
+	"  in terms of a.flat";
 
 static PyObject *
 array_argsort(PyArrayObject *self, PyObject *args) 
@@ -629,7 +640,14 @@ array_argsort(PyArrayObject *self, PyObject *args)
 	return _ARET(PyArray_ArgSort(self, axis));
 }
 
-static char doc_searchsorted[] = "a.searchsorted(v)";
+static char doc_searchsorted[] = "a.searchsorted(v)\n"\
+	" Assuming that a is a 1-D array, in ascending order and\n"\
+	" represents bin boundaries, then a.searchsorted(values) gives an\n"\
+	" array of bin numbers, giving the bin into which each value would\n"\
+	" be placed.  This method is helpful for histograming.  \n"\
+	" Note: No warning is given if the boundaries, in a, are not \n"\
+	" in ascending order.";
+;
 
 static PyObject *
 array_searchsorted(PyArrayObject *self, PyObject *args) 
