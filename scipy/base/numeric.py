@@ -68,8 +68,7 @@ def zeros_like(a):
     use empty_like(), which is faster as it only allocates memory."""
 
     a = asarray(a)
-    return a.__array_wrap__(zeros(a.shape,a.dtype,
-                                  a.flags['FORTRAN'] and a.ndim > 1))
+    return zeros(a.shape,a.dtype, a.flags['FNC'])
 
 def empty_like(a):
     """Return an empty (uninitialized) array of the shape and typecode of a.
@@ -78,9 +77,8 @@ def empty_like(a):
     your array to be initialized, you should use zeros_like().
 
     """
-    asarray(a)
-    return a.__array_wrap__(empty(a.shape,a.dtype,
-                                  a.flags['FORTRAN'] and a.ndim > 1))
+    a = asarray(a)
+    return empty(a.shape,a.dtype, a.flags['FNC'])
 
 # end Fernando's utilities
 

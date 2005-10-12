@@ -73,11 +73,12 @@ defdict = {
                (1,1), None,
                "takes the conjugate of x elementwise."
                ],
-'remainder' : [intflt,fltsO,
-               ("fmod,"*3, "PyNumber_Remainder"),
-               (2,1), Zero,
-               "computes x1 % x2 elementwise."
-               ],
+
+'fmod' : [intflt,fltsM,
+          ("fmod,"*3, "fmod"),
+          (2,1), Zero,
+          "computes (C-like) x1 % x2 elementwise."
+          ],
 'power' : [nobool,noint,
            ("pow,"*6,
             "PyNumber_Power"),
@@ -266,10 +267,12 @@ defdict = {
              (2,1), None,
              "a safe and correct arctan(x1/x2)"
              ],
-'fmod' : [fltsM, fltsM,
-          ("fmod,"*3,'"fmod"'),
-          (2,1), None,
-          "computes x1-n*x2 where n is the quotient of x1 / x2"],
+
+'remainder' : [intflt, 'O',
+               ("PyObject_Remainder"),
+               (2,1), None,
+               "computes x1-n*x2 where n is floor(x1 / x2)"],
+
 'hypot' : [fltsM, fltsM,
            ("hypot,"*3, '"hypot"'),
            (2,1), None,

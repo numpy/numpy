@@ -513,20 +513,17 @@ gentype_ndim_get(PyObject *self)
 static PyObject *
 gentype_flags_get(PyObject *self)
 {
-	PyObject *dict;
-	dict = PyDict_New();	
+	static int flags=CONTIGUOUS | OWNDATA | FORTRAN | ALIGNED | \
+		NOTSWAPPED;
+        static PyObject *module=NULL;
 
-#define ADDFLAG(flag, val) PyDict_SetItemString(dict, #flag, Py_##val);
+        if (module==NULL) {
+                module = PyImport_ImportModule("scipy.base._internal");
+                if (module == NULL) return NULL;
+        }
+        return PyObject_CallMethod(module, "flagsobj", "Oii", 
+                                   self, flags, 1);
 
-        ADDFLAG(CONTIGUOUS, True);
-        ADDFLAG(OWN_DATA, True);
-        ADDFLAG(FORTRAN, True);
-        ADDFLAG(ALIGNED, True);
-        ADDFLAG(NOTSWAPPED, True);
-        ADDFLAG(WRITEABLE, False);
-        ADDFLAG(UPDATEIFCOPY, False);
-	return dict;
-#undef ADDFLAG
 }
 
 static PyObject *

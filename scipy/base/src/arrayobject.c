@@ -2341,7 +2341,7 @@ array_divmod(PyArrayObject *op1, PyObject *op2)
 {
         PyObject *divp, *modp, *result;
 
-        divp = array_divide(op1, op2);
+        divp = array_floor_divide(op1, op2);
         if (divp == NULL) return NULL;
         modp = array_remainder(op1, op2);
         if (modp == NULL) {
@@ -3556,8 +3556,8 @@ array_flags_get(PyArrayObject *self)
                 module = PyImport_ImportModule("scipy.base._internal");
                 if (module == NULL) return NULL;
         }
-        return PyObject_CallMethod(module, "flagsobj", "Oi", 
-                                   self, self->flags);
+        return PyObject_CallMethod(module, "flagsobj", "Oii", 
+                                   self, self->flags, 0);
 }
 
 /*

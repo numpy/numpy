@@ -3727,7 +3727,6 @@ array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
 	return retobj;
 }
 
-
 static struct PyMethodDef array_module_methods[] = {
 	{"set_string_function", (PyCFunction)array_set_string_function, 
 	 METH_VARARGS|METH_KEYWORDS, doc_set_string_function},

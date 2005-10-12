@@ -21,12 +21,13 @@ _cnum = _flagdict['CONTIGUOUS']
 _fnum = _flagdict['FORTRAN']
 
 class flagsobj(dict):
-    def __init__(self, arr, flags):
+    def __init__(self, arr, flags, scalar):
         self._arr = arr
         self._flagnum = flags
         for k in _defflags:
             num = _flagdict[k]
             dict.__setitem__(self, k, flags & num == num)
+        self.scalar = scalar
 
     def __getitem__(self, key):
         if not isinstance(key, str):
@@ -68,6 +69,8 @@ class flagsobj(dict):
         raise KeyError, "Unknown flag: %s" % key
         
     def __setitem__(self, item, val):
+        if self.scalar:
+            raise ValueError, "Cannot set flags on array scalars."
         val = not not val  # convert to boolean
         if item not in _setable:
             raise KeyError, "Cannot set flag", item

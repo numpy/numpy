@@ -1266,11 +1266,53 @@ static void
 
 
 /**begin repeat
+#TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+#typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
+*/
+static void
+@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func) 
+{
+	register intp i;
+	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+	char *i1=args[0], *i2=args[1], *op=args[2];
+	double x, y, res;
+	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+		x = *((@typ@ *)i1);
+		y = *((@typ@ *)i2);
+		res = x - floor(x/y)*y;
+		*((@typ@ *)op)= (@typ@)(res);
+	} 
+}
+/**end repeat**/
+
+/**begin repeat
+#TYPE=FLOAT,DOUBLE,LONGDOUBLE#
+#typ=float,double,longdouble#
+#c=f,,l#
+*/
+static void
+@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func) 
+{
+	register intp i;
+	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+	char *i1=args[0], *i2=args[1], *op=args[2];
+	@typ@ x, y, res;
+	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+		x = *((@typ@ *)i1);
+		y = *((@typ@ *)i2);
+		res = x - floor@c@(x/y)*y;
+		*((@typ@ *)op)= res;
+	} 
+}
+/**end repeat**/
+
+
+/**begin repeat
 
 #TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG)*6#
 #typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong)*6#
 #OP= %*10, &*10, |*10, ^*10, <<*10, >>*10#
-#kind=remainder*10, bitwise_and*10, bitwise_or*10, bitwise_xor*10, left_shift*10, right_shift*10#
+#kind=fmod*10, bitwise_and*10, bitwise_or*10, bitwise_xor*10, left_shift*10, right_shift*10#
 
 */
 static void 
@@ -1581,7 +1623,7 @@ static struct PyMethodDef methods[] = {
 };
 
 DL_EXPORT(void) initumath(void) {
-	PyObject *m, *d, *s, *c_api;
+	PyObject *m, *d, *s, *s2, *c_api;
 	double pinf, pzero, mynan;
   
 	/* Create the module and add the functions */
@@ -1662,11 +1704,13 @@ DL_EXPORT(void) initumath(void) {
         PyModule_AddObject(m, "NAN", PyFloat_FromDouble(mynan));
 
 	s = PyDict_GetItemString(d, "conjugate");
+	s2 = PyDict_GetItemString(d, "remainder");
 	/* Setup the array object's numerical structures with appropriate 
 	   ufuncs in d*/
 	PyArray_SetNumericOps(d);
 
 	PyDict_SetItemString(d, "conj", s);
+	PyDict_SetItemString(d, "mod", s2);
 
  err:  
 	/* Check for errors */
