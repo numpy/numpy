@@ -1940,7 +1940,7 @@ typedef struct {
                 *greater,
                 *greater_equal,
                 *floor_divide,
-                *TRUE_divide,
+                *true_divide,
 		*logical_or,
 		*logical_and,
 		*floor,
@@ -1993,7 +1993,7 @@ PyArray_SetNumericOps(PyObject *dict)
         SET(greater);
         SET(greater_equal);
         SET(floor_divide);	
-        SET(TRUE_divide);	
+        SET(true_divide);	
 	SET(logical_or);
 	SET(logical_and);
 	SET(floor);
@@ -2003,7 +2003,8 @@ PyArray_SetNumericOps(PyObject *dict)
         return 0;
 }
 
-#define GET(op) if (PyDict_SetItemString(dict, #op, n_ops.op)==-1) \
+#define GET(op) if (n_ops.op &&						\
+		    (PyDict_SetItemString(dict, #op, n_ops.op)==-1))	\
 		goto fail;
 
 static PyObject *
@@ -2034,7 +2035,7 @@ PyArray_GetNumericOps(void)
         GET(greater);
         GET(greater_equal);
         GET(floor_divide);  
-        GET(TRUE_divide); 
+        GET(true_divide); 
 	GET(logical_or);
 	GET(logical_and);
 	GET(floor);
@@ -2294,9 +2295,9 @@ array_floor_divide(PyArrayObject *m1, PyObject *m2)
 }
 
 static PyObject *
-array_TRUE_divide(PyArrayObject *m1, PyObject *m2) 
+array_true_divide(PyArrayObject *m1, PyObject *m2) 
 {
-        return PyArray_GenericBinaryFunction(m1, m2, n_ops.TRUE_divide);
+        return PyArray_GenericBinaryFunction(m1, m2, n_ops.true_divide);
 }
 
 static PyObject *
@@ -2307,10 +2308,10 @@ array_inplace_floor_divide(PyArrayObject *m1, PyObject *m2)
 }
 
 static PyObject *
-array_inplace_TRUE_divide(PyArrayObject *m1, PyObject *m2) 
+array_inplace_true_divide(PyArrayObject *m1, PyObject *m2) 
 {
         return PyArray_GenericInplaceBinaryFunction(m1, m2, 
-						    n_ops.TRUE_divide);
+						    n_ops.true_divide);
 }
 
 /* Array evaluates as "TRUE" if any of the elements are non-zero */
@@ -2533,9 +2534,9 @@ static PyNumberMethods array_as_number = {
         (binaryfunc)array_inplace_bitwise_or,   /*inplace_or*/
 
         (binaryfunc)array_floor_divide,	     /*nb_floor_divide*/
-        (binaryfunc)array_TRUE_divide,	     /*nb_TRUE_divide*/
+        (binaryfunc)array_true_divide,	     /*nb_true_divide*/
         (binaryfunc)array_inplace_floor_divide,  /*nb_inplace_floor_divide*/
-        (binaryfunc)array_inplace_TRUE_divide,   /*nb_inplace_TRUE_divide*/
+        (binaryfunc)array_inplace_true_divide,   /*nb_inplace_true_divide*/
 
 };
 
