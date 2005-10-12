@@ -223,17 +223,17 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
 CCompiler.get_version = new.instancemethod(\
     CCompiler_get_version,None,CCompiler)
 
-#if sys.platform == 'win32':
-#    compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
-#                                 "Mingw32 port of GNU C Compiler for Win32"\
-#                                 "(for MSC built Python)")
-#    if os.environ.get('OSTYPE','')=='msys' or \
-#           os.environ.get('MSYSTEM','')=='MINGW32':
-#        # On windows platforms, we want to default to mingw32 (gcc)
-#        # because msvc can't build blitz stuff.
-#        log.info('Setting mingw32 as default compiler for nt.')
-#        ccompiler._default_compilers = (('nt', 'mingw32'),) \
-#                                       + ccompiler._default_compilers
+if sys.platform == 'win32':
+   compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
+                                "Mingw32 port of GNU C Compiler for Win32"\
+                                "(for MSC built Python)")
+   if os.environ.get('OSTYPE','')=='msys' or \
+          os.environ.get('MSYSTEM','')=='MINGW32':
+       # On windows platforms, we want to default to mingw32 (gcc)
+       # because msvc can't build blitz stuff.
+       log.info('Setting mingw32 as default compiler for nt.')
+       ccompiler._default_compilers = (('nt', 'mingw32'),) \
+                                      + ccompiler._default_compilers
 
 
 _distutils_new_compiler = new_compiler
