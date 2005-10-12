@@ -47,23 +47,6 @@ static double atanh(double x)
 }
 #endif
 
-#if !defined(HAVE_INVERSE_HYPERBOLIC_FLOAT)
-static float acoshf(float x)
-{
-  return (float)acosh((double)(x));
-}
-
-static float asinhf(float x)
-{
-  return (float)asinh((double)(x));
-}
-
-static float atanhf(float x)
-{
-  return (float)atanh((double)(x));
-}
-#endif
-
 #ifdef HAVE_HYPOT
 #if !defined(NeXT) && !defined(_MSC_VER)
 extern double hypot(double, double);
@@ -237,6 +220,97 @@ hypot, atan2, pow
 }
 #endif
 /**end repeat**/
+
+
+#if !defined(HAVE_INVERSE_HYPERBOLIC_FLOAT)
+#ifdef HAVE_FLOAT_FUNCS
+static float acoshf(float x)
+{
+	return logf(x + sqrtf((x-1.0)*(x+1.0)));
+}
+
+static float asinhf(float xx)
+{
+	float x;
+	int sign;
+	if (xx < 0.0) {
+		sign = -1;
+		x = -xx;
+	}
+	else {
+		sign = 1;
+		x = xx;
+	}
+	return sign*logf(x + sqrtf(x*x+1.0));
+}
+
+static float atanhf(float x)
+{
+	return 0.5*logf((1.0+x)/(1.0-x));
+}
+#else
+static float acoshf(float x)
+{
+  return (float)acosh((double)(x));
+}
+
+static float asinhf(float x)
+{
+  return (float)asinh((double)(x));
+}
+
+static float atanhf(float x)
+{
+  return (float)atanh((double)(x));
+}
+#endif
+#endif
+
+
+#if !defined(HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE)
+#ifdef HAVE_LONGDOUBLE_FUNCS
+static longdouble acoshl(longdouble x)
+{
+	return logl(x + sqrtl((x-1.0)*(x+1.0)));
+}
+
+static longdouble asinhl(longdouble xx)
+{
+	longdouble x;
+	int sign;
+	if (xx < 0.0) {
+		sign = -1;
+		x = -xx;
+	}
+	else {
+		sign = 1;
+		x = xx;
+	}
+	return sign*logl(x + sqrtl(x*x+1.0));
+}
+
+static longdouble atanhl(longdouble x)
+{
+	return 0.5*logl((1.0+x)/(1.0-x));
+}
+#else
+static longdouble acoshl(longdouble x)
+{
+  return (longdouble)acosh((double)(x));
+}
+
+static longdouble asinhl(longdouble x)
+{
+  return (longdouble)asinh((double)(x));
+}
+
+static longdouble atanhl(longdouble x)
+{
+  return (longdouble)atanh((double)(x));
+}
+#endif
+#endif
+
 
 
 
