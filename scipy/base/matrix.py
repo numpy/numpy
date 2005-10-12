@@ -128,8 +128,13 @@ class matrix(N.ndarray):
         else:
             return N.dot(other, self)
 
+    def __imul__(self, other):
+        self[:] = self * other
+        return self
+
     def __pow__(self, other):
-        if len(shape)!=2 or shape[0]!=shape[1]:
+        shape = self.shape
+        if len(shape) != 2 or shape[0] != shape[1]:
             raise TypeError, "matrix is not square"
         if type(other) in (type(1), type(1L)):
             if other==0:
@@ -184,14 +189,13 @@ class matrix(N.ndarray):
 
     def getH(self):
         if issubclass(self.dtype, N.complexfloating):
-            return self.transpose(self.conjugate())
+            return self.transpose().conjugate()
         else:
             return self.transpose()
 
     def getI(self):
-	import scipy
-        inv = scipy.linalg.inv
-        return matrix(inv(self))
+        from scipy import linalg
+        return matrix(linalg.inv(self))
 
     A = property(getA, None, doc="base array")
     T = property(getT, None, doc="transpose")    
