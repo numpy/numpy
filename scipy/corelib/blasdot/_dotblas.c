@@ -238,13 +238,13 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    cblas_daxpy(l, *((double *)ap2->data), (double *)ap1->data, 1,
 			(double *)ret->data, 1);
 	} 
-	else if (typenum == PyArray_FLOAT) {
-	    cblas_saxpy(l, *((float *)ap2->data), (float *)ap1->data, 1,
-			(float *)ret->data, 1);
-	}
 	else if (typenum == PyArray_CDOUBLE) {
 	    cblas_zaxpy(l, (double *)ap2->data, (double *)ap1->data, 1,
 			(double *)ret->data, 1);
+	}
+	else if (typenum == PyArray_FLOAT) {
+	    cblas_saxpy(l, *((float *)ap2->data), (float *)ap1->data, 1,
+			(float *)ret->data, 1);
 	}
 	else if (typenum == PyArray_CFLOAT) {
 	    cblas_caxpy(l, (float *)ap2->data, (float *)ap1->data, 1,
@@ -491,7 +491,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 	    cblas_zaxpy(l, (double *)ap2->data, (double *)ap1->data, 1,
 			(double *)ret->data, 1);
 	}
-	else  if (typenum == PyArray_FLOAT) {
+	else if (typenum == PyArray_FLOAT) {
 	    cblas_saxpy(l, *((float *)ap2->data), (float *)ap1->data, 1,
 			(float *)ret->data, 1);
 	}
