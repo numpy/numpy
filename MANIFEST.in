@@ -1,4 +1,3 @@
-recursive-include doc *.txt
 include MANIFEST.in
 include THANKS.txt
 #include scipy/f2py2e/f2py.1

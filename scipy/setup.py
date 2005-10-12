@@ -11,6 +11,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('base')
     config.add_subpackage('corelib') # installed as scipy.lib
     config.add_subpackage('basic')
+    config.add_data_dir('doc')
     return config.todict()
 
 if __name__ == '__main__':

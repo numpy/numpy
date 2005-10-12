@@ -22,7 +22,6 @@ def setup_package():
             url = "http://numeric.scipy.org",
 	    license = 'BSD',
             )
-	config.add_data_dir('doc')
         config.add_subpackage('scipy')
         config.name = 'scipy_core'
         print config.name,'version',config.version
