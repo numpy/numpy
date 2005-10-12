@@ -64,6 +64,25 @@ static float atanhf(float x)
 }
 #endif
 
+#if !defined(HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE)
+static longdouble acoshl(longdouble x)
+{
+  return (longdouble)acosh((double)(x));
+}
+
+static longdouble asinhl(longdouble x)
+{
+  return (longdouble)asinh((double)(x));
+}
+
+static longdouble atanhl(longdouble x)
+{
+  return (longdouble)atanh((double)(x));
+}
+#endif
+
+
+
 #ifdef HAVE_HYPOT
 #if !defined(NeXT) && !defined(_MSC_VER)
 extern double hypot(double, double);
@@ -187,7 +206,6 @@ sin, cos, tan
 sinh, cosh, tanh, 
 fabs, floor, ceil, fmod, sqrt, log10, log, exp, fabs
 asin, acos, atan, 
-asinh, acosh, atanh
 
 hypot, atan2, pow
 
@@ -195,10 +213,10 @@ hypot, atan2, pow
 
 /**begin repeat
 
-#kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan,asinh,acosh,atanh)*2#
-#typ=longdouble*19, float*19#
-#c=l*19,f*19#
-#TYPE=LONGDOUBLE*19, FLOAT*19#
+#kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan)*2#
+#typ=longdouble*16, float*16#
+#c=l*16,f*16#
+#TYPE=LONGDOUBLE*16, FLOAT*16#
 */
 #ifndef HAVE_@TYPE@_FUNCS
 @typ@ @kind@@c@(@typ@ x) {

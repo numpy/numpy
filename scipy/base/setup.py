@@ -62,6 +62,8 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append('HAVE_INVERSE_HYPERBOLIC')
             if config_cmd.check_func('atanhf', **kws_args):
                 moredefs.append('HAVE_INVERSE_HYPERBOLIC_FLOAT')
+            if config_cmd.check_func('atanhl', **kw_args):
+                moredefs.append('HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE')
             if config_cmd.check_func('isnan', **kws_args):
                 moredefs.append('HAVE_ISNAN')
 
