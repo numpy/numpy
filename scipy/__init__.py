@@ -8,26 +8,11 @@ It is being distributed for a fee for a limited time to try and raise money for
 development.
 """
 
-try:   # For installation purposes only 
-    from scipy.base import *
-    import scipy.basic as basic
-    from scipy.basic.fft import fft, ifft
-    from scipy.basic.random import rand, randn
-    import scipy.basic.fft as fftpack
-    import scipy.basic.linalg as linalg
-    import scipy.basic.random as random
-    from core_version import version as __core_version__
-    from scipy.test.testing import ScipyTest
-    test = ScipyTest('scipy').test
 
-except AttributeError, inst:
-    if inst.args[0] == "'module' object has no attribute 'typeinfo'":
-        print "Not loaded: Are you running from the source directory?"
-    else:
-        raise
-except ImportError, inst:
-    if inst.args[0] == 'No module named multiarray':
-        print "Not loaded: Are you running from the source directory?"
-    else:
-        raise
-
+import os as _os
+_install_init = _os.path.join(_os.path.dirname(__file__),'install__init__.py')
+if _os.path.isfile(_install_init):
+    execfile(_install_init)
+else:
+    print 'Running from source directory.'
+del _os
