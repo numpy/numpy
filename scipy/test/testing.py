@@ -264,7 +264,7 @@ class ScipyTest:
                         names.append(n)        
         return names
 
-    def _get_module_tests(self,module,level):
+    def _get_module_tests(self,module,level,verbosity):
         mstr = self._module_str
         d,f = os.path.split(module.__file__)
 
@@ -292,9 +292,10 @@ class ScipyTest:
             if short_module_name[-8:]=='_version' \
                and short_module_name[:-8]==module.__name__.split('.')[-2]:
                 return []
-            print test_file
-            print '   !! No test file %r found for %s' \
-                  % (os.path.basename(test_file), mstr(module))
+            if verbosity>1:
+                print test_file
+                print '   !! No test file %r found for %s' \
+                      % (os.path.basename(test_file), mstr(module))
             return []
 
         try:
@@ -360,7 +361,7 @@ class ScipyTest:
                    or module is None \
                    or os.path.basename(os.path.dirname(module.__file__))=='tests':
                 continue
-            suites.extend(self._get_module_tests(module, level))
+            suites.extend(self._get_module_tests(module, level, verbosity))
 
         suites.extend(self._get_suite_list(sys.modules[package_name], level))
 
