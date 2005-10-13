@@ -13,17 +13,8 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('basic')
     config.add_data_dir('doc')
 
-    def generate_install_init_py(ext,build_dir):
-        from distutils.dep_util import newer
-        from distutils.file_util import copy_file
-        source = ext.depends[0]
-        target = os.path.join(build_dir,'install__init__.py')
-        if newer(source,target):
-            copy_file(source,target)
-        return target
+    config.make_config_py(name='__core_config__') # installs __config__.py
 
-    config.add_extension('__init__',[generate_install_init_py],
-                         depends=['install__init__py'])
     return config.todict()
 
 if __name__ == '__main__':

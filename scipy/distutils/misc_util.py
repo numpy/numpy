@@ -814,11 +814,20 @@ class Configuration:
             def rm_file(f=target):
                 try: os.remove(f); print 'removed',f
                 except OSError: pass
+                try: os.remove(f+'c'); print 'removed',f+'c'
+                except OSError: pass
             atexit.register(rm_file)
 
             return target
 
-        self.add_data_files(generate_svn_version_py)
+        self.add_data_files(generate_svn_version_py())
+        return
+
+    def make_config_py(self,name='__config__'):
+        """ Generate package __config__.py file containing system_info
+        information used during building the package.
+        """
+        self.add_extension(name,[generate_config_py])
         return
 
 def get_cmd(cmdname,_cache={}):
