@@ -84,7 +84,7 @@ class matrix(N.ndarray):
 
         ret = N.ndarray.__new__(matrix, shape, arr.dtype, buffer=arr,
                                 fortran=fortran,
-                                swap=(not arr.flags['NOTSWAPPED']))
+                                swap=arr.flags['S'])
         return ret; 
 
 

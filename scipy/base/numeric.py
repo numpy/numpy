@@ -27,35 +27,17 @@ fastCopyAndTranspose = multiarray._fastCopyAndTranspose
 register_dtype = multiarray.register_dtype
 can_cast = multiarray.can_cast
 
-
 def asarray(a, dtype=None):
     """asarray(a,dtype=None) returns a as an array.  Unlike array(),
-    no copy is performed if a is already an array.  Will return a subclass
-    of array. 
+    no copy is performed if a is already an array.  Subclasses are converted
+    to base class ndarray.
     """
     return array(a, dtype, copy=0)
 
-def asndarray(a, dtype=None):
-    """asndarray(a, dtype=None) always returns an actual ndarray object.
-    No copy is performed if a is already an array.
-    Meant primarily for debugging.     
+def asanyarray(a, dtype=None):
+    """will pass subclasses through...
     """
-    dtype = obj2dtype(dtype)
-    # exact check
-    while 1:
-        if type(a) is ndarray:
-            if dtype is None or a.dtype is dtype:
-                return a
-            else:
-                return a.astype(dtype)
-        try:
-            if dtype is None:
-                return a.__array__()
-            else:
-                return a.__array__(dtype)
-        except AttributeError:
-            a = array(a,dtype)  # copy irrelevant
-            dtype = None
+    return array(a, dtype, copy=0, subok=1)
 
 def isfortran(a):
     return a.flags['FNC']
@@ -66,9 +48,9 @@ def zeros_like(a):
 
     If you don't explicitly need the array to be zeroed, you should instead
     use empty_like(), which is faster as it only allocates memory."""
-
-    a = asarray(a)
-    return zeros(a.shape,a.dtype, a.flags['FNC'])
+    
+    a = asanyarray(a)
+    return a.__array_wrap__(zeros(a.shape,a.dtype, a.flags['FNC']))
 
 def empty_like(a):
     """Return an empty (uninitialized) array of the shape and typecode of a.
@@ -77,8 +59,8 @@ def empty_like(a):
     your array to be initialized, you should use zeros_like().
 
     """
-    a = asarray(a)
-    return empty(a.shape,a.dtype, a.flags['FNC'])
+    a = asanyarray(a)
+    return a.__array_wrap__(empty(a.shape,a.dtype, a.flags['FNC']))
 
 # end Fernando's utilities
 

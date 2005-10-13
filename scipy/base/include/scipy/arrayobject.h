@@ -811,28 +811,23 @@ typedef struct {
 				 it is also FORTRAN contiguous 
 			      */
 
-	/* Not used -- always assumed 
-#define OWN_DIMENSIONS 2  
-#define OWN_STRIDES    4  
-	*/
-
-#define OWNDATA        8
-#define OWN_DATA       OWNDATA
-
-#define FORTRAN    0x020    /* set if array is a contiguous Fortran array */
-	                    /*  first index varies the fastest in memory
-			        (strides array is reverse of C-contiguous
+#define FORTRAN    2    /* set if array is a contiguous Fortran array */
+                       /*  first index varies the fastest in memory
+                           (strides array is reverse of C-contiguous
 			           array)*/
 
-	/* array never has these two set -- FromAny flags only */
-#define FORCECAST     0x040    
-#define ENSURECOPY    0x080 	
+#define OWNDATA        4
+#define OWN_DATA       OWNDATA
+
+	/* array never has these three set -- FromAny flags only */
+#define FORCECAST     0x010    
+#define ENSURECOPY    0x020
+#define ENSUREARRAY   0x040
 
 #define ALIGNED       0x100
 #define NOTSWAPPED    0x200
 #define WRITEABLE     0x400
 
-  /* Flag used in creating a new array, not set in the array */
 
 	/* If this flags is set, then base contains a pointer to 
 	   an array of the same size that should be updated with the 

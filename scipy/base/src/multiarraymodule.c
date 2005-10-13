@@ -2809,13 +2809,26 @@ PyArray_EquivArrTypes(PyArrayObject *a1, PyArrayObject *a2)
 
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))
 
-static char doc_fromobject[] = "array(object, dtype=None, copy=1, fortran=0) will return a new array formed from the given object type given.  Object can anything with an __array__ method, or any (nested) sequence.  If no type is given, then the type will be determined as the minimum type required to hold the objects in the  sequence.  If copy is zero and sequence is already an array with the right type, a reference will be returned.  If the sequence is an array, type can be used only to upcast the array.  For downcasting use .astype(t) method.";
+static char doc_fromobject[] = "array(object, dtype=None, copy=1, fortran=0, "\
+        "subok=0)\n"\
+        "will return a new array formed from the given object type given.\n"\
+        "Object can anything with an __array__ method, or any object\n"\
+        "exposing the array interface, or any (nested) sequence.\n"\
+        "If no type is given, then the type will be determined as the\n"\
+        "minimum type required to hold the objects in the sequence.\n"\
+        "If copy is zero and sequence is already an array with the right \n"\
+        "type, a reference will be returned.  If the sequence is an array,\n"\
+        "type can be used only to upcast the array.  For downcasting \n"\
+        "use .astype(t) method.  If subok is true, then subclasses of the\n"\
+        "array may be returned. Otherwise, a base-class ndarray is returned";
 
 static PyObject *
 _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 {
 	PyObject *op, *ret=NULL;
-	static char *kwd[]= {"object", "dtype", "copy", "fortran", NULL};
+	static char *kwd[]= {"object", "dtype", "copy", "fortran", "subok", 
+                             NULL};
+        Bool subok=FALSE;
 	Bool copy=TRUE;
 	PyArray_Typecode type = {PyArray_NOTYPE, 0, 0};
 	PyArray_Typecode oldtype = {PyArray_NOTYPE, 0, 0};
@@ -2823,16 +2836,18 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	Bool fortran=FALSE;
 	int flags=0;
 
-	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&", kwd, &op, 
+	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&", kwd, &op, 
 					PyArray_TypecodeConverter,
                                         &type, 
 					PyArray_BoolConverter, &copy, 
-					PyArray_BoolConverter, &fortran)) 
+					PyArray_BoolConverter, &fortran,
+                                        PyArray_BoolConverter, &subok)) 
 		return NULL;
 	type_num = type.type_num;
 
 	/* fast exit if simple call */
-	if (PyArray_Check(op) && (copy==0) &&			\
+	if ((PyArray_CheckExact(op) && PyBigArray_CheckExact(op)) && \
+            (copy==0) &&                                             \
 	    (fortran == PyArray_CHKFLAGS(op, FORTRAN))) {
 		if (type_num == PyArray_NOTYPE) {
 			Py_INCREF(op);
@@ -2851,11 +2866,14 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	if (copy) {
 		flags = ENSURECOPY;
 	}
+        if (!subok) {
+                flags |= ENSUREARRAY;
+        }
 
 	if ((ret = PyArray_FromAny(op, &type, 0, 0, flags)) == NULL) 
 		return NULL;
 
-	return _ARET(ret);
+	return ret;
 }
 
 static PyObject *

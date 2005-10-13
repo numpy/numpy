@@ -1378,10 +1378,10 @@ static void
 
 /**begin repeat 
 
-#TYPE=(BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE)*2#
-#OP= >*17, <*17#
-#typ=(Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble)*2#
-#kind= maximum*17, minimum*17#
+#TYPE=(BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*2#
+#OP= >*14, <*14#
+#typ=(Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*2#
+#kind= maximum*14, minimum*14#
 */
 static void 
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func) 
@@ -1394,6 +1394,33 @@ static void
 	}
 }
 /**end repeat**/
+
+/**begin repeat 
+
+#TYPE=(CFLOAT,CDOUBLE,CLONGDOUBLE)*2#
+#OP= >*3, <*3#
+#typ=(cfloat, cdouble, clongdouble)*2#
+#kind= maximum*3, minimum*3#
+*/
+static void 
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func) 
+{
+	register intp i;
+	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+	char *i1=args[0], *i2=args[1], *op=args[2];
+        @typ@ *i1c, *i2c;
+	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+                i1c = (@typ@ *)i1;
+                i2c = (@typ@ *)i2;
+                if ((i1c->real @OP@ i2c->real) ||                       \
+                    ((i1c->real==i2c->real) && (i1c->imag @OP@ i2c->imag)))
+                        memcpy(op, i1, sizeof(@typ@));
+                else
+                        memcpy(op, i2, sizeof(@typ@));
+	}
+}
+/**end repeat**/
+
 
 
 /*** isinf, isinf, isfinite, signbit ***/

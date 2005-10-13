@@ -3532,8 +3532,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         return PyArray_Return(ret);
         
  fail:
-        if (dims.ptr) free(dims.ptr);
-        if (strides.ptr) free(strides.ptr);
+        if (dims.ptr) PyDimMem_FREE(dims.ptr);
+        if (strides.ptr) PyDimMem_FREE(strides.ptr);
         return NULL;
 }
 
@@ -4857,7 +4857,7 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Typecode *at)
 	PyObject *out;
 	int ret;
 
-	if ((mp->descr->type_num == at->type_num) && \
+	if ((mp->descr->type_num == at->type_num) &&                    \
 	    (at->itemsize==0 || mp->itemsize == at->itemsize) &&
 	    PyArray_ISBEHAVED_RO(mp)) {
 		Py_INCREF(mp);
@@ -4953,10 +4953,13 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 	int arrflags;
 	PyArray_Typecode oldtype;
 	char *msg = "Cannot copy-back to a read-only array.";
+        PyTypeObject *subtype;
 
 	oldtype.type_num = PyArray_TYPE(arr);
 	oldtype.itemsize = PyArray_ITEMSIZE(arr);
 	oldtype.fortran = 0;
+
+        subtype = arr->ob_type;
 
 	if (type == PyArray_NOTYPE) type = arr->descr->type_num;
 	if (itemsize == 0) itemsize = arr->itemsize;
@@ -4982,8 +4985,12 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
                                 PyErr_SetString(PyExc_ValueError, msg);
                                 return NULL;
                         }
-			ret = (PyArrayObject *)\
-				PyArray_New(arr->ob_type, 
+                        if ((flags & ENSUREARRAY) && \
+                            (subtype != &PyBigArray_Type)) {
+                                subtype = &PyArray_Type;
+                        }
+			ret = (PyArrayObject *)         \
+				PyArray_New(subtype, 
 					    arr->nd, 
 					    arr->dimensions,
 					    arr->descr->type_num,
@@ -5002,8 +5009,25 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 		/* If no copy then just increase the reference
 		   count and return the input */
 		else {  
+                        if ((flags & ENSUREARRAY) && \
+                            (subtype != &PyBigArray_Type)) {
+                                ret = (PyArrayObject *) \
+                                        PyArray_New(&PyArray_Type,
+                                                    arr->nd,
+                                                    arr->dimensions,
+                                                    arr->descr->type_num,
+                                                    arr->strides,
+                                                    arr->data,
+                                                    arr->itemsize,
+                                                    arr->flags,NULL);
+                                if (ret == NULL) return NULL;
+                                ret->base = (PyObject *)arr;
+                                ret->flags &= ~UPDATEIFCOPY;
+                        }
+                        else {
+                                ret = arr;
+                        }
 			Py_INCREF(arr);
-			ret = arr;
 		}
 	}
 	
@@ -5020,8 +5044,21 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
                                 PyErr_SetString(PyExc_ValueError, msg);
                                 return NULL;
                         }
-			ret = (PyArrayObject *)\
-				PyArray_CastToType(arr, typecode);
+                        if ((flags & ENSUREARRAY) && \
+                            (subtype != &PyBigArray_Type)) {
+                                subtype = &PyArray_Type;
+                        }
+                        ret = (PyArrayObject *)\
+                                PyArray_New(subtype, arr->nd,
+                                            arr->dimensions, typecode->type_num,
+                                            NULL, NULL, typecode->itemsize,
+                                            typecode->fortran, 
+                                            (PyObject *)arr);
+                        if (ret == NULL) return NULL;
+                        if (PyArray_CastTo(ret, arr) < 0) {
+                                Py_DECREF(ret);
+                                return NULL;
+                        }
 			if (flags & UPDATEIFCOPY)  {
 				ret->flags |= UPDATEIFCOPY;
 				ret->base = (PyObject *)arr;
@@ -5031,7 +5068,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 		}
 		else {
 			PyErr_SetString(PyExc_TypeError, 
-					"Array can not be safely cast "\
+					"Array can not be safely cast " \
 					"to required type");
 			ret = NULL;
 		}
@@ -5440,6 +5477,7 @@ PyArray_FromAny(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 /* This is a quick wrapper around PyArray_FromAny(op, NULL, 0, 0, 0) */
 /*  that special cases Arrays and PyArray_Scalars up front */
 /*  It steals a reference to the object */
+/*  It also guarantees that the result is PyArray_Type or PyBigArray_Type */
 
 /*  Because it decrefs op if any conversion needs to take place 
     -- so it can be used like PyArray_EnsureArray(some_function(...)) */
@@ -5451,14 +5489,14 @@ PyArray_EnsureArray(PyObject *op)
 
         if (op == NULL) return NULL;
 
-        if (PyArray_Check(op)) return op;
-
+        if (PyArray_CheckExact(op) || PyBigArray_CheckExact(op)) return op;
+        
         if (PyArray_IsScalar(op, Generic)) {
                 new = PyArray_FromScalar(op, NULL);
                 Py_DECREF(op);
                 return new;
         }
-        new = PyArray_FromAny(op, NULL, 0, 0, 0);
+        new = PyArray_FromAny(op, NULL, 0, 0, ENSUREARRAY);
         Py_DECREF(op);
         return new;
 }
