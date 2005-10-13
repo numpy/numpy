@@ -10,7 +10,7 @@ import sys
 from scipy.test.testing import *
 set_package_path()
 import scipy.base;reload(scipy.base)
-from scipy.base import *
+from scipy.base.getlimits import *
 del sys.path[0]
 
 ##################################################
@@ -25,5 +25,4 @@ class test_double(unittest.TestCase):
         pass
 
 if __name__ == "__main__":
-    ScipyTest('scipy.base.limits').run()
-
+    ScipyTest().run()
