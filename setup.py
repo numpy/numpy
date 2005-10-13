@@ -6,7 +6,6 @@ def setup_package():
 
     from scipy.distutils.core import setup
     from scipy.distutils.misc_util import Configuration
-    from scipy.core_version import version
 
     old_path = os.getcwd()
     local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -15,7 +14,6 @@ def setup_package():
 
     try:
         config = Configuration(
-            version = version,
             maintainer = "SciPy Developers",
             maintainer_email = "scipy-dev@scipy.org",
             description = "Core SciPy",
@@ -23,8 +21,13 @@ def setup_package():
 	    license = 'BSD',
             )
         config.add_subpackage('scipy')
+
+        from scipy.core_version import version
         config.name = 'scipy_core'
+        config.dict_append(version=version)
+
         print config.name,'version',config.version
+
         setup( **config.todict() )
     finally:
         del sys.path[0]
