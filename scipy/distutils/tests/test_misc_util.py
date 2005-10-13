@@ -1,6 +1,6 @@
 import sys
 from scipy.test.testing import *
-from scipy.distutils.command.misc_util import appendpath
+from scipy.distutils.misc_util import appendpath
 from os.path import join
 
 class test_appendpath(ScipyTestCase):
