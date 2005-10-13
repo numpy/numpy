@@ -24,7 +24,6 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('__init__',[generate_install_init_py],
                          depends=['install__init__py'])
-
     return config.todict()
 
 if __name__ == '__main__':
