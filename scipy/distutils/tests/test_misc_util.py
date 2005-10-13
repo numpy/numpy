@@ -1,5 +1,5 @@
 import sys
-from scipy.base.testing import *
+from scipy.test.testing import *
 from scipy.distutils.command.build_src import appendpath
 from os.path import join
 
