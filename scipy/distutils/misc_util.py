@@ -499,10 +499,6 @@ class Configuration:
         else:
             self.data_files.extend(data_dict.items())
         return            
-
-    def _common_prefix(self,files):
-        nof_path_components = [len(f.split(os.sep)) for f in files]
-        
     
     def add_include_dirs(self,*paths):
         """ Add paths to configuration include directories.
@@ -841,8 +837,6 @@ class Configuration:
 
             return target
 
-        #d = os.path.join(*(self.name.split('.')))
-        #self.add_data_files((d,generate_svn_version_py()))
         self.add_data_files(generate_svn_version_py())
         return
 
