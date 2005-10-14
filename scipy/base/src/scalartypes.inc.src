@@ -545,6 +545,12 @@ gentype_shape_set(PyObject *self, PyObject *val)
 }
 */
 
+static PyObject *
+gentype_dataptr_get(PyObject *self)
+{
+	return PyString_FromString("");
+}
+
 
 static PyObject *
 gentype_data_get(PyObject *self)
@@ -768,7 +774,7 @@ static PyGetSetDef gentype_getsets[] = {
 	 (setter)0, 
 	 "a 1-d view of scalar"}, 
 	{"__array_data__", 
-	 (getter)gentype_data_get,
+	 (getter)gentype_dataptr_get,
 	 NULL,
 	 "Array protocol: data"},
 	{"__array_typestr__",

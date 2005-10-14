@@ -3739,6 +3739,12 @@ array_priority_get(PyArrayObject *self)
 
 
 static PyObject *
+array_dataptr_get(PyArrayObject *self)
+{
+	return PyString_FromFormat("%p", self->data);
+}
+
+static PyObject *
 array_data_get(PyArrayObject *self)
 {
 	intp nbytes;
@@ -4244,7 +4250,7 @@ static PyGetSetDef array_getsetlist[] = {
 	 (setter)array_flat_set, 
 	 "a 1-d view of a contiguous array"}, 
 	{"__array_data__", 
-	 (getter)array_data_get,
+	 (getter)array_dataptr_get,
 	 NULL,
 	 "Array protocol: data"},
 	{"__array_typestr__",
@@ -5201,14 +5207,27 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	/* Get the strides */
 	
 	attr = PyObject_GetAttrString(input, "__array_data__");
-	if (attr == NULL) {
-		Py_INCREF(input);
-		attr = input;
+	if (attr && !PyString_Check(attr)) {
+		PyErr_SetString(PyExc_TypeError, "__array_data__ must return"\
+				" a string providing the pointer to data.");
+		Py_DECREF(attr);
+		return NULL;
 	}
-	
-	res = PyObject_AsWriteBuffer(attr, (void **)&data, &buffer_len);
-	Py_DECREF(attr);
-	if (res < 0) return NULL;
+	if ((attr == NULL) || (PyString_GET_SIZE(attr) < 1)) {
+		res = PyObject_AsWriteBuffer(input, (void **)&data, 
+					     &buffer_len);
+		Py_XDECREF(attr);
+		if (res < 0) return NULL;
+	}
+	else {
+		res = sscanf(PyString_AsString(attr), "%p", (void **)&data);
+		Py_DECREF(attr);
+		if (res < 1) {
+			PyErr_SetString(PyExc_TypeError, 
+					"__array_data__ cannot be converted.");
+			return NULL;
+		}
+	}
 
 	attr = PyObject_GetAttrString(input, "__array_typestr__");
 	if (!PyString_Check(attr)) {
