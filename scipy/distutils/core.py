@@ -1,7 +1,12 @@
 
 import types
 from distutils.core import *
-from distutils.core import setup as old_setup
+try:
+    from setuptools import setup as old_setup
+    have_setuptools = 1
+except ImportError:
+    from distutils.core import setup as old_setup
+    have_setuptools = 0
 
 from scipy.distutils.extension import Extension
 from scipy.distutils.command import config
@@ -25,7 +30,7 @@ scipy_cmdclass = {'build':            build.build,
                   'config_fc':        config_compiler.config_fc,
                   'config':           config.config,
                   'build_ext':        build_ext.build_ext,
-                  'build_py':         build_py.build_py,                
+                  'build_py':         build_py.build_py,
                   'build_clib':       build_clib.build_clib,
                   'sdist':            sdist.sdist,
                   'install_data':     install_data.install_data,
@@ -33,6 +38,12 @@ scipy_cmdclass = {'build':            build.build,
                   'install':          install.install,
                   'bdist_rpm':        bdist_rpm.bdist_rpm,
                   }
+if have_setuptools:
+    from setuptools.command import bdist_egg, develop, easy_install, egg_info
+    scipy_cmdclass['bdist_egg'] = bdist_egg.bdist_egg
+    scipy_cmdclass['develop'] = develop.develop
+    scipy_cmdclass['easy_install'] = easy_install.easy_install
+    scipy_cmdclass['egg_info'] = egg_info.egg_info
 
 def setup(**attr):
 
@@ -40,9 +51,9 @@ def setup(**attr):
 
     new_attr = attr.copy()
     if new_attr.has_key('cmdclass'):
-        cmdclass.update(new_attr['cmdclass'])        
+        cmdclass.update(new_attr['cmdclass'])
     new_attr['cmdclass'] = cmdclass
-    
+
     # Move extension source libraries to libraries
     libraries = []
     for ext in new_attr.get('ext_modules',[]):
