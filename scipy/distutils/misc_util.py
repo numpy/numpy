@@ -244,8 +244,11 @@ def get_data_files(data):
                 continue
         if is_local_src_dir(s):
             os.path.walk(s,_gsf_visit_func,filenames)
-        elif type(s) is type('') and os.path.isfile(s):
-            filenames.append(s)
+        elif type(s) is type(''):
+            if os.path.isfile(s):
+                filenames.append(s)
+            else:
+                print 'Not existing data file:',s
         else:
             raise TypeError,`s`
     return filenames
@@ -292,6 +295,7 @@ class Configuration:
             package_path = self.local_path
         elif os.path.isdir(os.path.join(self.local_path,package_path)):
             package_path = os.path.join(self.local_path,package_path)
+        assert os.path.isdir(package_path),`package_path`
         self.top_path = top_path
 
         self.list_keys = copy.copy(self._list_keys)
@@ -433,9 +437,9 @@ class Configuration:
             os.path.walk(path, _gsf_visit_func,filenames)
             if not os.path.isabs(path):
                 if d is None:
-                    ds = path
+                    ds = os.path.join(*(self.name.split('.')+[data_path]))
                 else:
-                    ds = os.path.join(*([d]+os.path.normpath(path).split()[1:]))
+                    ds = os.path.join(d,data_path)
                 self.add_data_files((ds,filenames))
             else:
                 if d is None:
@@ -447,34 +451,47 @@ class Configuration:
     def add_data_files(self,*files):
         """ Add data files to configuration data_files.
         Argument(s) can be either
-        - 2-sequence (<datadir suffix>,<path to data file(s)>)
-        - paths to data files where python datadir suffix defaults
+        - 2-sequence (<datadir prefix>,<path to data file(s)>)
+        - paths to data files where python datadir prefix defaults
           to package dir.
-        If path is not absolute then it's datadir suffix is
+        If path is not absolute then it's datadir prefix is
         package dir + dirname of the path.
         """
         data_dict = {}
+        new_files = []
         for p in files:
-            if type(p) is type(''):
+            if type(p) is not type(()):
                 d = os.path.join(*(self.name.split('.')))
-                file_list = self.paths(p)
-                if not os.path.isabs(p):
+                if type(p) is type('') and not os.path.isabs(p):
                     d = appendpath(d,os.path.dirname(p))
-            elif type(p) is type(()):
-                assert len(p)==2,`p`
-                d = p[0]
-                if type(p[1]) is type(''):
-                    file_list = self.paths(p[1])
+                p = (d,p)
+            new_files.append(p)
+        files = []
+        for prefix,filepattern in new_files:
+            if type(filepattern) is type(''):
+                file_list = self.paths(filepattern)
+            elif callable(filepattern):
+                file_list = [filepattern]
+            else:
+                file_list = self.paths(*filepattern)
+
+            nof_path_components = [len(f.split(os.sep)) \
+                                   for f in file_list if type(f) is type('')]
+            if nof_path_components:
+                min_path_components = min(nof_path_components)-1
+            else:
+                min_path_components = 0
+
+            for f in file_list:
+                if type(f) is type(''):
+                    extra_path_components = f.split(os.sep)[min_path_components:-1]
+                    p = os.path.join(*([prefix]+extra_path_components))
                 else:
-                    file_list = self.paths(*p[1])
-            else:
-                # function
-                d = os.path.join(*(self.name.split('.')))
-                file_list = [p]
-            if not data_dict.has_key(d):
-                data_dict[d] = file_list[:]
-            else:
-                data_dict[d].extend(file_list)
+                    p = prefix
+                if not data_dict.has_key(p):
+                    data_dict[p] = [f]
+                else:
+                    data_dict[p].append(f)
 
         dist = self.get_distribution()
         if dist is not None:
@@ -482,7 +499,11 @@ class Configuration:
         else:
             self.data_files.extend(data_dict.items())
         return            
+
+    def _common_prefix(self,files):
+        nof_path_components = [len(f.split(os.sep)) for f in files]
         
+    
     def add_include_dirs(self,*paths):
         """ Add paths to configuration include directories.
         """
@@ -820,6 +841,8 @@ class Configuration:
 
             return target
 
+        #d = os.path.join(*(self.name.split('.')))
+        #self.add_data_files((d,generate_svn_version_py()))
         self.add_data_files(generate_svn_version_py())
         return
 
