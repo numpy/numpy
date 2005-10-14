@@ -1549,7 +1549,6 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
 	int swap;
         PyArray_CopySwapFunc *copyswap;
 
-
 	/* Unbound map iterator --- Bind should have been called */
 	if (mit->ait == NULL) return NULL;
 
@@ -6477,6 +6476,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
 	PyArray_CopySwapFunc *copyswap;
 
 	mit->index = 0;
+
 	copyswap = mit->iters[0]->ao->descr->copyswap;
 
 	if (mit->subspace != NULL) {
@@ -6645,7 +6645,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 	curraxis = 0;
 	j = 0;
 	noellip = 1;  /* Only expand the first ellipsis */
-	memset(mit->bscoord, '\0', sizeof(intp)*arr->nd);
+	memset(mit->bscoord, 0, sizeof(intp)*arr->nd);
 	for (i=0; i<n; i++) {
 		/* We need to fill in the starting coordinates for
 		   the subspace */
@@ -6961,7 +6961,7 @@ arraymapiter_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 
 /* Returns a 0-dim array holding the element desired */
-
+/*
 static PyObject *
 arraymapiter_next(PyArrayMapIterObject *mit)
 {
@@ -6975,6 +6975,7 @@ arraymapiter_next(PyArrayMapIterObject *mit)
 	}
         return NULL;
 }
+*/
 
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
@@ -7009,6 +7010,17 @@ arraymapiter_traverse(PyArrayMapIterObject *mit, visitproc visit, void *arg)
         return 0;
 }
 
+
+/* The mapiter object must be created new each time.  It does not work
+   to bind to a new array, and continue.
+
+   This was the orginal intention, but currently MapIterNew must be 
+   that does not work.  Do not expose the MapIter_Type to Python.
+
+   It's not very useful anyway, since mapiter(indexobj); mapiter.bind(a); 
+   mapiter is equivalent to a[indexobj].flat but the latter gets to use 
+   slice syntax.
+*/
 /* 
 static char doc_mapiter_bind[] = "obj.bind(a)\n Bind an array to the "\
 	"mapiter object";
@@ -7016,16 +7028,15 @@ static char doc_mapiter_bind[] = "obj.bind(a)\n Bind an array to the "\
 static PyObject *
 mapiter_bind(PyArrayMapIterObject *mit, PyObject *args)
 {
-	PyObject *r;
-        intp size, strides;
-        int nd;
 	PyArrayObject *arr;
 
         if (!PyArg_ParseTuple(args, "O!", &PyArray_Type, &arr)) return NULL;
 
-	PyArray_MapIterBind(mit, arr);
+ 	PyArray_MapIterBind(mit, arr);
 
 	if (mit->ait == NULL) return NULL;
+	
+ 	PyArray_MapIterReset(mit);
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -7067,8 +7078,8 @@ static PyTypeObject PyArrayMapIter_Type = {
         0,					/* tp_richcompare */
         0,					/* tp_weaklistoffset */
         0,		 	                /* tp_iter */
-        (iternextfunc)arraymapiter_next,	/* tp_iternext */
-        0,	    		                /* tp_methods */
+        (iternextfunc)0, /*arraymapiter_next,*/	/* tp_iternext */
+        0,             	                        /* tp_methods */
         0,					  /* tp_members */
         0,			                  /* tp_getset */
         0,					  /* tp_base */

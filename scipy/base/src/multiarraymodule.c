@@ -4012,9 +4012,11 @@ DL_EXPORT(void) initmultiarray(void) {
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
         Py_INCREF(&PyArrayIter_Type);
 	PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
+
+	/* Doesn't need to be exposed to Python 
         Py_INCREF(&PyArrayMapIter_Type);
 	PyDict_SetItemString(d, "mapiter", (PyObject *)&PyArrayMapIter_Type);
-
+	*/
         set_flaginfo(d);
 
 	if (set_typeinfo(d) == 0) 

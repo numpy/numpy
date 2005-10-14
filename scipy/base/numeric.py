@@ -12,6 +12,7 @@ newaxis = None
 
 ndarray = multiarray.ndarray
 bigndarray = multiarray.bigndarray
+flatiter = multiarray.flatiter
 ufunc = type(sin)
 
 arange = multiarray.arange
