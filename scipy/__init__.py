@@ -57,4 +57,4 @@ else:
 if show_scipy_config is not None:
     __doc__ += __scipy_doc__
     from _import_tools import import_packages
-    import_packages(__path__[0])
+    import_packages()
