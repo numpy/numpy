@@ -837,7 +837,8 @@ class Configuration:
 
             return target
 
-        self.add_data_files(generate_svn_version_py())
+        d = os.path.join(*(self.name.split('.')))
+        self.add_data_files((d,generate_svn_version_py()))
         return
 
     def make_config_py(self,name='__config__'):
