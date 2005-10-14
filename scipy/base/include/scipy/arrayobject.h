@@ -162,8 +162,6 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 
 	/* Define bit-width array types and typedefs */
 
-#define MAKEFLOAT(x) x.
-
 #define MAX_INT8 127
 #define MIN_INT8 -128
 #define MAX_UINT8 255
@@ -641,7 +639,7 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 typedef Py_intptr_t intp;
 typedef Py_uintptr_t uintp;
 
-#define INTP_STRFORMAT "%d"
+#define INTP_FMT "%d"
 
 #if SIZEOF_PY_INTPTR_T == SIZEOF_INT  
 	#define PyArray_INTP PyArray_INT
@@ -667,8 +665,8 @@ typedef Py_uintptr_t uintp;
 	#define MAX_INTP MAX_LONGLONG
 	#define MIN_INTP MIN_LONGLONG
 	#define MAX_UINTP MAX_ULONGLONG
-        #undef INTP_STRFORMAT
-        #define INTP_STRFORMAT "%Ld"
+        #undef INTP_FMT
+        #define INTP_FMT "%Ld"
 #endif
 
 #define ERR(str) fprintf(stderr, #str); fflush(stderr);
@@ -839,9 +837,7 @@ typedef struct {
 /* Size of internal buffers used for alignment */
 #define PyArray_BUFSIZE 10000
 #define PyArray_MIN_BUFSIZE 5
-#define PyArray_MAX_BUFSIZE MAX_INT32
-#define MAXBUFNUM 1024
-
+#define PyArray_MAX_BUFSIZE 100000000
 
 #define BEHAVED_FLAGS ALIGNED | NOTSWAPPED | WRITEABLE
 #define BEHAVED_FLAGS_RO ALIGNED | NOTSWAPPED
@@ -1113,7 +1109,7 @@ typedef struct {
 #define PyArray_ISNUMBER(obj) PyTypeNum_ISNUMBER(PyArray_TYPE(obj))
 #define PyArray_ISSTRING(obj) PyTypeNum_ISSTRING(PyArray_TYPE(obj))
 #define PyArray_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(PyArray_TYPE(obj))
-#define PyArray_ISPYTHONTYPE(obj) PyTypeNum_ISPYTHONTYPE(PyArray_TYPE(obj))
+#define PyArray_ISPYTHON(obj) PyTypeNum_ISPYTHON(PyArray_TYPE(obj))
 #define PyArray_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
 #define PyArray_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyArray_TYPE(obj))
 #define PyArray_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyArray_TYPE(obj))
