@@ -1,23 +1,13 @@
 #!/usr/bin/env python
-
 import os
-from glob import glob
-from scipy.distutils.misc_util import get_path, Configuration, dot_join
-
-def configuration(parent_package='',parent_path=None):
-    parent_path2 = parent_path
-    parent_path = parent_package
-    local_path = get_path(__name__,parent_path2)
-    config = Configuration('weave',parent_package)
-    config.add_subpackage('tests')
-    scxx_files = glob(os.path.join(local_path,'scxx','*.*'))
-    install_path = os.path.join(parent_path,'weave','scxx')
+def configuration(parent_package='',top_path=None):
+    from scipy.distutils.misc_util import Configuration
+    config = Configuration('weave',parent_package,top_path)
+    config.add_data_dir('tests')
     config.add_data_dir('scxx')
     config.add_data_dir(os.path.join('blitz','blitz'))
-    config.add_data_dir(os.path.join('blitz','blitz','array'))
-    config.add_data_dir(os.path.join('blitz','blitz','meta'))
-    config.add_data_files(*glob(os.path.join(local_path,'doc','*.html')))
-    config.add_data_files(*glob(os.path.join(local_path,'examples','*.py')))    
+    config.add_data_dir('doc')
+    config.add_data_dir('examples')
     return config
 
 if __name__ == '__main__':    
@@ -29,4 +19,4 @@ if __name__ == '__main__':
           author_email = "eric@enthought.com",
           licence = "SciPy License (BSD Style)",
           url = 'http://www.scipy.org',
-          **configuration(parent_path=''))
+          **configuration(parent_path='').todict())

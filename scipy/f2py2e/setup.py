@@ -29,6 +29,8 @@ from __version__ import version
 def configuration(parent_package='',top_path=None):
     config = Configuration('f2py', parent_package, top_path)
 
+    config.add_data_dir('docs')
+
     config.add_data_files('src/fortranobject.c',
                           'src/fortranobject.h',
                           'f2py.1'
@@ -62,9 +64,12 @@ f2py.main()
     return config
 
 if __name__ == "__main__":
-    print 'F2PY Version',version
 
-    config = configuration(top_path='').todict()
+    config = configuration(top_path='')
+    version = config.get_version()
+    print 'F2PY Version',version
+    config = config.todict()
+
     if sys.version[:3]>='2.3':
         config['download_url'] = "http://cens.ioc.ee/projects/f2py2e/2.x"\
                                  "/F2PY-2-latest.tar.gz"
