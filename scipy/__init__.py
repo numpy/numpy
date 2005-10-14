@@ -1,13 +1,19 @@
-"""SciPy Core
+"""\
+SciPy Core
+==========
 
-You can support the development of SciPy by purchasing documentation at
+You can support the development of SciPy by purchasing documentation
+at
 
-http://www.trelgol.com
+  http://www.trelgol.com
 
-It is being distributed for a fee for a limited time to try and raise money for
-development.
+It is being distributed for a fee for a limited time to try and raise
+money for development.
 
 Documentation is also available in the docstrings.
+
+Available subpackages
+---------------------
 """
 
 try:
@@ -28,3 +34,19 @@ else:
     from core_version import version as __core_version__
     from scipy.test.testing import ScipyTest
     test = ScipyTest('scipy').test
+
+__scipy_doc__ = """\
+SciPy: A scientific computing package for Python
+================================================
+
+Available subpackages
+---------------------
+"""
+
+try:
+    from __scipy_config__ import show as show_scipy_config
+except ImportError:
+    show_scipy_config = None
+
+if show_scipy_config is not None:
+    __doc__ += __scipy_doc__
