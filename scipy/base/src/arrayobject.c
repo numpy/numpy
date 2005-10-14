@@ -3192,7 +3192,7 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 		if (itemsize < 1) {
 			PyErr_SetString(PyExc_ValueError,
 					"Type must provide an itemsize.");
-			PyObject_Del(self);
+			self->ob_type->tp_free((PyObject *)self);
 			return NULL;
 		}
 		self->itemsize = itemsize;
@@ -3209,7 +3209,7 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 	if (nd > 0) {
 		self->dimensions = PyDimMem_NEW(2*nd);
 		if (self->dimensions == NULL) {
-			PyObject_Del(self);
+			self->ob_type->tp_free((PyObject *)self);
 			return PyErr_NoMemory();
 		}
 		self->strides = self->dimensions + nd;
@@ -3224,10 +3224,10 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 						"If strides is given in " \
 						"array creation, data must " \
 						"be given too.");
-				PyObject_Del(self);
 				PyDimMem_FREE(self->dimensions);
+				self->ob_type->tp_free((PyObject *)self);
 				return NULL;
-			}					
+			}				
 			memcpy(self->strides, strides, sizeof(intp)*nd);
 		}
 	}
@@ -3244,9 +3244,8 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 		else if ((temp=sd%sizeof(intp))) sd += sizeof(intp) - temp;
 
 		if ((data = PyDataMem_NEW(sd))==NULL) {
-			PyObject_Del(self);
-			if (self->dimensions != NULL) 
-				PyDimMem_FREE(self->dimensions);
+			PyDimMem_FREE(self->dimensions);
+			self->ob_type->tp_free((PyObject *)self);
 			return PyErr_NoMemory();
 		}
 		self->flags |= OWN_DATA;
@@ -5510,7 +5509,7 @@ PyArray_FromObject(PyObject *op, int type, int min_depth, int max_depth)
 	PyArray_Typecode typecode = {0, 0, 0};
 	typecode.type_num = type;
         return PyArray_FromAny(op, &typecode, min_depth,
-			     max_depth, BEHAVED_FLAGS);
+			       max_depth, BEHAVED_FLAGS | ENSUREARRAY);
 }
 
 static PyObject *
@@ -5520,7 +5519,7 @@ PyArray_ContiguousFromObject(PyObject *op, int type, int min_depth,
 	PyArray_Typecode typecode = {0, 0, 0};
 	typecode.type_num = type;
         return PyArray_FromAny(op, &typecode, min_depth,
-			     max_depth, DEFAULT_FLAGS);
+			       max_depth, DEFAULT_FLAGS | ENSUREARRAY);
 }
 
 static PyObject *
@@ -5530,7 +5529,7 @@ PyArray_CopyFromObject(PyObject *op, int type, int min_depth,
 	PyArray_Typecode typecode = {0, 0, 0};
 	typecode.type_num = type;
         return PyArray_FromAny(op, &typecode, min_depth, max_depth,
-			     ENSURECOPY);
+			       ENSURECOPY | ENSUREARRAY);
 }
 
 /* End of deprecated */

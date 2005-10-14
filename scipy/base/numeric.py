@@ -27,17 +27,17 @@ fastCopyAndTranspose = multiarray._fastCopyAndTranspose
 register_dtype = multiarray.register_dtype
 can_cast = multiarray.can_cast
 
-def asarray(a, dtype=None):
-    """asarray(a,dtype=None) returns a as an array.  Unlike array(),
+def asarray(a, dtype=None, fortran=False):
+    """returns a as an array.  Unlike array(),
     no copy is performed if a is already an array.  Subclasses are converted
     to base class ndarray.
     """
-    return array(a, dtype, copy=0)
+    return array(a, dtype, copy=0, fortran=fortran)
 
-def asanyarray(a, dtype=None):
+def asanyarray(a, dtype=None,copy=0,fortran=False):
     """will pass subclasses through...
     """
-    return array(a, dtype, copy=0, subok=1)
+    return array(a, dtype, copy=0, fortran=fortran, subok=1)
 
 def isfortran(a):
     return a.flags['FNC']

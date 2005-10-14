@@ -219,7 +219,7 @@ c_=concatenator(-1)
 
 # A simple nd index iterator over an array:
 
-class ndenumerate(enumerate):
+class ndenumerate(object):
     def __init__(self, arr):
         arr = asarray(arr)
         self.iter = enumerate(arr.flat)
@@ -240,6 +240,9 @@ class ndenumerate(enumerate):
             val = val % self.factors[i]
         indxs[self.nd-1] = val
         return tuple(indxs), res[1]
+
+    def __iter__(self):
+        return self
 
 
 

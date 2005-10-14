@@ -601,12 +601,15 @@ def run_compile():
     undef_macros, sources = filter_files('-U','',sources,remove_prefix=1)
     define_macros, sources = filter_files('-D','',sources,remove_prefix=1)
     using_numarray = 0
+    using_numeric = 0
     for i in range(len(define_macros)):
         name_value = string.split(define_macros[i],'=',1)
         if len(name_value)==1:
             name_value.append(None)
             if name_value[0]=='NUMARRAY':
                 using_numarray = 1
+            elif name_value[0] == 'NUMERIC':
+                using_numeric = 1
         if len(name_value)==2:
             define_macros[i] = tuple(name_value)
         else:
@@ -630,12 +633,7 @@ def run_compile():
             print 'Failed to import numarray:',sys.exc_value
             raise ImportError,'Must have numarray installed.'
         num_info = get_info('numarray')
-    elif using_newscipy:
-        import scipy
-        n = 'scipy'
-        p = get_prefix(scipy)
-        num_info = {}
-    else:
+    elif using_numeric:
         try:
             import Numeric
             n = 'Numeric'
@@ -643,7 +641,14 @@ def run_compile():
         except ImportError:
             print 'Failed to import Numeric:',sys.exc_value
             raise ImportError,'Must have Numeric installed.'
-        num_info = get_info('NumPy')
+        num_info = get_info('NumPy')        
+    else:
+        import scipy
+        n = 'scipy'
+        p = get_prefix(scipy)
+        from scipy.distutils.misc_utils import get_scipy_include_dirs
+        num_info = {'include_dirs': get_scipy_include_dirs()}
+        
     if num_info:
         include_dirs.extend(num_info.get('include_dirs',[]))
 

@@ -6,6 +6,8 @@ http://www.trelgol.com
 
 It is being distributed for a fee for a limited time to try and raise money for
 development.
+
+Documentation is also available in the docstrings.
 """
 
 try:
