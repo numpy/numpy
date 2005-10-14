@@ -852,7 +852,7 @@ cdef class RandomState:
         cdef double *pix
         cdef long *mnix
         cdef long i, j, dn
-        cdef double Sum, prob
+        cdef double Sum
 
         d = len(pvals)
         parr = PyArray_ContiguousFromObject(pvals, PyArray_DOUBLE, 1, 1)

@@ -33,7 +33,7 @@ cdef extern from "scipy/arrayobject.h":
         int type_num, elsize
         char type
 
-    ctypedef class scipy.ArrayType [object PyArrayObject]:
+    ctypedef extern class scipy.ArrayType [object PyArrayObject]:
         cdef char *data
         cdef int nd
         cdef intp *dimensions
