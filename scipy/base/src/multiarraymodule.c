@@ -1199,7 +1199,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis) {
 	PyArrayObject *ret=NULL;
 	char *new_data, *old_data;
 
-	repeats = (PyAO *)PyArray_ContiguousFromObject(op, PyArray_INTP, 0, 1);
+	repeats = (PyAO *)PyArray_ContiguousFromAny(op, PyArray_INTP, 0, 1);
 	if (repeats == NULL) return NULL;
 	nd = repeats->nd;
 	counts = (intp *)repeats->data;
@@ -1325,12 +1325,12 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 		if ((otmp = PySequence_GetItem(op, i)) == NULL) 
 			goto fail;
 		mps[i] = (PyArrayObject*)
-			PyArray_ContiguousFromObject(otmp, type_num, 
+			PyArray_ContiguousFromAny(otmp, type_num, 
 						     0, 0);
 		Py_DECREF(otmp);
 	}
 	
-	ap = (PyArrayObject *)PyArray_ContiguousFromObject((PyObject *)ip, 
+	ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)ip, 
 							   PyArray_INTP, 
 							   0, 0);
 	if (ap == NULL) goto fail;
@@ -1508,7 +1508,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis)
 
 	SWAPAXES(op, ap);
 
-	ap = (PyArrayObject *)PyArray_ContiguousFromObject((PyObject *)op, 
+	ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op, 
 							   PyArray_NOTYPE,
 							   1, 0);
 	Py_DECREF(op);
@@ -1611,11 +1611,11 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 	typenum = PyArray_ObjectType((PyObject *)op1, 0);
 	typenum = PyArray_ObjectType(op2, typenum);
 	ret = NULL;
-	ap1 = (PyArrayObject *)PyArray_ContiguousFromObject((PyObject *)op1, 
+	ap1 = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op1, 
 							    typenum, 
 							    1, 1);
 	if (ap1 == NULL) return NULL;
-	ap2 = (PyArrayObject *)PyArray_ContiguousFromObject(op2, typenum, 
+	ap2 = (PyArrayObject *)PyArray_ContiguousFromAny(op2, typenum, 
 							    0, 0);
 	if (ap2 == NULL) goto fail;
 	
@@ -1665,10 +1665,10 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	typenum = PyArray_ObjectType(op2, typenum);
 		
 	ret = NULL;
-	ap1 = (PyArrayObject *)PyArray_ContiguousFromObject(op1, typenum, 
+	ap1 = (PyArrayObject *)PyArray_ContiguousFromAny(op1, typenum, 
 							    0, 0);
 	if (ap1 == NULL) return NULL;
-	ap2 = (PyArrayObject *)PyArray_ContiguousFromObject(op2, typenum, 
+	ap2 = (PyArrayObject *)PyArray_ContiguousFromAny(op2, typenum, 
 							    0, 0);
 	if (ap2 == NULL) goto fail;
 	
@@ -1769,16 +1769,18 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	intp matchDim, otherDim, is2r, is1r;
 	PyTypeObject *subtype;
         double prior1, prior2;
+	PyArray_Typecode typec = {0,0,0};
         
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);	
 	
+	typec.type_num = typenum;
 	ret = NULL;
-	ap1 = (PyArrayObject *)PyArray_ContiguousFromObject(op1, typenum, 
-							    0, 0);
+	ap1 = (PyArrayObject *)PyArray_FromAny(op1, &typec, 0, 0, 
+					       DEFAULT_FLAGS);
 	if (ap1 == NULL) return NULL;
-	ap2 = (PyArrayObject *)PyArray_ContiguousFromObject(op2, typenum, 
-							    0, 0);
+	ap2 = (PyArrayObject *)PyArray_FromAny(op2, &typec, 0, 0,
+					       DEFAULT_FLAGS);
 	if (ap2 == NULL) goto fail;
 	
 	if (ap1->nd == 0 || ap2->nd == 0) {
@@ -1945,16 +1947,18 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	int is1, is2, os;
 	char *ip1, *ip2, *op;
 	PyArray_DotFunc *dot;
+	PyArray_Typecode typec = {0,0,0};
 	
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);
-	
+
+	typec.type_num = typenum;
 	ret = NULL;
-	ap1 = (PyArrayObject *)PyArray_ContiguousFromObject(op1, typenum, 
-							    1, 1);
+	ap1 = (PyArrayObject *)PyArray_FromAny(op1, &typec, 1, 1,
+					       DEFAULT_FLAGS);
 	if (ap1 == NULL) return NULL;
-	ap2 = (PyArrayObject *)PyArray_ContiguousFromObject(op2, typenum, 
-							    1, 1);
+	ap2 = (PyArrayObject *)PyArray_FromAny(op1, &typec, 1, 1,
+					       DEFAULT_FLAGS);
 	if (ap2 == NULL) goto fail;
 	
 	n1 = ap1->dimensions[ap1->nd-1];
@@ -2132,8 +2136,8 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 	SWAPAXES(op, ap);
 
 	ap = (PyArrayObject *)\
-		PyArray_ContiguousFromObject((PyObject *)op, 
-					     PyArray_NOTYPE, 1, 0);
+		PyArray_ContiguousFromAny((PyObject *)op, 
+					  PyArray_NOTYPE, 1, 0);
 
 	Py_DECREF(op);
 	if (ap == NULL) return NULL;
@@ -2189,7 +2193,7 @@ PyArray_Take(PyArrayObject *self0, PyObject *indices0, int axis) {
 	self = (PyAO *)_check_axis(self0, &axis, CARRAY_FLAGS);
         if (self == NULL) return NULL;
 	
-        indices = (PyArrayObject *)PyArray_ContiguousFromObject(indices0, 
+        indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0, 
 								PyArray_INTP, 
 								1, 0);
         if (indices == NULL) goto fail;
@@ -2275,12 +2279,12 @@ PyArray_Put(PyArrayObject *self, PyObject *indices0, PyObject* values0)
         dest = self->data;
         chunk = self->itemsize;
 
-        indices = (PyArrayObject *)PyArray_ContiguousFromObject(indices0, PyArray_INTP, 0, 0);
+        indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0, PyArray_INTP, 0, 0);
         if (indices == NULL) goto fail;
         ni = PyArray_SIZE(indices);
 
         values = (PyArrayObject *)\
-		PyArray_ContiguousFromObject(values0, self->descr->type_num, 
+		PyArray_ContiguousFromAny(values0, self->descr->type_num, 
 					     0, 0);
         if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);
@@ -2335,7 +2339,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject *mask0, PyObject* values0)
         chunk = self->itemsize;
 
         mask = (PyArrayObject *)\
-		PyArray_ContiguousFromObject(mask0, PyArray_BOOL, 0, 0);
+		PyArray_ContiguousFromAny(mask0, PyArray_BOOL, 0, 0);
         if (mask == NULL) goto fail;
         ni = PyArray_SIZE(mask);
         if (ni != max_item) {
@@ -2347,7 +2351,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject *mask0, PyObject* values0)
 
 	thistype = self->descr->type_num;
         values = (PyArrayObject *)\
-		PyArray_ContiguousFromObject(values0, thistype, 0, 0);
+		PyArray_ContiguousFromAny(values0, thistype, 0, 0);
 	if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);	 /* zero if null array */
         if (nv > 0) {

@@ -100,7 +100,7 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
 
     Py_Try(PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist,
 				       &list, &weight));
-    Py_Try(lst = PyArray_ContiguousFromObject(list, PyArray_INTP, 1, 1));
+    Py_Try(lst = PyArray_ContiguousFromAny(list, PyArray_INTP, 1, 1));
     len = PyArray_SIZE(lst);
     numbers = (intp *) PyArray_DATA(lst);
     mxi = mxx (numbers, len) ;
@@ -116,8 +116,8 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
 	Py_DECREF(lst);
     }
     else {
-	Py_Try(wts = PyArray_ContiguousFromObject(weight, 
-						  PyArray_DOUBLE, 1, 1));
+	    Py_Try(wts = PyArray_ContiguousFromAny(weight, 
+						   PyArray_DOUBLE, 1, 1));
 	weights = (double *)PyArray_DATA (wts);
 	Py_Assert(PyArray_SIZE(wts) == len, "bincount: length of weights " \
 		  "does not match that of list");

@@ -211,6 +211,11 @@ PyArray_Typecode structure
 }
 
 
+PyArray_ContiguousFromAny(op, typenum, min_depth, max_depth) is equivalent
+to PyArray_ContiguousFromObject(...) (which is still available), except
+it will return the subclass if op is already a subclass of the ndarray.  
+The ContiguousFromObject version will always return an ndarray (or a bigndarray). 
+
 Passing Data Type information to C-code
 ============================================
 

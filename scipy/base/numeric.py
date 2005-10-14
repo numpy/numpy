@@ -97,8 +97,8 @@ def outer(a,b):
       result(i,j) = a(i)*b(j) when a and b are vectors
       Will accept any arguments that can be made into vectors.
    """
-   a = asndarray(a)
-   b = asndarray(b)
+   a = asarray(a)
+   b = asarray(b)
    return a.ravel()[:,newaxis]*b.ravel()[newaxis,:]
 
 def vdot(a, b):
@@ -136,8 +136,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1):
     the z-component of the equivalent three-dimensional cross product is
     returned.
     """
-    a = _move_axis_to_0(asndarray(a), axisa)
-    b = _move_axis_to_0(asndarray(b), axisb)
+    a = _move_axis_to_0(asarray(a), axisa)
+    b = _move_axis_to_0(asarray(b), axisb)
     msg = "incompatible dimensions for cross product\n"\
           "(dimension must be 2 or 3)"
     if (a.shape[0] not in [2,3]) or (b.shape[0] not in [2,3]):

@@ -5534,6 +5534,15 @@ PyArray_CopyFromObject(PyObject *op, int type, int min_depth,
 
 /* End of deprecated */
 
+static PyObject *
+PyArray_ContiguousFromAny(PyObject *op, int type, int min_depth, 
+			  int max_depth)
+{
+	PyArray_Typecode typecode = {0,0,0};
+	typecode.type_num = type;
+        return PyArray_FromAny(op, &typecode, min_depth,
+			       max_depth, DEFAULT_FLAGS);
+}	
 
 static int 
 PyArray_CanCastSafely(int fromtype, int totype) 

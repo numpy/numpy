@@ -411,8 +411,8 @@ the number of rows, then residuals will be returned as an empty array
 otherwise resids = sum((b-dot(A,x)**2).
 Singular values less than s[0]*rcond are treated as zero.
 """
-    a = asndarray(a)
-    b = asndarary(b)
+    a = asarray(a)
+    b = asarray(b)
     one_eq = len(b.shape) == 1
     if one_eq:
         b = b[:, Numeric.NewAxis]

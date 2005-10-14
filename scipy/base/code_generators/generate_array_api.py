@@ -111,11 +111,25 @@ objectapi_list = [
     If max_dimensions = 0, then any number of dimensions are allowed.
     Fix the dimension by setting min_dimension == max_dimension.
     If the array is already contiguous (and aligned and not swapped)
-    no copy is done, just a new reference created. 
+    no copy is done, just a new reference created.
+    Base-class ndarray is returned.
     """,
      'ContiguousFromObject',
      'PyObject *, int typenum, int, int',
      'PyObject *'),
+
+    (r"""Construct an array from an arbitrary Python Object.
+    Last two integers are min_dimensions, and max_dimensions.
+    If max_dimensions = 0, then any number of dimensions are allowed.
+    Fix the dimension by setting min_dimension == max_dimension.
+    If the array is already contiguous (and aligned and not swapped)
+    no copy is done, just a new reference created.  Subclasses
+    passed through.
+    """,
+     'ContiguousFromAny',
+     'PyObject *, int typenum, int, int',
+     'PyObject *'),
+    
 
     (r"""Same as ContiguousFromObject except ensure a copy.
     """,
