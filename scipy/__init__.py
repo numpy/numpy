@@ -43,10 +43,18 @@ Available subpackages
 ---------------------
 """
 
-try:
-    from __scipy_config__ import show as show_scipy_config
-except ImportError:
+import os
+if os.environ.has_key('RUNNING_FROM_SCIPY_SOURCE'):
+    print 'Running from scipy source directory.'
     show_scipy_config = None
+else:
+    try:
+        from __scipy_config__ import show as show_scipy_config
+    except ImportError:
+        show_scipy_config = None
+
 
 if show_scipy_config is not None:
     __doc__ += __scipy_doc__
+    from _import_tools import import_packages
+    import_packages(__path__[0])
