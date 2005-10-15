@@ -394,7 +394,7 @@ cdef class RandomState:
             length = PyArray_SIZE(array)
             array_data = <long *>array.data
             for i from 0 <= i < length:
-                array_data[i] = lo + rk_interval(diff, self.internal_state)
+                array_data[i] = lo + <long>rk_interval(diff, self.internal_state)
             return array
 
     def bytes(self, unsigned int length):
