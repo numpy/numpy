@@ -35,19 +35,19 @@ extern "C" {
 typedef PY_LONG_LONG longlong;
 typedef unsigned PY_LONG_LONG ulonglong;
 #  ifdef _MSC_VER
-#    define LONGLONG_FMT         "%I64d"
-#    define ULONGLONG_FMT        "%I64u"
+#    define LONGLONG_FMT         "I64d"
+#    define ULONGLONG_FMT        "I64u"
 #    define LONGLONG_SUFFIX(x)   (x##i64)
 #    define ULONGLONG_SUFFIX(x)  (x##Ui64)
 #  else
-	/* #define LONGLONG_FMT   "%lld"      Another possible variant
-           #define ULONGLONG_FMT  "%llu"
+	/* #define LONGLONG_FMT   "lld"      Another possible variant
+           #define ULONGLONG_FMT  "llu"
 
-	   #define LONGLONG_FMT   "%qd"   -- BSD perhaps?
-	   #define ULONGLONG_FMT   "%qu"
+	   #define LONGLONG_FMT   "qd"   -- BSD perhaps?
+	   #define ULONGLONG_FMT   "qu"
 	*/
-#    define LONGLONG_FMT         "%Ld"
-#    define ULONGLONG_FMT        "%Lu"
+#    define LONGLONG_FMT         "Ld"
+#    define ULONGLONG_FMT        "Lu"
 #    define LONGLONG_SUFFIX(x)   (x##LL)
 #    define ULONGLONG_SUFFIX(x)  (x##ULL)
 #  endif
@@ -639,7 +639,7 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 typedef Py_intptr_t intp;
 typedef Py_uintptr_t uintp;
 
-#define INTP_FMT "%d"
+#define INTP_FMT "d"
 
 #if SIZEOF_PY_INTPTR_T == SIZEOF_INT  
 	#define PyArray_INTP PyArray_INT
@@ -666,7 +666,7 @@ typedef Py_uintptr_t uintp;
 	#define MIN_INTP MIN_LONGLONG
 	#define MAX_UINTP MAX_ULONGLONG
         #undef INTP_FMT
-        #define INTP_FMT "%Ld"
+        #define INTP_FMT "Ld"
 #endif
 
 #define ERR(str) fprintf(stderr, #str); fflush(stderr);

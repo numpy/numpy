@@ -1,4 +1,4 @@
-import scipy.base as sb
+import numeric as sb
 import sys
 import types
 import re

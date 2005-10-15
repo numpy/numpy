@@ -164,6 +164,7 @@ requires can be any of
   NOTSWAPPED, 
   WRITEABLE, 
   ENSURECOPY, 
+  ENSUREARRAY,
   UPDATEIFCOPY,
   FORCECAST,
 
@@ -182,8 +183,11 @@ requires can be any of
    CARRAY_FLAGS = CONTIGUOUS | BEHAVED_FLAGS
    FARRAY_FLAGS = FORTRAN | BEHAVED_FLAGS
    
-   By default, if the object is an array and requires is 0, 
+   By default, if the object is an array (or any subclass) and requires is 0, 
    the array will just be INCREF'd and returned. 
+
+   ENSUREARRAY makes sure a base-class ndarray is returned (If the object is a 
+   bigndarray it will also be returned).   
    
    typecode->fortran can be set to request a
    fortran-contiguous  array (or just | FORTRAN to the requires flags).

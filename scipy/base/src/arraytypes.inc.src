@@ -569,13 +569,13 @@ static void
 
 #fname=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
 #type=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble#
-#format="%hd","%hu","%d","%u","%ld","%lu",LONGLONG_FMT,ULONGLONG_FMT,"%f","%lf","%Lf"#
+#format="hd","hu","d","u","ld","lu",LONGLONG_FMT,ULONGLONG_FMT,"f","lf","Lf"#
 */
 static int
 @fname@_scan (FILE *fp, @type@ *ip, int itemsize, char *sep, PyArrayObject *ao)
 {
 	int num;
-	num = fscanf(fp, @format@, ip);
+	num = fscanf(fp, "%"@format@, ip);
 	if (num != 1) {
 		if (num == 0) return -3;
 		if (num == EOF) return -4;
