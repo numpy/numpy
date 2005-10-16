@@ -7,8 +7,8 @@ Examples:
   python return_integer.py --quiet
 """
 
-import f2py2e
-from Numeric import array
+import scipy.f2py as f2py2e
+from scipy.base import array
 
 def build(f2py_opts):
     try:
@@ -92,11 +92,11 @@ def runtest(t):
     assert t(array(123))==123
     assert t(array([123]))==123
     assert t(array([[123]]))==123
-    assert t(array([123],'1'))==123
-    assert t(array([123],'s'))==123
+    assert t(array([123],'b'))==123
+    assert t(array([123],'h'))==123
     assert t(array([123],'i'))==123
     assert t(array([123],'l'))==123
-    assert t(array([123],'b'))==123
+    assert t(array([123],'B'))==123
     assert t(array([123],'f'))==123
     assert t(array([123],'d'))==123
     if sys.version[:3]<'2.3':
@@ -144,5 +144,5 @@ if __name__=='__main__':
         if status:
             print '*'*20
             print 'Running f2py2e.diagnose'
-            import f2py2e.diagnose
-            f2py2e.diagnose.run()
+            import scipy.f2py.diagnose as diagnose
+            #diagnose.run()

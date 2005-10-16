@@ -646,7 +646,7 @@ def run_compile():
         import scipy
         n = 'scipy'
         p = get_prefix(scipy)
-        from scipy.distutils.misc_utils import get_scipy_include_dirs
+        from scipy.distutils.misc_util import get_scipy_include_dirs
         num_info = {'include_dirs': get_scipy_include_dirs()}
         
     if num_info:
