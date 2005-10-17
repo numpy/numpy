@@ -161,6 +161,10 @@ class GnuFCompiler(FCompiler):
             elif cpu.is_AthlonMP():
                 opt.append('-march=athlon-mp')
                 # there's also: athlon-tbird, athlon-4, athlon-xp
+            elif cpu.is_Nocona():
+                opt.append('-march=nocona')
+            elif cpu.is_Prescott():
+                opt.append('-march=prescott')
             elif cpu.is_PentiumIV():
                 opt.append('-march=pentium4')
             elif cpu.is_PentiumIII():
@@ -197,7 +201,9 @@ class GnuFCompiler(FCompiler):
         elif cpu.is_i386():
             opt.append('-march=i386')
         if cpu.is_Intel():
-            opt.extend(['-malign-double','-fomit-frame-pointer'])
+            opt.append('-fomit-frame-pointer')
+            if cpu.is_32bit():
+                opt.append('-malign-double')
         return opt
 
 if __name__ == '__main__':

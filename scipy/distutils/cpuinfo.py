@@ -177,6 +177,12 @@ class linux_cpuinfo(cpuinfo_base):
         return re.match(r'.*?Pentium.*?(IV|4)\b',
                         self.info[0]['model name']) is not None
 
+    def _is_Prescott(self):
+        return self.is_PentiumIV() and self.has_sse3()
+
+    def _is_Nocona(self):
+        return self.is_PentiumIV() and self.is_64bit()
+
     def _is_Itanium(self):
         return re.match(r'.*?Itanium\b',
                         self.info[0]['model name']) is not None
@@ -226,6 +232,9 @@ class linux_cpuinfo(cpuinfo_base):
         if self.info[0]['uname_m']=='x86_64':
             return 1
         return 0
+
+    def _is_32bit(self):
+        return not self.is_64bit()
 
 class irix_cpuinfo(cpuinfo_base):
 
