@@ -643,11 +643,12 @@ def run_compile():
             raise ImportError,'Must have Numeric installed.'
         num_info = get_info('NumPy')        
     else:
-        import scipy
-        n = 'scipy'
-        p = get_prefix(scipy)
-        from scipy.distutils.misc_util import get_scipy_include_dirs
-        num_info = {'include_dirs': get_scipy_include_dirs()}
+        num_info = {}
+        #import scipy
+        #n = 'scipy'
+        #p = get_prefix(scipy)
+        #from scipy.distutils.misc_util import get_scipy_include_dirs
+        #num_info = {'include_dirs': get_scipy_include_dirs()}
         
     if num_info:
         include_dirs.extend(num_info.get('include_dirs',[]))
