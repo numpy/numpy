@@ -3147,7 +3147,7 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 	PyArrayObject *self;
 	PyArray_Descr *descr;
 	register int i;
-	intp sd, temp;
+	intp sd, temp=-1;
 
 	descr = PyArray_DescrFromType(type_num);
 	if (descr == NULL) return NULL;
@@ -3275,6 +3275,11 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 	if ((obj != NULL) && (subtype != &PyArray_Type) && 
 	    (subtype != &PyBigArray_Type)) {
 		PyObject *res;
+		if (temp==-1) { /* did not allocate own data */
+			/* update flags before calling back into
+			   Python */
+			PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
+		}
 		res = PyObject_CallMethod((PyObject *)self, 
 					  "__array_finalize__",
 					  "O", obj);

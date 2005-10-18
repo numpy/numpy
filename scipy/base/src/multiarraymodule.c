@@ -216,45 +216,24 @@ _check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
 	int nd;
 	intp *dims;
 	Bool done=FALSE;
-	int j,k;
+	int j, k;
 
 	nd = self->nd;
 	dims = self->dimensions;
 
-	if (nd < newnd) { /* Check for only inserting ones */ 
-		for (k=0, j=0; !done && k<newnd; k++) {
-			if ((j < nd) && (newdims[k] == dims[j])) {
-				strides[k] = self->strides[j];
-				j++;
-			}
-			else if (newdims[k] != 1) done=TRUE;
-			else strides[k] = 0;
+	for (k=0, j=0; !done && (j<nd || k<newnd);) {
+		if ((j<nd) && (k<newnd) && (newdims[k]==dims[j])) {
+			strides[k] = self->strides[j];
+			j++; k++;
 		}
-	}
-	else if (newnd < nd) { /* Check for only removing ones */
-		for (k=0, j=0; !done && j<nd; j++) {
-			if ((k < newnd) && (dims[j] == newdims[k])) {
-				strides[k] = self->strides[j];
-				k++;
-			}
-			else if (dims[j] != 1) done=TRUE;
+		else if ((k<newnd) && (newdims[k]==1)) {
+			strides[k] = 0;
+			k++;
 		}
-	}
-	else { /* same shape --- check for moving ones around. */
-		for (k=0, j=0; !done && (j<nd || k<newnd);) {
-			if ((j<nd) && (k<newnd) && (newdims[k]==dims[j])) {
-				strides[k] = self->strides[j];
-				j++; k++;
-			}
-			else if ((k<newnd) && (newdims[k]==1)) {
-				strides[k] = 0;
-				k++;
-			}
-			else if ((j<nd) && (dims[j]==1)) {
-				j++;
-			}
-			else done=TRUE;
+		else if ((j<nd) && (dims[j]==1)) {
+			j++;
 		}
+		else done=TRUE;
 	}
 	if (done) return -1;
 	return 0;
@@ -297,7 +276,6 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
 	if (i==0) strides=newstrides;
 	
 	if (strides==NULL) {
-		PyArray_UpdateFlags(self, CONTIGUOUS);
 		if (!PyArray_ISCONTIGUOUS(self)) {
 			PyErr_SetString(PyExc_ValueError, 
 					"changing shape that way "\
