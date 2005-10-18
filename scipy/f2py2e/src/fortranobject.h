@@ -9,35 +9,8 @@ extern "C" {
 #ifdef FORTRANOBJECT_C
 #define NO_IMPORT_ARRAY
 #endif
-
-#if defined(NUMARRAY)
-
-#define libnumarray_UNIQUE_SYMBOL libnumarray_API
-#include "numarray/libnumarray.h"
-
-#if !defined(__arrayobject_h)  /* not defined as of 1.0 */
-#define libnumeric_UNIQUE_SYMBOL libnumeric_API
-#include "numarray/arrayobject.h"
-
-/* numarray-1.0 hack */
-#if defined(_libnumeric) && !defined(NUMARRAY_VERSION_HEX) && !defined(NO_IMPORT_ARRAY)
-void **libnumeric_API;
-void **libnumarray_API;
-#endif
-
-#endif
-
-#else
-
 #define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
-#if defined(NUMERIC)
-#include "Numeric/arrayobject.h"
-#else
-int init_fortranobject(void);
 #include "scipy/arrayobject.h"
-#endif
-
-#endif
 
   /*
 #ifdef F2PY_REPORT_ATEXIT_DISABLE

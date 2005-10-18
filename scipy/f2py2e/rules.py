@@ -210,19 +210,7 @@ DL_EXPORT(void) init#modulename#(void) {
 \tPyFortran_Type.ob_type = &PyType_Type;
 \timport_array();
 \tif (PyErr_Occurred())
-\t\tPy_FatalError(\"can't initialize module #modulename# (failed to import _numpy)\");
-#if defined(NUMARRAY)
-\timport_libnumarray();
-#else
-#if defined(NDARRAY_VERSION)
-init_fortranobject();
-#else
-\tif (PyImport_ImportModule(\"Numeric\")==NULL) {
-\t\tPyErr_Print();
-\t\tPy_FatalError(\"can't initialize module #modulename#\");
-\t}
-#endif
-#endif
+\t\tPy_FatalError(\"can't initialize module #modulename# (failed to import scipy.base)\");
 \td = PyModule_GetDict(m);
 \ts = PyString_FromString(\"$R"""+"""evision: $\");
 \tPyDict_SetItemString(d, \"__version__\", s);

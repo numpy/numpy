@@ -14,10 +14,6 @@ extern "C" {
   $Date: 2005/07/11 07:44:20 $
 */
 
-int init_fortranobject(void) {
-  return import_array();
-}
-
 /************************* FortranObject *******************************/
 
 typedef PyObject *(*fortranfunc)(PyObject *,PyObject *,PyObject *,void *);
@@ -518,64 +514,9 @@ void dump_attrs(const PyArrayObject* arr) {
 }
 #endif
 
-#if defined(NUMARRAY)
-/* Numarray's array wrapper routines NA_InputArray, NA_OutputArray, and
-NA_IoArray constrain input sequences and arrays to meet a set of numarray
-behavioral requirements.  The principle behind the routines is to create a
-temporary array to use as a shadow or substitute of an array/sequence which
-doesn't satisfy the requirements.  For Input, data is copied from the original
-sequence to the temporary.  For Output, data is copied back from the temporary
-to the original sequence.  For Io, data flow is bidirectional.  Key
-requirements for numarray describe alignment, byteswapping, and contiguity.
-
-Because Fortran mode in f2py appears to require a transposed array, and
-because numarray's use of temporary copies "erases" the striding effects
-of the transpose, numarray has to un-transpose and then re-transpose
-following the wrapping.  By un-transposing, wrapping, and re-transposing,
-the Fortran striding effects are preserved.  When un-transposing, both
-the original and shadow arrays must be untransposed.
-*/
-static PyArrayObject *
-numarray_wrap(PyObject *obj, int intent)
-{
-	PyArrayObject *arr;
-	if (intent & F2PY_INTENT_INOUT) {
-		if ((intent & F2PY_INTENT_C) || !NA_NumArrayCheck(obj)) {
-			arr = NA_IoArray(obj, tAny, NUM_C_ARRAY);
-		} else { /* FORTRAN and NumArray */
-			if (NA_swapAxes((PyArrayObject *) obj, -1, -2) < 0)
-				return NULL;
-			arr = NA_IoArray(
-				obj, tAny, NUM_ALIGNED|NUM_NOTSWAPPED);
-			if (NA_swapAxes((PyArrayObject *) obj, -1, -2) < 0)
-			 	return NULL;
-			if (((PyObject *)arr) != obj) {
-			 	if (NA_swapAxes(arr, -1, -2) < 0)
-			 		return NULL;
-			}
-		}
-	} else if (intent & F2PY_INTENT_IN) {
-		arr = NA_InputArray(obj, tAny, NUM_C_ARRAY);
-        } else if (intent & F2PY_INTENT_OUT) {
-	        arr = NA_OutputArray(obj, tAny, NUM_C_ARRAY);
-	} else {
-	  arr = (PyArrayObject *) PyErr_Format(PyExc_RuntimeError,
-					       "unknown intent: %08x", intent);
-	}
-	if (((PyObject *)arr) == obj) {
-	  Py_XDECREF(obj);
-        }
-	return arr;
-}
-#endif
-
 #define SWAPTYPE(a,b,t) {t c; c = (a); (a) = (b); (b) = c; }
 
 static int swap_arrays(PyArrayObject* arr1, PyArrayObject* arr2) {
-#ifdef NUMARRAY
-  fprintf(stderr,"swap_arrays: intent(inplace) not implemented for Numarray.\n"); 
-  return 1;
-#else
   SWAPTYPE(arr1->data,arr2->data,char*);
   SWAPTYPE(arr1->nd,arr2->nd,int);
   SWAPTYPE(arr1->dimensions,arr2->dimensions,int*);
@@ -585,7 +526,6 @@ static int swap_arrays(PyArrayObject* arr1, PyArrayObject* arr2) {
   SWAPTYPE(arr1->flags,arr2->flags,int);
   /* SWAPTYPE(arr1->weakreflist,arr2->weakreflist,PyObject*); */
   return 0;
-#endif
 }
 
 extern
@@ -623,13 +563,9 @@ PyArrayObject* array_from_pyobj(const int type_num,
 	return NULL; /*XXX: set exception */
       {
 	PyArrayObject *obj2;
-#if !defined(NUMARRAY)
 	if (intent & F2PY_INTENT_OUT)
 	  Py_INCREF(obj);
 	obj2 = (PyArrayObject *) obj;
-#else
-	obj2 = numarray_wrap(obj, intent);
-#endif
 	return obj2;
       }
     }
@@ -657,11 +593,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
     PyArrayObject *arr;
     int is_cont;
 
-#if !defined(NUMARRAY)
     arr = (PyArrayObject *)obj;
-#else
-    arr = numarray_wrap(obj, intent);
-#endif
     is_cont = (intent & F2PY_INTENT_C) ? 
       (ISCONTIGUOUS(arr)) : (2*array_has_column_major_storage(arr));
     if (check_and_fix_dimensions(arr,rank,dims))
@@ -698,12 +630,6 @@ PyArrayObject* array_from_pyobj(const int type_num,
 	lazy_transpose(tmp_arr);	
 	tmp_arr->flags &= ~CONTIGUOUS;
       }
-      /* discard numarray temporary for creating well behaved array */
-#if defined(NUMARRAY)
-      if (((PyObject *)arr) != obj) {
-	Py_XDECREF(arr);
-      }
-#endif
       if (intent & F2PY_INTENT_INPLACE) {
 	if (swap_arrays(arr,tmp_arr))
 	  return NULL;
@@ -714,12 +640,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 	arr = tmp_arr;
       }
     } else {
-      if ((intent & F2PY_INTENT_OUT)
-#if defined(NUMARRAY)
-	  /* numarray can't assume that arr == obj */
-	  && (((PyObject *)arr) == obj)
-#endif
-	  ) {
+      if ((intent & F2PY_INTENT_OUT)) {
 	Py_INCREF(arr);
       }
     }
@@ -891,178 +812,16 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,int *dims) 
 
 /* End of file: array_from_pyobj.c */
 
-
 /************************* copy_ND_array *******************************/
 
-#if defined(NUMARRAY)
-
-extern 
-int copy_ND_array(const PyArrayObject *in, PyArrayObject *out)
-{
-#ifdef F2PY_REPORT_ON_ARRAY_COPY
-  f2py_report_on_array_copy(out,"NA_copyArray");
-#endif
-  return NA_copyArray(out, in);
-} 
-#elif defined(NDARRAY_VERSION)
 extern
 int copy_ND_array(const PyArrayObject *in, PyArrayObject *out)
 {
 #ifdef F2PY_REPORT_ON_ARRAY_COPY
   f2py_report_on_array_copy(out, "CopyInto");
 #endif
-  return PyArray_CopyInto(out, in);
+  return PyArray_CopyInto(out, (PyArrayObject *)in);
 }
-#else
-/*     Here starts Travis Oliphant's contribution    */
-#define INCREMENT(ret_ind, nd, max_ind) \
-{ \
-  int k; \
-  k = (nd) - 1; \
-  if (k<0) (ret_ind)[0] = (max_ind)[0]; else \
-  if (++(ret_ind)[k] >= (max_ind)[k]) { \
-    while (k >= 0 && ((ret_ind)[k] >= (max_ind)[k]-1)) \
-      (ret_ind)[k--] = 0; \
-    if (k >= 0) (ret_ind)[k]++; \
-    else (ret_ind)[0] = (max_ind)[0]; \
-  }  \
-}
-#define CALCINDEX(indx, nd_index, strides, ndim) \
-{ \
-  int i; \
-  indx = 0; \
-  for (i=0; i < (ndim); ++i)  \
-    indx += nd_index[i]*strides[i]; \
-} 
-
-static void CDOUBLE_to_CDOUBLE(double *ip, int ipstep, double *op, int opstep, int n) {
-  int i; 
-  for(i=0;i<n;i++,ip+=ipstep*2,op+=opstep*2) {
-    *op = (double)*ip;
-    *(op+1) = (double)*(ip+1);
-  }
-}
-static void CFLOAT_to_CFLOAT(float *ip, int ipstep, float *op, int opstep, int n) {
-  int i;
-  for(i=0;i<n;i++,ip+=ipstep*2,op+=opstep*2) {
-    *op = (float)*ip;
-    *(op+1) = (float)*(ip+1);
-  }
-}
-static void CDOUBLE_to_CFLOAT(double *ip, int ipstep, float *op, int opstep, int n) {
-  int i; 
-  for(i=0;i<n;i++,ip+=ipstep*2,op+=opstep*2) {
-    *op = (float)*ip;
-    *(op+1) = (float)*(ip+1);
-  }
-}
-static void CFLOAT_to_CDOUBLE(float *ip, int ipstep, double *op, int opstep, int n) {
-  int i;
-  for(i=0;i<n;i++,ip+=ipstep*2,op+=opstep*2) {
-    *op = (double)*ip;
-    *(op+1) = (double)*(ip+1);
-  }
-}
-
-extern 
-int copy_ND_array(const PyArrayObject *in, PyArrayObject *out)
-{
-
-  /* This routine copies an N-D array in to an N-D array out where both
-     can be discontiguous.  An appropriate (raw) cast is made on the data.
-  */
-
-  /* It works by using an N-1 length vector to hold the N-1 first indices 
-     into the array.  This counter is looped through copying (and casting) 
-     the entire last dimension at a time.
-  */
-
-  int *nd_index, indx1;
-  int indx2, last_dim;
-  int instep, outstep;
-  PyArray_VectorUnaryFunc *cast = in->descr->cast[out->descr->type_num];
-
-#ifdef DEBUG_COPY_ND_ARRAY
-   printf("\n");
-   printf("IN:\n");
-   dump_attrs(in);
-#endif
-
-  if (0 == in->nd) {
-    cast(in->data,1,out->data,1,1);
-    return 0;
-  }
-
-#ifdef F2PY_REPORT_ON_ARRAY_COPY
-  f2py_report_on_array_copy(out,"copy_ND_array");
-#endif
-
-  if (in->descr->type_num==PyArray_CDOUBLE
-      && out->descr->type_num==PyArray_CDOUBLE)
-    cast = (PyArray_VectorUnaryFunc*)CDOUBLE_to_CDOUBLE;
-  else if (in->descr->type_num==PyArray_CFLOAT 
-	   && out->descr->type_num==PyArray_CFLOAT)
-    cast = (PyArray_VectorUnaryFunc*)CFLOAT_to_CFLOAT;
-  else if (in->descr->type_num==PyArray_CFLOAT 
-	   && out->descr->type_num==PyArray_CDOUBLE)
-    cast = (PyArray_VectorUnaryFunc*)CFLOAT_to_CDOUBLE;
-  else if (in->descr->type_num==PyArray_CDOUBLE
-	   && out->descr->type_num==PyArray_CFLOAT)
-    cast = (PyArray_VectorUnaryFunc*)CDOUBLE_to_CFLOAT;
-
-  if (1 == in->nd) {
-    instep = in->strides[0] / in->descr->elsize;
-    outstep = out->strides[0] / out->descr->elsize;
-    cast(in->data,instep,out->data,outstep,in->dimensions[0]);
-  } else {
-    nd_index = (int *)calloc(in->nd-1,sizeof(int));
-    if (NULL == nd_index ) {
-      fprintf(stderr,
-	      "copy_ND_array: could not allocate memory for index array.\n");
-      return -1;
-    }
-
-    last_dim = in->nd - 1;
-    instep = in->strides[last_dim] / in->descr->elsize;
-    outstep = out->strides[last_dim] / out->descr->elsize;
-
-    while(nd_index[0] != in->dimensions[0]) {
-      CALCINDEX(indx1,nd_index,in->strides,in->nd-1);
-      CALCINDEX(indx2,nd_index,out->strides,out->nd-1);
-      /* Copy (with an appropriate cast) the last dimension of the array */
-      cast(in->data+indx1, instep,
-	   out->data+indx2, outstep,
-	   in->dimensions[last_dim]);
-      INCREMENT(nd_index,in->nd-1,in->dimensions);
-    }
-    free(nd_index);
-  }
-
-#ifdef DEBUG_COPY_ND_ARRAY
-  {
-    const int arr_size = PyArray_Size((PyObject *)in);
-    int i;
-    for(i=0;i<arr_size;++i) {
-      printf("in[%d] = ",i);
-      PyObject_Print((PyObject*)(in->descr->getitem(in->data+i*in->descr->elsize)),stdout,0);
-      printf("\n");
-    }
-  }
-  {
-    const int arr_size = PyArray_Size((PyObject *)out);
-    int i;
-    for(i=0;i<arr_size;++i) {
-      printf("out[%d] = ",i);
-      PyObject_Print((PyObject*)(out->descr->getitem(out->data+i*out->descr->elsize)),stdout,0);
-      printf("\n");
-    }
-  }
-#endif
-
-  return 0;
-} 
-/* EOF T.O.'s contib */
-#endif
 
 #ifdef __cplusplus
 }
