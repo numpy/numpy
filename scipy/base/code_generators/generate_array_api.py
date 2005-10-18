@@ -630,7 +630,19 @@ static int PyArray_NUMUSERTYPES=0;
 
 #else
 
+#if defined(PY_ARRAY_UNIQUE_SYMBOL)
+#define PyArray_API PY_ARRAY_UNIQUE_SYMBOL
+#endif
+
+#if defined(NO_IMPORT_ARRAY)
+extern void **PyArray_API;
+#else
+#if defined(PY_ARRAY_UNIQUE_SYMBOL)
+void **PyArray_API;
+#else
 static void **PyArray_API=NULL;
+#endif
+#endif
 
 #define PyBigArray_Type (*(PyTypeObject *)PyArray_API[0])
 #define PyArray_Type (*(PyTypeObject *)PyArray_API[1])
@@ -640,9 +652,10 @@ static void **PyArray_API=NULL;
 
 %s
 
+#ifndef NO_IMPORT_ARRAY
 static int
 import_array(void) 
-{ 
+{
   PyObject *numpy = PyImport_ImportModule("scipy.base.multiarray");
   PyObject *c_api = NULL;
   if (numpy == NULL) return -1;
@@ -656,6 +669,7 @@ import_array(void)
   if (PyArray_API == NULL) return -1;
   return 0;
 }
+#endif
 
 #endif
 
