@@ -1006,9 +1006,16 @@ def analyzeline(m,case,line):
             if f==0: dl=dl+c
             elif f==1: il=il+c
             elif f==2:
+                dl = dl.strip()
+                if dl.startswith(','):
+                    dl = dl[1:].strip()
                 ll.append([dl,il])
                 dl=c;il='';f=0
-        if f==2: ll.append([dl,il])
+        if f==2:
+            dl = dl.strip()
+            if dl.startswith(','):
+                dl = dl[1:].strip()
+            ll.append([dl,il])
         vars={}
         if groupcache[groupcounter].has_key('vars'):
             vars=groupcache[groupcounter]['vars']

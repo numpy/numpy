@@ -7,8 +7,8 @@ Examples:
 """
 
 
-import f2py2e
-from Numeric import array
+import scipy.f2py as f2py2e
+from scipy.base import array
 
 def build(f2py_opts):
     try:
@@ -85,11 +85,11 @@ def runtest(t):
     assert abs(t(array(234))-234.)<=err
     assert abs(t(array([234]))-234.)<=err
     assert abs(t(array([[234]]))-234.)<=err
-    assert abs(t(array([234],'1'))+22)<=err
-    assert abs(t(array([234],'s'))-234.)<=err
+    assert abs(t(array([234],'b'))+22)<=err
+    assert abs(t(array([234],'h'))-234.)<=err
     assert abs(t(array([234],'i'))-234.)<=err
     assert abs(t(array([234],'l'))-234.)<=err
-    assert abs(t(array([234],'b'))-234.)<=err
+    assert abs(t(array([234],'B'))-234.)<=err
     assert abs(t(array([234],'f'))-234.)<=err
     assert abs(t(array([234],'d'))-234.)<=err
     if sys.version[:3]<'2.3':
