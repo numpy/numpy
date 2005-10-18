@@ -16,6 +16,9 @@ Available subpackages
 ---------------------
 """
 
+import os
+NO_SCIPY_IMPORT = os.environ.get('NO_SCIPY_IMPORT',None)
+
 try:
     from __core_config__ import show as show_core_config
 except ImportError:
@@ -43,9 +46,8 @@ Available subpackages
 ---------------------
 """
 
-import os
-if os.environ.has_key('RUNNING_FROM_SCIPY_SOURCE'):
-    print 'Running from scipy source directory.'
+if NO_SCIPY_IMPORT is not None:
+    print 'Skip importing scipy packages (NO_SCIPY_IMPORT=%s)' % (NO_SCIPY_IMPORT)
     show_scipy_config = None
 elif show_core_config is None:
     show_scipy_config = None
