@@ -634,7 +634,7 @@ static int PyArray_NUMUSERTYPES=0;
 #define PyArray_API PY_ARRAY_UNIQUE_SYMBOL
 #endif
 
-#if defined(NO_IMPORT_ARRAY)
+#if defined(NO_IMPORT) || defined(NO_IMPORT_ARRAY)
 extern void **PyArray_API;
 #else
 #if defined(PY_ARRAY_UNIQUE_SYMBOL)
@@ -652,7 +652,7 @@ static void **PyArray_API=NULL;
 
 %s
 
-#ifndef NO_IMPORT_ARRAY
+#if !defined(NO_IMPORT_ARRAY) && !defined(NO_IMPORT)
 static int
 import_array(void) 
 {
