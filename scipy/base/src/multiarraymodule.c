@@ -210,8 +210,58 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
         return ret;
 }
 
+static int
+_check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
+{
+	int nd;
+	intp *dims;
+	Bool done=FALSE;
+	int j,k;
+
+	nd = self->nd;
+	dims = self->dimensions;
+
+	if (nd < newnd) { /* Check for only inserting ones */ 
+		for (k=0, j=0; !done && k<newnd; k++) {
+			if ((j < nd) && (newdims[k] == dims[j])) {
+				strides[k] = self->strides[j];
+				j++;
+			}
+			else if (newdims[k] != 1) done=TRUE;
+			else strides[k] = 0;
+		}
+	}
+	else if (newnd < nd) { /* Check for only removing ones */
+		for (k=0, j=0; !done && j<nd; j++) {
+			if ((k < newnd) && (dims[j] == newdims[k])) {
+				strides[k] = self->strides[j];
+				k++;
+			}
+			else if (dims[j] != 1) done=TRUE;
+		}
+	}
+	else { /* same shape --- check for moving ones around. */
+		for (k=0, j=0; !done && (j<nd || k<newnd);) {
+			if ((j<nd) && (k<newnd) && (newdims[k]==dims[j])) {
+				strides[k] = self->strides[j];
+				j++; k++;
+			}
+			else if ((k<newnd) && (newdims[k]==1)) {
+				strides[k] = 0;
+				k++;
+			}
+			else if ((j<nd) && (dims[j]==1)) {
+				j++;
+			}
+			else done=TRUE;
+		}
+	}
+	if (done) return -1;
+	return 0;
+}
+
 /* Returns a new array 
-   with the a new shape from the data
+   with the new shape from the data
    in the old array
 */
 
@@ -224,6 +274,8 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
 	char msg[] = "total size of new array must be unchanged";
 	int n = newdims->len;
         Bool same;
+	intp *strides = NULL;
+	intp newstrides[MAX_DIMS];
 
         /*  Quick check to make sure anything needs to be done */
         if (n == self->nd) {
@@ -236,54 +288,65 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
                 }
                 if (same) return PyArray_View(self, NULL);
         }
-
-        if (!PyArray_ISCONTIGUOUS(self)) {
-                PyErr_SetString(PyExc_ValueError, 
-				"changing shape only works on contiguous arrays");
-                return NULL;
-        }
 	
-        s_known = 1;
-        i_unknown = -1;
-
-        for(i=0; i<n; i++) {
-                if (dimensions[i] < 0) {
-                        if (i_unknown == -1) {
-                                i_unknown = i;
-                        } else {
-                                PyErr_SetString(PyExc_ValueError, 
-						"can only specify one "	\
-						" unknown dimension");
-                                goto fail;
-                        }
-                } else {
-			s_known *= dimensions[i];
-                }
-        }
+	/* Returns a pointer to an appropriate strides array
+	   if all we are doing is inserting ones into the shape,
+	   or removing ones from the shape 
+	   or doing a combination of the two*/
+	i=_check_ones(self, n, dimensions, newstrides);
+	if (i==0) strides=newstrides;
 	
-        s_original = PyArray_SIZE(self);
-	
-        if (i_unknown >= 0) {
-                if ((s_known == 0) || (s_original % s_known != 0)) {
-                        PyErr_SetString(PyExc_ValueError, msg);
-                        goto fail;
-                }
-                dimensions[i_unknown] = s_original/s_known;
-        } else {
-                if (s_original != s_known) {
-                        PyErr_SetString(PyExc_ValueError, msg);
-                        goto fail;
-                }
-        }
+	if (strides==NULL) {
+		PyArray_UpdateFlags(self, CONTIGUOUS);
+		if (!PyArray_ISCONTIGUOUS(self)) {
+			PyErr_SetString(PyExc_ValueError, 
+					"changing shape that way "\
+					"only works on contiguous arrays");
+			return NULL;
+		}
+		
+		s_known = 1;
+		i_unknown = -1;
+		
+		for(i=0; i<n; i++) {
+			if (dimensions[i] < 0) {
+				if (i_unknown == -1) {
+					i_unknown = i;
+				} else {
+					PyErr_SetString(PyExc_ValueError, 
+							"can only specify one" \
+							" unknown dimension");
+					goto fail;
+				}
+			} else {
+				s_known *= dimensions[i];
+			}
+		}
+		
+		s_original = PyArray_SIZE(self);
+		
+		if (i_unknown >= 0) {
+			if ((s_known == 0) || (s_original % s_known != 0)) {
+				PyErr_SetString(PyExc_ValueError, msg);
+				goto fail;
+			}
+			dimensions[i_unknown] = s_original/s_known;
+		} else {
+			if (s_original != s_known) {
+				PyErr_SetString(PyExc_ValueError, msg);
+				goto fail;
+			}
+		}
+	}
         
 	ret = (PyAO *)PyArray_New(self->ob_type,
 				  n, dimensions,
 				  self->descr->type_num,
-				  NULL,
+				  strides,
 				  self->data,
 				  self->itemsize,
 				  self->flags, (PyObject *)self);
-
+	
 	if (ret== NULL)
                 goto fail;
 	

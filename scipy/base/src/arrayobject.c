@@ -3278,7 +3278,11 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 		res = PyObject_CallMethod((PyObject *)self, 
 					  "__array_finalize__",
 					  "O", obj);
-		if (res == NULL) PyErr_Clear();
+		if (res == NULL) {
+			PyDimMem_FREE(self->dimensions);
+			self->ob_type->tp_free((PyObject *)self);
+			return NULL;
+		}
 		else Py_DECREF(res);
 	}
 

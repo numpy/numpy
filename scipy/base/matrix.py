@@ -93,12 +93,12 @@ class matrix(N.ndarray):
         if ndim == 0:
             self.shape = (1,1)
         elif ndim == 1:
-            self.shape = (1, self.shape[0])
+            self.shape = (1,self.shape[0])
         return
 
     def __getitem__(self, index):
         out = N.ndarray.__getitem__(self, index)
-        # Need to swap if slice is on first inde
+        # Need to swap if slice is on first index
         retscal = False
         try:
             n = len(index)
