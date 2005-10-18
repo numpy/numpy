@@ -21,6 +21,9 @@ from auxfuncs import *
 from crackfortran import markoutercomma
 import cb_rules
 
+# Numarray and Numeric users should set this False
+using_newcore = True
+
 depargs=[]
 lcb_map={}
 lcb2_map={}
@@ -62,7 +65,8 @@ c2capi_map={'double':'PyArray_DOUBLE',
 
 #These new maps aren't used anyhere yet, but should be by default
 #  unless building numeric or numarray extensions.
-newc2capi_map={'double':'PyArray_DOUBLE',
+if using_newcore:
+    c2capi_map={'double':'PyArray_DOUBLE',
             'float':'PyArray_FLOAT',
             'long_double':'PyArray_LONGDOUBLE',           
             'char':'PyArray_BYTE',
@@ -97,7 +101,8 @@ c2pycode_map={'double':'d',
               'complex_long_double':'D',               # forced casting
               'string':'c'
               }
-newc2pycode_map={'double':'d',
+if using_newcore:
+    c2pycode_map={'double':'d',
                  'float':'f',
                  'long_double':'g', 
                  'char':'b',
@@ -127,6 +132,10 @@ c2buildvalue_map={'double':'d',
                   'complex_double':'N',
                   'complex_long_double':'N',
                   'string':'z'}
+if using_newcore:
+    #c2buildvalue_map=???
+    pass
+
 f2cmap_all={'real':{'':'float','4':'float','8':'double','12':'long_double','16':'long_double'},
             'integer':{'':'int','1':'signed_char','2':'short','4':'int','8':'long_long',
                        '-1':'unsigned_char','-2':'unsigned_short','-4':'unsigned',

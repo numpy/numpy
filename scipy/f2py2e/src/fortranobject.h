@@ -33,6 +33,7 @@ void **libnumarray_API;
 #if defined(NUMERIC)
 #include "Numeric/arrayobject.h"
 #else
+int init_fortranobject(void);
 #include "scipy/arrayobject.h"
 #endif
 

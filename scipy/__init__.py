@@ -47,6 +47,8 @@ import os
 if os.environ.has_key('RUNNING_FROM_SCIPY_SOURCE'):
     print 'Running from scipy source directory.'
     show_scipy_config = None
+elif show_core_config is None:
+    show_scipy_config = None
 else:
     try:
         from __scipy_config__ import show as show_scipy_config

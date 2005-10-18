@@ -215,7 +215,7 @@ DL_EXPORT(void) init#modulename#(void) {
 \timport_libnumarray();
 #else
 #if defined(NDARRAY_VERSION)
-\timport_array();
+init_fortranobject();
 #else
 \tif (PyImport_ImportModule(\"Numeric\")==NULL) {
 \t\tPyErr_Print();

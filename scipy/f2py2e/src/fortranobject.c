@@ -14,6 +14,10 @@ extern "C" {
   $Date: 2005/07/11 07:44:20 $
 */
 
+int init_fortranobject(void) {
+  return import_array();
+}
+
 /************************* FortranObject *******************************/
 
 typedef PyObject *(*fortranfunc)(PyObject *,PyObject *,PyObject *,void *);
@@ -596,7 +600,6 @@ PyArrayObject* array_from_pyobj(const int type_num,
      Py_BuildValue("N",arr).
      Otherwise, if obj!=arr then the caller must call Py_DECREF(arr).
   */
-
   if (intent & F2PY_INTENT_CACHE) {
     /* Don't expect correct storage order or anything reasonable when
        returning intent(cache) array. */ 
@@ -636,6 +639,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
   if (intent & F2PY_INTENT_HIDE) {
     PyArrayObject *arr = NULL;
     CHECK_DIMS_DEFINED(rank,dims,"intent(hide) must have defined dimensions.\n");
+    //arr = (PyArrayObject *)PyArray_SimpleNew(rank, dims, type_num);
     arr = (PyArrayObject *)PyArray_FromDims(rank,dims,type_num);
     ARR_IS_NULL(arr==NULL,"FromDims failed: intent(hide)\n");
     if (intent & F2PY_INTENT_OUT) {
