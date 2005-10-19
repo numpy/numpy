@@ -657,6 +657,8 @@ typedef Py_uintptr_t uintp;
 	#define MAX_INTP MAX_LONG
 	#define MIN_INTP MIN_LONG
 	#define MAX_UINTP MAX_ULONG
+        #undef INTP_FMT
+        #define INTP_FMT "ld"
 #elif defined(PY_LONG_LONG) && (SIZEOF_PY_INTPTR_T == SIZEOF_LONG_LONG)
 	#define PyArray_INTP PyArray_LONGLONG
 	#define PyArray_UINTP PyArray_ULONGLONG
