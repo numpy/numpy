@@ -38,15 +38,10 @@ PyFortranObject_New(FortranDataDef* defs, f2py_void_func init) {
       PyDict_SetItemString(fp->dict,fp->defs[i].name,v);
     } else
       if ((fp->defs[i].data)!=NULL) { /* Is Fortran variable or array (not allocatable) */
-	v = PyArray_FromDimsAndData(fp->defs[i].rank,
-				    fp->defs[i].dims.d,
-				    fp->defs[i].type,
-				    fp->defs[i].data);
+	v = PyArray_New(&PyArray_Type, fp->defs[i].rank, fp->defs[i].dims.d,
+			fp->defs[i].type, NULL, fp->defs[i].data, 0, FARRAY_FLAGS,
+			NULL);
 	if (v==NULL) return NULL;
-	if (fp->defs[i].rank>1) { /* Is multi-dimensional common block member */
-	  transpose_strides((PyArrayObject*)v);
-	  ((PyArrayObject*)v)->flags &= ~CONTIGUOUS;
-	}
 	PyDict_SetItemString(fp->dict,fp->defs[i].name,v);
       }
   Py_XDECREF(v);
@@ -120,7 +115,7 @@ fortran_doc (FortranDataDef def) {
   }
   if (sprintf(p,"%s\n",p)==0) goto fail;
   if (strlen(p)>size) {
-    fprintf(stderr,"fortranobject.c:fortran_doc:len(p)=%d>%d(size): too long doc string required, increase size\n",strlen(p),size);
+    fprintf(stderr,"fortranobject.c:fortran_doc:len(p)=%d>%d(size): too long doc string required, increase size\n",(int) strlen(p),size);
     goto fail;
   }
   s = PyString_FromString(p);
@@ -161,16 +156,10 @@ fortran_getattr(PyFortranObject *fp, char *name) {
       else
 	k = fp->defs[i].rank;
       if (fp->defs[i].data !=NULL) {              /* array is allocated */
-	PyObject *v = PyArray_FromDimsAndData(k,
-					      fp->defs[i].dims.d,
-					      fp->defs[i].type,
-					      fp->defs[i].data
-					      );
+	v = PyArray_New(&PyArray_Type, k, fp->defs[i].dims.d,
+			fp->defs[i].type, NULL, fp->defs[i].data, 0, FARRAY_FLAGS,
+			NULL);
 	if (v==NULL) return NULL;
-	if (fp->defs[i].rank>1) {                 /* multi-dimensional array */
-	  transpose_strides((PyArrayObject*)v);
-	  ((PyArrayObject*)v)->flags &= ~CONTIGUOUS;
-	}
 	/* Py_INCREF(v); */
 	return v;
       } else {                                    /* array is not allocated */
@@ -210,7 +199,8 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v) {
       return -1;
     }
     if (fp->defs[i].func!=NULL) { /* is allocatable array */
-      int dims[F2PY_MAX_DIMS],k;
+      intp dims[F2PY_MAX_DIMS];
+      int k;
       save_def = &fp->defs[i];
       if (v!=Py_None) {     /* set new value (reallocate if needed --
 			       see f2py generated code for more
@@ -224,15 +214,15 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v) {
 	(*(fp->defs[i].func))(&fp->defs[i].rank,dims,set_data,&flag);
 	for(k=0;k<fp->defs[i].rank;k++) dims[k]=-1;
       }
-      memcpy(fp->defs[i].dims.d,dims,fp->defs[i].rank*sizeof(int));
+      memcpy(fp->defs[i].dims.d,dims,fp->defs[i].rank*sizeof(intp));
     } else {                     /* not allocatable array */
       if ((arr = array_from_pyobj(fp->defs[i].type,fp->defs[i].dims.d,fp->defs[i].rank,F2PY_INTENT_IN,v))==NULL)
 	return -1;      
     }
     if (fp->defs[i].data!=NULL) { /* copy Python object to Fortran array */
-      int s = _PyArray_multiply_list(fp->defs[i].dims.d,arr->nd);
+      intp s = PyArray_MultiplyList(fp->defs[i].dims.d,arr->nd);
       if (s==-1)
-	s = _PyArray_multiply_list(arr->dimensions,arr->nd);
+	s = PyArray_MultiplyList(arr->dimensions,arr->nd);
       if (s<0 ||
 	  (memcpy(fp->defs[i].data,arr->data,s*arr->descr->elsize))==NULL) {
 	if ((PyObject*)arr!=v) {
@@ -415,7 +405,8 @@ void lazy_transpose(PyArrayObject* arr) {
     Note that this function is assumed to be used even times for a
     given array. Otherwise, the caller should set flags &= ~CONTIGUOUS.
    */
-  int rank,i,s,j; 
+  int rank, i;
+  intp s,j; 
   rank = arr->nd; 
   if (rank < 2) return;
 
@@ -431,7 +422,8 @@ void lazy_transpose(PyArrayObject* arr) {
 
 extern
 void transpose_strides(PyArrayObject* arr) {
-  int rank,i,j;
+  int rank, i;
+  intp j;
   rank = arr->nd; 
   if (rank < 2) return;
   j = arr->strides[rank-1];
@@ -473,7 +465,7 @@ if (arr_is_NULL) { \
 if (count_nonpos(rank,dims)) { int i;\
   fprintf(stderr,"array_from_pyobj:" mess); \
   fprintf(stderr,"rank=%d dimensions=[ ",rank); \
-  for(i=0;i<rank;++i) fprintf(stderr,"%d ",dims[i]); \
+  for(i=0;i<rank;++i) fprintf(stderr,"%d ",(int) dims[i]);	\
   fprintf(stderr,"]\n"); \
   return NULL; \
 }
@@ -481,9 +473,9 @@ if (count_nonpos(rank,dims)) { int i;\
 #define HAS_PROPER_ELSIZE(arr,type_num) \
   ((PyArray_DescrFromType(type_num)->elsize) == (arr)->descr->elsize)
 
-static
-int count_nonpos(const int rank,
-		 const int *dims) {
+static int 
+count_nonpos(const int rank,
+	     const intp *dims) {
   int i=0,r=0;
   while (i<rank) {
     if (dims[i] <= 0) ++r;
@@ -494,21 +486,21 @@ int count_nonpos(const int rank,
 
 static int check_and_fix_dimensions(const PyArrayObject* arr,
 				    const int rank,
-				    int *dims);
-
+				    intp *dims);
+  
 #ifdef DEBUG_COPY_ND_ARRAY
 void dump_attrs(const PyArrayObject* arr) {
   int rank = arr->nd;
-  int size = PyArray_Size((PyObject *)arr);
+  intp size = PyArray_Size((PyObject *)arr);
   int i;
-  printf("\trank = %d, flags = %d, size = %d\n",rank,arr->flags,size);
+  printf("\trank = %d, flags = %d, size = %d\n",rank,arr->flags,(int) size);
   printf("\tstrides = [");
   for(i=0;i<rank;++i) {
-    printf("%3d",arr->strides[i]);
+    printf("%3d",(int) arr->strides[i]);
   }
   printf("]\n\t dimensions = [");
   for(i=0;i<rank;++i) {
-    printf("%3d",arr->dimensions[i]);
+    printf("%3d",(int) arr->dimensions[i]);
   }
   printf("]\n");
 }
@@ -519,18 +511,19 @@ void dump_attrs(const PyArrayObject* arr) {
 static int swap_arrays(PyArrayObject* arr1, PyArrayObject* arr2) {
   SWAPTYPE(arr1->data,arr2->data,char*);
   SWAPTYPE(arr1->nd,arr2->nd,int);
-  SWAPTYPE(arr1->dimensions,arr2->dimensions,int*);
-  SWAPTYPE(arr1->strides,arr2->strides,int*);
+  SWAPTYPE(arr1->dimensions,arr2->dimensions,intp*);
+  SWAPTYPE(arr1->strides,arr2->strides,intp*);
   SWAPTYPE(arr1->base,arr2->base,PyObject*);
   SWAPTYPE(arr1->descr,arr2->descr,PyArray_Descr*);
   SWAPTYPE(arr1->flags,arr2->flags,int);
+  SWAPTYPE(arr1->itemsize, arr2->itemsize, int);
   /* SWAPTYPE(arr1->weakreflist,arr2->weakreflist,PyObject*); */
   return 0;
 }
 
 extern
 PyArrayObject* array_from_pyobj(const int type_num,
-				int *dims,
+				intp *dims,
 				const int rank,
 				const int intent,
 				PyObject *obj) {
@@ -548,7 +541,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
       PyArrayObject *arr = NULL;
       CHECK_DIMS_DEFINED(rank,dims,"optional,intent(cache) must"
 			 " have defined dimensions.\n");
-      arr = (PyArrayObject *)PyArray_FromDims(rank,dims,type_num);
+      arr = (PyArrayObject *)PyArray_SimpleNew(rank,dims,type_num);
       ARR_IS_NULL(arr==NULL,"FromDims failed: optional,intent(cache)\n");
 /*       if (intent & F2PY_INTENT_OUT) */
 /* 	Py_INCREF(arr); */
@@ -575,13 +568,13 @@ PyArrayObject* array_from_pyobj(const int type_num,
   if (intent & F2PY_INTENT_HIDE) {
     PyArrayObject *arr = NULL;
     CHECK_DIMS_DEFINED(rank,dims,"intent(hide) must have defined dimensions.\n");
-    //arr = (PyArrayObject *)PyArray_SimpleNew(rank, dims, type_num);
-    arr = (PyArrayObject *)PyArray_FromDims(rank,dims,type_num);
+    arr = (PyArrayObject *)PyArray_SimpleNew(rank, dims, type_num);
     ARR_IS_NULL(arr==NULL,"FromDims failed: intent(hide)\n");
     if (intent & F2PY_INTENT_OUT) {
       if ((!(intent & F2PY_INTENT_C)) && (rank>1)) {
 	transpose_strides(arr);
 	arr->flags &= ~CONTIGUOUS;
+	arr->flags |= FORTRAN;
       }
 /*       Py_INCREF(arr); */
     }
@@ -603,7 +596,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 	       && HAS_PROPER_ELSIZE(arr,type_num)
 	       && PyArray_CanCastSafely(arr->descr->type_num,type_num)
 	       /* Make PyArray_CanCastSafely safer for 64-bit machines: */
-	       && (arr->descr->type_num==PyArray_LONG?type_num!=PyArray_DOUBLE:1)
+	       /* && (arr->descr->type_num==PyArray_LONG?type_num!=PyArray_DOUBLE:1)*/
 	       ))) {
       PyArrayObject *tmp_arr = NULL;
       if (intent & F2PY_INTENT_INOUT) {
@@ -618,9 +611,9 @@ PyArrayObject* array_from_pyobj(const int type_num,
 /* 	ARR_IS_NULL(arr==NULL,"CopyFromObject failed: array.\n"); */
 /*       } else */
       {
-	tmp_arr = (PyArrayObject *)PyArray_FromDims(arr->nd,
-						    arr->dimensions,
-						    type_num);
+	tmp_arr = (PyArrayObject *)PyArray_SimpleNew(arr->nd,
+						     arr->dimensions,
+						     type_num);
 	ARR_IS_NULL(tmp_arr==NULL,"FromDims failed: array with unsafe cast.\n");
 	if (copy_ND_array(arr,tmp_arr))
 	  ARR_IS_NULL(1,"copy_ND_array failed: array with unsafe cast.\n");
@@ -629,6 +622,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 	lazy_transpose(arr);
 	lazy_transpose(tmp_arr);	
 	tmp_arr->flags &= ~CONTIGUOUS;
+	tmp_arr->flags |= FORTRAN;
       }
       if (intent & F2PY_INTENT_INPLACE) {
 	if (swap_arrays(arr,tmp_arr))
@@ -650,12 +644,13 @@ PyArrayObject* array_from_pyobj(const int type_num,
   if ((obj==Py_None) && (intent & F2PY_OPTIONAL)) {
     PyArrayObject *arr = NULL;
     CHECK_DIMS_DEFINED(rank,dims,"optional must have defined dimensions.\n");    
-    arr = (PyArrayObject *)PyArray_FromDims(rank,dims,type_num);
+    arr = (PyArrayObject *)PyArray_SimpleNew(rank,dims,type_num);
     ARR_IS_NULL(arr==NULL,"FromDims failed: optional.\n");
     if (intent & F2PY_INTENT_OUT) {
       if ((!(intent & F2PY_INTENT_C)) && (rank>1)) {
 	transpose_strides(arr);
 	arr->flags &= ~CONTIGUOUS;
+	arr->flags |= FORTRAN;
       }
 /*       Py_INCREF(arr); */
     }
@@ -677,6 +672,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
       PyArrayObject *tmp_arr = NULL;
       lazy_transpose(arr);
       arr->flags &= ~CONTIGUOUS;
+      arr->flags |= FORTRAN;
       tmp_arr = (PyArrayObject *) PyArray_CopyFromObject((PyObject *)arr,type_num,0,0);
 #ifdef F2PY_REPORT_ON_ARRAY_COPY
       f2py_report_on_array_copy(tmp_arr,"PyArray_CopyFromObject");
@@ -686,6 +682,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
       ARR_IS_NULL(arr==NULL,"CopyFromObject(Array) failed: intent(fortran)\n");
       lazy_transpose(arr);
       arr->flags &= ~CONTIGUOUS;
+      arr->flags |= FORTRAN;
     }
 /*     if (intent & F2PY_INTENT_OUT) */
 /*       Py_INCREF(arr); */
@@ -720,7 +717,7 @@ int array_has_column_major_storage(const PyArrayObject *ap) {
 }
 
 static
-int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,int *dims) {
+int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims) {
   /*
     This function fills in blanks (that are -1\'s) in dims list using
     the dimensions from arr. It also checks that non-blank dims will
@@ -729,7 +726,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,int *dims) 
   const int arr_size = (arr->nd)?PyArray_Size((PyObject *)arr):1;
 
   if (rank > arr->nd) { /* [1,2] -> [[1],[2]]; 1 -> [[1]]  */
-    int new_size = 1;
+    intp new_size = 1;
     int free_axe = -1;
     int i;
     /* Fill dims where -1 or 0; check dimensions; calc new_size; */
@@ -737,7 +734,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,int *dims) 
       if (dims[i] >= 0) {
 	if (dims[i]!=arr->dimensions[i]) {
 	  fprintf(stderr,"%d-th dimension must be fixed to %d but got %d\n",
-		  i,dims[i],arr->dimensions[i]);
+		  i,(int) dims[i], (int) arr->dimensions[i]);
 	  return 1;
 	}
 	if (!dims[i]) dims[i] = 1;
@@ -749,7 +746,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,int *dims) 
     for(i=arr->nd;i<rank;++i)
       if (dims[i]>1) {
 	fprintf(stderr,"%d-th dimension must be %d but got 0 (not defined).\n",
-		i,dims[i]);
+		i,(int) dims[i]);
 	return 1;
       } else if (free_axe<0)
 	free_axe = i;
@@ -761,13 +758,13 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,int *dims) 
     }
     if (new_size != arr_size) {
       fprintf(stderr,"confused: new_size=%d, arr_size=%d (maybe too many free"
-	      " indices)\n",new_size,arr_size);
+	      " indices)\n",(int )new_size,arr_size);
       return 1;
     }
   } else { /* [[1,2]] -> [[1],[2]] */
     int i,j,d;
     int effrank;
-    int size;
+    intp size;
     for (i=0,effrank=0;i<arr->nd;++i)
       if (arr->dimensions[i]>1) ++effrank;
     if (dims[rank-1]>=0)
@@ -799,10 +796,10 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,int *dims) 
     for (i=0,size=1;i<rank;++i) size *= dims[i];
     if (size != arr_size) {
       fprintf(stderr,"confused: size=%d, arr_size=%d, rank=%d, effrank=%d, arr.nd=%d, dims=[",
-	      size,arr_size,rank,effrank,arr->nd);
-      for (i=0;i<rank;++i) fprintf(stderr," %d",dims[i]);
+	      (int) size,arr_size,rank,effrank,arr->nd);
+      for (i=0;i<rank;++i) fprintf(stderr," %d",(int) dims[i]);
       fprintf(stderr," ], arr.dims=[");
-      for (i=0;i<arr->nd;++i) fprintf(stderr," %d",arr->dimensions[i]);
+      for (i=0;i<arr->nd;++i) fprintf(stderr," %d",(int) arr->dimensions[i]);
       fprintf(stderr," ]\n");
       return 1;
     }

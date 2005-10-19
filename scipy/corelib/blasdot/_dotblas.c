@@ -688,7 +688,7 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
     }
     l = ap1->dimensions[ap1->nd-1];
   
-    ret = (PyArrayObject *)PyArray_FromDims(0, dimensions, typenum);
+    ret = (PyArrayObject *)PyArray_SimpleNew(0, dimensions, typenum);
     if (ret == NULL) goto fail;
 
 

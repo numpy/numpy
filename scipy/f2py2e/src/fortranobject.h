@@ -60,7 +60,7 @@ Author: Pearu Peterson <pearu@cens.ioc.ee>
 
 typedef void (*f2py_set_data_func)(char*,int*);
 typedef void (*f2py_void_func)(void);
-typedef void (*f2py_init_func)(int*,int*,f2py_set_data_func,int*);
+typedef void (*f2py_init_func)(int*,intp*,f2py_set_data_func,int*);
 
   /*typedef void* (*f2py_c_func)(void*,...);*/
 
@@ -70,7 +70,7 @@ typedef struct {
   char *name;                /* attribute (array||routine) name */
   int rank;                  /* array rank, 0 for scalar, max is F2PY_MAX_DIMS,
 				|| rank=-1 for Fortran routine */
-  struct {int d[F2PY_MAX_DIMS];} dims;  /* dimensions of the array, || not used */
+  struct {intp d[F2PY_MAX_DIMS];} dims; /* dimensions of the array, || not used */
   int type;                  /* PyArray_<type> || not used */
   char *data;                /* pointer to array || Fortran routine */
   f2py_init_func func;            /* initialization function for
@@ -109,7 +109,7 @@ typedef struct {
   extern void lazy_transpose(PyArrayObject* arr); /* Obsolete?? */
   extern void transpose_strides(PyArrayObject* arr);
   extern PyArrayObject* array_from_pyobj(const int type_num,
-					 int *dims,
+					 intp *dims,
 					 const int rank,
 					 const int intent,
 					 PyObject *obj);
