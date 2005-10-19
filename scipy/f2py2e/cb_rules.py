@@ -349,7 +349,7 @@ cb_arg_rules=[
     },
 # Array ...
     {
-    'decl':'\tint #varname#_Dims[#rank#] = {#rank*[-1]#};',
+    'decl':'\tintp #varname#_Dims[#rank#] = {#rank*[-1]#};',
     'setdims':'\t#cbsetdims#;',
     '_check':isarray,
     '_depend':''
