@@ -615,93 +615,6 @@ cppmacros['OLDPYNUM']="""\
 """
 ################# C functions ###############
 
-needs['arr_from_pyobj']=['PRINTPYOBJERR','SWAP',
-                         'CFUNCSMESS','OLDPYNUM']
-cfuncs['arr_from_pyobj']="""\
-static PyArrayObject *arr_from_pyobj(int type,int *dims,int rank,PyObject *obj) {
-\tPyArrayObject *self = NULL;
-\tPyArrayObject *self_cp = NULL;
-\tint i;
-\tif (obj == Py_None) {
-\t\tCFUNCSMESS(\"arr_from_pyobj: obj = None. Doing FromDims\\n\");
-\t\tself = (PyArrayObject *)PyArray_FromDims(rank,dims,type);
-\t} else {
-\t\tCFUNCSMESS(\"arr_from_pyobj: Trying ContiguousFromObject\\n\");
-\t\tself = (PyArrayObject *)PyArray_ContiguousFromObject(obj,type,0,0);
-\t\tif (self == NULL)
-\t\t\tCFUNCSMESS(\"arr_from_pyobj:  ContiguousFromObject unsuccesful\\n\");
-\t}
-/*\tPy_XINCREF(self);*/
-\tif ((self == NULL) && PyArray_Check(obj)) { /* if could not cast safely in above */
-\t\tint loc_rank = ((PyArrayObject *)obj)->nd;
-\t\tint *loc_dims = ((PyArrayObject *)obj)->dimensions;
-\t\tCFUNCSMESS(\"arr_from_pyobj: isarray(obj). Doing FromDims\\n\");
-\t\tself = (PyArrayObject *)PyArray_FromDims(loc_rank,loc_dims,type);
-\t}
-\tif (self == NULL) {
-\t\tint i;
-\t\tfprintf(stderr,\"arr_from_pyobj: PyArray_FromDims failed (rank=%d,type=%d,dims=(%d\",rank,type,dims[0]);
-\t\tfor(i=1;i<rank;i++) fprintf(stderr,\",%d\",dims[i]);
-\t\tfprintf(stderr,\"))\\n\");
-\t\tgoto capi_fail;
-\t}
-\t\tself_cp = self;
-\tif (!(rank==self->nd)) {
-\t\tint u_dim = -1, dims_s = 1, self_s = (self->nd)?PyArray_Size((PyObject *)self):1;
-\t\tCFUNCSMESS(\"arr_from_pyobj: Mismatch of ranks. Trying to match.\\n\");
-\t\tCFUNCSMESS(\"arr_from_pyobj:\");
-#ifdef DEBUGCFUNCS
-\t\tfprintf(stderr,\"rank=%d,self->nd=%d,dims=(\",rank,self->nd);
-\t\tfor(i=0;i<rank;i++) fprintf(stderr,\" %d\",dims[i]);
-\t\tfprintf(stderr,\")\\n\");
-#endif
-\t\tfor(i=0;i<rank;i++)
-\t\t\tif (dims[i]<1)
-\t\t\t\tif (u_dim<0) u_dim = i;
-\t\t\t\telse dims[i] = 1;
-\t\t\telse dims_s *= dims[i];
-\t\tif (u_dim >= 0) {
-\t\t\tdims[u_dim] = self_s/dims_s;
-\t\t\tdims_s *= dims[u_dim];
-\t\t}
-\t\tCFUNCSMESS(\"arr_from_pyobj:\");
-#ifdef DEBUGCFUNCS
-\t\tfprintf(stderr,\"rank=%d,self->nd=%d,self_s=%d,dims_s=%d,dims=(\",rank,self->nd,self_s,dims_s);
-\t\tfor(i=0;i<rank;i++) fprintf(stderr,\" %d\",dims[i]);
-\t\tfprintf(stderr,\")\\n\");
-#endif
-\t\tif (self_s != dims_s) {
-\t\t\tfprintf(stderr,\"#modulename#:arr_from_pyobj: expected rank-%d array but got rank-%d array with different size.\\n\",rank,self->nd);
-\t\tgoto capi_fail;
-\t\t}
-\t\tself = (PyArrayObject *)PyArray_FromDimsAndDataAndDescr(rank, dims,self_cp->descr,self_cp->data);
-\t\tif (self == NULL)
-\t\t\tgoto capi_fail;
-\t\tPy_INCREF(self_cp);
-\t\tself->base = (PyObject *)self_cp;
-\t}
-\tfor (i=0;i<rank;i++)
-\t\tif (dims[i]>self->dimensions[i]) {
-\t\t\tfprintf(stderr,\"#modulename#:arr_from_pyobj: %d-th dimension must be at least %d but got %d.\\n\",i+1,dims[i],self->dimensions[i]);
-\t\t\tgoto capi_fail;
-\t\t}
-\tif (((PyObject *)self_cp != obj) && PyArray_Check(obj)) {
-\t\tif (copy_ND_array((PyArrayObject *)obj,self_cp)) {
-\t\t\tfprintf(stderr,\"#modulename#:arr_from_pyobj: failed to copy object to rank-%d array with shape (\",self_cp->nd);
-\t\t\tfor(i=0;i<self_cp->nd;i++) fprintf(stderr,\"%d,\",self_cp->dimensions[i]);
-\t\t\tfprintf(stderr,\")\\n\");
-\t\t\tPRINTPYOBJERR((PyObject *)self_cp);
-\t\t\tgoto capi_fail;
-\t\t}
-\t}
-\tif (self != NULL)
-\t\treturn self;
-\tCFUNCSMESS(\"arr_from_pyobj: self==NULL. Confused?!.\\n\");
-capi_fail:
-\tPRINTPYOBJERR(obj);
-\tPy_XDECREF(self);
-\treturn NULL;
-}"""
 cfuncs['calcarrindex']="""\
 static int calcarrindex(int *i,PyArrayObject *arr) {
 \tint k,ii = i[0];
@@ -717,8 +630,8 @@ static int calcarrindextr(int *i,PyArrayObject *arr) {
 \treturn ii;
 }"""
 cfuncs['forcomb']="""\
-static struct { int nd,*d,*i,*i_tr,tr; } forcombcache;
-static int initforcomb(int *dims,int nd,int tr) {
+static struct { int nd;intp *d;int *i,*i_tr,tr; } forcombcache;
+static int initforcomb(intp *dims,int nd,int tr) {
   int k;
   if (dims==NULL) return 0;
   if (nd<0) return 0;
@@ -756,73 +669,6 @@ static int *nextforcomb(void) {
   if (forcombcache.tr) return i_tr;
   return i;
 }"""
-## cfuncs['copy_ND_array']="""\
-## /*     Here starts Travis Oliphant's contribution     */
-## #define INCREMENT(ret_ind, nd, max_ind) \\
-## { \\
-##   int k; \\
-##   k = (nd) - 1; \\
-##   if (k<0) (ret_ind)[0] = (max_ind)[0]; else \\
-##   if (++(ret_ind)[k] >= (max_ind)[k]) { \\
-##     while (k >= 0 && ((ret_ind)[k] >= (max_ind)[k]-1)) \\
-##       (ret_ind)[k--] = 0; \\
-##     if (k >= 0) (ret_ind)[k]++; \\
-##     else (ret_ind)[0] = (max_ind)[0]; \\
-##   }  \\
-## }
-## #define CALCINDEX(indx, nd_index, strides, ndim) \\
-## { \\
-##   int i; \\
-##   indx = 0; \\
-##   for (i=0; i < (ndim); i++)  \\
-##     indx += nd_index[i]*strides[i]; \\
-## } 
-## static int copy_ND_array(PyArrayObject *in, PyArrayObject *out)
-## {
-
-##   /* This routine copies an N-D array in to an N-D array out where both
-##      can be discontiguous.  An appropriate (raw) cast is made on the data.
-##   */
-
-##   /* It works by using an N-1 length vector to hold the N-1 first indices 
-##      into the array.  This counter is looped through copying (and casting) 
-##      the entire last dimension at a time.
-##   */
-
-##   int *nd_index, indx1;
-##   int indx2, last_dim;
-##   int instep, outstep;
-
-##   if (0 == in->nd) {
-##     in->descr->cast[out->descr->type_num]((void *)in->data,1,(void *)out->data,1,1);
-##     return 0;
-##   }
-##   if (1 == in->nd) {
-##     (in->descr->cast[out->descr->type_num])((void *)(in->data),1,(void *)(out->data),1,in->dimensions[0]);
-##     return 0;
-##   }
-##   nd_index = (int *)calloc(in->nd-1,sizeof(int));
-##   last_dim = in->nd - 1;
-##   instep = in->strides[last_dim] / in->descr->elsize;
-##   outstep = out->strides[last_dim] / out->descr->elsize;
-##   if (NULL == nd_index) {
-##      fprintf(stderr,\"Could not allocate memory for index array.\\n\");
-##      return -1;
-##   }
-##   CFUNCSMESS(\"copy_ND_array: doing a complete copy\\n\");
-##   while(nd_index[0] != in->dimensions[0]) {
-##     CALCINDEX(indx1,nd_index,in->strides,in->nd-1);
-##     CALCINDEX(indx2,nd_index,out->strides,out->nd-1);
-##     /* Copy (with an appropriate cast) the last dimension of the array */
-##     (in->descr->cast[out->descr->type_num])((void *)(in->data+indx1),instep,(void *)(out->data+indx2),outstep,in->dimensions[last_dim]); 
-##     INCREMENT(nd_index,in->nd-1,in->dimensions);
-##   }
-##   free(nd_index);
-##   return 0;
-## } 
-## /* EOF T.O.'s contib */
-## """
-
 needs['try_pyarr_from_string']=['STRINGCOPYN','PRINTPYOBJERR','string']
 cfuncs['try_pyarr_from_string']="""\
 static int try_pyarr_from_string(PyObject *obj,const string str) {
