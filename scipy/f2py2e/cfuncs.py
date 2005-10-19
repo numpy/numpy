@@ -875,6 +875,16 @@ needs['long_double_from_pyobj']=['double_from_pyobj','long_double']
 cfuncs['long_double_from_pyobj']="""\
 static int long_double_from_pyobj(long_double* v,PyObject *obj,const char *errmess) {
 \tdouble d=0;
+\tif (PyArray_CheckScalar(obj)){
+\t\tif PyArray_IsScalar(obj, LongDouble) {
+\t\t\tPyArray_ScalarAsCtype(obj, v);
+\t\t\treturn 1;
+\t\t}
+\t\telse if (PyArray_Check(obj) && PyArray_TYPE(obj)==PyArray_LONGDOUBLE) {
+\t\t\t(*v) = *((longdouble *)PyArray_DATA(obj))
+\t\t\treturn 1;
+\t\t}
+\t}
 \tif (double_from_pyobj(&d,obj,errmess)) {
 \t\t*v = (long_double)d;
 \t\treturn 1;
@@ -938,6 +948,17 @@ needs['complex_long_double_from_pyobj']=['complex_long_double','long_double',
 cfuncs['complex_long_double_from_pyobj']="""\
 static int complex_long_double_from_pyobj(complex_long_double* v,PyObject *obj,const char *errmess) {
 \tcomplex_double cd={0.0,0.0};
+\tif (PyArray_CheckScalar(obj)){
+\t\tif PyArray_IsScalar(obj, CLongDouble) {
+\t\t\tPyArray_ScalarAsCtype(obj, v);
+\t\t\treturn 1;
+\t\t}
+\t\telse if (PyArray_Check(obj) && PyArray_TYPE(obj)==PyArray_CLONGDOUBLE) {
+\t\t\t(*v).r = ((clongdouble *)PyArray_DATA(obj))->real;
+\t\t\t(*v).i = ((clongdouble *)PyArray_DATA(obj))->imag;
+\t\t\treturn 1;
+\t\t}
+\t}
 \tif (complex_double_from_pyobj(&cd,obj,errmess)) {
 \t\t(*v).r = (long_double)cd.r;
 \t\t(*v).i = (long_double)cd.i;
@@ -953,6 +974,38 @@ static int complex_double_from_pyobj(complex_double* v,PyObject *obj,const char 
 \tif (PyComplex_Check(obj)) {
 \t\tc=PyComplex_AsCComplex(obj);
 \t\t(*v).r=c.real, (*v).i=c.imag;
+\t\treturn 1;
+\t}
+\tif (PyArray_IsScalar(obj, ComplexFloating)) {
+\t\tif (PyArray_IsScalar(obj, CFloat)) {
+\t\t\tcfloat new;
+\t\t\tPyArray_ScalarAsCtype(obj, &new);
+\t\t\t(*v).r = (double)new.real;
+\t\t\t(*v).i = (double)new.imag;
+\t\t}
+\t\telse if (PyArray_IsScalar(obj, CLongDouble)) {
+\t\t\tclongdouble new;
+\t\t\tPyArray_ScalarAsCtype(obj, &new);
+\t\t\t(*v).r = (double)new.real;
+\t\t\t(*v).i = (double)new.imag;
+\t\t}
+\t\telse { /* if (PyArray_IsScalar(obj, CDouble)) */
+\t\t\tPyArray_ScalarAsCtype(obj, v);
+\t\t}
+\t\treturn 1;
+\t}
+\tif (PyArray_CheckScalar(obj)) { /* 0-dim array or still array scalar */
+\t\tPyObject *arr;
+\t\tPyArray_Typecode otype = {PyArray_CDOUBLE, sizeof(cdouble), 0};
+\t\tif (PyArray_Check(obj)) {
+\t\t\tarr = PyArray_CastToType((PyArrayObject *)obj, &otype);
+\t\t}
+\t\telse {
+\t\t\tarr = PyArray_FromScalar(obj, &otype);
+\t\t}
+\t\tif (arr==NULL) return 0;
+\t\t(*v).r = ((cdouble *)PyArray_DATA(arr))->real;
+\t\t(*v).i = ((cdouble *)PyArray_DATA(arr))->imag;
 \t\treturn 1;
 \t}
 \t/* Python does not provide PyNumber_Complex function :-( */

@@ -5,6 +5,7 @@ import umath as um
 import numerictypes as nt
 from numeric import asarray, array, correlate, outer, concatenate
 import sys
+_dt_ = nt.dtype2char
 
 #Use this to add a new axis to an array
 
@@ -22,11 +23,11 @@ LittleEndian = (sys.byteorder == 'little')
 
 # backward compatible names from old Precision.py
 
-Character = nt.string
-UnsignedInt8 = nt.uint8
-UnsignedInt16 = nt.uint16
-UnsignedInt32 = nt.uint32
-UnsignedInt = nt.uint
+Character = 'S1'
+UnsignedInt8 = _dt_(nt.uint8)
+UnsignedInt16 = _dt_(nt.uint16)
+UnsignedInt32 = _dt_(nt.uint32)
+UnsignedInt = _dt_(nt.uint)
 
 typecodes = {'Character':'S1', 'Integer':'bhilq', 'UnsignedInteger':'BHILQ',
              'Float':'fdg', 'Complex':'FDG', 'AllInteger':'bBhHiIlLqQ',
@@ -37,42 +38,42 @@ def sarray(a, dtype=None, copy=0):
     return array(a, dtype, copy)
 
 try:
-    UnsignedInt64 = nt.uint64
-    UnsignedInt128 = nt.uint128
+    UnsignedInt64 = _dt_(nt.uint64)
+    UnsignedInt128 = _dt_(nt.uint128)
 except AttributeError:
     pass
 
-Int8 = nt.int8
-Int16 = nt.int16
-Int32 = nt.int32
+Int8 = _dt_(nt.int8)
+Int16 = _dt_(nt.int16)
+Int32 = _dt_(nt.int32)
 
 try:
-    Int64 = nt.int64
-    Int128 = nt.int128
+    Int64 = _dt_(nt.int64)
+    Int128 = _dt_(nt.int128)
 except AttributeError:
     pass
 
-Int0 = nt.int
-Int = nt.int
-Float0 = nt.float
-Float = nt.float
-Complex0 = nt.complex
-Complex = nt.complex
-PyObject = nt.object
+Int0 = _dt_(nt.int)
+Int = _dt_(nt.int)
+Float0 = _dt_(nt.float)
+Float = _dt_(nt.float)
+Complex0 = _dt_(nt.complex)
+Complex = _dt_(nt.complex)
+PyObject = _dt_(nt.object)
 
-Float32 = nt.float32
-Float64 = nt.float64
+Float32 = _dt_(nt.float32)
+Float64 = _dt_(nt.float64)
 
 try:
-    Float128 = nt.float128
+    Float128 = _dt_(nt.float128)
 except AttributeError:    
     pass
 
-Complex32 = nt.complex64
-Complex64 = nt.complex128
+Complex32 = _dt_(nt.complex64)
+Complex64 = _dt_(nt.complex128)
 
 try:
-    Complex128 = nt.complex256
+    Complex128 = _dt_(nt.complex256)
 except AttributeError:    
     pass
 

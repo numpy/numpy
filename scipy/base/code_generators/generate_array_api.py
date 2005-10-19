@@ -88,6 +88,10 @@ objectapi_list = [
     """,
      'FromScalar', 'PyObject *, PyArray_Typecode *', 'PyObject *'),
 
+    (r"""Convert to c-type
+    """,
+     'ScalarAsCtype', 'PyObject *, void *', 'void'),
+
     (r"""Register Data type
     """,
      'RegisterDataType', 'PyTypeObject *', 'int'),
@@ -515,7 +519,7 @@ multiapi_list = [
 
 
 types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger', 'Inexact',
-         'Floating', 'Complex', 'Flexible', 'Character',
+         'Floating', 'ComplexFloating', 'Flexible', 'Character',
          'Bool','Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
          'UInt', 'ULong', 'ULongLong', 'Float', 'Double', 'LongDouble',
          'CFloat', 'CDouble', 'CLongDouble', 'Object', 'String', 'Unicode',

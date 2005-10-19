@@ -39,6 +39,29 @@ typedef struct {
 	char *obval;
 } PyVoidScalarObject;
 
+/* no error checking is performed -- ctypeptr must be same type as scalar */
+static void
+PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
+{
+	PyArray_Typecode typecode;
+	PyArray_TypecodeFromScalar(scalar, &typecode);
+	
+	if (PyTypeNum_ISFLEXIBLE(typecode.type_num)) {
+		void **newptr = (void **)ctypeptr;
+		switch(typecode.type_num) {
+		case PyArray_STRING:
+			*newptr = (void *)PyString_AS_STRING(scalar);
+		case PyArray_UNICODE:
+			*newptr = (void *)PyUnicode_AS_DATA(scalar);
+		case PyArray_VOID:
+			*newptr = ((PyVoidScalarObject *)scalar)->obval;
+		}
+	}
+	memcpy(ctypeptr, &(((PyScalarObject *)scalar)->obval), 
+	       sizeof(typecode.itemsize));
+	return;
+}
+
 /* 0-dim array from array-scalar object */
 
 static PyObject *
