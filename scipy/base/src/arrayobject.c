@@ -724,14 +724,12 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
         ret = PyArray_New(&PyArray_Type, nd, newd, 
                            descr->type_num, NULL, data, descr->elsize, 
-			   0, NULL);
+			   CARRAY_FLAGS, NULL);
 #else
 	ret = PyArray_New(&PyArray_Type, nd, (intp *)d, 
                            descr->type_num, NULL, data, descr->elsize, 
-			   0, NULL);
+			   CARRAY_FLAGS, NULL);
 #endif
-	if (descr->type_num != PyArray_OBJECT)
-		memset(PyArray_DATA(ret), 0, PyArray_SIZE(ret));
 	return ret;
 }
 
@@ -747,15 +745,12 @@ PyArray_FromDimsAndData(int nd, int *d, int type, char *data)
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i]; 
 	ret = PyArray_New(&PyArray_Type, nd, newd, 
 			   type, NULL, data, 0, 
-			   0, NULL);
+			   CARRAY_FLAGS, NULL);
 #else
 	ret = PyArray_New(&PyArray_Type, nd, (intp *)d, 
 			   type, NULL, data, 0, 
-			   0, NULL);
+			   CARRAY_FLAGS, NULL);
 #endif
-	if (type != PyArray_OBJECT && type != PyArray_OBJECTLTR) 
-                /* already done*/
-		memset(PyArray_DATA(ret), 0, PyArray_SIZE(ret));
 	return ret;
 }
 
