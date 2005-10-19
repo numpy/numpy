@@ -801,8 +801,8 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
     }
     for (i=0,size=1;i<rank;++i) size *= dims[i];
     if (size != arr_size) {
-      fprintf(stderr,"confused: size=%" INTP_FMT ", arr_size=%d, rank=%d,"
-	      " effrank=%d, arr.nd=%d, dims=[",
+      fprintf(stderr,"confused: size=%" INTP_FMT ", arr_size=%" INTP_FMT
+	      ", rank=%d, effrank=%d, arr.nd=%d, dims=[",
 	      size,arr_size,rank,effrank,arr->nd);
       for (i=0;i<rank;++i) fprintf(stderr," %" INTP_FMT,dims[i]);
       fprintf(stderr," ], arr.dims=[");
