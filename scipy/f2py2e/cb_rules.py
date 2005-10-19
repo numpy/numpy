@@ -358,7 +358,7 @@ cb_arg_rules=[
     'pyobjfrom':[{debugcapi:'\tfprintf(stderr,"debug-capi:cb:#varname#\\n");'},
                  """\
 \tif (#name#_nofargs>capi_i) {
-\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_FromDimsAndData(#rank#,#varname#_Dims,#atype#,(char*)#varname#); /*XXX: Hmm, what will destroy this array??? */
+\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname#_Dims,#atype#,NULL,(char*)#varname#,0,0,NULL); /*XXX: Hmm, what will destroy this array??? */
 \t\tif (tmp_arr==NULL)
 \t\t\tgoto capi_fail;
 """,
