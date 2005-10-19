@@ -2228,9 +2228,24 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 		return NULL;
 	}
 
-
-        if (otype.type_num == PyArray_NOTYPE)
-                otype.type_num = mp->descr->type_num;
+        if (otype.type_num == PyArray_NOTYPE) {	
+		int typenum = PyArray_TYPE(mp);
+		if (PyTypeNum_ISINTEGER(typenum) &&	\
+		    (mp->itemsize < sizeof(long))) {
+			if (PyTypeNum_ISUNSIGNED(typenum))
+				otype.type_num = PyArray_ULONG;
+			else
+				otype.type_num = PyArray_LONG;
+		}
+		else if (PyTypeNum_ISBOOL(typenum) && \
+			 ((strcmp(self->name,"add")==0) ||	\
+			  (strcmp(self->name,"multiply")==0))) {
+			otype.type_num = PyArray_LONG;
+		}
+		else {
+			otype.type_num = typenum;
+		}
+	}
 
         switch(operation) {
         case UFUNC_REDUCE:
