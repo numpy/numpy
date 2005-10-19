@@ -58,7 +58,7 @@ Author: Pearu Peterson <pearu@cens.ioc.ee>
 
 #define F2PY_MAX_DIMS 40
 
-typedef void (*f2py_set_data_func)(char*,int*);
+typedef void (*f2py_set_data_func)(char*,intp*);
 typedef void (*f2py_void_func)(void);
 typedef void (*f2py_init_func)(int*,intp*,f2py_set_data_func,int*);
 
