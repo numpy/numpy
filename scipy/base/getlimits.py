@@ -8,7 +8,7 @@ from machar import MachAr
 import numeric
 from numeric import array
 
-def frz(a):
+def _frz(a):
     """fix rank-0 --> rank-1"""
     if len(a.shape) == 0:
         a = a.reshape((1,))
@@ -20,68 +20,101 @@ _convert_to_float = {
     numeric.clongfloat: numeric.longfloat
     }
 
-_machar_cache = {}
-
 class finfo(object):
-    def __init__(self, dtype):
-        dtype = numeric.obj2dtype(dtype)
-        if not issubclass(dtype, numeric.inexact):
-            raise ValueError, "data type not inexact"
-        if not issubclass(dtype, numeric.floating):
-            dtype = _convert_to_float[dtype]
-        if dtype is numeric.float_:
-            try:
-                self.machar = _machar_cache[numeric.float_]
-            except KeyError:
-                self.machar = MachAr(lambda v:array([v],'d'),
-                                     lambda v:frz(v.astype('i'))[0],
-                                     lambda v:array(frz(v)[0],'d'),
-                                     lambda v:'%24.16e' % array(frz(v)[0],'d'),
-                                     'scipy float precision floating point '\
-                                     'number')
-                _machar_cache[numeric.float_] = self.machar
-                
-        elif dtype is numeric.single:
-            try:
-                self.machar = _machar_cache[numeric.single]
-            except KeyError:
-                self.machar =  MachAr(lambda v:array([v],'f'),
-                                      lambda v:frz(v.astype('i'))[0],
-                                      lambda v:array(frz(v)[0],'f'),  #
-                                      lambda v:'%15.7e' % array(frz(v)[0],'f'),
-                                      "scipy single precision floating "\
-                                      "point number")
-                _machar_cache[numeric.single] = self.machar 
-        elif dtype is numeric.longfloat:
-            try:
-                self.machar = _machar_cache[numeric.longfloat]
-            except KeyError:                
-                self.machar = MachAr(lambda v:array([v],'g'),
-                                     lambda v:frz(v.astype('i'))[0],
-                                     lambda v:array(frz(v)[0],'g'),  #
-                                     lambda v:str(array(frz(v)[0],'g')),
-                                     "scipy longfloat precision floating "\
-                                     "point number")
-                _machar_cache[numeric.longfloat] = self.machar
 
-        for word in ['tiny', 'precision', 'resolution',
-                     'ngrd','maxexp','minexp','epsneg','negep',
+    _finfo_cache = {}
+
+    def __new__(cls, dtype):
+        obj = cls._finfo_cache.get(dtype,None)
+        if obj is not None:
+            return obj
+        dtypes = [dtype]
+        newdtype = numeric.obj2dtype(dtype)
+        if newdtype is not dtype:
+            dtypes.append(newdtype)
+            dtype = newdtype
+        if not issubclass(dtype, numeric.inexact):
+            raise ValueError, "data type %r not inexact" % (dtype)
+        obj = cls._finfo_cache.get(dtype,None)
+        if obj is not None:
+            return obj
+        if not issubclass(dtype, numeric.floating):
+            newdtype = _convert_to_float[dtype]
+            if newdtype is not dtype:
+                dtypes.append(newdtype)
+                dtype = newdtype
+        obj = cls._finfo_cache.get(dtype,None)
+        if obj is not None:
+            return obj
+        obj = object.__new__(cls)._init(dtype)
+        for dt in dtypes:
+            cls._finfo_cache[dt] = obj
+        return obj
+
+    def _init(self, dtype):
+        self.dtype = dtype
+        if dtype is numeric.float_:
+            machar = MachAr(lambda v:array([v],'d'),
+                            lambda v:_frz(v.astype('i'))[0],
+                            lambda v:array(_frz(v)[0],'d'),
+                            lambda v:'%24.16e' % array(_frz(v)[0],'d'),
+                            'scipy float precision floating point '\
+                            'number')
+        elif dtype is numeric.single:
+            machar =  MachAr(lambda v:array([v],'f'),
+                             lambda v:_frz(v.astype('i'))[0],
+                             lambda v:array(_frz(v)[0],'f'),  #
+                             lambda v:'%15.7e' % array(_frz(v)[0],'f'),
+                             "scipy single precision floating "\
+                             "point number")
+        elif dtype is numeric.longfloat:
+            machar = MachAr(lambda v:array([v],'g'),
+                            lambda v:_frz(v.astype('i'))[0],
+                            lambda v:array(_frz(v)[0],'g'),  #
+                            lambda v:str(array(_frz(v)[0],'g')),
+                            "scipy longfloat precision floating "\
+                            "point number")
+        else:
+            raise ValueError,`dtype`
+
+        for word in ['tiny', 'precision', 'resolution','iexp',
+                     'maxexp','minexp','epsneg','negep',
                      'machep']:
-            setattr(self,word,getattr(self.machar, word))
-        self.max = self.machar.huge
+            setattr(self,word,getattr(machar, word))
+        self.max = machar.huge
         self.min = -self.max
-        self.eps = self.machar.epsilon
-        self.nexp = self.machar.iexp
-        self.nmant = self.machar.it
+        self.eps = machar.epsilon
+        self.nexp = machar.iexp
+        self.nmant = machar.it
+        self.machar = machar
+        self._str_tiny = machar._str_xmin
+        self._str_max = machar._str_xmax
+        self._str_epsneg = machar._str_epsneg
+        self._str_eps = machar._str_eps
+        self._str_resolution = machar._str_resolution
+        return self
+
+    def __str__(self):
+        return '''\
+Machine parameters for %(dtype)s
+---------------------------------------------------------------------
+precision=%(precision)3s   resolution=%(_str_resolution)s
+machep=%(machep)6s   eps=     %(_str_eps)s
+negep =%(negep)6s   epsneg=  %(_str_epsneg)s
+minexp=%(minexp)6s   tiny=    %(_str_tiny)s
+maxexp=%(maxexp)6s   max=     %(_str_max)s
+nexp  =%(nexp)6s   min=       -max
+---------------------------------------------------------------------
+''' % self.__dict__
     
 if __name__ == '__main__':
     f = finfo(numeric.single)
-    print 'single epsilon:',f.epsilon
+    print 'single epsilon:',f.eps
     print 'single tiny:',f.tiny
     f = finfo(numeric.float)
-    print 'float epsilon:',f.epsilon
-    print 'float tiny:',f.tiney
+    print 'float epsilon:',f.eps
+    print 'float tiny:',f.tiny
     f = finfo(numeric.longfloat)
-    print 'longfloat epsilon:',f.epsilon
+    print 'longfloat epsilon:',f.eps
     print 'longfloat tiny:',f.tiny
 

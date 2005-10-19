@@ -248,6 +248,7 @@ class MachAr:
         ten = two + two + two + two + two
         resolution = ten ** (-self.precision)
         self.resolution = float_to_float(resolution)
+        self._str_resolution = float_to_str(resolution)
 
     def __str__(self):
         return '''\
