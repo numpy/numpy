@@ -115,7 +115,7 @@ fortran_doc (FortranDataDef def) {
   }
   if (sprintf(p,"%s\n",p)==0) goto fail;
   if (strlen(p)>size) {
-    fprintf(stderr,"fortranobject.c:fortran_doc:len(p)=%d>%d(size): too long doc string required, increase size\n",(int) strlen(p),size);
+    fprintf(stderr,"fortranobject.c:fortran_doc:len(p)=%zd>%d(size): too long doc string required, increase size\n",strlen(p),size);
     goto fail;
   }
   s = PyString_FromString(p);
@@ -125,7 +125,7 @@ fortran_doc (FortranDataDef def) {
 }
 
 static FortranDataDef *save_def; /* save pointer of an allocatable array */
-static void set_data(char *d,int *f) {  /* callback from Fortran */
+static void set_data(char *d,intp *f) {  /* callback from Fortran */
   if (*f)                               /* In fortran f=allocated(d) */
     save_def->data = d;
   else
@@ -224,7 +224,7 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v) {
       if (s==-1)
 	s = PyArray_MultiplyList(arr->dimensions,arr->nd);
       if (s<0 ||
-	  (memcpy(fp->defs[i].data,arr->data,s*arr->descr->elsize))==NULL) {
+	  (memcpy(fp->defs[i].data,arr->data,s*PyArray_ITEMSIZE(arr)))==NULL) {
 	if ((PyObject*)arr!=v) {
 	  Py_DECREF(arr);
 	}
@@ -390,7 +390,7 @@ static void f2py_report_on_array_copy(PyArrayObject* arr, char* func_name) {
   const long arr_size = PyArray_Size((PyObject *)arr);
   if (arr_size>F2PY_REPORT_ON_ARRAY_COPY) {
     fprintf(stderr,"copied an array using %s: size=%ld, elsize=%d\n", 
-	    func_name, arr_size, arr->descr->elsize);
+	    func_name, arr_size, PyArray_ITEMSIZE(arr));
   }
 }
 #endif
@@ -471,7 +471,7 @@ if (count_nonpos(rank,dims)) { int i;\
 }
 
 #define HAS_PROPER_ELSIZE(arr,type_num) \
-  ((PyArray_DescrFromType(type_num)->elsize) == (arr)->descr->elsize)
+  ((PyArray_DescrFromType(type_num)->elsize) == PyArray_ITEMSIZE(arr))
 
 static int 
 count_nonpos(const int rank,
@@ -487,7 +487,7 @@ count_nonpos(const int rank,
 static int check_and_fix_dimensions(const PyArrayObject* arr,
 				    const int rank,
 				    intp *dims);
-  
+
 #ifdef DEBUG_COPY_ND_ARRAY
 void dump_attrs(const PyArrayObject* arr) {
   int rank = arr->nd;
@@ -707,7 +707,7 @@ int array_has_column_major_storage(const PyArrayObject *ap) {
   */
   int sd;
   int i;
-  sd = ap->descr->elsize;
+  sd = PyArray_ITEMSIZE(ap);
   for (i=0;i<ap->nd;++i) {
     if (ap->dimensions[i] == 0) return 1;
     if (ap->strides[i] != sd) return 0;
