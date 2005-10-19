@@ -356,14 +356,18 @@ cb_arg_rules=[
     },
     {
     'pyobjfrom':[{debugcapi:'\tfprintf(stderr,"debug-capi:cb:#varname#\\n");'},
-                 """\
+                 {isintent_c:"""\
 \tif (#name#_nofargs>capi_i) {
-\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname#_Dims,#atype#,NULL,(char*)#varname#,0,0,NULL); /*XXX: Hmm, what will destroy this array??? */
+\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname#_Dims,#atype#,NULL,(char*)#varname#,0,CARRAY_FLAGS,NULL); /*XXX: Hmm, what will destroy this array??? */
+""",
+                  l_not(isintent_c):"""\
+\tif (#name#_nofargs>capi_i) {
+\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname#_Dims,#atype#,NULL,(char*)#varname#,0,FARRAY_FLAGS,NULL); /*XXX: Hmm, what will destroy this array??? */
+""",
+                  }, 
+                 """
 \t\tif (tmp_arr==NULL)
 \t\t\tgoto capi_fail;
-""",
-                 {l_not(isintent_c):'#if (#rank#>1)\n\t\ttranspose_strides(tmp_arr);\n\t\t\ntmp_arr->flags &= ~CONTIGUOUS;\n#endif'},
-                 """
 \t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,(PyObject *)tmp_arr))
 \t\t\tgoto capi_fail;
 }"""],
