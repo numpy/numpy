@@ -156,7 +156,7 @@ fortran_getattr(PyFortranObject *fp, char *name) {
       else
 	k = fp->defs[i].rank;
       if (fp->defs[i].data !=NULL) {              /* array is allocated */
-	v = PyArray_New(&PyArray_Type, k, fp->defs[i].dims.d,
+	PyObject *v = PyArray_New(&PyArray_Type, k, fp->defs[i].dims.d,
 			fp->defs[i].type, NULL, fp->defs[i].data, 0, FARRAY_FLAGS,
 			NULL);
 	if (v==NULL) return NULL;
