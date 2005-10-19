@@ -25,6 +25,7 @@ import sys
 import os
 import re
 import warnings
+import glob
 
 flatindex_re = re.compile('([.]flat(\s*?[[=]))')
 int_re = re.compile('int\s*[(][^)]*[)]')
@@ -34,11 +35,11 @@ complex_re = re.compile('complex\s*[(][^)]*[)]')
 unicode_re = re.compile('unicode\s*[(][^)]*[)]')
 
 def replacetypechars(astr):
-    astr = astr.replace("'s'","'h'")
-    astr = astr.replace("'c'","'S1'")
+#    astr = astr.replace("'s'","'h'")
+#    astr = astr.replace("'c'","'S1'")
     astr = astr.replace("'b'","'B'")
     astr = astr.replace("'1'","'b'")
-    astr = astr.replace("'w'","'H'")
+#    astr = astr.replace("'w'","'H'")
     astr = astr.replace("'u'","'I'")
     return astr
 
@@ -111,7 +112,7 @@ def warnofnewtypes(filestr):
     
 import datetime
 def fromstr(filestr):
-    filestr = replacetypechars(filestr)
+    #filestr = replacetypechars(filestr)
     filestr, fromall1 = changeimports(filestr, 'Numeric', 'scipy')
     filestr, fromall1 = changeimports(filestr, 'multiarray',
                                       'scipy.base.multiarray')
@@ -149,15 +150,23 @@ def getandcopy(name):
     base, ext = os.path.splitext(name)
     makenewfile(base+'.orig', filestr)
     return filestr
-       
-def fromfile(args):
-    filename = args[1]
+
+def fromfile(filename):
     filestr = getandcopy(filename)
     filestr = fromstr(filestr)
     makenewfile(filename, filestr)
+           
+def fromargs(args):
+    filename = args[1]
+    fromfile(filename)
+
+def convertall(direc=''):
+    files = glob.glob(os.path.join(direc,'*.py'))
+    for afile in files:
+        fromfile(afile)
 
 if __name__ == '__main__':
-    fromfile(sys.argv)
+    fromargs(sys.argv)
     
              
 
