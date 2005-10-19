@@ -81,9 +81,11 @@ typedef unsigned char Bool;
 
 typedef signed char byte;
 typedef unsigned char ubyte;
+#ifndef _BSD_SOURCE
 typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
+#endif
 
 typedef struct { float real, imag; } cfloat;
 typedef struct { double real, imag; } cdouble;
