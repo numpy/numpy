@@ -559,6 +559,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 			 " have defined dimensions.\n");
       arr = (PyArrayObject *)PyArray_SimpleNew(rank,dims,type_num);
       ARR_IS_NULL(arr==NULL,"FromDims failed: optional,intent(cache)\n");
+      memset(arr->data, 0, PyArray_NBYTES(arr));
 /*       if (intent & F2PY_INTENT_OUT) */
 /* 	Py_INCREF(arr); */
       return arr;
@@ -586,6 +587,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
     CHECK_DIMS_DEFINED(rank,dims,"intent(hide) must have defined dimensions.\n");
     arr = (PyArrayObject *)PyArray_SimpleNew(rank, dims, type_num);
     ARR_IS_NULL(arr==NULL,"FromDims failed: intent(hide)\n");
+    memset(arr->data, 0, PyArray_NBYTES(arr));
     if (intent & F2PY_INTENT_OUT) {
       if ((!(intent & F2PY_INTENT_C)) && (rank>1)) {
 	transpose_strides(arr);
@@ -664,6 +666,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
     CHECK_DIMS_DEFINED(rank,dims,"optional must have defined dimensions.\n");    
     arr = (PyArrayObject *)PyArray_SimpleNew(rank,dims,type_num);
     ARR_IS_NULL(arr==NULL,"FromDims failed: optional.\n");
+    memset(arr->data, 0, PyArray_NBYTES(arr));
     if (intent & F2PY_INTENT_OUT) {
       if ((!(intent & F2PY_INTENT_C)) && (rank>1)) {
 	transpose_strides(arr);
