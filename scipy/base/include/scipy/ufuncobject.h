@@ -179,9 +179,7 @@ typedef struct {
 
 #include "__ufunc_api.h"
 
-#define UFUNC_ERRMASK_NAME "_UFUNC_ERRMASK"
-#define UFUNC_ERRFUNC_NAME "_UFUNC_ERRFUNC"
-#define UFUNC_BUFSIZE_NAME "_UFUNC_BUFSIZE"
+#define UFUNC_PYVALS_NAME "UFUNC_PYVALS"
 
 #define UFUNC_CHECK_ERROR() \
 	if ((loop->obj && PyErr_Occurred()) ||                          \

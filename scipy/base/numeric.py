@@ -275,6 +275,38 @@ def allclose (a, b, rtol=1.e-5, atol=1.e-8):
     return alltrue(ravel(d))
             
 
+def _setpyvals(lst, frame, where=0):
+    if not isinstance(lst, list) or len(lst) != 3:
+        raise ValueError, "Invalid pyvalues (length 3 list needed)."
+
+    try:
+        wh = where.lower()[0]
+    except (AttributeError, TypeError, IndexError):
+        wh = None
+
+    if where==0 or wh == 'l':
+        frame.f_locals[UFUNC_PYVALS_NAME] = lst
+    elif where == 1 or wh == 'g':
+        frame.f_globals[UFUNC_PYVALS_NAME] = lst
+    elif where == 2 or wh == 'b':
+        frame.f_builtins[UFUNC_PYVALS_NAME] = lst 
+
+    return
+
+def _getpyvals(frame):
+    try:
+        return frame.f_locals[UFUNC_PYVALS_NAME]
+    except KeyError:
+        try:
+            return frame.f_globals[UFUNC_PYVALS_NAME]
+        except KeyError:
+            try:
+                return frame.f_builtins[UFUNC_PYVALS_NAME]
+            except KeyError:
+                return [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
+            
+
+
 _errdict = {"ignore":ERR_IGNORE,
             "warn":ERR_WARN,
             "raise":ERR_RAISE,
@@ -290,31 +322,16 @@ def seterr(divide="ignore", over="ignore", under="ignore", invalid="ignore", whe
                 (_errdict[over] << SHIFT_OVERFLOW ) + \
                 (_errdict[under] << SHIFT_UNDERFLOW) + \
                 (_errdict[invalid] << SHIFT_INVALID)
+
     frame = sys._getframe().f_back
-    try:
-        wh = where.lower()[0]
-    except (AttributeError, TypeError, IndexError):
-        wh = None
-    if where==0 or wh == 'l':
-        frame.f_locals[UFUNC_ERRMASK_NAME] = maskvalue
-    elif where == 1 or wh == 'g':
-        frame.f_globals[UFUNC_ERRMASK_NAME] = maskvalue
-    elif where == 2 or wh == 'b':
-        frame.f_builtins[UFUNC_ERRMASK_NAME] = maskvalue
-    return
-
-    frame.f_locals[UFUNC_ERRMASK_NAME] = maskvalue
-    return
-
-seterr()
-
+    pyvals = _getpyvals(frame)
+    pyvals[1] = maskvalue
+    _setpyvals(pyvals, frame, where)        
+    
 def geterr():
-    frame = sys._getframe().f_back
-    try:
-        maskvalue = frame.f_locals[UFUNC_ERRMASK_NAME]
-    except KeyError:
-        maskvalue = ERR_DEFAULT
-
+    frame = sys._getframe().f_back    
+    maskvalue = _getpyvals(frame)[1]
+        
     mask = 3
     res = {}
     val = (maskvalue >> SHIFT_DIVIDEBYZERO) & mask
@@ -330,39 +347,36 @@ def geterr():
 def setbufsize(size, where=0):
     if size > 10e6:
         raise ValueError, "Very big buffers.. %s" % size
+
     frame = sys._getframe().f_back
-    try:
-        wh = where.lower()[0]
-    except (AttributeError, TypeError, IndexError):
-        wh = None
-    if where == 0 or wh == 'l':
-        frame.f_locals[UFUNC_BUFSIZE_NAME] = size
-    elif where == 1 or wh == 'g':
-        frame.f_globals[UFUNC_BUFSIZE_NAME] = size
-    elif where == 2 or wh == 'b':
-        frame.f_builtins[UFUNC_BUFSIZE_NAME] = size
-    return
+    pyvals = _getpyvals(frame)
+    pyvals[0] = size
+    _setpyvals(pyvals, frame, where)
 
-setbufsize(10000, 1)
-
-def getbufsize(size):
+def getbufsize():
     frame = sys._getframe().f_back
-    try:
-        retval = frame.f_locals[UFUNC_BUFSIZE_NAME]
-    except KeyError:
-        retval = frame.f_globals[UFUNC_BUFSIZE_NAME]
-    except KeyError:
-        retval = frame.f_builtins[UFUNC_BUFSIZE_NAME]
-    except KeyError:
-        retvalue = UFUNC_BUFSIZE_DEFAULT
+    return _getpyvals(frame)[0]
 
-    return retval
+def seterrcall(func, where=0):
+    if not callable(func):
+        raise ValueError, "Only callable can be used as callback"
+    frame = sys._getframe().f_back
+    pyvals = _getpyvals(frame)
+    pyvals[2] = func
+    _setpyvals(pyvals, frame, where)
 
+def geterrcall():
+    frame = sys._getframe().f_back
+    return _getpyvals(frame)[2]   
 
-# Set the UFUNC_BUFSIZE_NAME to something
-# Set the UFUNC_ERRMASK_NAME to something
-seterr(where='builtin')
-setbufsize(UFUNC_BUFSIZE_DEFAULT,where='builtin')
+def _setdef():
+    frame = sys._getframe()
+    defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
+    frame.f_globals[UFUNC_PYVALS_NAME] = defval
+    frame.f_builtins[UFUNC_PYVALS_NAME] = defval    
+    
+# set the default values
+_setdef()
 
 Inf = inf = infty = Infinity = PINF
 nan = NaN = NAN

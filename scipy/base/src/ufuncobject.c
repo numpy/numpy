@@ -670,57 +670,72 @@ select_types(PyUFuncObject *self, int *arg_types,
 	return 0;
 }
 
-
-
 static int
-_getintfromvar(char *str, int deflt)
+_getpyvalues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 {
-        PyObject *thedict;
-        PyObject *ref;
-	int retval=deflt;
 
-        thedict = PyEval_GetLocals();
-        ref = PyDict_GetItemString(thedict, str);
-        if (ref == NULL) {
-                thedict = PyEval_GetGlobals();
-                ref = PyDict_GetItemString(thedict, str);
-        }
-        if (ref == NULL) {
-                thedict = PyEval_GetBuiltins();
-                ref = PyDict_GetItemString(thedict, str);
-	}
-        if (ref != NULL) retval = (int) PyInt_AsLong(ref);
-        if (ref == NULL || retval == -1) retval = deflt;
-        PyErr_Clear();
-	return retval;
-}
-
-static PyObject *
-_getfuncfromvar(char *str, PyObject *deflt)
-{
         PyObject *thedict;
-        PyObject *ref;
+        PyObject *ref=NULL;
 	PyObject *retval;
 
         thedict = PyEval_GetLocals();
-        ref = PyDict_GetItemString(thedict, str);
+        ref = PyDict_GetItemString(thedict, UFUNC_PYVALS_NAME);
         if (ref == NULL) {
 		thedict = PyEval_GetGlobals();
-		ref = PyDict_GetItemString(thedict, str);
+		ref = PyDict_GetItemString(thedict, UFUNC_PYVALS_NAME);
         }
         if (ref == NULL) {
-                thedict = PyEval_GetBuiltins();
-                ref = PyDict_GetItemString(thedict, str);
+ 	        thedict = PyEval_GetBuiltins();
+                ref = PyDict_GetItemString(thedict, UFUNC_PYVALS_NAME);
 	}
-        if (ref != NULL) retval = ref;
-	else retval = deflt;
+	if (ref == NULL) {
+		*errmask = UFUNC_ERR_DEFAULT;
+		*errobj = Py_BuildValue("NO",
+					PyString_FromString(name),
+					Py_None);
+		*bufsize = PyArray_BUFSIZE;
+		return 0;
+	}
+	if (!PyList_Check(ref) || (PyList_GET_SIZE(ref)!=3)) {
+		PyErr_Format(PyExc_TypeError, "%s must be a length 3 list.",
+			     UFUNC_PYVALS_NAME);
+		return -1;
+	}
+
+	*bufsize = PyInt_AsLong(PyList_GET_ITEM(ref, 0));
+	if ((*bufsize == -1) && PyErr_Occurred()) return -1;
+	if ((*bufsize < PyArray_MIN_BUFSIZE) ||	\
+	    (*bufsize > PyArray_MAX_BUFSIZE)) {
+		PyErr_Format(PyExc_ValueError,  
+			     "The buffer size (%d) is not "	\
+			     "in range (%d - %d)", 
+			     *bufsize, PyArray_MIN_BUFSIZE, 
+			     PyArray_MAX_BUFSIZE);
+		return -1;
+	}	
+
+	*errmask = PyInt_AsLong(PyList_GET_ITEM(ref, 1));
+	if (*errmask < 0) {
+		if (PyErr_Occurred()) return -1;
+		PyErr_Format(PyExc_ValueError,		\
+			     "Invalid error mask (%d)", 
+			     *errmask);
+		return -1;
+	}
+	
+	retval = PyList_GET_ITEM(ref, 2);
 	if (retval != Py_None && !PyCallable_Check(retval)) {
-		PyErr_Format(PyExc_ValueError, 
-			     "%s if provided must be callable", str);
-		return NULL;
+		PyErr_SetString(PyExc_ValueError, 
+				"callback function must be callable");
+		return -1;
 	}
-	Py_INCREF(retval);
-	return retval;
+
+	*errobj = Py_BuildValue("NO", 
+				PyString_FromString(name),
+				retval);
+	if (*errobj == NULL) return -1;
+	
+	return 0;
 }
 
 
@@ -849,17 +864,6 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         if (select_types(loop->ufunc, arg_types, &(loop->function), 
                          &(loop->funcdata), scalars) == -1)
 		return -1;
-
-	/* This is the buffer size in number of elements.*/
-        loop->bufsize = _getintfromvar(UFUNC_BUFSIZE_NAME, PyArray_BUFSIZE);
-	if ((loop->bufsize < PyArray_MIN_BUFSIZE) ||	\
-	    (loop->bufsize > PyArray_MAX_BUFSIZE)) {
-		PyErr_Format(PyExc_ValueError, "The buffer size (%d) is not " \
-			     "in range (%d - %d)", 
-			     loop->bufsize, PyArray_MIN_BUFSIZE, 
-			     PyArray_MAX_BUFSIZE);
-		return -1;
-	}
 	
 	/* Create copies for some of the arrays if appropriate */
 	if (_create_copies(loop, arg_types, mps) < 0) return -1;
@@ -1145,10 +1149,12 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
 		PyErr_SetString(PyExc_ValueError, "function not supported");
 		return NULL;
 	}
-
 	if ((loop=PyObject_NEW(PyUFuncLoopObject, &PyUFuncLoop_Type)) == NULL)
 		return NULL;
-
+	/* --- no real speed increase this way
+	loop = malloc(sizeof(PyUFuncLoopObject));
+	*/
+	
 	loop->index = 0;
 	loop->ufunc = self;
         Py_INCREF(self);
@@ -1159,25 +1165,14 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
         }
 	loop->errobj = NULL;
 
+	if (_getpyvalues((self->name ? self->name : ""),
+			 &(loop->bufsize), &(loop->errormask), 
+			 &(loop->errobj)) < 0)
+		goto fail;
+
 	/* Setup the matrices */
 	if (construct_matrices(loop, args, mps) < 0) goto fail;
 	
-	loop->errormask = _getintfromvar(UFUNC_ERRMASK_NAME,
-					 UFUNC_ERR_DEFAULT);
-	if (loop->errormask < 0) {
-		PyErr_Format(PyExc_ValueError, 
-			     "Invalid error mask (%d)", 
-			     loop->errormask);
-		goto fail;
-	}
-
-	loop->errobj = Py_BuildValue("NN", 
-				     PyString_FromString((self->name ? \
-                                                          self->name : "")),   
-				     _getfuncfromvar(UFUNC_ERRFUNC_NAME,
-						     Py_None));
-	if (loop->errobj == NULL) goto fail;
-
 	PyUFunc_clearfperr();
 
 	return loop;
@@ -1416,14 +1411,14 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 	}	
 	
         LOOP_END_THREADS
-	
-        Py_DECREF(loop);
+
+	Py_DECREF(loop);
 	return 0;
 
  fail:
         LOOP_END_THREADS
-                        
-	Py_XDECREF(loop);
+
+	Py_DECREF(loop);                        
 	return -1;
  }
 
@@ -1530,19 +1525,10 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 				 &(loop->funcdata), scalars) == -1) 
 			goto fail;   		
 	}
-
-	/* Make bufsize depend on a local then module-level variable */
-	loop->bufsize = _getintfromvar("UFUNC_BUFSIZE", 
-				       PyArray_BUFSIZE);
-	if ((loop->bufsize < PyArray_MIN_BUFSIZE) ||		\
-	    (loop->bufsize > PyArray_MAX_BUFSIZE)) {
-		PyErr_Format(PyExc_ValueError,  
-			     "The buffer size (%d) is not "	\
-			     "in range (%d - %d)", 
-			     loop->bufsize, PyArray_MIN_BUFSIZE, 
-			     PyArray_MAX_BUFSIZE);
-		goto fail;
-	}
+	
+	/* get looping parameters from Python */
+	if (_getpyvalues(str, &(loop->bufsize), &(loop->errormask), 
+			 &(loop->errobj)) < 0) goto fail;
 	
 	/* Make copy if misbehaved or not otype for small arrays */
 	if (_create_reduce_copy(loop, arr, otype) < 0) goto fail; 
@@ -1688,22 +1674,6 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
                         loop->bufptr[0] = loop->buffer;
                 }
 	}
-	
-	loop->errormask = _getintfromvar(UFUNC_ERRMASK_NAME,
-					 UFUNC_ERR_DEFAULT);
-	if (loop->errormask < 0) {
-		PyErr_Format(PyExc_ValueError, \
-			     "Invalid error mask (%d)", 
-			     loop->errormask);
-		goto fail;
-			     
-	}
-
-	loop->errobj = Py_BuildValue("NN", 
-				     PyString_FromString(str),
-				     _getfuncfromvar(UFUNC_ERRFUNC_NAME,
-						     Py_None));
-	if (loop->errobj == NULL) goto fail;
 
         /* Determine if object arrays are involved */
         if (otype == PyArray_OBJECT || aar->descr->type_num == PyArray_OBJECT)
@@ -2893,6 +2863,7 @@ static PyTypeObject PyUFuncLoop_Type = {
 	/* methods */
 	(destructor)ufuncloop_dealloc	/*tp_dealloc*/
 };
+
 
 static PyTypeObject PyUFuncReduce_Type = {
 	PyObject_HEAD_INIT(0)
