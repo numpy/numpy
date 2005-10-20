@@ -178,10 +178,10 @@ hypot, atan2, pow
 
 /**begin repeat
 
-#kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan,asinh,acosh,atanh)*2#
-#typ=longdouble*19, float*19#
-#c=l*19,f*19#
-#TYPE=LONGDOUBLE*19, FLOAT*19#
+#kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan)*2#
+#typ=longdouble*16, float*16#
+#c=l*16,f*16#
+#TYPE=LONGDOUBLE*16, FLOAT*16#
 */
 #ifndef HAVE_@TYPE@_FUNCS
 @typ@ @kind@@c@(@typ@ x) {
