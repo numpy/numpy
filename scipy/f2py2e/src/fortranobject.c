@@ -522,6 +522,21 @@ static int swap_arrays(PyArrayObject* arr1, PyArrayObject* arr2) {
   return 0;
 }
 
+	/* useful after a lazy-transpose to update the flags
+	   quickly 
+	*/
+
+#define _lazy_transpose_update_flags(obj) {		   \
+		if (PyArray_ISCONTIGUOUS(obj)) {	   \
+			PyArray_FLAGS(obj) &= ~CONTIGUOUS; \
+			PyArray_FLAGS(obj) |= FORTRAN; \
+		}					 \
+		else if PyArray_CHKFLAGS(obj, FORTRAN) { \
+			PyArray_FLAGS(obj) &= ~FORTRAN; \
+			PyArray_FLAGS(obj) |= CONTIGUOUS; \
+		}					  \
+	}
+
 extern
 PyArrayObject* array_from_pyobj(const int type_num,
 				intp *dims,
@@ -550,7 +565,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
     }
 
     if (PyArray_Check(obj) 
-	&& ISCONTIGUOUS((PyArrayObject *)obj)
+	&& PyArray_ISONESEGMENT(obj)
 	&& HAS_PROPER_ELSIZE((PyArrayObject *)obj,type_num)
 	) {
       if (check_and_fix_dimensions((PyArrayObject *)obj,rank,dims))
@@ -606,6 +621,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 	  }
       if ((rank>1) && (! (intent & F2PY_INTENT_C))) {
 	lazy_transpose(arr);
+	_lazy_transpose_update_flags(arr);
       }
 /*       if (PyArray_CanCastSafely(arr->descr->type_num,type_num)) { */
 /* 	tmp_arr = (PyArrayObject *)PyArray_CopyFromObject(obj,type_num,0,0); */
@@ -621,7 +637,8 @@ PyArrayObject* array_from_pyobj(const int type_num,
       }
       if ((rank>1) && (! (intent & F2PY_INTENT_C))) {
 	lazy_transpose(arr);
-	lazy_transpose(tmp_arr);	
+	_lazy_transpose_update_flags(arr);
+	lazy_transpose(tmp_arr);
 	tmp_arr->flags &= ~CONTIGUOUS;
 	tmp_arr->flags |= FORTRAN;
       }
@@ -671,19 +688,24 @@ PyArrayObject* array_from_pyobj(const int type_num,
 
     if ((rank>1) && (! (intent & F2PY_INTENT_C))) {
       PyArrayObject *tmp_arr = NULL;
-      lazy_transpose(arr);
-      arr->flags &= ~CONTIGUOUS;
-      arr->flags |= FORTRAN;
-      tmp_arr = (PyArrayObject *) PyArray_CopyFromObject((PyObject *)arr,type_num,0,0);
+      if (rank == 2) {
+	      tmp_arr = (PyArrayObject *) PyArray_CopyAndTranspose((PyObject *)arr);
+	      PyArray_UpdateFlags(tmp_arr, CONTIGUOUS | FORTRAN);
+      }
+      else {
+	      lazy_transpose(arr);
+	      arr->flags &= ~CONTIGUOUS;
+	      arr->flags |= FORTRAN;
+	      tmp_arr = (PyArrayObject *) PyArray_Copy(arr);
+      }
 #ifdef F2PY_REPORT_ON_ARRAY_COPY
-      f2py_report_on_array_copy(tmp_arr,"PyArray_CopyFromObject");
+      f2py_report_on_array_copy(tmp_arr,"PyArray_Copy");
 #endif
       Py_DECREF(arr);
       arr = tmp_arr;
-      ARR_IS_NULL(arr==NULL,"CopyFromObject(Array) failed: intent(fortran)\n");
+      ARR_IS_NULL(arr==NULL,"Copy(Array) failed: intent(fortran)\n");
       lazy_transpose(arr);
-      arr->flags &= ~CONTIGUOUS;
-      arr->flags |= FORTRAN;
+      _lazy_transpose_update_flags(arr);
     }
 /*     if (intent & F2PY_INTENT_OUT) */
 /*       Py_INCREF(arr); */

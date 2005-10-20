@@ -640,7 +640,7 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 
         elsize = dest->itemsize;
 
-        if ((PyArray_ISCONTIGUOUS(dest) && PyArray_ISCONTIGUOUS(src)) \
+        if ((PyArray_ISCONTIGUOUS(dest) && PyArray_ISCONTIGUOUS(src))	\
 	    || (PyArray_ISFORTRAN(dest) && PyArray_ISFORTRAN(src))) {
                
                 PyArray_XDECREF(dest);
@@ -2984,7 +2984,6 @@ _IsFortranContiguous(PyArrayObject *ap)
 	}
 	return 1;
 }
-
 
 static int
 _IsAligned(PyArrayObject *ap) 

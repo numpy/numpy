@@ -2228,7 +2228,10 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 		return NULL;
 	}
 
+	/* Get default type to reduce over if not given */
         if (otype.type_num == PyArray_NOTYPE) {	
+		/* For integer types --- makes sure at 
+		   least a long is used */
 		int typenum = PyArray_TYPE(mp);
 		if (PyTypeNum_ISINTEGER(typenum) &&	\
 		    (mp->itemsize < sizeof(long))) {
