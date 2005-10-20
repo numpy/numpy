@@ -58,7 +58,7 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 		}
 	}
 	memcpy(ctypeptr, &(((PyScalarObject *)scalar)->obval), 
-	       sizeof(typecode.itemsize));
+	       typecode.itemsize);
 	return;
 }
 
