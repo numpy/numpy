@@ -696,6 +696,7 @@ _getpyvalues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 		*bufsize = PyArray_BUFSIZE;
 		return 0;
 	}
+	*errobj = NULL;
 	if (!PyList_Check(ref) || (PyList_GET_SIZE(ref)!=3)) {
 		PyErr_Format(PyExc_TypeError, "%s must be a length 3 list.",
 			     UFUNC_PYVALS_NAME);
