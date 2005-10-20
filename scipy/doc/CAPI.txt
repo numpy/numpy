@@ -111,10 +111,11 @@ PyArray_OBJECT.
 
 PyArray_SimpleNew(nd, dims, typenum)  is a drop-in replacement for 
 PyArray_FromDims (except it takes intp* dims instead of int* dims which
-		  matters on 64-bit systems).
+		  matters on 64-bit systems) and it does not initialize 
+                  the memory to zero.
 
 PyArray_SimpleNew is just a macro for PyArray_New with default arguments.
-
+Use PyArray_FILLWBYTE(arr, 0)  to fill with zeros.
 
 The PyArray_FromDims and family of functions are still available and
 are loose wrappers around this function.  These functions still take

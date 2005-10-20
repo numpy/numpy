@@ -3399,6 +3399,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
 }
 
 
+/* Assumes contiguous */
 static void
 PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
 {
@@ -3419,6 +3420,60 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
         }
 }        
 
+static int
+PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
+{
+	PyObject *newarr;
+	int itemsize;
+	void *fromptr;
+	PyArray_Typecode type = {0,0,0};
+	intp size;
+
+	type.type_num = PyArray_TYPE(arr);
+	itemsize = PyArray_ITEMSIZE(arr);
+	type.itemsize = itemsize;
+	newarr = PyArray_FromAny(obj, &type, 0,0, BEHAVED_FLAGS_RO);
+	if (newarr == NULL) return -1;
+	fromptr = PyArray_DATA(newarr);
+	size=PyArray_SIZE(arr);
+	if (PyArray_ISONESEGMENT(arr)) {
+		char *toptr=PyArray_DATA(arr);
+		while(size--) {
+			memcpy(toptr, fromptr, itemsize);
+			toptr += itemsize;
+		}
+	}
+	else {
+		PyArrayIterObject *iter;
+		PyObject *behaved;
+		
+		behaved = PyArray_FromAny((PyObject *)arr, NULL, 0,0, 
+					  BEHAVED_FLAGS | UPDATEIFCOPY);
+		if (behaved == NULL) { 
+			Py_DECREF(newarr);
+			return -1;
+		}
+		
+		iter = (PyArrayIterObject *)		\
+			PyArray_IterNew(behaved);
+		
+		if (iter == NULL) {
+			Py_DECREF(behaved);
+			Py_DECREF(newarr);
+			return -1;
+		}
+
+		while(size--) {
+			memcpy(iter->dataptr, fromptr, itemsize);
+			PyArray_ITER_NEXT(iter);
+		}
+
+		Py_DECREF(iter);
+		Py_DECREF(behaved);
+	}
+	Py_DECREF(newarr);
+	return 0;
+}
 
 static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds) 

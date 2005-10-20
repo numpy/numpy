@@ -262,6 +262,10 @@ objectapi_list = [
 
     (r"""
     """,
+     'FillWithScalar','PyArrayObject *, PyObject *', 'int'),
+
+    (r"""
+    """,
      'CheckStrides', 'int, int, intp, intp *, intp *', 'Bool')
 
     ]

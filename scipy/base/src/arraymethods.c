@@ -19,6 +19,20 @@ array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_Take(self, indices, dimension));
 }
 
+static char doc_fill[] = "a.fill(value) places the scalar value at every"\
+	"position in the array.";
+
+static PyObject *
+array_fill(PyArrayObject *self, PyObject *args)
+{
+	PyObject *obj;
+	if (!PyArg_ParseTuple(args, "O", &obj))
+		return NULL;
+	if (PyArray_FillWithScalar(self, obj) < 0) return NULL;
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
 static char doc_put[] = "a.put(indices, values) sets a.flat[n] = v[n] "\
 	"for each n in indices. v can be scalar or shorter than indices, "\
 	"will repeat.";
@@ -1365,6 +1379,8 @@ static PyMethodDef array_methods[] = {
 	{"dump", (PyCFunction) array_dump, 1, doc_dump},
 
 	/* Extended methods added 2005 */
+	{"fill", (PyCFunction)array_fill,
+	 METH_VARARGS, doc_fill},
 	{"transpose",	(PyCFunction)array_transpose, 
 	 METH_VARARGS, doc_transpose},
 	{"take",	(PyCFunction)array_take, 

@@ -861,7 +861,7 @@ gentype_wraparray(PyObject *scalar, PyObject *args)
 
 /**begin repeat
 
-#name=tolist, toscalar, tostring, astype, copy, resize, __deepcopy__, choose, sort, argsort, searchsorted, argmax, argmin, reshape, view, swapaxes, max, min, ptp, conj, conjugate, nonzero, all, any, flatten, ravel#
+#name=tolist, toscalar, tostring, astype, copy, resize, __deepcopy__, choose, sort, argsort, searchsorted, argmax, argmin, reshape, view, swapaxes, max, min, ptp, conj, conjugate, nonzero, all, any, flatten, ravel, fill, transpose#
 */
 
 static PyObject *
@@ -920,7 +920,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 
 /**begin repeat
 
-#name=transpose, getfield, take, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, sum, cumsum, prod, cumprod, compress#
+#name=getfield, take, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, sum, cumsum, prod, cumprod, compress#
 */
 
 static PyObject *
@@ -1038,8 +1038,10 @@ static PyMethodDef gentype_methods[] = {
 	{"dump", (PyCFunction) gentype_dump, 1, NULL},
 
 	/* Methods for array */
+	{"fill", (PyCFunction)gentype_fill,
+	 METH_VARARGS, NULL},
 	{"transpose",	(PyCFunction)gentype_transpose, 
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	 METH_VARARGS, NULL},
 	{"take",	(PyCFunction)gentype_take, 
 	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"put",	(PyCFunction)gentype_put, 
@@ -1634,6 +1636,7 @@ PyArray_TypecodeFromTypeObject(PyObject *type, PyArray_Typecode *typecode) {
 			itemsize = descr->elsize;
 	}
 	typecode->itemsize = itemsize;
+	typecode->fortran = 0;
 	return;
 }
 

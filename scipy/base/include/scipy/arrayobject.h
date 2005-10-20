@@ -1206,6 +1206,8 @@ typedef struct {
 #define PyArray_FROM_O(m) PyArray_FromAny(m, NULL, 0, 0, 0)
 #define PyArray_FROM_OF(m,flags) PyArray_FromAny(m, NULL, 0, 0, flags)
 
+#define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), (val), PyArray_NBYTES(obj))
+
 #define REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define MAX_ELSIZE 2*SIZEOF_LONGDOUBLE
 

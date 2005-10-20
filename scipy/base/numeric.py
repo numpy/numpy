@@ -248,9 +248,8 @@ def ones(shape, dtype=int_, fortran=0):
     """ones(shape, dtype=int_) returns an array of the given
     dimensions which is initialized to all ones. 
     """
-    a=zeros(shape, dtype, fortran)
-    a+=1
-    ### a[...]=1  -- slower?
+    a = empty(shape, dtype, fortran)
+    a.fill(1)
     return a
  
 def identity(n,dtype=int_):
