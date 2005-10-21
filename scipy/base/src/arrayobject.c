@@ -3228,13 +3228,11 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 		
 	if (data == NULL) {
 
-		/* Make sure we are aligned on void ptrs (without wasting
-		 space if we already are).  But, also, allocate something 
-		 even for zero-space arrays e.g. shape=(0,) -- otherwise
-                 buffer exposure (a.data) doesn't work as it should. */
+		/* Allocate something even for zero-space arrays 
+		 e.g. shape=(0,) -- otherwise buffer exposure (a.data) doesn't work
+		 as it should. */
 
 		if (sd==0) sd = sizeof(intp);
-		else if ((temp=sd%sizeof(intp))) sd += sizeof(intp) - temp;
 
 		if ((data = PyDataMem_NEW(sd))==NULL) {
 			PyDimMem_FREE(self->dimensions);
