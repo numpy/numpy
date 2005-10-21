@@ -1268,7 +1268,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		   Or if not contiguous, then a single-stride
 		   increment moves through the entire array. 
 		*/
-                /* fprintf(stderr, "ONE...%d\n", loop->size);*/
+                /*fprintf(stderr, "ONE...%d\n", loop->size);*/
 		loop->function((char **)loop->bufptr, &(loop->size), 
 			       loop->steps, loop->funcdata);
 		UFUNC_CHECK_ERROR();
@@ -1277,7 +1277,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		/* Everything is notswapped, aligned and of the 
 		   right type but not contiguous. -- Almost as fast.
 		*/
-                /* fprintf(stderr, "NOBUFFER...%d\n", loop->size);*/
+                /*fprintf(stderr, "NOBUFFER...%d\n", loop->size);*/
 		while (loop->index < loop->size) {
 			for (i=0; i<self->nargs; i++) 
 				loop->bufptr[i] = loop->iters[i]->dataptr;
