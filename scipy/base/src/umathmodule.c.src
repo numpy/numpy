@@ -107,7 +107,7 @@ double hypot(double x, double y)
 #endif
 
 #endif /* HAVE_ISNAN */
-#endif /* !defined(isnan) */
+#endif /* defined(fpclassify) */
 
 
 /* Define signbit if needed */

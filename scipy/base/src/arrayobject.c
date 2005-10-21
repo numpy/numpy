@@ -3799,7 +3799,10 @@ array_priority_get(PyArrayObject *self)
 static PyObject *
 array_dataptr_get(PyArrayObject *self)
 {
-	return PyString_FromFormat("%p", self->data);
+	return Py_BuildValue("NO",
+			     PyString_FromFormat("%p", self->data),
+			     (self->flags & WRITEABLE ? Py_False :
+			      Py_True));
 }
 
 static PyObject *
@@ -5258,6 +5261,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	int res, i, n;
 	intp dims[MAX_DIMS], strides[MAX_DIMS];
 	int swap;
+	int dataflags = BEHAVED_FLAGS;
 
 	/* Get the memory from __array_data__ and __array_offset__ */
 	/* Get the shape */
@@ -5265,28 +5269,42 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	/* Get the strides */
 	
 	attr = PyObject_GetAttrString(input, "__array_data__");
-	if (attr && !PyString_Check(attr)) {
-		PyErr_SetString(PyExc_TypeError, "__array_data__ must return"\
-				" a string providing the pointer to data.");
-		Py_DECREF(attr);
-		return NULL;
-	}
-	if ((attr == NULL) || (PyString_GET_SIZE(attr) < 1)) {
-		res = PyObject_AsWriteBuffer(input, (void **)&data, 
+	if ((attr == NULL) || (attr==Py_None) || (!PyTuple_Check(attr))) {
+		if (attr && (attr != Py_None)) item=attr;
+		else item=input;
+		res = PyObject_AsWriteBuffer(item, (void **)&data, 
 					     &buffer_len);
-		Py_XDECREF(attr);
-		if (res < 0) return NULL;
-	}
-	else {
-		res = sscanf(PyString_AsString(attr), "%p", (void **)&data);
-		Py_DECREF(attr);
-		if (res < 1) {
-			PyErr_SetString(PyExc_TypeError, 
-					"__array_data__ cannot be converted.");
-			return NULL;
+		if (res < 0) {
+			PyErr_Clear();
+			res = PyObject_AsReadBuffer(item, (const void **)&data,
+						    &buffer_len);
+			if (res < 0) {Py_XDECREF(attr); return NULL;}
+			dataflags &= ~WRITEABLE;
 		}
 	}
-
+	else {
+		if (PyTuple_GET_SIZE(attr) != 2) {
+			Py_DECREF(attr);
+			PyErr_SetString(PyExc_TypeError, 
+					"__array_data__ must return"	\
+					" a 2-tuple with ('data pointer "\
+					"string', read-only flag)");
+			return NULL;
+		}
+		res = sscanf(PyString_AsString(PyTuple_GET_ITEM(attr,0)),
+			     "%p", (void **)&data);
+		if (res < 1) {
+			Py_DECREF(attr);
+			PyErr_SetString(PyExc_TypeError, 
+					"__array_data__ string cannot be " \
+					"converted.");
+			return NULL;
+		}
+		if (PyObject_IsTrue(PyTuple_GET_ITEM(attr,1))) {
+			dataflags &= ~WRITEABLE;
+		}
+	}
+	Py_XDECREF(attr);
 	attr = PyObject_GetAttrString(input, "__array_typestr__");
 	if (!PyString_Check(attr)) {
 		PyErr_SetString(PyExc_TypeError, "__array_typestr__ must be a string.");
@@ -5315,7 +5333,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, n, dims, 
 					   type.type_num, 
 					   NULL, data, type.itemsize, 
-                                           BEHAVED_FLAGS, NULL);
+                                           dataflags, NULL);
 	if (ret == NULL) return NULL;
 	Py_INCREF(input);
 	ret->base = input;
