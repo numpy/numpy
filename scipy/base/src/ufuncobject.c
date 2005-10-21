@@ -2393,6 +2393,7 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
         PyUFuncObject *self;
         char *fname, *str;
         int fname_len=-1;
+	int offset[2];
 
         if (!PyArg_ParseTuple(args, "Oii", &function, &nin, &nout)) return NULL;
 
@@ -2404,7 +2405,6 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
 	if ((self = PyObject_NEW(PyUFuncObject, &PyUFunc_Type)) == NULL) 
 		return NULL;
 	
-
 	self->userloops = NULL;
 	self->nin = nin;
 	self->nout = nout;
@@ -2427,24 +2427,41 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
         Py_XDECREF(pyname);
 
 
-        self->ptr = malloc((self->nargs)+sizeof(PyUFunc_PyFuncData)+sizeof(void *)+(fname_len+14));
-        
+
+	/* self->ptr holds a pointer for enough memory for
+	   self->data[0] (fdata)
+	   self->data
+	   self->name
+	   self->types
+
+	   To be safest, all of these need their memory aligned on void * pointers
+	   Therefore, we may need to allocate extra space.
+	*/
+	offset[0] = sizeof(PyUFunc_PyFuncData);
+	i = (sizeof(PyUFunc_PyFuncData) % sizeof(void *));
+	if (i) offset[0] += (sizeof(void *) - i);
+	offset[1] = self->nargs;
+	i = (self->nargs % sizeof(void *));
+	if (i) offset[1] += (sizeof(void *)-i);
+
+        self->ptr = malloc(offset[0] + offset[1] + sizeof(void *) + \
+			   (fname_len+14));
+
 	if (self->ptr == NULL) return PyErr_NoMemory();
         Py_INCREF(function);
         self->obj = function;
-	fdata = (PyUFunc_PyFuncData *)(self->ptr + (nin+nout) + sizeof(void *));
+	fdata = (PyUFunc_PyFuncData *)(self->ptr);
         fdata->nin = nin;
         fdata->nout = nout;
         fdata->callable = function;
         
-        self->data = (void **)(self->ptr + (nin+nout));
+        self->data = (void **)(self->ptr + offset[0]);
         self->data[0] = (void *)fdata;
-
-
-	self->types = (char *)self->ptr;
+	
+	self->types = (char *)self->data + sizeof(void *);
         for (i=0; i<self->nargs; i++) self->types[i] = PyArray_OBJECT;
 
-        str = (char *)(fdata + 1);
+        str = self->types + offset[1];
         memcpy(str, fname, fname_len);
         memcpy(str+fname_len, " (vectorized)", 14);
         
