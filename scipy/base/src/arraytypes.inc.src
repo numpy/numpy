@@ -119,11 +119,12 @@ static int
 	int rsize;
         
         if (!(PyArray_IsScalar(op, @kind@))) {
-                if (PyArray_CheckScalar(op))                         
+                if (PyArray_Check(op) && (PyArray_NDIM(op)==0)) {
                         op2 = ((PyArrayObject *)op)->descr->getitem     \
                                 (((PyArrayObject *)op)->data, 
                                  (PyArrayObject *)op);
-                else { 
+		}
+		else { 
                         op2 = op; Py_INCREF(op);
                 }
                 oop = PyComplex_AsCComplex (op2);
