@@ -15,7 +15,7 @@
 #  * Eliminates savespace=xxx
 #  * Replace xxx.spacesaver() with True
 #  * Convert xx.savespace(?) to pass + ## xx.savespace(?)
-#  * Convert a.shape = ? to a.reshape(?) 
+#  #### -- not * Convert a.shape = ? to a.reshape(?) 
 #  * Prints warning for use of bool, int, float, copmlex, object, and unicode
 #
 
@@ -88,14 +88,14 @@ def replaceattr(astr):
 svspc = re.compile(r'(\S+\s*[(].+),\s*savespace\s*=.+\s*[)]')
 svspc2 = re.compile(r'([^,(\s]+[.]spacesaver[(][)])')
 svspc3 = re.compile(r'(\S+[.]savespace[(].*[)])')
-shpe = re.compile(r'(\S+\s*)[.]shape\s*=[^=]\s*(.+)')
+#shpe = re.compile(r'(\S+\s*)[.]shape\s*=[^=]\s*(.+)')
 def replaceother(astr):
     astr = astr.replace("typecode=","dtype=")
     astr = astr.replace("UserArray","ndarray")
     astr = svspc.sub('\\1)',astr)
     astr = svspc2.sub('True',astr)
     astr = svspc3.sub('pass  ## \\1', astr)
-    astr = shpe.sub('\\1=\\1.reshape(\\2)', astr)
+    #astr = shpe.sub('\\1=\\1.reshape(\\2)', astr)
     return astr
 
 def warnofnewtypes(filestr):
@@ -112,7 +112,7 @@ def warnofnewtypes(filestr):
     
 import datetime
 def fromstr(filestr):
-    #filestr = replacetypechars(filestr)
+    filestr = replacetypechars(filestr)
     filestr, fromall1 = changeimports(filestr, 'Numeric', 'scipy')
     filestr, fromall1 = changeimports(filestr, 'multiarray',
                                       'scipy.base.multiarray')

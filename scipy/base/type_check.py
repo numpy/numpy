@@ -10,7 +10,8 @@ import umath
 __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'isscalar',
            'isreal','nan_to_num','real','real_if_close',
-           'typename','asfarray','mintypecode','asscalar']
+           'typename','asfarray','mintypecode','asscalar',
+           'common_type']
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
 
