@@ -2450,8 +2450,10 @@ PyArray_BoolConverter(PyObject *object, Bool *val)
     // ** e.g. zeros(1,2,3) should not succeed, silently treating the '2' as
     // ** the dtype and '3' as meaning fortran=true.  The user probably wants
     // ** something else, like zeros((1,2,3)).
-    if (! PyBool_Check(object) )
-        return PY_FAIL;
+    //
+    // ** Update: disabled for now, until I've tested this with the full scipy
+    // if (! PyBool_Check(object) )
+    //     return PY_FAIL;
     
     if (PyObject_IsTrue(object))
         *val=TRUE;
