@@ -34,7 +34,7 @@ typecodes = {'Character':'S1', 'Integer':'bhilq', 'UnsignedInteger':'BHILQ',
              'AllFloat':'fdgFDG', 'All':'?bhilqBHILQfdgFDGSUVO'}
 
 
-def sarray(a, dtype=None, copy=0):
+def sarray(a, dtype=None, copy=False):
     return array(a, dtype, copy)
 
 try:
@@ -111,7 +111,7 @@ def repeat(a, repeats, axis=0):
        a tuple of length a.shape[axis] containing repeats.
        The argument a can be anything array(a) will accept.
     """
-    a = array(a, copy=0)
+    a = array(a, copy=False)
     return a.repeat(repeats, axis)
 
 def put (a, ind, v):
@@ -121,13 +121,13 @@ def put (a, ind, v):
        The routine put is the equivalent of the following (although the loop   
        is in C for speed): 
 
-           ind = array(indices, copy=0) 
-           v = array(values, copy=0).astype(a, a.dtype) 
+           ind = array(indices, copy=False) 
+           v = array(values, copy=False).astype(a, a.dtype) 
            for i in ind: a.flat[i] = v[i] 
        a must be a contiguous Numeric array.
     """
-    a = array(a,copy=0)
-    v = array(v,copy=0)
+    a = array(a,copy=False)
+    v = array(v,copy=False)
     return a.put(a, ind, v.astype(a.dtype))
 
 def putmask (a, mask, v):
@@ -141,7 +141,7 @@ def swapaxes(a, axis1, axis2):
     """swapaxes(a, axis1, axis2) returns array a with axis1 and axis2
     interchanged.
     """
-    a = array(a, copy=0)
+    a = array(a, copy=False)
     return a.swapaxes(axis1, axis2)
 
 def transpose(a, axes=None):
@@ -149,40 +149,40 @@ def transpose(a, axes=None):
     according to axes.  If axes is None (default) returns array with
     dimensions reversed.
     """
-    a = array(a,copy=0)
+    a = array(a,copy=False)
     return a.transpose(axes)
 
 def sort(a, axis=-1):
     """sort(a,axis=-1) returns array with elements sorted along given axis.
     """
-    a = array(a, copy=0)
+    a = array(a, copy=False)
     return a.sort(axis)
 
 def argsort(a, axis=-1):
     """argsort(a,axis=-1) return the indices into a of the sorted array
     along the given axis, so that take(a,result,axis) is the sorted array.
     """
-    a = array(a, copy=0)
+    a = array(a, copy=False)
     return a.argsort(axis)
 
 def argmax(a, axis=-1):
     """argmax(a,axis=-1) returns the indices to the maximum value of the
     1-D arrays along the given axis.    
     """
-    a = array(a, copy=0)
+    a = array(a, copy=False)
     return a.argmax(axis)
 
 def argmin(a, axis=-1):
     """argmin(a,axis=-1) returns the indices to the minimum value of the
     1-D arrays along the given axis.    
     """
-    a = array(a,copy=0)
+    a = array(a,copy=False)
     return a.argmin(axis)
 
 def searchsorted(a, v):
     """searchsorted(a, v)
     """
-    a = array(a,copy=0)
+    a = array(a,copy=False)
     return a.searchsorted(v)
 
 def resize(a, new_shape):

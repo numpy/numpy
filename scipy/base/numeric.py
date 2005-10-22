@@ -33,12 +33,12 @@ def asarray(a, dtype=None, fortran=False):
     no copy is performed if a is already an array.  Subclasses are converted
     to base class ndarray.
     """
-    return array(a, dtype, copy=0, fortran=fortran)
+    return array(a, dtype, copy=False, fortran=fortran)
 
-def asanyarray(a, dtype=None,copy=0,fortran=False):
+def asanyarray(a, dtype=None,copy=False,fortran=False):
     """will pass subclasses through...
     """
-    return array(a, dtype, copy=0, fortran=fortran, subok=1)
+    return array(a, dtype, copy=False, fortran=fortran, subok=1)
 
 def isfortran(a):
     return a.flags['FNC']
@@ -244,7 +244,7 @@ def load(file):
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
 
-def ones(shape, dtype=int_, fortran=0):
+def ones(shape, dtype=int_, fortran=False):
     """ones(shape, dtype=int_) returns an array of the given
     dimensions which is initialized to all ones. 
     """
@@ -271,8 +271,8 @@ def allclose (a, b, rtol=1.e-5, atol=1.e-8):
         The absolute error atol comes into play for those elements
         of y that are very small or zero; it says how small x must be also.
     """
-    x = array(a, copy=0)
-    y = array(b, copy=0)
+    x = array(a, copy=False)
+    y = array(b, copy=False)
     d = less(absolute(x-y), atol + rtol * absolute(y))
     return alltrue(ravel(d))
             

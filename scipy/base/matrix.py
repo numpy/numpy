@@ -47,7 +47,7 @@ def _convert_from_string(data):
 
 class matrix(N.ndarray):
     __array_priority__ = 10.0
-    def __new__(self, data, dtype=None, copy=1):
+    def __new__(self, data, dtype=None, copy=True):
         if isinstance(data, matrix):
             dtype2 = data.dtype
             if (dtype is None):

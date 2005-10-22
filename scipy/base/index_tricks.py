@@ -79,7 +79,7 @@ class nd_grid:
            >>> ogrid[0:5,0:5]
            [array([[0],[1],[2],[3],[4]]), array([[0, 1, 2, 3, 4]])] 
     """
-    def __init__(self, sparse=0):
+    def __init__(self, sparse=False):
         self.sparse = sparse
     def __getitem__(self,key):
         try:
@@ -157,7 +157,7 @@ class concatenator:
         self.col=0
         return res
         
-    def __init__(self, axis=0, matrix=0):
+    def __init__(self, axis=0, matrix=False):
         self._axis = axis
         self._matrix = matrix
         self.axis = axis
@@ -188,7 +188,7 @@ class concatenator:
                     newobj = _nx.arange(start, stop, step)
             elif type(key[k]) is types.StringType:
                 if (key[k] in 'rc'):
-                    self.matrix = 1
+                    self.matrix = True
                     self.col = (key[k] == 'c')
                     continue
                 try:

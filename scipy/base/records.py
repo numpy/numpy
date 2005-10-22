@@ -56,7 +56,7 @@ def _split(input):
 
 
 class format_parser:
-    def __init__(self, formats, aligned=0):
+    def __init__(self, formats, aligned=False):
         self._parseFormats(formats, aligned)
 
     def _parseFormats(self, formats, aligned=0):

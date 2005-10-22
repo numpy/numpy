@@ -338,7 +338,7 @@ ScalarType = [_types.IntType, _types.FloatType,
               _types.StringType, _types.UnicodeType, _types.BufferType]
 ScalarType.extend(_dtype2char_dict.keys())
 for key in _dtype2char_dict.keys():
-    cast[key] = lambda x, k=key : array(x,copy=0).astype(k)
+    cast[key] = lambda x, k=key : array(x,copy=False).astype(k)
 
 del key
 

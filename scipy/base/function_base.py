@@ -80,11 +80,11 @@ def logspace(start,stop,num=50,endpoint=1):
         y = _nx.arange(0,num) * step + start
     return _nx.power(10.0,y)
 
-def linspace(start,stop,num=50,endpoint=1,retstep=0):
+def linspace(start,stop,num=50,endpoint=1,retstep=False):
     """ Evenly spaced samples.
     
         Return num evenly spaced samples from start to stop.  If endpoint=1 then
-        last sample is stop. If retstep is 1 then return the step value used.
+        last sample is stop. If retstep is true then return the step value used.
     """
     if num <= 0: return array([])
     if endpoint:
@@ -103,7 +103,7 @@ def iterable(y):
     except: return 0
     return 1
 
-def histogram(x, bins=10, range=None, normed=0):
+def histogram(x, bins=10, range=None, normed=False):
     x = asarray(x).ravel()
     if not iterable(bins):
         if range is None:
@@ -164,7 +164,7 @@ def average (a, axis=0, weights=None, returned=0):
             if returned:
                 d = ones(shape(n)) * d
         else:
-            w = array(weights, copy=0) * 1.0
+            w = array(weights, copy=False) * 1.0
             wsh = w.shape
             if wsh == ():
                 wsh = (1,)
@@ -308,7 +308,7 @@ def select(condlist, choicelist, default=0):
         S = S*ones(asarray(pfac).shape)
     return choose(S, tuple(choicelist))
 
-def _asarray1d(arr,copy=0):
+def _asarray1d(arr,copy=False):
     """Ensure 1d array for one array.
     """
     if copy:
@@ -319,7 +319,7 @@ def _asarray1d(arr,copy=0):
 def copy(a):
     """Return an array copy of the object.
     """
-    return array(a,copy=1)
+    return array(a,copy=True)
     
 # Basic operations
 def amax(m,axis=-1): 
@@ -475,7 +475,7 @@ def unwrap(p,discont=pi,axis=-1):
     _nx.putmask(ddmod,(ddmod==-pi) & (dd > 0),pi)
     ph_correct = ddmod - dd;
     _nx.putmask(ph_correct,abs(dd)<discont,0)
-    up = array(p,copy=1,typecode='d')
+    up = array(p,copy=True,typecode='d')
     up[slice1] = p[slice1] + cumsum(ph_correct,axis)
     return up
 

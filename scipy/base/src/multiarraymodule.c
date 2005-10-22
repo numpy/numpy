@@ -2445,10 +2445,20 @@ PyArray_Converter(PyObject *object, PyObject **address)
 static int
 PyArray_BoolConverter(PyObject *object, Bool *val)
 {
-	if (PyObject_IsTrue(object)) *val=TRUE;
-	else *val=FALSE;
-	if (PyErr_Occurred()) return PY_FAIL;
-	return PY_SUCCEED;
+    // ** Added by EJS on Oct 22: stricter checking on boolean values **
+    // ** We want functions to fail more visibly with incorrect arguments 
+    // ** e.g. zeros(1,2,3) should not succeed, silently treating the '2' as
+    // ** the dtype and '3' as meaning fortran=true.  The user probably wants
+    // ** something else, like zeros((1,2,3)).
+    if (! PyBool_Check(object) )
+        return PY_FAIL;
+    
+    if (PyObject_IsTrue(object))
+        *val=TRUE;
+    else *val=FALSE;
+    if (PyErr_Occurred())
+        return PY_FAIL;
+    return PY_SUCCEED;
 }
 
 
