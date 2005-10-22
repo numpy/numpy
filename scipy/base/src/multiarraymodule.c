@@ -2729,14 +2729,11 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 			}
 		}
 	}
-
-	/* Arbitray object with dtypenum and itemsize attributes. */
-	else if (PyObject_HasAttrString(obj, "dtypenum") && 
-	    PyObject_HasAttrString(obj, "itemsize")) {
-		attr = PyObject_GetAttrString(obj, "dtypenum");
-		check_num = PyInt_AsLong(attr);
-		if (PyErr_Occurred()) {  /* not an integer, try character */
-			PyErr_Clear();
+	/* Arbitray object with dtypechar and itemsize attributes. */
+	else if (PyObject_HasAttrString(obj, "dtypechar") && 
+		 PyObject_HasAttrString(obj, "itemsize")) {
+		attr = PyObject_GetAttrString(obj, "dtypechar");
+		if (attr && PyString_GET_SIZE(attr) > 0) {
 			type = PyString_AsString(attr);
 			check_num = (int) type[0];
 		}
@@ -2800,6 +2797,7 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 	if (at->itemsize == 0) at->itemsize = descr->elsize;
 	
         return PY_SUCCEED;
+
  fail:
 	PyErr_SetString(PyExc_TypeError, 
 			"data type not understood");

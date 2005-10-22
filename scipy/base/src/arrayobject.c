@@ -2054,8 +2054,11 @@ PyArray_GenericReduceFunction(PyArrayObject *m1, PyObject *op, int axis,
 	}
 	if (rtype == PyArray_NOTYPE) 
 		args = Py_BuildValue("(Oi)", m1, axis);
-	else
-		args = Py_BuildValue("(Oii)", m1, axis, rtype);
+	else {
+		PyArray_Descr *descr;
+		descr = PyArray_DescrFromType(rtype);
+		args = Py_BuildValue("(Oic)", m1, axis, descr->type);
+	}
 	meth = PyObject_GetAttrString(op, "reduce");
 	if (meth && PyCallable_Check(meth)) {
 		ret = PyObject_Call(meth, args, NULL);
@@ -2077,8 +2080,11 @@ PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
 	}
 	if (rtype == PyArray_NOTYPE) 
 		args = Py_BuildValue("(Oi)", m1, axis);
-	else
-		args = Py_BuildValue("(Oii)", m1, axis, rtype);
+	else {
+		PyArray_Descr *descr;
+		descr = PyArray_DescrFromType(rtype);
+		args = Py_BuildValue("(Oic)", m1, axis, descr->type);
+	}
 	meth = PyObject_GetAttrString(op, "accumulate");
 	if (meth && PyCallable_Check(meth)) {
 		ret = PyObject_Call(meth, args, NULL);
