@@ -642,15 +642,6 @@ gentype_descr_get(PyObject *self)
 
 
 static PyObject *
-gentype_typenum_get(PyObject *self)
-{
-	PyArray_Typecode typecode;
-
-	PyArray_TypecodeFromScalar(self, &typecode);
-	return PyInt_FromLong((long) typecode.type_num);
-}
-
-static PyObject *
 gentype_type_get(PyObject *self)
 {
 	return (PyObject *)self->ob_type;
@@ -776,10 +767,6 @@ static PyGetSetDef gentype_getsets[] = {
 	 (getter)gentype_typechar_get,
 	 (setter)0,
 	 "get gentype type character code"},
-	{"dtypenum",
-	 (getter)gentype_typenum_get,
-	 (setter)0,
-	 "get gentype type number code"},
 	{"dtypestr",
 	 (getter)gentype_typestr_get,
 	 NULL,

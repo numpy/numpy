@@ -2444,17 +2444,7 @@ PyArray_Converter(PyObject *object, PyObject **address)
 
 static int
 PyArray_BoolConverter(PyObject *object, Bool *val)
-{
-    // ** Added by EJS on Oct 22: stricter checking on boolean values **
-    // ** We want functions to fail more visibly with incorrect arguments 
-    // ** e.g. zeros(1,2,3) should not succeed, silently treating the '2' as
-    // ** the dtype and '3' as meaning fortran=true.  The user probably wants
-    // ** something else, like zeros((1,2,3)).
-    //
-    // ** Update: disabled for now, until I've tested this with the full scipy
-    // if (! PyBool_Check(object) )
-    //     return PY_FAIL;
-    
+{    
     if (PyObject_IsTrue(object))
         *val=TRUE;
     else *val=FALSE;
@@ -2773,7 +2763,12 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
                         check_num = PyArray_UNICODE;
 	}	
         else { /* Default -- try integer conversion */
-                check_num = PyInt_AsLong(obj);
+		/* Don't allow integer conversion */
+                /* check_num = PyInt_AsLong(obj); */
+		/* fprintf(stderr, "****\n\ntype=%s\n\n****\n", 
+			obj->ob_type->tp_name);
+		*/
+		goto fail;
 	}
 
 	if (PyErr_Occurred()) goto fail;

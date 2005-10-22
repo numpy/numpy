@@ -3943,12 +3943,6 @@ array_descr_get(PyArrayObject *self)
 	return res;
 }
 
-static PyObject *
-array_typenum_get(PyArrayObject *self)
-{
-	return PyInt_FromLong((long) self->descr->type_num);
-}
-
 
 static PyObject *
 array_type_get(PyArrayObject *self)
@@ -4288,10 +4282,6 @@ static PyGetSetDef array_getsetlist[] = {
 	 (getter)array_typechar_get,
 	 NULL,
 	 "get array type character code"},
-	{"dtypenum",
-	 (getter)array_typenum_get,
-	 NULL,
-	 "get array type number code"},
 	{"dtypestr",
 	 (getter)array_typestr_get,
 	 NULL,
@@ -5382,8 +5372,18 @@ array_fromattr(PyObject *op, PyArray_Typecode *typecode, int flags)
         if (typecode->type_num == PyArray_NOTYPE) {
                 new = PyObject_CallMethod(op, "__array__", NULL);
         } else {
-                new = PyObject_CallMethod(op, "__array__", "i", 
-                                          typecode->type_num);
+		PyArray_Descr *descr;
+		PyObject *obj;
+
+		descr = PyArray_DescrFromType(typecode->type_num);
+		if (PyTypeNum_ISFLEXIBLE(typecode->type_num)) {
+			obj = PyString_FromFormat("%c%d", descr->type,
+						  typecode->itemsize);
+		}
+		else { 
+			obj = (PyObject *)(descr->typeobj); Py_INCREF(obj);
+		}
+		new = PyObject_CallMethod(op, "__array__", "N", obj);
         }
         if (new == NULL) return NULL;
         if (!PyArray_Check(new)) {
@@ -5415,6 +5415,9 @@ array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 	/*  This is where the flags are used */
         if (PyArray_Check(op)) 
 		r = array_fromarray((PyArrayObject *)op, typecode, flags);
+	else if (PyArray_IsScalar(op, Generic)) {
+		r = PyArray_FromScalar(op, typecode);
+	}
 	else if (PyObject_HasAttrString(op, "__array__")) {
 		/* Code that returns the object to convert for a non
 		   multiarray input object from the __array__ attribute of the
