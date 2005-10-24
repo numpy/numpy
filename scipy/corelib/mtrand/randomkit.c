@@ -144,12 +144,19 @@ rk_error rk_randomseed(rk_state *state)
 #else
 	struct _timeb	tv;
 #endif
+        int i;
 
 	if(rk_devfill(state->key, sizeof(state->key), 0) == RK_NOERR)
 	{
 		state->key[0] |= 0x80000000UL; /* ensures non-zero key */
 		state->pos = RK_STATE_LEN;
 		state->has_gauss = 0;
+
+                for (i=0; i<624; i++)
+                {
+                    state->key[i] &= 0xffffffffUL;
+                }
+
 		return RK_NOERR;
 	}
 
