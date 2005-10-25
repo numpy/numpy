@@ -6,7 +6,7 @@ from numeric import ScalarType
 from umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc, \
      isnan, absolute
 from oldnumeric import ravel, nonzero, choose, \
-     sometrue, alltrue, reshape, any, all, typecodes 
+     sometrue, alltrue, reshape, any, all, typecodes, ArrayType
 from type_check import ScalarType, isscalar
 from shape_base import squeeze, atleast_1d
 from _compiled_base import digitize, bincount, _insert
@@ -124,7 +124,7 @@ def histogram(x, bins=10, range=None, normed=False):
     else:
         return n, bins
 
-def average (a, axis=0, weights=None, returned=0):
+def average(a, axis=0, weights=None, returned=0):
     """average(a, axis=0, weights=None)
        Computes average along indicated axis. 
        If axis is None, average over the entire array.
@@ -201,7 +201,7 @@ def asarray_chkfinite(x):
     x = asarray(x)
     if (x.dtypechar in _nx.typecodes['AllFloat']) \
            and (_nx.isnan(x).any() or _nx.isinf(x).any()):
-        raise ValueError, "Array must not contain infs or nans."
+        raise ValueError, "array must not contain infs or nans"
     return x    
 
 
@@ -250,7 +250,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         condlist.append(~totlist)
         n += 1
     if (n != n2):
-        raise ValueError, "function list and condition list must be the same."
+        raise ValueError, "function list and condition list must be the same"
     y = empty(x.shape, x.dtype)
     for k in range(n):
         item = funclist[k]
@@ -291,7 +291,7 @@ def select(condlist, choicelist, default=0):
     n = len(condlist)
     n2 = len(choicelist)
     if n2 != n:
-        raise ValueError, "List of cases, must be same length as the list of conditions."
+        raise ValueError, "list of cases must be same length as list of conditions"
     choicelist.insert(0,default)    
     S = 0
     pfac = 1
@@ -378,7 +378,7 @@ def gradient(f,*varargs):
     elif n==N:
         dx = list(varargs)
     else:
-        raise SyntaxError, "Invalid number of arguments"
+        raise SyntaxError, "invalid number of arguments"
 
     # use central differences on interior and first differences on endpoints
 
@@ -628,7 +628,7 @@ class vectorize:
         try:
             fcode = pyfunc.func_code
         except AttributeError:
-            raise TypeError, "Object is not a callable Python object"
+            raise TypeError, "object is not a callable Python object"
 
         self.thefunc = pyfunc
         self.ufunc = None
@@ -641,10 +641,10 @@ class vectorize:
         if isinstance(otypes,types.StringType):
             self.otypes=otypes
         else:
-            raise ValueError, "Output types must be a string."
+            raise ValueError, "output types must be a string"
         for char in self.otypes:
             if char not in typecodes['All']:
-                raise ValueError, "Invalid typecode specified"
+                raise ValueError, "invalid typecode specified"
 
     def __call__(self,*args):
         # get number of outputs and output types by calling

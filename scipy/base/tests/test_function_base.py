@@ -39,6 +39,25 @@ class test_all(unittest.TestCase):
         assert_array_equal(alltrue(y1),[0,0,1])
         assert_array_equal(alltrue(y1,axis=1),[0,0,1])
 
+class test_average(unittest.TestCase):
+    def check_basic(self):
+        y1 = array([1,2,3])
+        assert(average(y1) == 2.)
+        y2 = array([1.,2.,3.])
+        assert(average(y2) == 2.)
+        y3 = [0.,0.,0.]
+        assert(average(y3) == 0.)
+
+        y4 = ones((4,4))
+        y4[0,1] = 0
+        y4[1,0] = 2
+        assert_array_equal(y4.mean(0), average(y4, 0))
+        assert_array_equal(y4.mean(1), average(y4, 1))
+        
+        y5 = rand(5,5)
+        assert_array_equal(y5.mean(0), average(y5, 0))
+        assert_array_equal(y5.mean(1), average(y5, 1))
+
 class test_logspace(unittest.TestCase):
     def check_basic(self):
         y = logspace(0,6)
