@@ -5052,7 +5052,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 				PyArray_New(subtype, 
 					    arr->nd, 
 					    arr->dimensions,
-					    arr->descr->type_num,
+					    type,
 					    NULL, NULL, 
 					    itemsize,
 					    flags & FORTRAN,
