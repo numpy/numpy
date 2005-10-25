@@ -230,7 +230,7 @@ PyArray_Zero(PyArrayObject *arr)
                                           &buf_len) < 0) {
                         PyErr_SetString(PyExc_ValueError, 
                                         "_zero not returning "          \
-                                        "writeable buffer.");
+                                        "writeable buffer");
                         Py_DECREF(ret);
                         return NULL;
                 }
@@ -269,7 +269,7 @@ PyArray_One(PyArrayObject *arr)
                                           &buf_len) < 0) {
                         PyErr_SetString(PyExc_ValueError, 
                                         "_one not returning "          \
-                                        "writeable buffer.");
+                                        "writeable buffer");
                         Py_DECREF(ret);
                         PyDataMem_FREE(oneval);
                         return NULL;
@@ -614,7 +614,7 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
        
         if (!PyArray_ISWRITEABLE(dest)) {
                 PyErr_SetString(PyExc_RuntimeError, 
-                                "Cannot write to array.");
+                                "cannot write to array");
                 return -1;
         }
 
@@ -627,9 +627,9 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 	if (ssize == 0) return 0;
         if (dsize % ssize != 0) {
                 PyErr_SetString(PyExc_ValueError, 
-                                "Destination number of elements must be"\
+                                "destination number of elements must be"\
                                 "an integer multiple of the source number of"\
-                                "elements.");
+                                "elements");
                 return -1;
         }
         ncopies = (dsize / ssize);
@@ -905,7 +905,7 @@ PyArray_RegisterDataType(PyTypeObject *type)
 	if ((type == &PyVoidArrType_Type) ||			\
 	    !PyType_IsSubtype(type, &PyVoidArrType_Type)) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Can only register void subtypes.");
+				"can only register void subtypes");
 		return -1;
 	}
 	/* See if this type is already registered */
@@ -945,7 +945,7 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 
 	if (!PyTypeNum_ISUSERDEF(typenum)) {
 		PyErr_SetString(PyExc_TypeError, 
-				"Data type not registered.");
+				"data type not registered");
 		return -1;
 	}
 	old = userdescrs[typenum-PyArray_USERDEF];
@@ -996,9 +996,9 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
         n3 = strlen((const char *)sep);
         if (n3 == 0) { /* binary data */
                 if (PyArray_ISOBJECT(self)) {
-                        PyErr_SetString(PyExc_ValueError, "Cannot write "\
+                        PyErr_SetString(PyExc_ValueError, "cannot write "\
 					"object arrays to a file in "\
-					"binary mode.");
+					"binary mode");
                         return -1;
                 }
 
@@ -1121,7 +1121,7 @@ PyArray_ToString(PyArrayObject *self)
         
         if (PyArray_TYPE(self) == PyArray_OBJECT) {
                 PyErr_SetString(PyExc_ValueError, "a string for the data"\
-				"in an object array is not appropriate.");
+				"in an object array is not appropriate");
                 return NULL;
         }
 
@@ -1203,7 +1203,7 @@ array_length(PyArrayObject *self)
         if (self->nd != 0) {
                 return self->dimensions[0];
         } else {
-		PyErr_SetString(PyExc_TypeError, "len() of unsized object.");
+		PyErr_SetString(PyExc_TypeError, "len() of unsized object");
 		return -1;
         }
 }
@@ -1218,7 +1218,7 @@ array_item(PyArrayObject *self, int i)
 
 	if(self->nd == 0) {
 		PyErr_SetString(PyExc_IndexError, 
-				"0-d arrays can't be indexed.");
+				"0-d arrays can't be indexed");
 		return NULL;
 	}
         if ((item = index2ptr(self, i)) == NULL) return NULL;
@@ -1252,12 +1252,12 @@ array_ass_item(PyArrayObject *self, int i, PyObject *v)
 
         if (v == NULL) {
                 PyErr_SetString(PyExc_ValueError, 
-                                "Can't delete array elements.");
+                                "can't delete array elements");
                 return -1;
         }
 	if (!PyArray_ISWRITEABLE(self)) {
 		PyErr_SetString(PyExc_RuntimeError,
-				"Array is not writeable.");
+				"array is not writeable");
 		return -1;
 	}
 
@@ -1304,7 +1304,7 @@ slice_GetIndices(PySliceObject *r, int length,
 		if (!slice_coerce_index(r->step, step)) return -1;
 		if (*step == 0) {
 			PyErr_SetString(PyExc_ValueError, 
-					"slice step can not be zero");
+					"slice step cannot be zero");
 			return -1;
 		}
 	}
@@ -1763,12 +1763,12 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 	
         if (op == NULL) {
                 PyErr_SetString(PyExc_ValueError, 
-                                "Can't delete array elements.");
+                                "cannot delete array elements");
                 return -1;
         }
 	if (!PyArray_ISWRITEABLE(self)) {
 		PyErr_SetString(PyExc_RuntimeError,
-				"Array is not writeable.");
+				"array is not writeable");
 		return -1;
 	}
 
@@ -1856,7 +1856,7 @@ array_getreadbuf(PyArrayObject *self, int segment, void **ptrptr)
 {
         if (segment != 0) {
                 PyErr_SetString(PyExc_ValueError, 
-                                "Accessing non-existing array segment");
+                                "accessing non-existing array segment");
                 return -1;
         }
         
@@ -1864,7 +1864,7 @@ array_getreadbuf(PyArrayObject *self, int segment, void **ptrptr)
                 *ptrptr = self->data;
                 return PyArray_NBYTES(self);
         }
-        PyErr_SetString(PyExc_ValueError, "Array is not a single segment");
+        PyErr_SetString(PyExc_ValueError, "array is not a single segment");
         *ptrptr = NULL;
         return -1;
 }
@@ -1876,8 +1876,8 @@ array_getwritebuf(PyArrayObject *self, int segment, void **ptrptr)
         if (PyArray_CHKFLAGS(self, WRITEABLE)) 
                 return array_getreadbuf(self, segment, (void **) ptrptr);
         else {
-                PyErr_SetString(PyExc_ValueError, "Array cannot be "\
-                                "accessed as a writeable buffer.");
+                PyErr_SetString(PyExc_ValueError, "array cannot be "\
+                                "accessed as a writeable buffer");
                 return -1;
         }
 }
@@ -1890,8 +1890,8 @@ array_getcharbuf(PyArrayObject *self, int segment, const char **ptrptr)
                 return array_getreadbuf(self, segment, (void **) ptrptr);
         else {
                 PyErr_SetString(PyExc_TypeError, 
-                                "Non-character array cannot be interpreted "\
-                                "as character buffer.");
+                                "non-character array cannot be interpreted "\
+                                "as character buffer");
                 return -1;
         }
 }
@@ -2361,14 +2361,14 @@ array_int(PyArrayObject *v)
         PyObject *pv, *pv2;
         if (PyArray_SIZE(v) != 1) {
                 PyErr_SetString(PyExc_TypeError, "only length-1 arrays can be"\
-				" converted to Python scalars.");
+				" converted to Python scalars");
                 return NULL;
         }
         pv = v->descr->getitem(v->data, v);
         if (pv == NULL) return NULL;
         if (pv->ob_type->tp_as_number == 0) {
-                PyErr_SetString(PyExc_TypeError, "cannot convert to an int, "\
-				"scalar object is not a number.");
+                PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
+				"scalar object is not a number");
                 Py_DECREF(pv);
                 return NULL;
         }
@@ -2390,14 +2390,14 @@ array_float(PyArrayObject *v)
         PyObject *pv, *pv2;
         if (PyArray_SIZE(v) != 1) {
                 PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
-				"be converted to Python scalars.");
+				"be converted to Python scalars");
                 return NULL;
         }
         pv = v->descr->getitem(v->data, v);
         if (pv == NULL) return NULL;
         if (pv->ob_type->tp_as_number == 0) {
                 PyErr_SetString(PyExc_TypeError, "cannot convert to an "\
-				"int, scalar object is not a number.");
+				"int; scalar object is not a number");
                 Py_DECREF(pv);
                 return NULL;
         }
@@ -2418,13 +2418,13 @@ array_long(PyArrayObject *v)
         PyObject *pv, *pv2;
         if (PyArray_SIZE(v) != 1) {
                 PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
-				"be converted to Python scalars.");
+				"be converted to Python scalars");
                 return NULL;
         }
         pv = v->descr->getitem(v->data, v);
         if (pv->ob_type->tp_as_number == 0) {
-                PyErr_SetString(PyExc_TypeError, "cannot convert to an int, "\
-				"scalar object is not a number.");
+                PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
+				"scalar object is not a number");
                 return NULL;
         }
         if (pv->ob_type->tp_as_number->nb_long == 0) {
@@ -2443,13 +2443,13 @@ array_oct(PyArrayObject *v)
         PyObject *pv, *pv2;
         if (PyArray_SIZE(v) != 1) {
                 PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
-				"be converted to Python scalars.");
+				"be converted to Python scalars");
                 return NULL;
         }
         pv = v->descr->getitem(v->data, v);
         if (pv->ob_type->tp_as_number == 0) {
-                PyErr_SetString(PyExc_TypeError, "cannot convert to an int, "\
-				"scalar object is not a number.");
+                PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
+				"scalar object is not a number");
                 return NULL;
         }
         if (pv->ob_type->tp_as_number->nb_oct == 0) {
@@ -2468,13 +2468,13 @@ array_hex(PyArrayObject *v)
         PyObject *pv, *pv2;
         if (PyArray_SIZE(v) != 1) {
                 PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
-				"be converted to Python scalars.");
+				"be converted to Python scalars");
                 return NULL;
         }
         pv = v->descr->getitem(v->data, v);
         if (pv->ob_type->tp_as_number == 0) {
-                PyErr_SetString(PyExc_TypeError, "cannot convert to an int, "\
-				"scalar object is not a number.");
+                PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
+				"scalar object is not a number");
                 return NULL;
         }
         if (pv->ob_type->tp_as_number->nb_hex == 0) {
@@ -2560,7 +2560,7 @@ array_slice(PyArrayObject *self, int ilow, int ihigh)
         char *data;
 
         if (self->nd == 0) {
-                PyErr_SetString(PyExc_ValueError, "can't slice a scalar");
+                PyErr_SetString(PyExc_ValueError, "cannot slice a scalar");
                 return NULL;
         }
         	
@@ -2601,12 +2601,12 @@ array_ass_slice(PyArrayObject *self, int ilow, int ihigh, PyObject *v) {
 	
         if (v == NULL) {
                 PyErr_SetString(PyExc_ValueError, 
-                                "Can't delete array elements.");
+                                "cannot delete array elements");
                 return -1;
         }
 	if (!PyArray_ISWRITEABLE(self)) {
 		PyErr_SetString(PyExc_RuntimeError,
-				"Array is not writeable.");
+				"array is not writeable");
 		return -1;
 	}
         if ((tmp = (PyArrayObject *)array_slice(self, ilow, ihigh)) \
@@ -3168,7 +3168,7 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 		if (dims[i] < 0) {
 			PyErr_SetString(PyExc_ValueError,
 					"negative dimensions"	\
-					" are not allowed.");
+					" are not allowed");
 			return NULL;
 		}
 	}
@@ -3190,7 +3190,7 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 	if (PyTypeNum_ISFLEXIBLE(type_num)) {
 		if (itemsize < 1) {
 			PyErr_SetString(PyExc_ValueError,
-					"Type must provide an itemsize.");
+					"type must provide an itemsize");
 			self->ob_type->tp_free((PyObject *)self);
 			return NULL;
 		}
@@ -3220,9 +3220,9 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 		else {
 			if (data == NULL) {
 				PyErr_SetString(PyExc_ValueError, 
-						"If strides is given in " \
+						"if 'strides' is given in " \
 						"array creation, data must " \
-						"be given too.");
+						"be given too");
 				PyDimMem_FREE(self->dimensions);
 				self->ob_type->tp_free((PyObject *)self);
 				return NULL;
@@ -3317,8 +3317,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
 
         if (newsize == 0) {
                 PyErr_SetString(PyExc_ValueError, 
-                                "Newsize is zero.  Cannot delete an array "\
-                                "in this way.");
+                                "newsize is zero; cannot delete an array "\
+                                "in this way");
                 return NULL;
         }
         oldsize = PyArray_SIZE(self);
@@ -3327,7 +3327,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
 		if (!(self->flags & OWN_DATA)) {
 			PyErr_SetString(PyExc_ValueError, 
 					"cannot resize this array:  "	\
-					"it does not own its data.");
+					"it does not own its data");
 			return NULL;
 		}
 		
@@ -3338,7 +3338,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
 					"cannot resize an array that has "\
 					"been referenced or is referencing\n"\
 					"another array in this way.  Use the "\
-					"resize function.");
+					"resize function");
 			return NULL;
 		} 
 		
@@ -3347,7 +3347,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
 					   newsize*(self->itemsize));
 		if (new_data == NULL) {
 			PyErr_SetString(PyExc_MemoryError, 
-					"can't allocate memory for array.");
+					"cannot allocate memory for array");
 			return NULL;
 		}
 		self->data = new_data;
@@ -3380,8 +3380,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
                 dimptr = PyDimMem_RENEW(self->dimensions, 2*new_nd);
                 if (dimptr == NULL) {
 			PyErr_SetString(PyExc_MemoryError, 
-                                        "can't allocate memory for array " \
-                                        "(array may be corrupted).");
+                                        "cannot allocate memory for array " \
+                                        "(array may be corrupted)");
                         return NULL;
                 }
                 self->dimensions = dimptr;
@@ -3524,8 +3524,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
 
         if (dims.ptr == NULL) {
-                PyErr_SetString(PyExc_ValueError, "Need to give a "\
-                                "valid shape as the first argument.");
+                PyErr_SetString(PyExc_ValueError, "need to give a "\
+                                "valid shape as the first argument");
                 goto fail;
         }
         if (buffer.ptr == NULL) {
@@ -3569,7 +3569,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                 }
                 if (type_num == PyArray_OBJECT) {
                         PyErr_SetString(PyExc_TypeError, "cannot construct "\
-                                        "an object array from buffer data.");
+                                        "an object array from buffer data");
                         goto fail;
                 }
                 /* get writeable and aligned */
@@ -3684,7 +3684,7 @@ array_flags_set(PyArrayObject *self, PyObject *obj)
                 return 0;
         }
         PyErr_SetString(PyExc_ValueError, 
-                        "Object must be a dictionary");
+                        "object must be a dictionary");
         return -1;
 }
 */
@@ -3750,7 +3750,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 
 	if (!PyArray_IntpConverter(obj, &newstrides) || \
 	    newstrides.ptr == NULL) {
-		PyErr_SetString(PyExc_TypeError, "invalid strides.");
+		PyErr_SetString(PyExc_TypeError, "invalid strides");
 		return -1;
 	}
 	if (newstrides.len != self->nd) {
@@ -3814,7 +3814,7 @@ array_data_get(PyArrayObject *self)
 {
 	intp nbytes;
 	if (!(PyArray_ISONESEGMENT(self))) {
-		PyErr_SetString(PyExc_AttributeError, "Cannot get single-"\
+		PyErr_SetString(PyExc_AttributeError, "cannot get single-"\
 				"segment buffer for discontiguous array");
 		return NULL;
 	}		
@@ -3838,19 +3838,19 @@ array_data_set(PyArrayObject *self, PyObject *op)
 		if (PyObject_AsReadBuffer(op, (const void **)&buf, 
 					  &buf_len) < 0) {
 			PyErr_SetString(PyExc_AttributeError, 
-					"Object does not have single-segment" \
+					"object does not have single-segment" \
 					"buffer interface");
 			return -1;
 		}
 	}
 	if (!PyArray_ISONESEGMENT(self)) {
-		PyErr_SetString(PyExc_AttributeError, "Cannot set single-" \
+		PyErr_SetString(PyExc_AttributeError, "cannot set single-" \
 				"segment buffer for discontiguous array");
 		return -1;
 	}
 	if (PyArray_NBYTES(self) > buf_len) {
 		PyErr_SetString(PyExc_AttributeError, 
-				"Not enough data for array.");
+				"not enough data for array");
 		return -1;
 	}
 	if (self->flags & OWN_DATA) {
@@ -3975,7 +3975,7 @@ array_type_set(PyArrayObject *self, PyObject *arg)
 
         if ((PyArray_TypecodeConverter(arg, &newtype) < 0) ||
             newtype.type_num == PyArray_NOTYPE) {
-                PyErr_SetString(PyExc_TypeError, "Invalid type for array");
+                PyErr_SetString(PyExc_TypeError, "invalid type for array");
                 return -1;
         }
         if (!(PyArray_ISONESEGMENT(self) ||		\
@@ -4178,8 +4178,8 @@ array_imag_set(PyArrayObject *self, PyObject *val)
 		return rint;
 	}
 	else {
-		PyErr_SetString(PyExc_TypeError, "Does not have imaginary " \
-				"part to set.");
+		PyErr_SetString(PyExc_TypeError, "does not have imaginary " \
+				"part to set");
 		return -1;
 	}
 }
@@ -4963,12 +4963,12 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 	if (mpsize == 0) return 0;
 	if (!PyArray_ISWRITEABLE(out)) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Output array is not writeable.");
+				"output array is not writeable");
 		return -1;
 	}
 	if (outsize % mpsize != 0) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Output array must have an integer-multiple"\
+				"output array must have an integer-multiple"\
 				" of the number of elements in the input "\
 				"array");
 		return -1; 
@@ -5011,7 +5011,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 	int copy = 0;
 	int arrflags;
 	PyArray_Typecode oldtype;
-	char *msg = "Cannot copy-back to a read-only array.";
+	char *msg = "cannot copy back to a read-only array";
         PyTypeObject *subtype;
 
 	oldtype.type_num = PyArray_TYPE(arr);
@@ -5127,7 +5127,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 		}
 		else {
 			PyErr_SetString(PyExc_TypeError, 
-					"Array can not be safely cast " \
+					"array cannot be safely cast " \
 					"to required type");
 			ret = NULL;
 		}
@@ -5291,7 +5291,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 			Py_DECREF(attr);
 			PyErr_SetString(PyExc_TypeError, 
 					"__array_data__ string cannot be " \
-					"converted.");
+					"converted");
 			return NULL;
 		}
 		if (PyObject_IsTrue(PyTuple_GET_ITEM(attr,1))) {
@@ -5301,7 +5301,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	Py_XDECREF(attr);
 	attr = PyObject_GetAttrString(input, "__array_typestr__");
 	if (!PyString_Check(attr)) {
-		PyErr_SetString(PyExc_TypeError, "__array_typestr__ must be a string.");
+		PyErr_SetString(PyExc_TypeError, "__array_typestr__ must be a string");
 		Py_DECREF(attr);
 		return NULL;	
 	}
@@ -5311,7 +5311,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
     
 	attr = PyObject_GetAttrString(input, "__array_shape__");
 	if (!PyTuple_Check(attr)) {
-		PyErr_SetString(PyExc_TypeError, "__array_shape__ must be a tuple.");
+		PyErr_SetString(PyExc_TypeError, "__array_shape__ must be a tuple");
 		Py_DECREF(attr);
 		return NULL;
 	}
@@ -5336,7 +5336,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	if (attr != NULL && attr != Py_None) {
 		if (!PyTuple_Check(attr)) {
 			PyErr_SetString(PyExc_TypeError, 
-					"__array_strides__ must be a tuple.");
+					"__array_strides__ must be a tuple");
 			Py_DECREF(attr);
 			return NULL;
 		}
@@ -5344,7 +5344,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 			PyErr_SetString(PyExc_ValueError, 
 					"mismatch in length of "\
 					"__array_strides__ and "\
-					"__array_shape__.");
+					"__array_shape__");
 			Py_DECREF(attr);
 			return NULL;
 		}
@@ -5395,7 +5395,7 @@ array_fromattr(PyObject *op, PyArray_Typecode *typecode, int flags)
         if (!PyArray_Check(new)) {
                 PyErr_SetString(PyExc_ValueError, 
                                 "object __array__ method not "  \
-                                "producing an array.");
+                                "producing an array");
                 Py_DECREF(new);
                 return NULL;
         }
@@ -5451,8 +5451,8 @@ array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 	/* Be sure we succeed here */
 	
         if(!PyArray_Check(r)) {
-                PyErr_SetString(PyExc_ValueError, 
-				"Internal error array_fromobject "\
+                PyErr_SetString(PyExc_RuntimeError, 
+				"internal error: array_fromobject "\
 				"not producing an array");
 		Py_DECREF(r);
                 return NULL;
@@ -5461,13 +5461,13 @@ array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth,
         if (min_depth != 0 && ((PyArrayObject *)r)->nd < min_depth) {
                 Py_DECREF(r);
                 PyErr_SetString(PyExc_ValueError, 
-                                "Object of too small depth for desired array");
+                                "object of too small depth for desired array");
                 return NULL;
         }
         if (max_depth != 0 && ((PyArrayObject *)r)->nd > max_depth) {
                 Py_DECREF(r);
                 PyErr_SetString(PyExc_ValueError, 
-                                "Object too deep for desired array");
+                                "object too deep for desired array");
                 return NULL;
         }
         return r;
@@ -5857,7 +5857,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
 
 	if (ind->nd != 1) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Boolean index array should have 1 dim");
+				"boolean index array should have 1 dimension");
 		return NULL;
 	}
 	index = (ind->dimensions[0]);
@@ -5933,7 +5933,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
 		if (num < 0) num += self->size;
 		if (num < 0 || num >= self->size) {
 			PyErr_Format(PyExc_IndexError,
-				     "Index %d out of bounds"		\
+				     "index %d out of bounds"		\
 				     " 0<=index<%d", (int) num, 
 				     (int) self->size);
 			Py_DECREF(ind_it);
@@ -6085,7 +6085,7 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
 
 	if (ind->nd != 1) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Boolean index array should have 1 dim");
+				"boolean index array should have 1 dimension");
 		return -1;
 	}
 	itemsize = self->ao->itemsize;
@@ -6138,7 +6138,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
 		if (num < 0) num += self->size;
 		if ((num < 0) || (num >= self->size)) {
 			PyErr_Format(PyExc_IndexError,
-				     "Index %d out of bounds"		\
+				     "index %d out of bounds"		\
 				     " 0<=index<%d", (int) num, 
 				     (int) self->size);
 			Py_DECREF(ind_it);
@@ -6526,7 +6526,7 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
 					PyErr_SetString(PyExc_ValueError, 
 							"index objects are " \
 							"not broadcastable " \
-							"to a single shape.");
+							"to a single shape");
 					return -1;
 				}
 			}
@@ -6695,7 +6695,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 	subnd = arr->nd - mit->numiter;
 	if (subnd < 0) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Too many indices for array.");
+				"too many indices for array");
 		return;
 	}
 
@@ -6919,12 +6919,12 @@ PyArray_MapIterNew(PyObject *indexobj)
 
 	if (fancy == SOBJ_BADARRAY) {
 		PyErr_SetString(PyExc_TypeError,			\
-				"Arrays used as indexes must be of "    \
+				"arrays used as indexes must be of "    \
 				"integer type");
 		goto fail;
 	}
 	if (fancy == SOBJ_TOOMANY) {
-		PyErr_SetString(PyExc_TypeError,"Too many indicies");
+		PyErr_SetString(PyExc_TypeError, "too many indicies");
 		goto fail;
 	}
 

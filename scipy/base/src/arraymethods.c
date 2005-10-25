@@ -104,7 +104,7 @@ array_reshape(PyArrayObject *self, PyObject *args)
 		if (!PyArray_IntpConverter(args, &newshape)) {
 			if (!PyErr_Occurred()) {
 				PyErr_SetString(PyExc_TypeError, 
-						"invalid shape.");
+						"invalid shape");
 			} 
 			goto fail;
 		}
@@ -277,8 +277,8 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 	
 	if (typecode.itemsize > self->itemsize) {
-		PyErr_SetString(PyExc_TypeError, "Field itemsize must be <="\
-				"array itemsize.");
+		PyErr_SetString(PyExc_TypeError, "field itemsize must be <="\
+				"array itemsize");
 		return NULL;
 	}
 	return _ARET(PyArray_GetField(self, &typecode, offset));
@@ -364,7 +364,7 @@ array_tolist(PyArrayObject *self, PyObject *args)
         if (!PyArg_ParseTuple(args, "")) return NULL;
         if (self->nd <= 0) {
                 PyErr_SetString(PyExc_ValueError, 
-				"Can't convert a 0d array to a list");
+				"can't convert a 0-d array to a list");
                 return NULL;
         }
 	
@@ -408,7 +408,7 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	}
 	fd = PyFile_AsFile(file);
 	if (fd == NULL) {
-		PyErr_SetString(PyExc_IOError, "First argument must be a " \
+		PyErr_SetString(PyExc_IOError, "first argument must be a " \
 				"string or open file");
 		Py_DECREF(file);
 		return NULL;
@@ -461,7 +461,7 @@ array_wraparray(PyArrayObject *self, PyObject *args)
 	
 	if (PyTuple_Size(args) < 1) {
 		PyErr_SetString(PyExc_TypeError,
-				"only accepts 1 argument.");
+				"only accepts 1 argument");
 		return NULL;
 	}
 	arr = PyTuple_GET_ITEM(args, 0);
@@ -570,7 +570,7 @@ array_resize(PyArrayObject *self, PyObject *args)
 		if (!PyArray_IntpConverter(args, &newshape)) {
 			if (!PyErr_Occurred()) {
 				PyErr_SetString(PyExc_TypeError, 
-						"invalid shape.");
+						"invalid shape");
 			} 
 			return NULL;			
 		}
@@ -867,14 +867,14 @@ array_setstate(PyArrayObject *self, PyObject *args)
 	if (typecode.type_num == PyArray_OBJECT) {
 		if (!PyList_Check(rawdata)) {
 			PyErr_SetString(PyExc_TypeError, 
-					"Object pickle not returning list");
+					"object pickle not returning list");
 			return NULL;
 		}
 	}
 	else {
 		if (!PyString_Check(rawdata)) {
 			PyErr_SetString(PyExc_TypeError, 
-					"Pickle not returning string");
+					"pickle not returning string");
 			return NULL;
 		}
 
@@ -884,7 +884,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 		if ((len != (self->itemsize *				\
 			     (int) PyArray_MultiplyList(dimensions, nd)))) {
 			PyErr_SetString(PyExc_ValueError, 
-					"Buffer size does not"	\
+					"buffer size does not"	\
 					" match array size");
 			return NULL;
 		}
@@ -1331,7 +1331,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
 				PyErr_SetString(PyExc_ValueError, 
 						"cannot set WRITEABLE "	\
 						"flag to True of this "	\
-						"array.");		\
+						"array");		\
 				return NULL;
 			}
                 else

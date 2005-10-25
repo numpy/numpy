@@ -602,7 +602,7 @@ select_types(PyUFuncObject *self, int *arg_types,
 				PyErr_SetString(PyExc_TypeError,
 						"ufuncs on user defined" \
 						" types don't support "\
-						"coercion.");
+						"coercion");
 				return -1;
 			}
 		}
@@ -617,7 +617,7 @@ select_types(PyUFuncObject *self, int *arg_types,
 			Py_DECREF(key);
 			PyErr_SetString(PyExc_TypeError, 
 					"no registered loop for this "	\
-					"user-defined type.");
+					"user-defined type");
 			return -1;			
 		}
 		if PyTuple_Check(obj) {
@@ -708,7 +708,7 @@ _getpyvalues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 	if ((*bufsize < PyArray_MIN_BUFSIZE) ||	\
 	    (*bufsize > PyArray_MAX_BUFSIZE)) {
 		PyErr_Format(PyExc_ValueError,  
-			     "The buffer size (%d) is not "	\
+			     "buffer size (%d) is not "	\
 			     "in range (%d - %d)", 
 			     *bufsize, PyArray_MIN_BUFSIZE, 
 			     PyArray_MAX_BUFSIZE);
@@ -719,14 +719,14 @@ _getpyvalues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 	if (*errmask < 0) {
 		if (PyErr_Occurred()) return -1;
 		PyErr_Format(PyExc_ValueError,		\
-			     "Invalid error mask (%d)", 
+			     "invalid error mask (%d)", 
 			     *errmask);
 		return -1;
 	}
 	
 	retval = PyList_GET_ITEM(ref, 2);
 	if (retval != Py_None && !PyCallable_Check(retval)) {
-		PyErr_SetString(PyExc_ValueError, 
+		PyErr_SetString(PyExc_TypeError, 
 				"callback function must be callable");
 		return -1;
 	}
@@ -829,7 +829,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                 if (mps[i] == NULL) return -1;
                 arg_types[i] = PyArray_TYPE(mps[i]);
                 if (PyTypeNum_ISFLEXIBLE(arg_types[i])) {
-                        PyErr_SetString(PyExc_ValueError, 
+                        PyErr_SetString(PyExc_TypeError, 
 					"ufuncs do not support"	\
                                         " flexible arrays");
                         return -1;
@@ -2177,7 +2177,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 
         /* Check to see if input is zero-dimensional */
         if (mp->nd == 0) {
-                PyErr_Format(PyExc_ValueError, "cannot %s on a scalar",
+                PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
                              _reduce_type[operation]);
                 Py_DECREF(mp);
                 return NULL;        
@@ -2185,7 +2185,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 
         /* Check to see that type (and otype) is not FLEXIBLE */
 	if (PyArray_ISFLEXIBLE(mp) || PyTypeNum_ISFLEXIBLE(otype.type_num)) {
-                PyErr_Format(PyExc_ValueError, 
+                PyErr_Format(PyExc_TypeError, 
 			     "cannot perform %s with flexible type",
                              _reduce_type[operation]);
                 Py_DECREF(mp);
@@ -2398,7 +2398,7 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
         if (!PyArg_ParseTuple(args, "Oii", &function, &nin, &nout)) return NULL;
 
         if (!PyCallable_Check(function)) {
-                PyErr_SetString(PyExc_TypeError, "Function must be callable.");
+                PyErr_SetString(PyExc_TypeError, "function must be callable");
                 return NULL;
         }
 	
@@ -2521,7 +2521,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 	
 	if ((usertype < PyArray_USERDEF) || (descr==NULL)) {
 		PyErr_SetString(PyExc_TypeError, 
-				"Cannot register typenumber");
+				"cannot register typenumber");
 		return -1;
 	}
 	if (ufunc->userloops == NULL) {
@@ -2629,7 +2629,7 @@ ufunc_outer(PyUFuncObject *self, PyObject *args)
 	}
 	
 	if (PySequence_Length(args) != 2) {
-		PyErr_SetString(PyExc_ValueError,
+		PyErr_SetString(PyExc_TypeError,
 				"exactly two arguments expected");
 		return NULL;
 	}

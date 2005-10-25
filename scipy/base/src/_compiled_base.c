@@ -106,7 +106,7 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
     mxi = mxx (numbers, len) ;
     mni = mnx (numbers, len) ;
     Py_Assert(numbers[mni] >= 0, 
-	      "First argument of bincount must be nonnegative.");
+	      "irst argument of bincount must be non-negative");
     ans_size = numbers [mxi] + 1 ;
     if (weight == Py_None) {
 	Py_Try(ans = PyArray_Zeros(1, &ans_size, &type));
@@ -173,7 +173,7 @@ arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
     iret = (intp *)PyArray_DATA(aret);
 
     Py_Assert(lx > 0 && lbins > 0, 
-	      "x and bins both must have nonzero length.");
+	      "x and bins both must have non-zero length");
     
     if (lbins == 1)  {
 	for (i=0 ; i<lx ; i++)
@@ -192,7 +192,7 @@ arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
             for ( i = 0 ; i < lx ; i ++ )
                 iret [i] = incr_slot_ ((float)dx [i], dbins, lbins) ;
         }
-        else Py_Assert(0, "bins must be montonic increasing or decreasing..");
+        else Py_Assert(0, "bins must be montonically increasing or decreasing");
     }
 
     Py_DECREF(ax);
@@ -253,8 +253,8 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 	else if ((PyArray_SIZE(ainput)) != PyArray_SIZE(amask)) sameshape = 0;
     }
     if (!sameshape) {
-	PyErr_SetString(PyExc_ValueError, 
-			"Mask array must be 1D or same shape as input array.");
+	PyErr_SetString(PyExc_TypeError, 
+			"mask array must be 1-d or same shape as input array");
 	goto fail;
     }
 

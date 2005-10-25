@@ -555,7 +555,7 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis)
         if (cond->nd != 1) {
                 Py_DECREF(cond);
                 PyErr_SetString(PyExc_ValueError, 
-				"Condition must be 1-d array.");
+				"condition must be 1-d array");
                 return NULL;
         }
 
@@ -865,12 +865,12 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd, int type_num)
 	typecode.type_num = type_num;
 	if (PyTypeNum_ISFLEXIBLE(type_num)) {
 		PyErr_SetString(PyExc_TypeError, 
-				"Cannot treat flexible type as C array.");
+				"cannot treat flexible type as C array");
 		return -1;
 	}
 	if ((nd < 1) || (nd > 3)) {
 		PyErr_SetString(PyExc_ValueError,
-				"Only Carrays of 1-3 dimensions available.");
+				"C arrays of only 1-3 dimensions available");
 		return -1;
 	}
 	if ((ap = (PyArrayObject*)PyArray_FromAny(*op, &typecode, nd, nd,
@@ -908,7 +908,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd, int type_num)
 	return 0;
 
  fail:
-	PyErr_SetString(PyExc_MemoryError, "No memory.");
+	PyErr_SetString(PyExc_MemoryError, "no memory");
 	return -1;
 }
 
@@ -1010,8 +1010,8 @@ PyArray_Concatenate(PyObject *op, int axis)
 	}
 	if (n == 0) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Concatenation of zero-length sequences is "\
-				"impossible.");
+				"concatenation of zero-length sequences is "\
+				"impossible");
 		return NULL;
 	}
 
@@ -1089,7 +1089,7 @@ PyArray_Concatenate(PyObject *op, int axis)
 		}
 		if (nd == 0) {
 			PyErr_SetString(PyExc_ValueError, 
-					"0d arrays can't be concatenated");
+					"0-d arrays can't be concatenated");
 			goto fail;
 		}
 		new_dim += mps[i]->dimensions[0];
@@ -1146,12 +1146,12 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 	if (a2 < 0) a2 += n;
 	if ((a1 < 0) || (a1 >= n)) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Bad axis1 argument to swapaxes.");
+				"bad axis1 argument to swapaxes");
 		return NULL;
 	}
 	if ((a2 < 0) || (a2 >= n)) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Bad axis2 argument to swapaxes.");
+				"bad axis2 argument to swapaxes");
 		return NULL;
 	}
 	new_axes = PyTuple_New(n);
@@ -1396,7 +1396,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	/* why not ??? 
 	if (PyTypeNum_ISFLEXIBLE(type_num)) {
 		PyErr_SetString(PyExc_NotImplementedError, 
-				"Not implemented for flexible sizes");
+				"not implemented for flexible sizes");
 		return NULL;
 	}
 	*/
@@ -1946,7 +1946,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 	else if (nd != 2) {
 		Py_DECREF(arr);
 		PyErr_SetString(PyExc_ValueError, 
-				"Only 2-d arrays are allowed.");
+				"only 2-d arrays are allowed");
 		return NULL;
 	}
 
@@ -2027,7 +2027,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 		break;
 	default:
 		PyErr_SetString(PyExc_ValueError, 
-				"mode must be 0,1, or 2");
+				"mode must be 0, 1, or 2");
 		goto fail;
 	}
 	
@@ -2086,7 +2086,7 @@ PyArray_ArgMin(PyArrayObject *ap, int axis)
 
 	if (PyArray_ISFLEXIBLE(ap)) {
 		PyErr_SetString(PyExc_TypeError, 
-				"argmax is unsupported for this type.");
+				"argmax is unsupported for this type");
 		return NULL;
 	}
 	else if (PyArray_ISUNSIGNED(ap)) 
@@ -2200,7 +2200,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 	m = ap->dimensions[ap->nd-1];
 	if (m == 0) {
 		PyErr_SetString(MultiArrayError, 
-				"Attempt to get argmax/argmin "\
+				"attempt to get argmax/argmin "\
 				"of an empty sequence??");
 		goto fail;
 	}
@@ -2273,7 +2273,7 @@ PyArray_Take(PyArrayObject *self0, PyObject *indices0, int axis) {
                         if (tmp < 0) tmp = tmp+max_item;
                         if ((tmp < 0) || (tmp >= max_item)) {
                                 PyErr_SetString(PyExc_IndexError, 
-						"Index out of range for "\
+						"index out of range for "\
 						"array");
                                 goto fail;
                         }
@@ -2309,7 +2309,7 @@ PyArray_Put(PyArrayObject *self, PyObject *indices0, PyObject* values0)
         values = NULL;
 
         if (!PyArray_Check(self)) {
-                PyErr_SetString(PyExc_ValueError, "put: first argument must be an array");
+                PyErr_SetString(PyExc_TypeError, "put: first argument must be an array");
                 return NULL;
         }
         if (!PyArray_ISCONTIGUOUS(self)) {
@@ -2335,7 +2335,7 @@ PyArray_Put(PyArrayObject *self, PyObject *indices0, PyObject* values0)
                         tmp = ((intp *)(indices->data))[i];
                         if (tmp < 0) tmp = tmp+max_item;
                         if ((tmp < 0) || (tmp >= max_item)) {
-                                PyErr_SetString(PyExc_IndexError, "Index out of range for array");
+                                PyErr_SetString(PyExc_IndexError, "index out of range for array");
                                 goto fail;
                         }
                         memmove(dest + tmp * chunk, src, chunk);
@@ -2364,7 +2364,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject *mask0, PyObject* values0)
         values = NULL;
 
         if (!PyArray_Check(self)) {
-                PyErr_SetString(PyExc_ValueError, 
+                PyErr_SetString(PyExc_TypeError, 
 				"putmask: first argument must "\
 				"be an array");
                 return NULL;
@@ -2386,7 +2386,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject *mask0, PyObject* values0)
         if (ni != max_item) {
                 PyErr_SetString(PyExc_ValueError, 
 				"putmask: mask and data must be "\
-				"the same size.");
+				"the same size");
                 goto fail;
         }
 
@@ -2629,11 +2629,11 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         }
         if (len < 0) {
                 PyErr_SetString(PyExc_TypeError, 
-                                "Expected sequence object with len >= 0");
+                                "expected sequence object with len >= 0");
                 return PY_FAIL;
         }
         if (len > MAX_DIMS) {
-                PyErr_Format(PyExc_ValueError, "Sequence too large, "   \
+                PyErr_Format(PyExc_ValueError, "sequence too large; "   \
                              "must be smaller than %d", MAX_DIMS);
                 return PY_FAIL;
         }
@@ -3021,9 +3021,9 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 		}
 		else {
 			if (!PyString_Check(obj)) {
-				PyErr_SetString(PyExc_ValueError, 
+				PyErr_SetString(PyExc_TypeError, 
 						"initializing object must "\
-						"be a string.");
+						"be a string");
 				return NULL;
 			}
 			if (PyString_GET_SIZE(obj) < typecode.itemsize) {
@@ -3143,7 +3143,7 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 
 	itemsize = type.itemsize;
 	if (itemsize == 0) {
-		PyErr_SetString(PyExc_ValueError, "zero-valued itemsize.");
+		PyErr_SetString(PyExc_ValueError, "zero-valued itemsize");
 		return NULL;
 	}
 	
@@ -3218,7 +3218,7 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 		numbytes = (intp )ftell(fp) - start;
 		fseek(fp, (long) start, SEEK_SET);
 		if (numbytes == -1) {
-			PyErr_SetString(PyExc_IOError, "Could not seek in file.");
+			PyErr_SetString(PyExc_IOError, "could not seek in file");
 			return NULL;
 		}
 		if (typecode->itemsize == 0) {
@@ -3246,7 +3246,7 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 		scan = PyArray_DescrFromType(typecode->type_num)->scanfunc;
 		if (scan == NULL) {
 			PyErr_SetString(PyExc_ValueError, 
-					"Don't know how to read "	\
+					"don't know how to read "	\
 					"character files with that "	\
 					"array type");
 			return NULL;
@@ -3373,7 +3373,7 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 	}
 	fp = PyFile_AsFile(file);
 	if (fp == NULL) {
-		PyErr_SetString(PyExc_IOError, "First argument must be an open file");
+		PyErr_SetString(PyExc_IOError, "first argument must be an open file");
 		Py_DECREF(file);
 		return NULL;
 	}
@@ -3395,13 +3395,13 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 
 	if (type->type_num == PyArray_OBJECT) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Cannot create an OBJECT array from memory"\
-				" buffer.");
+				"cannot create an OBJECT array from memory"\
+				" buffer");
 		return NULL;
 	}
 	if (type->itemsize == 0) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Itemsize cannot be zero in type");
+				"itemsize cannot be zero in type");
 		return NULL;
 	}
 
@@ -3685,7 +3685,7 @@ array_set_ops_function(PyObject *self, PyObject *args, PyObject *kwds)
 	if (PyArray_SetNumericOps(kwds) == -1) {
 		Py_DECREF(oldops);
 		PyErr_SetString(PyExc_ValueError, 
-				"One or more objects is not callable.");
+				"one or more objects not callable");
 		return NULL;
 	}
 	return oldops;
@@ -3701,7 +3701,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
 	if ((x==NULL) || (y==NULL)) {
 		PyErr_SetString(PyExc_ValueError, "either both or neither"
-				"of x and y should be given.");
+				"of x and y should be given");
 		return NULL;
 	}
 
@@ -3784,8 +3784,8 @@ array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
 	if (d1.type_num == PyArray_NOTYPE || \
 	    d2.type_num == PyArray_NOTYPE) {
 		PyErr_SetString(PyExc_TypeError, 
-				"did not understand one of the types. "\
-				"'None' not accepted.");
+				"did not understand one of the types; "\
+				"'None' not accepted");
 		return NULL;
 	}
 		
@@ -3870,7 +3870,7 @@ setup_scalartypes(PyObject *dict)
         if (PyType_Ready(&Py##child##ArrType_Type) < 0) {		\
                 PyErr_Print();                                          \
                 PyErr_Format(PyExc_SystemError,                         \
-			     "Could not initialize Py%sArrType_Tyupe",  \
+			     "could not initialize Py%sArrType_Type",  \
                              #child);                                   \
                 return -1;						\
         }
@@ -3896,7 +3896,7 @@ setup_scalartypes(PyObject *dict)
         if (PyType_Ready(&Py##child##ArrType_Type) < 0) {               \
                 PyErr_Print();                                          \
 		PyErr_Format(PyExc_SystemError,                         \
-			     "Could not initialize Py%sArrType_Type",   \
+			     "could not initialize Py%sArrType_Type",   \
                              #child);                                   \
                 return -1;                                              \
         }\
@@ -3910,7 +3910,7 @@ setup_scalartypes(PyObject *dict)
         if (PyType_Ready(&Py##child##ArrType_Type) < 0) {               \
                 PyErr_Print();                                          \
 		PyErr_Format(PyExc_SystemError,                         \
-			     "Could not initialize Py%sArrType_Type",   \
+			     "could not initialize Py%sArrType_Type",   \
                              #child);                                   \
                 return -1;                                              \
         }\
