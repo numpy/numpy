@@ -627,9 +627,9 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 	if (ssize == 0) return 0;
         if (dsize % ssize != 0) {
                 PyErr_SetString(PyExc_ValueError, 
-                                "destination number of elements must be"\
-                                "an integer multiple of the source number of"\
-                                "elements");
+                                "number of elements in destination must be "\
+                                "integer multiple of number of "\
+                                "elements in source");
                 return -1;
         }
         ncopies = (dsize / ssize);
@@ -1097,8 +1097,8 @@ PyArray_ToList(PyArrayObject *self)
                 v=(PyArrayObject *)array_item(self, i);
 		if (v->nd >= self->nd) {
 			PyErr_SetString(PyExc_RuntimeError,
-					"array_item not returning smaller" \
-					" dimensional array");
+					"array_item not returning smaller-" \
+					"dimensional array");
 			Py_DECREF(lp);
 			return NULL;
 		}
@@ -3167,8 +3167,8 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 	for (i=nd-1;i>=0;i--) {
 		if (dims[i] < 0) {
 			PyErr_SetString(PyExc_ValueError,
-					"negative dimensions"	\
-					" are not allowed");
+					"negative dimensions "	\
+					"are not allowed");
 			return NULL;
 		}
 	}
@@ -3649,7 +3649,7 @@ array_flags_set(PyArrayObject *self, PyObject *obj)
                         else {
 				self->flags = flagback;
                                 PyErr_SetString(PyExc_ValueError, 
-                                                "cannot set UPDATEIFCOPY" \
+                                                "cannot set UPDATEIFCOPY " \
                                                 "flag to True");
                                 return -1;
                         }
@@ -3838,7 +3838,7 @@ array_data_set(PyArrayObject *self, PyObject *op)
 		if (PyObject_AsReadBuffer(op, (const void **)&buf, 
 					  &buf_len) < 0) {
 			PyErr_SetString(PyExc_AttributeError, 
-					"object does not have single-segment" \
+					"object does not have single-segment " \
 					"buffer interface");
 			return -1;
 		}
@@ -5280,8 +5280,8 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 		if (PyTuple_GET_SIZE(attr) != 2) {
 			Py_DECREF(attr);
 			PyErr_SetString(PyExc_TypeError, 
-					"__array_data__ must return"	\
-					" a 2-tuple with ('data pointer "\
+					"__array_data__ must return "	\
+					"a 2-tuple with ('data pointer "\
 					"string', read-only flag)");
 			return NULL;
 		}
