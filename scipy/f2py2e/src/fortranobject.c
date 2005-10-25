@@ -549,6 +549,133 @@ PyArrayObject* array_from_pyobj(const int type_num,
      Py_BuildValue("N",arr).
      Otherwise, if obj!=arr then the caller must call Py_DECREF(arr).
   */
+
+  if (intent & F2PY_INTENT_CACHE) {
+    /* Don't expect correct storage order or anything reasonable when
+       returning intent(cache) array. */ 
+    if ((intent & F2PY_INTENT_HIDE)
+	|| (obj==Py_None)) {
+      PyArrayObject *arr = NULL;
+      CHECK_DIMS_DEFINED(rank,dims,"optional,intent(cache) must"
+			 " have defined dimensions.\n");
+      arr = (PyArrayObject *)PyArray_SimpleNew(rank,dims,type_num);
+      ARR_IS_NULL(arr==NULL,"PyArray_SimpleNew failed: optional,intent(cache)\n");
+      return arr;
+    }
+    if (PyArray_Check(obj) 
+	&& PyArray_ISONESEGMENT(obj)
+	&& HAS_PROPER_ELSIZE((PyArrayObject *)obj,type_num)
+	) {
+      if (check_and_fix_dimensions((PyArrayObject *)obj,rank,dims))
+	return NULL; /*XXX: set exception */
+      {
+	if (intent & F2PY_INTENT_OUT)
+	  Py_INCREF(obj);
+	return (PyArrayObject *)obj;
+      }
+    }
+    ARR_IS_NULL(1,"intent(cache) must be contiguous array with a proper elsize.\n");
+  }
+
+  if (intent & F2PY_INTENT_HIDE) {
+    PyArrayObject *arr = NULL;
+    CHECK_DIMS_DEFINED(rank,dims,"intent(hide) must have defined dimensions.\n");
+    arr = (PyArrayObject *)
+      PyArray_New(&PyArray_Type, rank, dims, type_num,
+		  NULL,NULL,0,
+		  !(intent&F2PY_INTENT_C),
+		  NULL);
+    ARR_IS_NULL(arr==NULL,"PyArray_New failed: intent(hide)\n");
+    PyArray_FILLWBYTE(arr, 0);
+    return arr;
+  }
+
+  if (PyArray_Check(obj)) { /* here we have always intent(in) or
+			       intent(inout) or intent(inplace) */
+    PyArrayObject *arr = (PyArrayObject *)obj;
+
+    if (check_and_fix_dimensions(arr,rank,dims))
+      return NULL; /*XXX: set exception */
+
+    if ((! (intent & F2PY_INTENT_COPY))
+	&& HAS_PROPER_ELSIZE(arr,type_num)
+	&& PyArray_CanCastSafely(arr->descr->type_num,type_num)
+	) {
+      if ((intent & F2PY_INTENT_C)?PyArray_ISCARRAY(arr):PyArray_ISFARRAY(arr)) {
+	if ((intent & F2PY_INTENT_OUT)) {
+	  Py_INCREF(arr);
+	}
+	return arr;
+      }
+    }
+
+    {
+      PyArrayObject *retarr = (PyArrayObject *) \
+	PyArray_New(&PyArray_Type, rank, dims, type_num,
+		    NULL,NULL,0,
+		    !(intent&F2PY_INTENT_C),
+		    NULL);
+
+      ARR_IS_NULL(retarr==NULL,"PyArray_New failed: intent(in,copy)\n");
+      if (PyArray_CopyInto(retarr, arr)) {
+	Py_DECREF(retarr);
+	return NULL;
+      }
+      if (intent & F2PY_INTENT_INPLACE) {
+	if (swap_arrays(arr,retarr))
+	  return NULL;
+	Py_XDECREF(retarr);
+	if (intent & F2PY_INTENT_OUT)
+	  Py_INCREF(arr);	
+      } else {
+	arr = retarr;
+      }
+    }
+    return arr;
+  }
+
+  if ((obj==Py_None) && (intent & F2PY_OPTIONAL)) {
+    PyArrayObject *arr = NULL;
+    CHECK_DIMS_DEFINED(rank,dims,"optional must have defined dimensions.\n");
+    arr = (PyArrayObject *)
+      PyArray_New(&PyArray_Type, rank, dims, type_num,
+		  NULL,NULL,0,
+		  !(intent&F2PY_INTENT_C),
+		  NULL);
+    ARR_IS_NULL(arr==NULL,"PyArray_New failed: optional\n");
+    PyArray_FILLWBYTE(arr, 0);
+    return arr;
+  }
+
+  if ((intent & F2PY_INTENT_INOUT) || (intent & F2PY_INTENT_INPLACE)) {
+    ARR_IS_NULL(1,"intent(inout)|intent(inplace) argument must be an array.\n");
+  }
+
+  {
+    PyArray_Typecode typecode = {type_num, 0, 0};
+    PyArrayObject *arr = (PyArrayObject *) \
+      PyArray_FromAny(obj,&typecode, 0,0,
+		      ((intent & F2PY_INTENT_C)?CARRAY_FLAGS:FARRAY_FLAGS));
+    ARR_IS_NULL(arr==NULL,"PyArray_FromAny failed: not a sequence.\n");
+    if (check_and_fix_dimensions(arr,rank,dims))
+      return NULL; /*XXX: set exception */
+    return arr;
+  }
+
+}
+
+extern
+PyArrayObject* old_array_from_pyobj(const int type_num,
+				intp *dims,
+				const int rank,
+				const int intent,
+				PyObject *obj) {
+  /* Note about reference counting
+     -----------------------------
+     If the caller returns the array to Python, it must be done with
+     Py_BuildValue("N",arr).
+     Otherwise, if obj!=arr then the caller must call Py_DECREF(arr).
+  */
   if (intent & F2PY_INTENT_CACHE) {
     /* Don't expect correct storage order or anything reasonable when
        returning intent(cache) array. */ 
