@@ -583,7 +583,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 
     {
       PyArrayObject *retarr = (PyArrayObject *) \
-	PyArray_New(&PyArray_Type, rank, dims, type_num,
+	PyArray_New(&PyArray_Type, arr->nd, arr->dimensions, type_num,
 		    NULL,NULL,0,
 		    !(intent&F2PY_INTENT_C),
 		    NULL);
