@@ -72,8 +72,8 @@ class Type(object):
     _cast_dict['LONG'] = _cast_dict['INT'] + ['LONG']
     _cast_dict['ULONG'] = _cast_dict['UINT'] + ['ULONG']
 
-    _cast_dict['LONGLONG'] = _cast_dict['LONG'] + ['ULONG','LONGLONG']
-    _cast_dict['ULONGLONG'] = _cast_dict['ULONG'] + ['LONG','ULONGLONG']
+    _cast_dict['LONGLONG'] = _cast_dict['LONG'] + ['LONGLONG']
+    _cast_dict['ULONGLONG'] = _cast_dict['ULONG'] + ['ULONGLONG']
 
     _cast_dict['FLOAT'] = _cast_dict['SHORT'] + ['USHORT','FLOAT']
     _cast_dict['DOUBLE'] = _cast_dict['INT'] + ['UINT','FLOAT','DOUBLE']
