@@ -426,7 +426,13 @@ static char doc_toscalar[] = "m.toscalar().  Copy the first data point of "\
 static PyObject *
 array_toscalar(PyArrayObject *self, PyObject *args) {
         if (!PyArg_ParseTuple(args, "")) return NULL;
-        return self->descr->getitem(self->data, self);
+	if (self->nd == 0 || PyArray_SIZE(self) == 1) 
+		return self->descr->getitem(self->data, self);
+	else {
+		PyErr_SetString(PyExc_ValueError, "can only convert an"	\
+				" array of size 1 to Python scalar.");
+		return NULL;
+	}
 }
 
 static char doc_cast[] = "m.astype(t).	Cast array m to type t.	 \n\n"\
