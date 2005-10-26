@@ -567,7 +567,7 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
 #include "arraytypes.inc"
 
 static char *
-index2ptr(PyArrayObject *mp, int i) 
+index2ptr(PyArrayObject *mp, intp i) 
 {
 	if (i==0 && (mp->nd == 0 || mp->dimensions[0] > 0)) 
 		return mp->data;
@@ -794,7 +794,7 @@ PyArray_Copy(PyArrayObject *m1)
 }
 
 
-static PyObject *array_item(PyArrayObject *, int);
+static PyObject *array_big_item(PyArrayObject *, intp);
 
 static PyObject *
 PyArray_Scalar(char *data, int type_num, int itemsize, int swap)
@@ -1094,7 +1094,7 @@ PyArray_ToList(PyArrayObject *self)
         lp = PyList_New(sz);
 	
         for (i=0; i<sz; i++) {
-                v=(PyArrayObject *)array_item(self, i);
+                v=(PyArrayObject *)array_big_item(self, i);
 		if (v->nd >= self->nd) {
 			PyErr_SetString(PyExc_RuntimeError,
 					"array_item not returning smaller-" \
@@ -1210,19 +1210,19 @@ array_length(PyArrayObject *self)
 
 
 static PyObject *
-array_item(PyArrayObject *self, int i) 
+array_big_item(PyArrayObject *self, intp i) 
 {
-    char *item;
-    PyArrayObject *r;
-
-
+	char *item;
+	PyArrayObject *r;
+	
+	
 	if(self->nd == 0) {
 		PyErr_SetString(PyExc_IndexError, 
 				"0-d arrays can't be indexed");
 		return NULL;
 	}
         if ((item = index2ptr(self, i)) == NULL) return NULL;
-
+	
 	r = (PyArrayObject *)PyArray_New(self->ob_type, 
 					 self->nd-1, self->dimensions+1, 
 					 self->descr->type_num, 
@@ -1239,12 +1239,12 @@ array_item(PyArrayObject *self, int i)
 static PyObject *
 array_item_nice(PyArrayObject *self, int i) 
 {
-	return PyArray_Return((PyArrayObject *)array_item(self, i));
+	return PyArray_Return((PyArrayObject *)array_big_item(self, (intp) i));
 }
 
 
 static int 
-array_ass_item(PyArrayObject *self, int i, PyObject *v) 
+array_ass_big_item(PyArrayObject *self, intp i, PyObject *v) 
 {
         PyArrayObject *tmp;
         char *item;
@@ -1264,7 +1264,7 @@ array_ass_item(PyArrayObject *self, int i, PyObject *v)
         if (i < 0) i = i+self->dimensions[0];
 
         if (self->nd > 1) {
-                if((tmp = (PyArrayObject *)array_item(self, i)) == NULL)
+                if((tmp = (PyArrayObject *)array_big_item(self, i)) == NULL)
                         return -1;
                 ret = PyArray_CopyObject(tmp, v);
                 Py_DECREF(tmp);
@@ -1275,6 +1275,17 @@ array_ass_item(PyArrayObject *self, int i, PyObject *v)
         if (self->descr->setitem(v, item, self) == -1) return -1;
         return 0;
 }
+
+#if SIZEOF_INT == SIZEOF_INTP
+#define array_ass_item array_ass_big_item
+#else
+static int
+array_ass_item(PyArrayObject *self, int i, PyObject *v)
+{
+	return array_ass_big_item(self, (intp) i, v);
+}
+#endif
+
 
 /* -------------------------------------------------------------- */
 static int
@@ -1671,7 +1682,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
 {
         intp dimensions[MAX_DIMS], strides[MAX_DIMS];
 	intp offset;
-        int nd, i;
+        int nd;
+	intp i;
         PyArrayObject *other;
 	PyArrayMapIterObject *mit;
 
@@ -1683,12 +1695,12 @@ array_subscript(PyArrayObject *self, PyObject *op)
                         PyErr_Clear();
                 else if (value >= 0) {
                         if (value <= MAX_INT)
-                                return array_item(self, (int) value);
+                                return array_big_item(self, value);
                 }
                 else if (value < 0) {
                         if (value >= -MAX_INT) {
                                 if (self->nd > 0) value += self->dimensions[0];
-                                return array_item(self, (int) value);
+                                return array_big_item(self, value);
                         }
                 }
         }
@@ -1715,10 +1727,10 @@ array_subscript(PyArrayObject *self, PyObject *op)
 		Py_DECREF(mit);
 	}
 
-	i = PyArray_PyIntAsInt(op);
+	i = PyArray_PyIntAsIntp(op);
 	if (!error_converting(i)) {
 		if (i < 0 && self->nd > 0) i = i+self->dimensions[0];
-		return array_item(self, i);
+		return array_big_item(self, i);
 	}
 	PyErr_Clear();
 
@@ -1757,7 +1769,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
 static int 
 array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op) 
 {
-        int ret, i;
+        int ret;
+	intp i;
         PyArrayObject *tmp;
 	PyArrayMapIterObject *mit;
 	
@@ -1793,9 +1806,9 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 		Py_DECREF((PyObject*)mit);
 	}
 
-	i = PyArray_PyIntAsInt(index);
+	i = PyArray_PyIntAsIntp(index);
 	if (!error_converting(i)) {
-		return array_ass_item(self, i, op);
+		return array_ass_big_item(self, i, op);
 	}
 	PyErr_Clear();
 	
