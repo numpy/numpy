@@ -1174,9 +1174,9 @@ PyArray_Transpose(PyArrayObject *ap, PyObject *op) {
 	intp *permutation = NULL;
 	PyArrayObject *ret = NULL;
 	
-	if (op == Py_None || op == NULL) {
+	if (op == NULL || op == Py_None) {
 		n = ap->nd;
-		permutation = (intp *)malloc(n*sizeof(int));
+		permutation = (intp *)malloc(n*sizeof(intp));
 		for(i=0; i<n; i++)
 			permutation[i] = n-1-i;
 	} else {
@@ -1184,7 +1184,7 @@ PyArray_Transpose(PyArrayObject *ap, PyObject *op) {
 				 PyArray_INTP) == -1)
 			return NULL;
 	
-		permutation = (intp *)malloc(n*sizeof(int));
+		permutation = (intp *)malloc(n*sizeof(intp));
 	
 		for(i=0; i<n; i++) {
 			axis = axes[i];
@@ -1223,8 +1223,8 @@ PyArray_Transpose(PyArrayObject *ap, PyObject *op) {
 	
  fail:
 	Py_XDECREF(ret);
-	if (permutation != NULL) free(permutation);
-	if (op != Py_None)
+	if (permutation) free(permutation);
+	if (op && (op != Py_None))
 		PyArray_Free(op, (char *)axes);
 	return NULL;
 }
