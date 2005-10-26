@@ -2853,6 +2853,21 @@ PyArray_EquivArrTypes(PyArrayObject *a1, PyArrayObject *a2)
         return PyArray_EquivalentTypes(&type1, &type2);
 }
 
+/* All flexible types of the same typenum seen as equivalent */
+static Bool
+PyArray_EquivalentTypenums(int typenum1, int typenum2)
+{
+	PyArray_Typecode type1={0,0,0};
+	PyArray_Typecode type2={0,0,0};
+	
+	type1.type_num = typenum1;
+	type2.type_num = typenum2;
+	type1.itemsize = PyArray_DescrFromType(typenum1)->elsize;
+	type2.itemsize = PyArray_DescrFromType(typenum2)->elsize;
+	
+	return PyArray_EquivalentTypes(&type1, &type2);
+}
+
 
 /*** END C-API FUNCTIONS **/
 

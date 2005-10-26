@@ -502,6 +502,10 @@ multiapi_list = [
     """,
      'EquivArrTypes', 'PyArrayObject *, PyArrayObject *', 'Bool'),
 
+    (r"""
+    """,
+     'EquivalentTypenums', 'int, int', 'Bool'),
+
     (r"""Zeros
     """,
      'Zeros', 'int, intp *, PyArray_Typecode *', 'PyObject *'),

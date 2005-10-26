@@ -299,20 +299,26 @@ num_to_c_types[type(1L)]  = 'int'
 # Numeric array Python numeric --> C type maps
 #----------------------------------------------------------------------------
 num_to_c_types['T'] = 'T' # for templates
+num_to_c_types['G'] = 'std::complex<longdouble> '
 num_to_c_types['F'] = 'std::complex<float> '
 num_to_c_types['D'] = 'std::complex<double> '
+num_to_c_types['g'] = 'longdouble'
 num_to_c_types['f'] = 'float'
 num_to_c_types['d'] = 'double'
-num_to_c_types['1'] = 'char'
-num_to_c_types['b'] = 'unsigned char'
-num_to_c_types['s'] = 'short'
-num_to_c_types['w'] = 'unsigned short'
+num_to_c_types['b'] = 'char'
+num_to_c_types['B'] = 'uchar'
+num_to_c_types['h'] = 'short'
+num_to_c_types['H'] = 'ushort'
 num_to_c_types['i'] = 'int'
-num_to_c_types['u'] = 'unsigned int'
+num_to_c_types['I'] = 'uint'
 
 # not strictly correct, but shoulld be fine fo numeric work.
 # add test somewhere to make sure long can be cast to int before using.
-num_to_c_types['l'] = 'int'
+num_to_c_types['l'] = 'long'
+num_to_c_types['L'] = 'ulong'
+
+num_to_c_types['q'] = 'longlong'
+num_to_c_types['Q'] = 'ulonglong'
 
 class scalar_converter(common_base_converter):
     def init_info(self):
