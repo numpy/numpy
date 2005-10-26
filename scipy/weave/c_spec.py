@@ -289,11 +289,11 @@ class file_converter(common_base_converter):
 # Standard Python numeric --> C type maps
 #----------------------------------------------------------------------------
 num_to_c_types = {}
-num_to_c_types[type(1)]  = 'int'
+num_to_c_types[type(1)]  = 'long'
 num_to_c_types[type(1.)] = 'double'
 num_to_c_types[type(1.+1.j)] = 'std::complex<double> '
 # !! hmmm. The following is likely unsafe...
-num_to_c_types[type(1L)]  = 'int'
+num_to_c_types[type(1L)]  = 'longlong'
 
 #----------------------------------------------------------------------------
 # Numeric array Python numeric --> C type maps
@@ -332,9 +332,9 @@ class int_converter(scalar_converter):
         scalar_converter.init_info(self)
         self.type_name = 'int'
         self.check_func = 'PyInt_Check'    
-        self.c_type = 'int'
-        self.return_type = 'int'
-        self.to_c_return = "(int) PyInt_AsLong(py_obj)"
+        self.c_type = 'long'
+        self.return_type = 'long'
+        self.to_c_return = "PyInt_AsLong(py_obj)"
         self.matching_types = [IntType]
 
 class long_converter(scalar_converter):
@@ -343,9 +343,9 @@ class long_converter(scalar_converter):
         # !! long to int conversion isn't safe!
         self.type_name = 'long'
         self.check_func = 'PyLong_Check'    
-        self.c_type = 'int'
-        self.return_type = 'int'
-        self.to_c_return = "(int) PyLong_AsLong(py_obj)"
+        self.c_type = 'longlong'
+        self.return_type = 'longlong'
+        self.to_c_return = "(longlong) PyLong_AsLongLong(py_obj)"
         self.matching_types = [LongType]
 
 class float_converter(scalar_converter):
