@@ -3,7 +3,7 @@ import sys
 import copy
 
 from scipy.test.testing import *
-from scipy.base import array, typeinfo, alltrue, ndarray, asarray, can_cast
+from scipy.base import array, typeinfo, alltrue, ndarray, asarray, can_cast,zeros
 set_package_path()
 from array_from_pyobj import wrap
 del sys.path[0]
@@ -109,7 +109,10 @@ class Type(object):
         self.dtypechar = typeinfo[self.NAME][0]
 
     def cast_types(self):
-        return map(Type,self._cast_dict[self.NAME])
+        return map(self.__class__,self._cast_dict[self.NAME])
+
+    def all_types(self):
+        return map(self.__class__,self._type_names)
 
     def smaller_types(self):
         bits = typeinfo[self.NAME][3]
@@ -144,24 +147,6 @@ class Array:
         self.obj_copy = copy.deepcopy(obj)
         self.obj = obj
 
-        self.pyarr = array(array(obj,
-                                 dtype = typ.dtypechar).reshape(*dims),
-                           fortran=not self.intent.is_intent('c'))
-        assert self.pyarr.dtypechar==typ.dtypechar,\
-               `self.pyarr.dtypechar,typ.dtypechar`
-        assert self.pyarr.flags['OWNDATA']
-        self.pyarr_attr = wrap.array_attrs(self.pyarr)
-
-        if len(dims)>1:
-            if self.intent.is_intent('c'):
-                assert not self.pyarr.flags['FORTRAN']
-                assert self.pyarr.flags['CONTIGUOUS']
-                assert not self.pyarr_attr[6] & wrap.FORTRAN
-            else:
-                assert self.pyarr.flags['FORTRAN']
-                assert not self.pyarr.flags['CONTIGUOUS']
-                assert self.pyarr_attr[6] & wrap.FORTRAN
-
         # arr.dtypechar may be different from typ.dtypechar
         self.arr = wrap.call(typ.type_num,dims,intent.flags,obj)
 
@@ -179,6 +164,35 @@ class Array:
                 assert not self.arr.flags['CONTIGUOUS']
                 assert self.arr_attr[6] & wrap.FORTRAN
 
+        if obj is None:
+            self.pyarr = None
+            self.pyarr_attr = None
+            return
+
+        if intent.is_intent('cache'):
+            assert isinstance(obj,ndarray),`type(obj)`
+            self.pyarr = array(obj).reshape(*dims)
+            
+        else:
+            self.pyarr = array(array(obj,
+                                     dtype = typ.dtypechar).reshape(*dims),
+                               fortran=not self.intent.is_intent('c'))
+            assert self.pyarr.dtypechar==typ.dtypechar,\
+                   `self.pyarr.dtypechar,typ.dtypechar`
+        assert self.pyarr.flags['OWNDATA']
+        self.pyarr_attr = wrap.array_attrs(self.pyarr)
+
+        if len(dims)>1:
+            if self.intent.is_intent('c'):
+                assert not self.pyarr.flags['FORTRAN']
+                assert self.pyarr.flags['CONTIGUOUS']
+                assert not self.pyarr_attr[6] & wrap.FORTRAN
+            else:
+                assert self.pyarr.flags['FORTRAN']
+                assert not self.pyarr.flags['CONTIGUOUS']
+                assert self.pyarr_attr[6] & wrap.FORTRAN
+
+
         assert self.arr_attr[1]==self.pyarr_attr[1] # nd
         assert self.arr_attr[2]==self.pyarr_attr[2] # dimensions
         if self.arr_attr[1]<=1:
@@ -189,8 +203,12 @@ class Array:
         assert self.arr_attr[6]==self.pyarr_attr[6],\
                `self.arr_attr[6],self.pyarr_attr[6],flags2names(0*self.arr_attr[6]-self.pyarr_attr[6]),flags2names(self.arr_attr[6]),intent` # flags
 
-        assert self.arr_attr[5][3]==self.type.elsize,\
-               `self.arr_attr[5][3],self.type.elsize`
+        if intent.is_intent('cache'):
+            assert self.arr_attr[5][3]>=self.type.elsize,\
+                   `self.arr_attr[5][3],self.type.elsize`
+        else:
+            assert self.arr_attr[5][3]==self.type.elsize,\
+                   `self.arr_attr[5][3],self.type.elsize`
         assert self.arr_equal(self.pyarr,self.arr)
         
         if isinstance(self.obj,ndarray):
@@ -242,6 +260,41 @@ class _test_shared_memory:
                 assert a.has_shared_memory(),`self.type.dtype,t.dtype`
             else:
                 assert not a.has_shared_memory(),`t.dtype`
+
+    def check_inout_2seq(self):
+        obj = array(self.num2seq,dtype=self.type.dtype)
+        a = self.array([len(self.num2seq)],intent.inout,obj)
+        assert a.has_shared_memory()
+
+        try:
+            a = self.array([2],intent.in_.inout,self.num2seq)
+        except TypeError,msg:
+            if not str(msg).startswith('failed to initialize intent(inout|inplace|cache) array'):
+                raise
+        else:
+            raise SystemError,'intent(inout) should have failed on sequence'
+
+    def check_f_inout_23seq(self):
+        obj = array(self.num23seq,dtype=self.type.dtype,fortran=1)
+        shape = (len(self.num23seq),len(self.num23seq[0]))
+        a = self.array(shape,intent.in_.inout,obj)
+        assert a.has_shared_memory()
+
+        obj = array(self.num23seq,dtype=self.type.dtype,fortran=0)
+        shape = (len(self.num23seq),len(self.num23seq[0]))
+        try:
+            a = self.array(shape,intent.in_.inout,obj)
+        except ValueError,msg:
+            if not str(msg).startswith('failed to initialize intent(inout) array'):
+                raise
+        else:
+            raise SystemError,'intent(inout) should have failed on improper array'
+
+    def check_c_inout_23seq(self):
+        obj = array(self.num23seq,dtype=self.type.dtype)
+        shape = (len(self.num23seq),len(self.num23seq[0]))
+        a = self.array(shape,intent.in_.c.inout,obj)
+        assert a.has_shared_memory()
 
     def check_in_copy_from_2casttype(self):
         for t in self.type.cast_types():
@@ -295,10 +348,160 @@ class _test_shared_memory:
                            intent.in_.c.copy,obj)
             assert not a.has_shared_memory(),`t.dtype`
 
+    def check_in_cache_from_2casttype(self):
+        for t in self.type.all_types():
+            if t.elsize != self.type.elsize:
+                continue
+            obj = array(self.num2seq,dtype=t.dtype)
+            shape = (len(self.num2seq),)
+            a = self.array(shape,intent.in_.c.cache,obj)        
+            assert a.has_shared_memory(),`t.dtype`
+
+            a = self.array(shape,intent.in_.cache,obj)        
+            assert a.has_shared_memory(),`t.dtype`
+            
+            obj = array(self.num2seq,dtype=t.dtype,fortran=1)
+            a = self.array(shape,intent.in_.c.cache,obj)        
+            assert a.has_shared_memory(),`t.dtype`
+
+            a = self.array(shape,intent.in_.cache,obj)
+            assert a.has_shared_memory(),`t.dtype`
+
+            try:
+                a = self.array(shape,intent.in_.cache,obj[::-1])
+            except ValueError,msg:
+                if not str(msg).startswith('failed to initialize intent(cache) array'):
+                    raise
+            else:
+                raise SystemError,'intent(cache) should have failed on multisegmented array'
+    def check_in_cache_from_2casttype_failure(self):
+        for t in self.type.all_types():
+            if t.elsize >= self.type.elsize:
+                continue
+            obj = array(self.num2seq,dtype=t.dtype)
+            shape = (len(self.num2seq),)
+            try:
+                a = self.array(shape,intent.in_.cache,obj)
+            except ValueError,msg:
+                if not str(msg).startswith('failed to initialize intent(cache) array'):
+                    raise
+            else:
+                raise SystemError,'intent(cache) should have failed on smaller array'
+
+    def check_cache_hidden(self):
+        shape = (2,)
+        a = self.array(shape,intent.cache.hide,None)
+        assert a.arr.shape==shape
+
+        shape = (2,3)
+        a = self.array(shape,intent.cache.hide,None)
+        assert a.arr.shape==shape
+
+        shape = (-1,3)
+        try:
+            a = self.array(shape,intent.cache.hide,None)
+        except ValueError,msg:
+            if not str(msg).startswith('failed to create intent(cache|hide)|optional array'):
+                raise
+        else:
+            raise SystemError,'intent(cache) should have failed on undefined dimensions'
+
+    def check_hidden(self):
+        shape = (2,)
+        a = self.array(shape,intent.hide,None)
+        assert a.arr.shape==shape
+        assert a.arr_equal(a.arr,zeros(shape,dtype=self.type.dtype))
+
+        shape = (2,3)
+        a = self.array(shape,intent.hide,None)
+        assert a.arr.shape==shape
+        assert a.arr_equal(a.arr,zeros(shape,dtype=self.type.dtype))
+        assert a.arr.flags['FORTRAN'] and not a.arr.flags['CONTIGUOUS']
+
+        shape = (2,3)
+        a = self.array(shape,intent.c.hide,None)
+        assert a.arr.shape==shape
+        assert a.arr_equal(a.arr,zeros(shape,dtype=self.type.dtype))
+        assert not a.arr.flags['FORTRAN'] and a.arr.flags['CONTIGUOUS']
+
+        shape = (-1,3)
+        try:
+            a = self.array(shape,intent.hide,None)
+        except ValueError,msg:
+            if not str(msg).startswith('failed to create intent(cache|hide)|optional array'):
+                raise
+        else:
+            raise SystemError,'intent(hide) should have failed on undefined dimensions'
+
+    def check_optional_none(self):
+        shape = (2,)
+        a = self.array(shape,intent.optional,None)
+        assert a.arr.shape==shape
+        assert a.arr_equal(a.arr,zeros(shape,dtype=self.type.dtype))
+
+        shape = (2,3)
+        a = self.array(shape,intent.optional,None)
+        assert a.arr.shape==shape
+        assert a.arr_equal(a.arr,zeros(shape,dtype=self.type.dtype))
+        assert a.arr.flags['FORTRAN'] and not a.arr.flags['CONTIGUOUS']
+
+        shape = (2,3)
+        a = self.array(shape,intent.c.optional,None)
+        assert a.arr.shape==shape
+        assert a.arr_equal(a.arr,zeros(shape,dtype=self.type.dtype))
+        assert not a.arr.flags['FORTRAN'] and a.arr.flags['CONTIGUOUS']
+
+    def check_optional_from_2seq(self):
+        obj = self.num2seq
+        shape = (len(obj),)
+        a = self.array(shape,intent.optional,obj)
+        assert a.arr.shape==shape
+        assert not a.has_shared_memory()
+
+    def check_optional_from_23seq(self):
+        obj = self.num23seq
+        shape = (len(obj),len(obj[0]))
+        a = self.array(shape,intent.optional,obj)
+        assert a.arr.shape==shape
+        assert not a.has_shared_memory()
+
+        a = self.array(shape,intent.optional.c,obj)
+        assert a.arr.shape==shape
+        assert not a.has_shared_memory()
+
+    def check_inplace(self):
+        obj = array(self.num23seq,dtype=self.type.dtype)
+        assert not obj.flags['FORTRAN'] and obj.flags['CONTIGUOUS']
+        shape = obj.shape
+        a = self.array(shape,intent.inplace,obj)
+        assert obj[1][2]==a.arr[1][2],`obj,a.arr`
+        a.arr[1][2]=54
+        assert obj[1][2]==a.arr[1][2]==array(54,dtype=self.type.dtype),`obj,a.arr`
+        assert a.arr is obj
+        assert obj.flags['FORTRAN'] # obj attributes are changed inplace!
+        assert not obj.flags['CONTIGUOUS']
+
+    def check_inplace_from_casttype(self):
+        for t in self.type.cast_types():
+            if t is self.type:
+                continue
+            obj = array(self.num23seq,dtype=t.dtype)
+            assert obj.dtype==t.dtype
+            assert obj.dtype is not self.type.dtype
+            assert not obj.flags['FORTRAN'] and obj.flags['CONTIGUOUS']
+            shape = obj.shape
+            a = self.array(shape,intent.inplace,obj)
+            assert obj[1][2]==a.arr[1][2],`obj,a.arr`
+            a.arr[1][2]=54
+            assert obj[1][2]==a.arr[1][2]==array(54,dtype=self.type.dtype),`obj,a.arr`
+            assert a.arr is obj
+            assert obj.flags['FORTRAN'] # obj attributes are changed inplace!
+            assert not obj.flags['CONTIGUOUS']
+            assert obj.dtype is self.type.dtype # obj type is changed inplace!
 
 for t in Type._type_names:
     exec '''\
-class test_%s(unittest.TestCase,
+class test_%s_gen(unittest.TestCase,
               _test_shared_memory
               ):
     type = Type(%r)

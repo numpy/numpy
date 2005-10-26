@@ -184,6 +184,10 @@ DL_EXPORT(void) initwrap(void) {
   if (PyErr_Occurred())
     Py_FatalError("can't initialize module wrap");
 
+#ifdef F2PY_REPORT_ATEXIT
+  on_exit(f2py_report_on_exit,(void*)"array_from_pyobj.wrap.call");
+#endif
+
 }
 #ifdef __cplusplus
 }

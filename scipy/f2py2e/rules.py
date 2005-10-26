@@ -157,40 +157,6 @@ static PyObject *#modulename#_module;
 
 """+gentitle("See f2py2e/rules.py")+"""
 
-static char doc_f2py_has_column_major_storage[] = \"\\
-Function has_column_major_storage(obj):\\n\\
-  Return transpose(obj).iscontiguous().\\n\";
-static PyObject *f2py_has_column_major_storage(PyObject *self,PyObject *args) {
-  PyObject * obj = NULL;
-  if (!PyArg_ParseTuple(args, \"O\",&obj))
-    return NULL;
-  return Py_BuildValue(\"i\",(PyArray_Check(obj)? array_has_column_major_storage((PyArrayObject*)(obj)):0));
-}
-
-static char doc_f2py_as_column_major_storage[] = \"\\
-Function as_column_major_storage(arr):\\n\\
-  Return array in column major data storage order.\\n\";
-static PyObject *f2py_as_column_major_storage(PyObject *self,PyObject *args) {
-  PyObject * obj = NULL;
-  PyArrayObject * arr = NULL;
-  if (!PyArg_ParseTuple(args, \"O\",&obj))
-    return NULL;
-  if (!PyArray_Check(obj)) {
-    PyErr_SetString(#modulename#_error,\"expected array object\\n\");
-    return NULL;
-  }
-  arr = (PyArrayObject*)obj;
-  arr = array_from_pyobj(arr->descr->type_num, arr->dimensions, arr->nd,
-                         F2PY_INTENT_OUT|F2PY_INTENT_IN, obj);
-  if (arr == NULL) {
-    if (!PyErr_Occurred())
-      PyErr_SetString(#modulename#_error,
-        \"failed in converting argument to C/Fortran array\");
-    return NULL;
-  }
-  return Py_BuildValue(\"N\",arr);
-}
-
 static FortranDataDef f2py_routine_defs[] = {
 #routine_defs#
 \t{NULL}
@@ -198,8 +164,6 @@ static FortranDataDef f2py_routine_defs[] = {
 
 static PyMethodDef f2py_module_methods[] = {
 #pymethoddef#
-\t{\"has_column_major_storage\",f2py_has_column_major_storage,METH_VARARGS,doc_f2py_has_column_major_storage},
-\t{\"as_column_major_storage\",f2py_as_column_major_storage,METH_VARARGS,doc_f2py_as_column_major_storage},
 \t{NULL,NULL}
 };
 

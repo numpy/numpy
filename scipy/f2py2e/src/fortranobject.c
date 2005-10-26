@@ -5,9 +5,7 @@
 extern "C" {
 #endif
 /*
-  This file implements: FortranObject, array_from_pyobj, copy_ND_array,
-                       lazy_transpose, transpose_strides,
-		       and array_has_column_major_storage.
+  This file implements: FortranObject, array_from_pyobj, copy_ND_array
 
   Author: Pearu Peterson <pearu@cens.ioc.ee>
   $Revision: 1.52 $
@@ -386,52 +384,24 @@ void f2py_report_on_exit(int exit_flag,void *name) {
 /********************** report on array copy ****************************/
 
 #ifdef F2PY_REPORT_ON_ARRAY_COPY
-static void f2py_report_on_array_copy(PyArrayObject* arr, char* func_name) {
+static void f2py_report_on_array_copy(PyArrayObject* arr) {
   const long arr_size = PyArray_Size((PyObject *)arr);
   if (arr_size>F2PY_REPORT_ON_ARRAY_COPY) {
-    fprintf(stderr,"copied an array using %s: size=%ld, elsize=%d\n", 
-	    func_name, arr_size, PyArray_ITEMSIZE(arr));
+    fprintf(stderr,"copied an array: size=%ld, elsize=%d\n", 
+	    arr_size, PyArray_ITEMSIZE(arr));
   }
 }
+static void f2py_report_on_array_copy_fromany(void) {
+  fprintf(stderr,"created an array from object\n");
+}
+
+#define F2PY_REPORT_ON_ARRAY_COPY_FROMARR f2py_report_on_array_copy((PyArrayObject *)arr)
+#define F2PY_REPORT_ON_ARRAY_COPY_FROMANY f2py_report_on_array_copy_fromany()
+#else
+#define F2PY_REPORT_ON_ARRAY_COPY_FROMARR
+#define F2PY_REPORT_ON_ARRAY_COPY_FROMANY
 #endif
 
-/************************* lazy_transpose *******************************/
-
-extern
-void lazy_transpose(PyArrayObject* arr) {
-  /*
-    Changes the order of array strides and dimensions.  This
-    corresponds to the lazy transpose of a Numeric array in-situ.
-    Note that this function is assumed to be used even times for a
-    given array. Otherwise, the caller should set flags &= ~CONTIGUOUS.
-   */
-  int rank, i;
-  intp s,j; 
-  rank = arr->nd; 
-  if (rank < 2) return;
-
-  for(i=0,j=rank-1;i<rank/2;++i,--j) {
-    s = arr->strides[i];
-    arr->strides[i] = arr->strides[j];
-    arr->strides[j] = s;
-    s = arr->dimensions[i];
-    arr->dimensions[i] = arr->dimensions[j];
-    arr->dimensions[j] = s;
-  }
-}
-
-extern
-void transpose_strides(PyArrayObject* arr) {
-  int rank, i;
-  intp j;
-  rank = arr->nd; 
-  if (rank < 2) return;
-  j = arr->strides[rank-1];
-  for(i=0;i<rank;++i) {
-    arr->strides[i] = j;
-    j *= arr->dimensions[i];
-  }
-}
 
 /************************* array_from_obj *******************************/
 
@@ -453,25 +423,6 @@ void transpose_strides(PyArrayObject* arr) {
  * Created: 13-16 January 2002
  * $Id: fortranobject.c,v 1.52 2005/07/11 07:44:20 pearu Exp $
  */
-
-
-#define ARR_IS_NULL(arr_is_NULL,mess) \
-if (arr_is_NULL) { \
-    fprintf(stderr,"array_from_pyobj:" mess); \
-    return NULL; \
-}
-
-#define CHECK_DIMS_DEFINED(rank,dims,mess) \
-if (count_nonpos(rank,dims)) { int i;\
-  fprintf(stderr,"array_from_pyobj:" mess); \
-  fprintf(stderr,"rank=%d dimensions=[ ",rank); \
-  for(i=0;i<rank;++i) fprintf(stderr,"%" INTP_FMT " ",dims[i]);	\
-  fprintf(stderr,"]\n"); \
-  return NULL; \
-}
-
-#define HAS_PROPER_ELSIZE(arr,type_num) \
-  ((PyArray_DescrFromType(type_num)->elsize) == PyArray_ITEMSIZE(arr))
 
 static int 
 count_nonpos(const int rank,
@@ -522,21 +473,6 @@ static int swap_arrays(PyArrayObject* arr1, PyArrayObject* arr2) {
   return 0;
 }
 
-	/* useful after a lazy-transpose to update the flags
-	   quickly 
-	*/
-
-#define _lazy_transpose_update_flags(obj) {		   \
-		if (PyArray_ISCONTIGUOUS(obj)) {	   \
-			PyArray_FLAGS(obj) &= ~CONTIGUOUS; \
-			PyArray_FLAGS(obj) |= FORTRAN; \
-		}					 \
-		else if PyArray_CHKFLAGS(obj, FORTRAN) { \
-			PyArray_FLAGS(obj) &= ~FORTRAN; \
-			PyArray_FLAGS(obj) |= CONTIGUOUS; \
-		}					  \
-	}
-
 extern
 PyArrayObject* array_from_pyobj(const int type_num,
 				intp *dims,
@@ -548,66 +484,102 @@ PyArrayObject* array_from_pyobj(const int type_num,
      If the caller returns the array to Python, it must be done with
      Py_BuildValue("N",arr).
      Otherwise, if obj!=arr then the caller must call Py_DECREF(arr).
+
+     Note on intent(cache,out,..)
+     ---------------------
+     Don't expect correct data when returning intent(cache) array.
+
   */
+  char mess[200];
+  PyArrayObject *arr = NULL;
+  PyArray_Descr *descr = PyArray_DescrFromType(type_num);
 
-  if (intent & F2PY_INTENT_CACHE) {
-    /* Don't expect correct storage order or anything reasonable when
-       returning intent(cache) array. */ 
-    if ((intent & F2PY_INTENT_HIDE)
-	|| (obj==Py_None)) {
-      PyArrayObject *arr = NULL;
-      CHECK_DIMS_DEFINED(rank,dims,"optional,intent(cache) must"
-			 " have defined dimensions.\n");
-      arr = (PyArrayObject *)PyArray_SimpleNew(rank,dims,type_num);
-      ARR_IS_NULL(arr==NULL,"PyArray_SimpleNew failed: optional,intent(cache)\n");
-      return arr;
+  if ((intent & F2PY_INTENT_HIDE)
+      || ((intent & F2PY_INTENT_CACHE) && (obj==Py_None))
+      || ((intent & F2PY_OPTIONAL) && (obj==Py_None))
+      ) {
+    /* intent(cache), optional, intent(hide) */
+    if (count_nonpos(rank,dims)) {
+      int i;
+      sprintf(mess,"failed to create intent(cache|hide)|optional array"
+	      "-- must have defined dimensions but got (");
+      for(i=0;i<rank;++i)
+	sprintf(mess+strlen(mess),"%" INTP_FMT ",",dims[i]);
+      sprintf(mess+strlen(mess),")");
+      PyErr_SetString(PyExc_ValueError,mess);
+      return NULL;
     }
-    if (PyArray_Check(obj) 
-	&& PyArray_ISONESEGMENT(obj)
-	&& HAS_PROPER_ELSIZE((PyArrayObject *)obj,type_num)
-	) {
-      if (check_and_fix_dimensions((PyArrayObject *)obj,rank,dims))
-	return NULL; /*XXX: set exception */
-      {
-	if (intent & F2PY_INTENT_OUT)
-	  Py_INCREF(obj);
-	return (PyArrayObject *)obj;
-      }
-    }
-    ARR_IS_NULL(1,"intent(cache) must be contiguous array with a proper elsize.\n");
-  }
-
-  if (intent & F2PY_INTENT_HIDE) {
-    PyArrayObject *arr = NULL;
-    CHECK_DIMS_DEFINED(rank,dims,"intent(hide) must have defined dimensions.\n");
     arr = (PyArrayObject *)
       PyArray_New(&PyArray_Type, rank, dims, type_num,
 		  NULL,NULL,0,
 		  !(intent&F2PY_INTENT_C),
 		  NULL);
-    ARR_IS_NULL(arr==NULL,"PyArray_New failed: intent(hide)\n");
-    PyArray_FILLWBYTE(arr, 0);
+    if (!(intent & F2PY_INTENT_CACHE))
+      PyArray_FILLWBYTE(arr, 0);
     return arr;
   }
 
-  if (PyArray_Check(obj)) { /* here we have always intent(in) or
-			       intent(inout) or intent(inplace) */
-    PyArrayObject *arr = (PyArrayObject *)obj;
+  if (PyArray_Check(obj)) {
+    arr = (PyArrayObject *)obj;
+
+    if (intent & F2PY_INTENT_CACHE) {
+      /* intent(cache) */
+      if (PyArray_ISONESEGMENT(obj)
+	  && PyArray_ITEMSIZE((PyArrayObject *)obj)>=descr->elsize) {
+	if (check_and_fix_dimensions((PyArrayObject *)obj,rank,dims))
+	  return NULL; /*XXX: set exception */
+	if (intent & F2PY_INTENT_OUT)
+	  Py_INCREF(obj);
+	return (PyArrayObject *)obj;
+      }
+      sprintf(mess,"failed to initialize intent(cache) array");
+      if (!PyArray_ISONESEGMENT(obj))
+	sprintf(mess+strlen(mess)," -- input must be in one segment");
+      if (PyArray_ITEMSIZE(arr)<descr->elsize)
+	sprintf(mess+strlen(mess)," -- expected at least elsize=%d but got %d",
+		descr->elsize,PyArray_ITEMSIZE(arr)
+		);
+      PyErr_SetString(PyExc_ValueError,mess);
+      return NULL;
+    }
+
+    /* here we have always intent(in) or intent(inout) or intent(inplace) */
 
     if (check_and_fix_dimensions(arr,rank,dims))
       return NULL; /*XXX: set exception */
 
     if ((! (intent & F2PY_INTENT_COPY))
-	&& HAS_PROPER_ELSIZE(arr,type_num)
+	&& PyArray_ITEMSIZE(arr)==descr->elsize
 	&& PyArray_CanCastSafely(arr->descr->type_num,type_num)
 	) {
       if ((intent & F2PY_INTENT_C)?PyArray_ISCARRAY(arr):PyArray_ISFARRAY(arr)) {
 	if ((intent & F2PY_INTENT_OUT)) {
 	  Py_INCREF(arr);
 	}
+	/* Returning input array */
 	return arr;
       }
     }
+
+    if (intent & F2PY_INTENT_INOUT) {
+      sprintf(mess,"failed to initialize intent(inout) array");
+      if ((intent & F2PY_INTENT_C) && !PyArray_ISCARRAY(arr))
+	sprintf(mess+strlen(mess)," -- input not contiguous");
+      if (!(intent & F2PY_INTENT_C) && !PyArray_ISFARRAY(arr))
+	sprintf(mess+strlen(mess)," -- input not fortran contiguous");
+      if (PyArray_ITEMSIZE(arr)!=descr->elsize)
+	sprintf(mess+strlen(mess)," -- expected elsize=%d but got %d",
+		descr->elsize,
+		PyArray_ITEMSIZE(arr)
+		);
+      if (!(PyArray_CanCastSafely(arr->descr->type_num,type_num)))
+	sprintf(mess+strlen(mess)," -- cannot cast safely from '%c' to '%c'",
+		arr->descr->type,descr->type);
+      PyErr_SetString(PyExc_ValueError,mess);
+      return NULL;
+    }
+
+    /* here we have always intent(in) or intent(inplace) */
 
     {
       PyArrayObject *retarr = (PyArrayObject *) \
@@ -615,18 +587,19 @@ PyArrayObject* array_from_pyobj(const int type_num,
 		    NULL,NULL,0,
 		    !(intent&F2PY_INTENT_C),
 		    NULL);
-
-      ARR_IS_NULL(retarr==NULL,"PyArray_New failed: intent(in,copy)\n");
+      if (retarr==NULL)
+	return NULL;
+      F2PY_REPORT_ON_ARRAY_COPY_FROMARR;
       if (PyArray_CopyInto(retarr, arr)) {
 	Py_DECREF(retarr);
 	return NULL;
       }
       if (intent & F2PY_INTENT_INPLACE) {
 	if (swap_arrays(arr,retarr))
-	  return NULL;
+	  return NULL; /* XXX: set exception */
 	Py_XDECREF(retarr);
 	if (intent & F2PY_INTENT_OUT)
-	  Py_INCREF(arr);	
+	  Py_INCREF(arr);
       } else {
 	arr = retarr;
       }
@@ -634,211 +607,27 @@ PyArrayObject* array_from_pyobj(const int type_num,
     return arr;
   }
 
-  if ((obj==Py_None) && (intent & F2PY_OPTIONAL)) {
-    PyArrayObject *arr = NULL;
-    CHECK_DIMS_DEFINED(rank,dims,"optional must have defined dimensions.\n");
-    arr = (PyArrayObject *)
-      PyArray_New(&PyArray_Type, rank, dims, type_num,
-		  NULL,NULL,0,
-		  !(intent&F2PY_INTENT_C),
-		  NULL);
-    ARR_IS_NULL(arr==NULL,"PyArray_New failed: optional\n");
-    PyArray_FILLWBYTE(arr, 0);
-    return arr;
-  }
-
-  if ((intent & F2PY_INTENT_INOUT) || (intent & F2PY_INTENT_INPLACE)) {
-    ARR_IS_NULL(1,"intent(inout)|intent(inplace) argument must be an array.\n");
+  if ((intent & F2PY_INTENT_INOUT) 
+      || (intent & F2PY_INTENT_INPLACE)
+      || (intent & F2PY_INTENT_CACHE)) {
+    sprintf(mess,"failed to initialize intent(inout|inplace|cache) array"
+	    " -- input must be array but got %s",
+	    PyString_AsString(PyObject_Str(PyObject_Type(obj)))
+	    );
+    PyErr_SetString(PyExc_TypeError,mess);
+    return NULL;
   }
 
   {
     PyArray_Typecode typecode = {type_num, 0, 0};
-    PyArrayObject *arr = (PyArrayObject *) \
+    F2PY_REPORT_ON_ARRAY_COPY_FROMANY;
+    arr = (PyArrayObject *) \
       PyArray_FromAny(obj,&typecode, 0,0,
 		      ((intent & F2PY_INTENT_C)?CARRAY_FLAGS:FARRAY_FLAGS));
-    ARR_IS_NULL(arr==NULL,"PyArray_FromAny failed: not a sequence.\n");
+    if (arr==NULL)
+      return NULL;
     if (check_and_fix_dimensions(arr,rank,dims))
       return NULL; /*XXX: set exception */
-    return arr;
-  }
-
-}
-
-extern
-PyArrayObject* old_array_from_pyobj(const int type_num,
-				intp *dims,
-				const int rank,
-				const int intent,
-				PyObject *obj) {
-  /* Note about reference counting
-     -----------------------------
-     If the caller returns the array to Python, it must be done with
-     Py_BuildValue("N",arr).
-     Otherwise, if obj!=arr then the caller must call Py_DECREF(arr).
-  */
-  if (intent & F2PY_INTENT_CACHE) {
-    /* Don't expect correct storage order or anything reasonable when
-       returning intent(cache) array. */ 
-    if ((intent & F2PY_INTENT_HIDE)
-	|| (obj==Py_None)) {
-      PyArrayObject *arr = NULL;
-      CHECK_DIMS_DEFINED(rank,dims,"optional,intent(cache) must"
-			 " have defined dimensions.\n");
-      arr = (PyArrayObject *)PyArray_SimpleNew(rank,dims,type_num);
-      ARR_IS_NULL(arr==NULL,"FromDims failed: optional,intent(cache)\n");
-      memset(arr->data, 0, PyArray_NBYTES(arr));
-/*       if (intent & F2PY_INTENT_OUT) */
-/* 	Py_INCREF(arr); */
-      return arr;
-    }
-
-    if (PyArray_Check(obj) 
-	&& PyArray_ISONESEGMENT(obj)
-	&& HAS_PROPER_ELSIZE((PyArrayObject *)obj,type_num)
-	) {
-      if (check_and_fix_dimensions((PyArrayObject *)obj,rank,dims))
-	return NULL; /*XXX: set exception */
-      {
-	PyArrayObject *obj2;
-	if (intent & F2PY_INTENT_OUT)
-	  Py_INCREF(obj);
-	obj2 = (PyArrayObject *) obj;
-	return obj2;
-      }
-    }
-    ARR_IS_NULL(1,"intent(cache) must be contiguous array with a proper elsize.\n");
-  }
-
-  if (intent & F2PY_INTENT_HIDE) {
-    PyArrayObject *arr = NULL;
-    CHECK_DIMS_DEFINED(rank,dims,"intent(hide) must have defined dimensions.\n");
-    arr = (PyArrayObject *)PyArray_SimpleNew(rank, dims, type_num);
-    ARR_IS_NULL(arr==NULL,"FromDims failed: intent(hide)\n");
-    memset(arr->data, 0, PyArray_NBYTES(arr));
-    if (intent & F2PY_INTENT_OUT) {
-      if ((!(intent & F2PY_INTENT_C)) && (rank>1)) {
-	transpose_strides(arr);
-	arr->flags &= ~CONTIGUOUS;
-	arr->flags |= FORTRAN;
-      }
-/*       Py_INCREF(arr); */
-    }
-    return arr;
-  }
-
-  if (PyArray_Check(obj)) { /* here we have always intent(in) or
-			       intent(inout) or intent(inplace) */
-    PyArrayObject *arr;
-    int is_cont;
-
-    arr = (PyArrayObject *)obj;
-    is_cont = (intent & F2PY_INTENT_C) ? 
-      (ISCONTIGUOUS(arr)) : (2*array_has_column_major_storage(arr));
-    if (check_and_fix_dimensions(arr,rank,dims))
-      return NULL; /*XXX: set exception */
-    if ((intent & F2PY_INTENT_COPY)
-	|| (! (is_cont
-	       && HAS_PROPER_ELSIZE(arr,type_num)
-	       && PyArray_CanCastSafely(arr->descr->type_num,type_num)
-	       /* Make PyArray_CanCastSafely safer for 64-bit machines: */
-	       /* && (arr->descr->type_num==PyArray_LONG?type_num!=PyArray_DOUBLE:1)*/
-	       ))) {
-      PyArrayObject *tmp_arr = NULL;
-      if (intent & F2PY_INTENT_INOUT) {
-	ARR_IS_NULL(1,"intent(inout) array must be contiguous and"
-		    " with a proper type and size.\n")
-	  }
-      if ((rank>1) && (! (intent & F2PY_INTENT_C))) {
-	lazy_transpose(arr);
-	_lazy_transpose_update_flags(arr);
-      }
-/*       if (PyArray_CanCastSafely(arr->descr->type_num,type_num)) { */
-/* 	tmp_arr = (PyArrayObject *)PyArray_CopyFromObject(obj,type_num,0,0); */
-/* 	ARR_IS_NULL(arr==NULL,"CopyFromObject failed: array.\n"); */
-/*       } else */
-      {
-	tmp_arr = (PyArrayObject *)PyArray_SimpleNew(arr->nd,
-						     arr->dimensions,
-						     type_num);
-	ARR_IS_NULL(tmp_arr==NULL,"FromDims failed: array with unsafe cast.\n");
-	if (copy_ND_array(arr,tmp_arr))
-	  ARR_IS_NULL(1,"copy_ND_array failed: array with unsafe cast.\n");
-      }
-      if ((rank>1) && (! (intent & F2PY_INTENT_C))) {
-	lazy_transpose(arr);
-	_lazy_transpose_update_flags(arr);
-	lazy_transpose(tmp_arr);
-	tmp_arr->flags &= ~CONTIGUOUS;
-	tmp_arr->flags |= FORTRAN;
-      }
-      if (intent & F2PY_INTENT_INPLACE) {
-	if (swap_arrays(arr,tmp_arr))
-	  return NULL;
-	Py_XDECREF(tmp_arr);
-	if (intent & F2PY_INTENT_OUT)
-	  Py_INCREF(arr);
-      } else {
-	arr = tmp_arr;
-      }
-    } else {
-      if ((intent & F2PY_INTENT_OUT)) {
-	Py_INCREF(arr);
-      }
-    }
-    return arr;
-  }
-
-  if ((obj==Py_None) && (intent & F2PY_OPTIONAL)) {
-    PyArrayObject *arr = NULL;
-    CHECK_DIMS_DEFINED(rank,dims,"optional must have defined dimensions.\n");    
-    arr = (PyArrayObject *)PyArray_SimpleNew(rank,dims,type_num);
-    ARR_IS_NULL(arr==NULL,"FromDims failed: optional.\n");
-    memset(arr->data, 0, PyArray_NBYTES(arr));
-    if (intent & F2PY_INTENT_OUT) {
-      if ((!(intent & F2PY_INTENT_C)) && (rank>1)) {
-	transpose_strides(arr);
-	arr->flags &= ~CONTIGUOUS;
-	arr->flags |= FORTRAN;
-      }
-/*       Py_INCREF(arr); */
-    }
-    return arr;
-  }
-
-  if ((intent & F2PY_INTENT_INOUT) || (intent & F2PY_INTENT_INPLACE)) {
-    ARR_IS_NULL(1,"intent(inout)|intent(inplace) argument must be an array.\n");
-  }
-
-  {
-    PyArrayObject *arr = (PyArrayObject *) \
-      PyArray_ContiguousFromObject(obj,type_num,0,0);
-    ARR_IS_NULL(arr==NULL,"ContiguousFromObject failed: not a sequence.\n");
-    if (check_and_fix_dimensions(arr,rank,dims))
-      return NULL; /*XXX: set exception */
-
-    if ((rank>1) && (! (intent & F2PY_INTENT_C))) {
-      PyArrayObject *tmp_arr = NULL;
-      if (rank == 2) {
-	      tmp_arr = (PyArrayObject *) PyArray_CopyAndTranspose((PyObject *)arr);
-	      PyArray_UpdateFlags(tmp_arr, CONTIGUOUS | FORTRAN);
-      }
-      else {
-	      lazy_transpose(arr);
-	      arr->flags &= ~CONTIGUOUS;
-	      arr->flags |= FORTRAN;
-	      tmp_arr = (PyArrayObject *) PyArray_Copy(arr);
-      }
-#ifdef F2PY_REPORT_ON_ARRAY_COPY
-      f2py_report_on_array_copy(tmp_arr,"PyArray_Copy");
-#endif
-      Py_DECREF(arr);
-      arr = tmp_arr;
-      ARR_IS_NULL(arr==NULL,"Copy(Array) failed: intent(fortran)\n");
-      lazy_transpose(arr);
-      _lazy_transpose_update_flags(arr);
-    }
-/*     if (intent & F2PY_INTENT_OUT) */
-/*       Py_INCREF(arr); */
     return arr;
   }
 
@@ -847,27 +636,6 @@ PyArrayObject* old_array_from_pyobj(const int type_num,
            /*****************************************/
            /* Helper functions for array_from_pyobj */
            /*****************************************/
-
-extern
-int array_has_column_major_storage(const PyArrayObject *ap) {
-  /* array_has_column_major_storage(a) is equivalent to
-     transpose(a).iscontiguous() but more efficient.
-
-     This function can be used in order to decide whether to use a
-     Fortran or C version of a wrapped function. This is relevant, for
-     example, in choosing a clapack or flapack function depending on
-     the storage order of array arguments.
-  */
-  int sd;
-  int i;
-  sd = PyArray_ITEMSIZE(ap);
-  for (i=0;i<ap->nd;++i) {
-    if (ap->dimensions[i] == 0) return 1;
-    if (ap->strides[i] != sd) return 0;
-    sd *= ap->dimensions[i];
-  }
-  return 1;
-}
 
 static
 int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims) {
@@ -971,12 +739,10 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
 /************************* copy_ND_array *******************************/
 
 extern
-int copy_ND_array(const PyArrayObject *in, PyArrayObject *out)
+int copy_ND_array(const PyArrayObject *arr, PyArrayObject *out)
 {
-#ifdef F2PY_REPORT_ON_ARRAY_COPY
-  f2py_report_on_array_copy(out, "CopyInto");
-#endif
-  return PyArray_CopyInto(out, (PyArrayObject *)in);
+  F2PY_REPORT_ON_ARRAY_COPY_FROMARR;
+  return PyArray_CopyInto(out, (PyArrayObject *)arr);
 }
 
 #ifdef __cplusplus

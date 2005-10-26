@@ -106,14 +106,11 @@ typedef struct {
 #define F2PY_OPTIONAL 128
 #define F2PY_INTENT_INPLACE 256
 
-  extern void lazy_transpose(PyArrayObject* arr); /* Obsolete?? */
-  extern void transpose_strides(PyArrayObject* arr);
   extern PyArrayObject* array_from_pyobj(const int type_num,
 					 intp *dims,
 					 const int rank,
 					 const int intent,
 					 PyObject *obj);
-  extern int array_has_column_major_storage(const PyArrayObject *ap);
   extern int copy_ND_array(const PyArrayObject *in, PyArrayObject *out);
 
 #ifdef DEBUG_COPY_ND_ARRAY
