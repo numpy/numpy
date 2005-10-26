@@ -704,15 +704,11 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
 \t\t\tPyErr_SetString(PyExc_ValueError,\"array object is non-contiguous.\");
 \t\t\tgoto capi_fail;
 \t\t}
-\t\tif (arr->descr->elsize==sizeof(char)) {
-\t\t\tif (*len == -1)
-\t\t\t\t*len = (arr->descr->elsize)*PyArray_SIZE(arr);
-\t\t\tSTRINGMALLOC(*str,*len);
-\t\t\tSTRINGCOPYN(*str,arr->data,*len);
-\t\t\treturn 1;
-\t\t}
-\t\tPyErr_SetString(PyExc_ValueError,\"array object element size is not 1.\");
-\t\tgoto capi_fail;
+\t\tif (*len == -1)
+\t\t\t*len = (arr->itemsize)*PyArray_SIZE(arr);
+\t\tSTRINGMALLOC(*str,*len);
+\t\tSTRINGCOPYN(*str,arr->data,*len);
+\t\treturn 1;
 \t}
 \tif (PyString_Check(obj)) {
 \t\ttmp = obj;
