@@ -11,7 +11,7 @@ __all__ = ['sqrt', 'log', 'log2','logn','log10', 'power', 'arccos',
 import numeric as _nx
 from numeric import *
 
-from type_check import isreal
+from type_check import isreal, asscalar
 
 __all__.extend([key for key in dir(_nx.umath) \
                 if key[0]!='_' and key not in __all__])
@@ -38,15 +38,15 @@ def _fix_real_abs_gt_1(x):
     
 def sqrt(x):
     x = _fix_real_lt_zero(x)
-    return sqrt(x)
+    return _nx.sqrt(x)
 
 def log(x):
     x = _fix_real_lt_zero(x)
-    return log(x)
+    return _nx.log(x)
 
 def log10(x):
     x = _fix_real_lt_zero(x)
-    return log10(x)    
+    return _nx.log10(x)
 
 def logn(n,x):
     """ Take log base n of x.
@@ -63,7 +63,7 @@ def log2(x):
 
 def power(x, p):
     x = _fix_real_lt_zero(x)
-    return power(x, p)
+    return _nx.power(x, p)
 
 
 def arccos(x):
