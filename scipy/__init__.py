@@ -60,5 +60,6 @@ else:
 
 if show_scipy_config is not None:
     __doc__ += __scipy_doc__
+    from scipy_version import scipy_version as __scipy_version__
     from _import_tools import import_packages
     import_packages()
