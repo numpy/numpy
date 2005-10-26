@@ -4703,10 +4703,13 @@ static PyObject *
 Array_FromScalar(PyObject *op, PyArray_Typecode *typecode) 
 {
         PyArrayObject *ret;
-	int itemsize = 0;
-	int type = typecode->type_num;
+	int itemsize; 
+	int type;
+	
+	itemsize = typecode->itemsize;
+	type = typecode->type_num;
 
-	if PyTypeNum_ISFLEXIBLE(type) {
+	if (itemsize == 0 && PyTypeNum_ISFLEXIBLE(type)) {
 		itemsize = PyObject_Length(op);
 	}
 

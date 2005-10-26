@@ -196,6 +196,8 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         return cName + "(%s)" % lst
     else:
         typename=arr.dtype.__name__[:-8]
+        if issubclass(arr.dtype, flexible):
+            typename = "%s%d" % (typename, arr.itemsize)    
         return cName + "(%s, dtype=%s)" % (lst, typename)
 
 def array_str(a, max_line_width = None, precision = None, suppress_small = None):
