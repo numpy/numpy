@@ -290,8 +290,26 @@ def clip(m, m_min, m_max):
 ##    selector = less(m, m_min)+2*greater(m, m_max)
 ##    return choose(selector, (m, m_min, m_max))
 
-def sum (x, axis=0, rtype=None):
-    """Sum the array over the given axis.
+def sum(x, axis=0, rtype=None):
+    """Sum the array over the given axis.  The optional rtype argument
+    is the data type for intermediate calculations.
+    
+    The default is to upcast (promote) smaller integer types to the
+    platform-dependent Int.  For example, on 32-bit platforms:
+
+        x.dtype                         default sum() rtype
+        ---------------------------------------------------
+        bool, Int8, Int16, Int32        Int32
+
+    Examples:
+    >>> sum([0.5, 1.5])
+    2.0
+    >>> sum([0.5, 1.5], rtype=Int32)
+    1
+    >>> sum([[0, 1], [0, 5]])
+    array([0, 6])
+    >>> sum([[0, 1], [0, 5]], axis=1)
+    array([1, 5])
     """
     return asarray(x).sum(axis, rtype)
 

@@ -606,12 +606,12 @@ array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
 	return PyArray_Repeat(self, repeats, axis);
 }
 
-static char doc_choose[] = "self.choose(b0,b1,...,bn)\n"\
+static char doc_choose[] = "a.choose(b0, b1, ..., bn)\n"\
 	"\n"\
-	" Self sould be an integer array with entries from 0 to n+1, \n"\
-	"  The bi arrays should be of the same shape as self.  The result\n"\
-	"  will be an array with elements chosen from the bi arrays\n"\
-	"  according to the value at each position of self.";
+	"Return an array with elements chosen from 'a' at the positions\n"\
+        "of the given arrays b_i.  The array 'a' should be an integer array\n"\
+        "with entries from 0 to n+1, and the b_i arrays should have the same\n"\
+        "shape as 'a'.";
 
 static PyObject *
 array_choose(PyArrayObject *self, PyObject *args) 
@@ -752,7 +752,7 @@ _setobject_pkl(PyArrayObject *self, PyObject *list)
 	iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
 	if (iter == NULL) return -1;
 	while(iter->index < iter->size) {
-		theobject = PyList_GET_ITEM(list,(int) iter->index);
+		theobject = PyList_GET_ITEM(list, (int) iter->index);
 		Py_INCREF(theobject);
 		*((PyObject **)iter->dataptr) = theobject;
 		PyArray_ITER_NEXT(iter);
@@ -1031,7 +1031,26 @@ array_transpose(PyArrayObject *self, PyObject *args)
 	return _ARET(PyArray_Transpose(self, shape));
 }
 
-static char doc_mean[] = "a.mean(axis=None, rtype=None)";
+static char doc_mean[] = "a.mean(axis=None, rtype=None)\n\n"\
+  "Average the array over the given axis.  If axis is None, average over\n"\
+  "all dimensions of the array.\n"\
+  "\n"\
+  "if 'a' has an integer type, the result has type Float.\n"\
+  "\n"\
+  "If an integer axis is given, this equals:\n"\
+  "    a.sum(axis, rtype) * 1.0 / len(a)\n"\
+  "\n"\     
+  "If axis is None, this equals:\n"\
+  "     a.sum(axis, rtype) * 1.0 / product(a.shape)\n"\
+
+  "The optional rtype argument is the data type for intermediate\n"\
+  "calculations in the sum.\n"\
+  "\n"\
+  "If an integer axis is given, this equals:\n"\
+  "    a.sum(axis, rtype) * 1.0 / len(a)\n"\
+  "\n"\
+  "If axis is None, this equals:\n"\
+  "    a.sum(axis, rtype) * 1.0 / product(a.shape)";
 
 static PyObject *
 array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds) 
@@ -1048,7 +1067,27 @@ array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_Mean(self, axis, rtype.type_num));
 }
 
-static char doc_sum[] = "a.sum(axis=None, rtype=None)";
+static char doc_sum[] = "a.sum(axis=None, rtype=None)\n\n"\
+  "Sum the array over the given axis.  The optional rtype argument\n"\
+  "is the data type for intermediate calculations.\n"\
+  "\n"\
+  "The default is to upcast (promote) smaller integer types to the\n"\
+  "platform-dependent Int.  For example, on 32-bit platforms:\n"\
+  "\n"\
+  "    a.dtype                         default sum() rtype\n"\
+  "    ---------------------------------------------------\n"\
+  "    bool, Int8, Int16, Int32        Int32\n"\
+  "\n"\
+  "Examples:\n"\
+  "\n"\
+  ">>> array([0.5, 1.5]).sum()\n"\
+  "2.0\n"\
+  ">>> array([0.5, 1.5].sum(rtype=Int32)\n"\
+  "1\n"\
+  ">>> array([[0, 1], [0, 5]]).sum()\n"\
+  "array([0, 6])\n"\
+  ">>> array([[0, 1], [0, 5]]).sum(axis=1)\n"\
+  "array([1, 5])";
 
 static PyObject *
 array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds) 

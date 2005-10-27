@@ -12,13 +12,13 @@ from shape_base import squeeze, atleast_1d
 from _compiled_base import digitize, bincount, _insert
 from ufunclike import sign
 
-__all__ = ['logspace','linspace', 'round_',
-           'select','piecewise','trim_zeros','alen','amax', 'amin', 'ptp',
-           'copy', 'iterable', 'base_repr', 'binary_repr', 
-           'prod','cumprod', 'diff','gradient','angle','unwrap','sort_complex',
-           'disp','unique','extract','insert','nansum','nanmax','nanargmax',
-           'nanargmin','nanmin', 'vectorize','asarray_chkfinite',
-           'average','histogram','bincount','digitize']
+__all__ = ['logspace', 'linspace', 'round_',
+           'select', 'piecewise', 'trim_zeros', 'alen', 'amax', 'amin', 'ptp',
+           'copy', 'iterable', 'base_repr', 'binary_repr', 'prod', 'cumprod',
+           'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
+           'unique', 'extract', 'insert', 'nansum', 'nanmax', 'nanargmax',
+           'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
+           'histogram', 'bincount', 'digitize']
 
 _lkup = {'0':'000',
          '1':'001',
@@ -33,7 +33,8 @@ _lkup = {'0':'000',
 def binary_repr(num):
     """Return the binary representation of the input number as a string.
 
-    This is abuut 25x faster than using base_repr with base 2.
+    This is equivalent to using base_repr with base 2, but about 25x
+    faster.
     """
     ostr = oct(num)
     bin = ''
@@ -65,34 +66,33 @@ def base_repr (number, base=2, padding=0):
 
 
 
-def logspace(start,stop,num=50,endpoint=1):
-    """ Evenly spaced samples on a logarithmic scale.
+def logspace(start, stop, num=50, endpoint=True):
+    """ Return evenly spaced samples on a logarithmic scale.
 
-        Return num evenly spaced samples from 10**start to 10**stop.  If
-        endpoint=1 then last sample is 10**stop.
+        Return 'num' evenly spaced samples from 10**start to 10**stop.
+        If 'endpoint' is True then the last sample is 10**stop.
     """
     if num <= 0: return array([])
     if endpoint:
         step = (stop-start)/float((num-1))
-        y = _nx.arange(0,num) * step + start
+        y = _nx.arange(0, num) * step + start
     else:
         step = (stop-start)/float(num)
-        y = _nx.arange(0,num) * step + start
-    return _nx.power(10.0,y)
+        y = _nx.arange(0, num) * step + start
+    return _nx.power(10.0, y)
 
-def linspace(start,stop,num=50,endpoint=1,retstep=False):
-    """ Evenly spaced samples.
-    
-        Return num evenly spaced samples from start to stop.  If endpoint=1 then
-        last sample is stop. If retstep is true then return the step value used.
+def linspace(start, stop, num=50, endpoint=True, retstep=False):
+    """ Return 'num' evenly spaced samples from 'start' to 'stop'.  If
+        'endpoint' is True, the last sample is 'stop'. If 'retstep' is
+        True then return the step value used.
     """
     if num <= 0: return array([])
     if endpoint:
         step = (stop-start)/float((num-1))
-        y = _nx.arange(0,num) * step + start        
+        y = _nx.arange(0, num) * step + start        
     else:
         step = (stop-start)/float(num)
-        y = _nx.arange(0,num) * step + start
+        y = _nx.arange(0, num) * step + start
     if retstep:
         return y, step
     else:
@@ -103,46 +103,56 @@ def iterable(y):
     except: return 0
     return 1
 
-def histogram(x, bins=10, range=None, normed=False):
-    x = asarray(x).ravel()
+def histogram(a, bins=10, range=None, normed=False):
+    a = asarray(a).ravel()
     if not iterable(bins):
         if range is None:
-            range = (x.min(), x.max())
-        mn, mx = [x+0.0 for x in range]
+            range = (a.min(), a.max())
+        mn, mx = [a+0.0 for a in range]
         if mn == mx:
             mn -= 0.5
             mx += 0.5
         bins = linspace(mn, mx, bins)
 
-    n = x.sort().searchsorted(bins)
-    n = concatenate([n, [len(x)]])
+    n = a.sort().searchsorted(bins)
+    n = concatenate([n, [len(a)]])
     n = n[1:]-n[:-1]
 
     if normed:
         db = bins[1] - bins[0]
-        return 1.0/(x.size*db) * n, bins
+        return 1.0/(a.size*db) * n, bins
     else:
         return n, bins
 
-def average(a, axis=0, weights=None, returned=0):
-    """average(a, axis=0, weights=None)
-       Computes average along indicated axis. 
-       If axis is None, average over the entire array.
-       Inputs can be integer or floating types; result is type Float.
-   
+def average(a, axis=0, weights=None, returned=False):
+    """average(a, axis=0, weights=None, returned=False)
+
+       Compute average over the given axis.  If axis is None, average 
+       over all dimensions of the array.  Equivalent to a.mean(axis), 
+       but with a default axis of 0 instead of None.
+
+       The average of an integer or floating-point array always has type
+       Float.   
+       
+       If an integer axis is given, this equals:
+           a.sum(axis) * 1.0 / len(a)
+       
+       If axis is None, this equals:
+           a.sum(axis) * 1.0 / product(a.shape)
+
        If weights are given, result is:
-           sum(a*weights)/(sum(weights))
-       weights must have a's shape or be the 1-d with length the size
-       of a in the given axis. Integer weights are converted to Float.
+           sum(a * weights) / sum(weights),
+       where the weights must have a's shape or be 1D with length the 
+       size of a in the given axis. Integer weights are converted to 
+       Float.  Not specifying weights is equivalent to specifying 
+       weights that are all 1.
 
-       Not supplying weights is equivalent to supply weights that are
-       all 1.
+       If 'returned' is True, return a tuple: the result and the sum of
+       the weights or count of values. The shape of these two results
+       will be the same.
 
-       If returned, return a tuple: the result and the sum of the weights 
-       or count of values. The shape of these two results will be the same.
-
-       raises ZeroDivisionError if appropriate when result is scalar.
-       (The version in MA does not -- it returns masked values).
+       Raises ZeroDivisionError if appropriate.  (The version in MA does
+       not -- it returns masked values).
     """
     if axis is None:
         a = array(a).ravel()
@@ -151,7 +161,7 @@ def average(a, axis=0, weights=None, returned=0):
             d = len(a) * 1.0
         else:
             w = array(weights).ravel() * 1.0
-            n = add.reduce(multiply(a,w))
+            n = add.reduce(multiply(a, w))
             d = add.reduce(w) 
     else:
         a = array(a)
@@ -174,16 +184,16 @@ def average(a, axis=0, weights=None, returned=0):
             elif wsh == (ash[axis],):
                 ni = ash[axis]
                 r = [newaxis]*ni
-                r[axis] = slice(None,None,1)
+                r[axis] = slice(None, None, 1)
                 w1 = eval("w["+repr(tuple(r))+"]*ones(ash, Float)")
                 n = add.reduce(a*w1, axis)
                 d = add.reduce(w1, axis)
             else:
-                raise ValueError, 'average: weights wrong shape.'
+                raise ValueError, 'averaging weights have wrong shape'
             
     if not isinstance(d, ArrayType):
         if d == 0.0: 
-            raise ZeroDivisionError, 'Numeric.average, zero denominator'
+            raise ZeroDivisionError, 'zero denominator in average()'
     if returned:
         return n/d, d
     else:
@@ -195,20 +205,20 @@ def isaltered():
     return 'scipy' in val
 
 
-def asarray_chkfinite(x):
-    """Like asarray except it checks to be sure no NaNs or Infs are present.
+def asarray_chkfinite(a):
+    """Like asarray, but check that no NaNs or Infs are present.
     """
-    x = asarray(x)
-    if (x.dtypechar in _nx.typecodes['AllFloat']) \
-           and (_nx.isnan(x).any() or _nx.isinf(x).any()):
-        raise ValueError, "array must not contain infs or nans"
-    return x    
+    a = asarray(a)
+    if (a.dtypechar in _nx.typecodes['AllFloat']) \
+           and (_nx.isnan(a).any() or _nx.isinf(a).any()):
+        raise ValueError, "array must not contain infs or NaNs"
+    return a    
 
 
 
 
 def piecewise(x, condlist, funclist, *args, **kw):
-    """Returns a piecewise-defined function.
+    """Return a piecewise-defined function.
 
     x is the domain
 
@@ -245,7 +255,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     n = len(condlist)
     if n == n2-1:  # compute the "otherwise" condition.
         totlist = condlist[0]
-        for k in range(1,n):
+        for k in range(1, n):
             totlist |= condlist
         condlist.append(~totlist)
         n += 1
@@ -261,16 +271,16 @@ def piecewise(x, condlist, funclist, *args, **kw):
     return y
 
 def select(condlist, choicelist, default=0):
-    """ Returns an array comprised from different elements of choicelist
+    """ Return an array composed of different elements of choicelist
         depending on the list of conditions.
 
         condlist is a list of condition arrays containing ones or zeros
     
         choicelist is a list of choice arrays (of the "same" size as the
         arrays in condlist).  The result array has the "same" size as the
-        arrays in choicelist.  If condlist is [c0,...,cN-1] then choicelist
+        arrays in choicelist.  If condlist is [c0, ..., cN-1] then choicelist
         must be of length N.  The elements of the choicelist can then be
-        represented as [v0,...,vN-1]. The default choice if none of the
+        represented as [v0, ..., vN-1]. The default choice if none of the
         conditions are met is given as the default argument. 
     
         The conditions are tested in order and the first one statisfied is
@@ -285,17 +295,17 @@ def select(condlist, choicelist, default=0):
         elif cN-1: vN-1
         else: default
     
-        Note, that one of the condition arrays must be large enough to handle
+        Note that one of the condition arrays must be large enough to handle
         the largest array in the choice list.
     """
     n = len(condlist)
     n2 = len(choicelist)
     if n2 != n:
         raise ValueError, "list of cases must be same length as list of conditions"
-    choicelist.insert(0,default)    
+    choicelist.insert(0, default)    
     S = 0
     pfac = 1
-    for k in range(1,n+1):
+    for k in range(1, n+1):
         S += k * pfac * asarray(condlist[k-1])
         if k < n:
             pfac *= (1-asarray(condlist[k-1]))
@@ -308,8 +318,8 @@ def select(condlist, choicelist, default=0):
         S = S*ones(asarray(pfac).shape)
     return choose(S, tuple(choicelist))
 
-def _asarray1d(arr,copy=False):
-    """Ensure 1d array for one array.
+def _asarray1d(arr, copy=False):
+    """Ensure 1D array for one array.
     """
     if copy:
         return asarray(arr).flatten()
@@ -317,42 +327,42 @@ def _asarray1d(arr,copy=False):
         return asarray(arr).ravel()
 
 def copy(a):
-    """Return an array copy of the object.
+    """Return an array copy of the given object.
     """
-    return array(a,copy=True)
+    return array(a, copy=True)
     
 # Basic operations
-def amax(m,axis=-1): 
-    """Returns the maximum of m along dimension axis. 
+def amax(a, axis=-1): 
+    """Return the maximum of 'a' along dimension axis. 
     """
-    return asarray(m).max(axis)
+    return asarray(a).max(axis)
 
-def amin(m,axis=-1):
-    """Returns the minimum of m along dimension axis.
+def amin(a, axis=-1):
+    """Return the minimum of a along dimension axis.
     """
-    return asarray(m).min(axis)
+    return asarray(a).min(axis)
 
-def alen(m):
-    """Returns the length of a Python object interpreted as an array
+def alen(a):
+    """Return the length of a Python object interpreted as an array
     """
-    return len(asarray(m))
+    return len(asarray(a))
 
-def ptp(m,axis=-1):
-    """Returns the maximum - minimum along the the given dimension
+def ptp(a, axis=-1):
+    """Return maximum - minimum along the the given dimension
     """
-    return asarray(m).ptp(axis)
+    return asarray(a).ptp(axis)
 
-def prod(m,axis=-1):
-    """Returns the product of the elements along the given axis
+def prod(a, axis=-1):
+    """Return the product of the elements along the given axis
     """
-    return asarray(m).prod(axis)
+    return asarray(a).prod(axis)
 
-def cumprod(m,axis=-1):
-    """Returns the cumulative product of the elments along the given axis
+def cumprod(a, axis=-1):
+    """Return the cumulative product of the elments along the given axis
     """
-    return asarray(m).cumprod(axis)
+    return asarray(a).cumprod(axis)
 
-def gradient(f,*varargs):
+def gradient(f, *varargs):
     """Calculate the gradient of an N-dimensional scalar function.
 
     Uses central differences on the interior and first differences on boundaries
@@ -385,32 +395,32 @@ def gradient(f,*varargs):
     print dx
     outvals = []
 
-    # create slice objects --- initially all are [:,:,...,:]
+    # create slice objects --- initially all are [:, :, ..., :]
     slice1 = [slice(None)]*N
     slice2 = [slice(None)]*N
     slice3 = [slice(None)]*N
 
     otype = f.dtypechar
-    if otype not in ['f','d','F','D']:
+    if otype not in ['f', 'd', 'F', 'D']:
         otype = 'd'
 
     for axis in range(N):
         # select out appropriate parts for this dimension
         out = zeros(f.shape, f.dtypechar)
-        slice1[axis] = slice(1,-1)
-        slice2[axis] = slice(2,None)
-        slice3[axis] = slice(None,-2)
-        # 1d equivalent -- out[1:-1] = (f[2:] - f[:-2])/2.0
+        slice1[axis] = slice(1, -1)
+        slice2[axis] = slice(2, None)
+        slice3[axis] = slice(None, -2)
+        # 1D equivalent -- out[1:-1] = (f[2:] - f[:-2])/2.0
         out[slice1] = (f[slice2] - f[slice3])/2.0   
         slice1[axis] = 0
         slice2[axis] = 1
         slice3[axis] = 0
-        # 1d equivalent -- out[0] = (f[1] - f[0])
+        # 1D equivalent -- out[0] = (f[1] - f[0])
         out[slice1] = (f[slice2] - f[slice3])
         slice1[axis] = -1
         slice2[axis] = -1
         slice3[axis] = -2
-        # 1d equivalent -- out[-1] = (f[-1] - f[-2])
+        # 1D equivalent -- out[-1] = (f[-1] - f[-2])
         out[slice1] = (f[slice2] - f[slice3])
         
         # divide by step size
@@ -427,28 +437,29 @@ def gradient(f,*varargs):
         return outvals
     
 
-def diff(x, n=1,axis=-1):
-    """Calculates the nth order, discrete difference along given axis.
+def diff(a, n=1, axis=-1):
+    """Calculate the nth order discrete difference along given axis.
     """
     if n==0:
-        return x
+        return a
     if n<0:
-        raise ValueError,'Order must be non-negative but got ' + `n`
-    x = asarray(x)
-    nd = len(x.shape)
+        raise ValueError, 'order must be non-negative but got ' + `n`
+    a = asarray(a)
+    nd = len(a.shape)
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
-    slice1[axis] = slice(1,None)
-    slice2[axis] = slice(None,-1)
+    slice1[axis] = slice(1, None)
+    slice2[axis] = slice(None, -1)
     slice1 = tuple(slice1)
     slice2 = tuple(slice2)
     if n > 1:
-        return diff(x[slice1]-x[slice2], n-1, axis=axis)
+        return diff(a[slice1]-a[slice2], n-1, axis=axis)
     else:
-        return x[slice1]-x[slice2]
+        return a[slice1]-a[slice2]
     
-def angle(z,deg=0):
-    """Return the angle of complex argument z."""
+def angle(z, deg=0):
+    """Return the angle of the complex argument z.
+    """
     if deg:
         fact = 180/pi
     else:
@@ -460,30 +471,30 @@ def angle(z,deg=0):
     else:
         zimag = 0
         zreal = z
-    return arctan2(zimag,zreal) * fact
+    return arctan2(zimag, zreal) * fact
 
-def unwrap(p,discont=pi,axis=-1):
-    """unwraps radian phase p by changing absolute jumps greater than
-       discont to their 2*pi complement along the given axis.
+def unwrap(p, discont=pi, axis=-1):
+    """Unwrap radian phase p by changing absolute jumps greater than
+       'discont' to their 2*pi complement along the given axis.
     """
     p = asarray(p)
     nd = len(p.shape)
-    dd = diff(p,axis=axis)
-    slice1 = [slice(None,None)]*nd     # full slices
-    slice1[axis] = slice(1,None)
-    ddmod = mod(dd+pi,2*pi)-pi
-    _nx.putmask(ddmod,(ddmod==-pi) & (dd > 0),pi)
+    dd = diff(p, axis=axis)
+    slice1 = [slice(None, None)]*nd     # full slices
+    slice1[axis] = slice(1, None)
+    ddmod = mod(dd+pi, 2*pi)-pi
+    _nx.putmask(ddmod, (ddmod==-pi) & (dd > 0), pi)
     ph_correct = ddmod - dd;
-    _nx.putmask(ph_correct,abs(dd)<discont,0)
-    up = array(p,copy=True,typecode='d')
-    up[slice1] = p[slice1] + cumsum(ph_correct,axis)
+    _nx.putmask(ph_correct, abs(dd)<discont, 0)
+    up = array(p, copy=True, typecode='d')
+    up[slice1] = p[slice1] + cumsum(ph_correct, axis)
     return up
 
 def sort_complex(a):
-    """ Sort a as a complex array using real part first and then
-    imaginary part if the real part is the same.
-    This is the default for complex arrays and so this is a
-    wrapper ensuring complex return type
+    """ Sort 'a' as a complex array using the real part first and then
+    the imaginary part if the real part is equal (the default sort order
+    for complex arrays).  This function is a wrapper ensuring a complex
+    return type.
     """
     b = asarray(a).sort()
     if not issubclass(b.dtype, _nx.complexfloating):
@@ -496,14 +507,14 @@ def sort_complex(a):
     else:
         return b
     
-def trim_zeros(filt,trim='fb'):
+def trim_zeros(filt, trim='fb'):
     """ Trim the leading and trailing zeros from a 1D array.
     
-        Example:
-            >>> import scipy
-            >>> a = array((0,0,0,1,2,3,2,1,0))
-            >>> scipy.trim_zeros(a)
-            array([1, 2, 3, 2, 1])
+    Example:
+        >>> import scipy
+        >>> a = array((0, 0, 0, 1, 2, 3, 2, 1, 0))
+        >>> scipy.trim_zeros(a)
+        array([1, 2, 3, 2, 1])
     """
     first = 0
     trim = trim.upper()
@@ -519,7 +530,7 @@ def trim_zeros(filt,trim='fb'):
     return filt[first:last]
 
 def unique(inseq):
-    """Returns unique items in 1-dimensional sequence.
+    """Return unique items from a 1-dimensional sequence.
     """
     # Dictionary setting is quite fast.
     set = {}
@@ -528,60 +539,63 @@ def unique(inseq):
     return asarray(set.keys())
     
 def extract(condition, arr):
-    """Elements of ravel(arr) where ravel(condition) is true (1-d)
+    """Return the elements of ravel(arr) where ravel(condition) is True
+    (in 1D).
 
-    Equivalent of compress(ravel(condition), ravel(arr))
+    Equivalent to compress(ravel(condition), ravel(arr)).
     """
     return _nx.take(ravel(arr), nonzero(ravel(condition)))
 
 def insert(arr, mask, vals):
-    """Similar to putmask arr[mask] = vals but 1d array vals has the
-    same number of elements as the non-zero values of mask. Inverse of extract.
+    """Similar to putmask arr[mask] = vals but the 1D array vals has the
+    same number of elements as the non-zero values of mask. Inverse of
+    extract.
     """
     return _nx._insert(arr, mask, vals)
 
-def nansum(x,axis=-1):
-    """Sum the array over the given axis treating nans as 0
+def nansum(a, axis=-1):
+    """Sum the array over the given axis, treating NaNs as 0.
     """
-    y = array(x)
+    y = array(a)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(x)] = 0
+        y[isnan(a)] = 0
     return y.sum(axis)
 
-def nanmin(x,axis=-1):
-    """Find the minimium over the given axis ignoring nans.
+def nanmin(a, axis=-1):
+    """Find the minimium over the given axis, ignoring NaNs.
     """
-    y = array(x)
+    y = array(a)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(x)] = _nx.inf
+        y[isnan(a)] = _nx.inf
     return y.min(axis)
 
-def nanargmin(x,axis=-1):
-    """Find the indices of the minimium over the given axis ignoring nans.
+def nanargmin(a, axis=-1):
+    """Find the indices of the minimium over the given axis ignoring NaNs.
     """
-    y = array(x)
+    y = array(a)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(x)] = _nx.inf    
+        y[isnan(a)] = _nx.inf    
     return y.argmin(axis)    
 
-def nanmax(x,axis=-1):
-    """Find the maximum over the given axis ignoring nans.
+def nanmax(a, axis=-1):
+    """Find the maximum over the given axis ignoring NaNs.
     """
-    y = array(x)
+    y = array(a)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(x)] = -_nx.inf    
+        y[isnan(a)] = -_nx.inf    
     return y.max(axis)    
 
-def nanargmax(x,axis=-1):
-    """Find the maximum over the given axis ignoring nans.
+def nanargmax(a, axis=-1):
+    """Find the maximum over the given axis ignoring NaNs.
     """
-    y = array(x)
+    y = array(a)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(x)] = -_nx.inf    
+        y[isnan(a)] = -_nx.inf    
     return y.argmax(axis)    
 
-def disp(mesg, device=None, linefeed=1):
-    """Display a message to device (default is sys.stdout) with(out) linefeed.
+def disp(mesg, device=None, linefeed=True):
+    """Display a message to the given device (default is sys.stdout)
+    with or without a linefeed.
     """
     if device is None:
         import sys
@@ -612,7 +626,7 @@ class vectorize:
 
   Example:
 
-    def myfunc(a,b):
+    def myfunc(a, b):
         if a > b:
             return a-b
         else
@@ -620,11 +634,11 @@ class vectorize:
 
     vfunc = vectorize(myfunc)
 
-    >>> vfunc([1,2,3,4],2)
-    array([3,4,1,2])
+    >>> vfunc([1, 2, 3, 4], 2)
+    array([3, 4, 1, 2])
 
     """
-    def __init__(self,pyfunc,otypes='',doc=None):
+    def __init__(self, pyfunc, otypes='', doc=None):
         try:
             fcode = pyfunc.func_code
         except AttributeError:
@@ -638,7 +652,7 @@ class vectorize:
             self.__doc__ = pyfunc.__doc__
         else:
             self.__doc__ = doc
-        if isinstance(otypes,types.StringType):
+        if isinstance(otypes, types.StringType):
             self.otypes=otypes
         else:
             raise ValueError, "output types must be a string"
@@ -646,7 +660,7 @@ class vectorize:
             if char not in typecodes['All']:
                 raise ValueError, "invalid typecode specified"
 
-    def __call__(self,*args):
+    def __call__(self, *args):
         # get number of outputs and output types by calling
         #  the function on the first entries of args
         if len(args) != self.nin:
@@ -674,33 +688,33 @@ class vectorize:
         if self.nout == 1:
             return self.ufunc(*args).astype(self.otypes[0])
         else:
-            return tuple([x.astype(c) for x,c in zip(self.ufunc(*args), self.otypes)])
+            return tuple([x.astype(c) for x, c in zip(self.ufunc(*args), self.otypes)])
 
 
-def round_(x, decimals=0):
-    """round_(m, decimals=0)  Rounds x to decimals places.
+def round_(a, decimals=0):
+    """Round 'a' to the given number of decimal places.  Rounding
+    behaviour is equivalent to Python.
 
-    Returns x if array is not floating point and rounds both the real
-    and imaginary parts separately if array is complex.  Rounds in the
-    same way as standard Python.
+    Return 'a' if the array is not floating point.  Round both the real
+    and imaginary parts separately if the array is complex.
     """
-    x = asarray(x)
-    if not issubclass(x.dtype, _nx.inexact):
-        return x
-    if issubclass(x.dtype, _nx.complexfloating):
-        return round_(x.real, decimals) + 1j*round_(x.imag, decimals)
+    a = asarray(a)
+    if not issubclass(a.dtype, _nx.inexact):
+        return a
+    if issubclass(a.dtype, _nx.complexfloating):
+        return round_(a.real, decimals) + 1j*round_(a.imag, decimals)
     if decimals is not 0:
         decimals = asarray(decimals)
-    s = sign(x)
+    s = sign(a)
     if decimals is not 0:
-        x = absolute(multiply(x,10.**decimals))
+        a = absolute(multiply(a, 10.**decimals))
     else:
-        x = absolute(x)
-    rem = x-asarray(x).astype(_nx.intp)
-    x = _nx.where(_nx.less(rem,0.5), _nx.floor(x), _nx.ceil(x))
+        a = absolute(a)
+    rem = a-asarray(a).astype(_nx.intp)
+    a = _nx.where(_nx.less(rem, 0.5), _nx.floor(a), _nx.ceil(a))
     # convert back
     if decimals is not 0:
-        return multiply(x,s/(10.**decimals))
+        return multiply(a, s/(10.**decimals))
     else:
-        return multiply(x,s)
+        return multiply(a, s)
 
