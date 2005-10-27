@@ -569,7 +569,12 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
 static char *
 index2ptr(PyArrayObject *mp, intp i) 
 {
-	if (i==0 && (mp->nd == 0 || mp->dimensions[0] > 0)) 
+	if(mp->nd == 0) {
+		PyErr_SetString(PyExc_IndexError, 
+				"0-d arrays can't be indexed");
+		return NULL;
+	}
+	if (i==0 && mp->dimensions[0] > 0)
 		return mp->data;
 	
         if (mp->nd>0 &&  i>0 && i < mp->dimensions[0]) {
