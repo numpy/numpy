@@ -1039,10 +1039,10 @@ static char doc_mean[] = "a.mean(axis=None, rtype=None)\n\n"\
   "\n"\
   "If an integer axis is given, this equals:\n"\
   "    a.sum(axis, rtype) * 1.0 / len(a)\n"\
-  "\n"\     
+  "\n"\
   "If axis is None, this equals:\n"\
   "     a.sum(axis, rtype) * 1.0 / product(a.shape)\n"\
-
+  "\n"\
   "The optional rtype argument is the data type for intermediate\n"\
   "calculations in the sum.\n"\
   "\n"\
