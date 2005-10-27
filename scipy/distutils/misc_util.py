@@ -224,7 +224,7 @@ def get_lib_source_files(lib):
     sources = filter(lambda s:type(s) is types.StringType,sources)
     filenames.extend(sources)
     filenames.extend(get_dependencies(sources))
-    depends = build_info.get('depends',[])
+    depends = lib[1].get('depends',[])
     for d in depends:
         if is_local_src_dir(d):
             os.path.walk(d,_gsf_visit_func,filenames)
