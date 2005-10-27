@@ -186,7 +186,7 @@ def array2string(a, max_line_width = None, precision = None,
                  style=repr):
 
     if a.shape == ():
-        x = a[()]
+        x = a.toscalar()
         try:
             lst = a._format(x)
         except AttributeError:
@@ -216,7 +216,7 @@ def _formatArray(a, format_function, rank, max_line_len,
     
     """
     if rank == 0:
-        return str(a[()])
+        return str(a.toscalar())
     
     if summary_insert and 2*edge_items < len(a):
         leading_items, trailing_items, summary_insert1 = \

@@ -1751,7 +1751,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
         prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
         subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
-
+       
 	ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
 					   typenum, NULL, NULL, 0, 0, 
                                            (PyObject *)
@@ -1910,7 +1910,6 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 		ip1 += is1r;
 	}
 	if (PyErr_Occurred()) goto fail;
-
 	
 	
 	Py_DECREF(ap1);
@@ -1983,12 +1982,14 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 {
 	PyArrayObject *ap1, *ap2, *ret;
 	intp length;
-	int i, n1, n2, n, n_left, n_right;
+	intp i, n1, n2, n, n_left, n_right;
 	int typenum;
-	int is1, is2, os;
+	intp is1, is2, os;
 	char *ip1, *ip2, *op;
 	PyArray_DotFunc *dot;
 	PyArray_Typecode typec = {0,0,0};
+        double prior1, prior2;
+        PyTypeObject *subtype=NULL;
 	
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);
@@ -1998,12 +1999,12 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	ap1 = (PyArrayObject *)PyArray_FromAny(op1, &typec, 1, 1,
 					       DEFAULT_FLAGS);
 	if (ap1 == NULL) return NULL;
-	ap2 = (PyArrayObject *)PyArray_FromAny(op1, &typec, 1, 1,
+	ap2 = (PyArrayObject *)PyArray_FromAny(op2, &typec, 1, 1,
 					       DEFAULT_FLAGS);
 	if (ap2 == NULL) goto fail;
 	
-	n1 = ap1->dimensions[ap1->nd-1];
-	n2 = ap2->dimensions[ap2->nd-1];
+	n1 = ap1->dimensions[0];
+	n2 = ap2->dimensions[0];
 
 	if (n1 < n2) { 
 		ret = ap1; ap1 = ap2; ap2 = ret; 
@@ -2017,7 +2018,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 		n_left = n_right = 0;
 		break;
 	case 1:
-		n_left = (int)(n/2);
+		n_left = (intp)(n/2);
 		n_right = n-n_left-1;
 		break;
 	case 2:
@@ -2030,22 +2031,29 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 				"mode must be 0, 1, or 2");
 		goto fail;
 	}
-	
-	ret = (PyArrayObject *)PyArray_New(ap1->ob_type, 1,
-					   &length, typenum, 
-					   NULL, NULL, 0, 0, 
-                                           (PyObject *)ap1);
-	if (ret == NULL) goto fail;
 
+	/* Need to choose an output array that can hold a sum 
+	    -- use priority to determine which subtype.
+	 */
+        prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
+        prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
+        subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+	
+	ret = (PyArrayObject *)PyArray_New(subtype, 1,
+					   &length, typenum, 
+					   NULL, NULL, 0, 0,
+                                           (PyObject *)
+					   (prior2 > prior1 ? ap2 : ap1));
+	if (ret == NULL) goto fail;
 	
 	dot = ret->descr->dotfunc;
 	if (dot == NULL) {
 		PyErr_SetString(PyExc_ValueError, 
-				"function not available for this type");
+				"function not available for this data type");
 		goto fail;
 	}
 	
-	is1 = ap1->strides[ap1->nd-1]; is2 = ap2->strides[ap2->nd-1];
+	is1 = ap1->strides[0]; is2 = ap2->strides[0];
 	op = ret->data; os = ret->itemsize;
 	
 	ip1 = ap1->data; ip2 = ap2->data+n_left*is2;

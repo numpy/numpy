@@ -87,7 +87,7 @@ def convolve(a,v,mode='full'):
     if (len(v) > len(a)):
         a, v = v, a
     mode = _mode_from_name(mode)
-    return correlate(a,asarray(v)[::-1],mode)
+    return multiarray.correlate(a,asarray(v)[::-1],mode)
 
 
 inner = multiarray.inner

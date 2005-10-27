@@ -127,7 +127,6 @@ dotblas_restoredot(PyObject *dummy, PyObject *args)
 
 static char doc_matrixproduct[] = "matrixproduct(a,b)\nReturns the dot product of a and b for arrays of floating point types.\nLike the generic scipy equivalent the product sum is over\nthe last dimension of a and the second-to-last dimension of b.\nNB: The first argument is not conjugated.";
 
-
 static PyObject *
 dotblas_matrixproduct(PyObject *dummy, PyObject *args) 
 {
@@ -159,7 +158,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     /* This function doesn't handle other types */
     if ((typenum != PyArray_DOUBLE && typenum != PyArray_CDOUBLE &&
 	 typenum != PyArray_FLOAT && typenum != PyArray_CFLOAT)) {
-	return PyArray_MatrixProduct(op1, op2);
+            return PyArray_Return((PyArrayObject *)PyArray_MatrixProduct(op1, op2));
     }
 
     ret = NULL;
@@ -185,7 +184,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 						     (PyObject *)ap2);
 	Py_DECREF(ap1); 
 	Py_DECREF(ap2);
-	return (PyObject *)ret;
+	return PyArray_Return(ret);
     }
 
     if (ap1->nd == 0 || ap2->nd == 0) {
@@ -408,7 +407,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
     /* This function doesn't handle other types */
     if ((typenum != PyArray_DOUBLE && typenum != PyArray_CDOUBLE &&
 	 typenum != PyArray_FLOAT && typenum != PyArray_CFLOAT)) {
-	return PyArray_InnerProduct(op1, op2);
+            return PyArray_Return((PyArrayObject *)PyArray_InnerProduct(op1, op2));
     }
 
     ret = NULL;
@@ -434,7 +433,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 						    (PyObject *)ap2);
 	Py_DECREF(ap1); 
 	Py_DECREF(ap2);
-	return (PyObject *)ret;
+	return PyArray_Return(ret);
     }
 
     if (ap1->nd == 0 || ap2->nd == 0) {
@@ -679,7 +678,7 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
 						    (PyObject *)ap2);
 	Py_DECREF(ap1); 
 	Py_DECREF(ap2);
-	return (PyObject *)ret;
+	return PyArray_Return(ret);
     }
 
     if (ap2->dimensions[0] != ap1->dimensions[ap1->nd-1]) {

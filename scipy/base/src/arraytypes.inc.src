@@ -1389,25 +1389,37 @@ static int
 
 /**end repeat**/
 
+static void
+BOOL_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n, 
+         void *ignore)
+{
+	register Bool tmp=FALSE;
+	register intp i;
+	for(i=0;i<n;i++,ip1+=is1,ip2+=is2) { 
+                if ((*((Bool *)ip1) != 0) && (*((Bool *)ip2) != 0)) {
+                        tmp = TRUE;
+                        break;
+                }
+	}		
+	*((Bool *)op) = tmp;
+}
 
 /**begin repeat
-
-#name=BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
-#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
-#out= Bool, intp, uintp, intp, uintp, intp, uintp, intp, uintp, longlong, ulonglong, float, double, longdouble#
+#name=BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+#type= byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+#out= long, ulong, long, ulong, long, ulong, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
-
 static void
 @name@_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n, 
 	   void *ignore)
 {
-	@out@ tmp=(@out@)0.0;
-	int i;
+	register @out@ tmp=(@out@)0;
+	register intp i;
 	for(i=0;i<n;i++,ip1+=is1,ip2+=is2) { 
 		tmp += (@out@)(*((@type@ *)ip1)) * \
 			(@out@)(*((@type@ *)ip2));
-	}							
-	*((@out@ *)op) = tmp;
+	}
+	*((@type@ *)op) = (@type@) tmp;
 }
 /**end repeat**/
 

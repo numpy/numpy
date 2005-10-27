@@ -36,7 +36,7 @@ def _lstsq(*args):
     
 
 __all__ = ['poly','roots','polyint','polyder','polyadd','polysub','polymul',
-           'polydiv','polyval','poly1d','poly1d','polyfit']
+           'polydiv','polyval','poly1d','polyfit']
  
 
 def poly(seq_of_zeros):
