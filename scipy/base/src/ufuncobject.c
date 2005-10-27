@@ -1094,7 +1094,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         }
 	else { /* uniformly-strided case ONE_UFUNCLOOP */
 		for (i=0; i<self->nargs; i++) {
-			if (mps[i]->nd == 0)
+			if (PyArray_SIZE(mps[i])==1)
 				loop->steps[i] = 0;
 			else 
 				loop->steps[i] = mps[i]->strides[mps[i]->nd-1];
