@@ -1032,10 +1032,8 @@ array_transpose(PyArrayObject *self, PyObject *args)
 }
 
 static char doc_mean[] = "a.mean(axis=None, rtype=None)\n\n"\
-  "Average the array over the given axis.  If axis is None, average over\n"\
-  "all dimensions of the array.\n"\
-  "\n"\
-  "if 'a' has an integer type, the result has type Float.\n"\
+  "Average the array over the given axis.  If the axis is None, average\n"\
+  "over all dimensions of the array.\n"\
   "\n"\
   "If an integer axis is given, this equals:\n"\
   "    a.sum(axis, rtype) * 1.0 / len(a)\n"\
@@ -1044,13 +1042,8 @@ static char doc_mean[] = "a.mean(axis=None, rtype=None)\n\n"\
   "     a.sum(axis, rtype) * 1.0 / product(a.shape)\n"\
   "\n"\
   "The optional rtype argument is the data type for intermediate\n"\
-  "calculations in the sum.\n"\
-  "\n"\
-  "If an integer axis is given, this equals:\n"\
-  "    a.sum(axis, rtype) * 1.0 / len(a)\n"\
-  "\n"\
-  "If axis is None, this equals:\n"\
-  "    a.sum(axis, rtype) * 1.0 / product(a.shape)";
+  "calculations in the sum.";
+
 
 static PyObject *
 array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds) 
@@ -1068,21 +1061,23 @@ array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 static char doc_sum[] = "a.sum(axis=None, rtype=None)\n\n"\
-  "Sum the array over the given axis.  The optional rtype argument\n"\
-  "is the data type for intermediate calculations.\n"\
+  "Sum the array over the given axis.  If the axis is None, sum over all\n"\
+  "dimensions of the array.\n"\
   "\n"\
-  "The default is to upcast (promote) smaller integer types to the\n"\
-  "platform-dependent Int.  For example, on 32-bit platforms:\n"\
+  "The optional rtype argument is the data type for the returned value\n"\
+  "and intermediate calculations.  The default is to upcast (promote)\n"\
+  "smaller integer types to the platform-dependent int.  For example, on\n"\
+  "32-bit platforms:\n"\
   "\n"\
   "    a.dtype                         default sum() rtype\n"\
   "    ---------------------------------------------------\n"\
-  "    bool, Int8, Int16, Int32        Int32\n"\
+  "    bool, int8, int16, int32        int32\n"\
   "\n"\
   "Examples:\n"\
   "\n"\
   ">>> array([0.5, 1.5]).sum()\n"\
   "2.0\n"\
-  ">>> array([0.5, 1.5].sum(rtype=Int32)\n"\
+  ">>> array([0.5, 1.5]).sum(rtype=int32)\n"\
   "1\n"\
   ">>> array([[0, 1], [0, 5]]).sum()\n"\
   "array([0, 6])\n"\

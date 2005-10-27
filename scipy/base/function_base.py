@@ -127,32 +127,29 @@ def histogram(a, bins=10, range=None, normed=False):
 def average(a, axis=0, weights=None, returned=False):
     """average(a, axis=0, weights=None, returned=False)
 
-       Compute average over the given axis.  If axis is None, average 
-       over all dimensions of the array.  Equivalent to a.mean(axis), 
-       but with a default axis of 0 instead of None.
+    Average the array over the given axis.  If the axis is None, average
+    over all dimensions of the array.  Equivalent to a.mean(axis), but
+    with a default axis of 0 instead of None.
 
-       The average of an integer or floating-point array always has type
-       Float.   
-       
-       If an integer axis is given, this equals:
-           a.sum(axis) * 1.0 / len(a)
-       
-       If axis is None, this equals:
-           a.sum(axis) * 1.0 / product(a.shape)
+    If an integer axis is given, this equals:
+        a.sum(axis) * 1.0 / len(a)
+    
+    If axis is None, this equals:
+        a.sum(axis) * 1.0 / product(a.shape)
 
-       If weights are given, result is:
-           sum(a * weights) / sum(weights),
-       where the weights must have a's shape or be 1D with length the 
-       size of a in the given axis. Integer weights are converted to 
-       Float.  Not specifying weights is equivalent to specifying 
-       weights that are all 1.
+    If weights are given, result is:
+        sum(a * weights) / sum(weights),
+    where the weights must have a's shape or be 1D with length the 
+    size of a in the given axis. Integer weights are converted to 
+    Float.  Not specifying weights is equivalent to specifying 
+    weights that are all 1.
 
-       If 'returned' is True, return a tuple: the result and the sum of
-       the weights or count of values. The shape of these two results
-       will be the same.
+    If 'returned' is True, return a tuple: the result and the sum of
+    the weights or count of values. The shape of these two results
+    will be the same.
 
-       Raises ZeroDivisionError if appropriate.  (The version in MA does
-       not -- it returns masked values).
+    Raises ZeroDivisionError if appropriate.  (The version in MA does
+    not -- it returns masked values).
     """
     if axis is None:
         a = array(a).ravel()
