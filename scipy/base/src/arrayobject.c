@@ -1265,6 +1265,11 @@ array_ass_big_item(PyArrayObject *self, intp i, PyObject *v)
 				"array is not writeable");
 		return -1;
 	}
+        if (self->nd == 0) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "0-d arrays can't be indexed.");
+                return -1;
+        }
 
         if (i < 0) i = i+self->dimensions[0];
 
@@ -1692,6 +1697,11 @@ array_subscript(PyArrayObject *self, PyObject *op)
         PyArrayObject *other;
 	PyArrayMapIterObject *mit;
 
+        if (self->nd == 0) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "0-d arrays can't be indexed.");
+                return NULL;
+        }
         if (PyArray_IsScalar(op, Integer) || PyInt_Check(op) || \
             PyLong_Check(op)) {
                 intp value;
@@ -1704,7 +1714,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 }
                 else if (value < 0) {
                         if (value >= -MAX_INT) {
-                                if (self->nd > 0) value += self->dimensions[0];
+                                value += self->dimensions[0];
                                 return array_big_item(self, value);
                         }
                 }
@@ -1789,6 +1799,11 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 				"array is not writeable");
 		return -1;
 	}
+        if (self->nd == 0) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "0-d arrays can't be indexed.");
+                return -1;
+        }
 
 	if (PyArrayMapIter_Check(index)) {
 		mit = (PyArrayMapIterObject *)index;

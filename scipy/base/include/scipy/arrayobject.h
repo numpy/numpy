@@ -783,8 +783,8 @@ typedef struct PyArrayObject {
 
 typedef struct {   /* Just the type_num and itemsize variables 
 		      for use in the TypeNum Converter function */
-	int type_num;
-	int itemsize;
+	int type_num; /* The enumerated type number */
+	int itemsize; /* The itemsize desired (for flexible types) */
 	int fortran;  /* Set to 1 if fortran-defined strides is desired */
 } PyArray_Typecode;
 

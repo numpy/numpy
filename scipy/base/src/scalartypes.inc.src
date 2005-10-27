@@ -62,8 +62,8 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 	return;
 }
 
-/* 0-dim array from array-scalar object */
 
+/* 0-dim array from array-scalar object */
 static PyObject *
 PyArray_FromScalar(PyObject *scalar, PyArray_Typecode *outcode)
 {
