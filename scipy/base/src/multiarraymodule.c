@@ -2592,7 +2592,7 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
         int buflen;
 
         buf->ptr = NULL;
-        buf->flags = WRITEABLE;
+        buf->flags = BEHAVED_FLAGS;
         buf->base = NULL;
 
 	if (obj == Py_None)

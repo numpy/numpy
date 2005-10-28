@@ -1448,7 +1448,7 @@ static void
         intp is=steps[0], os=steps[1], n=dimensions[0];
         char *ip=args[0], *op=args[1];
         for(i=0; i<n; i++, ip+=is, op+=os) {
-                *((Bool *)op) = @kind@@c@(*((@typ@ *)ip));
+                *((Bool *)op) = (Bool) (@kind@@c@(*((@typ@ *)ip)) != 0);
         }
 }
 /**end repeat**/
