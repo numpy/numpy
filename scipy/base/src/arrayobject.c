@@ -802,12 +802,12 @@ PyArray_Copy(PyArrayObject *m1)
 static PyObject *array_big_item(PyArrayObject *, intp);
 
 static PyObject *
-PyArray_Scalar(char *data, int type_num, int itemsize, int swap)
+PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
 {
         PyArray_Descr *descr;
 	PyTypeObject *type;
 	PyObject *obj;	
-	char *destptr;
+        void *destptr;
         PyArray_CopySwapFunc *copyswap;
 
         descr = PyArray_DescrFromType(type_num);
