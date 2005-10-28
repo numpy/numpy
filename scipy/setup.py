@@ -7,7 +7,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('distutils')
     config.add_subpackage('weave')
     config.add_subpackage('test')
-    config.add_subpackage('f2py2e') # installed as scipy.f2py
+    config.add_subpackage('f2py') # installed as scipy.f2py
     config.add_subpackage('base')
     config.add_subpackage('corelib') # installed as scipy.lib
     config.add_subpackage('basic')
