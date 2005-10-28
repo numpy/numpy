@@ -410,7 +410,7 @@ static void
 	       PyArrayObject *aop) {
 	register intp i; 
 	for(i=0;i<n;i++,op++,ip++) {
-		*op = (Bool)(((*ip).real != FALSE) && ((*ip).imag != FALSE));
+		*op = (Bool)(((*ip).real != FALSE) || ((*ip).imag != FALSE));
 	}
 }
 /**end repeat**/
@@ -1053,8 +1053,8 @@ UNICODE_copyswap (char *dst, char *src, int swap, int itemsize)
 /****************** nonzero **********************************/
 
 /**begin repeat
-#fname=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE#
-#type=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble#
+#fname=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+#type=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 static Bool 
 @fname@_nonzero (@type@ *ip, PyArrayObject *ap)
@@ -1070,6 +1070,27 @@ static Bool
 	}
 }
 /**end repeat**/
+
+/**begin repeat
+#fname=CFLOAT,CDOUBLE,CLONGDOUBLE#
+#type=cfloat, cdouble, clongdouble#
+*/
+static Bool 
+@fname@_nonzero (@type@ *ip, PyArrayObject *ap)
+{
+	@type@ t1;
+	if (ap==NULL || PyArray_ISBEHAVED_RO(ap))
+		return (Bool) ((ip->real != 0) || (ip->imag != 0));
+	else {
+		/* don't worry about swap, since we are just testing
+		   whether or not equal to 0 */
+		memcpy(&t1, ip, sizeof(@type@));
+		return (Bool) ((t1.real != 0) || (t1.imag != 0));
+	}
+}
+/**end repeat**/
+
+
 
 #define WHITESPACE " \t\n\r\v\f"
 #define WHITELEN 6

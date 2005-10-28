@@ -28,7 +28,7 @@ cmplxO = cmplx+'O'
 cmplxM = cmplx+'M'
 noint = flts+cmplx+'O'
 nointM = flts+cmplx+'M'
-all = '?'+ints+flts+cmplxO
+allM = '?'+ints+flts+cmplxM
 nobool = all[1:]
 nobool_or_obj = all[1:-1]
 intflt = ints+flts
@@ -120,25 +120,25 @@ defdict = {
                "returns elementwise x1 |= x2",
                '?'*len(all)
                ],
-'logical_and': [nocmplxM,'M',('"logical_and"',),
+'logical_and': [allM,'M',('"logical_and"',),
                 (2,1), One,
                 "returns x1 and x2 elementwise.",
-                '?'*len(nocmplxM)
+                '?'*len(nocmplxM+cmplx)
                 ],
-'logical_or': [nocmplxM,'M',('"logical_or"',),
+'logical_or': [allM,'M',('"logical_or"',),
                 (2,1), Zero,               
                 "returns x1 or x2 elementwise.",
-               '?'*len(nocmplxM)
+               '?'*len(nocmplxM+cmplx)
                ],
-'logical_xor': [nocmplxM, 'M', ('"logical_xor"',),
+'logical_xor': [allM, 'M', ('"logical_xor"',),
                 (2,1), None,
                 "returns x1 xor x2 elementwise.",
-                '?'*len(nocmplxM)
+                '?'*len(nocmplxM+cmplx)
                 ],
-'logical_not' : [nocmplxM, 'M', ('"logical_not"',),
+'logical_not' : [allM, 'M', ('"logical_not"',),
                  (1,1), None,
                  "returns not x elementwise.",
-                 '?'*len(nocmplxM)
+                 '?'*len(nocmplxM+cmplx)
                  ],
 'maximum' : [noobj,'',(),
              (2,1), None,

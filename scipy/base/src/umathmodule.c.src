@@ -1159,10 +1159,10 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 
 /**begin repeat 
 
-#TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE)*4#
-#OP= >*16, >=*16, <*16, <=*16#
-#typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble)*4#
-#kind= greater*16, greater_equal*16, less*16, less_equal*16#
+#TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*4#
+#OP= >*13, >=*13, <*13, <=*13#
+#typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*4#
+#kind= greater*13, greater_equal*13, less*13, less_equal*13#
 */
 
 static void 
@@ -1179,7 +1179,31 @@ static void
 
 
 /**begin repeat
+#TYPE=(CFLOAT,CDOUBLE,CLONGDOUBLE)*4#
+#OP= >*3, >=*3, <*3, <=*3#
+#typ=(cfloat, cdouble, clongdouble)*4#
+#kind= greater*3, greater_equal*3, less*3, less_equal*3#
+*/
 
+static void 
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func) 
+{
+	register intp i;
+	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+	char *i1=args[0], *i2=args[1], *op=args[2];
+	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+		if (((@typ@ *)i1)->real == ((@typ@ *)i2)->real)
+			*((Bool *)op)=((@typ@ *)i1)->imag @OP@ \
+				((@typ@ *)i2)->imag;
+		else
+			*((Bool *)op)=((@typ@ *)i1)->real @OP@ \
+				((@typ@ *)i2)->real;
+	}
+}
+/**end repeat**/
+
+
+/**begin repeat
 #TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*4#
 #typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*4#
 #OP= ==*13, !=*13, &&*13, ||*13#
@@ -1200,11 +1224,11 @@ static void
 
 /**begin repeat
 
-#TYPE=(CFLOAT, CDOUBLE, CLONGDOUBLE)*2#
-#typ=(float, double, longdouble)*2#
-#OP= ==*3, !=*3#
-#OP2= &&*3, ||*3#
-#kind=equal*3, not_equal*3#
+#TYPE=(CFLOAT, CDOUBLE, CLONGDOUBLE)*4#
+#typ=(float, double, longdouble)*4#
+#OP= ==*3, !=*3, &&*3, ||*3#
+#OP2= &&*3, ||*3, &&*3, ||*3#
+#kind=equal*3, not_equal*3, logical_and*3, logical_or*3#
 */
 static void 
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func) 
@@ -1255,9 +1279,10 @@ static void
 }
 /**end repeat**/
 
+#define BOOL_negative BOOL_logical_not
+
 
 /**begin repeat
-
 #TYPE=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
 #typ=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
@@ -1273,7 +1298,24 @@ static void
 }
 /**end repeat**/
 
-#define BOOL_negative BOOL_logical_not
+/**begin repeat
+#TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
+#typ=cfloat, cdouble, clongdouble#
+*/
+static void 
+@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *func) 
+{
+	register intp i;
+	intp is1=steps[0],os=steps[1], n=dimensions[0];
+	char *i1=args[0], *op=args[1];
+	for(i=0; i<n; i++, i1+=is1, op+=os) {
+		*((Bool *)op) = ! (((@typ@ *)i1)->real ||	\
+				   ((@typ@ *)i1)->imag);
+	}
+}
+/**end repeat**/
+
+
 
 
 /**begin repeat
@@ -1370,7 +1412,6 @@ BOOL_invert(char **args, intp *dimensions, intp *steps, void *func)
 
 
 /**begin repeat
-
 #TYPE=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
 #typ=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 
@@ -1386,6 +1427,28 @@ static void
 	}
 }
 /**end repeat**/
+
+
+/**begin repeat
+#TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
+#typ=cfloat, cdouble, clongdouble#
+*/
+static void 
+@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *func) 
+{
+	Bool p1, p2;
+	register intp i;
+	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+	char *i1=args[0], *i2=args[1], *op=args[2];
+	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+		p1 = ((@typ@ *)i1)->real || ((@typ@ *)i1)->imag;
+		p2 = ((@typ@ *)i2)->real || ((@typ@ *)i2)->imag;
+		*((Bool *)op)= (p1 || p2) && !(p1 && p2);
+	}
+}
+/**end repeat**/
+
+
 
 /**begin repeat 
 
