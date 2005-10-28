@@ -42,6 +42,7 @@ Getting arrays in C-code
 
 All new arrays can be created using PyArray_New.  A simple interface 
 equivalent to PyArray_FromDims is PyArray_SimpleNew(nd, dims, typenum)
+and to PyArray_FromDimsAndData is PyArray_SimpleNewFromData(nd, dims, typenum, data)
 
 This is a very flexible function.  
 
