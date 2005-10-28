@@ -498,14 +498,3 @@ if __name__ == "__main__":
     code = make_code(defdict, filename)
     fid.write(code)
     fid.close()
-    
-
-
-
-
-
-
-
-
-
-

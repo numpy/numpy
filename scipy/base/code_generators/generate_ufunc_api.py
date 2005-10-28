@@ -1,4 +1,3 @@
-
 #  doc is comment_documentation
 
 # use list so order is preserved.
@@ -10,7 +9,7 @@ ufunc_api_list = [
     (r"""
     """,
      'RegisterLoopForType','PyUFuncObject *, int, PyUFuncGenericFunction, void *', 'int'),
-    
+
     (r"""
     """,
      'GenericFunction', 'PyUFuncObject *, PyObject *, PyArrayObject **', 'int'),
@@ -25,11 +24,11 @@ ufunc_api_list = [
 
     (r"""
     """,
-     'f_f','char **, intp *, intp *, void *','void'),    
+     'f_f','char **, intp *, intp *, void *','void'),
 
     (r"""
     """,
-     'g_g','char **, intp *, intp *, void *','void'),     
+     'g_g','char **, intp *, intp *, void *','void'),
 
     (r"""
     """,
@@ -37,11 +36,11 @@ ufunc_api_list = [
 
     (r"""
     """,
-     'F_F','char **, intp *, intp *, void *','void'),     
+     'F_F','char **, intp *, intp *, void *','void'),
 
     (r"""
     """,
-     'D_D','char **, intp *, intp *, void *','void'),     
+     'D_D','char **, intp *, intp *, void *','void'),
 
     (r"""
     """,
@@ -49,7 +48,7 @@ ufunc_api_list = [
 
     (r"""
     """,
-     'O_O','char **, intp *, intp *, void *','void'), 
+     'O_O','char **, intp *, intp *, void *','void'),
 
     (r"""
     """,
@@ -65,7 +64,7 @@ ufunc_api_list = [
 
     (r"""
     """,
-     'gg_g','char **, intp *, intp *, void *','void'),     
+     'gg_g','char **, intp *, intp *, void *','void'),
 
     (r"""
     """,
@@ -77,7 +76,7 @@ ufunc_api_list = [
 
     (r"""
     """,
-     'FF_F','char **, intp *, intp *, void *','void'),         
+     'FF_F','char **, intp *, intp *, void *','void'),
 
     (r"""
     """,
@@ -100,7 +99,7 @@ ufunc_api_list = [
      'clearfperr', 'void', 'void')
 
 ]
-    
+
 # API fixes for __arrayobject_api.h
 
 fixed = 1
@@ -142,15 +141,15 @@ static void **PyUFunc_API;
 
 static int
 import_ufunc(void)
-{ 
+{
   PyObject *numpy = PyImport_ImportModule("scipy.base.umath");
   PyObject *c_api = NULL;
 
   if (numpy == NULL) return -1;
   c_api = PyObject_GetAttrString(numpy, "_UFUNC_API");
   if (c_api == NULL) {Py_DECREF(numpy); return -1;}
-  if (PyCObject_Check(c_api)) { 
-      PyUFunc_API = (void **)PyCObject_AsVoidPtr(c_api); 
+  if (PyCObject_Check(c_api)) {
+      PyUFunc_API = (void **)PyCObject_AsVoidPtr(c_api);
   }
   Py_DECREF(c_api);
   Py_DECREF(numpy);
@@ -160,7 +159,7 @@ import_ufunc(void)
 
 #endif
 
-""" % ('\n'.join(module_list), 
+""" % ('\n'.join(module_list),
        '\n'.join(extension_list))
 
 # Write to header
@@ -184,7 +183,3 @@ void *PyUFunc_API[] = {
 fid = open('__ufunc_api.c','w')
 fid.write(outstr)
 fid.close()
-
-
-
-

@@ -1,4 +1,3 @@
-
 #  doc is comment_documentation
 
 # use list so order is preserved.
@@ -19,7 +18,7 @@ objectapi_list = [
      'INCREF','PyArrayObject *','int'),
 
     (r"""Decrement all internal references for object arrays.
-    """,     
+    """,
      'XDECREF','PyArrayObject *','int'),
 
     (r"""Set the array print function to be a Python function.
@@ -30,7 +29,7 @@ objectapi_list = [
     """,
      'DescrFromType','int','PyArray_Descr *'),
 
-    (r"""Get pointer to zero of correct type for array. 
+    (r"""Get pointer to zero of correct type for array.
     """,
      'Zero', 'PyArrayObject *', 'char *'),
 
@@ -78,7 +77,7 @@ objectapi_list = [
 
     (r"""Get scalar-equivalent to 0-d array
     """,
-     'Scalar', 'char *, int, int, int', 'PyObject *'),
+     'Scalar', 'void *, int, int, int', 'PyObject *'),
 
     (r"""Get scalar-equivalent to 0-d array
     """,
@@ -99,14 +98,14 @@ objectapi_list = [
     (r"""Insert Descr Table
     """,
      'RegisterDescrForType', 'int, PyArray_Descr *', 'int'),
-    
+
     (r"""Construct an empty array from dimensions and typenum
     """,
      'FromDims','int nd, int *, int typenum','PyObject *'),
 
     (r"""Construct an array from dimensions, typenum, and a pointer
     to the data.  Python will never free this (unless you later set
-    the OWN_DATA flag). 
+    the OWN_DATA flag).
     """,
      'FromDimsAndData','int, int *, int, char *','PyObject *'),
 
@@ -133,7 +132,7 @@ objectapi_list = [
      'ContiguousFromAny',
      'PyObject *, int typenum, int, int',
      'PyObject *'),
-    
+
 
     (r"""Same as ContiguousFromObject except ensure a copy.
     """,
@@ -206,11 +205,11 @@ objectapi_list = [
     (r"""
     """,
      'Dumps', 'PyObject *, int', 'PyObject *'),
-    
-    
+
+
     (r"""Is the typenum valid?
     """,
-     'ValidType','int','int'),  
+     'ValidType','int','int'),
 
     (r"""Update Several Flags at once.
     """,
@@ -310,7 +309,7 @@ multiapi_list = [
     (r"""ArgMax
     """,
      'ArgMax','PyArrayObject *, int','PyObject *'),
-    
+
     (r"""ArgMin
     """,
      'ArgMin','PyArrayObject *, int','PyObject *'),
@@ -422,7 +421,7 @@ multiapi_list = [
 
     (r"""Compare Lists
     """,
-     'CompareLists','intp *, intp *, int n','int'),    
+     'CompareLists','intp *, intp *, int n','int'),
 
     (r"""Simulat a C-array
     """,
@@ -447,7 +446,7 @@ multiapi_list = [
 
     (r"""PyArray_IntpFromSequence
     """,
-     'IntpFromSequence', 'PyObject *, intp *, int', 'int'), 
+     'IntpFromSequence', 'PyObject *, intp *, int', 'int'),
 
     (r"""Concatenate an arbitrary Python sequence into
      an array.
@@ -469,7 +468,7 @@ multiapi_list = [
     (r"""Numeric.correlate(a1,a2,mode)
     """,
      'Correlate','PyObject *, PyObject *, int mode','PyObject *'),
-    
+
     (r"""Typestr converter
     """,
      'TypestrConvert', 'int, int', 'int'),
@@ -522,7 +521,7 @@ multiapi_list = [
     (r"""Arange
     """,
      'Arange', 'double, double, double, int', 'PyObject *')
-    
+
     ]
 
 
@@ -538,7 +537,7 @@ types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger', 'Inexa
 fixed = 5
 numtypes = len(types) + fixed
 numobject = len(objectapi_list) + numtypes
-nummulti = len(multiapi_list) 
+nummulti = len(multiapi_list)
 numtotal = numobject + nummulti
 
 
@@ -570,7 +569,7 @@ for k, item in enumerate(objectapi_list):
     astr = "        (void *) PyArray_%s," % item[1]
     init_list.append(astr)
 
-    
+
 ##outstr = r"""
 ###ifdef _ARRAYOBJECT
 
@@ -666,15 +665,15 @@ static void **PyArray_API=NULL;
 
 #if !defined(NO_IMPORT_ARRAY) && !defined(NO_IMPORT)
 static int
-import_array(void) 
+import_array(void)
 {
   PyObject *numpy = PyImport_ImportModule("scipy.base.multiarray");
   PyObject *c_api = NULL;
   if (numpy == NULL) return -1;
   c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
   if (c_api == NULL) {Py_DECREF(numpy); return -1;}
-  if (PyCObject_Check(c_api)) { 
-      PyArray_API = (void **)PyCObject_AsVoidPtr(c_api); 
+  if (PyCObject_Check(c_api)) {
+      PyArray_API = (void **)PyCObject_AsVoidPtr(c_api);
   }
   Py_DECREF(c_api);
   Py_DECREF(numpy);
@@ -685,7 +684,7 @@ import_array(void)
 
 #endif
 
-""" % ('\n'.join(module_list), 
+""" % ('\n'.join(module_list),
        '\n'.join(extension_list))
 
 # Write to header
@@ -713,7 +712,3 @@ void *PyArray_API[] = {
 fid = open('__multiarray_api.c','w')
 fid.write(outstr)
 fid.close()
-
-
-
-
