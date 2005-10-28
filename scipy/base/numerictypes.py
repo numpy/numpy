@@ -2,7 +2,7 @@
 
 """numerictypes: Define the numeric type objects
 
-This module is designed so 'from numeric3types import *' is safe.
+This module is designed so 'from numerictypes import *' is safe.
 Exported symbols include:
 
   Dictionary with all registered number types (including aliases):
@@ -12,13 +12,13 @@ Exported symbols include:
       see variable arraytypes for which ones you have
 
     Bit-width names
-    
+
     int8 int16 int32 int64 int128
     uint8 uint16 uint32 uint64 uint128
     float16 float32 float64 float96 float128 float256
     complex32 complex64 complex128 complex192 complex256 complex512
 
-    c-based names 
+    c-based names
 
     bool_
 
@@ -38,7 +38,7 @@ Exported symbols include:
     longfloat, clongfloat,
 
     As part of the type-hierarchy:    xx -- is bit-width
-    
+
      generic
        bool_
        numeric
@@ -58,52 +58,46 @@ Exported symbols include:
              uint_
              ulonglong
          floating           (floatxx)
-             single          
+             single
              float_  (double)
              longfloat
          complexfloating    (complexxx)
-             csingle        
+             csingle
              complex_ (cfloat, cdouble)
              clongfloat
-   
+
        flexible
          character
            str_     (string)
-           unicode_ 
+           unicode_
          void
-   
+
        object_
 
 $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
 
-import multiarray
-typeinfo = multiarray.typeinfo
-ndarray = multiarray.ndarray
-array = multiarray.array
-_I = typeinfo
+# we add more at the bottom
+__all__ = ['typeDict', 'arraytypes', 'ScalarType', 'obj2dtype', 'cast']
 
-pybool = bool
-pyint = int
-pyfloat = float
-pylong = long
-pycomplex = complex
-pyobject = object
-pyunicode = unicode
-
+from multiarray import typeinfo, ndarray, array
 import types as _types
 
-typeDict = {}      # Contains all leaf-node numeric types with aliases
+# we don't export these for import *, but we do want them accessible
+# as numerictypes.bool, etc.
+from __builtin__ import bool, int, long, float, complex, object, unicode, str
 
+typeDict = {}      # Contains all leaf-node numeric types with aliases
+allTypes = {}      # Collect the types we will add to the module here
 
 def _evalname(name):
     k = 0
     for ch in name:
         if ch in '0123456789':
             break
-        k+=1
+        k += 1
     try:
-        bits = pyint(name[k:])
+        bits = int(name[k:])
     except ValueError:
         bits = 0
     base = name[:k]
@@ -115,15 +109,15 @@ def bitname(obj):
     base = ''
     char = ''
     try:
-        info = _I[name.upper()]
+        info = typeinfo[name.upper()]
         assert(info[-1] == obj)  # sanity check
         bits = info[2]
-        
+
     except KeyError:     # bit-width name
         base, bits = _evalname(name)
         char = base[0]
 
-    if name=='bool':
+    if name == 'bool':
         char = 'b'
     elif name=='string':
         char = 'S'
@@ -139,122 +133,118 @@ def bitname(obj):
         base = 'object'
         bits = 0
 
-    bytes = bits / 8        
+    bytes = bits / 8
 
     if char != '' and bytes != 0:
         char = "%s%d" % (char, bytes)
 
-    return base, bits, char  
+    return base, bits, char
 
 revdict = {}
-_tocheck = _I.keys()
-_thisdict = globals()  # this will insert into module name space
 
-for a in _tocheck:
-    name = a.lower()
-    if isinstance(_I[a],type(())):
-        typeobj = _I[a][-1]
-        # define C-name and insert typenum and typechar references also
-        _thisdict[name] = typeobj
-        typeDict[name] = typeobj
-        typeDict[_I[a][0]] = typeobj
-        typeDict[_I[a][1]] = typeobj
+def _add_types():
+    for a in typeinfo.keys():
+        name = a.lower()
+        if isinstance(typeinfo[a], type(())):
+            typeobj = typeinfo[a][-1]
+            # define C-name and insert typenum and typechar references also
+            allTypes[name] = typeobj
+            typeDict[name] = typeobj
+            typeDict[typeinfo[a][0]] = typeobj
+            typeDict[typeinfo[a][1]] = typeobj
 
-        # insert bit-width version for this class (if relevant)
-        base, bit, char = bitname(typeobj)
-        revdict[typeobj] = (_I[a][:-1], (base, bit, char), a)
-        if base != '':
-            _thisdict["%s%d" % (base, bit)] = typeobj
-            typeDict["%s%d" % (base, bit)] = typeobj
-        if char != '':
-            typeDict[char] = typeobj
-        
-    else:  # generic class
-        _thisdict[name] = _I[a]
+            # insert bit-width version for this class (if relevant)
+            base, bit, char = bitname(typeobj)
+            revdict[typeobj] = (typeinfo[a][:-1], (base, bit, char), a)
+            if base != '':
+                allTypes["%s%d" % (base, bit)] = typeobj
+                typeDict["%s%d" % (base, bit)] = typeobj
+            if char != '':
+                typeDict[char] = typeobj
+
+        else:  # generic class
+            allTypes[name] = typeinfo[a]
+_add_types()
+
+# We use these later
+void = allTypes['void']
+generic = allTypes['generic']
 
 #
 # Rework the Python names (so that float and complex and int are consistent
 #                            with Python usage)
 #
-complex_ = cdouble
-int0 = intp
-uint0 = uintp
-single = float
-csingle = cfloat
-float_ = double
-intc = int
-uintc = uint
-int_ = long
-uint = ulong
-cfloat = cdouble
-longfloat = longdouble
-clongfloat = clongdouble
-
-bool_ = bool
-unicode_ = unicode
-str_ = string
-object_ = object
-
-object = pyobject
-unicode = pyunicode
-int = pyint
-long = pylong
-float = pyfloat
-complex = pycomplex
-bool = pybool
-
-del ulong, pyobject, pyunicode, pyint, pylong, pyfloat, pycomplex, pybool
-
-del _thisdict, _tocheck, a, name, typeobj
-del base, bit, char
-
+def _set_up_aliases():
+    type_pairs = [('complex_', 'cdouble'),
+                  ('int0', 'intp'),
+                  ('uint0', 'uintp'),
+                  ('single', 'float'),
+                  ('csingle', 'cfloat'),
+                  ('float_', 'double'),
+                  ('intc', 'int'),
+                  ('uintc', 'uint'),
+                  ('int_', 'long'),
+                  ('uint', 'ulong'),
+                  ('cfloat', 'cdouble'),
+                  ('longfloat', 'longdouble'),
+                  ('clongfloat', 'clongdouble'),
+                  ('bool_', 'bool'),
+                  ('unicode_', 'unicode'),
+                  ('str_', 'string'),
+                  ('object_', 'object')]
+    for alias, t in type_pairs:
+        allTypes[alias] = allTypes[t]
+    # Remove aliases overriding python types
+    for t in ['ulong', 'object', 'unicode', 'int', 'long', 'float',
+              'complex', 'bool']:
+        try:
+            del allTypes[t]
+        except KeyError:
+            pass
+_set_up_aliases()
 
 # Now, construct dictionary to lookup character codes from types
 
 _dtype2char_dict = {}
-for name in typeinfo.keys():
-    tup = typeinfo[name]
-    if isinstance(tup,type(())):
-        _dtype2char_dict[tup[-1]] = tup[0]
+def _construct_char_code_lookup():
+    for name in typeinfo.keys():
+        tup = typeinfo[name]
+        if isinstance(tup, type(())):
+            _dtype2char_dict[tup[-1]] = tup[0]
+_construct_char_code_lookup()
 
 arraytypes = {'int': [],
               'uint':[],
               'float':[],
               'complex':[],
-              'others':[bool_,object_,str_,unicode_,void]}
+              'others':[bool,object,str,unicode,void]}
 
-_ibytes = [1,2,4,8,16,32,64]
-_fbytes = [2,4,8,10,12,16,32,64]
-              
-for bytes in _ibytes:
-    bits = 8*bytes
+def _add_array_type(typename, bits):
     try:
-        arraytypes['int'].append(eval("int%d" % bits))
-    except NameError:
+        t = allTypes['%s%d' % (typename, bits)]
+    except KeyError:
         pass
-    try:
-        arraytypes['uint'].append(eval("uint%d" % bits))
-    except NameError:
-        pass
+    else:
+        arraytypes[typename].append(t)
 
-for bytes in _fbytes:
-    bits = 8*bytes
-    try:
-        arraytypes['float'].append(eval("float%d" % bits))
-    except NameError:
-        pass
-    try:
-        arraytypes['complex'].append(eval("complex%d" % (2*bits,)))
-    except NameError:
-        pass
+def _set_array_types():
+    ibytes = [1, 2, 4, 8, 16, 32, 64]
+    fbytes = [2, 4, 8, 10, 12, 16, 32, 64]
+    for bytes in ibytes:
+        bits = 8*bytes
+        _add_array_type('int', bits)
+        _add_array_type('uint', bits)
+    for bytes in fbytes:
+        bits = 8*bytes
+        _add_array_type('float', bits)
+        _add_array_type('complex', bits)
+_set_array_types()
 
-del bytes, bits
-
-genericTypeRank = ['bool','int8','uint8','int16','uint16',
+genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
                    'int32', 'uint32', 'int64', 'uint64', 'int128',
-                   'uint128','float16',
-                   'float32','float64', 'float80', 'float96', 'float128',
-                   'float256'
+                   'uint128', 'float16',
+                   'float32', 'float64', 'float80', 'float96', 'float128',
+                   'float256',
                    'complex32', 'complex64', 'complex128', 'complex160',
                    'complex192', 'complex256', 'complex512', 'object']
 
@@ -271,26 +261,19 @@ def maximum_dtype(t):
     else:
         return arraytypes[base][-1]
 
+_python_types = {int : 'int_',
+                 float: 'float_',
+                 complex: 'complex_',
+                 bool: 'bool_',
+                 str: 'string',
+                 unicode: 'unicode_',
+                 _types.BufferType: 'void',
+                }
 def _python_type(t):
     """returns the type corresponding to a certain Python type"""
     if not isinstance(t, _types.TypeType):
         t = type(t)
-    if t == _types.IntType:
-        return int_
-    elif t == _types.FloatType:
-        return float_
-    elif t == _types.ComplexType:
-        return complex_
-    elif t == _types.BooleanType:
-        return bool_
-    elif t == _types.StringType:
-        return str_
-    elif t == _types.UnicodeType:
-        return unicode_
-    elif t == _types.BufferType:
-        return void
-    else:
-        return object_
+    return allTypes[_python_types.get(t, 'object_')]
 
 def isdtype(rep):
     """Determines whether the given object represents
@@ -300,18 +283,18 @@ def isdtype(rep):
         return True
     except (KeyError, ValueError):
         return False
-    
+
 def obj2dtype(rep, default=None):
     try:
         if issubclass(rep, generic):
             return rep
     except TypeError:
         pass
-        
+
     if isinstance(rep, type):
         return _python_type(rep)
     if isinstance(rep, ndarray):
-        return rep.dtype    
+        return rep.dtype
     res = typeDict.get(rep, default)
     return res
 
@@ -321,8 +304,6 @@ def dtype2char(dtype):
         raise ValueError, "unrecognized type"
     return _dtype2char_dict[dtype]
 
-
-del _ibytes, _fbytes, multiarray
 
 # Create dictionary of casting functions that wrap sequences
 # indexed by type or type character
@@ -339,10 +320,12 @@ ScalarType = [_types.IntType, _types.FloatType,
 ScalarType.extend(_dtype2char_dict.keys())
 ScalarType = tuple(ScalarType)
 for key in _dtype2char_dict.keys():
-    cast[key] = lambda x, k=key : array(x,copy=False).astype(k)
+    cast[key] = lambda x, k=key : array(x, copy=False).astype(k)
+
+# Now add the types we've determined to this module
+for key in allTypes:
+    globals()[key] = allTypes[key]
+    __all__.append(key)
 
 del key
-
-
-
 

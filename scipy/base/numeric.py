@@ -1,3 +1,21 @@
+__all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
+           'arange', 'array', 'zeros', 'empty',
+           'fromstring', 'fromfile', 'frombuffer',
+           'where', 'concatenate', 'fastCopyAndTranspose',
+           'register_dtype', 'can_cast',
+           'asarray', 'asanyarray', 'isfortran', 'zeros_like', 'empty_like',
+           'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
+           'alterdot', 'restoredot', 'cross',
+           'array2string', 'get_printoptions', 'set_printoptions',
+           'array_repr', 'array_str', 'set_string_function',
+           'little_endian',
+           'indices', 'fromfunction',
+           'load', 'loads',
+           'ones', 'identity', 'allclose',
+           'seterr', 'geterr', 'setbufsize', 'getbufsize',
+           'seterrcall', 'geterrcall',
+           'Inf', 'inf', 'infty', 'Infinity',
+           'nan', 'NaN']
 
 import sys
 import types, math
@@ -5,8 +23,24 @@ import types, math
 import multiarray
 import umath
 from umath import *
+import numerictypes
 from numerictypes import *
 from _compiled_base import _insert
+
+def extend_all(module):
+    adict = {}
+    for a in __all__:
+        adict[a] = 1
+    try:
+        mall = getattr(module, '__all__')
+    except AttributeError:
+        mall = [k for k in module.__dict__.keys() if not k.startswith('_')]
+    for a in mall:
+        if a not in adict:
+            __all__.append(a)
+
+extend_all(umath)
+extend_all(numerictypes)
 
 newaxis = None
 
@@ -35,7 +69,7 @@ def asarray(a, dtype=None, fortran=False):
     """
     return array(a, dtype, copy=False, fortran=fortran)
 
-def asanyarray(a, dtype=None,copy=False,fortran=False):
+def asanyarray(a, dtype=None, copy=False, fortran=False):
     """will pass subclasses through...
     """
     return array(a, dtype, copy=False, fortran=fortran, subok=1)
@@ -49,9 +83,8 @@ def zeros_like(a):
 
     If you don't explicitly need the array to be zeroed, you should instead
     use empty_like(), which is faster as it only allocates memory."""
-    
     a = asanyarray(a)
-    return a.__array_wrap__(zeros(a.shape,a.dtype, a.flags['FNC']))
+    return a.__array_wrap__(zeros(a.shape, a.dtype, a.flags['FNC']))
 
 def empty_like(a):
     """Return an empty (uninitialized) array of the shape and typecode of a.
@@ -61,7 +94,7 @@ def empty_like(a):
 
     """
     a = asanyarray(a)
-    return a.__array_wrap__(empty(a.shape,a.dtype, a.flags['FNC']))
+    return a.__array_wrap__(empty(a.shape, a.dtype, a.flags['FNC']))
 
 # end Fernando's utilities
 
@@ -73,7 +106,7 @@ def _mode_from_name(mode):
     if isinstance(mode, type("")):
         return _mode_from_name_dict[mode.lower()[0]]
     return mode
-        
+
 def correlate(a,v,mode='valid'):
     mode = _mode_from_name(mode)
     return multiarray.correlate(a,v,mode)
@@ -94,18 +127,18 @@ inner = multiarray.inner
 dot = multiarray.dot
 
 def outer(a,b):
-   """outer(a,b) returns the outer product of two vectors.
-      result(i,j) = a(i)*b(j) when a and b are vectors
-      Will accept any arguments that can be made into vectors.
-   """
-   a = asarray(a)
-   b = asarray(b)
-   return a.ravel()[:,newaxis]*b.ravel()[newaxis,:]
+    """outer(a,b) returns the outer product of two vectors.
+    result(i,j) = a(i)*b(j) when a and b are vectors
+    Will accept any arguments that can be made into vectors.
+    """
+    a = asarray(a)
+    b = asarray(b)
+    return a.ravel()[:,newaxis]*b.ravel()[newaxis,:]
 
 def vdot(a, b):
     """Returns the dot product of 2 vectors (or anything that can be made into
-       a vector). NB: this is not the same as `dot`, as it takes the conjugate
-       of its first argument if complex and always returns a scalar."""
+    a vector). NB: this is not the same as `dot`, as it takes the conjugate
+    of its first argument if complex and always returns a scalar."""
     return dot(asarray(a).ravel().conj(), asarray(b).ravel())
 
 # try to import blas optimized dot if available
@@ -168,7 +201,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1):
         return cp
     else:
         return cp.swapaxes(0,axisc)
-    
+
 
 #Use numarray's printing function
 from arrayprint import array2string, get_printoptions, set_printoptions
@@ -200,7 +233,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
             typename = "%s%d" % (typename, arr.itemsize)    
         return cName + "(%s, dtype=%s)" % (lst, typename)
 
-def array_str(a, max_line_width = None, precision = None, suppress_small = None):
+def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     return array2string(a, max_line_width, precision, suppress_small, ' ', "")
 
 set_string_function = multiarray.set_string_function
@@ -227,11 +260,11 @@ def fromfunction(function, dimensions, **kwargs):
     numbers indicating the length of the desired output for each axis.
 
     The function can also accept keyword arguments which will be
-    passed in as well. 
+    passed in as well.
     """
     args = indices(dimensions)
     return function(*args,**kwargs)
-    
+
 
 from cPickle import load, loads
 _cload = load
@@ -256,7 +289,7 @@ def ones(shape, dtype=int_, fortran=False):
     a = zeros(shape, dtype, fortran)
     a+=1
     return a
- 
+
 def identity(n,dtype=int_):
     """identity(n) returns the identity matrix of shape n x n.
     """
@@ -277,7 +310,6 @@ def allclose (a, b, rtol=1.e-5, atol=1.e-8):
     y = array(b, copy=False)
     d = less(absolute(x-y), atol + rtol * absolute(y))
     return alltrue(ravel(d))
-            
 
 def _setpyvals(lst, frame, where=0):
     if not isinstance(lst, list) or len(lst) != 3:
@@ -308,8 +340,6 @@ def _getpyvals(frame):
                 return frame.f_builtins[UFUNC_PYVALS_NAME]
             except KeyError:
                 return [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
-            
-
 
 _errdict = {"ignore":ERR_IGNORE,
             "warn":ERR_WARN,
@@ -321,21 +351,22 @@ for key in _errdict.keys():
     _errdict_rev[_errdict[key]] = key
 del key
 
-def seterr(divide="ignore", over="ignore", under="ignore", invalid="ignore", where=0):
-    maskvalue = (_errdict[divide] << SHIFT_DIVIDEBYZERO) + \
-                (_errdict[over] << SHIFT_OVERFLOW ) + \
-                (_errdict[under] << SHIFT_UNDERFLOW) + \
-                (_errdict[invalid] << SHIFT_INVALID)
+def seterr(divide="ignore", over="ignore", under="ignore",
+           invalid="ignore", where=0):
+    maskvalue = ((_errdict[divide] << SHIFT_DIVIDEBYZERO) +
+                 (_errdict[over] << SHIFT_OVERFLOW ) +
+                 (_errdict[under] << SHIFT_UNDERFLOW) +
+                 (_errdict[invalid] << SHIFT_INVALID))
 
     frame = sys._getframe().f_back
     pyvals = _getpyvals(frame)
     pyvals[1] = maskvalue
-    _setpyvals(pyvals, frame, where)        
-    
+    _setpyvals(pyvals, frame, where)
+
 def geterr():
-    frame = sys._getframe().f_back    
+    frame = sys._getframe().f_back
     maskvalue = _getpyvals(frame)[1]
-        
+
     mask = 3
     res = {}
     val = (maskvalue >> SHIFT_DIVIDEBYZERO) & mask
@@ -371,19 +402,20 @@ def seterrcall(func, where=0):
 
 def geterrcall():
     frame = sys._getframe().f_back
-    return _getpyvals(frame)[2]   
+    return _getpyvals(frame)[2]
 
 def _setdef():
     frame = sys._getframe()
     defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
     frame.f_globals[UFUNC_PYVALS_NAME] = defval
-    frame.f_builtins[UFUNC_PYVALS_NAME] = defval    
-    
+    frame.f_builtins[UFUNC_PYVALS_NAME] = defval
+
 # set the default values
 _setdef()
 
 Inf = inf = infty = Infinity = PINF
 nan = NaN = NAN
+
+import oldnumeric
 from oldnumeric import *
-
-
+extend_all(oldnumeric)

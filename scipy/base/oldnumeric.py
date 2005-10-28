@@ -1,5 +1,30 @@
 # Compatibility module containing deprecated names
 
+__all__ = ['asarray', 'array', 'concatenate',
+           'NewAxis',
+           'UFuncType', 'UfuncType', 'ArrayType', 'arraytype',
+           'LittleEndian',
+           'Character', 'UnsignedInt8', 'UnsignedInt16', 'UnsignedInt',
+           # UnsignedInt64 and Unsigned128 added below if possible
+           # same for Int64 and Int128, Float128, and Complex128
+           'Int8', 'Int16', 'Int32',
+           'Int0', 'Int', 'Float0', 'Float', 'Complex0', 'Complex',
+           'PyObject', 'Float32', 'Float64',
+           'Complex32', 'Complex64',
+           'typecodes', 'sarray', 'arrayrange', 'cross_correlate',
+           'matrixmultiply', 'outerproduct', 'innerproduct',
+           # from cPickle
+           'dump', 'dumps',
+           # functions that are now methods
+           'take', 'reshape', 'choose', 'repeat', 'put', 'putmask',
+           'swapaxes', 'transpose', 'sort', 'argsort', 'argmax', 'argmin',
+           'searchsorted',
+           'resize', 'diagonal', 'trace', 'ravel', 'nonzero', 'shape',
+           'compress', 'clip', 'sum', 'product', 'sometrue', 'alltrue',
+           'any', 'all', 'cumsum', 'cumproduct', 'ndim',
+           'rank', 'size', 'around',
+          ]
+
 import multiarray as mu
 import umath as um
 import numerictypes as nt
@@ -8,18 +33,16 @@ import sys
 _dt_ = nt.dtype2char
 
 #Use this to add a new axis to an array
-
 #compatibility only
 NewAxis = None
-#deprecated
 
+#deprecated
 UFuncType = type(um.sin)
+UfuncType = type(um.sin)
 ArrayType = mu.ndarray
-arraytype = ArrayType
-UfuncType = UFuncType
+arraytype = mu.ndarray
 
 LittleEndian = (sys.byteorder == 'little')
-
 
 # backward compatible names from old Precision.py
 
@@ -29,19 +52,13 @@ UnsignedInt16 = _dt_(nt.uint16)
 UnsignedInt32 = _dt_(nt.uint32)
 UnsignedInt = _dt_(nt.uint)
 
-typecodes = {'Character':'S1', 'Integer':'bhilq', 'UnsignedInteger':'BHILQ',
-             'Float':'fdg', 'Complex':'FDG', 'AllInteger':'bBhHiIlLqQ',
-             'AllFloat':'fdgFDG', 'All':'?bhilqBHILQfdgFDGSUVO'}
-
-
-def sarray(a, dtype=None, copy=False):
-    return array(a, dtype, copy)
-
 try:
     UnsignedInt64 = _dt_(nt.uint64)
     UnsignedInt128 = _dt_(nt.uint128)
 except AttributeError:
     pass
+else:
+    __all__ += ['UnsignedInt64', 'UnsignedInt128']
 
 Int8 = _dt_(nt.int8)
 Int16 = _dt_(nt.int16)
@@ -52,6 +69,8 @@ try:
     Int128 = _dt_(nt.int128)
 except AttributeError:
     pass
+else:
+    __all__ += ['Int64', 'Int128']
 
 Int0 = _dt_(nt.int)
 Int = _dt_(nt.int)
@@ -60,22 +79,37 @@ Float = _dt_(nt.float)
 Complex0 = _dt_(nt.complex)
 Complex = _dt_(nt.complex)
 PyObject = _dt_(nt.object)
-
 Float32 = _dt_(nt.float32)
 Float64 = _dt_(nt.float64)
 
 try:
     Float128 = _dt_(nt.float128)
-except AttributeError:    
+except AttributeError:
     pass
+else:
+    __all__ += ['Float128']
 
 Complex32 = _dt_(nt.complex64)
 Complex64 = _dt_(nt.complex128)
 
 try:
     Complex128 = _dt_(nt.complex256)
-except AttributeError:    
+except AttributeError:
     pass
+else:
+    __all__ += ['Complex128']
+
+typecodes = {'Character':'S1',
+             'Integer':'bhilq',
+             'UnsignedInteger':'BHILQ',
+             'Float':'fdg',
+             'Complex':'FDG',
+             'AllInteger':'bBhHiIlLqQ',
+             'AllFloat':'fdgFDG',
+             'All':'?bhilqBHILQfdgFDGSUVO'}
+
+def sarray(a, dtype=None, copy=False):
+    return array(a, dtype, copy)
 
 # backward compatibility
 arrayrange = mu.arange
@@ -83,8 +117,8 @@ cross_correlate = correlate
 
 # deprecated names
 matrixmultiply = mu.dot
-outerproduct=outer
-innerproduct=mu.inner
+outerproduct = outer
+innerproduct = mu.inner
 
 from cPickle import dump, dumps
 
@@ -118,12 +152,12 @@ def put (a, ind, v):
     """put(a, ind, v) results in a[n] = v[n] for all n in ind
        If v is shorter than mask it will be repeated as necessary.
        In particular v can be a scalar or length 1 array.
-       The routine put is the equivalent of the following (although the loop   
-       is in C for speed): 
+       The routine put is the equivalent of the following (although the loop
+       is in C for speed):
 
-           ind = array(indices, copy=False) 
-           v = array(values, copy=False).astype(a, a.dtype) 
-           for i in ind: a.flat[i] = v[i] 
+           ind = array(indices, copy=False)
+           v = array(values, copy=False).astype(a, a.dtype)
+           for i in ind: a.flat[i] = v[i]
        a must be a contiguous Numeric array.
     """
     a = array(a,copy=False)
@@ -167,14 +201,14 @@ def argsort(a, axis=-1):
 
 def argmax(a, axis=-1):
     """argmax(a,axis=-1) returns the indices to the maximum value of the
-    1-D arrays along the given axis.    
+    1-D arrays along the given axis.
     """
     a = array(a, copy=False)
     return a.argmax(axis)
 
 def argmin(a, axis=-1):
     """argmin(a,axis=-1) returns the indices to the minimum value of the
-    1-D arrays along the given axis.    
+    1-D arrays along the given axis.
     """
     a = array(a,copy=False)
     return a.argmin(axis)
@@ -191,7 +225,7 @@ def resize(a, new_shape):
     fills the new array with repeated copies of a.
 
     Note that a.resize(new_shape) will fill array with 0's
-    beyond current definition of a. 
+    beyond current definition of a.
     """
 
     a = ravel(a)
@@ -201,7 +235,7 @@ def resize(a, new_shape):
     n_copies = int(total_size / Na)
     extra = total_size % Na
 
-    if extra != 0: 
+    if extra != 0:
         n_copies = n_copies+1
         extra = Na-extra
 
@@ -211,44 +245,11 @@ def resize(a, new_shape):
 
     return reshape(a, new_shape)
 
-
 def diagonal(a, offset=0, axis1=0, axis2=1):
     """diagonal(a, offset=0, axis1=0, axis2=1) returns the given diagonals
     defined by the last two dimensions of the array.
     """
     return asarray(a).diagonal(offset, axis1, axis2)
-##    a = asarray(a)
-##    nd = len(a.shape)
-##    new_axes = range(nd)
-##    if (axis1 < 0): axis1 += nd
-##    if (axis2 < 0): axis2 += nd
-##    try: 
-##        new_axes.remove(axis1)  
-##        new_axes.remove(axis2)  
-##    except ValueError: 
-##            raise ValueError, "axis1(=%d) and axis2(=%d) must be different and within range." % (axis1, axis2) 
-##    new_axes = new_axes + [axis1, axis2] ### insert at the end, not the beginning
-##    a = transpose(a, new_axes)
-##    s = a.shape
-##    rank = len(s) 
-##    if rank == 2:
-##        n1 = s[0]
-##        n2 = s[1]
-##        n = n1 * n2
-##        s = (n,)
-##        a = reshape(a, s)
-##        if offset < 0:
-##            return take(a, range(- n2 * offset, min(n2, n1+offset) *
-##                                      (n2+1) - n2 * offset, n2+1), axis=0)
-##        else:
-##            return take(a, range(offset, min(n1, n2-offset) *
-##                                 (n2+1) + offset, n2+1), axis=0)
-##    else:
-##        my_diagonal = []
-##        for i in range(s[0]):
-##            my_diagonal.append(diagonal(a[i], offset, rank-3, rank-2)) ###
-##        return array(my_diagonal)
-    
 
 def trace(a, offset=0, axis1=0, axis2=1, rtype=None):
     """trace(a,offset=0, axis1=0, axis2=1) returns the sum along diagonals
@@ -267,7 +268,6 @@ def nonzero(a):
     a must be 1d
     """
     return asarray(a).nonzero()
-##  return repeat(arange(len(a)), not_equal(a, 0))
 
 def shape(a):
     """shape(a) returns the shape of a (as a function call which
@@ -287,13 +287,11 @@ def clip(m, m_min, m_max):
     m_max.
     """
     return asarray(m).clip(m_min, m_max)
-##    selector = less(m, m_min)+2*greater(m, m_max)
-##    return choose(selector, (m, m_min, m_max))
 
 def sum(x, axis=0, rtype=None):
     """Sum the array over the given axis.  The optional rtype argument
     is the data type for intermediate calculations.
-    
+
     The default is to upcast (promote) smaller integer types to the
     platform-dependent Int.  For example, on 32-bit platforms:
 
@@ -342,7 +340,7 @@ def cumsum (x, axis=0, rtype=None):
 def cumproduct (x, axis=0, rtype=None):
     """Sum the array over the given axis."""
     return asarray(x).cumprod(axis, rtype)
-    
+
 def ndim(a):
     try:
         return a.ndim
@@ -358,13 +356,6 @@ def rank (a):
     except:
         return asarray(a).ndim
 
-def shape (a):
-    "Get the shape of sequence a"
-    try:
-        return a.shape
-    except:
-        return asarray(a).shape
-
 def size (a, axis=None):
     "Get the number of elements in sequence a, or along a certain axis."
     a = asarray(a)
@@ -373,5 +364,4 @@ def size (a, axis=None):
     else:
         return a.shape[axis]
 
-from function_base import round_
-around = round_            
+from function_base import round_ as around
