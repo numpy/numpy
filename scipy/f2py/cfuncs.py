@@ -1173,11 +1173,11 @@ def buildcfuncs():
     from capi_maps import c2capi_map
     for k in c2capi_map.keys():
         m='pyarr_from_p_%s1'%k
-        cppmacros[m]='#define %s(v) (PyArray_FromDimsAndData(0,NULL,%s,(char *)v))'%(m,c2capi_map[k])
+        cppmacros[m]='#define %s(v) (PyArray_SimpleNewFromData(0,NULL,%s,(char *)v))'%(m,c2capi_map[k])
     k='string'
     m='pyarr_from_p_%s1'%k
-    cppmacros[m]='#define %s(v,dims) (PyArray_FromDimsAndData(1,dims,PyArray_CHAR,(char *)v))'%(m)
-        
+    cppmacros[m]='#define %s(v,dims) (PyArray_SimpleNewFromData(1,dims,PyArray_CHAR,(char *)v))'%(m)
+
 
 ############ Auxiliary functions for sorting needs ###################
 
