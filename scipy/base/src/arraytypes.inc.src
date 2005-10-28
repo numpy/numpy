@@ -1179,27 +1179,21 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
 
 /****************** compare **********************************/
 
+static int
+BOOL_compare(Bool *ip1, Bool *ip2, PyArrayObject *ap)
+{
+	return (*ip1 ? (*ip2 ? 0 : 1) : (*ip2 ? -1 : 0));
+}
+
 /**begin repeat
-#fname=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#type=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+#fname=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+#type=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 
 static int
 @fname@_compare (@type@ *ip1, @type@ *ip2, PyArrayObject *ap) 
 {
-        @type@ t1, t2;
-
-        if ((ap==NULL) || PyArray_ISBEHAVED_RO(ap)) {
-                return *ip1 < *ip2 ? -1 : *ip1 == *ip2 ? 0 : 1;
-        }
-        else { 
-		int size = ap->itemsize;
-		Bool swap = !PyArray_ISNOTSWAPPED(ap);
-		/* copy to local, aligned variable */
-                copy_and_swap(&t1, ip1, size, 1, 0, swap);
-		copy_and_swap(&t2, ip2, size, 1, 0, swap);
-		return t1 < t2 ? -1 : t1 == t2 ? 0 : 1;
-        }
+	return *ip1 < *ip2 ? -1 : *ip1 == *ip2 ? 0 : 1;
 }
 
 /**end repeat**/
@@ -1213,31 +1207,12 @@ static int
 static int
 @fname@_compare (@type@ *ip1, @type@ *ip2, PyArrayObject *ap) 
 {
-        @type@ t1, t2;
-
-        if ((ap==NULL) || PyArray_ISBEHAVED_RO(ap)) {
-		if (*ip1 == *ip2) {
-			return ip1[1]<ip2[1] ? -1 : (ip1[1] == ip2[1] ? 0 : 1);
-		}
-		else {
-			return *ip1 < *ip2 ? -1 : 1;
-		}
-        }
-        else { 
-		int size = ap->itemsize >> 1;
-		Bool swap = !PyArray_ISNOTSWAPPED(ap);
-		/* copy to local, aligned variable */
-                copy_and_swap(&t1, ip1, size, 1, 0, swap);
-		copy_and_swap(&t2, ip2, size, 1, 0, swap);
-		if (t1 == t2) {
-			copy_and_swap(&t1, ip1+1, size, 1, 0, swap);
-			copy_and_swap(&t2, ip2+1, size, 1, 0, swap);
-			return (t1 < t2 ? -1 : (t1 == t2 ? 0 : 1));
-		}
-		else {
-			return t1 < t2 ? -1 : 1;
-		}
-        }
+	if (*ip1 == *ip2) {
+		return ip1[1]<ip2[1] ? -1 : (ip1[1] == ip2[1] ? 0 : 1);
+	}
+	else {
+		return *ip1 < *ip2 ? -1 : 1;
+	}
 }
  /**end repeat**/
 

@@ -698,7 +698,6 @@ typedef Py_uintptr_t uintp;
 typedef PyObject * (PyArray_GetItemFunc) (void *, void *);
 typedef int (PyArray_SetItemFunc)(PyObject *, void *, void *);
 
-typedef int (PyArray_CompareFunc)(const void *, const void *, void *);
 typedef void (PyArray_CopySwapNFunc)(void *, void *, intp, int, int);
 typedef void (PyArray_CopySwapFunc)(void *, void *, int, int);
 typedef Bool (PyArray_NonzeroFunc)(void *, void *);
@@ -707,6 +706,7 @@ typedef Bool (PyArray_NonzeroFunc)(void *, void *);
   /* These assume aligned and notswapped data -- a buffer will be
       used before or contiguous data will be obtained
   */
+typedef int (PyArray_CompareFunc)(const void *, const void *, void *);
 typedef int (PyArray_ArgFunc)(void*, intp, intp*, void *);
 typedef void (PyArray_DotFunc)(void *, intp, void *, intp, void *, intp, 
 			       void *);
