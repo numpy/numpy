@@ -2349,18 +2349,18 @@ array_inplace_true_divide(PyArrayObject *m1, PyObject *m2)
 
 /* Array evaluates as "TRUE" if any of the elements are non-zero */
 static int 
-array_all_nonzero(PyArrayObject *mp) 
+array_any_nonzero(PyArrayObject *mp) 
 {
 	intp index;
 	PyArrayIterObject *it;
-	Bool anyTRUE = 0;
+	Bool anyTRUE = FALSE;
 	
 	it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
 	if (it==NULL) return anyTRUE;
 	index = it->size;
 	while(index--) {
 		if (mp->descr->nonzero(it->dataptr, mp)) {
-			anyTRUE = 1;
+			anyTRUE = TRUE;
 			break;
 		}
 		PyArray_ITER_NEXT(it);
@@ -2538,7 +2538,7 @@ static PyNumberMethods array_as_number = {
         (unaryfunc)array_negative,                  /*nb_neg*/	
         (unaryfunc)_array_copy_nice,		    /*nb_pos*/ 
         (unaryfunc)array_absolute,		    /*(unaryfunc)array_abs,*/
-        (inquiry)array_all_nonzero,		    /*nb_nonzero*/
+        (inquiry)array_any_nonzero,		    /*nb_nonzero*/
         (unaryfunc)array_invert,		    /*nb_invert*/
         (binaryfunc)array_left_shift,	    /*nb_lshift*/
         (binaryfunc)array_right_shift,	    /*nb_rshift*/

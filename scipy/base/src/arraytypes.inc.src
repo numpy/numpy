@@ -573,7 +573,7 @@ static void
 #format="hd","hu","d","u","ld","lu",LONGLONG_FMT,ULONGLONG_FMT,"f","lf","Lf"#
 */
 static int
-@fname@_scan (FILE *fp, @type@ *ip, int itemsize, char *sep, PyArrayObject *ao)
+@fname@_scan (FILE *fp, @type@ *ip, char *sep, void *ignore)
 {
 	int num;
 	num = fscanf(fp, "%"@format@, ip);
@@ -1421,11 +1421,9 @@ static void
 
 
 /**begin repeat
-
 #name=CFLOAT, CDOUBLE, CLONGDOUBLE#
 #type= float, double, longdouble#
 */
-
 static void @name@_dot(char *ip1, intp is1, char *ip2, intp is2,
 		       char *op, intp n, void *ignore) 
 {				

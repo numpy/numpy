@@ -3286,7 +3286,7 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 			dptr = r->data;
 			for (i=0; i < num; i++) {
 				if (done) break;
-				done = scan(fp, dptr, r->itemsize, sep, NULL);
+				done = scan(fp, dptr, sep, NULL);
 				if (done < -2) break;
 				nread += 1;
 				dptr += r->itemsize;
@@ -3314,7 +3314,7 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 			totalbytes = bytes = size * typecode->itemsize;
 			dptr = r->data;
 			while (!done) {
-				done = scan(fp, dptr, r->itemsize, sep, NULL);
+				done = scan(fp, dptr, sep, NULL);
 
 				/* end of file reached trying to 
 				   scan value.  done is 1 or 2

@@ -711,7 +711,7 @@ typedef int (PyArray_ArgFunc)(void*, intp, intp*, void *);
 typedef void (PyArray_DotFunc)(void *, intp, void *, intp, void *, intp, 
 			       void *);
 typedef void (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
-typedef int (PyArray_ScanFunc)(FILE *, void *, int, void *, void *);
+typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
 
 
 typedef struct {
