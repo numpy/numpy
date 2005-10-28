@@ -694,9 +694,9 @@ typedef Py_uintptr_t uintp;
 #define PyDimMem_RENEW(ptr,size) ((intp *)realloc(ptr,size*sizeof(intp)))
 
 
-  /* These must deal with unaligned and unbyteswapped data if necessary */
-typedef PyObject * (PyArray_GetItemFunc) (char *, void *);
-typedef int (PyArray_SetItemFunc)(PyObject *, char *, void *);
+  /* These must deal with unaligned and swapped data if necessary */
+typedef PyObject * (PyArray_GetItemFunc) (void *, void *);
+typedef int (PyArray_SetItemFunc)(PyObject *, void *, void *);
 
 typedef int (PyArray_CompareFunc)(const void *, const void *, void *);
 typedef void (PyArray_CopySwapNFunc)(void *, void *, intp, int, int);
@@ -704,14 +704,14 @@ typedef void (PyArray_CopySwapFunc)(void *, void *, int, int);
 typedef Bool (PyArray_NonzeroFunc)(void *, void *);
 
 
-  /* These assume aligned and byteswapped data -- a buffer will be
+  /* These assume aligned and notswapped data -- a buffer will be
       used before or contiguous data will be obtained
   */
 typedef int (PyArray_ArgFunc)(void*, intp, intp*, void *);
-typedef void (PyArray_DotFunc)(char *, intp, char *, intp, char *, intp, 
+typedef void (PyArray_DotFunc)(void *, intp, void *, intp, void *, intp, 
 			       void *);
 typedef void (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
-typedef int (PyArray_ScanFunc)(FILE *, void *, int, char *, void *);
+typedef int (PyArray_ScanFunc)(FILE *, void *, int, void *, void *);
 
 
 typedef struct {
