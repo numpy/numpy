@@ -1214,7 +1214,7 @@ typedef struct {
 #define PyArray_SimpleNew(nd, dims, typenum) \
 	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
 #define PyArray_SimpleNewFromData(nd, dims, typenum, data) \
-	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, 0, NULL)
+	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, CARRAY_FLAGS, NULL)
 
         /*Compatibility with old Numeric stuff -- don't use in new code */
 
