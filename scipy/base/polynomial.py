@@ -1,10 +1,15 @@
-## Automatically adapted for scipy Sep 19, 2005 by convertcode.py
+"""
+Functions to operate on polynomials.
+"""
 
-import numeric
-_nx = numeric
-from numeric import *
-from scimath import *
+# FIXME: this module still uses Numeric typechars
 
+__all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
+           'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
+           'polyfit']
+
+import re
+import numeric as NX
 
 from type_check import isscalar
 from twodim_base import diag, vander
@@ -14,6 +19,7 @@ eigvals = None
 lstsq = None
 
 def get_linalg_funcs():
+    "Look for linear algebra functions in scipy"
     global eigvals, lstsq
     import scipy
     eigvals = scipy.linalg.eigvals
@@ -21,39 +27,36 @@ def get_linalg_funcs():
     return
 
 def _eigvals(arg):
+    "Return the eigenvalues of the argument"
     try:
         return eigvals(arg)
     except TypeError:
         get_linalg_funcs()
         return eigvals(arg)
 
-def _lstsq(*args):
+def _lstsq(X, y):
+    "Do least squares on the arguments"
     try:
-        return lstsq(*args)
+        return lstsq(X, y)
     except TypeError:
         get_linalg_funcs()
-        return lstsq(*args)
-    
-
-__all__ = ['poly','roots','polyint','polyder','polyadd','polysub','polymul',
-           'polydiv','polyval','poly1d','polyfit']
- 
+        return lstsq(X, y)
 
 def poly(seq_of_zeros):
     """ Return a sequence representing a polynomial given a sequence of roots.
 
         If the input is a matrix, return the characteristic polynomial.
-    
+
         Example:
-    
+
          >>> b = roots([1,3,1,5,6])
          >>> poly(b)
          array([1., 3., 1., 5., 6.])
     """
     seq_of_zeros = atleast_1d(seq_of_zeros)    
-    sh = shape(seq_of_zeros)
+    sh = NX.shape(seq_of_zeros)
     if len(sh) == 2 and sh[0] == sh[1]:
-        seq_of_zeros=_eigvals(seq_of_zeros)
+        seq_of_zeros = _eigvals(seq_of_zeros)
     elif len(sh) ==1:
         pass
     else:
@@ -64,15 +67,16 @@ def poly(seq_of_zeros):
 
     a = [1]
     for k in range(len(seq_of_zeros)):
-        a = convolve(a,[1, -seq_of_zeros[k]], mode=2)
-        
-    if a.dtypechar in ['F','D']:
+        a = NX.convolve(a, [1, -seq_of_zeros[k]], mode=2)
+
+    if a.dtypechar in ['F', 'D']:
         # if complex roots are all complex conjugates, the roots are real.
-        roots = asarray(seq_of_zeros,'D')
-        pos_roots = sort_complex(compress(roots.imag > 0,roots))
-        neg_roots = conjugate(sort_complex(compress(roots.imag < 0,roots)))
+        roots = NX.asarray(seq_of_zeros, 'D')
+        pos_roots = sort_complex(NX.compress(roots.imag > 0, roots))
+        neg_roots = NX.conjugate(sort_complex(
+                                        NX.compress(roots.imag < 0,roots)))
         if (len(pos_roots) == len(neg_roots) and
-            alltrue(neg_roots == pos_roots)):
+            NX.alltrue(neg_roots == pos_roots)):
             a = a.real.copy()
 
     return a
@@ -88,34 +92,34 @@ def roots(p):
     p = atleast_1d(p)
     if len(p.shape) != 1:
         raise ValueError,"Input must be a rank-1 array."
-        
+
     # find non-zero array entries
-    non_zero = nonzero(ravel(p))
+    non_zero = NX.nonzero(NX.ravel(p))
 
     # find the number of trailing zeros -- this is the number of roots at 0.
     trailing_zeros = len(p) - non_zero[-1] - 1
 
     # strip leading and trailing zeros
     p = p[int(non_zero[0]):int(non_zero[-1])+1]
-    
+
     # casting: if incoming array isn't floating point, make it floating point.
-    if p.dtypechar not in ['f','d','F','D']:
+    if p.dtypechar not in ['f', 'd', 'F', 'D']:
         p = p.astype('d')
 
     N = len(p)
     if N > 1:
         # build companion matrix and find its eigenvalues (the roots)
-        A = diag(ones((N-2,),p.dtypechar),-1)
-        A[0,:] = -p[1:] / p[0]
+        A = diag(NX.ones((N-2,), p.dtypechar), -1)
+        A[0, :] = -p[1:] / p[0]
         roots = _eigvals(A)
     else:
-        return array([])
+        return NX.array([])
 
-    # tack any zeros onto the back of the array    
-    roots = hstack((roots,zeros(trailing_zeros,roots.dtypechar)))
+    # tack any zeros onto the back of the array
+    roots = hstack((roots, NX.zeros(trailing_zeros, roots.dtypechar)))
     return roots
 
-def polyint(p,m=1,k=None):
+def polyint(p, m=1, k=None):
     """Return the mth analytical integral of the polynomial p.
 
     If k is None, then zero-valued constants of integration are used.
@@ -127,45 +131,45 @@ def polyint(p,m=1,k=None):
     if m < 0:
         raise ValueError, "Order of integral must be positive (see polyder)"
     if k is None:
-        k = _nx.zeros(m)
+        k = NX.zeros(m)
     k = atleast_1d(k)
     if len(k) == 1 and m > 1:
-        k = k[0]*_nx.ones(m)
+        k = k[0]*NX.ones(m)
     if len(k) < m:
         raise ValueError, \
               "k must be a scalar or a rank-1 array of length 1 or >m."
     if m == 0:
         return p
     else:
-        truepoly = isinstance(p,poly1d)
-        p = asarray(p)
-        y = _nx.zeros(len(p)+1,'d')
-        y[:-1] = p*1.0/_nx.arange(len(p),0,-1)
-        y[-1] = k[0]        
-        val = polyint(y,m-1,k=k[1:])
+        truepoly = isinstance(p, poly1d)
+        p = NX.asarray(p)
+        y = NX.zeros(len(p)+1, 'd')
+        y[:-1] = p*1.0/NX.arange(len(p), 0, -1)
+        y[-1] = k[0]
+        val = polyint(y, m-1, k=k[1:])
         if truepoly:
             val = poly1d(val)
         return val
-            
-def polyder(p,m=1):
+
+def polyder(p, m=1):
     """Return the mth derivative of the polynomial p.
     """
     m = int(m)
-    truepoly = isinstance(p,poly1d)
-    p = asarray(p)
+    truepoly = isinstance(p, poly1d)
+    p = NX.asarray(p)
     n = len(p)-1
-    y = p[:-1] * _nx.arange(n,0,-1)
+    y = p[:-1] * NX.arange(n, 0, -1)
     if m < 0:
         raise ValueError, "Order of derivative must be positive (see polyint)"
     if m == 0:
         return p
     else:
-        val = polyder(y,m-1)
+        val = polyder(y, m-1)
         if truepoly:
             val = poly1d(val)
         return val
 
-def polyfit(x,y,N):
+def polyfit(x, y, N):
     """
 
     Do a best fit polynomial of order N of y to x.  Return value is a
@@ -201,17 +205,17 @@ def polyfit(x,y,N):
     See also polyval
 
     """
-    x = asarray(x)+0.
-    y = asarray(y)+0.
-    y = reshape(y, (len(y),1))
+    x = NX.asarray(x)+0.
+    y = NX.asarray(y)+0.
+    y = NX.reshape(y, (len(y), 1))
     X = vander(x, N+1)
-    c,resids,rank,s = _lstsq(X,y)
+    c, resids, rank, s = _lstsq(X, y)
     c.shape = (N+1,)
     return c
 
 
 
-def polyval(p,x):
+def polyval(p, x):
     """Evaluate the polynomial p at x.  If x is a polynomial then composition.
 
     Description:
@@ -226,58 +230,58 @@ def polyval(p,x):
       Notice:  This can produce inaccurate results for polynomials with significant
       variability. Use carefully.
     """
-    p = asarray(p)
-    if isinstance(x,poly1d):
+    p = NX.asarray(p)
+    if isinstance(x, poly1d):
         y = 0
     else:
-        x = asarray(x)
-        y = _nx.zeros(x.shape,x.dtypechar)
+        x = NX.asarray(x)
+        y = NX.zeros(x.shape, x.dtypechar)
     for i in range(len(p)):
         y = x * y + p[i]
     return y
 
-def polyadd(a1,a2):
+def polyadd(a1, a2):
     """Adds two polynomials represented as sequences
     """
-    truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
-    a1,a2 = map(atleast_1d,(a1,a2))
+    truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
+    a1, a2 = map(atleast_1d, (a1, a2))
     diff = len(a2) - len(a1)
     if diff == 0:
         return a1 + a2
     elif diff > 0:
-        zr = _nx.zeros(diff)
-        val = _nx.concatenate((zr,a1)) + a2
+        zr = NX.zeros(diff)
+        val = NX.concatenate((zr, a1)) + a2
     else:
-        zr = _nx.zeros(abs(diff))
-        val = a1 + _nx.concatenate((zr,a2))
+        zr = NX.zeros(abs(diff))
+        val = a1 + NX.concatenate((zr, a2))
     if truepoly:
         val = poly1d(val)
     return val
 
-def polysub(a1,a2):
+def polysub(a1, a2):
     """Subtracts two polynomials represented as sequences
     """
-    truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
-    a1,a2 = map(atleast_1d,(a1,a2))
+    truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
+    a1, a2 = map(atleast_1d, (a1, a2))
     diff = len(a2) - len(a1)
     if diff == 0:
         return a1 - a2
     elif diff > 0:
-        zr = _nx.zeros(diff)
-        val = _nx.concatenate((zr,a1)) - a2
+        zr = NX.zeros(diff)
+        val = NX.concatenate((zr, a1)) - a2
     else:
-        zr = _nx.zeros(abs(diff))
-        val = a1 - _nx.concatenate((zr,a2))
+        zr = NX.zeros(abs(diff))
+        val = a1 - NX.concatenate((zr, a2))
     if truepoly:
         val = poly1d(val)
     return val
 
 
-def polymul(a1,a2):
+def polymul(a1, a2):
     """Multiplies two polynomials represented as sequences.
     """
-    truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
-    val = _nx.convolve(a1,a2)
+    truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
+    val = NX.convolve(a1, a2)
     if truepoly:
         val = poly1d(val)
     return val
@@ -288,7 +292,7 @@ def deconvolve(signal, divisor):
     """
     try:
         import scipy.signal
-    except:
+    except ImportError:
         print "You need scipy.signal to use this function."
     num = atleast_1d(signal)
     den = atleast_1d(divisor)
@@ -298,25 +302,24 @@ def deconvolve(signal, divisor):
         quot = [];
         rem = num;
     else:
-        input = _nx.ones(N-D+1,_nx.Float)
+        input = NX.ones(N-D+1, NX.Float)
         input[1:] = 0
         quot = scipy.signal.lfilter(num, den, input)
-        rem = num - _nx.convolve(den,quot,mode=2)
+        rem = num - NX.convolve(den, quot, mode=2)
     return quot, rem
 
-def polydiv(a1,a2):
+def polydiv(a1, a2):
     """Computes q and r polynomials so that a1(s) = q(s)*a2(s) + r(s)
     """
-    truepoly = (isinstance(a1,poly1d) or isinstance(a2,poly1d))
-    q, r = deconvolve(a1,a2)
-    while _nx.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
+    truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
+    q, r = deconvolve(a1, a2)
+    while NX.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
         r = r[1:]
     if truepoly:
-        q, r = map(poly1d,(q,r))
+        q, r = map(poly1d, (q, r))
     return q, r
 
 
-import re
 _poly_mat = re.compile(r"[*][*]([0-9]*)")
 def _raise_power(astr, wrap=70):
     n = 0
@@ -324,7 +327,7 @@ def _raise_power(astr, wrap=70):
     line2 = ''
     output = ' '
     while 1:
-        mat = _poly_mat.search(astr,n)
+        mat = _poly_mat.search(astr, n)
         if mat is None:
             break
         span = mat.span()
@@ -338,14 +341,14 @@ def _raise_power(astr, wrap=70):
             output += line1 + "\n" + line2 + "\n "
             line1 = toadd1
             line2 = toadd2
-        else:                
+        else:
             line2 += partstr + ' '*(len(power)-1)
             line1 += ' '*(len(partstr)-1) + power
     output += line1 + "\n" + line2
     return output + astr[n:]
-    
-                       
-class poly1d:
+
+
+class poly1d(object):
     """A one-dimensional polynomial class.
 
     p = poly1d([1,2,3]) constructs the polynomial x**2 + 2 x + 3
@@ -363,7 +366,7 @@ class poly1d:
          be used in all functions that accept arrays.
     """
     def __init__(self, c_or_r, r=0):
-        if isinstance(c_or_r,poly1d):
+        if isinstance(c_or_r, poly1d):
             for key in c_or_r.__dict__.keys():
                 self.__dict__[key] = c_or_r.__dict__[key]
             return
@@ -374,19 +377,19 @@ class poly1d:
             raise ValueError, "Polynomial must be 1d only."
         c_or_r = trim_zeros(c_or_r, trim='f')
         if len(c_or_r) == 0:
-            c_or_r = _nx.array([0])
+            c_or_r = NX.array([0])
         self.__dict__['coeffs'] = c_or_r
         self.__dict__['order'] = len(c_or_r) - 1
 
-    def __array__(self,t=None):
+    def __array__(self, t=None):
         if t:
-            return asarray(self.coeffs,t)
+            return NX.asarray(self.coeffs, t)
         else:
-            return asarray(self.coeffs)
+            return NX.asarray(self.coeffs)
 
-    def __coerce__(self,other):
+    def __coerce__(self, other):
         return None
-    
+
     def __repr__(self):
         vals = repr(self.coeffs)
         vals = vals[6:-1]
@@ -416,14 +419,14 @@ class poly1d:
                     newstr = ''
                 elif coefstr == 'b':
                     newstr = 'x'
-                else:                    
+                else:
                     newstr = '%s x' % (coefstr,)
             else:
                 if coefstr == '0':
                     newstr = ''
                 elif coefstr == 'b':
                     newstr = 'x**%d' % (power,)
-                else:                    
+                else:
                     newstr = '%s x**%d' % (coefstr, power)
 
             if k > 0:
@@ -437,7 +440,7 @@ class poly1d:
             else:
                 thestr = newstr
         return _raise_power(thestr)
-        
+
 
     def __call__(self, val):
         return polyval(self.coeffs, val)
@@ -454,12 +457,12 @@ class poly1d:
             return poly1d(other * self.coeffs)
         else:
             other = poly1d(other)
-            return poly1d(polymul(self.coeffs, other.coeffs))        
-    
+            return poly1d(polymul(self.coeffs, other.coeffs))
+
     def __add__(self, other):
         other = poly1d(other)
-        return poly1d(polyadd(self.coeffs, other.coeffs))        
-        
+        return poly1d(polyadd(self.coeffs, other.coeffs))
+
     def __radd__(self, other):
         other = poly1d(other)
         return poly1d(polyadd(self.coeffs, other.coeffs))
@@ -485,20 +488,20 @@ class poly1d:
             return poly1d(self.coeffs/other)
         else:
             other = poly1d(other)
-            return map(poly1d,polydiv(self.coeffs, other.coeffs))
+            return map(poly1d, polydiv(self.coeffs, other.coeffs))
 
     def __rdiv__(self, other):
         if isscalar(other):
             return poly1d(other/self.coeffs)
         else:
             other = poly1d(other)
-            return map(poly1d,polydiv(other.coeffs, self.coeffs))
+            return map(poly1d, polydiv(other.coeffs, self.coeffs))
 
     def __setattr__(self, key, val):
         raise ValueError, "Attributes cannot be changed this way."
 
     def __getattr__(self, key):
-        if key in ['r','roots']:
+        if key in ['r', 'roots']:
             return roots(self.coeffs)
         elif key in ['c','coef','coefficients']:
             return self.coeffs
@@ -506,7 +509,7 @@ class poly1d:
             return self.order
         else:
             return self.__dict__[key]
-        
+
     def __getitem__(self, val):
         ind = self.order - val
         if val > self.order:
@@ -520,15 +523,20 @@ class poly1d:
         if key < 0:
             raise ValueError, "Does not support negative powers."
         if key > self.order:
-            zr = _nx.zeros(key-self.order,self.coeffs.dtypechar)
-            self.__dict__['coeffs'] = _nx.concatenate((zr,self.coeffs))
+            zr = NX.zeros(key-self.order, self.coeffs.dtypechar)
+            self.__dict__['coeffs'] = NX.concatenate((zr, self.coeffs))
             self.__dict__['order'] = key
             ind = 0
         self.__dict__['coeffs'][ind] = val
         return
 
     def integ(self, m=1, k=0):
-        return poly1d(polyint(self.coeffs,m=m,k=k))
+        """Return the mth analytical integral of this polynomial.
+        See the documentation for polyint.
+        """
+        return poly1d(polyint(self.coeffs, m=m, k=k))
 
     def deriv(self, m=1):
-        return poly1d(polyder(self.coeffs,m=m))
+        """Return the mth derivative of this polynomial.
+        """
+        return poly1d(polyder(self.coeffs, m=m))
