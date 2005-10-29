@@ -227,8 +227,8 @@ def polyval(p, x):
       or x can be another polynomial and the composite polynomial p(x) will be
       returned.
 
-      Notice:  This can produce inaccurate results for polynomials with significant
-      variability. Use carefully.
+      Notice:  This can produce inaccurate results for polynomials with
+      significant variability. Use carefully.
     """
     p = NX.asarray(p)
     if isinstance(x, poly1d):
@@ -377,7 +377,7 @@ class poly1d(object):
             raise ValueError, "Polynomial must be 1d only."
         c_or_r = trim_zeros(c_or_r, trim='f')
         if len(c_or_r) == 0:
-            c_or_r = NX.array([0])
+            c_or_r = NX.array([0.])
         self.__dict__['coeffs'] = c_or_r
         self.__dict__['order'] = len(c_or_r) - 1
 
