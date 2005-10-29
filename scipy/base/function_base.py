@@ -1,3 +1,11 @@
+__all__ = ['logspace', 'linspace', 'round_',
+           'select', 'piecewise', 'trim_zeros', 'alen', 'amax', 'amin', 'ptp',
+           'copy', 'iterable', 'base_repr', 'binary_repr', 'prod', 'cumprod',
+           'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
+           'unique', 'extract', 'insert', 'nansum', 'nanmax', 'nanargmax',
+           'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
+           'histogram', 'bincount', 'digitize']
+
 import types
 import math, operator
 import numeric as _nx
@@ -9,16 +17,8 @@ from oldnumeric import ravel, nonzero, choose, \
      sometrue, alltrue, reshape, any, all, typecodes, ArrayType
 from type_check import ScalarType, isscalar
 from shape_base import squeeze, atleast_1d
-from _compiled_base import digitize, bincount, _insert
+from scipy.base._compiled_base import digitize, bincount, _insert
 from ufunclike import sign
-
-__all__ = ['logspace', 'linspace', 'round_',
-           'select', 'piecewise', 'trim_zeros', 'alen', 'amax', 'amin', 'ptp',
-           'copy', 'iterable', 'base_repr', 'binary_repr', 'prod', 'cumprod',
-           'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
-           'unique', 'extract', 'insert', 'nansum', 'nanmax', 'nanargmax',
-           'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
-           'histogram', 'bincount', 'digitize']
 
 _lkup = {'0':'000',
          '1':'001',
@@ -89,7 +89,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
     if num <= 0: return array([])
     if endpoint:
         step = (stop-start)/float((num-1))
-        y = _nx.arange(0, num) * step + start        
+        y = _nx.arange(0, num) * step + start
     else:
         step = (stop-start)/float(num)
         y = _nx.arange(0, num) * step + start
@@ -133,7 +133,7 @@ def average(a, axis=0, weights=None, returned=False):
 
     If an integer axis is given, this equals:
         a.sum(axis) * 1.0 / len(a)
-    
+
     If axis is None, this equals:
         a.sum(axis) * 1.0 / product(a.shape)
 
@@ -187,9 +187,9 @@ def average(a, axis=0, weights=None, returned=False):
                 d = add.reduce(w1, axis)
             else:
                 raise ValueError, 'averaging weights have wrong shape'
-            
+
     if not isinstance(d, ArrayType):
-        if d == 0.0: 
+        if d == 0.0:
             raise ZeroDivisionError, 'zero denominator in average()'
     if returned:
         return n/d, d
@@ -209,7 +209,7 @@ def asarray_chkfinite(a):
     if (a.dtypechar in _nx.typecodes['AllFloat']) \
            and (_nx.isnan(a).any() or _nx.isinf(a).any()):
         raise ValueError, "array must not contain infs or NaNs"
-    return a    
+    return a
 
 
 
@@ -244,7 +244,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
            |   ...
            |  fn(x)  for conditionn
            |--
-        
+
     """
     n2 = len(funclist)
     if not isinstance(condlist, type([])):
@@ -272,26 +272,26 @@ def select(condlist, choicelist, default=0):
         depending on the list of conditions.
 
         condlist is a list of condition arrays containing ones or zeros
-    
+
         choicelist is a list of choice arrays (of the "same" size as the
         arrays in condlist).  The result array has the "same" size as the
         arrays in choicelist.  If condlist is [c0, ..., cN-1] then choicelist
         must be of length N.  The elements of the choicelist can then be
         represented as [v0, ..., vN-1]. The default choice if none of the
         conditions are met is given as the default argument. 
-    
+
         The conditions are tested in order and the first one statisfied is
         used to select the choice. In other words, the elements of the
         output array are found from the following tree (notice the order of
         the conditions matters):
-    
+
         if c0: v0
         elif c1: v1
         elif c2: v2
         ...
         elif cN-1: vN-1
         else: default
-    
+
         Note that one of the condition arrays must be large enough to handle
         the largest array in the choice list.
     """
@@ -299,7 +299,7 @@ def select(condlist, choicelist, default=0):
     n2 = len(choicelist)
     if n2 != n:
         raise ValueError, "list of cases must be same length as list of conditions"
-    choicelist.insert(0, default)    
+    choicelist.insert(0, default)
     S = 0
     pfac = 1
     for k in range(1, n+1):
@@ -311,7 +311,7 @@ def select(condlist, choicelist, default=0):
     if type(S) in ScalarType or max(asarray(S).shape)==1:
         pfac = asarray(1)
         for k in range(n2+1):
-            pfac = pfac + asarray(choicelist[k])            
+            pfac = pfac + asarray(choicelist[k])
         S = S*ones(asarray(pfac).shape)
     return choose(S, tuple(choicelist))
 
@@ -327,10 +327,10 @@ def copy(a):
     """Return an array copy of the given object.
     """
     return array(a, copy=True)
-    
+
 # Basic operations
-def amax(a, axis=-1): 
-    """Return the maximum of 'a' along dimension axis. 
+def amax(a, axis=-1):
+    """Return the maximum of 'a' along dimension axis.
     """
     return asarray(a).max(axis)
 
@@ -419,10 +419,10 @@ def gradient(f, *varargs):
         slice3[axis] = -2
         # 1D equivalent -- out[-1] = (f[-1] - f[-2])
         out[slice1] = (f[slice2] - f[slice3])
-        
+
         # divide by step size
         outvals.append(out / dx[axis])
-        
+
         # reset the slice object in this dimension to ":"
         slice1[axis] = slice(None)
         slice2[axis] = slice(None)
@@ -432,7 +432,7 @@ def gradient(f, *varargs):
         return outvals[0]
     else:
         return outvals
-    
+
 
 def diff(a, n=1, axis=-1):
     """Calculate the nth order discrete difference along given axis.
@@ -453,7 +453,7 @@ def diff(a, n=1, axis=-1):
         return diff(a[slice1]-a[slice2], n-1, axis=axis)
     else:
         return a[slice1]-a[slice2]
-    
+
 def angle(z, deg=0):
     """Return the angle of the complex argument z.
     """
@@ -503,10 +503,10 @@ def sort_complex(a):
             return b.astype('D')
     else:
         return b
-    
+
 def trim_zeros(filt, trim='fb'):
     """ Trim the leading and trailing zeros from a 1D array.
-    
+
     Example:
         >>> import scipy
         >>> a = array((0, 0, 0, 1, 2, 3, 2, 1, 0))
@@ -534,7 +534,7 @@ def unique(inseq):
     for item in inseq:
         set[item] = None
     return asarray(set.keys())
-    
+
 def extract(condition, arr):
     """Return the elements of ravel(arr) where ravel(condition) is True
     (in 1D).
@@ -571,24 +571,24 @@ def nanargmin(a, axis=-1):
     """
     y = array(a)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(a)] = _nx.inf    
-    return y.argmin(axis)    
+        y[isnan(a)] = _nx.inf
+    return y.argmin(axis)
 
 def nanmax(a, axis=-1):
     """Find the maximum over the given axis ignoring NaNs.
     """
     y = array(a)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(a)] = -_nx.inf    
-    return y.max(axis)    
+        y[isnan(a)] = -_nx.inf
+    return y.max(axis)
 
 def nanargmax(a, axis=-1):
     """Find the maximum over the given axis ignoring NaNs.
     """
     y = array(a)
     if not issubclass(y.dtype, _nx.integer):
-        y[isnan(a)] = -_nx.inf    
-    return y.argmax(axis)    
+        y[isnan(a)] = -_nx.inf
+    return y.argmax(axis)
 
 def disp(mesg, device=None, linefeed=True):
     """Display a message to the given device (default is sys.stdout)
@@ -604,18 +604,18 @@ def disp(mesg, device=None, linefeed=True):
     device.flush()
     return
 
-class vectorize:
+class vectorize(object):
     """
  vectorize(somefunction, otypes=None, doc=None)
  Generalized Function class.
 
   Description:
- 
+
     Define a vectorized function which takes nested sequence
     objects or scipy arrays as inputs and returns a
     scipy array as output, evaluating the function over successive
     tuples of the input arrays like the python map function except it uses
-    the broadcasting rules of scipy. 
+    the broadcasting rules of scipy.
 
   Input:
 

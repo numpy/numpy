@@ -1,4 +1,6 @@
 
+__all__ = ['matrix', 'bmat', 'mat']
+
 import numeric as N
 from numeric import ArrayType, concatenate, integer, multiply, power
 from type_check import isscalar
@@ -6,8 +8,6 @@ from function_base import binary_repr
 import types
 import string as str_
 import sys
-
-__all__ = ['matrix', 'bmat', 'mat']
 
 # make translation table
 _table = [None]*256
@@ -60,7 +60,7 @@ class matrix(N.ndarray):
             if isinstance(data, N.ndarray):
                 dtype = data.dtype
         intype = N.obj2dtype(dtype)
-        
+
         if isinstance(data, types.StringType):
             data = _convert_from_string(data)
 
@@ -85,8 +85,7 @@ class matrix(N.ndarray):
         ret = N.ndarray.__new__(matrix, shape, arr.dtype, buffer=arr,
                                 fortran=fortran,
                                 swap=arr.flags['S'])
-        return ret; 
-
+        return ret
 
     def __array_finalize__(self, obj):
         ndim = self.ndim
@@ -180,10 +179,10 @@ class matrix(N.ndarray):
     #  to have dimension a.ndim-1
     def tolist(self):
         return self.__array__().tolist()
-    
+
     def getA(self):
         return self.__array__()
-        
+
     def getT(self):
         return self.transpose()
 
@@ -198,7 +197,7 @@ class matrix(N.ndarray):
         return matrix(linalg.inv(self))
 
     A = property(getA, None, doc="base array")
-    T = property(getT, None, doc="transpose")    
+    T = property(getT, None, doc="transpose")
     H = property(getH, None, doc="hermitian (conjugate) transpose")
     I = property(getI, None, doc="inverse")
 
@@ -222,22 +221,22 @@ def _from_string(str,gdict,ldict):
                     thismat = gdict[col]
                 except KeyError:
                     raise KeyError, "%s not found" % (col,)
-                                    
+
             coltup.append(thismat)
         rowtup.append(concatenate(coltup,axis=-1))
     return concatenate(rowtup,axis=0)
-    
+
 
 def bmat(obj,ldict=None, gdict=None):
     """Build a matrix object from string, nested sequence, or array.
 
-    Ex:  F = bmat('A, B; C, D')  
+    Ex:  F = bmat('A, B; C, D') 
          F = bmat([[A,B],[C,D]])
          F = bmat(r_[c_[A,B],c_[C,D]])
 
         all produce the same Matrix Object    [ A  B ]
                                               [ C  D ]
-                                      
+
         if A, B, C, and D are appropriately shaped 2-d arrays.
     """
     if isinstance(obj, types.StringType):
@@ -249,9 +248,9 @@ def bmat(obj,ldict=None, gdict=None):
         else:
             glob_dict = gdict
             loc_dict = ldict
-        
+
         return matrix(_from_string(obj, glob_dict, loc_dict))
-    
+
     if isinstance(obj, (types.TupleType, types.ListType)):
         # [[A,B],[C,D]]
         arr_rows = []
@@ -265,5 +264,3 @@ def bmat(obj,ldict=None, gdict=None):
         return matrix(obj)
 
 mat = matrix
-
-        

@@ -12,7 +12,7 @@ from oldnumeric import any
 
 # Need to speed this up...especially for longfloat
 
-class MachAr:
+class MachAr(object):
     """Diagnosing machine parameters.
 
     The following attributes are available:

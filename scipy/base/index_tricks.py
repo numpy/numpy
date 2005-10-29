@@ -1,9 +1,11 @@
 ## Automatically adapted for scipy Sep 19, 2005 by convertcode.py
 
+__all__ = ['mgrid','ogrid','r_', 'c_', 'index_exp', 'ix_','ndenumerate']
+
+import sys
 import types
 import numeric as _nx
 from numeric import asarray
-__all__ = ['mgrid','ogrid','r_', 'c_', 'index_exp', 'ix_','ndenumerate']
 
 from type_check import ScalarType
 import function_base
@@ -41,14 +43,14 @@ def ix_(*args):
         baseshape[k] = 1
     return tuple(out)
 
-class nd_grid:
+class nd_grid(object):
     """ Construct a "meshgrid" in N-dimensions.
 
         grid = nd_grid() creates an instance which will return a mesh-grid
         when indexed.  The dimension and number of the output arrays are equal
         to the number of indexing dimensions.  If the step length is not a
         complex number, then the stop is not inclusive.
-    
+
         However, if the step length is a COMPLEX NUMBER (e.g. 5j), then the
         integer part of it's magnitude is interpreted as specifying the
         number of points to create between the start and stop values, where
@@ -57,9 +59,9 @@ class nd_grid:
         If instantiated with an argument of 1, the mesh-grid is open or not
         fleshed out so that only one-dimension of each returned argument is
         greater than 1
-    
+
         Example:
-    
+
            >>> mgrid = nd_grid()
            >>> mgrid[0:5,0:5]
            array([[[0, 0, 0, 0, 0],
@@ -83,10 +85,10 @@ class nd_grid:
         self.sparse = sparse
     def __getitem__(self,key):
         try:
-	    size = []
+            size = []
             typecode = _nx.Int
-	    for k in range(len(key)):
-	        step = key[k].step
+            for k in range(len(key)):
+                step = key[k].step
                 start = key[k].start
                 if start is None: start=0
                 if step is None: step=1
@@ -103,7 +105,7 @@ class nd_grid:
                 nn = map(lambda x,t: _nx.arange(x,dtype=t),size,(typecode,)*len(size))
             else:
                 nn = _nx.indices(size,typecode)
-	    for k in range(len(size)):
+            for k in range(len(size)):
                 step = key[k].step
                 start = key[k].start
                 if start is None: start=0
@@ -118,7 +120,7 @@ class nd_grid:
                     slobj[k] = slice(None,None)
                     nn[k] = nn[k][slobj]
                     slobj[k] = _nx.NewAxis
-	    return nn
+            return nn
         except (IndexError, TypeError):
             step = key.step
             stop = key.stop
@@ -132,7 +134,7 @@ class nd_grid:
                 return _nx.arange(0,length,1,_nx.Float)*step + start
             else:
                 return _nx.arange(start, stop, step)
-	    
+
     def __getslice__(self,i,j):
         return _nx.arange(i,j)
 
@@ -142,8 +144,7 @@ class nd_grid:
 mgrid = nd_grid()
 ogrid = nd_grid(1)
 
-import sys
-class concatenator:
+class concatenator(object):
     """ Translates slice objects to concatenation along an axis.
     """
     def _retval(self, res):
@@ -156,13 +157,14 @@ class concatenator:
         self.matrix=self._matrix
         self.col=0
         return res
-        
+
     def __init__(self, axis=0, matrix=False):
         self._axis = axis
         self._matrix = matrix
         self.axis = axis
         self.matrix = matrix
         self.col = 0
+
     def __getitem__(self,key):
         if isinstance(key,types.StringType):
             frame = sys._getframe().f_back
@@ -174,7 +176,7 @@ class concatenator:
         for k in range(len(key)):
             if type(key[k]) is types.SliceType:
                 typecode = _nx.Int
-	        step = key[k].step
+                step = key[k].step
                 start = key[k].start
                 stop = key[k].stop
                 if start is None: start = 0
@@ -197,7 +199,7 @@ class concatenator:
                 except:
                     raise ValueError, "Unknown special directive."
             elif type(key[k]) in ScalarType:
-                newobj = asarray([key[k]])                
+                newobj = asarray([key[k]])
             else:
                 newobj = key[k]
             objs.append(newobj)
@@ -268,8 +270,7 @@ class ndenumerate(object):
 # in Python code and returns a tuple of slice objects that can be
 # used in the construction of complex index expressions.
 
-class _index_expression_class:
-    import sys
+class _index_expression_class(object):
     maxint = sys.maxint
 
     def __getitem__(self, item):

@@ -1,12 +1,12 @@
-import numeric as _nx
-from numeric import *
-
-from type_check import isscalar
-
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'column_stack','dstack','array_split','split','hsplit',
            'vsplit','dsplit','squeeze','apply_over_axes','expand_dims',
            'apply_along_axis']
+
+import numeric as _nx
+from numeric import *
+
+from type_check import isscalar
 
 def apply_along_axis(func1d,axis,arr,*args):
     """ Execute func1d(arr[i],*args) where func1d takes 1-D arrays
@@ -69,8 +69,8 @@ def apply_along_axis(func1d,axis,arr,*args):
             outarr[tuple(i.tolist())] = res
             k += 1
         return outarr
-        
-     
+
+
 def apply_over_axes(func, a, axes):
     """Apply a function repeatedly over multiple axes, keeping the same shape
     for the resulting array.
@@ -160,7 +160,7 @@ def atleast_2d(*arys):
         return res[0]
     else:
         return res
-        
+
 def atleast_3d(*arys):
     """ Force a sequence of arrays to each be at least 3D.
 
@@ -274,7 +274,7 @@ def column_stack(tup):
     """
     arrays = map(_nx.transpose,map(atleast_2d,tup))
     return _nx.concatenate(arrays,1)
-    
+
 def dstack(tup):
     """ Stack arrays in sequence depth wise (along third dimension)
 
@@ -311,7 +311,7 @@ def _replace_zero_by_x_arrays(sub_arys):
         elif _nx.sometrue(_nx.equal(_nx.shape(sub_arys[i]),0)):
             sub_arys[i] = _nx.array([])   
     return sub_arys
-    
+
 def array_split(ary,indices_or_sections,axis = 0):
     """ Divide an array into a list of sub-arrays.
 
@@ -428,7 +428,7 @@ def hsplit(ary,indices_or_sections):
             an integer, ary is divided into that many equally sized sub arrays.
             If it is impossible to make the sub-arrays equally sized, the
             operation throws a ValueError exception. See array_split and
-            split for other options on indices_or_sections.                        
+            split for other options on indices_or_sections.
         Arguments:
            ary -- N-D array.
               Array to be divided into sub-arrays.
@@ -439,10 +439,10 @@ def hsplit(ary,indices_or_sections):
               list results in a single sub-array equal to the original
               array.
         Returns:
-            sequence of sub-arrays.  The returned arrays have the same 
+            sequence of sub-arrays.  The returned arrays have the same
             number of dimensions as the input array.
         Related:
-            hstack, split, array_split, vsplit, dsplit.           
+            hstack, split, array_split, vsplit, dsplit.
         Examples:
             >>> import scipy
             >>> a= array((1,2,3,4))
@@ -452,7 +452,7 @@ def hsplit(ary,indices_or_sections):
             [array([[1, 2],
                    [1, 2]]), array([[3, 4],
                    [3, 4]])]
-                   
+
     """
     if len(_nx.shape(ary)) == 0:
         raise ValueError, 'hsplit only works on arrays of 1 or more dimensions'
@@ -460,7 +460,7 @@ def hsplit(ary,indices_or_sections):
         return split(ary,indices_or_sections,1)
     else:
         return split(ary,indices_or_sections,0)
-        
+
 def vsplit(ary,indices_or_sections):
     """ Split ary into multiple rows of sub-arrays
 
@@ -481,12 +481,12 @@ def vsplit(ary,indices_or_sections):
               list results in a single sub-array equal to the original
               array.
         Returns:
-            sequence of sub-arrays.  The returned arrays have the same 
-            number of dimensions as the input array.      
+            sequence of sub-arrays.  The returned arrays have the same
+            number of dimensions as the input array.
         Caveats:
            How should we handle 1D arrays here?  I am currently raising
-           an error when I encounter them.  Any better approach?      
-           
+           an error when I encounter them.  Any better approach?
+
            Should we reduce the returned array to their minium dimensions
            by getting rid of any dimensions that are 1?
         Related:
@@ -497,7 +497,7 @@ def vsplit(ary,indices_or_sections):
             ...            [1,2,3,4]])
             >>> scipy.vsplit(a)
             [array([       [1, 2, 3, 4]]), array([       [1, 2, 3, 4]])]
-                   
+
     """
     if len(_nx.shape(ary)) < 2:
         raise ValueError, 'vsplit only works on arrays of 2 or more dimensions'
@@ -512,7 +512,7 @@ def dsplit(ary,indices_or_sections):
             an integer, ary is divided into that many equally sized sub arrays.
             If it is impossible to make the sub-arrays equally sized, the
             operation throws a ValueError exception. See array_split and
-            split for other options on indices_or_sections.                        
+            split for other options on indices_or_sections.
         Arguments:
            ary -- N-D array.
               Array to be divided into sub-arrays.
@@ -523,10 +523,10 @@ def dsplit(ary,indices_or_sections):
               list results in a single sub-array equal to the original
               array.
         Returns:
-            sequence of sub-arrays.  The returned arrays have the same 
+            sequence of sub-arrays.  The returned arrays have the same
             number of dimensions as the input array.
         Caveats:
-           See vsplit caveats.       
+           See vsplit caveats.
         Related:
             dstack, split, array_split, hsplit, vsplit.
         Examples:
@@ -534,7 +534,7 @@ def dsplit(ary,indices_or_sections):
             [array([       [[1, 2],
                     [1, 2]]]), array([       [[3, 4],
                     [3, 4]]])]
-                                       
+
     """
     if len(_nx.shape(ary)) < 3:
         raise ValueError, 'vsplit only works on arrays of 3 or more dimensions'

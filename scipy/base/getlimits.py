@@ -106,7 +106,7 @@ maxexp=%(maxexp)6s   max=     %(_str_max)s
 nexp  =%(nexp)6s   min=       -max
 ---------------------------------------------------------------------
 ''' % self.__dict__
-    
+
 if __name__ == '__main__':
     f = finfo(numeric.single)
     print 'single epsilon:',f.eps

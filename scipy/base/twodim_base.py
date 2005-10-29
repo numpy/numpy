@@ -25,7 +25,7 @@ def flipud(m):
     if m.ndim < 1:
         raise ValueError, "Input must be >= 1-d."
     return m[::-1]
-    
+
 def rot90(m, k=1):
     """ returns the array found by rotating m by k*90
     degrees in the counterclockwise direction.  Works on the first two
@@ -39,7 +39,7 @@ def rot90(m, k=1):
     elif k == 1: return transpose(fliplr(m))
     elif k == 2: return fliplr(flipud(m))
     else: return fliplr(transpose(m))  # k==3
-    
+
 def eye(N, M=None, k=0, dtype=int_):
     """ eye returns a N-by-M 2-d array where the  k-th diagonal is all ones, 
         and everything else is zeros.
@@ -61,7 +61,7 @@ def diag(v, k=0):
             i = arange(0,n-k)
             fi = i+k+i*n
         else:
-            i = arange(0,n+k)            
+            i = arange(0,n+k)
             fi = i+(i-k)*n
         res.flat[fi] = v
         return res
@@ -84,7 +84,7 @@ def tri(N, M=None, k=0, dtype=int_):
     """ returns a N-by-M array where all the diagonals starting from
         lower left corner up to the k-th are all ones.
     """
-    if M is None: M = N    
+    if M is None: M = N
     m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
     return m.astype(dtype)
 
@@ -121,6 +121,3 @@ def vander(x, N=None):
     for i in range(N-1):
         X[:,i] = x**(N-i-1)
     return X
-
-
-

@@ -1,17 +1,17 @@
 ## Automatically adapted for scipy Sep 19, 2005 by convertcode.py
 
+__all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
+           'isscalar',
+           'isreal','nan_to_num','real','real_if_close',
+           'typename','asfarray','mintypecode','asscalar',
+           'common_type']
+
 import types
 import numeric as _nx
 from numeric import ndarray, asarray, array, isinf, isnan, isfinite, signbit, \
      ufunc, ScalarType, obj2dtype
 from ufunclike import isneginf, isposinf
 import umath
-
-__all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
-           'isscalar',
-           'isreal','nan_to_num','real','real_if_close',
-           'typename','asfarray','mintypecode','asscalar',
-           'common_type']
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
 
@@ -51,7 +51,7 @@ def asfarray(a, dtype=_nx.float_):
         dtype = _nx.float_
     a = asarray(a,dtype=dtype)
     return a
-   
+
 def isscalar(num):
     if isinstance(num, _nx.generic):
         return True
@@ -82,7 +82,7 @@ def _getmaxmin(t):
     import getlimits
     f = getlimits.finfo(t)
     return f.max, f.min
-    
+
 def nan_to_num(x):
     # mapping:
     #    NaN -> 0
@@ -96,7 +96,7 @@ def nan_to_num(x):
         y = nan_to_num(x.real) + 1j * nan_to_num(x.imag)
     elif issubclass(t, _nx.integer):
         y = array(x)
-    else:   
+    else:
         y = array(x)
         if not y.shape:
             y = array([x])
@@ -179,6 +179,3 @@ def common_type(*arrays):
         kind = max(kind, array_kind[t])
         precision = max(precision, array_precision[t])
     return array_type[kind][precision]
-
-if __name__ == '__main__':
-    print "Nothing..."

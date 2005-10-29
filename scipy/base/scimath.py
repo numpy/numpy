@@ -35,7 +35,7 @@ def _fix_real_abs_gt_1(x):
     if any(isreal(x) & (abs(x)>1)):
         x = _tocomplex(x)
     return x
-    
+
 def sqrt(x):
     x = _fix_real_lt_zero(x)
     return _nx.sqrt(x)
@@ -64,7 +64,6 @@ def log2(x):
 def power(x, p):
     x = _fix_real_lt_zero(x)
     return _nx.power(x, p)
-
 
 def arccos(x):
     x = _fix_real_abs_gt_1(x)
