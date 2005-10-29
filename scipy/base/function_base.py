@@ -643,7 +643,11 @@ class vectorize:
 
         self.thefunc = pyfunc
         self.ufunc = None
-        self.nin = len(fcode.co_varnames)
+        self.nin = fcode.co_argcount
+        if pyfunc.func_defaults:
+            self.nin_wo_defaults = self.nin - len(pyfunc.func_defaults)
+        else:
+            self.nin_wo_defaults = self.nin
         self.nout = None
         if doc is None:
             self.__doc__ = pyfunc.__doc__
@@ -656,11 +660,13 @@ class vectorize:
         for char in self.otypes:
             if char not in typecodes['All']:
                 raise ValueError, "invalid typecode specified"
+        self.lastcallargs = 0
 
     def __call__(self, *args):
         # get number of outputs and output types by calling
         #  the function on the first entries of args
-        if len(args) != self.nin:
+        nargs = len(args)
+        if (nargs > self.nin) or (nargs < self.nin_wo_defaults):
             raise ValueError, "mismatch between python function inputs"\
                   " and received arguments"
         if self.nout is None or self.otypes == '':
@@ -679,8 +685,9 @@ class vectorize:
                     otypes.append(asarray(theout[k]).dtypechar)
                 self.otypes = ''.join(otypes)
 
-        if self.ufunc is None:
-            self.ufunc = frompyfunc(self.thefunc, self.nin, self.nout)
+        if (self.ufunc is None) or (self.lastcallargs != nargs):
+            self.ufunc = frompyfunc(self.thefunc, nargs, self.nout)
+            self.lastcallargs = nargs
 
         if self.nout == 1:
             return self.ufunc(*args).astype(self.otypes[0])
