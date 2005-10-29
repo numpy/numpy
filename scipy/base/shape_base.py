@@ -115,7 +115,7 @@ def atleast_1d(*arys):
     """ Force a sequence of arrays to each be at least 1D.
 
          Description:
-            Force an array to be at least 1D.  If an array is 0D, the 
+            Force an array to be at least 1D.  If an array is 0D, the
             array is converted to a single row of values.  Otherwise,
             the array is unaltered.
          Arguments:
