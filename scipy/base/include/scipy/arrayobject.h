@@ -899,16 +899,16 @@ typedef struct {
 
 typedef struct {
         PyObject_HEAD
-	int                     nd_m1;            /* number of dimensions - 1 */
-        intp		        index, size;
-	intp                    coordinates[MAX_DIMS];/* N-dimensional loop */
-        intp                    dims_m1[MAX_DIMS];    /* ao->dimensions - 1 */
-	intp                    strides[MAX_DIMS];    /* ao->strides or fake */
-	intp                    backstrides[MAX_DIMS];/* how far to jump back */
-	intp                    factors[MAX_DIMS];     /* shape factors */
-	PyArrayObject           *ao;
-	char                    *dataptr;        /* pointer to current item*/
-        unsigned char           contiguous;
+	int               nd_m1;            /* number of dimensions - 1 */
+        intp		  index, size;
+	intp              coordinates[MAX_DIMS];/* N-dimensional loop */
+        intp              dims_m1[MAX_DIMS];    /* ao->dimensions - 1 */
+	intp              strides[MAX_DIMS];    /* ao->strides or fake */
+	intp              backstrides[MAX_DIMS];/* how far to jump back */
+	intp              factors[MAX_DIMS];     /* shape factors */
+	PyArrayObject     *ao;
+	char              *dataptr;        /* pointer to current item*/
+        Bool              contiguous;
 } PyArrayIterObject;
 
 
