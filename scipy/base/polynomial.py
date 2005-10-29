@@ -2,8 +2,6 @@
 Functions to operate on polynomials.
 """
 
-# FIXME: this module still uses Numeric typechars
-
 __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
            'polyfit']
@@ -53,8 +51,8 @@ def poly(seq_of_zeros):
          >>> poly(b)
          array([1., 3., 1., 5., 6.])
     """
-    seq_of_zeros = atleast_1d(seq_of_zeros)    
-    sh = NX.shape(seq_of_zeros)
+    seq_of_zeros = atleast_1d(seq_of_zeros)
+    sh = seq_of_zeros.shape
     if len(sh) == 2 and sh[0] == sh[1]:
         seq_of_zeros = _eigvals(seq_of_zeros)
     elif len(sh) ==1:
@@ -67,11 +65,11 @@ def poly(seq_of_zeros):
 
     a = [1]
     for k in range(len(seq_of_zeros)):
-        a = NX.convolve(a, [1, -seq_of_zeros[k]], mode=2)
+        a = NX.convolve(a, [1, -seq_of_zeros[k]], mode='full')
 
-    if a.dtypechar in ['F', 'D']:
+    if isinstance(a.dtype, nx.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
-        roots = NX.asarray(seq_of_zeros, 'D')
+        roots = NX.asarray(seq_of_zeros, complex)
         pos_roots = sort_complex(NX.compress(roots.imag > 0, roots))
         neg_roots = NX.conjugate(sort_complex(
                                         NX.compress(roots.imag < 0,roots)))
@@ -103,20 +101,20 @@ def roots(p):
     p = p[int(non_zero[0]):int(non_zero[-1])+1]
 
     # casting: if incoming array isn't floating point, make it floating point.
-    if p.dtypechar not in ['f', 'd', 'F', 'D']:
-        p = p.astype('d')
+    if not isinstance(p.dtype, (nx.floating, nx.complexfloating)):
+        p = p.astype(float)
 
     N = len(p)
     if N > 1:
         # build companion matrix and find its eigenvalues (the roots)
-        A = diag(NX.ones((N-2,), p.dtypechar), -1)
+        A = diag(NX.ones((N-2,), p.dtype), -1)
         A[0, :] = -p[1:] / p[0]
         roots = _eigvals(A)
     else:
         return NX.array([])
 
     # tack any zeros onto the back of the array
-    roots = hstack((roots, NX.zeros(trailing_zeros, roots.dtypechar)))
+    roots = hstack((roots, NX.zeros(trailing_zeros, roots.dtype)))
     return roots
 
 def polyint(p, m=1, k=None):
@@ -131,10 +129,10 @@ def polyint(p, m=1, k=None):
     if m < 0:
         raise ValueError, "Order of integral must be positive (see polyder)"
     if k is None:
-        k = NX.zeros(m)
+        k = NX.zeros(m, float)
     k = atleast_1d(k)
     if len(k) == 1 and m > 1:
-        k = k[0]*NX.ones(m)
+        k = k[0]*NX.ones(m, float)
     if len(k) < m:
         raise ValueError, \
               "k must be a scalar or a rank-1 array of length 1 or >m."
@@ -143,7 +141,7 @@ def polyint(p, m=1, k=None):
     else:
         truepoly = isinstance(p, poly1d)
         p = NX.asarray(p)
-        y = NX.zeros(len(p)+1, 'd')
+        y = NX.zeros(len(p)+1, float)
         y[:-1] = p*1.0/NX.arange(len(p), 0, -1)
         y[-1] = k[0]
         val = polyint(y, m-1, k=k[1:])
@@ -235,7 +233,7 @@ def polyval(p, x):
         y = 0
     else:
         x = NX.asarray(x)
-        y = NX.zeros(x.shape, x.dtypechar)
+        y = NX.zeros_like(x)
     for i in range(len(p)):
         y = x * y + p[i]
     return y
@@ -249,10 +247,10 @@ def polyadd(a1, a2):
     if diff == 0:
         return a1 + a2
     elif diff > 0:
-        zr = NX.zeros(diff)
+        zr = NX.zeros(diff, a1.dtype)
         val = NX.concatenate((zr, a1)) + a2
     else:
-        zr = NX.zeros(abs(diff))
+        zr = NX.zeros(abs(diff), a2.dtype)
         val = a1 + NX.concatenate((zr, a2))
     if truepoly:
         val = poly1d(val)
@@ -267,10 +265,10 @@ def polysub(a1, a2):
     if diff == 0:
         return a1 - a2
     elif diff > 0:
-        zr = NX.zeros(diff)
+        zr = NX.zeros(diff, a1)
         val = NX.concatenate((zr, a1)) - a2
     else:
-        zr = NX.zeros(abs(diff))
+        zr = NX.zeros(abs(diff), a2)
         val = a1 - NX.concatenate((zr, a2))
     if truepoly:
         val = poly1d(val)
@@ -302,10 +300,10 @@ def deconvolve(signal, divisor):
         quot = [];
         rem = num;
     else:
-        input = NX.ones(N-D+1, NX.Float)
+        input = NX.ones(N-D+1, float)
         input[1:] = 0
         quot = scipy.signal.lfilter(num, den, input)
-        rem = num - NX.convolve(den, quot, mode=2)
+        rem = num - NX.convolve(den, quot, mode='full')
     return quot, rem
 
 def polydiv(a1, a2):
@@ -523,7 +521,7 @@ class poly1d(object):
         if key < 0:
             raise ValueError, "Does not support negative powers."
         if key > self.order:
-            zr = NX.zeros(key-self.order, self.coeffs.dtypechar)
+            zr = NX.zeros(key-self.order, self.coeffs.dtype)
             self.__dict__['coeffs'] = NX.concatenate((zr, self.coeffs))
             self.__dict__['order'] = key
             ind = 0
