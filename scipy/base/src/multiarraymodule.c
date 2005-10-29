@@ -3705,7 +3705,7 @@ array_set_ops_function(PyObject *self, PyObject *args, PyObject *kwds)
 	/*  Leave this to the caller for now --- error will be raised
 	    later when use is attempted 
 	*/
-	if (PyArray_SetNumericOps(kwds) == -1) {
+	if (kwds && PyArray_SetNumericOps(kwds) == -1) {
 		Py_DECREF(oldops);
 		PyErr_SetString(PyExc_ValueError, 
 				"one or more objects not callable");

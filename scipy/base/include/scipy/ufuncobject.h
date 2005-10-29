@@ -164,7 +164,6 @@ typedef struct {
 #define LOOP_END_THREADS   
 #endif
 
-#define PyUFunc_Unbounded 120
 #define PyUFunc_One 1
 #define PyUFunc_Zero 0
 #define PyUFunc_None -1

@@ -2527,7 +2527,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 	if (ufunc->userloops == NULL) {
 		ufunc->userloops = PyDict_New();
 	}
-	key = PyInt_FromLong(usertype);
+	key = PyInt_FromLong((long) usertype);
 	if (key == NULL) return -1;
 	cobj = PyCObject_FromVoidPtr((void *)function, NULL);
 	if (cobj == NULL) {Py_DECREF(key); return -1;}
@@ -2850,7 +2850,7 @@ static char Ufunctype__doc__[] =
 static PyTypeObject PyUFunc_Type = {
 	PyObject_HEAD_INIT(0)
 	0,				/*ob_size*/
-	"ufunc",			/*tp_name*/
+	"scipy.ufunc",			/*tp_name*/
 	sizeof(PyUFuncObject),		/*tp_basicsize*/
 	0,				/*tp_itemsize*/
 	/* methods */

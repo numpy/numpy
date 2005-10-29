@@ -2,7 +2,7 @@ __all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
            'arange', 'array', 'zeros', 'empty',
            'fromstring', 'fromfile', 'frombuffer',
            'where', 'concatenate', 'fastCopyAndTranspose',
-           'register_dtype', 'can_cast',
+           'register_dtype', 'set_numeric_ops', 'can_cast',
            'asarray', 'asanyarray', 'isfortran', 'zeros_like', 'empty_like',
            'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
            'alterdot', 'restoredot', 'cross',
@@ -60,6 +60,7 @@ where = multiarray.where
 concatenate = multiarray.concatenate
 fastCopyAndTranspose = multiarray._fastCopyAndTranspose
 register_dtype = multiarray.register_dtype
+set_numeric_ops = multiarray.set_numeric_ops
 can_cast = multiarray.can_cast
 
 def asarray(a, dtype=None, fortran=False):

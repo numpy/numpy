@@ -92,6 +92,10 @@ ufunc_api_list = [
 
     (r"""
     """,
+     'On_Om', 'char **, intp *, intp *, void *', 'void'),
+
+    (r"""
+    """,
      'checkfperr', 'int, PyObject *', 'int'),
 
     (r"""
