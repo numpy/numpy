@@ -307,9 +307,17 @@ def polydiv(a1, a2):
     """Computes q and r polynomials so that a1(s) = q(s)*a2(s) + r(s)
     """
     truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
-    q, r = deconvolve(a1, a2)
+    monDivisor = NX.asarray(a2) / a2[0]
+    dividend = NX.asarray(a1) / a2[0]
+    q = []
+    r = dividend
+    while len(r) >= len(monDivisor):
+        q.append(r[0])
+        r = polysub(r, polymul(q, monDivisor))[1:]
+    q = NX.asarray(q)
     while NX.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
         r = r[1:]
+    r *= a2[0]
     if truepoly:
         q, r = map(poly1d, (q, r))
     return q, r
