@@ -367,7 +367,15 @@ class ScipyTest:
 
         all_tests = unittest.TestSuite(suites)
         runner = unittest.TextTestRunner(verbosity=verbosity)
-        runner.run(all_tests)
+        # Use the builtin displayhook. If the tests are being run
+        # under IPython (for instance), any doctest test suites will
+        # fail otherwise.
+        old_displayhook = sys.displayhook
+        sys.displayhook = sys.__displayhook__
+        try:
+            runner.run(all_tests)
+        finally:
+            sys.displayhook = old_displayhook
         return runner
 
     def run(self):
