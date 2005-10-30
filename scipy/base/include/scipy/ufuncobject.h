@@ -25,6 +25,13 @@ typedef struct {
 
 #include "arrayobject.h"
 
+#ifdef PYARRAY_TYPES_PREFIX
+#  define CAT2(x,y)   x ## y
+#  define CAT(x,y)    CAT2(x,y)
+#  define NS(name)    CAT(PYARRAY_TYPES_PREFIX, name)
+#  define intp        NS(intp)
+#endif
+
 #define UFUNC_ERR_IGNORE 0
 #define UFUNC_ERR_WARN   1
 #define UFUNC_ERR_RAISE  2
@@ -59,8 +66,8 @@ typedef struct {
 	   to work with PyArray_Broadcast */
 	PyObject_HEAD
 	int  numiter;
-	intp size;      
-	intp index;    
+	intp size;
+	intp index;
 	int nd;
 	intp dimensions[MAX_DIMS];	
 	PyArrayIterObject *iters[MAX_ARGS];
@@ -128,12 +135,12 @@ typedef struct {
 	/* The error handling */
 	int errormask;
 	PyObject *errobj;
-        
+
         PyUFuncGenericFunction function;
-        void *funcdata;        
+        void *funcdata;
         int meth;
         int swap;
-        
+
         void *buffer;
         int bufsize;
 
@@ -148,11 +155,11 @@ typedef struct {
         int  insize;
         char *inptr;
 
-	/* For copying small arrays */
-	PyObject *decref;
-        
+        /* For copying small arrays */
+        PyObject *decref;
+
         int obj;
-        
+
 } PyUFuncReduceObject;
 
 
@@ -160,8 +167,8 @@ typedef struct {
 #define LOOP_BEGIN_THREADS if (!(loop->obj)) {_save = PyEval_SaveThread();}
 #define LOOP_END_THREADS   if (!(loop->obj)) {PyEval_RestoreThread(_save);}
 #else
-#define LOOP_BEGIN_THREADS 
-#define LOOP_END_THREADS   
+#define LOOP_BEGIN_THREADS
+#define LOOP_END_THREADS
 #endif
 
 #define PyUFunc_One 1
@@ -172,7 +179,7 @@ typedef struct {
 typedef struct {
         int nin;
         int nout;
-        PyObject *callable; 
+        PyObject *callable;
 } PyUFunc_PyFuncData;
 
 
@@ -239,7 +246,7 @@ typedef struct {
 	(void) fpsetsticky(0);						\
 	}
 	
-#elif defined(linux) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__) 
+#elif defined(linux) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
 
 #if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__)
 #include <fenv.h>
@@ -286,6 +293,12 @@ typedef struct {
 
 #endif
 
+#ifdef PYARRAY_TYPES_PREFIX
+#  undef CAT
+#  undef CAT2
+#  undef NS
+#  undef inpt
+#endif
 
 
 #ifdef __cplusplus

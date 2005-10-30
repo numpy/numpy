@@ -16,6 +16,50 @@ extern "C" {
 
 #include "config.h"
 
+#ifdef PYARRAY_TYPES_PREFIX
+#  define CAT2(x,y)   x ## y
+#  define CAT(x,y)    CAT2(x,y)
+#  define NS(name)    CAT(PYARRAY_TYPES_PREFIX, name)
+#  define longlong    NS(longlong)
+#  define ulonglong   NS(ulonglong)
+#  define Bool        NS(Bool)
+#  define longdouble  NS(longdouble)
+#  define byte        NS(byte)
+#  define ubyte       NS(ubyte)
+#  define ushort      NS(ushort)
+#  define uint        NS(uint)
+#  define ulong       NS(ulong)
+#  define cfloat      NS(cfloat)
+#  define cdouble     NS(cdouble)
+#  define clongdouble NS(clongdouble)
+#  define Int8        NS(Int8)
+#  define UInt8       NS(UInt8)
+#  define Int16       NS(Int16)
+#  define UInt16      NS(UInt16)
+#  define Int32       NS(Int32)
+#  define UInt32      NS(UInt32)
+#  define Int64       NS(Int64)
+#  define UInt64      NS(UInt64)
+#  define Int128      NS(Int128)
+#  define UInt128     NS(UInt128)
+#  define Int256      NS(Int256)
+#  define UInt256     NS(UInt256)
+#  define Float16     NS(Float16)
+#  define Complex32   NS(Complex32)
+#  define Float32     NS(Float32)
+#  define Complex64   NS(Complex64)
+#  define Float64     NS(Float64)
+#  define Complex128  NS(Complex128)
+#  define Float80     NS(Float80)
+#  define Complex160  NS(Complex160)
+#  define Float96     NS(Float96)
+#  define Complex192  NS(Complex192)
+#  define Float128    NS(Float128)
+#  define Complex256  NS(Complex256)
+#  define intp        NS(intp)
+#  define uintp       NS(uintp)
+#endif
+
 /* There are several places in the code where an array of dimensions is */
 /* allocated statically.  This is the size of that static allocation. */
 
@@ -489,8 +533,8 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 #ifndef PyArray_FLOAT80
 #define PyArray_FLOAT80 PyArray_DOUBLE
 #define PyArray_COMPLEX160 PyArray_CDOUBLE
-	typedef double Float80
-	typedef cdouble Complex160
+	typedef double Float80;
+	typedef cdouble Complex160;
 #endif
 #elif BITSOF_DOUBLE == 96
 #define STRBITSOF_DOUBLE "96"
@@ -547,8 +591,8 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 #ifndef PyArray_FLOAT80
 #define PyArray_FLOAT80 PyArray_FLOAT
 #define PyArray_COMPLEX160 PyArray_CFLOAT
-	typedef float Float80
-	typedef cfloat Complex160
+	typedef float Float80;
+	typedef cfloat Complex160;
 #endif
 #elif BITSOF_FLOAT == 96
 #define STRBITSOF_FLOAT "96"
@@ -604,8 +648,8 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 #ifndef PyArray_FLOAT80
 #define PyArray_FLOAT80 PyArray_LONGDOUBLE
 #define PyArray_COMPLEX160 PyArray_CLONGDOUBLE
-	typedef longdouble Float80
-	typedef clongdouble Complex160
+	typedef longdouble Float80;
+	typedef clongdouble Complex160;
 #endif
 #elif BITSOF_LONGDOUBLE == 96
 #define STRBITSOF_LONGDOUBLE "96"
@@ -1226,7 +1270,49 @@ typedef struct {
 #define PyArray_ISSPACESAVER(m) FALSE
 #define PyScalarArray_Check PyArray_CheckScalar
 
-
+#ifdef PYARRAY_TYPES_PREFIX
+#  undef CAT
+#  undef CAT2
+#  undef NS
+#  undef longlong
+#  undef ulonglong
+#  undef Bool
+#  undef longdouble
+#  undef byte
+#  undef ubyte
+#  undef ushort
+#  undef uint
+#  undef ulong
+#  undef cfloat
+#  undef cdouble
+#  undef clongdouble
+#  undef Int8
+#  undef UInt8
+#  undef Int16
+#  undef UInt16
+#  undef Int32
+#  undef UInt32
+#  undef Int64
+#  undef UInt64
+#  undef Int128
+#  undef UInt128
+#  undef Int256
+#  undef UInt256
+#  undef Float16
+#  undef Complex32
+#  undef Float32
+#  undef Complex64
+#  undef Float64
+#  undef Complex128
+#  undef Float80
+#  undef Complex160
+#  undef Float96
+#  undef Complex192
+#  undef Float128
+#  undef Complex256
+#  undef intp
+#  undef uintp
+#endif
 
 #ifdef __cplusplus
 }
