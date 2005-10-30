@@ -288,10 +288,7 @@ def polymul(a1, a2):
 def deconvolve(signal, divisor):
     """Deconvolves divisor out of signal.  Requires scipy.signal library
     """
-    try:
-        import scipy.signal
-    except ImportError:
-        print "You need scipy.signal to use this function."
+    import scipy.signal
     num = atleast_1d(signal)
     den = atleast_1d(divisor)
     N = len(num)
