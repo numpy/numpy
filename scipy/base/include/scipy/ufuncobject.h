@@ -25,10 +25,10 @@ typedef struct {
 
 #include "arrayobject.h"
 
-#ifdef PYARRAY_TYPES_PREFIX
+#ifdef PY_ARRAY_TYPES_PREFIX
 #  define CAT2(x,y)   x ## y
 #  define CAT(x,y)    CAT2(x,y)
-#  define NS(name)    CAT(PYARRAY_TYPES_PREFIX, name)
+#  define NS(name)    CAT(PY_ARRAY_TYPES_PREFIX, name)
 #  define intp        NS(intp)
 #endif
 
@@ -293,7 +293,7 @@ typedef struct {
 
 #endif
 
-#ifdef PYARRAY_TYPES_PREFIX
+#ifdef PY_ARRAY_TYPES_PREFIX
 #  undef CAT
 #  undef CAT2
 #  undef NS

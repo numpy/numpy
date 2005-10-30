@@ -16,10 +16,10 @@ extern "C" {
 
 #include "config.h"
 
-#ifdef PYARRAY_TYPES_PREFIX
+#ifdef PY_ARRAY_TYPES_PREFIX
 #  define CAT2(x,y)   x ## y
 #  define CAT(x,y)    CAT2(x,y)
-#  define NS(name)    CAT(PYARRAY_TYPES_PREFIX, name)
+#  define NS(name)    CAT(PY_ARRAY_TYPES_PREFIX, name)
 #  define longlong    NS(longlong)
 #  define ulonglong   NS(ulonglong)
 #  define Bool        NS(Bool)
@@ -1270,7 +1270,7 @@ typedef struct {
 #define PyArray_ISSPACESAVER(m) FALSE
 #define PyScalarArray_Check PyArray_CheckScalar
 
-#ifdef PYARRAY_TYPES_PREFIX
+#ifdef PY_ARRAY_TYPES_PREFIX
 #  undef CAT
 #  undef CAT2
 #  undef NS
