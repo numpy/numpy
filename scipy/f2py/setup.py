@@ -51,6 +51,8 @@ def configuration(parent_package='',top_path=None):
             f.write('''\
 #!/usr/bin/env %s
 # See http://cens.ioc.ee/projects/f2py2e/
+import os
+os.environ["NO_SCIPY_IMPORT"]="f2py"
 import scipy.f2py as f2py
 f2py.main()
 '''%(os.path.basename(sys.executable)))

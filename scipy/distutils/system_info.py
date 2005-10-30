@@ -867,6 +867,7 @@ def _get_build_temp():
     return os.path.join('build','temp'+plat_specifier)
 
 def get_atlas_version(**config):
+    os.environ['NO_SCIPY_IMPORT']='get_atlas_version'
     from core import Extension, setup
     from misc_util import get_cmd
     import log
@@ -908,7 +909,9 @@ def get_atlas_version(**config):
     so_ext = get_config_var('SO')
     target = os.path.join(build_dir,'atlas_version'+so_ext)
     cmd = [get_pythonexe(),'-c',
-           '"import imp;imp.load_dynamic(\\"atlas_version\\",\\"%s\\")"'\
+           '"import imp,os;os.environ[\\"NO_SCIPY_IMPORT\\"]='\
+           '\\"system_info.get_atlas_version:load atlas_version\\";'\
+           'imp.load_dynamic(\\"atlas_version\\",\\"%s\\")"'\
            % (os.path.basename(target))]
     s,o = exec_command(cmd,execute_in=os.path.dirname(target),use_tee=0)
     atlas_version = None
