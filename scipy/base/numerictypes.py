@@ -119,6 +119,7 @@ def bitname(obj):
 
     if name == 'bool':
         char = 'b'
+        base = 'bool'
     elif name=='string':
         char = 'S'
         base = 'string'
@@ -165,6 +166,7 @@ def _add_types():
         else:  # generic class
             allTypes[name] = typeinfo[a]
 _add_types()
+
 
 # We use these later
 void = allTypes['void']
