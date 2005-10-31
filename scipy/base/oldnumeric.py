@@ -162,7 +162,7 @@ def put (a, ind, v):
     """
     a = array(a,copy=False)
     v = array(v,copy=False)
-    return a.put(a, ind, v.astype(a.dtype))
+    return a.put(ind, v.astype(a.dtype))
 
 def putmask (a, mask, v):
     """putmask(a, mask, v) results in a = v for all places mask is true.
