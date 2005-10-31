@@ -90,6 +90,42 @@ class flagsobj(dict):
         self._arr.setflags(**kwds)
         
 
+    def get_fnc(self):
+        fl = self._flagnum
+        return (fl & _fnum == _fnum) and \
+               not (fl & _cnum == _cnum)
+
+    def get_forc(self):
+        fl = self._flagnum
+        return (fl & _cnum == _cnum) or \
+               (fl & _fnum == _fnum)
+
+    def get_behaved(self):
+        fl = self._flagnum
+        return (fl & _anum == _anum) and \
+               (fl & _nnum == _nnum) and \
+               (fl & _wnum == _wnum)
+
+    def get_behaved_ro(self):
+        fl = self._flagnum
+        return (fl & _anum == _anum) and \
+               (fl & _nnum == _nnum)
+
+    def get_carray(self):
+        fl = self._flagnum
+        return (fl & _anum == _anum) and \
+               (fl & _nnum == _nnum) and \
+               (fl & _wnum == _wnum) and \
+               (fl & _cnum == _cnum)
+
+    def get_farray(self):
+        fl = self._flagnum
+        return (fl & _anum == _anum) and \
+               (fl & _nnum == _nnum) and \
+               (fl & _wnum == _wnum) and \
+               (fl & _fnum == _fnum) and \
+               not (fl & _cnum == _cnum)
+
     def get_contiguous(self):
         return (self._flagnum & _cnum == _cnum)
 
@@ -107,6 +143,9 @@ class flagsobj(dict):
 
     def get_notswapped(self):
         return (self._flagnum & _nnum == _nnum)
+
+    def get_swapped(self):
+        return not (self._flagnum & _nnum == _nnum)
 
     def get_writeable(self):
         return (self._flagnum & _wnum == _wnum)
@@ -127,12 +166,23 @@ class flagsobj(dict):
         val = not val
         self._arr.setflags(swap=val)
 
+    def set_swapped(self, val):
+        val = not not val
+        self._arr.setflags(swap=val)
+
     contiguous = property(get_contiguous, None, "")
     fortran = property(get_fortran, None, "")
     updateifcopy = property(get_updateifcopy, set_updateifcopy, "")
     owndata = property(get_owndata, None, "")
     aligned = property(get_aligned, set_aligned, "")
     notswapped = property(get_notswapped, set_notswapped, "")
+    swapped = property(get_swapped, set_swapped, "")
     writeable = property(get_writeable, set_writeable, "")
 
+    fnc = property(get_fnc, None, "")
+    forc = property(get_forc, None, "")
+    behaved = property(get_behaved, None, "")
+    behaved_ro = property(get_behaved_ro, None, "")
+    carray = property(get_carray, None, "")
+    farray = property(get_farray, None, "")
     
