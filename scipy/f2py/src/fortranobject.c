@@ -473,6 +473,12 @@ static int swap_arrays(PyArrayObject* arr1, PyArrayObject* arr2) {
   return 0;
 }
 
+#define ARRAY_ISCOMPATIBLE(arr,type_num) \
+(  (PyArray_ISINTEGER(arr) && PyTypeNum_ISINTEGER(type_num)) \
+ ||(PyArray_ISFLOAT(arr) && PyTypeNum_ISFLOAT(type_num)) \
+ ||(PyArray_ISCOMPLEX(arr) && PyTypeNum_ISCOMPLEX(type_num)) \
+)
+
 extern
 PyArrayObject* array_from_pyobj(const int type_num,
 				intp *dims,
@@ -550,7 +556,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 
     if ((! (intent & F2PY_INTENT_COPY))
 	&& PyArray_ITEMSIZE(arr)==descr->elsize
-	&& PyArray_CanCastSafely(arr->descr->type_num,type_num)
+	&& ARRAY_ISCOMPATIBLE(arr,type_num)
 	) {
       if ((intent & F2PY_INTENT_C)?PyArray_ISCARRAY(arr):PyArray_ISFARRAY(arr)) {
 	if ((intent & F2PY_INTENT_OUT)) {
@@ -572,8 +578,8 @@ PyArrayObject* array_from_pyobj(const int type_num,
 		descr->elsize,
 		PyArray_ITEMSIZE(arr)
 		);
-      if (!(PyArray_CanCastSafely(arr->descr->type_num,type_num)))
-	sprintf(mess+strlen(mess)," -- cannot cast safely from '%c' to '%c'",
+      if (!(ARRAY_ISCOMPATIBLE(arr,type_num)))
+	sprintf(mess+strlen(mess)," -- input '%c' not compatible to '%c'",
 		arr->descr->type,descr->type);
       PyErr_SetString(PyExc_ValueError,mess);
       return NULL;
