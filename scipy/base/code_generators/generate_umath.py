@@ -40,7 +40,7 @@ noobj = all[:-1]
 defdict = {
 'add': [all,'O',("PyNumber_Add",),
         (2,1), Zero,
-        "addd the arguments elementwise."
+        "adds the arguments elementwise."
         ],
 'subtract' : [all,'O',("PyNumber_Subtract",),
               (2,1), Zero,
