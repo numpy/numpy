@@ -1,4 +1,5 @@
 
+
 from multiarray import _flagdict
 
 _defflags = _flagdict.keys()
@@ -19,6 +20,8 @@ _nnum = _flagdict['NOTSWAPPED']
 _wnum = _flagdict['WRITEABLE']
 _cnum = _flagdict['CONTIGUOUS']
 _fnum = _flagdict['FORTRAN']
+_unum = _flagdict['UPDATEIFCOPY']
+_onum = _flagdict['OWNDATA']
 
 class flagsobj(dict):
     def __init__(self, arr, flags, scalar):
@@ -86,3 +89,50 @@ class flagsobj(dict):
         # now actually update array flags
         self._arr.setflags(**kwds)
         
+
+    def get_contiguous(self):
+        return (self._flagnum & _cnum == _cnum)
+
+    def get_fortran(self):
+        return (self._flagnum & _fnum == _fnum)
+
+    def get_updateifcopy(self):
+        return (self._flagnum & _unum == _unum)
+
+    def get_owndata(self):
+        return (self._flagnum & _onum == _onum)
+
+    def get_aligned(self):
+        return (self._flagnum & _anum == _anum)
+
+    def get_notswapped(self):
+        return (self._flagnum & _nnum == _nnum)
+
+    def get_writeable(self):
+        return (self._flagnum & _wnum == _wnum)
+
+    def set_writeable(self, val):
+        val = not not val
+        self._arr.setflags(write=val)
+
+    def set_aligned(self, val):
+        val = not not val
+        self._arr.setflags(align=val)
+
+    def set_updateifcopy(self, val):
+        val = not not val
+        self._arr.setflags(uic=val)
+
+    def set_notswapped(self, val):
+        val = not val
+        self._arr.setflags(swap=val)
+
+    contiguous = property(get_contiguous, None, "")
+    fortran = property(get_fortran, None, "")
+    updateifcopy = property(get_updateifcopy, set_updateifcopy, "")
+    owndata = property(get_owndata, None, "")
+    aligned = property(get_aligned, set_aligned, "")
+    notswapped = property(get_notswapped, set_notswapped, "")
+    writeable = property(get_writeable, set_writeable, "")
+
+    
