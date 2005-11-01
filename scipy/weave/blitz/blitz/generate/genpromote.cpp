@@ -1,10 +1,13 @@
-#include <fstream.h>
+#include <iostream>
+#include <fstream>
 
-struct {
+struct TypePromotions {
     int priority;
     int promotion;
     const char* name;
-} types[] = {
+};
+
+TypePromotions types[] = {
     { 9,  4, "char" },
     { 9,  4, "unsigned char" },
     { 9,  4, "short int" },
@@ -28,39 +31,39 @@ const char *typeName = "T_promote";
 
 void generate()
 {
-    cout << "Generating <promote.h>" << endl;
+    std::cout << "Generating <promote-old.h>" << std::endl;
 
-    ofstream ofs("promote.h");
+    std::ofstream ofs("../promote-old.h");
 
     ofs << "/***********************************************************************\n"
 " * promote.h   Arithmetic type promotion trait class\n"
-" * Author: Todd Veldhuizen         (tveldhui@seurat.uwaterloo.ca)\n"
+" * Author: Todd Veldhuizen         (tveldhui@oonumerics.org)\n"
 " *\n"
-" * This program may be distributed in an unmodified form.  It may not be\n"
-" * sold or used in a commercial product.\n"
+" * Copyright (C) 1997-2001 Todd Veldhuizen <tveldhui@oonumerics.org>\n"
 " *\n"
-" * For more information on these template techniques, please see the\n"
-" * Blitz++ Numerical Library Project, at URL http://monet.uwaterloo.ca/blitz/\n"
+" * This program is free software; you can redistribute it and/or\n"
+" * modify it under the terms of the GNU General Public License\n"
+" * as published by the Free Software Foundation; either version 2\n"
+" * of the License, or (at your option) any later version.\n"
+" *\n"
+" * This program is distributed in the hope that it will be useful,\n"
+" * but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+" * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+" * GNU General Public License for more details.\n"
+" *\n"
+" * Suggestions:          blitz-dev@oonumerics.org\n"
+" * Bugs:                 blitz-bugs@oonumerics.org\n"
+" *\n"
+" * For more information, please see the Blitz++ Home Page:\n"
+" *    http://oonumerics.org/blitz/\n"
+" *\n"
+" ***************************************************************************\n"
 " */\n"
 "\n"
-<< "// Generated: " << __FILE__ << " " << __DATE__ << " " << __TIME__ << endl <<endl <<
-"#ifndef BZ_PROMOTE_H\n"
-"#define BZ_PROMOTE_H\n\n"
-"#include <blitz/blitz.h>\n"
-"#include <complex>\n\n"
-"BZ_NAMESPACE(blitz)\n\n"
-"#ifdef BZ_TEMPLATE_QUALIFIED_RETURN_TYPE\n"
-"    #define BZ_PROMOTE(A,B) _bz_typename promote_trait<A,B>::T_promote\n"
-"#else\n"
-"    #define BZ_PROMOTE(A,B) A\n"
-"#endif\n";
+        << "// Generated: " << __FILE__ << " " << __DATE__ << " " << __TIME__ << std::endl;
 
 ofs <<
-"// NEEDS_WORK: once partial specialization is supported, the default\n"
-"// behaviour of promote_trait should be changed to promote to whichever\n"
-"// type has a bigger sizeof().\n"
-"\n"
-"template<class A, class B>\n"
+"template<typename A, typename B>\n"
 "class promote_trait {\n"
 "public:\n"
 "        typedef A   T_promote;\n"
@@ -95,27 +98,25 @@ ofs <<
 
 
             if ((i >= 11) || (j >= 11))
-                ofs << "#ifdef BZ_HAVE_COMPLEX" << endl;
+                ofs << "#ifdef BZ_HAVE_COMPLEX" << std::endl;
 
-            ofs << "template<>" << endl
+            ofs << "template<>" << std::endl
                 << "class " << className << "<" << types[i].name << ", "
                 << types[j].name << "> {\npublic:\n"
                 << "\ttypedef " << types[promote].name << " "
                 << typeName << ";\n};\n";
 
             if ((i >= 11) || (j >= 11))
-                ofs << "#endif" << endl;
+                ofs << "#endif" << std::endl;
 
-            ofs << endl;
+            ofs << std::endl;
         }
     }
 
-    ofs << endl << "BZ_NAMESPACE_END" << endl << endl
-        << "#endif // BZ_PROMOTE_H" << endl;
 }
 
 int main()
 {
     generate();
-    return 1;
+    return 0;
 }

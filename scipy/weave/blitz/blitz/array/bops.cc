@@ -1,84 +1,34 @@
 /***************************************************************************
- * blitz/arraybops.cc	Array expression templates (2 operands)
+ * blitz/../array/bops.cc	Array expression templates (2 operands)
  *
- * $Id$
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
- * Copyright (C) 1997 Todd Veldhuizen <tveldhui@oonumerics.org>
- * All rights reserved.   Please see <blitz/blitz.h> for terms and
- * conditions of use.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * Suggestions:          blitz-dev@oonumerics.org
- * Bugs:                 blitz-bugs@oonumerics.org
+ * Suggestions:          blitz-suggest@cybervision.com
+ * Bugs:                 blitz-bugs@cybervision.com
  *
  * For more information, please see the Blitz++ Home Page:
- *    http://oonumerics.org/blitz/
+ *    http://seurat.uwaterloo.ca/blitz/
  *
  ***************************************************************************
- * $Log$
- * Revision 1.1  2002/09/12 07:02:06  eric
- * major rewrite of weave.
- *
- * 0.
- * The underlying library code is significantly re-factored and simpler. There used to be a xxx_spec.py and xxx_info.py file for every group of type conversion classes.  The spec file held the python code that handled the conversion and the info file had most of the C code templates that were generated.  This proved pretty confusing in practice, so the two files have mostly been merged into the spec file.
- *
- * Also, there was quite a bit of code duplication running around.  The re-factoring was able to trim the standard conversion code base (excluding blitz and accelerate stuff) by about 40%.  This should be a huge maintainability and extensibility win.
- *
- * 1.
- * With multiple months of using Numeric arrays, I've found some of weave's "magic variable" names unwieldy and want to change them.  The following are the old declarations for an array x of Float32 type:
- *
- *         PyArrayObject* x = convert_to_numpy(...);
- *         float* x_data = (float*) x->data;
- *         int*   _Nx = x->dimensions;
- *         int*   _Sx = x->strides;
- *         int    _Dx = x->nd;
- *
- * The new declaration looks like this:
- *
- *         PyArrayObject* x_array = convert_to_numpy(...);
- *         float* x = (float*) x->data;
- *         int*   Nx = x->dimensions;
- *         int*   Sx = x->strides;
- *         int    Dx = x->nd;
- *
- * This is obviously not backward compatible, and will break some code (including a lot of mine).  It also makes inline() code more readable and natural to write.
- *
- * 2.
- * I've switched from CXX to Gordon McMillan's SCXX for list, tuples, and dictionaries.  I like CXX pretty well, but its use of advanced C++ (templates, etc.) caused some portability problems.  The SCXX library is similar to CXX but doesn't use templates at all.  This, like (1) is not an
- * API compatible change and requires repairing existing code.
- *
- * I have also thought about boost python, but it also makes heavy use of templates.  Moving to SCXX gets rid of almost all template usage for the standard type converters which should help portability.  std::complex and std::string from the STL are the only templates left.  Of course blitz still uses templates in a major way so weave.blitz will continue to be hard on compilers.
- *
- * I've actually considered scrapping the C++ classes for list, tuples, and
- * dictionaries, and just fall back to the standard Python C API because the classes are waaay slower than the raw API in many cases.  They are also more convenient and less error prone in many cases, so I've decided to stick with them.  The PyObject variable will always be made available for variable "x" under the name "py_x" for more speedy operations.  You'll definitely want to use these for anything that needs to be speedy.
- *
- * 3.
- * strings are converted to std::string now.  I found this to be the most useful type in for strings in my code.  Py::String was used previously.
- *
- * 4.
- * There are a number of reference count "errors" in some of the less tested conversion codes such as instance, module, etc.  I've cleaned most of these up.  I put errors in quotes here because I'm actually not positive that objects passed into "inline" really need reference counting applied to them.  The dictionaries passed in by inline() hold references to these objects so it doesn't seem that they could ever be garbage collected inadvertently.  Variables used by ext_tools, though, definitely need the reference counting done.  I don't think this is a major cost in speed, so it probably isn't worth getting rid of the ref count code.
- *
- * 5.
- * Unicode objects are now supported.  This was necessary to support rendering Unicode strings in the freetype wrappers for Chaco.
- *
- * 6.
- * blitz++ was upgraded to the latest CVS.  It compiles about twice as fast as the old blitz and looks like it supports a large number of compilers (though only gcc 2.95.3 is tested).  Compile times now take about 9 seconds on my 850 MHz PIII laptop.
- *
- * Revision 1.1.1.1  2000/06/19 12:26:14  tveldhui
- * Imported sources
- *
- * Revision 1.2  1998/03/14 00:04:47  tveldhui
- * 0.2-alpha-05
  *
  */ 
 
 // Generated source file.  Do not edit. 
-// genarrbops.cpp Aug  7 1997 15:04:14
+// genarrbops.cpp Dec 30 2003 16:48:46
 
 #ifndef BZ_ARRAYBOPS_CC
 #define BZ_ARRAYBOPS_CC
 
 #ifndef BZ_ARRAYEXPR_H
- #error <blitz/arraybops.cc> must be included after <blitz/arrayexpr.h>
+ #error <blitz/array/bops.cc> must be included after <blitz/arrayexpr.h>
 #endif
 
 BZ_NAMESPACE(blitz)
@@ -90,13 +40,13 @@ BZ_NAMESPACE(blitz)
 // Array<T_numtype1, N_rank1> + Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Add<T_numtype1, T_numtype2 > > >
 operator+(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Add<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -106,15 +56,15 @@ operator+(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> + _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      Add<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      Add<T_numtype1, typename P_expr2::T_numtype > > >
 operator+(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Add<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      Add<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -122,13 +72,13 @@ operator+(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> + IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       Add<T_numtype1, int > > >
 operator+(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       Add<T_numtype1, int> >
       (d1.begin(), 
@@ -138,13 +88,13 @@ operator+(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> + int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       Add<T_numtype1, int > > >
 operator+(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       Add<T_numtype1, int> >
       (d1.begin(), 
@@ -154,13 +104,13 @@ operator+(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> + float
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>,
       Add<T_numtype1, float > > >
 operator+(const Array<T_numtype1, N_rank1>& d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>, 
       Add<T_numtype1, float> >
       (d1.begin(), 
@@ -170,13 +120,13 @@ operator+(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> + double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>,
       Add<T_numtype1, double > > >
 operator+(const Array<T_numtype1, N_rank1>& d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>, 
       Add<T_numtype1, double> >
       (d1.begin(), 
@@ -186,13 +136,13 @@ operator+(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> + long double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>,
       Add<T_numtype1, long double > > >
 operator+(const Array<T_numtype1, N_rank1>& d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>, 
       Add<T_numtype1, long double> >
       (d1.begin(), 
@@ -203,13 +153,13 @@ operator+(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> + complex<T2>
 template<class T_numtype1, int N_rank1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Add<T_numtype1, complex<T2>  > > >
 operator+(const Array<T_numtype1, N_rank1>& d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Add<T_numtype1, complex<T2> > >
       (d1.begin(), 
@@ -220,15 +170,15 @@ operator+(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> + Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      Add<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      Add<typename P_expr1::T_numtype, T_numtype2 > > >
 operator+(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      Add<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      Add<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -236,15 +186,15 @@ operator+(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> + _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      Add<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      Add<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator+(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Add<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      Add<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -252,15 +202,15 @@ operator+(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> + IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      Add<_bz_typename P_expr1::T_numtype, int > > >
+      Add<typename P_expr1::T_numtype, int > > >
 operator+(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      Add<_bz_typename P_expr1::T_numtype, int> >
+      Add<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -268,15 +218,15 @@ operator+(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> + int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      Add<_bz_typename P_expr1::T_numtype, int > > >
+      Add<typename P_expr1::T_numtype, int > > >
 operator+(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      Add<_bz_typename P_expr1::T_numtype, int> >
+      Add<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -284,15 +234,15 @@ operator+(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> + float
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>,
-      Add<_bz_typename P_expr1::T_numtype, float > > >
+      Add<typename P_expr1::T_numtype, float > > >
 operator+(_bz_ArrayExpr<P_expr1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>, 
-      Add<_bz_typename P_expr1::T_numtype, float> >
+      Add<typename P_expr1::T_numtype, float> >
       (d1, 
       _bz_ArrayExprConstant<float>(d2));
 }
@@ -300,15 +250,15 @@ operator+(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> + double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>,
-      Add<_bz_typename P_expr1::T_numtype, double > > >
+      Add<typename P_expr1::T_numtype, double > > >
 operator+(_bz_ArrayExpr<P_expr1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>, 
-      Add<_bz_typename P_expr1::T_numtype, double> >
+      Add<typename P_expr1::T_numtype, double> >
       (d1, 
       _bz_ArrayExprConstant<double>(d2));
 }
@@ -316,15 +266,15 @@ operator+(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> + long double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>,
-      Add<_bz_typename P_expr1::T_numtype, long double > > >
+      Add<typename P_expr1::T_numtype, long double > > >
 operator+(_bz_ArrayExpr<P_expr1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>, 
-      Add<_bz_typename P_expr1::T_numtype, long double> >
+      Add<typename P_expr1::T_numtype, long double> >
       (d1, 
       _bz_ArrayExprConstant<long double>(d2));
 }
@@ -333,15 +283,15 @@ operator+(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> + complex<T2>
 template<class P_expr1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
-      Add<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      Add<typename P_expr1::T_numtype, complex<T2>  > > >
 operator+(_bz_ArrayExpr<P_expr1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
-      Add<_bz_typename P_expr1::T_numtype, complex<T2> > >
+      Add<typename P_expr1::T_numtype, complex<T2> > >
       (d1, 
       _bz_ArrayExprConstant<complex<T2> > (d2));
 }
@@ -350,13 +300,13 @@ operator+(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> + Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Add<int, T_numtype2 > > >
 operator+(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Add<int, T_numtype2> >
       (d1, 
@@ -366,15 +316,15 @@ operator+(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> + _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      Add<int, _bz_typename P_expr2::T_numtype > > >
+      Add<int, typename P_expr2::T_numtype > > >
 operator+(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Add<int, _bz_typename P_expr2::T_numtype> >
+      Add<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -382,13 +332,13 @@ operator+(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> + IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       Add<int, int > > >
 operator+(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       Add<int, int> >
       (d1, 
@@ -398,13 +348,13 @@ operator+(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> + int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       Add<int, int > > >
 operator+(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       Add<int, int> >
       (d1, 
@@ -414,13 +364,13 @@ operator+(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> + float
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>,
       Add<int, float > > >
 operator+(IndexPlaceholder<N_index1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>, 
       Add<int, float> >
       (d1, 
@@ -430,13 +380,13 @@ operator+(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> + double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>,
       Add<int, double > > >
 operator+(IndexPlaceholder<N_index1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>, 
       Add<int, double> >
       (d1, 
@@ -446,13 +396,13 @@ operator+(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> + long double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>,
       Add<int, long double > > >
 operator+(IndexPlaceholder<N_index1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>, 
       Add<int, long double> >
       (d1, 
@@ -463,13 +413,13 @@ operator+(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> + complex<T2>
 template<int N_index1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Add<int, complex<T2>  > > >
 operator+(IndexPlaceholder<N_index1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Add<int, complex<T2> > >
       (d1, 
@@ -480,13 +430,13 @@ operator+(IndexPlaceholder<N_index1> d1,
 // int + Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Add<int, T_numtype2 > > >
 operator+(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Add<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -496,15 +446,15 @@ operator+(int d1,
 // int + _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      Add<int, _bz_typename P_expr2::T_numtype > > >
+      Add<int, typename P_expr2::T_numtype > > >
 operator+(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      Add<int, _bz_typename P_expr2::T_numtype> >
+      Add<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -512,13 +462,13 @@ operator+(int d1,
 // int + IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       Add<int, int > > >
 operator+(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       Add<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -528,13 +478,13 @@ operator+(int d1,
 // float + Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Add<float, T_numtype2 > > >
 operator+(float d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Add<float, T_numtype2> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -544,15 +494,15 @@ operator+(float d1,
 // float + _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>,
-      Add<float, _bz_typename P_expr2::T_numtype > > >
+      Add<float, typename P_expr2::T_numtype > > >
 operator+(float d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>, 
-      Add<float, _bz_typename P_expr2::T_numtype> >
+      Add<float, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<float>(d1), 
       d2);
 }
@@ -560,13 +510,13 @@ operator+(float d1,
 // float + IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>,
       Add<float, int > > >
 operator+(float d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>, 
       Add<float, int> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -576,13 +526,13 @@ operator+(float d1,
 // double + Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Add<double, T_numtype2 > > >
 operator+(double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Add<double, T_numtype2> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -592,15 +542,15 @@ operator+(double d1,
 // double + _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>,
-      Add<double, _bz_typename P_expr2::T_numtype > > >
+      Add<double, typename P_expr2::T_numtype > > >
 operator+(double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Add<double, _bz_typename P_expr2::T_numtype> >
+      Add<double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<double>(d1), 
       d2);
 }
@@ -608,13 +558,13 @@ operator+(double d1,
 // double + IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>,
       Add<double, int > > >
 operator+(double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>, 
       Add<double, int> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -624,13 +574,13 @@ operator+(double d1,
 // long double + Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Add<long double, T_numtype2 > > >
 operator+(long double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Add<long double, T_numtype2> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -640,15 +590,15 @@ operator+(long double d1,
 // long double + _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>,
-      Add<long double, _bz_typename P_expr2::T_numtype > > >
+      Add<long double, typename P_expr2::T_numtype > > >
 operator+(long double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Add<long double, _bz_typename P_expr2::T_numtype> >
+      Add<long double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<long double>(d1), 
       d2);
 }
@@ -656,13 +606,13 @@ operator+(long double d1,
 // long double + IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>,
       Add<long double, int > > >
 operator+(long double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>, 
       Add<long double, int> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -673,13 +623,13 @@ operator+(long double d1,
 // complex<T1> + Array<T_numtype2, N_rank2>
 template<class T1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>,
       Add<complex<T1> , T_numtype2 > > >
 operator+(complex<T1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>, 
       Add<complex<T1> , T_numtype2> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -691,15 +641,15 @@ operator+(complex<T1> d1,
 // complex<T1> + _bz_ArrayExpr<P_expr2>
 template<class T1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>,
-      Add<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      Add<complex<T1> , typename P_expr2::T_numtype > > >
 operator+(complex<T1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>, 
-      Add<complex<T1> , _bz_typename P_expr2::T_numtype> >
+      Add<complex<T1> , typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
       d2);
 }
@@ -709,13 +659,13 @@ operator+(complex<T1> d1,
 // complex<T1> + IndexPlaceholder<N_index2>
 template<class T1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>,
       Add<complex<T1> , int > > >
 operator+(complex<T1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>, 
       Add<complex<T1> , int> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -729,13 +679,13 @@ operator+(complex<T1> d1,
 // Array<T_numtype1, N_rank1> - Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Subtract<T_numtype1, T_numtype2 > > >
 operator-(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Subtract<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -745,15 +695,15 @@ operator-(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> - _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      Subtract<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      Subtract<T_numtype1, typename P_expr2::T_numtype > > >
 operator-(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Subtract<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      Subtract<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -761,13 +711,13 @@ operator-(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> - IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       Subtract<T_numtype1, int > > >
 operator-(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       Subtract<T_numtype1, int> >
       (d1.begin(), 
@@ -777,13 +727,13 @@ operator-(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> - int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       Subtract<T_numtype1, int > > >
 operator-(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       Subtract<T_numtype1, int> >
       (d1.begin(), 
@@ -793,13 +743,13 @@ operator-(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> - float
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>,
       Subtract<T_numtype1, float > > >
 operator-(const Array<T_numtype1, N_rank1>& d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>, 
       Subtract<T_numtype1, float> >
       (d1.begin(), 
@@ -809,13 +759,13 @@ operator-(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> - double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>,
       Subtract<T_numtype1, double > > >
 operator-(const Array<T_numtype1, N_rank1>& d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>, 
       Subtract<T_numtype1, double> >
       (d1.begin(), 
@@ -825,13 +775,13 @@ operator-(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> - long double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>,
       Subtract<T_numtype1, long double > > >
 operator-(const Array<T_numtype1, N_rank1>& d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>, 
       Subtract<T_numtype1, long double> >
       (d1.begin(), 
@@ -842,13 +792,13 @@ operator-(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> - complex<T2>
 template<class T_numtype1, int N_rank1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Subtract<T_numtype1, complex<T2>  > > >
 operator-(const Array<T_numtype1, N_rank1>& d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Subtract<T_numtype1, complex<T2> > >
       (d1.begin(), 
@@ -859,15 +809,15 @@ operator-(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> - Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      Subtract<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      Subtract<typename P_expr1::T_numtype, T_numtype2 > > >
 operator-(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      Subtract<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      Subtract<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -875,15 +825,15 @@ operator-(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> - _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      Subtract<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      Subtract<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator-(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Subtract<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      Subtract<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -891,15 +841,15 @@ operator-(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> - IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      Subtract<_bz_typename P_expr1::T_numtype, int > > >
+      Subtract<typename P_expr1::T_numtype, int > > >
 operator-(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      Subtract<_bz_typename P_expr1::T_numtype, int> >
+      Subtract<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -907,15 +857,15 @@ operator-(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> - int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      Subtract<_bz_typename P_expr1::T_numtype, int > > >
+      Subtract<typename P_expr1::T_numtype, int > > >
 operator-(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      Subtract<_bz_typename P_expr1::T_numtype, int> >
+      Subtract<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -923,15 +873,15 @@ operator-(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> - float
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>,
-      Subtract<_bz_typename P_expr1::T_numtype, float > > >
+      Subtract<typename P_expr1::T_numtype, float > > >
 operator-(_bz_ArrayExpr<P_expr1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>, 
-      Subtract<_bz_typename P_expr1::T_numtype, float> >
+      Subtract<typename P_expr1::T_numtype, float> >
       (d1, 
       _bz_ArrayExprConstant<float>(d2));
 }
@@ -939,15 +889,15 @@ operator-(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> - double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>,
-      Subtract<_bz_typename P_expr1::T_numtype, double > > >
+      Subtract<typename P_expr1::T_numtype, double > > >
 operator-(_bz_ArrayExpr<P_expr1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>, 
-      Subtract<_bz_typename P_expr1::T_numtype, double> >
+      Subtract<typename P_expr1::T_numtype, double> >
       (d1, 
       _bz_ArrayExprConstant<double>(d2));
 }
@@ -955,15 +905,15 @@ operator-(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> - long double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>,
-      Subtract<_bz_typename P_expr1::T_numtype, long double > > >
+      Subtract<typename P_expr1::T_numtype, long double > > >
 operator-(_bz_ArrayExpr<P_expr1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>, 
-      Subtract<_bz_typename P_expr1::T_numtype, long double> >
+      Subtract<typename P_expr1::T_numtype, long double> >
       (d1, 
       _bz_ArrayExprConstant<long double>(d2));
 }
@@ -972,15 +922,15 @@ operator-(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> - complex<T2>
 template<class P_expr1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
-      Subtract<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      Subtract<typename P_expr1::T_numtype, complex<T2>  > > >
 operator-(_bz_ArrayExpr<P_expr1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
-      Subtract<_bz_typename P_expr1::T_numtype, complex<T2> > >
+      Subtract<typename P_expr1::T_numtype, complex<T2> > >
       (d1, 
       _bz_ArrayExprConstant<complex<T2> > (d2));
 }
@@ -989,13 +939,13 @@ operator-(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> - Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Subtract<int, T_numtype2 > > >
 operator-(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Subtract<int, T_numtype2> >
       (d1, 
@@ -1005,15 +955,15 @@ operator-(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> - _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      Subtract<int, _bz_typename P_expr2::T_numtype > > >
+      Subtract<int, typename P_expr2::T_numtype > > >
 operator-(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Subtract<int, _bz_typename P_expr2::T_numtype> >
+      Subtract<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -1021,13 +971,13 @@ operator-(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> - IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       Subtract<int, int > > >
 operator-(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       Subtract<int, int> >
       (d1, 
@@ -1037,13 +987,13 @@ operator-(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> - int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       Subtract<int, int > > >
 operator-(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       Subtract<int, int> >
       (d1, 
@@ -1053,13 +1003,13 @@ operator-(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> - float
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>,
       Subtract<int, float > > >
 operator-(IndexPlaceholder<N_index1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>, 
       Subtract<int, float> >
       (d1, 
@@ -1069,13 +1019,13 @@ operator-(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> - double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>,
       Subtract<int, double > > >
 operator-(IndexPlaceholder<N_index1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>, 
       Subtract<int, double> >
       (d1, 
@@ -1085,13 +1035,13 @@ operator-(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> - long double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>,
       Subtract<int, long double > > >
 operator-(IndexPlaceholder<N_index1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>, 
       Subtract<int, long double> >
       (d1, 
@@ -1102,13 +1052,13 @@ operator-(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> - complex<T2>
 template<int N_index1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Subtract<int, complex<T2>  > > >
 operator-(IndexPlaceholder<N_index1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Subtract<int, complex<T2> > >
       (d1, 
@@ -1119,13 +1069,13 @@ operator-(IndexPlaceholder<N_index1> d1,
 // int - Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Subtract<int, T_numtype2 > > >
 operator-(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Subtract<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -1135,15 +1085,15 @@ operator-(int d1,
 // int - _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      Subtract<int, _bz_typename P_expr2::T_numtype > > >
+      Subtract<int, typename P_expr2::T_numtype > > >
 operator-(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      Subtract<int, _bz_typename P_expr2::T_numtype> >
+      Subtract<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -1151,13 +1101,13 @@ operator-(int d1,
 // int - IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       Subtract<int, int > > >
 operator-(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       Subtract<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -1167,13 +1117,13 @@ operator-(int d1,
 // float - Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Subtract<float, T_numtype2 > > >
 operator-(float d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Subtract<float, T_numtype2> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -1183,15 +1133,15 @@ operator-(float d1,
 // float - _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>,
-      Subtract<float, _bz_typename P_expr2::T_numtype > > >
+      Subtract<float, typename P_expr2::T_numtype > > >
 operator-(float d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>, 
-      Subtract<float, _bz_typename P_expr2::T_numtype> >
+      Subtract<float, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<float>(d1), 
       d2);
 }
@@ -1199,13 +1149,13 @@ operator-(float d1,
 // float - IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>,
       Subtract<float, int > > >
 operator-(float d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>, 
       Subtract<float, int> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -1215,13 +1165,13 @@ operator-(float d1,
 // double - Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Subtract<double, T_numtype2 > > >
 operator-(double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Subtract<double, T_numtype2> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -1231,15 +1181,15 @@ operator-(double d1,
 // double - _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>,
-      Subtract<double, _bz_typename P_expr2::T_numtype > > >
+      Subtract<double, typename P_expr2::T_numtype > > >
 operator-(double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Subtract<double, _bz_typename P_expr2::T_numtype> >
+      Subtract<double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<double>(d1), 
       d2);
 }
@@ -1247,13 +1197,13 @@ operator-(double d1,
 // double - IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>,
       Subtract<double, int > > >
 operator-(double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>, 
       Subtract<double, int> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -1263,13 +1213,13 @@ operator-(double d1,
 // long double - Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Subtract<long double, T_numtype2 > > >
 operator-(long double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Subtract<long double, T_numtype2> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -1279,15 +1229,15 @@ operator-(long double d1,
 // long double - _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>,
-      Subtract<long double, _bz_typename P_expr2::T_numtype > > >
+      Subtract<long double, typename P_expr2::T_numtype > > >
 operator-(long double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Subtract<long double, _bz_typename P_expr2::T_numtype> >
+      Subtract<long double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<long double>(d1), 
       d2);
 }
@@ -1295,13 +1245,13 @@ operator-(long double d1,
 // long double - IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>,
       Subtract<long double, int > > >
 operator-(long double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>, 
       Subtract<long double, int> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -1312,13 +1262,13 @@ operator-(long double d1,
 // complex<T1> - Array<T_numtype2, N_rank2>
 template<class T1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>,
       Subtract<complex<T1> , T_numtype2 > > >
 operator-(complex<T1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>, 
       Subtract<complex<T1> , T_numtype2> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -1330,15 +1280,15 @@ operator-(complex<T1> d1,
 // complex<T1> - _bz_ArrayExpr<P_expr2>
 template<class T1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>,
-      Subtract<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      Subtract<complex<T1> , typename P_expr2::T_numtype > > >
 operator-(complex<T1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>, 
-      Subtract<complex<T1> , _bz_typename P_expr2::T_numtype> >
+      Subtract<complex<T1> , typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
       d2);
 }
@@ -1348,13 +1298,13 @@ operator-(complex<T1> d1,
 // complex<T1> - IndexPlaceholder<N_index2>
 template<class T1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>,
       Subtract<complex<T1> , int > > >
 operator-(complex<T1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>, 
       Subtract<complex<T1> , int> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -1368,13 +1318,13 @@ operator-(complex<T1> d1,
 // Array<T_numtype1, N_rank1> * Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Multiply<T_numtype1, T_numtype2 > > >
 operator*(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Multiply<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -1384,15 +1334,15 @@ operator*(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> * _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      Multiply<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      Multiply<T_numtype1, typename P_expr2::T_numtype > > >
 operator*(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Multiply<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      Multiply<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -1400,13 +1350,13 @@ operator*(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> * IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       Multiply<T_numtype1, int > > >
 operator*(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       Multiply<T_numtype1, int> >
       (d1.begin(), 
@@ -1416,13 +1366,13 @@ operator*(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> * int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       Multiply<T_numtype1, int > > >
 operator*(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       Multiply<T_numtype1, int> >
       (d1.begin(), 
@@ -1432,13 +1382,13 @@ operator*(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> * float
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>,
       Multiply<T_numtype1, float > > >
 operator*(const Array<T_numtype1, N_rank1>& d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>, 
       Multiply<T_numtype1, float> >
       (d1.begin(), 
@@ -1448,13 +1398,13 @@ operator*(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> * double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>,
       Multiply<T_numtype1, double > > >
 operator*(const Array<T_numtype1, N_rank1>& d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>, 
       Multiply<T_numtype1, double> >
       (d1.begin(), 
@@ -1464,13 +1414,13 @@ operator*(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> * long double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>,
       Multiply<T_numtype1, long double > > >
 operator*(const Array<T_numtype1, N_rank1>& d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>, 
       Multiply<T_numtype1, long double> >
       (d1.begin(), 
@@ -1481,13 +1431,13 @@ operator*(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> * complex<T2>
 template<class T_numtype1, int N_rank1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Multiply<T_numtype1, complex<T2>  > > >
 operator*(const Array<T_numtype1, N_rank1>& d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Multiply<T_numtype1, complex<T2> > >
       (d1.begin(), 
@@ -1498,15 +1448,15 @@ operator*(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> * Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      Multiply<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      Multiply<typename P_expr1::T_numtype, T_numtype2 > > >
 operator*(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      Multiply<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      Multiply<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -1514,15 +1464,15 @@ operator*(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> * _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      Multiply<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      Multiply<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator*(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Multiply<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      Multiply<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -1530,15 +1480,15 @@ operator*(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> * IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      Multiply<_bz_typename P_expr1::T_numtype, int > > >
+      Multiply<typename P_expr1::T_numtype, int > > >
 operator*(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      Multiply<_bz_typename P_expr1::T_numtype, int> >
+      Multiply<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -1546,15 +1496,15 @@ operator*(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> * int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      Multiply<_bz_typename P_expr1::T_numtype, int > > >
+      Multiply<typename P_expr1::T_numtype, int > > >
 operator*(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      Multiply<_bz_typename P_expr1::T_numtype, int> >
+      Multiply<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -1562,15 +1512,15 @@ operator*(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> * float
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>,
-      Multiply<_bz_typename P_expr1::T_numtype, float > > >
+      Multiply<typename P_expr1::T_numtype, float > > >
 operator*(_bz_ArrayExpr<P_expr1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>, 
-      Multiply<_bz_typename P_expr1::T_numtype, float> >
+      Multiply<typename P_expr1::T_numtype, float> >
       (d1, 
       _bz_ArrayExprConstant<float>(d2));
 }
@@ -1578,15 +1528,15 @@ operator*(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> * double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>,
-      Multiply<_bz_typename P_expr1::T_numtype, double > > >
+      Multiply<typename P_expr1::T_numtype, double > > >
 operator*(_bz_ArrayExpr<P_expr1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>, 
-      Multiply<_bz_typename P_expr1::T_numtype, double> >
+      Multiply<typename P_expr1::T_numtype, double> >
       (d1, 
       _bz_ArrayExprConstant<double>(d2));
 }
@@ -1594,15 +1544,15 @@ operator*(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> * long double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>,
-      Multiply<_bz_typename P_expr1::T_numtype, long double > > >
+      Multiply<typename P_expr1::T_numtype, long double > > >
 operator*(_bz_ArrayExpr<P_expr1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>, 
-      Multiply<_bz_typename P_expr1::T_numtype, long double> >
+      Multiply<typename P_expr1::T_numtype, long double> >
       (d1, 
       _bz_ArrayExprConstant<long double>(d2));
 }
@@ -1611,15 +1561,15 @@ operator*(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> * complex<T2>
 template<class P_expr1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
-      Multiply<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      Multiply<typename P_expr1::T_numtype, complex<T2>  > > >
 operator*(_bz_ArrayExpr<P_expr1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
-      Multiply<_bz_typename P_expr1::T_numtype, complex<T2> > >
+      Multiply<typename P_expr1::T_numtype, complex<T2> > >
       (d1, 
       _bz_ArrayExprConstant<complex<T2> > (d2));
 }
@@ -1628,13 +1578,13 @@ operator*(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> * Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Multiply<int, T_numtype2 > > >
 operator*(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Multiply<int, T_numtype2> >
       (d1, 
@@ -1644,15 +1594,15 @@ operator*(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> * _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      Multiply<int, _bz_typename P_expr2::T_numtype > > >
+      Multiply<int, typename P_expr2::T_numtype > > >
 operator*(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Multiply<int, _bz_typename P_expr2::T_numtype> >
+      Multiply<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -1660,13 +1610,13 @@ operator*(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> * IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       Multiply<int, int > > >
 operator*(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       Multiply<int, int> >
       (d1, 
@@ -1676,13 +1626,13 @@ operator*(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> * int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       Multiply<int, int > > >
 operator*(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       Multiply<int, int> >
       (d1, 
@@ -1692,13 +1642,13 @@ operator*(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> * float
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>,
       Multiply<int, float > > >
 operator*(IndexPlaceholder<N_index1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>, 
       Multiply<int, float> >
       (d1, 
@@ -1708,13 +1658,13 @@ operator*(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> * double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>,
       Multiply<int, double > > >
 operator*(IndexPlaceholder<N_index1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>, 
       Multiply<int, double> >
       (d1, 
@@ -1724,13 +1674,13 @@ operator*(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> * long double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>,
       Multiply<int, long double > > >
 operator*(IndexPlaceholder<N_index1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>, 
       Multiply<int, long double> >
       (d1, 
@@ -1741,13 +1691,13 @@ operator*(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> * complex<T2>
 template<int N_index1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Multiply<int, complex<T2>  > > >
 operator*(IndexPlaceholder<N_index1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Multiply<int, complex<T2> > >
       (d1, 
@@ -1758,13 +1708,13 @@ operator*(IndexPlaceholder<N_index1> d1,
 // int * Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Multiply<int, T_numtype2 > > >
 operator*(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Multiply<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -1774,15 +1724,15 @@ operator*(int d1,
 // int * _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      Multiply<int, _bz_typename P_expr2::T_numtype > > >
+      Multiply<int, typename P_expr2::T_numtype > > >
 operator*(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      Multiply<int, _bz_typename P_expr2::T_numtype> >
+      Multiply<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -1790,13 +1740,13 @@ operator*(int d1,
 // int * IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       Multiply<int, int > > >
 operator*(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       Multiply<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -1806,13 +1756,13 @@ operator*(int d1,
 // float * Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Multiply<float, T_numtype2 > > >
 operator*(float d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Multiply<float, T_numtype2> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -1822,15 +1772,15 @@ operator*(float d1,
 // float * _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>,
-      Multiply<float, _bz_typename P_expr2::T_numtype > > >
+      Multiply<float, typename P_expr2::T_numtype > > >
 operator*(float d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>, 
-      Multiply<float, _bz_typename P_expr2::T_numtype> >
+      Multiply<float, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<float>(d1), 
       d2);
 }
@@ -1838,13 +1788,13 @@ operator*(float d1,
 // float * IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>,
       Multiply<float, int > > >
 operator*(float d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>, 
       Multiply<float, int> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -1854,13 +1804,13 @@ operator*(float d1,
 // double * Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Multiply<double, T_numtype2 > > >
 operator*(double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Multiply<double, T_numtype2> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -1870,15 +1820,15 @@ operator*(double d1,
 // double * _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>,
-      Multiply<double, _bz_typename P_expr2::T_numtype > > >
+      Multiply<double, typename P_expr2::T_numtype > > >
 operator*(double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Multiply<double, _bz_typename P_expr2::T_numtype> >
+      Multiply<double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<double>(d1), 
       d2);
 }
@@ -1886,13 +1836,13 @@ operator*(double d1,
 // double * IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>,
       Multiply<double, int > > >
 operator*(double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>, 
       Multiply<double, int> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -1902,13 +1852,13 @@ operator*(double d1,
 // long double * Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Multiply<long double, T_numtype2 > > >
 operator*(long double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Multiply<long double, T_numtype2> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -1918,15 +1868,15 @@ operator*(long double d1,
 // long double * _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>,
-      Multiply<long double, _bz_typename P_expr2::T_numtype > > >
+      Multiply<long double, typename P_expr2::T_numtype > > >
 operator*(long double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Multiply<long double, _bz_typename P_expr2::T_numtype> >
+      Multiply<long double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<long double>(d1), 
       d2);
 }
@@ -1934,13 +1884,13 @@ operator*(long double d1,
 // long double * IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>,
       Multiply<long double, int > > >
 operator*(long double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>, 
       Multiply<long double, int> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -1951,13 +1901,13 @@ operator*(long double d1,
 // complex<T1> * Array<T_numtype2, N_rank2>
 template<class T1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>,
       Multiply<complex<T1> , T_numtype2 > > >
 operator*(complex<T1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>, 
       Multiply<complex<T1> , T_numtype2> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -1969,15 +1919,15 @@ operator*(complex<T1> d1,
 // complex<T1> * _bz_ArrayExpr<P_expr2>
 template<class T1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>,
-      Multiply<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      Multiply<complex<T1> , typename P_expr2::T_numtype > > >
 operator*(complex<T1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>, 
-      Multiply<complex<T1> , _bz_typename P_expr2::T_numtype> >
+      Multiply<complex<T1> , typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
       d2);
 }
@@ -1987,13 +1937,13 @@ operator*(complex<T1> d1,
 // complex<T1> * IndexPlaceholder<N_index2>
 template<class T1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>,
       Multiply<complex<T1> , int > > >
 operator*(complex<T1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>, 
       Multiply<complex<T1> , int> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -2007,13 +1957,13 @@ operator*(complex<T1> d1,
 // Array<T_numtype1, N_rank1> / Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Divide<T_numtype1, T_numtype2 > > >
 operator/(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Divide<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -2023,15 +1973,15 @@ operator/(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> / _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      Divide<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      Divide<T_numtype1, typename P_expr2::T_numtype > > >
 operator/(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Divide<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      Divide<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -2039,13 +1989,13 @@ operator/(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> / IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       Divide<T_numtype1, int > > >
 operator/(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       Divide<T_numtype1, int> >
       (d1.begin(), 
@@ -2055,13 +2005,13 @@ operator/(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> / int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       Divide<T_numtype1, int > > >
 operator/(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       Divide<T_numtype1, int> >
       (d1.begin(), 
@@ -2071,13 +2021,13 @@ operator/(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> / float
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>,
       Divide<T_numtype1, float > > >
 operator/(const Array<T_numtype1, N_rank1>& d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>, 
       Divide<T_numtype1, float> >
       (d1.begin(), 
@@ -2087,13 +2037,13 @@ operator/(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> / double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>,
       Divide<T_numtype1, double > > >
 operator/(const Array<T_numtype1, N_rank1>& d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>, 
       Divide<T_numtype1, double> >
       (d1.begin(), 
@@ -2103,13 +2053,13 @@ operator/(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> / long double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>,
       Divide<T_numtype1, long double > > >
 operator/(const Array<T_numtype1, N_rank1>& d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>, 
       Divide<T_numtype1, long double> >
       (d1.begin(), 
@@ -2120,13 +2070,13 @@ operator/(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> / complex<T2>
 template<class T_numtype1, int N_rank1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Divide<T_numtype1, complex<T2>  > > >
 operator/(const Array<T_numtype1, N_rank1>& d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Divide<T_numtype1, complex<T2> > >
       (d1.begin(), 
@@ -2137,15 +2087,15 @@ operator/(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> / Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      Divide<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      Divide<typename P_expr1::T_numtype, T_numtype2 > > >
 operator/(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      Divide<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      Divide<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -2153,15 +2103,15 @@ operator/(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> / _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      Divide<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      Divide<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator/(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Divide<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      Divide<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -2169,15 +2119,15 @@ operator/(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> / IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      Divide<_bz_typename P_expr1::T_numtype, int > > >
+      Divide<typename P_expr1::T_numtype, int > > >
 operator/(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      Divide<_bz_typename P_expr1::T_numtype, int> >
+      Divide<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -2185,15 +2135,15 @@ operator/(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> / int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      Divide<_bz_typename P_expr1::T_numtype, int > > >
+      Divide<typename P_expr1::T_numtype, int > > >
 operator/(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      Divide<_bz_typename P_expr1::T_numtype, int> >
+      Divide<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -2201,15 +2151,15 @@ operator/(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> / float
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>,
-      Divide<_bz_typename P_expr1::T_numtype, float > > >
+      Divide<typename P_expr1::T_numtype, float > > >
 operator/(_bz_ArrayExpr<P_expr1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>, 
-      Divide<_bz_typename P_expr1::T_numtype, float> >
+      Divide<typename P_expr1::T_numtype, float> >
       (d1, 
       _bz_ArrayExprConstant<float>(d2));
 }
@@ -2217,15 +2167,15 @@ operator/(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> / double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>,
-      Divide<_bz_typename P_expr1::T_numtype, double > > >
+      Divide<typename P_expr1::T_numtype, double > > >
 operator/(_bz_ArrayExpr<P_expr1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>, 
-      Divide<_bz_typename P_expr1::T_numtype, double> >
+      Divide<typename P_expr1::T_numtype, double> >
       (d1, 
       _bz_ArrayExprConstant<double>(d2));
 }
@@ -2233,15 +2183,15 @@ operator/(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> / long double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>,
-      Divide<_bz_typename P_expr1::T_numtype, long double > > >
+      Divide<typename P_expr1::T_numtype, long double > > >
 operator/(_bz_ArrayExpr<P_expr1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>, 
-      Divide<_bz_typename P_expr1::T_numtype, long double> >
+      Divide<typename P_expr1::T_numtype, long double> >
       (d1, 
       _bz_ArrayExprConstant<long double>(d2));
 }
@@ -2250,15 +2200,15 @@ operator/(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> / complex<T2>
 template<class P_expr1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
-      Divide<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      Divide<typename P_expr1::T_numtype, complex<T2>  > > >
 operator/(_bz_ArrayExpr<P_expr1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
-      Divide<_bz_typename P_expr1::T_numtype, complex<T2> > >
+      Divide<typename P_expr1::T_numtype, complex<T2> > >
       (d1, 
       _bz_ArrayExprConstant<complex<T2> > (d2));
 }
@@ -2267,13 +2217,13 @@ operator/(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> / Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Divide<int, T_numtype2 > > >
 operator/(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Divide<int, T_numtype2> >
       (d1, 
@@ -2283,15 +2233,15 @@ operator/(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> / _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      Divide<int, _bz_typename P_expr2::T_numtype > > >
+      Divide<int, typename P_expr2::T_numtype > > >
 operator/(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Divide<int, _bz_typename P_expr2::T_numtype> >
+      Divide<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -2299,13 +2249,13 @@ operator/(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> / IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       Divide<int, int > > >
 operator/(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       Divide<int, int> >
       (d1, 
@@ -2315,13 +2265,13 @@ operator/(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> / int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       Divide<int, int > > >
 operator/(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       Divide<int, int> >
       (d1, 
@@ -2331,13 +2281,13 @@ operator/(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> / float
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>,
       Divide<int, float > > >
 operator/(IndexPlaceholder<N_index1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>, 
       Divide<int, float> >
       (d1, 
@@ -2347,13 +2297,13 @@ operator/(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> / double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>,
       Divide<int, double > > >
 operator/(IndexPlaceholder<N_index1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>, 
       Divide<int, double> >
       (d1, 
@@ -2363,13 +2313,13 @@ operator/(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> / long double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>,
       Divide<int, long double > > >
 operator/(IndexPlaceholder<N_index1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>, 
       Divide<int, long double> >
       (d1, 
@@ -2380,13 +2330,13 @@ operator/(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> / complex<T2>
 template<int N_index1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Divide<int, complex<T2>  > > >
 operator/(IndexPlaceholder<N_index1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Divide<int, complex<T2> > >
       (d1, 
@@ -2397,13 +2347,13 @@ operator/(IndexPlaceholder<N_index1> d1,
 // int / Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Divide<int, T_numtype2 > > >
 operator/(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Divide<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -2413,15 +2363,15 @@ operator/(int d1,
 // int / _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      Divide<int, _bz_typename P_expr2::T_numtype > > >
+      Divide<int, typename P_expr2::T_numtype > > >
 operator/(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      Divide<int, _bz_typename P_expr2::T_numtype> >
+      Divide<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -2429,13 +2379,13 @@ operator/(int d1,
 // int / IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       Divide<int, int > > >
 operator/(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       Divide<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -2445,13 +2395,13 @@ operator/(int d1,
 // float / Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Divide<float, T_numtype2 > > >
 operator/(float d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Divide<float, T_numtype2> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -2461,15 +2411,15 @@ operator/(float d1,
 // float / _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>,
-      Divide<float, _bz_typename P_expr2::T_numtype > > >
+      Divide<float, typename P_expr2::T_numtype > > >
 operator/(float d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>, 
-      Divide<float, _bz_typename P_expr2::T_numtype> >
+      Divide<float, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<float>(d1), 
       d2);
 }
@@ -2477,13 +2427,13 @@ operator/(float d1,
 // float / IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>,
       Divide<float, int > > >
 operator/(float d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>, 
       Divide<float, int> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -2493,13 +2443,13 @@ operator/(float d1,
 // double / Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Divide<double, T_numtype2 > > >
 operator/(double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Divide<double, T_numtype2> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -2509,15 +2459,15 @@ operator/(double d1,
 // double / _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>,
-      Divide<double, _bz_typename P_expr2::T_numtype > > >
+      Divide<double, typename P_expr2::T_numtype > > >
 operator/(double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Divide<double, _bz_typename P_expr2::T_numtype> >
+      Divide<double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<double>(d1), 
       d2);
 }
@@ -2525,13 +2475,13 @@ operator/(double d1,
 // double / IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>,
       Divide<double, int > > >
 operator/(double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>, 
       Divide<double, int> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -2541,13 +2491,13 @@ operator/(double d1,
 // long double / Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Divide<long double, T_numtype2 > > >
 operator/(long double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Divide<long double, T_numtype2> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -2557,15 +2507,15 @@ operator/(long double d1,
 // long double / _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>,
-      Divide<long double, _bz_typename P_expr2::T_numtype > > >
+      Divide<long double, typename P_expr2::T_numtype > > >
 operator/(long double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Divide<long double, _bz_typename P_expr2::T_numtype> >
+      Divide<long double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<long double>(d1), 
       d2);
 }
@@ -2573,13 +2523,13 @@ operator/(long double d1,
 // long double / IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>,
       Divide<long double, int > > >
 operator/(long double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>, 
       Divide<long double, int> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -2590,13 +2540,13 @@ operator/(long double d1,
 // complex<T1> / Array<T_numtype2, N_rank2>
 template<class T1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>,
       Divide<complex<T1> , T_numtype2 > > >
 operator/(complex<T1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>, 
       Divide<complex<T1> , T_numtype2> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -2608,15 +2558,15 @@ operator/(complex<T1> d1,
 // complex<T1> / _bz_ArrayExpr<P_expr2>
 template<class T1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>,
-      Divide<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      Divide<complex<T1> , typename P_expr2::T_numtype > > >
 operator/(complex<T1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>, 
-      Divide<complex<T1> , _bz_typename P_expr2::T_numtype> >
+      Divide<complex<T1> , typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
       d2);
 }
@@ -2626,13 +2576,13 @@ operator/(complex<T1> d1,
 // complex<T1> / IndexPlaceholder<N_index2>
 template<class T1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>,
       Divide<complex<T1> , int > > >
 operator/(complex<T1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>, 
       Divide<complex<T1> , int> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -2646,13 +2596,13 @@ operator/(complex<T1> d1,
 // Array<T_numtype1, N_rank1> % Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Modulo<T_numtype1, T_numtype2 > > >
 operator%(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Modulo<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -2662,15 +2612,15 @@ operator%(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> % _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      Modulo<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      Modulo<T_numtype1, typename P_expr2::T_numtype > > >
 operator%(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Modulo<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      Modulo<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -2678,13 +2628,13 @@ operator%(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> % IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       Modulo<T_numtype1, int > > >
 operator%(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       Modulo<T_numtype1, int> >
       (d1.begin(), 
@@ -2694,13 +2644,13 @@ operator%(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> % int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       Modulo<T_numtype1, int > > >
 operator%(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       Modulo<T_numtype1, int> >
       (d1.begin(), 
@@ -2710,15 +2660,15 @@ operator%(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> % Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      Modulo<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      Modulo<typename P_expr1::T_numtype, T_numtype2 > > >
 operator%(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      Modulo<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      Modulo<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -2726,15 +2676,15 @@ operator%(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> % _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      Modulo<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      Modulo<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator%(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Modulo<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      Modulo<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -2742,15 +2692,15 @@ operator%(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> % IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      Modulo<_bz_typename P_expr1::T_numtype, int > > >
+      Modulo<typename P_expr1::T_numtype, int > > >
 operator%(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      Modulo<_bz_typename P_expr1::T_numtype, int> >
+      Modulo<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -2758,15 +2708,15 @@ operator%(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> % int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      Modulo<_bz_typename P_expr1::T_numtype, int > > >
+      Modulo<typename P_expr1::T_numtype, int > > >
 operator%(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      Modulo<_bz_typename P_expr1::T_numtype, int> >
+      Modulo<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -2774,13 +2724,13 @@ operator%(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> % Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Modulo<int, T_numtype2 > > >
 operator%(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Modulo<int, T_numtype2> >
       (d1, 
@@ -2790,15 +2740,15 @@ operator%(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> % _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      Modulo<int, _bz_typename P_expr2::T_numtype > > >
+      Modulo<int, typename P_expr2::T_numtype > > >
 operator%(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Modulo<int, _bz_typename P_expr2::T_numtype> >
+      Modulo<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -2806,13 +2756,13 @@ operator%(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> % IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       Modulo<int, int > > >
 operator%(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       Modulo<int, int> >
       (d1, 
@@ -2822,13 +2772,13 @@ operator%(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> % int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       Modulo<int, int > > >
 operator%(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       Modulo<int, int> >
       (d1, 
@@ -2838,13 +2788,13 @@ operator%(IndexPlaceholder<N_index1> d1,
 // int % Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Modulo<int, T_numtype2 > > >
 operator%(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Modulo<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -2854,15 +2804,15 @@ operator%(int d1,
 // int % _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      Modulo<int, _bz_typename P_expr2::T_numtype > > >
+      Modulo<int, typename P_expr2::T_numtype > > >
 operator%(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      Modulo<int, _bz_typename P_expr2::T_numtype> >
+      Modulo<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -2870,13 +2820,13 @@ operator%(int d1,
 // int % IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       Modulo<int, int > > >
 operator%(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       Modulo<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -2889,13 +2839,13 @@ operator%(int d1,
 // Array<T_numtype1, N_rank1> > Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Greater<T_numtype1, T_numtype2 > > >
 operator>(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Greater<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -2905,15 +2855,15 @@ operator>(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> > _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      Greater<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      Greater<T_numtype1, typename P_expr2::T_numtype > > >
 operator>(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Greater<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      Greater<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -2921,13 +2871,13 @@ operator>(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> > IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       Greater<T_numtype1, int > > >
 operator>(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       Greater<T_numtype1, int> >
       (d1.begin(), 
@@ -2937,13 +2887,13 @@ operator>(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> > int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       Greater<T_numtype1, int > > >
 operator>(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       Greater<T_numtype1, int> >
       (d1.begin(), 
@@ -2953,13 +2903,13 @@ operator>(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> > float
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>,
       Greater<T_numtype1, float > > >
 operator>(const Array<T_numtype1, N_rank1>& d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>, 
       Greater<T_numtype1, float> >
       (d1.begin(), 
@@ -2969,13 +2919,13 @@ operator>(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> > double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>,
       Greater<T_numtype1, double > > >
 operator>(const Array<T_numtype1, N_rank1>& d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>, 
       Greater<T_numtype1, double> >
       (d1.begin(), 
@@ -2985,13 +2935,13 @@ operator>(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> > long double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>,
       Greater<T_numtype1, long double > > >
 operator>(const Array<T_numtype1, N_rank1>& d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>, 
       Greater<T_numtype1, long double> >
       (d1.begin(), 
@@ -3002,13 +2952,13 @@ operator>(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> > complex<T2>
 template<class T_numtype1, int N_rank1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Greater<T_numtype1, complex<T2>  > > >
 operator>(const Array<T_numtype1, N_rank1>& d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Greater<T_numtype1, complex<T2> > >
       (d1.begin(), 
@@ -3019,15 +2969,15 @@ operator>(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> > Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      Greater<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      Greater<typename P_expr1::T_numtype, T_numtype2 > > >
 operator>(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      Greater<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      Greater<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -3035,15 +2985,15 @@ operator>(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> > _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      Greater<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      Greater<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator>(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Greater<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      Greater<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -3051,15 +3001,15 @@ operator>(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> > IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      Greater<_bz_typename P_expr1::T_numtype, int > > >
+      Greater<typename P_expr1::T_numtype, int > > >
 operator>(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      Greater<_bz_typename P_expr1::T_numtype, int> >
+      Greater<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -3067,15 +3017,15 @@ operator>(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> > int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      Greater<_bz_typename P_expr1::T_numtype, int > > >
+      Greater<typename P_expr1::T_numtype, int > > >
 operator>(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      Greater<_bz_typename P_expr1::T_numtype, int> >
+      Greater<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -3083,15 +3033,15 @@ operator>(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> > float
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>,
-      Greater<_bz_typename P_expr1::T_numtype, float > > >
+      Greater<typename P_expr1::T_numtype, float > > >
 operator>(_bz_ArrayExpr<P_expr1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>, 
-      Greater<_bz_typename P_expr1::T_numtype, float> >
+      Greater<typename P_expr1::T_numtype, float> >
       (d1, 
       _bz_ArrayExprConstant<float>(d2));
 }
@@ -3099,15 +3049,15 @@ operator>(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> > double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>,
-      Greater<_bz_typename P_expr1::T_numtype, double > > >
+      Greater<typename P_expr1::T_numtype, double > > >
 operator>(_bz_ArrayExpr<P_expr1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>, 
-      Greater<_bz_typename P_expr1::T_numtype, double> >
+      Greater<typename P_expr1::T_numtype, double> >
       (d1, 
       _bz_ArrayExprConstant<double>(d2));
 }
@@ -3115,15 +3065,15 @@ operator>(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> > long double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>,
-      Greater<_bz_typename P_expr1::T_numtype, long double > > >
+      Greater<typename P_expr1::T_numtype, long double > > >
 operator>(_bz_ArrayExpr<P_expr1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>, 
-      Greater<_bz_typename P_expr1::T_numtype, long double> >
+      Greater<typename P_expr1::T_numtype, long double> >
       (d1, 
       _bz_ArrayExprConstant<long double>(d2));
 }
@@ -3132,15 +3082,15 @@ operator>(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> > complex<T2>
 template<class P_expr1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
-      Greater<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      Greater<typename P_expr1::T_numtype, complex<T2>  > > >
 operator>(_bz_ArrayExpr<P_expr1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
-      Greater<_bz_typename P_expr1::T_numtype, complex<T2> > >
+      Greater<typename P_expr1::T_numtype, complex<T2> > >
       (d1, 
       _bz_ArrayExprConstant<complex<T2> > (d2));
 }
@@ -3149,13 +3099,13 @@ operator>(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> > Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Greater<int, T_numtype2 > > >
 operator>(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Greater<int, T_numtype2> >
       (d1, 
@@ -3165,15 +3115,15 @@ operator>(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> > _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      Greater<int, _bz_typename P_expr2::T_numtype > > >
+      Greater<int, typename P_expr2::T_numtype > > >
 operator>(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Greater<int, _bz_typename P_expr2::T_numtype> >
+      Greater<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -3181,13 +3131,13 @@ operator>(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> > IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       Greater<int, int > > >
 operator>(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       Greater<int, int> >
       (d1, 
@@ -3197,13 +3147,13 @@ operator>(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> > int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       Greater<int, int > > >
 operator>(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       Greater<int, int> >
       (d1, 
@@ -3213,13 +3163,13 @@ operator>(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> > float
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>,
       Greater<int, float > > >
 operator>(IndexPlaceholder<N_index1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>, 
       Greater<int, float> >
       (d1, 
@@ -3229,13 +3179,13 @@ operator>(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> > double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>,
       Greater<int, double > > >
 operator>(IndexPlaceholder<N_index1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>, 
       Greater<int, double> >
       (d1, 
@@ -3245,13 +3195,13 @@ operator>(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> > long double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>,
       Greater<int, long double > > >
 operator>(IndexPlaceholder<N_index1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>, 
       Greater<int, long double> >
       (d1, 
@@ -3262,13 +3212,13 @@ operator>(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> > complex<T2>
 template<int N_index1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Greater<int, complex<T2>  > > >
 operator>(IndexPlaceholder<N_index1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Greater<int, complex<T2> > >
       (d1, 
@@ -3279,13 +3229,13 @@ operator>(IndexPlaceholder<N_index1> d1,
 // int > Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Greater<int, T_numtype2 > > >
 operator>(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Greater<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -3295,15 +3245,15 @@ operator>(int d1,
 // int > _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      Greater<int, _bz_typename P_expr2::T_numtype > > >
+      Greater<int, typename P_expr2::T_numtype > > >
 operator>(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      Greater<int, _bz_typename P_expr2::T_numtype> >
+      Greater<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -3311,13 +3261,13 @@ operator>(int d1,
 // int > IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       Greater<int, int > > >
 operator>(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       Greater<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -3327,13 +3277,13 @@ operator>(int d1,
 // float > Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Greater<float, T_numtype2 > > >
 operator>(float d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Greater<float, T_numtype2> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -3343,15 +3293,15 @@ operator>(float d1,
 // float > _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>,
-      Greater<float, _bz_typename P_expr2::T_numtype > > >
+      Greater<float, typename P_expr2::T_numtype > > >
 operator>(float d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>, 
-      Greater<float, _bz_typename P_expr2::T_numtype> >
+      Greater<float, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<float>(d1), 
       d2);
 }
@@ -3359,13 +3309,13 @@ operator>(float d1,
 // float > IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>,
       Greater<float, int > > >
 operator>(float d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>, 
       Greater<float, int> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -3375,13 +3325,13 @@ operator>(float d1,
 // double > Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Greater<double, T_numtype2 > > >
 operator>(double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Greater<double, T_numtype2> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -3391,15 +3341,15 @@ operator>(double d1,
 // double > _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>,
-      Greater<double, _bz_typename P_expr2::T_numtype > > >
+      Greater<double, typename P_expr2::T_numtype > > >
 operator>(double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Greater<double, _bz_typename P_expr2::T_numtype> >
+      Greater<double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<double>(d1), 
       d2);
 }
@@ -3407,13 +3357,13 @@ operator>(double d1,
 // double > IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>,
       Greater<double, int > > >
 operator>(double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>, 
       Greater<double, int> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -3423,13 +3373,13 @@ operator>(double d1,
 // long double > Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Greater<long double, T_numtype2 > > >
 operator>(long double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Greater<long double, T_numtype2> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -3439,15 +3389,15 @@ operator>(long double d1,
 // long double > _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>,
-      Greater<long double, _bz_typename P_expr2::T_numtype > > >
+      Greater<long double, typename P_expr2::T_numtype > > >
 operator>(long double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Greater<long double, _bz_typename P_expr2::T_numtype> >
+      Greater<long double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<long double>(d1), 
       d2);
 }
@@ -3455,13 +3405,13 @@ operator>(long double d1,
 // long double > IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>,
       Greater<long double, int > > >
 operator>(long double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>, 
       Greater<long double, int> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -3472,13 +3422,13 @@ operator>(long double d1,
 // complex<T1> > Array<T_numtype2, N_rank2>
 template<class T1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>,
       Greater<complex<T1> , T_numtype2 > > >
 operator>(complex<T1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>, 
       Greater<complex<T1> , T_numtype2> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -3490,15 +3440,15 @@ operator>(complex<T1> d1,
 // complex<T1> > _bz_ArrayExpr<P_expr2>
 template<class T1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>,
-      Greater<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      Greater<complex<T1> , typename P_expr2::T_numtype > > >
 operator>(complex<T1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>, 
-      Greater<complex<T1> , _bz_typename P_expr2::T_numtype> >
+      Greater<complex<T1> , typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
       d2);
 }
@@ -3508,13 +3458,13 @@ operator>(complex<T1> d1,
 // complex<T1> > IndexPlaceholder<N_index2>
 template<class T1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>,
       Greater<complex<T1> , int > > >
 operator>(complex<T1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>, 
       Greater<complex<T1> , int> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -3528,13 +3478,13 @@ operator>(complex<T1> d1,
 // Array<T_numtype1, N_rank1> < Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Less<T_numtype1, T_numtype2 > > >
 operator<(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Less<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -3544,15 +3494,15 @@ operator<(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> < _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      Less<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      Less<T_numtype1, typename P_expr2::T_numtype > > >
 operator<(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Less<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      Less<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -3560,13 +3510,13 @@ operator<(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> < IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       Less<T_numtype1, int > > >
 operator<(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       Less<T_numtype1, int> >
       (d1.begin(), 
@@ -3576,13 +3526,13 @@ operator<(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> < int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       Less<T_numtype1, int > > >
 operator<(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       Less<T_numtype1, int> >
       (d1.begin(), 
@@ -3592,13 +3542,13 @@ operator<(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> < float
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>,
       Less<T_numtype1, float > > >
 operator<(const Array<T_numtype1, N_rank1>& d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>, 
       Less<T_numtype1, float> >
       (d1.begin(), 
@@ -3608,13 +3558,13 @@ operator<(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> < double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>,
       Less<T_numtype1, double > > >
 operator<(const Array<T_numtype1, N_rank1>& d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>, 
       Less<T_numtype1, double> >
       (d1.begin(), 
@@ -3624,13 +3574,13 @@ operator<(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> < long double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>,
       Less<T_numtype1, long double > > >
 operator<(const Array<T_numtype1, N_rank1>& d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>, 
       Less<T_numtype1, long double> >
       (d1.begin(), 
@@ -3641,13 +3591,13 @@ operator<(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> < complex<T2>
 template<class T_numtype1, int N_rank1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Less<T_numtype1, complex<T2>  > > >
 operator<(const Array<T_numtype1, N_rank1>& d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Less<T_numtype1, complex<T2> > >
       (d1.begin(), 
@@ -3658,15 +3608,15 @@ operator<(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> < Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      Less<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      Less<typename P_expr1::T_numtype, T_numtype2 > > >
 operator<(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      Less<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      Less<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -3674,15 +3624,15 @@ operator<(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> < _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      Less<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      Less<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator<(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Less<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      Less<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -3690,15 +3640,15 @@ operator<(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> < IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      Less<_bz_typename P_expr1::T_numtype, int > > >
+      Less<typename P_expr1::T_numtype, int > > >
 operator<(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      Less<_bz_typename P_expr1::T_numtype, int> >
+      Less<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -3706,15 +3656,15 @@ operator<(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> < int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      Less<_bz_typename P_expr1::T_numtype, int > > >
+      Less<typename P_expr1::T_numtype, int > > >
 operator<(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      Less<_bz_typename P_expr1::T_numtype, int> >
+      Less<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -3722,15 +3672,15 @@ operator<(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> < float
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>,
-      Less<_bz_typename P_expr1::T_numtype, float > > >
+      Less<typename P_expr1::T_numtype, float > > >
 operator<(_bz_ArrayExpr<P_expr1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>, 
-      Less<_bz_typename P_expr1::T_numtype, float> >
+      Less<typename P_expr1::T_numtype, float> >
       (d1, 
       _bz_ArrayExprConstant<float>(d2));
 }
@@ -3738,15 +3688,15 @@ operator<(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> < double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>,
-      Less<_bz_typename P_expr1::T_numtype, double > > >
+      Less<typename P_expr1::T_numtype, double > > >
 operator<(_bz_ArrayExpr<P_expr1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>, 
-      Less<_bz_typename P_expr1::T_numtype, double> >
+      Less<typename P_expr1::T_numtype, double> >
       (d1, 
       _bz_ArrayExprConstant<double>(d2));
 }
@@ -3754,15 +3704,15 @@ operator<(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> < long double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>,
-      Less<_bz_typename P_expr1::T_numtype, long double > > >
+      Less<typename P_expr1::T_numtype, long double > > >
 operator<(_bz_ArrayExpr<P_expr1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>, 
-      Less<_bz_typename P_expr1::T_numtype, long double> >
+      Less<typename P_expr1::T_numtype, long double> >
       (d1, 
       _bz_ArrayExprConstant<long double>(d2));
 }
@@ -3771,15 +3721,15 @@ operator<(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> < complex<T2>
 template<class P_expr1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
-      Less<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      Less<typename P_expr1::T_numtype, complex<T2>  > > >
 operator<(_bz_ArrayExpr<P_expr1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
-      Less<_bz_typename P_expr1::T_numtype, complex<T2> > >
+      Less<typename P_expr1::T_numtype, complex<T2> > >
       (d1, 
       _bz_ArrayExprConstant<complex<T2> > (d2));
 }
@@ -3788,13 +3738,13 @@ operator<(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> < Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Less<int, T_numtype2 > > >
 operator<(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Less<int, T_numtype2> >
       (d1, 
@@ -3804,15 +3754,15 @@ operator<(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> < _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      Less<int, _bz_typename P_expr2::T_numtype > > >
+      Less<int, typename P_expr2::T_numtype > > >
 operator<(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Less<int, _bz_typename P_expr2::T_numtype> >
+      Less<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -3820,13 +3770,13 @@ operator<(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> < IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       Less<int, int > > >
 operator<(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       Less<int, int> >
       (d1, 
@@ -3836,13 +3786,13 @@ operator<(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> < int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       Less<int, int > > >
 operator<(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       Less<int, int> >
       (d1, 
@@ -3852,13 +3802,13 @@ operator<(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> < float
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>,
       Less<int, float > > >
 operator<(IndexPlaceholder<N_index1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>, 
       Less<int, float> >
       (d1, 
@@ -3868,13 +3818,13 @@ operator<(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> < double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>,
       Less<int, double > > >
 operator<(IndexPlaceholder<N_index1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>, 
       Less<int, double> >
       (d1, 
@@ -3884,13 +3834,13 @@ operator<(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> < long double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>,
       Less<int, long double > > >
 operator<(IndexPlaceholder<N_index1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>, 
       Less<int, long double> >
       (d1, 
@@ -3901,13 +3851,13 @@ operator<(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> < complex<T2>
 template<int N_index1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Less<int, complex<T2>  > > >
 operator<(IndexPlaceholder<N_index1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Less<int, complex<T2> > >
       (d1, 
@@ -3918,13 +3868,13 @@ operator<(IndexPlaceholder<N_index1> d1,
 // int < Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Less<int, T_numtype2 > > >
 operator<(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Less<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -3934,15 +3884,15 @@ operator<(int d1,
 // int < _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      Less<int, _bz_typename P_expr2::T_numtype > > >
+      Less<int, typename P_expr2::T_numtype > > >
 operator<(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      Less<int, _bz_typename P_expr2::T_numtype> >
+      Less<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -3950,13 +3900,13 @@ operator<(int d1,
 // int < IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       Less<int, int > > >
 operator<(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       Less<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -3966,13 +3916,13 @@ operator<(int d1,
 // float < Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Less<float, T_numtype2 > > >
 operator<(float d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Less<float, T_numtype2> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -3982,15 +3932,15 @@ operator<(float d1,
 // float < _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>,
-      Less<float, _bz_typename P_expr2::T_numtype > > >
+      Less<float, typename P_expr2::T_numtype > > >
 operator<(float d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>, 
-      Less<float, _bz_typename P_expr2::T_numtype> >
+      Less<float, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<float>(d1), 
       d2);
 }
@@ -3998,13 +3948,13 @@ operator<(float d1,
 // float < IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>,
       Less<float, int > > >
 operator<(float d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>, 
       Less<float, int> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -4014,13 +3964,13 @@ operator<(float d1,
 // double < Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Less<double, T_numtype2 > > >
 operator<(double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Less<double, T_numtype2> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -4030,15 +3980,15 @@ operator<(double d1,
 // double < _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>,
-      Less<double, _bz_typename P_expr2::T_numtype > > >
+      Less<double, typename P_expr2::T_numtype > > >
 operator<(double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Less<double, _bz_typename P_expr2::T_numtype> >
+      Less<double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<double>(d1), 
       d2);
 }
@@ -4046,13 +3996,13 @@ operator<(double d1,
 // double < IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>,
       Less<double, int > > >
 operator<(double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>, 
       Less<double, int> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -4062,13 +4012,13 @@ operator<(double d1,
 // long double < Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Less<long double, T_numtype2 > > >
 operator<(long double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Less<long double, T_numtype2> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -4078,15 +4028,15 @@ operator<(long double d1,
 // long double < _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>,
-      Less<long double, _bz_typename P_expr2::T_numtype > > >
+      Less<long double, typename P_expr2::T_numtype > > >
 operator<(long double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Less<long double, _bz_typename P_expr2::T_numtype> >
+      Less<long double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<long double>(d1), 
       d2);
 }
@@ -4094,13 +4044,13 @@ operator<(long double d1,
 // long double < IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>,
       Less<long double, int > > >
 operator<(long double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>, 
       Less<long double, int> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -4111,13 +4061,13 @@ operator<(long double d1,
 // complex<T1> < Array<T_numtype2, N_rank2>
 template<class T1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>,
       Less<complex<T1> , T_numtype2 > > >
 operator<(complex<T1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>, 
       Less<complex<T1> , T_numtype2> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -4129,15 +4079,15 @@ operator<(complex<T1> d1,
 // complex<T1> < _bz_ArrayExpr<P_expr2>
 template<class T1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>,
-      Less<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      Less<complex<T1> , typename P_expr2::T_numtype > > >
 operator<(complex<T1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>, 
-      Less<complex<T1> , _bz_typename P_expr2::T_numtype> >
+      Less<complex<T1> , typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
       d2);
 }
@@ -4147,13 +4097,13 @@ operator<(complex<T1> d1,
 // complex<T1> < IndexPlaceholder<N_index2>
 template<class T1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>,
       Less<complex<T1> , int > > >
 operator<(complex<T1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>, 
       Less<complex<T1> , int> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -4167,13 +4117,13 @@ operator<(complex<T1> d1,
 // Array<T_numtype1, N_rank1> >= Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       GreaterOrEqual<T_numtype1, T_numtype2 > > >
 operator>=(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       GreaterOrEqual<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -4183,15 +4133,15 @@ operator>=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> >= _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      GreaterOrEqual<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      GreaterOrEqual<T_numtype1, typename P_expr2::T_numtype > > >
 operator>=(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      GreaterOrEqual<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      GreaterOrEqual<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -4199,13 +4149,13 @@ operator>=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> >= IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       GreaterOrEqual<T_numtype1, int > > >
 operator>=(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       GreaterOrEqual<T_numtype1, int> >
       (d1.begin(), 
@@ -4215,13 +4165,13 @@ operator>=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> >= int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       GreaterOrEqual<T_numtype1, int > > >
 operator>=(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       GreaterOrEqual<T_numtype1, int> >
       (d1.begin(), 
@@ -4231,13 +4181,13 @@ operator>=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> >= float
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>,
       GreaterOrEqual<T_numtype1, float > > >
 operator>=(const Array<T_numtype1, N_rank1>& d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>, 
       GreaterOrEqual<T_numtype1, float> >
       (d1.begin(), 
@@ -4247,13 +4197,13 @@ operator>=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> >= double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>,
       GreaterOrEqual<T_numtype1, double > > >
 operator>=(const Array<T_numtype1, N_rank1>& d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>, 
       GreaterOrEqual<T_numtype1, double> >
       (d1.begin(), 
@@ -4263,13 +4213,13 @@ operator>=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> >= long double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>,
       GreaterOrEqual<T_numtype1, long double > > >
 operator>=(const Array<T_numtype1, N_rank1>& d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>, 
       GreaterOrEqual<T_numtype1, long double> >
       (d1.begin(), 
@@ -4280,13 +4230,13 @@ operator>=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> >= complex<T2>
 template<class T_numtype1, int N_rank1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       GreaterOrEqual<T_numtype1, complex<T2>  > > >
 operator>=(const Array<T_numtype1, N_rank1>& d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       GreaterOrEqual<T_numtype1, complex<T2> > >
       (d1.begin(), 
@@ -4297,15 +4247,15 @@ operator>=(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> >= Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      GreaterOrEqual<typename P_expr1::T_numtype, T_numtype2 > > >
 operator>=(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      GreaterOrEqual<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -4313,15 +4263,15 @@ operator>=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> >= _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      GreaterOrEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator>=(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      GreaterOrEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -4329,15 +4279,15 @@ operator>=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> >= IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, int > > >
+      GreaterOrEqual<typename P_expr1::T_numtype, int > > >
 operator>=(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, int> >
+      GreaterOrEqual<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -4345,15 +4295,15 @@ operator>=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> >= int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, int > > >
+      GreaterOrEqual<typename P_expr1::T_numtype, int > > >
 operator>=(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, int> >
+      GreaterOrEqual<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -4361,15 +4311,15 @@ operator>=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> >= float
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>,
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, float > > >
+      GreaterOrEqual<typename P_expr1::T_numtype, float > > >
 operator>=(_bz_ArrayExpr<P_expr1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>, 
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, float> >
+      GreaterOrEqual<typename P_expr1::T_numtype, float> >
       (d1, 
       _bz_ArrayExprConstant<float>(d2));
 }
@@ -4377,15 +4327,15 @@ operator>=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> >= double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>,
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, double > > >
+      GreaterOrEqual<typename P_expr1::T_numtype, double > > >
 operator>=(_bz_ArrayExpr<P_expr1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>, 
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, double> >
+      GreaterOrEqual<typename P_expr1::T_numtype, double> >
       (d1, 
       _bz_ArrayExprConstant<double>(d2));
 }
@@ -4393,15 +4343,15 @@ operator>=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> >= long double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>,
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, long double > > >
+      GreaterOrEqual<typename P_expr1::T_numtype, long double > > >
 operator>=(_bz_ArrayExpr<P_expr1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>, 
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, long double> >
+      GreaterOrEqual<typename P_expr1::T_numtype, long double> >
       (d1, 
       _bz_ArrayExprConstant<long double>(d2));
 }
@@ -4410,15 +4360,15 @@ operator>=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> >= complex<T2>
 template<class P_expr1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      GreaterOrEqual<typename P_expr1::T_numtype, complex<T2>  > > >
 operator>=(_bz_ArrayExpr<P_expr1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
-      GreaterOrEqual<_bz_typename P_expr1::T_numtype, complex<T2> > >
+      GreaterOrEqual<typename P_expr1::T_numtype, complex<T2> > >
       (d1, 
       _bz_ArrayExprConstant<complex<T2> > (d2));
 }
@@ -4427,13 +4377,13 @@ operator>=(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> >= Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       GreaterOrEqual<int, T_numtype2 > > >
 operator>=(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       GreaterOrEqual<int, T_numtype2> >
       (d1, 
@@ -4443,15 +4393,15 @@ operator>=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> >= _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      GreaterOrEqual<int, _bz_typename P_expr2::T_numtype > > >
+      GreaterOrEqual<int, typename P_expr2::T_numtype > > >
 operator>=(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      GreaterOrEqual<int, _bz_typename P_expr2::T_numtype> >
+      GreaterOrEqual<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -4459,13 +4409,13 @@ operator>=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> >= IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       GreaterOrEqual<int, int > > >
 operator>=(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       GreaterOrEqual<int, int> >
       (d1, 
@@ -4475,13 +4425,13 @@ operator>=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> >= int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       GreaterOrEqual<int, int > > >
 operator>=(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       GreaterOrEqual<int, int> >
       (d1, 
@@ -4491,13 +4441,13 @@ operator>=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> >= float
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>,
       GreaterOrEqual<int, float > > >
 operator>=(IndexPlaceholder<N_index1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>, 
       GreaterOrEqual<int, float> >
       (d1, 
@@ -4507,13 +4457,13 @@ operator>=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> >= double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>,
       GreaterOrEqual<int, double > > >
 operator>=(IndexPlaceholder<N_index1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>, 
       GreaterOrEqual<int, double> >
       (d1, 
@@ -4523,13 +4473,13 @@ operator>=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> >= long double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>,
       GreaterOrEqual<int, long double > > >
 operator>=(IndexPlaceholder<N_index1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>, 
       GreaterOrEqual<int, long double> >
       (d1, 
@@ -4540,13 +4490,13 @@ operator>=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> >= complex<T2>
 template<int N_index1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       GreaterOrEqual<int, complex<T2>  > > >
 operator>=(IndexPlaceholder<N_index1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       GreaterOrEqual<int, complex<T2> > >
       (d1, 
@@ -4557,13 +4507,13 @@ operator>=(IndexPlaceholder<N_index1> d1,
 // int >= Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       GreaterOrEqual<int, T_numtype2 > > >
 operator>=(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       GreaterOrEqual<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -4573,15 +4523,15 @@ operator>=(int d1,
 // int >= _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      GreaterOrEqual<int, _bz_typename P_expr2::T_numtype > > >
+      GreaterOrEqual<int, typename P_expr2::T_numtype > > >
 operator>=(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      GreaterOrEqual<int, _bz_typename P_expr2::T_numtype> >
+      GreaterOrEqual<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -4589,13 +4539,13 @@ operator>=(int d1,
 // int >= IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       GreaterOrEqual<int, int > > >
 operator>=(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       GreaterOrEqual<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -4605,13 +4555,13 @@ operator>=(int d1,
 // float >= Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>,
       GreaterOrEqual<float, T_numtype2 > > >
 operator>=(float d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       GreaterOrEqual<float, T_numtype2> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -4621,15 +4571,15 @@ operator>=(float d1,
 // float >= _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>,
-      GreaterOrEqual<float, _bz_typename P_expr2::T_numtype > > >
+      GreaterOrEqual<float, typename P_expr2::T_numtype > > >
 operator>=(float d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>, 
-      GreaterOrEqual<float, _bz_typename P_expr2::T_numtype> >
+      GreaterOrEqual<float, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<float>(d1), 
       d2);
 }
@@ -4637,13 +4587,13 @@ operator>=(float d1,
 // float >= IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>,
       GreaterOrEqual<float, int > > >
 operator>=(float d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>, 
       GreaterOrEqual<float, int> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -4653,13 +4603,13 @@ operator>=(float d1,
 // double >= Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       GreaterOrEqual<double, T_numtype2 > > >
 operator>=(double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       GreaterOrEqual<double, T_numtype2> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -4669,15 +4619,15 @@ operator>=(double d1,
 // double >= _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>,
-      GreaterOrEqual<double, _bz_typename P_expr2::T_numtype > > >
+      GreaterOrEqual<double, typename P_expr2::T_numtype > > >
 operator>=(double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>, 
-      GreaterOrEqual<double, _bz_typename P_expr2::T_numtype> >
+      GreaterOrEqual<double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<double>(d1), 
       d2);
 }
@@ -4685,13 +4635,13 @@ operator>=(double d1,
 // double >= IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>,
       GreaterOrEqual<double, int > > >
 operator>=(double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>, 
       GreaterOrEqual<double, int> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -4701,13 +4651,13 @@ operator>=(double d1,
 // long double >= Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       GreaterOrEqual<long double, T_numtype2 > > >
 operator>=(long double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       GreaterOrEqual<long double, T_numtype2> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -4717,15 +4667,15 @@ operator>=(long double d1,
 // long double >= _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>,
-      GreaterOrEqual<long double, _bz_typename P_expr2::T_numtype > > >
+      GreaterOrEqual<long double, typename P_expr2::T_numtype > > >
 operator>=(long double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>, 
-      GreaterOrEqual<long double, _bz_typename P_expr2::T_numtype> >
+      GreaterOrEqual<long double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<long double>(d1), 
       d2);
 }
@@ -4733,13 +4683,13 @@ operator>=(long double d1,
 // long double >= IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>,
       GreaterOrEqual<long double, int > > >
 operator>=(long double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>, 
       GreaterOrEqual<long double, int> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -4750,13 +4700,13 @@ operator>=(long double d1,
 // complex<T1> >= Array<T_numtype2, N_rank2>
 template<class T1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>,
       GreaterOrEqual<complex<T1> , T_numtype2 > > >
 operator>=(complex<T1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>, 
       GreaterOrEqual<complex<T1> , T_numtype2> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -4768,15 +4718,15 @@ operator>=(complex<T1> d1,
 // complex<T1> >= _bz_ArrayExpr<P_expr2>
 template<class T1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>,
-      GreaterOrEqual<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      GreaterOrEqual<complex<T1> , typename P_expr2::T_numtype > > >
 operator>=(complex<T1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>, 
-      GreaterOrEqual<complex<T1> , _bz_typename P_expr2::T_numtype> >
+      GreaterOrEqual<complex<T1> , typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
       d2);
 }
@@ -4786,13 +4736,13 @@ operator>=(complex<T1> d1,
 // complex<T1> >= IndexPlaceholder<N_index2>
 template<class T1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>,
       GreaterOrEqual<complex<T1> , int > > >
 operator>=(complex<T1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>, 
       GreaterOrEqual<complex<T1> , int> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -4806,13 +4756,13 @@ operator>=(complex<T1> d1,
 // Array<T_numtype1, N_rank1> <= Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LessOrEqual<T_numtype1, T_numtype2 > > >
 operator<=(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LessOrEqual<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -4822,15 +4772,15 @@ operator<=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> <= _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      LessOrEqual<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      LessOrEqual<T_numtype1, typename P_expr2::T_numtype > > >
 operator<=(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      LessOrEqual<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      LessOrEqual<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -4838,13 +4788,13 @@ operator<=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> <= IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       LessOrEqual<T_numtype1, int > > >
 operator<=(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       LessOrEqual<T_numtype1, int> >
       (d1.begin(), 
@@ -4854,13 +4804,13 @@ operator<=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> <= int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       LessOrEqual<T_numtype1, int > > >
 operator<=(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       LessOrEqual<T_numtype1, int> >
       (d1.begin(), 
@@ -4870,13 +4820,13 @@ operator<=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> <= float
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>,
       LessOrEqual<T_numtype1, float > > >
 operator<=(const Array<T_numtype1, N_rank1>& d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>, 
       LessOrEqual<T_numtype1, float> >
       (d1.begin(), 
@@ -4886,13 +4836,13 @@ operator<=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> <= double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>,
       LessOrEqual<T_numtype1, double > > >
 operator<=(const Array<T_numtype1, N_rank1>& d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>, 
       LessOrEqual<T_numtype1, double> >
       (d1.begin(), 
@@ -4902,13 +4852,13 @@ operator<=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> <= long double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>,
       LessOrEqual<T_numtype1, long double > > >
 operator<=(const Array<T_numtype1, N_rank1>& d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>, 
       LessOrEqual<T_numtype1, long double> >
       (d1.begin(), 
@@ -4919,13 +4869,13 @@ operator<=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> <= complex<T2>
 template<class T_numtype1, int N_rank1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       LessOrEqual<T_numtype1, complex<T2>  > > >
 operator<=(const Array<T_numtype1, N_rank1>& d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       LessOrEqual<T_numtype1, complex<T2> > >
       (d1.begin(), 
@@ -4936,15 +4886,15 @@ operator<=(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> <= Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      LessOrEqual<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      LessOrEqual<typename P_expr1::T_numtype, T_numtype2 > > >
 operator<=(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      LessOrEqual<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      LessOrEqual<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -4952,15 +4902,15 @@ operator<=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> <= _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      LessOrEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      LessOrEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator<=(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      LessOrEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      LessOrEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -4968,15 +4918,15 @@ operator<=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> <= IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      LessOrEqual<_bz_typename P_expr1::T_numtype, int > > >
+      LessOrEqual<typename P_expr1::T_numtype, int > > >
 operator<=(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      LessOrEqual<_bz_typename P_expr1::T_numtype, int> >
+      LessOrEqual<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -4984,15 +4934,15 @@ operator<=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> <= int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      LessOrEqual<_bz_typename P_expr1::T_numtype, int > > >
+      LessOrEqual<typename P_expr1::T_numtype, int > > >
 operator<=(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      LessOrEqual<_bz_typename P_expr1::T_numtype, int> >
+      LessOrEqual<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -5000,15 +4950,15 @@ operator<=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> <= float
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>,
-      LessOrEqual<_bz_typename P_expr1::T_numtype, float > > >
+      LessOrEqual<typename P_expr1::T_numtype, float > > >
 operator<=(_bz_ArrayExpr<P_expr1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>, 
-      LessOrEqual<_bz_typename P_expr1::T_numtype, float> >
+      LessOrEqual<typename P_expr1::T_numtype, float> >
       (d1, 
       _bz_ArrayExprConstant<float>(d2));
 }
@@ -5016,15 +4966,15 @@ operator<=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> <= double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>,
-      LessOrEqual<_bz_typename P_expr1::T_numtype, double > > >
+      LessOrEqual<typename P_expr1::T_numtype, double > > >
 operator<=(_bz_ArrayExpr<P_expr1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>, 
-      LessOrEqual<_bz_typename P_expr1::T_numtype, double> >
+      LessOrEqual<typename P_expr1::T_numtype, double> >
       (d1, 
       _bz_ArrayExprConstant<double>(d2));
 }
@@ -5032,15 +4982,15 @@ operator<=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> <= long double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>,
-      LessOrEqual<_bz_typename P_expr1::T_numtype, long double > > >
+      LessOrEqual<typename P_expr1::T_numtype, long double > > >
 operator<=(_bz_ArrayExpr<P_expr1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>, 
-      LessOrEqual<_bz_typename P_expr1::T_numtype, long double> >
+      LessOrEqual<typename P_expr1::T_numtype, long double> >
       (d1, 
       _bz_ArrayExprConstant<long double>(d2));
 }
@@ -5049,15 +4999,15 @@ operator<=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> <= complex<T2>
 template<class P_expr1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
-      LessOrEqual<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      LessOrEqual<typename P_expr1::T_numtype, complex<T2>  > > >
 operator<=(_bz_ArrayExpr<P_expr1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
-      LessOrEqual<_bz_typename P_expr1::T_numtype, complex<T2> > >
+      LessOrEqual<typename P_expr1::T_numtype, complex<T2> > >
       (d1, 
       _bz_ArrayExprConstant<complex<T2> > (d2));
 }
@@ -5066,13 +5016,13 @@ operator<=(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> <= Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LessOrEqual<int, T_numtype2 > > >
 operator<=(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LessOrEqual<int, T_numtype2> >
       (d1, 
@@ -5082,15 +5032,15 @@ operator<=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> <= _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      LessOrEqual<int, _bz_typename P_expr2::T_numtype > > >
+      LessOrEqual<int, typename P_expr2::T_numtype > > >
 operator<=(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      LessOrEqual<int, _bz_typename P_expr2::T_numtype> >
+      LessOrEqual<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -5098,13 +5048,13 @@ operator<=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> <= IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       LessOrEqual<int, int > > >
 operator<=(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       LessOrEqual<int, int> >
       (d1, 
@@ -5114,13 +5064,13 @@ operator<=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> <= int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       LessOrEqual<int, int > > >
 operator<=(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       LessOrEqual<int, int> >
       (d1, 
@@ -5130,13 +5080,13 @@ operator<=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> <= float
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>,
       LessOrEqual<int, float > > >
 operator<=(IndexPlaceholder<N_index1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>, 
       LessOrEqual<int, float> >
       (d1, 
@@ -5146,13 +5096,13 @@ operator<=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> <= double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>,
       LessOrEqual<int, double > > >
 operator<=(IndexPlaceholder<N_index1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>, 
       LessOrEqual<int, double> >
       (d1, 
@@ -5162,13 +5112,13 @@ operator<=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> <= long double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>,
       LessOrEqual<int, long double > > >
 operator<=(IndexPlaceholder<N_index1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>, 
       LessOrEqual<int, long double> >
       (d1, 
@@ -5179,13 +5129,13 @@ operator<=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> <= complex<T2>
 template<int N_index1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       LessOrEqual<int, complex<T2>  > > >
 operator<=(IndexPlaceholder<N_index1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       LessOrEqual<int, complex<T2> > >
       (d1, 
@@ -5196,13 +5146,13 @@ operator<=(IndexPlaceholder<N_index1> d1,
 // int <= Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LessOrEqual<int, T_numtype2 > > >
 operator<=(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LessOrEqual<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -5212,15 +5162,15 @@ operator<=(int d1,
 // int <= _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      LessOrEqual<int, _bz_typename P_expr2::T_numtype > > >
+      LessOrEqual<int, typename P_expr2::T_numtype > > >
 operator<=(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      LessOrEqual<int, _bz_typename P_expr2::T_numtype> >
+      LessOrEqual<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -5228,13 +5178,13 @@ operator<=(int d1,
 // int <= IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       LessOrEqual<int, int > > >
 operator<=(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       LessOrEqual<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -5244,13 +5194,13 @@ operator<=(int d1,
 // float <= Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LessOrEqual<float, T_numtype2 > > >
 operator<=(float d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LessOrEqual<float, T_numtype2> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -5260,15 +5210,15 @@ operator<=(float d1,
 // float <= _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>,
-      LessOrEqual<float, _bz_typename P_expr2::T_numtype > > >
+      LessOrEqual<float, typename P_expr2::T_numtype > > >
 operator<=(float d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>, 
-      LessOrEqual<float, _bz_typename P_expr2::T_numtype> >
+      LessOrEqual<float, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<float>(d1), 
       d2);
 }
@@ -5276,13 +5226,13 @@ operator<=(float d1,
 // float <= IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>,
       LessOrEqual<float, int > > >
 operator<=(float d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>, 
       LessOrEqual<float, int> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -5292,13 +5242,13 @@ operator<=(float d1,
 // double <= Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LessOrEqual<double, T_numtype2 > > >
 operator<=(double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LessOrEqual<double, T_numtype2> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -5308,15 +5258,15 @@ operator<=(double d1,
 // double <= _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>,
-      LessOrEqual<double, _bz_typename P_expr2::T_numtype > > >
+      LessOrEqual<double, typename P_expr2::T_numtype > > >
 operator<=(double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>, 
-      LessOrEqual<double, _bz_typename P_expr2::T_numtype> >
+      LessOrEqual<double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<double>(d1), 
       d2);
 }
@@ -5324,13 +5274,13 @@ operator<=(double d1,
 // double <= IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>,
       LessOrEqual<double, int > > >
 operator<=(double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>, 
       LessOrEqual<double, int> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -5340,13 +5290,13 @@ operator<=(double d1,
 // long double <= Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LessOrEqual<long double, T_numtype2 > > >
 operator<=(long double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LessOrEqual<long double, T_numtype2> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -5356,15 +5306,15 @@ operator<=(long double d1,
 // long double <= _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>,
-      LessOrEqual<long double, _bz_typename P_expr2::T_numtype > > >
+      LessOrEqual<long double, typename P_expr2::T_numtype > > >
 operator<=(long double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>, 
-      LessOrEqual<long double, _bz_typename P_expr2::T_numtype> >
+      LessOrEqual<long double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<long double>(d1), 
       d2);
 }
@@ -5372,13 +5322,13 @@ operator<=(long double d1,
 // long double <= IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>,
       LessOrEqual<long double, int > > >
 operator<=(long double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>, 
       LessOrEqual<long double, int> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -5389,13 +5339,13 @@ operator<=(long double d1,
 // complex<T1> <= Array<T_numtype2, N_rank2>
 template<class T1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>,
       LessOrEqual<complex<T1> , T_numtype2 > > >
 operator<=(complex<T1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>, 
       LessOrEqual<complex<T1> , T_numtype2> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -5407,15 +5357,15 @@ operator<=(complex<T1> d1,
 // complex<T1> <= _bz_ArrayExpr<P_expr2>
 template<class T1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>,
-      LessOrEqual<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      LessOrEqual<complex<T1> , typename P_expr2::T_numtype > > >
 operator<=(complex<T1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>, 
-      LessOrEqual<complex<T1> , _bz_typename P_expr2::T_numtype> >
+      LessOrEqual<complex<T1> , typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
       d2);
 }
@@ -5425,13 +5375,13 @@ operator<=(complex<T1> d1,
 // complex<T1> <= IndexPlaceholder<N_index2>
 template<class T1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>,
       LessOrEqual<complex<T1> , int > > >
 operator<=(complex<T1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>, 
       LessOrEqual<complex<T1> , int> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -5445,13 +5395,13 @@ operator<=(complex<T1> d1,
 // Array<T_numtype1, N_rank1> == Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Equal<T_numtype1, T_numtype2 > > >
 operator==(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Equal<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -5461,15 +5411,15 @@ operator==(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> == _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      Equal<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      Equal<T_numtype1, typename P_expr2::T_numtype > > >
 operator==(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Equal<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      Equal<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -5477,13 +5427,13 @@ operator==(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> == IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       Equal<T_numtype1, int > > >
 operator==(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       Equal<T_numtype1, int> >
       (d1.begin(), 
@@ -5493,13 +5443,13 @@ operator==(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> == int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       Equal<T_numtype1, int > > >
 operator==(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       Equal<T_numtype1, int> >
       (d1.begin(), 
@@ -5509,13 +5459,13 @@ operator==(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> == float
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>,
       Equal<T_numtype1, float > > >
 operator==(const Array<T_numtype1, N_rank1>& d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>, 
       Equal<T_numtype1, float> >
       (d1.begin(), 
@@ -5525,13 +5475,13 @@ operator==(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> == double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>,
       Equal<T_numtype1, double > > >
 operator==(const Array<T_numtype1, N_rank1>& d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>, 
       Equal<T_numtype1, double> >
       (d1.begin(), 
@@ -5541,13 +5491,13 @@ operator==(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> == long double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>,
       Equal<T_numtype1, long double > > >
 operator==(const Array<T_numtype1, N_rank1>& d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>, 
       Equal<T_numtype1, long double> >
       (d1.begin(), 
@@ -5558,13 +5508,13 @@ operator==(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> == complex<T2>
 template<class T_numtype1, int N_rank1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Equal<T_numtype1, complex<T2>  > > >
 operator==(const Array<T_numtype1, N_rank1>& d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Equal<T_numtype1, complex<T2> > >
       (d1.begin(), 
@@ -5575,15 +5525,15 @@ operator==(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> == Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      Equal<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      Equal<typename P_expr1::T_numtype, T_numtype2 > > >
 operator==(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      Equal<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      Equal<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -5591,15 +5541,15 @@ operator==(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> == _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      Equal<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      Equal<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator==(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Equal<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      Equal<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -5607,15 +5557,15 @@ operator==(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> == IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      Equal<_bz_typename P_expr1::T_numtype, int > > >
+      Equal<typename P_expr1::T_numtype, int > > >
 operator==(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      Equal<_bz_typename P_expr1::T_numtype, int> >
+      Equal<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -5623,15 +5573,15 @@ operator==(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> == int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      Equal<_bz_typename P_expr1::T_numtype, int > > >
+      Equal<typename P_expr1::T_numtype, int > > >
 operator==(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      Equal<_bz_typename P_expr1::T_numtype, int> >
+      Equal<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -5639,15 +5589,15 @@ operator==(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> == float
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>,
-      Equal<_bz_typename P_expr1::T_numtype, float > > >
+      Equal<typename P_expr1::T_numtype, float > > >
 operator==(_bz_ArrayExpr<P_expr1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>, 
-      Equal<_bz_typename P_expr1::T_numtype, float> >
+      Equal<typename P_expr1::T_numtype, float> >
       (d1, 
       _bz_ArrayExprConstant<float>(d2));
 }
@@ -5655,15 +5605,15 @@ operator==(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> == double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>,
-      Equal<_bz_typename P_expr1::T_numtype, double > > >
+      Equal<typename P_expr1::T_numtype, double > > >
 operator==(_bz_ArrayExpr<P_expr1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>, 
-      Equal<_bz_typename P_expr1::T_numtype, double> >
+      Equal<typename P_expr1::T_numtype, double> >
       (d1, 
       _bz_ArrayExprConstant<double>(d2));
 }
@@ -5671,15 +5621,15 @@ operator==(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> == long double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>,
-      Equal<_bz_typename P_expr1::T_numtype, long double > > >
+      Equal<typename P_expr1::T_numtype, long double > > >
 operator==(_bz_ArrayExpr<P_expr1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>, 
-      Equal<_bz_typename P_expr1::T_numtype, long double> >
+      Equal<typename P_expr1::T_numtype, long double> >
       (d1, 
       _bz_ArrayExprConstant<long double>(d2));
 }
@@ -5688,15 +5638,15 @@ operator==(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> == complex<T2>
 template<class P_expr1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
-      Equal<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      Equal<typename P_expr1::T_numtype, complex<T2>  > > >
 operator==(_bz_ArrayExpr<P_expr1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
-      Equal<_bz_typename P_expr1::T_numtype, complex<T2> > >
+      Equal<typename P_expr1::T_numtype, complex<T2> > >
       (d1, 
       _bz_ArrayExprConstant<complex<T2> > (d2));
 }
@@ -5705,13 +5655,13 @@ operator==(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> == Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Equal<int, T_numtype2 > > >
 operator==(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Equal<int, T_numtype2> >
       (d1, 
@@ -5721,15 +5671,15 @@ operator==(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> == _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      Equal<int, _bz_typename P_expr2::T_numtype > > >
+      Equal<int, typename P_expr2::T_numtype > > >
 operator==(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      Equal<int, _bz_typename P_expr2::T_numtype> >
+      Equal<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -5737,13 +5687,13 @@ operator==(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> == IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       Equal<int, int > > >
 operator==(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       Equal<int, int> >
       (d1, 
@@ -5753,13 +5703,13 @@ operator==(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> == int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       Equal<int, int > > >
 operator==(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       Equal<int, int> >
       (d1, 
@@ -5769,13 +5719,13 @@ operator==(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> == float
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>,
       Equal<int, float > > >
 operator==(IndexPlaceholder<N_index1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>, 
       Equal<int, float> >
       (d1, 
@@ -5785,13 +5735,13 @@ operator==(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> == double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>,
       Equal<int, double > > >
 operator==(IndexPlaceholder<N_index1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>, 
       Equal<int, double> >
       (d1, 
@@ -5801,13 +5751,13 @@ operator==(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> == long double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>,
       Equal<int, long double > > >
 operator==(IndexPlaceholder<N_index1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>, 
       Equal<int, long double> >
       (d1, 
@@ -5818,13 +5768,13 @@ operator==(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> == complex<T2>
 template<int N_index1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       Equal<int, complex<T2>  > > >
 operator==(IndexPlaceholder<N_index1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       Equal<int, complex<T2> > >
       (d1, 
@@ -5835,13 +5785,13 @@ operator==(IndexPlaceholder<N_index1> d1,
 // int == Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Equal<int, T_numtype2 > > >
 operator==(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Equal<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -5851,15 +5801,15 @@ operator==(int d1,
 // int == _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      Equal<int, _bz_typename P_expr2::T_numtype > > >
+      Equal<int, typename P_expr2::T_numtype > > >
 operator==(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      Equal<int, _bz_typename P_expr2::T_numtype> >
+      Equal<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -5867,13 +5817,13 @@ operator==(int d1,
 // int == IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       Equal<int, int > > >
 operator==(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       Equal<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -5883,13 +5833,13 @@ operator==(int d1,
 // float == Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Equal<float, T_numtype2 > > >
 operator==(float d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Equal<float, T_numtype2> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -5899,15 +5849,15 @@ operator==(float d1,
 // float == _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>,
-      Equal<float, _bz_typename P_expr2::T_numtype > > >
+      Equal<float, typename P_expr2::T_numtype > > >
 operator==(float d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>, 
-      Equal<float, _bz_typename P_expr2::T_numtype> >
+      Equal<float, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<float>(d1), 
       d2);
 }
@@ -5915,13 +5865,13 @@ operator==(float d1,
 // float == IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>,
       Equal<float, int > > >
 operator==(float d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>, 
       Equal<float, int> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -5931,13 +5881,13 @@ operator==(float d1,
 // double == Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Equal<double, T_numtype2 > > >
 operator==(double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Equal<double, T_numtype2> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -5947,15 +5897,15 @@ operator==(double d1,
 // double == _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>,
-      Equal<double, _bz_typename P_expr2::T_numtype > > >
+      Equal<double, typename P_expr2::T_numtype > > >
 operator==(double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Equal<double, _bz_typename P_expr2::T_numtype> >
+      Equal<double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<double>(d1), 
       d2);
 }
@@ -5963,13 +5913,13 @@ operator==(double d1,
 // double == IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>,
       Equal<double, int > > >
 operator==(double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>, 
       Equal<double, int> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -5979,13 +5929,13 @@ operator==(double d1,
 // long double == Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       Equal<long double, T_numtype2 > > >
 operator==(long double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       Equal<long double, T_numtype2> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -5995,15 +5945,15 @@ operator==(long double d1,
 // long double == _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>,
-      Equal<long double, _bz_typename P_expr2::T_numtype > > >
+      Equal<long double, typename P_expr2::T_numtype > > >
 operator==(long double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>, 
-      Equal<long double, _bz_typename P_expr2::T_numtype> >
+      Equal<long double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<long double>(d1), 
       d2);
 }
@@ -6011,13 +5961,13 @@ operator==(long double d1,
 // long double == IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>,
       Equal<long double, int > > >
 operator==(long double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>, 
       Equal<long double, int> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -6028,13 +5978,13 @@ operator==(long double d1,
 // complex<T1> == Array<T_numtype2, N_rank2>
 template<class T1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>,
       Equal<complex<T1> , T_numtype2 > > >
 operator==(complex<T1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>, 
       Equal<complex<T1> , T_numtype2> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -6046,15 +5996,15 @@ operator==(complex<T1> d1,
 // complex<T1> == _bz_ArrayExpr<P_expr2>
 template<class T1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>,
-      Equal<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      Equal<complex<T1> , typename P_expr2::T_numtype > > >
 operator==(complex<T1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>, 
-      Equal<complex<T1> , _bz_typename P_expr2::T_numtype> >
+      Equal<complex<T1> , typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
       d2);
 }
@@ -6064,13 +6014,13 @@ operator==(complex<T1> d1,
 // complex<T1> == IndexPlaceholder<N_index2>
 template<class T1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>,
       Equal<complex<T1> , int > > >
 operator==(complex<T1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>, 
       Equal<complex<T1> , int> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -6084,13 +6034,13 @@ operator==(complex<T1> d1,
 // Array<T_numtype1, N_rank1> != Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       NotEqual<T_numtype1, T_numtype2 > > >
 operator!=(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       NotEqual<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -6100,15 +6050,15 @@ operator!=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> != _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      NotEqual<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      NotEqual<T_numtype1, typename P_expr2::T_numtype > > >
 operator!=(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      NotEqual<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      NotEqual<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -6116,13 +6066,13 @@ operator!=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> != IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       NotEqual<T_numtype1, int > > >
 operator!=(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       NotEqual<T_numtype1, int> >
       (d1.begin(), 
@@ -6132,13 +6082,13 @@ operator!=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> != int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       NotEqual<T_numtype1, int > > >
 operator!=(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       NotEqual<T_numtype1, int> >
       (d1.begin(), 
@@ -6148,13 +6098,13 @@ operator!=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> != float
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>,
       NotEqual<T_numtype1, float > > >
 operator!=(const Array<T_numtype1, N_rank1>& d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<float>, 
       NotEqual<T_numtype1, float> >
       (d1.begin(), 
@@ -6164,13 +6114,13 @@ operator!=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> != double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>,
       NotEqual<T_numtype1, double > > >
 operator!=(const Array<T_numtype1, N_rank1>& d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<double>, 
       NotEqual<T_numtype1, double> >
       (d1.begin(), 
@@ -6180,13 +6130,13 @@ operator!=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> != long double
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>,
       NotEqual<T_numtype1, long double > > >
 operator!=(const Array<T_numtype1, N_rank1>& d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<long double>, 
       NotEqual<T_numtype1, long double> >
       (d1.begin(), 
@@ -6197,13 +6147,13 @@ operator!=(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> != complex<T2>
 template<class T_numtype1, int N_rank1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       NotEqual<T_numtype1, complex<T2>  > > >
 operator!=(const Array<T_numtype1, N_rank1>& d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       NotEqual<T_numtype1, complex<T2> > >
       (d1.begin(), 
@@ -6214,15 +6164,15 @@ operator!=(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> != Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      NotEqual<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      NotEqual<typename P_expr1::T_numtype, T_numtype2 > > >
 operator!=(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      NotEqual<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      NotEqual<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -6230,15 +6180,15 @@ operator!=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> != _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      NotEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      NotEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator!=(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      NotEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      NotEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -6246,15 +6196,15 @@ operator!=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> != IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      NotEqual<_bz_typename P_expr1::T_numtype, int > > >
+      NotEqual<typename P_expr1::T_numtype, int > > >
 operator!=(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      NotEqual<_bz_typename P_expr1::T_numtype, int> >
+      NotEqual<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -6262,15 +6212,15 @@ operator!=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> != int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      NotEqual<_bz_typename P_expr1::T_numtype, int > > >
+      NotEqual<typename P_expr1::T_numtype, int > > >
 operator!=(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      NotEqual<_bz_typename P_expr1::T_numtype, int> >
+      NotEqual<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -6278,15 +6228,15 @@ operator!=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> != float
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>,
-      NotEqual<_bz_typename P_expr1::T_numtype, float > > >
+      NotEqual<typename P_expr1::T_numtype, float > > >
 operator!=(_bz_ArrayExpr<P_expr1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<float>, 
-      NotEqual<_bz_typename P_expr1::T_numtype, float> >
+      NotEqual<typename P_expr1::T_numtype, float> >
       (d1, 
       _bz_ArrayExprConstant<float>(d2));
 }
@@ -6294,15 +6244,15 @@ operator!=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> != double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>,
-      NotEqual<_bz_typename P_expr1::T_numtype, double > > >
+      NotEqual<typename P_expr1::T_numtype, double > > >
 operator!=(_bz_ArrayExpr<P_expr1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<double>, 
-      NotEqual<_bz_typename P_expr1::T_numtype, double> >
+      NotEqual<typename P_expr1::T_numtype, double> >
       (d1, 
       _bz_ArrayExprConstant<double>(d2));
 }
@@ -6310,15 +6260,15 @@ operator!=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> != long double
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>,
-      NotEqual<_bz_typename P_expr1::T_numtype, long double > > >
+      NotEqual<typename P_expr1::T_numtype, long double > > >
 operator!=(_bz_ArrayExpr<P_expr1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<long double>, 
-      NotEqual<_bz_typename P_expr1::T_numtype, long double> >
+      NotEqual<typename P_expr1::T_numtype, long double> >
       (d1, 
       _bz_ArrayExprConstant<long double>(d2));
 }
@@ -6327,15 +6277,15 @@ operator!=(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> != complex<T2>
 template<class P_expr1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
-      NotEqual<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      NotEqual<typename P_expr1::T_numtype, complex<T2>  > > >
 operator!=(_bz_ArrayExpr<P_expr1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
-      NotEqual<_bz_typename P_expr1::T_numtype, complex<T2> > >
+      NotEqual<typename P_expr1::T_numtype, complex<T2> > >
       (d1, 
       _bz_ArrayExprConstant<complex<T2> > (d2));
 }
@@ -6344,13 +6294,13 @@ operator!=(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> != Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       NotEqual<int, T_numtype2 > > >
 operator!=(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       NotEqual<int, T_numtype2> >
       (d1, 
@@ -6360,15 +6310,15 @@ operator!=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> != _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      NotEqual<int, _bz_typename P_expr2::T_numtype > > >
+      NotEqual<int, typename P_expr2::T_numtype > > >
 operator!=(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      NotEqual<int, _bz_typename P_expr2::T_numtype> >
+      NotEqual<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -6376,13 +6326,13 @@ operator!=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> != IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       NotEqual<int, int > > >
 operator!=(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       NotEqual<int, int> >
       (d1, 
@@ -6392,13 +6342,13 @@ operator!=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> != int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       NotEqual<int, int > > >
 operator!=(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       NotEqual<int, int> >
       (d1, 
@@ -6408,13 +6358,13 @@ operator!=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> != float
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>,
       NotEqual<int, float > > >
 operator!=(IndexPlaceholder<N_index1> d1, 
       float d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<float>, 
       NotEqual<int, float> >
       (d1, 
@@ -6424,13 +6374,13 @@ operator!=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> != double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>,
       NotEqual<int, double > > >
 operator!=(IndexPlaceholder<N_index1> d1, 
       double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<double>, 
       NotEqual<int, double> >
       (d1, 
@@ -6440,13 +6390,13 @@ operator!=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> != long double
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>,
       NotEqual<int, long double > > >
 operator!=(IndexPlaceholder<N_index1> d1, 
       long double d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<long double>, 
       NotEqual<int, long double> >
       (d1, 
@@ -6457,13 +6407,13 @@ operator!=(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> != complex<T2>
 template<int N_index1, class T2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > ,
       NotEqual<int, complex<T2>  > > >
 operator!=(IndexPlaceholder<N_index1> d1, 
       complex<T2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<complex<T2> > , 
       NotEqual<int, complex<T2> > >
       (d1, 
@@ -6474,13 +6424,13 @@ operator!=(IndexPlaceholder<N_index1> d1,
 // int != Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       NotEqual<int, T_numtype2 > > >
 operator!=(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       NotEqual<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -6490,15 +6440,15 @@ operator!=(int d1,
 // int != _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      NotEqual<int, _bz_typename P_expr2::T_numtype > > >
+      NotEqual<int, typename P_expr2::T_numtype > > >
 operator!=(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      NotEqual<int, _bz_typename P_expr2::T_numtype> >
+      NotEqual<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -6506,13 +6456,13 @@ operator!=(int d1,
 // int != IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       NotEqual<int, int > > >
 operator!=(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       NotEqual<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -6522,13 +6472,13 @@ operator!=(int d1,
 // float != Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>,
       NotEqual<float, T_numtype2 > > >
 operator!=(float d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       NotEqual<float, T_numtype2> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -6538,15 +6488,15 @@ operator!=(float d1,
 // float != _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>,
-      NotEqual<float, _bz_typename P_expr2::T_numtype > > >
+      NotEqual<float, typename P_expr2::T_numtype > > >
 operator!=(float d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       _bz_ArrayExpr<P_expr2>, 
-      NotEqual<float, _bz_typename P_expr2::T_numtype> >
+      NotEqual<float, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<float>(d1), 
       d2);
 }
@@ -6554,13 +6504,13 @@ operator!=(float d1,
 // float != IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>,
       NotEqual<float, int > > >
 operator!=(float d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<float>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<float>, 
       IndexPlaceholder<N_index2>, 
       NotEqual<float, int> >
       (_bz_ArrayExprConstant<float>(d1), 
@@ -6570,13 +6520,13 @@ operator!=(float d1,
 // double != Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       NotEqual<double, T_numtype2 > > >
 operator!=(double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       NotEqual<double, T_numtype2> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -6586,15 +6536,15 @@ operator!=(double d1,
 // double != _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>,
-      NotEqual<double, _bz_typename P_expr2::T_numtype > > >
+      NotEqual<double, typename P_expr2::T_numtype > > >
 operator!=(double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       _bz_ArrayExpr<P_expr2>, 
-      NotEqual<double, _bz_typename P_expr2::T_numtype> >
+      NotEqual<double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<double>(d1), 
       d2);
 }
@@ -6602,13 +6552,13 @@ operator!=(double d1,
 // double != IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>,
       NotEqual<double, int > > >
 operator!=(double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<double>, 
       IndexPlaceholder<N_index2>, 
       NotEqual<double, int> >
       (_bz_ArrayExprConstant<double>(d1), 
@@ -6618,13 +6568,13 @@ operator!=(double d1,
 // long double != Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>,
       NotEqual<long double, T_numtype2 > > >
 operator!=(long double d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       NotEqual<long double, T_numtype2> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -6634,15 +6584,15 @@ operator!=(long double d1,
 // long double != _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>,
-      NotEqual<long double, _bz_typename P_expr2::T_numtype > > >
+      NotEqual<long double, typename P_expr2::T_numtype > > >
 operator!=(long double d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       _bz_ArrayExpr<P_expr2>, 
-      NotEqual<long double, _bz_typename P_expr2::T_numtype> >
+      NotEqual<long double, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<long double>(d1), 
       d2);
 }
@@ -6650,13 +6600,13 @@ operator!=(long double d1,
 // long double != IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>,
       NotEqual<long double, int > > >
 operator!=(long double d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<long double>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<long double>, 
       IndexPlaceholder<N_index2>, 
       NotEqual<long double, int> >
       (_bz_ArrayExprConstant<long double>(d1), 
@@ -6667,13 +6617,13 @@ operator!=(long double d1,
 // complex<T1> != Array<T_numtype2, N_rank2>
 template<class T1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>,
       NotEqual<complex<T1> , T_numtype2 > > >
 operator!=(complex<T1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       ArrayIterator<T_numtype2, N_rank2>, 
       NotEqual<complex<T1> , T_numtype2> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -6685,15 +6635,15 @@ operator!=(complex<T1> d1,
 // complex<T1> != _bz_ArrayExpr<P_expr2>
 template<class T1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>,
-      NotEqual<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      NotEqual<complex<T1> , typename P_expr2::T_numtype > > >
 operator!=(complex<T1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       _bz_ArrayExpr<P_expr2>, 
-      NotEqual<complex<T1> , _bz_typename P_expr2::T_numtype> >
+      NotEqual<complex<T1> , typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
       d2);
 }
@@ -6703,13 +6653,13 @@ operator!=(complex<T1> d1,
 // complex<T1> != IndexPlaceholder<N_index2>
 template<class T1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>,
       NotEqual<complex<T1> , int > > >
 operator!=(complex<T1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<complex<T1> > , 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<complex<T1> > , 
       IndexPlaceholder<N_index2>, 
       NotEqual<complex<T1> , int> >
       (_bz_ArrayExprConstant<complex<T1> > (d1), 
@@ -6723,13 +6673,13 @@ operator!=(complex<T1> d1,
 // Array<T_numtype1, N_rank1> && Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LogicalAnd<T_numtype1, T_numtype2 > > >
 operator&&(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LogicalAnd<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -6739,15 +6689,15 @@ operator&&(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> && _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      LogicalAnd<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      LogicalAnd<T_numtype1, typename P_expr2::T_numtype > > >
 operator&&(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      LogicalAnd<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      LogicalAnd<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -6755,13 +6705,13 @@ operator&&(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> && IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       LogicalAnd<T_numtype1, int > > >
 operator&&(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       LogicalAnd<T_numtype1, int> >
       (d1.begin(), 
@@ -6771,13 +6721,13 @@ operator&&(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> && int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       LogicalAnd<T_numtype1, int > > >
 operator&&(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       LogicalAnd<T_numtype1, int> >
       (d1.begin(), 
@@ -6787,15 +6737,15 @@ operator&&(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> && Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      LogicalAnd<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      LogicalAnd<typename P_expr1::T_numtype, T_numtype2 > > >
 operator&&(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      LogicalAnd<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      LogicalAnd<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -6803,15 +6753,15 @@ operator&&(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> && _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      LogicalAnd<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      LogicalAnd<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator&&(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      LogicalAnd<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      LogicalAnd<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -6819,15 +6769,15 @@ operator&&(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> && IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      LogicalAnd<_bz_typename P_expr1::T_numtype, int > > >
+      LogicalAnd<typename P_expr1::T_numtype, int > > >
 operator&&(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      LogicalAnd<_bz_typename P_expr1::T_numtype, int> >
+      LogicalAnd<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -6835,15 +6785,15 @@ operator&&(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> && int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      LogicalAnd<_bz_typename P_expr1::T_numtype, int > > >
+      LogicalAnd<typename P_expr1::T_numtype, int > > >
 operator&&(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      LogicalAnd<_bz_typename P_expr1::T_numtype, int> >
+      LogicalAnd<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -6851,13 +6801,13 @@ operator&&(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> && Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LogicalAnd<int, T_numtype2 > > >
 operator&&(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LogicalAnd<int, T_numtype2> >
       (d1, 
@@ -6867,15 +6817,15 @@ operator&&(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> && _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      LogicalAnd<int, _bz_typename P_expr2::T_numtype > > >
+      LogicalAnd<int, typename P_expr2::T_numtype > > >
 operator&&(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      LogicalAnd<int, _bz_typename P_expr2::T_numtype> >
+      LogicalAnd<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -6883,13 +6833,13 @@ operator&&(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> && IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       LogicalAnd<int, int > > >
 operator&&(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       LogicalAnd<int, int> >
       (d1, 
@@ -6899,13 +6849,13 @@ operator&&(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> && int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       LogicalAnd<int, int > > >
 operator&&(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       LogicalAnd<int, int> >
       (d1, 
@@ -6915,13 +6865,13 @@ operator&&(IndexPlaceholder<N_index1> d1,
 // int && Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LogicalAnd<int, T_numtype2 > > >
 operator&&(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LogicalAnd<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -6931,15 +6881,15 @@ operator&&(int d1,
 // int && _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      LogicalAnd<int, _bz_typename P_expr2::T_numtype > > >
+      LogicalAnd<int, typename P_expr2::T_numtype > > >
 operator&&(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      LogicalAnd<int, _bz_typename P_expr2::T_numtype> >
+      LogicalAnd<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -6947,13 +6897,13 @@ operator&&(int d1,
 // int && IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       LogicalAnd<int, int > > >
 operator&&(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       LogicalAnd<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -6966,13 +6916,13 @@ operator&&(int d1,
 // Array<T_numtype1, N_rank1> || Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LogicalOr<T_numtype1, T_numtype2 > > >
 operator||(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LogicalOr<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -6982,15 +6932,15 @@ operator||(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> || _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      LogicalOr<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      LogicalOr<T_numtype1, typename P_expr2::T_numtype > > >
 operator||(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      LogicalOr<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      LogicalOr<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -6998,13 +6948,13 @@ operator||(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> || IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       LogicalOr<T_numtype1, int > > >
 operator||(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       LogicalOr<T_numtype1, int> >
       (d1.begin(), 
@@ -7014,13 +6964,13 @@ operator||(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> || int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       LogicalOr<T_numtype1, int > > >
 operator||(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       LogicalOr<T_numtype1, int> >
       (d1.begin(), 
@@ -7030,15 +6980,15 @@ operator||(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> || Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      LogicalOr<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      LogicalOr<typename P_expr1::T_numtype, T_numtype2 > > >
 operator||(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      LogicalOr<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      LogicalOr<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -7046,15 +6996,15 @@ operator||(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> || _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      LogicalOr<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      LogicalOr<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator||(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      LogicalOr<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      LogicalOr<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -7062,15 +7012,15 @@ operator||(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> || IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      LogicalOr<_bz_typename P_expr1::T_numtype, int > > >
+      LogicalOr<typename P_expr1::T_numtype, int > > >
 operator||(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      LogicalOr<_bz_typename P_expr1::T_numtype, int> >
+      LogicalOr<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -7078,15 +7028,15 @@ operator||(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> || int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      LogicalOr<_bz_typename P_expr1::T_numtype, int > > >
+      LogicalOr<typename P_expr1::T_numtype, int > > >
 operator||(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      LogicalOr<_bz_typename P_expr1::T_numtype, int> >
+      LogicalOr<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -7094,13 +7044,13 @@ operator||(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> || Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LogicalOr<int, T_numtype2 > > >
 operator||(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LogicalOr<int, T_numtype2> >
       (d1, 
@@ -7110,15 +7060,15 @@ operator||(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> || _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      LogicalOr<int, _bz_typename P_expr2::T_numtype > > >
+      LogicalOr<int, typename P_expr2::T_numtype > > >
 operator||(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      LogicalOr<int, _bz_typename P_expr2::T_numtype> >
+      LogicalOr<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -7126,13 +7076,13 @@ operator||(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> || IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       LogicalOr<int, int > > >
 operator||(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       LogicalOr<int, int> >
       (d1, 
@@ -7142,13 +7092,13 @@ operator||(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> || int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       LogicalOr<int, int > > >
 operator||(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       LogicalOr<int, int> >
       (d1, 
@@ -7158,13 +7108,13 @@ operator||(IndexPlaceholder<N_index1> d1,
 // int || Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       LogicalOr<int, T_numtype2 > > >
 operator||(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       LogicalOr<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -7174,15 +7124,15 @@ operator||(int d1,
 // int || _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      LogicalOr<int, _bz_typename P_expr2::T_numtype > > >
+      LogicalOr<int, typename P_expr2::T_numtype > > >
 operator||(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      LogicalOr<int, _bz_typename P_expr2::T_numtype> >
+      LogicalOr<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -7190,13 +7140,13 @@ operator||(int d1,
 // int || IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       LogicalOr<int, int > > >
 operator||(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       LogicalOr<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -7209,13 +7159,13 @@ operator||(int d1,
 // Array<T_numtype1, N_rank1> ^ Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       BitwiseXor<T_numtype1, T_numtype2 > > >
 operator^(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       BitwiseXor<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -7225,15 +7175,15 @@ operator^(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> ^ _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseXor<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      BitwiseXor<T_numtype1, typename P_expr2::T_numtype > > >
 operator^(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseXor<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      BitwiseXor<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -7241,13 +7191,13 @@ operator^(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> ^ IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       BitwiseXor<T_numtype1, int > > >
 operator^(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       BitwiseXor<T_numtype1, int> >
       (d1.begin(), 
@@ -7257,13 +7207,13 @@ operator^(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> ^ int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       BitwiseXor<T_numtype1, int > > >
 operator^(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       BitwiseXor<T_numtype1, int> >
       (d1.begin(), 
@@ -7273,15 +7223,15 @@ operator^(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> ^ Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      BitwiseXor<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      BitwiseXor<typename P_expr1::T_numtype, T_numtype2 > > >
 operator^(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      BitwiseXor<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      BitwiseXor<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -7289,15 +7239,15 @@ operator^(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> ^ _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseXor<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      BitwiseXor<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator^(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseXor<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      BitwiseXor<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -7305,15 +7255,15 @@ operator^(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> ^ IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      BitwiseXor<_bz_typename P_expr1::T_numtype, int > > >
+      BitwiseXor<typename P_expr1::T_numtype, int > > >
 operator^(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      BitwiseXor<_bz_typename P_expr1::T_numtype, int> >
+      BitwiseXor<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -7321,15 +7271,15 @@ operator^(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> ^ int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      BitwiseXor<_bz_typename P_expr1::T_numtype, int > > >
+      BitwiseXor<typename P_expr1::T_numtype, int > > >
 operator^(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      BitwiseXor<_bz_typename P_expr1::T_numtype, int> >
+      BitwiseXor<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -7337,13 +7287,13 @@ operator^(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> ^ Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       BitwiseXor<int, T_numtype2 > > >
 operator^(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       BitwiseXor<int, T_numtype2> >
       (d1, 
@@ -7353,15 +7303,15 @@ operator^(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> ^ _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseXor<int, _bz_typename P_expr2::T_numtype > > >
+      BitwiseXor<int, typename P_expr2::T_numtype > > >
 operator^(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseXor<int, _bz_typename P_expr2::T_numtype> >
+      BitwiseXor<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -7369,13 +7319,13 @@ operator^(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> ^ IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       BitwiseXor<int, int > > >
 operator^(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       BitwiseXor<int, int> >
       (d1, 
@@ -7385,13 +7335,13 @@ operator^(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> ^ int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       BitwiseXor<int, int > > >
 operator^(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       BitwiseXor<int, int> >
       (d1, 
@@ -7401,13 +7351,13 @@ operator^(IndexPlaceholder<N_index1> d1,
 // int ^ Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       BitwiseXor<int, T_numtype2 > > >
 operator^(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       BitwiseXor<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -7417,15 +7367,15 @@ operator^(int d1,
 // int ^ _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseXor<int, _bz_typename P_expr2::T_numtype > > >
+      BitwiseXor<int, typename P_expr2::T_numtype > > >
 operator^(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseXor<int, _bz_typename P_expr2::T_numtype> >
+      BitwiseXor<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -7433,13 +7383,13 @@ operator^(int d1,
 // int ^ IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       BitwiseXor<int, int > > >
 operator^(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       BitwiseXor<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -7452,13 +7402,13 @@ operator^(int d1,
 // Array<T_numtype1, N_rank1> & Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       BitwiseAnd<T_numtype1, T_numtype2 > > >
 operator&(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       BitwiseAnd<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -7468,15 +7418,15 @@ operator&(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> & _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseAnd<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      BitwiseAnd<T_numtype1, typename P_expr2::T_numtype > > >
 operator&(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseAnd<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      BitwiseAnd<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -7484,13 +7434,13 @@ operator&(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> & IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       BitwiseAnd<T_numtype1, int > > >
 operator&(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       BitwiseAnd<T_numtype1, int> >
       (d1.begin(), 
@@ -7500,13 +7450,13 @@ operator&(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> & int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       BitwiseAnd<T_numtype1, int > > >
 operator&(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       BitwiseAnd<T_numtype1, int> >
       (d1.begin(), 
@@ -7516,15 +7466,15 @@ operator&(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> & Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      BitwiseAnd<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      BitwiseAnd<typename P_expr1::T_numtype, T_numtype2 > > >
 operator&(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      BitwiseAnd<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      BitwiseAnd<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -7532,15 +7482,15 @@ operator&(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> & _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseAnd<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      BitwiseAnd<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator&(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseAnd<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      BitwiseAnd<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -7548,15 +7498,15 @@ operator&(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> & IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      BitwiseAnd<_bz_typename P_expr1::T_numtype, int > > >
+      BitwiseAnd<typename P_expr1::T_numtype, int > > >
 operator&(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      BitwiseAnd<_bz_typename P_expr1::T_numtype, int> >
+      BitwiseAnd<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -7564,15 +7514,15 @@ operator&(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> & int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      BitwiseAnd<_bz_typename P_expr1::T_numtype, int > > >
+      BitwiseAnd<typename P_expr1::T_numtype, int > > >
 operator&(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      BitwiseAnd<_bz_typename P_expr1::T_numtype, int> >
+      BitwiseAnd<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -7580,13 +7530,13 @@ operator&(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> & Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       BitwiseAnd<int, T_numtype2 > > >
 operator&(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       BitwiseAnd<int, T_numtype2> >
       (d1, 
@@ -7596,15 +7546,15 @@ operator&(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> & _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseAnd<int, _bz_typename P_expr2::T_numtype > > >
+      BitwiseAnd<int, typename P_expr2::T_numtype > > >
 operator&(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseAnd<int, _bz_typename P_expr2::T_numtype> >
+      BitwiseAnd<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -7612,13 +7562,13 @@ operator&(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> & IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       BitwiseAnd<int, int > > >
 operator&(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       BitwiseAnd<int, int> >
       (d1, 
@@ -7628,13 +7578,13 @@ operator&(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> & int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       BitwiseAnd<int, int > > >
 operator&(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       BitwiseAnd<int, int> >
       (d1, 
@@ -7644,13 +7594,13 @@ operator&(IndexPlaceholder<N_index1> d1,
 // int & Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       BitwiseAnd<int, T_numtype2 > > >
 operator&(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       BitwiseAnd<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -7660,15 +7610,15 @@ operator&(int d1,
 // int & _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseAnd<int, _bz_typename P_expr2::T_numtype > > >
+      BitwiseAnd<int, typename P_expr2::T_numtype > > >
 operator&(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseAnd<int, _bz_typename P_expr2::T_numtype> >
+      BitwiseAnd<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -7676,13 +7626,13 @@ operator&(int d1,
 // int & IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       BitwiseAnd<int, int > > >
 operator&(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       BitwiseAnd<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -7695,13 +7645,13 @@ operator&(int d1,
 // Array<T_numtype1, N_rank1> | Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       BitwiseOr<T_numtype1, T_numtype2 > > >
 operator|(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       BitwiseOr<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -7711,15 +7661,15 @@ operator|(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> | _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseOr<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      BitwiseOr<T_numtype1, typename P_expr2::T_numtype > > >
 operator|(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseOr<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      BitwiseOr<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -7727,13 +7677,13 @@ operator|(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> | IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       BitwiseOr<T_numtype1, int > > >
 operator|(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       BitwiseOr<T_numtype1, int> >
       (d1.begin(), 
@@ -7743,13 +7693,13 @@ operator|(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> | int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       BitwiseOr<T_numtype1, int > > >
 operator|(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       BitwiseOr<T_numtype1, int> >
       (d1.begin(), 
@@ -7759,15 +7709,15 @@ operator|(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> | Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      BitwiseOr<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      BitwiseOr<typename P_expr1::T_numtype, T_numtype2 > > >
 operator|(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      BitwiseOr<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      BitwiseOr<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -7775,15 +7725,15 @@ operator|(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> | _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseOr<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      BitwiseOr<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator|(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseOr<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      BitwiseOr<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -7791,15 +7741,15 @@ operator|(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> | IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      BitwiseOr<_bz_typename P_expr1::T_numtype, int > > >
+      BitwiseOr<typename P_expr1::T_numtype, int > > >
 operator|(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      BitwiseOr<_bz_typename P_expr1::T_numtype, int> >
+      BitwiseOr<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -7807,15 +7757,15 @@ operator|(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> | int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      BitwiseOr<_bz_typename P_expr1::T_numtype, int > > >
+      BitwiseOr<typename P_expr1::T_numtype, int > > >
 operator|(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      BitwiseOr<_bz_typename P_expr1::T_numtype, int> >
+      BitwiseOr<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -7823,13 +7773,13 @@ operator|(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> | Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       BitwiseOr<int, T_numtype2 > > >
 operator|(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       BitwiseOr<int, T_numtype2> >
       (d1, 
@@ -7839,15 +7789,15 @@ operator|(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> | _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseOr<int, _bz_typename P_expr2::T_numtype > > >
+      BitwiseOr<int, typename P_expr2::T_numtype > > >
 operator|(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseOr<int, _bz_typename P_expr2::T_numtype> >
+      BitwiseOr<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -7855,13 +7805,13 @@ operator|(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> | IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       BitwiseOr<int, int > > >
 operator|(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       BitwiseOr<int, int> >
       (d1, 
@@ -7871,13 +7821,13 @@ operator|(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> | int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       BitwiseOr<int, int > > >
 operator|(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       BitwiseOr<int, int> >
       (d1, 
@@ -7887,13 +7837,13 @@ operator|(IndexPlaceholder<N_index1> d1,
 // int | Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       BitwiseOr<int, T_numtype2 > > >
 operator|(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       BitwiseOr<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -7903,15 +7853,15 @@ operator|(int d1,
 // int | _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      BitwiseOr<int, _bz_typename P_expr2::T_numtype > > >
+      BitwiseOr<int, typename P_expr2::T_numtype > > >
 operator|(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      BitwiseOr<int, _bz_typename P_expr2::T_numtype> >
+      BitwiseOr<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -7919,13 +7869,13 @@ operator|(int d1,
 // int | IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       BitwiseOr<int, int > > >
 operator|(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       BitwiseOr<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -7938,13 +7888,13 @@ operator|(int d1,
 // Array<T_numtype1, N_rank1> >> Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       ShiftRight<T_numtype1, T_numtype2 > > >
 operator>>(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       ShiftRight<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -7954,15 +7904,15 @@ operator>>(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> >> _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      ShiftRight<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      ShiftRight<T_numtype1, typename P_expr2::T_numtype > > >
 operator>>(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      ShiftRight<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      ShiftRight<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -7970,13 +7920,13 @@ operator>>(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> >> IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       ShiftRight<T_numtype1, int > > >
 operator>>(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       ShiftRight<T_numtype1, int> >
       (d1.begin(), 
@@ -7986,13 +7936,13 @@ operator>>(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> >> int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       ShiftRight<T_numtype1, int > > >
 operator>>(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       ShiftRight<T_numtype1, int> >
       (d1.begin(), 
@@ -8002,15 +7952,15 @@ operator>>(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> >> Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      ShiftRight<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      ShiftRight<typename P_expr1::T_numtype, T_numtype2 > > >
 operator>>(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      ShiftRight<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      ShiftRight<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -8018,15 +7968,15 @@ operator>>(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> >> _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      ShiftRight<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      ShiftRight<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator>>(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      ShiftRight<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      ShiftRight<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -8034,15 +7984,15 @@ operator>>(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> >> IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      ShiftRight<_bz_typename P_expr1::T_numtype, int > > >
+      ShiftRight<typename P_expr1::T_numtype, int > > >
 operator>>(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      ShiftRight<_bz_typename P_expr1::T_numtype, int> >
+      ShiftRight<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -8050,15 +8000,15 @@ operator>>(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> >> int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      ShiftRight<_bz_typename P_expr1::T_numtype, int > > >
+      ShiftRight<typename P_expr1::T_numtype, int > > >
 operator>>(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      ShiftRight<_bz_typename P_expr1::T_numtype, int> >
+      ShiftRight<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -8066,13 +8016,13 @@ operator>>(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> >> Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       ShiftRight<int, T_numtype2 > > >
 operator>>(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       ShiftRight<int, T_numtype2> >
       (d1, 
@@ -8082,15 +8032,15 @@ operator>>(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> >> _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      ShiftRight<int, _bz_typename P_expr2::T_numtype > > >
+      ShiftRight<int, typename P_expr2::T_numtype > > >
 operator>>(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      ShiftRight<int, _bz_typename P_expr2::T_numtype> >
+      ShiftRight<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -8098,13 +8048,13 @@ operator>>(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> >> IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       ShiftRight<int, int > > >
 operator>>(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       ShiftRight<int, int> >
       (d1, 
@@ -8114,13 +8064,13 @@ operator>>(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> >> int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       ShiftRight<int, int > > >
 operator>>(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       ShiftRight<int, int> >
       (d1, 
@@ -8130,13 +8080,13 @@ operator>>(IndexPlaceholder<N_index1> d1,
 // int >> Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       ShiftRight<int, T_numtype2 > > >
 operator>>(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       ShiftRight<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -8146,15 +8096,15 @@ operator>>(int d1,
 // int >> _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      ShiftRight<int, _bz_typename P_expr2::T_numtype > > >
+      ShiftRight<int, typename P_expr2::T_numtype > > >
 operator>>(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      ShiftRight<int, _bz_typename P_expr2::T_numtype> >
+      ShiftRight<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -8162,13 +8112,13 @@ operator>>(int d1,
 // int >> IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       ShiftRight<int, int > > >
 operator>>(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       ShiftRight<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -8181,13 +8131,13 @@ operator>>(int d1,
 // Array<T_numtype1, N_rank1> << Array<T_numtype2, N_rank2>
 template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       ShiftLeft<T_numtype1, T_numtype2 > > >
 operator<<(const Array<T_numtype1, N_rank1>& d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       ShiftLeft<T_numtype1, T_numtype2> >
       (d1.begin(), 
@@ -8197,15 +8147,15 @@ operator<<(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> << _bz_ArrayExpr<P_expr2>
 template<class T_numtype1, int N_rank1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>,
-      ShiftLeft<T_numtype1, _bz_typename P_expr2::T_numtype > > >
+      ShiftLeft<T_numtype1, typename P_expr2::T_numtype > > >
 operator<<(const Array<T_numtype1, N_rank1>& d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExpr<P_expr2>, 
-      ShiftLeft<T_numtype1, _bz_typename P_expr2::T_numtype> >
+      ShiftLeft<T_numtype1, typename P_expr2::T_numtype> >
       (d1.begin(), 
       d2);
 }
@@ -8213,13 +8163,13 @@ operator<<(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> << IndexPlaceholder<N_index2>
 template<class T_numtype1, int N_rank1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>,
       ShiftLeft<T_numtype1, int > > >
 operator<<(const Array<T_numtype1, N_rank1>& d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       IndexPlaceholder<N_index2>, 
       ShiftLeft<T_numtype1, int> >
       (d1.begin(), 
@@ -8229,13 +8179,13 @@ operator<<(const Array<T_numtype1, N_rank1>& d1,
 // Array<T_numtype1, N_rank1> << int
 template<class T_numtype1, int N_rank1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>,
       ShiftLeft<T_numtype1, int > > >
 operator<<(const Array<T_numtype1, N_rank1>& d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<ArrayIterator<T_numtype1, N_rank1>, 
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
       _bz_ArrayExprConstant<int>, 
       ShiftLeft<T_numtype1, int> >
       (d1.begin(), 
@@ -8245,15 +8195,15 @@ operator<<(const Array<T_numtype1, N_rank1>& d1,
 // _bz_ArrayExpr<P_expr1> << Array<T_numtype2, N_rank2>
 template<class P_expr1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>,
-      ShiftLeft<_bz_typename P_expr1::T_numtype, T_numtype2 > > >
+      ShiftLeft<typename P_expr1::T_numtype, T_numtype2 > > >
 operator<<(_bz_ArrayExpr<P_expr1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
-      ShiftLeft<_bz_typename P_expr1::T_numtype, T_numtype2> >
+      ShiftLeft<typename P_expr1::T_numtype, T_numtype2> >
       (d1, 
       d2.begin());
 }
@@ -8261,15 +8211,15 @@ operator<<(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> << _bz_ArrayExpr<P_expr2>
 template<class P_expr1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>,
-      ShiftLeft<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      ShiftLeft<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator<<(_bz_ArrayExpr<P_expr1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExpr<P_expr2>, 
-      ShiftLeft<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> >
+      ShiftLeft<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -8277,15 +8227,15 @@ operator<<(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> << IndexPlaceholder<N_index2>
 template<class P_expr1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>,
-      ShiftLeft<_bz_typename P_expr1::T_numtype, int > > >
+      ShiftLeft<typename P_expr1::T_numtype, int > > >
 operator<<(_bz_ArrayExpr<P_expr1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       IndexPlaceholder<N_index2>, 
-      ShiftLeft<_bz_typename P_expr1::T_numtype, int> >
+      ShiftLeft<typename P_expr1::T_numtype, int> >
       (d1, 
       d2);
 }
@@ -8293,15 +8243,15 @@ operator<<(_bz_ArrayExpr<P_expr1> d1,
 // _bz_ArrayExpr<P_expr1> << int
 template<class P_expr1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>,
-      ShiftLeft<_bz_typename P_expr1::T_numtype, int > > >
+      ShiftLeft<typename P_expr1::T_numtype, int > > >
 operator<<(_bz_ArrayExpr<P_expr1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExpr<P_expr1>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
       _bz_ArrayExprConstant<int>, 
-      ShiftLeft<_bz_typename P_expr1::T_numtype, int> >
+      ShiftLeft<typename P_expr1::T_numtype, int> >
       (d1, 
       _bz_ArrayExprConstant<int>(d2));
 }
@@ -8309,13 +8259,13 @@ operator<<(_bz_ArrayExpr<P_expr1> d1,
 // IndexPlaceholder<N_index1> << Array<T_numtype2, N_rank2>
 template<int N_index1, class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>,
       ShiftLeft<int, T_numtype2 > > >
 operator<<(IndexPlaceholder<N_index1> d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       ShiftLeft<int, T_numtype2> >
       (d1, 
@@ -8325,15 +8275,15 @@ operator<<(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> << _bz_ArrayExpr<P_expr2>
 template<int N_index1, class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>,
-      ShiftLeft<int, _bz_typename P_expr2::T_numtype > > >
+      ShiftLeft<int, typename P_expr2::T_numtype > > >
 operator<<(IndexPlaceholder<N_index1> d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExpr<P_expr2>, 
-      ShiftLeft<int, _bz_typename P_expr2::T_numtype> >
+      ShiftLeft<int, typename P_expr2::T_numtype> >
       (d1, 
       d2);
 }
@@ -8341,13 +8291,13 @@ operator<<(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> << IndexPlaceholder<N_index2>
 template<int N_index1, int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>,
       ShiftLeft<int, int > > >
 operator<<(IndexPlaceholder<N_index1> d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       IndexPlaceholder<N_index2>, 
       ShiftLeft<int, int> >
       (d1, 
@@ -8357,13 +8307,13 @@ operator<<(IndexPlaceholder<N_index1> d1,
 // IndexPlaceholder<N_index1> << int
 template<int N_index1>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>,
       ShiftLeft<int, int > > >
 operator<<(IndexPlaceholder<N_index1> d1, 
       int d2)
 {
-    return _bz_ArrayExprOp<IndexPlaceholder<N_index1>, 
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
       _bz_ArrayExprConstant<int>, 
       ShiftLeft<int, int> >
       (d1, 
@@ -8373,13 +8323,13 @@ operator<<(IndexPlaceholder<N_index1> d1,
 // int << Array<T_numtype2, N_rank2>
 template<class T_numtype2, int N_rank2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>,
       ShiftLeft<int, T_numtype2 > > >
 operator<<(int d1, 
       const Array<T_numtype2, N_rank2>& d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       ArrayIterator<T_numtype2, N_rank2>, 
       ShiftLeft<int, T_numtype2> >
       (_bz_ArrayExprConstant<int>(d1), 
@@ -8389,15 +8339,15 @@ operator<<(int d1,
 // int << _bz_ArrayExpr<P_expr2>
 template<class P_expr2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>,
-      ShiftLeft<int, _bz_typename P_expr2::T_numtype > > >
+      ShiftLeft<int, typename P_expr2::T_numtype > > >
 operator<<(int d1, 
       _bz_ArrayExpr<P_expr2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       _bz_ArrayExpr<P_expr2>, 
-      ShiftLeft<int, _bz_typename P_expr2::T_numtype> >
+      ShiftLeft<int, typename P_expr2::T_numtype> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }
@@ -8405,15 +8355,501 @@ operator<<(int d1,
 // int << IndexPlaceholder<N_index2>
 template<int N_index2>
 inline
-_bz_ArrayExpr<_bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>,
       ShiftLeft<int, int > > >
 operator<<(int d1, 
       IndexPlaceholder<N_index2> d2)
 {
-    return _bz_ArrayExprOp<_bz_ArrayExprConstant<int>, 
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
       IndexPlaceholder<N_index2>, 
       ShiftLeft<int, int> >
+      (_bz_ArrayExprConstant<int>(d1), 
+      d2);
+}
+/****************************************************************************
+ * Minimum Operators
+ ****************************************************************************/
+
+// Array<T_numtype1, N_rank1> min Array<T_numtype2, N_rank2>
+template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      ArrayIterator<T_numtype2, N_rank2>,
+      _bz_Min<T_numtype1, T_numtype2 > > >
+min(const Array<T_numtype1, N_rank1>& d1, 
+      const Array<T_numtype2, N_rank2>& d2)
+{
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      ArrayIterator<T_numtype2, N_rank2>, 
+      _bz_Min<T_numtype1, T_numtype2> >
+      (d1.begin(), 
+      d2.begin());
+}
+
+// Array<T_numtype1, N_rank1> min _bz_ArrayExpr<P_expr2>
+template<class T_numtype1, int N_rank1, class P_expr2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      _bz_ArrayExpr<P_expr2>,
+      _bz_Min<T_numtype1, typename P_expr2::T_numtype > > >
+min(const Array<T_numtype1, N_rank1>& d1, 
+      _bz_ArrayExpr<P_expr2> d2)
+{
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      _bz_ArrayExpr<P_expr2>, 
+      _bz_Min<T_numtype1, typename P_expr2::T_numtype> >
+      (d1.begin(), 
+      d2);
+}
+
+// Array<T_numtype1, N_rank1> min IndexPlaceholder<N_index2>
+template<class T_numtype1, int N_rank1, int N_index2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      IndexPlaceholder<N_index2>,
+      _bz_Min<T_numtype1, int > > >
+min(const Array<T_numtype1, N_rank1>& d1, 
+      IndexPlaceholder<N_index2> d2)
+{
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      IndexPlaceholder<N_index2>, 
+      _bz_Min<T_numtype1, int> >
+      (d1.begin(), 
+      d2);
+}
+
+// Array<T_numtype1, N_rank1> min int
+template<class T_numtype1, int N_rank1>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      _bz_ArrayExprConstant<int>,
+      _bz_Min<T_numtype1, int > > >
+min(const Array<T_numtype1, N_rank1>& d1, 
+      int d2)
+{
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      _bz_ArrayExprConstant<int>, 
+      _bz_Min<T_numtype1, int> >
+      (d1.begin(), 
+      _bz_ArrayExprConstant<int>(d2));
+}
+
+// _bz_ArrayExpr<P_expr1> min Array<T_numtype2, N_rank2>
+template<class P_expr1, class T_numtype2, int N_rank2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      ArrayIterator<T_numtype2, N_rank2>,
+      _bz_Min<typename P_expr1::T_numtype, T_numtype2 > > >
+min(_bz_ArrayExpr<P_expr1> d1, 
+      const Array<T_numtype2, N_rank2>& d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      ArrayIterator<T_numtype2, N_rank2>, 
+      _bz_Min<typename P_expr1::T_numtype, T_numtype2> >
+      (d1, 
+      d2.begin());
+}
+
+// _bz_ArrayExpr<P_expr1> min _bz_ArrayExpr<P_expr2>
+template<class P_expr1, class P_expr2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      _bz_ArrayExpr<P_expr2>,
+      _bz_Min<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
+min(_bz_ArrayExpr<P_expr1> d1, 
+      _bz_ArrayExpr<P_expr2> d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      _bz_ArrayExpr<P_expr2>, 
+      _bz_Min<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
+      (d1, 
+      d2);
+}
+
+// _bz_ArrayExpr<P_expr1> min IndexPlaceholder<N_index2>
+template<class P_expr1, int N_index2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      IndexPlaceholder<N_index2>,
+      _bz_Min<typename P_expr1::T_numtype, int > > >
+min(_bz_ArrayExpr<P_expr1> d1, 
+      IndexPlaceholder<N_index2> d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      IndexPlaceholder<N_index2>, 
+      _bz_Min<typename P_expr1::T_numtype, int> >
+      (d1, 
+      d2);
+}
+
+// _bz_ArrayExpr<P_expr1> min int
+template<class P_expr1>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      _bz_ArrayExprConstant<int>,
+      _bz_Min<typename P_expr1::T_numtype, int > > >
+min(_bz_ArrayExpr<P_expr1> d1, 
+      int d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      _bz_ArrayExprConstant<int>, 
+      _bz_Min<typename P_expr1::T_numtype, int> >
+      (d1, 
+      _bz_ArrayExprConstant<int>(d2));
+}
+
+// IndexPlaceholder<N_index1> min Array<T_numtype2, N_rank2>
+template<int N_index1, class T_numtype2, int N_rank2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      ArrayIterator<T_numtype2, N_rank2>,
+      _bz_Min<int, T_numtype2 > > >
+min(IndexPlaceholder<N_index1> d1, 
+      const Array<T_numtype2, N_rank2>& d2)
+{
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      ArrayIterator<T_numtype2, N_rank2>, 
+      _bz_Min<int, T_numtype2> >
+      (d1, 
+      d2.begin());
+}
+
+// IndexPlaceholder<N_index1> min _bz_ArrayExpr<P_expr2>
+template<int N_index1, class P_expr2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      _bz_ArrayExpr<P_expr2>,
+      _bz_Min<int, typename P_expr2::T_numtype > > >
+min(IndexPlaceholder<N_index1> d1, 
+      _bz_ArrayExpr<P_expr2> d2)
+{
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      _bz_ArrayExpr<P_expr2>, 
+      _bz_Min<int, typename P_expr2::T_numtype> >
+      (d1, 
+      d2);
+}
+
+// IndexPlaceholder<N_index1> min IndexPlaceholder<N_index2>
+template<int N_index1, int N_index2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      IndexPlaceholder<N_index2>,
+      _bz_Min<int, int > > >
+min(IndexPlaceholder<N_index1> d1, 
+      IndexPlaceholder<N_index2> d2)
+{
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      IndexPlaceholder<N_index2>, 
+      _bz_Min<int, int> >
+      (d1, 
+      d2);
+}
+
+// IndexPlaceholder<N_index1> min int
+template<int N_index1>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      _bz_ArrayExprConstant<int>,
+      _bz_Min<int, int > > >
+min(IndexPlaceholder<N_index1> d1, 
+      int d2)
+{
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      _bz_ArrayExprConstant<int>, 
+      _bz_Min<int, int> >
+      (d1, 
+      _bz_ArrayExprConstant<int>(d2));
+}
+
+// int min Array<T_numtype2, N_rank2>
+template<class T_numtype2, int N_rank2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      ArrayIterator<T_numtype2, N_rank2>,
+      _bz_Min<int, T_numtype2 > > >
+min(int d1, 
+      const Array<T_numtype2, N_rank2>& d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      ArrayIterator<T_numtype2, N_rank2>, 
+      _bz_Min<int, T_numtype2> >
+      (_bz_ArrayExprConstant<int>(d1), 
+      d2.begin());
+}
+
+// int min _bz_ArrayExpr<P_expr2>
+template<class P_expr2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      _bz_ArrayExpr<P_expr2>,
+      _bz_Min<int, typename P_expr2::T_numtype > > >
+min(int d1, 
+      _bz_ArrayExpr<P_expr2> d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      _bz_ArrayExpr<P_expr2>, 
+      _bz_Min<int, typename P_expr2::T_numtype> >
+      (_bz_ArrayExprConstant<int>(d1), 
+      d2);
+}
+
+// int min IndexPlaceholder<N_index2>
+template<int N_index2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      IndexPlaceholder<N_index2>,
+      _bz_Min<int, int > > >
+min(int d1, 
+      IndexPlaceholder<N_index2> d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      IndexPlaceholder<N_index2>, 
+      _bz_Min<int, int> >
+      (_bz_ArrayExprConstant<int>(d1), 
+      d2);
+}
+/****************************************************************************
+ * Maximum Operators
+ ****************************************************************************/
+
+// Array<T_numtype1, N_rank1> max Array<T_numtype2, N_rank2>
+template<class T_numtype1, int N_rank1, class T_numtype2, int N_rank2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      ArrayIterator<T_numtype2, N_rank2>,
+      _bz_Max<T_numtype1, T_numtype2 > > >
+max(const Array<T_numtype1, N_rank1>& d1, 
+      const Array<T_numtype2, N_rank2>& d2)
+{
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      ArrayIterator<T_numtype2, N_rank2>, 
+      _bz_Max<T_numtype1, T_numtype2> >
+      (d1.begin(), 
+      d2.begin());
+}
+
+// Array<T_numtype1, N_rank1> max _bz_ArrayExpr<P_expr2>
+template<class T_numtype1, int N_rank1, class P_expr2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      _bz_ArrayExpr<P_expr2>,
+      _bz_Max<T_numtype1, typename P_expr2::T_numtype > > >
+max(const Array<T_numtype1, N_rank1>& d1, 
+      _bz_ArrayExpr<P_expr2> d2)
+{
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      _bz_ArrayExpr<P_expr2>, 
+      _bz_Max<T_numtype1, typename P_expr2::T_numtype> >
+      (d1.begin(), 
+      d2);
+}
+
+// Array<T_numtype1, N_rank1> max IndexPlaceholder<N_index2>
+template<class T_numtype1, int N_rank1, int N_index2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      IndexPlaceholder<N_index2>,
+      _bz_Max<T_numtype1, int > > >
+max(const Array<T_numtype1, N_rank1>& d1, 
+      IndexPlaceholder<N_index2> d2)
+{
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      IndexPlaceholder<N_index2>, 
+      _bz_Max<T_numtype1, int> >
+      (d1.begin(), 
+      d2);
+}
+
+// Array<T_numtype1, N_rank1> max int
+template<class T_numtype1, int N_rank1>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      _bz_ArrayExprConstant<int>,
+      _bz_Max<T_numtype1, int > > >
+max(const Array<T_numtype1, N_rank1>& d1, 
+      int d2)
+{
+    return _bz_ArrayExprBinaryOp<ArrayIterator<T_numtype1, N_rank1>, 
+      _bz_ArrayExprConstant<int>, 
+      _bz_Max<T_numtype1, int> >
+      (d1.begin(), 
+      _bz_ArrayExprConstant<int>(d2));
+}
+
+// _bz_ArrayExpr<P_expr1> max Array<T_numtype2, N_rank2>
+template<class P_expr1, class T_numtype2, int N_rank2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      ArrayIterator<T_numtype2, N_rank2>,
+      _bz_Max<typename P_expr1::T_numtype, T_numtype2 > > >
+max(_bz_ArrayExpr<P_expr1> d1, 
+      const Array<T_numtype2, N_rank2>& d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      ArrayIterator<T_numtype2, N_rank2>, 
+      _bz_Max<typename P_expr1::T_numtype, T_numtype2> >
+      (d1, 
+      d2.begin());
+}
+
+// _bz_ArrayExpr<P_expr1> max _bz_ArrayExpr<P_expr2>
+template<class P_expr1, class P_expr2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      _bz_ArrayExpr<P_expr2>,
+      _bz_Max<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
+max(_bz_ArrayExpr<P_expr1> d1, 
+      _bz_ArrayExpr<P_expr2> d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      _bz_ArrayExpr<P_expr2>, 
+      _bz_Max<typename P_expr1::T_numtype, typename P_expr2::T_numtype> >
+      (d1, 
+      d2);
+}
+
+// _bz_ArrayExpr<P_expr1> max IndexPlaceholder<N_index2>
+template<class P_expr1, int N_index2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      IndexPlaceholder<N_index2>,
+      _bz_Max<typename P_expr1::T_numtype, int > > >
+max(_bz_ArrayExpr<P_expr1> d1, 
+      IndexPlaceholder<N_index2> d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      IndexPlaceholder<N_index2>, 
+      _bz_Max<typename P_expr1::T_numtype, int> >
+      (d1, 
+      d2);
+}
+
+// _bz_ArrayExpr<P_expr1> max int
+template<class P_expr1>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      _bz_ArrayExprConstant<int>,
+      _bz_Max<typename P_expr1::T_numtype, int > > >
+max(_bz_ArrayExpr<P_expr1> d1, 
+      int d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExpr<P_expr1>, 
+      _bz_ArrayExprConstant<int>, 
+      _bz_Max<typename P_expr1::T_numtype, int> >
+      (d1, 
+      _bz_ArrayExprConstant<int>(d2));
+}
+
+// IndexPlaceholder<N_index1> max Array<T_numtype2, N_rank2>
+template<int N_index1, class T_numtype2, int N_rank2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      ArrayIterator<T_numtype2, N_rank2>,
+      _bz_Max<int, T_numtype2 > > >
+max(IndexPlaceholder<N_index1> d1, 
+      const Array<T_numtype2, N_rank2>& d2)
+{
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      ArrayIterator<T_numtype2, N_rank2>, 
+      _bz_Max<int, T_numtype2> >
+      (d1, 
+      d2.begin());
+}
+
+// IndexPlaceholder<N_index1> max _bz_ArrayExpr<P_expr2>
+template<int N_index1, class P_expr2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      _bz_ArrayExpr<P_expr2>,
+      _bz_Max<int, typename P_expr2::T_numtype > > >
+max(IndexPlaceholder<N_index1> d1, 
+      _bz_ArrayExpr<P_expr2> d2)
+{
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      _bz_ArrayExpr<P_expr2>, 
+      _bz_Max<int, typename P_expr2::T_numtype> >
+      (d1, 
+      d2);
+}
+
+// IndexPlaceholder<N_index1> max IndexPlaceholder<N_index2>
+template<int N_index1, int N_index2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      IndexPlaceholder<N_index2>,
+      _bz_Max<int, int > > >
+max(IndexPlaceholder<N_index1> d1, 
+      IndexPlaceholder<N_index2> d2)
+{
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      IndexPlaceholder<N_index2>, 
+      _bz_Max<int, int> >
+      (d1, 
+      d2);
+}
+
+// IndexPlaceholder<N_index1> max int
+template<int N_index1>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      _bz_ArrayExprConstant<int>,
+      _bz_Max<int, int > > >
+max(IndexPlaceholder<N_index1> d1, 
+      int d2)
+{
+    return _bz_ArrayExprBinaryOp<IndexPlaceholder<N_index1>, 
+      _bz_ArrayExprConstant<int>, 
+      _bz_Max<int, int> >
+      (d1, 
+      _bz_ArrayExprConstant<int>(d2));
+}
+
+// int max Array<T_numtype2, N_rank2>
+template<class T_numtype2, int N_rank2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      ArrayIterator<T_numtype2, N_rank2>,
+      _bz_Max<int, T_numtype2 > > >
+max(int d1, 
+      const Array<T_numtype2, N_rank2>& d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      ArrayIterator<T_numtype2, N_rank2>, 
+      _bz_Max<int, T_numtype2> >
+      (_bz_ArrayExprConstant<int>(d1), 
+      d2.begin());
+}
+
+// int max _bz_ArrayExpr<P_expr2>
+template<class P_expr2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      _bz_ArrayExpr<P_expr2>,
+      _bz_Max<int, typename P_expr2::T_numtype > > >
+max(int d1, 
+      _bz_ArrayExpr<P_expr2> d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      _bz_ArrayExpr<P_expr2>, 
+      _bz_Max<int, typename P_expr2::T_numtype> >
+      (_bz_ArrayExprConstant<int>(d1), 
+      d2);
+}
+
+// int max IndexPlaceholder<N_index2>
+template<int N_index2>
+inline
+_bz_ArrayExpr<_bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      IndexPlaceholder<N_index2>,
+      _bz_Max<int, int > > >
+max(int d1, 
+      IndexPlaceholder<N_index2> d2)
+{
+    return _bz_ArrayExprBinaryOp<_bz_ArrayExprConstant<int>, 
+      IndexPlaceholder<N_index2>, 
+      _bz_Max<int, int> >
       (_bz_ArrayExprConstant<int>(d1), 
       d2);
 }

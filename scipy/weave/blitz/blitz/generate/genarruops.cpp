@@ -1,7 +1,7 @@
 #include "bzfstream.h"
 #include "arroptuple.h"
 
-bzofstream ofs("arrayuops.cc", 
+bzofstream ofs("../array/uops.cc", 
     "Expression templates for arrays, unary functions", __FILE__,
     "BZ_ARRAYUOPS_CC");
 
@@ -12,53 +12,53 @@ void one(const char* fname, int flag=0, const char* apname = 0)
     if (apname == 0)
         apname = fname;
 
-    ofs << "/****************************************************************************" << endl
-        << " * " << fname << endl
-        << " ****************************************************************************/" << endl << endl;
+    ofs << "/****************************************************************************" << std::endl
+        << " * " << fname << std::endl
+        << " ****************************************************************************/" << std::endl << std::endl;
 
     if (flag == ieeeflag)
-        ofs << "#ifdef BZ_HAVE_IEEE_MATH" << endl;
+        ofs << "#ifdef BZ_HAVE_IEEE_MATH" << std::endl;
     else if (flag == bsdflag)
-        ofs << "#ifdef BZ_HAVE_SYSTEM_V_MATH" << endl;
+        ofs << "#ifdef BZ_HAVE_SYSTEM_V_MATH" << std::endl;
 
     OperandTuple operands(1);
 
     do {
         if (operands.anyComplex())
-            ofs << "#ifdef BZ_HAVE_COMPLEX" << endl;
+            ofs << "#ifdef BZ_HAVE_COMPLEX" << std::endl;
 
         operands.printTemplates(ofs);
-        ofs << endl << "inline" << endl
+        ofs << std::endl << "inline" << std::endl
             << "_bz_ArrayExpr<_bz_ArrayExprUnaryOp<";
         operands.printIterators(ofs);
-        ofs << "," << endl << "    _bz_" << apname << "<";
+        ofs << "," << std::endl << "    _bz_" << apname << "<";
         operands[0].printNumtype(ofs);
-        ofs << "> > >" << endl
+        ofs << "> > >" << std::endl
             << fname << "(";
         operands.printArgumentList(ofs);
-        ofs << ")" << endl
-            << "{" << endl;
+        ofs << ")" << std::endl
+            << "{" << std::endl;
 
         ofs << "    return _bz_ArrayExprUnaryOp<";
         operands.printIterators(ofs);
-        ofs << "," << endl << "    _bz_" << apname << "<";
+        ofs << "," << std::endl << "    _bz_" << apname << "<";
         operands[0].printNumtype(ofs);
         ofs << "> >(";
         operands.printInitializationList(ofs);
-        ofs << ");" << endl
-            << "}" << endl;
+        ofs << ");" << std::endl
+            << "}" << std::endl;
 
         if (operands.anyComplex())
-            ofs << "#endif // BZ_HAVE_COMPLEX" << endl;
+            ofs << "#endif // BZ_HAVE_COMPLEX" << std::endl;
 
-        ofs << endl;
+        ofs << std::endl;
 
     } while (++operands);
     
     if (flag != 0)
-        ofs << "#endif" << endl;
+        ofs << "#endif" << std::endl;
 
-    ofs << endl;
+    ofs << std::endl;
 }
 
 void two(const char* fname, int flag=0, const char* apname = 0)
@@ -66,14 +66,14 @@ void two(const char* fname, int flag=0, const char* apname = 0)
     if (apname == 0)
         apname = fname;
 
-    ofs << "/****************************************************************************" << endl
-        << " * " << fname << endl
-        << " ****************************************************************************/" << endl << endl;
+    ofs << "/****************************************************************************" << std::endl
+        << " * " << fname << std::endl
+        << " ****************************************************************************/" << std::endl << std::endl;
 
     if (flag == ieeeflag)
-        ofs << "#ifdef BZ_HAVE_IEEE_MATH" << endl;
+        ofs << "#ifdef BZ_HAVE_IEEE_MATH" << std::endl;
     else if (flag == bsdflag)
-        ofs << "#ifdef BZ_HAVE_SYSTEM_V_MATH" << endl;
+        ofs << "#ifdef BZ_HAVE_SYSTEM_V_MATH" << std::endl;
 
     OperandTuple operands(2);
 
@@ -86,51 +86,51 @@ void two(const char* fname, int flag=0, const char* apname = 0)
             continue;
 
         if (operands.anyComplex())
-            ofs << "#ifdef BZ_HAVE_COMPLEX" << endl;
+            ofs << "#ifdef BZ_HAVE_COMPLEX" << std::endl;
 
         operands.printTemplates(ofs);
-        ofs << endl << "inline" << endl
-            << "_bz_ArrayExpr<_bz_ArrayExprOp<";
+        ofs << std::endl << "inline" << std::endl
+            << "_bz_ArrayExpr<_bz_ArrayExprBinaryOp<";
         operands.printIterators(ofs);
-        ofs << "," << endl << "    _bz_" << apname << "<";
+        ofs << "," << std::endl << "    _bz_" << apname << "<";
         operands[0].printNumtype(ofs);
         ofs << ",";
         operands[1].printNumtype(ofs);
-        ofs << "> > >" << endl
+        ofs << "> > >" << std::endl
             << fname << "(";
         operands.printArgumentList(ofs);
-        ofs << ")" << endl
-            << "{" << endl;
+        ofs << ")" << std::endl
+            << "{" << std::endl;
 
-        ofs << "    return _bz_ArrayExprOp<";
+        ofs << "    return _bz_ArrayExprBinaryOp<";
         operands.printIterators(ofs);
-        ofs << "," << endl << "    _bz_" << apname << "<";
+        ofs << "," << std::endl << "    _bz_" << apname << "<";
         operands[0].printNumtype(ofs);
         ofs << ",";
         operands[1].printNumtype(ofs);
         ofs << "> >(";
         operands.printInitializationList(ofs);
-        ofs << ");" << endl
-            << "}" << endl << endl;
+        ofs << ");" << std::endl
+            << "}" << std::endl << std::endl;
 
         if (operands.anyComplex())
-            ofs << "#endif // BZ_HAVE_COMPLEX" << endl << endl;
+            ofs << "#endif // BZ_HAVE_COMPLEX" << std::endl << std::endl;
 
     } while (++operands);
 
     if (flag != 0)
-        ofs << "#endif" << endl;
+        ofs << "#endif" << std::endl;
 
-    ofs << endl;
+    ofs << std::endl;
 }
 
 int main()
 {
-    cout << "Generating <arrayuops.cc>" << endl;
+    std::cout << "Generating <array/uops.cc>" << std::endl;
 
 ofs << 
 "#ifndef BZ_ARRAYEXPR_H\n"
-" #error <blitz/arrayuops.cc> must be included after <blitz/arrayexpr.h>\n"
+" #error <blitz/array/uops.cc> must be included after <blitz/arrayexpr.h>\n"
 "#endif // BZ_ARRAYEXPR_H\n\n";
 
     ofs.beginNamespace();

@@ -1,92 +1,3 @@
-/*
- * $Id$
- *
- * $Log$
- * Revision 1.2  2002/09/12 07:02:06  eric
- * major rewrite of weave.
- *
- * 0.
- * The underlying library code is significantly re-factored and simpler. There used to be a xxx_spec.py and xxx_info.py file for every group of type conversion classes.  The spec file held the python code that handled the conversion and the info file had most of the C code templates that were generated.  This proved pretty confusing in practice, so the two files have mostly been merged into the spec file.
- *
- * Also, there was quite a bit of code duplication running around.  The re-factoring was able to trim the standard conversion code base (excluding blitz and accelerate stuff) by about 40%.  This should be a huge maintainability and extensibility win.
- *
- * 1.
- * With multiple months of using Numeric arrays, I've found some of weave's "magic variable" names unwieldy and want to change them.  The following are the old declarations for an array x of Float32 type:
- *
- *         PyArrayObject* x = convert_to_numpy(...);
- *         float* x_data = (float*) x->data;
- *         int*   _Nx = x->dimensions;
- *         int*   _Sx = x->strides;
- *         int    _Dx = x->nd;
- *
- * The new declaration looks like this:
- *
- *         PyArrayObject* x_array = convert_to_numpy(...);
- *         float* x = (float*) x->data;
- *         int*   Nx = x->dimensions;
- *         int*   Sx = x->strides;
- *         int    Dx = x->nd;
- *
- * This is obviously not backward compatible, and will break some code (including a lot of mine).  It also makes inline() code more readable and natural to write.
- *
- * 2.
- * I've switched from CXX to Gordon McMillan's SCXX for list, tuples, and dictionaries.  I like CXX pretty well, but its use of advanced C++ (templates, etc.) caused some portability problems.  The SCXX library is similar to CXX but doesn't use templates at all.  This, like (1) is not an
- * API compatible change and requires repairing existing code.
- *
- * I have also thought about boost python, but it also makes heavy use of templates.  Moving to SCXX gets rid of almost all template usage for the standard type converters which should help portability.  std::complex and std::string from the STL are the only templates left.  Of course blitz still uses templates in a major way so weave.blitz will continue to be hard on compilers.
- *
- * I've actually considered scrapping the C++ classes for list, tuples, and
- * dictionaries, and just fall back to the standard Python C API because the classes are waaay slower than the raw API in many cases.  They are also more convenient and less error prone in many cases, so I've decided to stick with them.  The PyObject variable will always be made available for variable "x" under the name "py_x" for more speedy operations.  You'll definitely want to use these for anything that needs to be speedy.
- *
- * 3.
- * strings are converted to std::string now.  I found this to be the most useful type in for strings in my code.  Py::String was used previously.
- *
- * 4.
- * There are a number of reference count "errors" in some of the less tested conversion codes such as instance, module, etc.  I've cleaned most of these up.  I put errors in quotes here because I'm actually not positive that objects passed into "inline" really need reference counting applied to them.  The dictionaries passed in by inline() hold references to these objects so it doesn't seem that they could ever be garbage collected inadvertently.  Variables used by ext_tools, though, definitely need the reference counting done.  I don't think this is a major cost in speed, so it probably isn't worth getting rid of the ref count code.
- *
- * 5.
- * Unicode objects are now supported.  This was necessary to support rendering Unicode strings in the freetype wrappers for Chaco.
- *
- * 6.
- * blitz++ was upgraded to the latest CVS.  It compiles about twice as fast as the old blitz and looks like it supports a large number of compilers (though only gcc 2.95.3 is tested).  Compile times now take about 9 seconds on my 850 MHz PIII laptop.
- *
- * Revision 1.6  2002/05/27 19:48:57  jcumming
- * Removed use of this->.  Member data_ of templated base class is now declared
- * in derived class Array.
- *
- * Revision 1.5  2002/05/23 00:15:43  jcumming
- * Fixed bug in Array::evaluateWithIndexTraversal1() by removing cast of
- * second argument to T_numtype in call to T_update::update().  This cast
- * will occur automatically when the update operation is performed.  This
- * fixes a problem reported by Masahiro Tatsumi <tatsumi@nfi.co.jp> in
- * which one could not assign a double to an Array of TinyVectors of double
- * without explicitly constructing a TinyVector of doubles on the right-hand
- * side.  Also fixed an unused variable warning emanating from the function
- * Array::evaluateWithFastTraversal() by moving the definition of local
- * variable "last" so that it is only seen if it is used.
- *
- * Revision 1.4  2002/03/06 16:18:34  patricg
- *
- * data_ replaced by this->data_
- *
- * Revision 1.3  2001/01/26 18:30:50  tveldhui
- * More source code reorganization to reduce compile times.
- *
- * Revision 1.2  2001/01/24 22:51:51  tveldhui
- * Reorganized #include orders to avoid including the huge Vector e.t.
- * implementation when using Array.
- *
- * Revision 1.1.1.1  2000/06/19 12:26:13  tveldhui
- * Imported sources
- *
- * Revision 1.2  1998/03/14 00:04:47  tveldhui
- * 0.2-alpha-05
- *
- * Revision 1.1  1998/02/25 20:04:01  tveldhui
- * Initial revision
- *
- */
-
 #ifndef BZ_ARRAYEVAL_CC
 #define BZ_ARRAYEVAL_CC
 
@@ -126,20 +37,20 @@ BZ_NAMESPACE(blitz)
 #ifdef BZ_HAVE_STD
 #ifdef BZ_ARRAY_SPACE_FILLING_TRAVERSAL
 
-template<_bz_bool canTryFastTraversal>
+template<bool canTryFastTraversal>
 struct _bz_tryFastTraversal {
-    template<class T_numtype, int N_rank, class T_expr, class T_update>
-    static _bz_bool tryFast(Array<T_numtype,N_rank>& array, 
+    template<typename T_numtype, int N_rank, typename T_expr, typename T_update>
+    static bool tryFast(Array<T_numtype,N_rank>& array, 
         BZ_ETPARM(T_expr) expr, T_update)
     {
-        return _bz_false;
+        return false;
     }
 };
 
 template<>
-struct _bz_tryFastTraversal<_bz_true> {
-    template<class T_numtype, int N_rank, class T_expr, class T_update>
-    static _bz_bool tryFast(Array<T_numtype,N_rank>& array, 
+struct _bz_tryFastTraversal<true> {
+    template<typename T_numtype, int N_rank, typename T_expr, typename T_update>
+    static bool tryFast(Array<T_numtype,N_rank>& array, 
         BZ_ETPARM(T_expr) expr, T_update)
     {
         // See if there's an appropriate space filling curve available.
@@ -168,17 +79,17 @@ cout.flush();
 #endif
             // A curve was available -- use fast traversal.
             array.evaluateWithFastTraversal(*order, expr, T_update());
-            return _bz_true;
+            return true;
         }
 
-        return _bz_false;
+        return false;
     }
 };
 
 #endif // BZ_ARRAY_SPACE_FILLING_TRAVERSAL
 #endif // BZ_HAVE_STD
 
-template<class T_numtype, int N_rank> template<class T_expr, class T_update>
+template<typename T_numtype, int N_rank> template<typename T_expr, typename T_update>
 inline Array<T_numtype, N_rank>& 
 Array<T_numtype, N_rank>::evaluate(T_expr expr, 
     T_update)
@@ -187,13 +98,13 @@ Array<T_numtype, N_rank>::evaluate(T_expr expr,
 #ifdef BZ_DEBUG
     if (!expr.shapeCheck(shape()))
     {
-      if (assertFailMode == _bz_false)
+      if (assertFailMode == false)
       {
         cerr << "[Blitz++] Shape check failed: Module " << __FILE__
              << " line " << __LINE__ << endl
              << "          Expression: ";
-        prettyPrintFormat format(_bz_true);   // Use terse formatting
-        string str;
+        prettyPrintFormat format(true);   // Use terse formatting
+        BZ_STD_SCOPE(string) str;
         expr.prettyPrint(str, format);
         cerr << str << endl ;
       }
@@ -228,8 +139,9 @@ Array<T_numtype, N_rank>::evaluate(T_expr expr,
         return *this;
 
 #ifdef BZ_DEBUG_TRAVERSE
-cout << "T_expr::numIndexPlaceholders = " << T_expr::numIndexPlaceholders
-     << endl; cout.flush();
+    cout << "T_expr::numIndexPlaceholders = " << T_expr::numIndexPlaceholders
+         << endl; 
+    cout.flush();
 #endif
 
     // Tau profiling code.  Provide Tau with a pretty-printed version of
@@ -237,11 +149,11 @@ cout << "T_expr::numIndexPlaceholders = " << T_expr::numIndexPlaceholders
     // NEEDS_WORK-- use a static initializer somehow.
 
 #ifdef BZ_TAU_PROFILING
-    static string exprDescription;
+    static BZ_STD_SCOPE(string) exprDescription;
     if (!exprDescription.length())   // faked static initializer
     {
         exprDescription = "A";
-        prettyPrintFormat format(_bz_true);   // Terse mode on
+        prettyPrintFormat format(true);   // Terse mode on
         format.nextArrayOperandSymbol();
         T_update::prettyPrint(exprDescription);
         expr.prettyPrint(exprDescription, format);
@@ -312,7 +224,7 @@ cout << "T_expr::numIndexPlaceholders = " << T_expr::numIndexPlaceholders
     }
 }
 
-template<class T_numtype, int N_rank> template<class T_expr, class T_update>
+template<typename T_numtype, int N_rank> template<typename T_expr, typename T_update>
 inline Array<T_numtype, N_rank>&
 Array<T_numtype, N_rank>::evaluateWithStackTraversal1(
     T_expr expr, T_update)
@@ -325,7 +237,7 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversal1(
     iter.loadStride(firstRank);
     expr.loadStride(firstRank);
 
-    _bz_bool useUnitStride = iter.isUnitStride(firstRank)
+    bool useUnitStride = iter.isUnitStride(firstRank)
           && expr.isUnitStride(firstRank);
 
 #ifdef BZ_ARRAY_EXPR_USE_COMMON_STRIDE
@@ -342,7 +254,7 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversal1(
  #endif
 #else
     int commonStride = 1;
-    bool useCommonStride = _bz_false;
+    bool useCommonStride = false;
 #endif
 
     const T_numtype * last = iter.data() + length(firstRank) 
@@ -356,30 +268,30 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversal1(
     BZ_DEBUG_MESSAGE("BZ_USE_FAST_READ_ARRAY_EXPR with commonStride");
 #endif
         int ubound = length(firstRank) * commonStride;
-        T_numtype* _bz_restrict data = const_cast<T_numtype*>(iter.data());
+        T_numtype* restrict data = const_cast<T_numtype*>(iter.data());
 
         if (commonStride == 1)
         {
  #ifndef BZ_ARRAY_STACK_TRAVERSAL_UNROLL
             for (int i=0; i < ubound; ++i)
-                T_update::update(data[i], expr.fastRead(i));
+                T_update::update(*data++, expr.fastRead(i));
  #else
             int n1 = ubound & 3;
             int i = 0;
             for (; i < n1; ++i)
-                T_update::update(data[i], expr.fastRead(i));
+                T_update::update(*data++, expr.fastRead(i));
            
             for (; i < ubound; i += 4)
             {
 #ifndef BZ_ARRAY_STACK_TRAVERSAL_CSE_AND_ANTIALIAS
-                T_update::update(data[i], expr.fastRead(i));
-                T_update::update(data[i+1], expr.fastRead(i+1));
-                T_update::update(data[i+2], expr.fastRead(i+2));
-                T_update::update(data[i+3], expr.fastRead(i+3));
+                T_update::update(*data++, expr.fastRead(i));
+                T_update::update(*data++, expr.fastRead(i+1));
+                T_update::update(*data++, expr.fastRead(i+2));
+                T_update::update(*data++, expr.fastRead(i+3));
 #else
-                int t1 = i+1;
-                int t2 = i+2;
-                int t3 = i+3;
+                const int t1 = i+1;
+                const int t2 = i+2;
+                const int t3 = i+3;
 
                 _bz_typename T_expr::T_numtype tmp1, tmp2, tmp3, tmp4;
 
@@ -388,10 +300,10 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversal1(
                 tmp3 = expr.fastRead(BZ_NO_PROPAGATE(t2));
                 tmp4 = expr.fastRead(BZ_NO_PROPAGATE(t3));
 
-                T_update::update(data[i], BZ_NO_PROPAGATE(tmp1));
-                T_update::update(data[BZ_NO_PROPAGATE(t1)], tmp2);
-                T_update::update(data[BZ_NO_PROPAGATE(t2)], tmp3);
-                T_update::update(data[BZ_NO_PROPAGATE(t3)], tmp4);
+                T_update::update(*data++, tmp1);
+                T_update::update(*data++, tmp2);
+                T_update::update(*data++, tmp3);
+                T_update::update(*data++, tmp4);
 #endif
             }
  #endif // BZ_ARRAY_STACK_TRAVERSAL_UNROLL
@@ -401,17 +313,17 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversal1(
         else {
 
   #ifndef BZ_ARRAY_STACK_TRAVERSAL_UNROLL
-            for (int i=0; i < ubound; i += commonStride)
+            for (int i=0; i != ubound; i += commonStride)
                 T_update::update(data[i], expr.fastRead(i));
   #else
             int n1 = (length(firstRank) & 3) * commonStride;
 
             int i = 0;
-            for (; i < n1; i += commonStride)
+            for (; i != n1; i += commonStride)
                 T_update::update(data[i], expr.fastRead(i));
 
             int strideInc = 4 * commonStride;
-            for (; i < ubound; i += strideInc)
+            for (; i != ubound; i += strideInc)
             {
                 T_update::update(data[i], expr.fastRead(i));
                 int i2 = i + commonStride;
@@ -450,7 +362,7 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversal1(
     return *this;
 }
 
-template<class T_numtype, int N_rank> template<class T_expr, class T_update>
+template<typename T_numtype, int N_rank> template<typename T_expr, typename T_update>
 inline Array<T_numtype, N_rank>&
 Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
     T_expr expr, T_update)
@@ -492,7 +404,7 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
      */
 
     const int maxRank = ordering(0);
-    const int secondLastRank = ordering(1);
+    // const int secondLastRank = ordering(1);
 
     // Create an iterator for the array receiving the result
     FastArrayIterator<T_numtype, N_rank> iter(*this);
@@ -516,7 +428,7 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
      * we might take advantage of this and generate more
      * efficient code.
      */
-    _bz_bool useUnitStride = iter.isUnitStride(maxRank)
+    bool useUnitStride = iter.isUnitStride(maxRank)
                           && expr.isUnitStride(maxRank);
 
     /*
@@ -539,7 +451,7 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
 
 #else
     int commonStride = 1;
-    bool useCommonStride = _bz_false;
+    bool useCommonStride = false;
 #endif
 
     /*
@@ -615,9 +527,6 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
 
         if ((useUnitStride) || (useCommonStride))
         {
-            T_numtype * _bz_restrict end = const_cast<T_numtype*>(iter.data()) 
-                + lastLength;
-
 #ifdef BZ_USE_FAST_READ_ARRAY_EXPR
 
             /*
@@ -638,7 +547,7 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
              * is ugly, so why bother.
              */
 
-            T_numtype* _bz_restrict data = const_cast<T_numtype*>(iter.data());
+            T_numtype* restrict data = const_cast<T_numtype*>(iter.data());
 
             /*
              * BZ_NEEDS_WORK-- need to implement optional unrolling.
@@ -646,11 +555,11 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
             if (commonStride == 1)
             {
                 for (int i=0; i < ubound; ++i)
-                    T_update::update(data[i], expr.fastRead(i));
+                    T_update::update(*data++, expr.fastRead(i));
             }
 #ifdef BZ_ARRAY_EXPR_USE_COMMON_STRIDE
             else {
-                for (int i=0; i < ubound; i += commonStride)
+                for (int i=0; i != ubound; i += commonStride)
                     T_update::update(data[i], expr.fastRead(i));
             }
 #endif
@@ -666,6 +575,9 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
             // This bit of code not really needed; should remove at some
             // point, along with the test for BZ_USE_FAST_READ_ARRAY_EXPR 
 
+            T_numtype * restrict end = const_cast<T_numtype*>(iter.data()) 
+                + lastLength;
+
             while (iter.data() != end) 
             {
                 T_update::update(*const_cast<T_numtype*>(iter.data()), *expr);
@@ -680,7 +592,7 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
              * loop.  This is going to hurt performance.  Luckily 95% of
              * the time, we hit the cases above.
              */
-            T_numtype * _bz_restrict end = const_cast<T_numtype*>(iter.data())
+            T_numtype * restrict end = const_cast<T_numtype*>(iter.data())
                 + lastLength * stride(maxRank);
 
             while (iter.data() != end)
@@ -740,7 +652,7 @@ Array<T_numtype, N_rank>::evaluateWithStackTraversalN(
     return *this;
 }
 
-template<class T_numtype, int N_rank> template<class T_expr, class T_update>
+template<typename T_numtype, int N_rank> template<typename T_expr, typename T_update>
 inline Array<T_numtype, N_rank>&
 Array<T_numtype, N_rank>::evaluateWithIndexTraversal1(
     T_expr expr, T_update)
@@ -749,13 +661,13 @@ Array<T_numtype, N_rank>::evaluateWithIndexTraversal1(
 
     if (stride(firstRank) == 1)
     {
-        T_numtype * _bz_restrict iter = data_;
+        T_numtype * restrict iter = data_ + lbound(firstRank);
         int last = ubound(firstRank);
 
         for (index[0] = lbound(firstRank); index[0] <= last;
             ++index[0])
         {
-            T_update::update(iter[index[0]], expr(index));
+            T_update::update(*iter++, expr(index));
         }
     }
     else {
@@ -775,7 +687,7 @@ Array<T_numtype, N_rank>::evaluateWithIndexTraversal1(
     return *this;
 }
 
-template<class T_numtype, int N_rank> template<class T_expr, class T_update>
+template<typename T_numtype, int N_rank> template<typename T_expr, typename T_update>
 inline Array<T_numtype, N_rank>&
 Array<T_numtype, N_rank>::evaluateWithIndexTraversalN(
     T_expr expr, T_update)
@@ -784,13 +696,13 @@ Array<T_numtype, N_rank>::evaluateWithIndexTraversalN(
     // index traversal for the source expression
    
     const int maxRank = ordering(0);
-    const int secondLastRank = ordering(1);
 
 #ifdef BZ_DEBUG_TRAVERSE
-cout << "Index traversal: N_rank = " << N_rank << endl;
-cout << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
-     << endl;
-cout.flush();
+    const int secondLastRank = ordering(1);
+    cout << "Index traversal: N_rank = " << N_rank << endl;
+    cout << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
+         << endl;
+    cout.flush();
 #endif
 
     FastArrayIterator<T_numtype, N_rank> iter(*this);
@@ -806,7 +718,7 @@ cout.flush();
     for (int i=0; i < N_rank; ++i)
       last(i) = storage_.base(i) + length_(i);
 
-    int lastLength = length(maxRank);
+    // int lastLength = length(maxRank);
 
     while (true) {
 
@@ -856,7 +768,7 @@ cout.flush();
 #ifdef BZ_HAVE_STD
 #ifdef BZ_ARRAY_SPACE_FILLING_TRAVERSAL
 
-template<class T_numtype, int N_rank> template<class T_expr, class T_update>
+template<typename T_numtype, int N_rank> template<typename T_expr, typename T_update>
 inline Array<T_numtype, N_rank>&
 Array<T_numtype, N_rank>::evaluateWithFastTraversal(
     const TraversalOrder<N_rank - 1>& order, 
@@ -864,18 +776,18 @@ Array<T_numtype, N_rank>::evaluateWithFastTraversal(
     T_update)
 {
     const int maxRank = ordering(0);
-    const int secondLastRank = ordering(1);
 
 #ifdef BZ_DEBUG_TRAVERSE
-cerr << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
-     << endl;
+    const int secondLastRank = ordering(1);
+    cerr << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
+         << endl;
 #endif
 
     FastArrayIterator<T_numtype, N_rank> iter(*this);
     iter.push(0);
     expr.push(0);
 
-    _bz_bool useUnitStride = iter.isUnitStride(maxRank) 
+    bool useUnitStride = iter.isUnitStride(maxRank) 
                           && expr.isUnitStride(maxRank);
 
 #ifdef BZ_ARRAY_EXPR_USE_COMMON_STRIDE
@@ -886,7 +798,7 @@ cerr << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
         && expr.isStride(maxRank,commonStride);
 #else
     int commonStride = 1;
-    bool useCommonStride = _bz_false;
+    bool useCommonStride = false;
 #endif
 
     int lastLength = length(maxRank);
@@ -919,25 +831,25 @@ cerr << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
         {
 #ifdef BZ_USE_FAST_READ_ARRAY_EXPR
             int ubound = lastLength * commonStride;
-            T_numtype* _bz_restrict data = const_cast<T_numtype*>(iter.data());
+            T_numtype* restrict data = const_cast<T_numtype*>(iter.data());
 
             if (commonStride == 1)
             {            
  #ifndef BZ_ARRAY_FAST_TRAVERSAL_UNROLL
                 for (int i=0; i < ubound; ++i)
-                    T_update::update(data[i], expr.fastRead(i));
+                    T_update::update(*data++, expr.fastRead(i));
  #else
                 int n1 = ubound & 3;
                 int i=0;
                 for (; i < n1; ++i)
-                    T_update::update(data[i], expr.fastRead(i));
+                    T_update::update(*data++, expr.fastRead(i));
 
                 for (; i < ubound; i += 4)
                 {
-                    T_update::update(data[i], expr.fastRead(i));
-                    T_update::update(data[i+1], expr.fastRead(i+1));
-                    T_update::update(data[i+2], expr.fastRead(i+2));
-                    T_update::update(data[i+3], expr.fastRead(i+3));
+                    T_update::update(*data++, expr.fastRead(i));
+                    T_update::update(*data++, expr.fastRead(i+1));
+                    T_update::update(*data++, expr.fastRead(i+2));
+                    T_update::update(*data++, expr.fastRead(i+3));
                 }
  #endif  // BZ_ARRAY_FAST_TRAVERSAL_UNROLL
             }
@@ -951,7 +863,7 @@ cerr << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
             iter.advance(lastLength * commonStride);
             expr.advance(lastLength * commonStride);
 #else   // ! BZ_USE_FAST_READ_ARRAY_EXPR
-            T_numtype* _bz_restrict last = const_cast<T_numtype*>(iter.data()) 
+            T_numtype* restrict last = const_cast<T_numtype*>(iter.data()) 
                 + lastLength * commonStride;
 
             while (iter.data() != last)
@@ -966,7 +878,7 @@ cerr << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
         else {
             // No common stride
 
-            T_numtype* _bz_restrict last = const_cast<T_numtype*>(iter.data()) 
+            T_numtype* restrict last = const_cast<T_numtype*>(iter.data()) 
                 + lastLength * stride(maxRank);
 
             while (iter.data() != last)
@@ -988,7 +900,7 @@ cerr << "maxRank = " << maxRank << " secondLastRank = " << secondLastRank
 
 #ifdef BZ_ARRAY_2D_STENCIL_TILING
 
-template<class T_numtype, int N_rank> template<class T_expr, class T_update>
+template<typename T_numtype, int N_rank> template<typename T_expr, typename T_update>
 inline Array<T_numtype, N_rank>& 
 Array<T_numtype, N_rank>::evaluateWithTiled2DTraversal(
     T_expr expr, T_update)
@@ -1004,7 +916,7 @@ Array<T_numtype, N_rank>::evaluateWithTiled2DTraversal(
     int count = 0;
 #endif
 
-    _bz_bool useUnitStride = iter.isUnitStride(minorRank)
+    bool useUnitStride = iter.isUnitStride(minorRank)
                           && expr.isUnitStride(minorRank);
 
 #ifdef BZ_ARRAY_EXPR_USE_COMMON_STRIDE
@@ -1015,7 +927,7 @@ Array<T_numtype, N_rank>::evaluateWithTiled2DTraversal(
         && expr.isStride(minorRank,commonStride);
 #else
     int commonStride = 1;
-    bool useCommonStride = _bz_false;
+    bool useCommonStride = false;
 #endif
 
     // Determine if a common major stride exists
@@ -1071,7 +983,7 @@ Array<T_numtype, N_rank>::evaluateWithTiled2DTraversal(
                 if ((useUnitStride) && (haveCommonMajorStride))
                 {
                     int offset = 0;
-                    T_numtype* _bz_restrict data = const_cast<T_numtype*>
+                    T_numtype* restrict data = const_cast<T_numtype*>
                         (iter.data());
 
                     for (int i=bi; i < ni; ++i)
@@ -1187,7 +1099,7 @@ Array<T_numtype, N_rank>::evaluateWithTiled2DTraversal(
 
 #ifdef BZ_ARRAY_2D_STENCIL_TILING
 
-template<class T_numtype, int N_rank> template<class T_expr, class T_update>
+template<typename T_numtype, int N_rank> template<typename T_expr, typename T_update>
 inline Array<T_numtype, N_rank>& 
 Array<T_numtype, N_rank>::evaluateWithTiled2DTraversal(
     T_expr expr, T_update)
@@ -1201,7 +1113,7 @@ Array<T_numtype, N_rank>::evaluateWithTiled2DTraversal(
     iter.push(0);
     expr.push(0);
 
-    _bz_bool useUnitStride = iter.isUnitStride(minorRank)
+    bool useUnitStride = iter.isUnitStride(minorRank)
                           && expr.isUnitStride(minorRank);
 
 #ifdef BZ_ARRAY_EXPR_USE_COMMON_STRIDE
@@ -1212,7 +1124,7 @@ Array<T_numtype, N_rank>::evaluateWithTiled2DTraversal(
         && expr.isStride(minorRank,commonStride);
 #else
     int commonStride = 1;
-    bool useCommonStride = _bz_false;
+    bool useCommonStride = false;
 #endif
 
     int maxi = length(majorRank);
@@ -1259,18 +1171,18 @@ Array<T_numtype, N_rank>::evaluateWithTiled2DTraversal(
 
                 if (useUnitStride)
                 {
-                    T_numtype* _bz_restrict data = const_cast<T_numtype*>
+                    T_numtype* restrict data = const_cast<T_numtype*>
                         (iter.data());
 
                     int ubound = (nj-bj);
                     for (int j=0; j < ubound; ++j)
-                        T_update::update(data[j], expr.fastRead(j));
+                        T_update::update(*data++, expr.fastRead(j));
                 }
 #ifdef BZ_ARRAY_EXPR_USE_COMMON_STRIDE
                 else if (useCommonStride)
                 {
                     int ubound = (nj-bj) * commonStride;
-                    T_numtype* _bz_restrict data = const_cast<T_numtype*>
+                    T_numtype* restrict data = const_cast<T_numtype*>
                         (iter.data());
 
                     for (int j=0; j < ubound; j += commonStride)

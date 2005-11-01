@@ -1,7 +1,6 @@
+// -*- C++ -*-
 /***************************************************************************
  * blitz/array/map.h      Declaration of the ArrayIndexMapping class
- *
- * $Id$
  *
  * Copyright (C) 1997-2001 Todd Veldhuizen <tveldhui@oonumerics.org>
  *
@@ -21,76 +20,7 @@
  * For more information, please see the Blitz++ Home Page:
  *    http://oonumerics.org/blitz/
  *
- ***************************************************************************
- * $Log$
- * Revision 1.2  2002/09/12 07:02:06  eric
- * major rewrite of weave.
- *
- * 0.
- * The underlying library code is significantly re-factored and simpler. There used to be a xxx_spec.py and xxx_info.py file for every group of type conversion classes.  The spec file held the python code that handled the conversion and the info file had most of the C code templates that were generated.  This proved pretty confusing in practice, so the two files have mostly been merged into the spec file.
- *
- * Also, there was quite a bit of code duplication running around.  The re-factoring was able to trim the standard conversion code base (excluding blitz and accelerate stuff) by about 40%.  This should be a huge maintainability and extensibility win.
- *
- * 1.
- * With multiple months of using Numeric arrays, I've found some of weave's "magic variable" names unwieldy and want to change them.  The following are the old declarations for an array x of Float32 type:
- *
- *         PyArrayObject* x = convert_to_numpy(...);
- *         float* x_data = (float*) x->data;
- *         int*   _Nx = x->dimensions;
- *         int*   _Sx = x->strides;
- *         int    _Dx = x->nd;
- *
- * The new declaration looks like this:
- *
- *         PyArrayObject* x_array = convert_to_numpy(...);
- *         float* x = (float*) x->data;
- *         int*   Nx = x->dimensions;
- *         int*   Sx = x->strides;
- *         int    Dx = x->nd;
- *
- * This is obviously not backward compatible, and will break some code (including a lot of mine).  It also makes inline() code more readable and natural to write.
- *
- * 2.
- * I've switched from CXX to Gordon McMillan's SCXX for list, tuples, and dictionaries.  I like CXX pretty well, but its use of advanced C++ (templates, etc.) caused some portability problems.  The SCXX library is similar to CXX but doesn't use templates at all.  This, like (1) is not an
- * API compatible change and requires repairing existing code.
- *
- * I have also thought about boost python, but it also makes heavy use of templates.  Moving to SCXX gets rid of almost all template usage for the standard type converters which should help portability.  std::complex and std::string from the STL are the only templates left.  Of course blitz still uses templates in a major way so weave.blitz will continue to be hard on compilers.
- *
- * I've actually considered scrapping the C++ classes for list, tuples, and
- * dictionaries, and just fall back to the standard Python C API because the classes are waaay slower than the raw API in many cases.  They are also more convenient and less error prone in many cases, so I've decided to stick with them.  The PyObject variable will always be made available for variable "x" under the name "py_x" for more speedy operations.  You'll definitely want to use these for anything that needs to be speedy.
- *
- * 3.
- * strings are converted to std::string now.  I found this to be the most useful type in for strings in my code.  Py::String was used previously.
- *
- * 4.
- * There are a number of reference count "errors" in some of the less tested conversion codes such as instance, module, etc.  I've cleaned most of these up.  I put errors in quotes here because I'm actually not positive that objects passed into "inline" really need reference counting applied to them.  The dictionaries passed in by inline() hold references to these objects so it doesn't seem that they could ever be garbage collected inadvertently.  Variables used by ext_tools, though, definitely need the reference counting done.  I don't think this is a major cost in speed, so it probably isn't worth getting rid of the ref count code.
- *
- * 5.
- * Unicode objects are now supported.  This was necessary to support rendering Unicode strings in the freetype wrappers for Chaco.
- *
- * 6.
- * blitz++ was upgraded to the latest CVS.  It compiles about twice as fast as the old blitz and looks like it supports a large number of compilers (though only gcc 2.95.3 is tested).  Compile times now take about 9 seconds on my 850 MHz PIII laptop.
- *
- * Revision 1.3  2002/05/10 14:32:08  patricg
- *
- * private constructor for template class ArrayIndexMapping did not had an
- * explicit initialiser for the private member random_, added it.
- * Compaq C++ V6.5-014 for Compaq Tru64 UNIX V5.1A (Rev. 1885) complained about
- * this.
- *
- * Revision 1.2  2001/01/24 20:22:51  tveldhui
- * Updated copyright date in headers.
- *
- * Revision 1.1.1.1  2000/06/19 12:26:13  tveldhui
- * Imported sources
- *
- * Revision 1.2  1998/03/14 00:04:47  tveldhui
- * 0.2-alpha-05
- *
- * Revision 1.1  1997/07/16 14:51:20  tveldhui
- * Update: Alpha release 0.2 (Arrays)
- *
- */
+ ****************************************************************************/
 
 /*
  * ArrayIndexMapping is used to implement tensor array notation.  For
@@ -123,7 +53,7 @@ BZ_NAMESPACE(blitz)
 
 template<int N_rank>
 struct _bz_doArrayIndexMapping {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, N_rank>&, 
         const TinyVector<int,N_destRank>&, int, int, int, int, int, int,
         int, int, int, int, int)
@@ -132,12 +62,13 @@ struct _bz_doArrayIndexMapping {
         // rank greater than 11, then you'll get a precondition failure
         // here.
         BZPRECONDITION(0);
+        return T_numtype();
     }
 };
 
 template<>
 struct _bz_doArrayIndexMapping<1> {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, 1>& array,
         const TinyVector<int,N_destRank>& index, int i0, int, int, int, int, 
         int, int, int, int, int, int)
@@ -149,7 +80,7 @@ struct _bz_doArrayIndexMapping<1> {
 
 template<>
 struct _bz_doArrayIndexMapping<2> {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, 2>& array,
         const TinyVector<int,N_destRank>& index, int i0, int i1, int, 
         int, int, int, int, int, int, int, int)
@@ -160,7 +91,7 @@ struct _bz_doArrayIndexMapping<2> {
 
 template<>
 struct _bz_doArrayIndexMapping<3> {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, 3>& array,
         const TinyVector<int,N_destRank>& index, int i0, int i1, int i2,
         int, int, int, int, int, int, int, int)
@@ -171,7 +102,7 @@ struct _bz_doArrayIndexMapping<3> {
 
 template<>
 struct _bz_doArrayIndexMapping<4> {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, 4>& array,
         const TinyVector<int,N_destRank>& index, int i0, int i1, int i2,
         int i3, int, int, int, int, int, int, int)
@@ -182,7 +113,7 @@ struct _bz_doArrayIndexMapping<4> {
 
 template<>
 struct _bz_doArrayIndexMapping<5> {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, 5>& array,
         const TinyVector<int,N_destRank>& index, int i0, int i1, int i2,
         int i3, int i4, int, int, int, int, int, int)
@@ -193,7 +124,7 @@ struct _bz_doArrayIndexMapping<5> {
 
 template<>
 struct _bz_doArrayIndexMapping<6> {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, 6>& array,
         const TinyVector<int,N_destRank>& index, int i0, int i1, int i2,
         int i3, int i4, int i5, int, int, int, int, int)
@@ -205,7 +136,7 @@ struct _bz_doArrayIndexMapping<6> {
 
 template<>
 struct _bz_doArrayIndexMapping<7> {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, 7>& array,
         const TinyVector<int,N_destRank>& index, int i0, int i1, int i2,
         int i3, int i4, int i5, int i6, int, int, int, int)
@@ -217,7 +148,7 @@ struct _bz_doArrayIndexMapping<7> {
 
 template<>
 struct _bz_doArrayIndexMapping<8> {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, 8>& array,
         const TinyVector<int,N_destRank>& index, int i0, int i1, int i2,
         int i3, int i4, int i5, int i6, int i7, int, int, int)
@@ -229,7 +160,7 @@ struct _bz_doArrayIndexMapping<8> {
 
 template<>
 struct _bz_doArrayIndexMapping<9> {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, 9>& array,
         const TinyVector<int,N_destRank>& index, int i0, int i1, int i2,
         int i3, int i4, int i5, int i6, int i7, int i8, int, int)
@@ -241,7 +172,7 @@ struct _bz_doArrayIndexMapping<9> {
 
 template<>
 struct _bz_doArrayIndexMapping<10> {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, 10>& array,
         const TinyVector<int,N_destRank>& index, int i0, int i1, int i2,
         int i3, int i4, int i5, int i6, int i7, int i8, int i9, int)
@@ -253,7 +184,7 @@ struct _bz_doArrayIndexMapping<10> {
 
 template<>
 struct _bz_doArrayIndexMapping<11> {
-    template<class T_numtype, int N_destRank>
+    template<typename T_numtype, int N_destRank>
     static T_numtype map(const Array<T_numtype, 11>& array,
         const TinyVector<int,N_destRank>& index, int i0, int i1, int i2,
         int i3, int i4, int i5, int i6, int i7, int i8, int i9, int i10)
@@ -264,7 +195,7 @@ struct _bz_doArrayIndexMapping<11> {
     }
 };
 
-template<class P_numtype, int N_rank, int N_map0, int N_map1=0, int N_map2=0,
+template<typename P_numtype, int N_rank, int N_map0, int N_map1=0, int N_map2=0,
     int N_map3=0, int N_map4=0, int N_map5=0, int N_map6=0, int N_map7=0, 
     int N_map8=0, int N_map9=0, int N_map10=0>
 class ArrayIndexMapping {
@@ -279,7 +210,7 @@ public:
      * then maxRank10 + 1, since the IndexPlaceholders start at 0 rather than
      * 1.  
      */
-    enum {
+    static const int
         maxRank1 = (N_map0 > N_map1) ? N_map0 : N_map1,
         maxRank2 = (N_map2 > maxRank1) ? N_map2 : maxRank1,
         maxRank3 = (N_map3 > maxRank2) ? N_map3 : maxRank2,
@@ -289,11 +220,12 @@ public:
         maxRank7 = (N_map7 > maxRank6) ? N_map7 : maxRank6,
         maxRank8 = (N_map8 > maxRank7) ? N_map8 : maxRank7,
         maxRank9 = (N_map9 > maxRank8) ? N_map9 : maxRank8,
-        maxRank10 = (N_map10 > maxRank9) ? N_map10 : maxRank9
-    };
+        maxRank10 = (N_map10 > maxRank9) ? N_map10 : maxRank9;
 
-    enum { numArrayOperands = 1, numIndexPlaceholders = 1,
-        rank = maxRank10 + 1 };
+    static const int 
+        numArrayOperands = 1, 
+        numIndexPlaceholders = 1,
+        rank = maxRank10 + 1;
 
     ArrayIndexMapping(const Array<T_numtype, N_rank>& array)
         : array_(array)
@@ -328,27 +260,27 @@ public:
     int ascending(int rank)
     {
         if (N_map0 == rank)
-            return array_.ascending(0);
+            return array_.isRankStoredAscending(0);
         else if ((N_map1 == rank) && (N_rank > 1))
-            return array_.ascending(1);
+            return array_.isRankStoredAscending(1);
         else if ((N_map2 == rank) && (N_rank > 2))
-            return array_.ascending(2);
+            return array_.isRankStoredAscending(2);
         else if ((N_map3 == rank) && (N_rank > 3))
-            return array_.ascending(3);
+            return array_.isRankStoredAscending(3);
         else if ((N_map4 == rank) && (N_rank > 4))
-            return array_.ascending(4);
+            return array_.isRankStoredAscending(4);
         else if ((N_map5 == rank) && (N_rank > 5))
-            return array_.ascending(5);
+            return array_.isRankStoredAscending(5);
         else if ((N_map6 == rank) && (N_rank > 6))
-            return array_.ascending(6);
+            return array_.isRankStoredAscending(6);
         else if ((N_map7 == rank) && (N_rank > 7))
-            return array_.ascending(7);
+            return array_.isRankStoredAscending(7);
         else if ((N_map8 == rank) && (N_rank > 8))
-            return array_.ascending(8);
+            return array_.isRankStoredAscending(8);
         else if ((N_map9 == rank) && (N_rank > 9))
-            return array_.ascending(9);
+            return array_.isRankStoredAscending(9);
         else if ((N_map10 == rank) && (N_rank > 10))
-            return array_.ascending(10);
+            return array_.isRankStoredAscending(10);
         else
             return INT_MIN;   // tiny(int());
     }
@@ -477,7 +409,7 @@ public:
         BZPRECONDITION(0);
     }
 
-    _bz_bool isUnitStride(int rank) const
+    bool isUnitStride(int) const
     {
         BZPRECONDITION(0);
         return false;
@@ -488,8 +420,8 @@ public:
         BZPRECONDITION(0);
     }
 
-    _bz_bool canCollapse(int,int) const
-    {   BZPRECONDITION(0);  return _bz_false; }
+    bool canCollapse(int,int) const
+    {   BZPRECONDITION(0);  return false; }
 
     T_numtype operator[](int)
     {   
@@ -509,30 +441,30 @@ public:
         return 0;
     }
 
-    _bz_bool isStride(int,int) const
+    bool isStride(int,int) const
     {
         BZPRECONDITION(0);
-        return _bz_true;
+        return true;
     }
 
     template<int N_rank2>
-    void moveTo(const TinyVector<int,N_rank2>& i)
+    void moveTo(const TinyVector<int,N_rank2>&)
     {
         BZPRECONDITION(0);
         return ;
     }
 
-    void prettyPrint(string& str, prettyPrintFormat& format) const
+    void prettyPrint(BZ_STD_SCOPE(string) &str, prettyPrintFormat&) const
     {
         // NEEDS_WORK-- do real formatting for reductions
         str += "map[NEEDS_WORK]";
     }
 
-    template<class T_shape>
-    _bz_bool shapeCheck(const T_shape& shape) const
+    template<typename T_shape>
+    bool shapeCheck(const T_shape&) const
     { 
         // NEEDS_WORK-- do a real shape check (tricky)
-        return _bz_true; 
+        return true; 
     }
 
 private:

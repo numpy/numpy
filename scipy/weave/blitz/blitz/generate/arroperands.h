@@ -1,5 +1,6 @@
-#include <iostream.h>
-#include <fstream.h>
+#include <iostream>
+#include <string>
+#include <fstream>
 
 class operand {
 public:
@@ -15,19 +16,19 @@ public:
     void setOperandNum(int i) 
     { operandNum_ = i; }
 
-    virtual void printName(ostream& os)
+    virtual void printName(std::ostream& os)
     { 
         os << name_;           
         printTemplateList(os);
     }
 
-    virtual void printTemplate(ostream& os, int n=0)
+    virtual void printTemplate(std::ostream& os, int n=0)
     {
         if (haveTemplate())
             os << template_ << operandNum_;
     }
 
-    virtual void printTemplateType(ostream& os, int n=0)
+    virtual void printTemplateType(std::ostream& os, int n=0)
     {
         if (haveTemplate())
             os << "class";
@@ -56,7 +57,7 @@ public:
     virtual int passByReference() const
     { return 0; }
 
-    virtual void printArgument(ostream& os)
+    virtual void printArgument(std::ostream& os)
     {
         if (passByReference())
             os << "const ";
@@ -67,13 +68,13 @@ public:
         os << " d" << operandNum_;      
     }
 
-    virtual void printIterator(ostream& os)
+    virtual void printIterator(std::ostream& os)
     {
         os << iterator_;
         printTemplateList(os);
     }
 
-    virtual void printTemplateList(ostream& os)
+    virtual void printTemplateList(std::ostream& os)
     {
         if (haveTemplate())
         {
@@ -90,12 +91,12 @@ public:
         }
     }
 
-    virtual void printNumtype(ostream& os)
+    virtual void printNumtype(std::ostream& os)
     {
         os << numtype_ << operandNum_;
     }
 
-    virtual void printInitialization(ostream& os)
+    virtual void printInitialization(std::ostream& os)
     {
         os << "d" << operandNum_;       
         if (initialization_ != 0)
@@ -117,7 +118,7 @@ public:
       : operand("Array", 0, "ArrayIterator", "T_numtype", ".begin()")
     { }
 
-    virtual void printTemplate(ostream& os, int n)
+    virtual void printTemplate(std::ostream& os, int n)
     {
         switch(n)
         {
@@ -129,7 +130,7 @@ public:
     virtual int passByReference() const
     { return 1; }
 
-    virtual void printTemplateType(ostream& os, int n=0)
+    virtual void printTemplateType(std::ostream& os, int n=0)
     {
         switch(n)
         {
@@ -154,9 +155,9 @@ public:
            0, 0)
     { }
 
-    virtual void printNumtype(ostream& os)
+    virtual void printNumtype(std::ostream& os)
     {
-        os << "_bz_typename P_expr" << operandNum_ << "::T_numtype";
+        os << "typename P_expr" << operandNum_ << "::T_numtype";
     }
 };
 
@@ -166,12 +167,12 @@ public:
       : operand("IndexPlaceholder", "N_index", "IndexPlaceholder", 0, 0)
     { }
 
-    virtual void printNumtype(ostream& os)
+    virtual void printNumtype(std::ostream& os)
     {
         os << "int";
     }
 
-    virtual void printTemplateType(ostream& os, int n=0)
+    virtual void printTemplateType(std::ostream& os, int n=0)
     {
         if (haveTemplate())
             os << "int";
@@ -184,18 +185,18 @@ public:
       : operand(name, 0, 0, name, 0)
     { }
 
-    virtual void printIterator(ostream& os)
+    virtual void printIterator(std::ostream& os)
     {
         os << "_bz_ArrayExprConstant<" << name_ << ">";
     }
 
-    virtual void printInitialization(ostream& os)
+    virtual void printInitialization(std::ostream& os)
     {
         os << "_bz_ArrayExprConstant<" << name_ << ">(d"
            << operandNum_ << ")";
     }
 
-    virtual void printNumtype(ostream& os)
+    virtual void printNumtype(std::ostream& os)
     {
         os << name_;
     }
@@ -216,20 +217,20 @@ public:
     virtual int isComplex() const
     { return 1; }
 
-    virtual void printIterator(ostream& os)
+    virtual void printIterator(std::ostream& os)
     {
         os << "_bz_ArrayExprConstant<";
         printNumtype(os);
         os << "> ";
     }
 
-    virtual void printInitialization(ostream& os)
+    virtual void printInitialization(std::ostream& os)
     {
         printIterator(os);
         os << "(d" << operandNum_ << ")";
     }
 
-    virtual void printNumtype(ostream& os)
+    virtual void printNumtype(std::ostream& os)
     {
         os << "complex<";
         printTemplate(os);

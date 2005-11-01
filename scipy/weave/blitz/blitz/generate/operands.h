@@ -1,6 +1,6 @@
-#include <iostream.h>
-#include <string.h>
-#include <fstream.h>
+#include <iostream>
+#include <string>
+#include <fstream>
 
 class operand {
 public:
@@ -16,7 +16,7 @@ public:
     void setOperandNum(int i) 
     { operandNum_ = i; }
 
-    virtual void printName(ostream& os)
+    virtual void printName(std::ostream& os)
     { 
         os << name_;           
         if (haveTemplate())
@@ -25,13 +25,13 @@ public:
         }
     }
 
-    virtual void printTemplate(ostream& os, int n=0)
+    virtual void printTemplate(std::ostream& os, int n=0)
     {
         if (haveTemplate())
             os << template_ << operandNum_;
     }
 
-    virtual void printTemplateType(ostream& os, int n=0)
+    virtual void printTemplateType(std::ostream& os, int n=0)
     {
         if (haveTemplate())
             os << "class";
@@ -57,13 +57,13 @@ public:
     virtual int isRange() const
     { return 0; }
 
-    virtual void printArgument(ostream& os)
+    virtual void printArgument(std::ostream& os)
     {
         printName(os);
         os << " d" << operandNum_;      
     }
 
-    virtual void printIterator(ostream& os)
+    virtual void printIterator(std::ostream& os)
     {
         os << iterator_;
 
@@ -71,12 +71,12 @@ public:
             os << "<" << template_ << operandNum_ << ">";
     }
 
-    virtual void printNumtype(ostream& os)
+    virtual void printNumtype(std::ostream& os)
     {
         os << numtype_ << operandNum_;
     }
 
-    virtual void printInitialization(ostream& os)
+    virtual void printInitialization(std::ostream& os)
     {
         os << "d" << operandNum_;       
         if (initialization_ != 0)
@@ -96,10 +96,10 @@ class VecOperand : public operand {
 public:
     VecOperand()
       : operand("Vector", "P_numtype", "VectorIterConst",
-           "P_numtype", ".begin()")
+           "P_numtype", ".beginFast()")
     { }
 
-    virtual void printArgument(ostream& os)
+    virtual void printArgument(std::ostream& os)
     {
         os << "const ";
         printName(os);
@@ -112,23 +112,23 @@ class TinyVecOperand : public operand {
 public:
     TinyVecOperand()
       : operand("TinyVector", "P_numtype", "TinyVectorIterConst",
-           "P_numtype", ".begin()")
+           "P_numtype", ".beginFast()")
     { }
 
-    virtual void printArgument(ostream& os)
+    virtual void printArgument(std::ostream& os)
     {
         os << "const ";
         printName(os);
         os << "& d" << operandNum_;
     }
 
-    virtual void printName(ostream& os)
+    virtual void printName(std::ostream& os)
     {
         os << "TinyVector<P_numtype" << operandNum_
            << ", N_length" << operandNum_ << ">";
     }
 
-    virtual void printTemplate(ostream& os, int n)
+    virtual void printTemplate(std::ostream& os, int n)
     {
         if (n == 0)
         {
@@ -140,7 +140,7 @@ public:
         }
     }
 
-    virtual void printTemplateType(ostream& os, int n)
+    virtual void printTemplateType(std::ostream& os, int n)
     {
         if (n == 0)
             os << "class";
@@ -153,7 +153,7 @@ public:
         return 2;
     }
 
-    virtual void printIterator(ostream& os)
+    virtual void printIterator(std::ostream& os)
     {
         os << "TinyVectorIterConst<P_numtype" << operandNum_
            << ", N_length" << operandNum_ << ">";
@@ -167,10 +167,10 @@ class VecPickOperand : public operand  {
 public:
     VecPickOperand()
       : operand("VectorPick", "P_numtype", "VectorPickIterConst",
-            "P_numtype", ".begin()")
+            "P_numtype", ".beginFast()")
     { }
 
-    virtual void printArgument(ostream& os)
+    virtual void printArgument(std::ostream& os)
     {
         os << "const ";
         printName(os);
@@ -185,9 +185,9 @@ public:
            0, 0)
     { }
 
-    virtual void printNumtype(ostream& os)
+    virtual void printNumtype(std::ostream& os)
     {
-        os << "_bz_typename P_expr" << operandNum_ << "::T_numtype";
+        os << "typename P_expr" << operandNum_ << "::T_numtype";
     }
 };
 
@@ -197,7 +197,7 @@ public:
       : operand("Range", 0, "Range", 0, 0)
     { }
 
-    virtual void printNumtype(ostream& os)
+    virtual void printNumtype(std::ostream& os)
     {
         os << "int";
     }
@@ -212,18 +212,18 @@ public:
       : operand(name, 0, 0, name, 0)
     { }
 
-    virtual void printIterator(ostream& os)
+    virtual void printIterator(std::ostream& os)
     {
         os << "_bz_VecExprConstant<" << name_ << ">";
     }
 
-    virtual void printInitialization(ostream& os)
+    virtual void printInitialization(std::ostream& os)
     {
         os << "_bz_VecExprConstant<" << name_ << ">(d"
            << operandNum_ << ")";
     }
 
-    virtual void printNumtype(ostream& os)
+    virtual void printNumtype(std::ostream& os)
     {
         os << name_;
     }
@@ -244,20 +244,20 @@ public:
     virtual int isComplex() const
     { return 1; }
 
-    virtual void printIterator(ostream& os)
+    virtual void printIterator(std::ostream& os)
     {
         os << "_bz_VecExprConstant<";
         printNumtype(os);
         os << "> ";
     }
 
-    virtual void printInitialization(ostream& os)
+    virtual void printInitialization(std::ostream& os)
     {
         printIterator(os);
         os << "(d" << operandNum_ << ")";
     }
 
-    virtual void printNumtype(ostream& os)
+    virtual void printNumtype(std::ostream& os)
     {
         os << "complex<";
         printTemplate(os);

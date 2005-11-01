@@ -1,8 +1,6 @@
 /***************************************************************************
  * blitz/array/resize.cc  Resizing of arrays
  *
- * $Id$
- *
  * Copyright (C) 1997-2001 Todd Veldhuizen <tveldhui@oonumerics.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -21,71 +19,7 @@
  * For more information, please see the Blitz++ Home Page:
  *    http://oonumerics.org/blitz/
  *
- ***************************************************************************
- * $Log$
- * Revision 1.2  2002/09/12 07:02:06  eric
- * major rewrite of weave.
- *
- * 0.
- * The underlying library code is significantly re-factored and simpler. There used to be a xxx_spec.py and xxx_info.py file for every group of type conversion classes.  The spec file held the python code that handled the conversion and the info file had most of the C code templates that were generated.  This proved pretty confusing in practice, so the two files have mostly been merged into the spec file.
- *
- * Also, there was quite a bit of code duplication running around.  The re-factoring was able to trim the standard conversion code base (excluding blitz and accelerate stuff) by about 40%.  This should be a huge maintainability and extensibility win.
- *
- * 1.
- * With multiple months of using Numeric arrays, I've found some of weave's "magic variable" names unwieldy and want to change them.  The following are the old declarations for an array x of Float32 type:
- *
- *         PyArrayObject* x = convert_to_numpy(...);
- *         float* x_data = (float*) x->data;
- *         int*   _Nx = x->dimensions;
- *         int*   _Sx = x->strides;
- *         int    _Dx = x->nd;
- *
- * The new declaration looks like this:
- *
- *         PyArrayObject* x_array = convert_to_numpy(...);
- *         float* x = (float*) x->data;
- *         int*   Nx = x->dimensions;
- *         int*   Sx = x->strides;
- *         int    Dx = x->nd;
- *
- * This is obviously not backward compatible, and will break some code (including a lot of mine).  It also makes inline() code more readable and natural to write.
- *
- * 2.
- * I've switched from CXX to Gordon McMillan's SCXX for list, tuples, and dictionaries.  I like CXX pretty well, but its use of advanced C++ (templates, etc.) caused some portability problems.  The SCXX library is similar to CXX but doesn't use templates at all.  This, like (1) is not an
- * API compatible change and requires repairing existing code.
- *
- * I have also thought about boost python, but it also makes heavy use of templates.  Moving to SCXX gets rid of almost all template usage for the standard type converters which should help portability.  std::complex and std::string from the STL are the only templates left.  Of course blitz still uses templates in a major way so weave.blitz will continue to be hard on compilers.
- *
- * I've actually considered scrapping the C++ classes for list, tuples, and
- * dictionaries, and just fall back to the standard Python C API because the classes are waaay slower than the raw API in many cases.  They are also more convenient and less error prone in many cases, so I've decided to stick with them.  The PyObject variable will always be made available for variable "x" under the name "py_x" for more speedy operations.  You'll definitely want to use these for anything that needs to be speedy.
- *
- * 3.
- * strings are converted to std::string now.  I found this to be the most useful type in for strings in my code.  Py::String was used previously.
- *
- * 4.
- * There are a number of reference count "errors" in some of the less tested conversion codes such as instance, module, etc.  I've cleaned most of these up.  I put errors in quotes here because I'm actually not positive that objects passed into "inline" really need reference counting applied to them.  The dictionaries passed in by inline() hold references to these objects so it doesn't seem that they could ever be garbage collected inadvertently.  Variables used by ext_tools, though, definitely need the reference counting done.  I don't think this is a major cost in speed, so it probably isn't worth getting rid of the ref count code.
- *
- * 5.
- * Unicode objects are now supported.  This was necessary to support rendering Unicode strings in the freetype wrappers for Chaco.
- *
- * 6.
- * blitz++ was upgraded to the latest CVS.  It compiles about twice as fast as the old blitz and looks like it supports a large number of compilers (though only gcc 2.95.3 is tested).  Compile times now take about 9 seconds on my 850 MHz PIII laptop.
- *
- * Revision 1.4  2002/03/06 15:50:41  patricg
- *
- * for (d=0; d < N_rank; ++d) replaced by for (int d=0; d < N_rank; ++d)
- * (for scoping problem)
- *
- * Revision 1.3  2001/02/11 15:43:39  tveldhui
- * Additions from Julian Cummings:
- *  - StridedDomain class
- *  - more versions of resizeAndPreserve
- *
- * Revision 1.2  2001/01/25 00:25:55  tveldhui
- * Ensured that source files have cvs logs.
- *
- */
-
+ ****************************************************************************/
 #ifndef BZ_ARRAYRESIZE_CC
 #define BZ_ARRAYRESIZE_CC
 
@@ -97,23 +31,23 @@
 
 BZ_NAMESPACE(blitz)
 
-template<class T_numtype, int N_rank>
-void Array<T_numtype, N_rank>::resize(int length0)
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(int extent0)
 {
-    BZPRECONDITION(length0 > 0);
+    BZPRECONDITION(extent0 >= 0);
     BZPRECONDITION(N_rank == 1);
 
-    if (length0 != length_[firstRank])
+    if (extent0 != length_[0])
     {
-        length_[firstRank] = length0;
+        length_[0] = extent0;
         setupStorage(0);
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resize(int extent0, int extent1)
 {
-    BZPRECONDITION((extent0 > 0) && (extent1 > 0));
+    BZPRECONDITION((extent0 >= 0) && (extent1 >= 0));
     BZPRECONDITION(N_rank == 2);
 
     if ((extent0 != length_[0]) || (extent1 != length_[1]))
@@ -124,11 +58,11 @@ void Array<T_numtype, N_rank>::resize(int extent0, int extent1)
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     int extent2)
 {
-    BZPRECONDITION((extent0 > 0) && (extent1 > 0) && (extent2 > 0));
+    BZPRECONDITION((extent0 >= 0) && (extent1 >= 0) && (extent2 >= 0));
     BZPRECONDITION(N_rank == 3);
 
     if ((extent0 != length_[0]) || (extent1 != length_[1])
@@ -142,12 +76,12 @@ void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
 }
 
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     int extent2, int extent3)
 {
-    BZPRECONDITION((extent0 > 0) && (extent1 > 0) && (extent2 > 0)
-        && (extent3 > 0));
+    BZPRECONDITION((extent0 >= 0) && (extent1 >= 0) && (extent2 >= 0)
+        && (extent3 >= 0));
     BZPRECONDITION(N_rank == 4);
 
     if ((extent0 != length_[0]) || (extent1 != length_[1])
@@ -161,12 +95,12 @@ void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     int extent2, int extent3, int extent4)
 {
-    BZPRECONDITION((extent0 > 0) && (extent1 > 0) && (extent2 > 0)
-        && (extent3 > 0) && (extent4 > 0));
+    BZPRECONDITION((extent0 >= 0) && (extent1 >= 0) && (extent2 >= 0)
+        && (extent3 >= 0) && (extent4 >= 0));
     BZPRECONDITION(N_rank == 5);
 
     if ((extent0 != length_[0]) || (extent1 != length_[1])
@@ -182,12 +116,12 @@ void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     int extent2, int extent3, int extent4, int extent5)
 {
-    BZPRECONDITION((extent0 > 0) && (extent1 > 0) && (extent2 > 0)
-        && (extent3 > 0) && (extent4 > 0) && (extent5 > 0));
+    BZPRECONDITION((extent0 >= 0) && (extent1 >= 0) && (extent2 >= 0)
+        && (extent3 >= 0) && (extent4 >= 0) && (extent5 >= 0));
     BZPRECONDITION(N_rank == 6);
 
     if ((extent0 != length_[0]) || (extent1 != length_[1])
@@ -204,14 +138,14 @@ void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     int extent2, int extent3, int extent4, int extent5,
     int extent6)
 {
-    BZPRECONDITION((extent0 > 0) && (extent1 > 0) && (extent2 > 0)
-        && (extent3 > 0) && (extent4 > 0) && (extent5 > 0)
-        && (extent6 > 0));
+    BZPRECONDITION((extent0 >= 0) && (extent1 >= 0) && (extent2 >= 0)
+        && (extent3 >= 0) && (extent4 >= 0) && (extent5 >= 0)
+        && (extent6 >= 0));
     BZPRECONDITION(N_rank == 7);
 
     if ((extent0 != length_[0]) || (extent1 != length_[1])
@@ -230,14 +164,14 @@ void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     int extent2, int extent3, int extent4, int extent5,
     int extent6, int extent7)
 {
-    BZPRECONDITION((extent0 > 0) && (extent1 > 0) && (extent2 > 0)
-        && (extent3 > 0) && (extent4 > 0) && (extent5 > 0)
-        && (extent6 > 0) && (extent7 > 0));
+    BZPRECONDITION((extent0 >= 0) && (extent1 >= 0) && (extent2 >= 0)
+        && (extent3 >= 0) && (extent4 >= 0) && (extent5 >= 0)
+        && (extent6 >= 0) && (extent7 >= 0));
     BZPRECONDITION(N_rank == 8);
 
     if ((extent0 != length_[0]) || (extent1 != length_[1])
@@ -257,14 +191,14 @@ void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     int extent2, int extent3, int extent4, int extent5,
     int extent6, int extent7, int extent8)
 {
-    BZPRECONDITION((extent0 > 0) && (extent1 > 0) && (extent2 > 0)
-        && (extent3 > 0) && (extent4 > 0) && (extent5 > 0)
-        && (extent6 > 0) && (extent7 > 0) && (extent8 > 0));
+    BZPRECONDITION((extent0 >= 0) && (extent1 >= 0) && (extent2 >= 0)
+        && (extent3 >= 0) && (extent4 >= 0) && (extent5 >= 0)
+        && (extent6 >= 0) && (extent7 >= 0) && (extent8 >= 0));
     BZPRECONDITION(N_rank == 9);
 
     if ((extent0 != length_[0]) || (extent1 != length_[1])
@@ -287,15 +221,15 @@ void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
 }
 
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     int extent2, int extent3, int extent4, int extent5,
     int extent6, int extent7, int extent8, int extent9)
 {
-    BZPRECONDITION((extent0 > 0) && (extent1 > 0) && (extent2 > 0)
-        && (extent3 > 0) && (extent4 > 0) && (extent5 > 0)
-        && (extent6 > 0) && (extent7 > 0) && (extent8 > 0)
-        && (extent9 > 0));
+    BZPRECONDITION((extent0 >= 0) && (extent1 >= 0) && (extent2 >= 0)
+        && (extent3 >= 0) && (extent4 >= 0) && (extent5 >= 0)
+        && (extent6 >= 0) && (extent7 >= 0) && (extent8 >= 0)
+        && (extent9 >= 0));
     BZPRECONDITION(N_rank == 10);
 
     if ((extent0 != length_[0]) || (extent1 != length_[1])
@@ -318,16 +252,16 @@ void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     int extent2, int extent3, int extent4, int extent5,
     int extent6, int extent7, int extent8, int extent9,
     int extent10)
 {
-    BZPRECONDITION((extent0 > 0) && (extent1 > 0) && (extent2 > 0)
-        && (extent3 > 0) && (extent4 > 0) && (extent5 > 0)
-        && (extent6 > 0) && (extent7 > 0) && (extent8 > 0)
-        && (extent9 > 0) && (extent10 > 0));
+    BZPRECONDITION((extent0 >= 0) && (extent1 >= 0) && (extent2 >= 0)
+        && (extent3 >= 0) && (extent4 >= 0) && (extent5 >= 0)
+        && (extent6 >= 0) && (extent7 >= 0) && (extent8 >= 0)
+        && (extent9 >= 0) && (extent10 >= 0));
     BZPRECONDITION(N_rank == 11);
 
     if ((extent0 != length_[0]) || (extent1 != length_[1])
@@ -352,7 +286,280 @@ void Array<T_numtype, N_rank>::resize(int extent0, int extent1,
     }
 }
 
-template<class T_numtype, int N_rank>
+
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(Range r0)
+{
+	BZPRECONDITION(r0.isAscendingContiguous());
+
+	length_[0] = r0.length();
+	storage_.setBase(0, r0.first());
+
+	setupStorage(0);
+}
+
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(Range r0, Range r1)
+{
+	BZPRECONDITION(r0.isAscendingContiguous() &&
+			r1.isAscendingContiguous());
+
+	length_[0] = r0.length();
+	storage_.setBase(0, r0.first());
+	length_[1] = r1.length();
+	storage_.setBase(1, r1.first());
+
+	setupStorage(1);
+}
+
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(Range r0, Range r1, Range r2)
+{ 
+	BZPRECONDITION(r0.isAscendingContiguous() &&
+			r1.isAscendingContiguous() && r2.isAscendingContiguous());
+
+	length_[0] = r0.length();
+	storage_.setBase(0, r0.first());
+	length_[1] = r1.length();
+	storage_.setBase(1, r1.first());
+	length_[2] = r2.length();
+	storage_.setBase(2, r2.first());
+
+	setupStorage(2);
+}
+
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(Range r0, Range r1, Range r2,
+		Range r3)
+{
+	BZPRECONDITION(r0.isAscendingContiguous() &&
+			r1.isAscendingContiguous() && r2.isAscendingContiguous()
+			&& r3.isAscendingContiguous());
+
+	length_[0] = r0.length();
+	storage_.setBase(0, r0.first());
+	length_[1] = r1.length();
+	storage_.setBase(1, r1.first());
+	length_[2] = r2.length();
+	storage_.setBase(2, r2.first());
+	length_[3] = r3.length();
+	storage_.setBase(3, r3.first());
+
+	setupStorage(3);
+} 
+
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(Range r0, Range r1, Range r2,
+		Range r3, Range r4)
+{
+	BZPRECONDITION(r0.isAscendingContiguous() &&
+			r1.isAscendingContiguous() && r2.isAscendingContiguous()
+			&& r3.isAscendingContiguous() && r4.isAscendingContiguous());
+
+	length_[0] = r0.length();
+	storage_.setBase(0, r0.first());
+	length_[1] = r1.length();
+	storage_.setBase(1, r1.first());
+	length_[2] = r2.length();
+	storage_.setBase(2, r2.first());
+	length_[3] = r3.length();
+	storage_.setBase(3, r3.first());
+	length_[4] = r4.length();
+	storage_.setBase(4, r4.first());
+
+	setupStorage(4);
+} 
+
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(Range r0, Range r1, Range r2,
+		Range r3, Range r4, Range r5)
+{
+	BZPRECONDITION(r0.isAscendingContiguous() &&
+			r1.isAscendingContiguous() && r2.isAscendingContiguous()
+			&& r3.isAscendingContiguous() && r4.isAscendingContiguous()
+			&& r5.isAscendingContiguous());
+
+	length_[0] = r0.length();
+	storage_.setBase(0, r0.first());
+	length_[1] = r1.length();
+	storage_.setBase(1, r1.first());
+	length_[2] = r2.length();
+	storage_.setBase(2, r2.first());
+	length_[3] = r3.length();
+	storage_.setBase(3, r3.first());
+	length_[4] = r4.length();
+	storage_.setBase(4, r4.first());
+	length_[5] = r5.length();
+	storage_.setBase(5, r5.first());
+
+	setupStorage(5);
+} 
+
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(Range r0, Range r1, Range r2,
+		Range r3, Range r4, Range r5, Range r6)
+{
+	BZPRECONDITION(r0.isAscendingContiguous() &&
+			r1.isAscendingContiguous() && r2.isAscendingContiguous()
+			&& r3.isAscendingContiguous() && r4.isAscendingContiguous()
+			&& r5.isAscendingContiguous() && r6.isAscendingContiguous());
+
+	length_[0] = r0.length();
+	storage_.setBase(0, r0.first());
+	length_[1] = r1.length();
+	storage_.setBase(1, r1.first());
+	length_[2] = r2.length();
+	storage_.setBase(2, r2.first());
+	length_[3] = r3.length();
+	storage_.setBase(3, r3.first());
+	length_[4] = r4.length();
+	storage_.setBase(4, r4.first());
+	length_[5] = r5.length();
+	storage_.setBase(5, r5.first());
+	length_[6] = r6.length();
+	storage_.setBase(6, r6.first());
+
+	setupStorage(6);
+} 
+
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(Range r0, Range r1, Range r2,
+		Range r3, Range r4, Range r5, Range r6, Range r7)
+{
+	BZPRECONDITION(r0.isAscendingContiguous() &&
+			r1.isAscendingContiguous() && r2.isAscendingContiguous()
+			&& r3.isAscendingContiguous() && r4.isAscendingContiguous()
+			&& r5.isAscendingContiguous() && r6.isAscendingContiguous()
+			&& r7.isAscendingContiguous());
+
+	length_[0] = r0.length();
+	storage_.setBase(0, r0.first());
+	length_[1] = r1.length();
+	storage_.setBase(1, r1.first());
+	length_[2] = r2.length();
+	storage_.setBase(2, r2.first());
+	length_[3] = r3.length();
+	storage_.setBase(3, r3.first());
+	length_[4] = r4.length();
+	storage_.setBase(4, r4.first());
+	length_[5] = r5.length();
+	storage_.setBase(5, r5.first());
+	length_[6] = r6.length();
+	storage_.setBase(6, r6.first());
+	length_[7] = r7.length();
+	storage_.setBase(7, r7.first());
+
+	setupStorage(7);
+} 
+
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(Range r0, Range r1, Range r2,
+		Range r3, Range r4, Range r5, Range r6, Range r7, Range r8)
+{
+	BZPRECONDITION(r0.isAscendingContiguous() &&
+			r1.isAscendingContiguous() && r2.isAscendingContiguous()
+			&& r3.isAscendingContiguous() && r4.isAscendingContiguous()
+			&& r5.isAscendingContiguous() && r6.isAscendingContiguous()
+			&& r7.isAscendingContiguous() && r8.isAscendingContiguous());
+
+	length_[0] = r0.length();
+	storage_.setBase(0, r0.first());
+	length_[1] = r1.length();
+	storage_.setBase(1, r1.first());
+	length_[2] = r2.length();
+	storage_.setBase(2, r2.first());
+	length_[3] = r3.length();
+	storage_.setBase(3, r3.first());
+	length_[4] = r4.length();
+	storage_.setBase(4, r4.first());
+	length_[5] = r5.length();
+	storage_.setBase(5, r5.first());
+	length_[6] = r6.length();
+	storage_.setBase(6, r6.first());
+	length_[7] = r7.length();
+	storage_.setBase(7, r7.first());
+	length_[8] = r8.length();
+	storage_.setBase(8, r8.first());
+
+	setupStorage(8);
+} 
+
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(Range r0, Range r1, Range r2,
+		Range r3, Range r4, Range r5, Range r6, Range r7, Range r8,
+		Range r9)
+{
+	BZPRECONDITION(r0.isAscendingContiguous() &&
+			r1.isAscendingContiguous() && r2.isAscendingContiguous()
+			&& r3.isAscendingContiguous() && r4.isAscendingContiguous()
+			&& r5.isAscendingContiguous() && r6.isAscendingContiguous()
+			&& r7.isAscendingContiguous() && r8.isAscendingContiguous()
+			&& r9.isAscendingContiguous());
+
+	length_[0] = r0.length();
+	storage_.setBase(0, r0.first());
+	length_[1] = r1.length();
+	storage_.setBase(1, r1.first());
+	length_[2] = r2.length();
+	storage_.setBase(2, r2.first());
+	length_[3] = r3.length();
+	storage_.setBase(3, r3.first());
+	length_[4] = r4.length();
+	storage_.setBase(4, r4.first());
+	length_[5] = r5.length();
+	storage_.setBase(5, r5.first());
+	length_[6] = r6.length();
+	storage_.setBase(6, r6.first());
+	length_[7] = r7.length();
+	storage_.setBase(7, r7.first());
+	length_[8] = r8.length();
+	storage_.setBase(8, r8.first());
+	length_[9] = r9.length();
+	storage_.setBase(9, r9.first());
+
+	setupStorage(9);
+} 
+
+template<typename T_numtype, int N_rank>
+void Array<T_numtype, N_rank>::resize(Range r0, Range r1, Range r2,
+		Range r3, Range r4, Range r5, Range r6, Range r7, Range r8,
+		Range r9, Range r10)
+{
+	BZPRECONDITION(r0.isAscendingContiguous() &&
+			r1.isAscendingContiguous() && r2.isAscendingContiguous()
+			&& r3.isAscendingContiguous() && r4.isAscendingContiguous()
+			&& r5.isAscendingContiguous() && r6.isAscendingContiguous()
+			&& r7.isAscendingContiguous() && r8.isAscendingContiguous()
+			&& r9.isAscendingContiguous() && r10.isAscendingContiguous());
+
+	length_[0] = r0.length();
+	storage_.setBase(0, r0.first());
+	length_[1] = r1.length();
+	storage_.setBase(1, r1.first());
+	length_[2] = r2.length();
+	storage_.setBase(2, r2.first());
+	length_[3] = r3.length();
+	storage_.setBase(3, r3.first());
+	length_[4] = r4.length();
+	storage_.setBase(4, r4.first());
+	length_[5] = r5.length();
+	storage_.setBase(5, r5.first());
+	length_[6] = r6.length();
+	storage_.setBase(6, r6.first());
+	length_[7] = r7.length();
+	storage_.setBase(7, r7.first());
+	length_[8] = r8.length();
+	storage_.setBase(8, r8.first());
+	length_[9] = r9.length();
+	storage_.setBase(9, r9.first());
+	length_[10] = r10.length();
+	storage_.setBase(10, r10.first());
+
+	setupStorage(10);
+} 
+
+
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(int length0)
 {
     BZPRECONDITION(length0 > 0);
@@ -389,7 +596,7 @@ void Array<T_numtype, N_rank>::resizeAndPreserve(int length0)
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1)
 {
     BZPRECONDITION((length0 > 0) && (length1 > 0));
@@ -411,7 +618,7 @@ void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1)
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     int length2)
 {
@@ -438,7 +645,7 @@ void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     int length2, int length3)
 {
@@ -465,7 +672,7 @@ void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     int length2, int length3, int length4)
 {
@@ -494,7 +701,7 @@ void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     int length2, int length3, int length4, int length5)
 {
@@ -526,7 +733,7 @@ void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
 }
 
 /* Added by Julian Cummings */
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     int length2, int length3, int length4, int length5, int length6)
 {
@@ -568,7 +775,7 @@ void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
 }
 
 /* Added by Julian Cummings */
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     int length2, int length3, int length4, int length5, int length6,
     int length7)
@@ -614,7 +821,7 @@ void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
 }
 
 /* Added by Julian Cummings */
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     int length2, int length3, int length4, int length5, int length6,
     int length7, int length8)
@@ -663,7 +870,7 @@ void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
 }
 
 /* Added by Julian Cummings */
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     int length2, int length3, int length4, int length5, int length6,
     int length7, int length8, int length9)
@@ -715,7 +922,7 @@ void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
 }
 
 /* Added by Julian Cummings */
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     int length2, int length3, int length4, int length5, int length6,
     int length7, int length8, int length9, int length10)
@@ -765,7 +972,7 @@ void Array<T_numtype, N_rank>::resizeAndPreserve(int length0, int length1,
     }
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resize(const TinyVector<int,N_rank>& extent)
 {
 // NEEDS_WORK -- don't resize if unnecessary
@@ -778,7 +985,7 @@ void Array<T_numtype, N_rank>::resize(const TinyVector<int,N_rank>& extent)
 }
 
 /* Added by Julian Cummings */
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void Array<T_numtype, N_rank>::resizeAndPreserve(
     const TinyVector<int,N_rank>& extent)
 {

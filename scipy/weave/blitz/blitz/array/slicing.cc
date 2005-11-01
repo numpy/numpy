@@ -1,8 +1,6 @@
 /***************************************************************************
  * blitz/array/slicing.cc  Slicing of arrays
  *
- * $Id$
- *
  * Copyright (C) 1997-2001 Todd Veldhuizen <tveldhui@oonumerics.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -21,85 +19,7 @@
  * For more information, please see the Blitz++ Home Page:
  *    http://oonumerics.org/blitz/
  *
- ***************************************************************************
- * $Log$
- * Revision 1.2  2002/09/12 07:02:06  eric
- * major rewrite of weave.
- *
- * 0.
- * The underlying library code is significantly re-factored and simpler. There used to be a xxx_spec.py and xxx_info.py file for every group of type conversion classes.  The spec file held the python code that handled the conversion and the info file had most of the C code templates that were generated.  This proved pretty confusing in practice, so the two files have mostly been merged into the spec file.
- *
- * Also, there was quite a bit of code duplication running around.  The re-factoring was able to trim the standard conversion code base (excluding blitz and accelerate stuff) by about 40%.  This should be a huge maintainability and extensibility win.
- *
- * 1.
- * With multiple months of using Numeric arrays, I've found some of weave's "magic variable" names unwieldy and want to change them.  The following are the old declarations for an array x of Float32 type:
- *
- *         PyArrayObject* x = convert_to_numpy(...);
- *         float* x_data = (float*) x->data;
- *         int*   _Nx = x->dimensions;
- *         int*   _Sx = x->strides;
- *         int    _Dx = x->nd;
- *
- * The new declaration looks like this:
- *
- *         PyArrayObject* x_array = convert_to_numpy(...);
- *         float* x = (float*) x->data;
- *         int*   Nx = x->dimensions;
- *         int*   Sx = x->strides;
- *         int    Dx = x->nd;
- *
- * This is obviously not backward compatible, and will break some code (including a lot of mine).  It also makes inline() code more readable and natural to write.
- *
- * 2.
- * I've switched from CXX to Gordon McMillan's SCXX for list, tuples, and dictionaries.  I like CXX pretty well, but its use of advanced C++ (templates, etc.) caused some portability problems.  The SCXX library is similar to CXX but doesn't use templates at all.  This, like (1) is not an
- * API compatible change and requires repairing existing code.
- *
- * I have also thought about boost python, but it also makes heavy use of templates.  Moving to SCXX gets rid of almost all template usage for the standard type converters which should help portability.  std::complex and std::string from the STL are the only templates left.  Of course blitz still uses templates in a major way so weave.blitz will continue to be hard on compilers.
- *
- * I've actually considered scrapping the C++ classes for list, tuples, and
- * dictionaries, and just fall back to the standard Python C API because the classes are waaay slower than the raw API in many cases.  They are also more convenient and less error prone in many cases, so I've decided to stick with them.  The PyObject variable will always be made available for variable "x" under the name "py_x" for more speedy operations.  You'll definitely want to use these for anything that needs to be speedy.
- *
- * 3.
- * strings are converted to std::string now.  I found this to be the most useful type in for strings in my code.  Py::String was used previously.
- *
- * 4.
- * There are a number of reference count "errors" in some of the less tested conversion codes such as instance, module, etc.  I've cleaned most of these up.  I put errors in quotes here because I'm actually not positive that objects passed into "inline" really need reference counting applied to them.  The dictionaries passed in by inline() hold references to these objects so it doesn't seem that they could ever be garbage collected inadvertently.  Variables used by ext_tools, though, definitely need the reference counting done.  I don't think this is a major cost in speed, so it probably isn't worth getting rid of the ref count code.
- *
- * 5.
- * Unicode objects are now supported.  This was necessary to support rendering Unicode strings in the freetype wrappers for Chaco.
- *
- * 6.
- * blitz++ was upgraded to the latest CVS.  It compiles about twice as fast as the old blitz and looks like it supports a large number of compilers (though only gcc 2.95.3 is tested).  Compile times now take about 9 seconds on my 850 MHz PIII laptop.
- *
- * Revision 1.7  2002/06/28 01:37:40  jcumming
- * Modified valid indexing check to avoid casting to unsigned.
- *
- * Revision 1.6  2002/06/27 00:18:10  jcumming
- * Changed T_numtype to P_numtype when used outside the argument list or body
- * of a member function definition (i.e., outside the class scope).  Inside
- * the class scope, we can use the typedef T_numtype.  The IBM xlC compiler
- * gets confused if P_numtype is used as a template parameter name in a member
- * function declaration and then T_numtype is used as the parameter name in
- * the member function definition.  Fixed usage to be more consistent.
- *
- * Revision 1.5  2002/05/27 19:49:27  jcumming
- * Removed use of this->.  Member data_ of templated base class is now declared
- * in derived class Array.
- *
- * Revision 1.4  2002/03/06 16:12:06  patricg
- *
- * data_ replaced by this->data_ everywhere
- *
- * Revision 1.3  2001/02/11 15:43:39  tveldhui
- * Additions from Julian Cummings:
- *  - StridedDomain class
- *  - more versions of resizeAndPreserve
- *
- * Revision 1.2  2001/01/25 00:25:55  tveldhui
- * Ensured that source files have cvs logs.
- *
- */
-
+ ****************************************************************************/
 #ifndef BZ_ARRAYSLICING_CC
 #define BZ_ARRAYSLICING_CC
 
@@ -114,7 +34,7 @@ BZ_NAMESPACE(blitz)
  * They all work by first referencing the other array, and then slicing.
  */
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, const RectDomain<N_rank>& subdomain)
 {
@@ -123,7 +43,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
         slice(i, subdomain[i]);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, const StridedDomain<N_rank>& subdomain)
 {
@@ -132,7 +52,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
         slice(i, subdomain[i]);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, Range r0)
 {
@@ -140,7 +60,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
     slice(0, r0);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, Range r0, Range r1)
 {
@@ -149,7 +69,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
     slice(1, r1);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, Range r0, Range r1, Range r2)
 {
@@ -159,7 +79,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
     slice(2, r2);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, Range r0, Range r1, Range r2, Range r3)
 {
@@ -170,7 +90,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
     slice(3, r3);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, Range r0, Range r1, Range r2, Range r3,
     Range r4)
@@ -183,7 +103,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
     slice(4, r4);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, Range r0, Range r1, Range r2, Range r3,
     Range r4, Range r5)
@@ -197,7 +117,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
     slice(5, r5);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, Range r0, Range r1, Range r2, Range r3,
     Range r4, Range r5, Range r6)
@@ -212,7 +132,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
     slice(6, r6);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, Range r0, Range r1, Range r2, Range r3,
     Range r4, Range r5, Range r6, Range r7)
@@ -228,7 +148,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
     slice(7, r7);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, Range r0, Range r1, Range r2, Range r3,
     Range r4, Range r5, Range r6, Range r7, Range r8)
@@ -245,7 +165,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
     slice(8, r8);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, Range r0, Range r1, Range r2, Range r3,
     Range r4, Range r5, Range r6, Range r7, Range r8, Range r9)
@@ -263,7 +183,7 @@ void Array<P_numtype, N_rank>::constructSubarray(
     slice(9, r9);
 }
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::constructSubarray(
     Array<T_numtype, N_rank>& array, Range r0, Range r1, Range r2, Range r3,
     Range r4, Range r5, Range r6, Range r7, Range r8, Range r9, Range r10)
@@ -287,15 +207,14 @@ void Array<P_numtype, N_rank>::constructSubarray(
  * combination of int and Range parameters.  There's room for up
  * to 11 parameters, but any unused parameters have no effect.
  */
-template<class P_numtype, int N_rank> template<int N_rank2, class R0,
-    class R1, class R2, class R3, class R4, class R5, class R6, class R7,
-    class R8, class R9, class R10>
+template<typename P_numtype, int N_rank> template<int N_rank2, typename R0,
+    class R1, typename R2, typename R3, typename R4, typename R5, typename R6, typename R7,
+    class R8, typename R9, typename R10>
 void Array<P_numtype, N_rank>::constructSlice(Array<T_numtype, N_rank2>& array,
     R0 r0, R1 r1, R2 r2, R3 r3, R4 r4, R5 r5, R6 r6, R7 r7, R8 r8, R9 r9,
     R10 r10)
 {
-    MemoryBlockReference<T_numtype>::changeBlock(array, array.zeroOffset());
-    data_ = array.dataZero();
+    MemoryBlockReference<T_numtype>::changeBlock(array);
 
     int setRank = 0;
 
@@ -331,7 +250,7 @@ void Array<P_numtype, N_rank>::constructSlice(Array<T_numtype, N_rank2>& array,
  * It's called by constructSlice(), above.  This version handles
  * Range parameters.
  */
-template<class P_numtype, int N_rank> template<int N_rank2>
+template<typename P_numtype, int N_rank> template<int N_rank2>
 void Array<P_numtype, N_rank>::slice(int& setRank, Range r,
     Array<T_numtype,N_rank2>& array, TinyVector<int,N_rank2>& rankMap,
     int sourceRank)
@@ -360,13 +279,13 @@ cout << "slice(" << setRank << ", [" << r.first(array.lbound(sourceRank))
  * It's called by constructSlice(), above.  This version handles
  * int parameters, which reduce the dimensionality by one.
  */
-template<class P_numtype, int N_rank> template<int N_rank2>
-void Array<P_numtype, N_rank>::slice(int& setRank, int i,
+template<typename P_numtype, int N_rank> template<int N_rank2>
+void Array<P_numtype, N_rank>::slice(int&, int i,
     Array<T_numtype,N_rank2>& array, TinyVector<int,N_rank2>& rankMap,
     int sourceRank)
 {
 #ifdef BZ_DEBUG_SLICE
-    cout << "slice(" << setRank << ", " << i
+    cout << "slice(" << i
          << ", Array<T," << N_rank2 << ">, " << sourceRank << ")" << endl;
     cout << "Offset by " << (i * array.stride(sourceRank))
          << endl;
@@ -390,7 +309,7 @@ void Array<P_numtype, N_rank>::slice(int& setRank, int i,
  *      x.slice(firstRank, Range(25,50));
  *      x = 0;       // Sets elements 25..50 of the original array to 0
  */
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 void Array<P_numtype, N_rank>::slice(int rank, Range r)
 {
     BZPRECONDITION((rank >= 0) && (rank < N_rank));
@@ -422,13 +341,15 @@ cout << "slice(" << rank << ", Range):" << endl
     length_[rank] = (last - first) / stride + 1;
 
     // TV 20000312: added second term here, for testsuite/Josef-Wagenhuber
-    int offset = -base(rank) * stride_[rank] * stride
-                 + first * stride_[rank];
-    // (first - base(rank)) * stride_[rank] 
+    int offset = (first - base(rank) * stride) * stride_[rank];
+
     data_ += offset;
-    zeroOffset_ -= offset;
+    zeroOffset_ += offset;
 
     stride_[rank] *= stride;
+    // JCC: adjust ascending flag if slicing with backwards Range
+    if (stride<0)
+        storage_.setAscendingFlag(rank, !isRankStoredAscending(rank));
 }
 
 BZ_NAMESPACE_END

@@ -1,3 +1,28 @@
+// -*- C++ -*-
+/***************************************************************************
+ * blitz/array/functorExpr.h   User-defined functors for arrays
+ *
+ * $Id$
+ *
+ * Copyright (C) 1997-2001 Todd Veldhuizen <tveldhui@oonumerics.org>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * Suggestions:          blitz-dev@oonumerics.org
+ * Bugs:                 blitz-bugs@oonumerics.org
+ *
+ * For more information, please see the Blitz++ Home Page:
+ *    http://oonumerics.org/blitz/
+ *
+ ****************************************************************************/
 /* This header file is designed to allow the use of Blitz++ with 
    functors (classes defining an operator()) and more general member
    functions. It works best if you have access to the class source code;
@@ -67,21 +92,13 @@
  #error <blitz/array/functorExpr.h> must be included via <blitz/array.h>
 #endif
 
-#ifndef BZ_PRETTYPRINT_H
- #include <blitz/prettyprint.h>
-#endif
-
-#ifndef BZ_SHAPECHECK_H
- #include <blitz/shapecheck.h>
-#endif
-
-#ifndef BZ_TINYVEC_H
- #include <blitz/tinyvec.h>
-#endif
+#include <blitz/prettyprint.h>
+#include <blitz/shapecheck.h>
+#include <blitz/tinyvec.h>
 
 BZ_NAMESPACE(blitz)
 
-template<class P_functor, class P_expr, class P_result>
+template<typename P_functor, typename P_expr, typename P_result>
 class _bz_FunctorExpr {
 public:
     typedef P_functor T_functor;
@@ -92,10 +109,10 @@ public:
     typedef int       T_ctorArg2;    // dummy
     typedef int       T_ctorArg3;    // dummy
 
-    enum { numArrayOperands = BZ_ENUM_CAST(T_expr::numArrayOperands),
-	   numIndexPlaceholders = BZ_ENUM_CAST(T_expr::numIndexPlaceholders),
-	   rank = BZ_ENUM_CAST(T_expr::rank)
-    };
+    static const int 
+        numArrayOperands = T_expr::numArrayOperands,
+	numIndexPlaceholders = T_expr::numIndexPlaceholders,
+	rank = T_expr::rank;
     
     _bz_FunctorExpr(const _bz_FunctorExpr<P_functor,P_expr,P_result>& a)
         : f_(a.f_), iter_(a.iter_)
@@ -110,8 +127,8 @@ public:
     { }
 
 #if BZ_TEMPLATE_CTOR_DOESNT_CAUSE_HAVOC
-    template<class T1>
-    _bz_explicit _bz_FunctorExpr(BZ_ETPARM(T_functor) f, BZ_ETPARM(T1) a)
+    template<typename T1>
+    explicit _bz_FunctorExpr(BZ_ETPARM(T_functor) f, BZ_ETPARM(T1) a)
         : f_(f), iter_(a)
     { }
 #endif
@@ -156,13 +173,13 @@ public:
     void loadStride(int rank)
     { iter_.loadStride(rank); }
 
-    _bz_bool isUnitStride(int rank) const
+    bool isUnitStride(int rank) const
     { return iter_.isUnitStride(rank); }
 
     void advanceUnitStride()
     { iter_.advanceUnitStride(); }
   
-    _bz_bool canCollapse(int outerLoopRank, int innerLoopRank) const
+    bool canCollapse(int outerLoopRank, int innerLoopRank) const
     { 
         return iter_.canCollapse(outerLoopRank, innerLoopRank); 
     }
@@ -176,10 +193,11 @@ public:
     int suggestStride(int rank) const
     { return iter_.suggestStride(rank); }
 
-    _bz_bool isStride(int rank, int stride) const
+    bool isStride(int rank, int stride) const
     { return iter_.isStride(rank,stride); }
 
-    void prettyPrint(string& str, prettyPrintFormat& format) const
+    void prettyPrint(BZ_STD_SCOPE(string) &str, 
+        prettyPrintFormat& format) const
     {
         str += BZ_DEBUG_TEMPLATE_AS_STRING_LITERAL(T_functor);
         str += "(";
@@ -187,8 +205,8 @@ public:
         str += ")";
     }
 
-    template<class T_shape>
-    _bz_bool shapeCheck(const T_shape& shape)
+    template<typename T_shape>
+    bool shapeCheck(const T_shape& shape)
     { return iter_.shapeCheck(shape); }
 
     template<int N_rank>
@@ -204,7 +222,7 @@ protected:
     T_expr iter_;
 };
 
-template<class P_functor, class P_expr1, class P_expr2, class P_result>
+template<typename P_functor, typename P_expr1, typename P_expr2, typename P_result>
 class _bz_FunctorExpr2 
 {
 public:
@@ -218,13 +236,13 @@ public:
     typedef T_expr1 T_ctorArg2;
     typedef int T_ctorArg3;  // dummy
 
-    enum { numArrayOperands = BZ_ENUM_CAST(T_expr1::numArrayOperands) +
-                              BZ_ENUM_CAST(T_expr2::numArrayOperands),
-	   numIndexPlaceholders = BZ_ENUM_CAST(T_expr1::numIndexPlaceholders) +
-	                          BZ_ENUM_CAST(T_expr2::numIndexPlaceholders),
-	   rank = BZ_ENUM_CAST(T_expr1::rank) > BZ_ENUM_CAST(T_expr2::rank) ?
-                  BZ_ENUM_CAST(T_expr1::rank) : BZ_ENUM_CAST(T_expr2::rank)
-    };
+    static const int 
+        numArrayOperands = T_expr1::numArrayOperands
+                         + T_expr2::numArrayOperands,
+	numIndexPlaceholders = T_expr1::numIndexPlaceholders
+	                     + T_expr2::numIndexPlaceholders,
+	rank = T_expr1::rank > T_expr2::rank
+             ? T_expr1::rank : T_expr2::rank;
   
     _bz_FunctorExpr2(const _bz_FunctorExpr2<P_functor, P_expr1, P_expr2,
         P_result>& a) 
@@ -236,7 +254,7 @@ public:
         : f_(f), iter1_(a), iter2_(b)
     { }
 
-    template<class T1, class T2>
+    template<typename T1, typename T2>
     _bz_FunctorExpr2(BZ_ETPARM(T_functor) f, BZ_ETPARM(T1) a, BZ_ETPARM(T2) b) 
         : f_(f), iter1_(a), iter2_(b)
     { }
@@ -308,7 +326,7 @@ public:
         iter2_.loadStride(rank);
     }
   
-    _bz_bool isUnitStride(int rank) const
+    bool isUnitStride(int rank) const
     { return iter1_.isUnitStride(rank) && iter2_.isUnitStride(rank); }
   
     void advanceUnitStride()
@@ -317,7 +335,7 @@ public:
         iter2_.advanceUnitStride();
     }
   
-    _bz_bool canCollapse(int outerLoopRank, int innerLoopRank) const
+    bool canCollapse(int outerLoopRank, int innerLoopRank) const
     { 
         return iter1_.canCollapse(outerLoopRank, innerLoopRank)
             && iter2_.canCollapse(outerLoopRank, innerLoopRank);
@@ -336,12 +354,13 @@ public:
         return ( stride1>stride2 ? stride1 : stride2 );
     }
   
-    _bz_bool isStride(int rank, int stride) const
+    bool isStride(int rank, int stride) const
     {
         return iter1_.isStride(rank,stride) && iter2_.isStride(rank,stride);
     }
   
-    void prettyPrint(string& str, prettyPrintFormat& format) const
+    void prettyPrint(BZ_STD_SCOPE(string) &str, 
+        prettyPrintFormat& format) const
     {
         str += BZ_DEBUG_TEMPLATE_AS_STRING_LITERAL(T_functor);
         str += "(";
@@ -358,8 +377,8 @@ public:
         iter2_.moveTo(i);
     }
   
-    template<class T_shape>
-    _bz_bool shapeCheck(const T_shape& shape)
+    template<typename T_shape>
+    bool shapeCheck(const T_shape& shape)
     { return iter1_.shapeCheck(shape) && iter2_.shapeCheck(shape); }
   
 protected:
@@ -370,7 +389,7 @@ protected:
     T_expr2 iter2_;
 };
 
-template<class P_functor, class P_expr1, class P_expr2, class P_expr3,
+template<typename P_functor, typename P_expr1, typename P_expr2, typename P_expr3,
     class P_result>
 class _bz_FunctorExpr3
 {
@@ -387,17 +406,16 @@ public:
     typedef T_expr2 T_ctorArg2;
     typedef T_expr3 T_ctorArg3;
 
-    enum { numArrayOperands = BZ_ENUM_CAST(T_expr1::numArrayOperands) +
-                              BZ_ENUM_CAST(T_expr2::numArrayOperands) +
-                              BZ_ENUM_CAST(T_expr3::numArrayOperands),
-	   numIndexPlaceholders = BZ_ENUM_CAST(T_expr1::numIndexPlaceholders) +
-	                          BZ_ENUM_CAST(T_expr2::numIndexPlaceholders) +
-	                          BZ_ENUM_CAST(T_expr3::numIndexPlaceholders),
-	   rank12 = BZ_ENUM_CAST(T_expr1::rank) > BZ_ENUM_CAST(T_expr2::rank) ?
-	            BZ_ENUM_CAST(T_expr1::rank) : BZ_ENUM_CAST(T_expr2::rank),
-	   rank = rank12 > BZ_ENUM_CAST(T_expr3::rank) ?
-	          rank12 : BZ_ENUM_CAST(T_expr3::rank)
-    };
+    static const int 
+        numArrayOperands = T_expr1::numArrayOperands
+                         + T_expr2::numArrayOperands
+                         + T_expr3::numArrayOperands,
+	numIndexPlaceholders = T_expr1::numIndexPlaceholders
+	                     + T_expr2::numIndexPlaceholders
+	                     + T_expr3::numIndexPlaceholders,
+	rank12 = T_expr1::rank > T_expr2::rank
+	       ? T_expr1::rank : T_expr2::rank,
+	rank = rank12 > T_expr3::rank ? rank12 : T_expr3::rank;
   
     _bz_FunctorExpr3(const _bz_FunctorExpr3<P_functor, P_expr1, P_expr2,
         P_expr3, P_result>& a) 
@@ -409,7 +427,7 @@ public:
         : f_(f), iter1_(a), iter2_(b), iter3_(c)
     { }
 
-    template<class T1, class T2, class T3>
+    template<typename T1, typename T2, typename T3>
     _bz_FunctorExpr3(BZ_ETPARM(T_functor) f, BZ_ETPARM(T1) a, BZ_ETPARM(T2) b,
         BZ_ETPARM(T3) c) 
         : f_(f), iter1_(a), iter2_(b), iter3_(c)
@@ -491,7 +509,7 @@ public:
         iter3_.loadStride(rank);
     }
   
-    _bz_bool isUnitStride(int rank) const
+    bool isUnitStride(int rank) const
     {
         return iter1_.isUnitStride(rank) && iter2_.isUnitStride(rank)
             && iter3_.isUnitStride(rank);
@@ -504,7 +522,7 @@ public:
         iter3_.advanceUnitStride();
     }
   
-    _bz_bool canCollapse(int outerLoopRank, int innerLoopRank) const
+    bool canCollapse(int outerLoopRank, int innerLoopRank) const
     { 
         return iter1_.canCollapse(outerLoopRank, innerLoopRank)
             && iter2_.canCollapse(outerLoopRank, innerLoopRank)
@@ -526,13 +544,14 @@ public:
             stride1 : stride2 );
     }
   
-    _bz_bool isStride(int rank, int stride) const
+    bool isStride(int rank, int stride) const
     {
         return iter1_.isStride(rank,stride) && iter2_.isStride(rank,stride)
             && iter3_.isStride(rank,stride);
     }
   
-    void prettyPrint(string& str, prettyPrintFormat& format) const
+    void prettyPrint(BZ_STD_SCOPE(string) &str, 
+        prettyPrintFormat& format) const
     {
         str += BZ_DEBUG_TEMPLATE_AS_STRING_LITERAL(T_functor);
         str += "(";
@@ -552,8 +571,8 @@ public:
         iter3_.moveTo(i);
     }
   
-    template<class T_shape>
-    _bz_bool shapeCheck(const T_shape& shape)
+    template<typename T_shape>
+    bool shapeCheck(const T_shape& shape)
     {
         return iter1_.shapeCheck(shape) && iter2_.shapeCheck(shape)
             && iter3_.shapeCheck(shape);
@@ -568,39 +587,42 @@ protected:
     T_expr3 iter3_;
 };
 
-template<class P_functor, class P_expr>
+template<typename P_functor, typename P_expr>
 _bz_inline_et
 _bz_ArrayExpr<_bz_FunctorExpr<P_functor, _bz_typename asExpr<P_expr>::T_expr,
     _bz_typename asExpr<P_expr>::T_expr::T_numtype> >
 applyFunctor(const P_functor& f, const ETBase<P_expr>& a)
 {
-    return _bz_ArrayExpr<_bz_FunctorExpr<P_functor,
+    typedef _bz_FunctorExpr<P_functor,
         _bz_typename asExpr<P_expr>::T_expr,
-        _bz_typename asExpr<P_expr>::T_expr::T_numtype> >
-        (f, static_cast<const P_expr&>(a));
+        _bz_typename asExpr<P_expr>::T_expr::T_numtype> f1;
+    return _bz_ArrayExpr<f1>(f, a.unwrap());
 }
 
-template<class P_functor, class P_expr1, class P_expr2>
+template<typename P_functor, typename P_expr1, typename P_expr2>
 _bz_inline_et
 _bz_ArrayExpr<_bz_FunctorExpr2<P_functor,
-    _bz_typename asExpr<P_expr1>::T_expr, _bz_typename asExpr<P_expr2>::T_expr,
+    _bz_typename asExpr<P_expr1>::T_expr,
+    _bz_typename asExpr<P_expr2>::T_expr,
     BZ_PROMOTE(_bz_typename asExpr<P_expr1>::T_expr::T_numtype,
                _bz_typename asExpr<P_expr2>::T_expr::T_numtype)> >
 applyFunctor(const P_functor& f,
     const ETBase<P_expr1>& a, const ETBase<P_expr2>& b)
 {
-    return _bz_ArrayExpr<_bz_FunctorExpr2<P_functor,
+    typedef _bz_FunctorExpr2<P_functor,
         _bz_typename asExpr<P_expr1>::T_expr,
         _bz_typename asExpr<P_expr2>::T_expr,
         BZ_PROMOTE(_bz_typename asExpr<P_expr1>::T_expr::T_numtype,
-            _bz_typename asExpr<P_expr2>::T_expr::T_numtype)> >
-        (f, static_cast<const P_expr1&>(a), static_cast<const P_expr2&>(b));
+                   _bz_typename asExpr<P_expr2>::T_expr::T_numtype)> f2;
+    return _bz_ArrayExpr<f2>(f, a.unwrap(), b.unwrap());
 }
 
-template<class P_functor, class P_expr1, class P_expr2, class P_expr3>
+template<typename P_functor, typename P_expr1, typename P_expr2, typename P_expr3>
 _bz_inline_et
-_bz_ArrayExpr<_bz_FunctorExpr3<P_functor, _bz_typename asExpr<P_expr1>::T_expr,
-    _bz_typename asExpr<P_expr2>::T_expr, _bz_typename asExpr<P_expr3>::T_expr,
+_bz_ArrayExpr<_bz_FunctorExpr3<P_functor,
+    _bz_typename asExpr<P_expr1>::T_expr,
+    _bz_typename asExpr<P_expr2>::T_expr, 
+    _bz_typename asExpr<P_expr3>::T_expr,
     BZ_PROMOTE(_bz_typename asExpr<P_expr1>::T_expr::T_numtype,
 	       BZ_PROMOTE(_bz_typename asExpr<P_expr2>::T_expr::T_numtype,
 	                  _bz_typename asExpr<P_expr3>::T_expr::T_numtype))> >
@@ -614,10 +636,7 @@ applyFunctor(const P_functor& f, const ETBase<P_expr1>& a,
         BZ_PROMOTE(_bz_typename asExpr<P_expr1>::T_expr::T_numtype,
 	    BZ_PROMOTE(_bz_typename asExpr<P_expr2>::T_expr::T_numtype,
 	               _bz_typename asExpr<P_expr3>::T_expr::T_numtype))> f3;
-
-    return _bz_ArrayExpr< f3 >(
-        f3(f, static_cast<const P_expr1&>(a),
-	static_cast<const P_expr2&>(b),	static_cast<const P_expr3&>(c)));
+    return _bz_ArrayExpr<f3>(f, a.unwrap(), b.unwrap(), c.unwrap());
 }
 
 BZ_NAMESPACE_END // End of stuff in namespace
@@ -630,7 +649,7 @@ public:                                                                   \
     _bz_Functor ## classname ## funcname (const classname& c)             \
         : c_(c)                                                           \
     { }                                                                   \
-    template<class T_numtype1>                                            \
+    template<typename T_numtype1>                                            \
     inline T_numtype1 operator()(T_numtype1 x) const                      \
     { return c_.funcname(x); }                                            \
 private:                                                                  \
@@ -644,7 +663,7 @@ public:                                                                   \
     _bz_Functor ## classname ## funcname (const classname& c)             \
         : c_(c)                                                           \
     { }                                                                   \
-    template<class T_numtype1, class T_numtype2>                          \
+    template<typename T_numtype1, typename T_numtype2>                          \
     inline BZ_PROMOTE(T_numtype1, T_numtype2)                             \
     operator()(T_numtype1 x, T_numtype2 y) const                          \
     { return c_.funcname(x,y); }                                          \
@@ -659,7 +678,7 @@ public:                                                                   \
     _bz_Functor ## classname ## funcname (const classname& c)             \
         : c_(c)                                                           \
     { }                                                                   \
-    template<class T_numtype1, class T_numtype2, class T_numtype3>        \
+    template<typename T_numtype1, typename T_numtype2, typename T_numtype3>        \
     inline BZ_PROMOTE(BZ_PROMOTE(T_numtype1, T_numtype2), T_numtype3)     \
     operator()(T_numtype1 x, T_numtype2 y, T_numtype3 z) const            \
     { return c_.funcname(x,y,z); }                                        \
@@ -675,7 +694,7 @@ public:                                                                   \
     _bz_Functor ## classname ## funcname (const classname& c)             \
         : c_(c)                                                           \
     { }                                                                   \
-    template<class T_numtype1>                                            \
+    template<typename T_numtype1>                                            \
     inline ret operator()(T_numtype1 x) const                             \
     { return c_.funcname(x); }                                            \
 private:                                                                  \
@@ -689,7 +708,7 @@ public:                                                                   \
     _bz_Functor ## classname ## funcname (const classname& c)             \
         : c_(c)                                                           \
     { }                                                                   \
-    template<class T_numtype1, class T_numtype2>                          \
+    template<typename T_numtype1, typename T_numtype2>                          \
     inline ret operator()(T_numtype1 x, T_numtype2 y) const               \
     { return c_.funcname(x,y); }                                          \
 private:                                                                  \
@@ -703,7 +722,7 @@ public:                                                                   \
     _bz_Functor ## classname ## funcname (const classname& c)             \
         : c_(c)                                                           \
     { }                                                                   \
-    template<class T_numtype1, class T_numtype2, class T_numtype3>        \
+    template<typename T_numtype1, typename T_numtype2, typename T_numtype3>        \
     inline ret operator()(T_numtype1 x, T_numtype2 y, T_numtype3 z) const \
     { return c_.funcname(x,y,z); }                                        \
 private:                                                                  \
@@ -712,7 +731,7 @@ private:                                                                  \
 
 
 #define BZ_DECLARE_FUNCTOR(classname)                                     \
-template<class P_expr>                                                    \
+template<typename P_expr>                                                 \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr)<            \
     classname,                                                            \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr>::T_expr,                  \
@@ -723,16 +742,18 @@ operator()(const BZ_BLITZ_SCOPE(ETBase)<P_expr>& a) const                 \
         BZ_BLITZ_SCOPE(_bz_FunctorExpr)<classname,                        \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr>::T_expr,              \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr>::T_expr::T_numtype> > \
-        (*this, static_cast<const P_expr&>(a));                           \
+        (*this, a.unwrap());                                              \
 }
 
 #define BZ_DECLARE_FUNCTOR2(classname)                                    \
-template<class P_expr1, class P_expr2>                                    \
+template<typename P_expr1, typename P_expr2>                              \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr2)<           \
     classname,                                                            \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,                 \
-    BZ_PROMOTE(BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,        \
+    BZ_PROMOTE(_bz_typename                                               \
+               BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,        \
+               _bz_typename                                               \
                BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype)> >     \
 operator()(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                      \
            const BZ_BLITZ_SCOPE(ETBase)<P_expr2>& b) const                \
@@ -741,21 +762,25 @@ operator()(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                      \
         BZ_BLITZ_SCOPE(_bz_FunctorExpr2)<classname,                       \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,             \
-        BZ_PROMOTE(BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,    \
+        BZ_PROMOTE(_bz_typename                                           \
+                   BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,    \
+                   _bz_typename                                           \
                    BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype)> > \
-        (*this, static_cast<const P_expr1&>(a),                           \
-                static_cast<const P_expr2&>(b));                          \
+        (*this, a.unwrap(), b.unwrap());                                  \
 }
 
 #define BZ_DECLARE_FUNCTOR3(classname)                                    \
-template<class P_expr1, class P_expr2, class P_expr3>                     \
+template<typename P_expr1, typename P_expr2, typename P_expr3>            \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr3)<           \
     classname,                                                            \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr3>::T_expr,                 \
-    BZ_PROMOTE(BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,        \
-    BZ_PROMOTE(BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype,        \
+    BZ_PROMOTE(_bz_typename                                               \
+               BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,        \
+    BZ_PROMOTE(_bz_typename                                               \
+               BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype,        \
+               _bz_typename                                               \
                BZ_BLITZ_SCOPE(asExpr)<P_expr3>::T_expr::T_numtype))> >    \
 operator()(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                      \
            const BZ_BLITZ_SCOPE(ETBase)<P_expr2>& b,                      \
@@ -766,17 +791,18 @@ operator()(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                      \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr3>::T_expr,             \
-        BZ_PROMOTE(BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,    \
-        BZ_PROMOTE(BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype,    \
+        BZ_PROMOTE(_bz_typename                                           \
+                   BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,    \
+        BZ_PROMOTE(_bz_typename                                           \
+                   BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype,    \
+                   _bz_typename                                           \
                    BZ_BLITZ_SCOPE(asExpr)<P_expr3>::T_expr::T_numtype))> >\
-        (*this, static_cast<const P_expr1&>(a),                           \
-                static_cast<const P_expr2&>(b),                           \
-                static_cast<const P_expr3&>(c));                          \
+        (*this, a.unwrap(), b.unwrap(), c.unwrap());                      \
 }
 
 
 #define BZ_DECLARE_FUNCTOR_RET(classname, ret)                            \
-template<class P_expr>                                                    \
+template<typename P_expr>                                                 \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr)<            \
     classname,                                                            \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr>::T_expr,                  \
@@ -787,11 +813,11 @@ operator()(const BZ_BLITZ_SCOPE(ETBase)<P_expr>& a) const                 \
         BZ_BLITZ_SCOPE(_bz_FunctorExpr)<classname,                        \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr>::T_expr,              \
         ret> >                                                            \
-        (*this, static_cast<const P_expr&>(a));                           \
+        (*this, a.unwrap());                                              \
 }
 
 #define BZ_DECLARE_FUNCTOR2_RET(classname, ret)                           \
-template<class P_expr1, class P_expr2>                                    \
+template<typename P_expr1, typename P_expr2>                              \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr2)<           \
     classname,                                                            \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,                 \
@@ -805,12 +831,11 @@ operator()(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                      \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,             \
         ret> >                                                            \
-        (*this, static_cast<const P_expr1&>(a),                           \
-                static_cast<const P_expr2&>(b));                          \
+        (*this, a.unwrap(), b.unwrap());                                  \
 }
 
 #define BZ_DECLARE_FUNCTOR3_RET(classname, ret)                           \
-template<class P_expr1, class P_expr2, class P_expr3>                     \
+template<typename P_expr1, typename P_expr2, typename P_expr3>            \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr3)<           \
     classname,                                                            \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,                 \
@@ -827,15 +852,13 @@ operator()(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                      \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr3>::T_expr,             \
         ret> >                                                            \
-        (*this, static_cast<const P_expr1&>(a),                           \
-                static_cast<const P_expr2&>(b),                           \
-                static_cast<const P_expr3&>(c));                          \
+        (*this, a.unwrap(), b.unwrap(), c.unwrap());                      \
 }
 
 
 #define BZ_DECLARE_MEMBER_FUNCTION(classname, funcname)                   \
 _BZ_MAKE_FUNCTOR(classname, funcname)                                     \
-template<class P_expr>                                                    \
+template<typename P_expr>                                                 \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr)<            \
     _bz_Functor ## classname ## funcname,                                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr>::T_expr,                  \
@@ -847,17 +870,19 @@ funcname(const BZ_BLITZ_SCOPE(ETBase)<P_expr>& a) const                   \
         _bz_Functor ## classname ## funcname,                             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr>::T_expr,              \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr>::T_expr::T_numtype> > \
-        (*this, static_cast<const P_expr&>(a));                           \
+        (*this, a.unwrap());                                              \
 }
 
 #define BZ_DECLARE_MEMBER_FUNCTION2(classname, funcname)                  \
 _BZ_MAKE_FUNCTOR2(classname, funcname)                                    \
-template<class P_expr1, class P_expr2>                                    \
+template<typename P_expr1, typename P_expr2>                              \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr2)<           \
     _bz_Functor ## classname ## funcname,                                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,                 \
-    BZ_PROMOTE(BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,        \
+    BZ_PROMOTE(_bz_typename                                               \
+               BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,        \
+               _bz_typename                                               \
                BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype)> >     \
 funcname(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                        \
          const BZ_BLITZ_SCOPE(ETBase)<P_expr2>& b) const                  \
@@ -867,23 +892,26 @@ funcname(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                        \
         _bz_Functor ## classname ## funcname,                             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,             \
-        BZ_PROMOTE(                                                       \
-        BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,               \
-        BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype)> >            \
-        (*this, static_cast<const P_expr1&>(a),                           \
-                static_cast<const P_expr2&>(b));                          \
+        BZ_PROMOTE(_bz_typename                                           \
+                   BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,    \
+                   _bz_typename                                           \
+                   BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype)> > \
+        (*this, a.unwrap(), b.unwrap());                                  \
 }
 
 #define BZ_DECLARE_MEMBER_FUNCTION3(classname, funcname)                  \
 _BZ_MAKE_FUNCTOR3(classname, funcname)                                    \
-template<class P_expr1, class P_expr2, class P_expr3>                     \
+template<typename P_expr1, typename P_expr2, typename P_expr3>            \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr3)<           \
     _bz_Functor ## classname ## funcname,                                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr3>::T_expr,                 \
-    BZ_PROMOTE(BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,        \
-    BZ_PROMOTE(BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype,        \
+    BZ_PROMOTE(_bz_typename                                               \
+               BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,        \
+    BZ_PROMOTE(_bz_typename                                               \
+               BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype,        \
+               _bz_typename                                               \
                BZ_BLITZ_SCOPE(asExpr)<P_expr3>::T_expr::T_numtype))> >    \
 funcname(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                        \
          const BZ_BLITZ_SCOPE(ETBase)<P_expr2>& b,                        \
@@ -895,20 +923,19 @@ funcname(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                        \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr3>::T_expr,             \
-        BZ_PROMOTE(                                                       \
-        BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,               \
-        BZ_PROMOTE(                                                       \
-        BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype,               \
-        BZ_BLITZ_SCOPE(asExpr)<P_expr3>::T_expr::T_numtype))> >           \
-        (*this, static_cast<const P_expr1&>(a),                           \
-                static_cast<const P_expr2&>(b),                           \
-                static_cast<const P_expr3&>(c));                          \
+        BZ_PROMOTE(_bz_typename                                           \
+                   BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr::T_numtype,    \
+        BZ_PROMOTE(_bz_typename                                           \
+                   BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr::T_numtype,    \
+                   _bz_typename                                           \
+                   BZ_BLITZ_SCOPE(asExpr)<P_expr3>::T_expr::T_numtype))> >\
+        (*this, a.unwrap(), b.unwrap(), c.unwrap());                      \
 }
 
 
 #define BZ_DECLARE_MEMBER_FUNCTION_RET(classname, funcname, ret)          \
 _BZ_MAKE_FUNCTOR_RET(classname, funcname, ret)                            \
-template<class P_expr>                                                    \
+template<typename P_expr>                                                 \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr)<            \
     _bz_Functor ## classname ## funcname,                                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr>::T_expr,                  \
@@ -920,12 +947,12 @@ funcname(const BZ_BLITZ_SCOPE(ETBase)<P_expr>& a) const                   \
         _bz_Functor ## classname ## funcname,                             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr>::T_expr,              \
         ret> >                                                            \
-        (*this, static_cast<const P_expr&>(a));                           \
+        (*this, a.unwrap());                                              \
 }
 
 #define BZ_DECLARE_MEMBER_FUNCTION2_RET(classname, funcname, ret)         \
 _BZ_MAKE_FUNCTOR2_RET(classname, funcname, ret)                           \
-template<class P_expr1, class P_expr2>                                    \
+template<typename P_expr1, typename P_expr2>                              \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr2)<           \
     _bz_Functor ## classname ## funcname,                                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,                 \
@@ -940,13 +967,12 @@ funcname(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                        \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,             \
         ret> >                                                            \
-        (*this, static_cast<const P_expr1&>(a),                           \
-                static_cast<const P_expr2&>(b));                          \
+        (*this, a.unwrap(), b.unwrap());                                  \
 }
 
 #define BZ_DECLARE_MEMBER_FUNCTION3_RET(classname, funcname, ret)         \
 _BZ_MAKE_FUNCTOR3_RET(classname, funcname, ret)                           \
-template<class P_expr1, class P_expr2, class P_expr3>                     \
+template<typename P_expr1, typename P_expr2, typename P_expr3>            \
 BZ_BLITZ_SCOPE(_bz_ArrayExpr)<BZ_BLITZ_SCOPE(_bz_FunctorExpr3)<           \
     _bz_Functor ## classname ## funcname,                                 \
     _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr1>::T_expr,                 \
@@ -964,9 +990,7 @@ funcname(const BZ_BLITZ_SCOPE(ETBase)<P_expr1>& a,                        \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr2>::T_expr,             \
         _bz_typename BZ_BLITZ_SCOPE(asExpr)<P_expr3>::T_expr,             \
         ret> >                                                            \
-        (*this, static_cast<const P_expr1&>(a),                           \
-                static_cast<const P_expr2&>(b),                           \
-                static_cast<const P_expr3&>(c));                          \
+        (*this, a.unwrap(), b.unwrap(), c.unwrap());                      \
 }
 
 

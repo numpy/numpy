@@ -12,15 +12,15 @@
 
 int main()
 {
-    std::cout << "Generating <vecbops.cc>" << std::endl;
+    std::cout << "Generating <vecbfn.cc>" << std::endl;
 
     OperandTuple operands(2);
 
-    bzofstream ofs("../vecbops.cc", "Vector expression templates (2 operands)",
-        __FILE__, "BZ_VECBOPS_CC");
+    bzofstream ofs("../vecbfn.cc", "Vector expression binary functions (2 operands)",
+        __FILE__, "BZ_VECBFN_CC");
 
     ofs << "#ifndef BZ_VECEXPR_H" << std::endl
-        << " #error <blitz/vecbops.cc> must be included via <blitz/vecexpr.h>" 
+        << " #error <blitz/vecbfn.cc> must be included via <blitz/vecexpr.h>" 
         << std::endl << "#endif" << std::endl << std::endl;
 
     ofs.beginNamespace();
@@ -32,27 +32,11 @@ int main()
         const char* opApplicName;
         const char* comment;
     } ops[] = {
-     { "+",  true,  true,  "_bz_Add",            "Addition Operators" },
-     { "-",  true,  true,  "_bz_Subtract",       "Subtraction Operators" },
-     { "*",  true,  true,  "_bz_Multiply",       "Multiplication Operators" },
-     { "/",  true,  true,  "_bz_Divide",         "Division Operators" },
-     { "%",  false, false, "_bz_Mod",            "Modulus Operators" },
-     { "^",  false, false, "_bz_BitwiseXOR",     "Bitwise XOR Operators" },
-     { "&",  false, false, "_bz_BitwiseAnd",     "Bitwise And Operators" },
-     { "|",  false, false, "_bz_BitwiseOr",      "Bitwise Or Operators" },
-     { ">>", false, false, "_bz_ShiftRight",     "Shift right Operators" },
-     { "<<", false, false, "_bz_ShiftLeft",      "Shift left Operators" },
-     { ">",  true,  false, "_bz_Greater",        "Greater-than Operators" },
-     { "<",  true,  false, "_bz_Less",           "Less-than Operators" },
-     { ">=", true,  false, "_bz_GreaterOrEqual", "Greater or equal (>=) operators" },
-     { "<=", true,  false, "_bz_LessOrEqual",    "Less or equal (<=) operators" },
-     { "==", true,  true,  "_bz_Equal",          "Equality operators" },
-     { "!=", true,  true,  "_bz_NotEqual",       "Not-equal operators" },
-     { "&&", false, false, "_bz_LogicalAnd",     "Logical AND operators" },
-     { "||", false, false, "_bz_LogicalOr",      "Logical OR operators" }
+     { "min",  true,  false,  "_bz_Min",       "Minimum Operators" },
+     { "max",  true,  false,  "_bz_Max",       "Maximum Operators" },
     };
 
-    for (int i=0; i < 18; ++i)
+    for (int i=0; i < 2; ++i)
     {
     ofs << "/****************************************************************************" << std::endl
         << " * " << ops[i].comment << std::endl
@@ -104,10 +88,7 @@ int main()
         ofs << " > > >" << std::endl;
      
         // operator+(const Vector<T_numtype1>& d1, _bz_VecExpr<T_expr2> d2)
-				if (ops[i].opSymbol[0] == 'm')
-					ofs << ops[i].opSymbol << "(";
-				else
-        	ofs << "operator" << ops[i].opSymbol << "(";
+        ofs << ops[i].opSymbol << "(";
         operands.printArgumentList(ofs, 1);
         ofs << ")" << std::endl << "{" << std::endl;
 

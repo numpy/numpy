@@ -1,8 +1,6 @@
 /***************************************************************************
  * blitz/array/interlace.cc
  *
- * $Id$
- *
  * Copyright (C) 1997-2001 Todd Veldhuizen <tveldhui@oonumerics.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -21,65 +19,7 @@
  * For more information, please see the Blitz++ Home Page:
  *    http://oonumerics.org/blitz/
  *
- ***************************************************************************
- * $Log$
- * Revision 1.2  2002/09/12 07:02:06  eric
- * major rewrite of weave.
- *
- * 0.
- * The underlying library code is significantly re-factored and simpler. There used to be a xxx_spec.py and xxx_info.py file for every group of type conversion classes.  The spec file held the python code that handled the conversion and the info file had most of the C code templates that were generated.  This proved pretty confusing in practice, so the two files have mostly been merged into the spec file.
- *
- * Also, there was quite a bit of code duplication running around.  The re-factoring was able to trim the standard conversion code base (excluding blitz and accelerate stuff) by about 40%.  This should be a huge maintainability and extensibility win.
- *
- * 1.
- * With multiple months of using Numeric arrays, I've found some of weave's "magic variable" names unwieldy and want to change them.  The following are the old declarations for an array x of Float32 type:
- *
- *         PyArrayObject* x = convert_to_numpy(...);
- *         float* x_data = (float*) x->data;
- *         int*   _Nx = x->dimensions;
- *         int*   _Sx = x->strides;
- *         int    _Dx = x->nd;
- *
- * The new declaration looks like this:
- *
- *         PyArrayObject* x_array = convert_to_numpy(...);
- *         float* x = (float*) x->data;
- *         int*   Nx = x->dimensions;
- *         int*   Sx = x->strides;
- *         int    Dx = x->nd;
- *
- * This is obviously not backward compatible, and will break some code (including a lot of mine).  It also makes inline() code more readable and natural to write.
- *
- * 2.
- * I've switched from CXX to Gordon McMillan's SCXX for list, tuples, and dictionaries.  I like CXX pretty well, but its use of advanced C++ (templates, etc.) caused some portability problems.  The SCXX library is similar to CXX but doesn't use templates at all.  This, like (1) is not an
- * API compatible change and requires repairing existing code.
- *
- * I have also thought about boost python, but it also makes heavy use of templates.  Moving to SCXX gets rid of almost all template usage for the standard type converters which should help portability.  std::complex and std::string from the STL are the only templates left.  Of course blitz still uses templates in a major way so weave.blitz will continue to be hard on compilers.
- *
- * I've actually considered scrapping the C++ classes for list, tuples, and
- * dictionaries, and just fall back to the standard Python C API because the classes are waaay slower than the raw API in many cases.  They are also more convenient and less error prone in many cases, so I've decided to stick with them.  The PyObject variable will always be made available for variable "x" under the name "py_x" for more speedy operations.  You'll definitely want to use these for anything that needs to be speedy.
- *
- * 3.
- * strings are converted to std::string now.  I found this to be the most useful type in for strings in my code.  Py::String was used previously.
- *
- * 4.
- * There are a number of reference count "errors" in some of the less tested conversion codes such as instance, module, etc.  I've cleaned most of these up.  I put errors in quotes here because I'm actually not positive that objects passed into "inline" really need reference counting applied to them.  The dictionaries passed in by inline() hold references to these objects so it doesn't seem that they could ever be garbage collected inadvertently.  Variables used by ext_tools, though, definitely need the reference counting done.  I don't think this is a major cost in speed, so it probably isn't worth getting rid of the ref count code.
- *
- * 5.
- * Unicode objects are now supported.  This was necessary to support rendering Unicode strings in the freetype wrappers for Chaco.
- *
- * 6.
- * blitz++ was upgraded to the latest CVS.  It compiles about twice as fast as the old blitz and looks like it supports a large number of compilers (though only gcc 2.95.3 is tested).  Compile times now take about 9 seconds on my 850 MHz PIII laptop.
- *
- * Revision 1.2  2001/01/24 20:22:50  tveldhui
- * Updated copyright date in headers.
- *
- * Revision 1.1.1.1  2000/06/19 12:26:13  tveldhui
- * Imported sources
- *
- *
- */
-
+ ****************************************************************************/
 #ifndef BZ_ARRAYINTERLACE_CC
 #define BZ_ARRAYINTERLACE_CC
 
@@ -124,7 +64,7 @@ BZ_NAMESPACE(blitz)
 // NEEDS_WORK -- doesn't make a lot of sense for user to provide a
 //               GeneralArrayStorage<N_rank+1>
 
-template<class T_numtype>
+template<typename T_numtype>
 void makeInterlacedArray(Array<T_numtype,2>& mainArray,
     Array<T_numtype,1>& subarray, int slice)
 {
@@ -132,7 +72,7 @@ void makeInterlacedArray(Array<T_numtype,2>& mainArray,
     subarray.reference(tmp);
 }
 
-template<class T_numtype>
+template<typename T_numtype>
 void makeInterlacedArray(Array<T_numtype,3>& mainArray,
     Array<T_numtype,2>& subarray, int slice)
 {
@@ -141,7 +81,7 @@ void makeInterlacedArray(Array<T_numtype,3>& mainArray,
     subarray.reference(tmp);
 }
 
-template<class T_numtype>
+template<typename T_numtype>
 void makeInterlacedArray(Array<T_numtype,4>& mainArray,
     Array<T_numtype,3>& subarray, int slice)
 {
@@ -151,7 +91,7 @@ void makeInterlacedArray(Array<T_numtype,4>& mainArray,
 }
 
 // These routines always allocate interlaced arrays
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void interlaceArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2)
 {
@@ -161,7 +101,7 @@ void interlaceArrays(const TinyVector<int,N_rank>& shape,
     makeInterlacedArray(array, a2, 1);
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void interlaceArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3)
@@ -173,7 +113,7 @@ void interlaceArrays(const TinyVector<int,N_rank>& shape,
     makeInterlacedArray(array, a3, 2);
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void interlaceArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4)
@@ -186,7 +126,7 @@ void interlaceArrays(const TinyVector<int,N_rank>& shape,
     makeInterlacedArray(array, a4, 3);
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void interlaceArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -201,7 +141,7 @@ void interlaceArrays(const TinyVector<int,N_rank>& shape,
     makeInterlacedArray(array, a5, 4);
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void interlaceArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -217,7 +157,7 @@ void interlaceArrays(const TinyVector<int,N_rank>& shape,
     makeInterlacedArray(array, a6, 5);
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void interlaceArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -235,7 +175,7 @@ void interlaceArrays(const TinyVector<int,N_rank>& shape,
     makeInterlacedArray(array, a7, 6);
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void interlaceArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -254,7 +194,7 @@ void interlaceArrays(const TinyVector<int,N_rank>& shape,
     makeInterlacedArray(array, a8, 7);
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void interlaceArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -275,7 +215,7 @@ void interlaceArrays(const TinyVector<int,N_rank>& shape,
     makeInterlacedArray(array, a9, 8);
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void interlaceArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -297,7 +237,7 @@ void interlaceArrays(const TinyVector<int,N_rank>& shape,
     makeInterlacedArray(array, a10, 9);
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void interlaceArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -328,7 +268,7 @@ void interlaceArrays(const TinyVector<int,N_rank>& shape,
 // These routines may or may not interlace arrays, depending on
 // whether it is advantageous for this platform.
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void allocateArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2)
 {
@@ -340,7 +280,7 @@ void allocateArrays(const TinyVector<int,N_rank>& shape,
 #endif
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void allocateArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3)
@@ -354,7 +294,7 @@ void allocateArrays(const TinyVector<int,N_rank>& shape,
 #endif
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void allocateArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4)
@@ -369,7 +309,7 @@ void allocateArrays(const TinyVector<int,N_rank>& shape,
 #endif
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void allocateArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -386,7 +326,7 @@ void allocateArrays(const TinyVector<int,N_rank>& shape,
 #endif
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void allocateArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -404,7 +344,7 @@ void allocateArrays(const TinyVector<int,N_rank>& shape,
 #endif
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void allocateArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -424,7 +364,7 @@ void allocateArrays(const TinyVector<int,N_rank>& shape,
 #endif
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void allocateArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -445,7 +385,7 @@ void allocateArrays(const TinyVector<int,N_rank>& shape,
 #endif
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void allocateArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -468,7 +408,7 @@ void allocateArrays(const TinyVector<int,N_rank>& shape,
 #endif
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void allocateArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -492,7 +432,7 @@ void allocateArrays(const TinyVector<int,N_rank>& shape,
 #endif
 }
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 void allocateArrays(const TinyVector<int,N_rank>& shape,
     Array<T_numtype,N_rank>& a1, Array<T_numtype,N_rank>& a2,
     Array<T_numtype,N_rank>& a3, Array<T_numtype,N_rank>& a4,
@@ -521,7 +461,7 @@ void allocateArrays(const TinyVector<int,N_rank>& shape,
 // NEEDS_WORK -- allocateArrays for TinyVector<Range,N_rank>
 
 // This constructor is used to create interlaced arrays.
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 Array<T_numtype,N_rank>::Array(const TinyVector<int,N_rank-1>& shape,
     int lastExtent, const GeneralArrayStorage<N_rank>& storage)
     : storage_(storage)
@@ -555,7 +495,7 @@ Array<T_numtype,N_rank>::Array(const TinyVector<int,N_rank-1>& shape,
 
 // NEEDS_WORK -- see note about TinyVector<Range,N> in <blitz/arrayshape.h>
 #if 0
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 Array<T_numtype,N_rank>::Array(const TinyVector<Range,N_rank-1>& shape,
     int lastExtent, const GeneralArrayStorage<N_rank>& storage)
     : storage_(storage)

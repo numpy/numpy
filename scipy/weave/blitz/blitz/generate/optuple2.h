@@ -119,7 +119,7 @@ public:
         return countTemplates;
     }
 
-    void printTemplates(ostream& os)
+    void printTemplates(std::ostream& os)
     {
         if (!numTemplates())
             return;
@@ -153,7 +153,7 @@ public:
         os << ">";
     }
 
-    void printTypes(ostream& os, int feedFlag = 0)
+    void printTypes(std::ostream& os, int feedFlag = 0)
     {
         for (int i=0; i < numOperands_; ++i)
         {
@@ -161,14 +161,14 @@ public:
             {
                 os << ", ";
                 if (feedFlag)
-                    os << endl << "      ";
+                    os << std::endl << "      ";
             }
 
             (*this)[i].printName(os);
         }
     }
 
-    void printIterators(ostream& os, int feedFlag = 0)
+    void printIterators(std::ostream& os, int feedFlag = 0)
     {
         for (int i=0; i < numOperands_; ++i)
         {
@@ -176,14 +176,14 @@ public:
             {
                 os << ", ";
                 if (feedFlag)
-                    os << endl << "      ";
+                    os << std::endl << "      ";
             }
 
             (*this)[i].printIterator(os);
         }
     }
 
-    void printArgumentList(ostream& os, int feedFlag = 0)
+    void printArgumentList(std::ostream& os, int feedFlag = 0)
     {
         for (int i=0; i < numOperands_; ++i)
         {
@@ -191,14 +191,14 @@ public:
             {
                 os << ", ";
                 if (feedFlag)
-                    os << endl << "      ";
+                    os << std::endl << "      ";
             }
 
             (*this)[i].printArgument(os);
         }
     }
 
-    void printInitializationList(ostream& os, int feedFlag = 0)
+    void printInitializationList(std::ostream& os, int feedFlag = 0)
     {
         for (int i=0; i < numOperands_; ++i)
         {
@@ -206,7 +206,7 @@ public:
             {
                 os << ", ";
                 if (feedFlag)
-                    os << endl << "      ";
+                    os << std::endl << "      ";
             }
 
             (*this)[i].printInitialization(os);
