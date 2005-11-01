@@ -1144,9 +1144,8 @@ typedef struct {
 				   (type < PyArray_USERDEF+\
 				    PyArray_NUMUSERTYPES))
 
-#define PyTypeNum_ISEXTENDED(type) (((type >= PyArray_STRING) &&   \
-				     (type <= PyArray_VOID)) ||	   \
-				    (type >= PyArray_USERDEF))
+#define PyTypeNum_ISEXTENDED(type) (PyTypeNum_ISFLEXIBLE(type) ||  \
+                                    PyTypeNum_ISUSERDEF(type))
 				    
 #define PyTypeNum_ISOBJECT(type) ((type) == PyArray_OBJECT)
 
@@ -1228,12 +1227,11 @@ typedef struct {
 #define PyBigArray_CheckExact(op) ((op)->ob_type == &PyBigArray_Type)
 #define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
 
-#define PyArray_CheckScalar(m) (PyObject_TypeCheck((m),			\
-						   &PyGenericArrType_Type) \
-				|| ((PyArray_Check((m))) &&		\
-				    (((PyArrayObject *)(m))->nd == 0)))
+#define PyArray_IsZeroDim(op) (PyArray_Check(op) && (PyArray_NDIM(op) == 0))
 #define PyArray_IsScalar(obj, cls)				\
 	(PyObject_TypeCheck((obj), &Py##cls##ArrType_Type))
+#define PyArray_CheckScalar(m) (PyArray_IsScalar(m, Generic) || \
+                                PyArray_IsZeroDim(m))
 #define PyArray_IsPythonScalar(obj) \
 	(PyInt_Check(obj) || PyFloat_Check(obj) || PyComplex_Check(obj) || \
 	 PyLong_Check(obj) || PyBool_Check(obj) || PyString_Check(obj) || \
@@ -1242,8 +1240,7 @@ typedef struct {
 	(PyArray_IsScalar(obj, Generic) || PyArray_IsPythonScalar(obj))
 
 #define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ? Py_INCREF(m), m : \
-	  (PyArrayObject *)(PyArray_ContiguousFromObject((PyObject *)(m), \
-		                      PyArray_TYPE(m), 0, 0))) 
+                                  (PyArrayObject *)(PyArray_Copy(m)))
 
 #define PyArray_SIZE(m) PyArray_MultiplyList(PyArray_DIMS(m), PyArray_NDIM(m))
 #define PyArray_NBYTES(m) (PyArray_ITEMSIZE(m) * PyArray_SIZE(m))
@@ -1258,7 +1255,7 @@ typedef struct {
 #define PyArray_SimpleNew(nd, dims, typenum) \
 	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
 #define PyArray_SimpleNewFromData(nd, dims, typenum, data) \
-	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, CARRAY_FLAGS, NULL)
+        PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, CARRAY_FLAGS, NULL)
 
         /*Compatibility with old Numeric stuff -- don't use in new code */
 

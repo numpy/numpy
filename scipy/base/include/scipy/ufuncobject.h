@@ -113,6 +113,7 @@ typedef struct {
 	intp steps[MAX_ARGS];
 
         int obj;  /* This loop calls object functions */
+        int notimplemented; /* The loop caused notimplemented */
 	
 } PyUFuncLoopObject;
 

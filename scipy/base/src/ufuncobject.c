@@ -802,6 +802,31 @@ _create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
 	return 0;
 }
 
+#define _GETATTR_(str, rstr) if (strcmp(name, #str) == 0) { \
+                return PyObject_HasAttrString(op, "__" #rstr "__");}
+
+static int
+_has_reflected_op(PyObject *op, char *name)
+{
+        _GETATTR_(add, radd)
+        _GETATTR_(subtract, rsub)
+        _GETATTR_(multiply, rmul)
+        _GETATTR_(divide, rdiv)
+        _GETATTR_(true_divide, rtruediv)
+        _GETATTR_(floor_divide, rfloordiv)
+        _GETATTR_(remainder, rmod)
+        _GETATTR_(power, rpow)
+        _GETATTR_(left_shift, rrlshift)
+        _GETATTR_(right_shift, rrshift)
+        _GETATTR_(bitwise_and, rand)
+        _GETATTR_(bitwise_xor, rxor)
+        _GETATTR_(bitwise_or, ror)
+        return 0;
+}
+
+#undef _GETATTR_
+
+
 static int
 construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 {
@@ -865,7 +890,18 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         if (select_types(loop->ufunc, arg_types, &(loop->function), 
                          &(loop->funcdata), scalars) == -1)
 		return -1;
-	
+
+        /* FAIL if the other object has the __r<op>__ method */
+        if ((arg_types[1] == PyArray_OBJECT) && \
+            (loop->ufunc->nin==2) && (loop->ufunc->nout == 1)) {
+                if (_has_reflected_op(PyTuple_GET_ITEM(args,1), \
+                                      loop->ufunc->name)) {
+                        loop->notimplemented = 1;
+                        return nargs;
+                }
+        }
+        loop->notimplemented=0;
+        
 	/* Create copies for some of the arrays if appropriate */
 	if (_create_copies(loop, arg_types, mps) < 0) return -1;
 	
@@ -1173,7 +1209,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
 
 	/* Setup the matrices */
 	if (construct_matrices(loop, args, mps) < 0) goto fail;
-	
+
 	PyUFunc_clearfperr();
 
 	return loop;
@@ -1258,6 +1294,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
         BEGIN_THREADS_DEF
 
 	if (!(loop = construct_loop(self, args, mps))) return -1;
+        if (loop->notimplemented) return -2;
 
 	LOOP_BEGIN_THREADS
 
@@ -2319,15 +2356,21 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 	PyObject *retobj[MAX_ARGS];
 	PyObject *res;
 	PyObject *obj;
-	
+        int errval;
+        
 	/* Initialize all array objects to NULL to make cleanup easier 
 	   if something goes wrong. */
 	for(i=0; i<self->nargs; i++) mps[i] = NULL;
 	
-	if (PyUFunc_GenericFunction(self, args, mps) == -1) {
+        errval = PyUFunc_GenericFunction(self, args, mps);
+        if (errval == -1) {
 		for(i=0; i<self->nargs; i++) Py_XDECREF(mps[i]);
 		return NULL;
 	}
+        if (errval == -2) {
+                Py_INCREF(Py_NotImplemented);
+                return Py_NotImplemented;
+        }
 	
 	for(i=0; i<self->nin; i++) Py_DECREF(mps[i]);
 

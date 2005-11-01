@@ -439,7 +439,7 @@ contiguous_data(PyArrayObject *src)
 
 
 static PyObject *PyArray_New(PyTypeObject *, int nd, intp *, 
-                             int, intp *, char *, int, int, PyObject *);
+                             int, intp *, void *, int, int, PyObject *);
 
 /* C-API functions */
 
@@ -3174,7 +3174,7 @@ _array_fill_strides(intp *strides, intp *dims, int nd, intp itemsize,
 	
 static PyObject *
 PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
-            intp *strides, char *data, int itemsize, int flags,
+            intp *strides, void *data, int itemsize, int flags,
 	    PyObject *obj)
 {
 	PyArrayObject *self;
