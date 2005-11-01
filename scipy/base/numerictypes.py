@@ -78,7 +78,7 @@ $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
 
 # we add more at the bottom
-__all__ = ['typeDict', 'arraytypes', 'ScalarType', 'obj2dtype', 'cast']
+__all__ = ['typeDict', 'arraytypes', 'ScalarType', 'obj2dtype', 'cast', 'nbytes']
 
 from multiarray import typeinfo, ndarray, array
 import types as _types
@@ -311,11 +311,11 @@ def dtype2char(dtype):
 # indexed by type or type character
 
 # This dictionary allows look up based on any alias for a type
-class _castdict(dict):
+class _typedict(dict):
     def __getitem__(self, obj):
         return dict.__getitem__(self, obj2dtype(obj))
 
-cast = _castdict()
+cast = _typedict()
 ScalarType = [_types.IntType, _types.FloatType,
               _types.ComplexType, _types.LongType, _types.BooleanType,
               _types.StringType, _types.UnicodeType, _types.BufferType]
@@ -323,6 +323,14 @@ ScalarType.extend(_dtype2char_dict.keys())
 ScalarType = tuple(ScalarType)
 for key in _dtype2char_dict.keys():
     cast[key] = lambda x, k=key : array(x, copy=False).astype(k)
+
+nbytes = _typedict()
+def _construct_nbytes_lookup():
+    for name, val in typeinfo.iteritems():
+        if not isinstance(val, tuple):
+            continue
+        nbytes[val[-1]] = val[2]
+_construct_nbytes_lookup()
 
 # Now add the types we've determined to this module
 for key in allTypes:

@@ -3916,11 +3916,29 @@ array_itemsize_get(PyArrayObject *self)
 static PyObject *
 array_size_get(PyArrayObject *self)
 {
-	longlong size=PyArray_SIZE(self);
-	if (size > MAX_INT || size < MIN_INT)
+	intp size=PyArray_SIZE(self);
+#if SIZEOF_INTP == SIZEOF_LONG
+        return PyInt_FromLong((long) size);
+#else
+	if (size > MAX_LONG || size < MIN_LONG)
 		return PyLong_FromLongLong(size);
 	else 
 		return PyInt_FromLong((long) size);
+#endif
+}
+
+static PyObject *
+array_nbytes_get(PyArrayObject *self)
+{
+        intp nbytes = PyArray_NBYTES(self);
+#if SIZEOF_INTP == SIZEOF_LONG
+        return PyInt_FromLong((long) nbytes);
+#else
+	if (nbytes > MAX_LONG || nbytes < MIN_LONG)
+		return PyLong_FromLongLong(nbytes);
+	else 
+		return PyInt_FromLong((long) nbytes);
+#endif
 }
 
 
@@ -4309,6 +4327,10 @@ static PyGetSetDef array_getsetlist[] = {
          (getter)array_size_get,
 	 NULL,
          "number of elements in the array"},
+        {"nbytes",
+         (getter)array_nbytes_get,
+         NULL,
+         "number of bytes in the array"},
 	{"base",
 	 (getter)array_base_get,
 	 NULL,
