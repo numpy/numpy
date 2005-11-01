@@ -906,6 +906,7 @@ typedef struct {
 	((((PyArrayObject *)(m))->flags & (FLAGS)) == (FLAGS))
 #define PyArray_ISCONTIGUOUS(m) PyArray_CHKFLAGS(m, CONTIGUOUS)
 #define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, WRITEABLE)
+#define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, ALIGNED)
 
 #define PyArray_ISCARRAY(m) PyArray_CHKFLAGS(m, CARRAY_FLAGS)
 #define PyArray_ISFARRAY(m) PyArray_CHKFLAGS(m, FARRAY_FLAGS)

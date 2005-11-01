@@ -5537,6 +5537,7 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
   ENSURECOPY, 
   UPDATEIFCOPY,
   FORCECAST,
+  ENSUREARRAY
 
    or'd (|) together
 
