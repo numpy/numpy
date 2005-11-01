@@ -84,10 +84,10 @@ public:
 
   void seed (twist_int seed = reference_seed)
   {
-    if (!S.size()) S.resize (N);
+    if (!S.size()) S.resize(N);
     enum { Knuth_A = 69069 }; 
     twist_int x = seed & 0xFFFFFFFF;
-    Iter s = &S[0];
+    Iter s = S.begin();
     twist_int mask = (seed == reference_seed) ? 0 : 0xFFFFFFFF;
     for (int j = 0; j < N; ++j) {
       // adding j here avoids the risk of all zeros 
@@ -95,24 +95,25 @@ public:
       *s++ = (x + (mask & j)) & 0xFFFFFFFF; 
       x *= Knuth_A;
     }
+    reload();
   }
 
   void reload (void)
   {
     if (!S.size()) seed (); // auto-seed detection
 
-    Iter p0 = &S[0];
+    Iter p0 = S.begin();
     Iter pM = p0 + PF;
     BitMixer twist;
     twist (S[0]); // prime the pump
-    for (Iter pf_end = &S[N-PF]; p0 != pf_end; ++p0, ++pM)
+    for (Iter pf_end = S.begin()+(N-PF); p0 != pf_end; ++p0, ++pM)
       *p0 = *pM ^ twist (p0[1]);
     pM = S.begin();
-    for (Iter s_end = &S[N-1]; p0 != s_end; ++p0, ++pM)
+    for (Iter s_end = S.begin()+(N-1); p0 != s_end; ++p0, ++pM)
       *p0 = *pM ^ twist (p0[1]);
     *p0 = *pM ^ twist (S[0]);
 
-    I = &S[0];
+    I = S.begin();
   }
 
   inline twist_int random (void)

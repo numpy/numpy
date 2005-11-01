@@ -23,9 +23,8 @@
  ***************************************************************************
  */
 
-// Generated: genpromote.cpp Aug  7 1997 14:59:32
-
-template<class A, class B>
+// Generated: genpromote.cpp Dec 10 2003 17:58:28
+template<typename A, typename B>
 class promote_trait {
 public:
         typedef A   T_promote;

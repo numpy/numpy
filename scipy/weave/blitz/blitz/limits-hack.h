@@ -1,60 +1,4 @@
 /*
- * Severely hacked-up version of SGI/libstdc++ limits, for use with Blitz.
- * $Log$
- * Revision 1.2  2002/09/12 07:04:04  eric
- * major rewrite of weave.
- *
- * 0.
- * The underlying library code is significantly re-factored and simpler. There used to be a xxx_spec.py and xxx_info.py file for every group of type conversion classes.  The spec file held the python code that handled the conversion and the info file had most of the C code templates that were generated.  This proved pretty confusing in practice, so the two files have mostly been merged into the spec file.
- *
- * Also, there was quite a bit of code duplication running around.  The re-factoring was able to trim the standard conversion code base (excluding blitz and accelerate stuff) by about 40%.  This should be a huge maintainability and extensibility win.
- *
- * 1.
- * With multiple months of using Numeric arrays, I've found some of weave's "magic variable" names unwieldy and want to change them.  The following are the old declarations for an array x of Float32 type:
- *
- *         PyArrayObject* x = convert_to_numpy(...);
- *         float* x_data = (float*) x->data;
- *         int*   _Nx = x->dimensions;
- *         int*   _Sx = x->strides;
- *         int    _Dx = x->nd;
- *
- * The new declaration looks like this:
- *
- *         PyArrayObject* x_array = convert_to_numpy(...);
- *         float* x = (float*) x->data;
- *         int*   Nx = x->dimensions;
- *         int*   Sx = x->strides;
- *         int    Dx = x->nd;
- *
- * This is obviously not backward compatible, and will break some code (including a lot of mine).  It also makes inline() code more readable and natural to write.
- *
- * 2.
- * I've switched from CXX to Gordon McMillan's SCXX for list, tuples, and dictionaries.  I like CXX pretty well, but its use of advanced C++ (templates, etc.) caused some portability problems.  The SCXX library is similar to CXX but doesn't use templates at all.  This, like (1) is not an
- * API compatible change and requires repairing existing code.
- *
- * I have also thought about boost python, but it also makes heavy use of templates.  Moving to SCXX gets rid of almost all template usage for the standard type converters which should help portability.  std::complex and std::string from the STL are the only templates left.  Of course blitz still uses templates in a major way so weave.blitz will continue to be hard on compilers.
- *
- * I've actually considered scrapping the C++ classes for list, tuples, and
- * dictionaries, and just fall back to the standard Python C API because the classes are waaay slower than the raw API in many cases.  They are also more convenient and less error prone in many cases, so I've decided to stick with them.  The PyObject variable will always be made available for variable "x" under the name "py_x" for more speedy operations.  You'll definitely want to use these for anything that needs to be speedy.
- *
- * 3.
- * strings are converted to std::string now.  I found this to be the most useful type in for strings in my code.  Py::String was used previously.
- *
- * 4.
- * There are a number of reference count "errors" in some of the less tested conversion codes such as instance, module, etc.  I've cleaned most of these up.  I put errors in quotes here because I'm actually not positive that objects passed into "inline" really need reference counting applied to them.  The dictionaries passed in by inline() hold references to these objects so it doesn't seem that they could ever be garbage collected inadvertently.  Variables used by ext_tools, though, definitely need the reference counting done.  I don't think this is a major cost in speed, so it probably isn't worth getting rid of the ref count code.
- *
- * 5.
- * Unicode objects are now supported.  This was necessary to support rendering Unicode strings in the freetype wrappers for Chaco.
- *
- * 6.
- * blitz++ was upgraded to the latest CVS.  It compiles about twice as fast as the old blitz and looks like it supports a large number of compilers (though only gcc 2.95.3 is tested).  Compile times now take about 9 seconds on my 850 MHz PIII laptop.
- *
- * Revision 1.2  2001/01/25 00:25:54  tveldhui
- * Ensured that source files have cvs logs.
- *
- */
-
-/*
  * Copyright (c) 1997
  * Silicon Graphics Computer Systems, Inc.
  *
@@ -95,7 +39,7 @@ enum float_denorm_style {
 
 // Base class for all specializations of numeric_limits.
 
-template <class __number>
+template <typename __number>
 class _Numeric_limits_base {
 public:
   static const bool is_specialized = false;
@@ -141,7 +85,7 @@ public:
 };
 
 #define __declare_numeric_base_member(__type, __mem) \
-template <class __number> \
+template <typename __number> \
   const __type _Numeric_limits_base<__number>:: __mem
 
 __declare_numeric_base_member(bool, is_specialized);
@@ -171,12 +115,11 @@ __declare_numeric_base_member(float_round_style, round_style);
 
 // Base class for integers.
 
-template <class _Int,
+template <typename _Int,
           _Int __imin,
           _Int __imax,
           int __idigits = -1>
-class _Integer_limits : public _Numeric_limits_base<_Int> 
-{
+class _Integer_limits : public _Numeric_limits_base<_Int> {
 public:
   static const bool is_specialized = true;
 
@@ -200,7 +143,7 @@ public:
 };
 
 #define __declare_integer_limits_member(__type, __mem) \
-template <class _Int, _Int __imin, _Int __imax, int __idigits> \
+template <typename _Int, _Int __imin, _Int __imax, int __idigits> \
   const __type _Integer_limits<_Int, __imin, __imax, __idigits>:: __mem
 
 __declare_integer_limits_member(bool, is_specialized);
@@ -216,7 +159,7 @@ __declare_integer_limits_member(bool, is_modulo);
 #undef __declare_integer_limits_member
 
 // Base class for floating-point numbers.
-template <class __number,
+template <typename __number,
          int __Digits, int __Digits10,
          int __MinExp, int __MaxExp,
          int __MinExp10, int __MaxExp10,
@@ -272,7 +215,7 @@ public:
 };
 
 #define __declare_float_limits_member(__type, __mem) \
-template <class __Num, int __Dig, int __Dig10, \
+template <typename __Num, int __Dig, int __Dig10, \
           int __MnX, int __MxX, int __MnX10, int __MxX10, \
           unsigned int __Inf, unsigned int __QNaN, unsigned int __SNaN, \
           bool __IsIEEE, float_round_style __Sty> \
@@ -306,7 +249,7 @@ __declare_float_limits_member(float_round_style, round_style);
 
 // The unspecialized class.
 
-template<class T> 
+template<typename T> 
 class numeric_limits : public _Numeric_limits_base<T> {};
 
 // Specializations for all built-in integral types.
@@ -315,64 +258,53 @@ class numeric_limits : public _Numeric_limits_base<T> {};
 
 template<>
 class numeric_limits<bool>
-  : public _Integer_limits<bool, false, true, 0>
-{};
+  : public _Integer_limits<bool, false, true, 0> {};
 
 #endif /* __STL_NO_BOOL */
 
 template<>
 class numeric_limits<char>
-  : public _Integer_limits<char, CHAR_MIN, CHAR_MAX>
-{};
+  : public _Integer_limits<char, CHAR_MIN, CHAR_MAX> {};
 
 template<>
 class numeric_limits<signed char>
-  : public _Integer_limits<signed char, SCHAR_MIN, SCHAR_MAX>
-{};
+  : public _Integer_limits<signed char, SCHAR_MIN, SCHAR_MAX> {};
 
 template<>
 class numeric_limits<unsigned char>
-  : public _Integer_limits<unsigned char, 0, UCHAR_MAX>
-{};
+  : public _Integer_limits<unsigned char, 0, UCHAR_MAX> {};
 
 #ifdef __STL_HAS_WCHAR_T
 
 template<>
 class numeric_limits<wchar_t>
-  : public _Integer_limits<wchar_t, INT_MIN, INT_MAX>
-{};
+  : public _Integer_limits<wchar_t, INT_MIN, INT_MAX> {};
 
 #endif
 
 template<>
 class numeric_limits<short>
-  : public _Integer_limits<short, SHRT_MIN, SHRT_MAX>
-{};
+  : public _Integer_limits<short, SHRT_MIN, SHRT_MAX> {};
 
 template<>
 class numeric_limits<unsigned short>
-  : public _Integer_limits<unsigned short, 0, USHRT_MAX>
-{};
+  : public _Integer_limits<unsigned short, 0, USHRT_MAX> {};
 
 template<>
 class numeric_limits<int>
-  : public _Integer_limits<int, INT_MIN, INT_MAX>
-{};
+  : public _Integer_limits<int, INT_MIN, INT_MAX> {};
 
 template<>
 class numeric_limits<unsigned int>
-  : public _Integer_limits<unsigned int, 0, UINT_MAX>
-{};
+  : public _Integer_limits<unsigned int, 0, UINT_MAX> {};
 
 template<>
 class numeric_limits<long>
-  : public _Integer_limits<long, LONG_MIN, LONG_MAX>
-{};
+  : public _Integer_limits<long, LONG_MIN, LONG_MAX> {};
 
 template<>
 class numeric_limits<unsigned long>
-  : public _Integer_limits<unsigned long, 0, ULONG_MAX>
-{};
+  : public _Integer_limits<unsigned long, 0, ULONG_MAX> {};
 
 #ifdef __STL_LONG_LONG
 #ifdef LONG_LONG_MIN
@@ -381,15 +313,13 @@ class numeric_limits<unsigned long>
 // fixed LONGLONG to be LONG_LONG
 template<>
 class numeric_limits<long long>
-  : public _Integer_limits<long long, LONG_LONG_MIN, LONG_LONG_MAX>
-{};
+  : public _Integer_limits<long long, LONG_LONG_MIN, LONG_LONG_MAX> {};
 
 // CYGNUS LOCAL 9/4/1998
 // fixed LONGLONG to be LONG_LONG
 template<>
 class numeric_limits<unsigned long long>
-  : public _Integer_limits<unsigned long long, 0, ULONG_LONG_MAX>
-{};
+  : public _Integer_limits<unsigned long long, 0, ULONG_LONG_MAX> {};
 
 #endif
 #endif /* __STL_LONG_LONG */

@@ -1,3 +1,4 @@
+// -*- C++ -*-
 /***************************************************************************
  * blitz/array-impl.h    Definition of the Array<P_numtype, N_rank> class
  *
@@ -21,120 +22,7 @@
  * For more information, please see the Blitz++ Home Page:
  *    http://oonumerics.org/blitz/
  *
- ***************************************************************************
- * $Log$
- * Revision 1.1  2002/09/12 07:04:04  eric
- * major rewrite of weave.
- *
- * 0.
- * The underlying library code is significantly re-factored and simpler. There used to be a xxx_spec.py and xxx_info.py file for every group of type conversion classes.  The spec file held the python code that handled the conversion and the info file had most of the C code templates that were generated.  This proved pretty confusing in practice, so the two files have mostly been merged into the spec file.
- *
- * Also, there was quite a bit of code duplication running around.  The re-factoring was able to trim the standard conversion code base (excluding blitz and accelerate stuff) by about 40%.  This should be a huge maintainability and extensibility win.
- *
- * 1.
- * With multiple months of using Numeric arrays, I've found some of weave's "magic variable" names unwieldy and want to change them.  The following are the old declarations for an array x of Float32 type:
- *
- *         PyArrayObject* x = convert_to_numpy(...);
- *         float* x_data = (float*) x->data;
- *         int*   _Nx = x->dimensions;
- *         int*   _Sx = x->strides;
- *         int    _Dx = x->nd;
- *
- * The new declaration looks like this:
- *
- *         PyArrayObject* x_array = convert_to_numpy(...);
- *         float* x = (float*) x->data;
- *         int*   Nx = x->dimensions;
- *         int*   Sx = x->strides;
- *         int    Dx = x->nd;
- *
- * This is obviously not backward compatible, and will break some code (including a lot of mine).  It also makes inline() code more readable and natural to write.
- *
- * 2.
- * I've switched from CXX to Gordon McMillan's SCXX for list, tuples, and dictionaries.  I like CXX pretty well, but its use of advanced C++ (templates, etc.) caused some portability problems.  The SCXX library is similar to CXX but doesn't use templates at all.  This, like (1) is not an
- * API compatible change and requires repairing existing code.
- *
- * I have also thought about boost python, but it also makes heavy use of templates.  Moving to SCXX gets rid of almost all template usage for the standard type converters which should help portability.  std::complex and std::string from the STL are the only templates left.  Of course blitz still uses templates in a major way so weave.blitz will continue to be hard on compilers.
- *
- * I've actually considered scrapping the C++ classes for list, tuples, and
- * dictionaries, and just fall back to the standard Python C API because the classes are waaay slower than the raw API in many cases.  They are also more convenient and less error prone in many cases, so I've decided to stick with them.  The PyObject variable will always be made available for variable "x" under the name "py_x" for more speedy operations.  You'll definitely want to use these for anything that needs to be speedy.
- *
- * 3.
- * strings are converted to std::string now.  I found this to be the most useful type in for strings in my code.  Py::String was used previously.
- *
- * 4.
- * There are a number of reference count "errors" in some of the less tested conversion codes such as instance, module, etc.  I've cleaned most of these up.  I put errors in quotes here because I'm actually not positive that objects passed into "inline" really need reference counting applied to them.  The dictionaries passed in by inline() hold references to these objects so it doesn't seem that they could ever be garbage collected inadvertently.  Variables used by ext_tools, though, definitely need the reference counting done.  I don't think this is a major cost in speed, so it probably isn't worth getting rid of the ref count code.
- *
- * 5.
- * Unicode objects are now supported.  This was necessary to support rendering Unicode strings in the freetype wrappers for Chaco.
- *
- * 6.
- * blitz++ was upgraded to the latest CVS.  It compiles about twice as fast as the old blitz and looks like it supports a large number of compilers (though only gcc 2.95.3 is tested).  Compile times now take about 9 seconds on my 850 MHz PIII laptop.
- *
- * Revision 1.10  2002/08/30 22:12:49  jcumming
- * Added declaration of setStorage() method, which lets user set Array storage
- * format after construction.
- *
- * Revision 1.9  2002/06/28 01:33:03  jcumming
- * Modified the isInRange() methods to check that each index value is
- * greater than or equal to the base index value, rather than just
- * casting (index-base) to an unsigned int.  The latter gives unpredictable
- * results if index<base and produces compiler warnings about comparisons
- * between unsigned and signed quantities.
- *
- * Revision 1.8  2002/06/27 00:28:50  jcumming
- * Changed template parameter name T_numtype2 to P_numtype2 in member function
- * template declarataions for consistency with definitions and to avoid any
- * confusion with typedef T_numtype.
- *
- * Revision 1.7  2002/06/26 23:55:45  jcumming
- * Explicitly specify second template argument for ListInitializationSwitch,
- * rather than relying on the default value.  This eliminates a compilation
- * problem using the xlC compiler.  Also removed #include of misc.cc, which
- * is now handled in blitz/array/et.h.
- *
- * Revision 1.6  2002/05/27 19:29:29  jcumming
- * Removed use of this-> as means of accessing members of templated base class.
- * Instead provided using declarations for these members within the derived
- * class definitions to bring them into the scope of the derived class.
- *
- * Revision 1.5  2002/03/06 15:47:49  patricg
- *
- * data_ replaced by this->data_ everywhere
- * changeToNullBlock() replaced by this->changeToNullBlock()
- * class _bz_endTag replaced by struct _bz_endTag {}
- *
- * Revision 1.4  2001/02/15 13:14:39  tveldhui
- * Fixed typo
- *
- * Revision 1.3  2001/02/11 22:10:55  tveldhui
- * Fixed prototype typos
- *
- * Revision 1.2  2001/02/11 15:43:39  tveldhui
- * Additions from Julian Cummings:
- *  - StridedDomain class
- *  - more versions of resizeAndPreserve
- *
- * Revision 1.1  2001/01/26 18:30:50  tveldhui
- * More source code reorganization to reduce compile times.
- *
- * Revision 1.3  2001/01/24 22:51:50  tveldhui
- * Reorganized #include orders to avoid including the huge Vector e.t.
- * implementation when using Array.
- *
- * Revision 1.2  2001/01/24 20:22:49  tveldhui
- * Updated copyright date in headers.
- *
- * Revision 1.1.1.1  2000/06/19 12:26:12  tveldhui
- * Imported sources
- *
- * Revision 1.2  1998/03/14 00:04:47  tveldhui
- * 0.2-alpha-05
- *
- * Revision 1.1  1997/07/16 14:51:20  tveldhui
- * Update: Alpha release 0.2 (Arrays)
- *
- */
+ ***************************************************************************/
 
 /*
  * Wish list for array classes.
@@ -150,35 +38,17 @@
 #ifndef BZ_ARRAY_H
 #define BZ_ARRAY_H
 
-#ifndef BZ_BLITZ_H
- #include <blitz/blitz.h>
-#endif
-
-#ifndef BZ_MEMBLOCK_H
- #include <blitz/memblock.h>
-#endif
-
-#ifndef BZ_RANGE_H
- #include <blitz/range.h>
-#endif
-
-#ifndef BZ_TINYVEC_H
- #include <blitz/tinyvec.h>
-#endif
+#include <blitz/blitz.h>
+#include <blitz/memblock.h>
+#include <blitz/range.h>
+#include <blitz/tinyvec.h>
 
 #ifdef BZ_ARRAY_SPACE_FILLING_TRAVERSAL
-#ifndef BZ_TRAVERSAL_H
- #include <blitz/traversal.h>
-#endif
+#include <blitz/traversal.h>
 #endif
 
-#ifndef BZ_INDEXEXPR_H
- #include <blitz/indexexpr.h>
-#endif
-
-#ifndef BZ_PRETTYPRINT_H
- #include <blitz/prettyprint.h>
-#endif
+#include <blitz/indexexpr.h>
+#include <blitz/prettyprint.h>
 
 #include <blitz/array/slice.h>     // Subarrays and slicing
 #include <blitz/array/map.h>       // Tensor index notation
@@ -193,24 +63,26 @@ BZ_NAMESPACE(blitz)
  * Forward declarations
  */
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 class ArrayIterator;
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 class ConstArrayIterator;
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 class FastArrayIterator;
 
-template<class P_expr>
+template<typename P_expr>
 class _bz_ArrayExpr;
 
-template<class T_array, class T_index>
+template<typename T_array, typename T_index>
 class IndirectArray;
 
-struct _bz_endTag {};
+template <typename P_numtype,int N_rank>
+void swap(Array<P_numtype,N_rank>&,Array<P_numtype,N_rank>&);
 
-
+template <typename P_numtype, int N_rank>
+void find(Array<TinyVector<int,N_rank>,1>&,const Array<P_numtype,N_rank>&);
 
 /*
  * Declaration of class Array
@@ -220,7 +92,7 @@ struct _bz_endTag {};
 // To make this work, need to expose MemoryBlockReference::numReferences()
 // and make Array<P,N2> a friend of Array<P,N> for slicing.
 
-template<class P_numtype, int N_rank>
+template<typename P_numtype, int N_rank>
 class Array : public MemoryBlockReference<P_numtype> 
 #ifdef BZ_NEW_EXPRESSION_TEMPLATES
     , public ETBase<Array<P_numtype,N_rank> >
@@ -257,7 +129,7 @@ public:
     typedef ArrayIterator<T_numtype,N_rank> iterator;
     typedef ConstArrayIterator<T_numtype,N_rank> const_iterator;
 
-    enum { _bz_rank = N_rank };
+    static const int _bz_rank = N_rank;
 
     //////////////////////////////////////////////
     // Constructors                             //
@@ -268,8 +140,8 @@ public:
      * Construct an array from an array expression.
      */
 
-    template<class T_expr>
-    _bz_explicit Array(_bz_ArrayExpr<T_expr> expr);
+    template<typename T_expr>
+    explicit Array(_bz_ArrayExpr<T_expr> expr);
 
     /*
      * Any missing length arguments will have their value taken from the
@@ -286,7 +158,7 @@ public:
         zeroOffset_ = 0;
     }
 
-    _bz_explicit Array(int length0, 
+    explicit Array(int length0, 
         GeneralArrayStorage<N_rank> storage = GeneralArrayStorage<N_rank>())
         : storage_(storage)
     {
@@ -454,7 +326,7 @@ public:
      * Construct an array from an existing block of memory.  Ownership
      * is not acquired (this is provided for backwards compatibility).
      */
-    Array(T_numtype* _bz_restrict dataFirst, TinyVector<int, N_rank> shape,
+    Array(T_numtype* restrict dataFirst, TinyVector<int, N_rank> shape,
         GeneralArrayStorage<N_rank> storage = GeneralArrayStorage<N_rank>())
       : MemoryBlockReference<T_numtype>(product(shape), dataFirst, 
           neverDeleteData),
@@ -472,7 +344,7 @@ public:
      * given set of strides.  Ownership is not acquired (i.e. the memory
      * block will not be freed by Blitz++).
      */
-    Array(T_numtype* _bz_restrict dataFirst, TinyVector<int, N_rank> shape,
+    Array(T_numtype* restrict dataFirst, TinyVector<int, N_rank> shape,
         TinyVector<int, N_rank> stride, 
         GeneralArrayStorage<N_rank> storage = GeneralArrayStorage<N_rank>())
       : MemoryBlockReference<T_numtype>(product(shape), dataFirst, 
@@ -490,7 +362,7 @@ public:
     /*
      * Construct an array from an existing block of memory.
      */
-    Array(T_numtype* _bz_restrict dataFirst, TinyVector<int, N_rank> shape,
+    Array(T_numtype* restrict dataFirst, TinyVector<int, N_rank> shape,
         preexistingMemoryPolicy deletionPolicy,
         GeneralArrayStorage<N_rank> storage = GeneralArrayStorage<N_rank>())
       : MemoryBlockReference<T_numtype>(product(shape), dataFirst, 
@@ -511,7 +383,7 @@ public:
      * Construct an array from an existing block of memory, with a
      * given set of strides.  
      */
-    Array(T_numtype* _bz_restrict dataFirst, TinyVector<int, N_rank> shape,
+    Array(T_numtype* restrict dataFirst, TinyVector<int, N_rank> shape,
         TinyVector<int, N_rank> stride,
         preexistingMemoryPolicy deletionPolicy,
         GeneralArrayStorage<N_rank> storage = GeneralArrayStorage<N_rank>())
@@ -837,6 +709,12 @@ public:
      * Create a reference of another array
      */
     Array(const Array<T_numtype, N_rank>& array)
+#ifdef BZ_NEW_EXPRESSION_TEMPLATES
+        : MemoryBlockReference<T_numtype>(),
+          ETBase< Array<T_numtype, N_rank> >(array)
+#else
+        : MemoryBlockReference<T_numtype>()
+#endif
     {
         // NEEDS_WORK: this const_cast is a tad ugly.
         reference(const_cast<T_array&>(array));
@@ -942,8 +820,8 @@ public:
      * a combination of integer and Range arguments.  It's not intended
      * for end-user use.
      */
-    template<int N_rank2, class R0, class R1, class R2, class R3, class R4,
-        class R5, class R6, class R7, class R8, class R9, class R10>
+    template<int N_rank2, typename R0, typename R1, typename R2, typename R3, typename R4,
+        typename R5, typename R6, typename R7, typename R8, typename R9, typename R10>
     Array(Array<T_numtype,N_rank2>& array, R0 r0, R1 r1, R2 r2,
         R3 r3, R4 r4, R5 r5, R6 r6, R7 r7, R8 r8, R9 r9, R10 r10)
     {
@@ -970,7 +848,7 @@ public:
     { return T_iterator(*this); }
 
     // Deprecated: now extractComponent(...)
-    template<class P_numtype2>
+    template<typename P_numtype2>
     Array<P_numtype2,N_rank>          chopComponent(P_numtype2 a, int compNum,
                                           int numComponents) const
     { return extractComponent(a, compNum, numComponents); }
@@ -994,19 +872,19 @@ public:
         return dot(storage_.base(), stride_);
     }
 
-    const T_numtype* _bz_restrict     data() const
+    const T_numtype* restrict     data() const
     { return data_ + dataOffset(); }
 
-    T_numtype* _bz_restrict           data() 
+    T_numtype* restrict           data() 
     { return data_ + dataOffset(); }
 
     // These dataZero() routines refer to the point (0,0,...,0)
     // which may not be in the array if the bases are nonzero.
     
-    const T_numtype* _bz_restrict     dataZero() const
+    const T_numtype* restrict     dataZero() const
     { return data_; }
 
-    T_numtype* _bz_restrict           dataZero()
+    T_numtype* restrict           dataZero()
     { return data_; }
 
     // These dataFirst() routines refer to the element in the
@@ -1027,12 +905,12 @@ public:
         return pos;
     }
     
-    const T_numtype* _bz_restrict     dataFirst() const
+    const T_numtype* restrict     dataFirst() const
     {
         return data_ + dataFirstOffset();
     }
 
-    T_numtype* _bz_restrict           dataFirst()
+    T_numtype* restrict           dataFirst()
     {
         return data_ + dataFirstOffset();
     }
@@ -1052,12 +930,12 @@ public:
 
     iterator                          end()
     {
-        return iterator(*this, _bz_endTag());
+        return iterator();
     }
 
     const_iterator                    end() const
     {
-        return const_iterator(*this, _bz_endTag());
+        return const_iterator();
     }
 
     int                               extent(int rank) const
@@ -1066,7 +944,7 @@ public:
     const TinyVector<int,N_rank>&     extent() const
     { return length_; }
 
-    template<class P_numtype2>
+    template<typename P_numtype2>
     Array<P_numtype2,N_rank>          extractComponent(P_numtype2, int compNum,
                                           int numComponents) const;
 
@@ -1076,35 +954,23 @@ public:
         length_ = 0;
     }
  
-    _bz_bool                          isMajorRank(int rank) const
-    { return storage_.ordering(rank) == 0; }
-
-    _bz_bool                          isMinorRank(int rank) const
-    { return storage_.ordering(rank) != 0; }
-
-    _bz_bool                          isRankStoredAscending(int rank) const
-    { return storage_.isRankStoredAscending(rank); }
-
-    _bz_bool                          isStorageContiguous() const;
-
-    int                               lbound(int rank) const
-    { return base(rank); }
-
-    TinyVector<int,N_rank>            lbound() const
-    {
-        return base();
+    bool isMajorRank(int rank) const { return storage_.ordering(rank) == 0; }
+    bool isMinorRank(int rank) const { return storage_.ordering(rank) != 0; }
+    bool isRankStoredAscending(int rank) const {
+        return storage_.isRankStoredAscending(rank);
     }
 
-    int                               length(int rank) const
-    { return length_[rank]; }
+    bool isStorageContiguous() const;
 
-    const TinyVector<int, N_rank>&    length() const
-    { return length_; }
+    int                    lbound(int rank) const { return base(rank); }
+    TinyVector<int,N_rank> lbound()         const { return base(); }
 
-    void                              makeUnique();
+    int                            length(int rank) const { return length_[rank]; }
+    const TinyVector<int, N_rank>& length()         const { return length_; }
 
-    int                               numElements() const
-    { return product(length_); }
+    void makeUnique();
+
+    int numElements() const { return product(length_); }
 
     // NEEDS_WORK -- Expose the numReferences() method
     // MemoryBlockReference<T_numtype>::numReferences;
@@ -1280,39 +1146,33 @@ public:
     // Debugging routines
     //////////////////////////////////////////////
 
-    _bz_bool isInRangeForDim(int i, int d) const
-    {
+    bool isInRangeForDim(int i, int d) const {
         return i >= base(d) && (i - base(d)) < length_[d];
     }
 
-    _bz_bool isInRange(int i0) const
-    {
+    bool isInRange(int i0) const {
         return i0 >= base(0) && (i0 - base(0)) < length_[0];
     }
 
-    _bz_bool isInRange(int i0, int i1) const
-    {
+    bool isInRange(int i0, int i1) const {
         return i0 >= base(0) && (i0 - base(0)) < length_[0]
             && i1 >= base(1) && (i1 - base(1)) < length_[1];
     }
 
-    _bz_bool isInRange(int i0, int i1, int i2) const
-    {
+    bool isInRange(int i0, int i1, int i2) const {
         return i0 >= base(0) && (i0 - base(0)) < length_[0]
             && i1 >= base(1) && (i1 - base(1)) < length_[1]
             && i2 >= base(2) && (i2 - base(2)) < length_[2];
     }
 
-    _bz_bool isInRange(int i0, int i1, int i2, int i3) const
-    {
+    bool isInRange(int i0, int i1, int i2, int i3) const {
         return i0 >= base(0) && (i0 - base(0)) < length_[0]
             && i1 >= base(1) && (i1 - base(1)) < length_[1]
             && i2 >= base(2) && (i2 - base(2)) < length_[2]
             && i3 >= base(3) && (i3 - base(3)) < length_[3];
     }
 
-    _bz_bool isInRange(int i0, int i1, int i2, int i3, int i4) const
-    {
+    bool isInRange(int i0, int i1, int i2, int i3, int i4) const {
         return i0 >= base(0) && (i0 - base(0)) < length_[0]
             && i1 >= base(1) && (i1 - base(1)) < length_[1]
             && i2 >= base(2) && (i2 - base(2)) < length_[2]
@@ -1320,9 +1180,7 @@ public:
             && i4 >= base(4) && (i4 - base(4)) < length_[4];
     }
 
-    _bz_bool isInRange(int i0, int i1, int i2, int i3, int i4,
-        int i5) const
-    {
+    bool isInRange(int i0, int i1, int i2, int i3, int i4, int i5) const {
         return i0 >= base(0) && (i0 - base(0)) < length_[0]
             && i1 >= base(1) && (i1 - base(1)) < length_[1]
             && i2 >= base(2) && (i2 - base(2)) < length_[2]
@@ -1331,9 +1189,7 @@ public:
             && i5 >= base(5) && (i5 - base(5)) < length_[5];
     }
 
-    _bz_bool isInRange(int i0, int i1, int i2, int i3, int i4,
-        int i5, int i6) const
-    {
+    bool isInRange(int i0, int i1, int i2, int i3, int i4, int i5, int i6) const {
         return i0 >= base(0) && (i0 - base(0)) < length_[0]
             && i1 >= base(1) && (i1 - base(1)) < length_[1]
             && i2 >= base(2) && (i2 - base(2)) < length_[2]
@@ -1343,9 +1199,8 @@ public:
             && i6 >= base(6) && (i6 - base(6)) < length_[6];
     }
 
-    _bz_bool isInRange(int i0, int i1, int i2, int i3, int i4,
-        int i5, int i6, int i7) const
-    {
+    bool isInRange(int i0, int i1, int i2, int i3, int i4,
+        int i5, int i6, int i7) const {
         return i0 >= base(0) && (i0 - base(0)) < length_[0]
             && i1 >= base(1) && (i1 - base(1)) < length_[1]
             && i2 >= base(2) && (i2 - base(2)) < length_[2]
@@ -1356,9 +1211,8 @@ public:
             && i7 >= base(7) && (i7 - base(7)) < length_[7];
     }
 
-    _bz_bool isInRange(int i0, int i1, int i2, int i3, int i4,
-        int i5, int i6, int i7, int i8) const
-    {
+    bool isInRange(int i0, int i1, int i2, int i3, int i4,
+        int i5, int i6, int i7, int i8) const {
         return i0 >= base(0) && (i0 - base(0)) < length_[0]
             && i1 >= base(1) && (i1 - base(1)) < length_[1]
             && i2 >= base(2) && (i2 - base(2)) < length_[2]
@@ -1370,9 +1224,8 @@ public:
             && i8 >= base(8) && (i8 - base(8)) < length_[8];
     }
 
-    _bz_bool isInRange(int i0, int i1, int i2, int i3, int i4,
-        int i5, int i6, int i7, int i8, int i9) const
-    {
+    bool isInRange(int i0, int i1, int i2, int i3, int i4,
+        int i5, int i6, int i7, int i8, int i9) const {
         return i0 >= base(0) && (i0 - base(0)) < length_[0]
             && i1 >= base(1) && (i1 - base(1)) < length_[1]
             && i2 >= base(2) && (i2 - base(2)) < length_[2]
@@ -1385,9 +1238,8 @@ public:
             && i9 >= base(9) && (i9 - base(9)) < length_[9];
     }
 
-    _bz_bool isInRange(int i0, int i1, int i2, int i3, int i4,
-        int i5, int i6, int i7, int i8, int i9, int i10) const
-    {
+    bool isInRange(int i0, int i1, int i2, int i3, int i4,
+        int i5, int i6, int i7, int i8, int i9, int i10) const {
         return i0 >= base(0) && (i0 - base(0)) < length_[0]
             && i1 >= base(1) && (i1 - base(1)) < length_[1]
             && i2 >= base(2) && (i2 - base(2)) < length_[2]
@@ -1401,81 +1253,83 @@ public:
             && i10 >= base(10) && (i10 - base(10)) < length_[10];
     }
 
-    _bz_bool isInRange(const T_index& index) const
-    {
+    bool isInRange(const T_index& index) const {
         for (int i=0; i < N_rank; ++i)
             if (index[i] < base(i) || (index[i] - base(i)) >= length_[i])
-                return _bz_false;
+                return false;
 
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(const T_index& index) const
-    {
+    bool assertInRange(const T_index& BZ_DEBUG_PARAM(index)) const {
         BZPRECHECK(isInRange(index), "Array index out of range: " << index
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(int i0) const
-    {
+    bool assertInRange(int BZ_DEBUG_PARAM(i0)) const {
         BZPRECHECK(isInRange(i0), "Array index out of range: " << i0
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(int i0, int i1) const
-    {
+    bool assertInRange(int BZ_DEBUG_PARAM(i0), int BZ_DEBUG_PARAM(i1)) const {
         BZPRECHECK(isInRange(i0,i1), "Array index out of range: (" 
             << i0 << ", " << i1 << ")"
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(int i0, int i1, int i2) const
+    bool assertInRange(int BZ_DEBUG_PARAM(i0), int BZ_DEBUG_PARAM(i1),
+        int BZ_DEBUG_PARAM(i2)) const
     {
         BZPRECHECK(isInRange(i0,i1,i2), "Array index out of range: ("
             << i0 << ", " << i1 << ", " << i2 << ")"
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(int i0, int i1, int i2, int i3) const
+    bool assertInRange(int BZ_DEBUG_PARAM(i0), int BZ_DEBUG_PARAM(i1),
+        int BZ_DEBUG_PARAM(i2), int BZ_DEBUG_PARAM(i3)) const
     {
         BZPRECHECK(isInRange(i0,i1,i2,i3), "Array index out of range: ("
             << i0 << ", " << i1 << ", " << i2 << ", " << i3 << ")"
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(int i0, int i1, int i2, int i3, int i4) const
+    bool assertInRange(int BZ_DEBUG_PARAM(i0), int BZ_DEBUG_PARAM(i1),
+        int BZ_DEBUG_PARAM(i2), int BZ_DEBUG_PARAM(i3),
+        int BZ_DEBUG_PARAM(i4)) const
     {
         BZPRECHECK(isInRange(i0,i1,i2,i3,i4), "Array index out of range: ("
             << i0 << ", " << i1 << ", " << i2 << ", " << i3 
             << ", " << i4 << ")"
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(int i0, int i1, int i2, int i3, int i4, 
-        int i5) const
+    bool assertInRange(int BZ_DEBUG_PARAM(i0), int BZ_DEBUG_PARAM(i1),
+        int BZ_DEBUG_PARAM(i2), int BZ_DEBUG_PARAM(i3), int BZ_DEBUG_PARAM(i4),
+        int BZ_DEBUG_PARAM(i5)) const
     {
         BZPRECHECK(isInRange(i0,i1,i2,i3,i4,i5), "Array index out of range: ("
             << i0 << ", " << i1 << ", " << i2 << ", " << i3
             << ", " << i4 << ", " << i5 << ")"
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(int i0, int i1, int i2, int i3, int i4,
-        int i5, int i6) const
+    bool assertInRange(int BZ_DEBUG_PARAM(i0), int BZ_DEBUG_PARAM(i1),
+        int BZ_DEBUG_PARAM(i2), int BZ_DEBUG_PARAM(i3), int BZ_DEBUG_PARAM(i4),
+        int BZ_DEBUG_PARAM(i5), int BZ_DEBUG_PARAM(i6)) const
     {
         BZPRECHECK(isInRange(i0,i1,i2,i3,i4,i5,i6), 
             "Array index out of range: ("
@@ -1483,11 +1337,13 @@ public:
             << ", " << i4 << ", " << i5 << ", " << i6 << ")"
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(int i0, int i1, int i2, int i3, int i4,
-        int i5, int i6, int i7) const
+    bool assertInRange(int BZ_DEBUG_PARAM(i0), int BZ_DEBUG_PARAM(i1),
+        int BZ_DEBUG_PARAM(i2), int BZ_DEBUG_PARAM(i3), int BZ_DEBUG_PARAM(i4),
+        int BZ_DEBUG_PARAM(i5), int BZ_DEBUG_PARAM(i6),
+        int BZ_DEBUG_PARAM(i7)) const
     {
         BZPRECHECK(isInRange(i0,i1,i2,i3,i4,i5,i6,i7),
             "Array index out of range: ("
@@ -1495,11 +1351,13 @@ public:
             << ", " << i4 << ", " << i5 << ", " << i6 << ", " << i7 << ")"
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(int i0, int i1, int i2, int i3, int i4,
-        int i5, int i6, int i7, int i8) const
+    bool assertInRange(int BZ_DEBUG_PARAM(i0), int BZ_DEBUG_PARAM(i1),
+        int BZ_DEBUG_PARAM(i2), int BZ_DEBUG_PARAM(i3), int BZ_DEBUG_PARAM(i4),
+        int BZ_DEBUG_PARAM(i5), int BZ_DEBUG_PARAM(i6), int BZ_DEBUG_PARAM(i7),
+        int BZ_DEBUG_PARAM(i8)) const
     {
         BZPRECHECK(isInRange(i0,i1,i2,i3,i4,i5,i6,i7,i8),
             "Array index out of range: ("
@@ -1508,11 +1366,13 @@ public:
             << ", " << i8 << ")"
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(int i0, int i1, int i2, int i3, int i4,
-        int i5, int i6, int i7, int i8, int i9) const
+    bool assertInRange(int BZ_DEBUG_PARAM(i0), int BZ_DEBUG_PARAM(i1),
+        int BZ_DEBUG_PARAM(i2), int BZ_DEBUG_PARAM(i3), int BZ_DEBUG_PARAM(i4),
+        int BZ_DEBUG_PARAM(i5), int BZ_DEBUG_PARAM(i6), int BZ_DEBUG_PARAM(i7),
+        int BZ_DEBUG_PARAM(i8), int BZ_DEBUG_PARAM(i9)) const
     {
         BZPRECHECK(isInRange(i0,i1,i2,i3,i4,i5,i6,i7,i8,i9),
             "Array index out of range: ("
@@ -1521,11 +1381,14 @@ public:
             << ", " << i8 << ", " << i9 << ")"
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
-    _bz_bool assertInRange(int i0, int i1, int i2, int i3, int i4,
-        int i5, int i6, int i7, int i8, int i9, int i10) const
+    bool assertInRange(int BZ_DEBUG_PARAM(i0), int BZ_DEBUG_PARAM(i1),
+        int BZ_DEBUG_PARAM(i2), int BZ_DEBUG_PARAM(i3), int BZ_DEBUG_PARAM(i4),
+        int BZ_DEBUG_PARAM(i5), int BZ_DEBUG_PARAM(i6), int BZ_DEBUG_PARAM(i7),
+        int BZ_DEBUG_PARAM(i8), int BZ_DEBUG_PARAM(i9),
+        int BZ_DEBUG_PARAM(i10)) const
     {
         BZPRECHECK(isInRange(i0,i1,i2,i3,i4,i5,i6,i7,i8,i9,i10),
             "Array index out of range: ("
@@ -1534,7 +1397,7 @@ public:
             << ", " << i8 << ", " << i9 << ", " << i10 << ")"
             << endl << "Lower bounds: " << storage_.base() << endl
             <<         "Length:       " << length_ << endl);
-        return _bz_true;
+        return true;
     }
 
     //////////////////////////////////////////////
@@ -1542,20 +1405,20 @@ public:
     //////////////////////////////////////////////
 
     template<int N_rank2>
-    T_numtype operator()(const TinyVector<int,N_rank2>& index) const
+    const T_numtype& restrict operator()(const TinyVector<int,N_rank2>& index) const
     {
         assertInRange(index);
         return data_[dot(index, stride_)];
     }
 
     template<int N_rank2>
-    T_numtype& _bz_restrict operator()(const TinyVector<int,N_rank2>& index) 
+    T_numtype& restrict operator()(const TinyVector<int,N_rank2>& index) 
     {
         assertInRange(index);
         return data_[dot(index, stride_)];
     }
 
-    T_numtype operator()(TinyVector<int,1> index) const
+    const T_numtype& restrict operator()(TinyVector<int,1> index) const
     {
         assertInRange(index[0]);
         return data_[index[0] * stride_[0]];
@@ -1567,7 +1430,7 @@ public:
         return data_[index[0] * stride_[0]];
     }
 
-    T_numtype operator()(TinyVector<int,2> index) const
+    const T_numtype& restrict operator()(TinyVector<int,2> index) const
     {
         assertInRange(index[0], index[1]);
         return data_[index[0] * stride_[0] + index[1] * stride_[1]];
@@ -1579,7 +1442,7 @@ public:
         return data_[index[0] * stride_[0] + index[1] * stride_[1]];
     }
 
-    T_numtype operator()(TinyVector<int,3> index) const
+    const T_numtype& restrict operator()(TinyVector<int,3> index) const
     {
         assertInRange(index[0], index[1], index[2]);
         return data_[index[0] * stride_[0] + index[1] * stride_[1]
@@ -1593,7 +1456,7 @@ public:
             + index[2] * stride_[2]];
     }
 
-    T_numtype operator()(const TinyVector<int,4>& index) const
+    const T_numtype& restrict operator()(const TinyVector<int,4>& index) const
     {
         assertInRange(index[0], index[1], index[2], index[3]);
         return data_[index[0] * stride_[0] + index[1] * stride_[1]
@@ -1607,7 +1470,7 @@ public:
             + index[2] * stride_[2] + index[3] * stride_[3]];
     }
 
-    T_numtype operator()(const TinyVector<int,5>& index) const
+    const T_numtype& restrict operator()(const TinyVector<int,5>& index) const
     {
         assertInRange(index[0], index[1], index[2], index[3],
             index[4]);
@@ -1625,7 +1488,7 @@ public:
             + index[4] * stride_[4]];
     }
 
-    T_numtype operator()(const TinyVector<int,6>& index) const
+    const T_numtype& restrict operator()(const TinyVector<int,6>& index) const
     {
         assertInRange(index[0], index[1], index[2], index[3],
             index[4], index[5]);
@@ -1643,7 +1506,7 @@ public:
             + index[4] * stride_[4] + index[5] * stride_[5]];
     }
 
-    T_numtype operator()(const TinyVector<int,7>& index) const
+    const T_numtype& restrict operator()(const TinyVector<int,7>& index) const
     {
         assertInRange(index[0], index[1], index[2], index[3],
             index[4], index[5], index[6]);
@@ -1663,7 +1526,7 @@ public:
             + index[6] * stride_[6]];
     }
 
-    T_numtype operator()(const TinyVector<int,8>& index) const
+    const T_numtype& restrict operator()(const TinyVector<int,8>& index) const
     {
         assertInRange(index[0], index[1], index[2], index[3],
             index[4], index[5], index[6], index[7]);
@@ -1683,7 +1546,7 @@ public:
             + index[6] * stride_[6] + index[7] * stride_[7]];
     }
 
-    T_numtype operator()(const TinyVector<int,9>& index) const
+    const T_numtype& restrict operator()(const TinyVector<int,9>& index) const
     {
         assertInRange(index[0], index[1], index[2], index[3],
             index[4], index[5], index[6], index[7], index[8]);
@@ -1705,7 +1568,7 @@ public:
             + index[8] * stride_[8]];
     }
 
-    T_numtype operator()(const TinyVector<int,10>& index) const
+    const T_numtype& restrict operator()(const TinyVector<int,10>& index) const
     {
         assertInRange(index[0], index[1], index[2], index[3],
             index[4], index[5], index[6], index[7], index[8], index[9]);
@@ -1727,7 +1590,7 @@ public:
             + index[8] * stride_[8] + index[9] * stride_[9]];
     }
 
-    T_numtype operator()(const TinyVector<int,11>& index) const
+    const T_numtype& restrict operator()(const TinyVector<int,11>& index) const
     {
         assertInRange(index[0], index[1], index[2], index[3],
             index[4], index[5], index[6], index[7], index[8], index[9],
@@ -1753,59 +1616,59 @@ public:
             + index[10] * stride_[10]];
     }
 
-    T_numtype operator()(int i0) const
+    const T_numtype& restrict operator()(int i0) const
     { 
         assertInRange(i0);
         return data_[i0 * stride_[0]]; 
     }
 
-    T_numtype& _bz_restrict operator()(int i0) 
+    T_numtype& restrict operator()(int i0) 
     {
         assertInRange(i0);
         return data_[i0 * stride_[0]];
     }
 
-    T_numtype operator()(int i0, int i1) const
+    const T_numtype& restrict operator()(int i0, int i1) const
     { 
         assertInRange(i0, i1);
         return data_[i0 * stride_[0] + i1 * stride_[1]];
     }
 
-    T_numtype& _bz_restrict operator()(int i0, int i1)
+    T_numtype& restrict operator()(int i0, int i1)
     {
         assertInRange(i0, i1);
         return data_[i0 * stride_[0] + i1 * stride_[1]];
     }
 
-    T_numtype operator()(int i0, int i1, int i2) const
+    const T_numtype& restrict operator()(int i0, int i1, int i2) const
     {
         assertInRange(i0, i1, i2);
         return data_[i0 * stride_[0] + i1 * stride_[1]
             + i2 * stride_[2]];
     }
 
-    T_numtype& _bz_restrict operator()(int i0, int i1, int i2) 
+    T_numtype& restrict operator()(int i0, int i1, int i2) 
     {
         assertInRange(i0, i1, i2);
         return data_[i0 * stride_[0] + i1 * stride_[1]
             + i2 * stride_[2]];
     }
 
-    T_numtype operator()(int i0, int i1, int i2, int i3) const
+    const T_numtype& restrict operator()(int i0, int i1, int i2, int i3) const
     {
         assertInRange(i0, i1, i2, i3);
         return data_[i0 * stride_[0] + i1 * stride_[1]
             + i2 * stride_[2] + i3 * stride_[3]];
     }
 
-    T_numtype& _bz_restrict operator()(int i0, int i1, int i2, int i3)
+    T_numtype& restrict operator()(int i0, int i1, int i2, int i3)
     {
         assertInRange(i0, i1, i2, i3);
         return data_[i0 * stride_[0] + i1 * stride_[1]
             + i2 * stride_[2] + i3 * stride_[3]];
     }
 
-    T_numtype operator()(int i0, int i1, int i2, int i3,
+    const T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4) const
     {
         assertInRange(i0, i1, i2, i3, i4);
@@ -1813,7 +1676,7 @@ public:
             + i2 * stride_[2] + i3 * stride_[3] + i4 * stride_[4]];
     }
 
-    T_numtype& _bz_restrict operator()(int i0, int i1, int i2, int i3,
+    T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4)
     {
         assertInRange(i0, i1, i2, i3, i4);
@@ -1821,7 +1684,7 @@ public:
             + i2 * stride_[2] + i3 * stride_[3] + i4 * stride_[4]];
     }
 
-    T_numtype operator()(int i0, int i1, int i2, int i3,
+    const T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5) const
     {
         assertInRange(i0, i1, i2, i3, i4, i5);
@@ -1830,7 +1693,7 @@ public:
             + i5 * stride_[5]];
     }
 
-    T_numtype& _bz_restrict operator()(int i0, int i1, int i2, int i3,
+    T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5)
     {
         assertInRange(i0, i1, i2, i3, i4, i5);
@@ -1839,7 +1702,7 @@ public:
             + i5 * stride_[5]];
     }
 
-    T_numtype operator()(int i0, int i1, int i2, int i3,
+    const T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5, int i6) const
     {
         assertInRange(i0, i1, i2, i3, i4, i5, i6);
@@ -1848,7 +1711,7 @@ public:
             + i5 * stride_[5] + i6 * stride_[6]];
     }
 
-    T_numtype& _bz_restrict operator()(int i0, int i1, int i2, int i3,
+    T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5, int i6)
     {
         assertInRange(i0, i1, i2, i3, i4, i5, i6);
@@ -1857,7 +1720,7 @@ public:
             + i5 * stride_[5] + i6 * stride_[6]];
     }
 
-    T_numtype operator()(int i0, int i1, int i2, int i3,
+    const T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5, int i6, int i7) const
     {
         assertInRange(i0, i1, i2, i3, i4, i5, i6, i7);
@@ -1866,7 +1729,7 @@ public:
             + i5 * stride_[5] + i6 * stride_[6] + i7 * stride_[7]];
     }
 
-    T_numtype& _bz_restrict operator()(int i0, int i1, int i2, int i3,
+    T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5, int i6, int i7)
     {
         assertInRange(i0, i1, i2, i3, i4, i5, i6, i7);
@@ -1875,7 +1738,7 @@ public:
             + i5 * stride_[5] + i6 * stride_[6] + i7 * stride_[7]];
     }
 
-    T_numtype operator()(int i0, int i1, int i2, int i3,
+    const T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5, int i6, int i7, int i8) const
     {
         assertInRange(i0, i1, i2, i3, i4, i5, i6, i7, i8);
@@ -1885,7 +1748,7 @@ public:
             + i8 * stride_[8]];
     }
 
-    T_numtype& _bz_restrict operator()(int i0, int i1, int i2, int i3,
+    T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5, int i6, int i7, int i8)
     {
         assertInRange(i0, i1, i2, i3, i4, i5, i6, i7, i8);
@@ -1895,7 +1758,7 @@ public:
             + i8 * stride_[8]];
     }
 
-    T_numtype operator()(int i0, int i1, int i2, int i3,
+    const T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5, int i6, int i7, int i8, int i9) const
     {
         assertInRange(i0, i1, i2, i3, i4, i5, i6, i7, i8, i9);
@@ -1905,7 +1768,7 @@ public:
             + i8 * stride_[8] + i9 * stride_[9]];
     }
 
-    T_numtype& _bz_restrict operator()(int i0, int i1, int i2, int i3,
+    T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5, int i6, int i7, int i8, int i9)
     {
         assertInRange(i0, i1, i2, i3, i4, i5, i6, i7, i8, i9);
@@ -1915,7 +1778,7 @@ public:
             + i8 * stride_[8] + i9 * stride_[9]];
     }
 
-    T_numtype operator()(int i0, int i1, int i2, int i3,
+    const T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5, int i6, int i7, int i8, int i9, int i10) const
     {
         assertInRange(i0, i1, i2, i3, i4, i5, i6, i7, i8, 
@@ -1926,7 +1789,7 @@ public:
             + i8 * stride_[8] + i9 * stride_[9] + i10 * stride_[10]];
     }
 
-    T_numtype& _bz_restrict operator()(int i0, int i1, int i2, int i3,
+    T_numtype& restrict operator()(int i0, int i1, int i2, int i3,
         int i4, int i5, int i6, int i7, int i8, int i9, int i10)
     {
         assertInRange(i0, i1, i2, i3, i4, i5, i6, i7, i8, 
@@ -2040,115 +1903,105 @@ public:
      * the appropriate cases exist above.
      */
 
-#ifdef BZ_PARTIAL_ORDERING
+#ifdef BZ_HAVE_PARTIAL_ORDERING
 
-    template<class T1, class T2>
-    _bz_typename SliceInfo<T_numtype,T1,T2>::T_slice
+    template<typename T1, typename T2>
+    typename SliceInfo<T_numtype,T1,T2>::T_slice
     operator()(T1 r1, T2 r2) const
     {
-        return SliceInfo<T_numtype,T1,T2>::T_slice(noConst(), r1, r2,
-            nilArraySection(), nilArraySection(), nilArraySection(),
+        typedef typename SliceInfo<T_numtype,T1,T2>::T_slice slice;
+        return slice(noConst(), r1, r2, nilArraySection(), nilArraySection(), nilArraySection(),
             nilArraySection(), nilArraySection(), nilArraySection(),
             nilArraySection(), nilArraySection(), nilArraySection());
     }
 
-    template<class T1, class T2, class T3>
-    _bz_typename SliceInfo<T_numtype,T1,T2,T3>::T_slice 
+    template<typename T1, typename T2, typename T3>
+    typename SliceInfo<T_numtype,T1,T2,T3>::T_slice 
     operator()(T1 r1, T2 r2, T3 r3) const
     {
-        return SliceInfo<T_numtype,T1,T2,T3>::T_slice(noConst(), r1, r2, r3,
-            nilArraySection(), nilArraySection(), nilArraySection(),
+        typedef typename SliceInfo<T_numtype,T1,T2,T3>::T_slice slice;
+        return slice(noConst(), r1, r2, r3, nilArraySection(), nilArraySection(), nilArraySection(),
             nilArraySection(), nilArraySection(), nilArraySection(),
             nilArraySection(), nilArraySection());
     }
 
-    template<class T1, class T2, class T3, class T4>
-    _bz_typename SliceInfo<T_numtype,T1,T2,T3,T4>::T_slice
+    template<typename T1, typename T2, typename T3, typename T4>
+    typename SliceInfo<T_numtype,T1,T2,T3,T4>::T_slice
     operator()(T1 r1, T2 r2, T3 r3, T4 r4) const
     {
-        return SliceInfo<T_numtype,T1,T2,T3,T4>::T_slice(noConst(), r1, r2, r3,
-            r4, nilArraySection(), nilArraySection(),
+        typedef typename SliceInfo<T_numtype,T1,T2,T3,T4>::T_slice slice;
+        return slice(noConst(), r1, r2, r3, r4, nilArraySection(), nilArraySection(),
             nilArraySection(), nilArraySection(), nilArraySection(),
             nilArraySection(), nilArraySection());
     }
 
-    template<class T1, class T2, class T3, class T4, class T5>
-    _bz_typename SliceInfo<T_numtype,T1,T2,T3,T4,T5>::T_slice
+    template<typename T1, typename T2, typename T3, typename T4, typename T5>
+    typename SliceInfo<T_numtype,T1,T2,T3,T4,T5>::T_slice
     operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5) const
     {
-        return SliceInfo<T_numtype,T1,T2,T3,T4,T5>::T_slice(noConst(), r1, r2, 
-            r3, r4, r5, nilArraySection(),
+        typedef typename SliceInfo<T_numtype,T1,T2,T3,T4,T5>::T_slice slice;
+        return slice(noConst(), r1, r2, r3, r4, r5, nilArraySection(),
             nilArraySection(), nilArraySection(), nilArraySection(),
             nilArraySection(), nilArraySection());
     }
 
-    template<class T1, class T2, class T3, class T4, class T5, class T6>
-    _bz_typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6>::T_slice
+    template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+    typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6>::T_slice
     operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5, T6 r6) const
     {
-        return SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6>::T_slice(noConst(), r1, 
-            r2, r3, r4, r5, r6, 
-            nilArraySection(), nilArraySection(), nilArraySection(),
+        typedef typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6>::T_slice slice;
+        return slice(noConst(), r1, r2, r3, r4, r5, r6, nilArraySection(), nilArraySection(), nilArraySection(),
             nilArraySection(), nilArraySection());
     }
 
-    template<class T1, class T2, class T3, class T4, class T5, class T6,
-        class T7>
-    _bz_typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7>::T_slice
+    template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6,
+        typename T7>
+    typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7>::T_slice
     operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5, T6 r6, T7 r7) const
     {
-        return SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7>::T_slice(noConst(), 
-            r1, r2, r3, r4, r5, r6, r7,
-            nilArraySection(), nilArraySection(),
+        typedef typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7>::T_slice slice;
+        return slice(noConst(), r1, r2, r3, r4, r5, r6, r7, nilArraySection(), nilArraySection(),
             nilArraySection(), nilArraySection());
     }
 
-    template<class T1, class T2, class T3, class T4, class T5, class T6,
-        class T7, class T8>
-    _bz_typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8>::T_slice
+    template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6,
+        typename T7, typename T8>
+    typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8>::T_slice
     operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5, T6 r6, T7 r7, T8 r8) const
     {
-        return SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8>::T_slice(noConst(), 
-            r1, r2, r3, r4, r5, r6, r7, r8,
+        typedef typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8>::T_slice slice;
+        return slice(noConst(), r1, r2, r3, r4, r5, r6, r7, r8,
             nilArraySection(), nilArraySection(), nilArraySection());
     }
 
-    template<class T1, class T2, class T3, class T4, class T5, class T6,
-        class T7, class T8, class T9>
-    _bz_typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9>::T_slice
-    operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5, T6 r6, T7 r7, T8 r8, 
-        T9 r9) const
+    template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6,
+        typename T7, typename T8, typename T9>
+    typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9>::T_slice
+    operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5, T6 r6, T7 r7, T8 r8, T9 r9) const
     {
-        return SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9>
-            ::T_slice(noConst(), 
-            r1, r2, r3, r4, r5, r6, r7, r8, r9, 
-            nilArraySection(), nilArraySection());
+        typedef typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9>::T_slice slice;
+        return slice(noConst(), r1, r2, r3, r4, r5, r6, r7, r8, r9, nilArraySection(), nilArraySection());
     }
 
-    template<class T1, class T2, class T3, class T4, class T5, class T6,
-        class T7, class T8, class T9, class T10>
-    _bz_typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9,T10>::T_slice
-    operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5, T6 r6, T7 r7, T8 r8,
-        T9 r9, T10 r10) const
+    template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6,
+        typename T7, typename T8, typename T9, typename T10>
+    typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9,T10>::T_slice
+    operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5, T6 r6, T7 r7, T8 r8, T9 r9, T10 r10) const
     {
-        return SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9,
-            T10>::T_slice(noConst(), r1, r2, r3, r4, r5, r6, r7, r8, 
-            r9, r10, nilArraySection());
+        typedef typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9,T10>::T_slice slice;
+        return slice(noConst(), r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, nilArraySection());
     }
 
-    template<class T1, class T2, class T3, class T4, class T5, class T6,
-        class T7, class T8, class T9, class T10, class T11>
-    _bz_typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,
-        T11>::T_slice
-    operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5, T6 r6, T7 r7, T8 r8,
-        T9 r9, T10 r10, T11 r11) const
+    template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6,
+        typename T7, typename T8, typename T9, typename T10, typename T11>
+    typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11>::T_slice
+    operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5, T6 r6, T7 r7, T8 r8, T9 r9, T10 r10, T11 r11) const
     {
-        return SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,
-            T11>::T_slice(noConst(), r1, r2, r3, r4, r5, r6, r7, r8, r9, 
-            r10, r11);
+        typedef typename SliceInfo<T_numtype,T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11>::T_slice slice;
+        return slice(noConst(), r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11);
     }
 
-#endif // BZ_PARTIAL_ORDERING
+#endif // BZ_HAVE_PARTIAL_ORDERING
 
     /*
      * These versions of operator() are provided to support tensor-style
@@ -2289,22 +2142,37 @@ public:
      * multicomponent_traits.
      */
 
-    // NEEDS_WORK: const version
-    Array<_bz_typename multicomponent_traits<T_numtype>::T_element,N_rank>
-    operator[](int component)
-    {
-        typedef _bz_typename multicomponent_traits<T_numtype>::T_element 
-            T_compType;
+    Array<typename multicomponent_traits<T_numtype>::T_element,N_rank>
+    operator[](const unsigned component) {
+        typedef typename multicomponent_traits<T_numtype>::T_element T_compType;
 
-        return extractComponent(T_compType(), 
-            component, multicomponent_traits<T_numtype>::numComponents);
+        return extractComponent(T_compType(),component,
+                                multicomponent_traits<T_numtype>::numComponents);
+    }
+
+    const Array<typename multicomponent_traits<T_numtype>::T_element,N_rank>
+    operator[](const unsigned component) const {
+        typedef typename multicomponent_traits<T_numtype>::T_element T_compType;
+
+        return extractComponent(T_compType(),component,
+                                multicomponent_traits<T_numtype>::numComponents);
+    }
+
+    Array<typename multicomponent_traits<T_numtype>::T_element,N_rank>
+    operator[](const int component) {
+        return operator[](static_cast<unsigned>(component));
+    }
+
+    const Array<typename multicomponent_traits<T_numtype>::T_element,N_rank>
+    operator[](const int component) const {
+        return operator[](static_cast<unsigned>(component));
     }
 
     //////////////////////////////////////////////
     // Indirection
     //////////////////////////////////////////////
  
-    template<class T_indexContainer>
+    template<typename T_indexContainer>
     IndirectArray<T_array, T_indexContainer>
     operator[](const T_indexContainer& index)
     {
@@ -2330,20 +2198,20 @@ public:
     // T_array& operator=(T_numtype);
 
 #ifdef BZ_NEW_EXPRESSION_TEMPLATES
-    template<class T_expr>
+    template<typename T_expr>
     T_array& operator=(const ETBase<T_expr>&);
     T_array& operator=(const Array<T_numtype,N_rank>&);
 
-    template<class T> T_array& operator+=(const T&);
-    template<class T> T_array& operator-=(const T&);
-    template<class T> T_array& operator*=(const T&);
-    template<class T> T_array& operator/=(const T&);
-    template<class T> T_array& operator%=(const T&);
-    template<class T> T_array& operator^=(const T&);
-    template<class T> T_array& operator&=(const T&);
-    template<class T> T_array& operator|=(const T&);
-    template<class T> T_array& operator>>=(const T&);
-    template<class T> T_array& operator<<=(const T&);
+    template<typename T> T_array& operator+=(const T&);
+    template<typename T> T_array& operator-=(const T&);
+    template<typename T> T_array& operator*=(const T&);
+    template<typename T> T_array& operator/=(const T&);
+    template<typename T> T_array& operator%=(const T&);
+    template<typename T> T_array& operator^=(const T&);
+    template<typename T> T_array& operator&=(const T&);
+    template<typename T> T_array& operator|=(const T&);
+    template<typename T> T_array& operator>>=(const T&);
+    template<typename T> T_array& operator<<=(const T&);
 
 #else
     T_array& operator+=(T_numtype);
@@ -2360,51 +2228,51 @@ public:
     // Array operands
     T_array& operator=(const Array<T_numtype,N_rank>&);
 
-    template<class P_numtype2> 
+    template<typename P_numtype2> 
     T_array& operator=(const Array<P_numtype2,N_rank>&);
-    template<class P_numtype2>
+    template<typename P_numtype2>
     T_array& operator+=(const Array<P_numtype2,N_rank>&);
-    template<class P_numtype2>
+    template<typename P_numtype2>
     T_array& operator-=(const Array<P_numtype2,N_rank>&);
-    template<class P_numtype2>
+    template<typename P_numtype2>
     T_array& operator*=(const Array<P_numtype2,N_rank>&);
-    template<class P_numtype2>
+    template<typename P_numtype2>
     T_array& operator/=(const Array<P_numtype2,N_rank>&);
-    template<class P_numtype2>
+    template<typename P_numtype2>
     T_array& operator%=(const Array<P_numtype2,N_rank>&);
-    template<class P_numtype2>
+    template<typename P_numtype2>
     T_array& operator^=(const Array<P_numtype2,N_rank>&);
-    template<class P_numtype2>
+    template<typename P_numtype2>
     T_array& operator&=(const Array<P_numtype2,N_rank>&);
-    template<class P_numtype2>
+    template<typename P_numtype2>
     T_array& operator|=(const Array<P_numtype2,N_rank>&);
-    template<class P_numtype2>
+    template<typename P_numtype2>
     T_array& operator>>=(const Array<P_numtype2,N_rank>&);
-    template<class P_numtype2>
+    template<typename P_numtype2>
     T_array& operator<<=(const Array<P_numtype2,N_rank>&);
 
     // Array expression operands
-    template<class T_expr>
+    template<typename T_expr>
     inline T_array& operator=(BZ_ETPARM(_bz_ArrayExpr<T_expr>) expr);
-    template<class T_expr>
+    template<typename T_expr>
     inline T_array& operator+=(BZ_ETPARM(_bz_ArrayExpr<T_expr>) expr);
-    template<class T_expr>
+    template<typename T_expr>
     inline T_array& operator-=(BZ_ETPARM(_bz_ArrayExpr<T_expr>) expr);
-    template<class T_expr>
+    template<typename T_expr>
     inline T_array& operator*=(BZ_ETPARM(_bz_ArrayExpr<T_expr>) expr);
-    template<class T_expr>
+    template<typename T_expr>
     inline T_array& operator/=(BZ_ETPARM(_bz_ArrayExpr<T_expr>) expr);
-    template<class T_expr>
+    template<typename T_expr>
     inline T_array& operator%=(BZ_ETPARM(_bz_ArrayExpr<T_expr>) expr);
-    template<class T_expr>
+    template<typename T_expr>
     inline T_array& operator^=(BZ_ETPARM(_bz_ArrayExpr<T_expr>) expr);
-    template<class T_expr>
+    template<typename T_expr>
     inline T_array& operator&=(BZ_ETPARM(_bz_ArrayExpr<T_expr>) expr);
-    template<class T_expr>
+    template<typename T_expr>
     inline T_array& operator|=(BZ_ETPARM(_bz_ArrayExpr<T_expr>) expr);
-    template<class T_expr>
+    template<typename T_expr>
     inline T_array& operator>>=(BZ_ETPARM(_bz_ArrayExpr<T_expr>) expr);
-    template<class T_expr>
+    template<typename T_expr>
     inline T_array& operator<<=(BZ_ETPARM(_bz_ArrayExpr<T_expr>) expr);
 
     // NEEDS_WORK -- Index placeholder operand
@@ -2415,12 +2283,12 @@ public:
 public:
     // Undocumented implementation routines
 
-    template<class T_expr, class T_update>
+    template<typename T_expr, typename T_update>
     inline T_array& evaluate(T_expr expr, T_update);
 
 #ifdef BZ_HAVE_STD
 #ifdef BZ_ARRAY_SPACE_FILLING_TRAVERSAL
-    template<class T_expr, class T_update>
+    template<typename T_expr, typename T_update>
     inline T_array& evaluateWithFastTraversal(
         const TraversalOrder<N_rank - 1>& order, 
         T_expr expr, T_update);
@@ -2428,33 +2296,31 @@ public:
 #endif
 
 #ifdef BZ_ARRAY_2D_STENCIL_TILING
-    template<class T_expr, class T_update>
+    template<typename T_expr, typename T_update>
     inline T_array& evaluateWithTiled2DTraversal(
         T_expr expr, T_update);
 #endif
 
-    template<class T_expr, class T_update>
+    template<typename T_expr, typename T_update>
     inline T_array& evaluateWithIndexTraversal1(
         T_expr expr, T_update);
 
-    template<class T_expr, class T_update>
+    template<typename T_expr, typename T_update>
     inline T_array& evaluateWithIndexTraversalN(
         T_expr expr, T_update);
 
-    template<class T_expr, class T_update>
+    template<typename T_expr, typename T_update>
     inline T_array& evaluateWithStackTraversal1(
         T_expr expr, T_update);
 
-    template<class T_expr, class T_update>
+    template<typename T_expr, typename T_update>
     inline T_array& evaluateWithStackTraversalN(
         T_expr expr, T_update);
 
 
-    T_numtype* _bz_restrict getInitializationIterator()
-    { return dataFirst(); }
+    T_numtype* restrict getInitializationIterator() { return dataFirst(); }
 
-    _bz_bool canCollapse(int outerRank, int innerRank) const
-    { 
+    bool canCollapse(int outerRank, int innerRank) const { 
 #ifdef BZ_DEBUG_TRAVERSE
         BZ_DEBUG_MESSAGE("stride(" << innerRank << ")=" << stride(innerRank)
           << ", extent()=" << extent(innerRank) << ", stride(outerRank)="
@@ -2501,8 +2367,8 @@ protected:
 
     void calculateZeroOffset();
 
-    template<int N_rank2, class R0, class R1, class R2, class R3, class R4, 
-        class R5, class R6, class R7, class R8, class R9, class R10>
+    template<int N_rank2, typename R0, typename R1, typename R2, typename R3, typename R4, 
+        typename R5, typename R6, typename R7, typename R8, typename R9, typename R10>
     void constructSlice(Array<T_numtype, N_rank2>& array, R0 r0, R1 r1, R2 r2, 
         R3 r3, R4 r4, R5 r5, R6 r6, R7 r7, R8 r8, R9 r9, R10 r10);
 
@@ -2515,8 +2381,8 @@ protected:
         TinyVector<int,N_rank2>& rankMap, int sourceRank);
 
     template<int N_rank2>
-    void slice(int& setRank, nilArraySection, Array<T_numtype,N_rank2>& array,
-        TinyVector<int,N_rank2>& rankMap, int sourceRank)
+    void slice(int&, nilArraySection, Array<T_numtype,N_rank2>&,
+        TinyVector<int,N_rank2>&, int)
     { }
 
     void doTranspose(int destRank, int sourceRank, T_array& array);
@@ -2589,17 +2455,48 @@ const int eleventhDim = 10;
  * Global Functions
  */
 
-template<class T_numtype>
+template<typename T_numtype>
 ostream& operator<<(ostream&, const Array<T_numtype,1>&);
 
-template<class T_numtype>
+template<typename T_numtype>
 ostream& operator<<(ostream&, const Array<T_numtype,2>&);
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 ostream& operator<<(ostream&, const Array<T_numtype,N_rank>&);
 
-template<class T_numtype, int N_rank>
+template<typename T_numtype, int N_rank>
 istream& operator>>(istream& is, Array<T_numtype,N_rank>& x);
+
+template <typename P_numtype,int N_rank>
+void swap(Array<P_numtype,N_rank>& a,Array<P_numtype,N_rank>& b) {
+    Array<P_numtype,N_rank> c(a);
+    a.reference(b);
+    b.reference(c);
+}
+
+template <typename P_expr>
+void find(Array<TinyVector<int,P_expr::rank>,1>& indices,
+          const _bz_ArrayExpr<P_expr>& expr) {
+    find(indices,
+         static_cast< Array<typename P_expr::T_numtype,P_expr::rank> >(expr));
+}
+
+template <typename P_numtype, int N_rank>
+void find(Array<TinyVector<int,N_rank>,1>& indices,
+          const Array<P_numtype,N_rank>& exprVals) {
+    indices.resize(exprVals.size());
+    typename Array<P_numtype,N_rank>::const_iterator it, end = exprVals.end();
+    int j=0; 
+    for (it = exprVals.begin(); it != end; ++it)
+        if (*it) 
+            indices(j++) = it.position();
+    if (j) 
+        indices.resizeAndPreserve(j);
+    else 
+        indices.free();
+    return;
+}
+
 
 BZ_NAMESPACE_END
 
@@ -2628,4 +2525,3 @@ BZ_NAMESPACE_END
 #include <blitz/array/stencils.h>   // Stencil objects
 
 #endif // BZ_ARRAY_H
-

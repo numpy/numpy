@@ -1,79 +1,28 @@
 /***************************************************************************
- * blitz/vecbops.cc	Vector expression templates (2 operands)
+ * blitz/../vecbops.cc	Vector expression templates (2 operands)
  *
- * $Id$
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
- * Copyright (C) 1997 Todd Veldhuizen <tveldhui@oonumerics.org>
- * All rights reserved.   Please see <blitz/blitz.h> for terms and
- * conditions of use.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * Suggestions:          blitz-dev@oonumerics.org
- * Bugs:                 blitz-bugs@oonumerics.org
- * Licensing inquiries:  blitz-licenses@oonumerics.org
+ * Suggestions:          blitz-suggest@cybervision.com
+ * Bugs:                 blitz-bugs@cybervision.com
  *
  * For more information, please see the Blitz++ Home Page:
- *    http://oonumerics.org/blitz/
+ *    http://seurat.uwaterloo.ca/blitz/
  *
  ***************************************************************************
- * $Log$
- * Revision 1.2  2002/09/12 07:04:04  eric
- * major rewrite of weave.
- *
- * 0.
- * The underlying library code is significantly re-factored and simpler. There used to be a xxx_spec.py and xxx_info.py file for every group of type conversion classes.  The spec file held the python code that handled the conversion and the info file had most of the C code templates that were generated.  This proved pretty confusing in practice, so the two files have mostly been merged into the spec file.
- *
- * Also, there was quite a bit of code duplication running around.  The re-factoring was able to trim the standard conversion code base (excluding blitz and accelerate stuff) by about 40%.  This should be a huge maintainability and extensibility win.
- *
- * 1.
- * With multiple months of using Numeric arrays, I've found some of weave's "magic variable" names unwieldy and want to change them.  The following are the old declarations for an array x of Float32 type:
- *
- *         PyArrayObject* x = convert_to_numpy(...);
- *         float* x_data = (float*) x->data;
- *         int*   _Nx = x->dimensions;
- *         int*   _Sx = x->strides;
- *         int    _Dx = x->nd;
- *
- * The new declaration looks like this:
- *
- *         PyArrayObject* x_array = convert_to_numpy(...);
- *         float* x = (float*) x->data;
- *         int*   Nx = x->dimensions;
- *         int*   Sx = x->strides;
- *         int    Dx = x->nd;
- *
- * This is obviously not backward compatible, and will break some code (including a lot of mine).  It also makes inline() code more readable and natural to write.
- *
- * 2.
- * I've switched from CXX to Gordon McMillan's SCXX for list, tuples, and dictionaries.  I like CXX pretty well, but its use of advanced C++ (templates, etc.) caused some portability problems.  The SCXX library is similar to CXX but doesn't use templates at all.  This, like (1) is not an
- * API compatible change and requires repairing existing code.
- *
- * I have also thought about boost python, but it also makes heavy use of templates.  Moving to SCXX gets rid of almost all template usage for the standard type converters which should help portability.  std::complex and std::string from the STL are the only templates left.  Of course blitz still uses templates in a major way so weave.blitz will continue to be hard on compilers.
- *
- * I've actually considered scrapping the C++ classes for list, tuples, and
- * dictionaries, and just fall back to the standard Python C API because the classes are waaay slower than the raw API in many cases.  They are also more convenient and less error prone in many cases, so I've decided to stick with them.  The PyObject variable will always be made available for variable "x" under the name "py_x" for more speedy operations.  You'll definitely want to use these for anything that needs to be speedy.
- *
- * 3.
- * strings are converted to std::string now.  I found this to be the most useful type in for strings in my code.  Py::String was used previously.
- *
- * 4.
- * There are a number of reference count "errors" in some of the less tested conversion codes such as instance, module, etc.  I've cleaned most of these up.  I put errors in quotes here because I'm actually not positive that objects passed into "inline" really need reference counting applied to them.  The dictionaries passed in by inline() hold references to these objects so it doesn't seem that they could ever be garbage collected inadvertently.  Variables used by ext_tools, though, definitely need the reference counting done.  I don't think this is a major cost in speed, so it probably isn't worth getting rid of the ref count code.
- *
- * 5.
- * Unicode objects are now supported.  This was necessary to support rendering Unicode strings in the freetype wrappers for Chaco.
- *
- * 6.
- * blitz++ was upgraded to the latest CVS.  It compiles about twice as fast as the old blitz and looks like it supports a large number of compilers (though only gcc 2.95.3 is tested).  Compile times now take about 9 seconds on my 850 MHz PIII laptop.
- *
- * Revision 1.1.1.1  2000/06/19 12:26:10  tveldhui
- * Imported sources
- *
- * Revision 1.2  1998/03/14 00:04:47  tveldhui
- * 0.2-alpha-05
  *
  */ 
 
 // Generated source file.  Do not edit. 
-// genvecbops.cpp Aug  7 1997 15:15:07
+// genvecbops.cpp Oct  6 2005 15:58:48
 
 #ifndef BZ_VECBOPS_CC
 #define BZ_VECBOPS_CC
@@ -101,8 +50,8 @@ operator+(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Add<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> + _bz_VecExpr<P_expr2>
@@ -110,15 +59,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Add<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Add<P_numtype1, typename P_expr2::T_numtype > > >
 operator+(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Add<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Add<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -135,8 +84,8 @@ operator+(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Add<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> + Range
@@ -152,7 +101,7 @@ operator+(const Vector<P_numtype1>& d1,
       Range, 
       _bz_Add<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -169,8 +118,8 @@ operator+(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Add<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> + int
@@ -186,7 +135,7 @@ operator+(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Add<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -203,7 +152,7 @@ operator+(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Add<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -220,7 +169,7 @@ operator+(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Add<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -237,7 +186,7 @@ operator+(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Add<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -255,7 +204,7 @@ operator+(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Add<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -266,16 +215,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_Add<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Add<typename P_expr1::T_numtype, P_numtype2 > > >
 operator+(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_Add<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Add<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> + _bz_VecExpr<P_expr2>
@@ -283,13 +232,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Add<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_Add<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator+(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Add<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Add<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -300,16 +249,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_Add<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Add<typename P_expr1::T_numtype, P_numtype2 > > >
 operator+(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_Add<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Add<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> + Range
@@ -317,13 +266,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_Add<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Add<typename P_expr1::T_numtype, int > > >
 operator+(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_Add<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Add<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -334,16 +283,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_Add<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Add<typename P_expr1::T_numtype, P_numtype2 > > >
 operator+(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_Add<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Add<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> + int
@@ -351,13 +300,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_Add<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Add<typename P_expr1::T_numtype, int > > >
 operator+(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_Add<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Add<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -368,13 +317,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>,
-      _bz_Add<_bz_typename P_expr1::T_numtype, float > > >
+      _bz_Add<typename P_expr1::T_numtype, float > > >
 operator+(_bz_VecExpr<P_expr1> d1, 
       float d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>, 
-      _bz_Add<_bz_typename P_expr1::T_numtype, float> > T_expr;
+      _bz_Add<typename P_expr1::T_numtype, float> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<float>(d2)));
@@ -385,13 +334,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>,
-      _bz_Add<_bz_typename P_expr1::T_numtype, double > > >
+      _bz_Add<typename P_expr1::T_numtype, double > > >
 operator+(_bz_VecExpr<P_expr1> d1, 
       double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>, 
-      _bz_Add<_bz_typename P_expr1::T_numtype, double> > T_expr;
+      _bz_Add<typename P_expr1::T_numtype, double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<double>(d2)));
@@ -402,13 +351,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>,
-      _bz_Add<_bz_typename P_expr1::T_numtype, long double > > >
+      _bz_Add<typename P_expr1::T_numtype, long double > > >
 operator+(_bz_VecExpr<P_expr1> d1, 
       long double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>, 
-      _bz_Add<_bz_typename P_expr1::T_numtype, long double> > T_expr;
+      _bz_Add<typename P_expr1::T_numtype, long double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<long double>(d2)));
@@ -420,13 +369,13 @@ template<class P_expr1, class T2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > ,
-      _bz_Add<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      _bz_Add<typename P_expr1::T_numtype, complex<T2>  > > >
 operator+(_bz_VecExpr<P_expr1> d1, 
       complex<T2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > , 
-      _bz_Add<_bz_typename P_expr1::T_numtype, complex<T2> > > T_expr;
+      _bz_Add<typename P_expr1::T_numtype, complex<T2> > > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<complex<T2> > (d2)));
@@ -447,8 +396,8 @@ operator+(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Add<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> + _bz_VecExpr<P_expr2>
@@ -456,15 +405,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Add<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Add<P_numtype1, typename P_expr2::T_numtype > > >
 operator+(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Add<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Add<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -481,8 +430,8 @@ operator+(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Add<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> + Range
@@ -498,7 +447,7 @@ operator+(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_Add<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -515,8 +464,8 @@ operator+(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Add<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> + int
@@ -532,7 +481,7 @@ operator+(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Add<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -549,7 +498,7 @@ operator+(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Add<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -566,7 +515,7 @@ operator+(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Add<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -583,7 +532,7 @@ operator+(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Add<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -601,7 +550,7 @@ operator+(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Add<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -621,7 +570,7 @@ operator+(Range d1,
       _bz_Add<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range + _bz_VecExpr<P_expr2>
@@ -629,13 +578,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_Add<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Add<int, typename P_expr2::T_numtype > > >
 operator+(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Add<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Add<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -655,7 +604,7 @@ operator+(Range d1,
       _bz_Add<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range + Range
@@ -689,7 +638,7 @@ operator+(Range d1,
       _bz_Add<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range + float
@@ -776,8 +725,8 @@ operator+(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Add<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> + _bz_VecExpr<P_expr2>
@@ -785,15 +734,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Add<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Add<P_numtype1, typename P_expr2::T_numtype > > >
 operator+(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Add<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Add<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -810,8 +759,8 @@ operator+(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Add<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> + Range
@@ -827,7 +776,7 @@ operator+(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_Add<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -844,8 +793,8 @@ operator+(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Add<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> + int
@@ -861,7 +810,7 @@ operator+(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Add<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -878,7 +827,7 @@ operator+(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Add<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -895,7 +844,7 @@ operator+(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Add<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -912,7 +861,7 @@ operator+(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Add<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -930,7 +879,7 @@ operator+(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Add<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -950,7 +899,7 @@ operator+(int d1,
       _bz_Add<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int + _bz_VecExpr<P_expr2>
@@ -958,13 +907,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Add<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Add<int, typename P_expr2::T_numtype > > >
 operator+(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Add<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Add<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -984,7 +933,7 @@ operator+(int d1,
       _bz_Add<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int + TinyVector<P_numtype2, N_length2>
@@ -1001,7 +950,7 @@ operator+(int d1,
       _bz_Add<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float + Vector<P_numtype2>
@@ -1018,7 +967,7 @@ operator+(float d1,
       _bz_Add<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float + _bz_VecExpr<P_expr2>
@@ -1026,13 +975,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Add<float, _bz_typename P_expr2::T_numtype > > >
+      _bz_Add<float, typename P_expr2::T_numtype > > >
 operator+(float d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Add<float, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Add<float, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
       d2));
@@ -1052,7 +1001,7 @@ operator+(float d1,
       _bz_Add<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float + Range
@@ -1086,7 +1035,7 @@ operator+(float d1,
       _bz_Add<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double + Vector<P_numtype2>
@@ -1103,7 +1052,7 @@ operator+(double d1,
       _bz_Add<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double + _bz_VecExpr<P_expr2>
@@ -1111,13 +1060,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Add<double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Add<double, typename P_expr2::T_numtype > > >
 operator+(double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Add<double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Add<double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
       d2));
@@ -1137,7 +1086,7 @@ operator+(double d1,
       _bz_Add<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double + Range
@@ -1171,7 +1120,7 @@ operator+(double d1,
       _bz_Add<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double + Vector<P_numtype2>
@@ -1188,7 +1137,7 @@ operator+(long double d1,
       _bz_Add<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double + _bz_VecExpr<P_expr2>
@@ -1196,13 +1145,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Add<long double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Add<long double, typename P_expr2::T_numtype > > >
 operator+(long double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Add<long double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Add<long double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
       d2));
@@ -1222,7 +1171,7 @@ operator+(long double d1,
       _bz_Add<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double + Range
@@ -1256,7 +1205,7 @@ operator+(long double d1,
       _bz_Add<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #ifdef BZ_HAVE_COMPLEX
 
@@ -1274,7 +1223,7 @@ operator+(complex<T1> d1,
       _bz_Add<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -1285,13 +1234,13 @@ template<class T1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>,
-      _bz_Add<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      _bz_Add<complex<T1> , typename P_expr2::T_numtype > > >
 operator+(complex<T1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>, 
-      _bz_Add<complex<T1> , _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Add<complex<T1> , typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
       d2));
@@ -1314,7 +1263,7 @@ operator+(complex<T1> d1,
       _bz_Add<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -1354,7 +1303,7 @@ operator+(complex<T1> d1,
       _bz_Add<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -1375,8 +1324,8 @@ operator-(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Subtract<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> - _bz_VecExpr<P_expr2>
@@ -1384,15 +1333,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Subtract<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Subtract<P_numtype1, typename P_expr2::T_numtype > > >
 operator-(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Subtract<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Subtract<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -1409,8 +1358,8 @@ operator-(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Subtract<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> - Range
@@ -1426,7 +1375,7 @@ operator-(const Vector<P_numtype1>& d1,
       Range, 
       _bz_Subtract<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -1443,8 +1392,8 @@ operator-(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Subtract<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> - int
@@ -1460,7 +1409,7 @@ operator-(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Subtract<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -1477,7 +1426,7 @@ operator-(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Subtract<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -1494,7 +1443,7 @@ operator-(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Subtract<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -1511,7 +1460,7 @@ operator-(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Subtract<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -1529,7 +1478,7 @@ operator-(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Subtract<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -1540,16 +1489,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Subtract<typename P_expr1::T_numtype, P_numtype2 > > >
 operator-(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Subtract<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> - _bz_VecExpr<P_expr2>
@@ -1557,13 +1506,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_Subtract<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator-(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Subtract<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -1574,16 +1523,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Subtract<typename P_expr1::T_numtype, P_numtype2 > > >
 operator-(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Subtract<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> - Range
@@ -1591,13 +1540,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Subtract<typename P_expr1::T_numtype, int > > >
 operator-(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Subtract<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -1608,16 +1557,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Subtract<typename P_expr1::T_numtype, P_numtype2 > > >
 operator-(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Subtract<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> - int
@@ -1625,13 +1574,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Subtract<typename P_expr1::T_numtype, int > > >
 operator-(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Subtract<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -1642,13 +1591,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>,
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, float > > >
+      _bz_Subtract<typename P_expr1::T_numtype, float > > >
 operator-(_bz_VecExpr<P_expr1> d1, 
       float d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>, 
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, float> > T_expr;
+      _bz_Subtract<typename P_expr1::T_numtype, float> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<float>(d2)));
@@ -1659,13 +1608,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>,
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, double > > >
+      _bz_Subtract<typename P_expr1::T_numtype, double > > >
 operator-(_bz_VecExpr<P_expr1> d1, 
       double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>, 
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, double> > T_expr;
+      _bz_Subtract<typename P_expr1::T_numtype, double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<double>(d2)));
@@ -1676,13 +1625,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>,
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, long double > > >
+      _bz_Subtract<typename P_expr1::T_numtype, long double > > >
 operator-(_bz_VecExpr<P_expr1> d1, 
       long double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>, 
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, long double> > T_expr;
+      _bz_Subtract<typename P_expr1::T_numtype, long double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<long double>(d2)));
@@ -1694,13 +1643,13 @@ template<class P_expr1, class T2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > ,
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      _bz_Subtract<typename P_expr1::T_numtype, complex<T2>  > > >
 operator-(_bz_VecExpr<P_expr1> d1, 
       complex<T2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > , 
-      _bz_Subtract<_bz_typename P_expr1::T_numtype, complex<T2> > > T_expr;
+      _bz_Subtract<typename P_expr1::T_numtype, complex<T2> > > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<complex<T2> > (d2)));
@@ -1721,8 +1670,8 @@ operator-(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Subtract<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> - _bz_VecExpr<P_expr2>
@@ -1730,15 +1679,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Subtract<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Subtract<P_numtype1, typename P_expr2::T_numtype > > >
 operator-(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Subtract<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Subtract<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -1755,8 +1704,8 @@ operator-(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Subtract<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> - Range
@@ -1772,7 +1721,7 @@ operator-(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_Subtract<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -1789,8 +1738,8 @@ operator-(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Subtract<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> - int
@@ -1806,7 +1755,7 @@ operator-(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Subtract<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -1823,7 +1772,7 @@ operator-(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Subtract<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -1840,7 +1789,7 @@ operator-(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Subtract<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -1857,7 +1806,7 @@ operator-(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Subtract<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -1875,7 +1824,7 @@ operator-(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Subtract<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -1895,7 +1844,7 @@ operator-(Range d1,
       _bz_Subtract<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range - _bz_VecExpr<P_expr2>
@@ -1903,13 +1852,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_Subtract<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Subtract<int, typename P_expr2::T_numtype > > >
 operator-(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Subtract<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Subtract<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -1929,7 +1878,7 @@ operator-(Range d1,
       _bz_Subtract<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range - Range
@@ -1963,7 +1912,7 @@ operator-(Range d1,
       _bz_Subtract<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range - float
@@ -2050,8 +1999,8 @@ operator-(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Subtract<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> - _bz_VecExpr<P_expr2>
@@ -2059,15 +2008,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Subtract<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Subtract<P_numtype1, typename P_expr2::T_numtype > > >
 operator-(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Subtract<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Subtract<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -2084,8 +2033,8 @@ operator-(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Subtract<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> - Range
@@ -2101,7 +2050,7 @@ operator-(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_Subtract<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -2118,8 +2067,8 @@ operator-(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Subtract<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> - int
@@ -2135,7 +2084,7 @@ operator-(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Subtract<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -2152,7 +2101,7 @@ operator-(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Subtract<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -2169,7 +2118,7 @@ operator-(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Subtract<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -2186,7 +2135,7 @@ operator-(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Subtract<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -2204,7 +2153,7 @@ operator-(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Subtract<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -2224,7 +2173,7 @@ operator-(int d1,
       _bz_Subtract<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int - _bz_VecExpr<P_expr2>
@@ -2232,13 +2181,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Subtract<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Subtract<int, typename P_expr2::T_numtype > > >
 operator-(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Subtract<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Subtract<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -2258,7 +2207,7 @@ operator-(int d1,
       _bz_Subtract<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int - TinyVector<P_numtype2, N_length2>
@@ -2275,7 +2224,7 @@ operator-(int d1,
       _bz_Subtract<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float - Vector<P_numtype2>
@@ -2292,7 +2241,7 @@ operator-(float d1,
       _bz_Subtract<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float - _bz_VecExpr<P_expr2>
@@ -2300,13 +2249,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Subtract<float, _bz_typename P_expr2::T_numtype > > >
+      _bz_Subtract<float, typename P_expr2::T_numtype > > >
 operator-(float d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Subtract<float, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Subtract<float, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
       d2));
@@ -2326,7 +2275,7 @@ operator-(float d1,
       _bz_Subtract<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float - Range
@@ -2360,7 +2309,7 @@ operator-(float d1,
       _bz_Subtract<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double - Vector<P_numtype2>
@@ -2377,7 +2326,7 @@ operator-(double d1,
       _bz_Subtract<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double - _bz_VecExpr<P_expr2>
@@ -2385,13 +2334,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Subtract<double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Subtract<double, typename P_expr2::T_numtype > > >
 operator-(double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Subtract<double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Subtract<double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
       d2));
@@ -2411,7 +2360,7 @@ operator-(double d1,
       _bz_Subtract<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double - Range
@@ -2445,7 +2394,7 @@ operator-(double d1,
       _bz_Subtract<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double - Vector<P_numtype2>
@@ -2462,7 +2411,7 @@ operator-(long double d1,
       _bz_Subtract<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double - _bz_VecExpr<P_expr2>
@@ -2470,13 +2419,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Subtract<long double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Subtract<long double, typename P_expr2::T_numtype > > >
 operator-(long double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Subtract<long double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Subtract<long double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
       d2));
@@ -2496,7 +2445,7 @@ operator-(long double d1,
       _bz_Subtract<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double - Range
@@ -2530,7 +2479,7 @@ operator-(long double d1,
       _bz_Subtract<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #ifdef BZ_HAVE_COMPLEX
 
@@ -2548,7 +2497,7 @@ operator-(complex<T1> d1,
       _bz_Subtract<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -2559,13 +2508,13 @@ template<class T1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>,
-      _bz_Subtract<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      _bz_Subtract<complex<T1> , typename P_expr2::T_numtype > > >
 operator-(complex<T1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>, 
-      _bz_Subtract<complex<T1> , _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Subtract<complex<T1> , typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
       d2));
@@ -2588,7 +2537,7 @@ operator-(complex<T1> d1,
       _bz_Subtract<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -2628,7 +2577,7 @@ operator-(complex<T1> d1,
       _bz_Subtract<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -2649,8 +2598,8 @@ operator*(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Multiply<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> * _bz_VecExpr<P_expr2>
@@ -2658,15 +2607,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Multiply<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Multiply<P_numtype1, typename P_expr2::T_numtype > > >
 operator*(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Multiply<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Multiply<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -2683,8 +2632,8 @@ operator*(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Multiply<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> * Range
@@ -2700,7 +2649,7 @@ operator*(const Vector<P_numtype1>& d1,
       Range, 
       _bz_Multiply<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -2717,8 +2666,8 @@ operator*(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Multiply<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> * int
@@ -2734,7 +2683,7 @@ operator*(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Multiply<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -2751,7 +2700,7 @@ operator*(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Multiply<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -2768,7 +2717,7 @@ operator*(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Multiply<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -2785,7 +2734,7 @@ operator*(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Multiply<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -2803,7 +2752,7 @@ operator*(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Multiply<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -2814,16 +2763,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Multiply<typename P_expr1::T_numtype, P_numtype2 > > >
 operator*(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Multiply<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> * _bz_VecExpr<P_expr2>
@@ -2831,13 +2780,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_Multiply<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator*(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Multiply<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -2848,16 +2797,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Multiply<typename P_expr1::T_numtype, P_numtype2 > > >
 operator*(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Multiply<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> * Range
@@ -2865,13 +2814,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Multiply<typename P_expr1::T_numtype, int > > >
 operator*(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Multiply<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -2882,16 +2831,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Multiply<typename P_expr1::T_numtype, P_numtype2 > > >
 operator*(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Multiply<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> * int
@@ -2899,13 +2848,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Multiply<typename P_expr1::T_numtype, int > > >
 operator*(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Multiply<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -2916,13 +2865,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>,
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, float > > >
+      _bz_Multiply<typename P_expr1::T_numtype, float > > >
 operator*(_bz_VecExpr<P_expr1> d1, 
       float d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>, 
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, float> > T_expr;
+      _bz_Multiply<typename P_expr1::T_numtype, float> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<float>(d2)));
@@ -2933,13 +2882,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>,
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, double > > >
+      _bz_Multiply<typename P_expr1::T_numtype, double > > >
 operator*(_bz_VecExpr<P_expr1> d1, 
       double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>, 
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, double> > T_expr;
+      _bz_Multiply<typename P_expr1::T_numtype, double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<double>(d2)));
@@ -2950,13 +2899,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>,
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, long double > > >
+      _bz_Multiply<typename P_expr1::T_numtype, long double > > >
 operator*(_bz_VecExpr<P_expr1> d1, 
       long double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>, 
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, long double> > T_expr;
+      _bz_Multiply<typename P_expr1::T_numtype, long double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<long double>(d2)));
@@ -2968,13 +2917,13 @@ template<class P_expr1, class T2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > ,
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      _bz_Multiply<typename P_expr1::T_numtype, complex<T2>  > > >
 operator*(_bz_VecExpr<P_expr1> d1, 
       complex<T2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > , 
-      _bz_Multiply<_bz_typename P_expr1::T_numtype, complex<T2> > > T_expr;
+      _bz_Multiply<typename P_expr1::T_numtype, complex<T2> > > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<complex<T2> > (d2)));
@@ -2995,8 +2944,8 @@ operator*(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Multiply<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> * _bz_VecExpr<P_expr2>
@@ -3004,15 +2953,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Multiply<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Multiply<P_numtype1, typename P_expr2::T_numtype > > >
 operator*(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Multiply<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Multiply<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -3029,8 +2978,8 @@ operator*(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Multiply<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> * Range
@@ -3046,7 +2995,7 @@ operator*(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_Multiply<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -3063,8 +3012,8 @@ operator*(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Multiply<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> * int
@@ -3080,7 +3029,7 @@ operator*(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Multiply<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -3097,7 +3046,7 @@ operator*(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Multiply<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -3114,7 +3063,7 @@ operator*(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Multiply<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -3131,7 +3080,7 @@ operator*(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Multiply<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -3149,7 +3098,7 @@ operator*(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Multiply<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -3169,7 +3118,7 @@ operator*(Range d1,
       _bz_Multiply<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range * _bz_VecExpr<P_expr2>
@@ -3177,13 +3126,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_Multiply<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Multiply<int, typename P_expr2::T_numtype > > >
 operator*(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Multiply<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Multiply<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -3203,7 +3152,7 @@ operator*(Range d1,
       _bz_Multiply<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range * Range
@@ -3237,7 +3186,7 @@ operator*(Range d1,
       _bz_Multiply<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range * float
@@ -3324,8 +3273,8 @@ operator*(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Multiply<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> * _bz_VecExpr<P_expr2>
@@ -3333,15 +3282,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Multiply<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Multiply<P_numtype1, typename P_expr2::T_numtype > > >
 operator*(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Multiply<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Multiply<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -3358,8 +3307,8 @@ operator*(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Multiply<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> * Range
@@ -3375,7 +3324,7 @@ operator*(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_Multiply<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -3392,8 +3341,8 @@ operator*(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Multiply<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> * int
@@ -3409,7 +3358,7 @@ operator*(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Multiply<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -3426,7 +3375,7 @@ operator*(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Multiply<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -3443,7 +3392,7 @@ operator*(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Multiply<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -3460,7 +3409,7 @@ operator*(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Multiply<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -3478,7 +3427,7 @@ operator*(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Multiply<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -3498,7 +3447,7 @@ operator*(int d1,
       _bz_Multiply<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int * _bz_VecExpr<P_expr2>
@@ -3506,13 +3455,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Multiply<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Multiply<int, typename P_expr2::T_numtype > > >
 operator*(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Multiply<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Multiply<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -3532,7 +3481,7 @@ operator*(int d1,
       _bz_Multiply<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int * TinyVector<P_numtype2, N_length2>
@@ -3549,7 +3498,7 @@ operator*(int d1,
       _bz_Multiply<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float * Vector<P_numtype2>
@@ -3566,7 +3515,7 @@ operator*(float d1,
       _bz_Multiply<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float * _bz_VecExpr<P_expr2>
@@ -3574,13 +3523,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Multiply<float, _bz_typename P_expr2::T_numtype > > >
+      _bz_Multiply<float, typename P_expr2::T_numtype > > >
 operator*(float d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Multiply<float, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Multiply<float, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
       d2));
@@ -3600,7 +3549,7 @@ operator*(float d1,
       _bz_Multiply<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float * Range
@@ -3634,7 +3583,7 @@ operator*(float d1,
       _bz_Multiply<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double * Vector<P_numtype2>
@@ -3651,7 +3600,7 @@ operator*(double d1,
       _bz_Multiply<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double * _bz_VecExpr<P_expr2>
@@ -3659,13 +3608,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Multiply<double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Multiply<double, typename P_expr2::T_numtype > > >
 operator*(double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Multiply<double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Multiply<double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
       d2));
@@ -3685,7 +3634,7 @@ operator*(double d1,
       _bz_Multiply<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double * Range
@@ -3719,7 +3668,7 @@ operator*(double d1,
       _bz_Multiply<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double * Vector<P_numtype2>
@@ -3736,7 +3685,7 @@ operator*(long double d1,
       _bz_Multiply<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double * _bz_VecExpr<P_expr2>
@@ -3744,13 +3693,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Multiply<long double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Multiply<long double, typename P_expr2::T_numtype > > >
 operator*(long double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Multiply<long double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Multiply<long double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
       d2));
@@ -3770,7 +3719,7 @@ operator*(long double d1,
       _bz_Multiply<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double * Range
@@ -3804,7 +3753,7 @@ operator*(long double d1,
       _bz_Multiply<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #ifdef BZ_HAVE_COMPLEX
 
@@ -3822,7 +3771,7 @@ operator*(complex<T1> d1,
       _bz_Multiply<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -3833,13 +3782,13 @@ template<class T1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>,
-      _bz_Multiply<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      _bz_Multiply<complex<T1> , typename P_expr2::T_numtype > > >
 operator*(complex<T1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>, 
-      _bz_Multiply<complex<T1> , _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Multiply<complex<T1> , typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
       d2));
@@ -3862,7 +3811,7 @@ operator*(complex<T1> d1,
       _bz_Multiply<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -3902,7 +3851,7 @@ operator*(complex<T1> d1,
       _bz_Multiply<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -3923,8 +3872,8 @@ operator/(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Divide<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> / _bz_VecExpr<P_expr2>
@@ -3932,15 +3881,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Divide<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Divide<P_numtype1, typename P_expr2::T_numtype > > >
 operator/(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Divide<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Divide<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -3957,8 +3906,8 @@ operator/(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Divide<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> / Range
@@ -3974,7 +3923,7 @@ operator/(const Vector<P_numtype1>& d1,
       Range, 
       _bz_Divide<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -3991,8 +3940,8 @@ operator/(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Divide<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> / int
@@ -4008,7 +3957,7 @@ operator/(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Divide<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -4025,7 +3974,7 @@ operator/(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Divide<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -4042,7 +3991,7 @@ operator/(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Divide<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -4059,7 +4008,7 @@ operator/(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Divide<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -4077,7 +4026,7 @@ operator/(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Divide<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -4088,16 +4037,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_Divide<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Divide<typename P_expr1::T_numtype, P_numtype2 > > >
 operator/(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_Divide<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Divide<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> / _bz_VecExpr<P_expr2>
@@ -4105,13 +4054,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Divide<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_Divide<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator/(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Divide<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Divide<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -4122,16 +4071,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_Divide<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Divide<typename P_expr1::T_numtype, P_numtype2 > > >
 operator/(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_Divide<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Divide<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> / Range
@@ -4139,13 +4088,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_Divide<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Divide<typename P_expr1::T_numtype, int > > >
 operator/(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_Divide<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Divide<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -4156,16 +4105,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_Divide<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Divide<typename P_expr1::T_numtype, P_numtype2 > > >
 operator/(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_Divide<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Divide<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> / int
@@ -4173,13 +4122,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_Divide<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Divide<typename P_expr1::T_numtype, int > > >
 operator/(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_Divide<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Divide<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -4190,13 +4139,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>,
-      _bz_Divide<_bz_typename P_expr1::T_numtype, float > > >
+      _bz_Divide<typename P_expr1::T_numtype, float > > >
 operator/(_bz_VecExpr<P_expr1> d1, 
       float d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>, 
-      _bz_Divide<_bz_typename P_expr1::T_numtype, float> > T_expr;
+      _bz_Divide<typename P_expr1::T_numtype, float> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<float>(d2)));
@@ -4207,13 +4156,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>,
-      _bz_Divide<_bz_typename P_expr1::T_numtype, double > > >
+      _bz_Divide<typename P_expr1::T_numtype, double > > >
 operator/(_bz_VecExpr<P_expr1> d1, 
       double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>, 
-      _bz_Divide<_bz_typename P_expr1::T_numtype, double> > T_expr;
+      _bz_Divide<typename P_expr1::T_numtype, double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<double>(d2)));
@@ -4224,13 +4173,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>,
-      _bz_Divide<_bz_typename P_expr1::T_numtype, long double > > >
+      _bz_Divide<typename P_expr1::T_numtype, long double > > >
 operator/(_bz_VecExpr<P_expr1> d1, 
       long double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>, 
-      _bz_Divide<_bz_typename P_expr1::T_numtype, long double> > T_expr;
+      _bz_Divide<typename P_expr1::T_numtype, long double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<long double>(d2)));
@@ -4242,13 +4191,13 @@ template<class P_expr1, class T2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > ,
-      _bz_Divide<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      _bz_Divide<typename P_expr1::T_numtype, complex<T2>  > > >
 operator/(_bz_VecExpr<P_expr1> d1, 
       complex<T2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > , 
-      _bz_Divide<_bz_typename P_expr1::T_numtype, complex<T2> > > T_expr;
+      _bz_Divide<typename P_expr1::T_numtype, complex<T2> > > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<complex<T2> > (d2)));
@@ -4269,8 +4218,8 @@ operator/(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Divide<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> / _bz_VecExpr<P_expr2>
@@ -4278,15 +4227,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Divide<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Divide<P_numtype1, typename P_expr2::T_numtype > > >
 operator/(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Divide<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Divide<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -4303,8 +4252,8 @@ operator/(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Divide<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> / Range
@@ -4320,7 +4269,7 @@ operator/(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_Divide<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -4337,8 +4286,8 @@ operator/(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Divide<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> / int
@@ -4354,7 +4303,7 @@ operator/(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Divide<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -4371,7 +4320,7 @@ operator/(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Divide<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -4388,7 +4337,7 @@ operator/(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Divide<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -4405,7 +4354,7 @@ operator/(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Divide<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -4423,7 +4372,7 @@ operator/(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Divide<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -4443,7 +4392,7 @@ operator/(Range d1,
       _bz_Divide<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range / _bz_VecExpr<P_expr2>
@@ -4451,13 +4400,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_Divide<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Divide<int, typename P_expr2::T_numtype > > >
 operator/(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Divide<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Divide<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -4477,7 +4426,7 @@ operator/(Range d1,
       _bz_Divide<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range / Range
@@ -4511,7 +4460,7 @@ operator/(Range d1,
       _bz_Divide<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range / float
@@ -4598,8 +4547,8 @@ operator/(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Divide<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> / _bz_VecExpr<P_expr2>
@@ -4607,15 +4556,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Divide<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Divide<P_numtype1, typename P_expr2::T_numtype > > >
 operator/(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Divide<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Divide<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -4632,8 +4581,8 @@ operator/(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Divide<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> / Range
@@ -4649,7 +4598,7 @@ operator/(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_Divide<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -4666,8 +4615,8 @@ operator/(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Divide<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> / int
@@ -4683,7 +4632,7 @@ operator/(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Divide<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -4700,7 +4649,7 @@ operator/(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Divide<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -4717,7 +4666,7 @@ operator/(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Divide<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -4734,7 +4683,7 @@ operator/(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Divide<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -4752,7 +4701,7 @@ operator/(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Divide<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -4772,7 +4721,7 @@ operator/(int d1,
       _bz_Divide<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int / _bz_VecExpr<P_expr2>
@@ -4780,13 +4729,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Divide<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Divide<int, typename P_expr2::T_numtype > > >
 operator/(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Divide<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Divide<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -4806,7 +4755,7 @@ operator/(int d1,
       _bz_Divide<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int / TinyVector<P_numtype2, N_length2>
@@ -4823,7 +4772,7 @@ operator/(int d1,
       _bz_Divide<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float / Vector<P_numtype2>
@@ -4840,7 +4789,7 @@ operator/(float d1,
       _bz_Divide<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float / _bz_VecExpr<P_expr2>
@@ -4848,13 +4797,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Divide<float, _bz_typename P_expr2::T_numtype > > >
+      _bz_Divide<float, typename P_expr2::T_numtype > > >
 operator/(float d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Divide<float, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Divide<float, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
       d2));
@@ -4874,7 +4823,7 @@ operator/(float d1,
       _bz_Divide<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float / Range
@@ -4908,7 +4857,7 @@ operator/(float d1,
       _bz_Divide<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double / Vector<P_numtype2>
@@ -4925,7 +4874,7 @@ operator/(double d1,
       _bz_Divide<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double / _bz_VecExpr<P_expr2>
@@ -4933,13 +4882,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Divide<double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Divide<double, typename P_expr2::T_numtype > > >
 operator/(double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Divide<double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Divide<double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
       d2));
@@ -4959,7 +4908,7 @@ operator/(double d1,
       _bz_Divide<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double / Range
@@ -4993,7 +4942,7 @@ operator/(double d1,
       _bz_Divide<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double / Vector<P_numtype2>
@@ -5010,7 +4959,7 @@ operator/(long double d1,
       _bz_Divide<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double / _bz_VecExpr<P_expr2>
@@ -5018,13 +4967,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Divide<long double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Divide<long double, typename P_expr2::T_numtype > > >
 operator/(long double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Divide<long double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Divide<long double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
       d2));
@@ -5044,7 +4993,7 @@ operator/(long double d1,
       _bz_Divide<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double / Range
@@ -5078,7 +5027,7 @@ operator/(long double d1,
       _bz_Divide<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #ifdef BZ_HAVE_COMPLEX
 
@@ -5096,7 +5045,7 @@ operator/(complex<T1> d1,
       _bz_Divide<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -5107,13 +5056,13 @@ template<class T1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>,
-      _bz_Divide<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      _bz_Divide<complex<T1> , typename P_expr2::T_numtype > > >
 operator/(complex<T1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>, 
-      _bz_Divide<complex<T1> , _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Divide<complex<T1> , typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
       d2));
@@ -5136,7 +5085,7 @@ operator/(complex<T1> d1,
       _bz_Divide<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -5176,7 +5125,7 @@ operator/(complex<T1> d1,
       _bz_Divide<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -5197,8 +5146,8 @@ operator%(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Mod<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> % _bz_VecExpr<P_expr2>
@@ -5206,15 +5155,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Mod<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Mod<P_numtype1, typename P_expr2::T_numtype > > >
 operator%(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Mod<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Mod<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -5231,8 +5180,8 @@ operator%(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Mod<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> % Range
@@ -5248,7 +5197,7 @@ operator%(const Vector<P_numtype1>& d1,
       Range, 
       _bz_Mod<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -5265,8 +5214,8 @@ operator%(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Mod<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> % int
@@ -5282,7 +5231,7 @@ operator%(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Mod<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -5291,16 +5240,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_Mod<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Mod<typename P_expr1::T_numtype, P_numtype2 > > >
 operator%(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_Mod<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Mod<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> % _bz_VecExpr<P_expr2>
@@ -5308,13 +5257,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Mod<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_Mod<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator%(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Mod<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Mod<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -5325,16 +5274,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_Mod<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Mod<typename P_expr1::T_numtype, P_numtype2 > > >
 operator%(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_Mod<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Mod<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> % Range
@@ -5342,13 +5291,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_Mod<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Mod<typename P_expr1::T_numtype, int > > >
 operator%(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_Mod<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Mod<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -5359,16 +5308,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_Mod<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Mod<typename P_expr1::T_numtype, P_numtype2 > > >
 operator%(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_Mod<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Mod<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> % int
@@ -5376,13 +5325,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_Mod<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Mod<typename P_expr1::T_numtype, int > > >
 operator%(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_Mod<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Mod<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -5401,8 +5350,8 @@ operator%(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Mod<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> % _bz_VecExpr<P_expr2>
@@ -5410,15 +5359,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Mod<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Mod<P_numtype1, typename P_expr2::T_numtype > > >
 operator%(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Mod<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Mod<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -5435,8 +5384,8 @@ operator%(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Mod<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> % Range
@@ -5452,7 +5401,7 @@ operator%(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_Mod<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -5469,8 +5418,8 @@ operator%(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Mod<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> % int
@@ -5486,7 +5435,7 @@ operator%(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Mod<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -5504,7 +5453,7 @@ operator%(Range d1,
       _bz_Mod<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range % _bz_VecExpr<P_expr2>
@@ -5512,13 +5461,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_Mod<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Mod<int, typename P_expr2::T_numtype > > >
 operator%(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Mod<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Mod<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -5538,7 +5487,7 @@ operator%(Range d1,
       _bz_Mod<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range % Range
@@ -5572,7 +5521,7 @@ operator%(Range d1,
       _bz_Mod<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> % Vector<P_numtype2>
@@ -5588,8 +5537,8 @@ operator%(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Mod<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> % _bz_VecExpr<P_expr2>
@@ -5597,15 +5546,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Mod<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Mod<P_numtype1, typename P_expr2::T_numtype > > >
 operator%(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Mod<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Mod<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -5622,8 +5571,8 @@ operator%(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Mod<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> % Range
@@ -5639,7 +5588,7 @@ operator%(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_Mod<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -5656,8 +5605,8 @@ operator%(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Mod<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> % int
@@ -5673,7 +5622,7 @@ operator%(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Mod<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -5691,7 +5640,7 @@ operator%(int d1,
       _bz_Mod<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int % _bz_VecExpr<P_expr2>
@@ -5699,13 +5648,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Mod<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Mod<int, typename P_expr2::T_numtype > > >
 operator%(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Mod<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Mod<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -5725,7 +5674,7 @@ operator%(int d1,
       _bz_Mod<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int % TinyVector<P_numtype2, N_length2>
@@ -5742,7 +5691,7 @@ operator%(int d1,
       _bz_Mod<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 /****************************************************************************
  * Bitwise XOR Operators
@@ -5761,8 +5710,8 @@ operator^(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_BitwiseXOR<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> ^ _bz_VecExpr<P_expr2>
@@ -5770,15 +5719,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseXOR<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseXOR<P_numtype1, typename P_expr2::T_numtype > > >
 operator^(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseXOR<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseXOR<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -5795,8 +5744,8 @@ operator^(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_BitwiseXOR<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> ^ Range
@@ -5812,7 +5761,7 @@ operator^(const Vector<P_numtype1>& d1,
       Range, 
       _bz_BitwiseXOR<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -5829,8 +5778,8 @@ operator^(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_BitwiseXOR<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> ^ int
@@ -5846,7 +5795,7 @@ operator^(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_BitwiseXOR<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -5855,16 +5804,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, P_numtype2 > > >
 operator^(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> ^ _bz_VecExpr<P_expr2>
@@ -5872,13 +5821,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator^(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -5889,16 +5838,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, P_numtype2 > > >
 operator^(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> ^ Range
@@ -5906,13 +5855,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, int > > >
 operator^(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -5923,16 +5872,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, P_numtype2 > > >
 operator^(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> ^ int
@@ -5940,13 +5889,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, int > > >
 operator^(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_BitwiseXOR<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_BitwiseXOR<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -5965,8 +5914,8 @@ operator^(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_BitwiseXOR<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> ^ _bz_VecExpr<P_expr2>
@@ -5974,15 +5923,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseXOR<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseXOR<P_numtype1, typename P_expr2::T_numtype > > >
 operator^(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseXOR<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseXOR<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -5999,8 +5948,8 @@ operator^(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_BitwiseXOR<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> ^ Range
@@ -6016,7 +5965,7 @@ operator^(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_BitwiseXOR<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -6033,8 +5982,8 @@ operator^(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_BitwiseXOR<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> ^ int
@@ -6050,7 +5999,7 @@ operator^(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_BitwiseXOR<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -6068,7 +6017,7 @@ operator^(Range d1,
       _bz_BitwiseXOR<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range ^ _bz_VecExpr<P_expr2>
@@ -6076,13 +6025,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseXOR<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseXOR<int, typename P_expr2::T_numtype > > >
 operator^(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseXOR<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseXOR<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -6102,7 +6051,7 @@ operator^(Range d1,
       _bz_BitwiseXOR<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range ^ Range
@@ -6136,7 +6085,7 @@ operator^(Range d1,
       _bz_BitwiseXOR<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> ^ Vector<P_numtype2>
@@ -6152,8 +6101,8 @@ operator^(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_BitwiseXOR<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> ^ _bz_VecExpr<P_expr2>
@@ -6161,15 +6110,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseXOR<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseXOR<P_numtype1, typename P_expr2::T_numtype > > >
 operator^(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseXOR<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseXOR<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -6186,8 +6135,8 @@ operator^(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_BitwiseXOR<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> ^ Range
@@ -6203,7 +6152,7 @@ operator^(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_BitwiseXOR<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -6220,8 +6169,8 @@ operator^(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_BitwiseXOR<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> ^ int
@@ -6237,7 +6186,7 @@ operator^(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_BitwiseXOR<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -6255,7 +6204,7 @@ operator^(int d1,
       _bz_BitwiseXOR<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int ^ _bz_VecExpr<P_expr2>
@@ -6263,13 +6212,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseXOR<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseXOR<int, typename P_expr2::T_numtype > > >
 operator^(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseXOR<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseXOR<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -6289,7 +6238,7 @@ operator^(int d1,
       _bz_BitwiseXOR<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int ^ TinyVector<P_numtype2, N_length2>
@@ -6306,7 +6255,7 @@ operator^(int d1,
       _bz_BitwiseXOR<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 /****************************************************************************
  * Bitwise And Operators
@@ -6325,8 +6274,8 @@ operator&(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_BitwiseAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> & _bz_VecExpr<P_expr2>
@@ -6334,15 +6283,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseAnd<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseAnd<P_numtype1, typename P_expr2::T_numtype > > >
 operator&(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseAnd<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseAnd<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -6359,8 +6308,8 @@ operator&(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_BitwiseAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> & Range
@@ -6376,7 +6325,7 @@ operator&(const Vector<P_numtype1>& d1,
       Range, 
       _bz_BitwiseAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -6393,8 +6342,8 @@ operator&(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_BitwiseAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> & int
@@ -6410,7 +6359,7 @@ operator&(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_BitwiseAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -6419,16 +6368,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, P_numtype2 > > >
 operator&(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> & _bz_VecExpr<P_expr2>
@@ -6436,13 +6385,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator&(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -6453,16 +6402,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, P_numtype2 > > >
 operator&(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> & Range
@@ -6470,13 +6419,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, int > > >
 operator&(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -6487,16 +6436,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, P_numtype2 > > >
 operator&(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> & int
@@ -6504,13 +6453,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, int > > >
 operator&(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_BitwiseAnd<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_BitwiseAnd<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -6529,8 +6478,8 @@ operator&(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_BitwiseAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> & _bz_VecExpr<P_expr2>
@@ -6538,15 +6487,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseAnd<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseAnd<P_numtype1, typename P_expr2::T_numtype > > >
 operator&(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseAnd<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseAnd<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -6563,8 +6512,8 @@ operator&(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_BitwiseAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> & Range
@@ -6580,7 +6529,7 @@ operator&(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_BitwiseAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -6597,8 +6546,8 @@ operator&(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_BitwiseAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> & int
@@ -6614,7 +6563,7 @@ operator&(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_BitwiseAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -6632,7 +6581,7 @@ operator&(Range d1,
       _bz_BitwiseAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range & _bz_VecExpr<P_expr2>
@@ -6640,13 +6589,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseAnd<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseAnd<int, typename P_expr2::T_numtype > > >
 operator&(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseAnd<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseAnd<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -6666,7 +6615,7 @@ operator&(Range d1,
       _bz_BitwiseAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range & Range
@@ -6700,7 +6649,7 @@ operator&(Range d1,
       _bz_BitwiseAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> & Vector<P_numtype2>
@@ -6716,8 +6665,8 @@ operator&(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_BitwiseAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> & _bz_VecExpr<P_expr2>
@@ -6725,15 +6674,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseAnd<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseAnd<P_numtype1, typename P_expr2::T_numtype > > >
 operator&(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseAnd<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseAnd<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -6750,8 +6699,8 @@ operator&(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_BitwiseAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> & Range
@@ -6767,7 +6716,7 @@ operator&(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_BitwiseAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -6784,8 +6733,8 @@ operator&(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_BitwiseAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> & int
@@ -6801,7 +6750,7 @@ operator&(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_BitwiseAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -6819,7 +6768,7 @@ operator&(int d1,
       _bz_BitwiseAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int & _bz_VecExpr<P_expr2>
@@ -6827,13 +6776,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseAnd<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseAnd<int, typename P_expr2::T_numtype > > >
 operator&(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseAnd<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseAnd<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -6853,7 +6802,7 @@ operator&(int d1,
       _bz_BitwiseAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int & TinyVector<P_numtype2, N_length2>
@@ -6870,7 +6819,7 @@ operator&(int d1,
       _bz_BitwiseAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 /****************************************************************************
  * Bitwise Or Operators
@@ -6889,8 +6838,8 @@ operator|(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_BitwiseOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> | _bz_VecExpr<P_expr2>
@@ -6898,15 +6847,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseOr<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseOr<P_numtype1, typename P_expr2::T_numtype > > >
 operator|(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseOr<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseOr<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -6923,8 +6872,8 @@ operator|(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_BitwiseOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> | Range
@@ -6940,7 +6889,7 @@ operator|(const Vector<P_numtype1>& d1,
       Range, 
       _bz_BitwiseOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -6957,8 +6906,8 @@ operator|(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_BitwiseOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> | int
@@ -6974,7 +6923,7 @@ operator|(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_BitwiseOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -6983,16 +6932,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_BitwiseOr<typename P_expr1::T_numtype, P_numtype2 > > >
 operator|(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_BitwiseOr<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> | _bz_VecExpr<P_expr2>
@@ -7000,13 +6949,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseOr<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator|(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseOr<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -7017,16 +6966,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_BitwiseOr<typename P_expr1::T_numtype, P_numtype2 > > >
 operator|(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_BitwiseOr<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> | Range
@@ -7034,13 +6983,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_BitwiseOr<typename P_expr1::T_numtype, int > > >
 operator|(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_BitwiseOr<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -7051,16 +7000,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_BitwiseOr<typename P_expr1::T_numtype, P_numtype2 > > >
 operator|(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_BitwiseOr<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> | int
@@ -7068,13 +7017,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_BitwiseOr<typename P_expr1::T_numtype, int > > >
 operator|(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_BitwiseOr<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_BitwiseOr<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -7093,8 +7042,8 @@ operator|(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_BitwiseOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> | _bz_VecExpr<P_expr2>
@@ -7102,15 +7051,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseOr<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseOr<P_numtype1, typename P_expr2::T_numtype > > >
 operator|(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseOr<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseOr<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -7127,8 +7076,8 @@ operator|(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_BitwiseOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> | Range
@@ -7144,7 +7093,7 @@ operator|(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_BitwiseOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -7161,8 +7110,8 @@ operator|(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_BitwiseOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> | int
@@ -7178,7 +7127,7 @@ operator|(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_BitwiseOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -7196,7 +7145,7 @@ operator|(Range d1,
       _bz_BitwiseOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range | _bz_VecExpr<P_expr2>
@@ -7204,13 +7153,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseOr<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseOr<int, typename P_expr2::T_numtype > > >
 operator|(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseOr<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseOr<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -7230,7 +7179,7 @@ operator|(Range d1,
       _bz_BitwiseOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range | Range
@@ -7264,7 +7213,7 @@ operator|(Range d1,
       _bz_BitwiseOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> | Vector<P_numtype2>
@@ -7280,8 +7229,8 @@ operator|(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_BitwiseOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> | _bz_VecExpr<P_expr2>
@@ -7289,15 +7238,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseOr<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseOr<P_numtype1, typename P_expr2::T_numtype > > >
 operator|(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseOr<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseOr<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -7314,8 +7263,8 @@ operator|(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_BitwiseOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> | Range
@@ -7331,7 +7280,7 @@ operator|(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_BitwiseOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -7348,8 +7297,8 @@ operator|(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_BitwiseOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> | int
@@ -7365,7 +7314,7 @@ operator|(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_BitwiseOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -7383,7 +7332,7 @@ operator|(int d1,
       _bz_BitwiseOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int | _bz_VecExpr<P_expr2>
@@ -7391,13 +7340,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_BitwiseOr<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_BitwiseOr<int, typename P_expr2::T_numtype > > >
 operator|(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_BitwiseOr<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_BitwiseOr<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -7417,7 +7366,7 @@ operator|(int d1,
       _bz_BitwiseOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int | TinyVector<P_numtype2, N_length2>
@@ -7434,7 +7383,7 @@ operator|(int d1,
       _bz_BitwiseOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 /****************************************************************************
  * Shift right Operators
@@ -7453,8 +7402,8 @@ operator>>(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_ShiftRight<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> >> _bz_VecExpr<P_expr2>
@@ -7462,15 +7411,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftRight<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftRight<P_numtype1, typename P_expr2::T_numtype > > >
 operator>>(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftRight<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftRight<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -7487,8 +7436,8 @@ operator>>(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_ShiftRight<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> >> Range
@@ -7504,7 +7453,7 @@ operator>>(const Vector<P_numtype1>& d1,
       Range, 
       _bz_ShiftRight<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -7521,8 +7470,8 @@ operator>>(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_ShiftRight<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> >> int
@@ -7538,7 +7487,7 @@ operator>>(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_ShiftRight<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -7547,16 +7496,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_ShiftRight<typename P_expr1::T_numtype, P_numtype2 > > >
 operator>>(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_ShiftRight<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> >> _bz_VecExpr<P_expr2>
@@ -7564,13 +7513,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftRight<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator>>(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftRight<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -7581,16 +7530,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_ShiftRight<typename P_expr1::T_numtype, P_numtype2 > > >
 operator>>(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_ShiftRight<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> >> Range
@@ -7598,13 +7547,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_ShiftRight<typename P_expr1::T_numtype, int > > >
 operator>>(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_ShiftRight<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -7615,16 +7564,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_ShiftRight<typename P_expr1::T_numtype, P_numtype2 > > >
 operator>>(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_ShiftRight<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> >> int
@@ -7632,13 +7581,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_ShiftRight<typename P_expr1::T_numtype, int > > >
 operator>>(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_ShiftRight<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_ShiftRight<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -7657,8 +7606,8 @@ operator>>(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_ShiftRight<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> >> _bz_VecExpr<P_expr2>
@@ -7666,15 +7615,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftRight<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftRight<P_numtype1, typename P_expr2::T_numtype > > >
 operator>>(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftRight<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftRight<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -7691,8 +7640,8 @@ operator>>(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_ShiftRight<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> >> Range
@@ -7708,7 +7657,7 @@ operator>>(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_ShiftRight<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -7725,8 +7674,8 @@ operator>>(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_ShiftRight<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> >> int
@@ -7742,7 +7691,7 @@ operator>>(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_ShiftRight<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -7760,7 +7709,7 @@ operator>>(Range d1,
       _bz_ShiftRight<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range >> _bz_VecExpr<P_expr2>
@@ -7768,13 +7717,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftRight<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftRight<int, typename P_expr2::T_numtype > > >
 operator>>(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftRight<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftRight<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -7794,7 +7743,7 @@ operator>>(Range d1,
       _bz_ShiftRight<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range >> Range
@@ -7828,7 +7777,7 @@ operator>>(Range d1,
       _bz_ShiftRight<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> >> Vector<P_numtype2>
@@ -7844,8 +7793,8 @@ operator>>(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_ShiftRight<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> >> _bz_VecExpr<P_expr2>
@@ -7853,15 +7802,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftRight<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftRight<P_numtype1, typename P_expr2::T_numtype > > >
 operator>>(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftRight<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftRight<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -7878,8 +7827,8 @@ operator>>(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_ShiftRight<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> >> Range
@@ -7895,7 +7844,7 @@ operator>>(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_ShiftRight<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -7912,8 +7861,8 @@ operator>>(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_ShiftRight<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> >> int
@@ -7929,7 +7878,7 @@ operator>>(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_ShiftRight<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -7947,7 +7896,7 @@ operator>>(int d1,
       _bz_ShiftRight<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int >> _bz_VecExpr<P_expr2>
@@ -7955,13 +7904,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftRight<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftRight<int, typename P_expr2::T_numtype > > >
 operator>>(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftRight<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftRight<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -7981,7 +7930,7 @@ operator>>(int d1,
       _bz_ShiftRight<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int >> TinyVector<P_numtype2, N_length2>
@@ -7998,7 +7947,7 @@ operator>>(int d1,
       _bz_ShiftRight<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 /****************************************************************************
  * Shift left Operators
@@ -8017,8 +7966,8 @@ operator<<(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_ShiftLeft<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> << _bz_VecExpr<P_expr2>
@@ -8026,15 +7975,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftLeft<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftLeft<P_numtype1, typename P_expr2::T_numtype > > >
 operator<<(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftLeft<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftLeft<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -8051,8 +8000,8 @@ operator<<(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_ShiftLeft<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> << Range
@@ -8068,7 +8017,7 @@ operator<<(const Vector<P_numtype1>& d1,
       Range, 
       _bz_ShiftLeft<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -8085,8 +8034,8 @@ operator<<(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_ShiftLeft<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> << int
@@ -8102,7 +8051,7 @@ operator<<(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_ShiftLeft<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -8111,16 +8060,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_ShiftLeft<typename P_expr1::T_numtype, P_numtype2 > > >
 operator<<(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_ShiftLeft<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> << _bz_VecExpr<P_expr2>
@@ -8128,13 +8077,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftLeft<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator<<(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftLeft<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -8145,16 +8094,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_ShiftLeft<typename P_expr1::T_numtype, P_numtype2 > > >
 operator<<(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_ShiftLeft<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> << Range
@@ -8162,13 +8111,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_ShiftLeft<typename P_expr1::T_numtype, int > > >
 operator<<(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_ShiftLeft<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -8179,16 +8128,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_ShiftLeft<typename P_expr1::T_numtype, P_numtype2 > > >
 operator<<(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_ShiftLeft<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> << int
@@ -8196,13 +8145,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_ShiftLeft<typename P_expr1::T_numtype, int > > >
 operator<<(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_ShiftLeft<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_ShiftLeft<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -8221,8 +8170,8 @@ operator<<(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_ShiftLeft<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> << _bz_VecExpr<P_expr2>
@@ -8230,15 +8179,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftLeft<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftLeft<P_numtype1, typename P_expr2::T_numtype > > >
 operator<<(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftLeft<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftLeft<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -8255,8 +8204,8 @@ operator<<(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_ShiftLeft<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> << Range
@@ -8272,7 +8221,7 @@ operator<<(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_ShiftLeft<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -8289,8 +8238,8 @@ operator<<(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_ShiftLeft<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> << int
@@ -8306,7 +8255,7 @@ operator<<(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_ShiftLeft<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -8324,7 +8273,7 @@ operator<<(Range d1,
       _bz_ShiftLeft<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range << _bz_VecExpr<P_expr2>
@@ -8332,13 +8281,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftLeft<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftLeft<int, typename P_expr2::T_numtype > > >
 operator<<(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftLeft<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftLeft<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -8358,7 +8307,7 @@ operator<<(Range d1,
       _bz_ShiftLeft<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range << Range
@@ -8392,7 +8341,7 @@ operator<<(Range d1,
       _bz_ShiftLeft<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> << Vector<P_numtype2>
@@ -8408,8 +8357,8 @@ operator<<(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_ShiftLeft<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> << _bz_VecExpr<P_expr2>
@@ -8417,15 +8366,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftLeft<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftLeft<P_numtype1, typename P_expr2::T_numtype > > >
 operator<<(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftLeft<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftLeft<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -8442,8 +8391,8 @@ operator<<(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_ShiftLeft<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> << Range
@@ -8459,7 +8408,7 @@ operator<<(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_ShiftLeft<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -8476,8 +8425,8 @@ operator<<(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_ShiftLeft<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> << int
@@ -8493,7 +8442,7 @@ operator<<(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_ShiftLeft<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -8511,7 +8460,7 @@ operator<<(int d1,
       _bz_ShiftLeft<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int << _bz_VecExpr<P_expr2>
@@ -8519,13 +8468,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_ShiftLeft<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_ShiftLeft<int, typename P_expr2::T_numtype > > >
 operator<<(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_ShiftLeft<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_ShiftLeft<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -8545,7 +8494,7 @@ operator<<(int d1,
       _bz_ShiftLeft<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int << TinyVector<P_numtype2, N_length2>
@@ -8562,7 +8511,7 @@ operator<<(int d1,
       _bz_ShiftLeft<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 /****************************************************************************
  * Greater-than Operators
@@ -8581,8 +8530,8 @@ operator>(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Greater<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> > _bz_VecExpr<P_expr2>
@@ -8590,15 +8539,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Greater<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Greater<P_numtype1, typename P_expr2::T_numtype > > >
 operator>(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Greater<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Greater<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -8615,8 +8564,8 @@ operator>(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Greater<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> > Range
@@ -8632,7 +8581,7 @@ operator>(const Vector<P_numtype1>& d1,
       Range, 
       _bz_Greater<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -8649,8 +8598,8 @@ operator>(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Greater<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> > int
@@ -8666,7 +8615,7 @@ operator>(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Greater<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -8683,7 +8632,7 @@ operator>(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Greater<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -8700,7 +8649,7 @@ operator>(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Greater<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -8717,7 +8666,7 @@ operator>(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Greater<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -8735,7 +8684,7 @@ operator>(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Greater<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -8746,16 +8695,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_Greater<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Greater<typename P_expr1::T_numtype, P_numtype2 > > >
 operator>(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_Greater<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Greater<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> > _bz_VecExpr<P_expr2>
@@ -8763,13 +8712,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Greater<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_Greater<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator>(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Greater<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Greater<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -8780,16 +8729,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_Greater<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Greater<typename P_expr1::T_numtype, P_numtype2 > > >
 operator>(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_Greater<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Greater<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> > Range
@@ -8797,13 +8746,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_Greater<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Greater<typename P_expr1::T_numtype, int > > >
 operator>(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_Greater<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Greater<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -8814,16 +8763,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_Greater<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Greater<typename P_expr1::T_numtype, P_numtype2 > > >
 operator>(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_Greater<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Greater<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> > int
@@ -8831,13 +8780,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_Greater<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Greater<typename P_expr1::T_numtype, int > > >
 operator>(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_Greater<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Greater<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -8848,13 +8797,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>,
-      _bz_Greater<_bz_typename P_expr1::T_numtype, float > > >
+      _bz_Greater<typename P_expr1::T_numtype, float > > >
 operator>(_bz_VecExpr<P_expr1> d1, 
       float d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>, 
-      _bz_Greater<_bz_typename P_expr1::T_numtype, float> > T_expr;
+      _bz_Greater<typename P_expr1::T_numtype, float> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<float>(d2)));
@@ -8865,13 +8814,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>,
-      _bz_Greater<_bz_typename P_expr1::T_numtype, double > > >
+      _bz_Greater<typename P_expr1::T_numtype, double > > >
 operator>(_bz_VecExpr<P_expr1> d1, 
       double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>, 
-      _bz_Greater<_bz_typename P_expr1::T_numtype, double> > T_expr;
+      _bz_Greater<typename P_expr1::T_numtype, double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<double>(d2)));
@@ -8882,13 +8831,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>,
-      _bz_Greater<_bz_typename P_expr1::T_numtype, long double > > >
+      _bz_Greater<typename P_expr1::T_numtype, long double > > >
 operator>(_bz_VecExpr<P_expr1> d1, 
       long double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>, 
-      _bz_Greater<_bz_typename P_expr1::T_numtype, long double> > T_expr;
+      _bz_Greater<typename P_expr1::T_numtype, long double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<long double>(d2)));
@@ -8900,13 +8849,13 @@ template<class P_expr1, class T2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > ,
-      _bz_Greater<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      _bz_Greater<typename P_expr1::T_numtype, complex<T2>  > > >
 operator>(_bz_VecExpr<P_expr1> d1, 
       complex<T2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > , 
-      _bz_Greater<_bz_typename P_expr1::T_numtype, complex<T2> > > T_expr;
+      _bz_Greater<typename P_expr1::T_numtype, complex<T2> > > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<complex<T2> > (d2)));
@@ -8927,8 +8876,8 @@ operator>(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Greater<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> > _bz_VecExpr<P_expr2>
@@ -8936,15 +8885,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Greater<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Greater<P_numtype1, typename P_expr2::T_numtype > > >
 operator>(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Greater<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Greater<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -8961,8 +8910,8 @@ operator>(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Greater<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> > Range
@@ -8978,7 +8927,7 @@ operator>(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_Greater<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -8995,8 +8944,8 @@ operator>(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Greater<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> > int
@@ -9012,7 +8961,7 @@ operator>(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Greater<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -9029,7 +8978,7 @@ operator>(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Greater<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -9046,7 +8995,7 @@ operator>(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Greater<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -9063,7 +9012,7 @@ operator>(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Greater<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -9081,7 +9030,7 @@ operator>(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Greater<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -9101,7 +9050,7 @@ operator>(Range d1,
       _bz_Greater<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range > _bz_VecExpr<P_expr2>
@@ -9109,13 +9058,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_Greater<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Greater<int, typename P_expr2::T_numtype > > >
 operator>(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Greater<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Greater<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -9135,7 +9084,7 @@ operator>(Range d1,
       _bz_Greater<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range > Range
@@ -9169,7 +9118,7 @@ operator>(Range d1,
       _bz_Greater<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range > float
@@ -9256,8 +9205,8 @@ operator>(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Greater<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> > _bz_VecExpr<P_expr2>
@@ -9265,15 +9214,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Greater<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Greater<P_numtype1, typename P_expr2::T_numtype > > >
 operator>(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Greater<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Greater<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -9290,8 +9239,8 @@ operator>(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Greater<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> > Range
@@ -9307,7 +9256,7 @@ operator>(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_Greater<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -9324,8 +9273,8 @@ operator>(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Greater<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> > int
@@ -9341,7 +9290,7 @@ operator>(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Greater<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -9358,7 +9307,7 @@ operator>(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Greater<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -9375,7 +9324,7 @@ operator>(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Greater<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -9392,7 +9341,7 @@ operator>(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Greater<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -9410,7 +9359,7 @@ operator>(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Greater<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -9430,7 +9379,7 @@ operator>(int d1,
       _bz_Greater<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int > _bz_VecExpr<P_expr2>
@@ -9438,13 +9387,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Greater<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Greater<int, typename P_expr2::T_numtype > > >
 operator>(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Greater<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Greater<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -9464,7 +9413,7 @@ operator>(int d1,
       _bz_Greater<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int > TinyVector<P_numtype2, N_length2>
@@ -9481,7 +9430,7 @@ operator>(int d1,
       _bz_Greater<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float > Vector<P_numtype2>
@@ -9498,7 +9447,7 @@ operator>(float d1,
       _bz_Greater<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float > _bz_VecExpr<P_expr2>
@@ -9506,13 +9455,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Greater<float, _bz_typename P_expr2::T_numtype > > >
+      _bz_Greater<float, typename P_expr2::T_numtype > > >
 operator>(float d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Greater<float, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Greater<float, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
       d2));
@@ -9532,7 +9481,7 @@ operator>(float d1,
       _bz_Greater<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float > Range
@@ -9566,7 +9515,7 @@ operator>(float d1,
       _bz_Greater<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double > Vector<P_numtype2>
@@ -9583,7 +9532,7 @@ operator>(double d1,
       _bz_Greater<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double > _bz_VecExpr<P_expr2>
@@ -9591,13 +9540,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Greater<double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Greater<double, typename P_expr2::T_numtype > > >
 operator>(double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Greater<double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Greater<double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
       d2));
@@ -9617,7 +9566,7 @@ operator>(double d1,
       _bz_Greater<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double > Range
@@ -9651,7 +9600,7 @@ operator>(double d1,
       _bz_Greater<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double > Vector<P_numtype2>
@@ -9668,7 +9617,7 @@ operator>(long double d1,
       _bz_Greater<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double > _bz_VecExpr<P_expr2>
@@ -9676,13 +9625,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Greater<long double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Greater<long double, typename P_expr2::T_numtype > > >
 operator>(long double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Greater<long double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Greater<long double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
       d2));
@@ -9702,7 +9651,7 @@ operator>(long double d1,
       _bz_Greater<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double > Range
@@ -9736,7 +9685,7 @@ operator>(long double d1,
       _bz_Greater<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #ifdef BZ_HAVE_COMPLEX
 
@@ -9754,7 +9703,7 @@ operator>(complex<T1> d1,
       _bz_Greater<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -9765,13 +9714,13 @@ template<class T1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>,
-      _bz_Greater<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      _bz_Greater<complex<T1> , typename P_expr2::T_numtype > > >
 operator>(complex<T1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>, 
-      _bz_Greater<complex<T1> , _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Greater<complex<T1> , typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
       d2));
@@ -9794,7 +9743,7 @@ operator>(complex<T1> d1,
       _bz_Greater<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -9834,7 +9783,7 @@ operator>(complex<T1> d1,
       _bz_Greater<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -9855,8 +9804,8 @@ operator<(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Less<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> < _bz_VecExpr<P_expr2>
@@ -9864,15 +9813,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Less<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Less<P_numtype1, typename P_expr2::T_numtype > > >
 operator<(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Less<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Less<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -9889,8 +9838,8 @@ operator<(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Less<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> < Range
@@ -9906,7 +9855,7 @@ operator<(const Vector<P_numtype1>& d1,
       Range, 
       _bz_Less<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -9923,8 +9872,8 @@ operator<(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Less<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> < int
@@ -9940,7 +9889,7 @@ operator<(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Less<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -9957,7 +9906,7 @@ operator<(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Less<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -9974,7 +9923,7 @@ operator<(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Less<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -9991,7 +9940,7 @@ operator<(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Less<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -10009,7 +9958,7 @@ operator<(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Less<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -10020,16 +9969,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_Less<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Less<typename P_expr1::T_numtype, P_numtype2 > > >
 operator<(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_Less<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Less<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> < _bz_VecExpr<P_expr2>
@@ -10037,13 +9986,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Less<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_Less<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator<(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Less<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Less<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -10054,16 +10003,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_Less<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Less<typename P_expr1::T_numtype, P_numtype2 > > >
 operator<(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_Less<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Less<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> < Range
@@ -10071,13 +10020,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_Less<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Less<typename P_expr1::T_numtype, int > > >
 operator<(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_Less<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Less<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -10088,16 +10037,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_Less<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Less<typename P_expr1::T_numtype, P_numtype2 > > >
 operator<(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_Less<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Less<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> < int
@@ -10105,13 +10054,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_Less<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Less<typename P_expr1::T_numtype, int > > >
 operator<(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_Less<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Less<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -10122,13 +10071,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>,
-      _bz_Less<_bz_typename P_expr1::T_numtype, float > > >
+      _bz_Less<typename P_expr1::T_numtype, float > > >
 operator<(_bz_VecExpr<P_expr1> d1, 
       float d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>, 
-      _bz_Less<_bz_typename P_expr1::T_numtype, float> > T_expr;
+      _bz_Less<typename P_expr1::T_numtype, float> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<float>(d2)));
@@ -10139,13 +10088,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>,
-      _bz_Less<_bz_typename P_expr1::T_numtype, double > > >
+      _bz_Less<typename P_expr1::T_numtype, double > > >
 operator<(_bz_VecExpr<P_expr1> d1, 
       double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>, 
-      _bz_Less<_bz_typename P_expr1::T_numtype, double> > T_expr;
+      _bz_Less<typename P_expr1::T_numtype, double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<double>(d2)));
@@ -10156,13 +10105,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>,
-      _bz_Less<_bz_typename P_expr1::T_numtype, long double > > >
+      _bz_Less<typename P_expr1::T_numtype, long double > > >
 operator<(_bz_VecExpr<P_expr1> d1, 
       long double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>, 
-      _bz_Less<_bz_typename P_expr1::T_numtype, long double> > T_expr;
+      _bz_Less<typename P_expr1::T_numtype, long double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<long double>(d2)));
@@ -10174,13 +10123,13 @@ template<class P_expr1, class T2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > ,
-      _bz_Less<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      _bz_Less<typename P_expr1::T_numtype, complex<T2>  > > >
 operator<(_bz_VecExpr<P_expr1> d1, 
       complex<T2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > , 
-      _bz_Less<_bz_typename P_expr1::T_numtype, complex<T2> > > T_expr;
+      _bz_Less<typename P_expr1::T_numtype, complex<T2> > > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<complex<T2> > (d2)));
@@ -10201,8 +10150,8 @@ operator<(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Less<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> < _bz_VecExpr<P_expr2>
@@ -10210,15 +10159,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Less<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Less<P_numtype1, typename P_expr2::T_numtype > > >
 operator<(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Less<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Less<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -10235,8 +10184,8 @@ operator<(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Less<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> < Range
@@ -10252,7 +10201,7 @@ operator<(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_Less<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -10269,8 +10218,8 @@ operator<(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Less<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> < int
@@ -10286,7 +10235,7 @@ operator<(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Less<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -10303,7 +10252,7 @@ operator<(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Less<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -10320,7 +10269,7 @@ operator<(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Less<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -10337,7 +10286,7 @@ operator<(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Less<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -10355,7 +10304,7 @@ operator<(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Less<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -10375,7 +10324,7 @@ operator<(Range d1,
       _bz_Less<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range < _bz_VecExpr<P_expr2>
@@ -10383,13 +10332,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_Less<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Less<int, typename P_expr2::T_numtype > > >
 operator<(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Less<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Less<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -10409,7 +10358,7 @@ operator<(Range d1,
       _bz_Less<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range < Range
@@ -10443,7 +10392,7 @@ operator<(Range d1,
       _bz_Less<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range < float
@@ -10530,8 +10479,8 @@ operator<(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Less<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> < _bz_VecExpr<P_expr2>
@@ -10539,15 +10488,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Less<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Less<P_numtype1, typename P_expr2::T_numtype > > >
 operator<(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Less<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Less<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -10564,8 +10513,8 @@ operator<(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Less<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> < Range
@@ -10581,7 +10530,7 @@ operator<(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_Less<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -10598,8 +10547,8 @@ operator<(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Less<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> < int
@@ -10615,7 +10564,7 @@ operator<(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Less<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -10632,7 +10581,7 @@ operator<(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Less<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -10649,7 +10598,7 @@ operator<(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Less<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -10666,7 +10615,7 @@ operator<(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Less<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -10684,7 +10633,7 @@ operator<(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Less<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -10704,7 +10653,7 @@ operator<(int d1,
       _bz_Less<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int < _bz_VecExpr<P_expr2>
@@ -10712,13 +10661,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Less<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Less<int, typename P_expr2::T_numtype > > >
 operator<(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Less<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Less<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -10738,7 +10687,7 @@ operator<(int d1,
       _bz_Less<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int < TinyVector<P_numtype2, N_length2>
@@ -10755,7 +10704,7 @@ operator<(int d1,
       _bz_Less<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float < Vector<P_numtype2>
@@ -10772,7 +10721,7 @@ operator<(float d1,
       _bz_Less<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float < _bz_VecExpr<P_expr2>
@@ -10780,13 +10729,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Less<float, _bz_typename P_expr2::T_numtype > > >
+      _bz_Less<float, typename P_expr2::T_numtype > > >
 operator<(float d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Less<float, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Less<float, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
       d2));
@@ -10806,7 +10755,7 @@ operator<(float d1,
       _bz_Less<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float < Range
@@ -10840,7 +10789,7 @@ operator<(float d1,
       _bz_Less<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double < Vector<P_numtype2>
@@ -10857,7 +10806,7 @@ operator<(double d1,
       _bz_Less<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double < _bz_VecExpr<P_expr2>
@@ -10865,13 +10814,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Less<double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Less<double, typename P_expr2::T_numtype > > >
 operator<(double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Less<double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Less<double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
       d2));
@@ -10891,7 +10840,7 @@ operator<(double d1,
       _bz_Less<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double < Range
@@ -10925,7 +10874,7 @@ operator<(double d1,
       _bz_Less<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double < Vector<P_numtype2>
@@ -10942,7 +10891,7 @@ operator<(long double d1,
       _bz_Less<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double < _bz_VecExpr<P_expr2>
@@ -10950,13 +10899,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Less<long double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Less<long double, typename P_expr2::T_numtype > > >
 operator<(long double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Less<long double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Less<long double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
       d2));
@@ -10976,7 +10925,7 @@ operator<(long double d1,
       _bz_Less<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double < Range
@@ -11010,7 +10959,7 @@ operator<(long double d1,
       _bz_Less<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #ifdef BZ_HAVE_COMPLEX
 
@@ -11028,7 +10977,7 @@ operator<(complex<T1> d1,
       _bz_Less<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -11039,13 +10988,13 @@ template<class T1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>,
-      _bz_Less<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      _bz_Less<complex<T1> , typename P_expr2::T_numtype > > >
 operator<(complex<T1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>, 
-      _bz_Less<complex<T1> , _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Less<complex<T1> , typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
       d2));
@@ -11068,7 +11017,7 @@ operator<(complex<T1> d1,
       _bz_Less<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -11108,7 +11057,7 @@ operator<(complex<T1> d1,
       _bz_Less<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -11129,8 +11078,8 @@ operator>=(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_GreaterOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> >= _bz_VecExpr<P_expr2>
@@ -11138,15 +11087,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_GreaterOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_GreaterOrEqual<P_numtype1, typename P_expr2::T_numtype > > >
 operator>=(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_GreaterOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_GreaterOrEqual<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -11163,8 +11112,8 @@ operator>=(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_GreaterOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> >= Range
@@ -11180,7 +11129,7 @@ operator>=(const Vector<P_numtype1>& d1,
       Range, 
       _bz_GreaterOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -11197,8 +11146,8 @@ operator>=(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_GreaterOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> >= int
@@ -11214,7 +11163,7 @@ operator>=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_GreaterOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -11231,7 +11180,7 @@ operator>=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_GreaterOrEqual<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -11248,7 +11197,7 @@ operator>=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_GreaterOrEqual<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -11265,7 +11214,7 @@ operator>=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_GreaterOrEqual<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -11283,7 +11232,7 @@ operator>=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_GreaterOrEqual<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -11294,16 +11243,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, P_numtype2 > > >
 operator>=(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> >= _bz_VecExpr<P_expr2>
@@ -11311,13 +11260,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator>=(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -11328,16 +11277,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, P_numtype2 > > >
 operator>=(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> >= Range
@@ -11345,13 +11294,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, int > > >
 operator>=(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -11362,16 +11311,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, P_numtype2 > > >
 operator>=(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> >= int
@@ -11379,13 +11328,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, int > > >
 operator>=(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -11396,13 +11345,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>,
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, float > > >
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, float > > >
 operator>=(_bz_VecExpr<P_expr1> d1, 
       float d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>, 
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, float> > T_expr;
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, float> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<float>(d2)));
@@ -11413,13 +11362,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>,
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, double > > >
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, double > > >
 operator>=(_bz_VecExpr<P_expr1> d1, 
       double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>, 
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, double> > T_expr;
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<double>(d2)));
@@ -11430,13 +11379,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>,
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, long double > > >
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, long double > > >
 operator>=(_bz_VecExpr<P_expr1> d1, 
       long double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>, 
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, long double> > T_expr;
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, long double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<long double>(d2)));
@@ -11448,13 +11397,13 @@ template<class P_expr1, class T2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > ,
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, complex<T2>  > > >
 operator>=(_bz_VecExpr<P_expr1> d1, 
       complex<T2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > , 
-      _bz_GreaterOrEqual<_bz_typename P_expr1::T_numtype, complex<T2> > > T_expr;
+      _bz_GreaterOrEqual<typename P_expr1::T_numtype, complex<T2> > > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<complex<T2> > (d2)));
@@ -11475,8 +11424,8 @@ operator>=(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_GreaterOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> >= _bz_VecExpr<P_expr2>
@@ -11484,15 +11433,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_GreaterOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_GreaterOrEqual<P_numtype1, typename P_expr2::T_numtype > > >
 operator>=(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_GreaterOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_GreaterOrEqual<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -11509,8 +11458,8 @@ operator>=(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_GreaterOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> >= Range
@@ -11526,7 +11475,7 @@ operator>=(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_GreaterOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -11543,8 +11492,8 @@ operator>=(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_GreaterOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> >= int
@@ -11560,7 +11509,7 @@ operator>=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_GreaterOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -11577,7 +11526,7 @@ operator>=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_GreaterOrEqual<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -11594,7 +11543,7 @@ operator>=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_GreaterOrEqual<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -11611,7 +11560,7 @@ operator>=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_GreaterOrEqual<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -11629,7 +11578,7 @@ operator>=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_GreaterOrEqual<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -11649,7 +11598,7 @@ operator>=(Range d1,
       _bz_GreaterOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range >= _bz_VecExpr<P_expr2>
@@ -11657,13 +11606,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_GreaterOrEqual<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_GreaterOrEqual<int, typename P_expr2::T_numtype > > >
 operator>=(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_GreaterOrEqual<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_GreaterOrEqual<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -11683,7 +11632,7 @@ operator>=(Range d1,
       _bz_GreaterOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range >= Range
@@ -11717,7 +11666,7 @@ operator>=(Range d1,
       _bz_GreaterOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range >= float
@@ -11804,8 +11753,8 @@ operator>=(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_GreaterOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> >= _bz_VecExpr<P_expr2>
@@ -11813,15 +11762,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_GreaterOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_GreaterOrEqual<P_numtype1, typename P_expr2::T_numtype > > >
 operator>=(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_GreaterOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_GreaterOrEqual<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -11838,8 +11787,8 @@ operator>=(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_GreaterOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> >= Range
@@ -11855,7 +11804,7 @@ operator>=(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_GreaterOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -11872,8 +11821,8 @@ operator>=(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_GreaterOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> >= int
@@ -11889,7 +11838,7 @@ operator>=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_GreaterOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -11906,7 +11855,7 @@ operator>=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_GreaterOrEqual<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -11923,7 +11872,7 @@ operator>=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_GreaterOrEqual<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -11940,7 +11889,7 @@ operator>=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_GreaterOrEqual<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -11958,7 +11907,7 @@ operator>=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_GreaterOrEqual<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -11978,7 +11927,7 @@ operator>=(int d1,
       _bz_GreaterOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int >= _bz_VecExpr<P_expr2>
@@ -11986,13 +11935,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_GreaterOrEqual<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_GreaterOrEqual<int, typename P_expr2::T_numtype > > >
 operator>=(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_GreaterOrEqual<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_GreaterOrEqual<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -12012,7 +11961,7 @@ operator>=(int d1,
       _bz_GreaterOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int >= TinyVector<P_numtype2, N_length2>
@@ -12029,7 +11978,7 @@ operator>=(int d1,
       _bz_GreaterOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float >= Vector<P_numtype2>
@@ -12046,7 +11995,7 @@ operator>=(float d1,
       _bz_GreaterOrEqual<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float >= _bz_VecExpr<P_expr2>
@@ -12054,13 +12003,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>,
-      _bz_GreaterOrEqual<float, _bz_typename P_expr2::T_numtype > > >
+      _bz_GreaterOrEqual<float, typename P_expr2::T_numtype > > >
 operator>=(float d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_GreaterOrEqual<float, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_GreaterOrEqual<float, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
       d2));
@@ -12080,7 +12029,7 @@ operator>=(float d1,
       _bz_GreaterOrEqual<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float >= Range
@@ -12114,7 +12063,7 @@ operator>=(float d1,
       _bz_GreaterOrEqual<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double >= Vector<P_numtype2>
@@ -12131,7 +12080,7 @@ operator>=(double d1,
       _bz_GreaterOrEqual<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double >= _bz_VecExpr<P_expr2>
@@ -12139,13 +12088,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_GreaterOrEqual<double, _bz_typename P_expr2::T_numtype > > >
+      _bz_GreaterOrEqual<double, typename P_expr2::T_numtype > > >
 operator>=(double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_GreaterOrEqual<double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_GreaterOrEqual<double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
       d2));
@@ -12165,7 +12114,7 @@ operator>=(double d1,
       _bz_GreaterOrEqual<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double >= Range
@@ -12199,7 +12148,7 @@ operator>=(double d1,
       _bz_GreaterOrEqual<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double >= Vector<P_numtype2>
@@ -12216,7 +12165,7 @@ operator>=(long double d1,
       _bz_GreaterOrEqual<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double >= _bz_VecExpr<P_expr2>
@@ -12224,13 +12173,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_GreaterOrEqual<long double, _bz_typename P_expr2::T_numtype > > >
+      _bz_GreaterOrEqual<long double, typename P_expr2::T_numtype > > >
 operator>=(long double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_GreaterOrEqual<long double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_GreaterOrEqual<long double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
       d2));
@@ -12250,7 +12199,7 @@ operator>=(long double d1,
       _bz_GreaterOrEqual<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double >= Range
@@ -12284,7 +12233,7 @@ operator>=(long double d1,
       _bz_GreaterOrEqual<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #ifdef BZ_HAVE_COMPLEX
 
@@ -12302,7 +12251,7 @@ operator>=(complex<T1> d1,
       _bz_GreaterOrEqual<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -12313,13 +12262,13 @@ template<class T1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>,
-      _bz_GreaterOrEqual<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      _bz_GreaterOrEqual<complex<T1> , typename P_expr2::T_numtype > > >
 operator>=(complex<T1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>, 
-      _bz_GreaterOrEqual<complex<T1> , _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_GreaterOrEqual<complex<T1> , typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
       d2));
@@ -12342,7 +12291,7 @@ operator>=(complex<T1> d1,
       _bz_GreaterOrEqual<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -12382,7 +12331,7 @@ operator>=(complex<T1> d1,
       _bz_GreaterOrEqual<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -12403,8 +12352,8 @@ operator<=(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_LessOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> <= _bz_VecExpr<P_expr2>
@@ -12412,15 +12361,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LessOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_LessOrEqual<P_numtype1, typename P_expr2::T_numtype > > >
 operator<=(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LessOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LessOrEqual<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -12437,8 +12386,8 @@ operator<=(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_LessOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> <= Range
@@ -12454,7 +12403,7 @@ operator<=(const Vector<P_numtype1>& d1,
       Range, 
       _bz_LessOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -12471,8 +12420,8 @@ operator<=(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_LessOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> <= int
@@ -12488,7 +12437,7 @@ operator<=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_LessOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -12505,7 +12454,7 @@ operator<=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_LessOrEqual<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -12522,7 +12471,7 @@ operator<=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_LessOrEqual<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -12539,7 +12488,7 @@ operator<=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_LessOrEqual<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -12557,7 +12506,7 @@ operator<=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_LessOrEqual<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -12568,16 +12517,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_LessOrEqual<typename P_expr1::T_numtype, P_numtype2 > > >
 operator<=(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_LessOrEqual<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> <= _bz_VecExpr<P_expr2>
@@ -12585,13 +12534,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_LessOrEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator<=(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LessOrEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -12602,16 +12551,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_LessOrEqual<typename P_expr1::T_numtype, P_numtype2 > > >
 operator<=(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_LessOrEqual<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> <= Range
@@ -12619,13 +12568,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_LessOrEqual<typename P_expr1::T_numtype, int > > >
 operator<=(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_LessOrEqual<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -12636,16 +12585,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_LessOrEqual<typename P_expr1::T_numtype, P_numtype2 > > >
 operator<=(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_LessOrEqual<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> <= int
@@ -12653,13 +12602,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_LessOrEqual<typename P_expr1::T_numtype, int > > >
 operator<=(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_LessOrEqual<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -12670,13 +12619,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>,
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, float > > >
+      _bz_LessOrEqual<typename P_expr1::T_numtype, float > > >
 operator<=(_bz_VecExpr<P_expr1> d1, 
       float d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>, 
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, float> > T_expr;
+      _bz_LessOrEqual<typename P_expr1::T_numtype, float> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<float>(d2)));
@@ -12687,13 +12636,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>,
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, double > > >
+      _bz_LessOrEqual<typename P_expr1::T_numtype, double > > >
 operator<=(_bz_VecExpr<P_expr1> d1, 
       double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>, 
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, double> > T_expr;
+      _bz_LessOrEqual<typename P_expr1::T_numtype, double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<double>(d2)));
@@ -12704,13 +12653,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>,
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, long double > > >
+      _bz_LessOrEqual<typename P_expr1::T_numtype, long double > > >
 operator<=(_bz_VecExpr<P_expr1> d1, 
       long double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>, 
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, long double> > T_expr;
+      _bz_LessOrEqual<typename P_expr1::T_numtype, long double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<long double>(d2)));
@@ -12722,13 +12671,13 @@ template<class P_expr1, class T2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > ,
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      _bz_LessOrEqual<typename P_expr1::T_numtype, complex<T2>  > > >
 operator<=(_bz_VecExpr<P_expr1> d1, 
       complex<T2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > , 
-      _bz_LessOrEqual<_bz_typename P_expr1::T_numtype, complex<T2> > > T_expr;
+      _bz_LessOrEqual<typename P_expr1::T_numtype, complex<T2> > > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<complex<T2> > (d2)));
@@ -12749,8 +12698,8 @@ operator<=(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_LessOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> <= _bz_VecExpr<P_expr2>
@@ -12758,15 +12707,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LessOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_LessOrEqual<P_numtype1, typename P_expr2::T_numtype > > >
 operator<=(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LessOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LessOrEqual<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -12783,8 +12732,8 @@ operator<=(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_LessOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> <= Range
@@ -12800,7 +12749,7 @@ operator<=(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_LessOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -12817,8 +12766,8 @@ operator<=(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_LessOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> <= int
@@ -12834,7 +12783,7 @@ operator<=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_LessOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -12851,7 +12800,7 @@ operator<=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_LessOrEqual<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -12868,7 +12817,7 @@ operator<=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_LessOrEqual<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -12885,7 +12834,7 @@ operator<=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_LessOrEqual<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -12903,7 +12852,7 @@ operator<=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_LessOrEqual<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -12923,7 +12872,7 @@ operator<=(Range d1,
       _bz_LessOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range <= _bz_VecExpr<P_expr2>
@@ -12931,13 +12880,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_LessOrEqual<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_LessOrEqual<int, typename P_expr2::T_numtype > > >
 operator<=(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LessOrEqual<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LessOrEqual<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -12957,7 +12906,7 @@ operator<=(Range d1,
       _bz_LessOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range <= Range
@@ -12991,7 +12940,7 @@ operator<=(Range d1,
       _bz_LessOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range <= float
@@ -13078,8 +13027,8 @@ operator<=(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_LessOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> <= _bz_VecExpr<P_expr2>
@@ -13087,15 +13036,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LessOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_LessOrEqual<P_numtype1, typename P_expr2::T_numtype > > >
 operator<=(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LessOrEqual<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LessOrEqual<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -13112,8 +13061,8 @@ operator<=(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_LessOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> <= Range
@@ -13129,7 +13078,7 @@ operator<=(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_LessOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -13146,8 +13095,8 @@ operator<=(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_LessOrEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> <= int
@@ -13163,7 +13112,7 @@ operator<=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_LessOrEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -13180,7 +13129,7 @@ operator<=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_LessOrEqual<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -13197,7 +13146,7 @@ operator<=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_LessOrEqual<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -13214,7 +13163,7 @@ operator<=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_LessOrEqual<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -13232,7 +13181,7 @@ operator<=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_LessOrEqual<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -13252,7 +13201,7 @@ operator<=(int d1,
       _bz_LessOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int <= _bz_VecExpr<P_expr2>
@@ -13260,13 +13209,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LessOrEqual<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_LessOrEqual<int, typename P_expr2::T_numtype > > >
 operator<=(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LessOrEqual<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LessOrEqual<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -13286,7 +13235,7 @@ operator<=(int d1,
       _bz_LessOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int <= TinyVector<P_numtype2, N_length2>
@@ -13303,7 +13252,7 @@ operator<=(int d1,
       _bz_LessOrEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float <= Vector<P_numtype2>
@@ -13320,7 +13269,7 @@ operator<=(float d1,
       _bz_LessOrEqual<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float <= _bz_VecExpr<P_expr2>
@@ -13328,13 +13277,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LessOrEqual<float, _bz_typename P_expr2::T_numtype > > >
+      _bz_LessOrEqual<float, typename P_expr2::T_numtype > > >
 operator<=(float d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LessOrEqual<float, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LessOrEqual<float, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
       d2));
@@ -13354,7 +13303,7 @@ operator<=(float d1,
       _bz_LessOrEqual<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float <= Range
@@ -13388,7 +13337,7 @@ operator<=(float d1,
       _bz_LessOrEqual<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double <= Vector<P_numtype2>
@@ -13405,7 +13354,7 @@ operator<=(double d1,
       _bz_LessOrEqual<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double <= _bz_VecExpr<P_expr2>
@@ -13413,13 +13362,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LessOrEqual<double, _bz_typename P_expr2::T_numtype > > >
+      _bz_LessOrEqual<double, typename P_expr2::T_numtype > > >
 operator<=(double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LessOrEqual<double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LessOrEqual<double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
       d2));
@@ -13439,7 +13388,7 @@ operator<=(double d1,
       _bz_LessOrEqual<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double <= Range
@@ -13473,7 +13422,7 @@ operator<=(double d1,
       _bz_LessOrEqual<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double <= Vector<P_numtype2>
@@ -13490,7 +13439,7 @@ operator<=(long double d1,
       _bz_LessOrEqual<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double <= _bz_VecExpr<P_expr2>
@@ -13498,13 +13447,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LessOrEqual<long double, _bz_typename P_expr2::T_numtype > > >
+      _bz_LessOrEqual<long double, typename P_expr2::T_numtype > > >
 operator<=(long double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LessOrEqual<long double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LessOrEqual<long double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
       d2));
@@ -13524,7 +13473,7 @@ operator<=(long double d1,
       _bz_LessOrEqual<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double <= Range
@@ -13558,7 +13507,7 @@ operator<=(long double d1,
       _bz_LessOrEqual<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #ifdef BZ_HAVE_COMPLEX
 
@@ -13576,7 +13525,7 @@ operator<=(complex<T1> d1,
       _bz_LessOrEqual<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -13587,13 +13536,13 @@ template<class T1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>,
-      _bz_LessOrEqual<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      _bz_LessOrEqual<complex<T1> , typename P_expr2::T_numtype > > >
 operator<=(complex<T1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>, 
-      _bz_LessOrEqual<complex<T1> , _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LessOrEqual<complex<T1> , typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
       d2));
@@ -13616,7 +13565,7 @@ operator<=(complex<T1> d1,
       _bz_LessOrEqual<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -13656,7 +13605,7 @@ operator<=(complex<T1> d1,
       _bz_LessOrEqual<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -13677,8 +13626,8 @@ operator==(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Equal<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> == _bz_VecExpr<P_expr2>
@@ -13686,15 +13635,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Equal<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Equal<P_numtype1, typename P_expr2::T_numtype > > >
 operator==(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Equal<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Equal<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -13711,8 +13660,8 @@ operator==(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Equal<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> == Range
@@ -13728,7 +13677,7 @@ operator==(const Vector<P_numtype1>& d1,
       Range, 
       _bz_Equal<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -13745,8 +13694,8 @@ operator==(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Equal<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> == int
@@ -13762,7 +13711,7 @@ operator==(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Equal<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -13779,7 +13728,7 @@ operator==(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Equal<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -13796,7 +13745,7 @@ operator==(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Equal<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -13813,7 +13762,7 @@ operator==(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Equal<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -13831,7 +13780,7 @@ operator==(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Equal<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -13842,16 +13791,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_Equal<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Equal<typename P_expr1::T_numtype, P_numtype2 > > >
 operator==(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_Equal<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Equal<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> == _bz_VecExpr<P_expr2>
@@ -13859,13 +13808,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Equal<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_Equal<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator==(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Equal<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Equal<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -13876,16 +13825,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_Equal<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Equal<typename P_expr1::T_numtype, P_numtype2 > > >
 operator==(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_Equal<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Equal<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> == Range
@@ -13893,13 +13842,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_Equal<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Equal<typename P_expr1::T_numtype, int > > >
 operator==(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_Equal<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Equal<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -13910,16 +13859,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_Equal<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_Equal<typename P_expr1::T_numtype, P_numtype2 > > >
 operator==(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_Equal<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_Equal<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> == int
@@ -13927,13 +13876,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_Equal<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_Equal<typename P_expr1::T_numtype, int > > >
 operator==(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_Equal<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_Equal<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -13944,13 +13893,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>,
-      _bz_Equal<_bz_typename P_expr1::T_numtype, float > > >
+      _bz_Equal<typename P_expr1::T_numtype, float > > >
 operator==(_bz_VecExpr<P_expr1> d1, 
       float d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>, 
-      _bz_Equal<_bz_typename P_expr1::T_numtype, float> > T_expr;
+      _bz_Equal<typename P_expr1::T_numtype, float> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<float>(d2)));
@@ -13961,13 +13910,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>,
-      _bz_Equal<_bz_typename P_expr1::T_numtype, double > > >
+      _bz_Equal<typename P_expr1::T_numtype, double > > >
 operator==(_bz_VecExpr<P_expr1> d1, 
       double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>, 
-      _bz_Equal<_bz_typename P_expr1::T_numtype, double> > T_expr;
+      _bz_Equal<typename P_expr1::T_numtype, double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<double>(d2)));
@@ -13978,13 +13927,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>,
-      _bz_Equal<_bz_typename P_expr1::T_numtype, long double > > >
+      _bz_Equal<typename P_expr1::T_numtype, long double > > >
 operator==(_bz_VecExpr<P_expr1> d1, 
       long double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>, 
-      _bz_Equal<_bz_typename P_expr1::T_numtype, long double> > T_expr;
+      _bz_Equal<typename P_expr1::T_numtype, long double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<long double>(d2)));
@@ -13996,13 +13945,13 @@ template<class P_expr1, class T2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > ,
-      _bz_Equal<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      _bz_Equal<typename P_expr1::T_numtype, complex<T2>  > > >
 operator==(_bz_VecExpr<P_expr1> d1, 
       complex<T2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > , 
-      _bz_Equal<_bz_typename P_expr1::T_numtype, complex<T2> > > T_expr;
+      _bz_Equal<typename P_expr1::T_numtype, complex<T2> > > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<complex<T2> > (d2)));
@@ -14023,8 +13972,8 @@ operator==(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Equal<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> == _bz_VecExpr<P_expr2>
@@ -14032,15 +13981,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Equal<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Equal<P_numtype1, typename P_expr2::T_numtype > > >
 operator==(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Equal<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Equal<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -14057,8 +14006,8 @@ operator==(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Equal<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> == Range
@@ -14074,7 +14023,7 @@ operator==(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_Equal<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -14091,8 +14040,8 @@ operator==(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Equal<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> == int
@@ -14108,7 +14057,7 @@ operator==(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Equal<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -14125,7 +14074,7 @@ operator==(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Equal<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -14142,7 +14091,7 @@ operator==(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Equal<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -14159,7 +14108,7 @@ operator==(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Equal<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -14177,7 +14126,7 @@ operator==(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Equal<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -14197,7 +14146,7 @@ operator==(Range d1,
       _bz_Equal<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range == _bz_VecExpr<P_expr2>
@@ -14205,13 +14154,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_Equal<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Equal<int, typename P_expr2::T_numtype > > >
 operator==(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Equal<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Equal<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -14231,7 +14180,7 @@ operator==(Range d1,
       _bz_Equal<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range == Range
@@ -14265,7 +14214,7 @@ operator==(Range d1,
       _bz_Equal<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range == float
@@ -14352,8 +14301,8 @@ operator==(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_Equal<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> == _bz_VecExpr<P_expr2>
@@ -14361,15 +14310,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Equal<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_Equal<P_numtype1, typename P_expr2::T_numtype > > >
 operator==(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Equal<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Equal<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -14386,8 +14335,8 @@ operator==(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_Equal<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> == Range
@@ -14403,7 +14352,7 @@ operator==(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_Equal<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -14420,8 +14369,8 @@ operator==(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_Equal<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> == int
@@ -14437,7 +14386,7 @@ operator==(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_Equal<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -14454,7 +14403,7 @@ operator==(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_Equal<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -14471,7 +14420,7 @@ operator==(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_Equal<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -14488,7 +14437,7 @@ operator==(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_Equal<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -14506,7 +14455,7 @@ operator==(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_Equal<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -14526,7 +14475,7 @@ operator==(int d1,
       _bz_Equal<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int == _bz_VecExpr<P_expr2>
@@ -14534,13 +14483,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Equal<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_Equal<int, typename P_expr2::T_numtype > > >
 operator==(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Equal<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Equal<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -14560,7 +14509,7 @@ operator==(int d1,
       _bz_Equal<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int == TinyVector<P_numtype2, N_length2>
@@ -14577,7 +14526,7 @@ operator==(int d1,
       _bz_Equal<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float == Vector<P_numtype2>
@@ -14594,7 +14543,7 @@ operator==(float d1,
       _bz_Equal<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float == _bz_VecExpr<P_expr2>
@@ -14602,13 +14551,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Equal<float, _bz_typename P_expr2::T_numtype > > >
+      _bz_Equal<float, typename P_expr2::T_numtype > > >
 operator==(float d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Equal<float, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Equal<float, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
       d2));
@@ -14628,7 +14577,7 @@ operator==(float d1,
       _bz_Equal<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float == Range
@@ -14662,7 +14611,7 @@ operator==(float d1,
       _bz_Equal<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double == Vector<P_numtype2>
@@ -14679,7 +14628,7 @@ operator==(double d1,
       _bz_Equal<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double == _bz_VecExpr<P_expr2>
@@ -14687,13 +14636,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Equal<double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Equal<double, typename P_expr2::T_numtype > > >
 operator==(double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Equal<double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Equal<double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
       d2));
@@ -14713,7 +14662,7 @@ operator==(double d1,
       _bz_Equal<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double == Range
@@ -14747,7 +14696,7 @@ operator==(double d1,
       _bz_Equal<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double == Vector<P_numtype2>
@@ -14764,7 +14713,7 @@ operator==(long double d1,
       _bz_Equal<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double == _bz_VecExpr<P_expr2>
@@ -14772,13 +14721,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_Equal<long double, _bz_typename P_expr2::T_numtype > > >
+      _bz_Equal<long double, typename P_expr2::T_numtype > > >
 operator==(long double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_Equal<long double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Equal<long double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
       d2));
@@ -14798,7 +14747,7 @@ operator==(long double d1,
       _bz_Equal<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double == Range
@@ -14832,7 +14781,7 @@ operator==(long double d1,
       _bz_Equal<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #ifdef BZ_HAVE_COMPLEX
 
@@ -14850,7 +14799,7 @@ operator==(complex<T1> d1,
       _bz_Equal<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -14861,13 +14810,13 @@ template<class T1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>,
-      _bz_Equal<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      _bz_Equal<complex<T1> , typename P_expr2::T_numtype > > >
 operator==(complex<T1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>, 
-      _bz_Equal<complex<T1> , _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_Equal<complex<T1> , typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
       d2));
@@ -14890,7 +14839,7 @@ operator==(complex<T1> d1,
       _bz_Equal<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -14930,7 +14879,7 @@ operator==(complex<T1> d1,
       _bz_Equal<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -14951,8 +14900,8 @@ operator!=(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_NotEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> != _bz_VecExpr<P_expr2>
@@ -14960,15 +14909,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_NotEqual<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_NotEqual<P_numtype1, typename P_expr2::T_numtype > > >
 operator!=(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_NotEqual<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_NotEqual<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -14985,8 +14934,8 @@ operator!=(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_NotEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> != Range
@@ -15002,7 +14951,7 @@ operator!=(const Vector<P_numtype1>& d1,
       Range, 
       _bz_NotEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -15019,8 +14968,8 @@ operator!=(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_NotEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> != int
@@ -15036,7 +14985,7 @@ operator!=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_NotEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -15053,7 +15002,7 @@ operator!=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_NotEqual<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -15070,7 +15019,7 @@ operator!=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_NotEqual<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -15087,7 +15036,7 @@ operator!=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_NotEqual<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -15105,7 +15054,7 @@ operator!=(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_NotEqual<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -15116,16 +15065,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_NotEqual<typename P_expr1::T_numtype, P_numtype2 > > >
 operator!=(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_NotEqual<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> != _bz_VecExpr<P_expr2>
@@ -15133,13 +15082,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_NotEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator!=(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_NotEqual<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -15150,16 +15099,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_NotEqual<typename P_expr1::T_numtype, P_numtype2 > > >
 operator!=(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_NotEqual<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> != Range
@@ -15167,13 +15116,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_NotEqual<typename P_expr1::T_numtype, int > > >
 operator!=(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_NotEqual<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -15184,16 +15133,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_NotEqual<typename P_expr1::T_numtype, P_numtype2 > > >
 operator!=(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_NotEqual<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> != int
@@ -15201,13 +15150,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_NotEqual<typename P_expr1::T_numtype, int > > >
 operator!=(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_NotEqual<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -15218,13 +15167,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>,
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, float > > >
+      _bz_NotEqual<typename P_expr1::T_numtype, float > > >
 operator!=(_bz_VecExpr<P_expr1> d1, 
       float d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<float>, 
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, float> > T_expr;
+      _bz_NotEqual<typename P_expr1::T_numtype, float> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<float>(d2)));
@@ -15235,13 +15184,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>,
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, double > > >
+      _bz_NotEqual<typename P_expr1::T_numtype, double > > >
 operator!=(_bz_VecExpr<P_expr1> d1, 
       double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<double>, 
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, double> > T_expr;
+      _bz_NotEqual<typename P_expr1::T_numtype, double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<double>(d2)));
@@ -15252,13 +15201,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>,
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, long double > > >
+      _bz_NotEqual<typename P_expr1::T_numtype, long double > > >
 operator!=(_bz_VecExpr<P_expr1> d1, 
       long double d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<long double>, 
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, long double> > T_expr;
+      _bz_NotEqual<typename P_expr1::T_numtype, long double> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<long double>(d2)));
@@ -15270,13 +15219,13 @@ template<class P_expr1, class T2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > ,
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, complex<T2>  > > >
+      _bz_NotEqual<typename P_expr1::T_numtype, complex<T2>  > > >
 operator!=(_bz_VecExpr<P_expr1> d1, 
       complex<T2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<complex<T2> > , 
-      _bz_NotEqual<_bz_typename P_expr1::T_numtype, complex<T2> > > T_expr;
+      _bz_NotEqual<typename P_expr1::T_numtype, complex<T2> > > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<complex<T2> > (d2)));
@@ -15297,8 +15246,8 @@ operator!=(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_NotEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> != _bz_VecExpr<P_expr2>
@@ -15306,15 +15255,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_NotEqual<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_NotEqual<P_numtype1, typename P_expr2::T_numtype > > >
 operator!=(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_NotEqual<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_NotEqual<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -15331,8 +15280,8 @@ operator!=(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_NotEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> != Range
@@ -15348,7 +15297,7 @@ operator!=(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_NotEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -15365,8 +15314,8 @@ operator!=(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_NotEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> != int
@@ -15382,7 +15331,7 @@ operator!=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_NotEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -15399,7 +15348,7 @@ operator!=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_NotEqual<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -15416,7 +15365,7 @@ operator!=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_NotEqual<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -15433,7 +15382,7 @@ operator!=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_NotEqual<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -15451,7 +15400,7 @@ operator!=(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_NotEqual<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -15471,7 +15420,7 @@ operator!=(Range d1,
       _bz_NotEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range != _bz_VecExpr<P_expr2>
@@ -15479,13 +15428,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_NotEqual<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_NotEqual<int, typename P_expr2::T_numtype > > >
 operator!=(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_NotEqual<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_NotEqual<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -15505,7 +15454,7 @@ operator!=(Range d1,
       _bz_NotEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range != Range
@@ -15539,7 +15488,7 @@ operator!=(Range d1,
       _bz_NotEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range != float
@@ -15626,8 +15575,8 @@ operator!=(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_NotEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> != _bz_VecExpr<P_expr2>
@@ -15635,15 +15584,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_NotEqual<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_NotEqual<P_numtype1, typename P_expr2::T_numtype > > >
 operator!=(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_NotEqual<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_NotEqual<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -15660,8 +15609,8 @@ operator!=(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_NotEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> != Range
@@ -15677,7 +15626,7 @@ operator!=(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_NotEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -15694,8 +15643,8 @@ operator!=(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_NotEqual<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> != int
@@ -15711,7 +15660,7 @@ operator!=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_NotEqual<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -15728,7 +15677,7 @@ operator!=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<float>, 
       _bz_NotEqual<P_numtype1, float> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<float>(d2)));
 }
 
@@ -15745,7 +15694,7 @@ operator!=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<double>, 
       _bz_NotEqual<P_numtype1, double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<double>(d2)));
 }
 
@@ -15762,7 +15711,7 @@ operator!=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<long double>, 
       _bz_NotEqual<P_numtype1, long double> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<long double>(d2)));
 }
 #ifdef BZ_HAVE_COMPLEX
@@ -15780,7 +15729,7 @@ operator!=(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<complex<T2> > , 
       _bz_NotEqual<P_numtype1, complex<T2> > > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<complex<T2> > (d2)));
 }
 #endif // BZ_HAVE_COMPLEX
@@ -15800,7 +15749,7 @@ operator!=(int d1,
       _bz_NotEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int != _bz_VecExpr<P_expr2>
@@ -15808,13 +15757,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_NotEqual<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_NotEqual<int, typename P_expr2::T_numtype > > >
 operator!=(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_NotEqual<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_NotEqual<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -15834,7 +15783,7 @@ operator!=(int d1,
       _bz_NotEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int != TinyVector<P_numtype2, N_length2>
@@ -15851,7 +15800,7 @@ operator!=(int d1,
       _bz_NotEqual<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float != Vector<P_numtype2>
@@ -15868,7 +15817,7 @@ operator!=(float d1,
       _bz_NotEqual<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float != _bz_VecExpr<P_expr2>
@@ -15876,13 +15825,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>,
-      _bz_NotEqual<float, _bz_typename P_expr2::T_numtype > > >
+      _bz_NotEqual<float, typename P_expr2::T_numtype > > >
 operator!=(float d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<float>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_NotEqual<float, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_NotEqual<float, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
       d2));
@@ -15902,7 +15851,7 @@ operator!=(float d1,
       _bz_NotEqual<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // float != Range
@@ -15936,7 +15885,7 @@ operator!=(float d1,
       _bz_NotEqual<float, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<float>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double != Vector<P_numtype2>
@@ -15953,7 +15902,7 @@ operator!=(double d1,
       _bz_NotEqual<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double != _bz_VecExpr<P_expr2>
@@ -15961,13 +15910,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_NotEqual<double, _bz_typename P_expr2::T_numtype > > >
+      _bz_NotEqual<double, typename P_expr2::T_numtype > > >
 operator!=(double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_NotEqual<double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_NotEqual<double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
       d2));
@@ -15987,7 +15936,7 @@ operator!=(double d1,
       _bz_NotEqual<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // double != Range
@@ -16021,7 +15970,7 @@ operator!=(double d1,
       _bz_NotEqual<double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double != Vector<P_numtype2>
@@ -16038,7 +15987,7 @@ operator!=(long double d1,
       _bz_NotEqual<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double != _bz_VecExpr<P_expr2>
@@ -16046,13 +15995,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>,
-      _bz_NotEqual<long double, _bz_typename P_expr2::T_numtype > > >
+      _bz_NotEqual<long double, typename P_expr2::T_numtype > > >
 operator!=(long double d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<long double>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_NotEqual<long double, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_NotEqual<long double, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
       d2));
@@ -16072,7 +16021,7 @@ operator!=(long double d1,
       _bz_NotEqual<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // long double != Range
@@ -16106,7 +16055,7 @@ operator!=(long double d1,
       _bz_NotEqual<long double, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<long double>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #ifdef BZ_HAVE_COMPLEX
 
@@ -16124,7 +16073,7 @@ operator!=(complex<T1> d1,
       _bz_NotEqual<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -16135,13 +16084,13 @@ template<class T1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>,
-      _bz_NotEqual<complex<T1> , _bz_typename P_expr2::T_numtype > > >
+      _bz_NotEqual<complex<T1> , typename P_expr2::T_numtype > > >
 operator!=(complex<T1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<complex<T1> > , 
       _bz_VecExpr<P_expr2>, 
-      _bz_NotEqual<complex<T1> , _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_NotEqual<complex<T1> , typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
       d2));
@@ -16164,7 +16113,7 @@ operator!=(complex<T1> d1,
       _bz_NotEqual<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -16204,7 +16153,7 @@ operator!=(complex<T1> d1,
       _bz_NotEqual<complex<T1> , P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<complex<T1> > (d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 #endif // BZ_HAVE_COMPLEX
 
@@ -16225,8 +16174,8 @@ operator&&(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_LogicalAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> && _bz_VecExpr<P_expr2>
@@ -16234,15 +16183,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalAnd<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalAnd<P_numtype1, typename P_expr2::T_numtype > > >
 operator&&(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalAnd<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalAnd<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -16259,8 +16208,8 @@ operator&&(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_LogicalAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> && Range
@@ -16276,7 +16225,7 @@ operator&&(const Vector<P_numtype1>& d1,
       Range, 
       _bz_LogicalAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -16293,8 +16242,8 @@ operator&&(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_LogicalAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> && int
@@ -16310,7 +16259,7 @@ operator&&(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_LogicalAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -16319,16 +16268,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_LogicalAnd<typename P_expr1::T_numtype, P_numtype2 > > >
 operator&&(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_LogicalAnd<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> && _bz_VecExpr<P_expr2>
@@ -16336,13 +16285,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalAnd<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator&&(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalAnd<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -16353,16 +16302,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_LogicalAnd<typename P_expr1::T_numtype, P_numtype2 > > >
 operator&&(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_LogicalAnd<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> && Range
@@ -16370,13 +16319,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_LogicalAnd<typename P_expr1::T_numtype, int > > >
 operator&&(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_LogicalAnd<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -16387,16 +16336,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_LogicalAnd<typename P_expr1::T_numtype, P_numtype2 > > >
 operator&&(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_LogicalAnd<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> && int
@@ -16404,13 +16353,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_LogicalAnd<typename P_expr1::T_numtype, int > > >
 operator&&(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_LogicalAnd<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_LogicalAnd<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -16429,8 +16378,8 @@ operator&&(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_LogicalAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> && _bz_VecExpr<P_expr2>
@@ -16438,15 +16387,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalAnd<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalAnd<P_numtype1, typename P_expr2::T_numtype > > >
 operator&&(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalAnd<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalAnd<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -16463,8 +16412,8 @@ operator&&(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_LogicalAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> && Range
@@ -16480,7 +16429,7 @@ operator&&(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_LogicalAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -16497,8 +16446,8 @@ operator&&(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_LogicalAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> && int
@@ -16514,7 +16463,7 @@ operator&&(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_LogicalAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -16532,7 +16481,7 @@ operator&&(Range d1,
       _bz_LogicalAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range && _bz_VecExpr<P_expr2>
@@ -16540,13 +16489,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalAnd<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalAnd<int, typename P_expr2::T_numtype > > >
 operator&&(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalAnd<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalAnd<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -16566,7 +16515,7 @@ operator&&(Range d1,
       _bz_LogicalAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range && Range
@@ -16600,7 +16549,7 @@ operator&&(Range d1,
       _bz_LogicalAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> && Vector<P_numtype2>
@@ -16616,8 +16565,8 @@ operator&&(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_LogicalAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> && _bz_VecExpr<P_expr2>
@@ -16625,15 +16574,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalAnd<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalAnd<P_numtype1, typename P_expr2::T_numtype > > >
 operator&&(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalAnd<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalAnd<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -16650,8 +16599,8 @@ operator&&(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_LogicalAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> && Range
@@ -16667,7 +16616,7 @@ operator&&(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_LogicalAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -16684,8 +16633,8 @@ operator&&(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_LogicalAnd<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> && int
@@ -16701,7 +16650,7 @@ operator&&(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_LogicalAnd<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -16719,7 +16668,7 @@ operator&&(int d1,
       _bz_LogicalAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int && _bz_VecExpr<P_expr2>
@@ -16727,13 +16676,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalAnd<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalAnd<int, typename P_expr2::T_numtype > > >
 operator&&(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalAnd<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalAnd<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -16753,7 +16702,7 @@ operator&&(int d1,
       _bz_LogicalAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int && TinyVector<P_numtype2, N_length2>
@@ -16770,7 +16719,7 @@ operator&&(int d1,
       _bz_LogicalAnd<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 /****************************************************************************
  * Logical OR operators
@@ -16789,8 +16738,8 @@ operator||(const Vector<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_LogicalOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> || _bz_VecExpr<P_expr2>
@@ -16798,15 +16747,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalOr<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalOr<P_numtype1, typename P_expr2::T_numtype > > >
 operator||(const Vector<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalOr<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalOr<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -16823,8 +16772,8 @@ operator||(const Vector<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_LogicalOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> || Range
@@ -16840,7 +16789,7 @@ operator||(const Vector<P_numtype1>& d1,
       Range, 
       _bz_LogicalOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -16857,8 +16806,8 @@ operator||(const Vector<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_LogicalOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // Vector<P_numtype1> || int
@@ -16874,7 +16823,7 @@ operator||(const Vector<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_LogicalOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -16883,16 +16832,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>,
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_LogicalOr<typename P_expr1::T_numtype, P_numtype2 > > >
 operator||(_bz_VecExpr<P_expr1> d1, 
       const Vector<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorIterConst<P_numtype2>, 
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_LogicalOr<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> || _bz_VecExpr<P_expr2>
@@ -16900,13 +16849,13 @@ template<class P_expr1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalOr<typename P_expr1::T_numtype, typename P_expr2::T_numtype > > >
 operator||(_bz_VecExpr<P_expr1> d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalOr<typename P_expr1::T_numtype, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -16917,16 +16866,16 @@ template<class P_expr1, class P_numtype2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>,
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_LogicalOr<typename P_expr1::T_numtype, P_numtype2 > > >
 operator||(_bz_VecExpr<P_expr1> d1, 
       const VectorPick<P_numtype2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       VectorPickIterConst<P_numtype2>, 
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_LogicalOr<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> || Range
@@ -16934,13 +16883,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range,
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_LogicalOr<typename P_expr1::T_numtype, int > > >
 operator||(_bz_VecExpr<P_expr1> d1, 
       Range d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       Range, 
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_LogicalOr<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -16951,16 +16900,16 @@ template<class P_expr1, class P_numtype2, int N_length2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>,
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, P_numtype2 > > >
+      _bz_LogicalOr<typename P_expr1::T_numtype, P_numtype2 > > >
 operator||(_bz_VecExpr<P_expr1> d1, 
       const TinyVector<P_numtype2, N_length2>& d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       TinyVectorIterConst<P_numtype2, N_length2>, 
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, P_numtype2> > T_expr;
+      _bz_LogicalOr<typename P_expr1::T_numtype, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // _bz_VecExpr<P_expr1> || int
@@ -16968,13 +16917,13 @@ template<class P_expr1>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>,
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, int > > >
+      _bz_LogicalOr<typename P_expr1::T_numtype, int > > >
 operator||(_bz_VecExpr<P_expr1> d1, 
       int d2)
 {
     typedef _bz_VecExprOp<_bz_VecExpr<P_expr1>, 
       _bz_VecExprConstant<int>, 
-      _bz_LogicalOr<_bz_typename P_expr1::T_numtype, int> > T_expr;
+      _bz_LogicalOr<typename P_expr1::T_numtype, int> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       _bz_VecExprConstant<int>(d2)));
@@ -16993,8 +16942,8 @@ operator||(const VectorPick<P_numtype1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_LogicalOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> || _bz_VecExpr<P_expr2>
@@ -17002,15 +16951,15 @@ template<class P_numtype1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalOr<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalOr<P_numtype1, typename P_expr2::T_numtype > > >
 operator||(const VectorPick<P_numtype1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<VectorPickIterConst<P_numtype1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalOr<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalOr<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -17027,8 +16976,8 @@ operator||(const VectorPick<P_numtype1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_LogicalOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> || Range
@@ -17044,7 +16993,7 @@ operator||(const VectorPick<P_numtype1>& d1,
       Range, 
       _bz_LogicalOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -17061,8 +17010,8 @@ operator||(const VectorPick<P_numtype1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_LogicalOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // VectorPick<P_numtype1> || int
@@ -17078,7 +17027,7 @@ operator||(const VectorPick<P_numtype1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_LogicalOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -17096,7 +17045,7 @@ operator||(Range d1,
       _bz_LogicalOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range || _bz_VecExpr<P_expr2>
@@ -17104,13 +17053,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalOr<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalOr<int, typename P_expr2::T_numtype > > >
 operator||(Range d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<Range, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalOr<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalOr<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
       d2));
@@ -17130,7 +17079,7 @@ operator||(Range d1,
       _bz_LogicalOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // Range || Range
@@ -17164,7 +17113,7 @@ operator||(Range d1,
       _bz_LogicalOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(d1, 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> || Vector<P_numtype2>
@@ -17180,8 +17129,8 @@ operator||(const TinyVector<P_numtype1, N_length1>& d1,
       VectorIterConst<P_numtype2>, 
       _bz_LogicalOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> || _bz_VecExpr<P_expr2>
@@ -17189,15 +17138,15 @@ template<class P_numtype1, int N_length1, class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalOr<P_numtype1, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalOr<P_numtype1, typename P_expr2::T_numtype > > >
 operator||(const TinyVector<P_numtype1, N_length1>& d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<TinyVectorIterConst<P_numtype1, N_length1>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalOr<P_numtype1, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalOr<P_numtype1, typename P_expr2::T_numtype> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -17214,8 +17163,8 @@ operator||(const TinyVector<P_numtype1, N_length1>& d1,
       VectorPickIterConst<P_numtype2>, 
       _bz_LogicalOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> || Range
@@ -17231,7 +17180,7 @@ operator||(const TinyVector<P_numtype1, N_length1>& d1,
       Range, 
       _bz_LogicalOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       d2));
 }
 
@@ -17248,8 +17197,8 @@ operator||(const TinyVector<P_numtype1, N_length1>& d1,
       TinyVectorIterConst<P_numtype2, N_length2>, 
       _bz_LogicalOr<P_numtype1, P_numtype2> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
-      d2.begin()));
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
+      d2.beginFast()));
 }
 
 // TinyVector<P_numtype1, N_length1> || int
@@ -17265,7 +17214,7 @@ operator||(const TinyVector<P_numtype1, N_length1>& d1,
       _bz_VecExprConstant<int>, 
       _bz_LogicalOr<P_numtype1, int> > T_expr;
 
-    return _bz_VecExpr<T_expr>(T_expr(d1.begin(), 
+    return _bz_VecExpr<T_expr>(T_expr(d1.beginFast(), 
       _bz_VecExprConstant<int>(d2)));
 }
 
@@ -17283,7 +17232,7 @@ operator||(int d1,
       _bz_LogicalOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int || _bz_VecExpr<P_expr2>
@@ -17291,13 +17240,13 @@ template<class P_expr2>
 inline
 _bz_VecExpr<_bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>,
-      _bz_LogicalOr<int, _bz_typename P_expr2::T_numtype > > >
+      _bz_LogicalOr<int, typename P_expr2::T_numtype > > >
 operator||(int d1, 
       _bz_VecExpr<P_expr2> d2)
 {
     typedef _bz_VecExprOp<_bz_VecExprConstant<int>, 
       _bz_VecExpr<P_expr2>, 
-      _bz_LogicalOr<int, _bz_typename P_expr2::T_numtype> > T_expr;
+      _bz_LogicalOr<int, typename P_expr2::T_numtype> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
       d2));
@@ -17317,7 +17266,7 @@ operator||(int d1,
       _bz_LogicalOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 
 // int || TinyVector<P_numtype2, N_length2>
@@ -17334,7 +17283,7 @@ operator||(int d1,
       _bz_LogicalOr<int, P_numtype2> > T_expr;
 
     return _bz_VecExpr<T_expr>(T_expr(_bz_VecExprConstant<int>(d1), 
-      d2.begin()));
+      d2.beginFast()));
 }
 BZ_NAMESPACE_END
 
