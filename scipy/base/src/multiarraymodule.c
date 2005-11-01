@@ -998,11 +998,12 @@ PyArray_Concatenate(PyObject *op, int axis)
 {
 	PyArrayObject *ret, **mps;
 	PyObject *otmp;
-	int i, n, type_num, tmp, nd=0, new_dim;
+	int i, n, tmp, nd=0, new_dim;
 	char *data;	
 	PyTypeObject *subtype;
 	double prior1, prior2;
 	intp numbytes;
+        PyArray_Typecode intype = {0,0,0};
 
 	n = PySequence_Length(op);
 	if (n == -1) {
@@ -1029,14 +1030,13 @@ PyArray_Concatenate(PyObject *op, int axis)
 	/* Make sure these arrays are legal to concatenate. */
 	/* Must have same dimensions except d0, and have coercible type. */
 	
-	type_num = 0;
 	for(i=0; i<n; i++) {
 		otmp = PySequence_GetItem(op, i);
-		type_num = PyArray_ObjectType(otmp, type_num);
+                PyArray_ArrayType(otmp, &intype, &intype);
 		mps[i] = NULL;
 		Py_XDECREF(otmp);
 	}
-	if (type_num == -1) {
+	if (intype.type_num == -1) {
 		PyErr_SetString(PyExc_TypeError, 
 				"can't find common type for arrays "\
 				"to concatenate");
@@ -1047,11 +1047,9 @@ PyArray_Concatenate(PyObject *op, int axis)
 	subtype = &PyArray_Type;
 	ret = NULL;
 	for(i=0; i<n; i++) {
-		PyArray_Typecode typecode = {0, 0, 0};
-		typecode.type_num = type_num;
 		if ((otmp = PySequence_GetItem(op, i)) == NULL) goto fail;
 		mps[i] = (PyArrayObject*)
-			PyArray_FromAny(otmp, &typecode, 0, 0, CARRAY_FLAGS);
+			PyArray_FromAny(otmp, &intype, 0, 0, CARRAY_FLAGS);
 		Py_DECREF(otmp);
 		if (mps[i] == NULL) goto fail;
 		if (axis >= MAX_DIMS) {
@@ -1099,7 +1097,8 @@ PyArray_Concatenate(PyObject *op, int axis)
 	mps[0]->dimensions[0] = new_dim;
 	ret = (PyArrayObject *)PyArray_New(subtype, nd,
 					   mps[0]->dimensions, 
-					   type_num, NULL, NULL, 0, 0,
+					   intype.type_num, NULL, NULL, 
+                                           intype.itemsize, 0,
                                            (PyObject *)ret);
 	mps[0]->dimensions[0] = tmp;
 	

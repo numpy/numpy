@@ -4543,8 +4543,8 @@ _array_small_type(int chktype, int mintype, int chksize, int minsize,
 		  PyArray_Typecode *outtype)
 {
 	outtype->type_num = MAX(chktype, mintype);
-	if (PyTypeNum_ISFLEXIBLE(outtype->type_num) &&	\
-	    PyTypeNum_ISFLEXIBLE(mintype)) {
+	if (PyTypeNum_ISFLEXIBLE(outtype->type_num) &&          \
+	    (PyTypeNum_ISFLEXIBLE(mintype) || mintype==0)) {
 		/* Handle string->unicode case separately 
 		   because string itemsize is twice as large */
 		if (outtype->type_num == PyArray_UNICODE && 
