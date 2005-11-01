@@ -74,9 +74,9 @@ def create_extension(module_path, **kw):
         See build_extension for information on keyword arguments.
     """
     # some (most?) platforms will fail to link C++ correctly
-    # unless scipy_distutils is used.
+    # unless scipy.distutils is used.
     try:
-        from scipy_distutils.core import Extension
+        from scipy.distutils.core import Extension
     except ImportError:
         from distutils.core import Extension
     
@@ -210,8 +210,8 @@ def build_extension(module_path,compiler_name = '',build_dir = None,
     """
     success = 0
     try:
-        from scipy_distutils.core import setup, Extension
-        from scipy_distutils.log import set_verbosity
+        from scipy.distutils.core import setup, Extension
+        from scipy.distutils.log import set_verbosity
         set_verbosity(-1)
     except ImportError:
         from distutils.core import setup, Extension
@@ -583,7 +583,7 @@ if sys.platform == 'win32':
     def build_import_library():
         """ Build the import libraries for Mingw32-gcc on Windows
         """
-        from scipy_distutils import lib2def
+        from scipy.distutils import lib2def
         #libfile, deffile = parse_cmd()
         #if deffile is None:
         #    deffile = sys.stdout

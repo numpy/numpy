@@ -12,9 +12,9 @@ from distutils.sysconfig import customize_compiler
 
 
 try:
-    from scipy_distutils.ccompiler import new_compiler
-    from scipy_distutils.core import Extension, setup
-    from scipy_distutils.command.build_ext import build_ext
+    from scipy.distutils.ccompiler import new_compiler
+    from scipy.distutils.core import Extension, setup
+    from scipy.distutils.command.build_ext import build_ext
 except ImportError:
     from distutils.ccompiler import new_compiler
     from distutils.core import Extension, setup
