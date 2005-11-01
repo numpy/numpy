@@ -5452,6 +5452,7 @@ array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 
 	int type = typecode->type_num;
         PyObject *r=NULL;
+        int seq = FALSE;
 
 	/* Is input object already an array? */
 	/*  This is where the flags are used */
@@ -5475,13 +5476,21 @@ array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 			_array_find_type(op, NULL, typecode, MAX_DIMS);
 		}
 		if (PySequence_Check(op))
+                {
 			r = Array_FromSequence(op, typecode, 
 					       min_depth, max_depth);
-		else
+			if (PyErr_Occurred() && r == NULL)
+                            /* It wasn't a valid sequence after all.
+                             * Try interpreting it as a scalar */
+                            PyErr_Clear();
+                        else
+                            seq = TRUE;
+                }
+                if (!seq)
 			r = Array_FromScalar(op, typecode);
 	}
 
-        /* If we didn't succed return NULL */
+        /* If we didn't succeed return NULL */
         if (r == NULL) return NULL;
 	
 	/* Be sure we succeed here */
@@ -6956,12 +6965,12 @@ PyArray_MapIterNew(PyObject *indexobj)
 
 	if (fancy == SOBJ_BADARRAY) {
 		PyErr_SetString(PyExc_TypeError,			\
-				"arrays used as indexes must be of "    \
+				"arrays used as indices must be of "    \
 				"integer type");
 		goto fail;
 	}
 	if (fancy == SOBJ_TOOMANY) {
-		PyErr_SetString(PyExc_TypeError, "too many indicies");
+		PyErr_SetString(PyExc_TypeError, "too many indices");
 		goto fail;
 	}
 
