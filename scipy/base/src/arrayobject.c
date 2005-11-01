@@ -5452,6 +5452,7 @@ array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 
 	int type = typecode->type_num;
         PyObject *r=NULL;
+        int seq = FALSE;
 
 	/* Is input object already an array? */
 	/*  This is where the flags are used */
@@ -5474,10 +5475,18 @@ array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 		if (type == PyArray_NOTYPE) {
 			_array_find_type(op, NULL, typecode, MAX_DIMS);
 		}
-		if (PySequence_Check(op))
+		if (PySequence_Check(op))  /* necessary but not sufficient */
+		{
 			r = Array_FromSequence(op, typecode, 
 					       min_depth, max_depth);
-		else
+			if (PyErr_Occurred() && r == NULL)
+                            /* It wasn't really a sequence after all.
+                             * Try interpreting it as a scalar */
+                            PyErr_Clear();
+                        else
+                            seq = TRUE;
+                }
+                if (!seq)
 			r = Array_FromScalar(op, typecode);
 	}
 
