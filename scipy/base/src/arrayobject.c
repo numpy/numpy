@@ -4000,6 +4000,23 @@ array_descr_get(PyArrayObject *self)
 	return res;
 }
 
+static PyObject *
+array_struct_get(PyArrayObject *self)
+{
+        PyArrayInterface *inter;
+        
+        inter = (PyArrayInterface *)malloc(sizeof(PyArrayInterface));
+        inter->version = 2;
+        inter->nd = self->nd;
+        inter->typekind = self->descr->kind;
+        inter->itemsize = self->itemsize;
+        inter->flags = self->flags;
+        inter->strides = self->strides;
+        inter->shape = self->dimensions;
+        inter->data = self->data;
+        return PyCObject_FromVoidPtr(inter, free);
+}
+
 
 static PyObject *
 array_type_get(PyArrayObject *self)
@@ -4379,6 +4396,10 @@ static PyGetSetDef array_getsetlist[] = {
 	 (getter)array_protocol_strides_get,
 	 NULL,
 	 "Array protocol: strides"},
+        {"__array_struct__",
+         (getter)array_struct_get,
+         NULL,
+         "Array protocol: struct"},
 	{"__array_priority__",
 	 (getter)array_priority_get,
 	 NULL,
@@ -5303,6 +5324,32 @@ _array_typecode_fromstr(char *str, int *swap, PyArray_Typecode *type)
 }
 
 static PyObject *
+array_fromstructinterface(PyObject *input, PyArray_Typecode *intype, int flags)
+{
+        PyArray_Typecode thetype = {0,0,0};
+        int swap;
+        char buf[80];
+        PyArrayInterface *inter;
+        PyObject *attr, *r;
+        
+        attr = PyObject_GetAttrString(input, "__array_struct__");
+        if ((attr==NULL) || (!PyCObject_Check(attr)) ||                 \
+            ((inter=((PyArrayInterface *)PyCObject_AsVoidPtr(attr)))->version != 2)) {
+                PyErr_SetString(PyExc_ValueError, "invalid __array_struct__");
+                return NULL;
+        }
+        snprintf(buf, 80, "|%c%d", inter->typekind, inter->itemsize);
+        if (_array_typecode_fromstr(buf, &swap, &thetype) < 0) {
+                return NULL;
+        }
+        r = PyArray_New(&PyArray_Type, inter->nd, inter->shape, thetype.type_num,
+                        inter->strides, inter->data, thetype.itemsize,
+                        inter->flags, NULL);
+        Py_DECREF(attr);
+        return r;
+}
+
+static PyObject *
 array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 {
 	PyObject *attr=NULL, *item=NULL, *r;
@@ -5483,6 +5530,9 @@ array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 	else if (PyArray_IsScalar(op, Generic)) {
 		r = PyArray_FromScalar(op, typecode);
 	}
+        else if (PyObject_HasAttrString(op, "__array_struct__")) {
+                r = array_fromstructinterface(op, typecode, flags);
+        }
 	else if (PyObject_HasAttrString(op, "__array__")) {
 		/* Code that returns the object to convert for a non
 		   multiarray input object from the __array__ attribute of the

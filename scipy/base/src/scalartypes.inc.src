@@ -571,7 +571,7 @@ gentype_shape_set(PyObject *self, PyObject *val)
 static PyObject *
 gentype_dataptr_get(PyObject *self)
 {
-	return PyString_FromString("");
+	return Py_BuildValue("NO",PyString_FromString(""),Py_True);
 }
 
 
@@ -616,6 +616,33 @@ gentype_typechar_get(PyObject *self)
 		return PyString_FromStringAndSize(&(descr->type), 1);
 }
 
+static void
+gentype_struct_free(void *ptr, void *arr)
+{
+        Py_DECREF((PyObject *)arr);
+        free(ptr);
+}
+
+static PyObject *
+gentype_struct_get(PyObject *self)
+{
+        PyArrayObject *arr;
+        PyArrayInterface *inter;
+        
+        arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
+        arr->flags &= ~WRITEABLE;
+        inter = (PyArrayInterface *)malloc(sizeof(PyArrayInterface));
+        inter->version = 2;
+        inter->nd = 0;
+        inter->flags = arr->flags;
+        inter->typekind = arr->descr->kind;
+        inter->itemsize = arr->itemsize;
+        inter->strides = NULL;
+        inter->shape = NULL;
+        inter->data = arr->data;
+        return PyCObject_FromVoidPtrAndDesc(inter, arr, gentype_struct_free);
+}
+
 static PyObject *
 gentype_typestr_get(PyObject *self)
 {
@@ -639,6 +666,7 @@ gentype_descr_get(PyObject *self)
 	Py_DECREF(arr);
 	return ret;
 }
+
 
 
 static PyObject *
@@ -807,6 +835,10 @@ static PyGetSetDef gentype_getsets[] = {
 	 (getter)gentype_shape_get,
 	 NULL,
 	 "Array protocol: strides"},
+        {"__array_struct__",
+         (getter)gentype_struct_get,
+         NULL,
+         "Array protocol: struct"},
 	/* Does not have __array_priority__ because it is not a subtype.
 	 */
        	{NULL, NULL, NULL, NULL}  /* Sentinel */

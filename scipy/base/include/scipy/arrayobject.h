@@ -1169,6 +1169,19 @@ typedef struct {
 				 PyArray_ISOBJECT(m))
 
 
+typedef struct {
+        int version;          /* contains the integer 2 as a sanity check */
+        int nd;               /* number of dimensions */
+        char typekind;        /* kind in array --- character code of typestr */
+        int itemsize;         /* size of each element */
+        int flags;            /* how should be data interpreted */
+        Py_intptr_t *shape;   /* A length-nd array of shape information */
+        Py_intptr_t *strides; /* A length-nd array of stride information */
+        void *data;           /* A pointer to the first element of the array */
+} PyArrayInterface;
+
+
+
   /*  Often, rather than always convert to an array, 
       we may want to delegate behavior for other objects passed in
   */
