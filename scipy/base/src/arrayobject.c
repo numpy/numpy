@@ -5385,7 +5385,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 		}
 		attr = PyObject_GetAttrString(input, "__array_offset__");
 		if (attr) {
-			num = PyInt_AsLong(attr);
+			long num = PyInt_AsLong(attr);
 			if (error_converting(num)) {
 				PyErr_SetString(PyExc_TypeError, 
 						"__array_offset__ "\
