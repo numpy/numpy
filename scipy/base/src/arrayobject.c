@@ -204,13 +204,13 @@ PyArray_GetPriority(PyObject *obj, double default_)
     The memory for the ptr still must be freed in any case;
 */
 
+
 static char *
 PyArray_Zero(PyArrayObject *arr)
 {
         char *zeroval;
-        char *buf;
-        int buf_len;
-        PyObject *obj, *ret;
+        int ret, storeflags;
+        PyObject *obj;
 
         zeroval = PyDataMem_NEW(arr->itemsize);
         if (zeroval == NULL) {
@@ -218,27 +218,21 @@ PyArray_Zero(PyArrayObject *arr)
                 return NULL;
         }
 
+	obj=PyInt_FromLong((long) 0);
         if (PyArray_ISOBJECT(arr)) {
-                obj=PyInt_FromLong((long) 0);
                 memcpy(zeroval, &obj, sizeof(PyObject *));
                 Py_DECREF(obj);
                 return zeroval;
         }
-        ret = PyObject_GetAttrString((PyObject *)arr, "_zero");
-        if (ret != NULL) {
-                if (PyObject_AsReadBuffer(ret, (const void **)&buf, 
-                                          &buf_len) < 0) {
-                        PyErr_SetString(PyExc_ValueError, 
-                                        "_zero not returning "          \
-                                        "writeable buffer");
-                        Py_DECREF(ret);
-                        return NULL;
-                }
-                memcpy(zeroval, buf, buf_len);
-                Py_DECREF(ret);
-        }
-        if (PyErr_Occurred()) PyErr_Clear();
-        memset(zeroval, 0, arr->itemsize);
+	storeflags = arr->flags;
+	arr->flags |= BEHAVED_FLAGS;
+        ret = arr->descr->setitem(obj, zeroval, arr);
+	arr->flags = storeflags;
+	Py_DECREF(obj);
+	if (ret < 0) {
+		PyDataMem_FREE(zeroval);
+		return NULL;
+	}
         return zeroval;
 }
 
@@ -246,9 +240,8 @@ static char *
 PyArray_One(PyArrayObject *arr)
 {
         char *oneval;
-        char *buf;
-        int buf_len, ret2;
-        PyObject *obj, *ret;
+        int ret, storeflags;
+        PyObject *obj;
 
         oneval = PyDataMem_NEW(arr->itemsize);
         if (oneval == NULL) {
@@ -261,25 +254,12 @@ PyArray_One(PyArrayObject *arr)
                 memcpy(oneval, &obj, sizeof(PyObject *));
                 Py_DECREF(obj);
                 return oneval;
-        }
-        
-        ret = PyObject_GetAttrString((PyObject *)arr, "_one");
-        if (ret != NULL) {
-                if (PyObject_AsReadBuffer(ret, (const void **)&buf, 
-                                          &buf_len) < 0) {
-                        PyErr_SetString(PyExc_ValueError, 
-                                        "_one not returning "          \
-                                        "writeable buffer");
-                        Py_DECREF(ret);
-                        PyDataMem_FREE(oneval);
-                        return NULL;
-                }
-                memcpy(oneval, buf, buf_len);
-                Py_DECREF(ret);
-        }
-        if (PyErr_Occurred()) PyErr_Clear();
+        }        
 
-        ret2 = arr->descr->setitem(obj, oneval, arr);
+	storeflags = arr->flags;
+	arr->flags |= BEHAVED_FLAGS;
+        ret = arr->descr->setitem(obj, oneval, arr);
+	arr->flags = storeflags;
         Py_DECREF(obj);
         if (ret < 0) {
                 PyDataMem_FREE(oneval);

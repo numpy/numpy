@@ -3685,6 +3685,11 @@ array_set_string_function(PyObject *dummy, PyObject *args, PyObject *kwds)
 
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|i", kwlist, 
 					&op, &repr)) return NULL; 
+	if (!PyCallable_Check(op)) {
+		PyErr_SetString(PyExc_TypeError, 
+				"Argument must be callable.");
+		return NULL;
+	}
 	PyArray_SetStringFunction(op, repr);
 	Py_INCREF(Py_None);
 	return Py_None;
