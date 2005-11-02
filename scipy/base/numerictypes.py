@@ -148,6 +148,7 @@ def _add_types():
         name = a.lower()
         if isinstance(typeinfo[a], type(())):
             typeobj = typeinfo[a][-1]
+                        
             # define C-name and insert typenum and typechar references also
             allTypes[name] = typeobj
             typeDict[name] = typeobj
@@ -156,6 +157,9 @@ def _add_types():
 
             # insert bit-width version for this class (if relevant)
             base, bit, char = bitname(typeobj)
+
+#            typeobj.bytes=bit/8
+
             revdict[typeobj] = (typeinfo[a][:-1], (base, bit, char), a)
             if base != '':
                 allTypes["%s%d" % (base, bit)] = typeobj
@@ -329,7 +333,7 @@ def _construct_nbytes_lookup():
     for name, val in typeinfo.iteritems():
         if not isinstance(val, tuple):
             continue
-        nbytes[val[-1]] = val[2]
+        nbytes[val[-1]] = val[2] / 8
 _construct_nbytes_lookup()
 
 # Now add the types we've determined to this module
