@@ -157,9 +157,6 @@ def _add_types():
 
             # insert bit-width version for this class (if relevant)
             base, bit, char = bitname(typeobj)
-
-#            typeobj.bytes=bit/8
-
             revdict[typeobj] = (typeinfo[a][:-1], (base, bit, char), a)
             if base != '':
                 allTypes["%s%d" % (base, bit)] = typeobj
