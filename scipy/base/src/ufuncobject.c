@@ -854,10 +854,8 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                 if (mps[i] == NULL) return -1;
                 arg_types[i] = PyArray_TYPE(mps[i]);
                 if (PyTypeNum_ISFLEXIBLE(arg_types[i])) {
-                        PyErr_SetString(PyExc_TypeError, 
-					"ufuncs do not support"	\
-                                        " flexible arrays");
-                        return -1;
+			loop->notimplemented = 1;
+			return nargs;
                 }
 		/*
 		fprintf(stderr, "array %d has reference %d\n", i, 
@@ -1275,7 +1273,10 @@ _printcastbuf(PyUFuncLoopObject *loop, int bufnum)
 /* currently generic ufuncs cannot be built for use on flexible arrays.
 
    The cast functions in the generic loop would need to be fixed to pass 
-   something besides NULL, NULL 
+   something besides NULL, NULL.
+
+   Also the underlying ufunc loops would not know the array size unless
+   that were passed in as data. 
 
 */
 

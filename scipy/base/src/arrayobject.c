@@ -5034,6 +5034,13 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 		return -1; 
 	}
 
+	if (out->descr->type_num >= PyArray_NTYPES) {
+		PyErr_SetString(PyExc_ValueError, 
+				"Can only cast to builtin types.");
+		return -1;
+				
+	}
+
 	simple =  ((PyArray_ISCARRAY(mp) && PyArray_ISCARRAY(out)) ||   \
                    (PyArray_ISFARRAY(mp) && PyArray_ISFARRAY(out)));
 	
@@ -5866,6 +5873,10 @@ PyArray_CanCastTo(PyArray_Typecode *from, PyArray_Typecode *to)
 				ret = (from->itemsize <= to->itemsize);
 			}
 		}
+		/* TODO: If totype is STRING or unicode 
+		    see if the length is long enough to hold the
+		    stringified value of the object.		    
+		*/
 	}
 	return ret;
 }
