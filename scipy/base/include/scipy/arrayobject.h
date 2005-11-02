@@ -1135,6 +1135,7 @@ typedef struct {
 #define PyTypeNum_ISPYTHON(type) ((type == PyArray_LONG) || \
 				  (type == PyArray_DOUBLE) ||	\
 				  (type == PyArray_CDOUBLE) ||	\
+		                  (type == PyArray_BOOL) || \
 				  (type == PyArray_OBJECT ))
 
 #define PyTypeNum_ISFLEXIBLE(type) ((type==PyArray_STRING) || \
@@ -1175,8 +1176,8 @@ typedef struct {
         char typekind;        /* kind in array --- character code of typestr */
         int itemsize;         /* size of each element */
         int flags;            /* how should be data interpreted */
-        Py_intptr_t *shape;   /* A length-nd array of shape information */
-        Py_intptr_t *strides; /* A length-nd array of stride information */
+        intp *shape;          /* A length-nd array of shape information */
+        intp *strides;        /* A length-nd array of stride information */
         void *data;           /* A pointer to the first element of the array */
 } PyArrayInterface;
 

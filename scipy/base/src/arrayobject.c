@@ -4011,12 +4011,13 @@ array_struct_get(PyArrayObject *self)
         inter->typekind = self->descr->kind;
         inter->itemsize = self->itemsize;
         inter->flags = self->flags;
+	inter->flags &= ~UPDATEIFCOPY;   /* reset this flag */
         inter->strides = self->strides;
         inter->shape = self->dimensions;
         inter->data = self->data;
-        return PyCObject_FromVoidPtr(inter, free);
+	Py_INCREF(self);
+        return PyCObject_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
 }
-
 
 static PyObject *
 array_type_get(PyArrayObject *self)
@@ -5345,6 +5346,8 @@ array_fromstructinterface(PyObject *input, PyArray_Typecode *intype, int flags)
         r = PyArray_New(&PyArray_Type, inter->nd, inter->shape, thetype.type_num,
                         inter->strides, inter->data, thetype.itemsize,
                         inter->flags, NULL);
+	Py_INCREF(input);
+	PyArray_BASE(r) = input;
         Py_DECREF(attr);
         return r;
 }
@@ -5379,6 +5382,17 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 						    &buffer_len);
 			if (res < 0) {Py_XDECREF(attr); return NULL;}
 			dataflags &= ~WRITEABLE;
+		}
+		attr = PyObject_GetAttrString(input, "__array_offset__");
+		if (attr) {
+			num = PyInt_AsLong(attr);
+			if (error_converting(num)) {
+				PyErr_SetString(PyExc_TypeError, 
+						"__array_offset__ "\
+						"must be an integer");
+				return NULL;
+			}
+			data += num;
 		}
 	}
 	else {
