@@ -3612,6 +3612,17 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 }
 
 
+static PyObject *
+array_iter(PyArrayObject *arr)
+{
+	if (arr->nd == 0) {
+		PyErr_SetString(PyExc_TypeError,
+				"iteration over a scalar (0-dim array)");
+		return NULL;
+	}
+	return PySeqIter_New((PyObject *)arr);
+}
+
 
 /*******************  array attribute get and set routines ******************/
 
@@ -4435,7 +4446,7 @@ static PyTypeObject PyBigArray_Type = {
 
         /* Iterator support (use standard) */
 
-        (getiterfunc)0,      		          /* tp_iter */
+        (getiterfunc)array_iter,   	          /* tp_iter */
         (iternextfunc)0,			  /* tp_iternext */
 
         /* Sub-classing (new-style object) support */
