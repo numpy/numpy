@@ -292,6 +292,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
         PyArrayObject *ret;
 	intp size;
 	PyArray_CopySwapNFunc *copyswapn;
+	PyArray_CopySwapFunc *copyswap;
 	PyArrayIterObject *it;
 
 	if (inplace) {
@@ -305,10 +306,10 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 			
 			it = (PyArrayIterObject *)\
 				PyArray_IterNew((PyObject *)self);
-			
+			copyswap = self->descr->copyswap;
 			while (it->index < it->size) {
-				copyswapn(it->dataptr, NULL, 1, 1, 
-					  self->itemsize);
+				copyswap(it->dataptr, NULL, 1, 
+					 self->itemsize);
 				PyArray_ITER_NEXT(it);
 			}
 			Py_DECREF(it);
@@ -328,7 +329,8 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 		
 		/* set the NOTSWAPPED flag to opposite self */
 		/* ret is always notswapped, 
-		   PyArray_Copy has already swapped if self was swapped */
+		   PyArray_Copy has already swapped if self was swapped 
+		   to begin with so just correct the flag in that case. */
 
 		if (self->flags & NOTSWAPPED) {
 			ret->descr->copyswapn(ret->data, NULL, size, 1, ret->itemsize);
@@ -963,7 +965,7 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 	if (cpick==NULL) return -1;
 
 	if PyString_Check(file) {
-		file = PyFile_FromString(PyString_AS_STRING(file), "rb");
+		file = PyFile_FromString(PyString_AS_STRING(file), "wb");
 		if (file==NULL) return -1;
 	}
 	else Py_INCREF(file);

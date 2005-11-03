@@ -979,11 +979,11 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
         PyArrayIterObject *it;
         PyObject *obj, *strobj, *tupobj;
 
-        n3 = strlen((const char *)sep);
-        if (n3 == 0) { /* binary data */
+	n3 = (sep ? strlen((const char *)sep) : 0);
+	if (n3 == 0) { /* binary data */
                 if (PyArray_ISOBJECT(self)) {
                         PyErr_SetString(PyExc_ValueError, "cannot write "\
-					"object arrays to a file in "\
+					"object arrays to a file in "	\
 					"binary mode");
                         return -1;
                 }
@@ -1021,7 +1021,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
         else {  /* text data */
                 it=(PyArrayIterObject *)                                \
                         PyArray_IterNew((PyObject *)self);
-		n4 = strlen((const char *)format);
+		n4 = (format ? strlen((const char *)format) : 0);
                 while(it->index < it->size) {
                         obj = self->descr->getitem(it->dataptr, self);
                         if (obj == NULL) {Py_DECREF(it); return -1;}
@@ -1106,7 +1106,7 @@ PyArray_ToString(PyArrayObject *self)
         PyArrayIterObject *it;
         
         if (PyArray_TYPE(self) == PyArray_OBJECT) {
-                PyErr_SetString(PyExc_ValueError, "a string for the data"\
+                PyErr_SetString(PyExc_ValueError, "a string for the data" \
 				"in an object array is not appropriate");
                 return NULL;
         }
@@ -3345,7 +3345,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
 			return NULL;
 		}
 		
-		refcnt = (((PyObject *)self)->ob_refcnt);
+		refcnt = REFCOUNT(self);
 		if ((refcnt > 2) || (self->base != NULL) ||     \
 		    (self->weakreflist != NULL)) {
 			PyErr_SetString(PyExc_ValueError, 
@@ -4854,8 +4854,8 @@ PyArray_ValidType(int type)
 	PyArray_Descr *descr;
 	
 	descr = PyArray_DescrFromType(type);
-	if (descr==NULL) return 0;
-	return 1;
+	if (descr==NULL) return FALSE;
+	return TRUE;
 }
 
 
