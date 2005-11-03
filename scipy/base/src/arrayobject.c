@@ -5382,6 +5382,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 			}
 			data += num;
 		}
+		else PyErr_Clear();
 	}
 	else {
 		if (PyTuple_GET_SIZE(attr) != 2) {
@@ -5407,6 +5408,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	}
 	Py_XDECREF(attr);
 	attr = PyObject_GetAttrString(input, "__array_typestr__");
+	if (attr == NULL) return NULL;
 	if (!PyString_Check(attr)) {
 		PyErr_SetString(PyExc_TypeError, "__array_typestr__ must be a string");
 		Py_DECREF(attr);
@@ -5417,6 +5419,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	if (res < 0) return NULL;
     
 	attr = PyObject_GetAttrString(input, "__array_shape__");
+	if (attr == NULL) return NULL;
 	if (!PyTuple_Check(attr)) {
 		PyErr_SetString(PyExc_TypeError, "__array_shape__ must be a tuple");
 		Py_DECREF(attr);
@@ -5429,7 +5432,6 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 		if (error_converting(dims[i])) break;
 	}
 	Py_DECREF(attr);
-	if (PyErr_Occurred()) return NULL;
 
 	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, n, dims, 
 					   type.type_num, 
@@ -5464,6 +5466,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 		if (PyErr_Occurred()) PyErr_Clear();	
 		memcpy(ret->strides, strides, n*sizeof(intp));
 	}
+	else PyErr_Clear();
 
 	if (swap) {
 		PyObject *tmp;
