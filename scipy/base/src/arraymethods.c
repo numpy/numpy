@@ -246,13 +246,21 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
 static char doc_getfield[] = "m.field(type, offset) returns a field "\
 	" of the given array as a certain type.  A field is a view of "\
 	" the array's data with each itemsize determined by the given type"\
-	" and the offset into the current array items given.";
+	" and the offset into the current array.";
 
 static PyObject *
 PyArray_GetField(PyArrayObject *self, PyArray_Typecode *type, 
 				  int offset)
 {
 	PyObject *ret=NULL;
+
+	if (offset < 0 || (offset + type->itemsize) > self->itemsize) {
+		PyErr_Format(PyExc_ValueError,
+			     "Need 0 <= offset <= %d for requested type "  \
+			     "but received offset = %d",
+			     self->itemsize-type->itemsize, offset);
+		return NULL;
+	}
 	ret = PyArray_New(self->ob_type, self->nd, self->dimensions,
 			  type->type_num, self->strides, 
 			  self->data + offset,
@@ -274,13 +282,7 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|i", kwlist,
 					 PyArray_TypecodeConverter, 
 					 &typecode, &offset)) return NULL;
-
 	
-	if (typecode.itemsize > self->itemsize) {
-		PyErr_SetString(PyExc_TypeError, "field itemsize must be <="\
-				"array itemsize");
-		return NULL;
-	}
 	return _ARET(PyArray_GetField(self, &typecode, offset));
 }
 

@@ -3238,7 +3238,7 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 		start = (intp )ftell(fp);
 		fseek(fp, 0, SEEK_END);
 		numbytes = (intp )ftell(fp) - start;
-		fseek(fp, (long) start, SEEK_SET);
+		fseek(fp, start, SEEK_SET);
 		if (numbytes == -1) {
 			PyErr_SetString(PyExc_IOError, "could not seek in file");
 			return NULL;
@@ -3256,7 +3256,8 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 		r = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &num, 
 						 typecode->type_num,
 						 NULL, NULL, 
-						 typecode->itemsize, 0, NULL);
+						 typecode->itemsize, 
+						 0, NULL);
 		if (r==NULL) return NULL;
 		nread = fread(r->data, typecode->itemsize, num, fp);
 	}
@@ -3415,6 +3416,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 	int itemsize;
 	int write=1;
 
+
 	if (type->type_num == PyArray_OBJECT) {
 		PyErr_SetString(PyExc_ValueError, 
 				"cannot create an OBJECT array from memory"\
@@ -3422,9 +3424,13 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 		return NULL;
 	}
 	if (type->itemsize == 0) {
-		PyErr_SetString(PyExc_ValueError, 
-				"itemsize cannot be zero in type");
-		return NULL;
+		if (_fill_in_itemsize(type) < 0) 
+			return NULL;
+		if (type->itemsize == 0) {
+			PyErr_SetString(PyExc_ValueError, 
+					"itemsize cannot be zero in type");
+			return NULL;
+		}
 	}
 
 	if (PyObject_AsWriteBuffer(buf, (void *)&data, &ts)==-1) {

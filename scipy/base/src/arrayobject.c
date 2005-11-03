@@ -5638,13 +5638,6 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
    CARRAY_FLAGS = CONTIGUOUS | BEHAVED_FLAGS
    FARRAY_FLAGS = FORTRAN | BEHAVED_FLAGS
    
-   By default, the returned array will be a copy of the object, 
-   (C) contiguous in memory, aligned, notswapped, and writeable.
-   
-   So  CONTIGUOUS | ENSURECOPY passed in means that the returned
-   array does not have to be CONTIGUOUS or a COPY but should be
-   ALIGNED, NOTSWAPPED and WRITEABLE.  
-
    typecode->fortran can be set to request a
    fortran-contiguous  array.  Fortran arrays are always behaved (aligned, 
    notswapped, and writeable) and not (C) CONTIGUOUS.  Note that either
@@ -5694,7 +5687,8 @@ PyArray_FromAny(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 				requires);	
 }
 
-/* This is a quick wrapper around PyArray_FromAny(op, NULL, 0, 0, 0) */
+/* This is a quick wrapper around PyArray_FromAny(op, NULL, 0, 0, 
+    ENSUREARRAY) */
 /*  that special cases Arrays and PyArray_Scalars up front */
 /*  It steals a reference to the object */
 /*  It also guarantees that the result is PyArray_Type or PyBigArray_Type */
