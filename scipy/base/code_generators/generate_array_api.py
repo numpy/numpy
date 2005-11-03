@@ -81,7 +81,7 @@ objectapi_list = [
 
     (r"""Get scalar-equivalent to 0-d array
     """,
-     'ToScalar', 'char *, PyArrayObject *', 'PyObject *'),
+     'ToScalar', 'void *, PyArrayObject *', 'PyObject *'),
 
     (r"""Get 0-dim array from scalar
     """,

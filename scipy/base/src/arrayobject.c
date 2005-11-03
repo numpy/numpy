@@ -542,6 +542,7 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
 }
 
 
+static PyArray_Descr **userdescrs=NULL;
 /* Computer-generated arraytype and scalartype code */
 #include "scalartypes.inc"
 #include "arraytypes.inc"
@@ -838,7 +839,7 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
    default new method calls this. 
 */
 static PyObject *
-PyArray_ToScalar(char *data, PyArrayObject *arr)
+PyArray_ToScalar(void *data, PyArrayObject *arr)
 {
 	int type_num = arr->descr->type_num;
 	int itemsize = arr->itemsize;

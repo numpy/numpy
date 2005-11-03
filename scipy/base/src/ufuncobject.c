@@ -2364,13 +2364,14 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 	for(i=0; i<self->nargs; i++) mps[i] = NULL;
 	
         errval = PyUFunc_GenericFunction(self, args, mps);
-        if (errval == -1) {
+        if (errval < 0) {
 		for(i=0; i<self->nargs; i++) Py_XDECREF(mps[i]);
-		return NULL;
-	}
-        if (errval == -2) {
-                Py_INCREF(Py_NotImplemented);
-                return Py_NotImplemented;
+		if (errval == -1)
+			return NULL;
+		else {
+			Py_INCREF(Py_NotImplemented);
+			return Py_NotImplemented;
+		}
         }
 	
 	for(i=0; i<self->nin; i++) Py_DECREF(mps[i]);

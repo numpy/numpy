@@ -56,6 +56,7 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 		case PyArray_VOID:
 			*newptr = ((PyVoidScalarObject *)scalar)->obval;
 		}
+		return;
 	}
 	memcpy(ctypeptr, &(((PyScalarObject *)scalar)->obval), 
 	       typecode.itemsize);
@@ -1599,12 +1600,19 @@ PyArray_TypenumFromTypeObject(PyObject *type)
 		}
                 i++;
 	}
+
+	/* Seacrh any registered types */
+	i = 0;
+	while (i < PyArray_NUMUSERTYPES) {
+		if (type == (PyObject *)(userdescrs[i]->typeobj)) {
+			typenum = i;
+			break;
+		}
+		i++;
+	}
+	
 	if (typenum != PyArray_NOTYPE)
 		return typenum;
-
-	/* Find registered types */
-	
-	/* here */
 
 	/* Convert generic types to specific types */
 	if ((type == (PyObject *) &PyNumericArrType_Type) || \

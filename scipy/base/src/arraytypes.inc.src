@@ -1599,7 +1599,6 @@ static PyArray_Descr *descrs[] = {
 	&VOID_Descr,
 };
 
-static PyArray_Descr **userdescrs=NULL;
 
 static PyArray_Descr *
 PyArray_DescrFromType(int type) {
