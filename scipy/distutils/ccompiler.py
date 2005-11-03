@@ -223,6 +223,13 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
 CCompiler.get_version = new.instancemethod(\
     CCompiler_get_version,None,CCompiler)
 
+compiler_class['intel'] = ('intelccompiler','IntelCCompiler',
+                           "Intel C Compiler for 32-bit applications")
+compiler_class['intele'] = ('intelccompiler','IntelItaniumCCompiler',
+                           "Intel C Itanium Compiler for Itanium-based applications")
+ccompiler._default_compilers = ccompiler._default_compilers \
+                               + (('linux.*','intel'),('linux.*','intele'))
+
 if sys.platform == 'win32':
    compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
                                 "Mingw32 port of GNU C Compiler for Win32"\
