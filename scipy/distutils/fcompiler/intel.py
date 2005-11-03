@@ -73,7 +73,7 @@ class IntelItaniumFCompiler(IntelFCompiler):
                       ' for the Itanium\(TM\)-based applications,'\
                       ' Version (?P<version>[^\s*]*)'
 
-    for fc_exe in map(find_executable,['efort','efc','ifort']):
+    for fc_exe in map(find_executable,['ifort','efort','efc']):
         if os.path.isfile(fc_exe):
             break
 
