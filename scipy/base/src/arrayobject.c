@@ -1690,15 +1690,12 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 if (PyErr_Occurred())
                         PyErr_Clear();
                 else if (value >= 0) {
-                        if (value <= MAX_INT)
-                                return array_big_item(self, value);
+			return array_big_item(self, value);
                 }
                 else if (value < 0) {
-                        if (value >= -MAX_INT) {
-                                value += self->dimensions[0];
-                                return array_big_item(self, value);
-                        }
-                }
+			value += self->dimensions[0];
+			return array_big_item(self, value);
+		}
         }
 
 	if (PyArrayMapIter_Check(op)) {
@@ -1780,11 +1777,22 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 				"array is not writeable");
 		return -1;
 	}
+	
+        if (PyArray_IsScalar(index, Integer) || PyInt_Check(index) ||	\
+            PyLong_Check(index)) {
+                intp value;
+                value = PyArray_PyIntAsIntp(index);
+                if (PyErr_Occurred())
+                        PyErr_Clear();
+		return array_ass_big_item(self, value, op);
+        }
+
         if (self->nd == 0) {
                 PyErr_SetString(PyExc_ValueError, 
                                 "0-d arrays can't be indexed.");
                 return -1;
         }
+	
 
 	if (PyArrayMapIter_Check(index)) {
 		mit = (PyArrayMapIterObject *)index;
@@ -1817,9 +1825,15 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 
         if ((tmp = (PyArrayObject *)array_subscript(self, index)) == NULL)
                 return -1; 
-        ret = PyArray_CopyObject(tmp, op);
-        Py_DECREF(tmp);
-	
+	if (PyArray_ISOBJECT(self) && (tmp->nd == 0)) {
+		if (tmp->descr->setitem(op, tmp->data, tmp) == -1)
+			return -1;
+		return 0;
+	}
+	else {
+		ret = PyArray_CopyObject(tmp, op);
+		Py_DECREF(tmp);
+	}	
         return ret;
 }
 
@@ -3532,7 +3546,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                          &PyArray_IntpConverter, 
                                          &strides,
                                          &swapped, &fortran)) 
-		return NULL;
+		goto fail;
 	
         if (typecode.type_num ==PyArray_NOTYPE) {
 		typecode.type_num = PyArray_DOUBLE;
@@ -3786,7 +3800,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 	if (newstrides.len != self->nd) {
 		PyErr_Format(PyExc_ValueError, "strides must be "	\
 			     " same length as shape (%d)", self->nd);
-		return -1;
+		goto fail;
 	}
 	new = self;
 	while(new->base != NULL) {
@@ -3800,11 +3814,16 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 				  self->dimensions, newstrides.ptr)) {
 		PyErr_SetString(PyExc_ValueError, "strides is not "\
 				"compatible with available memory");
-		return -1;
+		goto fail;
 	}
 	memcpy(self->strides, newstrides.ptr, sizeof(intp)*newstrides.len);
 	PyArray_UpdateFlags(self, CONTIGUOUS | FORTRAN);
+	PyDimMem_FREE(newstrides.ptr);
 	return 0;
+
+ fail:
+	PyDimMem_FREE(newstrides.ptr);
+	return -1;
 }
 
 
@@ -5984,7 +6003,7 @@ arrayiter_dealloc(PyArrayIterObject *it)
         PyObject_GC_UnTrack(it);
         Py_XDECREF(it->ao);
         PyObject_GC_Del(it);
- }
+}
 
 static int
 arrayiter_traverse(PyArrayIterObject *it, visitproc visit, void *arg)
@@ -6338,6 +6357,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	
 	type.type_num = self->ao->descr->type_num;
 	itemsize = type.itemsize = self->ao->itemsize;
+	type.fortran = 0;
 	
 	arrval = PyArray_FromAny(val, &type, 0, 0, 0);
 	if (arrval==NULL) return -1;
@@ -7244,6 +7264,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
         PyObject_GC_UnTrack(mit);
         Py_XDECREF(mit->ait);
 	Py_XDECREF(mit->indexobj);
+	Py_XDECREF(mit->subspace);
 	for (i=0; i<mit->numiter; i++)
 		Py_XDECREF(mit->iters[i]);
         PyObject_GC_Del(mit);
@@ -7257,6 +7278,10 @@ arraymapiter_traverse(PyArrayMapIterObject *mit, visitproc visit, void *arg)
                 if ((ret = visit((PyObject *)(mit->ait), arg)) != 0) 
 			return ret;	
 
+	if (mit->subspace != NULL)
+		if ((ret = visit((PyObject *)(mit->subspace), arg)) != 0) 
+			return ret;
+
 	if (mit->iters != NULL) 
 		for (i=0; i<mit->numiter; i++) 
 			if (mit->iters[i] != NULL) 
@@ -7266,6 +7291,7 @@ arraymapiter_traverse(PyArrayMapIterObject *mit, visitproc visit, void *arg)
 
 	if (mit->indexobj != NULL)
 		if ((ret = visit(mit->indexobj, arg)) != 0) return ret;
+
 	
         return 0;
 }

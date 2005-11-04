@@ -110,7 +110,10 @@ array_reshape(PyArrayObject *self, PyObject *args)
 		}
 	}
 
-	if (newshape.len == 1) return PyArray_Ravel(self, 0);
+	if (newshape.len == 1) {
+		PyDimMem_FREE(newshape.ptr);
+		return PyArray_Ravel(self, 0);
+	}
 
 	if ((newshape.len == 0) || PyArray_ISCONTIGUOUS(self)) {
 		ret = PyArray_Newshape(self, &newshape);
@@ -135,6 +138,7 @@ array_reshape(PyArrayObject *self, PyObject *args)
 	}
 	PyDimMem_FREE(newshape.ptr);
         return _ARET(ret);
+
  fail:
 	PyDimMem_FREE(newshape.ptr);
 	return NULL;

@@ -2995,7 +2995,7 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
         
 	static char *kwlist[] = {"shape","dtype","fortran",NULL};
 	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
-        PyArray_Dims shape;
+        PyArray_Dims shape = {NULL, 0};
 	Bool fortran = FALSE;	
         PyObject *ret;
 
@@ -3005,7 +3005,7 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
                                          PyArray_TypecodeConverter,
 					 &typecode, 
 					 PyArray_BoolConverter, &fortran)) 
-		return NULL;
+		goto fail;
 	
 	typecode.fortran = fortran;
         if (typecode.type_num ==PyArray_NOTYPE) 
@@ -3014,6 +3014,10 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
 	ret = PyArray_Empty(shape.len, shape.ptr, &typecode);        
         PyDimMem_FREE(shape.ptr);
         return ret;
+
+ fail:
+	PyDimMem_FREE(shape.ptr);
+	return ret;
 }
 
 static char doc_scalar[] = "scalar(dtypestr,obj) will return a new scalar array of the given type initialized with obj. Mainly for pickle support. typestr must be a valid data typestr (complete with < > or |).  If dtypestr is object, then obj can be any object, otherwise obj must be a string. If obj is not given it will be interpreted as None for object type and zeros for all other types.";
@@ -3119,7 +3123,7 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
 {
 	static char *kwlist[] = {"shape","dtype","fortran",NULL};
 	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
-        PyArray_Dims shape;
+        PyArray_Dims shape = {NULL, 0};
 	Bool fortran = FALSE;	
         PyObject *ret;
 
@@ -3130,7 +3134,7 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
 					 &typecode, 
 					 PyArray_BoolConverter,
 					 &fortran)) 
-		return NULL;
+		goto fail;
 	
 	typecode.fortran = fortran;
         if (typecode.type_num ==PyArray_NOTYPE) 
@@ -3139,6 +3143,10 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
 	ret = PyArray_Zeros(shape.len, shape.ptr, &typecode);        
         PyDimMem_FREE(shape.ptr);
         return ret;
+
+ fail:
+	PyDimMem_FREE(shape.ptr);
+	return ret;
 }
 
 static char doc_set_typeDict[] = "set_typeDict(dict) set the internal "\
