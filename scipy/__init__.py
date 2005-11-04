@@ -36,7 +36,7 @@ else:
     import scipy.basic.random as random
     from core_version import version as __core_version__
     from scipy.test.testing import ScipyTest
-    test = ScipyTest('scipy').test
+    test = ScipyTest('scipy.base').test
 
 __scipy_doc__ = """\
 SciPy: A scientific computing package for Python

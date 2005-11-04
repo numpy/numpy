@@ -772,7 +772,7 @@ static PyObject *
 array_reduce(PyArrayObject *self, PyObject *args)
 {
 	PyObject *ret=NULL, *state=NULL, *obj=NULL, *mod=NULL;
-	PyObject *Bool, *thestr=NULL;
+	PyObject *mybool, *thestr=NULL;
 
 	/* Return a tuple of (callable object, arguments, object's state) */
 	/*  We will put everything in the object's state, so that on UnPickle
@@ -815,9 +815,9 @@ array_reduce(PyArrayObject *self, PyObject *args)
 							  "shape"));	
 	PyTuple_SET_ITEM(state, 1, PyObject_GetAttrString((PyObject *)self, 
 							  "dtypestr"));
-	Bool = (PyArray_ISFORTRAN(self) ? Py_True : Py_False);
-	Py_INCREF(Bool);
-	PyTuple_SET_ITEM(state, 2, Bool);
+	mybool = (PyArray_ISFORTRAN(self) ? Py_True : Py_False);
+	Py_INCREF(mybool);
+	PyTuple_SET_ITEM(state, 2, mybool);
 	if (PyArray_ISOBJECT(self)) {
 		thestr = _getobject_pkl(self);
 	}

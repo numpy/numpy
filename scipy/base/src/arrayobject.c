@@ -2969,7 +2969,7 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
 static int
 _IsContiguous(PyArrayObject *ap) 
 {
-	int sd;
+	intp sd;
 	int i;
 
 	if (ap->nd == 0) return 1;
@@ -2989,7 +2989,7 @@ _IsContiguous(PyArrayObject *ap)
 static int 
 _IsFortranContiguous(PyArrayObject *ap) 
 {
-	int sd;
+	intp sd;
 	int i;
 	
 	if (ap->nd == 0) return 1;
@@ -3083,6 +3083,11 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 		if (_IsAligned(ret)) ret->flags |= ALIGNED;
 		else ret->flags &= ~ALIGNED;
 	}
+	/* This is not checked by default WRITEABLE is not part of UPDATE_ALL_FLAGS */
+	if (flagmask & WRITEABLE) {
+	        if (_IsWriteable(ret)) ret->flags |= WRITEABLE;
+	       	else ret->flags &= ~WRITEABLE;	
+        }
 	return;
 }
 
@@ -4014,7 +4019,8 @@ array_struct_get(PyArrayObject *self)
 static PyObject *
 array_type_get(PyArrayObject *self)
 {
-	return PyArray_TypeObjectFromType(self->descr->type_num);
+        Py_INCREF(self->descr->typeobj);
+        return (PyObject *)self->descr->typeobj;
 }
 
 /* If the type is changed.  
@@ -4631,33 +4637,40 @@ _array_find_type(PyObject *op, PyArray_Typecode *minitype,
 		chksize = outtype->itemsize;
 		goto finish;
 	}
-	
 
-        if (PyObject_HasAttrString(op, "__array__")) {
-                ip = PyObject_CallMethod(op, "__array__", NULL);
-                if(ip && PyArray_Check(ip)) {
-			chktype = PyArray_TYPE(ip);
-			chksize = PyArray_ITEMSIZE(ip);
-			goto finish;
-		}
-        } 
-	
-	if (PyObject_HasAttrString(op, "__array_typestr__")) {
-		int swap=0, res;
-		ip = PyObject_GetAttrString(op, "__array_typestr__");
-		if (ip && PyString_Check(ip)) {
+	if ((ip=PyObject_GetAttrString(op, "__array_typestr__"))!=NULL) {
+		int swap=0, res=-1;
+		if (PyString_Check(ip)) {
 			res = _array_typecode_fromstr(PyString_AS_STRING(ip), 
 						      &swap, outtype);   
 			if (res >= 0) {
-				Py_DECREF(ip);
 				chktype = outtype->type_num;
 				chksize = outtype->itemsize;
-				goto finish;
 			}
 		}
-		Py_XDECREF(ip);
+		Py_DECREF(ip);
+                if (res >= 0) goto finish;
 	}
-
+        
+        if ((ip=PyObject_GetAttrString(op, "__array_struct__")) != NULL) {
+                PyArrayInterface *inter;
+                char buf[40];
+                int swap=0, res=-1;
+                if (PyCObject_Check(ip)) {
+                        inter=(PyArrayInterface *)PyCObject_AsVoidPtr(ip);
+                        if (inter->version == 2) {
+                                snprintf(buf, 40, "|%c%d", inter->typekind, inter->itemsize);
+                                res = _array_typecode_fromstr(buf, &swap, outtype);
+                                if (res >= 0) {
+                                        chktype = outtype->type_num;
+                                        chktype = outtype->itemsize;
+                                }
+                        }
+                }
+                Py_DECREF(ip);
+                if (res >= 0) goto finish;
+        }
+        	
         if (PyString_Check(op)) {
 		chktype = PyArray_STRING;
 		chksize = PyString_GET_SIZE(op);
@@ -4673,9 +4686,19 @@ _array_find_type(PyObject *op, PyArray_Typecode *minitype,
 	if (PyBuffer_Check(op)) {
 		chktype = PyArray_VOID;
 		chksize = op->ob_type->tp_as_sequence->sq_length(op);
-		PyErr_Clear();
+                PyErr_Clear();
 		goto finish;
 	}
+
+
+        if (PyObject_HasAttrString(op, "__array__")) {
+                ip = PyObject_CallMethod(op, "__array__", NULL);
+                if(ip && PyArray_Check(ip)) {
+			chktype = PyArray_TYPE(ip);
+			chksize = PyArray_ITEMSIZE(ip);
+			goto finish;
+		}
+        } 
 
 	if (PyInstance_Check(op)) goto deflt;
 	
@@ -5328,17 +5351,18 @@ array_fromstructinterface(PyObject *input, PyArray_Typecode *intype, int flags)
 {
         PyArray_Typecode thetype = {0,0,0};
         int swap;
-        char buf[80];
+        char buf[40];
         PyArrayInterface *inter;
         PyObject *attr, *r;
         
         attr = PyObject_GetAttrString(input, "__array_struct__");
-        if ((attr==NULL) || (!PyCObject_Check(attr)) ||                 \
+        if (attr == NULL) {PyErr_Clear(); return Py_NotImplemented;}
+        if (!PyCObject_Check(attr) ||                                   \
             ((inter=((PyArrayInterface *)PyCObject_AsVoidPtr(attr)))->version != 2)) {
                 PyErr_SetString(PyExc_ValueError, "invalid __array_struct__");
                 return NULL;
         }
-        snprintf(buf, 80, "|%c%d", inter->typekind, inter->itemsize);
+        snprintf(buf, 40, "|%c%d", inter->typekind, inter->itemsize);
         if (_array_typecode_fromstr(buf, &swap, &thetype) < 0) {
                 return NULL;
         }
@@ -5348,6 +5372,7 @@ array_fromstructinterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	Py_INCREF(input);
 	PyArray_BASE(r) = input;
         Py_DECREF(attr);
+        PyArray_UpdateFlags((PyArrayObject *)r, UPDATE_ALL_FLAGS);
         return r;
 }
 
@@ -5355,6 +5380,7 @@ static PyObject *
 array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 {
 	PyObject *attr=NULL, *item=NULL, *r;
+        PyObject *tstr, *shape;        
 	PyArrayObject *ret=NULL;
 	PyArray_Typecode type;
 	char *data;
@@ -5369,6 +5395,11 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	/* Get the typestring -- ignore array_descr */
 	/* Get the strides */
 	
+        shape = PyObject_GetAttrString(input, "__array_shape__");
+        if (shape == NULL) {PyErr_Clear(); return Py_NotImplemented;}
+        tstr = PyObject_GetAttrString(input, "__array_typestr__");
+        if (tstr == NULL) {Py_DECREF(shape); PyErr_Clear(); return Py_NotImplemented;}
+        
 	attr = PyObject_GetAttrString(input, "__array_data__");
 	if ((attr == NULL) || (attr==Py_None) || (!PyTuple_Check(attr))) {
 		if (attr && (attr != Py_None)) item=attr;
@@ -5418,8 +5449,7 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 		}
 	}
 	Py_XDECREF(attr);
-	attr = PyObject_GetAttrString(input, "__array_typestr__");
-	if (attr == NULL) return NULL;
+	attr = tstr;
 	if (!PyString_Check(attr)) {
 		PyErr_SetString(PyExc_TypeError, "__array_typestr__ must be a string");
 		Py_DECREF(attr);
@@ -5427,10 +5457,8 @@ array_frominterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	}
 	res = _array_typecode_fromstr(PyString_AS_STRING(attr), &swap, &type);
 	Py_DECREF(attr);
-	if (res < 0) return NULL;
-    
-	attr = PyObject_GetAttrString(input, "__array_shape__");
-	if (attr == NULL) return NULL;
+	if (res < 0) return NULL;    
+	attr = shape;
 	if (!PyTuple_Check(attr)) {
 		PyErr_SetString(PyExc_TypeError, "__array_shape__ must be a tuple");
 		Py_DECREF(attr);
@@ -5546,19 +5574,16 @@ array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 	else if (PyArray_IsScalar(op, Generic)) {
 		r = PyArray_FromScalar(op, typecode);
 	}
-        else if (PyObject_HasAttrString(op, "__array_struct__")) {
-                r = array_fromstructinterface(op, typecode, flags);
+        else if ((r = array_fromstructinterface(op, typecode, flags)) != Py_NotImplemented) {
         }
-	else if (PyObject_HasAttrString(op, "__array__")) {
-		/* Code that returns the object to convert for a non
+        else if ((r = array_frominterface(op, typecode, flags)) != Py_NotImplemented) {
+	}
+        else if (PyObject_HasAttrString(op, "__array__")) {
+                /* Code that returns the object to convert for a non
 		   multiarray input object from the __array__ attribute of the
 		   object. */
                 r = array_fromattr(op, typecode, flags);
-	}
-	else if (PyObject_HasAttrString(op, "__array_shape__") &&
-		 PyObject_HasAttrString(op, "__array_typestr__")) {
-		r = array_frominterface(op, typecode, flags);
-	}
+        }
 	else {
 		if (type == PyArray_NOTYPE) {
 			_array_find_type(op, NULL, typecode, MAX_DIMS);
@@ -5617,7 +5642,8 @@ PyArray_ArrayType(PyObject *op, PyArray_Typecode *intype,
 static int 
 PyArray_ObjectType(PyObject *op, int minimum_type) 
 {
-	PyArray_Typecode intype, outtype;
+	PyArray_Typecode intype = {0,0,0};
+        PyArray_Typecode outtype = {0,0,0};
 	intype.type_num = minimum_type;
 	_array_find_type(op, &intype, &outtype, MAX_DIMS);
 	return outtype.type_num;

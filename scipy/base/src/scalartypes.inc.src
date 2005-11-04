@@ -669,10 +669,10 @@ gentype_descr_get(PyObject *self)
 }
 
 
-
 static PyObject *
 gentype_type_get(PyObject *self)
 {
+        Py_INCREF(self->ob_type);
 	return (PyObject *)self->ob_type;
 }
 

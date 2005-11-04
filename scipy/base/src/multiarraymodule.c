@@ -3619,7 +3619,7 @@ array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 	PyObject *o_start=NULL, *o_stop=Py_None, *o_step=NULL;
 	static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
 	double start, stop, step;
-	PyArray_Typecode typecode = {PyArray_NOTYPE, 0};
+	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
 	int type_num;
 	int deftype = PyArray_INTP;
 
