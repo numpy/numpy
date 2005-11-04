@@ -72,13 +72,13 @@ except AttributeError:
 else:
     __all__ += ['Int64', 'Int128']
 
-Int0 = _dt_(nt.int)
-Int = _dt_(nt.int)
-Float0 = _dt_(nt.float)
-Float = _dt_(nt.float)
-Complex0 = _dt_(nt.complex)
-Complex = _dt_(nt.complex)
-PyObject = _dt_(nt.object)
+Int0 = _dt_(int)
+Int = _dt_(int)
+Float0 = _dt_(float)
+Float = _dt_(float)
+Complex0 = _dt_(complex)
+Complex = _dt_(complex)
+PyObject = _dt_(nt.object_)
 Float32 = _dt_(nt.float32)
 Float64 = _dt_(nt.float64)
 
@@ -100,13 +100,13 @@ else:
     __all__ += ['Complex128']
 
 typecodes = {'Character':'S1',
-             'Integer':'bhilq',
-             'UnsignedInteger':'BHILQ',
+             'Integer':'bhilqp',
+             'UnsignedInteger':'BHILQP',
              'Float':'fdg',
              'Complex':'FDG',
-             'AllInteger':'bBhHiIlLqQ',
+             'AllInteger':'bBhHiIlLqQpP',
              'AllFloat':'fdgFDG',
-             'All':'?bhilqBHILQfdgFDGSUVO'}
+             'All':'?bhilqpBHILQPfdgFDGSUVO'}
 
 def sarray(a, dtype=None, copy=False):
     return array(a, dtype, copy)

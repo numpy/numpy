@@ -212,8 +212,9 @@ _dtype2char_dict = {}
 def _construct_char_code_lookup():
     for name in typeinfo.keys():
         tup = typeinfo[name]
-        if isinstance(tup, type(())):
-            _dtype2char_dict[tup[-1]] = tup[0]
+        if isinstance(tup, tuple):
+	     if tup[0] not in ['p','P']:
+                _dtype2char_dict[tup[-1]] = tup[0]
 _construct_char_code_lookup()
 
 arraytypes = {'int': [],
