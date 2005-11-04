@@ -5,6 +5,7 @@ __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
 
 import numeric as _nx
 from numeric import *
+from oldnumeric import product
 
 from type_check import isscalar
 

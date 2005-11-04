@@ -2309,7 +2309,7 @@ static PyObject *
 PyArray_Put(PyArrayObject *self, PyObject *indices0, PyObject* values0) 
 {
         PyArrayObject  *indices, *values;
-        int i, chunk, ni, max_item, nv, tmp; 
+        int i, chunk, ni, max_item, nv, tmp, thistype; 
         char *src, *dest;
 
         indices = NULL;
@@ -2331,22 +2331,39 @@ PyArray_Put(PyArrayObject *self, PyObject *indices0, PyObject* values0)
         if (indices == NULL) goto fail;
         ni = PyArray_SIZE(indices);
 
+	thistype = self->descr->type_num;
         values = (PyArrayObject *)\
-		PyArray_ContiguousFromAny(values0, self->descr->type_num, 
-					     0, 0);
+		PyArray_ContiguousFromAny(values0, thistype, 0, 0);
         if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);
         if (nv > 0) { /* nv == 0 for a null array */
-                for(i=0; i<ni; i++) {
-                        src = values->data + chunk * (i % nv);
-                        tmp = ((intp *)(indices->data))[i];
-                        if (tmp < 0) tmp = tmp+max_item;
-                        if ((tmp < 0) || (tmp >= max_item)) {
-                                PyErr_SetString(PyExc_IndexError, "index out of range for array");
-                                goto fail;
+                if (thistype == PyArray_OBJECT) {   
+                        for(i=0; i<ni; i++) {
+                                src = values->data + chunk * (i % nv);
+                                tmp = ((intp *)(indices->data))[i];
+                                if (tmp < 0) tmp = tmp+max_item;
+                                if ((tmp < 0) || (tmp >= max_item)) {
+                                        PyErr_SetString(PyExc_IndexError, "index out of range for array");
+                                        goto fail;
+                                }
+                                Py_INCREF(*((PyObject **)src));
+                                Py_XDECREF(*((PyObject **)(dest+tmp*chunk)));
+                                memmove(dest + tmp * chunk, src, chunk);
                         }
-                        memmove(dest + tmp * chunk, src, chunk);
                 }
+                else {
+                        for(i=0; i<ni; i++) {
+                                src = values->data + chunk * (i % nv);
+                                tmp = ((intp *)(indices->data))[i];
+                                if (tmp < 0) tmp = tmp+max_item;
+                                if ((tmp < 0) || (tmp >= max_item)) {
+                                        PyErr_SetString(PyExc_IndexError, "index out of range for array");
+                                        goto fail;
+                                }
+                                memmove(dest + tmp * chunk, src, chunk);
+                        }
+                }
+
         }
 
         Py_XDECREF(values);
@@ -2403,13 +2420,22 @@ PyArray_PutMask(PyArrayObject *self, PyObject *mask0, PyObject* values0)
 	if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);	 /* zero if null array */
         if (nv > 0) {
-		for(i=0; i<ni; i++) {
-			src = values->data + chunk * (i % nv);
-			tmp = ((Bool *)(mask->data))[i];
-			if (tmp) {
-				memmove(dest + i * chunk, src, chunk);
-				if (thistype == PyArray_OBJECT)
+                if (thistype == PyArray_OBJECT) {
+                        for(i=0; i<ni; i++) {
+                                src = values->data + chunk * (i % nv);
+                                tmp = ((Bool *)(mask->data))[i];
+                                if (tmp) {
 					Py_INCREF(*((PyObject **)src));
+                                        Py_XDECREF(*((PyObject **)(dest+i*chunk)));
+                                        memmove(dest + i * chunk, src, chunk);
+                                }
+			}
+                }
+                else {
+                        for(i=0; i<ni; i++) {
+                                src = values->data + chunk * (i % nv);
+                                tmp = ((Bool *)(mask->data))[i];
+                                if (tmp) memmove(dest + i * chunk, src, chunk);
 			}
 		}
         }
