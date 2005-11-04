@@ -1331,9 +1331,9 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	PyArrayObject **mps, *ap, *ret;
 	PyObject *otmp;
 	intp *self_data, mi;
+    PyArray_Typecode intype = {0,0,0};
 	ap = NULL;
 	ret = NULL;
-        PyArray_Typecode intype = {0,0,0};
 	
 	n = PySequence_Length(op);
 	
