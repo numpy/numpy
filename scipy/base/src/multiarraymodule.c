@@ -1333,6 +1333,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	intp *self_data, mi;
 	ap = NULL;
 	ret = NULL;
+        PyArray_Typecode intype = {0,0,0};
 	
 	n = PySequence_Length(op);
 	
@@ -1349,11 +1350,11 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	type_num = 0;
 	for(i=0; i<n; i++) {
 		otmp = PySequence_GetItem(op, i);
-		type_num = PyArray_ObjectType(otmp, type_num);
+                PyArray_ArrayType(otmp, &intype, &intype);
 		mps[i] = NULL;
 		Py_XDECREF(otmp);
 	}
-	if (type_num == -1) {
+	if (intype.type_num == -1) {
 		PyErr_SetString(PyExc_TypeError, 
 				"can't find common type for arrays to "\
 				"choose from");
@@ -1365,8 +1366,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 		if ((otmp = PySequence_GetItem(op, i)) == NULL) 
 			goto fail;
 		mps[i] = (PyArrayObject*)
-			PyArray_ContiguousFromAny(otmp, type_num, 
-						     0, 0);
+                        PyArray_FromAny(otmp, &intype, 0, 0, CARRAY_FLAGS);
 		Py_DECREF(otmp);
 	}
 	
@@ -1392,16 +1392,9 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 		sizes[i] = PyArray_NBYTES(mps[i]);
 	}
 	
-	/* why not ??? 
-	if (PyTypeNum_ISFLEXIBLE(type_num)) {
-		PyErr_SetString(PyExc_NotImplementedError, 
-				"not implemented for flexible sizes");
-		return NULL;
-	}
-	*/
 	ret = (PyArrayObject *)PyArray_New(ap->ob_type, ap->nd,
-					   ap->dimensions, type_num,
-					   NULL, NULL, 0, 0, (PyObject *)ap);
+					   ap->dimensions, intype.type_num,
+					   NULL, NULL, intype.itemsize, 0, (PyObject *)ap);
 	if (ret == NULL) goto fail;
 	
 	elsize = ret->itemsize;
