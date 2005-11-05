@@ -618,6 +618,7 @@ PyArray_Nonzero(PyArrayObject *self)
 		}
 	}
 
+	Py_DECREF(it);
 	return ret;
 
  fail:
@@ -2937,7 +2938,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	type_num = type.type_num;
 
 	/* fast exit if simple call */
-	if ((PyArray_CheckExact(op) && PyBigArray_CheckExact(op)) && \
+	if ((PyArray_CheckExact(op) || PyBigArray_CheckExact(op)) && \
             (copy==0) &&                                             \
 	    (fortran == PyArray_CHKFLAGS(op, FORTRAN))) {
 		if (type_num == PyArray_NOTYPE) {
@@ -2997,7 +2998,7 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
 	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
         PyArray_Dims shape = {NULL, 0};
 	Bool fortran = FALSE;	
-        PyObject *ret;
+        PyObject *ret=NULL;
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&",
 					 kwlist, PyArray_IntpConverter,
@@ -3009,8 +3010,8 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
 	
 	typecode.fortran = fortran;
         if (typecode.type_num ==PyArray_NOTYPE) 
-		typecode.type_num = PyArray_INTP;
-                
+		typecode.type_num = PyArray_LONG;
+	
 	ret = PyArray_Empty(shape.len, shape.ptr, &typecode);        
         PyDimMem_FREE(shape.ptr);
         return ret;
@@ -3125,7 +3126,7 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
 	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
         PyArray_Dims shape = {NULL, 0};
 	Bool fortran = FALSE;	
-        PyObject *ret;
+        PyObject *ret=NULL;
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&",
 					 kwlist, PyArray_IntpConverter,

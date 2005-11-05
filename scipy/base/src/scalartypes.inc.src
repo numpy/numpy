@@ -100,10 +100,16 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Typecode *outcode)
 	}
 	
 	if (outcode == NULL || \
-	    outcode->type_num == PyArray_NOTYPE ||	\
-	    outcode->type_num == PyArray_TYPE(r))
+	    outcode->type_num == PyArray_NOTYPE)
 		return r;
 
+	if (outcode->type_num == typecode.type_num) {
+		if (!PyTypeNum_ISFLEXIBLE(typecode.type_num))
+			return r;
+		if (outcode->itemsize == typecode.itemsize)
+			return r;			
+	}
+	
 	/* cast if necessary to desired output typecode */
 	ret = PyArray_CastToType((PyArrayObject *)r, outcode);
 	Py_DECREF(r);

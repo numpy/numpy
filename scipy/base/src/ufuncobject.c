@@ -969,41 +969,43 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                         if (mps[i] == NULL) return -1;
                 }
 
-
 		/* reset types for outputs that are equivalent 
 		    -- no sense casting uselessly
 		*/
-		if (mps[i]->descr->type_num != arg_types[i]) {
-			PyArray_Typecode atype = {PyArray_NOTYPE, 0, 0};
-			ntype.type_num = PyArray_TYPE(mps[i]);
-			ntype.itemsize = PyArray_ITEMSIZE(mps[i]);
-			atype.type_num = arg_types[i];
-			atype.itemsize = \
-				PyArray_DescrFromType(arg_types[i])->elsize;
-			if (PyArray_EquivalentTypes(&atype, &ntype)) {
-				arg_types[i] = PyArray_TYPE(mps[i]);
-			}
-		}
-
+		else {
+  		  if (mps[i]->descr->type_num != arg_types[i]) {
+			  PyArray_Typecode atype = {PyArray_NOTYPE, 0, 
+							  0};
+			  ntype.type_num = PyArray_TYPE(mps[i]);
+			  ntype.itemsize = PyArray_ITEMSIZE(mps[i]);
+			  atype.type_num = arg_types[i];
+			  atype.itemsize =				\
+				  PyArray_DescrFromType(arg_types[i])->elsize;
+			  if (PyArray_EquivalentTypes(&atype, &ntype)) {
+				  arg_types[i] = PyArray_TYPE(mps[i]);
+			  }
+		  }
+		  
 		/* still not the same -- or will we have to use buffers?*/
-		if (mps[i]->descr->type_num != arg_types[i] ||
-		    !PyArray_ISBEHAVED_RO(mps[i])) {
-			if (loop->size < loop->bufsize) {
-				PyObject *new;
-				/* Copy the array to a temporary copy 
-				   and set the UPDATEIFCOPY flag
-				*/
-				ntype.type_num = arg_types[i];
-				ntype.itemsize = 0;
-				new = PyArray_FromAny((PyObject *)mps[i], 
-						      &ntype, 0, 0,
-						      FORCECAST | 
-						      BEHAVED_FLAGS_RO |
-						      UPDATEIFCOPY);
-				if (new == NULL) return -1;
-				Py_DECREF(mps[i]);
-				mps[i] = (PyArrayObject *)new;
-			}
+		  if (mps[i]->descr->type_num != arg_types[i] ||
+		      !PyArray_ISBEHAVED_RO(mps[i])) {
+			  if (loop->size < loop->bufsize) {
+				  PyObject *new;
+				  /* Copy the array to a temporary copy 
+				     and set the UPDATEIFCOPY flag
+				  */
+				  ntype.type_num = arg_types[i];
+				  ntype.itemsize = 0;
+				  new = PyArray_FromAny((PyObject *)mps[i],
+							&ntype, 0, 0,
+							FORCECAST | 
+							BEHAVED_FLAGS_RO |
+							UPDATEIFCOPY);
+				  if (new == NULL) return -1;
+				  Py_DECREF(mps[i]);
+				  mps[i] = (PyArrayObject *)new;
+			  }
+		  }
 		}
 		
                 loop->iters[i] = (PyArrayIterObject *)		\
@@ -1295,7 +1297,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
         BEGIN_THREADS_DEF
 
 	if (!(loop = construct_loop(self, args, mps))) return -1;
-        if (loop->notimplemented) return -2;
+        if (loop->notimplemented) {Py_DECREF(loop); return -2;}
 
 	LOOP_BEGIN_THREADS
 

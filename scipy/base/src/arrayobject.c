@@ -1614,8 +1614,10 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 		}
 	}
 	
-	if ((it = (PyArrayIterObject *)PyArray_IterNew(arr))==NULL) 
+	if ((it = (PyArrayIterObject *)PyArray_IterNew(arr))==NULL) {
+		Py_DECREF(arr);
 		return -1;
+	}
 
 	index = mit->size;
 	swap = ((mit->ait->ao->flags & NOTSWAPPED) != \
@@ -1636,6 +1638,8 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
                         if (it->index == it->size)
                                 PyArray_ITER_RESET(it);
                 }
+		Py_DECREF(arr);
+		Py_DECREF(it);
                 return 0;
         }
 
@@ -1647,6 +1651,8 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 		if (it->index == it->size)
 			PyArray_ITER_RESET(it);
 	}		
+	Py_DECREF(arr);
+	Py_DECREF(it);
 	return 0;
 }
 
@@ -1812,7 +1818,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 			Py_DECREF(mit);
 			return ret;
 		}
-		Py_DECREF((PyObject*)mit);
+		Py_DECREF(mit);
 	}
 
 	i = PyArray_PyIntAsIntp(index);
@@ -2343,26 +2349,43 @@ array_inplace_true_divide(PyArrayObject *m1, PyObject *m2)
 }
 
 /* Array evaluates as "TRUE" if any of the elements are non-zero */
-static int 
-array_any_nonzero(PyArrayObject *mp) 
-{
-	intp index;
-	PyArrayIterObject *it;
-	Bool anyTRUE = FALSE;
+/* static int  */
+/* array_any_nonzero(PyArrayObject *mp)  */
+/* { */
+/* 	intp index; */
+/* 	PyArrayIterObject *it; */
+/* 	Bool anyTRUE = FALSE; */
 	
-	it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
-	if (it==NULL) return anyTRUE;
-	index = it->size;
-	while(index--) {
-		if (mp->descr->nonzero(it->dataptr, mp)) {
-			anyTRUE = TRUE;
-			break;
-		}
-		PyArray_ITER_NEXT(it);
+/* 	it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp); */
+/* 	if (it==NULL) return anyTRUE; */
+/* 	index = it->size; */
+/* 	while(index--) { */
+/* 		if (mp->descr->nonzero(it->dataptr, mp)) { */
+/* 			anyTRUE = TRUE; */
+/* 			break; */
+/* 		} */
+/* 		PyArray_ITER_NEXT(it); */
+/* 	} */
+/* 	Py_DECREF(it); */
+/* 	return anyTRUE; */
+/* } */
+
+static int
+_array_nonzero(PyArrayObject *mp)
+{
+	if (PyArray_SIZE(mp) == 1) {
+		return mp->descr->nonzero(mp->data, mp);
 	}
-	Py_DECREF(it);
-	return anyTRUE;
+	else {
+		PyErr_SetString(PyExc_ValueError, 
+				"The truth value of an array " \
+				"with more than one element is ambiguous. " \
+				"Use a.any() or a.all()");
+		return -1;
+	}
 }
+
+
 
 static PyObject *
 array_divmod(PyArrayObject *op1, PyObject *op2) 
@@ -2533,7 +2556,7 @@ static PyNumberMethods array_as_number = {
         (unaryfunc)array_negative,                  /*nb_neg*/	
         (unaryfunc)_array_copy_nice,		    /*nb_pos*/ 
         (unaryfunc)array_absolute,		    /*(unaryfunc)array_abs,*/
-        (inquiry)array_any_nonzero,		    /*nb_nonzero*/
+        (inquiry)_array_nonzero,		    /*nb_nonzero*/
         (unaryfunc)array_invert,		    /*nb_invert*/
         (binaryfunc)array_left_shift,	    /*nb_lshift*/
         (binaryfunc)array_right_shift,	    /*nb_rshift*/
