@@ -3493,10 +3493,11 @@ static int
 PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 {
 	PyObject *newarr;
-	int itemsize;
+	int itemsize, swap;
 	void *fromptr;
 	PyArray_Typecode type = {0,0,0};
 	intp size;
+        PyArray_CopySwapFunc *copyswap;
 
 	type.type_num = PyArray_TYPE(arr);
 	itemsize = PyArray_ITEMSIZE(arr);
@@ -3505,40 +3506,29 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 	if (newarr == NULL) return -1;
 	fromptr = PyArray_DATA(newarr);
 	size=PyArray_SIZE(arr);
+	swap=!PyArray_ISNOTSWAPPED(arr);
+	copyswap = arr->descr->copyswap;
 	if (PyArray_ISONESEGMENT(arr)) {
 		char *toptr=PyArray_DATA(arr);
-		while(size--) {
-			memcpy(toptr, fromptr, itemsize);
+		while (size--) {
+			copyswap(toptr, fromptr, swap, itemsize);
 			toptr += itemsize;
 		}
 	}
 	else {
 		PyArrayIterObject *iter;
-		PyObject *behaved;
 		
-		behaved = PyArray_FromAny((PyObject *)arr, NULL, 0,0, 
-					  BEHAVED_FLAGS | UPDATEIFCOPY);
-		if (behaved == NULL) { 
-			Py_DECREF(newarr);
-			return -1;
-		}
-		
-		iter = (PyArrayIterObject *)		\
-			PyArray_IterNew(behaved);
-		
+		iter = (PyArrayIterObject *)\
+			PyArray_IterNew((PyObject *)arr);
 		if (iter == NULL) {
-			Py_DECREF(behaved);
 			Py_DECREF(newarr);
 			return -1;
 		}
-
 		while(size--) {
-			memcpy(iter->dataptr, fromptr, itemsize);
+			copyswap(iter->dataptr, fromptr, swap, itemsize);
 			PyArray_ITER_NEXT(iter);
 		}
-
 		Py_DECREF(iter);
-		Py_DECREF(behaved);
 	}
 	Py_DECREF(newarr);
 	return 0;

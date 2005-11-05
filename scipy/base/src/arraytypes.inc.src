@@ -941,8 +941,6 @@ OBJECT_copyswapn (PyObject **dst, PyObject **src, intp n, int swap, int itemsize
 {
 	register int i, nn=n;
 	PyObject **dp=dst, **sp=src;
-	PyObject *meth=NULL;
-	PyObject *ret=NULL;
 	if (src != NULL) {
 		for (i=0; i<nn; i++) {
 			Py_XDECREF(*dp);
@@ -950,19 +948,7 @@ OBJECT_copyswapn (PyObject **dst, PyObject **src, intp n, int swap, int itemsize
 			*dp++ = *sp++;
 		}
 	}
-	if (swap) {
-		/* get .byteswap methods if they exist */
-		dp = dst;
-		for (i=0; i<nn; i++) {
-			meth = PyObject_GetAttrString(*dp, "byteswap");
-			if ((meth != NULL) && PyCallable_Check(meth)) {
-				ret = PyObject_CallObject(meth, NULL);
-				Py_XDECREF(ret);
-			}
-			Py_XDECREF(meth);
-			dp++;
-		}
-	}
+	/* ignore swap */
 	return;
 }
 
