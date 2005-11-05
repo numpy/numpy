@@ -2673,12 +2673,11 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 	}
         seq->len = len;
         nd = PyArray_IntpFromSequence(obj, (intp *)seq->ptr, len);
-        if (nd == -1 || nd != len) goto fail;
+        if (nd == -1 || nd != len) {
+		PyDimMem_FREE(seq->ptr);
+		return PY_FAIL;
+	}
         return PY_SUCCEED;
-
- fail:
-	PyDimMem_FREE(seq->ptr);
-	return PY_FAIL;
 }
 
 /* This function takes a Python object representing a type and converts it 
@@ -3109,7 +3108,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Typecode *type)
                 PyArray_FillObjectArray(ret, zero);
                 Py_DECREF(zero);
 	}
-	else {		
+	else {
 		memset(ret->data, 0, n*(ret->itemsize));
 	}
 	return (PyObject *)ret;
@@ -3141,7 +3140,7 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
         if (typecode.type_num ==PyArray_NOTYPE) 
 		typecode.type_num = PyArray_INTP;
                 
-	ret = PyArray_Zeros(shape.len, shape.ptr, &typecode);        
+	ret = PyArray_Zeros(shape.len, shape.ptr, &typecode);
         PyDimMem_FREE(shape.ptr);
         return ret;
 

@@ -505,7 +505,7 @@ array_finalize(PyArrayObject *self, PyObject *args)
 }
 
 
-static char doc_array_getarray[] = "m.__array__(|type) just returns either a new reference to self if type is not given or a new array of type if type is different from the current type of the array.";
+static char doc_array_getarray[] = "m.__array__(|dtype) just returns either a new reference to self if dtype is not given or a new array of provided data type if dtype is different from the current dtype of the array.";
 
 static PyObject *
 array_getarray(PyArrayObject *self, PyObject *args) 

@@ -1165,16 +1165,14 @@ array_dealloc(PyArrayObject *self) {
                 Py_DECREF(self->base);
         }
         
-        if ((self->flags & OWN_DATA) && (self->data != NULL)) {
+        if ((self->flags & OWN_DATA) && self->data) {
 		/* Free internal references if an Object array */
-		PyArray_XDECREF(self);
-
+		if (PyArray_ISOBJECT(self))
+			PyArray_XDECREF(self);
                 PyDataMem_FREE(self->data);
         }
 	
-        if (self->dimensions != NULL) {
-                PyDimMem_FREE(self->dimensions); 
-	}
+	PyDimMem_FREE(self->dimensions); 
 	
         self->ob_type->tp_free((PyObject *)self);
 }
@@ -1534,7 +1532,14 @@ _swap_axes(PyArrayMapIterObject *mit, PyArrayObject **ret)
 	*ret = (PyArrayObject *)new;
 }
 
+/* Prototypes for Mapping calls --- not part of the C-API
+   because only useful as part of a getitem call. 
+*/
 
+static void PyArray_MapIterReset(PyArrayMapIterObject *);
+static void PyArray_MapIterNext(PyArrayMapIterObject *);
+static void PyArray_MapIterBind(PyArrayMapIterObject *, PyArrayObject *);
+static PyObject* PyArray_MapIterNew(PyObject *);
 
 static PyObject *
 PyArray_GetMap(PyArrayMapIterObject *mit)
@@ -3203,7 +3208,7 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 	PyArrayObject *self;
 	PyArray_Descr *descr;
 	register int i;
-	intp sd, temp=-1;
+	intp sd;
 
 	descr = PyArray_DescrFromType(type_num);
 	if (descr == NULL) return NULL;
@@ -3264,8 +3269,8 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 	if (nd > 0) {
 		self->dimensions = PyDimMem_NEW(2*nd);
 		if (self->dimensions == NULL) {
-			self->ob_type->tp_free((PyObject *)self);
-			return PyErr_NoMemory();
+			PyErr_NoMemory();
+			goto fail;
 		}
 		self->strides = self->dimensions + nd;
 		memcpy(self->dimensions, dims, sizeof(intp)*nd);
@@ -3291,15 +3296,14 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 	if (data == NULL) {
 
 		/* Allocate something even for zero-space arrays 
-		 e.g. shape=(0,) -- otherwise buffer exposure (a.data) doesn't work
-		 as it should. */
+		 e.g. shape=(0,) -- otherwise buffer exposure 
+		 (a.data) doesn't work as it should. */
 
 		if (sd==0) sd = sizeof(intp);
 
 		if ((data = PyDataMem_NEW(sd))==NULL) {
-			PyDimMem_FREE(self->dimensions);
-			self->ob_type->tp_free((PyObject *)self);
-			return PyErr_NoMemory();
+			PyErr_NoMemory();
+			goto fail;
 		}
 		self->flags |= OWN_DATA;
 
@@ -3329,23 +3333,28 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 	if ((obj != NULL) && (subtype != &PyArray_Type) && 
 	    (subtype != &PyBigArray_Type)) {
 		PyObject *res;
-		if (temp==-1) { /* did not allocate own data */
-			/* update flags before calling back into
-			   Python */
+		if (!(self->flags & OWNDATA)) { /* did not allocate own data */
+			 /* update flags before calling back into
+			    Python */
 			PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
 		}
 		res = PyObject_CallMethod((PyObject *)self, 
 					  "__array_finalize__",
 					  "O", obj);
 		if (res == NULL) {
-			PyDimMem_FREE(self->dimensions);
-			self->ob_type->tp_free((PyObject *)self);
-			return NULL;
+			if (self->flags & OWNDATA) PyDataMem_FREE(self);
+			goto fail;
 		}
 		else Py_DECREF(res);
 	}
 
 	return (PyObject *)self;
+
+ fail:
+	PyDimMem_FREE(self->dimensions);
+	self->ob_type->tp_free((PyObject *)self);
+	return NULL;
+
 }
 
 
@@ -3776,10 +3785,9 @@ array_shape_set(PyArrayObject *self, PyObject *val)
 	}
 	ret = PyArray_Reshape(self, val);
 	if (ret == NULL) return -1;
-	
-	if (self->nd > 0) { /* Free old dimensions and strides */
-		PyDimMem_FREE(self->dimensions);
-	}
+
+	/* Free old dimensions and strides */
+	PyDimMem_FREE(self->dimensions);
 	nd = PyArray_NDIM(ret);
 	self->nd = nd;
 	if (nd > 0) {  /* create new dimensions and strides */
@@ -4557,7 +4565,7 @@ discover_depth(PyObject *s, int max, int stop_at_string)
 	
         if ((e=PySequence_GetItem(s,0)) == NULL) return -1;
         if(e!=s) {
-		d=discover_depth(e,max-1, stop_at_string);
+		d=discover_depth(e, max-1, stop_at_string);
 		if(d >= 0) d++;
 	}
         Py_DECREF(e);

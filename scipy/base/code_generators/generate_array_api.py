@@ -227,22 +227,6 @@ objectapi_list = [
     """,
      'IterNew','PyObject *', 'PyObject *'),
 
-    (r"""Map Iterator.
-    """,
-     'MapIterNew', 'PyObject *', 'PyObject *'),
-
-    (r"""Bind Map Iterator
-    """,
-     'MapIterBind', 'PyArrayMapIterObject *, PyArrayObject *', 'void'),
-
-    (r"""Bind Map Iterator
-    """,
-     'MapIterReset', 'PyArrayMapIterObject *', 'void'),
-
-    (r"""
-    """,
-     'MapIterNext', 'PyArrayMapIterObject *', 'void'),
-
     (r"""
     """,
      'PyIntAsInt', 'PyObject *', 'int'),
