@@ -1085,6 +1085,7 @@ PyArray_ToList(PyArrayObject *self)
 			PyErr_SetString(PyExc_RuntimeError,
 					"array_item not returning smaller-" \
 					"dimensional array");
+                        Py_DECREF(v);
 			Py_DECREF(lp);
 			return NULL;
 		}
@@ -1709,27 +1710,16 @@ array_subscript(PyArrayObject *self, PyObject *op)
 		}
         }
 
-	if (PyArrayMapIter_Check(op)) {
-		mit = (PyArrayMapIterObject *)op;
-		/* bind to current array */
-		PyArray_MapIterBind(mit, self);
-		
-		/* If the mapiterator was created with standard indexing
-		   behavior, fall through to view-based code */
-		if (!mit->view) return PyArray_GetMap(mit);
-		op = mit->indexobj;
-	}
-	else { /* wrap arguments into a mapiter object */
-		mit = (PyArrayMapIterObject *)PyArray_MapIterNew(op);
-		if (mit == NULL) return NULL;
-		if (!mit->view) {  /* fancy indexing */
-			PyArray_MapIterBind(mit, self);
-			other = (PyArrayObject *)PyArray_GetMap(mit);
-			Py_DECREF(mit);
-			return (PyObject *)other;
-		}
-		Py_DECREF(mit);
-	}
+	/* wrap arguments into a mapiter object */
+        mit = (PyArrayMapIterObject *)PyArray_MapIterNew(op);
+        if (mit == NULL) return NULL;
+        if (!mit->view) {  /* fancy indexing */
+                PyArray_MapIterBind(mit, self);
+                other = (PyArrayObject *)PyArray_GetMap(mit);
+                Py_DECREF(mit);
+                return (PyObject *)other;
+        }
+        Py_DECREF(mit);
 
 	i = PyArray_PyIntAsIntp(op);
 	if (!error_converting(i)) {
@@ -1805,26 +1795,15 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
         }
 	
 
-	if (PyArrayMapIter_Check(index)) {
-		mit = (PyArrayMapIterObject *)index;
-		/* bind behavior to current array */
-		PyArray_MapIterBind(mit, self);
-			
-		/* fall through if standard view-based map iterator */
-		if (!mit->view) return PyArray_SetMap(mit, op);
-		index = mit->indexobj;
-	}
-	else {
-		mit = (PyArrayMapIterObject *)PyArray_MapIterNew(index);
-		if (mit == NULL) return -1;
-		if (!mit->view) {
-			PyArray_MapIterBind(mit, self);
-			ret = PyArray_SetMap(mit, op);
-			Py_DECREF(mit);
-			return ret;
-		}
-		Py_DECREF(mit);
-	}
+        mit = (PyArrayMapIterObject *)PyArray_MapIterNew(index);
+        if (mit == NULL) return -1;
+        if (!mit->view) {
+                PyArray_MapIterBind(mit, self);
+                ret = PyArray_SetMap(mit, op);
+                Py_DECREF(mit);
+                return ret;
+        }
+        Py_DECREF(mit);
 
 	i = PyArray_PyIntAsIntp(index);
 	if (!error_converting(i)) {
@@ -2137,44 +2116,32 @@ PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
 static PyObject *
 PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op) 
 {
-        PyObject *args, *ret;
         if (op == NULL) {
                 Py_INCREF(Py_NotImplemented);
                 return Py_NotImplemented; 
         }
-        args = Py_BuildValue("(OO)", m1, m2);
-        ret = PyObject_Call(op, args, NULL);
-        Py_DECREF(args);
-        return ret;
+        return PyObject_CallFunction(op, "OO", m1, m2);
 }
 
 static PyObject *
 PyArray_GenericUnaryFunction(PyArrayObject *m1, PyObject *op) 
 {
-        PyObject *args, *ret;
         if (op == NULL) {
                 Py_INCREF(Py_NotImplemented);
                 return Py_NotImplemented; 
         }
-        args = Py_BuildValue("(O)", m1);
-        ret = PyObject_Call(op, args, NULL);
-        Py_DECREF(args);
-        return ret;
+        return PyObject_CallFunction(op, "(O)", m1);
 }
 
 static PyObject *
 PyArray_GenericInplaceBinaryFunction(PyArrayObject *m1, 
 				     PyObject *m2, PyObject *op) 
 {
-        PyObject *args, *ret;
         if (op == NULL) {
                 Py_INCREF(Py_NotImplemented);
                 return Py_NotImplemented; 
         }
-        args = Py_BuildValue("(OOO)", m1, m2, m1);
-        ret = PyObject_Call(op, args, NULL);
-        Py_DECREF(args);
-        return ret;
+        return PyObject_CallFunction(op, "OOO", m1, m2, m1);
 }
 
 static PyObject *
@@ -5223,7 +5190,6 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
                                                     arr->flags,NULL);
                                 if (ret == NULL) return NULL;
                                 ret->base = (PyObject *)arr;
-                                ret->flags &= ~UPDATEIFCOPY;
                         }
                         else {
                                 ret = arr;
@@ -5749,7 +5715,7 @@ PyArray_FromAny(PyObject *op, PyArray_Typecode *typecode, int min_depth,
 	}
 	/* Ensure that type->fortran and flags & FORTRAN are the
 	   same */
-	if (requires & FORTRAN) typecode->fortran = 1;
+	if (requires & FORTRAN) type->fortran = 1;
 	if (type->fortran == 1) {
 		requires |= FARRAY_FLAGS;
 		if (min_depth > 2) requires &= ~CONTIGUOUS;
@@ -6250,8 +6216,9 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		else if (PyArray_ISINTEGER(obj)) {
 			PyObject *new;
 			new = PyArray_FromAny(obj, &indtype, 0, 0, 
-					      FORCECAST | BEHAVED_FLAGS);
+					      FORCECAST | BEHAVED_FLAGS_RO);
 			if (new==NULL) goto fail;
+                        Py_DECREF(obj);
 			obj = new;
 			r = iter_subscript_int(self, (PyArrayObject *)obj);
 		}
@@ -7283,8 +7250,8 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
 	int i;
         PyObject_GC_UnTrack(mit);
-        Py_XDECREF(mit->ait);
 	Py_XDECREF(mit->indexobj);
+        Py_XDECREF(mit->ait);
 	Py_XDECREF(mit->subspace);
 	for (i=0; i<mit->numiter; i++)
 		Py_XDECREF(mit->iters[i]);

@@ -1079,10 +1079,6 @@ typedef struct {
 } PyArrayMapIterObject;
 
 
-/* Map Iterator API */ 
-#define PyArrayMapIter_Check(op) PyObject_TypeCheck(op, &PyArrayMapIter_Type)
-
-
 #define PyArray_NDIM(obj) (((PyArrayObject *)(obj))->nd)
 #define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || PyArray_CHKFLAGS(m, CONTIGUOUS) || \
 				 PyArray_CHKFLAGS(m, FORTRAN))

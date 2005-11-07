@@ -1488,8 +1488,6 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 /**end repeat**/
 
 
-
-
 static PyNumberMethods longdoubletype_as_number;
 static PyNumberMethods clongdoubletype_as_number;
 
