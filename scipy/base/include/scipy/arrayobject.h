@@ -1268,6 +1268,9 @@ typedef struct {
 #define PyArray_SimpleNewFromData(nd, dims, typenum, data) \
         PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, CARRAY_FLAGS, NULL)
 
+	/* Copy should always return contiguous array */
+#define PyArray_Copy(obj) PyArray_NewCopy(obj, 0)
+
         /*Compatibility with old Numeric stuff -- don't use in new code */
 
 #define PyArray_UNSIGNED_TYPES

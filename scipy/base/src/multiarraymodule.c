@@ -671,7 +671,7 @@ PyArray_Conjugate(PyArrayObject *self)
 		PyObject *new;
 		intp size, i;
 		/* Make a copy */
-		new = PyArray_Copy(self);
+		new = PyArray_NewCopy(self, -1);
 		if (new==NULL) return NULL;
 		size = PyArray_SIZE(new);
 		if (self->descr->type_num == PyArray_CFLOAT) {
@@ -2937,19 +2937,34 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	type_num = type.type_num;
 
 	/* fast exit if simple call */
-	if ((PyArray_CheckExact(op) || PyBigArray_CheckExact(op)) && \
-            (copy==0) &&                                             \
-	    (fortran == PyArray_CHKFLAGS(op, FORTRAN))) {
+	if ((PyArray_CheckExact(op) || PyBigArray_CheckExact(op))) {
 		if (type_num == PyArray_NOTYPE) {
-			Py_INCREF(op);
-			return op;
+			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
+				Py_INCREF(op);
+				return op;
+			}
+			else {
+				return PyArray_NewCopy((PyArrayObject*)op, 
+						       fortran);
+			}
 		}
 		/* One more chance */
 		oldtype.type_num = PyArray_TYPE(op);
 		oldtype.itemsize = PyArray_ITEMSIZE(op);
 		if (PyArray_EquivalentTypes(&oldtype, &type)) {
-			Py_INCREF(op);
-			return op;
+			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
+				Py_INCREF(op);
+				return op;
+			}
+			else {
+				ret = PyArray_NewCopy((PyArrayObject*)op,
+						      fortran);
+				if (oldtype.type_num == type.type_num) 
+					return ret;
+				PyArray_DESCR(ret) =			\
+					PyArray_DescrFromType(type.type_num);
+				return ret;
+			}
 		}
 	}
 

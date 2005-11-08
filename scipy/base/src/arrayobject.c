@@ -763,22 +763,23 @@ PyArray_FromDims(int nd, int *d, int type)
 
 /* end old calls */
 
-/* Copy should always return contiguous array */
 static PyObject *
-PyArray_Copy(PyArrayObject *m1) 
+PyArray_NewCopy(PyArrayObject *m1, int fortran)
 {
 	PyArrayObject *ret;
+	if (fortran < 0) fortran = PyArray_ISFORTRAN(m1);
+	
 	ret = (PyArrayObject *)PyArray_New(m1->ob_type, m1->nd, 
 					   m1->dimensions,
 					   m1->descr->type_num,
 					   NULL, NULL, m1->itemsize,
-					   0, (PyObject *)m1);
+					   fortran, 
+					   (PyObject *)m1);
 	
         if (PyArray_CopyInto(ret, m1) == -1) return NULL;
 	
-        return (PyObject *)ret;
+        return (PyObject *)ret;	
 }
-
 
 static PyObject *array_big_item(PyArrayObject *, intp);
 

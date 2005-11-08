@@ -553,14 +553,19 @@ array_getarray(PyArrayObject *self, PyObject *args)
 	}
 }
 
-static char doc_copy[] = "m.copy(). Return a copy of the array.";
+static char doc_copy[] = "m.copy(|fortran). Return a copy of the array.\n"\
+	"If fortran == 0 then the result is contiguous (default). \n"\
+	"If fortran >  0 then the result has fortran data order. \n"\
+	"If fortran <  0 then the result has fortran data order only if m\n"
+	"   is already in fortran order.";
 
 static PyObject *
 array_copy(PyArrayObject *self, PyObject *args) 
 {
-        if (!PyArg_ParseTuple(args, "")) return NULL;
+	int fortran=0;
+        if (!PyArg_ParseTuple(args, "|i", &fortran)) return NULL;
 	
-        return _ARET(PyArray_Copy(self));
+        return PyArray_NewCopy(self, fortran);
 }
 
 static char doc_resize[] = "self.resize(new_shape).  "\

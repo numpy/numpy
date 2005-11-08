@@ -178,7 +178,7 @@ objectapi_list = [
 
     (r"""Copy an array.
     """,
-     'Copy','PyArrayObject *','PyObject *'),
+     'NewCopy','PyArrayObject *, int','PyObject *'),
 
     (r"""Like FromDimsAndData but uses the Descr structure instead of
     typecode as input.
