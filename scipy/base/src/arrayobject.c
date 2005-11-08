@@ -1704,7 +1704,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 else if (value >= 0) {
 			return array_big_item(self, value);
                 }
-                else if (value < 0) {
+                else /* (value < 0) */ {
 			value += self->dimensions[0];
 			return array_big_item(self, value);
 		}
@@ -4518,9 +4518,16 @@ discover_depth(PyObject *s, int max, int stop_at_string)
 		return PyArray_NDIM(s);
         if(PyString_Check(s) || PyBuffer_Check(s) || PyUnicode_Check(s))
 		return stop_at_string ? 0:1;
+	if ((e=PyObject_GetAttrString(s, "__array_shape__")) != NULL) {
+		if (PyTuple_Check(e)) d=PyTuple_GET_SIZE(e);
+		else d=-1;
+		Py_DECREF(e);
+		if (d>-1) return d;
+	}
+	else PyErr_Clear();
+
         if (PySequence_Length(s) == 0) 
-		return 1;
-	
+		return 1;	
         if ((e=PySequence_GetItem(s,0)) == NULL) return -1;
         if(e!=s) {
 		d=discover_depth(e, max-1, stop_at_string);
@@ -4659,6 +4666,7 @@ _array_find_type(PyObject *op, PyArray_Typecode *minitype,
 		Py_DECREF(ip);
                 if (res >= 0) goto finish;
 	}
+	else PyErr_Clear();
         
         if ((ip=PyObject_GetAttrString(op, "__array_struct__")) != NULL) {
                 PyArrayInterface *inter;
@@ -4678,6 +4686,7 @@ _array_find_type(PyObject *op, PyArray_Typecode *minitype,
                 Py_DECREF(ip);
                 if (res >= 0) goto finish;
         }
+	else PyErr_Clear();
         	
         if (PyString_Check(op)) {
 		chktype = PyArray_STRING;
