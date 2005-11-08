@@ -1233,7 +1233,9 @@ array_nonzero(PyArrayObject *self, PyObject *args)
 }
 
 
-static char doc_trace[] = "a.trace(offset=0, axis1=0, axis2=1, rtype=None)";
+static char doc_trace[] = "a.trace(offset=0, axis1=0, axis2=1, rtype=None) \n"\
+	"return the sum along the offset diagonal of the arrays indicated\n" \
+	"axis1 and axis2.";
 
 static PyObject *
 array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds) 

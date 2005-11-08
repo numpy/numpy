@@ -1572,8 +1572,10 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
 	   defined by the mapping iterator */
 
 	if ((it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ret)) 
-	    == NULL) 
+	    == NULL) {
+		Py_DECREF(ret);
 		return NULL;
+	}
 	index = it->size;
 	swap = ((temp->flags & NOTSWAPPED) != (ret->flags & NOTSWAPPED));
         copyswap = ret->descr->copyswap;
@@ -1637,8 +1639,6 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
                         Py_XDECREF(*((PyObject **)mit->dataptr));
                         Py_INCREF(*((PyObject **)it->dataptr));
                         memmove(mit->dataptr, it->dataptr, sizeof(PyObject *));
-                        copyswap(mit->dataptr, NULL, swap, 
-                                  sizeof(PyObject *));
                         PyArray_MapIterNext(mit);
                         PyArray_ITER_NEXT(it);
                         if (it->index == it->size)
@@ -1648,7 +1648,6 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 		Py_DECREF(it);
                 return 0;
         }
-
 	while(index--) {
 		memmove(mit->dataptr, it->dataptr, PyArray_ITEMSIZE(arr));
                 copyswap(mit->dataptr, NULL, swap, PyArray_ITEMSIZE(arr));
@@ -1785,7 +1784,8 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
                 value = PyArray_PyIntAsIntp(index);
                 if (PyErr_Occurred())
                         PyErr_Clear();
-		return array_ass_big_item(self, value, op);
+		else
+			return array_ass_big_item(self, value, op);
         }
 
         if (self->nd == 0) {
@@ -1816,14 +1816,12 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
         if ((tmp = (PyArrayObject *)array_subscript(self, index)) == NULL)
                 return -1; 
 	if (PyArray_ISOBJECT(self) && (tmp->nd == 0)) {
-		if (tmp->descr->setitem(op, tmp->data, tmp) == -1)
-			return -1;
-		return 0;
+		ret = tmp->descr->setitem(op, tmp->data, tmp);
 	}
 	else {
 		ret = PyArray_CopyObject(tmp, op);
-		Py_DECREF(tmp);
-	}	
+	}
+	Py_DECREF(tmp);
         return ret;
 }
 
@@ -6978,13 +6976,14 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 				goto fail;
 			}
 			PyArray_ITER_NEXT(it);
-		}		
+		} 
 		PyArray_ITER_RESET(it);
 	}
 	return;
 
  fail:
 	Py_XDECREF(sub);
+	mit->subspace = NULL;
 	Py_XDECREF(mit->ait);
 	mit->ait = NULL;
 	return;
@@ -7034,8 +7033,8 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
 
 	ptr = (Bool *)ba->data;
 
-	if (count == 0) return nd;
-
+	if (count == 0) goto finish;
+	
 	/* Loop through the Boolean array  and copy coordinates
 	   for non-zero entries */
 	for (i=0; i<size; i++) {
@@ -7054,6 +7053,9 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
 			}
 		}
 	}
+
+ finish:
+	Py_DECREF(ba);
 	return nd;
 
  fail:

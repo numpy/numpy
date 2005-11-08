@@ -10,8 +10,7 @@ from numeric import array
 
 def _frz(a):
     """fix rank-0 --> rank-1"""
-    if len(a.shape) == 0:
-        a = a.reshape((1,))
+    if a.ndim == 0: a.shape = (1,)
     return a
 
 _convert_to_float = {
