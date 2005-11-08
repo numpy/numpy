@@ -1363,7 +1363,7 @@ parse_subindex(PyObject *op, intp *step_size, intp *n_steps, intp max)
 		*n_steps = RubberIndex;
 		index = 0;
 	} else if (PySlice_Check(op)) {
-		int stop;
+		intp stop;
 		if (slice_GetIndices((PySliceObject *)op, max,
 				     &index, &stop, step_size, n_steps) < 0) {
 			if (!PyErr_Occurred()) {
