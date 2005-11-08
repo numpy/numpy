@@ -863,7 +863,7 @@ PyArray_Return(PyArrayObject *mp)
                 return NULL;
         }
 
-	if (PyArray_Check((PyObject *)mp) && mp->nd == 0) {
+	if (mp->nd == 0) {
 		PyObject *ret;
 		ret = PyArray_ToScalar(mp->data, mp);
 		Py_DECREF(mp);
@@ -1107,11 +1107,12 @@ PyArray_ToString(PyArrayObject *self)
         PyObject *ret;
         PyArrayIterObject *it;
         
-        if (PyArray_TYPE(self) == PyArray_OBJECT) {
-                PyErr_SetString(PyExc_ValueError, "a string for the data" \
-				"in an object array is not appropriate");
-                return NULL;
-        }
+	/*        if (PyArray_TYPE(self) == PyArray_OBJECT) {
+		  PyErr_SetString(PyExc_ValueError, "a string for the data" \
+		  "in an object array is not appropriate");
+		  return NULL;
+		  }
+	*/
 
         numbytes = PyArray_NBYTES(self);
         if (PyArray_ISONESEGMENT(self)) {
@@ -1174,7 +1175,7 @@ array_dealloc(PyArrayObject *self) {
                 PyDataMem_FREE(self->data);
         }
 	
-	PyDimMem_FREE(self->dimensions); 
+	PyDimMem_FREE(self->dimensions);
 	
         self->ob_type->tp_free((PyObject *)self);
 }
@@ -1280,9 +1281,9 @@ array_ass_item(PyArrayObject *self, int i, PyObject *v)
 
 /* -------------------------------------------------------------- */
 static int
-slice_coerce_index(PyObject *o, int *v)
+slice_coerce_index(PyObject *o, intp *v)
 {
-	*v = PyArray_PyIntAsInt(o);
+	*v = PyArray_PyIntAsIntp(o);
 	if (error_converting(*v)) {
 		PyErr_Clear();
 		return 0;
@@ -1294,11 +1295,11 @@ slice_coerce_index(PyObject *o, int *v)
 /* This is basically PySlice_GetIndicesEx, but with our coercion
  * of indices to integers (plus, that function is new in Python 2.3) */
 static int
-slice_GetIndices(PySliceObject *r, int length,
-                 int *start, int *stop, int *step,
+slice_GetIndices(PySliceObject *r, intp length,
+                 intp *start, intp *stop, intp *step,
                  intp *slicelength)
 {
-	int defstart, defstop;
+	intp defstart, defstop;
 	
 	if (r->step == Py_None) {
 		*step = 1;
@@ -1350,10 +1351,10 @@ slice_GetIndices(PySliceObject *r, int length,
 #define RubberIndex -2
 #define SingleIndex -3
 
-static int
-parse_subindex(PyObject *op, int *step_size, intp *n_steps, int max)
+static intp
+parse_subindex(PyObject *op, intp *step_size, intp *n_steps, intp max)
 {
-	int index;
+	intp index;
 	
 	if (op == Py_None) {
 		*n_steps = PseudoIndex;
@@ -1377,7 +1378,7 @@ parse_subindex(PyObject *op, int *step_size, intp *n_steps, int max)
 			index = 0;
 		}
 	} else {
-		index = PyArray_PyIntAsInt(op);
+		index = PyArray_PyIntAsIntp(op);
 		if (error_converting(index)) {
 			PyErr_SetString(PyExc_IndexError,
 					"each subindex must be either a "\
@@ -1404,9 +1405,8 @@ parse_index(PyArrayObject *self, PyObject *op,
             intp *dimensions, intp *strides, intp *offset_ptr)
 {
         int i, j, n;
-        int nd_old, nd_new, start, offset, n_add, n_pseudo;
-        int step_size;
-	intp n_steps;
+        int nd_old, nd_new, n_add, n_pseudo;
+	intp n_steps, start, offset, step_size;
         PyObject *op1=NULL;
         int is_slice;
 
@@ -1678,7 +1678,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 
 */
 
-/* Always returns 0-dimensional arrays */
+/* Always returns arrays */
 
 static PyObject *
 array_subscript(PyArrayObject *self, PyObject *op) 
@@ -6130,7 +6130,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 {
 	int i;
 	PyArray_Typecode indtype = {PyArray_INTP, 0, 0};
-	int start, step_size;
+	intp start, step_size;
 	intp n_steps;
 	PyObject *r;
 	char *dptr;
@@ -6340,7 +6340,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	PyArray_Typecode indtype = {PyArray_INTP, 0, 0};
 	int swap;
 	int itemsize;
-	int start, step_size;
+	intp start, step_size;
 	intp n_steps;
 	PyObject *obj;
         PyArray_CopySwapFunc *copyswap;
@@ -6934,8 +6934,8 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 			noellip = 0;
 		}
 		else {
-			int start=0;
-			int stop, step;
+			intp start=0;
+			intp stop, step;
 			/* Should be slice object or
 			   another Ellipsis */
 			if (obj == Py_Ellipsis) {
