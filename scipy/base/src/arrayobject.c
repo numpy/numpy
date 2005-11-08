@@ -3101,9 +3101,10 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 }
 
 /* This routine checks to see if newstrides (of length nd) will not 
- walk outside of the memory implied by either numbytes or
- a single segment array of the provided dimensions and element size if
- numbytes is 0 */
+ walk outside of the memory implied by a single segment array of the provided 
+ dimensions and element size.  If numbytes is 0 it will be calculated from 
+ the provided shape and element size.
+*/
 static Bool
 PyArray_CheckStrides(int elsize, int nd, intp numbytes, 
 		     intp *dims, intp *newstrides)
