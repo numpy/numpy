@@ -33,7 +33,7 @@ array_fill(PyArrayObject *self, PyObject *args)
 	return Py_None;
 }
 
-static char doc_put[] = "a.put(indices, values) sets a.flat[n] = v[n] "\
+static char doc_put[] = "a.put(values, indices) sets a.flat[n] = v[n] "\
 	"for each n in indices. v can be scalar or shorter than indices, "\
 	"will repeat.";
 
@@ -41,15 +41,15 @@ static PyObject *
 array_put(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	PyObject *indices, *values;
-	static char *kwlist[] = {"indices", "values", NULL};
+	static char *kwlist[] = {"values", "indices", NULL};
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist,
-					 &indices, &values))
+					 &values, &indices))
 		return NULL;
-	return PyArray_Put(self, indices, values);
+	return PyArray_Put(self, values, indices);
 }
 
-static char doc_putmask[] = "a.putmask(mask, values) sets a.flat[n] = v[n] "\
+static char doc_putmask[] = "a.putmask(values, mask) sets a.flat[n] = v[n] "\
 	"for each n where mask.flat[n] is TRUE. v can be scalar.";
 
 static PyObject *
@@ -57,12 +57,12 @@ array_putmask(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
 	PyObject *mask, *values;
 
-	static char *kwlist[] = {"mask", "values", NULL};
+	static char *kwlist[] = {"values", "mask", NULL};
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist,
-					 &mask, &values))
+					 &values, &mask))
 		return NULL;
-	return PyArray_PutMask(self, mask, values);
+	return PyArray_PutMask(self, values, mask);
 }
 
 /* Used to reshape a Fortran Array */

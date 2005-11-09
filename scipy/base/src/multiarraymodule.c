@@ -2300,7 +2300,7 @@ PyArray_Take(PyArrayObject *self0, PyObject *indices0, int axis) {
 }
 
 static PyObject *
-PyArray_Put(PyArrayObject *self, PyObject *indices0, PyObject* values0) 
+PyArray_Put(PyArrayObject *self, PyObject* values0, PyObject *indices0) 
 {
         PyArrayObject  *indices, *values;
         int i, chunk, ni, max_item, nv, tmp, thistype; 
@@ -2372,7 +2372,7 @@ PyArray_Put(PyArrayObject *self, PyObject *indices0, PyObject* values0)
 }
 
 static PyObject *
-PyArray_PutMask(PyArrayObject *self, PyObject *mask0, PyObject* values0) 
+PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0) 
 {
         PyArrayObject  *mask, *values;
         int i, chunk, ni, max_item, nv, tmp, thistype;

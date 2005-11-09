@@ -161,15 +161,15 @@ def put (a, ind, v):
        a must be a contiguous Numeric array.
     """
     a = array(a,copy=False)
-    v = array(v,copy=False)
-    return a.put(ind, v.astype(a.dtype))
+    return a.put(v,ind)
 
 def putmask (a, mask, v):
     """putmask(a, mask, v) results in a = v for all places mask is true.
        If v is shorter than mask it will be repeated as necessary.
        In particular v can be a scalar or length 1 array.
     """
-    return a.putmask(mask, v)
+    a = array(a,copy=False)
+    return a.putmask(v, mask)
 
 def swapaxes(a, axis1, axis2):
     """swapaxes(a, axis1, axis2) returns array a with axis1 and axis2
