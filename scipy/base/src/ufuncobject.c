@@ -1503,11 +1503,18 @@ _create_reduce_copy(PyUFuncReduceObject *loop, PyArrayObject **arr, int rtype)
 					      FORCECAST |		\
 					      BEHAVED_FLAGS_RO);
 			if (new == NULL) return -1;
-			Py_XDECREF(*arr);
 			*arr = (PyArrayObject *)new;
 			loop->decref = new;
 		}
 	}
+
+	/* Don't decref *arr before assigning to new
+	   because it will not be DECREF'd in the loop.
+	   
+	   If a copy is made, then the copy will be removed
+	   on deallocation of the loop structure by setting 
+	   loop->decref.
+	*/
 	
 	return 0;
 }
