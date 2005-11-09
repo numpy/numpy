@@ -160,7 +160,6 @@ def put (a, ind, v):
            for i in ind: a.flat[i] = v[i]
        a must be a contiguous Numeric array.
     """
-    a = array(a,copy=False)
     return a.put(v,ind)
 
 def putmask (a, mask, v):
@@ -168,7 +167,6 @@ def putmask (a, mask, v):
        If v is shorter than mask it will be repeated as necessary.
        In particular v can be a scalar or length 1 array.
     """
-    a = array(a,copy=False)
     return a.putmask(v, mask)
 
 def swapaxes(a, axis1, axis2):
