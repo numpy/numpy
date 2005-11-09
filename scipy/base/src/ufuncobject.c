@@ -22,6 +22,7 @@
   Space Science Telescope Institute
   J. Todd Miller
   Perry Greenfield
+  Rick White
  
 */
 
@@ -1508,8 +1509,8 @@ _create_reduce_copy(PyUFuncReduceObject *loop, PyArrayObject **arr, int rtype)
 		}
 	}
 
-	/* Don't decref *arr before assigning to new
-	   because it will not be DECREF'd in the loop.
+	/* Don't decref *arr before re-assigning
+	   because it was not going to be DECREF'd anyway.
 	   
 	   If a copy is made, then the copy will be removed
 	   on deallocation of the loop structure by setting 

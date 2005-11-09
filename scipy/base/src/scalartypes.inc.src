@@ -187,6 +187,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
 	arr = PyArray_FromScalar(self, NULL);
 	if (arr == NULL) return NULL;
 	meth = PyObject_GetAttrString(arr, str);
+	if (meth == NULL) {Py_DECREF(arr); return NULL;}
 	if (kwds == NULL) 
 		ret = PyObject_CallObject(meth, args);
 	else
@@ -374,12 +375,13 @@ static PyObject *
 gentype_str(PyObject *self)
 {
 	PyArrayObject *arr;
-	PyObject *ret;
+	PyObject *ret, *tmp;
 
 	arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
 	if (arr==NULL) return NULL;
-	ret = PyObject_Str(arr->descr->getitem(arr->data, arr));
+	ret = PyObject_Str((tmp=arr->descr->getitem(arr->data, arr)));
 	Py_DECREF(arr);
+	Py_XDECREF(tmp);
 	return ret;
 }
 
@@ -387,12 +389,13 @@ static PyObject *
 gentype_repr(PyObject *self)
 {
 	PyArrayObject *arr;
-	PyObject *ret;
+	PyObject *ret, *tmp ;
 
 	arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
 	if (arr==NULL) return NULL;
-	ret = PyObject_Repr(arr->descr->getitem(arr->data, arr));
+	ret = PyObject_Repr((tmp=arr->descr->getitem(arr->data, arr)));
 	Py_DECREF(arr);
+	Py_XDECREF(tmp);
 	return ret;
 }
 

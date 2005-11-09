@@ -78,7 +78,7 @@ $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
 
 # we add more at the bottom
-__all__ = ['typeDict', 'arraytypes', 'ScalarType', 'obj2dtype', 'cast', 'nbytes']
+__all__ = ['typeDict', 'arraytypes', 'ScalarType', 'obj2dtype', 'cast', 'nbytes', 'dtype2char']
 
 from multiarray import typeinfo, ndarray, array
 import types as _types
