@@ -326,7 +326,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 		return (PyObject *)self;
 	}
 	else {
-		if ((ret = (PyArrayObject *)PyArray_Copy(self)) == NULL) 
+		if ((ret = (PyArrayObject *)PyArray_NewCopy(self,-1)) == NULL) 
 			return NULL;
 		
 		size = PyArray_SIZE(self);
@@ -457,7 +457,7 @@ array_cast(PyArrayObject *self, PyObject *args)
 
 	if (typecode.type_num == PyArray_NOTYPE ||	\
 	    typecode.type_num == PyArray_TYPE(self)) {
-		return _ARET(PyArray_Copy(self));
+		return _ARET(PyArray_NewCopy(self,-1));
 	}
 	return _ARET(PyArray_CastToType(self, &typecode));
 }	  
@@ -708,8 +708,8 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
                 copy = PyImport_ImportModule("copy");
                 if (copy == NULL) return NULL;
                 deepcopy = PyObject_GetAttrString(copy, "deepcopy");
-                if (deepcopy == NULL) return NULL;
                 Py_DECREF(copy);
+                if (deepcopy == NULL) return NULL;
                 it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
                 if (it == NULL) {Py_DECREF(deepcopy); return NULL;}
                 optr = (PyObject **)PyArray_DATA(ret);
@@ -1036,12 +1036,22 @@ array_transpose(PyArrayObject *self, PyObject *args)
 {
 	PyObject *shape=Py_None;
 	int n;
+	PyArray_Dims permute;
+	PyObject *ret;
 
 	n = PyTuple_Size(args);
 	if (n > 1) shape = args;
 	else if (n == 1) shape = PyTuple_GET_ITEM(args, 0);
 	
-	return _ARET(PyArray_Transpose(self, shape));
+	if (shape == Py_None)
+		ret = PyArray_Transpose(self, NULL);
+	else {
+		if (!PyArray_IntpConverter(shape, &permute)) return NULL;
+		ret = PyArray_Transpose(self, &permute);
+		PyDimMem_FREE(permute.ptr);
+	}
+	
+	return _ARET(ret);
 }
 
 static char doc_mean[] = "a.mean(axis=None, rtype=None)\n\n"\

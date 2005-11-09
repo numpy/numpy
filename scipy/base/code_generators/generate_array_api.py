@@ -256,7 +256,7 @@ objectapi_list = [
 multiapi_list = [
     (r"""Return Transpose.
     """,
-     'Transpose','PyArrayObject *, PyObject *','PyObject *'),
+     'Transpose','PyArrayObject *, PyArray_Dims *','PyObject *'),
 
     (r"""Take
     """,

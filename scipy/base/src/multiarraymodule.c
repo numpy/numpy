@@ -135,7 +135,6 @@ PyArray_View(PyArrayObject *self, PyArray_Typecode *type)
 	return new;	
 
  fail:
-        Py_XDECREF(v);
         Py_XDECREF(new);
         return NULL;
 }
@@ -294,7 +293,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
 					PyErr_SetString(PyExc_ValueError, 
 							"can only specify one" \
 							" unknown dimension");
-					goto fail;
+					return NULL;
 				}
 			} else {
 				s_known *= dimensions[i];
@@ -306,13 +305,13 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
 		if (i_unknown >= 0) {
 			if ((s_known == 0) || (s_original % s_known != 0)) {
 				PyErr_SetString(PyExc_ValueError, msg);
-				goto fail;
+				return NULL;
 			}
 			dimensions[i_unknown] = s_original/s_known;
 		} else {
 			if (s_original != s_known) {
 				PyErr_SetString(PyExc_ValueError, msg);
-				goto fail;
+				return NULL;
 			}
 		}
 	}
@@ -325,17 +324,13 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
 				  self->itemsize,
 				  self->flags, (PyObject *)self);
 	
-	if (ret== NULL)
-                goto fail;
+	if (ret== NULL) return NULL;
 	
         Py_INCREF(self);
         ret->base = (PyObject *)self;
 	PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
 	
         return (PyObject *)ret;
-	
- fail:
-        return NULL;
 }
 
 /* return a new view of the array object with all of its unit-length 
@@ -371,8 +366,8 @@ PyArray_Squeeze(PyArrayObject *self)
 			  self->descr->type_num, strides,
 			  self->data, self->itemsize, self->flags,
 			  (PyObject *)self);
-	self->flags &= ~OWN_DATA;
-	self->base = (PyObject *)self;
+	PyArray_FLAGS(ret) &= ~OWN_DATA;
+	PyArray_BASE(ret) = (PyObject *)self;
 	Py_INCREF(self);
 	return (PyObject *)ret;
 }
@@ -434,19 +429,19 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype)
 	if (obj1 == NULL) {Py_DECREF(new); return NULL;}
 
 	/* Compute x * x */
-	obj2 = PyNumber_Multiply(obj1, obj1);
+	obj2 = PyArray_EnsureArray(PyNumber_Multiply(obj1, obj1));
 	Py_DECREF(obj1);
 	if (obj2 == NULL) {Py_DECREF(new); return NULL;}
 
 	/* Compute add.reduce(x*x,axis) */
-	obj1 = PyArray_GenericReduceFunction((PyArrayObject *)obj2, n_ops.add,
+	obj1 = PyArray_GenericReduceFunction((PyAO *)obj2, n_ops.add,
 					     axis, rtype);
 	Py_DECREF(obj2);
 	if (obj1 == NULL) {Py_DECREF(new); return NULL;}
 
 	n = PyArray_DIM(new,axis)-1;
 	Py_DECREF(new);
-	if (n==0) n=1;
+	if (n<=0) n=1;
 	obj2 = PyFloat_FromDouble(1.0/((double )n));
 	if (obj2 == NULL) {Py_DECREF(obj1); return NULL;}
 	ret = PyArray_EnsureArray(PyNumber_Multiply(obj1, obj2));
@@ -603,8 +598,8 @@ PyArray_Nonzero(PyArrayObject *self)
 			item = PyArray_New(self->ob_type, 1, &count, 
 					   PyArray_INTP, NULL, NULL, 0, 0,
 					   (PyObject *)self);
-			PyTuple_SET_ITEM(ret, j, item);
 			if (item == NULL) goto fail;
+			PyTuple_SET_ITEM(ret, j, item);
 			dptr[j] = (intp *)PyArray_DATA(item);
 		}
 		
@@ -638,10 +633,14 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max)
 	two = PyInt_FromLong((long)2);
 	res1 = PyArray_GenericBinaryFunction(self, max, n_ops.greater);
 	res2 = PyArray_GenericBinaryFunction(self, min, n_ops.less);
-	if ((res1 == NULL) || (res2 == NULL)) goto fail;
+	if ((res1 == NULL) || (res2 == NULL)) {
+		Py_DECREF(two);
+		Py_XDECREF(res1);
+		Py_XDECREF(res2);
+	}
 	res3 = PyNumber_Multiply(two, res1);
-	Py_DECREF(two);
-	Py_DECREF(res1);
+	Py_DECREF(two); 
+	Py_DECREF(res1); 
 	if (res3 == NULL) return NULL;
 
 	selector = PyArray_EnsureArray(PyNumber_Add(res2, res3));
@@ -650,18 +649,11 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max)
 	if (selector == NULL) return NULL;
 
 	newtup = Py_BuildValue("(OOO)", (PyObject *)self, min, max);
-	if (newtup == NULL) goto fail;
+	if (newtup == NULL) {Py_DECREF(selector); return NULL;}
 	ret = PyArray_Choose((PyAO *)selector, newtup);
 	Py_DECREF(selector);
 	Py_DECREF(newtup);
 	return ret;
-
- fail:
-	Py_XDECREF(res1);
-	Py_XDECREF(res2);
-	Py_XDECREF(two);
-	Py_XDECREF(selector);
-	return NULL;
 }
 
 static PyObject *
@@ -721,9 +713,11 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 {
 	int n = self->nd;
 	PyObject *new;
-	PyObject *newaxes;
+	PyArray_Dims newaxes;
+	intp dims[MAX_DIMS];
 	int i, pos;	
 
+	newaxes.ptr = dims;
 	if (n < 2) {
 		PyErr_SetString(PyExc_ValueError, 
 				"array.ndim must be >= 2");
@@ -739,19 +733,16 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 		return NULL;
 	}
       
-	newaxes = PyTuple_New(n);
-	if (newaxes==NULL) return NULL;
+	newaxes.len = n;
 	/* insert at the end */
-	PyTuple_SET_ITEM(newaxes, n-2, PyInt_FromLong((long)axis1));
-	PyTuple_SET_ITEM(newaxes, n-1, PyInt_FromLong((long)axis2));
+	newaxes.ptr[n-2] = axis1;
+	newaxes.ptr[n-1] = axis2;
 	pos = 0;
 	for (i=0; i<n; i++) {
 		if ((i==axis1) || (i==axis2)) continue;
-		PyTuple_SET_ITEM(newaxes, pos++, 
-				 PyInt_FromLong((long) i));
+		newaxes.ptr[pos++] = i;
 	}
-	new = PyArray_Transpose(self, newaxes);
-	Py_DECREF(newaxes);
+	new = PyArray_Transpose(self, &newaxes);
 	if (new == NULL) return NULL;
 	self = (PyAO *)new;
 	
@@ -1127,10 +1118,11 @@ PyArray_Concatenate(PyObject *op, int axis)
 static PyObject *
 PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 {
-	PyObject *new_axes;
+	PyArray_Dims new_axes;
+	intp dims[MAX_DIMS];
 	int n, i, val;
 	PyObject *ret;
-
+		
 	if (a1 == a2) {
 		Py_INCREF(ap);
 		return (PyObject *)ap;
@@ -1154,45 +1146,45 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 				"bad axis2 argument to swapaxes");
 		return NULL;
 	}
-	new_axes = PyTuple_New(n);
+	new_axes.ptr = dims;
+	new_axes.len = n;
+
 	for (i=0; i<n; i++) {
 		if (i == a1) val = a2;
 		else if (i == a2) val = a1;
 		else val = i;
-		PyTuple_SET_ITEM(new_axes, i, PyInt_FromLong((long) val));
+		new_axes.ptr[i] = val;
 	}
-	ret = PyArray_Transpose(ap, new_axes);
-	Py_DECREF(new_axes);
+	ret = PyArray_Transpose(ap, &new_axes);
 	return ret;
 }
 
-
 static PyObject *
-PyArray_Transpose(PyArrayObject *ap, PyObject *op) {
+PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute) {
 	intp *axes, axis;
 	intp i, n;
-	intp *permutation = NULL;
+	intp permutation[MAX_DIMS];
 	PyArrayObject *ret = NULL;
-	
-	if (op == NULL || op == Py_None) {
+
+	if (permute == NULL) {
 		n = ap->nd;
-		permutation = (intp *)malloc(n*sizeof(intp));
 		for(i=0; i<n; i++)
 			permutation[i] = n-1-i;
 	} else {
-		if (PyArray_AsCArray(&op, (char **)&axes, &n, 1,
-				 PyArray_INTP) == -1)
+		n = permute->len;
+		axes = permute->ptr;
+		if (n > ap->nd) {
+			PyErr_SetString(PyExc_ValueError, 
+					"too many axes for this array");
 			return NULL;
-	
-		permutation = (intp *)malloc(n*sizeof(intp));
-	
+		}
 		for(i=0; i<n; i++) {
 			axis = axes[i];
 			if (axis < 0) axis = ap->nd+axis;
 			if (axis < 0 || axis >= ap->nd) {
 				PyErr_SetString(PyExc_ValueError, 
 						"invalid axis for this array");
-				goto fail;
+				return NULL;
 			}
 			permutation[i] = axis;
 		}
@@ -1204,7 +1196,7 @@ PyArray_Transpose(PyArrayObject *ap, PyObject *op) {
 					   ap->descr->type_num, NULL,
 					   ap->data, ap->itemsize, ap->flags,
 					   (PyObject *)ap);
-	if (ret == NULL) goto fail;
+	if (ret == NULL) return NULL;
 	
 	/* point at true owner of memory: */
 	ret->base = (PyObject *)ap;
@@ -1214,19 +1206,9 @@ PyArray_Transpose(PyArrayObject *ap, PyObject *op) {
 		ret->dimensions[i] = ap->dimensions[permutation[i]];
 		ret->strides[i] = ap->strides[permutation[i]];
 	}
-	PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
-	
-	if (op && (op != Py_None))
-		PyArray_Free(op, (char *)axes);
-	free(permutation);
-	return (PyObject *)ret;
-	
- fail:
-	Py_XDECREF(ret);
-	if (permutation) free(permutation);
-	if (op && (op != Py_None))
-		PyArray_Free(op, (char *)axes);
-	return NULL;
+	PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);	
+
+	return (PyObject *)ret;	
 }
 
 static PyObject *
@@ -1332,7 +1314,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	PyArrayObject **mps, *ap, *ret;
 	PyObject *otmp;
 	intp *self_data, mi;
-    PyArray_Typecode intype = {0,0,0};
+	PyArray_Typecode intype = {0,0,0};
 	ap = NULL;
 	ret = NULL;
 	
@@ -1395,7 +1377,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	
 	ret = (PyArrayObject *)PyArray_New(ap->ob_type, ap->nd,
 					   ap->dimensions, intype.type_num,
-					   NULL, NULL, intype.itemsize, 0, (PyObject *)ap);
+					   NULL, NULL, intype.itemsize, 0, 
+					   (PyObject *)ap);
 	if (ret == NULL) goto fail;
 	
 	elsize = ret->itemsize;
@@ -1598,7 +1581,7 @@ local_where(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
 	intp  min_i, max_i, i, j;
 	int location, elsize = ap1->itemsize;
 	intp elements = ap1->dimensions[ap1->nd-1];
-	intp n = PyArray_Size((PyObject *)ap2);
+	intp n = PyArray_SIZE(ap2);
 	intp *rp = (intp *)ret->data;
 	char *ip = ap2->data;
 	char *vp = ap1->data;
@@ -1632,7 +1615,7 @@ local_where(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
 static PyObject *
 PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2) 
 {
-	PyArrayObject *ap1, *ap2, *ret;
+	PyArrayObject *ap1=NULL, *ap2=NULL, *ret=NULL;
 	int typenum = 0;
 
 	/* 
@@ -1685,7 +1668,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 static PyObject *
 PyArray_InnerProduct(PyObject *op1, PyObject *op2) 
 {
-	PyArrayObject *ap1, *ap2, *ret;
+	PyArrayObject *ap1, *ap2, *ret=NULL;
 	intp i, j, l, i1, i2, n1, n2;
 	int typenum;
 	intp is1, is2, os;
@@ -1698,7 +1681,6 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);
 		
-	ret = NULL;
 	ap1 = (PyArrayObject *)PyArray_ContiguousFromAny(op1, typenum, 
 							    0, 0);
 	if (ap1 == NULL) return NULL;
@@ -1793,7 +1775,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 static PyObject *
 PyArray_MatrixProduct(PyObject *op1, PyObject *op2) 
 {
-	PyArrayObject *ap1, *ap2, *ret;
+	PyArrayObject *ap1, *ap2, *ret=NULL;
 	intp i, j, l, i1, i2, n1, n2;
 	int typenum;
 	intp is1, is2, os;
@@ -1809,7 +1791,6 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	typenum = PyArray_ObjectType(op2, typenum);	
 	
 	typec.type_num = typenum;
-	ret = NULL;
 	ap1 = (PyArrayObject *)PyArray_FromAny(op1, &typec, 0, 0, 
 					       DEFAULT_FLAGS);
 	if (ap1 == NULL) return NULL;
@@ -1973,7 +1954,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 static PyObject *
 PyArray_Correlate(PyObject *op1, PyObject *op2, int mode) 
 {
-	PyArrayObject *ap1, *ap2, *ret;
+	PyArrayObject *ap1, *ap2, *ret=NULL;
 	intp length;
 	intp i, n1, n2, n, n_left, n_right;
 	int typenum;
@@ -1988,7 +1969,6 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	typenum = PyArray_ObjectType(op2, typenum);
 
 	typec.type_num = typenum;
-	ret = NULL;
 	ap1 = (PyArrayObject *)PyArray_FromAny(op1, &typec, 1, 1,
 					       DEFAULT_FLAGS);
 	if (ap1 == NULL) return NULL;
@@ -2141,7 +2121,7 @@ PyArray_Ptp(PyArrayObject *ap, int axis)
 {
 	PyArrayObject *arr;
 	PyObject *ret;
-	PyObject *obj1 = NULL, *obj2=NULL;
+	PyObject *obj1=NULL, *obj2=NULL;
 
 	if ((arr=(PyArrayObject *)_check_axis(ap, &axis, 0))==NULL)
 		return NULL;

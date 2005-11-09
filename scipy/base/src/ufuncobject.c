@@ -1503,6 +1503,7 @@ _create_reduce_copy(PyUFuncReduceObject *loop, PyArrayObject **arr, int rtype)
 					      FORCECAST |		\
 					      BEHAVED_FLAGS_RO);
 			if (new == NULL) return -1;
+			Py_XDECREF(*arr);
 			*arr = (PyArrayObject *)new;
 			loop->decref = new;
 		}
@@ -1510,7 +1511,6 @@ _create_reduce_copy(PyUFuncReduceObject *loop, PyArrayObject **arr, int rtype)
 	
 	return 0;
 }
-
 
 
 static PyTypeObject PyUFuncReduce_Type;
