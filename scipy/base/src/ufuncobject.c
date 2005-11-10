@@ -614,8 +614,8 @@ select_types(PyUFuncObject *self, int *arg_types,
 		key = PyInt_FromLong((long) arg_types[0]);
 		if (key == NULL) return -1;
 		obj = PyDict_GetItem(self->userloops, key);
+		Py_DECREF(key);
 		if (obj == NULL) {
-			Py_DECREF(key);
 			PyErr_SetString(PyExc_TypeError, 
 					"no registered loop for this "	\
 					"user-defined type");
@@ -631,7 +631,7 @@ select_types(PyUFuncObject *self, int *arg_types,
 				PyCObject_AsVoidPtr(obj);
 			*data = NULL;
 		}
-		Py_DECREF(key);
+                Py_DECREF(obj);
 		return 0;
 	}
 	
@@ -937,6 +937,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 						"return arrays must be "\
 						"of ArrayType");
 				Py_DECREF(mps[i]);
+                                mps[i] = NULL;
 				return -1;
 			}
                 }
@@ -945,12 +946,14 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                         PyErr_SetString(PyExc_ValueError, 
                                         "invalid return array shape");
 			Py_DECREF(mps[i]);
+                        mps[i] = NULL;
                         return -1;
                 }
                 if (!PyArray_ISWRITEABLE(mps[i])) {
                         PyErr_SetString(PyExc_ValueError, 
                                         "return array is not writeable");
 			Py_DECREF(mps[i]);
+                        mps[i] = NULL;
                         return -1;
                 }
         }
@@ -2338,6 +2341,7 @@ _find_array_wrap(PyObject *args)
 						PyErr_Clear();
 						priority[np] = PyArray_SUBTYPE_PRIORITY;
 					}
+                                        Py_DECREF(attr);
 				}
 				with_wrap[np] = obj;
 				np += 1;

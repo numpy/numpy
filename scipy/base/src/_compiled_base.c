@@ -135,6 +135,7 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
  fail:
     Py_XDECREF(lst);
     Py_XDECREF(wts);
+    Py_XDECREF(ans);
     return NULL;
 }
 
@@ -151,7 +152,7 @@ arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
        as appropriate.                                                      */
     /* self is not used */
     PyObject *ox, *obins ;
-    PyObject *ax=NULL, *abins=NULL, *aret;
+    PyObject *ax=NULL, *abins=NULL, *aret=NULL;
     double *dx, *dbins ;       
     intp lbins, lx ;             /* lengths */
     intp *iret;
@@ -202,6 +203,7 @@ arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
  fail:
     Py_XDECREF(ax);
     Py_XDECREF(abins);
+    Py_XDECREF(aret);
     return NULL;
 }
 
@@ -283,8 +285,8 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 	}
 	Py_DECREF(amask);
 	Py_DECREF(avalscast);
-	Py_INCREF(Py_None);
 	PyDataMem_FREE(zero);
+	Py_INCREF(Py_None);
 	return Py_None;
     }
 
@@ -321,8 +323,8 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 
     Py_DECREF(amask);
     Py_DECREF(avalscast);
-    Py_INCREF(Py_None);
     PyDataMem_FREE(zero);
+    Py_INCREF(Py_None);
     return Py_None;
   
  fail:
@@ -358,12 +360,13 @@ DL_EXPORT(void) init_compiled_base(void) {
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
 
-    s = PyString_FromString("0.4");
+    s = PyString_FromString("0.5");
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
     ErrorObject = PyString_FromString("scipy.base._compiled_base.error");
     PyDict_SetItemString(d, "error", ErrorObject);
+    Py_DECREF(ErrorObject);
 
     /* Check for errors */
     if (PyErr_Occurred())
