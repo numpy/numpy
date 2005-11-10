@@ -1165,7 +1165,6 @@ typedef struct {
 #define PyArray_ISNOTSWAPPED(m) (PyArray_CHKFLAGS(m, NOTSWAPPED) || \
 				 PyArray_ISOBJECT(m))
 
-
 typedef struct {
         int version;          /* contains the integer 2 as a sanity check */
         int nd;               /* number of dimensions */

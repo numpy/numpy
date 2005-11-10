@@ -65,6 +65,7 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 
 
 /* 0-dim array from array-scalar object */
+/* always contains a copy of the data */
 static PyObject *
 PyArray_FromScalar(PyObject *scalar, PyArray_Typecode *outcode)
 {
@@ -640,7 +641,6 @@ gentype_struct_get(PyObject *self)
         PyArrayInterface *inter;
         
         arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-        arr->flags &= ~WRITEABLE;
         inter = (PyArrayInterface *)malloc(sizeof(PyArrayInterface));
         inter->version = 2;
         inter->nd = 0;

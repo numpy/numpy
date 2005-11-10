@@ -4027,7 +4027,8 @@ array_struct_get(PyArrayObject *self)
         inter->typekind = self->descr->kind;
         inter->itemsize = self->itemsize;
         inter->flags = self->flags;
-	inter->flags &= ~UPDATEIFCOPY;   /* reset this flag */
+        /* reset unused flags */
+	inter->flags &= ~(UPDATEIFCOPY | OWNDATA);  
         inter->strides = self->strides;
         inter->shape = self->dimensions;
         inter->data = self->data;
