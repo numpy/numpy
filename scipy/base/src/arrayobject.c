@@ -5372,7 +5372,7 @@ array_fromstructinterface(PyObject *input, PyArray_Typecode *intype, int flags)
         int swap;
         char buf[40];
         PyArrayInterface *inter;
-        PyObject *attr, *r;
+        PyObject *attr, *r, *ret;
         
         attr = PyObject_GetAttrString(input, "__array_struct__");
         if (attr == NULL) {PyErr_Clear(); return Py_NotImplemented;}
@@ -5394,7 +5394,9 @@ array_fromstructinterface(PyObject *input, PyArray_Typecode *intype, int flags)
 	PyArray_BASE(r) = input;
         Py_DECREF(attr);
         PyArray_UpdateFlags((PyArrayObject *)r, UPDATE_ALL_FLAGS);
-        return r;
+        ret = array_fromarray((PyArrayObject*)r, intype, flags);
+        Py_DECREF(r);
+        return ret;
 }
 
 static PyObject *
