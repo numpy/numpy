@@ -50,7 +50,7 @@ def configuration(parent_package='',top_path=None):
     def get_lapack_lite_sources(ext, build_dir):
         if not lapack_info:
             print "### Warning:  Using unoptimized lapack ###"
-            return ext.depends
+	    return ext.depends[:-1]
         else:
             return ext.depends[:1]
 
@@ -60,7 +60,7 @@ def configuration(parent_package='',top_path=None):
                                   ['lapack_litemodule.c',
                                    'zlapack_lite.c', 'dlapack_lite.c',
                                    'blas_lite.c', 'dlamch.c',
-                                   'f2c_lite.c']],
+                                   'f2c_lite.c','f2c.h']],
                          extra_info = lapack_info
                          )
             
