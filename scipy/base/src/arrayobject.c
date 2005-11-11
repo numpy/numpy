@@ -775,8 +775,11 @@ PyArray_NewCopy(PyArrayObject *m1, int fortran)
 					   NULL, NULL, m1->itemsize,
 					   fortran, 
 					   (PyObject *)m1);
-	
-        if (PyArray_CopyInto(ret, m1) == -1) return NULL;
+	if (ret == NULL) return NULL;
+        if (PyArray_CopyInto(ret, m1) == -1) {
+                Py_DECREF(ret);
+                return NULL;
+        }
 	
         return (PyObject *)ret;	
 }
@@ -5175,7 +5178,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 					    flags & FORTRAN,
 					    (PyObject *)arr);
                         if (ret == NULL) return NULL;
-			if (PyArray_CopyInto(ret, arr) == -1) return NULL;
+			if (PyArray_CopyInto(ret, arr) == -1) {Py_DECREF(ret); return NULL;}
 			if (flags & UPDATEIFCOPY)  {
 				ret->flags |= UPDATEIFCOPY;
 				ret->base = (PyObject *)arr;
