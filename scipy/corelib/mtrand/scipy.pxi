@@ -47,5 +47,6 @@ cdef extern from "scipy/arrayobject.h":
     ArrayType PyArray_ContiguousFromObject(object obj, PyArray_TYPES type, 
         int mindim, int maxdim)
     intp PyArray_SIZE(ArrayType arr)
+    void *PyArray_DATA(ArrayType arr)
 
     void import_array()

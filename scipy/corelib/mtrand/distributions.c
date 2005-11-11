@@ -380,28 +380,47 @@ long rk_binomial_btpe(rk_state *state, long n, double p)
     return y;
 }
 
-long rk_binomial_waiting(rk_state *state, long n, double p)
+long rk_binomial_inversion(rk_state *state, long n, double p)
 {
-    double q, E, Sum;
-    long X;
+    double q, qn, np, px, U;
+    long X, bound;
 
-    q = -log(1.0 - p);
-
-    X = 0;
-    Sum = 0.0;
-
-    while (Sum <= q)
+    if (!(state->has_binomial) || 
+         (state->nsave != n) ||
+         (state->psave != p))
     {
-        if (X == n)
-        {
-            X += 1;
-            break;
-        }
-        E = rk_standard_exponential(state);
-        Sum += E / (n - X);
-        X++;
+        state->nsave = n;
+        state->psave = p;
+        state->has_binomial = 1;
+        state->q = q = 1.0 - p;
+        state->r = qn = exp(n * log(q));
+        state->c = np = n*p;
+        state->m = bound = min(n, np + 10.0*sqrt(np));
+    } else
+    {
+        q = state->q;
+        qn = state->r;
+        np = state->c;
+        bound = state->m;
     }
-    return X-1;
+    X = 0;
+    px = qn;
+    U = rk_double(state);
+    while (U > px)
+    {
+        X++;
+        if (X > bound) 
+        {
+            X = 0;
+            px = qn;
+            U = rk_double(state);
+        } else 
+        {
+            U -= px;
+            px  = ((n-X+1) * p * px)/(X*q);
+        }
+    }
+    return X;
 }
 
 long rk_binomial(rk_state *state, long n, double p)
@@ -412,7 +431,7 @@ long rk_binomial(rk_state *state, long n, double p)
     {
         if (p*n <= 30.0)
         {
-            return rk_binomial_waiting(state, n, p);
+            return rk_binomial_inversion(state, n, p);
         }
         else
         {
@@ -424,7 +443,7 @@ long rk_binomial(rk_state *state, long n, double p)
         q = 1.0-p;
         if (q*n <= 30.0)
         {
-            return n - rk_binomial_waiting(state, n, q);
+            return n - rk_binomial_inversion(state, n, q);
         }
         else
         {

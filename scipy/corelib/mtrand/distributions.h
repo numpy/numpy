@@ -94,8 +94,8 @@ extern long rk_binomial(rk_state *state, long n, double p);
 /* Binomial distribution using BTPE. */
 extern long rk_binomial_btpe(rk_state *state, long n, double p);
 
-/* Binomial distribution using the waiting time algorithm. */
-extern long rk_binomial_waiting(rk_state *state, long n, double p);
+/* Binomial distribution using inversion and chop-down */
+extern long rk_binomial_inversion(rk_state *state, long n, double p);
 
 /* Negative binomial distribution computed by generating a Gamma(n, (1-p)/p)
  * variate Y and returning a Poisson(Y) variate (Devroye p. 543). */

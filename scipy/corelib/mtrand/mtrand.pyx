@@ -88,8 +88,12 @@ cdef extern from "distributions.h":
     double rk_triangular(rk_state *state, double left, double mode, double right)
     
     long rk_binomial(rk_state *state, long n, double p)
+    long rk_binomial_btpe(rk_state *state, long n, double p)
+    long rk_binomial_inversion(rk_state *state, long n, double p)
     long rk_negative_binomial(rk_state *state, long n, double p)
     long rk_poisson(rk_state *state, double lam)
+    long rk_poisson_mult(rk_state *state, double lam)
+    long rk_poisson_ptrs(rk_state *state, double lam)
     long rk_zipf(rk_state *state, double a)
     long rk_geometric(rk_state *state, double p)
     long rk_hypergeometric(rk_state *state, long good, long bad, long sample)
@@ -917,6 +921,7 @@ cdef class RandomState:
         return arr    
 
 _rand = RandomState()
+seed = _rand.seed
 get_state = _rand.get_state
 set_state = _rand.set_state
 random_sample = _rand.random_sample
