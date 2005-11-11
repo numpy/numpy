@@ -117,13 +117,10 @@ double rk_uniform(rk_state *state, double loc, double scale)
     return loc + scale*rk_double(state);
 }
 
-#define LOG4 1.3862943611198906
-#define ONELOG92 2.5040773967762742
-
 double rk_standard_gamma(rk_state *state, double shape)
 {
-    double b, c, lam;
-    double U, V, X, Y, Z, R;
+    double b, c;
+    double U, V, X, Y;
 
     if (shape == 1.0)
     {
@@ -131,7 +128,7 @@ double rk_standard_gamma(rk_state *state, double shape)
     }
     else if (shape < 1.0)
     {
-        while (1)
+        for (;;)
         {
             U = rk_double(state);
             V = rk_standard_exponential(state);
@@ -156,29 +153,23 @@ double rk_standard_gamma(rk_state *state, double shape)
     }
     else
     {
-        b = shape - LOG4;
-        lam = sqrt(2.0*shape - 1.0);
-        c = shape + lam;
-        
-        while (1)
+        b = shape - 1./3.;
+        c = 1./sqrt(9*b);
+        for (;;)
         {
-            U = rk_double(state);
-            V = rk_double(state);
-            Y = log(V/(1.0-V))/lam;
-            X = shape*exp(Y); 
-            Z = U*V*V;
-            R = b + c*Y - X;
-            if ((R >= 4.5*Z - ONELOG92) || (R >= log(Z)))
+            do
             {
-                break;
-            }
+                X = rk_gauss(state); 
+                V = 1.0 + c*X;
+            } while (V <= 0.0);
+
+            V = V*V*V;
+            U = rk_double(state);
+            if (U < 1.0 - 0.0331*(X*X)*(X*X)) return (b*V);
+            if (log(U) < 0.5*X*X + b*(1. - V + log(V))) return (b*V);
         }
-        return X;
     }
 }
-
-#undef LOG4
-#undef ONELOG92
 
 double rk_gamma(rk_state *state, double shape, double scale)
 {

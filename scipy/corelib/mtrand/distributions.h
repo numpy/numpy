@@ -39,8 +39,12 @@ extern "C" {
  *  Generation. Communications of the ACM, 31, 2 (February, 1988) 216.
  *
  * Hoermann, W. The Transformed Rejection Method for Generating Poisson Random
- *  Variables, Insurance: Mathematics and Economics, (to appear)
+ *  Variables. Insurance: Mathematics and Economics, (to appear)
  *  http://citeseer.csail.mit.edu/151115.html
+ *
+ * Marsaglia, G. and Tsang, W. W. A Simple Method for Generating Gamma 
+ * Variables. ACM Transactions on Mathematical Software, Vol. 26, No. 3,
+ * September 2000, Pages 363–372.
  */
  
 /* Normal distribution with mean=loc and standard deviation=scale. */
@@ -59,8 +63,8 @@ extern double rk_uniform(rk_state *state, double loc, double scale);
 /* Standard gamma distribution with shape parameter. 
  * When shape < 1, the algorithm given by (Devroye p. 304) is used.
  * When shape == 1, a Exponential variate is generated.
- * When shape > 1, Cheng's GB rejection algorithm from Devroye p. 413 with the
- * corrections given in the Errata is used.
+ * When shape > 1, the small and fast method of (Marsaglia and Tsang 2000) 
+ * is used.
  */
 extern double rk_standard_gamma(rk_state *state, double shape);
 
