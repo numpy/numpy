@@ -678,16 +678,20 @@ _getpyvalues(char *name, int *bufsize, int *errmask, PyObject **errobj)
         PyObject *thedict;
         PyObject *ref=NULL;
 	PyObject *retval;
-
+	static PyObject *thestring=NULL;
+	
+	if (thestring == NULL) {
+		thestring = PyString_InternFromString(UFUNC_PYVALS_NAME);
+	}
         thedict = PyEval_GetLocals();
-        ref = PyDict_GetItemString(thedict, UFUNC_PYVALS_NAME);
+        ref = PyDict_GetItem(thedict, thestring);
         if (ref == NULL) {
 		thedict = PyEval_GetGlobals();
-		ref = PyDict_GetItemString(thedict, UFUNC_PYVALS_NAME);
+		ref = PyDict_GetItem(thedict, thestring);
         }
         if (ref == NULL) {
  	        thedict = PyEval_GetBuiltins();
-                ref = PyDict_GetItemString(thedict, UFUNC_PYVALS_NAME);
+                ref = PyDict_GetItem(thedict, thestring);
 	}
 	if (ref == NULL) {
 		*errmask = UFUNC_ERR_DEFAULT;
