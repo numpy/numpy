@@ -3748,10 +3748,6 @@ array_shape_set(PyArrayObject *self, PyObject *val)
  	int nd;
 	PyObject *ret;
 
-	if (!PyTuple_Check(val)) {
-		PyErr_SetString(PyExc_TypeError, "shape must be a tuple");
-		return -1;
-	}
 	ret = PyArray_Reshape(self, val);
 	if (ret == NULL) return -1;
 
