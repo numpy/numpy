@@ -828,7 +828,7 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
 		}
 	}
 	else {
-		destptr = &(((PyScalarObject*)obj)->obval);
+		destptr = _SOFFSET_(obj, type_num);
 	}
 	/* copyswap for OBJECT increments the reference count */
         copyswap(destptr, data, swap, itemsize);
@@ -842,11 +842,8 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
 static PyObject *
 PyArray_ToScalar(void *data, PyArrayObject *arr)
 {
-	int type_num = arr->descr->type_num;
-	int itemsize = arr->itemsize;
-        int swap = !(PyArray_ISNOTSWAPPED(arr));
-
-	return PyArray_Scalar(data, type_num, itemsize, swap);
+	return PyArray_Scalar(data, arr->descr->type_num, arr->itemsize, 
+                              !(PyArray_ISNOTSWAPPED(arr)));
 }
 
 
@@ -856,6 +853,7 @@ static PyObject *
 PyArray_Return(PyArrayObject *mp) 
 {
         
+
 	if (mp == NULL) return NULL;
 
         if (PyErr_Occurred()) {
@@ -5176,6 +5174,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Typecode *typecode, int flags)
 					    itemsize,
 					    flags & FORTRAN,
 					    (PyObject *)arr);
+                        if (ret == NULL) return NULL;
 			if (PyArray_CopyInto(ret, arr) == -1) return NULL;
 			if (flags & UPDATEIFCOPY)  {
 				ret->flags |= UPDATEIFCOPY;

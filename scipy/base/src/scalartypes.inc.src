@@ -1,7 +1,10 @@
 /* -*- c -*- */
 
-/**begin repeat
+static int PyArrayScalar_Offset[PyArray_NTYPES+1];
 
+#define _SOFFSET_(obj, type_num) ((char *)(obj) + PyArrayScalar_Offset[(type_num)])
+
+/**begin repeat
 #name=Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble,  CFloat, CDouble, CLongDouble, Object,#
 #type=Bool, signed char, short, int, long, longlong, unsigned char, unsigned short, unsigned int, unsigned long, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, PyObject *,char#
 */
@@ -9,7 +12,6 @@ typedef struct {
 	PyObject_HEAD;
 	@type@ obval;
 } Py@name@ScalarObject;
-
 /**end repeat**/
 
 /* Inheritance established later when tp_bases is set (or tp_base for 
@@ -58,7 +60,7 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 		}
 		return;
 	}
-	memcpy(ctypeptr, &(((PyScalarObject *)scalar)->obval), 
+	memcpy(ctypeptr, _SOFFSET_(scalar, typecode.type_num),
 	       typecode.itemsize);
 	return;
 }
@@ -91,7 +93,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Typecode *outcode)
 		memptr = (((PyVoidScalarObject *)scalar)->obval);
 		break;
 	default:
-		memptr = &(((PyScalarObject *)scalar)->obval);
+		memptr = _SOFFSET_(scalar, typecode.type_num);
 		break;
 	}
 
@@ -195,7 +197,10 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
 		ret = PyObject_Call(meth, args, kwds);
 	Py_DECREF(meth);
 	Py_DECREF(arr);
-	return PyArray_Return((PyArrayObject *)ret);
+        if (PyArray_Check(ret))
+                return PyArray_Return((PyArrayObject *)ret);
+        else
+                return ret;
 }
 
 /**begin repeat
@@ -701,7 +706,7 @@ gentype_real_get(PyObject *self)
 
 	if (PyArray_IsScalar(self, ComplexFloating)) {
 		PyArray_TypecodeFromScalar(self, &typecode);
-		return PyArray_Scalar(&(((PyScalarObject *)self)->obval),
+		return PyArray_Scalar(_SOFFSET_(self, typecode.type_num),
 				      typecode.type_num-PyArray_NUM_FLOATTYPE,
 				      typecode.itemsize >> 1, 0);
 	}
@@ -722,7 +727,7 @@ gentype_imag_get(PyObject *self)
 	PyArray_TypecodeFromScalar(self, &typecode);
 	if (PyArray_IsScalar(self, ComplexFloating)) {
 		typecode.itemsize >>= 1;
-		return PyArray_Scalar(&(((PyScalarObject *)self)->obval)
+		return PyArray_Scalar(_SOFFSET_(self, typecode.type_num)
 				      + typecode.itemsize, 
 				      typecode.type_num-PyArray_NUM_FLOATTYPE,
 				      typecode.itemsize, 0);
@@ -1172,7 +1177,7 @@ gentype_getreadbuf(PyObject *self, int segment, void **ptrptr)
 			*ptrptr = ((PyVoidScalarObject *)self)->obval;
 	}
 	else 
-		*ptrptr = (void *)&(((PyScalarObject *)self)->obval);
+		*ptrptr = (void *)_SOFFSET_(self, outcode.type_num);
 
 	return numbytes;
 }
@@ -1565,6 +1570,13 @@ ComplexFloating, Flexible, Character#
 
 	PyArrayIter_Type.tp_iter = PyObject_SelfIter;
 	PyArrayMapIter_Type.tp_iter = PyObject_SelfIter;
+
+/**begin repeat
+#name=Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble,  CFloat, CDouble, CLongDouble, Object,#
+#num=BOOL, BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, NTYPES#
+**/
+        PyArrayScalar_Offset[PyArray_@num@] = (int) offsetof(Py@name@ScalarObject, obval);
+/**end repeat**/
 }
 
 
