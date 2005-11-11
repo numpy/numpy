@@ -1,0 +1,173 @@
+weave is distributed under the same license as SciPy which uses a BSD Style 
+license.  weave also includes CXX by Paul Dubois, portions of SCXX by
+Gordon McMillan, and blitz++ by Todd Veldhuizen.  The licenses for all of
+these packages are different, but allow free use for both commercial and
+non-commercial purposes.  The licenses for each are listed below:
+
+-------------------------------------------------------------------------
+
+SciPy License
+
+Copyright (c) 2001, Enthought, Inc.
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+  a. Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+  b. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+  c. Neither the name of the Enthought nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE.
+
+-------------------------------------------------------------------------
+
+CXX License
+
+*** Legal Notice for all LLNL-contributed files ***
+
+Copyright (c) 1996. The Regents of the University of California. 
+                    All rights reserved. 
+
+Permission to use, copy, modify, and distribute this software for any purpose 
+without fee is hereby granted, provided that this entire notice is included in 
+all copies of any software which is or includes a copy or modification of this 
+software and in all copies of the supporting documentation for such software.
+
+This work was produced at the University of California, Lawrence Livermore 
+National Laboratory under contract no. W-7405-ENG-48 between the U.S. 
+Department of Energy and The Regents of the University of California for the 
+operation of UC LLNL. 
+
+DISCLAIMER 
+
+This software was prepared as an account of work sponsored by an agency of the 
+United States Government. Neither the United States Government nor the 
+University of California nor any of their employees, makes any warranty, 
+express or implied, or assumes any liability or responsibility for the 
+accuracy, completeness, or usefulness of any information, apparatus, product, 
+or process disclosed, or represents that its use would not infringe privately-
+owned rights. Reference herein to any specific commercial products, process, or 
+service by trade name, trademark, manufacturer, or otherwise, does not 
+necessarily constitute or imply its endorsement, recommendation, or favoring by 
+the United States Government or the University of California. The views and 
+opinions of authors expressed herein do not necessarily state or reflect those 
+of the United States Government or the University of California, and shall not 
+be used for advertising or product endorsement purposes.
+
+-------------------------------------------------------------------------
+
+SCXX License
+
+No restrictions on usage, modification or redistribution, as long as the 
+copyright notice is maintained. No warranty whatsoever.
+
+copyright 1999 McMillan Enterprises, Inc.
+www.mcmillan-inc.com
+
+-------------------------------------------------------------------------
+
+Blitz License
+
+The `Blitz++ Artistic License'
+(with thanks and apologies to authors of the Perl Artistic License)
+
+Preamble
+
+The intent of this document is to state the conditions under which 
+Blitz++ may be copied, such that the authors maintains some
+semblance of artistic control over the development of the package,
+while giving the users of the package the right to use and
+distribute Blitz++ in a more-or-less customary fashion, plus the
+right to make reasonable modifications.
+
+Definitions
+
+`Library' refers to the collection of files distributed by the
+Copyright Holder, and derivatives of that collection of files
+created through textual modification.
+
+`Standard Version' refers to such a Library if it has not been
+modified, or has been modified in accordance with the wishes of the
+Copyright Holder as specified below.
+
+Copyright Holder' is whoever is named in the copyright or
+copyrights for the package.
+
+`You' is you, if you're thinking about copying, modifying or
+distributing this Library.
+
+`Freely Available' means that no fee is charged for the item.
+It also means that recipients of the item may redistribute it 
+under the same conditions they received it.
+
+``Reasonable copying fee'' is whatever you can justify on the basis
+of media cost, duplication charges, time of people involved, and so
+on. (You will not be required to justify it to the Copyright Holder,
+but only to the computing community at large as a market that must
+bear the fee.)
+
+1. You may make and give away verbatim copies of the 
+Standard Version of this Library without restriction, provided that
+you duplicate all of the original copyright notices, this license,
+and associated disclaimers. 
+
+2. The Standard Version of the Library may be distributed as part
+of a collection of software, provided no more than a reasonable
+copying fee is charged for the software collection.
+
+3. You may apply bug fixes, portability fixes and other modifications
+derived from the Public Domain or from the Copyright Holder. A
+Library modified in such a way shall still be considered the
+Standard Version.
+
+4. You may otherwise modify your copy of this Library in any way,
+provided that you insert a prominent notice in each changed file
+stating how and when you changed that file, and provided that you do
+at least ONE of the following:
+
+a. place your modifications in the Public Domain or otherwise
+make them Freely Available, such as by posting said
+modifications to the Blitz++ development list, 
+and allowing the Copyright Holder to include
+your modifications in the Standard Version of the Library.
+
+b. use the modified Library only within your corporation or
+organization. 
+
+c. make other distribution arrangements with the Copyright
+Holder.
+
+5. You may distribute programs which use this Library
+in object code or executable form without restriction.
+
+6. Any object code generated as a result of using this Library 
+does not fall under the copyright of this Library, but
+belongs to whomever generated it, and may be sold commercially.
+
+7. The name of the Copyright Holder or the Library may not be used to 
+endorse or promote products derived from this software without 
+specific prior written permission.
+
+8. THIS PACKAGE IS PROVIDED `AS IS' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+

@@ -1,0 +1,231 @@
+Questions:
+
+    1. sequences (tuples and lists) are empty (full of NULL values)
+       on creation.  On return to Python, nothing is done to check
+       whether a sequence has NULL values in it.  NULL values in 
+       Python will cause problems.  An alternative is to fill created
+       sequences with PyNone.  This is slower, but maybe safer.  I
+       believe this is what CXX does.  I need to ask others what they
+       think about this.
+    2. operator[] presents the biggest problems for C++ Python library
+       as far as I can tell.  The problem is we need a different function
+       called in the following two cases:
+       
+         dict_obj["a"] = 1;
+         obj = dict_obj["a"];
+       
+       In the first case, no KeyError should be thrown.  In the 2nd,
+       the KeyError should be thrown.  Unfortunately, this is not 
+       possible with simple C++.  It may be possible with template
+       expressions, but we aren't using those. So, for now, we will
+       have to deal with KeyErrors not occuring on the RHS of equations.
+       A secondary option here is to have a second argument have a 
+       special function for RHS access to values.  This is likely 
+       what we will do in auto generated code. 
+       
+       In the case that IndexErrors occur, these should always be
+       thrown.
+       
+For release:
+    1.  Change return_val to be an py::object.  This will get rid of 
+        of the need to handle incref/decref on your own most of the time.
+        DONE
+    2.  Flesh out object to handle all types of values in a generic way:
+        a. sequence access.
+           DONE
+        b. casting from/to standard types
+            int, float, double, std::complex, char*, std::string.
+           DONE
+        c. attr should return a reference?  Not sure about this.
+           I DONT THINK SO
+    3.  Tests that always thrown exceptions aren't getting cataloged.
+        This isn't a big deal in practice, but it needs to be cleaned up.
+    4.  Test file conversion for ref counts
+    5.  Examine all examples and make sure they make sense (and work).            
+    6.  Add iter() and next() to objects.
+    7.  check comparisons
+        DONE.
+    8.  clean up dict objects.
+        DONE.
+    9.  test dict object.
+        DONE 
+    9.  test get_item_operator for object, list, tuples, dicts.
+        DONE -- but I don't really like the operator[] behavior.
+        
+base package
+    scipy_base
+    scipy_distutils
+    scipy_test
+    gui_thread
+
+scipy
+weave
+chaco
+    
+weave
+
+Note on ref counts:
+There is some ref count strangness in inline() *if it is called from
+a function*.  When called from the command line, the ref counts behave
+correctly.  When called from a function, the first call to a
+inline() causes the ref count goes up an extra count.  However,
+subsequent calls don't cause any further refcount increases.  Checks
+put in py::object creation and destruction look like the C++ code is
+not loosing a ref count.  I'm thinking that some of the stack frame
+limbo played in inline() might be to blame???  Anyway, this needs
+further investigation.  I'm not sure if the issue is leading to leaks
+or not.
+
+Proposed changes to weave:
+
+* change return_val to a py::object
+    This could remove almost all of the need of handling PyObject*.
+* document changes.    
+* review directory structure.
+* outline method of aggregating functions into a single file.
+
+EVERYTHING BELOW HERE IS DONE.
+* all classes moved to py:: namespace
+* made tuples mutable with indexing notation. (handy in weave)
+* converted camel case names (setItem -> set_item)
+* change class names to reflect boost like names and put each 
+  exposed class in its own header file.
+    PWOBase     -> py::object   -- object.h     
+    PWOList     -> py::list     -- list.h       
+    PWOTuple    -> py::tuple    -- tuple.h      
+    PWOMapping  -> py::dict     -- dict.h       
+    PWOCallable -> py::callable -- callable.h   
+    PWOString   -> py::str      -- str.h        
+    PWONumber   -> py::number   -- number.h     
+    
+    py::object public methods:
+        int print(FILE *f, int flags) const DONE
+
+        bool hasattr(const char* nm) const  DONE
+
+        py::object_attr attr(const char* nm) const
+        py::object_attr attr(const py::object& nm) const
+
+        ??
+        int set_attr(const char* nm, py::object& val)
+        int set_attr(PyObject* nm, py::object& val)
+
+        int del(const char* nm)
+        int del(const py::object& nm)
+          
+        int cmp(const py::object& other) const
+
+        bool operator == (const py::object& other) const 
+        bool operator != (const py::object& other) const 
+        bool operator > (const py::object& other) const 
+        bool operator < (const py::object& other) const
+        bool operator >= (const py::object& other) const
+        bool operator <= (const py::object& other) const 
+      
+        PyObject* repr() const
+        /*PyObject* str() const*/ // conflicts with class named str
+        PyObject* type() const
+        
+        int hash() const
+        bool is_true() const
+        bool is_callable() const
+        
+        PyObject* disown() 
+
+
+    py::sequence public methods:
+        PWOSequence operator+(const PWOSequence& rhs) const
+        //count
+        int count(const py::object& value) const
+        int count(int value) const;
+        int count(double value) const;    
+        int count(char* value) const;
+        int count(std::string value) const;
+        
+        py::object operator [] (int i) const
+        py::sequence get_slice(int lo, int hi) const
+        
+        bool in(const py::object& value) const
+        bool in(int value);    
+        bool in(double value);
+        bool in(char* value);
+        bool in(std::string value);
+  
+        int index(const py::object& value) const
+        int index(int value) const;
+        int index(double value) const;
+        int index(char* value) const;
+        int index(std::string value) const;    
+  
+        int len() const
+        int length() const  // compatible with std::string
+
+        py::sequence operator * (int count) const //repeat
+
+    class py::tuple
+        void set_item(int ndx, py::object& val)
+        void set_item(int ndx, int val)
+        void set_item(int ndx, double val)
+        void set_item(int ndx, char* val)
+        void set_item(int ndx, std::string val)
+        
+        // make tuples mutable like lists
+        // much easier to set up call lists, etc.
+        py::tuple_member operator [] (int i)
+        
+    class py::list
+
+        bool del(int i)
+        bool del(int lo, int hi)
+
+        py::list_member operator [] (int i)
+
+        void set_item(int ndx, py::object& val)
+        void set_item(int ndx, int val)
+        void set_item(int ndx, double val)
+        void set_item(int ndx, char* val)
+        void set_item(int ndx, std::string val)
+
+        void set_slice(int lo, int hi, const py::sequence& slice)
+
+        py::list& append(const py::object& other)
+        py::list& append(int other)
+        py::list& append(double other)
+        py::list& append(char* other)
+        py::list& append(std::string other)
+  
+        py::list& insert(int ndx, py::object& other)
+        py::list& insert(int ndx, int other);
+        py::list& insert(int ndx, double other);
+        py::list& insert(int ndx, char* other);  
+        py::list& insert(int ndx, std::string other);
+
+        py::list& reverse()
+        py::list& sort()
+
+    class py::dict
+        py::dict_member operator [] (const char* key)
+        py::dict_member operator [] (std::string key)
+  
+        py::dict_member operator [] (PyObject* key)
+        py::dict_member operator [] (int key)  
+        py::dict_member operator [] (double key)
+    
+        bool has_key(PyObject* key) const
+        bool has_key(const char* key) const
+        // needs int, std::string, and double versions
+  
+        int len() const
+        int length() const
+
+        void set_item(const char* key, PyObject* val)
+        void set_item(PyObject* key, PyObject* val) const
+        // need int, std::string and double versions
+        void clear()
+        
+        void del(PyObject* key)
+        void del(const char* key)
+        // need int, std::string, and double versions
+        
+        py::list items() const
+        py::list keys() const
