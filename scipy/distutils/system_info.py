@@ -473,22 +473,30 @@ class system_info:
     def combine_paths(self,*args):
         return combine_paths(*args,**{'verbosity':self.verbosity})
 
+
 class fftw_info(system_info):
+    #variables to override
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['rfftw', 'fftw']
-    includes = ['fftw.h','rfftw.h']
-    macros = [('SCIPY_FFTW_H',None)]
     notfounderror = FFTWNotFoundError
+    ver_info  = [ { 'name':'fftw3',
+                    'libs':['fftw3'],
+                    'includes':['fftw3.h'],
+                    'macros':[('SCIPY_FFTW3_H',None)]},
+                  { 'name':'fftw2',
+                    'libs':['rfftw', 'fftw'],
+                    'includes':['fftw.h','rfftw.h'],
+                    'macros':[('SCIPY_FFTW_H',None)]}]
 
     def __init__(self):
         system_info.__init__(self)
 
-    def calc_info(self):
+    def calc_ver_info(self,ver_param):
+        """Returns True on successful version detection, else False"""
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
         incl_dir = None
-        libs = self.get_libs(self.section+'_libs', self.libs)
+        libs = self.get_libs(self.section+'_libs', ver_param['libs'])
         info = None
         for d in lib_dirs:
             r = self.check_libs(d,libs)
@@ -498,53 +506,68 @@ class fftw_info(system_info):
         if info is not None:
             flag = 0
             for d in incl_dirs:
-                if len(self.combine_paths(d,self.includes))==2:
+                if len(self.combine_paths(d,ver_param['includes']))==len(ver_param['includes']):
                     dict_append(info,include_dirs=[d])
                     flag = 1
                     incl_dirs = [d]
                     incl_dir = d
                     break
             if flag:
-                dict_append(info,define_macros=self.macros)
+                dict_append(info,define_macros=ver_param['macros'])
             else:
                 info = None
         if info is not None:
             self.set_info(**info)
+            return True
+        else:
+            if self.verbosity>0:
+                print '  %s not found' % (ver_param['name'])
+            return False
+
+    def calc_info(self):
+        for i in self.ver_info:
+            if self.calc_ver_info(i):
+                break
 
 class dfftw_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['drfftw','dfftw']
-    includes = ['dfftw.h','drfftw.h']
-    macros = [('SCIPY_DFFTW_H',None)]
+    ver_info  = [ { 'name':'dfftw',
+                    'libs':['drfftw','dfftw'],
+                    'includes':['dfftw.h','drfftw.h'],
+                    'macros':[('SCIPY_DFFTW_H',None)]} ]
 
 class sfftw_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['srfftw','sfftw']
-    includes = ['sfftw.h','srfftw.h']
-    macros = [('SCIPY_SFFTW_H',None)]
+    ver_info  = [ { 'name':'sfftw',
+                    'libs':['srfftw','sfftw'],
+                    'includes':['sfftw.h','srfftw.h'],
+                    'macros':[('SCIPY_SFFTW_H',None)]} ]
 
 class fftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['rfftw_threads','fftw_threads']
-    includes = ['fftw_threads.h','rfftw_threads.h']
-    macros = [('SCIPY_FFTW_THREADS_H',None)]
+    ver_info  = [ { 'name':'fftw threads',
+                    'libs':['rfftw_threads','fftw_threads'],
+                    'includes':['fftw_threads.h','rfftw_threads.h'],
+                    'macros':[('SCIPY_FFTW_THREADS_H',None)]} ]
 
 class dfftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['drfftw_threads','dfftw_threads']
-    includes = ['dfftw_threads.h','drfftw_threads.h']
-    macros = [('SCIPY_DFFTW_THREADS_H',None)]
+    ver_info  = [ { 'name':'dfftw threads',
+                    'libs':['drfftw_threads','dfftw_threads'],
+                    'includes':['dfftw_threads.h','drfftw_threads.h'],
+                    'macros':[('SCIPY_DFFTW_THREADS_H',None)]} ]
 
 class sfftw_threads_info(fftw_info):
     section = 'fftw'
     dir_env_var = 'FFTW'
-    libs = ['srfftw_threads','sfftw_threads']
-    includes = ['sfftw_threads.h','srfftw_threads.h']
-    macros = [('SCIPY_SFFTW_THREADS_H',None)]
+    ver_info  = [ { 'name':'sfftw threads',
+                    'libs':['srfftw_threads','sfftw_threads'],
+                    'includes':['sfftw_threads.h','srfftw_threads.h'],
+                    'macros':[('SCIPY_SFFTW_THREADS_H',None)]} ]
 
 class djbfft_info(system_info):
     section = 'djbfft'
