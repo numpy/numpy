@@ -2,11 +2,9 @@
 
 X.flat returns an indexable 1-D iterator (mostly similar to an array but always 1-d)
 
-long(<>)     -->  pylong(<>)  if from Numeric * was changed to from scipy.base import *
-
 .typecode()  -->  .dtypechar
 
-.iscontiguous() --> .flags['CONTIGUOUS']
+.iscontiguous() --> .flags['CONTIGUOUS'] or .flags.contiguous
 
 .byteswapped() -> .byteswap()
 

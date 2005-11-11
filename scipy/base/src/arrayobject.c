@@ -3768,7 +3768,7 @@ array_shape_set(PyArrayObject *self, PyObject *val)
 		memcpy(self->strides, PyArray_STRIDES(ret), 
 		       nd*sizeof(intp));
 	}
-	else self->dimensions=NULL;
+	else {self->dimensions=NULL; self->strides=NULL;}
 	Py_DECREF(ret);
 	PyArray_UpdateFlags(self, CONTIGUOUS | FORTRAN);
 	return 0;
