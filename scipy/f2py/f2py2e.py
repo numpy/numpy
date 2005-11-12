@@ -30,20 +30,15 @@ import common_rules
 import auxfuncs
 import cfuncs
 import capi_maps
-## import buildmakefile
-## import buildsetup
 import func2subr
 import f90mod_rules
 
 outmess = auxfuncs.outmess
 
 try:
-    from scipy.distutils import __version__ as scipy_distutils_version
+    from scipy import __core_version__ as scipy_core_version
 except ImportError:
-    try:
-        from scipy_distutils import __version__ as scipy_distutils_version
-    except ImportError:
-        scipy_distutils_version = 'N/A'
+    scipy_distutils_version = 'N/A'
 
 __usage__ = """\
 Usage:
@@ -106,13 +101,6 @@ Options:
   --debug-capi     Create C/API code that reports the state of the wrappers
                    during runtime. Useful for debugging.
 
-  -include'<includefile>' Add CPP #include statement to the C/API code.
-                   <includefile> should be in the format of either
-                   `\"filename.ext\"' or `<filename.ext>'.
-                   As a result <includefile> will be included just before
-                   wrapper functions part in the C/API code.
-                   [DEPRECIATED], use usercode statement in signature file.
-
   --[no-]wrap-functions    Create Fortran subroutine wrappers to Fortran 77
                    functions. --wrap-functions is default because it ensures
                    maximum portability/compiler independence.
@@ -131,11 +119,8 @@ Options:
 
 scipy.distutils options (only effective with -c):
 
-  --help-compiler      List available Fortran compilers [DEPRECIATED]
   --fcompiler=         Specify Fortran compiler type by vendor
   --compiler=          Specify C compiler type (as defined by distutils)
-  --fcompiler-exec=    Specify the path to F77 compiler [DEPRECIATED]
-  --f90compiler-exec=  Specify the path to F90 compiler [DEPRECIATED]
 
   --help-fcompiler     List available Fortran compilers and exit
   --f77exec=           Specify the path to F77 compiler
@@ -175,13 +160,11 @@ Extra options (only effective with -c):
   a message should be shown.
 
 Version:     %s
-scipy.distutils Version: %s
-Requires:    Python 1.5.2 or higher (2.x is supported).
-             Numerical Python 13 or higher (20.x,21.x,22.x are supported)
-             scipy_distutils (can be downloaded from f2py site)
+scipy_core Version: %s
+Requires:    Python 2.3 or higher.
 License:     LGPL (see http://www.fsf.org)
 Copyright 1999 - 2005 Pearu Peterson all rights reserved.
-http://cens.ioc.ee/projects/f2py2e/"""%(f2py_version, scipy_distutils_version)
+http://cens.ioc.ee/projects/f2py2e/"""%(f2py_version, scipy_core_version)
 
 
 def scaninputline(inputline):
@@ -189,45 +172,24 @@ def scaninputline(inputline):
     f,f2,f3,f4,f5,f6,f7=1,0,0,0,0,0,0
     verbose = 1
     dolc=-1
-##     dosetup = 0
-##     doscipysetup = 0
-##     domanifest = 0
-##     domakefile = 0
     dolatexdoc = 0
     dorestdoc = 0
     wrapfuncs = 1
     buildpath = '.'
     include_paths = []
-##     do_analyze = 1
     signsfile,modulename=None,None
-##     format='f77'
-##     makefileopts=[]
-##     options=buildmakefile.get_f2pyflags({'buildpath':buildpath})
     options = {'buildpath':buildpath}
     for l in inputline:
         if l=='': pass
         elif l=='only:': f=0
         elif l=='skip:': f=-1
         elif l==':': f=1;f4=0
-##         elif l=='-f77': format='f77'
-##         elif l=='-f90': format='f90'
-##         elif l=='-fix': format='fix'
         elif l[:8]=='--debug-': debug.append(l[8:])
         elif l=='--lower': dolc=1
-##         elif l=='--skip-analyze': do_analyze=0
         elif l=='--build-dir': f6=1
         elif l=='--no-lower': dolc=0
-##         elif l=='--setup': dosetup=1
-##         elif l=='--scipy-setup':
-##             doscipysetup=1
-##             dosetup=1
-##         elif l=='--no-setup': dosetup=0
         elif l=='--quiet': verbose = 0
         elif l=='--verbose': verbose += 1
-##         elif l=='--manifest': domanifest=1
-##         elif l=='--no-manifest': domanifest=0
-##         elif l=='--makefile': domakefile=1
-##         elif l=='--no-makefile': domakefile=0
         elif l=='--latex-doc': dolatexdoc=1
         elif l=='--no-latex-doc': dolatexdoc=0
         elif l=='--rest-doc': dorestdoc=1
@@ -236,26 +198,11 @@ def scaninputline(inputline):
         elif l=='--no-wrap-functions': wrapfuncs=0
         elif l=='--short-latex': options['shortlatex']=1
         elif l=='--overwrite-signature': options['h-overwrite']=1
-##         elif l=='--overwrite-makefile':
-##             domakefile=1
-##             makefileopts.append('--overwrite-makefile')
-##         elif l=='--overwrite-setup':
-##             dosetup=1
-##             makefileopts.append('--overwrite-setup')
-##         elif l=='--external-modroutines': options[l]=1
-##         elif l=='--no-external-modroutines': options['--external-modroutines']=0
         elif l=='-h': f2=1
         elif l=='-m': f3=1
-##         elif l=='--use-libs':
-##             makefileopts.append(l)
-##         elif l=='-makefile':
-##             f4=1
         elif l[:2]=='-v':
             print f2py_version
             sys.exit()
-##         elif l[:6]=='-pyinc': # obsolete
-##             print os.path.join(sys.prefix,'include','python'+sys.version[:3])
-##             sys.exit()
         elif l=='--show-compilers':
             f5=1
         elif l[:8]=='-include':
@@ -264,17 +211,12 @@ def scaninputline(inputline):
         elif l[:15]=='--include_paths':
             f7=1
         elif l[0]=='-':
-##             if f4:
-##                 makefileopts.append(l)
-##             else:
             errmess('Unknown option %s\n'%`l`)
             sys.exit()
         elif f2: f2=0;signsfile=l
         elif f3: f3=0;modulename=l
         elif f6: f6=0;buildpath=l
         elif f7: f7=0;include_paths.extend(l.split(os.pathsep))
-##         elif f4:
-##             makefileopts.append(l)
         elif f==1:
             try:
                 open(l).close()
@@ -285,7 +227,6 @@ def scaninputline(inputline):
         elif f==0: onlyfuncs.append(l)
     if not f5 and not files and not modulename:
         print __usage__
-        #errmess('Expected files and modulename but failed to got one of them\n')
         sys.exit()
     if not os.path.isdir(buildpath):
         if not verbose:
@@ -296,10 +237,7 @@ def scaninputline(inputline):
     if signsfile and os.path.isfile(signsfile) and not options.has_key('h-overwrite'):
         errmess('Signature file "%s" exists!!! Use --overwrite-signature to overwrite.\n'%(signsfile))
         sys.exit()
-##     if format in ['f77','f90','fix']: options['format']=format
-##     else:
-##         errmess('Illegal format "%s". Exiting.\n'%(format))
-##         sys.exit()
+
     options['debug']=debug
     options['verbose']=verbose
     if dolc==-1 and not signsfile: options['do-lower']=0
@@ -308,39 +246,16 @@ def scaninputline(inputline):
     if signsfile: options['signsfile']=signsfile
     if onlyfuncs: options['onlyfuncs']=onlyfuncs
     if skipfuncs: options['skipfuncs']=skipfuncs
-##     options['do_analyze'] = do_analyze
-##     options['dosetup'] = dosetup
-##     options['doscipysetup'] = doscipysetup
-##     options['domanifest'] = domanifest
-##     options['domakefile'] = domakefile
     options['dolatexdoc'] = dolatexdoc
     options['dorestdoc'] = dorestdoc
     options['wrapfuncs'] = wrapfuncs
-##     if not '--use-libs' in makefileopts:
-##         makefileopts=makefileopts+files
-##     options['makefileopts']=makefileopts
-##     options['setupopts']=makefileopts
     options['buildpath']=buildpath
     options['include_paths']=include_paths
-##     if f5:
-##         buildmakefile.showcompilers(options)
-##         sys.exit()
     return files,options
 
 def callcrackfortran(files,options):
     rules.options=options
     funcs=[]
-##     if options['format']=='f77':
-##         crackfortran.strictf77=1
-##         crackfortran.sourcecodeform='fix'
-##     elif options['format']=='f90':
-##         crackfortran.strictf77=0
-##         crackfortran.sourcecodeform='free'
-##     elif options['format']=='fix':
-##         crackfortran.strictf77=0
-##         crackfortran.sourcecodeform='fix'
-##     else:
-##         errmess('callcrackfortran: Unknown format. Exiting.\n');sys.exit()
     crackfortran.debug=options['debug']
     crackfortran.verbose=options['verbose']
     if options.has_key('module'):
@@ -349,8 +264,6 @@ def callcrackfortran(files,options):
         crackfortran.skipfuncs=options['skipfuncs']
     if options.has_key('onlyfuncs'):
         crackfortran.onlyfuncs=options['onlyfuncs']
-##     if options.has_key('do_analyze'):
-##         crackfortran.do_analyze=options['do_analyze']
     crackfortran.include_paths[:]=options['include_paths']
     crackfortran.dolowercase=options['do-lower']
     postlist=crackfortran.crackfortran(files)
@@ -426,23 +339,13 @@ def run_main(comline_list):
             if isusedby.has_key(postlist[i]['name']):
                 #if not quiet:
                 outmess('Skipping Makefile build for module "%s" which is used by %s\n'%(postlist[i]['name'],string.join(map(lambda s:'"%s"'%s,isusedby[postlist[i]['name']]),',')))
-##             else:
-##                 if options['dosetup']:
-##                     options['setupopts'].append('-I'+os.path.dirname(fobjhsrc))
-##                     options['setupopts'].append(fobjcsrc)
-##                     buildsetup.build(postlist[i],options)
-##                 if options['domakefile']:
-##                     buildmakefile.build(postlist[i],options)
     if options.has_key('signsfile'):
         if options['verbose']>1:
             outmess('Stopping. Edit the signature file and then run f2py on the signature file: ')
             outmess('%s %s\n'%(os.path.basename(sys.argv[0]),options['signsfile']))
-        #outmess('\tOr run GNU make to build shared module: gmake -f Makefile-<modulename>\n')
-        #outmess('\tOr run: python setup_<modulename>.py build\n')
         return
     for i in range(len(postlist)):
         if postlist[i]['block']!='python module':
-            #errmess('All blocks must be module blocks but got %s. Exiting.\n'%(`postlist[i]['block']`))
             if not options.has_key('python module'):
                 errmess('Tip: If your original code is Fortran 77 then you must use -m option.\n')
             raise TypeError,'All blocks must be module blocks but got %s'%(`postlist[i]['block']`)
@@ -452,9 +355,6 @@ def run_main(comline_list):
 
     ret=buildmodules(postlist)
 
-    #if not quiet:
-    #outmess('Run GNU make to build shared modules: gmake -f Makefile-<modulename> [test]\n')
-    #outmess('Or run: python setup_<modulename>.py build\n')
     for mn in ret.keys():
         dict_append(ret[mn],{'csrc':fobjcsrc,'h':fobjhsrc})
     return ret
@@ -525,22 +425,12 @@ def run_compile():
     fc_flags = filter(re.compile(r'[-][-]((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help[-]fcompiler))').match,sys.argv[1:])
     sys.argv = filter(lambda a,flags=fc_flags:a not in flags,sys.argv)
 
-    if scipy_distutils_version[:5]>='0.2.2':
+    if 1:
         del_list = []
         for s in flib_flags:
-            v = '--help-compiler'
-            if s==v:
-                nv = '--help-fcompiler'
-                print v,'is depreciated. Use',nv,'instead.'
-                fc_flags.append(nv)
-                del_list.append(s)
-                continue
             v = '--fcompiler='
             if s[:len(v)]==v:
-                if scipy_distutils_version[:5]>='0.4.0':
-                    from scipy.distutils import fcompiler
-                else:
-                    from scipy_distutils import fcompiler
+                from scipy.distutils import fcompiler
                 allowed_keys = fcompiler.fcompiler_class.keys()
                 nv = ov = s[len(v):].lower()
                 if ov not in allowed_keys:
@@ -553,18 +443,6 @@ def run_compile():
                     nv = ov
                 i = flib_flags.index(s)
                 flib_flags[i] = '--fcompiler=' + nv
-                continue
-            v = '--fcompiler-exec='
-            if s[:len(v)]==v:
-                fc_flags.append('--f77exec='+s[len(v):])
-                print v+' is depreciated. Use "%s" instead.' % (fc_flags[-1])
-                del_list.append(s)
-                continue
-            v = '--f90compiler-exec='
-            if s[:len(v)]==v:
-                fc_flags.append('--f90exec='+s[len(v):])
-                print v+' is depreciated. Use "%s" instead.' % (fc_flags[-1])
-                del_list.append(s)
                 continue
         for s in del_list:
             i = flib_flags.index(s)
@@ -582,11 +460,8 @@ def run_compile():
         modulename = sys.argv[i+1]
         del sys.argv[i+1],sys.argv[i]
         sources = sys.argv[1:]
-    elif scipy_distutils_version[:5]>='0.2.2':
-        if scipy_distutils_version[:5]>='0.4.0':
-            from scipy.distutils.command.build_src import get_f2py_modulename
-        else:
-            from scipy_distutils.command.build_src import get_f2py_modulename
+    else:
+        from scipy.distutils.command.build_src import get_f2py_modulename
         pyf_files,sources = filter_files('','[.]pyf([.]src|)',sources)
         sources = pyf_files + sources
         for f in pyf_files:
@@ -606,57 +481,25 @@ def run_compile():
         name_value = string.split(define_macros[i],'=',1)
         if len(name_value)==1:
             name_value.append(None)
-            if name_value[0]=='NUMARRAY':
-                using_numarray = 1
-            elif name_value[0] == 'NUMERIC':
-                using_numeric = 1
         if len(name_value)==2:
             define_macros[i] = tuple(name_value)
         else:
             print 'Invalid use of -D:',name_value
 
-    if scipy_distutils_version[:5]>='0.4.0':
-        from scipy.distutils.system_info import get_info
-        using_newscipy=1
-    else:
-        from scipy_distutils.system_info import get_info
-        using_newscipy=0
+    from scipy.distutils.system_info import get_info
+
     num_include_dir = None
-    if using_numarray:
-        try:
-            import numarray
-            n = 'numarray'
-            p = get_prefix(numarray)
-            import numarray.numinclude as numinclude
-            include_dirs.append(numinclude.include_dir)
-        except ImportError:
-            print 'Failed to import numarray:',sys.exc_value
-            raise ImportError,'Must have numarray installed.'
-        num_info = get_info('numarray')
-    elif using_numeric:
-        try:
-            import Numeric
-            n = 'Numeric'
-            p = get_prefix(Numeric)
-        except ImportError:
-            print 'Failed to import Numeric:',sys.exc_value
-            raise ImportError,'Must have Numeric installed.'
-        num_info = get_info('NumPy')        
-    else:
-        num_info = {}
-        #import scipy
-        #n = 'scipy'
-        #p = get_prefix(scipy)
-        #from scipy.distutils.misc_util import get_scipy_include_dirs
-        #num_info = {'include_dirs': get_scipy_include_dirs()}
-        
+    num_info = {}
+    #import scipy
+    #n = 'scipy'
+    #p = get_prefix(scipy)
+    #from scipy.distutils.misc_util import get_scipy_include_dirs
+    #num_info = {'include_dirs': get_scipy_include_dirs()}
+
     if num_info:
         include_dirs.extend(num_info.get('include_dirs',[]))
 
-    if scipy_distutils_version[:5]>='0.4.0':
-        from scipy.distutils.core import setup,Extension
-    else:
-        from scipy_distutils.core import setup,Extension
+    from scipy.distutils.core import setup,Extension
     ext_args = {'name':modulename,'sources':sources,
                 'include_dirs': include_dirs,
                 'library_dirs': library_dirs,
@@ -668,10 +511,7 @@ def run_compile():
                 }
 
     if sysinfo_flags:
-        if scipy_distutils_version[:5]>='0.4.0':
-            from scipy.distutils.misc_util import dict_append
-        else:
-            from scipy_distutils.misc_util import dict_append
+        from scipy.distutils.misc_util import dict_append
         for n in sysinfo_flags:
             i = get_info(n)
             if not i:
@@ -688,10 +528,7 @@ def run_compile():
     if fc_flags:
         sys.argv.extend(['config_fc']+fc_flags)
     if flib_flags:
-        if scipy_distutils_version[:5]>='0.2.2':
-            sys.argv.extend(['build_ext']+flib_flags)
-        else:
-            sys.argv.extend(['build_flib']+flib_flags)
+        sys.argv.extend(['build_ext']+flib_flags)
 
     setup(ext_modules = [ext])
 
@@ -702,10 +539,7 @@ def run_compile():
 def main():
     if '--help-link' in sys.argv[1:]:
         sys.argv.remove('--help-link')
-        if scipy_distutils_version[:5]>='0.4.0':
-            from scipy.distutils.system_info import show_all
-        else:
-            from scipy_distutils.system_info import show_all
+        from scipy.distutils.system_info import show_all
         show_all()
         return
     if '-c' in sys.argv[1:]:

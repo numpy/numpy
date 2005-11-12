@@ -522,6 +522,8 @@ class FCompiler(CCompiler):
 
 fcompiler_class = {'gnu':('gnu','GnuFCompiler',
                           "GNU Fortran Compiler"),
+                   'gnu95':('gnu','Gnu95FCompiler',
+                            "GNU 95 Fortran Compiler"),
                    'g95':('g95','G95FCompiler',
                           "GNU Fortran 95 Compiler"),
                    'pg':('pg','PGroupFCompiler',
@@ -561,18 +563,18 @@ fcompiler_class = {'gnu':('gnu','GnuFCompiler',
 
 _default_compilers = (
     # Platform mappings
-    ('win32',('gnu','intelv','absoft','compaqv','intelev','g95')),
-    ('cygwin.*',('gnu','intelv','absoft','compaqv','intelev','g95')),
+    ('win32',('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
+    ('cygwin.*',('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
     ('linux.*',('gnu','intel','lahey','pg','absoft','nag','vast','compaq',
-                'intele','g95')),
-    ('darwin.*',('nag','absoft','ibm','gnu','g95')),
-    ('sunos.*',('sun','gnu','g95')),
-    ('irix.*',('mips','gnu')),
-    ('aix.*',('ibm','gnu')),
+                'intele','gnu95','g95')),
+    ('darwin.*',('nag','absoft','ibm','gnu','gnu95','g95')),
+    ('sunos.*',('sun','gnu','gnu95','g95')),
+    ('irix.*',('mips','gnu','gnu95',)),
+    ('aix.*',('ibm','gnu','gnu95',)),
     # OS mappings
-    ('posix',('gnu',)),
-    ('nt',('gnu',)),
-    ('mac',('gnu',)),
+    ('posix',('gnu','gnu95',)),
+    ('nt',('gnu','gnu95',)),
+    ('mac',('gnu','gnu95',)),
     )
 
 def _find_existing_fcompiler(compilers, osname=None, platform=None):

@@ -206,6 +206,31 @@ class GnuFCompiler(FCompiler):
                 opt.append('-malign-double')
         return opt
 
+class Gnu95FCompiler(GnuFCompiler):
+
+    compiler_type = 'gnu95'
+    version_pattern = r'GNU Fortran 95 \(GCC (?P<version>[^\s*\)]+)'
+
+    # 'gfortran --version' results:
+    # Debian: GNU Fortran 95 (GCC 4.0.3 20051023 (prerelease) (Debian 4.0.2-3))
+
+    for fc_exe in map(find_executable,['gfortran','f95']):
+        if os.path.isfile(fc_exe):
+            break
+    executables = {
+        'version_cmd'  : [fc_exe,"--version"],
+        'compiler_f77' : [fc_exe,"-Wall","-ffixed-form","-fno-second-underscore"],
+        'compiler_f90' : [fc_exe,"-Wall","-fno-second-underscore"],
+        'compiler_fix' : [fc_exe,"-Wall","-ffixed-form","-fno-second-underscore"],
+        'linker_so'    : [fc_exe,"-Wall"],
+        'archiver'     : ["ar", "-cr"],
+        'ranlib'       : ["ranlib"],
+        'linker_exe'   : [fc_exe,"-Wall"]
+        }
+    module_dir_switch = '-M'
+    module_include_switch = '-I'
+
+
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
