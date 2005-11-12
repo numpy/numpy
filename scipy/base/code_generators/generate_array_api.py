@@ -409,7 +409,7 @@ multiapi_list = [
 
     (r"""Simulat a C-array
     """,
-     "AsCArray",'PyObject **, void *ptr, intp *, int, int','int'),
+     "AsCArray",'PyObject **, void *ptr, intp *, int, int, int','int'),
 
     (r"""Convert to a 1D C-array
     """,

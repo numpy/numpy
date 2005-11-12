@@ -145,6 +145,8 @@ PyArray_Ravel(PyArrayObject *a, int fortran)
 	PyArray_Dims newdim = {NULL,1};
 	intp val[1] = {-1};
 
+	if (fortran < 0) fortran = PyArray_ISFORTRAN(a);
+
         if (a->nd == 1) {
                 Py_INCREF(a);
                 return (PyObject *)a;
@@ -161,6 +163,8 @@ PyArray_Flatten(PyArrayObject *a, int fortran)
 {
 	PyObject *ret, *new;
 	intp size;
+
+	if (fortran < 0) fortran = PyArray_ISFORTRAN(a);
 
 	size = PyArray_SIZE(a);
 	ret = PyArray_New(a->ob_type,
@@ -846,7 +850,8 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 */
 
 static int
-PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd, int type_num) 
+PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd, int type_num,
+		 int itemsize)
 {
 	PyArrayObject *ap;
 	PyArray_Typecode typecode = {0, 0, 0};
@@ -855,11 +860,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd, int type_num)
 	char ***ptr3;
 
 	typecode.type_num = type_num;
-	if (PyTypeNum_ISFLEXIBLE(type_num)) {
-		PyErr_SetString(PyExc_TypeError, 
-				"cannot treat flexible type as C array");
-		return -1;
-	}
+	typecode.itemsize = itemsize;
 	if ((nd < 1) || (nd > 3)) {
 		PyErr_SetString(PyExc_ValueError,
 				"C arrays of only 1-3 dimensions available");
@@ -911,7 +912,7 @@ PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
 {
 	intp newd1;
 	
-	if (PyArray_AsCArray(op, (void *)ptr, &newd1, 1, typecode) == -1)
+	if (PyArray_AsCArray(op, (void *)ptr, &newd1, 1, typecode, 0) == -1)
 		return -1;	
 	*d1 = (int) newd1;
 	return 0;
@@ -923,7 +924,7 @@ PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode)
 {
 	intp newdims[2];
 
-	if (PyArray_AsCArray(op, (void *)ptr, newdims, 2, typecode) == -1)
+	if (PyArray_AsCArray(op, (void *)ptr, newdims, 2, typecode, 0) == -1)
 		return -1;
 
 	*d1 = (int ) newdims[0];
