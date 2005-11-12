@@ -204,7 +204,7 @@ array_max(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return PyArray_Max(self, axis);
+	return _ARET(PyArray_Max(self, axis));
 }
 
 static char doc_ptp[] = "a.ptp(axis=None) a.max(axis)-a.min(axis)";
@@ -217,7 +217,7 @@ array_ptp(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return PyArray_Ptp(self, axis);
+	return _ARET(PyArray_Ptp(self, axis));
 }
 
 
@@ -231,7 +231,7 @@ array_min(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return PyArray_Min(self, axis);
+	return _ARET(PyArray_Min(self, axis));
 }
 
 
@@ -565,7 +565,7 @@ array_copy(PyArrayObject *self, PyObject *args)
 	int fortran=0;
         if (!PyArg_ParseTuple(args, "|i", &fortran)) return NULL;
 	
-        return PyArray_NewCopy(self, fortran);
+        return _ARET(PyArray_NewCopy(self, fortran));
 }
 
 static char doc_resize[] = "self.resize(new_shape).  "\
@@ -616,7 +616,7 @@ array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
 					 &repeats, PyArray_AxisConverter,
 					 &axis)) return NULL;
 	
-	return PyArray_Repeat(self, repeats, axis);
+	return _ARET(PyArray_Repeat(self, repeats, axis));
 }
 
 static char doc_choose[] = "a.choose(b0, b1, ..., bn)\n"\
