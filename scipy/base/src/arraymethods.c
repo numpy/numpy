@@ -1,5 +1,6 @@
 
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))
+
 static char doc_take[] = "a.take(indices, axis=None).  Selects the elements "\
 	"in indices from array a along the given axis.";
 
@@ -204,7 +205,7 @@ array_max(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return _ARET(PyArray_Max(self, axis));
+	return PyArray_Max(self, axis);
 }
 
 static char doc_ptp[] = "a.ptp(axis=None) a.max(axis)-a.min(axis)";
@@ -217,7 +218,7 @@ array_ptp(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return _ARET(PyArray_Ptp(self, axis));
+	return PyArray_Ptp(self, axis);
 }
 
 
@@ -231,7 +232,7 @@ array_min(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return _ARET(PyArray_Min(self, axis));
+	return PyArray_Min(self, axis);
 }
 
 
@@ -1080,7 +1081,7 @@ array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 &axis, PyArray_TypecodeConverter,
 					 &rtype)) return NULL;
 
-	return _ARET(PyArray_Mean(self, axis, rtype.type_num));
+	return PyArray_Mean(self, axis, rtype.type_num);
 }
 
 static char doc_sum[] = "a.sum(axis=None, rtype=None)\n\n"\
