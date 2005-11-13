@@ -1,4 +1,4 @@
- /*
+/*
   Provide multidimensional arrays as a basic object type in python.  
 
 Based on Original Numeric implementation
