@@ -231,11 +231,11 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     if (!PyArg_ParseTupleAndKeywords(args, kwdict, "O&OO", kwlist, 
 				     PyArray_Converter, &ainput, 
 				     &mask, &vals))
-	return NULL;
-
+            goto fail;
+    
     
     amask = (PyArrayObject *) PyArray_FROM_OF(mask, CARRAY_FLAGS);
-    if (amask == NULL) return NULL;
+    if (amask == NULL) goto fail;
     /* Cast an object array */
     if (amask->descr->type_num == PyArray_OBJECT) {
 	tmp = (PyArrayObject *)PyArray_Cast(amask, PyArray_INTP);
@@ -264,7 +264,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     if (avals == NULL) goto fail;
     avalscast = (PyArrayObject *)PyArray_Cast(avals, ainput->descr->type_num);
     if (avalscast == NULL) goto fail;
-    Py_DECREF(avals);
+    Py_DECREF(avals); 
 
     numvals = PyArray_SIZE(avalscast);
     nd = ainput->nd;
@@ -324,11 +324,13 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     Py_DECREF(amask);
     Py_DECREF(avalscast);
     PyDataMem_FREE(zero);
+    Py_DECREF(ainput);
     Py_INCREF(Py_None);
     return Py_None;
   
  fail:
     PyDataMem_FREE(zero);
+    Py_XDECREF(ainput);
     Py_XDECREF(amask);
     Py_XDECREF(avals);
     Py_XDECREF(avalscast);

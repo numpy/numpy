@@ -67,3 +67,5 @@ class test_algebra(ScipyTestCase):
         assert allclose((mA + mA).A, (A + A))        
         assert allclose((3*mA).A, (3*A))
 
+if __name__ == "__main__":
+    ScipyTest('scipy.base.matrix').run()

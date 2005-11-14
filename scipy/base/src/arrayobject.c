@@ -814,7 +814,7 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
 		else {
 			destptr = PyDataMem_NEW(itemsize);
 			if (destptr == NULL) {
-				PyObject_Del(obj);
+                                Py_DECREF(obj);
 				return PyErr_NoMemory();
 			}
 			if (type_num == PyArray_UNICODE) {
@@ -4721,8 +4721,10 @@ _array_find_type(PyObject *op, PyArray_Typecode *minitype,
                 if(ip && PyArray_Check(ip)) {
 			chktype = PyArray_TYPE(ip);
 			chksize = PyArray_ITEMSIZE(ip);
+                        Py_DECREF(ip);
 			goto finish;
 		}
+                Py_DECREF(ip);
         } 
 
 	if (PyInstance_Check(op)) goto deflt;
@@ -4838,7 +4840,7 @@ Array_FromScalar(PyObject *op, PyArray_Typecode *typecode)
         ret->descr->setitem(op, ret->data, ret);
 	
         if (PyErr_Occurred()) {
-                array_dealloc(ret);
+                Py_DECREF(ret);
                 return NULL;
         } else {
                 return (PyObject *)ret;
@@ -6876,13 +6878,6 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 	PyArrayIterObject *it;
 	intp dimsize;
 	intp *indptr;
-
-	/* Remove old binding if any */
-	Py_XDECREF(mit->ait);
-	mit->ait = NULL;
-
-	Py_XDECREF(mit->subspace);
-	mit->subspace = NULL;
 	
 	subnd = arr->nd - mit->numiter;
 	if (subnd < 0) {
@@ -7000,8 +6995,8 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 	return;
 
  fail:
-	Py_XDECREF(mit->ait);
 	Py_XDECREF(mit->subspace);
+	Py_XDECREF(mit->ait);
 	mit->subspace = NULL;
 	mit->ait = NULL;
 	return;
@@ -7213,10 +7208,7 @@ PyArray_MapIterNew(PyObject *indexobj)
         return (PyObject *)mit;
        
  fail:
-	Py_XDECREF(mit->indexobj);
-	for (i=0; i<mit->numiter; i++)
-		Py_XDECREF(mit->iters[i]);
-        PyObject_Del(mit);
+        Py_DECREF(mit);
 	return NULL;
 }
 
@@ -7335,16 +7327,15 @@ PyArray_MultiIterNew(int n, ...)
 	va_end(va);	
 	
 	if (!err && PyArray_Broadcast(multi) < 0) err=1;
-	
+
+        PyObject_GC_Track(multi);
 	if (err) {
-		for (i=0; i<n; i++) Py_XDECREF(multi->iters[i]);
-		PyObject_GC_Del(multi);
+                Py_DECREF(multi);
 		return NULL;
 	}
 	
 	PyArray_MultiIter_RESET(multi);
 	
-        PyObject_GC_Track(multi);
         return (PyObject *)multi;
 }
 
@@ -7393,8 +7384,8 @@ arraymultiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         return (PyObject *)multi;
 	
  fail:
-	for (i=0; i<n; i++) Py_XDECREF(multi->iters[i]);
-	PyObject_GC_Del(multi);
+        PyObject_GC_Track(multi);
+        Py_DECREF(multi);
 	return NULL;
 }
 

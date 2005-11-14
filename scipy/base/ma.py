@@ -686,7 +686,8 @@ class MaskedArray (object):
             f = masked_print_option
         else:
             f = self.fill_value()
-        return str(filled(self, f))
+        res = self.filled(f)
+        return str(res)
 
     def __repr__(self):
         """Calculate the repr representation, using masked for fill if

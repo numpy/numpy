@@ -629,7 +629,8 @@ PyArrayObject* array_from_pyobj(const int type_num,
     F2PY_REPORT_ON_ARRAY_COPY_FROMANY;
     arr = (PyArrayObject *) \
       PyArray_FromAny(obj,&typecode, 0,0,
-		      ((intent & F2PY_INTENT_C)?CARRAY_FLAGS:FARRAY_FLAGS));
+		      ((intent & F2PY_INTENT_C)?CARRAY_FLAGS:FARRAY_FLAGS) \
+                      | FORCECAST );
     if (arr==NULL)
       return NULL;
     if (check_and_fix_dimensions(arr,rank,dims))

@@ -1223,7 +1223,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
 	return loop;
 
  fail:
-	ufuncloop_dealloc(loop);
+        Py_DECREF(loop);
 	return NULL;
 }
 
@@ -1741,7 +1741,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 	return loop;
 
  fail:
-        ufuncreduce_dealloc(loop);
+        Py_DECREF(loop);
 	return NULL;	
 }
 
