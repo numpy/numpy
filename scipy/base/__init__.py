@@ -1,5 +1,5 @@
 
-from info_scipy_base import __doc__
+from info import __doc__
 from scipy.core_version import version as __version__
 
 import multiarray

@@ -27,18 +27,14 @@ except ImportError:
 if show_core_config is None:
     print 'Running from scipy core source directory.'
 else:
-    from scipy.base import *
-    import scipy.basic as basic
-    from scipy.basic.fft import fft, ifft
-    from scipy.basic.random import rand, randn
-    import scipy.basic.fft as fftpack
-    import scipy.basic.linalg as linalg
-    import scipy.basic.random as random
+    from _import_tools import PackageImport
     from core_version import version as __core_version__
-    from scipy.test.testing import ScipyTest
+    __doc__ += PackageImport().import_packages(\
+        ['test','base','basic'])
     test = ScipyTest('scipy').test
 
-__scipy_doc__ = """\
+__scipy_doc__ = """
+
 SciPy: A scientific computing package for Python
 ================================================
 
@@ -59,7 +55,6 @@ else:
 
 
 if show_scipy_config is not None:
-    __doc__ += __scipy_doc__
     from scipy_version import scipy_version as __scipy_version__
-    from _import_tools import import_packages
-    import_packages()
+    __doc__ += __scipy_doc__
+    __doc__ += PackageImport().import_packages()

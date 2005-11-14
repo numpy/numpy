@@ -1,5 +1,4 @@
-__doc__ = """scipy.base defining a multi-dimensional array and useful procedures for
-   Numerical computation.
+__doc__ = """Defines a multi-dimensional array and useful procedures for Numerical computation.
 
 Functions
 
@@ -205,4 +204,5 @@ Threading tricks
 ParallelExec     --  Execute commands in parallel thread.
 """
 
-standalone = 1
+depends = ['scipy.test']
+global_symbols = ['*']

@@ -8,4 +8,5 @@ Modules
   testing -- useful tools for scipy-style testing sites.
 
 """
-standalone = 1
+
+global_symbols = ['ScipyTest']
