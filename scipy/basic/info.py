@@ -10,4 +10,5 @@ helper - lite version of scipy.linalg.helper
 """
 
 depends = ['scipy.base']
-global_symbols = ['fft','ifft','rand','randn','random']
+global_symbols = ['fft','ifft','rand','randn','random',
+                  'linalg','fftpack']

@@ -1,3 +1,6 @@
+"""Lite version of scipy.linalg.
+"""
+
 from basic_lite import *
 inv = inverse
 solve = solve_linear_equations
