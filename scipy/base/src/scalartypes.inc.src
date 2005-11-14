@@ -197,7 +197,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
 		ret = PyObject_Call(meth, args, kwds);
 	Py_DECREF(meth);
 	Py_DECREF(arr);
-        if (PyArray_Check(ret))
+        if (ret && PyArray_Check(ret))
                 return PyArray_Return((PyArrayObject *)ret);
         else
                 return ret;

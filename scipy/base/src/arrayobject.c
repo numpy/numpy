@@ -4244,9 +4244,9 @@ array_imag_set(PyArrayObject *self, PyObject *val)
 						   self->dimensions,
 						   self->descr->type_num - \
 						   PyArray_NUM_FLOATTYPE,
-						   self->strides+ \
-						   (self->itemsize >> 1) ,
- 						   self->data,
+						   self->strides,
+ 						   self->data +		\
+						   (self->itemsize >> 1),
 						   0,
 						   self->flags, (PyObject *)self);
 		if (ret == NULL) {
