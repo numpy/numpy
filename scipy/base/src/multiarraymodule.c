@@ -4096,6 +4096,9 @@ DL_EXPORT(void) initmultiarray(void) {
 	if (PyType_Ready(&PyArrayMapIter_Type) < 0)
                 return; 
 
+	if (PyType_Ready(&PyArrayMultiIter_Type) < 0)
+		return;
+
 	c_api = PyCObject_FromVoidPtr((void *)PyArray_API, NULL);
 	if (PyErr_Occurred()) goto err;
 	PyDict_SetItemString(d, "_ARRAY_API", c_api);
@@ -4114,6 +4117,8 @@ DL_EXPORT(void) initmultiarray(void) {
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
         Py_INCREF(&PyArrayIter_Type);
 	PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
+        Py_INCREF(&PyArrayMultiIter_Type);
+	PyDict_SetItemString(d, "multiter", (PyObject *)&PyArrayMultiIter_Type);
 
 	/* Doesn't need to be exposed to Python 
         Py_INCREF(&PyArrayMapIter_Type);

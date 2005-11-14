@@ -1018,13 +1018,11 @@ typedef struct {
 		}							\
 }
 
-/* Not constructed anywhere.  Just serves as a standard type that
-   PyArray_Broadcast expects.
 
+/*
    Any object passed to PyArray_Broadcast must be binary compatible with 
    this structure.    
 */
-
 
 typedef struct {
 	PyObject_HEAD
@@ -1036,7 +1034,39 @@ typedef struct {
 	intp                    dimensions[MAX_DIMS];  /* dimensions */
 	PyArrayIterObject       *iters[MAX_DIMS];      /* iterators */
 } PyArrayMultiIterObject;  
+
+#define PyArray_MultiIter_RESET(multi) {			  \
+		int _mi_;					  \
+		(multi)->index = 0;				  \
+		for (_mi_ = 0; _mi_ < (multi)->numiter; _mi_++) { \
+			PyArray_ITER_RESET((multi)->iters[_mi_]); \
+		}						  \
+	}
 	
+#define PyArray_MultiIter_NEXT(multi) {				 \
+		int _mi_;					 \
+		(multi)->index += 1;				 \
+		for (_mi_=0; _mi_<(multi)->numiter; _mi_++) {	 \
+			PyArray_ITER_NEXT((multi)->iters[_mi_]); \
+		}						 \
+	}
+	
+#define PyArray_MultiIter_GOTO(it, dest) {				\
+		int _mi_;						\
+		for (_mi_=0; _mi_<(multi)->numiter; _mi_++) {		\
+			PyArray_ITER_GOTO((multi)->iters[_mi_], dest);	\
+		}							\
+		(multi)->index = (multi)->iters[0]->index;		\
+	}
+	
+#define PyArray_MultiIter_GOTO1D(it, ind) {				\
+		int _mi_;						\
+		for (_mi_=0; _mi_<(multi)->numiter; _mi_++) {		\
+			PyArray_ITER_GOTO1D((multi)->iters[_mi_], ind);	\
+		}							\
+		(multi)->index = (multi)->iters[0]->index;		\
+	}
+		
 
 /* Store the information needed for fancy-indexing over an array */
 

@@ -4457,7 +4457,7 @@ static PyTypeObject PyBigArray_Type = {
         NULL,                            	  /*tp_as_buffer*/
         (Py_TPFLAGS_DEFAULT 
          | Py_TPFLAGS_BASETYPE
-         | Py_TPFLAGS_CHECKTYPES),           /*tp_flags*/
+         | Py_TPFLAGS_CHECKTYPES),                /*tp_flags*/
         /*Documentation string */
         Arraytype__doc__,			  /*tp_doc*/
 
@@ -6566,13 +6566,14 @@ static PyTypeObject PyArrayIter_Type = {
         0,	                         	/* tp_getattro */
         0,					/* tp_setattro */
         0,					/* tp_as_buffer */
-        Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+        Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | \
+	Py_TPFLAGS_HAVE_ITER,                   /* tp_flags */
         0,					/* tp_doc */
         (traverseproc)arrayiter_traverse,	/* tp_traverse */
         0,					/* tp_clear */
         0,					/* tp_richcompare */
         0,					/* tp_weaklistoffset */
-        0,		    	                /* tp_iter */
+        PyObject_SelfIter, 	                /* tp_iter */
         (iternextfunc)arrayiter_next,		/* tp_iternext */
         iter_methods,				/* tp_methods */
 };
@@ -7292,6 +7293,206 @@ static PyTypeObject PyArrayMapIter_Type = {
         0,					  /* tp_subclasses */
         0					  /* tp_weaklist */
 
+};
+
+static PyObject *
+PyArray_MultiIterNew(int n, ...)
+{
+        va_list va;
+	PyArrayMultiIterObject *multi;
+	PyObject *current;
+	PyObject *arr;
+	
+	int i, err=0;
+	
+	if (n < 2 || n > MAX_DIMS) {
+		PyErr_Format(PyExc_ValueError, 
+			     "Need between 2 and (%d) "			\
+			     "array objects (inclusive).", MAX_DIMS);
+	}
+	
+        multi = PyObject_GC_New(PyArrayMultiIterObject, &PyArrayMultiIter_Type);
+        if (multi == NULL)
+                return NULL;
+	
+	for (i=0; i<n; i++) multi->iters[i] = NULL;
+	multi->numiter = n;
+	multi->index = 0;
+
+        va_start(va, n);
+	for (i=0; i<n; i++) {
+		current = va_arg(va, PyObject *);
+		arr = PyArray_FROM_O(current);
+		if (arr==NULL) {
+			err=1; break;
+		}
+		else {
+			multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
+			Py_DECREF(arr);
+		}
+	}
+
+	va_end(va);	
+	
+	if (!err && PyArray_Broadcast(multi) < 0) err=1;
+	
+	if (err) {
+		for (i=0; i<n; i++) Py_XDECREF(multi->iters[i]);
+		PyObject_GC_Del(multi);
+		return NULL;
+	}
+	
+	PyArray_MultiIter_RESET(multi);
+	
+        PyObject_GC_Track(multi);
+        return (PyObject *)multi;
+}
+
+static PyObject *
+arraymultiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
+{
+	
+	int n, i;
+	PyArrayMultiIterObject *multi;
+	PyObject *arr;
+	
+	if (kwds != NULL) {
+		PyErr_SetString(PyExc_ValueError, 
+				"keyword arguments not accepted.");
+		return NULL;
+	}
+
+	n = PyTuple_Size(args);
+	if (n < 2 || n > MAX_DIMS) {
+		if (PyErr_Occurred()) return NULL;
+		PyErr_Format(PyExc_ValueError, 
+			     "Need at least two and fewer than (%d) "	\
+			     "array objects.", MAX_DIMS);
+		return NULL;
+	}
+	
+        multi = PyObject_GC_New(PyArrayMultiIterObject, &PyArrayMultiIter_Type);
+        if (multi == NULL)
+                return NULL;
+
+	multi->numiter = n;
+	multi->index = 0;
+	for (i=0; i<n; i++) multi->iters[i] = NULL;
+	for (i=0; i<n; i++) {
+		arr = PyArray_FromAny(PyTuple_GET_ITEM(args, i), NULL, 0, 0, 0);
+		if (arr == NULL) goto fail;
+		if ((multi->iters[i] =					\
+		     (PyArrayIterObject *)PyArray_IterNew(arr))==NULL) 
+			goto fail;
+		Py_DECREF(arr);
+	}
+	if (PyArray_Broadcast(multi) < 0) goto fail;
+	PyArray_MultiIter_RESET(multi);
+	
+        PyObject_GC_Track(multi);
+        return (PyObject *)multi;
+	
+ fail:
+	for (i=0; i<n; i++) Py_XDECREF(multi->iters[i]);
+	PyObject_GC_Del(multi);
+	return NULL;
+}
+
+static PyObject *
+arraymultiter_next(PyArrayMultiIterObject *multi)
+{
+	PyObject *ret;
+	int i, n;
+
+	n = multi->numiter;
+	ret = PyTuple_New(n);
+	if (ret == NULL) return NULL;
+	if (multi->index < multi->size) {
+		for (i=0; i < n; i++) {
+			PyArrayIterObject *it=multi->iters[i];
+			PyTuple_SET_ITEM(ret, i, 
+					 PyArray_ToScalar(it->dataptr, it->ao));
+			PyArray_ITER_NEXT(it);
+		}
+		multi->index++;
+		return ret;
+	}
+        return NULL;
+}
+
+static void
+arraymultiter_dealloc(PyArrayMultiIterObject *multi)
+{
+	int i;
+
+        PyObject_GC_UnTrack(multi);
+	for (i=0; i<multi->numiter; i++) 
+		Py_XDECREF(multi->iters[i]);
+        PyObject_GC_Del(multi);
+}
+
+static int
+arraymultiter_traverse(PyArrayMultiIterObject *multi, visitproc visit, void *arg)
+{
+	int err, i;
+
+        for (i=0; i<multi->numiter; i++) 
+		if (multi->iters[i]) {
+			err = visit((PyObject *)(multi->iters[i]), arg);
+			if (err) return err;
+		}
+        return 0;
+}
+
+static PyTypeObject PyArrayMultiIter_Type = {
+        PyObject_HEAD_INIT(NULL)
+        0,					 /* ob_size */
+        "scipy.multiter",		      	 /* tp_name */
+        sizeof(PyArrayMultiIterObject),          /* tp_basicsize */
+        0,					 /* tp_itemsize */
+        /* methods */
+        (destructor)arraymultiter_dealloc,	/* tp_dealloc */
+        0,					/* tp_print */
+        0,					/* tp_getattr */
+        0,					/* tp_setattr */
+        0,					/* tp_compare */
+        0,					/* tp_repr */
+        0,					/* tp_as_number */
+        0,                                      /* tp_as_sequence */
+        0,        	                        /* tp_as_mapping */
+        0,					/* tp_hash */
+        0,					/* tp_call */
+        0,					/* tp_str */
+        0,	                         	/* tp_getattro */
+        0,					/* tp_setattro */
+        0,					/* tp_as_buffer */
+        Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC	\
+	| Py_TPFLAGS_HAVE_ITER,                 /* tp_flags */
+        0,					/* tp_doc */
+        (traverseproc)arraymultiter_traverse,	/* tp_traverse */
+        0,					/* tp_clear */
+        0,					/* tp_richcompare */
+        0,					/* tp_weaklistoffset */
+        PyObject_SelfIter,    	                /* tp_iter */
+        (iternextfunc)arraymultiter_next,	/* tp_iternext */
+        0,             	                        /* tp_methods */
+        0,					  /* tp_members */
+        0,			                  /* tp_getset */
+        0,					  /* tp_base */
+        0,					  /* tp_dict */
+        0,					  /* tp_descr_get */
+        0,					  /* tp_descr_set */
+        0,					  /* tp_dictoffset */
+        (initproc)0,	  	                  /* tp_init */
+        0,  	                                  /* tp_alloc */
+        arraymultiter_new,	                  /* tp_new */
+        0,	                                  /* tp_free */
+        0,					  /* tp_is_gc */
+        0,					  /* tp_bases */
+        0,					  /* tp_mro */
+        0,					  /* tp_cache */
+        0,					  /* tp_subclasses */
+        0					  /* tp_weaklist */
 };
 
 /** END of Subscript Iterator **/

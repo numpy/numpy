@@ -227,6 +227,10 @@ objectapi_list = [
     """,
      'IterNew','PyObject *', 'PyObject *'),
 
+    (r"""Get MultiIterator,
+    """,
+     'MultiIterNew','int, ...', 'PyObject *'),
+
     (r"""
     """,
      'PyIntAsInt', 'PyObject *', 'int'),
@@ -518,7 +522,7 @@ types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger', 'Inexa
 
 # API fixes for __arrayobject_api.h
 
-fixed = 4
+fixed = 5
 numtypes = len(types) + fixed
 numobject = len(objectapi_list) + numtypes
 nummulti = len(multiapi_list)
@@ -619,6 +623,7 @@ static PyTypeObject PyBigArray_Type;
 static PyTypeObject PyArray_Type;
 static PyTypeObject PyArrayIter_Type;
 static PyTypeObject PyArrayMapIter_Type;
+static PyTypeObject PyArrayMultiIter_Type;
 static int PyArray_NUMUSERTYPES=0;
 
 %s
@@ -642,7 +647,8 @@ static void **PyArray_API=NULL;
 #define PyBigArray_Type (*(PyTypeObject *)PyArray_API[0])
 #define PyArray_Type (*(PyTypeObject *)PyArray_API[1])
 #define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[2])
-#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[3])
+#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[3])
+#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[4])
 
 %s
 
@@ -685,6 +691,7 @@ void *PyArray_API[] = {
         (void *) &PyBigArray_Type,
         (void *) &PyArray_Type,
         (void *) &PyArrayIter_Type,
+        (void *) &PyArrayMultiIter_Type,
         (int *) &PyArray_NUMUSERTYPES,
 %s
 };
