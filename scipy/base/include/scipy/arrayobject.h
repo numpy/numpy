@@ -1018,6 +1018,8 @@ typedef struct {
 		}							\
 }
 
+#define PyArray_ITER_DATA(it) ((PyArrayIterObject *)it)->dataptr
+	
 
 /*
    Any object passed to PyArray_Broadcast must be binary compatible with 
@@ -1037,35 +1039,45 @@ typedef struct {
 
 #define PyArray_MultiIter_RESET(multi) {			  \
 		int _mi_;					  \
-		(multi)->index = 0;				  \
-		for (_mi_ = 0; _mi_ < (multi)->numiter; _mi_++) { \
-			PyArray_ITER_RESET((multi)->iters[_mi_]); \
+		PyArrayMultiIterObject *_mul_ = (multi);	  \
+		_mul_->index = 0;				  \
+		for (_mi_ = 0; _mi_ < _mul_->numiter; _mi_++) {	  \
+			PyArray_ITER_RESET(_mul_->iters[_mi_]);	  \
 		}						  \
 	}
 	
 #define PyArray_MultiIter_NEXT(multi) {				 \
 		int _mi_;					 \
-		(multi)->index += 1;				 \
-		for (_mi_=0; _mi_<(multi)->numiter; _mi_++) {	 \
-			PyArray_ITER_NEXT((multi)->iters[_mi_]); \
+		PyArrayMultiIterObject *_mul_ = (multi);	  \
+		_mul_->index += 1;				 \
+		for (_mi_=0; _mi_<_mul_->numiter; _mi_++) {	 \
+			PyArray_ITER_NEXT(_mul_->iters[_mi_]);	 \
 		}						 \
 	}
 	
-#define PyArray_MultiIter_GOTO(it, dest) {				\
+#define PyArray_MultiIter_GOTO(multi, dest) {				\
 		int _mi_;						\
-		for (_mi_=0; _mi_<(multi)->numiter; _mi_++) {		\
-			PyArray_ITER_GOTO((multi)->iters[_mi_], dest);	\
+		PyArrayMultiIterObject *_mul_ = (multi);		\
+		for (_mi_=0; _mi_<_mul_->numiter; _mi_++) {		\
+			PyArray_ITER_GOTO(_mul_->iters[_mi_], dest);	\
 		}							\
-		(multi)->index = (multi)->iters[0]->index;		\
+		_mul_->index = _mul_->iters[0]->index;			\
 	}
 	
-#define PyArray_MultiIter_GOTO1D(it, ind) {				\
+#define PyArray_MultiIter_GOTO1D(multi, ind) {				\
 		int _mi_;						\
-		for (_mi_=0; _mi_<(multi)->numiter; _mi_++) {		\
-			PyArray_ITER_GOTO1D((multi)->iters[_mi_], ind);	\
+		PyArrayMultiIterObject *_mul_ = (multi);		\
+		for (_mi_=0; _mi_<_mul_->numiter; _mi_++) {		\
+			PyArray_ITER_GOTO1D(_mul_->iters[_mi_], ind);	\
 		}							\
-		(multi)->index = (multi)->iters[0]->index;		\
+		_mul_->index = _mul_->iters[0]->index;			\
 	}
+
+#define PyArray_MultiIter_DATA(multi, i) \
+	((PyArrayMultiIterObject *)multi)->iters[i]->dataptr
+
+#define PyArray_MultiIter_SIZE(multi) \
+	((PyArrayMultiIterObject *)multi)->size;
 		
 
 /* Store the information needed for fancy-indexing over an array */
