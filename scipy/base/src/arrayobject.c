@@ -6601,6 +6601,7 @@ static PyTypeObject PyArrayIter_Type = {
 #define SOBJ_BADARRAY 2
 #define SOBJ_TOOMANY 3
 #define SOBJ_LISTTUP 4
+#define SOBJ_BADSEQ 5
 
 static int
 fancy_indexing_check(PyObject *args)
@@ -6622,8 +6623,13 @@ fancy_indexing_check(PyObject *args)
 					break;
 				}
 			}
-			else if (PySequence_Check(obj))
-				retval = SOBJ_ISFANCY;
+			else if (PySequence_Check(obj)) {
+				if (PyString_Check(obj) ||	\
+				    PyUnicode_Check(obj))
+					return SOBJ_BADSEQ;
+				else
+					retval = SOBJ_ISFANCY;
+			}
 		}
 	}	
 	else if (PyArray_Check(args)) {
@@ -6639,6 +6645,10 @@ fancy_indexing_check(PyObject *args)
 		   as long as there are also no Arrays and or additional
 		   sequences embedded.
 		*/
+		if (PyString_Check(obj) || PyUnicode_Check(obj)) {
+			return SOBJ_BADSEQ;
+			return retval;
+		}
 		retval = SOBJ_ISFANCY;
 		n = PySequence_Size(args);
 		if (n<0 || n>=MAX_DIMS) return SOBJ_ISFANCY;
@@ -6652,7 +6662,11 @@ fancy_indexing_check(PyObject *args)
 					retval = SOBJ_BADARRAY;
 			}
 			else if (PySequence_Check(obj)) {
-				retval = SOBJ_LISTTUP;
+				if (PyString_Check(obj) ||	\
+				    PyUnicode_Check(obj))
+					retval = SOBJ_BADSEQ;
+				else
+					retval = SOBJ_LISTTUP;
 			}
 			else if (PySlice_Check(obj) || obj == Py_Ellipsis || \
 			    obj == Py_None) {
@@ -7112,13 +7126,17 @@ PyArray_MapIterNew(PyObject *indexobj)
 	}
 
 	if (fancy == SOBJ_BADARRAY) {
-		PyErr_SetString(PyExc_TypeError,			\
+		PyErr_SetString(PyExc_IndexError,			\
 				"arrays used as indices must be of "    \
 				"integer type");
 		goto fail;
 	}
 	if (fancy == SOBJ_TOOMANY) {
-		PyErr_SetString(PyExc_TypeError, "too many indices");
+		PyErr_SetString(PyExc_IndexError, "too many indices");
+		goto fail;
+	}
+	if (fancy == SOBJ_BADSEQ) {
+		PyErr_SetString(PyExc_IndexError, "Bad sequence as index.");
 		goto fail;
 	}
 
