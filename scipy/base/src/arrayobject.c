@@ -4734,7 +4734,8 @@ _array_find_type(PyObject *op, PyArray_Typecode *minitype,
                         Py_DECREF(ip);
 			goto finish;
 		}
-                Py_DECREF(ip);
+                Py_XDECREF(ip);
+		if (PyErr_Occurred()) PyErr_Clear();
         } 
 
 	if (PyInstance_Check(op)) goto deflt;

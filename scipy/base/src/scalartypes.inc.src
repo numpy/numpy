@@ -126,7 +126,11 @@ gentype_alloc(PyTypeObject *type, int nitems)
         const size_t size = _PyObject_VAR_SIZE(type, nitems+1);
 
         obj = (PyObject *)malloc(size);
-        PyObject_Init(obj, type);
+	memset(obj, 0, size);
+	if (type->tp_itemsize == 0)
+                PyObject_INIT(obj, type);
+        else
+                (void) PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
         return obj;
 }
 
@@ -1520,7 +1524,9 @@ initialize_numeric_types(void)
 	PyGenericArrType_Type.tp_getset = gentype_getsets;
 	PyGenericArrType_Type.tp_new = NULL;
         PyGenericArrType_Type.tp_alloc = gentype_alloc;
+	PyStringArrType_Type.tp_alloc = NULL;
 	PyGenericArrType_Type.tp_free = free;
+	PyStringArrType_Type.tp_free = NULL;
 	PyGenericArrType_Type.tp_repr = gentype_repr;
 	PyGenericArrType_Type.tp_str = gentype_str;
 	PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
