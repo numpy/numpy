@@ -20,6 +20,7 @@ real_fft2d(a, s=None, axes=(-2,-1))
 inverse_real_fft2d(a, s=None, axes=(-2, -1))
 """
 from fft_lite import *
+from helper import *
 
 ifft = inverse_fft
 refft = real_fft
@@ -37,4 +38,3 @@ ifft2 = inverse_fft2d
 refft2 = real_fft2d
 irefft2 = inverse_real_fft2d
 
-from helper import *

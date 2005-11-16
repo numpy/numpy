@@ -1221,6 +1221,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
 		return NULL;
 	}
 	loop = malloc(sizeof(PyUFuncLoopObject));
+	if (loop==NULL) return NULL;
 	
 	loop->index = 0;
 	loop->ufunc = self;
@@ -1489,7 +1490,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
  fail:
         LOOP_END_THREADS
 
-        ufuncloop_dealloc(loop);
+	if (loop) ufuncloop_dealloc(loop);
 	return -1;
  }
 
@@ -1566,7 +1567,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
         
         if ((loop = malloc(sizeof(PyUFuncReduceObject)))==NULL) {
                 PyErr_NoMemory(); return loop;
-        }       
+        }
         
         loop->swap = 0;
 	loop->index = 0;

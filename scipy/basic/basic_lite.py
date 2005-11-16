@@ -215,10 +215,10 @@ def _convertarray(a):
 
 # Eigenvectors
 
-def eigenvectors(a):
-    """eigenvectors(a) returns u,v  where u is the eigenvalues and
-v is a matrix of eigenvectors with vector v[i] corresponds to
-eigenvalue u[i].  Satisfies the equation dot(a, v[i]) = u[i]*v[i]
+def eig(a):
+    """eig(a) returns u,v  where u is the eigenvalues and
+v is a matrix of eigenvectors with vector v[:,i] corresponds to
+eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
 """
     a = asarray(a)    
     _assertRank2(a)
@@ -270,10 +270,10 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[i]) = u[i]*v[i]
                 v[ind[2*i+1]] = vr[ind[2*i]] - 1j*vr[ind[2*i+1]]
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
-    return w,wrap(v)
+    return w,wrap(v.transpose())
 
 
-def Heigenvectors(a, UPLO='L'):
+def eigh(a, UPLO='L'):
     _assertRank2(a)
     _assertSquareness(a)
     t =_commonType(a)
@@ -307,12 +307,12 @@ def Heigenvectors(a, UPLO='L'):
         results = lapack_routine('V', UPLO, n, a, n,w, work, lwork, iwork, liwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
-    return w,wrap(a)
+    return w,wrap(a.transpose())
 
 
 # Singular value decomposition
 
-def singular_value_decomposition(a, full_matrices = 0):
+def svd(a, full_matrices = 1):
     _assertRank2(a)
     n = a.shape[1]
     m = a.shape[0]
@@ -365,7 +365,7 @@ def generalized_inverse(a, rcond = 1.e-10):
     a = Numeric.array(a, copy=0)
     if a.dtypechar in Numeric.typecodes['Complex']:
         a = Numeric.conjugate(a)
-    u, s, vt = singular_value_decomposition(a, 0)
+    u, s, vt = svd(a, 0)
     m = u.shape[0]
     n = vt.shape[1]
     cutoff = rcond*Numeric.maximum.reduce(s)
@@ -492,7 +492,7 @@ if __name__ == '__main__':
 
         ev = eigenvalues(a)
 
-        evalues, evectors = eigenvectors(a)
+        evalues, evectors = eig(a)
         check = ev-evalues
         print check
 
@@ -501,7 +501,7 @@ if __name__ == '__main__':
         print check
 
 
-        u, s, vt = singular_value_decomposition(a)
+        u, s, vt = svd(a,0)
         check = a - Numeric.matrixmultiply(u*s, vt)
         print check
 

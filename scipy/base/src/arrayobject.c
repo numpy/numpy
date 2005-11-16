@@ -7365,10 +7365,9 @@ arraymultiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 		return NULL;
 	}
 	
-        fprintf(stderr, "multi new...");
-        multi = PyObject_New(PyArrayMultiIterObject, &PyArrayMultiIter_Type);
-        if (multi == NULL)
-                return NULL;
+	multi = malloc(sizeof(PyArrayMultiIterObject));
+        if (multi == NULL) return PyErr_NoMemory();
+	PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
 	multi->numiter = n;
 	multi->index = 0;
@@ -7420,7 +7419,7 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
 
 	for (i=0; i<multi->numiter; i++) 
 		Py_XDECREF(multi->iters[i]);
-        PyObject_Del(multi);
+	free(multi);
 }
 
 static PyTypeObject PyArrayMultiIter_Type = {
