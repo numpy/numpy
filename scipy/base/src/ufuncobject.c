@@ -1180,9 +1180,35 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         return nargs;
 }
 
-static PyTypeObject PyUFuncLoop_Type;
+static void
+ufuncreduce_dealloc(PyUFuncReduceObject *self)
+{
+        if (self->ufunc) {
+                Py_XDECREF(self->it);
+		Py_XDECREF(self->rit);
+                Py_XDECREF(self->ret);
+		Py_XDECREF(self->errobj);
+		Py_XDECREF(self->decref);
+                if (self->buffer) free(self->buffer);
+                Py_DECREF(self->ufunc);
+        }
+        free(self);
+}
 
-static void ufuncloop_dealloc(PyUFuncLoopObject *);
+static void
+ufuncloop_dealloc(PyUFuncLoopObject *self)
+{
+	int i;
+	
+	if (self->ufunc != NULL) {
+		for (i=0; i<self->ufunc->nargs; i++)
+			Py_XDECREF(self->iters[i]);
+		if (self->buffer[0]) free(self->buffer[0]);
+		Py_XDECREF(self->errobj);
+		Py_DECREF(self->ufunc);
+	}
+        free(self);
+}
 
 static PyUFuncLoopObject *
 construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
@@ -1194,11 +1220,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
 		PyErr_SetString(PyExc_ValueError, "function not supported");
 		return NULL;
 	}
-	if ((loop=PyObject_NEW(PyUFuncLoopObject, &PyUFuncLoop_Type)) == NULL)
-		return NULL;
-	/* --- no real speed increase this way
 	loop = malloc(sizeof(PyUFuncLoopObject));
-	*/
 	
 	loop->index = 0;
 	loop->ufunc = self;
@@ -1223,7 +1245,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
 	return loop;
 
  fail:
-        Py_DECREF(loop);
+        ufuncloop_dealloc(loop);
 	return NULL;
 }
 
@@ -1305,7 +1327,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
         BEGIN_THREADS_DEF
 
 	if (!(loop = construct_loop(self, args, mps))) return -1;
-        if (loop->notimplemented) {Py_DECREF(loop); return -2;}
+        if (loop->notimplemented) {ufuncloop_dealloc(loop); return -2;}
 
 	LOOP_BEGIN_THREADS
 
@@ -1460,14 +1482,14 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 	}	
 	
         LOOP_END_THREADS
-
-	Py_DECREF(loop);
+                
+        ufuncloop_dealloc(loop);
 	return 0;
 
  fail:
         LOOP_END_THREADS
 
-	Py_DECREF(loop);                        
+        ufuncloop_dealloc(loop);
 	return -1;
  }
 
@@ -1527,11 +1549,6 @@ _create_reduce_copy(PyUFuncReduceObject *loop, PyArrayObject **arr, int rtype)
 	return 0;
 }
 
-
-static PyTypeObject PyUFuncReduce_Type;
-
-static void ufuncreduce_dealloc(PyUFuncReduceObject *);
-
 static PyUFuncReduceObject *
 construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis, 
 		 int otype, int operation, intp ind_size, char *str)
@@ -1546,12 +1563,11 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 	int nd = (*arr)->nd;
 	/* Reduce type is the type requested of the input 
 	   during reduction */
-
-	if ((loop=PyObject_NEW(PyUFuncReduceObject, 
-			       &PyUFuncReduce_Type)) == NULL)
-		return NULL;
-
-
+        
+        if ((loop = malloc(sizeof(PyUFuncReduceObject)))==NULL) {
+                PyErr_NoMemory(); return loop;
+        }       
+        
         loop->swap = 0;
 	loop->index = 0;
 	loop->ufunc = self;
@@ -1741,7 +1757,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 	return loop;
 
  fail:
-        Py_DECREF(loop);
+        ufuncreduce_dealloc(loop);
 	return NULL;	
 }
 
@@ -1876,14 +1892,14 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 
         ret = loop->ret;
 	/* Hang on to this reference -- will be decref'd with loop */
-        Py_INCREF(ret);  
-        Py_DECREF(loop);
+        Py_INCREF(ret);
+        ufuncreduce_dealloc(loop);
         return (PyObject *)ret;
 
  fail:
         LOOP_END_THREADS
 
-        Py_XDECREF(loop);
+        if (loop) ufuncreduce_dealloc(loop);
         return NULL;
 }
 
@@ -2010,14 +2026,14 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
 	LOOP_END_THREADS
         ret = loop->ret;
 	/* Hang on to this reference -- will be decref'd with loop */
-        Py_INCREF(ret);  
-        Py_DECREF(loop);
+        Py_INCREF(ret);
+        ufuncreduce_dealloc(loop);
         return (PyObject *)ret;
 
  fail:
 	LOOP_END_THREADS
 
-        Py_XDECREF(loop);
+        if (loop) ufuncreduce_dealloc(loop);
         return NULL;
 }
 
@@ -2158,14 +2174,14 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 	
         ret = loop->ret;
 	/* Hang on to this reference -- will be decref'd with loop */
-        Py_INCREF(ret);  
-        Py_DECREF(loop);
+        Py_INCREF(ret);
+        ufuncreduce_dealloc(loop);
         return (PyObject *)ret;
 	
  fail:
 	LOOP_END_THREADS
 
-	Py_XDECREF(loop);
+        if (loop) ufuncreduce_dealloc(loop);
 	return NULL;
 }
 
@@ -2465,9 +2481,10 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
                 return NULL;
         }
 	
-	if ((self = PyObject_NEW(PyUFuncObject, &PyUFunc_Type)) == NULL) 
-		return NULL;
-	
+        self = malloc(sizeof(PyUFuncObject));
+        if (self == NULL) return NULL;
+        PyObject_Init((PyObject *)self, &PyUFunc_Type);
+
 	self->userloops = NULL;
 	self->nin = nin;
 	self->nout = nout;
@@ -2545,9 +2562,10 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
 			char *name, char *doc, int check_return) 
 {
 	PyUFuncObject *self;
-	
-	if ((self = PyObject_NEW(PyUFuncObject, &PyUFunc_Type)) == NULL) 
-		return NULL;
+
+        self = malloc(sizeof(PyUFuncObject));
+        if (self == NULL) return NULL;
+        PyObject_Init((PyObject *)self, &PyUFunc_Type);
 	
 	self->nin = nin;
 	self->nout = nout;
@@ -2617,43 +2635,12 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 }
 
 static void
-ufuncreduce_dealloc(PyUFuncReduceObject *self)
-{
-        if (self->ufunc) {
-                Py_XDECREF(self->it);
-		Py_XDECREF(self->rit);
-                Py_XDECREF(self->ret);
-		Py_XDECREF(self->errobj);
-		Py_XDECREF(self->decref);
-                if (self->buffer) free(self->buffer);
-                Py_DECREF(self->ufunc);
-        }
-        PyObject_DEL(self);
-}
-
-static void
-ufuncloop_dealloc(PyUFuncLoopObject *self)
-{
-	int i;
-	
-	if (self->ufunc != NULL) {
-		for (i=0; i<self->ufunc->nargs; i++)
-			Py_XDECREF(self->iters[i]);
-		if (self->buffer[0]) free(self->buffer[0]);
-		Py_XDECREF(self->errobj);
-		Py_DECREF(self->ufunc);
-	}
-	PyObject_DEL(self);
-}
-
-
-static void
 ufunc_dealloc(PyUFuncObject *self)
 {
         if (self->ptr) free(self->ptr);
 	Py_XDECREF(self->userloops);
         Py_XDECREF(self->obj);
-	PyObject_DEL(self);
+        free(self);
 }
 
 static PyObject *
@@ -2934,28 +2921,6 @@ static PyTypeObject PyUFunc_Type = {
 	0L,0L,0L,0L,
 	Ufunctype__doc__ /* Documentation string */
 };
-
-static PyTypeObject PyUFuncLoop_Type = {
-	PyObject_HEAD_INIT(0)
-	0,				/*ob_size*/
-	"ufuncloop",			/*tp_name*/
-	sizeof(PyUFuncLoopObject),	/*tp_basicsize*/
-	0,				/*tp_itemsize*/
-	/* methods */
-	(destructor)ufuncloop_dealloc	/*tp_dealloc*/
-};
-
-
-static PyTypeObject PyUFuncReduce_Type = {
-	PyObject_HEAD_INIT(0)
-	0,				/*ob_size*/
-	"ufuncreduce",			/*tp_name*/
-	sizeof(PyUFuncReduceObject),	/*tp_basicsize*/
-	0,				/*tp_itemsize*/
-	/* methods */
-	(destructor)ufuncreduce_dealloc	/*tp_dealloc*/
-};
-
 
 /* End of code for ufunc objects */
 /* -------------------------------------------------------- */

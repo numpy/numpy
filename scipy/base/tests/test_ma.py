@@ -522,7 +522,6 @@ class test_ma(ScipyTestCase):
         self.failUnless(allclose(average(x), 2.5))
         self.failUnless(allclose(average(x, weights=w1), 2.5))
         y=array([arange(6), 2.0*arange(6)])
-        y = array([[0,1,2,3,4,5],[0.,2.,4.,6,8,10]])
         self.failUnless(allclose(average(y, None), scipy.add.reduce(scipy.arange(6))*3./12.))
         self.failUnless(allclose(average(y, axis=0), scipy.arange(6) * 3./2.))
         self.failUnless(allclose(average(y, axis=1), [average(x), average(x) * 2.0]))

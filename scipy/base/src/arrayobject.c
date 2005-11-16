@@ -4425,6 +4425,16 @@ static PyGetSetDef array_getsetlist[] = {
 /****************** end of attribute get and set routines *******************/
 
 
+static PyObject *
+array_alloc(PyTypeObject *type, int nitems)
+{
+        PyObject *obj;
+        /* nitems will always be 0 */        
+        obj = (PyObject *)malloc(sizeof(PyArrayObject));
+        PyObject_Init(obj, type);
+        return obj;
+}
+
 
 static char Arraytype__doc__[] = 
         "A array object represents a multidimensional, homogeneous array\n"
@@ -4482,9 +4492,9 @@ static PyTypeObject PyBigArray_Type = {
         0,					  /* tp_descr_set */
         0,					  /* tp_dictoffset */
         (initproc)0,	  	                  /* tp_init */
-        0,	                                  /* tp_alloc */ 
+        array_alloc,	                          /* tp_alloc */ 
         (newfunc)array_new,		          /* tp_new */
-        0,	               	                  /* tp_free */
+        free,	                   	          /* tp_free */
         0,					  /* tp_is_gc */
         0,					  /* tp_bases */
         0,					  /* tp_mro */
@@ -5970,7 +5980,9 @@ PyArray_IterNew(PyObject *obj)
                 return NULL;
         }
 
-        it = PyObject_GC_New(PyArrayIterObject, &PyArrayIter_Type);
+        it = (PyArrayIterObject *)malloc(sizeof(PyArrayIterObject));
+        PyObject_Init((PyObject *)it, &PyArrayIter_Type);
+        /* it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);*/
         if (it == NULL)
                 return NULL;
 
@@ -5994,7 +6006,6 @@ PyArray_IterNew(PyObject *obj)
 	}
 	PyArray_ITER_RESET(it);
 	
-        PyObject_GC_Track(it);
         return (PyObject *)it;
 }
 
@@ -6016,19 +6027,9 @@ arrayiter_next(PyArrayIterObject *it)
 static void
 arrayiter_dealloc(PyArrayIterObject *it)
 {
-        PyObject_GC_UnTrack(it);
         Py_XDECREF(it->ao);
-        PyObject_GC_Del(it);
+        free(it);
 }
-
-static int
-arrayiter_traverse(PyArrayIterObject *it, visitproc visit, void *arg)
-{
-        if (it->ao)
-                return visit((PyObject *)(it->ao), arg);
-        return 0;
-}
-
 
 static int
 iter_length(PyArrayIterObject *self) 
@@ -6568,10 +6569,9 @@ static PyTypeObject PyArrayIter_Type = {
         0,	                         	/* tp_getattro */
         0,					/* tp_setattro */
         0,					/* tp_as_buffer */
-        Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | \
-	Py_TPFLAGS_HAVE_ITER,                   /* tp_flags */
+        Py_TPFLAGS_DEFAULT,                     /* tp_flags */
         0,					/* tp_doc */
-        (traverseproc)arrayiter_traverse,	/* tp_traverse */
+        0,      	                        /* tp_traverse */
         0,					/* tp_clear */
         0,					/* tp_richcompare */
         0,					/* tp_weaklistoffset */
@@ -7089,7 +7089,9 @@ PyArray_MapIterNew(PyObject *indexobj)
 	PyObject *arr = NULL;
 	int i, n, started, nonindex;
 
-        mit = PyObject_New(PyArrayMapIterObject, &PyArrayMapIter_Type);
+        
+        mit = (PyArrayMapIterObject *)malloc(sizeof(PyArrayMapIterObject));
+        PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
         if (mit == NULL)
                 return NULL;
 	for (i=0; i<MAX_DIMS; i++)
@@ -7222,7 +7224,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
 	Py_XDECREF(mit->subspace);
 	for (i=0; i<mit->numiter; i++)
 		Py_XDECREF(mit->iters[i]);
-        PyObject_Del(mit);
+        free(mit);
 }
 
 /* The mapiter object must be created new each time.  It does not work
@@ -7303,7 +7305,8 @@ PyArray_MultiIterNew(int n, ...)
 			     "array objects (inclusive).", MAX_DIMS);
 	}
 	
-        multi = PyObject_GC_New(PyArrayMultiIterObject, &PyArrayMultiIter_Type);
+        fprintf(stderr, "multi new...");
+        multi = PyObject_New(PyArrayMultiIterObject, &PyArrayMultiIter_Type);
         if (multi == NULL)
                 return NULL;
 	
@@ -7328,7 +7331,6 @@ PyArray_MultiIterNew(int n, ...)
 	
 	if (!err && PyArray_Broadcast(multi) < 0) err=1;
 
-        PyObject_GC_Track(multi);
 	if (err) {
                 Py_DECREF(multi);
 		return NULL;
@@ -7362,7 +7364,8 @@ arraymultiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 		return NULL;
 	}
 	
-        multi = PyObject_GC_New(PyArrayMultiIterObject, &PyArrayMultiIter_Type);
+        fprintf(stderr, "multi new...");
+        multi = PyObject_New(PyArrayMultiIterObject, &PyArrayMultiIter_Type);
         if (multi == NULL)
                 return NULL;
 
@@ -7380,11 +7383,9 @@ arraymultiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	if (PyArray_Broadcast(multi) < 0) goto fail;
 	PyArray_MultiIter_RESET(multi);
 	
-        PyObject_GC_Track(multi);
         return (PyObject *)multi;
 	
  fail:
-        PyObject_GC_Track(multi);
         Py_DECREF(multi);
 	return NULL;
 }
@@ -7416,23 +7417,9 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
 {
 	int i;
 
-        PyObject_GC_UnTrack(multi);
 	for (i=0; i<multi->numiter; i++) 
 		Py_XDECREF(multi->iters[i]);
-        PyObject_GC_Del(multi);
-}
-
-static int
-arraymultiter_traverse(PyArrayMultiIterObject *multi, visitproc visit, void *arg)
-{
-	int err, i;
-
-        for (i=0; i<multi->numiter; i++) 
-		if (multi->iters[i]) {
-			err = visit((PyObject *)(multi->iters[i]), arg);
-			if (err) return err;
-		}
-        return 0;
+        PyObject_Del(multi);
 }
 
 static PyTypeObject PyArrayMultiIter_Type = {
@@ -7457,10 +7444,9 @@ static PyTypeObject PyArrayMultiIter_Type = {
         0,	                         	/* tp_getattro */
         0,					/* tp_setattro */
         0,					/* tp_as_buffer */
-        Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC	\
-	| Py_TPFLAGS_HAVE_ITER,                 /* tp_flags */
+        Py_TPFLAGS_DEFAULT,                     /* tp_flags */
         0,					/* tp_doc */
-        (traverseproc)arraymultiter_traverse,	/* tp_traverse */
+        0,        	                        /* tp_traverse */
         0,					/* tp_clear */
         0,					/* tp_richcompare */
         0,					/* tp_weaklistoffset */

@@ -1739,13 +1739,6 @@ DL_EXPORT(void) initumath(void) {
 	if (PyType_Ready(&PyUFunc_Type) < 0)
                 return;
 
-	if (PyType_Ready(&PyUFuncLoop_Type) < 0)
-		return;
-
-	if (PyType_Ready(&PyUFuncReduce_Type) < 0)
-                return;
-
-
 	/* Add some symbolic constants to the module */
 	d = PyModule_GetDict(m);
 
