@@ -119,6 +119,16 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Typecode *outcode)
 	return ret;
 }
 
+static PyObject *
+gentype_alloc(PyTypeObject *type, int nitems)
+{
+        PyObject *obj;
+        const size_t size = _PyObject_VAR_SIZE(type, nitems+1);
+
+        obj = (PyObject *)malloc(size);
+        PyObject_Init(obj, type);
+        return obj;
+}
 
 static void
 gentype_dealloc(PyObject *v) 
@@ -1509,7 +1519,8 @@ initialize_numeric_types(void)
 	PyGenericArrType_Type.tp_methods = gentype_methods;
 	PyGenericArrType_Type.tp_getset = gentype_getsets;
 	PyGenericArrType_Type.tp_new = NULL;
-	PyGenericArrType_Type.tp_free = PyObject_Del;
+        PyGenericArrType_Type.tp_alloc = gentype_alloc;
+	PyGenericArrType_Type.tp_free = free;
 	PyGenericArrType_Type.tp_repr = gentype_repr;
 	PyGenericArrType_Type.tp_str = gentype_str;
 	PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
