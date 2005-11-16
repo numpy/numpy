@@ -4087,6 +4087,8 @@ DL_EXPORT(void) initmultiarray(void) {
 
         if (setup_scalartypes(d) < 0) goto err;
 
+	PyArrayIter_Type.tp_iter = PyObject_SelfIter;
+	PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
 	if (PyType_Ready(&PyArrayIter_Type) < 0)
 		return; 
         

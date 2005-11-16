@@ -6576,7 +6576,7 @@ static PyTypeObject PyArrayIter_Type = {
         0,					/* tp_clear */
         0,					/* tp_richcompare */
         0,					/* tp_weaklistoffset */
-        PyObject_SelfIter, 	                /* tp_iter */
+        0,         	                        /* tp_iter */
         (iternextfunc)arrayiter_next,		/* tp_iternext */
         iter_methods,				/* tp_methods */
 };
@@ -6645,7 +6645,7 @@ fancy_indexing_check(PyObject *args)
 		   as long as there are also no Arrays and or additional
 		   sequences embedded.
 		*/
-		if (PyString_Check(obj) || PyUnicode_Check(obj)) {
+		if (PyString_Check(args) || PyUnicode_Check(args)) {
 			return SOBJ_BADSEQ;
 			return retval;
 		}
@@ -7468,7 +7468,7 @@ static PyTypeObject PyArrayMultiIter_Type = {
         0,					/* tp_clear */
         0,					/* tp_richcompare */
         0,					/* tp_weaklistoffset */
-        PyObject_SelfIter,    	                /* tp_iter */
+        0,         	                        /* tp_iter */
         (iternextfunc)arraymultiter_next,	/* tp_iternext */
         0,             	                        /* tp_methods */
         0,					  /* tp_members */

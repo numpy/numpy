@@ -100,8 +100,6 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # (-mthreads: Support thread-safe exception handling on `Mingw32')       
         
         # no additional libraries needed -- maybe need msvcr71
-        if sys.version[:3] > '2.3':
-            self.dll_libraries = ['msvcr71']
         #self.dll_libraries=[]
         return
 
@@ -121,6 +119,11 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
              extra_postargs=None,
              build_temp=None,
              target_lang=None):
+        if sys.platform[:3] > '2.3':
+            if libraries:
+                libraries.append('msvcr71')
+            else:
+                libraries = ['msvcr71']
         args = (self,
                 target_desc,
                 objects,
