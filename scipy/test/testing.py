@@ -210,6 +210,26 @@ def _get_all_method_names(cls):
                     names.append(n)
     return names
 
+# for debug build--check for memory leaks during the test.
+class _SciPyTextTestResult(unittest._TextTestResult):
+    def startTest(self, test):
+        unittest._TextTestResult.startTest(self, test)
+        if self.showAll:
+            N = len(sys.getobjects(0))
+            self._totnumobj = N
+            self._totrefcnt = sys.gettotalrefcount()
+            
+    def stopTest(self, test):
+        if self.showAll:
+            N = len(sys.getobjects(0))
+            self.stream.write("objects: %d ===> %d;   " % (self._totnumobj, N))
+            self.stream.write("refcnts: %d ===> %d\n" % (self._totrefcnt,
+                              sys.gettotalrefcount()))
+
+class SciPyTextTestRunner(unittest.TextTestRunner):
+    def _makeResult(self):
+        return _SciPyTextTestResult(self.stream, self.descriptions, self.verbosity)
+    
 __all__.append('ScipyTest')
 class ScipyTest:
     """ Scipy tests site manager.
@@ -366,6 +386,9 @@ class ScipyTest:
         suites.extend(self._get_suite_list(sys.modules[package_name], level))
 
         all_tests = unittest.TestSuite(suites)
+        #if hasattr(sys,'getobjects'):
+        #    runner = SciPyTextTestRunner(verbosity=verbosity)
+        #else:
         runner = unittest.TextTestRunner(verbosity=verbosity)
         # Use the builtin displayhook. If the tests are being run
         # under IPython (for instance), any doctest test suites will
