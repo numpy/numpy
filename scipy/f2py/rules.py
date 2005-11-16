@@ -991,10 +991,10 @@ if (#varname#_capi==Py_None) {
                  ],
     'cleanupfrompyobj':[ # note that this list will be reversed
     '\t}  /*if (capi_#varname#_tmp == NULL) ... else of #varname#*/',
-    {l_not(isintent_hide):"""\
+    {l_not(l_or(isintent_out,isintent_hide)):"""\
 \tif((PyObject *)capi_#varname#_tmp!=#varname#_capi) {
 \t\tPy_XDECREF(capi_#varname#_tmp); }"""},
-    {isintent_hide:"""\t\tPy_XDECREF(capi_#varname#_tmp);"""},
+    {l_and(isintent_hide,l_not(isintent_out)):"""\t\tPy_XDECREF(capi_#varname#_tmp);"""},
     {hasinitvalue:'\t}  /*if (f2py_success) of #varname# init*/'},
     ],
     '_check':isarray,
