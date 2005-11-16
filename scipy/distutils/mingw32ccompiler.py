@@ -99,8 +99,10 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # dlls need another dll (mingwm10.dll see Mingw32 docs)
         # (-mthreads: Support thread-safe exception handling on `Mingw32')       
         
-        # no additional libraries needed 
-        self.dll_libraries=[]
+        # no additional libraries needed -- maybe need msvcr71
+        if sys.version[:3] > '2.3':
+            self.dll_libraries = ['msvcr71']
+        #self.dll_libraries=[]
         return
 
     # __init__ ()

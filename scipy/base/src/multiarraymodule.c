@@ -3250,39 +3250,36 @@ PyArray_FromFile(FILE *fp, PyArray_Typecode *typecode, intp num, char *sep)
 	PyArrayObject *r;
 	size_t nread = 0;
 	PyArray_ScanFunc *scan;
+	Bool binary;
 
 	if (typecode->itemsize == 0) {
 		if (_fill_in_itemsize(typecode) < 0) 
 			return NULL;
 	}
 
-	if (num == -1 && sep == NULL) {  /* Get size for binary file*/
+	binary = ((sep == NULL) || (strlen(sep) == 0));
+	if (num == -1 && binary) {  /* Get size for binary file*/
 		intp start, numbytes;
 		start = (intp )ftell(fp);
 		fseek(fp, 0, SEEK_END);
 		numbytes = (intp )ftell(fp) - start;
-		fseek(fp, start, SEEK_SET);
+		rewind(fp);
 		if (numbytes == -1) {
-			PyErr_SetString(PyExc_IOError, "could not seek in file");
+			PyErr_SetString(PyExc_IOError, 
+					"could not seek in file");
 			return NULL;
 		}
-		if (typecode->itemsize == 0) {
-			typecode->itemsize = numbytes;
-			num = 1;
-		}
-		else {
-			num = numbytes / typecode->itemsize;
-		}
+		num = numbytes / typecode->itemsize;
 	}
 	
-	if (sep==NULL) { /* binary data */
+	if (binary) { /* binary data */
 		r = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &num, 
 						 typecode->type_num,
 						 NULL, NULL, 
 						 typecode->itemsize, 
 						 0, NULL);
 		if (r==NULL) return NULL;
-		nread = fread(r->data, typecode->itemsize, num, fp);
+		nread = fread(r->data, r->itemsize, num, fp);
 	}
 	else {  /* character reading */
 		intp i;
