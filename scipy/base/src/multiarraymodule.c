@@ -2656,6 +2656,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         nd = PyArray_IntpFromSequence(obj, (intp *)seq->ptr, len);
         if (nd == -1 || nd != len) {
 		PyDimMem_FREE(seq->ptr);
+		seq->ptr=NULL;
 		return PY_FAIL;
 	}
         return PY_SUCCEED;
@@ -2674,7 +2675,7 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
         PyArray_Descr *descr;
         int check_num=PyArray_NOTYPE+10;
 	int len;
-	PyObject *item, *attr=NULL;
+	PyObject *item;
 
 	at->itemsize = 0;
         if (obj == Py_None) {
@@ -2682,12 +2683,29 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
                 return PY_SUCCEED;
         }
 
-        if (PyType_Check(obj) && PyType_IsSubtype((PyTypeObject *)obj, 
-                                                  &PyGenericArrType_Type)) {
-                PyArray_TypecodeFromTypeObject(obj, at);
-                return PY_SUCCEED;
-        }
-
+        if (PyType_Check(obj)) {
+		if (PyType_IsSubtype((PyTypeObject *)obj, 
+				     &PyGenericArrType_Type)) {
+			PyArray_TypecodeFromTypeObject(obj, at);
+			return PY_SUCCEED;
+		}
+		check_num = PyArray_OBJECT;
+		if (obj == (PyObject *)(&PyInt_Type)) 
+			check_num = PyArray_LONG;
+		else if (obj == (PyObject *)(&PyBool_Type))
+			check_num = PyArray_BOOL;
+		else if (obj == (PyObject *)(&PyFloat_Type)) 
+			check_num = PyArray_DOUBLE;
+		else if (obj == (PyObject *)(&PyComplex_Type)) 
+			check_num = PyArray_CDOUBLE;
+                else if (obj == (PyObject *)(&PyString_Type))
+                        check_num = PyArray_STRING;
+                else if (obj == (PyObject *)(&PyUnicode_Type))
+                        check_num = PyArray_UNICODE;
+		else if (obj == (PyObject *)(&PyBuffer_Type))
+			check_num = PyArray_VOID;
+		goto finish;
+	}	
 
 	/* type object could be an array */
 	if (PyArray_Check(obj)) {
@@ -2736,36 +2754,6 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 			}
 		}
 	}
-	/* Arbitray object with dtypechar and itemsize attributes. */
-	else if (PyObject_HasAttrString(obj, "dtypechar") && 
-		 PyObject_HasAttrString(obj, "itemsize")) {
-		attr = PyObject_GetAttrString(obj, "dtypechar");
-		if (attr && PyString_GET_SIZE(attr) > 0) {
-			type = PyString_AsString(attr);
-			check_num = (int) type[0];
-		}
-		Py_XDECREF(attr);
-		if (!PyErr_Occurred()) {
-			attr = PyObject_GetAttrString(obj, "itemsize");
-			at->itemsize = PyInt_AsLong(attr);
-			Py_XDECREF(attr);
-		}			
-	}		
-	else if (PyType_Check(obj)) {
-		check_num = PyArray_OBJECT;
-		if (obj == (PyObject *)(&PyInt_Type)) 
-			check_num = PyArray_LONG;
-		else if (obj == (PyObject *)(&PyBool_Type))
-			check_num = PyArray_BOOL;
-		else if (obj == (PyObject *)(&PyFloat_Type)) 
-			check_num = PyArray_DOUBLE;
-		else if (obj == (PyObject *)(&PyComplex_Type)) 
-			check_num = PyArray_CDOUBLE;
-                else if (obj == (PyObject *)(&PyString_Type))
-                        check_num = PyArray_STRING;
-                else if (obj == (PyObject *)(&PyUnicode_Type))
-                        check_num = PyArray_UNICODE;
-	}	
         else { /* Default -- try integer conversion */
 		/* Don't allow integer conversion */
                 /* check_num = PyInt_AsLong(obj); */
@@ -2780,6 +2768,8 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 	/*
 	if (check_num == PyArray_NOTYPE) return PY_FAIL;
 	*/
+
+ finish:
 	if (check_num == PyArray_NOTYPE) {
 		at->type_num = PyArray_NOTYPE;
 		at->itemsize = 0;
@@ -2967,7 +2957,6 @@ static PyObject *
 PyArray_Empty(int nd, intp *dims, PyArray_Typecode *type)
 {
 	PyArrayObject *ret;
-	intp n;
         
 	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, nd, dims, 
 					   type->type_num,
@@ -2975,7 +2964,6 @@ PyArray_Empty(int nd, intp *dims, PyArray_Typecode *type)
 					   type->fortran, NULL);
 	if (ret == NULL) return NULL;
         
-	n = PyArray_SIZE(ret);
 	if ((PyArray_TYPE(ret) == PyArray_OBJECT)) {
                 PyArray_FillObjectArray(ret, Py_None);
 	}
@@ -3098,14 +3086,14 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Typecode *type)
 					   type->fortran, NULL);
 	if (ret == NULL) return NULL;
         
-	n = PyArray_SIZE(ret);
 	if ((PyArray_TYPE(ret) == PyArray_OBJECT)) {
 		PyObject *zero = PyInt_FromLong(0);
                 PyArray_FillObjectArray(ret, zero);
                 Py_DECREF(zero);
 	}
 	else {
-		memset(ret->data, 0, n*(ret->itemsize));
+		n = PyArray_NBYTES(ret);
+		memset(ret->data, 0, n);
 	}
 	return (PyObject *)ret;
 
