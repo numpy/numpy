@@ -42,7 +42,7 @@ class test_properties(ScipyTestCase):
         mB = matrix(B)
         assert allclose(linalg.inv(B), mB.I)
         assert all(array(transpose(B) == mB.T))
-        assert all(array(conjugate(transpose(B)), mB.H))
+        assert all(array(conjugate(transpose(B)) == mB.H))
 
 class test_algebra(ScipyTestCase):
     def test_basic(self):
