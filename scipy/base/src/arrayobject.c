@@ -2323,27 +2323,27 @@ array_inplace_true_divide(PyArrayObject *m1, PyObject *m2)
 						    n_ops.true_divide);
 }
 
-/* Array evaluates as "TRUE" if any of the elements are non-zero */
-/* static int  */
-/* array_any_nonzero(PyArrayObject *mp)  */
-/* { */
-/* 	intp index; */
-/* 	PyArrayIterObject *it; */
-/* 	Bool anyTRUE = FALSE; */
+/* Array evaluates as "TRUE" if any of the elements are non-zero*/
+static int 
+array_any_nonzero(PyArrayObject *mp) 
+{
+	intp index;
+	PyArrayIterObject *it;
+	Bool anyTRUE = FALSE;
 	
-/* 	it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp); */
-/* 	if (it==NULL) return anyTRUE; */
-/* 	index = it->size; */
-/* 	while(index--) { */
-/* 		if (mp->descr->nonzero(it->dataptr, mp)) { */
-/* 			anyTRUE = TRUE; */
-/* 			break; */
-/* 		} */
-/* 		PyArray_ITER_NEXT(it); */
-/* 	} */
-/* 	Py_DECREF(it); */
-/* 	return anyTRUE; */
-/* } */
+	it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
+	if (it==NULL) return anyTRUE;
+	index = it->size;
+	while(index--) {
+		if (mp->descr->nonzero(it->dataptr, mp)) {
+			anyTRUE = TRUE;
+			break;
+		}
+		PyArray_ITER_NEXT(it);
+	}
+	Py_DECREF(it);
+	return anyTRUE;
+}
 
 static int
 _array_nonzero(PyArrayObject *mp)
@@ -2654,7 +2654,14 @@ array_contains(PyArrayObject *self, PyObject *el)
 {
         /* equivalent to (self == el).any() */
 
-	return PyObject_RichCompareBool((PyObject *)self, el, Py_EQ);
+        PyObject *res;        
+        int ret;
+
+        res = PyArray_EnsureArray(PyObject_RichCompare((PyObject *)self, el, Py_EQ));
+        if (res == NULL) return -1;
+        ret = array_any_nonzero((PyArrayObject *)res);
+        Py_DECREF(res);
+        return ret;
 }
 
 
@@ -6601,7 +6608,6 @@ static PyTypeObject PyArrayIter_Type = {
 #define SOBJ_BADARRAY 2
 #define SOBJ_TOOMANY 3
 #define SOBJ_LISTTUP 4
-#define SOBJ_BADSEQ 5
 
 static int
 fancy_indexing_check(PyObject *args)
@@ -6624,11 +6630,7 @@ fancy_indexing_check(PyObject *args)
 				}
 			}
 			else if (PySequence_Check(obj)) {
-				if (PyString_Check(obj) ||	\
-				    PyUnicode_Check(obj))
-					return SOBJ_BADSEQ;
-				else
-					retval = SOBJ_ISFANCY;
+                                retval = SOBJ_ISFANCY;
 			}
 		}
 	}	
@@ -6645,10 +6647,6 @@ fancy_indexing_check(PyObject *args)
 		   as long as there are also no Arrays and or additional
 		   sequences embedded.
 		*/
-		if (PyString_Check(args) || PyUnicode_Check(args)) {
-			return SOBJ_BADSEQ;
-			return retval;
-		}
 		retval = SOBJ_ISFANCY;
 		n = PySequence_Size(args);
 		if (n<0 || n>=MAX_DIMS) return SOBJ_ISFANCY;
@@ -6662,11 +6660,7 @@ fancy_indexing_check(PyObject *args)
 					retval = SOBJ_BADARRAY;
 			}
 			else if (PySequence_Check(obj)) {
-				if (PyString_Check(obj) ||	\
-				    PyUnicode_Check(obj))
-					retval = SOBJ_BADSEQ;
-				else
-					retval = SOBJ_LISTTUP;
+                                retval = SOBJ_LISTTUP;
 			}
 			else if (PySlice_Check(obj) || obj == Py_Ellipsis || \
 			    obj == Py_None) {
@@ -7135,10 +7129,6 @@ PyArray_MapIterNew(PyObject *indexobj)
 		PyErr_SetString(PyExc_IndexError, "too many indices");
 		goto fail;
 	}
-	if (fancy == SOBJ_BADSEQ) {
-		PyErr_SetString(PyExc_IndexError, "Bad sequence as index.");
-		goto fail;
-	}
 
 	if (fancy == SOBJ_LISTTUP) {
 		PyObject *newobj;
@@ -7176,7 +7166,7 @@ PyArray_MapIterNew(PyObject *indexobj)
 		}
 	}
 
-	else if (PyList_Check(indexobj) || PyArray_Check(indexobj)) {
+	else if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
 		mit->numiter = 1;
 		arr = PyArray_FromAny(indexobj, &indtype, 0, 0, FORCECAST);
 		if (arr == NULL) goto fail;
@@ -7198,14 +7188,14 @@ PyArray_MapIterNew(PyObject *indexobj)
 		n = PyTuple_GET_SIZE(indexobj);
 		new = PyTuple_New(n);
 		if (new == NULL) goto fail;
-		Py_DECREF(mit->indexobj);
-		mit->indexobj = new;
 		started = 0;
 		nonindex = 0;
 		for (i=0; i<n; i++) {
 			obj = PyTuple_GET_ITEM(indexobj,i);
-			if (_convert_obj(obj, &iter) < 0)
+			if (_convert_obj(obj, &iter) < 0) {
+                                Py_DECREF(new);
 				goto fail;
+                        }
 			if (iter!= NULL) { 
 				started = 1;
 				if (nonindex) mit->consec = 0;
@@ -7219,6 +7209,8 @@ PyArray_MapIterNew(PyObject *indexobj)
 				PyTuple_SET_ITEM(new,i,obj);
 			}
 		}
+		Py_DECREF(mit->indexobj);
+		mit->indexobj = new;
 		/* Store the number of iterators actually converted */
 		/*  These will be mapped to actual axes at bind time */
 		if (PyArray_Broadcast((PyArrayMultiIterObject *)mit) < 0)
