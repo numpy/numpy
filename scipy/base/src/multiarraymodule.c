@@ -3740,11 +3740,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 	PyObject *tup=NULL, *obj=NULL;
 	PyObject *ret=NULL, *zero=NULL;
 
-	if ((x==NULL) || (y==NULL)) {
-		PyErr_SetString(PyExc_ValueError, "either both or neither"
-				"of x and y should be given");
-		return NULL;
-	}
 
 	arr = (PyArrayObject *)PyArray_FromAny(condition, NULL, 0, 0, 0);
 	if (arr == NULL) return NULL;
@@ -3755,9 +3750,18 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 		return ret;
 	}
 
+	if ((x==NULL) || (y==NULL)) {
+		Py_DECREF(arr);
+		PyErr_SetString(PyExc_ValueError, "either both or neither"
+				"of x and y should be given");
+		return NULL;
+	}
+
+
 	zero = PyInt_FromLong((long) 0);
 
-	obj = PyArray_EnsureArray(PyArray_GenericBinaryFunction(arr, zero, n_ops.not_equal));
+	obj = PyArray_EnsureArray(PyArray_GenericBinaryFunction(arr, zero, 
+								n_ops.not_equal));
 	Py_DECREF(zero);
 	Py_DECREF(arr);
 	if (obj == NULL) return NULL;
