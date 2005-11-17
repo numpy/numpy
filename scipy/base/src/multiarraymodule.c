@@ -2708,17 +2708,17 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 	}	
 
 	/* type object could be an array */
-	if (PyArray_Check(obj)) {
-		at->type_num = PyArray_TYPE(obj);
-		at->itemsize = PyArray_ITEMSIZE(obj);
-		return PY_SUCCEED;
-	}
+/* 	if (PyArray_Check(obj)) { */
+/* 		at->type_num = PyArray_TYPE(obj); */
+/* 		at->itemsize = PyArray_ITEMSIZE(obj); */
+/* 		return PY_SUCCEED; */
+/* 	} */
 
 	/* or an array scalar */
-        if (PyArray_IsScalar(obj, Generic)) {
-                PyArray_TypecodeFromScalar(obj, at);
-                return PY_SUCCEED;
-        }
+/*         if (PyArray_IsScalar(obj, Generic)) { */
+/*                 PyArray_TypecodeFromScalar(obj, at); */
+/*                 return PY_SUCCEED; */
+/*         } */
 
 	/* or a typecode string */
 
