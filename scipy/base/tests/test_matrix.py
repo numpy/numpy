@@ -44,6 +44,48 @@ class test_properties(ScipyTestCase):
         assert all(array(transpose(B) == mB.T))
         assert all(array(conjugate(transpose(B)) == mB.H))
 
+class test_autocasting(ScipyTestCase):
+    def test_basic(self):
+        A = arange(100).reshape(10,10)
+        mA = matrix(A)
+        
+        mB = mA.copy()
+        O = ones((10,10), float64) * 0.1
+        mB += O
+        assert mB.dtype == float64
+        assert all(mA != mB)
+        assert all(mB == mA+0.1)
+        
+        mC = mA.copy()
+        O = ones((10,10), complex128)
+        mC *= O
+        assert mC.dtype == complex128
+        assert all(mA != mB)
+
+    def test_comparisons(self):
+        A = arange(100).reshape(10,10)
+        mA = matrix(A)
+        mB = matrix(A) + 0.1
+        assert all(mB == A+0.1)
+        assert all(mB == matrix(A+0.1))
+        assert not any(mB == matrix(A-0.1))
+        assert all(mA < mB)
+        assert all(mA <= mB)
+        assert all(mA <= mA)
+        assert not any(mA < mA)
+        
+        assert not any(mB < mA)
+        assert all(mB >= mA)
+        assert all(mB >= mB)
+        assert not any(mB > mB)
+        
+        assert all(mA == mA)
+        assert not any(mA == mB)
+        assert all(mB != mA)
+        
+        assert not all(abs(mA) > 0)
+        assert all(abs(mB > 0))
+
 class test_algebra(ScipyTestCase):
     def test_basic(self):
         from scipy import linalg
