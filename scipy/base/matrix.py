@@ -113,59 +113,59 @@ class matrix(object):
             return out.A[0,0]
         # Return array if the output is 1-d, or matrix if the output is 2-d
         if out.ndim == 2:
-            return matrix(out)
+            return asmatrix(out)
         else:
             return out
 
     def copy(self):
-        return matrix(self.arr.copy())
+        return asmatrix(self.arr.copy())
 
     def __copy__(self):
-        return matrix(self.arr.copy())
+        return asmatrix(self.arr.copy())
 
     def __add__(self, other):
-        return matrix(self.arr + other)
+        return asmatrix(self.arr + other)
 
     def __radd__(self, other):
-        return matrix(other + self.arr)
+        return asmatrix(other + self.arr)
 
     def __sub__(self, other):
-        return matrix(self.arr - other)
+        return asmatrix(self.arr - other)
 
     def __rsub__(self, other):
-        return matrix(other - self.arr)
+        return asmatrix(other - self.arr)
 
     def __mul__(self, other):
         if (isinstance(other, N.ndarray) or isinstance(other, matrix)) \
                 and other.ndim == 0:
-            return matrix(N.multiply(self.arr, other))
+            return asmatrix(N.multiply(self.arr, other))
         else:
-            return matrix(N.dot(self.arr, other))
+            return asmatrix(N.dot(self.arr, other))
 
     def __rmul__(self, other):
         if (isinstance(other, N.ndarray) or isinstance(other, matrix)) \
                 and other.ndim == 0:
-            return matrix(N.multiply(other, self.arr))
+            return asmatrix(N.multiply(other, self.arr))
         else:
-            return matrix(N.dot(other, self.arr))
+            return asmatrix(N.dot(other, self.arr))
 
     def __div__(self, other):
         try:
             if other.ndim == 0:
-                return matrix(N.divide(self.arr, other))
+                return asmatrix(N.divide(self.arr, other))
             else:
                 raise NotImplementedError, "matrix division not yet implemented"
         except AttributeError: 
-            return matrix(N.divide(self.arr, other))
+            return asmatrix(N.divide(self.arr, other))
 
     def __rdiv__(self, other):
         try:
             if other.ndim == 0:
-                return matrix(N.divide(other, self.arr))
+                return asmatrix(N.divide(other, self.arr))
             else:
                 raise NotImplementedError, "matrix division not yet implemented"
         except AttributeError: 
-            return matrix(N.divide(other, self.arr))
+            return asmatrix(N.divide(other, self.arr))
 
     def __iadd__(self, other):
         new = self.arr + other
@@ -253,11 +253,11 @@ class matrix(object):
     def __abs__(self):
         return self.arr.__abs__()
 
-    def __getattr__(self, obj):
-        return self.arr.__getattribute__(obj)
+    #def __getattr__(self, obj):
+    #    return self.arr.__getattribute__(obj)
 
     def __setattr__(self, obj, value):
-        if obj in ('shape', 'arr'):
+        if obj in ('arr',):
             object.__setattr__(self, obj, value)
         else:
             self.arr.__setattr__(obj, value)
@@ -268,7 +268,7 @@ class matrix(object):
             raise TypeError, "matrix is not square"
         if type(other) in (type(1), type(1L)):
             if other==0:
-                return matrix(N.identity(shape[0]))
+                return asmatrix(N.identity(shape[0]))
             if other<0:
                 x = self.I
                 other=-other
@@ -306,6 +306,14 @@ class matrix(object):
     def __str__(self):
         return str(self.arr)
 
+    def reshape(self, newshape):
+        return asmatrix(self.arr.reshape(newshape))
+
+    def astype(self, t):
+        """ Cast matrix to the given data type.
+        """
+        return asmatrix(self.arr.astype(t))
+
     # Needed becase tolist method expects a[i] 
     #  to have dimension a.ndim-1
     #def tolist(self):
@@ -315,22 +323,59 @@ class matrix(object):
         return self.arr
 
     def getT(self):
-        return matrix(self.arr.transpose())
+        return asmatrix(self.arr.transpose())
 
     def getH(self):
         if issubclass(self.arr.dtype, N.complexfloating):
-            return matrix(self.arr.transpose().conjugate())
+            return asmatrix(self.arr.transpose().conjugate())
         else:
-            return matrix(self.arr.transpose())
+            return asmatrix(self.arr.transpose())
 
     def getI(self):
         from scipy import linalg
-        return matrix(linalg.inv(self))
+        return asmatrix(linalg.inv(self))
+
+    def getshape(self):
+        return self.arr.shape
+
+    def getdtype(self):
+        return self.arr.dtype
+
+    def getdtypechar(self):
+        return self.arr.dtypechar
+
+    def getsize(self):
+        return self.arr.size
+
+    def getflags(self):
+        return self.arr.flags
+
+    def getndim(self):
+        return self.arr.ndim
+
+    def getreal(self):
+        return asmatrix(self.arr.real)
+
+    def getimag(self):
+        return asmatrix(self.arr.imag)
+
+    def getdata(self):
+        return self.arr.data
 
     A = property(getA, None, doc="base array")
     T = property(getT, None, doc="transpose")
     H = property(getH, None, doc="hermitian (conjugate) transpose")
     I = property(getI, None, doc="inverse")
+    shape = property(getshape, None, doc="2-tuple of matrix dimensions")
+    dtype = property(getdtype, None, doc="data type")
+    dtypechat = property(getdtypechar, None, doc="data type character code")
+    size = property(getsize, None, doc="number of elements")
+    flags = property(getflags, None, doc="dictionary of special array flags")
+    ndim = property(getndim, None, doc="number of dimensions (always 2 for " \
+            "matrices)")
+    real = property(getreal, None, doc="real part of matrix")
+    imag = property(getimag, None, doc="imaginary part of matrix")
+    data = property(getdata, None, doc="dictionary of special array flags")
 
 
 def _from_string(str,gdict,ldict):
