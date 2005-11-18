@@ -996,10 +996,6 @@ PyArray_Concatenate(PyObject *op, int axis)
 	PyTypeObject *subtype;
 	double prior1, prior2;
 	intp numbytes;
-        PyArray_Typecode intype = {-2,0,0};
-        PyArray_Typecode stype = {0,0,0};
-	int allscalars = 0;
-	
 
 	n = PySequence_Length(op);
 	if (n == -1) {
@@ -1015,55 +1011,16 @@ PyArray_Concatenate(PyObject *op, int axis)
 	if ((axis < 0) || ((0 < axis) && (axis < MAX_DIMS)))
 		return _swap_and_concat(op, axis, n);
 	
-	ret = NULL;
-	
-	mps = (PyArrayObject **)malloc(n*sizeof(PyArrayObject *));
-	if (mps == NULL) {
-		PyErr_SetString(PyExc_MemoryError, "memory error");
-		return NULL;
-	}
+	mps = PyArray_ConvertToCommonType(op, &n);
+	if (mps == NULL) return NULL;
 	
 	/* Make sure these arrays are legal to concatenate. */
-	/* Must have same dimensions except d0, and have coercible type. */
+	/* Must have same dimensions except d0 */
 	
-	for(i=0; i<n; i++) {
-		otmp = PySequence_GetItem(op, i);
-		if (!PyArray_CheckAnyScalar(otmp)) {
-			PyArray_ArrayType(otmp, &intype, &intype);
-			mps[i] = NULL;
-		}
-		else {
-			PyArray_ArrayType(otmp, &stype, &stype);
-			mps[i] = (PyArrayObject *)Py_None;
-			Py_INCREF(Py_None);
-		}
-		Py_XDECREF(otmp);
-	}
-	if (intype.type_num == -2) { /* all scalars */
-		allscalars = 1;
-		memcpy(&intype, &stype, sizeof(PyArray_Typecode));
-	}
-	if (intype.type_num == -1) {
-		PyErr_SetString(PyExc_TypeError, 
-				"can't find common type for arrays "\
-				"to concatenate");
-		goto fail;
-	}
-
 	prior1 = 0.0;
 	subtype = &PyArray_Type;
 	ret = NULL;
 	for(i=0; i<n; i++) {
-		int flags = CARRAY_FLAGS;
-		if ((otmp = PySequence_GetItem(op, i)) == NULL) goto fail;
-		if (!allscalars && ((PyObject *)(mps[i]) == Py_None)) {
-			flags |= FORCECAST;
-			Py_DECREF(Py_None);
-		}
-		mps[i] = (PyArrayObject*)
-			PyArray_FromAny(otmp, &intype, 0, 0, CARRAY_FLAGS);
-		Py_DECREF(otmp);
-		if (mps[i] == NULL) goto fail;
 		if (axis >= MAX_DIMS) {
 			otmp = PyArray_Ravel(mps[i],0);
 			Py_DECREF(mps[i]);
@@ -1109,8 +1066,9 @@ PyArray_Concatenate(PyObject *op, int axis)
 	mps[0]->dimensions[0] = new_dim;
 	ret = (PyArrayObject *)PyArray_New(subtype, nd,
 					   mps[0]->dimensions, 
-					   intype.type_num, NULL, NULL, 
-                                           intype.itemsize, 0,
+					   mps[0]->descr->type_num, 
+					   NULL, NULL, 
+                                           mps[0]->itemsize, 0,
                                            (PyObject *)ret);
 	mps[0]->dimensions[0] = tmp;
 	
@@ -1326,33 +1284,21 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis) {
 	return NULL;
 }
 
-
-static PyObject *
-PyArray_Choose(PyArrayObject *ip, PyObject *op) {
-	intp i, n, *sizes, m, offset, elsize, type_num;
-	char *ret_data;
-	PyArrayObject **mps, *ap, *ret;
+static PyArrayObject **
+PyArray_ConvertToCommonType(PyObject *op, int *retn)
+{
+	int i, n, allscalars; 
+	PyArrayObject **mps=NULL;
 	PyObject *otmp;
-	intp *self_data, mi;
-	PyArray_Typecode intype = {-2,0,0};
+	PyArray_Typecode intype = {-1,0,0};
 	PyArray_Typecode stype = {0,0,0};
-	ap = NULL;
-	ret = NULL;
-	int allscalars = 0;
 	
-	n = PySequence_Length(op);
+	*retn = n = PySequence_Length(op);
+	if (PyErr_Occurred()) return NULL;
 	
-	mps = (PyArrayObject **)malloc(n*sizeof(PyArrayObject *));
-	if (mps == NULL) {
-		PyErr_SetString(PyExc_MemoryError, "memory error");
-		return NULL;
-	}
+	mps = (PyArrayObject **)PyDataMem_NEW(n*sizeof(PyArrayObject *));
+	if (mps == NULL) return (void*)PyErr_NoMemory();
 	
-	sizes = (intp *)malloc(n*sizeof(intp));
-	
-	/* Figure out the right type for the new array */
-	
-	type_num = 0;
 	for(i=0; i<n; i++) {
 		otmp = PySequence_GetItem(op, i);
 		if (!PyArray_CheckAnyScalar(otmp)) {
@@ -1366,17 +1312,10 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 		}
 		Py_XDECREF(otmp);
 	}
-	if (intype.type_num == -2) { /* all scalars */
+	if (intype.type_num == -1) { /* all scalars */
 		allscalars = 1;
 		memcpy(&intype, &stype, sizeof(PyArray_Typecode));
 	}
-	if (intype.type_num == -1) {
-		PyErr_SetString(PyExc_TypeError, 
-				"can't find common type for arrays to "\
-				"choose from");
-		goto fail;
-	}
-	
 	/* Make sure all arrays are actual array objects. */
 	for(i=0; i<n; i++) {
 		int flags = CARRAY_FLAGS;
@@ -1390,8 +1329,32 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 		mps[i] = (PyArrayObject*)
                         PyArray_FromAny(otmp, &intype, 0, 0, flags);
 		Py_DECREF(otmp);
-	}
+	}	
+	return mps;
+
+ fail:
+	for (i=0; i<n; i++) Py_XDECREF(mps[i]);
+	free(mps);
+	return NULL;
+}
+
+
+static PyObject *
+PyArray_Choose(PyArrayObject *ip, PyObject *op) {
+	intp i, n, *sizes, m, offset, elsize;
+	char *ret_data;
+	PyArrayObject **mps, *ap, *ret;
+	intp *self_data, mi;
+	ap = NULL;
+	ret = NULL;
 	
+       	
+	sizes = (intp *)malloc(n*sizeof(intp));
+	if (sizes == NULL) return PyErr_NoMemory();
+	
+	/* Convert all inputs to arrays of a common type */
+	mps = PyArray_ConvertToCommonType(op, &n);	
+	if (mps == NULL) return NULL;
 	ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)ip, 
 							   PyArray_INTP, 
 							   0, 0);
@@ -1415,8 +1378,10 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	}
 	
 	ret = (PyArrayObject *)PyArray_New(ap->ob_type, ap->nd,
-					   ap->dimensions, intype.type_num,
-					   NULL, NULL, intype.itemsize, 0, 
+					   ap->dimensions, 
+					   mps[0]->descr->type_num,
+					   NULL, NULL, 
+					   mps[0]->itemsize, 0, 
 					   (PyObject *)ap);
 	if (ret == NULL) goto fail;
 	
