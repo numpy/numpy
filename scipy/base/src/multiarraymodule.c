@@ -1294,10 +1294,11 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 	PyArray_Typecode stype = {0,0,0};
 	
 	*retn = n = PySequence_Length(op);
-	if (PyErr_Occurred()) return NULL;
+	if (PyErr_Occurred()) {*retn = 0; return NULL;}
 	
 	mps = (PyArrayObject **)PyDataMem_NEW(n*sizeof(PyArrayObject *));
 	if (mps == NULL) {
+		*retn = 0;
 		return (void*)PyErr_NoMemory();
 	}
 	
@@ -1339,6 +1340,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 	return mps;
 
  fail:
+	*retn = 0;
 	for (i=0; i<n; i++) Py_XDECREF(mps[i]);
 	PyDataMem_FREE(mps);
 	return NULL;
@@ -1357,7 +1359,6 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	/* Convert all inputs to arrays of a common type */
 	mps = PyArray_ConvertToCommonType(op, &n);
 	if (mps == NULL) return NULL;
-	if (n == 0) goto fail;
 
 	sizes = (intp *)malloc(n*sizeof(intp));
 	if (sizes == NULL) goto fail;
