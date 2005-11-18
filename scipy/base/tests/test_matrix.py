@@ -44,24 +44,6 @@ class test_properties(ScipyTestCase):
         assert all(array(transpose(B) == mB.T))
         assert all(array(conjugate(transpose(B)) == mB.H))
 
-class test_autocasting(ScipyTestCase):
-    def test_basic(self):
-        A = arange(100).reshape(10,10)
-        mA = matrix(A)
-        
-        mB = mA.copy()
-        O = ones((10,10), float64) * 0.1
-        mB += O
-        assert mB.dtype == float64
-        assert all(mA != mB)
-        assert all(mB == mA+0.1)
-        
-        mC = mA.copy()
-        O = ones((10,10), complex128)
-        mC *= O
-        assert mC.dtype == complex128
-        assert all(mA != mB)
-
     def test_comparisons(self):
         A = arange(100).reshape(10,10)
         mA = matrix(A)
@@ -85,6 +67,32 @@ class test_autocasting(ScipyTestCase):
         
         assert not all(abs(mA) > 0)
         assert all(abs(mB > 0))
+    
+    def test_asmatrix(self):
+        A = arange(100).reshape(10,10)
+        mA = asmatrix(A)
+        mB = matrix(A)
+        A[0,0] = -10
+        assert A[0,0] == mA[0,0]
+        assert A[0,0] != mB[0,0]
+
+class test_autocasting(ScipyTestCase):
+    def test_basic(self):
+        A = arange(100).reshape(10,10)
+        mA = matrix(A)
+        
+        mB = mA.copy()
+        O = ones((10,10), float64) * 0.1
+        mB += O
+        assert mB.dtype == float64
+        assert all(mA != mB)
+        assert all(mB == mA+0.1)
+        
+        mC = mA.copy()
+        O = ones((10,10), complex128)
+        mC *= O
+        assert mC.dtype == complex128
+        assert all(mA != mB)
 
 class test_algebra(ScipyTestCase):
     def test_basic(self):

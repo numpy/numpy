@@ -1,5 +1,5 @@
 
-__all__ = ['matrix', 'bmat', 'mat']
+__all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import numeric as N
 from numeric import ArrayType, concatenate, integer, multiply, power
@@ -357,6 +357,12 @@ def _from_string(str,gdict,ldict):
         rowtup.append(concatenate(coltup,axis=-1))
     return concatenate(rowtup,axis=0)
 
+def asmatrix(data, dtype=None):
+    """ Returns 'data' as a matrix.  Unlike matrix(), no copy is performed
+    if 'data' is already a matrix or array.  Equivalent to:
+        matrix(data, copy=False)
+    """
+    return matrix(data, dtype=dtype, copy=False)
 
 def bmat(obj,ldict=None, gdict=None):
     """Build a matrix object from string, nested sequence, or array.
