@@ -525,14 +525,6 @@ PyUFunc_clearfperr()
 #define BUFFER_REDUCELOOP 3
 
 
-#define UFUNC_REDUCE 0
-#define UFUNC_ACCUMULATE 1
-#define UFUNC_REDUCEAT 2
-#define UFUNC_OUTER 3
-
-
-
-
 static char
 _lowest_type(char intype)
 {
@@ -665,7 +657,10 @@ select_types(PyUFuncObject *self, int *arg_types,
 	for(j=0; j<self->nargs; j++) 
 		arg_types[j] = self->types[i*self->nargs+j];
 
-	*data = self->data[i];
+        if (self->data)
+                *data = self->data[i];
+        else 
+                *data = NULL;
 	*function = self->functions[i];
 
 	return 0;
@@ -1342,7 +1337,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
                 /*fprintf(stderr, "ONE...%d\n", loop->size);*/
 		loop->function((char **)loop->bufptr, &(loop->size), 
 			       loop->steps, loop->funcdata);
-		UFUNC_CHECK_ERROR();
+		UFUNC_CHECK_ERROR(loop);
 		break;
 	case NOBUFFER_UFUNCLOOP:
 		/* Everything is notswapped, aligned and of the 
@@ -1355,7 +1350,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 
 			loop->function((char **)loop->bufptr, &(loop->bufcnt),
 				       loop->steps, loop->funcdata);
-			UFUNC_CHECK_ERROR();
+			UFUNC_CHECK_ERROR(loop);
 
 			for (i=0; i<self->nargs; i++) {
 				PyArray_ITER_NEXT(loop->iters[i]);
@@ -1446,7 +1441,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 					       &bufcnt, 
 					       steps, loop->funcdata);
  
-				UFUNC_CHECK_ERROR();
+				UFUNC_CHECK_ERROR(loop);
 
 				for (i=self->nin; i<self->nargs; i++) {
 					if (loop->cast[i]) {
@@ -1815,7 +1810,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
                         loop->function((char **)loop->bufptr, 
 				       &(loop->N),
                                        loop->steps, loop->funcdata);
-			UFUNC_CHECK_ERROR();
+			UFUNC_CHECK_ERROR(loop);
 
                         PyArray_ITER_NEXT(loop->it)
                         loop->bufptr[1] += loop->outsize;
@@ -1880,7 +1875,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
                                 loop->function((char **)loop->bufptr,
                                                &i, 
 					       loop->steps, loop->funcdata);
-				UFUNC_CHECK_ERROR();
+				UFUNC_CHECK_ERROR(loop);
                         }                       
                         PyArray_ITER_NEXT(loop->it);
                         loop->bufptr[1] += loop->outsize;
@@ -1949,7 +1944,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
                         loop->function((char **)loop->bufptr, 
 				       &(loop->N),
                                        loop->steps, loop->funcdata);
-			UFUNC_CHECK_ERROR();
+			UFUNC_CHECK_ERROR(loop);
 
                         PyArray_ITER_NEXT(loop->it);
 			PyArray_ITER_NEXT(loop->rit);
@@ -2014,7 +2009,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
                                 loop->function((char **)loop->bufptr,
                                                &i, 
 					       loop->steps, loop->funcdata);
-				UFUNC_CHECK_ERROR();
+				UFUNC_CHECK_ERROR(loop);
                         }                       
                         PyArray_ITER_NEXT(loop->it);
 			PyArray_ITER_NEXT(loop->rit);
@@ -2110,7 +2105,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 					loop->function((char **)loop->bufptr,
 						       &mm, loop->steps,
 						       loop->funcdata);
-					UFUNC_CHECK_ERROR();
+					UFUNC_CHECK_ERROR(loop);
 				}	
 				loop->bufptr[1] += loop->ret->strides[axis];
 				ptr++;
@@ -2158,7 +2153,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 					loop->function((char **)loop->bufptr,
 						       &j, loop->steps,
 						       loop->funcdata);
-					UFUNC_CHECK_ERROR();
+					UFUNC_CHECK_ERROR(loop);
 				} 
 				loop->bufptr[1] += loop->ret->strides[axis];
 				ptr++;

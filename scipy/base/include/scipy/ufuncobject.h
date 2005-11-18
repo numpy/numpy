@@ -176,6 +176,11 @@ typedef struct {
 #define PyUFunc_Zero 0
 #define PyUFunc_None -1
 
+#define UFUNC_REDUCE 0
+#define UFUNC_ACCUMULATE 1
+#define UFUNC_REDUCEAT 2
+#define UFUNC_OUTER 3
+
 
 typedef struct {
         int nin;
@@ -188,11 +193,11 @@ typedef struct {
 
 #define UFUNC_PYVALS_NAME "UFUNC_PYVALS"
 
-#define UFUNC_CHECK_ERROR() \
-	if ((loop->obj && PyErr_Occurred()) ||                          \
-            (loop->errormask &&                                         \
-             PyUFunc_checkfperr(loop->errormask,                        \
-                                loop->errobj)))				\
+#define UFUNC_CHECK_ERROR(arg)                                         \
+	if (((arg)->obj && PyErr_Occurred()) ||                        \
+            ((arg)->errormask &&                                       \
+             PyUFunc_checkfperr((arg)->errormask,                      \
+                                (arg)->errobj)))                       \
 		goto fail
 
 /* This code checks the IEEE status flags in a platform-dependent way */
