@@ -1289,9 +1289,11 @@ typedef struct {
 	(PyInt_Check(obj) || PyFloat_Check(obj) || PyComplex_Check(obj) || \
 	 PyLong_Check(obj) || PyBool_Check(obj) || PyString_Check(obj) || \
 	 PyUnicode_Check(obj))
-#define PyArray_IsAnyScalar(obj) \
+#define PyArray_IsAnyScalar(obj)					\
 	(PyArray_IsScalar(obj, Generic) || PyArray_IsPythonScalar(obj))
-
+#define PyArray_CheckAnyScalar(obj) (PyArray_CheckScalar(obj) ||	\
+				     PyArray_IsPythonScalar(obj))
+	
 #define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ? Py_INCREF(m), m : \
                                   (PyArrayObject *)(PyArray_Copy(m)))
 

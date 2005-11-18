@@ -996,7 +996,10 @@ PyArray_Concatenate(PyObject *op, int axis)
 	PyTypeObject *subtype;
 	double prior1, prior2;
 	intp numbytes;
-        PyArray_Typecode intype = {0,0,0};
+        PyArray_Typecode intype = {-2,0,0};
+        PyArray_Typecode stype = {0,0,0};
+	int allscalars = 0;
+	
 
 	n = PySequence_Length(op);
 	if (n == -1) {
@@ -1025,9 +1028,20 @@ PyArray_Concatenate(PyObject *op, int axis)
 	
 	for(i=0; i<n; i++) {
 		otmp = PySequence_GetItem(op, i);
-                PyArray_ArrayType(otmp, &intype, &intype);
-		mps[i] = NULL;
+		if (!PyArray_CheckAnyScalar(otmp)) {
+			PyArray_ArrayType(otmp, &intype, &intype);
+			mps[i] = NULL;
+		}
+		else {
+			PyArray_ArrayType(otmp, &stype, &stype);
+			mps[i] = (PyArrayObject *)Py_None;
+			Py_INCREF(Py_None);
+		}
 		Py_XDECREF(otmp);
+	}
+	if (intype.type_num == -2) { /* all scalars */
+		allscalars = 1;
+		memcpy(&intype, &stype, sizeof(PyArray_Typecode));
 	}
 	if (intype.type_num == -1) {
 		PyErr_SetString(PyExc_TypeError, 
@@ -1040,7 +1054,12 @@ PyArray_Concatenate(PyObject *op, int axis)
 	subtype = &PyArray_Type;
 	ret = NULL;
 	for(i=0; i<n; i++) {
+		int flags = CARRAY_FLAGS;
 		if ((otmp = PySequence_GetItem(op, i)) == NULL) goto fail;
+		if (!allscalars && ((PyObject *)(mps[i]) == Py_None)) {
+			flags |= FORCECAST;
+			Py_DECREF(Py_None);
+		}
 		mps[i] = (PyArrayObject*)
 			PyArray_FromAny(otmp, &intype, 0, 0, CARRAY_FLAGS);
 		Py_DECREF(otmp);
@@ -1315,9 +1334,11 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	PyArrayObject **mps, *ap, *ret;
 	PyObject *otmp;
 	intp *self_data, mi;
-	PyArray_Typecode intype = {0,0,0};
+	PyArray_Typecode intype = {-2,0,0};
+	PyArray_Typecode stype = {0,0,0};
 	ap = NULL;
 	ret = NULL;
+	int allscalars = 0;
 	
 	n = PySequence_Length(op);
 	
@@ -1334,9 +1355,20 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	type_num = 0;
 	for(i=0; i<n; i++) {
 		otmp = PySequence_GetItem(op, i);
-                PyArray_ArrayType(otmp, &intype, &intype);
-		mps[i] = NULL;
+		if (!PyArray_CheckAnyScalar(otmp)) {
+			PyArray_ArrayType(otmp, &intype, &intype);
+			mps[i] = NULL;
+		}
+		else {
+			PyArray_ArrayType(otmp, &stype, &stype);
+			mps[i] = (PyArrayObject *)Py_None;
+			Py_INCREF(Py_None);
+		}
 		Py_XDECREF(otmp);
+	}
+	if (intype.type_num == -2) { /* all scalars */
+		allscalars = 1;
+		memcpy(&intype, &stype, sizeof(PyArray_Typecode));
 	}
 	if (intype.type_num == -1) {
 		PyErr_SetString(PyExc_TypeError, 
@@ -1347,10 +1379,16 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 	
 	/* Make sure all arrays are actual array objects. */
 	for(i=0; i<n; i++) {
+		int flags = CARRAY_FLAGS;
 		if ((otmp = PySequence_GetItem(op, i)) == NULL) 
 			goto fail;
+		if (!allscalars && ((PyObject *)(mps[i]) == Py_None)) {
+			/* forcecast scalars */
+			flags |= FORCECAST;
+			Py_DECREF(Py_None);
+		}
 		mps[i] = (PyArrayObject*)
-                        PyArray_FromAny(otmp, &intype, 0, 0, CARRAY_FLAGS);
+                        PyArray_FromAny(otmp, &intype, 0, 0, flags);
 		Py_DECREF(otmp);
 	}
 	
@@ -2098,7 +2136,7 @@ PyArray_Max(PyArrayObject *ap, int axis)
 	if ((arr=(PyArrayObject *)_check_axis(ap, &axis, 0))==NULL)
 		return NULL;
 	ret = PyArray_GenericReduceFunction(arr, n_ops.maximum, axis, 
-					    PyArray_NOTYPE);
+					    arr->descr->type_num);
 	Py_DECREF(arr);
 	return ret;	    
 }
@@ -2112,7 +2150,7 @@ PyArray_Min(PyArrayObject *ap, int axis)
 	if ((arr=(PyArrayObject *)_check_axis(ap, &axis, 0))==NULL)
 		return NULL;
 	ret = PyArray_GenericReduceFunction(arr, n_ops.minimum, axis,
-					    PyArray_NOTYPE);
+					    arr->descr->type_num);
 	Py_DECREF(arr);
 	return ret;	    
 }
@@ -3752,7 +3790,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
 	if ((x==NULL) || (y==NULL)) {
 		Py_DECREF(arr);
-		PyErr_SetString(PyExc_ValueError, "either both or neither"
+		PyErr_SetString(PyExc_ValueError, "either both or neither "
 				"of x and y should be given");
 		return NULL;
 	}
