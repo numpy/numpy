@@ -598,6 +598,7 @@ array_resize(PyArrayObject *self, PyObject *args)
 	}
 	ret = PyArray_Resize(self, &newshape);
         PyDimMem_FREE(newshape.ptr);
+        if (ret == NULL) return NULL;
 	Py_DECREF(ret);
 	Py_INCREF(Py_None);
 	return Py_None;
