@@ -1,5 +1,5 @@
 
-__all__ = ['matrix', 'bmat', 'mat']
+__all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import numeric as N
 from numeric import ArrayType, concatenate, integer, multiply, power
@@ -44,6 +44,12 @@ def _convert_from_string(data):
         newdata.append(newrow)
     return newdata
 
+def asmatrix(data, dtype=None):  
+    """ Returns 'data' as a matrix.  Unlike matrix(), no copy is performed  
+    if 'data' is already a matrix or array.  Equivalent to:  
+    matrix(data, copy=False)  
+    """  
+    return matrix(data, dtype=dtype, copy=False)  
 
 class matrix(N.ndarray):
     __array_priority__ = 10.0
@@ -75,16 +81,16 @@ class matrix(N.ndarray):
         elif ndim == 1:
             shape = (1,shape[0])
 
-        fortran = False;
-        if (ndim == 2) and arr.flags['FORTRAN']:
+        fortran = False
+        if (ndim == 2) and arr.flags.fortran:
             fortran = True
-
-        if not (fortran or arr.flags['CONTIGUOUS']):
+            
+        if not (fortran or arr.flags.contiguous):
             arr = arr.copy()
 
         ret = N.ndarray.__new__(matrix, shape, arr.dtype, buffer=arr,
                                 fortran=fortran,
-                                swap=arr.flags['S'])
+                                swap=arr.flags.swapped)
         return ret
 
     def __array_finalize__(self, obj):

@@ -83,14 +83,14 @@ class test_autocasting(ScipyTestCase):
         
         mB = mA.copy()
         O = ones((10,10), float64) * 0.1
-        mB += O
+        mB = mB + O
         assert mB.dtype == float64
         assert all(mA != mB)
         assert all(mB == mA+0.1)
         
         mC = mA.copy()
         O = ones((10,10), complex128)
-        mC *= O
+        mC = mC * O
         assert mC.dtype == complex128
         assert all(mA != mB)
 
