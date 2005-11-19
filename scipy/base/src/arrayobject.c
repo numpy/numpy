@@ -3057,6 +3057,8 @@ _IsWriteable(PyArrayObject *ap)
 {
 	PyObject *base=ap->base;
 	PyBufferProcs *pb;
+	void *dummy;
+	int n;
 
 	/* If we own our own data, then no-problem */
 	if ((base == NULL) || (ap->flags & OWN_DATA)) return TRUE;
@@ -3081,8 +3083,7 @@ _IsWriteable(PyArrayObject *ap)
 	   -- could be abused -- */
 	if PyString_Check(base) return TRUE;
 
-	pb = base->ob_type->tp_as_buffer;
-	if (pb == NULL || pb->bf_getwritebuffer == NULL)
+	if (PyObject_AsWriteBuffer(base, &dummy, &n) < 0)
 		return FALSE;
 	
 	return TRUE;

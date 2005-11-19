@@ -57,6 +57,7 @@ empty = multiarray.empty
 fromstring = multiarray.fromstring
 fromfile = multiarray.fromfile
 frombuffer = multiarray.frombuffer
+newbuffer = multiarray.newbuffer
 where = multiarray.where
 concatenate = multiarray.concatenate
 fastCopyAndTranspose = multiarray._fastCopyAndTranspose

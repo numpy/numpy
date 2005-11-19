@@ -3452,13 +3452,25 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 		}
 	}
 
+	if (buf->ob_type->tp_as_buffer == NULL || \
+	    (buf->ob_type->tp_as_buffer->bf_getwritebuffer == NULL &&	\
+	     buf->ob_type->tp_as_buffer->bf_getreadbuffer == NULL)) {
+		PyObject *newbuf;
+		newbuf = PyObject_CallMethod(buf, "__buffer__", NULL);
+		if (newbuf == NULL) return NULL;
+		buf = newbuf;
+	}
+	else {Py_INCREF(buf);}
+
 	if (PyObject_AsWriteBuffer(buf, (void *)&data, &ts)==-1) {
 		write = 0;
 		PyErr_Clear();
 		if (PyObject_AsReadBuffer(buf, (void *)&data, &ts)==-1) {
+			Py_DECREF(buf);
 			return NULL;
 		}
 	}
+	
 	s = (intp)ts;	
 	n = (intp)count;
 	itemsize = type->itemsize;
@@ -3468,6 +3480,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 			PyErr_SetString(PyExc_ValueError, 
 					"buffer size must be a multiple"\
 					" of element size");
+			Py_DECREF(buf);
 			return NULL;
 		}
 		n = s/itemsize;
@@ -3476,6 +3489,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 			PyErr_SetString(PyExc_ValueError, 
 					"buffer is smaller than requested"\
 					" size");
+			Py_DECREF(buf);
 			return NULL;
 		}
 	}
@@ -3483,12 +3497,14 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 	if ((ret = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &n, 
 						type->type_num, NULL, 
 						data, itemsize, DEFAULT_FLAGS,
-						NULL)) == NULL)
+						NULL)) == NULL) {
+		Py_DECREF(buf);
 		return NULL;
+	}
 	
 	if (!write) ret->flags &= ~WRITEABLE;
 	if (swapped) ret->flags &= ~NOTSWAPPED;
-	Py_INCREF(buf);
+
 	/* Store a reference for decref on deallocation */
 	ret->base = buf;
 	PyArray_UpdateFlags(ret, ALIGNED);
@@ -3851,6 +3867,22 @@ array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
 	return retobj;
 }
 
+static char doc_new_buffer[] = \
+	"newbuffer(size) return a new (uninitialized) buffer object of "\
+	"size bytes.";
+
+static PyObject *
+new_buffer(PyObject *dummy, PyObject *args)
+{
+	int size;
+
+	if(!PyArg_ParseTuple(args, "i", &size))
+		return NULL;
+	
+	return PyBuffer_New(size);
+}
+
+
 static struct PyMethodDef array_module_methods[] = {
 	{"set_string_function", (PyCFunction)array_set_string_function, 
 	 METH_VARARGS|METH_KEYWORDS, doc_set_string_function},
@@ -3891,9 +3923,8 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS, doc_register_dtype},
 	{"can_cast", (PyCFunction)array_can_cast_safely,
 	 METH_VARARGS | METH_KEYWORDS, doc_can_cast_safely},		
-	/*  {"arrayMap",	(PyCFunction)array_arrayMap, 
-	    METH_VARARGS, doc_arrayMap},*/
-	
+	{"newbuffer", (PyCFunction)new_buffer,
+	 METH_VARARGS, doc_new_buffer},	
 	{NULL,		NULL, 0}		/* sentinel */
 };
 

@@ -3,16 +3,16 @@
 This module implements a class wrapper (memmap) around the
 mmap type which adds some additional properties.
 
-The intended use of the class(es) (memmap, memmapSlice) is to create a
+The intended use of the class(es) (memmap, memmapslice) is to create a
 single tier of slices from a file and to use these slices as if they
 were buffers within the Numarray framework.  The slices have these
 properties:
 
-1. memmapSlices are non-overlapping.
-2. memmapSlices are resizable.
-3. memmapSlices from the same memmap remain "related" and affect one
+1. memmapslices are non-overlapping.
+2. memmapslices are resizable.
+3. memmapslices from the same memmap remain "related" and affect one
 anothers buffer offsets.
-4. Changing the size of a memmapSlice changes the size of the parent memmap.
+4. Changing the size of a memmapslice changes the size of the parent memmap.
 
 For example:
 
@@ -32,11 +32,11 @@ Slice m into the buffers "n" and "p" which will correspond to numarray:
 
 >>> n = m[0:16]
 >>> n
-<memmapSlice of length:16 writable>
+<memmapslice of length:16 writable>
 
 >>> p = m[24:48]
 >>> p
-<memmapSlice of length:24 writable>
+<memmapslice of length:24 writable>
 
 NOTE: You *can not* make overlapping slices of a memmap:
 
@@ -47,16 +47,16 @@ IndexError: Slice overlaps prior slice of same file.
 
 NOTE: you *can not* make an array directly from a memmap:
 
->>> import numarrayall as num
->>> c = num.NumArray(buffer=m, shape=(len(m)/4,), type=num.Int32)
+>>> import scipy.base as sb
+>>> c = sb.frombuffer(buffer=m, dtype=sb.int32, count=len(m)/4)
 Traceback (most recent call last):
 ...
 error: NA_updateDataPtr: error getting read buffer data ptr
 
-This fails because m, being the root memmap and not a memmapSlice, does not
+This fails because m, being the root memmap and not a memmapslice, does not
 define __buffer__() or resize().
 
-Finally, the good part.  Make numarray from the memmapSlice "buffers":
+Finally, the good part.  Make numarray from the memmapslice "buffers":
 
 >>> a = num.NumArray(buffer=n, shape=(len(n)/4,), type=num.Int32)
 >>> a[:] = 0  # Since the initial contents of 'n' are undefined.
@@ -70,7 +70,7 @@ array([1, 1, 1, 1], type=Int32)
 >>> b
 array([ 2.,  2.,  2.])
 
-Here's the other good part about memmapSlices:  they're resizable.
+Here's the other good part about memmapslices:  they're resizable.
 
 >>> _junk = a.resize( 6 )
 >>> num.explicit_type(a)
@@ -115,7 +115,7 @@ array([ 2.,  2.,  2.])
 >>> m
 <memmap on file 'memmap.tst' with mode='r+', length=32, 2 slices>
 
-Arrays based on memmapSlices can be pickled:
+Arrays based on memmapslices can be pickled:
 
 >>> import cPickle
 >>> c = cPickle.loads(cPickle.dumps(b))
@@ -123,7 +123,7 @@ Arrays based on memmapSlices can be pickled:
 array([ 2.,  2.,  2.])
 
 However, when the array is restored by the unpickler, the buffer is
-restored as an "orphaned" memmapSlice.  There is currently no support
+restored as an "orphaned" memmapslice.  There is currently no support
 for pickling the memmap.
 
 When you're done with the memory map and numarray, call m.close().  m.close()
@@ -140,7 +140,7 @@ Traceback (most recent call last):
 RuntimeError: memmap no longer valid.  (closed?)
 
 
-Slices of a memmap are memmapSlice objects.  Slices of a memmapSlice
+Slices of a memmap are memmapslice objects.  Slices of a memmapslice
 are strings.
 
 >>> m = memmap("memmap.tst",mode="w+",len=100)
@@ -159,7 +159,7 @@ region of the memmap available for reallocation:
 >>> m = memmap("memmap.tst",mode="w+",len=100)
 >>> m1 = m[0:50]
 
-Delete directly from the memmap without referring to the memmapSlice:
+Delete directly from the memmap without referring to the memmapslice:
 
 >>> del m[0:50]
 >>> m2 = m[0:70]
@@ -171,10 +171,10 @@ invalidated it:
 >>> m1
 Traceback (most recent call last):
 ...
-RuntimeError: A deleted memmapSlice has been used.
+RuntimeError: A deleted memmapslice has been used.
 
 It is a bad idea to mix operations on a memmap which modify its data
-or file structure with slice deletions.  DO NOT use a memmapSlice
+or file structure with slice deletions.  DO NOT use a memmapslice
 where it's contents can be modified or resized and then delete the
 region it refers to later.  In this case, the status of the
 modifications is undefined; the underlying map may or may not reflect
@@ -189,7 +189,7 @@ cannot be resized, flushed, or synced to the original file.
 >>> m = memmap("memmap.tst",mode="c",len=100)
 >>> n = m[:]
 >>> n
-<memmapSlice of length:100 writable>
+<memmapslice of length:100 writable>
 >>> a = num.NumArray(buffer=n, shape=(len(n),), type=num.Int8)
 >>> a += 1
 >>> # it worked!
@@ -211,7 +211,7 @@ of the restrictions of copy-on-write mappings.
 >>> m = memmap("memmap.tst",mode="r",len=100)
 >>> n = m[:]
 >>> n
-<memmapSlice of length:100 readonly>
+<memmapslice of length:100 readonly>
 >>> a = num.NumArray(buffer=n, shape=(len(n),), type=num.Int8)
 >>> a += 1  # can't work...  buffer is readonly
 Traceback (most recent call last):
@@ -230,7 +230,7 @@ import types
 import operator
 import copy_reg
 import copy
-from numeric import fromstring, frombuffer, empty
+from numeric import frombuffer, newbuffer
 
 valid_filemodes = ["r", "c", "r+", "w+"]
 writeable_filemodes = ["r+","w+"]
@@ -388,14 +388,14 @@ class memmap:
         return i
 
     def __getitem__(self,i):
-        """__getitem__(self,i) returns a memmapSlice corresponding to the
+        """__getitem__(self,i) returns a memmapslice corresponding to the
         index 'i' of the memmap 'self'.  The memmap keeps a record of the
         slice so that it can coordinate it with other slices from the same
         file.  Slices of a memmap are not permitted to overlap.
         """
         i, j = self._fix_slice(i)
         self._chkOverlaps(i, j)
-        obj = memmapSlice(self._buffer(i, j), readonly=self._readonly)
+        obj = memmapslice(self._buffer(i, j), readonly=self._readonly)
         self._slices.append((i, j, obj))
         return obj
 
@@ -407,7 +407,7 @@ class memmap:
         for k in range(len(self._slices)):
             b,e,o = self._slices[k]
             if b==i and e==j:
-                o._markDeleted()
+                o._mark_deleted()
                 del self._slices[k]
                 return
         else:
@@ -461,7 +461,7 @@ class memmap:
             (new_map == self._filename or new_map is None)):
             raise RuntimeError("memmap trying to flush onto readonly file")
 
-        temp_map = "memmap.tmp"            
+        temp_map = "memmap.tmp" 
         f = _open(temp_map, "w+")
         mlen = len(self)
         l = self._slices
@@ -541,7 +541,7 @@ class memmap:
         bytes, possibly between two adjacent slices, at byte 'offset'.
         It is not legal to insert into the middle of another slice, but
         pretty much everything else is legal.  The resulting
-        memmapSlice is returned.
+        memmapslice is returned.
 
         >>> m = open("memmap.tst",mode="w+",len=100)
         >>> n = m[0:50]
@@ -561,44 +561,44 @@ class memmap:
         self._chkIndex(offset, isSlice=1)
         self._chkOverlaps(offset, offset)
         if buffer is None:
-            mem = empty((size,),'B').data
+            mem = newbuffer(size)
         elif size is None or len(buffer) == size:
             mem = buffer
             size = len(buffer)
         else:
             raise ValueError("buffer and size don't match.")
-        obj = memmapSlice(mem, dirty=1)
+        obj = memmapslice(mem, dirty=1)
         self._slices.append((offset, offset, obj))
         return obj
 
     def __del__(self):
         self.close()
 
-class memmapSlice:
+class memmapslice:
     def __init__(self, buffer, dirty=0, readonly=0):
         self._buffer = buffer
         self._dirty = dirty
         self._deleted = 0
         self._readonly = readonly
 
-    def _markDeleted(self):
+    def _mark_deleted(self):
         self._deleted = 1
 
-    def _checkDeleted(self):
-        """_checkDeleted ensures that a deleted memmap region does not continue
+    def _check_deleted(self):
+        """_check_deleted ensures that a deleted memmap region does not continue
         to be used.  For a map region to be re-used, a new slice must be taken.
         """
         if self._deleted:
-            raise RuntimeError, "A deleted memmapSlice has been used."
+            raise RuntimeError, "A deleted memmapslice has been used."
 
-    # Limited pickling support: memmapSlices are pickled uniquely, and are
-    # restored as memmapSlices, but they are orphaned in the sense that
+    # Limited pickling support: memmapslices are pickled uniquely, and are
+    # restored as memmapslices, but they are orphaned in the sense that
     # the memory mapped file from which they came is likely to be gone.  
-    # Ideally, under these circumstances, the memmapSlice should just mutate
+    # Ideally, under these circumstances, the memmapslice should just mutate
     # into a memory object on unpickling.  This seems hard to do...
     def __getstate__(self):
-	"""Returns the state of a memmapSlice for pickling."""
-        self._checkDeleted()
+	"""Returns the state of a memmapslice for pickling."""
+        self._check_deleted()
 	d = copy.copy(self.__dict__)
 	d["_buffer"] = str(self._buffer)
 	d["_dirty"] = 0
@@ -606,16 +606,19 @@ class memmapSlice:
 	return d
 
     def __setstate__(self, state):
-	"""Restores the state of a memmapSlice after unpickling."""
+	"""Restores the state of a memmapslice after unpickling."""
         self.__dict__.update(state)
-	self._buffer = fromstring(state["_buffer"]).data
+        strng = state["_buffer"]
+        N = len(string)
+	self._buffer = newbuffer(N)
+        self._buffer[:] = strng
 
     def __repr__(self):
         if self._readonly:
             s = "readonly"
         else:
             s = "writable"
-        return "<memmapSlice of length:%d %s>" % (len(self), s)
+        return "<memmapslice of length:%d %s>" % (len(self), s)
 
     def __len__(self):
         if self._buffer:
@@ -630,7 +633,7 @@ class memmapSlice:
         return self._dirty
 
     def __getitem__(self,i):
-        self._checkDeleted()
+        self._check_deleted()
         if type(i) is types.IntType:
             return str(self.__buffer__()[i])
         elif type(i) is types.SliceType:
@@ -639,7 +642,7 @@ class memmapSlice:
             raise TypeError("Can't handle index type")
 
     def __setitem__(self, i, v):
-        self._checkDeleted()
+        self._check_deleted()
         if type(i) is types.IntType:
             self.__buffer__()[i] = v
         elif type(i) is types.SliceType:
@@ -648,11 +651,11 @@ class memmapSlice:
             raise TypeError("Can't handle index type")
 
     def __buffer__(self):
-        self._checkDeleted()
+        self._check_deleted()
         if self._buffer is not None:
             return self._buffer
         else:
-            raise RuntimeError("memmapSlice no longer valid...(memmap closed?)")
+            raise RuntimeError("memmapslice no longer valid...(memmap closed?)")
 
     def _rebuffer(self, b):
         self._buffer = b
@@ -663,11 +666,11 @@ class memmapSlice:
         """_modify_buffer(self, offset, size) replaces the slice's mmap
         buffer with a resized RAM buffer, and copies the contents.
         """
-        self._checkDeleted()
+        self._check_deleted()
         self._dirty = 1
         olen = len(self)
         nlen = olen+size
-        nm = empty((nlen,),'B').data
+        nm = newbuffer(nlen)
         nm[0:offset] = self._buffer[0:offset]
         if size > 0:
             nm[offset+size:] = self._buffer[offset:]
@@ -683,7 +686,7 @@ class memmapSlice:
         beginning, or the end.
         """
         # Since insertion points aren't indices, tolerate the end
-        self._checkDeleted()
+        self._check_deleted()
         self._chkIndex(offset, 1)
         if offset + size > sys.maxint:
             raise ValueError("Insert makes file too big for integer offsets")
@@ -732,10 +735,10 @@ class memmapSlice:
         self.delete(len(self)-size, size)
 
     def resize(self, newsize):
-        """resize(self, newsize) appends or truncates the memmapSlice to
+        """resize(self, newsize) appends or truncates the memmapslice to
         'newsize'.  Any newly added region is uninitialized.
         """
-        self._checkDeleted()
+        self._check_deleted()
         olen = len(self)
         if newsize > olen:
             self._append( newsize-olen )
@@ -796,6 +799,7 @@ def proveit(N, filename="memmap.dat", pagesize=1024, mode="r"):
     m = memmap(filename, mode=mode)
     n = m[:]
     a = frombuffer(buffer=n, dtype='b', count=len(n))
+    del n
     hits = num.arange(N//pagesize)*pagesize
     fetch = a[ hits ]  # force every page into RAM
 
