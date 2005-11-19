@@ -41,6 +41,8 @@ class GnuFCompiler(FCompiler):
     if os.name != 'nt' and sys.platform!='cygwin':
         pic_flags = ['-fPIC']
 
+    g2c = 'g2c'
+
     #def get_linker_so(self):
     #    # win32 linking should be handled by standard linker
     #    # Darwin g77 cannot be used as a linker.
@@ -94,12 +96,12 @@ class GnuFCompiler(FCompiler):
         opt = []
         d = self.get_libgcc_dir()
         if d is not None:
-            g2c = 'g2c-pic'
+            g2c = self.g2c + '-pic'
             f = self.static_lib_format % (g2c, self.static_lib_extension)
             if not os.path.isfile(os.path.join(d,f)):
-                g2c = 'g2c'
+                g2c = self.g2c
         else:
-            g2c = 'g2c'
+            g2c = self.g2c
         
         if sys.platform=='win32':
             opt.append('gcc')
@@ -230,6 +232,7 @@ class Gnu95FCompiler(GnuFCompiler):
     module_dir_switch = '-M'
     module_include_switch = '-I'
 
+    g2c = 'gfortran'
 
 if __name__ == '__main__':
     from distutils import log
