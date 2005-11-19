@@ -1349,7 +1349,8 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 
 static PyObject *
 PyArray_Choose(PyArrayObject *ip, PyObject *op) {
-	intp i, n, *sizes, m, offset, elsize;
+	intp *sizes, offset;
+	int i,n,m,elsize;
 	char *ret_data;
 	PyArrayObject **mps, *ap, *ret;
 	intp *self_data, mi;
