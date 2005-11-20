@@ -230,7 +230,7 @@ import types
 import operator
 import copy_reg
 import copy
-from numeric import frombuffer, newbuffer
+from numeric import frombuffer, newbuffer, getbuffer
 
 valid_filemodes = ["r", "c", "r+", "w+"]
 writeable_filemodes = ["r+","w+"]
@@ -327,13 +327,10 @@ class memmap:
             raise RuntimeError("memmap no longer valid.  (closed?)")
         if end is None:
             end = len(self)
-        obj = frombuffer(self._mmap)
-        if self._readonly:
-            obj.flags.writeable=False
-        return obj.data
+        return getbuffer(self._mmap, begin, end)    
 
     def _chkOverlaps(self, begin, end):
-        """_chkOverlaps(self, begin, end) is called to raise an exception
+        """_chkOverlaps(self, begin,  end) is called to raise an exception
         if the requested slice will overlap any slices which have already
         been taken.
         """
@@ -621,7 +618,7 @@ class memmapslice:
         return "<memmapslice of length:%d %s>" % (len(self), s)
 
     def __len__(self):
-        if self._buffer:
+        if self._buffer is not None:
             return len(self.__buffer__())
         else:
             return 0
@@ -787,9 +784,8 @@ def test():
 def proveit(N, filename="memmap.dat", pagesize=1024, mode="r"):
     """proveit is a diagnostic function which creates a file of size 'N',
     memory maps it, and then reads one byte at 'pagesize' intervals."""
-    
+
     import numeric as num
-    import os
     
     f = _open(filename, "w+")
     f.seek(N-1)

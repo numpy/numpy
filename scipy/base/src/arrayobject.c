@@ -3056,7 +3056,6 @@ static Bool
 _IsWriteable(PyArrayObject *ap)
 {
 	PyObject *base=ap->base;
-	PyBufferProcs *pb;
 	void *dummy;
 	int n;
 
@@ -4965,6 +4964,8 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in)
 	
 	inbuffer = PyDataMem_NEW(PyArray_BUFSIZE*elsize);
 	if (inbuffer == NULL) return -1;
+	if (PyArray_ISOBJECT(in)) 
+		memset(inbuffer, 0, PyArray_BUFSIZE*elsize);
 	it_in = (PyArrayIterObject *)PyArray_IterNew((PyObject *)in);
 	if (it_in == NULL) goto exit;
 
@@ -4973,7 +4974,9 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in)
 			    PyArray_ISNOTSWAPPED(out));
 		outbuffer = PyDataMem_NEW(PyArray_BUFSIZE*oelsize);
 		if (outbuffer == NULL) goto exit;
-
+		if (PyArray_ISOBJECT(out))
+			memset(outbuffer, 0, PyArray_BUFSIZE*oelsize);
+		
 		it_out = (PyArrayIterObject *)PyArray_IterNew((PyObject *)out);
 		if (it_out == NULL) goto exit;
 
@@ -5115,8 +5118,8 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 				
 	}
 
-	simple =  ((PyArray_ISCARRAY(mp) && PyArray_ISCARRAY(out)) ||   \
-                   (PyArray_ISFARRAY(mp) && PyArray_ISFARRAY(out)));
+	simple =  ((PyArray_ISCARRAY_RO(mp) && PyArray_ISCARRAY(out)) ||   \
+                   (PyArray_ISFARRAY_RO(mp) && PyArray_ISFARRAY(out)));
 	
 	if (simple) {
 		char *inptr;

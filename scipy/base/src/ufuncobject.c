@@ -1149,6 +1149,8 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		loop->buffer[0] = (char *)malloc(loop->bufsize*(cnt+cntcast));
 		/* fprintf(stderr, "Allocated buffer at %p of size %d, cnt=%d, cntcast=%d\n", loop->buffer[0], loop->bufsize * (cnt + cntcast), cnt, cntcast); */
 		if (loop->buffer[0] == NULL) return -1;
+		if (loop->obj) memset(loop->buffer[0], 0, 
+				      loop->bufsize*(cnt+cntcast));
 		castptr = loop->buffer[0] + loop->bufsize*cnt;
 		for (i=0; i<self->nargs; i++) {
 			if (i > 0)
@@ -1215,8 +1217,9 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
 		PyErr_SetString(PyExc_ValueError, "function not supported");
 		return NULL;
 	}
-	loop = malloc(sizeof(PyUFuncLoopObject));
-	if (loop==NULL) return NULL;
+        if ((loop = malloc(sizeof(PyUFuncLoopObject)))==NULL) {
+                PyErr_NoMemory(); return loop;
+        }
 	
 	loop->index = 0;
 	loop->ufunc = self;
@@ -1621,6 +1624,12 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
                 loop->swap = !(PyArray_ISNOTSWAPPED(aar));
         }
 
+        /* Determine if object arrays are involved */
+        if (otype == PyArray_OBJECT || aar->descr->type_num == PyArray_OBJECT)
+                loop->obj = 1;
+        else
+                loop->obj = 0;
+
         if (loop->meth == ZERODIM_REDUCELOOP) {
                 idarr = _getidentity(self, otype, str);
                 if (idarr == NULL) goto fail;
@@ -1721,33 +1730,31 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 	}
 	loop->steps[2] = loop->steps[1];
 	loop->bufptr[2] = loop->bufptr[1] + loop->steps[2];
+
 	
 	if (loop->meth == BUFFER_UFUNCLOOP) {
-
+		int _size;
 		loop->steps[0] = loop->outsize;
                 if (otype != aar->descr->type_num) {
-                        loop->buffer = (char *)malloc(loop->bufsize*\
-                                                      (loop->outsize + \
-                                                       aar->itemsize));
+			_size=loop->bufsize*(loop->outsize +		\
+					     aar->itemsize);
+                        loop->buffer = (char *)malloc(_size);
                         if (loop->buffer == NULL) goto fail;
+			if (loop->obj) memset(loop->buffer, 0, _size);
                         loop->castbuf = loop->buffer + \
                                 loop->bufsize*aar->itemsize;
                         loop->bufptr[0] = loop->castbuf;     
                         loop->cast = aar->descr->cast[otype];
                 }
                 else {
-                        loop->buffer = (char *)malloc(loop->bufsize*\
-                                                      loop->outsize);
+			_size = loop->bufsize * loop->outsize;
+                        loop->buffer = (char *)malloc(_size);
                         if (loop->buffer == NULL) goto fail;
+			if (loop->obj) memset(loop->buffer, 0, _size);
                         loop->bufptr[0] = loop->buffer;
                 }
 	}
 
-        /* Determine if object arrays are involved */
-        if (otype == PyArray_OBJECT || aar->descr->type_num == PyArray_OBJECT)
-                loop->obj = 1;
-        else
-                loop->obj = 0;
 
 	PyUFunc_clearfperr();
 	return loop;
@@ -1785,13 +1792,15 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
         case ZERODIM_REDUCELOOP:
 		/* fprintf(stderr, "ZERO..%d\n", loop->size); */
 		for(i=0; i<loop->size; i++) {
+			if (loop->obj) Py_INCREF(*((PyObject **)loop->idptr));
 			memcpy(loop->bufptr[1], loop->idptr, loop->outsize);
 			loop->bufptr[1] += loop->outsize;
-		}               
+		}
                 break;
         case ONEDIM_REDUCELOOP:
 		/*fprintf(stderr, "ONEDIM..%d\n", loop->size); */
                 while(loop->index < loop->size) {
+			if (loop->obj) Py_INCREF(*((PyObject **)loop->it->dataptr));
                         memcpy(loop->bufptr[1], loop->it->dataptr, 
                                loop->outsize);
 			PyArray_ITER_NEXT(loop->it);
@@ -1803,6 +1812,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 		/*fprintf(stderr, "NOBUFFER..%d\n", loop->size); */
                 while(loop->index < loop->size) {
 			/* Copy first element to output */
+			if (loop->obj) 
+				Py_INCREF(*((PyObject **)loop->it->dataptr));
                         memcpy(loop->bufptr[1], loop->it->dataptr, 
                                loop->outsize);
 			/* Adjust input pointer */
@@ -1816,7 +1827,6 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
                         loop->bufptr[1] += loop->outsize;
                         loop->bufptr[2] = loop->bufptr[1];
                         loop->index++; 
-			if (PyErr_Occurred()) goto fail;
                 }
                 break;
         case BUFFER_UFUNCLOOP:
@@ -1844,6 +1854,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 						     loop->insize);
 				loop->cast(loop->buffer, loop->castbuf,
 					   1, NULL, NULL);
+				if (loop->obj) 
+					Py_INCREF(*((PyObject **)loop->castbuf));
 				memcpy(loop->bufptr[1], loop->castbuf,
 				       loop->outsize);
 			}
@@ -1919,6 +1931,8 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
         case ZERODIM_REDUCELOOP: /* Accumulate */
 		/* fprintf(stderr, "ZERO..%d\n", loop->size); */
 		for(i=0; i<loop->size; i++) {
+			if (loop->obj) 
+				Py_INCREF(*((PyObject **)loop->idptr));
 			memcpy(loop->bufptr[1], loop->idptr, loop->outsize);
 			loop->bufptr[1] += loop->outsize;
 		}               
@@ -1926,6 +1940,8 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
         case ONEDIM_REDUCELOOP: /* Accumulate */
 		/* fprintf(stderr, "ONEDIM..%d\n", loop->size); */
                 while(loop->index < loop->size) {
+			if (loop->obj) 
+				Py_INCREF(*((PyObject **)loop->it->dataptr));
                         memcpy(loop->bufptr[1], loop->it->dataptr, 
                                loop->outsize);
 			PyArray_ITER_NEXT(loop->it);
@@ -1937,6 +1953,8 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
 		/* fprintf(stderr, "NOBUFFER..%d\n", loop->size); */
                 while(loop->index < loop->size) {
 			/* Copy first element to output */
+			if (loop->obj) 
+				Py_INCREF(*((PyObject **)loop->it->dataptr));
                         memcpy(loop->bufptr[1], loop->it->dataptr, 
                                loop->outsize);
 			/* Adjust input pointer */
@@ -1978,6 +1996,8 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
 						     loop->insize);
 				loop->cast(loop->buffer, loop->castbuf,
 					   1, NULL, NULL);
+				if (loop->obj) 
+					Py_INCREF(*((PyObject **)loop->castbuf));
 				memcpy(loop->bufptr[1], loop->castbuf,
 				       loop->outsize);
 			}
@@ -2086,7 +2106,6 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 	case ZERODIM_REDUCELOOP:
 		/* fprintf(stderr, "ZERO..\n"); */
 		break;
-
 	/* NOBUFFER -- behaved array and same type */
 	case NOBUFFER_UFUNCLOOP: 	                /* Reduceat */
 		/* fprintf(stderr, "NOBUFFER..%d\n", loop->size); */
@@ -2095,6 +2114,8 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 			for (i=0; i<nn; i++) {
 				loop->bufptr[0] = loop->it->dataptr +	\
 					(*ptr)*loop->instrides;
+				if (loop->obj) 
+					Py_INCREF(*((PyObject **)loop->bufptr[0]));
 				memcpy(loop->bufptr[1], loop->bufptr[0],
 				       loop->outsize);
 				mm = (i==nn-1 ? arr->dimensions[axis]-*ptr : \
@@ -2123,6 +2144,8 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 		while(loop->index < loop->size) {
 			ptr = (intp *)ind->data;
 			for (i=0; i<nn; i++) {
+				if (loop->obj) 
+					Py_INCREF(*((PyObject **)loop->idptr));
 				memcpy(loop->bufptr[1], loop->idptr, 
 				       loop->outsize);
 				n = 0;
@@ -2307,13 +2330,13 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	if (ret==NULL) return NULL;
 	if (op->ob_type != ret->ob_type) {
 		res = PyObject_CallMethod(op, "__array_wrap__", "O", ret);
+		if (res == NULL) PyErr_Clear();
+		else if (res == Py_None) Py_DECREF(res);
+		else {
+			Py_DECREF(ret);
+			return res;
+		}	
 	}
-	if (res == NULL) PyErr_Clear();
-	else if (res == Py_None) Py_DECREF(res);
-	else {
-		Py_DECREF(ret);
-		return res;
-	}	
 	return PyArray_Return(ret);
 	
 }

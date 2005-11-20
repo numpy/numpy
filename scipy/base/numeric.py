@@ -1,6 +1,6 @@
 __all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
            'arange', 'array', 'zeros', 'empty', 'multiter',
-           'fromstring', 'fromfile', 'frombuffer',
+           'fromstring', 'fromfile', 'frombuffer','newbuffer','getbuffer',
            'where', 'concatenate', 'fastCopyAndTranspose',
            'register_dtype', 'set_numeric_ops', 'can_cast',
            'asarray', 'asanyarray', 'isfortran', 'zeros_like', 'empty_like',
@@ -58,12 +58,14 @@ fromstring = multiarray.fromstring
 fromfile = multiarray.fromfile
 frombuffer = multiarray.frombuffer
 newbuffer = multiarray.newbuffer
+getbuffer = multiarray.getbuffer
 where = multiarray.where
 concatenate = multiarray.concatenate
 fastCopyAndTranspose = multiarray._fastCopyAndTranspose
 register_dtype = multiarray.register_dtype
 set_numeric_ops = multiarray.set_numeric_ops
 can_cast = multiarray.can_cast
+
 
 def asarray(a, dtype=None, fortran=False):
     """returns a as an array.  Unlike array(),

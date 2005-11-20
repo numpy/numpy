@@ -3509,7 +3509,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 	/* Store a reference for decref on deallocation */
 	ret->base = buf;
 	PyArray_UpdateFlags(ret, ALIGNED);
-	return (PyObject *)ret; 	
+	return (PyObject *)ret;
 }
 
 static char doc_frombuffer[] = \
@@ -3869,8 +3869,8 @@ array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
 }
 
 static char doc_new_buffer[] = \
-	"newbuffer(size) return a new (uninitialized) buffer object of "\
-	"size bytes.";
+	"newbuffer(size) return a new uninitialized buffer object of size "
+	"bytes";
 
 static PyObject *
 new_buffer(PyObject *dummy, PyObject *args)
@@ -3881,6 +3881,33 @@ new_buffer(PyObject *dummy, PyObject *args)
 		return NULL;
 	
 	return PyBuffer_New(size);
+}
+
+static char doc_buffer_buffer[] = \
+	"getbuffer(obj [,offset[, size]]) create a buffer object from the "\
+	"given object\n  referencing a slice of length size starting at "\
+	"offset.  Default\n is the entire buffer. A read-write buffer is "\
+	"attempted followed by a read-only buffer.";
+
+static PyObject *
+buffer_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
+{
+	PyObject *obj;
+	int offset=0, size=Py_END_OF_BUFFER, n;
+	void *unused;
+	static char *kwlist[] = {"object", "offset", "size", NULL};
+	
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ii", kwlist, 
+					 &obj, &offset, &size))
+		return NULL;
+
+
+	if (PyObject_AsWriteBuffer(obj, &unused, &n) < 0) {
+		PyErr_Clear();
+		return PyBuffer_FromObject(obj, offset, size);		
+	}
+	else
+		return PyBuffer_FromReadWriteObject(obj, offset, size);
 }
 
 
@@ -3926,6 +3953,8 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS, doc_can_cast_safely},		
 	{"newbuffer", (PyCFunction)new_buffer,
 	 METH_VARARGS, doc_new_buffer},	
+	{"getbuffer", (PyCFunction)buffer_buffer,
+	 METH_VARARGS | METH_KEYWORDS, doc_buffer_buffer},	
 	{NULL,		NULL, 0}		/* sentinel */
 };
 

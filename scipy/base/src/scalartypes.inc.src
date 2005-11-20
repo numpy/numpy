@@ -1258,7 +1258,7 @@ string_arrtype_dealloc(PyObject *v)
 static void
 object_arrtype_dealloc(PyObject *v)
 {
-	Py_DECREF(((PyObjectScalarObject *)v)->obval);
+	Py_XDECREF(((PyObjectScalarObject *)v)->obval);
 	v->ob_type->tp_free(v);
 }
 
