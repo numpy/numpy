@@ -147,13 +147,14 @@ PyArray_Ravel(PyArrayObject *a, int fortran)
 
 	if (fortran < 0) fortran = PyArray_ISFORTRAN(a);
 
-        if (a->nd == 1) {
-                Py_INCREF(a);
-                return (PyObject *)a;
-        }
 	newdim.ptr = val;
-	if (!fortran && PyArray_ISCONTIGUOUS(a)) 
+	if (!fortran && PyArray_ISCONTIGUOUS(a)) {
+		if (a->nd == 1) {
+			Py_INCREF(a);
+			return (PyObject *)a;
+		}
 		return PyArray_Newshape(a, &newdim);
+	}
 	else
 	        return PyArray_Flatten(a, fortran);
 }

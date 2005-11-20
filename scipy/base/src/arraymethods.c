@@ -1320,10 +1320,9 @@ static char doc_flatten[] = "a.flatten([fortran]) return a 1-d array (always cop
 static PyObject *
 array_flatten(PyArrayObject *self, PyObject *args)
 {
-	Bool fortran=FALSE;
+	int fortran=0;
 
-	if (!PyArg_ParseTuple(args, "|O&",
-			      PyArray_BoolConverter, &fortran)) 
+	if (!PyArg_ParseTuple(args, "|i", &fortran)) return NULL;
 		return NULL;
 
 	return PyArray_Flatten(self, (int) fortran);
@@ -1334,12 +1333,11 @@ static char doc_ravel[] = "a.ravel([fortran]) return a 1-d array (copy only if n
 static PyObject *
 array_ravel(PyArrayObject *self, PyObject *args)
 {
-	Bool fortran=FALSE;
+	int fortran=0;
 
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_BoolConverter,
-			      &fortran)) return NULL;
+	if (!PyArg_ParseTuple(args, "|i", &fortran)) return NULL;
 
-	return PyArray_Ravel(self, (int) fortran);
+	return PyArray_Ravel(self, fortran);
 }
 
 

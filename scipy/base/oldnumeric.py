@@ -5,6 +5,7 @@ __all__ = ['asarray', 'array', 'concatenate',
            'UFuncType', 'UfuncType', 'ArrayType', 'arraytype',
            'LittleEndian',
            'Character', 'UnsignedInt8', 'UnsignedInt16', 'UnsignedInt',
+           'UInt8','UInt16','UInt32',
            # UnsignedInt64 and Unsigned128 added below if possible
            # same for Int64 and Int128, Float128, and Complex128
            'Int8', 'Int16', 'Int32',
@@ -48,17 +49,27 @@ LittleEndian = (sys.byteorder == 'little')
 
 Character = 'S1'
 UnsignedInt8 = _dt_(nt.uint8)
+UInt8 = UnsignedInt8
 UnsignedInt16 = _dt_(nt.uint16)
+UInt16 = UnsignedInt16
 UnsignedInt32 = _dt_(nt.uint32)
+UInt32 = UnsignedInt32
 UnsignedInt = _dt_(nt.uint)
 
 try:
     UnsignedInt64 = _dt_(nt.uint64)
+except AttributeError:
+    pass
+else:
+    UInt64 = UnsignedInt64
+    __all__ += ['UnsignedInt64', 'UInt64']
+try:
     UnsignedInt128 = _dt_(nt.uint128)
 except AttributeError:
     pass
 else:
-    __all__ += ['UnsignedInt64', 'UnsignedInt128']
+    UInt128 = UnsignedInt128
+    __all__ += ['UnsignedInt128','UInt128']
 
 Int8 = _dt_(nt.int8)
 Int16 = _dt_(nt.int16)
@@ -66,11 +77,17 @@ Int32 = _dt_(nt.int32)
 
 try:
     Int64 = _dt_(nt.int64)
+except AttributeError:
+    pass
+else:
+    __all__ += ['Int64']
+
+try:
     Int128 = _dt_(nt.int128)
 except AttributeError:
     pass
 else:
-    __all__ += ['Int64', 'Int128']
+    __all__ += ['Int128']
 
 Int0 = _dt_(int)
 Int = _dt_(int)
