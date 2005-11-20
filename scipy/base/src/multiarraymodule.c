@@ -3427,7 +3427,7 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 
 static PyObject *
 PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type, 
-		   intp count, int swapped) 
+		   intp count, intp offset, int swapped) 
 {
 	PyArrayObject *ret;
 	char *data;
@@ -3457,7 +3457,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 	    (buf->ob_type->tp_as_buffer->bf_getwritebuffer == NULL &&	\
 	     buf->ob_type->tp_as_buffer->bf_getreadbuffer == NULL)) {
 		PyObject *newbuf;
-		newbuf = PyObject_CallMethod(buf, "__buffer__", NULL);
+		newbuf = PyObject_GetAttrString(buf, "__buffer__");
 		if (newbuf == NULL) return NULL;
 		buf = newbuf;
 	}
@@ -3472,7 +3472,14 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 		}
 	}
 	
-	s = (intp)ts;	
+	if ((offset < 0) || (offset >= ts)) {
+		PyErr_Format(PyExc_ValueError,
+			     "offset must be positive and smaller than %"
+			     INTP_FMT, (intp)ts);
+	}
+
+	data += offset;
+	s = (intp)ts - offset;
 	n = (intp)count;
 	itemsize = type->itemsize;
 	
@@ -3513,12 +3520,13 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Typecode *type,
 }
 
 static char doc_frombuffer[] = \
-	"frombuffer(buffer=, dtype=intp, count=-1, swap=0)\n"\
+	"frombuffer(buffer=, dtype=intp, count=-1, offset=0, swap=0)\n"\
 	"\n"								\
 	"  Returns a 1-d array of data type dtype from buffer. The buffer\n"\
 	"   argument must be an object that exposes the buffer interface.\n"\
 	"   If count is -1 then the entire buffer is used, otherwise, count\n"\
-	"   is the size of the output.  If the buffer has data that is out\n" \
+	"   is the size of the output.  If offset is given then jump that\n"\
+	"   far into the buffer. If the buffer has data that is out\n" \
 	"   not in machine byte-order, than set swap=1.  The data will not\n"
 	"   be byteswapped, but the array will manage it in future\n"\
 	"   operations.\n";
@@ -3527,20 +3535,21 @@ static PyObject *
 array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
 	PyObject *obj=NULL;
-	longlong nin=-1;
+	longlong nin=-1, offset=0;
 	static char *kwlist[] = {"buffer", "dtype", "count", 
 				 "swap", NULL};
 	PyArray_Typecode type = {PyArray_INTP, sizeof(intp), 0};
 	int swapped=0;
 
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&Li", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&LLi", kwlist, 
 					 &obj,
 					 PyArray_TypecodeConverter, &type,
-					 &nin, &swapped)) {
+					 &nin, &offset, &swapped)) {
 		return NULL;
 	}
 
-	return PyArray_FromBuffer(obj, &type, (intp)nin, swapped);
+	return PyArray_FromBuffer(obj, &type, (intp)nin, 
+				  (intp)offset, swapped);
 }
 
 

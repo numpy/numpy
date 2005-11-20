@@ -3524,14 +3524,15 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds) 
 {
-	static char *kwlist[] = {"shape", "dtype", "buffer", "strides", 
-                                 "swap", "fortran", NULL};
+	static char *kwlist[] = {"shape", "dtype", "buffer", "offset", 
+				 "strides", "swap", "fortran", NULL};
 	int itemsize = 0;
 	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
 	int type_num = PyArray_NOTYPE;
         PyArray_Dims dims = {NULL, 0};
         PyArray_Dims strides = {NULL, 0};
         PyArray_Chunk buffer;
+	longlong offset=0;
 	int fortran = 0;
         int swapped = 0;
 	PyArrayObject *ret;
@@ -3545,13 +3546,14 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	   array of a specific type and shape. 
 	*/
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&O&ii",
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&ii",
 					 kwlist, PyArray_IntpConverter,
                                          &dims, 
                                          PyArray_TypecodeConverter,
 					 &typecode, 
                                          PyArray_BufferConverter,
                                          &buffer,
+					 &offset,
                                          &PyArray_IntpConverter, 
                                          &strides,
                                          &swapped, &fortran)) 
@@ -3582,6 +3584,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                 }
         }
         else {  /* buffer given -- use it */
+		buffer.len -= offset;
+		buffer.ptr += offset;
                 if (dims.len == 1 && dims.ptr[0] == -1) {
                         dims.ptr[0] = buffer.len / itemsize;
                 }

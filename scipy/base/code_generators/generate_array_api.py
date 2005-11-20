@@ -160,7 +160,8 @@ objectapi_list = [
 
     (r"""
     """,
-     'FromBuffer', 'PyObject *, PyArray_Typecode *, intp, int','PyObject *'),
+     'FromBuffer', 'PyObject *, PyArray_Typecode *, intp, intp, int',
+     'PyObject *'),
 
     (r"""Return either an array or the appropriate Python object if the
     array is 0d and matches a Python type.
