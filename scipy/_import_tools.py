@@ -5,7 +5,7 @@ import imp
 from glob import glob
 
 class PackageImport:
-    """ Import packages in the current directory that implement
+    """ Import packages from the current directory that implement
     info.py. See scipy/doc/DISTUTILS.txt for more info.
     """
 
