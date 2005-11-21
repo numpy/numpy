@@ -126,8 +126,6 @@ class FCompiler(CCompiler):
                     cmd = self.compiler_f90[0]
         return cmd
 
-        return cmd
-
     def get_linker_so(self):
         """ Linker command to build shared libraries. """
         f77 = self.executables['compiler_f77']

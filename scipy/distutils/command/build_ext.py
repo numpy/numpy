@@ -95,9 +95,13 @@ class build_ext (old_build_ext):
                                            verbose=self.verbose,
                                            dry_run=self.dry_run,
                                            force=self.force)
-            self.fcompiler.customize(self.distribution)
-            self.fcompiler.customize_cmd(self)
-            self.fcompiler.show_customization()
+            if self.fcompiler.get_version():
+                self.fcompiler.customize(self.distribution)
+                self.fcompiler.customize_cmd(self)
+                self.fcompiler.show_customization()
+            else:
+                self.warn('fcompiler=%s is not available.' % (self.fcompiler.compiler_type))
+                self.fcompiler = None
 
         # Build extensions
         self.build_extensions()
@@ -260,7 +264,8 @@ class build_ext (old_build_ext):
         except:
             pass
         
-        use_fortran_linker = getattr(ext,'language','c') in ['f77','f90']
+        use_fortran_linker = getattr(ext,'language','c') in ['f77','f90'] \
+                             and self.fcompiler is not None
         c_libraries = []
         c_library_dirs = []
         if use_fortran_linker or f_sources:
