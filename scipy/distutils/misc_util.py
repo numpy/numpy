@@ -882,7 +882,7 @@ def default_config_dict(name = None, parent_name = None, local_path=None):
     """
     import warnings
     warnings.warn('Use Configuration(%s,%s,top_path=%s) instead of '\
-                  'default_config_dict(%s,%s,%s)' \
+                  'depreciated default_config_dict(%s,%s,%s)' \
                   % (`name`,`parent_name`,`local_path`))
     c = Configuration(name, parent_name, local_path)
     return c.todict()
