@@ -1,3 +1,6 @@
+from numerictypes import obj2dtype
+
+__all__ = ['issubclass_', 'get_scipy_include', 'issubdtype']
 
 def issubclass_(arg1, arg2):
     try:
@@ -5,6 +8,9 @@ def issubclass_(arg1, arg2):
     except TypeError:
         return False
 
+def issubdtype(arg1, arg2):
+    return issubclass(obj2dtype(arg1), obj2dtype(arg2))
+    
 def get_scipy_include():
     """Return the directory in the package that contains the scipy/*.h header 
     files.

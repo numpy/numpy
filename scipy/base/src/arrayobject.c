@@ -811,23 +811,31 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
 			((PyStringObject *)obj)->ob_sstate =	\
 				SSTATE_NOT_INTERNED; 
 		}
+		else if (type_num == PyArray_UNICODE) {
+			PyUnicodeObject *uni = (PyUnicodeObject*)obj;
+			int length = itemsize / sizeof(Py_UNICODE);
+			/* Need an extra slot and need to use 
+			   Python memory manager */
+			destptr = PyMem_NEW(Py_UNICODE, length+1);
+			if (destptr == NULL) {
+                                Py_DECREF(obj);
+				return PyErr_NoMemory();
+			}
+			uni->str = (Py_UNICODE *)destptr;
+			uni->str[0] = 0;
+			uni->str[length] = 0;
+			uni->length = length;
+			uni->hash = -1;
+			uni->defenc = NULL;
+		}
 		else {
 			destptr = PyDataMem_NEW(itemsize);
 			if (destptr == NULL) {
                                 Py_DECREF(obj);
 				return PyErr_NoMemory();
 			}
-			if (type_num == PyArray_UNICODE) {
-				PyUnicode_AS_UNICODE(obj) = \
-					(Py_UNICODE *)destptr;
-				((PyUnicodeObject*)obj)->length = itemsize / \
-					sizeof(Py_UNICODE);
-				((PyUnicodeObject*)obj)->hash = -1;
-			}
-			else {
-				((PyVoidScalarObject *)obj)->obval = destptr;
-				((PyVoidScalarObject *)obj)->ob_size = itemsize;
-			}
+			((PyVoidScalarObject *)obj)->obval = destptr;
+			((PyVoidScalarObject *)obj)->ob_size = itemsize;
 		}
 	}
 	else {
@@ -4908,6 +4916,7 @@ Array_FromSequence(PyObject *s, PyArray_Typecode *typecode, int min_depth,
 		if (discover_itemsize(s, nd, &itemsize) == -1) {
 			return NULL;
 		}
+		if (type == PyArray_UNICODE) itemsize*=sizeof(Py_UNICODE);
 	}
 	
         r=(PyArrayObject*)PyArray_New(&PyArray_Type, nd, d, 

@@ -1243,15 +1243,9 @@ static PyTypeObject PyGenericArrType_Type = {
 /* works for VOID and UNICODE */
 
 static void
-flexible_dealloc(PyObject *v) 
+void_dealloc(PyObject *v) 
 {
 	PyDataMem_FREE(((PyVoidScalarObject *)v)->obval);
-	v->ob_type->tp_free(v);
-}
-
-static void
-string_arrtype_dealloc(PyObject *v)
-{
 	v->ob_type->tp_free(v);
 }
 
@@ -1581,8 +1575,7 @@ ComplexFloating, Flexible, Character#
 	/**end repeat**/
 
 	PyStringArrType_Type.tp_itemsize = sizeof(char);
-	PyStringArrType_Type.tp_dealloc = string_arrtype_dealloc;
-	PyFlexibleArrType_Type.tp_dealloc = flexible_dealloc;
+	PyFlexibleArrType_Type.tp_dealloc = void_dealloc;
 	PyObjectArrType_Type.tp_dealloc = object_arrtype_dealloc;
 
 	PyArrayIter_Type.tp_iter = PyObject_SelfIter;
