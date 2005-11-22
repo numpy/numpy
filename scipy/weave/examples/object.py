@@ -3,7 +3,7 @@
 # inc result: 2
 # after set attr: 5
 
-import weave
+import scipy.weave as weave
 
 #----------------------------------------------------------------------------
 # get/set attribute and call methods example

@@ -10,12 +10,12 @@ def time_it():
     expr = "ex[:,1:,1:] =   ca_x[:,1:,1:] * ex[:,1:,1:]" \
                          "+ cb_y_x[:,1:,1:] * (hz[:,1:,1:] - hz[:,:-1,1:])" \
                          "- cb_z_x[:,1:,1:] * (hy[:,1:,1:] - hy[:,1:,:-1])"        
-    ex = ones((10,10,10),typecode=Float32)
-    ca_x = ones((10,10,10),typecode=Float32)
-    cb_y_x = ones((10,10,10),typecode=Float32)
-    cb_z_x = ones((10,10,10),typecode=Float32)
-    hz = ones((10,10,10),typecode=Float32)
-    hy = ones((10,10,10),typecode=Float32)
+    ex = ones((10,10,10),dtype=Float32)
+    ca_x = ones((10,10,10),dtype=Float32)
+    cb_y_x = ones((10,10,10),dtype=Float32)
+    cb_z_x = ones((10,10,10),dtype=Float32)
+    hz = ones((10,10,10),dtype=Float32)
+    hy = ones((10,10,10),dtype=Float32)
     
     N = 1
     t1 = time.time()
