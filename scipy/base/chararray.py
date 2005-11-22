@@ -1,11 +1,11 @@
 from numerictypes import character, string, unicode_, obj2dtype
-from numeric import ndarray
+from numeric import ndarray, multiter, empty
 
 # special sub-class for character arrays (string and unicode_)
 # This adds equality testing and methods of str and unicode types
 #  which operate on an element-by-element basis
 
-class ndchararray(ndarray):
+class charndarray(ndarray):
     def __new__(subtype, shape, itemlen=1, unicode=False, buffer=None,
                 offset=0, strides=None, swap=0, fortran=0):
 
@@ -30,28 +30,74 @@ class ndchararray(ndarray):
 
     # these should be moved to C
     def __eq__(self, other):
-        return NotImplemented
+        b = multiter(self, other)
+        result = empty(b.shape, dtype=bool)
+        res = result.flat
+        for k, val in enumerate(b):
+            res[k] = (val[0] == val[1])
+        return result
 
     def __ne__(self, other):
-        return NotImplemented
+        b = multiter(self, other)
+        result = empty(b.shape, dtype=bool)
+        res = result.flat
+        for k, val in enumerate(b):
+            res[k] = (val[0] != val[1])
+        return result
 
     def __ge__(self, other):
-        return NotImplemented
-
+        b = multiter(self, other)
+        result = empty(b.shape, dtype=bool)
+        res = result.flat
+        for k, val in enumerate(b):
+            res[k] = (val[0] >= val[1])
+        return result
+        
     def __le__(self, other):
-        return NotImplemented
+        b = multiter(self, other)
+        result = empty(b.shape, dtype=bool)
+        res = result.flat
+        for k, val in enumerate(b):
+            res[k] = (val[0] <= val[1])
+        return result        
 
     def __gt__(self, other):
-        return NotImplemented
-
+        b = multiter(self, other)
+        result = empty(b.shape, dtype=bool)
+        res = result.flat
+        for k, val in enumerate(b):
+            res[k] = (val[0] > val[1])
+        return result
+    
     def __lt__(self, other):
-        return NotImplemented
-
+        b = multiter(self, other)
+        result = empty(b.shape, dtype=bool)
+        res = result.flat
+        for k, val in enumerate(b):
+            res[k] = (val[0] < val[1])
+        return result        
+        
     def __add__(self, other):
-        return NotImplemented
+        b = multiter(self, other)
+        outitem = max(b.iters[0].base.itemsize,
+                      b.iters[1].base.itemsize)
+        dtype = self.dtypestr[0] + str(outitem)
+        result = empty(b.shape, dtype=dtype)
+        res = result.flat
+        for k, val in enumerate(b):
+            res[k] = (val[0] + val[1])
+        return result 
 
     def __radd__(self, other):
-        return NotImplemented
+        b = muliter(other, self)
+        outitem = max(b.iters[0].base.itemsize,
+                      b.iters[1].base.itemsize)
+        dtype = self.dtypestr[0] + str(outitem)
+        result = empty(b.shape, dtype=dtype)
+        res = result.flat
+        for k, val in enumerate(b):
+            res[k] = (val[0] + val[1])
+        return result 
 
     def __mul__(self, other):
         return NotImplemented
@@ -64,14 +110,6 @@ class ndchararray(ndarray):
 
     def __rmod__(self, other):
         return NotImplemented
-
-
-    def _strmethod(self, *args, **kwds):
-        name = args[0]
-        args = args[1:]
-        
-        for obj in self.flat:
-            getattr(obj, name)(*args, **kwds)
 
     def capitalize(self):
         pass
@@ -208,8 +246,14 @@ def chararray(obj, itemlen=7, copy=True, unicode=False, fortran=False):
             obj = obj.copy()
 
         return ndarray.__new__(chararray, obj.shape)
-    
-    
+
+
+
+    if unicode:
+        dtype = "U%d" % itemlen
+    else:
+        dtype = "S%d" % itemlen
+
     val = asarray(obj).astype(dtype)
     
     return chararray(val.shape, itemlen, unicode, buffer=val,

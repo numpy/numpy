@@ -6571,6 +6571,10 @@ static PyMethodDef iter_methods[] = {
         {NULL,		NULL}		/* sentinel */
 };
 
+static PyMemberDef iter_members[] = {
+	{"base", T_OBJECT, offsetof(PyArrayIterObject, ao), RO, NULL},
+	{NULL},
+};
 
 static PyTypeObject PyArrayIter_Type = {
         PyObject_HEAD_INIT(NULL)
@@ -6603,6 +6607,9 @@ static PyTypeObject PyArrayIter_Type = {
         0,         	                        /* tp_iter */
         (iternextfunc)arrayiter_next,		/* tp_iternext */
         iter_methods,				/* tp_methods */
+        iter_members,	             	        /* tp_members */
+        0,                                      /* tp_getset */
+
 };
 
 /** END of Array Iterator **/
@@ -7449,6 +7456,95 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
 	free(multi);
 }
 
+static PyObject *
+arraymultiter_size_get(PyArrayMultiIterObject *self)
+{
+#if SIZEOF_INTP <= SIZEOF_LONG
+	return PyInt_FromLong((long) self->size);
+#else
+	if (self->size < MAX_LONG)
+		return PyInt_FromLong((long) self->size);
+	else
+		return PyLong_FromLongLong((longlong) self->size);
+#endif
+}
+
+static PyObject *
+arraymultiter_index_get(PyArrayMultiIterObject *self)
+{
+#if SIZEOF_INTP <= SIZEOF_LONG
+	return PyInt_FromLong((long) self->index);
+#else
+	if (self->size < MAX_LONG)
+		return PyInt_FromLong((long) self->index);
+	else
+		return PyLong_FromLongLong((longlong) self->index);
+#endif
+}
+
+static PyObject *
+arraymultiter_shape_get(PyArrayMultiIterObject *self)
+{
+	return PyArray_IntTupleFromIntp(self->nd, self->dimensions);	
+}
+
+static PyObject *
+arraymultiter_iters_get(PyArrayMultiIterObject *self)
+{
+	PyObject *res;
+	int i, n;
+	n = self->numiter;
+	res = PyTuple_New(n);
+	if (res == NULL) return res;
+	for (i=0; i<n; i++) {
+		Py_INCREF(self->iters[i]);
+		PyTuple_SET_ITEM(res, i, (PyObject *)self->iters[i]);
+	}
+	return res;
+}
+
+static PyGetSetDef arraymultiter_getsetlist[] = {
+        {"size", 
+	 (getter)arraymultiter_size_get,
+	 NULL, 
+	 "total size of broadcasted result"},
+        {"index", 
+	 (getter)arraymultiter_index_get, 
+         NULL,
+	 "current index in broadcasted result"},
+	{"shape",
+	 (getter)arraymultiter_shape_get,
+	 NULL,
+	 "shape of broadcasted result"},
+	{"iters",
+	 (getter)arraymultiter_iters_get,
+	 NULL,
+	 "tuple of individual iterators"},
+	{NULL, NULL, NULL, NULL},
+};
+
+static PyMemberDef arraymultiter_members[] = {
+	{"numiter", T_INT, offsetof(PyArrayMultiIterObject, numiter), 
+	 RO, NULL},
+	{"nd", T_INT, offsetof(PyArrayMultiIterObject, nd), RO, NULL},
+	{NULL},
+};
+
+static PyObject *
+arraymultiter_reset(PyArrayMultiIterObject *self, PyObject *args)
+{
+	if (!PyArg_ParseTuple(args, "")) return NULL;
+
+	PyArray_MultiIter_RESET(self);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyMethodDef arraymultiter_methods[] = {
+	{"reset", (PyCFunction) arraymultiter_reset, METH_VARARGS, NULL},
+	{NULL, NULL},
+};
+
 static PyTypeObject PyArrayMultiIter_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
@@ -7479,9 +7575,9 @@ static PyTypeObject PyArrayMultiIter_Type = {
         0,					/* tp_weaklistoffset */
         0,         	                        /* tp_iter */
         (iternextfunc)arraymultiter_next,	/* tp_iternext */
-        0,             	                        /* tp_methods */
-        0,					  /* tp_members */
-        0,			                  /* tp_getset */
+        arraymultiter_methods,     	        /* tp_methods */
+        arraymultiter_members,	    	        /* tp_members */
+        arraymultiter_getsetlist,               /* tp_getset */
         0,					  /* tp_base */
         0,					  /* tp_dict */
         0,					  /* tp_descr_get */

@@ -4034,14 +4034,18 @@ setup_scalartypes(PyObject *dict)
         Py##child##ArrType_Type.tp_bases =                              \
                 Py_BuildValue("(OO)", &Py##parent1##_Type,		\
 			      &Py##parent2##ArrType_Type);		\
+	Py##child##ArrType_Type.tp_richcompare =			\
+		Py##parent1##_Type.tp_richcompare;			\
+	Py##child##ArrType_Type.tp_compare =				\
+		Py##parent1##_Type.tp_compare;				\
+        Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;	\
         if (PyType_Ready(&Py##child##ArrType_Type) < 0) {               \
                 PyErr_Print();                                          \
 		PyErr_Format(PyExc_SystemError,                         \
 			     "could not initialize Py%sArrType_Type",   \
                              #child);                                   \
                 return -1;                                              \
-        }\
-        Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;
+        }
 
         SINGLE_INHERIT(Bool, Generic);
         SINGLE_INHERIT(Byte, SignedInteger);

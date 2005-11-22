@@ -103,9 +103,7 @@ typedef unsigned long ulonglong;
 #  define ULONGLONG_SUFFIX(x) (x##UL)
 #endif
 
-#ifndef Bool
 typedef unsigned char Bool;
-#endif
 #ifndef FALSE
 #define FALSE 0
 #endif
