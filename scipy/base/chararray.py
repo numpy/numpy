@@ -1,59 +1,14 @@
-# TODO:  This needs to be
-#        fleshed out
-#  Adapted from Numarray by J. Todd Miller
-"""
-Large chararray test
->>> xx=array(None,itemsize=3,shape=220000)
+from numerictypes import character, string, unicode_
+from numeric import ndarray, issubclass_
 
->>> import cPickle
->>> c=cPickle.loads(cPickle.dumps(fromlist(["this","that","something else"])))
->>> c
-CharArray(['this', 'that', 'something else'])
->>> c._type
-CharArrayType(14)
+class chararray(ndarray):
+    def __new__(subtype, shape, dtype=string, buffer=None, offset=0,
+                strides=None, swap=0, fortran=0, itemsize=1):
+        if not issubclass_(dtype, character):
+            raise ValueError, "dtype must be string or unicode_"
 
->>> a=fromlist(["this"]*25); a.shape=(5,5); a[ range(2,4) ]
-CharArray([['this', 'this', 'this', 'this', 'this'],
-           ['this', 'this', 'this', 'this', 'this']])
->>> a[ range(2,4) ] = fromlist(["that"]); a
-CharArray([['this', 'this', 'this', 'this', 'this'],
-           ['this', 'this', 'this', 'this', 'this'],
-           ['that', 'that', 'that', 'that', 'that'],
-           ['that', 'that', 'that', 'that', 'that'],
-           ['this', 'this', 'this', 'this', 'this']])
+        
 
->>> array([], shape=(0,1,2))
-CharArray([])
-
->>> a = _gen.concatenate([array(["1"]*3), array(["2"]*3)]); a
-CharArray(['1', '1', '1', '2', '2', '2'])
->>> _gen.reshape(a, (2,3))
-CharArray([['1', '1', '1'],
-           ['2', '2', '2']])
-
->>> CharArray(buffer="thatthis", shape=(2,), itemsize=4,
-...              bytestride=-4, byteoffset=4)
-CharArray(['this', 'that'])
-"""
-
-from copy import _EmptyClass
-import memory
-import _bytes
-import _chararray
-import numarrayall as _na
-import generic as _gen
-import sys
-import string
-import types
-import os
-import re
-import arrayprint
-import warnings
-import numerictypes as _nt
-import numinclude as _numinclude
-import _ndarray as _nda
-
-_globals, _locals  = globals, locals
 
 class CharArrayType:
     def __init__(self, itemsize):

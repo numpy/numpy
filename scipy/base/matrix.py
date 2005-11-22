@@ -53,7 +53,7 @@ def asmatrix(data, dtype=None):
 
 class matrix(N.ndarray):
     __array_priority__ = 10.0
-    def __new__(self, data, dtype=None, copy=True):
+    def __new__(subtype, data, dtype=None, copy=True):
         if isinstance(data, matrix):
             dtype2 = data.dtype
             if (dtype is None):
@@ -88,7 +88,7 @@ class matrix(N.ndarray):
         if not (fortran or arr.flags.contiguous):
             arr = arr.copy()
 
-        ret = N.ndarray.__new__(matrix, shape, arr.dtype, buffer=arr,
+        ret = N.ndarray.__new__(subtype, shape, arr.dtype, buffer=arr,
                                 fortran=fortran,
                                 swap=arr.flags.swapped)
         return ret
