@@ -53,8 +53,8 @@ PyObject * PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type,
 
 subtype  : The subtype that should be created (either pass in
              &PyArray_Type, &PyBigArray_Type, or obj->ob_type,
-             where obj is a subtype (or subclass) of 
-	     of PyArray_Type or PyBigArray_Type).
+             where obj is a an instance of a subtype (or subclass) of 
+	     PyArray_Type or PyBigArray_Type).
 
 nd       : The number of dimensions (<MAX_DIMS)
 
@@ -194,12 +194,13 @@ requires can be any of
    typecode->fortran can be set to request a
    fortran-contiguous  array (or just | FORTRAN to the requires flags).
    Fortran arrays are always behaved (aligned, 
-   notswapped, and writeable) and not (C) CONTIGUOUS.  Note that either
-   FORTRAN in the flag or typecode->fortran = 1 is enough to request
-   a FORTRAN-style array. 
+   notswapped, and writeable) and (if greater than 1d) not (C) CONTIGUOUS.  
+   Note that either FORTRAN in the flag or typecode->fortran = 1 is 
+   enough to request a FORTRAN-style array. 
 
-   UPDATEIFCOPY flag sets this flag in the returned array if a copy is
-   made and the base argument points to the (possibly) misbehaved array.
+   UPDATEIFCOPY flag sets this flag in the returned array *if a copy is
+   made*.  The base argument of the returned array points to the misbehaved 
+   array (which is set to READONLY in that case).   
    When the new array is deallocated, the original array held in base
    is updated with the contents of the new array.  This is useful, 
    if you don't want to deal with a possibly mis-behaved array, but want
@@ -260,21 +261,23 @@ segfaults may result.
 There are 7 (binary) flags that describe the memory area used by the
 data buffer.  These constants are defined in arrayobject.h and
 determine the bit-position of the flag.  Python exposes a nice dictionary
-interface for getting (and sometimes setting) these flags.
+interface for getting (and, if appropriate, setting) these flags.
 
-Memory areas of all kinds can be pointed to by an NDArray, necessitating 
-these flags.  If you get a PyArrayObject in C-code, 
-you should be aware of the flags that are set.  
+Memory areas of all kinds can be pointed to by an ndarray, necessitating 
+these flags.  If you get an arbitrary PyArrayObject in C-code, 
+you need to be aware of the flags that are set.  
 If you need to guarantee a certain kind of array 
 (like CONTIGUOUS and BEHAVED), then pass these requirements into the 
 PyArray_FromAny function.  
 
 
-CONTIGUOUS  :  True if the array is a (C-style) contiguous in memory.
+CONTIGUOUS  :  True if the array is (C-style) contiguous in memory.
 FORTRAN     :  True if the array is (Fortran-style) contiguous in memory.
 
 Notice that 1-d arrays are always both FORTRAN contiguous and C contiguous.
-Both of these flags can be checked and are convenience flags.
+Both of these flags can be checked and are convenience flags only as whether
+or not an array is CONTIGUOUS or FORTRAN can be determined by the strides,
+dimensions, and itemsize variables..
 
 OWNDATA     :  True if the array owns the memory (it will try and free it
 	        using PyDataMem_FREE() on deallocation --- 
@@ -287,21 +290,27 @@ ALIGNED     :  True if the data buffer is aligned for the type.  This
 	        can be checked.
 NOTSWAPPED  :  True if the data is in machine byte order.  Arrays
 	        can be out of machine byte order and will still 
-		work (albeit more slowly).  
+		work (albeit more slowly). 
 WRITEABLE   :  True only if the data buffer can be "written" to.
 
 
 UPDATEIFCOPY :  This is a special flag that is set if this array represents
 	          a copy made because a user required certain FLAGS in 
-		  PyArray_FromAny  and a copy had to be made of some 
-		  other array.   The base attribute then points to the 
-		  "misbehaved" array.  When the array with this flag
-                  set is deallocated, it will copy its contents to
-	          the "misbehaved" array (casting if necessary).
+		  PyArray_FromAny and a copy had to be made of some 
+		  other array (and the user asked for this flag to be set in 
+	          such a situation). The base attribute then points to the 
+		  "misbehaved" array (which is set read_only).  
+                  When the array with this flag set is deallocated, 
+                  it will copy its contents back to the "misbehaved" array 
+                  (casting if necessary) and will reset the "misbehaved" 
+	          array to WRITEABLE.  If the "misbehaved" array
+	          was not WRITEABLE to begin with then PyArray_FromAny would
+	          have returned an error because UPDATEIFCOPY would not
+	          have been possible.  
 
 
 PyArray_UpdateFlags(obj, FLAGS) will update the obj->flags for FLAGS
-                  which can be any of CONTIGUOUS FORTRAN or ALIGNED.
+                  which can be any of CONTIGUOUS FORTRAN ALIGNED or WRITEABLE
 
 Some useful combinations of these flags:
 
@@ -314,9 +323,6 @@ FARRAY_FLAGS = FORTRAN | BEHAVED
 The macro PyArray_CHECKFLAGS(obj, FLAGS)  can test any combination of flags.
 There are several default combinations defined as macros already 
 (see arrayobject.h) 
-
-
-
 
 
 There are more C-API enhancements which you can discover in the code, 
