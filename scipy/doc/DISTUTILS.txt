@@ -6,6 +6,8 @@ Scipy Distutils - Users Guide
 :Author: Pearu Peterson <pearu@cens.ioc.ee>
 :Discussions to: scipy-dev@scipy.org
 :Created: October 2005
+:Revision: $LastChangedRevision$
+:SVN source: $HeadURL:$
 
 Scipy structure
 '''''''''''''''
