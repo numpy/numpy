@@ -132,7 +132,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *ap1, *ap2, *ret;
-    int j, l, lda, ldb;
+    int j, l, lda, ldb, ldc;
     int typenum, nd;
     intp dimensions[MAX_DIMS];
     static const float oneF[2] = {1.0, 0.0};
@@ -333,33 +333,34 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	/* Matrix matrix multiplication -- Level 3 BLAS */  
 	lda = (ap1->dimensions[1] > 1 ? ap1->dimensions[1] : 1);
 	ldb = (ap2->dimensions[1] > 1 ? ap2->dimensions[1] : 1);
+	ldc = (ret->dimensions[1] > 1 ? ret->dimensions[1] : 1);
 	if (typenum == PyArray_DOUBLE) {
 	    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 			ap1->dimensions[0], ap2->dimensions[1], ap2->dimensions[0],
 			1.0, (double *)ap1->data, lda,
 			(double *)ap2->data, ldb,
-			0.0, (double *)ret->data, ldb);
+			0.0, (double *)ret->data, ldc);
 	}
 	else if (typenum == PyArray_FLOAT) {
 	    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 			ap1->dimensions[0], ap2->dimensions[1], ap2->dimensions[0],
 			1.0, (float *)ap1->data, lda,
 			(float *)ap2->data, ldb,
-			0.0, (float *)ret->data, ldb);
+			0.0, (float *)ret->data, ldc);
 	}
 	else if (typenum == PyArray_CDOUBLE) {
 	    cblas_zgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 			ap1->dimensions[0], ap2->dimensions[1], ap2->dimensions[0],
 			oneD, (double *)ap1->data, lda,
 			(double *)ap2->data, ldb,
-			zeroD, (double *)ret->data, ldb);
+			zeroD, (double *)ret->data, ldc);
 	}
 	else if (typenum == PyArray_CFLOAT) {
 	    cblas_cgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 			ap1->dimensions[0], ap2->dimensions[1], ap2->dimensions[0],
 			oneF, (float *)ap1->data, lda,
 			(float *)ap2->data, ldb,
-			zeroF, (float *)ret->data, ldb);
+			zeroF, (float *)ret->data, ldc);
 	}
     }
 
@@ -382,7 +383,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *ap1, *ap2, *ret;
-    int j, l, lda, ldb;
+    int j, l, lda, ldb, ldc;
     int typenum, nd;
     intp dimensions[MAX_DIMS];
     static const float oneF[2] = {1.0, 0.0};
@@ -580,33 +581,34 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 	/* Matrix matrix multiplication -- Level 3 BLAS */  
 	lda = (ap1->dimensions[1] > 1 ? ap1->dimensions[1] : 1);
 	ldb = (ap2->dimensions[1] > 1 ? ap2->dimensions[1] : 1);
+	ldc = (ret->dimensions[1] > 1 ? ret->dimensions[1] : 1);
 	if (typenum == PyArray_DOUBLE) {
 	    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 			ap1->dimensions[0], ap2->dimensions[0], ap1->dimensions[1],
 			1.0, (double *)ap1->data, lda,
 			(double *)ap2->data, ldb,
-			0.0, (double *)ret->data, ldb);
+			0.0, (double *)ret->data, ldc);
 	}
 	else if (typenum == PyArray_FLOAT) {
 	    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 			ap1->dimensions[0], ap2->dimensions[0], ap1->dimensions[1],
 			1.0, (float *)ap1->data, lda,
 			(float *)ap2->data, ldb,
-			0.0, (float *)ret->data, ldb);
+			0.0, (float *)ret->data, ldc);
 	}
 	else if (typenum == PyArray_CDOUBLE) {
 	    cblas_zgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 			ap1->dimensions[0], ap2->dimensions[0], ap1->dimensions[1],
 			oneD, (double *)ap1->data, lda,
 			(double *)ap2->data, ldb,
-			zeroD, (double *)ret->data, ldb);
+			zeroD, (double *)ret->data, ldc);
 	}
 	else if (typenum == PyArray_CFLOAT) {
 	    cblas_cgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 			ap1->dimensions[0], ap2->dimensions[0], ap1->dimensions[1],
 			oneF, (float *)ap1->data, lda,
 			(float *)ap2->data, ldb,
-			zeroF, (float *)ret->data, ldb);
+			zeroF, (float *)ret->data, ldc);
 	}
     }
     Py_DECREF(ap1);
