@@ -889,11 +889,15 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                          &(loop->funcdata), scalars) == -1)
 		return -1;
 
-        /* FAIL if the other object has the __r<op>__ method */
-        if ((arg_types[1] == PyArray_OBJECT) && \
+        /* FAIL if the other object has the __r<op>__ method 
+	   and has __array_priority__ as an attribute and
+	*/
+        if ((arg_types[1] == PyArray_OBJECT) &&				\
             (loop->ufunc->nin==2) && (loop->ufunc->nout == 1)) {
-                if (_has_reflected_op(PyTuple_GET_ITEM(args,1), \
-                                      loop->ufunc->name)) {
+		PyObject *_obj = PyTuple_GET_ITEM(args, 1);
+                if (!PyArray_CheckExact(_obj) && !PyBigArray_CheckExact(_obj) && \
+		    PyObject_HasAttrString(_obj, "__array_priority__") && \
+		    _has_reflected_op(_obj, loop->ufunc->name)) {
                         loop->notimplemented = 1;
                         return nargs;
                 }
