@@ -332,6 +332,7 @@ def _setpyvals(lst, frame, where=0):
     elif where == 2 or wh == 'b':
         frame.f_builtins[UFUNC_PYVALS_NAME] = lst 
 
+    umath.update_use_defaults()
     return
 
 def _getpyvals(frame):
@@ -414,6 +415,7 @@ def _setdef():
     defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
     frame.f_globals[UFUNC_PYVALS_NAME] = defval
     frame.f_builtins[UFUNC_PYVALS_NAME] = defval
+    umath.update_use_defaults()
 
 # set the default values
 _setdef()

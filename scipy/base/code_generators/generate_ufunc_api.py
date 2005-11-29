@@ -96,6 +96,10 @@ ufunc_api_list = [
 
     (r"""
     """,
+     'GetPyValues', 'char *, int *, int *, PyObject **', 'int'),
+    
+    (r"""
+    """,
      'checkfperr', 'int, PyObject *', 'int'),
 
     (r"""

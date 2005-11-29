@@ -666,27 +666,30 @@ select_types(PyUFuncObject *self, int *arg_types,
 	return 0;
 }
 
-static int
-_getpyvalues(char *name, int *bufsize, int *errmask, PyObject **errobj)
-{
+static int PyUFunc_USEDEFAULTS=0;
 
+static int
+PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
+{
         PyObject *thedict;
         PyObject *ref=NULL;
 	PyObject *retval;
 	static PyObject *thestring=NULL;
-	
-	if (thestring == NULL) {
-		thestring = PyString_InternFromString(UFUNC_PYVALS_NAME);
-	}
-        thedict = PyEval_GetLocals();
-        ref = PyDict_GetItem(thedict, thestring);
-        if (ref == NULL) {
-		thedict = PyEval_GetGlobals();
+
+	if (!PyUFunc_USEDEFAULTS) {
+		if (thestring == NULL) {
+			thestring = PyString_InternFromString(UFUNC_PYVALS_NAME);
+		}
+		thedict = PyEval_GetLocals();
 		ref = PyDict_GetItem(thedict, thestring);
-        }
-        if (ref == NULL) {
- 	        thedict = PyEval_GetBuiltins();
-                ref = PyDict_GetItem(thedict, thestring);
+		if (ref == NULL) {
+			thedict = PyEval_GetGlobals();
+			ref = PyDict_GetItem(thedict, thestring);
+		}
+		if (ref == NULL) {
+			thedict = PyEval_GetBuiltins();
+			ref = PyDict_GetItem(thedict, thestring);
+		}
 	}
 	if (ref == NULL) {
 		*errmask = UFUNC_ERR_DEFAULT;
@@ -889,8 +892,10 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                          &(loop->funcdata), scalars) == -1)
 		return -1;
 
-        /* FAIL if the other object has the __r<op>__ method 
-	   and has __array_priority__ as an attribute and
+        /* FAIL with NotImplemented if the other object has 
+	   the __r<op>__ method and has __array_priority__ as 
+	   an attribute (signalling it can handle ndarray's) 
+	   and is not already an ndarray or bigndarray
 	*/
         if ((arg_types[1] == PyArray_OBJECT) &&				\
             (loop->ufunc->nin==2) && (loop->ufunc->nout == 1)) {
@@ -1235,9 +1240,9 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
         }
 	loop->errobj = NULL;
 
-	if (_getpyvalues((self->name ? self->name : ""),
-			 &(loop->bufsize), &(loop->errormask), 
-			 &(loop->errobj)) < 0)
+	if (PyUFunc_GetPyValues((self->name ? self->name : ""),
+				&(loop->bufsize), &(loop->errormask), 
+				&(loop->errobj)) < 0)
 		goto fail;
 
 	/* Setup the matrices */
@@ -1602,8 +1607,8 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 	}
 	
 	/* get looping parameters from Python */
-	if (_getpyvalues(str, &(loop->bufsize), &(loop->errormask), 
-			 &(loop->errobj)) < 0) goto fail;
+	if (PyUFunc_GetPyValues(str, &(loop->bufsize), &(loop->errormask), 
+				&(loop->errobj)) < 0) goto fail;
 	
 	/* Make copy if misbehaved or not otype for small arrays */
 	if (_create_reduce_copy(loop, arr, otype) < 0) goto fail; 
@@ -2478,6 +2483,27 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 		return (PyObject *)ret;
 	}	
 
+}
+
+static PyObject *
+ufunc_update_use_defaults(PyObject *dummy, PyObject *args)
+{
+	PyObject *errobj;
+	int errmask, bufsize;
+
+	if (!PyArg_ParseTuple(args, "")) return NULL;
+	
+	PyUFunc_USEDEFAULTS = 0;
+	PyUFunc_GetPyValues("test", &bufsize, &errmask, &errobj);
+	
+	if ((errmask == UFUNC_ERR_DEFAULT) &&		\
+	    (bufsize == PyArray_BUFSIZE) &&		\
+	    (PyTuple_GET_ITEM(errobj, 1) == Py_None)) {
+		PyUFunc_USEDEFAULTS = 1;
+	}
+	
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};

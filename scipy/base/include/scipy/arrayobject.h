@@ -1222,51 +1222,6 @@ typedef struct {
         void *data;           /* A pointer to the first element of the array */
 } PyArrayInterface;
 
-
-
-  /*  Often, rather than always convert to an array, 
-      we may want to delegate behavior for other objects passed in
-  */
-
-	/* 
-
-#define Py_DELEGATE(op, name)                                     \
-	if (PyObject_HasAttrString(op, #name)) {                  \
-		PyObject *ret=NULL;				  \
-		PyObject *meth=PyObject_GetAttrString(op, #name); \
-		if (PyCallable_Check(meth)) {			  \
-			ret = PyObject_CallObject(meth, NULL);	  \
-		}						  \
-		Py_XDECREF(meth);				  \
-		return ret;					  \
-	}
-
-#define Py_DELEGATE_ARGS(op, name, args)			  \
-	if (PyObject_HasAttrString(op, #name)) {                  \
-		PyObject *ret=NULL;				  \
-		PyObject *meth=PyObject_GetAttrString(op, #name); \
-		if (PyCallable_Check(meth)) {			  \
-			ret = PyObject_CallObject(meth, args);	  \
-		}						  \
-                Py_XDECREF(args);                                 \
-		Py_XDECREF(meth);				  \
-		return ret;					  \
-	}
-
-#define Py_DELEGATE_ARGS_KWDS(op, name, args, kwds)	          \
-	if (PyObject_HasAttrString(op, #name)) {                  \
-		PyObject *ret=NULL;				  \
-		PyObject *meth=PyObject_GetAttrString(op, #name); \
-		if (PyCallable_Check(meth)) {			  \
-			ret = PyObject_Call(meth, args, kwds);	  \
-		}						  \
-                Py_XDECREF(args);                                 \
-		Py_XDECREF(meth);				  \
-		return ret;					  \
-	}
-	*/
-
-
         /* Includes the "function" C-API -- these are all stored in a 
 	   list of pointers --- one for each file
 	   The two lists are concatenated into one in multiarray.
@@ -1317,7 +1272,8 @@ typedef struct {
         PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, CARRAY_FLAGS, NULL)
 
 	/* These might be faster without the dereferencing of obj
-	   going on inside
+	   going on inside -- of course an optimizing compiler should 
+	   inline the constants inside a for loop making it a moot point
 	*/
 		
 #define PyArray_GETPTR1(obj, i) (PyArray_DATA(obj) +		\
