@@ -900,7 +900,8 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         if ((arg_types[1] == PyArray_OBJECT) &&				\
             (loop->ufunc->nin==2) && (loop->ufunc->nout == 1)) {
 		PyObject *_obj = PyTuple_GET_ITEM(args, 1);
-                if (!PyArray_CheckExact(_obj) && !PyBigArray_CheckExact(_obj) && \
+                if (!PyArray_CheckExact(_obj) &&			\
+		    !PyBigArray_CheckExact(_obj) &&			\
 		    PyObject_HasAttrString(_obj, "__array_priority__") && \
 		    _has_reflected_op(_obj, loop->ufunc->name)) {
                         loop->notimplemented = 1;

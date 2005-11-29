@@ -94,7 +94,11 @@ objectapi_list = [
     (r"""Convert to c-type
     """,
      'ScalarAsCtype', 'PyObject *, void *', 'void'),
-
+    
+    (r"""Cast Scalar to c-type
+    """,
+     'CastScalarToCtype', 'PyObject *, void *, PyArray_Typecode *', 'int'),
+    
     (r"""Register Data type
     """,
      'RegisterDataType', 'PyTypeObject *', 'int'),

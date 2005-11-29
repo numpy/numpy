@@ -42,6 +42,8 @@ typedef struct {
 } PyVoidScalarObject;
 
 /* no error checking is performed -- ctypeptr must be same type as scalar */
+/* in case of flexible type, the data is not copied into ctypeptr which is expected to 
+   be a pointer to pointer */
 static void
 PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 {
@@ -65,6 +67,44 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 	return;
 }
 
+/* The output buffer must be large-enough to receive the value */
+/*  Even for flexible types which is different from ScalarAsCtype
+    where only a reference for flexible types is returned 
+*/
+
+static int
+PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr, 
+			  PyArray_Typecode *outcode)
+{
+	PyArray_Typecode incode;
+	PyArray_Descr* descr;
+	
+	PyArray_TypecodeFromScalar(scalar, &incode);
+	descr = PyArray_DescrFromType(incode.type_num);
+	if (PyTypeNum_ISFLEXIBLE(incode.type_num) ||
+	    PyTypeNum_ISFLEXIBLE(outcode->type_num)) {
+		PyArrayObject *ain, *aout;
+
+		ain = (PyArrayObject *)PyArray_FromScalar(scalar, NULL);
+		if (ain == NULL) return -1;
+		aout = (PyArrayObject *)PyArray_New(&PyArray_Type, 
+						    0, NULL, outcode->type_num,
+						    NULL, ctypeptr, 
+						    outcode->itemsize, 
+						    CARRAY_FLAGS, NULL);
+		if (aout == NULL) {Py_DECREF(ain); return -1;}
+		descr->cast[outcode->type_num](ain->data, 
+					       aout->data, 1, ain, aout);
+		Py_DECREF(ain);
+		Py_DECREF(aout);
+	}
+	else {
+		descr->cast[outcode->type_num](_SOFFSET_(scalar, 
+							incode.type_num), 
+					      ctypeptr, 1, NULL, NULL);
+	}
+	return 0;
+}
 
 /* 0-dim array from array-scalar object */
 /* always contains a copy of the data */
