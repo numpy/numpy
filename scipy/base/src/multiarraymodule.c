@@ -63,6 +63,16 @@ PyArray_MultiplyList(register intp *l1, register int n)
         return s;
 }
 
+static char *
+PyArray_GetPtr(PyArrayObject *obj, register intp* ind)
+{
+	register int n = obj->nd;
+	register intp *strides = obj->strides;
+	register char *dptr = obj->data;
+	
+	while (n--) dptr += (*strides++) * (*ind++);
+	return dptr;
+}
 
 static int 
 PyArray_AxisConverter(PyObject *obj, int *axis)
@@ -4062,7 +4072,8 @@ setup_scalartypes(PyObject *dict)
         SINGLE_INHERIT(LongLong, SignedInteger);
 #endif
 
-        SINGLE_INHERIT(UByte, UnsignedInteger);
+        fprintf(stderr, "tp_free = %p, PyObject_Del = %p, int_tp_free = %p, base.tp_free = %p\n", PyIntArrType_Type.tp_free, PyObject_Del, PyInt_Type.tp_free, PySignedIntegerArrType_Type.tp_free);
+	SINGLE_INHERIT(UByte, UnsignedInteger);
         SINGLE_INHERIT(UShort, UnsignedInteger);
         SINGLE_INHERIT(UInt, UnsignedInteger);
         SINGLE_INHERIT(ULong, UnsignedInteger);

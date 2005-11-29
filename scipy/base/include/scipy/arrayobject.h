@@ -1316,6 +1316,29 @@ typedef struct {
 #define PyArray_SimpleNewFromData(nd, dims, typenum, data) \
         PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, CARRAY_FLAGS, NULL)
 
+
+	/* These might be faster without the dereferencing of obj
+	   going on inside
+	*/
+		
+#define PyArray_GETPTR1(obj, i) (PyArray_DATA(obj) +		\
+				 i*PyArray_STRIDE(obj, 0))
+	
+#define PyArray_GETPTR2(obj, i, j) (PyArray_DATA(obj) +		\
+				    i*PyArray_STRIDE(obj, 0) +	\
+				    j*PyArray_STRIDE(obj, 1))
+	
+#define PyArray_GETPTR3(obj, i, j, k) (PyArray_DATA(obj) +		\
+				       i*PyArray_STRIDE(obj, 0) +	\
+				       j*PyArray_STRIDE(obj, 1) +	\
+				       k*PyArray_STRIDE(obj, 2))	\
+		
+#define PyArray_GETPTR4(obj, i, j, k, l) (PyArray_DATA(obj) +		\
+					  i*PyArray_STRIDE(obj, 0) +	\
+					  j*PyArray_STRIDE(obj, 1) +	\
+					  k*PyArray_STRIDE(obj, 2) +	\
+					  l*PyArray_STRIDE(obj, 3))
+	
 	/* Copy should always return contiguous array */
 #define PyArray_Copy(obj) PyArray_NewCopy(obj, 0)
 

@@ -1,11 +1,11 @@
-from numerictypes import character, string, unicode_, obj2dtype
+from numerictypes import character, string, unicode_, obj2dtype, integer
 from numeric import ndarray, multiter, empty
 
 # special sub-class for character arrays (string and unicode_)
 # This adds equality testing and methods of str and unicode types
 #  which operate on an element-by-element basis
 
-class charndarray(ndarray):
+class ndchararray(ndarray):
     def __new__(subtype, shape, itemlen=1, unicode=False, buffer=None,
                 offset=0, strides=None, swap=0, fortran=0):
 
@@ -79,9 +79,9 @@ class charndarray(ndarray):
         
     def __add__(self, other):
         b = multiter(self, other)
-        outitem = max(b.iters[0].base.itemsize,
-                      b.iters[1].base.itemsize)
-        dtype = self.dtypestr[0] + str(outitem)
+        arr = b.iters[1].base
+        outitem = self.itemsize + arr.itemsize
+        dtype = self.dtypestr[1:2] + str(outitem)
         result = empty(b.shape, dtype=dtype)
         res = result.flat
         for k, val in enumerate(b):
@@ -89,10 +89,10 @@ class charndarray(ndarray):
         return result 
 
     def __radd__(self, other):
-        b = muliter(other, self)
-        outitem = max(b.iters[0].base.itemsize,
-                      b.iters[1].base.itemsize)
-        dtype = self.dtypestr[0] + str(outitem)
+        b = multiter(other, self)
+        outitem = b.iters[0].base.itemsize + \
+                  b.iters[1].base.itemsize
+        dtype = self.dtypestr[1:2] + str(outitem)
         result = empty(b.shape, dtype=dtype)
         res = result.flat
         for k, val in enumerate(b):
@@ -100,10 +100,30 @@ class charndarray(ndarray):
         return result 
 
     def __mul__(self, other):
-        return NotImplemented
+        b = multiter(self, other)
+        arr = b.iters[1].base
+        if not issubclass(arr.dtype, integer):
+            raise ValueError, "Can only multiply by integers"
+        outitem = b.iters[0].base.itemsize * arr.max()
+        dtype = self.dtypestr[1:2] + str(outitem)
+        result = empty(b.shape, dtype=dtype)
+        res = result.flat
+        for k, val in enumerate(b):
+            res[k] = val[0]*val[1]
+        return result
 
     def __rmul__(self, other):
-        return NotImplemented
+        b = multiter(self, other)
+        arr = b.iters[1].base
+        if not issubclass(arr.dtype, integer):
+            raise ValueError, "Can only multiply by integers"
+        outitem = b.iters[0].base.itemsize * arr.max()
+        dtype = self.dtypestr[1:2] + str(outitem)
+        result = empty(b.shape, dtype=dtype)
+        res = result.flat
+        for k, val in enumerate(b):
+            res[k] = val[0]*val[1]
+        return result
 
     def __mod__(self, other):
         return NotImplemented
@@ -219,7 +239,7 @@ class charndarray(ndarray):
                 
 def chararray(obj, itemlen=7, copy=True, unicode=False, fortran=False):
 
-    if isinstance(obj, chararray):
+    if isinstance(obj, charndarray):
         if copy or (itemlen != obj.itemlen) \
            or (not unicode and obj.dtype == unicode_) \
            or (unicode and obj.dtype == string):
@@ -247,8 +267,6 @@ def chararray(obj, itemlen=7, copy=True, unicode=False, fortran=False):
 
         return ndarray.__new__(chararray, obj.shape)
 
-
-
     if unicode:
         dtype = "U%d" % itemlen
     else:
@@ -256,8 +274,8 @@ def chararray(obj, itemlen=7, copy=True, unicode=False, fortran=False):
 
     val = asarray(obj).astype(dtype)
     
-    return chararray(val.shape, itemlen, unicode, buffer=val,
-                     strides=val.strides, fortran=fortran)
+    return ndchararray(val.shape, itemlen, unicode, buffer=val,
+                       strides=val.strides, fortran=fortran)
 
     
 def aschararray(obj):

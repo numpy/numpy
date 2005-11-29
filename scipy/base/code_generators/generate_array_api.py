@@ -411,6 +411,9 @@ multiapi_list = [
     """,
      'MultiplyIntList','int *lp, int n','int'),
 
+    (r"""Produce a pointer into array
+    """,
+     'GetPtr', 'PyArrayObject *, intp*', 'char *'),
 
     (r"""Compare Lists
     """,
