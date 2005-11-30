@@ -2109,10 +2109,9 @@ PyArray_ArgMin(PyArrayObject *ap, int axis)
 	else 
 		obj = PyInt_FromLong((long) 0);
 	
-	new = PyNumber_Subtract(obj, (PyObject *)ap);
-	if (new == NULL) return NULL;
-
+	new = PyArray_EnsureArray(PyNumber_Subtract(obj, (PyObject *)ap));
 	Py_DECREF(obj);
+	if (new == NULL) return NULL;
 	ret = PyArray_ArgMax((PyArrayObject *)new, axis);
 	Py_DECREF(new);
 	return ret;

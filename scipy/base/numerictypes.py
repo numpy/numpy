@@ -327,12 +327,24 @@ for key in _dtype2char_dict.keys():
     cast[key] = lambda x, k=key : array(x, copy=False).astype(k)
 
 nbytes = _typedict()
-def _construct_nbytes_lookup():
+_alignment = _typedict()
+_maxvals = _typedict()
+_minvals = _typedict()
+def _construct_lookups():
     for name, val in typeinfo.iteritems():
         if not isinstance(val, tuple):
             continue
-        nbytes[val[-1]] = val[2] / 8
-_construct_nbytes_lookup()
+        obj = val[-1]
+        nbytes[obj] = val[2] / 8
+        _alignment[obj] = val[3]
+        if (len(val) > 5):
+            _maxvals[obj] = val[4]
+            _minvals[obj] = val[5]
+        else:
+            _maxvals[obj] = None
+            _minvals[obj] = None
+
+_construct_lookups()
 
 # Now add the types we've determined to this module
 for key in allTypes:
