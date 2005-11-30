@@ -369,7 +369,7 @@ multiapi_list = [
 
     (r"""Std
     """,
-     'Std','PyArrayObject *, int, int','PyObject *'),
+     'Std','PyArrayObject *, int, int, int','PyObject *'),
 
     (r"""Sum
     """,

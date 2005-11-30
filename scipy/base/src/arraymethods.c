@@ -1222,7 +1222,24 @@ array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 &axis, PyArray_TypecodeConverter,
 					 &rtype)) return NULL;
 	
-	return PyArray_Std(self, axis, rtype.type_num);
+	return PyArray_Std(self, axis, rtype.type_num, 0);
+}
+
+static char doc_variance[] = "a.var(axis=None, rtype=None)";
+
+static PyObject *
+array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds) 
+{
+	int axis=MAX_DIMS;
+	PyArray_Typecode rtype = {PyArray_NOTYPE, 0, 0};
+	static char *kwlist[] = {"axis", "rtype", NULL};
+	
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
+					 PyArray_AxisConverter, 
+					 &axis, PyArray_TypecodeConverter,
+					 &rtype)) return NULL;
+	
+	return PyArray_Std(self, axis, rtype.type_num, 1);
 }
 
 static char doc_compress[] = "a.compress(condition=, axis=None)";
@@ -1501,6 +1518,8 @@ static PyMethodDef array_methods[] = {
 	 METH_VARARGS, doc_nonzero},
 	{"std", (PyCFunction)array_stddev,
 	 METH_VARARGS|METH_KEYWORDS, doc_stddev},
+	{"var", (PyCFunction)array_variance,
+	 METH_VARARGS|METH_KEYWORDS, doc_variance},
 	{"sum", (PyCFunction)array_sum,
 	 METH_VARARGS|METH_KEYWORDS, doc_sum},
 	{"cumsum", (PyCFunction)array_cumsum,

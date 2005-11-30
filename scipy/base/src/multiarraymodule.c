@@ -412,8 +412,9 @@ PyArray_Mean(PyArrayObject *self, int axis, int rtype)
 	return ret;
 }
 
+/* Set variance to 1 to by-pass square-root calculation and return variance */
 static PyObject *
-PyArray_Std(PyArrayObject *self, int axis, int rtype)
+PyArray_Std(PyArrayObject *self, int axis, int rtype, int variance)
 {
 	PyObject *obj1=NULL, *obj2=NULL, *new=NULL;
 	PyObject *ret=NULL, *newshape=NULL;
@@ -439,7 +440,7 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype)
 	if (obj2 == NULL) {Py_DECREF(new); return NULL;}
 
 	/* Compute x = x - mx */
-	obj1 = PyNumber_Subtract((PyObject *)self, obj2);
+	obj1 = PyNumber_Subtract((PyObject *)new, obj2);
 	Py_DECREF(obj2);
 	if (obj1 == NULL) {Py_DECREF(new); return NULL;}
 
@@ -462,6 +463,8 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype)
 	ret = PyArray_EnsureArray(PyNumber_Multiply(obj1, obj2));
 	Py_DECREF(obj1);
 	Py_DECREF(obj2);
+
+        if (variance) return PyArray_Return(ret);
 
 	/* sqrt() */
 	obj1 = PyArray_GenericUnaryFunction((PyAO *)ret, n_ops.sqrt);
