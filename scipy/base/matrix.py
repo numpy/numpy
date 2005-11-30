@@ -88,7 +88,8 @@ class matrix(N.ndarray):
         if not (fortran or arr.flags.contiguous):
             arr = arr.copy()
 
-        ret = N.ndarray.__new__(subtype, shape, arr.dtype, buffer=arr,
+        ret = N.ndarray.__new__(subtype, shape, arr.dtype, arr.itemsize,
+                                buffer=arr,
                                 fortran=fortran,
                                 swap=arr.flags.swapped)
         return ret

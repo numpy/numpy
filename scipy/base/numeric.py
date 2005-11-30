@@ -1,5 +1,5 @@
 __all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
-           'arange', 'array', 'zeros', 'empty', 'multiter',
+           'arange', 'array', 'zeros', 'empty', 'broadcast',
            'fromstring', 'fromfile', 'frombuffer','newbuffer','getbuffer',
            'where', 'concatenate', 'fastCopyAndTranspose',
            'register_dtype', 'set_numeric_ops', 'can_cast',
@@ -47,7 +47,7 @@ newaxis = None
 ndarray = multiarray.ndarray
 bigndarray = multiarray.bigndarray
 flatiter = multiarray.flatiter
-multiter = multiarray.multiter
+broadcast = multiarray.broadcast
 ufunc = type(sin)
 
 arange = multiarray.arange

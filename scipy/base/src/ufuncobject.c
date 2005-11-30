@@ -602,11 +602,14 @@ select_types(PyUFuncObject *self, int *arg_types,
 		for (i=self->nin; i<self->nargs; i++) {
 			arg_types[i] = arg_types[0];
 		}
-		
-		key = PyInt_FromLong((long) arg_types[0]);
-		if (key == NULL) return -1;
-		obj = PyDict_GetItem(self->userloops, key);
-		Py_DECREF(key);
+
+		obj = NULL;
+		if (self->userloops) {
+			key = PyInt_FromLong((long) arg_types[0]);
+			if (key == NULL) return -1;
+			obj = PyDict_GetItem(self->userloops, key);
+			Py_DECREF(key);
+		}
 		if (obj == NULL) {
 			PyErr_SetString(PyExc_TypeError, 
 					"no registered loop for this "	\

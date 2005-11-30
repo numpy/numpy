@@ -124,7 +124,7 @@ PyArray_View(PyArrayObject *self, PyArray_Typecode *type)
         PyArray_BASE(new) = (PyObject *)self;
         if ((type_num != PyArray_NOTYPE) &&             \
             (type_num != self->descr->type_num)) {
-                if (!PyTypeNum_ISFLEXIBLE(type_num)) {
+                if (!PyTypeNum_ISEXTENDED(type_num)) {
                         v = PyArray_TypeObjectFromType(type_num);
                 }
                 else {
@@ -460,11 +460,13 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, int variance)
 	if (n<=0) n=1;
 	obj2 = PyFloat_FromDouble(1.0/((double )n));
 	if (obj2 == NULL) {Py_DECREF(obj1); return NULL;}
-	ret = PyArray_EnsureArray(PyNumber_Multiply(obj1, obj2));
+	ret = PyNumber_Multiply(obj1, obj2);
 	Py_DECREF(obj1);
 	Py_DECREF(obj2);
 
-        if (variance) return PyArray_Return(ret);
+        if (variance) return ret;
+	
+	ret = PyArray_EnsureArray(ret);
 
 	/* sqrt() */
 	obj1 = PyArray_GenericUnaryFunction((PyAO *)ret, n_ops.sqrt);
@@ -2086,6 +2088,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	Py_XDECREF(ret);
 	return NULL;
 }
+
 
 static PyObject *
 PyArray_ArgMin(PyArrayObject *ap, int axis) 
@@ -4210,7 +4213,7 @@ DL_EXPORT(void) initmultiarray(void) {
         Py_INCREF(&PyArrayIter_Type);
 	PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
         Py_INCREF(&PyArrayMultiIter_Type);
-	PyDict_SetItemString(d, "multiter", (PyObject *)&PyArrayMultiIter_Type);
+	PyDict_SetItemString(d, "broadcast", (PyObject *)&PyArrayMultiIter_Type);
 
 	/* Doesn't need to be exposed to Python 
         Py_INCREF(&PyArrayMapIter_Type);

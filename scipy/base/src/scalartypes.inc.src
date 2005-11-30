@@ -50,14 +50,14 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 	PyArray_Typecode typecode;
 	PyArray_TypecodeFromScalar(scalar, &typecode);
 	
-	if (PyTypeNum_ISFLEXIBLE(typecode.type_num)) {
+	if (PyTypeNum_ISEXTENDED(typecode.type_num)) {
 		void **newptr = (void **)ctypeptr;
 		switch(typecode.type_num) {
 		case PyArray_STRING:
 			*newptr = (void *)PyString_AS_STRING(scalar);
 		case PyArray_UNICODE:
 			*newptr = (void *)PyUnicode_AS_DATA(scalar);
-		case PyArray_VOID:
+		default:
 			*newptr = ((PyVoidScalarObject *)scalar)->obval;
 		}
 		return;
@@ -81,8 +81,8 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 	
 	PyArray_TypecodeFromScalar(scalar, &incode);
 	descr = PyArray_DescrFromType(incode.type_num);
-	if (PyTypeNum_ISFLEXIBLE(incode.type_num) ||
-	    PyTypeNum_ISFLEXIBLE(outcode->type_num)) {
+	if (PyTypeNum_ISEXTENDED(incode.type_num) ||
+	    PyTypeNum_ISEXTENDED(outcode->type_num)) {
 		PyArrayObject *ain, *aout;
 
 		ain = (PyArrayObject *)PyArray_FromScalar(scalar, NULL);
@@ -129,11 +129,13 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Typecode *outcode)
 	case PyArray_UNICODE:
 		memptr = (char *)PyUnicode_AS_DATA(scalar);
 		break;
-	case PyArray_VOID:
-		memptr = (((PyVoidScalarObject *)scalar)->obval);
-		break;
 	default:
-		memptr = _SOFFSET_(scalar, typecode.type_num);
+		if (PyTypeNum_ISEXTENDED(typecode.type_num)) {
+			memptr = (((PyVoidScalarObject *)scalar)->obval);
+		}
+		else {
+			memptr = _SOFFSET_(scalar, typecode.type_num);
+		}
 		break;
 	}
 
@@ -147,7 +149,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Typecode *outcode)
 		return r;
 
 	if (outcode->type_num == typecode.type_num) {
-		if (!PyTypeNum_ISFLEXIBLE(typecode.type_num))
+		if (!PyTypeNum_ISEXTENDED(typecode.type_num))
 			return r;
 		if (outcode->itemsize == typecode.itemsize)
 			return r;			
@@ -1672,11 +1674,11 @@ PyArray_TypenumFromTypeObject(PyObject *type)
                 i++;
 	}
 
-	/* Seacrh any registered types */
+	/* Search any registered types */
 	i = 0;
 	while (i < PyArray_NUMUSERTYPES) {
 		if (type == (PyObject *)(userdescrs[i]->typeobj)) {
-			typenum = i;
+			typenum = i + PyArray_USERDEF;
 			break;
 		}
 		i++;
@@ -1699,7 +1701,7 @@ PyArray_TypenumFromTypeObject(PyObject *type)
 		return PyArray_ULONG;
         else if (type == (PyObject *) &PyCharacterArrType_Type)
 		return PyArray_STRING;
-	else if (type == (PyObject *) &PyFlexibleArrType_Type)
+	else if (PyType_IsSubtype((PyTypeObject *)type, &PyFlexibleArrType_Type))
 		return PyArray_VOID;
 	else if (type == (PyObject *)&PyBool_Type)
 		typenum = PyArray_BOOL;
@@ -1728,10 +1730,7 @@ PyArray_TypecodeFromTypeObject(PyObject *type, PyArray_Typecode *typecode) {
 	type_num = PyArray_TypenumFromTypeObject(type);
 	typecode->type_num = type_num;
 
-	if (PyTypeNum_ISFLEXIBLE(type_num)) {
-                itemsize = 0;
-	}
-	else {
+	if (!PyTypeNum_ISFLEXIBLE(type_num)) {
 		PyArray_Descr *descr;
 		descr = PyArray_DescrFromType(type_num);
 		if (descr != NULL)
@@ -1754,8 +1753,8 @@ PyArray_TypecodeFromScalar(PyObject *sc, PyArray_Typecode *typecode)
 			typecode->itemsize = PyString_GET_SIZE(sc);
 		else if (type_num == PyArray_UNICODE)
 			typecode->itemsize = PyUnicode_GET_DATA_SIZE(sc);
-		else if (type_num == PyArray_VOID) {
-			typecode->itemsize = \
+		else { 
+			typecode->itemsize =				\
 				((PyVoidScalarObject *)sc)->ob_size;
 		}
         }

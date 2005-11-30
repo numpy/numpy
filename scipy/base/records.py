@@ -1,4 +1,5 @@
 import numeric as sb
+import numerictypes as nt
 import sys
 import types
 import re
@@ -139,10 +140,12 @@ class format_parser:
         # This pads record so next record is aligned if self._rec_align is true.
         # Otherwise next the record starts right after the end of the last one.
         self._total_itemsize = (self._stops[-1]/maxalign + 1) * maxalign
-        
 
 
-class RecArray(sb.ndarray):
+class record(nt.void):
+    pass
+
+class ndrecarray(sb.ndarray):
     def __new__(self, *args, **kwds):
         buf = args[0]
         formats = args[1]
@@ -159,15 +162,14 @@ class RecArray(sb.ndarray):
             else: 
                 raise NameError, "Illegal shape %s" % `shape`
 
-        typecode = 'V%d' % itemsize
         if buf is None:
-            this = sb.ndarray.__new__(RecArray, shape, typecode)
+            this = sb.ndarray.__new__(self, shape, record, itemsize)
         else:
             byteorder = kwds.get('byteorder', sys.byteorder)
             swapped = 0
             if (byteorder != sys.byteorder):
                 swapped = 1
-            this = sb.ndarray.__new__(RecArray, shape, typecode, buffer=buf,
+            this = sb.ndarray.__new__(self, shape, record, itemsize, buffer=buf,
                                       swapped=swapped)
         this.parsed = parsed
         return this

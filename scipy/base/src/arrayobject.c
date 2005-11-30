@@ -804,7 +804,7 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
 	else
 		obj = type->tp_alloc(type, 0);
 	if (obj == NULL) return NULL;
-	if PyTypeNum_ISFLEXIBLE(type_num) {  
+	if PyTypeNum_ISEXTENDED(type_num) {  
 		if (type_num == PyArray_STRING) {
 			destptr = PyString_AS_STRING(obj);
 			((PyStringObject *)obj)->ob_shash = -1;
@@ -895,6 +895,7 @@ static int
 PyArray_RegisterDataType(PyTypeObject *type)
 {
 	PyArray_Descr *descr;
+	PyObject *obj;
 	int typenum;
 	int i;
 	
@@ -915,7 +916,14 @@ PyArray_RegisterDataType(PyTypeObject *type)
 	       sizeof(PyArray_Descr));
 	typenum = PyArray_USERDEF + PyArray_NUMUSERTYPES;
 	descr->type_num = typenum;
-	descr->typeobj = type;
+        descr->typeobj = type;
+	obj = PyObject_GetAttrString((PyObject *)type,"itemsize");
+	if (obj) {
+		i = PyInt_AsLong(obj);
+		if ((i < 0) && (PyErr_Occurred())) PyErr_Clear();
+		else descr->elsize = i;
+	}
+	Py_INCREF(type);
 	userdescrs = realloc(userdescrs, 
 			    (PyArray_NUMUSERTYPES+1)*sizeof(void *));
         if (userdescrs == NULL) {
@@ -2763,7 +2771,7 @@ array_repr_builtin(PyArrayObject *self)
 		free(string); return NULL; 
 	}
 	
-	if (PyArray_ISFLEXIBLE(self)) {
+	if (PyArray_ISEXTENDED(self)) {
 		char buf[100];
 		snprintf(buf, sizeof(buf), "%d", self->itemsize);
 		sprintf(string+n, ", '%c%s')", self->descr->type, buf);
@@ -3242,23 +3250,18 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 		}
 	}
 	else self->flags = (flags & ~UPDATEIFCOPY);
-	
-	if (PyTypeNum_ISFLEXIBLE(type_num)) {
+
+	self->itemsize = descr->elsize;
+	if (self->itemsize == 0) {
 		if (itemsize < 1) {
 			PyErr_SetString(PyExc_ValueError,
-					"type must provide an itemsize");
+					"data type must provide an itemsize");
 			self->ob_type->tp_free((PyObject *)self);
 			return NULL;
 		}
 		self->itemsize = itemsize;
-		/* Guarantee that these kind of arrays are never byteswapped
-		   unknowingly.  
-		*/
-		if (type_num != PyArray_UNICODE)
-			self->flags |= NOTSWAPPED;
 	}
-	else self->itemsize = descr->elsize; 
-		
+	
 	sd = self->itemsize;
 	
 	if (nd > 0) {
@@ -3532,9 +3535,9 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds) 
 {
-	static char *kwlist[] = {"shape", "dtype", "buffer", "offset", 
+	static char *kwlist[] = {"shape", "dtype", "itemlen", "buffer", "offset", 
 				 "strides", "swap", "fortran", NULL};
-	int itemsize = 0;
+	int itemsize = -1;
 	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
 	int type_num = PyArray_NOTYPE;
         PyArray_Dims dims = {NULL, 0};
@@ -3554,11 +3557,12 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	   array of a specific type and shape. 
 	*/
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&ii",
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&iO&LO&ii",
 					 kwlist, PyArray_IntpConverter,
                                          &dims, 
                                          PyArray_TypecodeConverter,
 					 &typecode, 
+					 &itemsize,
                                          PyArray_BufferConverter,
                                          &buffer,
 					 &offset,
@@ -3570,6 +3574,13 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         if (typecode.type_num ==PyArray_NOTYPE) {
 		typecode.type_num = PyArray_DOUBLE;
 		typecode.itemsize = sizeof(double);
+	}
+	/* An itemlen is used only if the typecode.itemsize is 0 */
+	if ((itemsize != -1) && typecode.itemsize==0) {
+		if (typecode.type_num == PyArray_UNICODE) {
+			itemsize *= sizeof(Py_UNICODE);
+		}
+		typecode.itemsize = itemsize;
 	}
 	type_num = typecode.type_num;
 	itemsize = typecode.itemsize;
@@ -3977,7 +3988,7 @@ array_nbytes_get(PyArrayObject *self)
 static PyObject *
 array_typechar_get(PyArrayObject *self)
 {
-	if PyArray_ISFLEXIBLE(self) 
+	if PyArray_ISEXTENDED(self) 
 		return PyString_FromFormat("%c%d", (self->descr->type),
 					   self->itemsize);
 	else 
@@ -4637,8 +4648,8 @@ _array_small_type(int chktype, int mintype, int chksize, int minsize,
 		  PyArray_Typecode *outtype)
 {
 	outtype->type_num = MAX(chktype, mintype);
-	if (PyTypeNum_ISFLEXIBLE(outtype->type_num) &&		\
-	    (PyTypeNum_ISFLEXIBLE(mintype) || mintype==0)) {
+	if (PyTypeNum_ISEXTENDED(outtype->type_num) &&		\
+	    (PyTypeNum_ISEXTENDED(mintype) || mintype==0)) {
 		/* Handle string->unicode case separately 
 		   because string itemsize is twice as large */
 		if (outtype->type_num == PyArray_UNICODE && 
@@ -4858,7 +4869,7 @@ Array_FromScalar(PyObject *op, PyArray_Typecode *typecode)
 	itemsize = typecode->itemsize;
 	type = typecode->type_num;
 
-	if (itemsize == 0 && PyTypeNum_ISFLEXIBLE(type)) {
+	if (itemsize == 0 && PyTypeNum_ISEXTENDED(type)) {
 		itemsize = PyObject_Length(op);
 	}
 
@@ -4912,7 +4923,7 @@ Array_FromSequence(PyObject *s, PyArray_Typecode *typecode, int min_depth,
 	if(discover_dimensions(s,nd,d, !stop_at_string) == -1) {
 		return NULL;
 	}
-	if (itemsize == 0 && PyTypeNum_ISFLEXIBLE(type)) {
+	if (itemsize == 0 && PyTypeNum_ISEXTENDED(type)) {
 		if (discover_itemsize(s, nd, &itemsize) == -1) {
 			return NULL;
 		}
@@ -5598,7 +5609,7 @@ array_fromattr(PyObject *op, PyArray_Typecode *typecode, int flags)
 		PyObject *obj;
 
 		descr = PyArray_DescrFromType(typecode->type_num);
-		if (PyTypeNum_ISFLEXIBLE(typecode->type_num)) {
+		if (PyTypeNum_ISEXTENDED(typecode->type_num)) {
 			obj = PyString_FromFormat("%c%d", descr->type,
 						  typecode->itemsize);
 		}
@@ -7340,7 +7351,7 @@ PyArray_MultiIterNew(int n, ...)
 			     "array objects (inclusive).", MAX_DIMS);
 	}
 	
-        fprintf(stderr, "multi new...");
+        /* fprintf(stderr, "multi new...");*/
         multi = PyObject_New(PyArrayMultiIterObject, &PyArrayMultiIter_Type);
         if (multi == NULL)
                 return NULL;
@@ -7548,7 +7559,7 @@ static PyMethodDef arraymultiter_methods[] = {
 static PyTypeObject PyArrayMultiIter_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
-        "scipy.multiter",		      	 /* tp_name */
+        "scipy.broadcast",		      	 /* tp_name */
         sizeof(PyArrayMultiIterObject),          /* tp_basicsize */
         0,					 /* tp_itemsize */
         /* methods */
