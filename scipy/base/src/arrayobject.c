@@ -4092,10 +4092,10 @@ array_type_set(PyArrayObject *self, PyObject *arg)
                 PyErr_SetString(PyExc_TypeError, "invalid type for array");
                 return -1;
         }
-        if (!(PyArray_ISONESEGMENT(self) ||		\
-	      (newtype.itemsize != self->itemsize))) {
-                PyErr_SetString(PyExc_ValueError, msg);
-                return -1;                 
+        if ((newtype.itemsize != self->itemsize) && \
+	    (self->nd == 0 || !PyArray_ISONESEGMENT(self))) {
+		PyErr_SetString(PyExc_ValueError, msg);
+		return -1;                 
         }
 
 	if (PyArray_ISCONTIGUOUS(self)) index = self->nd - 1;
