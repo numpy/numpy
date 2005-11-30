@@ -1,5 +1,6 @@
-from numerictypes import character, string, unicode_, obj2dtype, integer
-from numeric import ndarray, broadcast, empty
+from numerictypes import character, string, unicode_, \
+     obj2dtype, integer, object_
+from numeric import ndarray, broadcast, empty, array
 import sys
 
 # special sub-class for character arrays (string and unicode_)
@@ -18,7 +19,8 @@ class ndchararray(ndarray):
             swap = 0
 
         if buffer is None:
-            self = ndarray.__new__(subtype, shape, dtype, itemlen, fortran=fortran)
+            self = ndarray.__new__(subtype, shape, dtype, itemlen,
+                                   fortran=fortran)
         else:
             self = ndarray.__new__(subtype, shape, dtype, itemlen, buffer=buffer,
                                    offset=offset, strides=strides,
@@ -33,7 +35,7 @@ class ndchararray(ndarray):
         result = empty(b.shape, dtype=bool)
         res = result.flat
         for k, val in enumerate(b):
-            r1 = val[0].strip('\x00')
+            r1 = val[0].rstrip('\x00')
 	    r2 = val[1]
 	    res[k] = eval("r1 %s r2" % op, {'r1':r1,'r2':r2})
         return result
@@ -122,13 +124,14 @@ class ndchararray(ndarray):
         for k, val in enumerate(myiter):
             newval = []
             for chk in val[1:]:
-                if chk is None:
+                if chk.dtype is object_ and chk.toscalar() is None:
                     break
                 newval.append(chk)
             newitem = getattr(val[0],name)(*newval)
             maxsize = max(len(newitem), maxsize)
-            res[k] = newval
+            res[k] = newitem
         newarr = ndchararray(myiter.shape, maxsize, self.dtype is unicode_)
+	print res, maxsize
         newarr[:] = res
         return newarr
 
@@ -138,12 +141,13 @@ class ndchararray(ndarray):
         for k, val in enumerate(myiter):
             newval = []
             for chk in val[1:]:
-                if chk is None:
+                if chk.dtype is object_ and chk.toscalar() is None:
                     break
                 newval.append(chk)
-            newitem = getattr(val[0],name)(*newval)
-            res[k] = newval
-        return res
+            this_str = val[0].rstrip('\x00')
+            newitem = getattr(this_str,name)(*newval)
+            res[k] = newitem
+        return result
 
     def _samemethod(self, name):
         result = self.copy()
@@ -157,13 +161,17 @@ class ndchararray(ndarray):
 
     if sys.version[:3] >= '2.4':
         def center(self, width, fillchar=' '):
-            return self._generalmethod('center', broadcast(self, width, fillchar))
+            return self._generalmethod('center',
+                                       broadcast(self, width, fillchar))
         def ljust(self, width, fillchar=' '):
-            return self._generalmethod('ljust', broadcast(self, width, fillchar))
+            return self._generalmethod('ljust',
+                                       broadcast(self, width, fillchar))
         def rjust(self, width, fillchar=' '):
-            return self._generalmethod('rjust', broadcast(self, width, fillchar))        
+            return self._generalmethod('rjust',
+                                       broadcast(self, width, fillchar))
         def rsplit(self, sep=None, maxsplit=None):
-            return self._generalmethod2('rsplit', broadcast(self, sep, maxsplit))
+            return self._typedmethod('rsplit', broadcast(self, sep, maxsplit),
+                                     object)
     else:
         def ljust(self, width):
             return self._generalmethod('ljust', broadcast(self, width))
@@ -197,7 +205,8 @@ class ndchararray(ndarray):
         result = empty(self.shape, dtype=bool)
         res = result.flat
         for k, val in enumerate(self.flat):
-            res[k] = getattr(val, name)()
+            item = val.rstrip('\x00')
+            res[k] = getattr(item, name)()
         return result
 
     def isalnum(self):
@@ -260,7 +269,6 @@ class ndchararray(ndarray):
     def title(self):
         return self._samemethod('title')
 
-    #deletechars not accepted for unicode objects
     def translate(self, table, deletechars=None):
         if self.dtype is unicode_:
             return self._generalmethod('translate', broadcast(self, table))
@@ -276,18 +284,16 @@ class ndchararray(ndarray):
                 
 def chararray(obj, itemlen=7, copy=True, unicode=False, fortran=False):
 
-    if isinstance(obj, charndarray):
+    if isinstance(obj, ndchararray):
         if copy or (itemlen != obj.itemlen) \
            or (not unicode and obj.dtype == unicode_) \
            or (unicode and obj.dtype == string):
-            return obj.astype(obj.dtypestr[1:])
+            return obj.astype("%s%d" % (obj.dtypechar, itemlen))
         else:
             return obj
-
         
     if isinstance(obj, ndarray) and (obj.dtype in [unicode_, string]):
-        copied = 0
-        
+        copied = 0       
         if unicode:
             dtype = 'U%d' % obj.itemlen
             if obj.dtype == string:
@@ -302,18 +308,21 @@ def chararray(obj, itemlen=7, copy=True, unicode=False, fortran=False):
         if copy and not copied:
             obj = obj.copy()
 
-        return ndarray.__new__(chararray, obj.shape)
+        return ndarray.__new__(ndchararray, obj.shape, dtype, itemlen,
+                               buffer=obj, offset=0, swap=obj.flags.swapped,
+                               fortran=obj.flags['FNC'])    
 
     if unicode:
         dtype = "U%d" % itemlen
     else:
         dtype = "S%d" % itemlen
 
-    val = asarray(obj).astype(dtype)
+    val = array(obj, dtype=dtype, fortran=fortran, subok=1)
     
     return ndchararray(val.shape, itemlen, unicode, buffer=val,
-                       strides=val.strides, fortran=fortran)
-
+                       strides=val.strides, swap=val.flags.swapped,
+                       fortran=fortran)
     
-def aschararray(obj):
-    return chararray(obj, copy=False)
+def aschararray(obj, itemlen=7, unicode=False, fortran=False):
+    return chararray(obj, itemlen, copy=False,
+                     unicode=unicode, fortran=fortran)
