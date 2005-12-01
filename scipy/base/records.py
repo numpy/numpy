@@ -79,8 +79,10 @@ class format_parser:
         self._repeats = [1] * self._nfields
         self._itemsizes = [0] * self._nfields
         self._sizes = [0] * self._nfields
-        self._stops = [0] * self._nfields
+        stops = [0] * self._nfields
+        self._offsets = [0] * self._nfields
         self._rec_aligned = aligned
+
 
         # preserve the input for future reference
         self._formats = [''] * self._nfields
@@ -124,7 +126,9 @@ class format_parser:
                 align = _alignment[_fmt[i]]
                 sum = ((sum + align - 1)/align) * align
                 maxalign = max(maxalign, align)
-            self._stops[i] = sum - 1
+            stops[i] = sum - 1
+
+            self._offsets = stops[i] - self._sizes[i] + 1
 
             # Unify the appearance of _format, independent of input formats
             revfmt = _typestr[_fmt[i]]
@@ -136,13 +140,32 @@ class format_parser:
                     self._formats[i] += `self._itemsizes[i]`
                     
         self._fmt = _fmt
-        # This pads record so next record is aligned if self._rec_align is true.
-        # Otherwise next the record starts right after the end of the last one.
-        self._total_itemsize = (self._stops[-1]/maxalign + 1) * maxalign
-
+        # This pads record so next record is aligned if self._rec_align is
+        #   true. Otherwise next the record starts right after the end
+        #   of the last one.
+        self._total_itemsize = (stops[-1]/maxalign + 1) * maxalign
 
 class record(nt.void):
-    pass
+    def _finalize(self, arr):
+        self.parsed = arr.parsed
+        self._nfields = arr._nfields
+        self._names = arr._names
+        self._fields = {}
+        
+    def __repr__(self):
+        return "A record with %d fields named %s" % (self._nfields,
+                                                     self._names)
+    def __str__(self):
+        return self.data[:]
+
+    def __getitem__(self, obj):
+        self.field(obj)
+
+    def __setitem__(self, obj, val):
+        self.setfield(obj, val)
+
+# This allows array scalars to be returned that are of record type. 
+sb.register_dtype(record)
 
 class ndrecarray(sb.ndarray):
     def __new__(subtype, *args, **kwds):
@@ -160,32 +183,33 @@ class ndrecarray(sb.ndarray):
             swapped = 0
             if (byteorder != sys.byteorder):
                 swapped = 1
-            self = sb.ndarray.__new__(subtype, shape, record, itemsize, buffer=buf,
-                                      swapped=swapped)
+            self = sb.ndarray.__new__(subtype, shape, record, itemsize,
+                                      buffer=buf, swapped=swapped)
         self.parsed = parsed
         return self    
 
     def __init__(self, shape, formats, names=None, buf=None, offset=0,
                  strides=None, byteorder=sys.byteorder, aligned=0):
-        print "init: ", buf, formats, shape, names, offset, strides,\
-              byteorder, aligned
         self._updateattr()        
-        self._fieldNames(names)
-        self._fields = {}
+        self._setfieldnames(names)
+
+        # now create a dictionary of field-names that returns type object
+        # offset
 
         # This should grab the names out of self.parsed that are important
         #  to have later and should set self._attributes
         #  to the list of meta information that needs to be carried around
     def _updateattr(self):
         self._nfields = self.parsed._nfields
-        self._attributes = ['parsed']
+        self._attributes = ['parsed','_nfields','_fields','_names']
 
     def __array_finalize__(self, obj):
         self._attributes = obj._attributes
         for key in self._attributes:
             setattr(self, key, getattr(obj, key))
+        self._fields = {}
 
-    def _fieldNames(self, names=None):
+    def _setfieldnames(self, names=None):
         """convert input field names into a list and assign to the _names
         attribute """
 
@@ -218,7 +242,7 @@ class ndrecarray(sb.ndarray):
         basearr = self.__array__()
         for indx in range(self._nfields):
             # We need the offset and the data type of the field
-            _offset = parsed._stops[indx] - parsed._sizes[indx] + 1
+            _offset = parsed._offsets[indx]
             _type = parsed._fmt[indx]
             if issubclass(_type, nt.flexible):
                 _type = nt.dtype2char(_type)+`parsed._itemsizes[indx]`
@@ -233,4 +257,6 @@ class ndrecarray(sb.ndarray):
             self._get_fields()
         return self._fields[field_name]
 
+    def setfield(self, field_name, val):
+        
     

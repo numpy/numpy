@@ -42,8 +42,8 @@ typedef struct {
 } PyVoidScalarObject;
 
 /* no error checking is performed -- ctypeptr must be same type as scalar */
-/* in case of flexible type, the data is not copied into ctypeptr which is expected to 
-   be a pointer to pointer */
+/* in case of flexible type, the data is not copied 
+   into ctypeptr which is expected to be a pointer to pointer */
 static void
 PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 {
@@ -1012,6 +1012,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 	}
 }
 
+
 /**begin repeat
 
 #name=getfield, take, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress#
@@ -1024,6 +1025,46 @@ gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 }
 /**end repeat**/
 
+static PyObject *
+gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+	int offset = 0;
+	PyObject *value, *src;
+	int mysize;
+	char *dptr;
+	static char *kwlist[] = {"value", "dtype", "offset", 0};
+				
+	if (!PyArray_IsScalar(self, Void)) {
+		PyErr_SetString(PyExc_TypeError, 
+				"Can't set fields in a non-void array scalar.");
+		return NULL;
+	}
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
+					 &value,
+					 PyArray_TypecodeConverter, 
+					 &typecode, &offset)) return NULL;
+
+	mysize = ((PyVoidScalarObject *)self)->ob_size;
+	
+	if (offset < 0 || (offset + typecode.itemsize) > mysize) {
+		PyErr_Format(PyExc_ValueError,
+			     "Need 0 <= offset <= %d for requested type "  \
+			     "but received offset = %d",
+			     mysize-typecode.itemsize, offset);
+		return NULL;
+	}	
+
+	dptr = ((PyVoidScalarObject *)self)->obval + offset;
+
+	/* Copy data from value to correct place in dptr */
+        src = PyArray_FromAny(value, &typecode, 0, 0, CARRAY_FLAGS);
+        if (src == NULL) return NULL;
+	memcpy(dptr, PyArray_DATA(src), PyArray_ITEMSIZE(src));
+	Py_DECREF(src);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
 
 static PyObject *
 gentype_reduce(PyObject *self, PyObject *args)
@@ -1112,6 +1153,8 @@ static PyMethodDef gentype_methods[] = {
         {"byteswap",   (PyCFunction)gentype_byteswap,1, NULL},
         {"astype", (PyCFunction)gentype_astype, 1, NULL},
 	{"getfield", (PyCFunction)gentype_getfield, 
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{"setfield", (PyCFunction)gentype_setfield, 
 	 METH_VARARGS | METH_KEYWORDS, NULL},
         {"copy", (PyCFunction)gentype_copy, 1, NULL},  
         {"resize", (PyCFunction)gentype_resize, 1, NULL}, 

@@ -853,8 +853,17 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
 static PyObject *
 PyArray_ToScalar(void *data, PyArrayObject *arr)
 {
-	return PyArray_Scalar(data, arr->descr->type_num, arr->itemsize, 
-                              !(PyArray_ISNOTSWAPPED(arr)));
+	PyObject *ret;
+	ret = PyArray_Scalar(data, arr->descr->type_num, arr->itemsize, 
+			     !(PyArray_ISNOTSWAPPED(arr)));
+	if (ret == NULL) return NULL;
+	if (PyArray_ISUSERDEF(arr)) {
+		PyObject *res;
+		res = PyObject_CallMethod(ret, "_finalize", "O", arr);
+		if (res == NULL) PyErr_Clear();
+		else Py_DECREF(res);
+	}
+	return ret;
 }
 
 
@@ -4081,6 +4090,10 @@ array_type_get(PyArrayObject *self)
     or the array is single-segment (contiguous or fortran) with
     compatibile dimensions
 
+    If itemsize is exactly the same, then the argument can be a tuple whose first 
+    argument is the type and second argument is the shape of that type 
+
+    The shape and strides will be adjusted in that case as well.
 */
 
 static int
@@ -4089,7 +4102,13 @@ array_type_set(PyArrayObject *self, PyObject *arg)
         PyArray_Typecode newtype = {PyArray_NOTYPE, 0, 0};
         intp newdim;
         int index;
+	int tupleset = 0;
         char *msg = "new type not compatible with array.";
+
+/* 	if (PyTuple_Check(arg)) { */
+/* 		arg = _convert_type_set(arg, &dims); */
+/* 		tupleset = 1; */
+/* 	} */
 
         if ((PyArray_TypecodeConverter(arg, &newtype) < 0) ||
             newtype.type_num == PyArray_NOTYPE) {
@@ -4133,8 +4152,7 @@ array_type_set(PyArrayObject *self, PyObject *arg)
                 self->strides[index] = newtype.itemsize;
 		
         }
-	
-        
+	        
         /* fall through -- adjust type*/
 
         self->descr = PyArray_DescrFromType(newtype.type_num);
@@ -5635,7 +5653,6 @@ array_fromattr(PyObject *op, PyArray_Typecode *typecode, int flags)
         Py_DECREF(new);
         return r;
 }        
-
 
 static PyObject *
 array_fromobject(PyObject *op, PyArray_Typecode *typecode, int min_depth, 

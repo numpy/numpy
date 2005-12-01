@@ -292,6 +292,58 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_GetField(self, &typecode, offset));
 }
 
+
+static char doc_setfield[] = "m.field(type, offset, val) places val into "\
+	" field of the given array defined by the type and offset.";
+
+static int
+PyArray_SetField(PyArrayObject *self, PyArray_Typecode *type, 
+		 int offset, PyObject *val)
+{
+	PyObject *ret=NULL;
+	int retval = 0;
+
+	if (offset < 0 || (offset + type->itemsize) > self->itemsize) {
+		PyErr_Format(PyExc_ValueError,
+			     "Need 0 <= offset <= %d for requested type "  \
+			     "but received offset = %d",
+			     self->itemsize-type->itemsize, offset);
+		return -1;
+	}
+	ret = PyArray_New(self->ob_type, self->nd, self->dimensions,
+			  type->type_num, self->strides, 
+			  self->data + offset,
+			  type->itemsize, self->flags, (PyObject *)self);
+	if (ret == NULL) return -1;
+	Py_INCREF(self);
+	((PyArrayObject *)ret)->base = (PyObject *)self;
+	PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
+	
+	retval = PyArray_CopyObject((PyArrayObject *)ret, val);
+	Py_DECREF(ret);
+	return retval;
+}
+
+static PyObject *
+array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+	int offset = 0;
+	PyObject *value;
+	static char *kwlist[] = {"value", "dtype", "offset", 0};
+	
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
+					 &value,
+					 PyArray_TypecodeConverter, 
+					 &typecode, &offset)) return NULL;
+	
+	if (PyArray_SetField(self, &typecode, offset, value) < 0)
+		return NULL;
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+
 static PyObject *
 PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 {
@@ -1443,6 +1495,8 @@ static PyMethodDef array_methods[] = {
         {"astype", (PyCFunction)array_cast, 1, doc_cast},
 	{"getfield", (PyCFunction)array_getfield, 
 	 METH_VARARGS | METH_KEYWORDS, doc_getfield},
+	{"setfield", (PyCFunction)array_setfield, 
+	 METH_VARARGS | METH_KEYWORDS, doc_setfield},
         {"copy", (PyCFunction)array_copy, 1, doc_copy},  
         {"resize", (PyCFunction)array_resize, 1, doc_resize}, 
 
