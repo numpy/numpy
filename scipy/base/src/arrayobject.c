@@ -22,16 +22,6 @@ Space Science Telescope Institute
 
 */
 
-/* $Id: arrayobject.c,v 1.59 2005/09/14 00:14:00 teoliphant Exp $ */
-
-/*
-#include "Python.h"
-#include "structmember.h"
-
-#define _MULTIARRAYMODULE
-#include "Numeric3/arrayobject.h"
-*/
-
 /* Helper functions */
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
@@ -3069,6 +3059,7 @@ _IsAligned(PyArrayObject *ap)
 		return 1;
 
 	alignment = ap->descr->alignment;
+	if (alignment == 1) return 1;
 
 	ptr = (intp) ap->data;
         aligned = (ptr % alignment) == 0;
@@ -4083,6 +4074,26 @@ array_type_get(PyArrayObject *self)
         return (PyObject *)self->descr->typeobj;
 }
 
+
+static PyObject *
+_convert_type_set(PyObject *arg, PyArray_Dims *dims)
+{
+	PyObject *shape;
+
+	if (PyTuple_GET_SIZE(arg) != 2) {
+		PyErr_SetString(PyExc_TypeError, 
+				"Type-setting tuple must be length 2.");
+		return NULL;
+	}
+	
+	shape = PyTuple_GET_ITEM(arg, 1);
+	if (PyArray_IntpConverter(shape, dims) < 0) return NULL;
+	
+	/* Steal the reference */
+	arg = PyTuple_GET_ITEM(arg, 0);
+
+	return arg;
+}
 /* If the type is changed.  
     Also needing change: strides, itemsize
 
@@ -4090,8 +4101,8 @@ array_type_get(PyArrayObject *self)
     or the array is single-segment (contiguous or fortran) with
     compatibile dimensions
 
-    If itemsize is exactly the same, then the argument can be a tuple whose first 
-    argument is the type and second argument is the shape of that type 
+    If itemsize is exactly the same, then the argument can be a tuple whose 
+    first argument is the type and second argument is the shape of that type 
 
     The shape and strides will be adjusted in that case as well.
 */
@@ -4100,64 +4111,122 @@ static int
 array_type_set(PyArrayObject *self, PyObject *arg)
 {
         PyArray_Typecode newtype = {PyArray_NOTYPE, 0, 0};
+	PyArray_Dims dims = {NULL, -1};
         intp newdim;
         int index;
-	int tupleset = 0;
+	int tupleset=0;
         char *msg = "new type not compatible with array.";
 
-/* 	if (PyTuple_Check(arg)) { */
-/* 		arg = _convert_type_set(arg, &dims); */
-/* 		tupleset = 1; */
-/* 	} */
+	if (PyTuple_Check(arg)) {
+		arg = _convert_type_set(arg, &dims);
+		if (arg == NULL) return -1;
+		tupleset = 1;
+	}
 
         if ((PyArray_TypecodeConverter(arg, &newtype) < 0) ||
             newtype.type_num == PyArray_NOTYPE) {
                 PyErr_SetString(PyExc_TypeError, "invalid type for array");
-                return -1;
-        }
-        if ((newtype.itemsize != self->itemsize) && \
-	    (self->nd == 0 || !PyArray_ISONESEGMENT(self))) {
-		PyErr_SetString(PyExc_ValueError, msg);
-		return -1;                 
+		if (tupleset) PyDimMem_FREE(dims.ptr);
+		return -1;
         }
 
-	if (PyArray_ISCONTIGUOUS(self)) index = self->nd - 1;
-	else index = 0;
-
-        if (newtype.itemsize < self->itemsize) {
-                /* if it is compatible increase the size of the dimension
-                   at end (or at the front for FORTRAN)
-                */
-                if (self->itemsize % newtype.itemsize != 0) {
-                        PyErr_SetString(PyExc_ValueError, msg);
-                        return -1;
-                }
-                newdim = self->itemsize / newtype.itemsize;
-		self->dimensions[index] *= newdim;
-                self->strides[index] = newtype.itemsize;
-	}
-        
-        else if (newtype.itemsize > self->itemsize) {
-        
-                /* Determine if last (or first if FORTRAN) dimension
-                   is compatible */
-
-		newdim = self->dimensions[index] * self->itemsize;
-                if ((newdim % newtype.itemsize) != 0) {
+	if (tupleset) { 
+		/* Adjust dimensions and strides to re-interpret
+		   item as an array of another item 
+		*/
+		intp newsize = newtype.itemsize * \
+			PyArray_MultiplyList(dims.ptr, dims.len);
+		intp newnd, *newdim, *newstrides;
+		intp savestrides[MAX_DIMS];
+		intp oldnd;
+		int i, tempsize;
+		
+		if (newsize != self->itemsize) {
 			PyErr_SetString(PyExc_ValueError, msg);
-                        return -1;
-                }
+			PyDimMem_FREE(dims.ptr);
+			return -1;
+		}
 		
-                self->dimensions[index] = newdim / newtype.itemsize;
-                self->strides[index] = newtype.itemsize;
+		/* Always place new dimensions at the end */
+		/*  so that normal indexing returns an array */
+		oldnd = self->nd;
+		newnd = oldnd + dims.len;
+		if (newnd > MAX_DIMS) {
+			PyErr_SetString(PyExc_ValueError, 
+					"too many dimensions in new array.");
+			PyDimMem_FREE(dims.ptr);
+			return -1;
+		}
+
+		/* save strides */
+		memcpy(savestrides, self->strides, oldnd*sizeof(intp));
+		self->dimensions = PyDimMem_RENEW(self->dimensions, 2*newnd);
+		if (self->dimensions == NULL) {
+			self->nd = 0;
+			PyErr_NoMemory();
+			PyDimMem_FREE(dims.ptr);
+			return -1;
+		}
+		self->strides = self->dimensions + newnd;
+
+		newdim = self->dimensions+oldnd;
+		newstrides = self->strides+oldnd;
+		memcpy(newdim, dims.ptr, dims.len*sizeof(intp));
+		memcpy(self->strides, savestrides, oldnd*sizeof(intp));
+		/* Make new strides */
+		tempsize = newtype.itemsize;
+		for (i=dims.len-1;i>=0;i--) {
+			newstrides[i] = tempsize;
+			tempsize *= newdim[i] ? newdim[i] : 1;
+		}
+		PyDimMem_FREE(dims.ptr);
+		self->nd = newnd;
+	}
+	else {
+		if ((newtype.itemsize != self->itemsize) &&	\
+		    (self->nd == 0 || !PyArray_ISONESEGMENT(self))) {
+			PyErr_SetString(PyExc_ValueError, msg);
+			return -1;
+		}
 		
-        }
+		if (PyArray_ISCONTIGUOUS(self)) index = self->nd - 1;
+		else index = 0;
+		
+		if (newtype.itemsize < self->itemsize) {
+			/* if it is compatible increase the size of the 
+			   dimension at end (or at the front for FORTRAN)
+			*/
+			if (self->itemsize % newtype.itemsize != 0) {
+				PyErr_SetString(PyExc_ValueError, msg);
+				return -1;
+			}
+			newdim = self->itemsize / newtype.itemsize;
+			self->dimensions[index] *= newdim;
+			self->strides[index] = newtype.itemsize;
+		}
+		
+		else if (newtype.itemsize > self->itemsize) {
+			
+			/* Determine if last (or first if FORTRAN) dimension
+			   is compatible */
+			
+			newdim = self->dimensions[index] * self->itemsize;
+			if ((newdim % newtype.itemsize) != 0) {
+				PyErr_SetString(PyExc_ValueError, msg);
+				return -1;
+			}
+			
+			self->dimensions[index] = newdim / newtype.itemsize;
+			self->strides[index] = newtype.itemsize;
+		}
+	}
 	        
         /* fall through -- adjust type*/
 
         self->descr = PyArray_DescrFromType(newtype.type_num);
         self->itemsize = newtype.itemsize;
-        PyArray_UpdateFlags(self, ALIGNED);
+	PyArray_UpdateFlags(self, (tupleset ? UPDATE_ALL_FLAGS : ALIGNED));
+
         return 0;
 
 }

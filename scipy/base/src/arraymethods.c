@@ -912,6 +912,8 @@ static char doc_setstate[] = "a.__setstate__(tuple) for unpickling.";
 
 static intp _array_fill_strides(intp *, intp *, int, intp, int, int *);
 
+static int _IsAligned(PyArrayObject *); 
+
 static PyObject *
 array_setstate(PyArrayObject *self, PyObject *args)
 {
@@ -995,8 +997,23 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
 	if (typecode.type_num != PyArray_OBJECT) {
 		self->data = datastr;
-		self->base = rawdata;
-		Py_INCREF(self->base);
+		if (!_IsAligned(self)) {
+			intp num = PyArray_NBYTES(self);
+			self->data = PyDataMem_NEW(num);
+			if (self->data == NULL) {
+				self->nd = 0;
+				PyDimMem_FREE(self->dimensions);
+				return PyErr_NoMemory();
+			}
+			memcpy(self->data, datastr, num);
+			self->flags |= OWN_DATA;
+			self->base = NULL;
+		}
+		else {
+			self->base = rawdata;
+			Py_INCREF(self->base);
+		}
+		if (swap) self->flags &= ~NOTSWAPPED;
 	}
 	else {
 		self->data = PyDataMem_NEW(PyArray_NBYTES(self));
@@ -1013,8 +1030,6 @@ array_setstate(PyArrayObject *self, PyObject *args)
 	}
 
 	PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
-
-	if (swap) self->flags &= ~NOTSWAPPED;
 	
 	Py_INCREF(Py_None);
 	return Py_None;	
