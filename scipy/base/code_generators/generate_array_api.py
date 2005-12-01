@@ -174,11 +174,11 @@ objectapi_list = [
 
     (r"""Get a subset of bytes from each element of the array
     """,
-     'GetField', 'PyArrayObject *, PyArray_Typecode *, int', 'PyObject *'),
+     'GetField', 'PyArrayObject *, PyObject *, int', 'PyObject *'),
 
     (r"""Set a subset of bytes from each element of the array
     """,
-     'SetField', 'PyArrayObject *, PyArray_Typecode *, int, PyObject *', 'int'),
+     'SetField', 'PyArrayObject *, PyObject *, int, PyObject *', 'int'),
 
     (r"""
     """,

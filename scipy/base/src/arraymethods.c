@@ -249,76 +249,138 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
 	return PyArray_SwapAxes(self, axis1, axis2);
 }
 
-static char doc_getfield[] = "m.field(type, offset) returns a field "\
+static int array_type_set(PyArrayObject *, PyObject *);
+
+static char doc_getfield[] = "m.getfield(dtype, offset) returns a field "\
 	" of the given array as a certain type.  A field is a view of "\
 	" the array's data with each itemsize determined by the given type"\
 	" and the offset into the current array.";
 
 static PyObject *
-PyArray_GetField(PyArrayObject *self, PyArray_Typecode *type, 
-				  int offset)
+PyArray_GetField(PyArrayObject *self, PyObject *dtype, int offset)
 {
 	PyObject *ret=NULL;
+	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+        int tupletype = 0;
+        
+        if (PyTuple_Check(dtype)) {
+                PyArray_Dims dim = {NULL, -1};
+                if (PyTuple_GET_SIZE(dtype) != 2) {
+                        PyErr_SetString(PyExc_TypeError, 
+                                        "tuple for data-type must be length 2");
+                        return NULL;
+                }
+                if (PyArray_TypecodeConverter(PyTuple_GET_ITEM(dtype,0), 
+                                              &typecode) < 0) return NULL;
+                if (PyArray_IntpConverter(PyTuple_GET_ITEM(dtype,1),
+                                           &dim) < 0) return NULL;
+                tupletype = 1;                
+                typecode.itemsize = typecode.itemsize *         \
+                        PyArray_MultiplyList(dim.ptr, dim.len);
+                typecode.type_num = PyArray_VOID;
+                PyDimMem_FREE(dim.ptr);
+        }
+        else {
+                if (PyArray_TypecodeConverter(dtype, &typecode) < 0) 
+                        return NULL;
+        }
+                                           
 
-	if (offset < 0 || (offset + type->itemsize) > self->itemsize) {
+	if (offset < 0 || (offset + typecode.itemsize) > self->itemsize) {
 		PyErr_Format(PyExc_ValueError,
 			     "Need 0 <= offset <= %d for requested type "  \
 			     "but received offset = %d",
-			     self->itemsize-type->itemsize, offset);
+			     self->itemsize-typecode.itemsize, offset);
 		return NULL;
 	}
 	ret = PyArray_New(self->ob_type, self->nd, self->dimensions,
-			  type->type_num, self->strides, 
+			  typecode.type_num, self->strides, 
 			  self->data + offset,
-			  type->itemsize, self->flags, (PyObject *)self);
+			  typecode.itemsize, self->flags, (PyObject *)self);
 	if (ret == NULL) return NULL;
 	Py_INCREF(self);
 	((PyArrayObject *)ret)->base = (PyObject *)self;
-	PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
-	return ret;	
+        
+        if (tupletype && (array_type_set((PyArrayObject *)ret, dtype) < 0)) {
+                Py_DECREF(ret); return NULL;
+        }
+	else {
+                PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
+        }
+	return ret;
 }
 
 static PyObject *
 array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+        PyObject *dtype;
+        
 	int offset = 0;
 	static char *kwlist[] = {"dtype", "offset", 0};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|i", kwlist,
-					 PyArray_TypecodeConverter, 
-					 &typecode, &offset)) return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|i", kwlist,
+					 &dtype, &offset)) return NULL;
 	
-	return _ARET(PyArray_GetField(self, &typecode, offset));
+	return _ARET(PyArray_GetField(self, dtype, offset));
 }
 
 
-static char doc_setfield[] = "m.field(type, offset, val) places val into "\
+static char doc_setfield[] = "m.setfield(dtype, offset, val) places val into "\
 	" field of the given array defined by the type and offset.";
 
 static int
-PyArray_SetField(PyArrayObject *self, PyArray_Typecode *type, 
+PyArray_SetField(PyArrayObject *self, PyObject *dtype,
 		 int offset, PyObject *val)
 {
+	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
 	PyObject *ret=NULL;
 	int retval = 0;
+        int tupletype=0;
+        
+        if (PyTuple_Check(dtype)) {
+                PyArray_Dims dim = {NULL, -1};
+                if (PyTuple_GET_SIZE(dtype) != 2) {
+                        PyErr_SetString(PyExc_TypeError, 
+                                        "tuple for data-type must be length 2");
+                        return -1;
+                }
+                if (PyArray_TypecodeConverter(PyTuple_GET_ITEM(dtype,0), 
+                                              &typecode) < 0) return -1;
+                if (PyArray_IntpConverter(PyTuple_GET_ITEM(dtype,1),
+                                           &dim) < 0) return -1;
+                tupletype = 1;                
+                typecode.itemsize = typecode.itemsize *         \
+                        PyArray_MultiplyList(dim.ptr, dim.len);
+                typecode.type_num = PyArray_VOID;
+                PyDimMem_FREE(dim.ptr);
+        }
+        else {
+                if (PyArray_TypecodeConverter(dtype, &typecode) < 0) 
+                        return -1;
+        }
 
-	if (offset < 0 || (offset + type->itemsize) > self->itemsize) {
+
+	if (offset < 0 || (offset + typecode.itemsize) > self->itemsize) {
 		PyErr_Format(PyExc_ValueError,
 			     "Need 0 <= offset <= %d for requested type "  \
 			     "but received offset = %d",
-			     self->itemsize-type->itemsize, offset);
+			     self->itemsize-typecode.itemsize, offset);
 		return -1;
 	}
 	ret = PyArray_New(self->ob_type, self->nd, self->dimensions,
-			  type->type_num, self->strides, 
+			  typecode.type_num, self->strides, 
 			  self->data + offset,
-			  type->itemsize, self->flags, (PyObject *)self);
+			  typecode.itemsize, self->flags, (PyObject *)self);
 	if (ret == NULL) return -1;
 	Py_INCREF(self);
 	((PyArrayObject *)ret)->base = (PyObject *)self;
-	PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
-	
+
+        if (tupletype && (array_type_set((PyArrayObject *)ret, dtype) < 0)) {
+                Py_DECREF(ret); return -1;
+        }
+	else {
+                PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
+        }
 	retval = PyArray_CopyObject((PyArrayObject *)ret, val);
 	Py_DECREF(ret);
 	return retval;
@@ -327,17 +389,16 @@ PyArray_SetField(PyArrayObject *self, PyArray_Typecode *type,
 static PyObject *
 array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+        PyObject *dtype;
 	int offset = 0;
 	PyObject *value;
 	static char *kwlist[] = {"value", "dtype", "offset", 0};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist,
 					 &value,
-					 PyArray_TypecodeConverter, 
-					 &typecode, &offset)) return NULL;
+					 &dtype, &offset)) return NULL;
 	
-	if (PyArray_SetField(self, &typecode, offset, value) < 0)
+	if (PyArray_SetField(self, dtype, offset, value) < 0)
 		return NULL;
 	Py_INCREF(Py_None);
 	return Py_None;
