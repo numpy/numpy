@@ -2765,20 +2765,22 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 			   more than one byte and itemsize must be
 			   the number of bytes.
 			*/
-			if (check_num == PyArray_UNICODELTR ||	\
-			    check_num == PyArray_UNICODE) 
-			  at->itemsize *= sizeof(Py_UNICODE);
-
+			if (check_num == PyArray_UNICODELTR)
+				at->itemsize *= sizeof(Py_UNICODE);
+			
 			/* Support for generic processing */
 			else if ((check_num != PyArray_STRINGLTR) &&
-				 (check_num != PyArray_VOIDLTR) &&
-				 (check_num != PyArray_STRING) &&
-				 (check_num != PyArray_VOID)) {
-				check_num = \
-					PyArray_TypestrConvert(at->itemsize,
-							       check_num);
-			        at->itemsize = 0;
-				if (check_num == PyArray_NOTYPE) goto fail;
+				 (check_num != PyArray_VOIDLTR)) {
+				if (at->itemsize == 0) {
+					/* reset because string conversion failed */
+					check_num = PyArray_NOTYPE+10;
+				}
+				else {
+					check_num =			\
+						PyArray_TypestrConvert(at->itemsize,
+								       check_num);
+					at->itemsize = 0;
+				}
 			}
 		}
 	}
@@ -2804,18 +2806,19 @@ PyArray_TypecodeConverter(PyObject *obj, PyArray_Typecode *at)
 		return PY_SUCCEED;
 	}
 
-        if ((descr = PyArray_DescrFromType(check_num))==NULL) {
+        if ((check_num == PyArray_NOTYPE+10) ||			\
+	    (descr = PyArray_DescrFromType(check_num))==NULL) {
 		/* Now check to see if the object is registered
 		   in typeDict */
 		if (typeDict != NULL) {
 			item = PyDict_GetItem(typeDict, obj);
 			if (item) {
-				PyArray_TypecodeFromTypeObject(obj, at);
+				PyArray_TypecodeFromTypeObject(item, at);
 				PyErr_Clear();
 				return PY_SUCCEED;
 			}
 		}
-                return PY_FAIL;
+		goto fail;
 	}
 	
         at->type_num = descr->type_num;

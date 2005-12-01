@@ -3341,7 +3341,11 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 					  "O", obj);
 		if (res == NULL) {
 			if (self->flags & OWNDATA) PyDataMem_FREE(self);
-			goto fail;
+			PyDimMem_FREE(self->dimensions);
+			/* theoretically should free self
+			   but this causes segmentation faults...
+			   Not sure why */
+			return NULL;
 		}
 		else Py_DECREF(res);
 	}
@@ -3350,7 +3354,7 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 
  fail:
 	PyDimMem_FREE(self->dimensions);
-	self->ob_type->tp_free((PyObject *)self);
+	subtype->tp_free((PyObject *)self);
 	return NULL;
 
 }
@@ -3535,8 +3539,8 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds) 
 {
-	static char *kwlist[] = {"shape", "dtype", "itemlen", "buffer", "offset", 
-				 "strides", "swap", "fortran", NULL};
+	static char *kwlist[] = {"shape", "dtype", "itemlen", "buffer", 
+				 "offset", "strides", "swap", "fortran", NULL};
 	int itemsize = -1;
 	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
 	int type_num = PyArray_NOTYPE;
@@ -3654,7 +3658,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
         PyDimMem_FREE(dims.ptr);
         if (strides.ptr) PyDimMem_FREE(strides.ptr);
-        return PyArray_Return(ret);
+        return (PyObject *)ret;
         
  fail:
         if (dims.ptr) PyDimMem_FREE(dims.ptr);
@@ -4871,6 +4875,7 @@ Array_FromScalar(PyObject *op, PyArray_Typecode *typecode)
 
 	if (itemsize == 0 && PyTypeNum_ISEXTENDED(type)) {
 		itemsize = PyObject_Length(op);
+		if (type == PyArray_UNICODE) itemsize *= sizeof(Py_UNICODE);
 	}
 
 	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, 0, NULL, type,

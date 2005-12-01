@@ -80,7 +80,7 @@ $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 # we add more at the bottom
 __all__ = ['typeDict', 'arraytypes', 'ScalarType', 'obj2dtype', 'cast', 'nbytes', 'dtype2char']
 
-from multiarray import typeinfo, ndarray, array
+from multiarray import typeinfo, ndarray, array, empty
 import types as _types
 
 # we don't export these for import *, but we do want them accessible
@@ -161,6 +161,7 @@ def _add_types():
             if base != '':
                 allTypes["%s%d" % (base, bit)] = typeobj
                 typeDict["%s%d" % (base, bit)] = typeobj
+                typeDict["%s%d" % (base.capitalize(), bit)] = typeobj
             if char != '':
                 typeDict[char] = typeobj
 
@@ -207,7 +208,6 @@ def _set_up_aliases():
 _set_up_aliases()
 
 # Now, construct dictionary to lookup character codes from types
-
 _dtype2char_dict = {}
 def _construct_char_code_lookup():
     for name in typeinfo.keys():
@@ -216,6 +216,7 @@ def _construct_char_code_lookup():
 	     if tup[0] not in ['p','P']:
                 _dtype2char_dict[tup[-1]] = tup[0]
 _construct_char_code_lookup()
+
 
 arraytypes = {'int': [],
               'uint':[],
@@ -302,29 +303,11 @@ def obj2dtype(rep, default=None):
     res = typeDict.get(rep, default)
     return res
 
-def dtype2char(dtype):
-    dtype = obj2dtype(dtype)
-    if dtype is None:
-        raise ValueError, "unrecognized type"
-    return _dtype2char_dict[dtype]
-
-
-# Create dictionary of casting functions that wrap sequences
-# indexed by type or type character
 
 # This dictionary allows look up based on any alias for a type
 class _typedict(dict):
     def __getitem__(self, obj):
         return dict.__getitem__(self, obj2dtype(obj))
-
-cast = _typedict()
-ScalarType = [_types.IntType, _types.FloatType,
-              _types.ComplexType, _types.LongType, _types.BooleanType,
-              _types.StringType, _types.UnicodeType, _types.BufferType]
-ScalarType.extend(_dtype2char_dict.keys())
-ScalarType = tuple(ScalarType)
-for key in _dtype2char_dict.keys():
-    cast[key] = lambda x, k=key : array(x, copy=False).astype(k)
 
 nbytes = _typedict()
 _alignment = _typedict()
@@ -345,6 +328,36 @@ def _construct_lookups():
             _minvals[obj] = None
 
 _construct_lookups()
+
+def dtype2char(dtype):
+    dtype = obj2dtype(dtype)
+    if dtype is None:
+        raise ValueError, "unrecognized type"
+    return _dtype2char_dict[dtype]
+
+# Create dictionary of casting functions that wrap sequences
+# indexed by type or type character
+
+
+cast = _typedict()
+ScalarType = [_types.IntType, _types.FloatType,
+              _types.ComplexType, _types.LongType, _types.BooleanType,
+              _types.StringType, _types.UnicodeType, _types.BufferType]
+ScalarType.extend(_dtype2char_dict.keys())
+ScalarType = tuple(ScalarType)
+for key in _dtype2char_dict.keys():
+    cast[key] = lambda x, k=key : array(x, copy=False).astype(k)
+
+
+_unicodesize = array('u','U').itemsize
+
+# Create the typestring lookup dictionary
+_typestr = _typedict()
+for key in _dtype2char_dict.keys():
+    if issubclass(key, allTypes['flexible']):
+        _typestr[key] = _dtype2char_dict[key]
+    else:
+        _typestr[key] = empty((1,),key).dtypestr[1:]
 
 # Now add the types we've determined to this module
 for key in allTypes:

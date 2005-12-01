@@ -140,26 +140,24 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         summary_insert = ""
         data = a.ravel()
 
-
-    
     items_per_line = a.shape[-1]
     
     try:
         format_function = a._format
     except AttributeError:
-        type = a.dtype
-        if issubclass(type, _nt.bool):
+        dtype = a.dtype
+        if issubclass(dtype, _nt.bool):
             format = "%s"
             format_function = lambda x, f = format: format % x
-        if issubclass(type, _nt.integer):
+        if issubclass(dtype, _nt.integer):
             max_str_len = max(len(str(max_reduce(data))),
                               len(str(min_reduce(data))))
             format = '%' + str(max_str_len) + 'd'
             format_function = lambda x, f = format: _formatInteger(x, f)
-        elif issubclass(type, _nt.floating):
+        elif issubclass(dtype, _nt.floating):
             format = _floatFormat(data, precision, suppress_small)
             format_function = lambda x, f = format: _formatFloat(x, f)
-        elif issubclass(type, _nt.complexfloating):
+        elif issubclass(dtype, _nt.complexfloating):
             real_format = _floatFormat(
                 data.real, precision, suppress_small, sign=0)
             imag_format = _floatFormat(
@@ -172,7 +170,6 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
 	    
     next_line_prefix = " " # skip over "["
     next_line_prefix += " "*len(prefix)                  # skip over array(
-
 
 
     lst = _formatArray(a, format_function, len(a.shape), max_line_width,

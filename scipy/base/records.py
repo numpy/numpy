@@ -10,7 +10,9 @@ import re
 # are equally allowed
 format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[A-Za-z0-9.]*)')
 
-numfmt = sb.typeDict
+numfmt = nt.typeDict
+
+
 
 def find_duplicate(list):
     """Find duplication in a list, return a list of dupicated elements"""
@@ -63,7 +65,9 @@ class format_parser:
     def _parseFormats(self, formats, aligned=0):
         """ Parse the field formats """
 
-        revdict = sb.revdict
+        _alignment = nt._alignment
+        _bytes = nt.nbytes
+        _typestr = nt._typestr
         if (type(formats) in [types.ListType, types.TupleType]):
             _fmt = formats[:]
         elif (type(formats) == types.StringType):
@@ -83,8 +87,7 @@ class format_parser:
 
         sum = 0
         maxalign = 1
-        unisize = sb.typeinfo['UNICODE'][2] or 2
-        print unisize
+        unisize = nt._unicodesize
         for i in range(self._nfields):
 
             # parse the formats into repeats and formats
@@ -106,8 +109,8 @@ class format_parser:
             else: 
                 _repeat = eval(_repeat)
             _fmt[i] = numfmt[_dtype]
-            if not issubclass(_fmt[i], sb.Flexible):
-                self._itemsizes[i] = revdict[_fmt[i]][0][2] >> 3
+            if not issubclass(_fmt[i], nt.flexible):
+                self._itemsizes[i] = _bytes[_fmt[i]]
             self._repeats[i] = _repeat
 
             if (type(_repeat) in [types.ListType, types.TupleType]):
@@ -118,24 +121,20 @@ class format_parser:
             sum += self._sizes[i]
             if self._rec_aligned:
                 # round sum up to multiple of alignment factor
-                align = revdict[_fmt[i]][0][3]
+                align = _alignment[_fmt[i]]
                 sum = ((sum + align - 1)/align) * align
                 maxalign = max(maxalign, align)
             self._stops[i] = sum - 1
 
             # Unify the appearance of _format, independent of input formats
-            revfmt = revdict[_fmt[i]][1][0]
+            revfmt = _typestr[_fmt[i]]
             self._formats[i] = `_repeat`+revfmt
-            if issubclass(_fmt[i], sb.Flexible):
-                if issubclass(_fmt[i], sb.Unicode):
+            if issubclass(_fmt[i], nt.flexible):
+                if issubclass(_fmt[i], nt.unicode_):
                     self._formats[i] += `self._itemsizes[i] / unisize`
                 else:
                     self._formats[i] += `self._itemsizes[i]`
-            elif issubclass(_fmt[i], sb.Object):
-                pass
-            else:
-                self._formats[i] += `revdict[_fmt[i]][1][1]`
-
+                    
         self._fmt = _fmt
         # This pads record so next record is aligned if self._rec_align is true.
         # Otherwise next the record starts right after the end of the last one.
@@ -146,51 +145,40 @@ class record(nt.void):
     pass
 
 class ndrecarray(sb.ndarray):
-    def __new__(self, *args, **kwds):
-        buf = args[0]
+    def __new__(subtype, *args, **kwds):
+        shape = args[0]
         formats = args[1]
-        shape = kwds.get('shape',-1)
+        buf = kwds.get('buf',None)
         aligned = kwds.get('aligned',0)
         parsed = format_parser(formats, aligned)
         itemsize = parsed._total_itemsize
-        if (shape != None):
-            if type(shape) in [types.IntType, types.LongType]: 
-                shape = (shape,)
-            elif (type(shape) == types.TupleType and type(shape[0]) in \
-                  [types.IntType, types.LongType]):
-                pass
-            else: 
-                raise NameError, "Illegal shape %s" % `shape`
 
         if buf is None:
-            this = sb.ndarray.__new__(self, shape, record, itemsize)
+            self = sb.ndarray.__new__(subtype, shape, record, itemsize)
         else:
             byteorder = kwds.get('byteorder', sys.byteorder)
             swapped = 0
             if (byteorder != sys.byteorder):
                 swapped = 1
-            this = sb.ndarray.__new__(self, shape, record, itemsize, buffer=buf,
+            self = sb.ndarray.__new__(subtype, shape, record, itemsize, buffer=buf,
                                       swapped=swapped)
-        this.parsed = parsed
-        return this
-    
+        self.parsed = parsed
+        return self    
 
-    def __init__(self, buf, formats, shape=-1, names=None, byteoffset=0,
-                 bytestride=None, byteorder=sys.byteorder, aligned=0):
-        print "init: ", buf, formats, shape, names, byteoffset, bytestride,\
+    def __init__(self, shape, formats, names=None, buf=None, offset=0,
+                 strides=None, byteorder=sys.byteorder, aligned=0):
+        print "init: ", buf, formats, shape, names, offset, strides,\
               byteorder, aligned
         self._updateattr()        
         self._fieldNames(names)
         self._fields = {}
-
 
         # This should grab the names out of self.parsed that are important
         #  to have later and should set self._attributes
         #  to the list of meta information that needs to be carried around
     def _updateattr(self):
         self._nfields = self.parsed._nfields
-        self._attributes = ['_rec_aligned', '_nfields']
-        del self.parsed
+        self._attributes = ['parsed']
 
     def __array_finalize__(self, obj):
         self._attributes = obj._attributes
@@ -224,3 +212,25 @@ class ndrecarray(sb.ndarray):
         if _dup:
             raise ValueError, "Duplicate field names: %s" % _dup
 
+    def _get_fields(self):
+        self._fields = {}
+        parsed = self.parsed
+        basearr = self.__array__()
+        for indx in range(self._nfields):
+            # We need the offset and the data type of the field
+            _offset = parsed._stops[indx] - parsed._sizes[indx] + 1
+            _type = parsed._fmt[indx]
+            if issubclass(_type, nt.flexible):
+                _type = nt.dtype2char(_type)+`parsed._itemsizes[indx]`
+            arr = basearr.getfield(_type, _offset)
+            # Put this array as a value in dictionary
+            # Do both name and index
+            self._fields[indx] = arr
+            self._fields[self._names[indx]] = arr
+            
+    def field(self, field_name):
+        if self._fields == {}:
+            self._get_fields()
+        return self._fields[field_name]
+
+    
