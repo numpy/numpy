@@ -574,7 +574,7 @@ array_cast(PyArrayObject *self, PyObject *args)
 	    (typecode.type_num == PyArray_TYPE(self) &&		\
 	     (typecode.itemsize == 0 ||				\
 	      typecode.itemsize == PyArray_ITEMSIZE(self)))) {
-		return _ARET(PyArray_NewCopy(self,-1));
+		return _ARET(PyArray_NewCopy(self,0));
 	}
 	return _ARET(PyArray_CastToType(self, &typecode));
 }	  
