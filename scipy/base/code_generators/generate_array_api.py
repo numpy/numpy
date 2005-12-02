@@ -44,7 +44,7 @@ objectapi_list = [
 
     (r"""Cast an array using typecode structure.
     """,
-     'CastToType','PyArrayObject *, PyArray_Typecode *','PyObject *'),
+     'CastToType','PyArrayObject *, PyArray_Descr *','PyObject *'),
 
     (r"""Cast to an already created array.
     """,
@@ -56,7 +56,7 @@ objectapi_list = [
 
     (r"""
     """,
-     'CanCastTo','PyArray_Typecode *, PyArray_Typecode *', 'Bool'),
+     'CanCastTo','PyArray_Descr *, PyArray_Descr *', 'Bool'),
 
     (r"""Return the typecode of the array a Python object would be
     converted to
@@ -65,7 +65,7 @@ objectapi_list = [
 
     (r"""
     """,
-     'ArrayType','PyObject *, PyArray_Typecode *, PyArray_Typecode *','void'),
+     'DescrFromObject','PyObject *, PyArray_Descr *', 'PyArray_Descr *'),
 
     (r"""
     """,
@@ -73,7 +73,7 @@ objectapi_list = [
 
     (r"""Return type typecode from array scalar.
     """,
-     'TypecodeFromScalar','PyObject *, PyArray_Typecode *','void'),
+     'TypecodeFromScalar','PyObject *, PyArray_Descr *','void'),
 
     (r"""Compute the size of an array (in number of items)
     """,
@@ -89,7 +89,7 @@ objectapi_list = [
 
     (r"""Get 0-dim array from scalar
     """,
-     'FromScalar', 'PyObject *, PyArray_Typecode *', 'PyObject *'),
+     'FromScalar', 'PyObject *, PyArray_Descr *', 'PyObject *'),
 
     (r"""Convert to c-type
     """,
@@ -97,7 +97,7 @@ objectapi_list = [
     
     (r"""Cast Scalar to c-type
     """,
-     'CastScalarToCtype', 'PyObject *, void *, PyArray_Typecode *', 'int'),
+     'CastScalarToCtype', 'PyObject *, void *, PyArray_Descr *', 'int'),
     
     (r"""Register Data type
     """,
@@ -152,7 +152,7 @@ objectapi_list = [
 
     (r"""
     """,
-     'FromAny', 'PyObject *, PyArray_Typecode *, int, int, int', 'PyObject *'),
+     'FromAny', 'PyObject *, PyArray_Descr *, int, int, int', 'PyObject *'),
 
     (r"""
     """,
@@ -160,11 +160,11 @@ objectapi_list = [
 
     (r"""
     """,
-     'FromFile', 'FILE *, PyArray_Typecode *, intp, char *','PyObject *'),
+     'FromFile', 'FILE *, PyArray_Descr *, intp, char *','PyObject *'),
 
     (r"""
     """,
-     'FromBuffer', 'PyObject *, PyArray_Typecode *, intp, intp, int',
+     'FromBuffer', 'PyObject *, PyArray_Descr *, intp, intp, int',
      'PyObject *'),
 
     (r"""Return either an array or the appropriate Python object if the
@@ -329,7 +329,7 @@ multiapi_list = [
 
     (r"""View
     """,
-     'View','PyArrayObject *, PyArray_Typecode *','PyObject *'),
+     'View','PyArrayObject *, PyArray_Descr *','PyObject *'),
 
     (r"""SwapAxes
     """,
@@ -479,7 +479,7 @@ multiapi_list = [
 
     (r"""Get typenum from an object -- a converter function
     """,
-     'TypecodeConverter','PyObject *, PyArray_Typecode *', 'int'),
+     'DescrConverter','PyObject *, PyArray_Descr **', 'int'),
 
     (r"""Get intp chunk from sequence
     """,
@@ -499,7 +499,7 @@ multiapi_list = [
 
     (r"""
     """,
-     'EquivalentTypes', 'PyArray_Typecode *, PyArray_Typecode *', 'Bool'),
+     'EquivalentTypes', 'PyArray_Descr *, PyArray_Descr *', 'Bool'),
 
     (r"""
     """,
@@ -511,11 +511,11 @@ multiapi_list = [
 
     (r"""Zeros
     """,
-     'Zeros', 'int, intp *, PyArray_Typecode *', 'PyObject *'),
+     'Zeros', 'int, intp *, PyArray_Descr *, int', 'PyObject *'),
 
     (r"""Empty
     """,
-     'Empty', 'int, intp *, PyArray_Typecode *', 'PyObject *'),
+     'Empty', 'int, intp *, PyArray_Descr *, int', 'PyObject *'),
 
 
     (r"""Where
@@ -529,7 +529,8 @@ multiapi_list = [
     ]
 
 
-types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger', 'Inexact',
+types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger',
+         'Inexact',
          'Floating', 'ComplexFloating', 'Flexible', 'Character',
          'Bool','Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
          'UInt', 'ULong', 'ULongLong', 'Float', 'Double', 'LongDouble',

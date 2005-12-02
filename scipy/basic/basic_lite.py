@@ -109,7 +109,9 @@ def cholesky_decomposition(a):
     _assertRank2(a)
     _assertSquareness(a)
     t =_commonType(a)
+    print "Before: ", a.flags
     a = _castCopyAndTranspose(t, a)
+    print "After: ", a.flags
     m = a.shape[0]
     n = a.shape[1]
     if _array_kind[t] == 1:

@@ -757,15 +757,18 @@ typedef void (PyArray_DotFunc)(void *, intp, void *, intp, void *, intp,
 typedef void (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
 typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
 
-
 typedef struct {
- 	PyTypeObject *typeobj;  /* the type object for this type */
+	PyObject_HEAD
+ 	PyTypeObject *typeobj;  /* the type object representing an 
+				   intance of this type */
 	char kind;              /* kind for this type */
-	char type;              /* character representing this type */
+	char type;              /* unique-character representing this type */
 	int type_num;           /* number representing this type */
-	int elsize;             /* element size for this type -- 
-				   or 0 if variable */
+	int elsize;             /* element size for this type */
        	int alignment;          /* alignment needed for this type */
+	PyObject *fields;       /* The fields dictionary for this type */
+	                        /* For statically defined descr this
+				   is always Py_NotImplemented */
 
 	/* Functions to cast to all other standard types*/
 	PyArray_VectorUnaryFunc *cast[PyArray_NTYPES];
@@ -816,27 +819,15 @@ typedef struct PyArrayObject {
 				   to-be-updated upon deletion of this one */
 	PyArray_Descr *descr;   /* Pointer to type structure */
 	int flags;              /* Flags describing array -- see below*/
-	int itemsize;           /* needed for Flexible size arrays:
-                                   CHAR, UNICODE, and VOID arrays
- 			         */ 
 	PyObject *weakreflist;  /* For weakreferences */
-
 } PyArrayObject;
 
-#define fortran fortran_  /* For some compilers */
-
-typedef struct {   /* Just the type_num and itemsize variables 
-		      for use in the TypeNum Converter function */
-	int type_num; /* The enumerated type number */
-	int itemsize; /* The itemsize desired (for flexible types) */
-	int fortran;  /* Set to 1 if fortran-defined strides is desired */
-} PyArray_Typecode;
+#define fortran fortran_        /* For some compilers */
 
 typedef struct {
         intp *ptr;
         int len;
 } PyArray_Dims;
-
 
 /* Mirrors buffer object to ptr */
 
@@ -897,6 +888,7 @@ typedef struct {
 #define DEFAULT_FLAGS CARRAY_FLAGS
 
 #define UPDATE_ALL_FLAGS CONTIGUOUS | FORTRAN | ALIGNED
+
 
 
 /*
@@ -1129,6 +1121,7 @@ typedef struct {
 #define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || PyArray_CHKFLAGS(m, CONTIGUOUS) || \
 				 PyArray_CHKFLAGS(m, FORTRAN))
 #define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, FORTRAN) && (PyArray_NDIM(m) > 1))
+#define FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, FORTRAN) ? FORTRAN : 0))
 #define PyArray_DATA(obj) (((PyArrayObject *)(obj))->data)
 #define PyArray_DIMS(obj) (((PyArrayObject *)(obj))->dimensions)
 #define PyArray_STRIDES(obj) (((PyArrayObject *)(obj))->strides)
@@ -1137,7 +1130,7 @@ typedef struct {
 #define PyArray_BASE(obj) (((PyArrayObject *)(obj))->base)
 #define PyArray_DESCR(obj) (((PyArrayObject *)(obj))->descr)
 #define PyArray_FLAGS(obj) (((PyArrayObject *)(obj))->flags)
-#define PyArray_ITEMSIZE(obj) (((PyArrayObject *)(obj))->itemsize)
+#define PyArray_ITEMSIZE(obj) (((PyArrayObject *)(obj))->descr->elsize)
 #define PyArray_TYPE(obj) (((PyArrayObject *)(obj))->descr->type_num)
 #define PyArray_GETITEM(obj,itemptr)			\
 	((PyArrayObject *)(obj))->descr->getitem((char *)itemptr,	\
@@ -1180,9 +1173,8 @@ typedef struct {
 		                  (type == PyArray_BOOL) || \
 				  (type == PyArray_OBJECT ))
 
-#define PyTypeNum_ISFLEXIBLE(type) ((type==PyArray_STRING) || \
-				    (type==PyArray_UNICODE) ||	\
-				    (type==PyArray_VOID))
+#define PyTypeNum_ISFLEXIBLE(type) ((type>=PyArray_STRING) && \
+				    (type<=PyArray_VOID))
 
 #define PyTypeNum_ISUSERDEF(type) ((type >= PyArray_USERDEF) && \
 				   (type < PyArray_USERDEF+\

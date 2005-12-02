@@ -1465,11 +1465,14 @@ OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 */
 
 static PyArray_Descr @from@_Descr = { 
+	                              _PyObject_EXTRA_INIT \
+				      1, &PyArray_DescrType,
                                       &Py@NAME@ArrType_Type,
 				      PyArray_@from@LTR,
 				      PyArray_@from@LTR,
 				      PyArray_@from@, 0,
 				      _ALIGN(@align@),
+				      Py_NotImplemented,
 {
 
 		(PyArray_VectorUnaryFunc*)@from@_to_BOOL, 
@@ -1518,12 +1521,15 @@ static PyArray_Descr @from@_Descr = {
 */
 
 static PyArray_Descr @from@_Descr = { 
+	                              _PyObject_EXTRA_INIT \
+				      1, &PyArray_DescrType,
 				      &Py@NAME@ArrType_Type,
 				      PyArray_@kind@LTR,
 				      PyArray_@from@LTR,
 				      PyArray_@from@, 
 				      @num@*sizeof(@fromtyp@), 
 				      _ALIGN(@fromtyp@),
+				      Py_NotImplemented,
 {
 
 		(PyArray_VectorUnaryFunc*)@from@_to_BOOL, 

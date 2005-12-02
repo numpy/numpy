@@ -74,7 +74,7 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 
 static int
 PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr, 
-			  PyArray_Typecode *outcode)
+			  PyArray_Descr *outcode)
 {
 	PyArray_Typecode incode;
 	PyArray_Descr* descr;
@@ -109,7 +109,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 /* 0-dim array from array-scalar object */
 /* always contains a copy of the data */
 static PyObject *
-PyArray_FromScalar(PyObject *scalar, PyArray_Typecode *outcode)
+PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 {
 	PyArray_Typecode typecode;
 	PyObject *r;
@@ -1139,7 +1139,7 @@ gentype_setflags(PyObject *self, PyObject *args, PyObject *kwds)
 	return Py_None;
 }
 
-static int _array_typecode_fromstr(char *, int *, PyArray_Typecode *);
+static int _array_typecode_fromstr(char *, int *, PyArray_Descr *);
 
 /* need to fill in doc-strings for these methods on import -- copy from 
    array docstrings 
@@ -1766,7 +1766,7 @@ PyArray_TypenumFromTypeObject(PyObject *type)
 }
 
 static void 
-PyArray_TypecodeFromTypeObject(PyObject *type, PyArray_Typecode *typecode) {
+PyArray_TypecodeFromTypeObject(PyObject *type, PyArray_Descr *typecode) {
 	int itemsize = 0;
 	int type_num;
 
@@ -1785,7 +1785,7 @@ PyArray_TypecodeFromTypeObject(PyObject *type, PyArray_Typecode *typecode) {
 }
 
 static void 
-PyArray_TypecodeFromScalar(PyObject *sc, PyArray_Typecode *typecode)
+PyArray_TypecodeFromScalar(PyObject *sc, PyArray_Descr *typecode)
 {
 	int type_num;
 
