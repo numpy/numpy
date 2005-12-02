@@ -3,6 +3,8 @@ import types
 from distutils.core import *
 try:
     from setuptools import setup as old_setup
+    # very old setuptools don't have this
+    from setuptools.command import bdist_egg
     have_setuptools = 1
 except ImportError:
     from distutils.core import setup as old_setup
