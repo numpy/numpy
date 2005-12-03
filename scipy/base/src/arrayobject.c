@@ -4025,7 +4025,14 @@ array_typestr_get(PyArrayObject *self)
 }
 
 static PyObject *
-array_descr_get(PyArrayObject *self)
+array_descr_get(PyArrayObject *self) 
+{
+	Py_INCREF(self->descr);
+	return (PyObject *)self->descr;
+}
+
+static PyObject *
+array_protocol_descr_get(PyArrayObject *self)
 {
 	PyObject *res;
 	PyObject *dobj;
@@ -4503,6 +4510,11 @@ static PyGetSetDef array_getsetlist[] = {
 	 (getter)array_typestr_get,
 	 NULL,
 	 "get array type string"},
+	{"descr", 
+	 (getter)array_descr_get,
+	 NULL,
+	 "get type descriptor for array",
+	}
         {"real", 
 	 (getter)array_real_get, 
 	 (setter)array_real_set, 
@@ -4524,7 +4536,7 @@ static PyGetSetDef array_getsetlist[] = {
 	 NULL,
 	 "Array protocol: typestr"},
 	{"__array_descr__",
-	 (getter)array_descr_get,
+	 (getter)array_protocol_descr_get,
 	 NULL,
 	 "Array protocol: descr"},
 	{"__array_shape__", 
@@ -7682,6 +7694,11 @@ PyArray_DescrNew(PyArray_Descr *base);
 	else {
 		Py_XINCREF(new->fields);
 	}
+	if (new->subarray) {
+		new->subarray = malloc(sizeof(PyArray_ArrayDescr));
+		memcpy(new->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
+		Py_INCREF(new->subarray->base);
+	}
 	Py_INCREF(new->typeobj);
 	return new;
 }
@@ -7695,8 +7712,47 @@ arraydescr_dealloc(PyArray_Descr *self)
 	}
 	Py_XDECREF(self->typeobj);
 	Py_XDECREF(self->fields);
+	if (self->subarray) {
+		Py_DECREF(self->subarray->base);
+		free(self->subarray);
+	}
 	self->ob_type->tp_free(self);
 }
+
+static PyMemberDef arraydescr_members[] = {
+	{"dtype", T_OBJECT, offsetof(PyArray_Descr, typeobj), RO, NULL},
+	{"dtypekind", T_CHAR, offsetof(PyArray_Descr, kind), RO, NULL},
+	{"dtypechar", T_CHAR, offsetof(PyArray_Descr, type), RO, NULL},
+	{"dtypenum", T_INT, offsetof(PyArray_Descr, type_num), RO, NULL},
+	{"itemsize", T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
+	{"alignment", T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
+	{"fields", T_OBJECT, offsetof(PyArray_Descr, fields), RO, NULL},
+	{NULL},
+}
+
+static PyObject *
+arraydescr_subdescr_get(PyArray_Descr *self)
+{
+	PyObject *tup;
+
+	if (self->subarray == NULL) {
+		Py_INCREF(Py_None);
+		return Py_None
+	}
+	return Py_BuildValue("ON", (PyObject *)self->subarray->base, 
+			     PyArray_IntTupleFromIntp(self->subarray->len,
+						      self->subarray->shape));
+}
+
+static PyGetSetDef arraydescr_getsets[] = {
+	{"subdescr", 
+	 (getter)arraydescr_subdescr_get,
+	 NULL,
+	 "A tuple of (descr, shape) or None."
+	}
+	{NULL, NULL, NULL, NULL},
+};
+
 
 
 static PyTypeObject PyArrayDescr_Type = {
@@ -7730,6 +7786,6 @@ static PyTypeObject PyArrayDescr_Type = {
         0,         	                        /* tp_iter */
         0,	                           	/* tp_iternext */
         0,				        /* tp_methods */
-        0,	                       	        /* tp_members */
-        arraydescr_getset,                      /* tp_getset */
+        arraydescr_members,	                /* tp_members */
+        arraydescr_getsets,                     /* tp_getset */
 };

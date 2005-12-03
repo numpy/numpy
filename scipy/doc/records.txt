@@ -1,0 +1,90 @@
+
+To support nested record arrays (a record data type that itself can have 
+a nested record type),  I think we need two things
+
+1) Dynamic PyArray_Descr objects, so that an array can have its "own".
+I think these need to be actual Python Objects, too, so that we can
+support the sharing and proper deallocation of these dynamic
+descriptors between arrays (i.e. slices and copies of arrays and so
+forth). Dynamic types will initially only be different in two ways:
+the element-size and the fields attribute. 
+
+Notice for every flexible-sized array, a new PyArray_Descr object will 
+be created since it needs a specific element size.  
+
+2) An additional PyObject * member of the PyArray_Descr structure for
+describing the fields.  This is Py_NotImplemented for statically defined types.
+For dynamically defined types it is NULL or a dictionary with keys that 
+return ordered lists.  There must be the same number of items in each list. 
+
+'names' : new attribute names (note that these will never 
+	  be able to over-ride "real" method and attribute names -- 
+	  those will be found first). 
+
+'titles' : labels for the fields (can be used alone in index-style lookups) in
+	   which case a reference to the field is returned. (optional)
+
+'formats' : the actual parameters to pass to GetField to retrieve the 
+            specific field.  This parameter is a (data-descr, offset) pair.
+	    The data-descr must be a PyArray_Descr pointer. 
+
+Doing this allows us to remove the self->itemsize from the array
+structure (I think that's a good thing because the size is an
+important part of the data-type description).
+
+3)  An additional PyArray_ArrayDescr * member of the PyArray_Descr
+    structure for supporting types that are themselves arrays of other
+    types. The PyArray_ArrayDescr structure has members PyArray_Descr *, 
+    int, and intp[MAX_DIMS] for holding a referencing to the base-type and
+    the shape of the sub-array.
+
+For now, this PyArray_ArrayDescr * member is only really used to get a
+higher-dimensional array from PyArray_NewFromDescr.   In other words, arrays
+with this structure set are not really useful. 
+
+However, placing it here complets the notion of a type descriptor
+and simplies the formats key so that all supported type description 
+is handled by the PyArray_Descr structure.
+
+ 
+Data type conversions: We can support additional data-type
+conversions.  The data-type passed in is converted to a PyArray_Descr*
+object.
+
+New possibilities for the "data-type"
+
+Tuple  (flexible type, itemsize)
+       (fixed type, shape)
+===============================
+
+Get converted to a new PyArray_Descr * object with a flexible
+type. The latter structure gets now fields dictionary but does 
+get a 
+
+
+Dictionary (keys "names", "titles", and "formats")
+===============================
+
+This will be converted to a PyArray_VOID type with corresponding
+fields parameter (the formats list will be converted to actual
+PyArray_Descr * objects).
+
+
+Objects (anything with an .itemsize and .fields attribute)
+=============================== 
+
+If its an instance of (a sub-class of) void type, then a new
+PyArray_Descr* structure is created corresponding to its typeobject 
+(and PyArray_VOID) typenumber.  If the type is registered, then the
+registered type-number is used. 
+
+otherwise a new PyArray_VOID PyArray_Descr* structure is created and
+filled ->elsize and ->fields filled in appropriately.
+
+The itemsize attribute must return a number > 0
+The fields attribute must return a dictionary with at least 
+"names" and "formats" entries.  The "formats" entry will be 
+converted to a "proper" descr->fields entry (all generic data-types
+converted to PyArray_Descr * structure). 
+
+

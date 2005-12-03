@@ -758,6 +758,12 @@ typedef void (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
 typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
 
 typedef struct {
+	struct PyArray_Descr *base;
+	int len;
+	intp shape[MAX_DIMS];
+} PyArray_ArrayDescr;
+
+typedef struct {
 	PyObject_HEAD
  	PyTypeObject *typeobj;  /* the type object representing an 
 				   intance of this type */
@@ -766,6 +772,8 @@ typedef struct {
 	int type_num;           /* number representing this type */
 	int elsize;             /* element size for this type */
        	int alignment;          /* alignment needed for this type */
+	PyArray_ArrayDescr *subarray    /* Non-NULL if this is an array of 
+				   some other descriptor */
 	PyObject *fields;       /* The fields dictionary for this type */
 	                        /* For statically defined descr this
 				   is always Py_NotImplemented */
@@ -1263,8 +1271,14 @@ typedef struct {
 
 #define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)	\
         PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
-			max_depth, DEFAULT_FLAGS);
-
+			max_depth, DEFAULT_FLAGS)
+	
+#define PyArray_EquivArrTypes(a1, a2)					\
+	PyArray_EquivalentTypes(PyArray_DESCR(a1), PyArray_DESCR(a2))
+#define PyArray_EquivalentTypenums(typenum1, typenum2)			\
+	PyArray_EquivalentTypes(PyArray_DescrFromType(typenum1),	\
+				PyArray_DescrFromType(typenum2))
+	
 #define PyArray_SimpleNew(nd, dims, typenum) \
 	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
 #define PyArray_SimpleNewFromData(nd, dims, typenum, data) \

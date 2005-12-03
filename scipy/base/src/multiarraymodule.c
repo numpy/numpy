@@ -2690,6 +2690,82 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         return PY_SUCCEED;
 }
 
+static PyObject *
+_setup_fields_dictionary(PyObject *orig, PyArray_Descr *type)
+{
+	PyObject *dict;
+	PyObject *list1, *list2;
+	PyObject *tup1;
+
+	dict = PyDict_New();
+	if (dict == NULL) return NULL;
+	list1 = PyList_New(1);
+	list2 = PyList_New(1);
+	tup1 = PyTuple_New(2);
+	PyList_SET_ITEM(list1, 0, PyString_FromString("f1"));
+	Py_INCREF(type);
+	PyTuple_SET_ITEM(tup1, 0, type);
+	PyTuple_SET_ITEM(tup2, 1, PyInt_FromLong(0));
+	PyList_SET_ITEM(list2, 0, tup1);
+	PyDict_SetItemString(dict, "names", list1);
+	Py_DECREF(list1);
+	PyDict_SetItemString(dict, "formats", list2);
+	Py_DECREF(list2);
+	return dict;
+}
+
+
+static PyArray_Descr *
+_convert_from_tuple(PyObject *obj) 
+{
+	PyArray_Descr *type;
+	
+	if (PyTuple_GET_SIZE(obj) != 2) return NULL;
+	if (PyArray_DescrConverter(PyTuple_GET_ITEM(obj,0), &type) < 0) 
+		return NULL;
+	if (type->elsize == 0) { /* interpret next item as a typesize */
+		int itemsize;
+		itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
+		if (error_converting(itemsize)) goto fail;
+		type->elsize = itemsize;
+	}
+	else { /* interpret next item as shape 
+		  and reset the type to PyArray_VOID with 
+		  a new fields attribute. 
+	       */
+		PyArray_Dims shape;
+		PyArray_Descr *newdescr;
+		if ((PyArray_IntpConverter(PyTuple_GET_ITEM(obj,1),
+					   &shape) < 0) ||	\
+		    (shape.len > MAX_DIMS)) goto fail;
+		newdescr = PyArray_DescrNew(type);
+		if (newdescr == NULL) goto fail;
+		newdescr->elsize *= PyArray_MultiplyList(shape.ptr, 
+							 shape.len);
+		newdescr->type_num = PyArray_VOID;
+		newdescr->field = _setup_fields_dictionary(obj, type);		
+		Py_DECREF(type);
+		type = newdescr;
+	}
+	return type;
+
+ fail:
+	Py_DECREF(type);
+	return NULL;
+}
+
+static PyArray_Descr *
+_convert_from_dict(PyObject *obj)
+{
+	return NULL;
+}
+
+static PyArray_Descr *
+_convert_from_obj(PyObject *obj)
+{
+	return NULL;
+}
+
 /* This function takes a Python object representing a type and converts it 
    to a the correct PyArray_Descr * structure to describe the type.
    
@@ -2778,18 +2854,22 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		}
 	}
 	/* or a tuple */
-	/* A tuple type would be either (generic typeobject + typesize) 
-	   or 
+	/* A tuple type would be either (generic typeobject, typesize) 
+	   or (data-type, shape).  
 	*/
  	else if (PyTuple_Check(obj)) {
+		*at = _convert_from_tuple(obj);
+		if (*at == NULL) goto fail;
 	}
 	/* or a dictionary */
-	/*
 	else if (PyDict_Check(obj)) {
+		*at = _convert_from_dict(obj);
+		if (*at == NULL) goto fail;
 	}
-	*/
-        else goto fail;
-
+        else {
+		*at = _convert_from_obj(obj);
+		if (*at == NULL) goto fail;
+	}
 	if (PyErr_Occurred()) goto fail;
 
 	/*
@@ -2836,60 +2916,20 @@ PyArray_EquivalentTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 {
 	register int typenum1=typ1->type_num;
 	register int typenum2=typ2->type_num;
-	register int size1=typ1->descr->elsize;
-	register int size2=typ2->descr->elsize;
+	register int size1=typ1->elsize;
+	register int size2=typ2->elsize;
 
 	if (size1 != size2) return FALSE;
-	if (typenum1==typenum2) return TRUE;
+	if (typ1->fields != typ2->fields) return FALSE;
 
-	/* If we are here then size1 == size2 */
-	if (typenum1 < PyArray_FLOAT) {
-		if (PyTypeNum_ISBOOL(typenum1))
-			return (Bool)(PyTypeNum_ISBOOL(typenum2));
-		else if (PyTypeNum_ISUNSIGNED(typenum1))
-			return (Bool)(PyTypeNum_ISUNSIGNED(typenum2));
-		else 
-			return (Bool)(PyTypeNum_ISSIGNED(typenum2));
+	if (typenum1 == PyArray_VOID || \
+	    typenum2 == PyArray_VOID) {
+		return ((typenum1 == typenum2) && 
+			(typ1->typeobj == typ2->typeobj) &&
+			(typ1->fields == typ2->fields));
 	}
-	else {
-		if (PyTypeNum_ISFLOAT(typenum1))
-			return (Bool)(PyTypeNum_ISFLOAT(typenum2));
-		else if (PyTypeNum_ISCOMPLEX(typenum1))
-			return (Bool)(PyTypeNum_ISCOMPLEX(typenum2));
-	}
-	/* Default size1 != size2 and typenum1 != typenum2 */
-	return FALSE;	
+	return (typ1->kind == typ2->kind)
 }
-
-static Bool 
-PyArray_EquivArrTypes(PyArrayObject *a1, PyArrayObject *a2)
-{
-        PyArray_Typecode type1={0,0,0};
-        PyArray_Typecode type2={0,0,0};
-
-	type1.type_num = PyArray_TYPE(a1);
-	type2.type_num = PyArray_TYPE(a2);
-	type1.itemsize = PyArray_ITEMSIZE(a1);
-	type2.itemsize = PyArray_ITEMSIZE(a2);
-			
-        return PyArray_EquivalentTypes(&type1, &type2);
-}
-
-/* All flexible types of the same typenum seen as equivalent */
-static Bool
-PyArray_EquivalentTypenums(int typenum1, int typenum2)
-{
-	PyArray_Typecode type1={0,0,0};
-	PyArray_Typecode type2={0,0,0};
-	
-	type1.type_num = typenum1;
-	type2.type_num = typenum2;
-	type1.itemsize = PyArray_DescrFromType(typenum1)->elsize;
-	type2.itemsize = PyArray_DescrFromType(typenum2)->elsize;
-	
-	return PyArray_EquivalentTypes(&type1, &type2);
-}
-
 
 /*** END C-API FUNCTIONS **/
 

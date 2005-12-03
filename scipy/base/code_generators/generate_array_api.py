@@ -471,14 +471,6 @@ multiapi_list = [
     """,
      'EquivalentTypes', 'PyArray_Descr *, PyArray_Descr *', 'Bool'),
 
-    (r"""
-    """,
-     'EquivArrTypes', 'PyArrayObject *, PyArrayObject *', 'Bool'),
-
-    (r"""
-    """,
-     'EquivalentTypenums', 'int, int', 'Bool'),
-
     (r"""Zeros
     """,
      'Zeros', 'int, intp *, PyArray_Descr *, int', 'PyObject *'),
