@@ -1784,24 +1784,29 @@ PyArray_TypecodeFromTypeObject(PyObject *type, PyArray_Descr *typecode) {
 	return;
 }
 
-static void 
-PyArray_TypecodeFromScalar(PyObject *sc, PyArray_Descr *typecode)
+static PyArray_Descr *
+PyArray_DescrFromScalar(PyObject *sc);
 {
 	int type_num;
+	PyArray_Descr *descr;
 
-        PyArray_TypecodeFromTypeObject((PyObject *)sc->ob_type, typecode);
-        if (typecode->itemsize == 0) {
-                type_num = typecode->type_num;
+        descr = PyArray_DescrFromTypeObject((PyObject *)sc->ob_type);
+        if (typecode->elsize == 0) {
+		PyArray_Descr* new;
+		new = PyArray_DescrNew(descr);
+		Py_XDECREF(descr);
+		descr = new;
+                type_num = descr->type_num;
 		if (type_num == PyArray_STRING) 
-			typecode->itemsize = PyString_GET_SIZE(sc);
+			descr->itemsize = PyString_GET_SIZE(sc);
 		else if (type_num == PyArray_UNICODE)
-			typecode->itemsize = PyUnicode_GET_DATA_SIZE(sc);
+			descr->itemsize = PyUnicode_GET_DATA_SIZE(sc);
 		else { 
-			typecode->itemsize =				\
+			descr->itemsize =				\
 				((PyVoidScalarObject *)sc)->ob_size;
 		}
         }
-	return;
+	return descr;
 }
 
 static PyObject *

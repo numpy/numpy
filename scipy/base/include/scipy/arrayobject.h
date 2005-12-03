@@ -1258,10 +1258,28 @@ typedef struct {
 #define REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define MAX_ELSIZE 2*SIZEOF_LONGDOUBLE
 
+#define PyArray_FromObject(op, type, min_depth, max_depth)		\
+	PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
+			max_depth, BEHAVED_FLAGS | ENSUREARRAY)
+
+#define PyArray_ContiguousFromObject(op, type, min_depth, max_depth)	\
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
+			max_depth, DEFAULT_FLAGS | ENSUREARRAY);
+
+
+#define PyArray_CopyFromObject(op, type, min_depth, max_depth)		\
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
+			max_depth, ENSURECOPY | ENSUREARRAY);
+
+#define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)	\
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
+			max_depth, DEFAULT_FLAGS);
+
 #define PyArray_SimpleNew(nd, dims, typenum) \
 	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
 #define PyArray_SimpleNewFromData(nd, dims, typenum, data) \
         PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, CARRAY_FLAGS, NULL)
+
 
 	/* These might be faster without the dereferencing of obj
 	   going on inside -- of course an optimizing compiler should 

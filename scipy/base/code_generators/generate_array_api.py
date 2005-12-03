@@ -117,39 +117,6 @@ objectapi_list = [
     """,
      'FromDimsAndData','int, int *, int, char *','PyObject *'),
 
-    (r"""Construct an array from an arbitrary Python Object.
-    Last two integers are min_dimensions, and max_dimensions.
-    If max_dimensions = 0, then any number of dimensions are allowed.
-    Fix the dimension by setting min_dimension == max_dimension.
-    If the array is already contiguous (and aligned and not swapped)
-    no copy is done, just a new reference created.
-    Base-class ndarray is returned.
-    """,
-     'ContiguousFromObject',
-     'PyObject *, int typenum, int, int',
-     'PyObject *'),
-
-    (r"""Construct an array from an arbitrary Python Object.
-    Last two integers are min_dimensions, and max_dimensions.
-    If max_dimensions = 0, then any number of dimensions are allowed.
-    Fix the dimension by setting min_dimension == max_dimension.
-    If the array is already contiguous (and aligned and not swapped)
-    no copy is done, just a new reference created.  Subclasses
-    passed through.
-    """,
-     'ContiguousFromAny',
-     'PyObject *, int typenum, int, int',
-     'PyObject *'),
-
-
-    (r"""Same as ContiguousFromObject except ensure a copy.
-    """,
-     'CopyFromObject','PyObject *, int, int, int','PyObject *'),
-
-    (r"""Can return a discontiguous array (but aligned and byteswapped)
-    """,
-     'FromObject','PyObject *, int, int, int','PyObject *'),
-
     (r"""
     """,
      'FromAny', 'PyObject *, PyArray_Descr *, int, int, int', 'PyObject *'),
@@ -219,7 +186,6 @@ objectapi_list = [
     """,
      'Dumps', 'PyObject *, int', 'PyObject *'),
 
-
     (r"""Is the typenum valid?
     """,
      'ValidType','int','int'),
@@ -231,6 +197,14 @@ objectapi_list = [
     (r"""Generic new array creation routine.
     """,
      'New','PyTypeObject *, int nd, intp *dims, int type, intp *strides, void *data, int itemsize, int fortran, PyObject *obj', 'PyObject *'),
+    
+    (r"""Generic new array creation routine.
+    """,
+     'NewFromDescr','PyTypeObject *, PyArray_Descr *, int nd, intp *dims, intp *strides, void *data, int fortran, PyObject *obj', 'PyObject *'),
+
+    (r"""Update Several Flags at once.
+    """,
+     'DescrNew','PyArray_Descr *','PyArray_Descr *','void'),
 
     (r"""Get Priority from object
     """,
