@@ -4960,7 +4960,7 @@ Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
 	int itemsize; 
 	int type;
 	
-	itemsize = typecode->itemsize;
+	itemsize = typecode->elsize;
 	type = typecode->type_num;
 
 	if (itemsize == 0 && PyTypeNum_ISEXTENDED(type)) {
@@ -4968,8 +4968,9 @@ Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
 		if (type == PyArray_UNICODE) itemsize *= sizeof(Py_UNICODE);
 	}
 
-	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, 0, NULL, type,
-					   NULL, NULL, itemsize, 0, NULL);
+	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, typecode,
+						    0, NULL, 
+						    NULL, NULL, 0, NULL);
 
 	if (ret == NULL) return NULL;
 
@@ -4985,7 +4986,7 @@ Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
 
 
 static PyObject *
-Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int min_depth, 
+Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran, int min_depth, 
 		   int max_depth)
 {
         PyArrayObject *r;
@@ -4993,7 +4994,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int min_depth,
 	intp d[MAX_DIMS];
 	int stop_at_string;
 	int type = typecode->type_num;
-	int itemsize = typecode->itemsize;
+	int itemsize = typecode->elsize;
 	
 	stop_at_string = ((type == PyArray_OBJECT) ||	\
 			  (type == PyArray_STRING) ||	\
@@ -5024,12 +5025,17 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int min_depth,
 		}
 		if (type == PyArray_UNICODE) itemsize*=sizeof(Py_UNICODE);
 	}
-	
-        r=(PyArrayObject*)PyArray_New(&PyArray_Type, nd, d, 
-				      type, NULL, NULL,
-				      itemsize, 
-				      typecode->fortran, NULL);
 
+	if (itemsize != typecode->elsize) {
+		typecode = PyArray_DescrNew(typecode);
+		typecode->elsize = itemsize;
+	}
+	
+        r=(PyArrayObject*)PyArray_New(&PyArray_Type, typecode,
+				      nd, d, 
+				      NULL, NULL,
+				      fortran, NULL);
+	
         if(!r) return NULL;
         if(Assign_Array(r,s) == -1) {
 		Py_DECREF(r);
@@ -5152,53 +5158,46 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in)
 
 /* For backward compatibility */
 
-static PyObject *
-PyArray_Cast(PyArrayObject *mp, int type_num) 
-{
-	PyArray_Descr type;
-	PyArray_Descr *descr;
-
-	descr = PyArray_DescrFromType(type_num);
-	type.itemsize = descr->elsize;
-	type.type_num = descr->type_num;
-	type.fortran = 0;
-	
-	return PyArray_CastToType(mp, &type);
-}
-
 static PyObject * 
 PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at) 
 {
 	PyObject *out;
 	int ret;
+	PyArray_Descr *mpd;
 
-	if ((mp->descr->type_num == at->type_num) &&                    \
-	    (at->descr->elsize==0 || mp->descr->elsize == at->descr->elsize) &&
+	mpd = mp->descr;
+
+	if (((mpd == at) || ((mpd->type_num == at->type_num) && 
+			     (mpd->elsize == at->elsize) ||	\
+			     (at->elsize==0))) &&		\
 	    PyArray_ISBEHAVED_RO(mp)) {
 		Py_INCREF(mp);
 		return (PyObject *)mp;
 	}
 		
-	if (at->descr->elsize == 0) {
-		if (mp->descr->type_num == PyArray_STRING &&	\
+	if (at->elsize == 0) {
+		at = PyArray_DescrNew(at);
+		if (at == NULL) return NULL;
+		if (mpd->type_num == PyArray_STRING &&	\
 		    at->type_num == PyArray_UNICODE)
-			at->descr->elsize = mp->descr->elsize*sizeof(Py_UNICODE);
-		if (mp->descr->type_num == PyArray_UNICODE &&
+			at->elsize = mpd->elsize*sizeof(Py_UNICODE);
+		if (mpd->type_num == PyArray_UNICODE &&
 		    at->type_num == PyArray_STRING) 
-			at->descr->elsize = mp->descr->elsize/sizeof(Py_UNICODE);
+			at->elsize = mpd->elsize/sizeof(Py_UNICODE);
 		if (at->type_num == PyArray_VOID)
-			at->descr->elsize = mp->descr->elsize;
+			at->elsize = mpd->elsize;
 	}
 
-	out = PyArray_New(mp->ob_type, mp->nd, 
-			  mp->dimensions, 
-			  at->type_num,
-			  NULL, NULL, at->descr->elsize, 
-			  at->fortran, (PyObject *)mp);
-	if (out == NULL) return NULL;
+	out = PyArray_NewFromDescr(mp->ob_type, at
+				   mp->nd, 
+				   mp->dimensions, 
+				   NULL, NULL, 
+				   at->fortran, (PyObject *)mp);
+
+	if (out == NULL) {Py_DECREF(at); return NULL;}
 	ret = PyArray_CastTo((PyArrayObject *)out, mp);
 	if (ret != -1) return out;
-
+	
 	Py_DECREF(out);
 	return NULL;
 	
@@ -5529,9 +5528,10 @@ array_fromstructinterface(PyObject *input, PyArray_Descr *intype, int flags)
 		Py_DECREF(attr);
                 return NULL;
         }
-        r = PyArray_New(&PyArray_Type, inter->nd, inter->shape, thetype.type_num,
-                        inter->strides, inter->data, thetype.itemsize,
-                        inter->flags, NULL);
+        r = PyArray_NewFromDescr(&PyArray_Type, thetype,
+				 inter->nd, inter->shape,
+				 inter->strides, inter->data,
+				 inter->flags, NULL);
 	Py_INCREF(input);
 	PyArray_BASE(r) = input;
         Py_DECREF(attr);
@@ -5547,7 +5547,7 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 	PyObject *attr=NULL, *item=NULL, *r;
         PyObject *tstr=NULL, *shape=NULL;        
 	PyArrayObject *ret=NULL;
-	PyArray_Descr type;
+	PyArray_Descr *type=NULL;
 	char *data;
 	int buffer_len;
 	int res, i, n;
@@ -5619,13 +5619,14 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 		Py_INCREF(attr); /* decref'd twice below */
 		goto fail;
 	}
-	res = _array_typecode_fromstr(PyString_AS_STRING(attr), &swap, &type);
+	type = _array_typecode_fromstr(PyString_AS_STRING(attr), &swap); 
 	Py_DECREF(attr); attr=NULL; tstr=NULL;
-	if (res < 0) goto fail;
+	if (type==NULL) goto fail;
 	attr = shape;
 	if (!PyTuple_Check(attr)) {
 		PyErr_SetString(PyExc_TypeError, "__array_shape__ must be a tuple");
 		Py_INCREF(attr); /* decref'd twice below */
+		Py_DECREF(type);
 		goto fail;
 	}
 	n = PyTuple_GET_SIZE(attr);
@@ -5636,11 +5637,11 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 	}
 	Py_DECREF(attr); shape=NULL; 
 
-	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, n, dims, 
-					   type.type_num, 
-					   NULL, data, type.itemsize, 
+	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, type,
+					   n, dims, 
+					   NULL, data, 
                                            dataflags, NULL);
-	if (ret == NULL) return NULL;
+	if (ret == NULL) {Py_DECREF(type); return NULL;}
 	Py_INCREF(input);
 	ret->base = input;
     
@@ -5686,7 +5687,7 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 	return r;
 
  fail:
-	Py_XDECREF(attr);	
+	Py_XDECREF(attr);
 	Py_XDECREF(shape);
 	Py_XDECREF(tstr);
 	return NULL;
@@ -5697,19 +5698,17 @@ array_fromattr(PyObject *op, PyArray_Descr *typecode, int flags)
 {
         PyObject *new, *r;
 	        
-        if (typecode->type_num == PyArray_NOTYPE) {
+        if (typecode == NULL) {
                 new = PyObject_CallMethod(op, "__array__", NULL);
         } else {
-		PyArray_Descr *descr;
 		PyObject *obj;
 
-		descr = PyArray_DescrFromType(typecode->type_num);
 		if (PyTypeNum_ISEXTENDED(typecode->type_num)) {
-			obj = PyString_FromFormat("%c%d", descr->type,
+			obj = PyString_FromFormat("%c%d", typecode->type,
 						  typecode->itemsize);
 		}
 		else { 
-			obj = (PyObject *)(descr->typeobj); Py_INCREF(obj);
+			obj = (PyObject *)(typecode->typeobj); Py_INCREF(obj);
 		}
 		new = PyObject_CallMethod(op, "__array__", "N", obj);
         }
@@ -5726,6 +5725,7 @@ array_fromattr(PyObject *op, PyArray_Descr *typecode, int flags)
         return r;
 }        
 
+/* Steals a reference to newtype */
 static PyObject *
 array_fromobject(PyObject *op, PyArray_Descr *newtype, int min_depth, 
 		 int max_depth, int flags) 
@@ -5764,7 +5764,7 @@ array_fromobject(PyObject *op, PyArray_Descr *newtype, int min_depth,
 		if (PySequence_Check(op)) {
 			/* necessary but not sufficient */
 			
-			r = Array_FromSequence(op, newtype, 
+			r = Array_FromSequence(op, newtype, flags & FORTRAN,
 					       min_depth, max_depth);
 			if (PyErr_Occurred() && r == NULL)
                             /* It wasn't really a sequence after all.
@@ -5852,11 +5852,9 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
    CARRAY_FLAGS = CONTIGUOUS | BEHAVED_FLAGS
    FARRAY_FLAGS = FORTRAN | BEHAVED_FLAGS
    
-   typecode->fortran can be set to request a
-   fortran-contiguous  array.  Fortran arrays are always behaved (aligned, 
-   notswapped, and writeable) and not (C) CONTIGUOUS.  Note that either
-   FORTRAN in the flag or typecode->fortran = 1 is enough to request
-   a FORTRAN-style array. 
+   FORTRAN can be set in the FLAGS to request a FORTRAN array. 
+   Fortran arrays are always behaved (aligned, 
+   notswapped, and writeable) and not (C) CONTIGUOUS (if > 1d). 
 
    UPDATEIFCOPY flag sets this flag in the returned array if a copy is
    made and the base argument points to the (possibly) misbehaved array.
@@ -6130,9 +6128,10 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
 		dptr += strides;
 	}
 	itemsize = self->ao->descr->elsize;
-	r = PyArray_New(self->ao->ob_type, 1, &count, 
-			self->ao->descr->type_num, NULL, NULL,
-			itemsize, 0, (PyObject *)self->ao);
+	r = PyArray_NewFromDescr(self->ao->ob_type,
+				 self->ao->descr, 1, &count, 
+				 NULL, NULL,
+				 0, (PyObject *)self->ao);
 	if (r==NULL) return NULL;
 
 	/* Set up loop */
@@ -6176,10 +6175,10 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
 		return r;
 	}
 	
-	r = PyArray_New(self->ao->ob_type, ind->nd, ind->dimensions,
-			self->ao->descr->type_num, NULL, 
-			NULL, self->ao->descr->elsize, 
-			0, (PyObject *)self->ao);
+	r = PyArray_NewFromDescr(self->ao->ob_type, self->ao->descr, 
+				 ind->nd, ind->dimensions,
+				 NULL, NULL, 
+				 0, (PyObject *)self->ao);
 	if (r==NULL) return NULL;
 
 	optr = PyArray_DATA(r);
@@ -6216,7 +6215,7 @@ static PyObject *
 iter_subscript(PyArrayIterObject *self, PyObject *ind)
 {
 	int i;
-	PyArray_Descr indtype = {PyArray_INTP, 0, 0};
+	PyArray_Descr *indtype;
 	intp start, step_size;
 	intp n_steps;
 	PyObject *r;
@@ -6225,7 +6224,6 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 	PyObject *obj = NULL;
 	int swap;
         PyArray_CopySwapFunc *copyswap;
-		
 
 	if (ind == Py_Ellipsis) {
 		ind = PySlice_New(NULL, NULL, NULL);
@@ -6233,6 +6231,8 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		Py_DECREF(ind);
 		return obj;
 	}
+
+	indtype = PyArray_DescrFromType(PyArray_INTP);
 
 	/* Tuples not accepted --- i.e. no NewAxis */
 	/* Could implement this with adjusted strides
@@ -6249,8 +6249,8 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		else { /* empty array */
 			intp ii = 0;
 			r = PyArray_New(self->ao->ob_type, 1, &ii, 
-					self->ao->descr->type_num, NULL, 
-					NULL, self->ao->descr->elsize, 0,
+					self->descr,
+					NULL, NULL, 0,
 					(PyObject *)self->ao);
 			return r;			
 		}
@@ -6276,9 +6276,11 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 			return r;
 		}
 		size = self->ao->descr->elsize;
-		r = PyArray_New(self->ao->ob_type, 1, &n_steps, 
-				self->ao->descr->type_num, NULL, NULL,
-				size, 0, (PyObject *)self->ao);
+		r = PyArray_NewFromDescr(self->ao->ob_type, 
+					 self->ao->descr, 
+					 1, &n_steps, 
+					 NULL, NULL,
+					 0, (PyObject *)self->ao);
 		if (r==NULL) goto fail; 
 		dptr = PyArray_DATA(r);
                 swap = !PyArray_ISNOTSWAPPED(self->ao);
@@ -6296,7 +6298,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 	/* convert to INTP array if Integer array scalar or List */
 
 	if (PyArray_IsScalar(ind, Integer) || PyList_Check(ind)) {
-		obj = PyArray_FromAny(ind, &indtype, 0, 0, FORCECAST);
+		obj = PyArray_FromAny(ind, indtype, 0, 0, FORCECAST);
 	}
 	else {
 		Py_INCREF(ind);
@@ -6311,7 +6313,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		/* Check for integer array */
 		else if (PyArray_ISINTEGER(obj)) {
 			PyObject *new;
-			new = PyArray_FromAny(obj, &indtype, 0, 0, 
+			new = PyArray_FromAny(obj, indtype, 0, 0, 
 					      FORCECAST | BEHAVED_FLAGS_RO);
 			if (new==NULL) goto fail;
                         Py_DECREF(obj);
@@ -6375,15 +6377,15 @@ static int
 iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
 		   PyArrayIterObject *val, int swap)
 {
-	PyArray_Descr typecode;
+	PyArray_Descr *typecode;
 	intp num;
 	PyArrayIterObject *ind_it;
 	int itemsize;
 	int index;
         PyArray_CopySwapFunc *copyswap;
 
-	itemsize = typecode.itemsize = self->ao->descr->elsize;
-	typecode.type_num = self->ao->descr->type_num;
+	typecode = self->ao->descr;
+	itemsize = typecode->elsize;
         copyswap = self->ao->descr->copyswap;
 	if (ind->nd == 0) {
 		num = *((intp *)ind->data);
@@ -6423,8 +6425,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	int i;
 	PyObject *arrval=NULL;
 	PyArrayIterObject *val_it=NULL;
-	PyArray_Descr type;
-	PyArray_Descr indtype = {PyArray_INTP, 0, 0};
+	PyArray_Descr *type;
+	PyArray_Descr *indtype;
 	int swap, retval=-1;
 	int itemsize;
 	intp start, step_size;
@@ -6438,12 +6440,13 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 		Py_DECREF(ind);
 		return i;
 	}
+
+	indtype = PyArray_DescrFromType(PyArray_INTP);
+
+	type = self->ao->descr;
+	itemsize = type->elsize;
 	
-	type.type_num = self->ao->descr->type_num;
-	itemsize = type.itemsize = self->ao->descr->elsize;
-	type.fortran = 0;
-	
-	arrval = PyArray_FromAny(val, &type, 0, 0, 0);
+	arrval = PyArray_FromAny(val, type, 0, 0, 0);
 	if (arrval==NULL) return -1;
 	val_it = (PyArrayIterObject *)PyArray_IterNew(arrval);
 	if (val_it==NULL) goto finish;
@@ -6498,9 +6501,9 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	/* convert to INTP array if Integer array scalar or List */
 
 	if (PyArray_IsScalar(ind, Integer))
-		obj = PyArray_FromScalar(ind, &indtype);
+		obj = PyArray_FromScalar(ind, indtype);
 	else if (PyList_Check(ind)) {
-		obj = PyArray_FromAny(ind, &indtype, 0, 0, FORCECAST);
+		obj = PyArray_FromAny(ind, indtype, 0, 0, FORCECAST);
 	}
 	else {
 		Py_INCREF(ind);
@@ -6518,7 +6521,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 		/* Check for integer array */
 		else if (PyArray_ISINTEGER(obj)) {
 			PyObject *new;
-			new = PyArray_FromAny(obj, &indtype, 0, 0, 
+			new = PyArray_FromAny(obj, indtype, 0, 0, 
 					      FORCECAST | BEHAVED_FLAGS);
 			Py_DECREF(obj);
 			obj = new;
@@ -6570,18 +6573,20 @@ iter_array(PyArrayIterObject *it, PyObject *op)
 
         size = PyArray_SIZE(it->ao);
         if (PyArray_ISCONTIGUOUS(it->ao)) {
-                r = PyArray_New(it->ao->ob_type, 1, &size, 
-				it->ao->descr->type_num,
-                                NULL, it->ao->data, it->ao->descr->elsize, 
-				it->ao->flags,
-                                (PyObject *)it->ao);                
+                r = PyArray_NewFromDescr(it->ao->ob_type, 
+					 it->ao->descr,
+					 1, &size, 
+					 NULL, it->ao->data, 
+					 it->ao->flags,
+					 (PyObject *)it->ao); 
 		if (r==NULL) return NULL;
         }
         else {
-                r = PyArray_New(it->ao->ob_type, 1, &size, 
-				it->ao->descr->type_num,
-                                NULL, NULL, it->ao->descr->elsize, 0, 
-                                (PyObject *)it->ao);
+                r = PyArray_NewFromDescr(it->ao->ob_type, 
+					 it->ao->descr,
+					 1, &size, 
+					 NULL, NULL, 
+					 0, (PyObject *)it->ao);
 		if (r==NULL) return NULL;
 		if (PyArray_CopyInto((PyArrayObject *)r, it->ao) < 0) {
 			Py_DECREF(r); 
@@ -6747,13 +6752,14 @@ fancy_indexing_check(PyObject *args)
 static int
 _convert_obj(PyObject *obj, PyArrayIterObject **iter)
 {
-	PyArray_Descr indtype = {PyArray_INTP, 0, 0};
+	PyArray_Descr *indtype;
 	PyObject *arr;
 
 	if (PySlice_Check(obj) || (obj == Py_Ellipsis))
 		*iter = NULL;
 	else {
-		arr = PyArray_FromAny(obj, &indtype, 0, 0, FORCECAST);
+		indtype = PyArray_DescrFromType(indtype);
+		arr = PyArray_FromAny(obj, indtype, 0, 0, FORCECAST);
 		if (arr == NULL) return -1;
 		*iter = (PyArrayIterObject *)PyArray_IterNew(arr);
 		Py_DECREF(arr);
@@ -7082,7 +7088,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 static int
 _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
 {
-	PyArray_Descr typecode = {PyArray_BOOL, 0, 0};
+	PyArray_Descr *typecode;
 	PyArrayObject *ba =NULL, *new=NULL;
 	int nd, j;
 	intp size, i, count;
@@ -7090,7 +7096,9 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
 	intp coords[MAX_DIMS], dims_m1[MAX_DIMS];
 	intp *dptr[MAX_DIMS];
 
-	ba = (PyArrayObject *)PyArray_FromAny(myBool, &typecode, 0, 0, 
+	typecode=PyArray_DescrFromType(PyArray_BOOL);
+	
+	ba = (PyArrayObject *)PyArray_FromAny(myBool, typecode, 0, 0, 
 					      CARRAY_FLAGS);
 	if (ba == NULL) return -1;
 	nd = ba->nd;
@@ -7159,7 +7167,7 @@ PyArray_MapIterNew(PyObject *indexobj)
 {
         PyArrayMapIterObject *mit;
 	int fancy=0;
-	PyArray_Descr indtype = {PyArray_INTP, 0, 0};
+	PyArray_Descr *indtype;
 	PyObject *arr = NULL;
 	int i, n, started, nonindex;
 
@@ -7232,8 +7240,9 @@ PyArray_MapIterNew(PyObject *indexobj)
 	}
 
 	else if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
+		indtype = PyArray_DescrFromType(PyArray_INT);
 		mit->numiter = 1;
-		arr = PyArray_FromAny(indexobj, &indtype, 0, 0, FORCECAST);
+		arr = PyArray_FromAny(indexobj, indtype, 0, 0, FORCECAST);
 		if (arr == NULL) goto fail;
 		mit->iters[0] = (PyArrayIterObject *)PyArray_IterNew(arr);
 		if (mit->iters[0] == NULL) {Py_DECREF(arr); goto fail;}

@@ -2704,17 +2704,21 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         int check_num=PyArray_NOTYPE+10;
 	int len;
 	PyObject *item;
+	int elsize = 0;
 
-	at->descr->elsize = 0;
-        if (obj == Py_None) {
-                at->type_num = PyArray_NOTYPE;
-                return PY_SUCCEED;
-        }
-
+	*at=NULL;
+	
+        if (obj == Py_None) return Py_SUCCEED;
+	
+	if (PyArray_DescrCheck(obj)) {
+		*at = obj;
+		return Py_SUCCEED;
+	}
+	
         if (PyType_Check(obj)) {
 		if (PyType_IsSubtype((PyTypeObject *)obj, 
 				     &PyGenericArrType_Type)) {
-			PyArray_TypecodeFromTypeObject(obj, at);
+			PyArray_DescrFromTypeObject(obj, at);
 			return PY_SUCCEED;
 		}
 		check_num = PyArray_OBJECT;
@@ -2733,20 +2737,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		else if (obj == (PyObject *)(&PyBuffer_Type))
 			check_num = PyArray_VOID;
 		goto finish;
-	}	
-
-	/* type object could be an array */
-/* 	if (PyArray_Check(obj)) { */
-/* 		at->type_num = PyArray_TYPE(obj); */
-/* 		at->descr->elsize = PyArray_ITEMSIZE(obj); */
-/* 		return PY_SUCCEED; */
-/* 	} */
-
-	/* or an array scalar */
-/*         if (PyArray_IsScalar(obj, Generic)) { */
-/*                 PyArray_TypecodeFromScalar(obj, at); */
-/*                 return PY_SUCCEED; */
-/*         } */
+	}
 
 	/* or a typecode string */
 
@@ -2758,7 +2749,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			check_num = (int) type[0];
 		}
 		if (len > 1) {
-			at->descr->elsize = atoi(type+1);
+			elsize = atoi(type+1);
 			/* When specifying length of UNICODE
 			   the number of characters is given to match 
 			   the STRING interface.  Each character can be
@@ -2766,32 +2757,38 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			   the number of bytes.
 			*/
 			if (check_num == PyArray_UNICODELTR)
-				at->descr->elsize *= sizeof(Py_UNICODE);
+				elsize *= sizeof(Py_UNICODE);
 			
-			/* Support for generic processing */
+			/* Support for generic processing 
+			   c4, i4, f8, etc...
+			*/
 			else if ((check_num != PyArray_STRINGLTR) &&
 				 (check_num != PyArray_VOIDLTR)) {
-				if (at->descr->elsize == 0) {
+				if (elsize == 0) {
 					/* reset because string conversion failed */
 					check_num = PyArray_NOTYPE+10;
 				}
 				else {
 					check_num =			\
-						PyArray_TypestrConvert(at->descr->elsize,
+						PyArray_TypestrConvert(elsize,
 								       check_num);
-					at->descr->elsize = 0;
+					elsize = 0;
 				}
 			}
 		}
 	}
-        else { /* Default -- try integer conversion */
-		/* Don't allow integer conversion */
-                /* check_num = PyInt_AsLong(obj); */
-		/* fprintf(stderr, "****\n\ntype=%s\n\n****\n", 
-			obj->ob_type->tp_name);
-		*/
-		goto fail;
+	/* or a tuple */
+	/* A tuple type would be either (generic typeobject + typesize) 
+	   or 
+	*/
+ 	else if (PyTuple_Check(obj)) {
 	}
+	/* or a dictionary */
+	/*
+	else if (PyDict_Check(obj)) {
+	}
+	*/
+        else goto fail;
 
 	if (PyErr_Occurred()) goto fail;
 
@@ -2800,35 +2797,32 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	*/
 
  finish:
-	if (check_num == PyArray_NOTYPE) {
-		at->type_num = PyArray_NOTYPE;
-		at->descr->elsize = 0;
-		return PY_SUCCEED;
-	}
-
         if ((check_num == PyArray_NOTYPE+10) ||			\
-	    (descr = PyArray_DescrFromType(check_num))==NULL) {
+	    (*at = PyArray_DescrFromType(check_num))==NULL) {
 		/* Now check to see if the object is registered
 		   in typeDict */
 		if (typeDict != NULL) {
 			item = PyDict_GetItem(typeDict, obj);
 			if (item) {
-				PyArray_TypecodeFromTypeObject(item, at);
+				*at = PyArray_DescrFromTypeObject(item);
 				PyErr_Clear();
 				return PY_SUCCEED;
 			}
 		}
 		goto fail;
 	}
-	
-        at->type_num = descr->type_num;
-	if (at->descr->elsize == 0) at->descr->elsize = descr->elsize;
+
+	if ((*at)->elsize == 0) && (elsize != 0) {
+		*at = PyArray_DescrNew(*at);
+		(*at)->elsize = elsize;
+	}
 	
         return PY_SUCCEED;
 
  fail:
 	PyErr_SetString(PyExc_TypeError, 
 			"data type not understood");
+	*at=NULL;
 	return PY_FAIL;
 }	
 

@@ -1226,6 +1226,8 @@ typedef struct {
 
         /* C-API that requries previous API to be defined */
 
+#define PyArray_DescrCheck(op) (PyObject_TypeCheck((op), &PyArrayDescr_Type))
+
 #define PyArray_Check(op) ((op)->ob_type == &PyArray_Type || \
 			   PyObject_TypeCheck((op), &PyBigArray_Type))
 #define PyBigArray_CheckExact(op) ((op)->ob_type == &PyBigArray_Type)
@@ -1258,18 +1260,6 @@ typedef struct {
 #define REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define MAX_ELSIZE 2*SIZEOF_LONGDOUBLE
 
-#define PyArray_FromObject(op, type, min_depth, max_depth)		\
-	PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
-			max_depth, BEHAVED_FLAGS | ENSUREARRAY)
-
-#define PyArray_ContiguousFromObject(op, type, min_depth, max_depth)	\
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
-			max_depth, DEFAULT_FLAGS | ENSUREARRAY);
-
-
-#define PyArray_CopyFromObject(op, type, min_depth, max_depth)		\
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
-			max_depth, ENSURECOPY | ENSUREARRAY);
 
 #define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)	\
         PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
@@ -1307,7 +1297,24 @@ typedef struct {
 	/* Copy should always return contiguous array */
 #define PyArray_Copy(obj) PyArray_NewCopy(obj, 0)
 
+#define PyArray_FromObject(op, type, min_depth, max_depth)		\
+	PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
+			max_depth, BEHAVED_FLAGS | ENSUREARRAY)
+
+#define PyArray_ContiguousFromObject(op, type, min_depth, max_depth)	\
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
+			max_depth, DEFAULT_FLAGS | ENSUREARRAY);
+
+
+#define PyArray_CopyFromObject(op, type, min_depth, max_depth)		\
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
+			max_depth, ENSURECOPY | ENSUREARRAY);
+
+#define PyArray_Cast(mp, type_num) \
+	PyArray_CastToType(mp, PyArray_DescrFromType(type_num))
+
         /*Compatibility with old Numeric stuff -- don't use in new code */
+
 
 #define PyArray_UNSIGNED_TYPES
 #define PyArray_SBYTE PyArray_BYTE

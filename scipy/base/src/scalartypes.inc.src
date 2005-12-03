@@ -47,10 +47,10 @@ typedef struct {
 static void
 PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 {
-	PyArray_Typecode typecode;
-	PyArray_TypecodeFromScalar(scalar, &typecode);
+	PyArray_Descr *typecode;
+	typecode = PyArray_DescrFromScalar(scalar);
 	
-	if (PyTypeNum_ISEXTENDED(typecode.type_num)) {
+	if (PyTypeNum_ISEXTENDED(typecode->type_num)) {
 		void **newptr = (void **)ctypeptr;
 		switch(typecode.type_num) {
 		case PyArray_STRING:
@@ -62,8 +62,8 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 		}
 		return;
 	}
-	memcpy(ctypeptr, _SOFFSET_(scalar, typecode.type_num),
-	       typecode.itemsize);
+	memcpy(ctypeptr, _SOFFSET_(scalar, typecode->type_num),
+	       typecode->elsize);
 	return;
 }
 
@@ -76,12 +76,10 @@ static int
 PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr, 
 			  PyArray_Descr *outcode)
 {
-	PyArray_Typecode incode;
 	PyArray_Descr* descr;
 	
-	PyArray_TypecodeFromScalar(scalar, &incode);
-	descr = PyArray_DescrFromType(incode.type_num);
-	if (PyTypeNum_ISEXTENDED(incode.type_num) ||
+	descr = PyArray_DescrFromScalar(scalar);
+	if (PyTypeNum_ISEXTENDED(descr->type_num) ||
 	    PyTypeNum_ISEXTENDED(outcode->type_num)) {
 		PyArrayObject *ain, *aout;
 
@@ -1765,50 +1763,45 @@ PyArray_TypenumFromTypeObject(PyObject *type)
 	return typenum;
 }
 
-static void 
-PyArray_TypecodeFromTypeObject(PyObject *type, PyArray_Descr *typecode) {
-	int itemsize = 0;
+static PyArray_Descr *
+PyArray_DescrFromTypeObject(PyObject *type) {
 	int type_num;
-
+	
 	type_num = PyArray_TypenumFromTypeObject(type);
-	typecode->type_num = type_num;
-
-	if (!PyTypeNum_ISFLEXIBLE(type_num)) {
-		PyArray_Descr *descr;
-		descr = PyArray_DescrFromType(type_num);
-		if (descr != NULL)
-			itemsize = descr->elsize;
-	}
-	typecode->itemsize = itemsize;
-	typecode->fortran = 0;
-	return;
+	return PyArray_DescrFromType(type_num);
 }
 
+/* New reference */
 static PyArray_Descr *
 PyArray_DescrFromScalar(PyObject *sc);
 {
 	int type_num;
 	PyArray_Descr *descr;
-
+	
         descr = PyArray_DescrFromTypeObject((PyObject *)sc->ob_type);
-        if (typecode->elsize == 0) {
-		PyArray_Descr* new;
-		new = PyArray_DescrNew(descr);
-		Py_XDECREF(descr);
-		descr = new;
+        if (descr->elsize == 0) {
+		descr = PyArray_DescrNew(descr);
                 type_num = descr->type_num;
 		if (type_num == PyArray_STRING) 
-			descr->itemsize = PyString_GET_SIZE(sc);
+			descr->elsize = PyString_GET_SIZE(sc);
 		else if (type_num == PyArray_UNICODE)
-			descr->itemsize = PyUnicode_GET_DATA_SIZE(sc);
+			descr->elsize = PyUnicode_GET_DATA_SIZE(sc);
 		else { 
-			descr->itemsize =				\
+			descr->elsize =					\
 				((PyVoidScalarObject *)sc)->ob_size;
+			descr->fields = PyObject_GetAttributeString(sc, "fields");
+			if (descr->fields && !PyDict_Check(descr->fields)) {
+				PyErr_SetString(PyExc_ValueError, 
+						"bad fields on scalar.");
+				return NULL;
+			}
+			PyErr_Clear();
 		}
         }
 	return descr;
 }
 
+/* New reference */
 static PyObject *
 PyArray_TypeObjectFromType(int type)
 {

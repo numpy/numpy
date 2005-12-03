@@ -38,10 +38,6 @@ objectapi_list = [
      'One', 'PyArrayObject *', 'char *'),
 
 
-    (r"""Cast an array to a different type.
-    """,
-     'Cast','PyArrayObject *, int','PyObject *'),
-
     (r"""Cast an array using typecode structure.
     """,
      'CastToType','PyArrayObject *, PyArray_Descr *','PyObject *'),
@@ -73,7 +69,7 @@ objectapi_list = [
 
     (r"""Return type typecode from array scalar.
     """,
-     'TypecodeFromScalar','PyObject *, PyArray_Descr *','void'),
+     'DescrFromScalar','PyObject *','PyArray_Descr *'),
 
     (r"""Compute the size of an array (in number of items)
     """,
@@ -513,7 +509,7 @@ types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger',
 
 # API fixes for __arrayobject_api.h
 
-fixed = 5
+fixed = 6
 numtypes = len(types) + fixed
 numobject = len(objectapi_list) + numtypes
 nummulti = len(multiapi_list)
@@ -612,6 +608,7 @@ outstr = r"""
 
 static PyTypeObject PyBigArray_Type;
 static PyTypeObject PyArray_Type;
+static PyTypeObject PyArrayDescr_Type;
 static PyTypeObject PyArrayIter_Type;
 static PyTypeObject PyArrayMapIter_Type;
 static PyTypeObject PyArrayMultiIter_Type;
@@ -637,9 +634,10 @@ static void **PyArray_API=NULL;
 
 #define PyBigArray_Type (*(PyTypeObject *)PyArray_API[0])
 #define PyArray_Type (*(PyTypeObject *)PyArray_API[1])
-#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[2])
-#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[3])
-#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[4])
+#define PyArrayDescr_Type (*(PyTypeObject *)PyArray_API[2])
+#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[3])
+#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[4])
+#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[5])
 
 %s
 

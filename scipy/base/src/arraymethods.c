@@ -162,12 +162,12 @@ static char doc_view[] = "a.view(<dtype>) return a new view of array with same d
 static PyObject *
 array_view(PyArrayObject *self, PyObject *args)
 {
-        PyArray_Descr * type = {PyArray_NOTYPE, 0, 0};
+        PyArray_Descr *type = NULL;
 	if (!PyArg_ParseTuple(args, "|O&",
                               PyArray_DescrConverter, &type)) 
                 return NULL;
 
-	return _ARET(PyArray_View(self, &type));
+	return _ARET(PyArray_View(self, type));
 }
 
 static char doc_argmax[] = "a.argmax(axis=None)";
@@ -260,44 +260,54 @@ static PyObject *
 PyArray_GetField(PyArrayObject *self, PyObject *dtype, int offset)
 {
 	PyObject *ret=NULL;
-	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+	PyArray_Descr *typecode=NULL;
         int tupletype = 0;
         
         if (PyTuple_Check(dtype)) {
                 PyArray_Dims dim = {NULL, -1};
+		PyArray_Descr *newtype;
                 if (PyTuple_GET_SIZE(dtype) != 2) {
                         PyErr_SetString(PyExc_TypeError, 
                                         "tuple for data-type must be length 2");
                         return NULL;
                 }
-                if (PyArray_TypecodeConverter(PyTuple_GET_ITEM(dtype,0), 
-                                              &typecode) < 0) return NULL;
+                if (PyArray_FixedDescrConverter(PyTuple_GET_ITEM(dtype,0), 
+						&typecode) < 0) return NULL;
                 if (PyArray_IntpConverter(PyTuple_GET_ITEM(dtype,1),
-                                           &dim) < 0) return NULL;
+					  &dim) < 0) return NULL;
                 tupletype = 1;                
-                typecode.itemsize = typecode.itemsize *         \
+		if (typecode->type_num == PyArray_VOID) {
+			newtype = PyArray_DescrNew(typecode);
+		}
+		else {
+			newtype = PyArray_DescrFromType(PyArray_VOID);
+		}
+		newtype->itemsize = typecode->itemsize *	\
                         PyArray_MultiplyList(dim.ptr, dim.len);
-                typecode.type_num = PyArray_VOID;
+		Py_DECREF(typecode);
+		typecode = newtype;
                 PyDimMem_FREE(dim.ptr);
         }
         else {
-                if (PyArray_TypecodeConverter(dtype, &typecode) < 0) 
+                if (PyArray_DescrConverter(dtype, &typecode) < 0) 
                         return NULL;
         }
                                            
 
-	if (offset < 0 || (offset + typecode.itemsize) > self->itemsize) {
+	if (offset < 0 || (offset + typecode->elsize) > self->itemsize) {
 		PyErr_Format(PyExc_ValueError,
 			     "Need 0 <= offset <= %d for requested type "  \
 			     "but received offset = %d",
 			     self->itemsize-typecode.itemsize, offset);
 		return NULL;
 	}
-	ret = PyArray_New(self->ob_type, self->nd, self->dimensions,
-			  typecode.type_num, self->strides, 
-			  self->data + offset,
-			  typecode.itemsize, self->flags, (PyObject *)self);
-	if (ret == NULL) return NULL;
+	ret = PyArray_NewFromDescr(self->ob_type, 
+				   typecode, 
+				   self->nd, self->dimensions,
+				   self->strides, 
+				   self->data + offset,
+				   self->flags, (PyObject *)self);
+	if (ret == NULL) {Py_DECREF(typecode); return NULL;}
 	Py_INCREF(self);
 	((PyArrayObject *)ret)->base = (PyObject *)self;
         
@@ -332,30 +342,38 @@ static int
 PyArray_SetField(PyArrayObject *self, PyObject *dtype,
 		 int offset, PyObject *val)
 {
-	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+	PyArray_Descr *typecode;
 	PyObject *ret=NULL;
 	int retval = 0;
         int tupletype=0;
         
         if (PyTuple_Check(dtype)) {
                 PyArray_Dims dim = {NULL, -1};
+		PyArray_Descr *newtype;
                 if (PyTuple_GET_SIZE(dtype) != 2) {
                         PyErr_SetString(PyExc_TypeError, 
                                         "tuple for data-type must be length 2");
                         return -1;
                 }
-                if (PyArray_TypecodeConverter(PyTuple_GET_ITEM(dtype,0), 
+                if (PyArray_DescrConverter(PyTuple_GET_ITEM(dtype,0), 
                                               &typecode) < 0) return -1;
                 if (PyArray_IntpConverter(PyTuple_GET_ITEM(dtype,1),
                                            &dim) < 0) return -1;
                 tupletype = 1;                
-                typecode.itemsize = typecode.itemsize *         \
+		if (typecode->type_num == PyArray_VOID) {
+			newtype = PyArray_DescrNew(typecode);
+		}
+		else {
+			newtype = PyArray_DescrFromType(PyArray_VOID);
+		}
+		newtype->itemsize = typecode->itemsize *	\
                         PyArray_MultiplyList(dim.ptr, dim.len);
-                typecode.type_num = PyArray_VOID;
+		Py_DECREF(typecode);
+		typecode = newtype;
                 PyDimMem_FREE(dim.ptr);
         }
         else {
-                if (PyArray_TypecodeConverter(dtype, &typecode) < 0) 
+                if (PyArray_DescrConverter(dtype, &typecode) < 0) 
                         return -1;
         }
 
@@ -367,10 +385,10 @@ PyArray_SetField(PyArrayObject *self, PyObject *dtype,
 			     self->itemsize-typecode.itemsize, offset);
 		return -1;
 	}
-	ret = PyArray_New(self->ob_type, self->nd, self->dimensions,
-			  typecode.type_num, self->strides, 
-			  self->data + offset,
-			  typecode.itemsize, self->flags, (PyObject *)self);
+	ret = PyArray_NewFromDescr(self->ob_type, 
+				   typecode, self->nd, self->dimensions,
+				   self->strides, self->data + offset,
+				   self->flags, (PyObject *)self);
 	if (ret == NULL) return -1;
 	Py_INCREF(self);
 	((PyArrayObject *)ret)->base = (PyObject *)self;
