@@ -12,7 +12,6 @@ objectapi_list = [
     """,
      'GetNumericOps','void','PyObject *'),
 
-
     (r"""For object arrays, increment all internal references.
     """,
      'INCREF','PyArrayObject *','int'),
@@ -198,9 +197,13 @@ objectapi_list = [
     """,
      'NewFromDescr','PyTypeObject *, PyArray_Descr *, int nd, intp *dims, intp *strides, void *data, int fortran, PyObject *obj', 'PyObject *'),
 
-    (r"""Update Several Flags at once.
+    (r"""
     """,
-     'DescrNew','PyArray_Descr *','PyArray_Descr *','void'),
+     'DescrNew','PyArray_Descr *','PyArray_Descr *'),
+    
+    (r"""
+    """,
+     'DescrNewFromType','int','PyArray_Descr *'),
 
     (r"""Get Priority from object
     """,
@@ -675,9 +678,10 @@ outstr = r"""
 void *PyArray_API[] = {
         (void *) &PyBigArray_Type,
         (void *) &PyArray_Type,
+        (void *) &PyArrayDescr_Type,
         (void *) &PyArrayIter_Type,
         (void *) &PyArrayMultiIter_Type,
-        (int *) &PyArray_NUMUSERTYPES,
+        (int *) &PyArray_NUMUSERTYPES, 
 %s
 };
 """ % '\n'.join(init_list)

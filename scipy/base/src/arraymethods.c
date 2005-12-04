@@ -542,11 +542,13 @@ array_wraparray(PyArrayObject *self, PyObject *args)
 		return NULL;
 	}	
 
-	ret = PyArray_New(self->ob_type, PyArray_NDIM(arr),
-			  PyArray_DIMS(arr), PyArray_TYPE(arr),
-			  PyArray_STRIDES(arr), PyArray_DATA(arr),
-			  PyArray_ITEMSIZE(arr), 
-			  PyArray_FLAGS(arr), (PyObject *)self);
+	Py_INCREF(PyArray_DESCR(arr));
+	ret = PyArray_NewFromDescr(self->ob_type, 
+				   PyArray_DESCR(arr),
+				   PyArray_NDIM(arr),
+				   PyArray_DIMS(arr), 
+				   PyArray_STRIDES(arr), PyArray_DATA(arr),
+				   PyArray_FLAGS(arr), (PyObject *)self);
 	if (ret == NULL) return NULL;
 	Py_INCREF(arr);
 	PyArray_BASE(ret) = arr;
@@ -582,11 +584,14 @@ array_getarray(PyArrayObject *self, PyObject *args)
 			subtype = &PyBigArray_Type;
 		}
 		
-		new = PyArray_New(subtype, PyArray_NDIM(self),
-				  PyArray_DIMS(self), PyArray_TYPE(self),
-				  PyArray_STRIDES(self), PyArray_DATA(self),
-				  PyArray_ITEMSIZE(self), 
-				  PyArray_FLAGS(self), NULL);
+		Py_INCREF(PyArray_DESCR(self));
+		new = PyArray_NewFromDescr(subtype, 
+					   PyArray_DESCR(self),
+					   PyArray_NDIM(self),
+					   PyArray_DIMS(self), 
+					   PyArray_STRIDES(self), 
+					   PyArray_DATA(self),
+					   PyArray_FLAGS(self), NULL);
 		if (new == NULL) return NULL;
 		Py_INCREF(self);
 		PyArray_BASE(new) = (PyObject *)self;

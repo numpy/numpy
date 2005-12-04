@@ -1319,7 +1319,14 @@ typedef struct {
 					  j*PyArray_STRIDE(obj, 1) +	\
 					  k*PyArray_STRIDE(obj, 2) +	\
 					  l*PyArray_STRIDE(obj, 3))
-	
+
+#define PyArray_DESCR_REPLACE(descr) do {	\
+		PyArray_Descr *_new_;			\
+		_new_ = PyArray_DescrNew(descr);	\
+		Py_DECREF(descr);			\
+		descr = _new_;				\
+	} while(0)
+
 	/* Copy should always return contiguous array */
 #define PyArray_Copy(obj) PyArray_NewCopy(obj, 0)
 

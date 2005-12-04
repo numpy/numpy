@@ -108,6 +108,8 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 
 /* 0-dim array from array-scalar object */
 /* always contains a copy of the data */
+
+/* does nothing with outcode */
 static PyObject *
 PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 {
@@ -156,6 +158,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 	}
 	
 	/* cast if necessary to desired output typecode */
+	Py_INCREF(outcode);
 	ret = PyArray_CastToType((PyArrayObject *)r, outcode, 0);
 	Py_DECREF(r);
 	return ret;

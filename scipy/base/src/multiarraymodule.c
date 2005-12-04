@@ -110,14 +110,14 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type)
 		type_num = type->type_num;
 	}
 
-	new = PyArray_New(self->ob_type,
-			  self->nd, self->dimensions,
-			  self->descr->type_num,
-			  self->strides,
-			  self->data,
-			  self->descr->elsize,
-			  self->flags, (PyObject *)self);
-
+	Py_INCREF(self->descr);
+	new = PyArray_NewFromDescr(self->ob_type,
+				   self->descr,
+				   self->nd, self->dimensions,
+				   self->strides,
+				   self->data,
+				   self->flags, (PyObject *)self);
+	
 	if (new==NULL) return NULL;
 	
         Py_INCREF(self);
@@ -178,14 +178,14 @@ PyArray_Flatten(PyArrayObject *a, int fortran)
 	if (fortran < 0) fortran = PyArray_ISFORTRAN(a);
 
 	size = PyArray_SIZE(a);
-	ret = PyArray_New(a->ob_type,
-			  1, &size,
-			  a->descr->type_num,
-			  NULL,
-                          NULL,
-			  a->descr->elsize,
-			  0, (PyObject *)a);
-
+	Py_INCREF(a->descr);
+	ret = PyArray_NewFromDescr(a->ob_type,
+				   a->descr,
+				   1, &size,
+				   NULL,
+				   NULL,
+				   0, (PyObject *)a);
+	
 	if (ret== NULL) return NULL;
 	if (fortran) {
 		new = PyArray_Transpose(a, NULL);
@@ -331,13 +331,13 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
 		}
 	}
         
-	ret = (PyAO *)PyArray_New(self->ob_type,
-				  n, dimensions,
-				  self->descr->type_num,
-				  strides,
-				  self->data,
-				  self->descr->elsize,
-				  self->flags, (PyObject *)self);
+	Py_INCREF(self->descr);
+	ret = (PyAO *)PyArray_NewFromDescr(self->ob_type,
+					   self->descr,
+					   n, dimensions,
+					   strides,
+					   self->data,
+					   self->flags, (PyObject *)self);
 	
 	if (ret== NULL) return NULL;
 	
@@ -377,10 +377,14 @@ PyArray_Squeeze(PyArrayObject *self)
 		}
 	}
 	
-	ret = PyArray_New(self->ob_type, newnd, dimensions, 
-			  self->descr->type_num, strides,
-			  self->data, self->descr->elsize, self->flags,
-			  (PyObject *)self);
+	Py_INCREF(self->descr);
+	ret = PyArray_NewFromDescr(self->ob_type, 
+				   self->descr,
+				   newnd, dimensions, 
+				   strides, self->data, 
+				   self->flags,
+				   (PyObject *)self);
+	if (ret == NULL) return NULL;
 	PyArray_FLAGS(ret) &= ~OWN_DATA;
 	PyArray_BASE(ret) = (PyObject *)self;
 	Py_INCREF(self);
@@ -1078,12 +1082,12 @@ PyArray_Concatenate(PyObject *op, int axis)
 	
 	tmp = mps[0]->dimensions[0];
 	mps[0]->dimensions[0] = new_dim;
-	ret = (PyArrayObject *)PyArray_New(subtype, nd,
-					   mps[0]->dimensions, 
-					   mps[0]->descr->type_num, 
-					   NULL, NULL, 
-                                           mps[0]->descr->elsize, 0,
-                                           (PyObject *)ret);
+	Py_INCREF(mps[0]->descr);
+	ret = (PyArrayObject *)PyArray_NewFromDescr(subtype, 
+						    mps[0]->descr, nd,
+						    mps[0]->dimensions, 
+						    NULL, NULL, 0,
+						    (PyObject *)ret);
 	mps[0]->dimensions[0] = tmp;
 	
 	if (ret == NULL) goto fail;
@@ -1184,10 +1188,13 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute) {
 	
 	/* this allocates memory for dimensions and strides (but fills them
 	   incorrectly), sets up descr, and points data at ap->data. */
-	ret = (PyArrayObject *)PyArray_New(ap->ob_type, n, permutation, 
-					   ap->descr->type_num, NULL,
-					   ap->data, ap->descr->elsize, ap->flags,
-					   (PyObject *)ap);
+	Py_INCREF(ap->descr);
+	ret = (PyArrayObject *)\
+		PyArray_NewFromDescr(ap->ob_type, 
+				     ap->descr, 
+				     n, permutation, 
+				     NULL, ap->data, ap->flags,
+				     (PyObject *)ap);
 	if (ret == NULL) return NULL;
 	
 	/* point at true owner of memory: */
@@ -1255,11 +1262,13 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis) {
 
 	/* Construct new array */
 	aop->dimensions[axis] = total;
-	ret = (PyArrayObject *)PyArray_New(aop->ob_type, aop->nd,
-					   aop->dimensions, 
-					   aop->descr->type_num,
-					   NULL, NULL, aop->descr->elsize, 0,
-					   (PyObject *)aop);
+	Py_INCREF(aop->descr);
+	ret = (PyArrayObject *)PyArray_NewFromDescr(aop->ob_type, 
+						    aop->descr,
+						    aop->nd,
+						    aop->dimensions,
+						    NULL, NULL, 0,
+						    (PyObject *)aop);
 	aop->dimensions[axis] = n;
 	
 	if (ret == NULL) goto fail;
@@ -1405,12 +1414,13 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op) {
 		sizes[i] = PyArray_NBYTES(mps[i]);
 	}
 	
-	ret = (PyArrayObject *)PyArray_New(ap->ob_type, ap->nd,
-					   ap->dimensions, 
-					   mps[0]->descr->type_num,
-					   NULL, NULL, 
-					   mps[0]->descr->elsize, 0, 
-					   (PyObject *)ap);
+	Py_INCREF(mps[0]->descr);
+	ret = (PyArrayObject *)PyArray_NewFromDescr(ap->ob_type, 
+						    mps[0]->descr,
+						    ap->nd,
+						    ap->dimensions, 
+						    NULL, NULL, 0,
+						    (PyObject *)ap);
 	if (ret == NULL) goto fail;
 	
 	elsize = ret->descr->elsize;
@@ -1959,9 +1969,12 @@ PyArray_CopyAndTranspose(PyObject *op)
 	dims[0] = PyArray_DIM(arr,1);
 	dims[1] = PyArray_DIM(arr,0);
 	elsize = PyArray_ITEMSIZE(arr);
-
-	ret = PyArray_New(arr->ob_type, 2, dims, PyArray_TYPE(arr),
-			  NULL, NULL, elsize, 0, arr);
+	
+	Py_INCREF(PyArray_DESCR(arr));
+	ret = PyArray_NewFromDescr(arr->ob_type, 
+				   PyArray_DESCR(arr),
+				   2, dims, 
+				   NULL, NULL, 0, arr);
 
 	if (ret == NULL) {
 		Py_DECREF(arr);
@@ -2248,7 +2261,7 @@ PyArray_Take(PyArrayObject *self0, PyObject *indices0, int axis) {
         if (self == NULL) return NULL;
 	
         indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0, 
-								PyArray_INTP, 
+							     PyArray_INTP, 
 								1, 0);
         if (indices == NULL) goto fail;
 	
@@ -2268,10 +2281,12 @@ PyArray_Take(PyArrayObject *self0, PyObject *indices0, int axis) {
                         }
                 }
         }
-        ret = (PyArrayObject *)PyArray_New(self->ob_type, nd, shape, 
-					   self->descr->type_num,
-					   NULL, NULL, 0, 0, 
-                                           (PyObject *)self);
+	Py_INCREF(self->descr);
+        ret = (PyArrayObject *)PyArray_NewFromDescr(self->ob_type, 
+						    self->descr,
+						    nd, shape, 
+						    NULL, NULL, 0, 
+						    (PyObject *)self);
 	
         if (ret == NULL) goto fail;
 	
@@ -3121,6 +3136,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 }
 
 
+/* steal a reference */
 static PyObject *
 PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 {
@@ -3470,12 +3486,14 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 		PyErr_SetString(PyExc_ValueError, 
 				"cannot create an OBJECT array from memory"\
 				" buffer");
+		Py_DECREF(type);
 		return NULL;
 	}
 	if (type->elsize == 0) {
 		PyErr_SetString(PyExc_ValueError, 
 				"itemsize cannot be zero in type");
-		return NULL;
+		Py_DECREF(type);
+		return NULL; 		
 	}
 
 	if (buf->ob_type->tp_as_buffer == NULL || \
@@ -3483,7 +3501,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 	     buf->ob_type->tp_as_buffer->bf_getreadbuffer == NULL)) {
 		PyObject *newbuf;
 		newbuf = PyObject_GetAttrString(buf, "__buffer__");
-		if (newbuf == NULL) return NULL;
+		if (newbuf == NULL) {Py_DECREF(type); return NULL;}
 		buf = newbuf;
 	}
 	else {Py_INCREF(buf);}
@@ -3493,6 +3511,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 		PyErr_Clear();
 		if (PyObject_AsReadBuffer(buf, (void *)&data, &ts)==-1) {
 			Py_DECREF(buf);
+			Py_DECREF(type);
 			return NULL;
 		}
 	}
@@ -3514,6 +3533,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 					"buffer size must be a multiple"\
 					" of element size");
 			Py_DECREF(buf);
+			Py_DECREF(type);
 			return NULL;
 		}
 		n = s/itemsize;
@@ -3523,14 +3543,17 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 					"buffer is smaller than requested"\
 					" size");
 			Py_DECREF(buf);
+			Py_DECREF(type);
 			return NULL;
 		}
 	}
 	
-	if ((ret = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &n, 
-						type->type_num, NULL, 
-						data, itemsize, DEFAULT_FLAGS,
-						NULL)) == NULL) {
+	if ((ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
+							 type, 
+							 1, &n, 
+							 NULL, data, 
+							 DEFAULT_FLAGS,
+							 NULL)) == NULL) {
 		Py_DECREF(buf);
 		return NULL;
 	}
@@ -4204,6 +4227,9 @@ DL_EXPORT(void) initmultiarray(void) {
 	if (PyType_Ready(&PyArrayMultiIter_Type) < 0)
 		return;
 
+	if (PyType_Ready(&PyArrayDescr_Type) < 0)
+		return;
+
 	c_api = PyCObject_FromVoidPtr((void *)PyArray_API, NULL);
 	if (PyErr_Occurred()) goto err;
 	PyDict_SetItemString(d, "_ARRAY_API", c_api);
@@ -4223,7 +4249,10 @@ DL_EXPORT(void) initmultiarray(void) {
         Py_INCREF(&PyArrayIter_Type);
 	PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
         Py_INCREF(&PyArrayMultiIter_Type);
-	PyDict_SetItemString(d, "broadcast", (PyObject *)&PyArrayMultiIter_Type);
+	PyDict_SetItemString(d, "broadcast", 
+			     (PyObject *)&PyArrayMultiIter_Type);
+	Py_INCREF(&PyArrayDescr_Type);
+	PyDict_SetItemString(d, "descr", (PyObject *)&PyArrayDescr_Type);
 
 	/* Doesn't need to be exposed to Python 
         Py_INCREF(&PyArrayMapIter_Type);

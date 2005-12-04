@@ -1,7 +1,6 @@
 static char module_doc[] =
 "This module provides a BLAS optimized\nmatrix multiply, inner product and dot for scipy arrays";
 
-
 #include "Python.h"
 #include "scipy/arrayobject.h"
 #ifndef CBLAS_HEADER

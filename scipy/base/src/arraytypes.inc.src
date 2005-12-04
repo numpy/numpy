@@ -1571,7 +1571,7 @@ static PyArray_Descr @from@_Descr = {
 
 /**end repeat**/
 
-static PyArray_Descr *descrs[] = {
+static PyArray_Descr *_builtin_descrs[] = {
 	&BOOL_Descr,
 	&BYTE_Descr,
 	&UBYTE_Descr,
@@ -1595,11 +1595,12 @@ static PyArray_Descr *descrs[] = {
 	&VOID_Descr,
 };
 
-
 static PyArray_Descr *
 PyArray_DescrFromType(int type) {
+	PyArray_Descr *ret=NULL;
+
 	if (type < PyArray_NTYPES) {
-		return descrs[type];
+		ret = _builtin_descrs[type];
 	}
 	else if (type == PyArray_NOTYPE) {
 		PyErr_SetString(PyExc_ValueError, 
@@ -1607,41 +1608,64 @@ PyArray_DescrFromType(int type) {
 		return NULL;
 	}
 	else if PyTypeNum_ISUSERDEF(type) {
-		return userdescrs[type-PyArray_USERDEF];
+		ret = userdescrs[type-PyArray_USERDEF];
 	} 
 	else {
 		switch(type) {
-                case PyArray_INTPLTR: return descrs[PyArray_INTP];
-		case PyArray_DOUBLELTR: return descrs[PyArray_DOUBLE];
-		case PyArray_CDOUBLELTR: return descrs[PyArray_CDOUBLE];
-
-                case PyArray_UINTPLTR: return descrs[PyArray_UINTP];
-                case PyArray_BOOLLTR: return descrs[PyArray_BOOL];
-		case PyArray_BYTELTR: return descrs[PyArray_BYTE];
-		case PyArray_UBYTELTR: return descrs[PyArray_UBYTE];
-		case PyArray_SHORTLTR: return descrs[PyArray_SHORT];
-		case PyArray_USHORTLTR: return descrs[PyArray_USHORT];
-		case PyArray_INTLTR: return descrs[PyArray_INT];
-		case PyArray_UINTLTR: return descrs[PyArray_UINT];
-		case PyArray_LONGLTR: return descrs[PyArray_LONG];
-                case PyArray_ULONGLTR: return descrs[PyArray_ULONG];
-                case PyArray_LONGLONGLTR: return descrs[PyArray_LONGLONG];
-                case PyArray_ULONGLONGLTR: return descrs[PyArray_ULONGLONG];
-		case PyArray_FLOATLTR: return descrs[PyArray_FLOAT];
-                case PyArray_LONGDOUBLELTR: return descrs[PyArray_LONGDOUBLE];
-		case PyArray_CFLOATLTR: return descrs[PyArray_CFLOAT];
+		case PyArray_LONGLTR: 
+			return PyArray_DescrFromType(PyArray_LONG);
+                case PyArray_INTPLTR: 
+			return PyArray_DescrFromType(PyArray_INTP);
+		case PyArray_INTLTR: 
+			return PyArray_DescrFromType(PyArray_INT);
+		case PyArray_DOUBLELTR: 
+			return PyArray_DescrFromType(PyArray_DOUBLE);
+		case PyArray_CDOUBLELTR: 
+			return PyArray_DescrFromType(PyArray_CDOUBLE);
+		case PyArray_FLOATLTR: 
+			return PyArray_DescrFromType(PyArray_FLOAT);
+		case PyArray_CFLOATLTR: 
+			return PyArray_DescrFromType(PyArray_CFLOAT);
+                case PyArray_UINTPLTR: 
+			return PyArray_DescrFromType(PyArray_UINTP);
+                case PyArray_BOOLLTR: 
+			return PyArray_DescrFromType(PyArray_BOOL);
+		case PyArray_STRINGLTR: 
+			return PyArray_DescrFromType(PyArray_STRING);
+	        case PyArray_VOIDLTR: 
+			return PyArray_DescrFromType(PyArray_VOID);
+		case PyArray_OBJECTLTR: 
+			return PyArray_DescrFromType(PyArray_OBJECT);
+		case PyArray_BYTELTR: 
+			return PyArray_DescrFromType(PyArray_BYTE);
+		case PyArray_UBYTELTR: 
+			return PyArray_DescrFromType(PyArray_UBYTE);
+		case PyArray_SHORTLTR: 
+			return PyArray_DescrFromType(PyArray_SHORT);
+		case PyArray_USHORTLTR: 
+			return PyArray_DescrFromType(PyArray_USHORT);
+		case PyArray_UINTLTR: 
+			return PyArray_DescrFromType(PyArray_UINT);
+                case PyArray_ULONGLTR: 
+			return PyArray_DescrFromType(PyArray_ULONG);
+                case PyArray_LONGLONGLTR: 
+			return PyArray_DescrFromType(PyArray_LONGLONG);
+                case PyArray_ULONGLONGLTR: 
+			return PyArray_DescrFromType(PyArray_ULONGLONG);
+                case PyArray_LONGDOUBLELTR: 
+			return PyArray_DescrFromType(PyArray_LONGDOUBLE);
                 case PyArray_CLONGDOUBLELTR: 
-			return descrs[PyArray_CLONGDOUBLE];
-		case PyArray_OBJECTLTR: return descrs[PyArray_OBJECT];
-		case PyArray_STRINGLTR: return descrs[PyArray_STRING];
-                case PyArray_UNICODELTR: return descrs[PyArray_UNICODE];
-	        case PyArray_VOIDLTR: return descrs[PyArray_VOID];
+			return PyArray_DescrFromType(PyArray_CLONGDOUBLE);
+                case PyArray_UNICODELTR: 
+			return PyArray_DescrFromType(PyArray_UNICODE);
 		default:
 			PyErr_SetString(PyExc_ValueError, 
 					"Invalid type for array");	
 			return NULL;
 		}
 	}
+	Py_INCREF(ret);
+	return ret;
 }
 
 
