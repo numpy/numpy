@@ -1466,7 +1466,7 @@ OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 */
 
 static PyArray_Descr @from@_Descr = { 
-	PyObject_HEAD_INIT(&PyArray_DescrType)
+	PyObject_HEAD_INIT(&PyArrayDescr_Type)
 	&Py@NAME@ArrType_Type,
 	PyArray_@from@LTR,
 	PyArray_@from@LTR,
@@ -1524,7 +1524,7 @@ static PyArray_Descr @from@_Descr = {
 */
 
 static PyArray_Descr @from@_Descr = { 
-	PyObject_HEAD_INIT(&PyArray_DescrType)
+	PyObject_HEAD_INIT(&PyArrayDescr_Type)
 	&Py@NAME@ArrType_Type,
 	PyArray_@kind@LTR,
 	PyArray_@from@LTR,

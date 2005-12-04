@@ -129,7 +129,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type)
                 }
                 else {
                         PyArray_Descr *descr;
-                        int itemsize = type->itemsize;
+                        int itemsize = type->elsize;
                         descr = PyArray_DescrFromType(type_num);
                         if (type_num == PyArray_UNICODE) 
                                 itemsize /= sizeof(Py_UNICODE);
@@ -868,7 +868,6 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd,
 		 PyArray_Descr* typedescr)
 {
 	PyArrayObject *ap;
-	PyArray_Descr *typecode;
 	intp n, m, i, j;
 	char **ptr2;
 	char ***ptr3;
@@ -1327,7 +1326,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 			mps[i] = NULL;
 		}
 		else {
-			newtype = PyArray_DescrFromObject(OTMP, stype);
+			newtype = PyArray_DescrFromObject(otmp, stype);
 			Py_XDECREF(stype);
 			stype = newtype;
 			mps[i] = (PyArrayObject *)Py_None;
@@ -2726,8 +2725,8 @@ _convert_from_tuple(PyObject *obj)
 		newdescr->subarray->base = type;
 		newdescr->subarray->shape.ptr = shape.ptr;
 		newdescr->subarray->shape.len = shape.len;
-		Py_XDECREF(newdescr->field);
-		newdescr->field = NULL;
+		Py_XDECREF(newdescr->fields);
+		newdescr->fields = NULL;
 		type = newdescr;
 	}
 	return type;
@@ -2759,7 +2758,6 @@ static int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
         char *type;
-        PyArray_Descr *descr;
         int check_num=PyArray_NOTYPE+10;
 	int len;
 	PyObject *item;
@@ -2770,14 +2768,14 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         if (obj == Py_None) return PY_SUCCEED;
 	
 	if (PyArray_DescrCheck(obj)) {
-		*at = obj;
+		*at = (PyArray_Descr *)obj;
 		return PY_SUCCEED;
 	}
 	
         if (PyType_Check(obj)) {
 		if (PyType_IsSubtype((PyTypeObject *)obj, 
 				     &PyGenericArrType_Type)) {
-			PyArray_DescrFromTypeObject(obj, at);
+			*at = PyArray_DescrFromTypeObject(obj);
 			return PY_SUCCEED;
 		}
 		check_num = PyArray_OBJECT;
@@ -2874,8 +2872,8 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		}
 		goto fail;
 	}
-
-	if ((*at)->elsize == 0) && (elsize != 0) {
+	
+	if (((*at)->elsize == 0) && (elsize != 0)) {
 		*at = PyArray_DescrNew(*at);
 		(*at)->elsize = elsize;
 	}
@@ -2911,7 +2909,7 @@ PyArray_EquivalentTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 			(typ1->typeobj == typ2->typeobj) &&
 			(typ1->fields == typ2->fields));
 	}
-	return (typ1->kind == typ2->kind)
+	return (typ1->kind == typ2->kind);
 }
 
 /*** END C-API FUNCTIONS **/
@@ -2966,7 +2964,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 			}
 		}
 		/* One more chance */
-		oldtype = op->descr;
+		oldtype = PyArray_DESCR(op);
 		if (PyArray_EquivalentTypes(oldtype, type)) {
 			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
 				Py_INCREF(op);
@@ -2984,15 +2982,17 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 		}
 	}
 
-	type.fortran = fortran; 
 	if (copy) {
 		flags = ENSURECOPY;
+	}
+	if (fortran) {
+		flags |= FORTRAN;
 	}
         if (!subok) {
                 flags |= ENSUREARRAY;
         }
 
-	if ((ret = PyArray_FromAny(op, &type, 0, 0, flags)) == NULL) 
+	if ((ret = PyArray_FromAny(op, type, 0, 0, flags)) == NULL) 
 		return NULL;
 
 	return ret;
@@ -3077,19 +3077,19 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 		return NULL;
 	}
 
-	if (typecode.type_num == PyArray_OBJECT) {
+	if (typecode->type_num == PyArray_OBJECT) {
 		if (obj == NULL) obj = Py_None;
 		dptr = &obj;
 		swap = 0;
 	}
 	else {
 		if (obj == NULL) {
-			dptr = malloc(typecode.itemsize);
+			dptr = malloc(typecode->elsize);
 			if (dptr == NULL) {
 				Py_DECREF(typecode);		
 				return PyErr_NoMemory();
 			}
-			memset(dptr, '\0', typecode.itemsize);
+			memset(dptr, '\0', typecode->elsize);
 			alloc = 1;
 		}
 		else {
@@ -3100,7 +3100,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 				Py_DECREF(typecode);				
 				return NULL;
 			}
-			if (PyString_GET_SIZE(obj) < typecode.itemsize) {
+			if (PyString_GET_SIZE(obj) < typecode->elsize) {
 				PyErr_SetString(PyExc_ValueError,
 						"initialization string is too"\
 						" small");
@@ -3112,7 +3112,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 	}
 
 	ret = PyArray_Scalar(dptr, typecode->type_num,
-			     typecode->itemsize, swap); 
+			     typecode->elsize, swap); 
 	Py_DECREF(typecode);
 	
 	/* free dptr which contains zeros */
@@ -3128,7 +3128,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 	intp n;
 
 	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
-						    type
+						    type,
 						    nd, dims, 
 						    NULL, NULL, 
 						    fortran, NULL);
@@ -3212,7 +3212,7 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "s#|O&LO&", kwlist, 
 					 &data, &s, 
-					 PyArray_DescrConverter, &type,
+					 PyArray_DescrConverter, &descr,
 					 &nin, 
 					 PyArray_BoolConverter,
 					 &swapped)) {
@@ -3300,12 +3300,12 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 	
 	if (binary) { /* binary data */
 		r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
-							  typecode
+							  typecode,
 							  1, &num, 
 							  NULL, NULL, 
 							  0, NULL);
 		if (r==NULL) return NULL;
-		nread = fread(r->data, descr->elsize, num, fp);
+		nread = fread(r->data, typecode->elsize, num, fp);
 	}
 	else {  /* character reading */
 		intp i;
@@ -3472,14 +3472,10 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 				" buffer");
 		return NULL;
 	}
-	if (type->itemsize == 0) {
-		if (_fill_in_itemsize(type) < 0) 
-			return NULL;
-		if (type->itemsize == 0) {
-			PyErr_SetString(PyExc_ValueError, 
-					"itemsize cannot be zero in type");
-			return NULL;
-		}
+	if (type->elsize == 0) {
+		PyErr_SetString(PyExc_ValueError, 
+				"itemsize cannot be zero in type");
+		return NULL;
 	}
 
 	if (buf->ob_type->tp_as_buffer == NULL || \
@@ -3510,7 +3506,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 	data += offset;
 	s = (intp)ts - offset;
 	n = (intp)count;
-	itemsize = type->itemsize;
+	itemsize = type->elsize;
 	
 	if (n < 0 ) {
 		if (s % itemsize != 0) {

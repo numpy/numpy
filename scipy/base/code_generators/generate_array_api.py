@@ -40,7 +40,7 @@ objectapi_list = [
 
     (r"""Cast an array using typecode structure.
     """,
-     'CastToType','PyArrayObject *, PyArray_Descr *','PyObject *'),
+     'CastToType','PyArrayObject *, PyArray_Descr *, int','PyObject *'),
 
     (r"""Cast to an already created array.
     """,

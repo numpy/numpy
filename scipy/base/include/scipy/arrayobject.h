@@ -762,10 +762,6 @@ typedef struct {
         int len;
 } PyArray_Dims;
 
-typedef struct {
-	struct PyArray_Descr *base;
-	PyArray_Dims shape;
-} PyArray_ArrayDescr;
 
 typedef struct {
 	PyObject_HEAD
@@ -774,14 +770,15 @@ typedef struct {
 	char kind;              /* kind for this type */
 	char type;              /* unique-character representing this type */
 	char byteorder;         /* '>' (big), '<' (little), '|' 
-				   (not-applicable), or '=' (native).
+				   (not-applicable), or '=' (native). */
 	int type_num;           /* number representing this type */
 	int elsize;             /* element size for this type */
        	int alignment;          /* alignment needed for this type */
-	PyArray_ArrayDescr *subarray    /* Non-NULL if this type is
-					   is an array (C-contiguous)
-					   of some other type
-					*/
+	struct _arr_descr					\
+	*subarray;              /* Non-NULL if this type is
+				   is an array (C-contiguous)
+				   of some other type
+				*/
 	PyObject *fields;       /* The fields dictionary for this type */
 	                        /* For statically defined descr this
 				   is always Py_NotImplemented */
@@ -816,6 +813,12 @@ typedef struct {
 	PyArray_NonzeroFunc *nonzero;
 
 } PyArray_Descr;
+
+
+typedef struct _arr_descr {
+	PyArray_Descr *base;
+	PyArray_Dims shape;
+} PyArray_ArrayDescr;
 
 
 typedef struct PyArrayObject {
@@ -974,9 +977,9 @@ typedef struct {
 }
 
 
-#define PyArray_ITER_NEXT(it) {				\
-	it->index++;					\
-	if (it->contiguous)  it->dataptr += it->ao->itemsize;	       \
+#define PyArray_ITER_NEXT(it) {						\
+	it->index++;						        \
+	if (it->contiguous)  it->dataptr += it->ao->descr->elsize;	\
 	else {								\
 		int _i_;						\
 		for (_i_ = it->nd_m1; _i_ >= 0; _i_--) {		\
@@ -1014,7 +1017,7 @@ typedef struct {
 		it->index = _lind_;					\
 		if (it->contiguous)					\
 			it->dataptr = it->ao->data + (ind) *		\
-				it->ao->itemsize;			\
+				it->ao->descr->elsize;			\
 		else {							\
 			it->dataptr = it->ao->data;			\
 			for (_i_ = 0; _i_<=it->nd_m1; _i_++) {		\
@@ -1326,15 +1329,14 @@ typedef struct {
 
 #define PyArray_ContiguousFromObject(op, type, min_depth, max_depth)	\
         PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
-			max_depth, DEFAULT_FLAGS | ENSUREARRAY);
-
+			max_depth, DEFAULT_FLAGS | ENSUREARRAY)
 
 #define PyArray_CopyFromObject(op, type, min_depth, max_depth)		\
         PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
-			max_depth, ENSURECOPY | ENSUREARRAY);
+			max_depth, ENSURECOPY | ENSUREARRAY)
 
 #define PyArray_Cast(mp, type_num) \
-	PyArray_CastToType(mp, PyArray_DescrFromType(type_num))
+	PyArray_CastToType(mp, PyArray_DescrFromType(type_num), 0)
 
         /*Compatibility with old Numeric stuff -- don't use in new code */
 

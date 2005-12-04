@@ -52,7 +52,7 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 	
 	if (PyTypeNum_ISEXTENDED(typecode->type_num)) {
 		void **newptr = (void **)ctypeptr;
-		switch(typecode.type_num) {
+		switch(typecode->type_num) {
 		case PyArray_STRING:
 			*newptr = (void *)PyString_AS_STRING(scalar);
 		case PyArray_UNICODE:
@@ -132,11 +132,11 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 		memptr = (char *)PyUnicode_AS_DATA(scalar);
 		break;
 	default:
-		if (PyTypeNum_ISEXTENDED(typecode.type_num)) {
+		if (PyTypeNum_ISEXTENDED(typecode->type_num)) {
 			memptr = (((PyVoidScalarObject *)scalar)->obval);
 		}
 		else {
-			memptr = _SOFFSET_(scalar, typecode.type_num);
+			memptr = _SOFFSET_(scalar, typecode->type_num);
 		}
 		break;
 	}
@@ -151,12 +151,12 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 	if (outcode->type_num == typecode->type_num) {
 		if (!PyTypeNum_ISEXTENDED(typecode->type_num))
 			return r;
-		if (outcode->itemsize == typecode->elsize);
+		if (outcode->elsize == typecode->elsize);
 		return r;			
 	}
 	
 	/* cast if necessary to desired output typecode */
-	ret = PyArray_CastToType((PyArrayObject *)r, outcode);
+	ret = PyArray_CastToType((PyArrayObject *)r, outcode, 0);
 	Py_DECREF(r);
 	return ret;
 }
@@ -705,7 +705,7 @@ gentype_struct_get(PyObject *self)
         inter->nd = 0;
         inter->flags = arr->flags;
         inter->typekind = arr->descr->kind;
-        inter->itemsize = arr->itemsize;
+        inter->itemsize = arr->descr->elsize;
         inter->strides = NULL;
         inter->shape = NULL;
         inter->data = arr->data;
@@ -782,7 +782,7 @@ gentype_imag_get(PyObject *self)
 	if (PyArray_IsScalar(self, ComplexFloating)) {
 		int elsize;
 		elsize = typecode->elsize >> 1;
-		return PyArray_Scalar(_SOFFSET_(self, typecode.type_num)
+		return PyArray_Scalar(_SOFFSET_(self, typecode->type_num)
 				      + elsize, 
 				      typecode->type_num-PyArray_NUM_FLOATTYPE,
 				      elsize, 0);
@@ -1004,7 +1004,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 		else memcpy(newmem, data, descr->elsize);
 		descr->copyswap(newmem, NULL, 1, descr->elsize);
 		new = PyArray_Scalar(newmem, descr->type_num, 
-				     descr->itemsize, 0);
+				     descr->elsize, 0);
 		free(newmem);
 		Py_DECREF(descr);
 		return new;
@@ -1138,7 +1138,6 @@ gentype_setflags(PyObject *self, PyObject *args, PyObject *kwds)
 	return Py_None;
 }
 
-static int _array_typecode_fromstr(char *, int *, PyArray_Descr *);
 
 /* need to fill in doc-strings for these methods on import -- copy from 
    array docstrings 
@@ -1399,7 +1398,6 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	PyObject *obj, *arr;
 	ulonglong memu=1;
 	PyObject *new=NULL;
-	PyArray_Descr *typecode;
 	char *destptr;
 
 	if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
@@ -1775,7 +1773,7 @@ PyArray_DescrFromTypeObject(PyObject *type) {
 
 /* New reference */
 static PyArray_Descr *
-PyArray_DescrFromScalar(PyObject *sc);
+PyArray_DescrFromScalar(PyObject *sc)
 {
 	int type_num;
 	PyArray_Descr *descr;
@@ -1791,8 +1789,9 @@ PyArray_DescrFromScalar(PyObject *sc);
 		else { 
 			descr->elsize =					\
 				((PyVoidScalarObject *)sc)->ob_size;
-			descr->fields = PyObject_GetAttributeString(sc, "fields");
+			descr->fields = PyObject_GetAttrString(sc, "fields");
 			if (descr->fields && !PyDict_Check(descr->fields)) {
+				Py_DECREF(descr);
 				PyErr_SetString(PyExc_ValueError, 
 						"bad fields on scalar.");
 				return NULL;

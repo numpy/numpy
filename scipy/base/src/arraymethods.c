@@ -260,12 +260,12 @@ static PyObject *
 PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 {
 	PyObject *ret=NULL;
-
-	if (offset < 0 || (offset + typed->elsize) > self->itemsize) {
+	
+	if (offset < 0 || (offset + typed->elsize) > self->descr->elsize) {
 		PyErr_Format(PyExc_ValueError,
 			     "Need 0 <= offset <= %d for requested type "  \
 			     "but received offset = %d",
-			     self->itemsize-typed->elsize, offset);
+			     self->descr->elsize-typed->elsize, offset);
 		return NULL;
 	}
 	ret = PyArray_NewFromDescr(self->ob_type, 
@@ -297,8 +297,8 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 
-static char doc_setfield[] = "m.setfield(dtype, offset, val) places val into "\
-	" field of the given array defined by the type and offset.";
+static char doc_setfield[] = "m.setfield(value, dtype, offset) places val "\
+	"into field of the given array defined by the data type and offset.";
 
 static int
 PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
@@ -307,7 +307,7 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
 	PyObject *ret=NULL;
 	int retval = 0;
         
-	if (offset < 0 || (offset + dtype->elsize) > self->itemsize) {
+	if (offset < 0 || (offset + dtype->elsize) > self->descr->elsize) {
 		PyErr_Format(PyExc_ValueError,
 			     "Need 0 <= offset <= %d for requested type "  \
 			     "but received offset = %d",
@@ -330,13 +330,13 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
 static PyObject *
 array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-        PyObject *dtype;
+        PyArray_Descr *dtype;
 	int offset = 0;
 	PyObject *value;
 	static char *kwlist[] = {"value", "dtype", "offset", 0};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist,
-					 &value,
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
+					 &value, PyArray_DescrConverter,
 					 &dtype, &offset)) return NULL;
 	
 	if (PyArray_SetField(self, dtype, offset, value) < 0)
@@ -360,7 +360,8 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 		
 		size = PyArray_SIZE(self);
 		if (PyArray_ISONESEGMENT(self)) {
-			copyswapn(self->data, NULL, size, 1, self->itemsize);
+			copyswapn(self->data, NULL, size, 1, 
+				  self->descr->elsize);
 		}
 		else { /* Use iterator */
 			
@@ -369,7 +370,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 			copyswap = self->descr->copyswap;
 			while (it->index < it->size) {
 				copyswap(it->dataptr, NULL, 1, 
-					 self->itemsize);
+					 self->descr->elsize);
 				PyArray_ITER_NEXT(it);
 			}
 			Py_DECREF(it);
@@ -393,7 +394,8 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 		   to begin with so just correct the flag in that case. */
 
 		if (self->flags & NOTSWAPPED) {
-			ret->descr->copyswapn(ret->data, NULL, size, 1, ret->itemsize);
+			ret->descr->copyswapn(ret->data, NULL, size, 1, 
+					      ret->descr->elsize);
 			ret->flags &= ~NOTSWAPPED;
 		}
 		else { /* self was swapped, so now ret isn't */
@@ -509,12 +511,12 @@ array_cast(PyArrayObject *self, PyObject *args)
 	PyArray_Descr *descr=NULL;
 	
         if (!PyArg_ParseTuple(args, "O&", PyArray_DescrConverter,
-			      &typecode)) return NULL;
-
-	if (descr==NULL || descr == PyArray_DESCR(self)) {
+			      &descr)) return NULL;
+	
+	if (descr==NULL || descr == self->descr) {
 		return _ARET(PyArray_NewCopy(self,0));
 	}
-	return _ARET(PyArray_CastToType(self, descr);
+	return _ARET(PyArray_CastToType(self, descr, 0));
 }	  
 
 /* default sub-type implementation */
@@ -599,7 +601,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
 		return (PyObject *)self;
 	}
 	else {
-		ret = PyArray_CastToType(self, newtype);
+		ret = PyArray_CastToType(self, newtype, 0);
 		Py_DECREF(self);
 		return ret;
 	}
@@ -813,7 +815,7 @@ _setobject_pkl(PyArrayObject *self, PyObject *list)
 	PyArrayIterObject *iter=NULL;
 	int size;
 
-	size = self->itemsize;
+	size = self->descr->elsize;
 	
 	iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
 	if (iter == NULL) return -1;
@@ -910,6 +912,8 @@ static intp _array_fill_strides(intp *, intp *, int, intp, int, int *);
 
 static int _IsAligned(PyArrayObject *); 
 
+static PyArray_Descr * _array_typedescr_fromstr(char *, int *);
+
 static PyObject *
 array_setstate(PyArrayObject *self, PyObject *args)
 {
@@ -935,8 +939,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
 	typecode = _array_typedescr_fromstr((char *)typestr, &swap);
 	if (typecode == NULL) return NULL;
 
-	self->descr = PyArray_DescrFromType(typecode->type_num);
-	self->itemsize = typecode->elsize;
+	Py_XDECREF(self->descr);
+	self->descr = typecode;
 	nd = PyArray_IntpFromSequence(shape, dimensions, MAX_DIMS);
 	if (typecode->type_num == PyArray_OBJECT) {
 		if (!PyList_Check(rawdata)) {
@@ -955,7 +959,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 		if (PyString_AsStringAndSize(rawdata, &datastr, &len))
 			return NULL;
 
-		if ((len != (self->itemsize *				\
+		if ((len != (self->descr->elsize *			\
 			     (int) PyArray_MultiplyList(dimensions, nd)))) {
 			PyErr_SetString(PyExc_ValueError, 
 					"buffer size does not"	\
@@ -987,7 +991,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 		self->strides = self->dimensions + nd;
 		memcpy(self->dimensions, dimensions, sizeof(intp)*nd);
 		(void) _array_fill_strides(self->strides, dimensions, nd,
-					   self->itemsize, fortran, 
+					   self->descr->elsize, fortran, 
 					   &(self->flags));
 	}
 
@@ -1015,7 +1019,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 		self->data = PyDataMem_NEW(PyArray_NBYTES(self));
 		if (self->data == NULL) { 
 			self->nd = 0;
-			self->data = PyDataMem_NEW(self->itemsize);
+			self->data = PyDataMem_NEW(self->descr->elsize);
 			if (self->dimensions) PyDimMem_FREE(self->dimensions);
 			return PyErr_NoMemory();
 		}
@@ -1135,7 +1139,7 @@ static char doc_mean[] = "a.mean(axis=None, rtype=None)\n\n"\
   "The optional rtype argument is the data type for intermediate\n"\
   "calculations in the sum.";
 
-#define CHKTYPENUM(typ) ((typ) ? (typ)->type_num : PyArray_NOTYPE)
+#define _CHKTYPENUM(typ) ((typ) ? (typ)->type_num : PyArray_NOTYPE)
 
 static PyObject *
 array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds) 
@@ -1350,7 +1354,8 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 PyArray_DescrConverter, &rtype))
 		return NULL;
 	
-	return _ARET(PyArray_Trace(self, offset, axis1, axis2, _CHKTYPENUM(rtype)));
+	return _ARET(PyArray_Trace(self, offset, axis1, axis2, 
+				   _CHKTYPENUM(rtype)));
 }
 
 #undef _CHKTYPENUM
