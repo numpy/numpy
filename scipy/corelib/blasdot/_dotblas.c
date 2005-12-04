@@ -141,7 +141,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     static const double zeroD[2] = {0.0, 0.0};
     double prior1, prior2;
     PyTypeObject *subtype;
-    PyArray_Typecode dtype = {PyArray_NOTYPE, 0, 0};
+    PyArray_Descr *dtype;
 
 
     if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) return NULL;
@@ -162,10 +162,10 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     }
 
     ret = NULL;
-    dtype.type_num = typenum;
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, &dtype, 0, 0, CARRAY_FLAGS);
+    dtype = PyArray_DescrFromType(typenum);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, CARRAY_FLAGS);
     if (ap1 == NULL) return NULL;
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, &dtype, 0, 0, CARRAY_FLAGS);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, CARRAY_FLAGS);
     if (ap2 == NULL) goto fail;
 
     if ((ap1->nd > 2) || (ap2->nd > 2)) {  
@@ -632,7 +632,7 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
     int l;
     int typenum;
     intp dimensions[MAX_DIMS];
-    PyArray_Typecode type;
+    PyArray_Descr *type;
 
     if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) return NULL;
 	
@@ -644,16 +644,16 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
     typenum = PyArray_ObjectType(op1, 0);  
     typenum = PyArray_ObjectType(op2, typenum);
     
-    type.type_num = typenum;
+    type = PyArray_DescrFromType(typenum);
     
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, &type, 0, 0, 0);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0);
     if (ap1==NULL) goto fail;
     op1 = PyArray_Flatten(ap1, 0);
     if (op1==NULL) goto fail;
     Py_DECREF(ap1);
     ap1 = (PyArrayObject *)op1;
     
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, &type, 0, 0, 0);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, type, 0, 0, 0);
     if (ap2==NULL) goto fail;
     op2 = PyArray_Flatten(ap2, 0);
     if (op2 == NULL) goto fail;

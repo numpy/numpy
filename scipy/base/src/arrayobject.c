@@ -3279,7 +3279,7 @@ PyArray_IsNativeByteorder(char order)
 	else return (order == '<');
 }
 
-/* steals a reference to descr */
+/* steals a reference to descr (even on failure) */
 static PyObject *
 PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd, 
 		     int *dims, int *strides, void *data, 
@@ -3298,8 +3298,10 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 			newstrides = newdims + MAX_DIMS;
 			memcpy(newstrides, strides, nd);
 		}
-		nd =_update_descr_and_dimensions(&descr, newdims, newstrides, nd);
-		ret = PyArray_NewFromDescr(subtype, descr, nd, newdims, newstrides,
+		nd =_update_descr_and_dimensions(&descr, newdims, 
+						 newstrides, nd);
+		ret = PyArray_NewFromDescr(subtype, descr, nd, newdims, 
+					   newstrides,
 					   data, flags, obj);
 		return ret;
 	}
@@ -3307,11 +3309,13 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 	if (nd < 0) {
 		PyErr_SetString(PyExc_ValueError,
 				"number of dimensions must be >=0");
+		Py_DECREF(descr);
 		return NULL;
 	}
         if (nd > MAX_DIMS) {
                 PyErr_Format(PyExc_ValueError,
                              "maximum number of dimensions is %d", MAX_DIMS);
+		Py_DECREF(descr);
                 return NULL;
 	}
 
@@ -3321,12 +3325,14 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 			PyErr_SetString(PyExc_ValueError,
 					"negative dimensions "	\
 					"are not allowed");
+			Py_DECREF(descr);
 			return NULL;
 		}
 	}
 	
 	self = (PyArrayObject *) subtype->tp_alloc(subtype, 0);
 	if (self == NULL) {
+		Py_DECREF(descr);
 		return NULL;	
 	}
 	self->dimensions = NULL;
@@ -3438,6 +3444,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 	return (PyObject *)self;
 
  fail:
+	Py_DECREF(descr);
 	PyDimMem_FREE(self->dimensions);
 	subtype->tp_free((PyObject *)self);
 	return NULL;
@@ -4075,24 +4082,16 @@ array_typechar_get(PyArrayObject *self)
 static PyObject *
 array_typestr_get(PyArrayObject *self)
 {
-	static char endians[] = "<>";
-	char endian;
-	int which;
-	unsigned long val = 1;
-	char *s;
 	char basic_=self->descr->kind;
-
-	s = (char *)&val; /* s[0] == 0 implies big-endian */
-	which = (PyArray_ISNOTSWAPPED(self) ? 0 : 1);
-	if (s[0] == 0) which = 1 - which;
-	endian = endians[which];       
+	char endian = self->descr->byteorder;
 	
-	if ((basic_==PyArray_VOIDLTR) || (basic_==PyArray_STRINGLTR) || \
-	    (basic_==PyArray_OBJECTLTR) || (self->descr->elsize == 1))
-		return PyString_FromFormat("|%c%d", basic_, self->descr->elsize);
-	else
-		return PyString_FromFormat("%c%c%d", endian, basic_,
-					   self->descr->elsize);
+	if (endian == '=') {
+		endian = '<';
+		if (!PyArray_IsNativeByteorder(endian)) endian = '>';
+	}
+	
+	return PyString_FromFormat("%c%c%d", endian, basic_,
+				   self->descr->elsize);
 }
 
 static PyObject *
@@ -4830,7 +4829,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 		int swap=0;
 		if (PyString_Check(ip)) {
 			chktype =					\
-				_array_typecode_fromstr(PyString_AS_STRING(ip), 
+				_array_typedescr_fromstr(PyString_AS_STRING(ip), 
 							&swap);   
 		}
 		Py_DECREF(ip);
@@ -4847,7 +4846,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
                         if (inter->version == 2) {
                                 snprintf(buf, 40, "|%c%d", inter->typekind, 
 					 inter->itemsize);
-				chktype = _array_typecode_fromstr(buf, &swap);
+				chktype = _array_typedescr_fromstr(buf, &swap);
                         }
                 }
                 Py_DECREF(ip);
@@ -5214,7 +5213,7 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at)
 				   NULL, NULL, 
 				   at->fortran, (PyObject *)mp);
 
-	if (out == NULL) {Py_DECREF(at); return NULL;}
+	if (out == NULL) return NULL;
 	ret = PyArray_CastTo((PyArrayObject *)out, mp);
 	if (ret != -1) return out;
 	
@@ -5418,18 +5417,9 @@ _array_typedescr_fromstr(char *str, int *swap)
 	int type_num;
 	char typechar;
 	int size;
-	unsigned long number = 1;
-	char *s;
 	char msg[] = "unsupported typestring";
-	
-	s = (char *)&number;   /* s[0] == 0 implies big-endian */
-	
-	*swap = 0;
-	
-	if (str[0] == '<' || str[0] == '>') {
-		if ((str[0] == '<') && (s[0] == 0)) *swap = 1;
-		else if ((str[0] == '>') && (s[0] != 0)) *swap = 1;
-	}
+		
+	*swap = !PyArray_IsNativeByteOrder(s[0]);
 	str += 1;
 	
 #define _MY_FAIL {				    \
@@ -5544,7 +5534,7 @@ array_fromstructinterface(PyObject *input, PyArray_Descr *intype, int flags)
                 return NULL;
         }
         snprintf(buf, 40, "|%c%d", inter->typekind, inter->descr->elsize);
-        if (thetype=_array_typecode_fromstr(buf, &swap) < 0) {
+        if (thetype=_array_typedescr_fromstr(buf, &swap) < 0) {
 		Py_DECREF(attr);
                 return NULL;
         }
@@ -5639,7 +5629,7 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 		Py_INCREF(attr); /* decref'd twice below */
 		goto fail;
 	}
-	type = _array_typecode_fromstr(PyString_AS_STRING(attr), &swap); 
+	type = _array_typedescr_fromstr(PyString_AS_STRING(attr), &swap); 
 	Py_DECREF(attr); attr=NULL; tstr=NULL;
 	if (type==NULL) goto fail;
 	attr = shape;
@@ -5657,11 +5647,11 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 	}
 	Py_DECREF(attr); shape=NULL; 
 
-	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, type,
-					   n, dims, 
-					   NULL, data, 
-                                           dataflags, NULL);
-	if (ret == NULL) {Py_DECREF(type); return NULL;}
+	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, type,
+						    n, dims, 
+						    NULL, data, 
+						    dataflags, NULL);
+	if (ret == NULL) return NULL;
 	Py_INCREF(input);
 	ret->base = input;
     
@@ -5886,6 +5876,7 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
 */
 
 
+/* steals a reference to descr */
 static PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *descr, int min_depth, 
 		int max_depth, int requires) 
@@ -6148,6 +6139,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
 		dptr += strides;
 	}
 	itemsize = self->ao->descr->elsize;
+	Py_INCREF(self->ao->descr);
 	r = PyArray_NewFromDescr(self->ao->ob_type,
 				 self->ao->descr, 1, &count, 
 				 NULL, NULL,

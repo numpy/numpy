@@ -64,6 +64,7 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 	}
 	memcpy(ctypeptr, _SOFFSET_(scalar, typecode->type_num),
 	       typecode->elsize);
+	Py_DECREF(typecode);
 	return;
 }
 
@@ -84,12 +85,13 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 		PyArrayObject *ain, *aout;
 
 		ain = (PyArrayObject *)PyArray_FromScalar(scalar, NULL);
-		if (ain == NULL) return -1;
-		aout = (PyArrayObject *)PyArray_New(&PyArray_Type, 
-						    0, NULL, outcode->type_num,
-						    NULL, ctypeptr, 
-						    outcode->itemsize, 
-						    CARRAY_FLAGS, NULL);
+		if (ain == NULL) {Py_DECREF(descr); return -1;}
+		aout = (PyArrayObject *)\
+			PyArray_NewFromDescr(&PyArray_Type, 
+					     outcode,
+					     0, NULL, 
+					     NULL, ctypeptr, 
+					     CARRAY_FLAGS, NULL);
 		if (aout == NULL) {Py_DECREF(ain); return -1;}
 		descr->cast[outcode->type_num](ain->data, 
 					       aout->data, 1, ain, aout);
@@ -98,8 +100,8 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 	}
 	else {
 		descr->cast[outcode->type_num](_SOFFSET_(scalar, 
-							incode.type_num), 
-					      ctypeptr, 1, NULL, NULL);
+							 descr->type_num), 
+					       ctypeptr, 1, NULL, NULL);
 	}
 	return 0;
 }
@@ -109,18 +111,20 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 static PyObject *
 PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 {
-	PyArray_Typecode typecode;
+	PyArray_Descr *typecode;
 	PyObject *r;
 	char *memptr;
 	PyObject *ret;
 
 	/* convert to 0-dim array of scalar typecode */
-	PyArray_TypecodeFromScalar(scalar, &typecode);
-	r = PyArray_New(&PyArray_Type, 0, NULL, typecode.type_num,
-			NULL, NULL, typecode.itemsize, 0, NULL);
+	typecode = PyArray_DescrFromScalar(scalar);
+	r = PyArray_NewFromDescr(&PyArray_Type, 
+				 typecode,
+				 0, NULL, 
+				 NULL, NULL, 0, NULL);
 	if (r==NULL) return NULL;
 
-	switch(typecode.type_num) {
+	switch(typecode->type_num) {
 	case PyArray_STRING:
 		memptr = PyString_AS_STRING(scalar);
 		break;
@@ -142,15 +146,13 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 		Py_INCREF(*((PyObject **)memptr));
 	}
 	
-	if (outcode == NULL || \
-	    outcode->type_num == PyArray_NOTYPE)
-		return r;
-
-	if (outcode->type_num == typecode.type_num) {
-		if (!PyTypeNum_ISEXTENDED(typecode.type_num))
+	if (outcode == NULL) return r;
+	
+	if (outcode->type_num == typecode->type_num) {
+		if (!PyTypeNum_ISEXTENDED(typecode->type_num))
 			return r;
-		if (outcode->itemsize == typecode.itemsize)
-			return r;			
+		if (outcode->itemsize == typecode->elsize);
+		return r;			
 	}
 	
 	/* cast if necessary to desired output typecode */
@@ -648,20 +650,20 @@ gentype_dataptr_get(PyObject *self)
 static PyObject *
 gentype_data_get(PyObject *self)
 {
-	PyArray_Typecode typecode;
-	PyArray_TypecodeFromScalar(self, &typecode);
+	PyArray_Descr *typecode;
 
-	return PyBuffer_FromObject(self, 0, typecode.itemsize);
+	typecode = PyArray_DescrFromScalar(self);
+	return PyBuffer_FromObject(self, 0, typecode->elsize);
 }
 
 
 static PyObject *
 gentype_itemsize_get(PyObject *self)
 {	
-	PyArray_Typecode typecode;
+	PyArray_Descr *typecode;
 
-	PyArray_TypecodeFromScalar(self, &typecode);
-	return PyInt_FromLong((long) typecode.itemsize);
+	typecode = PyArray_DescrFromScalar(self);
+	return PyInt_FromLong((long) typecode->elsize);
 }
 
 static PyObject *
@@ -674,14 +676,12 @@ gentype_size_get(PyObject *self)
 static PyObject *
 gentype_typechar_get(PyObject *self)
 {
-	PyArray_Typecode typecode;
 	PyArray_Descr *descr;
 
-	PyArray_TypecodeFromScalar(self, &typecode);
-	descr = PyArray_DescrFromType(typecode.type_num);
+	descr = PyArray_DescrFromScalar(self);
 	if (PyArray_IsScalar(self, Flexible)) 
 		return PyString_FromFormat("%c%d", (int)(descr->type),
-					   typecode.itemsize);
+					   descr->elsize);
 	else 
 		return PyString_FromStringAndSize(&(descr->type), 1);
 }
@@ -756,13 +756,13 @@ gentype_base_get(PyObject *self)
 static PyObject *
 gentype_real_get(PyObject *self)
 {
-	PyArray_Typecode typecode;
+	PyArray_Descr *typecode;
 
 	if (PyArray_IsScalar(self, ComplexFloating)) {
-		PyArray_TypecodeFromScalar(self, &typecode);
-		return PyArray_Scalar(_SOFFSET_(self, typecode.type_num),
-				      typecode.type_num-PyArray_NUM_FLOATTYPE,
-				      typecode.itemsize >> 1, 0);
+		typecode = PyArray_DescrFromScalar(self);
+		return PyArray_Scalar(_SOFFSET_(self, typecode->type_num),
+				      typecode->type_num-PyArray_NUM_FLOATTYPE,
+				      typecode->elsize >> 1, 0);
 	}
 	else if PyArray_IsScalar(self, Object) {
 		PyObject *obj = ((PyObjectScalarObject *)self)->obval;
@@ -777,14 +777,15 @@ gentype_real_get(PyObject *self)
 static PyObject *
 gentype_imag_get(PyObject *self)
 {	
-	PyArray_Typecode typecode;
-	PyArray_TypecodeFromScalar(self, &typecode);
+	PyArray_Descr *typecode;
+	typecode = PyArray_DescrFromScalar(self);
 	if (PyArray_IsScalar(self, ComplexFloating)) {
-		typecode.itemsize >>= 1;
+		int elsize;
+		elsize = typecode->elsize >> 1;
 		return PyArray_Scalar(_SOFFSET_(self, typecode.type_num)
-				      + typecode.itemsize, 
-				      typecode.type_num-PyArray_NUM_FLOATTYPE,
-				      typecode.itemsize, 0);
+				      + elsize, 
+				      typecode->type_num-PyArray_NUM_FLOATTYPE,
+				      elsize, 0);
 	}
 	else if PyArray_IsScalar(self, Object) {
 		PyObject *obj = ((PyObjectScalarObject *)self)->obval;
@@ -802,10 +803,10 @@ gentype_imag_get(PyObject *self)
 	else {
 		PyObject *ret;
 		char *temp;
-		temp = PyDataMem_NEW(typecode.itemsize);
-		memset(temp, '\0', typecode.itemsize);
-		ret = PyArray_Scalar(temp, typecode.type_num,
-				     typecode.itemsize, 0);
+		temp = PyDataMem_NEW(typecode->elsize);
+		memset(temp, '\0', typecode->elsize);
+		ret = PyArray_Scalar(temp, typecode->type_num,
+				     typecode->elsize, 0);
 		PyDataMem_FREE(temp);
 		return ret;
 	}
@@ -920,11 +921,11 @@ static char doc_getarray[] = "sc.__array__(|type) return 0-dim array";
 static PyObject *
 gentype_getarray(PyObject *scalar, PyObject *args) 
 {
-	PyArray_Typecode outcode = {PyArray_NOTYPE, 0, 0};
-
-	if (!PyArg_ParseTuple(args, "|O&", &PyArray_TypecodeConverter,
+	PyArray_Descr *outcode;
+	
+	if (!PyArg_ParseTuple(args, "|O&", &PyArray_DescrConverter,
 			      &outcode)) return NULL;
-	return PyArray_FromScalar(scalar, &outcode);
+	return PyArray_FromScalar(scalar, outcode);
 }
 
 static char doc_sc_wraparray[] = "sc.__array_wrap__(obj) return scalar from array";
@@ -992,20 +993,20 @@ gentype_byteswap(PyObject *self, PyObject *args)
 		 */
 		char *data;
 		int numbytes;
-		PyArray_Typecode type;
 		PyArray_Descr *descr;
 		PyObject *new;
 		char *newmem;
 
 		numbytes = gentype_getreadbuf(self, 0, (void **)&data);
-		PyArray_TypecodeFromScalar(self, &type);
-		newmem = malloc(type.itemsize);
-		if (newmem == NULL) return PyErr_NoMemory();
-		else memcpy(newmem, data, type.itemsize);
-		descr = PyArray_DescrFromType(type.type_num);
-		descr->copyswap(newmem, NULL, 1, type.itemsize);		
-		new = PyArray_Scalar(newmem, type.type_num, type.itemsize, 0);
+		descr = PyArray_DescrFromScalar(self);
+		newmem = malloc(descr->elsize);
+		if (newmem == NULL) {Py_DECREF(descr); return PyErr_NoMemory();}
+		else memcpy(newmem, data, descr->elsize);
+		descr->copyswap(newmem, NULL, 1, descr->elsize);
+		new = PyArray_Scalar(newmem, descr->type_num, 
+				     descr->itemsize, 0);
 		free(newmem);
+		Py_DECREF(descr);
 		return new;
 	}
 }
@@ -1026,13 +1027,13 @@ gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
 {
-	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+	PyArray_Descr *typecode;
 	int offset = 0;
 	PyObject *value, *src;
 	int mysize;
 	char *dptr;
 	static char *kwlist[] = {"value", "dtype", "offset", 0};
-				
+	
 	if (!PyArray_IsScalar(self, Void)) {
 		PyErr_SetString(PyExc_TypeError, 
 				"Can't set fields in a non-void array scalar.");
@@ -1040,23 +1041,23 @@ gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
 	}
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
 					 &value,
-					 PyArray_TypecodeConverter, 
+					 PyArray_DescrConverter, 
 					 &typecode, &offset)) return NULL;
 
 	mysize = ((PyVoidScalarObject *)self)->ob_size;
 	
-	if (offset < 0 || (offset + typecode.itemsize) > mysize) {
+	if (offset < 0 || (offset + typecode->elsize) > mysize) {
 		PyErr_Format(PyExc_ValueError,
 			     "Need 0 <= offset <= %d for requested type "  \
 			     "but received offset = %d",
-			     mysize-typecode.itemsize, offset);
+			     mysize-typecode->elsize, offset);
 		return NULL;
 	}	
 
 	dptr = ((PyVoidScalarObject *)self)->obval + offset;
 
 	/* Copy data from value to correct place in dptr */
-        src = PyArray_FromAny(value, &typecode, 0, 0, CARRAY_FLAGS);
+        src = PyArray_FromAny(value, typecode, 0, 0, CARRAY_FLAGS);
         if (src == NULL) return NULL;
 	memcpy(dptr, PyArray_DATA(src), PyArray_ITEMSIZE(src));
 	Py_DECREF(src);
@@ -1257,7 +1258,7 @@ static int
 gentype_getreadbuf(PyObject *self, int segment, void **ptrptr)
 {
 	int numbytes;
-	PyArray_Typecode outcode;
+	PyArray_Descr *outcode;
 	
 	if (segment != 0) {
 		PyErr_SetString(PyExc_SystemError, 
@@ -1265,8 +1266,8 @@ gentype_getreadbuf(PyObject *self, int segment, void **ptrptr)
 		return -1;
 	}
 
-	PyArray_TypecodeFromScalar(self, &outcode);
-	numbytes = outcode.itemsize;
+	outcode = PyArray_DescrFromScalar(self);
+	numbytes = outcode->elsize;
 	if PyArray_IsScalar(self, Flexible) {
 		if PyArray_IsScalar(self, String)
 			*ptrptr = PyString_AS_STRING(self);
@@ -1276,19 +1277,21 @@ gentype_getreadbuf(PyObject *self, int segment, void **ptrptr)
 			*ptrptr = ((PyVoidScalarObject *)self)->obval;
 	}
 	else 
-		*ptrptr = (void *)_SOFFSET_(self, outcode.type_num);
+		*ptrptr = (void *)_SOFFSET_(self, outcode->type_num);
 
+	Py_DECREF(outcode);
 	return numbytes;
 }
 
 static int
 gentype_getsegcount(PyObject *self, int *lenp)
 {
-	PyArray_Typecode outcode;
+	PyArray_Descr *outcode;
 
-	PyArray_TypecodeFromScalar(self, &outcode);
+	outcode = PyArray_DescrFromScalar(self);
 	if (lenp)
-		*lenp = outcode.itemsize;
+		*lenp = outcode->elsize;
+	Py_DECREF(outcode);
 	return 1;
 }
 
@@ -1355,7 +1358,7 @@ static PyObject *
 {
 	PyObject *obj=NULL;
 	PyObject *arr;
-	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+	PyArray_Descr *typecode;
 
 	if (type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases)==2)) {
 		PyTypeObject *sup;
@@ -1371,8 +1374,8 @@ static PyObject *
 
 	if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
 
-	typecode.type_num = PyArray_@TYPE@;
-	arr = PyArray_FromAny(obj, &typecode, 0, 0, FORCECAST);
+	typecode = PyArray_DescrFromType(PyArray_@TYPE@);
+	arr = PyArray_FromAny(obj, typecode, 0, 0, FORCECAST);
 	return PyArray_Return((PyArrayObject *)arr);
 }
 /**end repeat**/
@@ -1383,11 +1386,10 @@ bool_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	PyObject *obj=NULL;
 	PyObject *arr;
-	PyArray_Typecode typecode = {PyArray_BOOL, 0, 0};
 
 	if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
-
-	arr = PyArray_FromAny(obj, &typecode, 0, 0, FORCECAST);
+	
+	arr = PyArray_FROM_OTF(obj, PyArray_BOOL, FORCECAST);
 	return PyArray_Return((PyArrayObject *)arr);
 }
 
@@ -1397,7 +1399,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	PyObject *obj, *arr;
 	ulonglong memu=1;
 	PyObject *new=NULL;
-	PyArray_Typecode typecode = {PyArray_VOID, 0, 0};
+	PyArray_Descr *typecode;
 	char *destptr;
 
 	if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
@@ -1435,7 +1437,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 		return ret;
 	}
 
-	arr = PyArray_FromAny(obj, &typecode, 0, 0, FORCECAST);
+	arr = PyArray_FROM_OTF(obj, PyArray_VOID, FORCECAST);
 	return PyArray_Return((PyArrayObject *)arr);
 }
 

@@ -811,11 +811,9 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 		PyObject *mydiagonal=NULL, *new=NULL, *ret=NULL, *sel=NULL;
 		intp i, n1;
 		int res;
-		PyArray_Typecode typecode;
+		PyArray_Descr *typecode;
 
-		typecode.type_num = self->descr->type_num;
-		typecode.itemsize = self->descr->elsize;
-		typecode.fortran = 0;
+		typecode = self->descr;
 
 		mydiagonal = PyList_New(0);
 		if (mydiagonal == NULL) {Py_DECREF(self); return NULL;}
@@ -845,7 +843,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 			}
 		}
 		Py_DECREF(self);
-		ret =  PyArray_FromAny(mydiagonal, &typecode, 0, 0, 0);
+		ret =  PyArray_FromAny(mydiagonal, typecode, 0, 0, 0);
 		Py_DECREF(mydiagonal);
 		return ret;
 	}
@@ -860,29 +858,27 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     ptr[i]  or ptr[i][j] or ptr[i][j][k] -- requires pointer allocation 
     for 2-d and 3-d.
 
-    Especially for 2-d and up, ptr is NOT equivalent to a statically defined
+    For 2-d and up, ptr is NOT equivalent to a statically defined
     2-d or 3-d array.  In particular, it cannot be passed into a 
     function that requires a true pointer to a fixed-size array. 
 */
 
 static int
-PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd, int type_num,
-		 int itemsize)
+PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd, 
+		 PyArray_Descr* typedescr)
 {
 	PyArrayObject *ap;
-	PyArray_Typecode typecode = {0, 0, 0};
+	PyArray_Descr *typecode;
 	intp n, m, i, j;
 	char **ptr2;
 	char ***ptr3;
 
-	typecode.type_num = type_num;
-	typecode.itemsize = itemsize;
 	if ((nd < 1) || (nd > 3)) {
 		PyErr_SetString(PyExc_ValueError,
 				"C arrays of only 1-3 dimensions available");
 		return -1;
 	}
-	if ((ap = (PyArrayObject*)PyArray_FromAny(*op, &typecode, nd, nd,
+	if ((ap = (PyArrayObject*)PyArray_FromAny(*op, typedescr, nd, nd,
 						  CARRAY_FLAGS)) == NULL)
 		return -1;
 	switch(nd) {
@@ -927,20 +923,23 @@ static int
 PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode) 
 {
 	intp newd1;
-	
-	if (PyArray_AsCArray(op, (void *)ptr, &newd1, 1, typecode, 0) == -1)
+	PyArray_Descr *descr;
+
+	descr = PyArray_DescrFromType(typecode);	
+	if (PyArray_AsCArray(op, (void *)ptr, &newd1, 1, descr) == -1)
 		return -1;	
 	*d1 = (int) newd1;
 	return 0;
 }
 
-
 static int 
 PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode) 
 {
 	intp newdims[2];
+	PyArray_Descr *descr;
 
-	if (PyArray_AsCArray(op, (void *)ptr, newdims, 2, typecode, 0) == -1)
+	descr = PyArray_DescrFromType(typecode);	
+	if (PyArray_AsCArray(op, (void *)ptr, newdims, 2, descr) == -1)
 		return -1;
 
 	*d1 = (int ) newdims[0];
@@ -1306,8 +1305,9 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 	int i, n, allscalars=0; 
 	PyArrayObject **mps=NULL;
 	PyObject *otmp;
-	PyArray_Typecode intype = {-2,0,0};
-	PyArray_Typecode stype = {0,0,0};
+	PyArray_Descr *intype=NULL, *stype=NULL;
+	PyArray_Descr *newtype=NULL;
+
 	
 	*retn = n = PySequence_Length(op);
 	if (PyErr_Occurred()) {*retn = 0; return NULL;}
@@ -1320,20 +1320,24 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 	
 	for(i=0; i<n; i++) {
 		otmp = PySequence_GetItem(op, i);
-		if (!PyArray_CheckAnyScalar(otmp)) {
-			PyArray_ArrayType(otmp, &intype, &intype);
+		if (!PyArray_CheckAnyScalar(otmp)) {			
+			newtype = PyArray_DescrFromObject(otmp, intype);
+			Py_XDECREF(intype);
+			intype = newtype;
 			mps[i] = NULL;
 		}
 		else {
-			PyArray_ArrayType(otmp, &stype, &stype);
+			newtype = PyArray_DescrFromObject(OTMP, stype);
+			Py_XDECREF(stype);
+			stype = newtype;
 			mps[i] = (PyArrayObject *)Py_None;
 			Py_INCREF(Py_None);
 		}
 		Py_XDECREF(otmp);
 	}
-	if (intype.type_num == -2) { /* all scalars */
+	if (intype==NULL) { /* all scalars */
 		allscalars = 1;
-		memcpy(&intype, &stype, sizeof(PyArray_Typecode));
+		intype = stype;
 		for (i=0; i<n; i++) {
 			Py_XDECREF(mps[i]);
 			mps[i] = NULL;
@@ -1350,7 +1354,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 			Py_DECREF(Py_None);
 		}
 		mps[i] = (PyArrayObject*)
-                        PyArray_FromAny(otmp, &intype, 0, 0, flags);
+                        PyArray_FromAny(otmp, intype, 0, 0, flags);
 		Py_DECREF(otmp);
 	}	
 	return mps;
@@ -1814,16 +1818,16 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	intp matchDim, otherDim, is2r, is1r;
 	PyTypeObject *subtype;
         double prior1, prior2;
-	PyArray_Typecode typec = {0,0,0};
+	PyArray_Descr *typec;
         
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);	
 	
-	typec.type_num = typenum;
-	ap1 = (PyArrayObject *)PyArray_FromAny(op1, &typec, 0, 0, 
+	typec = PyArray_DescrFromType(typenum);
+	ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, 
 					       DEFAULT_FLAGS);
 	if (ap1 == NULL) return NULL;
-	ap2 = (PyArrayObject *)PyArray_FromAny(op2, &typec, 0, 0,
+	ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
 					       DEFAULT_FLAGS);
 	if (ap2 == NULL) goto fail;
 	
@@ -1990,18 +1994,18 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	intp is1, is2, os;
 	char *ip1, *ip2, *op;
 	PyArray_DotFunc *dot;
-	PyArray_Typecode typec = {0,0,0};
+	PyArray_Descr *typec;
         double prior1, prior2;
         PyTypeObject *subtype=NULL;
 	
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);
-
-	typec.type_num = typenum;
-	ap1 = (PyArrayObject *)PyArray_FromAny(op1, &typec, 1, 1,
+	
+	typec = PyArray_DescrFromType(typenum);
+	ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
 					       DEFAULT_FLAGS);
 	if (ap1 == NULL) return NULL;
-	ap2 = (PyArrayObject *)PyArray_FromAny(op2, &typec, 1, 1,
+	ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
 					       DEFAULT_FLAGS);
 	if (ap2 == NULL) goto fail;
 	
@@ -2936,24 +2940,22 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
                              NULL};
         Bool subok=FALSE;
 	Bool copy=TRUE;
-	PyArray_Typecode type = {PyArray_NOTYPE, 0, 0};
-	PyArray_Typecode oldtype = {PyArray_NOTYPE, 0, 0};
-	int type_num;
+	PyArray_Descr *type=NULL;
+	PyArray_Descr *oldtype=NULL;
 	Bool fortran=FALSE;
 	int flags=0;
 
 	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&", kwd, &op, 
-					PyArray_TypecodeConverter,
+					PyArray_DescrConverter,
                                         &type, 
 					PyArray_BoolConverter, &copy, 
 					PyArray_BoolConverter, &fortran,
                                         PyArray_BoolConverter, &subok)) 
 		return NULL;
-	type_num = type.type_num;
 
 	/* fast exit if simple call */
 	if ((PyArray_CheckExact(op) || PyBigArray_CheckExact(op))) {
-		if (type_num == PyArray_NOTYPE) {
+		if (type==NULL) {
 			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
 				Py_INCREF(op);
 				return op;
@@ -2964,9 +2966,8 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 			}
 		}
 		/* One more chance */
-		oldtype.type_num = PyArray_TYPE(op);
-		oldtype.itemsize = PyArray_ITEMSIZE(op);
-		if (PyArray_EquivalentTypes(&oldtype, &type)) {
+		oldtype = op->descr;
+		if (PyArray_EquivalentTypes(oldtype, type)) {
 			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
 				Py_INCREF(op);
 				return op;
@@ -2974,10 +2975,10 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 			else {
 				ret = PyArray_NewCopy((PyArrayObject*)op,
 						      fortran);
-				if (oldtype.type_num == type.type_num) 
-					return ret;
-				PyArray_DESCR(ret) =			\
-					PyArray_DescrFromType(type.type_num);
+				if (oldtype == type) return ret;
+				Py_INCREF(oldtype);
+				Py_DECREF(PyArray_DESCR(ret));
+				PyArray_DESCR(ret) = oldtype;
 				return ret;
 			}
 		}
@@ -2998,14 +2999,14 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 }
 
 static PyObject *
-PyArray_Empty(int nd, intp *dims, PyArray_Descr *type)
+PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 {
 	PyArrayObject *ret;
         
-	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, nd, dims, 
-					   type->type_num,
-					   NULL, NULL, type->itemsize, 
-					   type->fortran, NULL);
+	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
+						    type, nd, dims, 
+						    NULL, NULL,
+						    fortran, NULL);
 	if (ret == NULL) return NULL;
         
 	if ((PyArray_TYPE(ret) == PyArray_OBJECT)) {
@@ -3022,7 +3023,7 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
 {
         
 	static char *kwlist[] = {"shape","dtype","fortran",NULL};
-	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+	PyArray_Descr *typecode;
         PyArray_Dims shape = {NULL, 0};
 	Bool fortran = FALSE;	
         PyObject *ret=NULL;
@@ -3030,16 +3031,13 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&",
 					 kwlist, PyArray_IntpConverter,
                                          &shape, 
-                                         PyArray_TypecodeConverter,
+                                         PyArray_DescrConverter,
 					 &typecode, 
 					 PyArray_BoolConverter, &fortran)) 
 		goto fail;
-	
-	typecode.fortran = fortran;
-        if (typecode.type_num ==PyArray_NOTYPE) 
-		typecode.type_num = PyArray_LONG;
-	
-	ret = PyArray_Empty(shape.len, shape.ptr, &typecode);        
+
+	if (typecode == NULL) typecode = PyArray_DescrFromType(PyArray_LONG);
+	ret = PyArray_Empty(shape.len, shape.ptr, typecode, fortran);        
         PyDimMem_FREE(shape.ptr);
         return ret;
 
@@ -3055,7 +3053,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 {
         
 	static char *kwlist[] = {"dtypestr","obj", NULL};
-	PyArray_Typecode typecode;
+	PyArray_Descr *typecode;
 	PyObject *obj=NULL;
 	char *typestr;
 	int typestrlen;
@@ -3069,12 +3067,13 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 					 &obj)) 
 		return NULL;
 	
-	if (_array_typecode_fromstr(typestr, &swap, &typecode) < 0) 
+	if (!(typecode=_array_typedescr_fromstr(typestr, &swap)))
 		return NULL;
 	
-	if (typecode.itemsize == 0) {
+	if (typecode->elsize == 0) {
 		PyErr_SetString(PyExc_ValueError,		\
 				"itemsize cannot be zero");
+		Py_DECREF(typecode);
 		return NULL;
 	}
 
@@ -3087,6 +3086,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 		if (obj == NULL) {
 			dptr = malloc(typecode.itemsize);
 			if (dptr == NULL) {
+				Py_DECREF(typecode);		
 				return PyErr_NoMemory();
 			}
 			memset(dptr, '\0', typecode.itemsize);
@@ -3097,21 +3097,24 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 				PyErr_SetString(PyExc_TypeError, 
 						"initializing object must "\
 						"be a string");
+				Py_DECREF(typecode);				
 				return NULL;
 			}
 			if (PyString_GET_SIZE(obj) < typecode.itemsize) {
 				PyErr_SetString(PyExc_ValueError,
 						"initialization string is too"\
 						" small");
+				Py_DECREF(typecode);				
 				return NULL;
 			}
 			dptr = PyString_AS_STRING(obj);
 		}
 	}
 
-	ret = PyArray_Scalar(dptr, typecode.type_num,
-			     typecode.itemsize, swap); 
-
+	ret = PyArray_Scalar(dptr, typecode->type_num,
+			     typecode->itemsize, swap); 
+	Py_DECREF(typecode);
+	
 	/* free dptr which contains zeros */
 	if (alloc) free(dptr);
 	return ret;
@@ -3119,15 +3122,16 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type)
+PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 {
 	PyArrayObject *ret;
 	intp n;
 
-	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, nd, dims, 
-					   type->type_num,
-					   NULL, NULL, type->itemsize, 
-					   type->fortran, NULL);
+	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
+						    type
+						    nd, dims, 
+						    NULL, NULL, 
+						    fortran, NULL);
 	if (ret == NULL) return NULL;
         
 	if ((PyArray_TYPE(ret) == PyArray_OBJECT)) {
@@ -3150,7 +3154,7 @@ static PyObject *
 array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds) 
 {
 	static char *kwlist[] = {"shape","dtype","fortran",NULL};
-	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+	PyArray_Descr *typecode;
         PyArray_Dims shape = {NULL, 0};
 	Bool fortran = FALSE;	
         PyObject *ret=NULL;
@@ -3158,17 +3162,16 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&",
 					 kwlist, PyArray_IntpConverter,
                                          &shape, 
-                                         PyArray_TypecodeConverter,
+                                         PyArray_DescrConverter,
 					 &typecode, 
 					 PyArray_BoolConverter,
 					 &fortran)) 
 		goto fail;
-	
-	typecode.fortran = fortran;
-        if (typecode.type_num ==PyArray_NOTYPE) 
-		typecode.type_num = PyArray_INTP;
+
+	if (typecode == NULL)
+		typecode = PyArray_DescrFromType(PyArray_LONG);
                 
-	ret = PyArray_Zeros(shape.len, shape.ptr, &typecode);
+	ret = PyArray_Zeros(shape.len, shape.ptr, typecode, (int) fortran);
         PyDimMem_FREE(shape.ptr);
         return ret;
 
@@ -3193,7 +3196,7 @@ array_set_typeDict(PyObject *ignored, PyObject *args)
 	return Py_None;
 }
 
-static char doc_fromString[] = "fromstring(string, dtype=intp, count=-1, swap=False) returns a new 1d array initialized from the raw binary data in string.  If count is positive, the new array will have count elements, otherwise it's size is determined by the size of string.";
+static char doc_fromString[] = "fromstring(string, dtype=int, count=-1, swap=False) returns a new 1d array initialized from the raw binary data in string.  If count is positive, the new array will have count elements, otherwise it's size is determined by the size of string.";
 
 static PyObject *
 array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
@@ -3203,22 +3206,24 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 	longlong nin=-1;
 	intp s, n;
 	static char *kwlist[] = {"string", "dtype", "count", "swap",NULL};
-	PyArray_Typecode type = {PyArray_INTP, sizeof(intp), 0};
+	PyArray_Descr *descr;
 	int itemsize;
 	int swapped=FALSE;
 
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "s#|O&LO&", kwlist, 
 					 &data, &s, 
-					 PyArray_TypecodeConverter, &type,
+					 PyArray_DescrConverter, &type,
 					 &nin, 
 					 PyArray_BoolConverter,
 					 &swapped)) {
 		return NULL;
 	}
+	if (descr == NULL)
+		descr=PyArray_DescrFromType(PyArray_LONG);
 	
 	n = (intp) nin;
 
-	itemsize = type.itemsize;
+	itemsize = descr->elsize;
 	if (itemsize == 0) {
 		PyErr_SetString(PyExc_ValueError, "zero-valued itemsize");
 		return NULL;
@@ -3241,10 +3246,11 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 		}
 	}
 
-	if ((ret = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &n, 
-						type.type_num, NULL, 
-						NULL, itemsize, 0,
-						NULL)) == NULL)
+	if ((ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
+							 descr,
+							 1, &n, 
+							 NULL, NULL,
+							 0, NULL)) == NULL)
 		return NULL;
 		
 	memcpy(ret->data, data, n*ret->descr->elsize);
@@ -3264,18 +3270,6 @@ sep is a separator string for character-based data (or NULL for binary)
    " " means whitespace
 */
 
-
-static int
-_fill_in_itemsize(PyArray_Descr *typecode)
-{
-	PyArray_Descr *descr;
-	descr = PyArray_DescrFromType(typecode->type_num);
-	if (descr==NULL) return -1;
-	typecode->itemsize = descr->elsize;
-	return 0;
-}
-
-
 static PyObject *
 PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 {
@@ -3284,9 +3278,9 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 	PyArray_ScanFunc *scan;
 	Bool binary;
 
-	if (typecode->itemsize == 0) {
-		if (_fill_in_itemsize(typecode) < 0) 
-			return NULL;
+	if (typecode->elsize == 0) {
+		PyErr_SetString(PyExc_ValueError, "0-sized elements.");
+		return NULL;
 	}
 
 	binary = ((sep == NULL) || (strlen(sep) == 0));
@@ -3301,24 +3295,24 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 					"could not seek in file");
 			return NULL;
 		}
-		num = numbytes / typecode->itemsize;
+		num = numbytes / typecode->elsize;
 	}
 	
 	if (binary) { /* binary data */
-		r = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &num, 
-						 typecode->type_num,
-						 NULL, NULL, 
-						 typecode->itemsize, 
-						 0, NULL);
+		r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
+							  typecode
+							  1, &num, 
+							  NULL, NULL, 
+							  0, NULL);
 		if (r==NULL) return NULL;
-		nread = fread(r->data, r->descr->elsize, num, fp);
+		nread = fread(r->data, descr->elsize, num, fp);
 	}
 	else {  /* character reading */
 		intp i;
 		char *dptr;
 		int done=0;
 
-		scan = PyArray_DescrFromType(typecode->type_num)->scanfunc;
+		scan = typecode->scanfunc;
 		if (scan == NULL) {
 			PyErr_SetString(PyExc_ValueError, 
 					"don't know how to read "	\
@@ -3328,12 +3322,12 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 		}
 
 		if (num != -1) {  /* number to read is known */
-			r = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, 
-							 &num, 
-							 typecode->type_num,
-							 NULL, NULL, 
-							 typecode->itemsize, 
-							 0, NULL);
+			r = (PyArrayObject *)\
+				PyArray_NewFromDescr(&PyArray_Type, 
+						     typecode, 
+						     1, &num, 
+						     NULL, NULL, 
+						     0, NULL);
 			if (r==NULL) return NULL;
 			dptr = r->data;
 			for (i=0; i < num; i++) {
@@ -3356,14 +3350,14 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 			intp bytes;
 			intp totalbytes;
 
-			r = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, 
-							 &size, 
-							 typecode->type_num,
-							 NULL, NULL, 
-							 typecode->itemsize, 
-							 0, NULL);
+			r = (PyArrayObject *)\
+				PyArray_NewFromDescr(&PyArray_Type, 
+						     typecode,
+						     1, &size, 
+						     NULL, NULL, 
+						     0, NULL);
 			if (r==NULL) return NULL;
-			totalbytes = bytes = size * typecode->itemsize;
+			totalbytes = bytes = size * typecode->elsize;
 			dptr = r->data;
 			while (!done) {
 				done = scan(fp, dptr, sep, NULL);
@@ -3405,7 +3399,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 }
 
 static char doc_fromfile[] = \
-	"fromfile(file=, dtype=intp, count=-1, sep='')\n"\
+	"fromfile(file=, dtype=int, count=-1, sep='')\n"	\
 	"\n"\
 	"  Return an array of the given data type from a \n"\
 	"  (text or binary) file.   The file argument can be an open file\n"\
@@ -3428,14 +3422,16 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 	char *mode=NULL;
 	longlong nin=-1;
 	static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
-	PyArray_Typecode type = {PyArray_INTP, sizeof(intp), 0};
-
+	PyArray_Descr *type;
+	
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&Ls", kwlist, 
 					 &file,
-					 PyArray_TypecodeConverter, &type,
+					 PyArray_DescrConverter, &type,
 					 &nin, &sep)) {
 		return NULL;
 	}
+
+	if (type == NULL) type = PyArray_DescrFromType(PyArray_LONG);
 
 	if (PyString_Check(file)) {
 		if (sep == "") mode="rb";
@@ -3448,11 +3444,12 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 	}
 	fp = PyFile_AsFile(file);
 	if (fp == NULL) {
-		PyErr_SetString(PyExc_IOError, "first argument must be an open file");
+		PyErr_SetString(PyExc_IOError, 
+				"first argument must be an open file");
 		Py_DECREF(file);
 		return NULL;
 	}
-	ret = PyArray_FromFile(fp, &type, (intp) nin, sep);
+	ret = PyArray_FromFile(fp, type, (intp) nin, sep);
 	Py_DECREF(file);
 	return ret;
 }
@@ -3552,7 +3549,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 }
 
 static char doc_frombuffer[] = \
-	"frombuffer(buffer=, dtype=intp, count=-1, offset=0, swap=0)\n"\
+	"frombuffer(buffer=, dtype=int, count=-1, offset=0, swap=0)\n"\
 	"\n"								\
 	"  Returns a 1-d array of data type dtype from buffer. The buffer\n"\
 	"   argument must be an object that exposes the buffer interface.\n"\
@@ -3570,20 +3567,21 @@ array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
 	longlong nin=-1, offset=0;
 	static char *kwlist[] = {"buffer", "dtype", "count", 
 				 "swap", NULL};
-	PyArray_Typecode type = {PyArray_INTP, sizeof(intp), 0};
+	PyArray_Descr *type;
 	int swapped=0;
 
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&LLi", kwlist, 
 					 &obj,
-					 PyArray_TypecodeConverter, &type,
+					 PyArray_DescrConverter, &type,
 					 &nin, &offset, &swapped)) {
 		return NULL;
 	}
-
-	return PyArray_FromBuffer(obj, &type, (intp)nin, 
+	if (type==NULL)
+		type = PyArray_DescrFromType(PyArray_LONG);
+	
+	return PyArray_FromBuffer(obj, type, (intp)nin, 
 				  (intp)offset, swapped);
 }
-
 
 
 static char doc_concatenate[] = "concatenate((a1,a2,...),axis=None).";
@@ -3689,20 +3687,20 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 }
 
 
-static char doc_arange[] = "arange(start, stop=None, step=1, dtype=intp)\n\n  Just like range() except it returns an array whose type can be\n specified by the keyword argument typecode.";
+static char doc_arange[] = "arange(start, stop=None, step=1, dtype=int)\n\n  Just like range() except it returns an array whose type can be\n specified by the keyword argument typecode.";
 
 static PyObject *
 array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 	PyObject *o_start=NULL, *o_stop=Py_None, *o_step=NULL;
 	static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
 	double start, stop, step;
-	PyArray_Typecode typecode = {PyArray_NOTYPE, 0, 0};
+	PyArray_Descr *typecode;
 	int type_num;
-	int deftype = PyArray_INTP;
-
+	int deftype = PyArray_LONG;
+	
 	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&", kwd, &o_start,
 					&o_stop, &o_step, 
-					PyArray_TypecodeConverter, 
+					PyArray_DescrConverter, 
 					&typecode)) 
 		return NULL;
 
@@ -3714,9 +3712,11 @@ array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 		deftype = PyArray_ObjectType(o_step, deftype);
 	}
 
-	type_num = typecode.type_num;
-	if (type_num == PyArray_NOTYPE) {
+	if (typecode == NULL) {
 		type_num = deftype;
+	}
+	else {
+		type_num = typecode->type_num;
 	}
 
 	start = PyFloat_AsDouble(o_start);
@@ -3885,25 +3885,24 @@ static char doc_can_cast_safely[] = \
 static PyObject *
 array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
 {
-	PyArray_Typecode d1={PyArray_NOTYPE, 0, 0};
-	PyArray_Typecode d2={PyArray_NOTYPE, 0, 0};
+	PyArray_Descr *d1;
+	PyArray_Descr *d2;
 	Bool ret;
 	PyObject *retobj;
 	static char *kwlist[] = {"from", "to", NULL};
 
 	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&", kwlist, 
-					PyArray_TypecodeConverter, &d1,
-					PyArray_TypecodeConverter, &d2))
+					PyArray_DescrConverter, &d1,
+					PyArray_DescrConverter, &d2))
 		return NULL;
-	if (d1.type_num == PyArray_NOTYPE || \
-	    d2.type_num == PyArray_NOTYPE) {
+	if (d1 == NULL || d2 == NULL) {
 		PyErr_SetString(PyExc_TypeError, 
-				"did not understand one of the types; "\
+				"did not understand one of the types; "	\
 				"'None' not accepted");
 		return NULL;
 	}
 		
-	ret = PyArray_CanCastTo(&d1, &d2);
+	ret = PyArray_CanCastTo(d1, d2);
 	retobj = (ret ? Py_True : Py_False);
 	Py_INCREF(retobj);
 	return retobj;

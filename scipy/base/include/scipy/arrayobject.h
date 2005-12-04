@@ -1265,6 +1265,12 @@ typedef struct {
 #define PyArray_NBYTES(m) (PyArray_ITEMSIZE(m) * PyArray_SIZE(m))
 #define PyArray_FROM_O(m) PyArray_FromAny(m, NULL, 0, 0, 0)
 #define PyArray_FROM_OF(m,flags) PyArray_FromAny(m, NULL, 0, 0, flags)
+#define PyArray_FROM_OT(m,type) PyArray_FromAny(m, PyArray_DescrFromType(type),\
+						0, 0, 0);
+#define PyArray_FROM_OTF(m, type, flags) \
+	PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0, flags)
+#define PyArray_FROMANY(m, type, min, max, flags) \
+	PyArray_FromAny(m, PyArray_DescrFromType(type), min, max, flags)
 
 #define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), (val), PyArray_NBYTES(obj))
 

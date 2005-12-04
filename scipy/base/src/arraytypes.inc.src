@@ -1462,21 +1462,21 @@ OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 #from= VOID, STRING, UNICODE#
 #align= char, char, Py_UNICODE#
 #NAME= Void, String, Unicode#
+#endian= |, |, =#
 */
 
 static PyArray_Descr @from@_Descr = { 
-	                              _PyObject_EXTRA_INIT \
-				      1, &PyArray_DescrType,
-                                      &Py@NAME@ArrType_Type,
-				      PyArray_@from@LTR,
-				      PyArray_@from@LTR,
-				      '=',
-				      PyArray_@from@, 0,
-				      _ALIGN(@align@),
-				      NULL,
-				      Py_NotImplemented,
-{
-
+	PyObject_HEAD_INIT(&PyArray_DescrType)
+	&Py@NAME@ArrType_Type,
+	PyArray_@from@LTR,
+	PyArray_@from@LTR,
+	'@endian@',
+	PyArray_@from@, 0,
+	_ALIGN(@align@),
+	NULL,
+	Py_NotImplemented,
+	{
+		
 		(PyArray_VectorUnaryFunc*)@from@_to_BOOL, 
 		(PyArray_VectorUnaryFunc*)@from@_to_BYTE, 
 		(PyArray_VectorUnaryFunc*)@from@_to_UBYTE, 
@@ -1499,15 +1499,15 @@ static PyArray_Descr @from@_Descr = {
 		(PyArray_VectorUnaryFunc*)@from@_to_UNICODE, 
 		(PyArray_VectorUnaryFunc*)@from@_to_VOID
 	},
-				      (PyArray_GetItemFunc*)@from@_getitem, 
-				      (PyArray_SetItemFunc*)@from@_setitem,
-				      (PyArray_CompareFunc*)@from@_compare, 
-				      (PyArray_ArgFunc*)@from@_argmax,
-				      (PyArray_DotFunc*)NULL, 
-				      (PyArray_ScanFunc*)@from@_scan,
-				      (PyArray_CopySwapNFunc*)@from@_copyswapn,
-                                      (PyArray_CopySwapFunc*)@from@_copyswap,
-				      (PyArray_NonzeroFunc*)@from@_nonzero,
+	(PyArray_GetItemFunc*)@from@_getitem, 
+	(PyArray_SetItemFunc*)@from@_setitem,
+	(PyArray_CompareFunc*)@from@_compare, 
+	(PyArray_ArgFunc*)@from@_argmax,
+	(PyArray_DotFunc*)NULL, 
+	(PyArray_ScanFunc*)@from@_scan,
+	(PyArray_CopySwapNFunc*)@from@_copyswapn,
+	(PyArray_CopySwapFunc*)@from@_copyswap,
+	(PyArray_NonzeroFunc*)@from@_nonzero,
 };
 
 /**end repeat**/
@@ -1520,22 +1520,22 @@ static PyArray_Descr @from@_Descr = {
 #fromtyp= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, float, double, longdouble, PyObject *#
 #NAME= Bool, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble, Object#
 #kind= GENBOOL, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, FLOATING, FLOATING, FLOATING, COMPLEX, COMPLEX, COMPLEX, OBJECT#
+#endian= |*3, =*14, |#
 */
 
 static PyArray_Descr @from@_Descr = { 
-	                              _PyObject_EXTRA_INIT \
-				      1, &PyArray_DescrType,
-				      &Py@NAME@ArrType_Type,
-				      PyArray_@kind@LTR,
-				      PyArray_@from@LTR,
-				      '=',
-				      PyArray_@from@, 
-				      @num@*sizeof(@fromtyp@), 
-				      _ALIGN(@fromtyp@),
-				      NULL,
-				      Py_NotImplemented,
-{
-
+	PyObject_HEAD_INIT(&PyArray_DescrType)
+	&Py@NAME@ArrType_Type,
+	PyArray_@kind@LTR,
+	PyArray_@from@LTR,
+	'@endian@',
+	PyArray_@from@, 
+	@num@*sizeof(@fromtyp@), 
+	_ALIGN(@fromtyp@),
+	NULL,
+	Py_NotImplemented,
+	{
+		
 		(PyArray_VectorUnaryFunc*)@from@_to_BOOL, 
 		(PyArray_VectorUnaryFunc*)@from@_to_BYTE,
 		(PyArray_VectorUnaryFunc*)@from@_to_UBYTE, 
@@ -1558,15 +1558,15 @@ static PyArray_Descr @from@_Descr = {
 		(PyArray_VectorUnaryFunc*)@from@_to_UNICODE, 
 		(PyArray_VectorUnaryFunc*)@from@_to_VOID
 	},
-				      (PyArray_GetItemFunc*)@from@_getitem, 
-				      (PyArray_SetItemFunc*)@from@_setitem,
-				      (PyArray_CompareFunc*)@from@_compare, 
-				      (PyArray_ArgFunc*)@from@_argmax,
-				      (PyArray_DotFunc*)@from@_dot, 
-				      (PyArray_ScanFunc*)@from@_scan,
-				      (PyArray_CopySwapNFunc*)@from@_copyswapn,
-				      (PyArray_CopySwapFunc*)@from@_copyswap,
-				      (PyArray_NonzeroFunc*)@from@_nonzero,
+	(PyArray_GetItemFunc*)@from@_getitem, 
+	(PyArray_SetItemFunc*)@from@_setitem,
+	(PyArray_CompareFunc*)@from@_compare, 
+	(PyArray_ArgFunc*)@from@_argmax,
+	(PyArray_DotFunc*)@from@_dot, 
+	(PyArray_ScanFunc*)@from@_scan,
+	(PyArray_CopySwapNFunc*)@from@_copyswapn,
+	(PyArray_CopySwapFunc*)@from@_copyswap,
+	(PyArray_NonzeroFunc*)@from@_nonzero,
 };
 
 /**end repeat**/
