@@ -2690,38 +2690,13 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         return PY_SUCCEED;
 }
 
-static PyObject *
-_setup_fields_dictionary(PyObject *orig, PyArray_Descr *type)
-{
-	PyObject *dict;
-	PyObject *list1, *list2;
-	PyObject *tup1;
-
-	dict = PyDict_New();
-	if (dict == NULL) return NULL;
-	list1 = PyList_New(1);
-	list2 = PyList_New(1);
-	tup1 = PyTuple_New(2);
-	PyList_SET_ITEM(list1, 0, PyString_FromString("f1"));
-	Py_INCREF(type);
-	PyTuple_SET_ITEM(tup1, 0, type);
-	PyTuple_SET_ITEM(tup2, 1, PyInt_FromLong(0));
-	PyList_SET_ITEM(list2, 0, tup1);
-	PyDict_SetItemString(dict, "names", list1);
-	Py_DECREF(list1);
-	PyDict_SetItemString(dict, "formats", list2);
-	Py_DECREF(list2);
-	return dict;
-}
-
-
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj) 
 {
 	PyArray_Descr *type;
 	
 	if (PyTuple_GET_SIZE(obj) != 2) return NULL;
-	if (PyArray_DescrConverter(PyTuple_GET_ITEM(obj,0), &type) < 0) 
+	if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj,0), &type)) 
 		return NULL;
 	if (type->elsize == 0) { /* interpret next item as a typesize */
 		int itemsize;
@@ -2743,8 +2718,12 @@ _convert_from_tuple(PyObject *obj)
 		newdescr->elsize *= PyArray_MultiplyList(shape.ptr, 
 							 shape.len);
 		newdescr->type_num = PyArray_VOID;
-		newdescr->field = _setup_fields_dictionary(obj, type);		
-		Py_DECREF(type);
+		newdescr->subarray = malloc(sizeof(PyArray_ArrayDescr));
+		newdescr->subarray->base = type;
+		newdescr->subarray->shape.ptr = shape.ptr;
+		newdescr->subarray->shape.len = shape.len;
+		Py_XDECREF(newdescr->field);
+		newdescr->field = NULL;
 		type = newdescr;
 	}
 	return type;
@@ -2784,11 +2763,11 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 
 	*at=NULL;
 	
-        if (obj == Py_None) return Py_SUCCEED;
+        if (obj == Py_None) return PY_SUCCEED;
 	
 	if (PyArray_DescrCheck(obj)) {
 		*at = obj;
-		return Py_SUCCEED;
+		return PY_SUCCEED;
 	}
 	
         if (PyType_Check(obj)) {

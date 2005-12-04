@@ -758,9 +758,13 @@ typedef void (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
 typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
 
 typedef struct {
+        intp *ptr;
+        int len;
+} PyArray_Dims;
+
+typedef struct {
 	struct PyArray_Descr *base;
-	int len;
-	intp shape[MAX_DIMS];
+	PyArray_Dims shape;
 } PyArray_ArrayDescr;
 
 typedef struct {
@@ -769,11 +773,15 @@ typedef struct {
 				   intance of this type */
 	char kind;              /* kind for this type */
 	char type;              /* unique-character representing this type */
+	char byteorder;         /* '>' (big), '<' (little), '|' 
+				   (not-applicable), or '=' (native).
 	int type_num;           /* number representing this type */
 	int elsize;             /* element size for this type */
        	int alignment;          /* alignment needed for this type */
-	PyArray_ArrayDescr *subarray    /* Non-NULL if this is an array of 
-				   some other descriptor */
+	PyArray_ArrayDescr *subarray    /* Non-NULL if this type is
+					   is an array (C-contiguous)
+					   of some other type
+					*/
 	PyObject *fields;       /* The fields dictionary for this type */
 	                        /* For statically defined descr this
 				   is always Py_NotImplemented */
@@ -831,11 +839,6 @@ typedef struct PyArrayObject {
 } PyArrayObject;
 
 #define fortran fortran_        /* For some compilers */
-
-typedef struct {
-        intp *ptr;
-        int len;
-} PyArray_Dims;
 
 /* Mirrors buffer object to ptr */
 

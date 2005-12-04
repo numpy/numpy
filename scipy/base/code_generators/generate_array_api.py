@@ -137,11 +137,11 @@ objectapi_list = [
 
     (r"""Get a subset of bytes from each element of the array
     """,
-     'GetField', 'PyArrayObject *, PyObject *, int', 'PyObject *'),
+     'GetField', 'PyArrayObject *, PyArray_Descr *, int', 'PyObject *'),
 
     (r"""Set a subset of bytes from each element of the array
     """,
-     'SetField', 'PyArrayObject *, PyObject *, int, PyObject *', 'int'),
+     'SetField', 'PyArrayObject *, PyArray_Descr *, int, PyObject *', 'int'),
 
     (r"""
     """,
@@ -236,7 +236,11 @@ objectapi_list = [
 
     (r"""
     """,
-     'CheckStrides', 'int, int, intp, intp *, intp *', 'Bool')
+     'CheckStrides', 'int, int, intp, intp *, intp *', 'Bool'),
+
+    (r"""
+    """,
+     'IsNativeByteOrder', 'char', 'Bool')
 
     ]
 

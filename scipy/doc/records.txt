@@ -26,7 +26,8 @@ return ordered lists.  There must be the same number of items in each list.
 
 'formats' : the actual parameters to pass to GetField to retrieve the 
             specific field.  This parameter is a (data-descr, offset) pair.
-	    The data-descr must be a PyArray_Descr pointer. 
+	    The data-descr must be a PyArray_Descr * object and offset 
+	    is an integer.
 
 Doing this allows us to remove the self->itemsize from the array
 structure (I think that's a good thing because the size is an
@@ -42,9 +43,11 @@ For now, this PyArray_ArrayDescr * member is only really used to get a
 higher-dimensional array from PyArray_NewFromDescr.   In other words, arrays
 with this structure set are not really useful. 
 
-However, placing it here complets the notion of a type descriptor
+However, placing it here completes the notion of a type descriptor
 and simplies the formats key so that all supported type description 
-is handled by the PyArray_Descr structure.
+is handled by the PyArray_Descr structure.  Adde a byte-order type to 
+descriptor as well so that entire array_descr in protocol can be supported
+by a PyArray_Descr structure. 
 
  
 Data type conversions: We can support additional data-type
@@ -58,8 +61,8 @@ Tuple  (flexible type, itemsize)
 ===============================
 
 Get converted to a new PyArray_Descr * object with a flexible
-type. The latter structure gets now fields dictionary but does 
-get a 
+type. The latter structure also sets the PyArray_ArrayDescr field of the
+returned PyArray_Descr *.
 
 
 Dictionary (keys "names", "titles", and "formats")

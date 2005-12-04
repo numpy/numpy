@@ -1199,7 +1199,7 @@ array_dealloc(PyArrayObject *self) {
 	PyDimMem_FREE(self->dimensions);
 
 	if (self->descr->fields != Py_NotImplemented) /* static type */
-		Py_DECREF(self->descr);
+		Py_XDECREF(self->descr);
 	
         self->ob_type->tp_free((PyObject *)self);
 }
@@ -3223,23 +3223,86 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 					"data type must provide an itemsize");
 			return NULL;
 		}
-		descr = PyArray_NewDescr(type_num);
+		descr = PyArray_NewDescr(descr);
 		descr->elsize = itemsize;
 	}
 	new = PyArray_NewFromDescr(subtype, descr, nt, dims, strides
 				   data, itemsize, flags);
-	Py_DECREF(descr);
 	return new;
 }
 
+/* Change a sub-array field to the base descriptor */
+static int
+_update_descr_and_dimensions(PyArray_Descr **des, intp *newdims, intp *newstrides, int oldnd)
+{
+	PyArray_Descr *old;
+	int newnd;
+	int numnew;
+	intp *mydim;
+	
+	old = *des;
+	*des = old->subarray->base;
+
+	numnew = old->subarray->shape.len;
+	newnd = oldnd + numnew;
+
+	mydim = newdims + oldnd;
+	memcpy(mydim, old->subarray->shape.ptr, numnew*sizeof(inpt));
+
+	if (newstrides) {
+		intp tempsize;
+		intp *mystrides;
+		mystrides = newstrides + oldnd;
+		/* Make new strides */
+		tempsize = *des->elsize;
+		for (i=numnew-1; i>=0; i--) {
+			mystrides[i] = tempsize;
+			tempsize *= mydim[i] ? mydim[i] : 1;
+		}
+	}
+	Py_INCREF(*des); 
+	Py_DECREF(old); 
+	return newnd;
+}
+
+/* Determine if character represents system byte-order or not */
+
+static Bool
+PyArray_IsNativeByteorder(char order)
+{
+	static unsigned long val = 1;
+	char *s;	
+	s = (char *)&val; /* s[0] == 0 implies big-endian */
+
+	if ((order != '<') && (order != '>')) return TRUE;
+	else if (s[0] == 0) return (order == '>');
+	else return (order == '<');
+}
+
+/* steals a reference to descr */
 static PyObject *
 PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd, 
-		     int *dims, int *strides, void *data, int itemsize, 
+		     int *dims, int *strides, void *data, 
 		     int flags, PyObject *obj)
 {	
 	PyArrayObject *self;
 	register int i;
 	intp sd;
+
+	if (descr->subarray) {
+		PyObject *ret;
+		intp newdims[2*MAX_DIMS];
+		intp *newstrides=NULL;
+		memcpy(newdims, dims, nd);
+		if (strides) {
+			newstrides = newdims + MAX_DIMS;
+			memcpy(newstrides, strides, nd);
+		}
+		nd =_update_descr_and_dimensions(&descr, newdims, newstrides, nd);
+		ret = PyArray_NewFromDescr(subtype, descr, nd, newdims, newstrides,
+					   data, flags, obj);
+		return ret;
+	}
 
 	if (nd < 0) {
 		PyErr_SetString(PyExc_ValueError,
@@ -3263,8 +3326,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 	}
 	
 	self = (PyArrayObject *) subtype->tp_alloc(subtype, 0);
-	if (self == NULL) return NULL;	
-	self->descr = descr;
+	if (self == NULL) {
+		return NULL;	
+	}
 	self->dimensions = NULL;
 	if (data == NULL) {  /* strides is NULL too */
 		self->flags = DEFAULT_FLAGS;
@@ -3275,8 +3339,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		}
 	}
 	else self->flags = (flags & ~UPDATEIFCOPY);
-
-	sd = self->descr->elsize;
+		
+	sd = descr->elsize;
 	
 	if (nd > 0) {
 		self->dimensions = PyDimMem_NEW(2*nd);
@@ -3304,6 +3368,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		}
 	}
        	
+	self->descr = descr;
+
 		
 	if (data == NULL) {
 
@@ -3335,6 +3401,11 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 					   this to be reset if truly
 					   desired */
         }
+	if (descr->byteorder != '=' &&				\
+	    !PyArray_IsNativeByteOrder(descr->byteorder)) {
+		self->flags &= ~NOTSWAPPED;
+	}
+
         self->data = data;
 	self->nd = nd;
 	self->base = (PyObject *)NULL;
@@ -4083,26 +4154,6 @@ array_type_get(PyArrayObject *self)
         return (PyObject *)self->descr->typeobj;
 }
 
-
-static PyObject *
-_convert_type_set(PyObject *arg, PyArray_Dims *dims)
-{
-	PyObject *shape;
-
-	if (PyTuple_GET_SIZE(arg) != 2) {
-		PyErr_SetString(PyExc_TypeError, 
-				"Type-setting tuple must be length 2.");
-		return NULL;
-	}
-	
-	shape = PyTuple_GET_ITEM(arg, 1);
-	if (PyArray_IntpConverter(shape, dims) < 0) return NULL;
-	
-	/* Steal the reference */
-	arg = PyTuple_GET_ITEM(arg, 0);
-
-	return arg;
-}
 /* If the type is changed.  
     Also needing change: strides, itemsize
 
@@ -4110,134 +4161,92 @@ _convert_type_set(PyObject *arg, PyArray_Dims *dims)
     or the array is single-segment (contiguous or fortran) with
     compatibile dimensions
 
-    If itemsize is exactly the same, then the argument can be a tuple whose 
-    first argument is the type and second argument is the shape of that type 
-
     The shape and strides will be adjusted in that case as well.
 */
 
 static int
 array_type_set(PyArrayObject *self, PyObject *arg)
 {
-        PyArray_Descr newtype = {PyArray_NOTYPE, 0, 0};
-	PyArray_Dims dims = {NULL, -1};
+        PyArray_Descr *newtype=NULL;
         intp newdim;
         int index;
-	int tupleset=0;
         char *msg = "new type not compatible with array.";
 
-	if (PyTuple_Check(arg)) {
-		arg = _convert_type_set(arg, &dims);
-		if (arg == NULL) return -1;
-		tupleset = 1;
-	}
-
-        if ((PyArray_DescrConverter(arg, &newtype) < 0) ||
-            newtype.type_num == PyArray_NOTYPE) {
+        if (!(PyArray_DescrConverter(arg, &newtype)) ||
+            newtype == NULL) {
                 PyErr_SetString(PyExc_TypeError, "invalid type for array");
-		if (tupleset) PyDimMem_FREE(dims.ptr);
 		return -1;
         }
 
-	if (tupleset) { 
-		/* Adjust dimensions and strides to re-interpret
-		   item as an array of another item 
+	if ((newtype->elsize != self->descr->elsize) &&		\
+	    (self->nd == 0 || !PyArray_ISONESEGMENT(self) || \
+	     newtype->subarray)) {
+		PyErr_SetString(PyExc_ValueError, msg);
+		return -1;
+	}
+	
+	if (PyArray_ISCONTIGUOUS(self)) index = self->nd - 1;
+	else index = 0;
+	
+	if (newtype->elsize < self->descr->elsize) {
+		/* if it is compatible increase the size of the 
+		   dimension at end (or at the front for FORTRAN)
 		*/
-		intp newsize = newtype.itemsize * \
-			PyArray_MultiplyList(dims.ptr, dims.len);
-		intp newnd, *newdim, *newstrides;
-		intp savestrides[MAX_DIMS];
-		intp oldnd;
-		int i, tempsize;
-		
-		if (newsize != self->descr->elsize) {
-			PyErr_SetString(PyExc_ValueError, msg);
-			PyDimMem_FREE(dims.ptr);
-			return -1;
-		}
-		
-		/* Always place new dimensions at the end */
-		/*  so that normal indexing returns an array */
-		oldnd = self->nd;
-		newnd = oldnd + dims.len;
-		if (newnd > MAX_DIMS) {
-			PyErr_SetString(PyExc_ValueError, 
-					"too many dimensions in new array.");
-			PyDimMem_FREE(dims.ptr);
-			return -1;
-		}
-
-		/* save strides */
-		memcpy(savestrides, self->strides, oldnd*sizeof(intp));
-		self->dimensions = PyDimMem_RENEW(self->dimensions, 2*newnd);
-		if (self->dimensions == NULL) {
-			self->nd = 0;
-			PyErr_NoMemory();
-			PyDimMem_FREE(dims.ptr);
-			return -1;
-		}
-		self->strides = self->dimensions + newnd;
-
-		newdim = self->dimensions+oldnd;
-		newstrides = self->strides+oldnd;
-		memcpy(newdim, dims.ptr, dims.len*sizeof(intp));
-		memcpy(self->strides, savestrides, oldnd*sizeof(intp));
-		/* Make new strides */
-		tempsize = newtype.itemsize;
-		for (i=dims.len-1;i>=0;i--) {
-			newstrides[i] = tempsize;
-			tempsize *= newdim[i] ? newdim[i] : 1;
-		}
-		PyDimMem_FREE(dims.ptr);
-		self->nd = newnd;
-	}
-	else {
-		if ((newtype.itemsize != self->descr->elsize) &&	\
-		    (self->nd == 0 || !PyArray_ISONESEGMENT(self))) {
+		if (self->descr->elsize % newtype->elsize != 0) {
 			PyErr_SetString(PyExc_ValueError, msg);
 			return -1;
 		}
-		
-		if (PyArray_ISCONTIGUOUS(self)) index = self->nd - 1;
-		else index = 0;
-		
-		if (newtype.itemsize < self->descr->elsize) {
-			/* if it is compatible increase the size of the 
-			   dimension at end (or at the front for FORTRAN)
-			*/
-			if (self->descr->elsize % newtype.itemsize != 0) {
-				PyErr_SetString(PyExc_ValueError, msg);
-				return -1;
-			}
-			newdim = self->descr->elsize / newtype.itemsize;
+		newdim = self->descr->elsize / newtype->elsize;
 			self->dimensions[index] *= newdim;
-			self->strides[index] = newtype.itemsize;
+			self->strides[index] = newtype->elsize;
+	}
+	
+	else if (newtype->elsize > self->descr->elsize) {
+		
+		/* Determine if last (or first if FORTRAN) dimension
+		   is compatible */
+		
+		newdim = self->dimensions[index] * self->descr->elsize;
+		if ((newdim % newtype->elsize) != 0) {
+			PyErr_SetString(PyExc_ValueError, msg);
+			return -1;
 		}
 		
-		else if (newtype.itemsize > self->descr->elsize) {
-			
-			/* Determine if last (or first if FORTRAN) dimension
-			   is compatible */
-			
-			newdim = self->dimensions[index] * self->descr->elsize;
-			if ((newdim % newtype.itemsize) != 0) {
-				PyErr_SetString(PyExc_ValueError, msg);
-				return -1;
-			}
-			
-			self->dimensions[index] = newdim / newtype.itemsize;
-			self->strides[index] = newtype.itemsize;
-		}
+		self->dimensions[index] = newdim / newtype->elsize;
+		self->strides[index] = newtype->elsize;
 	}
-	        
+
         /* fall through -- adjust type*/
 
-        self->descr = PyArray_DescrFromType(newtype.type_num);
-        self->descr->elsize = newtype.itemsize;
-	PyArray_UpdateFlags(self, (tupleset ? UPDATE_ALL_FLAGS : ALIGNED));
+	Py_DECREF(self->descr);
 
+	if (newtype->subarray) {
+		/* create new array object from data and update 
+		   dimensions, strides and descr from it */
+		PyArrayObject *temp;
+
+		temp = (PyArrayObject *)\
+			PyArray_NewFromDescr(&PyArray_Type, newtype, self->nd,
+					     self->dimensions, self->strides,
+					     self->data, self->flags, NULL);
+		PyDimMem_FREE(self->dimensions);
+		self->dimensions = temp->dimensions;
+		self->nd = temp->nd;
+		self->strides = temp->strides;
+		self->descr = temp->descr;
+		/* Fool deallocator */
+		temp->nd = 0;
+		temp-dimensions = NULL;
+		temp->descr = NULL;
+		Py_DECREF(temp);
+	}
+	else {
+		Py_DECREF(self->descr);
+		self->descr = newtype;  /* steal the reference */
+	}
+	PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
+	
         return 0;
-
 }
 
 
@@ -4343,7 +4352,6 @@ array_imag_get(PyArrayObject *self)
 					     self->dimensions,
 					     self->strides,
 					     self->data + type->elsize,
-					     0,
 					     self->flags, (PyObject *)self);
 		if (ret == NULL) return NULL;
 		ret->flags &= ~CONTIGUOUS;
@@ -7697,6 +7705,8 @@ PyArray_DescrNew(PyArray_Descr *base);
 	if (new->subarray) {
 		new->subarray = malloc(sizeof(PyArray_ArrayDescr));
 		memcpy(new->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
+		new->subarray->shape.ptr = PyDimMem_NEW(new->subarray->shape.len);
+		memcpy(new->subarray->shape.ptr, base->subarray->shape.ptr);
 		Py_INCREF(new->subarray->base);
 	}
 	Py_INCREF(new->typeobj);
@@ -7707,13 +7717,14 @@ static void
 arraydescr_dealloc(PyArray_Descr *self)
 {
 	if (self->fields == Py_NotImplemented) {
-		self->ob_refcnt = 1;
+		self->ob_refcnt = 2;
 		return;
 	}
 	Py_XDECREF(self->typeobj);
 	Py_XDECREF(self->fields);
 	if (self->subarray) {
 		Py_DECREF(self->subarray->base);
+		PyDimMem_FREE(self->subarray->shape.ptr);
 		free(self->subarray);
 	}
 	self->ob_type->tp_free(self);
@@ -7740,8 +7751,8 @@ arraydescr_subdescr_get(PyArray_Descr *self)
 		return Py_None
 	}
 	return Py_BuildValue("ON", (PyObject *)self->subarray->base, 
-			     PyArray_IntTupleFromIntp(self->subarray->len,
-						      self->subarray->shape));
+			     PyArray_IntTupleFromIntp(self->subarray->shape.len,
+						      self->subarray->shape.ptr));
 }
 
 static PyGetSetDef arraydescr_getsets[] = {
