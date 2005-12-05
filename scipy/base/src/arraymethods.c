@@ -256,16 +256,18 @@ static char doc_getfield[] = "m.getfield(dtype, offset) returns a field "\
 	" the array's data with each itemsize determined by the given type"\
 	" and the offset into the current array.";
 
+/* steals typed reference */
 static PyObject *
 PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 {
 	PyObject *ret=NULL;
-	
+
 	if (offset < 0 || (offset + typed->elsize) > self->descr->elsize) {
 		PyErr_Format(PyExc_ValueError,
 			     "Need 0 <= offset <= %d for requested type "  \
 			     "but received offset = %d",
 			     self->descr->elsize-typed->elsize, offset);
+		Py_DECREF(typed);
 		return NULL;
 	}
 	ret = PyArray_NewFromDescr(self->ob_type, 
@@ -293,6 +295,10 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 PyArray_DescrConverter,
 					 &dtype, &offset)) return NULL;
 	
+	if (dtype == NULL) {
+		PyErr_SetString(PyExc_ValueError, "Invalid data type".);
+		return NULL;
+	}
 	return _ARET(PyArray_GetField(self, dtype, offset));
 }
 
@@ -312,6 +318,7 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
 			     "Need 0 <= offset <= %d for requested type "  \
 			     "but received offset = %d",
 			     self->descr->elsize-dtype->elsize, offset);
+		Py_DECREF(dtype);
 		return -1;
 	}
 	ret = PyArray_NewFromDescr(self->ob_type, 
@@ -338,7 +345,11 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
 					 &value, PyArray_DescrConverter,
 					 &dtype, &offset)) return NULL;
-	
+
+	if (dtype == NULL) {
+		PyErr_SetString(PyExc_ValueError, "Invalid data type".);
+		return NULL;
+	}
 	if (PyArray_SetField(self, dtype, offset, value) < 0)
 		return NULL;
 	Py_INCREF(Py_None);
@@ -509,12 +520,15 @@ static PyObject *
 array_cast(PyArrayObject *self, PyObject *args) 
 {
 	PyArray_Descr *descr=NULL;
+	PyObject *obj;
 	
         if (!PyArg_ParseTuple(args, "O&", PyArray_DescrConverter,
 			      &descr)) return NULL;
 	
 	if (descr==NULL || descr == self->descr) {
-		return _ARET(PyArray_NewCopy(self,0));
+		obj = _ARET(PyArray_NewCopy(self,0));
+		Py_XDECREF(descr);
+		return obj;
 	}
 	return _ARET(PyArray_CastToType(self, descr, 0));
 }	  

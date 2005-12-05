@@ -126,6 +126,10 @@ objectapi_list = [
 
     (r"""
     """,
+     'FromString', 'char *, intp, PyArray_Descr *, intp, int','PyObject *'),
+    
+    (r"""
+    """,
      'FromBuffer', 'PyObject *, PyArray_Descr *, intp, intp, int',
      'PyObject *'),
 

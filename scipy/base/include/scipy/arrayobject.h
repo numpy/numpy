@@ -1323,7 +1323,7 @@ typedef struct {
 #define PyArray_DESCR_REPLACE(descr) do {	\
 		PyArray_Descr *_new_;			\
 		_new_ = PyArray_DescrNew(descr);	\
-		Py_DECREF(descr);			\
+		Py_XDECREF(descr);			\
 		descr = _new_;				\
 	} while(0)
 
@@ -1347,7 +1347,9 @@ typedef struct {
 
         /*Compatibility with old Numeric stuff -- don't use in new code */
 
-
+#define PyArray_FromDimsAndData(nd, d, type, data) \
+	PyArray_FromDimsAndDataAndDescr(nd, d, PyArray_DescrFromType(type), \
+					data)
 #define PyArray_UNSIGNED_TYPES
 #define PyArray_SBYTE PyArray_BYTE
 #define PyArray_CHAR PyArray_BYTE

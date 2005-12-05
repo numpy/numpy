@@ -554,6 +554,9 @@ _lowest_type(char intype)
         }
 }
 
+/* Called to determine coercion
+ */
+
 static int 
 _cancoerce(char thistype, char neededtype, char scalar) 
 {

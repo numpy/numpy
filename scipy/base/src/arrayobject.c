@@ -4,7 +4,7 @@
 Based on Original Numeric implementation
 Copyright (c) 1995, 1996, 1997 Jim Hugunin, hugunin@mit.edu
 
-with contributions from many Numeric Python developers 1995-2004               *
+with contributions from many Numeric Python developers 1995-2004 
 
 Heavily modified in 2005 with inspiration from Numarray 
 
@@ -689,6 +689,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 
 /* They all zero-out the memory as previously done */
 
+/* steals reference to descr -- accepts NULL*/
 static PyObject *
 PyArray_FromDimsAndDataAndDescr(int nd, int *d, 
                                 PyArray_Descr *descr,
@@ -700,60 +701,29 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
 	intp newd[MAX_DIMS];
 	
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
-	Py_INCREF(descr);
         ret = PyArray_NewFromDescr(&PyArray_Type, descr, 
 				   nd, newd, 
 				   NULL, data,
 				   CARRAY_FLAGS, NULL);
 #else
-	Py_INCREF(descr);
-	ret = PyArray_New(&PyArray_Type, descr,
-			  nd, (intp *)d, 
-			  NULL, data, 
-			  CARRAY_FLAGS, NULL);
+	ret = PyArray_NewFromDescr(&PyArray_Type, descr,
+				   nd, (intp *)d, 
+				   NULL, data, 
+				   CARRAY_FLAGS, NULL);
 #endif
 	return ret;
 }
 
-
-static PyObject *
-PyArray_FromDimsAndData(int nd, int *d, int type, char *data) 
-{
-	PyObject *ret;
-#if SIZEOF_INTP != SIZEOF_INT
-	int i;	
-	intp newd[MAX_DIMS];
-
-	for (i=0; i<nd; i++) newd[i] = (intp) d[i]; 
-	ret = PyArray_New(&PyArray_Type, nd, newd, 
-			   type, NULL, data, 0, 
-			   CARRAY_FLAGS, NULL);
-#else
-	ret = PyArray_New(&PyArray_Type, nd, (intp *)d, 
-			   type, NULL, data, 0, 
-			   CARRAY_FLAGS, NULL);
-#endif
-	return ret;
-}
-
+/* FromDimsAndData is a macro */
 
 static PyObject *
 PyArray_FromDims(int nd, int *d, int type) 
 {
 	PyObject *ret;
-#if SIZEOF_INTP != SIZEOF_INT
-	intp newd[MAX_DIMS];
-	int i;	
-
-	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
-	ret = PyArray_New(&PyArray_Type, nd, newd, type,
-			   NULL, NULL, 0, 0, NULL);
-#else
-	ret = PyArray_New(&PyArray_Type, nd, (intp *)d, type,
-			   NULL, NULL, 0, 0, NULL);
-#endif
-	if (type != PyArray_OBJECT && type != PyArray_OBJECTLTR) 
-		memset(PyArray_DATA(ret), 0, PyArray_SIZE(ret));
+	ret = PyArray_FromDimsAndData(nd, d, type, NULL);
+	if (ret->descr != &OBJECT_Descr) {
+		memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
+	}
 	return ret;
 }
 
@@ -930,6 +900,7 @@ PyArray_RegisterDataType(PyTypeObject *type)
 		i = PyInt_AsLong(obj);
 		if ((i < 0) && (PyErr_Occurred())) PyErr_Clear();
 		else descr->elsize = i;
+		Py_DECREF(obj);
 	}
 	Py_INCREF(type);
 	userdescrs = realloc(userdescrs, 
@@ -950,6 +921,8 @@ PyArray_RegisterDataType(PyTypeObject *type)
    frees the copy of the Descr_table already there.
    places a pointer to the new one into the slot.
 */
+
+/* steals a reference to descr */
 static int
 PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 {
@@ -959,6 +932,7 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 	if (!PyTypeNum_ISUSERDEF(typenum)) {
 		PyErr_SetString(PyExc_TypeError, 
 				"data type not registered");
+		Py_DECREF(descr);
 		return -1;
 	}
 	old = userdescrs[typenum-PyArray_USERDEF];
@@ -991,7 +965,7 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 	_ZERO_CHECK(alignment);
 #undef _ZERO_CHECK
 
-	free(old);
+	Py_DECREF(old);
 	userdescrs[typenum-PyArray_USERDEF] = descr;
 	return 0;
 }
@@ -1648,6 +1622,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 	if (mit->ait == NULL) return -1;
 
 	descr = mit->ait->ao->descr;
+	Py_INCREF(descr);
 	arr = PyArray_FromAny(op, descr, 0, 0, FORCECAST);
 	if (arr == NULL) return -1;
 
@@ -3308,6 +3283,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 	register int i;
 	intp sd;
 
+	if (!descr) descr = PyArray_DescrFromType(PyArray_LONG);
 	if (descr->subarray) {
 		PyObject *ret;
 		intp newdims[2*MAX_DIMS];
@@ -3611,6 +3587,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 
 	descr = PyArray_DESCR(arr);
 	itemsize = descr->elsize;
+	Py_INCREF(descr);
 	newarr = PyArray_FromAny(obj, descr, 0,0, BEHAVED_FLAGS_RO);
 	if (newarr == NULL) return -1;
 	fromptr = PyArray_DATA(newarr);
@@ -4433,7 +4410,7 @@ array_flat_set(PyArrayObject *self, PyObject *val)
         PyArray_CopySwapFunc *copyswap;
 
 	typecode = self->descr;
-	
+	Py_INCREF(typecode);
 	arr = PyArray_FromAny(val, typecode, 
 			      0, 0, FORCECAST | FORTRAN_IF(self));
 	if (arr == NULL) return -1;
@@ -4763,6 +4740,8 @@ discover_dimensions(PyObject *s, int nd, intp *d, int check_it)
 }
 
 /* new reference */
+/* doesn't alter refcount of chktype or mintype --- 
+   unless one of them is returned */
 static PyArray_Descr *
 _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
 {
@@ -4818,6 +4797,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 	
 	if (minitype == NULL) 
 		minitype = PyArray_DescrFromType(PyArray_BOOL);
+	else Py_INCREF(minitype);
 	
         if (max < 0) goto deflt;
 	
@@ -4901,6 +4881,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 			goto deflt;
 		}
                 if (l == 0 && minitype->type_num == PyArray_BOOL) {
+			Py_DECREF(minitype);
 			minitype = PyArray_DescrFromType(PyArray_INTP);
 		}
                 while (--l >= 0) {
@@ -4940,6 +4921,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 	
 	outtype = _array_small_type(chktype, minitype);
 	Py_DECREF(chktype);
+	Py_DECREF(minitype);
 	return outtype; 
 }
 
@@ -4970,6 +4952,7 @@ Assign_Array(PyArrayObject *self, PyObject *v)
 }
 
 /* "Array Scalars don't call this code" */ 
+/* steals reference to typecode -- no NULL*/
 static PyObject *
 Array_FromScalar(PyObject *op, PyArray_Descr *typecode) 
 {
@@ -5002,6 +4985,7 @@ Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
 }
 
 
+/* steals reference to typecode unless return value is NULL*/
 static PyObject *
 Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran, 
 		   int min_depth, int max_depth)
@@ -5012,6 +4996,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 	int stop_at_string;
 	int type = typecode->type_num;
 	int itemsize = typecode->elsize;
+	PyArray_Descr *savetype=typecode;
 	
 	stop_at_string = ((type == PyArray_OBJECT) ||	\
 			  (type == PyArray_STRING) ||	\
@@ -5044,7 +5029,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 	}
 
 	if (itemsize != typecode->elsize) {
-		typecode = PyArray_DescrNew(typecode);
+		PyArray_DESCR_REPLACE(typecode);
 		typecode->elsize = itemsize;
 	}
 	
@@ -5053,8 +5038,9 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 					       NULL, NULL,
 					       fortran, NULL);
 	
-        if(!r) return NULL;
+        if(!r) return {Py_XINCREF(savetype); NULL;}
         if(Assign_Array(r,s) == -1) {
+		Py_XINCREF(savetype);
 		Py_DECREF(r);
 		return NULL;
 	}
@@ -5176,7 +5162,7 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in)
 
 /* For backward compatibility */
 
-/* steals reference to at */
+/* steals reference to at --- cannot be NULL*/
 static PyObject * 
 PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
 {
@@ -5190,6 +5176,7 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
 			     ((mpd->elsize == at->elsize) ||	\
 			      (at->elsize==0)))) &&		\
 	    PyArray_ISBEHAVED_RO(mp)) {
+		Py_DECREF(at);
 		Py_INCREF(mp);
 		return (PyObject *)mp;
 	}
@@ -5283,6 +5270,7 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 	return 0;
 }
 
+/* steals reference to newtype --- acc. NULL */
 static PyObject *
 array_fromarray(PyArrayObject *arr, PyArray_Descr *newtype, int flags) 
 {
@@ -5299,7 +5287,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
         subtype = arr->ob_type;
 	
-	if (newtype == NULL) newtype = oldtype;
+	if (newtype == NULL) {newtype = oldtype; Py_INCREF(oldtype);}
 	type = newtype->type_num;
 	itemsize = newtype->elsize;
 
@@ -5318,6 +5306,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 		if (copy) {
                         if ((flags & UPDATEIFCOPY) && \
                             (!PyArray_ISWRITEABLE(arr))) {
+				Py_DECREF(newtype);
                                 PyErr_SetString(PyExc_ValueError, msg);
                                 return NULL;
                         }
@@ -5347,6 +5336,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 		else {  
                         if ((flags & ENSUREARRAY) && \
                             (subtype != &PyBigArray_Type)) {
+				Py_DECREF(newtype);
 				Py_INCREF(arr->descr);
 				ret = (PyArrayObject *)			\
                                         PyArray_NewFromDescr(&PyArray_Type,
@@ -5376,6 +5366,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 		    PyArray_CanCastTo(oldtype, newtype)) {
                         if ((flags & UPDATEIFCOPY) &&		\
                             (!PyArray_ISWRITEABLE(arr))) {
+				Py_DECREF(newtype);
                                 PyErr_SetString(PyExc_ValueError, msg);
                                 return NULL;
                         }
@@ -5446,10 +5437,10 @@ _array_typedescr_fromstr(char *str, int *swap)
 			type_num = PyArray_UBYTE;
 		else if (size == sizeof(short)) 
 			type_num = PyArray_USHORT;
-		else if (size == sizeof(int)) 
-			type_num = PyArray_UINT;
 		else if (size == sizeof(ulong)) 
 			type_num = PyArray_ULONG;
+		else if (size == sizeof(int)) 
+			type_num = PyArray_UINT;
 		else if (size == sizeof(ulonglong))
 			type_num = PyArray_ULONGLONG;
 		else _MY_FAIL
@@ -5461,10 +5452,10 @@ _array_typedescr_fromstr(char *str, int *swap)
 		    type_num = PyArray_BYTE;
 		else if (size == sizeof(short)) 
 			type_num = PyArray_SHORT;
-		else if (size == sizeof(int))
-			type_num = PyArray_INT;
 		else if (size == sizeof(long)) 
 			type_num = PyArray_LONG;
+		else if (size == sizeof(int))
+			type_num = PyArray_INT;
 		else if (size == sizeof(longlong))
 			type_num = PyArray_LONGLONG;
 		else _MY_FAIL
@@ -5519,6 +5510,7 @@ _array_typedescr_fromstr(char *str, int *swap)
     return descr;
 }
 
+/* steals a reference to intype unless NotImplemented */
 static PyObject *
 array_fromstructinterface(PyObject *input, PyArray_Descr *intype, int flags)
 {
@@ -5529,16 +5521,21 @@ array_fromstructinterface(PyObject *input, PyArray_Descr *intype, int flags)
 	PyObject *attr, *r, *ret;
         
         attr = PyObject_GetAttrString(input, "__array_struct__");
-        if (attr == NULL) {PyErr_Clear(); return Py_NotImplemented;}
+        if (attr == NULL) {
+		PyErr_Clear();
+		return Py_NotImplemented;
+	}
         if (!PyCObject_Check(attr) ||                                   \
             ((inter=((PyArrayInterface *)\
 		     PyCObject_AsVoidPtr(attr)))->version != 2)) {
                 PyErr_SetString(PyExc_ValueError, "invalid __array_struct__");
+		Py_XDECREF(intype);
 		Py_DECREF(attr);
                 return NULL;
         }
         snprintf(buf, 40, "|%c%d", inter->typekind, inter->itemsize);
         if (!(thetype=_array_typedescr_fromstr(buf, &swap))) {
+		Py_XDECREF(intype);
 		Py_DECREF(attr);
                 return NULL;
         }
@@ -5555,6 +5552,7 @@ array_fromstructinterface(PyObject *input, PyArray_Descr *intype, int flags)
         return ret;
 }
 
+/* steals a reference to intype unless NotImplemented */
 static PyObject *
 array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 {
@@ -5655,7 +5653,7 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 						    n, dims, 
 						    NULL, data, 
 						    dataflags, NULL);
-	if (ret == NULL) return NULL;
+	if (ret == NULL) {Py_XDECREF(intype); return NULL;}
 	Py_INCREF(input);
 	ret->base = input;
     
@@ -5666,6 +5664,7 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 					"__array_strides__ must be a tuple");
 			Py_DECREF(attr);
 			Py_DECREF(ret);
+			Py_XDECREF(intype);
 			return NULL;
 		}
 		if (n != PyTuple_GET_SIZE(attr)) {
@@ -5675,6 +5674,7 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 					"__array_shape__");
 			Py_DECREF(attr);
 			Py_DECREF(ret);
+			Py_XDECREF(intype);
 			return NULL;
 		}
 		for (i=0; i<n; i++) {
@@ -5691,7 +5691,8 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 	if (swap) {
 		PyObject *tmp;
                 tmp = PyArray_Byteswap(ret, TRUE);
-		if (tmp==NULL) {Py_DECREF(ret); return NULL;}
+		if (tmp==NULL) {Py_DECREF(ret); 
+			Py_XDECREF(intype); return NULL;}
 		Py_DECREF(tmp);
 	}
 
@@ -5701,12 +5702,14 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 	return r;
 
  fail:
+	Py_XDECREF(intype);
 	Py_XDECREF(attr);
 	Py_XDECREF(shape);
 	Py_XDECREF(tstr);
 	return NULL;
 }
 
+/* steals a reference to typecode */
 static PyObject *
 array_fromattr(PyObject *op, PyArray_Descr *typecode, int flags) 
 {
@@ -5726,12 +5729,13 @@ array_fromattr(PyObject *op, PyArray_Descr *typecode, int flags)
 		}
 		new = PyObject_CallMethod(op, "__array__", "N", obj);
         }
-        if (new == NULL) return NULL;
+        if (new == NULL) {Py_XDECREF(typecode); return NULL;}
         if (!PyArray_Check(new)) {
                 PyErr_SetString(PyExc_ValueError, 
                                 "object __array__ method not "  \
                                 "producing an array");
                 Py_DECREF(new);
+		Py_DECREF(typecode);
                 return NULL;
         }
         r = array_fromarray((PyArrayObject *)new, typecode, flags);
@@ -5819,6 +5823,7 @@ array_fromobject(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return r;
 }
 
+/* new reference -- accepts NULL for mintype*/
 static PyArray_Descr *
 PyArray_DescrFromObject(PyObject *op, PyArray_Descr *mintype)
 {
@@ -5880,7 +5885,7 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
 */
 
 
-/* steals a reference to descr */
+/* steals a reference to descr -- accepts NULL */
 static PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *descr, int min_depth, 
 		int max_depth, int requires) 
@@ -6014,6 +6019,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
         }
 }
 
+/* leaves reference count alone --- cannot be NULL*/
 static Bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
@@ -6322,6 +6328,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 
 	indtype = PyArray_DescrFromType(PyArray_INTP);
 	if (PyArray_IsScalar(ind, Integer) || PyList_Check(ind)) {
+		Py_INCREF(indtype);
 		obj = PyArray_FromAny(ind, indtype, 0, 0, FORCECAST);
 	}
 	else {
@@ -6333,6 +6340,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		/* Check for Boolean object */
 		if (PyArray_TYPE(obj)==PyArray_BOOL) {
 			r = iter_subscript_Bool(self, (PyArrayObject *)obj);
+			Py_DECREF(indtype);
 		} 
 		/* Check for integer array */
 		else if (PyArray_ISINTEGER(obj)) {
@@ -6352,6 +6360,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		Py_DECREF(obj);
 		return r;
 	}
+	else Py_DECREF(indtype);
 
 	PyErr_SetString(PyExc_IndexError, "unsupported iterator index");
 
@@ -6470,6 +6479,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	type = self->ao->descr;
 	itemsize = type->elsize;
 	
+	Py_INCREF(type);
 	arrval = PyArray_FromAny(val, type, 0, 0, 0);
 	if (arrval==NULL) return -1;
 	val_it = (PyArrayIterObject *)PyArray_IterNew(arrval);
@@ -6528,6 +6538,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	if (PyArray_IsScalar(ind, Integer))
 		obj = PyArray_FromScalar(ind, indtype);
 	else if (PyList_Check(ind)) {
+		Py_INCREF(indtype);
 		obj = PyArray_FromAny(ind, indtype, 0, 0, FORCECAST);
 	}
 	else {
@@ -6546,6 +6557,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 		/* Check for integer array */
 		else if (PyArray_ISINTEGER(obj)) {
 			PyObject *new;
+			Py_INCREF(indtype);
 			new = PyArray_FromAny(obj, indtype, 0, 0, 
 					      FORCECAST | BEHAVED_FLAGS);
 			Py_DECREF(obj);
@@ -7124,7 +7136,6 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
 	intp *dptr[MAX_DIMS];
 
 	typecode=PyArray_DescrFromType(PyArray_BOOL);
-	
 	ba = (PyArrayObject *)PyArray_FromAny(myBool, typecode, 0, 0, 
 					      CARRAY_FLAGS);
 	if (ba == NULL) return -1;
@@ -7267,8 +7278,8 @@ PyArray_MapIterNew(PyObject *indexobj)
 	}
 
 	else if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
-		indtype = PyArray_DescrFromType(PyArray_INT);
 		mit->numiter = 1;
+		indtype = PyArray_DescrFromType(PyArray_INT);
 		arr = PyArray_FromAny(indexobj, indtype, 0, 0, FORCECAST);
 		if (arr == NULL) goto fail;
 		mit->iters[0] = (PyArrayIterObject *)PyArray_IterNew(arr);
@@ -7692,12 +7703,15 @@ PyArray_DescrNewFromType(int type_num)
 /** There are some statically-defined PyArray_Descr objects corresponding
     to the basic built-in types.  
     These can and should be DECREF'd and INCREF'd as appropriate, anyway.
+    If a mistake is made in reference counting, deallocation on these 
+    builtins will be attempted leading to problems. 
 
     This let's us deal with all PyArray_Descr objects using reference
     counting (regardless of whether they are statically or dynamically 
     allocated). 
 **/
 
+/* base cannot be NULL */
 static PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base)
 {
