@@ -457,9 +457,13 @@ multiapi_list = [
     """,
      'TypestrConvert', 'int, int', 'int'),
 
-    (r"""Get typenum from an object -- a converter function
+    (r"""Get typenum from an object -- None goes to &LONG_descr
     """,
      'DescrConverter','PyObject *, PyArray_Descr **', 'int'),
+
+    (r"""Get typenum from an object -- None goes to NULL
+    """,
+     'DescrConverter2','PyObject *, PyArray_Descr **', 'int'),
 
     (r"""Get intp chunk from sequence
     """,

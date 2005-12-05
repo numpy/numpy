@@ -267,6 +267,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     avalscast = (PyArrayObject *)PyArray_Cast(avals, ainput->descr->type_num);
     if (avalscast == NULL) goto fail;
     Py_DECREF(avals); 
+    avals = NULL;
 
     numvals = PyArray_SIZE(avalscast);
     nd = ainput->nd;
@@ -276,6 +277,8 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     vptr = avalscast->data;
     delsize = avalscast->descr->elsize;
     zero = PyArray_Zero(amask);
+    if (zero == NULL) 
+	    goto fail;
     objarray = (ainput->descr->type_num == PyArray_OBJECT);
   
     /* Handle zero-dimensional case separately */

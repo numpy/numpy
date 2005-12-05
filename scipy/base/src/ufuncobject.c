@@ -2233,7 +2233,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	PyObject *op, *res=NULL;
 	PyObject *obj_ind;        
 	PyArrayObject *indices = NULL;
-	PyArray_Descr *otype;
+	PyArray_Descr *otype=NULL;
 	static char *kwlist1[] = {"array", "axis", "rtype", NULL};
 	static char *kwlist2[] = {"array", "indices", "axis", "rtype", NULL}; 
         static char *_reduce_type[] = {"reduce", "accumulate", \
@@ -2289,7 +2289,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         }
 
         /* Check to see that type (and otype) is not FLEXIBLE */
-	if (PyArray_ISFLEXIBLE(mp) || PyTypeNum_ISFLEXIBLE(otype->type_num)) {
+	if (PyArray_ISFLEXIBLE(mp) || (otype && PyTypeNum_ISFLEXIBLE(otype->type_num))) {
                 PyErr_Format(PyExc_TypeError, 
 			     "cannot perform %s with flexible type",
                              _reduce_type[operation]);

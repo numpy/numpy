@@ -3660,8 +3660,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                          &swapped, &fortran)) 
 		goto fail;
 	
-        if (descr == NULL) descr = PyArray_DescrFromType(PyArray_DOUBLE);
-	
 	type_num = descr->type_num;
 	itemsize = descr->elsize;	
 
@@ -4795,7 +4793,6 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         PyObject *ip;
 	PyArray_Descr *chktype=NULL;
 	PyArray_Descr *outtype;
-	PyArray_Descr *newtype;
 	
 	if (minitype == NULL) 
 		minitype = PyArray_DescrFromType(PyArray_BOOL);
@@ -4887,6 +4884,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 			minitype = PyArray_DescrFromType(PyArray_INTP);
 		}
                 while (--l >= 0) {
+			PyArray_Descr *newtype;
                         ip = PySequence_GetItem(op, l);
                         if (ip==NULL) {
 				PyErr_Clear(); 
@@ -4894,10 +4892,13 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 			}
 			chktype = _array_find_type(ip, minitype, max-1);
 			newtype = _array_small_type(chktype, minitype);
+			Py_DECREF(minitype);
+			minitype = newtype;
 			Py_DECREF(chktype);
                         Py_DECREF(ip);
                 }
-		chktype = newtype;
+		chktype = minitype;
+		Py_INCREF(minitype);
 		goto finish;
         }
 	
@@ -5839,9 +5840,12 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
 	PyArray_Descr *outtype;
 	int ret;
 
+	intype = PyArray_DescrFromType(minimum_type);
+	if (intype == NULL) PyErr_Clear();
 	outtype = _array_find_type(op, intype, MAX_DIMS);
 	ret = outtype->type_num;
 	Py_DECREF(outtype);
+	Py_DECREF(intype);
 	return ret;
 }
 
@@ -7722,10 +7726,10 @@ PyArray_DescrNew(PyArray_Descr *base)
 	new = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
 	if (new == NULL) return NULL;
 	/* Don't copy PyObject_HEAD part */
-	memcpy(((char *)new+offsetof(PyArray_Descr, typeobj)),
-	       ((char *)base+offsetof(PyArray_Descr, typeobj)),
+	memcpy((char *)new+sizeof(PyObject),
+	       (char *)base+sizeof(PyObject),
 	       sizeof(PyArray_Descr)-sizeof(PyObject));
-
+		
 	/* Make sure to reset if this came from builtin
 	   type 
 	*/

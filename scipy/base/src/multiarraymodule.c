@@ -2754,6 +2754,17 @@ _convert_from_obj(PyObject *obj)
 	return NULL;
 }
 
+
+static int
+PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
+{
+	if (obj == Py_None) {
+		*at = NULL;
+		return PY_SUCCEED;
+	}
+	else return PyArray_DescrConverter(obj, at);
+}
+
 /* This function takes a Python object representing a type and converts it 
    to a the correct PyArray_Descr * structure to describe the type.
    
@@ -2961,7 +2972,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	int flags=0;
 
 	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&", kwd, &op, 
-					PyArray_DescrConverter,
+					PyArray_DescrConverter2,
                                         &type, 
 					PyArray_BoolConverter, &copy, 
 					PyArray_BoolConverter, &fortran,
@@ -3022,6 +3033,7 @@ PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 {
 	PyArrayObject *ret;
         
+	if (!type) type = PyArray_DescrFromType(PyArray_LONG);
 	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
 						    type, nd, dims, 
 						    NULL, NULL,
@@ -3035,14 +3047,14 @@ PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 }
 
 
-static char doc_empty[] = "empty((d1,...,dn),dtype=intp,fortran=0) will return a new array\n of shape (d1,...,dn) and given type with all its entries uninitialized. This can be faster than zeros.";
+static char doc_empty[] = "empty((d1,...,dn),dtype=int,fortran=0) will return a new array\n of shape (d1,...,dn) and given type with all its entries uninitialized. This can be faster than zeros.";
 
 static PyObject *
 array_empty(PyObject *ignored, PyObject *args, PyObject *kwds) 
 {
         
 	static char *kwlist[] = {"shape","dtype","fortran",NULL};
-	PyArray_Descr *typecode;
+	PyArray_Descr *typecode=NULL;
         PyArray_Dims shape = {NULL, 0};
 	Bool fortran = FALSE;	
         PyObject *ret=NULL;
@@ -3147,6 +3159,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 	PyArrayObject *ret;
 	intp n;
 
+	if (!type) type = PyArray_DescrFromType(PyArray_LONG);
 	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
 						    type,
 						    nd, dims, 
@@ -3167,14 +3180,14 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 
 }
 
-static char doc_zeros[] = "zeros((d1,...,dn),dtype=intp,fortran=0) will return a new array of shape (d1,...,dn) and type typecode with all it's entries initialized to zero.";
+static char doc_zeros[] = "zeros((d1,...,dn),dtype=int,fortran=0) will return a new array of shape (d1,...,dn) and type typecode with all it's entries initialized to zero.";
 
 
 static PyObject *
 array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds) 
 {
 	static char *kwlist[] = {"shape","dtype","fortran",NULL};
-	PyArray_Descr *typecode;
+	PyArray_Descr *typecode=NULL;
         PyArray_Dims shape = {NULL, 0};
 	Bool fortran = FALSE;	
         PyObject *ret=NULL;
@@ -3279,7 +3292,7 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 	longlong nin=-1;
 	int s;
 	static char *kwlist[] = {"string", "dtype", "count", "swap",NULL};
-	PyArray_Descr *descr;
+	PyArray_Descr *descr=NULL;
 	int swapped=FALSE;
 
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "s#|O&LO&", kwlist, 
@@ -3456,7 +3469,7 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 	char *mode=NULL;
 	longlong nin=-1;
 	static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
-	PyArray_Descr *type;
+	PyArray_Descr *type=NULL;
 	
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&Ls", kwlist, 
 					 &file,
@@ -3604,7 +3617,7 @@ array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
 	longlong nin=-1, offset=0;
 	static char *kwlist[] = {"buffer", "dtype", "count", 
 				 "swap", NULL};
-	PyArray_Descr *type;
+	PyArray_Descr *type=NULL;
 	int swapped=0;
 
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&LLi", kwlist, 
@@ -3731,7 +3744,7 @@ array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 	PyObject *o_start=NULL, *o_stop=Py_None, *o_step=NULL;
 	static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
 	double start, stop, step;
-	PyArray_Descr *typecode;
+	PyArray_Descr *typecode=NULL;
 	int type_num;
 	int deftype = PyArray_LONG;
 	
@@ -3922,8 +3935,8 @@ static char doc_can_cast_safely[] = \
 static PyObject *
 array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
 {
-	PyArray_Descr *d1;
-	PyArray_Descr *d2;
+	PyArray_Descr *d1=NULL;
+	PyArray_Descr *d2=NULL;
 	Bool ret;
 	PyObject *retobj;
 	static char *kwlist[] = {"from", "to", NULL};

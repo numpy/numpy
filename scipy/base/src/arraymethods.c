@@ -1161,7 +1161,7 @@ array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
 					 PyArray_AxisConverter, 
-					 &axis, PyArray_DescrConverter,
+					 &axis, PyArray_DescrConverter2,
 					 &rtype)) return NULL;
 
 	return PyArray_Mean(self, axis, _CHKTYPENUM(rtype));
@@ -1200,7 +1200,7 @@ array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
 					 PyArray_AxisConverter, 
-					 &axis, PyArray_DescrConverter,
+					 &axis, PyArray_DescrConverter2,
 					 &rtype)) return NULL;
 	
 	return PyArray_Sum(self, axis, _CHKTYPENUM(rtype));
@@ -1218,7 +1218,7 @@ array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
 					 PyArray_AxisConverter, 
-					 &axis, PyArray_DescrConverter,
+					 &axis, PyArray_DescrConverter2,
 					 &rtype)) return NULL;
 	
 	return PyArray_CumSum(self, axis, _CHKTYPENUM(rtype));
@@ -1235,7 +1235,7 @@ array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
 					 PyArray_AxisConverter, 
-					 &axis, PyArray_DescrConverter,
+					 &axis, PyArray_DescrConverter2,
 					 &rtype)) return NULL;
 	
 	return PyArray_Prod(self, axis, _CHKTYPENUM(rtype));
@@ -1253,7 +1253,7 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
 					 PyArray_AxisConverter, 
-					 &axis, PyArray_DescrConverter,
+					 &axis, PyArray_DescrConverter2,
 					 &rtype)) return NULL;
 	
 	return PyArray_CumProd(self, axis, _CHKTYPENUM(rtype));
@@ -1298,7 +1298,7 @@ array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
 					 PyArray_AxisConverter, 
-					 &axis, PyArray_DescrConverter,
+					 &axis, PyArray_DescrConverter2,
 					 &rtype)) return NULL;
 	
 	return PyArray_Std(self, axis, _CHKTYPENUM(rtype), 0);
@@ -1315,7 +1315,7 @@ array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
 					 PyArray_AxisConverter, 
-					 &axis, PyArray_DescrConverter,
+					 &axis, PyArray_DescrConverter2,
 					 &rtype)) return NULL;
 	
 	return PyArray_Std(self, axis, _CHKTYPENUM(rtype), 1);
@@ -1357,12 +1357,12 @@ static PyObject *
 array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis1=0, axis2=1, offset=0;
-	PyArray_Descr *rtype;
+	PyArray_Descr *rtype=NULL;
 	static char *kwlist[] = {"offset", "axis1", "axis2", "rtype", NULL};
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iiiO&", kwlist, 
 					 &offset, &axis1, &axis2,
-					 PyArray_DescrConverter, &rtype))
+					 PyArray_DescrConverter2, &rtype))
 		return NULL;
 	
 	return _ARET(PyArray_Trace(self, offset, axis1, axis2, 
