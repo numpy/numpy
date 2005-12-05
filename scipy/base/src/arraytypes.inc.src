@@ -1606,7 +1606,11 @@ PyArray_DescrFromType(int type) {
 		ret = _builtin_descrs[type];
 	}
 	else if (type == PyArray_NOTYPE) {
-		ret = NULL;
+		/* This needs to not raise an error so
+		   that PyArray_DescrFromType(PyArray_NOTYPE)
+		   works for backwards-compatible C-API 
+		*/		
+		return NULL;
 	}
 	else if PyTypeNum_ISUSERDEF(type) {
 		ret = userdescrs[type-PyArray_USERDEF];

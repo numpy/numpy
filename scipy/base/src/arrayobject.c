@@ -3626,7 +3626,8 @@ static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds) 
 {
 	static char *kwlist[] = {"shape", "dtype", "buffer", 
-				 "offset", "strides", "swap", "fortran", NULL};
+				 "offset", "strides", "swap", 
+				 "fortran", NULL};
 	PyArray_Descr *descr=NULL;
 	int type_num;
 	int itemsize;

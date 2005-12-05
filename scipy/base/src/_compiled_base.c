@@ -222,7 +222,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     */
     PyObject *mask=NULL, *vals=NULL;
     PyArrayObject *ainput=NULL, *amask=NULL, *avals=NULL, 
-	*avalscast=NULL, *tmp=NULL;
+	    *tmp=NULL;
     int numvals, totmask, sameshape;
     char *input_data, *mptr, *vptr, *zero=NULL;
     int melsize, delsize, copied, nd;
@@ -262,20 +262,16 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 	goto fail;
     }
 
-    avals = (PyArrayObject *)PyArray_FromObject(vals, PyArray_NOTYPE, 0, 1);
+    avals = (PyArrayObject *)PyArray_FromObject(vals, ainput->descr->type_num, 0, 1);
     if (avals == NULL) goto fail;
-    avalscast = (PyArrayObject *)PyArray_Cast(avals, ainput->descr->type_num);
-    if (avalscast == NULL) goto fail;
-    Py_DECREF(avals); 
-    avals = NULL;
 
-    numvals = PyArray_SIZE(avalscast);
+    numvals = PyArray_SIZE(avals);
     nd = ainput->nd;
     input_data = ainput->data;
     mptr = amask->data;
     melsize = amask->descr->elsize;
-    vptr = avalscast->data;
-    delsize = avalscast->descr->elsize;
+    vptr = avals->data;
+    delsize = avals->descr->elsize;
     zero = PyArray_Zero(amask);
     if (zero == NULL) 
 	    goto fail;
@@ -289,7 +285,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 	    if (objarray) Py_INCREF(*((PyObject **)vptr));
 	}
 	Py_DECREF(amask);
-	Py_DECREF(avalscast);
+	Py_DECREF(avals);
 	PyDataMem_FREE(zero);
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -321,13 +317,13 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 	    vptr += delsize;
 	    copied += 1;
 	    /* If we move past value data.  Reset */
-	    if (copied >= numvals) vptr = avalscast->data;
+	    if (copied >= numvals) vptr = avals->data;
 	}
 	mptr += melsize;
     }
 
     Py_DECREF(amask);
-    Py_DECREF(avalscast);
+    Py_DECREF(avals);
     PyDataMem_FREE(zero);
     Py_DECREF(ainput);
     Py_INCREF(Py_None);
@@ -338,7 +334,6 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     Py_XDECREF(ainput);
     Py_XDECREF(amask);
     Py_XDECREF(avals);
-    Py_XDECREF(avalscast);
     return NULL;
 }
 
