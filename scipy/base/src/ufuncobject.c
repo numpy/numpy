@@ -554,6 +554,9 @@ _lowest_type(char intype)
         }
 }
 
+/* Called to determine coercion
+ */
+
 static int 
 _cancoerce(char thistype, char neededtype, char scalar) 
 {
@@ -770,8 +773,8 @@ _create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
 	int i;
 	intp size;
 	PyObject *new;
-	PyArray_Typecode ntype = {PyArray_NOTYPE, 0, 0};
-	PyArray_Typecode atype = {PyArray_NOTYPE, 0, 0};
+	PyArray_Descr *ntype; 
+	PyArray_Descr *atype;
 
 	for (i=0; i<nin; i++) {
 		size = PyArray_SIZE(mps[i]);
@@ -780,22 +783,19 @@ _create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
 		   mps[i] for later checking....
 		*/
 		if (PyArray_TYPE(mps[i]) != arg_types[i]) {
-			ntype.type_num = PyArray_TYPE(mps[i]);
-			ntype.itemsize = PyArray_ITEMSIZE(mps[i]);
-			atype.type_num = arg_types[i];
-			atype.itemsize = \
-				PyArray_DescrFromType(arg_types[i])->elsize;
-			if (PyArray_EquivalentTypes(&atype, &ntype)) {
-				arg_types[i] = PyArray_TYPE(mps[i]);
+			ntype = mps[i]->descr;
+			atype = PyArray_DescrFromType(arg_types[i]);
+			if (PyArray_EquivalentTypes(atype, ntype)) {
+				arg_types[i] = ntype->type_num;
 			}
+			Py_DECREF(atype);
 		}
 		if (size < loop->bufsize) {
 			if (!(PyArray_ISBEHAVED_RO(mps[i])) ||		\
 			    PyArray_TYPE(mps[i]) != arg_types[i]) {
-				ntype.type_num = arg_types[i];
-				ntype.itemsize = 0;
+				ntype = PyArray_DescrFromType(arg_types[i]);
 				new = PyArray_FromAny((PyObject *)mps[i], 
-						      &ntype, 0, 0,
+						      ntype, 0, 0,
 						      FORCECAST |	\
 						      BEHAVED_FLAGS_RO);
 				if (new == NULL) return -1;
@@ -973,7 +973,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         /* construct any missing return arrays and make output iterators */
         
         for (i=self->nin; i<self->nargs; i++) {
-		PyArray_Typecode ntype = {PyArray_NOTYPE, 0, 0};
+		PyArray_Descr *ntype;
 
                 if (mps[i] == NULL) {
                         mps[i] = (PyArrayObject *)PyArray_New(subtype,
@@ -990,16 +990,13 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		*/
 		else {
   		  if (mps[i]->descr->type_num != arg_types[i]) {
-			  PyArray_Typecode atype = {PyArray_NOTYPE, 0, 
-							  0};
-			  ntype.type_num = PyArray_TYPE(mps[i]);
-			  ntype.itemsize = PyArray_ITEMSIZE(mps[i]);
-			  atype.type_num = arg_types[i];
-			  atype.itemsize =				\
-				  PyArray_DescrFromType(arg_types[i])->elsize;
-			  if (PyArray_EquivalentTypes(&atype, &ntype)) {
-				  arg_types[i] = PyArray_TYPE(mps[i]);
+			  PyArray_Descr *atype;
+			  ntype = mps[i]->descr;
+			  atype = PyArray_DescrFromType(arg_types[i]);
+			  if (PyArray_EquivalentTypes(atype, ntype)) {
+				  arg_types[i] = ntype->type_num;
 			  }
+			  Py_DECREF(atype);
 		  }
 		  
 		/* still not the same -- or will we have to use buffers?*/
@@ -1010,10 +1007,9 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 				  /* Copy the array to a temporary copy 
 				     and set the UPDATEIFCOPY flag
 				  */
-				  ntype.type_num = arg_types[i];
-				  ntype.itemsize = 0;
+				  ntype = PyArray_DescrFromType(arg_types[i]);
 				  new = PyArray_FromAny((PyObject *)mps[i],
-							&ntype, 0, 0,
+							ntype, 0, 0,
 							FORCECAST | 
 							BEHAVED_FLAGS_RO |
 							UPDATEIFCOPY);
@@ -1043,13 +1039,14 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 	cnt = cntcast = 0; /* keeps track of bytes to allocate */
 	maxsize = 0;
         for (i=0; i<self->nargs; i++) {
-		cnt += mps[i]->itemsize;
+		cnt += mps[i]->descr->elsize;
                 if (arg_types[i] != mps[i]->descr->type_num) {
 			PyArray_Descr *descr;
 
                         loop->meth = BUFFER_UFUNCLOOP;
 			descr = PyArray_DescrFromType(arg_types[i]);
 			cntcast += descr->elsize;
+			Py_DECREF(descr);
                         if (i < self->nin) {
                                 loop->cast[i] = \
 					mps[i]->descr->cast[arg_types[i]];
@@ -1141,7 +1138,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         }
         else if (loop->meth == BUFFER_UFUNCLOOP) {
                 for (i=0; i<self->nargs; i++) {
-			loop->steps[i] = mps[i]->itemsize;  
+			loop->steps[i] = mps[i]->descr->elsize;  
 		}
         }
 	else { /* uniformly-strided case ONE_UFUNCLOOP */
@@ -1168,15 +1165,17 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		for (i=0; i<self->nargs; i++) {
 			if (i > 0)
 				loop->buffer[i] = loop->buffer[i-1] + \
-					loop->bufsize * mps[i-1]->itemsize;
+					loop->bufsize * \
+					mps[i-1]->descr->elsize;
 			/* fprintf(stderr, "buffer[%d] = %p\n", i, loop->buffer[i]); */
 			if (loop->cast[i]) {
+				PyArray_Descr *descr;
 				loop->castbuf[i] = castptr + 
 					loop->bufsize*oldsize;
 				/* fprintf(stderr, "castbuf[%d] = %p\n", i, loop->castbuf[i]); */
-#define _PyD PyArray_DescrFromType
-				oldsize = _PyD(arg_types[i])->elsize;
-#undef _PyD
+				descr = PyArray_DescrFromType(arg_types[i]);
+				oldsize = descr->elsize;
+				Py_DECREF(descr);
 				loop->bufptr[i] = loop->castbuf[i];
 				castptr = loop->castbuf[i];
 				loop->steps[i] = oldsize;
@@ -1399,7 +1398,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		
 		for (i=0; i<self->nargs; i++) {
 			copyswapn[i] = mps[i]->descr->copyswapn;
-			mpselsize[i] = mps[i]->itemsize;
+			mpselsize[i] = mps[i]->descr->elsize;
 			pyobject[i] = (loop->obj && \
                                        (mps[i]->descr->type_num == PyArray_OBJECT));
 		}
@@ -1509,8 +1508,8 @@ static PyArrayObject *
 _getidentity(PyUFuncObject *self, int otype, char *str)
 {
         PyObject *obj, *arr;
-        PyArray_Typecode typecode = {otype, 0, 0};
-
+        PyArray_Descr *typecode;
+	
         if (self->identity == PyUFunc_None) {
                 PyErr_Format(PyExc_ValueError, 
                              "zero-size array to ufunc.%s "      \
@@ -1522,8 +1521,9 @@ _getidentity(PyUFuncObject *self, int otype, char *str)
         } else {
                 obj = PyInt_FromLong((long) 0);
         }
-	
-        arr = PyArray_FromAny(obj, &typecode, 0, 0, CARRAY_FLAGS);
+
+	typecode = PyArray_DescrFromType(otype); 
+        arr = PyArray_FromAny(obj, typecode, 0, 0, CARRAY_FLAGS);
         Py_DECREF(obj);
         return (PyArrayObject *)arr;
 }
@@ -1533,15 +1533,16 @@ _create_reduce_copy(PyUFuncReduceObject *loop, PyArrayObject **arr, int rtype)
 {
 	intp maxsize;
 	PyObject *new;
-	PyArray_Typecode ntype = {rtype, 0, 0};
+	PyArray_Descr *ntype;
 	
 	maxsize = PyArray_SIZE(*arr);
 	
 	if (maxsize < loop->bufsize) {
 		if (!(PyArray_ISBEHAVED_RO(*arr)) ||	\
 		    PyArray_TYPE(*arr) != rtype) {
+			ntype = PyArray_DescrFromType(rtype);
 			new = PyArray_FromAny((PyObject *)(*arr), 
-					      &ntype, 0, 0,
+					      ntype, 0, 0,
 					      FORCECAST |		\
 					      BEHAVED_FLAGS_RO);
 			if (new == NULL) return -1;
@@ -1646,15 +1647,15 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
         if (loop->meth == ZERODIM_REDUCELOOP) {
                 idarr = _getidentity(self, otype, str);
                 if (idarr == NULL) goto fail;
-                if (idarr->itemsize > UFUNC_MAXIDENTITY) {
+                if (idarr->descr->elsize > UFUNC_MAXIDENTITY) {
                         PyErr_Format(PyExc_RuntimeError, 
 				     "UFUNC_MAXIDENTITY (%d)"		\
                                      " is too small (needs to be at least %d)",
-                                     UFUNC_MAXIDENTITY, idarr->itemsize);
+                                     UFUNC_MAXIDENTITY, idarr->descr->elsize);
                         Py_DECREF(idarr);
                         goto fail;
                 }
-                memcpy(loop->idptr, idarr->data, idarr->itemsize);
+                memcpy(loop->idptr, idarr->data, idarr->descr->elsize);
                 Py_DECREF(idarr);
         }
 	
@@ -1692,8 +1693,8 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 		break;
 	}
         if (loop->ret == NULL) goto fail;
-        loop->insize = aar->itemsize;
-        loop->outsize = loop->ret->itemsize;
+        loop->insize = aar->descr->elsize;
+        loop->outsize = loop->ret->descr->elsize;
         loop->bufptr[1] = loop->ret->data;
 
 	if (loop->meth == ZERODIM_REDUCELOOP) {
@@ -1750,12 +1751,12 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 		loop->steps[0] = loop->outsize;
                 if (otype != aar->descr->type_num) {
 			_size=loop->bufsize*(loop->outsize +		\
-					     aar->itemsize);
+					     aar->descr->elsize);
                         loop->buffer = (char *)malloc(_size);
                         if (loop->buffer == NULL) goto fail;
 			if (loop->obj) memset(loop->buffer, 0, _size);
                         loop->castbuf = loop->buffer + \
-                                loop->bufsize*aar->itemsize;
+                                loop->bufsize*aar->descr->elsize;
                         loop->bufptr[0] = loop->castbuf;     
                         loop->cast = aar->descr->cast[otype];
                 }
@@ -2232,8 +2233,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	PyObject *op, *res=NULL;
 	PyObject *obj_ind;        
 	PyArrayObject *indices = NULL;
-	PyArray_Typecode otype= {PyArray_NOTYPE, 0, 0};
-        PyArray_Typecode indtype = {PyArray_INTP, 0, 0};
+	PyArray_Descr *otype=NULL;
 	static char *kwlist1[] = {"array", "axis", "rtype", NULL};
 	static char *kwlist2[] = {"array", "indices", "axis", "rtype", NULL}; 
         static char *_reduce_type[] = {"reduce", "accumulate", \
@@ -2258,19 +2258,21 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	}
 
 	if (operation == UFUNC_REDUCEAT) {
+		PyArray_Descr *indtype;
+		indtype = PyArray_DescrFromType(PyArray_INTP);
 		if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iO&", kwlist2, 
 						&op, &obj_ind, &axis, 
-						PyArray_TypecodeConverter, 
+						PyArray_DescrConverter, 
 						&otype)) return NULL;
-                indices = (PyArrayObject *)PyArray_FromAny(obj_ind, &indtype, 
+                indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype, 
 							   1, 1, CARRAY_FLAGS);
                 if (indices == NULL) return NULL;
-
+		Py_DECREF(indtype);		
 	}
 	else {
 		if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&", kwlist1,
 						&op, &axis, 
-						PyArray_TypecodeConverter, 
+						PyArray_DescrConverter, 
 						&otype)) return NULL;
 	}
 	
@@ -2287,7 +2289,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         }
 
         /* Check to see that type (and otype) is not FLEXIBLE */
-	if (PyArray_ISFLEXIBLE(mp) || PyTypeNum_ISFLEXIBLE(otype.type_num)) {
+	if (PyArray_ISFLEXIBLE(mp) || (otype && PyTypeNum_ISFLEXIBLE(otype->type_num))) {
                 PyErr_Format(PyExc_TypeError, 
 			     "cannot perform %s with flexible type",
                              _reduce_type[operation]);
@@ -2303,43 +2305,42 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	}
 
 	/* Get default type to reduce over if not given */
-        if (otype.type_num == PyArray_NOTYPE) {	
+        if (otype == NULL) {
 		/* For integer types --- makes sure at 
 		   least a long is used */
 		int typenum = PyArray_TYPE(mp);
 		if (PyTypeNum_ISINTEGER(typenum) &&	\
-		    (mp->itemsize < sizeof(long))) {
+		    (mp->descr->elsize < sizeof(long))) {
 			if (PyTypeNum_ISUNSIGNED(typenum))
-				otype.type_num = PyArray_ULONG;
+				typenum = PyArray_ULONG;
 			else
-				otype.type_num = PyArray_LONG;
+				typenum = PyArray_LONG;
 		}
 		else if (PyTypeNum_ISBOOL(typenum) && \
 			 ((strcmp(self->name,"add")==0) ||	\
 			  (strcmp(self->name,"multiply")==0))) {
-			otype.type_num = PyArray_LONG;
+			typenum = PyArray_LONG;
 		}
-		else {
-			otype.type_num = typenum;
-		}
+		otype = PyArray_DescrFromType(typenum);
 	}
 
         switch(operation) {
         case UFUNC_REDUCE:
                 ret = (PyArrayObject *)PyUFunc_Reduce(self, mp, axis, 
-                                                      otype.type_num);
+                                                      otype->type_num);
 		break;
         case UFUNC_ACCUMULATE:
                 ret = (PyArrayObject *)PyUFunc_Accumulate(self, mp, axis, 
-                                                          otype.type_num);
+                                                          otype->type_num);
 		break;
         case UFUNC_REDUCEAT:
                 ret = (PyArrayObject *)PyUFunc_Reduceat(self, mp, indices, 
-                                                        axis, otype.type_num);
+                                                        axis, otype->type_num);
                 Py_DECREF(indices);
 		break;
         }
         Py_DECREF(mp);
+	Py_DECREF(otype);
 	if (ret==NULL) return NULL;
 	if (op->ob_type != ret->ob_type) {
 		res = PyObject_CallMethod(op, "__array_wrap__", "O", ret);
@@ -2649,15 +2650,18 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 			    PyUFuncGenericFunction function,
 			    void *data)
 {
-	PyArray_Descr *descr=PyArray_DescrFromType(usertype);
+	PyArray_Descr *descr;
     	PyObject *key, *cobj;
 	int ret;	
 	
+	descr=PyArray_DescrFromType(usertype);
 	if ((usertype < PyArray_USERDEF) || (descr==NULL)) {
 		PyErr_SetString(PyExc_TypeError, 
-				"cannot register typenumber");
+				"unknown type");
 		return -1;
 	}
+	Py_DECREF(descr);
+	
 	if (ufunc->userloops == NULL) {
 		ufunc->userloops = PyDict_New();
 	}
@@ -2850,7 +2854,16 @@ _makeargs(int num, char ltr, char *str)
 	return;
 }
 
-#define _typecharfromnum(num) (PyArray_DescrFromType((num))->type)
+static char
+_typecharfromnum(int num) {
+	PyArray_Descr *descr;
+	char ret;
+	
+	descr = PyArray_DescrFromType(num);
+	ret = descr->type;
+	Py_DECREF(descr);
+	return ret;
+} 
 
 static PyObject *
 ufunc_getattr(PyUFuncObject *self, char *name)

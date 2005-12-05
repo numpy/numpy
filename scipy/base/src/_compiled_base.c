@@ -90,13 +90,14 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
       *   histogram (list, weight) [i] is the sum of all weight [j]
       * where list [j] == i.                                              */
      /* self is not used */
-    PyArray_Typecode type = {PyArray_INTP, 0, 0};
+    PyArray_Descr *type;
     PyObject *list = NULL, *weight=Py_None ;
     PyObject *lst=NULL, *ans=NULL, *wts=NULL;
     intp *numbers, *ians, len , mxi, mni, ans_size;
     int i;
     double *weights , *dans;
     static char *kwlist[] = {"list", "weights", NULL};
+
 
     Py_Try(PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist,
 				       &list, &weight));
@@ -108,8 +109,9 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
     Py_Assert(numbers[mni] >= 0, 
 	      "irst argument of bincount must be non-negative");
     ans_size = numbers [mxi] + 1 ;
+    type = PyArray_DescrFromType(PyArray_INTP);
     if (weight == Py_None) {
-	Py_Try(ans = PyArray_Zeros(1, &ans_size, &type));
+	Py_Try(ans = PyArray_Zeros(1, &ans_size, type, 0));
 	ians = (intp *)(PyArray_DATA(ans));
 	for (i = 0 ; i < len ; i++)
 	    ians [numbers [i]] += 1 ;
@@ -121,8 +123,8 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
 	weights = (double *)PyArray_DATA (wts);
 	Py_Assert(PyArray_SIZE(wts) == len, "bincount: length of weights " \
 		  "does not match that of list");
-	type.type_num = PyArray_DOUBLE;
-	Py_Try(ans = PyArray_Zeros(1, &ans_size, &type));
+	type = PyArray_DescrFromType(PyArray_DOUBLE);
+	Py_Try(ans = PyArray_Zeros(1, &ans_size, type, 0));
 	dans = (double *)PyArray_DATA (ans);
 	for (i = 0 ; i < len ; i++) {
 	    dans[numbers[i]] += weights[i];
@@ -158,14 +160,15 @@ arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
     intp *iret;
     int m, i ;
     static char *kwlist[] = {"x", "bins", NULL};
-    PyArray_Typecode type = {PyArray_DOUBLE, sizeof(double), 0};
+    PyArray_Descr *type;
 
     Py_Try(PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, 
 				       &ox, &obins));
 
-    Py_Try(ax=PyArray_FromAny(ox, &type, 1, 1, CARRAY_FLAGS));
-    Py_Try(abins = PyArray_FromAny(obins, &type, 1, 1, CARRAY_FLAGS));
-
+    type = PyArray_DescrFromType(PyArray_DOUBLE);
+    Py_Try(ax=PyArray_FromAny(ox, type, 1, 1, CARRAY_FLAGS));
+    Py_Try(abins = PyArray_FromAny(obins, type, 1, 1, CARRAY_FLAGS));
+    
     lx = PyArray_SIZE(ax);
     dx = (double *)PyArray_DATA(ax);
     lbins = PyArray_SIZE(abins);
@@ -219,7 +222,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     */
     PyObject *mask=NULL, *vals=NULL;
     PyArrayObject *ainput=NULL, *amask=NULL, *avals=NULL, 
-	*avalscast=NULL, *tmp=NULL;
+	    *tmp=NULL;
     int numvals, totmask, sameshape;
     char *input_data, *mptr, *vptr, *zero=NULL;
     int melsize, delsize, copied, nd;
@@ -232,8 +235,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 				     PyArray_Converter, &ainput, 
 				     &mask, &vals))
             goto fail;
-    
-    
+        
     amask = (PyArrayObject *) PyArray_FROM_OF(mask, CARRAY_FLAGS);
     if (amask == NULL) goto fail;
     /* Cast an object array */
@@ -260,20 +262,19 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 	goto fail;
     }
 
-    avals = (PyArrayObject *)PyArray_FromObject(vals, PyArray_NOTYPE, 0, 1);
+    avals = (PyArrayObject *)PyArray_FromObject(vals, ainput->descr->type_num, 0, 1);
     if (avals == NULL) goto fail;
-    avalscast = (PyArrayObject *)PyArray_Cast(avals, ainput->descr->type_num);
-    if (avalscast == NULL) goto fail;
-    Py_DECREF(avals); 
 
-    numvals = PyArray_SIZE(avalscast);
+    numvals = PyArray_SIZE(avals);
     nd = ainput->nd;
     input_data = ainput->data;
     mptr = amask->data;
     melsize = amask->descr->elsize;
-    vptr = avalscast->data;
-    delsize = avalscast->descr->elsize;
+    vptr = avals->data;
+    delsize = avals->descr->elsize;
     zero = PyArray_Zero(amask);
+    if (zero == NULL) 
+	    goto fail;
     objarray = (ainput->descr->type_num == PyArray_OBJECT);
   
     /* Handle zero-dimensional case separately */
@@ -284,7 +285,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 	    if (objarray) Py_INCREF(*((PyObject **)vptr));
 	}
 	Py_DECREF(amask);
-	Py_DECREF(avalscast);
+	Py_DECREF(avals);
 	PyDataMem_FREE(zero);
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -316,13 +317,13 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 	    vptr += delsize;
 	    copied += 1;
 	    /* If we move past value data.  Reset */
-	    if (copied >= numvals) vptr = avalscast->data;
+	    if (copied >= numvals) vptr = avals->data;
 	}
 	mptr += melsize;
     }
 
     Py_DECREF(amask);
-    Py_DECREF(avalscast);
+    Py_DECREF(avals);
     PyDataMem_FREE(zero);
     Py_DECREF(ainput);
     Py_INCREF(Py_None);
@@ -333,7 +334,6 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     Py_XDECREF(ainput);
     Py_XDECREF(amask);
     Py_XDECREF(avals);
-    Py_XDECREF(avalscast);
     return NULL;
 }
 

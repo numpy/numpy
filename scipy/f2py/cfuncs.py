@@ -865,12 +865,11 @@ static int complex_double_from_pyobj(complex_double* v,PyObject *obj,const char 
 \t}
 \tif (PyArray_CheckScalar(obj)) { /* 0-dim array or still array scalar */
 \t\tPyObject *arr;
-\t\tPyArray_Typecode otype = {PyArray_CDOUBLE, sizeof(cdouble), 0};
 \t\tif (PyArray_Check(obj)) {
-\t\t\tarr = PyArray_CastToType((PyArrayObject *)obj, &otype);
+\t\t\tarr = PyArray_Cast((PyArrayObject *)obj, PyArray_CDOUBLE);
 \t\t}
 \t\telse {
-\t\t\tarr = PyArray_FromScalar(obj, &otype);
+\t\t\tarr = PyArray_FromScalar(obj, PyArray_DescrFromType(PyArray_CDOUBLE)));
 \t\t}
 \t\tif (arr==NULL) return 0;
 \t\t(*v).r = ((cdouble *)PyArray_DATA(arr))->real;

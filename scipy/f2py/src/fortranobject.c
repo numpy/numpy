@@ -625,10 +625,9 @@ PyArrayObject* array_from_pyobj(const int type_num,
   }
 
   {
-    PyArray_Typecode typecode = {type_num, 0, 0};
     F2PY_REPORT_ON_ARRAY_COPY_FROMANY;
     arr = (PyArrayObject *) \
-      PyArray_FromAny(obj,&typecode, 0,0,
+      PyArray_FromAny(obj,PyArray_DescrFromType(type_num), 0,0,
 		      ((intent & F2PY_INTENT_C)?CARRAY_FLAGS:FARRAY_FLAGS) \
                       | FORCECAST );
     if (arr==NULL)

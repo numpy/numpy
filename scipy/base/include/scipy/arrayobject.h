@@ -757,15 +757,31 @@ typedef void (PyArray_DotFunc)(void *, intp, void *, intp, void *, intp,
 typedef void (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
 typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
 
+typedef struct {
+        intp *ptr;
+        int len;
+} PyArray_Dims;
+
 
 typedef struct {
- 	PyTypeObject *typeobj;  /* the type object for this type */
+	PyObject_HEAD
+ 	PyTypeObject *typeobj;  /* the type object representing an 
+				   intance of this type */
 	char kind;              /* kind for this type */
-	char type;              /* character representing this type */
+	char type;              /* unique-character representing this type */
+	char byteorder;         /* '>' (big), '<' (little), '|' 
+				   (not-applicable), or '=' (native). */
 	int type_num;           /* number representing this type */
-	int elsize;             /* element size for this type -- 
-				   or 0 if variable */
+	int elsize;             /* element size for this type */
        	int alignment;          /* alignment needed for this type */
+	struct _arr_descr					\
+	*subarray;              /* Non-NULL if this type is
+				   is an array (C-contiguous)
+				   of some other type
+				*/
+	PyObject *fields;       /* The fields dictionary for this type */
+	                        /* For statically defined descr this
+				   is always Py_NotImplemented */
 
 	/* Functions to cast to all other standard types*/
 	PyArray_VectorUnaryFunc *cast[PyArray_NTYPES];
@@ -798,6 +814,11 @@ typedef struct {
 
 } PyArray_Descr;
 
+typedef struct _arr_descr {
+	PyArray_Descr *base;
+	PyObject *shape;       /* a tuple */
+} PyArray_ArrayDescr;
+
 
 typedef struct PyArrayObject {
 	PyObject_HEAD
@@ -816,27 +837,10 @@ typedef struct PyArrayObject {
 				   to-be-updated upon deletion of this one */
 	PyArray_Descr *descr;   /* Pointer to type structure */
 	int flags;              /* Flags describing array -- see below*/
-	int itemsize;           /* needed for Flexible size arrays:
-                                   CHAR, UNICODE, and VOID arrays
- 			         */ 
 	PyObject *weakreflist;  /* For weakreferences */
-
 } PyArrayObject;
 
-#define fortran fortran_  /* For some compilers */
-
-typedef struct {   /* Just the type_num and itemsize variables 
-		      for use in the TypeNum Converter function */
-	int type_num; /* The enumerated type number */
-	int itemsize; /* The itemsize desired (for flexible types) */
-	int fortran;  /* Set to 1 if fortran-defined strides is desired */
-} PyArray_Typecode;
-
-typedef struct {
-        intp *ptr;
-        int len;
-} PyArray_Dims;
-
+#define fortran fortran_        /* For some compilers */
 
 /* Mirrors buffer object to ptr */
 
@@ -897,6 +901,7 @@ typedef struct {
 #define DEFAULT_FLAGS CARRAY_FLAGS
 
 #define UPDATE_ALL_FLAGS CONTIGUOUS | FORTRAN | ALIGNED
+
 
 
 /*
@@ -971,9 +976,9 @@ typedef struct {
 }
 
 
-#define PyArray_ITER_NEXT(it) {				\
-	it->index++;					\
-	if (it->contiguous)  it->dataptr += it->ao->itemsize;	       \
+#define PyArray_ITER_NEXT(it) {						\
+	it->index++;						        \
+	if (it->contiguous)  it->dataptr += it->ao->descr->elsize;	\
 	else {								\
 		int _i_;						\
 		for (_i_ = it->nd_m1; _i_ >= 0; _i_--) {		\
@@ -1011,7 +1016,7 @@ typedef struct {
 		it->index = _lind_;					\
 		if (it->contiguous)					\
 			it->dataptr = it->ao->data + (ind) *		\
-				it->ao->itemsize;			\
+				it->ao->descr->elsize;			\
 		else {							\
 			it->dataptr = it->ao->data;			\
 			for (_i_ = 0; _i_<=it->nd_m1; _i_++) {		\
@@ -1129,6 +1134,7 @@ typedef struct {
 #define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || PyArray_CHKFLAGS(m, CONTIGUOUS) || \
 				 PyArray_CHKFLAGS(m, FORTRAN))
 #define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, FORTRAN) && (PyArray_NDIM(m) > 1))
+#define FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, FORTRAN) ? FORTRAN : 0))
 #define PyArray_DATA(obj) (((PyArrayObject *)(obj))->data)
 #define PyArray_DIMS(obj) (((PyArrayObject *)(obj))->dimensions)
 #define PyArray_STRIDES(obj) (((PyArrayObject *)(obj))->strides)
@@ -1137,7 +1143,7 @@ typedef struct {
 #define PyArray_BASE(obj) (((PyArrayObject *)(obj))->base)
 #define PyArray_DESCR(obj) (((PyArrayObject *)(obj))->descr)
 #define PyArray_FLAGS(obj) (((PyArrayObject *)(obj))->flags)
-#define PyArray_ITEMSIZE(obj) (((PyArrayObject *)(obj))->itemsize)
+#define PyArray_ITEMSIZE(obj) (((PyArrayObject *)(obj))->descr->elsize)
 #define PyArray_TYPE(obj) (((PyArrayObject *)(obj))->descr->type_num)
 #define PyArray_GETITEM(obj,itemptr)			\
 	((PyArrayObject *)(obj))->descr->getitem((char *)itemptr,	\
@@ -1180,9 +1186,8 @@ typedef struct {
 		                  (type == PyArray_BOOL) || \
 				  (type == PyArray_OBJECT ))
 
-#define PyTypeNum_ISFLEXIBLE(type) ((type==PyArray_STRING) || \
-				    (type==PyArray_UNICODE) ||	\
-				    (type==PyArray_VOID))
+#define PyTypeNum_ISFLEXIBLE(type) ((type>=PyArray_STRING) && \
+				    (type<=PyArray_VOID))
 
 #define PyTypeNum_ISUSERDEF(type) ((type >= PyArray_USERDEF) && \
 				   (type < PyArray_USERDEF+\
@@ -1229,10 +1234,13 @@ typedef struct {
 	   They are available as import_array()
          */
 
+
 #include "__multiarray_api.h"
 
 
         /* C-API that requries previous API to be defined */
+
+#define PyArray_DescrCheck(op) (PyObject_TypeCheck((op), &PyArrayDescr_Type))
 
 #define PyArray_Check(op) ((op)->ob_type == &PyArray_Type || \
 			   PyObject_TypeCheck((op), &PyBigArray_Type))
@@ -1260,16 +1268,34 @@ typedef struct {
 #define PyArray_NBYTES(m) (PyArray_ITEMSIZE(m) * PyArray_SIZE(m))
 #define PyArray_FROM_O(m) PyArray_FromAny(m, NULL, 0, 0, 0)
 #define PyArray_FROM_OF(m,flags) PyArray_FromAny(m, NULL, 0, 0, flags)
+#define PyArray_FROM_OT(m,type) PyArray_FromAny(m, PyArray_DescrFromType(type),\
+						0, 0, 0);
+#define PyArray_FROM_OTF(m, type, flags) \
+	PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0, flags)
+#define PyArray_FROMANY(m, type, min, max, flags) \
+	PyArray_FromAny(m, PyArray_DescrFromType(type), min, max, flags)
 
 #define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), (val), PyArray_NBYTES(obj))
 
 #define REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define MAX_ELSIZE 2*SIZEOF_LONGDOUBLE
 
+
+#define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)	\
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
+			max_depth, DEFAULT_FLAGS)
+	
+#define PyArray_EquivArrTypes(a1, a2)					\
+	PyArray_EquivalentTypes(PyArray_DESCR(a1), PyArray_DESCR(a2))
+#define PyArray_EquivalentTypenums(typenum1, typenum2)			\
+	PyArray_EquivalentTypes(PyArray_DescrFromType(typenum1),	\
+				PyArray_DescrFromType(typenum2))
+	
 #define PyArray_SimpleNew(nd, dims, typenum) \
 	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
 #define PyArray_SimpleNewFromData(nd, dims, typenum, data) \
         PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, CARRAY_FLAGS, NULL)
+
 
 	/* These might be faster without the dereferencing of obj
 	   going on inside -- of course an optimizing compiler should 
@@ -1293,11 +1319,37 @@ typedef struct {
 					  j*PyArray_STRIDE(obj, 1) +	\
 					  k*PyArray_STRIDE(obj, 2) +	\
 					  l*PyArray_STRIDE(obj, 3))
-	
+
+#define PyArray_DESCR_REPLACE(descr) do {	\
+		PyArray_Descr *_new_;			\
+		_new_ = PyArray_DescrNew(descr);	\
+		Py_XDECREF(descr);			\
+		descr = _new_;				\
+	} while(0)
+
 	/* Copy should always return contiguous array */
 #define PyArray_Copy(obj) PyArray_NewCopy(obj, 0)
 
+#define PyArray_FromObject(op, type, min_depth, max_depth)		\
+	PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
+			max_depth, BEHAVED_FLAGS | ENSUREARRAY)
+
+#define PyArray_ContiguousFromObject(op, type, min_depth, max_depth)	\
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
+			max_depth, DEFAULT_FLAGS | ENSUREARRAY)
+
+#define PyArray_CopyFromObject(op, type, min_depth, max_depth)		\
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
+			max_depth, ENSURECOPY | ENSUREARRAY)
+
+#define PyArray_Cast(mp, type_num) \
+	PyArray_CastToType(mp, PyArray_DescrFromType(type_num), 0)
+
         /*Compatibility with old Numeric stuff -- don't use in new code */
+
+#define PyArray_FromDimsAndData(nd, d, type, data) \
+	PyArray_FromDimsAndDataAndDescr(nd, d, PyArray_DescrFromType(type), \
+					data)
 
 #define PyArray_UNSIGNED_TYPES
 #define PyArray_SBYTE PyArray_BYTE

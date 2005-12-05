@@ -19,10 +19,11 @@ class ndchararray(ndarray):
             swap = 0
 
         if buffer is None:
-            self = ndarray.__new__(subtype, shape, dtype, itemlen,
+            self = ndarray.__new__(subtype, shape, (dtype, itemlen),
                                    fortran=fortran)
         else:
-            self = ndarray.__new__(subtype, shape, dtype, itemlen, buffer=buffer,
+            self = ndarray.__new__(subtype, shape, (dtype, itemlen),
+                                   buffer=buffer,
                                    offset=offset, strides=strides,
                                    swap=swap, fortran=fortran)
         return self
@@ -308,7 +309,7 @@ def chararray(obj, itemlen=7, copy=True, unicode=False, fortran=False):
         if copy and not copied:
             obj = obj.copy()
 
-        return ndarray.__new__(ndchararray, obj.shape, dtype, itemlen,
+        return ndarray.__new__(ndchararray, obj.shape, (dtype, itemlen),
                                buffer=obj, offset=0, swap=obj.flags.swapped,
                                fortran=obj.flags['FNC'])    
 

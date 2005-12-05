@@ -177,13 +177,13 @@ class ndrecarray(sb.ndarray):
         itemsize = parsed._total_itemsize
 
         if buf is None:
-            self = sb.ndarray.__new__(subtype, shape, record, itemsize)
+            self = sb.ndarray.__new__(subtype, shape, (record, itemsize))
         else:
             byteorder = kwds.get('byteorder', sys.byteorder)
             swapped = 0
             if (byteorder != sys.byteorder):
                 swapped = 1
-            self = sb.ndarray.__new__(subtype, shape, record, itemsize,
+            self = sb.ndarray.__new__(subtype, shape, (record, itemsize),
                                       buffer=buf, swapped=swapped)
         self.parsed = parsed
         return self    

@@ -12,7 +12,6 @@ objectapi_list = [
     """,
      'GetNumericOps','void','PyObject *'),
 
-
     (r"""For object arrays, increment all internal references.
     """,
      'INCREF','PyArrayObject *','int'),
@@ -29,6 +28,10 @@ objectapi_list = [
     """,
      'DescrFromType','int','PyArray_Descr *'),
 
+    (r"""Get a typeobject from a type-number
+    """,
+     'TypeObjectFromType','int','PyObject *'),
+
     (r"""Get pointer to zero of correct type for array.
     """,
      'Zero', 'PyArrayObject *', 'char *'),
@@ -38,13 +41,9 @@ objectapi_list = [
      'One', 'PyArrayObject *', 'char *'),
 
 
-    (r"""Cast an array to a different type.
-    """,
-     'Cast','PyArrayObject *, int','PyObject *'),
-
     (r"""Cast an array using typecode structure.
     """,
-     'CastToType','PyArrayObject *, PyArray_Typecode *','PyObject *'),
+     'CastToType','PyArrayObject *, PyArray_Descr *, int','PyObject *'),
 
     (r"""Cast to an already created array.
     """,
@@ -56,7 +55,7 @@ objectapi_list = [
 
     (r"""
     """,
-     'CanCastTo','PyArray_Typecode *, PyArray_Typecode *', 'Bool'),
+     'CanCastTo','PyArray_Descr *, PyArray_Descr *', 'Bool'),
 
     (r"""Return the typecode of the array a Python object would be
     converted to
@@ -65,7 +64,7 @@ objectapi_list = [
 
     (r"""
     """,
-     'ArrayType','PyObject *, PyArray_Typecode *, PyArray_Typecode *','void'),
+     'DescrFromObject','PyObject *, PyArray_Descr *', 'PyArray_Descr *'),
 
     (r"""
     """,
@@ -73,7 +72,7 @@ objectapi_list = [
 
     (r"""Return type typecode from array scalar.
     """,
-     'TypecodeFromScalar','PyObject *, PyArray_Typecode *','void'),
+     'DescrFromScalar','PyObject *','PyArray_Descr *'),
 
     (r"""Compute the size of an array (in number of items)
     """,
@@ -89,7 +88,7 @@ objectapi_list = [
 
     (r"""Get 0-dim array from scalar
     """,
-     'FromScalar', 'PyObject *, PyArray_Typecode *', 'PyObject *'),
+     'FromScalar', 'PyObject *, PyArray_Descr *', 'PyObject *'),
 
     (r"""Convert to c-type
     """,
@@ -97,7 +96,7 @@ objectapi_list = [
     
     (r"""Cast Scalar to c-type
     """,
-     'CastScalarToCtype', 'PyObject *, void *, PyArray_Typecode *', 'int'),
+     'CastScalarToCtype', 'PyObject *, void *, PyArray_Descr *', 'int'),
     
     (r"""Register Data type
     """,
@@ -111,48 +110,15 @@ objectapi_list = [
     """,
      'FromDims','int nd, int *, int typenum','PyObject *'),
 
-    (r"""Construct an array from dimensions, typenum, and a pointer
-    to the data.  Python will never free this (unless you later set
-    the OWN_DATA flag).
+    (r"""Like FromDimsAndData but uses the Descr structure instead of
+    typecode as input.
     """,
-     'FromDimsAndData','int, int *, int, char *','PyObject *'),
-
-    (r"""Construct an array from an arbitrary Python Object.
-    Last two integers are min_dimensions, and max_dimensions.
-    If max_dimensions = 0, then any number of dimensions are allowed.
-    Fix the dimension by setting min_dimension == max_dimension.
-    If the array is already contiguous (and aligned and not swapped)
-    no copy is done, just a new reference created.
-    Base-class ndarray is returned.
-    """,
-     'ContiguousFromObject',
-     'PyObject *, int typenum, int, int',
+     'FromDimsAndDataAndDescr','int, int *, PyArray_Descr *, char *',
      'PyObject *'),
-
-    (r"""Construct an array from an arbitrary Python Object.
-    Last two integers are min_dimensions, and max_dimensions.
-    If max_dimensions = 0, then any number of dimensions are allowed.
-    Fix the dimension by setting min_dimension == max_dimension.
-    If the array is already contiguous (and aligned and not swapped)
-    no copy is done, just a new reference created.  Subclasses
-    passed through.
-    """,
-     'ContiguousFromAny',
-     'PyObject *, int typenum, int, int',
-     'PyObject *'),
-
-
-    (r"""Same as ContiguousFromObject except ensure a copy.
-    """,
-     'CopyFromObject','PyObject *, int, int, int','PyObject *'),
-
-    (r"""Can return a discontiguous array (but aligned and byteswapped)
-    """,
-     'FromObject','PyObject *, int, int, int','PyObject *'),
 
     (r"""
     """,
-     'FromAny', 'PyObject *, PyArray_Typecode *, int, int, int', 'PyObject *'),
+     'FromAny', 'PyObject *, PyArray_Descr *, int, int, int', 'PyObject *'),
 
     (r"""
     """,
@@ -160,11 +126,15 @@ objectapi_list = [
 
     (r"""
     """,
-     'FromFile', 'FILE *, PyArray_Typecode *, intp, char *','PyObject *'),
+     'FromFile', 'FILE *, PyArray_Descr *, intp, char *','PyObject *'),
 
     (r"""
     """,
-     'FromBuffer', 'PyObject *, PyArray_Typecode *, intp, intp, int',
+     'FromString', 'char *, intp, PyArray_Descr *, intp, int','PyObject *'),
+    
+    (r"""
+    """,
+     'FromBuffer', 'PyObject *, PyArray_Descr *, intp, intp, int',
      'PyObject *'),
 
     (r"""Return either an array or the appropriate Python object if the
@@ -174,11 +144,11 @@ objectapi_list = [
 
     (r"""Get a subset of bytes from each element of the array
     """,
-     'GetField', 'PyArrayObject *, PyObject *, int', 'PyObject *'),
+     'GetField', 'PyArrayObject *, PyArray_Descr *, int', 'PyObject *'),
 
     (r"""Set a subset of bytes from each element of the array
     """,
-     'SetField', 'PyArrayObject *, PyObject *, int, PyObject *', 'int'),
+     'SetField', 'PyArrayObject *, PyArray_Descr *, int, PyObject *', 'int'),
 
     (r"""
     """,
@@ -193,11 +163,6 @@ objectapi_list = [
     """,
      'NewCopy','PyArrayObject *, int','PyObject *'),
 
-    (r"""Like FromDimsAndData but uses the Descr structure instead of
-    typecode as input.
-    """,
-     'FromDimsAndDataAndDescr','int, int *, PyArray_Descr *, char *',
-     'PyObject *'),
 
     (r"""Copy an Array into another array.
     """,
@@ -219,7 +184,6 @@ objectapi_list = [
     """,
      'Dumps', 'PyObject *, int', 'PyObject *'),
 
-
     (r"""Is the typenum valid?
     """,
      'ValidType','int','int'),
@@ -231,6 +195,18 @@ objectapi_list = [
     (r"""Generic new array creation routine.
     """,
      'New','PyTypeObject *, int nd, intp *dims, int type, intp *strides, void *data, int itemsize, int fortran, PyObject *obj', 'PyObject *'),
+    
+    (r"""Generic new array creation routine.
+    """,
+     'NewFromDescr','PyTypeObject *, PyArray_Descr *, int nd, intp *dims, intp *strides, void *data, int fortran, PyObject *obj', 'PyObject *'),
+
+    (r"""
+    """,
+     'DescrNew','PyArray_Descr *','PyArray_Descr *'),
+    
+    (r"""
+    """,
+     'DescrNewFromType','int','PyArray_Descr *'),
 
     (r"""Get Priority from object
     """,
@@ -266,7 +242,11 @@ objectapi_list = [
 
     (r"""
     """,
-     'CheckStrides', 'int, int, intp, intp *, intp *', 'Bool')
+     'CheckStrides', 'int, int, intp, intp *, intp *', 'Bool'),
+
+    (r"""
+    """,
+     'IsNativeByteOrder', 'char', 'Bool')
 
     ]
 
@@ -329,7 +309,7 @@ multiapi_list = [
 
     (r"""View
     """,
-     'View','PyArrayObject *, PyArray_Typecode *','PyObject *'),
+     'View','PyArrayObject *, PyArray_Descr *','PyObject *'),
 
     (r"""SwapAxes
     """,
@@ -429,7 +409,7 @@ multiapi_list = [
 
     (r"""Simulat a C-array
     """,
-     "AsCArray",'PyObject **, void *ptr, intp *, int, int, int','int'),
+     "AsCArray",'PyObject **, void *ptr, intp *, int, PyArray_Descr *','int'),
 
     (r"""Convert to a 1D C-array
     """,
@@ -477,9 +457,13 @@ multiapi_list = [
     """,
      'TypestrConvert', 'int, int', 'int'),
 
-    (r"""Get typenum from an object -- a converter function
+    (r"""Get typenum from an object -- None goes to &LONG_descr
     """,
-     'TypecodeConverter','PyObject *, PyArray_Typecode *', 'int'),
+     'DescrConverter','PyObject *, PyArray_Descr **', 'int'),
+
+    (r"""Get typenum from an object -- None goes to NULL
+    """,
+     'DescrConverter2','PyObject *, PyArray_Descr **', 'int'),
 
     (r"""Get intp chunk from sequence
     """,
@@ -499,23 +483,15 @@ multiapi_list = [
 
     (r"""
     """,
-     'EquivalentTypes', 'PyArray_Typecode *, PyArray_Typecode *', 'Bool'),
-
-    (r"""
-    """,
-     'EquivArrTypes', 'PyArrayObject *, PyArrayObject *', 'Bool'),
-
-    (r"""
-    """,
-     'EquivalentTypenums', 'int, int', 'Bool'),
+     'EquivalentTypes', 'PyArray_Descr *, PyArray_Descr *', 'Bool'),
 
     (r"""Zeros
     """,
-     'Zeros', 'int, intp *, PyArray_Typecode *', 'PyObject *'),
+     'Zeros', 'int, intp *, PyArray_Descr *, int', 'PyObject *'),
 
     (r"""Empty
     """,
-     'Empty', 'int, intp *, PyArray_Typecode *', 'PyObject *'),
+     'Empty', 'int, intp *, PyArray_Descr *, int', 'PyObject *'),
 
 
     (r"""Where
@@ -529,7 +505,8 @@ multiapi_list = [
     ]
 
 
-types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger', 'Inexact',
+types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger',
+         'Inexact',
          'Floating', 'ComplexFloating', 'Flexible', 'Character',
          'Bool','Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
          'UInt', 'ULong', 'ULongLong', 'Float', 'Double', 'LongDouble',
@@ -538,7 +515,7 @@ types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger', 'Inexa
 
 # API fixes for __arrayobject_api.h
 
-fixed = 5
+fixed = 6
 numtypes = len(types) + fixed
 numobject = len(objectapi_list) + numtypes
 nummulti = len(multiapi_list)
@@ -637,6 +614,7 @@ outstr = r"""
 
 static PyTypeObject PyBigArray_Type;
 static PyTypeObject PyArray_Type;
+static PyTypeObject PyArrayDescr_Type;
 static PyTypeObject PyArrayIter_Type;
 static PyTypeObject PyArrayMapIter_Type;
 static PyTypeObject PyArrayMultiIter_Type;
@@ -662,9 +640,10 @@ static void **PyArray_API=NULL;
 
 #define PyBigArray_Type (*(PyTypeObject *)PyArray_API[0])
 #define PyArray_Type (*(PyTypeObject *)PyArray_API[1])
-#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[2])
-#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[3])
-#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[4])
+#define PyArrayDescr_Type (*(PyTypeObject *)PyArray_API[2])
+#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[3])
+#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[4])
+#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[5])
 
 %s
 
@@ -706,9 +685,10 @@ outstr = r"""
 void *PyArray_API[] = {
         (void *) &PyBigArray_Type,
         (void *) &PyArray_Type,
+        (void *) &PyArrayDescr_Type,
         (void *) &PyArrayIter_Type,
         (void *) &PyArrayMultiIter_Type,
-        (int *) &PyArray_NUMUSERTYPES,
+        (int *) &PyArray_NUMUSERTYPES, 
 %s
 };
 """ % '\n'.join(init_list)
