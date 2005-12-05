@@ -1719,6 +1719,28 @@ array_subscript(PyArrayObject *self, PyObject *op)
 		}
         }
 
+	if (PyString_Check(op) || PyUnicode_Check(op)) {
+		if (self->descr->fields) {
+			PyObject *obj;
+			obj = PyDict_GetItem(self->descr->fields, op);
+			if (obj != NULL) {
+				PyArray_Descr *descr;
+				int offset;
+				PyObject *title;
+				
+				if (PyArg_ParseTuple(obj, "Oi|O",
+						     &descr, &offset, &title)) 
+					return PyArray_GetField(self, descr, 
+								offset);
+			}
+		}
+		
+		PyErr_Format(PyExc_ValueError, 
+			     "field named %s not found.",
+			     PyString_AsString(op));
+		return NULL;
+	}
+
 	/* wrap arguments into a mapiter object */
         mit = (PyArrayMapIterObject *)PyArray_MapIterNew(op);
         if (mit == NULL) return NULL;
@@ -1806,6 +1828,29 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
                 return -1;
         }
 	
+
+	if (PyString_Check(index) || PyUnicode_Check(index)) {
+		if (self->descr->fields) {
+			PyObject *obj;
+			obj = PyDict_GetItem(self->descr->fields, index);
+			if (obj != NULL) {
+				PyArray_Descr *descr;
+				int offset;
+				PyObject *title;
+				
+				if (PyArg_ParseTuple(obj, "Oi|O",
+						     &descr, &offset, &title)) 
+					return PyArray_SetField(self, descr, 
+								offset, op);
+			}
+		}
+		
+		PyErr_Format(PyExc_ValueError, 
+			     "field named %s not found.",
+			     PyString_AsString(index));
+		return -1;
+	}
+
 
         mit = (PyArrayMapIterObject *)PyArray_MapIterNew(index);
         if (mit == NULL) return -1;

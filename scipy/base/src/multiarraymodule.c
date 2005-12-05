@@ -834,11 +834,6 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 	}
 }
 
-
-
-
-
-
 /* simulates a C-style 1-3 dimensional array which can be accesed using 
     ptr[i]  or ptr[i][j] or ptr[i][j][k] -- requires pointer allocation 
     for 2-d and 3-d.
@@ -2697,6 +2692,15 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         return PY_SUCCEED;
 }
 
+
+
+
+
+/* A tuple type would be either (generic typeobject, typesize) 
+   or (fixed-length, data-type, shape) 
+   to indicate an array of a fixed-type.
+*/
+
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj) 
 {
@@ -2743,16 +2747,129 @@ _convert_from_tuple(PyObject *obj)
 	return NULL;
 }
 
+/* a dictionary specifying a data-type
+   must have at least two and up to four
+   keys
+   These must all be sequences of the same length.
+
+   "names" --- field names 
+   "formats" --- the data-type descriptors for the field.
+   
+   Optional:
+
+   "offsets" --- integers indicating the offset into the 
+                 record of the start of the field.
+		 if not given, then "consecutive offsets" 
+		 will be assumed and placed in the dictionary.
+   
+   "titles" --- Allows the use of an additional key
+                 for the fields dictionary.
+               
+Attribute-lookup-based field names merely has to query the fields 
+dictionary of the data-descriptor.  Any result present can be used
+to return the correct field.
+
+So, the notion of what is a name and what is a title is really quite
+arbitrary.  
+
+What does distinguish a title, however, is that if it is not None, 
+it will be placed at the end of the tuple inserted into the 
+fields dictionary.
+*/
+
 static PyArray_Descr *
 _convert_from_dict(PyObject *obj)
 {
+	PyArray_Descr *new;
+	PyObject *fields=NULL;
+	PyObject *names, *offsets, *descrs, *titles;
+	int n, i;
+	int totalsize;
+
+	new = PyArray_DescrNewFromType(PyArray_VOID);
+	if (new == NULL) return NULL;
+	fields = PyDict_New();
+	if (fields == NULL) goto fail;
+
+	names = PyDict_GetItemString(obj, "names");
+	descrs = PyDict_GetItemString(obj, "formats");
+	offsets = PyDict_GetItemString(obj, "offsets");
+	titles = PyDict_GetItemString(obj, "titles");
+
+	if (!names || !descrs) {
+		PyErr_SetString(PyExc_ValueError, 
+				"dictionary must have at least 'names', and"\
+				" 'descrs' as keys");
+		goto fail;
+	}
+	n = PyObject_Length(names);
+	if ((n > PyObject_Length(descrs)) ||			\
+	    (offsets && (n > PyObject_Length(offsets))) ||	\
+	    (titles && (n > PyObject_Length(titles)))) {
+		PyErr_SetString(PyExc_ValueError,
+				"all items in the dictionary must have" \
+				" the same length.");
+		goto fail;
+	}
+
+	totalsize = 0;
+	for(i=0; i<n; i++) {
+		PyObject *tup, *descr, *index, *item, *name;
+		int len, ret;
+		PyArray_Descr *newdescr;
+
+		/* Build item to insert (descr, offset, [title])*/
+		len = 2;
+		item = NULL;
+		index = PyInt_FromLong(i);
+		if (titles) {
+			item=PyObject_GetItem(titles, index);
+			if (item && item != Py_None) len = 3;
+			else Py_XDECREF(item);
+			PyErr_Clear();
+		}
+		tup = PyTuple_New(len);
+		descr = PyObject_GetItem(descrs, index);
+		ret = PyArray_DescrConverter(descr, &newdescr);
+		Py_DECREF(descr);
+		PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
+		if (offsets)
+			PyTuple_SET_ITEM(tup, 1, 
+					 PyObject_GetItem(offsets, index));
+		else 
+			PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
+		totalsize += newdescr->elsize;
+		if (len == 3) PyTuple_SET_ITEM(tup, 2, item);
+		name = PyObject_GetItem(names, index);
+		Py_DECREF(index);
+
+		/* Insert into dictionary */
+		PyDict_SetItem(fields, name, tup);
+		Py_DECREF(name);
+		if (len == 3) PyDict_SetItem(fields, item, tup);
+		Py_DECREF(tup);
+		if ((ret == PY_FAIL) || (newdescr->elsize == 0)) goto fail;
+	}
+
+	new->elsize = totalsize;
+	new->fields = fields;
+	return new;
+
+ fail:
+	Py_XDECREF(new);
+	Py_XDECREF(fields);
 	return NULL;
 }
 
+/* 
+*/
 static PyArray_Descr *
 _convert_from_obj(PyObject *obj)
 {
-	return NULL;
+	PyObject *obj_dict;
+
+	obj_dict = obj->ob_type->tp_dict;
+	return _convert_from_dict(obj_dict);
 }
 
 
@@ -2864,9 +2981,6 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		}
 	}
 	/* or a tuple */
-	/* A tuple type would be either (generic typeobject, typesize) 
-	   or (data-type, shape).  
-	*/
  	else if (PyTuple_Check(obj)) {
 		*at = _convert_from_tuple(obj);
 		if (*at == NULL) goto fail;
@@ -2875,7 +2989,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	/* or a dictionary */
 	else if (PyDict_Check(obj)) {
 		*at = _convert_from_dict(obj);
-		if (*at == NULL) goto fail;
+		if (*at == NULL) return PY_FAIL;
 		return PY_SUCCEED;
 	}
         else {
