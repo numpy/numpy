@@ -3188,7 +3188,8 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 	PyArrayObject *ret; 
 	char *data;
 	longlong nin=-1;
-	intp s, n;
+	int s;
+	intp n;
 	static char *kwlist[] = {"string", "dtype", "count", "swap",NULL};
 	PyArray_Typecode type = {PyArray_INTP, sizeof(intp), 0};
 	int itemsize;
