@@ -2702,13 +2702,14 @@ _convert_from_tuple(PyObject *obj)
 {
 	PyArray_Descr *type;
 	
-	if (PyTuple_GET_SIZE(obj) != 2) return NULL;
+	if (PyTuple_GET_SIZE(obj) < 2) return NULL;
 	if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj,0), &type)) 
 		return NULL;
 	if (type->elsize == 0) { /* interpret next item as a typesize */
 		int itemsize;
 		itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
 		if (error_converting(itemsize)) goto fail;
+		PyArray_DESCR_REPLACE(type);
 		type->elsize = itemsize;
 	}
 	else { /* interpret next item as shape 
@@ -2869,15 +2870,18 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
  	else if (PyTuple_Check(obj)) {
 		*at = _convert_from_tuple(obj);
 		if (*at == NULL) goto fail;
+		return PY_SUCCEED;
 	}
 	/* or a dictionary */
 	else if (PyDict_Check(obj)) {
 		*at = _convert_from_dict(obj);
 		if (*at == NULL) goto fail;
+		return PY_SUCCEED;
 	}
         else {
 		*at = _convert_from_obj(obj);
 		if (*at == NULL) goto fail;
+		return PY_SUCCEED;
 	}
 	if (PyErr_Occurred()) goto fail;
 
@@ -4283,7 +4287,7 @@ DL_EXPORT(void) initmultiarray(void) {
 	PyDict_SetItemString(d, "broadcast", 
 			     (PyObject *)&PyArrayMultiIter_Type);
 	Py_INCREF(&PyArrayDescr_Type);
-	PyDict_SetItemString(d, "descr", (PyObject *)&PyArrayDescr_Type);
+	PyDict_SetItemString(d, "datadescr", (PyObject *)&PyArrayDescr_Type);
 
 	/* Doesn't need to be exposed to Python 
         Py_INCREF(&PyArrayMapIter_Type);

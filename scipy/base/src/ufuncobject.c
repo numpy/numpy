@@ -1807,7 +1807,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 		/* fprintf(stderr, "ZERO..%d\n", loop->size); */
 		for(i=0; i<loop->size; i++) {
 			if (loop->obj) Py_INCREF(*((PyObject **)loop->idptr));
-			memcpy(loop->bufptr[1], loop->idptr, loop->outsize);
+			memmove(loop->bufptr[1], loop->idptr, loop->outsize);
 			loop->bufptr[1] += loop->outsize;
 		}
                 break;
@@ -1815,7 +1815,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 		/*fprintf(stderr, "ONEDIM..%d\n", loop->size); */
                 while(loop->index < loop->size) {
 			if (loop->obj) Py_INCREF(*((PyObject **)loop->it->dataptr));
-                        memcpy(loop->bufptr[1], loop->it->dataptr, 
+                        memmove(loop->bufptr[1], loop->it->dataptr, 
                                loop->outsize);
 			PyArray_ITER_NEXT(loop->it);
 			loop->bufptr[1] += loop->outsize;
@@ -1828,7 +1828,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 			/* Copy first element to output */
 			if (loop->obj) 
 				Py_INCREF(*((PyObject **)loop->it->dataptr));
-                        memcpy(loop->bufptr[1], loop->it->dataptr, 
+                        memmove(loop->bufptr[1], loop->it->dataptr, 
                                loop->outsize);
 			/* Adjust input pointer */
                         loop->bufptr[0] = loop->it->dataptr+loop->steps[0];

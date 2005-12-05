@@ -3290,10 +3290,10 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		PyObject *ret;
 		intp newdims[2*MAX_DIMS];
 		intp *newstrides=NULL;
-		memcpy(newdims, dims, nd);
+		memcpy(newdims, dims, nd*sizeof(intp));
 		if (strides) {
 			newstrides = newdims + MAX_DIMS;
-			memcpy(newstrides, strides, nd);
+			memcpy(newstrides, strides, nd*sizeof(intp));
 		}
 		nd =_update_descr_and_dimensions(&descr, newdims, 
 						 newstrides, nd);
@@ -7818,7 +7818,7 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 static PyTypeObject PyArrayDescr_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
-        "scipy.descr",	 	                 /* tp_name */
+        "scipy.datadescr",	 	         /* tp_name */
         sizeof(PyArray_Descr),                   /* tp_basicsize */
         0,					 /* tp_itemsize */
         /* methods */
