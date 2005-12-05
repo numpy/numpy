@@ -814,10 +814,9 @@ typedef struct {
 
 } PyArray_Descr;
 
-
 typedef struct _arr_descr {
 	PyArray_Descr *base;
-	PyArray_Dims shape;
+	PyObject *shape;       /* a tuple */
 } PyArray_ArrayDescr;
 
 
@@ -1235,6 +1234,7 @@ typedef struct {
 	   They are available as import_array()
          */
 
+
 #include "__multiarray_api.h"
 
 
@@ -1350,6 +1350,7 @@ typedef struct {
 #define PyArray_FromDimsAndData(nd, d, type, data) \
 	PyArray_FromDimsAndDataAndDescr(nd, d, PyArray_DescrFromType(type), \
 					data)
+
 #define PyArray_UNSIGNED_TYPES
 #define PyArray_SBYTE PyArray_BYTE
 #define PyArray_CHAR PyArray_BYTE

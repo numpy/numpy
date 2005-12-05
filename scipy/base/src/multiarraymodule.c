@@ -99,14 +99,12 @@ PyArray_CompareLists(intp *l1, intp *l2, int n)
         return 1;
 }
 
-/* steals a reference to type*/
+/* steals a reference to type -- accepts NULL */
 static PyObject *
 PyArray_View(PyArrayObject *self, PyArray_Descr *type)
 {
 	PyObject *new=NULL;
-        PyObject *v=NULL;
-        int type_num = PyArray_NOTYPE;
-
+ 
 	Py_INCREF(self->descr);
 	new = PyArray_NewFromDescr(self->ob_type,
 				   self->descr,
@@ -120,7 +118,8 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type)
         PyArray_BASE(new) = (PyObject *)self;
 	
 	if (type != NULL) {
-		if (PyObject_SetAttrString(new, "dtype", type) < 0) {
+		if (PyObject_SetAttrString(new, "dtype", 
+					   (PyObject *)type) < 0) {
 			Py_DECREF(new);
 			Py_DECREF(type);
 			return NULL;
@@ -2718,18 +2717,20 @@ _convert_from_tuple(PyObject *obj)
 	       */
 		PyArray_Dims shape;
 		PyArray_Descr *newdescr;
-		if ((PyArray_IntpConverter(PyTuple_GET_ITEM(obj,1),
-					   &shape) < 0) ||	\
+		PyObject *val;
+		val = PyTuple_GET_ITEM(obj,1);
+		if ((PyArray_IntpConverter(val, &shape) < 0) ||	\
 		    (shape.len > MAX_DIMS)) goto fail;
 		newdescr = PyArray_DescrNew(type);
-		if (newdescr == NULL) goto fail;
+		if (newdescr == NULL) {PyDimMem_FREE(shape.ptr); goto fail;}
 		newdescr->elsize *= PyArray_MultiplyList(shape.ptr, 
 							 shape.len);
+		PyDimMem_FREE(shape.ptr);
 		newdescr->type_num = PyArray_VOID;
 		newdescr->subarray = malloc(sizeof(PyArray_ArrayDescr));
 		newdescr->subarray->base = type;
-		newdescr->subarray->shape.ptr = shape.ptr;
-		newdescr->subarray->shape.len = shape.len;
+		Py_INCREF(val);
+		newdescr->subarray->shape = val;
 		Py_XDECREF(newdescr->fields);
 		newdescr->fields = NULL;
 		type = newdescr;
@@ -2756,7 +2757,11 @@ _convert_from_obj(PyObject *obj)
 /* This function takes a Python object representing a type and converts it 
    to a the correct PyArray_Descr * structure to describe the type.
    
-   Many objects can be used to represent a type.
+   Many objects can be used to represent a data-type which in SciPy is
+   quite a flexible concept. 
+
+   This is the central code that converts Python objects to 
+   Type-descriptor objects that are used throughout scipy.
  */
 
 /* new reference in *at */
@@ -2771,7 +2776,12 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 
 	*at=NULL;
 	
-        if (obj == Py_None) return PY_SUCCEED;
+	/* default */
+        if (obj == Py_None) {
+		*at = PyArray_DescrFromType(PyArray_LONG);
+		return PY_SUCCEED;
+	}
+
 	
 	if (PyArray_DescrCheck(obj)) {
 		*at = (PyArray_Descr *)obj;
@@ -3209,11 +3219,12 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 		   intp n, int swap)
 {
 	int itemsize;
+	PyArrayObject *ret;
 
-	if (descr == NULL)
-		descr=PyArray_DescrFromType(PyArray_LONG);
+	if (dtype == NULL)
+		dtype=PyArray_DescrFromType(PyArray_LONG);
 	
-	if (descr == &OBJECT_Descr) {
+	if (dtype == &OBJECT_Descr) {
 		PyErr_SetString(PyExc_ValueError, 
 				"Cannot create an object array from a"\
 				" string.");
@@ -3221,9 +3232,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 		return NULL;
 	}
 	
-	n = (intp) nin;
-
-	itemsize = descr->elsize;
+	itemsize = dtype->elsize;
 	if (itemsize == 0) {
 		PyErr_SetString(PyExc_ValueError, "zero-valued itemsize");
 		Py_DECREF(dtype);
@@ -3250,13 +3259,13 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 	}
 
 	if ((ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
-							 descr,
+							 dtype,
 							 1, &n, 
 							 NULL, NULL,
 							 0, NULL)) == NULL)
 		return NULL;
 		
-	memcpy(ret->data, data, n*descr->elsize);
+	memcpy(ret->data, data, n*dtype->elsize);
 	if (swap) ret->flags &= ~NOTSWAPPED;
 	return (PyObject *)ret;
 }
@@ -3266,10 +3275,9 @@ static char doc_fromString[] = "fromstring(string, dtype=int, count=-1, swap=Fal
 static PyObject *
 array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
-	PyArrayObject *ret; 
 	char *data;
 	longlong nin=-1;
-	int s, n;
+	int s;
 	static char *kwlist[] = {"string", "dtype", "count", "swap",NULL};
 	PyArray_Descr *descr;
 	int swapped=FALSE;

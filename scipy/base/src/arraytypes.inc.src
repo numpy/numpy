@@ -1601,7 +1601,6 @@ static PyArray_Descr *_builtin_descrs[] = {
 static PyArray_Descr *
 PyArray_DescrFromType(int type) {
 	PyArray_Descr *ret=NULL;
-	char *msg = "Invalid type for array";
 
 	if (type < PyArray_NTYPES) {
 		ret = _builtin_descrs[type];

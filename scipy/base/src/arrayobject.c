@@ -721,7 +721,7 @@ PyArray_FromDims(int nd, int *d, int type)
 {
 	PyObject *ret;
 	ret = PyArray_FromDimsAndData(nd, d, type, NULL);
-	if (ret->descr != &OBJECT_Descr) {
+	if (PyArray_DESCR(ret) != &OBJECT_Descr) {
 		memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
 	}
 	return ret;
@@ -3232,20 +3232,23 @@ _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
 	int newnd;
 	int numnew;
 	intp *mydim;
+	int i;
 	
 	old = *des;
 	*des = old->subarray->base;
 
-	numnew = old->subarray->shape.len;
+	numnew = PyTuple_GET_SIZE(old->subarray->shape);
 	newnd = oldnd + numnew;
 
 	mydim = newdims + oldnd;
-	memcpy(mydim, old->subarray->shape.ptr, numnew*sizeof(intp));
+	for (i=0; i<numnew; i++) {
+		mydim[i] = (intp) PyInt_AsLong\
+			(PyTuple_GET_ITEM(old->subarray->shape, i));
+	}
 
 	if (newstrides) {
 		intp tempsize;
 		intp *mystrides;
-		int i;
 		mystrides = newstrides + oldnd;
 		/* Make new strides */
 		tempsize = (*des)->elsize;
@@ -3283,7 +3286,6 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 	register int i;
 	intp sd;
 
-	if (!descr) descr = PyArray_DescrFromType(PyArray_LONG);
 	if (descr->subarray) {
 		PyObject *ret;
 		intp newdims[2*MAX_DIMS];
@@ -5038,7 +5040,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 					       NULL, NULL,
 					       fortran, NULL);
 	
-        if(!r) return {Py_XINCREF(savetype); NULL;}
+        if(!r) {Py_XINCREF(savetype); return NULL;}
         if(Assign_Array(r,s) == -1) {
 		Py_XINCREF(savetype);
 		Py_DECREF(r);
@@ -7737,10 +7739,7 @@ PyArray_DescrNew(PyArray_Descr *base)
 		new->subarray = malloc(sizeof(PyArray_ArrayDescr));
 		memcpy(new->subarray, base->subarray, 
 		       sizeof(PyArray_ArrayDescr));
-		new->subarray->shape.ptr = \
-			PyDimMem_NEW(new->subarray->shape.len);
-		memcpy(new->subarray->shape.ptr, base->subarray->shape.ptr,
-		       sizeof(intp)*base->subarray->shape.len);
+		Py_INCREF(new->subarray->shape);
 		Py_INCREF(new->subarray->base);
 	}
 	Py_INCREF(new->typeobj);
@@ -7761,8 +7760,8 @@ arraydescr_dealloc(PyArray_Descr *self)
 	Py_XDECREF(self->typeobj);
 	Py_XDECREF(self->fields);
 	if (self->subarray) {
+		Py_DECREF(self->subarray->shape);
 		Py_DECREF(self->subarray->base);
-		PyDimMem_FREE(self->subarray->shape.ptr);
 		free(self->subarray);
 	}
 	self->ob_type->tp_free(self);
@@ -7786,11 +7785,8 @@ arraydescr_subdescr_get(PyArray_Descr *self)
 		Py_INCREF(Py_None);
 		return Py_None;
 	}
-	return Py_BuildValue("ON", (PyObject *)self->subarray->base, 
-			     PyArray_IntTupleFromIntp(self->subarray->\
-						      shape.len,
-						      self->subarray->\
-						      shape.ptr));
+	return Py_BuildValue("OO", (PyObject *)self->subarray->base, 
+			     self->subarray->shape);
 }
 
 static PyGetSetDef arraydescr_getsets[] = {

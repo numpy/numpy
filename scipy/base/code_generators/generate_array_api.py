@@ -28,6 +28,10 @@ objectapi_list = [
     """,
      'DescrFromType','int','PyArray_Descr *'),
 
+    (r"""Get a typeobject from a type-number
+    """,
+     'TypeObjectFromType','int','PyObject *'),
+
     (r"""Get pointer to zero of correct type for array.
     """,
      'Zero', 'PyArrayObject *', 'char *'),
@@ -106,11 +110,11 @@ objectapi_list = [
     """,
      'FromDims','int nd, int *, int typenum','PyObject *'),
 
-    (r"""Construct an array from dimensions, typenum, and a pointer
-    to the data.  Python will never free this (unless you later set
-    the OWN_DATA flag).
+    (r"""Like FromDimsAndData but uses the Descr structure instead of
+    typecode as input.
     """,
-     'FromDimsAndData','int, int *, int, char *','PyObject *'),
+     'FromDimsAndDataAndDescr','int, int *, PyArray_Descr *, char *',
+     'PyObject *'),
 
     (r"""
     """,
@@ -159,11 +163,6 @@ objectapi_list = [
     """,
      'NewCopy','PyArrayObject *, int','PyObject *'),
 
-    (r"""Like FromDimsAndData but uses the Descr structure instead of
-    typecode as input.
-    """,
-     'FromDimsAndDataAndDescr','int, int *, PyArray_Descr *, char *',
-     'PyObject *'),
 
     (r"""Copy an Array into another array.
     """,

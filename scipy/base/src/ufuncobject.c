@@ -788,6 +788,7 @@ _create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
 			if (PyArray_EquivalentTypes(atype, ntype)) {
 				arg_types[i] = ntype->type_num;
 			}
+			Py_DECREF(atype);
 		}
 		if (size < loop->bufsize) {
 			if (!(PyArray_ISBEHAVED_RO(mps[i])) ||		\
@@ -995,6 +996,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 			  if (PyArray_EquivalentTypes(atype, ntype)) {
 				  arg_types[i] = ntype->type_num;
 			  }
+			  Py_DECREF(atype);
 		  }
 		  
 		/* still not the same -- or will we have to use buffers?*/
@@ -1044,6 +1046,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                         loop->meth = BUFFER_UFUNCLOOP;
 			descr = PyArray_DescrFromType(arg_types[i]);
 			cntcast += descr->elsize;
+			Py_DECREF(descr);
                         if (i < self->nin) {
                                 loop->cast[i] = \
 					mps[i]->descr->cast[arg_types[i]];
@@ -1166,12 +1169,13 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 					mps[i-1]->descr->elsize;
 			/* fprintf(stderr, "buffer[%d] = %p\n", i, loop->buffer[i]); */
 			if (loop->cast[i]) {
+				PyArray_Descr *descr;
 				loop->castbuf[i] = castptr + 
 					loop->bufsize*oldsize;
 				/* fprintf(stderr, "castbuf[%d] = %p\n", i, loop->castbuf[i]); */
-#define _PyD PyArray_DescrFromType
-				oldsize = _PyD(arg_types[i])->elsize;
-#undef _PyD
+				descr = PyArray_DescrFromType(arg_types[i]);
+				oldsize = descr->elsize;
+				Py_DECREF(descr);
 				loop->bufptr[i] = loop->castbuf[i];
 				castptr = loop->castbuf[i];
 				loop->steps[i] = oldsize;
@@ -1506,7 +1510,6 @@ _getidentity(PyUFuncObject *self, int otype, char *str)
         PyObject *obj, *arr;
         PyArray_Descr *typecode;
 	
-	typecode = PyArray_DescrFromType(otype);
         if (self->identity == PyUFunc_None) {
                 PyErr_Format(PyExc_ValueError, 
                              "zero-size array to ufunc.%s "      \
@@ -1518,7 +1521,8 @@ _getidentity(PyUFuncObject *self, int otype, char *str)
         } else {
                 obj = PyInt_FromLong((long) 0);
         }
-	
+
+	typecode = PyArray_DescrFromType(otype); 
         arr = PyArray_FromAny(obj, typecode, 0, 0, CARRAY_FLAGS);
         Py_DECREF(obj);
         return (PyArrayObject *)arr;
@@ -1531,12 +1535,12 @@ _create_reduce_copy(PyUFuncReduceObject *loop, PyArrayObject **arr, int rtype)
 	PyObject *new;
 	PyArray_Descr *ntype;
 	
-	ntype = PyArray_DescrFromType(rtype);
 	maxsize = PyArray_SIZE(*arr);
 	
 	if (maxsize < loop->bufsize) {
 		if (!(PyArray_ISBEHAVED_RO(*arr)) ||	\
 		    PyArray_TYPE(*arr) != rtype) {
+			ntype = PyArray_DescrFromType(rtype);
 			new = PyArray_FromAny((PyObject *)(*arr), 
 					      ntype, 0, 0,
 					      FORCECAST |		\
@@ -2263,7 +2267,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
                 indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype, 
 							   1, 1, CARRAY_FLAGS);
                 if (indices == NULL) return NULL;
-		
+		Py_DECREF(indtype);		
 	}
 	else {
 		if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&", kwlist1,
@@ -2301,25 +2305,23 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	}
 
 	/* Get default type to reduce over if not given */
-        if (otype->type_num == PyArray_NOTYPE) {	
+        if (otype == NULL) {
 		/* For integer types --- makes sure at 
 		   least a long is used */
 		int typenum = PyArray_TYPE(mp);
 		if (PyTypeNum_ISINTEGER(typenum) &&	\
 		    (mp->descr->elsize < sizeof(long))) {
 			if (PyTypeNum_ISUNSIGNED(typenum))
-				otype->type_num = PyArray_ULONG;
+				typenum = PyArray_ULONG;
 			else
-				otype->type_num = PyArray_LONG;
+				typenum = PyArray_LONG;
 		}
 		else if (PyTypeNum_ISBOOL(typenum) && \
 			 ((strcmp(self->name,"add")==0) ||	\
 			  (strcmp(self->name,"multiply")==0))) {
-			otype->type_num = PyArray_LONG;
+			typenum = PyArray_LONG;
 		}
-		else {
-			otype->type_num = typenum;
-		}
+		otype = PyArray_DescrFromType(typenum);
 	}
 
         switch(operation) {
@@ -2338,6 +2340,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 		break;
         }
         Py_DECREF(mp);
+	Py_DECREF(otype);
 	if (ret==NULL) return NULL;
 	if (op->ob_type != ret->ob_type) {
 		res = PyObject_CallMethod(op, "__array_wrap__", "O", ret);
@@ -2647,15 +2650,18 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 			    PyUFuncGenericFunction function,
 			    void *data)
 {
-	PyArray_Descr *descr=PyArray_DescrFromType(usertype);
+	PyArray_Descr *descr;
     	PyObject *key, *cobj;
 	int ret;	
 	
+	descr=PyArray_DescrFromType(usertype);
 	if ((usertype < PyArray_USERDEF) || (descr==NULL)) {
 		PyErr_SetString(PyExc_TypeError, 
-				"cannot register typenumber");
+				"unknown type");
 		return -1;
 	}
+	Py_DECREF(descr);
+	
 	if (ufunc->userloops == NULL) {
 		ufunc->userloops = PyDict_New();
 	}
@@ -2848,7 +2854,16 @@ _makeargs(int num, char ltr, char *str)
 	return;
 }
 
-#define _typecharfromnum(num) (PyArray_DescrFromType((num))->type)
+static char
+_typecharfromnum(int num) {
+	PyArray_Descr *descr;
+	char ret;
+	
+	descr = PyArray_DescrFromType(num);
+	ret = descr->type;
+	Py_DECREF(descr);
+	return ret;
+} 
 
 static PyObject *
 ufunc_getattr(PyUFuncObject *self, char *name)

@@ -162,7 +162,7 @@ static char doc_view[] = "a.view(<dtype>) return a new view of array with same d
 static PyObject *
 array_view(PyArrayObject *self, PyObject *args)
 {
-        PyArray_Descr *type = NULL;
+        PyArray_Descr *type=NULL;
 	if (!PyArg_ParseTuple(args, "|O&",
                               PyArray_DescrConverter, &type)) 
                 return NULL;
@@ -295,10 +295,6 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 PyArray_DescrConverter,
 					 &dtype, &offset)) return NULL;
 	
-	if (dtype == NULL) {
-		PyErr_SetString(PyExc_ValueError, "Invalid data type".);
-		return NULL;
-	}
 	return _ARET(PyArray_GetField(self, dtype, offset));
 }
 
@@ -346,10 +342,6 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 &value, PyArray_DescrConverter,
 					 &dtype, &offset)) return NULL;
 
-	if (dtype == NULL) {
-		PyErr_SetString(PyExc_ValueError, "Invalid data type".);
-		return NULL;
-	}
 	if (PyArray_SetField(self, dtype, offset, value) < 0)
 		return NULL;
 	Py_INCREF(Py_None);
@@ -525,7 +517,7 @@ array_cast(PyArrayObject *self, PyObject *args)
         if (!PyArg_ParseTuple(args, "O&", PyArray_DescrConverter,
 			      &descr)) return NULL;
 	
-	if (descr==NULL || descr == self->descr) {
+	if (descr == self->descr) {
 		obj = _ARET(PyArray_NewCopy(self,0));
 		Py_XDECREF(descr);
 		return obj;
@@ -583,12 +575,12 @@ static char doc_array_getarray[] = "m.__array__(|dtype) just returns either a ne
 static PyObject *
 array_getarray(PyArrayObject *self, PyObject *args) 
 {
-	PyArray_Descr *newtype;
+	PyArray_Descr *newtype=NULL;
 	PyObject *ret;
-
+	
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_DescrConverter,
 			      &newtype)) return NULL;
-
+	
 	/* convert to PyArray_Type or PyBigArray_Type */
 	if (!PyArray_CheckExact(self) || !PyBigArray_CheckExact(self)) {
 		PyObject *new;
@@ -615,7 +607,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
 		Py_INCREF(self);
 	}
 		
-	if (newtype==NULL || 
+	if ((newtype == NULL) || \
 	    PyArray_EquivalentTypes(self->descr, newtype)) {
 		return (PyObject *)self;
 	}
@@ -1164,7 +1156,7 @@ static PyObject *
 array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
-	PyArray_Descr *rtype;
+	PyArray_Descr *rtype=NULL;
 	static char *kwlist[] = {"axis", "rtype", NULL};
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
@@ -1203,7 +1195,7 @@ static PyObject *
 array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
-	PyArray_Descr * rtype;
+	PyArray_Descr *rtype=NULL;
 	static char *kwlist[] = {"axis", "rtype", NULL};
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
@@ -1238,7 +1230,7 @@ static PyObject *
 array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
-	PyArray_Descr * rtype;
+	PyArray_Descr *rtype=NULL;
 	static char *kwlist[] = {"axis", "rtype", NULL};
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
@@ -1256,7 +1248,7 @@ static PyObject *
 array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
-	PyArray_Descr * rtype;
+	PyArray_Descr *rtype=NULL;
 	static char *kwlist[] = {"axis", "rtype", NULL};
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
@@ -1301,7 +1293,7 @@ static PyObject *
 array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
-	PyArray_Descr * rtype;
+	PyArray_Descr *rtype=NULL;
 	static char *kwlist[] = {"axis", "rtype", NULL};
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
@@ -1318,7 +1310,7 @@ static PyObject *
 array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
-	PyArray_Descr * rtype;
+	PyArray_Descr *rtype=NULL;
 	static char *kwlist[] = {"axis", "rtype", NULL};
 	
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
