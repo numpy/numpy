@@ -33,7 +33,7 @@ def configuration(parent_package='',top_path=None):
             python_include = sysconfig.get_python_inc()
             result = config_cmd.try_run(tc,include_dirs=[python_include])
             if not result:
-                raise "ERROR: Failed to test configuration"            
+                raise "ERROR: Failed to test configuration"
             moredefs = []
 
             #
@@ -63,7 +63,7 @@ def configuration(parent_package='',top_path=None):
             if config_cmd.check_func('atanhf', **kws_args):
                 moredefs.append('HAVE_INVERSE_HYPERBOLIC_FLOAT')
             if config_cmd.check_func('atanhl', **kws_args):
-                moredefs.append('HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE')                
+                moredefs.append('HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE')
             if config_cmd.check_func('isnan', **kws_args):
                 moredefs.append('HAVE_ISNAN')
             if config_cmd.check_func('isinf', **kws_args):
@@ -97,35 +97,26 @@ def configuration(parent_package='',top_path=None):
         config.add_data_files((header_dir,target))
         return target
 
-    def generate_array_api(ext,build_dir):
-        target = join(build_dir,'__multiarray_api.h')
-        script = join(codegen_dir,'generate_array_api.py')
-        if newer(script,target):
-            old_sys_path = sys.path
-            try:
+    def generate_api_func(header_file, module_name):
+        def generate_api(ext,build_dir):
+            target = join(build_dir, header_file)
+            script = join(codegen_dir, module_name + '.py')
+            if newer(script, target):
                 sys.path.insert(0, codegen_dir)
-                import generate_array_api
-                print 'executing',script
-                generate_array_api.generate_api(build_dir)
-            finally:
-                sys.path = old_sys_path
-        config.add_data_files((header_dir,target))
-        return target
+                try:
+                    m = __import__(module_name)
+                    print 'executing',script
+                    m.generate_api(build_dir)
+                finally:
+                    del sys.path[0]
+            config.add_data_files((header_dir,target))
+            return target
+        return generate_api
 
-    def generate_ufunc_api(ext,build_dir):
-        target = join(build_dir,'__ufunc_api.h')
-        script = join(codegen_dir,'generate_ufunc_api.py')
-        if newer(script,target):
-            old_sys_path = sys.path
-            try:
-                sys.path.insert(0, codegen_dir)
-                import generate_ufunc_api
-                print 'executing',script
-                generate_ufunc_api.generate_api(build_dir)
-            finally:
-                sys.path = old_sys_path
-        config.add_data_files((header_dir,target))
-        return target
+    generate_array_api = generate_api_func('__multiarray.h',
+                                           'generate_array_api')
+    generate_ufunc_api = generate_api_func('__ufunc_api.h',
+                                           'generate_ufunc_api')
 
     def generate_umath_c(ext,build_dir):
         target = join(build_dir,'__umath_generated.c')
@@ -236,7 +227,7 @@ int main(int argc, char **argv)
                                    'type' : 'PY_LONG_LONG'})
     testcode.append(c_size_test % {'sz' : 'SIZEOF_PY_LONG_LONG',
                                    'type' : 'PY_LONG_LONG'})
-    
+
 
     testcode.append(r'''
 #else
@@ -259,7 +250,7 @@ int main(int argc, char **argv)
           return 0;
 }
 ''')
-    testcode = '\n'.join(testcode)    
+    testcode = '\n'.join(testcode)
     return testcode
 
 if __name__=='__main__':
