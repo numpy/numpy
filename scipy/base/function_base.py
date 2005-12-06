@@ -82,17 +82,22 @@ def logspace(start, stop, num=50, endpoint=True):
     return _nx.power(10.0, y)
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False):
-    """ Return 'num' evenly spaced samples from 'start' to 'stop'.  If
-        'endpoint' is True, the last sample is 'stop'. If 'retstep' is
-        True then return the step value used.
+    """Return evenly spaced numbers.
+
+    Return 'num' evenly spaced samples from 'start' to 'stop'.  If
+    'endpoint' is True, the last sample is 'stop'. If 'retstep' is
+    True then return the step value used.
     """
-    if num <= 0: return array([])
+    num = int(num)
+    if num <= 0:
+        return array([])
     if endpoint:
+        if num == 1:
+            return array([start])
         step = (stop-start)/float((num-1))
-        y = _nx.arange(0, num) * step + start
     else:
         step = (stop-start)/float(num)
-        y = _nx.arange(0, num) * step + start
+    y = _nx.arange(0, num) * step + start
     if retstep:
         return y, step
     else:

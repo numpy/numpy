@@ -81,6 +81,12 @@ class test_linspace(unittest.TestCase):
         assert_almost_equal(st,8/49.0)
         assert_array_almost_equal(y,mgrid[2:10:50j],13)
 
+    def check_corner(self):
+        y = list(linspace(0,1,1))
+        assert y == [0.0], y
+        y = list(linspace(0,1,2.5))
+        assert y == [0.0, 1.0]
+
 class test_amax(unittest.TestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
@@ -90,7 +96,7 @@ class test_amax(unittest.TestCase):
              [8,3.0,2.0]]
         assert_equal(amax(b,axis=0),[8.0,10.0,9.0])
         assert_equal(amax(b,axis=1),[9.0,10.0,8.0])
-        
+
 class test_amin(unittest.TestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
