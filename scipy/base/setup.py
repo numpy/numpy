@@ -104,7 +104,6 @@ def configuration(parent_package='',top_path=None):
             old_sys_path = sys.path
             try:
                 sys.path.insert(0, codegen_dir)
-                print sys.path
                 import generate_array_api
                 print 'executing',script
                 generate_array_api.generate_api(build_dir)
