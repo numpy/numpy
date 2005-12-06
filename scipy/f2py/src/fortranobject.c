@@ -468,7 +468,6 @@ static int swap_arrays(PyArrayObject* arr1, PyArrayObject* arr2) {
   SWAPTYPE(arr1->base,arr2->base,PyObject*);
   SWAPTYPE(arr1->descr,arr2->descr,PyArray_Descr*);
   SWAPTYPE(arr1->flags,arr2->flags,int);
-  SWAPTYPE(arr1->itemsize, arr2->itemsize, int);
   /* SWAPTYPE(arr1->weakreflist,arr2->weakreflist,PyObject*); */
   return 0;
 }

@@ -216,7 +216,10 @@ def _usefields(adict):
             raise ValueError, "invalid offset."
         names.append(fname)
         offsets.append(num)
-        formats.append(dtypedescr(obj[0]))
+        format = dtypedescr(obj[0])
+        if (format.itemsize == 0):
+            raise ValueError, "all itemsizes must be given."
+        formats.append(format)
         if (n > 2):
             title = obj[2]
         else:
