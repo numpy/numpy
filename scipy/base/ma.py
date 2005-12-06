@@ -4,7 +4,8 @@ by Paul F. Dubois.
 
 Copyright 1999, 2000, 2001 Regents of the University of California.
 Released for unlimited redistribution.
-Adapted for scipy.base 2005 by Travis Oliphant and Paul Dubois.
+Adapted for scipy_core 2005 by Travis Oliphant and
+(mainly) Paul Dubois.
 """
 import string, types, sys
 

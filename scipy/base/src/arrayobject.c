@@ -1751,8 +1751,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
             PyLong_Check(op)) {
                 intp value;
                 value = PyArray_PyIntAsIntp(op);
-                if (PyErr_Occurred())
-                        PyErr_Clear();
+		PyErr_Clear();
                 else if (value >= 0) {
 			return array_big_item(self, value);
                 }
@@ -7377,7 +7376,7 @@ PyArray_MapIterNew(PyObject *indexobj)
 
 	else if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
 		mit->numiter = 1;
-		indtype = PyArray_DescrFromType(PyArray_INT);
+		indtype = PyArray_DescrFromType(PyArray_INTP);
 		arr = PyArray_FromAny(indexobj, indtype, 0, 0, FORCECAST);
 		if (arr == NULL) goto fail;
 		mit->iters[0] = (PyArrayIterObject *)PyArray_IterNew(arr);
