@@ -1773,6 +1773,29 @@ PyArray_DescrFromTypeObject(PyObject *type)
 	/* Otherwise --- type is a sub-type of an array scalar
 	   currently only VOID allows it
 	*/
+
+	/* Check the generic types */
+	if ((type == (PyObject *) &PyNumericArrType_Type) ||		\
+	    (type == (PyObject *) &PyInexactArrType_Type) ||		\
+	    (type == (PyObject *) &PyFloatingArrType_Type))
+		typenum = PyArray_DOUBLE;
+	else if (type == (PyObject *)&PyComplexFloatingArrType_Type)
+		typenum = PyArray_CDOUBLE;
+	else if ((type == (PyObject *)&PyIntegerArrType_Type) ||	\
+		 (type == (PyObject *)&PySignedIntegerArrType_Type))
+		typenum = PyArray_LONG;
+	else if (type == (PyObject *) &PyUnsignedIntegerArrType_Type)
+		typenum = PyArray_ULONG;
+	else if (type == (PyObject *) &PyCharacterArrType_Type)
+		typenum = PyArray_STRING;
+	else if ((type == (PyObject *) &PyGenericArrType_Type) || \
+		 (type == (PyObject *) &PyFlexibleArrType_Type))
+		typenum = PyArray_VOID;
+
+	if (typenum != PyArray_NOTYPE) {
+		return PyArray_DescrFromType(typenum);
+	}
+	
 	new = _arraydescr_fromobj(type);
 	if (new == NULL)
 		PyErr_SetString(PyExc_ValueError, 

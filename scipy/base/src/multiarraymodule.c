@@ -2973,7 +2973,8 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		if (PyType_IsSubtype((PyTypeObject *)obj, 
 				     &PyGenericArrType_Type)) {
 			*at = PyArray_DescrFromTypeObject(obj);
-			return PY_SUCCEED;
+			if (*at) return PY_SUCCEED;
+			else return PY_FAIL;
 		}
 		check_num = PyArray_OBJECT;
 		if (obj == (PyObject *)(&PyInt_Type))
@@ -2982,19 +2983,6 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			check_num = PyArray_DOUBLE;
 		else if (obj == (PyObject *)(&PyComplex_Type)) 
 			check_num = PyArray_CDOUBLE;
-		else if ((obj == (PyObject *) &PyNumericArrType_Type) || \
-			 (obj == (PyObject *) &PyInexactArrType_Type) || \
-			 (obj == (PyObject *) &PyFloatingArrType_Type))
-		        check_num = PyArray_DOUBLE;
-		else if (obj == (PyObject *)&PyComplexFloatingArrType_Type)
-			check_num = PyArray_CDOUBLE;
-		else if ((obj == (PyObject *)&PyIntegerArrType_Type) || \
-			 (obj == (PyObject *)&PySignedIntegerArrType_Type))
-			check_num = PyArray_LONG;
-		else if (obj == (PyObject *) &PyUnsignedIntegerArrType_Type)
-			check_num = PyArray_ULONG;
-		else if (obj == (PyObject *) &PyCharacterArrType_Type)
-			check_num = PyArray_STRING;
 		else if (obj == (PyObject *)(&PyBool_Type))
 			check_num = PyArray_BOOL;
                 else if (obj == (PyObject *)(&PyString_Type))

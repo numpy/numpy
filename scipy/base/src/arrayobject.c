@@ -739,34 +739,32 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
                                 PyArray_Descr *descr,
                                 char *data)
 {
-	PyObject *ret;
 
 #if SIZEOF_INTP != SIZEOF_INT
 	int i;
 	intp newd[MAX_DIMS];
 	
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
-        ret = PyArray_NewFromDescr(&PyArray_Type, descr, 
-				   nd, newd, 
-				   NULL, data,
-				   CARRAY_FLAGS, NULL);
+        return PyArray_NewFromDescr(&PyArray_Type, descr, 
+				    nd, newd, 
+				    NULL, data,
+				    CARRAY_FLAGS, NULL);
 #else
-	ret = PyArray_NewFromDescr(&PyArray_Type, descr,
-				   nd, (intp *)d, 
-				   NULL, data, 
-				   CARRAY_FLAGS, NULL);
+	return PyArray_NewFromDescr(&PyArray_Type, descr,
+				    nd, (intp *)d, 
+				    NULL, data, 
+				    CARRAY_FLAGS, NULL);
 #endif
-	return ret;
 }
-
-/* FromDimsAndData is a macro */
 
 static PyObject *
 PyArray_FromDims(int nd, int *d, int type) 
 {
 	PyObject *ret;
-	ret = PyArray_FromDimsAndData(nd, d, type, NULL);
-	if (PyArray_DESCR(ret) != &OBJECT_Descr) {
+	ret = PyArray_FromDimsAndDataAndDescr(nd, d, 
+					      PyArray_DescrFromType(type),
+					      NULL);
+	if (ret && (PyArray_DESCR(ret)->type_num != PyArray_OBJECT)) {
 		memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
 	}
 	return ret;
@@ -1751,7 +1749,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
             PyLong_Check(op)) {
                 intp value;
                 value = PyArray_PyIntAsIntp(op);
-		PyErr_Clear();
+		if (PyErr_Occurred())
+			PyErr_Clear();
                 else if (value >= 0) {
 			return array_big_item(self, value);
                 }
@@ -1760,7 +1759,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
 			return array_big_item(self, value);
 		}
         }
-
+	
 	if (PyString_Check(op) || PyUnicode_Check(op)) {
 		if (self->descr->fields) {
 			PyObject *obj;
