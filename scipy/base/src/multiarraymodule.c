@@ -2866,7 +2866,7 @@ _convert_from_dict(PyObject *obj)
 
 	totalsize = 0;
 	for(i=0; i<n; i++) {
-		PyObject *tup, *descr, *index, *item, *name;
+		PyObject *tup, *descr, *index, *item, *name, *off;
 		int len, ret;
 		PyArray_Descr *newdescr;
 
@@ -2885,9 +2885,17 @@ _convert_from_dict(PyObject *obj)
 		ret = PyArray_DescrConverter(descr, &newdescr);
 		Py_DECREF(descr);
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
-		if (offsets)
-			PyTuple_SET_ITEM(tup, 1, 
-					 PyObject_GetItem(offsets, index));
+		if (offsets) {
+			long offset;
+			off = PyObject_GetItem(offsets, index);
+			offset = PyInt_AsLong(off);
+			PyTuple_SET_ITEM(tup, 1, off);
+			if (offset < 0) {
+				PyErr_SetString(PyExc_ValueError,
+						"invalid offset");
+				ret = PY_FAIL;
+			}
+		}
 		else 
 			PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
 		totalsize += newdescr->elsize;

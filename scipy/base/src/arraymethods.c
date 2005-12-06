@@ -322,7 +322,8 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
 	if (ret == NULL) return -1;
 	Py_INCREF(self);
 	((PyArrayObject *)ret)->base = (PyObject *)self;
-	
+
+	PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);	
 	retval = PyArray_CopyObject((PyArrayObject *)ret, val);
 	Py_DECREF(ret);
 	return retval;
