@@ -3319,7 +3319,7 @@ PyArray_IsNativeByteOrder(char order)
 /* steals a reference to descr (even on failure) */
 static PyObject *
 PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd, 
-		     int *dims, int *strides, void *data, 
+		     intp *dims, intp *strides, void *data, 
 		     int flags, PyObject *obj)
 {	
 	PyArrayObject *self;
