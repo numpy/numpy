@@ -70,7 +70,7 @@ extern "C" {
 #define PY_SUCCEED 1
 
 	/* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x0432
+#define NDARRAY_VERSION 0x0802
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.

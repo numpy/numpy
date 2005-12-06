@@ -2884,6 +2884,12 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj)
 		Py_DECREF(type);
 		return NULL;
 	}
+	if (type == &OBJECT_Descr) {
+		PyErr_SetString(PyExc_ValueError,
+				"cannot base a new descriptor on an"\
+				" OBJECT descriptor.");
+		return NULL;
+	}
 	new = PyArray_DescrNew(type);
 	Py_DECREF(type);
 	if (new == NULL) return NULL;
