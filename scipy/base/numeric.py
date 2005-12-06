@@ -1,5 +1,5 @@
 __all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
-           'arange', 'array', 'zeros', 'empty', 'broadcast', 'datadescr',
+           'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtypedescr',
            'fromstring', 'fromfile', 'frombuffer','newbuffer','getbuffer',
            'where', 'concatenate', 'fastCopyAndTranspose',
            'register_dtype', 'set_numeric_ops', 'can_cast',
@@ -48,7 +48,7 @@ ndarray = multiarray.ndarray
 bigndarray = multiarray.bigndarray
 flatiter = multiarray.flatiter
 broadcast = multiarray.broadcast
-datadescr=multiarray.datadescr
+dtypedescr=multiarray.dtypedescr
 ufunc = type(sin)
 
 arange = multiarray.arange

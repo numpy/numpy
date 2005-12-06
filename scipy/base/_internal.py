@@ -1,6 +1,6 @@
 
 
-from multiarray import _flagdict
+from multiarray import _flagdict, dtypedescr
 
 _defflags = _flagdict.keys()
 
@@ -186,3 +186,48 @@ class flagsobj(dict):
     carray = property(get_carray, None, "")
     farray = property(get_farray, None, "")
     
+
+
+# make sure the tuple entries are PyArray_Descr
+#	   or convert them
+#
+# make sure offsets are all interpretable 
+#	   as positive integers and
+#	   convert them to positive integers if so 
+#
+#
+# return totalsize from last offset and size
+
+def _usefields(adict):
+    names = []
+    formats = []
+    offsets = []
+    titles = []
+    fnames = adict.keys()
+    for fname in fnames:
+        obj = adict[fname]
+        n = len(obj)
+        if not isinstance(obj, tuple) or n not in [2,3]:
+            raise ValueError, "entry not a 2- or 3- tuple"
+        if (n > 2) and (obj[2] == fname):
+            continue
+        num = int(obj[1])
+        if (num < 0):
+            raise ValueError, "invalid offset."
+        names.append(fname)
+        offsets.append(num)
+        formats.append(dtypedescr(obj[0]))
+        if (n > 2):
+            title = obj[2]
+        else:
+            title = None
+        titles.append(title)
+    return dtypedescr({"names" : names,
+                       "formats" : formats,
+                       "offsets" : offsets,
+                       "titles" : titles})
+    
+        
+        
+        
+        

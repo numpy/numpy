@@ -1828,7 +1828,6 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
                 return -1;
         }
 	
-
 	if (PyString_Check(index) || PyUnicode_Check(index)) {
 		if (self->descr->fields) {
 			PyObject *obj;
@@ -4141,57 +4140,6 @@ array_descr_get(PyArrayObject *self)
 	return (PyObject *)self->descr;
 }
 
-static PyObject *
-array_protocol_descr_get(PyArrayObject *self)
-{
-	PyObject *res;
-	PyObject *dobj;
-
-	/* hand this off to the typeobject */
-	/* or give default */
-	if (PyArray_ISUSERDEF(self)) {
-		res = PyObject_GetAttrString((PyObject *)self->descr->typeobj, 
-					     "__array_descr__");
-		if (res) return res;
-		PyErr_Clear();
-	}
-	/* get default */
-	dobj = PyTuple_New(2);
-	if (dobj == NULL) return NULL;
-	PyTuple_SET_ITEM(dobj, 0, PyString_FromString(""));
-	PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
-	res = PyList_New(1);
-	if (res == NULL) {Py_DECREF(dobj); return NULL;}
-	PyList_SET_ITEM(res, 0, dobj);
-	return res;
-}
-
-static PyObject *
-array_struct_get(PyArrayObject *self)
-{
-        PyArrayInterface *inter;
-        
-        inter = (PyArrayInterface *)malloc(sizeof(PyArrayInterface));
-        inter->version = 2;
-        inter->nd = self->nd;
-        inter->typekind = self->descr->kind;
-        inter->itemsize = self->descr->elsize;
-        inter->flags = self->flags;
-        /* reset unused flags */
-	inter->flags &= ~(UPDATEIFCOPY | OWNDATA);  
-        inter->strides = self->strides;
-        inter->shape = self->dimensions;
-        inter->data = self->data;
-	Py_INCREF(self);
-        return PyCObject_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
-}
-
-static PyObject *
-array_type_get(PyArrayObject *self)
-{
-        Py_INCREF(self->descr->typeobj);
-        return (PyObject *)self->descr->typeobj;
-}
 
 /* If the type is changed.  
     Also needing change: strides, itemsize
@@ -4204,7 +4152,7 @@ array_type_get(PyArrayObject *self)
 */
 
 static int
-array_type_set(PyArrayObject *self, PyObject *arg)
+array_descr_set(PyArrayObject *self, PyObject *arg)
 {
         PyArray_Descr *newtype=NULL;
         intp newdim;
@@ -4263,16 +4211,25 @@ array_type_set(PyArrayObject *self, PyObject *arg)
 		self->dimensions = temp->dimensions;
 		self->nd = temp->nd;
 		self->strides = temp->strides;
-		self->descr = temp->descr;
+		Py_DECREF(newtype);
+		newtype = temp->descr;
 		/* Fool deallocator */
 		temp->nd = 0;
 		temp->dimensions = NULL;
 		temp->descr = NULL;
 		Py_DECREF(temp);
 	}
-	else {
-		self->descr = newtype;  /* steal the reference */
+		
+	if ((self->descr->elsize == newtype->elsize) && newtype->fields) {
+		PyArray_Descr *_thetype;
+		_thetype = PyArray_DescrNew(self->descr);
+		Py_XDECREF(_thetype->fields);
+		Py_INCREF(newtype->fields);
+		_thetype->fields = newtype->fields;
+		Py_DECREF(newtype);
+		newtype = _thetype;
 	}
+	self->descr = newtype; 
 	PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
 	
         return 0;
@@ -4282,6 +4239,59 @@ array_type_set(PyArrayObject *self, PyObject *arg)
 	Py_DECREF(newtype);
 	return -1;
 }
+
+static PyObject *
+array_protocol_descr_get(PyArrayObject *self)
+{
+	PyObject *res;
+	PyObject *dobj;
+
+	/* hand this off to the typeobject */
+	/* or give default */
+	if (PyArray_ISUSERDEF(self)) {
+		res = PyObject_GetAttrString((PyObject *)self->descr->typeobj, 
+					     "__array_descr__");
+		if (res) return res;
+		PyErr_Clear();
+	}
+	/* get default */
+	dobj = PyTuple_New(2);
+	if (dobj == NULL) return NULL;
+	PyTuple_SET_ITEM(dobj, 0, PyString_FromString(""));
+	PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
+	res = PyList_New(1);
+	if (res == NULL) {Py_DECREF(dobj); return NULL;}
+	PyList_SET_ITEM(res, 0, dobj);
+	return res;
+}
+
+static PyObject *
+array_struct_get(PyArrayObject *self)
+{
+        PyArrayInterface *inter;
+        
+        inter = (PyArrayInterface *)malloc(sizeof(PyArrayInterface));
+        inter->version = 2;
+        inter->nd = self->nd;
+        inter->typekind = self->descr->kind;
+        inter->itemsize = self->descr->elsize;
+        inter->flags = self->flags;
+        /* reset unused flags */
+	inter->flags &= ~(UPDATEIFCOPY | OWNDATA);  
+        inter->strides = self->strides;
+        inter->shape = self->dimensions;
+        inter->data = self->data;
+	Py_INCREF(self);
+        return PyCObject_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
+}
+
+static PyObject *
+array_type_get(PyArrayObject *self)
+{
+        Py_INCREF(self->descr->typeobj);
+        return (PyObject *)self->descr->typeobj;
+}
+
 
 
 static PyObject *
@@ -4537,7 +4547,7 @@ static PyGetSetDef array_getsetlist[] = {
 	 "base object"},
         {"dtype", 
 	 (getter)array_type_get, 
-	 (setter)array_type_set,
+	 NULL,
 	 "get array type class"},
 	{"dtypechar",
 	 (getter)array_typechar_get,
@@ -4547,10 +4557,10 @@ static PyGetSetDef array_getsetlist[] = {
 	 (getter)array_typestr_get,
 	 NULL,
 	 "get array type string"},
-	{"descr", 
+	{"dtypedescr", 
 	 (getter)array_descr_get,
-	 NULL,
-	 "get type descriptor for array"},
+	 (setter)array_descr_set,
+	 "get(set) data-type-descriptor for array"},
         {"real", 
 	 (getter)array_real_get, 
 	 (setter)array_real_set, 

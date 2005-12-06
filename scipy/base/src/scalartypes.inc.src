@@ -758,6 +758,11 @@ gentype_type_get(PyObject *self)
 	return (PyObject *)self->ob_type;
 }
 
+static PyObject *
+gentype_typedescr_get(PyObject *self)
+{
+	return (PyObject *)PyArray_DescrFromScalar(self);
+}
 
 static PyObject *
 gentype_base_get(PyObject *self)
@@ -890,6 +895,10 @@ static PyGetSetDef gentype_getsets[] = {
 	 (getter)gentype_typestr_get,
 	 NULL,
 	 "get array type string"},
+	{"dtypedescr",
+	 (getter)gentype_typedescr_get,
+	 NULL,
+	 "get array data-descriptor"},
         {"real", 
 	 (getter)gentype_real_get, 
 	 (setter)0,

@@ -2775,7 +2775,23 @@ arbitrary.
 What does distinguish a title, however, is that if it is not None, 
 it will be placed at the end of the tuple inserted into the 
 fields dictionary.
+
+If the dictionary does not have "names" and "formats" entries,
+then it will be checked for conformity and used directly. 
 */
+
+static PyArray_Descr *
+_use_fields_dict(PyObject *obj)
+{
+        static PyObject *module=NULL;
+
+        if (module==NULL) {
+                module = PyImport_ImportModule("scipy.base._internal");
+                if (module == NULL) return NULL;
+        }
+        return (PyArray_Descr *)PyObject_CallMethod(module, "_usefields", 
+						    "O", obj);
+}
 
 static PyArray_Descr *
 _convert_from_dict(PyObject *obj)
@@ -2786,23 +2802,19 @@ _convert_from_dict(PyObject *obj)
 	int n, i;
 	int totalsize;
 
-	new = PyArray_DescrNewFromType(PyArray_VOID);
-	if (new == NULL) return NULL;
 	fields = PyDict_New();
-	if (fields == NULL) goto fail;
-
+	if (fields == NULL) return (PyArray_Descr *)PyErr_NoMemory();
+	
 	names = PyDict_GetItemString(obj, "names");
 	descrs = PyDict_GetItemString(obj, "formats");
-	offsets = PyDict_GetItemString(obj, "offsets");
-	titles = PyDict_GetItemString(obj, "titles");
 
 	if (!names || !descrs) {
-		PyErr_SetString(PyExc_ValueError, 
-				"dictionary must have at least 'names', and"\
-				" 'descrs' as keys");
-		goto fail;
+		Py_DECREF(fields);
+		return _use_fields_dict(obj);
 	}
 	n = PyObject_Length(names);
+	offsets = PyDict_GetItemString(obj, "offsets");
+	titles = PyDict_GetItemString(obj, "titles");
 	if ((n > PyObject_Length(descrs)) ||			\
 	    (offsets && (n > PyObject_Length(offsets))) ||	\
 	    (titles && (n > PyObject_Length(titles)))) {
@@ -2851,12 +2863,13 @@ _convert_from_dict(PyObject *obj)
 		if ((ret == PY_FAIL) || (newdescr->elsize == 0)) goto fail;
 	}
 
+	new = PyArray_DescrNewFromType(PyArray_VOID);
+	if (new == NULL) goto fail;
 	new->elsize = totalsize;
 	new->fields = fields;
 	return new;
 
  fail:
-	Py_XDECREF(new);
 	Py_XDECREF(fields);
 	return NULL;
 }
@@ -4290,8 +4303,6 @@ setup_scalartypes(PyObject *dict)
 
 	/* Clean up string and unicode array types so they act more like
 	   strings -- get their tables from the standard types.
-	   
-	   
 	*/
 }
 
@@ -4401,7 +4412,7 @@ DL_EXPORT(void) initmultiarray(void) {
 	PyDict_SetItemString(d, "broadcast", 
 			     (PyObject *)&PyArrayMultiIter_Type);
 	Py_INCREF(&PyArrayDescr_Type);
-	PyDict_SetItemString(d, "datadescr", (PyObject *)&PyArrayDescr_Type);
+	PyDict_SetItemString(d, "dtypedescr", (PyObject *)&PyArrayDescr_Type);
 
 	/* Doesn't need to be exposed to Python 
         Py_INCREF(&PyArrayMapIter_Type);

@@ -249,8 +249,6 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
 	return PyArray_SwapAxes(self, axis1, axis2);
 }
 
-static int array_type_set(PyArrayObject *, PyObject *);
-
 static char doc_getfield[] = "m.getfield(dtype, offset) returns a field "\
 	" of the given array as a certain type.  A field is a view of "\
 	" the array's data with each itemsize determined by the given type"\
