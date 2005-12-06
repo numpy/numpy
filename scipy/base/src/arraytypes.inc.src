@@ -1599,7 +1599,8 @@ static PyArray_Descr *_builtin_descrs[] = {
 };
 
 static PyArray_Descr *
-PyArray_DescrFromType(int type) {
+PyArray_DescrFromType(int type)
+{
 	PyArray_Descr *ret=NULL;
 
 	if (type < PyArray_NTYPES) {

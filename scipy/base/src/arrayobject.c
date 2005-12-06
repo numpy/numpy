@@ -691,7 +691,8 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 static PyObject *
 PyArray_FromDimsAndDataAndDescr(int nd, int *d, 
                                 PyArray_Descr *descr,
-                                char *data) {
+                                char *data)
+{
 	PyObject *ret;
 
 #if SIZEOF_INTP != SIZEOF_INT
