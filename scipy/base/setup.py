@@ -101,12 +101,15 @@ def configuration(parent_package='',top_path=None):
         target = join(build_dir,'__multiarray_api.h')
         script = join(codegen_dir,'generate_array_api.py')
         if newer(script,target):
-            script = os.path.abspath(script)
-            old_cwd = os.getcwd()
-            os.chdir(build_dir)
-            print 'executing',script
-            execfile(script,{},{})
-            os.chdir(old_cwd)
+            old_sys_path = sys.path
+            try:
+                sys.path.insert(0, codegen_dir)
+                print sys.path
+                import generate_array_api
+                print 'executing',script
+                generate_array_api.generate_api(build_dir)
+            finally:
+                sys.path = old_sys_path
         config.add_data_files((header_dir,target))
         return target
 
@@ -114,12 +117,14 @@ def configuration(parent_package='',top_path=None):
         target = join(build_dir,'__ufunc_api.h')
         script = join(codegen_dir,'generate_ufunc_api.py')
         if newer(script,target):
-            script = os.path.abspath(script)
-            old_cwd = os.getcwd()
-            os.chdir(build_dir)
-            print 'executing',script
-            execfile(script,{},{})
-            os.chdir(old_cwd)
+            old_sys_path = sys.path
+            try:
+                sys.path.insert(0, codegen_dir)
+                import generate_ufunc_api
+                print 'executing',script
+                generate_ufunc_api.generate_api(build_dir)
+            finally:
+                sys.path = old_sys_path
         config.add_data_files((header_dir,target))
         return target
 
