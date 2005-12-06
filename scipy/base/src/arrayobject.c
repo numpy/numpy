@@ -1175,9 +1175,7 @@ array_dealloc(PyArrayObject *self) {
 	
 	PyDimMem_FREE(self->dimensions);
 
-	if (self->descr->fields != Py_NotImplemented) {/* static type */
-		Py_XDECREF(self->descr);
-	}
+	Py_DECREF(self->descr);
 	
         self->ob_type->tp_free((PyObject *)self);
 }
@@ -7777,15 +7775,7 @@ PyArray_DescrNew(PyArray_Descr *base)
 	       (char *)base+sizeof(PyObject),
 	       sizeof(PyArray_Descr)-sizeof(PyObject));
 		
-	/* Make sure to reset if this came from builtin
-	   type 
-	*/
-	if (new->fields == Py_NotImplemented) {
-		new->fields = NULL;
-	}
-	else {
-		Py_XINCREF(new->fields);
-	}
+	Py_XINCREF(new->fields);
 	if (new->subarray) {
 		new->subarray = malloc(sizeof(PyArray_ArrayDescr));
 		memcpy(new->subarray, base->subarray, 
@@ -7803,11 +7793,6 @@ PyArray_DescrNew(PyArray_Descr *base)
 static void
 arraydescr_dealloc(PyArray_Descr *self)
 {
-	if (self->fields == Py_NotImplemented) {
-		fprintf(stderr, "Ahhh... We are getting rid of" \
-			"a registered type....\n");
-		return;
-	}
 	Py_XDECREF(self->typeobj);
 	Py_XDECREF(self->fields);
 	if (self->subarray) {

@@ -578,7 +578,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
 \t\t\tgoto capi_fail;
 \t\t}
 \t\tif (*len == -1)
-\t\t\t*len = (arr->itemsize)*PyArray_SIZE(arr);
+\t\t\t*len = (arr->descr->elsize)*PyArray_SIZE(arr);
 \t\tSTRINGMALLOC(*str,*len);
 \t\tSTRINGCOPYN(*str,arr->data,*len);
 \t\treturn 1;
