@@ -1,4 +1,6 @@
 
+#A place for code to be called from C-code
+#  that implements more complicated stuff.
 
 from multiarray import _flagdict, dtypedescr
 
@@ -198,6 +200,9 @@ class flagsobj(dict):
 #
 # return totalsize from last offset and size
 
+# Called in PyArray_DescrConverter function when
+#  a dictionary without "names" and "formats"
+#  fields is used as a data-type descriptor.
 def _usefields(adict):
     names = []
     formats = []
