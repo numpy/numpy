@@ -44,6 +44,9 @@ typedef struct {
 /* no error checking is performed -- ctypeptr must be same type as scalar */
 /* in case of flexible type, the data is not copied 
    into ctypeptr which is expected to be a pointer to pointer */
+/*OBJECT_API
+ Convert to c-type
+*/
 static void
 PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 {
@@ -73,6 +76,9 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
     where only a reference for flexible types is returned 
 */
 
+/*OBJECT_API
+ Cast Scalar to c-type
+*/
 static int
 PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr, 
 			  PyArray_Descr *outcode)
@@ -111,6 +117,9 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 /* always contains a copy of the data */
 
 /* steals reference to outcode */
+/*OBJECT_API
+ Get 0-dim array from scalar
+*/
 static PyObject *
 PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 {
@@ -1805,6 +1814,9 @@ PyArray_DescrFromTypeObject(PyObject *type)
 }
 
 /* New reference */
+/*OBJECT_API
+ Return type typecode from array scalar.
+*/
 static PyArray_Descr *
 PyArray_DescrFromScalar(PyObject *sc)
 {
@@ -1836,6 +1848,9 @@ PyArray_DescrFromScalar(PyObject *sc)
 }
 
 /* New reference */
+/*OBJECT_API
+ Get a typeobject from a type-number
+*/
 static PyObject *
 PyArray_TypeObjectFromType(int type)
 {

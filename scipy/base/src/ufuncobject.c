@@ -36,6 +36,7 @@ typedef void (CfloatBinaryFunc)(cfloat *x, cfloat *y, cfloat *res);
 typedef void (ClongdoubleBinaryFunc)(clongdouble *x, clongdouble *y, \
 				     clongdouble *res);
 
+/*UFUNC_API*/
 static void
 PyUFunc_ff_f_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 {
@@ -49,6 +50,7 @@ PyUFunc_ff_f_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 	}
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_ff_f(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -63,6 +65,7 @@ PyUFunc_ff_f(char **args, intp *dimensions, intp *steps, void *func)
 	}
 } 
 
+/*UFUNC_API*/
 static void 
 PyUFunc_dd_d(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -77,6 +80,7 @@ PyUFunc_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 	}
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_gg_g(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -92,6 +96,7 @@ PyUFunc_gg_g(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 
+/*UFUNC_API*/
 static void 
 PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -108,6 +113,7 @@ PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 	}
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 {
@@ -124,6 +130,7 @@ PyUFunc_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 	}
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_FF_F(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -140,6 +147,7 @@ PyUFunc_FF_F(char **args, intp *dimensions, intp *steps, void *func)
 	}
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_GG_G(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -158,6 +166,7 @@ PyUFunc_GG_G(char **args, intp *dimensions, intp *steps, void *func)
 	}
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -191,6 +200,7 @@ typedef void CdoubleUnaryFunc(cdouble *x, cdouble *res);
 typedef void CfloatUnaryFunc(cfloat *x, cfloat *res);
 typedef void ClongdoubleUnaryFunc(clongdouble *x, clongdouble *res);
 
+/*UFUNC_API*/
 static void 
 PyUFunc_f_f_As_d_d(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -201,6 +211,7 @@ PyUFunc_f_f_As_d_d(char **args, intp *dimensions, intp *steps, void *func)
 	}
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_d_d(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -211,6 +222,7 @@ PyUFunc_d_d(char **args, intp *dimensions, intp *steps, void *func)
 	}
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_f_f(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -222,6 +234,7 @@ PyUFunc_f_f(char **args, intp *dimensions, intp *steps, void *func)
 	}
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -235,6 +248,7 @@ PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 
+/*UFUNC_API*/
 static void 
 PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -249,6 +263,7 @@ PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func)
 	}
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_F_F(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -264,6 +279,7 @@ PyUFunc_F_F(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 
+/*UFUNC_API*/
 static void 
 PyUFunc_D_D(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -279,6 +295,7 @@ PyUFunc_D_D(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 
+/*UFUNC_API*/
 static void 
 PyUFunc_G_G(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -293,6 +310,7 @@ PyUFunc_G_G(char **args, intp *dimensions, intp *steps, void *func)
 	}
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -311,6 +329,7 @@ PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func)
         return;
 }
 
+/*UFUNC_API*/
 static void 
 PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func) 
 {
@@ -342,6 +361,7 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
    func is a structure with nin, nout, and a Python callable function
 */
 
+/*UFUNC_API*/
 static void
 PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
 {
@@ -464,6 +484,7 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus)
 }
 
 
+/*UFUNC_API*/
 static int
 PyUFunc_checkfperr(int errmask, PyObject *errobj)
 {
@@ -498,6 +519,7 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj)
 
 
 /* Checking the status flag clears it */
+/*UFUNC_API*/
 static void
 PyUFunc_clearfperr()
 {
@@ -674,6 +696,7 @@ select_types(PyUFuncObject *self, int *arg_types,
 
 static int PyUFunc_USEDEFAULTS=0;
 
+/*UFUNC_API*/
 static int
 PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 {
@@ -1328,6 +1351,7 @@ _printcastbuf(PyUFuncLoopObject *loop, int bufnum)
    arguments are parsed and placed in mps in construct_loop (construct_matrices)
 */
 
+/*UFUNC_API*/
 static int 
 PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, 
 			PyArrayObject **mps) 
@@ -2609,6 +2633,7 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
 }
 
 
+/*UFUNC_API*/
 static PyObject *
 PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data, 
 			char *types, int ntypes,
@@ -2644,6 +2669,7 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
 	return (PyObject *)self;
 }
 
+/*UFUNC_API*/
 static int
 PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc, 
 			    int usertype,

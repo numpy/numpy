@@ -48,6 +48,9 @@ static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
 /* An Error object -- rarely used? */
 static PyObject *MultiArrayError;
 
+/*MULTIARRAY_API
+ Multiply a List of ints
+*/
 static int
 PyArray_MultiplyIntList(register int *l1, register int n) 
 {
@@ -56,6 +59,9 @@ PyArray_MultiplyIntList(register int *l1, register int n)
         return s;
 }
 
+/*MULTIARRAY_API
+ Multiply a List
+*/
 static intp 
 PyArray_MultiplyList(register intp *l1, register int n) 
 {
@@ -64,6 +70,9 @@ PyArray_MultiplyList(register intp *l1, register int n)
         return s;
 }
 
+/*MULTIARRAY_API
+ Produce a pointer into array
+*/
 static char *
 PyArray_GetPtr(PyArrayObject *obj, register intp* ind)
 {
@@ -75,6 +84,9 @@ PyArray_GetPtr(PyArrayObject *obj, register intp* ind)
 	return dptr;
 }
 
+/*MULTIARRAY_API
+ Get axis from an object (possibly None) -- a converter function,
+*/
 static int 
 PyArray_AxisConverter(PyObject *obj, int *axis)
 {
@@ -90,6 +102,9 @@ PyArray_AxisConverter(PyObject *obj, int *axis)
 	return PY_SUCCEED;
 }
 
+/*MULTIARRAY_API
+ Compare Lists
+*/
 static int 
 PyArray_CompareLists(intp *l1, intp *l2, int n) 
 {
@@ -101,6 +116,9 @@ PyArray_CompareLists(intp *l1, intp *l2, int n)
 }
 
 /* steals a reference to type -- accepts NULL */
+/*MULTIARRAY_API
+ View
+*/
 static PyObject *
 PyArray_View(PyArrayObject *self, PyArray_Descr *type)
 {
@@ -130,6 +148,9 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type)
 	return new;	
 }
 
+/*MULTIARRAY_API
+ Ravel
+*/
 static PyObject *
 PyArray_Ravel(PyArrayObject *a, int fortran)
 {
@@ -150,6 +171,9 @@ PyArray_Ravel(PyArrayObject *a, int fortran)
 	        return PyArray_Flatten(a, fortran);
 }
 
+/*MULTIARRAY_API
+ Flatten
+*/
 static PyObject *
 PyArray_Flatten(PyArrayObject *a, int fortran)
 {
@@ -193,6 +217,9 @@ PyArray_Flatten(PyArrayObject *a, int fortran)
 
 / * Not recommended */
 
+/*MULTIARRAY_API
+ Reshape an array
+*/
 static PyObject *
 PyArray_Reshape(PyArrayObject *self, PyObject *shape) 
 {
@@ -239,6 +266,9 @@ _check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
    in the old array
 */
 
+/*MULTIARRAY_API
+ New shape for an array
+*/
 static PyObject * 
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
 {
@@ -334,6 +364,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
    return the same array.
  */
 
+/*MULTIARRAY_API*/
 static PyObject *
 PyArray_Squeeze(PyArrayObject *self)
 {
@@ -373,6 +404,9 @@ PyArray_Squeeze(PyArrayObject *self)
 }
 
 
+/*MULTIARRAY_API
+ Mean
+*/
 static PyObject *
 PyArray_Mean(PyArrayObject *self, int axis, int rtype)
 {
@@ -398,6 +432,9 @@ PyArray_Mean(PyArrayObject *self, int axis, int rtype)
 }
 
 /* Set variance to 1 to by-pass square-root calculation and return variance */
+/*MULTIARRAY_API
+ Std
+*/
 static PyObject *
 PyArray_Std(PyArrayObject *self, int axis, int rtype, int variance)
 {
@@ -461,6 +498,9 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, int variance)
 }
 
 
+/*MULTIARRAY_API
+ Sum
+*/
 static PyObject *
 PyArray_Sum(PyArrayObject *self, int axis, int rtype)
 {
@@ -474,6 +514,9 @@ PyArray_Sum(PyArrayObject *self, int axis, int rtype)
 	return ret;
 }
 
+/*MULTIARRAY_API
+ Prod
+*/
 static PyObject *
 PyArray_Prod(PyArrayObject *self, int axis, int rtype)
 {
@@ -487,6 +530,9 @@ PyArray_Prod(PyArrayObject *self, int axis, int rtype)
 	return ret;
 }
 
+/*MULTIARRAY_API
+ CumSum
+*/
 static PyObject *
 PyArray_CumSum(PyArrayObject *self, int axis, int rtype)
 {
@@ -500,6 +546,9 @@ PyArray_CumSum(PyArrayObject *self, int axis, int rtype)
 	return ret;
 }
 
+/*MULTIARRAY_API
+ CumProd
+*/
 static PyObject *
 PyArray_CumProd(PyArrayObject *self, int axis, int rtype)
 {
@@ -514,6 +563,9 @@ PyArray_CumProd(PyArrayObject *self, int axis, int rtype)
 	return ret;
 }
 
+/*MULTIARRAY_API
+ Any
+*/
 static PyObject *
 PyArray_Any(PyArrayObject *self, int axis)
 {
@@ -528,6 +580,9 @@ PyArray_Any(PyArrayObject *self, int axis)
 	return ret;
 }
 
+/*MULTIARRAY_API
+ All
+*/
 static PyObject *
 PyArray_All(PyArrayObject *self, int axis)
 {
@@ -543,6 +598,9 @@ PyArray_All(PyArrayObject *self, int axis)
 }
 
 
+/*MULTIARRAY_API
+ Compress
+*/
 static PyObject *
 PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis)
 {
@@ -566,6 +624,9 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis)
 	return ret;
 }
 
+/*MULTIARRAY_API
+ Nonzero
+*/
 static PyObject *
 PyArray_Nonzero(PyArrayObject *self)
 {
@@ -628,6 +689,9 @@ PyArray_Nonzero(PyArrayObject *self)
         
 }
 
+/*MULTIARRAY_API
+ Clip
+*/
 static PyObject *
 PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max)
 {
@@ -661,6 +725,9 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max)
 	return ret;
 }
 
+/*MULTIARRAY_API
+ Conjugate
+*/
 static PyObject *
 PyArray_Conjugate(PyArrayObject *self)
 {
@@ -700,6 +767,9 @@ PyArray_Conjugate(PyArrayObject *self)
 	}
 }
 
+/*MULTIARRAY_API
+ Trace
+*/
 static PyObject *
 PyArray_Trace(PyArrayObject *self, int offset, int axis1, int axis2, 
 int rtype)
@@ -713,6 +783,9 @@ int rtype)
 	return ret;
 }
 
+/*MULTIARRAY_API
+ Diagonal
+*/
 static PyObject *
 PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 {
@@ -845,6 +918,9 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 */
 
 /* steals a reference to typedescr -- can be NULL*/
+/*MULTIARRAY_API
+ Simulat a C-array
+*/
 static int
 PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd, 
 		 PyArray_Descr* typedescr)
@@ -901,6 +977,9 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd,
 
 /* Deprecated --- Use PyArray_AsCArray instead */
 
+/*MULTIARRAY_API
+ Convert to a 1D C-array
+*/
 static int 
 PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode) 
 {
@@ -914,6 +993,9 @@ PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
 	return 0;
 }
 
+/*MULTIARRAY_API
+ Convert to a 2D C-array
+*/
 static int 
 PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode) 
 {
@@ -931,6 +1013,9 @@ PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode)
 
 /* End Deprecated */
 
+/*MULTIARRAY_API
+ Free pointers created if As2D is called
+*/
 static int 
 PyArray_Free(PyObject *op, void *ptr) 
 {
@@ -982,6 +1067,9 @@ _swap_and_concat(PyObject *op, int axis, int n)
   multidimensional array.*/
 /* If axis is MAX_DIMS or bigger, then each sequence object will 
    be flattened before concatenation 
+*/
+/*MULTIARRAY_API
+ Concatenate an arbitrary Python sequence into an array.
 */
 static PyObject *
 PyArray_Concatenate(PyObject *op, int axis) 
@@ -1090,6 +1178,9 @@ PyArray_Concatenate(PyObject *op, int axis)
 	return NULL;
 }
 
+/*MULTIARRAY_API
+ SwapAxes
+*/
 static PyObject *
 PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 {
@@ -1134,8 +1225,12 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 	return ret;
 }
 
+/*MULTIARRAY_API
+ Return Transpose.
+*/
 static PyObject *
-PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute) {
+PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
+{
 	intp *axes, axis;
 	intp i, n;
 	intp permutation[MAX_DIMS];
@@ -1189,8 +1284,12 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute) {
 	return (PyObject *)ret;	
 }
 
+/*MULTIARRAY_API
+ Repeat the array.
+*/
 static PyObject *
-PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis) {
+PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
+{
 	intp *counts;
 	intp n, n_outer, i, j, k, chunk, total;
 	intp tmp;
@@ -1286,6 +1385,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis) {
 	return NULL;
 }
 
+/*OBJECT_API*/
 static PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn)
 {
@@ -1358,8 +1458,12 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 }
 
 
+/*MULTIARRAY_API
+ Numeric.choose()
+*/
 static PyObject *
-PyArray_Choose(PyArrayObject *ip, PyObject *op) {
+PyArray_Choose(PyArrayObject *ip, PyObject *op)
+{
 	intp *sizes, offset;
 	int i,n,m,elsize;
 	char *ret_data;
@@ -1471,6 +1575,9 @@ qsortCompare (const void *a, const void *b)
 		else (op) = (ap);					\
 	}
 
+/*MULTIARRAY_API
+ Sort an array
+*/
 static PyObject *
 PyArray_Sort(PyArrayObject *op, int axis) 
 {
@@ -1537,6 +1644,9 @@ argsort_static_compare(const void *ip1, const void *ip2)
 					  global_obj);
 }
 
+/*MULTIARRAY_API
+ ArgSort an array
+*/
 static PyObject *
 PyArray_ArgSort(PyArrayObject *op, int axis) 
 {
@@ -1637,6 +1747,9 @@ local_where(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
 	}
 }
 
+/*MULTIARRAY_API
+ Numeric.searchsorted(a,v)
+*/
 static PyObject *
 PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2) 
 {
@@ -1690,6 +1803,9 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 /* Could perhaps be redone to not make contiguous arrays 
  */
 
+/*MULTIARRAY_API
+ Numeric.innerproduct(a,v)
+*/
 static PyObject *
 PyArray_InnerProduct(PyObject *op1, PyObject *op2) 
 {
@@ -1797,6 +1913,9 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 
 
 /* just like inner product but does the swapaxes stuff on the fly */
+/*MULTIARRAY_API
+ Numeric.matrixproduct(a,v)
+*/
 static PyObject *
 PyArray_MatrixProduct(PyObject *op1, PyObject *op2) 
 {
@@ -1923,6 +2042,9 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	return NULL;
 }
 
+/*MULTIARRAY_API
+ Fast Copy and Transpose
+*/
 static PyObject *
 PyArray_CopyAndTranspose(PyObject *op) 
 {
@@ -1980,6 +2102,9 @@ PyArray_CopyAndTranspose(PyObject *op)
 	return ret;
 }
  
+/*MULTIARRAY_API
+ Numeric.correlate(a1,a2,mode)
+*/
 static PyObject *
 PyArray_Correlate(PyObject *op1, PyObject *op2, int mode) 
 {
@@ -2091,6 +2216,9 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 }
 
 
+/*MULTIARRAY_API
+ ArgMin
+*/
 static PyObject *
 PyArray_ArgMin(PyArrayObject *ap, int axis) 
 {
@@ -2118,6 +2246,9 @@ PyArray_ArgMin(PyArrayObject *ap, int axis)
 	return ret;
 }
 
+/*MULTIARRAY_API
+ Max
+*/
 static PyObject *
 PyArray_Max(PyArrayObject *ap, int axis)
 {
@@ -2132,6 +2263,9 @@ PyArray_Max(PyArrayObject *ap, int axis)
 	return ret;	    
 }
 
+/*MULTIARRAY_API
+ Min
+*/
 static PyObject *
 PyArray_Min(PyArrayObject *ap, int axis)
 {
@@ -2146,6 +2280,9 @@ PyArray_Min(PyArrayObject *ap, int axis)
 	return ret;	    
 }
 
+/*MULTIARRAY_API
+ Ptp
+*/
 static PyObject *
 PyArray_Ptp(PyArrayObject *ap, int axis)
 {
@@ -2173,6 +2310,9 @@ PyArray_Ptp(PyArrayObject *ap, int axis)
 }
 
 
+/*MULTIARRAY_API
+ ArgMax
+*/
 static PyObject *
 PyArray_ArgMax(PyArrayObject *op, int axis) 
 {
@@ -2234,8 +2374,12 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 }  
 
 
+/*MULTIARRAY_API
+ Take
+*/
 static PyObject *
-PyArray_Take(PyArrayObject *self0, PyObject *indices0, int axis) {
+PyArray_Take(PyArrayObject *self0, PyObject *indices0, int axis)
+{
         PyArrayObject *self, *indices, *ret;
         intp nd, i, j, n, m, max_item, tmp, chunk;
 	intp shape[MAX_DIMS];
@@ -2311,6 +2455,9 @@ PyArray_Take(PyArrayObject *self0, PyObject *indices0, int axis) {
         return NULL;
 }
 
+/*MULTIARRAY_API
+ Put values into an array
+*/
 static PyObject *
 PyArray_Put(PyArrayObject *self, PyObject* values0, PyObject *indices0) 
 {
@@ -2383,6 +2530,9 @@ PyArray_Put(PyArrayObject *self, PyObject* values0, PyObject *indices0)
         return NULL;
 }
 
+/*MULTIARRAY_API
+ Put values into an array according to a mask.
+*/
 static PyObject *
 PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0) 
 {
@@ -2466,6 +2616,10 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
    as you get a new reference to it.
 */
     
+/*MULTIARRAY_API
+ Useful to pass as converter function for O& processing in
+ PyArgs_ParseTuple.
+*/
 static int 
 PyArray_Converter(PyObject *object, PyObject **address) 
 {
@@ -2481,6 +2635,9 @@ PyArray_Converter(PyObject *object, PyObject **address)
         }
 }
 
+/*MULTIARRAY_API
+ Convert an object to true / false
+*/
 static int
 PyArray_BoolConverter(PyObject *object, Bool *val)
 {    
@@ -2493,6 +2650,9 @@ PyArray_BoolConverter(PyObject *object, Bool *val)
 }
 
 
+/*MULTIARRAY_API
+ Typestr converter
+*/
 static int
 PyArray_TypestrConvert(int itemsize, int gentype)
 {
@@ -2617,6 +2777,9 @@ PyArray_TypestrConvert(int itemsize, int gentype)
 */
 
 
+/*MULTIARRAY_API
+ Get buffer chunk from object
+*/
 static int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 {
@@ -2654,6 +2817,9 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
    PyDimMem_FREE(seq.ptr)**
 */
 
+/*MULTIARRAY_API
+ Get intp chunk from sequence
+*/
 static int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 {
@@ -2924,6 +3090,9 @@ _convert_from_dict(PyObject *obj)
 	return NULL;
 }
 
+/*MULTIARRAY_API
+ Get typenum from an object -- None goes to NULL
+*/
 static int
 PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
 {
@@ -2945,6 +3114,9 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
  */
 
 /* new reference in *at */
+/*MULTIARRAY_API
+ Get typenum from an object -- None goes to &LONG_descr
+*/
 static int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
@@ -3086,6 +3258,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
    equivalent (same basic kind and same itemsize).
 */
 
+/*MULTIARRAY_API*/
 static Bool
 PyArray_EquivalentTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 {
@@ -3194,6 +3367,9 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 
 /* accepts NULL type */
 /* steals referenct to type */
+/*MULTIARRAY_API
+ Empty
+*/
 static PyObject *
 PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 {
@@ -3319,6 +3495,9 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 
 /* steal a reference */
 /* accepts NULL type */
+/*MULTIARRAY_API
+ Zeros
+*/
 static PyObject *
 PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 {
@@ -3393,6 +3572,7 @@ array_set_typeDict(PyObject *ignored, PyObject *args)
 }
 
 /* steals a reference to dtype -- accepts NULL */
+/*OBJECT_API*/
 static PyObject *
 PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype, 
 		   intp n, int swap)
@@ -3483,6 +3663,7 @@ sep is a separator string for character-based data (or NULL for binary)
    " " means whitespace
 */
 
+/*OBJECT_API*/
 static PyObject *
 PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 {
@@ -3667,6 +3848,7 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 	return ret;
 }
 
+/*OBJECT_API*/
 static PyObject *
 PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type, 
 		   intp count, intp offset, int swapped) 
@@ -3866,6 +4048,9 @@ static PyObject *array_correlate(PyObject *dummy, PyObject *args, PyObject *kwds
 }
 
 
+/*MULTIARRAY_API
+ Arange
+*/
 static PyObject *
 PyArray_Arange(double start, double stop, double step, int type_num)
 {
@@ -4018,6 +4203,9 @@ array_set_ops_function(PyObject *self, PyObject *args, PyObject *kwds)
 }
 
 
+/*MULTIARRAY_API
+ Where
+*/
 static PyObject *
 PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 {

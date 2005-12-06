@@ -26,6 +26,7 @@ Space Science Telescope Institute
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
+/*OBJECT_API*/
 static intp
 PyArray_PyIntAsIntp(PyObject *o)
 {
@@ -97,6 +98,7 @@ PyArray_PyIntAsIntp(PyObject *o)
 
 static PyObject *array_int(PyArrayObject *v);
 
+/*OBJECT_API*/
 static int
 PyArray_PyIntAsInt(PyObject *o)
 {
@@ -164,6 +166,9 @@ PyArray_PyIntAsInt(PyObject *o)
 }
 
 
+/*OBJECT_API
+ Get Priority from object
+*/
 static double
 PyArray_GetPriority(PyObject *obj, double default_) 
 {
@@ -200,6 +205,9 @@ PyArray_GetPriority(PyObject *obj, double default_)
 */
 
 
+/*OBJECT_API
+ Get pointer to zero of correct type for array.
+*/
 static char *
 PyArray_Zero(PyArrayObject *arr)
 {
@@ -231,6 +239,9 @@ PyArray_Zero(PyArrayObject *arr)
         return zeroval;
 }
 
+/*OBJECT_API
+ Get pointer to one of correct type for array
+*/
 static char *
 PyArray_One(PyArrayObject *arr)
 {
@@ -420,6 +431,9 @@ static PyObject *PyArray_New(PyTypeObject *, int nd, intp *,
 
 /* Used for arrays of python objects to increment the reference count of */
 /* every python object in the array. */
+/*OBJECT_API
+ For object arrays, increment all internal references.
+*/
 static int 
 PyArray_INCREF(PyArrayObject *mp) 
 {
@@ -445,6 +459,9 @@ PyArray_INCREF(PyArrayObject *mp)
         return 0;
 }
 
+/*OBJECT_API
+ Decrement all internal references for object arrays.
+*/
 static int 
 PyArray_XDECREF(PyArrayObject *mp) 
 {
@@ -606,6 +623,9 @@ index2ptr(PyArrayObject *mp, intp i)
         return NULL;
 }
 
+/*OBJECT_API
+ Compute the size of an array (in number of items)
+*/
 static intp 
 PyArray_Size(PyObject *op) 
 {
@@ -627,6 +647,9 @@ PyArray_Size(PyObject *op)
    They can be different sizes and have different types however. 
 */
 
+/*OBJECT_API
+ Copy an Array into another array.
+*/
 static int
 PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 {
@@ -734,6 +757,10 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 /* They all zero-out the memory as previously done */
 
 /* steals reference to descr -- accepts NULL*/
+/*OBJECT_API
+ Like FromDimsAndData but uses the Descr structure instead of typecode
+ as input.
+*/
 static PyObject *
 PyArray_FromDimsAndDataAndDescr(int nd, int *d, 
                                 PyArray_Descr *descr,
@@ -757,6 +784,9 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
 #endif
 }
 
+/*OBJECT_API
+ Construct an empty array from dimensions and typenum
+*/
 static PyObject *
 PyArray_FromDims(int nd, int *d, int type) 
 {
@@ -772,6 +802,9 @@ PyArray_FromDims(int nd, int *d, int type)
 
 /* end old calls */
 
+/*OBJECT_API
+ Copy an array.
+*/
 static PyObject *
 PyArray_NewCopy(PyArrayObject *m1, int fortran)
 {
@@ -797,6 +830,9 @@ PyArray_NewCopy(PyArrayObject *m1, int fortran)
 
 static PyObject *array_big_item(PyArrayObject *, intp);
 
+/*OBJECT_API
+ Get scalar-equivalent to 0-d array
+*/
 static PyObject *
 PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
 {
@@ -864,6 +900,9 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
    from the given pointer to memory -- main Scalar creation function
    default new method calls this. 
 */
+/*OBJECT_API
+ Get scalar-equivalent to 0-d array
+*/
 static PyObject *
 PyArray_ToScalar(void *data, PyArrayObject *arr)
 {
@@ -883,6 +922,10 @@ PyArray_ToScalar(void *data, PyArrayObject *arr)
 
 /* Return Python scalar if 0-d array object is encountered */
 
+/*OBJECT_API
+ Return either an array or the appropriate Python object if the array
+ is 0d and matches a Python type.
+*/
 static PyObject *
 PyArray_Return(PyArrayObject *mp) 
 {
@@ -913,6 +956,9 @@ PyArray_Return(PyArrayObject *mp)
  
   needs the userdecrs table and PyArray_NUMUSER variables
   defined in arratypes.inc
+*/
+/*OBJECT_API
+ Register Data type
 */
 static int 
 PyArray_RegisterDataType(PyTypeObject *type)
@@ -966,6 +1012,9 @@ PyArray_RegisterDataType(PyTypeObject *type)
 */
 
 /* steals a reference to descr */
+/*OBJECT_API
+ Insert Descr Table
+*/
 static int
 PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 {
@@ -1014,6 +1063,9 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 }
 
 
+/*OBJECT_API
+ To File
+*/
 static int
 PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format) 
 {
@@ -1108,6 +1160,9 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
         return 0;
 }
 
+/*OBJECT_API
+ To List
+*/
 static PyObject *
 PyArray_ToList(PyArrayObject *self) 
 {
@@ -2074,6 +2129,9 @@ static NumericOps n_ops = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	}
 
         
+/*OBJECT_API
+ Set internal structure with number functions that all arrays will use
+*/
 int 
 PyArray_SetNumericOps(PyObject *dict) 
 {
@@ -2114,6 +2172,9 @@ PyArray_SetNumericOps(PyObject *dict)
 		    (PyDict_SetItemString(dict, #op, n_ops.op)==-1))	\
 		goto fail;
 
+/*OBJECT_API
+ Get dictionary showing number functions that all arrays will use
+*/
 static PyObject *
 PyArray_GetNumericOps(void) 
 {
@@ -2870,6 +2931,9 @@ array_repr_builtin(PyArrayObject *self)
 static PyObject *PyArray_StrFunction=NULL;
 static PyObject *PyArray_ReprFunction=NULL;
 
+/*OBJECT_API
+ Set the array print function to be a Python function.
+*/
 static void 
 PyArray_SetStringFunction(PyObject *op, int repr) 
 {
@@ -3061,6 +3125,9 @@ PyArray_IntTupleFromIntp(int len, intp *vals)
 
 /* Returns the number of dimensions or -1 if an error occurred */
 /*  vals must be large enough to hold maxvals */
+/*MULTIARRAY_API
+ PyArray_IntpFromSequence
+*/
 static int
 PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals) 
 {
@@ -3186,6 +3253,9 @@ _IsWriteable(PyArrayObject *ap)
 }
 
 
+/*OBJECT_API
+ Update Several Flags at once.
+*/
 static void
 PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 {
@@ -3221,6 +3291,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
  dimensions and element size.  If numbytes is 0 it will be calculated from 
  the provided shape and element size.
 */
+/*OBJECT_API*/
 static Bool
 PyArray_CheckStrides(int elsize, int nd, intp numbytes, 
 		     intp *dims, intp *newstrides)
@@ -3283,6 +3354,9 @@ _array_fill_strides(intp *strides, intp *dims, int nd, intp itemsize,
 	return itemsize;
 }
 
+/*OBJECT_API
+ Generic new array creation routine.
+*/
 static PyObject *
 PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
             intp *strides, void *data, int itemsize, int flags,
@@ -3349,6 +3423,7 @@ _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
 
 /* Determine if character represents system byte-order or not */
 
+/*OBJECT_API*/
 static Bool
 PyArray_IsNativeByteOrder(char order)
 {
@@ -3362,6 +3437,9 @@ PyArray_IsNativeByteOrder(char order)
 }
 
 /* steals a reference to descr (even on failure) */
+/*OBJECT_API
+ Generic new array creation routine.
+*/
 static PyObject *
 PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd, 
 		     intp *dims, intp *strides, void *data, 
@@ -3532,6 +3610,10 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 
 
 
+/*OBJECT_API
+ Resize (reallocate data).  Only works if nothing else is referencing
+ this array and it is contiguous.
+*/
 static PyObject * 
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
 {
@@ -3642,6 +3724,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
 
 
 /* Assumes contiguous */
+/*OBJECT_API*/
 static void
 PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
 {
@@ -3662,6 +3745,7 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
         }
 }        
 
+/*OBJECT_API*/
 static int
 PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 {
@@ -5139,6 +5223,9 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 }
 
 
+/*OBJECT_API
+ Is the typenum valid?
+*/
 static int 
 PyArray_ValidType(int type) 
 {
@@ -5254,6 +5341,9 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in)
 /* For backward compatibility */
 
 /* steals reference to at --- cannot be NULL*/
+/*OBJECT_API
+ Cast an array using typecode structure.
+*/
 static PyObject * 
 PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
 {
@@ -5305,6 +5395,9 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
    of the number of elements in mp. 
 */
 
+/*OBJECT_API
+ Cast to an already created array.
+*/
 static int
 PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 {
@@ -5915,12 +6008,17 @@ array_fromobject(PyObject *op, PyArray_Descr *newtype, int min_depth,
 }
 
 /* new reference -- accepts NULL for mintype*/
+/*OBJECT_API*/
 static PyArray_Descr *
 PyArray_DescrFromObject(PyObject *op, PyArray_Descr *mintype)
 {
 	return _array_find_type(op, mintype, MAX_DIMS);
 }
 
+/*OBJECT_API
+ Return the typecode of the array a Python object would be converted
+ to
+*/
 static int 
 PyArray_ObjectType(PyObject *op, int minimum_type) 
 {
@@ -5980,6 +6078,7 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
 
 
 /* steals a reference to descr -- accepts NULL */
+/*OBJECT_API*/
 static PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *descr, int min_depth, 
 		int max_depth, int requires) 
@@ -6001,6 +6100,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 /*  Because it decrefs op if any conversion needs to take place 
     so it can be used like PyArray_EnsureArray(some_function(...)) */
 
+/*OBJECT_API*/
 static PyObject *
 PyArray_EnsureArray(PyObject *op)
 {
@@ -6022,6 +6122,9 @@ PyArray_EnsureArray(PyObject *op)
 
 
 
+/*OBJECT_API
+ Check the type coercion rules.
+*/
 static int 
 PyArray_CanCastSafely(int fromtype, int totype) 
 {
@@ -6114,6 +6217,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
 }
 
 /* leaves reference count alone --- cannot be NULL*/
+/*OBJECT_API*/
 static Bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
@@ -6152,6 +6256,9 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 /*         and Python's array iterator                                   ***/
                      
 
+/*OBJECT_API
+ Get Iterator.
+*/
 static PyObject *
 PyArray_IterNew(PyObject *obj)
 {
@@ -6906,6 +7013,7 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
 /* Adjust dimensionality and strides for index object iterators 
    --- i.e. broadcast
  */
+/*OBJECT_API*/
 static int
 PyArray_Broadcast(PyArrayMultiIterObject *mit)
 {
@@ -7511,6 +7619,9 @@ static PyTypeObject PyArrayMapIter_Type = {
 /** END of Subscript Iterator **/
 
 
+/*OBJECT_API
+ Get MultiIterator,
+*/
 static PyObject *
 PyArray_MultiIterNew(int n, ...)
 {
@@ -7782,6 +7893,7 @@ static PyTypeObject PyArrayMultiIter_Type = {
         0					  /* tp_weaklist */
 };
 
+/*OBJECT_API*/
 static PyArray_Descr *
 PyArray_DescrNewFromType(int type_num)
 {
@@ -7808,6 +7920,7 @@ PyArray_DescrNewFromType(int type_num)
 **/
 
 /* base cannot be NULL */
+/*OBJECT_API*/
 static PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base)
 {

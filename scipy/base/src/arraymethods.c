@@ -255,6 +255,9 @@ static char doc_getfield[] = "m.getfield(dtype, offset) returns a field "\
 	" and the offset into the current array.";
 
 /* steals typed reference */
+/*OBJECT_API
+ Get a subset of bytes from each element of the array
+*/
 static PyObject *
 PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 {
@@ -300,6 +303,9 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static char doc_setfield[] = "m.setfield(value, dtype, offset) places val "\
 	"into field of the given array defined by the data type and offset.";
 
+/*OBJECT_API
+ Set a subset of bytes from each element of the array
+*/
 static int
 PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
 		 int offset, PyObject *val)
@@ -348,6 +354,7 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 
+/*OBJECT_API*/
 static PyObject *
 PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 {
@@ -1045,6 +1052,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 	return Py_None;	
 }
 
+/*OBJECT_API*/
 static int
 PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 {
@@ -1069,6 +1077,7 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 	return 0;
 }
 
+/*OBJECT_API*/
 static PyObject *
 PyArray_Dumps(PyObject *self, int protocol)
 {
