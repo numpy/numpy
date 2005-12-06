@@ -29,6 +29,7 @@
 
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
 
+
 /* Including this file is the only way I know how to declare functions
    static in each file, and store the pointers from functions in both
    arrayobject.c and multiarraymodule.c for the C-API 
@@ -2895,6 +2896,7 @@ _convert_from_dict(PyObject *obj)
 						"invalid offset");
 				ret = PY_FAIL;
 			}
+			if (offset > totalsize) totalsize = offset;
 		}
 		else 
 			PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
@@ -2921,18 +2923,6 @@ _convert_from_dict(PyObject *obj)
 	Py_XDECREF(fields);
 	return NULL;
 }
-
-/* 
-*/
-static PyArray_Descr *
-_convert_from_obj(PyObject *obj)
-{
-	PyObject *obj_dict;
-
-	obj_dict = obj->ob_type->tp_dict;
-	return _convert_from_dict(obj_dict);
-}
-
 
 static int
 PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
@@ -2986,14 +2976,27 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			return PY_SUCCEED;
 		}
 		check_num = PyArray_OBJECT;
-		if (obj == (PyObject *)(&PyInt_Type)) 
+		if (obj == (PyObject *)(&PyInt_Type))
 			check_num = PyArray_LONG;
-		else if (obj == (PyObject *)(&PyBool_Type))
-			check_num = PyArray_BOOL;
 		else if (obj == (PyObject *)(&PyFloat_Type)) 
 			check_num = PyArray_DOUBLE;
 		else if (obj == (PyObject *)(&PyComplex_Type)) 
 			check_num = PyArray_CDOUBLE;
+		else if ((obj == (PyObject *) &PyNumericArrType_Type) || \
+			 (obj == (PyObject *) &PyInexactArrType_Type) || \
+			 (obj == (PyObject *) &PyFloatingArrType_Type))
+		        check_num = PyArray_DOUBLE;
+		else if (obj == (PyObject *)&PyComplexFloatingArrType_Type)
+			check_num = PyArray_CDOUBLE;
+		else if ((obj == (PyObject *)&PyIntegerArrType_Type) || \
+			 (obj == (PyObject *)&PySignedIntegerArrType_Type))
+			check_num = PyArray_LONG;
+		else if (obj == (PyObject *) &PyUnsignedIntegerArrType_Type)
+			check_num = PyArray_ULONG;
+		else if (obj == (PyObject *) &PyCharacterArrType_Type)
+			check_num = PyArray_STRING;
+		else if (obj == (PyObject *)(&PyBool_Type))
+			check_num = PyArray_BOOL;
                 else if (obj == (PyObject *)(&PyString_Type))
                         check_num = PyArray_STRING;
                 else if (obj == (PyObject *)(&PyUnicode_Type))
@@ -3054,7 +3057,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		return PY_SUCCEED;
 	}
         else {
-		*at = _convert_from_obj(obj);
+		*at = _arraydescr_fromobj(obj);
 		if (*at == NULL) goto fail;
 		return PY_SUCCEED;
 	}
@@ -3071,11 +3074,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		   in typeDict */
 		if (typeDict != NULL) {
 			item = PyDict_GetItem(typeDict, obj);
-			if (item) {
-				*at = PyArray_DescrFromTypeObject(item);
-				PyErr_Clear();
-				return PY_SUCCEED;
-			}
+			if (item) return PyArray_DescrConverter(item, at);
 		}
 		goto fail;
 	}

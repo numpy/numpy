@@ -1703,12 +1703,13 @@ ComplexFloating, Flexible, Character#
 }
 
 
+/* the order of this table is important */
 static PyTypeObject *typeobjects[] = {
-	&PyBoolArrType_Type,
-	&PyByteArrType_Type,
+        &PyBoolArrType_Type,
+        &PyByteArrType_Type,
 	&PyUByteArrType_Type,
-	&PyShortArrType_Type,
-	&PyUShortArrType_Type,
+        &PyShortArrType_Type,
+        &PyUShortArrType_Type,
 	&PyIntArrType_Type,
 	&PyUIntArrType_Type,
 	&PyLongArrType_Type,
@@ -1727,9 +1728,8 @@ static PyTypeObject *typeobjects[] = {
 	&PyVoidArrType_Type
 };
 
-
 static int
-PyArray_TypenumFromTypeObject(PyObject *type) 
+_typenum_fromtypeobj(PyObject *type, int user)
 {
 	int typenum, i;
 
@@ -1742,6 +1742,8 @@ PyArray_TypenumFromTypeObject(PyObject *type)
 		}
                 i++;
 	}
+	
+	if (!user) return typenum;
 
 	/* Search any registered types */
 	i = 0;
@@ -1752,52 +1754,31 @@ PyArray_TypenumFromTypeObject(PyObject *type)
 		}
 		i++;
 	}
-	
-	if (typenum != PyArray_NOTYPE)
-		return typenum;
-
-	/* Convert generic types to specific types */
-	if ((type == (PyObject *) &PyNumericArrType_Type) || \
-	    (type == (PyObject *) &PyInexactArrType_Type) || \
-	    (type == (PyObject *) &PyFloatingArrType_Type))
-		return PyArray_DOUBLE;
-	else if (type == (PyObject *)&PyComplexFloatingArrType_Type)
-		return PyArray_CDOUBLE;
-	else if ((type == (PyObject *)&PyIntegerArrType_Type) ||	\
-		 (type == (PyObject *)&PySignedIntegerArrType_Type))
-		return PyArray_LONG;
-	else if (type == (PyObject *) &PyUnsignedIntegerArrType_Type)
-		return PyArray_ULONG;
-        else if (type == (PyObject *) &PyCharacterArrType_Type)
-		return PyArray_STRING;
-	else if (PyType_IsSubtype((PyTypeObject *)type, &PyFlexibleArrType_Type))
-		return PyArray_VOID;
-	else if (type == (PyObject *)&PyBool_Type)
-		typenum = PyArray_BOOL;
-	else if (type == (PyObject *)&PyInt_Type)
-		typenum = PyArray_LONG;
-	else if (type == (PyObject *)&PyFloat_Type)
-		typenum = PyArray_DOUBLE;	
-	else if (type == (PyObject *)&PyComplex_Type)
-		typenum = PyArray_CDOUBLE;
-	else if (type == (PyObject *)&PyString_Type)
-		typenum = PyArray_STRING;
-	else if (type == (PyObject *)&PyUnicode_Type)
-		typenum = PyArray_UNICODE;
-	else if (type == (PyObject *)&PyBuffer_Type)
-		typenum = PyArray_VOID;
-	else
-		typenum = PyArray_OBJECT;
 	return typenum;
 }
 
 /* new reference */
 static PyArray_Descr *
-PyArray_DescrFromTypeObject(PyObject *type) {
-	int type_num;
-	
-	type_num = PyArray_TypenumFromTypeObject(type);
-	return PyArray_DescrFromType(type_num);
+PyArray_DescrFromTypeObject(PyObject *type)
+{	
+	int typenum;
+	PyArray_Descr *new;
+
+	/* if it's a builtin type, then use the typenumber */
+	typenum = _typenum_fromtypeobj(type,0);	
+	if (typenum != PyArray_NOTYPE) {
+		return PyArray_DescrFromType(typenum);
+	}
+
+	/* Otherwise --- type is a sub-type of an array scalar
+	   currently only VOID allows it
+	*/
+	new = _arraydescr_fromobj(type);
+	if (new == NULL)
+		PyErr_SetString(PyExc_ValueError, 
+				"type-object not returning a "\
+				"proper data-descriptor.");
+	return new;
 }
 
 /* New reference */
