@@ -30,11 +30,11 @@ class Function(object):
     def argtypes_string(self):
         if not self.args:
             return 'void'
-        argstr = ', '.join(a[0] for a in self.args)
+        argstr = ', '.join([a[0] for a in self.args])
         return argstr
 
     def __str__(self):
-        argstr = ', '.join(self._format_arg(a) for a in self.args)
+        argstr = ', '.join([self._format_arg(a) for a in self.args])
         if self.doc:
             doccomment = '/* %s */\n' % self.doc
         else:

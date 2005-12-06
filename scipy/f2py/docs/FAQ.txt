@@ -565,6 +565,9 @@ Q: What people think about F2PY?
 
 Here are some comments people have posted to f2py mailing list and c.l.py:
 
++ Ryan Krauss: I really appreciate f2py.  It seems weird to say, but I
+  am excited about relearning FORTRAN to compliment my python stuff.
+
 + Fabien Wahl: f2py is great, and is used extensively over here...
 
 + Fernando Perez: Anyway, many many thanks for this amazing tool.

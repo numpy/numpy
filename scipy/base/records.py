@@ -258,5 +258,5 @@ class ndrecarray(sb.ndarray):
         return self._fields[field_name]
 
     def setfield(self, field_name, val):
-        
-    
+        pass
+
