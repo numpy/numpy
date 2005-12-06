@@ -869,7 +869,7 @@ static int complex_double_from_pyobj(complex_double* v,PyObject *obj,const char 
 \t\t\tarr = PyArray_Cast((PyArrayObject *)obj, PyArray_CDOUBLE);
 \t\t}
 \t\telse {
-\t\t\tarr = PyArray_FromScalar(obj, PyArray_DescrFromType(PyArray_CDOUBLE)));
+\t\t\tarr = PyArray_FromScalar(obj, PyArray_DescrFromType(PyArray_CDOUBLE));
 \t\t}
 \t\tif (arr==NULL) return 0;
 \t\t(*v).r = ((cdouble *)PyArray_DATA(arr))->real;

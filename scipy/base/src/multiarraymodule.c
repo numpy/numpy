@@ -2693,39 +2693,80 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 }
 
 
-
-
-
 /* A tuple type would be either (generic typeobject, typesize) 
-   or (fixed-length, data-type, shape) 
-   to indicate an array of a fixed-type.
+   or (fixed-length data-type, shape) 
+
+   or (inheriting data-type, new-data-type)
+   The new data-type must have the same itemsize as the inheriting data-type
+   unless the latter is 0 in the final case.
+   
+   Thus (int32, {'real':(int16,0),'imag',(int16,2)})
+
+   is one way to specify a descriptor that will give 
+   a['real'] and a['imag'] to an int32 array.
 */
+
+/* steal type reference */
+static PyArray_Descr *
+_use_inherit(PyArray_Descr *type, PyObject *newobj) 
+{
+	PyArray_Descr *new;
+	PyArray_Descr *conv;
+	
+	if (!PyArray_DescrConverter(newobj, &conv)) {
+		Py_DECREF(type);
+		return NULL;
+	}
+	new = PyArray_DescrNew(type);
+	Py_DECREF(type);
+	if (new == NULL) return NULL;
+
+	if (new->elsize && new->elsize != conv->elsize) {
+		PyErr_SetString(PyExc_ValueError, 
+				"mismatch in size of old"\
+				"and new data-descriptor");
+		return NULL;
+	}
+	
+	new->fields = conv->fields;
+	Py_INCREF(new->fields);
+	Py_DECREF(conv);
+	return new;
+}
 
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj) 
 {
 	PyArray_Descr *type;
+	PyObject *val;
 	
 	if (PyTuple_GET_SIZE(obj) < 2) return NULL;
+
 	if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj,0), &type)) 
 		return NULL;
+	val = PyTuple_GET_ITEM(obj,1);
 	if (type->elsize == 0) { /* interpret next item as a typesize */
 		int itemsize;
 		itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
-		if (error_converting(itemsize)) goto fail;
+		if (error_converting(itemsize)) {
+			PyErr_Clear();
+			return _use_inherit(type, val);
+		}
 		PyArray_DESCR_REPLACE(type);
 		type->elsize = itemsize;
 	}
-	else { /* interpret next item as shape 
-		  and reset the type to PyArray_VOID with 
-		  a new fields attribute. 
+	else {
+		/* interpret next item as shape 
+		   and reset the type to PyArray_VOID with 
+		   anew fields attribute. 
 	       */
 		PyArray_Dims shape;
 		PyArray_Descr *newdescr;
-		PyObject *val;
-		val = PyTuple_GET_ITEM(obj,1);
 		if ((PyArray_IntpConverter(val, &shape) < 0) ||	\
-		    (shape.len > MAX_DIMS)) goto fail;
+		    (shape.len > MAX_DIMS)) {
+			PyErr_Clear();
+			return _use_inherit(type, val);
+		}
 		newdescr = PyArray_DescrNew(type);
 		if (newdescr == NULL) {PyDimMem_FREE(shape.ptr); goto fail;}
 		newdescr->elsize *= PyArray_MultiplyList(shape.ptr, 
@@ -2749,8 +2790,7 @@ _convert_from_tuple(PyObject *obj)
 
 /* a dictionary specifying a data-type
    must have at least two and up to four
-   keys
-   These must all be sequences of the same length.
+   keys These must all be sequences of the same length.
 
    "names" --- field names 
    "formats" --- the data-type descriptors for the field.
@@ -2764,7 +2804,7 @@ _convert_from_tuple(PyObject *obj)
    
    "titles" --- Allows the use of an additional key
                  for the fields dictionary.
-               
+                            
 Attribute-lookup-based field names merely has to query the fields 
 dictionary of the data-descriptor.  Any result present can be used
 to return the correct field.
@@ -2801,7 +2841,7 @@ _convert_from_dict(PyObject *obj)
 	PyObject *names, *offsets, *descrs, *titles;
 	int n, i;
 	int totalsize;
-
+	
 	fields = PyDict_New();
 	if (fields == NULL) return (PyArray_Descr *)PyErr_NoMemory();
 	

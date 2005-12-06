@@ -15,19 +15,10 @@ be created since it needs a specific element size.
 2) An additional PyObject * member of the PyArray_Descr structure for
 describing the fields.  This is Py_NotImplemented for statically defined types.
 For dynamically defined types it is NULL or a dictionary with keys that 
-return ordered lists.  There must be the same number of items in each list. 
-
-'names' : new attribute names (note that these will never 
-	  be able to over-ride "real" method and attribute names -- 
-	  those will be found first). 
-
-'titles' : labels for the fields (can be used alone in index-style lookups) in
-	   which case a reference to the field is returned. (optional)
-
-'formats' : the actual parameters to pass to GetField to retrieve the 
-            specific field.  This parameter is a (data-descr, offset) pair.
-	    The data-descr must be a PyArray_Descr * object and offset 
-	    is an integer.
+return ordered lists.  This dictionary is a mapping between keys and
+a tuple (PyArray_Descr object, offset, [optional title]).  Notice that there 
+may be more than one key returning the same item, but the title is always the 
+same. 
 
 Doing this allows us to remove the self->itemsize from the array
 structure (I think that's a good thing because the size is an
@@ -35,8 +26,8 @@ important part of the data-type description).
 
 3)  An additional PyArray_ArrayDescr * member of the PyArray_Descr
     structure for supporting types that are themselves arrays of other
-    types. The PyArray_ArrayDescr structure has members PyArray_Descr *, 
-    int, and intp[MAX_DIMS] for holding a referencing to the base-type and
+    types. The PyArray_ArrayDescr structure has members PyArray_Descr *,
+    PyObject *, for holding a reference to the base-type and
     the shape of the sub-array.
 
 For now, this PyArray_ArrayDescr * member is only really used to get a
@@ -45,7 +36,7 @@ with this structure set are not really useful.
 
 However, placing it here completes the notion of a type descriptor
 and simplies the formats key so that all supported type description 
-is handled by the PyArray_Descr structure.  Adde a byte-order type to 
+is handled by the PyArray_Descr structure.  Add a byte-order type to 
 descriptor as well so that entire array_descr in protocol can be supported
 by a PyArray_Descr structure. 
 
@@ -91,12 +82,9 @@ converted to a "proper" descr->fields entry (all generic data-types
 converted to PyArray_Descr * structure). 
 
 
-
 Reference counting for PyArray_Descr * objects.
 
-Most functions that take PyArary_Descr * as arguments steal the reference
-unless otherwise noted.
-
-Exceptions:  PyArray_Scalar, 
+Most functions that take PyArary_Descr * as arguments and return a PyObject *
+steal the reference unless otherwise noted in the code.
 
 Functions that return PyArray_Descr * objects return a new reference. 

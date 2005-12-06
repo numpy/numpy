@@ -110,7 +110,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 /* 0-dim array from array-scalar object */
 /* always contains a copy of the data */
 
-/* does nothing with outcode */
+/* steals reference to outcode */
 static PyObject *
 PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 {
@@ -125,7 +125,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 				 typecode,
 				 0, NULL, 
 				 NULL, NULL, 0, NULL);
-	if (r==NULL) return NULL;
+	if (r==NULL) {Py_XDECREF(outcode); return NULL;}
 
 	switch(typecode->type_num) {
 	case PyArray_STRING:
@@ -159,7 +159,6 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 	}
 	
 	/* cast if necessary to desired output typecode */
-	Py_INCREF(outcode);
 	ret = PyArray_CastToType((PyArrayObject *)r, outcode, 0);
 	Py_DECREF(r);
 	return ret;
@@ -953,7 +952,6 @@ gentype_getarray(PyObject *scalar, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", &PyArray_DescrConverter,
 			      &outcode)) return NULL;
 	ret = PyArray_FromScalar(scalar, outcode);
-	Py_DECREF(outcode);
 	return ret;
 }
 

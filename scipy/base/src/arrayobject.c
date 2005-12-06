@@ -51,7 +51,6 @@ PyArray_PyIntAsIntp(PyObject *o)
 	}
 	else if (PyArray_IsScalar(o, Integer)) {
 		arr = PyArray_FromScalar(o, descr);
-		Py_DECREF(descr);
 	}
 	if (arr != NULL) {
 		ret = *((intp *)PyArray_DATA(arr));
@@ -124,7 +123,6 @@ PyArray_PyIntAsInt(PyObject *o)
 	}
 	if (PyArray_IsScalar(o, Integer)) {
 		arr = PyArray_FromScalar(o, descr);
-		Py_DECREF(descr);
 	}
 	if (arr != NULL) {
 		ret = *((int *)PyArray_DATA(arr));
@@ -4219,16 +4217,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 		temp->descr = NULL;
 		Py_DECREF(temp);
 	}
-		
-	if ((self->descr->elsize == newtype->elsize) && newtype->fields) {
-		PyArray_Descr *_thetype;
-		_thetype = PyArray_DescrNew(self->descr);
-		Py_XDECREF(_thetype->fields);
-		Py_INCREF(newtype->fields);
-		_thetype->fields = newtype->fields;
-		Py_DECREF(newtype);
-		newtype = _thetype;
-	}
+
 	self->descr = newtype; 
 	PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
 	
@@ -6597,8 +6586,10 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	/* convert to INTP array if Integer array scalar or List */
 
 	indtype = PyArray_DescrFromType(PyArray_INTP);
-	if (PyArray_IsScalar(ind, Integer))
+	if (PyArray_IsScalar(ind, Integer)) {
+		Py_INCREF(indtype);
 		obj = PyArray_FromScalar(ind, indtype);
+	}
 	else if (PyList_Check(ind)) {
 		Py_INCREF(indtype);
 		obj = PyArray_FromAny(ind, indtype, 0, 0, FORCECAST);
