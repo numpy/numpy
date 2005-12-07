@@ -2872,7 +2872,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
    a['real'] and a['imag'] to an int32 array.
 */
 
-/* steal type reference */
+/* leave type reference alone */
 static PyArray_Descr *
 _use_inherit(PyArray_Descr *type, PyObject *newobj) 
 {
@@ -2880,7 +2880,6 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj)
 	PyArray_Descr *conv;
 	
 	if (!PyArray_DescrConverter(newobj, &conv)) {
-		Py_DECREF(type);
 		return NULL;
 	}
 	if (type == &OBJECT_Descr) {
@@ -2890,7 +2889,6 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj)
 		return NULL;
 	}
 	new = PyArray_DescrNew(type);
-	Py_DECREF(type);
 	if (new == NULL) return NULL;
 
 	if (new->elsize && new->elsize != conv->elsize) {
@@ -2909,7 +2907,7 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj)
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj) 
 {
-	PyArray_Descr *type;
+	PyArray_Descr *type, *res;
 	PyObject *val;
 	
 	if (PyTuple_GET_SIZE(obj) < 2) return NULL;
@@ -2917,27 +2915,35 @@ _convert_from_tuple(PyObject *obj)
 	if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj,0), &type)) 
 		return NULL;
 	val = PyTuple_GET_ITEM(obj,1);
+	/* try to interpret next item as a type */
+	res = _use_inherit(type, val);
+	if (res) {Py_DECREF(type); return res;}
+	
 	if (type->elsize == 0) { /* interpret next item as a typesize */
 		int itemsize;
 		itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
 		if (error_converting(itemsize)) {
-			PyErr_Clear();
-			return _use_inherit(type, val);
+			PyErr_SetString(PyExc_ValueError, 
+					"invalid itemsize in generic type "\
+					"tuple");
+			goto fail;
 		}
 		PyArray_DESCR_REPLACE(type);
 		type->elsize = itemsize;
 	}
 	else {
-		/* interpret next item as shape 
+		/* interpret next item as shape (if it's a tuple)
 		   and reset the type to PyArray_VOID with 
 		   anew fields attribute. 
 	       */
-		PyArray_Dims shape;
+		PyArray_Dims shape={NULL,-1};
 		PyArray_Descr *newdescr;
-		if ((PyArray_IntpConverter(val, &shape) < 0) ||	\
+		if (!(PyArray_IntpConverter(val, &shape)) || 
 		    (shape.len > MAX_DIMS)) {
-			PyErr_Clear();
-			return _use_inherit(type, val);
+			PyDimMem_FREE(shape.ptr);
+			PyErr_SetString(PyExc_ValueError, 
+					"invalid shape in fixed-type tuple.");
+			goto fail;
 		}
 		newdescr = PyArray_DescrNew(type);
 		if (newdescr == NULL) {PyDimMem_FREE(shape.ptr); goto fail;}
@@ -2984,7 +2990,7 @@ _convert_from_list(PyObject *obj)
 		tup = PyTuple_New(2);
 		key = PyString_FromFormat("f%d", i);
 		ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
-		PyTuple_SET_ITEM(tup, 0, conv);
+		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
 		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
 		PyDict_SetItem(fields, key, tup);
 		totalsize += conv->elsize;
@@ -3105,9 +3111,10 @@ _convert_from_dict(PyObject *obj)
 			off = PyObject_GetItem(offsets, index);
 			offset = PyInt_AsLong(off);
 			PyTuple_SET_ITEM(tup, 1, off);
-			if (offset < 0) {
+			if (offset < totalsize) {
 				PyErr_SetString(PyExc_ValueError,
-						"invalid offset");
+						"invalid offset (must be "\
+						"ordered)");
 				ret = PY_FAIL;
 			}
 			if (offset > totalsize) totalsize = offset;
@@ -3255,13 +3262,13 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	/* or a tuple */
  	else if (PyTuple_Check(obj)) {
 		*at = _convert_from_tuple(obj);
-		if (*at == NULL) goto fail;
+		if (*at == NULL) return PY_FAIL;
 		return PY_SUCCEED;
 	}
 	/* or a list */
 	else if (PyList_Check(obj)) {
 		*at = _convert_from_list(obj);
-		if (*at == NULL) goto fail;
+		if (*at == NULL) return PY_FAIL;
 		return PY_SUCCEED;
 	}
 	/* or a dictionary */

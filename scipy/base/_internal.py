@@ -204,6 +204,7 @@ class flagsobj(dict):
 #  a dictionary without "names" and "formats"
 #  fields is used as a data-type descriptor.
 def _usefields(adict):
+    allfields = []
     names = []
     formats = []
     offsets = []
@@ -219,21 +220,20 @@ def _usefields(adict):
         num = int(obj[1])
         if (num < 0):
             raise ValueError, "invalid offset."
-        names.append(fname)
-        offsets.append(num)
         format = dtypedescr(obj[0])
         if (format.itemsize == 0):
-            raise ValueError, "all itemsizes must be given."
-        formats.append(format)
+            raise ValueError, "all itemsizes must be fixed."
         if (n > 2):
             title = obj[2]
         else:
             title = None
-        titles.append(title)
-    return dtypedescr({"names" : names,
-                       "formats" : formats,
-                       "offsets" : offsets,
-                       "titles" : titles})
+        allfields.append((fname, format, num, title))
+    # sort by offsets
+    allfields.sort(lambda x,y: cmp(x[2],y[2]))
+    return dtypedescr({"names" : [x[0] for x in allfields],
+                       "formats" : [x[1] for x in allfields],
+                       "offsets" : [x[2] for x in allfields],
+                       "titles" : [x[3] for x in allfields]})
 
 
 # construct an array_protocol descriptor list
