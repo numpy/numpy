@@ -66,21 +66,6 @@ def base_repr (number, base=2, padding=0):
 
 
 
-def logspace(start, stop, num=50, endpoint=True):
-    """ Return evenly spaced samples on a logarithmic scale.
-
-        Return 'num' evenly spaced samples from 10**start to 10**stop.
-        If 'endpoint' is True then the last sample is 10**stop.
-    """
-    if num <= 0: return array([])
-    if endpoint:
-        step = (stop-start)/float((num-1))
-        y = _nx.arange(0, num) * step + start
-    else:
-        step = (stop-start)/float(num)
-        y = _nx.arange(0, num) * step + start
-    return _nx.power(10.0, y)
-
 def linspace(start, stop, num=50, endpoint=True, retstep=False):
     """Return evenly spaced numbers.
 
@@ -102,6 +87,16 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
         return y, step
     else:
         return y
+
+def logspace(start,stop,num=50,endpoint=True,base=10.0):
+    """Evenly spaced numbers on a logarithmic scale.
+
+    Computes int(num) evenly spaced exponents from start to stop.
+    If endpoint=True, then last exponent is stop.
+    Returns base**exponents.
+    """
+    y = linspace(start,stop,num=num,endpoint=endpoint)
+    return _nx.power(base,y)
 
 def iterable(y):
     try: iter(y)
