@@ -31,6 +31,14 @@ object.
 
 New possibilities for the "data-type"
 
+List [data-type 1, data-type 2, ..., data-type n]
+===============================
+Equivalent to  {'names':['f1','f2',...,'fn'],
+	        'formats': [data-type 1, data-type 2, ..., data-type n]}
+
+This is a quick way to specify a record format with default field names.
+
+
 Tuple  (flexible type, itemsize)
        (fixed type, shape)
 ===============================

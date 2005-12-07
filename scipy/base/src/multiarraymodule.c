@@ -2960,6 +2960,49 @@ _convert_from_tuple(PyObject *obj)
 	return NULL;
 }
 
+/* a list specifying a data-type can just be
+   a list of formats.  The names for the fields
+   will default to f1, f2, f3, and so forth.
+*/
+
+static PyArray_Descr *
+_convert_from_list(PyObject *obj)
+{
+	int n, i;
+	int totalsize;
+	PyObject *fields;
+	PyArray_Descr *conv=NULL;
+	PyArray_Descr *new;
+	PyObject *key, *tup;
+       	int ret;
+
+	n = PyList_GET_SIZE(obj);
+	totalsize = 0;
+	if (n==0) return NULL;
+	fields = PyDict_New();
+	for (i=0; i<n; i++) {
+		tup = PyTuple_New(2);
+		key = PyString_FromFormat("f%d", i);
+		ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
+		PyTuple_SET_ITEM(tup, 0, conv);
+		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
+		PyDict_SetItem(fields, key, tup);
+		totalsize += conv->elsize;
+		Py_DECREF(tup);
+		Py_DECREF(key);
+		if (ret == PY_FAIL) goto fail;
+	}
+	new = PyArray_DescrNewFromType(PyArray_VOID);
+	new->fields = fields;
+	new->elsize = totalsize;
+	return new;
+
+ fail:
+	Py_DECREF(fields);
+	return NULL;
+}
+
+
 /* a dictionary specifying a data-type
    must have at least two and up to four
    keys These must all be sequences of the same length.
@@ -3212,6 +3255,12 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	/* or a tuple */
  	else if (PyTuple_Check(obj)) {
 		*at = _convert_from_tuple(obj);
+		if (*at == NULL) goto fail;
+		return PY_SUCCEED;
+	}
+	/* or a list */
+	else if (PyList_Check(obj)) {
+		*at = _convert_from_list(obj);
 		if (*at == NULL) goto fail;
 		return PY_SUCCEED;
 	}
