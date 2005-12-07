@@ -772,6 +772,7 @@ gentype_typedescr_get(PyObject *self)
 	return (PyObject *)PyArray_DescrFromScalar(self);
 }
 
+
 static PyObject *
 gentype_base_get(PyObject *self)
 {
@@ -921,7 +922,7 @@ static PyGetSetDef gentype_getsets[] = {
 	 "get array type string"},
 	{"dtypedescr",
 	 (getter)gentype_typedescr_get,
-	 NULL,
+	 (getter)gentype_typedescr_set,
 	 "get array data-descriptor"},
         {"real", 
 	 (getter)gentype_real_get, 
@@ -1819,15 +1820,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
 	/* Otherwise --- type is a sub-type of an array scalar
 	   currently only VOID allows it -- use it as the type-object.
 	*/
-
-	new = _arraydescr_fromobj(type);
-	if (new == NULL) {
-		PyErr_SetString(PyExc_ValueError, 
-				"type-object not returning a "\
-				"proper data-descriptor.");
-                return NULL;
-        }
-        
+	new = PyArray_DescrNewFromType(PyArray_VOID);
         Py_DECREF(new->typeobj);
         new->typeobj = (PyTypeObject *)type;
         Py_INCREF(type);
@@ -1836,7 +1829,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
 
 /* New reference */
 /*OBJECT_API
- Return type typecode from array scalar.
+ Return descr object from array scalar.
 */
 static PyArray_Descr *
 PyArray_DescrFromScalar(PyObject *sc)

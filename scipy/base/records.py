@@ -59,8 +59,10 @@ def _split(input):
 
 
 class format_parser:
-    def __init__(self, formats, aligned=False):
+    def __init__(self, formats, names, titles, aligned=False):
         self._parseFormats(formats, aligned)
+        self._setfieldnames(names, titles)
+        self._constructfields()
 
     def _parseFormats(self, formats, aligned=0):
         """ Parse the field formats """
@@ -145,74 +147,7 @@ class format_parser:
         #   of the last one.
         self._total_itemsize = (stops[-1]/maxalign + 1) * maxalign
 
-class record(nt.void):
-    def _finalize(self, arr):
-        self.parsed = arr.parsed
-        self._nfields = arr._nfields
-        self._names = arr._names
-        self._fields = {}
-
-    def __repr__(self):
-        return "A record with %d fields named %s" % (self._nfields,
-                                                     self._names)
-    def __str__(self):
-        return self.data[:]
-
-    def __getitem__(self, obj):
-        self.field(obj)
-
-    def __setitem__(self, obj, val):
-        self.setfield(obj, val)
-
-# This allows array scalars to be returned that are of record type.
-#  And for _finalize to be called when
-sb.register_dtype(record)
-
-# The ndrecarray takes names, formats, and optionally titles keywords 
-
-class ndrecarray(sb.ndarray):
-    def __new__(subtype, *args, **kwds):
-        shape = args[0]
-        formats = args[1]
-        buf = kwds.get('buf',None)
-        aligned = kwds.get('aligned',0)
-        parsed = format_parser(formats, aligned)
-        itemsize = parsed._total_itemsize
-
-        if buf is None:
-            self = sb.ndarray.__new__(subtype, shape, (record, itemsize))
-        else:
-            byteorder = kwds.get('byteorder', sys.byteorder)
-            swapped = 0
-            if (byteorder != sys.byteorder):
-                swapped = 1
-            self = sb.ndarray.__new__(subtype, shape, (record, itemsize),
-                                      buffer=buf, swapped=swapped)
-        self.parsed = parsed
-        return self    
-
-    def __init__(self, shape, formats, names=None, buf=None, offset=0,
-                 strides=None, byteorder=sys.byteorder, aligned=0):
-        self._updateattr()        
-        self._setfieldnames(names)
-
-        # now create a dictionary of field-names that returns type object
-        # offset
-
-        # This should grab the names out of self.parsed that are important
-        #  to have later and should set self._attributes
-        #  to the list of meta information that needs to be carried around
-    def _updateattr(self):
-        self._nfields = self.parsed._nfields
-        self._attributes = ['parsed','_nfields','_fields','_names']
-
-    def __array_finalize__(self, obj):
-        self._attributes = obj._attributes
-        for key in self._attributes:
-            setattr(self, key, getattr(obj, key))
-        self._fields = {}
-
-    def _setfieldnames(self, names=None):
+    def _setfieldnames(self, names, titles):
         """convert input field names into a list and assign to the _names
         attribute """
 
@@ -228,38 +163,69 @@ class ndrecarray(sb.ndarray):
         else: 
             self._names = []
 
-        # if the names are not specified, they will be assigned as "c1, c2,..."
-        # if not enough names are specified, they will be assigned as "c[n+1],
-        # c[n+2],..." etc. where n is the number of specified names..."
+        # if the names are not specified, they will be assigned as "f1, f2,..."
+        # if not enough names are specified, they will be assigned as "f[n+1],
+        # f[n+2],..." etc. where n is the number of specified names..."
         self._names += map(lambda i: 
-            'c'+`i`, range(len(self._names)+1,self._nfields+1))
+            'f'+`i`, range(len(self._names)+1,self._nfields+1))
 
         # check for redundant names
         _dup = find_duplicate(self._names)
         if _dup:
             raise ValueError, "Duplicate field names: %s" % _dup
 
-    def _get_fields(self):
-        self._fields = {}
-        parsed = self.parsed
-        basearr = self.__array__()
-        for indx in range(self._nfields):
-            # We need the offset and the data type of the field
-            _offset = parsed._offsets[indx]
-            _type = parsed._fmt[indx]
-            if issubclass(_type, nt.flexible):
-                _type = nt.dtype2char(_type)+`parsed._itemsizes[indx]`
-            arr = basearr.getfield(_type, _offset)
-            # Put this array as a value in dictionary
-            # Do both name and index
-            self._fields[indx] = arr
-            self._fields[self._names[indx]] = arr
-            
-    def field(self, field_name):
-        if self._fields == {}:
-            self._get_fields()
-        return self._fields[field_name]
+        if (titles):
+            self._titles = [n.strip() for n in titles][:self._nfields]
+        else:
+            self._titles = []
 
-    def setfield(self, field_name, val):
-        pass
+        if (self._nfields > len(titles)):
+            self._titles += [None]*(self._nfields-len(titles))
+    
+
+    def _createfields(self):
+        self._fields = {}
+        
+
+class record(nt.void):
+    def _finalize(self, descr):
+        self.fields = descr.fields
+        
+    def __repr__(self):
+        return "A record with fields", self.fields
+
+    def __str__(self):
+        return self.data[:]
+
+    def __getitem__(self, obj):
+        self.getfield(*(self.fields[obj][:2]))
+        
+    def __setitem__(self, obj, val):
+        self.setfield(*(self.fields[obj][:2]))
+        
+
+# The ndrecarray is almost identical to a standard array (which supports
+#   named fields already)  The biggest difference is that it is always of
+#   record data-type, has fields, and can use attribute-lookup to access
+#   those fields.
+
+# You can create a record array using 
+
+class ndrecarray(sb.ndarray):
+    def __new__(subtype, shape, formats, names=None, titles=None,
+                buf=None, offset=0, strides=None, swap=0, aligned=0):
+        parsed = format_parser(formats, aligned, names)
+        itemsize = parsed._total_itemsize
+        fields = parsed._fields
+
+        if buf is None:
+            self = sb.ndarray.__new__(subtype, shape, (record, fields))
+        else:
+            byteorder = kwds.get('byteorder', sys.byteorder)
+            swapped = 0
+            if (byteorder != sys.byteorder):
+                swapped = 1
+            self = sb.ndarray.__new__(subtype, shape, (record, fields),
+                                      buffer=buf, swapped=swapped)
+        return self    
 

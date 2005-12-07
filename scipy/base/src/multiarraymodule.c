@@ -2874,14 +2874,16 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 
 /* leave type reference alone */
 static PyArray_Descr *
-_use_inherit(PyArray_Descr *type, PyObject *newobj) 
+_use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag) 
 {
 	PyArray_Descr *new;
 	PyArray_Descr *conv;
 	
+	*errflag = 0;
 	if (!PyArray_DescrConverter(newobj, &conv)) {
 		return NULL;
 	}
+	*errflag = 1;
 	if (type == &OBJECT_Descr) {
 		PyErr_SetString(PyExc_ValueError,
 				"cannot base a new descriptor on an"\
@@ -2901,6 +2903,7 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj)
 	new->fields = conv->fields;
 	Py_INCREF(new->fields);
 	Py_DECREF(conv);
+	*errflag = 0;
 	return new;
 }
 
@@ -2909,6 +2912,7 @@ _convert_from_tuple(PyObject *obj)
 {
 	PyArray_Descr *type, *res;
 	PyObject *val;
+	int errflag;
 	
 	if (PyTuple_GET_SIZE(obj) < 2) return NULL;
 
@@ -2916,9 +2920,17 @@ _convert_from_tuple(PyObject *obj)
 		return NULL;
 	val = PyTuple_GET_ITEM(obj,1);
 	/* try to interpret next item as a type */
-	res = _use_inherit(type, val);
-	if (res) {Py_DECREF(type); return res;}
-	
+	res = _use_inherit(type, val, &errflag);
+	if (res || errflag) {
+		Py_DECREF(type);
+		if (res) return res;
+		else return NULL;
+	}
+	PyErr_Clear();
+	/* We get here if res was NULL but errflag wasn't set
+	   --- i.e. the conversion to a data-descr failed in _use_inherit
+	*/
+
 	if (type->elsize == 0) { /* interpret next item as a typesize */
 		int itemsize;
 		itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
@@ -3144,6 +3156,54 @@ _convert_from_dict(PyObject *obj)
 	Py_XDECREF(fields);
 	return NULL;
 }
+
+/* 
+   any object with the .fields attribute and/or
+   .itemsize attribute (if the .fields attribute does not give
+   the total size -- i.e. a partial record naming).
+   If itemsize is given it must be >= size computed from fields
+   
+   The .fields attribute must return a convertible dictionary if 
+   present.  Result inherits from PyArray_VOID.
+*/
+
+static PyArray_Descr *
+_arraydescr_fromobj(PyObject *type)
+{
+	PyObject *fields;
+	PyObject *itemsize;
+	PyArray_Descr *new;
+	PyArray_Descr *conv=NULL;
+	int elsize;
+	
+	fields = PyObject_GetAttrString(type, "fields");
+	PyErr_Clear();
+	itemsize = PyObject_GetAttrString(type, "itemsize");
+	PyErr_Clear();
+	if (!fields && !itemsize) return NULL;
+
+	new = PyArray_DescrNewFromType(PyArray_VOID);	
+	
+	if (fields && PyDict_Check(fields) && \
+	    (PyArray_DescrConverter(fields, &conv)) && 
+	    conv->fields) {
+		Py_INCREF(conv->fields);
+		new->fields = conv->fields;
+		new->elsize = conv->elsize;
+	}
+	Py_XDECREF(conv);
+	
+	if (itemsize && (elsize = PyInt_AsLong(itemsize)) && \
+	    (elsize >= 0) && \
+	    ((new->elsize == 0) || (elsize > new->elsize))) {
+		new->elsize = elsize;
+	}
+	Py_XDECREF(fields);
+	Py_XDECREF(itemsize);
+	if (new->elsize == 0) {Py_DECREF(new); return NULL;}
+	return new;
+}
+
 
 /*MULTIARRAY_API
  Get typenum from an object -- None goes to NULL

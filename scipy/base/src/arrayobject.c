@@ -553,53 +553,6 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
                 byte_swap_vector(d1, numitems, itemsize);
 }
 
-/* 
-   any object with the .fields attributes and/or
-   .itemsize attribute (if the .fields attribute does not give
-   the total size -- i.e. a partial record naming).
-   If itemsize is given it must be >= size computed from fields
-   
-   The .fields attribute must return a convertible dictionary if 
-   present.  Result inherits from PyArray_VOID.
-*/
-
-static PyArray_Descr *
-_arraydescr_fromobj(PyObject *type)
-{
-	PyObject *fields;
-	PyObject *itemsize;
-	PyArray_Descr *new;
-	PyArray_Descr *conv=NULL;
-	int elsize;
-	
-	fields = PyObject_GetAttrString(type, "fields");
-	PyErr_Clear();
-	itemsize = PyObject_GetAttrString(type, "itemsize");
-	PyErr_Clear();
-	if (!fields && !itemsize) return NULL;
-
-	new = PyArray_DescrNewFromType(PyArray_VOID);	
-	
-	if (fields && PyDict_Check(fields) && \
-	    (PyArray_DescrConverter(fields, &conv)) && 
-	    conv->fields) {
-		Py_INCREF(conv->fields);
-		new->fields = conv->fields;
-		new->elsize = conv->elsize;
-	}
-	Py_XDECREF(conv);
-	
-	if (itemsize && (elsize = PyInt_AsLong(itemsize)) && \
-	    (elsize >= 0) && \
-	    ((new->elsize == 0) || (elsize > new->elsize))) {
-		new->elsize = elsize;
-	}
-	Py_XDECREF(fields);
-	Py_XDECREF(itemsize);
-	if (new->elsize == 0) {Py_DECREF(new); return NULL;}
-	return new;
-}
-
 static PyArray_Descr **userdescrs=NULL;
 /* Computer-generated arraytype and scalartype code */
 #include "scalartypes.inc"

@@ -238,10 +238,9 @@ def _usefields(adict):
 
 # construct an array_protocol descriptor list
 #  from the fields attribute of a descriptor
-# This calls itself recursively through the descriptor
-#  attribute lookup, but should eventually hit
-#  a descriptor that has no fields and returns
-#  a simple typestring instead. 
+# This calls itself recursively but should eventually hit
+#  a descriptor that has no fields and then return
+#  a simple typestring 
 
 def _array_descr(descriptor):
     fields = descriptor.fields
