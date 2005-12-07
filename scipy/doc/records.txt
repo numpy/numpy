@@ -1,44 +1,28 @@
 
-To support nested record arrays (a record data type that itself can have 
-a nested record type),  I think we need two things
+The ndarray supports records intrinsically.  
+None of the default descriptors have fields defined, but you can create new
+descriptors easily.  The ndarray even supports nested arrays of records inside 
+of a record.  Any record that the array protocol can describe can be represented. 
+The ndarray also supports partial field descriptors.  Not every byte has to be
+accounted for. 
 
-1) Dynamic PyArray_Descr objects, so that an array can have its "own".
-I think these need to be actual Python Objects, too, so that we can
-support the sharing and proper deallocation of these dynamic
-descriptors between arrays (i.e. slices and copies of arrays and so
-forth). Dynamic types will initially only be different in two ways:
-the element-size and the fields attribute. 
+This was done by adding to the established PyArray_Descr * structure:
 
-Notice for every flexible-sized array, a new PyArray_Descr object will 
-be created since it needs a specific element size.  
+1) a PyObject *fields member which contains a dictionary of 
+"field name" : (PyArray_Descr *field-type, offset, [optional field title]). 
+If a title is given, then it is also inserted into the dictionary and used to 
+key the same entry. 
 
-2) An additional PyObject * member of the PyArray_Descr structure for
-describing the fields.  This is Py_NotImplemented for statically defined types.
-For dynamically defined types it is NULL or a dictionary with keys that 
-return ordered lists.  This dictionary is a mapping between keys and
-a tuple (PyArray_Descr object, offset, [optional title]).  Notice that there 
-may be more than one key returning the same item, but the title is always the 
-same. 
+2) A byteorder member.  By default this is '=' (native), or '|' (not-applicable).
 
-Doing this allows us to remove the self->itemsize from the array
-structure (I think that's a good thing because the size is an
-important part of the data-type description).
+3) An additional PyArray_ArrDescr *member of the structure which
+contains a simple representation of an array of another base-type.
+types. The PyArray_ArrayDescr structure has members PyArray_Descr *,
+PyObject *, for holding a reference to the base-type and the shape of
+the sub-array.
 
-3)  An additional PyArray_ArrayDescr * member of the PyArray_Descr
-    structure for supporting types that are themselves arrays of other
-    types. The PyArray_ArrayDescr structure has members PyArray_Descr *,
-    PyObject *, for holding a reference to the base-type and
-    the shape of the sub-array.
-
-For now, this PyArray_ArrayDescr * member is only really used to get a
-higher-dimensional array from PyArray_NewFromDescr.   In other words, arrays
-with this structure set are not really useful. 
-
-However, placing it here completes the notion of a type descriptor
-and simplies the formats key so that all supported type description 
-is handled by the PyArray_Descr structure.  Add a byte-order type to 
-descriptor as well so that entire array_descr in protocol can be supported
-by a PyArray_Descr structure. 
+4) The PyArray_Descr * as official Python object that fully describes
+a region of memory for the data
 
  
 Data type conversions: We can support additional data-type
@@ -85,6 +69,10 @@ converted to PyArray_Descr * structure).
 Reference counting for PyArray_Descr * objects.
 
 Most functions that take PyArary_Descr * as arguments and return a PyObject *
-steal the reference unless otherwise noted in the code.
+steal the reference unless otherwise noted in the code: 
 
 Functions that return PyArray_Descr * objects return a new reference. 
+
+There is a new function  and a new method of array objects both labelled
+dtypescr which can be used to try out the PyArray_DescrConverter.
+

@@ -15,16 +15,13 @@ of the API) that will need to be changed:
     flexible arrays and mis-behaved arrays to be handled.
 
   * The descr->zero and descr->one constants have been replaced with
-    function calls, PyArray_Zero, and PyArray_One.
-
-  * You should use PyArray_ITEMSIZE(obj) instead of descr->elsize to
-    get the itemsize of an object (for flexible arrays descr->elsize
-    is 0).
+    function calls, PyArray_Zero, and PyArray_One (be sure to read the
+    code and free the resulting memory if you use these calls. 
 
   * If you passed array->dimensions and array->strides around to 
-    functions.  These are now, intp* pointers.  On 32-bit systems
-    there won't be a problem.  However, on 64-bit systems, you will
-    need to make changes.  
+    functions, you will need to fix some code.  These are now intp* pointers.  
+    On 32-bit systems there won't be a problem.  However, on 64-bit systems, you will
+    need to make changes to avoid errors and segfaults.
 
 
 The header files arrayobject.h and ufuncobject.h contain many defines
@@ -40,15 +37,16 @@ All of these headers are installed to
 Getting arrays in C-code
 =========================
 
-All new arrays can be created using PyArray_New.  A simple interface 
+All new arrays can be created using PyArray_NewFromDescr.  A simple interface 
 equivalent to PyArray_FromDims is PyArray_SimpleNew(nd, dims, typenum)
 and to PyArray_FromDimsAndData is PyArray_SimpleNewFromData(nd, dims, typenum, data)
 
 This is a very flexible function.  
 
-PyObject * PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type, 
-         intp *strides, char *data, int itemsize, int flags, 
-         PyObject *obj);
+PyObject * PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr,
+                                int nd, intp *dims, 
+                                intp *strides, char *data, 
+				int flags, PyObject *obj);
 
 
 subtype  : The subtype that should be created (either pass in
@@ -56,22 +54,30 @@ subtype  : The subtype that should be created (either pass in
              where obj is a an instance of a subtype (or subclass) of 
 	     PyArray_Type or PyBigArray_Type).
 
+descr    : The type descriptor for the array.  This is a Python Object
+	     (this function steals a reference to it).  The easiest way
+	     to get one is using PyArray_DescrFromType(<typenum>).  If 
+	     you want to use a flexible size array, then you need to use
+	     PyArray_DescrNewFromType(<flexible typenum>) and set its elsize
+	     paramter to the desired size.   The typenum in both of these
+	     cases is one of the PyArray_XXXX enumerated types. 
+
 nd       : The number of dimensions (<MAX_DIMS)
 
 *dims    : A pointer to the size in each dimension.  Information will be
              copied from here.
 
-type     : An integer specifying the type of the array 
-             (use the PyArray_XXXX enumerated types).
-
 *strides : The strides this array should have.  For new arrays created
              by this routine, this should be NULL.  If you pass in
-             memory for this array to use, then you should pass in the
-             strides information as well.  Any strides will be copied into
-	     the array structure.   Do not pass in bad strides information.
+             memory for this array to use, then you can pass in the
+             strides information as well (otherwise it will be created for
+	     you and default to C-contiguous or Fortran contiguous).
+	     Any strides will be copied into the array structure.   
+	     Do not pass in bad strides information!!!!
 
 	    PyArray_CheckStrides(...) can help but you must call it if you are
-	     unsure.
+	     unsure.  You cannot pass in strides information when data is NULL
+	     and this routine is creating its own memory. 
 
 *data    : NULL for creating brand-new memory.  If you want this array
              to wrap another memory area, then pass the pointer here.
@@ -81,24 +87,18 @@ type     : An integer specifying the type of the array
              from another Python object, INCREF that Python object after
              passing it's data pointer to this routine, and set the
              ->base member of the returned array to the Python object.
-             You are responsible for setting the base object.  Failure
-             to do so will create a memory leak.  
+             *You are responsible for* setting PyArray_BASE(ret) to the 
+	     base object.  Failure to do so will create a memory leak.  
             
             If you pass in a data buffer, the flags argument will be
               the flags of the new array. If you create a new array, a
               non-zero flags argument indicates that you want the array
               to be in FORTRAN order.
 
-itemsize : Indicates the itemsize for the new array.  This can be 0
-             if it is a fixed-size array type.  It is only used for
-             flexible array types and must be set in that case.
-
-
 flags    : Either the flags showing how to interpret the data buffer
              passed in.  Or if a new array is created, nonzero to
              indicate a FORTRAN order array.  See below for an explanation of
 	     the flags.
-
 
 obj      : If subtypes is &PyArray_Type or &PyBigArray_Type, this
              argument is ignored.  Otherwise, the __array_finalize__
@@ -108,7 +108,7 @@ obj      : If subtypes is &PyArray_Type or &PyBigArray_Type, this
              array argument.  But, it can be anything...)
 
 Note: The returned array object will be unitialized unless the type is
-PyArray_OBJECT.
+PyArray_OBJECT in which case the memory will be set to NULL.
 
 PyArray_SimpleNew(nd, dims, typenum)  is a drop-in replacement for 
 PyArray_FromDims (except it takes intp* dims instead of int* dims which
@@ -136,15 +136,14 @@ function calls still remain but they are loose wrappers around the
 PyArray_FromAny call).
 
 static PyObject *
-PyArray_FromAny(PyObject *op, PyArray_Typecode *typecode, int min_depth, 
+PyArray_FromAny(PyObject *op, PyArray_Descr *dtype, int min_depth, 
 		int max_depth, int requires) 
 
 
 op        : The Python object to "convert" to an array object
 
-typecode  : A typecode structure filled with the data type and
-              itemsize of the desired data type.  This can be NULL, if
-              the type should be determined from the object.  Unless
+dtype     : The desired data-type descriptor.  This can be NULL, if the descriptor
+	    should be determined by the object.  Unless
               FORCECAST is present in flags, this call will generate
               an error if the data type cannot be safely obtained from
               the object.
@@ -161,7 +160,7 @@ From the code comments, the requires flag is explained.
 requires can be any of 
 
   CONTIGUOUS, 
-  FORTRAN, (or set typecode->fortran=1)
+  FORTRAN, 
   ALIGNED, 
   NOTSWAPPED, 
   WRITEABLE, 
@@ -191,13 +190,6 @@ requires can be any of
    ENSUREARRAY makes sure a base-class ndarray is returned (If the object is a 
    bigndarray it will also be returned).   
    
-   typecode->fortran can be set to request a
-   fortran-contiguous  array (or just | FORTRAN to the requires flags).
-   Fortran arrays are always behaved (aligned, 
-   notswapped, and writeable) and (if greater than 1d) not (C) CONTIGUOUS.  
-   Note that either FORTRAN in the flag or typecode->fortran = 1 is 
-   enough to request a FORTRAN-style array. 
-
    UPDATEIFCOPY flag sets this flag in the returned array *if a copy is
    made*.  The base argument of the returned array points to the misbehaved 
    array (which is set to READONLY in that case).   
@@ -210,14 +202,6 @@ requires can be any of
    it is safe. 
 
 
-PyArray_Typecode structure
-{
-        int type_num;
-        int itemsize;
-        int fortran --- used to indicate a fortran array is desired.
-}
-
-
 PyArray_ContiguousFromAny(op, typenum, min_depth, max_depth) is equivalent
 to PyArray_ContiguousFromObject(...) (which is still available), except
 it will return the subclass if op is already a subclass of the ndarray.  
@@ -226,12 +210,13 @@ The ContiguousFromObject version will always return an ndarray (or a bigndarray)
 Passing Data Type information to C-code
 ============================================
 
-To get a Typecode structure from Python use the
-PyArray_TypecodeConverter function.  This will return a typecode
-structure filled appropriately based on a wide variety of user inputs.
+All Data-types are handled using the PyArray_Descr * structure.
+This structure can be obtained from a Python object using 
+PyArray_DescrConverter and PyArray_DescrConverter2.  The former 
+returns the default PyArray_LONG descriptor when the input object
+is None, while the latter returns NULL when the input object is None. 
 
 See the arraymethods.c and multiarraymodule.c files for many examples of usage.
-
 
 Getting at the structure of the array.
 
@@ -244,10 +229,11 @@ PyArray_DIMS(obj)
 PyArray_DIM(obj, n)
 PyArray_STRIDES(obj)
 PyArray_STRIDE(obj,n)
+PyArray_DESCR(obj)
+PyArray_BASE(obj)
 
 
 see more in arrayobject.h
-
 
 
 NDArray Flags
