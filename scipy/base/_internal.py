@@ -234,8 +234,50 @@ def _usefields(adict):
                        "formats" : formats,
                        "offsets" : offsets,
                        "titles" : titles})
-    
-        
-        
-        
-        
+
+
+# construct an array_protocol descriptor list
+#  from the fields attribute of a descriptor
+# This calls itself recursively through the descriptor
+#  attribute lookup, but should eventually hit
+#  a descriptor that has no fields and returns
+#  a simple typestring instead. 
+
+def _array_descr(descriptor):
+    fields = descriptor.fields
+    if fields is None:
+        return descriptor.arrtypestr
+
+    #get ordered list of fields with names
+    ordered_fields = fields.items()
+    # remove duplicates
+    new = {}
+    for item in ordered_fields:
+        # We don't want to include redundant or non-string
+        #  entries
+        if not isinstance(item[0],str) or (len(item[1]) > 2 \
+                                           and item[0] == item[1][2]):
+            continue
+        new[item[1]] = item[0]
+    ordered_fields = [x[0] + (x[1],) for x in new.items()]
+    #sort the list on the offset
+    ordered_fields.sort(lambda x,y : cmp(x[1],y[1]))
+
+    result = []
+    offset = 0
+    for field in ordered_fields:
+        if field[1] > offset:
+            result.append(('','|V%d' % (field[1]-offset)))
+        if len(field) > 3:
+            name = (field[2],field[3])
+        else:
+            name = field[2]
+        if field[0].subdescr:
+            tup = (name, _array_descr(field[0].subdescr[0]),
+                   field[0].subdescr[1])
+        else:
+            tup = (name, _array_descr(field[0]))
+        offset += field[0].itemsize
+        result.append(tup)
+
+    return result

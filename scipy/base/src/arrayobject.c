@@ -912,11 +912,14 @@ static PyObject *
 PyArray_ToScalar(void *data, PyArrayObject *arr)
 {
 	PyObject *ret;
+	PyTypeObject *type;
 	ret = PyArray_Scalar(data, !(PyArray_ISNOTSWAPPED(arr)), arr->descr);
 	if (ret == NULL) return NULL;
-	if (PyArray_ISUSERDEF(arr)) {
+	type = arr->descr->typeobj;
+	if (PyType_IsSubtype(type, &PyVoidArrType_Type) &&	\
+	    (type != &PyVoidArrType_Type)) {
 		PyObject *res;
-		res = PyObject_CallMethod(ret, "_finalize", "O", arr);
+		res = PyObject_CallMethod(ret, "_finalize", "O", arr->descr);
 		if (res == NULL) PyErr_Clear();
 		else Py_DECREF(res);
 	}
@@ -1834,9 +1837,11 @@ array_subscript(PyArrayObject *self, PyObject *op)
 				PyObject *title;
 				
 				if (PyArg_ParseTuple(obj, "Oi|O",
-						     &descr, &offset, &title)) 
+						     &descr, &offset, &title)) {
+					Py_INCREF(descr);
 					return PyArray_GetField(self, descr, 
 								offset);
+				}
 			}
 		}
 		
@@ -1943,9 +1948,11 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 				PyObject *title;
 				
 				if (PyArg_ParseTuple(obj, "Oi|O",
-						     &descr, &offset, &title)) 
+						     &descr, &offset, &title)) {
+					Py_INCREF(descr);
 					return PyArray_SetField(self, descr, 
 								offset, op);
+				}
 			}
 		}
 		
@@ -4370,15 +4377,11 @@ array_protocol_descr_get(PyArrayObject *self)
 {
 	PyObject *res;
 	PyObject *dobj;
+	
+	res = PyObject_GetAttrString((PyObject *)self->descr, "arrdescr");
+	if (res) return res;
+	PyErr_Clear();
 
-	/* hand this off to the typeobject */
-	/* or give default */
-	if (PyArray_ISUSERDEF(self)) {
-		res = PyObject_GetAttrString((PyObject *)self->descr->typeobj, 
-					     "__array_descr__");
-		if (res) return res;
-		PyErr_Clear();
-	}
 	/* get default */
 	dobj = PyTuple_New(2);
 	if (dobj == NULL) return NULL;
@@ -7992,12 +7995,61 @@ arraydescr_subdescr_get(PyArray_Descr *self)
 			     self->subarray->shape);
 }
 
+static PyObject *
+arraydescr_protocol_typestr_get(PyArray_Descr *self)
+{
+	char basic_=self->kind;
+	char endian = self->byteorder;
+	
+	if (endian == '=') {
+		endian = '<';
+		if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
+	}
+	
+	return PyString_FromFormat("%c%c%d", endian, basic_,
+				   self->elsize);
+}
+
+static PyObject *
+arraydescr_protocol_descr_get(PyArray_Descr *self)
+{
+	PyObject *dobj, *res;
+	static PyObject *module=NULL;
+
+	if (self->fields == NULL) {
+		/* get default */
+		dobj = PyTuple_New(2);
+		if (dobj == NULL) return NULL;
+		PyTuple_SET_ITEM(dobj, 0, PyString_FromString(""));
+		PyTuple_SET_ITEM(dobj, 1, \
+				 arraydescr_protocol_typestr_get(self));
+		res = PyList_New(1);
+		if (res == NULL) {Py_DECREF(dobj); return NULL;}
+		PyList_SET_ITEM(res, 0, dobj);
+		return res;
+	}
+
+        if (module==NULL) {
+                module = PyImport_ImportModule("scipy.base._internal");
+                if (module == NULL) return NULL;
+        }
+
+        return PyObject_CallMethod(module, "_array_descr", "O", self);
+}
+
 static PyGetSetDef arraydescr_getsets[] = {
 	{"subdescr", 
 	 (getter)arraydescr_subdescr_get,
 	 NULL,
-	 "A tuple of (descr, shape) or None."
-	},
+	 "A tuple of (descr, shape) or None."},
+	{"arrdescr",
+	 (getter)arraydescr_protocol_descr_get,
+	 NULL,
+	 "The array_protocol type descriptor."},
+	{"arrtypestr",
+	 (getter)arraydescr_protocol_typestr_get,
+	 NULL,
+	 "The array_protocol typestring."},
 	{NULL, NULL, NULL, NULL},
 };
 
