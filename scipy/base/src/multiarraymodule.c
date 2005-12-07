@@ -1,4 +1,3 @@
-
 /*
   Python Multiarray Module -- A useful collection of functions for creating and
   using ndarrays
