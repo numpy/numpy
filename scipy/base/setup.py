@@ -113,7 +113,7 @@ def configuration(parent_package='',top_path=None):
             return target
         return generate_api
 
-    generate_array_api = generate_api_func('__multiarray.h',
+    generate_array_api = generate_api_func('__multiarray_api.h',
                                            'generate_array_api')
     generate_ufunc_api = generate_api_func('__ufunc_api.h',
                                            'generate_ufunc_api')
