@@ -1,4 +1,3 @@
-
 /*
   Python Multiarray Module -- A useful collection of functions for creating and
   using ndarrays
@@ -3489,8 +3488,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 		}
 	}
 
-	ret = PyArray_Scalar(dptr, typecode->type_num,
-			     typecode->elsize, swap); 
+	ret = PyArray_Scalar(dptr, swap, typecode);
 	Py_DECREF(typecode);
 	
 	/* free dptr which contains zeros */

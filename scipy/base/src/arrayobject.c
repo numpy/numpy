@@ -830,27 +830,29 @@ PyArray_NewCopy(PyArrayObject *m1, int fortran)
 
 static PyObject *array_big_item(PyArrayObject *, intp);
 
+/* Does nothing with descr (cannot be NULL) */
 /*OBJECT_API
- Get scalar-equivalent to 0-d array
+ Get scalar-equivalent to a region of memory described by a descriptor.
 */
 static PyObject *
-PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
+PyArray_Scalar(void *data, int swap, PyArray_Descr *descr)
 {
-        PyArray_Descr *descr;
 	PyTypeObject *type;
 	PyObject *obj;	
         void *destptr;
         PyArray_CopySwapFunc *copyswap;
+	int type_num;
+	int itemsize;
 
-        descr = PyArray_DescrFromType(type_num);
-        if (descr == NULL) return NULL;
+	type_num = descr->type_num;
+	itemsize = descr->elsize;
         type = descr->typeobj;
         copyswap = descr->copyswap;
-	if (type_num == PyArray_STRING) 
+	if (type->tp_itemsize != 0)  /* String type */
 		obj = type->tp_alloc(type, itemsize);
 	else
 		obj = type->tp_alloc(type, 0);
-	if (obj == NULL) {Py_DECREF(descr); return NULL;}
+	if (obj == NULL) return NULL;
 	if PyTypeNum_ISEXTENDED(type_num) {  
 		if (type_num == PyArray_STRING) {
 			destptr = PyString_AS_STRING(obj);
@@ -866,7 +868,6 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
 			destptr = PyMem_NEW(Py_UNICODE, length+1);
 			if (destptr == NULL) {
                                 Py_DECREF(obj);
-				Py_DECREF(descr);
 				return PyErr_NoMemory();
 			}
 			uni->str = (Py_UNICODE *)destptr;
@@ -880,7 +881,6 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
 			destptr = PyDataMem_NEW(itemsize);
 			if (destptr == NULL) {
                                 Py_DECREF(obj);
-				Py_DECREF(descr);
 				return PyErr_NoMemory();
 			}
 			((PyVoidScalarObject *)obj)->obval = destptr;
@@ -892,7 +892,6 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
 	}
 	/* copyswap for OBJECT increments the reference count */
         copyswap(destptr, data, swap, itemsize);
-	Py_DECREF(descr);
 	return obj;
 }
 
@@ -900,6 +899,12 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
    from the given pointer to memory -- main Scalar creation function
    default new method calls this. 
 */
+
+/* Ideally, here the descriptor would contain all the information needed.
+   So, that we simply need the data and the descriptor, and perhaps
+   a flag 
+*/
+
 /*OBJECT_API
  Get scalar-equivalent to 0-d array
 */
@@ -907,8 +912,7 @@ static PyObject *
 PyArray_ToScalar(void *data, PyArrayObject *arr)
 {
 	PyObject *ret;
-	ret = PyArray_Scalar(data, arr->descr->type_num, arr->descr->elsize, 
-			     !(PyArray_ISNOTSWAPPED(arr)));
+	ret = PyArray_Scalar(data, !(PyArray_ISNOTSWAPPED(arr)), arr->descr);
 	if (ret == NULL) return NULL;
 	if (PyArray_ISUSERDEF(arr)) {
 		PyObject *res;
@@ -1007,7 +1011,7 @@ PyArray_RegisterDataType(PyTypeObject *type)
 /* 
    copyies over from the old descr table for anything
    NULL or zero in what is given. 
-   frees the copy of the Descr_table already there.
+   DECREF's the Descr already there.
    places a pointer to the new one into the slot.
 */
 
@@ -1037,6 +1041,8 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 	for (i=0; i<PyArray_NTYPES; i++) {
 		_NULL_CHECK(cast[i]);
 	}
+        _NULL_CHECK(fields);
+        _NULL_CHECK(subarray);
 	_NULL_CHECK(getitem);
 	_NULL_CHECK(setitem);
 	_NULL_CHECK(compare);	
@@ -1053,10 +1059,13 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 
 	_ZERO_CHECK(kind);
 	_ZERO_CHECK(type);
+        _ZERO_CHECK(byteorder);
 	_ZERO_CHECK(elsize);
 	_ZERO_CHECK(alignment);
 #undef _ZERO_CHECK
 
+        Py_XINCREF(descr->fields);
+        Py_XINCREF(descr->typeobj);
 	Py_DECREF(old);
 	userdescrs[typenum-PyArray_USERDEF] = descr;
 	return 0;

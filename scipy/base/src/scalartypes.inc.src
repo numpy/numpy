@@ -780,17 +780,34 @@ gentype_base_get(PyObject *self)
 }
 
 
+static PyArray_Descr *
+_realdescr_fromcomplexscalar(PyObject *self, int *typenum)
+{
+	if PyArray_IsScalar(self, CDouble) {
+		*typenum = PyArray_CDOUBLE;
+		return PyArray_DescrFromType(PyArray_DOUBLE);
+	}
+	if PyArray_IsScalar(self, CFloat) {
+		*typenum = PyArray_CFLOAT;
+		return PyArray_DescrFromType(PyArray_FLOAT);
+	}
+	if PyArray_IsScalar(self, CLongDouble) {
+		*typenum = PyArray_CLONGDOUBLE;
+		return PyArray_DescrFromType(PyArray_LONGDOUBLE);
+	}
+	return NULL;
+}
+
 static PyObject *
 gentype_real_get(PyObject *self)
 {
 	PyArray_Descr *typecode;
 	PyObject *ret;
+	int typenum;
 
 	if (PyArray_IsScalar(self, ComplexFloating)) {
-		typecode = PyArray_DescrFromScalar(self);
-		ret = PyArray_Scalar(_SOFFSET_(self, typecode->type_num),
-				      typecode->type_num-PyArray_NUM_FLOATTYPE,
-				      typecode->elsize >> 1, 0);
+		typecode = _realdescr_fromcomplexscalar(self, &typenum);
+		ret = PyArray_Scalar(_SOFFSET_(self, typenum), 0, typecode);
 		Py_DECREF(typecode);
 		return ret;
 	}
@@ -809,23 +826,23 @@ gentype_imag_get(PyObject *self)
 {	
 	PyArray_Descr *typecode;
 	PyObject *ret;	
-	typecode = PyArray_DescrFromScalar(self);
+	int typenum;
+	
+	typecode = _realdescr_fromcomplexscalar(self, &typenum);
 	if (PyArray_IsScalar(self, ComplexFloating)) {
-		int elsize;
-		elsize = typecode->elsize >> 1;
-		ret = PyArray_Scalar(_SOFFSET_(self, typecode->type_num)
-				     + elsize, 
-				     typecode->type_num-PyArray_NUM_FLOATTYPE,
-				     elsize, 0);
+		ret = PyArray_Scalar(_SOFFSET_(self, typenum)		\
+				     + typecode->elsize, 0, typecode);
 	}
 	else if PyArray_IsScalar(self, Object) {
 		PyObject *obj = ((PyObjectScalarObject *)self)->obval;
+		PyArray_Descr *newtype;
 		ret = PyObject_GetAttrString(obj, "imag");
 		if (ret == NULL) {
 			PyErr_Clear();
 			obj = PyInt_FromLong(0);
-			ret = PyArray_Scalar((char *)&obj, PyArray_OBJECT, 
-					     sizeof(void *), 0);
+			newtype = PyArray_DescrFromType(PyArray_OBJECT);
+			ret = PyArray_Scalar((char *)&obj, 0, newtype);
+			Py_DECREF(newtype);
 			Py_DECREF(obj);
 		}
 	}
@@ -833,8 +850,7 @@ gentype_imag_get(PyObject *self)
 		char *temp;
 		temp = PyDataMem_NEW(typecode->elsize);
 		memset(temp, '\0', typecode->elsize);
-		ret = PyArray_Scalar(temp, typecode->type_num,
-				     typecode->elsize, 0);
+		ret = PyArray_Scalar(temp, 0, typecode);
 		PyDataMem_FREE(temp);
 	}
 	
@@ -983,8 +999,8 @@ gentype_wraparray(PyObject *scalar, PyObject *args)
 		return NULL;
 	}
 
-	return PyArray_Scalar(PyArray_DATA(arr), PyArray_TYPE(arr),
-			      PyArray_ITEMSIZE(arr), !PyArray_ISNOTSWAPPED(arr));
+	return PyArray_Scalar(PyArray_DATA(arr), !PyArray_ISNOTSWAPPED(arr),
+			      PyArray_DESCR(arr));
 }
 
 
@@ -1039,8 +1055,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 		if (newmem == NULL) {Py_DECREF(descr); return PyErr_NoMemory();}
 		else memcpy(newmem, data, descr->elsize);
 		descr->copyswap(newmem, NULL, 1, descr->elsize);
-		new = PyArray_Scalar(newmem, descr->type_num, 
-				     descr->elsize, 0);
+		new = PyArray_Scalar(newmem, 0, descr);
 		free(newmem);
 		Py_DECREF(descr);
 		return new;
@@ -1779,10 +1794,6 @@ PyArray_DescrFromTypeObject(PyObject *type)
 		return PyArray_DescrFromType(typenum);
 	}
 
-	/* Otherwise --- type is a sub-type of an array scalar
-	   currently only VOID allows it
-	*/
-
 	/* Check the generic types */
 	if ((type == (PyObject *) &PyNumericArrType_Type) ||		\
 	    (type == (PyObject *) &PyInexactArrType_Type) ||		\
@@ -1805,11 +1816,21 @@ PyArray_DescrFromTypeObject(PyObject *type)
 		return PyArray_DescrFromType(typenum);
 	}
 	
+	/* Otherwise --- type is a sub-type of an array scalar
+	   currently only VOID allows it -- use it as the type-object.
+	*/
+
 	new = _arraydescr_fromobj(type);
-	if (new == NULL)
+	if (new == NULL) {
 		PyErr_SetString(PyExc_ValueError, 
 				"type-object not returning a "\
 				"proper data-descriptor.");
+                return NULL;
+        }
+        
+        Py_DECREF(new->typeobj);
+        new->typeobj = (PyTypeObject *)type;
+        Py_INCREF(type);
 	return new;
 }
 

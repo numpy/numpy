@@ -151,7 +151,7 @@ class record(nt.void):
         self._nfields = arr._nfields
         self._names = arr._names
         self._fields = {}
-        
+
     def __repr__(self):
         return "A record with %d fields named %s" % (self._nfields,
                                                      self._names)
@@ -164,8 +164,11 @@ class record(nt.void):
     def __setitem__(self, obj, val):
         self.setfield(obj, val)
 
-# This allows array scalars to be returned that are of record type. 
+# This allows array scalars to be returned that are of record type.
+#  And for _finalize to be called when
 sb.register_dtype(record)
+
+# The ndrecarray takes names, formats, and optionally titles keywords 
 
 class ndrecarray(sb.ndarray):
     def __new__(subtype, *args, **kwds):
