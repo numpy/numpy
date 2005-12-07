@@ -834,9 +834,8 @@ static PyObject *array_big_item(PyArrayObject *, intp);
  Get scalar-equivalent to 0-d array
 */
 static PyObject *
-PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
+PyArray_Scalar(void *data, int swap, PyArray_Descr *)
 {
-        PyArray_Descr *descr;
 	PyTypeObject *type;
 	PyObject *obj;	
         void *destptr;
@@ -846,7 +845,7 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
         if (descr == NULL) return NULL;
         type = descr->typeobj;
         copyswap = descr->copyswap;
-	if (type_num == PyArray_STRING) 
+	if (type->tp_itemsize != 0)  /* String type */
 		obj = type->tp_alloc(type, itemsize);
 	else
 		obj = type->tp_alloc(type, 0);
@@ -900,6 +899,12 @@ PyArray_Scalar(void *data, int type_num, int itemsize, int swap)
    from the given pointer to memory -- main Scalar creation function
    default new method calls this. 
 */
+
+/* Ideally, here the descriptor would contain all the information needed.
+   So, that we simply need the data and the descriptor, and perhaps
+   a flag 
+*/
+
 /*OBJECT_API
  Get scalar-equivalent to 0-d array
 */
@@ -1007,7 +1012,7 @@ PyArray_RegisterDataType(PyTypeObject *type)
 /* 
    copyies over from the old descr table for anything
    NULL or zero in what is given. 
-   frees the copy of the Descr_table already there.
+   DECREF's the Descr already there.
    places a pointer to the new one into the slot.
 */
 
@@ -1037,6 +1042,8 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 	for (i=0; i<PyArray_NTYPES; i++) {
 		_NULL_CHECK(cast[i]);
 	}
+        _NULL_CHECK(fields);
+        _NULL_CHECK(subarray);
 	_NULL_CHECK(getitem);
 	_NULL_CHECK(setitem);
 	_NULL_CHECK(compare);	
@@ -1053,10 +1060,13 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 
 	_ZERO_CHECK(kind);
 	_ZERO_CHECK(type);
+        _ZERO_CHECK(byteorder);
 	_ZERO_CHECK(elsize);
 	_ZERO_CHECK(alignment);
 #undef _ZERO_CHECK
 
+        Py_XINCREF(descr->fields);
+        Py_XINCREF(descr->typeobj);
 	Py_DECREF(old);
 	userdescrs[typenum-PyArray_USERDEF] = descr;
 	return 0;

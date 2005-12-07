@@ -1779,10 +1779,6 @@ PyArray_DescrFromTypeObject(PyObject *type)
 		return PyArray_DescrFromType(typenum);
 	}
 
-	/* Otherwise --- type is a sub-type of an array scalar
-	   currently only VOID allows it
-	*/
-
 	/* Check the generic types */
 	if ((type == (PyObject *) &PyNumericArrType_Type) ||		\
 	    (type == (PyObject *) &PyInexactArrType_Type) ||		\
@@ -1805,11 +1801,21 @@ PyArray_DescrFromTypeObject(PyObject *type)
 		return PyArray_DescrFromType(typenum);
 	}
 	
+	/* Otherwise --- type is a sub-type of an array scalar
+	   currently only VOID allows it -- use it as the type-object.
+	*/
+
 	new = _arraydescr_fromobj(type);
-	if (new == NULL)
+	if (new == NULL) {
 		PyErr_SetString(PyExc_ValueError, 
 				"type-object not returning a "\
 				"proper data-descriptor.");
+                return NULL;
+        }
+        
+        Py_DECREF(new->typeobj);
+        new->typeobj = type;
+        Py_INCREF(type);
 	return new;
 }
 
