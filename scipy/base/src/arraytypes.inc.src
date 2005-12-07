@@ -150,8 +150,7 @@ static int
 static PyObject * 
 LONGDOUBLE_getitem(char *ip, PyArrayObject *ap) 
 {
-        return PyArray_Scalar(ip, PyArray_LONGDOUBLE, sizeof(longdouble), 
-                              !PyArray_ISNOTSWAPPED(ap));
+        return PyArray_Scalar(ip, !PyArray_ISNOTSWAPPED(ap), ap->descr);
 }
 
 static int 
@@ -178,8 +177,7 @@ LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
 static PyObject * 
 CLONGDOUBLE_getitem(char *ip, PyArrayObject *ap) 
 {
-        return PyArray_Scalar(ip, PyArray_CLONGDOUBLE, sizeof(clongdouble), 
-                              !PyArray_ISNOTSWAPPED(ap));
+        return PyArray_Scalar(ip, !PyArray_ISNOTSWAPPED(ap), ap->descr);
 }
 
 

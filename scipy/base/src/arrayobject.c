@@ -830,26 +830,29 @@ PyArray_NewCopy(PyArrayObject *m1, int fortran)
 
 static PyObject *array_big_item(PyArrayObject *, intp);
 
+/* Does nothing with descr (cannot be NULL) */
 /*OBJECT_API
- Get scalar-equivalent to 0-d array
+ Get scalar-equivalent to a region of memory described by a descriptor.
 */
 static PyObject *
-PyArray_Scalar(void *data, int swap, PyArray_Descr *)
+PyArray_Scalar(void *data, int swap, PyArray_Descr *descr)
 {
 	PyTypeObject *type;
 	PyObject *obj;	
         void *destptr;
         PyArray_CopySwapFunc *copyswap;
+	int type_num;
+	int itemsize;
 
-        descr = PyArray_DescrFromType(type_num);
-        if (descr == NULL) return NULL;
+	type_num = descr->type_num;
+	itemsize = descr->elsize;
         type = descr->typeobj;
         copyswap = descr->copyswap;
 	if (type->tp_itemsize != 0)  /* String type */
 		obj = type->tp_alloc(type, itemsize);
 	else
 		obj = type->tp_alloc(type, 0);
-	if (obj == NULL) {Py_DECREF(descr); return NULL;}
+	if (obj == NULL) return NULL;
 	if PyTypeNum_ISEXTENDED(type_num) {  
 		if (type_num == PyArray_STRING) {
 			destptr = PyString_AS_STRING(obj);
@@ -865,7 +868,6 @@ PyArray_Scalar(void *data, int swap, PyArray_Descr *)
 			destptr = PyMem_NEW(Py_UNICODE, length+1);
 			if (destptr == NULL) {
                                 Py_DECREF(obj);
-				Py_DECREF(descr);
 				return PyErr_NoMemory();
 			}
 			uni->str = (Py_UNICODE *)destptr;
@@ -879,7 +881,6 @@ PyArray_Scalar(void *data, int swap, PyArray_Descr *)
 			destptr = PyDataMem_NEW(itemsize);
 			if (destptr == NULL) {
                                 Py_DECREF(obj);
-				Py_DECREF(descr);
 				return PyErr_NoMemory();
 			}
 			((PyVoidScalarObject *)obj)->obval = destptr;
@@ -891,7 +892,6 @@ PyArray_Scalar(void *data, int swap, PyArray_Descr *)
 	}
 	/* copyswap for OBJECT increments the reference count */
         copyswap(destptr, data, swap, itemsize);
-	Py_DECREF(descr);
 	return obj;
 }
 
@@ -912,8 +912,7 @@ static PyObject *
 PyArray_ToScalar(void *data, PyArrayObject *arr)
 {
 	PyObject *ret;
-	ret = PyArray_Scalar(data, arr->descr->type_num, arr->descr->elsize, 
-			     !(PyArray_ISNOTSWAPPED(arr)));
+	ret = PyArray_Scalar(data, !(PyArray_ISNOTSWAPPED(arr)), arr->descr);
 	if (ret == NULL) return NULL;
 	if (PyArray_ISUSERDEF(arr)) {
 		PyObject *res;
