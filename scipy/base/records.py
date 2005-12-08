@@ -1,4 +1,4 @@
-__all__ = ['record', 'ndrecarray']
+__all__ = ['record', 'ndrecarray','format_parser']
 
 import numeric as sb
 import numerictypes as nt
@@ -148,6 +148,8 @@ class format_parser:
                     self._f_formats[i] += `self._itemsizes[i]`
 
             self._formats[i] = `_repeat`+self._f_formats[i]
+            if (_repeat != 1):
+                self._f_formats[i] = (self._f_formats[i], _repeat)
                         
                     
         self._fmt = _fmt
@@ -196,16 +198,26 @@ class format_parser:
         self._descr = sb.dtypedescr({'names':self._names,
                                      'formats':self._f_formats,
                                      'offsets':self._offsets,
-                                     'titles':self._titles
-                                     }
-                                    )
-
-class record(nt.void):        
+                                     'titles':self._titles})
+        
+class record(nt.void):
     def __repr__(self):
-        return "A record with fields: %s" % (','.join(self.fields.keys()),)
+        return self.__str__()
     
     def __str__(self):
-        return self.data[:]
+        fdict = self.fields
+        names = fdict.keys()
+        all = []
+        for name in names:
+            item = fdict[name]
+            if (len(item) > 3) and item[2] == name:
+                continue
+            all.append(item)
+
+        all.sort(lambda x,y: cmp(x[1],y[1]))
+
+        outlist = [self.getfield(item[0], item[1]) for item in all]
+        return str(outlist)
 
     def __getattribute__(self, attr):
         if attr in ['setfield', 'getfield', 'fields']:
