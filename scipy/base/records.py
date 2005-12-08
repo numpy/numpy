@@ -1,3 +1,5 @@
+__all__ = ['record', 'ndrecarray']
+
 import numeric as sb
 import numerictypes as nt
 import sys
@@ -62,7 +64,7 @@ class format_parser:
     def __init__(self, formats, names, titles, aligned=False):
         self._parseFormats(formats, aligned)
         self._setfieldnames(names, titles)
-        self._constructfields()
+        self._createdescr()
 
     def _parseFormats(self, formats, aligned=0):
         """ Parse the field formats """
@@ -89,6 +91,9 @@ class format_parser:
         # preserve the input for future reference
         self._formats = [''] * self._nfields
 
+        # fields-compatible formats
+        self._f_formats = [''] * self._nfields
+                          
         sum = 0
         maxalign = 1
         unisize = nt._unicodesize
@@ -118,7 +123,8 @@ class format_parser:
             self._repeats[i] = _repeat
 
             if (type(_repeat) in [types.ListType, types.TupleType]):
-                self._sizes[i] = self._itemsizes[i] * reduce(lambda x,y: x*y, _repeat)
+                self._sizes[i] = self._itemsizes[i] * \
+                                 reduce(lambda x,y: x*y, _repeat)
             else:
                 self._sizes[i] = self._itemsizes[i] * _repeat
 
@@ -130,16 +136,19 @@ class format_parser:
                 maxalign = max(maxalign, align)
             stops[i] = sum - 1
 
-            self._offsets = stops[i] - self._sizes[i] + 1
+            self._offsets[i] = stops[i] - self._sizes[i] + 1
 
             # Unify the appearance of _format, independent of input formats
             revfmt = _typestr[_fmt[i]]
-            self._formats[i] = `_repeat`+revfmt
+            self._f_formats[i] = revfmt
             if issubclass(_fmt[i], nt.flexible):
                 if issubclass(_fmt[i], nt.unicode_):
-                    self._formats[i] += `self._itemsizes[i] / unisize`
+                    self._f_formats[i] += `self._itemsizes[i] / unisize`
                 else:
-                    self._formats[i] += `self._itemsizes[i]`
+                    self._f_formats[i] += `self._itemsizes[i]`
+
+            self._formats[i] = `_repeat`+self._f_formats[i]
+                        
                     
         self._fmt = _fmt
         # This pads record so next record is aligned if self._rec_align is
@@ -178,14 +187,18 @@ class format_parser:
             self._titles = [n.strip() for n in titles][:self._nfields]
         else:
             self._titles = []
+            titles = []
 
         if (self._nfields > len(titles)):
             self._titles += [None]*(self._nfields-len(titles))
-    
-
-    def _createfields(self):
-        self._fields = {}
-        
+            
+    def _createdescr(self):
+        self._descr = sb.dtypedescr({'names':self._names,
+                                     'formats':self._f_formats,
+                                     'offsets':self._offsets,
+                                     'titles':self._titles
+                                     }
+                                    )
 
 class record(nt.void):
     def _finalize(self, descr):
@@ -197,9 +210,26 @@ class record(nt.void):
     def __str__(self):
         return self.data[:]
 
+    def __getattribute___(self, attr):
+        fielddict = nt.void.__getattribute__(self,'fields')
+        try:
+            res = fielddict[attr][:2]
+        except:
+            return nt.void.__getattribute__(self, attr)
+        return self.getfield(*res)
+
+    def __setattr__(self, attr, val):
+        fielddict = nt.void.__getattribute__(self,'fields')
+        try:
+            res = fielddict[attr][:2]
+        except:
+            return nt.void.__setattr__(self,attr,val)
+        return self.setfield(val,*res)
+
+    
     def __getitem__(self, obj):
         self.getfield(*(self.fields[obj][:2]))
-        
+       
     def __setitem__(self, obj, val):
         self.setfield(*(self.fields[obj][:2]))
         
@@ -209,23 +239,44 @@ class record(nt.void):
 #   record data-type, has fields, and can use attribute-lookup to access
 #   those fields.
 
-# You can create a record array using 
 
 class ndrecarray(sb.ndarray):
     def __new__(subtype, shape, formats, names=None, titles=None,
                 buf=None, offset=0, strides=None, swap=0, aligned=0):
-        parsed = format_parser(formats, aligned, names)
-        itemsize = parsed._total_itemsize
-        fields = parsed._fields
 
-        if buf is None:
-            self = sb.ndarray.__new__(subtype, shape, (record, fields))
+        if isinstance(formats,string):
+            parsed = format_parser(formats, aligned, names, titles)
+            descr = parsed._descr
         else:
-            byteorder = kwds.get('byteorder', sys.byteorder)
-            swapped = 0
-            if (byteorder != sys.byteorder):
-                swapped = 1
-            self = sb.ndarray.__new__(subtype, shape, (record, fields),
-                                      buffer=buf, swapped=swapped)
-        return self    
+            if aligned:
+                if not isinstance(formats, dict) and \
+                   not isinstance(formats, list):
+                    raise ValueError, "Can only deal with alignment"\
+                          "for list and dictionary type-descriptors."
+            descr = dtypedescr(formats, aligned)
+        
+        if buf is None:
+            self = sb.ndarray.__new__(subtype, shape, (record, descr))
+        else:
+            self = sb.ndarray.__new__(subtype, shape, (record, descr),
+                                      buffer=buf, swap=swap)
+        return self
 
+    def __getattribute__(self, attr):
+        fielddict = sb.ndarray.__getattribute__(self,'dtypedescr').fields
+        try:
+            res = fielddict[attr][:2]
+        except:
+            return sb.ndarray.__getattribute__(self,attr)
+        
+        return self.getfield(*res)
+    
+    def __setattr__(self, attr, val):
+        fielddict = sb.ndarray.__getattribute__(self,'dtypedescr').fields
+        try:
+            res = fielddict[attr][:2]
+        except:
+            return sb.ndarray.__setattr__(self,attr,val)
+        
+        return self.setfield(val,*res)
+    

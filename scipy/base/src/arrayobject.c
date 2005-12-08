@@ -8006,14 +8006,28 @@ static PyGetSetDef arraydescr_getsets[] = {
 	{NULL, NULL, NULL, NULL},
 };
 
+
+static PyArray_Descr *_convert_from_list(PyObject *obj, int align);
+static PyArray_Descr *_convert_from_dict(PyObject *obj, int align);
+
 static PyObject *
 arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
+	PyObject *odescr;
 	PyArray_Descr *descr;
+	int align=0;
 	
-	if (!PyArg_ParseTuple(args, "O&", PyArray_DescrConverter, 
-			      &descr)) return NULL;
-	
+	if (!PyArg_ParseTuple(args, "O|i", &odescr, &align))
+		return NULL;
+
+	if (align) {
+		if PyDict_Check(odescr) 
+			return (PyObject *)_convert_from_dict(odescr, 1);
+		if PyList_Check(odescr) 
+			return (PyObject *)_convert_from_list(odescr, 1);
+	}
+	if (!PyArray_DescrConverter(odescr, &descr)) 
+		return NULL;
 	return (PyObject *)descr;
 }
 

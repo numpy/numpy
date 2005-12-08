@@ -1088,7 +1088,8 @@ gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
 	
 	if (!PyArray_IsScalar(self, Void)) {
 		PyErr_SetString(PyExc_TypeError, 
-				"Can't set fields in a non-void array scalar.");
+				"Can't set fields in a "\
+				"non-void array scalar.");
 		return NULL;
 	}
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
@@ -1849,11 +1850,9 @@ PyArray_DescrFromScalar(PyObject *sc)
 			descr->elsize =					\
 				((PyVoidScalarObject *)sc)->ob_size;
 			descr->fields = PyObject_GetAttrString(sc, "fields");
-			if (descr->fields && !PyDict_Check(descr->fields)) {
-				Py_DECREF(descr);
-				PyErr_SetString(PyExc_ValueError, 
-						"bad fields on scalar.");
-				return NULL;
+			if (!descr->fields || !PyDict_Check(descr->fields)) {
+				Py_XDECREF(descr->fields);
+				descr->fields = NULL;
 			}
 			PyErr_Clear();
 		}

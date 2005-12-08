@@ -2864,7 +2864,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 
    or (inheriting data-type, new-data-type)
    The new data-type must have the same itemsize as the inheriting data-type
-   unless the latter is 0 in the final case.
+   unless the latter is 0 
    
    Thus (int32, {'real':(int16,0),'imag',(int16,2)})
 
@@ -2899,9 +2899,9 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
 				"and new data-descriptor");
 		return NULL;
 	}
-	
+	new->elsize = conv->elsize;
 	new->fields = conv->fields;
-	Py_INCREF(new->fields);
+	Py_XINCREF(new->fields);
 	Py_DECREF(conv);
 	*errflag = 0;
 	return new;
@@ -2984,7 +2984,7 @@ _convert_from_tuple(PyObject *obj)
 */
 
 static PyArray_Descr *
-_convert_from_list(PyObject *obj)
+_convert_from_list(PyObject *obj, int align)
 {
 	int n, i;
 	int totalsize;
@@ -2993,25 +2993,37 @@ _convert_from_list(PyObject *obj)
 	PyArray_Descr *new;
 	PyObject *key, *tup;
        	int ret;
+	int maxalign=0;
 
+	
 	n = PyList_GET_SIZE(obj);
 	totalsize = 0;
 	if (n==0) return NULL;
 	fields = PyDict_New();
 	for (i=0; i<n; i++) {
 		tup = PyTuple_New(2);
-		key = PyString_FromFormat("f%d", i);
+		key = PyString_FromFormat("f%d", i+1);
 		ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
 		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
 		PyDict_SetItem(fields, key, tup);
-		totalsize += conv->elsize;
 		Py_DECREF(tup);
 		Py_DECREF(key);
 		if (ret == PY_FAIL) goto fail;
+		totalsize += conv->elsize;
+		if (align) {
+			int _align;
+			_align = conv->alignment;
+			if (_align > 1) totalsize =			\
+				((totalsize + _align - 1)/_align)*_align;
+			maxalign = MAX(maxalign, _align);
+		}
 	}
 	new = PyArray_DescrNewFromType(PyArray_VOID);
 	new->fields = fields;
+	if (maxalign > 1) {
+		totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
+	}
 	new->elsize = totalsize;
 	return new;
 
@@ -3067,13 +3079,14 @@ _use_fields_dict(PyObject *obj)
 }
 
 static PyArray_Descr *
-_convert_from_dict(PyObject *obj)
+_convert_from_dict(PyObject *obj, int align)
 {
 	PyArray_Descr *new;
 	PyObject *fields=NULL;
 	PyObject *names, *offsets, *descrs, *titles;
 	int n, i;
 	int totalsize;
+	int maxalign=0;
 	
 	fields = PyDict_New();
 	if (fields == NULL) return (PyArray_Descr *)PyErr_NoMemory();
@@ -3133,7 +3146,6 @@ _convert_from_dict(PyObject *obj)
 		}
 		else 
 			PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
-		totalsize += newdescr->elsize;
 		if (len == 3) PyTuple_SET_ITEM(tup, 2, item);
 		name = PyObject_GetItem(names, index);
 		Py_DECREF(index);
@@ -3144,10 +3156,19 @@ _convert_from_dict(PyObject *obj)
 		if (len == 3) PyDict_SetItem(fields, item, tup);
 		Py_DECREF(tup);
 		if ((ret == PY_FAIL) || (newdescr->elsize == 0)) goto fail;
+		totalsize += newdescr->elsize;
+		if (align) {
+			int _align = newdescr->alignment;
+			if (_align > 1) totalsize =			\
+				((totalsize + _align - 1)/_align)*_align;
+			maxalign = MAX(maxalign,_align);
+		}
 	}
 
 	new = PyArray_DescrNewFromType(PyArray_VOID);
 	if (new == NULL) goto fail;
+	if (maxalign > 1)
+		totalsize = ((totalsize + maxalign - 1)/maxalign)*maxalign;
 	new->elsize = totalsize;
 	new->fields = fields;
 	return new;
@@ -3327,13 +3348,13 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	}
 	/* or a list */
 	else if (PyList_Check(obj)) {
-		*at = _convert_from_list(obj);
+		*at = _convert_from_list(obj,0);
 		if (*at == NULL) return PY_FAIL;
 		return PY_SUCCEED;
 	}
 	/* or a dictionary */
 	else if (PyDict_Check(obj)) {
-		*at = _convert_from_dict(obj);
+		*at = _convert_from_dict(obj,0);
 		if (*at == NULL) return PY_FAIL;
 		return PY_SUCCEED;
 	}
