@@ -12,6 +12,7 @@ import string, types, sys
 import umath
 import oldnumeric
 import function_base
+from function_base import amax, amin
 from numeric import e, pi, newaxis, ndarray
 from oldnumeric import typecodes
 from numerictypes import *
@@ -1872,13 +1873,13 @@ class _minimum_operation:
         if b is None:
             m = getmask(a)
             if m is None:
-                d = min(filled(a).ravel())
+                d = amin(filled(a).ravel())
                 return d
             ac = a.compressed()
             if len(ac) == 0:
                 return masked
             else:
-                return min(ac.raw_data())
+                return amin(ac.raw_data())
         else:
             return where(less(a, b), a, b)[...]
 
@@ -1921,13 +1922,13 @@ class _maximum_operation:
         if b is None:
             m = getmask(a)
             if m is None:
-                d = max(filled(a).ravel())
+                d = amax(filled(a).ravel())
                 return d
             ac = a.compressed()
             if len(ac) == 0:
                 return masked
             else:
-                return max(ac.raw_data())
+                return amax(ac.raw_data())
         else:
             return where(greater(a, b), a, b)[...]
 

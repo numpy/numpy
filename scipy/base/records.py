@@ -150,8 +150,7 @@ class format_parser:
             self._formats[i] = `_repeat`+self._f_formats[i]
             if (_repeat != 1):
                 self._f_formats[i] = (self._f_formats[i], _repeat)
-                        
-                    
+                                            
         self._fmt = _fmt
         # This pads record so next record is aligned if self._rec_align is
         #   true. Otherwise next the record starts right after the end
