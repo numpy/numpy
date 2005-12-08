@@ -1319,10 +1319,10 @@ static void
 
 
 /**begin repeat
-#TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
-#typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
-#ftyp=float*4,double*4,longdouble*2#
-#c=f*4,,,,,l*2#
+#TYPE=BYTE,SHORT,INT,LONG,LONGLONG#
+#typ=byte, short, int, long, longlong#
+#ftyp=float*2,double*2,longdouble*1#
+#c=f*2,,,l*1#
 */
 static void
 @TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
@@ -1331,11 +1331,38 @@ static void
 	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
 	char *i1=args[0], *i2=args[1], *op=args[2];
 	@ftyp@ x, y, res;
+	@typ@ ix,iy;
 	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		x = *((@typ@ *)i1);
-		y = *((@typ@ *)i2);
-		res = x - floor@c@(x/y)*y;
-		*((@typ@ *)op)= (@typ@)(res);
+		ix = *((@typ@ *)i1);
+		iy = *((@typ@ *)i2);
+		if ((ix > 0) == (iy > 0)) {
+			*((@typ@ *)op) = ix % iy;
+		}
+		else {  /* handle mixed case the way Python does */
+			x = ix;
+			y = iy;
+			res = x - floor@c@(x/y)*y;
+			*((@typ@ *)op)= (@typ@)(res);
+		}
+	}
+}
+/**end repeat**/
+
+/**begin repeat
+#TYPE=UBYTE,USHORT,UINT,ULONG,ULONGLONG#
+#typ=ubyte, ushort, uint, ulong, ulonglong#
+*/
+static void
+@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
+{
+	register intp i;
+	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+	char *i1=args[0], *i2=args[1], *op=args[2];
+	@typ@ ix,iy;
+	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+		ix = *((@typ@ *)i1);
+		iy = *((@typ@ *)i2);
+		*((@typ@ *)op) = ix % iy;
 	}
 }
 /**end repeat**/

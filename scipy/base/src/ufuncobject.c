@@ -738,14 +738,15 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 	*bufsize = PyInt_AsLong(PyList_GET_ITEM(ref, 0));
 	if ((*bufsize == -1) && PyErr_Occurred()) return -1;
 	if ((*bufsize < PyArray_MIN_BUFSIZE) ||	\
-	    (*bufsize > PyArray_MAX_BUFSIZE)) {
+	    (*bufsize > PyArray_MAX_BUFSIZE) || \
+	    (*bufsize % 16 != 0)) {
 		PyErr_Format(PyExc_ValueError,  
 			     "buffer size (%d) is not "	\
-			     "in range (%d - %d)", 
+			     "in range (%d - %d) or not a multiple of 16", 
 			     *bufsize, PyArray_MIN_BUFSIZE, 
 			     PyArray_MAX_BUFSIZE);
 		return -1;
-	}	
+	}
 
 	*errmask = PyInt_AsLong(PyList_GET_ITEM(ref, 1));
 	if (*errmask < 0) {
@@ -860,6 +861,7 @@ static int
 construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 {
         int nargs, i, cnt, cntcast, maxsize;
+	int scnt, scntcast;
         int arg_types[MAX_ARGS];
 	char scalars[MAX_ARGS];
 	PyUFuncObject *self=loop->ufunc;
@@ -1059,33 +1061,17 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         /* Determine looping method needed */
         loop->meth = NO_UFUNCLOOP;
 
-	cnt = cntcast = 0; /* keeps track of bytes to allocate */
 	maxsize = 0;
         for (i=0; i<self->nargs; i++) {
-		cnt += mps[i]->descr->elsize;
-                if (arg_types[i] != mps[i]->descr->type_num) {
-			PyArray_Descr *descr;
-
+		loop->needbuffer[i] = 0;
+                if (arg_types[i] != mps[i]->descr->type_num || 
+		    !PyArray_ISBEHAVED_RO(mps[i])) {
                         loop->meth = BUFFER_UFUNCLOOP;
-			descr = PyArray_DescrFromType(arg_types[i]);
-			cntcast += descr->elsize;
-			Py_DECREF(descr);
-                        if (i < self->nin) {
-                                loop->cast[i] = \
-					mps[i]->descr->cast[arg_types[i]];
-			}
-                        else {
-                                loop->cast[i] = descr->\
-					cast[mps[i]->descr->type_num];
-			}
-
+			loop->needbuffer[i] = 1;
                 }
-                loop->swap[i] = !(PyArray_ISNOTSWAPPED(mps[i]));
-                if (!PyArray_ISBEHAVED_RO(mps[i])) {
-                        loop->meth = BUFFER_UFUNCLOOP;
-                }
-                if (!loop->obj && mps[i]->descr->type_num == PyArray_OBJECT)
-                        loop->obj = 1;
+                if (!loop->obj && mps[i]->descr->type_num == PyArray_OBJECT) {
+			loop->obj = 1;
+		}
         }
         
         if (loop->meth == NO_UFUNCLOOP) {
@@ -1116,7 +1102,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
         loop->numiter = self->nargs;
 
         /* Fill in steps */
-        if (loop->meth == NOBUFFER_UFUNCLOOP) {
+        if (loop->meth != ONE_UFUNCLOOP) {
 		int ldim = 0;
 		intp maxdim=-1;
 		PyArrayIterObject *it;
@@ -1135,6 +1121,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 
 		loop->size /= maxdim;
                 loop->bufcnt = maxdim;
+		loop->ldim = ldim;
 
                 /* Fix the iterators so the inner loop occurs over the 
 		   largest dimensions -- This can be done by 
@@ -1153,22 +1140,30 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 			   don't use PyArray_ITER_GOTO1D 
 			   so don't change them) */
 
-
 			/* Set the steps to the strides in that dimension */
                         loop->steps[i] = it->strides[ldim];
 		}
 
-        }
-        else if (loop->meth == BUFFER_UFUNCLOOP) {
-                for (i=0; i<self->nargs; i++) {
-			loop->steps[i] = mps[i]->descr->elsize;  
+		/* fix up steps where we will be copying data to 
+		   buffers and calculate the ninnerloops and leftover
+		   values -- if step size is already zero that is not changed... 
+		*/
+		if (loop->meth == BUFFER_UFUNCLOOP) {
+			loop->leftover = maxdim % loop->bufsize;
+			loop->ninnerloops = (maxdim / loop->bufsize) + 1;
+			for (i=0; i<self->nargs; i++) {
+				if (loop->needbuffer[i] && loop->steps[i]) {
+					loop->steps[i] = mps[i]->descr->elsize;
+				}
+				/* These are changed later if casting is needed */
+			}
 		}
         }
-	else { /* uniformly-strided case ONE_UFUNCLOOP */
+        else { /* uniformly-strided case ONE_UFUNCLOOP */
 		for (i=0; i<self->nargs; i++) {
-			if (PyArray_SIZE(mps[i])==1)
+			if (PyArray_SIZE(mps[i]) == 1)
 				loop->steps[i] = 0;
-			else 
+			else
 				loop->steps[i] = mps[i]->strides[mps[i]->nd-1];
 		}
 	}
@@ -1176,39 +1171,81 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 
 	/* Finally, create memory for buffers if we need them */
 	
+	/* buffers for scalars are specially made small -- scalars are
+	   not copied multiple times */
 	if (loop->meth == BUFFER_UFUNCLOOP) {
+		int cnt = 0, cntcast = 0; /* keeps track of bytes to allocate */
+		int scnt = 0, scntcast = 0;
 		char *castptr;
+		char *bufptr;
+		int last_was_scalar=0;
+		int last_cast_was_scalar=0;
+		int oldbufsize=0;
 		int oldsize=0;
-		loop->buffer[0] = (char *)malloc(loop->bufsize*(cnt+cntcast));
+		int scbufsize = 4*sizeof(double);
+		int memsize;
+
+		/* compute the element size */
+		for (i=0; i<self->nargs;i++) {
+			if (!loop->needbuffer) continue;
+			if (arg_types[i] != mps[i]->descr->type_num) {
+				descr = PyArray_DescrFromType(arg_types[i]);
+				if (loop->steps[i])
+					cntcast += descr->elsize;
+				else
+					scntcsast += descr->elsize;
+				if (i < self->nin) {
+					loop->cast[i] =			\
+						mps[i]->descr->cast[arg_types[i]];
+				}
+				else {
+					loop->cast[i] = descr->		\
+						cast[mps[i]->descr->type_num];
+				}
+				Py_DECREF(descr);
+			}
+			loop->swap[i] = !(PyArray_ISNOTSWAPPED(mps[i]));
+			if (loop->steps[i])
+				cnt += mps[i]->descr->elsize;
+			else
+				scnt += mps[i]->descr->elsize;
+		}
+		memsize = loop->bufsize*(cnt+cntcast) + scbufsize*(scnt+scntcast);
+ 		loop->buffer[0] = (char *)malloc(memsize);
+
 		/* fprintf(stderr, "Allocated buffer at %p of size %d, cnt=%d, cntcast=%d\n", loop->buffer[0], loop->bufsize * (cnt + cntcast), cnt, cntcast); */
-		if (loop->buffer[0] == NULL) return -1;
-		if (loop->obj) memset(loop->buffer[0], 0, 
-				      loop->bufsize*(cnt+cntcast));
-		castptr = loop->buffer[0] + loop->bufsize*cnt;
+
+		if (loop->buffer[0] == NULL) {PyErr_NoMemory(); return -1;}
+		if (loop->obj) memset(loop->buffer[0], 0, memsize);
+		castptr = loop->buffer[0] + loop->bufsize*cnt + scbufsize*scnt;
+		bufptr = loop->buffer[0];
 		for (i=0; i<self->nargs; i++) {
-			if (i > 0)
-				loop->buffer[i] = loop->buffer[i-1] + \
-					loop->bufsize * \
-					mps[i-1]->descr->elsize;
+			if (!loop->needbuffer[i]) continue;
+			loop->buffer[i] = bufptr + (last_was_scalar ? scbufsize : \
+						    loop->bufsize)*oldbufsize;
+			last_was_scalar = (loop->steps[i] == 0);
+			bufptr = loop->buffer[i];
+			oldbufsize = mps[i]->descr->elsize;
 			/* fprintf(stderr, "buffer[%d] = %p\n", i, loop->buffer[i]); */
 			if (loop->cast[i]) {
 				PyArray_Descr *descr;
-				loop->castbuf[i] = castptr + 
-					loop->bufsize*oldsize;
+				loop->castbuf[i] = castptr + (last_cast_was_scalar ? scbufsize : \
+							      loop->bufsize)*oldsize;
+				last_cast_was_scalar = last_was_scalar;
 				/* fprintf(stderr, "castbuf[%d] = %p\n", i, loop->castbuf[i]); */
 				descr = PyArray_DescrFromType(arg_types[i]);
 				oldsize = descr->elsize;
 				Py_DECREF(descr);
 				loop->bufptr[i] = loop->castbuf[i];
 				castptr = loop->castbuf[i];
-				loop->steps[i] = oldsize;
+				if (loop->steps[i])
+					loop->steps[i] = oldsize;
 			}
-			else
+			else {
 				loop->bufptr[i] = loop->buffer[i];
-			loop->dptr[i] = loop->buffer[i];
+			}
 		}
 	}
-
         return nargs;
 }
 
@@ -1398,19 +1435,14 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		}
 		break;
 	case BUFFER_UFUNCLOOP: {
-		/* Make local copies of all loop variables */
-		/* Optimizations needed:
-		   1) move data better into the buffer better
-		      --- not one at a time -- this requires some 
-                      pre-analysis and is only possible over 
-                      the largest dimension.
-		*/
-
 		PyArray_CopySwapNFunc *copyswapn[MAX_ARGS];
 		PyArrayIterObject **iters=loop->iters;
 		int *swap=loop->swap;
 		void **dptr=loop->dptr;
 		int mpselsize[MAX_ARGS];
+		intp laststrides[MAX_ARGS];
+		int fastmemcpy[MAX_ARGS];
+		int *needbuffer=loop->needbuffer;
 		intp index=loop->index, size=loop->size;
 		intp bufcnt=loop->bufcnt;
 		int bufsize=loop->bufsize;
@@ -1418,6 +1450,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		void **buffer = loop->buffer;
 		void **castbuf = loop->castbuf;
 		intp *steps = loop->steps;
+		int ninnerloops = loop->ninnerloops;
 		Bool pyobject[MAX_ARGS];
 		
 		for (i=0; i<self->nargs; i++) {
@@ -1425,10 +1458,13 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 			mpselsize[i] = mps[i]->descr->elsize;
 			pyobject[i] = (loop->obj && \
                                        (mps[i]->descr->type_num == PyArray_OBJECT));
+			laststrides[i] = iters[i]->strides[loop->ldim];
+			if (laststrides[i] == mpselsize[i]) fastmemcpy[i] = 1;
+			else fastmemcpy[i] = 0;
 		}
 		/* Do generic buffered looping here (works for any kind of
-		   arrays):   Everything uses a buffer. 
-
+		   arrays -- some need buffers, some don't.  */
+		
 		    1. fill the input buffers.
 		    2. If buffer is filled then 
 		          a. cast any input buffers needing it. 
@@ -1436,7 +1472,45 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 			  c. cast any output buffers needing it.
 			  d. copy output buffer back to output arrays.
                     3. goto next position
-		*/                
+		*/
+
+		while (index < size) {
+			for (i=0; i<self->nargs; i++) {
+				if (needbuffer[i]) {
+					loop->dptr[i] = loop->bufptr[i];
+				}
+				else {
+					loop->dptr[i] = loop->iters[i]->dataptr;
+				}
+			}
+
+			/* This is the inner function over the last dimension */
+			for (i=1; i<=ninnerloops; i++) {
+				if (i==ninnerloops) bufsize = loop->leftover;
+				
+				for (i=0; i<self->nin; i++) {
+					if (needbuffer[i]) {
+						if (fastmemcpy[i]) 
+							memcpy(dptr[i], 
+						for (j=0; j<bufsize; j++) {
+							memcpy
+						}
+					}
+				}
+				
+			}
+			
+			loop->function((char **)loop->bufptr, &(loop->bufcnt),
+				       loop->steps, loop->funcdata);
+
+			UFUNC_CHECK_ERROR(loop);
+
+			for (i=0; i<self->nargs; i++) {
+				PyArray_ITER_NEXT(loop->iters[i]);
+			}
+			index++;
+		}
+                
 		/*fprintf(stderr, "BUFFER...%d\n", loop->size);*/
 		/*
 		for (i=0; i<self->nargs; i++) {
