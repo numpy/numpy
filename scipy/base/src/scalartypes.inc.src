@@ -922,7 +922,7 @@ static PyGetSetDef gentype_getsets[] = {
 	 "get array type string"},
 	{"dtypedescr",
 	 (getter)gentype_typedescr_get,
-	 (getter)gentype_typedescr_set,
+	 NULL,
 	 "get array data-descriptor"},
         {"real", 
 	 (getter)gentype_real_get, 
