@@ -39,6 +39,9 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 typedef struct {
 	PyObject_VAR_HEAD;
 	char *obval;
+	PyArray_Descr *descr;
+	int flags;
+	PyObject *base;
 } PyVoidScalarObject;
 
 /* no error checking is performed -- ctypeptr must be same type as scalar */
@@ -808,7 +811,8 @@ gentype_real_get(PyObject *self)
 
 	if (PyArray_IsScalar(self, ComplexFloating)) {
 		typecode = _realdescr_fromcomplexscalar(self, &typenum);
-		ret = PyArray_Scalar(_SOFFSET_(self, typenum), 0, typecode);
+		ret = PyArray_Scalar(_SOFFSET_(self, typenum), 0, typecode,
+				     NULL);
 		Py_DECREF(typecode);
 		return ret;
 	}
@@ -832,7 +836,7 @@ gentype_imag_get(PyObject *self)
 	typecode = _realdescr_fromcomplexscalar(self, &typenum);
 	if (PyArray_IsScalar(self, ComplexFloating)) {
 		ret = PyArray_Scalar(_SOFFSET_(self, typenum)		\
-				     + typecode->elsize, 0, typecode);
+				     + typecode->elsize, 0, typecode, NULL);
 	}
 	else if PyArray_IsScalar(self, Object) {
 		PyObject *obj = ((PyObjectScalarObject *)self)->obval;
@@ -842,7 +846,7 @@ gentype_imag_get(PyObject *self)
 			PyErr_Clear();
 			obj = PyInt_FromLong(0);
 			newtype = PyArray_DescrFromType(PyArray_OBJECT);
-			ret = PyArray_Scalar((char *)&obj, 0, newtype);
+			ret = PyArray_Scalar((char *)&obj, 0, newtype, NULL);
 			Py_DECREF(newtype);
 			Py_DECREF(obj);
 		}
@@ -851,7 +855,7 @@ gentype_imag_get(PyObject *self)
 		char *temp;
 		temp = PyDataMem_NEW(typecode->elsize);
 		memset(temp, '\0', typecode->elsize);
-		ret = PyArray_Scalar(temp, 0, typecode);
+		ret = PyArray_Scalar(temp, 0, typecode, NULL);
 		PyDataMem_FREE(temp);
 	}
 	
@@ -1001,7 +1005,7 @@ gentype_wraparray(PyObject *scalar, PyObject *args)
 	}
 
 	return PyArray_Scalar(PyArray_DATA(arr), !PyArray_ISNOTSWAPPED(arr),
-			      PyArray_DESCR(arr));
+			      PyArray_DESCR(arr), arr);
 }
 
 
@@ -1056,7 +1060,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 		if (newmem == NULL) {Py_DECREF(descr); return PyErr_NoMemory();}
 		else memcpy(newmem, data, descr->elsize);
 		descr->copyswap(newmem, NULL, 1, descr->elsize);
-		new = PyArray_Scalar(newmem, 0, descr);
+		new = PyArray_Scalar(newmem, 0, descr, NULL);
 		free(newmem);
 		Py_DECREF(descr);
 		return new;
@@ -1092,6 +1096,12 @@ gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
 				"non-void array scalar.");
 		return NULL;
 	}
+
+	if ((((PyVoidScalarObject *)self)->flags & WRITEABLE) != WRITEABLE) {
+		PyErr_SetString(PyExc_RuntimeError,
+				"Can't write to memory");
+		return NULL;
+	}
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
 					 &value,
 					 PyArray_DescrConverter, 
@@ -1113,7 +1123,9 @@ gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
 	/* Copy data from value to correct place in dptr */
         src = PyArray_FromAny(value, typecode, 0, 0, CARRAY_FLAGS);
         if (src == NULL) return NULL;
-	memcpy(dptr, PyArray_DATA(src), PyArray_ITEMSIZE(src));
+	typecode->copyswap(dptr, PyArray_DATA(src), 
+			   !(((PyVoidScalarObject *)self)->flags & NOTSWAPPED),
+			   PyArray_ITEMSIZE(src));
 	Py_DECREF(src);
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -1381,12 +1393,20 @@ static PyTypeObject PyGenericArrType_Type = {
         sizeof(PyObject),		          /*tp_basicsize*/
 };
 
-/* works for VOID and UNICODE */
-
 static void
-void_dealloc(PyObject *v) 
+unicode_dealloc(PyObject *v) 
 {
 	PyDataMem_FREE(((PyVoidScalarObject *)v)->obval);
+	v->ob_type->tp_free(v);
+}
+
+static void
+void_dealloc(PyVoidScalarObject *v) 
+{
+	if (v->flags & OWNDATA)
+		PyDataMem_FREE(v->obval);
+	Py_XDECREF(v->descr);
+	Py_XDECREF(v->base);
 	v->ob_type->tp_free(v);
 }
 
@@ -1485,12 +1505,17 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 		}
 		((PyVoidScalarObject *)ret)->obval = destptr;
 		((PyVoidScalarObject *)ret)->ob_size = (int) memu;
+		((PyVoidScalarObject *)ret)->descr = \
+			PyArray_DescrNewFromType(PyArray_VOID);
+		((PyVoidScalarObject *)ret)->descr->elsize = (int) memu;
+		((PyVoidScalarObject *)ret)->flags = BEHAVED_FLAGS | OWNDATA;
+		((PyVoidScalarObject *)ret)->base = NULL;
 		memset(destptr, '\0', (size_t) memu);
 		return ret;
 	}
 
 	arr = PyArray_FROM_OTF(obj, PyArray_VOID, FORCECAST);
-	return PyArray_Return((PyArrayObject *)arr);
+        return PyArray_Return((PyArrayObject *)arr);
 }
 
 
@@ -1714,7 +1739,8 @@ ComplexFloating, Flexible, Character#
 	/**end repeat**/
 
 	PyStringArrType_Type.tp_itemsize = sizeof(char);
-	PyFlexibleArrType_Type.tp_dealloc = void_dealloc;
+	PyVoidArrType_Type.tp_dealloc = (destructor) void_dealloc;
+	PyUnicodeArrType_Type.tp_dealloc = unicode_dealloc;
 	PyObjectArrType_Type.tp_dealloc = object_arrtype_dealloc;
 
 	PyArrayIter_Type.tp_iter = PyObject_SelfIter;
@@ -1837,7 +1863,12 @@ PyArray_DescrFromScalar(PyObject *sc)
 {
 	int type_num;
 	PyArray_Descr *descr;
-	
+
+	if PyArray_IsScalar(sc, Void) {
+		descr = ((PyVoidScalarObject *)sc)->descr;
+		Py_INCREF(descr);
+		return descr;
+	}
         descr = PyArray_DescrFromTypeObject((PyObject *)sc->ob_type);
         if (descr->elsize == 0) {
 		PyArray_DESCR_REPLACE(descr);
@@ -1846,7 +1877,7 @@ PyArray_DescrFromScalar(PyObject *sc)
 			descr->elsize = PyString_GET_SIZE(sc);
 		else if (type_num == PyArray_UNICODE)
 			descr->elsize = PyUnicode_GET_DATA_SIZE(sc);
-		else { 
+		else {
 			descr->elsize =					\
 				((PyVoidScalarObject *)sc)->ob_size;
 			descr->fields = PyObject_GetAttrString(sc, "fields");

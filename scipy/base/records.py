@@ -200,38 +200,37 @@ class format_parser:
                                      }
                                     )
 
-class record(nt.void):
-    def _finalize(self, descr):
-        self.fields = descr.fields
-        
+class record(nt.void):        
     def __repr__(self):
-        return "A record with fields", self.fields
-
+        return "A record with fields: %s" % (','.join(self.fields.keys()),)
+    
     def __str__(self):
         return self.data[:]
 
-    def __getattribute___(self, attr):
-        fielddict = nt.void.__getattribute__(self,'fields')
-        try:
-            res = fielddict[attr][:2]
-        except:
+    def __getattribute__(self, attr):
+        if attr in ['setfield', 'getfield', 'fields']:
             return nt.void.__getattribute__(self, attr)
-        return self.getfield(*res)
+        fielddict = nt.void.__getattribute__(self, 'fields')
+        res = fielddict.get(attr,None)
+        if res:
+            return self.getfield(*res[:2])
+        return nt.void.__getattribute__(self, attr)
 
     def __setattr__(self, attr, val):
+        if attr in ['setfield', 'getfield', 'fields']:
+            raise AttributeError, "Cannot set '%s' attribute" % attr;
         fielddict = nt.void.__getattribute__(self,'fields')
-        try:
-            res = fielddict[attr][:2]
-        except:
-            return nt.void.__setattr__(self,attr,val)
-        return self.setfield(val,*res)
+        res = fielddict.get(attr,None)
+        if res:
+            return self.setfield(val,*res[:2])
 
+        return nt.void.__setattr__(self,attr,val)
     
     def __getitem__(self, obj):
-        self.getfield(*(self.fields[obj][:2]))
+        return self.getfield(*(self.fields[obj][:2]))
        
     def __setitem__(self, obj, val):
-        self.setfield(*(self.fields[obj][:2]))
+        return self.setfield(*(self.fields[obj][:2]))
         
 
 # The ndrecarray is almost identical to a standard array (which supports
@@ -244,7 +243,7 @@ class ndrecarray(sb.ndarray):
     def __new__(subtype, shape, formats, names=None, titles=None,
                 buf=None, offset=0, strides=None, swap=0, aligned=0):
 
-        if isinstance(formats,string):
+        if isinstance(formats,str):
             parsed = format_parser(formats, aligned, names, titles)
             descr = parsed._descr
         else:

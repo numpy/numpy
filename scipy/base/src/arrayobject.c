@@ -788,7 +788,7 @@ static PyObject *array_big_item(PyArrayObject *, intp);
  Get scalar-equivalent to a region of memory described by a descriptor.
 */
 static PyObject *
-PyArray_Scalar(void *data, int swap, PyArray_Descr *descr)
+PyArray_Scalar(void *data, int swap, PyArray_Descr *descr, PyObject *base)
 {
 	PyTypeObject *type;
 	PyObject *obj;	
@@ -818,6 +818,7 @@ PyArray_Scalar(void *data, int swap, PyArray_Descr *descr)
 			int length = itemsize / sizeof(Py_UNICODE);
 			/* Need an extra slot and need to use 
 			   Python memory manager */
+			uni->str = NULL;
 			destptr = PyMem_NEW(Py_UNICODE, length+1);
 			if (destptr == NULL) {
                                 Py_DECREF(obj);
@@ -830,14 +831,36 @@ PyArray_Scalar(void *data, int swap, PyArray_Descr *descr)
 			uni->hash = -1;
 			uni->defenc = NULL;
 		}
-		else {
+		else { 
+			PyVoidScalarObject *vobj = (PyVoidScalarObject *)obj;
+			vobj->base = NULL;
+			vobj->descr = descr;
+			Py_INCREF(descr);
+			vobj->obval = NULL;
+			vobj->ob_size = itemsize;
+			vobj->flags = BEHAVED_FLAGS | OWNDATA;
+			if (type != &PyVoidArrType_Type && descr->fields) {
+				PyObject *name;
+				name = PyString_InternFromString("fields");
+				PyObject_GenericSetAttr(obj, name,	\
+							(PyObject *)	\
+							descr->fields);
+				Py_DECREF(name);
+				if (base) {
+					Py_INCREF(base);
+					vobj->base = base;
+					vobj->flags = PyArray_FLAGS(base);
+					vobj->flags &= ~OWNDATA;
+					vobj->obval = data;
+					return obj;
+				}
+			}
 			destptr = PyDataMem_NEW(itemsize);
 			if (destptr == NULL) {
                                 Py_DECREF(obj);
 				return PyErr_NoMemory();
 			}
-			((PyVoidScalarObject *)obj)->obval = destptr;
-			((PyVoidScalarObject *)obj)->ob_size = itemsize;
+			vobj->obval = destptr;
 		}
 	}
 	else {
@@ -864,19 +887,8 @@ PyArray_Scalar(void *data, int swap, PyArray_Descr *descr)
 static PyObject *
 PyArray_ToScalar(void *data, PyArrayObject *arr)
 {
-	PyObject *ret;
-	PyTypeObject *type;
-	ret = PyArray_Scalar(data, !(PyArray_ISNOTSWAPPED(arr)), arr->descr);
-	if (ret == NULL) return NULL;
-	type = arr->descr->typeobj;
-	if (PyType_IsSubtype(type, &PyVoidArrType_Type) &&	\
-	    (type != &PyVoidArrType_Type)) {
-		PyObject *res;
-		res = PyObject_CallMethod(ret, "_finalize", "O", arr->descr);
-		if (res == NULL) PyErr_Clear();
-		else Py_DECREF(res);
-	}
-	return ret;
+	return PyArray_Scalar(data, !(PyArray_ISNOTSWAPPED(arr)), 
+			      arr->descr, (PyObject *)arr);
 }
 
 

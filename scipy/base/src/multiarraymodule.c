@@ -3625,7 +3625,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 		}
 	}
 
-	ret = PyArray_Scalar(dptr, swap, typecode);
+	ret = PyArray_Scalar(dptr, swap, typecode, NULL);
 	Py_DECREF(typecode);
 	
 	/* free dptr which contains zeros */
