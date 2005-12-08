@@ -241,7 +241,7 @@ class record(nt.void):
         return self.getfield(*(self.fields[obj][:2]))
        
     def __setitem__(self, obj, val):
-        return self.setfield(*(self.fields[obj][:2]))
+        return self.setfield(val, *(self.fields[obj][:2]))
         
 
 # The ndrecarray is almost identical to a standard array (which supports
