@@ -896,6 +896,9 @@ def dict_append(d,**kws):
             d[k] = v
 
 def appendpath(prefix,path):
+    if not ('/' == os.path.sep):
+        prefix = prefix.replace('/',os.path.sep)
+        path = path.replace('/',os.path.sep)
     drive = ''
     if os.path.isabs(path):
         drive = os.path.splitdrive(prefix)[0]
