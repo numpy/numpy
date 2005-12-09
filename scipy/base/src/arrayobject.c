@@ -728,12 +728,12 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
         return PyArray_NewFromDescr(&PyArray_Type, descr, 
 				    nd, newd, 
 				    NULL, data,
-				    CARRAY_FLAGS, NULL);
+				    (data ? CARRAY_FLAGS : 0), NULL);
 #else
 	return PyArray_NewFromDescr(&PyArray_Type, descr,
 				    nd, (intp *)d, 
 				    NULL, data, 
-				    CARRAY_FLAGS, NULL);
+				    (data ? CARRAY_FLAGS : 0), NULL);
 #endif
 }
 
@@ -744,9 +744,13 @@ static PyObject *
 PyArray_FromDims(int nd, int *d, int type) 
 {
 	PyObject *ret;
-	ret = PyArray_FromDimsAndDataAndDescr(nd, d, 
+	ret = PyArray_FromDimsAndDataAndDescr(nd, d,
 					      PyArray_DescrFromType(type),
 					      NULL);
+	/* Old FromDims set memory to zero --- some algorithms
+	   relied on that.  Better keep it the same. If 
+	   Object type, then it's already been set to zero, though.
+	*/
 	if (ret && (PyArray_DESCR(ret)->type_num != PyArray_OBJECT)) {
 		memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
 	}
