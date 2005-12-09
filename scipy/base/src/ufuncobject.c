@@ -1216,7 +1216,6 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		/* fprintf(stderr, "Allocated buffer at %p of size %d, cnt=%d, cntcast=%d\n", loop->buffer[0], loop->bufsize * (cnt + cntcast), cnt, cntcast); */
 
 		if (loop->buffer[0] == NULL) {PyErr_NoMemory(); return -1;}
-		if (loop->obj) memset(loop->buffer[0], 0, memsize);
 		castptr = loop->buffer[0] + loop->bufsize*cnt + scbufsize*scnt;
 		bufptr = loop->buffer[0];
 		for (i=0; i<self->nargs; i++) {
@@ -1443,6 +1442,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		int *needbuffer=loop->needbuffer;
 		intp index=loop->index, size=loop->size;
 		int bufsize;
+		intp bufcnt;
 		int copysizes[MAX_ARGS];
 		void **bufptr = loop->bufptr;
 		void **buffer = loop->buffer;
@@ -1554,31 +1554,32 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 					if (swap[i]) {
 						/* fprintf(stderr, "swapping...\n");*/
 						copyswapn[i](buffer[i], NULL,
-							     datasize[i], 1,
+							     (intp) datasize[i], 1,
 							     mpselsize[i]);
 					}
 					/* cast to the other buffer if necessary */
 					if (loop->cast[i]) {
 						loop->cast[i](buffer[i],
 							      castbuf[i],
-							      datasize[i],
+							      (intp) datasize[i],
 							      NULL, NULL);
 					}
 				}
 				
-				loop->function((char **)dptr, &bufsize, steps, loop->funcdata);
-
+				bufcnt = (intp) bufsize;
+				loop->function((char **)dptr, &bufcnt, steps, loop->funcdata);
+				
 				for (i=self->nin; i<self->nargs; i++) {
 					if (!needbuffer[i]) continue;
 					if (loop->cast[i]) {
 						loop->cast[i](castbuf[i],
 							      buffer[i],
-							      datasize[i],
+							      (intp) datasize[i],
 							      NULL, NULL);
 					}
 					if (swap[i]) {
 						copyswapn[i](buffer[i], NULL,
-							     datasize[i], 1, 
+							     (intp) datasize[i], 1, 
 							     mpselsize[i]);
 					}
 					/* copy back to output arrays */
