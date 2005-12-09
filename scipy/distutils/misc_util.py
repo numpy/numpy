@@ -896,8 +896,11 @@ def dict_append(d,**kws):
             d[k] = v
 
 def appendpath(prefix,path):
+    drive = ''
     if os.path.isabs(path):
-        absprefix = os.path.abspath(prefix)
+        drive = os.path.splitdrive(prefix)[0]
+        absprefix = os.path.splitdrive(os.path.abspath(prefix))[1]
+        pathdrive,path = os.path.splitdrive(path)
         d = os.path.commonprefix([absprefix,path])
         if os.path.join(absprefix[:len(d)],absprefix[len(d):])!=absprefix \
            or os.path.join(path[:len(d)],path[len(d):])!=path:
@@ -908,7 +911,7 @@ def appendpath(prefix,path):
             subpath = subpath[1:]
     else:
         subpath = path
-    return os.path.normpath(os.path.join(prefix, subpath))
+    return os.path.normpath(os.path.join(drive + prefix, subpath))
 
 def generate_config_py(extension, build_dir):
     """ Generate <package>/config.py file containing system_info
