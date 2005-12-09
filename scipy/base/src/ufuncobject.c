@@ -1442,7 +1442,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		int fastmemcpy[MAX_ARGS];
 		int *needbuffer=loop->needbuffer;
 		intp index=loop->index, size=loop->size;
-		int bufsize=loop->bufsize;
+		int bufsize;
 		int copysizes[MAX_ARGS];
 		void **bufptr = loop->bufptr;
 		void **buffer = loop->buffer;
@@ -1452,7 +1452,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		int ninnerloops = loop->ninnerloops;
 		Bool pyobject[MAX_ARGS];
 		int datasize[MAX_ARGS];
-                int i, j, k;
+                int i, j, k, stopcondition;
 		
 		for (i=0; i<self->nargs; i++) {
 			copyswapn[i] = mps[i]->descr->copyswapn;
@@ -1461,20 +1461,10 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
                                        (mps[i]->descr->type_num == PyArray_OBJECT));
 			laststrides[i] = iters[i]->strides[loop->lastdim];
 			if (steps[i] && laststrides[i] != mpselsize[i]) fastmemcpy[i] = 0;
-			else fastmemcpy[i] = 1;
-                        datasize[i] = (steps[i] ? bufsize : 1);
-			copysizes[i] = datasize[i] * mpselsize[i];
+			else fastmemcpy[i] = !pyobject[i];
 		}
 		/* Do generic buffered looping here (works for any kind of
 		   arrays -- some need buffers, some don't. 
-		
-		    1. fill the input buffers.
-		    2. If buffer is filled then 
-		          a. cast any input buffers needing it. 
-		          b. call inner function (which loops over the buffer).
-			  c. cast any output buffers needing it.
-			  d. copy output buffer back to output arrays.
-                    3. goto next position
 		*/
 		
 		/* New algorithm: N is the largest dimension.  B is the buffer-size.
@@ -1507,7 +1497,9 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		*/
 
 
-		/*fprintf(stderr, "BUFFER...%d\n", loop->size);*/
+		/* fprintf(stderr, "BUFFER...%d,%d,%d\n", loop->size, 
+		           loop->ninnerloops, loop->leftover);
+		*/
 		/*
 		for (i=0; i<self->nargs; i++) {
 		         fprintf(stderr, "iters[%d]->dataptr = %p, %p of size %d\n", i, 
@@ -1515,11 +1507,16 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		}
 		*/
 
+		stopcondition = ninnerloops;
+		if (loop->leftover == 0) stopcondition--;
 		while (index < size) {
+			bufsize=loop->bufsize;
 			for (i=0; i<self->nargs; i++) {
 				tptr[i] = loop->iters[i]->dataptr;
 				if (needbuffer[i]) {
 					dptr[i] = bufptr[i];
+					datasize[i] = (steps[i] ? bufsize : 1);
+					copysizes[i] = datasize[i] * mpselsize[i];
 				}
 				else {
 					dptr[i] = tptr[i];
@@ -1527,31 +1524,29 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 			}
 
 			/* This is the inner function over the last dimension */
-			for (k=1; k<=ninnerloops; k++) {
-                                fprintf(stderr, "k=%d, ninnerloops=%d\n", k, ninnerloops);
+			for (k=1; k<=stopcondition; k++) {
 				if (k==ninnerloops) {
                                         bufsize = loop->leftover;
                                         for (i=0; i<self->nargs;i++) {
+						if (!needbuffer[i]) continue;
                                                 datasize[i] = (steps[i] ? bufsize : 1);
 						copysizes[i] = datasize[i] * mpselsize[i];
                                         }
-                                        fprintf(stderr, "%d, %d, %d\n", bufsize, datasize[0],
-                                                datasize[1]);
                                 }
                                         
 				for (i=0; i<self->nin; i++) {
 					if (!needbuffer[i]) continue;
 					if (fastmemcpy[i]) 
-						memcpy(loop->buffer[i], tptr[i],
+						memcpy(buffer[i], tptr[i],
 						       copysizes[i]);
 					else {
 						char *myptr1, *myptr2;
-						myptr1 = loop->buffer[i];
+						myptr1 = buffer[i];
 						myptr2 = tptr[i];
 						for (j=0; j<bufsize; j++) {
 							memcpy(myptr1, myptr2, mpselsize[i]);
 							myptr1 += mpselsize[i];
-							myptr2 += mpselsize[i];
+							myptr2 += laststrides[i];
 						}
 					}
 					
@@ -1588,18 +1583,19 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 					}
 					/* copy back to output arrays */
 					if (fastmemcpy[i]) 
-						memcpy(tptr[i], loop->buffer[i], copysizes[i]);
+						memcpy(tptr[i], buffer[i], copysizes[i]);
 					else {
 						char *myptr1, *myptr2;
-						myptr2 = loop->buffer[i];
+						myptr2 = buffer[i];
 						myptr1 = tptr[i];
 						for (j=0; j<bufsize; j++) {
 							memcpy(myptr1, myptr2, mpselsize[i]);
-							myptr1 += mpselsize[i];
+							myptr1 += laststrides[i];
 							myptr2 += mpselsize[i];
 						}
 					}
                                 }
+				if (k == stopcondition) continue;
 				for (i=0; i<self->nargs; i++) {
 					tptr[i] += bufsize * laststrides[i];
 					if (!needbuffer[i]) dptr[i] = tptr[i];
