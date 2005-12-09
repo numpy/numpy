@@ -93,7 +93,7 @@ typedef struct {
 	int needbuffer[MAX_ARGS];
 	int leftover;
 	int ninnerloops;
-	intp lastdim;
+	int lastdim;
 	
 	/* Whether or not to swap */
 	int swap[MAX_ARGS];

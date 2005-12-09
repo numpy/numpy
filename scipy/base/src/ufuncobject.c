@@ -1453,6 +1453,8 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		Bool pyobject[MAX_ARGS];
 		int datasize[MAX_ARGS];
                 int i, j, k, stopcondition;
+		char *myptr1, *myptr2;
+
 		
 		for (i=0; i<self->nargs; i++) {
 			copyswapn[i] = mps[i]->descr->copyswapn;
@@ -1461,7 +1463,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
                                        (mps[i]->descr->type_num == PyArray_OBJECT));
 			laststrides[i] = iters[i]->strides[loop->lastdim];
 			if (steps[i] && laststrides[i] != mpselsize[i]) fastmemcpy[i] = 0;
-			else fastmemcpy[i] = !pyobject[i];
+			else fastmemcpy[i] = 1;
 		}
 		/* Do generic buffered looping here (works for any kind of
 		   arrays -- some need buffers, some don't. 
@@ -1540,7 +1542,6 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 						memcpy(buffer[i], tptr[i],
 						       copysizes[i]);
 					else {
-						char *myptr1, *myptr2;
 						myptr1 = buffer[i];
 						myptr2 = tptr[i];
 						for (j=0; j<bufsize; j++) {
@@ -1583,14 +1584,22 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 							     mpselsize[i]);
 					}
 					/* copy back to output arrays */
+					/* decref what's already there for object arrays */
+					if (pyobject[i]) {
+						myptr1 = tptr[i];
+						for (j=0; j<datasize[i]; j++) {
+							Py_XDECREF(*((PyObject **)myptr1));
+							myptr1 += laststrides[i];
+						}
+					}
 					if (fastmemcpy[i]) 
 						memcpy(tptr[i], buffer[i], copysizes[i]);
 					else {
-						char *myptr1, *myptr2;
 						myptr2 = buffer[i];
 						myptr1 = tptr[i];
 						for (j=0; j<bufsize; j++) {
-							memcpy(myptr1, myptr2, mpselsize[i]);
+							memcpy(myptr1, myptr2, 
+							       mpselsize[i]);
 							myptr1 += laststrides[i];
 							myptr2 += mpselsize[i];
 						}
@@ -1601,6 +1610,30 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 					tptr[i] += bufsize * laststrides[i];
 					if (!needbuffer[i]) dptr[i] = tptr[i];
 				}
+			}
+
+			if (loop->obj) { /* DECREF castbuf for object arrays */
+				for (i=0; i<self->nargs; i++) {
+					if (pyobject[i]) {
+						if (steps[i] == 0) {
+							Py_XDECREF(*((PyObject **)castbuf[i]));
+						}
+						else {
+							int size = loop->bufsize;
+							PyObject **objptr = castbuf[i];
+							/* size is loop->bufsize unless there
+							   was only one loop */
+							if (ninnerloops == 1) \
+								size = loop->leftover;
+							
+							for (j=0; j<size; j++) {
+								Py_XDECREF(*objptr);
+								objptr += 1;
+							}
+						}
+					}
+				}
+				
 			}
 			
 			UFUNC_CHECK_ERROR(loop);
