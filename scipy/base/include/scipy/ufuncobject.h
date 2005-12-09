@@ -88,6 +88,12 @@ typedef struct {
 
 	/* Loop method */
 	int meth;
+
+	/* Whether we need to copy to a buffer or not.*/
+	int needbuffer[MAX_ARGS];
+	int leftover;
+	int ninnerloops;
+	intp lastdim;
 	
 	/* Whether or not to swap */
 	int swap[MAX_ARGS];
