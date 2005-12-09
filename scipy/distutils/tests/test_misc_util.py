@@ -1,7 +1,9 @@
 import sys
 from scipy.test.testing import *
 from scipy.distutils.misc_util import appendpath
-from os.path import join
+from os.path import join, sep
+
+ajoin = lambda *paths: join(*((sep,)+paths))
 
 class test_appendpath(ScipyTestCase):
 
@@ -17,15 +19,15 @@ class test_appendpath(ScipyTestCase):
         assert_equal(appendpath('prefix/sub','sup/name'),
                      join('prefix','sub','sup','name'))
         assert_equal(appendpath('/prefix/sub','/prefix/name'),
-                     join('/prefix','sub','name'))
+                     ajoin('prefix','sub','name'))
 
     def check_3(self):
         assert_equal(appendpath('/prefix/sub','/prefix/sup/name'),
                      join('/prefix','sub','sup','name'))
         assert_equal(appendpath('/prefix/sub/sub2','/prefix/sup/sup2/name'),
-                     join('/prefix','sub','sub2','sup','sup2','name'))
+                     ajoin('prefix','sub','sub2','sup','sup2','name'))
         assert_equal(appendpath('/prefix/sub/sub2','/prefix/sub/sup/name'),
-                     join('/prefix','sub','sub2','sup','name'))
+                     ajoin('prefix','sub','sub2','sup','name'))
 
 if __name__ == "__main__":
     ScipyTest().run()
