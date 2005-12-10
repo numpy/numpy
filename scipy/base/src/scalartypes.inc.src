@@ -1844,7 +1844,8 @@ static PyArray_Descr *
 PyArray_DescrFromTypeObject(PyObject *type)
 {	
 	int typenum;
-	PyArray_Descr *new;
+	PyArray_Descr *new, *conv=NULL;
+	PyObject *dtypedescr;
 
 	/* if it's a builtin type, then use the typenumber */
 	typenum = _typenum_fromtypeobj(type,0);	
@@ -1877,7 +1878,20 @@ PyArray_DescrFromTypeObject(PyObject *type)
 	/* Otherwise --- type is a sub-type of an array scalar
 	   currently only VOID allows it -- use it as the type-object.
 	*/
+	/* look for a dtypedescr attribute */
 	new = PyArray_DescrNewFromType(PyArray_VOID);
+	dtypedescr = PyObject_GetAttrString(type, "dtypedescr");
+	PyErr_Clear();
+	if (dtypedescr && !PyArray_DescrConverter(dtypedescr, &conv))
+		PyErr_Clear();
+	if (conv) {
+		new->fields = conv->fields;
+		Py_INCREF(new->fields);
+		new->elsize = conv->elsize;
+		new->subarray = conv->subarray;
+		conv->subarray = NULL;
+		Py_DECREF(conv);
+	}
         Py_DECREF(new->typeobj);
         new->typeobj = (PyTypeObject *)type;
         Py_INCREF(type);

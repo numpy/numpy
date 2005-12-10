@@ -3179,24 +3179,26 @@ _convert_from_dict(PyObject *obj, int align)
 }
 
 /* 
-   any object with the .fields attribute and/or
-   .itemsize attribute (if the .fields attribute does not give
-   the total size -- i.e. a partial record naming).
+   any object with 
+   the .fields attribute and/or .itemsize attribute 
+   (if the .fields attribute does not give
+    the total size -- i.e. a partial record naming).
    If itemsize is given it must be >= size computed from fields
    
    The .fields attribute must return a convertible dictionary if 
    present.  Result inherits from PyArray_VOID.
 */
 
+/*
 static PyArray_Descr *
 _arraydescr_fromobj(PyObject *type)
 {
-	PyObject *fields;
-	PyObject *itemsize;
+	PyObject *fields=NULL;
+	PyObject *itemsize=NULL;
 	PyArray_Descr *new;
 	PyArray_Descr *conv=NULL;
 	int elsize;
-	
+		
 	fields = PyObject_GetAttrString(type, "fields");
 	PyErr_Clear();
 	itemsize = PyObject_GetAttrString(type, "itemsize");
@@ -3224,6 +3226,7 @@ _arraydescr_fromobj(PyObject *type)
 	if (new->elsize == 0) {Py_DECREF(new); return NULL;}
 	return new;
 }
+*/
 
 
 /*MULTIARRAY_API
@@ -3260,7 +3263,9 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         int check_num=PyArray_NOTYPE+10;
 	int len;
 	PyObject *item;
-	int elsize = 0;
+	int elsize = 0, ret;
+	PyObject *dtypedescr;
+
 
 	*at=NULL;
 	
@@ -3299,6 +3304,13 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
                         check_num = PyArray_UNICODE;
 		else if (obj == (PyObject *)(&PyBuffer_Type))
 			check_num = PyArray_VOID;
+		else if ((dtypedescr = PyObject_GetAttrString(obj,
+							      "dtypedescr"))) {
+			ret = PyArray_DescrConverter(dtypedescr, at);
+			Py_DECREF(dtypedescr);
+			if (ret) return ret;
+		}
+		PyErr_Clear();
 		goto finish;
 	}
 
@@ -3359,9 +3371,14 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		return PY_SUCCEED;
 	}
         else {
-		*at = _arraydescr_fromobj(obj);
-		if (*at == NULL) goto fail;
-		return PY_SUCCEED;
+		dtypedescr = PyObject_GetAttrString(obj, "dtypedescr");
+		PyErr_Clear();
+		if (dtypedescr) {
+			ret = PyArray_DescrConverter(dtypedescr, at);
+			Py_DECREF(dtypedescr);
+			return ret;
+		}
+		goto fail;
 	}
 	if (PyErr_Occurred()) goto fail;
 

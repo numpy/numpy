@@ -263,7 +263,7 @@ class ndrecarray(sb.ndarray):
                    not isinstance(formats, list):
                     raise ValueError, "Can only deal with alignment"\
                           "for list and dictionary type-descriptors."
-            descr = dtypedescr(formats, aligned)
+            descr = sb.dtypedescr(formats, aligned)
         
         if buf is None:
             self = sb.ndarray.__new__(subtype, shape, (record, descr))

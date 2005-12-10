@@ -795,7 +795,7 @@ static PyObject *
 PyArray_Scalar(void *data, int swap, PyArray_Descr *descr, PyObject *base)
 {
 	PyTypeObject *type;
-	PyObject *obj;	
+	PyObject *obj, *name;	
         void *destptr;
         PyArray_CopySwapFunc *copyswap;
 	int type_num;
@@ -844,7 +844,6 @@ PyArray_Scalar(void *data, int swap, PyArray_Descr *descr, PyObject *base)
 			vobj->ob_size = itemsize;
 			vobj->flags = BEHAVED_FLAGS | OWNDATA;
 			if (type != &PyVoidArrType_Type && descr->fields) {
-				PyObject *name;
 				name = PyString_InternFromString("fields");
 				PyObject_GenericSetAttr(obj, name,	\
 							(PyObject *)	\
