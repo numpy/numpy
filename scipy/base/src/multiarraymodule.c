@@ -2559,8 +2559,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         chunk = self->descr->elsize;
 
         mask = (PyArrayObject *)\
-		PyArray_ContiguousFromAny(mask0, PyArray_BOOL, 0, 0);
-        if (mask == NULL) goto fail;
+		PyArray_FROM_OTF(mask0, PyArray_BOOL, CARRAY_FLAGS | FORCECAST);
+	if (mask == NULL) goto fail;
         ni = PyArray_SIZE(mask);
         if (ni != max_item) {
                 PyErr_SetString(PyExc_ValueError, 
