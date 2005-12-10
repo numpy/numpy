@@ -68,20 +68,20 @@ dotblas_alterdot(PyObject *dummy, PyObject *args)
 
     if (!altered) {
 	descr = PyArray_DescrFromType(PyArray_FLOAT);
-	oldFunctions[PyArray_FLOAT] = descr->dotfunc;
-	descr->dotfunc = (PyArray_DotFunc *)FLOAT_dot;
+	oldFunctions[PyArray_FLOAT] = descr->f->dotfunc;
+	descr->f->dotfunc = (PyArray_DotFunc *)FLOAT_dot;
 	
 	descr = PyArray_DescrFromType(PyArray_DOUBLE);
-	oldFunctions[PyArray_DOUBLE] = descr->dotfunc;
-	descr->dotfunc = (PyArray_DotFunc *)DOUBLE_dot;
+	oldFunctions[PyArray_DOUBLE] = descr->f->dotfunc;
+	descr->f->dotfunc = (PyArray_DotFunc *)DOUBLE_dot;
 	
 	descr = PyArray_DescrFromType(PyArray_CFLOAT);
-	oldFunctions[PyArray_CFLOAT] = descr->dotfunc;
-	descr->dotfunc = (PyArray_DotFunc *)CFLOAT_dot;
+	oldFunctions[PyArray_CFLOAT] = descr->f->dotfunc;
+	descr->f->dotfunc = (PyArray_DotFunc *)CFLOAT_dot;
 	
 	descr = PyArray_DescrFromType(PyArray_CDOUBLE);
-	oldFunctions[PyArray_CDOUBLE] = descr->dotfunc;
-	descr->dotfunc = (PyArray_DotFunc *)CDOUBLE_dot;
+	oldFunctions[PyArray_CDOUBLE] = descr->f->dotfunc;
+	descr->f->dotfunc = (PyArray_DotFunc *)CDOUBLE_dot;
 
 	altered = TRUE;
     }
@@ -101,20 +101,24 @@ dotblas_restoredot(PyObject *dummy, PyObject *args)
 
     if (altered) {
 	descr = PyArray_DescrFromType(PyArray_FLOAT);
-	descr->dotfunc = oldFunctions[PyArray_FLOAT];
+	descr->f->dotfunc = oldFunctions[PyArray_FLOAT];
 	oldFunctions[PyArray_FLOAT] = NULL;
+	Py_XDECREF(descr);
 
 	descr = PyArray_DescrFromType(PyArray_DOUBLE);
-	descr->dotfunc = oldFunctions[PyArray_DOUBLE];
+	descr->f->dotfunc = oldFunctions[PyArray_DOUBLE];
 	oldFunctions[PyArray_DOUBLE] = NULL;
+	Py_XDECREF(descr);
 
 	descr = PyArray_DescrFromType(PyArray_CFLOAT);
-	descr->dotfunc = oldFunctions[PyArray_CFLOAT];
+	descr->f->dotfunc = oldFunctions[PyArray_CFLOAT];
 	oldFunctions[PyArray_CFLOAT] = NULL;
+	Py_XDECREF(descr);
 
 	descr = PyArray_DescrFromType(PyArray_CDOUBLE);
-	descr->dotfunc = oldFunctions[PyArray_CDOUBLE];
+	descr->f->dotfunc = oldFunctions[PyArray_CDOUBLE];
 	oldFunctions[PyArray_CDOUBLE] = NULL;
+	Py_XDECREF(descr);
 	
 	altered = FALSE;
     }
