@@ -8,7 +8,9 @@ There are a few non-standard Numeric usages (that were not really part
 of the API) that will need to be changed:
 
   * If you used any of the function pointers in the PyArray_Descr
-    structure you will have to modify your usage of those.  The
+    structure you will have to modify your usage of those.  First, 
+    the pointers are all under the member named f.  So descr->cast is now
+    descr->f->cast.  In addition, the
     casting functions have eliminated the strides argument (use
     PyArray_CastTo if you need strided casting). All functions have
     one or two PyArrayObject * arguments at the end.  This allows the

@@ -279,7 +279,7 @@ cppmacros['TRYPYARRAYTEMPLATE']="""\
 /* New SciPy */
 #define TRYPYARRAYTEMPLATECHAR case PyArray_STRING: *(char *)(arr->data)=*v; break;
 #define TRYPYARRAYTEMPLATELONG case PyArray_LONG: *(long *)(arr->data)=*v; break;
-#define TRYPYARRAYTEMPLATEOBJECT case PyArray_OBJECT: (arr->descr->setitem)(pyobj_from_ ## ctype ## 1(*v),arr->data); break;
+#define TRYPYARRAYTEMPLATEOBJECT case PyArray_OBJECT: (arr->descr->f->setitem)(pyobj_from_ ## ctype ## 1(*v),arr->data); break;
 
 #define TRYPYARRAYTEMPLATE(ctype,typecode) \\
 	PyArrayObject *arr = NULL;\\
@@ -305,7 +305,7 @@ cppmacros['TRYPYARRAYTEMPLATE']="""\
 		case PyArray_ULONGLONG: *(ulonglong *)(arr->data)=*v; break;\\
 		case PyArray_LONGDOUBLE: *(longdouble *)(arr->data)=*v; break;\\
 		case PyArray_CLONGDOUBLE: *(longdouble *)(arr->data)=*v; break;\\
-		case PyArray_OBJECT: (arr->descr->setitem)(pyobj_from_ ## ctype ## 1(*v),arr->data, arr); break;\\
+		case PyArray_OBJECT: (arr->descr->f->setitem)(pyobj_from_ ## ctype ## 1(*v),arr->data, arr); break;\\
 	default: return -2;\\
 	};\\
 	return 1
@@ -313,7 +313,7 @@ cppmacros['TRYPYARRAYTEMPLATE']="""\
 
 needs['TRYCOMPLEXPYARRAYTEMPLATE']=['PRINTPYOBJERR']
 cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
-#define TRYCOMPLEXPYARRAYTEMPLATEOBJECT case PyArray_OBJECT: (arr->descr->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),arr->data, arr); break;
+#define TRYCOMPLEXPYARRAYTEMPLATEOBJECT case PyArray_OBJECT: (arr->descr->f->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),arr->data, arr); break;
 #define TRYCOMPLEXPYARRAYTEMPLATE(ctype,typecode)\\
 	PyArrayObject *arr = NULL;\\
 	if (!obj) return -2;\\
@@ -345,7 +345,7 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
 		case PyArray_ULONGLONG: *(ulonglong *)(arr->data)=(*v).r; break;\\
 		case PyArray_LONGDOUBLE: *(longdouble *)(arr->data)=(*v).r; break;\\
 		case PyArray_CLONGDOUBLE: *(longdouble *)(arr->data)=(*v).r;*(longdouble *)(arr->data+sizeof(longdouble))=(*v).i;break;\\                
-                case PyArray_OBJECT: (arr->descr->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),arr->data, arr); break;\\
+                case PyArray_OBJECT: (arr->descr->f->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),arr->data, arr); break;\\
 		default: return -2;\\
 	};\\
 	return -1;        
