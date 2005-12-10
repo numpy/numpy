@@ -365,7 +365,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 	PyArrayIterObject *it;
 
 	if (inplace) {
-		copyswapn = self->descr->copyswapn;
+		copyswapn = self->descr->f->copyswapn;
 		
 		size = PyArray_SIZE(self);
 		if (PyArray_ISONESEGMENT(self)) {
@@ -376,7 +376,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 			
 			it = (PyArrayIterObject *)\
 				PyArray_IterNew((PyObject *)self);
-			copyswap = self->descr->copyswap;
+			copyswap = self->descr->f->copyswap;
 			while (it->index < it->size) {
 				copyswap(it->dataptr, NULL, 1, 
 					 self->descr->elsize);
@@ -403,7 +403,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 		   to begin with so just correct the flag in that case. */
 
 		if (self->flags & NOTSWAPPED) {
-			ret->descr->copyswapn(ret->data, NULL, size, 1, 
+			ret->descr->f->copyswapn(ret->data, NULL, size, 1, 
 					      ret->descr->elsize);
 			ret->flags &= ~NOTSWAPPED;
 		}
@@ -502,7 +502,7 @@ static PyObject *
 array_toscalar(PyArrayObject *self, PyObject *args) {
         if (!PyArg_ParseTuple(args, "")) return NULL;
 	if (self->nd == 0 || PyArray_SIZE(self) == 1) 
-		return self->descr->getitem(self->data, self);
+		return self->descr->f->getitem(self->data, self);
 	else {
 		PyErr_SetString(PyExc_ValueError, "can only convert an"	\
 				" array of size 1 to Python scalar.");

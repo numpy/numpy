@@ -640,7 +640,7 @@ PyArray_Nonzero(PyArrayObject *self)
 
 	size = it->size;
 	for (i=0; i<size; i++) {
-		if (self->descr->nonzero(it->dataptr, self)) count++;
+		if (self->descr->f->nonzero(it->dataptr, self)) count++;
 		PyArray_ITER_NEXT(it);
 	}
 
@@ -652,7 +652,7 @@ PyArray_Nonzero(PyArrayObject *self)
 		dptr[0] = (intp *)PyArray_DATA(ret);
 		
 		for (i=0; i<size; i++) {
-			if (self->descr->nonzero(it->dataptr, self)) 
+			if (self->descr->f->nonzero(it->dataptr, self)) 
 				*(dptr[0])++ = i;
 			PyArray_ITER_NEXT(it);
 		}		
@@ -671,7 +671,7 @@ PyArray_Nonzero(PyArrayObject *self)
 		/* reset contiguous so that coordinates gets updated */
 		it->contiguous = 0;
 		for (i=0; i<size; i++) {
-			if (self->descr->nonzero(it->dataptr, self)) 
+			if (self->descr->f->nonzero(it->dataptr, self)) 
 				for (j=0; j<n; j++) 
 					*(dptr[j])++ = it->coordinates[j];
 			PyArray_ITER_NEXT(it);
@@ -1552,7 +1552,7 @@ static PyArrayObject *global_obj;
 static int 
 qsortCompare (const void *a, const void *b) 
 {
-	return global_obj->descr->compare(a,b,global_obj);
+	return global_obj->descr->f->compare(a,b,global_obj);
 }
 
 #define SWAPAXES(op, ap) {						\
@@ -1595,7 +1595,7 @@ PyArray_Sort(PyArrayObject *op, int axis)
 
 	if (ap == NULL) return NULL;
 
-	if (ap->descr->compare == NULL) {
+	if (ap->descr->f->compare == NULL) {
 		PyErr_SetString(PyExc_TypeError, 
 				"compare not supported for type");
 		Py_DECREF(ap);
@@ -1638,7 +1638,7 @@ argsort_static_compare(const void *ip1, const void *ip2)
 	int isize = global_obj->descr->elsize;
 	const intp *ipa = ip1;
 	const intp *ipb = ip2;	
-	return global_obj->descr->compare(global_data + (isize * *ipa),
+	return global_obj->descr->f->compare(global_data + (isize * *ipa),
                                           global_data + (isize * *ipb), 
 					  global_obj);
 }
@@ -1671,7 +1671,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis)
 					   NULL, NULL, 0, 0, (PyObject *)ap);
 	if (ret == NULL) goto fail;
 	
-	if (ap->descr->compare == NULL) {
+	if (ap->descr->f->compare == NULL) {
 		PyErr_SetString(PyExc_TypeError, 
 				"compare not supported for type");
 		goto fail;
@@ -1711,7 +1711,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis)
 static void 
 local_where(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
 {	
-	PyArray_CompareFunc *compare = ap2->descr->compare;
+	PyArray_CompareFunc *compare = ap2->descr->f->compare;
 	intp  min_i, max_i, i, j;
 	int location, elsize = ap1->descr->elsize;
 	intp elements = ap1->dimensions[ap1->nd-1];
@@ -1778,7 +1778,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 					   NULL, NULL, 0, 0, (PyObject *)ap2);
 	if (ret == NULL) goto fail;
 
-	if (ap2->descr->compare == NULL) {
+	if (ap2->descr->f->compare == NULL) {
 		PyErr_SetString(PyExc_TypeError, 
 				"compare not supported for type");
 		goto fail;
@@ -1873,7 +1873,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 					   (prior2 > prior1 ? ap2 : ap1));
 	if (ret == NULL) goto fail;
 
-	dot = (ret->descr->dotfunc);
+	dot = (ret->descr->f->dotfunc);
 	
 	if (dot == NULL) {
 		PyErr_SetString(PyExc_ValueError, 
@@ -2001,7 +2001,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 					   (prior2 > prior1 ? ap2 : ap1));
 	if (ret == NULL) goto fail;
 
-	dot = ret->descr->dotfunc;
+	dot = ret->descr->f->dotfunc;
 	if (dot == NULL) {
 		PyErr_SetString(PyExc_ValueError, 
 				"dot not available for this type");
@@ -2173,7 +2173,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 					   (prior2 > prior1 ? ap2 : ap1));
 	if (ret == NULL) goto fail;
 	
-	dot = ret->descr->dotfunc;
+	dot = ret->descr->f->dotfunc;
 	if (dot == NULL) {
 		PyErr_SetString(PyExc_ValueError, 
 				"function not available for this data type");
@@ -2333,7 +2333,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 	Py_DECREF(op);
 	if (ap == NULL) return NULL;
 	
-	arg_func = ap->descr->argmax;
+	arg_func = ap->descr->f->argmax;
 	if (arg_func == NULL) {
 		PyErr_SetString(PyExc_TypeError, "data type not ordered");
 		goto fail;
@@ -3847,7 +3847,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 		char *dptr;
 		int done=0;
 
-		scan = typecode->scanfunc;
+		scan = typecode->f->scanfunc;
 		if (scan == NULL) {
 			PyErr_SetString(PyExc_ValueError, 
 					"don't know how to read "	\
@@ -4220,7 +4220,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 	type = ((PyArrayObject *)range)->descr->type_num;
 	for (i=0; i < length; i++) {
 		value = start + i*step;
-		dbl_descr->cast[type]((char*)&value, rptr, 1, NULL, 
+		dbl_descr->f->cast[type]((char*)&value, rptr, 1, NULL, 
 				      (PyArrayObject *)range);
 		rptr += elsize;
 	}

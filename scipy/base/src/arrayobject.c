@@ -229,7 +229,7 @@ PyArray_Zero(PyArrayObject *arr)
         }
 	storeflags = arr->flags;
 	arr->flags |= BEHAVED_FLAGS;
-        ret = arr->descr->setitem(obj, zeroval, arr);
+        ret = arr->descr->f->setitem(obj, zeroval, arr);
 	arr->flags = storeflags;
 	Py_DECREF(obj);
 	if (ret < 0) {
@@ -264,7 +264,7 @@ PyArray_One(PyArrayObject *arr)
 
 	storeflags = arr->flags;
 	arr->flags |= BEHAVED_FLAGS;
-        ret = arr->descr->setitem(obj, oneval, arr);
+        ret = arr->descr->f->setitem(obj, oneval, arr);
 	arr->flags = storeflags;
         Py_DECREF(obj);
         if (ret < 0) {
@@ -638,8 +638,8 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
         ncopies = (dsize / ssize);
 
 	swap = PyArray_ISNOTSWAPPED(dest) != PyArray_ISNOTSWAPPED(src);
-	copyswap = dest->descr->copyswap;
-	copyswapn = dest->descr->copyswapn;
+	copyswap = dest->descr->f->copyswap;
+	copyswapn = dest->descr->f->copyswapn;
 
         elsize = dest->descr->elsize;
 
@@ -804,7 +804,7 @@ PyArray_Scalar(void *data, int swap, PyArray_Descr *descr, PyObject *base)
 	type_num = descr->type_num;
 	itemsize = descr->elsize;
         type = descr->typeobj;
-        copyswap = descr->copyswap;
+        copyswap = descr->f->copyswap;
 	if (type->tp_itemsize != 0)  /* String type */
 		obj = type->tp_alloc(type, itemsize);
 	else
@@ -995,7 +995,6 @@ static int
 PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 {
 	PyArray_Descr *old;
-	int i;
 
 	if (!PyTypeNum_ISUSERDEF(typenum)) {
 		PyErr_SetString(PyExc_TypeError, 
@@ -1007,24 +1006,17 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 	descr->typeobj = old->typeobj;
 	descr->type_num = typenum;
 
-#define _NULL_CHECK(member) \
-	if (descr->member == NULL) descr->member = old->member
-
-	for (i=0; i<PyArray_NTYPES; i++) {
-		_NULL_CHECK(cast[i]);
+	if (descr->f == NULL) descr->f = old->f;
+	if (descr->fields == NULL) descr->fields = old->fields;
+	if (descr->subarray == NULL && old->subarray) {
+		descr->subarray = malloc(sizeof(PyArray_ArrayDescr));
+		memcpy(descr->subarray, old->subarray, 
+		       sizeof(PyArray_ArrayDescr));
+		Py_INCREF(descr->subarray->shape);
+		Py_INCREF(descr->subarray->base);
 	}
-        _NULL_CHECK(fields);
-        _NULL_CHECK(subarray);
-	_NULL_CHECK(getitem);
-	_NULL_CHECK(setitem);
-	_NULL_CHECK(compare);	
-	_NULL_CHECK(argmax);
-	_NULL_CHECK(dotfunc);
-	_NULL_CHECK(scanfunc);
-	_NULL_CHECK(copyswapn);
-	_NULL_CHECK(copyswap);
-	_NULL_CHECK(nonzero);
-#undef _NULL_CHECK
+        Py_XINCREF(descr->fields);
+        Py_XINCREF(descr->typeobj);
 
 #define _ZERO_CHECK(member) \
 	if (descr->member == 0) descr->member = old->member
@@ -1036,8 +1028,6 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 	_ZERO_CHECK(alignment);
 #undef _ZERO_CHECK
 
-        Py_XINCREF(descr->fields);
-        Py_XINCREF(descr->typeobj);
 	Py_DECREF(old);
 	userdescrs[typenum-PyArray_USERDEF] = descr;
 	return 0;
@@ -1100,7 +1090,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                         PyArray_IterNew((PyObject *)self);
 		n4 = (format ? strlen((const char *)format) : 0);
                 while(it->index < it->size) {
-                        obj = self->descr->getitem(it->dataptr, self);
+                        obj = self->descr->f->getitem(it->dataptr, self);
                         if (obj == NULL) {Py_DECREF(it); return -1;}
 			if (n4 == 0) { /* standard writing */
 				strobj = PyObject_Str(obj);
@@ -1154,7 +1144,7 @@ PyArray_ToList(PyArrayObject *self)
         if (!PyArray_Check(self)) return (PyObject *)self;
 
         if (self->nd == 0) 
-		return self->descr->getitem(self->data,self);
+		return self->descr->f->getitem(self->data,self);
 	
         sz = self->dimensions[0];
         lp = PyList_New(sz);
@@ -1347,7 +1337,7 @@ array_ass_big_item(PyArrayObject *self, intp i, PyObject *v)
         }
 	
         if ((item = index2ptr(self, i)) == NULL) return -1;
-        if (self->descr->setitem(v, item, self) == -1) return -1;
+        if (self->descr->f->setitem(v, item, self) == -1) return -1;
         return 0;
 }
 
@@ -1667,7 +1657,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
 	}
 	index = it->size;
 	swap = ((temp->flags & NOTSWAPPED) != (ret->flags & NOTSWAPPED));
-        copyswap = ret->descr->copyswap;
+        copyswap = ret->descr->f->copyswap;
 	PyArray_MapIterReset(mit);
 	while (index--) {
                 copyswap(it->dataptr, mit->dataptr, swap, ret->descr->elsize);
@@ -1718,7 +1708,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 	swap = ((mit->ait->ao->flags & NOTSWAPPED) != \
 		(PyArray_FLAGS(arr) & NOTSWAPPED));
 
-        copyswap = PyArray_DESCR(arr)->copyswap;
+        copyswap = PyArray_DESCR(arr)->f->copyswap;
 	PyArray_MapIterReset(mit);
         /* Need to decref OBJECT arrays */
         if (PyTypeNum_ISOBJECT(descr->type_num)) {
@@ -1953,7 +1943,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
         if ((tmp = (PyArrayObject *)array_subscript(self, index)) == NULL)
                 return -1; 
 	if (PyArray_ISOBJECT(self) && (tmp->nd == 0)) {
-		ret = tmp->descr->setitem(op, tmp->data, tmp);
+		ret = tmp->descr->f->setitem(op, tmp->data, tmp);
 	}
 	else {
 		ret = PyArray_CopyObject(tmp, op);
@@ -2475,7 +2465,7 @@ array_any_nonzero(PyArrayObject *mp)
 	if (it==NULL) return anyTRUE;
 	index = it->size;
 	while(index--) {
-		if (mp->descr->nonzero(it->dataptr, mp)) {
+		if (mp->descr->f->nonzero(it->dataptr, mp)) {
 			anyTRUE = TRUE;
 			break;
 		}
@@ -2491,7 +2481,7 @@ _array_nonzero(PyArrayObject *mp)
 	intp n;
 	n = PyArray_SIZE(mp);
 	if (n == 1) {
-		return mp->descr->nonzero(mp->data, mp);
+		return mp->descr->f->nonzero(mp->data, mp);
 	}
 	else if (n == 0) {
 		return 0;
@@ -2535,7 +2525,7 @@ array_int(PyArrayObject *v)
 				" converted to Python scalars");
                 return NULL;
         }
-        pv = v->descr->getitem(v->data, v);
+        pv = v->descr->f->getitem(v->data, v);
         if (pv == NULL) return NULL;
         if (pv->ob_type->tp_as_number == 0) {
                 PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
@@ -2564,7 +2554,7 @@ array_float(PyArrayObject *v)
 				"be converted to Python scalars");
                 return NULL;
         }
-        pv = v->descr->getitem(v->data, v);
+        pv = v->descr->f->getitem(v->data, v);
         if (pv == NULL) return NULL;
         if (pv->ob_type->tp_as_number == 0) {
                 PyErr_SetString(PyExc_TypeError, "cannot convert to an "\
@@ -2592,7 +2582,7 @@ array_long(PyArrayObject *v)
 				"be converted to Python scalars");
                 return NULL;
         }
-        pv = v->descr->getitem(v->data, v);
+        pv = v->descr->f->getitem(v->data, v);
         if (pv->ob_type->tp_as_number == 0) {
                 PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
 				"scalar object is not a number");
@@ -2617,7 +2607,7 @@ array_oct(PyArrayObject *v)
 				"be converted to Python scalars");
                 return NULL;
         }
-        pv = v->descr->getitem(v->data, v);
+        pv = v->descr->f->getitem(v->data, v);
         if (pv->ob_type->tp_as_number == 0) {
                 PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
 				"scalar object is not a number");
@@ -2642,7 +2632,7 @@ array_hex(PyArrayObject *v)
 				"be converted to Python scalars");
                 return NULL;
         }
-        pv = v->descr->getitem(v->data, v);
+        pv = v->descr->f->getitem(v->data, v);
         if (pv->ob_type->tp_as_number == 0) {
                 PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
 				"scalar object is not a number");
@@ -2838,7 +2828,7 @@ dump_data(char **string, int *n, int *max_n, char *data, int nd,
 	
         if (nd == 0) {
 		
-                if ((op = descr->getitem(data, self)) == NULL) return -1;
+                if ((op = descr->f->getitem(data, self)) == NULL) return -1;
                 sp = PyObject_Repr(op);
                 if (sp == NULL) {Py_DECREF(op); return -1;}
                 ostring = PyString_AsString(sp);
@@ -3749,7 +3739,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 	fromptr = PyArray_DATA(newarr);
 	size=PyArray_SIZE(arr);
 	swap=!PyArray_ISNOTSWAPPED(arr);
-	copyswap = arr->descr->copyswap;
+	copyswap = arr->descr->f->copyswap;
 	if (PyArray_ISONESEGMENT(arr)) {
 		char *toptr=PyArray_DATA(arr);
 		while (size--) {
@@ -4573,7 +4563,7 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 	if (selfit == NULL) goto exit;
 
         swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
-        copyswap = self->descr->copyswap;
+        copyswap = self->descr->f->copyswap;
         if (PyArray_ISOBJECT(self)) {
                 while(selfit->index < selfit->size) {
                         Py_XDECREF(*((PyObject **)selfit->dataptr));
@@ -5130,7 +5120,7 @@ Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
 
 	if (ret == NULL) return NULL;
 
-        ret->descr->setitem(op, ret->data, ret);
+        ret->descr->f->setitem(op, ret->data, ret);
 	
         if (PyErr_Occurred()) {
                 Py_DECREF(ret);
@@ -5241,9 +5231,9 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in)
         PyArray_CopySwapFunc *out_csn;
 	int retval = -1;
 
-	castfunc = in->descr->cast[out->descr->type_num];
-        in_csn = in->descr->copyswap;
-        out_csn = out->descr->copyswap;
+	castfunc = in->descr->f->cast[out->descr->type_num];
+        in_csn = in->descr->f->copyswap;
+        out_csn = out->descr->f->copyswap;
 
 	/* If the input or output is STRING, UNICODE, or VOID */
 	/*  then getitem and setitem are used for the cast */
@@ -5419,7 +5409,7 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 
 		while(ncopies--) {
 			inptr = mp->data;
-			mp->descr->cast[out->descr->type_num](inptr, 
+			mp->descr->f->cast[out->descr->type_num](inptr, 
 							      optr,
 							      mpsize,
 							      mp, out);
@@ -6348,7 +6338,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
 	index = ind->dimensions[0];
 	dptr = ind->data;
 
-        copyswap = self->ao->descr->copyswap;
+        copyswap = self->ao->descr->f->copyswap;
 	/* Loop over Boolean array */
 	swap = !(PyArray_ISNOTSWAPPED(self->ao));
 	while(index--) {
@@ -6395,7 +6385,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
 	ind_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ind);
 	if (ind_it == NULL) {Py_DECREF(r); return NULL;}
 	index = ind_it->size;
-        copyswap = PyArray_DESCR(r)->copyswap;
+        copyswap = PyArray_DESCR(r)->f->copyswap;
         swap = !PyArray_ISNOTSWAPPED(self->ao);
 	while(index--) {
 		num = *((intp *)(ind_it->dataptr));
@@ -6495,7 +6485,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		if (r==NULL) goto fail; 
 		dptr = PyArray_DATA(r);
                 swap = !PyArray_ISNOTSWAPPED(self->ao);
-                copyswap = PyArray_DESCR(r)->copyswap;
+                copyswap = PyArray_DESCR(r)->f->copyswap;
 		while(n_steps--) {
                         copyswap(dptr, self->dataptr, swap, size);
 			for(i=0; i< step_size; i++) 
@@ -6573,7 +6563,7 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
 	dptr = ind->data;
 	PyArray_ITER_RESET(self);
 	/* Loop over Boolean array */
-        copyswap = self->ao->descr->copyswap;
+        copyswap = self->ao->descr->f->copyswap;
 	while(index--) {
 		if (*((Bool *)dptr) != 0) {
                         copyswap(self->dataptr, val->dataptr, swap,
@@ -6602,7 +6592,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
 
 	typecode = self->ao->descr;
 	itemsize = typecode->elsize;
-        copyswap = self->ao->descr->copyswap;
+        copyswap = self->ao->descr->f->copyswap;
 	if (ind->nd == 0) {
 		num = *((intp *)ind->data);
 		PyArray_ITER_GOTO1D(self, num);
@@ -6670,7 +6660,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	/* Check for Boolean -- this is first becasue
 	   Bool is a subclass of Int */
 
-        copyswap = PyArray_DESCR(arrval)->copyswap;
+        copyswap = PyArray_DESCR(arrval)->f->copyswap;
 	swap = (PyArray_ISNOTSWAPPED(self->ao)!=PyArray_ISNOTSWAPPED(arrval));
 	if (PyBool_Check(ind)) {
 		if (PyObject_IsTrue(ind)) {
@@ -7077,7 +7067,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
 
 	mit->index = 0;
 
-	copyswap = mit->iters[0]->ao->descr->copyswap;
+	copyswap = mit->iters[0]->ao->descr->f->copyswap;
 
 	if (mit->subspace != NULL) {
 		memcpy(coord, mit->bscoord, sizeof(intp)*mit->ait->ao->nd);
@@ -7121,7 +7111,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
 
 	mit->index += 1;
 	if (mit->index >= mit->size) return;
-	copyswap = mit->iters[0]->ao->descr->copyswap;
+	copyswap = mit->iters[0]->ao->descr->f->copyswap;
 	/* Sub-space iteration */
 	if (mit->subspace != NULL) {
 		PyArray_ITER_NEXT(mit->subspace);

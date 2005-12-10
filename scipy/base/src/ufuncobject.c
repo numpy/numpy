@@ -1196,10 +1196,10 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 					scntcast += descr->elsize;
 				if (i < self->nin) {
 					loop->cast[i] =			\
-						mps[i]->descr->cast[arg_types[i]];
+						mps[i]->descr->f->cast[arg_types[i]];
 				}
 				else {
-					loop->cast[i] = descr->		\
+					loop->cast[i] = descr->f->	\
 						cast[mps[i]->descr->type_num];
 				}
 				Py_DECREF(descr);
@@ -1457,7 +1457,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 
 		
 		for (i=0; i<self->nargs; i++) {
-			copyswapn[i] = mps[i]->descr->copyswapn;
+			copyswapn[i] = mps[i]->descr->f->copyswapn;
 			mpselsize[i] = mps[i]->descr->elsize;
 			pyobject[i] = (loop->obj && \
                                        (mps[i]->descr->type_num == PyArray_OBJECT));
@@ -1912,7 +1912,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
                         loop->castbuf = loop->buffer + \
                                 loop->bufsize*aar->descr->elsize;
                         loop->bufptr[0] = loop->castbuf;     
-                        loop->cast = aar->descr->cast[otype];
+                        loop->cast = aar->descr->f->cast[otype];
                 }
                 else {
 			_size = loop->bufsize * loop->outsize;
@@ -2016,7 +2016,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 			if (loop->cast) {
 				/* A little tricky because we need to
 				   cast it first */
-				arr->descr->copyswap(loop->buffer,
+				arr->descr->f->copyswap(loop->buffer,
 						     loop->inptr,
 						     loop->swap,
 						     loop->insize);
@@ -2028,7 +2028,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 				       loop->outsize);
 			}
 			else { /* Simple copy */
-				arr->descr->copyswap(loop->bufptr[1], 
+				arr->descr->f->copyswap(loop->bufptr[1], 
 						     loop->inptr,
 						     loop->swap,
 						     loop->insize);
@@ -2041,7 +2041,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
                                 dptr = loop->buffer;
                                 for (i=0; i<loop->bufsize; i++, n++) {
                                         if (n == loop->N) break;
-                                        arr->descr->copyswap(dptr,
+                                        arr->descr->f->copyswap(dptr,
                                                              loop->inptr,
                                                              loop->swap,
                                                              loop->insize);
@@ -2158,7 +2158,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
 			if (loop->cast) {
 				/* A little tricky because we need to
 				   cast it first */
-				arr->descr->copyswap(loop->buffer,
+				arr->descr->f->copyswap(loop->buffer,
 						     loop->inptr,
 						     loop->swap,
 						     loop->insize);
@@ -2170,7 +2170,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
 				       loop->outsize);
 			}
 			else { /* Simple copy */
-				arr->descr->copyswap(loop->bufptr[1], 
+				arr->descr->f->copyswap(loop->bufptr[1], 
 						     loop->inptr,
 						     loop->swap,
 						     loop->insize);
@@ -2183,7 +2183,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
                                 dptr = loop->buffer;
                                 for (i=0; i<loop->bufsize; i++, n++) {
                                         if (n == loop->N) break;
-                                        arr->descr->copyswap(dptr,
+                                        arr->descr->f->copyswap(dptr,
                                                              loop->inptr,
                                                              loop->swap,
                                                              loop->insize);
@@ -2328,7 +2328,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 					dptr = loop->buffer;
 					for (j=0; j<loop->bufsize; j++, n++) {
 						if (n == mm) break;
-						arr->descr->copyswap\
+						arr->descr->f->copyswap\
 							(dptr,
 							 loop->inptr,
 							 loop->swap,

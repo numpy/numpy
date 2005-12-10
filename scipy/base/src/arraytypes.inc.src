@@ -51,7 +51,7 @@ static PyObject *
                 return @func1@((@typ1@)t1);
 	}
 	else {
-                ap->descr->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap),
+                ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap),
 				    ap->descr->elsize);
                 return @func1@((@typ1@)t1);
 	}
@@ -70,7 +70,7 @@ static int
         if (ap == NULL || PyArray_ISBEHAVED(ap)) 
                 *((@typ@ *)ov)=temp;
         else {
-                ap->descr->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), 
+                ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), 
 				    ap->descr->elsize);
         }
         
@@ -120,7 +120,7 @@ static int
         
         if (!(PyArray_IsScalar(op, @kind@))) {
                 if (PyArray_Check(op) && (PyArray_NDIM(op)==0)) {
-                        op2 = ((PyArrayObject *)op)->descr->getitem     \
+                        op2 = ((PyArrayObject *)op)->descr->f->getitem     \
                                 (((PyArrayObject *)op)->data, 
                                  (PyArrayObject *)op);
 		}
@@ -1463,18 +1463,8 @@ OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 #endian= |, |, =#
 */
 
-static PyArray_Descr @from@_Descr = { 
-	PyObject_HEAD_INIT(&PyArrayDescr_Type)
-	&Py@NAME@ArrType_Type,
-	PyArray_@from@LTR,
-	PyArray_@from@LTR,
-	'@endian@',
-	PyArray_@from@, 0,
-	_ALIGN(@align@),
-	NULL,
-	NULL,
+static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	{
-		
 		(PyArray_VectorUnaryFunc*)@from@_to_BOOL, 
 		(PyArray_VectorUnaryFunc*)@from@_to_BYTE, 
 		(PyArray_VectorUnaryFunc*)@from@_to_UBYTE, 
@@ -1508,6 +1498,19 @@ static PyArray_Descr @from@_Descr = {
 	(PyArray_NonzeroFunc*)@from@_nonzero,
 };
 
+static PyArray_Descr @from@_Descr = { 
+	PyObject_HEAD_INIT(&PyArrayDescr_Type)
+	&Py@NAME@ArrType_Type,
+	PyArray_@from@LTR,
+	PyArray_@from@LTR,
+	'@endian@',
+	PyArray_@from@, 0,
+	_ALIGN(@align@),
+	NULL,
+	NULL,
+	&_Py@NAME@_ArrFuncs,
+};
+
 /**end repeat**/
 
 
@@ -1521,19 +1524,8 @@ static PyArray_Descr @from@_Descr = {
 #endian= |*3, =*14, |#
 */
 
-static PyArray_Descr @from@_Descr = { 
-	PyObject_HEAD_INIT(&PyArrayDescr_Type)
-	&Py@NAME@ArrType_Type,
-	PyArray_@kind@LTR,
-	PyArray_@from@LTR,
-	'@endian@',
-	PyArray_@from@, 
-	@num@*sizeof(@fromtyp@), 
-	_ALIGN(@fromtyp@),
-	NULL,
-	NULL,
+static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	{
-		
 		(PyArray_VectorUnaryFunc*)@from@_to_BOOL, 
 		(PyArray_VectorUnaryFunc*)@from@_to_BYTE,
 		(PyArray_VectorUnaryFunc*)@from@_to_UBYTE, 
@@ -1565,6 +1557,20 @@ static PyArray_Descr @from@_Descr = {
 	(PyArray_CopySwapNFunc*)@from@_copyswapn,
 	(PyArray_CopySwapFunc*)@from@_copyswap,
 	(PyArray_NonzeroFunc*)@from@_nonzero,
+};
+
+static PyArray_Descr @from@_Descr = { 
+	PyObject_HEAD_INIT(&PyArrayDescr_Type)
+	&Py@NAME@ArrType_Type,
+	PyArray_@kind@LTR,
+	PyArray_@from@LTR,
+	'@endian@',
+	PyArray_@from@, 
+	@num@*sizeof(@fromtyp@), 
+	_ALIGN(@fromtyp@),
+	NULL,
+	NULL,
+	&_Py@NAME@_ArrFuncs,
 };
 
 /**end repeat**/

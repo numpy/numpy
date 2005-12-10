@@ -102,13 +102,13 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 					     NULL, ctypeptr, 
 					     CARRAY_FLAGS, NULL);
 		if (aout == NULL) {Py_DECREF(ain); return -1;}
-		descr->cast[outcode->type_num](ain->data, 
+		descr->f->cast[outcode->type_num](ain->data, 
 					       aout->data, 1, ain, aout);
 		Py_DECREF(ain);
 		Py_DECREF(aout);
 	}
 	else {
-		descr->cast[outcode->type_num](_SOFFSET_(scalar, 
+		descr->f->cast[outcode->type_num](_SOFFSET_(scalar, 
 							 descr->type_num), 
 					       ctypeptr, 1, NULL, NULL);
 	}
@@ -456,7 +456,7 @@ gentype_str(PyObject *self)
 
 	arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
 	if (arr==NULL) return NULL;
-	ret = PyObject_Str((tmp=arr->descr->getitem(arr->data, arr)));
+	ret = PyObject_Str((tmp=arr->descr->f->getitem(arr->data, arr)));
 	Py_DECREF(arr);
 	Py_XDECREF(tmp);
 	return ret;
@@ -470,7 +470,7 @@ gentype_repr(PyObject *self)
 
 	arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
 	if (arr==NULL) return NULL;
-	ret = PyObject_Repr((tmp=arr->descr->getitem(arr->data, arr)));
+	ret = PyObject_Repr((tmp=arr->descr->f->getitem(arr->data, arr)));
 	Py_DECREF(arr);
 	Py_XDECREF(tmp);
 	return ret;
@@ -1059,7 +1059,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 		newmem = malloc(descr->elsize);
 		if (newmem == NULL) {Py_DECREF(descr); return PyErr_NoMemory();}
 		else memcpy(newmem, data, descr->elsize);
-		descr->copyswap(newmem, NULL, 1, descr->elsize);
+		descr->f->copyswap(newmem, NULL, 1, descr->elsize);
 		new = PyArray_Scalar(newmem, 0, descr, NULL);
 		free(newmem);
 		Py_DECREF(descr);
@@ -1123,7 +1123,7 @@ gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
 	/* Copy data from value to correct place in dptr */
         src = PyArray_FromAny(value, typecode, 0, 0, CARRAY_FLAGS);
         if (src == NULL) return NULL;
-	typecode->copyswap(dptr, PyArray_DATA(src), 
+	typecode->f->copyswap(dptr, PyArray_DATA(src), 
 			   !(((PyVoidScalarObject *)self)->flags & NOTSWAPPED),
 			   PyArray_ITEMSIZE(src));
 	Py_DECREF(src);
