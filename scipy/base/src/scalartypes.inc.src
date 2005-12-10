@@ -1845,7 +1845,6 @@ PyArray_DescrFromTypeObject(PyObject *type)
 {	
 	int typenum;
 	PyArray_Descr *new, *conv=NULL;
-	PyObject *dtypedescr;
 
 	/* if it's a builtin type, then use the typenumber */
 	typenum = _typenum_fromtypeobj(type,0);	
@@ -1880,10 +1879,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
 	*/
 	/* look for a dtypedescr attribute */
 	new = PyArray_DescrNewFromType(PyArray_VOID);
-	dtypedescr = PyObject_GetAttrString(type, "dtypedescr");
-	PyErr_Clear();
-	if (dtypedescr && !PyArray_DescrConverter(dtypedescr, &conv))
-		PyErr_Clear();
+	conv = _arraydescr_fromobj(type);
 	if (conv) {
 		new->fields = conv->fields;
 		Py_INCREF(new->fields);

@@ -29,6 +29,26 @@
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
 
 
+
+static PyArray_Descr *
+_arraydescr_fromobj(PyObject *obj)
+{
+	PyObject *dtypedescr;
+	PyArray_Descr *new;
+	int ret;
+	
+	dtypedescr = PyObject_GetAttrString(obj, "dtypedescr");
+	PyErr_Clear();
+	if (dtypedescr) {
+		ret = PyArray_DescrConverter(dtypedescr, &new);
+		Py_DECREF(dtypedescr);
+		if (ret) return new;
+		PyErr_Clear();
+	}
+	return NULL;
+}
+
+
 /* Including this file is the only way I know how to declare functions
    static in each file, and store the pointers from functions in both
    arrayobject.c and multiarraymodule.c for the C-API 
@@ -3189,45 +3209,6 @@ _convert_from_dict(PyObject *obj, int align)
    present.  Result inherits from PyArray_VOID.
 */
 
-/*
-static PyArray_Descr *
-_arraydescr_fromobj(PyObject *type)
-{
-	PyObject *fields=NULL;
-	PyObject *itemsize=NULL;
-	PyArray_Descr *new;
-	PyArray_Descr *conv=NULL;
-	int elsize;
-		
-	fields = PyObject_GetAttrString(type, "fields");
-	PyErr_Clear();
-	itemsize = PyObject_GetAttrString(type, "itemsize");
-	PyErr_Clear();
-	if (!fields && !itemsize) return NULL;
-
-	new = PyArray_DescrNewFromType(PyArray_VOID);	
-	
-	if (fields && PyDict_Check(fields) && \
-	    (PyArray_DescrConverter(fields, &conv)) && 
-	    conv->fields) {
-		Py_INCREF(conv->fields);
-		new->fields = conv->fields;
-		new->elsize = conv->elsize;
-	}
-	Py_XDECREF(conv);
-	
-	if (itemsize && (elsize = PyInt_AsLong(itemsize)) && \
-	    (elsize >= 0) && \
-	    ((new->elsize == 0) || (elsize > new->elsize))) {
-		new->elsize = elsize;
-	}
-	Py_XDECREF(fields);
-	Py_XDECREF(itemsize);
-	if (new->elsize == 0) {Py_DECREF(new); return NULL;}
-	return new;
-}
-*/
-
 
 /*MULTIARRAY_API
  Get typenum from an object -- None goes to NULL
@@ -3263,8 +3244,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         int check_num=PyArray_NOTYPE+10;
 	int len;
 	PyObject *item;
-	int elsize = 0, ret;
-	PyObject *dtypedescr;
+	int elsize = 0;
 
 
 	*at=NULL;
@@ -3304,13 +3284,10 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
                         check_num = PyArray_UNICODE;
 		else if (obj == (PyObject *)(&PyBuffer_Type))
 			check_num = PyArray_VOID;
-		else if ((dtypedescr = PyObject_GetAttrString(obj,
-							      "dtypedescr"))) {
-			ret = PyArray_DescrConverter(dtypedescr, at);
-			Py_DECREF(dtypedescr);
-			if (ret) return ret;
+		else {
+			*at = _arraydescr_fromobj(obj);
+			if (*at) return PY_SUCCEED;
 		}
-		PyErr_Clear();
 		goto finish;
 	}
 
@@ -3371,13 +3348,8 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		return PY_SUCCEED;
 	}
         else {
-		dtypedescr = PyObject_GetAttrString(obj, "dtypedescr");
-		PyErr_Clear();
-		if (dtypedescr) {
-			ret = PyArray_DescrConverter(dtypedescr, at);
-			Py_DECREF(dtypedescr);
-			return ret;
-		}
+		*at = _arraydescr_fromobj(obj);
+		if (*at) return PY_SUCCEED;
 		goto fail;
 	}
 	if (PyErr_Occurred()) goto fail;
