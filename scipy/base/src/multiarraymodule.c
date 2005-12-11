@@ -3044,6 +3044,7 @@ _convert_from_list(PyObject *obj, int align)
 	if (maxalign > 1) {
 		totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
 	}
+	if (align) new->alignment = maxalign;
 	new->elsize = totalsize;
 	return new;
 
@@ -3189,6 +3190,7 @@ _convert_from_dict(PyObject *obj, int align)
 	if (new == NULL) goto fail;
 	if (maxalign > 1)
 		totalsize = ((totalsize + maxalign - 1)/maxalign)*maxalign;
+	if (align) new->alignment = maxalign;
 	new->elsize = totalsize;
 	new->fields = fields;
 	return new;
@@ -4179,7 +4181,7 @@ static PyObject *array_correlate(PyObject *dummy, PyObject *args, PyObject *kwds
 
 
 /*MULTIARRAY_API
- Arange
+ Arange, 
 */
 static PyObject *
 PyArray_Arange(double start, double stop, double step, int type_num)
