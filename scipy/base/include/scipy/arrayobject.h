@@ -757,6 +757,8 @@ typedef void (PyArray_DotFunc)(void *, intp, void *, intp, void *, intp,
 typedef void (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
 typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
 
+typedef int (PyArray_FillFunc)(void *, intp, void *);
+
 typedef struct {
         intp *ptr;
         int len;
@@ -791,6 +793,8 @@ typedef struct {
 	
 	/* Function to determine if data is zero or not */
 	PyArray_NonzeroFunc *nonzero;
+
+	PyArray_FillFunc *fill;
 } PyArray_ArrFuncs;
 
 
@@ -1299,6 +1303,8 @@ typedef struct {
 	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
 #define PyArray_SimpleNewFromData(nd, dims, typenum, data) \
         PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, CARRAY_FLAGS, NULL)
+#define PyArray_SimpleNewFromDescr(nd, dims, descr) \
+	PyArray_NewFromDescr(&PyArray_Type, descr, nd, dims, NULL, NULL, 0, NULL)
 
 
 	/* These might be faster without the dereferencing of obj

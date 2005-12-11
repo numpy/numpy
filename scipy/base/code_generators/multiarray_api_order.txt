@@ -60,3 +60,4 @@ PyArray_Zeros
 PyArray_Empty
 PyArray_Where
 PyArray_Arange
+PyArray_ArangeObj

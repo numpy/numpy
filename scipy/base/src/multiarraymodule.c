@@ -4186,12 +4186,10 @@ static PyObject *array_correlate(PyObject *dummy, PyObject *args, PyObject *kwds
 static PyObject *
 PyArray_Arange(double start, double stop, double step, int type_num)
 {
-	intp length, i;
+	intp length;
 	PyObject *range;
-	char *rptr;
-	int elsize, type;
-	double value;
-	PyArray_Descr *dbl_descr;
+	PyArray_ArrFuncs *funcs;
+	PyObject *obj;
 
 	length = (intp ) ceil((stop - start)/step);
     
@@ -4204,19 +4202,159 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 	range = PyArray_New(&PyArray_Type, 1, &length, type_num, 
 			    NULL, NULL, 0, 0, NULL);
 	if (range == NULL) return NULL;
-	dbl_descr = PyArray_DescrFromType(PyArray_DOUBLE);
-    
-	rptr = ((PyArrayObject *)range)->data;
-	elsize = ((PyArrayObject *)range)->descr->elsize;
-	type = ((PyArrayObject *)range)->descr->type_num;
-	for (i=0; i < length; i++) {
-		value = start + i*step;
-		dbl_descr->f->cast[type]((char*)&value, rptr, 1, NULL, 
-				      (PyArrayObject *)range);
-		rptr += elsize;
+
+	funcs = PyArray_DESCR(range)->f; 
+
+	/* place start in the buffer and the next value in the second position */
+	/* if length > 2, then call the inner loop, otherwise stop */
+
+	obj = PyFloat_FromDouble(start);
+	funcs->setitem(obj, PyArray_DATA(range), (PyArrayObject *)range);
+	Py_DECREF(obj);
+	if (length == 1) return range;
+
+	obj = PyFloat_FromDouble(start + step);
+	funcs->setitem(obj, PyArray_DATA(range)+PyArray_ITEMSIZE(range), 
+		       (PyArrayObject *)range);
+	Py_DECREF(obj);
+	if (length == 2) return range;
+
+	if (!funcs->fill) {
+		PyErr_SetString(PyExc_ValueError, "no fill-function for data-type.");
+		Py_DECREF(range);
+		return NULL;
 	}
-    
+	funcs->fill(PyArray_DATA(range), length, (PyArrayObject *)range);
+	
 	return range;
+}
+
+/* the formula is 
+   len = (intp) ceil((start - stop) / step);
+*/
+static intp
+_calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, int cmplx)
+{
+	intp len;
+	PyObject *val;
+	double value;
+	
+	*next = PyNumber_Subtract(stop, start);
+	if (!next) return -1;
+	val = PyNumber_TrueDivide(*next, step);
+	Py_DECREF(*next); *next=NULL;
+	if (!val) return -1;
+	if (cmplx && PyComplex_Check(val)) {
+		value = PyComplex_RealAsDouble(val);
+		if (error_converting(value)) {Py_DECREF(val); return -1;}
+		len = (intp) ceil(value);
+		value = PyComplex_ImagAsDouble(val);
+		Py_DECREF(val);
+		if (error_converting(value)) return -1;
+		len = MIN(len, (intp) ceil(value));
+	}
+	else {
+		value = PyFloat_AsDouble(val);
+		Py_DECREF(val);
+		if (error_converting(value)) return -1;
+		len = (intp) ceil(value);
+	}
+	
+	if (len > 0) {
+		*next = PyNumber_Add(start, step);
+		if (!next) return -1;
+	}
+	return len;
+}
+
+/* this doesn't change the references */
+/*MULTIARRAY_API
+ ArangeObj,
+*/
+static PyObject *
+PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr *dtype) 
+{
+	PyObject *range;
+	PyArray_ArrFuncs *funcs;
+	PyObject *next;
+	intp length;
+
+	if (!dtype) {
+		PyArray_Descr *deftype;
+		PyArray_Descr *newtype;
+		deftype = PyArray_DescrFromType(PyArray_LONG);
+		newtype = PyArray_DescrFromObject(start, deftype);
+		Py_DECREF(deftype);
+		deftype = newtype;
+		if (stop && stop != Py_None) {
+			newtype = PyArray_DescrFromObject(stop, deftype);
+			Py_DECREF(deftype);
+			deftype = newtype;
+		}
+		if (step && step != Py_None) {
+			newtype = PyArray_DescrFromObject(step, deftype);
+			Py_DECREF(deftype);
+			deftype = newtype;
+		}
+		dtype = deftype;
+	}
+	else Py_INCREF(dtype);
+
+	if (!step || step == Py_None) {
+		step = PyInt_FromLong(1);
+	}
+	else Py_XINCREF(step);
+
+	if (!stop || stop == Py_None) {
+		stop = start;
+		start = PyInt_FromLong(0);
+	}
+	else Py_INCREF(start);
+
+	/* calculate the length and next = start + step*/
+	length = _calc_length(start, stop, step, &next, 
+			      PyTypeNum_ISCOMPLEX(dtype->type_num));
+
+	if (PyErr_Occurred()) {Py_DECREF(dtype); goto fail;}
+	if (length <= 0) {
+		length = 0;
+		range = PyArray_SimpleNewFromDescr(1, &length, dtype);
+		Py_DECREF(step); Py_DECREF(start); return range;
+	}
+
+	range = PyArray_SimpleNewFromDescr(1, &length, dtype);
+	if (range == NULL) goto fail;
+
+	funcs = PyArray_DESCR(range)->f;
+
+	/* place start in the buffer and the next value in the second position */
+	/* if length > 2, then call the inner loop, otherwise stop */
+
+	if (funcs->setitem(start, PyArray_DATA(range), (PyArrayObject *)range) < 0)
+		goto fail;
+	if (length == 1) goto finish;
+	if (funcs->setitem(next, PyArray_DATA(range)+PyArray_ITEMSIZE(range), 
+			   (PyArrayObject *)range) < 0) goto fail;
+	if (length == 2) goto finish;
+
+	if (!funcs->fill) {
+		PyErr_SetString(PyExc_ValueError, "no fill-function for data-type.");
+		Py_DECREF(range);
+		goto fail;
+	}
+	funcs->fill(PyArray_DATA(range), length, (PyArrayObject *)range);
+
+ finish:
+	Py_DECREF(start);
+	Py_DECREF(step);
+	Py_DECREF(next);
+	return range;
+	
+ fail:
+	Py_DECREF(start);
+	Py_DECREF(step);
+	Py_XDECREF(next);
+	return NULL;
 }
 
 
@@ -4224,12 +4362,9 @@ static char doc_arange[] = "arange(start, stop=None, step=1, dtype=int)\n\n  Jus
 
 static PyObject *
 array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
-	PyObject *o_start=NULL, *o_stop=Py_None, *o_step=NULL;
+	PyObject *o_start=NULL, *o_stop=NULL, *o_step=NULL;
 	static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
-	double start, stop, step;
 	PyArray_Descr *typecode=NULL;
-	int type_num;
-	int deftype = PyArray_LONG;
 	
 	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&", kwd, &o_start,
 					&o_stop, &o_step, 
@@ -4237,57 +4372,10 @@ array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 					&typecode)) 
 		return NULL;
 
-	deftype = PyArray_ObjectType(o_start, deftype);
-	if (o_stop != Py_None) {
-		deftype = PyArray_ObjectType(o_stop, deftype);
-	}
-	if (o_step != NULL) {
-		deftype = PyArray_ObjectType(o_step, deftype);
-	}
-
-	if (typecode == NULL) {
-		type_num = deftype;
-	}
-	else {
-		type_num = typecode->type_num;
-	}
-
-	start = PyFloat_AsDouble(o_start);
-	if error_converting(start) return NULL;
-
-	if (o_step == NULL) {
-		step = 1;
-	}
-	else {
-		step = PyFloat_AsDouble(o_step);
-		if error_converting(step) return NULL;
-	}
-
-	if (o_stop == Py_None) {
-		stop = start;
-		start = 0;
-	}
-	else {
-		stop = PyFloat_AsDouble(o_stop);
-		if error_converting(stop) return NULL;
-	}
-
-	return PyArray_Arange(start, stop, step, type_num);
+	return PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
 }
-
 #undef _ARET
 
-/*****
-      static char doc_arrayMap[] = "arrayMap(func, [a1,...,an])";
-
-      static PyObject *array_arrayMap(PyObject *dummy, PyObject *args) {
-      PyObject *shape, *a0;
-  
-      if (PyArg_ParseTuple(args, "OO", &a0, &shape) == NULL) return NULL;
-	
-      return PyArray_Map(a0, shape);
-      }
-*****/
 
 static char 
 doc_set_string_function[] = "set_string_function(f, repr=1) sets the python function f to be the function used to obtain a pretty printable string version of a array whenever a array is printed.  f(M) should expect a array argument M, and should return a string consisting of the desired representation of M for printing.";
