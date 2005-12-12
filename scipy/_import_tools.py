@@ -35,7 +35,7 @@ class PackageImport:
                                                 info_file,
                                               ('.py','U',1))
             except Exception,msg:
-                print msg
+                print >> sys.stderr, msg
                 info_module = None
 
             if info_module is None:
@@ -116,11 +116,11 @@ class PackageImport:
             postpone_import = getattr(info_module,'postpone_import',True)
         
             try:
-                print 'Importing',package_name,'to',self.parent_name
+                #print 'Importing',package_name,'to',self.parent_name
                 exec ('import '+package_name, frame.f_globals,frame.f_locals)
             except Exception,msg:
-                print 'Failed to import',package_name
-                print msg
+                print >> sys.stderr, 'Failed to import',package_name
+                print >> sys.stderr, msg
                 continue
 
             self.imported_packages.append(fullname)
@@ -130,8 +130,8 @@ class PackageImport:
                     exec ('from '+package_name+' import '+symbol,
                           frame.f_globals,frame.f_locals)
                 except Exception,msg:
-                    print 'Failed to import',symbol,'from',package_name
-                    print msg
+                    print >> sys.stderr, 'Failed to import',symbol,'from',package_name
+                    print >> sys.stderr, msg
                     continue
 
             titles.append((fullname,self._get_doc_title(info_module)))
@@ -141,7 +141,7 @@ class PackageImport:
                       % (package_name,package_name),
                       frame.f_globals,frame.f_locals)
             except Exception,msg:
-                print 'Failed to set test function for',package_name
-                print msg
+		print >> sys.stderr, 'Failed to set test function for',package_name
+                print >> sys.stderr, msg
 
         return self._format_titles(titles)

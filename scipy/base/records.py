@@ -1,4 +1,4 @@
-__all__ = ['record', 'ndrecarray','format_parser']
+__all__ = ['record', 'recarray','format_parser']
 
 import numeric as sb
 import numerictypes as nt
@@ -14,10 +14,8 @@ format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[A-Za-z0-9.]*
 
 numfmt = nt.typeDict
 
-
-
 def find_duplicate(list):
-    """Find duplication in a list, return a list of dupicated elements"""
+    """Find duplication in a list, return a list of duplicated elements"""
     dup = []
     for i in range(len(list)):
         if (list[i] in list[i+1:]):
@@ -244,13 +242,13 @@ class record(nt.void):
         return self.setfield(val, *(self.fields[obj][:2]))
         
 
-# The ndrecarray is almost identical to a standard array (which supports
+# The recarray is almost identical to a standard array (which supports
 #   named fields already)  The biggest difference is that it is always of
 #   record data-type, has fields, and can use attribute-lookup to access
 #   those fields.
 
 
-class ndrecarray(sb.ndarray):
+class recarray(sb.ndarray):
     def __new__(subtype, shape, formats, names=None, titles=None,
                 buf=None, offset=0, strides=None, swap=0, aligned=0):
 
