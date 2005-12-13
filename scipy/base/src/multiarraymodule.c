@@ -29,7 +29,6 @@
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
 
 
-
 static PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)
 {
@@ -2926,8 +2925,10 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
 		return NULL;
 	}
 	new->elsize = conv->elsize;
-	new->fields = conv->fields;
-	Py_XINCREF(new->fields);
+	if (conv->fields != Py_None) {
+		new->fields = conv->fields;
+		Py_XINCREF(new->fields);
+	}
 	Py_DECREF(conv);
 	*errflag = 0;
 	return new;
@@ -3290,6 +3291,8 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		check_num = PyArray_OBJECT;
 		if (obj == (PyObject *)(&PyInt_Type))
 			check_num = PyArray_LONG;
+		else if (obj == (PyObject *)(&PyLong_Type))
+			check_num = PyArray_LONGLONG;
 		else if (obj == (PyObject *)(&PyFloat_Type)) 
 			check_num = PyArray_DOUBLE;
 		else if (obj == (PyObject *)(&PyComplex_Type)) 

@@ -121,14 +121,14 @@ import scipy as _sp
 
 cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
     cdef double *array_data
-    cdef ArrayType array "arrayObject"
+    cdef ndarray array "arrayObject"
     cdef long length
     cdef long i
 
     if size is None:
         return func(state)
     else:
-        array = <ArrayType>_sp.empty(size, _sp.Float64)
+        array = <ndarray>_sp.empty(size, _sp.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -137,14 +137,14 @@ cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
 
 cdef object cont1_array(rk_state *state, rk_cont1 func, object size, double a):
     cdef double *array_data
-    cdef ArrayType array "arrayObject"
+    cdef ndarray array "arrayObject"
     cdef long length
     cdef long i
 
     if size is None:
         return func(state, a)
     else:
-        array = <ArrayType>_sp.empty(size, _sp.Float64)
+        array = <ndarray>_sp.empty(size, _sp.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -154,14 +154,14 @@ cdef object cont1_array(rk_state *state, rk_cont1 func, object size, double a):
 cdef object cont2_array(rk_state *state, rk_cont2 func, object size, double a, 
     double b):
     cdef double *array_data
-    cdef ArrayType array "arrayObject"
+    cdef ndarray array "arrayObject"
     cdef long length
     cdef long i
 
     if size is None:
         return func(state, a, b)
     else:
-        array = <ArrayType>_sp.empty(size, _sp.Float64)
+        array = <ndarray>_sp.empty(size, _sp.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -172,14 +172,14 @@ cdef object cont3_array(rk_state *state, rk_cont3 func, object size, double a,
     double b, double c):
 
     cdef double *array_data
-    cdef ArrayType array "arrayObject"
+    cdef ndarray array "arrayObject"
     cdef long length
     cdef long i
     
     if size is None:
         return func(state, a, b, c)
     else:
-        array = <ArrayType>_sp.empty(size, _sp.Float64)
+        array = <ndarray>_sp.empty(size, _sp.Float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -188,14 +188,14 @@ cdef object cont3_array(rk_state *state, rk_cont3 func, object size, double a,
 
 cdef object disc0_array(rk_state *state, rk_disc0 func, object size):
     cdef long *array_data
-    cdef ArrayType array "arrayObject"
+    cdef ndarray array "arrayObject"
     cdef long length
     cdef long i
 
     if size is None:
         return func(state)
     else:
-        array = <ArrayType>_sp.empty(size, _sp.Int)
+        array = <ndarray>_sp.empty(size, _sp.Int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -204,14 +204,14 @@ cdef object disc0_array(rk_state *state, rk_disc0 func, object size):
 
 cdef object discnp_array(rk_state *state, rk_discnp func, object size, long n, double p):
     cdef long *array_data
-    cdef ArrayType array "arrayObject"
+    cdef ndarray array "arrayObject"
     cdef long length
     cdef long i
 
     if size is None:
         return func(state, n, p)
     else:
-        array = <ArrayType>_sp.empty(size, _sp.Int)
+        array = <ndarray>_sp.empty(size, _sp.Int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -221,14 +221,14 @@ cdef object discnp_array(rk_state *state, rk_discnp func, object size, long n, d
 cdef object discnmN_array(rk_state *state, rk_discnmN func, object size, 
     long n, long m, long N):
     cdef long *array_data
-    cdef ArrayType array "arrayObject"
+    cdef ndarray array "arrayObject"
     cdef long length
     cdef long i
 
     if size is None:
         return func(state, n, m, N)
     else:
-        array = <ArrayType>_sp.empty(size, _sp.Int)
+        array = <ndarray>_sp.empty(size, _sp.Int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -237,14 +237,14 @@ cdef object discnmN_array(rk_state *state, rk_discnmN func, object size,
 
 cdef object discd_array(rk_state *state, rk_discd func, object size, double a):
     cdef long *array_data
-    cdef ArrayType array "arrayObject"
+    cdef ndarray array "arrayObject"
     cdef long length
     cdef long i
 
     if size is None:
         return func(state, a)
     else:
-        array = <ArrayType>_sp.empty(size, _sp.Int)
+        array = <ndarray>_sp.empty(size, _sp.Int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -303,13 +303,13 @@ cdef class RandomState:
         the clock otherwise.
         """
         cdef rk_error errcode
-        cdef ArrayType obj "arrayObject_obj"
+        cdef ndarray obj "arrayObject_obj"
         if seed is None:
             errcode = rk_randomseed(self.internal_state)
         elif type(seed) is int:
             rk_seed(seed, self.internal_state)
         else:
-            obj = <ArrayType>PyArray_ContiguousFromObject(seed, PyArray_LONG, 1, 1)
+            obj = <ndarray>PyArray_ContiguousFromObject(seed, PyArray_LONG, 1, 1)
             init_by_array(self.internal_state, <unsigned long *>(obj.data),
                 obj.dimensions[0])
 
@@ -318,8 +318,8 @@ cdef class RandomState:
 
         get_state() -> ('MT19937', int key[624], int pos)
         """
-        cdef ArrayType state "arrayObject_state"
-        state = <ArrayType>_sp.empty(624, _sp.Int)
+        cdef ndarray state "arrayObject_state"
+        state = <ndarray>_sp.empty(624, _sp.Int)
         memcpy(<void*>(state.data), self.internal_state.key, 624*sizeof(long))
         return ('MT19937', state, self.internal_state.pos)
         
@@ -330,13 +330,13 @@ cdef class RandomState:
         
         set_state(state)
         """
-        cdef ArrayType obj "arrayObject_obj"
+        cdef ndarray obj "arrayObject_obj"
         cdef int pos
         algorithm_name = state[0]
         if algorithm_name != 'MT19937':
             raise ValueError("algorithm must be 'MT19937'")
         key, pos = state[1:]
-        obj = <ArrayType>PyArray_ContiguousFromObject(key, PyArray_LONG, 1, 1)
+        obj = <ndarray>PyArray_ContiguousFromObject(key, PyArray_LONG, 1, 1)
         if obj.dimensions[0] != 624:
             raise ValueError("state must be 624 longs")
         memcpy(self.internal_state.key, <void*>(obj.data), 624*sizeof(long))
@@ -376,7 +376,7 @@ cdef class RandomState:
         """
         cdef long lo, hi, diff
         cdef long *array_data
-        cdef ArrayType array "arrayObject"
+        cdef ndarray array "arrayObject"
         cdef long length
         cdef long i
 
@@ -394,7 +394,7 @@ cdef class RandomState:
         if size is None:
             return rk_interval(diff, self.internal_state)
         else:
-            array = <ArrayType>_sp.empty(size, _sp.Int)
+            array = <ndarray>_sp.empty(size, _sp.Int)
             length = PyArray_SIZE(array)
             array_data = <long *>array.data
             for i from 0 <= i < length:
@@ -852,14 +852,14 @@ cdef class RandomState:
         as long as sum(pvals[:-1]) <= 1).
         """
         cdef long d
-        cdef ArrayType parr "arrayObject_parr", mnarr "arrayObject_mnarr"
+        cdef ndarray parr "arrayObject_parr", mnarr "arrayObject_mnarr"
         cdef double *pix
         cdef long *mnix
         cdef long i, j, dn
         cdef double Sum
 
         d = len(pvals)
-        parr = <ArrayType>PyArray_ContiguousFromObject(pvals, PyArray_DOUBLE, 1, 1)
+        parr = <ndarray>PyArray_ContiguousFromObject(pvals, PyArray_DOUBLE, 1, 1)
         pix = <double*>parr.data
 
         if kahan_sum(pix, d-1) > 1.0:
@@ -873,7 +873,7 @@ cdef class RandomState:
             shape = size + (d,)
 
         multin = _sp.zeros(shape, _sp.Int)
-        mnarr = <ArrayType>multin
+        mnarr = <ndarray>multin
         mnix = <long*>mnarr.data
         i = 0
         while i < PyArray_SIZE(mnarr):

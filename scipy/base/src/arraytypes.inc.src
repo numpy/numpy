@@ -292,7 +292,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 				      "_getitem");
 	descr = ap->descr;
 	PyErr_Clear();
-	if (!meth && descr->fields) {
+	if (!meth && descr->fields && descr->fields != Py_None) {
 		PyObject *key;
 		PyObject *names;
 		int i, n;
@@ -373,7 +373,8 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 				      "_setitem");
 	descr = ap->descr;
 	PyErr_Clear();
-	if (!meth && descr->fields && PyTuple_Check(op)) {
+	if (!meth && descr->fields && (descr->fields != Py_None) && \
+	    PyTuple_Check(op)) {
 		PyObject *key;
 		PyObject *names;
 		int i, n, ret=-1;
@@ -1669,7 +1670,7 @@ static PyArray_Descr @from@_Descr = {
 	PyArray_@from@, 0,
 	_ALIGN(@align@),
 	NULL,
-	NULL,
+	Py_None,
 	&_Py@NAME@_ArrFuncs,
 };
 
@@ -1732,7 +1733,7 @@ static PyArray_Descr @from@_Descr = {
 	@num@*sizeof(@fromtyp@), 
 	_ALIGN(@fromtyp@),
 	NULL,
-	NULL,
+	Py_None,
 	&_Py@NAME@_ArrFuncs,
 };
 

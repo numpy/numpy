@@ -1949,7 +1949,8 @@ PyArray_DescrFromScalar(PyObject *sc)
 			descr->elsize =					\
 				((PyVoidScalarObject *)sc)->ob_size;
 			descr->fields = PyObject_GetAttrString(sc, "fields");
-			if (!descr->fields || !PyDict_Check(descr->fields)) {
+			if (!descr->fields || !PyDict_Check(descr->fields) || \
+			    (descr->fields == Py_None)) {
 				Py_XDECREF(descr->fields);
 				descr->fields = NULL;
 			}

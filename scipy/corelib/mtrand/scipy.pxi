@@ -29,24 +29,24 @@ cdef extern from "scipy/arrayobject.h":
 
     ctypedef int intp 
 
-    struct PyArray_Descr:
-        int type_num, elsize
-        char type
+    ctypedef extern class scipy.dtypedescr [object PyArray_Descr]:
+        cdef int type_num, elsize
+        cdef char type
 
-    ctypedef extern class scipy.ArrayType [object PyArrayObject]:
+    ctypedef extern class scipy.ndarray [object PyArrayObject]:
         cdef char *data
         cdef int nd
         cdef intp *dimensions
         cdef intp *strides
         cdef object base
-        cdef PyArray_Descr *descr
+        cdef dtypedescr descr
         cdef int flags
 
-    ArrayType PyArray_SimpleNew(int ndims, intp* dims, int item_type)
+    ndarray PyArray_SimpleNew(int ndims, intp* dims, int item_type)
     int PyArray_Check(object obj)
-    ArrayType PyArray_ContiguousFromObject(object obj, PyArray_TYPES type, 
+    ndarray PyArray_ContiguousFromObject(object obj, PyArray_TYPES type, 
         int mindim, int maxdim)
-    intp PyArray_SIZE(ArrayType arr)
-    void *PyArray_DATA(ArrayType arr)
+    intp PyArray_SIZE(ndarray arr)
+    void *PyArray_DATA(ndarray arr)
 
     void import_array()

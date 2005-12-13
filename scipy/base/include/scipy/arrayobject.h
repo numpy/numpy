@@ -817,7 +817,7 @@ typedef struct {
 				*/
 	PyObject *fields;       /* The fields dictionary for this type */
 	                        /* For statically defined descr this
-				   is always Py_NotImplemented */
+				   is always Py_None */
 
 	PyArray_ArrFuncs *f;     /* a table of functions specific for each
 				    basic data descriptor */

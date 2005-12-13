@@ -73,7 +73,7 @@ def changeimports(fstr, name, newname):
 
 def replaceattr(astr):
     astr = astr.replace(".typecode()",".dtypechar")
-    astr = astr.replace(".iscontiguous()",".flags['CONTIGUOUS']")
+    astr = astr.replace(".iscontiguous()",".flags.contiguous")
     astr = astr.replace(".byteswapped()",".byteswap()")
     astr = astr.replace(".itemsize()",".itemsize")
 

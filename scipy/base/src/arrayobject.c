@@ -1006,7 +1006,10 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 	descr->type_num = typenum;
 
 	if (descr->f == NULL) descr->f = old->f;
-	if (descr->fields == NULL) descr->fields = old->fields;
+	if (descr->fields == NULL) {
+		descr->fields = old->fields;
+		Py_XINCREF(descr->fields);
+	}
 	if (descr->subarray == NULL && old->subarray) {
 		descr->subarray = malloc(sizeof(PyArray_ArrayDescr));
 		memcpy(descr->subarray, old->subarray, 
@@ -1014,7 +1017,6 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 		Py_INCREF(descr->subarray->shape);
 		Py_INCREF(descr->subarray->base);
 	}
-        Py_XINCREF(descr->fields);
         Py_XINCREF(descr->typeobj);
 
 #define _ZERO_CHECK(member) \
@@ -4219,19 +4221,12 @@ array_typechar_get(PyArrayObject *self)
 		return PyString_FromStringAndSize(&(self->descr->type), 1);
 }
 
+static PyObject *arraydescr_protocol_typestr_get(PyArray_Descr *);
+
 static PyObject *
 array_typestr_get(PyArrayObject *self)
 {
-	char basic_=self->descr->kind;
-	char endian = self->descr->byteorder;
-	
-	if (endian == '=') {
-		endian = '<';
-		if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
-	}
-	
-	return PyString_FromFormat("%c%c%d", endian, basic_,
-				   self->descr->elsize);
+	return arraydescr_protocol_typestr_get(self->descr);
 }
 
 static PyObject *
@@ -7916,7 +7911,8 @@ PyArray_DescrNew(PyArray_Descr *base)
 	memcpy((char *)new+sizeof(PyObject),
 	       (char *)base+sizeof(PyObject),
 	       sizeof(PyArray_Descr)-sizeof(PyObject));
-		
+
+	if (new->fields == Py_None) new->fields = NULL;
 	Py_XINCREF(new->fields);
 	if (new->subarray) {
 		new->subarray = malloc(sizeof(PyArray_ArrayDescr));
@@ -7945,6 +7941,10 @@ arraydescr_dealloc(PyArray_Descr *self)
 	self->ob_type->tp_free(self);
 }
 
+/* we need to be careful about setting attributes because these
+   objects are pointed to by arrays that depend on them for interpreting
+   data.  Currently no attributes of dtypedescr objects can be set. 
+*/
 static PyMemberDef arraydescr_members[] = {
 	{"dtype", T_OBJECT, offsetof(PyArray_Descr, typeobj), RO, NULL},
 	{"dtypekind", T_CHAR, offsetof(PyArray_Descr, kind), RO, NULL},
@@ -7988,7 +7988,7 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
 	PyObject *dobj, *res;
 	static PyObject *module=NULL;
 
-	if (self->fields == NULL) {
+	if (self->fields == NULL || self->fields == Py_None) {
 		/* get default */
 		dobj = PyTuple_New(2);
 		if (dobj == NULL) return NULL;
@@ -8009,6 +8009,20 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
         return PyObject_CallMethod(module, "_array_descr", "O", self);
 }
 
+/* returns 1 for a builtin type
+   and 2 for a user-defined data-type descriptor
+   return 0 if neither (i.e. it's a copy of one)
+*/
+static PyObject *
+arraydescr_isbuiltin_get(PyArray_Descr *self) 
+{
+	long val;
+	val = 0;
+	if (self->fields == Py_None) val = 1;
+	if (PyTypeNum_ISUSERDEF(self->type_num)) val = 2;
+	return PyInt_FromLong(val);
+}
+
 static PyGetSetDef arraydescr_getsets[] = {
 	{"subdescr", 
 	 (getter)arraydescr_subdescr_get,
@@ -8018,13 +8032,16 @@ static PyGetSetDef arraydescr_getsets[] = {
 	 (getter)arraydescr_protocol_descr_get,
 	 NULL,
 	 "The array_protocol type descriptor."},
-	{"arrtypestr",
+	{"dtypestr",
 	 (getter)arraydescr_protocol_typestr_get,
 	 NULL,
 	 "The array_protocol typestring."},
+	{"isbuiltin",
+	 (getter)arraydescr_isbuiltin_get,
+	 NULL,
+	 "Is this a buillt-in data-type descriptor."},
 	{NULL, NULL, NULL, NULL},
 };
-
 
 static PyArray_Descr *_convert_from_list(PyObject *obj, int align);
 static PyArray_Descr *_convert_from_dict(PyObject *obj, int align);
@@ -8035,8 +8052,10 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	PyObject *odescr;
 	PyArray_Descr *descr, *conv;
 	int align=0;
+	Bool copy=FALSE;
 	
-	if (!PyArg_ParseTuple(args, "O|i", &odescr, &align))
+	if (!PyArg_ParseTuple(args, "O|iO&", &odescr, &align,
+			      PyArray_BoolConverter, &copy))
 		return NULL;
 	
 	if (align) {
@@ -8047,10 +8066,13 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	}
 	if (!PyArray_DescrConverter(odescr, &conv)) 
 		return NULL;
-	/* Get a new copy of it (so it can be changed in setstate) */
-	descr = PyArray_DescrNew(conv);
-	Py_DECREF(conv);
-	return (PyObject *)descr;
+	/* Get a new copy of it (e.g. so it can be changed in setstate) */
+	if (copy && conv->fields == Py_None) {
+		descr = PyArray_DescrNew(conv);
+		Py_DECREF(conv);
+		conv = descr;
+	}
+	return (PyObject *)conv;
 }
 
 static char doc_arraydescr_reduce[] = "self.__reduce__()  for pickling.";
@@ -8081,8 +8103,8 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 	else {
 		obj = PyString_FromFormat("%c%d",self->kind, self->elsize);
 	}
-	PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(N)", obj));
-
+	PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(Nii)", obj, 0, 1));
+	
 	/* Now return the state which is at least 
 	   byteorder, subarray, and fields */
 	endian = self->byteorder;
@@ -8093,7 +8115,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 	state = PyTuple_New(5);
 	PyTuple_SET_ITEM(state, 0, PyString_FromFormat("%c", endian));
 	PyTuple_SET_ITEM(state, 1, arraydescr_subdescr_get(self));
-	if (self->fields) {
+	if (self->fields && self->fields != Py_None) {
 		Py_INCREF(self->fields);
 		PyTuple_SET_ITEM(state, 2, self->fields);
 	}
@@ -8130,6 +8152,8 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 	char endian;
 	PyObject *subarray, *fields;
 
+	if (self->fields == Py_None) {Py_INCREF(Py_None); return Py_None;}
+
 	if (!PyArg_ParseTuple(args, "(cOOii)", &endian, &subarray, &fields,
 			      &elsize, &alignment)) return NULL;
 	
@@ -8150,7 +8174,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 		self->subarray->shape = PyTuple_GET_ITEM(subarray, 1);
 		Py_INCREF(self->subarray->shape);
 	}
-
+	
 	if (fields != Py_None) {
 		Py_XDECREF(self->fields);
 		self->fields = fields;
@@ -8161,6 +8185,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 		self->elsize = elsize;
 		self->alignment = alignment;
 	}
+	
 	Py_INCREF(Py_None);
 	return Py_None;
 }
