@@ -397,12 +397,12 @@ def fromstring(datastring, formats, shape=None, names=None, titles=None,
     """ create a (read-only) record array from binary data contained in
     a string"""
 
-    formats = format_parser(formats, names, titles, aligned)
+    parsed = format_parser(formats, names, titles, aligned)
     itemsize = parsed._descr.itemsize
     if (shape is None or shape == 0 or shape == -1):
         shape = (len(datastring)-offset) / itemsize
         
-    _array = recarray(shape, parsed._descr, shape=shape, names=names,
+    _array = recarray(shape, parsed._descr, names=names,
                       titles=titles, buf=datastring, offset=offset,
                       byteorder=byteorder)
     return _array
