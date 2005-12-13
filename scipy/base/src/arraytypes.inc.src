@@ -282,12 +282,55 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 {
         PyObject *u=NULL;
         PyObject *pyres=NULL;
-	PyObject *args=NULL;
+	PyObject *args=NULL, *scalar;
+	PyArray_Descr* descr;
         int itemsize=ap->descr->elsize;
-        PyObject *meth=PyObject_GetAttrString((PyObject *)ap->descr->typeobj,
-					      "_getitem");
+        PyObject *meth=NULL;
 
 
+	meth = PyObject_GetAttrString((PyObject *)ap->descr->typeobj,
+				      "_getitem");
+	descr = ap->descr;
+	PyErr_Clear();
+	if (!meth && descr->fields) {
+		PyObject *key;
+		PyObject *names;
+		int i, n;
+		PyObject *ret;
+		PyObject *tup, *title;
+		PyArray_Descr *new;
+		int offset;
+		int switched;
+
+		/* get the names from the fields dictionary*/
+		key = PyInt_FromLong(-1);
+		names = PyDict_GetItem(descr->fields, key);
+		Py_DECREF(key);
+		if (!names) goto finish;
+		n = PyList_GET_SIZE(names);
+		ret = PyTuple_New(n);
+		for (i=0; i<n; i++) {
+			switched = 0;
+			key = PyList_GET_ITEM(names, i);
+			tup = PyDict_GetItem(descr->fields, key);
+			if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, 
+					      &title)) {
+				Py_DECREF(ret); 
+				return NULL;
+			}
+			if (PyTypeNum_ISEXTENDED(new->type_num) || 
+			    new->type_num == PyArray_VOID) {
+				switched = 1;
+				ap->descr = new;
+			}
+			PyTuple_SET_ITEM(ret, i, \
+					 new->f->getitem(ip+offset, ap));
+			if (switched) ap->descr = descr;
+		}
+		return ret;
+	}
+
+ finish:
 	if (PyArray_ISWRITEABLE(ap))
 		u = PyBuffer_FromReadWriteMemory(ip, itemsize);
 	else
@@ -301,9 +344,9 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 		PyErr_Clear();
 		return u;        
 	}
-
-	args = Py_BuildValue("OO",u, ap);
-	Py_DECREF(u);
+	
+	scalar = PyArray_ToScalar(ip, ap);
+	args = Py_BuildValue("NNO",scalar, u, ap);
 	if (args==0) goto fail;
         pyres = PyObject_CallObject(meth, args);
 	Py_DECREF(args);
@@ -313,7 +356,6 @@ VOID_getitem(char *ip, PyArrayObject *ap)
  fail:
         Py_XDECREF(meth);
         Py_XDECREF(args);
-        Py_XDECREF(u);
         return NULL;
 }
 
@@ -322,17 +364,62 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 {
         PyObject *u=NULL;
         PyObject *pyres=NULL;
-        PyObject *args=NULL;
+        PyObject *args=NULL, *scalar;
+	PyArray_Descr* descr;
         int itemsize=ap->descr->elsize;
 	int res;
-        PyObject *meth=PyObject_GetAttrString((PyObject *)ap->descr->typeobj,
-					      "_setitem");
+        PyObject *meth;
+	meth = PyObject_GetAttrString((PyObject *)ap->descr->typeobj,
+				      "_setitem");
+	descr = ap->descr;
+	PyErr_Clear();
+	if (!meth && descr->fields && PyTuple_Check(op)) {
+		PyObject *key;
+		PyObject *names;
+		int i, n, ret=-1;
+		PyObject *tup, *title;
+		PyArray_Descr *new;
+		int offset;
+		int switched;
 
+		/* get the names from the fields dictionary*/
+		key = PyInt_FromLong(-1);
+		names = PyDict_GetItem(descr->fields, key);
+		Py_DECREF(key);
+		if (!names) goto finish;
+		n = PyList_GET_SIZE(names);
+		if (PyTuple_GET_SIZE(op) != n) {
+			PyErr_SetString(PyExc_ValueError, 
+					"size of tuple must match"\
+					"number of fields.");
+			return -1;
+		}
+		for (i=0; i<n; i++) {
+			switched = 0;
+			key = PyList_GET_ITEM(names, i);
+			tup = PyDict_GetItem(descr->fields, key);
+			if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, 
+					      &title)) {
+				return -1;
+			}
+			if (PyTypeNum_ISEXTENDED(new->type_num) || 
+			    new->type_num == PyArray_VOID) {
+				switched = 1;
+				ap->descr = new;
+			}
+			ret = new->f->setitem(PyTuple_GET_ITEM(op, i),
+					      ip+offset, ap);
+			if (switched) ap->descr = descr;
+			if (ret < 0) break;
+		}
+		return ret;
+	}
+
+ finish:
 	/* Default is to use buffer interface to set item */
         if ((meth == NULL) || (!PyCallable_Check(meth))) {
 		const void *buffer;
 		int buflen;
-		PyErr_Clear();
 		res = PyObject_AsReadBuffer(op, &buffer, &buflen);
 		if (res == -1) goto fail;
 		memcpy(ip, buffer, MIN(buflen, itemsize));
@@ -341,7 +428,8 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         }
         u = PyBuffer_FromReadWriteMemory(ip, itemsize);
 	if (u==NULL) goto fail;
-	args = Py_BuildValue("OOO",u, op, ap);
+	scalar = PyArray_ToScalar(ip, ap);
+	args = Py_BuildValue("NNOO",scalar, u, op, ap);
         pyres = PyObject_CallObject(meth, args);
         if (pyres==NULL) goto fail;
 	res = 0;
@@ -350,14 +438,12 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         Py_DECREF(meth);
         Py_DECREF(args);
         Py_DECREF(pyres);
-        Py_DECREF(u);
         return res;
 
  fail:
         Py_XDECREF(pyres);
         Py_XDECREF(meth);
         Py_XDECREF(args);
-        Py_XDECREF(u);
         return -1;          
 }
 
@@ -1718,7 +1804,6 @@ PyArray_DescrFromType(int type)
 }
 
 
-
 static int
 set_typeinfo(PyObject *dict)
 {
@@ -1734,6 +1819,7 @@ set_typeinfo(PyObject *dict)
 */
 	_letter_to_num[PyArray_@name@LTR] = PyArray_@name@;
 /**end repeat**/
+	_letter_to_num[PyArray_STRINGLTR2] = PyArray_STRING;
 
 	/* Set a dictionary with type information */
 	infodict = PyDict_New();

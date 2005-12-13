@@ -204,36 +204,54 @@ class flagsobj(dict):
 #  a dictionary without "names" and "formats"
 #  fields is used as a data-type descriptor.
 def _usefields(adict):
-    allfields = []
-    names = []
-    formats = []
-    offsets = []
-    titles = []
-    fnames = adict.keys()
-    for fname in fnames:
-        obj = adict[fname]
-        n = len(obj)
-        if not isinstance(obj, tuple) or n not in [2,3]:
-            raise ValueError, "entry not a 2- or 3- tuple"
-        if (n > 2) and (obj[2] == fname):
-            continue
-        num = int(obj[1])
-        if (num < 0):
-            raise ValueError, "invalid offset."
-        format = dtypedescr(obj[0])
-        if (format.itemsize == 0):
-            raise ValueError, "all itemsizes must be fixed."
-        if (n > 2):
-            title = obj[2]
-        else:
-            title = None
-        allfields.append((fname, format, num, title))
-    # sort by offsets
-    allfields.sort(lambda x,y: cmp(x[2],y[2]))
-    return dtypedescr({"names" : [x[0] for x in allfields],
-                       "formats" : [x[1] for x in allfields],
-                       "offsets" : [x[2] for x in allfields],
-                       "titles" : [x[3] for x in allfields]})
+    try:
+        names = adict[-1]
+    except KeyError:
+        names = None
+    if names is None:
+        allfields = []
+        fnames = adict.keys()
+        for fname in fnames:
+            obj = adict[fname]
+            n = len(obj)
+            if not isinstance(obj, tuple) or n not in [2,3]:
+                raise ValueError, "entry not a 2- or 3- tuple"
+            if (n > 2) and (obj[2] == fname):
+                continue
+            num = int(obj[1])
+            if (num < 0):
+                raise ValueError, "invalid offset."
+            format = dtypedescr(obj[0])
+            if (format.itemsize == 0):
+                raise ValueError, "all itemsizes must be fixed."
+            if (n > 2):
+                title = obj[2]
+            else:
+                title = None
+            allfields.append((fname, format, num, title))
+        # sort by offsets
+        allfields.sort(lambda x,y: cmp(x[2],y[2]))
+        names = [x[0] for x in allfields]
+        formats = [x[1] for x in allfields]
+        offsets = [x[2] for x in allfields]
+        titles = [x[3] for x in allfields]
+    else:
+        formats = []
+        offsets = []
+        titles = []
+        for name in names:
+            res = adict[name]
+            formats.append(res[0])
+            offsets.append(res[1])
+            if (len(res) > 2):
+                titles.append(res[2])
+            else:
+                titles.append(None)
+
+    return dtypedescr({"names" : names,
+                       "formats" : formats,
+                       "offsets" : offsets,
+                       "titles" : titles})
 
 
 # construct an array_protocol descriptor list

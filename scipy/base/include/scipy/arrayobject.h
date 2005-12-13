@@ -191,6 +191,7 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 			PyArray_CLONGDOUBLELTR = 'G',
 			PyArray_OBJECTLTR = 'O',
 			PyArray_STRINGLTR = 'S',
+			PyArray_STRINGLTR2 = 'a',
 			PyArray_UNICODELTR = 'U',
 		        PyArray_VOIDLTR = 'V',
 

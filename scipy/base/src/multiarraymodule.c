@@ -3018,13 +3018,15 @@ _convert_from_list(PyObject *obj, int align)
 	PyArray_Descr *conv=NULL;
 	PyArray_Descr *new;
 	PyObject *key, *tup;
+	PyObject *nameslist=NULL;
        	int ret;
 	int maxalign=0;
-
 	
 	n = PyList_GET_SIZE(obj);
 	totalsize = 0;
 	if (n==0) return NULL;
+	nameslist = PyList_New(n);
+	if (!nameslist) return NULL;
 	fields = PyDict_New();
 	for (i=0; i<n; i++) {
 		tup = PyTuple_New(2);
@@ -3034,7 +3036,7 @@ _convert_from_list(PyObject *obj, int align)
 		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
 		PyDict_SetItem(fields, key, tup);
 		Py_DECREF(tup);
-		Py_DECREF(key);
+		PyList_SET_ITEM(nameslist, i, key);
 		if (ret == PY_FAIL) goto fail;
 		totalsize += conv->elsize;
 		if (align) {
@@ -3045,6 +3047,10 @@ _convert_from_list(PyObject *obj, int align)
 			maxalign = MAX(maxalign, _align);
 		}
 	}
+	key = PyInt_FromLong(-1);
+	PyDict_SetItem(fields, key, nameslist);
+	Py_DECREF(key);
+	Py_DECREF(nameslist);
 	new = PyArray_DescrNewFromType(PyArray_VOID);
 	new->fields = fields;
 	if (maxalign > 1) {
@@ -3055,6 +3061,7 @@ _convert_from_list(PyObject *obj, int align)
 	return new;
 
  fail:
+	Py_DECREF(nameslist);
 	Py_DECREF(fields);
 	return NULL;
 }
@@ -3110,7 +3117,7 @@ _convert_from_dict(PyObject *obj, int align)
 {
 	PyArray_Descr *new;
 	PyObject *fields=NULL;
-	PyObject *names, *offsets, *descrs, *titles;
+	PyObject *names, *offsets, *descrs, *titles, *key;
 	int n, i;
 	int totalsize;
 	int maxalign=0;
@@ -3198,6 +3205,9 @@ _convert_from_dict(PyObject *obj, int align)
 		totalsize = ((totalsize + maxalign - 1)/maxalign)*maxalign;
 	if (align) new->alignment = maxalign;
 	new->elsize = totalsize;
+	key = PyInt_FromLong(-1);
+	PyDict_SetItem(fields, key, names);
+	Py_DECREF(key);
 	new->fields = fields;
 	return new;
 
@@ -3326,7 +3336,8 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			   c4, i4, f8, etc...
 			*/
 			else if ((check_num != PyArray_STRINGLTR) &&
-				 (check_num != PyArray_VOIDLTR)) {
+				 (check_num != PyArray_VOIDLTR) &&	\
+				 (check_num != PyArray_STRINGLTR2)) {
 				check_num =				\
 					PyArray_TypestrConvert(elsize,
 							       check_num);
@@ -4245,7 +4256,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
 	double value;
 	
 	*next = PyNumber_Subtract(stop, start);
-	if (!next) return -1;
+	if (!(*next)) return -1;
 	val = PyNumber_TrueDivide(*next, step);
 	Py_DECREF(*next); *next=NULL;
 	if (!val) return -1;

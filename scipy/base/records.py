@@ -209,19 +209,7 @@ class record(nt.void):
         return self.__str__()
     
     def __str__(self):
-        fdict = self.fields
-        names = fdict.keys()
-        all = []
-        for name in names:
-            item = fdict[name]
-            if (len(item) > 3) and item[2] == name:
-                continue
-            all.append(item)
-
-        all.sort(lambda x,y: cmp(x[1],y[1]))
-
-        outlist = [self.getfield(item[0], item[1]) for item in all]
-        return str(tuple(outlist))
+        return str(self.toscalar())
 
     def __getattribute__(self, attr):
         if attr in ['setfield', 'getfield', 'fields']:
@@ -385,7 +373,7 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
     if isinstance(shape, (int, long)):
         shape = (shape,)
 
-    if len(shape > 1):
+    if len(shape) > 1:
         raise ValueError, "Can only deal with 1-d list of records"
 
     nfields = len(recList[0])
@@ -398,11 +386,9 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
     parsed = format_parser(formats, names, titles, aligned)
     _names = parsed._names
     _array = recarray(shape, parsed._descr)
-    farr = _array.flat
     
     for k in xrange(_array.size):
-        for j in xrange(nfields):
-            farr[k][_names[j]] = recList[k][j]
+        _array[k] = tuple(recList[k])
 
     return _array
 
