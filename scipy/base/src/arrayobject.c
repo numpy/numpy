@@ -3864,7 +3864,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                 }
                 /* get writeable and aligned */
                 if (fortran) buffer.flags |= FORTRAN;
-                if (!(swapped)) buffer.flags |= NOTSWAPPED;
+                if (swapped) buffer.flags &= ~NOTSWAPPED;
                 ret = (PyArrayObject *)\
 			PyArray_NewFromDescr(subtype, descr,
 					     dims.len, dims.ptr,

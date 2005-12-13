@@ -56,6 +56,7 @@ static PyObject *
                 return @func1@((@typ1@)t1);
 	}
 }
+
 static int 
 @TYP@_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
         @typ@ temp;  /* ensures alignment */
@@ -300,7 +301,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 		PyObject *tup, *title;
 		PyArray_Descr *new;
 		int offset;
-		int switched;
+		int savedflags;
 
 		/* get the names from the fields dictionary*/
 		key = PyInt_FromLong(-1);
@@ -309,8 +310,8 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 		if (!names) goto finish;
 		n = PyList_GET_SIZE(names);
 		ret = PyTuple_New(n);
+		savedflags = ap->flags;
 		for (i=0; i<n; i++) {
-			switched = 0;
 			key = PyList_GET_ITEM(names, i);
 			tup = PyDict_GetItem(descr->fields, key);
 			if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, 
@@ -318,15 +319,18 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 				Py_DECREF(ret); 
 				return NULL;
 			}
-			if (PyTypeNum_ISEXTENDED(new->type_num) || 
-			    new->type_num == PyArray_VOID) {
-				switched = 1;
-				ap->descr = new;
-			}
-			PyTuple_SET_ITEM(ret, i, \
+			ap->descr = new;
+			/* update alignment based on offset */
+			if ((new->alignment > 1) &&			\
+			    ((((intp)(ip+offset)) % new->alignment) != 0))
+				ap->flags &= ~ALIGNED;
+			else
+				ap->flags |= ALIGNED;
+			PyTuple_SET_ITEM(ret, i,			\
 					 new->f->getitem(ip+offset, ap));
-			if (switched) ap->descr = descr;
 		}
+		ap->descr = descr;
+		ap->flags = savedflags;
 		return ret;
 	}
 
@@ -381,7 +385,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 		PyObject *tup, *title;
 		PyArray_Descr *new;
 		int offset;
-		int switched;
+		int savedflags;
 
 		/* get the names from the fields dictionary*/
 		key = PyInt_FromLong(-1);
@@ -396,23 +400,25 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 			return -1;
 		}
 		for (i=0; i<n; i++) {
-			switched = 0;
 			key = PyList_GET_ITEM(names, i);
 			tup = PyDict_GetItem(descr->fields, key);
 			if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, 
 					      &title)) {
 				return -1;
 			}
-			if (PyTypeNum_ISEXTENDED(new->type_num) || 
-			    new->type_num == PyArray_VOID) {
-				switched = 1;
-				ap->descr = new;
-			}
+			ap->descr = new;
+			/* remember to update alignment flags */
+			if ((new->alignment > 1) &&			\
+			    ((((intp)(ip+offset)) % new->alignment) != 0))
+				ap->flags &= ~ALIGNED;
+			else
+				ap->flags |= ALIGNED;
 			ret = new->f->setitem(PyTuple_GET_ITEM(op, i),
 					      ip+offset, ap);
-			if (switched) ap->descr = descr;
 			if (ret < 0) break;
 		}
+		ap->descr = descr;
+		ap->flags = savedflags;
 		return ret;
 	}
 

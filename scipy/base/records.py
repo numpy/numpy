@@ -239,7 +239,7 @@ class record(nt.void):
 
 # The recarray is almost identical to a standard array (which supports
 #   named fields already)  The biggest difference is that it can use
-#   attribute-lookup to the fields.
+#   attribute-lookup to find the fields and it returns a record item.
 
 
 class recarray(sb.ndarray):
@@ -263,9 +263,10 @@ class recarray(sb.ndarray):
         if buf is None:
             self = sb.ndarray.__new__(subtype, shape, (record, descr))
         else:
+            byteorder = byteorder.lower()
             swap = ((byteorder != _sysbyte) and (byteorder in _byteorders))
             self = sb.ndarray.__new__(subtype, shape, (record, descr),
-                                      buffer=buf, swap=swap)
+                                      buffer=buf, offset=offset, swap=swap)
         return self
 
     def __getattribute__(self, attr):

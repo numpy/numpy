@@ -117,7 +117,10 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 }
 
 /* 0-dim array from array-scalar object */
-/* always contains a copy of the data */
+/* always contains a copy of the data 
+   unless outcode is NULL, it is of void type and the referrer does
+   not own it either.
+*/
 
 /* steals reference to outcode */
 /*OBJECT_API
@@ -133,6 +136,19 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 
 	/* convert to 0-dim array of scalar typecode */
 	typecode = PyArray_DescrFromScalar(scalar);
+	if (PyTypeNum_ISEXTENDED(typecode->type_num) && \
+	    !(((PyVoidScalarObject *)scalar)->flags & OWNDATA) &&	\
+	    outcode == NULL) {
+		r = PyArray_NewFromDescr(&PyArray_Type,
+					 typecode,
+					 0, NULL, NULL,
+					 ((PyVoidScalarObject *)scalar)->obval,
+					 ((PyVoidScalarObject *)scalar)->flags,
+					 NULL);
+		PyArray_BASE(r) = (PyObject *)scalar;
+		Py_INCREF(scalar);
+		return r;
+	}
 	r = PyArray_NewFromDescr(&PyArray_Type, 
 				 typecode,
 				 0, NULL, 
@@ -626,6 +642,14 @@ gentype_flags_get(PyObject *self)
 	static int flags=CONTIGUOUS | OWNDATA | FORTRAN | ALIGNED | \
 		NOTSWAPPED;
         static PyObject *module=NULL;
+
+	if (PyArray_IsScalar(self, Void)) {
+		PyObject *ap, *res;
+		ap = PyArray_FromScalar(self, NULL);
+		res = PyObject_GetAttrString(ap, "flags");
+		Py_DECREF(ap);
+		return res;
+	}
 
         if (module==NULL) {
                 module = PyImport_ImportModule("scipy.base._internal");
