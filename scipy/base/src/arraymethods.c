@@ -854,6 +854,8 @@ array_reduce(PyArrayObject *self, PyObject *args)
 {
 	PyObject *ret=NULL, *state=NULL, *obj=NULL, *mod=NULL;
 	PyObject *mybool, *thestr=NULL;
+	PyArray_Descr *descr;
+	char endian;
 
 	/* Return a tuple of (callable object, arguments, object's state) */
 	/*  We will put everything in the object's state, so that on UnPickle
@@ -862,10 +864,10 @@ array_reduce(PyArrayObject *self, PyObject *args)
 	ret = PyTuple_New(3);
 	if (ret == NULL) return NULL;
 	mod = PyImport_ImportModule("scipy.base.multiarray");
-	if (mod == NULL) return NULL;
+	if (mod == NULL) {Py_DECREF(ret); return NULL;}
 	obj = PyObject_GetAttrString(mod, "empty");
 	Py_DECREF(mod);
-	if (obj == NULL) return NULL;
+	if (obj == NULL) {Py_DECREF(ret); return NULL;}
 	PyTuple_SET_ITEM(ret, 0, obj);
 	PyTuple_SET_ITEM(ret, 1, 
 			 Py_BuildValue("NNN",
@@ -873,14 +875,13 @@ array_reduce(PyArrayObject *self, PyObject *args)
 						     PyInt_FromLong(0)),
 				       PyObject_GetAttrString((PyObject *)self,
 							      "dtypechar"),
-				       PyInt_FromLong((long) 0)));
+				       PyInt_FromLong((long) self->descr->elsize)));
 	
 	/* Now fill in object's state.  This is a tuple with 
 	   4 arguments
 
 	   1) a Tuple giving the shape
-	   2) a string giving the typestr (> or < indicates byte order
-	      if swap is possibly needed)
+	   2) a PyArray_Descr Object (with correct bytorder set)
 	   3) a Bool stating if Fortran or not
 	   4) a binary string with the data (or a list for Object arrays)
 
@@ -893,9 +894,24 @@ array_reduce(PyArrayObject *self, PyObject *args)
 		Py_DECREF(ret); return NULL;
 	}
 	PyTuple_SET_ITEM(state, 0, PyObject_GetAttrString((PyObject *)self, 
-							  "shape"));	
-	PyTuple_SET_ITEM(state, 1, PyObject_GetAttrString((PyObject *)self, 
-							  "dtypestr"));
+							  "shape"));
+	endian = self->descr->byteorder;
+	if ((endian == '=') || (PyArray_ISNOTSWAPPED(self) !=		\
+				PyArray_IsNativeByteOrder(endian))) {
+		descr = PyArray_DescrNew(self->descr);
+		endian = '<';
+		if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
+		if (!PyArray_ISNOTSWAPPED(self)) {
+			if (endian == '<') endian = '>';
+			else endian = '<';
+		}
+		descr->byteorder = endian;
+	}
+	else {
+		descr = self->descr;
+		Py_INCREF(descr);
+	}
+	PyTuple_SET_ITEM(state, 1, (PyObject *)descr);
 	mybool = (PyArray_ISFORTRAN(self) ? Py_True : Py_False);
 	Py_INCREF(mybool);
 	PyTuple_SET_ITEM(state, 2, mybool);
@@ -919,8 +935,7 @@ static char doc_setstate[] = "a.__setstate__(tuple) for unpickling.";
 
 /*
 	   1) a Tuple giving the shape
-	   2) a string giving the typestr (> or < indicates byte order
-	      if swap is possibly needed)
+	   2) a PyArray_Descr Object
 	   3) a Bool stating if Fortran or not
 	   4) a binary string with the data (or a list if Object array) 
 */
@@ -939,25 +954,21 @@ array_setstate(PyArrayObject *self, PyObject *args)
 	long fortran;
 	PyObject *rawdata;
 	char *datastr;
-	const char *typestr;
-	int len, typestrlen;
-	int swap;
+	int len;
 	intp dimensions[MAX_DIMS];
 	int nd;
 	
 	/* This will free any memory associated with a and
 	   use the string in setstate as the (writeable) memory.
 	*/
-	if (!PyArg_ParseTuple(args, "(O!z#iO)", &PyTuple_Type,
-			      &shape, &typestr, &typestrlen,
+	if (!PyArg_ParseTuple(args, "(O!O!iO)", &PyTuple_Type,
+			      &shape, &PyArrayDescr_Type, &typecode, 
 			      &fortran, &rawdata))
 		return NULL;
 
-	typecode = _array_typedescr_fromstr((char *)typestr, &swap);
-	if (typecode == NULL) return NULL;
-
 	Py_XDECREF(self->descr);
 	self->descr = typecode;
+	Py_INCREF(typecode);
 	nd = PyArray_IntpFromSequence(shape, dimensions, MAX_DIMS);
 	if (typecode->type_num == PyArray_OBJECT) {
 		if (!PyList_Check(rawdata)) {
@@ -1030,7 +1041,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
 			self->base = rawdata;
 			Py_INCREF(self->base);
 		}
-		if (swap) self->flags &= ~NOTSWAPPED;
+		if (!PyArray_IsNativeByteOrder(typecode->byteorder))
+			self->flags &= ~NOTSWAPPED;
 	}
 	else {
 		self->data = PyDataMem_NEW(PyArray_NBYTES(self));

@@ -2677,7 +2677,13 @@ PyArray_TypestrConvert(int itemsize, int gentype)
 {
 	register int newtype = gentype;
 	
-	if (gentype == PyArray_SIGNEDLTR) {
+	if (gentype == PyArray_GENBOOLLTR) {
+		if (itemsize == 1)
+			newtype = PyArray_BOOL;
+		else 
+			newtype = PyArray_NOTYPE;
+	}
+	else if (gentype == PyArray_SIGNEDLTR) {
 		switch(itemsize) {
 		case 1:
 			newtype = PyArray_INT8;
@@ -3310,24 +3316,23 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			   more than one byte and itemsize must be
 			   the number of bytes.
 			*/
-			if (check_num == PyArray_UNICODELTR)
+			if (elsize == 0) {
+				check_num = PyArray_NOTYPE+10;
+			}
+			else if (check_num == PyArray_UNICODELTR) {
 				elsize *= sizeof(Py_UNICODE);
-			
+			}
 			/* Support for generic processing 
 			   c4, i4, f8, etc...
 			*/
 			else if ((check_num != PyArray_STRINGLTR) &&
 				 (check_num != PyArray_VOIDLTR)) {
-				if (elsize == 0) {
-					/* reset because string conversion failed */
-					check_num = PyArray_NOTYPE+10;
-				}
-				else {
-					check_num =			\
-						PyArray_TypestrConvert(elsize,
-								       check_num);
-					elsize = 0;
-				}
+				check_num =				\
+					PyArray_TypestrConvert(elsize,
+							       check_num);
+				if (check_num == PyArray_NOTYPE)
+					check_num += 10;
+				elsize = 0;
 			}
 		}
 	}
@@ -3551,34 +3556,29 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
 	return ret;
 }
 
-static char doc_scalar[] = "scalar(dtypestr,obj) will return a new scalar array of the given type initialized with obj. Mainly for pickle support. typestr must be a valid data typestr (complete with < > or |).  If dtypestr is object, then obj can be any object, otherwise obj must be a string. If obj is not given it will be interpreted as None for object type and zeros for all other types.";
+static char doc_scalar[] = "scalar(dtypedescr,obj) will return a new scalar array of the given type initialized with obj. Mainly for pickle support.  The dtypedescr must be a valid data-type descriptor.  If dtypedescr corresponds to an OBJECT descriptor, then obj can be any object, otherwise obj must be a string. If obj is not given it will be interpreted as None for object type and zeros for all other types.";
 
 static PyObject *
 array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds) 
 {
         
-	static char *kwlist[] = {"dtypestr","obj", NULL};
+	static char *kwlist[] = {"dtypedescr","obj", NULL};
 	PyArray_Descr *typecode;
 	PyObject *obj=NULL;
-	char *typestr;
-	int typestrlen;
 	int swap, alloc=0;
 	void *dptr;
 	PyObject *ret;
 
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "z#|O",
-					 kwlist, &typestr, &typestrlen,
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!|O",
+					 kwlist, &PyArrayDescr_Type, 
+					 &typecode,
 					 &obj)) 
 		return NULL;
-	
-	if (!(typecode=_array_typedescr_fromstr(typestr, &swap)))
-		return NULL;
-	
+		
 	if (typecode->elsize == 0) {
 		PyErr_SetString(PyExc_ValueError,		\
 				"itemsize cannot be zero");
-		Py_DECREF(typecode);
 		return NULL;
 	}
 
@@ -3591,7 +3591,6 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 		if (obj == NULL) {
 			dptr = malloc(typecode->elsize);
 			if (dptr == NULL) {
-				Py_DECREF(typecode);		
 				return PyErr_NoMemory();
 			}
 			memset(dptr, '\0', typecode->elsize);
@@ -3602,22 +3601,20 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 				PyErr_SetString(PyExc_TypeError, 
 						"initializing object must "\
 						"be a string");
-				Py_DECREF(typecode);				
 				return NULL;
 			}
 			if (PyString_GET_SIZE(obj) < typecode->elsize) {
 				PyErr_SetString(PyExc_ValueError,
 						"initialization string is too"\
 						" small");
-				Py_DECREF(typecode);				
 				return NULL;
 			}
 			dptr = PyString_AS_STRING(obj);
 		}
+		swap = (!PyArray_IsNativeByteOrder(typecode->byteorder));
 	}
 
 	ret = PyArray_Scalar(dptr, swap, typecode, NULL);
-	Py_DECREF(typecode);
 	
 	/* free dptr which contains zeros */
 	if (alloc) free(dptr);
@@ -4190,6 +4187,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 	PyObject *range;
 	PyArray_ArrFuncs *funcs;
 	PyObject *obj;
+	int ret;
 
 	length = (intp ) ceil((stop - start)/step);
     
@@ -4209,14 +4207,16 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 	/* if length > 2, then call the inner loop, otherwise stop */
 
 	obj = PyFloat_FromDouble(start);
-	funcs->setitem(obj, PyArray_DATA(range), (PyArrayObject *)range);
+	ret = funcs->setitem(obj, PyArray_DATA(range), (PyArrayObject *)range);
 	Py_DECREF(obj);
+	if (ret < 0) goto fail;
 	if (length == 1) return range;
 
 	obj = PyFloat_FromDouble(start + step);
-	funcs->setitem(obj, PyArray_DATA(range)+PyArray_ITEMSIZE(range), 
-		       (PyArrayObject *)range);
+	ret = funcs->setitem(obj, PyArray_DATA(range)+PyArray_ITEMSIZE(range), 
+			     (PyArrayObject *)range);
 	Py_DECREF(obj);
+	if (ret < 0) goto fail;
 	if (length == 2) return range;
 
 	if (!funcs->fill) {
@@ -4225,8 +4225,13 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 		return NULL;
 	}
 	funcs->fill(PyArray_DATA(range), length, (PyArrayObject *)range);
+	if (PyErr_Occurred()) goto fail;
 	
 	return range;
+
+ fail:
+	Py_DECREF(range);
+	return NULL;
 }
 
 /* the formula is 
@@ -4343,6 +4348,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 		goto fail;
 	}
 	funcs->fill(PyArray_DATA(range), length, (PyArrayObject *)range);
+	if (PyErr_Occurred()) goto fail;
 
  finish:
 	Py_DECREF(start);

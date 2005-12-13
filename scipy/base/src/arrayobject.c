@@ -3538,9 +3538,11 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 					   this to be reset if truly
 					   desired */
         }
-	if (descr->byteorder != '=' &&				\
-	    !PyArray_IsNativeByteOrder(descr->byteorder)) {
-		self->flags &= ~NOTSWAPPED;
+	if ((descr->byteorder != '=') && (descr->byteorder != '|')) {
+		if (PyArray_IsNativeByteOrder(descr->byteorder)) 
+			self->flags |= NOTSWAPPED;
+		else
+			self->flags &= ~NOTSWAPPED;
 	}
 
         self->data = data;
@@ -4706,10 +4708,22 @@ array_alloc(PyTypeObject *type, int nitems)
 
 static char Arraytype__doc__[] = 
         "A array object represents a multidimensional, homogeneous array\n"
-	"  of basic values.  Arrays are sequence, mapping and numeric\n"
-	"  objects.  More information is available in the scipy module and\n"
-	"  by looking at the methods and attributes of an array.";
-
+	"  of fixed-size items.  An associated data-type-descriptor object details\n"
+	"  the data-type in an array (including any fields).  An array can be\n"
+	"  constructed using the scipy.array command. Arrays are sequence, mapping\n"
+	"  and numeric objects.  More information is available in the scipy module\n"
+	"  and by looking at the methods and attributes of an array.\n\n"
+	"  ndarray.__new__(subtype, shape=, dtype=long_, buffer=None, offset=0,\n"
+        "                  strides=None, swap=0, fortran=False)\n\n"
+	"   There are two modes of creating an array using the __new__ method:\n"
+	"   1) If buffer is None, then only shape, dtype, and fortran are used\n"
+	"   2) If buffer is an object exporting the buffer interface, then all\n"
+	"      keywords are interpreted.\n"
+	"   The dtype parameter can be any object that can be interpreted as a\n"
+	"   scipy.dtypedescr object.\n\n"
+	"   No __init__ method is needed because the array is fully initialized\n"
+	"      after the __new__ method.";
+	
 static PyTypeObject PyBigArray_Type = { 
         PyObject_HEAD_INIT(NULL)
         0,					  /*ob_size*/
@@ -8019,28 +8033,150 @@ static PyObject *
 arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
 	PyObject *odescr;
-	PyArray_Descr *descr;
+	PyArray_Descr *descr, *conv;
 	int align=0;
 	
 	if (!PyArg_ParseTuple(args, "O|i", &odescr, &align))
 		return NULL;
-
+	
 	if (align) {
 		if PyDict_Check(odescr) 
 			return (PyObject *)_convert_from_dict(odescr, 1);
 		if PyList_Check(odescr) 
 			return (PyObject *)_convert_from_list(odescr, 1);
 	}
-	if (!PyArray_DescrConverter(odescr, &descr)) 
+	if (!PyArray_DescrConverter(odescr, &conv)) 
 		return NULL;
+	/* Get a new copy of it */
+	descr = PyArray_DescrNew(conv);
+	Py_DECREF(conv);
 	return (PyObject *)descr;
 }
 
+static char doc_arraydescr_reduce[] = "self.__reduce__()  for pickling.";
+
+/* return a tuple of (callable object, args, state) */
+static PyObject *
+arraydescr_reduce(PyArray_Descr *self, PyObject *args)
+{
+	PyObject *ret, *mod, *obj;
+	PyObject *state;
+	char endian;
+	int elsize, alignment;
+
+	ret = PyTuple_New(3);
+	if (ret == NULL) return NULL;
+	mod = PyImport_ImportModule("scipy.base.multiarray");
+	if (mod == NULL) {Py_DECREF(ret); return NULL;}
+	obj = PyObject_GetAttrString(mod, "dtypedescr");
+	Py_DECREF(mod);
+	if (obj == NULL) {Py_DECREF(ret); return NULL;}
+	PyTuple_SET_ITEM(ret, 0, obj);
+	if (PyTypeNum_ISUSERDEF(self->type_num)) {
+		obj = (PyObject *)self->typeobj;
+		Py_INCREF(obj);
+	}
+	else {
+		obj = PyString_FromFormat("%c%d",self->kind, self->elsize);
+	}
+	PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(N)", obj));
+
+	/* Now return the state which is at least 
+	   byteorder, subarray, and fields */
+	endian = self->byteorder;
+	if (endian == '=') {
+		endian = '<';
+		if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
+	}
+	state = PyTuple_New(5);
+	PyTuple_SET_ITEM(state, 0, PyString_FromFormat("%c", endian));
+	PyTuple_SET_ITEM(state, 1, arraydescr_subdescr_get(self));
+	if (self->fields) {
+		Py_INCREF(self->fields);
+		PyTuple_SET_ITEM(state, 2, self->fields);
+	}
+	else {
+		PyTuple_SET_ITEM(state, 2, Py_None);
+		Py_INCREF(Py_None);
+	}
+
+	/* for extended types it also includes elsize and alignment */
+	if (PyTypeNum_ISEXTENDED(self->type_num)) {
+		elsize = self->elsize;
+		alignment = self->alignment;
+	}
+	else {elsize = -1; alignment = -1;}
+
+	PyTuple_SET_ITEM(state, 3, PyInt_FromLong(elsize));
+	PyTuple_SET_ITEM(state, 4, PyInt_FromLong(alignment));
+
+	PyTuple_SET_ITEM(ret, 2, state);
+	return ret;
+}
+
+
+
+/* state is at least byteorder, subarray, and fields but could include elsize 
+   and alignment for EXTENDED arrays 
+*/
+static char doc_arraydescr_setstate[] = "self.__setstate__()  for pickling.";
+
+static PyObject *
+arraydescr_setstate(PyArray_Descr *self, PyObject *args)
+{
+	int elsize = -1, alignment = -1;
+	char endian;
+	PyObject *subarray, *fields;
+
+	if (!PyArg_ParseTuple(args, "(cOOii)", &endian, &subarray, &fields,
+			      &elsize, &alignment)) return NULL;
+	
+	if (PyArray_IsNativeByteOrder(endian)) endian = '=';
+
+	self->byteorder = endian;
+	if (self->subarray) {
+		Py_XDECREF(self->subarray->base);
+		Py_XDECREF(self->subarray->shape);
+		free(self->subarray);
+	}
+	self->subarray = NULL;
+
+	if (subarray != Py_None) {
+		self->subarray = malloc(sizeof(PyArray_ArrayDescr));
+		self->subarray->base = (PyArray_Descr *)PyTuple_GET_ITEM(subarray, 0);
+		Py_INCREF(self->subarray->base);
+		self->subarray->shape = PyTuple_GET_ITEM(subarray, 1);
+		Py_INCREF(self->subarray->shape);
+	}
+
+	if (fields != Py_None) {
+		Py_XDECREF(self->fields);
+		self->fields = fields;
+		Py_INCREF(fields);
+	}
+	
+	if (PyTypeNum_ISEXTENDED(self->type_num)) {
+		self->elsize = elsize;
+		self->alignment = alignment;
+	}
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+
+static PyMethodDef arraydescr_methods[] = {
+        /* for pickling */
+        {"__reduce__", (PyCFunction)arraydescr_reduce, METH_VARARGS, 
+	 doc_arraydescr_reduce},
+	{"__setstate__", (PyCFunction)arraydescr_setstate, METH_VARARGS,
+	 doc_arraydescr_setstate},
+        {NULL,		NULL}		/* sentinel */
+};
 
 static PyTypeObject PyArrayDescr_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
-        "scipy.datadescr",	 	         /* tp_name */
+        "scipy.dtypedescr",	 	         /* tp_name */
         sizeof(PyArray_Descr),                   /* tp_basicsize */
         0,					 /* tp_itemsize */
         /* methods */
@@ -8067,7 +8203,7 @@ static PyTypeObject PyArrayDescr_Type = {
         0,					/* tp_weaklistoffset */
         0,         	                        /* tp_iter */
         0,	                           	/* tp_iternext */
-        0,				        /* tp_methods */
+        arraydescr_methods,	       	        /* tp_methods */
         arraydescr_members,	                /* tp_members */
         arraydescr_getsets,                     /* tp_getset */
         0,					  /* tp_base */

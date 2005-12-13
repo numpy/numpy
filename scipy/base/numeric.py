@@ -239,7 +239,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         if issubclass(arr.dtype, flexible):
             if typename not in ['unicode','string','void']:
                 typename = arr.dtype.__name__
-            typename = "%s%d" % (typename, arr.itemsize)
+            typename = "(%s,%d)" % (typename, arr.itemsize)
         return cName + "(%s, dtype=%s)" % (lst, typename)
 
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):

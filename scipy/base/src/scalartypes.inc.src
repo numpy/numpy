@@ -1151,7 +1151,7 @@ gentype_reduce(PyObject *self, PyObject *args)
 	Py_DECREF(mod);
 	if (obj == NULL) return NULL;
 	PyTuple_SET_ITEM(ret, 0, obj);
-	obj = PyObject_GetAttrString((PyObject *)self, "dtypestr");
+	obj = PyObject_GetAttrString((PyObject *)self, "dtypedescr");
 	if PyArray_IsScalar(self, Object) {
 		mod = ((PyObjectScalarObject *)self)->obval;
 		PyTuple_SET_ITEM(ret, 1,
@@ -1847,9 +1847,11 @@ PyArray_DescrFromTypeObject(PyObject *type)
 	PyArray_Descr *new, *conv=NULL;
 
 	/* if it's a builtin type, then use the typenumber */
-	typenum = _typenum_fromtypeobj(type,0);	
+	typenum = _typenum_fromtypeobj(type,1);	
 	if (typenum != PyArray_NOTYPE) {
-		return PyArray_DescrFromType(typenum);
+		new = PyArray_DescrFromType(typenum);
+		if (PyTypeNum_ISUSERDEF(typenum)) goto finish;
+		return new;
 	}
 
 	/* Check the generic types */
@@ -1879,6 +1881,8 @@ PyArray_DescrFromTypeObject(PyObject *type)
 	*/
 	/* look for a dtypedescr attribute */
 	new = PyArray_DescrNewFromType(PyArray_VOID);
+
+ finish:
 	conv = _arraydescr_fromobj(type);
 	if (conv) {
 		new->fields = conv->fields;

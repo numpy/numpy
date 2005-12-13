@@ -21,6 +21,7 @@ from polynomial import *
 from machar import *
 from getlimits import *
 import ma
+import records as rec
 from records import *
 from memmap import *
 import convertcode

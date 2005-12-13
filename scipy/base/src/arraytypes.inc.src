@@ -1452,7 +1452,31 @@ OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 }
 
 #define BOOL_fill NULL
-#define OBJECT_fill NULL
+
+/* this requires buffer to be filled with objects or NULL */
+static void
+OBJECT_fill(PyObject **buffer, intp length, void *ignored)
+{
+	intp i;
+	PyObject *start = buffer[0];
+	PyObject *delta = buffer[1];
+	delta = PyNumber_Subtract(delta, start);
+	if (!delta) return;
+	start = PyNumber_Add(start, delta);
+	if (!start) goto finish;
+	buffer += 2;
+	
+	for (i=2; i<length; i++, buffer++) {
+		start = PyNumber_Add(start, delta);
+		if (!start) goto finish;
+		Py_XDECREF(*buffer);
+		*buffer = start;
+	}
+
+ finish:
+	Py_DECREF(delta);
+	return;	
+}
 
 /**begin repeat 
 #NAME=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
