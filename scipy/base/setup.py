@@ -137,7 +137,9 @@ def configuration(parent_package='',top_path=None):
             join('src','arraymethods.c'),
             join('src','scalartypes.inc.src'),
             join('src','arraytypes.inc.src'),
-            join('include','scipy','*object.h')
+            join('include','scipy','*object.h'),
+	    join(codegen_dir,'genapi.py'),
+	    join(codegen_dir,'*.txt')
             ]
 
     config.add_extension('multiarray',
@@ -162,7 +164,7 @@ def configuration(parent_package='',top_path=None):
                                     ],
                          depends = [join('src','ufuncobject.c'),
                                     generate_umath_py,
-                                    join(codegen_dir,'generate_ufunc_api.py')
+                                    join(codegen_dir,'generate_ufunc_api.py'),
                                     ]+deps,
                          )
 
