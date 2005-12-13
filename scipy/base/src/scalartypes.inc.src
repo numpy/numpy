@@ -1070,7 +1070,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 
 /**begin repeat
 
-#name=getfield, take, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress#
+#name=take, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress#
 */
 
 static PyObject *
@@ -1079,6 +1079,30 @@ gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 	return gentype_generic_method(self, args, kwds, "@name@");
 }
 /**end repeat**/
+
+static PyObject *
+gentype_getfield(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	PyObject *ret;
+
+	ret = gentype_generic_method(self, args, kwds, "getfield");
+	if (!ret) return ret;
+	if (PyArray_IsScalar(self, Void) && \
+	    PyArray_IsScalar(ret, Generic) &&	\
+	    (!PyArray_IsScalar(ret, Void))) {
+		PyArray_Descr *descr;
+		if (!((((PyVoidScalarObject *)self)->flags &	\
+		       NOTSWAPPED) == NOTSWAPPED)) {
+			descr = PyArray_DescrFromScalar(ret);
+			if (descr->byteorder != '|') {
+				descr->f->copyswap(_SOFFSET_(ret, 
+							     descr->type_num),
+						   NULL, 1, descr->elsize);
+			}
+		}
+	}
+	return ret;
+}
 
 static PyObject *
 gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)

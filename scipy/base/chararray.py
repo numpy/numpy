@@ -63,7 +63,7 @@ class chararray(ndarray):
         b = broadcast(self, other)
         arr = b.iters[1].base
         outitem = self.itemsize + arr.itemsize
-        result = ndchararray(b.shape, outitem, self.dtype is unicode_)
+        result = chararray(b.shape, outitem, self.dtype is unicode_)
         res = result.flat
         for k, val in enumerate(b):
             res[k] = (val[0] + val[1])
@@ -73,7 +73,7 @@ class chararray(ndarray):
         b = broadcast(other, self)
         outitem = b.iters[0].base.itemsize + \
                   b.iters[1].base.itemsize
-        result = ndchararray(b.shape, outitem, self.dtype is unicode_)        
+        result = chararray(b.shape, outitem, self.dtype is unicode_)        
         res = result.flat
         for k, val in enumerate(b):
             res[k] = (val[0] + val[1])
@@ -85,7 +85,7 @@ class chararray(ndarray):
         if not issubclass(arr.dtype, integer):
             raise ValueError, "Can only multiply by integers"
         outitem = b.iters[0].base.itemsize * arr.max()
-        result = ndchararray(b.shape, outitem, self.dtype is unicode_)
+        result = chararray(b.shape, outitem, self.dtype is unicode_)
         res = result.flat
         for k, val in enumerate(b):
             res[k] = val[0]*val[1]
@@ -97,7 +97,7 @@ class chararray(ndarray):
         if not issubclass(arr.dtype, integer):
             raise ValueError, "Can only multiply by integers"
         outitem = b.iters[0].base.itemsize * arr.max()
-        result = ndchararray(b.shape, outitem, self.dtype is unicode_)        
+        result = chararray(b.shape, outitem, self.dtype is unicode_)        
         res = result.flat
         for k, val in enumerate(b):
             res[k] = val[0]*val[1]
@@ -111,7 +111,7 @@ class chararray(ndarray):
             newval = val[0] % val[1]
             maxsize = max(len(newval), maxsize)
             res[k] = newval
-        newarr = ndchararray(b.shape, maxsize, self.dtype is unicode_)
+        newarr = chararray(b.shape, maxsize, self.dtype is unicode_)
         nearr[:] = res
         return newarr
     
@@ -130,7 +130,7 @@ class chararray(ndarray):
             newitem = getattr(val[0],name)(*newval)
             maxsize = max(len(newitem), maxsize)
             res[k] = newitem
-        newarr = ndchararray(myiter.shape, maxsize, self.dtype is unicode_)
+        newarr = chararray(myiter.shape, maxsize, self.dtype is unicode_)
 	print res, maxsize
         newarr[:] = res
         return newarr
@@ -284,7 +284,7 @@ class chararray(ndarray):
     
 def array(obj, itemlen=7, copy=True, unicode=False, fortran=False):
         
-    if isinstance(obj, ndchararray):
+    if isinstance(obj, chararray):
         if copy or (itemlen != obj.itemlen) \
            or (not unicode and obj.dtype == unicode_) \
            or (unicode and obj.dtype == string):
@@ -308,7 +308,7 @@ def array(obj, itemlen=7, copy=True, unicode=False, fortran=False):
         if copy and not copied:
             obj = obj.copy()
 
-        return ndarray.__new__(ndchararray, obj.shape, (dtype, itemlen),
+        return ndarray.__new__(chararray, obj.shape, (dtype, itemlen),
                                buffer=obj, offset=0, swap=obj.flags.swapped,
                                fortran=obj.flags['FNC'])    
 

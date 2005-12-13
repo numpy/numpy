@@ -4,7 +4,10 @@ import numeric as sb
 import numerictypes as nt
 import sys
 import types
-import re
+import re, stat, os
+
+_sysbyte = sys.byteorder
+_byteorders = ['big','little']
 
 # formats regular expression
 # allows multidimension spec with a tuple syntax in front 
@@ -253,7 +256,8 @@ class record(nt.void):
 
 class recarray(sb.ndarray):
     def __new__(subtype, shape, formats, names=None, titles=None,
-                buf=None, offset=0, strides=None, swap=0, aligned=0):
+                buf=None, offset=0, strides=None, byteorder=_sysbyte,
+                aligned=0):
 
         if isinstance(formats, sb.dtypedescr):
             descr = formats
@@ -267,10 +271,11 @@ class recarray(sb.ndarray):
                     raise ValueError, "Can only deal with alignment"\
                           "for list and dictionary type-descriptors."
             descr = sb.dtypedescr(formats, aligned)
-        
+
         if buf is None:
             self = sb.ndarray.__new__(subtype, shape, (record, descr))
         else:
+            swap = ((byteorder != _sysbyte) and (byteorder in _byteorders))
             self = sb.ndarray.__new__(subtype, shape, (record, descr),
                                       buffer=buf, swap=swap)
         return self
@@ -295,7 +300,7 @@ class recarray(sb.ndarray):
 
 
 def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
-               swap=0, aligned=0):
+               aligned=0):
     """ create a record array from a (flat) list of arrays
 
     >>> x1=array([1,2,3,4])
@@ -338,7 +343,7 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
 
     parsed = format_parser(formats, names, titles, aligned)
     _names = parsed._names
-    _array = recarray(shape, parsed._descr, swap=swap)
+    _array = recarray(shape, parsed._descr)
     
     # populate the record array (makes a copy)
     for i in range(len(arrayList)):
@@ -346,8 +351,9 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
 
     return _array
 
+# shape must be 1-d 
 def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
-                swap=0, aligned=0):
+                aligned=0):
     """ create a Record Array from a list of records in text form
 
         The data in the same field can be heterogeneous, they will be promoted
@@ -376,25 +382,147 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
     if (shape is None or shape == 0):
         shape = len(recList)
 
-    if isinstance(shape, int):
+    if isinstance(shape, (int, long)):
         shape = (shape,)
+
+    if len(shape > 1):
+        raise ValueError, "Can only deal with 1-d list of records"
 
     nfields = len(recList[0])
     if formats is None:  # slower
         obj = sb.array(recList,dtype=object)
         arrlist = [sb.array(obj[:,i].tolist()) for i in xrange(nfields)]
         return fromarrays(arrlist, formats=formats, shape=shape, names=names,
-                          titles=titles, swap=swap, aligned=aligned)
+                          titles=titles, aligned=aligned)
     
     parsed = format_parser(formats, names, titles, aligned)
     _names = parsed._names
-    _array = recarray(shape, parsed._descr, swap=swap)
-
+    _array = recarray(shape, parsed._descr)
     farr = _array.flat
-
+    
     for k in xrange(_array.size):
         for j in xrange(nfields):
             farr[k][_names[j]] = recList[k][j]
 
     return _array
 
+def fromstring(datastring, formats, shape=None, names=None, titles=None,
+               byteorder=_sysbyte, aligned=0, offset=0):
+    """ create a (read-only) record array from binary data contained in
+    a string"""
+
+    formats = format_parser(formats, names, titles, aligned)
+    itemsize = parsed._descr.itemsize
+    if (shape is None or shape == 0 or shape == -1):
+        shape = (len(datastring)-offset) / itemsize
+        
+    _array = recarray(shape, parsed._descr, shape=shape, names=names,
+                      titles=titles, buf=datastring, offset=offset,
+                      byteorder=byteorder)
+    return _array
+
+def fromfile(fd, formats, shape=None, names=None, titles=None,
+             byteorder=_sysbyte, aligned=0, offset=0):
+    """Create an array from binary file data
+
+    If file is a string then that file is opened, else it is assumed
+    to be a file object. No options at the moment, all file positioning
+    must be done prior to this function call with a file object
+
+    >>> import testdata, sys
+    >>> fd=open(testdata.filename)
+    >>> fd.seek(2880*2)
+    >>> r=fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
+    >>> print r[0]
+    (5.1000000000000005, 61, 'abcde')
+    >>> r._shape
+    (3,)
+    """
+
+    if (shape is None or shape == 0):
+        shape = (-1,)
+    elif isinstance(shape, (int, long)):
+        shape = (shape,)
+
+    name = 0
+    if isinstance(fd, str):
+        name = 1
+        fd = open(fd, 'rb')
+    if (offset > 0):
+        fd.seek(offset, 1)
+    try:
+        size = os.fstat(fd.fileno())[stat.ST_SIZE] - fd.tell()
+    except:
+        size = os.path.getsize(fd.name) - fd.tell()
+
+    parsed = format_parser(formats, names, titles, aligned)
+    itemsize = parsed._descr.itemsize
+
+    shapeprod = sb.array(shape).prod()
+    shapesize = shapeprod*itemsize
+    if shapesize < 0:
+        shape = list(shape)
+        shape[ shape.index(-1) ] = size / -shapesize
+        shape = tuple(shape)
+        shapeprod = sb.array(shape).prod()
+        
+    nbytes = shapeprod*itemsize
+
+    if nbytes > size:
+        raise ValueError(
+                "Not enough bytes left in file for specified shape and type")
+
+    # create the array
+    _array = recarray(shape, parsed._descr)
+    nbytesread = fd.readinto(_array.data)
+    if nbytesread != nbytes:
+        raise IOError("Didn't read as many bytes as expected")
+    if name:
+        fd.close()
+
+    # update swap flag if byteorder does not match
+    if ((byteorder != _sysbyte) and (byteorder in _byteorders)):
+        _array.flags.swapped=True
+        
+    return _array
+
+
+def array(obj, formats=None, names=None, titles=None, shape=None,
+          byteorder=_sysbyte, aligned=0, offset=0, strides=None):
+    
+    if isinstance(obj, (type(None), str, file)) and (formats is None):
+        raise ValueError("Must define formats if object is "\
+                         "None, string, or a file pointer")
+
+    elif obj is None:
+        if shape is None:
+            raise ValueError("Must define a shape if obj is None")
+        return recarray(shape, formats, names=names, titles=titles,
+                        buf=obj, offset=offset, strides=strides,
+                        byteorder=byteorder, aligned=aligned)
+    elif isinstance(obj, str):
+        return fromstring(obj, formats, names=names, titles=titles,
+                          shape=shape, byteorder=byteorder, aligned=aligned,
+                          offset=offset)
+    elif isinstance(obj, (list, tuple)):
+        if isinstance(obj[0], sb.ndarray):
+            return fromarrays(obj, formats=formats, names=names, titles=titles,
+                              shape=shape, aligned=aligned)
+        else:
+            return fromrecords(obj, formats=formats, names=names, titles=titles,
+                               shape=shape, aligned=aligned)
+    elif isinstance(obj, recarray):
+        new = obj.copy()
+        parsed = format_parser(formats, names, titles, aligned)
+        new.dtypedescr = parsed._descr
+        return new
+    elif isinstance(obj, file):
+        return fromfile(obj, formats=formats, names=names, titles=titles,
+                        shape=shape, byteorder=byteorder, aligned=aligned,
+                        offset=offset)
+    else:
+        raise ValueError("Unknown input type")
+    
+    
+                
+        
