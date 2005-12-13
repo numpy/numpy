@@ -863,19 +863,18 @@ array_reduce(PyArrayObject *self, PyObject *args)
 
 	ret = PyTuple_New(3);
 	if (ret == NULL) return NULL;
-	mod = PyImport_ImportModule("scipy.base.multiarray");
+	mod = PyImport_ImportModule("scipy.base._internal");
 	if (mod == NULL) {Py_DECREF(ret); return NULL;}
-	obj = PyObject_GetAttrString(mod, "empty");
+	obj = PyObject_GetAttrString(mod, "_reconstruct");
 	Py_DECREF(mod);
-	if (obj == NULL) {Py_DECREF(ret); return NULL;}
 	PyTuple_SET_ITEM(ret, 0, obj);
 	PyTuple_SET_ITEM(ret, 1, 
-			 Py_BuildValue("NNN",
+			 Py_BuildValue("ONN",
+				       (PyObject *)self->ob_type,
 				       Py_BuildValue("(N)",
 						     PyInt_FromLong(0)),
 				       PyObject_GetAttrString((PyObject *)self,
-							      "dtypechar"),
-				       PyInt_FromLong((long) self->descr->elsize)));
+							      "dtypechar")));
 	
 	/* Now fill in object's state.  This is a tuple with 
 	   4 arguments

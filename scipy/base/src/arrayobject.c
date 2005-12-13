@@ -8047,7 +8047,7 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	}
 	if (!PyArray_DescrConverter(odescr, &conv)) 
 		return NULL;
-	/* Get a new copy of it */
+	/* Get a new copy of it (so it can be changed in setstate) */
 	descr = PyArray_DescrNew(conv);
 	Py_DECREF(conv);
 	return (PyObject *)descr;
@@ -8072,7 +8072,9 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 	Py_DECREF(mod);
 	if (obj == NULL) {Py_DECREF(ret); return NULL;}
 	PyTuple_SET_ITEM(ret, 0, obj);
-	if (PyTypeNum_ISUSERDEF(self->type_num)) {
+	if (PyTypeNum_ISUSERDEF(self->type_num) ||		\
+	    ((self->type_num == PyArray_VOID &&			\
+	      self->typeobj != &PyVoidArrType_Type))) {
 		obj = (PyObject *)self->typeobj;
 		Py_INCREF(obj);
 	}

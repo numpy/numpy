@@ -3,12 +3,14 @@ from numerictypes import character, string, unicode_, \
 from numeric import ndarray, broadcast, empty, array
 import sys
 
+__all__ = ['chararray']
+
 # special sub-class for character arrays (string and unicode_)
 # This adds equality testing and methods of str and unicode types
 #  which operate on an element-by-element basis
 
 
-class ndchararray(ndarray):
+class chararray(ndarray):
     def __new__(subtype, shape, itemlen=1, unicode=False, buffer=None,
                 offset=0, strides=None, swap=0, fortran=0):
 
@@ -27,9 +29,6 @@ class ndchararray(ndarray):
                                    offset=offset, strides=strides,
                                    swap=swap, fortran=fortran)
         return self
-
-    def __reduce__(self):
-        pass
 
     def _richcmpfunc(self, other, op):
         b = broadcast(self, other)
@@ -282,9 +281,9 @@ class ndchararray(ndarray):
     def zfill(self, width):
         return self._generalmethod('zfill', broadcast(self, width))
 
-                
-def chararray(obj, itemlen=7, copy=True, unicode=False, fortran=False):
-
+    
+def array(obj, itemlen=7, copy=True, unicode=False, fortran=False):
+        
     if isinstance(obj, ndchararray):
         if copy or (itemlen != obj.itemlen) \
            or (not unicode and obj.dtype == unicode_) \
@@ -320,10 +319,10 @@ def chararray(obj, itemlen=7, copy=True, unicode=False, fortran=False):
 
     val = array(obj, dtype=dtype, fortran=fortran, subok=1)
     
-    return ndchararray(val.shape, itemlen, unicode, buffer=val,
-                       strides=val.strides, swap=val.flags.swapped,
-                       fortran=fortran)
-    
-def aschararray(obj, itemlen=7, unicode=False, fortran=False):
+    return chararray(val.shape, itemlen, unicode, buffer=val,
+                     strides=val.strides, swap=val.flags.swapped,
+                     fortran=fortran)
+
+def asarray(obj, itemlen=7, unicode=False, fortran=False):
     return chararray(obj, itemlen, copy=False,
                      unicode=unicode, fortran=fortran)

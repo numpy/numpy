@@ -247,9 +247,8 @@ class record(nt.void):
         
 
 # The recarray is almost identical to a standard array (which supports
-#   named fields already)  The biggest difference is that it is always of
-#   record data-type, has fields, and can use attribute-lookup to access
-#   those fields.
+#   named fields already)  The biggest difference is that it can use
+#   attribute-lookup to the fields.
 
 
 class recarray(sb.ndarray):
@@ -257,7 +256,7 @@ class recarray(sb.ndarray):
                 buf=None, offset=0, strides=None, swap=0, aligned=0):
 
         if isinstance(formats, sb.dtypedescr):
-            descr = formats   
+            descr = formats
         elif isinstance(formats,str):
             parsed = format_parser(formats, names, titles, aligned)
             descr = parsed._descr
@@ -312,6 +311,9 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
 
     if shape is None or shape == 0:
         shape = arrayList[0].shape
+
+    if isinstance(shape, int):
+        shape = (shape,)
             
     if formats is None:
         # go through each object in the list to see if it is an ndarray
@@ -344,7 +346,8 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
 
     return _array
 
-def fromrecords(recList, formats=None, names=None, shape=0, swap=0, aligned=0):
+def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
+                swap=0, aligned=0):
     """ create a Record Array from a list of records in text form
 
         The data in the same field can be heterogeneous, they will be promoted
@@ -358,9 +361,9 @@ def fromrecords(recList, formats=None, names=None, shape=0, swap=0, aligned=0):
     >>> r=fromrecords([[456,'dbe',1.2],[2,'de',1.3]],names='col1,col2,col3')
     >>> print r[0]
     (456, 'dbe', 1.2)
-    >>> r.field('col1')
+    >>> r.col1
     array([456,   2])
-    >>> r.field('col2')
+    >>> r.col2
     array(['dbe', 'de'])
     >>> import cPickle
     >>> print cPickle.loads(cPickle.dumps(r))
@@ -370,30 +373,28 @@ def fromrecords(recList, formats=None, names=None, shape=0, swap=0, aligned=0):
     ]
     """
 
-    if shape == 0:
-        _shape = len(recList)
-    else:
-        _shape = shape
+    if (shape is None or shape == 0):
+        shape = len(recList)
 
-    _nfields = len(recList[0])
-    for _rec in recList:
-        if len(_rec) != _nfields:
-            raise ValueError, "inconsistent number of objects in each record"
-    arrlist = [0]*_nfields
-    for col in range(_nfields):
-        tmp = [0]*_shape
-        for row in range(_shape):
-            tmp[row] = recList[row][col]
-        try:
-            arrlist[col] = num.array(tmp)
-        except:
-            try:
-                arrlist[col] = chararray.array(tmp)
-            except:
-                raise ValueError, "inconsistent data at row %d,field %d" % (row, col)
-    _array = fromarrays(arrlist, formats=formats, shape=_shape, names=names,
-                byteorder=byteorder, aligned=aligned)
-    del arrlist
-    del tmp
+    if isinstance(shape, int):
+        shape = (shape,)
+
+    nfields = len(recList[0])
+    if formats is None:  # slower
+        obj = sb.array(recList,dtype=object)
+        arrlist = [sb.array(obj[:,i].tolist()) for i in xrange(nfields)]
+        return fromarrays(arrlist, formats=formats, shape=shape, names=names,
+                          titles=titles, swap=swap, aligned=aligned)
+    
+    parsed = format_parser(formats, names, titles, aligned)
+    _names = parsed._names
+    _array = recarray(shape, parsed._descr, swap=swap)
+
+    farr = _array.flat
+
+    for k in xrange(_array.size):
+        for j in xrange(nfields):
+            farr[k][_names[j]] = recList[k][j]
+
     return _array
 

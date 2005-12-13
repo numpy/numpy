@@ -1374,10 +1374,10 @@ _printcastbuf(PyUFuncLoopObject *loop, int bufnum)
 /* currently generic ufuncs cannot be built for use on flexible arrays.
 
    The cast functions in the generic loop would need to be fixed to pass 
-   something besides NULL, NULL.
+   in something besides NULL, NULL.
 
-   Also the underlying ufunc loops would not know the array size unless
-   that were passed in as data. 
+   Also the underlying ufunc loops would not know the element-size unless
+   that was passed in as data (which could be arranged).
 
 */
 

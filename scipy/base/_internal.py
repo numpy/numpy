@@ -2,7 +2,7 @@
 #A place for code to be called from C-code
 #  that implements more complicated stuff.
 
-from multiarray import _flagdict, dtypedescr
+from multiarray import _flagdict, dtypedescr, ndarray
 
 _defflags = _flagdict.keys()
 
@@ -280,3 +280,6 @@ def _array_descr(descriptor):
         result.append(tup)
 
     return result
+
+def _reconstruct(subtype, shape, dtype):
+    return ndarray.__new__(subtype, shape, dtype)
