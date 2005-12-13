@@ -119,7 +119,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
              extra_postargs=None,
              build_temp=None,
              target_lang=None):
-        if sys.platform[:3] > '2.3':
+        if sys.version[:3] > '2.3':
             if libraries:
                 libraries.append('msvcr71')
             else:
