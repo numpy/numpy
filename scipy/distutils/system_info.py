@@ -119,6 +119,7 @@ if sys.platform == 'win32':
     default_src_dirs = ['.']
     default_x11_lib_dirs = []
     default_x11_include_dirs = []
+    default_intel_dirs = []
 else:
     default_lib_dirs = ['/usr/local/lib', '/opt/lib', '/usr/lib',
                         '/sw/lib']
@@ -129,6 +130,8 @@ else:
     default_x11_lib_dirs = ['/usr/X11R6/lib','/usr/X11/lib','/usr/lib']
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include',
                                 '/usr/include']
+    default_intel_dirs = [os.environ.get('HOME','.'),
+                          '/opt/intel','/usr/local/intel']
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0,os.path.join(sys.prefix, 'lib'))
@@ -154,6 +157,9 @@ def get_info(name,notfound_action=0):
           'atlas_blas_threads':atlas_blas_threads_info,
           'lapack_atlas':lapack_atlas_info,  # use lapack_opt instead
           'lapack_atlas_threads':lapack_atlas_threads_info,  # ditto
+          'mkl':mkl_info,
+          'lapack_mkl':lapack_mkl_info,
+          'blas_mkl':blas_mkl_info,
           'x11':x11_info,
           'fftw':fftw_info,
           'dfftw':dfftw_info,
@@ -441,30 +447,45 @@ class system_info:
         if sys.platform=='cygwin':
             exts.append('.dll.a')
         for ext in exts:
-            info = self._check_libs(lib_dir,libs,opt_libs,ext)
+            info = self._check_libs(lib_dir,libs,opt_libs,[ext])
             if info is not None: return info
         return
 
-    def _lib_list(self, lib_dir, libs, ext):
+    def check_libs2(self,lib_dir,libs,opt_libs =[]):
+        """ If static or shared libraries are available then return
+            their info dictionary. """
+        if self.search_static_first:
+            exts = ['.a',so_ext]
+        else:
+            exts = [so_ext,'.a']
+        if sys.platform=='cygwin':
+            exts.append('.dll.a')
+        info = self._check_libs(lib_dir,libs,opt_libs,exts)
+        if info is not None: return info
+        return
+
+    def _lib_list(self, lib_dir, libs, exts):
         assert type(lib_dir) is type('')
         liblist = []
         for l in libs:
-            p = self.combine_paths(lib_dir, 'lib'+l+ext)
-            if p:
-                assert len(p)==1
-                liblist.append(p[0])
+            for ext in exts:
+                p = self.combine_paths(lib_dir, 'lib'+l+ext)
+                if p:
+                    assert len(p)==1
+                    liblist.append(p[0])
+                    break
         return liblist
 
     def _extract_lib_names(self,libs):
         return [os.path.splitext(os.path.basename(p))[0][3:] \
                 for p in libs]
 
-    def _check_libs(self,lib_dir,libs, opt_libs, ext):
-        found_libs = self._lib_list(lib_dir, libs, ext)
+    def _check_libs(self,lib_dir,libs, opt_libs, exts):
+        found_libs = self._lib_list(lib_dir, libs, exts)
         if len(found_libs) == len(libs):
             found_libs = self._extract_lib_names(found_libs)
             info = {'libraries' : found_libs, 'library_dirs' : [lib_dir]}
-            opt_found_libs = self._lib_list(lib_dir, opt_libs, ext)
+            opt_found_libs = self._lib_list(lib_dir, opt_libs, exts)
             if len(opt_found_libs) == len(opt_libs):
                 opt_found_libs = self._extract_lib_names(opt_found_libs)
                 info['libraries'].extend(opt_found_libs)
@@ -603,6 +624,73 @@ class djbfft_info(system_info):
                 self.set_info(**info)
                 return
         return
+
+class mkl_info(system_info):
+    section = 'mkl'
+    dir_env_var = 'MKL'
+    _lib_mkl = ['mkl','vml','guide']
+
+    def get_mkl_rootdir(self):
+        mklroot = os.environ.get('MKLROOT',None)
+        if mklroot is not None:
+            return mklroot
+        for d in default_intel_dirs:
+            dirs = glob(os.path.join(d,'mkl','*')) + glob(os.path.join(d,'mkl*'))
+            for d in dirs:
+                if os.path.isdir(os.path.join(d,'lib')):
+                    return d
+        return None
+
+    def __init__(self):
+        mklroot = self.get_mkl_rootdir()
+        if mklroot is None:
+            system_info.__init__(self)
+        else:
+            from cpuinfo import cpu
+            if cpu.is_Itanium():
+                plt = '64'
+                l = 'mkl_ipf'
+            elif cpu.is_Xeon():
+                plt = 'em64t'
+                l = 'mkl_em64t'
+            else:
+                plt = '32'
+                l = 'mkl_ia32'
+            if l not in self._lib_mkl:
+                self._lib_mkl.insert(0,l)
+            system_info.__init__(self,
+                                 default_lib_dirs=[os.path.join(mklroot,'lib',plt)],
+                                 default_include_dirs=[os.path.join(mklroot,'include')])
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        incl_dirs = self.get_include_dirs()
+        mkl_libs = self.get_libs('mkl_libs',self._lib_mkl)
+        mkl = None
+        for d in lib_dirs:
+            mkl = self.check_libs2(d,mkl_libs)
+            if mkl is not None:
+                break
+        if mkl is None:
+            return
+        info = {}
+        dict_append(info,**mkl)
+        dict_append(info,libraries = ['pthread'], include_dirs = incl_dirs)
+        self.set_info(**info)
+
+class lapack_mkl_info(mkl_info):
+
+    def calc_info(self):
+        mkl = get_info('mkl')
+        if not mkl:
+            return
+        lapack_libs = self.get_libs('lapack_libs',['mkl_lapack'])
+        info = {'libraries': lapack_libs}
+        dict_append(info,**mkl)
+        self.set_info(**info)
+
+class blas_mkl_info(mkl_info):
+    pass
 
 class atlas_info(system_info):
     section = 'atlas'
@@ -971,6 +1059,11 @@ class lapack_opt_info(system_info):
                               define_macros=[('NO_ATLAS_INFO',3)])
                 return
 
+        lapack_mkl_info = get_info('lapack_mkl')
+        if lapack_mkl_info:
+            self.set_info(**lapack_mkl_info)
+            return
+
         atlas_info = get_info('atlas_threads')
         if not atlas_info:
             atlas_info = get_info('atlas')
@@ -1054,6 +1147,11 @@ class blas_opt_info(system_info):
                               extra_link_args=link_args,
                               define_macros=[('NO_ATLAS_INFO',3)])
                 return
+
+        blas_mkl_info = get_info('blas_mkl')
+        if blas_mkl_info:
+            self.set_info(**blas_mkl_info)
+            return
 
         atlas_info = get_info('atlas_blas_threads')
         if not atlas_info:

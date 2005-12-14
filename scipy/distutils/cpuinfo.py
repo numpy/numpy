@@ -191,6 +191,7 @@ class linux_cpuinfo(cpuinfo_base):
         return re.match(r'.*?XEON\b',
                         self.info[0]['model name']) is not None
 
+    _is_Xeon = _is_XEON
 
     # Varia
 
