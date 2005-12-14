@@ -4277,7 +4277,7 @@ array_struct_get(PyArrayObject *self)
         inter->flags = self->flags;
         /* reset unused flags */
 	inter->flags &= ~(UPDATEIFCOPY | OWNDATA);  
-	if (!PyArray_ISNOTSWAPPED(self)) inter->flags |= NOTSWAPPED;
+	if (PyArray_ISNOTSWAPPED(self)) inter->flags |= NOTSWAPPED;
         inter->strides = self->strides;
         inter->shape = self->dimensions;
         inter->data = self->data;
@@ -5248,9 +5248,11 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
 
 	mpd = mp->descr;
 
-	if (((mpd == at) || ((mpd->type_num == at->type_num) && 
-			     ((mpd->elsize == at->elsize) ||	\
-			      (at->elsize==0)))) &&		\
+	if (((mpd == at) || ((mpd->type_num == at->type_num) &&		\
+			     PyArray_EquivByteorders(mpd->byteorder,\
+						     at->byteorder) &&	\
+			     ((mpd->elsize == at->elsize) ||		\
+			      (at->elsize==0)))) &&			\
 	    PyArray_ISBEHAVED_RO(mp)) {
 		Py_DECREF(at);
 		Py_INCREF(mp);

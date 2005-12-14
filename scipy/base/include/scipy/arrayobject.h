@@ -1315,6 +1315,9 @@ typedef struct {
 #define PyArray_EquivalentTypenums(typenum1, typenum2)			\
 	PyArray_EquivalentTypes(PyArray_DescrFromType(typenum1),	\
 				PyArray_DescrFromType(typenum2))
+
+#define PyArray_EquivByteorders(b1, b2) \
+	((b1 == b2) || (PyArray_ISNBO(b1) == PyArray_ISNBO(b2)))
 	
 #define PyArray_SimpleNew(nd, dims, typenum) \
 	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
