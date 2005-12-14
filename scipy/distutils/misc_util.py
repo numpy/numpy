@@ -861,17 +861,19 @@ def get_cmd(cmdname,_cache={}):
     return _cache[cmdname]
 
 def get_scipy_include_dirs():
+    # scipy_include_dirs are set by scipy/base/setup.py, otherwise []
     include_dirs = Configuration.scipy_include_dirs[:]
     if not include_dirs:
-        import scipy.base as base
-        include_dirs.append(os.path.join(os.path.dirname(base.__file__),'include'))
-        #from distutils.sysconfig import get_python_inc
-        #prefix = []
-        #for name in scipy.__file__.split(os.sep):
-        #    if name=='lib':
-        #        break
-        #    prefix.append(name)
-        #include_dirs.append(get_python_inc(prefix=os.sep.join(prefix)))
+        import scipy
+        if scipy.show_core_config is None:
+            # running from scipy_core source directory
+            include_dirs.append(os.path.join(os.path.dirname(scipy.__file__),
+                                             'base','include'))
+        else:
+            # using installed scipy core headers
+            import scipy.base as base
+            include_dirs.append(os.path.join(os.path.dirname(base.__file__),'include'))
+    # else running scipy/base/setup.py
     return include_dirs
 
 #########################
