@@ -232,7 +232,7 @@ class linux_cpuinfo(cpuinfo_base):
             return 1
         if self.info[0]['uname_m']=='x86_64':
             return 1
-        if self.info.get('arch','')=='IA-64':
+        if self.info[0].get('arch','')=='IA-64':
             return 1
         return 0
 
