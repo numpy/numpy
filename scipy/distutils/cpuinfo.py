@@ -185,7 +185,7 @@ class linux_cpuinfo(cpuinfo_base):
 
     def _is_Itanium(self):
         return re.match(r'.*?Itanium\b',
-                        self.info[0]['model name']) is not None
+                        self.info[0]['family']) is not None
 
     def _is_XEON(self):
         return re.match(r'.*?XEON\b',
@@ -231,6 +231,8 @@ class linux_cpuinfo(cpuinfo_base):
         if self.info[0].get('clflush size','')=='64':
             return 1
         if self.info[0]['uname_m']=='x86_64':
+            return 1
+        if self.info.get('arch','')=='IA-64':
             return 1
         return 0
 
