@@ -641,7 +641,6 @@ gentype_flags_get(PyObject *self)
 {
 	static int flags=CONTIGUOUS | OWNDATA | FORTRAN | ALIGNED | \
 		NOTSWAPPED;
-        static PyObject *module=NULL;
 
 	if (PyArray_IsScalar(self, Void)) {
 		PyObject *ap, *res;
@@ -651,11 +650,7 @@ gentype_flags_get(PyObject *self)
 		return res;
 	}
 
-        if (module==NULL) {
-                module = PyImport_ImportModule("scipy.base._internal");
-                if (module == NULL) return NULL;
-        }
-        return PyObject_CallMethod(module, "flagsobj", "Oii", 
+        return PyObject_CallMethod(_scipy_internal, "flagsobj", "Oii", 
                                    self, flags, 1);
 
 }

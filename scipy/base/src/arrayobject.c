@@ -3912,13 +3912,7 @@ array_ndim_get(PyArrayObject *self)
 static PyObject *
 array_flags_get(PyArrayObject *self)
 {
-        static PyObject *module=NULL;
-
-        if (module==NULL) {
-                module = PyImport_ImportModule("scipy.base._internal");
-                if (module == NULL) return NULL;
-        }
-        return PyObject_CallMethod(module, "flagsobj", "Oii", 
+        return PyObject_CallMethod(_scipy_internal, "flagsobj", "Oii", 
                                    self, self->flags, 0);
 }
 
@@ -7986,7 +7980,6 @@ static PyObject *
 arraydescr_protocol_descr_get(PyArray_Descr *self)
 {
 	PyObject *dobj, *res;
-	static PyObject *module=NULL;
 
 	if (self->fields == NULL || self->fields == Py_None) {
 		/* get default */
@@ -8001,12 +7994,8 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
 		return res;
 	}
 
-        if (module==NULL) {
-                module = PyImport_ImportModule("scipy.base._internal");
-                if (module == NULL) return NULL;
-        }
-
-        return PyObject_CallMethod(module, "_array_descr", "O", self);
+        return PyObject_CallMethod(_scipy_internal, "_array_descr", 
+				   "O", self);
 }
 
 /* returns 1 for a builtin type
@@ -8045,6 +8034,7 @@ static PyGetSetDef arraydescr_getsets[] = {
 
 static PyArray_Descr *_convert_from_list(PyObject *obj, int align);
 static PyArray_Descr *_convert_from_dict(PyObject *obj, int align);
+static PyArray_Descr *_convert_from_commastring(PyObject *obj, int align);
 
 static PyObject *
 arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
@@ -8063,6 +8053,13 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 			return (PyObject *)_convert_from_dict(odescr, 1);
 		if PyList_Check(odescr) 
 			return (PyObject *)_convert_from_list(odescr, 1);
+		if PyString_Check(odescr)
+			return (PyObject *)_convert_from_commastring(odescr, 
+								     1);
+		PyErr_SetString(PyExc_ValueError, 
+				"align can only be non-zero for"	\
+				"dictionary, list, and string objects.");
+		return NULL;
 	}
 	if (!PyArray_DescrConverter(odescr, &conv)) 
 		return NULL;

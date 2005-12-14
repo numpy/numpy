@@ -27,6 +27,7 @@
 #define PyAO PyArrayObject
 
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
+static PyObject *_scipy_internal=NULL; /* A Python module for callbacks */
 
 
 static PyArray_Descr *
@@ -3068,6 +3069,32 @@ _convert_from_list(PyObject *obj, int align)
 }
 
 
+/* comma-separated string */
+/* this is the format developed by the numarray records module */
+/* and implemented by the format parser in that module */
+/* this is an alternative implementation found in the _internal.py 
+   file patterned after that one -- the approach is to try to convert 
+   to a list (with tuples if any repeat information is present) 
+   and then call the _convert_from_list)
+*/
+
+static PyArray_Descr *
+_convert_from_commastring(PyObject *obj, int align)
+{
+	PyObject *listobj;
+	PyArray_Descr *res;
+
+	if (!PyString_Check(obj)) return NULL;
+        listobj = PyObject_CallMethod(_scipy_internal, "_commastring",
+				      "O", obj);
+	if (!listobj) return NULL;
+	res = _convert_from_list(listobj, align);
+	Py_DECREF(listobj);
+	return res;
+}
+
+
+
 /* a dictionary specifying a data-type
    must have at least two and up to four
    keys These must all be sequences of the same length.
@@ -3103,13 +3130,8 @@ then it will be checked for conformity and used directly.
 static PyArray_Descr *
 _use_fields_dict(PyObject *obj)
 {
-        static PyObject *module=NULL;
-
-        if (module==NULL) {
-                module = PyImport_ImportModule("scipy.base._internal");
-                if (module == NULL) return NULL;
-        }
-        return (PyArray_Descr *)PyObject_CallMethod(module, "_usefields", 
+        return (PyArray_Descr *)PyObject_CallMethod(_scipy_internal, 
+						    "_usefields", 
 						    "O", obj);
 }
 
@@ -3317,21 +3339,34 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	if (PyString_Check(obj)) {
 		/* Check for a string typecode. */
 		type = PyString_AS_STRING(obj);
-		len = PyString_GET_SIZE(obj);		
+		len = PyString_GET_SIZE(obj);
 		if (len > 0) {
 			check_num = (int) type[0];
 		}
 		if (len > 1) {
 			elsize = atoi(type+1);
+			if (len > 2 && elsize < 10) {
+				/* perhaps commas present */
+				int i;
+				for (i=1;i<len && type[i]!=',';i++);
+				if (i < len) {
+					/* see if it can be converted from 
+					   a comma-separated string */
+					*at = _convert_from_commastring(obj, 
+									0);
+					if (*at) return PY_SUCCEED;
+					else return PY_FAIL;
+				}
+			}
+			if (elsize == 0) {
+				check_num = PyArray_NOTYPE+10;
+			}
 			/* When specifying length of UNICODE
 			   the number of characters is given to match 
 			   the STRING interface.  Each character can be
 			   more than one byte and itemsize must be
 			   the number of bytes.
 			*/
-			if (elsize == 0) {
-				check_num = PyArray_NOTYPE+10;
-			}
 			else if (check_num == PyArray_UNICODELTR) {
 				elsize *= sizeof(Py_UNICODE);
 			}
@@ -4883,9 +4918,11 @@ DL_EXPORT(void) initmultiarray(void) {
 	*/
         set_flaginfo(d);
 
-	if (set_typeinfo(d) == 0) 
-                return;  /* otherwise there is an error */
+	if (set_typeinfo(d) != 0) goto err;
 
+	_scipy_internal =						\
+		PyImport_ImportModule("scipy.base._internal");
+	if (_scipy_internal != NULL) return;
 
  err:	
 	/* Check for errors */

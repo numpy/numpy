@@ -5,6 +5,8 @@ import numerictypes as nt
 import sys
 import types
 import re, stat, os
+import _internal
+
 
 _sysbyte = sys.byteorder
 _byteorders = ['big','little']
@@ -13,7 +15,6 @@ _byteorders = ['big','little']
 # allows multidimension spec with a tuple syntax in front 
 # of the letter code '(2,3)f4' and ' (  2 ,  3  )  f4  ' 
 # are equally allowed
-format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[A-Za-z0-9.]*)')
 
 numfmt = nt.typeDict
 _typestr = nt._typestr
@@ -27,40 +28,6 @@ def find_duplicate(list):
                 dup.append(list[i])
     return dup
 
-def _split(input):
-    """Split the input formats string into field formats without splitting 
-       the tuple used to specify multi-dimensional arrays."""
-
-    newlist = []
-    hold = ''
-
-    for element in input.split(','):
-        if hold != '':
-            item = hold + ',' + element
-        else:
-            item = element
-        left = item.count('(')
-        right = item.count(')')
-
-        # if the parenthesis is not balanced, hold the string
-        if left > right :
-            hold = item  
-
-        # when balanced, append to the output list and reset the hold
-        elif left == right:
-            newlist.append(item)
-            hold = ''
-
-        # too many close parenthesis is unacceptable
-        else:
-            raise SyntaxError, item
-
-    # if there is string left over in hold
-    if hold != '':
-        raise SyntaxError, hold
-
-    return newlist
-
 
 class format_parser:
     def __init__(self, formats, names, titles, aligned=False):
@@ -70,97 +37,13 @@ class format_parser:
 
     def _parseFormats(self, formats, aligned=0):
         """ Parse the field formats """
-
-        _alignment = nt._alignment
-        _bytes = nt.nbytes
-
-        if (type(formats) in [types.ListType, types.TupleType]):
-            _fmt = formats[:]
-        elif (type(formats) == types.StringType):
-            _fmt = _split(formats)
-        else:
-            raise NameError, "illegal input formats %s" % `formats`
-
-        self._nfields = len(_fmt)
-        self._repeats = [1] * self._nfields
-        self._itemsizes = [0] * self._nfields
-        self._sizes = [0] * self._nfields
-        stops = [0] * self._nfields
-        self._offsets = [0] * self._nfields
-        self._rec_aligned = aligned
-
-
-        # preserve the input for future reference
-        self._formats = [''] * self._nfields
-
-        # fields-compatible formats
-        self._f_formats = [''] * self._nfields
-                          
-        sum = 0
-        maxalign = 1
-        unisize = nt._unicodesize
-        for i in range(self._nfields):
-
-            # parse the formats into repeats and formats
-            try:
-                (_repeat, _dtype) = format_re.match(_fmt[i].strip()).groups()
-            except TypeError, AttributeError: 
-                raise ValueError('format %s is not recognized' % _fmt[i])
-
-            # Flexible types need special treatment
-            _dtype = _dtype.strip()
-            if _dtype[0] in ['V','S','U','a']:
-                self._itemsizes[i] = int(_dtype[1:])
-                if _dtype[0] == 'U':
-                    self._itemsizes[i] *= unisize
-                if _dtype[0] == 'a':
-                    _dtype = 'S'
-                else:
-                    _dtype = _dtype[0]
-
-            if _repeat == '': 
-                _repeat = 1
-            else: 
-                _repeat = eval(_repeat)
-            _fmt[i] = numfmt[_dtype]
-            if not issubclass(_fmt[i], nt.flexible):
-                self._itemsizes[i] = _bytes[_fmt[i]]
-            self._repeats[i] = _repeat
-
-            if (type(_repeat) in [types.ListType, types.TupleType]):
-                self._sizes[i] = self._itemsizes[i] * \
-                                 reduce(lambda x,y: x*y, _repeat)
-            else:
-                self._sizes[i] = self._itemsizes[i] * _repeat
-
-            sum += self._sizes[i]
-            if self._rec_aligned:
-                # round sum up to multiple of alignment factor
-                align = _alignment[_fmt[i]]
-                sum = ((sum + align - 1)/align) * align
-                maxalign = max(maxalign, align)
-            stops[i] = sum - 1
-
-            self._offsets[i] = stops[i] - self._sizes[i] + 1
-
-            # Unify the appearance of _format, independent of input formats
-            revfmt = _typestr[_fmt[i]]
-            self._f_formats[i] = revfmt
-            if issubclass(_fmt[i], nt.flexible):
-                if issubclass(_fmt[i], nt.unicode_):
-                    self._f_formats[i] += `self._itemsizes[i] / unisize`
-                else:
-                    self._f_formats[i] += `self._itemsizes[i]`
-
-            self._formats[i] = `_repeat`+self._f_formats[i]
-            if (_repeat != 1):
-                self._f_formats[i] = (self._f_formats[i], _repeat)
-                                            
-        self._fmt = _fmt
-        # This pads record so next record is aligned if self._rec_align is
-        #   true. Otherwise next the record starts right after the end
-        #   of the last one.
-        self._total_itemsize = (stops[-1]/maxalign + 1) * maxalign
+        
+        dtypedescr = sb.dtypedescr(formats, aligned)
+        fields = dtypedescr.fields
+        keys = fields[-1]
+        self._f_formats = [fields[key][0] for key in keys]
+        self._offsets = [fields[key][1] for key in keys]
+        self._nfields = len(keys)
 
     def _setfieldnames(self, names, titles):
         """convert input field names into a list and assign to the _names
@@ -249,16 +132,9 @@ class recarray(sb.ndarray):
 
         if isinstance(formats, sb.dtypedescr):
             descr = formats
-        elif isinstance(formats,str):
+        else:
             parsed = format_parser(formats, names, titles, aligned)
             descr = parsed._descr
-        else:
-            if aligned:
-                if not isinstance(formats, dict) and \
-                   not isinstance(formats, list):
-                    raise ValueError, "Can only deal with alignment"\
-                          "for list and dictionary type-descriptors."
-            descr = sb.dtypedescr(formats, aligned)
 
         if buf is None:
             self = sb.ndarray.__new__(subtype, shape, (record, descr))

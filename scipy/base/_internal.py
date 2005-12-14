@@ -2,6 +2,7 @@
 #A place for code to be called from C-code
 #  that implements more complicated stuff.
 
+import re
 from multiarray import _flagdict, dtypedescr, ndarray
 
 _defflags = _flagdict.keys()
@@ -301,3 +302,61 @@ def _array_descr(descriptor):
 
 def _reconstruct(subtype, shape, dtype):
     return ndarray.__new__(subtype, shape, dtype)
+
+
+format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[A-Za-z0-9.]*)')
+
+def _split(input):
+    """Split the input formats string into field formats without splitting 
+       the tuple used to specify multi-dimensional arrays."""
+
+    newlist = []
+    hold = ''
+
+    for element in input.split(','):
+        if hold != '':
+            item = hold + ',' + element
+        else:
+            item = element
+        left = item.count('(')
+        right = item.count(')')
+
+        # if the parenthesis is not balanced, hold the string
+        if left > right :
+            hold = item  
+
+        # when balanced, append to the output list and reset the hold
+        elif left == right:
+            newlist.append(item.strip())
+            hold = ''
+
+        # too many close parenthesis is unacceptable
+        else:
+            raise SyntaxError, item
+
+    # if there is string left over in hold
+    if hold != '':
+        raise SyntaxError, hold
+
+    return newlist
+
+# str is a string (perhaps comma separated)
+def _commastring(astr):
+    res = _split(astr)
+    if (len(res)) == 1:
+        raise ValueError, "no commas present"
+    result = []
+    for k,item in enumerate(res):
+        # convert item
+        try:
+            (repeats, dtype) = format_re.match(item).groups()
+        except TypeError, AttributeError: 
+            raise ValueError('format %s is not recognized' % item)
+        
+        if (repeats == ''):
+            newitem = dtype
+        else:
+            newitem = (dtype, eval(repeats))
+        result.append(newitem)
+
+    return result
