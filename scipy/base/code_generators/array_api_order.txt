@@ -58,4 +58,3 @@ PyArray_Broadcast
 PyArray_FillObjectArray
 PyArray_FillWithScalar
 PyArray_CheckStrides
-PyArray_IsNativeByteOrder

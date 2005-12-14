@@ -354,6 +354,8 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return Py_None;
 }
 
+/* This doesn't change the descriptor just the actual data...
+ */
 
 /*OBJECT_API*/
 static PyObject *
@@ -385,9 +387,6 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 			}
 			Py_DECREF(it);
 		}
-
-		if (self->flags & NOTSWAPPED) self->flags &= ~NOTSWAPPED;
-		else self->flags |= NOTSWAPPED;
 		
 		Py_INCREF(self);
 		return (PyObject *)self;
@@ -397,21 +396,14 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 			return NULL;
 		
 		size = PyArray_SIZE(self);
-		
-		/* set the NOTSWAPPED flag to opposite self */
-		/* ret is always notswapped, 
-		   PyArray_Copy has already swapped if self was swapped 
-		   to begin with so just correct the flag in that case. */
 
-		if (self->flags & NOTSWAPPED) {
-			ret->descr->f->copyswapn(ret->data, NULL, size, 1, 
-					      ret->descr->elsize);
-			ret->flags &= ~NOTSWAPPED;
-		}
-		else { /* self was swapped, so now ret isn't */
-			ret->flags |= NOTSWAPPED;
-		}
-		
+		/* now ret has the same dtypedescr as self (including
+		   byteorder)
+		*/
+
+		ret->descr->f->copyswapn(ret->data, NULL, size, 1, 
+					 ret->descr->elsize);
+
 		return (PyObject *)ret;
 	}
 }
@@ -856,7 +848,6 @@ array_reduce(PyArrayObject *self, PyObject *args)
 	PyObject *ret=NULL, *state=NULL, *obj=NULL, *mod=NULL;
 	PyObject *mybool, *thestr=NULL;
 	PyArray_Descr *descr;
-	char endian;
 
 	/* Return a tuple of (callable object, arguments, object's state) */
 	/*  We will put everything in the object's state, so that on UnPickle
@@ -895,22 +886,8 @@ array_reduce(PyArrayObject *self, PyObject *args)
 	}
 	PyTuple_SET_ITEM(state, 0, PyObject_GetAttrString((PyObject *)self, 
 							  "shape"));
-	endian = self->descr->byteorder;
-	if ((endian == '=') || (PyArray_ISNOTSWAPPED(self) !=		\
-				PyArray_IsNativeByteOrder(endian))) {
-		descr = PyArray_DescrNew(self->descr);
-		endian = '<';
-		if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
-		if (!PyArray_ISNOTSWAPPED(self)) {
-			if (endian == '<') endian = '>';
-			else endian = '<';
-		}
-		descr->byteorder = endian;
-	}
-	else {
-		descr = self->descr;
-		Py_INCREF(descr);
-	}
+	descr = self->descr;
+	Py_INCREF(descr);
 	PyTuple_SET_ITEM(state, 1, (PyObject *)descr);
 	mybool = (PyArray_ISFORTRAN(self) ? Py_True : Py_False);
 	Py_INCREF(mybool);
@@ -1041,8 +1018,6 @@ array_setstate(PyArrayObject *self, PyObject *args)
 			self->base = rawdata;
 			Py_INCREF(self->base);
 		}
-		if (!PyArray_IsNativeByteOrder(typecode->byteorder))
-			self->flags &= ~NOTSWAPPED;
 	}
 	else {
 		self->data = PyDataMem_NEW(PyArray_NBYTES(self));
@@ -1463,7 +1438,7 @@ array_ravel(PyArrayObject *self, PyObject *args)
 
 
 
-static char doc_setflags[] = "a.setflags(write=None, swap=None, align=None, uic=None)";
+static char doc_setflags[] = "a.setflags(write=None, align=None, uic=None)";
 
 static int _IsAligned(PyArrayObject *);
 static Bool _IsWriteable(PyArrayObject *);
@@ -1471,15 +1446,14 @@ static Bool _IsWriteable(PyArrayObject *);
 static PyObject *
 array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-	static char *kwlist[] = {"write", "swap", "align", "uic", NULL};
+	static char *kwlist[] = {"write", "align", "uic", NULL};
 	PyObject *write=Py_None;
-	PyObject *swap=Py_None;
 	PyObject *align=Py_None;
 	PyObject *uic=Py_None;
 	int flagback = self->flags;
 		
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOOO", kwlist,
-					 &write, &swap, &align, &uic))
+					 &write, &align, &uic))
 		return NULL;
 
 	if (align != Py_None) {
@@ -1525,12 +1499,6 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
                         self->flags &= ~WRITEABLE;
         }
         
-        if (swap != Py_None) {
-                if (PyObject_IsTrue(swap))
-                        self->flags &= ~NOTSWAPPED;
-                else 
-                        self->flags |= NOTSWAPPED;
-        }
         Py_INCREF(Py_None);
         return Py_None;
 }

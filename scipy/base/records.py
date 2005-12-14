@@ -133,16 +133,14 @@ class recarray(sb.ndarray):
         if isinstance(formats, sb.dtypedescr):
             descr = formats
         else:
-            parsed = format_parser(formats, names, titles, aligned)
+            parsed = format_parser(formats, names, titles, aligned, byteorder)
             descr = parsed._descr
 
         if buf is None:
             self = sb.ndarray.__new__(subtype, shape, (record, descr))
         else:
-            byteorder = byteorder.lower()
-            swap = ((byteorder != _sysbyte) and (byteorder in _byteorders))
             self = sb.ndarray.__new__(subtype, shape, (record, descr),
-                                      buffer=buf, offset=offset, swap=swap)
+                                      buffer=buf, offset=offset)
         return self
 
     def __getattribute__(self, attr):
@@ -318,7 +316,7 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
     except:
         size = os.path.getsize(fd.name) - fd.tell()
 
-    parsed = format_parser(formats, names, titles, aligned)
+    parsed = format_parser(formats, names, titles, aligned, byteorder)
     itemsize = parsed._descr.itemsize
 
     shapeprod = sb.array(shape).prod()
@@ -342,10 +340,6 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
         raise IOError("Didn't read as many bytes as expected")
     if name:
         fd.close()
-
-    # update swap flag if byteorder does not match
-    if ((byteorder != _sysbyte) and (byteorder in _byteorders)):
-        _array.flags.swapped=True
         
     return _array
 

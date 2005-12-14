@@ -885,7 +885,6 @@ typedef struct {
 #define ENSUREARRAY   0x040
 
 #define ALIGNED       0x100
-#define NOTSWAPPED    0x200
 #define WRITEABLE     0x400
 
 
@@ -901,8 +900,8 @@ typedef struct {
 #define PyArray_MIN_BUFSIZE 5
 #define PyArray_MAX_BUFSIZE 100000000
 
-#define BEHAVED_FLAGS ALIGNED | NOTSWAPPED | WRITEABLE
-#define BEHAVED_FLAGS_RO ALIGNED | NOTSWAPPED
+#define BEHAVED_FLAGS ALIGNED | WRITEABLE
+#define BEHAVED_FLAGS_RO ALIGNED 
 #define CARRAY_FLAGS CONTIGUOUS | BEHAVED_FLAGS
 #define CARRAY_FLAGS_RO CONTIGUOUS | BEHAVED_FLAGS_RO
 #define FARRAY_FLAGS FORTRAN | BEHAVED_FLAGS
@@ -923,14 +922,6 @@ typedef struct {
 #define PyArray_ISCONTIGUOUS(m) PyArray_CHKFLAGS(m, CONTIGUOUS)
 #define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, WRITEABLE)
 #define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, ALIGNED)
-
-#define PyArray_ISCARRAY(m) PyArray_CHKFLAGS(m, CARRAY_FLAGS)
-#define PyArray_ISCARRAY_RO(m) PyArray_CHKFLAGS(m, CARRAY_FLAGS_RO)
-#define PyArray_ISFARRAY(m) PyArray_CHKFLAGS(m, FARRAY_FLAGS)
-#define PyArray_ISFARRAY_RO(m) PyArray_CHKFLAGS(m, FARRAY_FLAGS_RO)
-#define PyArray_ISBEHAVED(m) PyArray_CHKFLAGS(m, BEHAVED_FLAGS)
-#define PyArray_ISBEHAVED_RO(m) PyArray_CHKFLAGS(m, BEHAVED_FLAGS_RO)
-
 
 #ifndef MAX
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -1221,10 +1212,29 @@ typedef struct {
 #define PyArray_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyArray_TYPE(obj))
 #define PyArray_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyArray_TYPE(obj))
 
-/* Object arrays ignore notswapped flag */
-#define PyArray_ISNOTSWAPPED(m) (PyArray_CHKFLAGS(m, NOTSWAPPED) || \
-				 PyArray_ISOBJECT(m))
+#ifdef WORDS_BIGENDIAN
+#define PyArray_NATIVEBYTE '>'
+#define PyArray_OPPOSITEBYTE '<'
+#define PyArray_IsNativeByteOrder(byteorder) (byteorder != '<')
+#define PyArray_ISNBO(byteorder) (byteorder != '<')
+#else
+#define PyArray_NATIVEBYTE '<'
+#define PyArray_OPPOSITEBYTE '>'
+#define PyArray_IsNativeByteOrder(byteorder) (byteorder != '>')
+#define PyArray_ISNBO(byteorder) (byteorder != '>')
+#endif
+#define PyArray_ISNOTSWAPPED(m) PyArray_ISNBO(PyArray_DESCR(m)->byteorder)
 
+#define PyArray_FLAGSWAP(m, flags) (PyArray_CHKFLAGS(m, flags) &&	\
+				    PyArray_ISNOTSWAPPED(m))
+#define PyArray_ISCARRAY(m) PyArray_FLAGSWAP(m, CARRAY_FLAGS)
+#define PyArray_ISCARRAY_RO(m) PyArray_FLAGSWAP(m, CARRAY_FLAGS_RO)
+#define PyArray_ISFARRAY(m) PyArray_FLAGSWAP(m, FARRAY_FLAGS)
+#define PyArray_ISFARRAY_RO(m) PyArray_FLAGSWAP(m, FARRAY_FLAGS_RO)
+#define PyArray_ISBEHAVED(m) PyArray_FLAGSWAP(m, BEHAVED_FLAGS)
+#define PyArray_ISBEHAVED_RO(m) PyArray_FLAGSWAP(m, BEHAVED_FLAGS_RO)
+
+	
 typedef struct {
         int version;          /* contains the integer 2 as a sanity check */
         int nd;               /* number of dimensions */
@@ -1235,6 +1245,7 @@ typedef struct {
         intp *strides;        /* A length-nd array of stride information */
         void *data;           /* A pointer to the first element of the array */
 } PyArrayInterface;
+#define NOTSWAPPED 0x200  /* part of the array interface */
 
         /* Includes the "function" C-API -- these are all stored in a 
 	   list of pointers --- one for each file

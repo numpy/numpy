@@ -639,21 +639,23 @@ gentype_ndim_get(PyObject *self)
 static PyObject *
 gentype_flags_get(PyObject *self)
 {
-	static int flags=CONTIGUOUS | OWNDATA | FORTRAN | ALIGNED | \
-		NOTSWAPPED;
-
-	if (PyArray_IsScalar(self, Void)) {
-		PyObject *ap, *res;
-		ap = PyArray_FromScalar(self, NULL);
-		res = PyObject_GetAttrString(ap, "flags");
-		Py_DECREF(ap);
-		return res;
-	}
+	static int flags=CONTIGUOUS | OWNDATA | FORTRAN | ALIGNED;
 
         return PyObject_CallMethod(_scipy_internal, "flagsobj", "Oii", 
                                    self, flags, 1);
-
 }
+
+static PyObject *
+voidtype_flags_get(PyObject *self)
+{
+	PyObject *ap, *res;
+
+	ap = PyArray_FromScalar(self, NULL);
+	res = PyObject_GetAttrString(ap, "flags");
+	Py_DECREF(ap);
+	return res;
+}
+
 
 static PyObject *
 gentype_shape_get(PyObject *self)
@@ -830,7 +832,7 @@ gentype_real_get(PyObject *self)
 
 	if (PyArray_IsScalar(self, ComplexFloating)) {
 		typecode = _realdescr_fromcomplexscalar(self, &typenum);
-		ret = PyArray_Scalar(_SOFFSET_(self, typenum), 0, typecode,
+		ret = PyArray_Scalar(_SOFFSET_(self, typenum), typecode,
 				     NULL);
 		Py_DECREF(typecode);
 		return ret;
@@ -855,7 +857,7 @@ gentype_imag_get(PyObject *self)
 	typecode = _realdescr_fromcomplexscalar(self, &typenum);
 	if (PyArray_IsScalar(self, ComplexFloating)) {
 		ret = PyArray_Scalar(_SOFFSET_(self, typenum)		\
-				     + typecode->elsize, 0, typecode, NULL);
+				     + typecode->elsize, typecode, NULL);
 	}
 	else if PyArray_IsScalar(self, Object) {
 		PyObject *obj = ((PyObjectScalarObject *)self)->obval;
@@ -865,7 +867,7 @@ gentype_imag_get(PyObject *self)
 			PyErr_Clear();
 			obj = PyInt_FromLong(0);
 			newtype = PyArray_DescrFromType(PyArray_OBJECT);
-			ret = PyArray_Scalar((char *)&obj, 0, newtype, NULL);
+			ret = PyArray_Scalar((char *)&obj, newtype, NULL);
 			Py_DECREF(newtype);
 			Py_DECREF(obj);
 		}
@@ -874,7 +876,7 @@ gentype_imag_get(PyObject *self)
 		char *temp;
 		temp = PyDataMem_NEW(typecode->elsize);
 		memset(temp, '\0', typecode->elsize);
-		ret = PyArray_Scalar(temp, 0, typecode, NULL);
+		ret = PyArray_Scalar(temp, typecode, NULL);
 		PyDataMem_FREE(temp);
 	}
 	
@@ -988,6 +990,7 @@ static PyGetSetDef gentype_getsets[] = {
        	{NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 
+
 /* 0-dim array from scalar object */
 
 static char doc_getarray[] = "sc.__array__(|type) return 0-dim array";
@@ -1023,8 +1026,7 @@ gentype_wraparray(PyObject *scalar, PyObject *args)
 		return NULL;
 	}
 
-	return PyArray_Scalar(PyArray_DATA(arr), !PyArray_ISNOTSWAPPED(arr),
-			      PyArray_DESCR(arr), arr);
+	return PyArray_Scalar(PyArray_DATA(arr), PyArray_DESCR(arr), arr);
 }
 
 
@@ -1079,7 +1081,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 		if (newmem == NULL) {Py_DECREF(descr); return PyErr_NoMemory();}
 		else memcpy(newmem, data, descr->elsize);
 		descr->f->copyswap(newmem, NULL, 1, descr->elsize);
-		new = PyArray_Scalar(newmem, 0, descr, NULL);
+		new = PyArray_Scalar(newmem, descr, NULL);
 		free(newmem);
 		Py_DECREF(descr);
 		return new;
@@ -1089,7 +1091,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 
 /**begin repeat
 
-#name=take, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress#
+#name=take, getfield, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress#
 */
 
 static PyObject *
@@ -1100,24 +1102,22 @@ gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 /**end repeat**/
 
 static PyObject *
-gentype_getfield(PyObject *self, PyObject *args, PyObject *kwds)
+voidtype_getfield(PyObject *self, PyObject *args, PyObject *kwds)
 {
 	PyObject *ret;
 
 	ret = gentype_generic_method(self, args, kwds, "getfield");
 	if (!ret) return ret;
-	if (PyArray_IsScalar(self, Void) && \
-	    PyArray_IsScalar(ret, Generic) &&	\
+	if (PyArray_IsScalar(ret, Generic) &&	\
 	    (!PyArray_IsScalar(ret, Void))) {
-		PyArray_Descr *descr;
-		if (!((((PyVoidScalarObject *)self)->flags &	\
-		       NOTSWAPPED) == NOTSWAPPED)) {
-			descr = PyArray_DescrFromScalar(ret);
-			if (descr->byteorder != '|') {
-				descr->f->copyswap(_SOFFSET_(ret, 
-							     descr->type_num),
-						   NULL, 1, descr->elsize);
-			}
+		PyArray_Descr *descr, *new;
+		descr = ((PyVoidScalarObject *)self)->descr;
+		if (!PyArray_ISNBO(descr->byteorder)) {
+			new = PyArray_DescrFromScalar(ret);
+			new->f->copyswap(_SOFFSET_(ret, 
+						   new->type_num),
+					 NULL, 1, new->elsize);
+			Py_DECREF(new);
 		}
 	}
 	return ret;
@@ -1126,6 +1126,15 @@ gentype_getfield(PyObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
 {
+	
+	PyErr_SetString(PyExc_TypeError, 
+			"Can't set fields in a non-void array scalar.");
+	return NULL;
+}	
+
+static PyObject *
+voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
+{
 	PyArray_Descr *typecode;
 	int offset = 0;
 	PyObject *value, *src;
@@ -1133,14 +1142,7 @@ gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
 	char *dptr;
 	static char *kwlist[] = {"value", "dtype", "offset", 0};
 	
-	if (!PyArray_IsScalar(self, Void)) {
-		PyErr_SetString(PyExc_TypeError, 
-				"Can't set fields in a "\
-				"non-void array scalar.");
-		return NULL;
-	}
-
-	if ((((PyVoidScalarObject *)self)->flags & WRITEABLE) != WRITEABLE) {
+	if ((self->flags & WRITEABLE) != WRITEABLE) {
 		PyErr_SetString(PyExc_RuntimeError,
 				"Can't write to memory");
 		return NULL;
@@ -1150,7 +1152,7 @@ gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
 					 PyArray_DescrConverter, 
 					 &typecode, &offset)) return NULL;
 
-	mysize = ((PyVoidScalarObject *)self)->ob_size;
+	mysize = self->ob_size;
 	
 	if (offset < 0 || (offset + typecode->elsize) > mysize) {
 		PyErr_Format(PyExc_ValueError,
@@ -1161,18 +1163,19 @@ gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
 		return NULL;
 	}	
 
-	dptr = ((PyVoidScalarObject *)self)->obval + offset;
+	dptr = self->obval + offset;
 
 	/* Copy data from value to correct place in dptr */
         src = PyArray_FromAny(value, typecode, 0, 0, CARRAY_FLAGS);
         if (src == NULL) return NULL;
 	typecode->f->copyswap(dptr, PyArray_DATA(src), 
-			   !(((PyVoidScalarObject *)self)->flags & NOTSWAPPED),
-			   PyArray_ITEMSIZE(src));
+			      !PyArray_ISNBO(self->descr->byteorder),
+			      PyArray_ITEMSIZE(src));
 	Py_DECREF(src);
 	Py_INCREF(Py_None);
 	return Py_None;
 }
+
 
 static PyObject *
 gentype_reduce(PyObject *self, PyObject *args)
@@ -1360,6 +1363,23 @@ static PyMethodDef gentype_methods[] = {
 	 METH_VARARGS|METH_KEYWORDS, NULL},
 	/* add other methods!!! */
         {NULL,		NULL}		/* sentinel */
+};
+
+
+static PyGetSetDef voidtype_getsets[] = {
+        {"flags", 
+	 (getter)voidtype_flags_get, 
+	 (setter)0, 
+	 "integer value of flags"},
+	{NULL, NULL}
+};
+
+static PyMethodDef voidtype_methods[] = {
+	{"getfield", (PyCFunction)voidtype_getfield, 
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{"setfield", (PyCFunction)voidtype_setfield, 
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{NULL, NULL}
 };
 
 static int
@@ -1748,7 +1768,9 @@ initialize_numeric_types(void)
 	PyGenericArrType_Type.tp_as_buffer = &gentype_as_buffer;
 	PyGenericArrType_Type.tp_flags = BASEFLAGS;
 	PyGenericArrType_Type.tp_methods = gentype_methods;
+	PyVoidArrType_Type.tp_methods = voidtype_methods;
 	PyGenericArrType_Type.tp_getset = gentype_getsets;
+	PyVoidArrType_Type.tp_getset = voidtype_getsets;
 	PyGenericArrType_Type.tp_new = NULL;
         PyGenericArrType_Type.tp_alloc = gentype_alloc;
 	PyStringArrType_Type.tp_alloc = NULL;
@@ -1758,6 +1780,7 @@ initialize_numeric_types(void)
 	PyGenericArrType_Type.tp_str = gentype_str;
 	PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
 
+	
 	/**begin repeat
 #NAME=Numeric, Integer, SignedInteger, UnsignedInteger, Inexact, Floating, 
 ComplexFloating, Flexible, Character#
