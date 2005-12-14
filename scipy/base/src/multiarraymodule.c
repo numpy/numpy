@@ -3128,11 +3128,11 @@ then it will be checked for conformity and used directly.
 */
 
 static PyArray_Descr *
-_use_fields_dict(PyObject *obj)
+_use_fields_dict(PyObject *obj, int align)
 {
         return (PyArray_Descr *)PyObject_CallMethod(_scipy_internal, 
 						    "_usefields", 
-						    "O", obj);
+						    "Oi", obj, align);
 }
 
 static PyArray_Descr *
@@ -3153,7 +3153,7 @@ _convert_from_dict(PyObject *obj, int align)
 
 	if (!names || !descrs) {
 		Py_DECREF(fields);
-		return _use_fields_dict(obj);
+		return _use_fields_dict(obj, align);
 	}
 	n = PyObject_Length(names);
 	offsets = PyDict_GetItemString(obj, "offsets");
@@ -3286,7 +3286,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	int len;
 	PyObject *item;
 	int elsize = 0;
-
+	char endian = '=';
 
 	*at=NULL;
 	
@@ -3295,7 +3295,6 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		*at = PyArray_DescrFromType(PyArray_LONG);
 		return PY_SUCCEED;
 	}
-
 	
 	if (PyArray_DescrCheck(obj)) {
 		*at = (PyArray_Descr *)obj;
@@ -3340,8 +3339,15 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		/* Check for a string typecode. */
 		type = PyString_AS_STRING(obj);
 		len = PyString_GET_SIZE(obj);
-		if (len > 0) {
+		if (len <= 0) goto fail;
+		check_num = (int) type[0];
+		if ((char) check_num == '>' || (char) check_num == '<' || \
+		    (char) check_num == '|') {
+			if (len <= 1) goto fail;
+			endian = (char) check_num;
+			type++; len--;
 			check_num = (int) type[0];
+			if (endian == '|') endian = '=';
 		}
 		if (len > 1) {
 			elsize = atoi(type+1);
@@ -3429,6 +3435,10 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	if (((*at)->elsize == 0) && (elsize != 0)) {
 		PyArray_DESCR_REPLACE(*at);
 		(*at)->elsize = elsize;
+	}
+	if (endian != '=') {
+		PyArray_DESCR_REPLACE(*at);
+		(*at)->byteorder = endian;
 	}
 	
         return PY_SUCCEED;

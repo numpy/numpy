@@ -7944,6 +7944,7 @@ static PyMemberDef arraydescr_members[] = {
 	{"dtypekind", T_CHAR, offsetof(PyArray_Descr, kind), RO, NULL},
 	{"dtypechar", T_CHAR, offsetof(PyArray_Descr, type), RO, NULL},
 	{"dtypenum", T_INT, offsetof(PyArray_Descr, type_num), RO, NULL},
+	{"byteorder", T_CHAR, offsetof(PyArray_Descr, byteorder), RO, NULL},
 	{"itemsize", T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
 	{"alignment", T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
 	{"fields", T_OBJECT, offsetof(PyArray_Descr, fields), RO, NULL},

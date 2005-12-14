@@ -204,7 +204,7 @@ class flagsobj(dict):
 # Called in PyArray_DescrConverter function when
 #  a dictionary without "names" and "formats"
 #  fields is used as a data-type descriptor.
-def _usefields(adict):
+def _usefields(adict, align):
     try:
         names = adict[-1]
     except KeyError:
@@ -252,7 +252,7 @@ def _usefields(adict):
     return dtypedescr({"names" : names,
                        "formats" : formats,
                        "offsets" : offsets,
-                       "titles" : titles})
+                       "titles" : titles}, align)
 
 
 # construct an array_protocol descriptor list
@@ -264,7 +264,7 @@ def _usefields(adict):
 def _array_descr(descriptor):
     fields = descriptor.fields
     if fields is None:
-        return descriptor.arrtypestr
+        return descriptor.dtypestr
 
     #get ordered list of fields with names
     ordered_fields = fields.items()
@@ -304,7 +304,8 @@ def _reconstruct(subtype, shape, dtype):
     return ndarray.__new__(subtype, shape, dtype)
 
 
-format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[A-Za-z0-9.]*)')
+# format_re and _split were taken from numarray by J. Todd Miller
+format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[><|A-Za-z0-9.]*)')
 
 def _split(input):
     """Split the input formats string into field formats without splitting 

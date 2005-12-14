@@ -317,6 +317,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 			if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, 
 					      &title)) {
 				Py_DECREF(ret); 
+				ap->descr = descr;
 				return NULL;
 			}
 			ap->descr = new;
@@ -326,11 +327,12 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 				ap->flags &= ~ALIGNED;
 			else
 				ap->flags |= ALIGNED;
+
 			PyTuple_SET_ITEM(ret, i,			\
 					 new->f->getitem(ip+offset, ap));
+			ap->flags = savedflags;
 		}
 		ap->descr = descr;
-		ap->flags = savedflags;
 		return ret;
 	}
 
@@ -404,6 +406,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 			tup = PyDict_GetItem(descr->fields, key);
 			if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, 
 					      &title)) {
+				ap->descr = descr;
 				return -1;
 			}
 			ap->descr = new;
@@ -413,12 +416,13 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 				ap->flags &= ~ALIGNED;
 			else
 				ap->flags |= ALIGNED;
+
 			ret = new->f->setitem(PyTuple_GET_ITEM(op, i),
 					      ip+offset, ap);
+			ap->flags = savedflags;
 			if (ret < 0) break;
 		}
 		ap->descr = descr;
-		ap->flags = savedflags;
 		return ret;
 	}
 

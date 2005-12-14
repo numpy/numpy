@@ -279,7 +279,8 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 				   self->flags, (PyObject *)self);
 	if (ret == NULL) return NULL;
 	Py_INCREF(self);
-	((PyArrayObject *)ret)->base = (PyObject *)self; 	
+	((PyArrayObject *)ret)->base = (PyObject *)self; 
+
 	PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
 	return ret;
 }
