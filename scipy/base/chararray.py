@@ -1,6 +1,7 @@
 from numerictypes import character, string, unicode_, \
      obj2dtype, integer, object_
-from numeric import ndarray, broadcast, empty, array
+from numeric import ndarray, broadcast, empty
+from numeric import array as narray
 import sys
 
 __all__ = ['chararray']
@@ -316,7 +317,7 @@ def array(obj, itemlen=7, copy=True, unicode=False, fortran=False):
     else:
         dtype = "S%d" % itemlen
 
-    val = array(obj, dtype=dtype, fortran=fortran, subok=1)
+    val = narray(obj, dtype=dtype, fortran=fortran, subok=1)
     
     return chararray(val.shape, itemlen, unicode, buffer=val,
                      strides=val.strides, 

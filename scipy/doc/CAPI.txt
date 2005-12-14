@@ -164,7 +164,6 @@ requires can be any of
   CONTIGUOUS, 
   FORTRAN, 
   ALIGNED, 
-  NOTSWAPPED, 
   WRITEABLE, 
   ENSURECOPY, 
   ENSUREARRAY,
@@ -178,11 +177,11 @@ requires can be any of
    won't guarantee it -- it will depend on the object as to whether or 
    not it has such features. 
 
-   Note that ENSURECOPY is enough to guarantee CONTIGUOUS, ALIGNED, NOTSWAPPED, 
+   Note that ENSURECOPY is enough to guarantee CONTIGUOUS, ALIGNED,
    and WRITEABLE and therefore it is redundant to include those as well. 
 
-   BEHAVED_FLAGS == ALIGNED | NOTSWAPPED | WRITEABLE
-   BEHAVED_FLAGS_RO == ALIGNED | NOTSWAPPED
+   BEHAVED_FLAGS == ALIGNED | WRITEABLE
+   BEHAVED_FLAGS_RO == ALIGNED 
    CARRAY_FLAGS = CONTIGUOUS | BEHAVED_FLAGS
    FARRAY_FLAGS = FORTRAN | BEHAVED_FLAGS
    
@@ -276,9 +275,6 @@ array, or part of some larger record array.  But, they may have other uses...
 
 ALIGNED     :  True if the data buffer is aligned for the type.  This
 	        can be checked.
-NOTSWAPPED  :  True if the data is in machine byte order.  Arrays
-	        can be out of machine byte order and will still 
-		work (albeit more slowly). 
 WRITEABLE   :  True only if the data buffer can be "written" to.
 
 
@@ -302,16 +298,18 @@ PyArray_UpdateFlags(obj, FLAGS) will update the obj->flags for FLAGS
 
 Some useful combinations of these flags:
 
-BEHAVED = ALIGNED | NOTSWAPPED | WRITEABLE
-BEHAVED_RO = ALIGNED | NOTSWAPPED
+BEHAVED = ALIGNED | WRITEABLE
+BEHAVED_RO = ALIGNED 
 CARRAY_FLAGS = CONTIGUOUS | BEHAVED
 FARRAY_FLAGS = FORTRAN | BEHAVED
-
 
 The macro PyArray_CHECKFLAGS(obj, FLAGS)  can test any combination of flags.
 There are several default combinations defined as macros already 
 (see arrayobject.h) 
 
+In particular, there are ISBEHAVED, ISBEHAVED_RO, ISCARRAY and ISFARRAY macros 
+that also check to make sure the array is in native byte order (as determined)
+by the data-type descriptor. 
 
 There are more C-API enhancements which you can discover in the code, 
       or buy the book (http://www.trelgol.com)

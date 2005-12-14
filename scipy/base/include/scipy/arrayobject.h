@@ -1212,17 +1212,22 @@ typedef struct {
 #define PyArray_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyArray_TYPE(obj))
 #define PyArray_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyArray_TYPE(obj))
 
+#define PyArray_LITTLE '<'
+#define PyArray_BIG '>'
+#define PyArray_NATIVE '='
+#define PyArray_SWAP 's'
+#define PyArray_IGNORE '|'
+
 #ifdef WORDS_BIGENDIAN
-#define PyArray_NATIVEBYTE '>'
-#define PyArray_OPPOSITEBYTE '<'
-#define PyArray_IsNativeByteOrder(byteorder) (byteorder != '<')
-#define PyArray_ISNBO(byteorder) (byteorder != '<')
+#define PyArray_NATBYTE PyArray_BIG
+#define PyArray_OPPBYTE PyArray_LITTLE
 #else
-#define PyArray_NATIVEBYTE '<'
-#define PyArray_OPPOSITEBYTE '>'
-#define PyArray_IsNativeByteOrder(byteorder) (byteorder != '>')
-#define PyArray_ISNBO(byteorder) (byteorder != '>')
+#define PyArray_NATBYTE PyArray_LITTLE
+#define PyArray_OPPBYTE PyArray_BIG
 #endif
+
+#define PyArray_ISNBO(arg) ((arg) != PyArray_OPPBYTE)
+#define PyArray_IsNativeByteOrder PyArray_ISNBO
 #define PyArray_ISNOTSWAPPED(m) PyArray_ISNBO(PyArray_DESCR(m)->byteorder)
 
 #define PyArray_FLAGSWAP(m, flags) (PyArray_CHKFLAGS(m, flags) &&	\

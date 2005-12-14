@@ -921,7 +921,7 @@ static intp _array_fill_strides(intp *, intp *, int, intp, int, int *);
 
 static int _IsAligned(PyArrayObject *); 
 
-static PyArray_Descr * _array_typedescr_fromstr(char *, int *);
+static PyArray_Descr * _array_typedescr_fromstr(char *);
 
 static PyObject *
 array_setstate(PyArrayObject *self, PyObject *args)
@@ -1503,6 +1503,24 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return Py_None;
 }
 
+static char doc_newbyteorder[] = "a.newbyteorder(<byteorder>) is equivalent\n" \
+	" to a.view(a.dtypedescr.newbytorder(<byteorder>))\n";
+
+static PyObject *
+array_newbyteorder(PyArrayObject *self, PyObject *args) 
+{
+	char endian = PyArray_SWAP;
+	PyArray_Descr *new;
+	
+	if (!PyArg_ParseTuple(args, "|O&", PyArray_ByteorderConverter,
+			      &endian)) return NULL;
+
+	new = PyArray_DescrNewByteorder(self->descr, endian);
+	if (!new) return NULL;
+	return _ARET(PyArray_View(self,	new));
+
+}
+
 static PyMethodDef array_methods[] = {
         {"tolist",	 (PyCFunction)array_tolist,	1, doc_tolist},
         {"toscalar", (PyCFunction)array_toscalar, METH_VARARGS, doc_toscalar},
@@ -1612,6 +1630,8 @@ static PyMethodDef array_methods[] = {
 	 METH_VARARGS, doc_ravel},
 	{"setflags", (PyCFunction)array_setflags,
 	 METH_VARARGS|METH_KEYWORDS, doc_setflags},
+	{"newbyteorder", (PyCFunction)array_newbyteorder,
+	 METH_VARARGS, doc_newbyteorder},
         {NULL,		NULL}		/* sentinel */
 };
 

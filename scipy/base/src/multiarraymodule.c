@@ -3453,6 +3453,39 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	return PY_FAIL;
 }	
 
+/*MULTIARRAY_API
+  Convert object to endian
+*/
+static int
+PyArray_ByteorderConverter(PyObject *obj, char *endian)
+{
+	char *str;
+	*endian = PyArray_SWAP;
+	str = PyString_AsString(obj);
+	if (!str) return PY_FAIL;
+	if (strlen(str) < 1) {
+		PyErr_SetString(PyExc_ValueError, 
+				"Byteorder string must be at least length 1");
+		return PY_FAIL;
+	}
+	*endian = str[0];
+	if (str[0] != PyArray_BIG && str[0] != PyArray_LITTLE &&	\
+	    str[0] != PyArray_NATIVE) {
+		if (str[0] == 'b' || str[0] == 'B')
+			*endian = PyArray_BIG;
+		else if (str[0] == 'l' || str[0] == 'L')
+			*endian = PyArray_LITTLE;
+		else if (str[0] == 'n' || str[0] == 'N')
+			*endian = PyArray_NATIVE;
+		else {
+			PyErr_Format(PyExc_ValueError, 
+				     "%s is an unrecognized byteorder",
+				     str);
+			return PY_FAIL;
+		}
+	}
+	return PY_SUCCEED;
+}
 
 /* This function returns true if the two typecodes are 
    equivalent (same basic kind and same itemsize).

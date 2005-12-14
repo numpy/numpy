@@ -1032,7 +1032,7 @@ gentype_wraparray(PyObject *scalar, PyObject *args)
 
 /**begin repeat
 
-#name=tolist, toscalar, tostring, astype, copy, resize, __deepcopy__, choose, sort, argsort, searchsorted, argmax, argmin, reshape, view, swapaxes, max, min, ptp, conj, conjugate, nonzero, all, any, flatten, ravel, fill, transpose#
+#name=tolist, toscalar, tostring, astype, copy, resize, __deepcopy__, choose, sort, argsort, searchsorted, argmax, argmin, reshape, view, swapaxes, max, min, ptp, conj, conjugate, nonzero, all, any, flatten, ravel, fill, transpose, newbyteorder#
 */
 
 static PyObject *
@@ -1102,17 +1102,16 @@ gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 /**end repeat**/
 
 static PyObject *
-voidtype_getfield(PyObject *self, PyObject *args, PyObject *kwds)
+voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 {
 	PyObject *ret;
 
-	ret = gentype_generic_method(self, args, kwds, "getfield");
+	ret = gentype_generic_method((PyObject *)self, args, kwds, "getfield");
 	if (!ret) return ret;
 	if (PyArray_IsScalar(ret, Generic) &&	\
 	    (!PyArray_IsScalar(ret, Void))) {
-		PyArray_Descr *descr, *new;
-		descr = ((PyVoidScalarObject *)self)->descr;
-		if (!PyArray_ISNBO(descr->byteorder)) {
+		PyArray_Descr *new;
+		if (!PyArray_ISNBO(self->descr->byteorder)) {
 			new = PyArray_DescrFromScalar(ret);
 			new->f->copyswap(_SOFFSET_(ret, 
 						   new->type_num),
@@ -1361,7 +1360,8 @@ static PyMethodDef gentype_methods[] = {
 	 METH_VARARGS, NULL},
 	{"setflags", (PyCFunction)gentype_setflags,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
-	/* add other methods!!! */
+	{"newbyteorder", (PyCFunction)gentype_newbyteorder,
+	 METH_VARARGS, NULL},
         {NULL,		NULL}		/* sentinel */
 };
 
