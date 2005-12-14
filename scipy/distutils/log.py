@@ -4,7 +4,7 @@ import sys
 from distutils.log import *
 from distutils.log import Log as old_Log
 from distutils.log import _global_log
-from scipy.distutils.misc_util import red_text, yellow_text, cyan_text
+from misc_util import red_text, yellow_text, cyan_text
 
 
 def _fix_args(args,flag=1):
