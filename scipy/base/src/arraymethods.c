@@ -607,7 +607,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
 	}
 		
 	if ((newtype == NULL) || \
-	    PyArray_EquivalentTypes(self->descr, newtype)) {
+	    PyArray_EquivTypes(self->descr, newtype)) {
 		return (PyObject *)self;
 	}
 	else {

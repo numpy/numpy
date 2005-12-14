@@ -809,7 +809,7 @@ _create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
 		if (PyArray_TYPE(mps[i]) != arg_types[i]) {
 			ntype = mps[i]->descr;
 			atype = PyArray_DescrFromType(arg_types[i]);
-			if (PyArray_EquivalentTypes(atype, ntype)) {
+			if (PyArray_EquivTypes(atype, ntype)) {
 				arg_types[i] = ntype->type_num;
 			}
 			Py_DECREF(atype);
@@ -1017,7 +1017,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 			  PyArray_Descr *atype;
 			  ntype = mps[i]->descr;
 			  atype = PyArray_DescrFromType(arg_types[i]);
-			  if (PyArray_EquivalentTypes(atype, ntype)) {
+			  if (PyArray_EquivTypes(atype, ntype)) {
 				  arg_types[i] = ntype->type_num;
 			  }
 			  Py_DECREF(atype);

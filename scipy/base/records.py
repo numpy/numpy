@@ -7,9 +7,23 @@ import types
 import re, stat, os
 import _internal
 
+_byteorderconv = {'b':'>',
+                  'l':'<',
+                  'n':'=',
+                  'B':'>',
+                  'L':'<',
+                  'N':'=',
+                  'S':'s',
+                  's':'s',
+                  '>':'>',
+                  '<':'<',
+                  '=':'=',
+                  '|':'|',
+                  'I':'|',
+                  'i':'|'}
 
-_sysbyte = sys.byteorder
-_byteorders = ['big','little']
+_sysbyte = _byteorderconv[sys.byteorder[0]]
+_byteorders = ['>','<','=']
 
 # formats regular expression
 # allows multidimension spec with a tuple syntax in front 
@@ -127,14 +141,18 @@ class record(nt.void):
 
 class recarray(sb.ndarray):
     def __new__(subtype, shape, formats, names=None, titles=None,
-                buf=None, offset=0, strides=None, byteorder=_sysbyte,
+                buf=None, offset=0, strides=None, byteorder=None,
                 aligned=0):
 
         if isinstance(formats, sb.dtypedescr):
             descr = formats
         else:
-            parsed = format_parser(formats, names, titles, aligned, byteorder)
+            parsed = format_parser(formats, names, titles, aligned)
             descr = parsed._descr
+
+        if (byteorder is not None):
+            byteorder = _byteorderconv[byteorder]
+            descr = descr.newbyteorder(byteorder)
 
         if buf is None:
             self = sb.ndarray.__new__(subtype, shape, (record, descr))
@@ -268,7 +286,7 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
     return _array
 
 def fromstring(datastring, formats, shape=None, names=None, titles=None,
-               byteorder=_sysbyte, aligned=0, offset=0):
+               byteorder=None, aligned=0, offset=0):
     """ create a (read-only) record array from binary data contained in
     a string"""
 
@@ -283,7 +301,7 @@ def fromstring(datastring, formats, shape=None, names=None, titles=None,
     return _array
 
 def fromfile(fd, formats, shape=None, names=None, titles=None,
-             byteorder=_sysbyte, aligned=0, offset=0):
+             byteorder=None, aligned=0, offset=0):
     """Create an array from binary file data
 
     If file is a string then that file is opened, else it is assumed
@@ -316,7 +334,7 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
     except:
         size = os.path.getsize(fd.name) - fd.tell()
 
-    parsed = format_parser(formats, names, titles, aligned, byteorder)
+    parsed = format_parser(formats, names, titles, aligned)
     itemsize = parsed._descr.itemsize
 
     shapeprod = sb.array(shape).prod()
@@ -345,7 +363,7 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
 
 
 def array(obj, formats=None, names=None, titles=None, shape=None,
-          byteorder=_sysbyte, aligned=0, offset=0, strides=None):
+          byteorder=None, aligned=0, offset=0, strides=None):
     
     if isinstance(obj, (type(None), str, file)) and (formats is None):
         raise ValueError("Must define formats if object is "\

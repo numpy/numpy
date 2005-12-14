@@ -1311,11 +1311,11 @@ typedef struct {
 			max_depth, DEFAULT_FLAGS)
 	
 #define PyArray_EquivArrTypes(a1, a2)					\
-	PyArray_EquivalentTypes(PyArray_DESCR(a1), PyArray_DESCR(a2))
-#define PyArray_EquivalentTypenums(typenum1, typenum2)			\
-	PyArray_EquivalentTypes(PyArray_DescrFromType(typenum1),	\
-				PyArray_DescrFromType(typenum2))
-
+	PyArray_EquivTypes(PyArray_DESCR(a1), PyArray_DESCR(a2))
+#define PyArray_EquivTypenums(typenum1, typenum2)		\
+	PyArray_EquivTypes(PyArray_DescrFromType(typenum1),	\
+			   PyArray_DescrFromType(typenum2))
+	
 #define PyArray_EquivByteorders(b1, b2) \
 	((b1 == b2) || (PyArray_ISNBO(b1) == PyArray_ISNBO(b2)))
 	

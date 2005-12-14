@@ -3477,6 +3477,10 @@ PyArray_ByteorderConverter(PyObject *obj, char *endian)
 			*endian = PyArray_LITTLE;
 		else if (str[0] == 'n' || str[0] == 'N')
 			*endian = PyArray_NATIVE;
+		else if (str[0] == 'i' || str[0] == 'I')
+			*endian = PyArray_IGNORE;
+		else if (str[0] == 's' || str[0] == 'S')
+			*endian = PyArray_SWAP;
 		else {
 			PyErr_Format(PyExc_ValueError, 
 				     "%s is an unrecognized byteorder",
@@ -3493,7 +3497,7 @@ PyArray_ByteorderConverter(PyObject *obj, char *endian)
 
 /*MULTIARRAY_API*/
 static Bool
-PyArray_EquivalentTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
+PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 {
 	register int typenum1=typ1->type_num;
 	register int typenum2=typ2->type_num;
@@ -3567,7 +3571,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 		}
 		/* One more chance */
 		oldtype = PyArray_DESCR(op);
-		if (PyArray_EquivalentTypes(oldtype, type)) {
+		if (PyArray_EquivTypes(oldtype, type)) {
 			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
 				Py_INCREF(op);
 				return op;
