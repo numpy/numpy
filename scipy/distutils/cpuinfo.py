@@ -227,14 +227,14 @@ class linux_cpuinfo(cpuinfo_base):
 
     def _is_64bit(self):
         if self.is_Alpha():
-            return 1
+            return True
         if self.info[0].get('clflush size','')=='64':
-            return 1
-        if self.info[0]['uname_m']=='x86_64':
-            return 1
+            return True
+        if self.info[0].get('uname_m','')=='x86_64':
+            return True
         if self.info[0].get('arch','')=='IA-64':
-            return 1
-        return 0
+            return True
+        return False
 
     def _is_32bit(self):
         return not self.is_64bit()
