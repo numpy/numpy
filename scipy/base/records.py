@@ -138,6 +138,8 @@ class record(nt.void):
 #   named fields already)  The biggest difference is that it can use
 #   attribute-lookup to find the fields and it returns a record item.
 
+# If byteorder is given it forces a particular byteorder on all
+#  the fields (and any subfields)
 
 class recarray(sb.ndarray):
     def __new__(subtype, shape, formats, names=None, titles=None,
@@ -151,7 +153,7 @@ class recarray(sb.ndarray):
             descr = parsed._descr
 
         if (byteorder is not None):
-            byteorder = _byteorderconv[byteorder]
+            byteorder = _byteorderconv[byteorder[0]]
             descr = descr.newbyteorder(byteorder)
 
         if buf is None:

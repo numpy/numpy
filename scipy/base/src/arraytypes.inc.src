@@ -388,7 +388,6 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 		PyArray_Descr *new;
 		int offset;
 		int savedflags;
-
 		/* get the names from the fields dictionary*/
 		key = PyInt_FromLong(-1);
 		names = PyDict_GetItem(descr->fields, key);
@@ -401,6 +400,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 					"number of fields.");
 			return -1;
 		}
+		savedflags = ap->flags;
 		for (i=0; i<n; i++) {
 			key = PyList_GET_ITEM(names, i);
 			tup = PyDict_GetItem(descr->fields, key);
