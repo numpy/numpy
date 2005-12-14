@@ -4277,6 +4277,7 @@ array_struct_get(PyArrayObject *self)
         inter->flags = self->flags;
         /* reset unused flags */
 	inter->flags &= ~(UPDATEIFCOPY | OWNDATA);  
+	if (!PyArray_ISNOTSWAPPED(self)) inter->flags |= NOTSWAPPED;
         inter->strides = self->strides;
         inter->shape = self->dimensions;
         inter->data = self->data;
