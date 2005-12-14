@@ -90,8 +90,7 @@ class matrix(N.ndarray):
 
         ret = N.ndarray.__new__(subtype, shape, arr.dtypedescr,
                                 buffer=arr,
-                                fortran=fortran,
-                                swap=arr.flags.swapped)
+                                fortran=fortran)
         return ret
 
     def __array_finalize__(self, obj):

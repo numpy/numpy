@@ -55,6 +55,7 @@ PyArray_IntpConverter
 PyArray_BufferConverter
 PyArray_AxisConverter
 PyArray_BoolConverter
+PyArray_ByteorderConverter
 PyArray_EquivalentTypes
 PyArray_Zeros
 PyArray_Empty

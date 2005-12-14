@@ -3436,7 +3436,10 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		PyArray_DESCR_REPLACE(*at);
 		(*at)->elsize = elsize;
 	}
-	if (endian != '=') {
+	if (endian != '=' && PyArray_ISNBO(endian)) endian = '='; 
+	
+	if (endian != '=' && (*at)->byteorder != '|' &&	\
+	    (*at)->byteorder != endian) {
 		PyArray_DESCR_REPLACE(*at);
 		(*at)->byteorder = endian;
 	}
@@ -3450,6 +3453,39 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	return PY_FAIL;
 }	
 
+/*MULTIARRAY_API
+  Convert object to endian
+*/
+static int
+PyArray_ByteorderConverter(PyObject *obj, char *endian)
+{
+	char *str;
+	*endian = PyArray_SWAP;
+	str = PyString_AsString(obj);
+	if (!str) return PY_FAIL;
+	if (strlen(str) < 1) {
+		PyErr_SetString(PyExc_ValueError, 
+				"Byteorder string must be at least length 1");
+		return PY_FAIL;
+	}
+	*endian = str[0];
+	if (str[0] != PyArray_BIG && str[0] != PyArray_LITTLE &&	\
+	    str[0] != PyArray_NATIVE) {
+		if (str[0] == 'b' || str[0] == 'B')
+			*endian = PyArray_BIG;
+		else if (str[0] == 'l' || str[0] == 'L')
+			*endian = PyArray_LITTLE;
+		else if (str[0] == 'n' || str[0] == 'N')
+			*endian = PyArray_NATIVE;
+		else {
+			PyErr_Format(PyExc_ValueError, 
+				     "%s is an unrecognized byteorder",
+				     str);
+			return PY_FAIL;
+		}
+	}
+	return PY_SUCCEED;
+}
 
 /* This function returns true if the two typecodes are 
    equivalent (same basic kind and same itemsize).
@@ -3466,6 +3502,8 @@ PyArray_EquivalentTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 
 	if (size1 != size2) return FALSE;
 	if (typ1->fields != typ2->fields) return FALSE;
+	if (PyArray_ISNBO(typ1->byteorder) != PyArray_ISNBO(typ2->byteorder))
+		return FALSE;
 
 	if (typenum1 == PyArray_VOID || \
 	    typenum2 == PyArray_VOID) {
@@ -3624,7 +3662,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 	static char *kwlist[] = {"dtypedescr","obj", NULL};
 	PyArray_Descr *typecode;
 	PyObject *obj=NULL;
-	int swap, alloc=0;
+	int alloc=0;
 	void *dptr;
 	PyObject *ret;
 
@@ -3644,7 +3682,6 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 	if (typecode->type_num == PyArray_OBJECT) {
 		if (obj == NULL) obj = Py_None;
 		dptr = &obj;
-		swap = 0;
 	}
 	else {
 		if (obj == NULL) {
@@ -3670,10 +3707,9 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 			}
 			dptr = PyString_AS_STRING(obj);
 		}
-		swap = (!PyArray_IsNativeByteOrder(typecode->byteorder));
 	}
 
-	ret = PyArray_Scalar(dptr, swap, typecode, NULL);
+	ret = PyArray_Scalar(dptr, typecode, NULL);
 	
 	/* free dptr which contains zeros */
 	if (alloc) free(dptr);
@@ -3762,8 +3798,7 @@ array_set_typeDict(PyObject *ignored, PyObject *args)
 /* steals a reference to dtype -- accepts NULL */
 /*OBJECT_API*/
 static PyObject *
-PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype, 
-		   intp n, int swap)
+PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype, intp n)
 {
 	int itemsize;
 	PyArrayObject *ret;
@@ -3804,7 +3839,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 			return NULL;
 		}
 	}
-
+	
 	if ((ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
 							 dtype,
 							 1, &n, 
@@ -3813,7 +3848,6 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 		return NULL;
 		
 	memcpy(ret->data, data, n*dtype->elsize);
-	if (swap) ret->flags &= ~NOTSWAPPED;
 	return (PyObject *)ret;
 }
 
@@ -3825,20 +3859,17 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 	char *data;
 	longlong nin=-1;
 	int s;
-	static char *kwlist[] = {"string", "dtype", "count", "swap",NULL};
+	static char *kwlist[] = {"string", "dtype", "count", NULL};
 	PyArray_Descr *descr=NULL;
-	int swapped=FALSE;
 
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "s#|O&LO&", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "s#|O&L", kwlist, 
 					 &data, &s, 
 					 PyArray_DescrConverter, &descr,
-					 &nin, 
-					 PyArray_BoolConverter,
-					 &swapped)) {
+					 &nin)) {
 		return NULL;
 	}
 
-	return PyArray_FromString(data, (intp)s, descr, (intp)nin, swapped);
+	return PyArray_FromString(data, (intp)s, descr, (intp)nin);
 }
 
 /* This needs an open file object and reads it in directly. 
@@ -4039,7 +4070,7 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 /*OBJECT_API*/
 static PyObject *
 PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type, 
-		   intp count, intp offset, int swapped) 
+		   intp count, intp offset) 
 {
 	PyArrayObject *ret;
 	char *data;
@@ -4126,7 +4157,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 	}
 	
 	if (!write) ret->flags &= ~WRITEABLE;
-	if (swapped) ret->flags &= ~NOTSWAPPED;
 
 	/* Store a reference for decref on deallocation */
 	ret->base = buf;
@@ -4135,14 +4165,15 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 }
 
 static char doc_frombuffer[] = \
-	"frombuffer(buffer=, dtype=int, count=-1, offset=0, swap=0)\n"\
+	"frombuffer(buffer=, dtype=int, count=-1, offset=0)\n"\
 	"\n"								\
 	"  Returns a 1-d array of data type dtype from buffer. The buffer\n"\
 	"   argument must be an object that exposes the buffer interface.\n"\
 	"   If count is -1 then the entire buffer is used, otherwise, count\n"\
 	"   is the size of the output.  If offset is given then jump that\n"\
 	"   far into the buffer. If the buffer has data that is out\n" \
-	"   not in machine byte-order, than set swap=1.  The data will not\n"
+	"   not in machine byte-order, than use a propert data type\n"\
+	"   descriptor. The data will not\n" \
 	"   be byteswapped, but the array will manage it in future\n"\
 	"   operations.\n";
 
@@ -4151,22 +4182,19 @@ array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
 	PyObject *obj=NULL;
 	longlong nin=-1, offset=0;
-	static char *kwlist[] = {"buffer", "dtype", "count", 
-				 "swap", NULL};
+	static char *kwlist[] = {"buffer", "dtype", "count", NULL};
 	PyArray_Descr *type=NULL;
-	int swapped=0;
 
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&LLi", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&LL", kwlist, 
 					 &obj,
 					 PyArray_DescrConverter, &type,
-					 &nin, &offset, &swapped)) {
+					 &nin, &offset)) {
 		return NULL;
 	}
 	if (type==NULL)
 		type = PyArray_DescrFromType(PyArray_LONG);
 	
-	return PyArray_FromBuffer(obj, type, (intp)nin, 
-				  (intp)offset, swapped);
+	return PyArray_FromBuffer(obj, type, (intp)nin, (intp)offset);
 }
 
 
@@ -4833,8 +4861,6 @@ set_flaginfo(PyObject *d)
         PyDict_SetItemString(newd, "ALIGNED", s=PyInt_FromLong(ALIGNED));
         Py_DECREF(s);
 
-        PyDict_SetItemString(newd, "NOTSWAPPED", s=PyInt_FromLong(NOTSWAPPED));
-        Py_DECREF(s);
         PyDict_SetItemString(newd, "UPDATEIFCOPY", s=PyInt_FromLong(UPDATEIFCOPY));
         Py_DECREF(s);
         PyDict_SetItemString(newd, "WRITEABLE", s=PyInt_FromLong(WRITEABLE));

@@ -709,7 +709,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 
 /* They all zero-out the memory as previously done */
 
-/* steals reference to descr -- accepts NULL*/
+/* steals reference to descr -- and enforces native byteorder on it.*/
 /*OBJECT_API
  Like FromDimsAndData but uses the Descr structure instead of typecode
  as input.
@@ -719,22 +719,28 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
                                 PyArray_Descr *descr,
                                 char *data)
 {
+	PyObject *ret;
 
+	if (!PyArray_ISNBO(descr->byteorder) && \
+	    (descr->byteorder != '|'))
+		descr->byteorder = '=';
+	
 #if SIZEOF_INTP != SIZEOF_INT
 	int i;
 	intp newd[MAX_DIMS];
 	
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
-        return PyArray_NewFromDescr(&PyArray_Type, descr, 
-				    nd, newd, 
-				    NULL, data,
-				    (data ? CARRAY_FLAGS : 0), NULL);
+        ret = PyArray_NewFromDescr(&PyArray_Type, descr, 
+				   nd, newd, 
+				   NULL, data,
+				   (data ? CARRAY_FLAGS : 0), NULL);
 #else
-	return PyArray_NewFromDescr(&PyArray_Type, descr,
-				    nd, (intp *)d, 
-				    NULL, data, 
-				    (data ? CARRAY_FLAGS : 0), NULL);
+	ret = PyArray_NewFromDescr(&PyArray_Type, descr,
+				   nd, (intp *)d, 
+				   NULL, data, 
+				   (data ? CARRAY_FLAGS : 0), NULL);
 #endif
+	return ret;
 }
 
 /*OBJECT_API
@@ -792,7 +798,7 @@ static PyObject *array_big_item(PyArrayObject *, intp);
  Get scalar-equivalent to a region of memory described by a descriptor.
 */
 static PyObject *
-PyArray_Scalar(void *data, int swap, PyArray_Descr *descr, PyObject *base)
+PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 {
 	PyTypeObject *type;
 	PyObject *obj, *name;	
@@ -800,6 +806,7 @@ PyArray_Scalar(void *data, int swap, PyArray_Descr *descr, PyObject *base)
         PyArray_CopySwapFunc *copyswap;
 	int type_num;
 	int itemsize;
+	int swap;
 
 	type_num = descr->type_num;
 	itemsize = descr->elsize;
@@ -870,6 +877,7 @@ PyArray_Scalar(void *data, int swap, PyArray_Descr *descr, PyObject *base)
 		destptr = _SOFFSET_(obj, type_num);
 	}
 	/* copyswap for OBJECT increments the reference count */
+	swap = !PyArray_ISNBO(descr->byteorder);
         copyswap(destptr, data, swap, itemsize);
 	return obj;
 }
@@ -890,8 +898,7 @@ PyArray_Scalar(void *data, int swap, PyArray_Descr *descr, PyObject *base)
 static PyObject *
 PyArray_ToScalar(void *data, PyArrayObject *arr)
 {
-	return PyArray_Scalar(data, !(PyArray_ISNOTSWAPPED(arr)), 
-			      arr->descr, (PyObject *)arr);
+	return PyArray_Scalar(data, arr->descr, (PyObject *)arr);
 }
 
 
@@ -1657,7 +1664,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
 		return NULL;
 	}
 	index = it->size;
-	swap = ((temp->flags & NOTSWAPPED) != (ret->flags & NOTSWAPPED));
+	swap = (PyArray_ISNOTSWAPPED(temp) != PyArray_ISNOTSWAPPED(ret));
         copyswap = ret->descr->f->copyswap;
 	PyArray_MapIterReset(mit);
 	while (index--) {
@@ -1706,8 +1713,8 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 	}
 
 	index = mit->size;
-	swap = ((mit->ait->ao->flags & NOTSWAPPED) != \
-		(PyArray_FLAGS(arr) & NOTSWAPPED));
+	swap = (PyArray_ISNOTSWAPPED(mit->ait->ao) != \
+		(PyArray_ISNOTSWAPPED(arr)));
 
         copyswap = PyArray_DESCR(arr)->f->copyswap;
 	PyArray_MapIterReset(mit);
@@ -3397,20 +3404,6 @@ _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
 	return newnd;
 }
 
-/* Determine if character represents system byte-order or not */
-
-/*OBJECT_API*/
-static Bool
-PyArray_IsNativeByteOrder(char order)
-{
-	static unsigned long val = 1;
-	char *s;	
-	s = (char *)&val; /* s[0] == 0 implies big-endian */
-
-	if ((order != '<') && (order != '>')) return TRUE;
-	else if (s[0] == 0) return (order == '>');
-	else return (order == '<');
-}
 
 /* steals a reference to descr (even on failure) */
 /*OBJECT_API
@@ -3540,13 +3533,6 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 					   this to be reset if truly
 					   desired */
         }
-	if ((descr->byteorder != '=') && (descr->byteorder != '|')) {
-		if (PyArray_IsNativeByteOrder(descr->byteorder)) 
-			self->flags |= NOTSWAPPED;
-		else
-			self->flags &= ~NOTSWAPPED;
-	}
-
         self->data = data;
 	self->nd = nd;
 	self->base = (PyObject *)NULL;
@@ -3773,7 +3759,7 @@ static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds) 
 {
 	static char *kwlist[] = {"shape", "dtype", "buffer", 
-				 "offset", "strides", "swap", 
+				 "offset", "strides",
 				 "fortran", NULL};
 	PyArray_Descr *descr=NULL;
 	int type_num;
@@ -3783,7 +3769,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         PyArray_Chunk buffer;
 	longlong offset=0;
 	int fortran = 0;
-        int swapped = 0;
 	PyArrayObject *ret;
 
 	buffer.ptr = NULL; 
@@ -3795,7 +3780,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	   array of a specific type and shape. 
 	*/
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&ii",
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&i",
 					 kwlist, PyArray_IntpConverter,
                                          &dims, 
                                          PyArray_DescrConverter,
@@ -3805,7 +3790,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 					 &offset,
                                          &PyArray_IntpConverter, 
                                          &strides,
-                                         &swapped, &fortran)) 
+                                         &fortran)) 
 		goto fail;
 	
 	type_num = descr->type_num;
@@ -3864,7 +3849,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                 }
                 /* get writeable and aligned */
                 if (fortran) buffer.flags |= FORTRAN;
-                if (swapped) buffer.flags &= ~NOTSWAPPED;
                 ret = (PyArrayObject *)\
 			PyArray_NewFromDescr(subtype, descr,
 					     dims.len, dims.ptr,
@@ -3915,76 +3899,6 @@ array_flags_get(PyArrayObject *self)
         return PyObject_CallMethod(_scipy_internal, "flagsobj", "Oii", 
                                    self, self->flags, 0);
 }
-
-/*
-static int
-array_flags_set(PyArrayObject *self, PyObject *obj) 
-{
-	int flagback = self->flags;
-
-        if (PyDict_Check(obj)) {
-                PyObject *new;
-		new = PyDict_GetItemString(obj, "ALIGNED");
-		if (new) {
-			if (PyObject_Not(new)) self->flags &= ~ALIGNED;
-			else if (_IsAligned(self)) self->flags |= ALIGNED;
-			else {
-				PyErr_SetString(PyExc_ValueError,
-						"cannot set aligned flag of " \
-						"mis-aligned array to True");
-				return -1;
-			}
-		}
-                new = PyDict_GetItemString(obj, "UPDATEIFCOPY");
-                if (new) {
-                        if (PyObject_Not(new)) {
-                                self->flags &= ~UPDATEIFCOPY;
-                                Py_DECREF(self->base);
-                                self->base = NULL;
-                        }
-                        else {
-				self->flags = flagback;
-                                PyErr_SetString(PyExc_ValueError, 
-                                                "cannot set UPDATEIFCOPY " \
-                                                "flag to True");
-                                return -1;
-                        }
-                }
-                new = PyDict_GetItemString(obj, "WRITEABLE");
-                if (new) {
-			if (PyObject_IsTrue(new)) {
-				if (_IsWriteable(self)) {
-					self->flags |= WRITEABLE;
-				}
-				else {
-					self->flags = flagback;
-					PyErr_SetString(PyExc_ValueError,
-							"cannot set "	\
-							"WRITEABLE "	\
-							"flag to True of "\
-							"this array ");
-					return -1;
-				}
-			}
-                        else
-                                self->flags &= ~WRITEABLE;
-                }
-                new = PyDict_GetItemString(obj, "NOTSWAPPED");
-                if (new) {
-                        if (PyObject_IsTrue(new))
-                                self->flags |= NOTSWAPPED;
-                        else {
-                                self->flags &= ~NOTSWAPPED;
-			}
-		}
-                return 0;
-        }
-        PyErr_SetString(PyExc_ValueError, 
-                        "object must be a dictionary");
-        return -1;
-}
-*/
-
 
 static PyObject *
 array_shape_get(PyArrayObject *self)
@@ -4254,6 +4168,14 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
                 PyErr_SetString(PyExc_TypeError, "invalid type for array");
 		return -1;
         }
+	if (newtype->type_num == PyArray_OBJECT || \
+	    self->descr->type_num == PyArray_OBJECT) {
+		PyErr_SetString(PyExc_TypeError, \
+				"Cannot change descriptor for object"\
+				"array.");
+		Py_DECREF(newtype);
+		return -1;
+	}
 
 	if ((newtype->elsize != self->descr->elsize) &&		\
 	    (self->nd == 0 || !PyArray_ISONESEGMENT(self) || \
@@ -4697,21 +4619,23 @@ array_alloc(PyTypeObject *type, int nitems)
 
 static char Arraytype__doc__[] = 
         "A array object represents a multidimensional, homogeneous array\n"
-	"  of fixed-size items.  An associated data-type-descriptor object details\n"
-	"  the data-type in an array (including any fields).  An array can be\n"
-	"  constructed using the scipy.array command. Arrays are sequence, mapping\n"
-	"  and numeric objects.  More information is available in the scipy module\n"
-	"  and by looking at the methods and attributes of an array.\n\n"
-	"  ndarray.__new__(subtype, shape=, dtype=long_, buffer=None, offset=0,\n"
-        "                  strides=None, swap=0, fortran=False)\n\n"
-	"   There are two modes of creating an array using the __new__ method:\n"
-	"   1) If buffer is None, then only shape, dtype, and fortran are used\n"
-	"   2) If buffer is an object exporting the buffer interface, then all\n"
-	"      keywords are interpreted.\n"
-	"   The dtype parameter can be any object that can be interpreted as a\n"
-	"   scipy.dtypedescr object.\n\n"
-	"   No __init__ method is needed because the array is fully initialized\n"
-	"      after the __new__ method.";
+	"  of fixed-size items.  An associated data-type-descriptor object\n"
+	"  details the data-type in an array (including byteorder and any\n"
+	"  fields).  An array can be constructed using the scipy.array\n"
+	"  command. Arrays are sequence, mapping and numeric objects.\n"
+	"  More information is available in the scipy module and by looking\n"
+	"  at the methods and attributes of an array.\n\n"
+	"  ndarray.__new__(subtype, shape=, dtype=long_, buffer=None, \n"
+	"                  offset=0, strides=None, fortran=False)\n\n"
+	"   There are two modes of creating an array using __new__:\n"
+	"   1) If buffer is None, then only shape, dtype, and fortran \n"
+	"      are used\n"
+	"   2) If buffer is an object exporting the buffer interface, then\n"
+	"      all keywords are interpreted.\n"
+	"   The dtype parameter can be any object that can be interpreted \n"
+	"      as a scipy.dtypedescr object.\n\n"
+	"   No __init__ method is needed because the array is fully \n"
+	"      initialized after the __new__ method.";
 	
 static PyTypeObject PyBigArray_Type = { 
         PyObject_HEAD_INIT(NULL)
@@ -4957,10 +4881,8 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 	}
 
 	if ((ip=PyObject_GetAttrString(op, "__array_typestr__"))!=NULL) {
-		int swap=0;
 		if (PyString_Check(ip)) {
-			chktype =_array_typedescr_fromstr	\
-				(PyString_AS_STRING(ip), &swap);
+			chktype =_array_typedescr_fromstr(PyString_AS_STRING(ip));
 		}
 		Py_DECREF(ip);
                 if (chktype) goto finish;
@@ -4970,13 +4892,12 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         if ((ip=PyObject_GetAttrString(op, "__array_struct__")) != NULL) {
                 PyArrayInterface *inter;
                 char buf[40];
-                int swap=0;
                 if (PyCObject_Check(ip)) {
                         inter=(PyArrayInterface *)PyCObject_AsVoidPtr(ip);
                         if (inter->version == 2) {
                                 snprintf(buf, 40, "|%c%d", inter->typekind, 
 					 inter->itemsize);
-				chktype = _array_typedescr_fromstr(buf, &swap);
+				chktype = _array_typedescr_fromstr(buf);
                         }
                 }
                 Py_DECREF(ip);
@@ -5454,8 +5375,7 @@ array_fromarray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
 		copy = (flags & ENSURECOPY) || \
 			((flags & CONTIGUOUS) && (!(arrflags & CONTIGUOUS))) \
-			|| ((flags & ALIGNED) && (!(arrflags & ALIGNED))) || \
-			((flags & NOTSWAPPED) && (!(arrflags & NOTSWAPPED))) \
+			|| ((flags & ALIGNED) && (!(arrflags & ALIGNED))) \
 			|| (arr->nd > 1 &&				\
 			    ((flags & FORTRAN) != (arrflags & FORTRAN))) || \
 			((flags & WRITEABLE) && (!(arrflags & WRITEABLE)));
@@ -5563,15 +5483,17 @@ array_fromarray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
 /* new reference */
 static PyArray_Descr *
-_array_typedescr_fromstr(char *str, int *swap)
+_array_typedescr_fromstr(char *str)
 {
 	PyArray_Descr *descr; 
 	int type_num;
 	char typechar;
 	int size;
 	char msg[] = "unsupported typestring";
-		
-	*swap = !PyArray_IsNativeByteOrder(str[0]);
+	int swap;
+	char swapchar;
+
+	swapchar = str[0];
 	str += 1;
 	
 #define _MY_FAIL {				    \
@@ -5658,11 +5580,15 @@ _array_typedescr_fromstr(char *str, int *swap)
 
     descr = PyArray_DescrFromType(type_num);
     if (descr == NULL) return NULL;
-    if (descr->elsize == 0) {
+    swap = !PyArray_ISNBO(swapchar);
+    if (descr->elsize == 0 || swap) {
 	    /* Need to make a new PyArray_Descr */
 	    PyArray_DESCR_REPLACE(descr);
 	    if (descr==NULL) return NULL;
-	    descr->elsize = size;
+	    if (descr->elsize == 0)
+		    descr->elsize = size;
+	    if (swap) 
+		    descr->byteorder = swapchar;
     }
     return descr;
 }
@@ -5672,10 +5598,10 @@ static PyObject *
 array_fromstructinterface(PyObject *input, PyArray_Descr *intype, int flags)
 {
 	PyArray_Descr *thetype;
-	int swap;
 	char buf[40];
 	PyArrayInterface *inter;
 	PyObject *attr, *r, *ret;
+	char endian = PyArray_NATBYTE;
         
         attr = PyObject_GetAttrString(input, "__array_struct__");
         if (attr == NULL) {
@@ -5690,12 +5616,18 @@ array_fromstructinterface(PyObject *input, PyArray_Descr *intype, int flags)
 		Py_DECREF(attr);
                 return NULL;
         }
-        snprintf(buf, 40, "|%c%d", inter->typekind, inter->itemsize);
-        if (!(thetype=_array_typedescr_fromstr(buf, &swap))) {
+	if ((inter->flags & NOTSWAPPED) != NOTSWAPPED) {
+		endian = PyArray_OPPBYTE;
+		inter->flags &= ~NOTSWAPPED;
+	}
+
+        snprintf(buf, 40, "%c%c%d", endian, inter->typekind, inter->itemsize);
+        if (!(thetype=_array_typedescr_fromstr(buf))) {
 		Py_XDECREF(intype);
 		Py_DECREF(attr);
                 return NULL;
         }
+
         r = PyArray_NewFromDescr(&PyArray_Type, thetype,
 				 inter->nd, inter->shape,
 				 inter->strides, inter->data,
@@ -5721,7 +5653,6 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 	int buffer_len;
 	int res, i, n;
 	intp dims[MAX_DIMS], strides[MAX_DIMS];
-	int swap;
 	int dataflags = BEHAVED_FLAGS;
 
 	/* Get the memory from __array_data__ and __array_offset__ */
@@ -5788,7 +5719,7 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 		Py_INCREF(attr); /* decref'd twice below */
 		goto fail;
 	}
-	type = _array_typedescr_fromstr(PyString_AS_STRING(attr), &swap); 
+	type = _array_typedescr_fromstr(PyString_AS_STRING(attr)); 
 	Py_DECREF(attr); attr=NULL; tstr=NULL;
 	if (type==NULL) goto fail;
 	attr = shape;
@@ -5844,15 +5775,6 @@ array_frominterface(PyObject *input, PyArray_Descr *intype, int flags)
 		memcpy(ret->strides, strides, n*sizeof(intp));
 	}
 	else PyErr_Clear();
-
-	if (swap) {
-		PyObject *tmp;
-                tmp = PyArray_Byteswap(ret, TRUE);
-		if (tmp==NULL) {Py_DECREF(ret); 
-			Py_XDECREF(intype); return NULL;}
-		Py_DECREF(tmp);
-	}
-
 	PyArray_UpdateFlags(ret, UPDATE_ALL_FLAGS);
 	r = array_fromarray(ret, intype, flags);
 	Py_DECREF(ret);
@@ -6013,7 +5935,6 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
   CONTIGUOUS, 
   FORTRAN,
   ALIGNED, 
-  NOTSWAPPED, 
   WRITEABLE, 
   ENSURECOPY, 
   UPDATEIFCOPY,
@@ -6028,11 +5949,11 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
    not it has such features. 
 
    Note that ENSURECOPY is enough
-   to guarantee CONTIGUOUS, ALIGNED, NOTSWAPPED, and WRITEABLE
+   to guarantee CONTIGUOUS, ALIGNED and WRITEABLE
    and therefore it is redundant to include those as well. 
 
-   BEHAVED_FLAGS == ALIGNED | NOTSWAPPED | WRITEABLE
-   BEHAVED_FLAGS_RO == ALIGNED | NOTSWAPPED
+   BEHAVED_FLAGS == ALIGNED | WRITEABLE
+   BEHAVED_FLAGS_RO == ALIGNED 
    CARRAY_FLAGS = CONTIGUOUS | BEHAVED_FLAGS
    FARRAY_FLAGS = FORTRAN | BEHAVED_FLAGS
    
@@ -8013,6 +7934,16 @@ arraydescr_isbuiltin_get(PyArray_Descr *self)
 	return PyInt_FromLong(val);
 }
 
+static PyObject *
+arraydescr_isnative_get(PyArray_Descr *self)
+{
+	PyObject *ret;
+
+	ret = (PyArray_ISNBO(self->byteorder) ? Py_True : Py_False);
+	Py_INCREF(ret);
+	return ret;
+}
+
 static PyGetSetDef arraydescr_getsets[] = {
 	{"subdescr", 
 	 (getter)arraydescr_subdescr_get,
@@ -8029,7 +7960,11 @@ static PyGetSetDef arraydescr_getsets[] = {
 	{"isbuiltin",
 	 (getter)arraydescr_isbuiltin_get,
 	 NULL,
-	 "Is this a buillt-in data-type descriptor."},
+	 "Is this a buillt-in data-type descriptor?"},
+	{"isnative",
+	 (getter)arraydescr_isnative_get,
+	 NULL,
+	 "Is the byte-order of this descriptor native?"},
 	{NULL, NULL, NULL, NULL},
 };
 
@@ -8136,8 +8071,6 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 	return ret;
 }
 
-
-
 /* state is at least byteorder, subarray, and fields but could include elsize 
    and alignment for EXTENDED arrays 
 */
@@ -8189,12 +8122,118 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 }
 
 
+/* returns a copy of the PyArray_Descr structure with the byteorder
+   altered:
+    no arguments:  The byteorder is swapped (in all subfields as well)
+    single argument:  The byteorder is forced to the given state
+                      (in all subfields as well)
+
+                      Valid states:  ('big', '>') or ('little' or '<')
+		                     ('native', or '=')
+
+		   If a descr structure with | is encountered it's own
+		   byte-order is not changed but any fields are:  
+*/
+
+/*OBJECT_API
+  Deep bytorder change of a data-type descriptor
+*/
+static PyArray_Descr *
+PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
+{
+	PyArray_Descr *new;
+	char endian;
+
+	new = PyArray_DescrNew(self);
+	endian = new->byteorder;
+	if (endian != PyArray_IGNORE) {
+		if (newendian == PyArray_SWAP) {  /* swap byteorder */
+			if PyArray_ISNBO(endian) endian = PyArray_OPPBYTE;
+			else endian = PyArray_NATBYTE;
+			new->byteorder = endian;
+		}
+		else if (newendian != PyArray_IGNORE) {
+			new->byteorder = newendian;
+		}
+	}
+	if (new->fields) {
+		PyObject *newfields;
+		PyObject *key, *value;
+		PyObject *newvalue;
+		PyObject *old;
+		PyArray_Descr *newdescr;
+		int pos = 0, len, i;
+		newfields = PyDict_New();
+		/* make new dictionary with replaced */
+		/* PyArray_Descr Objects */
+		while(PyDict_Next(self->fields, &pos, &key, &value)) {
+			if (PyInt_Check(key) &&			\
+			    PyInt_AsLong(key) == -1) {
+				PyDict_SetItem(newfields, key, value);
+				continue;
+			}
+			if (!PyString_Check(key) ||	     \
+			    !PyTuple_Check(value) ||			\
+			    ((len=PyTuple_GET_SIZE(value)) < 2))
+				continue;
+			
+			old = PyTuple_GET_ITEM(value, 0);
+			if (!PyArray_DescrCheck(old)) continue;
+			newdescr = PyArray_DescrNewByteorder		\
+				((PyArray_Descr *)old, newendian);
+			if (newdescr == NULL) {
+				Py_DECREF(newfields); Py_DECREF(new);
+				return NULL;
+			}
+			newvalue = PyTuple_New(len);
+			PyTuple_SET_ITEM(newvalue, 0,		\
+					 (PyObject *)newdescr);
+			for(i=1; i<len; i++) {
+				old = PyTuple_GET_ITEM(value, i);
+				Py_INCREF(old);
+				PyTuple_SET_ITEM(newvalue, i, old);
+			}
+			PyDict_SetItem(newfields, key, newvalue);
+			Py_DECREF(newvalue);
+		}
+		Py_DECREF(new->fields);
+		new->fields = newfields;
+	}
+	if (new->subarray) {
+		Py_DECREF(new->subarray->base);
+		new->subarray->base = PyArray_DescrNewByteorder \
+			(self->subarray->base, newendian);
+	}
+	return new;
+}
+
+
+static char doc_arraydescr_newbyteorder[] = "self.newbyteorder(<endian>)"
+	" returns a copy of the dtypedescr object\n"
+	" with altered byteorders.  If <endian> is not given all byteorders\n"
+	" are swapped.  Otherwise endian can be '>', '<', or '=' to force\n"
+	" a byteorder.  Descriptors in all fields are also updated in the\n"
+	" new dtypedescr object.";
+
+static PyObject *
+arraydescr_newbyteorder(PyArray_Descr *self, PyObject *args) 
+{
+	char endian=PyArray_SWAP;
+	
+	if (!PyArg_ParseTuple(args, "|O&", PyArray_ByteorderConverter,
+			      &endian)) return NULL;
+			
+	return (PyObject *)PyArray_DescrNewByteorder(self, endian);
+}
+
 static PyMethodDef arraydescr_methods[] = {
         /* for pickling */
         {"__reduce__", (PyCFunction)arraydescr_reduce, METH_VARARGS, 
 	 doc_arraydescr_reduce},
 	{"__setstate__", (PyCFunction)arraydescr_setstate, METH_VARARGS,
 	 doc_arraydescr_setstate},
+	{"newbyteorder", (PyCFunction)arraydescr_newbyteorder, METH_VARARGS,
+	 doc_arraydescr_newbyteorder},
         {NULL,		NULL}		/* sentinel */
 };
 

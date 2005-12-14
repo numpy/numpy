@@ -7,11 +7,10 @@ from multiarray import _flagdict, dtypedescr, ndarray
 
 _defflags = _flagdict.keys()
 
-_setable = ['WRITEABLE', 'NOTSWAPPED', 'SWAPPED', 'UPDATEIFCOPY', 'ALIGNED',
-            'W','N','S','U','A']
-_setable2 = ['write','swap','swap','uic','align']*2
+_setable = ['WRITEABLE','UPDATEIFCOPY', 'ALIGNED',
+            'W','U','A']
+_setable2 = ['write','uic','align']*2
 _firstltr = {'W':'WRITEABLE',
-             'N':'NOTSWAPPED',
              'A':'ALIGNED',
              'C':'CONTIGUOUS',
              'F':'FORTRAN',
@@ -19,7 +18,6 @@ _firstltr = {'W':'WRITEABLE',
              'U':'UPDATEIFCOPY'}
 
 _anum = _flagdict['ALIGNED']
-_nnum = _flagdict['NOTSWAPPED']
 _wnum = _flagdict['WRITEABLE']
 _cnum = _flagdict['CONTIGUOUS']
 _fnum = _flagdict['FORTRAN']
@@ -43,10 +41,8 @@ class flagsobj(dict):
                 return dict.__getitem__(self, _firstltr[key])
             except:
                 if (key == 'B'):
-                    num = _anum + _nnum + _wnum
+                    num = _anum + _wnum
                     return self._flagnum & num == num
-                elif (key == 'S'):
-                    return not (self._flagnum & _nnum == _nnum)
         else:
             try:
                 return dict.__getitem__(self, key)
@@ -57,19 +53,17 @@ class flagsobj(dict):
 	        if (key == 'FORC'):
 		    return (self._flagnum & _fnum == _fnum) or \
                            (self._flagnum & _cnum == _cnum)
-                if (key == 'SWAPPED'):
-                    return not (self._flagnum & _nnum == _nnum)
                 if (key == 'BEHAVED'):
-                    num = _anum + _nnum + _wnum
+                    num = _anum + _wnum
                     return self._flagnum & num == num
                 if (key in ['BEHAVED_RO', 'BRO']):
-                    num = _anum + _nnum
+                    num = _anum 
                     return self._flagnum & num == num
                 if (key in ['CARRAY','CA']):
-                    num = _anum + _nnum + _wnum + _cnum
+                    num = _anum + _wnum + _cnum
                     return self._flagnum & num == num
                 if (key in ['FARRAY','FA']):
-                    num = _anum + _nnum + _wnum + _fnum
+                    num = _anum + _wnum + _fnum
                     return (self._flagnum & num == num) and not \
                            (self._flagnum & _cnum == _cnum)
         raise KeyError, "Unknown flag: %s" % key
@@ -106,25 +100,21 @@ class flagsobj(dict):
     def get_behaved(self):
         fl = self._flagnum
         return (fl & _anum == _anum) and \
-               (fl & _nnum == _nnum) and \
                (fl & _wnum == _wnum)
 
     def get_behaved_ro(self):
         fl = self._flagnum
-        return (fl & _anum == _anum) and \
-               (fl & _nnum == _nnum)
+        return (fl & _anum == _anum)
 
     def get_carray(self):
         fl = self._flagnum
         return (fl & _anum == _anum) and \
-               (fl & _nnum == _nnum) and \
                (fl & _wnum == _wnum) and \
                (fl & _cnum == _cnum)
 
     def get_farray(self):
         fl = self._flagnum
         return (fl & _anum == _anum) and \
-               (fl & _nnum == _nnum) and \
                (fl & _wnum == _wnum) and \
                (fl & _fnum == _fnum) and \
                not (fl & _cnum == _cnum)
@@ -143,12 +133,6 @@ class flagsobj(dict):
 
     def get_aligned(self):
         return (self._flagnum & _anum == _anum)
-
-    def get_notswapped(self):
-        return (self._flagnum & _nnum == _nnum)
-
-    def get_swapped(self):
-        return not (self._flagnum & _nnum == _nnum)
 
     def get_writeable(self):
         return (self._flagnum & _wnum == _wnum)
@@ -178,8 +162,6 @@ class flagsobj(dict):
     updateifcopy = property(get_updateifcopy, set_updateifcopy, "")
     owndata = property(get_owndata, None, "")
     aligned = property(get_aligned, set_aligned, "")
-    notswapped = property(get_notswapped, set_notswapped, "")
-    swapped = property(get_swapped, set_swapped, "")
     writeable = property(get_writeable, set_writeable, "")
 
     fnc = property(get_fnc, None, "")

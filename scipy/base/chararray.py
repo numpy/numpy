@@ -1,6 +1,7 @@
 from numerictypes import character, string, unicode_, \
      obj2dtype, integer, object_
-from numeric import ndarray, broadcast, empty, array
+from numeric import ndarray, broadcast, empty
+from numeric import array as narray
 import sys
 
 __all__ = ['chararray']
@@ -12,13 +13,12 @@ __all__ = ['chararray']
 
 class chararray(ndarray):
     def __new__(subtype, shape, itemlen=1, unicode=False, buffer=None,
-                offset=0, strides=None, swap=0, fortran=0):
+                offset=0, strides=None, fortran=0):
 
         if unicode:
             dtype = unicode_
         else:
             dtype = string
-            swap = 0
 
         if buffer is None:
             self = ndarray.__new__(subtype, shape, (dtype, itemlen),
@@ -27,7 +27,7 @@ class chararray(ndarray):
             self = ndarray.__new__(subtype, shape, (dtype, itemlen),
                                    buffer=buffer,
                                    offset=offset, strides=strides,
-                                   swap=swap, fortran=fortran)
+                                   fortran=fortran)
         return self
 
     def _richcmpfunc(self, other, op):
@@ -309,7 +309,7 @@ def array(obj, itemlen=7, copy=True, unicode=False, fortran=False):
             obj = obj.copy()
 
         return ndarray.__new__(chararray, obj.shape, (dtype, itemlen),
-                               buffer=obj, offset=0, swap=obj.flags.swapped,
+                               buffer=obj, offset=0, 
                                fortran=obj.flags['FNC'])    
 
     if unicode:
@@ -317,10 +317,10 @@ def array(obj, itemlen=7, copy=True, unicode=False, fortran=False):
     else:
         dtype = "S%d" % itemlen
 
-    val = array(obj, dtype=dtype, fortran=fortran, subok=1)
+    val = narray(obj, dtype=dtype, fortran=fortran, subok=1)
     
     return chararray(val.shape, itemlen, unicode, buffer=val,
-                     strides=val.strides, swap=val.flags.swapped,
+                     strides=val.strides, 
                      fortran=fortran)
 
 def asarray(obj, itemlen=7, unicode=False, fortran=False):
