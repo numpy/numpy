@@ -8270,7 +8270,20 @@ arraydescr_repr(PyArray_Descr *self)
 		lst = arraydescr_protocol_descr_get(self);
 		if (!lst) sub = PyString_FromString("<err>");
 		else sub = PyObject_Str(lst);
-		Py_XDECREF(lst);
+		Py_XDECREF(lst);		
+		if (self->type_num != PyArray_VOID) {
+			PyObject *p;
+			PyObject *t=PyString_FromString("'");
+			p = arraydescr_protocol_typestr_get(self);
+			PyString_Concat(&p, t);
+			PyString_ConcatAndDel(&t, p);
+			p = PyString_FromString("(");
+			PyString_ConcatAndDel(&p, t);
+			PyString_ConcatAndDel(&p, PyString_FromString(", "));
+			PyString_ConcatAndDel(&p, sub);
+			PyString_ConcatAndDel(&p, PyString_FromString(")"));
+			sub = p;
+		}
 	}
 	else {
 		PyObject *t=PyString_FromString("'");
