@@ -1264,7 +1264,7 @@ typedef struct {
 
         /* C-API that requries previous API to be defined */
 
-#define PyArray_DescrCheck(op) (PyObject_TypeCheck((op), &PyArrayDescr_Type))
+#define PyArray_DescrCheck(op) ((op)->ob_type == &PyArrayDescr_Type)
 
 #define PyArray_Check(op) ((op)->ob_type == &PyArray_Type || \
 			   PyObject_TypeCheck((op), &PyBigArray_Type))

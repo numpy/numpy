@@ -2942,7 +2942,7 @@ _convert_from_tuple(PyObject *obj)
 	PyObject *val;
 	int errflag;
 	
-	if (PyTuple_GET_SIZE(obj) < 2) return NULL;
+	if (PyTuple_GET_SIZE(obj) != 2) return NULL;
 
 	if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj,0), &type)) 
 		return NULL;
@@ -3006,12 +3006,77 @@ _convert_from_tuple(PyObject *obj)
 	return NULL;
 }
 
+/* obj is a list.  Each item is a tuple with
+
+(field-name, data-type (either a list or a string), and an optional 
+ shape parameter).
+*/
+static PyArray_Descr *
+_convert_from_array_descr(PyObject *obj)
+{
+	int n, i, totalsize;
+	int ret;
+	PyObject *fields, *item, *newobj;
+	PyObject *name, *key, *tup;
+	PyObject *nameslist;
+	PyArray_Descr *new;
+	PyArray_Descr *conv;
+	
+	n = PyList_GET_SIZE(obj);	
+	nameslist = PyList_New(n);
+	if (!nameslist) return NULL;
+	totalsize = 0;
+	fields = PyDict_New();
+	for (i=0; i<n; i++) {
+		item = PyList_GET_ITEM(obj, i);
+		if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2) || \
+		    !PyString_Check((name = PyTuple_GET_ITEM(item,0))))
+			goto fail;
+		Py_INCREF(name);
+		PyList_SET_ITEM(nameslist, i, name);
+		if (PyTuple_GET_SIZE(item) == 2) {
+			ret = PyArray_DescrConverter(PyTuple_GET_ITEM(item, 1), 
+						     &conv);
+			if (ret == PY_FAIL) 
+				PyObject_Print(PyTuple_GET_ITEM(item,1),
+					       stderr, 0);
+		}
+		else if (PyTuple_GET_SIZE(item) == 3) {
+			newobj = PyTuple_GetSlice(item, 1, 3);
+			ret = PyArray_DescrConverter(newobj, &conv);
+			Py_DECREF(newobj);
+		}
+		else goto fail;
+		if (ret == PY_FAIL) goto fail;
+		tup = PyTuple_New(2);
+		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
+		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
+		totalsize += conv->elsize;
+		PyDict_SetItem(fields, name, tup);
+		Py_DECREF(tup);
+	}
+	key = PyInt_FromLong(-1);
+	PyDict_SetItem(fields, key, nameslist);
+	Py_DECREF(key);
+	Py_DECREF(nameslist);
+	new = PyArray_DescrNewFromType(PyArray_VOID);
+	new->fields = fields;
+	new->elsize = totalsize;
+	return new;
+ 
+ fail:
+	Py_DECREF(fields);
+	Py_DECREF(nameslist);
+	return NULL;
+
+}
+
 /* a list specifying a data-type can just be
    a list of formats.  The names for the fields
    will default to f1, f2, f3, and so forth.
 
    or it can be an array_descr format string -- in which case
-   align must be 0
+   align must be 0.  
 */
 
 static PyArray_Descr *
@@ -3030,11 +3095,6 @@ _convert_from_list(PyObject *obj, int align)
 	n = PyList_GET_SIZE(obj);
 	totalsize = 0;
 	if (n==0) return NULL;
-
-	/* We can tell it's an array_descr format because
-	   the first element is a tuple whose first element is a string 
-	*/
-
 	nameslist = PyList_New(n);
 	if (!nameslist) return NULL;
 	fields = PyDict_New();
@@ -3073,7 +3133,15 @@ _convert_from_list(PyObject *obj, int align)
  fail:
 	Py_DECREF(nameslist);
 	Py_DECREF(fields);
-	return NULL;
+	if (align) {
+		PyErr_SetString(PyExc_ValueError, 
+				"failed to convert from list of formats "\
+				"and align cannot be 1 for conversion from "\
+				"array_descr structure");
+		return NULL;
+	}
+	PyErr_Clear();
+	return _convert_from_array_descr(obj);
 }
 
 
@@ -3402,24 +3470,34 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	/* or a tuple */
  	else if (PyTuple_Check(obj)) {
 		*at = _convert_from_tuple(obj);
-		if (*at == NULL) return PY_FAIL;
+		if (*at == NULL){
+			if (PyErr_Occurred()) return PY_FAIL;
+			goto fail;
+		}
 		return PY_SUCCEED;
 	}
 	/* or a list */
 	else if (PyList_Check(obj)) {
 		*at = _convert_from_list(obj,0);
-		if (*at == NULL) return PY_FAIL;
+		if (*at == NULL) {
+			if (PyErr_Occurred()) return PY_FAIL;
+			goto fail;
+		}
 		return PY_SUCCEED;
 	}
 	/* or a dictionary */
 	else if (PyDict_Check(obj)) {
 		*at = _convert_from_dict(obj,0);
-		if (*at == NULL) return PY_FAIL;
+		if (*at == NULL) {
+			if (PyErr_Occurred()) return PY_FAIL;
+			goto fail;
+		}
 		return PY_SUCCEED;
 	}
         else {
 		*at = _arraydescr_fromobj(obj);
 		if (*at) return PY_SUCCEED;
+		if (PyErr_Occurred()) return PY_FAIL;
 		goto fail;
 	}
 	if (PyErr_Occurred()) goto fail;
