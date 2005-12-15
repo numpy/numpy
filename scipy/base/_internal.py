@@ -56,9 +56,6 @@ class flagsobj(dict):
                 if (key == 'BEHAVED'):
                     num = _anum + _wnum
                     return self._flagnum & num == num
-                if (key in ['BEHAVED_RO', 'BRO']):
-                    num = _anum 
-                    return self._flagnum & num == num
                 if (key in ['CARRAY','CA']):
                     num = _anum + _wnum + _cnum
                     return self._flagnum & num == num
@@ -80,8 +77,6 @@ class flagsobj(dict):
         for k, name in enumerate(_setable):
             if item == name:
                 kwds[_setable2[k]] = val
-        if (item == 'NOTSWAPPED' or item == 'N'):
-            kwds['swap'] = not val
 
         # now actually update array flags
         self._arr.setflags(**kwds)
@@ -101,10 +96,6 @@ class flagsobj(dict):
         fl = self._flagnum
         return (fl & _anum == _anum) and \
                (fl & _wnum == _wnum)
-
-    def get_behaved_ro(self):
-        fl = self._flagnum
-        return (fl & _anum == _anum)
 
     def get_carray(self):
         fl = self._flagnum
@@ -149,14 +140,6 @@ class flagsobj(dict):
         val = not not val
         self._arr.setflags(uic=val)
 
-    def set_notswapped(self, val):
-        val = not val
-        self._arr.setflags(swap=val)
-
-    def set_swapped(self, val):
-        val = not not val
-        self._arr.setflags(swap=val)
-
     contiguous = property(get_contiguous, None, "")
     fortran = property(get_fortran, None, "")
     updateifcopy = property(get_updateifcopy, set_updateifcopy, "")
@@ -167,7 +150,6 @@ class flagsobj(dict):
     fnc = property(get_fnc, None, "")
     forc = property(get_forc, None, "")
     behaved = property(get_behaved, None, "")
-    behaved_ro = property(get_behaved_ro, None, "")
     carray = property(get_carray, None, "")
     farray = property(get_farray, None, "")
     

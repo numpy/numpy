@@ -1,5 +1,5 @@
 /*
-  Provide multidimensional arrays as a basic object type in python.  
+  Provide multidimensional arrays as a basic object type in python. 
 
 Based on Original Numeric implementation
 Copyright (c) 1995, 1996, 1997 Jim Hugunin, hugunin@mit.edu
@@ -3723,7 +3723,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 	descr = PyArray_DESCR(arr);
 	itemsize = descr->elsize;
 	Py_INCREF(descr);
-	newarr = PyArray_FromAny(obj, descr, 0,0, BEHAVED_FLAGS_RO);
+	newarr = PyArray_FromAny(obj, descr, 0,0, ALIGNED);
 	if (newarr == NULL) return -1;
 	fromptr = PyArray_DATA(newarr);
 	size=PyArray_SIZE(arr);
@@ -5956,7 +5956,6 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
    and therefore it is redundant to include those as well. 
 
    BEHAVED_FLAGS == ALIGNED | WRITEABLE
-   BEHAVED_FLAGS_RO == ALIGNED 
    CARRAY_FLAGS = CONTIGUOUS | BEHAVED_FLAGS
    FARRAY_FLAGS = FORTRAN | BEHAVED_FLAGS
    
@@ -6444,7 +6443,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		else if (PyArray_ISINTEGER(obj)) {
 			PyObject *new;
 			new = PyArray_FromAny(obj, indtype, 0, 0, 
-					      FORCECAST | BEHAVED_FLAGS_RO);
+					      FORCECAST | ALIGNED);
 			if (new==NULL) goto fail;
                         Py_DECREF(obj);
 			obj = new;

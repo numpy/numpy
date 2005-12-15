@@ -295,7 +295,6 @@ def obj2dtype(rep, default=None):
             return rep
     except TypeError:
         pass
-
     if isinstance(rep, type):
         return _python_type(rep)
     if isinstance(rep, ndarray):

@@ -820,8 +820,7 @@ _create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
 				ntype = PyArray_DescrFromType(arg_types[i]);
 				new = PyArray_FromAny((PyObject *)mps[i], 
 						      ntype, 0, 0,
-						      FORCECAST |	\
-						      BEHAVED_FLAGS_RO);
+						      FORCECAST | ALIGNED);
 				if (new == NULL) return -1;
 				Py_DECREF(mps[i]);
 				mps[i] = (PyArrayObject *)new;
@@ -1034,8 +1033,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 				  ntype = PyArray_DescrFromType(arg_types[i]);
 				  new = PyArray_FromAny((PyObject *)mps[i],
 							ntype, 0, 0,
-							FORCECAST | 
-							BEHAVED_FLAGS_RO |
+							FORCECAST | ALIGNED |
 							UPDATEIFCOPY);
 				  if (new == NULL) return -1;
 				  Py_DECREF(mps[i]);
@@ -1697,8 +1695,7 @@ _create_reduce_copy(PyUFuncReduceObject *loop, PyArrayObject **arr, int rtype)
 			ntype = PyArray_DescrFromType(rtype);
 			new = PyArray_FromAny((PyObject *)(*arr), 
 					      ntype, 0, 0,
-					      FORCECAST |		\
-					      BEHAVED_FLAGS_RO);
+					      FORCECAST | ALIGNED);
 			if (new == NULL) return -1;
 			*arr = (PyArrayObject *)new;
 			loop->decref = new;

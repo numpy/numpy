@@ -3009,6 +3009,9 @@ _convert_from_tuple(PyObject *obj)
 /* a list specifying a data-type can just be
    a list of formats.  The names for the fields
    will default to f1, f2, f3, and so forth.
+
+   or it can be an array_descr format string -- in which case
+   align must be 0
 */
 
 static PyArray_Descr *
@@ -3027,6 +3030,11 @@ _convert_from_list(PyObject *obj, int align)
 	n = PyList_GET_SIZE(obj);
 	totalsize = 0;
 	if (n==0) return NULL;
+
+	/* We can tell it's an array_descr format because
+	   the first element is a tuple whose first element is a string 
+	*/
+
 	nameslist = PyList_New(n);
 	if (!nameslist) return NULL;
 	fields = PyDict_New();
@@ -3855,7 +3863,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype, intp n)
 	return (PyObject *)ret;
 }
 
-static char doc_fromString[] = "fromstring(string, dtype=int, count=-1, swap=False) returns a new 1d array initialized from the raw binary data in string.  If count is positive, the new array will have count elements, otherwise it's size is determined by the size of string.";
+static char doc_fromString[] = "fromstring(string, dtype=int, count=-1) returns a new 1d array initialized from the raw binary data in string.  If count is positive, the new array will have count elements, otherwise it's size is determined by the size of string.";
 
 static PyObject *
 array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)

@@ -1,7 +1,7 @@
 __all__ = ['memmap']
 
 import mmap
-from numeric import uint8, ndarray
+from numeric import uint8, ndarray, dtypedescr
 from numerictypes import nbytes
 
 valid_filemodes = ["r", "c", "r+", "w+"]
@@ -17,7 +17,7 @@ mode_equivalents = {
 
 class memmap(ndarray):
     def __new__(subtype, name, dtype=uint8, mode='r+', offset=0,
-                shape=None, swap=0, fortran=0):
+                shape=None, fortran=0):
         
         try:
             mode = mode_equivalents[mode]
@@ -33,7 +33,8 @@ class memmap(ndarray):
 
         fid.seek(0,2)
         flen = fid.tell()
-        _dbytes = nbytes[dtype]
+        descr = dtypedescr(dtype)
+        _dbytes = descr.itemsize
 
         if shape is None:
             bytes = flen-offset
@@ -66,8 +67,8 @@ class memmap(ndarray):
 
         mm = mmap.mmap(fid.fileno(), bytes, access=acc)
 
-        self = ndarray.__new__(subtype, shape, dtype=dtype, buffer=mm,
-                               offset=offset, swap=swap, fortran=fortran)
+        self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
+                               offset=offset, fortran=fortran)
         self._mmap = mm
         self._offset = offset
         self._mode = mode
