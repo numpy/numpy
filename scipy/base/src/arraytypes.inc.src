@@ -1680,7 +1680,7 @@ static PyArray_Descr @from@_Descr = {
 	PyArray_@from@, 0,
 	_ALIGN(@align@),
 	NULL,
-	Py_None,
+	NULL,
 	&_Py@NAME@_ArrFuncs,
 };
 
@@ -1743,7 +1743,7 @@ static PyArray_Descr @from@_Descr = {
 	@num@*sizeof(@fromtyp@), 
 	_ALIGN(@fromtyp@),
 	NULL,
-	Py_None,
+	NULL,
 	&_Py@NAME@_ArrFuncs,
 };
 
@@ -1831,6 +1831,15 @@ set_typeinfo(PyObject *dict)
 	_letter_to_num[PyArray_@name@LTR] = PyArray_@name@;
 /**end repeat**/
 	_letter_to_num[PyArray_STRINGLTR2] = PyArray_STRING;
+
+
+/**begin repeat
+#name=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
+*/
+	@name@_Descr.fields = Py_None;
+/**end repeat**/
+
+
 
 	/* Set a dictionary with type information */
 	infodict = PyDict_New();
