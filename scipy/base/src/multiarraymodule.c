@@ -3032,7 +3032,12 @@ _convert_from_array_descr(PyObject *obj)
 		if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2) || \
 		    !PyString_Check((name = PyTuple_GET_ITEM(item,0))))
 			goto fail;
-		Py_INCREF(name);
+		if (PyString_GET_SIZE(name)==0) {
+			name = PyString_FromFormat("f%d", i);
+		}
+		else {
+			Py_INCREF(name);
+		}
 		PyList_SET_ITEM(nameslist, i, name);
 		if (PyTuple_GET_SIZE(item) == 2) {
 			ret = PyArray_DescrConverter(PyTuple_GET_ITEM(item, 1), 
@@ -3080,7 +3085,7 @@ _convert_from_array_descr(PyObject *obj)
 */
 
 static PyArray_Descr *
-_convert_from_list(PyObject *obj, int align)
+_convert_from_list(PyObject *obj, int align, int try_descr)
 {
 	int n, i;
 	int totalsize;
@@ -3133,6 +3138,7 @@ _convert_from_list(PyObject *obj, int align)
  fail:
 	Py_DECREF(nameslist);
 	Py_DECREF(fields);
+	if (!try_descr) return NULL;
 	if (align) {
 		PyErr_SetString(PyExc_ValueError, 
 				"failed to convert from list of formats "\
@@ -3164,8 +3170,12 @@ _convert_from_commastring(PyObject *obj, int align)
         listobj = PyObject_CallMethod(_scipy_internal, "_commastring",
 				      "O", obj);
 	if (!listobj) return NULL;
-	res = _convert_from_list(listobj, align);
+	res = _convert_from_list(listobj, align, 0);
 	Py_DECREF(listobj);
+	if (!res && !PyErr_Occurred()) {
+		PyErr_SetString(PyExc_ValueError, "invalid data-type");
+		return NULL;
+	}
 	return res;
 }
 
@@ -3478,7 +3488,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	}
 	/* or a list */
 	else if (PyList_Check(obj)) {
-		*at = _convert_from_list(obj,0);
+		*at = _convert_from_list(obj,0,1);
 		if (*at == NULL) {
 			if (PyErr_Occurred()) return PY_FAIL;
 			goto fail;

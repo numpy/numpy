@@ -7970,9 +7970,10 @@ static PyGetSetDef arraydescr_getsets[] = {
 	{NULL, NULL, NULL, NULL},
 };
 
-static PyArray_Descr *_convert_from_list(PyObject *obj, int align);
+static PyArray_Descr *_convert_from_list(PyObject *obj, int align, int try_descr);
 static PyArray_Descr *_convert_from_dict(PyObject *obj, int align);
 static PyArray_Descr *_convert_from_commastring(PyObject *obj, int align);
+static PyArray_Descr *_convert_from_array_descr(PyObject *obj);
 
 static PyObject *
 arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
@@ -7987,21 +7988,39 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 		return NULL;
 	
 	if (align) {
+		conv = NULL;
 		if PyDict_Check(odescr) 
-			return (PyObject *)_convert_from_dict(odescr, 1);
-		if PyList_Check(odescr) 
-			return (PyObject *)_convert_from_list(odescr, 1);
-		if PyString_Check(odescr)
-			return (PyObject *)_convert_from_commastring(odescr, 
+			conv =  _convert_from_dict(odescr, 1);
+		else if PyList_Check(odescr) 
+			conv = _convert_from_list(odescr, 1, 0);
+		else if PyString_Check(odescr)
+			conv = _convert_from_commastring(odescr, 
 								     1);
-		PyErr_SetString(PyExc_ValueError, 
-				"align can only be non-zero for"	\
-				"dictionary, list, and string objects.");
+		else {
+			PyErr_SetString(PyExc_ValueError, 
+					"align can only be non-zero for" \
+					"dictionary, list, and string objects.");
+		}
+		if (conv) return (PyObject *)conv;
+		if (!PyErr_Occurred()) {
+			PyErr_SetString(PyExc_ValueError,
+					"data-type-descriptor not understood");
+		}
 		return NULL;
 	}
+
+	if PyList_Check(odescr) {
+		conv = _convert_from_array_descr(odescr);
+		if (!conv) {
+			PyErr_Clear();
+			conv = _convert_from_list(odescr, 0, 0);
+		}
+		return (PyObject *)conv;
+	}
+
 	if (!PyArray_DescrConverter(odescr, &conv)) 
 		return NULL;
-	/* Get a new copy of it (e.g. so it can be changed in setstate) */
+	/* Get a new copy of it unless it's already a copy */
 	if (copy && conv->fields == Py_None) {
 		descr = PyArray_DescrNew(conv);
 		Py_DECREF(conv);
@@ -8234,10 +8253,38 @@ static PyMethodDef arraydescr_methods[] = {
 	 doc_arraydescr_reduce},
 	{"__setstate__", (PyCFunction)arraydescr_setstate, METH_VARARGS,
 	 doc_arraydescr_setstate},
+
 	{"newbyteorder", (PyCFunction)arraydescr_newbyteorder, METH_VARARGS,
 	 doc_arraydescr_newbyteorder},
         {NULL,		NULL}		/* sentinel */
 };
+
+static PyObject *
+arraydescr_repr(PyArray_Descr *self)
+{
+	PyObject *s=PyString_FromString("dtypedescr(");
+	PyObject *sub;
+
+	if (self->fields && self->fields != Py_None) {
+		PyObject *lst;
+		lst = arraydescr_protocol_descr_get(self);
+		if (!lst) sub = PyString_FromString("<err>");
+		else sub = PyObject_Str(lst);
+		Py_XDECREF(lst);
+	}
+	else {
+		PyObject *t=PyString_FromString("'");
+		sub = arraydescr_protocol_typestr_get(self);
+		PyString_Concat(&sub, t);
+		PyString_ConcatAndDel(&t, sub);
+		sub = t;
+	}
+	
+	PyString_ConcatAndDel(&s, sub);
+	sub = PyString_FromString(")");
+	PyString_ConcatAndDel(&s, sub);
+	return s;
+}
 
 static PyTypeObject PyArrayDescr_Type = {
         PyObject_HEAD_INIT(NULL)
@@ -8251,13 +8298,13 @@ static PyTypeObject PyArrayDescr_Type = {
         0,					/* tp_getattr */
         0,					/* tp_setattr */
         0,					/* tp_compare */
-        0,	   		                /* tp_repr */
+        (reprfunc)arraydescr_repr,	        /* tp_repr */
         0,					/* tp_as_number */
         0,     			                /* tp_as_sequence */
         0,                      	        /* tp_as_mapping */
         0,					/* tp_hash */
         0,					/* tp_call */
-        0,					/* tp_str */
+        (reprfunc)arraydescr_repr,              /* tp_str */
         0,	                         	/* tp_getattro */
         0,					/* tp_setattro */
         0,					/* tp_as_buffer */
