@@ -7,7 +7,7 @@ Scipy Distutils - Users Guide
 :Discussions to: scipy-dev@scipy.org
 :Created: October 2005
 :Revision: $LastChangedRevision$
-:SVN source: $HeadURL:$
+:SVN source: $HeadURL$
 
 Scipy structure
 '''''''''''''''
@@ -427,6 +427,9 @@ So, the header a typical ``__init__.py`` file is::
 
   from info import __doc__
   ...
+
+  from scipy.test.testing import ScipyTest
+  test = ScipyTest().test
 
 The ``tests/`` directory
 ''''''''''''''''''''''''
