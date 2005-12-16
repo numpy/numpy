@@ -21,6 +21,7 @@ inverse_real_fft2d(a, s=None, axes=(-2, -1))
 """
 from scipy.base import *
 import fftpack_lite as fftpack
+from helper import *
 
 _fft_cache = {}
 _real_fft_cache = {}
