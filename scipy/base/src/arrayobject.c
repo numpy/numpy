@@ -721,8 +721,7 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
 {
 	PyObject *ret;
 
-	if (!PyArray_ISNBO(descr->byteorder) && \
-	    (descr->byteorder != '|'))
+	if (!PyArray_ISNBO(descr->byteorder))
 		descr->byteorder = '=';
 	
 #if SIZEOF_INTP != SIZEOF_INT
@@ -812,6 +811,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 	itemsize = descr->elsize;
         type = descr->typeobj;
         copyswap = descr->f->copyswap;
+	swap = !PyArray_ISNBO(descr->byteorder);
 	if (type->tp_itemsize != 0)  /* String type */
 		obj = type->tp_alloc(type, itemsize);
 	else
@@ -850,6 +850,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 			vobj->obval = NULL;
 			vobj->ob_size = itemsize;
 			vobj->flags = BEHAVED_FLAGS | OWNDATA;
+			swap = 0;
 			if (type != &PyVoidArrType_Type && descr->fields) {
 				name = PyString_InternFromString("fields");
 				PyObject_GenericSetAttr(obj, name,	\
@@ -877,7 +878,6 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 		destptr = _SOFFSET_(obj, type_num);
 	}
 	/* copyswap for OBJECT increments the reference count */
-	swap = !PyArray_ISNBO(descr->byteorder);
         copyswap(destptr, data, swap, itemsize);
 	return obj;
 }
@@ -5825,7 +5825,7 @@ array_fromattr(PyObject *op, PyArray_Descr *typecode, int flags)
         return r;
 }        
 
-/* Steals a reference to newtype */
+/* Steals a reference to newtype --- which can be NULL */
 static PyObject *
 array_fromobject(PyObject *op, PyArray_Descr *newtype, int min_depth, 
 		 int max_depth, int flags) 
@@ -5939,6 +5939,7 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
   FORTRAN,
   ALIGNED, 
   WRITEABLE, 
+  NOTSWAPPED,
   ENSURECOPY, 
   UPDATEIFCOPY,
   FORCECAST,
@@ -5981,6 +5982,16 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 {
 	if (requires & ENSURECOPY) {
 		requires |= DEFAULT_FLAGS;
+	}
+	if (requires & NOTSWAPPED) {
+		if (!descr && PyArray_Check(op) && \
+		    !PyArray_ISNBO(PyArray_DESCR(op)->byteorder)) {
+			descr = PyArray_DescrNew(PyArray_DESCR(op));
+		}
+		else if ((descr && !PyArray_ISNBO(descr->byteorder))) {
+			PyArray_DESCR_REPLACE(descr);
+		}
+		descr->byteorder = PyArray_NATIVE;
 	}
 
 	return array_fromobject(op, descr, min_depth, max_depth,

@@ -28,11 +28,6 @@ import warnings
 import glob
 
 flatindex_re = re.compile('([.]flat(\s*?[[=]))')
-int_re = re.compile('int\s*[(][^)]*[)]')
-bool_re = re.compile('bool\s*[(][^)]*[)]')
-float_re = re.compile('float\s*[(][^)]*[)]')
-complex_re = re.compile('complex\s*[(][^)]*[)]')
-unicode_re = re.compile('unicode\s*[(][^)]*[)]')
 
 def replacetypechars(astr):
 #    astr = astr.replace("'s'","'h'")
@@ -47,15 +42,10 @@ def changeimports(fstr, name, newname):
     importstr = 'import %s' % name
     importasstr = 'import %s as ' % name
     fromstr = 'from %s import ' % name
-    fromallstr = 'from %s import *' % name
     fromall=0
 
     fstr = fstr.replace(importasstr, 'import %s as ' % newname)
     fstr = fstr.replace(importstr, 'import %s as %s' % (newname,name))
-    if (fstr.find(fromallstr) >= 0):
-        warnings.warn('Usage of %s found.' % fromallstr)
-        fstr = fstr.replace(fromallstr, 'from %s import *' % newname)
-        fromall=1
 
     ind = 0
     Nlen = len(fromstr)
@@ -98,18 +88,6 @@ def replaceother(astr):
     #astr = shpe.sub('\\1=\\1.reshape(\\2)', astr)
     return astr
 
-def warnofnewtypes(filestr):
-    if int_re.search(filestr) or \
-       float_re.search(filestr) or \
-       complex_re.search(filestr) or \
-       unicode_re.search(filestr) or \
-       bool_re.search(filestr):
-        warnings.warn("Use of builtin bool, int, float, complex, or unicode\n" \
-                      "found when import * used -- these will be handled by\n" \
-                      "new array scalars under scipy")
-        
-    return
-    
 import datetime
 def fromstr(filestr):
     filestr = replacetypechars(filestr)
@@ -130,8 +108,6 @@ def fromstr(filestr):
     fromall = fromall1 or fromall2 or fromall3
     filestr = replaceattr(filestr)
     filestr = replaceother(filestr)
-    if fromall:
-        warnofnewtypes(filestr)
     today = datetime.date.today().strftime('%b %d, %Y')
     name = os.path.split(sys.argv[0])[-1]
     filestr = '## Automatically adapted for '\
