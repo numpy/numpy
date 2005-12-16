@@ -252,7 +252,11 @@ class ScipyTest:
     Also old styled test_suite(level=1) hooks are supported but
     soon to be removed.
     """
-    def __init__(self, package='__main__'):
+    def __init__(self, package=None):
+        if package is None:
+            from scipy.distutils.misc_util import get_frame
+            f = get_frame(1)
+            package = f.f_locals['__name__']
         self.package = package
 
     def _module_str(self, module):
@@ -378,8 +382,9 @@ class ScipyTest:
         suites = []
         for name, module in sys.modules.items():
             if package_name != name[:len(package_name)] \
-                   or module is None \
-                   or os.path.basename(os.path.dirname(module.__file__))=='tests':
+                   or module is None:
+                continue
+            if os.path.basename(os.path.dirname(module.__file__))=='tests':
                 continue
             suites.extend(self._get_module_tests(module, level, verbosity))
 

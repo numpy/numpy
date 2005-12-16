@@ -158,8 +158,8 @@ def get_info(name,notfound_action=0):
           'lapack_atlas':lapack_atlas_info,  # use lapack_opt instead
           'lapack_atlas_threads':lapack_atlas_threads_info,  # ditto
           'mkl':mkl_info,
-          'lapack_mkl':lapack_mkl_info,
-          'blas_mkl':blas_mkl_info,
+          'lapack_mkl':lapack_mkl_info,      # use lapack_opt instead
+          'blas_mkl':blas_mkl_info,          # use blas_opt instead
           'x11':x11_info,
           'fftw':fftw_info,
           'dfftw':dfftw_info,

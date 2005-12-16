@@ -27,7 +27,7 @@ def get_path(mod_name,parent_path=None):
         mod = sys.modules[mod_name]
         file = mod.__file__
         d = os.path.dirname(os.path.abspath(file))
-    if parent_path:
+    if parent_path is not None:
         pd = os.path.abspath(parent_path)
         if pd==d[:len(pd)]:
             d = d[len(pd)+1:]
