@@ -3,7 +3,7 @@ Basic tools
 ===========
 
 linalg - lite version of scipy.linalg
-fft    - lite version of scipy.fftpack
+fftpack - lite version of scipy.fftpack
 helper - lite version of scipy.linalg.helper
 
 """
