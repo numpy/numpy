@@ -1197,20 +1197,20 @@ typedef struct {
 				    
 #define PyTypeNum_ISOBJECT(type) ((type) == PyArray_OBJECT)
 
-#define _PyAD
-#define PyDescr_ISBOOL(obj) PyTypeNum_ISBOOL(((_PyAD*)obj)->type_num)
-#define PyDescr_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(((_PyAD*)obj)->type_num)
-#define PyDescr_ISSIGNED(obj) PyTypeNum_ISSIGNED(((_PyAD*)obj)->type_num)
-#define PyDescr_ISINTEGER(obj) PyTypeNum_ISINTEGER(((_PyAD*)obj)->type_num)
-#define PyDescr_ISFLOAT(obj) PyTypeNum_ISFLOAT(((_PyAD*)obj)->type_num)
-#define PyDescr_ISNUMBER(obj) PyTypeNum_ISNUMBER(((_PyAD*)obj)->type_num)
-#define PyDescr_ISSTRING(obj) PyTypeNum_ISSTRING(((_PyAD*)obj)->type_num)
-#define PyDescr_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(((_PyAD*)obj)->type_num)
-#define PyDescr_ISPYTHON(obj) PyTypeNum_ISPYTHON(((_PyAD*)obj)->type_num)
-#define PyDescr_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(((_PyAD*)obj)->type_num)
-#define PyDescr_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((_PyAD*)obj)->type_num)
-#define PyDescr_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((_PyAD*)obj)->type_num)
-#define PyDescr_ISOBJECT(obj) PyTypeNum_ISOBJECT(((_PyAD*)obj)->type_num)
+#define _PyADt(o) ((PyArray_Descr *)o)->type_num
+#define PyDescr_ISBOOL(obj) PyTypeNum_ISBOOL(_PyADt(obj))
+#define PyDescr_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(_PyADt(obj))
+#define PyDescr_ISSIGNED(obj) PyTypeNum_ISSIGNED(_PyADt(obj))
+#define PyDescr_ISINTEGER(obj) PyTypeNum_ISINTEGER(_PyADt(obj))
+#define PyDescr_ISFLOAT(obj) PyTypeNum_ISFLOAT(_PyADt(obj))
+#define PyDescr_ISNUMBER(obj) PyTypeNum_ISNUMBER(_PyADt(obj))
+#define PyDescr_ISSTRING(obj) PyTypeNum_ISSTRING(_PyADt(obj))
+#define PyDescr_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(_PyADt(obj))
+#define PyDescr_ISPYTHON(obj) PyTypeNum_ISPYTHON(_PyADt(obj))
+#define PyDescr_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(_PyADt(obj))
+#define PyDescr_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(_PyADt(obj))
+#define PyDescr_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(_PyADt(obj))
+#define PyDescr_ISOBJECT(obj) PyTypeNum_ISOBJECT(_PyADt(obj))
 #undef _PyAD
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))

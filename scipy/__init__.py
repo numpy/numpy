@@ -30,7 +30,7 @@ else:
     from _import_tools import PackageImport
     from core_version import version as __core_version__
     __doc__ += PackageImport().import_packages(\
-        ['test','base'])
+        ['test','basic','base'])
     test = ScipyTest('scipy').test
 
 __scipy_doc__ = """
