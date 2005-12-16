@@ -8,23 +8,6 @@ def configuration(parent_package='',top_path=None):
 
     config.add_data_dir('tests')
 
-    # Configure blasdot
-    blas_info = get_info('blas_opt',0)
-    #blas_info = {}
-    def get_dotblas_sources(ext, build_dir):
-        if blas_info:
-            return ext.depends[:1]
-        return None # no extension module will be built
-
-    config.add_extension('_dotblas',
-                         sources = [get_dotblas_sources],
-                         depends=[join('blasdot','_dotblas.c'),
-                                  join('blasdot','cblas.h'),
-                                  ],
-                         include_dirs = ['blasdot'],
-                         extra_info = blas_info
-                         )
-
     # Configure fftpack_lite
     config.add_extension('fftpack_lite',
                          sources=[join('fftpack_lite', x) for x in \

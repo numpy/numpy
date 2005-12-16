@@ -121,6 +121,7 @@ class PackageImport:
             except Exception,msg:
                 print >> sys.stderr, 'Failed to import',package_name
                 print >> sys.stderr, msg
+                raise
                 continue
 
             self.imported_packages.append(fullname)
