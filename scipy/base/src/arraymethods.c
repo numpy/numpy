@@ -1419,8 +1419,7 @@ array_flatten(PyArrayObject *self, PyObject *args)
 	int fortran=0;
 
 	if (!PyArg_ParseTuple(args, "|i", &fortran)) return NULL;
-		return NULL;
-
+        
 	return PyArray_Flatten(self, (int) fortran);
 }
 
