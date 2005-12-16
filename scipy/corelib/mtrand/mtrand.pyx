@@ -833,8 +833,9 @@ cdef class RandomState:
         # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
         # decomposition of cov is such an A.
         
+        from scipy.basic import linalg
         # XXX: we really should be doing this by Cholesky decomposition
-        (u,s,v) = _sp.linalg.singular_value_decomposition(cov)
+        (u,s,v) = linalg.svd(cov)
         x = _sp.matrixmultiply(x*_sp.sqrt(s),v)
         # The rows of x now have the correct covariance but mean 0. Add
         # mean to each row. Then each row will have mean mean.
