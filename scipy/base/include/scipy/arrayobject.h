@@ -733,7 +733,7 @@ typedef Py_uintptr_t uintp;
   /* #define PyArrayMem_FREE(ptr) PyMem_Free(ptr) */
 #define PyDataMem_RENEW(ptr,size) ((char *)realloc(ptr,size))
 
-#define PyArray_USE_PYMEM 1
+#define PyArray_USE_PYMEM 0 
 
 #if PyArray_USE_PYMEM == 1
 #define _pya_malloc PyObject_Malloc

@@ -4690,7 +4690,7 @@ static PyTypeObject PyBigArray_Type = {
         (initproc)0,	  	                  /* tp_init */
         array_alloc,	                          /* tp_alloc */ 
         (newfunc)array_new,		          /* tp_new */
-        free,	                   	          /* tp_free */
+        _pya_free,                   	          /* tp_free */
         0,					  /* tp_is_gc */
         0,					  /* tp_bases */
         0,					  /* tp_mro */
