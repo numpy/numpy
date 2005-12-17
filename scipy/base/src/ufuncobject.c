@@ -1209,7 +1209,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 				scnt += mps[i]->descr->elsize;
 		}
 		memsize = loop->bufsize*(cnt+cntcast) + scbufsize*(scnt+scntcast);
- 		loop->buffer[0] = (char *)malloc(memsize);
+ 		loop->buffer[0] = PyDataMem_NEW(memsize);
 
 		/* fprintf(stderr, "Allocated buffer at %p of size %d, cnt=%d, cntcast=%d\n", loop->buffer[0], loop->bufsize * (cnt + cntcast), cnt, cntcast); */
 
@@ -1255,10 +1255,10 @@ ufuncreduce_dealloc(PyUFuncReduceObject *self)
                 Py_XDECREF(self->ret);
 		Py_XDECREF(self->errobj);
 		Py_XDECREF(self->decref);
-                if (self->buffer) free(self->buffer);
+                if (self->buffer) PyDataMem_FREE(self->buffer);
                 Py_DECREF(self->ufunc);
         }
-        free(self);
+        _pya_free(self);
 }
 
 static void
@@ -1269,11 +1269,11 @@ ufuncloop_dealloc(PyUFuncLoopObject *self)
 	if (self->ufunc != NULL) {
 		for (i=0; i<self->ufunc->nargs; i++)
 			Py_XDECREF(self->iters[i]);
-		if (self->buffer[0]) free(self->buffer[0]);
+		if (self->buffer[0]) PyDataMem_FREE(self->buffer[0]);
 		Py_XDECREF(self->errobj);
 		Py_DECREF(self->ufunc);
 	}
-        free(self);
+        _pya_free(self);
 }
 
 static PyUFuncLoopObject *
@@ -1286,7 +1286,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
 		PyErr_SetString(PyExc_ValueError, "function not supported");
 		return NULL;
 	}
-        if ((loop = malloc(sizeof(PyUFuncLoopObject)))==NULL) {
+        if ((loop = _pya_malloc(sizeof(PyUFuncLoopObject)))==NULL) {
                 PyErr_NoMemory(); return loop;
         }
 	
@@ -1728,7 +1728,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 	/* Reduce type is the type requested of the input 
 	   during reduction */
         
-        if ((loop = malloc(sizeof(PyUFuncReduceObject)))==NULL) {
+        if ((loop = _pya_malloc(sizeof(PyUFuncReduceObject)))==NULL) {
                 PyErr_NoMemory(); return loop;
         }
         
@@ -1903,7 +1903,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
                 if (otype != aar->descr->type_num) {
 			_size=loop->bufsize*(loop->outsize +		\
 					     aar->descr->elsize);
-                        loop->buffer = (char *)malloc(_size);
+                        loop->buffer = PyDataMem_NEW(_size);
                         if (loop->buffer == NULL) goto fail;
 			if (loop->obj) memset(loop->buffer, 0, _size);
                         loop->castbuf = loop->buffer + \
@@ -1913,7 +1913,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
                 }
                 else {
 			_size = loop->bufsize * loop->outsize;
-                        loop->buffer = (char *)malloc(_size);
+                        loop->buffer = PyDataMem_NEW(_size);
                         if (loop->buffer == NULL) goto fail;
 			if (loop->obj) memset(loop->buffer, 0, _size);
                         loop->bufptr[0] = loop->buffer;
@@ -2686,7 +2686,7 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
                 return NULL;
         }
 	
-        self = malloc(sizeof(PyUFuncObject));
+        self = _pya_malloc(sizeof(PyUFuncObject));
         if (self == NULL) return NULL;
         PyObject_Init((PyObject *)self, &PyUFunc_Type);
 
@@ -2729,7 +2729,7 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
 	i = (self->nargs % sizeof(void *));
 	if (i) offset[1] += (sizeof(void *)-i);
 
-        self->ptr = malloc(offset[0] + offset[1] + sizeof(void *) + \
+        self->ptr = _pya_malloc(offset[0] + offset[1] + sizeof(void *) + \
 			   (fname_len+14));
 
 	if (self->ptr == NULL) return PyErr_NoMemory();
@@ -2769,7 +2769,7 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
 {
 	PyUFuncObject *self;
 
-        self = malloc(sizeof(PyUFuncObject));
+        self = _pya_malloc(sizeof(PyUFuncObject));
         if (self == NULL) return NULL;
         PyObject_Init((PyObject *)self, &PyUFunc_Type);
 	
@@ -2847,10 +2847,10 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 static void
 ufunc_dealloc(PyUFuncObject *self)
 {
-        if (self->ptr) free(self->ptr);
+        if (self->ptr) _pya_free(self->ptr);
 	Py_XDECREF(self->userloops);
         Py_XDECREF(self->obj);
-        free(self);
+        _pya_free(self);
 }
 
 static PyObject *
@@ -3065,7 +3065,7 @@ ufunc_getattr(PyUFuncObject *self, char *name)
 		char *t;
 		list = PyList_New(nt);
 		if (list == NULL) return NULL;
-		t = malloc(no+ni+2);
+		t = _pya_malloc(no+ni+2);
 		n = 0;
 		for (k=0; k<nt; k++) {
 			for (j=0; j<ni; j++) {
@@ -3082,7 +3082,7 @@ ufunc_getattr(PyUFuncObject *self, char *name)
 			str = PyString_FromStringAndSize(t, no+ni+2);
 			PyList_SET_ITEM(list, k, str);
 		}
-		free(t);
+		_pya_free(t);
 		return list;
 		
 	}

@@ -964,7 +964,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd,
 		break;
 	case 2:
 		n = ap->dimensions[0];
-		ptr2 = (char **)malloc(n * sizeof(char *));
+		ptr2 = (char **)_pya_malloc(n * sizeof(char *));
 		if (!ptr2) goto fail;
 		for (i=0; i<n; i++) {
 			ptr2[i] = ap->data + i*ap->strides[0];
@@ -974,7 +974,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd,
 	case 3:
 		n = ap->dimensions[0];
 		m = ap->dimensions[1];
-		ptr3 = (char ***)malloc(n*(m+1) * sizeof(char *));
+		ptr3 = (char ***)_pya_malloc(n*(m+1) * sizeof(char *));
 		if (!ptr3) goto fail;
 		for (i=0; i<n; i++) {
 			ptr3[i] = ptr3[n + (m-1)*i];
@@ -1043,7 +1043,7 @@ PyArray_Free(PyObject *op, void *ptr)
         if ((ap->nd < 1) || (ap->nd > 3)) 
 		return -1;
         if (ap->nd >= 2) {
-		free(ptr);
+		_pya_free(ptr);
         }
         Py_DECREF(ap);
         return 0;
@@ -1495,7 +1495,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op)
 	mps = PyArray_ConvertToCommonType(op, &n);
 	if (mps == NULL) return NULL;
 
-	sizes = (intp *)malloc(n*sizeof(intp));
+	sizes = (intp *)_pya_malloc(n*sizeof(intp));
 	if (sizes == NULL) goto fail;
 	
 	ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)ip, 
@@ -1551,7 +1551,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op)
 	for(i=0; i<n; i++) Py_XDECREF(mps[i]);
 	Py_DECREF(ap);
 	PyDataMem_FREE(mps);
-	free(sizes);
+	_pya_free(sizes);
 
 	return (PyObject *)ret;
 	
@@ -1559,7 +1559,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op)
 	for(i=0; i<n; i++) Py_XDECREF(mps[i]);
 	Py_XDECREF(ap);
 	PyDataMem_FREE(mps);
-	free(sizes);
+	_pya_free(sizes);
 	Py_XDECREF(ret);
 	return NULL;
 }
@@ -2991,7 +2991,7 @@ _convert_from_tuple(PyObject *obj)
 							 shape.len);
 		PyDimMem_FREE(shape.ptr);
 		newdescr->type_num = PyArray_VOID;
-		newdescr->subarray = malloc(sizeof(PyArray_ArrayDescr));
+		newdescr->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
 		newdescr->subarray->base = type;
 		Py_INCREF(val);
 		newdescr->subarray->shape = val;
@@ -3785,7 +3785,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 	}
 	else {
 		if (obj == NULL) {
-			dptr = malloc(typecode->elsize);
+			dptr = _pya_malloc(typecode->elsize);
 			if (dptr == NULL) {
 				return PyErr_NoMemory();
 			}
@@ -3812,7 +3812,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 	ret = PyArray_Scalar(dptr, typecode, NULL);
 	
 	/* free dptr which contains zeros */
-	if (alloc) free(dptr);
+	if (alloc) _pya_free(dptr);
 	return ret;
 }
 

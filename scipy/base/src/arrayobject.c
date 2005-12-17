@@ -411,14 +411,14 @@ contiguous_data(PyArrayObject *src)
                             &elsize, &copies) == -1) 
                 return NULL;
 	
-        new_data = (char *)malloc(stride);
+        new_data = (char *)_pya_malloc(stride);
 	
         ret = do_sliced_copy(new_data, dest_strides_ptr, dest_dimensions, 
                              dest_nd, src->data, src_strides, 
                              src_dimensions, src_nd, elsize, copies);
 	
         if (ret != -1) { return new_data; }
-        else { free(new_data); return NULL; }
+        else { _pya_free(new_data); return NULL; }
 }
 
 /* end Helper functions */
@@ -454,7 +454,7 @@ PyArray_INCREF(PyArrayObject *mp)
         data2 = data;
         for(i=0; i<n; i++, data++) Py_XINCREF(*data);
 	
-        if (!PyArray_ISONESEGMENT(mp)) free(data2);
+        if (!PyArray_ISONESEGMENT(mp)) _pya_free(data2);
 	
         return 0;
 }
@@ -481,7 +481,7 @@ PyArray_XDECREF(PyArrayObject *mp)
         data2 = data;    
         for(i=0; i<n; i++, data++) Py_XDECREF(*data);
 	
-        if (!PyArray_ISONESEGMENT(mp)) free(data2);
+        if (!PyArray_ISONESEGMENT(mp)) _pya_free(data2);
 	
         return 0;
 }
@@ -1018,7 +1018,7 @@ PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
 		Py_XINCREF(descr->fields);
 	}
 	if (descr->subarray == NULL && old->subarray) {
-		descr->subarray = malloc(sizeof(PyArray_ArrayDescr));
+		descr->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
 		memcpy(descr->subarray, old->subarray, 
 		       sizeof(PyArray_ArrayDescr));
 		Py_INCREF(descr->subarray->shape);
@@ -2832,7 +2832,7 @@ dump_data(char **string, int *n, int *max_n, char *data, int nd,
         int i, N;
 	
 #define CHECK_MEMORY if (*n >= *max_n-16) { *max_n *= 2; \
-		*string = (char *)realloc(*string, *max_n); }
+		*string = (char *)_pya_realloc(*string, *max_n); }
 	
         if (nd == 0) {
 		
@@ -2881,7 +2881,7 @@ array_repr_builtin(PyArrayObject *self)
 	
         max_n = PyArray_NBYTES(self)*4*sizeof(char) + 7;
 	
-        if ((string = (char *)malloc(max_n)) == NULL) {
+        if ((string = (char *)_pya_malloc(max_n)) == NULL) {
                 PyErr_SetString(PyExc_MemoryError, "out of memory");
                 return NULL;
         }
@@ -2892,7 +2892,7 @@ array_repr_builtin(PyArrayObject *self)
         if (dump_data(&string, &n, &max_n, self->data, 
 		      self->nd, self->dimensions, 
                       self->strides, self) < 0) { 
-		free(string); return NULL; 
+		_pya_free(string); return NULL; 
 	}
 	
 	if (PyArray_ISEXTENDED(self)) {
@@ -2907,7 +2907,7 @@ array_repr_builtin(PyArrayObject *self)
 	}
 	
 
-        free(string);
+        _pya_free(string);
         return ret;
 }
 
@@ -4269,7 +4269,7 @@ array_struct_get(PyArrayObject *self)
 {
         PyArrayInterface *inter;
         
-        inter = (PyArrayInterface *)malloc(sizeof(PyArrayInterface));
+        inter = (PyArrayInterface *)_pya_malloc(sizeof(PyArrayInterface));
         inter->version = 2;
         inter->nd = self->nd;
         inter->typekind = self->descr->kind;
@@ -4612,7 +4612,7 @@ array_alloc(PyTypeObject *type, int nitems)
 {
         PyObject *obj;
         /* nitems will always be 0 */        
-        obj = (PyObject *)malloc(sizeof(PyArrayObject));
+        obj = (PyObject *)_pya_malloc(sizeof(PyArrayObject));
         PyObject_Init(obj, type);
         return obj;
 }
@@ -6178,7 +6178,7 @@ PyArray_IterNew(PyObject *obj)
                 return NULL;
         }
 
-        it = (PyArrayIterObject *)malloc(sizeof(PyArrayIterObject));
+        it = (PyArrayIterObject *)_pya_malloc(sizeof(PyArrayIterObject));
         PyObject_Init((PyObject *)it, &PyArrayIter_Type);
         /* it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);*/
         if (it == NULL)
@@ -6226,7 +6226,7 @@ static void
 arrayiter_dealloc(PyArrayIterObject *it)
 {
         Py_XDECREF(it->ao);
-        free(it);
+        _pya_free(it);
 }
 
 static int
@@ -7321,7 +7321,7 @@ PyArray_MapIterNew(PyObject *indexobj)
 	int i, n, started, nonindex;
 
         
-        mit = (PyArrayMapIterObject *)malloc(sizeof(PyArrayMapIterObject));
+        mit = (PyArrayMapIterObject *)_pya_malloc(sizeof(PyArrayMapIterObject));
         PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
         if (mit == NULL)
                 return NULL;
@@ -7458,7 +7458,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
 	Py_XDECREF(mit->subspace);
 	for (i=0; i<mit->numiter; i++)
 		Py_XDECREF(mit->iters[i]);
-        free(mit);
+        _pya_free(mit);
 }
 
 /* The mapiter object must be created new each time.  It does not work
@@ -7604,7 +7604,7 @@ arraymultiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 		return NULL;
 	}
 	
-	multi = malloc(sizeof(PyArrayMultiIterObject));
+	multi = _pya_malloc(sizeof(PyArrayMultiIterObject));
         if (multi == NULL) return PyErr_NoMemory();
 	PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
@@ -7658,7 +7658,7 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
 
 	for (i=0; i<multi->numiter; i++) 
 		Py_XDECREF(multi->iters[i]);
-	free(multi);
+	_pya_free(multi);
 }
 
 static PyObject *
@@ -7843,7 +7843,7 @@ PyArray_DescrNew(PyArray_Descr *base)
 	if (new->fields == Py_None) new->fields = NULL;
 	Py_XINCREF(new->fields);
 	if (new->subarray) {
-		new->subarray = malloc(sizeof(PyArray_ArrayDescr));
+		new->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
 		memcpy(new->subarray, base->subarray, 
 		       sizeof(PyArray_ArrayDescr));
 		Py_INCREF(new->subarray->shape);
@@ -7864,7 +7864,7 @@ arraydescr_dealloc(PyArray_Descr *self)
 	if (self->subarray) {
 		Py_DECREF(self->subarray->shape);
 		Py_DECREF(self->subarray->base);
-		free(self->subarray);
+		_pya_free(self->subarray);
 	}
 	self->ob_type->tp_free(self);
 }
@@ -8126,12 +8126,12 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 	if (self->subarray) {
 		Py_XDECREF(self->subarray->base);
 		Py_XDECREF(self->subarray->shape);
-		free(self->subarray);
+		_pya_free(self->subarray);
 	}
 	self->subarray = NULL;
 
 	if (subarray != Py_None) {
-		self->subarray = malloc(sizeof(PyArray_ArrayDescr));
+		self->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
 		self->subarray->base = (PyArray_Descr *)PyTuple_GET_ITEM(subarray, 0);
 		Py_INCREF(self->subarray->base);
 		self->subarray->shape = PyTuple_GET_ITEM(subarray, 1);

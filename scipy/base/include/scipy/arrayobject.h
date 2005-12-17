@@ -733,10 +733,22 @@ typedef Py_uintptr_t uintp;
   /* #define PyArrayMem_FREE(ptr) PyMem_Free(ptr) */
 #define PyDataMem_RENEW(ptr,size) ((char *)realloc(ptr,size))
 
-  /* Dimensions and strides */
-#define PyDimMem_NEW(size) ((intp *)malloc(size*sizeof(intp)))
-#define PyDimMem_FREE(ptr) free(ptr)
-#define PyDimMem_RENEW(ptr,size) ((intp *)realloc(ptr,size*sizeof(intp)))
+#define PyArray_USE_PYMEM 1
+
+#if PyArray_USE_PYMEM == 1
+#define _pya_malloc PyObject_Malloc
+#define _pya_free PyObject_Free
+#define _pya_realloc PyObject_Realloc
+#else
+#define _pya_malloc malloc
+#define _pya_free free
+#define _pya_realloc realloc
+#endif 
+
+/* Dimensions and strides */
+#define PyDimMem_NEW(size) ((intp *)_pya_malloc(size*sizeof(intp)))
+#define PyDimMem_FREE(ptr) _pya_free(ptr)
+#define PyDimMem_RENEW(ptr,size) ((intp *)_pya_realloc(ptr,size*sizeof(intp)))
 
 
   /* These must deal with unaligned and swapped data if necessary */

@@ -1437,7 +1437,6 @@ OBJECT_argmax(PyObject **ip, intp n, intp *max_ind, PyArrayObject *aip)
 	return 0;
 }
 
-
 /**begin repeat
 
 #fname= STRING, UNICODE, VOID#
@@ -1449,7 +1448,7 @@ static int
 {
 	register intp i; 
 	int elsize = aip->descr->elsize;
-	@type@ *mp = (@type@ *)malloc(elsize);
+	@type@ *mp = (@type@ *)_pya_malloc(elsize);
 	
 	if (mp==NULL) return 0;
 	memcpy(mp, ip, elsize);
@@ -1461,6 +1460,7 @@ static int
 			*max_ind=i;
 		} 
 	} 
+	_pya_free(mp);
 	return 0;
 }
 
