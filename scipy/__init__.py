@@ -27,11 +27,6 @@ except ImportError:
 class PackageLoader:
     def __init__(self):
         """ Manages loading SciPy packages.
-        
-        Inputs:
-
-          doc_titles - a list to be filled with strings of package
-                       documentation titles.
         """
 
         self.frame = frame = sys._getframe(1)
