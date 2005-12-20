@@ -8,6 +8,6 @@ helper - lite version of scipy.linalg.helper
 
 """
 
-depends = ['scipy.base']
+depends = ['base']
 global_symbols = ['fft','ifft','rand','randn', 
                   'linalg','fftpack','random']

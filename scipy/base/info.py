@@ -204,5 +204,5 @@ Threading tricks
 ParallelExec     --  Execute commands in parallel thread.
 """
 
-depends = ['scipy.test']
+depends = ['test']
 global_symbols = ['*']
