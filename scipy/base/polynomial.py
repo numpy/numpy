@@ -367,8 +367,7 @@ class poly1d(object):
          be used in all functions that accept arrays.
 
     p = poly1d([1,2,3], variable='lambda') will use lambda in the
-    string representation of p. p.variable stores the string used for the
-    variable.
+    string representation of p.
     """
     def __init__(self, c_or_r, r=0, variable=None):
         if isinstance(c_or_r, poly1d):
