@@ -365,11 +365,17 @@ class poly1d(object):
          quotient and remainder).
     asarray(p) will also give the coefficient array, so polynomials can
          be used in all functions that accept arrays.
+
+    p = poly1d([1,2,3], variable='lambda') will use lambda in the
+    string representation of p. p.variable stores the string used for the
+    variable.
     """
-    def __init__(self, c_or_r, r=0):
+    def __init__(self, c_or_r, r=0, variable=None):
         if isinstance(c_or_r, poly1d):
             for key in c_or_r.__dict__.keys():
                 self.__dict__[key] = c_or_r.__dict__[key]
+            if variable is not None:
+                self.__dict__['variable'] = variable
             return
         if r:
             c_or_r = poly(c_or_r)
@@ -381,6 +387,9 @@ class poly1d(object):
             c_or_r = NX.array([0.])
         self.__dict__['coeffs'] = c_or_r
         self.__dict__['order'] = len(c_or_r) - 1
+        if variable is None:
+            variable = 'x'
+        self.__dict__['variable'] = variable
 
     def __array__(self, t=None):
         if t:
@@ -402,6 +411,7 @@ class poly1d(object):
     def __str__(self):
         N = self.order
         thestr = "0"
+        var = self.variable
         for k in range(len(self.coeffs)):
             coefstr ='%.4g' % abs(self.coeffs[k])
             if coefstr[-4:] == '0000':
@@ -419,16 +429,16 @@ class poly1d(object):
                 if coefstr == '0':
                     newstr = ''
                 elif coefstr == 'b':
-                    newstr = 'x'
+                    newstr = var
                 else:
-                    newstr = '%s x' % (coefstr,)
+                    newstr = '%s %s' % (coefstr, var)
             else:
                 if coefstr == '0':
                     newstr = ''
                 elif coefstr == 'b':
-                    newstr = 'x**%d' % (power,)
+                    newstr = '%s**%d' % (var, power,)
                 else:
-                    newstr = '%s x**%d' % (coefstr, power)
+                    newstr = '%s %s**%d' % (coefstr, var, power)
 
             if k > 0:
                 if newstr != '':

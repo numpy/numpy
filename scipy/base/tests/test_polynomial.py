@@ -59,6 +59,16 @@ poly1d([ 0.00039683,  0.00277778,  0.025     ,  0.        ,  0.        ,
 poly1d([ 2.,  2.])
 >>> p.deriv(2)
 poly1d([ 2.])
+
+>>> q = poly1d([1.,2,3], variable='y')
+>>> print q
+   2
+1 y + 2 y + 3
+>>> q = poly1d([1.,2,3], variable='lambda')
+>>> print q
+        2
+1 lambda + 2 lambda + 3
+
 """
 
 from scipy.test.testing import *
