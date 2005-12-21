@@ -150,6 +150,7 @@ class PackageLoader:
         self.info_modules = {}
         if options.get('force',False):
             self.imported_packages = []
+        verbose = options.get('verbose',False)
 
         self._init_info_modules(packages or None)
 
@@ -158,7 +159,7 @@ class PackageLoader:
                 continue
             fullname = self.parent_name +'.'+ package_name
             info_module = self.info_modules[package_name]
-            if options.get('verbose',False):
+            if verbose>1:
                 print >> sys.stderr, 'Importing',package_name,'to',self.parent_name
 
             old_object = frame.f_locals.get(package_name,None)
@@ -170,17 +171,18 @@ class PackageLoader:
                 print >> sys.stderr, msg
                 continue
 
-            new_object = frame.f_locals.get(package_name)
-            if old_object is not None and old_object is not new_object:
-                print >> sys.stderr, 'Overwriting',package_name,'=',\
-                      `old_object`,'with',`new_object`            
+            if verbose:
+                new_object = frame.f_locals.get(package_name)
+                if old_object is not None and old_object is not new_object:
+                    print >> sys.stderr, 'Overwriting',package_name,'=',\
+                          `old_object`,'with',`new_object`            
 
             self.imported_packages.append(package_name)
             self.parent_export_names.append(package_name)
 
             global_symbols = getattr(info_module,'global_symbols',[])
             for symbol in global_symbols:
-                if options.get('verbose',False):
+                if verbose:
                     print >> sys.stderr, 'Importing',symbol,'of',package_name,\
                           'to',self.parent_name
 
@@ -195,10 +197,11 @@ class PackageLoader:
                 else:
                     symbols = [symbol]
 
-                old_objects = {}
-                for s in symbols:
-                    if frame.f_locals.has_key(s):
-                        old_objects[s] = frame.f_locals[s]
+                if verbose:
+                    old_objects = {}
+                    for s in symbols:
+                        if frame.f_locals.has_key(s):
+                            old_objects[s] = frame.f_locals[s]
                 try:
                     exec ('from '+package_name+' import '+symbol,
                           frame.f_globals,frame.f_locals)
@@ -207,11 +210,12 @@ class PackageLoader:
                     print >> sys.stderr, msg
                     continue
 
-                for s,old_object in old_objects.items():
-                    new_object = frame.f_locals[s]
-                    if new_object is not old_object:
-                        print >> sys.stderr, 'Overwriting',s,'=',\
-                              `old_object`,'with',`new_object`            
+                if verbose:
+                    for s,old_object in old_objects.items():
+                        new_object = frame.f_locals[s]
+                        if new_object is not old_object:
+                            print >> sys.stderr, 'Overwriting',s,'=',\
+                                  `old_object`,'with',`new_object`            
 
                 if symbol=='*':
                     self.parent_export_names.extend(symbols)
@@ -256,4 +260,3 @@ if show_scipy_config is not None:
     from scipy_version import scipy_version as __scipy_version__
     __doc__ += __scipy_doc__
     pkgload(verbose=0)
-
