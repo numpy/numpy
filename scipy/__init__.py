@@ -18,6 +18,7 @@ Available subpackages
 
 import os, sys
 NO_SCIPY_IMPORT = os.environ.get('NO_SCIPY_IMPORT',None)
+SCIPY_IMPORT_VERBOSE = int(os.environ.get('SCIPY_IMPORT_VERBOSE','0'))
 
 try:
     from __core_config__ import show as show_core_config
@@ -247,7 +248,7 @@ if show_core_config is None:
 else:
     from core_version import version as __core_version__
 
-    pkgload('test','base','basic',verbose=0)
+    pkgload('test','base','basic',verbose=SCIPY_IMPORT_VERBOSE)
 
     test = ScipyTest('scipy').test
 
@@ -275,4 +276,4 @@ else:
 if show_scipy_config is not None:
     from scipy_version import scipy_version as __scipy_version__
     __doc__ += __scipy_doc__
-    pkgload(verbose=0)
+    pkgload(verbose=SCIPY_IMPORT_VERBOSE)
