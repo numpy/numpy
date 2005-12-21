@@ -46,11 +46,21 @@ class PackageLoader:
         from glob import glob
         if packages is None:
             info_files = glob(os.path.join(self.parent_path,'*','info.py'))
+            for info_file in glob(os.path.join(self.parent_path,'*','info.pyc')):
+                if info_file[:-1] not in info_files:
+                    info_files.append(info_file)
         else:
             info_files = []
             for package in packages:
                 package = os.path.join(*package.split('.'))
-                info_files.append(os.path.join(self.parent_path,package,'info.py'))
+                info_file = os.path.join(self.parent_path,package,'info.py')
+                if not os.path.isfile(info_file): info_file += 'c'
+                if os.path.isfile(info_file):
+                    info_files.append(info_file)
+                else:
+                    if self.verbose:
+                        print >> sys.stderr, 'Package',`package`,\
+                              'does not have info.py file. Ignoring.'
 
         info_modules = self.info_modules
         for info_file in info_files:
@@ -58,11 +68,17 @@ class PackageLoader:
             if info_modules.has_key(package_name):
                 continue
             fullname = self.parent_name +'.'+ package_name
+
+            if info_file[-1]=='c':
+                filedescriptor = ('.pyc','rb',2)
+            else:
+                filedescriptor = ('.py','U',1)
+
             try:
                 info_module = imp.load_module(fullname+'.info',
-                                              open(info_file,'U'),
-                                                info_file,
-                                              ('.py','U',1))
+                                              open(info_file,filedescriptor[1]),
+                                              info_file,
+                                              filedescriptor)
             except Exception,msg:
                 print >> sys.stderr, msg
                 info_module = None
@@ -150,7 +166,7 @@ class PackageLoader:
         self.info_modules = {}
         if options.get('force',False):
             self.imported_packages = []
-        verbose = options.get('verbose',False)
+        self.verbose = verbose = options.get('verbose',False)
 
         self._init_info_modules(packages or None)
 
