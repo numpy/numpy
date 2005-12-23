@@ -1,6 +1,6 @@
 """
 >>> import scipy.base as nx
->>> from scipy.base.polynomial import poly1d
+>>> from scipy.base.polynomial import poly1d, polydiv
 
 >>> p = poly1d([1.,2,3])
 >>> p
@@ -27,7 +27,7 @@ poly1d([ 3.,  2.,  1.])
 >>> p * q
 poly1d([  3.,   8.,  14.,   8.,   3.])
 >>> p / q
-[poly1d([ 0.33333333]), poly1d([ 1.33333333,  2.66666667])]
+(poly1d([ 0.33333333]), poly1d([ 1.33333333,  2.66666667]))
 >>> p + q
 poly1d([ 4.,  4.,  4.])
 >>> p - q
@@ -69,6 +69,8 @@ poly1d([ 2.])
         2
 1 lambda + 2 lambda + 3
 
+>>> polydiv(poly1d([1,0,-1]), poly1d([1,1]))
+(poly1d([ 1., -1.]), poly1d([ 0.]))
 """
 
 from scipy.test.testing import *

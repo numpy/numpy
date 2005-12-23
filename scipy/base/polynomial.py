@@ -240,7 +240,8 @@ def polyadd(a1, a2):
     """Adds two polynomials represented as sequences
     """
     truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
-    a1, a2 = map(atleast_1d, (a1, a2))
+    a1 = atleast_1d(a1)
+    a2 = atleast_1d(a2)
     diff = len(a2) - len(a1)
     if diff == 0:
         return a1 + a2
@@ -258,7 +259,8 @@ def polysub(a1, a2):
     """Subtracts two polynomials represented as sequences
     """
     truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
-    a1, a2 = map(atleast_1d, (a1, a2))
+    a1 = atleast_1d(a1)
+    a2 = atleast_1d(a2)
     diff = len(a2) - len(a1)
     if diff == 0:
         return a1 - a2
@@ -301,25 +303,28 @@ def deconvolve(signal, divisor):
         rem = num - NX.convolve(den, quot, mode='full')
     return quot, rem
 
-def polydiv(a1, a2):
-    """Computes q and r polynomials so that a1(s) = q(s)*a2(s) + r(s)
+def polydiv(u, v):
+    """Computes q and r polynomials so that u(s) = q(s)*v(s) + r(s)
+    and deg r < deg v.
     """
-    truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
-    monDivisor = NX.asarray(a2) / a2[0]
-    dividend = NX.asarray(a1) / a2[0]
-    q = []
-    r = dividend
-    while len(r) >= len(monDivisor):
-        q.append(r[0])
-        r = polysub(r, polymul(q, monDivisor))[1:]
-    q = NX.asarray(q)
+    truepoly = (isinstance(u, poly1d) or isinstance(u, poly1d))
+    u = atleast_1d(u)
+    v = atleast_1d(v)
+    m = len(u) - 1
+    n = len(v) - 1
+    scale = 1. / v[0]
+    q = NX.zeros((m-n+1,), float)
+    r = u.copy()
+    for k in range(0, m-n+1):
+        d = scale * r[k]
+        q[k] = d
+        r[k:k+n+1] -= d*v
     while NX.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
         r = r[1:]
-    r *= a2[0]
     if truepoly:
-        q, r = map(poly1d, (q, r))
+        q = poly1d(q)
+        r = poly1d(r)
     return q, r
-
 
 _poly_mat = re.compile(r"[*][*]([0-9]*)")
 def _raise_power(astr, wrap=70):
@@ -498,14 +503,14 @@ class poly1d(object):
             return poly1d(self.coeffs/other)
         else:
             other = poly1d(other)
-            return map(poly1d, polydiv(self.coeffs, other.coeffs))
+            return polydiv(self, other)
 
     def __rdiv__(self, other):
         if isscalar(other):
             return poly1d(other/self.coeffs)
         else:
             other = poly1d(other)
-            return map(poly1d, polydiv(other.coeffs, self.coeffs))
+            return polydiv(other, self)
 
     def __setattr__(self, key, val):
         raise ValueError, "Attributes cannot be changed this way."
