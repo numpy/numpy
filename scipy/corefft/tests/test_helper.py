@@ -6,7 +6,7 @@
 import sys
 from scipy.test.testing import *
 set_package_path()
-from scipy.basic.helper import fftshift,ifftshift,fftfreq
+from scipy.corefft import fftshift,ifftshift,fftfreq
 del sys.path[0]
 
 from scipy import pi

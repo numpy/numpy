@@ -10,7 +10,9 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('f2py')
     config.add_subpackage('base')
     config.add_subpackage('lib')
-    config.add_subpackage('basic')
+    config.add_subpackage('corefft')
+    config.add_subpackage('corelinalg')
+    config.add_subpackage('corerandom')
     config.add_data_dir('doc')
 
     config.make_config_py(name='__core_config__') # installs __config__.py

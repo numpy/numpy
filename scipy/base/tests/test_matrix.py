@@ -28,7 +28,7 @@ class test_ctor(ScipyTestCase):
         
 class test_properties(ScipyTestCase):
     def test_basic(self):
-        from scipy.basic import linalg
+        import scipy.corelinalg as linalg
         
         A = array([[1., 2.], 
                    [3., 4.]])
@@ -96,7 +96,7 @@ class test_autocasting(ScipyTestCase):
 
 class test_algebra(ScipyTestCase):
     def test_basic(self):
-        from scipy.basic import linalg
+        import scipy.corelinalg as linalg
         
         A = array([[1., 2.],
                    [3., 4.]])
