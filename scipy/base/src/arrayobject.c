@@ -4717,7 +4717,7 @@ static PyTypeObject PyArray_Type = {
 /* object. */
 
 static int 
-discover_depth(PyObject *s, int max, int stop_at_string) 
+discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple) 
 {
         int d=0;
         PyObject *e;
@@ -4732,6 +4732,7 @@ discover_depth(PyObject *s, int max, int stop_at_string)
 		return PyArray_NDIM(s);
         if(PyString_Check(s) || PyBuffer_Check(s) || PyUnicode_Check(s))
 		return stop_at_string ? 0:1;
+	if (stop_at_tuple && PyTuple_Check(s)) return 0;
 	if ((e=PyObject_GetAttrString(s, "__array_shape__")) != NULL) {
 		if (PyTuple_Check(e)) d=PyTuple_GET_SIZE(e);
 		else d=-1;
@@ -4744,7 +4745,7 @@ discover_depth(PyObject *s, int max, int stop_at_string)
 		return 1;	
         if ((e=PySequence_GetItem(s,0)) == NULL) return -1;
         if(e!=s) {
-		d=discover_depth(e, max-1, stop_at_string);
+		d=discover_depth(e, max-1, stop_at_string, stop_at_tuple);
 		if(d >= 0) d++;
 	}
         Py_DECREF(e);
@@ -5064,6 +5065,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
         int nd;
 	intp d[MAX_DIMS];
 	int stop_at_string;
+	int stop_at_tuple;
 	int type = typecode->type_num;
 	int itemsize = typecode->elsize;
 	PyArray_Descr *savetype=typecode;
@@ -5073,7 +5075,11 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 			  (type == PyArray_UNICODE) ||  \
 			  (type == PyArray_VOID));
 
-        if (!((nd=discover_depth(s, MAX_DIMS+1, stop_at_string)) > 0)) {
+	stop_at_tuple = (type == PyArray_VOID && typecode->fields &&	\
+			 typecode->fields != Py_None);
+	
+        if (!((nd=discover_depth(s, MAX_DIMS+1, stop_at_string, 
+				 stop_at_tuple)) > 0)) {
 		if (nd==0)
 			return Array_FromScalar(s, typecode);
                 PyErr_SetString(PyExc_ValueError, 

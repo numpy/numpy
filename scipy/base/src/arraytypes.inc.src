@@ -229,12 +229,14 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 	return 0;
 }
 
-/* STRING */
-static 
-PyObject * 
+/* STRING -- can handle both NULL-terminated and not NULL-terminated cases */
+static PyObject * 
 STRING_getitem(char *ip, PyArrayObject *ap) 
 {
-	return PyString_FromStringAndSize(ip,ap->descr->elsize);
+	if (ip[ap->descr->elsize-1])
+		return PyString_FromStringAndSize(ip,ap->descr->elsize);
+	else
+		return PyString_FromString(ip);
 }
 
 static int 
