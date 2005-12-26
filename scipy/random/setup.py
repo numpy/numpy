@@ -3,7 +3,7 @@ from os.path import join
 
 def configuration(parent_package='',top_path=None):
     from scipy.distutils.misc_util import Configuration
-    config = Configuration('corerandom',parent_package,top_path)
+    config = Configuration('random',parent_package,top_path)
             
     return config
 
