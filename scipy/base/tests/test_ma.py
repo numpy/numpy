@@ -1,8 +1,7 @@
-import unittest
 import scipy 
 import types, time
 from scipy.base.ma import *
-from scipy.test.testing import ScipyTestCase, ScipyTest
+from scipy.testing import ScipyTestCase, ScipyTest
 def eq(v,w):
     result = allclose(v,w)
     if not result:

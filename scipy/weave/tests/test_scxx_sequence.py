@@ -1,10 +1,10 @@
 """ Test refcounting and behavior of SCXX.
 """
-import unittest
+
 import time
 import os,sys
 
-from scipy_test.testing import *
+from scipy.testing import *
 set_package_path()
 from weave import inline_tools
 restore_path()
@@ -20,7 +20,7 @@ restore_path()
 
 from UserList import UserList
 
-class _test_sequence_base(unittest.TestCase):
+class _test_sequence_base(ScipyTestCase):
     seq_type = None
 
     def check_conversion(self,level=5):
@@ -434,5 +434,5 @@ class test_list(_test_sequence_base):
         assert b == desired   
 
 if __name__ == "__main__":
-    ScipyTest('weave.scxx').run()
+    ScipyTest().run()
 

@@ -2,7 +2,7 @@
 # weave - C/C++ integration
 #
 
-from info_weave import __doc__
+from info import __doc__
 from weave_version import weave_version as __version__
 
 try:
@@ -18,5 +18,5 @@ try:
 except:
     pass
 
-from scipy.test.testing import ScipyTest
-test = ScipyTest('weave').test
+from scipy.testing import ScipyTest
+test = ScipyTest().test

@@ -21,5 +21,5 @@ else:
     
 
 
-from scipy.test.testing import ScipyTest 
+from scipy.testing import ScipyTest 
 test = ScipyTest().test

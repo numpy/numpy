@@ -248,7 +248,9 @@ if show_core_config is None:
 else:
     from core_version import version as __core_version__
 
-    pkgload('test','base','corefft','corelinalg','random',verbose=SCIPY_IMPORT_VERBOSE)
+    pkgload('testing','base','corefft','corelinalg','random',
+            verbose=SCIPY_IMPORT_VERBOSE)
+
 
     test = ScipyTest('scipy').test
 

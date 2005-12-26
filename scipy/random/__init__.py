@@ -15,5 +15,5 @@ def __RandomState_ctor():
     """
     return RandomState()
 
-from scipy.test.testing import ScipyTest 
+from scipy.testing import ScipyTest 
 test = ScipyTest().test

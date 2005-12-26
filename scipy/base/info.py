@@ -204,5 +204,5 @@ Threading tricks
 ParallelExec     --  Execute commands in parallel thread.
 """
 
-depends = ['test']
+depends = ['testing']
 global_symbols = ['*']

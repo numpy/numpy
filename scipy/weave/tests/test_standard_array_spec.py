@@ -1,9 +1,6 @@
-import unittest
-from scipy_base.numerix import *
-from scipy_base.numerix import RandomArray
-import time
 
-from scipy_test.testing import *
+from scipy.base import *
+from scipy.testing import *
 set_package_path()
 from weave import standard_array_spec
 restore_path()
@@ -31,7 +28,7 @@ def print_assert_equal(test_string,actual,desired):
         pprint.pprint(desired,msg)
         raise AssertionError, msg.getvalue()
 
-class test_array_converter(unittest.TestCase):    
+class test_array_converter(ScipyTestCase):    
     def check_type_match_string(self):
         s = standard_array_spec.array_converter()
         assert( not s.type_match('string') )
@@ -43,5 +40,5 @@ class test_array_converter(unittest.TestCase):
         assert(s.type_match(arange(4)))
 
 if __name__ == "__main__":
-    ScipyTest('weave.standard_array_spec').run()
+    ScipyTest().run()
 

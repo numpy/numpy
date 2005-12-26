@@ -1,42 +1,22 @@
-import unittest, os
-from scipy_base.numerix import *
-from scipy_test.testing import *
+import os
+from scipy.base import *
+from scipy.testing import *
 set_package_path()
 from weave import size_check
 from weave.ast_tools import *
 restore_path()
 
-import scipy_base.numerix as nx
+import scipy.base as nx
 
 empty = array(())
  
-def array_assert_equal(test_string,actual,desired):
-    """this should probably be in scipy_test.testing
-    """
-    import pprint        
-    try:
-        assert(all(equal(actual,desired)))
-    except AssertionError:
-        try:
-            # kluge for bug in scipy_base.numerix
-            assert (len(actual[0]) == len(actual[1]) == 
-                    len(desired[0]) == len(desired[1]) == 0)
-        except:    
-            import cStringIO
-            msg = cStringIO.StringIO()
-            msg.write(test_string)
-            msg.write(' failed\nACTUAL: \n')
-            pprint.pprint(actual,msg)
-            msg.write('DESIRED: \n')
-            pprint.pprint(desired,msg)
-            raise AssertionError, msg.getvalue()
 
-class test_make_same_length(unittest.TestCase):
+class test_make_same_length(ScipyTestCase):
 
     def generic_test(self,x,y,desired):
         actual = size_check.make_same_length(x,y)
         desired = desired
-        array_assert_equal('',actual,desired)
+        assert_array_equal('',actual,desired)
 
     def check_scalar(self):
         x,y = (),()
@@ -59,11 +39,11 @@ class test_make_same_length(unittest.TestCase):
         desired = array((1,2,3)),array((1,1,2))
         self.generic_test(x,y,desired)
 
-class test_binary_op_size(unittest.TestCase):
+class test_binary_op_size(ScipyTestCase):
     def generic_test(self,x,y,desired):
         actual = size_check.binary_op_size(x,y)
         desired = desired
-        array_assert_equal('',actual,desired)
+        assert_array_equal('',actual,desired)
     def generic_error_test(self,x,y):
         try:
             actual = size_check.binary_op_size(x,y)
@@ -122,7 +102,7 @@ class test_binary_op_size(unittest.TestCase):
         self.generic_error_test(x,y)
 
 class test_dummy_array(test_binary_op_size):
-    def array_assert_equal(self,test_string,actual,desired):
+    def assert_array_equal(self,test_string,actual,desired):
         """this should probably be in scipy_test.testing
         """
         import pprint        
@@ -148,7 +128,7 @@ class test_dummy_array(test_binary_op_size):
         for op in ops:
             actual = eval('xx' + op + 'yy')
             desired = desired
-            self.array_assert_equal('',actual,desired)
+            self.assert_array_equal('',actual,desired)
     def generic_error_test(self,x,y):
         try:
             self.generic_test('',x,y)
@@ -158,8 +138,8 @@ class test_dummy_array(test_binary_op_size):
     def desired_type(self,val):
         return size_check.dummy_array(array(val),1)
 
-class test_dummy_array_indexing(unittest.TestCase):
-    def array_assert_equal(self,test_string,actual,desired):
+class test_dummy_array_indexing(ScipyTestCase):
+    def assert_array_equal(self,test_string,actual,desired):
         """this should probably be in scipy_test.testing
         """
         import pprint        
@@ -178,7 +158,7 @@ class test_dummy_array_indexing(unittest.TestCase):
         a = size_check.dummy_array(ary)
         actual = eval(expr).shape        
         #print desired, actual
-        self.array_assert_equal(expr,actual,desired)
+        self.assert_array_equal(expr,actual,desired)
     def generic_wrap(self,a,expr):
         #print expr ,eval(expr)
         desired = array(eval(expr).shape)
@@ -324,27 +304,27 @@ class test_dummy_array_indexing(unittest.TestCase):
             except IndexError:
                 pass
 
-class test_reduction(unittest.TestCase):
+class test_reduction(ScipyTestCase):
     def check_1d_0(self):
         a = ones((5,))
         actual = size_check.reduction(a,0)
         desired = size_check.dummy_array((),1)
-        array_assert_equal('',actual.shape,desired.shape)        
+        assert_array_equal('',actual.shape,desired.shape)        
     def check_2d_0(self):
         a = ones((5,10))
         actual = size_check.reduction(a,0)
         desired = size_check.dummy_array((10,),1)
-        array_assert_equal('',actual.shape,desired.shape)        
+        assert_array_equal('',actual.shape,desired.shape)        
     def check_2d_1(self):
         a = ones((5,10))
         actual = size_check.reduction(a,1)
         desired = size_check.dummy_array((5,),1)
-        array_assert_equal('',actual.shape,desired.shape)        
+        assert_array_equal('',actual.shape,desired.shape)        
     def check_3d_0(self):
         a = ones((5,6,7))
         actual = size_check.reduction(a,1)
         desired = size_check.dummy_array((5,7),1)
-        array_assert_equal('',actual.shape,desired.shape)        
+        assert_array_equal('',actual.shape,desired.shape)        
     def check_error0(self):
         a = ones((5,))
         try:
@@ -358,8 +338,8 @@ class test_reduction(unittest.TestCase):
         except ValueError:
             pass            
 
-class test_expressions(unittest.TestCase):        
-    def array_assert_equal(self,test_string,actual,desired):
+class test_expressions(ScipyTestCase):        
+    def assert_array_equal(self,test_string,actual,desired):
         """this should probably be in scipy_test.testing
         """
         import pprint        
@@ -389,7 +369,7 @@ class test_expressions(unittest.TestCase):
         if actual is 'failed' and  desired is 'failed':
             return
         try:            
-            self.array_assert_equal(expr,actual,desired)
+            self.assert_array_equal(expr,actual,desired)
         except:
             print 'EXPR:',expr
             print 'ACTUAL:',actual

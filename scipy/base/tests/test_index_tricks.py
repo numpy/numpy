@@ -1,13 +1,11 @@
-import unittest
-import sys
 
-from scipy.test.testing import *
+from scipy.testing import *
 set_package_path()
 import scipy.base;reload(scipy.base)
 from scipy.base import *
-del sys.path[0]
+restore_path()
 
-class test_grid(unittest.TestCase):
+class test_grid(ScipyTestCase):
     def check_basic(self):
         a = mgrid[-1:1:10j]
         b = mgrid[-1:1:0.1]
@@ -32,7 +30,7 @@ class test_grid(unittest.TestCase):
         assert_array_almost_equal(d[0,1,:]-d[0,0,:], 0.1*ones(20,'d'),11)
         assert_array_almost_equal(d[1,:,1]-d[1,:,0], 0.2*ones(20,'d'),11)
 
-class test_concatenator(unittest.TestCase):
+class test_concatenator(ScipyTestCase):
     def check_1d(self):
         assert_array_equal(r_[1,2,3,4,5,6],array([1,2,3,4,5,6]))
         b = ones(5)
@@ -52,4 +50,4 @@ class test_concatenator(unittest.TestCase):
         assert_array_equal(d[5:,:],c)
 
 if __name__ == "__main__":
-    ScipyTest('scipy.base.index_tricks').run()
+    ScipyTest().run()

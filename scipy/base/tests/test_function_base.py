@@ -1,14 +1,13 @@
 
-import unittest
 import sys
 
-from scipy.test.testing import *
+from scipy.testing import *
 set_package_path()
 import scipy.base;reload(scipy.base)
 from scipy.base import *
 del sys.path[0]
 
-class test_any(unittest.TestCase):
+class test_any(ScipyTestCase):
     def check_basic(self):
         y1 = [0,0,1,0]
         y2 = [0,0,0,0]
@@ -23,7 +22,7 @@ class test_any(unittest.TestCase):
         assert_array_equal(sometrue(y1),[1,1,0])
         assert_array_equal(sometrue(y1,axis=1),[0,1,1])
         
-class test_all(unittest.TestCase):
+class test_all(ScipyTestCase):
     def check_basic(self):
         y1 = [0,1,1,0]
         y2 = [0,0,0,0]
@@ -39,7 +38,7 @@ class test_all(unittest.TestCase):
         assert_array_equal(alltrue(y1),[0,0,1])
         assert_array_equal(alltrue(y1,axis=1),[0,0,1])
 
-class test_average(unittest.TestCase):
+class test_average(ScipyTestCase):
     def check_basic(self):
         y1 = array([1,2,3])
         assert(average(y1) == 2.)
@@ -58,7 +57,7 @@ class test_average(unittest.TestCase):
         assert_array_equal(y5.mean(0), average(y5, 0))
         assert_array_equal(y5.mean(1), average(y5, 1))
 
-class test_logspace(unittest.TestCase):
+class test_logspace(ScipyTestCase):
     def check_basic(self):
         y = logspace(0,6)
         assert(len(y)==50)
@@ -69,7 +68,7 @@ class test_logspace(unittest.TestCase):
         y = logspace(0,6,num=7)
         assert_array_equal(y,[1,10,100,1e3,1e4,1e5,1e6])
 
-class test_linspace(unittest.TestCase):
+class test_linspace(ScipyTestCase):
     def check_basic(self):
         y = linspace(0,10)
         assert(len(y)==50)
@@ -87,7 +86,7 @@ class test_linspace(unittest.TestCase):
         y = list(linspace(0,1,2.5))
         assert y == [0.0, 1.0]
 
-class test_amax(unittest.TestCase):
+class test_amax(ScipyTestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
         assert_equal(amax(a),10.0)
@@ -97,7 +96,7 @@ class test_amax(unittest.TestCase):
         assert_equal(amax(b,axis=0),[8.0,10.0,9.0])
         assert_equal(amax(b,axis=1),[9.0,10.0,8.0])
 
-class test_amin(unittest.TestCase):
+class test_amin(ScipyTestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
         assert_equal(amin(a),-5.0)
@@ -107,7 +106,7 @@ class test_amin(unittest.TestCase):
         assert_equal(amin(b,axis=0),[3.0,3.0,2.0])
         assert_equal(amin(b,axis=1),[3.0,4.0,2.0])
 
-class test_ptp(unittest.TestCase):
+class test_ptp(ScipyTestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
         assert_equal(ptp(a),15.0)
@@ -117,7 +116,7 @@ class test_ptp(unittest.TestCase):
         assert_equal(ptp(b,axis=0),[5.0,7.0,7.0])
         assert_equal(ptp(b),[6.0,6.0,6.0])
 
-class test_cumsum(unittest.TestCase):
+class test_cumsum(ScipyTestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
@@ -133,7 +132,7 @@ class test_cumsum(unittest.TestCase):
                                       [5,11,18,27],
                                       [10,13,17,22]],ctype))
 
-class test_prod(unittest.TestCase):
+class test_prod(ScipyTestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
@@ -151,7 +150,7 @@ class test_prod(unittest.TestCase):
                                    array([50,36,84,180],ctype))
                 assert_array_equal(prod(a2),array([24, 1890, 600],ctype))
 
-class test_cumprod(unittest.TestCase):
+class test_cumprod(ScipyTestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
@@ -176,7 +175,7 @@ class test_cumprod(unittest.TestCase):
                                           [ 5, 30, 210, 1890],
                                           [10, 30, 120,  600]],ctype))
 
-class test_diff(unittest.TestCase):
+class test_diff(ScipyTestCase):
     def check_basic(self):
         x = [1,4,6,7,12]
         out = array([3,2,1,5])
@@ -197,7 +196,7 @@ class test_diff(unittest.TestCase):
         assert_array_equal(diff(x,axis=0),out3)
         assert_array_equal(diff(x,n=2,axis=0),out4)
 
-class test_angle(unittest.TestCase):
+class test_angle(ScipyTestCase):
     def check_basic(self):
         x = [1+3j,sqrt(2)/2.0+1j*sqrt(2)/2,1,1j,-1,-1j,1-3j,-1+3j]
         y = angle(x)
@@ -208,7 +207,7 @@ class test_angle(unittest.TestCase):
         assert_array_almost_equal(y,yo,11)
         assert_array_almost_equal(z,zo,11)
 
-class test_trim_zeros(unittest.TestCase):
+class test_trim_zeros(ScipyTestCase):
     """ only testing for integer splits.
     """
     def check_basic(self):
@@ -225,7 +224,7 @@ class test_trim_zeros(unittest.TestCase):
         assert_array_equal(res,array([1,0,2,3,0,4]))
 
 
-class test_extins(unittest.TestCase):
+class test_extins(ScipyTestCase):
     def check_basic(self):
         a = array([1,3,2,1,2,3,3])
         b = extract(a>1,a)
@@ -243,7 +242,7 @@ class test_extins(unittest.TestCase):
         insert(a,mask,c)
         assert_array_equal(a,ac)
                 
-class test_vectorize(unittest.TestCase):
+class test_vectorize(ScipyTestCase):
     def check_simple(self):
         def addsubtract(a,b):
             if a > b:

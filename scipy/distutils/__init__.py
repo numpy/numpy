@@ -12,5 +12,5 @@ except ImportError:
     _INSTALLED = False
 
 if _INSTALLED:
-    from scipy.test.testing import ScipyTest 
-    test = ScipyTest('scipy.distutils').test
+    from scipy.testing import ScipyTest 
+    test = ScipyTest().test

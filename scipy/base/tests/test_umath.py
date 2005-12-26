@@ -1,8 +1,8 @@
-import sys
-from scipy.test.testing import *
+
+from scipy.testing import *
 set_package_path()
 from scipy.base.umath import minimum, maximum
-del sys.path[0]
+restore_path()
 
 
 class test_maximum(ScipyTestCase):

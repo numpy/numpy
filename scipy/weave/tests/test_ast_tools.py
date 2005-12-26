@@ -1,10 +1,5 @@
-import unittest
-from scipy_base.numerix import *
-# The following try/except so that non-SciPy users can still use blitz
-from scipy_base.numeric import RandomArray
-import time
 
-from scipy_test.testing import *
+from scipy.testing import *
 set_package_path()
 from weave import ast_tools
 restore_path()
@@ -13,7 +8,7 @@ set_local_path()
 from weave_test_utils import *
 restore_path()
 
-class test_harvest_variables(unittest.TestCase):
+class test_harvest_variables(ScipyTestCase):
     """ Not much testing going on here, but 
         at least it is a flame test.
     """    
@@ -33,4 +28,4 @@ class test_harvest_variables(unittest.TestCase):
         self.generic_test(expr,desired)
 
 if __name__ == "__main__":
-    ScipyTest('weave.ast_tools').run()
+    ScipyTest().run()

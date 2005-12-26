@@ -18,5 +18,5 @@ else:
     ifft2 = scipy.fftpack.ifft2
 
 
-from scipy.test.testing import ScipyTest 
+from scipy.testing import ScipyTest 
 test = ScipyTest().test

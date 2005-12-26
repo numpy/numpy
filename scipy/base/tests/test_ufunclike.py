@@ -53,7 +53,7 @@ array([ 2.169925  ,  1.20163386,  2.70043972])
 
 """
 
-from scipy.test.testing import *
+from scipy.testing import *
 
 import doctest
 def test_suite(level=1):

@@ -26,10 +26,10 @@ def print_assert_equal(test_string,actual,desired):
 ###################################################
 # mainly used by catalog tests               
 ###################################################
-from scipy_distutils.misc_util import add_grandparent_to_path,restore_path
 
-add_grandparent_to_path(__name__)
-import catalog
+from scipy.testing import set_package_path, restore_path
+set_package_path()
+from weave import catalog
 restore_path()
 
 import glob
@@ -168,5 +168,3 @@ def move_file (src, dst,
                   (src, dst, src, msg)
 
     return dst
-
-        

@@ -1,21 +1,20 @@
-import unittest
-from scipy_base.numerix import *
-# The following try/except so that non-SciPy users can still use blitz
-from scipy_base.numerix import RandomArray
 import os
 import time
 
-from scipy_test.testing import *
+from scipy.base import *
+
+from scipy.testing import *
 set_package_path()
 from weave import blitz_tools
+from weave.ast_tools import harvest_variables
 restore_path()
+
 set_local_path()
 from weave_test_utils import *
 restore_path()
 
-from weave.ast_tools import harvest_variables
 
-class test_ast_to_blitz_expr(unittest.TestCase):
+class test_ast_to_blitz_expr(ScipyTestCase):
 
     def generic_test(self,expr,desired):
         import parser
@@ -58,7 +57,7 @@ class test_ast_to_blitz_expr(unittest.TestCase):
                   '-hy(_all,blitz::Range(1,_end),blitz::Range(_beg,Nhy(2)-1-1)));'
         self.generic_test(expr,desired)
 
-class test_blitz(unittest.TestCase):
+class test_blitz(ScipyTestCase):
     """* These are long running tests...
     
          I'd like to benchmark these things somehow.
@@ -176,4 +175,4 @@ class test_blitz(unittest.TestCase):
         self.generic_2d(expr,Complex64)
 
 if __name__ == "__main__":
-    ScipyTest('weave.blitz_tools').run()
+    ScipyTest().run()

@@ -30,5 +30,7 @@ del nt
 
 from utils import *
 
-from scipy.test.testing import ScipyTest 
-test = ScipyTest('scipy.base').test
+__all__ = filter(lambda s:not s.startswith('_'),dir())
+
+from scipy.testing import ScipyTest 
+test = ScipyTest().test

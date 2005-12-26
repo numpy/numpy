@@ -1,11 +1,9 @@
-import unittest
-import sys
 
-from scipy.test.testing import *
+from scipy.testing import *
 set_package_path()
 import scipy.base;reload(scipy.base)
 from scipy.base import *
-del sys.path[0]
+restore_path()
 
 class test_ctor(ScipyTestCase):
     def test_basic(self):

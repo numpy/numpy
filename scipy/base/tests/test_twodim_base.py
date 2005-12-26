@@ -2,14 +2,11 @@
 
 """
 
-import unittest
-
-import sys
-from scipy.test.testing import *
+from scipy.testing import *
 set_package_path()
 import scipy.base;reload(scipy.base)
 from scipy.base import *
-del sys.path[0]
+restore_path()
 
 ##################################################
 
@@ -19,7 +16,7 @@ def get_mat(n):
     data = add.outer(data,data)
     return data
 
-class test_eye(unittest.TestCase):
+class test_eye(ScipyTestCase):
     def check_basic(self):
 	assert_equal(eye(4),array([[1,0,0,0],
                                    [0,1,0,0],
@@ -55,7 +52,7 @@ class test_eye(unittest.TestCase):
                                           [1,0,0],
                                           [0,1,0]]))
 
-class test_diag(unittest.TestCase):
+class test_diag(ScipyTestCase):
     def check_vector(self):
         vals = (100*arange(5)).astype('l')
         b = zeros((5,5))
@@ -84,7 +81,7 @@ class test_diag(unittest.TestCase):
             b[k] = vals[k+2,k]
         assert_equal(diag(vals,-2),b[:3])
 
-class test_fliplr(unittest.TestCase):
+class test_fliplr(ScipyTestCase):
     def check_basic(self):
         self.failUnlessRaises(ValueError, fliplr, ones(4))
         a = get_mat(4)
@@ -96,7 +93,7 @@ class test_fliplr(unittest.TestCase):
              [5,4,3]]
         assert_equal(fliplr(a),b)
 
-class test_flipud(unittest.TestCase):
+class test_flipud(ScipyTestCase):
     def check_basic(self):
         a = get_mat(4)
         b = a[::-1,:]
@@ -107,7 +104,7 @@ class test_flipud(unittest.TestCase):
              [0,1,2]]
         assert_equal(flipud(a),b)
 
-class test_rot90(unittest.TestCase):
+class test_rot90(ScipyTestCase):
     def check_basic(self):
         self.failUnlessRaises(ValueError, rot90, ones(4))
 
@@ -134,4 +131,4 @@ class test_rot90(unittest.TestCase):
             assert_equal(rot90(a,k=k),b4)
 
 if __name__ == "__main__":
-    ScipyTest('scipy.base.twodim_base').run()
+    ScipyTest().run()

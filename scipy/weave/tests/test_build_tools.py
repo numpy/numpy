@@ -2,10 +2,9 @@
 # tests for MingW32Compiler
 # don't know how to test gcc_exists() and msvc_exists()...
 
-import unittest
 import os, sys, tempfile
 
-from scipy_test.testing import *
+from scipy.testing import *
 set_package_path()
 from weave import build_tools
 restore_path()
@@ -13,7 +12,7 @@ restore_path()
 def is_writable(val):
     return os.access(val,os.W_OK)
     
-class test_configure_build_dir(unittest.TestCase):
+class test_configure_build_dir(ScipyTestCase):
     def check_default(self):
         " default behavior is to return current directory "
         d = build_tools.configure_build_dir()
@@ -47,7 +46,7 @@ class test_configure_temp_dir(test_configure_build_dir):
         assert(d == tempfile.gettempdir())
         assert(is_writable(d))
 
-class test_configure_sys_argv(unittest.TestCase):
+class test_configure_sys_argv(ScipyTestCase):
     def check_simple(self):
         build_dir = 'build_dir'
         temp_dir = 'temp_dir'
@@ -64,4 +63,4 @@ class test_configure_sys_argv(unittest.TestCase):
         assert(pre_argv == sys.argv[:])
 
 if __name__ == "__main__":
-    ScipyTest('weave.build_tools').run()
+    ScipyTest().run()

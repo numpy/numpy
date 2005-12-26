@@ -1,5 +1,5 @@
 import sys
-from scipy.test.testing import *
+from scipy.testing import *
 from scipy.distutils.misc_util import appendpath
 from os.path import join, sep
 

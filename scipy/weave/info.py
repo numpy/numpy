@@ -9,3 +9,4 @@ C/C++ integration
 """
 postpone_import = 1
 standalone = 1
+ignore = 1

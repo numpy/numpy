@@ -1,7 +1,5 @@
-import unittest
-import sys
 
-from scipy.test.testing import *
+from scipy.testing import *
 set_package_path()
 import scipy.base;
 from scipy.base import *
@@ -17,7 +15,7 @@ class test_apply_along_axis(ScipyTestCase):
         a = ones((10,101),'d')
         assert_array_equal(apply_along_axis(len,0,a),len(a)*ones(shape(a)[1]))
 
-class test_array_split(unittest.TestCase):
+class test_array_split(ScipyTestCase):
     def check_integer_0_split(self):
         a = arange(10)
         try:
@@ -120,7 +118,7 @@ class test_array_split(unittest.TestCase):
                    array([]),array([])]
         compare_results(res,desired)
         
-class test_split(unittest.TestCase):
+class test_split(ScipyTestCase):
     """* This function is essentially the same as array_split,
          except that it test if splitting will result in an
          equal split.  Only test for this case.
@@ -139,7 +137,7 @@ class test_split(unittest.TestCase):
         except ValueError:
             pass
 
-class test_atleast_1d(unittest.TestCase):
+class test_atleast_1d(ScipyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=map(atleast_1d,[a,b])
@@ -170,7 +168,7 @@ class test_atleast_1d(unittest.TestCase):
         assert(atleast_1d(3.0).shape == (1,))
         assert(atleast_1d([[2,3],[4,5]]).shape == (2,2))
 
-class test_atleast_2d(unittest.TestCase):
+class test_atleast_2d(ScipyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=map(atleast_2d,[a,b])
@@ -199,7 +197,7 @@ class test_atleast_2d(unittest.TestCase):
         assert(atleast_2d([3j,1]).shape == (1,2))
         assert(atleast_2d([[[3,1],[4,5]],[[3,5],[1,2]]]).shape == (2,2,2))
 
-class test_atleast_3d(unittest.TestCase):
+class test_atleast_3d(ScipyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=map(atleast_3d,[a,b])
@@ -222,7 +220,7 @@ class test_atleast_3d(unittest.TestCase):
         desired = [a,b]
         assert_array_equal(res,desired)
 
-class test_hstack(unittest.TestCase):
+class test_hstack(ScipyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=hstack([a,b])
@@ -239,7 +237,7 @@ class test_hstack(unittest.TestCase):
         desired = array([[1,1],[2,2]])
         assert_array_equal(res,desired)
 
-class test_vstack(unittest.TestCase):
+class test_vstack(ScipyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=vstack([a,b])
@@ -261,7 +259,7 @@ class test_vstack(unittest.TestCase):
         desired = array([[1,2],[1,2]])
         assert_array_equal(res,desired)
 
-class test_dstack(unittest.TestCase):
+class test_dstack(ScipyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=dstack([a,b])
@@ -286,7 +284,7 @@ class test_dstack(unittest.TestCase):
 """ array_split has more comprehensive test of splitting.
     only do simple test on hsplit, vsplit, and dsplit
 """
-class test_hsplit(unittest.TestCase):
+class test_hsplit(ScipyTestCase):
     """ only testing for integer splits.
     """
     def check_0D_array(self):
@@ -308,7 +306,7 @@ class test_hsplit(unittest.TestCase):
         desired = [array([[1,2],[1,2]]),array([[3,4],[3,4]])]
         compare_results(res,desired)
 
-class test_vsplit(unittest.TestCase):
+class test_vsplit(ScipyTestCase):
     """ only testing for integer splits.
     """
     def check_1D_array(self):
@@ -325,7 +323,7 @@ class test_vsplit(unittest.TestCase):
         desired = [array([[1,2,3,4]]),array([[1,2,3,4]])]
         compare_results(res,desired)
 
-class test_dsplit(unittest.TestCase):
+class test_dsplit(ScipyTestCase):
     """ only testing for integer splits.
     """
     def check_2D_array(self):
@@ -346,7 +344,7 @@ class test_dsplit(unittest.TestCase):
                    array([[[3,4],[3,4]],[[3,4],[3,4]]])]
         compare_results(res,desired)
 
-class test_squeeze(unittest.TestCase):
+class test_squeeze(ScipyTestCase):
     def check_basic(self):
         a = rand(20,10,10,1,1)
         b = rand(20,1,10,1,20)
@@ -363,4 +361,4 @@ def compare_results(res,desired):
 
 
 if __name__ == "__main__":
-    ScipyTest('scipy.base.shape_base').run()
+    ScipyTest().run()

@@ -1,7 +1,7 @@
-import unittest
+
 import time
 
-from scipy_test.testing import *
+from scipy.testing import *
 set_package_path()
 from weave import ext_tools, c_spec
 try:
@@ -17,7 +17,7 @@ restore_path()
 build_dir = empty_temp_dir()
 print 'building extensions here:', build_dir    
 
-class test_ext_module(unittest.TestCase):
+class test_ext_module(ScipyTestCase):
     #should really do some testing of where modules end up
     def check_simple(self,level=5):
         """ Simplest possible module """
@@ -94,7 +94,7 @@ class test_ext_module(unittest.TestCase):
         c,d = ext_return_tuple.test(a)
         assert(c==a and d == a+1)
            
-class test_ext_function(unittest.TestCase):
+class test_ext_function(ScipyTestCase):
     #should really do some testing of where modules end up
     def check_simple(self,level=5):
         """ Simplest possible function """
@@ -107,7 +107,7 @@ class test_ext_function(unittest.TestCase):
         import simple_ext_function
         simple_ext_function.test()
       
-class test_assign_variable_types(unittest.TestCase):            
+class test_assign_variable_types(ScipyTestCase):            
     def check_assign_variable_types(self):
         try:
             from scipy_base.numerix import arange, Float32, Float64
@@ -135,4 +135,4 @@ class test_assign_variable_types(unittest.TestCase):
         print_assert_equal(expr,actual,desired)
 
 if __name__ == "__main__":
-    ScipyTest('weave.ext_tools').run()
+    ScipyTest().run()

@@ -7,9 +7,8 @@ check_var_local -- tests wheter a variable is passed in , modified,
 check_return -- test whether a variable is passed in, modified, and
                 then returned as a function return value correctly
 """
-import unittest
 
-from scipy_test.testing import *
+from scipy.testing import *
 set_package_path()
 from weave import ext_tools, wx_spec
 restore_path()
@@ -17,7 +16,7 @@ restore_path()
 import wxPython
 import wxPython.wx
 
-class test_wx_converter(unittest.TestCase):    
+class test_wx_converter(ScipyTestCase):    
     def check_type_match_string(self,level=5):
         s = wx_spec.wx_converter()
         assert(not s.type_match('string') )
@@ -92,4 +91,4 @@ class test_wx_converter(unittest.TestCase):
         assert( c == 'hello')
 
 if __name__ == "__main__":
-    ScipyTest('weave.wx_spec').run()
+    ScipyTest().run()

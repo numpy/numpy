@@ -19,4 +19,4 @@ if __name__ == '__main__':
           author_email = "eric@enthought.com",
           licence = "SciPy License (BSD Style)",
           url = 'http://www.scipy.org',
-          **configuration(parent_path='').todict())
+          **configuration(top_path='').todict())

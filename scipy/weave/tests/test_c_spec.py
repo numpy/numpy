@@ -1,4 +1,3 @@
-import unittest
 import time
 import os,sys
 
@@ -9,7 +8,7 @@ import os,sys
 global test_dir 
 test_dir = ''
 
-from scipy_test.testing import *
+from scipy.testing import *
 set_package_path()
 from weave import inline_tools,ext_tools,c_spec
 from weave.build_tools import msvc_exists, gcc_exists
@@ -49,7 +48,7 @@ def print_assert_equal(test_string,actual,desired):
 # Scalar conversion test classes
 #   int, float, complex
 #----------------------------------------------------------------------------
-class test_int_converter(unittest.TestCase):
+class test_int_converter(ScipyTestCase):
     compiler = ''    
     def check_type_match_string(self,level=5):
         s = c_spec.int_converter()
@@ -104,7 +103,7 @@ class test_int_converter(unittest.TestCase):
 
         assert( c == 3)
 
-class test_float_converter(unittest.TestCase):    
+class test_float_converter(ScipyTestCase):    
     compiler = ''
     def check_type_match_string(self,level=5):
         s = c_spec.float_converter()
@@ -159,7 +158,7 @@ class test_float_converter(unittest.TestCase):
         c = test(b)
         assert( c == 3.)
         
-class test_complex_converter(unittest.TestCase):    
+class test_complex_converter(ScipyTestCase):    
     compiler = ''
     def check_type_match_string(self,level=5):
         s = c_spec.complex_converter()
@@ -217,7 +216,7 @@ class test_complex_converter(unittest.TestCase):
 # File conversion tests
 #----------------------------------------------------------------------------
 
-class test_file_converter(unittest.TestCase):    
+class test_file_converter(ScipyTestCase):    
     compiler = ''
     def check_py_to_file(self,level=5):
         import tempfile
@@ -251,14 +250,14 @@ class test_file_converter(unittest.TestCase):
 # Instance conversion tests
 #----------------------------------------------------------------------------
 
-class test_instance_converter(unittest.TestCase):    
+class test_instance_converter(ScipyTestCase):    
     pass
 
 #----------------------------------------------------------------------------
 # Callable object conversion tests
 #----------------------------------------------------------------------------
     
-class test_callable_converter(unittest.TestCase):        
+class test_callable_converter(ScipyTestCase):        
     compiler=''
     def check_call_function(self,level=5):
         import string
@@ -278,7 +277,7 @@ class test_callable_converter(unittest.TestCase):
         desired = func(search_str,sub_str)        
         assert(desired == actual)
 
-class test_sequence_converter(unittest.TestCase):    
+class test_sequence_converter(ScipyTestCase):    
     compiler = ''
     def check_convert_to_dict(self,level=5):
         d = {}
@@ -293,7 +292,7 @@ class test_sequence_converter(unittest.TestCase):
         t = ()
         inline_tools.inline("",['t'],compiler=self.compiler,force=1)
 
-class test_string_converter(unittest.TestCase):    
+class test_string_converter(ScipyTestCase):    
     compiler = ''
     def check_type_match_string(self,level=5):
         s = c_spec.string_converter()
@@ -348,7 +347,7 @@ class test_string_converter(unittest.TestCase):
         c = test(b)
         assert( c == 'hello')
 
-class test_list_converter(unittest.TestCase):    
+class test_list_converter(ScipyTestCase):    
     compiler = ''
     def check_type_match_bad(self,level=5):
         s = c_spec.list_converter()
@@ -459,7 +458,7 @@ class test_list_converter(unittest.TestCase):
         print 'python:', t2 - t1        
         assert( sum1 == sum2 and sum1 == sum3)
 
-class test_tuple_converter(unittest.TestCase):    
+class test_tuple_converter(ScipyTestCase):    
     compiler = ''
     def check_type_match_bad(self,level=5):
         s = c_spec.tuple_converter()
@@ -512,7 +511,7 @@ class test_tuple_converter(unittest.TestCase):
         assert( c == ('hello',None))
 
 
-class test_dict_converter(unittest.TestCase):    
+class test_dict_converter(ScipyTestCase):    
     def check_type_match_bad(self,level=5):
         s = c_spec.dict_converter()
         objs = [[],(),'',1,1.,1+1j]

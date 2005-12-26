@@ -73,7 +73,7 @@ poly1d([ 2.])
 (poly1d([ 1., -1.]), poly1d([ 0.]))
 """
 
-from scipy.test.testing import *
+from scipy.testing import *
 
 import doctest
 def test_suite(level=1):

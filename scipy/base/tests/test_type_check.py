@@ -1,12 +1,11 @@
 
-import unittest
 import sys
 
-from scipy.test.testing import *
+from scipy.testing import *
 set_package_path()
 import scipy.base;reload(scipy.base);reload(scipy.base.type_check)
 from scipy.base import *
-del sys.path[0]
+restore_path()
 
 def assert_all(x):
     assert(all(x)), x
@@ -60,7 +59,7 @@ class test_mintypecode(ScipyTestCase):
         #assert_equal(mintypecode('idF',savespace=1),'F')
         assert_equal(mintypecode('idD'),'D')
         
-class test_isscalar(unittest.TestCase):
+class test_isscalar(ScipyTestCase):
     def check_basic(self):
         assert(isscalar(3))
         assert(not isscalar([3]))
@@ -69,7 +68,7 @@ class test_isscalar(unittest.TestCase):
         assert(isscalar(10L))
         assert(isscalar(4.0))
 
-class test_real(unittest.TestCase):
+class test_real(ScipyTestCase):
     def check_real(self):
         y = rand(10,)
         assert_array_equal(y,real(y))
@@ -78,7 +77,7 @@ class test_real(unittest.TestCase):
         y = rand(10,)+1j*rand(10,)
         assert_array_equal(y.real,real(y))
 
-class test_imag(unittest.TestCase):
+class test_imag(ScipyTestCase):
     def check_real(self):
         y = rand(10,)
         assert_array_equal(0,imag(y))
@@ -87,7 +86,7 @@ class test_imag(unittest.TestCase):
         y = rand(10,)+1j*rand(10,)
         assert_array_equal(y.imag,imag(y))
 
-class test_iscomplex(unittest.TestCase):
+class test_iscomplex(ScipyTestCase):
     def check_fail(self):
         z = array([-1,0,1])
         res = iscomplex(z)
@@ -97,7 +96,7 @@ class test_iscomplex(unittest.TestCase):
         res = iscomplex(z)
         assert_array_equal(res,[1,0,0])
 
-class test_isreal(unittest.TestCase):
+class test_isreal(ScipyTestCase):
     def check_pass(self):
         z = array([-1,0,1j])
         res = isreal(z)
@@ -107,21 +106,21 @@ class test_isreal(unittest.TestCase):
         res = isreal(z)
         assert_array_equal(res,[0,1,1])
 
-class test_iscomplexobj(unittest.TestCase):
+class test_iscomplexobj(ScipyTestCase):
     def check_basic(self):
         z = array([-1,0,1])
         assert(not iscomplexobj(z))
         z = array([-1j,0,-1])
         assert(iscomplexobj(z))
 
-class test_isrealobj(unittest.TestCase):
+class test_isrealobj(ScipyTestCase):
     def check_basic(self):
         z = array([-1,0,1])
         assert(isrealobj(z))
         z = array([-1j,0,-1])
         assert(not isrealobj(z))
 
-class test_isnan(unittest.TestCase):
+class test_isnan(ScipyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isnan(z) == 0
@@ -141,7 +140,7 @@ class test_isnan(unittest.TestCase):
     def check_complex1(self):
         assert_all(isnan(array(0+0j)/0.) == 1)
                 
-class test_isfinite(unittest.TestCase):
+class test_isfinite(ScipyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isfinite(z) == 1
@@ -161,7 +160,7 @@ class test_isfinite(unittest.TestCase):
     def check_complex1(self):
         assert_all(isfinite(array(1+1j)/0.) == 0)
         
-class test_isinf(unittest.TestCase):
+class test_isinf(ScipyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isinf(z) == 0
@@ -180,21 +179,21 @@ class test_isinf(unittest.TestCase):
     #    assert_all(isinf(log(-1.)) == 0)
     #    assert_all(isnan(log(-1.)) == 1)
 
-class test_isposinf(unittest.TestCase):
+class test_isposinf(ScipyTestCase):
     def check_generic(self):
         vals = isposinf(array((-1.,0,1))/0.)
         assert(vals[0] == 0)
         assert(vals[1] == 0)
         assert(vals[2] == 1)
 
-class test_isneginf(unittest.TestCase):
+class test_isneginf(ScipyTestCase):
     def check_generic(self):
         vals = isneginf(array((-1.,0,1))/0.)
         assert(vals[0] == 1)
         assert(vals[1] == 0)
         assert(vals[2] == 0)
 
-class test_nan_to_num(unittest.TestCase):
+class test_nan_to_num(ScipyTestCase):
     def check_generic(self):
         vals = nan_to_num(array((-1.,0,1))/0.)
         assert_all(vals[0] < -1e10) and assert_all(isfinite(vals[0]))
@@ -224,7 +223,7 @@ class test_nan_to_num(unittest.TestCase):
         #assert_all(vals.real < -1e10) and assert_all(isfinite(vals))    
 
 
-class test_real_if_close(unittest.TestCase):
+class test_real_if_close(ScipyTestCase):
     def check_basic(self):
         a = rand(10)
         b = real_if_close(a+1e-15j)

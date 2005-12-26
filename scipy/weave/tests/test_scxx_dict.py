@@ -1,16 +1,15 @@
 """ Test refcounting and behavior of SCXX.
 """
-import unittest
 import time
 import os,sys
 
-from scipy_test.testing import *
+from scipy.testing import *
 set_package_path()
 from weave import inline_tools
 restore_path()
 
 
-class test_dict_construct(unittest.TestCase):
+class test_dict_construct(ScipyTestCase):
     #------------------------------------------------------------------------
     # Check that construction from basic types is allowed and have correct
     # reference counts
@@ -26,7 +25,7 @@ class test_dict_construct(unittest.TestCase):
         assert res == {}
                               
                     
-class test_dict_has_key(unittest.TestCase):
+class test_dict_has_key(ScipyTestCase):
     def check_obj(self,level=5):
         class foo:
             pass
@@ -90,7 +89,7 @@ class test_dict_has_key(unittest.TestCase):
         res = inline_tools.inline(code,['a'])
         assert not res
 
-class test_dict_get_item_op(unittest.TestCase):
+class test_dict_get_item_op(ScipyTestCase):
 
     def generic_get(self,code,args=['a']):
         a = {}
@@ -133,7 +132,7 @@ class test_dict_get_item_op(unittest.TestCase):
         except KeyError:
             pass    
             
-class test_dict_set_operator(unittest.TestCase):
+class test_dict_set_operator(ScipyTestCase):
     def generic_new(self,key,val):
         # test that value is set correctly and that reference counts
         # on dict, key, and val are being handled correctly.
@@ -200,7 +199,7 @@ class test_dict_set_operator(unittest.TestCase):
         key,val = foo(),12345
         self.generic_overwrite(key,val)
                 
-class test_dict_del(unittest.TestCase):
+class test_dict_del(ScipyTestCase):
     def generic(self,key):
         # test that value is set correctly and that reference counts
         # on dict, key, are being handled correctly. after deletion,
@@ -234,7 +233,7 @@ class test_dict_del(unittest.TestCase):
         key = foo()
         self.generic(key)
 
-class test_dict_others(unittest.TestCase):
+class test_dict_others(ScipyTestCase):
     def check_clear(self,level=5):
         a = {}
         a["hello"] = 1
@@ -263,4 +262,4 @@ class test_dict_others(unittest.TestCase):
         assert a == b
 
 if __name__ == "__main__":
-    ScipyTest('weave.scxx').run()
+    ScipyTest().run()

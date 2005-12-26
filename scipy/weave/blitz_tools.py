@@ -1,6 +1,5 @@
 import parser
 import string
-import copy
 import os,sys
 import ast_tools
 import token,symbol
@@ -11,6 +10,7 @@ import converters
 from ast_tools import *
 
 from scipy.base import *
+import copy
 from types import *
 
 import inline_tools

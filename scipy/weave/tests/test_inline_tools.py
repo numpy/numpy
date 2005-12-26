@@ -1,7 +1,7 @@
-import unittest
-from scipy_base.numerix import *
 
-from scipy_test.testing import *
+from scipy.base import *
+
+from scipy.testing import *
 set_package_path()
 from weave import inline_tools
 restore_path()
@@ -9,7 +9,7 @@ set_local_path()
 from test_scxx import *
 restore_path()
 
-class test_inline(unittest.TestCase):
+class test_inline(ScipyTestCase):
     """ These are long running tests...
     
          I'd like to benchmark these things somehow.
@@ -43,4 +43,4 @@ class test_inline(unittest.TestCase):
             pass
 
 if __name__ == "__main__":
-    ScipyTest('weave.inline_tools').run()
+    ScipyTest().run()

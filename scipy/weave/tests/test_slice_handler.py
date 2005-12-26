@@ -1,7 +1,5 @@
-import unittest
-# Was getting a weird "no module named slice_handler error with this.
 
-from scipy_test.testing import *
+from scipy.testing import *
 set_package_path()
 from weave import slice_handler
 from weave.slice_handler import indexed_array_pattern
@@ -24,7 +22,7 @@ def print_assert_equal(test_string,actual,desired):
         pprint.pprint(desired,msg)
         raise AssertionError, msg.getvalue()
 
-class test_build_slice_atom(unittest.TestCase):
+class test_build_slice_atom(ScipyTestCase):
     def generic_test(self,slice_vars,desired):
         pos = slice_vars['pos']
         ast_list = slice_handler.build_slice_atom(slice_vars,pos)
@@ -36,7 +34,7 @@ class test_build_slice_atom(unittest.TestCase):
         desired = 'slice(1,2-1)'
         self.generic_test(slice_vars,desired)
         
-class test_slice(unittest.TestCase):
+class test_slice(ScipyTestCase):
 
     def generic_test(self,suite_string,desired):
         import parser
@@ -137,7 +135,7 @@ def replace_whitespace(in_str):
     out = string.replace(out,"\n","")
     return out
     
-class test_transform_slices(unittest.TestCase):
+class test_transform_slices(ScipyTestCase):
     def generic_test(self,suite_string,desired):
         import parser
         ast_list = parser.suite(suite_string).tolist()
