@@ -1032,7 +1032,7 @@ gentype_wraparray(PyObject *scalar, PyObject *args)
 
 /**begin repeat
 
-#name=tolist, toscalar, tostring, astype, copy, resize, __deepcopy__, choose, sort, argsort, searchsorted, argmax, argmin, reshape, view, swapaxes, max, min, ptp, conj, conjugate, nonzero, all, any, flatten, ravel, fill, transpose, newbyteorder#
+#name=tolist, item, tostring, astype, copy, resize, __deepcopy__, choose, sort, argsort, searchsorted, argmax, argmin, reshape, view, swapaxes, max, min, ptp, conj, conjugate, nonzero, all, any, flatten, ravel, fill, transpose, newbyteorder#
 */
 
 static PyObject *
@@ -1255,7 +1255,7 @@ gentype_setflags(PyObject *self, PyObject *args, PyObject *kwds)
 */
 static PyMethodDef gentype_methods[] = {
         {"tolist",	 (PyCFunction)gentype_tolist,	1, NULL},
-        {"toscalar", (PyCFunction)gentype_toscalar, METH_VARARGS, NULL},
+        {"item", (PyCFunction)gentype_item, METH_VARARGS, NULL},
 	{"tofile", (PyCFunction)gentype_tofile, 
 	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"tostring", (PyCFunction)gentype_tostring, METH_VARARGS, NULL},

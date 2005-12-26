@@ -124,7 +124,7 @@ class chararray(ndarray):
         for k, val in enumerate(myiter):
             newval = []
             for chk in val[1:]:
-                if chk.dtype is object_ and chk.toscalar() is None:
+                if chk.dtype is object_ and chk.item() is None:
                     break
                 newval.append(chk)
             newitem = getattr(val[0],name)(*newval)
@@ -141,7 +141,7 @@ class chararray(ndarray):
         for k, val in enumerate(myiter):
             newval = []
             for chk in val[1:]:
-                if chk.dtype is object_ and chk.toscalar() is None:
+                if chk.dtype is object_ and chk.item() is None:
                     break
                 newval.append(chk)
             this_str = val[0].rstrip('\x00')

@@ -106,7 +106,7 @@ class record(nt.void):
         return self.__str__()
     
     def __str__(self):
-        return str(self.toscalar())
+        return str(self.item())
 
     def __getattribute__(self, attr):
         if attr in ['setfield', 'getfield', 'fields']:

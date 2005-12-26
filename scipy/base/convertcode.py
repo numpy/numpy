@@ -65,8 +65,8 @@ def replaceattr(astr):
     astr = astr.replace(".typecode()",".dtypechar")
     astr = astr.replace(".iscontiguous()",".flags.contiguous")
     astr = astr.replace(".byteswapped()",".byteswap()")
+    astr = astr.replace(".toscalar()", ".item()")
     astr = astr.replace(".itemsize()",".itemsize")
-
     # preserve uses of flat that should be o.k.
     tmpstr = flatindex_re.sub("@@@@\\2",astr)
     # replace other uses of flat

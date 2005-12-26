@@ -488,7 +488,7 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return Py_None;
 }
 
-static char doc_toscalar[] = "m.toscalar().  Copy the first data point of "\
+static char doc_toscalar[] = "m.item().  Copy the first data point of "\
 	"the array to a standard Python scalar and return it.";
 
 static PyObject *
@@ -1522,7 +1522,7 @@ array_newbyteorder(PyArrayObject *self, PyObject *args)
 
 static PyMethodDef array_methods[] = {
         {"tolist",	 (PyCFunction)array_tolist,	1, doc_tolist},
-        {"toscalar", (PyCFunction)array_toscalar, METH_VARARGS, doc_toscalar},
+        {"item", (PyCFunction)array_toscalar, METH_VARARGS, doc_toscalar},
 	{"tofile", (PyCFunction)array_tofile, 
          METH_VARARGS | METH_KEYWORDS, doc_tofile},
         {"tostring", (PyCFunction)array_tostring, METH_VARARGS, doc_tostring},

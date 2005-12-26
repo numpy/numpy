@@ -1305,7 +1305,7 @@ array(data = %(data)s,
         return self._data.dtype
     dtype = property(fget=_get_dtype, doc="type of the array elements.")
 
-    def toscalar(self):
+    def item(self):
         "Return Python scalar if possible."
         if self._mask is not None:
             m = oldnumeric.ravel(self._mask)
@@ -1314,7 +1314,7 @@ array(data = %(data)s,
                     return masked
             except IndexError:
                 return masked
-        return self._data.toscalar()
+        return self._data.item()
 
     def tolist(self, fill_value=None):
         "Convert to list"

@@ -130,7 +130,7 @@ def real_if_close(a,tol=100):
 
 
 def asscalar(a):
-    return a.toscalar()
+    return a.item()
 
 #-----------------------------------------------------------------------------
 
