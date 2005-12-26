@@ -2385,8 +2385,8 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	PyObject *obj_ind;        
 	PyArrayObject *indices = NULL;
 	PyArray_Descr *otype=NULL;
-	static char *kwlist1[] = {"array", "axis", "rtype", NULL};
-	static char *kwlist2[] = {"array", "indices", "axis", "rtype", NULL}; 
+	static char *kwlist1[] = {"array", "axis", "dtype", NULL};
+	static char *kwlist2[] = {"array", "indices", "axis", "dtype", NULL}; 
         static char *_reduce_type[] = {"reduce", "accumulate", \
 				       "reduceat", NULL};
 	if (self == NULL) {

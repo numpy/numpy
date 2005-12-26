@@ -266,11 +266,11 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     """
     return asarray(a).diagonal(offset, axis1, axis2)
 
-def trace(a, offset=0, axis1=0, axis2=1, rtype=None):
+def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
     """trace(a,offset=0, axis1=0, axis2=1) returns the sum along diagonals
     (defined by the last two dimenions) of the array.
     """
-    return asarray(a).trace(offset, axis1, axis2, rtype)
+    return asarray(a).trace(offset, axis1, axis2, dtype)
 
 def ravel(m):
     """ravel(m) returns a 1d array corresponding to all the elements of it's
@@ -303,32 +303,32 @@ def clip(m, m_min, m_max):
     """
     return asarray(m).clip(m_min, m_max)
 
-def sum(x, axis=0, rtype=None):
-    """Sum the array over the given axis.  The optional rtype argument
+def sum(x, axis=0, dtype=None):
+    """Sum the array over the given axis.  The optional dtype argument
     is the data type for intermediate calculations.
 
     The default is to upcast (promote) smaller integer types to the
     platform-dependent Int.  For example, on 32-bit platforms:
 
-        x.dtype                         default sum() rtype
+        x.dtype                         default sum() dtype
         ---------------------------------------------------
         bool, Int8, Int16, Int32        Int32
 
     Examples:
     >>> sum([0.5, 1.5])
     2.0
-    >>> sum([0.5, 1.5], rtype=Int32)
+    >>> sum([0.5, 1.5], dtype=Int32)
     1
     >>> sum([[0, 1], [0, 5]])
     array([0, 6])
     >>> sum([[0, 1], [0, 5]], axis=1)
     array([1, 5])
     """
-    return asarray(x).sum(axis, rtype)
+    return asarray(x).sum(axis, dtype)
 
-def product (x, axis=0, rtype=None):
+def product (x, axis=0, dtype=None):
     """Product of the array elements over the given axis."""
-    return asarray(x).prod(axis, rtype)
+    return asarray(x).prod(axis, dtype)
 
 def sometrue (x, axis=0):
     """Perform a logical_or over the given axis."""
@@ -348,13 +348,13 @@ def all(x,axis=None):
     """
     return ravel(x).all(axis)
 
-def cumsum (x, axis=0, rtype=None):
+def cumsum (x, axis=0, dtype=None):
     """Sum the array over the given axis."""
-    return asarray(x).cumsum(axis, rtype)
+    return asarray(x).cumsum(axis, dtype)
 
-def cumproduct (x, axis=0, rtype=None):
+def cumproduct (x, axis=0, dtype=None):
     """Sum the array over the given axis."""
-    return asarray(x).cumprod(axis, rtype)
+    return asarray(x).cumprod(axis, dtype)
 
 def ndim(a):
     try:
