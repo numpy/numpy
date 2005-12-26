@@ -720,14 +720,15 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
                                 char *data)
 {
 	PyObject *ret;
+#if SIZEOF_INTP != SIZEOF_INT
 	int i;
 	intp newd[MAX_DIMS];
+#endif
 
 	if (!PyArray_ISNBO(descr->byteorder))
 		descr->byteorder = '=';
 	
 #if SIZEOF_INTP != SIZEOF_INT
-	
 	for (i=0; i<nd; i++) newd[i] = (intp) d[i];
         ret = PyArray_NewFromDescr(&PyArray_Type, descr, 
 				   nd, newd, 
