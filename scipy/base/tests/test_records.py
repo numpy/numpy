@@ -22,6 +22,16 @@ class test_fromrecords(ScipyTestCase):
     def check_recarray_slices(self):
         r=rec.array([(1,11,'a'),(2,22,'b'),(3,33,'c'),(4,44,'d'),(5,55,'ex'),(6,66,'f'),(7,77,'g')],formats='u1,f4,a1')
         assert_equal(r[1::2][1].item(),(4, 44.0, 'd'))
-        
+
+    def check_recarray_fromarrays(self):
+        x1 = array([1,2,3,4])
+        x2 = array(['a','dd','xyz','12'])
+        x3 = array([1.1,2,3,4])
+        r = rec.fromarrays([x1,x2,x3],names='a,b,c')
+        assert_equal(r[1].item(),(2,'dd',2.0))
+        x1[1] = 34
+        assert_equal(r.a,array([1,2,3,4]))
+
+                
 if __name__ == "__main__":
     ScipyTest().run()
