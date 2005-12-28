@@ -354,7 +354,7 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
                 "Not enough bytes left in file for specified shape and type")
 
     # create the array
-    _array = recarray(shape, parsed._descr)
+    _array = recarray(shape, parsed._descr, byteorder=byteorder)
     nbytesread = fd.readinto(_array.data)
     if nbytesread != nbytes:
         raise IOError("Didn't read as many bytes as expected")
