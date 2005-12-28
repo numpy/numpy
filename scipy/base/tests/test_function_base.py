@@ -114,7 +114,7 @@ class test_ptp(ScipyTestCase):
              [4,10.0,5.0],
              [8,3.0,2.0]]
         assert_equal(ptp(b,axis=0),[5.0,7.0,7.0])
-        assert_equal(ptp(b),[6.0,6.0,6.0])
+        assert_equal(ptp(b,axis=-1),[6.0,6.0,6.0])
 
 class test_cumsum(ScipyTestCase):
     def check_basic(self):
@@ -148,7 +148,7 @@ class test_prod(ScipyTestCase):
                 assert_equal(prod(a),26400)
                 assert_array_equal(prod(a2,axis=0), 
                                    array([50,36,84,180],ctype))
-                assert_array_equal(prod(a2),array([24, 1890, 600],ctype))
+                assert_array_equal(prod(a2,axis=-1),array([24, 1890, 600],ctype))
 
 class test_cumprod(ScipyTestCase):
     def check_basic(self):
@@ -162,15 +162,15 @@ class test_cumprod(ScipyTestCase):
                 self.failUnlessRaises(ArithmeticError, cumprod, a)
                 self.failUnlessRaises(ArithmeticError, cumprod, a2, 1)
                 self.failUnlessRaises(ArithmeticError, cumprod, a)
-            else:                
-                assert_array_equal(cumprod(a),
+            else:
+                assert_array_equal(cumprod(a,axis=-1),
                                    array([1, 2, 20, 220,
                                           1320, 6600, 26400],ctype))
                 assert_array_equal(cumprod(a2,axis=0),
                                    array([[ 1,  2,  3,   4],
                                           [ 5, 12, 21,  36],
                                           [50, 36, 84, 180]],ctype))
-                assert_array_equal(cumprod(a2),
+                assert_array_equal(cumprod(a2,axis=-1),
                                    array([[ 1,  2,   6,   24],
                                           [ 5, 30, 210, 1890],
                                           [10, 30, 120,  600]],ctype))

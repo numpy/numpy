@@ -19,11 +19,11 @@ __all__ = ['asarray', 'array', 'concatenate',
            # functions that are now methods
            'take', 'reshape', 'choose', 'repeat', 'put', 'putmask',
            'swapaxes', 'transpose', 'sort', 'argsort', 'argmax', 'argmin',
-           'searchsorted',
+           'searchsorted', 'alen', 
            'resize', 'diagonal', 'trace', 'ravel', 'nonzero', 'shape',
-           'compress', 'clip', 'sum', 'product', 'sometrue', 'alltrue',
-           'any', 'all', 'cumsum', 'cumproduct', 'ndim',
-           'rank', 'size', 'around',
+           'compress', 'clip', 'sum', 'product', 'prod', 'sometrue', 'alltrue',
+           'any', 'all', 'cumsum', 'cumproduct', 'cumprod', 'ptp', 'ndim',
+           'rank', 'size', 'around', 'mean', 'std', 'var', 'squeeze', 'amax', 'amin'
           ]
 
 import multiarray as mu
@@ -260,6 +260,10 @@ def resize(a, new_shape):
 
     return reshape(a, new_shape)
 
+def squeeze(a):
+    "Returns a with any ones from the shape of a removed"
+    return asarray(a).squeeze()
+
 def diagonal(a, offset=0, axis1=0, axis2=1):
     """diagonal(a, offset=0, axis1=0, axis2=1) returns the given diagonals
     defined by the last two dimensions of the array.
@@ -356,6 +360,36 @@ def cumproduct (x, axis=0, dtype=None):
     """Sum the array over the given axis."""
     return asarray(x).cumprod(axis, dtype)
 
+def ptp(a, axis=0):
+    """Return maximum - minimum along the the given dimension
+    """
+    return asarray(a).ptp(axis)
+
+def amax(a, axis=0):
+    """Return the maximum of 'a' along dimension axis.
+    """
+    return asarray(a).max(axis)
+
+def amin(a, axis=0):
+    """Return the minimum of a along dimension axis.
+    """
+    return asarray(a).min(axis)
+
+def alen(a):
+    """Return the length of a Python object interpreted as an array
+    """
+    return len(asarray(a))
+
+def prod(a, axis=0):
+    """Return the product of the elements along the given axis
+    """
+    return asarray(a).prod(axis)
+
+def cumprod(a, axis=0):
+    """Return the cumulative product of the elments along the given axis
+    """
+    return asarray(a).cumprod(axis)
+
 def ndim(a):
     try:
         return a.ndim
@@ -368,15 +402,29 @@ def rank (a):
     """
     try:
         return a.ndim
-    except:
+    except AttributeError:
         return asarray(a).ndim
 
 def size (a, axis=None):
     "Get the number of elements in sequence a, or along a certain axis."
-    a = asarray(a)
     if axis is None:
-        return a.size
+        try:
+            return a.size
+        except AttributeError:
+            return asarray(a).size
     else:
-        return a.shape[axis]
+        try:
+            return a.shape[axis]
+        except AttributeError:
+            return asarray(a).shape[axis]
 
 from function_base import round_ as around
+
+def mean(a, axis=0, dtype=None):
+    return asarray(a).mean(axis, dtype)
+
+def std(a, axis=0, dtype=None):
+    return asarray(a).std(axis, dtype)
+
+def var(a, axis=0, dtype=None):
+    return asarray(a).var(axis, dtype)

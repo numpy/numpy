@@ -1,22 +1,25 @@
 __all__ = ['logspace', 'linspace', 'round_',
-           'select', 'piecewise', 'trim_zeros', 'alen', 'amax', 'amin', 'ptp',
-           'copy', 'iterable', 'base_repr', 'binary_repr', 'prod', 'cumprod',
+           'select', 'piecewise', 'trim_zeros',
+           'copy', 'iterable', 'base_repr', 'binary_repr', 
            'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
            'unique', 'extract', 'insert', 'nansum', 'nanmax', 'nanargmax',
            'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
-           'histogram', 'bincount', 'digitize']
+           'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort', 'median',
+           'sinc', 'hamming', 'hanning', 'bartlett', 'blackman', 'kaiser', 'trapz'
+           ]
 
 import types
 import math, operator
 import numeric as _nx
 from numeric import ones, zeros, arange, concatenate, array, asarray, empty
-from numeric import ScalarType
+from numeric import ScalarType, dot, where
 from umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc, \
-     isnan, absolute
+     isnan, absolute, cos, less_equal, sqrt, sin
 from oldnumeric import ravel, nonzero, choose, \
-     sometrue, alltrue, reshape, any, all, typecodes, ArrayType
+     sometrue, alltrue, reshape, any, all, typecodes, ArrayType, squeeze
 from type_check import ScalarType, isscalar
-from shape_base import squeeze, atleast_1d
+from shape_base import atleast_1d
+from twodim_base import diag
 from scipy.base._compiled_base import digitize, bincount, _insert
 from ufunclike import sign
 
@@ -63,7 +66,6 @@ def base_repr (number, base=2, padding=0):
         exponent -= 1
     return res
 #end Fernando's utilities
-
 
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False):
@@ -196,12 +198,6 @@ def average(a, axis=0, weights=None, returned=False):
     else:
         return n/d
 
-
-def isaltered():
-    val = str(type(_nx.array([1])))
-    return 'scipy' in val
-
-
 def asarray_chkfinite(a):
     """Like asarray, but check that no NaNs or Infs are present.
     """
@@ -329,35 +325,6 @@ def copy(a):
     return array(a, copy=True)
 
 # Basic operations
-def amax(a, axis=-1):
-    """Return the maximum of 'a' along dimension axis.
-    """
-    return asarray(a).max(axis)
-
-def amin(a, axis=-1):
-    """Return the minimum of a along dimension axis.
-    """
-    return asarray(a).min(axis)
-
-def alen(a):
-    """Return the length of a Python object interpreted as an array
-    """
-    return len(asarray(a))
-
-def ptp(a, axis=-1):
-    """Return maximum - minimum along the the given dimension
-    """
-    return asarray(a).ptp(axis)
-
-def prod(a, axis=-1):
-    """Return the product of the elements along the given axis
-    """
-    return asarray(a).prod(axis)
-
-def cumprod(a, axis=-1):
-    """Return the cumulative product of the elments along the given axis
-    """
-    return asarray(a).cumprod(axis)
 
 def gradient(f, *varargs):
     """Calculate the gradient of an N-dimensional scalar function.
@@ -722,3 +689,121 @@ def round_(a, decimals=0):
     else:
         return multiply(a, s)
 
+
+def cov(m,y=None, rowvar=0, bias=0):
+    """Estimate the covariance matrix.
+    
+    If m is a vector, return the variance.  For matrices where each row
+    is an observation, and each column a variable, return the covariance
+    matrix.  Note that in this case diag(cov(m)) is a vector of
+    variances for each column.
+
+    cov(m) is the same as cov(m, m)
+
+    Normalization is by (N-1) where N is the number of observations
+    (unbiased estimate).  If bias is 1 then normalization is by N.
+
+    If rowvar is zero, then each row is a variable with
+    observations in the columns.
+    """
+    if y is None:
+        y = asarray(m)
+    else:
+        y = asarray(y)
+        m = asarray(m)
+    if rowvar:
+        m = m.transpose()
+        y = y.transpose()
+    if (m.shape[0] == 1):
+        m = m.transpose()
+    if (y.shape[0] == 1):
+        y = y.transpose()
+    N = m.shape[0]
+    if (y.shape[0] != N):
+        raise ValueError, "x and y must have the same number of observations."
+    m = m - m.mean(axis=0)
+    y = y - y.mean(axis=0)
+    if bias:
+        fact = N*1.0
+    else:
+        fact = N-1.0
+
+    val = squeeze(dot(m.transpose(),y.conj()) / fact)
+    return val
+
+def corrcoef(x, y=None):
+    """The correlation coefficients
+    """
+    c = cov(x, y)
+    d = diag(c)
+    return c/sqrt(multiply.outer(d,d))
+
+def blackman(M):
+    """blackman(M) returns the M-point Blackman window.
+    """
+    n = arange(0,M)
+    return 0.42-0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
+
+def bartlett(M):
+    """bartlett(M) returns the M-point Bartlett window.
+    """
+    n = arange(0,M)
+    return where(less_equal(n,(M-1)/2.0),2.0*n/(M-1),2.0-2.0*n/(M-1))
+
+def hanning(M):
+    """hanning(M) returns the M-point Hanning window.
+    """
+    n = arange(0,M)
+    return 0.5-0.5*cos(2.0*pi*n/(M-1))
+
+def hamming(M):
+    """hamming(M) returns the M-point Hamming window.
+    """
+    n = arange(0,M)
+    return 0.54-0.46*cos(2.0*pi*n/(M-1))
+
+def kaiser(M,beta):
+    """kaiser(M, beta) returns a Kaiser window of length M with shape parameter
+    beta. It depends on scipy.special (in full scipy) for the modified bessel
+    function i0.
+    """
+    from scipy.special import i0
+    n = arange(0,M)
+    alpha = (M-1)/2.0
+    return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(beta)
+
+def sinc(x):
+    """sinc(x) returns sin(pi*x)/(pi*x) at all points of array x.
+    """
+    y = pi* where(x == 0, 1.0e-20, x)
+    return sin(y)/y
+
+def msort(a):
+    return a.sort(0)
+
+def median(m):
+    """median(m) returns a median of m along the first dimension of m.
+    """
+    sorted = msort(m)
+    if sorted.shape[0] % 2 == 1:
+        return sorted[int(sorted.shape[0]/2)]
+    else:
+        sorted = msort(m)
+        index=sorted.shape[0]/2
+        return (sorted[index-1]+sorted[index])/2.0
+
+def trapz(y, x=None, dx=1.0, axis=-1):
+    """Integrate y(x) using samples along the given axis and the composite
+    trapezoidal rule.  If x is None, spacing given by dx is assumed.
+    """
+    y = asarray(y)
+    if x is None:
+        d = dx
+    else:
+        d = diff(x,axis=axis)
+    nd = len(y.shape)
+    slice1 = [slice(None)]*nd
+    slice2 = [slice(None)]*nd
+    slice1[axis] = slice(1,None)
+    slice2[axis] = slice(None,-1)
+    return add.reduce(d * (y[slice1]+y[slice2])/2.0,axis)

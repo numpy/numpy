@@ -12,9 +12,8 @@ import string, types, sys
 import umath
 import oldnumeric
 import function_base
-from function_base import amax, amin
 from numeric import e, pi, newaxis, ndarray
-from oldnumeric import typecodes
+from oldnumeric import typecodes, amax, amin
 from numerictypes import *
 import numeric
 

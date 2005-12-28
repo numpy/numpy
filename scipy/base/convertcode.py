@@ -99,7 +99,7 @@ def fromstr(filestr):
     filestr, fromall1 = changeimports(filestr, 'Precision', 'scipy.base')
     filestr, fromall2 = changeimports(filestr, 'numerix', 'scipy.base')
     filestr, fromall3 = changeimports(filestr, 'scipy_base', 'scipy.base')
-    filestr, fromall3 = changeimports(filestr, 'MLab', 'scipy.corelinalg')
+    filestr, fromall3 = changeimports(filestr, 'MLab', 'scipy.base.mlab')
     filestr, fromall3 = changeimports(filestr, 'LinearAlgebra', 'scipy.corelinalg')
     filestr, fromall3 = changeimports(filestr, 'RNG', 'scipy.random')
     filestr, fromall3 = changeimports(filestr, 'RandomArray', 'scipy.random')

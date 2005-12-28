@@ -1281,7 +1281,6 @@ array_all(PyArrayObject *self, PyObject *args)
 	return PyArray_All(self, axis);
 }
 
-
 static char doc_stddev[] = "a.std(axis=None, dtype=None)";
 
 static PyObject *

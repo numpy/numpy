@@ -1,6 +1,6 @@
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'column_stack','dstack','array_split','split','hsplit',
-           'vsplit','dsplit','squeeze','apply_over_axes','expand_dims',
+           'vsplit','dsplit','apply_over_axes','expand_dims',
            'apply_along_axis']
 
 import numeric as _nx
@@ -108,9 +108,6 @@ def expand_dims(a, axis):
         axis = axis + len(shape) + 1
     return a.reshape(shape[:axis] + (1,) + shape[axis:])
 
-def squeeze(a):
-    "Returns a with any ones from the shape of a removed"
-    return asarray(a).squeeze()
 
 def atleast_1d(*arys):
     """ Force a sequence of arrays to each be at least 1D.
