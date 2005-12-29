@@ -284,17 +284,11 @@ static PyObject *
 VOID_getitem(char *ip, PyArrayObject *ap)
 {
         PyObject *u=NULL;
-        PyObject *pyres=NULL;
-	PyObject *args=NULL, *scalar;
 	PyArray_Descr* descr;
-        int itemsize=ap->descr->elsize;
-        PyObject *meth=NULL;
+        int itemsize;
 
 	descr = ap->descr;
-	meth = PyObject_GetAttrString((PyObject *)descr->typeobj,
-				      "_getitem");
-	PyErr_Clear();
-	if (!meth && descr->fields && descr->fields != Py_None) {
+	if (descr->fields && descr->fields != Py_None) {
 		PyObject *key;
 		PyObject *names;
 		int i, n;
@@ -337,7 +331,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 		return ret;
 	}
 
-	if (!meth && descr->subarray) {
+	if (descr->subarray) {
 		/* return an array of the basic type */
 		PyArray_Dims shape={NULL,-1};
 		PyObject *ret;
@@ -361,6 +355,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 	}
 
  finish:
+	itemsize=ap->descr->elsize;
 	if (PyArray_ISWRITEABLE(ap))
 		u = PyBuffer_FromReadWriteMemory(ip, itemsize);
 	else
@@ -369,23 +364,9 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 
 	/* default is to return buffer object pointing to current item */
 	/*  a view of it */
-        if ((meth == NULL) || (!PyCallable_Check(meth))) {
-		Py_XDECREF(meth);
-		PyErr_Clear();
-		return u;        
-	}
+	return u;        
 	
-	scalar = PyArray_ToScalar(ip, ap);
-	args = Py_BuildValue("NNO",scalar, u, ap);
-	if (args==0) goto fail;
-        pyres = PyObject_CallObject(meth, args);
-	Py_DECREF(args);
-	Py_DECREF(meth);
-	return pyres;
-
  fail:
-        Py_XDECREF(meth);
-        Py_XDECREF(args);
         return NULL;
 }
 
@@ -397,18 +378,12 @@ static int
 VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 {
         PyObject *u=NULL;
-        PyObject *pyres=NULL;
-        PyObject *args=NULL, *scalar;
 	PyArray_Descr* descr;
         int itemsize=ap->descr->elsize;
 	int res;
-        PyObject *meth;
 
 	descr = ap->descr;
-	meth = PyObject_GetAttrString((PyObject *)descr->typeobj,
-				      "_setitem");
-	PyErr_Clear();
-	if (!meth && descr->fields && (descr->fields != Py_None) && \
+	if (descr->fields && (descr->fields != Py_None) && \
 	    PyTuple_Check(op)) {
 		PyObject *key;
 		PyObject *names;
@@ -456,7 +431,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 		return res;
 	}
 
-	if (!meth && descr->subarray) {
+	if (descr->subarray) {
 		/* copy into an array of the same basic type */
 		PyArray_Dims shape={NULL,-1};
 		PyObject *ret;
@@ -483,33 +458,16 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 
  finish:
 	/* Default is to use buffer interface to set item */
-        if ((meth == NULL) || (!PyCallable_Check(meth))) {
+	{
 		const void *buffer;
 		int buflen;
 		res = PyObject_AsReadBuffer(op, &buffer, &buflen);
 		if (res == -1) goto fail;
 		memcpy(ip, buffer, MIN(buflen, itemsize));
-		Py_XDECREF(meth);
-		return 0;
         }
-        u = PyBuffer_FromReadWriteMemory(ip, itemsize);
-	if (u==NULL) goto fail;
-	scalar = PyArray_ToScalar(ip, ap);
-	args = Py_BuildValue("NNOO",scalar, u, op, ap);
-        pyres = PyObject_CallObject(meth, args);
-        if (pyres==NULL) goto fail;
-	res = 0;
-        if (PyErr_Occurred()) goto fail;        
-
-        Py_DECREF(meth);
-        Py_DECREF(args);
-        Py_DECREF(pyres);
-        return res;
+	return 0;
 
  fail:
-        Py_XDECREF(pyres);
-        Py_XDECREF(meth);
-        Py_XDECREF(args);
         return -1;          
 }
 
@@ -1295,42 +1253,15 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
 	int i;
 	int len = ap->descr->elsize;
 	Bool nonz = FALSE;
-        PyObject *u=NULL;
-        int res;
-        PyObject *pyres=NULL;
-        PyObject *meth=PyObject_GetAttrString((PyObject *)ap->descr->typeobj, 
-					      "_nonzero");
-        PyObject *args=NULL;
-
-        if ((meth == NULL) || (!PyCallable_Check(meth))) {
-		/* Default behavior */
-		Py_XDECREF(meth);
-		for (i=0; i<len; i++) {
-			if (*ip != '\0') {
-				nonz = TRUE;
-				break;
-			}
-			ip++;
-		}
-		return nonz;
-        }
-
-        if (len < 0) return FALSE;
 	
-        u = PyBuffer_FromMemory(ip, len);
-        if ((u==NULL)) {Py_DECREF(meth); return FALSE;}
-
-        args = Py_BuildValue("OO",u, ap);
-        pyres = PyObject_CallObject(meth, args);
-	Py_DECREF(args);
-	Py_DECREF(u);
-	Py_DECREF(meth);
-        if (pyres==NULL) return FALSE;
-        res = (int) PyInt_AsLong(pyres);
-	Py_DECREF(pyres);
-        if (PyErr_Occurred()) return FALSE;
-
-	return (Bool) res;
+	for (i=0; i<len; i++) {
+		if (*ip != '\0') {
+			nonz = TRUE;
+			break;
+		}
+		ip++;
+	}
+	return nonz;
 }
 
 
@@ -1406,49 +1337,9 @@ UNICODE_compare(Py_UNICODE *ip1, Py_UNICODE *ip2, PyArrayObject *ap)
 	return 0;
 }
 
-static int
-VOID_compare(void *ip1, void *ip2, PyArrayObject *ap) 
-{
-        PyObject *u=NULL, *v=NULL;
-        int res;
-        PyObject *pyres=NULL;
-        int itemsize=ap->descr->elsize;
-        PyObject *meth=PyObject_GetAttrString((PyObject *)ap->descr->typeobj,
-					      "_compare");
-        PyObject *args=NULL;
+/* redefine compare in terms of fields and subarrays if any */
 
-        if ((meth == NULL) || (!PyCallable_Check(meth))) {
-                PyErr_SetString(PyExc_NotImplementedError, 
-				"Object needs a compare method.");
-                goto fail;
-        }
-        if (itemsize < 0) goto fail;
-        u = PyBuffer_FromMemory(ip1, itemsize);
-        v = PyBuffer_FromMemory(ip2, itemsize);
-        if ((u==NULL) || (v==NULL)) goto fail;        
-        
-        args = Py_BuildValue("OOO",u,v,ap);
-        
-        pyres = PyObject_CallObject(meth, args);
-        if (pyres==NULL) goto fail;
-        res = PyInt_AsLong(pyres);
-        if (PyErr_Occurred()) goto fail;        
-
-        Py_DECREF(meth);
-        Py_DECREF(args);
-        Py_DECREF(pyres);
-        Py_DECREF(u);
-        Py_DECREF(v);
-        return res;
-
- fail:
-        Py_XDECREF(pyres);
-        Py_XDECREF(meth);
-        Py_XDECREF(args);
-        Py_XDECREF(u);
-        Py_XDECREF(v);
-        return 0; 
-}
+#define VOID_compare NULL
 
 /****************** argfunc **********************************/
 
@@ -1494,8 +1385,8 @@ OBJECT_argmax(PyObject **ip, intp n, intp *max_ind, PyArrayObject *aip)
 
 /**begin repeat
 
-#fname= STRING, UNICODE, VOID#
-#type= char, Py_UNICODE, void#
+#fname= STRING, UNICODE#
+#type= char, Py_UNICODE#
 
 */
 static int 
@@ -1520,6 +1411,8 @@ static int
 }
 
 /**end repeat**/
+
+#define VOID_argmax NULL
 
 static void
 BOOL_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n, 
