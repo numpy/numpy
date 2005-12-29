@@ -377,7 +377,6 @@ static int PyArray_CopyObject(PyArrayObject *, PyObject *);
 static int
 VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 {
-        PyObject *u=NULL;
 	PyArray_Descr* descr;
         int itemsize=ap->descr->elsize;
 	int res;

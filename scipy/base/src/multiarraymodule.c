@@ -1608,9 +1608,9 @@ PyArray_Sort(PyArrayObject *op, int axis)
 
 	SWAPAXES(op, ap);
 
-	ap = (PyArrayObject *)PyArray_CopyFromObject((PyObject *)op, 
-						     PyArray_NOTYPE,
-						     1, 0);
+        ap = (PyArrayObject *)PyArray_FromAny((PyObject *)op, 
+					      NULL, 1, 0, ENSURECOPY);
+
 	Py_DECREF(op);
 
 	if (ap == NULL) return NULL;

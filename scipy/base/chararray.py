@@ -282,25 +282,29 @@ class chararray(ndarray):
         return self._generalmethod('zfill', broadcast(self, width))
 
     
-def array(obj, itemlen=7, copy=True, unicode=False, fortran=False):
+def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
         
     if isinstance(obj, chararray):
-        if copy or (itemlen != obj.itemlen) \
+        if itemsize is None:
+            itemsize = obj.itemsize
+        if copy or (itemsize != obj.itemsize) \
            or (not unicode and obj.dtype == unicode_) \
            or (unicode and obj.dtype == string):
-            return obj.astype("%s%d" % (obj.dtypechar, itemlen))
+            return obj.astype("%s%d" % (obj.dtypechar, itemsize))
         else:
             return obj
         
     if isinstance(obj, ndarray) and (obj.dtype in [unicode_, string]):
+        if itemsize is None:
+            itemsize = obj.itemsize
         copied = 0       
         if unicode:
-            dtype = 'U%d' % obj.itemlen
+            dtype = 'U%d' % obj.itemsize
             if obj.dtype == string:
                 obj = obj.astype(dtype)
                 copied = 1
         else:
-            dtype = 'S%d' % obj.itemlen
+            dtype = 'S%d' % obj.itemsize
             if obj.dtype == unicode_:
                 obj = obj.astype(dtype)
                 copied = 1
@@ -308,21 +312,22 @@ def array(obj, itemlen=7, copy=True, unicode=False, fortran=False):
         if copy and not copied:
             obj = obj.copy()
 
-        return ndarray.__new__(chararray, obj.shape, (dtype, itemlen),
+        return ndarray.__new__(chararray, obj.shape, dtype,
                                buffer=obj, offset=0, 
                                fortran=obj.flags['FNC'])    
 
-    if unicode:
-        dtype = "U%d" % itemlen
-    else:
-        dtype = "S%d" % itemlen
+    if unicode: dtype = "U"
+    else: dtype = "S"
+
+    if itemsize is not None:
+        dtype += str(itemsize)
 
     val = narray(obj, dtype=dtype, fortran=fortran, subok=1)
     
-    return chararray(val.shape, itemlen, unicode, buffer=val,
+    return chararray(val.shape, itemsize, unicode, buffer=val,
                      strides=val.strides, 
                      fortran=fortran)
 
-def asarray(obj, itemlen=7, unicode=False, fortran=False):
-    return chararray(obj, itemlen, copy=False,
-                     unicode=unicode, fortran=fortran)
+def asarray(obj, itemsize=None, unicode=False, fortran=False):
+    return array(obj, itemsize, copy=False,
+                 unicode=unicode, fortran=fortran)
