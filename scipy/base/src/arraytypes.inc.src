@@ -290,10 +290,9 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         int itemsize=ap->descr->elsize;
         PyObject *meth=NULL;
 
-
-	meth = PyObject_GetAttrString((PyObject *)ap->descr->typeobj,
-				      "_getitem");
 	descr = ap->descr;
+	meth = PyObject_GetAttrString((PyObject *)descr->typeobj,
+				      "_getitem");
 	PyErr_Clear();
 	if (!meth && descr->fields && descr->fields != Py_None) {
 		PyObject *key;
@@ -338,6 +337,29 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 		return ret;
 	}
 
+	if (!meth && descr->subarray) {
+		/* return an array of the basic type */
+		PyArray_Dims shape={NULL,-1};
+		PyObject *ret;
+		if (!(PyArray_IntpConverter(descr->subarray->shape, 
+					    &shape))) {
+			PyDimMem_FREE(shape.ptr);
+			PyErr_SetString(PyExc_ValueError, 
+					"invalid shape in fixed-type tuple.");
+			return NULL;
+		}
+		ret = PyArray_NewFromDescr(&PyArray_Type,
+					   descr->subarray->base,
+					   shape.len, shape.ptr,
+					   NULL, ip, ap->flags, NULL);
+		PyDimMem_FREE(shape.ptr);
+		if (!ret) return NULL;
+		PyArray_BASE(ret) = (PyObject *)ap;
+		Py_INCREF(ap);
+		PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
+		return ret;
+	}
+
  finish:
 	if (PyArray_ISWRITEABLE(ap))
 		u = PyBuffer_FromReadWriteMemory(ip, itemsize);
@@ -367,6 +389,10 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         return NULL;
 }
 
+
+
+static int PyArray_CopyObject(PyArrayObject *, PyObject *);
+
 static int
 VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 {
@@ -377,19 +403,21 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         int itemsize=ap->descr->elsize;
 	int res;
         PyObject *meth;
-	meth = PyObject_GetAttrString((PyObject *)ap->descr->typeobj,
-				      "_setitem");
+
 	descr = ap->descr;
+	meth = PyObject_GetAttrString((PyObject *)descr->typeobj,
+				      "_setitem");
 	PyErr_Clear();
 	if (!meth && descr->fields && (descr->fields != Py_None) && \
 	    PyTuple_Check(op)) {
 		PyObject *key;
 		PyObject *names;
-		int i, n, ret=-1;
+		int i, n;
 		PyObject *tup, *title;
 		PyArray_Descr *new;
 		int offset;
 		int savedflags;
+		res = -1;
 		/* get the names from the fields dictionary*/
 		key = PyInt_FromLong(-1);
 		names = PyDict_GetItem(descr->fields, key);
@@ -419,13 +447,38 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 			else
 				ap->flags |= ALIGNED;
 
-			ret = new->f->setitem(PyTuple_GET_ITEM(op, i),
+			res = new->f->setitem(PyTuple_GET_ITEM(op, i),
 					      ip+offset, ap);
 			ap->flags = savedflags;
-			if (ret < 0) break;
+			if (res < 0) break;
 		}
 		ap->descr = descr;
-		return ret;
+		return res;
+	}
+
+	if (!meth && descr->subarray) {
+		/* copy into an array of the same basic type */
+		PyArray_Dims shape={NULL,-1};
+		PyObject *ret;
+		if (!(PyArray_IntpConverter(descr->subarray->shape, 
+					    &shape))) {
+			PyDimMem_FREE(shape.ptr);
+			PyErr_SetString(PyExc_ValueError, 
+					"invalid shape in fixed-type tuple.");
+			return -1;
+		}
+		ret = PyArray_NewFromDescr(&PyArray_Type,
+					   descr->subarray->base,
+					   shape.len, shape.ptr,
+					   NULL, ip, ap->flags, NULL);
+		PyDimMem_FREE(shape.ptr);
+		if (!ret) return -1;
+		PyArray_BASE(ret) = (PyObject *)ap;
+		Py_INCREF(ap);
+		PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
+		res = PyArray_CopyObject((PyArrayObject *)ret, op);
+		Py_DECREF(ret);
+		return res;
 	}
 
  finish:

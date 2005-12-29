@@ -3374,14 +3374,21 @@ _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
 	old = *des;
 	*des = old->subarray->base;
 
-	numnew = PyTuple_GET_SIZE(old->subarray->shape);
-	newnd = oldnd + numnew;
-
 	mydim = newdims + oldnd;
-	for (i=0; i<numnew; i++) {
-		mydim[i] = (intp) PyInt_AsLong\
-			(PyTuple_GET_ITEM(old->subarray->shape, i));
+	if (PyTuple_Check(old->subarray->shape)) {
+		numnew = PyTuple_GET_SIZE(old->subarray->shape);
+		
+		for (i=0; i<numnew; i++) {
+			mydim[i] = (intp) PyInt_AsLong			\
+				(PyTuple_GET_ITEM(old->subarray->shape, i));
+		}
 	}
+	else {
+		numnew = 1;
+		mydim[0] = (intp) PyInt_AsLong(old->subarray->shape);
+	}
+	
+	newnd = oldnd + numnew;
 
 	if (newstrides) {
 		intp tempsize;
@@ -5070,8 +5077,9 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 			  (type == PyArray_UNICODE) ||  \
 			  (type == PyArray_VOID));
 
-	stop_at_tuple = (type == PyArray_VOID && typecode->fields &&	\
-			 typecode->fields != Py_None);
+	stop_at_tuple = (type == PyArray_VOID && ((typecode->fields &&	\
+						   typecode->fields!=Py_None) \
+						  || (typecode->subarray)));
 	
         if (!((nd=discover_depth(s, MAX_DIMS+1, stop_at_string, 
 				 stop_at_tuple)) > 0)) {
@@ -8272,9 +8280,8 @@ static PyMethodDef arraydescr_methods[] = {
 };
 
 static PyObject *
-arraydescr_repr(PyArray_Descr *self)
+arraydescr_str(PyArray_Descr *self)
 {
-	PyObject *s=PyString_FromString("dtypedescr(");
 	PyObject *sub;
 
 	if (self->fields && self->fields != Py_None) {
@@ -8297,6 +8304,16 @@ arraydescr_repr(PyArray_Descr *self)
 			sub = p;
 		}
 	}
+	else if (self->subarray) {
+		PyObject *p;
+		PyObject *t = PyString_FromString("(");
+		p = arraydescr_str(self->subarray->base);
+		PyString_ConcatAndDel(&t, p);
+		PyString_ConcatAndDel(&t, PyString_FromString(","));
+		PyString_ConcatAndDel(&t, PyObject_Str(self->subarray->shape));
+		PyString_ConcatAndDel(&t, PyString_FromString(")"));
+		sub = t;
+	}
 	else {
 		PyObject *t=PyString_FromString("'");
 		sub = arraydescr_protocol_typestr_get(self);
@@ -8304,7 +8321,15 @@ arraydescr_repr(PyArray_Descr *self)
 		PyString_ConcatAndDel(&t, sub);
 		sub = t;
 	}
-	
+	return sub;
+}
+
+static PyObject *
+arraydescr_repr(PyArray_Descr *self)
+{
+	PyObject *sub, *s;
+	s = PyString_FromString("dtypedescr(");
+        sub = arraydescr_str(self);
 	PyString_ConcatAndDel(&s, sub);
 	sub = PyString_FromString(")");
 	PyString_ConcatAndDel(&s, sub);
@@ -8329,7 +8354,7 @@ static PyTypeObject PyArrayDescr_Type = {
         0,                      	        /* tp_as_mapping */
         0,					/* tp_hash */
         0,					/* tp_call */
-        (reprfunc)arraydescr_repr,              /* tp_str */
+        (reprfunc)arraydescr_str,              /* tp_str */
         0,	                         	/* tp_getattro */
         0,					/* tp_setattro */
         0,					/* tp_as_buffer */

@@ -2985,12 +2985,12 @@ _convert_from_tuple(PyObject *obj)
 					"invalid shape in fixed-type tuple.");
 			goto fail;
 		}
-		newdescr = PyArray_DescrNew(type);
+		newdescr = PyArray_DescrNewFromType(PyArray_VOID);
 		if (newdescr == NULL) {PyDimMem_FREE(shape.ptr); goto fail;}
+		newdescr->elsize = type->elsize;
 		newdescr->elsize *= PyArray_MultiplyList(shape.ptr, 
 							 shape.len);
 		PyDimMem_FREE(shape.ptr);
-		newdescr->type_num = PyArray_VOID;
 		newdescr->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
 		newdescr->subarray->base = type;
 		Py_INCREF(val);
