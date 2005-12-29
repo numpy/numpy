@@ -12,7 +12,7 @@ __all__ = ['chararray']
 
 
 class chararray(ndarray):
-    def __new__(subtype, shape, itemlen=1, unicode=False, buffer=None,
+    def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
                 offset=0, strides=None, fortran=0):
 
         if unicode:
@@ -21,10 +21,10 @@ class chararray(ndarray):
             dtype = string
 
         if buffer is None:
-            self = ndarray.__new__(subtype, shape, (dtype, itemlen),
+            self = ndarray.__new__(subtype, shape, (dtype, itemsize),
                                    fortran=fortran)
         else:
-            self = ndarray.__new__(subtype, shape, (dtype, itemlen),
+            self = ndarray.__new__(subtype, shape, (dtype, itemsize),
                                    buffer=buffer,
                                    offset=offset, strides=strides,
                                    fortran=fortran)
@@ -293,18 +293,18 @@ def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
             return obj.astype("%s%d" % (obj.dtypechar, itemsize))
         else:
             return obj
-        
+
     if isinstance(obj, ndarray) and (obj.dtype in [unicode_, string]):
         if itemsize is None:
             itemsize = obj.itemsize
-        copied = 0       
+        copied = 0
         if unicode:
-            dtype = 'U%d' % obj.itemsize
+            dtype = (unicode_, obj.itemsize)
             if obj.dtype == string:
                 obj = obj.astype(dtype)
                 copied = 1
         else:
-            dtype = 'S%d' % obj.itemsize
+            dtype = (string, obj.itemsize)
             if obj.dtype == unicode_:
                 obj = obj.astype(dtype)
                 copied = 1
@@ -312,9 +312,9 @@ def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
         if copy and not copied:
             obj = obj.copy()
 
-        return ndarray.__new__(chararray, obj.shape, dtype,
-                               buffer=obj, offset=0, 
-                               fortran=obj.flags['FNC'])    
+        return chararray(obj.shape, itemsize=itemsize, unicode=unicode,
+                         buffer=obj, offset=0, 
+                         fortran=obj.flags['FNC'])    
 
     if unicode: dtype = "U"
     else: dtype = "S"
@@ -322,6 +322,14 @@ def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
     if itemsize is not None:
         dtype += str(itemsize)
 
+    if isinstance(obj, str) or isinstance(obj, unicode):
+        if itemsize is None:
+            itemsize = len(obj)
+        shape = len(obj) / itemsize            
+        return chararray(shape, itemsize=itemsize, unicode=unicode,
+                         buffer=obj)
+
+    # default 
     val = narray(obj, dtype=dtype, fortran=fortran, subok=1)
     
     return chararray(val.shape, itemsize, unicode, buffer=val,
