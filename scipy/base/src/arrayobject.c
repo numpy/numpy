@@ -852,12 +852,16 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 			vobj->ob_size = itemsize;
 			vobj->flags = BEHAVED_FLAGS | OWNDATA;
 			swap = 0;
-			if (type != &PyVoidArrType_Type && descr->fields) {
-				name = PyString_InternFromString("fields");
-				PyObject_GenericSetAttr(obj, name,	\
-							(PyObject *)	\
-							descr->fields);
-				Py_DECREF(name);
+			if (descr->fields) {
+				if (type != &PyVoidArrType_Type) {
+					name = PyString_InternFromString\
+						("fields");
+					PyObject_GenericSetAttr(obj, name, \
+								(PyObject *) \
+								descr->fields);
+					Py_DECREF(name);
+					PyErr_Clear();
+				}
 				if (base) {
 					Py_INCREF(base);
 					vobj->base = base;
