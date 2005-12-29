@@ -109,18 +109,18 @@ class record(nt.void):
         return str(self.item())
 
     def __getattribute__(self, attr):
-        if attr in ['setfield', 'getfield', 'fields']:
+        if attr in ['setfield', 'getfield', 'dtypedescr']:
             return nt.void.__getattribute__(self, attr)
-        fielddict = nt.void.__getattribute__(self, 'fields')
+        fielddict = nt.void.__getattribute__(self, 'dtypedescr').fields
         res = fielddict.get(attr,None)
         if res:
             return self.getfield(*res[:2])
         return nt.void.__getattribute__(self, attr)
 
     def __setattr__(self, attr, val):
-        if attr in ['setfield', 'getfield', 'fields']:
+        if attr in ['setfield', 'getfield', 'dtypedescr']:
             raise AttributeError, "Cannot set '%s' attribute" % attr;
-        fielddict = nt.void.__getattribute__(self,'fields')
+        fielddict = nt.void.__getattribute__(self,'dtypedescr').fields
         res = fielddict.get(attr,None)
         if res:
             return self.setfield(val,*res[:2])
@@ -128,10 +128,10 @@ class record(nt.void):
         return nt.void.__setattr__(self,attr,val)
     
     def __getitem__(self, obj):
-        return self.getfield(*(self.fields[obj][:2]))
+        return self.getfield(*(self.dtypedescr.fields[obj][:2]))
        
     def __setitem__(self, obj, val):
-        return self.setfield(val, *(self.fields[obj][:2]))
+        return self.setfield(val, *(self.dtypedescr.fields[obj][:2]))
         
 
 # The recarray is almost identical to a standard array (which supports

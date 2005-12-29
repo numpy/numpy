@@ -646,15 +646,19 @@ gentype_flags_get(PyObject *self)
 }
 
 static PyObject *
-voidtype_flags_get(PyObject *self)
+voidtype_flags_get(PyVoidScalarObject *self)
 {
-	PyObject *ap, *res;
-
-	ap = PyArray_FromScalar(self, NULL);
-	res = PyObject_GetAttrString(ap, "flags");
-	Py_DECREF(ap);
-	return res;
+	return PyObject_CallMethod(_scipy_internal, "flagsobj", "Oii", 
+                                   self, self->flags, 1);
 }
+
+static PyObject *
+voidtype_dtypedescr_get(PyVoidScalarObject *self)
+{
+	Py_INCREF(self->descr);
+	return (PyObject *)self->descr;
+}
+
 
 
 static PyObject *
@@ -1371,6 +1375,10 @@ static PyGetSetDef voidtype_getsets[] = {
 	 (getter)voidtype_flags_get, 
 	 (setter)0, 
 	 "integer value of flags"},
+	{"dtypedescr",
+	 (getter)voidtype_dtypedescr_get,
+	 (setter)0,
+	 "dtypedescr object"},
 	{NULL, NULL}
 };
 
