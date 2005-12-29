@@ -1,6 +1,7 @@
 
 from scipy.testing import *
 set_package_path()
+import os as _os
 import scipy.base;reload(scipy.base)
 from scipy.base import *
 from scipy.base import records as rec
@@ -32,6 +33,12 @@ class test_fromrecords(ScipyTestCase):
         x1[1] = 34
         assert_equal(r.a,array([1,2,3,4]))
 
-                
+    def check_recarray_fromfile(self):
+        __path__ = _os.path.split(__file__)
+        filename = _os.path.join(__path__[0], "testdata.fits")
+        fd = open(filename)
+        fd.seek(2880*2)
+        r = rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
+           
 if __name__ == "__main__":
     ScipyTest().run()

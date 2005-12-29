@@ -12,3 +12,4 @@ include MANIFEST.in
 #recursive-include scipy/corelib/mtrand *.c *.h *.pyx *.pxi
 #prune scipy/base/include/scipy
 #recursive-include scipy/base/include/scipy *object.h
+#include scipy/base/tests/testdata.fits
