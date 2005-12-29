@@ -191,10 +191,10 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
     >>> x3=array([1.1,2,3,4])
     >>> r=fromarrays([x1,x2,x3],names='a,b,c')
     >>> print r[1]
-    (2, 'dd\x00', 2.0)
+    (2, 'dd', 2.0)
     >>> x1[1]=34
     >>> r.a
-    array([1, 2, 3, 4])
+    recarray([1, 2, 3, 4])
     """
 
     if shape is None or shape == 0:
@@ -251,9 +251,9 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
     >>> print r[0]
     (456, 'dbe', 1.2)
     >>> r.col1
-    array([456,   2])
+    recarray([456,   2])
     >>> r.col2
-    array(['dbe', 'de'])
+    recarray(['dbe', 'de'])
     >>> import cPickle
     >>> print cPickle.loads(cPickle.dumps(r))
     recarray[ 
