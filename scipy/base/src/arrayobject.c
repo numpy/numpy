@@ -1275,14 +1275,12 @@ array_length(PyArrayObject *self)
         }
 }
 
-
 static PyObject *
 array_big_item(PyArrayObject *self, intp i) 
 {
 	char *item;
 	PyArrayObject *r;
-	
-	
+		
 	if(self->nd == 0) {
 		PyErr_SetString(PyExc_IndexError, 
 				"0-d arrays can't be indexed");
@@ -1330,7 +1328,7 @@ array_ass_big_item(PyArrayObject *self, intp i, PyObject *v)
 		return -1;
 	}
         if (self->nd == 0) {
-                PyErr_SetString(PyExc_ValueError, 
+                PyErr_SetString(PyExc_IndexError, 
                                 "0-d arrays can't be indexed.");
                 return -1;
         }
@@ -1775,26 +1773,6 @@ array_subscript(PyArrayObject *self, PyObject *op)
         PyArrayObject *other;
 	PyArrayMapIterObject *mit;
 
-        if (self->nd == 0) {
-                PyErr_SetString(PyExc_ValueError, 
-                                "0-d arrays can't be indexed.");
-                return NULL;
-        }
-        if (PyArray_IsScalar(op, Integer) || PyInt_Check(op) || \
-            PyLong_Check(op)) {
-                intp value;
-                value = PyArray_PyIntAsIntp(op);
-		if (PyErr_Occurred())
-			PyErr_Clear();
-                else if (value >= 0) {
-			return array_big_item(self, value);
-                }
-                else /* (value < 0) */ {
-			value += self->dimensions[0];
-			return array_big_item(self, value);
-		}
-        }
-	
 	if (PyString_Check(op) || PyUnicode_Check(op)) {
 		if (self->descr->fields) {
 			PyObject *obj;
@@ -1818,6 +1796,26 @@ array_subscript(PyArrayObject *self, PyObject *op)
 			     PyString_AsString(op));
 		return NULL;
 	}
+        if (self->nd == 0) {
+                PyErr_SetString(PyExc_IndexError, 
+                                "0-d arrays can't be indexed.");
+                return NULL;
+        }
+        if (PyArray_IsScalar(op, Integer) || PyInt_Check(op) || \
+            PyLong_Check(op)) {
+                intp value;
+                value = PyArray_PyIntAsIntp(op);
+		if (PyErr_Occurred())
+			PyErr_Clear();
+                else if (value >= 0) {
+			return array_big_item(self, value);
+                }
+                else /* (value < 0) */ {
+			value += self->dimensions[0];
+			return array_big_item(self, value);
+		}
+        }
+	
 
 	/* wrap arguments into a mapiter object */
         mit = (PyArrayMapIterObject *)PyArray_MapIterNew(op);
@@ -1900,12 +1898,6 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 			return array_ass_big_item(self, value, op);
         }
 
-        if (self->nd == 0) {
-                PyErr_SetString(PyExc_ValueError, 
-                                "0-d arrays can't be indexed.");
-                return -1;
-        }
-	
 	if (PyString_Check(index) || PyUnicode_Check(index)) {
 		if (self->descr->fields) {
 			PyObject *obj;
@@ -1929,6 +1921,13 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 			     PyString_AsString(index));
 		return -1;
 	}
+
+        if (self->nd == 0) {
+                PyErr_SetString(PyExc_IndexError, 
+                                "0-d arrays can't be indexed.");
+                return -1;
+        }
+	
 
 
         mit = (PyArrayMapIterObject *)PyArray_MapIterNew(index);
