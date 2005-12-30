@@ -48,13 +48,10 @@ class MachAr(object):
     Reference:
       Numerical Recipies.
     """
-    def __init__(self,
-                 float_conv=float,
-                 int_conv=int,
+    def __init__(self, float_conv=float,int_conv=int,
                  float_to_float=float,
                  float_to_str = lambda v:'%24.16e' % v,
-                 title = 'Python floating point number',
-                 ):
+                 title = 'Python floating point number'):
         """
           float_conv - convert integer to float (array)
           int_conv   - convert float (array) to integer

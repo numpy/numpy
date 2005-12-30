@@ -4,7 +4,7 @@ import numeric as sb
 import numerictypes as nt
 import sys
 import types
-import re, stat, os
+import stat, os
 import _internal
 
 _byteorderconv = {'b':'>',
@@ -21,9 +21,6 @@ _byteorderconv = {'b':'>',
                   '|':'|',
                   'I':'|',
                   'i':'|'}
-
-_sysbyte = _byteorderconv[sys.byteorder[0]]
-_byteorders = ['>','<','=']
 
 # formats regular expression
 # allows multidimension spec with a tuple syntax in front 
@@ -160,7 +157,8 @@ class recarray(sb.ndarray):
             self = sb.ndarray.__new__(subtype, shape, (record, descr))
         else:
             self = sb.ndarray.__new__(subtype, shape, (record, descr),
-                                      buffer=buf, offset=offset)
+                                      buffer=buf, offset=offset,
+                                      strides=strides)
         return self
 
     def __getattribute__(self, attr):
@@ -279,7 +277,6 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
                           titles=titles, aligned=aligned)
     
     parsed = format_parser(formats, names, titles, aligned)
-    _names = parsed._names
     _array = recarray(shape, parsed._descr)
     
     for k in xrange(_array.size):

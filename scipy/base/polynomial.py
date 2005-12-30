@@ -401,9 +401,6 @@ class poly1d(object):
         else:
             return NX.asarray(self.coeffs)
 
-    def __coerce__(self, other):
-        return None
-
     def __repr__(self):
         vals = repr(self.coeffs)
         vals = vals[6:-1]

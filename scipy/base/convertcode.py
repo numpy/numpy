@@ -24,7 +24,6 @@ __all__ = ['fromfile', 'fromstr']
 import sys
 import os
 import re
-import warnings
 import glob
 
 flatindex_re = re.compile('([.]flat(\s*?[[=]))')

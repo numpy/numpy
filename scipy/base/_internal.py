@@ -315,7 +315,7 @@ def _commastring(astr):
         # convert item
         try:
             (repeats, dtype) = format_re.match(item).groups()
-        except TypeError, AttributeError: 
+        except (TypeError, AttributeError): 
             raise ValueError('format %s is not recognized' % item)
         
         if (repeats == ''):

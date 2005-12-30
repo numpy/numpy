@@ -3,7 +3,6 @@
 
 __all__ = ['finfo']
 
-import sys
 from machar import MachAr
 import numeric
 from numeric import array

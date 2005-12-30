@@ -4,15 +4,16 @@ __all__ = ['logspace', 'linspace', 'round_',
            'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
            'unique', 'extract', 'insert', 'nansum', 'nanmax', 'nanargmax',
            'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
-           'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort', 'median',
-           'sinc', 'hamming', 'hanning', 'bartlett', 'blackman', 'kaiser', 'trapz'
+           'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort',
+           'median', 'sinc', 'hamming', 'hanning', 'bartlett', 'blackman',
+           'kaiser', 'trapz'
            ]
 
 import types
-import math, operator
+import math
 import numeric as _nx
 from numeric import ones, zeros, arange, concatenate, array, asarray, empty
-from numeric import ScalarType, dot, where
+from numeric import ScalarType, dot, where, newaxis
 from umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc, \
      isnan, absolute, cos, less_equal, sqrt, sin, mod
 from oldnumeric import ravel, nonzero, choose, \
@@ -20,7 +21,7 @@ from oldnumeric import ravel, nonzero, choose, \
 from type_check import ScalarType, isscalar
 from shape_base import atleast_1d
 from twodim_base import diag
-from scipy.base._compiled_base import digitize, bincount, _insert
+from _compiled_base import digitize, bincount, _insert
 from ufunclike import sign
 
 _lkup = {'0':'000',
@@ -171,7 +172,7 @@ def average(a, axis=0, weights=None, returned=False):
             n = add.reduce(a, axis) 
             d = ash[axis] * 1.0
             if returned:
-                d = ones(shape(n)) * d
+                d = ones(n.shape) * d
         else:
             w = array(weights, copy=False) * 1.0
             wsh = w.shape
@@ -451,7 +452,7 @@ def unwrap(p, discont=pi, axis=-1):
     ph_correct = ddmod - dd;
     _nx.putmask(ph_correct, abs(dd)<discont, 0)
     up = array(p, copy=True, typecode='d')
-    up[slice1] = p[slice1] + cumsum(ph_correct, axis)
+    up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
 
 def sort_complex(a):
@@ -515,7 +516,7 @@ def insert(arr, mask, vals):
     same number of elements as the non-zero values of mask. Inverse of
     extract.
     """
-    return _nx._insert(arr, mask, vals)
+    return _insert(arr, mask, vals)
 
 def nansum(a, axis=-1):
     """Sum the array over the given axis, treating NaNs as 0.

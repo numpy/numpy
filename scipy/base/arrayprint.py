@@ -85,7 +85,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     """                        
     
     global _summaryThreshhold, _summaryEdgeItems, _float_output_precision, \
-           _line_width
+           _line_width, _float_output_suppress_small
     if (linewidth is not None):
         _line_width = linewidth
     if (threshold is not None):

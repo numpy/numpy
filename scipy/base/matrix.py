@@ -22,6 +22,7 @@ for k in _table:
     if k not in _numchars:
         _todelete.append(k)
 _todelete = ''.join(_todelete)
+del k
 
 def _eval(astr):
     return eval(astr.translate(_table,_todelete))

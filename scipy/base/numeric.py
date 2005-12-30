@@ -18,14 +18,11 @@ __all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
            'nan', 'NaN']
 
 import sys
-import types, math
-
 import multiarray
 import umath
 from umath import *
 import numerictypes
 from numerictypes import *
-from _compiled_base import _insert
 
 def extend_all(module):
     adict = {}
@@ -284,7 +281,6 @@ def load(file):
         file = _file(file,"rb")
     return _cload(file)
 
-
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
 
@@ -318,7 +314,7 @@ def allclose (a, b, rtol=1.e-5, atol=1.e-8):
     x = array(a, copy=False)
     y = array(b, copy=False)
     d = less(absolute(x-y), atol + rtol * absolute(y))
-    return alltrue(ravel(d))
+    return d.ravel().all()
 
 def _setpyvals(lst, frame, where=0):
     if not isinstance(lst, list) or len(lst) != 3:

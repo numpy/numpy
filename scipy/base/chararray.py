@@ -112,7 +112,7 @@ class chararray(ndarray):
             maxsize = max(len(newval), maxsize)
             res[k] = newval
         newarr = chararray(b.shape, maxsize, self.dtype is unicode_)
-        nearr[:] = res
+        newarr[:] = res
         return newarr
     
     def __rmod__(self, other):

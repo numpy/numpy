@@ -22,7 +22,6 @@ def apply_along_axis(func1d,axis,arr,*args):
         raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d." 
             % (axis,nd))
     ind = [0]*(nd-1)
-    dims = arr.shape
     i = zeros(nd,'O')
     indlist = range(nd)
     indlist.remove(axis)
@@ -52,7 +51,7 @@ def apply_along_axis(func1d,axis,arr,*args):
     else:
         Ntot = product(outshape)
         holdshape = outshape
-        outshape = list(shape(arr))
+        outshape = list(arr.shape)
         outshape[axis] = len(res)
         outarr = zeros(outshape,asarray(res).dtypechar)
         outarr[tuple(i.tolist())] = res

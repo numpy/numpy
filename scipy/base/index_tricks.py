@@ -185,9 +185,10 @@ class concatenator(object):
                 if type(step) is type(1j):
                     size = int(abs(step))
                     typecode = _nx.Float
-                    newobj = function_base.linspace(start, stop, num=size)
+                    newobj = function_base.linspace(start, stop, num=size,
+                                                    dtype=typecode)
                 else:
-                    newobj = _nx.arange(start, stop, step)
+                    newobj = _nx.arange(start, stop, step, dtype=typecode)
             elif type(key[k]) is types.StringType:
                 if (key[k] in 'rc'):
                     self.matrix = True

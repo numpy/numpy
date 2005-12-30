@@ -12,7 +12,7 @@ import string, types, sys
 import umath
 import oldnumeric
 import function_base
-from numeric import e, pi, newaxis, ndarray
+from numeric import e, pi, newaxis, ndarray, inf
 from oldnumeric import typecodes, amax, amin
 from numerictypes import *
 import numeric

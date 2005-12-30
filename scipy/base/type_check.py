@@ -6,7 +6,6 @@ __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'typename','asfarray','mintypecode','asscalar',
            'common_type']
 
-import types
 import numeric as _nx
 from numeric import ndarray, asarray, array, isinf, isnan, isfinite, signbit, \
      ufunc, ScalarType, obj2dtype
