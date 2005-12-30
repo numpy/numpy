@@ -738,7 +738,7 @@ array_argsort(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return _ARET(PyArray_ArgSort(self, axis));
+	return _ARET(PyArray_ArgSort(self, axis, PyArray_QUICKSORT));
 }
 
 static char doc_searchsorted[] = "a.searchsorted(v)\n"\

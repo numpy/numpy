@@ -1701,7 +1701,7 @@ argsort_static_compare(const void *ip1, const void *ip2)
  ArgSort an array
 */
 static PyObject *
-PyArray_ArgSort(PyArrayObject *op, int axis) 
+PyArray_ArgSort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
 {
 	PyArrayObject *ap, *ret, *store;
 	intp *ip;
