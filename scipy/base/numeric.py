@@ -149,7 +149,7 @@ def vdot(a, b):
 try:
     # importing this changes the dot function for basic 4 types
     # to blas-optimized versions.
-    from scipy.lib._dotblas import dot, vdot, inner, alterdot, restoredot
+    from _dotblas import dot, vdot, inner, alterdot, restoredot
 except ImportError:
     def alterdot():
         pass
