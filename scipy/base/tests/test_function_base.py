@@ -263,6 +263,73 @@ class test_vectorize(ScipyTestCase):
         assert_array_equal(r,[5,8,1,4])
         
 
+
+class test_unwrap(ScipyTestCase):
+	def check_simple(self):
+		#check that unwrap removes jumps greather that 2*pi
+		assert_array_equal(unwrap([1,1+2*pi]),[1,1])
+		#check that unwrap maintans continuity 
+		assert(all(diff(unwrap(rand(10)*100))<pi))
+		
+
+class test_filterwindows(ScipyTestCase):
+	def check_hanning(self):
+		#check symmetry
+		w=hanning(10)
+		assert_array_almost_equal(w,flipud(w),7)
+		#check known value 
+		assert_almost_equal(sum(w),4.500,4)
+
+	def check_hamming(self):
+		#check symmetry
+		w=hamming(10)
+		assert_array_almost_equal(w,flipud(w),7)
+		#check known value 
+		assert_almost_equal(sum(w),4.9400,4)
+	
+	def check_bartlett(self):
+		#check symmetry
+		w=bartlett(10)
+		assert_array_almost_equal(w,flipud(w),7)
+		#check known value 
+		assert_almost_equal(sum(w),4.4444,4)
+
+	def check_blackman(self):
+		#check symmetry
+		w=blackman(10)
+		assert_array_almost_equal(w,flipud(w),7)
+		#check known value 
+		assert_almost_equal(sum(w),3.7800,4)
+	
+
+class test_trapz(ScipyTestCase):
+	def check_simple(self):
+		r=trapz(exp(-1/2*(arange(-10,10,.1))**2)/sqrt(2*pi),dx=0.1)
+		#check integral of normal equals 1
+		assert_almost_equal(sum(r),1,7)
+		
+class test_sinc(ScipyTestCase):
+	def check_simple(self):
+		assert(sinc(0)==1)
+		w=sinc(linspace(-1,1,100))
+		#check symmetry
+		assert_array_almost_equal(w,flipud(w),7)
+
+class test_histogram(ScipyTestCase):
+	def check_simple(self):
+		n=100
+		v=rand(n)
+		(a,b)=histogram(v)
+		#check if the sum of the bins equals the number of samples
+		assert(sum(a)==n)
+		#check that the bin counts are evenly spaced when the data is from a linear function
+		(a,b)=histogram(linspace(0,10,100))
+		assert(all(a==10))
+		
+		
+		
+		
+		
 def compare_results(res,desired):
     for i in range(len(desired)):
         assert_array_equal(res[i],desired[i])

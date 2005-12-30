@@ -204,8 +204,9 @@ def transpose(a, axes=None):
 def sort(a, axis=-1):
     """sort(a,axis=-1) returns array with elements sorted along given axis.
     """
-    a = array(a, copy=False)
-    return a.sort(axis)
+    a = array(a, copy=True)
+    a.sort(axis)
+    return a
 
 def argsort(a, axis=-1):
     """argsort(a,axis=-1) return the indices into a of the sorted array

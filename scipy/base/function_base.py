@@ -1,4 +1,5 @@
-__all__ = ['logspace', 'linspace', 'round_',
+
+l__all__ = ['logspace', 'linspace', 'round_',
            'select', 'piecewise', 'trim_zeros',
            'copy', 'iterable', 'base_repr', 'binary_repr', 
            'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
@@ -17,7 +18,8 @@ from numeric import ScalarType, dot, where, newaxis
 from umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc, \
      isnan, absolute, cos, less_equal, sqrt, sin, mod
 from oldnumeric import ravel, nonzero, choose, \
-     sometrue, alltrue, reshape, any, all, typecodes, ArrayType, squeeze
+     sometrue, alltrue, reshape, any, all, typecodes, ArrayType, squeeze,\
+     sort
 from type_check import ScalarType, isscalar
 from shape_base import atleast_1d
 from twodim_base import diag
@@ -111,13 +113,13 @@ def histogram(a, bins=10, range=None, normed=False):
     if not iterable(bins):
         if range is None:
             range = (a.min(), a.max())
-        mn, mx = [a+0.0 for a in range]
+        mn, mx = [mi+0.0 for mi in range]
         if mn == mx:
             mn -= 0.5
             mx += 0.5
-        bins = linspace(mn, mx, bins)
+        bins = linspace(mn, mx, bins, endpoint=False)
 
-    n = a.sort().searchsorted(bins)
+    n = sort(a).searchsorted(bins)
     n = concatenate([n, [len(a)]])
     n = n[1:]-n[:-1]
 
@@ -451,7 +453,7 @@ def unwrap(p, discont=pi, axis=-1):
     _nx.putmask(ddmod, (ddmod==-pi) & (dd > 0), pi)
     ph_correct = ddmod - dd;
     _nx.putmask(ph_correct, abs(dd)<discont, 0)
-    up = array(p, copy=True, typecode='d')
+    up = array(p, copy=True, dtype='d')
     up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
 

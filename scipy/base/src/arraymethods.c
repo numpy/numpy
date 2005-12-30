@@ -709,28 +709,31 @@ array_choose(PyArrayObject *self, PyObject *args)
 	return _ARET(PyArray_Choose(self, choices));
 }
 
-static char doc_sort[] = "a.sort(<None>)";
+static char doc_sort[] = "a.sort(<-1>) sorts in place along axis.  Return is None.";
 
 static PyObject *
 array_sort(PyArrayObject *self, PyObject *args) 
 {
-	int axis=MAX_DIMS;
+	int axis=-1;
+	int val;
 	
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;
 	
-	return _ARET(PyArray_Sort(self, axis));
+	val = PyArray_Sort(self, axis, PyArray_QUICKSORT);
+	if (val < 0) return NULL;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
-static char doc_argsort[] = "a.argsort(<None>)\n"\
+static char doc_argsort[] = "a.argsort(<-1>)\n"\
 	"  Return the indexes into a that would sort it along the"\
-	"  given axis (or <None> if the sorting should be done"\
-	"  in terms of a.flat";
+	"  given axis";
 
 static PyObject *
 array_argsort(PyArrayObject *self, PyObject *args) 
 {
-	int axis=MAX_DIMS;
+	int axis=-1;
 	
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
 			      &axis)) return NULL;

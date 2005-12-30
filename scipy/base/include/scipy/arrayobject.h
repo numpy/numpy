@@ -208,6 +208,13 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 			PyArray_COMPLEXLTR = 'c'
 };
 
+typedef enum {
+	PyArray_QUICKSORT,
+	PyArray_TIMSORT,
+	PyArray_HEAPSORT,
+	PyArray_MERGESORT,
+} PyArray_SORTKIND;
+
 	/* Define bit-width array types and typedefs */
 
 #define MAX_INT8 127

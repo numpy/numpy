@@ -1575,6 +1575,12 @@ qsortCompare (const void *a, const void *b)
 	return global_obj->descr->f->compare(a,b,global_obj);
 }
 
+/* Consumes reference to ap (op gets it)
+   op contains a version of the array with axes swapped if
+   local variable axis is not the last dimension.
+   orign must be defined locally. 
+*/
+
 #define SWAPAXES(op, ap) {						\
 		orign = (ap)->nd-1;					\
 		if (axis != orign) {					\
@@ -1585,7 +1591,12 @@ qsortCompare (const void *a, const void *b)
 		else (op) = (ap);					\
 	}
 
-#define SWAPBACK(op, ap) { \
+/* Consumes reference to ap (op gets it)
+   origin must be previously defined locally. 
+   SWAPAXES must have been called previously. 
+   op contains the swapped version of the array. 
+*/
+#define SWAPBACK(op, ap) {	     \
 		if (axis != orign) { \
 			(op) = (PyAO *)PyArray_SwapAxes((ap), axis, orign); \
 			Py_DECREF((ap));				\
@@ -1594,59 +1605,85 @@ qsortCompare (const void *a, const void *b)
 		else (op) = (ap);					\
 	}
 
+#define SWAPAXES2(op, ap) {						\
+		orign = (ap)->nd-1;					\
+		if (axis != orign) {					\
+			(op) = (PyAO *)PyArray_SwapAxes((ap), axis, orign); \
+			Py_DECREF((ap));				\
+			if ((op) == NULL) return -1;			\
+		}							\
+		else (op) = (ap);					\
+	}
+
+#define SWAPBACK2(op, ap) {	     \
+		if (axis != orign) { \
+			(op) = (PyAO *)PyArray_SwapAxes((ap), axis, orign); \
+			Py_DECREF((ap));				\
+			if ((op) == NULL) return -1;			\
+		}							\
+		else (op) = (ap);					\
+	}
+
 /*MULTIARRAY_API
  Sort an array
 */
-static PyObject *
-PyArray_Sort(PyArrayObject *op, int axis) 
+static int
+PyArray_Sort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
 {
 	PyArrayObject *ap=NULL, *store_arr=NULL;
+	PyArrayObject *save=op;
 	char *ip;
 	int i, n, m, elsize, orign;
 
-	if ((ap = (PyAO*) _check_axis(op, &axis, 0))==NULL) return NULL;
+	n = op->nd;
+	if (axis < 0) axis += n;
+	if ((axis < 0) || (axis >= n)) {
+		PyErr_Format(PyExc_ValueError, 
+			     "axis(=%d) out of bounds", axis);
+		return -1;
+	}
 
-	SWAPAXES(op, ap);
+	SWAPAXES2(ap, op);
 
-        ap = (PyArrayObject *)PyArray_FromAny((PyObject *)op, 
-					      NULL, 1, 0, ENSURECOPY);
+        op = (PyArrayObject *)PyArray_FromAny((PyObject *)ap, 
+					      NULL, 1, 0, 
+					      ENSURECOPY);
+	
+	if (op == NULL) return -1;
 
-	Py_DECREF(op);
-
-	if (ap == NULL) return NULL;
-
-	if (ap->descr->f->compare == NULL) {
+	if (op->descr->f->compare == NULL) {
 		PyErr_SetString(PyExc_TypeError, 
-				"compare not supported for type");
-		Py_DECREF(ap);
-		return NULL;
+				"sort not supported for type");
+		Py_DECREF(op);
+		return -1;
 	}
 	
-	elsize = ap->descr->elsize;
-	m = ap->dimensions[ap->nd-1];
+	elsize = op->descr->elsize;
+	m = op->dimensions[op->nd-1];
 	if (m == 0) goto finish;
 
-	n = PyArray_SIZE(ap)/m;
+	n = PyArray_SIZE(op)/m;
 
 	/* Store global -- allows re-entry -- restore before leaving*/
 	store_arr = global_obj; 
-	global_obj = ap;
+	global_obj = op;
 	
-	for (ip=ap->data, i=0; i<n; i++, ip+=elsize*m) {
+	for (ip=op->data, i=0; i<n; i++, ip+=elsize*m) {
 		qsort(ip, m, elsize, qsortCompare);
 	}
 	
 	global_obj = store_arr;
 		
 	if (PyErr_Occurred()) {
-		Py_DECREF(ap);
-		return NULL;	
+		Py_DECREF(op);
+		return -1;	
 	}
 
  finish:
-	SWAPBACK(op, ap);
+	SWAPBACK2(ap, op);
 
-	return (PyObject *)op;
+	PyArray_CopyInto(save, ap);
+	return 0;
 }
 
 
@@ -1675,38 +1712,43 @@ PyArray_ArgSort(PyArrayObject *op, int axis)
 	int argsort_elsize;
 	char *store_ptr;
 
-	if ((ap = (PyAO *)_check_axis(op, &axis, 0))==NULL) return NULL;
+	n = op->nd;
+	if (axis < 0) axis += n;
+	if ((axis < 0) || (axis >= n)) {
+		PyErr_Format(PyExc_ValueError, 
+			     "axis(=%d) out of bounds", axis);
+		return NULL;
+	}
 
-	SWAPAXES(op, ap);
+	SWAPAXES(ap, op);
 
-	ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op, 
+	op = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)ap, 
 							   PyArray_NOTYPE,
 							   1, 0);
-	Py_DECREF(op);
 
-	if (ap == NULL) return NULL;
+	if (op == NULL) return NULL;
 	
-	ret = (PyArrayObject *)PyArray_New(ap->ob_type, ap->nd,
-					   ap->dimensions, PyArray_INTP,
-					   NULL, NULL, 0, 0, (PyObject *)ap);
+	ret = (PyArrayObject *)PyArray_New(op->ob_type, op->nd,
+					   op->dimensions, PyArray_INTP,
+					   NULL, NULL, 0, 0, (PyObject *)op);
 	if (ret == NULL) goto fail;
 	
-	if (ap->descr->f->compare == NULL) {
+	if (op->descr->f->compare == NULL) {
 		PyErr_SetString(PyExc_TypeError, 
 				"compare not supported for type");
 		goto fail;
 	}
 	
 	ip = (intp *)ret->data;
-	argsort_elsize = ap->descr->elsize;
-	m = ap->dimensions[ap->nd-1];
+	argsort_elsize = op->descr->elsize;
+	m = op->dimensions[op->nd-1];
 	if (m == 0) goto finish;
 
-	n = PyArray_SIZE(ap)/m;
+	n = PyArray_SIZE(op)/m;
 	store_ptr = global_data;
-	global_data = ap->data;
+	global_data = op->data;
 	store = global_obj;
-	global_obj = ap;
+	global_obj = op;
 	for (i=0; i<n; i++, ip+=m, global_data += m*argsort_elsize) {
 		for(j=0; j<m; j++) ip[j] = j;
 		qsort((char *)ip, m, sizeof(intp),
@@ -1717,7 +1759,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis)
 
 
  finish:
-	Py_DECREF(ap);
+	Py_DECREF(op);
 	SWAPBACK(op, ret);
 	return (PyObject *)op;
 
