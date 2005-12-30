@@ -1,12 +1,10 @@
 # To get sub-modules
-from info import __doc__
-
-from scipy.lib.mtrand import *
+from info import __doc__, __all__
+from mtrand import *
 
 # Some aliases:
-ranf = random_sample
-random = random_sample
-sample = random_sample
+ranf = random = sample = random_sample
+__all__.extend(['ranf','random','sample'])
 
 def __RandomState_ctor():
     """Return a RandomState instance.

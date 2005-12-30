@@ -25,17 +25,6 @@ def configuration(parent_package='',top_path=None):
                          extra_info = blas_info
                          )
 
-    # Configure mtrand
-    config.add_extension('mtrand',
-                         sources=[join('mtrand', x) for x in 
-                                  ['mtrand.c', 'randomkit.c', 'initarray.c',
-                                   'distributions.c']],
-                         libraries=['m'],
-                         depends = [join('mtrand','*.h'),
-                                    join('mtrand','*.pyx'),
-                                    join('mtrand','*.pxi'),
-                                    ]
-                        )
 
     return config
 
