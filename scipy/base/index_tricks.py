@@ -175,7 +175,6 @@ class concatenator(object):
         objs = []
         for k in range(len(key)):
             if type(key[k]) is types.SliceType:
-                typecode = _nx.Int
                 step = key[k].step
                 start = key[k].start
                 stop = key[k].stop
@@ -184,11 +183,9 @@ class concatenator(object):
                     step = 1
                 if type(step) is type(1j):
                     size = int(abs(step))
-                    typecode = _nx.Float
-                    newobj = function_base.linspace(start, stop, num=size,
-                                                    dtype=typecode)
+                    newobj = function_base.linspace(start, stop, num=size)
                 else:
-                    newobj = _nx.arange(start, stop, step, dtype=typecode)
+                    newobj = _nx.arange(start, stop, step)
             elif type(key[k]) is types.StringType:
                 if (key[k] in 'rc'):
                     self.matrix = True
