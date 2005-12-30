@@ -1612,13 +1612,15 @@ qsortCompare (const void *a, const void *b)
 		if (axis != orign) {					\
 			SWAPINTP(ap->dimensions[axis], ap->dimensions[orign]); \
 			SWAPINTP(ap->strides[axis], ap->strides[orign]); \
-		}							\
+			PyArray_UpdateFlags(ap, CONTIGUOUS | FORTRAN); \
+		}						       \
 	}
 
 #define SWAPBACK2(ap) {		     \
 		if (axis != orign) {					\
 			SWAPINTP(ap->dimensions[axis], ap->dimensions[orign]); \
 			SWAPINTP(ap->strides[axis], ap->strides[orign]); \
+			PyArray_UpdateFlags(ap, CONTIGUOUS | FORTRAN);	\
 		}							\
 	}
 
