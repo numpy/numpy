@@ -152,6 +152,7 @@ class PackageLoader:
 
        - verbose - integer specifying verbosity level [default: 0].
        - force   - when True, force reloading loaded packages [default: False].
+       - postpone - when True, don't load packages [default: False]
 
      If no input arguments are given, then all of scipy's subpackages are
      imported.
@@ -168,6 +169,7 @@ class PackageLoader:
         if options.get('force',False):
             self.imported_packages = []
         self.verbose = verbose = options.get('verbose',False)
+        postpone = options.get('postpone',False)
 
         self._init_info_modules(packages or None)
 
@@ -176,6 +178,13 @@ class PackageLoader:
                 continue
             fullname = self.parent_name +'.'+ package_name
             info_module = self.info_modules[package_name]
+            if postpone:
+                if verbose>1:
+                    print >> sys.stderr, 'Adding',package_name,'to',\
+                          self.parent_name,'export names'
+                self.parent_export_names.append(package_name)
+                continue
+            
             if verbose>1:
                 print >> sys.stderr, 'Importing',package_name,'to',self.parent_name
 
@@ -278,4 +287,4 @@ else:
 if show_scipy_config is not None:
     from scipy_version import scipy_version as __scipy_version__
     __doc__ += __scipy_doc__
-    pkgload(verbose=SCIPY_IMPORT_VERBOSE)
+    pkgload(verbose=SCIPY_IMPORT_VERBOSE,postpone=False)
