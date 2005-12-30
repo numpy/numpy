@@ -463,7 +463,8 @@ def sort_complex(a):
     for complex arrays).  This function is a wrapper ensuring a complex
     return type.
     """
-    b = asarray(a).sort()
+    b = array(a,copy=True)
+    b.sort()
     if not issubclass(b.dtype, _nx.complexfloating):
         if b.dtypechar in 'bhBH':
             return b.astype('F')
@@ -782,7 +783,9 @@ def sinc(x):
     return sin(y)/y
 
 def msort(a):
-    return a.sort(0)
+    b = array(a,copy=True)
+    b.sort(0)
+    return b
 
 def median(m):
     """median(m) returns a median of m along the first dimension of m.
