@@ -1605,33 +1605,30 @@ qsortCompare (const void *a, const void *b)
 		else (op) = (ap);					\
 	}
 
-#define SWAPAXES2(op, ap) {						\
+/* These swap axes in-place if necessary */
+#define SWAPINTP(a,b) {intp c; c=(a); (a) = (b); (b) = c;}
+#define SWAPAXES2(ap) {						\
 		orign = (ap)->nd-1;					\
 		if (axis != orign) {					\
-			(op) = (PyAO *)PyArray_SwapAxes((ap), axis, orign); \
-			Py_DECREF((ap));				\
-			if ((op) == NULL) return -1;			\
+			SWAPINTP(ap->dimensions[axis], ap->dimensions[orign]); \
+			SWAPINTP(ap->strides[axis], ap->strides[orign]); \
 		}							\
-		else (op) = (ap);					\
 	}
 
-#define SWAPBACK2(op, ap) {	     \
-		if (axis != orign) { \
-			(op) = (PyAO *)PyArray_SwapAxes((ap), axis, orign); \
-			Py_DECREF((ap));				\
-			if ((op) == NULL) return -1;			\
+#define SWAPBACK2(ap) {		     \
+		if (axis != orign) {					\
+			SWAPINTP(ap->dimensions[axis], ap->dimensions[orign]); \
+			SWAPINTP(ap->strides[axis], ap->strides[orign]); \
 		}							\
-		else (op) = (ap);					\
 	}
 
 /*MULTIARRAY_API
- Sort an array
+ Sort an array in-place
 */
 static int
 PyArray_Sort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
 {
 	PyArrayObject *ap=NULL, *store_arr=NULL;
-	PyArrayObject *save=op;
 	char *ip;
 	int i, n, m, elsize, orign;
 
@@ -1643,47 +1640,45 @@ PyArray_Sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 		return -1;
 	}
 
-	SWAPAXES2(ap, op);
-
-        op = (PyArrayObject *)PyArray_FromAny((PyObject *)ap, 
-					      NULL, 1, 0, 
-					      ENSURECOPY);
-	
-	if (op == NULL) return -1;
-
 	if (op->descr->f->compare == NULL) {
 		PyErr_SetString(PyExc_TypeError, 
 				"sort not supported for type");
-		Py_DECREF(op);
 		return -1;
 	}
+
+	SWAPAXES2(op);
+
+        ap = (PyArrayObject *)PyArray_FromAny((PyObject *)op, 
+					      NULL, 1, 0, 
+					      DEFAULT_FLAGS | UPDATEIFCOPY);	
+	if (ap == NULL) goto fail;
 	
-	elsize = op->descr->elsize;
-	m = op->dimensions[op->nd-1];
+	elsize = ap->descr->elsize;
+	m = ap->dimensions[ap->nd-1];
 	if (m == 0) goto finish;
 
-	n = PyArray_SIZE(op)/m;
+	n = PyArray_SIZE(ap)/m;
 
 	/* Store global -- allows re-entry -- restore before leaving*/
 	store_arr = global_obj; 
-	global_obj = op;
+	global_obj = ap;
 	
-	for (ip=op->data, i=0; i<n; i++, ip+=elsize*m) {
+	for (ip=ap->data, i=0; i<n; i++, ip+=elsize*m) {
 		qsort(ip, m, elsize, qsortCompare);
 	}
 	
 	global_obj = store_arr;
 		
-	if (PyErr_Occurred()) {
-		Py_DECREF(op);
-		return -1;	
-	}
+	if (PyErr_Occurred()) goto fail;
 
  finish:
-	SWAPBACK2(ap, op);
-
-	PyArray_CopyInto(save, ap);
+	Py_DECREF(ap);  /* Should update op if needed */
+	SWAPBACK2(op);
 	return 0;
+ fail:
+	Py_XDECREF(ap);
+	SWAPBACK2(op);
+	return -1;
 }
 
 

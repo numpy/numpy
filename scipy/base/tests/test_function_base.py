@@ -304,7 +304,7 @@ class test_filterwindows(ScipyTestCase):
 
 class test_trapz(ScipyTestCase):
 	def check_simple(self):
-		r=trapz(exp(-1/2*(arange(-10,10,.1))**2)/sqrt(2*pi),dx=0.1)
+		r=trapz(exp(-1.0/2*(arange(-10,10,.1))**2)/sqrt(2*pi),dx=0.1)
 		#check integral of normal equals 1
 		assert_almost_equal(sum(r),1,7)
 		
