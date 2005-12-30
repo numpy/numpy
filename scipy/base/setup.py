@@ -3,13 +3,12 @@ import imp
 import os
 from os.path import join
 from glob import glob
-from scipy.distutils.misc_util import Configuration,dot_join
 from distutils.dep_util import newer,newer_group
 
-from scipy.distutils.command.build import build
-
-
 def configuration(parent_package='',top_path=None):
+    from scipy.distutils.misc_util import Configuration,dot_join
+    from scipy.distutils.system_info import get_info
+
     config = Configuration('base',parent_package,top_path)
     local_dir = config.local_path
     codegen_dir = join(local_dir,'code_generators')
@@ -174,6 +173,24 @@ def configuration(parent_package='',top_path=None):
                                   generate_array_api,
                                   ],
                          )
+
+    # Configure blasdot
+    blas_info = get_info('blas_opt',0)
+    #blas_info = {}
+    def get_dotblas_sources(ext, build_dir):
+        if blas_info:
+            return ext.depends[:1]
+        return None # no extension module will be built
+
+    config.add_extension('_dotblas',
+                         sources = [get_dotblas_sources],
+                         depends=[join('blasdot','_dotblas.c'),
+                                  join('blasdot','cblas.h'),
+                                  ],
+                         include_dirs = ['blasdot'],
+                         extra_info = blas_info
+                         )
+
 
     config.add_data_dir('tests')
     config.make_svn_version_py()
