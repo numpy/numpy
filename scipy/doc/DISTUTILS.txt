@@ -20,6 +20,7 @@ Currently Scipy project consists of two packages:
   + scipy.f2py - a tool to bind Fortran/C codes to Python
   + scipy.weave - a tool to bind C++ codes to Python
   + scipy.base - future replacement of Numeric and numarray packages
+  + scipy.testing - scipy-style tools for unit testing
   + etc
 
 - Scipy --- a collection of Scientific tools for Python.
@@ -389,24 +390,29 @@ relations between packages, etc.
 The following information will be looked in the ``info.py`` file:
 
 __doc__
-  The documentation string of the module.
+  The documentation string of the package.
 
 __doc_title__
-  The title of the module. If not defined then the first non-empty 
+  The title of the package. If not defined then the first non-empty 
   line of ``__doc__`` will be used.
+
+__all__
+  List of symbols that package exports. Optional.
 
 global_symbols
   List of names that should be imported to scipy name space. To import
   all symbols to ``scipy`` namespace, define ``global_symbols=['*']``.
 
 depends
-  List of names that the package depends on. Use full names,
-  e.g. ``scipy.test`` in this list. Default value is ``[]``.
+  List of names that the package depends on. Prefix ``scipy.``
+  will be automatically added to package names. For example,
+  use ``testing`` to indicate dependence on ``scipy.testing``
+  package. Default value is ``[]``.
 
 postpone_import
   Boolean variable indicating that importing the package should be
   postponed until the first attempt of its usage. Default value is ``False``.
-
+  Depreciated.
 
 The ``__init__.py`` file
 ''''''''''''''''''''''''
@@ -428,7 +434,7 @@ So, the header a typical ``__init__.py`` file is::
   from info import __doc__
   ...
 
-  from scipy.test.testing import ScipyTest
+  from scipy.testing import ScipyTest
   test = ScipyTest().test
 
 The ``tests/`` directory
@@ -449,7 +455,7 @@ a Scipy package module ``scipy.xxx.yyy`` containing a function
 ``zzz()``, is shown below::
 
   import sys
-  from scipy.test.testing import *
+  from scipy.testing import *
 
   set_package_path()
   # import xxx symbols
@@ -473,7 +479,7 @@ a Scipy package module ``scipy.xxx.yyy`` containing a function
 basically only implements an additional method ``measure(self,
 code_str, times=1)``.
 
-``scipy.test.testing`` module provides also the following convenience
+``scipy.testing`` module provides also the following convenience
 functions::
 
   assert_equal(actual,desired,err_msg='',verbose=1)
