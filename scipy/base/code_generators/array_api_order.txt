@@ -59,3 +59,4 @@ PyArray_FillObjectArray
 PyArray_FillWithScalar
 PyArray_CheckStrides
 PyArray_DescrNewByteorder
+PyArray_IterAllButAxis

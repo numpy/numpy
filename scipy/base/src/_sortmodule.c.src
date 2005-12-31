@@ -1,0 +1,86 @@
+/* The purpose of this module is to add faster sort functions
+   that are type-specific.  This is done by altering the
+   function table for the builtin descriptors. 
+*/
+
+#include "Python.h"
+#include "scipy/arrayobject.h"
+
+#define STDC_LT(a,b) ((a) < (b))
+#define STDC_LE(a,b) ((a) <= (b))
+#define STDC_EQ(a,b) ((a) == (b))
+#define SWAP(a,b) {SWAP_temp = (b); (b)=(a); (a) = SWAP_temp;}
+
+static void 
+LONG_quicksort(long *start, intp num, int elsize, void *unused)
+{
+	long *pl = start;
+	long *pr = start + num - 1;
+	long vp, SWAP_temp;
+	long *stack[100], **sptr = stack, *pm, *pi, *pj, *pt;
+
+        for(;;) {
+                while ((pr - pl) > 15) {
+                        /* quicksort partition */
+                        pm = pl + ((pr - pl) >> 1);
+                        if (STDC_LT(*pm,*pl)) SWAP(*pm,*pl);
+                        if (STDC_LT(*pr,*pm)) SWAP(*pr,*pm);
+                        if (STDC_LT(*pm,*pl)) SWAP(*pm,*pl);
+                        vp = *pm;
+                        pi = pl;
+                        pj = pr - 1;
+                        SWAP(*pm,*pj);
+                        for(;;) {
+                                do ++pi; while (STDC_LT(*pi,vp));
+                                do --pj; while (STDC_LT(vp,*pj));
+                                if (pi >= pj)  break;
+                                SWAP(*pi,*pj);
+                        }
+                        SWAP(*pi,*(pr-1));
+                        /* push largest partition on stack */
+                        if (pi - pl < pr - pi) {
+                                *sptr++ = pi + 1;
+                                *sptr++ = pr;
+                                pr = pi - 1;
+                        }else{
+                                *sptr++ = pl;
+                                *sptr++ = pi - 1;
+                                pl = pi + 1;
+                        }
+                }
+                /* insertion sort */
+                for(pi = pl + 1; pi <= pr; ++pi) {
+                        vp = *pi;
+                        for(pj = pi, pt = pi - 1; pj > pl && STDC_LT(vp, *pt);) {
+                                *pj-- = *pt--;
+                        }
+                        *pj = vp;
+                }
+                if (sptr == stack) break;
+                pr = *(--sptr);
+                pl = *(--sptr);
+        }
+}
+	
+static void 
+add_sortfuncs(void)
+{
+	PyArray_Descr *descr;
+
+	descr = PyArray_DescrFromType(PyArray_LONG);
+	descr->f->sort[PyArray_QUICKSORT] = (PyArray_SortFunc *)LONG_quicksort;
+}
+
+static struct PyMethodDef methods[] = {
+	{NULL, NULL, 0}
+};
+
+PyMODINIT_FUNC
+init_sort(void) {
+	PyObject *m;
+
+	m = Py_InitModule("_sort", methods);
+	
+	if (import_array() < 0) return;
+	add_sortfuncs();
+}

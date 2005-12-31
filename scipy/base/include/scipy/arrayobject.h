@@ -209,11 +209,12 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 };
 
 typedef enum {
-	PyArray_QUICKSORT,
-	PyArray_TIMSORT,
-	PyArray_HEAPSORT,
-	PyArray_MERGESORT,
+	PyArray_QUICKSORT=0,
+	PyArray_HEAPSORT=1,
+	PyArray_MERGESORT=2,
+	PyArray_TIMSORT=3,
 } PyArray_SORTKIND;
+#define PyArray_NSORTS PyArray_TIMSORT + 1
 
 	/* Define bit-width array types and typedefs */
 
@@ -779,6 +780,9 @@ typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
 
 typedef int (PyArray_FillFunc)(void *, intp, void *);
 
+typedef void (PyArray_SortFunc)(void *, intp, int, void *);
+typedef int (PyArray_ArgSortFunc)(void *, void *);
+
 typedef struct {
         intp *ptr;
         int len;
@@ -814,7 +818,13 @@ typedef struct {
 	/* Function to determine if data is zero or not */
 	PyArray_NonzeroFunc *nonzero;
 
+	/* Used for arange */
 	PyArray_FillFunc *fill;
+
+	/* Sorting functions */
+	PyArray_SortFunc *sort[PyArray_NSORTS];
+	PyArray_ArgSortFunc *argsort[PyArray_NSORTS];
+
 } PyArray_ArrFuncs;
 
 
