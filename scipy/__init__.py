@@ -30,7 +30,7 @@ class PackageLoader:
         """ Manages loading SciPy packages.
         """
 
-        self.frame = frame = sys._getframe(1)
+        self.parent_frame = frame = sys._getframe(1)
         self.parent_name = eval('__name__',frame.f_globals,frame.f_locals)
         self.parent_path = eval('__path__[0]',frame.f_globals,frame.f_locals)
         if not frame.f_locals.has_key('__all__'):
@@ -39,17 +39,28 @@ class PackageLoader:
 
         self.info_modules = None
         self.imported_packages = []
+        self.verbose = None
+
+    def _get_info_files(self, parent_path=None):
+        """ Return info.py files from parent_path subdirectories.
+        """
+        from glob import glob
+        if parent_path is None:
+            parent_path = self.parent_path
+        info_files = glob(os.path.join(parent_path,'*','info.py'))
+        for info_file in glob(os.path.join(parent_path,'*','info.pyc')):
+            if info_file[:-1] not in info_files:
+                info_files.append(info_file)
+        for info_file in info_files[:]:
+            info_files.extend(self._get_info_files(os.path.dirname(info_file)))
+        return info_files
 
     def _init_info_modules(self, packages=None):
         """Initialize info_modules = {<package_name>: <package info.py module>}.
         """
         import imp
-        from glob import glob
         if packages is None:
-            info_files = glob(os.path.join(self.parent_path,'*','info.py'))
-            for info_file in glob(os.path.join(self.parent_path,'*','info.pyc')):
-                if info_file[:-1] not in info_files:
-                    info_files.append(info_file)
+            info_files = self._get_info_files()
         else:
             info_files = []
             for package in packages:
@@ -59,13 +70,13 @@ class PackageLoader:
                 if os.path.isfile(info_file):
                     info_files.append(info_file)
                 else:
-                    if self.verbose:
-                        print >> sys.stderr, 'Package',`package`,\
-                              'does not have info.py file. Ignoring.'
+                    self.warn('Package %r does not have info.py file. Ignoring.'\
+                              % package)
 
         info_modules = self.info_modules
         for info_file in info_files:
-            package_name = os.path.basename(os.path.dirname(info_file))
+            package_name = os.path.dirname(info_file[len(self.parent_path)+1:])\
+                           .replace(os.sep,'.')
             if info_modules.has_key(package_name):
                 continue
             fullname = self.parent_name +'.'+ package_name
@@ -81,7 +92,7 @@ class PackageLoader:
                                               info_file,
                                               filedescriptor)
             except Exception,msg:
-                print >> sys.stderr, msg
+                self.error(msg)
                 info_module = None
 
             if info_module is None or getattr(info_module,'ignore',False):
@@ -164,7 +175,7 @@ class PackageLoader:
        were actually imported. [NotImplemented]
 
      """
-        frame = self.frame
+        frame = self.parent_frame
         self.info_modules = {}
         if options.get('force',False):
             self.imported_packages = []
@@ -173,45 +184,38 @@ class PackageLoader:
 
         self._init_info_modules(packages or None)
 
+        self.log('Imports to %r namespace\n----------------------------'\
+                 % self.parent_name)
+
         for package_name in self._get_sorted_names():
             if package_name in self.imported_packages:
                 continue
             fullname = self.parent_name +'.'+ package_name
             info_module = self.info_modules[package_name]
-            if postpone:
-                if verbose>1:
-                    print >> sys.stderr, 'Adding',package_name,'to',\
-                          self.parent_name,'export names'
+            if postpone and '.' not in package_name:
+                self.log('__all__.append(%r)' % (package_name))
                 self.parent_export_names.append(package_name)
                 continue
             
-            if verbose>1:
-                print >> sys.stderr, 'Importing',package_name,'to',self.parent_name
-
             old_object = frame.f_locals.get(package_name,None)
 
-            try:
-                exec ('import '+package_name, frame.f_globals,frame.f_locals)
-            except Exception,msg:
-                print >> sys.stderr, 'Failed to import',package_name
-                print >> sys.stderr, msg
+            cmdstr = 'import '+package_name
+            if self._execcmd(cmdstr):
                 continue
-
-            if verbose:
+            self.imported_packages.append(package_name)
+    
+            if verbose!=-1:
                 new_object = frame.f_locals.get(package_name)
                 if old_object is not None and old_object is not new_object:
-                    print >> sys.stderr, 'Overwriting',package_name,'=',\
-                          `old_object`,'with',`new_object`            
+                    self.warn('Overwriting %s=%s (was %s)' \
+                              % (package_name,self._obj2str(new_object),
+                                 self._obj2str(old_object)))
 
-            self.imported_packages.append(package_name)
-            self.parent_export_names.append(package_name)
+            if '.' not in package_name:
+                self.parent_export_names.append(package_name)
 
             global_symbols = getattr(info_module,'global_symbols',[])
             for symbol in global_symbols:
-                if verbose:
-                    print >> sys.stderr, 'Importing',symbol,'of',package_name,\
-                          'to',self.parent_name
-
                 if symbol=='*':
                     symbols = eval('getattr(%s,"__all__",None)'\
                                    % (package_name),
@@ -223,25 +227,23 @@ class PackageLoader:
                 else:
                     symbols = [symbol]
 
-                if verbose:
+                if verbose!=-1:
                     old_objects = {}
                     for s in symbols:
                         if frame.f_locals.has_key(s):
                             old_objects[s] = frame.f_locals[s]
-                try:
-                    exec ('from '+package_name+' import '+symbol,
-                          frame.f_globals,frame.f_locals)
-                except Exception,msg:
-                    print >> sys.stderr, 'Failed to import',symbol,'from',package_name
-                    print >> sys.stderr, msg
+
+                cmdstr = 'from '+package_name+' import '+symbol
+                if self._execcmd(cmdstr):
                     continue
 
-                if verbose:
+                if verbose!=-1:
                     for s,old_object in old_objects.items():
                         new_object = frame.f_locals[s]
                         if new_object is not old_object:
-                            print >> sys.stderr, 'Overwriting',s,'=',\
-                                  `old_object`,'with',`new_object`            
+                            self.warn('Overwriting %s=%s (was %s)' \
+                                      % (s,self._obj2repr(new_object),
+                                         self._obj2repr(old_object)))
 
                 if symbol=='*':
                     self.parent_export_names.extend(symbols)
@@ -249,6 +251,38 @@ class PackageLoader:
                     self.parent_export_names.append(symbol)
 
         return
+
+    def _execcmd(self,cmdstr):
+        """ Execute command in parent_frame."""
+        frame = self.parent_frame
+        try:
+            exec (cmdstr, frame.f_globals,frame.f_locals)
+        except Exception,msg:
+            self.error('%s -> failed: %s' % (cmdstr,msg))
+            return True
+        else:
+            self.log('%s -> success' % (cmdstr))                            
+        return
+
+    def _obj2repr(self,obj):
+        """ Return repr(obj) with"""
+        module = getattr(obj,'__module__',None)
+        file = getattr(obj,'__file__',None)
+        if module is not None:
+            return repr(obj) + ' from ' + module
+        if file is not None:
+            return repr(obj) + ' from ' + file
+        return repr(obj)
+
+    def log(self,mess):
+        if self.verbose>1:
+            print >> sys.stderr, str(mess)
+    def warn(self,mess):
+        if self.verbose>=0:
+            print >> sys.stderr, str(mess)
+    def error(self,mess):
+        if self.verbose!=-1:
+            print >> sys.stderr, str(mess)
 
 pkgload = PackageLoader()
 
@@ -288,3 +322,5 @@ if show_scipy_config is not None:
     from scipy_version import scipy_version as __scipy_version__
     __doc__ += __scipy_doc__
     pkgload(verbose=SCIPY_IMPORT_VERBOSE,postpone=False)
+
+    
