@@ -212,7 +212,7 @@ typedef enum {
 	PyArray_QUICKSORT=0,
 	PyArray_HEAPSORT=1,
 	PyArray_MERGESORT=2,
-	PyArray_TIMSORT=3,
+	PyArray_TIMSORT=3,    /* the sort Python uses -- specialized */
 } PyArray_SORTKIND;
 #define PyArray_NSORTS PyArray_TIMSORT + 1
 
@@ -780,8 +780,8 @@ typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
 
 typedef int (PyArray_FillFunc)(void *, intp, void *);
 
-typedef void (PyArray_SortFunc)(void *, intp, int, void *);
-typedef void (PyArray_ArgSortFunc)(void *, intp *, intp, int, void *);
+typedef int (PyArray_SortFunc)(void *, intp, void *);
+typedef int (PyArray_ArgSortFunc)(void *, intp *, intp, void *);
 
 typedef struct {
         intp *ptr;

@@ -1036,7 +1036,7 @@ gentype_wraparray(PyObject *scalar, PyObject *args)
 
 /**begin repeat
 
-#name=tolist, item, tostring, astype, copy, resize, __deepcopy__, choose, sort, argsort, searchsorted, argmax, argmin, reshape, view, swapaxes, max, min, ptp, conj, conjugate, nonzero, all, any, flatten, ravel, fill, transpose, newbyteorder#
+#name=tolist, item, tostring, astype, copy, resize, __deepcopy__, choose, searchsorted, argmax, argmin, reshape, view, swapaxes, max, min, ptp, conj, conjugate, nonzero, all, any, flatten, ravel, fill, transpose, newbyteorder#
 */
 
 static PyObject *
@@ -1095,7 +1095,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 
 /**begin repeat
 
-#name=take, getfield, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress#
+#name=take, getfield, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress, sort, argsort#
 */
 
 static PyObject *

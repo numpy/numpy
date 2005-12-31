@@ -709,36 +709,44 @@ array_choose(PyArrayObject *self, PyObject *args)
 	return _ARET(PyArray_Choose(self, choices));
 }
 
-static char doc_sort[] = "a.sort(<-1>) sorts in place along axis.  Return is None.";
+static char doc_sort[] = "a.sort(axis=-1,kind='quicksort') sorts in place along axis.  Return is None and kind can be 'quicksort', 'mergesort', or 'heapsort'";
 
 static PyObject *
-array_sort(PyArrayObject *self, PyObject *args) 
+array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=-1;
 	int val;
+	PyArray_SORTKIND which=PyArray_QUICKSORT;
+	static char *kwlist[] = {"axis", "kind", NULL};
 	
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
-			      &axis)) return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
+					 PyArray_AxisConverter, &axis,
+					 PyArray_SortkindConverter, &which))
+		return NULL;
 	
-	val = PyArray_Sort(self, axis, PyArray_QUICKSORT);
+	val = PyArray_Sort(self, axis, which);
 	if (val < 0) return NULL;
 	Py_INCREF(Py_None);
 	return Py_None;
 }
 
-static char doc_argsort[] = "a.argsort(<-1>)\n"\
+static char doc_argsort[] = "a.argsort(axis=-1,kind='quicksort')\n"\
 	"  Return the indexes into a that would sort it along the"\
-	"  given axis";
+	"  given axis; kind can be 'quicksort', 'mergesort', or 'heapsort'";
 
 static PyObject *
-array_argsort(PyArrayObject *self, PyObject *args) 
+array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=-1;
+	PyArray_SORTKIND which=PyArray_QUICKSORT;
+	static char *kwlist[] = {"axis", "kind", NULL};
 	
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
-			      &axis)) return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
+					 PyArray_AxisConverter, &axis,
+					 PyArray_SortkindConverter, &which))
+		return NULL;
 	
-	return _ARET(PyArray_ArgSort(self, axis, PyArray_QUICKSORT));
+	return _ARET(PyArray_ArgSort(self, axis, which));
 }
 
 static char doc_searchsorted[] = "a.searchsorted(v)\n"\
@@ -1570,9 +1578,9 @@ static PyMethodDef array_methods[] = {
 	{"choose",	(PyCFunction)array_choose, 
 	 METH_VARARGS, doc_choose},	
 	{"sort",	(PyCFunction)array_sort, 
-	 METH_VARARGS, doc_sort},
+	 METH_VARARGS|METH_KEYWORDS, doc_sort},
 	{"argsort",	(PyCFunction)array_argsort, 
-	 METH_VARARGS, doc_argsort},
+	 METH_VARARGS|METH_KEYWORDS, doc_argsort},
 	{"searchsorted",  (PyCFunction)array_searchsorted, 
 	 METH_VARARGS, doc_searchsorted},	
 	{"argmax",	(PyCFunction)array_argmax, 
