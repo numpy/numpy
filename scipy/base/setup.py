@@ -174,6 +174,13 @@ def configuration(parent_package='',top_path=None):
                                   ],
                          )
 
+    config.add_extension('_sort',
+                         sources=[join('src','_sortmodule.c.src'),
+                                  generate_config_h,
+                                  generate_array_api,
+                                  ],
+                         )
+
     # Configure blasdot
     blas_info = get_info('blas_opt',0)
     #blas_info = {}

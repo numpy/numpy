@@ -1616,6 +1616,12 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	(PyArray_CopySwapFunc*)@from@_copyswap,
 	(PyArray_NonzeroFunc*)@from@_nonzero,
 	(PyArray_FillFunc*)NULL,
+	{
+		NULL, NULL, NULL, NULL
+	},
+	{
+		NULL, NULL, NULL, NULL
+	}
 };
 
 static PyArray_Descr @from@_Descr = { 
@@ -1677,7 +1683,13 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	(PyArray_CopySwapNFunc*)@from@_copyswapn,
 	(PyArray_CopySwapFunc*)@from@_copyswap,
 	(PyArray_NonzeroFunc*)@from@_nonzero,
-	(PyArray_FillFunc*)@from@_fill
+	(PyArray_FillFunc*)@from@_fill,
+	{
+		NULL, NULL, NULL, NULL
+	},
+	{
+		NULL, NULL, NULL, NULL
+	}
 };
 
 static PyArray_Descr @from@_Descr = { 

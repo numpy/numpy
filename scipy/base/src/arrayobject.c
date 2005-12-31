@@ -6216,6 +6216,29 @@ PyArray_IterNew(PyObject *obj)
         return (PyObject *)it;
 }
 
+
+/*OBJECT_API
+ Get Iterator that iterates over all but one axis (don't use this with
+ PyArray_ITER_GOTO1D) 
+*/
+static PyObject *
+PyArray_IterAllButAxis(PyObject *obj, int axis)
+{
+	PyArrayIterObject *it;
+	it = (PyArrayIterObject *)PyArray_IterNew(obj);
+	if (it == NULL) return NULL;
+
+	/* adjust so that will not iterate over axis */
+	it->contiguous = 0;
+	it->size /= (it->dims_m1[axis]+1);
+	it->dims_m1[axis] = 0;
+	it->backstrides[axis] = 0;
+	
+	/* (won't fix factors so don't use
+	   PyArray_ITER_GOTO1D with this iterator) */
+	return (PyObject *)it;
+}
+
 /* Returns an array scalar holding the element desired */
 
 static PyObject *

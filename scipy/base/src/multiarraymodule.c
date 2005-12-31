@@ -1564,6 +1564,72 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op)
 	return NULL;
 }
 
+static void
+_strided_copy(char *dst, intp dststride, char *src, intp srcstride, intp num, int elsize)
+{
+	while(num--) {
+		memcpy(dst, src, elsize);
+		dst += dststride;
+		src += srcstride;
+	}
+}
+
+/* These algorithms use special sorting.  They are not called unless the 
+   underlying sort function for the type is available.  Note that axis is already
+   valid. The sort functions require 1-d contiguous and well-behaved data.
+   Therefore, a copy will be made of the data if needed before handing it to the
+   sorting routine.
+   An iterator is constructed and adjusted to walk over all but the desired sorting
+   axis. 
+*/
+static int
+_new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
+{
+	PyArrayIterObject *it;
+	int needcopy=0;
+	intp N, size;
+	int elsize;
+	intp astride;
+	PyArray_SortFunc *sort;
+
+	it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, axis);
+	if (it == NULL) return -1;
+	sort = op->descr->f->sort[which];
+	size = it->size;
+	N = op->dimensions[axis];
+	elsize = op->descr->elsize;
+	astride = op->strides[axis];
+
+	needcopy = !(op->flags & ALIGNED) || (astride != (intp) elsize);
+
+	if (needcopy) {
+		char *buffer;
+		buffer = PyDataMem_NEW(N*elsize);
+		while (size--) {
+			_strided_copy(buffer, (intp) elsize, it->dataptr, astride, 
+				      N, elsize);
+			sort(buffer, N, elsize, op);
+			_strided_copy(it->dataptr, astride, buffer, (intp) elsize, 
+				      N, elsize);
+			PyArray_ITER_NEXT(it);
+		}
+	}
+	else {
+		while (size--) {
+			sort(it->dataptr, N, elsize, op);
+			PyArray_ITER_NEXT(it);
+		}
+	}	
+	return 0;
+}
+
+static PyObject*
+_new_argsort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
+{
+	PyErr_SetNone(PyExc_NotImplementedError);
+	return NULL;
+}
+
 
 /* Be sure to save this global_compare when necessary */
 
@@ -1641,10 +1707,21 @@ PyArray_Sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 			     "axis(=%d) out of bounds", axis);
 		return -1;
 	}
+	if (!PyArray_ISWRITEABLE(op)) {
+		PyErr_SetString(PyExc_RuntimeError, 
+				"attempted sort on unwriteable array.");
+		return -1;
+	}
 
-	if (op->descr->f->compare == NULL) {
+	/* Determine if we should use new algorithm or not */
+	if (op->descr->f->sort[which] != NULL) {
+		return _new_sort(op, axis, which);
+	}
+
+	if ((which != PyArray_QUICKSORT) || \
+	    op->descr->f->compare == NULL) {
 		PyErr_SetString(PyExc_TypeError, 
-				"sort not supported for type");
+				"desired sort not supported for this type");
 		return -1;
 	}
 
@@ -1703,7 +1780,7 @@ argsort_static_compare(const void *ip1, const void *ip2)
 static PyObject *
 PyArray_ArgSort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
 {
-	PyArrayObject *ap, *ret, *store;
+	PyArrayObject *ap=NULL, *ret, *store;
 	intp *ip;
 	intp i, j, n, m, orign;
 	int argsort_elsize;
@@ -1715,6 +1792,17 @@ PyArray_ArgSort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 		PyErr_Format(PyExc_ValueError, 
 			     "axis(=%d) out of bounds", axis);
 		return NULL;
+	}
+
+	/* Determine if we should use new algorithm or not */
+	if (op->descr->f->argsort[which] != NULL) {
+		return _new_argsort(op, axis, which);
+	}
+
+	if ((which != PyArray_QUICKSORT) || op->descr->f->compare == NULL) {
+		PyErr_SetString(PyExc_TypeError, 
+				"requested sort not available for type");
+		goto fail;
 	}
 
 	SWAPAXES(ap, op);
@@ -1730,11 +1818,6 @@ PyArray_ArgSort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 					   NULL, NULL, 0, 0, (PyObject *)op);
 	if (ret == NULL) goto fail;
 	
-	if (op->descr->f->compare == NULL) {
-		PyErr_SetString(PyExc_TypeError, 
-				"compare not supported for type");
-		goto fail;
-	}
 	
 	ip = (intp *)ret->data;
 	argsort_elsize = op->descr->elsize;
