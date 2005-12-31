@@ -6226,10 +6226,12 @@ PyArray_IterAllButAxis(PyObject *obj, int axis)
 	PyArrayIterObject *it;
 	it = (PyArrayIterObject *)PyArray_IterNew(obj);
 	if (it == NULL) return NULL;
-
+	
 	/* adjust so that will not iterate over axis */
 	it->contiguous = 0;
-	it->size /= (it->dims_m1[axis]+1);
+	if (it->size != 0) {
+		it->size /= PyArray_DIM(obj,axis);
+	}
 	it->dims_m1[axis] = 0;
 	it->backstrides[axis] = 0;
 	
