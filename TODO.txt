@@ -1,0 +1,7 @@
+Extend ufuncs to handle flexible types
+ or at least handle comparisons in array type for flexible types
+
+Fix reduce, accumululate, and reduceat buffered method to be similar
+  to the fix for the generic function (use a specialized inner loop, 
+  but other than that it should be the same code as NOBUFFER...
+

@@ -2962,7 +2962,6 @@ array_str(PyArrayObject *self)
         return s;
 }
 
-
 static PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op) 
 {
