@@ -190,11 +190,12 @@ class PackageLoader:
         for package_name in self._get_sorted_names():
             if package_name in self.imported_packages:
                 continue
-            fullname = self.parent_name +'.'+ package_name
             info_module = self.info_modules[package_name]
-            if postpone and '.' not in package_name:
+            global_symbols = getattr(info_module,'global_symbols',[])            
+            if postpone and not global_symbols:
                 self.log('__all__.append(%r)' % (package_name))
-                self.parent_export_names.append(package_name)
+                if '.' not in package_name:
+                    self.parent_export_names.append(package_name)
                 continue
             
             old_object = frame.f_locals.get(package_name,None)
@@ -214,7 +215,6 @@ class PackageLoader:
             if '.' not in package_name:
                 self.parent_export_names.append(package_name)
 
-            global_symbols = getattr(info_module,'global_symbols',[])
             for symbol in global_symbols:
                 if symbol=='*':
                     symbols = eval('getattr(%s,"__all__",None)'\
@@ -296,6 +296,7 @@ else:
 
 
     test = ScipyTest('scipy').test
+    __all__.append('test')
 
 __scipy_doc__ = """
 
@@ -321,6 +322,4 @@ else:
 if show_scipy_config is not None:
     from scipy_version import scipy_version as __scipy_version__
     __doc__ += __scipy_doc__
-    pkgload(verbose=SCIPY_IMPORT_VERBOSE,postpone=False)
-
-    
+    pkgload(verbose=SCIPY_IMPORT_VERBOSE,postpone=True)
