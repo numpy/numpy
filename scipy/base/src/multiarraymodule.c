@@ -1613,6 +1613,7 @@ _new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 				      N, elsize);
 			PyArray_ITER_NEXT(it);
 		}
+		PyDataMem_FREE(buffer);
 	}
 	else {
 		while (size--) {
@@ -1620,13 +1621,76 @@ _new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 			PyArray_ITER_NEXT(it);
 		}
 	}	
+	Py_DECREF(it);
 	return 0;
 }
 
 static PyObject*
 _new_argsort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
 {
-	PyErr_SetNone(PyExc_NotImplementedError);
+
+	PyArrayIterObject *it=NULL;
+	PyArrayIterObject *rit=NULL;
+	PyObject *ret;
+	int needcopy=0, i;
+	intp N, size;
+	int elsize;
+	intp astride, rstride, *iptr;
+	PyArray_ArgSortFunc *argsort;
+
+	ret = PyArray_New(op->ob_type, op->nd,
+			  op->dimensions, PyArray_INTP,
+			  NULL, NULL, 0, 0, (PyObject *)op);
+	if (ret == NULL) return NULL;
+
+	it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, axis);
+	rit = (PyArrayIterObject *)PyArray_IterAllButAxis(ret, axis);
+	if (rit == NULL || it == NULL) goto fail;
+	argsort = op->descr->f->argsort[which];
+	size = it->size;
+	N = op->dimensions[axis];
+	elsize = op->descr->elsize;
+	astride = op->strides[axis];
+	rstride = PyArray_STRIDE(ret,axis);
+
+	needcopy = !(op->flags & ALIGNED) || (astride != (intp) elsize) || \
+		(rstride != sizeof(intp));
+	
+	if (needcopy) {
+		char *valbuffer, *indbuffer;
+		valbuffer = PyDataMem_NEW(N*(elsize+sizeof(intp)));
+		indbuffer = valbuffer + (N*elsize);
+		while (size--) {
+			_strided_copy(valbuffer, (intp) elsize, it->dataptr, astride, 
+				      N, elsize);
+			iptr = (intp *)indbuffer;
+			for (i=0; i<N; i++) *iptr++ = i;
+			argsort(valbuffer, (intp *)indbuffer, N, elsize, op);
+			_strided_copy(rit->dataptr, rstride, indbuffer, sizeof(intp),
+				      N, sizeof(intp));
+			PyArray_ITER_NEXT(it);
+			PyArray_ITER_NEXT(rit);
+		}
+		PyDataMem_FREE(valbuffer);
+	}
+	else {
+		while (size--) {
+			iptr = (intp *)rit->dataptr;
+			for (i=0; i<N; i++) *iptr++ = i;
+			argsort(it->dataptr, (intp *)rit->dataptr, N, elsize, op);
+			PyArray_ITER_NEXT(it);
+			PyArray_ITER_NEXT(rit);
+		}
+	}
+
+	Py_DECREF(it);
+	Py_DECREF(rit);
+	return ret;
+
+ fail:
+	Py_DECREF(ret);
+	Py_XDECREF(it);
+	Py_XDECREF(rit);
 	return NULL;
 }
 
@@ -1713,7 +1777,7 @@ PyArray_Sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 		return -1;
 	}
 
-	/* Determine if we should use new algorithm or not */
+	/* Determine if we should use type-specific algorithm or not */
 	if (op->descr->f->sort[which] != NULL) {
 		return _new_sort(op, axis, which);
 	}

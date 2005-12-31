@@ -610,7 +610,7 @@ class MaskedArray (object):
     def __array__ (self, t = None):
         "Special hook for numeric. Converts to numeric if possible."
         if self._mask is not None:
-            if umath.sometrue(oldnumeric.ravel(self._mask)):
+            if oldnumeric.sometrue(oldnumeric.ravel(self._mask)):
                 raise MAError, \
                 """Cannot automatically convert masked array to numeric because data
                    is masked in one or more locations.

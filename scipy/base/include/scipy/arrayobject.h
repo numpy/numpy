@@ -781,7 +781,7 @@ typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
 typedef int (PyArray_FillFunc)(void *, intp, void *);
 
 typedef void (PyArray_SortFunc)(void *, intp, int, void *);
-typedef int (PyArray_ArgSortFunc)(void *, void *);
+typedef void (PyArray_ArgSortFunc)(void *, intp *, intp, int, void *);
 
 typedef struct {
         intp *ptr;
