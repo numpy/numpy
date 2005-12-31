@@ -2,7 +2,15 @@
    that are type-specific.  This is done by altering the
    function table for the builtin descriptors. 
 
-   These sorting functions are copied from numarray 
+   These sorting functions are copied almost directly from numarray 
+   with a few modifications (complex comparisons compare the imaginary 
+   part if the real parts are equal, for example), and the names
+   are changed. 
+*/
+
+/* Quick sort is usually the fastest, but the worst case scenario can
+   be slower than the merge and heap sorts.  The merge sort requires
+   extra memory and so for large arrays may not be useful. 
 */
 
 
@@ -133,6 +141,93 @@ static int
 	return 0;
 }
 
+
+static int
+@TYPE@_heapsort(@type@ *start, intp n, void *unused)
+{
+	
+        @type@ tmp, *a;
+        intp i,j,l;
+
+        /* The array needs to be offset by one for heapsort indexing */
+	a = start - 1;
+
+        for (l = n>>1; l > 0; --l) {
+                tmp = a[l];
+                for (i = l, j = l<<1; j <= n;) {
+                        if (j < n && @lessthan@(a[j], a[j+1]))
+                                j += 1;
+                        if (@lessthan@(tmp, a[j])) {
+                                a[i] = a[j];
+                                i = j;
+                                j += j;
+                        }else
+                                break;
+                }
+                a[i] = tmp;
+        }
+
+        for (; n > 1;) {
+                tmp = a[n];
+                a[n] = a[1];
+                n -= 1;
+                for (i = 1, j = 2; j <= n;) {
+                        if (j < n && @lessthan@(a[j], a[j+1]))
+                                j++;
+                        if (@lessthan@(tmp, a[j])) {
+                                a[i] = a[j];
+                                i = j;
+                                j += j;
+                        }else
+                                break;
+                }
+                a[i] = tmp;
+        }
+	return 0;
+}
+
+static int
+@TYPE@_aheapsort(@type@ *v, intp *tosort, intp n, void *unused)
+{
+	intp *a, i,j,l, tmp;
+	/* The arrays need to be offset by one for heapsort indexing */
+	a = tosort - 1;
+
+        for (l = n>>1; l > 0; --l) {
+                tmp = a[l];
+                for (i = l, j = l<<1; j <= n;) {
+                        if (j < n && @lessthan@(v[a[j]], v[a[j+1]]))
+                                j += 1;
+                        if (@lessthan@(v[tmp], v[a[j]])) {
+                                a[i] = a[j];
+                                i = j;
+                                j += j;
+                        }else
+                                break;
+                }
+                a[i] = tmp;
+        }
+
+        for (; n > 1;) {
+                tmp = a[n];
+                a[n] = a[1];
+                n -= 1;
+                for (i = 1, j = 2; j <= n;) {
+                        if (j < n && @lessthan@(v[a[j]], v[a[j+1]]))
+                                j++;
+                        if (@lessthan@(v[tmp], v[a[j]])) {
+                                a[i] = a[j];
+                                i = j;
+                                j += j;
+                        }else
+                                break;
+                }
+                a[i] = tmp;
+        }
+
+	return 0;
+}
+
 static void
 @TYPE@_mergesort0(@type@ *pl, @type@ *pr, @type@ *pw)
 {
@@ -244,92 +339,6 @@ static int
 
 	@TYPE@_amergesort0(pl, pr, v, pw);
 	PyDimMem_FREE(pw);
-	return 0;
-}
-
-static int
-@TYPE@_heapsort(@type@ *start, intp n, void *unused)
-{
-	
-        @type@ tmp, *a;
-        intp i,j,l;
-
-        /* The array needs to be offset by one for heapsort indexing */
-	a = start - 1;
-
-        for (l = n>>1; l > 0; --l) {
-                tmp = a[l];
-                for (i = l, j = l<<1; j <= n;) {
-                        if (j < n && @lessthan@(a[j], a[j+1]))
-                                j += 1;
-                        if (@lessthan@(tmp, a[j])) {
-                                a[i] = a[j];
-                                i = j;
-                                j += j;
-                        }else
-                                break;
-                }
-                a[i] = tmp;
-        }
-
-        for (; n > 1;) {
-                tmp = a[n];
-                a[n] = a[1];
-                n -= 1;
-                for (i = 1, j = 2; j <= n;) {
-                        if (j < n && @lessthan@(a[j], a[j+1]))
-                                j++;
-                        if (@lessthan@(tmp, a[j])) {
-                                a[i] = a[j];
-                                i = j;
-                                j += j;
-                        }else
-                                break;
-                }
-                a[i] = tmp;
-        }
-	return 0;
-}
-
-static int
-@TYPE@_aheapsort(@type@ *v, intp *tosort, intp n, void *unused)
-{
-	intp *a, i,j,l, tmp;
-	/* The arrays need to be offset by one for heapsort indexing */
-	a = tosort - 1;
-
-        for (l = n>>1; l > 0; --l) {
-                tmp = a[l];
-                for (i = l, j = l<<1; j <= n;) {
-                        if (j < n && @lessthan@(v[a[j]], v[a[j+1]]))
-                                j += 1;
-                        if (@lessthan@(v[tmp], v[a[j]])) {
-                                a[i] = a[j];
-                                i = j;
-                                j += j;
-                        }else
-                                break;
-                }
-                a[i] = tmp;
-        }
-
-        for (; n > 1;) {
-                tmp = a[n];
-                a[n] = a[1];
-                n -= 1;
-                for (i = 1, j = 2; j <= n;) {
-                        if (j < n && @lessthan@(v[a[j]], v[a[j+1]]))
-                                j++;
-                        if (@lessthan@(v[tmp], v[a[j]])) {
-                                a[i] = a[j];
-                                i = j;
-                                j += j;
-                        }else
-                                break;
-                }
-                a[i] = tmp;
-        }
-
 	return 0;
 }
 /**end repeat**/
