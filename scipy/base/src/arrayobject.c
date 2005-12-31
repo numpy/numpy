@@ -1619,7 +1619,7 @@ _swap_axes(PyArrayMapIterObject *mit, PyArrayObject **ret)
 static void PyArray_MapIterReset(PyArrayMapIterObject *);
 static void PyArray_MapIterNext(PyArrayMapIterObject *);
 static void PyArray_MapIterBind(PyArrayMapIterObject *, PyArrayObject *);
-static PyObject* PyArray_MapIterNew(PyObject *);
+static PyObject* PyArray_MapIterNew(PyObject *, int);
 
 static PyObject *
 PyArray_GetMap(PyArrayMapIterObject *mit)
@@ -1758,12 +1758,14 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 
 /* Always returns arrays */
 
+static PyObject *iter_subscript(PyArrayIterObject *, PyObject *); 
+
 static PyObject *
 array_subscript(PyArrayObject *self, PyObject *op) 
 {
         intp dimensions[MAX_DIMS], strides[MAX_DIMS];
 	intp offset;
-        int nd;
+        int nd, oned;
 	intp i;
         PyArrayObject *other;
 	PyArrayMapIterObject *mit;
@@ -1810,12 +1812,23 @@ array_subscript(PyArrayObject *self, PyObject *op)
 			return array_big_item(self, value);
 		}
         }
-	
+
+	oned = ((self->nd == 1) && !(PyTuple_Check(op) && PyTuple_GET_SIZE(op) > 1));
 
 	/* wrap arguments into a mapiter object */
-        mit = (PyArrayMapIterObject *)PyArray_MapIterNew(op);
+        mit = (PyArrayMapIterObject *)PyArray_MapIterNew(op, oned);
         if (mit == NULL) return NULL;
         if (!mit->view) {  /* fancy indexing */
+		if (oned) {
+			PyArrayIterObject *it;
+			PyObject *rval;
+			it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+			if (it == NULL) {Py_DECREF(mit); return NULL;}
+			rval = iter_subscript(it, mit->indexobj);
+			Py_DECREF(it);
+			Py_DECREF(mit);
+			return rval;
+		}
                 PyArray_MapIterBind(mit, self);
                 other = (PyArrayObject *)PyArray_GetMap(mit);
                 Py_DECREF(mit);
@@ -1864,10 +1877,12 @@ array_subscript(PyArrayObject *self, PyObject *op)
    used.
 */
 
+static int iter_ass_subscript(PyArrayIterObject *, PyObject *, PyObject *); 
+
 static int 
 array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op) 
 {
-        int ret;
+        int ret, oned;
 	intp i;
         PyArrayObject *tmp;
 	PyArrayMapIterObject *mit;
@@ -1922,12 +1937,22 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
                                 "0-d arrays can't be indexed.");
                 return -1;
         }
-	
 
+	oned = ((self->nd == 1) && !(PyTuple_Check(op) && PyTuple_GET_SIZE(op) > 1));
 
-        mit = (PyArrayMapIterObject *)PyArray_MapIterNew(index);
+        mit = (PyArrayMapIterObject *)PyArray_MapIterNew(index, oned);
         if (mit == NULL) return -1;
         if (!mit->view) {
+		if (oned) {
+			PyArrayIterObject *it;
+			int rval;
+			it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+			if (it == NULL) {Py_DECREF(mit); return -1;}
+			rval = iter_ass_subscript(it, mit->indexobj, op);
+			Py_DECREF(it);
+			Py_DECREF(mit);
+			return rval;
+		}
                 PyArray_MapIterBind(mit, self);
                 ret = PyArray_SetMap(mit, op);
                 Py_DECREF(mit);
@@ -4627,7 +4652,7 @@ static char Arraytype__doc__[] =
 	"  command. Arrays are sequence, mapping and numeric objects.\n"
 	"  More information is available in the scipy module and by looking\n"
 	"  at the methods and attributes of an array.\n\n"
-	"  ndarray.__new__(subtype, shape=, dtype=long_, buffer=None, \n"
+	"  ndarray.__new__(subtype, shape=, dtype=int_, buffer=None, \n"
 	"                  offset=0, strides=None, fortran=False)\n\n"
 	"   There are two modes of creating an array using __new__:\n"
 	"   1) If buffer is None, then only shape, dtype, and fortran \n"
@@ -6383,7 +6408,6 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
 static PyObject *
 iter_subscript(PyArrayIterObject *self, PyObject *ind)
 {
-	int i;
 	PyArray_Descr *indtype=NULL;
 	intp start, step_size;
 	intp n_steps;
@@ -6400,8 +6424,14 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		Py_DECREF(ind);
 		return obj;
 	}
+	if (PyTuple_Check(ind)) {
+		int len;
+		len = PyTuple_GET_SIZE(ind);
+		if (len > 1) goto fail;
+		ind = PyTuple_GET_ITEM(ind, 0);
+	}
 
-	/* Tuples not accepted --- i.e. no NewAxis */
+	/* Tuples >1d not accepted --- i.e. no NewAxis */
 	/* Could implement this with adjusted strides
 	   and dimensions in iterator */
 
@@ -6425,8 +6455,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		}
 	}
 
-	/* Check for Integer or Slice */
-	
+	/* Check for Integer or Slice */ 	
 	
 	if (PyLong_Check(ind) || PyInt_Check(ind) || PySlice_Check(ind)) {
 		start = parse_subindex(ind, &step_size, &n_steps, 
@@ -6457,8 +6486,8 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
                 copyswap = PyArray_DESCR(r)->f->copyswap;
 		while(n_steps--) {
                         copyswap(dptr, self->dataptr, swap, size);
-			for(i=0; i< step_size; i++) 
-				PyArray_ITER_NEXT(self);
+			start += step_size;
+			PyArray_ITER_GOTO1D(self, start)
 			dptr += size;
 		}
 		PyArray_ITER_RESET(self);
@@ -6471,6 +6500,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 	if (PyArray_IsScalar(ind, Integer) || PyList_Check(ind)) {
 		Py_INCREF(indtype);
 		obj = PyArray_FromAny(ind, indtype, 0, 0, FORCECAST);
+		if (obj == NULL) goto fail;
 	}
 	else {
 		Py_INCREF(ind);
@@ -6494,8 +6524,6 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 			r = iter_subscript_int(self, (PyArrayObject *)obj);
 		}
 		else {
-			PyErr_SetString(PyExc_IndexError, 
-					"unsupported iterator index");
 			goto fail;
 		}
 		Py_DECREF(obj);
@@ -6503,9 +6531,10 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 	}
 	else Py_DECREF(indtype);
 
-	PyErr_SetString(PyExc_IndexError, "unsupported iterator index");
 
  fail:
+	if (!PyErr_Occurred())
+		PyErr_SetString(PyExc_IndexError, "unsupported iterator index");
 	Py_XDECREF(indtype);
 	Py_XDECREF(obj);
 	return NULL;
@@ -6536,13 +6565,13 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
 	while(index--) {
 		if (*((Bool *)dptr) != 0) {
                         copyswap(self->dataptr, val->dataptr, swap,
-                                  itemsize);
+				 itemsize);
+			PyArray_ITER_NEXT(val);
+			if (val->index==val->size) 
+				PyArray_ITER_RESET(val);
 		}
 		dptr += strides;
 		PyArray_ITER_NEXT(self);
-		PyArray_ITER_NEXT(val);
-		if (val->index==val->size) 
-			PyArray_ITER_RESET(val);
 	}
 	PyArray_ITER_RESET(self);
 	return 0;
@@ -6593,11 +6622,9 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
 	return 0;
 }
 
-
 static int
 iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val) 
 {
-	int i;
 	PyObject *arrval=NULL;
 	PyArrayIterObject *val_it=NULL;
 	PyArray_Descr *type;
@@ -6608,14 +6635,21 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	intp n_steps;
 	PyObject *obj=NULL;
         PyArray_CopySwapFunc *copyswap;
+
 	
 	if (ind == Py_Ellipsis) {
 		ind = PySlice_New(NULL, NULL, NULL);
-		i = iter_ass_subscript(self, ind, val);
+		retval = iter_ass_subscript(self, ind, val);
 		Py_DECREF(ind);
-		return i;
+		return retval;
 	}
 
+	if (PyTuple_Check(ind)) {
+		int len;
+		len = PyTuple_GET_SIZE(ind);
+		if (len > 1) goto finish;
+		ind = PyTuple_GET_ITEM(ind, 0);
+	}
 
 	type = self->ao->descr;
 	itemsize = type->elsize;
@@ -6662,8 +6696,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 		while(n_steps--) {
                         copyswap(self->dataptr, val_it->dataptr,
                                   swap, itemsize);
-			for(i=0; i < step_size; i++) 
-				PyArray_ITER_NEXT(self);
+			start += step_size;
+			PyArray_ITER_GOTO1D(self, start)
 			PyArray_ITER_NEXT(val_it);
 			if (val_it->index == val_it->size) 
 				PyArray_ITER_RESET(val_it);
@@ -6894,7 +6928,7 @@ fancy_indexing_check(PyObject *args)
 			return SOBJ_BADARRAY;
 	}
 	else if (PySequence_Check(args)) {
-		/* Sequences < MAX_DMS with any slice objects
+		/* Sequences < MAX_DIMS with any slice objects
 		   or NewAxis, or Ellipsis is considered standard
 		   as long as there are also no Arrays and or additional
 		   sequences embedded.
@@ -7159,7 +7193,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 	     
 	if (mit->view) return;
 
-	/* no subspace iteration needed.  Return */
+	/* no subspace iteration needed.  Finish up and Return */
 	if (subnd == 0) {
 		n = arr->nd;
 		for (i=0; i<n; i++) {
@@ -7345,7 +7379,7 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
 }
 
 static PyObject *
-PyArray_MapIterNew(PyObject *indexobj)
+PyArray_MapIterNew(PyObject *indexobj, int oned)
 {
         PyArrayMapIterObject *mit;
 	int fancy=0;
@@ -7400,6 +7434,7 @@ PyArray_MapIterNew(PyObject *indexobj)
 #undef SOBJ_TOOMANY 
 #undef SOBJ_LISTTUP 
 
+	if (oned) return (PyObject *)mit;
 
 	/* Must have some kind of fancy indexing if we are here */
 	/* indexobj is either a list, an arrayobject, or a tuple 
@@ -7497,8 +7532,8 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
 /* The mapiter object must be created new each time.  It does not work
    to bind to a new array, and continue.
 
-   This was the orginal intention, but currently MapIterNew must be 
-   that does not work.  Do not expose the MapIter_Type to Python.
+   This was the orginal intention, but currently that does not work.  
+   Do not expose the MapIter_Type to Python.
 
    It's not very useful anyway, since mapiter(indexobj); mapiter.bind(a); 
    mapiter is equivalent to a[indexobj].flat but the latter gets to use 
@@ -7905,6 +7940,12 @@ arraydescr_dealloc(PyArray_Descr *self)
 /* we need to be careful about setting attributes because these
    objects are pointed to by arrays that depend on them for interpreting
    data.  Currently no attributes of dtypedescr objects can be set. 
+   *except* problematically the field attribute is a regular dictionary that
+   can be changed by the user.  
+
+   We have to trust the user not to do this...
+   Probably should make the fields dictionary a special "only-settable" from
+   C dictionary or something.
 */
 static PyMemberDef arraydescr_members[] = {
 	{"dtype", T_OBJECT, offsetof(PyArray_Descr, typeobj), RO, NULL},

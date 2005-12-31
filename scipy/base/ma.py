@@ -1436,7 +1436,7 @@ arange = arrayrange
 
 def fromstring (s, t):
     "Construct a masked array from a string. Result will have no mask."
-    return masked_array(umath.fromstring(s, t))
+    return masked_array(numeric.fromstring(s, t))
 
 def left_shift (a, n):
     "Left shift n bits"
@@ -1764,7 +1764,7 @@ def masked_outside(x, v1, v2, copy=1):
 def reshape (a, *newshape):
     "Copy of a with a new shape."
     m = getmask(a)
-    d = umath.reshape(filled(a), *newshape)
+    d = filled(a).reshape(*newshape)
     if m is None:
         return masked_array(d)
     else:
@@ -1814,6 +1814,32 @@ def transpose(a, axes=None):
     else:
         return masked_array(numeric.transpose(d, axes),
                      mask = numeric.transpose(m, axes))
+
+
+def put(a, indices, values):
+    """put(a, indices, values) sets storage-indexed locations to corresponding values.
+
+    Values and indices are filled if necessary.
+
+    """
+    d = a.raw_data()
+    ind = filled(indices)
+    v = filled(values)
+    numeric.put (d, ind, v)
+    m = getmask(a)
+    if m is not None:
+        a.unshare_mask()
+        numeric.put(a.raw_mask(), ind, 0)
+
+def putmask(a, mask, values):
+    "putmask(a, mask, values) sets a where mask is true."
+    if mask is None:
+        return
+    numeric.putmask(a.raw_data(), mask, values)
+    m = getmask(a)
+    if m is None: return
+    a.unshare_mask()
+    numeric.putmask(a.raw_mask(), mask, 0)
 
 def innerproduct(a,b):
     """innerproduct(a,b) returns the dot product of two arrays, which has
