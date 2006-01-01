@@ -32,7 +32,7 @@ class PackageLoader:
 
         self.parent_frame = frame = sys._getframe(1)
         self.parent_name = eval('__name__',frame.f_globals,frame.f_locals)
-        self.parent_path = eval('__path__[0]',frame.f_globals,frame.f_locals)
+        self.parent_path = eval('__path__',frame.f_globals,frame.f_locals)
         if not frame.f_locals.has_key('__all__'):
             exec('__all__ = []',frame.f_globals,frame.f_locals)
         self.parent_export_names = eval('__all__',frame.f_globals,frame.f_locals)
@@ -41,46 +41,51 @@ class PackageLoader:
         self.imported_packages = []
         self.verbose = None
 
-    def _get_info_files(self, parent_path=None):
-        """ Return info.py files from parent_path subdirectories.
+    def _get_info_files(self, package_dir, parent_path, parent_package=None):
+        """ Return list of (package name,info.py file) from parent_path subdirectories.
         """
         from glob import glob
-        if parent_path is None:
-            parent_path = self.parent_path
-        info_files = glob(os.path.join(parent_path,'*','info.py'))
-        for info_file in glob(os.path.join(parent_path,'*','info.pyc')):
-            if info_file[:-1] not in info_files:
-                info_files.append(info_file)
-        for info_file in info_files[:]:
-            info_files.extend(self._get_info_files(os.path.dirname(info_file)))
+        files = glob(os.path.join(parent_path,package_dir,'info.py'))
+        for info_file in glob(os.path.join(parent_path,package_dir,'info.pyc')):
+            if info_file[:-1] not in files:
+                files.append(info_file)
+        info_files = []
+        for info_file in files:
+            package_name = os.path.dirname(info_file[len(parent_path)+1:])\
+                           .replace(os.sep,'.')
+            if parent_package:
+                package_name = parent_package + '.' + package_name
+            info_files.append((package_name,info_file))
+            info_files.extend(self._get_info_files('*',
+                                                   os.path.dirname(info_file),
+                                                   package_name))
         return info_files
 
     def _init_info_modules(self, packages=None):
         """Initialize info_modules = {<package_name>: <package info.py module>}.
         """
         import imp
+        info_files = []
         if packages is None:
-            info_files = self._get_info_files()
+            for path in self.parent_path:
+                info_files.extend(self._get_info_files('*',path))
         else:
-            info_files = []
-            for package in packages:
-                package = os.path.join(*package.split('.'))
-                info_file = os.path.join(self.parent_path,package,'info.py')
-                if not os.path.isfile(info_file): info_file += 'c'
-                if os.path.isfile(info_file):
-                    info_files.append(info_file)
+            for package_name in packages:
+                package_dir = os.path.join(*package_name.split('.'))
+                for path in self.parent_path:
+                    names_files = self._get_info_files(package_dir, path)
+                    if names_files:
+                        info_files.extend(names_files)
+                        break
                 else:
                     self.warn('Package %r does not have info.py file. Ignoring.'\
-                              % package)
+                              % package_name)
 
         info_modules = self.info_modules
-        for info_file in info_files:
-            package_name = os.path.dirname(info_file[len(self.parent_path)+1:])\
-                           .replace(os.sep,'.')
+        for package_name,info_file in info_files:
             if info_modules.has_key(package_name):
                 continue
             fullname = self.parent_name +'.'+ package_name
-
             if info_file[-1]=='c':
                 filedescriptor = ('.pyc','rb',2)
             else:
@@ -283,6 +288,11 @@ class PackageLoader:
     def error(self,mess):
         if self.verbose!=-1:
             print >> sys.stderr, str(mess)
+
+try:
+    import pkg_resources # activate namespace packages (manipulates __path__)
+except ImportError:
+    pass
 
 pkgload = PackageLoader()
 
