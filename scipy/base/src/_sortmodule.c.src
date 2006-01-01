@@ -12,8 +12,8 @@
    be slower than the merge and heap sorts.  The merge sort requires
    extra memory and so for large arrays may not be useful. 
  
-   Both the heap and merge sorts are *stable* meaning that equal components
-   are unmoved from their entry versions and so can be used to
+   The merge sort is *stable*, meaning that equal components
+   are unmoved from their entry versions, so it can be used to
    implement lexigraphic sorting on multiple keys. 
 */
 
