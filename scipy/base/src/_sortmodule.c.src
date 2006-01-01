@@ -11,6 +11,10 @@
 /* Quick sort is usually the fastest, but the worst case scenario can
    be slower than the merge and heap sorts.  The merge sort requires
    extra memory and so for large arrays may not be useful. 
+ 
+   Both the heap and merge sorts are *stable* meaning that equal components
+   are unmoved from their entry versions and so can be used to
+   implement lexigraphic sorting on multiple keys. 
 */
 
 
@@ -342,6 +346,87 @@ static int
 	return 0;
 }
 /**end repeat**/
+
+static int
+unincmp(Py_UNICODE *s1, Py_UNICODE *s2, register int len)
+{
+	register Py_UNICODE c1, c2;
+	while(len-- > 0) {
+		c1 = *s1++;
+		c2 = *s2++;
+		if (c1 != c2)
+			return (c1 < c2) ? -1 : 1;
+	}
+	return 0;
+}
+
+/**begin repeat
+#TYPE=STRING,UNICODE#
+#comp=strncmp,unincmp#
+#type=char *, Py_UNICODE *#
+*/
+static void 
+@TYPE@_amergesort0(intp *pl, intp *pr, @type@*v, intp *pw, int elsize)
+{
+	@type@ vp;
+        intp vi, *pi, *pj, *pk, *pm;
+
+        if (pr - pl > 20) {
+                /* merge sort */
+                pm = pl + ((pr - pl + 1)>>1);
+                @TYPE@_amergesort0(pl,pm-1,v,pw,elsize);
+                @TYPE@_amergesort0(pm,pr,v,pw,elsize);
+                for(pi = pw, pj = pl; pj < pm; ++pi, ++pj) {
+                        *pi = *pj;
+                }
+                for(pk = pw, pm = pl; pk < pi && pj <= pr; ++pm) {
+                        if (@comp@(v[*pk],v[*pj],elsize)<=0) {
+                                *pm = *pk;
+                                ++pk;
+                        }else{
+                                *pm = *pj;
+                                ++pj;
+                        }
+                }
+                for(; pk < pi; ++pm, ++pk) {
+                        *pm = *pk;
+                }
+        }else{
+                /* insertion sort */
+                for(pi = pl + 1; pi <= pr; ++pi) {
+                        vi = *pi;
+                        vp = v[vi];
+                        for(pj = pi, pk = pi - 1; 		\
+			    pj > pl && (@comp@(vp, v[*pk],elsize)<=0); \
+			    --pj, --pk) {
+                                *pj = *pk;
+                        }
+                        *pj = vi;
+                }
+        }
+}
+
+static int
+@TYPE@_amergesort(@type@*v, intp *tosort, intp num, PyArrayObject *arr)
+{
+	intp *pl, *pr, *pw;
+	int elsize;
+
+	elsize = arr->descr->elsize;
+
+	pl = tosort; pr = pl + num - 1;
+	pw = PyDimMem_NEW((1+num/2));
+	
+	if (!pw) {
+		PyErr_NoMemory();
+		return -1;
+	}
+
+	@TYPE@_amergesort0(pl, pr, v, pw, elsize);
+	PyDimMem_FREE(pw);
+	return 0;
+}
+/**end repeat**/
 	
 static void 
 add_sortfuncs(void)
@@ -365,6 +450,13 @@ add_sortfuncs(void)
 	descr->f->argsort[PyArray_MERGESORT] = \
 		(PyArray_ArgSortFunc *)@TYPE@_amergesort;
 /**end repeat**/
+
+	descr = PyArray_DescrFromType(PyArray_STRING);
+	descr->f->argsort[PyArray_MERGESORT] = \
+		(PyArray_ArgSortFunc *)STRING_amergesort;
+	descr = PyArray_DescrFromType(PyArray_UNICODE);
+	descr->f->argsort[PyArray_MERGESORT] = \
+		(PyArray_ArgSortFunc *)UNICODE_amergesort;
 }
 
 static struct PyMethodDef methods[] = {

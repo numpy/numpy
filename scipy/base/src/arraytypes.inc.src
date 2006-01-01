@@ -1323,30 +1323,30 @@ STRING_compare(char *ip1, char *ip2, PyArrayObject *ap)
 	return strncmp(ip1, ip2, ap->descr->elsize);
 }
 
+/* taken from Python */
 static int 
-UNICODE_compare(Py_UNICODE *ip1, Py_UNICODE *ip2, PyArrayObject *ap)
+UNICODE_compare(register Py_UNICODE *ip1, register Py_UNICODE *ip2, 
+		PyArrayObject *ap)
 {
-	PyObject *u=NULL, *v=NULL;
-	int res;
-        int itemsize=ap->descr->elsize;
-	if (itemsize < 0) goto fail;
-	u = PyUnicode_FromUnicode(ip1, itemsize);
-	v = PyUnicode_FromUnicode(ip2, itemsize);
-	if ((u==NULL) || (v==NULL)) goto fail;
-	res = PyObject_Compare(u, v);
-	Py_DECREF(u);
-	Py_DECREF(v);
-	return res;
-       
- fail:
-	Py_XDECREF(u);
-	Py_XDECREF(v);
+        register int itemsize=ap->descr->elsize;
+	register Py_UNICODE c1, c2;
+
+	if (itemsize < 0) return 0;
+	
+	while(itemsize-- > 0) {
+		c1 = *ip1++;
+		c2 = *ip2++;
+		
+		if (c1 != c2) 
+			return (c1 < c2) ? -1 : 1;
+	}
 	return 0;
 }
 
-/* redefine compare in terms of fields and subarrays if any */
+/* possibly redefine compare in terms of fields and subarrays if any */
 
-#define VOID_compare NULL
+/* as it is, it compares raw-bytes as it they were strings */
+#define VOID_compare STRING_compare
 
 /****************** argfunc **********************************/
 
