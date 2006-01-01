@@ -47,7 +47,6 @@ monotonic_ (double * a, int lena)
 }
 
 
-static char arr_bincount__doc__[] = "";
 
 static intp
 mxx (intp *i , intp len)
@@ -141,7 +140,6 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
     return NULL;
 }
 
-static char arr_digitize__doc__[] = "";
 
 static PyObject *
 arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
@@ -337,14 +335,58 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     return NULL;
 }
 
+/* Can only be called if doc is currently NULL
+*/
+static PyObject *
+arr_add_docstring(PyObject *dummy, PyObject *args)
+{
+	PyObject *obj;
+	PyObject *str;
+	
+	if (!PyArg_ParseTuple(args, "OO!", &obj, &PyString_Type, &str))
+		return NULL;
+
+	if (obj->ob_type == &PyCFunction_Type) {
+		if (!((PyCFunctionObject *)obj)->m_ml->ml_doc) {
+			((PyCFunctionObject *)obj)->m_ml->ml_doc =	\
+				PyString_AS_STRING(str);
+			Py_INCREF(str);
+		}
+		else {
+			PyErr_Format(PyExc_RuntimeError,		\
+				     "%s method already has a docstring",
+				     ((PyCFunctionObject *)obj)	\
+				     ->m_ml->ml_name);
+			return NULL;
+		}
+	}
+	else if (obj->ob_type == &PyType_Type) {
+		if (!((PyTypeObject *)obj)->tp_doc) {
+			((PyTypeObject *)obj)->tp_doc =	\
+				PyString_AS_STRING(str);
+			Py_INCREF(str);			
+		}
+		else {
+			PyErr_Format(PyExc_RuntimeError,		\
+				     "%s type already has a docstring",
+				     ((PyTypeObject *)obj)->tp_name);
+			return NULL;
+		}
+	}
+	
+	Py_INCREF(Py_None);
+	return Py_None;
+}
 
 static struct PyMethodDef methods[] = {
     {"_insert",	 (PyCFunction)arr_insert, METH_VARARGS | METH_KEYWORDS, 
      arr_insert__doc__},
     {"bincount", (PyCFunction)arr_bincount,  
-     METH_VARARGS | METH_KEYWORDS, arr_bincount__doc__},
+     METH_VARARGS | METH_KEYWORDS, NULL},
      {"digitize", (PyCFunction)arr_digitize, METH_VARARGS | METH_KEYWORDS,
-     arr_digitize__doc__},
+     NULL},
+    {"add_docstring", (PyCFunction)arr_add_docstring, METH_VARARGS,
+     NULL},
     {NULL, NULL}    /* sentinel */
 };
 
