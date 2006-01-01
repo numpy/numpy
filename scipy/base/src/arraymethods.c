@@ -719,8 +719,7 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	PyArray_SORTKIND which=PyArray_QUICKSORT;
 	static char *kwlist[] = {"axis", "kind", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
-					 PyArray_AxisConverter, &axis,
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&", kwlist, &axis,
 					 PyArray_SortkindConverter, &which))
 		return NULL;
 	
@@ -741,8 +740,7 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	PyArray_SORTKIND which=PyArray_QUICKSORT;
 	static char *kwlist[] = {"axis", "kind", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
-					 PyArray_AxisConverter, &axis,
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&", kwlist, &axis,
 					 PyArray_SortkindConverter, &which))
 		return NULL;
 	

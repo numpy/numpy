@@ -63,7 +63,7 @@ fastCopyAndTranspose = multiarray._fastCopyAndTranspose
 register_dtype = multiarray.register_dtype
 set_numeric_ops = multiarray.set_numeric_ops
 can_cast = multiarray.can_cast
-
+lexsort = multiarray.lexsort
 
 
 def asarray(a, dtype=None, fortran=False):

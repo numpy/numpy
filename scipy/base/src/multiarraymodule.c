@@ -1952,6 +1952,159 @@ PyArray_ArgSort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 
 }  
 
+
+/*MULTIARRAY_API
+ LexSort an array providing indices that will sort a collection of arrays
+ lexicographically.  The first key is sorted on first, followed by the second key
+ -- requires that arg"merge"sort is available for each sort_key
+
+ Returns an index array that shows the indexes for the lexicographic sort along 
+ the given axis. 
+*/
+static PyObject *
+PyArray_LexSort(PyObject *sort_keys, int axis) 
+{
+	PyArrayObject **mps;
+	PyArrayIterObject **its;
+	PyArrayObject *ret=NULL;
+	PyArrayIterObject *rit=NULL;
+	int n;
+	int nd;
+	int needcopy=0, i,j;
+	intp N, size;
+	int elsize;
+	intp astride, rstride, *iptr;
+	PyArray_ArgSortFunc *argsort;
+
+	if (!PyTuple_Check(sort_keys) || \
+	    ((n=PyTuple_GET_SIZE(sort_keys)) <= 0)) {
+		PyErr_SetString(PyExc_TypeError, 
+				"need tuple of keys with len > 0 in lexsort");
+		return NULL;
+	}
+	mps = (PyArrayObject **) _pya_malloc(n*sizeof(PyArrayObject));
+	if (mps==NULL) return PyErr_NoMemory();
+	its = (PyArrayIterObject **) _pya_malloc(n*sizeof(PyArrayIterObject));
+	if (its == NULL) {_pya_free(mps); return PyErr_NoMemory();}
+	for (i=0; i<n; i++) {mps[i] = NULL; its[i] = NULL;}
+	for (i=0; i<n; i++) {
+		mps[i] = (PyArrayObject *)PyArray_FROM_O\
+			(PyTuple_GET_ITEM(sort_keys, i));
+		if (mps[i] == NULL) goto fail;
+		if (i>0) {
+			if ((mps[i]->nd != mps[0]->nd) ||	\
+			    (!PyArray_CompareLists(mps[i]->dimensions,
+						   mps[0]->dimensions,
+						   mps[0]->nd))) {
+				PyErr_SetString(PyExc_ValueError,
+						"all keys need to be the same shape");
+				goto fail;
+			}
+		}
+		if (!mps[i]->descr->f->argsort[PyArray_MERGESORT]) {
+			PyErr_Format(PyExc_TypeError, 
+				     "merge sort not available for item %d", i);
+			goto fail;
+		}
+		its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis	\
+			((PyObject *)mps[i], axis);
+		if (its[i]==NULL) goto fail;
+	}
+
+	/* Now we can check the axis */
+	nd = mps[0]->nd;
+	if ((nd==0) || (PyArray_SIZE(mps[0])==1)) {
+		ret = (PyArrayObject *)PyArray_New(&PyArray_Type, mps[0]->nd,
+						   mps[0]->dimensions, 
+						   PyArray_INTP,
+						   NULL, NULL, 0, 0, NULL);
+		if (ret == NULL) return NULL;
+		*((intp *)(ret->data)) = 0;
+		return (PyObject *)ret;
+	}
+	if (axis < 0) axis += nd;
+	if ((axis < 0) || (axis >= nd)) {
+		PyErr_Format(PyExc_ValueError, 
+			     "axis(=%d) out of bounds", axis);
+		goto fail;
+	}
+
+	/* Now do the sorting */
+
+	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, mps[0]->nd,
+					   mps[0]->dimensions, PyArray_INTP,
+					   NULL, NULL, 0, 0, NULL);
+	if (ret == NULL) goto fail;
+
+	rit = (PyArrayIterObject *)\
+		PyArray_IterAllButAxis((PyObject *)ret, axis);
+	if (rit == NULL) goto fail;
+
+	size = rit->size;
+	N = mps[0]->dimensions[axis];
+	rstride = PyArray_STRIDE(ret,axis);
+
+	needcopy = (rstride != sizeof(intp));
+	for (j=0; j<n && !needcopy; j++) {
+		needcopy = !(mps[j]->flags & ALIGNED) || \
+			(mps[j]->strides[axis] != (intp)mps[j]->descr->elsize);
+	}
+
+	if (needcopy) {
+		char *valbuffer, *indbuffer;
+		valbuffer = PyDataMem_NEW(N*(elsize+sizeof(intp)));
+		indbuffer = valbuffer + (N*elsize);
+		while (size--) {
+			iptr = (intp *)indbuffer;
+			for (i=0; i<N; i++) *iptr++ = i;
+			for (j=0; j<n; j++) {
+				elsize = mps[j]->descr->elsize;
+				astride = mps[j]->strides[axis];	
+				argsort = mps[j]->descr->f->argsort[PyArray_MERGESORT];
+				_strided_copy(valbuffer, (intp) elsize, its[j]->dataptr,
+					      astride, N, elsize);
+				if (argsort(valbuffer, (intp *)indbuffer, N, mps[j]) < 0) {
+					PyDataMem_FREE(valbuffer); goto fail;
+				}
+				PyArray_ITER_NEXT(its[j]);
+			}
+			_strided_copy(rit->dataptr, rstride, indbuffer,
+				      sizeof(intp), N, sizeof(intp));
+			PyArray_ITER_NEXT(rit);
+		}
+		PyDataMem_FREE(valbuffer);
+	}
+	else {
+		while (size--) {
+			iptr = (intp *)rit->dataptr;
+			for (i=0; i<N; i++) *iptr++ = i;
+			for (j=0; j<n; j++) {
+				argsort = mps[j]->descr->f->argsort[PyArray_MERGESORT];
+				if (argsort(its[j]->dataptr, (intp *)rit->dataptr,
+					    N, mps[j]) < 0)  goto fail;
+				PyArray_ITER_NEXT(its[j]);
+			}
+			PyArray_ITER_NEXT(rit);
+		}
+	}
+
+	for (i=0; i<n; i++) {Py_XDECREF(mps[i]); Py_XDECREF(its[i]);}	
+	Py_DECREF(rit);
+	_pya_free(mps);
+	_pya_free(its);
+	return (PyObject *)ret;
+
+ fail:
+	Py_XDECREF(rit);
+	Py_XDECREF(ret);
+	for (i=0; i<n; i++) {Py_XDECREF(mps[i]); Py_XDECREF(its[i]);}
+	_pya_free(mps);
+	_pya_free(its);
+	return NULL;
+
+}
+
+
 static void 
 local_where(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
 {	
@@ -4824,7 +4977,6 @@ array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 
 	return PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
 }
-#undef _ARET
 
 
 static char 
@@ -4934,6 +5086,31 @@ array_where(PyObject *ignored, PyObject *args)
 	return PyArray_Where(obj, x, y);
 
 }
+
+static char doc_lexsort[] = "lexsort(keys=, axis=-1) returns an array of indexes"\
+	" similar to argsort except the sorting is done using the provided sorting"\
+	" keys.  First the sort is done using key[0], then the resulting list of"\
+	" indexes is further manipulated by sorting on key[0].  And so forth"\
+	" The result is a sort on multiple keys.  If the keys represented columns" \
+	" of a spread-sheet, for example, this would sort using multiple columns."\
+	" The keys argument must be a tuple of things that can be converted to "\
+	" arrays of the same shape.";
+
+static PyObject *
+array_lexsort(PyObject *ignored, PyObject *args, PyObject *kwds)
+{
+	int axis=-1;
+	PyObject *obj;
+	static char *kwlist[] = {"keys", "axis", NULL};
+	
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!|i", kwlist, 
+					 &PyTuple_Type, &obj, &axis)) return NULL;
+	
+	return _ARET(PyArray_LexSort(obj, axis));
+}
+
+#undef _ARET
+
 
 static char doc_register_dtype[] = \
 	"register_dtype(a) registers a new type object -- gives it a typenum";
@@ -5045,6 +5222,8 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS|METH_KEYWORDS, doc_scalar},
 	{"where",  (PyCFunction)array_where,
 	 METH_VARARGS, doc_where},
+	{"lexsort", (PyCFunction)array_lexsort,
+	 METH_VARARGS | METH_KEYWORDS, doc_lexsort},
 	{"fromstring",(PyCFunction)array_fromString,
 	 METH_VARARGS|METH_KEYWORDS, doc_fromString},
 	{"concatenate", (PyCFunction)array_concatenate, 
