@@ -3,7 +3,7 @@
 __all__ = ['asarray', 'array', 'concatenate',
            'NewAxis',
            'UFuncType', 'UfuncType', 'ArrayType', 'arraytype',
-           'LittleEndian',
+           'LittleEndian', 'Bool', 
            'Character', 'UnsignedInt8', 'UnsignedInt16', 'UnsignedInt',
            'UInt8','UInt16','UInt32',
            # UnsignedInt64 and Unsigned128 added below if possible
@@ -89,6 +89,7 @@ except AttributeError:
 else:
     __all__ += ['Int128']
 
+Bool = _dt_(bool)
 Int0 = _dt_(int)
 Int = _dt_(int)
 Float0 = _dt_(float)

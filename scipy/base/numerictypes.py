@@ -161,7 +161,10 @@ def _add_types():
             if base != '':
                 allTypes["%s%d" % (base, bit)] = typeobj
                 typeDict["%s%d" % (base, bit)] = typeobj
-                typeDict["%s%d" % (base.capitalize(), bit)] = typeobj
+                if base[:2] == 'ui':
+                    typeDict['U%s%d' % (base[1:].capitalize(), bit)] = typeobj
+                else:
+                    typeDict["%s%d" % (base.capitalize(), bit)] = typeobj
             if char != '':
                 typeDict[char] = typeobj
 
