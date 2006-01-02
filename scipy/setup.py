@@ -5,7 +5,6 @@ def configuration(parent_package='',top_path=None):
     from scipy.distutils.misc_util import Configuration
     config = Configuration('scipy',parent_package,top_path)
     config.add_subpackage('distutils')
-    config.add_subpackage('weave')
     config.add_subpackage('testing')
     config.add_subpackage('f2py')
     config.add_subpackage('base')
