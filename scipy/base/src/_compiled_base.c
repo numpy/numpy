@@ -1,4 +1,5 @@
 #include "Python.h"
+#include "structmember.h"
 #include "scipy/arrayobject.h"
 
 static PyObject *ErrorObject;
@@ -335,6 +336,10 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     return NULL;
 }
 
+
+static PyTypeObject *PyMemberDescr_TypePtr=NULL;
+static PyTypeObject *PyGetSetDescr_TypePtr=NULL;
+
 /* Can only be called if doc is currently NULL
 */
 static PyObject *
@@ -342,38 +347,47 @@ arr_add_docstring(PyObject *dummy, PyObject *args)
 {
 	PyObject *obj;
 	PyObject *str;
+	char *docstr;
+	static char *msg = "already has a docstring";
 	
 	if (!PyArg_ParseTuple(args, "OO!", &obj, &PyString_Type, &str))
 		return NULL;
 
-	if (obj->ob_type == &PyCFunction_Type) {
-		if (!((PyCFunctionObject *)obj)->m_ml->ml_doc) {
-			((PyCFunctionObject *)obj)->m_ml->ml_doc =	\
-				PyString_AS_STRING(str);
-			Py_INCREF(str);
-		}
-		else {
+	docstr = PyString_AS_STRING(str);
+
+#define _TESTDOC1(typebase) (obj->ob_type == &Py##typebase##_Type)
+#define _TESTDOC2(typebase) (obj->ob_type == Py##typebase##_TypePtr)
+#define _ADDDOC(typebase, doc, name) {					\
+		Py##typebase##Object *new = (Py##typebase##Object *)obj; \
+		if (!(doc)) {						\
+			doc = docstr;				\
+		}							\
+		else {							\
 			PyErr_Format(PyExc_RuntimeError,		\
-				     "%s method already has a docstring",
-				     ((PyCFunctionObject *)obj)	\
-				     ->m_ml->ml_name);
-			return NULL;
-		}
-	}
-	else if (obj->ob_type == &PyType_Type) {
-		if (!((PyTypeObject *)obj)->tp_doc) {
-			((PyTypeObject *)obj)->tp_doc =	\
-				PyString_AS_STRING(str);
-			Py_INCREF(str);			
-		}
-		else {
-			PyErr_Format(PyExc_RuntimeError,		\
-				     "%s type already has a docstring",
-				     ((PyTypeObject *)obj)->tp_name);
-			return NULL;
-		}
+				     "%s method %s",name, msg);		\
+			return NULL;					\
+		}							\
 	}
 	
+	if _TESTDOC1(CFunction) 
+		_ADDDOC(CFunction, new->m_ml->ml_doc, new->m_ml->ml_name)
+	else if _TESTDOC1(Type) 
+		_ADDDOC(Type, new->tp_doc, new->tp_name)
+        else if _TESTDOC2(MemberDescr) 
+		_ADDDOC(MemberDescr, new->d_member->doc, new->d_member->name)
+        else if _TESTDOC2(GetSetDescr) 
+		_ADDDOC(GetSetDescr, new->d_getset->doc, new->d_getset->name)
+	else {
+		PyErr_SetString(PyExc_TypeError, 
+				"Cannot set a docstring for that object");
+		return NULL;
+	}
+
+#undef _TESTDOC1
+#undef _TESTDOC2
+#undef _ADDDOC
+	
+	Py_INCREF(str);
 	Py_INCREF(Py_None);
 	return Py_None;
 }
@@ -389,6 +403,23 @@ static struct PyMethodDef methods[] = {
      NULL},
     {NULL, NULL}    /* sentinel */
 };
+
+static void
+define_types(void) 
+{
+	PyObject *tp_dict;
+	PyObject *myobj;
+
+	tp_dict = PyArrayDescr_Type.tp_dict;
+	/* Get "subdescr" */
+	myobj = PyDict_GetItemString(tp_dict, "fields");
+	if (myobj == NULL) return;
+	PyGetSetDescr_TypePtr = myobj->ob_type;
+	myobj = PyDict_GetItemString(tp_dict, "alignment");
+	if (myobj == NULL) return;
+	PyMemberDescr_TypePtr = myobj->ob_type;
+	return;
+}
 
 /* Initialization function for the module (*must* be called initArray) */
 
@@ -412,6 +443,10 @@ DL_EXPORT(void) init_compiled_base(void) {
     PyDict_SetItemString(d, "error", ErrorObject);
     Py_DECREF(ErrorObject);
 
+
+    /* define PyGetSetDescr_Type and PyMemberDescr_Type */
+    define_types();
+    
     /* Check for errors */
     if (PyErr_Occurred())
 	    Py_FatalError("can't initialize module _compiled_base");

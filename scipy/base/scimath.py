@@ -1,6 +1,6 @@
 """
 Wrapper functions to more user-friendly calling of certain math functions
-whose output is different than the input in certain domains of the input.
+whose output data-type is different than the input data-type in certain domains of the input.
 """
 
 __all__ = ['sqrt', 'log', 'log2', 'logn','log10', 'power', 'arccos',

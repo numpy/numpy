@@ -7940,22 +7940,15 @@ arraydescr_dealloc(PyArray_Descr *self)
 /* we need to be careful about setting attributes because these
    objects are pointed to by arrays that depend on them for interpreting
    data.  Currently no attributes of dtypedescr objects can be set. 
-   *except* problematically the field attribute is a regular dictionary that
-   can be changed by the user.  
-
-   We have to trust the user not to do this...
-   Probably should make the fields dictionary a special "only-settable" from
-   C dictionary or something.
 */
 static PyMemberDef arraydescr_members[] = {
 	{"dtype", T_OBJECT, offsetof(PyArray_Descr, typeobj), RO, NULL},
-	{"dtypekind", T_CHAR, offsetof(PyArray_Descr, kind), RO, NULL},
-	{"dtypechar", T_CHAR, offsetof(PyArray_Descr, type), RO, NULL},
-	{"dtypenum", T_INT, offsetof(PyArray_Descr, type_num), RO, NULL},
+	{"kind", T_CHAR, offsetof(PyArray_Descr, kind), RO, NULL},
+	{"char", T_CHAR, offsetof(PyArray_Descr, type), RO, NULL},
+	{"num", T_INT, offsetof(PyArray_Descr, type_num), RO, NULL},
 	{"byteorder", T_CHAR, offsetof(PyArray_Descr, byteorder), RO, NULL},
 	{"itemsize", T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
 	{"alignment", T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
-	{"fields", T_OBJECT, offsetof(PyArray_Descr, fields), RO, NULL},
 	{NULL},
 };
 
@@ -8031,6 +8024,16 @@ arraydescr_isnative_get(PyArray_Descr *self)
 	return ret;
 }
 
+static PyObject *
+arraydescr_fields_get(PyArray_Descr *self)
+{
+	if (self->fields == NULL || self->fields == Py_None) {
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+	return PyDictProxy_New(self->fields);
+}
+
 static PyGetSetDef arraydescr_getsets[] = {
 	{"subdescr", 
 	 (getter)arraydescr_subdescr_get,
@@ -8052,6 +8055,10 @@ static PyGetSetDef arraydescr_getsets[] = {
 	 (getter)arraydescr_isnative_get,
 	 NULL,
 	 "Is the byte-order of this descriptor native?"},
+	{"fields",
+	 (getter)arraydescr_fields_get,
+	 NULL,
+	 NULL},
 	{NULL, NULL, NULL, NULL},
 };
 
