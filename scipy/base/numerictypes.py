@@ -78,7 +78,7 @@ $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
 
 # we add more at the bottom
-__all__ = ['typeDict', 'arraytypes', 'ScalarType', 'obj2dtype', 'cast', 'nbytes', 'dtype2char']
+__all__ = ['typeDict', 'typeNA', 'arraytypes', 'ScalarType', 'obj2dtype', 'cast', 'nbytes', 'dtype2char']
 
 from multiarray import typeinfo, ndarray, array, empty
 import types as _types
@@ -88,6 +88,7 @@ import types as _types
 from __builtin__ import bool, int, long, float, complex, object, unicode, str
 
 typeDict = {}      # Contains all leaf-node numeric types with aliases
+typeNA = {}        # Contails all leaf-node types -> numarray type equivalences
 allTypes = {}      # Collect the types we will add to the module here
 
 def _evalname(name):
@@ -161,13 +162,24 @@ def _add_types():
             if base != '':
                 allTypes["%s%d" % (base, bit)] = typeobj
                 typeDict["%s%d" % (base, bit)] = typeobj
-                if base[:2] == 'ui':
-                    typeDict['U%s%d' % (base[1:].capitalize(), bit)] = typeobj
+                if base == 'uint':
+                    tmpstr = 'UInt%d' % bit
+                    typeDict[tmpstr] = typeobj
+                    na_name = tmpstr
+                elif base == 'complex':
+                    na_num = '%s%d' % (base.capitalize(), bit/2)
+                elif base == 'bool':
+                    na_name = base.capitalize()
+                    typeDict[na_name] = typeobj
                 else:
-                    typeDict["%s%d" % (base.capitalize(), bit)] = typeobj
+                    na_name = "%s%d" % (base.capitalize(), bit)
+                    typeDict[na_name] = typeobj
+                typeNA[na_name] = typeobj
+                typeNA[typeobj] = na_name
+                typeNA[typeinfo[a][0]] = na_name
             if char != '':
                 typeDict[char] = typeobj
-
+                typeNA[char] = na_name
         else:  # generic class
             allTypes[name] = typeinfo[a]
 _add_types()

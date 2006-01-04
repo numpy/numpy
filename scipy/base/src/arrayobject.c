@@ -8408,6 +8408,19 @@ arraydescr_repr(PyArray_Descr *self)
 	return s;
 }
 
+static int
+arraydescr_compare(PyArray_Descr *self, PyObject *other)
+{
+ 	if (!PyArray_DescrCheck(other)) {
+		PyErr_SetString(PyExc_TypeError, 
+				"not a dtypedescr object.");
+		return -1;
+	}
+	if (PyArray_EquivTypes(self, (PyArray_Descr *)other)) return 0;
+	if (PyArray_CanCastTo(self, (PyArray_Descr *)other)) return -1;
+	return 1;
+}
+
 static PyTypeObject PyArrayDescr_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
@@ -8419,7 +8432,7 @@ static PyTypeObject PyArrayDescr_Type = {
         0,					/* tp_print */
         0,					/* tp_getattr */
         0,					/* tp_setattr */
-        0,					/* tp_compare */
+	(cmpfunc)arraydescr_compare,		/* tp_compare */
         (reprfunc)arraydescr_repr,	        /* tp_repr */
         0,					/* tp_as_number */
         0,     			                /* tp_as_sequence */
