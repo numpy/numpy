@@ -1,8 +1,8 @@
-"""Numerix: array processing for numbers, strings, records, and objects.
+"""Scipy: array processing for numbers, strings, records, and objects.
 
-Numerix is an array processing package designed to efficiently manipulate
+Scipy is an array processing package designed to efficiently manipulate
 large multi-dimensional arrays without sacrificing too much speed for small
-multi-dimensional arrays.  Numerix is built on the Numeric code base and
+multi-dimensional arrays.  Scipy is built on the Numeric code base and
 adds features introduced by numarray as well as an extended C-API and the
 ability to create arrays of arbitrary type.
 
@@ -32,8 +32,8 @@ Operating System :: MacOS
 
 def setup_package():
 
-    from numerix.distutils.core import setup
-    from numerix.distutils.misc_util import Configuration
+    from scipy.distutils.core import setup
+    from scipy.distutils.misc_util import Configuration
 
     old_path = os.getcwd()
     local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -45,19 +45,19 @@ def setup_package():
             maintainer = "SciPy Developers",
             maintainer_email = "scipy-dev@scipy.org",
             description = DOCLINES[0],
-            long_description = "\n".join(DOCLINES[2:])
+            long_description = "\n".join(DOCLINES[2:]),
             url = "http://numeric.scipy.org",
-            download_url = "http://sourceforge.net/projects/numpy"
+            download_url = "http://sourceforge.net/projects/numpy",
             license = 'BSD',
-            classifiers=filter(None, CLASSIFIERS.split('\n'))
-            author = "Travis E. Oliphant"
+            classifiers=filter(None, CLASSIFIERS.split('\n')),
+            author = "Travis E. Oliphant",
             author_email = "oliphant.travis@ieee.org",
             platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
             )
         config.add_subpackage('scipy')
 
-        from numerix.version import version
-        config.name = 'numerix'
+        from scipy.core_version import version
+        config.name = 'scipy'
         config.dict_append(version=version)
 
         print config.name,'version',config.version
