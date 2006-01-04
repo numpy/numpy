@@ -7,8 +7,6 @@ import numpy.core.numeric as _nx
 from numpy.core.numeric import *
 from numpy.core.oldnumeric import product
 
-from type_check import isscalar
-
 def apply_along_axis(func1d,axis,arr,*args):
     """ Execute func1d(arr[i],*args) where func1d takes 1-D arrays
         and arr is an N-d array.  i varies so as to apply the function

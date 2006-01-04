@@ -9,7 +9,7 @@ __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
 import re
 import numpy.core.numeric as NX
 
-from type_check import isscalar
+from numpy.core import isscalar
 from twodim_base import diag, vander
 from shape_base import hstack, atleast_1d
 from function_base import trim_zeros, sort_complex
