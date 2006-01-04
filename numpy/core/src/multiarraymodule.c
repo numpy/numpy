@@ -5288,9 +5288,9 @@ setup_scalartypes(PyObject *dict)
         if (PyType_Ready(&PyGenericArrType_Type) < 0)
                 return -1;
 
-        SINGLE_INHERIT(Numeric, Generic);
-        SINGLE_INHERIT(Integer, Numeric);
-        SINGLE_INHERIT(Inexact, Numeric);
+        SINGLE_INHERIT(Number, Generic);
+        SINGLE_INHERIT(Integer, Number);
+        SINGLE_INHERIT(Inexact, Number);
         SINGLE_INHERIT(SignedInteger, Integer);
         SINGLE_INHERIT(UnsignedInteger, Integer);
         SINGLE_INHERIT(Floating, Inexact);
@@ -5493,7 +5493,7 @@ DL_EXPORT(void) initmultiarray(void) {
 	if (set_typeinfo(d) != 0) goto err;
 
 	_numpy_internal =						\
-		PyImport_ImportModule("numpy.base._internal");
+		PyImport_ImportModule("numpy.core._internal");
 	if (_numpy_internal != NULL) return;
 
  err:	

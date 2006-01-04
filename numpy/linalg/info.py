@@ -21,5 +21,5 @@ Core Linear Algebra Tools
 
 """
 
-depends = ['base']
+depends = ['core']
 

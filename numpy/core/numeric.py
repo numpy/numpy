@@ -10,7 +10,7 @@ __all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
            'array_repr', 'array_str', 'set_string_function',
            'little_endian',
            'indices', 'fromfunction',
-           'load', 'loads',
+           'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
            'ones', 'identity', 'allclose',
            'seterr', 'geterr', 'setbufsize', 'getbufsize',
            'seterrcall', 'geterrcall',
@@ -271,6 +271,54 @@ def fromfunction(function, dimensions, **kwargs):
     args = indices(dimensions)
     return function(*args,**kwargs)
 
+def isscalar(num):
+    if isinstance(num, generic):
+        return True
+    else:
+        return type(num) in ScalarType
+
+_lkup = {'0':'000',
+         '1':'001',
+         '2':'010',
+         '3':'011',
+         '4':'100',
+         '5':'101',
+         '6':'110',
+         '7':'111',
+         'L':''}
+
+def binary_repr(num):
+    """Return the binary representation of the input number as a string.
+
+    This is equivalent to using base_repr with base 2, but about 25x
+    faster.
+    """
+    ostr = oct(num)
+    bin = ''
+    for ch in ostr[1:]:
+        bin += _lkup[ch]
+    ind = 0
+    while bin[ind] == '0':
+        ind += 1
+    return bin[ind:]
+
+def base_repr (number, base=2, padding=0):
+    """Return the representation of a number in any given base.
+    """
+    chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+    lnb = math.log(base)
+    res = padding*chars[0]
+    if number == 0:
+        return res + chars[0]
+    exponent = int (math.log (number)/lnb)
+    while(exponent >= 0):
+        term = long(base)**exponent
+        lead_digit = int(number / term)
+        res += chars[lead_digit]
+        number -= term*lead_digit
+        exponent -= 1
+    return res
 
 from cPickle import load, loads
 _cload = load

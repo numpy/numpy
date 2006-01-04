@@ -2,9 +2,8 @@
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import numeric as N
-from numeric import ArrayType, concatenate, integer, multiply, power
-from type_check import isscalar
-from function_base import binary_repr
+from numeric import ArrayType, concatenate, integer, multiply, power, \
+     isscalar, binary_repr
 import types
 import string as str_
 import sys

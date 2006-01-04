@@ -1,6 +1,6 @@
 
 from info import __doc__
-from numpy.core_version import version as __version__
+from numpy.version import version as __version__
 
 import multiarray
 import umath
@@ -9,7 +9,7 @@ multiarray.set_typeDict(nt.typeDict)
 import _sort
 from numeric import *
 from oldnumeric import *
-from matrix import *
+from defmatrix import *
 import ma
 import chararray as char
 import records as rec

@@ -1,7 +1,7 @@
 import os
 import genapi
 
-types = ['Generic','Numeric','Integer','SignedInteger','UnsignedInteger',
+types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
          'Inexact',
          'Floating', 'ComplexFloating', 'Flexible', 'Character',
          'Bool','Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
@@ -51,7 +51,7 @@ static void **PyArray_API=NULL;
 static int
 import_array(void)
 {
-  PyObject *numpy = PyImport_ImportModule("numpy.base.multiarray");
+  PyObject *numpy = PyImport_ImportModule("numpy.core.multiarray");
   PyObject *c_api = NULL;
   if (numpy == NULL) return -1;
   c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");

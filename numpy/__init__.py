@@ -17,8 +17,7 @@ Available subpackages
 """
 
 import os, sys
-NO_SCIPY_IMPORT = os.environ.get('NO_SCIPY_IMPORT',None)
-SCIPY_IMPORT_VERBOSE = int(os.environ.get('SCIPY_IMPORT_VERBOSE','0'))
+NUMPY_IMPORT_VERBOSE = int(os.environ.get('NUMPY_IMPORT_VERBOSE','0'))
 
 try:
     from __core_config__ import show as show_core_config
@@ -299,10 +298,10 @@ pkgload = PackageLoader()
 if show_core_config is None:
     print >> sys.stderr, 'Running from numpy core source directory.'
 else:
-    from core_version import version as __core_version__
+    from version import version as __version__
 
-    pkgload('testing','base','corefft','corelinalg','random',
-            verbose=SCIPY_IMPORT_VERBOSE)
+    pkgload('testing','core','lib','dft','linalg','random',
+            verbose=NUMPY_IMPORT_VERBOSE)
 
 
     test = ScipyTest('numpy').test
@@ -310,17 +309,14 @@ else:
 
 __numpy_doc__ = """
 
-SciPy: A scientific computing package for Python
+NumPy: A scientific computing package for Python
 ================================================
 
 Available subpackages
 ---------------------
 """
 
-if NO_SCIPY_IMPORT is not None:
-    print >> sys.stderr, 'Skip importing numpy packages (NO_SCIPY_IMPORT=%s)' % (NO_SCIPY_IMPORT)
-    show_numpy_config = None
-elif show_core_config is None:
+if show_core_config is None:
     show_numpy_config = None
 else:
     try:
@@ -332,4 +328,4 @@ else:
 if show_numpy_config is not None:
     from numpy_version import numpy_version as __numpy_version__
     __doc__ += __numpy_doc__
-    pkgload(verbose=SCIPY_IMPORT_VERBOSE,postpone=True)
+    pkgload(verbose=NUMPY_IMPORT_VERBOSE,postpone=True)

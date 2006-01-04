@@ -23,7 +23,8 @@ __all__ = ['asarray', 'array', 'concatenate',
            'resize', 'diagonal', 'trace', 'ravel', 'nonzero', 'shape',
            'compress', 'clip', 'sum', 'product', 'prod', 'sometrue', 'alltrue',
            'any', 'all', 'cumsum', 'cumproduct', 'cumprod', 'ptp', 'ndim',
-           'rank', 'size', 'around', 'mean', 'std', 'var', 'squeeze', 'amax', 'amin'
+           'rank', 'size', 'around', 'round_', 'mean', 'std', 'var', 'squeeze',
+           'amax', 'amin'
           ]
 
 import multiarray as mu
@@ -420,7 +421,34 @@ def size (a, axis=None):
         except AttributeError:
             return asarray(a).shape[axis]
 
-from function_base import round_ as around
+def round_(a, decimals=0):
+    """Round 'a' to the given number of decimal places.  Rounding
+    behaviour is equivalent to Python.
+
+    Return 'a' if the array is not floating point.  Round both the real
+    and imaginary parts separately if the array is complex.
+    """
+    a = asarray(a)
+    if not issubclass(a.dtype, _nx.inexact):
+        return a
+    if issubclass(a.dtype, _nx.complexfloating):
+        return round_(a.real, decimals) + 1j*round_(a.imag, decimals)
+    if decimals is not 0:
+        decimals = asarray(decimals)
+    s = sign(a)
+    if decimals is not 0:
+        a = absolute(multiply(a, 10.**decimals))
+    else:
+        a = absolute(a)
+    rem = a-asarray(a).astype(_nx.intp)
+    a = _nx.where(_nx.less(rem, 0.5), _nx.floor(a), _nx.ceil(a))
+    # convert back
+    if decimals is not 0:
+        return multiply(a, s/(10.**decimals))
+    else:
+        return multiply(a, s)
+
+around = round_
 
 def mean(a, axis=0, dtype=None):
     return asarray(a).mean(axis, dtype)

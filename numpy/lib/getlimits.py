@@ -4,7 +4,7 @@
 __all__ = ['finfo']
 
 from machar import MachAr
-import numpy.core.numeric
+import numpy.core.numeric as numeric
 from numpy.core.numeric import array
 
 def _frz(a):

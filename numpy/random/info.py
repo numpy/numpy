@@ -4,7 +4,7 @@ Core Random Tools
 
 """
 
-depends = ['base']
+depends = ['core']
 global_symbols = ['rand','randn']
 
 __all__ = [

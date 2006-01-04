@@ -4,13 +4,12 @@ __all__ = ['mgrid','ogrid','r_', 'c_', 'index_exp', 'ix_','ndenumerate']
 
 import sys
 import types
-import numeric as _nx
-from numeric import asarray
+import numpy.core.numeric as _nx
+from numpy.core.numeric import asarray, ScalarType
 
-from type_check import ScalarType
 import function_base
 import twodim_base as matrix_base
-import matrix
+import numpy.core.defmatrix as matrix
 makemat = matrix.matrix
 
 def ix_(*args):

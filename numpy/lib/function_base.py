@@ -1,5 +1,5 @@
 
-l__all__ = ['logspace', 'linspace', 'round_',
+l__all__ = ['logspace', 'linspace',
            'select', 'piecewise', 'trim_zeros',
            'copy', 'iterable', 'base_repr', 'binary_repr', 
            'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
@@ -14,60 +14,18 @@ import types
 import math
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, asarray, empty
-from numpy.core.numeric import ScalarType, dot, where, newaxis
+from numpy.core.numeric import ScalarType, dot, where, newaxis, isscalar
 from numpy.core.umath import pi, multiply, add, arctan2, maximum, minimum, frompyfunc, \
      isnan, absolute, cos, less_equal, sqrt, sin, mod
 from numpy.core.oldnumeric import ravel, nonzero, choose, \
      sometrue, alltrue, reshape, any, all, typecodes, ArrayType, squeeze,\
      sort
-from type_check import ScalarType, isscalar
+from type_check import ScalarType
 from shape_base import atleast_1d
 from twodim_base import diag
 from _compiled_base import digitize, bincount, _insert
 from ufunclike import sign
 
-_lkup = {'0':'000',
-         '1':'001',
-         '2':'010',
-         '3':'011',
-         '4':'100',
-         '5':'101',
-         '6':'110',
-         '7':'111',
-         'L':''}
-
-def binary_repr(num):
-    """Return the binary representation of the input number as a string.
-
-    This is equivalent to using base_repr with base 2, but about 25x
-    faster.
-    """
-    ostr = oct(num)
-    bin = ''
-    for ch in ostr[1:]:
-        bin += _lkup[ch]
-    ind = 0
-    while bin[ind] == '0':
-        ind += 1
-    return bin[ind:]
-
-def base_repr (number, base=2, padding=0):
-    """Return the representation of a number in any given base.
-    """
-    chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-    lnb = math.log(base)
-    res = padding*chars[0]
-    if number == 0:
-        return res + chars[0]
-    exponent = int (math.log (number)/lnb)
-    while(exponent >= 0):
-        term = long(base)**exponent
-        lead_digit = int(number / term)
-        res += chars[lead_digit]
-        number -= term*lead_digit
-        exponent -= 1
-    return res
 #end Fernando's utilities
 
 
@@ -664,35 +622,6 @@ class vectorize(object):
             return self.ufunc(*args).astype(self.otypes[0])
         else:
             return tuple([x.astype(c) for x, c in zip(self.ufunc(*args), self.otypes)])
-
-
-def round_(a, decimals=0):
-    """Round 'a' to the given number of decimal places.  Rounding
-    behaviour is equivalent to Python.
-
-    Return 'a' if the array is not floating point.  Round both the real
-    and imaginary parts separately if the array is complex.
-    """
-    a = asarray(a)
-    if not issubclass(a.dtype, _nx.inexact):
-        return a
-    if issubclass(a.dtype, _nx.complexfloating):
-        return round_(a.real, decimals) + 1j*round_(a.imag, decimals)
-    if decimals is not 0:
-        decimals = asarray(decimals)
-    s = sign(a)
-    if decimals is not 0:
-        a = absolute(multiply(a, 10.**decimals))
-    else:
-        a = absolute(a)
-    rem = a-asarray(a).astype(_nx.intp)
-    a = _nx.where(_nx.less(rem, 0.5), _nx.floor(a), _nx.ceil(a))
-    # convert back
-    if decimals is not 0:
-        return multiply(a, s/(10.**decimals))
-    else:
-        return multiply(a, s)
-
 
 def cov(m,y=None, rowvar=0, bias=0):
     """Estimate the covariance matrix.

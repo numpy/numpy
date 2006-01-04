@@ -11,7 +11,6 @@ import string, types, sys
 
 import umath
 import oldnumeric
-import function_base
 from numeric import e, pi, newaxis, ndarray, inf
 from oldnumeric import typecodes, amax, amin
 from numerictypes import *
@@ -468,7 +467,7 @@ absolute = masked_unary_operation(umath.absolute)
 fabs = masked_unary_operation(umath.fabs)
 negative = masked_unary_operation(umath.negative)
 nonzero = masked_unary_operation(oldnumeric.nonzero)
-around = masked_unary_operation(function_base.round_)
+around = masked_unary_operation(oldnumeric.round_)
 floor = masked_unary_operation(umath.floor)
 ceil = masked_unary_operation(umath.ceil)
 sometrue = masked_unary_operation(oldnumeric.sometrue)

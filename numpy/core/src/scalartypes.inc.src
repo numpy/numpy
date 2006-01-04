@@ -19,9 +19,9 @@ typedef struct {
 
 /**begin repeat
 
-#name=numeric, integer, signedinteger, unsignedinteger, inexact, floating, complexfloating, flexible, 
+#name=number, integer, signedinteger, unsignedinteger, inexact, floating, complexfloating, flexible, 
 character#
-#NAME=Numeric, Integer, SignedInteger, UnsignedInteger, Inexact, Floating, ComplexFloating, Flexible, Character#
+#NAME=Number, Integer, SignedInteger, UnsignedInteger, Inexact, Floating, ComplexFloating, Flexible, Character#
 */
 
 static PyTypeObject Py@NAME@ArrType_Type = { 
@@ -1925,7 +1925,7 @@ initialize_numeric_types(void)
 	PyVoidArrType_Type.tp_as_mapping = &voidtype_as_mapping;
 	
 	/**begin repeat
-#NAME=Numeric, Integer, SignedInteger, UnsignedInteger, Inexact, Floating, 
+#NAME=Number, Integer, SignedInteger, UnsignedInteger, Inexact, Floating, 
 ComplexFloating, Flexible, Character#
 	*/
         Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;
@@ -2064,7 +2064,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
 	}
 
 	/* Check the generic types */
-	if ((type == (PyObject *) &PyNumericArrType_Type) ||		\
+	if ((type == (PyObject *) &PyNumberArrType_Type) ||		\
 	    (type == (PyObject *) &PyInexactArrType_Type) ||		\
 	    (type == (PyObject *) &PyFloatingArrType_Type))
 		typenum = PyArray_DOUBLE;

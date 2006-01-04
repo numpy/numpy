@@ -427,7 +427,7 @@ DL_EXPORT(void) init_compiled_base(void) {
     PyObject *m, *d, *s;
   
     /* Create the module and add the functions */
-    m = Py_InitModule("numpy.base._compiled_base", methods); 
+    m = Py_InitModule("_compiled_base", methods); 
 
     /* Import the array and ufunc objects */
     import_array();
@@ -439,7 +439,7 @@ DL_EXPORT(void) init_compiled_base(void) {
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
-    ErrorObject = PyString_FromString("numpy.base._compiled_base.error");
+    ErrorObject = PyString_FromString("numpy.lib._compiled_base.error");
     PyDict_SetItemString(d, "error", ErrorObject);
     Py_DECREF(ErrorObject);
 

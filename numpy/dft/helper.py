@@ -5,8 +5,8 @@ Discrete Fourier Transforms - helper.py
 
 __all__ = ['fftshift','ifftshift','fftfreq']
 
-from numpy.base import asarray, concatenate, arange, take, \
-		array, integer
+from numpy.core import asarray, concatenate, arange, take, \
+    array, integer
 import types
 
 def fftshift(x,axes=None):

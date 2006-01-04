@@ -1892,7 +1892,7 @@ set_typeinfo(PyObject *dict)
                              (PyObject *)&Py##name##ArrType_Type);
 
         SETTYPE(Generic)
-        SETTYPE(Numeric)
+        SETTYPE(Number)
         SETTYPE(Integer)
 	SETTYPE(Inexact)
         SETTYPE(SignedInteger)

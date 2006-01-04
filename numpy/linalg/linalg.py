@@ -12,7 +12,7 @@ __all__ = ['LinAlgError', 'solve_linear_equations', 'solve',
            'eigenvectors', 'eig', 'Heigenvectors', 'eigh','lstsq', 'linear_least_squares'
            ]
            
-from numpy.base import *
+from numpy.core import *
 import lapack_lite
 import math
 

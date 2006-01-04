@@ -26,5 +26,5 @@ Core FFT routines
    ihfft
 """
 
-depends = ['base']
+depends = ['core']
 global_symbols = ['fft','ifft']
