@@ -4,19 +4,19 @@ from info import __doc__
 from fftpack import *
 from helper import *
 
-# re-define duplicated functions if full scipy installed.
+# re-define duplicated functions if full numpy installed.
 try:
-    import scipy.fftpack
+    import numpy.fftpack
 except ImportError:
     pass
 else:
-    fft = scipy.fftpack.fft
-    ifft = scipy.fftpack.ifft
-    fftn = scipy.fftpack.fftn
-    ifftn = scipy.fftpack.ifftn
-    fft2 = scipy.fftpack.fft2
-    ifft2 = scipy.fftpack.ifft2
+    fft = numpy.fftpack.fft
+    ifft = numpy.fftpack.ifft
+    fftn = numpy.fftpack.fftn
+    ifftn = numpy.fftpack.ifftn
+    fft2 = numpy.fftpack.fft2
+    ifft2 = numpy.fftpack.ifft2
 
 
-from scipy.testing import ScipyTest 
+from numpy.testing import ScipyTest 
 test = ScipyTest().test

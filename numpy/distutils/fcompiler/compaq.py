@@ -4,8 +4,8 @@
 import os
 import sys
 
-from scipy.distutils.cpuinfo import cpu
-from scipy.distutils.fcompiler import FCompiler
+from numpy.distutils.cpuinfo import cpu
+from numpy.distutils.fcompiler import FCompiler
 
 class CompaqFCompiler(FCompiler):
 

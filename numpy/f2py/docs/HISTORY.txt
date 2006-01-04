@@ -27,7 +27,7 @@ Release 2.46.243
 
 * f2py2e.py
 
-  - Added support for scipy.distutils version 0.4.0.
+  - Added support for numpy.distutils version 0.4.0.
 
 * Documentation
 
@@ -111,8 +111,8 @@ Release 2.45.241_1926
 * setup.py
 
   - Clean up.
-  - Disabled ``need_scipy_distutils`` function. From now on it is assumed
-    that proper version of ``scipy_distutils`` is already installed.
+  - Disabled ``need_numpy_distutils`` function. From now on it is assumed
+    that proper version of ``numpy_distutils`` is already installed.
 
 * capi_maps.py
 
@@ -168,7 +168,7 @@ Release 2.43.239_1831
 
   - Intoduced ``--help-link`` and ``--link-<resource>``
     switches to link generated extension module with system
-    ``<resource>`` as defined by scipy_distutils/system_info.py.
+    ``<resource>`` as defined by numpy_distutils/system_info.py.
 
 * fortranobject.c
 
@@ -356,7 +356,7 @@ Release 2.39.235_1644
 * docs
 
   - Initial f2py manpage file f2py.1.
-  - Updated usersguide and other docs when using scipy_distutils 0.2.2
+  - Updated usersguide and other docs when using numpy_distutils 0.2.2
     and up.
 
 * capi_maps.py
@@ -383,7 +383,7 @@ Release 2.39.235_1644
 
 * diagnose.py
 
-  - Updated for scipy_distutils 0.2.2 and up.
+  - Updated for numpy_distutils 0.2.2 and up.
   - Added numarray support to diagnose.
 
 * fortranobject.c
@@ -394,7 +394,7 @@ Release 2.39.235_1644
 
 * f2py2e.py
 
-  - Applying new hooks for scipy_distutils 0.2.2 and up, keeping
+  - Applying new hooks for numpy_distutils 0.2.2 and up, keeping
     backward compatibility with depreciation messages.
   - Using always os.system on non-posix platforms in f2py2e.compile
     function.
@@ -410,8 +410,8 @@ Release 2.39.235_1644
 * setup.py
 
   - Installing f2py.py instead of f2py.bat under NT.   
-  - Introduced ``--with-scipy_distutils`` that is useful when making
-    f2py tar-ball with scipy_distutils included.
+  - Introduced ``--with-numpy_distutils`` that is useful when making
+    f2py tar-ball with numpy_distutils included.
 
 Release 2.37.233-1545
 =====================
@@ -466,7 +466,7 @@ Release 2.35.229-1505
 
 * setup.py
 
-  - Updated the CVS location of scipy_distutils.
+  - Updated the CVS location of numpy_distutils.
 
 * auxfuncs.py
 
@@ -566,7 +566,7 @@ Public Release 2.32.225-1419
 
 * setup.py
 
-  - Install scipy_distutils only if it is missing or is too old
+  - Install numpy_distutils only if it is missing or is too old
     for f2py.
 
 * f90modrules.py
@@ -667,7 +667,7 @@ Public Release 2.32.225-1419
   - Introduced dummy routine feature.
   - F77 and F90 wrapper subroutines (if any) as saved to different
     files, <modulename>-f2pywrappers.f and <modulename>-f2pywrappers2.f90,
-    respectively. Therefore, wrapping F90 requires scipy_distutils >= 
+    respectively. Therefore, wrapping F90 requires numpy_distutils >= 
     0.2.0_alpha_2.229.
   - Fixed compiler warnings about meaningless ``const void (*f2py_func)(..)``.
   - Improved error messages for ``*_from_pyobj``.
@@ -739,7 +739,7 @@ Older Releases
  *** Cleaned up the output of 'f2py -h': removed obsolete items,
     added build_flib options section. 
  *** Added --help-compiler option: it lists available Fortran compilers
-    as detected by scipy_distutils/command/build_flib.py. This option
+    as detected by numpy_distutils/command/build_flib.py. This option
     is available only with -c option.
 
 
@@ -789,7 +789,7 @@ Older Releases
 
 ::
 
- *** Updated f2py for the latest scipy_distutils.
+ *** Updated f2py for the latest numpy_distutils.
  *** A nasty bug with multi-dimensional Fortran arrays is fixed
     (intent(out) arrays had wrong shapes). (Thanks to Eric for 
     pointing out this bug).
@@ -801,7 +801,7 @@ Older Releases
 
 ::
 
- *** Updated f2py for the latest scipy_distutils.
+ *** Updated f2py for the latest numpy_distutils.
  *** Fixed raise error when f2py missed -m flag.
  *** Script name `f2py' now depends on the name of python executable.
     For example, `python2.2 setup.py install' will create a f2py
@@ -924,7 +924,7 @@ Older Releases
  *** Fixed -c process. Removed pyf_extensions function and pyf_file class.
  *** Reorganized setup.py. It generates f2py or f2py.bat scripts
     depending on the OS and the location of the python executable.
- *** Started to use update_version from scipy_distutils that makes
+ *** Started to use update_version from numpy_distutils that makes
     f2py startup faster. As a side effect, the version number system
     changed.
  *** Introduced test-site/test_f2py2e.py script that runs all
@@ -933,20 +933,20 @@ Older Releases
     when run_main is called several times.
  *** Added 'import Numeric' to C/API init<module> function.
  *** Fixed f2py.bat in setup.py.
- *** Switched over to scipy_distutils and dropped fortran_support.
+ *** Switched over to numpy_distutils and dropped fortran_support.
  *** On Windows create f2py.bat file.
  *** Introduced -c option: read fortran or pyf files, construct extension
     modules, build, and save them to current directory. 
     In one word: do-it-all-in-one-call.
  *** Introduced pyf_extensions(sources,f2py_opts) function. It simplifies
     the extension building process considerably. Only for internal use.
- *** Converted tests to use scipy_distutils in order to improve portability:
+ *** Converted tests to use numpy_distutils in order to improve portability:
     a,b,c
  *** f2py2e.run_main() returns a pyf_file class instance containing
     information about f2py generated files.
  *** Introduced `--build-dir <dirname>' command line option.
  *** Fixed setup.py for bdist_rpm command.
- *** Added --scipy-setup command line option.
+ *** Added --numpy-setup command line option.
  *** Fixed crackfortran that did not recognized capitalized type
     specification with --no-lower flag.
  *** `-h stdout' writes signature to stdout.

@@ -43,7 +43,7 @@ out and let me know, I'll add your name.)
 Special thanks are due to ...
 
 Eric Jones - he and Travis O. are responsible for starting the
-scipy_distutils project that allowed to move most of the platform and
+numpy_distutils project that allowed to move most of the platform and
 compiler specific codes out from F2PY. This simplified maintaining the
 F2PY project considerably.
 

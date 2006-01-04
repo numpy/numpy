@@ -10,10 +10,10 @@ from types import *
 from distutils.dep_util import newer_group, newer
 from distutils.command.build_ext import build_ext as old_build_ext
 
-from scipy.distutils import log
-from scipy.distutils.misc_util import filter_sources, has_f_sources, \
+from numpy.distutils import log
+from numpy.distutils.misc_util import filter_sources, has_f_sources, \
      has_cxx_sources, get_ext_source_files, all_strings, \
-     get_scipy_include_dirs
+     get_numpy_include_dirs
 from distutils.errors import DistutilsFileError
 
 class build_ext (old_build_ext):
@@ -90,7 +90,7 @@ class build_ext (old_build_ext):
  
         # Initialize Fortran/C++ compilers if needed.
         if need_f_compiler:
-            from scipy.distutils.fcompiler import new_fcompiler
+            from numpy.distutils.fcompiler import new_fcompiler
             self.fcompiler = new_fcompiler(compiler=self.fcompiler,
                                            verbose=self.verbose,
                                            dry_run=self.dry_run,
@@ -173,7 +173,7 @@ class build_ext (old_build_ext):
         kws = {'depends':ext.depends}
         output_dir = self.build_temp
 
-        include_dirs = ext.include_dirs + get_scipy_include_dirs()
+        include_dirs = ext.include_dirs + get_numpy_include_dirs()
 
         c_objects = []
         if c_sources:

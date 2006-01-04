@@ -1,9 +1,9 @@
 /* -*- c -*- */
 
 #include "Python.h"
-#include "scipy/arrayobject.h"
+#include "numpy/arrayobject.h"
 #define _UMATHMODULE
-#include "scipy/ufuncobject.h"
+#include "numpy/ufuncobject.h"
 #include "abstract.h"
 #include <math.h>
 

@@ -207,7 +207,7 @@ class ScipyTest:
     """
     def __init__(self, package=None):
         if package is None:
-            from scipy.distutils.misc_util import get_frame
+            from numpy.distutils.misc_util import get_frame
             f = get_frame(1)
             package = f.f_locals['__name__']
         self.package = package

@@ -1,6 +1,6 @@
 
 import os
-from scipy.distutils.core import setup, Extension
+from numpy.distutils.core import setup, Extension
 
 ext = Extension('f2py_ext.fib2',['src/fib2.pyf','src/fib1.f'])
 

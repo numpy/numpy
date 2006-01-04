@@ -1,4 +1,4 @@
-## Automatically adapted for scipy Sep 19, 2005 by convertcode.py
+## Automatically adapted for numpy Sep 19, 2005 by convertcode.py
 
 __all__ = ['mgrid','ogrid','r_', 'c_', 'index_exp', 'ix_','ndenumerate']
 

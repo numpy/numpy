@@ -10,23 +10,23 @@ except ImportError:
     from distutils.core import setup as old_setup
     have_setuptools = 0
 
-from scipy.distutils.extension import Extension
-from scipy.distutils.command import config
-from scipy.distutils.command import build
-from scipy.distutils.command import build_py
-from scipy.distutils.command import config_compiler
-from scipy.distutils.command import build_ext
-from scipy.distutils.command import build_clib
-from scipy.distutils.command import build_src
-from scipy.distutils.command import build_scripts
-from scipy.distutils.command import sdist
-from scipy.distutils.command import install_data
-from scipy.distutils.command import install_headers
-from scipy.distutils.command import install
-from scipy.distutils.command import bdist_rpm
-from scipy.distutils.misc_util import get_data_files
+from numpy.distutils.extension import Extension
+from numpy.distutils.command import config
+from numpy.distutils.command import build
+from numpy.distutils.command import build_py
+from numpy.distutils.command import config_compiler
+from numpy.distutils.command import build_ext
+from numpy.distutils.command import build_clib
+from numpy.distutils.command import build_src
+from numpy.distutils.command import build_scripts
+from numpy.distutils.command import sdist
+from numpy.distutils.command import install_data
+from numpy.distutils.command import install_headers
+from numpy.distutils.command import install
+from numpy.distutils.command import bdist_rpm
+from numpy.distutils.misc_util import get_data_files
 
-scipy_cmdclass = {'build':            build.build,
+numpy_cmdclass = {'build':            build.build,
                   'build_src':        build_src.build_src,
                   'build_scripts':    build_scripts.build_scripts,
                   'config_fc':        config_compiler.config_fc,
@@ -42,14 +42,14 @@ scipy_cmdclass = {'build':            build.build,
                   }
 if have_setuptools:
     from setuptools.command import bdist_egg, develop, easy_install, egg_info
-    scipy_cmdclass['bdist_egg'] = bdist_egg.bdist_egg
-    scipy_cmdclass['develop'] = develop.develop
-    scipy_cmdclass['easy_install'] = easy_install.easy_install
-    scipy_cmdclass['egg_info'] = egg_info.egg_info
+    numpy_cmdclass['bdist_egg'] = bdist_egg.bdist_egg
+    numpy_cmdclass['develop'] = develop.develop
+    numpy_cmdclass['easy_install'] = easy_install.easy_install
+    numpy_cmdclass['egg_info'] = egg_info.egg_info
 
 def setup(**attr):
 
-    cmdclass = scipy_cmdclass.copy()
+    cmdclass = numpy_cmdclass.copy()
 
     new_attr = attr.copy()
     if new_attr.has_key('cmdclass'):

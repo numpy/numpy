@@ -1,6 +1,6 @@
 
 import os
-from scipy_distutils.core import setup, Extension
+from numpy_distutils.core import setup, Extension
 
 ext_c = Extension('swig_ext._example',['src/example.i','src/example.c'])
 ext_cpp = Extension('swig_ext._example2',['src/zoo.i','src/zoo.cc'],

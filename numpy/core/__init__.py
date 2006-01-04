@@ -1,6 +1,6 @@
 
 from info import __doc__
-from scipy.core_version import version as __version__
+from numpy.core_version import version as __version__
 
 import multiarray
 import umath
@@ -33,5 +33,5 @@ from utils import *
 
 __all__ = filter(lambda s:not s.startswith('_'),dir())
 
-from scipy.testing import ScipyTest 
+from numpy.testing import ScipyTest 
 test = ScipyTest().test

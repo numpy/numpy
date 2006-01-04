@@ -4,8 +4,8 @@
     NOT FINISHED
  */
 
-#include "scipy/arrayobject.h"
-#include "scipy/ufuncobject.h"
+#include "numpy/arrayobject.h"
+#include "numpy/ufuncobject.h"
 
 
 /**begin repeat

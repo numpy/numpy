@@ -1,10 +1,10 @@
 
-from scipy.testing import *
+from numpy.testing import *
 set_package_path()
 import os as _os
-import scipy.base;reload(scipy.base)
-from scipy.base import *
-from scipy.base import records as rec
+import numpy.base;reload(numpy.base)
+from numpy.base import *
+from numpy.base import records as rec
 restore_path()
 
 class test_fromrecords(ScipyTestCase):

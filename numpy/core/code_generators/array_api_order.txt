@@ -1,4 +1,4 @@
-# The functions in the scipy_core C API
+# The functions in the numpy_core C API
 # They are defined here so that the order is set.
 PyArray_SetNumericOps
 PyArray_GetNumericOps

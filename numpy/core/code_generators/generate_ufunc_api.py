@@ -31,7 +31,7 @@ static void **PyUFunc_API=NULL;
 static int
 import_ufunc(void)
 {
-  PyObject *numpy = PyImport_ImportModule("scipy.base.umath");
+  PyObject *numpy = PyImport_ImportModule("numpy.base.umath");
   PyObject *c_api = NULL;
 
   if (numpy == NULL) return -1;

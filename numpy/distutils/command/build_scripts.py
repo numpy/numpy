@@ -2,7 +2,7 @@
 """
 
 from distutils.command.build_scripts import build_scripts as old_build_scripts
-from scipy.distutils import log
+from numpy.distutils import log
 
 class build_scripts(old_build_scripts):
 
@@ -40,5 +40,5 @@ class build_scripts(old_build_scripts):
         return old_build_scripts.run(self)
 
     def get_source_files(self):
-        from scipy.distutils.misc_util import get_script_files
+        from numpy.distutils.misc_util import get_script_files
         return get_script_files(self.scripts)

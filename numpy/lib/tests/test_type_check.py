@@ -1,10 +1,10 @@
 
 import sys
 
-from scipy.testing import *
+from numpy.testing import *
 set_package_path()
-import scipy.base;reload(scipy.base);reload(scipy.base.type_check)
-from scipy.base import *
+import numpy.base;reload(numpy.base);reload(numpy.base.type_check)
+from numpy.base import *
 restore_path()
 
 def assert_all(x):

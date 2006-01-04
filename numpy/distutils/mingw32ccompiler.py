@@ -13,17 +13,17 @@ import sys
 import log
 
 # Overwrite certain distutils.ccompiler functions:
-import scipy.distutils.ccompiler
+import numpy.distutils.ccompiler
 
 # NT stuff
 # 1. Make sure libpython<version>.a exists for gcc.  If not, build it.
 # 2. Force windows to use gcc (we're struggling with MSVC and g77 support) 
-#    --> this is done in scipy/distutils/ccompiler.py
+#    --> this is done in numpy/distutils/ccompiler.py
 # 3. Force windows to use g77
 
 import distutils.cygwinccompiler
 from distutils.version import StrictVersion
-from scipy.distutils.ccompiler import gen_preprocess_options, gen_lib_options
+from numpy.distutils.ccompiler import gen_preprocess_options, gen_lib_options
 from distutils.errors import DistutilsExecError, CompileError, UnknownFileError
 
 from distutils.unixccompiler import UnixCCompiler 
@@ -197,7 +197,7 @@ def build_import_library():
         return
     log.info('Building import library: "%s"' % (out_file))
 
-    from scipy.distutils import lib2def
+    from numpy.distutils import lib2def
 
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])    
     def_file = os.path.join(sys.prefix,'libs',def_name)

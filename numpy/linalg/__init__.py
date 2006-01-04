@@ -3,23 +3,23 @@ from info import __doc__
 
 from linalg import *
 
-# re-define duplicated functions if full scipy installed.
+# re-define duplicated functions if full numpy installed.
 try:
-    import scipy.linalg
+    import numpy.linalg
 except ImportError:
     pass
 else:
-    inv = scipy.linalg.inv
-    svd = scipy.linalg.svd
-    solve = scipy.linalg.solve
-    det = scipy.linalg.det
-    eig = scipy.linalg.eig
-    eigvals = scipy.linalg.eigvals
-    lstsq = scipy.linalg.lstsq
-    pinv = scipy.linalg.pinv
-    cholesky = scipy.linalg.cholesky
+    inv = numpy.linalg.inv
+    svd = numpy.linalg.svd
+    solve = numpy.linalg.solve
+    det = numpy.linalg.det
+    eig = numpy.linalg.eig
+    eigvals = numpy.linalg.eigvals
+    lstsq = numpy.linalg.lstsq
+    pinv = numpy.linalg.pinv
+    cholesky = numpy.linalg.cholesky
     
 
 
-from scipy.testing import ScipyTest 
+from numpy.testing import ScipyTest 
 test = ScipyTest().test

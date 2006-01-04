@@ -17,9 +17,9 @@ eigvals = None
 lstsq = None
 
 def get_linalg_funcs():
-    "Look for linear algebra functions in scipy"
+    "Look for linear algebra functions in numpy"
     global eigvals, lstsq
-    from scipy.corelinalg import eigvals, lstsq
+    from numpy.corelinalg import eigvals, lstsq
     return
 
 def _eigvals(arg):
@@ -286,9 +286,9 @@ def polymul(a1, a2):
 
 
 def deconvolve(signal, divisor):
-    """Deconvolves divisor out of signal.  Requires scipy.signal library
+    """Deconvolves divisor out of signal.  Requires numpy.signal library
     """
-    import scipy.signal
+    import numpy.signal
     num = atleast_1d(signal)
     den = atleast_1d(divisor)
     N = len(num)
@@ -299,7 +299,7 @@ def deconvolve(signal, divisor):
     else:
         input = NX.ones(N-D+1, float)
         input[1:] = 0
-        quot = scipy.signal.lfilter(num, den, input)
+        quot = numpy.signal.lfilter(num, den, input)
         rem = num - NX.convolve(den, quot, mode='full')
     return quot, rem
 

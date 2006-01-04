@@ -1,11 +1,11 @@
 """ Test functions for limits module.
 """
 
-from scipy.testing import *
+from numpy.testing import *
 set_package_path()
-import scipy.base;reload(scipy.base)
-from scipy.base.getlimits import finfo
-from scipy import single,double,longdouble
+import numpy.base;reload(numpy.base)
+from numpy.base.getlimits import finfo
+from numpy import single,double,longdouble
 restore_path()
 
 ##################################################

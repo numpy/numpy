@@ -8,15 +8,15 @@
 PYTHON=python
 MAJOR=2
 F2PY2E_CVSROOT=:pserver:anonymous@cens.ioc.ee:/home/cvs
-SCIPY_CVSROOT=:pserver:anonymous@scipy.org:/home/cvsroot
+SCIPY_CVSROOT=:pserver:anonymous@numpy.org:/home/cvsroot
 
 UPLOADCMD = scp -r
 UPLOADDIR = pearu@kev.ioc.ee:/net/cens/home/www/unsecure/projects/f2py2e/
 
 REV=`python -c 'from __version__ import *;print version'`
-SCIPY_DISTUTILS_REV=`cd scipy_distutils && $(PYTHON) -c 'from scipy_distutils_version import *;print scipy_distutils_version' && cd ..`
+SCIPY_DISTUTILS_REV=`cd numpy_distutils && $(PYTHON) -c 'from numpy_distutils_version import *;print numpy_distutils_version' && cd ..`
 
-SRC_FILES = F2PY-$(MAJOR)-latest.tar.gz scipy_distutils-latest.tar.gz F2PY-$(MAJOR)-latest.win32.exe scipy_distutils-latest.win32.exe
+SRC_FILES = F2PY-$(MAJOR)-latest.tar.gz numpy_distutils-latest.tar.gz F2PY-$(MAJOR)-latest.win32.exe numpy_distutils-latest.win32.exe
 
 HTML_FILES = index.html FAQ.html HISTORY.html THANKS.html TESTING.html OLDNEWS.html
 FAQ_DEPS = simple.f pytest.py pyforttest.pyf simple_session.dat
@@ -64,25 +64,25 @@ f2py2e_latest: upload/tmp/$(MAJOR).x/F2PY-$(MAJOR)-latest.tar.gz upload/tmp/$(MA
 # Create Scipy_distutils tar-balls
 ##############################################################################
 
-scipy_distutils:
-	test -d scipy_distutils && (cd scipy_distutils && cvs -d $(SCIPY_CVSROOT) -z7 update -Pd && cd -) || cvs -d $(SCIPY_CVSROOT) checkout scipy_distutils
+numpy_distutils:
+	test -d numpy_distutils && (cd numpy_distutils && cvs -d $(SCIPY_CVSROOT) -z7 update -Pd && cd -) || cvs -d $(SCIPY_CVSROOT) checkout numpy_distutils
 
-upload/tmp/$(MAJOR).x/scipy_distutils-latest.tar.gz: scipy_distutils
-	cd scipy_distutils && python setup.py sdist -f
+upload/tmp/$(MAJOR).x/numpy_distutils-latest.tar.gz: numpy_distutils
+	cd numpy_distutils && python setup.py sdist -f
 	mkdir -p upload/tmp/$(MAJOR).x
-	cp scipy_distutils/dist/scipy_distutils-$(SCIPY_DISTUTILS_REV).tar.gz upload/tmp/$(MAJOR).x
-	ln -sf scipy_distutils-$(SCIPY_DISTUTILS_REV).tar.gz scipy_distutils-latest.tar.gz
-	mv scipy_distutils-latest.tar.gz upload/tmp/$(MAJOR).x
-upload/tmp/$(MAJOR).x/scipy_distutils-latest.win32.exe: scipy_distutils
-	cd scipy_distutils && python setup.py bdist_wininst
+	cp numpy_distutils/dist/numpy_distutils-$(SCIPY_DISTUTILS_REV).tar.gz upload/tmp/$(MAJOR).x
+	ln -sf numpy_distutils-$(SCIPY_DISTUTILS_REV).tar.gz numpy_distutils-latest.tar.gz
+	mv numpy_distutils-latest.tar.gz upload/tmp/$(MAJOR).x
+upload/tmp/$(MAJOR).x/numpy_distutils-latest.win32.exe: numpy_distutils
+	cd numpy_distutils && python setup.py bdist_wininst
 	mkdir -p upload/tmp/$(MAJOR).x
-	cp scipy_distutils/dist/scipy_distutils-$(SCIPY_DISTUTILS_REV).win32.exe upload/tmp/$(MAJOR).x
-	ln -sf scipy_distutils-$(SCIPY_DISTUTILS_REV).win32.exe scipy_distutils-latest.win32.exe
-	mv scipy_distutils-latest.win32.exe upload/tmp/$(MAJOR).x
+	cp numpy_distutils/dist/numpy_distutils-$(SCIPY_DISTUTILS_REV).win32.exe upload/tmp/$(MAJOR).x
+	ln -sf numpy_distutils-$(SCIPY_DISTUTILS_REV).win32.exe numpy_distutils-latest.win32.exe
+	mv numpy_distutils-latest.win32.exe upload/tmp/$(MAJOR).x
 
-scipy_distutils_latest: upload/tmp/$(MAJOR).x/scipy_distutils-latest.tar.gz upload/tmp/$(MAJOR).x/scipy_distutils-latest.win32.exe
+numpy_distutils_latest: upload/tmp/$(MAJOR).x/numpy_distutils-latest.tar.gz upload/tmp/$(MAJOR).x/numpy_distutils-latest.win32.exe
 
-latest: f2py2e_latest scipy_distutils_latest
+latest: f2py2e_latest numpy_distutils_latest
 
 ##############################################################################
 # Upload files.
@@ -92,18 +92,18 @@ upload/www/$(MAJOR).x/F2PY-$(MAJOR)-latest.tar.gz: upload/tmp/$(MAJOR).x/F2PY-$(
 	-mkdir -p `dirname $@`
 	cp -P upload/tmp/$(MAJOR).x/F2PY-{$(MAJOR)-latest,$(REV)}.tar.gz upload/www/$(MAJOR).x
 	$(UPLOADCMD) upload/tmp/$(MAJOR).x/F2PY-{$(MAJOR)-latest,$(REV)}.tar.gz $(UPLOADDIR)/$(MAJOR).x/
-upload/www/$(MAJOR).x/scipy_distutils-latest.tar.gz: upload/tmp/$(MAJOR).x/scipy_distutils-latest.tar.gz
+upload/www/$(MAJOR).x/numpy_distutils-latest.tar.gz: upload/tmp/$(MAJOR).x/numpy_distutils-latest.tar.gz
 	-mkdir -p `dirname $@`
-	cp -P upload/tmp/$(MAJOR).x/scipy_distutils-{latest,$(SCIPY_DISTUTILS_REV)}.tar.gz upload/www/$(MAJOR).x/
-	$(UPLOADCMD) upload/tmp/$(MAJOR).x/scipy_distutils-{latest,$(SCIPY_DISTUTILS_REV)}.tar.gz $(UPLOADDIR)/$(MAJOR).x
+	cp -P upload/tmp/$(MAJOR).x/numpy_distutils-{latest,$(SCIPY_DISTUTILS_REV)}.tar.gz upload/www/$(MAJOR).x/
+	$(UPLOADCMD) upload/tmp/$(MAJOR).x/numpy_distutils-{latest,$(SCIPY_DISTUTILS_REV)}.tar.gz $(UPLOADDIR)/$(MAJOR).x
 upload/www/$(MAJOR).x/F2PY-$(MAJOR)-latest.win32.exe: upload/tmp/$(MAJOR).x/F2PY-$(MAJOR)-latest.win32.exe
 	-mkdir -p `dirname $@`
 	cp -P upload/tmp/$(MAJOR).x/F2PY-{$(MAJOR)-latest,$(REV)}.win32.exe upload/www/$(MAJOR).x
 	$(UPLOADCMD) upload/tmp/$(MAJOR).x/F2PY-{$(MAJOR)-latest,$(REV)}.win32.exe $(UPLOADDIR)/$(MAJOR).x/
-upload/www/$(MAJOR).x/scipy_distutils-latest.win32.exe: upload/tmp/$(MAJOR).x/scipy_distutils-latest.win32.exe
+upload/www/$(MAJOR).x/numpy_distutils-latest.win32.exe: upload/tmp/$(MAJOR).x/numpy_distutils-latest.win32.exe
 	-mkdir -p `dirname $@`
-	cp -P upload/tmp/$(MAJOR).x/scipy_distutils-{latest,$(SCIPY_DISTUTILS_REV)}.win32.exe upload/www/$(MAJOR).x
-	$(UPLOADCMD) upload/tmp/$(MAJOR).x/scipy_distutils-{latest,$(SCIPY_DISTUTILS_REV)}.win32.exe $(UPLOADDIR)/$(MAJOR).x/
+	cp -P upload/tmp/$(MAJOR).x/numpy_distutils-{latest,$(SCIPY_DISTUTILS_REV)}.win32.exe upload/www/$(MAJOR).x
+	$(UPLOADCMD) upload/tmp/$(MAJOR).x/numpy_distutils-{latest,$(SCIPY_DISTUTILS_REV)}.win32.exe $(UPLOADDIR)/$(MAJOR).x/
 
 upload/tmp/usersguide/index.html: docs/usersguide/index.txt $(UG_FILES_DEP:%=upload/www/usersguide/%)
 	-mkdir -p upload/tmp/usersguide
@@ -167,7 +167,7 @@ clean:
 distclean: clean
 	rm -f {tests/,src/,}*~
 	rm -f tests/*.{f,f90}
-	rm -rf dist {docs/,docs/usersguide/,}build f2py2e scipy_distutils upload
+	rm -rf dist {docs/,docs/usersguide/,}build f2py2e numpy_distutils upload
 	rm -f MANIFEST f2py?.? f2py
 
 .PHONY: install test

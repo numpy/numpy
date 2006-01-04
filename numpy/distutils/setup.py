@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-from scipy.distutils.core      import setup
-from scipy.distutils.misc_util import Configuration
+from numpy.distutils.core      import setup
+from numpy.distutils.misc_util import Configuration
 
 def configuration(parent_package='',top_path=None):
     config = Configuration('distutils',parent_package,top_path)

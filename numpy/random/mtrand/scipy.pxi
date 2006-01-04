@@ -3,7 +3,7 @@
 # :License:   BSD Style
 
 
-cdef extern from "scipy/arrayobject.h":
+cdef extern from "numpy/arrayobject.h":
     ctypedef enum PyArray_TYPES:
         PyArray_BOOL
         PyArray_BYTE
@@ -29,11 +29,11 @@ cdef extern from "scipy/arrayobject.h":
 
     ctypedef int intp 
 
-    ctypedef extern class scipy.dtypedescr [object PyArray_Descr]:
+    ctypedef extern class numpy.dtypedescr [object PyArray_Descr]:
         cdef int type_num, elsize
         cdef char type
 
-    ctypedef extern class scipy.ndarray [object PyArrayObject]:
+    ctypedef extern class numpy.ndarray [object PyArrayObject]:
         cdef char *data
         cdef int nd
         cdef intp *dimensions

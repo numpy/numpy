@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # File: setup_example.py
 
-from scipy_distutils.core import Extension
+from numpy_distutils.core import Extension
 
 ext1 = Extension(name = 'scalar',
                  sources = ['scalar.f'])
@@ -9,7 +9,7 @@ ext2 = Extension(name = 'fib2',
                  sources = ['fib2.pyf','fib1.f'])
 
 if __name__ == "__main__":
-    from scipy_distutils.core import setup
+    from numpy_distutils.core import setup
     setup(name = 'f2py_example',
           description       = "F2PY Users Guide examples",
           author            = "Pearu Peterson",

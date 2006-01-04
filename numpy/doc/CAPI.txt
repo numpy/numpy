@@ -1,5 +1,5 @@
 Author:          Travis Oliphant
-Discussions to:  scipy-dev@scipy.org
+Discussions to:  numpy-dev@numpy.org
 Created:         October 2005
 
 The CAPI of SciPy is (mostly) backward compatible with Numeric.  
@@ -33,7 +33,7 @@ their function signatures.
 
 All of these headers are installed to 
 
-<YOUR_PYTHON_LOCATION>/site-packages/scipy/base/include
+<YOUR_PYTHON_LOCATION>/site-packages/numpy/base/include
 
 
 Getting arrays in C-code

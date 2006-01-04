@@ -35,11 +35,11 @@ def run():
         print 'Failed to import numarray:',sys.exc_value
         has_numarray = 0
     try:
-        import scipy.base
-        has_newscipy = 1
+        import numpy.base
+        has_newnumpy = 1
     except ImportError:
-        print 'Failed to import new scipy:', sys.exc_value
-        has_newscipy = 0
+        print 'Failed to import new numpy:', sys.exc_value
+        has_newnumpy = 0
     try:
         import f2py2e
         has_f2py2e = 1
@@ -47,15 +47,15 @@ def run():
         print 'Failed to import f2py2e:',sys.exc_value
         has_f2py2e = 0
     try:
-        import scipy.distutils
-        has_scipy_distutils = 2
+        import numpy.distutils
+        has_numpy_distutils = 2
     except ImportError:
         try:
-            import scipy_distutils
-            has_scipy_distutils = 1
+            import numpy_distutils
+            has_numpy_distutils = 1
         except ImportError:
-            print 'Failed to import scipy_distutils:',sys.exc_value
-            has_scipy_distutils = 0
+            print 'Failed to import numpy_distutils:',sys.exc_value
+            has_numpy_distutils = 0
     if has_Numeric:
         try:
             print 'Found Numeric version %r in %s' % \
@@ -70,10 +70,10 @@ def run():
         except Exception,msg:
             print 'error:',msg
             print '------'
-    if has_newscipy:
+    if has_newnumpy:
         try:
-            print 'Found new scipy version %r in %s' % \
-                  (scipy.__version__, scipy.__file__)
+            print 'Found new numpy version %r in %s' % \
+                  (numpy.__version__, numpy.__file__)
         except Exception,msg:
             print 'error:', msg
             print '------'
@@ -84,24 +84,24 @@ def run():
         except Exception,msg:
             print 'error:',msg
             print '------'
-    if has_scipy_distutils:
+    if has_numpy_distutils:
         try:
-            if has_scipy_distutils==2:
-                print 'Found scipy.distutils version %r in %r' % (\
-            scipy.distutils.__version__,
-            scipy.distutils.__file__)
+            if has_numpy_distutils==2:
+                print 'Found numpy.distutils version %r in %r' % (\
+            numpy.distutils.__version__,
+            numpy.distutils.__file__)
             else:
-                print 'Found scipy_distutils version %r in %r' % (\
-            scipy_distutils.scipy_distutils_version.scipy_distutils_version,
-            scipy_distutils.__file__)
+                print 'Found numpy_distutils version %r in %r' % (\
+            numpy_distutils.numpy_distutils_version.numpy_distutils_version,
+            numpy_distutils.__file__)
             print '------'
         except Exception,msg:
             print 'error:',msg
             print '------'
         try:
-            if has_scipy_distutils==1:
-                print 'Importing scipy_distutils.command.build_flib ...',
-                import scipy_distutils.command.build_flib as build_flib
+            if has_numpy_distutils==1:
+                print 'Importing numpy_distutils.command.build_flib ...',
+                import numpy_distutils.command.build_flib as build_flib
                 print 'ok'
                 print '------'
                 try:
@@ -113,15 +113,15 @@ def run():
                     print 'error:',msg
                     print '------'
         except Exception,msg:
-            print 'error:',msg,'(ignore it, build_flib is obsolute for scipy.distutils 0.2.2 and up)'
+            print 'error:',msg,'(ignore it, build_flib is obsolute for numpy.distutils 0.2.2 and up)'
             print '------'
         try:
-            if has_scipy_distutils==2:
-                print 'Importing scipy.distutils.fcompiler ...',
-                import scipy.distutils.fcompiler as fcompiler
+            if has_numpy_distutils==2:
+                print 'Importing numpy.distutils.fcompiler ...',
+                import numpy.distutils.fcompiler as fcompiler
             else:
-                print 'Importing scipy_distutils.fcompiler ...',
-                import scipy_distutils.fcompiler as fcompiler
+                print 'Importing numpy_distutils.fcompiler ...',
+                import numpy_distutils.fcompiler as fcompiler
             print 'ok'
             print '------'
             try:
@@ -135,21 +135,21 @@ def run():
             print 'error:',msg
             print '------'
         try:
-            if has_scipy_distutils==2:
-                print 'Importing scipy.distutils.cpuinfo ...',
-                from scipy.distutils.cpuinfo import cpuinfo
+            if has_numpy_distutils==2:
+                print 'Importing numpy.distutils.cpuinfo ...',
+                from numpy.distutils.cpuinfo import cpuinfo
                 print 'ok'
                 print '------'
             else:
                 try:
-                    print 'Importing scipy_distutils.command.cpuinfo ...',
-                    from scipy_distutils.command.cpuinfo import cpuinfo
+                    print 'Importing numpy_distutils.command.cpuinfo ...',
+                    from numpy_distutils.command.cpuinfo import cpuinfo
                     print 'ok'
                     print '------'
                 except Exception,msg:
                     print 'error:',msg,'(ignore it)'
-                    print 'Importing scipy_distutils.cpuinfo ...',
-                    from scipy_distutils.cpuinfo import cpuinfo
+                    print 'Importing numpy_distutils.cpuinfo ...',
+                    from numpy_distutils.cpuinfo import cpuinfo
                     print 'ok'
                     print '------'
             cpu = cpuinfo()

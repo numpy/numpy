@@ -26,7 +26,7 @@ __all__ = ['fft','inverse_fft', 'ifft', 'real_fft', 'refft', 'inverse_real_fft',
            'inverse_fft2d', 'real_fftnd', 'real_fft2d', 'inverse_real_fftnd',
            'inverse_real_fft2d',]
 
-from scipy.base import *
+from numpy.base import *
 import fftpack_lite as fftpack
 from helper import *
 

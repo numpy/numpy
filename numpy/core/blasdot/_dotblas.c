@@ -1,8 +1,8 @@
 static char module_doc[] =
-"This module provides a BLAS optimized\nmatrix multiply, inner product and dot for scipy arrays";
+"This module provides a BLAS optimized\nmatrix multiply, inner product and dot for numpy arrays";
 
 #include "Python.h"
-#include "scipy/arrayobject.h"
+#include "numpy/arrayobject.h"
 #ifndef CBLAS_HEADER
 #define CBLAS_HEADER "cblas.h"
 #endif
@@ -128,7 +128,7 @@ dotblas_restoredot(PyObject *dummy, PyObject *args)
 }
       
 
-static char doc_matrixproduct[] = "matrixproduct(a,b)\nReturns the dot product of a and b for arrays of floating point types.\nLike the generic scipy equivalent the product sum is over\nthe last dimension of a and the second-to-last dimension of b.\nNB: The first argument is not conjugated.";
+static char doc_matrixproduct[] = "matrixproduct(a,b)\nReturns the dot product of a and b for arrays of floating point types.\nLike the generic numpy equivalent the product sum is over\nthe last dimension of a and the second-to-last dimension of b.\nNB: The first argument is not conjugated.";
 
 static PyObject *
 dotblas_matrixproduct(PyObject *dummy, PyObject *args) 

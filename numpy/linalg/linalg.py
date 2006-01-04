@@ -1,4 +1,4 @@
-"""Lite version of scipy.linalg.
+"""Lite version of numpy.linalg.
 """
 # This module is a lite version of LinAlg.py module which contains
 # high-level Python interface to the LAPACK library.  The lite version
@@ -12,7 +12,7 @@ __all__ = ['LinAlgError', 'solve_linear_equations', 'solve',
            'eigenvectors', 'eig', 'Heigenvectors', 'eigh','lstsq', 'linear_least_squares'
            ]
            
-from scipy.base import *
+from numpy.base import *
 import lapack_lite
 import math
 

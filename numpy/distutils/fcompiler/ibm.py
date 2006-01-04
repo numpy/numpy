@@ -2,7 +2,7 @@ import os
 import re
 import sys
 
-from scipy.distutils.fcompiler import FCompiler
+from numpy.distutils.fcompiler import FCompiler
 from distutils import log
 
 class IbmFCompiler(FCompiler):
@@ -74,7 +74,7 @@ class IbmFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from scipy.distutils.fcompiler import new_fcompiler
+    from numpy.distutils.fcompiler import new_fcompiler
     compiler = new_fcompiler(compiler='ibm')
     compiler.customize()
     print compiler.get_version()

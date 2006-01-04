@@ -44,7 +44,7 @@ class config_fc(Command):
 
     def finalize_options(self):
         if self.help_fcompiler:
-            from scipy.distutils.fcompiler import show_fcompilers
+            from numpy.distutils.fcompiler import show_fcompilers
             show_fcompilers(self.distribution)
             sys.exit()
         return

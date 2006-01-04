@@ -3119,7 +3119,7 @@ static char Ufunctype__doc__[] =
 static PyTypeObject PyUFunc_Type = {
 	PyObject_HEAD_INIT(0)
 	0,				/*ob_size*/
-	"scipy.ufunc",			/*tp_name*/
+	"numpy.ufunc",			/*tp_name*/
 	sizeof(PyUFuncObject),		/*tp_basicsize*/
 	0,				/*tp_itemsize*/
 	/* methods */

@@ -1,8 +1,8 @@
 
-from scipy.testing import *
+from numpy.testing import *
 set_package_path()
-import scipy.base;
-from scipy.base import *
+import numpy.base;
+from numpy.base import *
 restore_path()
 
 class test_apply_along_axis(ScipyTestCase):

@@ -1,6 +1,6 @@
 """
->>> import scipy.base as nx
->>> from scipy.base.polynomial import poly1d, polydiv
+>>> import numpy.base as nx
+>>> from numpy.base.polynomial import poly1d, polydiv
 
 >>> p = poly1d([1.,2,3])
 >>> p
@@ -73,7 +73,7 @@ poly1d([ 2.])
 (poly1d([ 1., -1.]), poly1d([ 0.]))
 """
 
-from scipy.testing import *
+from numpy.testing import *
 
 import doctest
 def test_suite(level=1):

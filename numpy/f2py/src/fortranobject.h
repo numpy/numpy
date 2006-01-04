@@ -10,7 +10,7 @@ extern "C" {
 #define NO_IMPORT_ARRAY
 #endif
 #define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
-#include "scipy/arrayobject.h"
+#include "numpy/arrayobject.h"
 
   /*
 #ifdef F2PY_REPORT_ATEXIT_DISABLE

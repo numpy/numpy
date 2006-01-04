@@ -1,6 +1,6 @@
 """
->>> import scipy.base as nx
->>> import scipy.base.ufunclike as U
+>>> import numpy.base as nx
+>>> import numpy.base.ufunclike as U
 
 Test fix:
 >>> a = nx.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
@@ -53,7 +53,7 @@ array([ 2.169925  ,  1.20163386,  2.70043972])
 
 """
 
-from scipy.testing import *
+from numpy.testing import *
 
 import doctest
 def test_suite(level=1):

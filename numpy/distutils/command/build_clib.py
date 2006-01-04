@@ -10,9 +10,9 @@ from types import *
 from distutils.command.build_clib import build_clib as old_build_clib
 from distutils.command.build_clib import show_compilers
 
-from scipy.distutils import log
+from numpy.distutils import log
 from distutils.dep_util import newer_group
-from scipy.distutils.misc_util import filter_sources, has_f_sources,\
+from numpy.distutils.misc_util import filter_sources, has_f_sources,\
      has_cxx_sources, all_strings, get_lib_source_files
 
 class build_clib(old_build_clib):
@@ -71,7 +71,7 @@ class build_clib(old_build_clib):
         self.compiler.show_customization()
 
         if self.have_f_sources():
-            from scipy.distutils.fcompiler import new_fcompiler
+            from numpy.distutils.fcompiler import new_fcompiler
             self.fcompiler = new_fcompiler(compiler=self.fcompiler,
                                            verbose=self.verbose,
                                            dry_run=self.dry_run,

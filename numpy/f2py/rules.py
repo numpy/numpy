@@ -174,7 +174,7 @@ DL_EXPORT(void) init#modulename#(void) {
 \tPyFortran_Type.ob_type = &PyType_Type;
 \timport_array();
 \tif (PyErr_Occurred())
-\t\tPy_FatalError(\"can't initialize module #modulename# (failed to import scipy.base)\");
+\t\tPy_FatalError(\"can't initialize module #modulename# (failed to import numpy.base)\");
 \td = PyModule_GetDict(m);
 \ts = PyString_FromString(\"$R"""+"""evision: $\");
 \tPyDict_SetItemString(d, \"__version__\", s);

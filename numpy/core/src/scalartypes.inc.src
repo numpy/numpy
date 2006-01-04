@@ -641,14 +641,14 @@ gentype_flags_get(PyObject *self)
 {
 	static int flags=CONTIGUOUS | OWNDATA | FORTRAN | ALIGNED;
 
-        return PyObject_CallMethod(_scipy_internal, "flagsobj", "Oii", 
+        return PyObject_CallMethod(_numpy_internal, "flagsobj", "Oii", 
                                    self, flags, 1);
 }
 
 static PyObject *
 voidtype_flags_get(PyVoidScalarObject *self)
 {
-	return PyObject_CallMethod(_scipy_internal, "flagsobj", "Oii", 
+	return PyObject_CallMethod(_numpy_internal, "flagsobj", "Oii", 
                                    self, self->flags, 1);
 }
 
@@ -1194,7 +1194,7 @@ gentype_reduce(PyObject *self, PyObject *args)
 	if (PyObject_AsReadBuffer(self, (const void **)&buffer, &buflen)<0) {
 		Py_DECREF(ret); return NULL;
 	}
-	mod = PyImport_ImportModule("scipy.base.multiarray");
+	mod = PyImport_ImportModule("numpy.base.multiarray");
 	if (mod == NULL) return NULL;
 	obj = PyObject_GetAttrString(mod, "scalar");
 	Py_DECREF(mod);

@@ -56,21 +56,21 @@ class finfo(object):
                             lambda v:_frz(v.astype('i'))[0],
                             lambda v:array(_frz(v)[0],'d'),
                             lambda v:'%24.16e' % array(_frz(v)[0],'d'),
-                            'scipy float precision floating point '\
+                            'numpy float precision floating point '\
                             'number')
         elif dtype is numeric.single:
             machar =  MachAr(lambda v:array([v],'f'),
                              lambda v:_frz(v.astype('i'))[0],
                              lambda v:array(_frz(v)[0],'f'),  #
                              lambda v:'%15.7e' % array(_frz(v)[0],'f'),
-                             "scipy single precision floating "\
+                             "numpy single precision floating "\
                              "point number")
         elif dtype is numeric.longfloat:
             machar = MachAr(lambda v:array([v],'g'),
                             lambda v:_frz(v.astype('i'))[0],
                             lambda v:array(_frz(v)[0],'g'),  #
                             lambda v:str(array(_frz(v)[0],'g')),
-                            "scipy longfloat precision floating "\
+                            "numpy longfloat precision floating "\
                             "point number")
         else:
             raise ValueError,`dtype`

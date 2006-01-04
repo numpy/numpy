@@ -273,7 +273,7 @@ class Configuration:
                   'libraries','headers','scripts']
     _dict_keys = ['package_dir']
 
-    scipy_include_dirs = []
+    numpy_include_dirs = []
 
     def __init__(self,
                  package_name=None,
@@ -615,7 +615,7 @@ class Configuration:
 
         ext_args['libraries'] = libnames + ext_args['libraries']
 
-        from scipy.distutils.core import Extension
+        from numpy.distutils.core import Extension
         ext = Extension(**ext_args)
         self.ext_modules.append(ext)
 
@@ -739,7 +739,7 @@ class Configuration:
                         libraries=self.libraries,
                         include_dirs=self.include_dirs)
         else:
-            from scipy.distutils.core import Extension
+            from numpy.distutils.core import Extension
             assert isinstance(extlib,Extension),`extlib`
             extlib.libraries.extend(self.libraries)
             extlib.include_dirs.extend(self.include_dirs)
@@ -860,20 +860,20 @@ def get_cmd(cmdname,_cache={}):
         _cache[cmdname] = cmd
     return _cache[cmdname]
 
-def get_scipy_include_dirs():
-    # scipy_include_dirs are set by scipy/base/setup.py, otherwise []
-    include_dirs = Configuration.scipy_include_dirs[:]
+def get_numpy_include_dirs():
+    # numpy_include_dirs are set by numpy/base/setup.py, otherwise []
+    include_dirs = Configuration.numpy_include_dirs[:]
     if not include_dirs:
-        import scipy
-        if scipy.show_core_config is None:
-            # running from scipy_core source directory
-            include_dirs.append(os.path.join(os.path.dirname(scipy.__file__),
+        import numpy
+        if numpy.show_core_config is None:
+            # running from numpy_core source directory
+            include_dirs.append(os.path.join(os.path.dirname(numpy.__file__),
                                              'base','include'))
         else:
-            # using installed scipy core headers
-            import scipy.base as base
+            # using installed numpy core headers
+            import numpy.base as base
             include_dirs.append(os.path.join(os.path.dirname(base.__file__),'include'))
-    # else running scipy/base/setup.py
+    # else running numpy/base/setup.py
     return include_dirs
 
 #########################
@@ -929,7 +929,7 @@ def generate_config_py(extension, build_dir):
                         sources=[generate_config_py])
         config['ext_modules'].append(ext)
     """
-    from scipy.distutils.system_info import system_info
+    from numpy.distutils.system_info import system_info
     from distutils.dir_util import mkpath
     target = os.path.join(*([build_dir]+extension.name.split('.'))) + '.py'
     mkpath(os.path.dirname(target))

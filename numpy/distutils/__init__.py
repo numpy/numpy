@@ -12,5 +12,5 @@ except ImportError:
     _INSTALLED = False
 
 if _INSTALLED:
-    from scipy.testing import ScipyTest 
+    from numpy.testing import ScipyTest 
     test = ScipyTest().test

@@ -93,30 +93,30 @@ If upgrading from F2PY version 2.3.321 or earlier then remove all f2py
 specific files from ``/path/to/python/bin`` directory before
 running installation command.
 
-Q: How to get/upgrade scipy_distutils when using F2PY from CVS?
+Q: How to get/upgrade numpy_distutils when using F2PY from CVS?
 ---------------------------------------------------------------
 
-To get scipy_distutils from SciPy CVS repository, run
+To get numpy_distutils from SciPy CVS repository, run
 ::
 
   cd cvs/f2py2e/
-  make scipy_distutils
+  make numpy_distutils
 
-This will checkout scipy_distutils to the current directory.
+This will checkout numpy_distutils to the current directory.
 
-You can upgrade scipy_distutils by executing
+You can upgrade numpy_distutils by executing
 ::
 
-  cd cvs/f2py2e/scipy_distutils
+  cd cvs/f2py2e/numpy_distutils
   cvs update -Pd
 
 and install it by executing
 ::
 
-  cd cvs/f2py2e/scipy_distutils
-  python setup_scipy_distutils.py install
+  cd cvs/f2py2e/numpy_distutils
+  python setup_numpy_distutils.py install
 
-In most of the time, f2py2e and scipy_distutils can be upgraded
+In most of the time, f2py2e and numpy_distutils can be upgraded
 independently.
 
 Testing
@@ -210,9 +210,9 @@ See the section `Setting up environment`__ for Cygwin and MinGW.
 
 __ http://cygwin.com/
 __ http://www.mingw.org/
-__ http://cens.ioc.ee/~pearu/scipy/BUILD_WIN32.html#setting-up-environment
+__ http://cens.ioc.ee/~pearu/numpy/BUILD_WIN32.html#setting-up-environment
 
-Install scipy_distutils and F2PY. Win32 installers of these packages
+Install numpy_distutils and F2PY. Win32 installers of these packages
 are provided in `F2PY Download`__ section.
 
 __ http://cens.ioc.ee/projects/f2py2e/#download
@@ -412,14 +412,14 @@ This question may be releavant when using F2PY in Makefiles.  Here
 follows a script demonstrating how to determine which Fortran compiler
 and flags F2PY will use::
 
-  # Using post-0.2.2 scipy_distutils
-  from scipy_distutils.fcompiler import new_fcompiler
+  # Using post-0.2.2 numpy_distutils
+  from numpy_distutils.fcompiler import new_fcompiler
   compiler = new_fcompiler() # or new_fcompiler(compiler='intel')
   compiler.dump_properties()
 
-  # Using pre-0.2.2 scipy_distutils
+  # Using pre-0.2.2 numpy_distutils
   import os
-  from scipy_distutils.command.build_flib import find_fortran_compiler
+  from numpy_distutils.command.build_flib import find_fortran_compiler
   def main():
       fcompiler = os.environ.get('FC_VENDOR')
       fcompiler_exec = os.environ.get('F77')
@@ -513,7 +513,7 @@ __ https://geodoc.uchicago.edu/climatewiki/WrappingBenchmarks
 
 + `Performance Python with Weave`__ by Prabhu Ramachandran.
 
-__ http://www.scipy.org/documentation/weave/weaveperformance.html
+__ http://www.numpy.org/documentation/weave/weaveperformance.html
 
 + `How To Install py-f2py on Mac OSX`__
 
@@ -527,7 +527,7 @@ Q: What projects use F2PY?
 
 + `SciPy: Scientific tools for Python`__
 
-__ http://www.scipy.org/
+__ http://www.numpy.org/
 
 + `The Bolometer Data Analysis Project`__
 
@@ -573,7 +573,7 @@ Here are some comments people have posted to f2py mailing list and c.l.py:
 + Fernando Perez: Anyway, many many thanks for this amazing tool.
 
   I haven't used pyfort, but I can definitely vouch for the amazing quality of 
-  f2py.  And since f2py is actively used by scipy, it won't go unmaintained.  
+  f2py.  And since f2py is actively used by numpy, it won't go unmaintained.  
   It's quite impressive, and very easy to use.
 
 + Kevin Mueller: First off, thanks to those responsible for F2PY; 

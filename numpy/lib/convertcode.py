@@ -1,5 +1,5 @@
 
-# This module converts code written for Numeric to run with scipy.base
+# This module converts code written for Numeric to run with numpy.base
 
 # Makes the following changes:
 #  * Converts typecharacters
@@ -97,7 +97,7 @@ def fromstr(filestr):
                                           'numpy.core.umath')
     filestr, fromall1 = changeimports(filestr, 'Precision', 'numpy.core')
     filestr, fromall2 = changeimports(filestr, 'numerix', 'numpy.core')
-    filestr, fromall3 = changeimports(filestr, 'scipy_base', 'numpy.core')
+    filestr, fromall3 = changeimports(filestr, 'numpy_base', 'numpy.core')
     filestr, fromall3 = changeimports(filestr, 'MLab', 'numpy.core.mlab')
     filestr, fromall3 = changeimports(filestr, 'LinearAlgebra', 'numpy.linalg')
     filestr, fromall3 = changeimports(filestr, 'RNG', 'numpy.random')
@@ -110,7 +110,7 @@ def fromstr(filestr):
     today = datetime.date.today().strftime('%b %d, %Y')
     name = os.path.split(sys.argv[0])[-1]
     filestr = '## Automatically adapted for '\
-              'scipy %s by %s\n\n%s' % (today, name, filestr)
+              'numpy %s by %s\n\n%s' % (today, name, filestr)
     return filestr
 
 def makenewfile(name, filestr):

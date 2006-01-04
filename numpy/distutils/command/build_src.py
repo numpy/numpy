@@ -10,13 +10,13 @@ from distutils.command import build_ext, build_py
 from distutils.util import convert_path
 from distutils.dep_util import newer_group, newer
 
-from scipy.distutils import log
-from scipy.distutils.misc_util import fortran_ext_match, all_strings, dot_join,\
+from numpy.distutils import log
+from numpy.distutils.misc_util import fortran_ext_match, all_strings, dot_join,\
      appendpath
-from scipy.distutils.from_template import process_file as process_f_file
-from scipy.distutils.conv_template import process_file as process_c_file
-from scipy.distutils.extension import Extension
-from scipy.distutils.system_info import get_info, dict_append
+from numpy.distutils.from_template import process_file as process_f_file
+from numpy.distutils.conv_template import process_file as process_c_file
+from numpy.distutils.extension import Extension
+from numpy.distutils.system_info import get_info, dict_append
 
 class build_src(build_ext.build_ext):
 
@@ -334,7 +334,7 @@ class build_src(build_ext.build_ext):
             if (self.force or newer_group(depends, target_file,'newer')) \
                    and not skip_f2py:
                 log.info("f2py: %s" % (source))
-                import scipy.f2py as f2py2e
+                import numpy.f2py as f2py2e
                 f2py2e.run_main(f2py_options + ['--build-dir',target_dir,source])
             else:
                 log.debug("  skipping '%s' f2py interface (up-to-date)" % (source))
@@ -349,7 +349,7 @@ class build_src(build_ext.build_ext):
             depends = f_sources + extension.depends
             if (self.force or newer_group(depends, target_file, 'newer')) \
                    and not skip_f2py:
-                import scipy.f2py as f2py2e
+                import numpy.f2py as f2py2e
                 log.info("f2py:> %s" % (target_file))
                 self.mkpath(target_dir)
                 f2py2e.run_main(f2py_options + ['--lower',
@@ -371,7 +371,7 @@ class build_src(build_ext.build_ext):
             extension.include_dirs.append(self.build_src)
 
         if not skip_f2py:
-            import scipy.f2py as f2py2e
+            import numpy.f2py as f2py2e
             d = os.path.dirname(f2py2e.__file__)
             source_c = os.path.join(d,'src','fortranobject.c')
             source_h = os.path.join(d,'src','fortranobject.h')

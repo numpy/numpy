@@ -1,6 +1,6 @@
 #include "fftpack.h"
 #include "Python.h"
-#include "scipy/arrayobject.h"
+#include "numpy/arrayobject.h"
 
 static PyObject *ErrorObject;
 

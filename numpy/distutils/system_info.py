@@ -22,7 +22,7 @@ classes are available:
   blas_src_info
   numpy_info
   numarray_info
-  scipy_info
+  numpy_info
   boost_python_info
   agg2_info
   wx_info
@@ -175,7 +175,7 @@ def get_info(name,notfound_action=0):
           'numpy':numpy_info,
           'numeric':numpy_info, # alias to numpy, for build_ext --backends support
           'numarray':numarray_info,
-          'scipy':scipy_info,
+          'numpy':numpy_info,
           'lapack_opt':lapack_opt_info,
           'blas_opt':blas_opt_info,
           'boost_python':boost_python_info,
@@ -206,49 +206,49 @@ class AtlasNotFoundError(NotFoundError):
     """
     Atlas (http://math-atlas.sourceforge.net/) libraries not found.
     Directories to search for the libraries can be specified in the
-    scipy_distutils/site.cfg file (section [atlas]) or by setting
+    numpy_distutils/site.cfg file (section [atlas]) or by setting
     the ATLAS environment variable."""
 
 class LapackNotFoundError(NotFoundError):
     """
     Lapack (http://www.netlib.org/lapack/) libraries not found.
     Directories to search for the libraries can be specified in the
-    scipy_distutils/site.cfg file (section [lapack]) or by setting
+    numpy_distutils/site.cfg file (section [lapack]) or by setting
     the LAPACK environment variable."""
 
 class LapackSrcNotFoundError(LapackNotFoundError):
     """
     Lapack (http://www.netlib.org/lapack/) sources not found.
     Directories to search for the sources can be specified in the
-    scipy_distutils/site.cfg file (section [lapack_src]) or by setting
+    numpy_distutils/site.cfg file (section [lapack_src]) or by setting
     the LAPACK_SRC environment variable."""
 
 class BlasNotFoundError(NotFoundError):
     """
     Blas (http://www.netlib.org/blas/) libraries not found.
     Directories to search for the libraries can be specified in the
-    scipy_distutils/site.cfg file (section [blas]) or by setting
+    numpy_distutils/site.cfg file (section [blas]) or by setting
     the BLAS environment variable."""
 
 class BlasSrcNotFoundError(BlasNotFoundError):
     """
     Blas (http://www.netlib.org/blas/) sources not found.
     Directories to search for the sources can be specified in the
-    scipy_distutils/site.cfg file (section [blas_src]) or by setting
+    numpy_distutils/site.cfg file (section [blas_src]) or by setting
     the BLAS_SRC environment variable."""
 
 class FFTWNotFoundError(NotFoundError):
     """
     FFTW (http://www.fftw.org/) libraries not found.
     Directories to search for the libraries can be specified in the
-    scipy_distutils/site.cfg file (section [fftw]) or by setting
+    numpy_distutils/site.cfg file (section [fftw]) or by setting
     the FFTW environment variable."""
 
 class DJBFFTNotFoundError(NotFoundError):
     """
     DJBFFT (http://cr.yp.to/djbfft.html) libraries not found.
     Directories to search for the libraries can be specified in the
-    scipy_distutils/site.cfg file (section [djbfft]) or by setting
+    numpy_distutils/site.cfg file (section [djbfft]) or by setting
     the DJBFFT environment variable."""
 
 class F2pyNotFoundError(NotFoundError):
@@ -331,7 +331,7 @@ class system_info:
 
     def get_info(self,notfound_action=0):
         """ Return a dictonary with items that are compatible
-            with scipy_distutils.setup keyword arguments.
+            with numpy_distutils.setup keyword arguments.
         """
         flag = 0
         if not self.has_info():
@@ -786,7 +786,7 @@ class atlas_info(system_info):
       size of %s is %sk (expected >4000k)
 
     Follow the instructions in the KNOWN PROBLEMS section of the file
-    scipy/INSTALL.txt.
+    numpy/INSTALL.txt.
 *********************************************************************
 """ % (lapack_lib,sz/1024)
                 warnings.warn(message)
@@ -956,7 +956,7 @@ class lapack_src_info(system_info):
         self.set_info(**info)
 
 atlas_version_c_text = r'''
-/* This file is generated from scipy_distutils/system_info.py */
+/* This file is generated from numpy_distutils/system_info.py */
 #ifdef __CPLUSPLUS__
 extern "C" {
 #endif
@@ -1360,9 +1360,9 @@ class numarray_info(numpy_info):
     section = 'numarray'
     modulename = 'numarray'
 
-class scipy_info(numpy_info):
-    section = 'scipy'
-    modulename = 'scipy'
+class numpy_info(numpy_info):
+    section = 'numpy'
+    modulename = 'numpy'
 
 
 class boost_python_info(system_info):

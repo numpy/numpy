@@ -1,5 +1,5 @@
 Determine fixed/free format Fortran 90 dialect from the
-contents of Fortran files. See scipy_distutils/command/build_flib.py.
+contents of Fortran files. See numpy_distutils/command/build_flib.py.
 
 [DONE]
 ========================================================================

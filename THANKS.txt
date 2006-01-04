@@ -10,7 +10,7 @@ Eric Jones for weave and other sundry subroutines
 Fernando Perez for code snippets, ideas, bufixes, and testing.
 John Hunter for code snippets (from matplotlib)
 Chris Hanley for help with records.py, testing, and bug fixes.
-Travis Vaught and Joe Cooper for administration of scipy.org web site and SVN 
+Travis Vaught and Joe Cooper for administration of numpy.org web site and SVN 
 Eric Firing for bugfixes.
 Arnd Baecker for 64-bit testing
 David Cooke for many code improvements including the auto-generated C-API

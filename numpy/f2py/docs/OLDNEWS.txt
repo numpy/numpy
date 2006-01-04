@@ -19,7 +19,7 @@
 
   February 24, 2004
     Latest F2PY release (version 2.39.235-1644).
-    Support for scipy_distutils 0.2.2 and up (e.g. compiler flags can be
+    Support for numpy_distutils 0.2.2 and up (e.g. compiler flags can be
     changed via f2py command line options). Implemented support for
     character arrays and arrays of strings (e.g. ``character*(*) a(m,..)``).
     *Important bug fixes regarding complex arguments, upgrading is

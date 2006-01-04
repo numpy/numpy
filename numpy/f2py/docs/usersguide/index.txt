@@ -56,7 +56,7 @@ following steps:
 
 * F2PY compiles all sources and builds an extension module containing
   the wrappers. In building extension modules, F2PY uses
-  ``scipy_distutils`` that supports a number of Fortran 77/90/95
+  ``numpy_distutils`` that supports a number of Fortran 77/90/95
   compilers, including Gnu, Intel,
   Sun Fortre, SGI MIPSpro, Absoft, NAG, Compaq etc. compilers.
 
@@ -1458,7 +1458,7 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
     Search include files from given directories.
 
   ``--help-link [<list of resources names>]`` 
-    List system resources found by ``scipy_distutils/system_info.py``.
+    List system resources found by ``numpy_distutils/system_info.py``.
     For example, try ``f2py --help-link lapack_opt``.
 
 3. To build an extension module, use
@@ -1529,7 +1529,7 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
   ``link-<resource>``
 
     Link extension module with <resource> as defined by
-    ``scipy_distutils/system_info.py``. E.g. to link with optimized
+    ``numpy_distutils/system_info.py``. E.g. to link with optimized
     LAPACK libraries (vecLib on MacOSX, ATLAS elsewhere), use
     ``--link-lapack_opt``. See also ``--help-link`` switch.
 
@@ -1612,10 +1612,10 @@ The following functions are provided by the ``f2py2e`` module:
     :literal:
 
 ==========================
-Using ``scipy_distutils``
+Using ``numpy_distutils``
 ==========================
 
-``scipy_distutils`` is part of the SciPy_ project and aims to extend
+``numpy_distutils`` is part of the SciPy_ project and aims to extend
 standard Python ``distutils`` to deal with Fortran sources and F2PY
 signature files, e.g. compile Fortran sources, call F2PY to construct
 extension modules, etc. 
@@ -1638,7 +1638,7 @@ extension modules, etc.
 
   __ setup_example.py
 
-``scipy_distutils`` extends ``distutils`` with the following features:
+``numpy_distutils`` extends ``distutils`` with the following features:
 
 * ``Extension`` class argument ``sources`` may contain Fortran source
   files. In addition, the list ``sources`` may contain at most one
@@ -1654,7 +1654,7 @@ extension modules, etc.
   Additional options to F2PY process can be given using ``Extension``
   class argument ``f2py_options``.
 
-``scipy_distutils`` 0.2.2 and up
+``numpy_distutils`` 0.2.2 and up
 ================================
 
 * The following new ``distutils`` commands are defined:
@@ -1682,14 +1682,14 @@ extension modules, etc.
  
     absoft sun mips intel intelv intele intelev nag compaq compaqv gnu vast pg hpux
 
-  See ``scipy_distutils/fcompiler.py`` for up-to-date list of
+  See ``numpy_distutils/fcompiler.py`` for up-to-date list of
   supported compilers or run
 
   ::
 
      f2py -c --help-fcompiler
 
-``scipy_distutils`` pre 0.2.2
+``numpy_distutils`` pre 0.2.2
 =============================
 
 * The following new ``distutils`` commands are defined:
@@ -1715,7 +1715,7 @@ extension modules, etc.
  
     Absoft Sun SGI Intel Itanium NAG Compaq Digital Gnu VAST PG
 
-  See ``scipy_distutils/command/build_flib.py`` for up-to-date list of
+  See ``numpy_distutils/command/build_flib.py`` for up-to-date list of
   supported compilers.
 
 ======================
@@ -1769,4 +1769,4 @@ In Python:
 .. _F2PY: http://cens.ioc.ee/projects/f2py2e/
 .. _Python: http://www.python.org/
 .. _NumPy: http://www.numpy.org/
-.. _SciPy: http://www.scipy.org/
+.. _SciPy: http://www.numpy.org/

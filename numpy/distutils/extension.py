@@ -53,7 +53,7 @@ class Extension(old_Extension):
         self.depends = depends or []
         self.language = language
 
-        # scipy_distutils features
+        # numpy_distutils features
         self.f2py_options = f2py_options or []
         self.module_dirs = module_dirs or []
 

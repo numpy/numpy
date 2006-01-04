@@ -82,7 +82,7 @@ facilitate:
   multi-dimensional Fortran and Numerical Python (i.e. C) arrays.
 
 In addition, F2PY can build the generated extension modules to shared
-libraries with one command. F2PY uses the ``scipy_distutils`` module
+libraries with one command. F2PY uses the ``numpy_distutils`` module
 from SciPy_ that supports number of major Fortran compilers.
 
 ..
@@ -196,17 +196,17 @@ and/or Fortran compilers installed.
  Download
 ==========
 
-You can download the sources for the latest F2PY and scipy_distutils
+You can download the sources for the latest F2PY and numpy_distutils
 releases as:
 
 * `2.x`__/`F2PY-2-latest.tar.gz`__
-* `2.x`__/`scipy_distutils-latest.tar.gz`__
+* `2.x`__/`numpy_distutils-latest.tar.gz`__
 
 Windows users might be interested in Win32 installer for F2PY and
 Scipy_distutils (these installers are built using Python 2.3):
 
 * `2.x`__/`F2PY-2-latest.win32.exe`__
-* `2.x`__/`scipy_distutils-latest.win32.exe`__
+* `2.x`__/`numpy_distutils-latest.win32.exe`__
 
 Older releases are also available in the directories
 `rel-0.x`__, `rel-1.x`__, `rel-2.x`__, `rel-3.x`__, `rel-4.x`__, `rel-5.x`__,
@@ -215,11 +215,11 @@ if you need them.
 .. __: 2.x/
 .. __: 2.x/F2PY-2-latest.tar.gz
 .. __: 2.x/
-.. __: 2.x/scipy_distutils-latest.tar.gz
+.. __: 2.x/numpy_distutils-latest.tar.gz
 .. __: 2.x/
 .. __: 2.x/F2PY-2-latest.win32.exe
 .. __: 2.x/
-.. __: 2.x/scipy_distutils-latest.win32.exe
+.. __: 2.x/numpy_distutils-latest.win32.exe
 .. __: rel-0.x
 .. __: rel-1.x
 .. __: rel-2.x
@@ -250,7 +250,7 @@ See also Installation__ section in `F2PY FAQ`_.
 
 .. __: FAQ.html#installation
 
-Similarly, to install ``scipy_distutils``, unpack its tar-ball and run::
+Similarly, to install ``numpy_distutils``, unpack its tar-ball and run::
 
   python setup.py install
 
@@ -433,7 +433,7 @@ __ http://jrfonseca.dyndns.org/debian/
 
 .. _CVS: http://www.cvshome.org/
 .. _Python: http://www.python.org/
-.. _SciPy: http://www.scipy.org/
+.. _SciPy: http://www.numpy.org/
 .. _NumPy: http://www.numpy.org/
 .. _Numarray: http://www.stsci.edu/resources/software_hardware/numarray
 .. _docutils: http://docutils.sourceforge.net/

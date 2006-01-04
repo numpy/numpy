@@ -1,8 +1,8 @@
 
-from scipy.testing import *
+from numpy.testing import *
 set_package_path()
-import scipy.base;reload(scipy.base)
-from scipy.base import *
+import numpy.base;reload(numpy.base)
+from numpy.base import *
 restore_path()
 
 class test_ctor(ScipyTestCase):
@@ -26,7 +26,7 @@ class test_ctor(ScipyTestCase):
         
 class test_properties(ScipyTestCase):
     def test_basic(self):
-        import scipy.corelinalg as linalg
+        import numpy.corelinalg as linalg
         
         A = array([[1., 2.], 
                    [3., 4.]])
@@ -94,7 +94,7 @@ class test_autocasting(ScipyTestCase):
 
 class test_algebra(ScipyTestCase):
     def test_basic(self):
-        import scipy.corelinalg as linalg
+        import numpy.corelinalg as linalg
         
         A = array([[1., 2.],
                    [3., 4.]])

@@ -4,8 +4,8 @@
 import os
 import sys
 
-from scipy.distutils.cpuinfo import cpu
-from scipy.distutils.fcompiler import FCompiler
+from numpy.distutils.cpuinfo import cpu
+from numpy.distutils.fcompiler import FCompiler
 
 class PGroupFCompiler(FCompiler):
 
@@ -36,7 +36,7 @@ class PGroupFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from scipy.distutils.fcompiler import new_fcompiler
+    from numpy.distutils.fcompiler import new_fcompiler
     compiler = new_fcompiler(compiler='pg')
     compiler.customize()
     print compiler.get_version()

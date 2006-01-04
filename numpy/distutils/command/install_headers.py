@@ -13,8 +13,8 @@ class install_headers (old_install_headers):
         for header in headers:
             if isinstance(header,tuple):
                 # Kind of a hack, but I don't know where else to change this...
-                if header[0] == 'scipy.base':
-                    header = ('scipy', header[1])
+                if header[0] == 'numpy.base':
+                    header = ('numpy', header[1])
                     if os.path.splitext(header[1])[1] == '.inc':
                         continue
                 d = os.path.join(*([prefix]+header[0].split('.')))

@@ -1,7 +1,7 @@
-"""scipy.distutils.fcompiler
+"""numpy.distutils.fcompiler
 
 Contains FCompiler, an abstract base class that defines the interface
-for the scipy.distutils Fortran compiler abstraction model.
+for the numpy.distutils Fortran compiler abstraction model.
 """
 
 __all__ = ['FCompiler','new_fcompiler','show_fcompilers',
@@ -17,9 +17,9 @@ from distutils.errors import DistutilsModuleError,DistutilsArgError,\
      DistutilsExecError,CompileError,LinkError,DistutilsPlatformError
 from distutils.util import split_quoted
 
-from scipy.distutils.ccompiler import CCompiler, gen_lib_options
-from scipy.distutils import log
-from scipy.distutils.command.config_compiler import config_fc
+from numpy.distutils.ccompiler import CCompiler, gen_lib_options
+from numpy.distutils import log
+from numpy.distutils.command.config_compiler import config_fc
 from distutils.spawn import _nt_quote_args
 
 class FCompiler(CCompiler):
@@ -636,7 +636,7 @@ def new_fcompiler(plat=None,
         raise DistutilsPlatformError, msg
 
     try:
-        module_name = 'scipy.distutils.fcompiler.'+module_name
+        module_name = 'numpy.distutils.fcompiler.'+module_name
         __import__ (module_name)
         module = sys.modules[module_name]
         klass = vars(module)[class_name]

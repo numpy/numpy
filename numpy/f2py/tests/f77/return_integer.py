@@ -7,8 +7,8 @@ Examples:
   python return_integer.py --quiet
 """
 
-import scipy.f2py as f2py2e
-from scipy.base import array
+import numpy.f2py as f2py2e
+from numpy.base import array
 
 def build(f2py_opts):
     try:
@@ -144,5 +144,5 @@ if __name__=='__main__':
         if status:
             print '*'*20
             print 'Running f2py2e.diagnose'
-            import scipy.f2py.diagnose as diagnose
+            import numpy.f2py.diagnose as diagnose
             #diagnose.run()

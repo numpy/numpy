@@ -479,9 +479,9 @@ def trim_zeros(filt, trim='fb'):
     """ Trim the leading and trailing zeros from a 1D array.
 
     Example:
-        >>> import scipy
+        >>> import numpy
         >>> a = array((0, 0, 0, 1, 2, 3, 2, 1, 0))
-        >>> scipy.trim_zeros(a)
+        >>> numpy.trim_zeros(a)
         array([1, 2, 3, 2, 1])
     """
     first = 0
@@ -583,10 +583,10 @@ class vectorize(object):
   Description:
 
     Define a vectorized function which takes nested sequence
-    objects or scipy arrays as inputs and returns a
-    scipy array as output, evaluating the function over successive
+    objects or numpy arrays as inputs and returns a
+    numpy array as output, evaluating the function over successive
     tuples of the input arrays like the python map function except it uses
-    the broadcasting rules of scipy.
+    the broadcasting rules of numpy.
 
   Input:
 
@@ -768,10 +768,10 @@ def hamming(M):
 
 def kaiser(M,beta):
     """kaiser(M, beta) returns a Kaiser window of length M with shape parameter
-    beta. It depends on scipy.special (in full scipy) for the modified bessel
+    beta. It depends on numpy.special (in full numpy) for the modified bessel
     function i0.
     """
-    from scipy.special import i0
+    from numpy.special import i0
     n = arange(0,M)
     alpha = (M-1)/2.0
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(beta)

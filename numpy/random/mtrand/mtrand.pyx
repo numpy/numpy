@@ -22,7 +22,7 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include "Python.pxi"
-include "scipy.pxi"
+include "numpy.pxi"
 
 cdef extern from "math.h":
     double exp(double x)
@@ -114,10 +114,10 @@ cdef extern from "initarray.h":
    void init_by_array(rk_state *self, unsigned long *init_key, 
                       unsigned long key_length)
 
-# Initialize scipy
+# Initialize numpy
 import_array()
 
-import scipy as _sp
+import numpy as _sp
 
 cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
     cdef double *array_data
@@ -277,8 +277,8 @@ cdef class RandomState:
     from a variety of probability distributions. In addition to the
     distribution-specific arguments, each method takes a keyword argument
     size=None. If size is None, then a single value is generated and returned.
-    If size is an integer, then a 1-D scipy array filled with generated values
-    is returned. If size is a tuple, then a scipy array with that shape is
+    If size is an integer, then a 1-D numpy array filled with generated values
+    is returned. If size is a tuple, then a numpy array with that shape is
     filled and returned.
     """
     cdef rk_state *internal_state
@@ -833,7 +833,7 @@ cdef class RandomState:
         # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
         # decomposition of cov is such an A.
         
-        from scipy.corelinalg import svd
+        from numpy.corelinalg import svd
         # XXX: we really should be doing this by Cholesky decomposition
         (u,s,v) = svd(cov)
         x = _sp.matrixmultiply(x*_sp.sqrt(s),v)

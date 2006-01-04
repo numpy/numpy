@@ -1,10 +1,10 @@
 """MA: a facility for dealing with missing observations
-MA is generally used as a scipy.array look-alike.
+MA is generally used as a numpy.array look-alike.
 by Paul F. Dubois.
 
 Copyright 1999, 2000, 2001 Regents of the University of California.
 Released for unlimited redistribution.
-Adapted for scipy_core 2005 by Travis Oliphant and
+Adapted for numpy_core 2005 by Travis Oliphant and
 (mainly) Paul Dubois.
 """
 import string, types, sys
@@ -2015,7 +2015,7 @@ def argsort (x, axis = -1, fill_value=None):
     """Treating masked values as if they have the value fill_value,
        return sort indices for sorting along given axis.
        if fill_value is None, use get_fill_value(x)
-       Returns a scipy array.
+       Returns a numpy array.
     """
     d = filled(x, fill_value)
     return oldnumeric.argsort(d, axis)
@@ -2024,7 +2024,7 @@ def argmin (x, axis = -1, fill_value=None):
     """Treating masked values as if they have the value fill_value,
        return indices for minimum values along given axis.
        if fill_value is None, use get_fill_value(x).
-       Returns a scipy array if x has more than one dimension.
+       Returns a numpy array if x has more than one dimension.
        Otherwise, returns a scalar index.
     """
     d = filled(x, fill_value)
@@ -2034,7 +2034,7 @@ def argmax (x, axis = -1, fill_value=None):
     """Treating masked values as if they have the value fill_value,
        return sort indices for maximum along given axis.
        if fill_value is None, use -get_fill_value(x) if it exists.
-       Returns a scipy array if x has more than one dimension.
+       Returns a numpy array if x has more than one dimension.
        Otherwise, returns a scalar index.
     """
     if fill_value is None:

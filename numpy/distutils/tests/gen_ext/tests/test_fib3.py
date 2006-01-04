@@ -1,5 +1,5 @@
 import sys
-from scipy.base.testing import *
+from numpy.base.testing import *
 set_package_path()
 from gen_ext import fib3
 del sys.path[0]

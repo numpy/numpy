@@ -21,7 +21,7 @@ def compile(source,
     ''' Build extension module from processing source with f2py.
     Read the source of this function for more information.
     '''
-    from scipy.distutils.exec_command import exec_command
+    from numpy.distutils.exec_command import exec_command
     if source_fn is None:
         fname = os.path.join(tempfile.mktemp()+'.f')
     else:
@@ -32,7 +32,7 @@ def compile(source,
     f.close()
 
     args = ' -c -m %s %s %s'%(modulename,fname,extra_args)
-    c = '%s -c "import scipy.f2py as f2py2e;f2py2e.main()" %s' %(sys.executable,args)
+    c = '%s -c "import numpy.f2py as f2py2e;f2py2e.main()" %s' %(sys.executable,args)
     s,o = exec_command(c)
     if source_fn is None:
         try: os.remove(fname)

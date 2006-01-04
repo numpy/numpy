@@ -249,7 +249,7 @@ def new_compiler (plat=None,
                   verbose=0,
                   dry_run=0,
                   force=0):
-    # Try first C compilers from scipy.distutils.
+    # Try first C compilers from numpy.distutils.
     if plat is None:
         plat = os.name
     try:
@@ -261,11 +261,11 @@ def new_compiler (plat=None,
         if compiler is not None:
             msg = msg + " with '%s' compiler" % compiler
         raise DistutilsPlatformError, msg
-    module_name = "scipy.distutils." + module_name
+    module_name = "numpy.distutils." + module_name
     try:
         __import__ (module_name)
     except ImportError, msg:
-        print msg,'in scipy.distutils, trying from distutils..'
+        print msg,'in numpy.distutils, trying from distutils..'
         module_name = module_name[6:]
         try:
             __import__(module_name)

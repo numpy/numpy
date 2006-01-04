@@ -28,7 +28,7 @@ class config(old_config):
 
     def _check_compiler (self):
         old_config._check_compiler(self)
-        from scipy.distutils.fcompiler import FCompiler, new_fcompiler
+        from numpy.distutils.fcompiler import FCompiler, new_fcompiler
         if not isinstance(self.fcompiler, FCompiler):
             self.fcompiler = new_fcompiler(compiler=self.fcompiler,
                                            dry_run=self.dry_run, force=1)

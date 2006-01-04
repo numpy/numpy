@@ -1,6 +1,6 @@
 import sys
-from scipy.testing import *
-from scipy.distutils.misc_util import appendpath
+from numpy.testing import *
+from numpy.distutils.misc_util import appendpath
 from os.path import join, sep
 
 ajoin = lambda *paths: join(*((sep,)+paths))

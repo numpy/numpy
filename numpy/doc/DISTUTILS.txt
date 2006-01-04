@@ -4,7 +4,7 @@ Scipy Distutils - Users Guide
 =============================
 
 :Author: Pearu Peterson <pearu@cens.ioc.ee>
-:Discussions to: scipy-dev@scipy.org
+:Discussions to: numpy-dev@numpy.org
 :Created: October 2005
 :Revision: $LastChangedRevision$
 :SVN source: $HeadURL$
@@ -16,11 +16,11 @@ Currently Scipy project consists of two packages:
 
 - Scipy core --- it provides packages like:
 
-  + scipy.distutils - extension to Python distutils
-  + scipy.f2py - a tool to bind Fortran/C codes to Python
-  + scipy.weave - a tool to bind C++ codes to Python
-  + scipy.base - future replacement of Numeric and numarray packages
-  + scipy.testing - scipy-style tools for unit testing
+  + numpy.distutils - extension to Python distutils
+  + numpy.f2py - a tool to bind Fortran/C codes to Python
+  + numpy.weave - a tool to bind C++ codes to Python
+  + numpy.base - future replacement of Numeric and numarray packages
+  + numpy.testing - numpy-style tools for unit testing
   + etc
 
 - Scipy --- a collection of Scientific tools for Python.
@@ -32,7 +32,7 @@ Requirements for SciPy packages
 '''''''''''''''''''''''''''''''
 
 Scipy consists of Python packages, called Scipy packages, that are
-available to Python users via ``scipy`` name space. Each Scipy package
+available to Python users via ``numpy`` name space. Each Scipy package
 may contain other Scipy packages. And so on. So, Scipy directory tree
 is a tree of packages with arbitrary depth and width. Any Scipy
 package may depend on Scipy core packages but the dependence on other
@@ -55,9 +55,9 @@ In order to add a Python package to Scipy, its building script (the
 ``setup.py`` file) must meet certain requirements. The minimal and the
 most important one is that it must define a function
 ``configuration(parent_package='',top_path=None)`` that returns a
-dictionary suitable for passing to ``scipy.distutils.core.setup(..)``
+dictionary suitable for passing to ``numpy.distutils.core.setup(..)``
 function. In order to simplify the construction of such an distionary,
-``scipy.distutils.misc_util`` provides a class ``Configuration``, the
+``numpy.distutils.misc_util`` provides a class ``Configuration``, the
 usage of will be described below.
 
 Scipy pure Python package example
@@ -68,12 +68,12 @@ Here follows a minimal example for a pure Python Scipy package
 
   #!/usr/bin/env python
   def configuration(parent_package='',top_path=None):
-      from scipy.distutils.misc_util import Configuration
+      from numpy.distutils.misc_util import Configuration
       config = Configuration('mypackage',parent_package,top_path)
       return config
 
   if __name__ == "__main__":
-      from scipy.distutils.core import setup
+      from numpy.distutils.core import setup
       setup(**configuration(top_path='').todict())
 
 The first argument ``parent_package`` of the main configuration
@@ -120,7 +120,7 @@ in writing setup scripts:
 ----------------------------------
 
 + ``config.todict()`` --- returns configuration distionary suitable for
-  passing to ``scipy.distutils.core.setup(..)`` function.
+  passing to ``numpy.distutils.core.setup(..)`` function.
 
 + ``config.paths(*paths) --- applies ``glob.glob(..)`` to items of
   ``paths`` if necessary. Fixes ``paths`` item that is relative to
@@ -242,7 +242,7 @@ in writing setup scripts:
   after processing all source generators, no extension module will
   be built. This is the recommended way to conditionally define
   extension modules. Source generator functions are called by the
-  ``build_src`` command of ``scipy.distutils``.
+  ``build_src`` command of ``numpy.distutils``.
 
   For example, here is a typical source generator function::
 
@@ -290,7 +290,7 @@ in writing setup scripts:
 + ``config.get_distribution()`` --- return distutils ``Distribution``
   instance.
 
-+ ``config.get_config_cmd()`` --- returns ``scipy.distutils`` config
++ ``config.get_config_cmd()`` --- returns ``numpy.distutils`` config
   command instance.
 
 Template files
@@ -299,21 +299,21 @@ Template files
 XXX: Describe how files with extensions ``.f.src``, ``.pyf.src``,
 ``.c.src``, etc. are pre-processed by the ``build_src`` command.
 
-Useful functions in ``scipy.distutils.misc_util``
+Useful functions in ``numpy.distutils.misc_util``
 -------------------------------------------------
 
-+ ``get_scipy_include_dirs()`` --- return a list of Scipy base
++ ``get_numpy_include_dirs()`` --- return a list of Scipy base
   include directories. Scipy base include directories contain
-  header files such as ``scipy/arrayobject.h``, ``scipy/funcobject.h``
+  header files such as ``numpy/arrayobject.h``, ``numpy/funcobject.h``
   etc. For installed Scipy core the returned list has length 1
   but when building Scipy core the list may contain more directories,
   for example, a path to ``config.h`` file that
-  ``scipy/base/setup.py`` file generates and is used by ``scipy``
+  ``numpy/base/setup.py`` file generates and is used by ``numpy``
   header files.
 
 + ``append_path(prefix,path)`` --- smart append ``path`` to ``prefix``.
 
-+ ``def get_cmd(cmdname,_cache={})`` --- returns ``scipy.distutils``
++ ``def get_cmd(cmdname,_cache={})`` --- returns ``numpy.distutils``
   command instance.
 
 + ``all_strings(lst)``
@@ -353,25 +353,25 @@ Useful functions in ``scipy.distutils.misc_util``
 + ``cxx_ext_match``, ``fortran_ext_match``, ``f90_ext_match``,
   ``f90_module_name_match``
 
-``scipy.distutils.system_info`` module
+``numpy.distutils.system_info`` module
 --------------------------------------
 
 + ``get_info(name,notfound_action=0)``
 + ``combine_paths(*args,**kws)``
 + ``show_all()``
 
-``scipy.distutils.cpuinfo`` module
+``numpy.distutils.cpuinfo`` module
 ----------------------------------
 
 + ``cpuinfo``
 
-``scipy.distutils.log`` module
+``numpy.distutils.log`` module
 ------------------------------
 
 + ``set_verbosity(v)``
 
 
-``scipy.distutils.exec_command`` module
+``numpy.distutils.exec_command`` module
 ---------------------------------------
 
 + ``get_pythonexe()``
@@ -400,13 +400,13 @@ __all__
   List of symbols that package exports. Optional.
 
 global_symbols
-  List of names that should be imported to scipy name space. To import
-  all symbols to ``scipy`` namespace, define ``global_symbols=['*']``.
+  List of names that should be imported to numpy name space. To import
+  all symbols to ``numpy`` namespace, define ``global_symbols=['*']``.
 
 depends
-  List of names that the package depends on. Prefix ``scipy.``
+  List of names that the package depends on. Prefix ``numpy.``
   will be automatically added to package names. For example,
-  use ``testing`` to indicate dependence on ``scipy.testing``
+  use ``testing`` to indicate dependence on ``numpy.testing``
   package. Default value is ``[]``.
 
 postpone_import
@@ -417,7 +417,7 @@ postpone_import
 The ``__init__.py`` file
 ''''''''''''''''''''''''
 
-To speed up the import time as well as to minimize memory usage, scipy
+To speed up the import time as well as to minimize memory usage, numpy
 uses ppimport hooks to transparently postpone importing large modules
 that might not be used during the Scipy usage session. But in order to
 have an access to the documentation of all Scipy packages, including 
@@ -434,7 +434,7 @@ So, the header a typical ``__init__.py`` file is::
   from info import __doc__
   ...
 
-  from scipy.testing import ScipyTest
+  from numpy.testing import ScipyTest
   test = ScipyTest().test
 
 The ``tests/`` directory
@@ -451,11 +451,11 @@ argument of these methods determine the level of the corresponding
 test. Default level is 1.
 
 A minimal example of a ``test_yyy.py`` file that implements tests for
-a Scipy package module ``scipy.xxx.yyy`` containing a function
+a Scipy package module ``numpy.xxx.yyy`` containing a function
 ``zzz()``, is shown below::
 
   import sys
-  from scipy.testing import *
+  from numpy.testing import *
 
   set_package_path()
   # import xxx symbols
@@ -479,7 +479,7 @@ a Scipy package module ``scipy.xxx.yyy`` containing a function
 basically only implements an additional method ``measure(self,
 code_str, times=1)``.
 
-``scipy.testing`` module provides also the following convenience
+``numpy.testing`` module provides also the following convenience
 functions::
 
   assert_equal(actual,desired,err_msg='',verbose=1)

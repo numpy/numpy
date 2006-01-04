@@ -203,15 +203,15 @@ def vstack(tup):
             tup -- sequence of arrays.  All arrays must have the same 
                    shape.
         Examples:
-            >>> import scipy
+            >>> import numpy
             >>> a = array((1,2,3))
             >>> b = array((2,3,4))
-            >>> scipy.vstack((a,b))
+            >>> numpy.vstack((a,b))
             array([[1, 2, 3],
                    [2, 3, 4]])
             >>> a = array([[1],[2],[3]])
             >>> b = array([[2],[3],[4]])
-            >>> scipy.vstack((a,b))
+            >>> numpy.vstack((a,b))
             array([[1],
                    [2],
                    [3],
@@ -234,14 +234,14 @@ def hstack(tup):
             tup -- sequence of arrays.  All arrays must have the same 
                    shape.
         Examples:
-            >>> import scipy
+            >>> import numpy
             >>> a = array((1,2,3))
             >>> b = array((2,3,4))
-            >>> scipy.hstack((a,b))
+            >>> numpy.hstack((a,b))
             array([1, 2, 3, 2, 3, 4])
             >>> a = array([[1],[2],[3]])
             >>> b = array([[2],[3],[4]])
-            >>> scipy.hstack((a,b))
+            >>> numpy.hstack((a,b))
             array([[1, 2],
                    [2, 3],
                    [3, 4]])
@@ -260,10 +260,10 @@ def column_stack(tup):
             tup -- sequence of 1D arrays.  All arrays must have the same 
                    length.
         Examples:
-            >>> import scipy
+            >>> import numpy
             >>> a = array((1,2,3))
             >>> b = array((2,3,4))
-            >>> scipy.column_stack((a,b))
+            >>> numpy.column_stack((a,b))
             array([[1, 2],
                    [2, 3],
                    [3, 4]])
@@ -285,16 +285,16 @@ def dstack(tup):
             tup -- sequence of arrays.  All arrays must have the same 
                    shape.
         Examples:
-            >>> import scipy
+            >>> import numpy
             >>> a = array((1,2,3))
             >>> b = array((2,3,4))
-            >>> scipy.dstack((a,b))
+            >>> numpy.dstack((a,b))
             array([       [[1, 2],
                     [2, 3],
                     [3, 4]]])
             >>> a = array([[1],[2],[3]])
             >>> b = array([[2],[3],[4]])
-            >>> scipy.dstack((a,b))
+            >>> numpy.dstack((a,b))
             array([[        [1, 2]],
                    [        [2, 3]],
                    [        [3, 4]]])
@@ -441,9 +441,9 @@ def hsplit(ary,indices_or_sections):
         Related:
             hstack, split, array_split, vsplit, dsplit.
         Examples:
-            >>> import scipy
+            >>> import numpy
             >>> a= array((1,2,3,4))
-            >>> scipy.hsplit(a,2)
+            >>> numpy.hsplit(a,2)
             [array([1, 2]), array([3, 4])]
             >>> a = array([[1,2,3,4],[1,2,3,4]])
             [array([[1, 2],
@@ -489,10 +489,10 @@ def vsplit(ary,indices_or_sections):
         Related:
             vstack, split, array_split, hsplit, dsplit.
         Examples:
-            import scipy
+            import numpy
             >>> a = array([[1,2,3,4],
             ...            [1,2,3,4]])
-            >>> scipy.vsplit(a)
+            >>> numpy.vsplit(a)
             [array([       [1, 2, 3, 4]]), array([       [1, 2, 3, 4]])]
 
     """

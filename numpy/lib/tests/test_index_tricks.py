@@ -1,8 +1,8 @@
 
-from scipy.testing import *
+from numpy.testing import *
 set_package_path()
-import scipy.base;reload(scipy.base)
-from scipy.base import *
+import numpy.base;reload(numpy.base)
+from numpy.base import *
 restore_path()
 
 class test_grid(ScipyTestCase):

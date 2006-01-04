@@ -1,10 +1,10 @@
 
 import sys
 
-from scipy.testing import *
+from numpy.testing import *
 set_package_path()
-import scipy.base;reload(scipy.base)
-from scipy.base import *
+import numpy.base;reload(numpy.base)
+from numpy.base import *
 del sys.path[0]
 
 class test_any(ScipyTestCase):
@@ -335,4 +335,4 @@ def compare_results(res,desired):
         assert_array_equal(res[i],desired[i])
 
 if __name__ == "__main__":
-    ScipyTest('scipy.base.function_base').run()
+    ScipyTest('numpy.base.function_base').run()

@@ -1,8 +1,8 @@
 import os
 import sys
 
-from scipy.distutils.cpuinfo import cpu
-from scipy.distutils.fcompiler.gnu import GnuFCompiler
+from numpy.distutils.cpuinfo import cpu
+from numpy.distutils.fcompiler.gnu import GnuFCompiler
 
 class VastFCompiler(GnuFCompiler):
 
@@ -44,7 +44,7 @@ class VastFCompiler(GnuFCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from scipy.distutils.fcompiler import new_fcompiler
+    from numpy.distutils.fcompiler import new_fcompiler
     compiler = new_fcompiler(compiler='vast')
     compiler.customize()
     print compiler.get_version()

@@ -36,9 +36,9 @@ import f90mod_rules
 outmess = auxfuncs.outmess
 
 try:
-    from scipy import __core_version__ as scipy_core_version
+    from numpy import __core_version__ as numpy_core_version
 except ImportError:
-    scipy_distutils_version = 'N/A'
+    numpy_distutils_version = 'N/A'
 
 __usage__ = """\
 Usage:
@@ -117,7 +117,7 @@ Options:
   -v               Print f2py version ID and exit.
 
 
-scipy.distutils options (only effective with -c):
+numpy.distutils options (only effective with -c):
 
   --fcompiler=         Specify Fortran compiler type by vendor
   --compiler=          Specify C compiler type (as defined by distutils)
@@ -136,7 +136,7 @@ scipy.distutils options (only effective with -c):
 Extra options (only effective with -c):
 
   --link-<resource>    Link extension module with <resource> as defined
-                       by scipy.distutils/system_info.py. E.g. to link
+                       by numpy.distutils/system_info.py. E.g. to link
                        with optimized LAPACK libraries (vecLib on MacOSX,
                        ATLAS elsewhere), use --link-lapack_opt.
                        See also --help-link switch.
@@ -160,11 +160,11 @@ Extra options (only effective with -c):
   a message should be shown.
 
 Version:     %s
-scipy_core Version: %s
+numpy_core Version: %s
 Requires:    Python 2.3 or higher.
 License:     LGPL (see http://www.fsf.org)
 Copyright 1999 - 2005 Pearu Peterson all rights reserved.
-http://cens.ioc.ee/projects/f2py2e/"""%(f2py_version, scipy_core_version)
+http://cens.ioc.ee/projects/f2py2e/"""%(f2py_version, numpy_core_version)
 
 
 def scaninputline(inputline):
@@ -430,7 +430,7 @@ def run_compile():
         for s in flib_flags:
             v = '--fcompiler='
             if s[:len(v)]==v:
-                from scipy.distutils import fcompiler
+                from numpy.distutils import fcompiler
                 allowed_keys = fcompiler.fcompiler_class.keys()
                 nv = ov = s[len(v):].lower()
                 if ov not in allowed_keys:
@@ -461,7 +461,7 @@ def run_compile():
         del sys.argv[i+1],sys.argv[i]
         sources = sys.argv[1:]
     else:
-        from scipy.distutils.command.build_src import get_f2py_modulename
+        from numpy.distutils.command.build_src import get_f2py_modulename
         pyf_files,sources = filter_files('','[.]pyf([.]src|)',sources)
         sources = pyf_files + sources
         for f in pyf_files:
@@ -486,20 +486,20 @@ def run_compile():
         else:
             print 'Invalid use of -D:',name_value
 
-    from scipy.distutils.system_info import get_info
+    from numpy.distutils.system_info import get_info
 
     num_include_dir = None
     num_info = {}
-    #import scipy
-    #n = 'scipy'
-    #p = get_prefix(scipy)
-    #from scipy.distutils.misc_util import get_scipy_include_dirs
-    #num_info = {'include_dirs': get_scipy_include_dirs()}
+    #import numpy
+    #n = 'numpy'
+    #p = get_prefix(numpy)
+    #from numpy.distutils.misc_util import get_numpy_include_dirs
+    #num_info = {'include_dirs': get_numpy_include_dirs()}
 
     if num_info:
         include_dirs.extend(num_info.get('include_dirs',[]))
 
-    from scipy.distutils.core import setup,Extension
+    from numpy.distutils.core import setup,Extension
     ext_args = {'name':modulename,'sources':sources,
                 'include_dirs': include_dirs,
                 'library_dirs': library_dirs,
@@ -511,7 +511,7 @@ def run_compile():
                 }
 
     if sysinfo_flags:
-        from scipy.distutils.misc_util import dict_append
+        from numpy.distutils.misc_util import dict_append
         for n in sysinfo_flags:
             i = get_info(n)
             if not i:
@@ -539,7 +539,7 @@ def run_compile():
 def main():
     if '--help-link' in sys.argv[1:]:
         sys.argv.remove('--help-link')
-        from scipy.distutils.system_info import show_all
+        from numpy.distutils.system_info import show_all
         show_all()
         return
     if '-c' in sys.argv[1:]:

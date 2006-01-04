@@ -1,7 +1,7 @@
 
 import os
 from distutils.unixccompiler import UnixCCompiler
-from scipy.distutils.exec_command import find_executable
+from numpy.distutils.exec_command import find_executable
 
 class IntelCCompiler(UnixCCompiler):
 

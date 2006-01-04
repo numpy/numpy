@@ -1,10 +1,10 @@
 
 import os
 def configuration(parent_name='',top_path=None):
-    from scipy.distutils.misc_util import Configuration
+    from numpy.distutils.misc_util import Configuration
 
     config = Configuration('array_from_pyobj',parent_name,top_path)
-    #import scipy.f2py as f2py
+    #import numpy.f2py as f2py
     #f2pydir=os.path.dirname(os.path.abspath(f2py.__file__))
     f2pydir=os.path.join(config.local_path,'..','..')
     fobjhsrc = os.path.join(f2pydir,'src','fortranobject.h')
@@ -22,5 +22,5 @@ def configuration(parent_name='',top_path=None):
     return config
 
 if __name__ == "__main__":
-    from scipy.distutils.core import setup
+    from numpy.distutils.core import setup
     setup(**configuration(top_path='').todict())

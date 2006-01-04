@@ -10,5 +10,5 @@ from function_base import msort, median, trapz, diff, cov, corrcoef, kaiser, bla
 from oldnumeric import cumsum, ptp, mean, std, prod, cumprod, squeeze
 from polynomial import roots
 
-from scipy.random import rand, randn
-from scipy.corelinalg import eig, svd
+from numpy.random import rand, randn
+from numpy.corelinalg import eig, svd

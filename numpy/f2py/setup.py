@@ -21,8 +21,8 @@ __version__ = "$Id: setup.py,v 1.32 2005/01/30 17:22:14 pearu Exp $"
 import os
 import sys
 from distutils.dep_util import newer
-from scipy.distutils.core import setup
-from scipy.distutils.misc_util import Configuration
+from numpy.distutils.core import setup
+from numpy.distutils.misc_util import Configuration
 
 from __version__ import version
 
@@ -53,7 +53,7 @@ def configuration(parent_package='',top_path=None):
 # See http://cens.ioc.ee/projects/f2py2e/
 import os
 os.environ["NO_SCIPY_IMPORT"]="f2py"
-import scipy.f2py as f2py
+import numpy.f2py as f2py
 f2py.main()
 '''%(os.path.basename(sys.executable)))
             f.close()

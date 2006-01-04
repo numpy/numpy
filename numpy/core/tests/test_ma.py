@@ -1,7 +1,7 @@
-import scipy 
+import numpy 
 import types, time
-from scipy.base.ma import *
-from scipy.testing import ScipyTestCase, ScipyTest
+from numpy.base.ma import *
+from numpy.testing import ScipyTestCase, ScipyTest
 def eq(v,w):
     result = allclose(v,w)
     if not result:
@@ -17,16 +17,16 @@ class test_ma(ScipyTestCase):
         self.setUp()
     
     def setUp (self):
-        x=scipy.array([1.,1.,1.,-2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
-        y=scipy.array([5.,0.,3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
+        x=numpy.array([1.,1.,1.,-2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        y=numpy.array([5.,0.,3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
         m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0 ,0, 1]
         xm = array(x, mask=m1)
         ym = array(y, mask=m2)
-        z = scipy.array([-.5, 0., .5, .8])
+        z = numpy.array([-.5, 0., .5, .8])
         zm = array(z, mask=[0,1,0,0])
-        xf = scipy.where(m1, 1.e+20, x)
+        xf = numpy.where(m1, 1.e+20, x)
         s = x.shape
         xm.set_fill_value(1.e+20)
         self.d = (x, y, a10, m1, m2, xm, ym, z, zm, xf, s)
@@ -97,41 +97,41 @@ class test_ma(ScipyTestCase):
             self.failUnless(eq(x**2, xm**2))
             self.failUnless(eq(abs(x)**2.5, abs(xm) **2.5))
             self.failUnless(eq(x**y, xm**ym))
-            self.failUnless(eq(scipy.add(x,y), add(xm, ym)))
-            self.failUnless(eq(scipy.subtract(x,y), subtract(xm, ym)))
-            self.failUnless(eq(scipy.multiply(x,y), multiply(xm, ym)))
-            self.failUnless(eq(scipy.divide(x,y), divide(xm, ym)))
+            self.failUnless(eq(numpy.add(x,y), add(xm, ym)))
+            self.failUnless(eq(numpy.subtract(x,y), subtract(xm, ym)))
+            self.failUnless(eq(numpy.multiply(x,y), multiply(xm, ym)))
+            self.failUnless(eq(numpy.divide(x,y), divide(xm, ym)))
 
 
     def check_testUfuncs1 (self):
         "Test various functions such as sin, cos."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
-        self.failUnless (eq(scipy.cos(x), cos(xm)))
-        self.failUnless (eq(scipy.cosh(x), cosh(xm)))
-        self.failUnless (eq(scipy.sin(x), sin(xm)))
-        self.failUnless (eq(scipy.sinh(x), sinh(xm)))
-        self.failUnless (eq(scipy.tan(x), tan(xm)))
-        self.failUnless (eq(scipy.tanh(x), tanh(xm)))
-        self.failUnless (eq(scipy.sqrt(abs(x)), sqrt(xm)))
-        self.failUnless (eq(scipy.log(abs(x)), log(xm)))
-        self.failUnless (eq(scipy.log10(abs(x)), log10(xm)))
-        self.failUnless (eq(scipy.exp(x), exp(xm)))
-        self.failUnless (eq(scipy.arcsin(z), arcsin(zm)))
-        self.failUnless (eq(scipy.arccos(z), arccos(zm)))
-        self.failUnless (eq(scipy.arctan(z), arctan(zm)))
-        self.failUnless (eq(scipy.arctan2(x, y), arctan2(xm, ym)))
-        self.failUnless (eq(scipy.absolute(x), absolute(xm)))
-        self.failUnless (eq(scipy.equal(x,y), equal(xm, ym)))
-        self.failUnless (eq(scipy.not_equal(x,y), not_equal(xm, ym)))
-        self.failUnless (eq(scipy.less(x,y), less(xm, ym)))
-        self.failUnless (eq(scipy.greater(x,y), greater(xm, ym)))
-        self.failUnless (eq(scipy.less_equal(x,y), less_equal(xm, ym)))
-        self.failUnless (eq(scipy.greater_equal(x,y), greater_equal(xm, ym)))
-        self.failUnless (eq(scipy.conjugate(x), conjugate(xm)))
-        self.failUnless (eq(scipy.concatenate((x,y)), concatenate((xm,ym))))
-        self.failUnless (eq(scipy.concatenate((x,y)), concatenate((x,y))))
-        self.failUnless (eq(scipy.concatenate((x,y)), concatenate((xm,y))))
-        self.failUnless (eq(scipy.concatenate((x,y,x)), concatenate((x,ym,x))))
+        self.failUnless (eq(numpy.cos(x), cos(xm)))
+        self.failUnless (eq(numpy.cosh(x), cosh(xm)))
+        self.failUnless (eq(numpy.sin(x), sin(xm)))
+        self.failUnless (eq(numpy.sinh(x), sinh(xm)))
+        self.failUnless (eq(numpy.tan(x), tan(xm)))
+        self.failUnless (eq(numpy.tanh(x), tanh(xm)))
+        self.failUnless (eq(numpy.sqrt(abs(x)), sqrt(xm)))
+        self.failUnless (eq(numpy.log(abs(x)), log(xm)))
+        self.failUnless (eq(numpy.log10(abs(x)), log10(xm)))
+        self.failUnless (eq(numpy.exp(x), exp(xm)))
+        self.failUnless (eq(numpy.arcsin(z), arcsin(zm)))
+        self.failUnless (eq(numpy.arccos(z), arccos(zm)))
+        self.failUnless (eq(numpy.arctan(z), arctan(zm)))
+        self.failUnless (eq(numpy.arctan2(x, y), arctan2(xm, ym)))
+        self.failUnless (eq(numpy.absolute(x), absolute(xm)))
+        self.failUnless (eq(numpy.equal(x,y), equal(xm, ym)))
+        self.failUnless (eq(numpy.not_equal(x,y), not_equal(xm, ym)))
+        self.failUnless (eq(numpy.less(x,y), less(xm, ym)))
+        self.failUnless (eq(numpy.greater(x,y), greater(xm, ym)))
+        self.failUnless (eq(numpy.less_equal(x,y), less_equal(xm, ym)))
+        self.failUnless (eq(numpy.greater_equal(x,y), greater_equal(xm, ym)))
+        self.failUnless (eq(numpy.conjugate(x), conjugate(xm)))
+        self.failUnless (eq(numpy.concatenate((x,y)), concatenate((xm,ym))))
+        self.failUnless (eq(numpy.concatenate((x,y)), concatenate((x,y))))
+        self.failUnless (eq(numpy.concatenate((x,y)), concatenate((xm,y))))
+        self.failUnless (eq(numpy.concatenate((x,y,x)), concatenate((x,ym,x))))
     
     def check_xtestCount (self):
         "Test count"
@@ -150,7 +150,7 @@ class test_ma(ScipyTestCase):
     def check_testMinMax (self):
         "Test minimum and maximum." 
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
-        xr = scipy.ravel(x) #max doesn't work if shaped
+        xr = numpy.ravel(x) #max doesn't work if shaped
         xmr = ravel(xm)
         self.failUnless (eq(max(xr), maximum(xmr))) #true because of careful selection of data
         self.failUnless (eq(min(xr), minimum(xmr))) #true because of careful selection of data
@@ -158,32 +158,32 @@ class test_ma(ScipyTestCase):
     def check_testAddSumProd (self):
         "Test add, sum, product."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
-        self.failUnless (eq(scipy.add.reduce(x), add.reduce(x)))
-        self.failUnless (eq(scipy.add.accumulate(x), add.accumulate(x)))
+        self.failUnless (eq(numpy.add.reduce(x), add.reduce(x)))
+        self.failUnless (eq(numpy.add.accumulate(x), add.accumulate(x)))
         self.failUnless (eq(4, sum(array(4))))
         self.failUnless (eq(4, sum(array(4), axis=0)))
-        self.failUnless (eq(scipy.sum(x), sum(x)))
-        self.failUnless (eq(scipy.sum(filled(xm,0)), sum(xm)))
-        self.failUnless (eq(scipy.sum(x,0), sum(x,0)))
-        self.failUnless (eq(scipy.product(x), product(x)))
-        self.failUnless (eq(scipy.product(x,0), product(x,0)))
-        self.failUnless (eq(scipy.product(filled(xm,1)), product(xm)))
+        self.failUnless (eq(numpy.sum(x), sum(x)))
+        self.failUnless (eq(numpy.sum(filled(xm,0)), sum(xm)))
+        self.failUnless (eq(numpy.sum(x,0), sum(x,0)))
+        self.failUnless (eq(numpy.product(x), product(x)))
+        self.failUnless (eq(numpy.product(x,0), product(x,0)))
+        self.failUnless (eq(numpy.product(filled(xm,1)), product(xm)))
         if len(s) > 1:
-            self.failUnless (eq(scipy.concatenate((x,y),1), concatenate((xm,ym),1)))
-            self.failUnless (eq(scipy.add.reduce(x,1), add.reduce(x,1)))
-            self.failUnless (eq(scipy.sum(x,1), sum(x,1)))
-            self.failUnless (eq(scipy.product(x,1), product(x,1)))
+            self.failUnless (eq(numpy.concatenate((x,y),1), concatenate((xm,ym),1)))
+            self.failUnless (eq(numpy.add.reduce(x,1), add.reduce(x,1)))
+            self.failUnless (eq(numpy.sum(x,1), sum(x,1)))
+            self.failUnless (eq(numpy.product(x,1), product(x,1)))
     
     
     def check_testCI(self):
         "Test of conversions and indexing"
-        x1 = scipy.array([1,2,4,3])
+        x1 = numpy.array([1,2,4,3])
         x2 = array(x1, mask = [1,0,0,0])
         x3 = array(x1, mask = [0,1,0,1])
         x4 = array(x1)
     # test conversion to strings
         junk, garbage = str(x2), repr(x2)
-        assert eq(scipy.sort(x1),sort(x2, fill_value=0))
+        assert eq(numpy.sort(x1),sort(x2, fill_value=0))
     # tests of indexing
         assert type(x2[1]) is type(x1[1])
         assert x1[1] == x2[1]
@@ -210,13 +210,13 @@ class test_ma(ScipyTestCase):
         x4[:] = masked_array([1,2,3,4],[0,1,1,0])
         assert allequal(getmask(x4), array([0,1,1,0]))
         assert allequal(x4, array([1,2,3,4]))
-        x1 = scipy.arange(5)*1.0
+        x1 = numpy.arange(5)*1.0
         x2 = masked_values(x1, 3.0)
         assert eq(x1,x2)
         assert allequal(array([0,0,0,1,0],MaskType), x2.mask)
         assert eq(3.0, x2.fill_value())
         x1 = array([1,'hello',2,3],object)
-        x2 = scipy.array([1,'hello',2,3],object)
+        x2 = numpy.array([1,'hello',2,3],object)
         s1 = x1[1].item()
         s2 = x2[1].item()
         self.assertEqual(type(s2), str)
@@ -233,7 +233,7 @@ class test_ma(ScipyTestCase):
         m3 = make_mask(m, copy=1)
         self.failUnless(m is not m3)
         
-        x1 = scipy.arange(5)
+        x1 = numpy.arange(5)
         y1 = array(x1, mask=m)
         self.failUnless( y1.raw_data() is not x1)
         self.failUnless( allequal(x1,y1.raw_data()))
@@ -299,7 +299,7 @@ class test_ma(ScipyTestCase):
     def check_testMaPut(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
-        i = scipy.nonzero(m)
+        i = numpy.nonzero(m)
         putmask(xm, m, z)
         assert take(xm, i) == z
         put(ym, i, zm)
@@ -411,15 +411,15 @@ class test_ma(ScipyTestCase):
     def check_testTakeTransposeInnerOuter(self):
         "Test of take, transpose, inner, outer products"
         x = arange(24)
-        y = scipy.arange(24)
+        y = numpy.arange(24)
         x[5:6] = masked
         x=x.reshape(2,3,4)
         y=y.reshape(2,3,4)
-        assert eq(scipy.transpose(y,(2,0,1)), transpose(x,(2,0,1)))
-        assert eq(scipy.take(y, (2,0,1), 1), take(x, (2,0,1), 1))
-        assert eq(scipy.innerproduct(filled(x,0),filled(y,0)),
+        assert eq(numpy.transpose(y,(2,0,1)), transpose(x,(2,0,1)))
+        assert eq(numpy.take(y, (2,0,1), 1), take(x, (2,0,1), 1))
+        assert eq(numpy.innerproduct(filled(x,0),filled(y,0)),
                                 innerproduct(x, y))
-        assert eq(scipy.outerproduct(filled(x,0),filled(y,0)),
+        assert eq(numpy.outerproduct(filled(x,0),filled(y,0)),
                                 outerproduct(x, y))
         y = array(['abc', 1, 'def', 2, 3], object)
         y[2] = masked
@@ -530,8 +530,8 @@ class test_ma(ScipyTestCase):
         self.failUnless(allclose(average(x), 2.5))
         self.failUnless(allclose(average(x, weights=w1), 2.5))
         y=array([arange(6), 2.0*arange(6)])
-        self.failUnless(allclose(average(y, None), scipy.add.reduce(scipy.arange(6))*3./12.))
-        self.failUnless(allclose(average(y, axis=0), scipy.arange(6) * 3./2.))
+        self.failUnless(allclose(average(y, None), numpy.add.reduce(numpy.arange(6))*3./12.))
+        self.failUnless(allclose(average(y, axis=0), numpy.arange(6) * 3./2.))
         self.failUnless(allclose(average(y, axis=1), [average(x), average(x) * 2.0]))
         self.failUnless(allclose(average(y, None, weights=w2), 20./6.))
         self.failUnless(allclose(average(y, axis=0, weights=w2), [0.,1.,2.,3.,4.,10.]))
@@ -591,13 +591,13 @@ def timingTest():
             print f.test_name
             print """\
 n = %7d 
-scipy time (ms) %6.1f 
+numpy time (ms) %6.1f 
 MA maskless ratio %6.1f
 MA masked ratio %6.1f
 """ % (n, t*1000.0, t1/t, t2/t)
 
 def testta(n, f):
-    x=scipy.arange(n) + 1.0
+    x=numpy.arange(n) + 1.0
     tn0 = time.time()
     z = f(x)
     return time.time() - tn0
@@ -633,5 +633,5 @@ def testinplace(x):
 testinplace.test_name = 'Inplace operations'
 
 if __name__ == "__main__":
-    ScipyTest('scipy.base.ma').run()    
+    ScipyTest('numpy.base.ma').run()    
     #timingTest()

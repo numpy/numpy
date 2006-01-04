@@ -3922,7 +3922,7 @@ array_ndim_get(PyArrayObject *self)
 static PyObject *
 array_flags_get(PyArrayObject *self)
 {
-        return PyObject_CallMethod(_scipy_internal, "flagsobj", "Oii", 
+        return PyObject_CallMethod(_numpy_internal, "flagsobj", "Oii", 
                                    self, self->flags, 0);
 }
 
@@ -4648,9 +4648,9 @@ static char Arraytype__doc__[] =
         "A array object represents a multidimensional, homogeneous array\n"
 	"  of fixed-size items.  An associated data-type-descriptor object\n"
 	"  details the data-type in an array (including byteorder and any\n"
-	"  fields).  An array can be constructed using the scipy.array\n"
+	"  fields).  An array can be constructed using the numpy.array\n"
 	"  command. Arrays are sequence, mapping and numeric objects.\n"
-	"  More information is available in the scipy module and by looking\n"
+	"  More information is available in the numpy module and by looking\n"
 	"  at the methods and attributes of an array.\n\n"
 	"  ndarray.__new__(subtype, shape=, dtype=int_, buffer=None, \n"
 	"                  offset=0, strides=None, fortran=False)\n\n"
@@ -4660,14 +4660,14 @@ static char Arraytype__doc__[] =
 	"   2) If buffer is an object exporting the buffer interface, then\n"
 	"      all keywords are interpreted.\n"
 	"   The dtype parameter can be any object that can be interpreted \n"
-	"      as a scipy.dtypedescr object.\n\n"
+	"      as a numpy.dtypedescr object.\n\n"
 	"   No __init__ method is needed because the array is fully \n"
 	"      initialized after the __new__ method.";
 	
 static PyTypeObject PyBigArray_Type = { 
         PyObject_HEAD_INIT(NULL)
         0,					  /*ob_size*/
-        "scipy.bigndarray",		  /*tp_name*/
+        "numpy.bigndarray",		  /*tp_name*/
         sizeof(PyArrayObject),		          /*tp_basicsize*/
         0,					  /*tp_itemsize*/
         /* methods */
@@ -4733,7 +4733,7 @@ static PyTypeObject PyBigArray_Type = {
 static PyTypeObject PyArray_Type = { 
         PyObject_HEAD_INIT(NULL)
         0,					  /*ob_size*/
-        "scipy.ndarray",			  /*tp_name*/
+        "numpy.ndarray",			  /*tp_name*/
         sizeof(PyArrayObject),		          /*tp_basicsize*/
         0,					  /*tp_itemsize*/
 };
@@ -6192,7 +6192,7 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 
 
 /*********************** Element-wise Array Iterator ***********************/
-/*  Aided by Peter J. Verveer's  nd_image package and scipy's arraymap  ****/
+/*  Aided by Peter J. Verveer's  nd_image package and numpy's arraymap  ****/
 /*         and Python's array iterator                                   ***/
                      
 
@@ -6841,7 +6841,7 @@ static PyMemberDef iter_members[] = {
 static PyTypeObject PyArrayIter_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
-        "scipy.flatiter",		         /* tp_name */
+        "numpy.flatiter",		         /* tp_name */
         sizeof(PyArrayIterObject),               /* tp_basicsize */
         0,					 /* tp_itemsize */
         /* methods */
@@ -7543,7 +7543,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
 static PyTypeObject PyArrayMapIter_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
-        "scipy.mapiter",		    	/* tp_name */
+        "numpy.mapiter",		    	/* tp_name */
         sizeof(PyArrayIterObject),               /* tp_basicsize */
         0,					 /* tp_itemsize */
         /* methods */
@@ -7821,7 +7821,7 @@ static PyMethodDef arraymultiter_methods[] = {
 static PyTypeObject PyArrayMultiIter_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
-        "scipy.broadcast",		      	 /* tp_name */
+        "numpy.broadcast",		      	 /* tp_name */
         sizeof(PyArrayMultiIterObject),          /* tp_basicsize */
         0,					 /* tp_itemsize */
         /* methods */
@@ -7996,7 +7996,7 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
 		return res;
 	}
 
-        return PyObject_CallMethod(_scipy_internal, "_array_descr", 
+        return PyObject_CallMethod(_numpy_internal, "_array_descr", 
 				   "O", self);
 }
 
@@ -8134,7 +8134,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 
 	ret = PyTuple_New(3);
 	if (ret == NULL) return NULL;
-	mod = PyImport_ImportModule("scipy.base.multiarray");
+	mod = PyImport_ImportModule("numpy.base.multiarray");
 	if (mod == NULL) {Py_DECREF(ret); return NULL;}
 	obj = PyObject_GetAttrString(mod, "dtypedescr");
 	Py_DECREF(mod);
@@ -8424,7 +8424,7 @@ arraydescr_compare(PyArray_Descr *self, PyObject *other)
 static PyTypeObject PyArrayDescr_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
-        "scipy.dtypedescr",	 	         /* tp_name */
+        "numpy.dtypedescr",	 	         /* tp_name */
         sizeof(PyArray_Descr),                   /* tp_basicsize */
         0,					 /* tp_itemsize */
         /* methods */

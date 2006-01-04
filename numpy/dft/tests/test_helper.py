@@ -4,12 +4,12 @@
 """
 
 import sys
-from scipy.testing import *
+from numpy.testing import *
 set_package_path()
-from scipy.corefft import fftshift,ifftshift,fftfreq
+from numpy.corefft import fftshift,ifftshift,fftfreq
 del sys.path[0]
 
-from scipy import pi
+from numpy import pi
 
 def random(size):
     return rand(*size)

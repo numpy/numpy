@@ -98,7 +98,7 @@ scripts:
     f2py -c --help-fcompiler
 
   to find out what compilers are available (or more precisely, which
-  ones are recognized by ``scipy_distutils``).
+  ones are recognized by ``numpy_distutils``).
 
 Reporting failures
 ------------------

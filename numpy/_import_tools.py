@@ -6,7 +6,7 @@ from glob import glob
 
 class PackageImport:
     """ Import packages from the current directory that implement
-    info.py. See scipy/doc/DISTUTILS.txt for more info.
+    info.py. See numpy/doc/DISTUTILS.txt for more info.
     """
 
     imported_packages = []

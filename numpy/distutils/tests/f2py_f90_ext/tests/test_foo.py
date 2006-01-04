@@ -1,5 +1,5 @@
 import sys
-from scipy.base.testing import *
+from numpy.base.testing import *
 set_package_path()
 from f2py_f90_ext import foo
 del sys.path[0]

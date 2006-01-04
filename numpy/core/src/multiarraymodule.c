@@ -5,7 +5,7 @@
   Original file 
   Copyright (c) 1995, 1996, 1997 Jim Hugunin, hugunin@mit.edu
 
-  Modified for scipy_core in 2005 
+  Modified for numpy_core in 2005 
 
   Travis E. Oliphant
   Assistant Professor at
@@ -22,12 +22,12 @@
 */
 
 #define _MULTIARRAYMODULE
-#include "scipy/arrayobject.h"
+#include "numpy/arrayobject.h"
 
 #define PyAO PyArrayObject
 
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
-static PyObject *_scipy_internal=NULL; /* A Python module for callbacks */
+static PyObject *_numpy_internal=NULL; /* A Python module for callbacks */
 
 
 static PyArray_Descr *
@@ -3544,7 +3544,7 @@ _convert_from_commastring(PyObject *obj, int align)
 	PyArray_Descr *res;
 
 	if (!PyString_Check(obj)) return NULL;
-        listobj = PyObject_CallMethod(_scipy_internal, "_commastring",
+        listobj = PyObject_CallMethod(_numpy_internal, "_commastring",
 				      "O", obj);
 	if (!listobj) return NULL;
 	res = _convert_from_list(listobj, align, 0);
@@ -3593,7 +3593,7 @@ then it will be checked for conformity and used directly.
 static PyArray_Descr *
 _use_fields_dict(PyObject *obj, int align)
 {
-        return (PyArray_Descr *)PyObject_CallMethod(_scipy_internal, 
+        return (PyArray_Descr *)PyObject_CallMethod(_numpy_internal, 
 						    "_usefields", 
 						    "Oi", obj, align);
 }
@@ -3734,7 +3734,7 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
    quite a flexible concept. 
 
    This is the central code that converts Python objects to 
-   Type-descriptor objects that are used throughout scipy.
+   Type-descriptor objects that are used throughout numpy.
  */
 
 /* new reference in *at */
@@ -5492,9 +5492,9 @@ DL_EXPORT(void) initmultiarray(void) {
 
 	if (set_typeinfo(d) != 0) goto err;
 
-	_scipy_internal =						\
-		PyImport_ImportModule("scipy.base._internal");
-	if (_scipy_internal != NULL) return;
+	_numpy_internal =						\
+		PyImport_ImportModule("numpy.base._internal");
+	if (_numpy_internal != NULL) return;
 
  err:	
 	/* Check for errors */

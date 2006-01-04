@@ -135,33 +135,33 @@ class PackageLoader:
         return package_names
 
     def __call__(self,*packages, **options):
-        """Load one or more packages into scipy's top-level namespace.
+        """Load one or more packages into numpy's top-level namespace.
 
     Usage:
 
-       This function is intended to shorten the need to import many of scipy's
+       This function is intended to shorten the need to import many of numpy's
        submodules constantly with statements such as
 
-       import scipy.linalg, scipy.fft, scipy.etc...
+       import numpy.linalg, numpy.fft, numpy.etc...
 
        Instead, you can say:
 
-         import scipy
-         scipy.pkgload('linalg','fft',...)
+         import numpy
+         numpy.pkgload('linalg','fft',...)
 
        or
 
-         scipy.pkgload()
+         numpy.pkgload()
 
        to load all of them in one call.
 
-       If a name which doesn't exist in scipy's namespace is
+       If a name which doesn't exist in numpy's namespace is
        given, an exception [[WHAT? ImportError, probably?]] is raised.
        [NotImplemented]
 
      Inputs:
 
-       - the names (one or more strings) of all the scipy modules one wishes to
+       - the names (one or more strings) of all the numpy modules one wishes to
        load into the top-level namespace.
 
      Optional keyword inputs:
@@ -170,7 +170,7 @@ class PackageLoader:
        - force   - when True, force reloading loaded packages [default: False].
        - postpone - when True, don't load packages [default: False]
 
-     If no input arguments are given, then all of scipy's subpackages are
+     If no input arguments are given, then all of numpy's subpackages are
      imported.
 
 
@@ -297,7 +297,7 @@ except ImportError:
 pkgload = PackageLoader()
 
 if show_core_config is None:
-    print >> sys.stderr, 'Running from scipy core source directory.'
+    print >> sys.stderr, 'Running from numpy core source directory.'
 else:
     from core_version import version as __core_version__
 
@@ -305,10 +305,10 @@ else:
             verbose=SCIPY_IMPORT_VERBOSE)
 
 
-    test = ScipyTest('scipy').test
+    test = ScipyTest('numpy').test
     __all__.append('test')
 
-__scipy_doc__ = """
+__numpy_doc__ = """
 
 SciPy: A scientific computing package for Python
 ================================================
@@ -318,18 +318,18 @@ Available subpackages
 """
 
 if NO_SCIPY_IMPORT is not None:
-    print >> sys.stderr, 'Skip importing scipy packages (NO_SCIPY_IMPORT=%s)' % (NO_SCIPY_IMPORT)
-    show_scipy_config = None
+    print >> sys.stderr, 'Skip importing numpy packages (NO_SCIPY_IMPORT=%s)' % (NO_SCIPY_IMPORT)
+    show_numpy_config = None
 elif show_core_config is None:
-    show_scipy_config = None
+    show_numpy_config = None
 else:
     try:
-        from __scipy_config__ import show as show_scipy_config
+        from __numpy_config__ import show as show_numpy_config
     except ImportError:
-        show_scipy_config = None
+        show_numpy_config = None
 
 
-if show_scipy_config is not None:
-    from scipy_version import scipy_version as __scipy_version__
-    __doc__ += __scipy_doc__
+if show_numpy_config is not None:
+    from numpy_version import numpy_version as __numpy_version__
+    __doc__ += __numpy_doc__
     pkgload(verbose=SCIPY_IMPORT_VERBOSE,postpone=True)

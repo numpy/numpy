@@ -1,6 +1,6 @@
 
 import os
-from scipy.distutils.core import setup, Extension
+from numpy.distutils.core import setup, Extension
 from distutils.dep_util import newer
 
 fib3_f = '''
