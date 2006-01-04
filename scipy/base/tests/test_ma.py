@@ -581,7 +581,20 @@ class test_ma(ScipyTestCase):
         self.assertEqual(1.0, float(array([[1]])))
         self.failUnlessRaises(ValueError, float, array([1,1]))
         self.failUnlessRaises(MAError, float, array([1],mask=[1]))
-        
+        self.failUnless(bool(array([0,1])))
+        self.failUnless(bool(array([0,0],mask=[0,1])))
+        self.failIf(bool(array([0,0])))
+        self.failIf(bool(array([0,0],mask=[0,0])))
+
+    def check_testScalarArithmetic(self):
+        xm = array(0, mask=1)
+        self.failUnless((1/array(0)).mask)
+        self.failUnless((1 + xm).mask)
+        self.failUnless((-xm).mask)
+        self.failUnless((-xm).mask)
+        self.failUnless(maximum(xm, xm).mask)
+        self.failUnless(minimum(xm, xm).mask)
+                
 def timingTest():
     for f in [testf, testinplace]:
         for n in [1000,10000,50000]:
