@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+<HEAD>
+<META name="Author" content="Pearu Peterson">
+<!-- You may add here some keywords (comma separeted list) -->
+<META name="Keywords" content="fortran,python,interface,f2py,f2py2e,wrapper,fpig">
+<TITLE>F2PY - Fortran to Python Interface Generator</TITLE>
+<LINK rel="stylesheet" type="text/css" href="/styles/userstyle.css">
+</HEAD>
+
+<body>
+<h2><a href="http://cens.ioc.ee/projects/f2py2e">F2PY</a> old news.</h2>
+
+<dl>
+    <dt> February 23, 2002
+   <dd> Fixed a bug of incorrect shapes of multi-dimensional arrays
+     when returning from Fortran routine (thanks to Eric for pointing
+     this out).
+     <code>F2PY_REPORT_ATEXIT</code> is disabled by default under Win32.
+  <dt> February 14, 2002
+  <dd> Introduced  <code>callprotoargument</code> statement so that
+    proper prototypes can be specified (this fixes SEGFAULTs when
+    wrapping C functions with <code>f2py</code>, see <a
+    href="NEWS.txt">NEWS.txt</a> for more details). Updated for the
+    latest <code>numpy_distutils</code>. Fixed few bugs.
+  <dt> February 3, 2002
+  <dd> Introduced <code>intent(overwrite),intent(out=name)</code>
+    attributes, <code>callstatement C-expr;</code> statement, and
+    reviewed reference counting in callback mechanism. Fixed bugs.
+  <dt> January 18, 2002
+  <dd> Introduced extra keyword argument <code>copy_#varname#=1</code>
+    for <code>intent(copy)</code> variables,
+    <code>-DF2PY_REPORT_ATEXIT</code> for reporting <code>f2py</code>
+    performance,
+    <code>has_column_major_storage</code> member function for generated
+    modules, and <a href="http://dmalloc.com/">dmalloc</a> support.
+  <dt> January 16, 2002
+  <dd> BREAKING NEWS! Solved long lasted dilemma of wrapping
+    multi-dimensional arrays where different
+    storage orders in C and Fortran come into account. From now on
+    this difference is dealt automatically by the f2py generated
+    module and in a very efficient way. For example, the corresponding
+    element A(i,j) of a Fortran array can be accessed in Python as
+    A[i,j].
+  <dt> January 13, 2002
+  <dd> Fifth Public Release is coming soon..., a snapshot is available
+    for download, now with updates.
+  <dt> December 17, 2001
+  <dd> <a href="Release-4.x.txt">Fourth Public Release</a>: Win32 support.
+  <dd> Making <code>f2py2e</code> a module. Currently it has only one
+    member function <code>run_main(comline_list)</code>.
+  <dd> Removed command line arguments <code>-fix,-f90,-f77</code>
+      and introduced many new ones. See <a href="NEWS.txt">NEWS.txt</a>.
+  <dd> <code>intent(..)</code> statement with empty name list defines
+    default <code>intent(..)</code> attribute for all routine arguments. 
+  <dd> Refinements in Win32 support. Eric Jones has provided a f2py
+    HOWTO for Windows users. See <a href="win32_notes.txt">win32_notes.txt</a>.
+  <dd> Major rewrote of the code generator to achieve
+       a higher quality of generated C/API modules (-Wall messages are
+       considerably reduced, especially for callback functions).
+  <dd> Many bugs were fixed.
+  <dt> December 12, 2001
+  <dd> Win32 support (thanks to Eric Jones and Tiffany Kamm). Minor
+    cleanups and fixes.
+  <dt> December 4, 2001
+  <dd> <a href="Release-3.x.txt">Third Public Release</a>: <code>f2py</code> supports <code>distutils</code>. It can be
+  installed with one and it generates <code>setup_modulename.py</code>
+  to be used for building Python extension modules.
+  <dd> Introduced <code>threadsafe</code>, <code>fortranname</code>,
+    and <code>intent(c)</code> statements.
+  <dt> August 13, 2001
+  <dd> Changed the name FPIG to F2PY for avoiding confusion with project names.
+  <dd> Updated <code>f2py</code> for use with Numeric version 20.x.
+  <dt> January 12, 2001
+  <dd> Example usages of <a href="pyfobj.html"><code>PyFortranObject</code></a>.
+       Fixed bugs. Updated the 
+      <a href="f2python9.html">Python 9 Conference paper</a> (F2PY paper).
+  <dt> December 9, 2000
+  <dd> Implemented support for <code>PARAMETER</code> statement.
+  <dt> November 6, 2000
+  <dd> Submitted a paper for 9th Python Conference (accepted). It is available in <a
+      href="f2python9.html">html</a>, <a href="f2python9.pdf">PDF</a>,
+       and <a href="f2python9.ps.gz">Gzipped PS</a> formats.
+  <dt> September 17, 2000
+  <dd> Support for F90/95 module data and routines. COMMON block
+      wrapping is rewritten. New signature file syntax:
+      <code>pythonmodule</code>. Signature files generated with
+      f2py-2.264 or earlier, are incompatible (need replacement
+      <code>module</code> with 
+      <code>pythonmodule</code>).
+  <dt> September 12, 2000
+  <dd> The second public release of <code>f2py</code> is out. See <a
+      href="Release-2.x.txt">Release notes</a>.
+  <dt> September 11, 2000
+  <dd> Now <code>f2py</code> supports wrapping Fortran 90/95 module routines
+      (support for F90/95 module data coming soon)
+  <dt> June 12, 2000
+  <dd> Now <code>f2py</code> has a mailing list <a
+href="#f2py-users">f2py-users</a> open for discussion.
+
+</dl>
+
+
+<!-- End of user text -->
+<HR>
+<ADDRESS>
+<A href="http://validator.w3.org/"><IMG border=0 align=right src="/icons/vh40.gif" alt="Valid HTML 4.0!" height=31 width=88></A>
+<A href="http://cens.ioc.ee/~pearu/" target="_top">Pearu Peterson</A>
+<A href="mailto:pearu (at) ioc.ee">&lt;pearu(at)ioc.ee&gt;</A><BR>
+<!-- hhmts start -->
+Last modified: Mon Dec  3 19:40:26 EET 2001
+<!-- hhmts end -->
+</ADDRESS>
+<!-- You may want to comment the following line out when the document is final-->
+<!-- Check that the reference is right -->
+<!--A href="http://validator.w3.org/check?uri=http://cens.ioc.ee/projects/f2py2e/index.html;ss"> Submit this page for validation</A-->
+
+</BODY>
+
+
+</HTML>

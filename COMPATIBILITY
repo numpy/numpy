@@ -31,7 +31,7 @@ using PyMemData_FREE(ptr) or PyMemData_XFREE(ptr);
 a->descr->zero       -->   PyArray_Zero(a)
 a->descr->one        -->   PyArray_One(a)
 
-Numeric/arrayobject.h  -->  scipy/arrayobject.h
+Numeric/arrayobject.h  -->  numpy/arrayobject.h
 
 
 # These will actually work and are defines for PyArray_BYTE, 

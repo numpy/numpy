@@ -1,0 +1,1044 @@
+.. -*- rest -*-
+
+=========================
+ F2PY History
+=========================
+
+:Author: Pearu Peterson <pearu@cens.ioc.ee>
+:Web-site: http://cens.ioc.ee/projects/f2py2e/
+:Date: $Date: 2005/09/16 08:36:45 $
+:Revision: $Revision: 1.191 $
+
+.. Contents::
+
+Release 2.46.243
+=====================
+
+* common_rules.py
+
+  - Fixed compiler warnings.
+
+* fortranobject.c
+
+  - Fixed another dims calculation bug.
+  - Fixed dims calculation bug and added the corresponding check.
+  - Accept higher dimensional arrays if their effective rank matches.
+    Effective rank is multiplication of non-unit dimensions.
+
+* f2py2e.py
+
+  - Added support for numpy.distutils version 0.4.0.
+
+* Documentation
+
+  - Added example about ``intent(callback,hide)`` usage. Updates.
+  - Updated FAQ.
+
+* cb_rules.py
+
+  - Fixed missing need kw error.
+  - Fixed getting callback non-existing extra arguments.
+  - External callback functions and extra_args can be set via 
+    ext.module namespace.
+  - Avoid crash when external callback function is not set.
+
+* rules.py
+
+  - Enabled ``intent(out)`` for ``intent(aux)`` non-complex scalars.
+  - Fixed splitting lines in F90 fixed form mode.
+  - Fixed FORTRANAME typo, relevant when wrapping scalar functions with 
+    ``--no-wrap-functions``.
+  - Improved failure handling for callback functions.
+  - Fixed bug in writting F90 wrapper functions when a line length
+    is exactly 66.
+
+* cfuncs.py
+
+  - Fixed dependency issue with typedefs.
+  - Introduced ``-DUNDERSCORE_G77`` that cause extra underscore to be
+    used for external names that contain an underscore.
+
+* capi_maps.py
+
+  - Fixed typos.
+  - Fixed using complex cb functions.
+
+* crackfortran.py
+
+  - Introduced parent_block key. Get ``use`` statements recursively 
+    from parent blocks. 
+  - Apply parameter values to kindselectors.
+  - Fixed bug evaluating ``selected_int_kind`` function.
+  - Ignore Name and Syntax errors when evaluating scalars.
+  - Treat ``<int>_intType`` as ``<int>`` in get_parameters.
+  - Added support for F90 line continuation in fix format mode.
+  - Include optional attribute of external to signature file.
+  - Add ``entry`` arguments to variable lists.
+  - Treat \xa0 character as space.
+  - Fixed bug where __user__ callback subroutine was added to its
+    argument list.
+  - In strict 77 mode read only the first 72 columns.
+  - Fixed parsing ``v(i) = func(r)``.
+  - Fixed parsing ``integer*4::``.
+  - Fixed parsing ``1.d-8`` when used as a parameter value.
+
+Release 2.45.241_1926
+=====================
+
+* diagnose.py
+
+  - Clean up output.
+
+* cb_rules.py
+
+  - Fixed ``_cpointer`` usage for subroutines.
+  - Fortran function ``_cpointer`` can be used for callbacks.
+
+* func2subr.py
+
+  - Use result name when wrapping functions with subroutines.
+
+* f2py2e.py
+
+  - Fixed ``--help-link`` switch.
+  - Fixed ``--[no-]lower`` usage with ``-c`` option.
+  - Added support for ``.pyf.src`` template files.
+
+* __init__.py
+
+  - Using ``exec_command`` in ``compile()``.
+
+* setup.py
+
+  - Clean up.
+  - Disabled ``need_numpy_distutils`` function. From now on it is assumed
+    that proper version of ``numpy_distutils`` is already installed.
+
+* capi_maps.py
+
+  - Added support for wrapping unsigned integers. In a .pyf file
+    ``integer(-1)``, ``integer(-2)``, ``integer(-4)`` correspond to
+    ``unsigned char``, ``unsigned short``, ``unsigned`` C types,
+    respectively.
+
+* tests/c/return_real.py
+
+  - Added tests to wrap C functions returning float/double.
+
+* fortranobject.c
+
+  - Added ``_cpointer`` attribute to wrapped objects.
+
+* rules.py
+
+  - ``_cpointer`` feature for wrapped module functions is not
+    functional at the moment.
+  - Introduced ``intent(aux)`` attribute. Useful to save a value
+    of a parameter to auxiliary C variable. Note that ``intent(aux)``
+    implies ``intent(c)``. 
+  - Added ``usercode`` section. When ``usercode`` is used in ``python
+    module`` block twise then the contents of the second multi-line
+    block is inserted after the definition of external routines.
+  - Call-back function arguments can be CObjects.
+
+* cfuncs.py
+
+  - Allow call-back function arguments to be fortran objects.
+  - Allow call-back function arguments to be built-in functions.
+
+* crackfortran.py
+
+  - Fixed detection of a function signature from usage example.
+  - Cleaned up -h output for intent(callback) variables.
+  - Repair malformed argument list (missing argument name).
+  - Warn on the usage of multiple attributes without type specification.
+  - Evaluate only scalars ``<initexpr>`` (e.g. not of strings).
+  - Evaluate ``<initexpr>`` using parameters name space.
+  - Fixed resolving `<name>(<args>)[result(<result>)]` pattern.
+  - ``usercode`` can be used more than once in the same context.
+
+Release 2.43.239_1831
+=====================
+
+* auxfuncs.py
+
+  - Made ``intent(in,inplace)`` to mean ``intent(inplace)``.
+
+* f2py2e.py
+
+  - Intoduced ``--help-link`` and ``--link-<resource>``
+    switches to link generated extension module with system
+    ``<resource>`` as defined by numpy_distutils/system_info.py.
+
+* fortranobject.c
+
+  - Patch to make PyArray_CanCastSafely safe on 64-bit machines.
+    Fixes incorrect results when passing ``array('l')`` to 
+    ``real*8 intent(in,out,overwrite)`` arguments.
+
+* rules.py
+
+  - Avoid empty continuation lines in Fortran wrappers.
+
+* cfuncs.py
+
+  - Adding ``\0`` at the end of a space-padded string, fixes tests
+    on 64-bit Gentoo.
+
+* crackfortran.py
+
+  - Fixed splitting lines with string parameters.
+
+Release 2.43.239_1806
+=====================
+
+* Tests
+
+  - Fixed test site that failed after padding strings with spaces
+    instead of zeros.
+
+* Documentation
+
+  - Documented ``intent(inplace)`` attribute.
+  - Documented ``intent(callback)`` attribute.
+  - Updated FAQ, added Users Feedback section.
+
+* cfuncs.py
+
+  - Padding longer (than provided from Python side) strings with spaces
+    (that is Fortran behavior) instead of nulls (that is C strncpy behavior).
+
+* f90mod_rules.py
+
+  - Undoing rmbadnames in Python and Fortran layers.
+
+* common_rules.py
+
+  - Renaming common block items that have names identical to C keywords.
+  - Fixed wrapping blank common blocks.
+
+* fortranobject.h
+
+  - Updated numarray (0.9, 1.0, 1.1) support (patch by Todd Miller).
+
+* fortranobject.c
+
+  - Introduced ``intent(inplace)`` feature.
+  - Fix numarray reference counts (patch by Todd).
+  - Updated numarray (0.9, 1.0, 1.1) support (patch by Todd Miller).
+  - Enabled F2PY_REPORT_ON_ARRAY_COPY for Numarray.
+
+* capi_maps.py
+
+  - Always normalize .f2py_f2cmap keys to lower case.
+
+* rules.py
+
+  - Disabled ``index`` macro as it conflicts with the one defined
+    in string.h.
+  - Moved ``externroutines`` up to make it visible to ``usercode``.
+  - Fixed bug in f90 code generation: no empty line continuation is
+    allowed.
+  - Fixed undefined symbols failure when ``fortranname`` is used
+    to rename a wrapped function.
+  - Support for ``entry`` statement.
+
+* auxfuncs.py
+
+  - Made is* functions more robust with respect to parameters that
+    have no typespec specified.
+  - Using ``size_t`` instead of ``int`` as the type of string
+    length. Fixes issues on 64-bit platforms.
+
+* setup.py
+
+  - Fixed bug of installing ``f2py`` script as ``.exe`` file.
+
+* f2py2e.py
+
+  - ``--compiler=`` and ``--fcompiler=`` can be specified at the same time.
+
+* crackfortran.py
+
+  - Fixed dependency detection for non-intent(in|inout|inplace) arguments.
+    They must depend on their dimensions, not vice-versa.
+  - Don't match ``!!f2py`` as a start of f2py directive.
+  - Only effective intent attributes will be output to ``-h`` target.
+  - Introduced ``intent(callback)`` to build interface between Python
+    functions and Fortran external routines.
+  - Avoid including external arguments to __user__ modules.
+  - Initial hooks to evaluate ``kind`` and ``selected_int_kind``.
+  - Evaluating parameters in {char,kind}selectors and applying rmbadname.
+  - Evaluating parameters using also module parameters. Fixed the order
+    of parameter evaluation.
+  - Fixed silly bug: when block name was not lower cased, it was not
+    recognized correctly.
+  - Applying mapping '.false.'->'False', '.true.'->'True' to logical
+    parameters. TODO: Support for logical expressions is needed.
+  - Added support for multiple statements in one line (separated with semicolon).
+  - Impl. get_useparameters function for using parameter values from
+    other f90 modules.
+  - Applied Bertholds patch to fix bug in evaluating expressions 
+    like ``1.d0/dvar``.
+  - Fixed bug in reading string parameters.
+  - Evaluating parameters in charselector. Code cleanup.
+  - Using F90 module parameters to resolve kindselectors.
+  - Made the evaluation of module data init-expression more robust.
+  - Support for ``entry`` statement.
+  - Fixed ``determineexprtype`` that in the case of parameters 
+    returned non-dictionary objects.
+  - Use ``-*- fix -*-`` to specify that a file is in fixed format.
+
+Release 2.39.235_1693
+=====================
+
+* fortranobject.{h,c}
+
+  - Support for allocatable string arrays.
+
+* cfuncs.py
+
+  - Call-back arguments can now be also instances that have ``__call__`` method
+    as well as instance methods.
+
+* f2py2e.py
+
+  - Introduced ``--include_paths <path1>:<path2>:..`` command line
+    option.
+  - Added ``--compiler=`` support to change the C/C++ compiler from
+    f2py command line.
+
+* capi_maps.py
+
+  - Handle ``XDY`` parameter constants.
+
+* crackfortran.py
+
+  - Handle ``XDY`` parameter constants.
+
+  - Introduced formatpattern to workaround a corner case where reserved 
+    keywords are used in format statement. Other than that, format pattern
+    has no use.
+
+  - Parameters are now fully evaluated.
+
+* More splitting of documentation strings.
+
+* func2subr.py - fixed bug for function names that f77 compiler
+  would set ``integer`` type.
+
+Release 2.39.235_1660
+=====================
+
+* f2py2e.py
+
+  - Fixed bug in using --f90flags=..
+
+* f90mod_rules.py
+
+  - Splitted generated documentation strings (to avoid MSVC issue when
+    string length>2k)
+
+  - Ignore ``private`` module data.
+
+Release 2.39.235_1644
+=====================
+
+:Date:24 February 2004
+
+* Character arrays:
+
+  - Finished complete support for character arrays and arrays of strings.
+  - ``character*n a(m)`` is treated like ``character a(m,n)`` with ``intent(c)``.
+  - Character arrays are now considered as ordinary arrays (not as arrays
+    of strings which actually didn't work).
+
+* docs
+
+  - Initial f2py manpage file f2py.1.
+  - Updated usersguide and other docs when using numpy_distutils 0.2.2
+    and up.
+
+* capi_maps.py
+
+  - Try harder to use .f2py_f2cmap mappings when kind is used.
+
+* crackfortran.py
+
+  - Included files are first search in the current directory and
+    then from the source file directory.
+  - Ignoring dimension and character selector changes.
+  - Fixed bug in Fortran 90 comments of fixed format.
+  - Warn when .pyf signatures contain undefined symbols.
+  - Better detection of source code formats. Using ``-*- fortran -*-``
+    or ``-*- f90 -*-`` in the first line of a Fortran source file is 
+    recommended to help f2py detect the format, fixed or free,
+    respectively, correctly.
+
+* cfuncs.py
+
+  - Fixed intent(inout) scalars when typecode=='l'.
+  - Fixed intent(inout) scalars when not using numarray.
+  - Fixed intent(inout) scalars when using numarray.
+
+* diagnose.py
+
+  - Updated for numpy_distutils 0.2.2 and up.
+  - Added numarray support to diagnose.
+
+* fortranobject.c
+
+  - Fixed nasty bug with intent(in,copy) complex slice arrays.
+  - Applied Todd's patch to support numarray's byteswapped or
+    misaligned arrays, requires numarray-0.8 or higher.
+
+* f2py2e.py
+
+  - Applying new hooks for numpy_distutils 0.2.2 and up, keeping
+    backward compatibility with depreciation messages.
+  - Using always os.system on non-posix platforms in f2py2e.compile
+    function.
+
+* rules.py
+
+  - Changed the order of buildcallback and usercode junks.
+
+* setup.cfg
+
+  - Added so that docs/ and tests/ directories are included to RPMs.
+
+* setup.py
+
+  - Installing f2py.py instead of f2py.bat under NT.   
+  - Introduced ``--with-numpy_distutils`` that is useful when making
+    f2py tar-ball with numpy_distutils included.
+
+Release 2.37.233-1545
+=====================
+
+:Date: 11 September 2003
+
+* rules.py
+
+  - Introduced ``interface_usercode`` replacement. When ``usercode``
+    statement is used inside the first interface block, its contents
+    will be inserted at the end of initialization function of a F2PY
+    generated extension module (feature request: Berthold Höllmann).
+  - Introduced auxiliary function ``as_column_major_storage`` that
+    converts input array to an array with column major storage order
+    (feature request: Hans Petter Langtangen).
+
+* crackfortran.py
+
+  - Introduced ``pymethoddef`` statement.
+
+* cfuncs.py
+
+  - Fixed "#ifdef in #define TRYPYARRAYTEMPLATE" bug (patch thanks
+    to Bernhard Gschaider)
+
+* auxfuncs.py
+
+  - Introduced ``getpymethod`` function.
+  - Enabled multi-line blocks in ``callprotoargument`` statement.
+
+* f90mod_rules.py
+
+  - Undone "Fixed Warning 43 emitted by Intel Fortran compiler" that
+    causes (curios) segfaults.
+
+* fortranobject.c
+
+  - Fixed segfaults (that were introduced with recent memory leak
+    fixes) when using allocatable arrays.
+  - Introduced F2PY_REPORT_ON_ARRAY_COPY CPP macro int-variable. If defined 
+    then a message is printed to stderr whenever a copy of an array is
+    made and arrays size is larger than F2PY_REPORT_ON_ARRAY_COPY.
+
+Release 2.35.229-1505
+=====================
+
+:Date: 5 August 2003
+
+* General
+
+  - Introduced ``usercode`` statement (dropped ``c_code`` hooks).
+
+* setup.py
+
+  - Updated the CVS location of numpy_distutils.
+
+* auxfuncs.py
+
+  - Introduced ``isint1array(var)`` for fixing ``integer*1 intent(out)``
+    support.
+
+* tests/f77/callback.py
+
+  Introduced some basic tests.
+
+* src/fortranobject.{c,h}
+
+  - Fixed memory leaks when getting/setting allocatable arrays.
+    (Bug report by Bernhard Gschaider)
+
+  - Initial support for numarray (Todd Miller's patch). Use -DNUMARRAY
+    on the f2py command line to enable numarray support. Note that
+    there is no character arrays support and these hooks are not
+    tested with F90 compilers yet.
+
+* cfuncs.py
+
+  - Fixed reference counting bug that appeared when constructing extra
+    argument list to callback functions.
+  - Added ``PyArray_LONG != PyArray_INT`` test.
+
+* f2py2e.py
+
+  Undocumented ``--f90compiler``.
+
+* crackfortran.py
+
+  - Introduced ``usercode`` statement.
+  - Fixed newlines when outputting multi-line blocks.
+  - Optimized ``getlincoef`` loop and ``analyzevars`` for cases where
+    len(vars) is large.
+  - Fixed callback string argument detection.
+  - Fixed evaluating expressions: only int|float expressions are
+    evaluated succesfully.
+
+* docs
+
+  Documented -DF2PY_REPORT_ATEXIT feature.
+
+* diagnose.py
+
+  Added CPU information and sys.prefix printout.
+
+* tests/run_all.py
+
+  Added cwd to PYTHONPATH.
+
+* tests/f??/return_{real,complex}.py
+
+  Pass "infinity" check in SunOS.
+
+* rules.py
+
+  - Fixed ``integer*1 intent(out)`` support
+  - Fixed free format continuation of f2py generated F90 files.
+
+* tests/mixed/
+
+  Introduced tests for mixing Fortran 77, Fortran 90 fixed and free
+  format codes in one module.
+
+* f90mod_rules.py
+
+  - Fixed non-prototype warnings.
+  - Fixed Warning 43 emitted by Intel Fortran compiler.
+  - Avoid long lines in Fortran codes to reduce possible problems with
+    continuations of lines.
+
+Public Release 2.32.225-1419
+============================
+
+:Date: 8 December 2002
+
+* docs/usersguide/
+
+  Complete revision of F2PY Users Guide  
+
+* tests/run_all.py
+
+  - New file. A Python script to run all f2py unit tests.
+
+* Removed files: buildmakefile.py, buildsetup.py.
+
+* tests/f77/
+
+  - Added intent(out) scalar tests.
+
+* f2py_testing.py
+
+  - Introduced. It contains jiffies, memusage, run, cmdline functions
+    useful for f2py unit tests site.
+
+* setup.py
+
+  - Install numpy_distutils only if it is missing or is too old
+    for f2py.
+
+* f90modrules.py
+
+  - Fixed wrapping f90 module data.
+  - Fixed wrapping f90 module subroutines.
+  - Fixed f90 compiler warnings for wrapped functions by using interface
+    instead of external stmt for functions.
+
+* tests/f90/
+
+  - Introduced return_*.py tests.
+
+* func2subr.py
+
+  - Added optional signature argument to createfuncwrapper.
+  - In f2pywrappers routines, declare external, scalar, remaining
+    arguments in that order. Fixes compiler error 'Invalid declaration'
+    for::
+
+      real function foo(a,b)
+      integer b
+      real a(b)
+      end
+
+* crackfortran.py
+
+  - Removed first-line comment information support.
+  - Introduced multiline block. Currently usable only for
+    ``callstatement`` statement.
+  - Improved array length calculation in getarrlen(..).
+  - "From sky" program group is created only if ``groupcounter<1``. 
+    See TODO.txt. 
+  - Added support for ``dimension(n:*)``, ``dimension(*:n)``. They are
+    treated as ``dimesnion(*)`` by f2py.
+  - Fixed parameter substitution (this fixes TODO item by Patrick
+    LeGresley, 22 Aug 2001).
+
+* f2py2e.py
+
+  - Disabled all makefile, setup, manifest file generation hooks.
+  - Disabled --[no]-external-modroutines option. All F90 module
+    subroutines will have Fortran/C interface hooks.
+  - --build-dir can be used with -c option.
+  - only/skip modes can be used with -c option.
+  - Fixed and documented `-h stdout` feature.
+  - Documented extra options.
+  - Introduced --quiet and --verbose flags.
+
+* cb_rules.py
+
+  - Fixed debugcapi hooks for intent(c) scalar call-back arguments
+    (bug report: Pierre Schnizer).
+  - Fixed intent(c) for scalar call-back arguments.
+  - Improved failure reports.
+
+* capi_maps.py
+
+  - Fixed complex(kind=..) to C type mapping bug. The following hold
+    complex==complex(kind=4)==complex*8, complex(kind=8)==complex*16
+  - Using signed_char for integer*1 (bug report: Steve M. Robbins).
+  - Fixed logical*8 function bug: changed its C correspondence to
+    long_long.
+  - Fixed memory leak when returning complex scalar.
+
+* __init__.py
+
+  - Introduced a new function (for f2py test site, but could be useful
+    in general) ``compile(source[,modulename,extra_args])`` for
+    compiling fortran source codes directly from Python.
+
+* src/fortranobject.c
+
+  - Multi-dimensional common block members and allocatable arrays 
+    are returned as Fortran-contiguous arrays.
+  - Fixed NULL return to Python without exception.
+  - Fixed memory leak in getattr(<fortranobj>,'__doc__').
+  - <fortranobj>.__doc__ is saved to <fortranobj>.__dict__ (previously
+    it was generated each time when requested).
+  - Fixed a nasty typo from the previous item that caused data
+    corruption and occasional SEGFAULTs.
+  - array_from_pyobj accepts arbitrary rank arrays if the last dimension
+    is undefined. E.g. dimension(3,*) accepts a(3,4,5) and the result is
+    array with dimension(3,20).
+  - Fixed (void*) casts to make g++ happy (bug report: eric).
+  - Changed the interface of ARR_IS_NULL macro to avoid "``NULL used in
+    arithmetics``" warnings from g++.
+
+* src/fortranobject.h
+
+  - Undone previous item. Defining NO_IMPORT_ARRAY for
+    src/fortranobject.c (bug report: travis)
+  - Ensured that PY_ARRAY_UNIQUE_SYMBOL is defined only for
+    src/fortranobject.c (bug report: eric).
+
+* rules.py
+
+  - Introduced dummy routine feature.
+  - F77 and F90 wrapper subroutines (if any) as saved to different
+    files, <modulename>-f2pywrappers.f and <modulename>-f2pywrappers2.f90,
+    respectively. Therefore, wrapping F90 requires numpy_distutils >= 
+    0.2.0_alpha_2.229.
+  - Fixed compiler warnings about meaningless ``const void (*f2py_func)(..)``.
+  - Improved error messages for ``*_from_pyobj``.
+  - Changed __CPLUSPLUS__ macros to __cplusplus (bug report: eric).
+  - Changed (void*) casts to (f2py_init_func) (bug report: eric).
+  - Removed unnecessary (void*) cast for f2py_has_column_major_storage
+    in f2py_module_methods definition (bug report: eric).
+  - Changed the interface of f2py_has_column_major_storage function:
+    removed const from the 1st argument.
+
+* cfuncs.py
+
+  - Introduced -DPREPEND_FORTRAN.
+  - Fixed bus error on SGI by using PyFloat_AsDouble when ``__sgi`` is defined.
+    This seems to be `know bug`__ with Python 2.1 and SGI.
+  - string_from_pyobj accepts only arrays whos elements size==sizeof(char).
+  - logical scalars (intent(in),function) are normalized to 0 or 1.
+  - Removed NUMFROMARROBJ macro.
+  - (char|short)_from_pyobj now use int_from_pyobj.
+  - (float|long_double)_from_pyobj now use double_from_pyobj.
+  - complex_(float|long_double)_from_pyobj now use complex_double_from_pyobj.
+  - Rewrote ``*_from_pyobj`` to be more robust. This fixes segfaults if
+    getting * from a string. Note that int_from_pyobj differs 
+    from PyNumber_Int in that it accepts also complex arguments 
+    (takes the real part) and sequences (takes the 1st element). 
+  - Removed unnecessary void* casts in NUMFROMARROBJ.
+  - Fixed casts in ``*_from_pyobj`` functions.
+  - Replaced CNUMFROMARROBJ with NUMFROMARROBJ.
+
+.. __: http://sourceforge.net/tracker/index.php?func=detail&aid=435026&group_id=5470&atid=105470
+
+* auxfuncs.py
+
+  - Introduced isdummyroutine().
+  - Fixed islong_* functions.
+  - Fixed isintent_in for intent(c) arguments (bug report: Pierre Schnizer).
+  - Introduced F2PYError and throw_error. Using throw_error, f2py 
+    rejects illegal .pyf file constructs that otherwise would cause
+    compilation failures or python crashes.
+  - Fixed islong_long(logical*8)->True.
+  - Introduced islogical() and islogicalfunction().
+  - Fixed prototype string argument (bug report: eric).
+
+* Updated README.txt and doc strings. Starting to use docutils.
+
+* Speed up for ``*_from_pyobj`` functions if obj is a sequence.
+
+* Fixed SegFault (reported by M.Braun) due to invalid ``Py_DECREF`` 
+  in ``GETSCALARFROMPYTUPLE``.
+
+Older Releases
+==============
+
+::
+
+ *** Fixed missing includes when wrapping F90 module data.
+ *** Fixed typos in docs of build_flib options.
+ *** Implemented prototype calculator if no callstatement or
+    callprotoargument statements are used. A warning is issued if
+    callstatement is used without callprotoargument.
+ *** Fixed transposing issue with array arguments in callback functions.
+ *** Removed -pyinc command line option.
+ *** Complete tests for Fortran 77 functions returning scalars.
+ *** Fixed returning character bug if --no-wrap-functions.
+ *** Described how to wrap F compiled Fortran F90 module procedures
+    with F2PY. See doc/using_F_compiler.txt.
+ *** Fixed the order of build_flib options when using --fcompiler=...
+ *** Recognize .f95 and .F95 files as Fortran sources with free format.
+ *** Cleaned up the output of 'f2py -h': removed obsolete items,
+    added build_flib options section. 
+ *** Added --help-compiler option: it lists available Fortran compilers
+    as detected by numpy_distutils/command/build_flib.py. This option
+    is available only with -c option.
+
+
+:Release: 2.13.175-1250
+:Date: 4 April 2002
+
+::
+
+ *** Fixed copying of non-contigious 1-dimensional arrays bug. 
+    (Thanks to Travis O.).
+
+
+:Release: 2.13.175-1242
+:Date: 26 March 2002
+
+::
+
+ *** Fixed ignoring type declarations.
+ *** Turned F2PY_REPORT_ATEXIT off by default.
+ *** Made MAX,MIN macros available by default so that they can be
+    always used in signature files. 
+ *** Disabled F2PY_REPORT_ATEXIT for FreeBSD.
+
+
+:Release: 2.13.175-1233
+:Date: 13 March 2002
+
+::
+
+ *** Fixed Win32 port when using f2py.bat. (Thanks to Erik Wilsher).
+ *** F2PY_REPORT_ATEXIT is disabled for MACs.
+ *** Fixed incomplete dependency calculator.
+
+
+:Release: 2.13.175-1222
+:Date: 3 March 2002
+
+::
+
+ *** Plugged a memory leak for intent(out) arrays with overwrite=0.
+ *** Introduced CDOUBLE_to_CDOUBLE,.. functions for copy_ND_array.
+    These cast functions probably work incorrectly in Numeric.
+
+
+:Release: 2.13.175-1212
+:Date: 23 February 2002
+
+::
+
+ *** Updated f2py for the latest numpy_distutils.
+ *** A nasty bug with multi-dimensional Fortran arrays is fixed
+    (intent(out) arrays had wrong shapes). (Thanks to Eric for 
+    pointing out this bug).
+ *** F2PY_REPORT_ATEXIT is disabled by default for __WIN32__.
+
+
+:Release: 2.11.174-1161
+:Date: 14 February 2002
+
+::
+
+ *** Updated f2py for the latest numpy_distutils.
+ *** Fixed raise error when f2py missed -m flag.
+ *** Script name `f2py' now depends on the name of python executable.
+    For example, `python2.2 setup.py install' will create a f2py
+    script with a name `f2py2.2'.
+ *** Introduced 'callprotoargument' statement so that proper prototypes
+    can be declared. This is crucial when wrapping C functions as it
+    will fix segmentation faults when these wrappers use non-pointer
+    arguments (thanks to R. Clint Whaley for explaining this to me). 
+    Note that in f2py generated wrapper, the prototypes have
+    the following forms: 
+       extern #rtype# #fortranname#(#callprotoargument#);
+    or
+       extern #rtype# F_FUNC(#fortranname#,#FORTRANNAME#)(#callprotoargument#);
+ *** Cosmetic fixes to F2PY_REPORT_ATEXIT feature.
+
+
+:Release: 2.11.174-1146
+:Date: 3 February 2002
+
+::
+
+ *** Reviewed reference counting in call-back mechanism. Fixed few bugs.
+ *** Enabled callstatement for complex functions.
+ *** Fixed bug with initializing capi_overwrite_<varname>
+ *** Introduced intent(overwrite) that is similar to intent(copy) but
+    has opposite effect. Renamed copy_<name>=1 to overwrite_<name>=0.
+    intent(overwrite) will make default overwrite_<name>=1.
+ *** Introduced intent(in|inout,out,out=<name>) attribute that renames
+    arguments name when returned. This renaming has effect only in
+    documentation strings. 
+ *** Introduced 'callstatement' statement to pyf file syntax. With this
+    one can specify explicitly how wrapped function should be called
+    from the f2py generated module. WARNING: this is a dangerous feature
+    and should be used with care. It is introduced to provide a hack
+    to construct wrappers that may have very different signature
+    pattern from the wrapped function. Currently 'callstatement' can
+    be used only inside a subroutine or function block (it should be enough
+    though) and must be only in one continuous line. The syntax of the
+    statement is:    callstatement <C-expression>;
+    
+
+:Release: 2.11.174
+:Date: 18 January 2002
+
+::
+
+ *** Fixed memory-leak for PyFortranObject.
+ *** Introduced extra keyword argument copy_<varname> for intent(copy)
+    variables. It defaults to 1 and forces to make a copy for
+    intent(in) variables when passing on to wrapped functions (in case
+    they undesirably change the variable in-situ). 
+ *** Introduced has_column_major_storage member function for all f2py
+    generated extension modules. It is equivalent to Python call
+    'transpose(obj).iscontiguous()' but very efficient.
+ *** Introduced -DF2PY_REPORT_ATEXIT. If this is used when compiling,
+    a report is printed to stderr as python exits. The report includes
+    the following timings: 
+    1) time spent in all wrapped function calls; 
+    2) time spent in f2py generated interface around the wrapped
+    functions. This gives a hint whether one should worry
+    about storing data in proper order (C or Fortran).
+    3) time spent in Python functions called by wrapped functions
+    through call-back interface.
+    4) time spent in f2py generated call-back interface.
+    For now, -DF2PY_REPORT_ATEXIT is enabled by default. Use 
+    -DF2PY_REPORT_ATEXIT_DISABLE to disable it (I am not sure if
+    Windows has needed tools, let me know). 
+    Also, I appreciate if you could send me the output of 'F2PY
+    performance report' (with CPU and platform information) so that I
+    could optimize f2py generated interfaces for future releases.
+ *** Extension modules can be linked with dmalloc library. Use
+    -DDMALLOC when compiling.
+ *** Moved array_from_pyobj to fortranobject.c.
+ *** Usage of intent(inout) arguments is made more strict -- only
+    with proper type contiguous arrays are accepted. In general,
+    you should avoid using intent(inout) attribute as it makes
+    wrappers of C and Fortran functions asymmetric. I recommend using
+    intent(in,out) instead.
+ *** intent(..) has new keywords: copy,cache.
+    intent(copy,in) - forces a copy of an input argument; this
+      may be useful for cases where the wrapped function changes
+      the argument in situ and this may not be desired side effect.
+      Otherwise, it is safe to not use intent(copy) for the sake
+      of a better performance. 
+    intent(cache,hide|optional) - just creates a junk of memory. 
+      It does not care about proper storage order. Can be also
+      intent(in) but then the corresponding argument must be a
+      contiguous array with a proper elsize.
+ *** intent(c) can be used also for subroutine names so that
+    -DNO_APPEND_FORTRAN can be avoided for C functions.
+
+ *** IMPORTANT BREAKING GOOD ... NEWS!!!: 
+
+    From now on you don't have to worry about the proper storage order
+    in multi-dimensional arrays that was earlier a real headache when
+    wrapping Fortran functions. Now f2py generated modules take care
+    of the proper conversations when needed. I have carefully designed
+    and optimized this interface to avoid any unnecessary memory usage
+    or copying of data. However, it is wise to use input arrays that
+    has proper storage order: for C arguments it is row-major and for
+    Fortran arguments it is column-major. But you don't need to worry
+    about that when developing your programs. The optimization of
+    initializing the program with proper data for possibly better
+    memory usage can be safely postponed until the program is working.
+
+    This change also affects the signatures in .pyf files. If you have
+    created wrappers that take multi-dimensional arrays in arguments,
+    it is better to let f2py re-generate these files. Or you have to
+    manually do the following changes: reverse the axes indices in all
+    'shape' macros. For example, if you have defined an array A(n,m)
+    and n=shape(A,1), m=shape(A,0) then you must change the last
+    statements to n=shape(A,0), m=shape(A,1).
+
+
+:Release: 2.8.172
+:Date: 13 January 2002
+
+::
+
+ *** Fixed -c process. Removed pyf_extensions function and pyf_file class.
+ *** Reorganized setup.py. It generates f2py or f2py.bat scripts
+    depending on the OS and the location of the python executable.
+ *** Started to use update_version from numpy_distutils that makes
+    f2py startup faster. As a side effect, the version number system
+    changed.
+ *** Introduced test-site/test_f2py2e.py script that runs all
+    tests.
+ *** Fixed global variables initialization problem in crackfortran 
+    when run_main is called several times.
+ *** Added 'import Numeric' to C/API init<module> function.
+ *** Fixed f2py.bat in setup.py.
+ *** Switched over to numpy_distutils and dropped fortran_support.
+ *** On Windows create f2py.bat file.
+ *** Introduced -c option: read fortran or pyf files, construct extension
+    modules, build, and save them to current directory. 
+    In one word: do-it-all-in-one-call.
+ *** Introduced pyf_extensions(sources,f2py_opts) function. It simplifies
+    the extension building process considerably. Only for internal use.
+ *** Converted tests to use numpy_distutils in order to improve portability:
+    a,b,c
+ *** f2py2e.run_main() returns a pyf_file class instance containing
+    information about f2py generated files.
+ *** Introduced `--build-dir <dirname>' command line option.
+ *** Fixed setup.py for bdist_rpm command.
+ *** Added --numpy-setup command line option.
+ *** Fixed crackfortran that did not recognized capitalized type
+    specification with --no-lower flag.
+ *** `-h stdout' writes signature to stdout.
+ *** Fixed incorrect message for check() with empty name list.
+
+
+:Release: 2.4.366
+:Date: 17 December 2001
+
+::
+
+ *** Added command line option --[no-]manifest.
+ *** `make test' should run on Windows, but the results are not truthful.
+ *** Reorganized f2py2e.py a bit. Introduced run_main(comline_list) function
+    that can be useful when running f2py from another Python module.
+ *** Removed command line options -f77,-fix,-f90 as the file format
+    is determined from the extension of the fortran file
+    or from its header (first line starting with `!%' and containing keywords
+    free, fix, or f77). The later overrides the former one.
+ *** Introduced command line options --[no-]makefile,--[no-]latex-doc.
+    Users must explicitly use --makefile,--latex-doc if Makefile-<modulename>,
+    <modulename>module.tex is desired. --setup is default. Use --no-setup
+    to disable setup_<modulename>.py generation. --overwrite-makefile
+    will set --makefile.
+ *** Added `f2py_rout_' to #capiname# in rules.py.
+ *** intent(...) statement with empty namelist forces intent(...) attribute for
+    all arguments.
+ *** Dropped DL_IMPORT and DL_EXPORT in fortranobject.h.
+ *** Added missing PyFortran_Type.ob_type initialization.
+ *** Added gcc-3.0 support.
+ *** Raising non-existing/broken Numeric as a FatalError exception.
+ *** Fixed Python 2.x specific += construct in fortran_support.py.
+ *** Fixed copy_ND_array for 1-rank arrays that used to call calloc(0,..)
+    and caused core dump with a non-gcc compiler (Thanks to Pierre Schnizer
+    for reporting this bug).
+ *** Fixed "warning: variable `..' might be clobbered by `longjmp' or `vfork'":
+  - Reorganized the structure of wrapper functions to get rid of 
+    `goto capi_fail' statements that caused the above warning.
+
+
+:Release: 2.3.343
+:Date: 12 December 2001
+
+::
+
+ *** Issues with the Win32 support (thanks to Eric Jones and Tiffany Kamm):
+  -  Using DL_EXPORT macro for init#modulename#.
+  -  Changed PyObject_HEAD_INIT(&PyType_Type) to PyObject_HEAD_INIT(0).
+  -  Initializing #name#_capi=NULL instead of Py_None in cb hooks.
+ *** Fixed some 'warning: function declaration isn't a prototype', mainly
+    in fortranobject.{c,h}.
+ *** Fixed 'warning: missing braces around initializer'.
+ *** Fixed reading a line containing only a label.
+ *** Fixed nonportable 'cp -fv' to shutil.copy in f2py2e.py.
+ *** Replaced PyEval_CallObject with PyObject_CallObject in cb_rules.
+ *** Replaced Py_DECREF with Py_XDECREF when freeing hidden arguments.
+    (Reason: Py_DECREF caused segfault when an error was raised)
+ *** Impl. support for `include "file"' (in addition to `include 'file'')
+ *** Fixed bugs (buildsetup.py missing in Makefile, in generated MANIFEST.in)
+
+
+:Release: 2.3.327
+:Date: 4 December 2001
+
+::
+
+ *** Sending out the third public release of f2py.
+ *** Support for Intel(R) Fortran Compiler (thanks to Patrick LeGresley).
+ *** Introduced `threadsafe' statement to pyf-files (or to be used with
+    the 'f2py' directive in fortran codes) to force
+    Py_BEGIN|END_ALLOW_THREADS block around the Fortran subroutine
+    calling statement in Python C/API. `threadsafe' statement has
+    an effect only inside a subroutine block.
+ *** Introduced `fortranname <name>' statement to be used only within
+    pyf-files. This is useful when the wrapper (Python C/API) function
+    has different name from the wrapped (Fortran) function.
+ *** Introduced `intent(c)' directive and statement. It is useful when
+    wrapping C functions. Use intent(c) for arguments that are
+    scalars (not pointers) or arrays (with row-ordering of elements).
+
+
+:Release: 2.3.321
+:Date: 3 December 2001
+
+::
+
+ *** f2py2e can be installed using distutils (run `python setup.py install').
+ *** f2py builds setup_<modulename>.py. Use --[no-]setup to control this
+    feature. setup_<modulename>.py uses fortran_support module (from SciPy),
+    but for your convenience it is included also with f2py as an additional
+    package. Note that it has not as many compilers supported as with
+    using Makefile-<modulename>, but new compilers should be added to 
+    fortran_support module, not to f2py2e package.
+ *** Fixed some compiler warnings about else statements.
+

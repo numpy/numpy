@@ -1,0 +1,509 @@
+.. -*- rest -*-
+
+Scipy Distutils - Users Guide
+=============================
+
+:Author: Pearu Peterson <pearu@cens.ioc.ee>
+:Discussions to: scipy-dev@scipy.org
+:Created: October 2005
+:Revision: $LastChangedRevision$
+:SVN source: $HeadURL$
+
+Scipy structure
+'''''''''''''''
+
+Currently Scipy project consists of two packages:
+
+- Scipy core --- it provides packages like:
+
+  + numpy.distutils - extension to Python distutils
+  + numpy.f2py - a tool to bind Fortran/C codes to Python
+  + numpy.weave - a tool to bind C++ codes to Python
+  + numpy.base - future replacement of Numeric and numarray packages
+  + numpy.testing - numpy-style tools for unit testing
+  + etc
+
+- Scipy --- a collection of Scientific tools for Python.
+
+The aim of this document is to describe how to add new tools to Scipy.
+
+
+Requirements for SciPy packages
+'''''''''''''''''''''''''''''''
+
+Scipy consists of Python packages, called Scipy packages, that are
+available to Python users via ``numpy`` name space. Each Scipy package
+may contain other Scipy packages. And so on. So, Scipy directory tree
+is a tree of packages with arbitrary depth and width. Any Scipy
+package may depend on Scipy core packages but the dependence on other
+Scipy packages should be kept minimal or zero.
+
+A Scipy package contains in addition to its sources, the following
+files and directories:
+
+  ``setup.py`` --- building script
+  ``info.py``  --- contains documentation and import flags
+  ``__init__.py`` --- package initializer
+  ``tests/`` --- directory of unittests
+
+Their contents will be described below.
+
+The ``setup.py`` file
+'''''''''''''''''''''
+
+In order to add a Python package to Scipy, its building script (the
+``setup.py`` file) must meet certain requirements. The minimal and the
+most important one is that it must define a function
+``configuration(parent_package='',top_path=None)`` that returns a
+dictionary suitable for passing to ``numpy.distutils.core.setup(..)``
+function. In order to simplify the construction of such an distionary,
+``numpy.distutils.misc_util`` provides a class ``Configuration``, the
+usage of will be described below.
+
+Scipy pure Python package example
+---------------------------------
+
+Here follows a minimal example for a pure Python Scipy package
+``setup.py`` file that will be explained in detail below::
+
+  #!/usr/bin/env python
+  def configuration(parent_package='',top_path=None):
+      from numpy.distutils.misc_util import Configuration
+      config = Configuration('mypackage',parent_package,top_path)
+      return config
+
+  if __name__ == "__main__":
+      from numpy.distutils.core import setup
+      setup(**configuration(top_path='').todict())
+
+The first argument ``parent_package`` of the main configuration
+function will contain a name of the parent Scipy package and the
+second argument ``top_path`` contains the name of the directory where
+the main ``setup.py`` script is located. Both arguments should be
+passed to the ``Configuration`` constructor after the name of the
+current package.
+
+The ``Configuration`` constructor has also fourth optional argument,
+``package_path``, that can be used when package files are located in
+some other location than the directory of the ``setup.py`` file. 
+
+Remaining ``Configuration`` arguments are all keyword arguments that will
+be used to initialize attributes of ``Configuration``
+instance. Usually, these keywords are the same as the ones that
+``setup(..)`` function would expect, for example, ``packages``,
+``ext_modules``, ``data_files``, ``include_dirs``, ``libraries``,
+``headers``, ``scripts``, ``package_dir``, etc.  However, the direct
+specification of these keywords is not recommended as the content of
+these keyword arguments will not be processed or checked for the
+consistency of Scipy building system.
+
+Finally, ``Configuration`` has ``.todict()`` method that returns all
+the configuration data as a dictionary suitable for passing on to the
+``setup(..)`` function.
+
+``Configuration`` instance attributes
+-------------------------------------
+
+In addition to attributes that can be specified via keyword arguments
+to ``Configuration`` constructor, ``Configuration`` instance (let us
+denote as ``config``) has the following attributes that can be useful
+in writing setup scripts:
+
++ ``config.name`` - full name of the current package. The names of parent
+  packages can be extracted as ``config.name.split('.')``.
+
++ ``config.local_path`` - path to the location of current ``setup.py`` file.
+
++ ``config.top_path`` - path to the location of main ``setup.py`` file.
+
+``Configuration`` instance methods
+----------------------------------
+
++ ``config.todict()`` --- returns configuration distionary suitable for
+  passing to ``numpy.distutils.core.setup(..)`` function.
+
++ ``config.paths(*paths) --- applies ``glob.glob(..)`` to items of
+  ``paths`` if necessary. Fixes ``paths`` item that is relative to
+  ``config.local_path``.
+
++ ``config.get_subpackage(subpackage_name,subpackage_path=None)`` ---
+  returns Scipy subpackage configuration. Subpackage is looked in the
+  current directory under the name ``subpackage_name`` but the path
+  can be specified also via optional ``subpackage_path`` argument.
+  If ``subpackage_name`` is specified as ``None`` then the subpackage
+  name will be taken the basename of ``subpackage_path``.
+
++ ``config.add_subpackage(subpackage_name,subpackage_path=None)`` ---
+  add Scipy subpackage configuration to the current one. The meaning
+  and usage of arguments is explained above, see
+  ``config.get_subpackage()`` method.
+
++ ``config.add_data_files(*files)`` --- prepend ``files`` to ``data_files``
+  list. If ``files`` item is a tuple then its first element defines
+  the suffix of where data files are copied relative to package installation
+  directory and the second element specifies the path to data
+  files. By default data files are copied under package installation
+  directory. For example,
+
+  ::
+
+    config.add_data_files('foo.dat',
+                          ('fun',['gun.dat','nun/pun.dat','/tmp/sun.dat']),
+                          'bar/car.dat'.
+                          '/full/path/to/can.dat',
+                          )
+
+  will install data files to the following locations::
+
+    <installation path of config.name package>/
+      foo.dat
+      fun/
+        gun.dat
+        nun/
+          pun.dat
+      sun.dat
+      bar/
+        car.dat
+      can.dat 
+
+  Path to data files can be a function taking no arguments and
+  returning path(s) to data files -- this is a useful when data files
+  are generated while building the package. (XXX: explain the step
+  when this function are called exactly) 
+
++ ``config.add_data_dir(data_path)`` --- add directory ``data_path``
+  recursively to ``data_files``. The whole directory tree starting at
+  ``data_path`` will be copied under package installation directory.
+  If ``data_path`` is a tuple then its first element defines
+  the suffix of where data files are copied relative to package installation
+  directory and the second element specifies the path to data directory.
+  By default data directory are copied under package installation
+  directory. For example,
+ 
+  ::
+
+    config.add_data_dir('fun')  # fun/ contains foo.dat bar/car.dat
+    config.add_data_dir(('sun','fun'))
+    config.add_data_dir(('gun','/full/path/to/fun'))
+
+  will install data files to the following locations 
+
+    <installation path of config.name package>/
+      fun/
+         foo.dat
+         bar/
+            car.dat
+      sun/
+         foo.dat
+         bar/
+            car.dat
+      gun/
+         foo.dat
+         car.dat
+
++ ``config.add_include_dirs(*paths)`` --- prepend ``paths`` to
+  ``include_dirs`` list. This list will be visible to all extension
+  modules of the current package.
+
++ ``config.add_headers(*files)`` --- prepend ``files`` to ``headers``
+  list. By default, headers will be installed under 
+  ``<prefix>/include/pythonX.X/<config.name.replace('.','/')>/``
+  directory. If ``files`` item is a tuple then it's first argument
+  specifies the installation suffix relative to
+  ``<prefix>/include/pythonX.X/`` path.
+
++ ``config.add_scripts(*files)`` --- prepend ``files`` to ``scripts``
+  list. Scripts will be installed under ``<prefix>/bin/`` directory.
+
++ ``config.add_extension(name,sources,*kw)`` --- create and add an
+  ``Extension`` instance to ``ext_modules`` list. The first argument 
+  ``name`` defines the name of the extension module that will be
+  installed under ``config.name`` package. The second argument is
+  a list of sources. ``add_extension`` method takes also keyword
+  arguments that are passed on to the ``Extension`` constructor.
+  The list of allowed keywords is the following: ``include_dirs``,
+  ``define_macros``, ``undef_macros``, ``library_dirs``, ``libraries``,
+  ``runtime_library_dirs``, ``extra_objects``, ``extra_compile_args``,
+  ``extra_link_args``, ``export_symbols``, ``swig_opts``, ``depends``,
+  ``language``, ``f2py_options``, ``module_dirs``, ``extra_info``.
+
+  Note that ``config.paths`` method is applied to all lists that
+  may contain paths. ``extra_info`` is a dictionary or a list
+  of dictionaries that content will be appended to keyword arguments.
+  The list ``depends`` contains paths to files or directories
+  that the sources of the extension module depend on. If any path
+  in the ``depends`` list is newer than the extension module, then
+  the module will be rebuilt.
+
+  The list of sources may contain functions ('source generators')
+  with a pattern ``def <funcname>(ext, build_dir): return
+  <source(s) or None>``. If ``funcname`` returns ``None``, no sources
+  are generated. And if the ``Extension`` instance has no sources
+  after processing all source generators, no extension module will
+  be built. This is the recommended way to conditionally define
+  extension modules. Source generator functions are called by the
+  ``build_src`` command of ``numpy.distutils``.
+
+  For example, here is a typical source generator function::
+
+    def generate_source(ext,build_dir):
+        import os
+        from distutils.dep_util import newer
+        target = os.path.join(build_dir,'somesource.c')
+        if newer(target,__file__):
+            # create target file
+        return target
+
+  The first argument contains the Extension instance that can be
+  useful to access its attributes like ``depends``, ``sources``,
+  etc. lists and modify them during the building process.
+  The second argument gives a path to a build directory that must
+  be used when creating files to a disk.
+
++ ``config.add_library(name, sources, **build_info)`` --- add
+  a library to ``libraries`` list. Allowed keywords arguments
+  are ``depends``, ``macros``, ``include_dirs``,
+  ``extra_compiler_args``, ``f2py_options``. See ``.add_extension()``
+  method for more information on arguments.
+
++ ``config.have_f77c()`` --- return True if Fortran 77 compiler is
+  available (read: a simple Fortran 77 code compiled succesfully). 
+
++ ``config.have_f90c()`` --- return True if Fortran 90 compiler is
+  available (read: a simple Fortran 90 code compiled succesfully). 
+
++ ``config.get_version()`` --- return version string of the current package,
+  ``None`` if version information could not be detected. This methods
+  scans files ``__version__.py``, ``<packagename>_version.py``,
+  ``version.py``, ``__svn_version__.py`` for string variables
+  ``version``, ``__version__``, ``<packagename>_version``.
+
++ ``config.make_svn_version_py()`` --- appends a data function to
+  ``data_files`` list that will generate ``__svn_version__.py`` file
+  to the current package directory. The file will be removed from
+  the source directory when Python exits.
+
++ ``config.get_build_temp_dir()`` --- return a path to a temporary
+  directory. This is the place where one should build temporary
+  files.
+
++ ``config.get_distribution()`` --- return distutils ``Distribution``
+  instance.
+
++ ``config.get_config_cmd()`` --- returns ``numpy.distutils`` config
+  command instance.
+
+Template files
+--------------
+
+XXX: Describe how files with extensions ``.f.src``, ``.pyf.src``,
+``.c.src``, etc. are pre-processed by the ``build_src`` command.
+
+Useful functions in ``numpy.distutils.misc_util``
+-------------------------------------------------
+
++ ``get_numpy_include_dirs()`` --- return a list of Scipy base
+  include directories. Scipy base include directories contain
+  header files such as ``numpy/arrayobject.h``, ``numpy/funcobject.h``
+  etc. For installed Scipy core the returned list has length 1
+  but when building Scipy core the list may contain more directories,
+  for example, a path to ``config.h`` file that
+  ``numpy/base/setup.py`` file generates and is used by ``numpy``
+  header files.
+
++ ``append_path(prefix,path)`` --- smart append ``path`` to ``prefix``.
+
++ ``def get_cmd(cmdname,_cache={})`` --- returns ``numpy.distutils``
+  command instance.
+
++ ``all_strings(lst)``
+
++ ``has_f_sources(sources)``
+
++ ``has_cxx_sources(sources)``
+
++ ``filter_sources(sources)`` --- return ``c_sources, cxx_sources,
+  f_sources, fmodule_sources``
+
++ ``get_dependencies(sources)``
+
++ ``is_local_src_dir(directory)``
+
++ ``get_ext_source_files(ext)``
+
++ ``get_script_files(scripts)``
+
++ ``get_lib_source_files(lib)``
+
++ ``get_data_files(data)``
+
++ ``dot_join(*args)``
+
++ ``get_frame(level=0)``
+
++ ``cyg2win32(path)``
+
++ ``terminal_has_colors()``, ``red_text(s)``, ``green_text(s)``,
+  ``yellow_text(s)``, ``blue_text(s)``, ``cyan_text(s)``
+
++ ``get_path(mod_name,parent_path=None)``
+
++ ``allpath(name)``
+
++ ``cxx_ext_match``, ``fortran_ext_match``, ``f90_ext_match``,
+  ``f90_module_name_match``
+
+``numpy.distutils.system_info`` module
+--------------------------------------
+
++ ``get_info(name,notfound_action=0)``
++ ``combine_paths(*args,**kws)``
++ ``show_all()``
+
+``numpy.distutils.cpuinfo`` module
+----------------------------------
+
++ ``cpuinfo``
+
+``numpy.distutils.log`` module
+------------------------------
+
++ ``set_verbosity(v)``
+
+
+``numpy.distutils.exec_command`` module
+---------------------------------------
+
++ ``get_pythonexe()``
++ ``splitcmdline(line)``
++ ``find_executable(exe, path=None)``
++ ``exec_command( command, execute_in='', use_shell=None, use_tee=None, **env )``
+
+The ``info.py`` file
+''''''''''''''''''''
+
+Scipy package import hooks assume that each Scipy package contains
+``info.py`` file that contains overall documentation about the package
+and some variables defining the order of package imports, dependence
+relations between packages, etc.
+
+The following information will be looked in the ``info.py`` file:
+
+__doc__
+  The documentation string of the package.
+
+__doc_title__
+  The title of the package. If not defined then the first non-empty 
+  line of ``__doc__`` will be used.
+
+__all__
+  List of symbols that package exports. Optional.
+
+global_symbols
+  List of names that should be imported to numpy name space. To import
+  all symbols to ``numpy`` namespace, define ``global_symbols=['*']``.
+
+depends
+  List of names that the package depends on. Prefix ``numpy.``
+  will be automatically added to package names. For example,
+  use ``testing`` to indicate dependence on ``numpy.testing``
+  package. Default value is ``[]``.
+
+postpone_import
+  Boolean variable indicating that importing the package should be
+  postponed until the first attempt of its usage. Default value is ``False``.
+  Depreciated.
+
+The ``__init__.py`` file
+''''''''''''''''''''''''
+
+To speed up the import time as well as to minimize memory usage, numpy
+uses ppimport hooks to transparently postpone importing large modules
+that might not be used during the Scipy usage session. But in order to
+have an access to the documentation of all Scipy packages, including 
+of the postponed packages, the documentation string of a package (that would
+usually reside in ``__init__.py`` file) should be copied also
+to ``info.py`` file.
+
+So, the header a typical ``__init__.py`` file is::
+
+  #
+  # Package ... - ...
+  #
+
+  from info import __doc__
+  ...
+
+  from numpy.testing import ScipyTest
+  test = ScipyTest().test
+
+The ``tests/`` directory
+''''''''''''''''''''''''
+
+Ideally, every Python code, extension module, or subpackage in Scipy
+package directory should have the corresponding ``test_<name>.py``
+file in ``tests/`` directory.  This file should define classes
+derived from ``ScipyTestCase`` (or from ``unittest.TestCase``) class
+and have names starting with ``test``. The methods of these classes
+which names start with ``bench``, ``check``, or ``test``, are passed
+on to unittest machinery. In addition, the value of the first optional
+argument of these methods determine the level of the corresponding
+test. Default level is 1.
+
+A minimal example of a ``test_yyy.py`` file that implements tests for
+a Scipy package module ``numpy.xxx.yyy`` containing a function
+``zzz()``, is shown below::
+
+  import sys
+  from numpy.testing import *
+
+  set_package_path()
+  # import xxx symbols
+  from xxx.yyy import zzz
+  restore_path()
+
+  #Optional:
+  set_local_path()
+  # import modules that are located in the same directory as this file.
+  restore_path()
+
+  class test_zzz(ScipyTestCase):
+      def check_simple(self, level=1):
+          assert zzz()=='Hello from zzz'
+      #...
+
+  if __name__ == "__main__":
+      ScipyTest().run()
+
+``ScipyTestCase`` is derived from ``unittest.TestCase`` and it
+basically only implements an additional method ``measure(self,
+code_str, times=1)``.
+
+``numpy.testing`` module provides also the following convenience
+functions::
+
+  assert_equal(actual,desired,err_msg='',verbose=1)
+  assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1)
+  assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1)
+  assert_array_equal(x,y,err_msg='')
+  assert_array_almost_equal(x,y,decimal=6,err_msg='')
+  rand(*shape) # returns random array with a given shape
+
+``ScipyTest`` can be used for running ``tests/test_*.py`` scripts.
+For instance, to run all test scripts of the module ``xxx``, execute
+in Python:
+
+  >>> ScipyTest('xxx').test(level=1,verbosity=1)
+
+or equivalently,
+
+  >>> import xxx
+  >>> ScipyTest(xxx).test(level=1,verbosity=1)
+
+To run only tests for ``xxx.yyy`` module, execute:
+
+  >>> ScipyTest('xxx.yyy').test(level=1,verbosity=1)
+
+To take the level and verbosity parameters for tests from
+``sys.argv``, use ``ScipyTest.run()`` method (this is supported only
+when ``optparse`` is installed).

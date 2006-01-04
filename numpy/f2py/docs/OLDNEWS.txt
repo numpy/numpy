@@ -1,0 +1,63 @@
+
+.. topic:: Old F2PY NEWS
+
+  March 30, 2004
+    F2PY bug fix release (version 2.39.235-1693). Two new command line switches:
+    ``--compiler`` and ``--include_paths``. Support for allocatable string arrays.
+    Callback arguments may now be arbitrary callable objects. Win32 installers
+    for F2PY and Scipy_core are provided.
+    `Differences with the previous release (version 2.37.235-1660)`__.
+
+  __ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt.diff?r1=1.98&r2=1.87&f=h
+
+
+  March 9, 2004
+    F2PY bug fix release (version 2.39.235-1660).
+    `Differences with the previous release (version 2.37.235-1644)`__.
+
+  __ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt.diff?r1=1.87&r2=1.83&f=h
+
+  February 24, 2004
+    Latest F2PY release (version 2.39.235-1644).
+    Support for numpy_distutils 0.2.2 and up (e.g. compiler flags can be
+    changed via f2py command line options). Implemented support for
+    character arrays and arrays of strings (e.g. ``character*(*) a(m,..)``).
+    *Important bug fixes regarding complex arguments, upgrading is
+    highly recommended*. Documentation updates.
+    `Differences with the previous release (version 2.37.233-1545)`__.
+
+  __ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt.diff?r1=1.83&r2=1.58&f=h
+
+  September 11, 2003
+    Latest F2PY release (version 2.37.233-1545).
+    New statements: ``pymethoddef`` and ``usercode`` in interface blocks.
+    New function: ``as_column_major_storage``.
+    New CPP macro: ``F2PY_REPORT_ON_ARRAY_COPY``.
+    Bug fixes.
+    `Differences with the previous release (version 2.35.229-1505)`__.
+
+  __ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt.diff?r1=1.58&r2=1.49&f=h
+
+  August 2, 2003
+    Latest F2PY release (version 2.35.229-1505).
+    `Differences with the previous release (version 2.32.225-1419)`__.
+
+  __ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt.diff?r1=1.49&r2=1.28&f=h
+
+  April 2, 2003
+    Initial support for Numarray_ (thanks to Todd Miller).
+
+  December 8, 2002
+    Sixth public release of F2PY (version 2.32.225-1419). Comes with
+    revised `F2PY Users Guide`__, `new testing site`__, lots of fixes
+    and other improvements, see `HISTORY.txt`_ for details.
+
+  __ usersguide/index.html
+  __ TESTING.txt_
+
+.. References
+   ==========
+
+.. _HISTORY.txt: HISTORY.html
+.. _Numarray: http://www.stsci.edu/resources/software_hardware/numarray
+.. _TESTING.txt: TESTING.html
