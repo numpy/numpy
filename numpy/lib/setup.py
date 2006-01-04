@@ -16,10 +16,7 @@ def configuration(parent_package='',top_path=None):
 
 
     config.add_extension('_compiled_base',
-                         sources=[join('src','_compiled_base.c'),
-                                  generate_config_h,
-                                  generate_array_api,
-                                  ],
+                         sources=[join('src','_compiled_base.c')]
                          )
 
     config.add_data_dir('tests')
