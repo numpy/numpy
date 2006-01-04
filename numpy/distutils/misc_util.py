@@ -861,19 +861,19 @@ def get_cmd(cmdname,_cache={}):
     return _cache[cmdname]
 
 def get_numpy_include_dirs():
-    # numpy_include_dirs are set by numpy/base/setup.py, otherwise []
+    # numpy_include_dirs are set by numpy/core/setup.py, otherwise []
     include_dirs = Configuration.numpy_include_dirs[:]
     if not include_dirs:
         import numpy
         if numpy.show_core_config is None:
             # running from numpy_core source directory
             include_dirs.append(os.path.join(os.path.dirname(numpy.__file__),
-                                             'base','include'))
+                                             'core','include'))
         else:
             # using installed numpy core headers
-            import numpy.base as base
-            include_dirs.append(os.path.join(os.path.dirname(base.__file__),'include'))
-    # else running numpy/base/setup.py
+            import numpy.core as core
+            include_dirs.append(os.path.join(os.path.dirname(core.__file__),'include'))
+    # else running numpy/core/setup.py
     return include_dirs
 
 #########################
