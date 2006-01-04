@@ -1872,7 +1872,7 @@ argsort_static_compare(const void *ip1, const void *ip2)
 static PyObject *
 PyArray_ArgSort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
 {
-	PyArrayObject *ap=NULL, *ret, *store;
+	PyArrayObject *ap=NULL, *ret=NULL, *store;
 	intp *ip;
 	intp i, j, n, m, orign;
 	int argsort_elsize;
@@ -1973,6 +1973,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 	int needcopy=0, i,j;
 	intp N, size;
 	int elsize;
+        int maxelsize;
 	intp astride, rstride, *iptr;
 	PyArray_ArgSortFunc *argsort;
 
@@ -2044,16 +2045,19 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 	N = mps[0]->dimensions[axis];
 	rstride = PyArray_STRIDE(ret,axis);
 
+        maxelsize = mps[0]->descr->elsize;
 	needcopy = (rstride != sizeof(intp));
 	for (j=0; j<n && !needcopy; j++) {
 		needcopy = !(mps[j]->flags & ALIGNED) || \
 			(mps[j]->strides[axis] != (intp)mps[j]->descr->elsize);
+                if (mps[j]->descr->elsize > maxelsize) 
+                        maxelsize = mps[j]->descr->elsize;
 	}
 
 	if (needcopy) {
 		char *valbuffer, *indbuffer;
-		valbuffer = PyDataMem_NEW(N*(elsize+sizeof(intp)));
-		indbuffer = valbuffer + (N*elsize);
+		valbuffer = PyDataMem_NEW(N*(maxelsize+sizeof(intp)));
+		indbuffer = valbuffer + (N*maxelsize);
 		while (size--) {
 			iptr = (intp *)indbuffer;
 			for (i=0; i<N; i++) *iptr++ = i;
