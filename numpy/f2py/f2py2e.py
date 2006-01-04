@@ -38,7 +38,7 @@ outmess = auxfuncs.outmess
 try:
     from numpy import __version__ as numpy_version
 except ImportError:
-    numpy_distutils_version = 'N/A'
+    numpy_version = 'N/A'
 
 __usage__ = """\
 Usage:
