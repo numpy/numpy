@@ -848,7 +848,6 @@ _setobject_pkl(PyArrayObject *self, PyObject *list)
 	return 0;
 }
 
-
 static char doc_reduce[] = "a.__reduce__()  for pickling.";
 
 static PyObject *
@@ -864,7 +863,7 @@ array_reduce(PyArrayObject *self, PyObject *args)
 
 	ret = PyTuple_New(3);
 	if (ret == NULL) return NULL;
-	mod = PyImport_ImportModule("numpy.base._internal");
+	mod = PyImport_ImportModule("numpy.core._internal");
 	if (mod == NULL) {Py_DECREF(ret); return NULL;}
 	obj = PyObject_GetAttrString(mod, "_reconstruct");
 	Py_DECREF(mod);

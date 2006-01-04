@@ -1,6 +1,6 @@
 """
->>> import numpy.base as nx
->>> from numpy.base.polynomial import poly1d, polydiv
+>>> import numpy.core as nx
+>>> from numpy.lib.polynomial import poly1d, polydiv
 
 >>> p = poly1d([1.,2,3])
 >>> p

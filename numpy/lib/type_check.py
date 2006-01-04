@@ -1,7 +1,6 @@
 ## Automatically adapted for numpy Sep 19, 2005 by convertcode.py
 
 __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
-           'isscalar',
            'isreal','nan_to_num','real','real_if_close',
            'typename','asfarray','mintypecode','asscalar',
            'common_type']
@@ -50,12 +49,6 @@ def asfarray(a, dtype=_nx.float_):
         dtype = _nx.float_
     a = asarray(a,dtype=dtype)
     return a
-
-def isscalar(num):
-    if isinstance(num, _nx.generic):
-        return True
-    else:
-        return type(num) in ScalarType
 
 def real(val):
     return asarray(val).real

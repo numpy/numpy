@@ -2,9 +2,8 @@
 from numpy.testing import *
 set_package_path()
 import os as _os
-import numpy.base;reload(numpy.base)
-from numpy.base import *
-from numpy.base import records as rec
+import numpy.core;reload(numpy.core)
+from numpy.core import *
 restore_path()
 
 class test_fromrecords(ScipyTestCase):

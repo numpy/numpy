@@ -3,8 +3,9 @@ import sys
 
 from numpy.testing import *
 set_package_path()
-import numpy.base;reload(numpy.base);reload(numpy.base.type_check)
-from numpy.base import *
+import numpy.lib;reload(numpy.lib);reload(numpy.lib.type_check)
+from numpy.lib import *
+from numpy.core import *
 restore_path()
 
 def assert_all(x):

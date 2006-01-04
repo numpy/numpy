@@ -96,6 +96,9 @@ defdict = {
               (1,1), None,
               "determines -x elementwise",
               ],
+'sign' : [nobool,'',(),(1,1),None,
+          "returns -1 if x < 0 and 0 if x==0 and 1 if x > 0"
+          ],
 'greater' : [all,'',(),(2,1), None,
              "returns elementwise x1 > x2 in a bool array.",
              '?'*len(all)

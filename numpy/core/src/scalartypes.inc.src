@@ -1194,7 +1194,7 @@ gentype_reduce(PyObject *self, PyObject *args)
 	if (PyObject_AsReadBuffer(self, (const void **)&buffer, &buflen)<0) {
 		Py_DECREF(ret); return NULL;
 	}
-	mod = PyImport_ImportModule("numpy.base.multiarray");
+	mod = PyImport_ImportModule("numpy.core.multiarray");
 	if (mod == NULL) return NULL;
 	obj = PyObject_GetAttrString(mod, "scalar");
 	Py_DECREF(mod);

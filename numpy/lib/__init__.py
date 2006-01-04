@@ -14,8 +14,6 @@ from polynomial import *
 from machar import *
 from getlimits import *
 import convertcode
-del nt
-
 from utils import *
 
 __all__ = filter(lambda s:not s.startswith('_'),dir())

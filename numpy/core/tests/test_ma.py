@@ -1,6 +1,6 @@
 import numpy 
 import types, time
-from numpy.base.ma import *
+from numpy.core.ma import *
 from numpy.testing import ScipyTestCase, ScipyTest
 def eq(v,w):
     result = allclose(v,w)
@@ -633,5 +633,5 @@ def testinplace(x):
 testinplace.test_name = 'Inplace operations'
 
 if __name__ == "__main__":
-    ScipyTest('numpy.base.ma').run()    
+    ScipyTest('numpy.core.ma').run()    
     #timingTest()

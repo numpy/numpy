@@ -1,6 +1,6 @@
 """
->>> import numpy.base as nx
->>> import numpy.base.ufunclike as U
+>>> import numpy.core as nx
+>>> import numpy.lib.ufunclike as U
 
 Test fix:
 >>> a = nx.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
@@ -21,8 +21,8 @@ Test isposinf, isneginf, sign
 array([True, False, False, False, False, False], dtype=bool)
 >>> U.isneginf(a)
 array([False, True, False, False, False, False], dtype=bool)
->>> U.sign(a)
-array([ 1, -1,  0,  0,  1, -1])
+>>> nx.sign(a)
+array([ 1., -1.,  0.,  0.,  1., -1.])
 
 Same thing with an output array:
 >>> y = nx.zeros(a.shape, bool)
@@ -34,7 +34,7 @@ array([True, False, False, False, False, False], dtype=bool)
 array([False, True, False, False, False, False], dtype=bool)
 >>> y
 array([False, True, False, False, False, False], dtype=bool)
->>> U.sign(a, y)
+>>> nx.sign(a, y)
 array([True, True, False, False, True, True], dtype=bool)
 >>> y
 array([True, True, False, False, True, True], dtype=bool)

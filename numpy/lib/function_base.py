@@ -24,7 +24,6 @@ from type_check import ScalarType
 from shape_base import atleast_1d
 from twodim_base import diag
 from _compiled_base import digitize, bincount, _insert
-from ufunclike import sign
 
 #end Fernando's utilities
 

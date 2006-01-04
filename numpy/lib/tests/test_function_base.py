@@ -3,8 +3,9 @@ import sys
 
 from numpy.testing import *
 set_package_path()
-import numpy.base;reload(numpy.base)
-from numpy.base import *
+import numpy.lib;reload(numpy.lib)
+from numpy.lib import *
+from numpy.core import *
 del sys.path[0]
 
 class test_any(ScipyTestCase):

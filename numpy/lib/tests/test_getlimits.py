@@ -3,8 +3,8 @@
 
 from numpy.testing import *
 set_package_path()
-import numpy.base;reload(numpy.base)
-from numpy.base.getlimits import finfo
+import numpy.lib;reload(numpy.lib)
+from numpy.lib.getlimits import finfo
 from numpy import single,double,longdouble
 restore_path()
 

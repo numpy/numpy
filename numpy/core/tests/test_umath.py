@@ -1,7 +1,7 @@
 
 from numpy.testing import *
 set_package_path()
-from numpy.base.umath import minimum, maximum
+from numpy.core.umath import minimum, maximum
 restore_path()
 
 

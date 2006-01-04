@@ -693,7 +693,6 @@ static void
 #OP=+*3,-*3#
 #kind=add*3,subtract*3#
 #typ=(float, double, longdouble)*2#
-
 */
 
 static void
@@ -1267,7 +1266,7 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *func) {
 #TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
 #typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
-static void
+ static void
 @TYPE@_negative(char **args, intp *dimensions, intp *steps, void *func)
 {
 	register intp i;
@@ -1280,6 +1279,68 @@ static void
 /**end repeat**/
 
 #define BOOL_negative BOOL_logical_not
+
+#define _SIGN1(x) ((x) > 0 ? 1 : ((x) < 0 ? -1 : 0))
+#define _SIGN2(x) ((x) == 0 ? 0 : 1)
+#define _SIGNC(x) (((x).real > 0) ? 1 : ((x).real < 0 ? -1 : ((x).imag > 0 ? 1 : ((x).imag < 0) ? -1 : 0)))
+/**begin repeat
+#TYPE=BYTE,SHORT,INT,LONG,LONGLONG,FLOAT,DOUBLE,LONGDOUBLE,UBYTE,USHORT,UINT,ULONG,ULONGLONG#
+#typ=byte,short,int,long,longlong,float,double,longdouble,ubyte,ushort,uint,ulong,ulonglong#
+#func=_SIGN1*8,_SIGN2*5#
+ */
+static void
+@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
+{
+	register intp i;
+	intp is1=steps[0],os=steps[1], n=dimensions[0];
+	char *i1=args[0], *op=args[1];
+        @typ@ t1;
+	for(i=0; i<n; i++, i1+=is1, op+=os) {
+                t1 = *((@typ@ *)i1);
+		*((@typ@ *)op) = (@typ@) @func@(t1);
+	}
+}
+/**end repeat**/
+
+/**begin repeat
+#TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
+#typ=cfloat,cdouble,clongdouble#
+ */
+static void
+@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
+{
+	register intp i;
+	intp is1=steps[0],os=steps[1], n=dimensions[0];
+	char *i1=args[0], *op=args[1];
+        @typ@ t1;
+	for(i=0; i<n; i++, i1+=is1, op+=os) {
+                t1 = *((@typ@ *)i1);
+		(*((@typ@ *)op)).real = _SIGNC(t1);
+                (*((@typ@ *)op)).imag = 0;
+	}
+}
+/**end repeat**/
+
+#undef _SIGN1
+#undef _SIGN2
+#undef _SIGNC
+
+
+static void
+OBJECT_sign(char **args, intp *dimensions, intp *steps, void *func)
+{
+	register intp i;
+	intp is1=steps[0],os=steps[1], n=dimensions[0];
+	char *i1=args[0], *op=args[1];
+        PyObject *t1, *zero, *res;
+        zero = PyInt_FromLong(0);
+	for(i=0; i<n; i++, i1+=is1, op+=os) {
+                t1 = *((PyObject **)i1);
+                res = PyInt_FromLong((long) PyObject_Compare(t1, zero));
+		*((PyObject **)op) = res;
+	}
+        Py_DECREF(zero);
+}
 
 
 /**begin repeat

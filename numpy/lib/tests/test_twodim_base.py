@@ -4,8 +4,8 @@
 
 from numpy.testing import *
 set_package_path()
-import numpy.base;reload(numpy.base)
-from numpy.base import *
+import numpy.lib;reload(numpy.lib)
+from numpy.lib import *
 restore_path()
 
 ##################################################
