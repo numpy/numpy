@@ -6,11 +6,11 @@ __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'typename','asfarray','mintypecode','asscalar',
            'common_type']
 
-import numeric as _nx
-from numeric import ndarray, asarray, array, isinf, isnan, isfinite, signbit, \
+import numpy.core.numeric as _nx
+from numpy.core.numeric import ndarray, asarray, array, isinf, isnan, isfinite, signbit, \
      ufunc, ScalarType, obj2dtype
 from ufunclike import isneginf, isposinf
-import umath
+import numpy.core.umath as umath
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
 

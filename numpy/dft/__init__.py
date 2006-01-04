@@ -6,17 +6,16 @@ from helper import *
 
 # re-define duplicated functions if full numpy installed.
 try:
-    import numpy.fftpack
+    import scipy.fftpack
 except ImportError:
     pass
 else:
-    fft = numpy.fftpack.fft
-    ifft = numpy.fftpack.ifft
-    fftn = numpy.fftpack.fftn
-    ifftn = numpy.fftpack.ifftn
-    fft2 = numpy.fftpack.fft2
-    ifft2 = numpy.fftpack.ifft2
-
+    fft = scipy.fftpack.fft
+    ifft = scipy.fftpack.ifft
+    fftn = scipy.fftpack.fftn
+    ifftn = scipy.fftpack.ifftn
+    fft2 = scipy.fftpack.fft2
+    ifft2 = scipy.fftpack.ifft2
 
 from numpy.testing import ScipyTest 
 test = ScipyTest().test

@@ -4,8 +4,8 @@
 __all__ = ['finfo']
 
 from machar import MachAr
-import numeric
-from numeric import array
+import numpy.core.numeric
+from numpy.core.numeric import array
 
 def _frz(a):
     """fix rank-0 --> rank-1"""

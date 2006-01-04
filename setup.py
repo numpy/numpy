@@ -44,10 +44,10 @@ def setup_package():
     try:
         config = Configuration(
             maintainer = "SciPy Developers",
-            maintainer_email = "numpy-dev@numpy.org",
+            maintainer_email = "scipy-dev@scipy.org",
             description = DOCLINES[0],
             long_description = "\n".join(DOCLINES[2:]),
-            url = "http://numeric.numpy.org",
+            url = "http://numeric.scipy.org",
             download_url = "http://sourceforge.net/projects/numpy",
             license = 'BSD',
             classifiers=filter(None, CLASSIFIERS.split('\n')),

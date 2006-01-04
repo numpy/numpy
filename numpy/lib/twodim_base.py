@@ -5,7 +5,7 @@
 __all__ = ['diag','eye','fliplr','flipud','rot90','tri','triu','tril',
            'vander']
 
-from numeric import *
+from numpy.core.numeric import *
 import sys
 
 def fliplr(m):

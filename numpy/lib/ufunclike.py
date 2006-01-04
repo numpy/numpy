@@ -4,8 +4,8 @@ storing results in an output array.
 """
 __all__ = ['fix', 'isneginf', 'isposinf', 'sign', 'log2']
 
-import numeric as nx
-from numeric import asarray, empty, empty_like, isinf, signbit, zeros
+import numpy.core.numeric as nx
+from numpy.core.numeric import asarray, empty, empty_like, isinf, signbit, zeros
 import umath
 
 def fix(x, y=None):

@@ -1,8 +1,8 @@
 Author:          Travis Oliphant
-Discussions to:  numpy-dev@numpy.org
+Discussions to:  scipy-dev@scipy.org
 Created:         October 2005
 
-The CAPI of SciPy is (mostly) backward compatible with Numeric.  
+The CAPI of NumPy is (mostly) backward compatible with Numeric.  
 
 There are a few non-standard Numeric usages (that were not really part
 of the API) that will need to be changed:
@@ -33,7 +33,7 @@ their function signatures.
 
 All of these headers are installed to 
 
-<YOUR_PYTHON_LOCATION>/site-packages/numpy/base/include
+<YOUR_PYTHON_LOCATION>/site-packages/numpy/core/include
 
 
 Getting arrays in C-code
@@ -49,7 +49,6 @@ PyObject * PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr,
                                 int nd, intp *dims, 
                                 intp *strides, char *data, 
 				int flags, PyObject *obj);
-
 
 subtype  : The subtype that should be created (either pass in
              &PyArray_Type, &PyBigArray_Type, or obj->ob_type,

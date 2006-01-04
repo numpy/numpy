@@ -3,9 +3,9 @@ __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'vsplit','dsplit','apply_over_axes','expand_dims',
            'apply_along_axis']
 
-import numeric as _nx
-from numeric import *
-from oldnumeric import product
+import numpy.core.numeric as _nx
+from numpy.core.numeric import *
+from numpy.core.oldnumeric import product
 
 from type_check import isscalar
 

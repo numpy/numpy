@@ -1,4 +1,4 @@
-from numerictypes import obj2dtype
+from numpy.core.numerictypes import obj2dtype
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubdtype']
 

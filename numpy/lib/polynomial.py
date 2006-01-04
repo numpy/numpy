@@ -7,7 +7,7 @@ __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polyfit']
 
 import re
-import numeric as NX
+import numpy.core.numeric as NX
 
 from type_check import isscalar
 from twodim_base import diag, vander
@@ -19,7 +19,7 @@ lstsq = None
 def get_linalg_funcs():
     "Look for linear algebra functions in numpy"
     global eigvals, lstsq
-    from numpy.corelinalg import eigvals, lstsq
+    from numpy.linalg import eigvals, lstsq
     return
 
 def _eigvals(arg):
@@ -288,7 +288,7 @@ def polymul(a1, a2):
 def deconvolve(signal, divisor):
     """Deconvolves divisor out of signal.  Requires numpy.signal library
     """
-    import numpy.signal
+    import scipy.signal
     num = atleast_1d(signal)
     den = atleast_1d(divisor)
     N = len(num)

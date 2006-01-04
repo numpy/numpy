@@ -6,8 +6,8 @@ whose output data-type is different than the input data-type in certain domains 
 __all__ = ['sqrt', 'log', 'log2', 'logn','log10', 'power', 'arccos',
            'arcsin', 'arctanh']
 
-import numeric as nx
-from numeric import *
+import numpy.core.numeric as nx
+from numpy.core.numeric import *
 
 from type_check import isreal, asscalar
 
