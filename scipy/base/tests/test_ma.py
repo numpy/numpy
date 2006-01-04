@@ -296,6 +296,15 @@ class test_ma(ScipyTestCase):
         z.put(y)
         assert eq (x, z)
     
+    def check_testMaPut(self):
+        (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
+        m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
+        i = scipy.nonzero(m)
+        putmask(xm, m, z)
+        assert take(xm, i) == z
+        put(ym, i, zm)
+        assert take(ym, i) == zm
+        
     def check_testOddFeatures(self):
         "Test of other odd features"
         x = arange(20); x=x.reshape(4,5)
@@ -564,7 +573,15 @@ class test_ma(ScipyTestCase):
         self.failUnless(eq(a2dma, 7./3.))
         a2dma = average(a2dm, axis=1)
         self.failUnless(eq(a2dma, [1.5, 4.0]))
-            
+
+    def check_testToPython(self):
+        self.assertEqual(1, int(array(1)))
+        self.assertEqual(1.0, float(array(1)))
+        self.assertEqual(1, int(array([[[1]]])))
+        self.assertEqual(1.0, float(array([[1]])))
+        self.failUnlessRaises(ValueError, float, array([1,1]))
+        self.failUnlessRaises(MAError, float, array([1],mask=[1]))
+        
 def timingTest():
     for f in [testf, testinplace]:
         for n in [1000,10000,50000]:

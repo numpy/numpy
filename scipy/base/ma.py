@@ -742,14 +742,14 @@ array(data = %(data)s,
         self.unmask()
         if self._mask is not None:
             raise MAError, 'Cannot convert masked element to a Python float.'
-        return float(self.data[...])
+        return float(self.data.item())
 
     def __int__(self):
         "Convert self to int."
         self.unmask()
         if self._mask is not None:
             raise MAError, 'Cannot convert masked element to a Python int.'
-        return int(self.data[...])
+        return int(self.data.item())
 
     def __getitem__(self, i):
         "Get item described by i. Not a copy as in previous versions."
