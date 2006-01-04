@@ -6,10 +6,10 @@ from glob import glob
 from distutils.dep_util import newer,newer_group
 
 def configuration(parent_package='',top_path=None):
-    from scipy.distutils.misc_util import Configuration,dot_join
-    from scipy.distutils.system_info import get_info
+    from numpy.distutils.misc_util import Configuration,dot_join
+    from numpy.distutils.system_info import get_info
 
-    config = Configuration('base',parent_package,top_path)
+    config = Configuration('core',parent_package,top_path)
     local_dir = config.local_path
     codegen_dir = join(local_dir,'code_generators')
 
@@ -19,7 +19,7 @@ def configuration(parent_package='',top_path=None):
                                      open(generate_umath_py,'U'),generate_umath_py,
                                      ('.py','U',1))
 
-    header_dir = join(*(config.name.split('.')+['include','scipy']))
+    header_dir = join(*(config.name.split('.')+['include','numpy']))
 
     def generate_config_h(ext, build_dir):
         target = join(build_dir,'config.h')
@@ -90,8 +90,8 @@ def configuration(parent_package='',top_path=None):
         ext.libraries.extend(mathlibs)
 
         incl_dir = os.path.dirname(target)
-        if incl_dir not in config.scipy_include_dirs:
-            config.scipy_include_dirs.append(incl_dir)
+        if incl_dir not in config.numpy_include_dirs:
+            config.numpy_include_dirs.append(incl_dir)
 
         config.add_data_files((header_dir,target))
         return target
@@ -127,16 +127,16 @@ def configuration(parent_package='',top_path=None):
             f.close()
         return []
 
-    config.add_data_files(join('include','scipy','*.h'))
+    config.add_data_files(join('include','numpy','*.h'))
     config.add_include_dirs('src')
 
-    config.scipy_include_dirs.extend(config.paths('include'))
+    config.numpy_include_dirs.extend(config.paths('include'))
 
     deps = [join('src','arrayobject.c'),
             join('src','arraymethods.c'),
             join('src','scalartypes.inc.src'),
             join('src','arraytypes.inc.src'),
-            join('include','scipy','*object.h'),
+            join('include','numpy','*object.h'),
 	    join(codegen_dir,'genapi.py'),
 	    join(codegen_dir,'*.txt')
             ]
@@ -165,13 +165,6 @@ def configuration(parent_package='',top_path=None):
                                     generate_umath_py,
                                     join(codegen_dir,'generate_ufunc_api.py'),
                                     ]+deps,
-                         )
-
-    config.add_extension('_compiled_base',
-                         sources=[join('src','_compiled_base.c'),
-                                  generate_config_h,
-                                  generate_array_api,
-                                  ],
                          )
 
     config.add_extension('_sort',
@@ -280,5 +273,5 @@ int main(int argc, char **argv)
     return testcode
 
 if __name__=='__main__':
-    from scipy.distutils.core import setup
+    from numpy.distutils.core import setup
     setup(**configuration(top_path='').todict())

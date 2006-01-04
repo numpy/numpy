@@ -17,7 +17,7 @@ def rand(*args):
     This only uses the standard library, so it is useful for testing purposes. 
     """
     import random
-    from scipy.base import zeros, Float64
+    from numpy.core import zeros, Float64
     results = zeros(args,Float64)
     f = results.flat
     for i in range(len(f)):
@@ -64,7 +64,7 @@ def assert_equal(actual,desired,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
     """
-    from scipy.base import ArrayType
+    from numpy.core import ArrayType
     if isinstance(actual, ArrayType) or isinstance(desired, ArrayType):
         return assert_array_equal(actual, desired, err_msg)
     msg = '\nItems are not equal:\n' + err_msg
@@ -84,7 +84,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
     """
-    from scipy.base import ArrayType
+    from numpy.core import ArrayType
     if isinstance(actual, ArrayType) or isinstance(desired, ArrayType):
         return assert_array_almost_equal(actual, desired, decimal, err_msg)
     msg = '\nItems are not equal:\n' + err_msg
@@ -134,7 +134,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
 
 
 def assert_array_equal(x,y,err_msg=''):
-    from scipy.base import asarray, alltrue, equal, shape, ravel, array2string
+    from numpy.core import asarray, alltrue, equal, shape, ravel, array2string
     x,y = asarray(x), asarray(y)
     msg = '\nArrays are not equal'
     try:
@@ -159,7 +159,7 @@ def assert_array_equal(x,y,err_msg=''):
 
 
 def assert_array_almost_equal(x,y,decimal=6,err_msg=''):
-    from scipy.base import asarray, alltrue, equal, shape, ravel,\
+    from numpy.core import asarray, alltrue, equal, shape, ravel,\
          array2string, less_equal, around
     x = asarray(x)
     y = asarray(y)
@@ -188,7 +188,7 @@ def assert_array_almost_equal(x,y,decimal=6,err_msg=''):
         raise ValueError, 'arrays are not almost equal'
 
 def assert_array_less(x,y,err_msg=''):
-    from scipy.base import asarray, alltrue, less, equal, shape, ravel, array2string
+    from numpy.core import asarray, alltrue, less, equal, shape, ravel, array2string
     x,y = asarray(x), asarray(y)
     msg = '\nArrays are not less-ordered'
     try:

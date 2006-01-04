@@ -90,20 +90,20 @@ def replaceother(astr):
 import datetime
 def fromstr(filestr):
     filestr = replacetypechars(filestr)
-    filestr, fromall1 = changeimports(filestr, 'Numeric', 'scipy')
+    filestr, fromall1 = changeimports(filestr, 'Numeric', 'numpy')
     filestr, fromall1 = changeimports(filestr, 'multiarray',
-                                      'scipy.base.multiarray')
+                                      'numpy.core.multiarray')
     filestr, fromall1 = changeimports(filestr, 'umath',
-                                          'scipy.base.umath')
-    filestr, fromall1 = changeimports(filestr, 'Precision', 'scipy.base')
-    filestr, fromall2 = changeimports(filestr, 'numerix', 'scipy.base')
-    filestr, fromall3 = changeimports(filestr, 'scipy_base', 'scipy.base')
-    filestr, fromall3 = changeimports(filestr, 'MLab', 'scipy.base.mlab')
-    filestr, fromall3 = changeimports(filestr, 'LinearAlgebra', 'scipy.corelinalg')
-    filestr, fromall3 = changeimports(filestr, 'RNG', 'scipy.random')
-    filestr, fromall3 = changeimports(filestr, 'RandomArray', 'scipy.random')
-    filestr, fromall3 = changeimports(filestr, 'FFT', 'scipy.corefft')
-    filestr, fromall3 = changeimports(filestr, 'MA', 'scipy.base.ma')
+                                          'numpy.core.umath')
+    filestr, fromall1 = changeimports(filestr, 'Precision', 'numpy.core')
+    filestr, fromall2 = changeimports(filestr, 'numerix', 'numpy.core')
+    filestr, fromall3 = changeimports(filestr, 'scipy_base', 'numpy.core')
+    filestr, fromall3 = changeimports(filestr, 'MLab', 'numpy.core.mlab')
+    filestr, fromall3 = changeimports(filestr, 'LinearAlgebra', 'numpy.linalg')
+    filestr, fromall3 = changeimports(filestr, 'RNG', 'numpy.random')
+    filestr, fromall3 = changeimports(filestr, 'RandomArray', 'numpy.random')
+    filestr, fromall3 = changeimports(filestr, 'FFT', 'numpy.dft')
+    filestr, fromall3 = changeimports(filestr, 'MA', 'numpy.core.ma')
     fromall = fromall1 or fromall2 or fromall3
     filestr = replaceattr(filestr)
     filestr = replaceother(filestr)
