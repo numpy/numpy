@@ -36,7 +36,7 @@ import f90mod_rules
 outmess = auxfuncs.outmess
 
 try:
-    from numpy import __core_version__ as numpy_core_version
+    from numpy import __version__ as numpy_version
 except ImportError:
     numpy_distutils_version = 'N/A'
 
@@ -164,7 +164,7 @@ numpy_core Version: %s
 Requires:    Python 2.3 or higher.
 License:     LGPL (see http://www.fsf.org)
 Copyright 1999 - 2005 Pearu Peterson all rights reserved.
-http://cens.ioc.ee/projects/f2py2e/"""%(f2py_version, numpy_core_version)
+http://cens.ioc.ee/projects/f2py2e/"""%(f2py_version, numpy_version)
 
 
 def scaninputline(inputline):
