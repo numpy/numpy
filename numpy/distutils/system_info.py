@@ -611,7 +611,7 @@ class djbfft_info(system_info):
             if p:
                 info = {'extra_objects':p}
                 break
-            p = self.combine_paths (d,['libdjbfft.a'])
+            p = self.combine_paths (d,['libdjbfft.a','libdjbfft'+so_ext])
             if p:
                 info = {'libraries':['djbfft'],'library_dirs':[d]}
                 break
