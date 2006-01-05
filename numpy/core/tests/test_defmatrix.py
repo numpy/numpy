@@ -6,7 +6,7 @@ from numpy.core import *
 restore_path()
 
 class test_ctor(ScipyTestCase):
-    def test_basic(self):
+    def check_basic(self):
         A = array([[1,2],[3,4]])
         mA = matrix(A)
         assert all(mA.A == A)
@@ -25,8 +25,8 @@ class test_ctor(ScipyTestCase):
         assert mvec.shape == (1,5)
         
 class test_properties(ScipyTestCase):
-    def test_basic(self):
-        import numpy.corelinalg as linalg
+    def check_basic(self):
+        import numpy.linalg as linalg
         
         A = array([[1., 2.], 
                    [3., 4.]])
@@ -42,7 +42,7 @@ class test_properties(ScipyTestCase):
         assert all(array(transpose(B) == mB.T))
         assert all(array(conjugate(transpose(B)) == mB.H))
 
-    def test_comparisons(self):
+    def check_comparisons(self):
         A = arange(100).reshape(10,10)
         mA = matrix(A)
         mB = matrix(A) + 0.1
@@ -66,7 +66,7 @@ class test_properties(ScipyTestCase):
         assert not all(abs(mA) > 0)
         assert all(abs(mB > 0))
     
-    def test_asmatrix(self):
+    def check_asmatrix(self):
         A = arange(100).reshape(10,10)
         mA = asmatrix(A)
         mB = matrix(A)
@@ -75,7 +75,7 @@ class test_properties(ScipyTestCase):
         assert A[0,0] != mB[0,0]
 
 class test_autocasting(ScipyTestCase):
-    def test_basic(self):
+    def check_basic(self):
         A = arange(100).reshape(10,10)
         mA = matrix(A)
         
@@ -93,8 +93,8 @@ class test_autocasting(ScipyTestCase):
         assert all(mA != mB)
 
 class test_algebra(ScipyTestCase):
-    def test_basic(self):
-        import numpy.corelinalg as linalg
+    def check_basic(self):
+        import numpy.linalg as linalg
         
         A = array([[1., 2.],
                    [3., 4.]])
@@ -115,3 +115,5 @@ class test_algebra(ScipyTestCase):
         assert allclose((mA + mA).A, (A + A))        
         assert allclose((3*mA).A, (3*A))
 
+if __name__ == "__main__":
+    ScipyTest().run()
