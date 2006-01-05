@@ -833,7 +833,7 @@ cdef class RandomState:
         # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
         # decomposition of cov is such an A.
         
-        from numpy.corelinalg import svd
+        from numpy.linalg import svd
         # XXX: we really should be doing this by Cholesky decomposition
         (u,s,v) = svd(cov)
         x = _sp.matrixmultiply(x*_sp.sqrt(s),v)
