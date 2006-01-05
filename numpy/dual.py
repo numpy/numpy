@@ -1,7 +1,7 @@
 # This module should be used for functions both in numpy and scipy if
 #  you want to use the numpy version if available but the scipy version
 #  otherwise.
-#  Usage  --- import numpy.dual
+#  Usage  --- from numpy.dual import fft, inv
 
 __all__ = ['fft','ifft','fftn','ifftn','fft2','ifft2',
            'inv','svd','solve','det','eig','eigvals','lstsq',
@@ -34,4 +34,7 @@ eigvals = linpkg.eigvals
 lstsq = linpkg.lstsq
 pinv = linpkg.pinv
 cholesky = linpkg.cholesky
+
+del linpkg
+del fftpkg
     
