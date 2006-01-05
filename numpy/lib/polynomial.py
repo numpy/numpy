@@ -284,25 +284,6 @@ def polymul(a1, a2):
         val = poly1d(val)
     return val
 
-
-def deconvolve(signal, divisor):
-    """Deconvolves divisor out of signal.  Requires numpy.signal library
-    """
-    import scipy.signal
-    num = atleast_1d(signal)
-    den = atleast_1d(divisor)
-    N = len(num)
-    D = len(den)
-    if D > N:
-        quot = [];
-        rem = num;
-    else:
-        input = NX.ones(N-D+1, float)
-        input[1:] = 0
-        quot = numpy.signal.lfilter(num, den, input)
-        rem = num - NX.convolve(den, quot, mode='full')
-    return quot, rem
-
 def polydiv(u, v):
     """Computes q and r polynomials so that u(s) = q(s)*v(s) + r(s)
     and deg r < deg v.
