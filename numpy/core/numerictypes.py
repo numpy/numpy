@@ -41,7 +41,7 @@ Exported symbols include:
 
      generic
        bool_
-       numeric
+       number
          integer
            signedinteger   (intxx)
              byte
