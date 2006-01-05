@@ -7,7 +7,7 @@ l__all__ = ['logspace', 'linspace',
            'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
            'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort',
            'median', 'sinc', 'hamming', 'hanning', 'bartlett', 'blackman',
-           'kaiser', 'trapz', 'i0'
+           'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
            ]
 
 import types
@@ -24,7 +24,7 @@ from numpy.core.oldnumeric import ravel, nonzero, choose, \
 from type_check import ScalarType
 from shape_base import atleast_1d
 from twodim_base import diag
-from _compiled_base import digitize, bincount, _insert
+from _compiled_base import digitize, bincount, _insert, add_docstring
 
 #end Fernando's utilities
 
@@ -829,3 +829,18 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     slice1[axis] = slice(1,None)
     slice2[axis] = slice(None,-1)
     return add.reduce(d * (y[slice1]+y[slice2])/2.0,axis)
+
+#always succeed
+def add_newdoc(place, obj, doc):
+    try:
+        new = {}
+        exec 'from %s import %s' % (place, obj) in new
+        if isinstance(doc, str):
+            add_docstring(new[obj], doc.strip())
+        elif isinstance(doc, tuple):
+            add_docstring(getattr(new[obj], doc[0]), doc[1].strip())
+        elif isinstance(doc, list):
+            for val in doc:
+                add_docstring(getattr(new[obj], val[0]), val[1].strip())
+    except:
+        pass

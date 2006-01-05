@@ -42,4 +42,6 @@ else:
 
     test = ScipyTest('numpy').test
 
+    import add_newdocs
+
     # TODO: Fix __doc__

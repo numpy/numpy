@@ -339,6 +339,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 
 static PyTypeObject *PyMemberDescr_TypePtr=NULL;
 static PyTypeObject *PyGetSetDescr_TypePtr=NULL;
+static PyTypeObject *PyMethodDescr_TypePtr=NULL;
 
 /* Can only be called if doc is currently NULL
 */
@@ -377,6 +378,9 @@ arr_add_docstring(PyObject *dummy, PyObject *args)
 		_ADDDOC(MemberDescr, new->d_member->doc, new->d_member->name)
         else if _TESTDOC2(GetSetDescr) 
 		_ADDDOC(GetSetDescr, new->d_getset->doc, new->d_getset->name)
+	else if _TESTDOC2(MethodDescr)
+                _ADDDOC(MethodDescr, new->d_method->ml_doc, 
+			new->d_method->ml_name)
 	else {
 		PyErr_SetString(PyExc_TypeError, 
 				"Cannot set a docstring for that object");
@@ -418,6 +422,9 @@ define_types(void)
 	myobj = PyDict_GetItemString(tp_dict, "alignment");
 	if (myobj == NULL) return;
 	PyMemberDescr_TypePtr = myobj->ob_type;
+	myobj = PyDict_GetItemString(tp_dict, "newbyteorder");
+	if (myobj == NULL) return;
+	PyMethodDescr_TypePtr = myobj->ob_type;
 	return;
 }
 
