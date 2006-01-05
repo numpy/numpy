@@ -1,9 +1,9 @@
 """\
-SciPy Core
+NumPy
 ==========
 
-You can support the development of SciPy by purchasing documentation
-at
+You can support the development of NumPy and SciPy by purchasing
+documentation at
 
   http://www.trelgol.com
 
@@ -26,7 +26,7 @@ except ImportError:
 
 class PackageLoader:
     def __init__(self):
-        """ Manages loading SciPy packages.
+        """ Manages loading NumPy packages.
         """
 
         self.parent_frame = frame = sys._getframe(1)

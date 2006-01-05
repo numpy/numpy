@@ -1,9 +1,9 @@
 Very complete documentation is available from the primary developer of
-SciPy Core for a small fee.  After a brief period, that documentation
+NumPy for a small fee.  After a brief period, that documentation
 will become freely available.  See http://www.trelgol.com for
 details. The fee and restriction period is intended to allow people
 and to encourage companies to easily contribute to the development of
-SciPy.
+NumPy.
 
 This directory will contain all public documentation that becomes available. 
 
