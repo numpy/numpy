@@ -161,7 +161,10 @@ def get_info(name,notfound_action=0):
           'lapack_mkl':lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl':blas_mkl_info,          # use blas_opt instead
           'x11':x11_info,
+          'fft_opt':fft_opt_info,
           'fftw':fftw_info,
+          'fftw2':fftw2_info,
+          'fftw3':fftw3_info,
           'dfftw':dfftw_info,
           'sfftw':sfftw_info,
           'fftw_threads':fftw_threads_info,
@@ -495,6 +498,20 @@ class system_info:
         return combine_paths(*args,**{'verbosity':self.verbosity})
 
 
+class fft_opt_info(system_info):
+    
+    def calc_info(self):
+        info = {}
+        fftw_info = get_info('fftw3') or get_info('fftw2') or get_info('dfftw')
+        djbfft_info = get_info('djbfft')
+        if fftw_info:
+            dict_append(info,**fftw_info)
+            if djbfft_info:
+                dict_append(info,**djbfft_info)
+            self.set_info(**info)
+            return
+
+
 class fftw_info(system_info):
     #variables to override
     section = 'fftw'
@@ -549,6 +566,28 @@ class fftw_info(system_info):
         for i in self.ver_info:
             if self.calc_ver_info(i):
                 break
+
+class fftw2_info(fftw_info):
+    #variables to override
+    section = 'fftw'
+    dir_env_var = 'FFTW'
+    notfounderror = FFTWNotFoundError
+    ver_info  = [ { 'name':'fftw2',
+                    'libs':['rfftw', 'fftw'],
+                    'includes':['fftw.h','rfftw.h'],
+                    'macros':[('SCIPY_FFTW_H',None)]}
+                  ]
+
+class fftw3_info(fftw_info):
+    #variables to override
+    section = 'fftw3'
+    dir_env_var = 'FFTW3'
+    notfounderror = FFTWNotFoundError
+    ver_info  = [ { 'name':'fftw3',
+                    'libs':['fftw3'],
+                    'includes':['fftw3.h'],
+                    'macros':[('SCIPY_FFTW3_H',None)]},
+                  ]
 
 class dfftw_info(fftw_info):
     section = 'fftw'
