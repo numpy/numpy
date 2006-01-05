@@ -11,4 +11,4 @@ from numpy.core.oldnumeric import cumsum, ptp, mean, std, prod, cumprod, squeeze
 from polynomial import roots
 
 from numpy.random import rand, randn
-from numpy.corelinalg import eig, svd
+from numpy.linalg import eig, svd
