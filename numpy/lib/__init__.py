@@ -13,10 +13,20 @@ import scimath as math
 from polynomial import *
 from machar import *
 from getlimits import *
-import convertcode
+#import convertcode
 from utils import *
 
-__all__ = filter(lambda s:not s.startswith('_'),dir())
+__all__ = []
+__all__ += type_check.__all__
+__all__ += index_tricks.__all__
+__all__ += function_base.__all__
+__all__ += shape_base.__all__
+__all__ += twodim_base.__all__
+__all__ += ufunclike.__all__
+__all__ += polynomial.__all__
+__all__ += machar.__all__
+__all__ += getlimits.__all__
+__all__ += utils.__all__
 
 from numpy.testing import ScipyTest 
 test = ScipyTest().test

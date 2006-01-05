@@ -17,7 +17,11 @@ from records import *
 from memmap import *
 del nt
 
-__all__ = filter(lambda s:not s.startswith('_'),dir())
+__all__ = ['char','rec','memmap']
+__all__ += numeric.__all__
+__all__ += oldnumeric.__all__
+__all__ += defmatrix.__all__
+__all__ += records.__all__
 
 from numpy.testing import ScipyTest 
 test = ScipyTest().test

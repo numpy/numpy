@@ -160,7 +160,7 @@ Extra options (only effective with -c):
   a message should be shown.
 
 Version:     %s
-numpy_core Version: %s
+numpy Version: %s
 Requires:    Python 2.3 or higher.
 License:     LGPL (see http://www.fsf.org)
 Copyright 1999 - 2005 Pearu Peterson all rights reserved.
