@@ -5863,7 +5863,7 @@ static PyObject *
 array_fromobject(PyObject *op, PyArray_Descr *newtype, int min_depth, 
 		 int max_depth, int flags) 
 {
-        /* This is the main code to make a SciPy array from a Python
+        /* This is the main code to make a NumPy array from a Python
            Object.  It is called from lot's of different places which
            is why there are so many checks.  The comments try to
            explain some of the checks. */

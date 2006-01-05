@@ -3734,7 +3734,7 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
 /* This function takes a Python object representing a type and converts it 
    to a the correct PyArray_Descr * structure to describe the type.
    
-   Many objects can be used to represent a data-type which in SciPy is
+   Many objects can be used to represent a data-type which in NumPy is
    quite a flexible concept. 
 
    This is the central code that converts Python objects to 

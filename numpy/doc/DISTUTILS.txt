@@ -1,6 +1,6 @@
 .. -*- rest -*-
 
-Scipy Distutils - Users Guide
+SciPy Distutils - Users Guide
 =============================
 
 :Author: Pearu Peterson <pearu@cens.ioc.ee>
@@ -9,12 +9,12 @@ Scipy Distutils - Users Guide
 :Revision: $LastChangedRevision$
 :SVN source: $HeadURL$
 
-Scipy structure
+SciPy structure
 '''''''''''''''
 
-Currently Scipy project consists of two packages:
+Currently SciPy project consists of two packages:
 
-- Scipy core --- it provides packages like:
+- NumPy (previously called SciPy core) --- it provides packages like:
 
   + numpy.distutils - extension to Python distutils
   + numpy.f2py - a tool to bind Fortran/C codes to Python
@@ -23,22 +23,22 @@ Currently Scipy project consists of two packages:
   + numpy.testing - numpy-style tools for unit testing
   + etc
 
-- Scipy --- a collection of Scientific tools for Python.
+- SciPy --- a collection of scientific tools for Python.
 
-The aim of this document is to describe how to add new tools to Scipy.
+The aim of this document is to describe how to add new tools to SciPy.
 
 
 Requirements for SciPy packages
 '''''''''''''''''''''''''''''''
 
-Scipy consists of Python packages, called Scipy packages, that are
-available to Python users via ``numpy`` name space. Each Scipy package
-may contain other Scipy packages. And so on. So, Scipy directory tree
-is a tree of packages with arbitrary depth and width. Any Scipy
-package may depend on Scipy core packages but the dependence on other
-Scipy packages should be kept minimal or zero.
+SciPy consists of Python packages, called SciPy packages, that are
+available to Python users via ``scipy`` name space. Each SciPy package
+may contain other SciPy packages. And so on. So, SciPy directory tree
+is a tree of packages with arbitrary depth and width. Any SciPy
+package may depend on NumPy packages but the dependence on other
+SciPy packages should be kept minimal or zero.
 
-A Scipy package contains in addition to its sources, the following
+A SciPy package contains in addition to its sources, the following
 files and directories:
 
   ``setup.py`` --- building script
@@ -51,7 +51,7 @@ Their contents will be described below.
 The ``setup.py`` file
 '''''''''''''''''''''
 
-In order to add a Python package to Scipy, its building script (the
+In order to add a Python package to SciPy, its building script (the
 ``setup.py`` file) must meet certain requirements. The minimal and the
 most important one is that it must define a function
 ``configuration(parent_package='',top_path=None)`` that returns a
@@ -60,10 +60,10 @@ function. In order to simplify the construction of such an distionary,
 ``numpy.distutils.misc_util`` provides a class ``Configuration``, the
 usage of will be described below.
 
-Scipy pure Python package example
+SciPy pure Python package example
 ---------------------------------
 
-Here follows a minimal example for a pure Python Scipy package
+Here follows a minimal example for a pure Python SciPy package
 ``setup.py`` file that will be explained in detail below::
 
   #!/usr/bin/env python
@@ -77,7 +77,7 @@ Here follows a minimal example for a pure Python Scipy package
       setup(**configuration(top_path='').todict())
 
 The first argument ``parent_package`` of the main configuration
-function will contain a name of the parent Scipy package and the
+function will contain a name of the parent SciPy package and the
 second argument ``top_path`` contains the name of the directory where
 the main ``setup.py`` script is located. Both arguments should be
 passed to the ``Configuration`` constructor after the name of the
@@ -95,7 +95,7 @@ instance. Usually, these keywords are the same as the ones that
 ``headers``, ``scripts``, ``package_dir``, etc.  However, the direct
 specification of these keywords is not recommended as the content of
 these keyword arguments will not be processed or checked for the
-consistency of Scipy building system.
+consistency of SciPy building system.
 
 Finally, ``Configuration`` has ``.todict()`` method that returns all
 the configuration data as a dictionary suitable for passing on to the
@@ -127,14 +127,14 @@ in writing setup scripts:
   ``config.local_path``.
 
 + ``config.get_subpackage(subpackage_name,subpackage_path=None)`` ---
-  returns Scipy subpackage configuration. Subpackage is looked in the
+  returns SciPy subpackage configuration. Subpackage is looked in the
   current directory under the name ``subpackage_name`` but the path
   can be specified also via optional ``subpackage_path`` argument.
   If ``subpackage_name`` is specified as ``None`` then the subpackage
   name will be taken the basename of ``subpackage_path``.
 
 + ``config.add_subpackage(subpackage_name,subpackage_path=None)`` ---
-  add Scipy subpackage configuration to the current one. The meaning
+  add SciPy subpackage configuration to the current one. The meaning
   and usage of arguments is explained above, see
   ``config.get_subpackage()`` method.
 
@@ -302,11 +302,11 @@ XXX: Describe how files with extensions ``.f.src``, ``.pyf.src``,
 Useful functions in ``numpy.distutils.misc_util``
 -------------------------------------------------
 
-+ ``get_numpy_include_dirs()`` --- return a list of Scipy base
-  include directories. Scipy base include directories contain
++ ``get_numpy_include_dirs()`` --- return a list of NumPy base
+  include directories. NumPy base include directories contain
   header files such as ``numpy/arrayobject.h``, ``numpy/funcobject.h``
-  etc. For installed Scipy core the returned list has length 1
-  but when building Scipy core the list may contain more directories,
+  etc. For installed NumPy the returned list has length 1
+  but when building NumPy the list may contain more directories,
   for example, a path to ``config.h`` file that
   ``numpy/base/setup.py`` file generates and is used by ``numpy``
   header files.

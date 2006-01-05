@@ -7,7 +7,7 @@ t3 = timeit.Timer('a=empty(shape=%d);sort(a)'%N,'from Numeric import empty,sort'
 
 print "1-D length = ", N
 print "Numarray: ", t1.repeat(3,100)
-print "SciPy: ", t2.repeat(3,100)
+print "NumPy: ", t2.repeat(3,100)
 print "Numeric: ", t3.repeat(3,100)
 
 N1,N2 = 100,100
@@ -17,7 +17,7 @@ t3 = timeit.Timer('a=empty(shape=(%d,%d));sort(a)'%(N1,N2),'from Numeric import 
 
 print "2-D shape = (%d,%d), last-axis" % (N1,N2)
 print "Numarray: ", t1.repeat(3,100)
-print "SciPy: ", t2.repeat(3,100)
+print "NumPy: ", t2.repeat(3,100)
 print "Numeric: ", t3.repeat(3,100)
 
 N1,N2 = 100,100
@@ -27,7 +27,7 @@ t3 = timeit.Timer('a=empty(shape=(%d,%d));sort(a,0)'%(N1,N2),'from Numeric impor
 
 print "2-D shape = (%d,%d), first-axis" % (N1,N2)
 print "Numarray: ", t1.repeat(3,100)
-print "SciPy: ", t2.repeat(3,100)
+print "NumPy: ", t2.repeat(3,100)
 print "Numeric: ", t3.repeat(3,100)
 
 

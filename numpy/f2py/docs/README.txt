@@ -20,6 +20,11 @@ __ FAQ.html
 
 .. topic:: NEWS!!!
 
+  January 5, 2006
+  
+    WARNING -- these notes are out of date! The package structure for NumPy and
+    SciPy has changed considerably.  Much of this information is now incorrect.
+  
   January 30, 2005
 
     Latest F2PY release (version 2.45.241_1926).

@@ -336,7 +336,7 @@ def array_split(ary,indices_or_sections,axis = 0):
            of rows.  This seems like the appropriate default, but
            we've agreed most other functions should default to
            axis=-1.  Perhaps we should use axis=-1 for consistency.
-           However, we could also make the argument that SciPy
+           However, we could also make the argument that NumPy
            works on "rows" by default.  sum() sums up rows of
            values.  split() will split data into rows.  Opinions?
     """
@@ -401,7 +401,7 @@ def split(ary,indices_or_sections,axis=0):
            of rows.  This seems like the appropriate default, but
            we've agreed most other functions should default to
            axis=-1.  Perhaps we should use axis=-1 for consistency.
-           However, we could also make the argument that SciPy
+           However, we could also make the argument that NumPy
            works on "rows" by default.  sum() sums up rows of
            values.  split() will split data into rows.  Opinions?
     """
