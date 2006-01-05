@@ -1,6 +1,6 @@
 .. -*- rest -*-
 
-SciPy Distutils - Users Guide
+NumPy Distutils - Users Guide
 =============================
 
 :Author: Pearu Peterson <pearu@cens.ioc.ee>
@@ -18,8 +18,8 @@ Currently SciPy project consists of two packages:
 
   + numpy.distutils - extension to Python distutils
   + numpy.f2py - a tool to bind Fortran/C codes to Python
-  + numpy.weave - a tool to bind C++ codes to Python
-  + numpy.base - future replacement of Numeric and numarray packages
+  + numpy.core - future replacement of Numeric and numarray packages
+  + numpy.lib - extra utility functions
   + numpy.testing - numpy-style tools for unit testing
   + etc
 

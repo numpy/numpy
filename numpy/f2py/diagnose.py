@@ -35,7 +35,7 @@ def run():
         print 'Failed to import numarray:',sys.exc_value
         has_numarray = 0
     try:
-        import numpy.base
+        import numpy
         has_newnumpy = 1
     except ImportError:
         print 'Failed to import new numpy:', sys.exc_value

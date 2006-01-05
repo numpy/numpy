@@ -1,8 +1,8 @@
 
 from numpy.testing import *
 set_package_path()
-import numpy.base;reload(numpy.base)
-from numpy.base import *
+import numpy.core;reload(numpy.core)
+from numpy.core import *
 restore_path()
 
 class test_ctor(ScipyTestCase):

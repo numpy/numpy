@@ -1,5 +1,5 @@
 import sys
-from numpy.base.testing import *
+from numpy.testing import *
 set_package_path()
 from f2py_ext import fib2
 del sys.path[0]

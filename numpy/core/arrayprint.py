@@ -10,7 +10,7 @@ __all__ = ["set_summary", "summary_off", "set_precision", "set_line_width",
 # last revision: 1996-3-13
 # modified by Jim Hugunin 1997-3-3 for repr's and str's (and other details)
 # and by Perry Greenfield 2000-4-1 for numarray
-# and by Travis Oliphant  2005-8-22 for numpy.base
+# and by Travis Oliphant  2005-8-22 for numpy
 
 import sys
 import numeric      as _gen

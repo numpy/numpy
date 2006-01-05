@@ -120,7 +120,7 @@ DL_EXPORT(void) initwrap(void) {
   PyFortran_Type.ob_type = &PyType_Type;
   import_array();
   if (PyErr_Occurred())
-    Py_FatalError("can't initialize module wrap (failed to import numpy.base)");
+    Py_FatalError("can't initialize module wrap (failed to import numpy)");
   d = PyModule_GetDict(m);
   s = PyString_FromString("This module 'wrap' is auto-generated with f2py (version:2_1330).\nFunctions:\n"
 "  arr = call(type_num,dims,intent,obj)\n"

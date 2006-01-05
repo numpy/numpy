@@ -1,5 +1,5 @@
 
-# This module converts code written for Numeric to run with numpy.base
+# This module converts code written for Numeric to run with numpy
 
 # Makes the following changes:
 #  * Converts typecharacters

@@ -8,7 +8,7 @@ Examples:
 
 
 import numpy.f2py as f2py2e
-from numpy.base import array
+from numpy import array
 
 def build(f2py_opts):
     try:

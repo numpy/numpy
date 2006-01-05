@@ -1,5 +1,5 @@
 import sys
-from numpy.base.testing import *
+from numpy.testing import *
 set_package_path()
 from swig_ext import example
 del sys.path[0]
