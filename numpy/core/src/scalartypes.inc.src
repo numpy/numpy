@@ -9,7 +9,7 @@ static int PyArrayScalar_Offset[PyArray_NTYPES+1];
 #type=Bool, signed char, short, int, long, longlong, unsigned char, unsigned short, unsigned int, unsigned long, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, PyObject *,char#
 */
 typedef struct {
-	PyObject_HEAD;
+	PyObject_HEAD
 	@type@ obval;
 } Py@name@ScalarObject;
 /**end repeat**/
@@ -37,7 +37,7 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 #define PyUnicodeScalarObject PyUnicodeObject
 
 typedef struct {
-	PyObject_VAR_HEAD;
+	PyObject_VAR_HEAD
 	char *obval;
 	PyArray_Descr *descr;
 	int flags;

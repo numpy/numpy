@@ -156,6 +156,8 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('umath',
                          sources = [generate_config_h,
                                     join('src','umathmodule.c.src'),
+                                    join('src','_signbit.c'),
+                                    join('src','_isnan.c'),
                                     generate_umath_c,
                                     generate_ufunc_api,
                                     join('src','scalartypes.inc.src'),

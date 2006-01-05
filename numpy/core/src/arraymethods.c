@@ -754,7 +754,6 @@ static char doc_searchsorted[] = "a.searchsorted(v)\n"\
 	" be placed.  This method is helpful for histograming.  \n"\
 	" Note: No warning is given if the boundaries, in a, are not \n"\
 	" in ascending order.";
-;
 
 static PyObject *
 array_searchsorted(PyArrayObject *self, PyObject *args) 
