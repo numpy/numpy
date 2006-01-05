@@ -300,21 +300,16 @@ class masked_unary_operation:
         d1 = filled(a, self.fill)
         if self.domain is not None:
             m = mask_or(m, self.domain(d1))
-        if m is None:
-            result = self.f(d1, *args, **kwargs)
-            if type(result) is ndarray:
-                return masked_array (result)
+        result = self.f(d1, *args, **kwargs)
+        if m is not None:
+            try:
+                shape = result.shape
+            except AttributeError:
+                pass
             else:
-                return result
-        else:
-            dx = masked_array(d1, m)
-            result = self.f(filled(dx, self.fill), *args, **kwargs)
-            if type(result) is ndarray:
-                return masked_array(result, m)
-            elif m[...]:
-                return masked
-            else:
-                return result
+                if m.shape != shape:
+                    m = mask_or(getmaskarray(a), getmaskarray(b))
+        return masked_array(result, m)
 
     def __str__ (self):
         return "Masked version of " + str(self.f)
@@ -352,21 +347,17 @@ class domained_binary_operation:
             d2 = where(t, self.filly, d2)
             mb = mask_or(mb, t)
         m = mask_or(ma, mb)
-        if m is None:
-            result =  self.f(d1, d2)
-            if type(result) is ndarray:
-                return masked_array(result)
+        result =  self.f(d1, d2)
+        if m is not None:
+            try:
+                shape = result.shape
+            except AttributeError:
+                pass
             else:
-                return result
-        result = self.f(d1, d2)
-        if type(result) is ndarray:
-            if m.shape != result.shape:
-                m = mask_or(getmaskarray(a), getmaskarray(b))
-            return masked_array(result, m)
-        elif m[...]:
-            return masked
-        else:
-            return result
+                if m.shape != shape:
+                    m = mask_or(getmaskarray(a), getmaskarray(b))
+        return masked_array(result, m)
+        
     def __str__ (self):
         return "Masked version of " + str(self.f)
 
@@ -383,25 +374,18 @@ class masked_binary_operation:
     def __call__ (self, a, b, *args, **kwargs):
         "Execute the call behavior."
         m = mask_or(getmask(a), getmask(b))
-        if m is None:
-            d1 = filled(a, self.fillx)
-            d2 = filled(b, self.filly)
-            result =  self.f(d1, d2, *args, **kwargs)
-            if type(result) is ndarray:
-                return masked_array(result)
-            else:
-                return result
         d1 = filled(a, self.fillx)
         d2 = filled(b, self.filly)
         result = self.f(d1, d2, *args, **kwargs)
-        if type(result) is ndarray:
-            if m.shape != result.shape:
-                m = mask_or(getmaskarray(a), getmaskarray(b))
-            return masked_array(result, m)
-        elif m[...]:
-            return masked
-        else:
-            return result
+        if m is not None:
+            try:
+                shape = result.shape
+            except AttributeError:
+                pass
+            else:
+                if m.shape != shape:
+                    m = mask_or(getmaskarray(a), getmaskarray(b))
+        return masked_array(result, m)
 
     def reduce (self, target, axis=0):
         """Reduce target along the given axis with this function."""
@@ -833,6 +817,18 @@ array(data = %(data)s,
                 self._shared_mask = False
             self._mask[i:j] = m
 
+    def __nonzero__(self):
+        """returns true if any element is non-zero or masked
+
+        """
+        # XXX: This changes bool conversion logic from MA.
+        # XXX: In MA bool(a) == len(a) != 0, but in scipy
+        # XXX: scalars do not have len 
+        m = self._mask
+        d = self._data
+        return bool(m is not None and m.any()
+                    or d is not None and d.any())
+    
     def __len__ (self):
         """Return length of first dimension. This is weird but Python's
          slicing behavior depends on it."""
@@ -1905,7 +1901,7 @@ class _minimum_operation:
             else:
                 return amin(ac.raw_data())
         else:
-            return where(less(a, b), a, b)[...]
+            return where(less(a, b), a, b)
 
     def reduce (self, target, axis=0):
         """Reduce target along the given axis."""
@@ -1954,7 +1950,7 @@ class _maximum_operation:
             else:
                 return amax(ac.raw_data())
         else:
-            return where(greater(a, b), a, b)[...]
+            return where(greater(a, b), a, b)
 
     def reduce (self, target, axis=0):
         """Reduce target along the given axis."""
