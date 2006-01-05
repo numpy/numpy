@@ -13,7 +13,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('linalg')
     config.add_subpackage('random')
     config.add_data_dir('doc')
-    config.make_config_py(name='__core_config__') # installs __core_config__.py
+    config.make_config_py() # installs __config__.py
 
     return config.todict()
 
