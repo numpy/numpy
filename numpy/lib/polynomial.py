@@ -19,7 +19,7 @@ lstsq = None
 def get_linalg_funcs():
     "Look for linear algebra functions in numpy"
     global eigvals, lstsq
-    from numpy.linalg import eigvals, lstsq
+    from numpy.dual import eigvals, lstsq
     return
 
 def _eigvals(arg):

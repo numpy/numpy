@@ -832,8 +832,8 @@ cdef class RandomState:
         # Then the matrix products of the rows of x and A has the desired
         # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
         # decomposition of cov is such an A.
-        
-        from numpy.linalg import svd
+	
+        from numpy.dual import svd
         # XXX: we really should be doing this by Cholesky decomposition
         (u,s,v) = svd(cov)
         x = _sp.matrixmultiply(x*_sp.sqrt(s),v)

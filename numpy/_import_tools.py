@@ -264,12 +264,12 @@ class PackageLoader:
        This function is intended to shorten the need to import many of numpy's
        submodules constantly with statements such as
 
-       import numpy.linalg, numpy.fft, numpy.etc...
+       import numpy.linalg, numpy.dft, numpy.etc...
 
        Instead, you can say:
 
          import numpy
-         numpy.pkgload('linalg','fft',...)
+         numpy.pkgload('linalg','dft',...)
 
        or
 

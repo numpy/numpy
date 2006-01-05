@@ -822,7 +822,7 @@ array(data = %(data)s,
 
         """
         # XXX: This changes bool conversion logic from MA.
-        # XXX: In MA bool(a) == len(a) != 0, but in scipy
+        # XXX: In MA bool(a) == len(a) != 0, but in numpy
         # XXX: scalars do not have len 
         m = self._mask
         d = self._data

@@ -5,7 +5,7 @@
 
 __all__ = ['fft','ifft','fftn','ifftn','fft2','ifft2',
            'inv','svd','solve','det','eig','eigvals','lstsq',
-           'pinv','cholesky']
+           'pinv','cholesky','i0']
 
 try:
     import scipy.linalg as linpkg
@@ -17,6 +17,10 @@ try:
 except ImportError:
     import numpy.dft as fftpkg
 
+try:
+    from scipy.special import i0
+except ImportError:
+    from numpy.lib import i0
 
 fft = fftpkg.fft
 ifft = fftpkg.ifft
@@ -35,6 +39,3 @@ lstsq = linpkg.lstsq
 pinv = linpkg.pinv
 cholesky = linpkg.cholesky
 
-del linpkg
-del fftpkg
-    
