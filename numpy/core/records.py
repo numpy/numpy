@@ -175,7 +175,7 @@ class recarray(sb.ndarray):
         # normal array
         if obj.dtypedescr.fields:
             return obj
-        if obj.dtypechar in 'SU':
+        if obj.dtype in [sb.string, sb.unicode_]:
             return obj.view(chararray)
         return obj.view(sb.ndarray)
             
