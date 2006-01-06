@@ -1,7 +1,7 @@
 __all__ = ['record', 'recarray','format_parser']
 
 import numeric as sb
-from chararray import chararray
+from defchararray import chararray
 import numerictypes as nt
 import sys
 import types
