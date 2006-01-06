@@ -82,6 +82,7 @@ class memmap(ndarray):
         return self
 
     def __array_finalize__(self, obj):
+        self._mmap = None
         if not _globalvar:
             raise ValueError, "Cannot create a memmap array that way"
 
@@ -89,9 +90,6 @@ class memmap(ndarray):
         self._mmap.flush()
 
     def __del__(self):
-        try:
+        if self._mmap is not None:
             self._mmap.flush()
             del self._mmap
-        except AttributeError:
-            pass
-
