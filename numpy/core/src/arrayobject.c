@@ -3797,7 +3797,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
 	/* For now, let's just use this to create an empty, contiguous 
 	   array of a specific type and shape. 
-	*/
+	*/	
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&i",
 					 kwlist, PyArray_IntpConverter,
@@ -8352,7 +8352,10 @@ arraydescr_str(PyArray_Descr *self)
 	if (self->fields && self->fields != Py_None) {
 		PyObject *lst;
 		lst = arraydescr_protocol_descr_get(self);
-		if (!lst) sub = PyString_FromString("<err>");
+		if (!lst) {
+			sub = PyString_FromString("<err>");
+			PyErr_Clear();
+		}
 		else sub = PyObject_Str(lst);
 		Py_XDECREF(lst);		
 		if (self->type_num != PyArray_VOID) {

@@ -62,16 +62,19 @@ class matrix(N.ndarray):
                 return data
             return data.astype(dtype)
 
-        if dtype is None:
-            if isinstance(data, N.ndarray):
-                dtype = data.dtype
-        intype = N.obj2dtype(dtype)
+        if isinstance(data, N.ndarray):
+            intype = N.dtypedescr(dtype)            
+            new = data.view(matrix)
+            if intype != data.dtypedescr:
+                return new.astype(intype)
+            if copy: return new.copy()
+            else: return new
 
         if isinstance(data, types.StringType):
             data = _convert_from_string(data)
 
         # now convert data to an array
-        arr = N.array(data, dtype=intype, copy=copy)
+        arr = N.array(data, dtype=dtype, copy=copy)
         ndim = arr.ndim
         shape = arr.shape
         if (ndim > 2):

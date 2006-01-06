@@ -764,7 +764,6 @@ def _chbevl(x, vals):
 
     return 0.5*(b0 - b2)
     
-
 def _i0_1(x):
     return exp(x) * _chbevl(x/2.0-2, _i0A)
 
@@ -780,7 +779,9 @@ def i0(x):
     y[ind] = _i0_1(x[ind])
     ind2 = ~ind
     y[ind2] = _i0_2(x[ind2])
-    return y.squeeze()    
+    return y.squeeze()
+
+## End of cephes code for i0
 
 def kaiser(M,beta):
     """kaiser(M, beta) returns a Kaiser window of length M with shape parameter

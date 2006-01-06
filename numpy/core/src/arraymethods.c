@@ -157,17 +157,29 @@ array_squeeze(PyArrayObject *self, PyObject *args)
 
 
 
-static char doc_view[] = "a.view(<dtype>) return a new view of array with same data.";
+static char doc_view[] = "a.view(<type>) return a new view of array with same data. type can be either a new sub-type object or a data-descriptor object";
 
 static PyObject *
 array_view(PyArrayObject *self, PyObject *args)
 {
+	PyObject *otype=NULL;
         PyArray_Descr *type=NULL;
-	if (!PyArg_ParseTuple(args, "|O&",
-                              PyArray_DescrConverter, &type)) 
-                return NULL;
 
-	return _ARET(PyArray_View(self, type));
+	if (!PyArg_ParseTuple(args, "|O", &otype)) return NULL;
+
+	if (otype) {
+		if (PyType_Check(otype) &&				\
+		    PyType_IsSubtype((PyTypeObject *)otype, 
+				     &PyBigArray_Type)) {
+			return _ARET(PyArray_View(self, NULL, 
+						  (PyTypeObject *)otype));
+		}
+		else {
+			if (PyArray_DescrConverter(otype, &type) == PY_FAIL) 
+				return NULL;
+		}
+	}
+	return _ARET(PyArray_View(self, type, NULL));
 }
 
 static char doc_argmax[] = "a.argmax(axis=None)";
@@ -1522,7 +1534,7 @@ array_newbyteorder(PyArrayObject *self, PyObject *args)
 
 	new = PyArray_DescrNewByteorder(self->descr, endian);
 	if (!new) return NULL;
-	return _ARET(PyArray_View(self,	new));
+	return _ARET(PyArray_View(self,	new, NULL));
 
 }
 

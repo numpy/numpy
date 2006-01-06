@@ -295,27 +295,15 @@ def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
             return obj
 
     if isinstance(obj, ndarray) and (obj.dtype in [unicode_, string]):
-        if itemsize is None:
-            itemsize = obj.itemsize
-        copied = 0
-        if unicode:
-            dtype = (unicode_, obj.itemsize)
-            if obj.dtype == string:
-                obj = obj.astype(dtype)
-                copied = 1
-        else:
-            dtype = (string, obj.itemsize)
-            if obj.dtype == unicode_:
-                obj = obj.astype(dtype)
-                copied = 1
+        new = obj.view(chararray)
+        if unicode and obj.dtype == string:
+            return new.astype((unicode_, obj.itemsize))
+        elif obj.dtype == unicode_:
+            return new.astype((string, obj.itemsize))
 
-        if copy and not copied:
-            obj = obj.copy()
-
-        return chararray(obj.shape, itemsize=itemsize, unicode=unicode,
-                         buffer=obj, offset=0, 
-                         fortran=obj.flags['FNC'])    
-
+        if copy: return new.copy()
+        else: return new
+        
     if unicode: dtype = "U"
     else: dtype = "S"
 

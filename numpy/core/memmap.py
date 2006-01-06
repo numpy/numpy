@@ -74,7 +74,6 @@ class memmap(ndarray):
         self._mode = mode
         self._size = size
         self._name = name
-
         fid.close()
         return self
 
@@ -85,4 +84,3 @@ class memmap(ndarray):
         self._mmap.flush()
 	del self._mmap
 
-                     

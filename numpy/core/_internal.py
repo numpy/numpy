@@ -230,21 +230,7 @@ def _array_descr(descriptor):
     if fields is None:
         return descriptor.dtypestr
 
-    #get ordered list of fields with names
-    ordered_fields = fields.items()
-    # remove duplicates
-    new = {}
-    for item in ordered_fields:
-        # We don't want to include redundant or non-string
-        #  entries
-        if not isinstance(item[0],str) or (len(item[1]) > 2 \
-                                           and item[0] == item[1][2]):
-            continue
-        new[item[1]] = item[0]
-    ordered_fields = [x[0] + (x[1],) for x in new.items()]
-    #sort the list on the offset
-    ordered_fields.sort(lambda x,y : cmp(x[1],y[1]))
-
+    ordered_fields = [fields[x] + (x,) for x in fields[-1]]
     result = []
     offset = 0
     for field in ordered_fields:

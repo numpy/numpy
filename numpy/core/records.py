@@ -1,6 +1,7 @@
 __all__ = ['record', 'recarray','format_parser']
 
 import numeric as sb
+from chararray import chararray
 import numerictypes as nt
 import sys
 import types
@@ -133,7 +134,8 @@ class record(nt.void):
 
 # The recarray is almost identical to a standard array (which supports
 #   named fields already)  The biggest difference is that it can use
-#   attribute-lookup to find the fields and it returns a record item.
+#   attribute-lookup to find the fields and it is constructed using
+#   a record.
 
 # If byteorder is given it forces a particular byteorder on all
 #  the fields (and any subfields)
@@ -168,7 +170,15 @@ class recarray(sb.ndarray):
         except:
             return sb.ndarray.__getattribute__(self,attr)
         
-        return self.getfield(*res)
+        obj = self.getfield(*res)
+        # if it has fields return a recarray, otherwise return
+        # normal array
+        if obj.dtypedescr.fields:
+            return obj
+        if obj.dtypechar in 'SU':
+            return obj.view(chararray)
+        return obj.view(sb.ndarray)
+            
     
     def __setattr__(self, attr, val):
         fielddict = sb.ndarray.__getattribute__(self,'dtypedescr').fields
@@ -192,7 +202,7 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
     (2, 'dd', 2.0)
     >>> x1[1]=34
     >>> r.a
-    recarray([1, 2, 3, 4])
+    array([1, 2, 3, 4])
     """
 
     if shape is None or shape == 0:
@@ -208,11 +218,7 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
         for obj in arrayList:
             if not isinstance(obj, sb.ndarray):
                 raise ValueError, "item in the array list must be an ndarray."
-            if obj.ndim == 1: 
-                _repeat = ''
-            elif len(obj._shape) >= 2:
-                _repeat = `obj._shape[1:]`
-            formats += _repeat + _typestr[obj.dtype]
+            formats += _typestr[obj.dtype]
             if issubclass(obj.dtype, nt.flexible):
                 formats += `obj.itemsize`
             formats += ','
@@ -394,6 +400,8 @@ def array(obj, formats=None, names=None, titles=None, shape=None,
         return fromfile(obj, formats=formats, names=names, titles=titles,
                         shape=shape, byteorder=byteorder, aligned=aligned,
                         offset=offset)
+    elif isinstance(obj, sb.ndarray):
+        return obj.view(recarray)
     else:
         raise ValueError("Unknown input type")
     

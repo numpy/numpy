@@ -139,12 +139,16 @@ PyArray_CompareLists(intp *l1, intp *l2, int n)
  View
 */
 static PyObject *
-PyArray_View(PyArrayObject *self, PyArray_Descr *type)
+PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 {
 	PyObject *new=NULL;
- 
+	PyTypeObject *subtype;
+
+	if (pytype) subtype = pytype;
+	else subtype = self->ob_type;
+	
 	Py_INCREF(self->descr);
-	new = PyArray_NewFromDescr(self->ob_type,
+	new = PyArray_NewFromDescr(subtype,
 				   self->descr,
 				   self->nd, self->dimensions,
 				   self->strides,
@@ -309,7 +313,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
                                 same=FALSE;
                         i++;
                 }
-                if (same) return PyArray_View(self, NULL);
+                if (same) return PyArray_View(self, NULL, NULL);
         }
 	
 	/* Returns a pointer to an appropriate strides array
