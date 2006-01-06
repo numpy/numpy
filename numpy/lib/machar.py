@@ -126,7 +126,7 @@ class MachAr(object):
 	    # Prevent infinite loop on PPC with gcc 4.0:
 	    if negep < 0:
                 raise RuntimeError, "could not determine machine tolerance " \
-		                    "for 'negep'"
+		                    "for 'negep', locals() -> %s" % (locals())
         negep = -negep
         epsneg = a
 
