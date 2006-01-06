@@ -526,6 +526,7 @@ class MaskedArray (object):
        such as when printing and in method/function filled().
        The fill_value is not used for computation within this module.
     """
+    __array_priority__ = 10.1
     def __init__(self, data, dtype=None, copy=True, fortran=False, 
                  mask=None, fill_value=None):
         """array(data, dtype=None, copy=True, fortran=False, mask=None, fill_value=None)
@@ -607,6 +608,12 @@ class MaskedArray (object):
         else:
             return self._data
 
+    def __array_wrap__ (self, array):
+        """Special hook for ufuncs.  Converts to Masked array with
+        the same mask as self."""
+        return MaskedArray(array, copy=False, mask=self._mask,
+                           fill_value = self._fill_value)
+        
     def _get_shape(self):
         "Return the current shape."
         return self._data.shape
