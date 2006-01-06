@@ -3622,15 +3622,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
                 return NULL;
         }
 
-
         newsize = PyArray_MultiplyList(new_dimensions, new_nd);
-
-        if (newsize == 0) {
-                PyErr_SetString(PyExc_ValueError, 
-                                "newsize is zero; cannot delete an array "\
-                                "in this way");
-                return NULL;
-        }
         oldsize = PyArray_SIZE(self);
         
 	if (oldsize != newsize) {
@@ -3651,10 +3643,11 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
 					"resize function");
 			return NULL;
 		} 
-		
+				
+		sd = (newsize == 0 ? sizeof(intp) : \
+		      newsize * self->descr->elsize);
 		/* Reallocate space if needed */
-		new_data = PyDataMem_RENEW(self->data, 
-					   newsize*(self->descr->elsize));
+		new_data = PyDataMem_RENEW(self->data, sd);
 		if (new_data == NULL) {
 			PyErr_SetString(PyExc_MemoryError, 
 					"cannot allocate memory for array");

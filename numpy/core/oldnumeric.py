@@ -248,12 +248,17 @@ def resize(a, new_shape):
     beyond current definition of a.
     """
 
+    if isinstance(new_shape, (int, nt.integer)):
+        new_shape = (new_shape,)
     a = ravel(a)
     Na = len(a)
     if not Na: return mu.zeros(new_shape, a.dtypechar)
     total_size = um.multiply.reduce(new_shape)
     n_copies = int(total_size / Na)
     extra = total_size % Na
+
+    if total_size == 0:
+        return a[:0]
 
     if extra != 0:
         n_copies = n_copies+1
