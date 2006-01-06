@@ -63,7 +63,10 @@ class matrix(N.ndarray):
             return data.astype(dtype)
 
         if isinstance(data, N.ndarray):
-            intype = N.dtypedescr(dtype)            
+            if dtype is None:
+                intype = data.dtypedescr
+            else:
+                intype = N.dtypedescr(dtype)
             new = data.view(matrix)
             if intype != data.dtypedescr:
                 return new.astype(intype)
