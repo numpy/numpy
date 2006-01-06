@@ -492,11 +492,12 @@ class test_ma(ScipyTestCase):
         f = open('test9.pik', 'rb')
         y = pickle.load(f)
         assert eq(x,y) 
-    
+        
     def check_testMasked(self):
         "Test of masked element"
         xx=arange(6)
         xx[1] = masked
+        self.failUnless(str(masked) ==  '--')
         self.failUnless(xx[1] is masked)
         self.failUnlessRaises(Exception, lambda x,y: x+y, masked, masked)
         self.failUnlessRaises(Exception, lambda x,y: x+y, masked, 2)

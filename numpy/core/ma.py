@@ -668,6 +668,12 @@ class MaskedArray (object):
         """
         if masked_print_option.enabled():
             f = masked_print_option
+            # XXX: Without the following special case masked
+            # XXX: would print as "[--]", not "--". Can we avoid
+            # XXX: checks for masked by choosing a different value
+            # XXX: for the masked singleton? 2005-01-05 -- sasha
+            if self is masked:
+                return str(f)
         else:
             f = self.fill_value()
         res = self.filled(f)
