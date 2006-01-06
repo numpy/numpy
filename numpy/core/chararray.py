@@ -6,6 +6,8 @@ import sys
 
 __all__ = ['chararray']
 
+_globalvar = 0
+
 # special sub-class for character arrays (string and unicode_)
 # This adds equality testing and methods of str and unicode types
 #  which operate on an element-by-element basis
@@ -14,12 +16,14 @@ __all__ = ['chararray']
 class chararray(ndarray):
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
                 offset=0, strides=None, fortran=0):
+        global _globalvar
 
         if unicode:
             dtype = unicode_
         else:
             dtype = string
 
+        _globalvar = 1
         if buffer is None:
             self = ndarray.__new__(subtype, shape, (dtype, itemsize),
                                    fortran=fortran)
@@ -28,7 +32,13 @@ class chararray(ndarray):
                                    buffer=buffer,
                                    offset=offset, strides=strides,
                                    fortran=fortran)
+        _globalvar = 0
         return self
+
+    def __array_finalize__(self, obj):
+        if not _globalvar and self.dtype not in [string, unicode_]:
+            raise ValueError, "Can only create a chararray from string data."
+                
 
     def _richcmpfunc(self, other, op):
         b = broadcast(self, other)

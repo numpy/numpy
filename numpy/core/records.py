@@ -255,9 +255,9 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
     >>> print r[0]
     (456, 'dbe', 1.2)
     >>> r.col1
-    recarray([456,   2])
+    array([456,   2])
     >>> r.col2
-    recarray(['dbe', 'de'])
+    chararray(['dbe', 'de'])
     >>> import cPickle
     >>> print cPickle.loads(cPickle.dumps(r))
     recarray[ 

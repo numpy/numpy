@@ -3490,7 +3490,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		Py_DECREF(descr);
 		return NULL;	
 	}
+	self->nd = nd;
 	self->dimensions = NULL;
+	self->data = NULL;
 	if (data == NULL) {  /* strides is NULL too */
 		self->flags = DEFAULT_FLAGS;
 		if (flags) {
@@ -3502,6 +3504,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 	else self->flags = (flags & ~UPDATEIFCOPY);
 		
 	sd = descr->elsize;
+	self->descr = descr;
+	self->base = (PyObject *)NULL;
+        self->weakreflist = (PyObject *)NULL;
 	
 	if (nd > 0) {
 		self->dimensions = PyDimMem_NEW(2*nd);
@@ -3521,16 +3526,11 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 						"if 'strides' is given in " \
 						"array creation, data must " \
 						"be given too");
-				PyDimMem_FREE(self->dimensions);
-				self->ob_type->tp_free((PyObject *)self);
-				return NULL;
-			}				
+				goto fail;
+			} 
 			memcpy(self->strides, strides, sizeof(intp)*nd);
 		}
-	}
-       	
-	self->descr = descr;
-
+	}       	
 		
 	if (data == NULL) {
 
@@ -3560,42 +3560,40 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 					   desired */
         }
         self->data = data;
-	self->nd = nd;
-	self->base = (PyObject *)NULL;
-        self->weakreflist = (PyObject *)NULL;
 
         /* call the __array_finalize__
 	   method if a subtype and some object passed in */
 	if ((obj != NULL) && (subtype != &PyArray_Type) && 
 	    (subtype != &PyBigArray_Type)) {
-		PyObject *res;
+		PyObject *res, *func, *args;
+		static PyObject *str=NULL;
+
+		if (str == NULL) {
+			str = PyString_InternFromString("__array_finalize__");
+		}
 		if (!(self->flags & OWNDATA)) { /* did not allocate own data */
 			 /* update flags before calling back into
 			    Python */
 			PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
 		}
-		res = PyObject_CallMethod((PyObject *)self, 
-					  "__array_finalize__",
-					  "O", obj);
-		if (res == NULL) {
-			if (self->flags & OWNDATA) PyDataMem_FREE(self);
-			PyDimMem_FREE(self->dimensions);
-			/* theoretically should free self
-			   but this causes segmentation faults...
-			   Not sure why */
-			return NULL;
+		func = PyObject_GetAttr((PyObject *)self, str);
+		if (func) {
+			args = PyTuple_New(1);
+			Py_INCREF(obj);
+			PyTuple_SET_ITEM(args, 0, obj);
+			res = PyObject_Call(func, args, NULL);
+			Py_DECREF(args);
+			Py_DECREF(func);
+			if (res == NULL) goto fail;
+			else Py_DECREF(res);
 		}
-		else Py_DECREF(res);
 	}
-
+	
 	return (PyObject *)self;
 
  fail:
-	Py_DECREF(descr);
-	PyDimMem_FREE(self->dimensions);
-	subtype->tp_free((PyObject *)self);
+	Py_DECREF(self);
 	return NULL;
-
 }
 
 

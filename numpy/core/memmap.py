@@ -14,11 +14,13 @@ mode_equivalents = {
     "write":"w+"
     }
 
+_globalvar = 0
 
 class memmap(ndarray):
     def __new__(subtype, name, dtype=uint8, mode='r+', offset=0,
                 shape=None, fortran=0):
-        
+        global _globalvar
+
         try:
             mode = mode_equivalents[mode]
         except KeyError:
@@ -67,8 +69,10 @@ class memmap(ndarray):
 
         mm = mmap.mmap(fid.fileno(), bytes, access=acc)
 
+        _globalvar = 1
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
                                offset=offset, fortran=fortran)
+        _globalvar = 0
         self._mmap = mm
         self._offset = offset
         self._mode = mode
@@ -77,10 +81,17 @@ class memmap(ndarray):
         fid.close()
         return self
 
+    def __array_finalize__(self, obj):
+        if not _globalvar:
+            raise ValueError, "Cannot create a memmap array that way"
+
     def sync(self):
         self._mmap.flush()
 
     def __del__(self):
-        self._mmap.flush()
-	del self._mmap
+        try:
+            self._mmap.flush()
+            del self._mmap
+        except AttributeError:
+            pass
 
