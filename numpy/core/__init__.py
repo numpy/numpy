@@ -17,7 +17,7 @@ from records import *
 from memmap import *
 del nt
 
-__all__ = ['char','rec','memmap']
+__all__ = ['char','rec','memmap','ma']
 __all__ += numeric.__all__
 __all__ += oldnumeric.__all__
 __all__ += defmatrix.__all__
