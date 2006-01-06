@@ -1,9 +1,9 @@
-"""Numpy: array processing for numbers, strings, records, and objects.
+"""NumPy: array processing for numbers, strings, records, and objects.
 
-Numpy is a general-purpose array-processing package designed to
+NumPy is a general-purpose array-processing package designed to
 efficiently manipulate large multi-dimensional arrays of arbitrary
 records without sacrificing too much speed for small multi-dimensional
-arrays.  Numpy is built on the Numeric code base and adds features
+arrays.  NumPy is built on the Numeric code base and adds features
 introduced by numarray as well as an extended C-API and the ability to
 create arrays of arbitrary type.
 

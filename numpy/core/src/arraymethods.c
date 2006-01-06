@@ -1457,7 +1457,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	PyObject *uic=Py_None;
 	int flagback = self->flags;
 		
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOOO", kwlist,
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO", kwlist,
 					 &write, &align, &uic))
 		return NULL;
 

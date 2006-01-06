@@ -9,7 +9,8 @@ import math
 
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_equal', 'assert_array_less',
-           'assert_array_almost_equal', 'jiffies', 'memusage', 'rand']
+           'assert_array_almost_equal', 'jiffies', 'memusage', 'rand',
+           'runstring']
 
 def rand(*args):
     """Returns an array of random numbers with the given shape.
@@ -208,3 +209,7 @@ def assert_array_less(x,y,err_msg=''):
     except ValueError:
         print shape(x),shape(y)
         raise ValueError, 'arrays are not less-ordered'
+
+def runstring(astr, dict):
+    exec astr in dict
+    

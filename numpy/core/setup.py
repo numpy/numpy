@@ -136,6 +136,8 @@ def configuration(parent_package='',top_path=None):
             join('src','arraymethods.c'),
             join('src','scalartypes.inc.src'),
             join('src','arraytypes.inc.src'),
+            join('src','_signbit.c'),
+            join('src','_isnan.c'),
             join('include','numpy','*object.h'),
 	    join(codegen_dir,'genapi.py'),
 	    join(codegen_dir,'*.txt')
@@ -156,8 +158,6 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('umath',
                          sources = [generate_config_h,
                                     join('src','umathmodule.c.src'),
-                                    join('src','_signbit.c'),
-                                    join('src','_isnan.c'),
                                     generate_umath_c,
                                     generate_ufunc_api,
                                     join('src','scalartypes.inc.src'),
