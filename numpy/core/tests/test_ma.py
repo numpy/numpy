@@ -103,6 +103,12 @@ class test_ma(ScipyTestCase):
             self.failUnless(eq(numpy.divide(x,y), divide(xm, ym)))
 
 
+    def check_testMixedArithmetic(self):
+        na = numpy.array([1])
+        ma = array([1])
+        self.failUnless(isinstance(na + ma, MaskedArray))
+        self.failUnless(isinstance(ma + na, MaskedArray))
+        
     def check_testUfuncs1 (self):
         "Test various functions such as sin, cos."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
