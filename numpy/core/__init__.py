@@ -11,11 +11,11 @@ from numeric import *
 from oldnumeric import *
 from defmatrix import *
 import ma
-import chararray as char
+import defchararray as char
 import records as rec
 from records import *
 from memmap import *
-from chararray import *
+from defchararray import *
 del nt
 
 __all__ = ['char','rec','memmap','ma']
