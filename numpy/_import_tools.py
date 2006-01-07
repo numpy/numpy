@@ -194,8 +194,8 @@ class PackageLoader:
                 new_object = frame.f_locals.get(package_name)
                 if old_object is not None and old_object is not new_object:
                     self.warn('Overwriting %s=%s (was %s)' \
-                              % (package_name,self._obj2str(new_object),
-                                 self._obj2str(old_object)))
+                              % (package_name,self._obj2repr(new_object),
+                                 self._obj2repr(old_object)))
 
             if '.' not in package_name:
                 self.parent_export_names.append(package_name)
