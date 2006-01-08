@@ -603,7 +603,9 @@ class test_ma(ScipyTestCase):
         self.failUnless(maximum(xm, xm).mask)
         self.failUnless(minimum(xm, xm).mask)
         self.failUnless(xm.filled().dtype is xm.data.dtype)
-                
+        x = array(0, mask=0)
+        self.failUnless(x.filled() is x.data)
+        
 def timingTest():
     for f in [testf, testinplace]:
         for n in [1000,10000,50000]:

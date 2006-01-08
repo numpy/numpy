@@ -1228,8 +1228,10 @@ array(data = %(data)s,
                     #ok, if scalar
                     if d.shape:
                         raise
-                    else:
+                    elif m:
                         result = numeric.array(value, dtype=d.dtype)
+                    else:
+                        result = d
             return result
 
     def ids (self):
