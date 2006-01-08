@@ -7,19 +7,26 @@ __all__ = ['fft','ifft','fftn','ifftn','fft2','ifft2',
            'inv','svd','solve','det','eig','eigvals','lstsq',
            'pinv','cholesky','i0']
 
+# First check to see that scipy is "new" scipy
+# Perhaps we could check to see if the functions actually work in
+#  the scipy that will be imported.
+
+
+have_scipy = 0
 try:
+    import scipy
+    if scipy.__version__ >= '0.4.4':
+        have_scipy = 1
+except ImportError:
+    pass
+
+if have_scipy:
     import scipy.linalg as linpkg
-except ImportError:
-    import numpy.linalg as linpkg
-
-try:
     import scipy.fftpack as fftpkg
-except ImportError:
-    import numpy.dft as fftpkg
-
-try:
     from scipy.special import i0
-except ImportError:
+else:
+    import numpy.linalg as linpkg
+    import numpy.dft as fftpkg
     from numpy.lib import i0
 
 fft = fftpkg.fft

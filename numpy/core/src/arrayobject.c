@@ -3538,7 +3538,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		 e.g. shape=(0,) -- otherwise buffer exposure 
 		 (a.data) doesn't work as it should. */
 
-		if (sd==0) sd = sizeof(intp);
+		if (sd==0) sd = descr->elsize;
 
 		if ((data = PyDataMem_NEW(sd))==NULL) {
 			PyErr_NoMemory();
@@ -3642,8 +3642,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
 			return NULL;
 		} 
 				
-		sd = (newsize == 0 ? sizeof(intp) : \
-		      newsize * self->descr->elsize);
+		if (newsize == 0) sd = self->descr->elsize;	
+		else sd = newsize * self->descr->elsize;
 		/* Reallocate space if needed */
 		new_data = PyDataMem_RENEW(self->data, sd);
 		if (new_data == NULL) {
@@ -6215,6 +6215,11 @@ PyArray_IterNew(PyObject *obj)
         Py_INCREF(ao);
         it->ao = ao;
 	it->size = PyArray_SIZE(ao);
+	if (it->size == 0) {
+		PyErr_SetString(PyExc_ValueError, 
+				"Cannot iterate over a size-0 array");
+		return NULL;
+	}
 	it->nd_m1 = nd - 1;
 	it->factors[nd-1] = 1;
 	for (i=0; i < nd; i++) {
