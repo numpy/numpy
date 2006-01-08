@@ -1215,11 +1215,17 @@ array(data = %(data)s,
                 try:
                     result = numeric.array(d, dtype=d.dtype, copy=1)
                     result[m] = value
-                except:
+                except (TypeError, AttributeError):
                     #ok, can't put that value in here
                     value = numeric.array(value, dtype=object)
                     d = d.astype(object)
                     result = oldnumeric.choose(m, (d, value))
+                except IndexError:
+                    #ok, if scalar
+                    if d.shape:
+                        raise
+                    else:
+                        result = numeric.array(value, dtype=d.dtype)
             return result
 
     def ids (self):
