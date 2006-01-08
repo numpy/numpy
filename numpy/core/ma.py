@@ -55,6 +55,8 @@ class _MaskedPrintOption:
     def __str__ (self):
         return str(self._display)
 
+    __repr__ = __str__
+    
 #if you single index into a masked location you get this object.
 masked_print_option = _MaskedPrintOption('--')
 
@@ -681,6 +683,8 @@ class MaskedArray (object):
             # XXX: for the masked singleton? 2005-01-05 -- sasha
             if self is masked:
                 return str(f)
+            # convert to object array to make filled work
+            self = self.astype(object)
         else:
             f = self.fill_value()
         res = self.filled(f)
