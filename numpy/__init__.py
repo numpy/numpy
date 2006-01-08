@@ -65,8 +65,6 @@ else:
     __all__ += core.__all__
     __all__ += lib.__all__
 
-    __all__ = filter(lambda s:not s.startswith('_'),dir())
-
     test = ScipyTest('numpy').test
 
     import add_newdocs
