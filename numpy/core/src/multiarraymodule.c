@@ -4704,7 +4704,7 @@ array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
 	PyObject *obj=NULL;
 	longlong nin=-1, offset=0;
-	static char *kwlist[] = {"buffer", "dtype", "count", NULL};
+	static char *kwlist[] = {"buffer", "dtype", "count", "offset", NULL};
 	PyArray_Descr *type=NULL;
 
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&LL", kwlist, 
