@@ -8,7 +8,7 @@ __all__ = ['PackageLoader']
 
 class PackageLoader:
     def __init__(self, verbose=False):
-        """ Manages loading NumPy packages.
+        """ Manages loading packages.
         """
 
         self.parent_frame = frame = sys._getframe(1)
@@ -116,29 +116,28 @@ class PackageLoader:
         return package_names
 
     def __call__(self,*packages, **options):
-        """Load one or more packages into numpy's top-level namespace.
+        """Load one or more packages into parent package top-level namespace.
 
     Usage:
 
-       This function is intended to shorten the need to import many of numpy's
-       submodules constantly with statements such as
+       This function is intended to shorten the need to import many of
+       subpackages, say of scipy, constantly with statements such as
 
-       import numpy.linalg, numpy.dft, numpy.etc...
+       import scipy.linalg, scipy.fftpack, scipy.etc...
 
        Instead, you can say:
 
-         import numpy
-         numpy.pkgload('linalg','dft',...)
+         import scipy
+         scipy.pkgload('linalg','fftpack',...)
 
        or
 
-         numpy.pkgload()
+         scipy.pkgload()
 
        to load all of them in one call.
 
-       If a name which doesn't exist in numpy's namespace is
-       given, an exception [[WHAT? ImportError, probably?]] is raised.
-       [NotImplemented]
+       If a name which doesn't exist in scipy's namespace is
+       given, a warning on missing info.py file is shown.
 
      Inputs:
 
@@ -148,17 +147,12 @@ class PackageLoader:
      Optional keyword inputs:
 
        - verbose - integer specifying verbosity level [default: 0].
+                   verbose=-1 will suspend also warnings.
        - force   - when True, force reloading loaded packages [default: False].
        - postpone - when True, don't load packages [default: False]
 
-     If no input arguments are given, then all of numpy's subpackages are
+     If no input arguments are given, then all of scipy's subpackages are
      imported.
-
-
-     Outputs:
-
-       The function returns a tuple with all the names of the modules which
-       were actually imported. [NotImplemented]
 
      """
         frame = self.parent_frame
