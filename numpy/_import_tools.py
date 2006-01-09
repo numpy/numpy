@@ -59,8 +59,8 @@ class PackageLoader:
                         info_files.extend(names_files)
                         break
                 else:
-                    self.warn('Package %r does not have info.py file. Ignoring.'\
-                              % package_name)
+                    self.warn('No scipy-style subpackage %r found in %s. Ignoring.'\
+                              % (package_name,':'.join(self.parent_path)))
 
         info_modules = self.info_modules
         for package_name,info_file in info_files:
@@ -137,7 +137,7 @@ class PackageLoader:
        to load all of them in one call.
 
        If a name which doesn't exist in scipy's namespace is
-       given, a warning on missing info.py file is shown.
+       given, a warning is shown.
 
      Inputs:
 
