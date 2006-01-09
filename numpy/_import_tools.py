@@ -281,14 +281,26 @@ class PackageLoader:
             return title
         return '* Not Available *'
 
-    def _format_titles(self,titles):
+    def _format_titles(self,titles,colsep='---'):
+        display_window_width = 70 # How to determine the correct value in runtime??
         lengths = [len(name)-name.find('.')-1 for (name,title) in titles]
         max_length = max(lengths)
         lines = []
         for (name,title) in titles:
             name = name[name.find('.')+1:]
             w = max_length - len(name)
-            lines.append('%s%s --- %s' % (name, w*' ', title))
+            words = title.split()
+            line = '%s%s %s' % (name,w*' ',colsep)
+            tab = len(line) * ' '
+            while words:
+                word = words.pop(0)
+                if len(line)+len(word)>display_window_width:
+                    lines.append(line)
+                    line = tab
+                line += ' ' + word
+            else:
+                lines.append(line)
+            #lines.append('%s%s --- %s' % (name, w*' ', title))
         return '\n'.join(lines)
 
     def get_pkgdocs(self):
@@ -299,6 +311,7 @@ class PackageLoader:
         self._init_info_modules(None)
 
         titles = []
+        symbols = []
         for package_name, info_module in self.info_modules.items():
             global_symbols = getattr(info_module,'global_symbols',[])
             fullname = self.parent_name +'.'+ package_name
@@ -306,6 +319,16 @@ class PackageLoader:
             if not sys.modules.has_key(fullname):
                 note = ' [*]'
             titles.append((fullname,self._get_doc_title(info_module) + note))
+            if global_symbols:
+                symbols.append((package_name,', '.join(global_symbols)))
 
-        return self._format_titles(titles) +\
-               '\n  [*] - using a package requires explicit import'
+        retstr = self._format_titles(titles) +\
+               '\n  [*] - using a package requires explicit import (see pkgload)'
+
+
+        if symbols:
+            retstr += """\n\nGlobal symbols from subpackages"""\
+                      """\n-------------------------------\n""" +\
+                      self._format_titles(symbols,'-->')
+
+        return retstr
