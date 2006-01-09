@@ -916,6 +916,8 @@ PyArray_Return(PyArrayObject *mp)
                 return NULL;
         }
 
+	if (!PyArray_Check(mp)) return (PyObject *)mp;
+	
 	if (mp->nd == 0) {
 		PyObject *ret;
 		ret = PyArray_ToScalar(mp->data, mp);
@@ -6215,11 +6217,6 @@ PyArray_IterNew(PyObject *obj)
         Py_INCREF(ao);
         it->ao = ao;
 	it->size = PyArray_SIZE(ao);
-	if (it->size == 0) {
-		PyErr_SetString(PyExc_ValueError, 
-				"Cannot iterate over a size-0 array");
-		return NULL;
-	}
 	it->nd_m1 = nd - 1;
 	it->factors[nd-1] = 1;
 	for (i=0; i < nd; i++) {
