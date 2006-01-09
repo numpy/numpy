@@ -15,6 +15,7 @@ from machar import *
 from getlimits import *
 #import convertcode
 from utils import *
+from arraysetops import *
 
 __all__ = []
 __all__ += type_check.__all__
@@ -27,6 +28,7 @@ __all__ += polynomial.__all__
 __all__ += machar.__all__
 __all__ += getlimits.__all__
 __all__ += utils.__all__
+__all__ += arraysetops.__all__
 
 from numpy.testing import ScipyTest 
 test = ScipyTest().test
