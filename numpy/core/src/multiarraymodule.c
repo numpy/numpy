@@ -2404,6 +2404,10 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 					   typenum, NULL, NULL, 0, 0, 
                                            (PyObject *)
 					   (prior2 > prior1 ? ap2 : ap1));
+
+	/* Ensure that multiarray.dot([],[]) -> 0 */
+	memset(PyArray_DATA(ret), 0, PyArray_ITEMSIZE(ret));
+
 	if (ret == NULL) goto fail;
 
 	dot = ret->descr->f->dotfunc;
