@@ -69,5 +69,32 @@ class test_dtypedescr(ScipyTestCase):
         d2 = dtypedescr('f8')
         assert_equal(d2, dtypedescr(float64))
         
+class test_zero_rank(ScipyTestCase):
+    def setUp(self):
+        self.d = array(0), array('x', object)
         
-    
+    def check_ellipsis_subscript(self):
+        a,b = self.d
+
+        self.failUnlessEqual(a[...], 0)
+        self.failUnlessEqual(b[...].item(), 'x')
+        self.failUnless(type(a[...]) is a.dtype)
+        self.failUnless(type(b[...]) is b.dtype)
+        
+    def check_empty_subscript(self):
+        a,b = self.d
+
+        self.failUnlessEqual(a[()], 0)
+        self.failUnlessEqual(b[()].item(), 'x')
+        self.failUnless(type(a[()]) is a.dtype)
+        self.failUnless(type(b[()]) is b.dtype)
+
+    def check_invalid_subscript(self):
+        a,b = self.d
+        self.failUnlessRaises(IndexError, lambda x: x[0], a)
+        self.failUnlessRaises(IndexError, lambda x: x[0], b)
+        self.failUnlessRaises(IndexError, lambda x: x[array([], int)], a)
+        self.failUnlessRaises(IndexError, lambda x: x[array([], int)], b)
+
+if __name__ == "__main__":
+        ScipyTest('numpy.core.multiarray').run()
