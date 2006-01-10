@@ -1468,6 +1468,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
                         PyArray_FromAny(otmp, intype, 0, 0, flags);
 		Py_DECREF(otmp);
 		Py_XDECREF(stype);
+                if (mps[i] == NULL) goto fail;
 	}	
 	return mps;
 
