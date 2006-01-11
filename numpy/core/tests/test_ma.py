@@ -605,6 +605,27 @@ class test_ma(ScipyTestCase):
         self.failUnless(xm.filled().dtype is xm.data.dtype)
         x = array(0, mask=0)
         self.failUnless(x.filled() is x.data)
+
+    def check_testArrayMethods(self):
+        a = array([1,3,2])
+        b = array([1,3,2], mask=[1,0,1])
+        self.failUnless(eq(a.any(), a.data.any()))
+        self.failUnless(eq(a.all(), a.data.all()))
+        self.failUnless(eq(a.argmax(), a.data.argmax()))
+        self.failUnless(eq(a.argmin(), a.data.argmin()))
+        self.failUnless(eq(a.choose(0,1,2,3,4), a.data.choose(0,1,2,3,4)))
+        self.failUnless(eq(a.compress([1,0,1]), a.data.compress([1,0,1])))
+        self.failUnless(eq(a.conj(), a.data.conj()))
+        self.failUnless(eq(a.conjugate(), a.data.conjugate()))
+        m = array([[1,2],[3,4]])
+        self.failUnless(eq(m.diagonal(), m.data.diagonal()))
+        self.failUnless(eq(a.sum(), a.data.sum()))
+        self.failUnless(eq(a.take([1,2]), a.data.take([1,2])))
+        self.failUnless(eq(m.transpose(), m.data.transpose()))
+        
+    def check_testAPI(self):
+        self.failIf([m for m in dir(numpy.ndarray)
+                     if m not in dir(array) and not m.startswith('_')])
         
 def timingTest():
     for f in [testf, testinplace]:

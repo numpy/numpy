@@ -2078,5 +2078,75 @@ def asarray(data, dtype=None):
         return data
     return array(data, dtype=dtype, copy=0)
 
+# Add methods to support ndarray interface
+# XXX: I is better to to change the masked_*_operation adaptors
+# XXX: to wrap ndarray methods directly to create ma.array methods.
+from types import MethodType
+def _m(f):
+    return MethodType(f, None, array)
+def not_implemented(*args, **kwds):
+    raise NotImplementedError, "not yet implemented for numpy.ma arrays"
+array.all = _m(alltrue)
+array.any = _m(sometrue)
+array.argmax = _m(argmax)
+array.argmin = _m(argmin)
+array.argsort = _m(argsort)
+array.base = property(_m(not_implemented))
+array.byteswap = _m(not_implemented)
+
+def _choose(self, *args):
+    return choose(self, args)
+array.choose = _m(_choose)
+del _choose
+
+array.clip = _m(not_implemented)
+
+def _compress(self, cond, axis=None):
+    return compress(cond, self, axis)
+array.compress = _m(_compress)
+del _compress
+
+array.conj = array.conjugate = _m(conjugate)
+array.copy = _m(not_implemented)
+array.cumprod = _m(not_implemented)
+array.cumsum = _m(not_implemented)
+array.diagonal = _m(diagonal)
+array.dtypedescr = property(_m(not_implemented))
+array.dtypestr = property(_m(not_implemented))
+array.dump = _m(not_implemented)
+array.dumps = _m(not_implemented)
+array.fill = _m(not_implemented)
+array.flags = property(_m(not_implemented))
+array.flatten = _m(ravel)
+array.getfield = _m(not_implemented)
+array.max = _m(maximum)
+array.mean = _m(average)
+array.min = _m(minimum)
+array.nbytes = property(_m(not_implemented))
+array.ndim = _m(not_implemented)
+array.newbyteorder = _m(not_implemented)
+array.nonzero = _m(nonzero)
+array.prod = _m(product)
+array.ptp = _m(not_implemented)
+array.repeat = _m(repeat)
+array.resize = _m(resize)
+array.searchsorted = _m(not_implemented)
+array.setfield = _m(not_implemented)
+array.setflags = _m(not_implemented)
+array.sort = _m(not_implemented)  # NB: ndarray.sort is inplace
+array.squeeze = _m(not_implemented)
+array.std = _m(not_implemented)
+array.strides = property(_m(not_implemented))
+array.sum = _m(sum)
+array.swapaxes = _m(not_implemented)
+array.take = _m(take)
+array.tofile = _m(not_implemented)
+array.trace = _m(not_implemented)
+array.transpose = _m(transpose)
+array.var = _m(not_implemented)
+array.view =  _m(not_implemented)
+del _m, MethodType, not_implemented
+
+
 masked = MaskedArray([0], int, mask=[1])[0:0]
 masked = masked[0:0]
