@@ -34,21 +34,21 @@ import numpy
 
 ##
 # 03.11.2005, c
-def ediff1d( ar1, toEnd = None, toBegin = None ):
+def ediff1d( ar1, to_end = None, to_begin = None ):
     """Array difference with prefixed and/or appended value."""
     dar1 = ar1[1:] - ar1[:-1]
-    if toEnd and toBegin:
+    if to_end and to_begin:
         shape = (ar1.shape[0] + 1,) + ar1.shape[1:]
         ed = numpy.empty( shape, dtype = ar1.dtype )
-        ed[0], ed[-1] = toBegin, toEnd
+        ed[0], ed[-1] = to_begin, to_end
         ed[1:-1] = dar1
-    elif toEnd:
+    elif to_end:
         ed = numpy.empty( ar1.shape, dtype = ar1.dtype )
-        ed[-1] = toEnd
+        ed[-1] = to_end
         ed[:-1] = dar1
-    elif toBegin:
+    elif to_begin:
         ed = numpy.empty( ar1.shape, dtype = ar1.dtype )
-        ed[0] = toBegin
+        ed[0] = to_begin
         ed[1:] = dar1
     else:
         ed = dar1
@@ -59,12 +59,12 @@ def ediff1d( ar1, toEnd = None, toBegin = None ):
 ##
 # 01.11.2005, c
 # 02.11.2005
-def unique1d( ar1, retIndx = False ):
-    """Unique elements of 1D array. When retIndx is True, return also the
-    indices indx such that ar1[indx] is the resulting array of unique
+def unique1d( ar1, retindx = False ):
+    """Unique elements of 1D array. When ret_indx is True, return also the
+    indices indx such that ar1.flat[indx] is the resulting array of unique
     elements."""
     ar = numpy.array( ar1 ).ravel()
-    if retIndx:
+    if retindx:
         perm = numpy.argsort( ar )
         aux = numpy.take( ar, perm )
         flag = ediff1d( aux, 1 ) != 0
@@ -94,7 +94,7 @@ def intersect1d_nu( ar1, ar2 ):
 def setxor1d( ar1, ar2 ):
     """Set exclusive-or of 1D arrays with unique elements."""
     aux = numpy.sort( numpy.concatenate( (ar1, ar2 ) ) )
-    flag = ediff1d( aux, toEnd = 1, toBegin = 1 ) == 0
+    flag = ediff1d( aux, to_end = 1, to_begin = 1 ) == 0
     flag2 = ediff1d( flag, 0 ) == 0
     return numpy.compress( flag2, aux )
 
@@ -136,7 +136,7 @@ def setdiff1d( ar1, ar2 ):
 
 ##
 # 02.11.2005, c
-def test_unique1d_speed( plotResults = False ):
+def test_unique1d_speed( plot_results = False ):
 #    exponents = numpy.linspace( 2, 7, 9 )
     exponents = numpy.linspace( 2, 6, 9 )
     ratios = []
@@ -182,7 +182,7 @@ def test_unique1d_speed( plotResults = False ):
     print dt2s
     print ratios
 
-    if plotResults:
+    if plot_results:
         import pylab
 
         def plotMe( fig, fun, nItems, dt1s, dt2s ):
@@ -198,4 +198,4 @@ def test_unique1d_speed( plotResults = False ):
         pylab.show()
 
 if (__name__ == '__main__'):
-    test_unique1d_speed( plotResults = True )
+    test_unique1d_speed( plot_results = True )

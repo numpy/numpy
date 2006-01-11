@@ -24,7 +24,7 @@ __all__ = ['asarray', 'array', 'concatenate',
            'compress', 'clip', 'sum', 'product', 'prod', 'sometrue', 'alltrue',
            'any', 'all', 'cumsum', 'cumproduct', 'cumprod', 'ptp', 'ndim',
            'rank', 'size', 'around', 'round_', 'mean', 'std', 'var', 'squeeze',
-           'amax', 'amin'
+           'amax', 'amin','bsum'
           ]
 
 import multiarray as mu
@@ -47,6 +47,9 @@ ArrayType = mu.ndarray
 arraytype = mu.ndarray
 
 LittleEndian = (sys.byteorder == 'little')
+
+# save away Python sum
+bsum = sum
 
 # backward compatible names from old Precision.py
 
