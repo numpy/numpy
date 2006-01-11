@@ -1776,8 +1776,8 @@ count_new_axes_0d(PyObject *tuple)
 	}
 	if (newaxis_count + ellipsis_count != argument_count) {
 		PyErr_SetString(PyExc_IndexError,
-				"0-d arrays can use a single ()"
-				" or a list of ellipses and newaxis"
+				"0-d arrays can only use a single ()"
+				" or a list of ellipses and newaxes"
 				" as an index");
 		return -1;
 	}
@@ -6491,7 +6491,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		ind = PyTuple_GET_ITEM(ind, 0);
 	}
 
-	/* Tuples >1d not accepted --- i.e. no NewAxis */
+	/* Tuples >1d not accepted --- i.e. no newaxis */
 	/* Could implement this with adjusted strides
 	   and dimensions in iterator */
 
@@ -6524,7 +6524,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 			goto fail;
 		if (n_steps == RubberIndex || n_steps == PseudoIndex) {
 			PyErr_SetString(PyExc_IndexError, 
-					"cannot use Ellipsis or NewAxes here");
+					"cannot use Ellipsis or newaxes here");
 			goto fail;
 		}
 		PyArray_ITER_GOTO1D(self, start)
@@ -6742,7 +6742,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 		if (start == -1) goto finish;
 		if (n_steps == RubberIndex || n_steps == PseudoIndex) {
 			PyErr_SetString(PyExc_IndexError, 
-					"cannot use Ellipsis or NewAxes here");
+					"cannot use Ellipsis or newaxes here");
 			goto finish;
 		}
 		PyArray_ITER_GOTO1D(self, start);
@@ -6989,7 +6989,7 @@ fancy_indexing_check(PyObject *args)
 	}
 	else if (PySequence_Check(args)) {
 		/* Sequences < MAX_DIMS with any slice objects
-		   or NewAxis, or Ellipsis is considered standard
+		   or newaxis, or Ellipsis is considered standard
 		   as long as there are also no Arrays and or additional
 		   sequences embedded.
 		*/
