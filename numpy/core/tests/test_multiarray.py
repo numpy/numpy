@@ -96,5 +96,31 @@ class test_zero_rank(ScipyTestCase):
         self.failUnlessRaises(IndexError, lambda x: x[array([], int)], a)
         self.failUnlessRaises(IndexError, lambda x: x[array([], int)], b)
 
+    def check_ellipsis_subscript_assignment(self):
+        a,b = self.d
+
+        a[...] = 42
+        self.failUnlessEqual(a, 42)
+        b[...] = ''
+        self.failUnlessEqual(b.item(), '')
+        
+    def check_empty_subscript_assignment(self):
+        a,b = self.d
+
+        a[()] = 42
+        self.failUnlessEqual(a, 42)
+        b[()] = ''
+        self.failUnlessEqual(b.item(), '')
+
+    def check_invalid_subscript_assignment(self):
+        a,b = self.d
+        def assign(x, i, v):
+            x[i] = v
+        self.failUnlessRaises(IndexError, assign, a, 0, 42)
+        self.failUnlessRaises(IndexError, assign, b, 0, '')
+        self.failUnlessRaises(TypeError, assign, a, (), '')
+
+    
+
 if __name__ == "__main__":
         ScipyTest('numpy.core.multiarray').run()

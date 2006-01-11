@@ -1938,6 +1938,9 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 	}
 
         if (self->nd == 0) {
+		if (index == Py_Ellipsis ||
+		    PyTuple_Check(index) && 0 == PyTuple_GET_SIZE(index))
+			return self->descr->f->setitem(op, self->data, self);
                 PyErr_SetString(PyExc_IndexError, 
                                 "0-d arrays can't be indexed.");
                 return -1;
