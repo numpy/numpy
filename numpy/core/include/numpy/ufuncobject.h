@@ -6,6 +6,7 @@ extern "C" {
 
 #define MAX_ARGS 40
 
+static int UFUNC_FLOATING_POINT_SUPPORT=1
 typedef void (*PyUFuncGenericFunction) (char **, intp *, intp *, void *);
 
 typedef struct {
@@ -298,8 +299,8 @@ typedef struct {
 
 #else
 
+UFUNC_FLOATING_POINT_SUPPORT=0
 #define UFUNC_CHECK_STATUS(ret) { \
-    printf("floating point flags not supported on this platform\n"); \
     ret = 0;							     \
   }
 

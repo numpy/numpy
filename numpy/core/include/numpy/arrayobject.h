@@ -63,7 +63,7 @@ extern "C" {
 /* There are several places in the code where an array of dimensions is */
 /* allocated statically.  This is the size of that static allocation. */
 
-#define MAX_DIMS 40
+#define MAX_DIMS 20
 
 /* Used for Converter Functions "O&" code in ParseTuple */
 #define PY_FAIL 0

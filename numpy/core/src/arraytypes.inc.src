@@ -182,13 +182,13 @@ CLONGDOUBLE_getitem(char *ip, PyArrayObject *ap)
 }
 
 
-
 /* UNICODE */
 static PyObject * 
 UNICODE_getitem(char *ip, PyArrayObject *ap) 
 {
 	PyObject *obj;
 	size_t size = sizeof(Py_UNICODE);
+
 	
 	obj = PyUnicode_FromUnicode((const Py_UNICODE *)ip, 
 				    ap->descr->elsize / size);
