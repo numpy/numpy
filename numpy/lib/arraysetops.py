@@ -63,40 +63,43 @@ def unique1d( ar1, retindx = False ):
     """Unique elements of 1D array. When ret_indx is True, return also the
     indices indx such that ar1.flat[indx] is the resulting array of unique
     elements."""
-    ar = numpy.array( ar1 ).ravel()
     if retindx:
-        perm = numpy.argsort( ar )
-        aux = numpy.take( ar, perm )
+        ar = numpy.array(ar1).ravel()
+        perm = ar.argsort()
+        aux = ar.take(perm)
         flag = ediff1d( aux, 1 ) != 0
-        return numpy.compress( flag, perm ), numpy.compress( flag, aux )
+        return perm.compress(flag), aux.compress(flag)
     else:
-        aux = numpy.sort( ar )
-        return numpy.compress( ediff1d( aux, 1 ) != 0, aux ) 
+        ar = numpy.array( ar1 ).flatten()
+        ar.sort()
+        return ar.compress( ediff1d( ar, 1 ) != 0)
 
 ##
 # 01.11.2005, c
 def intersect1d( ar1, ar2 ):
     """Intersection of 1D arrays with unique elements."""
-    aux = numpy.sort( numpy.concatenate( (ar1, ar2 ) ) )
-    return numpy.compress( (aux[1:] - aux[:-1]) == 0, aux )
+    aux = numpy.concatenate((ar1,ar2))
+    aux.sort()
+    return aux.compress( (aux[1:] - aux[:-1]) == 0)
 
 ##
 # 01.11.2005, c
 def intersect1d_nu( ar1, ar2 ):
     """Intersection of 1D arrays with any elements."""
     # Might be faster then unique1d( intersect1d( ar1, ar2 ) )?
-    aux = numpy.sort( numpy.concatenate( (unique1d( ar1 ),
-                                          unique1d( ar2  )) ) )
-    return numpy.compress( (aux[1:] - aux[:-1]) == 0, aux )
+    aux = numpy.concatenate((unique1d(ar1), unique1d(ar2)))
+    aux.sort()
+    return aux.compress( (aux[1:] - aux[:-1]) == 0)
 
 ##
 # 01.11.2005, c
 def setxor1d( ar1, ar2 ):
     """Set exclusive-or of 1D arrays with unique elements."""
-    aux = numpy.sort( numpy.concatenate( (ar1, ar2 ) ) )
+    aux = numpy.concatenate( (ar1, ar2 ) )
+    aux.sort()
     flag = ediff1d( aux, to_end = 1, to_begin = 1 ) == 0
     flag2 = ediff1d( flag, 0 ) == 0
-    return numpy.compress( flag2, aux )
+    return aux.compress( flag2 )
 
 ##
 # 03.11.2005, c
@@ -104,12 +107,14 @@ def setxor1d( ar1, ar2 ):
 def setmember1d( ar1, ar2 ):
     """Return an array of shape of ar1 containing 1 where the elements of
     ar1 are in ar2 and 0 otherwise."""
-    ar = numpy.concatenate( (ar1, ar2 ) )
-    tt = numpy.concatenate( (numpy.zeros_like( ar1 ),
-                             numpy.zeros_like( ar2 ) + 1) )
-    perm = numpy.argsort( ar )
-    aux = numpy.take( ar, perm )
-    aux2 = numpy.take( tt, perm )
+    concat = numpy.concatenate
+    zlike = numpy.zeros_like
+    ar = concat( (ar1, ar2 ) )
+    tt = concat( (zlike( ar1 ),
+                  zlike( ar2 ) + 1) )
+    perm = ar.argsort()
+    aux = ar.take(perm)
+    aux2 = tt.take(perm)
     flag = ediff1d( aux, 1 ) == 0
 
     ii = numpy.where( flag * aux2 )
@@ -117,9 +122,9 @@ def setmember1d( ar1, ar2 ):
     perm[ii+1] = perm[ii]
     perm[ii] = aux
 
-    indx = numpy.argsort( perm )[:len( ar1 )]
+    indx = perm.argsort()[:len( ar1 )]
 
-    return numpy.take( flag, indx )
+    return flag.take( indx )
 
 ##
 # 03.11.2005, c
@@ -132,7 +137,7 @@ def union1d( ar1, ar2 ):
 def setdiff1d( ar1, ar2 ):
     """Set difference of 1D arrays with unique elements."""
     aux = setmember1d( ar1, ar2 )
-    return numpy.compress( aux == 0, ar1 )
+    return ar1.compress(aux == 0)
 
 ##
 # 02.11.2005, c
