@@ -4757,7 +4757,7 @@ static PyTypeObject PyBigArray_Type = {
 
         (traverseproc)0,			  /*tp_traverse */
         (inquiry)0,			          /*tp_clear */
-        (richcmpfunc)array_richcompare,	          
+        (richcmpfunc)array_richcompare,	          /*tp_richcompare */
         offsetof(PyArrayObject, weakreflist),     /*tp_weaklistoffset */
 
         /* Iterator support (use standard) */

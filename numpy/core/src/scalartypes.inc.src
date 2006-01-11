@@ -1845,10 +1845,9 @@ void_arrtype_hash(PyObject *obj)
         return _Py_HashPointer((void *)(((PyVoidScalarObject *)obj)->obval));
 }
 
-
 /*object arrtype getattro and setattro */
 static PyObject *
-object_getattro(PyObjectScalarObject *obj, PyObject *attr) {
+object_arrtype_getattro(PyObjectScalarObject *obj, PyObject *attr) {
 	PyObject *res;
 	/* first look in generic type and then hand off to actual object */
 
@@ -1859,7 +1858,7 @@ object_getattro(PyObjectScalarObject *obj, PyObject *attr) {
 }
 
 static int
-object_setattro(PyObjectScalarObject *obj, PyObject *attr, PyObject *val) {
+object_arrtype_setattro(PyObjectScalarObject *obj, PyObject *attr, PyObject *val) {
 	int res;
 	/* first look in generic type and then hand off to actual object */
 
@@ -1869,10 +1868,181 @@ object_setattro(PyObjectScalarObject *obj, PyObject *attr, PyObject *val) {
 	return PyObject_GenericSetAttr(obj->obval, attr, val);
 }
 
+static int 
+object_arrtype_length(PyObjectScalarObject *self) 
+{
+	return PyObject_Length(self->obval);
+}
+
+static PyObject *
+object_arrtype_concat(PyObjectScalarObject *self, PyObject *other)
+{
+	return PySequence_Concat(self->obval, other);
+}
+
+static PyObject *
+object_arrtype_repeat(PyObjectScalarObject *self, int count)
+{
+	return PySequence_Repeat(self->obval, count);
+}
+
+static PyObject *
+object_arrtype_subscript(PyObjectScalarObject *self, PyObject *key)
+{
+	return PyObject_GetItem(self->obval, key);
+}
+
+static int
+object_arrtype_ass_subscript(PyObjectScalarObject *self, PyObject *key, 
+			     PyObject *value)
+{
+	return PyObject_SetItem(self->obval, key, value);
+}
+
+static int
+object_arrtype_contains(PyObjectScalarObject *self, PyObject *ob)
+{
+	return PySequence_Contains(self->obval, ob);
+}
+
+static PyObject *
+object_arrtype_inplace_concat(PyObjectScalarObject *self, PyObject *o)
+{
+	return PySequence_InPlaceConcat(self->obval, o);
+}
+
+static PyObject *
+object_arrtype_inplace_repeat(PyObjectScalarObject *self, int count)
+{
+	return PySequence_InPlaceRepeat(self->obval, count);
+}
+
+static PySequenceMethods object_arrtype_as_sequence = {
+        (inquiry)object_arrtype_length, /*sq_length*/
+        (binaryfunc)object_arrtype_concat, /*sq_concat*/
+        (intargfunc)object_arrtype_repeat, /*sq_repeat*/
+        0,                                  /*sq_item*/
+        0,                                  /*sq_slice*/
+        0,                                   /* sq_ass_item */
+        0,                                   /* sq_ass_slice */
+        (objobjproc)object_arrtype_contains,              /* sq_contains */
+        (binaryfunc)object_arrtype_inplace_concat,        /* sq_inplace_concat */
+        (intargfunc)object_arrtype_inplace_repeat,        /* sq_inplace_repeat */
+};
+
+static PyMappingMethods object_arrtype_as_mapping = {
+        (inquiry)object_arrtype_length,
+        (binaryfunc)object_arrtype_subscript,
+        (objobjargproc)object_arrtype_ass_subscript,
+};
+
+static int 
+object_arrtype_getsegcount(PyObjectScalarObject *self, int *lenp) 
+{
+	int newlen;
+	int cnt;
+	PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
+	
+	if (pb == NULL || \
+	    pb->bf_getsegcount == NULL || \
+	    (cnt = (*pb->bf_getsegcount)(self->obval, &newlen)) != 1) 
+		return 0;
+	
+	if (lenp) 
+		*lenp = newlen;
+	
+	return cnt;
+}
+
+static int 
+object_arrtype_getreadbuf(PyObjectScalarObject *self, int segment, void **ptrptr) 
+{
+	PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
+
+	if (pb == NULL || \
+	    pb->bf_getreadbuffer == NULL ||
+	    pb->bf_getsegcount == NULL) {
+		PyErr_SetString(PyExc_TypeError, 
+				"expected a readable buffer object");
+		return -1;
+	}
+	
+	return (*pb->bf_getreadbuffer)(self->obval, segment, ptrptr);
+}
+
+static int 
+object_arrtype_getwritebuf(PyObjectScalarObject *self, int segment, void **ptrptr) 
+{
+	PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
+
+	if (pb == NULL || \
+	    pb->bf_getwritebuffer == NULL ||
+	    pb->bf_getsegcount == NULL) {
+		PyErr_SetString(PyExc_TypeError, 
+				"expected a writeable buffer object");
+		return -1;
+	}
+	
+	return (*pb->bf_getwritebuffer)(self->obval, segment, ptrptr);
+}
+
+static int 
+object_arrtype_getcharbuf(PyObjectScalarObject *self, int segment, 
+			  const char **ptrptr) 
+{
+	PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
+
+	if (pb == NULL || \
+	    pb->bf_getcharbuffer == NULL ||
+	    pb->bf_getsegcount == NULL) {
+		PyErr_SetString(PyExc_TypeError, 
+				"expected a character buffer object");
+		return -1;
+	}
+	
+	return (*pb->bf_getcharbuffer)(self->obval, segment, ptrptr);
+}
+
+static PyBufferProcs object_arrtype_as_buffer = {
+        (getreadbufferproc)object_arrtype_getreadbuf,
+        (getwritebufferproc)object_arrtype_getwritebuf,
+        (getsegcountproc)object_arrtype_getsegcount,
+        (getcharbufferproc)object_arrtype_getcharbuf,
+};
+
+static PyObject *
+object_arrtype_call(PyObjectScalarObject *obj, PyObject *args, PyObject *kwds)
+{
+	return PyObject_Call(obj->obval, args, kwds);
+}
+
+static PyTypeObject PyObjectArrType_Type = {
+        PyObject_HEAD_INIT(NULL)
+        0,					  /*ob_size*/
+        "object_arrtype",	                  /*tp_name*/
+        sizeof(PyObjectScalarObject),	          /*tp_basicsize*/
+        0,                                        /* tp_itemsize */
+        (destructor)object_arrtype_dealloc,       /* tp_dealloc */
+        0,                                        /* tp_print */
+        0,                                        /* tp_getattr */
+        0,                                        /* tp_setattr */
+        0,                                        /* tp_compare */
+        0,                                        /* tp_repr */
+        0,                                        /* tp_as_number */
+        &object_arrtype_as_sequence,              /* tp_as_sequence */
+        &object_arrtype_as_mapping,               /* tp_as_mapping */
+        0,                                        /* tp_hash */
+        (ternaryfunc)object_arrtype_call,         /* tp_call */
+        0,                                        /* tp_str */
+        (getattrofunc)object_arrtype_getattro,     /* tp_getattro */
+        (setattrofunc)object_arrtype_setattro,     /* tp_setattro */
+        &object_arrtype_as_buffer,                /* tp_as_buffer */
+        0,                                        /* tp_flags */
+};
 
 /**begin repeat
-#name=bool, string, unicode, void, object#
-#NAME=Bool, String, Unicode, Void, Object#
+#name=bool, string, unicode, void#
+#NAME=Bool, String, Unicode, Void#
 */
 static PyTypeObject Py@NAME@ArrType_Type = { 
         PyObject_HEAD_INIT(NULL)
@@ -1976,11 +2146,6 @@ ComplexFloating, Flexible, Character#
 	PyStringArrType_Type.tp_itemsize = sizeof(char);
 	PyVoidArrType_Type.tp_dealloc = (destructor) void_dealloc;
 	PyUnicodeArrType_Type.tp_dealloc = unicode_dealloc;
-	PyObjectArrType_Type.tp_dealloc = object_arrtype_dealloc;
-	PyObjectArrType_Type.tp_getattro = (getattrofunc) object_getattro;
-	PyObjectArrType_Type.tp_setattro = (setattrofunc) object_setattro;
-
-	
 
 	PyArrayIter_Type.tp_iter = PyObject_SelfIter;
 	PyArrayMapIter_Type.tp_iter = PyObject_SelfIter;
