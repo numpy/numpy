@@ -1849,23 +1849,24 @@ void_arrtype_hash(PyObject *obj)
 static PyObject *
 object_arrtype_getattro(PyObjectScalarObject *obj, PyObject *attr) {
 	PyObject *res;
-	/* first look in generic type and then hand off to actual object */
 
-	res = PyObject_GenericGetAttr((PyObject *)obj, attr);
+	/* first look in object and then hand off to generic type */
+
+	res = PyObject_GenericGetAttr(obj->obval, attr);	
 	if (res) return res;
 	PyErr_Clear();
-	return PyObject_GenericGetAttr(obj->obval, attr);
+	return 	PyObject_GenericGetAttr((PyObject *)obj, attr);
 }
 
 static int
 object_arrtype_setattro(PyObjectScalarObject *obj, PyObject *attr, PyObject *val) {
 	int res;
-	/* first look in generic type and then hand off to actual object */
+	/* first look in object and then hand off to generic type */
 
-	res = PyObject_GenericSetAttr((PyObject *)obj, attr, val);
+	res = PyObject_GenericSetAttr(obj->obval, attr, val);
 	if (res >= 0) return res;
 	PyErr_Clear();
-	return PyObject_GenericSetAttr(obj->obval, attr, val);
+	return PyObject_GenericSetAttr((PyObject *)obj, attr, val);
 }
 
 static int 
