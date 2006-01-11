@@ -1742,6 +1742,58 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 	return 0;
 }
 
+int
+count_new_axes_0d(PyObject *tuple)
+{
+	int i, argument_count;
+	int ellipsis_count = 0;
+	int newaxis_count = 0;
+	
+	argument_count = PyTuple_GET_SIZE(tuple);
+
+	for (i = 0; i < argument_count; ++i) {
+		PyObject *arg = PyTuple_GET_ITEM(tuple, i);
+		if (arg == Py_Ellipsis && !ellipsis_count) ellipsis_count++;
+		else if (arg == Py_None) newaxis_count++;
+		else break;
+	}
+	if (i < argument_count) {
+		PyErr_SetString(PyExc_IndexError,
+				"0-d arrays can only use a single ()"
+				" or a list of newaxes (and a single ...)"
+				" as an index");
+		return -1;
+	}
+	if (newaxis_count > MAX_DIMS) {
+		PyErr_SetString(PyExc_IndexError,
+				"too many dimensions");
+		return -1;
+	}
+	return newaxis_count;
+}
+
+static PyObject *
+add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
+{
+	PyArrayObject *other;
+	intp dimensions[MAX_DIMS]; 
+	int i;
+	for (i = 0; i < newaxis_count; ++i) {
+		dimensions[i]  = 1;
+	}
+	Py_INCREF(arr->descr);
+	if ((other = (PyArrayObject *)
+	     PyArray_NewFromDescr(arr->ob_type, arr->descr,
+				  newaxis_count, dimensions,
+				  NULL, arr->data,
+				  arr->flags,
+				  (PyObject *)arr)) == NULL) 
+		return NULL;
+	other->base = (PyObject *)arr;
+	Py_INCREF(arr);
+	return (PyObject *)other;
+}
+
 /* Called when treating array object like a mapping -- called first from 
    Python when using a[object] unless object is a standard slice object
    (not an extended one). 
@@ -1762,58 +1814,6 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 
 static PyObject *iter_subscript(PyArrayIterObject *, PyObject *); 
 
-int
-count_new_axes_0d(PyObject *tuple)
-{
-	int i, argument_count;
-	int ellipsis_count = 0;
-	int newaxis_count = 0;
-	argument_count = PyTuple_GET_SIZE(tuple);
-	for (i = 0; i < argument_count; ++i) {
-		PyObject *arg = PyTuple_GET_ITEM(tuple, i);
-		ellipsis_count += (arg == Py_Ellipsis);
-		newaxis_count += (arg == Py_None);
-	}
-	if (newaxis_count + ellipsis_count != argument_count) {
-		PyErr_SetString(PyExc_IndexError,
-				"0-d arrays can only use a single ()"
-				" or a list of ellipses and newaxes"
-				" as an index");
-		return -1;
-	}
-	if (newaxis_count > MAX_DIMS) {
-		PyErr_SetString(PyExc_IndexError,
-				"too many dimensions");
-		return -1;
-	}
-	return newaxis_count;
-
-}
-static PyObject *
-add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
-{
-	PyArrayObject *other;
-	intp dimensions[MAX_DIMS], strides[MAX_DIMS];
-	int i;
-	for (i = 0; i < newaxis_count; ++i) {
-		dimensions[i] = strides[i] = 1;
-	}
-	Py_INCREF(arr->descr);
-	if ((other = (PyArrayObject *)
-	     PyArray_NewFromDescr(arr->ob_type, arr->descr,
-				  newaxis_count, dimensions,
-				  strides, arr->data,
-				  arr->flags,
-				  (PyObject *)arr)) == NULL) 
-		return NULL;
-
-	other->base = (PyObject *)arr;
-	Py_INCREF(arr);
-	
-	other ->flags &= ~OWNDATA;
-	
-	return (PyObject *)other;
-}
 
 static PyObject *
 array_subscript(PyArrayObject *self, PyObject *op) 
@@ -1999,8 +1999,9 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 	}
 
         if (self->nd == 0) {
-		if (index == Py_Ellipsis || (PyTuple_Check(index) && \
-                                             0 == PyTuple_GET_SIZE(index)))
+		if (index == Py_Ellipsis || index == Py_None ||		\
+		    (PyTuple_Check(index) && (0 == PyTuple_GET_SIZE(index) || \
+					      count_new_axes_0d(index) > 0)))
 			return self->descr->f->setitem(op, self->data, self);
                 PyErr_SetString(PyExc_IndexError, 
                                 "0-d arrays can't be indexed.");
@@ -2048,6 +2049,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 	Py_DECREF(tmp);
         return ret;
 }
+
 
 /* There are places that require that array_subscript return a PyArrayObject
    and not possibly a scalar.  Thus, this is the function exposed to 

@@ -14,4 +14,4 @@ Travis Vaught and Joe Cooper for administration of numpy.org web site and SVN
 Eric Firing for bugfixes.
 Arnd Baecker for 64-bit testing
 David Cooke for many code improvements including the auto-generated C-API
-Alexander Belopolsky (sasha) for Masked array bug-fixes and tests...
+Alexander Belopolsky (sasha) for Masked array bug-fixes and tests and rank-0 array improvements
