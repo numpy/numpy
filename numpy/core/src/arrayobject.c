@@ -809,6 +809,11 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 	int swap;
 
 	type_num = descr->type_num;
+	if ((type_num == PyArray_OBJECT) &&		\
+	    (PyArray_Check((*((PyObject **)data))))) {
+		Py_INCREF(*((PyObject **)data));
+		return *((PyObject **)data);
+	}
 	itemsize = descr->elsize;
         type = descr->typeobj;
         copyswap = descr->f->copyswap;
