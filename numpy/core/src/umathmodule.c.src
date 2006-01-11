@@ -1823,7 +1823,11 @@ static struct PyMethodDef methods[] = {
 DL_EXPORT(void) initumath(void) {
 	PyObject *m, *d, *s, *s2, *c_api;
 	double pinf, pzero, mynan;
+        int UFUNC_FLOATING_POINT_SUPPORT = 1;
 
+#ifdef NO_UFUNC_FLOATING_POINT_SUPPORT
+        UFUNC_FLOATING_POINT_SUPPORT = 0;
+#endif
 	/* Create the module and add the functions */
 	m = Py_InitModule("umath", methods);
 

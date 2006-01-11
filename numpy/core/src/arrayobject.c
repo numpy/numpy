@@ -1796,8 +1796,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
 		return NULL;
 	}
         if (self->nd == 0) {
-		if (op == Py_Ellipsis ||
-		    PyTuple_Check(op) && 0 == PyTuple_GET_SIZE(op))
+		if (op == Py_Ellipsis || (PyTuple_Check(op) &&          \
+                                          0 == PyTuple_GET_SIZE(op)))
 			return PyArray_ToScalar(self->data, self);
                 PyErr_SetString(PyExc_IndexError, 
                                 "0-d arrays can't be indexed.");
@@ -1938,8 +1938,8 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 	}
 
         if (self->nd == 0) {
-		if (index == Py_Ellipsis ||
-		    PyTuple_Check(index) && 0 == PyTuple_GET_SIZE(index))
+		if (index == Py_Ellipsis || (PyTuple_Check(index) && \
+                                             0 == PyTuple_GET_SIZE(index)))
 			return self->descr->f->setitem(op, self->data, self);
                 PyErr_SetString(PyExc_IndexError, 
                                 "0-d arrays can't be indexed.");

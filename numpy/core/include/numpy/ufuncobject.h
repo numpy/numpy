@@ -6,7 +6,6 @@ extern "C" {
 
 #define MAX_ARGS 40
 
-static int UFUNC_FLOATING_POINT_SUPPORT=1
 typedef void (*PyUFuncGenericFunction) (char **, intp *, intp *, void *);
 
 typedef struct {
@@ -299,7 +298,7 @@ typedef struct {
 
 #else
 
-UFUNC_FLOATING_POINT_SUPPORT=0
+#define NO_FLOATING_POINT_SUPPORT 
 #define UFUNC_CHECK_STATUS(ret) { \
     ret = 0;							     \
   }
