@@ -24,7 +24,7 @@ __all__ = ['asarray', 'array', 'concatenate',
            'compress', 'clip', 'sum', 'product', 'prod', 'sometrue', 'alltrue',
            'any', 'all', 'cumsum', 'cumproduct', 'cumprod', 'ptp', 'ndim',
            'rank', 'size', 'around', 'round_', 'mean', 'std', 'var', 'squeeze',
-           'amax', 'amin','bsum'
+           'amax', 'amin',
           ]
 
 import multiarray as mu
@@ -36,6 +36,12 @@ import numeric as _nx
 import sys
 _dt_ = nt.dtype2char
 
+import types
+
+try:
+    _gentype = types.GeneratorType
+except AttributeError:
+    _gentype = types.NoneType
 #Use this to add a new axis to an array
 #compatibility only
 NewAxis = None
@@ -49,7 +55,7 @@ arraytype = mu.ndarray
 LittleEndian = (sys.byteorder == 'little')
 
 # save away Python sum
-bsum = sum
+_sum_ = sum
 
 # backward compatible names from old Precision.py
 
@@ -341,6 +347,8 @@ def sum(x, axis=0, dtype=None):
     >>> sum([[0, 1], [0, 5]], axis=1)
     array([1, 5])
     """
+    if isinstance(x, _gentype):
+        return _sum_(x)
     return asarray(x).sum(axis, dtype)
 
 def product (x, axis=0, dtype=None):
