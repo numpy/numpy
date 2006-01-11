@@ -8140,9 +8140,11 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	PyArray_Descr *descr, *conv;
 	int align=0;
 	Bool copy=FALSE;
+	static char *kwlist[] = {"dtype", "align", "copy", NULL};
 	
-	if (!PyArg_ParseTuple(args, "O|iO&", &odescr, &align,
-			      PyArray_BoolConverter, &copy))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&",
+					 kwlist, &odescr, &align,
+					 PyArray_BoolConverter, &copy))
 		return NULL;
 	
 	if (align) {
@@ -8152,8 +8154,7 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 		else if PyList_Check(odescr) 
 			conv = _convert_from_list(odescr, 1, 0);
 		else if PyString_Check(odescr)
-			conv = _convert_from_commastring(odescr, 
-								     1);
+			conv = _convert_from_commastring(odescr, 1);
 		else {
 			PyErr_SetString(PyExc_ValueError, 
 					"align can only be non-zero for" \

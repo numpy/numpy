@@ -3498,12 +3498,6 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
 		key = PyString_FromFormat("f%d", i+1);
 		ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
-		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
-		PyDict_SetItem(fields, key, tup);
-		Py_DECREF(tup);
-		PyList_SET_ITEM(nameslist, i, key);
-		if (ret == PY_FAIL) goto fail;
-		totalsize += conv->elsize;
 		if (align) {
 			int _align;
 			_align = conv->alignment;
@@ -3511,6 +3505,12 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
 				((totalsize + _align - 1)/_align)*_align;
 			maxalign = MAX(maxalign, _align);
 		}
+		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
+		PyDict_SetItem(fields, key, tup);
+		Py_DECREF(tup);
+		PyList_SET_ITEM(nameslist, i, key);
+		if (ret == PY_FAIL) goto fail;
+		totalsize += conv->elsize;
 	}
 	key = PyInt_FromLong(-1);
 	PyDict_SetItem(fields, key, nameslist);
@@ -3677,8 +3677,15 @@ _convert_from_dict(PyObject *obj, int align)
 			}
 			if (offset > totalsize) totalsize = offset;
 		}
-		else 
+		else {
 			PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
+			if (align) {
+				int _align = newdescr->alignment;
+				if (_align > 1) totalsize =		\
+					((totalsize + _align - 1)/_align)*_align;
+				maxalign = MAX(maxalign,_align);
+			}
+		}
 		if (len == 3) PyTuple_SET_ITEM(tup, 2, item);
 		name = PyObject_GetItem(names, index);
 		Py_DECREF(index);
@@ -3690,12 +3697,6 @@ _convert_from_dict(PyObject *obj, int align)
 		Py_DECREF(tup);
 		if ((ret == PY_FAIL) || (newdescr->elsize == 0)) goto fail;
 		totalsize += newdescr->elsize;
-		if (align) {
-			int _align = newdescr->alignment;
-			if (_align > 1) totalsize =			\
-				((totalsize + _align - 1)/_align)*_align;
-			maxalign = MAX(maxalign,_align);
-		}
 	}
 
 	new = PyArray_DescrNewFromType(PyArray_VOID);
