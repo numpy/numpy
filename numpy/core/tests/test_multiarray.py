@@ -76,16 +76,16 @@ class test_zero_rank(ScipyTestCase):
     def check_ellipsis_subscript(self):
         a,b = self.d
         self.failUnlessEqual(a[...], 0)
-        self.failUnlessEqual(b[...].item(), 'x')
+        self.failUnlessEqual(b[...], 'x')
         self.failUnless(type(a[...]) is a.dtype)
-        self.failUnless(type(b[...]) is b.dtype)
+        self.failUnless(type(b[...]) is str)
         
     def check_empty_subscript(self):
         a,b = self.d
         self.failUnlessEqual(a[()], 0)
-        self.failUnlessEqual(b[()].item(), 'x')
+        self.failUnlessEqual(b[()], 'x')
         self.failUnless(type(a[()]) is a.dtype)
-        self.failUnless(type(b[()]) is b.dtype)
+	self.failUnless(type(b[()]) is str)
 
     def check_invalid_subscript(self):
         a,b = self.d

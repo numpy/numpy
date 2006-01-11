@@ -223,8 +223,8 @@ class test_ma(ScipyTestCase):
         assert eq(3.0, x2.fill_value())
         x1 = array([1,'hello',2,3],object)
         x2 = numpy.array([1,'hello',2,3],object)
-        s1 = x1[1].item()
-        s2 = x2[1].item()
+        s1 = x1[1]
+        s2 = x2[1]
         self.assertEqual(type(s2), str)
         self.assertEqual(type(s1), str)
         self.assertEqual(s1, s2)
@@ -430,9 +430,9 @@ class test_ma(ScipyTestCase):
         y = array(['abc', 1, 'def', 2, 3], object)
         y[2] = masked
         t = take(y,[0,3,4])
-        assert t[0].item() == 'abc'
-        assert t[1].item() == 2
-        assert t[2].item() == 3
+        assert t[0] == 'abc'
+        assert t[1] == 2
+        assert t[2] == 3
     
     def check_testInplace(self):
         """Test of inplace operations and rich comparisons"""
