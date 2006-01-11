@@ -75,7 +75,6 @@ class test_zero_rank(ScipyTestCase):
         
     def check_ellipsis_subscript(self):
         a,b = self.d
-
         self.failUnlessEqual(a[...], 0)
         self.failUnlessEqual(b[...].item(), 'x')
         self.failUnless(type(a[...]) is a.dtype)
@@ -83,7 +82,6 @@ class test_zero_rank(ScipyTestCase):
         
     def check_empty_subscript(self):
         a,b = self.d
-
         self.failUnlessEqual(a[()], 0)
         self.failUnlessEqual(b[()].item(), 'x')
         self.failUnless(type(a[()]) is a.dtype)
@@ -98,7 +96,6 @@ class test_zero_rank(ScipyTestCase):
 
     def check_ellipsis_subscript_assignment(self):
         a,b = self.d
-
         a[...] = 42
         self.failUnlessEqual(a, 42)
         b[...] = ''
@@ -106,7 +103,6 @@ class test_zero_rank(ScipyTestCase):
         
     def check_empty_subscript_assignment(self):
         a,b = self.d
-
         a[()] = 42
         self.failUnlessEqual(a, 42)
         b[()] = ''
@@ -120,7 +116,22 @@ class test_zero_rank(ScipyTestCase):
         self.failUnlessRaises(IndexError, assign, b, 0, '')
         self.failUnlessRaises(TypeError, assign, a, (), '')
 
-    
+    def check_newaxis(self):
+        a,b = self.d
+        self.failUnlessEqual(a[newaxis].shape, (1,))
+        self.failUnlessEqual(a[..., newaxis].shape, (1,))
+        self.failUnlessEqual(a[newaxis, ...].shape, (1,))
+        self.failUnlessEqual(a[..., newaxis].shape, (1,))
+        self.failUnlessEqual(a[newaxis, ..., newaxis].shape, (1,1))
+        self.failUnlessEqual(a[..., newaxis, newaxis].shape, (1,1))
+        self.failUnlessEqual(a[newaxis, newaxis, ...].shape, (1,1))
+        self.failUnlessEqual(a[(newaxis,)*10].shape, (1,)*10)
+
+    def check_invalid_newaxis(self):
+        a,b = self.d
+        def subscript(x, i): x[i]
+        self.failUnlessRaises(IndexError, subscript, a, (newaxis, 0))
+        self.failUnlessRaises(IndexError, subscript, a, (newaxis,)*50)
 
 if __name__ == "__main__":
         ScipyTest('numpy.core.multiarray').run()
