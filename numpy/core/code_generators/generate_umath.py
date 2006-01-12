@@ -235,10 +235,20 @@ defdict = {
          (1, 1), None,
          "e**x elementwise."
          ],
+'expm1' : [nointM, nointM,
+         ("expm1,"*6, '"expm1"'),
+         (1, 1), None,
+         "e**x-1 elementwise."
+         ],
 'log' : [nointM, nointM,
          ("log,"*6, '"log"'),
          (1, 1), None,
          "logarithm base e elementwise."
+         ],
+'log1p' : [nointM, nointM,
+         ("log1p,"*6, '"log1p"'),
+         (1, 1), None,
+         "log(1+x) to base e elementwise."
          ],
 'log10' : [nointM, nointM,
          ("log10,"*6, '"log10"'),

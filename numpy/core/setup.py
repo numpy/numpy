@@ -57,6 +57,10 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append('HAVE_LONGDOUBLE_FUNCS')
             if config_cmd.check_func('expf', **kws_args):
                 moredefs.append('HAVE_FLOAT_FUNCS')
+            if config_cmd.check_func('log1p', **kws_args):
+                moredefs.append('HAVE_LOG1P')
+            if config_cmd.check_func('expm1', **kws_args):
+                moredefs.append('HAVE_EXPM1')
             if config_cmd.check_func('asinh', **kws_args):
                 moredefs.append('HAVE_INVERSE_HYPERBOLIC')
             if config_cmd.check_func('atanhf', **kws_args):

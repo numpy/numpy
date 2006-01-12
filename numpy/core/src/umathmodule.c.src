@@ -20,15 +20,41 @@ extern double modf (double, double *);
 #define M_PI 3.14159265358979323846264338328
 #endif
 
+#ifndef HAVE_LOG1P
+static double log1p(double x)
+{
+	double u = 1. + x;
+	if (u == 1.0) {
+		return x;
+	} else {
+		return log(u) * x / (u-1.);
+	}
+}
+#endif
+
+#ifndef HAVE_EXPM1
+static double expm1(double x)
+{
+	double u = exp(x);
+	if (u == 1.0) {
+		return x;
+	} else if (u-1.0 == -1.0) {
+		return -1;
+	} else {
+		return (u-1.0) * x/log(u);
+	}
+}
+#endif
+
 #ifndef HAVE_INVERSE_HYPERBOLIC
 static double acosh(double x)
 {
-	return log(x + sqrt((x-1.0)*(x+1.0)));
+	return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
 
 static double asinh(double xx)
 {
-	double x;
+	double x, d;
 	int sign;
 	if (xx < 0.0) {
 		sign = -1;
@@ -38,14 +64,119 @@ static double asinh(double xx)
 		sign = 1;
 		x = xx;
 	}
-	return sign*log(x + sqrt(x*x+1.0));
+	if (x > 1e8) {
+		d = x;
+	} else {
+		d = sqrt(x*x + 1);
+	}
+	return sign*log1p(x*(1.0 + x/(d+1)));
 }
 
 static double atanh(double x)
 {
-	return 0.5*log((1.0+x)/(1.0-x));
+	return 0.5*log1p(2.0*x/(1.0-x));
 }
 #endif
+
+#if !defined(HAVE_INVERSE_HYPERBOLIC_FLOAT)
+#ifdef HAVE_FLOAT_FUNCS
+static float acoshf(float x)
+{
+	return 2*logf(sqrtf((x+1.0)/2)+sqrtf((x-1.0)/2));
+}
+
+static float asinhf(float xx)
+{
+	float x, d;
+	int sign;
+	if (xx < 0.0) {
+		sign = -1;
+		x = -xx;
+	}
+	else {
+		sign = 1;
+		x = xx;
+	}
+	if (x > 1e5) {
+		d = x;
+	} else {
+		d = sqrtf(x*x + 1);
+	}
+	return sign*log1pf(x*(1.0 + x/(d+1)));
+}
+
+static float atanhf(float x)
+{
+	return 0.5*log1pf(2.0*x/(1.0-x));
+}
+#else
+static float acoshf(float x)
+{
+  return (float)acosh((double)(x));
+}
+
+static float asinhf(float x)
+{
+  return (float)asinh((double)(x));
+}
+
+static float atanhf(float x)
+{
+  return (float)atanh((double)(x));
+}
+#endif
+#endif
+
+
+#if !defined(HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE)
+#ifdef HAVE_LONGDOUBLE_FUNCS
+static longdouble acoshl(longdouble x)
+{
+	return 2*logl(sqrtl((x+1.0)/2)+sqrtl((x-1.0)/2));
+}
+
+static longdouble asinhl(longdouble xx)
+{
+	longdouble x, d;
+	int sign;
+	if (xx < 0.0) {
+		sign = -1;
+		x = -xx;
+	}
+	else {
+		sign = 1;
+		x = xx;
+	}
+	if (x > 1e17) {
+		d = x;
+	} else {
+		d = sqrtl(x*x + 1);
+	}
+	return sign*log1pl(x*(1.0 + x/(d+1)));
+}
+
+static longdouble atanhl(longdouble x)
+{
+	return 0.5*log1pl(2.0*x/(1.0-x));
+}
+#else
+static longdouble acoshl(longdouble x)
+{
+  return (longdouble)acosh((double)(x));
+}
+
+static longdouble asinhl(longdouble x)
+{
+  return (longdouble)asinh((double)(x));
+}
+
+static longdouble atanhl(longdouble x)
+{
+  return (longdouble)atanh((double)(x));
+}
+#endif
+#endif
+
 
 #ifdef HAVE_HYPOT
 #if !defined(NeXT) && !defined(_MSC_VER)
@@ -173,26 +304,26 @@ double hypot(double x, double y)
 
 /* First, the C functions that do the real work */
 
-/* if C99 extensions not availble
+/* if C99 extensions not available then define dummy functions that use the
+ double versions for
 
-then define dummy functions that use the double versions for
+  sin, cos, tan
+  sinh, cosh, tanh,
+  fabs, floor, ceil, fmod, sqrt, log10, log, exp, fabs
+  asin, acos, atan,
+  asinh, acosh, atanh
 
-sin, cos, tan
-sinh, cosh, tanh,
-fabs, floor, ceil, fmod, sqrt, log10, log, exp, fabs
-asin, acos, atan,
-asinh, acosh, atanh
+  hypot, atan2, pow
 
-hypot, atan2, pow
-
+  log1p, expm1
 */
 
 /**begin repeat
 
-#kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan)*2#
-#typ=longdouble*16, float*16#
-#c=l*16,f*16#
-#TYPE=LONGDOUBLE*16, FLOAT*16#
+#kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan,log1p,expm1)*2#
+#typ=longdouble*18, float*18#
+#c=l*18,f*18#
+#TYPE=LONGDOUBLE*18, FLOAT*18#
 */
 #ifndef HAVE_@TYPE@_FUNCS
 @typ@ @kind@@c@(@typ@ x) {
@@ -232,95 +363,6 @@ hypot, atan2, pow
 #endif
 /**end repeat**/
 
-
-#if !defined(HAVE_INVERSE_HYPERBOLIC_FLOAT)
-#ifdef HAVE_FLOAT_FUNCS
-static float acoshf(float x)
-{
-	return logf(x + sqrtf((x-1.0)*(x+1.0)));
-}
-
-static float asinhf(float xx)
-{
-	float x;
-	int sign;
-	if (xx < 0.0) {
-		sign = -1;
-		x = -xx;
-	}
-	else {
-		sign = 1;
-		x = xx;
-	}
-	return sign*logf(x + sqrtf(x*x+1.0));
-}
-
-static float atanhf(float x)
-{
-	return 0.5*logf((1.0+x)/(1.0-x));
-}
-#else
-static float acoshf(float x)
-{
-  return (float)acosh((double)(x));
-}
-
-static float asinhf(float x)
-{
-  return (float)asinh((double)(x));
-}
-
-static float atanhf(float x)
-{
-  return (float)atanh((double)(x));
-}
-#endif
-#endif
-
-
-#if !defined(HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE)
-#ifdef HAVE_LONGDOUBLE_FUNCS
-static longdouble acoshl(longdouble x)
-{
-	return logl(x + sqrtl((x-1.0)*(x+1.0)));
-}
-
-static longdouble asinhl(longdouble xx)
-{
-	longdouble x;
-	int sign;
-	if (xx < 0.0) {
-		sign = -1;
-		x = -xx;
-	}
-	else {
-		sign = 1;
-		x = xx;
-	}
-	return sign*logl(x + sqrtl(x*x+1.0));
-}
-
-static longdouble atanhl(longdouble x)
-{
-	return 0.5*logl((1.0+x)/(1.0-x));
-}
-#else
-static longdouble acoshl(longdouble x)
-{
-  return (longdouble)acosh((double)(x));
-}
-
-static longdouble asinhl(longdouble x)
-{
-  return (longdouble)asinh((double)(x));
-}
-
-static longdouble atanhl(longdouble x)
-{
-  return (longdouble)atanh((double)(x));
-}
-#endif
-#endif
 
 
 
@@ -436,9 +478,27 @@ nc_log@c@(c@typ@ *x, c@typ@ *r)
 }
 
 static void
+nc_log1p@c@(c@typ@ *x, c@typ@ *r)
+{
+	@typ@ l = hypot@c@(x->real + 1.0,x->imag);
+	r->imag = atan2@c@(x->imag, x->real + 1.0);
+	r->real = log@c@(l);
+	return;
+}
+
+static void
 nc_exp@c@(c@typ@ *x, c@typ@ *r)
 {
 	@typ@ a = exp@c@(x->real);
+	r->real = a*cos@c@(x->imag);
+	r->imag = a*sin@c@(x->imag);
+	return;
+}
+
+static void
+nc_expm1@c@(c@typ@ *x, c@typ@ *r)
+{
+	@typ@ a = exp@c@(x->real-1);
 	r->real = a*cos@c@(x->imag);
 	r->imag = a*sin@c@(x->imag);
 	return;
