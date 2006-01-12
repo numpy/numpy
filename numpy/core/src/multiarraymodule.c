@@ -3375,6 +3375,11 @@ _convert_from_tuple(PyObject *obj)
 					"invalid shape in fixed-type tuple.");
 			goto fail;
 		}
+		/* If (type, 1) was given, it is equivalent to type... */
+		if (shape.len == 1 && shape.ptr[0] == 1 && PyNumber_Check(val)) {
+			PyDimMem_FREE(shape.ptr);
+			return type;
+		}
 		newdescr = PyArray_DescrNewFromType(PyArray_VOID);
 		if (newdescr == NULL) {PyDimMem_FREE(shape.ptr); goto fail;}
 		newdescr->elsize = type->elsize;
