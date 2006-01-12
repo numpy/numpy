@@ -296,6 +296,9 @@ typedef struct {
 	fp_clr_flag( FP_DIV_BY_ZERO | FP_OVERFLOW | FP_UNDERFLOW | FP_INVALID); \
 }
 
+#define generate_divbyzero_error() fp_raise_xcp(FP_DIV_BY_ZERO)
+#define generate_overflow_error() fp_raise_xcp(FE_OVERFLOW)
+
 #else
 
 #define NO_FLOATING_POINT_SUPPORT 
