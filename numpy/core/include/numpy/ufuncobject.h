@@ -280,7 +280,7 @@ typedef struct {
 #define generate_divbyzero_error() feraiseexcept(FE_DIVBYZERO)
 #define generate_overflow_error() feraiseexcept(FE_OVERFLOW)
 	
-#elif defined(AIX)
+#elif defined(_AIX)
 
 #include <float.h>
 #include <fpxcp.h>
@@ -288,11 +288,11 @@ typedef struct {
 #define UFUNC_CHECK_STATUS(ret) { \
 	fpflag_t fpstatus; \
                                                 \
-	fpstatus = fp_read_flag();
+	fpstatus = fp_read_flag(); \
 	ret = ((FP_DIV_BY_ZERO & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
 		| ((FP_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)	\
 		| ((FP_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
-		| ((FP_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0);
+		| ((FP_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0); \
 	fp_clr_flag( FP_DIV_BY_ZERO | FP_OVERFLOW | FP_UNDERFLOW | FP_INVALID); \
 }
 
