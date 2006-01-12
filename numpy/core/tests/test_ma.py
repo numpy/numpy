@@ -626,6 +626,14 @@ class test_ma(ScipyTestCase):
     def check_testAPI(self):
         self.failIf([m for m in dir(numpy.ndarray)
                      if m not in dir(array) and not m.startswith('_')])
+
+    def check_testSingleElementSubscript(self):
+        a = array([1,3,2])
+        b = array([1,3,2], mask=[1,0,1])
+        self.failUnlessEqual(a[0].shape, ())
+        self.failUnlessEqual(b[0].shape, ())
+        self.failUnlessEqual(b[1].shape, ())
+
         
 def timingTest():
     for f in [testf, testinplace]:

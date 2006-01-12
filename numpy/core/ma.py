@@ -2148,5 +2148,4 @@ array.view =  _m(not_implemented)
 del _m, MethodType, not_implemented
 
 
-masked = MaskedArray([0], int, mask=[1])[0:0]
-masked = masked[0:0]
+masked = MaskedArray(0, int, mask=1)
