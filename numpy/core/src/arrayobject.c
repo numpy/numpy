@@ -3884,15 +3884,20 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                          &strides,
                                          &fortran)) 
 		goto fail;
-	
+
+
+	if (descr == NULL)
+		descr = PyArray_DescrFromType(PyArray_LONG);
+
 	type_num = descr->type_num;
-	itemsize = descr->elsize;	
+	itemsize = descr->elsize;
 
         if (dims.ptr == NULL) {
                 PyErr_SetString(PyExc_ValueError, "need to give a "\
                                 "valid shape as the first argument");
                 goto fail;
         }
+
         if (buffer.ptr == NULL) {
                 ret = (PyArrayObject *)\
 			PyArray_NewFromDescr(subtype, descr,
