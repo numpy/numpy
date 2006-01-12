@@ -498,8 +498,8 @@ nc_exp@c@(c@typ@ *x, c@typ@ *r)
 static void
 nc_expm1@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ a = exp@c@(x->real-1);
-	r->real = a*cos@c@(x->imag);
+	@typ@ a = exp@c@(x->real);
+	r->real = a*cos@c@(x->imag) - 1.0;
 	r->imag = a*sin@c@(x->imag);
 	return;
 }
