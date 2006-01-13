@@ -8,7 +8,8 @@
 #include <math.h>
 
 
-/* A whole slew of basic math functions are provided originally by Konrad Hinsen. */
+/* A whole slew of basic math functions are provided originally 
+   by Konrad Hinsen. */
 
 #if !defined(__STDC__) && !defined(_MSC_VER)
 extern double fmod (double, double);
@@ -20,31 +21,6 @@ extern double modf (double, double *);
 #define M_PI 3.14159265358979323846264338328
 #endif
 
-#ifndef HAVE_LOG1P
-static double log1p(double x)
-{
-	double u = 1. + x;
-	if (u == 1.0) {
-		return x;
-	} else {
-		return log(u) * x / (u-1.);
-	}
-}
-#endif
-
-#ifndef HAVE_EXPM1
-static double expm1(double x)
-{
-	double u = exp(x);
-	if (u == 1.0) {
-		return x;
-	} else if (u-1.0 == -1.0) {
-		return -1;
-	} else {
-		return (u-1.0) * x/log(u);
-	}
-}
-#endif
 
 #ifndef HAVE_INVERSE_HYPERBOLIC
 static double acosh(double x)
@@ -314,8 +290,6 @@ double hypot(double x, double y)
   asinh, acosh, atanh
 
   hypot, atan2, pow
-
-  log1p, expm1
 */
 
 /**begin repeat
@@ -363,6 +337,85 @@ double hypot(double x, double y)
 #endif
 /**end repeat**/
 
+
+
+#ifndef HAVE_LOG1P
+static double log1p(double x)
+{
+	double u = 1. + x;
+	if (u == 1.0) {
+		return x;
+	} else {
+		return log(u) * x / (u-1.);
+	}
+}
+#endif
+
+#if !defined(HAVE_LOG1P) || !defined(HAVE_LONGDOUBLE_FUNCS)
+static longdouble log1pl(longdouble x)
+{
+	longdouble u = 1. + x;
+	if (u == 1.0) {
+		return x;
+	} else {
+		return logl(u) * x / (u-1.);
+	}
+}
+#endif
+
+#if !defined(HAVE_LOG1P) || !defined(HAVE_FLOAT_FUNCS)
+static float log1pf(float x)
+{
+	float u = 1. + x;
+	if (u == 1.0) {
+		return x;
+	} else {
+		return logf(u) * x / (u-1.);
+	}
+}
+#endif
+
+#ifndef HAVE_EXPM1
+static double expm1(double x)
+{
+	double u = exp(x);
+	if (u == 1.0) {
+		return x;
+	} else if (u-1.0 == -1.0) {
+		return -1;
+	} else {
+		return (u-1.0) * x/log(u);
+	}
+}
+#endif
+
+#if !defined(HAVE_EXPM1) || !defined(HAVE_LONGDOUBLE_FUNCS)
+static longdouble expm1l(longdouble x)
+{
+	longdouble u = expl(x);
+	if (u == 1.0) {
+		return x;
+	} else if (u-1.0 == -1.0) {
+		return -1;
+	} else {
+		return (u-1.0) * x/logl(u);
+	}
+}
+#endif
+
+#if !defined(HAVE_EXPM1) || !defined(HAVE_FLOAT_FUNCS)
+static float expm1f(float x)
+{
+	float u = expf(x);
+	if (u == 1.0) {
+		return x;
+	} else if (u-1.0 == -1.0) {
+		return -1;
+	} else {
+		return (u-1.0) * x/logf(u);
+	}
+}
+#endif
 
 
 
