@@ -28,6 +28,7 @@ static double acosh(double x)
 	return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
 
+double log1p(double);
 static double asinh(double xx)
 {
 	double x, d;
@@ -56,6 +57,9 @@ static double atanh(double x)
 
 #if !defined(HAVE_INVERSE_HYPERBOLIC_FLOAT)
 #ifdef HAVE_FLOAT_FUNCS
+float log1pf(float);
+float logf(float);
+float sqrtf(float);
 static float acoshf(float x)
 {
 	return 2*logf(sqrtf((x+1.0)/2)+sqrtf((x-1.0)/2));
@@ -106,6 +110,9 @@ static float atanhf(float x)
 
 #if !defined(HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE)
 #ifdef HAVE_LONGDOUBLE_FUNCS
+longdouble logl(longdouble);
+longdouble sqrtl(longdouble);
+longdouble log1pl(longdouble);
 static longdouble acoshl(longdouble x)
 {
 	return 2*logl(sqrtl((x+1.0)/2)+sqrtl((x-1.0)/2));
@@ -340,7 +347,7 @@ double hypot(double x, double y)
 
 
 #ifndef HAVE_LOG1P
-static double log1p(double x)
+double log1p(double x)
 {
 	double u = 1. + x;
 	if (u == 1.0) {
@@ -352,7 +359,7 @@ static double log1p(double x)
 #endif
 
 #if !defined(HAVE_LOG1P) || !defined(HAVE_LONGDOUBLE_FUNCS)
-static longdouble log1pl(longdouble x)
+longdouble log1pl(longdouble x)
 {
 	longdouble u = 1. + x;
 	if (u == 1.0) {
@@ -364,7 +371,7 @@ static longdouble log1pl(longdouble x)
 #endif
 
 #if !defined(HAVE_LOG1P) || !defined(HAVE_FLOAT_FUNCS)
-static float log1pf(float x)
+float log1pf(float x)
 {
 	float u = 1. + x;
 	if (u == 1.0) {
