@@ -5921,7 +5921,7 @@ array_fromattr(PyObject *op, PyArray_Descr *typecode, int flags)
                                 "object __array__ method not "  \
                                 "producing an array");
                 Py_DECREF(new);
-		Py_DECREF(typecode);
+		Py_XDECREF(typecode);
                 return NULL;
         }
         r = array_fromarray((PyArrayObject *)new, typecode, flags);

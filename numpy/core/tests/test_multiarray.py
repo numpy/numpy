@@ -133,5 +133,12 @@ class test_zero_rank(ScipyTestCase):
         self.failUnlessRaises(IndexError, subscript, a, (newaxis, 0))
         self.failUnlessRaises(IndexError, subscript, a, (newaxis,)*50)
 
+class test_creation(ScipyTestCase):
+    def check_from_attribute(self):
+        class x(object):
+            def __array__(self, dtype=None):
+                pass
+        self.failUnlessRaises(ValueError, array, x())
+
 if __name__ == "__main__":
         ScipyTest('numpy.core.multiarray').run()
