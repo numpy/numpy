@@ -455,8 +455,8 @@ arccos = masked_unary_operation(umath.arccos, 0.0, domain_check_interval(-1.0, 1
 arctan = masked_unary_operation(umath.arctan)
 # Missing from numeric
 arcsinh = masked_unary_operation(umath.arcsinh)
-arccosh = masked_unary_operation(umath.arccosh)
-arctanh = masked_unary_operation(umath.arctanh)
+arccosh = masked_unary_operation(umath.arccosh, 1.0, domain_greater_equal(1.0))
+arctanh = masked_unary_operation(umath.arctanh, 0.0, domain_check_interval(-1.0+1e-15, 1.0-1e-15))
 sinh = masked_unary_operation(umath.sinh)
 cosh = masked_unary_operation(umath.cosh)
 tanh = masked_unary_operation(umath.tanh)

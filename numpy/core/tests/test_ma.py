@@ -645,8 +645,8 @@ class test_ufuncs(ScipyTestCase):
                   'arcsin', 'arccos', 'arctan',
                   'sinh', 'cosh', 'tanh', 
                   'arcsinh',
-                  # 'arccosh', # buggy domain
-                  # 'arctanh', # buggy domain
+                  'arccosh',
+                  'arctanh',
                   'absolute', 'fabs', 'negative',
                   # 'nonzero', 'around',
                   'floor', 'ceil',
