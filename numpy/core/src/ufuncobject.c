@@ -2516,11 +2516,10 @@ _find_array_wrap(PyObject *args)
 	int nargs, i;
 	int np = 0;
 	int argmax = 0;
-	int val;
 	double priority[MAX_ARGS];
 	double maxpriority = PyArray_SUBTYPE_PRIORITY;
 	PyObject *with_wrap[MAX_ARGS];
-	PyObject *attr;
+	PyObject *attr, *wrap;
 	PyObject *obj;
 
 	nargs = PyTuple_Size(args);
@@ -2529,11 +2528,9 @@ _find_array_wrap(PyObject *args)
 		if (PyArray_CheckExact(obj) || PyBigArray_CheckExact(obj) || \
 		    PyArray_IsAnyScalar(obj))
 			continue;
-		attr = PyObject_GetAttrString(obj, "__array_wrap__");
-		if (attr != NULL) {
-			val = PyCallable_Check(attr);
-			Py_DECREF(attr);
-			if (val) {
+		wrap = PyObject_GetAttrString(obj, "__array_wrap__");
+		if (wrap != NULL) {
+			if (PyCallable_Check(wrap)) {
 				attr = PyObject_GetAttrString(obj,
 						     "__array_priority__");
 				if (attr == NULL)
@@ -2547,7 +2544,7 @@ _find_array_wrap(PyObject *args)
 					}
                                         Py_DECREF(attr);
 				}
-				with_wrap[np] = obj;
+				with_wrap[np] = wrap;
 				np += 1;
 			}
 		}
@@ -2555,15 +2552,18 @@ _find_array_wrap(PyObject *args)
 	}
 
 	if (np == 0) return NULL;
-
-	for (i=0; i<np; i++) {
+	wrap = with_wrap[0];
+	for (i=1; i<np; i++) {
 		if (priority[i] > maxpriority) {
 			maxpriority = priority[i];
-			argmax = i;
+			Py_DECREF(wrap);	
+			wrap = with_wrap[i];
+		} else {
+			Py_DECREF(with_wrap[i]);
 		}
 	}
-
-	return with_wrap[argmax];
+	
+	return wrap;
 }
 
 static PyObject *
@@ -2616,8 +2616,13 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 			mps[j] = (PyArrayObject *)old;
 		}
 		if (obj != NULL) {
-			res = PyObject_CallMethod(obj, "__array_wrap__",
-						  "O", mps[j]);
+			res = PyObject_CallFunction(obj, "O(OOi)",
+						    mps[j], self, args, i);
+			if (res == NULL) {
+				PyErr_Clear();
+				res = PyObject_CallFunctionObjArgs(obj, mps[j], NULL);
+			}
+			Py_DECREF(obj);
 			if (res == NULL) PyErr_Clear();
 			else if (res == Py_None) Py_DECREF(res);
 			else {
