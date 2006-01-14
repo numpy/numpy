@@ -5,6 +5,8 @@ from __version__ import version as __version__
 import ccompiler
 import unixccompiler
 
+from info import __doc__
+
 try:
     import __config__
     _INSTALLED = True

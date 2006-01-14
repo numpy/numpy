@@ -12,30 +12,6 @@ money for development.
 
 Documentation is also available in the docstrings.
 
-Available subpackages
----------------------
-
-core      - Defines a multi-dimensional array and useful procedures
-            for Numerical computation.
-lib       - Basic functions used by several sub-packages and useful
-            to have in the main name-space
-dft       - Core FFT routines
-linalg    - Core Linear Algebra Tools
-random    - Core Random Tools
-testing   - Scipy testing tools
-distutils - Enhanced distutils with Fortran compiler support and more
-f2py      - Fortran to Python interface generator
-dual      - Overwrite certain functions with high-performance Scipy tools
-
-Available tools
----------------
-
-core, lib namespaces
-fft, ifft   - Functions for FFT and inverse FFT
-rand, randn - Functions for uniform and normal random numbers.
-test        - Method to run numpy unittests.
-__version__ - Numpy version string
-show_config - Show numpy build configuration
 """
 
 try:
@@ -55,16 +31,38 @@ if show_config is None:
     del _sys
 else:
     from version import version as __version__
-    from testing import ScipyTest
-    from core import *
-    from lib import *
-    from dft import fft, ifft
-    from random import rand, randn
 
-    __all__ = ['ScipyTest','fft','ifft','rand','randn']
-    __all__ += core.__all__
-    __all__ += lib.__all__
+    import os as _os
+    NUMPY_IMPORT_VERBOSE = int(_os.environ.get('NUMPY_IMPORT_VERBOSE','0'))
+    del _os
+    from _import_tools import PackageLoader
+    pkgload = PackageLoader()
+    pkgload('testing','core','lib','dft','random','f2py','distutils',
+            verbose=NUMPY_IMPORT_VERBOSE,postpone=False)
+
+    __doc__ += """
+
+Available subpackages
+---------------------
+"""
+    __doc__ += pkgload.get_pkgdocs()
 
     test = ScipyTest('numpy').test
-
     import add_newdocs
+
+    __doc__ += """
+
+Utility tools
+-------------
+
+  test        --- Run numpy unittests
+  pkgload     --- Load numpy packages
+  show_config --- Show numpy build configuration
+  dual        --- Overwrite certain functions with high-performance Scipy tools
+  __version__ --- Numpy version string
+
+Environment variables
+---------------------
+
+  NUMPY_IMPORT_VERBOSE --- pkgload verbose flag, default is 0.
+"""

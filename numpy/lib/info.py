@@ -1,6 +1,6 @@
-__doc__ = \
-""" Basic functions used by several sub-packages and useful to have in the
-main name-space
+__doc_title__ = """Basic functions used by several sub-packages and
+useful to have in the main name-space."""
+__doc__ = __doc_title__ + """ 
 
 Type handling
 ==============

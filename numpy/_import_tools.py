@@ -170,8 +170,9 @@ class PackageLoader:
             if package_name in self.imported_packages:
                 continue
             info_module = self.info_modules[package_name]
-            global_symbols = getattr(info_module,'global_symbols',[])            
-            if postpone and not global_symbols:
+            global_symbols = getattr(info_module,'global_symbols',[])
+            postpone_import = getattr(info_module,'postpone_import',False)
+            if (postpone and not global_symbols) or postpone_import:
                 self.log('__all__.append(%r)' % (package_name))
                 if '.' not in package_name:
                     self.parent_export_names.append(package_name)
@@ -294,7 +295,6 @@ class PackageLoader:
                 line += ' ' + word
             else:
                 lines.append(line)
-            #lines.append('%s%s --- %s' % (name, w*' ', title))
         return '\n'.join(lines)
 
     def get_pkgdocs(self):
