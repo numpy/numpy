@@ -684,6 +684,9 @@ class MaskedArray (object):
             # XXX: for the masked singleton? 2005-01-05 -- sasha
             if self is masked:
                 return str(f)
+            m = self._mask
+            if m is not nomask and m.shape == () and m:
+                return str(f)
             # convert to object array to make filled work
             self = self.astype(object)
         else:

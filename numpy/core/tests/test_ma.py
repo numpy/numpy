@@ -605,6 +605,7 @@ class test_ma(ScipyTestCase):
         self.failUnless(xm.filled().dtype is xm.data.dtype)
         x = array(0, mask=0)
         self.failUnless(x.filled() is x.data)
+        self.failUnlessEqual(str(xm), str(masked_print_option))
 
     def check_testArrayMethods(self):
         a = array([1,3,2])
