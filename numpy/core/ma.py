@@ -16,7 +16,11 @@ from oldnumeric import typecodes, amax, amin
 from numerictypes import *
 import numeric
 
-    
+# Ufunc domain lookup for __array_wrap__
+ufunc_domain = {}
+# Ufunc fills lookup for __array__
+ufunc_fills = {}
+
 MaskType=bool_
 nomask = None # To be changed to MaskType(0)
 divide_tolerance = 1.e-35
@@ -295,7 +299,9 @@ class masked_unary_operation:
         self.fill = fill
         self.domain = domain
         self.__doc__ = getattr(aufunc, "__doc__", str(aufunc))
-
+        ufunc_domain[aufunc] = domain
+        ufunc_fills[aufunc] = fill,
+        
     def __call__ (self, a, *args, **kwargs):
         "Execute the call behavior."
 # numeric tries to return scalars rather than arrays when given scalars.
@@ -337,6 +343,8 @@ class domained_binary_operation:
         self.fillx = fillx
         self.filly = filly
         self.__doc__ = getattr(abfunc, "__doc__", str(abfunc))
+        ufunc_domain[abfunc] = domain
+        ufunc_fills[abfunc] = fillx,filly
 
     def __call__(self, a, b):
         "Execute the call behavior."
@@ -373,6 +381,8 @@ class masked_binary_operation:
         self.fillx = fillx
         self.filly = filly
         self.__doc__ = getattr(abfunc, "__doc__", str(abfunc))
+        ufunc_domain[abfunc] = None
+        ufunc_fills[abfunc] = fillx,filly
 
     def __call__ (self, a, b, *args, **kwargs):
         "Execute the call behavior."
@@ -611,11 +621,29 @@ class MaskedArray (object):
         else:
             return self._data
 
-    def __array_wrap__ (self, array):
-        """Special hook for ufuncs.  Converts to Masked array with
-        the same mask as self."""
-        return MaskedArray(array, copy=False, mask=self._mask,
-                           fill_value = self._fill_value)
+    def __array_wrap__ (self, array, context):
+        """Special hook for ufuncs.
+
+        Wraps the numpy array and sets the mask according to
+        context.
+        """
+        func, args = context[:2]
+        domain = ufunc_domain[func]
+        fills = ufunc_fills[func]
+        m = reduce(mask_or, [getmask(a) for a in args])
+        if domain is not None:
+            m = mask_or(m, domain(*[filled(a,f) for (a,f)
+                                       in zip(args, fills)]))
+        if m is not nomask:
+            try:
+                shape = array.shape
+            except AttributeError:
+                pass
+            else:
+                if m.shape != shape:
+                    m = reduce(mask_or, [getmaskarray(a) for a in args])
+            
+        return MaskedArray(array, copy=False, mask=m)
         
     def _get_shape(self):
         "Return the current shape."

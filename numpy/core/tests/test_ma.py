@@ -2,13 +2,13 @@ import numpy
 import types, time
 from numpy.core.ma import *
 from numpy.testing import ScipyTestCase, ScipyTest
-def eq(v,w):
+def eq(v,w, msg=''):
     result = allclose(v,w)
     if not result:
-        print """Not eq:
+        print """Not eq:%s
 %s
 ----
-%s"""% (str(v), str(w))
+%s"""% (msg, str(v), str(w))
     return result
 
 class test_ma(ScipyTestCase):
@@ -635,6 +635,47 @@ class test_ma(ScipyTestCase):
         self.failUnlessEqual(b[0].shape, ())
         self.failUnlessEqual(b[1].shape, ())
 
+class test_ufuncs(ScipyTestCase):
+    def setUp(self):
+        self.d = (array([1.0, 0, -1, pi/2]*2, mask=[0]*8),
+                  array([1.0, 0, -1, pi/2]*2, mask=[0]*8),)
+    def check_testUfuncRegression(self):
+        for f in ['sqrt', 'log', 'log10', 'exp', 'conjugate',
+                  'sin', 'cos', 'tan', 
+                  'arcsin', 'arccos', 'arctan',
+                  'sinh', 'cosh', 'tanh', 
+                  'arcsinh',
+                  # 'arccosh', # buggy domain
+                  # 'arctanh', # buggy domain
+                  'absolute', 'fabs', 'negative',
+                  # 'nonzero', 'around',
+                  'floor', 'ceil',
+                  # 'sometrue', 'alltrue',
+                  'logical_not',
+                  'add', 'subtract', 'multiply',
+                  'divide', 'true_divide', 'floor_divide',
+                  'remainder', 'fmod', 'hypot', 'arctan2',
+                  'equal', 'not_equal', 'less_equal', 'greater_equal',
+                  'less', 'greater',
+                  'logical_and', 'logical_or', 'logical_xor',
+                  ]:
+            try:
+                uf = getattr(umath, f)
+            except AttributeError:
+                uf = getattr(oldnumeric, f)
+            mf = getattr(numpy.ma, f)
+            args = self.d[:uf.nin]
+            ur = uf(*args)
+            mr = mf(*args)
+            self.failUnless(eq(ur.filled(0), mr.filled(0), f))
+            self.failUnless(eqmask(ur.mask, mr.mask))
+
+def eqmask(m1, m2):
+    if m1 is nomask:
+        return m2 is nomask
+    if m2 is nomask:
+        return m1 is nomask
+    return (m1 == m2).all()
         
 def timingTest():
     for f in [testf, testinplace]:
