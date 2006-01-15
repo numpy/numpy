@@ -2506,24 +2506,6 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	
 }
 
-
-
-/* ---------- */
-static double
-_get_array_priority(PyObject* obj)
-{
-	double priority = PyArray_SUBTYPE_PRIORITY;
-	PyObject* attr;
-	attr = PyObject_GetAttrString(obj, "__array_priority__");
-	if (attr) {
-		if (PyFloat_CheckExact(attr)) {
-			priority = PyFloat_AS_DOUBLE(attr);
-		}
-		Py_DECREF(attr);
-	}
-	return  priority;
-}
-
 static PyObject *
 _find_array_wrap(PyObject *args)
 {
@@ -2557,9 +2539,9 @@ _find_array_wrap(PyObject *args)
 	if (np < 2)
 		return wrap;
 	wrap = wraps[0];
-	maxpriority = _get_array_priority(with_wrap[0]);
+	maxpriority = PyArray_GetPriority(with_wrap[0], PyArray_SUBTYPE_PRIORITY);
 	for (i = 1; i < np; ++i) {
-		priority = _get_array_priority(with_wrap[i]);
+		priority = PyArray_GetPriority(with_wrap[i], PyArray_SUBTYPE_PRIORITY);
 		if (priority > maxpriority) {
 			maxpriority = priority;
 			Py_DECREF(wrap);

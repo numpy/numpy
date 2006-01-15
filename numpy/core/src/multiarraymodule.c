@@ -1,3 +1,4 @@
+
 /*
   Python Multiarray Module -- A useful collection of functions for creating and
   using ndarrays
@@ -1125,7 +1126,7 @@ PyArray_Concatenate(PyObject *op, int axis)
 	/* Make sure these arrays are legal to concatenate. */
 	/* Must have same dimensions except d0 */
 	
-	prior1 = 0.0;
+	prior1 = PyArray_PRIORITY;
 	subtype = &PyArray_Type;
 	ret = NULL;
 	for(i=0; i<n; i++) {
@@ -1134,11 +1135,13 @@ PyArray_Concatenate(PyObject *op, int axis)
 			Py_DECREF(mps[i]);
 			mps[i] = (PyArrayObject *)otmp;
 		}
-		prior2 = PyArray_GetPriority((PyObject *)(mps[i]), 0.0);
-		if (prior2 > prior1) {
-			prior1 = prior2;
-			subtype = mps[i]->ob_type;
-			ret = mps[i];
+		if (mps[i]->ob_type != subtype) {
+			prior2 = PyArray_GetPriority((PyObject *)(mps[i]), 0.0);
+			if (prior2 > prior1) {
+				prior1 = prior2;
+				subtype = mps[i]->ob_type;
+				ret = mps[i];
+			}
 		}
 	}
 	
@@ -2269,9 +2272,12 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	/* Need to choose an output array that can hold a sum 
 	    -- use priority to determine which subtype.
 	 */
-        prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-        prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-        subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+	if (ap2->ob_type != ap1->ob_type) {
+		prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
+		prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
+		subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+	} else subtype = ap1->ob_type;
+       
        
 	ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
 					   typenum, NULL, NULL, 0, 0, 
@@ -2397,9 +2403,13 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	*/
 
         /* Choose which subtype to return */
-        prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-        prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-        subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+	if (ap2->ob_type != ap1->ob_type) {
+		prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
+		prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
+		subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+	} 
+	else subtype = ap1->ob_type;
+	
 
 	ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
 					   typenum, NULL, NULL, 0, 0, 
@@ -2572,9 +2582,12 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	/* Need to choose an output array that can hold a sum 
 	    -- use priority to determine which subtype.
 	 */
-        prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-        prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-        subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+	if (ap2->ob_type != ap1->ob_type) {
+		prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
+		prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
+		subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+	}
+	else subtype = ap2->ob_type;
 	
 	ret = (PyArrayObject *)PyArray_New(subtype, 1,
 					   &length, typenum, 
