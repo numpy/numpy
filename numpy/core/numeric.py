@@ -1,6 +1,7 @@
 __all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
            'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtype',
-           'fromstring', 'fromfile', 'frombuffer','newbuffer','getbuffer',
+           'fromstring', 'fromfile', 'frombuffer','newbuffer',
+           'getbuffer',
            'where', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
            'register_dtype', 'set_numeric_ops', 'can_cast',
            'asarray', 'asanyarray', 'isfortran', 'zeros_like', 'empty_like',

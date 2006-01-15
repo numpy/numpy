@@ -4,6 +4,7 @@ import mmap
 from numeric import uint8, ndarray, dtype
 from numerictypes import nbytes
 
+dtypedescr = dtype
 valid_filemodes = ["r", "c", "r+", "w+"]
 writeable_filemodes = ["r+","w+"]
 
@@ -14,9 +15,8 @@ mode_equivalents = {
     "write":"w+"
     }
 
-_globalvar = 0
-
 class memmap(ndarray):
+    __array_priority__ = -100.0
     def __new__(subtype, name, dtype=uint8, mode='r+', offset=0,
                 shape=None, fortran=0):
         global _globalvar
@@ -35,7 +35,7 @@ class memmap(ndarray):
 
         fid.seek(0,2)
         flen = fid.tell()
-        descr = dtype(dtype)
+        descr = dtypedescr(dtype)
         _dbytes = descr.itemsize
 
         if shape is None:
@@ -69,10 +69,8 @@ class memmap(ndarray):
 
         mm = mmap.mmap(fid.fileno(), bytes, access=acc)
 
-        _globalvar = 1
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
                                offset=offset, fortran=fortran)
-        _globalvar = 0
         self._mmap = mm
         self._offset = offset
         self._mode = mode
@@ -82,9 +80,9 @@ class memmap(ndarray):
         return self
 
     def __array_finalize__(self, obj):
-        self._mmap = None
-        if not _globalvar:
+        if not isinstance(obj, memmap):
             raise ValueError, "Cannot create a memmap array that way"
+        self._mmap = None
 
     def sync(self):
         self._mmap.flush()

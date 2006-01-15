@@ -8019,15 +8019,28 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_protocol_typename_get(PyArray_Descr *self)
+arraydescr_typename_get(PyArray_Descr *self)
 {
         int len;
         PyTypeObject *typeobj = self->typeobj;
+	PyObject *res;
 
 	/* Both are equivalents, but second is more resistent to changes */
 /* 	len = strlen(typeobj->tp_name) - 8; */
-	len = strchr(typeobj->tp_name, (int)'_')-(typeobj->tp_name);
-	return PyString_FromStringAndSize(typeobj->tp_name, len);
+
+	if (PyTypeNum_ISUSERDEF(self->type_num)) {
+		res = PyString_FromString(typeobj->tp_name);
+	}
+	else {
+		len = strchr(typeobj->tp_name, (int)'_')-(typeobj->tp_name);
+		res = PyString_FromStringAndSize(typeobj->tp_name, len);
+	}
+	if (PyTypeNum_ISEXTENDED(self->type_num) && self->elsize != 0) {
+		PyObject *p;
+		p = PyString_FromFormat("%d", self->elsize * 8);
+		PyString_ConcatAndDel(&res, p);
+	}
+	return res;						   
 }
 
 static PyObject *
@@ -8100,7 +8113,7 @@ static PyGetSetDef arraydescr_getsets[] = {
 	 NULL,
 	 "The array_protocol typestring."},
 	{"name",
-	 (getter)arraydescr_protocol_typename_get,
+	 (getter)arraydescr_typename_get,
 	 NULL,
 	 "The array_protocol typename."},
 	{"isbuiltin",
