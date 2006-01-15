@@ -3,7 +3,7 @@
 #  that implements more complicated stuff.
 
 import re
-from multiarray import _flagdict, dtypedescr, ndarray
+from multiarray import _flagdict, dtype, ndarray
 
 _defflags = _flagdict.keys()
 
@@ -186,7 +186,7 @@ def _usefields(adict, align):
             num = int(obj[1])
             if (num < 0):
                 raise ValueError, "invalid offset."
-            format = dtypedescr(obj[0])
+            format = dtype(obj[0])
             if (format.itemsize == 0):
                 raise ValueError, "all itemsizes must be fixed."
             if (n > 2):
@@ -213,10 +213,10 @@ def _usefields(adict, align):
             else:
                 titles.append(None)
 
-    return dtypedescr({"names" : names,
-                       "formats" : formats,
-                       "offsets" : offsets,
-                       "titles" : titles}, align)
+    return dtype({"names" : names,
+                  "formats" : formats,
+                  "offsets" : offsets,
+                  "titles" : titles}, align)
 
 
 # construct an array_protocol descriptor list
@@ -228,7 +228,7 @@ def _usefields(adict, align):
 def _array_descr(descriptor):
     fields = descriptor.fields
     if fields is None:
-        return descriptor.dtypestr
+        return descriptor.str
 
     ordered_fields = [fields[x] + (x,) for x in fields[-1]]
     result = []

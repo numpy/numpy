@@ -37,7 +37,7 @@ _arraydescr_fromobj(PyObject *obj)
 	PyArray_Descr *new;
 	int ret;
 	
-	dtypedescr = PyObject_GetAttrString(obj, "dtypedescr");
+	dtypedescr = PyObject_GetAttrString(obj, "dtype");
 	PyErr_Clear();
 	if (dtypedescr) {
 		ret = PyArray_DescrConverter(dtypedescr, &new);
@@ -160,7 +160,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         PyArray_BASE(new) = (PyObject *)self;
 	
 	if (type != NULL) {
-		if (PyObject_SetAttrString(new, "dtypedescr", 
+		if (PyObject_SetAttrString(new, "dtype",
 					   (PyObject *)type) < 0) {
 			Py_DECREF(new);
 			Py_DECREF(type);
@@ -4065,7 +4065,7 @@ static PyObject *
 _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 {
 	PyObject *op, *ret=NULL;
-	static char *kwd[]= {"object", "dtype", "copy", "fortran", "subok", 
+	static char *kwd[]= {"object", "dtype", "copy", "fortran", "subok", /* XXX ? */
                              NULL};
         Bool subok=FALSE;
 	Bool copy=TRUE;
@@ -4182,13 +4182,13 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
 	return ret;
 }
 
-static char doc_scalar[] = "scalar(dtypedescr,obj) will return a new scalar array of the given type initialized with obj. Mainly for pickle support.  The dtypedescr must be a valid data-type descriptor.  If dtypedescr corresponds to an OBJECT descriptor, then obj can be any object, otherwise obj must be a string. If obj is not given it will be interpreted as None for object type and zeros for all other types.";
+static char doc_scalar[] = "scalar(dtype,obj) will return a new scalar array of the given type initialized with obj. Mainly for pickle support.  The dtype must be a valid data-type descriptor.  If dtype corresponds to an OBJECT descriptor, then obj can be any object, otherwise obj must be a string. If obj is not given it will be interpreted as None for object type and zeros for all other types.";
 
 static PyObject *
 array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds) 
 {
         
-	static char *kwlist[] = {"dtypedescr","obj", NULL};
+	static char *kwlist[] = {"dtype","obj", NULL};
 	PyArray_Descr *typecode;
 	PyObject *obj=NULL;
 	int alloc=0;
@@ -4284,7 +4284,7 @@ static char doc_zeros[] = "zeros((d1,...,dn),dtype=int,fortran=0) will return a 
 static PyObject *
 array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds) 
 {
-	static char *kwlist[] = {"shape","dtype","fortran",NULL};
+	static char *kwlist[] = {"shape","dtype","fortran",NULL}; /* XXX ? */
 	PyArray_Descr *typecode=NULL;
         PyArray_Dims shape = {NULL, 0};
 	Bool fortran = FALSE;	
@@ -5501,7 +5501,7 @@ DL_EXPORT(void) initmultiarray(void) {
 	PyDict_SetItemString(d, "broadcast", 
 			     (PyObject *)&PyArrayMultiIter_Type);
 	Py_INCREF(&PyArrayDescr_Type);
-	PyDict_SetItemString(d, "dtypedescr", (PyObject *)&PyArrayDescr_Type);
+	PyDict_SetItemString(d, "dtype", (PyObject *)&PyArrayDescr_Type);
 
 	/* Doesn't need to be exposed to Python 
         Py_INCREF(&PyArrayMapIter_Type);

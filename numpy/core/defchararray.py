@@ -300,7 +300,7 @@ def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
         if copy or (itemsize != obj.itemsize) \
            or (not unicode and obj.dtype == unicode_) \
            or (unicode and obj.dtype == string):
-            return obj.astype("%s%d" % (obj.dtypechar, itemsize))
+            return obj.astype("%s%d" % (obj.dtype.char, itemsize))
         else:
             return obj
 

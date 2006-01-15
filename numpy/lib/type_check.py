@@ -20,15 +20,15 @@ def mintypecode(typechars,typeset='GDFgdf',default='d'):
     The returned type character must be the smallest size such that
     an array of the returned type can handle the data from an array of
     type t for each t in typechars (or if typechars is an array,
-    then its dtypechar).
+    then its dtype.char).
 
     If the typechars does not intersect with the typeset, then default
     is returned.
 
-    If t in typechars is not a string then t=asarray(t).dtypechar is
+    If t in typechars is not a string then t=asarray(t).dtype.char is
     applied.
     """
-    typecodes = [(type(t) is type('') and t) or asarray(t).dtypechar\
+    typecodes = [(type(t) is type('') and t) or asarray(t).dtype.char\
                  for t in typechars]
     intersection = [t for t in typecodes if t in typeset]
     if not intersection:
@@ -63,10 +63,10 @@ def isreal(x):
     return imag(x) == _nx.zeros_like(x)
 
 def iscomplexobj(x):
-    return issubclass( asarray(x).dtype, _nx.complexfloating)
+    return issubclass( asarray(x).dtype.type, _nx.complexfloating)
 
 def isrealobj(x):
-    return not issubclass( asarray(x).dtype, _nx.complexfloating)
+    return not issubclass( asarray(x).dtype.type, _nx.complexfloating)
 
 #-----------------------------------------------------------------------------
 
@@ -81,7 +81,7 @@ def nan_to_num(x):
     #    Inf -> limits.double_max
     #   -Inf -> limits.double_min
     try:
-        t = x.dtype
+        t = x.dtype.type
     except AttributeError:
         t = obj2dtype(type(x))
     if issubclass(t, _nx.complexfloating):
@@ -98,7 +98,7 @@ def nan_to_num(x):
         are_inf = isposinf(y)
         are_neg_inf = isneginf(y)
         are_nan = isnan(y)
-        maxf, minf = _getmaxmin(y.dtype)
+        maxf, minf = _getmaxmin(y.dtype.type)
         y[are_nan] = 0
         y[are_inf] = maxf
         y[are_neg_inf] = minf
@@ -110,11 +110,11 @@ def nan_to_num(x):
 
 def real_if_close(a,tol=100):
     a = asarray(a)
-    if a.dtypechar not in 'FDG':
+    if a.dtype.char not in 'FDG':
         return a
     if tol > 1:
         import getlimits
-        f = getlimits.finfo(a.dtype)
+        f = getlimits.finfo(a.dtype.type)
         tol = f.eps * tol
     if _nx.allclose(a.imag, 0, atol=tol):
         a = a.real
@@ -167,7 +167,7 @@ def common_type(*arrays):
     kind = 0
     precision = 0
     for a in arrays:
-        t = a.dtypechar
+        t = a.dtype.char
         kind = max(kind, array_kind[t])
         precision = max(precision, array_precision[t])
     return array_type[kind][precision]

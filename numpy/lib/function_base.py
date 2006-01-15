@@ -163,7 +163,7 @@ def asarray_chkfinite(a):
     """Like asarray, but check that no NaNs or Infs are present.
     """
     a = asarray(a)
-    if (a.dtypechar in _nx.typecodes['AllFloat']) \
+    if (a.dtype.char in _nx.typecodes['AllFloat']) \
            and (_nx.isnan(a).any() or _nx.isinf(a).any()):
         raise ValueError, "array must not contain infs or NaNs"
     return a
@@ -322,13 +322,13 @@ def gradient(f, *varargs):
     slice2 = [slice(None)]*N
     slice3 = [slice(None)]*N
 
-    otype = f.dtypechar
+    otype = f.dtype.char
     if otype not in ['f', 'd', 'F', 'D']:
         otype = 'd'
 
     for axis in range(N):
         # select out appropriate parts for this dimension
-        out = zeros(f.shape, f.dtypechar)
+        out = zeros(f.shape, f.dtype.char)
         slice1[axis] = slice(1, -1)
         slice2[axis] = slice(2, None)
         slice3[axis] = slice(None, -2)
@@ -387,7 +387,7 @@ def angle(z, deg=0):
     else:
         fact = 1.0
     z = asarray(z)
-    if (issubclass(z.dtype, _nx.complexfloating)):
+    if (issubclass(z.dtype.type, _nx.complexfloating)):
         zimag = z.imag
         zreal = z.real
     else:
@@ -420,10 +420,10 @@ def sort_complex(a):
     """
     b = array(a,copy=True)
     b.sort()
-    if not issubclass(b.dtype, _nx.complexfloating):
-        if b.dtypechar in 'bhBH':
+    if not issubclass(b.dtype.type, _nx.complexfloating):
+        if b.dtype.char in 'bhBH':
             return b.astype('F')
-        elif b.dtypechar == 'g':
+        elif b.dtype.char == 'g':
             return b.astype('G')
         else:
             return b.astype('D')
@@ -480,7 +480,7 @@ def nansum(a, axis=-1):
     """Sum the array over the given axis, treating NaNs as 0.
     """
     y = array(a)
-    if not issubclass(y.dtype, _nx.integer):
+    if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = 0
     return y.sum(axis)
 
@@ -488,7 +488,7 @@ def nanmin(a, axis=-1):
     """Find the minimium over the given axis, ignoring NaNs.
     """
     y = array(a)
-    if not issubclass(y.dtype, _nx.integer):
+    if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = _nx.inf
     return y.min(axis)
 
@@ -496,7 +496,7 @@ def nanargmin(a, axis=-1):
     """Find the indices of the minimium over the given axis ignoring NaNs.
     """
     y = array(a)
-    if not issubclass(y.dtype, _nx.integer):
+    if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = _nx.inf
     return y.argmin(axis)
 
@@ -504,7 +504,7 @@ def nanmax(a, axis=-1):
     """Find the maximum over the given axis ignoring NaNs.
     """
     y = array(a)
-    if not issubclass(y.dtype, _nx.integer):
+    if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = -_nx.inf
     return y.max(axis)
 
@@ -512,7 +512,7 @@ def nanargmax(a, axis=-1):
     """Find the maximum over the given axis ignoring NaNs.
     """
     y = array(a)
-    if not issubclass(y.dtype, _nx.integer):
+    if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = -_nx.inf
     return y.argmax(axis)
 
@@ -608,7 +608,7 @@ class vectorize(object):
             if self.otypes == '':
                 otypes = []
                 for k in range(self.nout):
-                    otypes.append(asarray(theout[k]).dtypechar)
+                    otypes.append(asarray(theout[k]).dtype.char)
                 self.otypes = ''.join(otypes)
 
         if (self.ufunc is None) or (self.lastcallargs != nargs):

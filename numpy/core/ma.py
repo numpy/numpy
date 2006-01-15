@@ -83,7 +83,7 @@ def default_fill_value (obj):
     elif isinstance(obj, types.ComplexType):
             return default_complex_fill_value
     elif isinstance(obj, MaskedArray) or isinstance(obj, ndarray):
-        x = obj.dtypechar
+        x = obj.dtype.char
         if x in typecodes['Float']:
             return default_real_fill_value
         if x in typecodes['Integer']:
@@ -105,7 +105,7 @@ def minimum_fill_value (obj):
     elif isinstance(obj, types.IntType) or isinstance(obj, types.LongType):
         return sys.maxint
     elif isinstance(obj, MaskedArray) or isinstance(obj, ndarray):
-        x = obj.dtypechar
+        x = obj.dtype.char
         if x in typecodes['Float']:
             return numeric.inf
         if x in typecodes['Integer']:
@@ -122,7 +122,7 @@ def maximum_fill_value (obj):
     elif isinstance(obj, types.IntType) or isinstance(obj, types.LongType):
             return -sys.maxint
     elif isinstance(obj, MaskedArray) or isinstance(obj, ndarray):
-        x = obj.dtypechar
+        x = obj.dtype.char
         if x in typecodes['Float']:
             return -inf
         if x in typecodes['Integer']:
@@ -161,7 +161,7 @@ def is_mask (m):
     """Is m a legal mask? Does not check contents, only type.
     """
     if m is nomask or (isinstance(m, ndarray) and \
-                     m.dtype is MaskType):
+                     m.dtype.type is MaskType):
         return 1
     else:
         return 0
@@ -176,7 +176,7 @@ def make_mask (m, copy=0, flag=0):
     if m is nomask:
         return nomask
     elif isinstance(m, ndarray):
-        if m.dtype is MaskType:
+        if m.dtype.type is MaskType:
             if copy:
                 result = numeric.array(m, dtype=MaskType, copy=copy)
             else:
@@ -525,12 +525,12 @@ class MaskedArray (object):
            then the candidate data is data.data and the
            mask used is data.mask. If data is a numeric array,
            it is used as the candidate raw data.
-           If dtypechar is not None and
-           is != data.dtypechar then a data copy is required.
+           If dtype.char is not None and
+           is != data.dtype.char then a data copy is required.
            Otherwise, the candidate is used.
 
        If a data copy is required, raw data stored is the result of:
-       numeric.array(data, dtype=dtypechar, copy=copy)
+       numeric.array(data, dtype=dtype.char, copy=copy)
 
        If mask is nomask there are no masked values. Otherwise mask must
        be convertible to an array of booleans with the same shape as x.
@@ -549,7 +549,7 @@ class MaskedArray (object):
         need_data_copied = copy
         if isinstance(data, MaskedArray):
             c = data.data
-            ctc = c.dtypechar
+            ctc = c.dtype.char
             if tc is None:
                 tc = ctc
             elif dtype2char(tc) != ctc:
@@ -561,7 +561,7 @@ class MaskedArray (object):
 
         elif isinstance(data, ndarray):
             c = data
-            ctc = c.dtypechar
+            ctc = c.dtype.char
             if tc is None:
                 tc = ctc
             elif dtype2char(tc) != ctc:
@@ -979,9 +979,9 @@ array(data = %(data)s,
 
     def __iadd__(self, other):
         "Add other to self in place."
-        t = self._data.dtypechar
+        t = self._data.dtype.char
         f = filled(other,0)
-        t1 = f.dtypechar
+        t1 = f.dtype.char
         if t == t1:
             pass
         elif t in typecodes['Integer']:
@@ -1022,9 +1022,9 @@ array(data = %(data)s,
 
     def __imul__(self, other):
         "Add other to self in place."
-        t = self._data.dtypechar
+        t = self._data.dtype.char
         f = filled(other,0)
-        t1 = f.dtypechar
+        t1 = f.dtype.char
         if t == t1:
             pass
         elif t in typecodes['Integer']:
@@ -1065,9 +1065,9 @@ array(data = %(data)s,
 
     def __isub__(self, other):
         "Subtract other from self in place."
-        t = self._data.dtypechar
+        t = self._data.dtype.char
         f = filled(other,0)
-        t1 = f.dtypechar
+        t1 = f.dtype.char
         if t == t1:
             pass
         elif t in typecodes['Integer']:
@@ -1110,9 +1110,9 @@ array(data = %(data)s,
 
     def __idiv__(self, other):
         "Divide self by other in place."
-        t = self._data.dtypechar
+        t = self._data.dtype.char
         f = filled(other,0)
-        t1 = f.dtypechar
+        t1 = f.dtype.char
         if t == t1:
             pass
         elif t in typecodes['Integer']:
@@ -1348,10 +1348,6 @@ array(data = %(data)s,
     size = property(fget=_get_size, doc="Number of elements in the array.")
 ## CHECK THIS: signature of numeric.array.size?
     
-    def _get_dtypechar(self):
-        return self._data.dtypechar
-    dtypechar = property(fget=_get_dtypechar, doc="type character of the array.")
-
     def _get_dtype(self):
         return self._data.dtype
     dtype = property(fget=_get_dtype, doc="type of the array elements.")
@@ -1464,7 +1460,7 @@ def masked_values (data, value, rtol=1.e-5, atol=1.e-8, copy=1):
     """
     abs = umath.absolute
     d = filled(data, value)
-    if issubclass(d.dtype, numeric.floating):
+    if issubclass(d.dtype.type, numeric.floating):
         m = umath.less_equal(abs(d-value), atol+rtol*abs(value))
         m = make_mask(m, flag=1)
         return array(d, mask = m, copy=copy,
@@ -1480,7 +1476,7 @@ def masked_object (data, value, copy=1):
 
 def arrayrange(start, stop=None, step=1, dtype=None):
     """Just like range() except it returns a array whose type can be specified
-    by the keyword argument dtypechar.
+    by the keyword argument dtype.
     """
     return array(numeric.arrayrange(start, stop, step, dtype))
 
@@ -1573,7 +1569,7 @@ def power (a, b, third=None):
     m = mask_or(ma, mb)
     fa = filled(a, 1)
     fb = filled(b, 1)
-    if fb.dtypechar in typecodes["Integer"]:
+    if fb.dtype.char in typecodes["Integer"]:
         return masked_array(umath.power(fa, fb), m)
     md = make_mask(umath.less_equal (fa, 0), flag=1)
     m = mask_or(m, md)
@@ -2143,8 +2139,6 @@ array.copy = _m(not_implemented)
 array.cumprod = _m(not_implemented)
 array.cumsum = _m(not_implemented)
 array.diagonal = _m(diagonal)
-array.dtypedescr = property(_m(not_implemented))
-array.dtypestr = property(_m(not_implemented))
 array.dump = _m(not_implemented)
 array.dumps = _m(not_implemented)
 array.fill = _m(not_implemented)

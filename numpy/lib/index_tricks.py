@@ -207,9 +207,9 @@ class concatenator(object):
             objs.append(newobj)
             if isinstance(newobj, _nx.ndarray) and not scalar:
                 if final_dtypedescr is None:
-                    final_dtypedescr = newobj.dtypedescr
-                elif newobj.dtypedescr > final_dtypedescr:
-                    final_dtypedescr = newobj.dtypedescr
+                    final_dtypedescr = newobj.dtype
+                elif newobj.dtype > final_dtypedescr:
+                    final_dtypedescr = newobj.dtype
         if final_dtypedescr is not None:
             for k in scalars:
                 objs[k] = objs[k].astype(final_dtypedescr)

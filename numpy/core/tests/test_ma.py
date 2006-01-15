@@ -39,7 +39,6 @@ class test_ma(ScipyTestCase):
         self.assertEqual(shape(xm), s)
         self.assertEqual(xm.shape, s)
         self.assertEqual(xm.dtype, x.dtype)
-        self.assertEqual(xm.dtypechar, x.dtypechar)
         self.assertEqual( xm.size , reduce(lambda x,y:x*y, s))
         self.assertEqual(count(xm) , len(m1) - reduce(lambda x,y:x+y, m1))
         self.failUnless(eq(xm, xf))

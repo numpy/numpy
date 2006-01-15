@@ -145,7 +145,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     try:
         format_function = a._format
     except AttributeError:
-        dtype = a.dtype
+        dtype = a.dtype.type
         if issubclass(dtype, _nt.bool):
             format = "%s"
             format_function = lambda x, f = format: format % x

@@ -222,9 +222,12 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     }
 
     /* Choose which subtype to return */
-    prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-    prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-    subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+    if (ap1->ob_type != ap2->ob_type) {
+	    prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
+	    prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
+	    subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+    }
+    else subtype = ap1->ob_type;
     
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
 				       typenum, NULL, NULL, 0, 0, 

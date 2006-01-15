@@ -29,7 +29,7 @@ def apply_along_axis(func1d,axis,arr,*args):
     res = func1d(arr[tuple(i.tolist())],*args)
     #  if res is a number, then we have a smaller output array
     if isscalar(res):
-        outarr = zeros(outshape,asarray(res).dtypechar)
+        outarr = zeros(outshape,asarray(res).dtype)
         outarr[ind] = res
         Ntot = product(outshape)
         k = 1
@@ -51,7 +51,7 @@ def apply_along_axis(func1d,axis,arr,*args):
         holdshape = outshape
         outshape = list(arr.shape)
         outshape[axis] = len(res)
-        outarr = zeros(outshape,asarray(res).dtypechar)
+        outarr = zeros(outshape,asarray(res).dtype)
         outarr[tuple(i.tolist())] = res
         k = 1
         while k < Ntot:

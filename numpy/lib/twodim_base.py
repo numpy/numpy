@@ -117,7 +117,7 @@ def vander(x, N=None):
     """
     x = asarray(x)
     if N is None: N=len(x)
-    X = ones( (len(x),N), x.dtypechar)
+    X = ones( (len(x),N), x.dtype)
     for i in range(N-1):
         X[:,i] = x**(N-i-1)
     return X

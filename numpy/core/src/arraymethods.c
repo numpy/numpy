@@ -884,8 +884,8 @@ array_reduce(PyArrayObject *self, PyObject *args)
 				       (PyObject *)self->ob_type,
 				       Py_BuildValue("(N)",
 						     PyInt_FromLong(0)),
-				       PyObject_GetAttrString((PyObject *)self,
-							      "dtypechar")));
+				       PyObject_GetAttrString((PyObject *)(self->descr),
+							      "char")));
 	
 	/* Now fill in object's state.  This is a tuple with 
 	   4 arguments

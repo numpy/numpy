@@ -55,7 +55,7 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
             index = [slice(None)]*len(s)
             index[axis] = slice(0,s[axis])
             s[axis] = n
-            z = zeros(s, a.dtypechar)
+            z = zeros(s, a.dtype.char)
             z[index] = a
             a = z
 

@@ -58,17 +58,17 @@ class matrix(N.ndarray):
             dtype2 = data.dtype
             if (dtype is None):
                 dtype = dtype2
-            if (dtype2 is dtype) and (not copy):
+            if (dtype2 == dtype) and (not copy):
                 return data
             return data.astype(dtype)
 
         if isinstance(data, N.ndarray):
             if dtype is None:
-                intype = data.dtypedescr
+                intype = data.dtype
             else:
-                intype = N.dtypedescr(dtype)
+                intype = N.dtype(dtype)
             new = data.view(matrix)
-            if intype != data.dtypedescr:
+            if intype != data.dtype:
                 return new.astype(intype)
             if copy: return new.copy()
             else: return new
@@ -94,7 +94,7 @@ class matrix(N.ndarray):
         if not (fortran or arr.flags.contiguous):
             arr = arr.copy()
 
-        ret = N.ndarray.__new__(subtype, shape, arr.dtypedescr,
+        ret = N.ndarray.__new__(subtype, shape, arr.dtype,
                                 buffer=arr,
                                 fortran=fortran)
         return ret
@@ -199,7 +199,7 @@ class matrix(N.ndarray):
         return self.transpose()
 
     def getH(self):
-        if issubclass(self.dtype, N.complexfloating):
+        if issubclass(self.dtype.type, N.complexfloating):
             return self.transpose().conjugate()
         else:
             return self.transpose()

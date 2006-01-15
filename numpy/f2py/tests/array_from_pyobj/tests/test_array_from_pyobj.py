@@ -177,8 +177,8 @@ class Array:
             self.pyarr = array(array(obj,
                                      dtype = typ.dtypechar).reshape(*dims),
                                fortran=not self.intent.is_intent('c'))
-            assert self.pyarr.dtypechar==typ.dtypechar,\
-                   `self.pyarr.dtypechar,typ.dtypechar`
+            assert self.pyarr.dtype.char==typ.dtypechar,\
+                   `self.pyarr.dtype.char,typ.dtypechar`
         assert self.pyarr.flags['OWNDATA']
         self.pyarr_attr = wrap.array_attrs(self.pyarr)
 

@@ -1,7 +1,7 @@
 __all__ = ['memmap']
 
 import mmap
-from numeric import uint8, ndarray, dtypedescr
+from numeric import uint8, ndarray, dtype
 from numerictypes import nbytes
 
 valid_filemodes = ["r", "c", "r+", "w+"]
@@ -35,7 +35,7 @@ class memmap(ndarray):
 
         fid.seek(0,2)
         flen = fid.tell()
-        descr = dtypedescr(dtype)
+        descr = dtype(dtype)
         _dbytes = descr.itemsize
 
         if shape is None:

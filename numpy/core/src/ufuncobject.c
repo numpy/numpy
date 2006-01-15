@@ -2515,7 +2515,6 @@ _find_array_wrap(PyObject *args)
 {
 	int nargs, i;
 	int np = 0;
-	int argmax = 0;
 	double priority[MAX_ARGS];
 	double maxpriority;
 	PyObject *with_wrap[MAX_ARGS];

@@ -261,7 +261,7 @@ def resize(a, new_shape):
         new_shape = (new_shape,)
     a = ravel(a)
     Na = len(a)
-    if not Na: return mu.zeros(new_shape, a.dtypechar)
+    if not Na: return mu.zeros(new_shape, a.dtype.char)
     total_size = um.multiply.reduce(new_shape)
     n_copies = int(total_size / Na)
     extra = total_size % Na
@@ -447,9 +447,9 @@ def round_(a, decimals=0):
     and imaginary parts separately if the array is complex.
     """
     a = asarray(a)
-    if not issubclass(a.dtype, _nx.inexact):
+    if not issubclass(a.dtype.type, _nx.inexact):
         return a
-    if issubclass(a.dtype, _nx.complexfloating):
+    if issubclass(a.dtype.type, _nx.complexfloating):
         return round_(a.real, decimals) + 1j*round_(a.imag, decimals)
     if decimals is not 0:
         decimals = asarray(decimals)

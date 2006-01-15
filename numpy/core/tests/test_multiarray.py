@@ -50,24 +50,24 @@ class test_attributes(ScipyTestCase):
         num = self.two.itemsize        
         assert_equal(self.two.size, 20)
         assert_equal(self.two.nbytes, 20*num)
-        assert_equal(self.two.itemsize, self.two.dtypedescr.itemsize)
+        assert_equal(self.two.itemsize, self.two.dtype.itemsize)
         assert_equal(self.two.base, arange(20))
 
     def check_dtypeattr(self):
-        assert_equal(self.one.dtype, int_)
-        assert_equal(self.three.dtype, float_)
-        assert_equal(self.one.dtypechar, 'l')
-        assert_equal(self.three.dtypechar, 'd')
-        self.failUnless(self.three.dtypestr[0] in '<>')
-        assert_equal(self.one.dtypestr[1], 'i')
-        assert_equal(self.three.dtypestr[1], 'f')
+        assert_equal(self.one.dtype, dtype(int_))
+        assert_equal(self.three.dtype, dtype(float_))
+        assert_equal(self.one.dtype.char, 'l')
+        assert_equal(self.three.dtype.char, 'd')
+        self.failUnless(self.three.dtype.str[0] in '<>')
+        assert_equal(self.one.dtype.str[1], 'i')
+        assert_equal(self.three.dtype.str[1], 'f')
 
 class test_dtypedescr(ScipyTestCase):
     def check_construction(self):
-        d1 = dtypedescr('i4')
-        assert_equal(d1, dtypedescr(int32))
-        d2 = dtypedescr('f8')
-        assert_equal(d2, dtypedescr(float64))
+        d1 = dtype('i4')
+        assert_equal(d1, dtype(int32))
+        d2 = dtype('f8')
+        assert_equal(d2, dtype(float64))
         
 class test_zero_rank(ScipyTestCase):
     def setUp(self):
@@ -77,14 +77,14 @@ class test_zero_rank(ScipyTestCase):
         a,b = self.d
         self.failUnlessEqual(a[...], 0)
         self.failUnlessEqual(b[...], 'x')
-        self.failUnless(type(a[...]) is a.dtype)
+        self.failUnless(type(a[...]) is a.dtype.type)
         self.failUnless(type(b[...]) is str)
         
     def check_empty_subscript(self):
         a,b = self.d
         self.failUnlessEqual(a[()], 0)
         self.failUnlessEqual(b[()], 'x')
-        self.failUnless(type(a[()]) is a.dtype)
+        self.failUnless(type(a[()]) is a.dtype.type)
 	self.failUnless(type(b[()]) is str)
 
     def check_invalid_subscript(self):

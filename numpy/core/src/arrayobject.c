@@ -3850,7 +3850,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds) 
 {
-	static char *kwlist[] = {"shape", "dtype", "buffer", 
+	static char *kwlist[] = {"shape", "dtype", "buffer",  /* XXX ? */
 				 "offset", "strides",
 				 "fortran", NULL};
 	PyArray_Descr *descr=NULL;
@@ -4216,16 +4216,6 @@ array_nbytes_get(PyArrayObject *self)
 }
 
 
-static PyObject *
-array_typechar_get(PyArrayObject *self)
-{
-	if PyArray_ISEXTENDED(self) 
-		return PyString_FromFormat("%c%d", (self->descr->type),
-					   self->descr->elsize);
-	else 
-		return PyString_FromStringAndSize(&(self->descr->type), 1);
-}
-
 static PyObject *arraydescr_protocol_typestr_get(PyArray_Descr *);
 
 static PyObject *
@@ -4381,15 +4371,6 @@ array_struct_get(PyArrayObject *self)
 	Py_INCREF(self);
         return PyCObject_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
 }
-
-static PyObject *
-array_type_get(PyArrayObject *self)
-{
-        Py_INCREF(self->descr->typeobj);
-        return (PyObject *)self->descr->typeobj;
-}
-
-
 
 static PyObject *
 array_base_get(PyArrayObject *self)
@@ -4642,19 +4623,7 @@ static PyGetSetDef array_getsetlist[] = {
 	 (getter)array_base_get,
 	 NULL,
 	 "base object"},
-        {"dtype", 
-	 (getter)array_type_get, 
-	 NULL,
-	 "get array type class"},
-	{"dtypechar",
-	 (getter)array_typechar_get,
-	 NULL,
-	 "get array type character code"},
-	{"dtypestr",
-	 (getter)array_typestr_get,
-	 NULL,
-	 "get array type string"},
-	{"dtypedescr", 
+	{"dtype",
 	 (getter)array_descr_get,
 	 (setter)array_descr_set,
 	 "get(set) data-type-descriptor for array"},
@@ -4731,7 +4700,7 @@ static char Arraytype__doc__[] =
 	"   2) If buffer is an object exporting the buffer interface, then\n"
 	"      all keywords are interpreted.\n"
 	"   The dtype parameter can be any object that can be interpreted \n"
-	"      as a numpy.dtypedescr object.\n\n"
+	"      as a numpy.dtype object.\n\n"
 	"   No __init__ method is needed because the array is fully \n"
 	"      initialized after the __new__ method.";
 	
@@ -8010,10 +7979,10 @@ arraydescr_dealloc(PyArray_Descr *self)
 
 /* we need to be careful about setting attributes because these
    objects are pointed to by arrays that depend on them for interpreting
-   data.  Currently no attributes of dtypedescr objects can be set. 
+   data.  Currently no attributes of dtype objects can be set. 
 */
 static PyMemberDef arraydescr_members[] = {
-	{"dtype", T_OBJECT, offsetof(PyArray_Descr, typeobj), RO, NULL},
+	{"type", T_OBJECT, offsetof(PyArray_Descr, typeobj), RO, NULL},
 	{"kind", T_CHAR, offsetof(PyArray_Descr, kind), RO, NULL},
 	{"char", T_CHAR, offsetof(PyArray_Descr, type), RO, NULL},
 	{"num", T_INT, offsetof(PyArray_Descr, type_num), RO, NULL},
@@ -8037,16 +8006,28 @@ arraydescr_subdescr_get(PyArray_Descr *self)
 static PyObject *
 arraydescr_protocol_typestr_get(PyArray_Descr *self)
 {
-	char basic_=self->kind;
-	char endian = self->byteorder;
-	
-	if (endian == '=') {
-		endian = '<';
-		if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
-	}
-	
-	return PyString_FromFormat("%c%c%d", endian, basic_,
-				   self->elsize);
+        char basic_=self->kind;
+        char endian = self->byteorder;
+
+        if (endian == '=') {
+                endian = '<';
+                if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
+        }
+
+        return PyString_FromFormat("%c%c%d", endian, basic_,
+                                   self->elsize);
+}
+
+static PyObject *
+arraydescr_protocol_typename_get(PyArray_Descr *self)
+{
+        int len;
+        PyTypeObject *typeobj = self->typeobj;
+
+	/* Both are equivalents, but second is more resistent to changes */
+/* 	len = strlen(typeobj->tp_name) - 8; */
+	len = strchr(typeobj->tp_name, (int)'_')-(typeobj->tp_name);
+	return PyString_FromStringAndSize(typeobj->tp_name, len);
 }
 
 static PyObject *
@@ -8114,10 +8095,14 @@ static PyGetSetDef arraydescr_getsets[] = {
 	 (getter)arraydescr_protocol_descr_get,
 	 NULL,
 	 "The array_protocol type descriptor."},
-	{"dtypestr",
+	{"str",
 	 (getter)arraydescr_protocol_typestr_get,
 	 NULL,
 	 "The array_protocol typestring."},
+	{"name",
+	 (getter)arraydescr_protocol_typename_get,
+	 NULL,
+	 "The array_protocol typename."},
 	{"isbuiltin",
 	 (getter)arraydescr_isbuiltin_get,
 	 NULL,
@@ -8208,7 +8193,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 	if (ret == NULL) return NULL;
 	mod = PyImport_ImportModule("numpy.core.multiarray");
 	if (mod == NULL) {Py_DECREF(ret); return NULL;}
-	obj = PyObject_GetAttrString(mod, "dtypedescr");
+	obj = PyObject_GetAttrString(mod, "dtype");
 	Py_DECREF(mod);
 	if (obj == NULL) {Py_DECREF(ret); return NULL;}
 	PyTuple_SET_ITEM(ret, 0, obj);
@@ -8394,11 +8379,11 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
 
 
 static char doc_arraydescr_newbyteorder[] = "self.newbyteorder(<endian>)"
-	" returns a copy of the dtypedescr object\n"
+	" returns a copy of the dtype object\n"
 	" with altered byteorders.  If <endian> is not given all byteorders\n"
 	" are swapped.  Otherwise endian can be '>', '<', or '=' to force\n"
 	" a byteorder.  Descriptors in all fields are also updated in the\n"
-	" new dtypedescr object.";
+	" new dtype object.";
 
 static PyObject *
 arraydescr_newbyteorder(PyArray_Descr *self, PyObject *args) 
@@ -8436,7 +8421,7 @@ arraydescr_str(PyArray_Descr *self)
 			PyErr_Clear();
 		}
 		else sub = PyObject_Str(lst);
-		Py_XDECREF(lst);		
+		Py_XDECREF(lst);
 		if (self->type_num != PyArray_VOID) {
 			PyObject *p;
 			PyObject *t=PyString_FromString("'");
@@ -8475,7 +8460,7 @@ static PyObject *
 arraydescr_repr(PyArray_Descr *self)
 {
 	PyObject *sub, *s;
-	s = PyString_FromString("dtypedescr(");
+	s = PyString_FromString("dtype(");
         sub = arraydescr_str(self);
 	PyString_ConcatAndDel(&s, sub);
 	sub = PyString_FromString(")");
@@ -8487,8 +8472,8 @@ static int
 arraydescr_compare(PyArray_Descr *self, PyObject *other)
 {
  	if (!PyArray_DescrCheck(other)) {
-		PyErr_SetString(PyExc_TypeError, 
-				"not a dtypedescr object.");
+		PyErr_SetString(PyExc_TypeError,
+				"not a dtype object.");
 		return -1;
 	}
 	if (PyArray_EquivTypes(self, (PyArray_Descr *)other)) return 0;
@@ -8499,7 +8484,7 @@ arraydescr_compare(PyArray_Descr *self, PyObject *other)
 static PyTypeObject PyArrayDescr_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
-        "numpy.dtypedescr",	 	         /* tp_name */
+        "numpy.dtype",		 	         /* tp_name */
         sizeof(PyArray_Descr),                   /* tp_basicsize */
         0,					 /* tp_itemsize */
         /* methods */

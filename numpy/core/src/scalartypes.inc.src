@@ -718,24 +718,6 @@ gentype_size_get(PyObject *self)
 	return PyInt_FromLong(1);
 }
 
-
-static PyObject *
-gentype_typechar_get(PyObject *self)
-{
-	PyArray_Descr *descr;
-	char type;
-	int elsize;
-
-	descr = PyArray_DescrFromScalar(self);
-	type = descr->type;
-	elsize = descr->elsize;
-	Py_DECREF(descr);
-	if (PyArray_IsScalar(self, Flexible)) 
-		return PyString_FromFormat("%c%d", (int)type, elsize);
-	else 
-		return PyString_FromStringAndSize(&type, 1);
-}
-
 static void
 gentype_struct_free(void *ptr, void *arr)
 {
@@ -769,7 +751,7 @@ gentype_typestr_get(PyObject *self)
 	PyObject *ret;
 
 	arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-	ret = PyObject_GetAttrString((PyObject *)arr, "dtypestr");
+	ret = PyObject_GetAttrString((PyObject *)arr->descr, "str");
 	Py_DECREF(arr);
 	return ret;
 }
@@ -786,13 +768,6 @@ gentype_descr_get(PyObject *self)
 	return ret;
 }
 
-
-static PyObject *
-gentype_type_get(PyObject *self)
-{
-        Py_INCREF(self->ob_type);
-	return (PyObject *)self->ob_type;
-}
 
 static PyObject *
 gentype_typedescr_get(PyObject *self)
@@ -937,19 +912,7 @@ static PyGetSetDef gentype_getsets[] = {
 	 (getter)gentype_base_get,
 	 (setter)0,
 	 "base object"},
-        {"dtype", 
-	 (getter)gentype_type_get, 
-	 (setter)0, 
-	 "get gentype type class"},
-	{"dtypechar",
-	 (getter)gentype_typechar_get,
-	 (setter)0,
-	 "get gentype type character code"},
-	{"dtypestr",
-	 (getter)gentype_typestr_get,
-	 NULL,
-	 "get array type string"},
-	{"dtypedescr",
+	{"dtype",
 	 (getter)gentype_typedescr_get,
 	 NULL,
 	 "get array data-descriptor"},
@@ -1143,7 +1106,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 	PyObject *value, *src;
 	int mysize;
 	char *dptr;
-	static char *kwlist[] = {"value", "dtype", "offset", 0};
+	static char *kwlist[] = {"value", "dtype", "offset", 0};/* XXX ? */
 	
 	if ((self->flags & WRITEABLE) != WRITEABLE) {
 		PyErr_SetString(PyExc_RuntimeError,
@@ -1200,7 +1163,7 @@ gentype_reduce(PyObject *self, PyObject *args)
 	Py_DECREF(mod);
 	if (obj == NULL) return NULL;
 	PyTuple_SET_ITEM(ret, 0, obj);
-	obj = PyObject_GetAttrString((PyObject *)self, "dtypedescr");
+	obj = PyObject_GetAttrString((PyObject *)self, "dtype");
 	if PyArray_IsScalar(self, Object) {
 		mod = ((PyObjectScalarObject *)self)->obval;
 		PyTuple_SET_ITEM(ret, 1,
@@ -1375,10 +1338,10 @@ static PyGetSetDef voidtype_getsets[] = {
 	 (getter)voidtype_flags_get, 
 	 (setter)0, 
 	 "integer value of flags"},
-	{"dtypedescr",
+	{"dtype",
 	 (getter)voidtype_dtypedescr_get,
 	 (setter)0,
-	 "dtypedescr object"},
+	 "dtype object"},
 	{NULL, NULL}
 };
 

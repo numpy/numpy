@@ -33,7 +33,7 @@ def _commonType(*arrays):
 #   force higher precision in lite version
     precision = 1
     for a in arrays:
-        t = a.dtypechar
+        t = a.dtype.char
         kind = max(kind, _array_kind[t])
         precision = max(precision, _array_precision[t])
     return _array_type[kind][precision]
@@ -55,7 +55,7 @@ _fastCT = fastCopyAndTranspose
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
     for a in arrays:
-        if a.dtypechar == type:
+        if a.dtype.char == type:
             cast_arrays = cast_arrays + (_fastCT(a),)
         else:
             cast_arrays = cast_arrays + (_fastCT(a.astype(type)),)
@@ -209,16 +209,16 @@ def Heigenvalues(a, UPLO='L'):
 
 def _convertarray(a):
     if issubclass(a.dtype, complexfloating):
-        if a.dtypechar == 'D':
+        if a.dtype.char == 'D':
             a = _fastCT(a)
         else:
             a = _fastCT(a.astype('D'))
     else:
-        if a.dtypechar == 'd':
+        if a.dtype.char == 'd':
             a = _fastCT(a)
         else:
             a = _fastCT(a.astype('d'))
-    return a, a.dtypechar
+    return a, a.dtype.char
 
 # Eigenvectors
 
@@ -370,7 +370,7 @@ def svd(a, full_matrices = 1):
 
 def generalized_inverse(a, rcond = 1.e-10):
     a = array(a, copy=0)
-    if a.dtypechar in typecodes['Complex']:
+    if a.dtype.char in typecodes['Complex']:
         a = conjugate(a)
     u, s, vt = svd(a, 0)
     m = u.shape[0]

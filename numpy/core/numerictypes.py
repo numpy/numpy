@@ -149,7 +149,7 @@ def _add_types():
         name = a.lower()
         if isinstance(typeinfo[a], type(())):
             typeobj = typeinfo[a][-1]
-                        
+
             # define C-name and insert typenum and typechar references also
             allTypes[name] = typeobj
             typeDict[name] = typeobj
@@ -313,7 +313,7 @@ def obj2dtype(rep, default=None):
     if isinstance(rep, type):
         return _python_type(rep)
     if isinstance(rep, ndarray):
-        return rep.dtype
+        return rep.dtype.type
     res = typeDict.get(rep, default)
     return res
 
@@ -371,7 +371,7 @@ for key in _dtype2char_dict.keys():
     if issubclass(key, allTypes['flexible']):
         _typestr[key] = _dtype2char_dict[key]
     else:
-        _typestr[key] = empty((1,),key).dtypestr[1:]
+        _typestr[key] = empty((1,),key).dtype.str[1:]
 
 # Now add the types we've determined to this module
 for key in allTypes:

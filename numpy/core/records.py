@@ -49,9 +49,9 @@ class format_parser:
 
     def _parseFormats(self, formats, aligned=0):
         """ Parse the field formats """
-        
-        dtypedescr = sb.dtypedescr(formats, aligned)
-        fields = dtypedescr.fields
+
+        dtype = sb.dtype(formats, aligned)
+        fields = dtype.fields
         keys = fields[-1]
         self._f_formats = [fields[key][0] for key in keys]
         self._offsets = [fields[key][1] for key in keys]
@@ -94,10 +94,10 @@ class format_parser:
             self._titles += [None]*(self._nfields-len(titles))
             
     def _createdescr(self):
-        self._descr = sb.dtypedescr({'names':self._names,
-                                     'formats':self._f_formats,
-                                     'offsets':self._offsets,
-                                     'titles':self._titles})
+        self._descr = sb.dtype({'names':self._names,
+                                'formats':self._f_formats,
+                                'offsets':self._offsets,
+                                'titles':self._titles})
         
 class record(nt.void):
     def __repr__(self):
@@ -107,18 +107,18 @@ class record(nt.void):
         return str(self.item())
 
     def __getattribute__(self, attr):
-        if attr in ['setfield', 'getfield', 'dtypedescr']:
+        if attr in ['setfield', 'getfield', 'dtype']:
             return nt.void.__getattribute__(self, attr)
-        fielddict = nt.void.__getattribute__(self, 'dtypedescr').fields
+        fielddict = nt.void.__getattribute__(self, 'dtype').fields
         res = fielddict.get(attr,None)
         if res:
             return self.getfield(*res[:2])
         return nt.void.__getattribute__(self, attr)
 
     def __setattr__(self, attr, val):
-        if attr in ['setfield', 'getfield', 'dtypedescr']:
+        if attr in ['setfield', 'getfield', 'dtype']:
             raise AttributeError, "Cannot set '%s' attribute" % attr;
-        fielddict = nt.void.__getattribute__(self,'dtypedescr').fields
+        fielddict = nt.void.__getattribute__(self,'dtype').fields
         res = fielddict.get(attr,None)
         if res:
             return self.setfield(val,*res[:2])
@@ -126,10 +126,10 @@ class record(nt.void):
         return nt.void.__setattr__(self,attr,val)
     
     def __getitem__(self, obj):
-        return self.getfield(*(self.dtypedescr.fields[obj][:2]))
+        return self.getfield(*(self.dtype.fields[obj][:2]))
        
     def __setitem__(self, obj, val):
-        return self.setfield(val, *(self.dtypedescr.fields[obj][:2]))
+        return self.setfield(val, *(self.dtype.fields[obj][:2]))
         
 
 # The recarray is almost identical to a standard array (which supports
@@ -145,7 +145,7 @@ class recarray(sb.ndarray):
                 buf=None, offset=0, strides=None, byteorder=None,
                 aligned=0):
 
-        if isinstance(formats, sb.dtypedescr):
+        if isinstance(formats, sb.dtype):
             descr = formats
         else:
             parsed = format_parser(formats, names, titles, aligned)
@@ -164,7 +164,7 @@ class recarray(sb.ndarray):
         return self
 
     def __getattribute__(self, attr):
-        fielddict = sb.ndarray.__getattribute__(self,'dtypedescr').fields
+        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
         try:
             res = fielddict[attr][:2]
         except:
@@ -173,7 +173,7 @@ class recarray(sb.ndarray):
         obj = self.getfield(*res)
         # if it has fields return a recarray, otherwise return
         # normal array
-        if obj.dtypedescr.fields:
+        if obj.dtype.fields:
             return obj
         if obj.dtype in [sb.string, sb.unicode_]:
             return obj.view(chararray)
@@ -181,7 +181,7 @@ class recarray(sb.ndarray):
             
     
     def __setattr__(self, attr, val):
-        fielddict = sb.ndarray.__getattribute__(self,'dtypedescr').fields
+        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
         try:
             res = fielddict[attr][:2]
         except:
@@ -218,8 +218,8 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
         for obj in arrayList:
             if not isinstance(obj, sb.ndarray):
                 raise ValueError, "item in the array list must be an ndarray."
-            formats += _typestr[obj.dtype]
-            if issubclass(obj.dtype, nt.flexible):
+            formats += _typestr[obj.dtype.type]
+            if issubclass(obj.dtype.type, nt.flexible):
                 formats += `obj.itemsize`
             formats += ','
         formats=formats[:-1]
@@ -394,7 +394,7 @@ def array(obj, formats=None, names=None, titles=None, shape=None,
     elif isinstance(obj, recarray):
         new = obj.copy()
         parsed = format_parser(formats, names, titles, aligned)
-        new.dtypedescr = parsed._descr
+        new.dtype = parsed._descr
         return new
     elif isinstance(obj, file):
         return fromfile(obj, formats=formats, names=names, titles=titles,
@@ -404,7 +404,3 @@ def array(obj, formats=None, names=None, titles=None, shape=None,
         return obj.view(recarray)
     else:
         raise ValueError("Unknown input type")
-    
-    
-                
-        

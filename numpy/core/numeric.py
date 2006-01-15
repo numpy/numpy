@@ -1,5 +1,5 @@
 __all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
-           'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtypedescr',
+           'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtype',
            'fromstring', 'fromfile', 'frombuffer','newbuffer','getbuffer',
            'where', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
            'register_dtype', 'set_numeric_ops', 'can_cast',
@@ -45,7 +45,7 @@ ndarray = multiarray.ndarray
 bigndarray = multiarray.bigndarray
 flatiter = multiarray.flatiter
 broadcast = multiarray.broadcast
-dtypedescr=multiarray.dtypedescr
+dtype=multiarray.dtype
 ufunc = type(sin)
 
 arange = multiarray.arange
@@ -223,7 +223,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
                            ', ', "array(")
     else: # show zero-length shape unless it is (0,)
         lst = "[], shape=%s" % (repr(arr.shape),)
-    typeless = arr.dtype in _typelessdata
+    typeless = arr.dtype.type in _typelessdata
 
     if arr.__class__ is not ndarray:
         cName= arr.__class__.__name__
@@ -232,10 +232,10 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     if typeless and arr.size:
         return cName + "(%s)" % lst
     else:
-        typename=arr.dtype.__name__[:-8]
-        if issubclass(arr.dtype, flexible):
+        typename=arr.dtype.type.__name__[:-8]
+        if issubclass(arr.dtype.type, flexible):
             if typename not in ['unicode','string','void']:
-                typename = arr.dtype.__name__
+                typename = arr.dtype.type.__name__
             typename = "(%s,%d)" % (typename, arr.itemsize)
         return cName + "(%s, dtype=%s)" % (lst, typename)
 

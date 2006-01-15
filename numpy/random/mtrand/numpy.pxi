@@ -29,7 +29,7 @@ cdef extern from "numpy/arrayobject.h":
 
     ctypedef int intp 
 
-    ctypedef extern class numpy.dtypedescr [object PyArray_Descr]:
+    ctypedef extern class numpy.dtype [object PyArray_Descr]:
         cdef int type_num, elsize
         cdef char type
 
@@ -39,7 +39,7 @@ cdef extern from "numpy/arrayobject.h":
         cdef intp *dimensions
         cdef intp *strides
         cdef object base
-        cdef dtypedescr descr
+        cdef dtype descr
         cdef int flags
 
     ndarray PyArray_SimpleNew(int ndims, intp* dims, int item_type)
