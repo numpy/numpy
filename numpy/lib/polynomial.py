@@ -65,7 +65,7 @@ def poly(seq_of_zeros):
     for k in range(len(seq_of_zeros)):
         a = NX.convolve(a, [1, -seq_of_zeros[k]], mode='full')
 
-    if issubclass(a.dtype, NX.complexfloating):
+    if issubclass(a.dtype.type, NX.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
         roots = NX.asarray(seq_of_zeros, complex)
         pos_roots = sort_complex(NX.compress(roots.imag > 0, roots))
@@ -99,7 +99,7 @@ def roots(p):
     p = p[int(non_zero[0]):int(non_zero[-1])+1]
 
     # casting: if incoming array isn't floating point, make it floating point.
-    if not issubclass(p.dtype, (NX.floating, NX.complexfloating)):
+    if not issubclass(p.dtype.type, (NX.floating, NX.complexfloating)):
         p = p.astype(float)
 
     N = len(p)
