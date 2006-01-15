@@ -99,5 +99,14 @@ class test_special_methods(ScipyTestCase):
         self.failUnless(type(exp(b) is B))
         self.failUnless(type(exp(c) is C))
 
+    def test_failing_wrap(self):
+        class A(object):
+            def __array__(self):
+                return zeros(1)
+            def __array_wrap__(self, arr, context):
+                raise RuntimeError
+        a = A()
+        self.failUnlessRaises(RuntimeError, maximum, a, a)
+
 if __name__ == "__main__":
     ScipyTest().run()

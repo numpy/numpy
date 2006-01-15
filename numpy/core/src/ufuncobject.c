@@ -2561,7 +2561,7 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 	PyArrayObject *mps[MAX_ARGS];
 	PyObject *retobj[MAX_ARGS];
 	PyObject *res;
-	PyObject *obj;
+	PyObject *wrap;
         int errval;
         
 	/* Initialize all array objects to NULL to make cleanup easier 
@@ -2587,7 +2587,7 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 	        use __array_wrap__ of input object with largest 
 		__array_priority__ (default = 0.0)
 	 */
-	obj = _find_array_wrap(args);
+	wrap = _find_array_wrap(args);
 	
 	/* wrap outputs */
 	for (i=0; i<self->nout; i++) {
@@ -2602,15 +2602,15 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 					      back into old */
 			mps[j] = (PyArrayObject *)old;
 		}
-		if (obj != NULL) {
-			res = PyObject_CallFunction(obj, "O(OOi)",
+		if (wrap != NULL) {
+			res = PyObject_CallFunction(wrap, "O(OOi)",
 						    mps[j], self, args, i);
-			if (res == NULL) {
+			if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
 				PyErr_Clear();
-				res = PyObject_CallFunctionObjArgs(obj, mps[j], NULL);
+				res = PyObject_CallFunctionObjArgs(wrap, mps[j], NULL);
 			}
-			Py_DECREF(obj);
-			if (res == NULL) PyErr_Clear();
+			Py_DECREF(wrap);
+			if (res == NULL) goto fail;
 			else if (res == Py_None) Py_DECREF(res);
 			else {
 				Py_DECREF(mps[j]);
@@ -2629,8 +2629,10 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 			PyTuple_SET_ITEM(ret, i, retobj[i]);
 		}
 		return (PyObject *)ret;
-	}	
-
+	}
+ fail:
+	for(i=self->nin; i<self->nargs; i++) Py_XDECREF(mps[i]);
+	return NULL;
 }
 
 static PyObject *
