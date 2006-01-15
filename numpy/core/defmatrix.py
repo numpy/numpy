@@ -127,17 +127,52 @@ class matrix(N.ndarray):
             return out.A[0,0]
         return out
 
+    def _get_truend(self):
+        shp = self.shape
+        truend = 0
+        for val in shp:
+            if (val > 1): truend += 1
+        return truend
+    
     def __mul__(self, other):
-        if isinstance(other, N.ndarray) and other.ndim == 0:
-            return N.multiply(self, other)
+        if (self.ndim != self._get_truend()):
+            myself = self.A.squeeze()
         else:
-            return N.dot(self, other)
+            myself = self
+
+        myother = other
+        if isinstance(other, matrix):
+            if (other.ndim != other._get_truend()):
+                myother = other.A.squeeze()
+                
+        if isinstance(myother, N.ndarray) and myother.size == 1:
+            res = N.multiply(myself, myother.item())
+        else:
+            res = N.dot(myself, myother)
+
+        if not isinstance(res, matrix):
+            res = res.view(matrix)
+        return res
 
     def __rmul__(self, other):
-        if isinstance(other, N.ndarray) and other.ndim == 0:
-            return N.multiply(other, self)
+        if (self.ndim != self._get_truend()):
+            myself = self.A.squeeze()
         else:
-            return N.dot(other, self)
+            myself = self
+
+        myother = other
+        if isinstance(other, matrix):
+            if (other.ndim != other._get_truend()):
+                myother = other.A.squeeze()
+                
+        if isinstance(myother, N.ndarray) and myother.size == 1:
+            res = N.multiply(myother.item(), myself)
+        else:
+            res = N.dot(myother, myself)
+
+        if not isinstance(res, matrix):
+            res = res.view(matrix)
+        return res
 
     def __imul__(self, other):
         self[:] = self * other

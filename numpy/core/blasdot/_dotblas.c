@@ -126,8 +126,34 @@ dotblas_restoredot(PyObject *dummy, PyObject *args)
     Py_INCREF(Py_None);
     return Py_None;
 }
-      
 
+static PyObject *
+_squeeze_if_needed(PyObject *input)
+{
+	PyObject *res;
+	int squeezeit=0;
+
+	if (PyArray_Check(input)) {
+		int truend=0;
+		int i;
+		int nd;
+
+		nd = PyArray_NDIM(input);
+		for (i=0; i<nd; i++) {
+			if (PyArray_DIM(input, i) > 1) truend++;
+		}
+		squeezeit = (nd != truend);
+	}
+	if (squeezeit) {
+		res = PyArray_Squeeze((PyArrayObject *)input);
+	}
+	else {
+		Py_INCREF(input);
+		res = input;
+	}
+	return res;
+}
+    
 static char doc_matrixproduct[] = "matrixproduct(a,b)\nReturns the dot product of a and b for arrays of floating point types.\nLike the generic numpy equivalent the product sum is over\nthe last dimension of a and the second-to-last dimension of b.\nNB: The first argument is not conjugated.";
 
 static PyObject *
@@ -166,9 +192,13 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 
     ret = NULL;
     dtype = PyArray_DescrFromType(typenum);
+    op1 = _squeeze_if_needed(op1);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, CARRAY_FLAGS);
+    Py_DECREF(op1);
     if (ap1 == NULL) return NULL;
+    op2 = _squeeze_if_needed(op2);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, CARRAY_FLAGS);
+    Py_DECREF(op2);
     if (ap2 == NULL) goto fail;
 
     if ((ap1->nd > 2) || (ap2->nd > 2)) {  
@@ -418,11 +448,14 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
     }
 
     ret = NULL;
+    op1 = _squeeze_if_needed(op1);
     ap1 = (PyArrayObject *)PyArray_ContiguousFromObject(op1, typenum, 0, 0);
+    Py_DECREF(op1);
     if (ap1 == NULL) return NULL;
+    op2 = _squeeze_if_needed(op2);
     ap2 = (PyArrayObject *)PyArray_ContiguousFromObject(op2, typenum, 0, 0);
+    Py_DECREF(op2);
     if (ap2 == NULL) goto fail;
-
 
     if ((ap1->nd > 2) || (ap2->nd > 2)) {  
 	/* This function doesn't handle dimensions greater than 2 -- other
