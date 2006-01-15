@@ -127,7 +127,7 @@ class matrix(N.ndarray):
             return out.A[0,0]
         return out
 
-    def _get_truend(self):
+    def _get_truendim(self):
         shp = self.shape
         truend = 0
         for val in shp:
@@ -135,14 +135,14 @@ class matrix(N.ndarray):
         return truend
     
     def __mul__(self, other):
-        if (self.ndim != self._get_truend()):
+        if (self.ndim != self._get_truendim()):
             myself = self.A.squeeze()
         else:
             myself = self
 
         myother = other
         if isinstance(other, matrix):
-            if (other.ndim != other._get_truend()):
+            if (other.ndim != other._get_truendim()):
                 myother = other.A.squeeze()
                 
         if isinstance(myother, N.ndarray) and myother.size == 1:
@@ -155,14 +155,14 @@ class matrix(N.ndarray):
         return res
 
     def __rmul__(self, other):
-        if (self.ndim != self._get_truend()):
+        if (self.ndim != self._get_truendim()):
             myself = self.A.squeeze()
         else:
             myself = self
 
         myother = other
         if isinstance(other, matrix):
-            if (other.ndim != other._get_truend()):
+            if (other.ndim != other._get_truendim()):
                 myother = other.A.squeeze()
                 
         if isinstance(myother, N.ndarray) and myother.size == 1:
