@@ -2517,7 +2517,7 @@ _find_array_wrap(PyObject *args)
 	int np = 0;
 	int argmax = 0;
 	double priority[MAX_ARGS];
-	double maxpriority = PyArray_SUBTYPE_PRIORITY;
+	double maxpriority;
 	PyObject *with_wrap[MAX_ARGS];
 	PyObject *attr, *wrap;
 	PyObject *obj;
@@ -2553,6 +2553,7 @@ _find_array_wrap(PyObject *args)
 
 	if (np == 0) return NULL;
 	wrap = with_wrap[0];
+	maxpriority = priority[0];
 	for (i=1; i<np; i++) {
 		if (priority[i] > maxpriority) {
 			maxpriority = priority[i];

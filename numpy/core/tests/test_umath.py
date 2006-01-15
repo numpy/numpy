@@ -61,5 +61,30 @@ class test_special_methods(ScipyTestCase):
         x = minimum(a, a)
         assert_equal(x.arr, zeros(1))
 
+    def test_priority(self):
+        class A(object):
+            def __array__(self):
+                return zeros(1)
+            def __array_wrap__(self, arr, context):
+                r = type(self)()
+                r.arr = arr
+                r.context = context
+                return r
+        class B(A):
+            __array_priority__ = 20
+        class C(A):
+            __array_priority__ = 40
+        a = A()
+        b = B()
+        c = C()
+        f = minimum
+        self.failUnless(isinstance(f(a,a), A))
+        self.failUnless(isinstance(f(a,b), B))
+        self.failUnless(isinstance(f(b,a), B))
+        self.failUnless(isinstance(f(b,b), B))
+        self.failUnless(isinstance(f(b,c), C))
+        self.failUnless(isinstance(f(c,b), C))
+        self.failUnless(isinstance(f(c,c), C))
+
 if __name__ == "__main__":
     ScipyTest().run()
