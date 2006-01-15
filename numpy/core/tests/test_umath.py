@@ -1,9 +1,9 @@
 
 from numpy.testing import *
 set_package_path()
-from numpy.core.umath import minimum, maximum
+from numpy.core.umath import minimum, maximum, exp
 import numpy.core.umath as ncu
-from numpy import zeros
+from numpy import zeros, ndarray
 restore_path()
 
 class test_log1p(ScipyTestCase):
@@ -71,20 +71,33 @@ class test_special_methods(ScipyTestCase):
                 r.context = context
                 return r
         class B(A):
-            __array_priority__ = 20
+            __array_priority__ = 20.
         class C(A):
-            __array_priority__ = 40
+            __array_priority__ = 40.
+        x = zeros(1)
         a = A()
         b = B()
         c = C()
         f = minimum
-        self.failUnless(isinstance(f(a,a), A))
-        self.failUnless(isinstance(f(a,b), B))
-        self.failUnless(isinstance(f(b,a), B))
-        self.failUnless(isinstance(f(b,b), B))
-        self.failUnless(isinstance(f(b,c), C))
-        self.failUnless(isinstance(f(c,b), C))
-        self.failUnless(isinstance(f(c,c), C))
+        self.failUnless(type(f(x,x)) is ndarray)
+        self.failUnless(type(f(x,a)) is A)
+        self.failUnless(type(f(x,b)) is B)
+        self.failUnless(type(f(x,c)) is C)
+        self.failUnless(type(f(a,x)) is A)
+        self.failUnless(type(f(b,x)) is B)
+        self.failUnless(type(f(c,x)) is C)
+
+        self.failUnless(type(f(a,a)) is A)
+        self.failUnless(type(f(a,b)) is B)
+        self.failUnless(type(f(b,a)) is B)
+        self.failUnless(type(f(b,b)) is B)
+        self.failUnless(type(f(b,c)) is C)
+        self.failUnless(type(f(c,b)) is C)
+        self.failUnless(type(f(c,c)) is C)
+
+        self.failUnless(type(exp(a) is A))
+        self.failUnless(type(exp(b) is B))
+        self.failUnless(type(exp(c) is C))
 
 if __name__ == "__main__":
     ScipyTest().run()

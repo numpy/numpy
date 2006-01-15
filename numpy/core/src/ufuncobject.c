@@ -2509,60 +2509,65 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 
 
 /* ---------- */
+static double
+_get_array_priority(PyObject* obj)
+{
+	double priority = PyArray_SUBTYPE_PRIORITY;
+	PyObject* attr;
+	attr = PyObject_GetAttrString(obj, "__array_priority__");
+	if (attr) {
+		if (PyFloat_CheckExact(attr)) {
+			priority = PyFloat_AS_DOUBLE(attr);
+		}
+		Py_DECREF(attr);
+	}
+	return  priority;
+}
 
 static PyObject *
 _find_array_wrap(PyObject *args)
 {
 	int nargs, i;
 	int np = 0;
-	double priority[MAX_ARGS];
-	double maxpriority;
-	PyObject *with_wrap[MAX_ARGS];
-	PyObject *attr, *wrap;
-	PyObject *obj;
+	double priority, maxpriority;
+	PyObject *with_wrap[MAX_ARGS], *wraps[MAX_ARGS];
+	PyObject *obj, *wrap = NULL;
 
-	nargs = PyTuple_Size(args);
+	nargs = PyTuple_GET_SIZE(args);
 	for (i=0; i<nargs; i++) {
 		obj = PyTuple_GET_ITEM(args, i);
 		if (PyArray_CheckExact(obj) || PyBigArray_CheckExact(obj) || \
 		    PyArray_IsAnyScalar(obj))
 			continue;
 		wrap = PyObject_GetAttrString(obj, "__array_wrap__");
-		if (wrap != NULL) {
+		if (wrap) {
 			if (PyCallable_Check(wrap)) {
-				attr = PyObject_GetAttrString(obj,
-						     "__array_priority__");
-				if (attr == NULL)
-					priority[np] = \
-						PyArray_SUBTYPE_PRIORITY;
-				else {
-					priority[np] = PyFloat_AsDouble(attr);
-					if (PyErr_Occurred()) {
-						PyErr_Clear();
-						priority[np] = PyArray_SUBTYPE_PRIORITY;
-					}
-                                        Py_DECREF(attr);
-				}
-				with_wrap[np] = wrap;
-				np += 1;
+				with_wrap[np] = obj;
+				wraps[np] = wrap;
+				++np;
+			}
+			else {
+				wrap = NULL;
 			}
 		}
-                PyErr_Clear();
-	}
-
-	if (np == 0) return NULL;
-	wrap = with_wrap[0];
-	maxpriority = priority[0];
-	for (i=1; i<np; i++) {
-		if (priority[i] > maxpriority) {
-			maxpriority = priority[i];
-			Py_DECREF(wrap);	
-			wrap = with_wrap[i];
-		} else {
-			Py_DECREF(with_wrap[i]);
+		else {
+			PyErr_Clear();
 		}
 	}
-	
+	if (np < 2)
+		return wrap;
+	wrap = wraps[0];
+	maxpriority = _get_array_priority(with_wrap[0]);
+	for (i = 1; i < np; ++i) {
+		priority = _get_array_priority(with_wrap[i]);
+		if (priority > maxpriority) {
+			maxpriority = priority;
+			Py_DECREF(wrap);
+			wrap = wraps[i];
+		} else {
+			Py_DECREF(wraps[i]);
+		}
+	}
 	return wrap;
 }
 
