@@ -15,7 +15,7 @@ __all__ = ['fft','ifft','fftn','ifftn','fft2','ifft2',
 have_scipy = 0
 try:
     import scipy
-    if scipy.__version__ >= '0.4.4':
+    if getattr(scipy, '__version__', None) >= '0.4.4':
         have_scipy = 1
 except ImportError:
     pass
