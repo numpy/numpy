@@ -55,9 +55,9 @@ class nd_grid(object):
         number of points to create between the start and stop values, where
         the stop value IS INCLUSIVE.
 
-        If instantiated with an argument of 1, the mesh-grid is open or not
-        fleshed out so that only one-dimension of each returned argument is
-        greater than 1
+        If instantiated with an argument of sparse=True, the mesh-grid is
+        open (or not fleshed out) so that only one-dimension of each returned
+        argument is greater than 1
 
         Example:
 
@@ -76,7 +76,7 @@ class nd_grid(object):
            >>> mgrid[-1:1:5j]
            array([-1. , -0.5,  0. ,  0.5,  1. ])
 
-           >>> ogrid = nd_grid(1)
+           >>> ogrid = nd_grid(sparse=True)
            >>> ogrid[0:5,0:5]
            [array([[0],[1],[2],[3],[4]]), array([[0, 1, 2, 3, 4]])] 
     """
@@ -140,11 +140,11 @@ class nd_grid(object):
     def __len__(self):
         return 0
 
-mgrid = nd_grid()
-ogrid = nd_grid(1)
+mgrid = nd_grid(sparse=False)
+ogrid = nd_grid(sparse=True)
 
 class concatenator(object):
-    """ Translates slice objects to concatenation along an axis.
+    """Translates slice objects to concatenation along an axis.
     """
     def _retval(self, res):
         if self.matrix:
@@ -224,14 +224,39 @@ class concatenator(object):
         return 0
 
 r_=concatenator(0)
+r_.__doc__ = """Translates slice objects to concatenation along the first axis.
+
+    For example:
+    >>> r_[array([1,2,3]), 0, 0, array([4,5,6])]
+    array([1, 2, 3, 0, 0, 4, 5, 6])
+"""
 c_=concatenator(-1)
+c_.__doc__ = """Translates slice objects to concatenation along the second axis.
+
+    For example:
+    >>> c_[array([[1],[2],[3]]), array([[4],[5],[6]])]
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
+"""
 #row = concatenator(0,1)
 #col = concatenator(-1,1)
 
 
-# A simple nd index iterator over an array:
 
 class ndenumerate(object):
+    """
+    A simple nd index iterator over an array.
+
+    Example:
+    >>> a = array([[1,2],[3,4]])
+    >>> for index, x in ndenumerate(a):
+    ...     print index, x
+    (0, 0) 1
+    (0, 1) 2
+    (1, 0) 3
+    (1, 1) 4
+    """
     def __init__(self, arr):
         arr = asarray(arr)
         self.iter = enumerate(arr.flat)
@@ -258,8 +283,6 @@ class ndenumerate(object):
 
 
 
-# A nicer way to build up index tuples for arrays.
-#
 # You can do all this with slice() plus a few special objects,
 # but there's a lot to remember. This version is simpler because
 # it uses the standard array indexing syntax.
@@ -273,14 +296,17 @@ class ndenumerate(object):
 # This module provides a convenient method for constructing
 # array indices algorithmically. It provides one importable object,
 # 'index_expression'.
-#
-# For any index combination, including slicing and axis insertion,
-# 'a[indices]' is the same as 'a[index_expression[indices]]' for any
-# array 'a'. However, 'index_expression[indices]' can be used anywhere
-# in Python code and returns a tuple of slice objects that can be
-# used in the construction of complex index expressions.
 
 class _index_expression_class(object):
+    """
+    A nicer way to build up index tuples for arrays.
+
+    For any index combination, including slicing and axis insertion,
+    'a[indices]' is the same as 'a[index_exp[indices]]' for any
+    array 'a'. However, 'index_exp[indices]' can be used anywhere
+    in Python code and returns a tuple of slice objects that can be
+    used in the construction of complex index expressions.
+    """
     maxint = sys.maxint
 
     def __getitem__(self, item):
