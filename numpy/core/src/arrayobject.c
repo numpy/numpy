@@ -765,6 +765,7 @@ PyArray_FromDims(int nd, int *d, int type)
 
 /* end old calls */
 
+
 /*OBJECT_API
  Copy an array.
 */
@@ -3078,7 +3079,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 case Py_EQ:
                         /* Try to convert other to an array */
                         array_other = PyArray_FromObject(other, 
-							 PyArray_NOTYPE, 0, 0);
+							 self->descr->type_num, 0, 0);
                         /* If not successful, then return the integer
 			   object 0. This fixes code that used to
 			   allow equality comparisons between arrays
@@ -3109,7 +3110,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 case Py_NE:
                         /* Try to convert other to an array */
                         array_other = PyArray_FromObject(other, 
-							 PyArray_NOTYPE, 0, 0);
+							 self->descr->type_num, 0, 0);
                         /* If not successful, then objects cannot be 
 			   compared and cannot be equal, therefore, 
 			   return True;
