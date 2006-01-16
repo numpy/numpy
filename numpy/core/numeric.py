@@ -308,6 +308,7 @@ def base_repr (number, base=2, padding=0):
     """
     chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
+    import math
     lnb = math.log(base)
     res = padding*chars[0]
     if number == 0:

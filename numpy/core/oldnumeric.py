@@ -311,7 +311,10 @@ def shape(a):
     """shape(a) returns the shape of a (as a function call which
        also works on nested sequences).
     """
-    return asarray(a).shape
+    try:
+        return a.shape
+    except AttributeError:
+        return asarray(a).shape
 
 def compress(condition, m, axis=-1):
     """compress(condition, x, axis=-1) = those elements of x corresponding 

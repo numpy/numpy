@@ -160,23 +160,26 @@ def _add_types():
             base, bit, char = bitname(typeobj)
             revdict[typeobj] = (typeinfo[a][:-1], (base, bit, char), a)
             if base != '':
-                allTypes["%s%d" % (base, bit)] = typeobj
-                typeDict["%s%d" % (base, bit)] = typeobj
-                if base == 'uint':
-                    tmpstr = 'UInt%d' % bit
-                    typeDict[tmpstr] = typeobj
-                    na_name = tmpstr
-                elif base == 'complex':
-                    na_num = '%s%d' % (base.capitalize(), bit/2)
-                elif base == 'bool':
-                    na_name = base.capitalize()
-                    typeDict[na_name] = typeobj
-                else:
-                    na_name = "%s%d" % (base.capitalize(), bit)
-                    typeDict[na_name] = typeobj
-                typeNA[na_name] = typeobj
-                typeNA[typeobj] = na_name
-                typeNA[typeinfo[a][0]] = na_name
+                myname = "%s%d" % (base, bit)
+                if (name != 'longdouble' and name != 'clongdouble') or \
+                       myname not in allTypes.keys():
+                    allTypes[myname] = typeobj
+                    typeDict[myname] = typeobj
+                    if base == 'uint':
+                        tmpstr = 'UInt%d' % bit
+                        typeDict[tmpstr] = typeobj
+                        na_name = tmpstr
+                    elif base == 'complex':
+                        na_name = '%s%d' % (base.capitalize(), bit/2)
+                    elif base == 'bool':
+                        na_name = base.capitalize()
+                        typeDict[na_name] = typeobj
+                    else:
+                        na_name = "%s%d" % (base.capitalize(), bit)
+                        typeDict[na_name] = typeobj
+                    typeNA[na_name] = typeobj
+                    typeNA[typeobj] = na_name
+                    typeNA[typeinfo[a][0]] = na_name
             if char != '':
                 typeDict[char] = typeobj
                 typeNA[char] = na_name
