@@ -226,12 +226,15 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
 	    subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
     }
-    else subtype = ap1->ob_type;
-    
-    ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
-				       typenum, NULL, NULL, 0, 0, 
-				       (PyObject *)\
-				       (prior2 > prior1 ? ap2 : ap1));  
+    else {
+	prior1 = prior2 = 0.0;
+	subtype = ap1->ob_type;
+    }
+
+    ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
+				       typenum, NULL, NULL, 0, 0,
+				       (PyObject *)
+				       (prior2 > prior1 ? ap2 : ap1));
 
     if (ret == NULL) goto fail;
     memset(ret->data, 0, PyArray_NBYTES(ret));

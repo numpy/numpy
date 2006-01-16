@@ -2206,7 +2206,36 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 	return NULL;
 }
 
+/*
+ Make a new empty array, of the passed size, of a type that takes the
+ priority of ap1 and ap2 into account.
+ */
+static PyArrayObject *
+new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2,
+		  intp nd, intp dimensions[], int typenum)
+{
+	PyArrayObject *ret;
+	PyTypeObject *subtype;
+	double prior1, prior2;
+	/* Need to choose an output array that can hold a sum 
+	    -- use priority to determine which subtype.
+	 */
+	if (ap2->ob_type != ap1->ob_type) {
+		prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
+		prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
 
+		subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
+	} else {
+		prior1 = prior2 = 0.0;
+		subtype = ap1->ob_type;
+	}
+
+	ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
+					   typenum, NULL, NULL, 0, 0, 
+                                           (PyObject *)
+					   (prior2 > prior1 ? ap2 : ap1));
+	return ret;
+}
 
 /* Could perhaps be redone to not make contiguous arrays 
  */
@@ -2224,8 +2253,6 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	char *ip1, *ip2, *op;
 	intp dimensions[MAX_DIMS], nd;
 	PyArray_DotFunc *dot;
-	PyTypeObject *subtype;
-        double prior1, prior2;
 	
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);
@@ -2272,17 +2299,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	/* Need to choose an output array that can hold a sum 
 	    -- use priority to determine which subtype.
 	 */
-	if (ap2->ob_type != ap1->ob_type) {
-		prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-		prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-		subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
-	} else subtype = ap1->ob_type;
-       
-       
-	ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
-					   typenum, NULL, NULL, 0, 0, 
-                                           (PyObject *)
-					   (prior2 > prior1 ? ap2 : ap1));
+	ret = new_array_for_sum(ap1, ap2, nd, dimensions, typenum);
 	if (ret == NULL) goto fail;
 
 	dot = (ret->descr->f->dotfunc);
@@ -2338,10 +2355,8 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	intp dimensions[MAX_DIMS], nd;
 	PyArray_DotFunc *dot;
 	intp matchDim, otherDim, is2r, is1r;
-	PyTypeObject *subtype;
-        double prior1, prior2;
 	PyArray_Descr *typec;
-        
+
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);	
 	
@@ -2403,23 +2418,11 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	*/
 
         /* Choose which subtype to return */
-	if (ap2->ob_type != ap1->ob_type) {
-		prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-		prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-		subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
-	} 
-	else subtype = ap1->ob_type;
-	
-
-	ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
-					   typenum, NULL, NULL, 0, 0, 
-                                           (PyObject *)
-					   (prior2 > prior1 ? ap2 : ap1));
+	ret = new_array_for_sum(ap1, ap2, nd, dimensions, typenum);
+	if (ret == NULL) goto fail;
 
 	/* Ensure that multiarray.dot([],[]) -> 0 */
 	memset(PyArray_DATA(ret), 0, PyArray_ITEMSIZE(ret));
-
-	if (ret == NULL) goto fail;
 
 	dot = ret->descr->f->dotfunc;
 	if (dot == NULL) {
@@ -2535,8 +2538,6 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	char *ip1, *ip2, *op;
 	PyArray_DotFunc *dot;
 	PyArray_Descr *typec;
-        double prior1, prior2;
-        PyTypeObject *subtype=NULL;
 	
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);
@@ -2582,18 +2583,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	/* Need to choose an output array that can hold a sum 
 	    -- use priority to determine which subtype.
 	 */
-	if (ap2->ob_type != ap1->ob_type) {
-		prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-		prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-		subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
-	}
-	else subtype = ap2->ob_type;
-	
-	ret = (PyArrayObject *)PyArray_New(subtype, 1,
-					   &length, typenum, 
-					   NULL, NULL, 0, 0,
-                                           (PyObject *)
-					   (prior2 > prior1 ? ap2 : ap1));
+	ret = new_array_for_sum(ap1, ap2, 1, &length, typenum);
 	if (ret == NULL) goto fail;
 	
 	dot = ret->descr->f->dotfunc;
