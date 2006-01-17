@@ -62,8 +62,12 @@ extern "C" {
 
 /* There are several places in the code where an array of dimensions is */
 /* allocated statically.  This is the size of that static allocation. */
+/*  The array creation itself could have arbitrary dimensions but 
+ *  all the places where static allocation is used would need to
+ *  be changed to dynamic (including inside of structures) 
+ */
 
-#define MAX_DIMS 20
+#define MAX_DIMS 32
 
 /* Used for Converter Functions "O&" code in ParseTuple */
 #define PY_FAIL 0

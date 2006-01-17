@@ -4553,8 +4553,8 @@ static char doc_fromfile[] = \
 	"  between elements in a text file.\n"\
 	"\n"\
 	"  WARNING: This function should be used sparingly, as it is not\n"\
-	"  a robust method of persistence.  But it can be useful to\n"\
-	"  read in simply-formatted or binary data quickly.";
+	"  a platform-independent method of persistence.  But it can be \n"\
+	"  useful to read in simply-formatted or binary data quickly.";
 
 static PyObject *
 array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
