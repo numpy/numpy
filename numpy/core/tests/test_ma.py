@@ -504,11 +504,12 @@ class test_ma(ScipyTestCase):
         xx[1] = masked
         self.failUnless(str(masked) ==  '--')
         self.failUnless(xx[1] is masked)
+        self.failUnlessEqual(filled(xx[1], 0), 0)
         # don't know why these should raise an exception...
         #self.failUnlessRaises(Exception, lambda x,y: x+y, masked, masked)
         #self.failUnlessRaises(Exception, lambda x,y: x+y, masked, 2)
-        self.failUnlessRaises(Exception, lambda x,y: x+y, masked, xx)
-        self.failUnlessRaises(Exception, lambda x,y: x+y, xx, masked)
+        #self.failUnlessRaises(Exception, lambda x,y: x+y, masked, xx)
+        #self.failUnlessRaises(Exception, lambda x,y: x+y, xx, masked)
     
     def check_testAverage1(self):
         "Test of average."

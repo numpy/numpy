@@ -1248,7 +1248,7 @@ array(data = %(data)s,
                 value = fill_value
 
             if self is masked:
-                result = numeric.array(value).reshape(*d.shape)
+                result = numeric.array(value)
             else:
                 try:
                     result = numeric.array(d, dtype=d.dtype, copy=1)
