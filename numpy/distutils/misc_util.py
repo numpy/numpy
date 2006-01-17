@@ -6,6 +6,16 @@ import copy
 import types
 import glob
 
+__all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
+           'dict_append', 'appendpath', 'generate_config_py',
+           'generate_svn_version_py', 'get_cmd', 'allpath',
+           'terminal_has_colors', 'red_text', 'green_text', 'yellow_text',
+           'blue_text', 'cyan_text', 'cyg2win32', 'all_strings',
+           'has_f_sources', 'has_cxx_sources', 'filter_sources',
+           'get_dependencies', 'is_local_src_dir', 'get_ext_source_files',
+           'get_script_files', 'get_lib_source_files', 'get_data_files',
+           'dot_join', 'get_frame']
+
 def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."
     splitted = name.split('/')

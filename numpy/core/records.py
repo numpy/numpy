@@ -69,23 +69,22 @@ class format_parser:
             else:
                 raise NameError, "illegal input names %s" % `names`
 
-            self._names = map(lambda n:n.strip(), names)[:self._nfields]
+            self._names = [n.strip() for n in names[:self._nfields]]
         else: 
             self._names = []
 
         # if the names are not specified, they will be assigned as "f1, f2,..."
         # if not enough names are specified, they will be assigned as "f[n+1],
         # f[n+2],..." etc. where n is the number of specified names..."
-        self._names += map(lambda i: 
-            'f'+`i`, range(len(self._names)+1,self._nfields+1))
-
+        self._names += ['f%d' % i for i in range(len(self._names)+1,
+                                                 self._nfields+1)]
         # check for redundant names
         _dup = find_duplicate(self._names)
         if _dup:
             raise ValueError, "Duplicate field names: %s" % _dup
 
         if (titles):
-            self._titles = [n.strip() for n in titles][:self._nfields]
+            self._titles = [n.strip() for n in titles[:self._nfields]]
         else:
             self._titles = []
             titles = []
@@ -175,7 +174,7 @@ class recarray(sb.ndarray):
         # normal array
         if obj.dtype.fields:
             return obj
-        if obj.dtype in [sb.string, sb.unicode_]:
+        if obj.dtype.char in 'SU':
             return obj.view(chararray)
         return obj.view(sb.ndarray)
             
@@ -238,20 +237,24 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
 
     return _array
 
-# shape must be 1-d 
+# shape must be 1-d if you use list of lists...
 def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
                 aligned=0):
-    """ create a Record Array from a list of records in text form
+    """ create a recarray from a list of records in text form
 
         The data in the same field can be heterogeneous, they will be promoted
         to the highest data type.  This method is intended for creating
-        smaller record arrays.  If used to create large array e.g.
+        smaller record arrays.  If used to create large array without formats
+        defined
 
-        r=fromrecords([[2,3.,'abc']]*100000)
+        r=fromrecords([(2,3.,'abc')]*100000)
 
-        it is slow.
+        it can be slow.
 
-    >>> r=fromrecords([[456,'dbe',1.2],[2,'de',1.3]],names='col1,col2,col3')
+        If formats is None, then this will auto-detect formats. Use list of
+        tuples rather than list of lists for faster processing.
+
+    >>> r=fromrecords([(456,'dbe',1.2),(2,'de',1.3)],names='col1,col2,col3')
     >>> print r[0]
     (456, 'dbe', 1.2)
     >>> r.col1
@@ -266,29 +269,32 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
     ]
     """
 
-    if (shape is None or shape == 0):
-        shape = len(recList)
-
-    if isinstance(shape, (int, long)):
-        shape = (shape,)
-
-    if len(shape) > 1:
-        raise ValueError, "Can only deal with 1-d list of records"
-
     nfields = len(recList[0])
     if formats is None:  # slower
         obj = sb.array(recList,dtype=object)
-        arrlist = [sb.array(obj[:,i].tolist()) for i in xrange(nfields)]
+        arrlist = [sb.array(obj[...,i].tolist()) for i in xrange(nfields)]
         return fromarrays(arrlist, formats=formats, shape=shape, names=names,
                           titles=titles, aligned=aligned)
-    
-    parsed = format_parser(formats, names, titles, aligned)
-    _array = recarray(shape, parsed._descr)
-    
-    for k in xrange(_array.size):
-        _array[k] = tuple(recList[k])
 
-    return _array
+    parsed = format_parser(formats, names, titles, aligned)
+    try:
+        retval = sb.array(recList, dtype = parsed._descr)
+    except TypeError:  # list of lists instead of list of tuples
+        if (shape is None or shape == 0):
+            shape = len(recList)
+        if isinstance(shape, (int, long)):
+            shape = (shape,)
+        if len(shape) > 1:
+            raise ValueError, "Can only deal with 1-d array."
+        _array = recarray(shape, parsed._descr)
+        for k in xrange(_array.size):
+            _array[k] = tuple(recList[k])
+        return _array
+    else:
+        if shape is not None and retval.shape != shape:
+            retval.shape = shape
+
+    return retval.view(recarray)
 
 def fromstring(datastring, formats, shape=None, names=None, titles=None,
                byteorder=None, aligned=0, offset=0):
@@ -310,8 +316,7 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
     """Create an array from binary file data
 
     If file is a string then that file is opened, else it is assumed
-    to be a file object. No options at the moment, all file positioning
-    must be done prior to this function call with a file object
+    to be a file object.
 
     >>> import testdata, sys
     >>> fd=open(testdata.filename)
@@ -372,7 +377,7 @@ def array(obj, formats=None, names=None, titles=None, shape=None,
     
     if isinstance(obj, (type(None), str, file)) and (formats is None):
         raise ValueError("Must define formats if object is "\
-                         "None, string, or a file pointer")
+                         "None, string, or an open file")
 
     elif obj is None:
         if shape is None:

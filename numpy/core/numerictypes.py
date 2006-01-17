@@ -216,11 +216,13 @@ def _set_up_aliases():
                   ('object_', 'object')]
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
+        typeDict[alias] = typeDict[t]
     # Remove aliases overriding python types
     for t in ['ulong', 'object', 'unicode', 'int', 'long', 'float',
               'complex', 'bool']:
         try:
             del allTypes[t]
+            del typeDict[t]
         except KeyError:
             pass
 _set_up_aliases()

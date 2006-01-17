@@ -263,18 +263,19 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	subtype = ap1->ob_type;
     }
     
+    if (l==0) nd = 0;
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
 				       typenum, NULL, NULL, 0, 0,
 				       (PyObject *)
 				       (prior2 > prior1 ? ap2 : ap1));
     
     if (ret == NULL) goto fail;
-    if (PyArray_SIZE(ret) == 0) {
-	Py_DECREF(ap1); 
-	Py_DECREF(ap2);
-	return (PyObject *)ret;
-    }
     memset(ret->data, 0, PyArray_NBYTES(ret));
+    if (l==0) {
+	    Py_DECREF(ap1);
+	    Py_DECREF(ap2);
+	    return PyArray_Return(ret);
+    }
     
     if (ap2shape == _scalar) {
 	/* Multiplication by a scalar -- Level 1 BLAS */

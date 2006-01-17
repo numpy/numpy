@@ -2212,7 +2212,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
  */
 static PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2,
-		  intp nd, intp dimensions[], int typenum)
+		  int nd, intp dimensions[], int typenum)
 {
 	PyArrayObject *ret;
 	PyTypeObject *subtype;
@@ -2248,10 +2248,10 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 {
 	PyArrayObject *ap1, *ap2, *ret=NULL;
 	intp i, j, l, i1, i2, n1, n2;
-	int typenum;
+	int typenum, nd;
 	intp is1, is2, os;
 	char *ip1, *ip2, *op;
-	intp dimensions[MAX_DIMS], nd;
+	intp dimensions[MAX_DIMS];
 	PyArray_DotFunc *dot;
 	
 	typenum = PyArray_ObjectType(op1, 0);  
@@ -2349,10 +2349,10 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 {
 	PyArrayObject *ap1, *ap2, *ret=NULL;
 	intp i, j, l, i1, i2, n1, n2;
-	int typenum;
+	int typenum, nd;
 	intp is1, is2, os;
 	char *ip1, *ip2, *op;
-	intp dimensions[MAX_DIMS], nd;
+	intp dimensions[MAX_DIMS];
 	PyArray_DotFunc *dot;
 	intp matchDim, otherDim, is2r, is1r;
 	PyArray_Descr *typec;
@@ -3686,13 +3686,13 @@ _convert_from_dict(PyObject *obj, int align)
 			if (offset > totalsize) totalsize = offset;
 		}
 		else {
-			PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
 			if (align) {
 				int _align = newdescr->alignment;
 				if (_align > 1) totalsize =		\
 					((totalsize + _align - 1)/_align)*_align;
 				maxalign = MAX(maxalign,_align);
 			}
+			PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
 		}
 		if (len == 3) PyTuple_SET_ITEM(tup, 2, item);
 		name = PyObject_GetItem(names, index);
@@ -3827,7 +3827,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		if (len <= 0) goto fail;
 		check_num = (int) type[0];
 		if ((char) check_num == '>' || (char) check_num == '<' || \
-		    (char) check_num == '|') {
+		    (char) check_num == '|' || (char) check_num == '=') {
 			if (len <= 1) goto fail;
 			endian = (char) check_num;
 			type++; len--;
@@ -3835,19 +3835,17 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			if (endian == '|') endian = '=';
 		}
 		if (len > 1) {
+			int i;
 			elsize = atoi(type+1);
-			if (len > 2 && elsize < 10) {
-				/* perhaps commas present */
-				int i;
-				for (i=1;i<len && type[i]!=',';i++);
-				if (i < len) {
-					/* see if it can be converted from 
-					   a comma-separated string */
-					*at = _convert_from_commastring(obj, 
-									0);
-					if (*at) return PY_SUCCEED;
-					else return PY_FAIL;
-				}
+			/* check for commas present */
+			for (i=1;i<len && type[i]!=',';i++);
+			if (i < len) {
+				/* see if it can be converted from 
+				   a comma-separated string */
+				*at = _convert_from_commastring(obj, 
+								0);
+				if (*at) return PY_SUCCEED;
+				else return PY_FAIL;
 			}
 			if (elsize == 0) {
 				check_num = PyArray_NOTYPE+10;

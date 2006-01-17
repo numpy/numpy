@@ -188,7 +188,7 @@ class ScipyTest:
     """ Scipy tests site manager.
 
     Usage:
-      >>> ScipyTest(<package>).test(level=1,verbosity=2)
+      >>> ScipyTest(<package>).test(level=1,verbosity=1)
 
     <package> is package name or its module object.
 
