@@ -135,44 +135,10 @@ class matrix(N.ndarray):
         return truend
     
     def __mul__(self, other):
-        if (self.ndim != self._get_truendim()):
-            myself = self.A.squeeze()
-        else:
-            myself = self
-
-        myother = other
-        if isinstance(other, matrix):
-            if (other.ndim != other._get_truendim()):
-                myother = other.A.squeeze()
-                
-        if isinstance(myother, N.ndarray) and myother.size == 1:
-            res = N.multiply(myself, myother.item())
-        else:
-            res = N.dot(myself, myother)
-
-        if not isinstance(res, matrix):
-            res = res.view(matrix)
-        return res
-
+        return N.dot(self, other)
+    
     def __rmul__(self, other):
-        if (self.ndim != self._get_truendim()):
-            myself = self.A.squeeze()
-        else:
-            myself = self
-
-        myother = other
-        if isinstance(other, matrix):
-            if (other.ndim != other._get_truendim()):
-                myother = other.A.squeeze()
-                
-        if isinstance(myother, N.ndarray) and myother.size == 1:
-            res = N.multiply(myother.item(), myself)
-        else:
-            res = N.dot(myother, myself)
-
-        if not isinstance(res, matrix):
-            res = res.view(matrix)
-        return res
+        return N.dot(other, self)
 
     def __imul__(self, other):
         self[:] = self * other

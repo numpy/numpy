@@ -2363,10 +2363,10 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	typec = PyArray_DescrFromType(typenum);
 	Py_INCREF(typec);
 	ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, 
-					       DEFAULT_FLAGS);
+					       BEHAVED_FLAGS);
 	if (ap1 == NULL) {Py_DECREF(typec); return NULL;}
 	ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
-					       DEFAULT_FLAGS);
+					       BEHAVED_FLAGS);
 	if (ap2 == NULL) goto fail;
 	
 	if (ap1->nd == 0 || ap2->nd == 0) {
