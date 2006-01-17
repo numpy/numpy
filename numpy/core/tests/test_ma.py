@@ -149,7 +149,7 @@ class test_ma(ScipyTestCase):
         assert isMaskedArray(count(ott,0))
         assert isinstance(count(ott), types.IntType)
         self.failUnless (eq(3, count(ott)))
-        assert getmask(count(ott,0)) is None
+        assert getmask(count(ott,0)) is nomask
         self.failUnless (eq([1,2],count(ott,0)))
    
     def check_testMinMax (self):
@@ -293,7 +293,7 @@ class test_ma(ScipyTestCase):
         x = array(d, mask = m) 
         x.putmask([30,40])
         self.failUnless( eq(x, [0,1,2,30,40]))
-        self.failUnless( x.mask is None)
+        self.failUnless( x.mask is nomask)
     
         x = array(d, mask = m) 
         y = x.compressed()
@@ -393,7 +393,7 @@ class test_ma(ScipyTestCase):
         z = where(c,x,y)
         zm = where(cm,x,y)
         assert eq(z, zm)
-        assert getmask(zm) is None
+        assert getmask(zm) is nomask
         assert eq(zm, [0,1,2,30,40,50])
         z = where(c, masked, 1)
         assert eq(z, [99,99,99,1,1,1])
