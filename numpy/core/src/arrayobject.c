@@ -3078,21 +3078,27 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 							     n_ops.less_equal);
                 case Py_EQ:
                         /* Try to convert other to an array */
-                        array_other = PyArray_FromObject(other, 
-							 self->descr->type_num, 0, 0);
-                        /* If not successful, then return the integer
-			   object 0. This fixes code that used to
-			   allow equality comparisons between arrays
-			   and other objects which would give a result
-			   of 0
-                        */
-                        if ((array_other == NULL) || \
-			    (array_other == Py_None)) {
-                                Py_XDECREF(array_other);
-                                PyErr_Clear();
-                                Py_INCREF(Py_False);
-                                return Py_False;
-                        }
+			if (!PyArray_Check(other)) {
+				array_other = PyArray_FromObject(other, 
+								 self->descr->type_num, 0, 0);
+				/* If not successful, then return the integer
+				   object 0. This fixes code that used to
+				   allow equality comparisons between arrays
+				   and other objects which would give a result
+				   of 0
+				*/
+				if ((array_other == NULL) ||	\
+				    (array_other == Py_None)) {
+					Py_XDECREF(array_other);
+					PyErr_Clear();
+					Py_INCREF(Py_False);
+					return Py_False;
+				}
+			}
+			else {
+				Py_INCREF(other);
+				array_other = other;
+			}
                         result = PyArray_GenericBinaryFunction(self, 
 							       array_other, 
 							       n_ops.equal);
@@ -3109,23 +3115,29 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                         return result;
                 case Py_NE:
                         /* Try to convert other to an array */
-                        array_other = PyArray_FromObject(other, 
-							 self->descr->type_num, 0, 0);
-                        /* If not successful, then objects cannot be 
-			   compared and cannot be equal, therefore, 
-			   return True;
-                        */
-                        if ((array_other == NULL) || \
-			    (array_other == Py_None)) {
-                                Py_XDECREF(array_other);
-                                PyErr_Clear();
-                                Py_INCREF(Py_True);
-                                return Py_True;
-                        }
-                        result = PyArray_GenericBinaryFunction(self, 
+			if (!PyArray_Check(other)) {
+				array_other = PyArray_FromObject(other, 
+								 self->descr->type_num, 0, 0);
+				/* If not successful, then objects cannot be 
+				   compared and cannot be equal, therefore, 
+				   return True;
+				*/
+				if ((array_other == NULL) ||	\
+				    (array_other == Py_None)) {
+					Py_XDECREF(array_other);
+					PyErr_Clear();
+					Py_INCREF(Py_True);
+					return Py_True;
+				}
+			}
+			else {
+				Py_INCREF(other);
+				array_other = other;
+			}
+			result = PyArray_GenericBinaryFunction(self, 
 							       array_other, 
-							     n_ops.not_equal);
-                        Py_DECREF(array_other);
+							       n_ops.not_equal);
+			Py_DECREF(array_other);
                         if (result == NULL) {
                                 PyErr_Clear();
                                 Py_INCREF(Py_True);

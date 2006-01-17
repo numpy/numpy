@@ -1578,10 +1578,37 @@ static void
 
 /**begin repeat
 
-#TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG)*6#
-#typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong)*6#
-#OP= %*10, &*10, |*10, ^*10, <<*10, >>*10#
-#kind=fmod*10, bitwise_and*10, bitwise_or*10, bitwise_xor*10, left_shift*10, right_shift*10#
+#TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+#typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
+*/
+static void
+@TYPE@_fmod(char **args, intp *dimensions, intp *steps, void *func)
+{
+	register intp i;
+	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+	char *i1=args[0], *i2=args[1], *op=args[2];
+	@typ@ x, y;
+	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+		x = *((@typ@ *)i1);
+		y = *((@typ@ *)i2);
+		if (y == 0) {
+			generate_divbyzero_error();
+			*((@typ@ *)op) = 0;
+		}
+		else {
+			*((@typ@ *)op)= x % y;
+		}
+		
+	}
+}
+/**end repeat**/
+
+/**begin repeat
+
+#TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG)*5#
+#typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong)*5#
+#OP= &*10, |*10, ^*10, <<*10, >>*10#
+#kind=bitwise_and*10, bitwise_or*10, bitwise_xor*10, left_shift*10, right_shift*10#
 
 */
 static void

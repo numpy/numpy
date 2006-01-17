@@ -545,14 +545,16 @@ class MaskedArray (object):
         """array(data, dtype=None, copy=True, fortran=False, mask=nomask, fill_value=None)
            If data already a numeric array, its dtype becomes the default value of dtype.
         """
-        tc = dtype
+        if dtype is None:
+            tc = None
+        else:
+            tc = numeric.dtype(dtype)
         need_data_copied = copy
         if isinstance(data, MaskedArray):
             c = data.data
-            ctc = c.dtype.char
             if tc is None:
-                tc = ctc
-            elif dtype2char(tc) != ctc:
+                tc = c.dtype
+            elif tc != c.dtype:
                 need_data_copied = True
             if mask is nomask:
                 mask = data.mask
@@ -561,17 +563,17 @@ class MaskedArray (object):
 
         elif isinstance(data, ndarray):
             c = data
-            ctc = c.dtype.char
             if tc is None:
-                tc = ctc
-            elif dtype2char(tc) != ctc:
+                tc = c.dtype
+            elif tc != c.dtype:
                 need_data_copied = True
         else:
             need_data_copied = False #because I'll do it now
             c = numeric.array(data, dtype=tc, copy=True, fortran=fortran)
+            tc = c.dtype
 
         if need_data_copied:
-            if tc == ctc:
+            if tc == c.dtype:
                 self._data = numeric.array(c, dtype=tc, copy=True, fortran=fortran)
             else:
                 self._data = c.astype(tc)

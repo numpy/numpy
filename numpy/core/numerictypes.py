@@ -78,7 +78,7 @@ $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
 
 # we add more at the bottom
-__all__ = ['typeDict', 'typeNA', 'arraytypes', 'ScalarType', 'obj2dtype', 'cast', 'nbytes', 'dtype2char']
+__all__ = ['typeDict', 'typeNA', 'arraytypes', 'ScalarType', 'obj2arrtype', 'cast', 'nbytes', 'arrtype2char','maximum_arrtype', 'isarrtype']
 
 from multiarray import typeinfo, ndarray, array, empty
 import types as _types
@@ -226,13 +226,13 @@ def _set_up_aliases():
 _set_up_aliases()
 
 # Now, construct dictionary to lookup character codes from types
-_dtype2char_dict = {}
+_arrtype2char_dict = {}
 def _construct_char_code_lookup():
     for name in typeinfo.keys():
         tup = typeinfo[name]
         if isinstance(tup, tuple):
 	     if tup[0] not in ['p','P']:
-                _dtype2char_dict[tup[-1]] = tup[0]
+                _arrtype2char_dict[tup[-1]] = tup[0]
 _construct_char_code_lookup()
 
 
@@ -271,9 +271,9 @@ genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
                    'complex32', 'complex64', 'complex128', 'complex160',
                    'complex192', 'complex256', 'complex512', 'object']
 
-def maximum_dtype(t):
-    """returns the type of highest precision of the same general kind as 't'"""
-    g = obj2dtype(t)
+def maximum_arrtype(t):
+    """returns the arrtype of highest precision of the same general kind as 't'"""
+    g = obj2arrtype(t)
     if g is None:
         return t
     t = g
@@ -298,16 +298,16 @@ def _python_type(t):
         t = type(t)
     return allTypes[_python_types.get(t, 'object_')]
 
-def isdtype(rep):
+def isarrtype(rep):
     """Determines whether the given object represents
     a numeric array type."""
     try:
-        char = dtype2char(rep)
+        char = arrtype2char(rep)
         return True
     except (KeyError, ValueError):
         return False
 
-def obj2dtype(rep, default=None):
+def obj2arrtype(rep, default=None):
     try:
         if issubclass(rep, generic):
             return rep
@@ -321,10 +321,10 @@ def obj2dtype(rep, default=None):
     return res
 
 
-# This dictionary allows look up based on any alias for a type
+# This dictionary allows look up based on any alias for an array type
 class _typedict(dict):
     def __getitem__(self, obj):
-        return dict.__getitem__(self, obj2dtype(obj))
+        return dict.__getitem__(self, obj2arrtype(obj))
 
 nbytes = _typedict()
 _alignment = _typedict()
@@ -346,11 +346,11 @@ def _construct_lookups():
 
 _construct_lookups()
 
-def dtype2char(dtype):
-    dtype = obj2dtype(dtype)
-    if dtype is None:
+def arrtype2char(arrtype):
+    arrtype = obj2arrtype(arrtype)
+    if arrtype is None:
         raise ValueError, "unrecognized type"
-    return _dtype2char_dict[dtype]
+    return _arrtype2char_dict[arrtype]
 
 # Create dictionary of casting functions that wrap sequences
 # indexed by type or type character
@@ -360,9 +360,9 @@ cast = _typedict()
 ScalarType = [_types.IntType, _types.FloatType,
               _types.ComplexType, _types.LongType, _types.BooleanType,
               _types.StringType, _types.UnicodeType, _types.BufferType]
-ScalarType.extend(_dtype2char_dict.keys())
+ScalarType.extend(_arrtype2char_dict.keys())
 ScalarType = tuple(ScalarType)
-for key in _dtype2char_dict.keys():
+for key in _arrtype2char_dict.keys():
     cast[key] = lambda x, k=key : array(x, copy=False).astype(k)
 
 
@@ -370,9 +370,9 @@ _unicodesize = array('u','U').itemsize
 
 # Create the typestring lookup dictionary
 _typestr = _typedict()
-for key in _dtype2char_dict.keys():
+for key in _arrtype2char_dict.keys():
     if issubclass(key, allTypes['flexible']):
-        _typestr[key] = _dtype2char_dict[key]
+        _typestr[key] = _arrtype2char_dict[key]
     else:
         _typestr[key] = empty((1,),key).dtype.str[1:]
 

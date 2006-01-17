@@ -1,5 +1,5 @@
 from numerictypes import character, string, unicode_, \
-     obj2dtype, integer, object_
+     integer, object_
 from numeric import ndarray, broadcast, empty
 from numeric import array as narray
 import sys
