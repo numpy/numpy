@@ -1050,7 +1050,11 @@ typedef struct {
 		int _i_;						\
 		intp _lind_ = (intp) (ind);				\
 		it->index = _lind_;					\
-		if (it->contiguous)					\
+                if (it->nd_m1 == 0) {                                   \
+                        it->dataptr = it->ao->data + (ind) *            \
+                                it->strides[0];                         \
+                }                                                       \
+                else if (it->contiguous)                                \
 			it->dataptr = it->ao->data + (ind) *		\
 				it->ao->descr->elsize;			\
 		else {							\
