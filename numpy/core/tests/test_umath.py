@@ -116,13 +116,20 @@ class test_special_methods(ScipyTestCase):
                 self.args = args
                 self.i = i
                 return zeros(1)
+        class B(object):
+            def __array__(self, dtype=None):
+                return zeros(1, dtype)
+        class C(object):
+            def __array__(self):
+                return zeros(1)
         a = A()
         maximum(zeros(1), a)
         self.failUnless(a.func is maximum)
         assert_equal(a.args[0], 0)
         self.failUnless(a.args[1] is a)
         self.failUnless(a.i == 1)
-
+        assert_equal(maximum(a, B()), 0)
+        assert_equal(maximum(a, C()), 0)
 
         
 if __name__ == "__main__":
