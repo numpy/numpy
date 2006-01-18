@@ -1,9 +1,19 @@
 /* -*- c -*- */
 
 static int PyArrayScalar_Offset[PyArray_NTYPES+1];
-static PyObject *PyArrayScalar_BoolValues[2];
-static PyObject *PyArrayScalar_True;
-static PyObject *PyArrayScalar_False;
+/* to be exposed in C-API */
+#define PyArrayScalar_False ((PyObject *)&_PyArrayScalar_BoolValues[0])
+#define PyArrayScalar_True ((PyObject *)&_PyArrayScalar_BoolValues[1])
+#define PyArrayScalar_RETURN_BOOL_FROM_LONG(i)			\
+	return Py_INCREF(&_PyArrayScalar_BoolValues[((i)!=0)]),	\
+		(PyObject *)&_PyArrayScalar_BoolValues[((i)!=0)]
+#define PyArrayScalar_RETURN_FALSE		\
+	return Py_INCREF(PyArrayScalar_False),	\
+		PyArrayScalar_False
+#define PyArrayScalar_RETURN_TRUE		\
+	return Py_INCREF(PyArrayScalar_True),	\
+		PyArrayScalar_True
+/* end to be exposed in C-API */
 
 #define _SOFFSET_(obj, type_num) ((char *)(obj) + PyArrayScalar_Offset[(type_num)])
 
@@ -16,6 +26,12 @@ typedef struct {
 	@type@ obval;
 } Py@name@ScalarObject;
 /**end repeat**/
+
+static PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
+	{PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
+	{PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
+};
+
 
 /* Inheritance established later when tp_bases is set (or tp_base for 
    single inheritance) */
@@ -1631,19 +1647,13 @@ bool_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	PyObject *arr;
 
 	if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
-	if (obj == Py_False) {
-		Py_INCREF(PyArrayScalar_False);
-		return PyArrayScalar_False;
-	}
-	if (obj == Py_True) {
-		Py_INCREF(PyArrayScalar_True);
-		return PyArrayScalar_True;
-	}
+	if (obj == Py_False)
+		PyArrayScalar_RETURN_FALSE;
+	if (obj == Py_True)
+		PyArrayScalar_RETURN_TRUE;
 	arr = PyArray_FROM_OTF(obj, PyArray_BOOL, FORCECAST);
 	if (arr && 0 == PyArray_NDIM(arr)) {
-		int i = *(Bool*)PyArray_DATA(arr);
-		Py_INCREF(PyArrayScalar_BoolValues[i]);
-		return PyArrayScalar_BoolValues[i];
+		PyArrayScalar_RETURN_BOOL_FROM_LONG(*(Bool*)PyArray_DATA(arr));
 	}
 	return PyArray_Return((PyArrayObject *)arr);
 }
@@ -2136,25 +2146,6 @@ ComplexFloating, Flexible, Character#
         PyArrayScalar_Offset[PyArray_@num@] = (int) offsetof(Py@name@ScalarObject, obval);
 /**end repeat**/
 }
-
-int
-initialize_bool_values(void)
-{
-	PyArrayScalar_False = PyArray_Return((PyArrayObject *)\
-					     PyArray_FROM_OTF(Py_False, PyArray_BOOL, FORCECAST));
-	if (PyArrayScalar_False == NULL)
-		return -1;
-	PyArrayScalar_True = PyArray_Return((PyArrayObject *)\
-					    PyArray_FROM_OTF(Py_True, PyArray_BOOL, FORCECAST));
-	if (PyArrayScalar_True == NULL) {
-		Py_DECREF(PyArrayScalar_False);
-		return -1;
-	}
-	PyArrayScalar_BoolValues[0] = PyArrayScalar_False;
-	PyArrayScalar_BoolValues[1] = PyArrayScalar_True;
-	return 0;
-}
-
 
 /* the order of this table is important */
 static PyTypeObject *typeobjects[] = {

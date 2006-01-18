@@ -810,14 +810,8 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 	int swap;
 
 	type_num = descr->type_num;
-	/* XXX: Extra check is needed to allow this function to
-	   XXX: be called to initialize bool values. It would
-	   XXX: be better not to use this function in init. */
-	if (type_num == PyArray_BOOL && PyArrayScalar_True) {
-		int i = *(Bool*)data;
-		Py_INCREF(PyArrayScalar_BoolValues[i]);
-		return PyArrayScalar_BoolValues[i];
-	}
+	if (type_num == PyArray_BOOL)
+		PyArrayScalar_RETURN_BOOL_FROM_LONG(*(Bool*)data);
 	else if (type_num == PyArray_OBJECT) {
 		Py_INCREF(*((PyObject **)data));
 		return *((PyObject **)data);
