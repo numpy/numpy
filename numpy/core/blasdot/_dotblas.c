@@ -455,12 +455,13 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    if (new == NULL) goto fail;
 	}
 	if (PyArray_ISCONTIGUOUS(ap1)) {
-	    Order = CblasRowMajor;
+            Order = CblasRowMajor;
+            lda = (ap1->dimensions[1] > 1 ? ap1->dimensions[1] : 1);
 	}
 	else {
 	    Order = CblasColMajor;
+            lda = (ap1->dimensions[0] > 1 ? ap1->dimensions[0] : 1);
 	}
-	lda = (ap1->dimensions[1] > 1 ? ap1->dimensions[1] : 1);
 	ap2s = ap2->strides[0] / ap2->descr->elsize;
 	if (typenum == PyArray_DOUBLE) {
 	    cblas_dgemv(Order, CblasNoTrans,  
@@ -503,11 +504,12 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	}
 	if (PyArray_ISCONTIGUOUS(ap2)) {
 	    Order = CblasRowMajor;
+            lda = (ap2->dimensions[1] > 1 ? ap2->dimensions[1] : 1);
 	}
 	else {
 	    Order = CblasColMajor;
+            lda = (ap2->dimensions[0] > 1 ? ap2->dimensions[0] : 1);
 	}
-	lda = (ap2->dimensions[1] > 1 ? ap2->dimensions[1] : 1);
 	if (ap1shape == _row) {
 	    ap1s = ap1->strides[1] / ap1->descr->elsize;
 	}

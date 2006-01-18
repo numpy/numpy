@@ -5,16 +5,17 @@ from numpy.core.multiarray import dot as dot_
 
 class test_dot(ScipyTestCase):
     def setUp(self):
-        self.A = rand(10,10)
-        self.b1 = rand(10,1)
-        self.b2 = rand(10)
-        self.b3 = rand(1,10)
+        self.A = rand(10,8)
+        self.b1 = rand(8,1)
+        self.b2 = rand(8)
+        self.b3 = rand(1,8)
+        self.b4 = rand(10)
         self.N = 14
 
     def check_matmat(self):
         A = self.A
-        c1 = dot(A, A)
-        c2 = dot_(A, A)
+        c1 = dot(A.transpose(), A)
+        c2 = dot_(A.transpose(), A)
         assert_almost_equal(c1, c2, decimal=self.N)
 
     def check_matvec(self):
@@ -30,16 +31,22 @@ class test_dot(ScipyTestCase):
         assert_almost_equal(c1, c2, decimal=self.N)
 
     def check_vecmat(self):
-        A, b2 = self.A, self.b2
-        c1 = dot(b2, A)
-        c2 = dot_(b2, A)
+        A, b4 = self.A, self.b4
+        c1 = dot(b4, A)
+        c2 = dot_(b4, A)
         assert_almost_equal(c1, c2, decimal=self.N)
 
     def check_vecmat2(self):
         b3, A = self.b3, self.A
-        c1 = dot(b3, A)
-        c2 = dot_(b3, A)
-        assert_almost_equal(c1, c2, decimal=self.N)        
+        c1 = dot(b3, A.transpose())
+        c2 = dot_(b3, A.transpose())
+        assert_almost_equal(c1, c2, decimal=self.N)
+
+    def check_vecmat3(self):
+        A, b4 = self.A, self.b4
+        c1 = dot(A.transpose(),b4)
+        c2 = dot_(A.transpose(),b4)
+        assert_almost_equal(c1, c2, decimal=self.N) 
 
     def check_vecvecouter(self):
         b1, b3 = self.b1, self.b3

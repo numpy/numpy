@@ -2147,6 +2147,7 @@ ComplexFloating, Flexible, Character#
 /**end repeat**/
 }
 
+
 /* the order of this table is important */
 static PyTypeObject *typeobjects[] = {
         &PyBoolArrType_Type,
