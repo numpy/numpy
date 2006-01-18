@@ -5480,6 +5480,9 @@ DL_EXPORT(void) initmultiarray(void) {
 	if (PyType_Ready(&PyArrayDescr_Type) < 0)
 		return;
 
+	/* NB: this cannot be called before types are initialized */
+	if (initialize_bool_values() < 0) goto err;
+
 	c_api = PyCObject_FromVoidPtr((void *)PyArray_API, NULL);
 	if (PyErr_Occurred()) goto err;
 	PyDict_SetItemString(d, "_ARRAY_API", c_api);

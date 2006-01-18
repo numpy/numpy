@@ -140,5 +140,17 @@ class test_creation(ScipyTestCase):
                 pass
         self.failUnlessRaises(ValueError, array, x())
 
+class test_bool(ScipyTestCase):
+    def check_test_interning(self):
+        a0 = bool_(0)
+        b0 = bool_(False)
+        self.failUnless(a0 is b0)
+        a1 = bool_(1)
+        b1 = bool_(True)
+        self.failUnless(a1 is b1)
+        self.failUnless(array([True])[0] is a1)
+        self.failUnless(array(True)[...] is a1)
+
+        
 if __name__ == "__main__":
         ScipyTest('numpy.core.multiarray').run()
