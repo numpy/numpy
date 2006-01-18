@@ -484,20 +484,17 @@ class test_ma(ScipyTestCase):
         x += 1.
         assert id1 == id(x.raw_data())
         assert eq(x, y+1.)
-      
+
     def check_testPickle(self):
         "Test of pickling"
+        import pickle
         x = arange(12)
         x[4:10:2] = masked
-        x=x.reshape(4,3)
-        f = open('test9.pik','wb')
-        import pickle
-        pickle.dump(x, f)
-        f.close()
-        f = open('test9.pik', 'rb')
-        y = pickle.load(f)
-        assert eq(x,y) 
-        
+        x = x.reshape(4,3)
+        s = pickle.dumps(x)
+        y = pickle.loads(s)
+        assert eq(x,y)
+
     def check_testMasked(self):
         "Test of masked element"
         xx=arange(6)
