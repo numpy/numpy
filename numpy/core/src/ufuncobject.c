@@ -855,6 +855,40 @@ _has_reflected_op(PyObject *op, char *name)
 
 #undef _GETATTR_
 
+/* XXX: some functionality in this function should become part of array C-API */
+static PyArrayObject *
+_get_input_array(PyUFuncObject *ufunc, PyObject *args, int i)
+{
+	PyObject *result;
+	PyObject *op, *array_meth;
+	op = PyTuple_GET_ITEM(args,i);
+	if (PyArray_Check(op)) {
+		Py_INCREF(op);
+		return (PyArrayObject *)op;
+	}
+	if (PyArray_IsScalar(op, Generic))
+		return (PyArrayObject *)PyArray_FromScalar(op, NULL);
+	array_meth = PyObject_GetAttrString(op, "__array__");
+	if (array_meth) {
+		result = PyObject_CallFunction(array_meth, "O(OOi)",
+						   Py_None, ufunc, args, i);
+		if (result == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
+			PyErr_Clear();
+			result = PyObject_CallFunction(array_meth, "");
+		}
+		if (!result || PyArray_Check(result))
+			return (PyArrayObject *)result;
+		else {
+			PyErr_SetString(PyExc_TypeError, "__array__ returned invalid type");
+			Py_DECREF(result);
+			return NULL;
+		}
+	}
+	/* XXX: Calling PyArray_FromAny after all the common cases
+	   XXX: are taken care of is an overkill, but at the moment
+	   XXX: arrayobject does not provide any simpler API. */
+	return (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0);
+}
 
 static int
 construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
@@ -877,9 +911,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 
         /* Get each input argument */
         for (i=0; i<self->nin; i++) {
-                mps[i] = (PyArrayObject *)\
-			PyArray_FromAny(PyTuple_GET_ITEM(args,i), 
-					NULL, 0, 0, 0);
+                mps[i] = _get_input_array(self, args, i);
                 if (mps[i] == NULL) return -1;
                 arg_types[i] = PyArray_TYPE(mps[i]);
                 if (PyTypeNum_ISFLEXIBLE(arg_types[i])) {

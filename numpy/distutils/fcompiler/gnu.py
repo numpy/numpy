@@ -51,7 +51,7 @@ class GnuFCompiler(FCompiler):
     #    return FCompiler.get_linker_so(self)
 
     def get_flags_linker_so(self):
-        opt = []
+        opt = ['-m32']
         if sys.platform=='darwin':
             target = os.environ.get('MACOSX_DEPLOYMENT_TARGET', None)
             if target is None:

@@ -108,5 +108,22 @@ class test_special_methods(ScipyTestCase):
         a = A()
         self.failUnlessRaises(RuntimeError, maximum, a, a)
 
+    def test_array_with_context(self):
+        class A(object):
+            def __array__(self, dtype=None, context=None):
+                func, args, i = context
+                self.func = func
+                self.args = args
+                self.i = i
+                return zeros(1)
+        a = A()
+        maximum(zeros(1), a)
+        self.failUnless(a.func is maximum)
+        assert_equal(a.args[0], 0)
+        self.failUnless(a.args[1] is a)
+        self.failUnless(a.i == 1)
+
+
+        
 if __name__ == "__main__":
     ScipyTest().run()
