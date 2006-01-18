@@ -1010,11 +1010,11 @@ typedef struct {
 
 #define PyArray_ITER_NEXT(it) {						\
 	it->index++;						        \
-	if (it->contiguous)  it->dataptr += it->ao->descr->elsize;	\
-        else if (it->nd_m1 == 0) { \
-                it->dataptr += it->strides[0]; \
-                it->coordinates[0]++; \
+        if (it->nd_m1 == 0) {                                           \
+                it->dataptr += it->strides[0];                          \
+                it->coordinates[0]++;                                   \
         }                                                               \
+	else if (it->contiguous)  it->dataptr += it->ao->descr->elsize; \
 	else {								\
 		int _i_;						\
 		for (_i_ = it->nd_m1; _i_ >= 0; _i_--) {		\
