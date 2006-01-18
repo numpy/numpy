@@ -51,7 +51,7 @@ class GnuFCompiler(FCompiler):
     #    return FCompiler.get_linker_so(self)
 
     def get_flags_linker_so(self):
-        opt = ['-m32']
+        opt = []
         if sys.platform=='darwin':
             target = os.environ.get('MACOSX_DEPLOYMENT_TARGET', None)
             if target is None:
@@ -63,7 +63,7 @@ class GnuFCompiler(FCompiler):
                     'MACOSX_DEPLOYMENT_TARGET reset to 10.3')
             os.environ['MACOSX_DEPLOYMENT_TARGET'] = '%s.%s' % (major,
                 minor)
-            
+
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
             opt.append("-shared")
@@ -79,7 +79,7 @@ class GnuFCompiler(FCompiler):
 
     def get_libgcc_dir(self):
         status, output = exec_command('%s -print-libgcc-file-name' \
-                                      % (self.compiler_f77[0]),use_tee=0)        
+                                      % (self.compiler_f77[0]),use_tee=0)
         if not status:
             return os.path.dirname(output)
         return
