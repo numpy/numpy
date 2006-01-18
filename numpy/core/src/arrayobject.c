@@ -5466,8 +5466,8 @@ array_fromarray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 			((flags & CONTIGUOUS) && (!(arrflags & CONTIGUOUS))) \
 			|| ((flags & ALIGNED) && (!(arrflags & ALIGNED))) \
 			|| (arr->nd > 1 &&				\
-			    ((flags & FORTRAN) != (arrflags & FORTRAN))) || \
-			((flags & WRITEABLE) && (!(arrflags & WRITEABLE)));
+			    ((flags & FORTRAN) && (!(arrflags & FORTRAN)))) \
+			|| ((flags & WRITEABLE) && (!(arrflags & WRITEABLE)));
 		
 		if (copy) {
                         if ((flags & UPDATEIFCOPY) && \

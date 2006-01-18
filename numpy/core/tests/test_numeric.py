@@ -3,7 +3,6 @@ from numpy.random import rand
 from numpy.testing import *
 from numpy.core.multiarray import dot as dot_
 
-
 class test_dot(ScipyTestCase):
     def setUp(self):
         self.A = rand(10,10)

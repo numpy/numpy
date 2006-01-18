@@ -192,9 +192,9 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     
     ret = NULL;
     dtype = PyArray_DescrFromType(typenum);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, BEHAVED_FLAGS);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, ALIGNED);
     if (ap1 == NULL) return NULL;
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, BEHAVED_FLAGS);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, ALIGNED);
     if (ap2 == NULL) goto fail;
     
     if ((ap1->nd > 2) || (ap2->nd > 2)) {  
