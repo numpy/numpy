@@ -7,6 +7,7 @@ import sys
 __all__ = ['chararray']
 
 _globalvar = 0
+_unicode = unicode
 
 # special sub-class for character arrays (string and unicode_)
 # This adds equality testing and methods of str and unicode types
@@ -320,7 +321,7 @@ def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
     if itemsize is not None:
         dtype += str(itemsize)
 
-    if isinstance(obj, str) or isinstance(obj, unicode):
+    if isinstance(obj, (str, _unicode)):
         if itemsize is None:
             itemsize = len(obj)
         shape = len(obj) / itemsize            
@@ -330,9 +331,7 @@ def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
     # default 
     val = narray(obj, dtype=dtype, fortran=fortran, subok=1)
     
-    return chararray(val.shape, itemsize, unicode, buffer=val,
-                     strides=val.strides, 
-                     fortran=fortran)
+    return val.view(chararray)
 
 def asarray(obj, itemsize=None, unicode=False, fortran=False):
     return array(obj, itemsize, copy=False,
