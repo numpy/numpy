@@ -7,27 +7,11 @@ __all__ = ['fft','ifft','fftn','ifftn','fft2','ifft2',
            'inv','svd','solve','det','eig','eigvals','lstsq',
            'pinv','cholesky','i0']
 
-# First check to see that scipy is "new" scipy
-# Perhaps we could check to see if the functions actually work in
-#  the scipy that will be imported.
+import numpy.linalg as linpkg
+import numpy.dft as fftpkg
+from numpy.lib import i0
+import sys
 
-
-have_scipy = 0
-try:
-    import scipy
-    if getattr(scipy, '__version__', None) >= '0.4.4':
-        have_scipy = 1
-except ImportError:
-    pass
-
-if have_scipy:
-    import scipy.linalg as linpkg
-    import scipy.fftpack as fftpkg
-    from scipy.special import i0
-else:
-    import numpy.linalg as linpkg
-    import numpy.dft as fftpkg
-    from numpy.lib import i0
 
 fft = fftpkg.fft
 ifft = fftpkg.ifft
@@ -46,3 +30,20 @@ lstsq = linpkg.lstsq
 pinv = linpkg.pinv
 cholesky = linpkg.cholesky
 
+_restore_dict = {}
+
+def register_func(name, func):
+    if name not in __all__:
+        raise ValueError, "%s not a dual function." % name
+    f = sys._getframe(0).f_globals
+    _restore_dict[name] = f[name]
+    f[name] = func
+
+def restore_func(name):
+    if name not in __all__:
+        raise ValueError, "%s not a dual function." % name
+    try:
+        sys._getframe(0).f_globals[name] = _restore_dict[name]
+    except KeyError:
+        pass
+    
