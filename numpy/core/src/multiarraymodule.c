@@ -631,7 +631,7 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis)
         PyArrayObject *cond;
 	PyObject *res, *ret;
 
-        cond = (PyAO *)PyArray_FromAny(condition, NULL, 0, 0, 0);
+        cond = (PyAO *)PyArray_FROM_O(condition);
         if (cond == NULL) return NULL;
         
         if (cond->nd != 1) {
@@ -926,7 +926,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 		}
 		Py_DECREF(self);
 		Py_INCREF(typecode);
-		ret =  PyArray_FromAny(mydiagonal, typecode, 0, 0, 0);
+		ret =  PyArray_FromAny(mydiagonal, typecode, 0, 0, 0, NULL);
 		Py_DECREF(mydiagonal);
 		return ret;
 	}
@@ -961,7 +961,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd,
 		return -1;
 	}
 	if ((ap = (PyArrayObject*)PyArray_FromAny(*op, typedescr, nd, nd,
-						  CARRAY_FLAGS)) == NULL)
+						  CARRAY_FLAGS, NULL)) == NULL)
 		return -1;
 	switch(nd) {
 	case 1:
@@ -1468,7 +1468,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 			Py_DECREF(Py_None);
 		}
 		mps[i] = (PyArrayObject*)
-                        PyArray_FromAny(otmp, intype, 0, 0, flags);
+                        PyArray_CheckFromAny(otmp, intype, 0, 0, flags, NULL);
 		Py_DECREF(otmp);
 		Py_XDECREF(stype);
                 if (mps[i] == NULL) goto fail;
@@ -1829,7 +1829,7 @@ PyArray_Sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 
         ap = (PyArrayObject *)PyArray_FromAny((PyObject *)op, 
 					      NULL, 1, 0, 
-					      DEFAULT_FLAGS | UPDATEIFCOPY);	
+					      DEFAULT_FLAGS | UPDATEIFCOPY, NULL);	
 	if (ap == NULL) goto fail;
 	
 	elsize = ap->descr->elsize;
@@ -2363,10 +2363,10 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	typec = PyArray_DescrFromType(typenum);
 	Py_INCREF(typec);
 	ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, 
-					       BEHAVED_FLAGS);
+					       BEHAVED_FLAGS, NULL);
 	if (ap1 == NULL) {Py_DECREF(typec); return NULL;}
 	ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
-					       BEHAVED_FLAGS);
+					       BEHAVED_FLAGS, NULL);
 	if (ap2 == NULL) goto fail;
 	
 	if (ap1->nd == 0 || ap2->nd == 0) {
@@ -2479,7 +2479,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 	char *optr;
 
 	/* make sure it is well-behaved */
-	arr = PyArray_FromAny(op, NULL, 0, 0, CARRAY_FLAGS);
+	arr = PyArray_FromAny(op, NULL, 0, 0, CARRAY_FLAGS, NULL);
 	nd = PyArray_NDIM(arr);
 	if (nd == 1) {     /* we will give in to old behavior */
 		ret = PyArray_Copy((PyArrayObject *)arr);
@@ -2545,10 +2545,10 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	typec = PyArray_DescrFromType(typenum);
 	Py_INCREF(typec);
 	ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
-					       DEFAULT_FLAGS);
+					       DEFAULT_FLAGS, NULL);
 	if (ap1 == NULL) {Py_DECREF(typec); return NULL;}
 	ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
-					       DEFAULT_FLAGS);
+					       DEFAULT_FLAGS, NULL);
 	if (ap2 == NULL) goto fail;
 	
 	n1 = ap1->dimensions[0];
@@ -3041,7 +3041,7 @@ PyArray_Converter(PyObject *object, PyObject **address)
                 return PY_SUCCEED;
         }
         else {
-		*address = PyArray_FromAny(object, NULL, 0, 0, CARRAY_FLAGS);
+		*address = PyArray_FromAny(object, NULL, 0, 0, CARRAY_FLAGS, NULL);
 		if (*address == NULL) return PY_FAIL;
 		return PY_SUCCEED;
         }
@@ -4124,7 +4124,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
                 flags |= ENSUREARRAY;
         }
 
-	if ((ret = PyArray_FromAny(op, type, 0, 0, flags)) == NULL) 
+	if ((ret = PyArray_CheckFromAny(op, type, 0, 0, flags, NULL)) == NULL) 
 		return NULL;
 
 	return ret;
@@ -5056,7 +5056,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 	PyObject *ret=NULL, *zero=NULL;
 
 
-	arr = (PyArrayObject *)PyArray_FromAny(condition, NULL, 0, 0, 0);
+	arr = (PyArrayObject *)PyArray_FromAny(condition, NULL, 0, 0, 0, NULL);
 	if (arr == NULL) return NULL;
 
 	if ((x==NULL) && (y==NULL)) {

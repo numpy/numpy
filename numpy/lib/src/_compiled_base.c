@@ -165,8 +165,8 @@ arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
 				       &ox, &obins));
 
     type = PyArray_DescrFromType(PyArray_DOUBLE);
-    Py_Try(ax=PyArray_FromAny(ox, type, 1, 1, CARRAY_FLAGS));
-    Py_Try(abins = PyArray_FromAny(obins, type, 1, 1, CARRAY_FLAGS));
+    Py_Try(ax=PyArray_FromAny(ox, type, 1, 1, CARRAY_FLAGS, NULL));
+    Py_Try(abins = PyArray_FromAny(obins, type, 1, 1, CARRAY_FLAGS, NULL));
     
     lx = PyArray_SIZE(ax);
     dx = (double *)PyArray_DATA(ax);

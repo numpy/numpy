@@ -934,6 +934,7 @@ typedef struct {
 #define PyArray_MAX_BUFSIZE 100000000
 
 #define BEHAVED_FLAGS ALIGNED | WRITEABLE
+#define BEHAVED_NS_FLAGS ALIGNED | WRITEABLE | NOTSWAPPED
 #define CARRAY_FLAGS CONTIGUOUS | BEHAVED_FLAGS
 #define CARRAY_FLAGS_RO CONTIGUOUS | ALIGNED
 #define FARRAY_FLAGS FORTRAN | BEHAVED_FLAGS
@@ -1347,24 +1348,23 @@ typedef struct {
 
 #define PyArray_SIZE(m) PyArray_MultiplyList(PyArray_DIMS(m), PyArray_NDIM(m))
 #define PyArray_NBYTES(m) (PyArray_ITEMSIZE(m) * PyArray_SIZE(m))
-#define PyArray_FROM_O(m) PyArray_FromAny(m, NULL, 0, 0, 0)
-#define PyArray_FROM_OF(m,flags) PyArray_FromAny(m, NULL, 0, 0, flags)
-#define PyArray_FROM_OT(m,type) PyArray_FromAny(m, PyArray_DescrFromType(type),\
-						0, 0, 0);
-#define PyArray_FROM_OTF(m, type, flags) \
-	PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0, flags)
+#define PyArray_FROM_O(m) PyArray_FromAny(m, NULL, 0, 0, 0, NULL)
+#define PyArray_FROM_OF(m,flags) PyArray_CheckFromAny(m, NULL, 0, 0, flags, NULL)
+#define PyArray_FROM_OT(m,type) PyArray_FromAny(m, PyArray_DescrFromType(type), \
+                                                      0, 0, 0, NULL);
+#define PyArray_FROM_OTF(m, type, flags)                                \
+	PyArray_CheckFromAny(m, PyArray_DescrFromType(type), 0, 0, flags, NULL)
 #define PyArray_FROMANY(m, type, min, max, flags) \
-	PyArray_FromAny(m, PyArray_DescrFromType(type), min, max, flags)
+	PyArray_CheckFromAny(m, PyArray_DescrFromType(type), min, max, flags, NULL)
 
 #define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), (val), PyArray_NBYTES(obj))
 
 #define REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define MAX_ELSIZE 2*SIZEOF_LONGDOUBLE
 
-
-#define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)	\
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
-			max_depth, DEFAULT_FLAGS)
+#define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)   \
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth, \
+                              max_depth, DEFAULT_FLAGS, NULL)
 	
 #define PyArray_EquivArrTypes(a1, a2)					\
 	PyArray_EquivTypes(PyArray_DESCR(a1), PyArray_DESCR(a2))
@@ -1418,16 +1418,16 @@ typedef struct {
 
 #define PyArray_FromObject(op, type, min_depth, max_depth)		\
 	PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
-			max_depth, BEHAVED_FLAGS | ENSUREARRAY)
+                              max_depth, BEHAVED_FLAGS | ENSUREARRAY, NULL)
 
 #define PyArray_ContiguousFromObject(op, type, min_depth, max_depth)	\
         PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
-			max_depth, DEFAULT_FLAGS | ENSUREARRAY)
-
+                              max_depth, DEFAULT_FLAGS | ENSUREARRAY, NULL)
+        
 #define PyArray_CopyFromObject(op, type, min_depth, max_depth)		\
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
-			max_depth, ENSURECOPY | ENSUREARRAY)
-
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,     \
+                        max_depth, ENSURECOPY | DEFAULT_FLAGS | ENSUREARRAY, NULL)
+        
 #define PyArray_Cast(mp, type_num) \
 	PyArray_CastToType(mp, PyArray_DescrFromType(type_num), 0)
 

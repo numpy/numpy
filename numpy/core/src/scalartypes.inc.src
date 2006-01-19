@@ -327,7 +327,7 @@ gentype_@name@(PyObject *m1, PyObject *m2)
                 else {
 			PyObject *newarr;
 			/* Convert object to Array scalar and try again */
-			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
+			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0, NULL);
 			if (newarr!=NULL) {
 				ret = newarr->ob_type->tp_as_number->nb_@name@(newarr, m2);
 				Py_DECREF(newarr);
@@ -343,7 +343,7 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 		else {
 			PyObject *newarr;
 			/* Convert object to Array and try again */
-			newarr = PyArray_FromAny(m2, NULL, 0, 0, 0);
+			newarr = PyArray_FromAny(m2, NULL, 0, 0, 0, NULL);
 			if (newarr!=NULL) {
 				ret = newarr->ob_type->tp_as_number->nb_@name@(m1, newarr);
 				Py_DECREF(newarr);
@@ -395,7 +395,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 		else {
 			PyObject *newarr;
 			/* Convert object to Array scalar and try again */
-			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0);
+			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0, NULL);
 			if (newarr!=NULL) {
 				ret = newarr->ob_type->tp_as_number->nb_multiply(newarr, m2);
 				Py_DECREF(newarr);
@@ -427,7 +427,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 		else {
 			PyObject *newarr;
 			/* Convert object to Array scalar and try again */
-			newarr = PyArray_FromAny(m2, NULL, 0, 0, 0);
+			newarr = PyArray_FromAny(m2, NULL, 0, 0, 0, NULL);
 			if (newarr!=NULL) {
 				ret = newarr->ob_type->tp_as_number->nb_multiply(m1, newarr);
 				Py_DECREF(newarr);
@@ -1151,7 +1151,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 	dptr = self->obval + offset;
 
 	/* Copy data from value to correct place in dptr */
-        src = PyArray_FromAny(value, typecode, 0, 0, CARRAY_FLAGS);
+        src = PyArray_FromAny(value, typecode, 0, 0, CARRAY_FLAGS, NULL);
         if (src == NULL) return NULL;
 	typecode->f->copyswap(dptr, PyArray_DATA(src), 
 			      !PyArray_ISNBO(self->descr->byteorder),
@@ -1634,7 +1634,7 @@ static PyObject *
 	if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
 
 	typecode = PyArray_DescrFromType(PyArray_@TYPE@);
-	arr = PyArray_FromAny(obj, typecode, 0, 0, FORCECAST);
+	arr = PyArray_FromAny(obj, typecode, 0, 0, FORCECAST, NULL);
 	return PyArray_Return((PyArrayObject *)arr);
 }
 /**end repeat**/

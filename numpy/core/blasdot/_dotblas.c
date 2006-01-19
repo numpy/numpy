@@ -192,9 +192,9 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     
     ret = NULL;
     dtype = PyArray_DescrFromType(typenum);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, ALIGNED);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, ALIGNED, NULL);
     if (ap1 == NULL) return NULL;
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, ALIGNED);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, ALIGNED, NULL);
     if (ap2 == NULL) goto fail;
     
     if ((ap1->nd > 2) || (ap2->nd > 2)) {  
@@ -888,14 +888,14 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
     
     type = PyArray_DescrFromType(typenum);
     
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
     if (ap1==NULL) goto fail;
     op1 = PyArray_Flatten(ap1, 0);
     if (op1==NULL) goto fail;
     Py_DECREF(ap1);
     ap1 = (PyArrayObject *)op1;
     
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, type, 0, 0, 0);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, type, 0, 0, 0, NULL);
     if (ap2==NULL) goto fail;
     op2 = PyArray_Flatten(ap2, 0);
     if (op2 == NULL) goto fail;

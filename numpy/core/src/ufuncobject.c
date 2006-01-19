@@ -820,7 +820,7 @@ _create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
 				ntype = PyArray_DescrFromType(arg_types[i]);
 				new = PyArray_FromAny((PyObject *)mps[i], 
 						      ntype, 0, 0,
-						      FORCECAST | ALIGNED);
+						      FORCECAST | ALIGNED, NULL);
 				if (new == NULL) return -1;
 				Py_DECREF(mps[i]);
 				mps[i] = (PyArrayObject *)new;
@@ -855,41 +855,6 @@ _has_reflected_op(PyObject *op, char *name)
 
 #undef _GETATTR_
 
-/* XXX: some functionality in this function should become part of array C-API */
-static PyArrayObject *
-_get_input_array(PyUFuncObject *ufunc, PyObject *args, int i)
-{
-	PyObject *result;
-	PyObject *op, *array_meth;
-	op = PyTuple_GET_ITEM(args,i);
-	if (PyArray_Check(op)) {
-		Py_INCREF(op);
-		return (PyArrayObject *)op;
-	}
-	if (PyArray_IsScalar(op, Generic))
-		return (PyArrayObject *)PyArray_FromScalar(op, NULL);
-	array_meth = PyObject_GetAttrString(op, "__array__");
-	if (array_meth) {
-		result = PyObject_CallFunction(array_meth, "O(OOi)",
-						   Py_None, ufunc, args, i);
-		if (result == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
-			PyErr_Clear();
-			result = PyObject_CallFunction(array_meth, "");
-		}
-		if (!result || PyArray_Check(result))
-			return (PyArrayObject *)result;
-		else {
-			PyErr_SetString(PyExc_TypeError, "__array__ returned invalid type");
-			Py_DECREF(result);
-			return NULL;
-		}
-	}
-	/* XXX: Calling PyArray_FromAny after all the common cases
-	   XXX: are taken care of is an overkill, but at the moment
-	   XXX: arrayobject does not provide any simpler API. */
-	return (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0);
-}
-
 static int
 construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 {
@@ -899,6 +864,8 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 	PyUFuncObject *self=loop->ufunc;
 	Bool allscalars=TRUE;
 	PyTypeObject *subtype=&PyArray_Type;
+        PyObject *context=NULL;
+        PyObject *obj;
 
         /* Check number of arguments */
         nargs = PyTuple_Size(args);
@@ -908,10 +875,15 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                 return -1;
         }
 
-
         /* Get each input argument */
         for (i=0; i<self->nin; i++) {
-                mps[i] = _get_input_array(self, args, i);
+                obj = PyTuple_GET_ITEM(args,i);
+                if (!PyArray_Check(obj) && !PyArray_IsScalar(obj, Generic)) {
+                        context = Py_BuildValue("OOi", self, args, i);
+                }
+                else context = NULL;
+                mps[i] = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, context);
+                Py_XDECREF(context);
                 if (mps[i] == NULL) return -1;
                 arg_types[i] = PyArray_TYPE(mps[i]);
                 if (PyTypeNum_ISFLEXIBLE(arg_types[i])) {
@@ -1066,7 +1038,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 				  new = PyArray_FromAny((PyObject *)mps[i],
 							ntype, 0, 0,
 							FORCECAST | ALIGNED |
-							UPDATEIFCOPY);
+							UPDATEIFCOPY, NULL);
 				  if (new == NULL) return -1;
 				  Py_DECREF(mps[i]);
 				  mps[i] = (PyArrayObject *)new;
@@ -1707,7 +1679,7 @@ _getidentity(PyUFuncObject *self, int otype, char *str)
         }
 
 	typecode = PyArray_DescrFromType(otype); 
-        arr = PyArray_FromAny(obj, typecode, 0, 0, CARRAY_FLAGS);
+        arr = PyArray_FromAny(obj, typecode, 0, 0, CARRAY_FLAGS, NULL);
         Py_DECREF(obj);
         return (PyArrayObject *)arr;
 }
@@ -1727,7 +1699,7 @@ _create_reduce_copy(PyUFuncReduceObject *loop, PyArrayObject **arr, int rtype)
 			ntype = PyArray_DescrFromType(rtype);
 			new = PyArray_FromAny((PyObject *)(*arr), 
 					      ntype, 0, 0,
-					      FORCECAST | ALIGNED);
+					      FORCECAST | ALIGNED, NULL);
 			if (new == NULL) return -1;
 			*arr = (PyArrayObject *)new;
 			loop->decref = new;
@@ -2414,7 +2386,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	int axis=0;
 	PyArrayObject *mp, *ret = NULL;
 	PyObject *op, *res=NULL;
-	PyObject *obj_ind;        
+	PyObject *obj_ind, *context; 
 	PyArrayObject *indices = NULL;
 	PyArray_Descr *otype=NULL;
 	static char *kwlist1[] = {"array", "axis", "dtype", NULL};
@@ -2448,7 +2420,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 						PyArray_DescrConverter, 
 						&otype)) return NULL;
                 indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype, 
-							   1, 1, CARRAY_FLAGS);
+							   1, 1, CARRAY_FLAGS, NULL);
                 if (indices == NULL) return NULL;
 		Py_DECREF(indtype);		
 	}
@@ -2460,7 +2432,14 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	}
 	
 	/* Ensure input is an array */	
-	mp = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0);
+        if (!PyArray_Check(op) && !PyArray_IsScalar(op, Generic)) {
+                context = Py_BuildValue("O(O)i", self, op, 0);
+        }
+        else {
+                context = NULL;
+        }
+	mp = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0, context);
+        Py_XDECREF(context);
 	if (mp == NULL) return NULL;
 
         /* Check to see if input is zero-dimensional */

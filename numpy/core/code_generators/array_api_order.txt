@@ -60,3 +60,8 @@ PyArray_FillWithScalar
 PyArray_CheckStrides
 PyArray_DescrNewByteorder
 PyArray_IterAllButAxis
+PyArray_CheckFromAny
+PyArray_FromArray
+PyArray_FromInterface
+PyArray_FromStructInterface
+PyArray_FromArrayAttr
