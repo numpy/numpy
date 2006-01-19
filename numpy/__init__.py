@@ -19,12 +19,6 @@ try:
 except ImportError:
     show_config = None
 
-try:
-    import pkg_resources as _pk # activate namespace packages (manipulates __path__)
-    del _pk
-except ImportError:
-    pass
-
 if show_config is None:
     import sys as _sys
     print >> _sys.stderr, 'Running from numpy source directory.'
