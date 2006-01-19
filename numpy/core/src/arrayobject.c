@@ -1654,7 +1654,7 @@ _swap_axes(PyArrayMapIterObject *mit, PyArrayObject **ret)
 static void PyArray_MapIterReset(PyArrayMapIterObject *);
 static void PyArray_MapIterNext(PyArrayMapIterObject *);
 static void PyArray_MapIterBind(PyArrayMapIterObject *, PyArrayObject *);
-static PyObject* PyArray_MapIterNew(PyObject *, int);
+static PyObject* PyArray_MapIterNew(PyObject *, int, int);
 
 static PyObject *
 PyArray_GetMap(PyArrayMapIterObject *mit)
@@ -1827,6 +1827,80 @@ add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
 	return (PyObject *)other;
 }
 
+
+/* This checks the args for any fancy indexing objects */
+
+#define SOBJ_NOTFANCY 0 
+#define SOBJ_ISFANCY 1
+#define SOBJ_BADARRAY 2
+#define SOBJ_TOOMANY 3
+#define SOBJ_LISTTUP 4
+
+static int
+fancy_indexing_check(PyObject *args)
+{
+	int i, n;
+	PyObject *obj;
+	int retval = SOBJ_NOTFANCY;
+
+	if (PyTuple_Check(args)) {
+		n = PyTuple_GET_SIZE(args);
+		if (n >= MAX_DIMS) return SOBJ_TOOMANY;
+		for (i=0; i<n; i++) {
+			obj = PyTuple_GET_ITEM(args,i);
+			if (PyArray_Check(obj)) {
+				if (PyArray_ISINTEGER(obj))
+					retval = SOBJ_ISFANCY;
+				else {
+					retval = SOBJ_BADARRAY;
+					break;
+				}
+			}
+			else if (PySequence_Check(obj)) {
+                                retval = SOBJ_ISFANCY;
+			}
+		}
+	}	
+	else if (PyArray_Check(args)) {
+		if ((PyArray_TYPE(args)==PyArray_BOOL) ||
+		    (PyArray_ISINTEGER(args)))
+			return SOBJ_ISFANCY;
+		else
+			return SOBJ_BADARRAY;
+	}
+	else if (PySequence_Check(args)) {
+		/* Sequences < MAX_DIMS with any slice objects
+		   or newaxis, or Ellipsis is considered standard
+		   as long as there are also no Arrays and or additional
+		   sequences embedded.
+		*/
+		retval = SOBJ_ISFANCY;
+		n = PySequence_Size(args);
+		if (n<0 || n>=MAX_DIMS) return SOBJ_ISFANCY;
+		for (i=0; i<n; i++) {
+			obj = PySequence_GetItem(args, i);
+			if (obj == NULL) return SOBJ_ISFANCY;
+			if (PyArray_Check(obj)) {
+				if (PyArray_ISINTEGER(obj))
+					retval = SOBJ_LISTTUP;
+				else
+					retval = SOBJ_BADARRAY;
+			}
+			else if (PySequence_Check(obj)) {
+                                retval = SOBJ_LISTTUP;
+			}
+			else if (PySlice_Check(obj) || obj == Py_Ellipsis || \
+			    obj == Py_None) {
+				retval = SOBJ_NOTFANCY;
+			}
+			Py_DECREF(obj);
+			if (retval > SOBJ_ISFANCY) return retval;
+		}
+	}
+
+	return retval;
+}
+
 /* Called when treating array object like a mapping -- called first from 
    Python when using a[object] unless object is a standard slice object
    (not an extended one). 
@@ -1853,7 +1927,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
 {
         intp dimensions[MAX_DIMS], strides[MAX_DIMS];
 	intp offset;
-        int nd, oned;
+        int nd, oned, fancy;
 	intp i;
         PyArrayObject *other;
 	PyArrayMapIterObject *mit;
@@ -1912,12 +1986,16 @@ array_subscript(PyArrayObject *self, PyObject *op)
 		}
         }
 
-	oned = ((self->nd == 1) && !(PyTuple_Check(op) && PyTuple_GET_SIZE(op) > 1));
+	fancy = fancy_indexing_check(op);
 
-	/* wrap arguments into a mapiter object */
-        mit = (PyArrayMapIterObject *)PyArray_MapIterNew(op, oned);
-        if (mit == NULL) return NULL;
-        if (!mit->view) {  /* fancy indexing */
+	if (fancy != SOBJ_NOTFANCY) { 
+		oned = ((self->nd == 1) && !(PyTuple_Check(op) &&	\
+					     PyTuple_GET_SIZE(op) > 1));
+
+		/* wrap arguments into a mapiter object */
+		mit = (PyArrayMapIterObject *)\
+			PyArray_MapIterNew(op, oned, fancy);
+		if (mit == NULL) return NULL;
 		if (oned) {
 			PyArrayIterObject *it;
 			PyObject *rval;
@@ -1933,7 +2011,6 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 Py_DECREF(mit);
                 return (PyObject *)other;
         }
-        Py_DECREF(mit);
 
 	i = PyArray_PyIntAsIntp(op);
 	if (!error_converting(i)) {
@@ -1981,7 +2058,7 @@ static int iter_ass_subscript(PyArrayIterObject *, PyObject *, PyObject *);
 static int 
 array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op) 
 {
-        int ret, oned;
+        int ret, oned, fancy;
 	intp i;
         PyArrayObject *tmp;
 	PyArrayMapIterObject *mit;
@@ -2041,11 +2118,15 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
                 return -1;
         }
 
-	oned = ((self->nd == 1) && !(PyTuple_Check(op) && PyTuple_GET_SIZE(op) > 1));
+	fancy = fancy_indexing_check(index);
 
-        mit = (PyArrayMapIterObject *)PyArray_MapIterNew(index, oned);
-        if (mit == NULL) return -1;
-        if (!mit->view) {
+	if (fancy != SOBJ_NOTFANCY) { 
+		oned = ((self->nd == 1) && !(PyTuple_Check(index) && \
+					     PyTuple_GET_SIZE(index) > 1));
+
+		mit = (PyArrayMapIterObject *)			\
+			PyArray_MapIterNew(index, oned, fancy);
+		if (mit == NULL) return -1;
 		if (oned) {
 			PyArrayIterObject *it;
 			int rval;
@@ -2061,8 +2142,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
                 Py_DECREF(mit);
                 return ret;
         }
-        Py_DECREF(mit);
-
+	
 	i = PyArray_PyIntAsIntp(index);
 	if (!error_converting(i)) {
 		return array_ass_big_item(self, i, op);
@@ -6967,79 +7047,6 @@ static PyTypeObject PyArrayIter_Type = {
  *     and so that indexing can be set up ahead of time                   *
  */ 
 
-/* This checks the args for any fancy indexing objects */
-
-#define SOBJ_NOTFANCY 0 
-#define SOBJ_ISFANCY 1
-#define SOBJ_BADARRAY 2
-#define SOBJ_TOOMANY 3
-#define SOBJ_LISTTUP 4
-
-static int
-fancy_indexing_check(PyObject *args)
-{
-	int i, n;
-	PyObject *obj;
-	int retval = SOBJ_NOTFANCY;
-
-	if (PyTuple_Check(args)) {
-		n = PyTuple_GET_SIZE(args);
-		if (n >= MAX_DIMS) return SOBJ_TOOMANY;
-		for (i=0; i<n; i++) {
-			obj = PyTuple_GET_ITEM(args,i);
-			if (PyArray_Check(obj)) {
-				if (PyArray_ISINTEGER(obj))
-					retval = SOBJ_ISFANCY;
-				else {
-					retval = SOBJ_BADARRAY;
-					break;
-				}
-			}
-			else if (PySequence_Check(obj)) {
-                                retval = SOBJ_ISFANCY;
-			}
-		}
-	}	
-	else if (PyArray_Check(args)) {
-		if ((PyArray_TYPE(args)==PyArray_BOOL) ||
-		    (PyArray_ISINTEGER(args)))
-			return SOBJ_ISFANCY;
-		else
-			return SOBJ_BADARRAY;
-	}
-	else if (PySequence_Check(args)) {
-		/* Sequences < MAX_DIMS with any slice objects
-		   or newaxis, or Ellipsis is considered standard
-		   as long as there are also no Arrays and or additional
-		   sequences embedded.
-		*/
-		retval = SOBJ_ISFANCY;
-		n = PySequence_Size(args);
-		if (n<0 || n>=MAX_DIMS) return SOBJ_ISFANCY;
-		for (i=0; i<n; i++) {
-			obj = PySequence_GetItem(args, i);
-			if (obj == NULL) return SOBJ_ISFANCY;
-			if (PyArray_Check(obj)) {
-				if (PyArray_ISINTEGER(obj))
-					retval = SOBJ_LISTTUP;
-				else
-					retval = SOBJ_BADARRAY;
-			}
-			else if (PySequence_Check(obj)) {
-                                retval = SOBJ_LISTTUP;
-			}
-			else if (PySlice_Check(obj) || obj == Py_Ellipsis || \
-			    obj == Py_None) {
-				retval = SOBJ_NOTFANCY;
-			}
-			Py_DECREF(obj);
-			if (retval > SOBJ_ISFANCY) return retval;
-		}
-	}
-
-	return retval;
-}
-
 /* convert an indexing object to an INTP indexing array iterator
    if possible -- otherwise, it is a Slice or Ellipsis object
    and has to be interpreted on bind to a particular 
@@ -7271,8 +7278,6 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 	     and dimensions of the object.
 	*/
 	     
-	if (mit->view) return;
-
 	/* no subspace iteration needed.  Finish up and Return */
 	if (subnd == 0) {
 		n = arr->nd;
@@ -7455,49 +7460,40 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
 	}
 	Py_XDECREF(ba);
 	return -1;
-
 }
 
 static PyObject *
-PyArray_MapIterNew(PyObject *indexobj, int oned)
+PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
 {
         PyArrayMapIterObject *mit;
-	int fancy=0;
 	PyArray_Descr *indtype;
 	PyObject *arr = NULL;
 	int i, n, started, nonindex;
 
-        
+	if (fancy == SOBJ_BADARRAY) {
+		PyErr_SetString(PyExc_IndexError,			\
+				"arrays used as indices must be of "    \
+				"integer type");
+		return NULL;
+	}
+	if (fancy == SOBJ_TOOMANY) {
+		PyErr_SetString(PyExc_IndexError, "too many indices");
+		return NULL;
+	}
+
         mit = (PyArrayMapIterObject *)_pya_malloc(sizeof(PyArrayMapIterObject));
         PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
         if (mit == NULL)
                 return NULL;
 	for (i=0; i<MAX_DIMS; i++)
 		mit->iters[i] = NULL;
- 	mit->view = 0;
  	mit->index = 0;
  	mit->ait = NULL;
  	mit->subspace = NULL;
 	mit->numiter = 0;
 	mit->consec = 1;
-	fancy = fancy_indexing_check(indexobj);
 	Py_INCREF(indexobj);
 	mit->indexobj = indexobj;
-	if (fancy == SOBJ_NOTFANCY) { /* bail out */
-		mit->view = 1;
-		goto ret;
-	}
-
-	if (fancy == SOBJ_BADARRAY) {
-		PyErr_SetString(PyExc_IndexError,			\
-				"arrays used as indices must be of "    \
-				"integer type");
-		goto fail;
-	}
-	if (fancy == SOBJ_TOOMANY) {
-		PyErr_SetString(PyExc_IndexError, "too many indices");
-		goto fail;
-	}
 
 	if (fancy == SOBJ_LISTTUP) {
 		PyObject *newobj;
@@ -7513,7 +7509,7 @@ PyArray_MapIterNew(PyObject *indexobj, int oned)
 #undef SOBJ_BADARRAY 
 #undef SOBJ_TOOMANY 
 #undef SOBJ_LISTTUP 
-
+        
 	if (oned) return (PyObject *)mit;
 
 	/* Must have some kind of fancy indexing if we are here */
@@ -7588,7 +7584,6 @@ PyArray_MapIterNew(PyObject *indexobj, int oned)
 			goto fail;
 	}
 
- ret:
         return (PyObject *)mit;
        
  fail:
