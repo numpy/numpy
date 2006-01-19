@@ -455,12 +455,13 @@ PyArray_PyIntAsIntp(PyObject *o)
 	if (PyArray_Check(o)) {
 		if (PyArray_SIZE(o)!=1 || !PyArray_ISINTEGER(o)) {
 			PyErr_SetString(PyExc_TypeError, msg);
-			Py_DECREF(descr);
 			return -1;
 		}
+		Py_INCREF(descr);
 		arr = PyArray_CastToType((PyArrayObject *)o, descr, 0);
 	}
 	else if (PyArray_IsScalar(o, Integer)) {
+		Py_INCREF(descr);
 		arr = PyArray_FromScalar(o, descr);
 	}
 	if (arr != NULL) {
@@ -537,12 +538,13 @@ PyArray_PyIntAsInt(PyObject *o)
 	if (PyArray_Check(o)) {
 		if (PyArray_SIZE(o)!=1 || !PyArray_ISINTEGER(o)) {
 			PyErr_SetString(PyExc_TypeError, msg);
-			Py_DECREF(descr);
 			return -1;
 		}
+		Py_INCREF(descr);
 		arr = PyArray_CastToType((PyArrayObject *)o, descr, 0);
 	}
 	if (PyArray_IsScalar(o, Integer)) {
+		Py_INCREF(descr);
 		arr = PyArray_FromScalar(o, descr);
 	}
 	if (arr != NULL) {

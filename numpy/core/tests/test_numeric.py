@@ -60,6 +60,10 @@ class test_dot(ScipyTestCase):
         c2 = dot_(b3, b1)
         assert_almost_equal(c1, c2, decimal=self.N)
 
+    def check_matscalar(self):
+	b1 = matrix(ones((3,3),dtype=complex))
+	assert_equal(b1*1.0, b1)
+
 
 class test_bool_scalar(ScipyTestCase):
     def test_logical(self):
