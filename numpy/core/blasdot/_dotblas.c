@@ -336,8 +336,8 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		rptr = ret->data;
 		l = ap1->dimensions[maxind];
 		pval = (double *)ap2->data;
-		a1s = ap1->strides[maxind] / sizeof(double);
-		rets = ret->strides[maxind] / sizeof(double);
+		a1s = ap1->strides[maxind] / sizeof(cdouble);
+		rets = ret->strides[maxind] / sizeof(cdouble);
 		for (i=0; i < ap1->dimensions[oind]; i++) {
 		    cblas_zaxpy(l, pval, (double *)ptr, a1s, 
 				(double *)rptr, rets);
@@ -400,8 +400,8 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		rptr = ret->data;
 		l = ap1->dimensions[maxind];
 		pval = (float *)ap2->data;
-		a1s = ap1->strides[maxind] / sizeof(float);
-		rets = ret->strides[maxind] / sizeof(float);
+		a1s = ap1->strides[maxind] / sizeof(cfloat);
+		rets = ret->strides[maxind] / sizeof(cfloat);
 		for (i=0; i < ap1->dimensions[oind]; i++) {
 		    cblas_caxpy(l, pval, (float *)ptr, a1s, 
 				(float *)rptr, rets);
