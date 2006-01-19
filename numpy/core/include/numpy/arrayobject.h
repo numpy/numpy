@@ -698,6 +698,8 @@ typedef enum {
  * Py_intptr_t, Py_uintptr_t are defined in pyport.h. */
 typedef Py_intptr_t intp;
 typedef Py_uintptr_t uintp;
+#define SIZEOF_INTP SIZEOF_PY_INTPTR_T
+#define SIZEOF_UINTP SIZEOF_PY_INTPTR_T
 
 #define INTP_FMT "d"
 

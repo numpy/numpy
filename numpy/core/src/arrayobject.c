@@ -22,150 +22,6 @@ Space Science Telescope Institute
 
 */
 
-/* Helper functions */
-
-#define error_converting(x)  (((x) == -1) && PyErr_Occurred())
-
-/*OBJECT_API*/
-static intp
-PyArray_PyIntAsIntp(PyObject *o)
-{
-	longlong long_value = -1;
-	PyObject *obj;
-	static char *msg = "an integer is required";
-	PyObject *arr=NULL;
-	PyArray_Descr *descr;
-	intp ret;
-
-	if (!o) {
-		PyErr_SetString(PyExc_TypeError, msg);
-		return -1;
-	}
-	descr = PyArray_DescrFromType(PyArray_INTP);
-	if (PyArray_Check(o)) {
-		if (PyArray_SIZE(o)!=1 || !PyArray_ISINTEGER(o)) {
-			PyErr_SetString(PyExc_TypeError, msg);
-			Py_DECREF(descr);
-			return -1;
-		}
-		arr = PyArray_CastToType((PyArrayObject *)o, descr, 0);
-	}
-	else if (PyArray_IsScalar(o, Integer)) {
-		arr = PyArray_FromScalar(o, descr);
-	}
-	if (arr != NULL) {
-		ret = *((intp *)PyArray_DATA(arr));
-		Py_DECREF(arr);
-		return ret;
-	}		
-	if (PyInt_Check(o)) {
-		long_value = (longlong) PyInt_AS_LONG(o);
-	} else if (PyLong_Check(o)) {
-		long_value = (longlong) PyLong_AsLongLong(o);
-	} else if (o->ob_type->tp_as_number != NULL &&		\
-		    o->ob_type->tp_as_number->nb_long != NULL) {
-		obj = o->ob_type->tp_as_number->nb_long(o);
-		if (obj != NULL) {
-			long_value = (longlong) PyLong_AsLongLong(obj);
-			Py_DECREF(obj);
-		}
-	} else if (o->ob_type->tp_as_number != NULL &&		\
-		    o->ob_type->tp_as_number->nb_int != NULL) {
-		obj = o->ob_type->tp_as_number->nb_int(o);
-		if (obj != NULL) {
-			long_value = (longlong) PyLong_AsLongLong(obj);
-			Py_DECREF(obj);
-		}
-	} else {
-		PyErr_SetString(PyExc_NotImplementedError,"");
-	}
-	
-	if error_converting(long_value) {
-		PyErr_SetString(PyExc_TypeError, msg);
-		return -1;
-	}
-	
-#if (SIZEOF_LONGLONG != SIZEOF_PY_INTPTR_T)
-	if ((long_value < MIN_INTP) || (long_value > MAX_INTP)) {
-		PyErr_SetString(PyExc_ValueError,
-				"integer won't fit into a C intp");
-		return -1;
-	}
-#endif
-	return (intp) long_value;
-}
-
-
-static PyObject *array_int(PyArrayObject *v);
-
-/*OBJECT_API*/
-static int
-PyArray_PyIntAsInt(PyObject *o)
-{
-	long long_value = -1;
-	PyObject *obj;
-	static char *msg = "an integer is required";
-	PyObject *arr=NULL;
-	PyArray_Descr *descr;
-	int ret;
-
-	
-	if (!o) {
-		PyErr_SetString(PyExc_TypeError, msg);
-		return -1;
-	}
-	descr = PyArray_DescrFromType(PyArray_INT);
-	if (PyArray_Check(o)) {
-		if (PyArray_SIZE(o)!=1 || !PyArray_ISINTEGER(o)) {
-			PyErr_SetString(PyExc_TypeError, msg);
-			Py_DECREF(descr);
-			return -1;
-		}
-		arr = PyArray_CastToType((PyArrayObject *)o, descr, 0);
-	}
-	if (PyArray_IsScalar(o, Integer)) {
-		arr = PyArray_FromScalar(o, descr);
-	}
-	if (arr != NULL) {
-		ret = *((int *)PyArray_DATA(arr));
-		Py_DECREF(arr);
-		return ret;
-	}		
-	if (PyInt_Check(o)) {
-		long_value = (long) PyInt_AS_LONG(o);
-	} else if (PyLong_Check(o)) {
-		long_value = (long) PyLong_AsLong(o);
-	} else if (o->ob_type->tp_as_number != NULL &&		\
-		    o->ob_type->tp_as_number->nb_long != NULL) {
-		obj = o->ob_type->tp_as_number->nb_long(o);
-		if (obj == NULL) return -1;
-		long_value = (long) PyLong_AsLong(obj);
-		Py_DECREF(obj);
-	} else if (o->ob_type->tp_as_number != NULL &&		\
-		    o->ob_type->tp_as_number->nb_int != NULL) {
-		obj = o->ob_type->tp_as_number->nb_int(o);
-		if (obj == NULL) return -1;
-		long_value = (long) PyLong_AsLong(obj);
-		Py_DECREF(obj);
-	} else {
-		PyErr_SetString(PyExc_NotImplementedError,"");
-	}
-	if error_converting(long_value) {
-		PyErr_SetString(PyExc_TypeError, msg);
-		return -1;
-	}
-	
-#if (SIZEOF_LONG != SIZEOF_INT)
-	if ((long_value < INT_MIN) || (long_value > INT_MAX)) {
-		PyErr_SetString(PyExc_ValueError,
-				"integer won't fit into a C int");
-		return -1;
-	}
-#endif
-	return (int) long_value;
-}
-
-
 /*OBJECT_API
  Get Priority from object
 */
@@ -554,9 +410,179 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
 }
 
 static PyArray_Descr **userdescrs=NULL;
+#define error_converting(x)  (((x) == -1) && PyErr_Occurred())
+
 /* Computer-generated arraytype and scalartype code */
 #include "scalartypes.inc"
 #include "arraytypes.inc"
+
+
+/* Helper functions */
+
+/*OBJECT_API*/
+static intp
+PyArray_PyIntAsIntp(PyObject *o)
+{
+	longlong long_value = -1;
+	PyObject *obj;
+	static char *msg = "an integer is required";
+	PyObject *arr;
+	PyArray_Descr *descr;
+	intp ret;
+
+	if (!o) {
+		PyErr_SetString(PyExc_TypeError, msg);
+		return -1;
+	}
+
+	if (PyInt_Check(o)) {
+		long_value = (longlong) PyInt_AS_LONG(o);
+		goto finish;
+	} else if (PyLong_Check(o)) {
+		long_value = (longlong) PyLong_AsLongLong(o);
+		goto finish;
+	}
+
+#if SIZEOF_INTP == SIZEOF_LONG 
+	descr = &LONG_Descr;
+#elif SIZEOF_INTP == SIZEOF_INT
+	descr = &INT_Descr;
+#else
+	descr = &LONGLONG_DESCR;
+#endif
+	arr = NULL;
+
+	if (PyArray_Check(o)) {
+		if (PyArray_SIZE(o)!=1 || !PyArray_ISINTEGER(o)) {
+			PyErr_SetString(PyExc_TypeError, msg);
+			Py_DECREF(descr);
+			return -1;
+		}
+		arr = PyArray_CastToType((PyArrayObject *)o, descr, 0);
+	}
+	else if (PyArray_IsScalar(o, Integer)) {
+		arr = PyArray_FromScalar(o, descr);
+	}
+	if (arr != NULL) {
+		ret = *((intp *)PyArray_DATA(arr));
+		Py_DECREF(arr);
+		return ret;
+	}		
+	if (o->ob_type->tp_as_number != NULL &&			\
+	    o->ob_type->tp_as_number->nb_long != NULL) {
+		obj = o->ob_type->tp_as_number->nb_long(o);
+		if (obj != NULL) {
+			long_value = (longlong) PyLong_AsLongLong(obj);
+			Py_DECREF(obj);
+		}
+	}
+	else if (o->ob_type->tp_as_number != NULL &&		\
+		 o->ob_type->tp_as_number->nb_int != NULL) {
+		obj = o->ob_type->tp_as_number->nb_int(o);
+		if (obj != NULL) {
+			long_value = (longlong) PyLong_AsLongLong(obj);
+			Py_DECREF(obj);
+		}
+	}
+	else {
+		PyErr_SetString(PyExc_NotImplementedError,"");
+	}
+	
+ finish:
+	if error_converting(long_value) {
+		PyErr_SetString(PyExc_TypeError, msg);
+		return -1;
+	}
+	
+#if (SIZEOF_LONGLONG > SIZEOF_INTP)
+	if ((long_value < MIN_INTP) || (long_value > MAX_INTP)) {
+		PyErr_SetString(PyExc_ValueError,
+				"integer won't fit into a C intp");
+		return -1;
+	}
+#endif
+	return (intp) long_value;
+}
+
+
+static PyObject *array_int(PyArrayObject *v);
+
+/*OBJECT_API*/
+static int
+PyArray_PyIntAsInt(PyObject *o)
+{
+	long long_value = -1;
+	PyObject *obj;
+	static char *msg = "an integer is required";
+	PyObject *arr;
+	PyArray_Descr *descr;
+	int ret;
+
+	
+	if (!o) {
+		PyErr_SetString(PyExc_TypeError, msg);
+		return -1;
+	}
+
+	if (PyInt_Check(o)) {
+		long_value = (long) PyInt_AS_LONG(o);
+		goto finish;
+	} else if (PyLong_Check(o)) {
+		long_value = (long) PyLong_AsLong(o);
+		goto finish;
+	}
+
+	descr = &INT_Descr;
+	arr=NULL;
+	if (PyArray_Check(o)) {
+		if (PyArray_SIZE(o)!=1 || !PyArray_ISINTEGER(o)) {
+			PyErr_SetString(PyExc_TypeError, msg);
+			Py_DECREF(descr);
+			return -1;
+		}
+		arr = PyArray_CastToType((PyArrayObject *)o, descr, 0);
+	}
+	if (PyArray_IsScalar(o, Integer)) {
+		arr = PyArray_FromScalar(o, descr);
+	}
+	if (arr != NULL) {
+		ret = *((int *)PyArray_DATA(arr));
+		Py_DECREF(arr);
+		return ret;
+	}		
+	if (o->ob_type->tp_as_number != NULL &&		\
+	    o->ob_type->tp_as_number->nb_int != NULL) {
+		obj = o->ob_type->tp_as_number->nb_int(o);
+		if (obj == NULL) return -1;
+		long_value = (long) PyLong_AsLong(obj);
+		Py_DECREF(obj);
+	}
+	else if (o->ob_type->tp_as_number != NULL &&			\
+		 o->ob_type->tp_as_number->nb_long != NULL) {
+		obj = o->ob_type->tp_as_number->nb_long(o);
+		if (obj == NULL) return -1;
+		long_value = (long) PyLong_AsLong(obj);
+		Py_DECREF(obj);
+	}		
+	else {
+		PyErr_SetString(PyExc_NotImplementedError,"");
+	}
+
+ finish:
+	if error_converting(long_value) {
+		PyErr_SetString(PyExc_TypeError, msg);
+		return -1;
+	}
+	
+#if (SIZEOF_LONG > SIZEOF_INT)
+	if ((long_value < INT_MIN) || (long_value > INT_MAX)) {
+		PyErr_SetString(PyExc_ValueError,
+				"integer won't fit into a C int");
+		return -1;
+	}
+#endif
+	return (int) long_value;
+}
 
 static char *
 index2ptr(PyArrayObject *mp, intp i) 
