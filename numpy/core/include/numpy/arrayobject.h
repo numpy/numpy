@@ -1353,10 +1353,14 @@ typedef struct {
 #define PyArray_FROM_OT(m,type) PyArray_FromAny(m, PyArray_DescrFromType(type), \
                                                       0, 0, 0, NULL);
 #define PyArray_FROM_OTF(m, type, flags)                                \
-	PyArray_CheckFromAny(m, PyArray_DescrFromType(type), 0, 0, flags, NULL)
-#define PyArray_FROMANY(m, type, min, max, flags) \
-	PyArray_CheckFromAny(m, PyArray_DescrFromType(type), min, max, flags, NULL)
-
+	PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0,           \
+                        (((flags) & ENSURECOPY) ?                       \
+                         ((flags) | DEFAULT_FLAGS) : (flags)), NULL) 
+#define PyArray_FROMANY(m, type, min, max, flags)                       \
+	PyArray_FromAny(m, PyArray_DescrFromType(type), min, max,       \
+                        (((flags) & ENSURECOPY) ?                       \
+                         (flags) | DEFAULT_FLAGS : (flags)), NULL)
+        
 #define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), (val), PyArray_NBYTES(obj))
 
 #define REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
