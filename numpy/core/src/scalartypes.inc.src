@@ -32,7 +32,6 @@ static PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
 	{PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
 };
 
-
 /* Inheritance established later when tp_bases is set (or tp_base for 
    single inheritance) */
 

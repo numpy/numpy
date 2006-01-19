@@ -62,6 +62,13 @@ import_array(void)
   Py_DECREF(c_api);
   Py_DECREF(numpy);
   if (PyArray_API == NULL) return -1;
+  /* Perform runtime check of C API version */
+  if (NDARRAY_VERSION != PyArray_GetNDArrayCVersion()) {
+    PyErr_Format(PyExc_RuntimeError, "numpy C-API mismatch: module "\
+        "compiled against version %%X but this version of numpy is %%X", \
+        (uint) PyArray_GetNDArrayCVersion(), (uint) NDARRAY_VERSION);
+    return -1;
+  }
   return 0;
 }
 #endif

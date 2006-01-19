@@ -4998,6 +4998,26 @@ array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 	return PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
 }
 
+/*MULTIARRAY_API
+ GetNDArrayCVersion
+*/
+static uint
+PyArray_GetNDArrayCVersion(void)
+{
+	return (uint)NDARRAY_VERSION;
+}
+
+static char 
+doc__get_ndarray_c_version[] = "_get_ndarray_c_version() gets the compile time NDARRAY_VERSION number";
+
+static PyObject *
+array__get_ndarray_c_version(PyObject *dummy, PyObject *args, PyObject *kwds) 
+{
+	static char *kwlist[] = {NULL};
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist )) return NULL;
+	
+	return PyInt_FromLong( (long) PyArray_GetNDArrayCVersion() );
+}
 
 static char 
 doc_set_string_function[] = "set_string_function(f, repr=1) sets the python function f to be the function used to obtain a pretty printable string version of a array whenever a array is printed.  f(M) should expect a array argument M, and should return a string consisting of the desired representation of M for printing.";
@@ -5223,6 +5243,8 @@ buffer_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
 
 
 static struct PyMethodDef array_module_methods[] = {
+	{"_get_ndarray_c_version", (PyCFunction)array__get_ndarray_c_version, 
+	 METH_VARARGS|METH_KEYWORDS, doc__get_ndarray_c_version},
 	{"set_string_function", (PyCFunction)array_set_string_function, 
 	 METH_VARARGS|METH_KEYWORDS, doc_set_string_function},
 	{"set_numeric_ops", (PyCFunction)array_set_ops_function,
