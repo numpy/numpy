@@ -43,7 +43,13 @@ def restore_func(name):
     if name not in __all__:
         raise ValueError, "%s not a dual function." % name
     try:
-        sys._getframe(0).f_globals[name] = _restore_dict[name]
+        val = _restore_dict[name]
     except KeyError:
-        pass
-    
+        return
+    else:
+        sys._getframe(0).f_globals[name] = val
+
+def restore_all():
+    for name in _restore_dict.keys():
+        restore_func(name)
+        
