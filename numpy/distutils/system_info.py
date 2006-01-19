@@ -119,7 +119,6 @@ if sys.platform == 'win32':
     default_src_dirs = ['.']
     default_x11_lib_dirs = []
     default_x11_include_dirs = []
-    default_intel_dirs = []
 else:
     default_lib_dirs = ['/usr/local/lib', '/opt/lib', '/usr/lib',
                         '/sw/lib']
@@ -130,8 +129,6 @@ else:
     default_x11_lib_dirs = ['/usr/X11R6/lib','/usr/X11/lib','/usr/lib']
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include',
                                 '/usr/include']
-    default_intel_dirs = [os.environ.get('HOME','.'),
-                          '/opt/intel','/usr/local/intel']
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0,os.path.join(sys.prefix, 'lib'))
@@ -673,7 +670,21 @@ class mkl_info(system_info):
         mklroot = os.environ.get('MKLROOT',None)
         if mklroot is not None:
             return mklroot
-        for d in default_intel_dirs:
+        paths = os.environ.get('LD_LIBRARY_PATH','').split(os.pathsep)
+        ld_so_conf = '/etc/ld.so.conf'
+        if os.path.isfile(ld_so_conf):
+            for d in open(ld_so_conf,'r').readlines():
+                d = d.strip()
+                if d: paths.append(d)
+        intel_mkl_dirs = []
+        for path in paths:
+            path_atoms = path.split(os.sep)
+            for m in path_atoms:
+                if m.startswith('mkl'):
+                    d = os.sep.join(path_atoms[:path_atoms.index(m)+2])
+                    intel_mkl_dirs.append(d)
+                    break
+        for d in paths:
             dirs = glob(os.path.join(d,'mkl','*')) + glob(os.path.join(d,'mkl*'))
             for d in dirs:
                 if os.path.isdir(os.path.join(d,'lib')):
