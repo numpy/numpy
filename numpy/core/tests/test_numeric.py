@@ -67,31 +67,31 @@ class test_dot(ScipyTestCase):
 
 class test_bool_scalar(ScipyTestCase):
     def test_logical(self):
-        f = bool_(False)
-        t = bool_(True)
+        f = False_
+        t = True_
         s = "xyz"
         self.failUnless((t and s) is s)
         self.failUnless((f and s) is f)
 
     def test_bitwise_or(self):
-        f = bool_(False)
-        t = bool_(True)
+        f = False_
+        t = True_
         self.failUnless((t | t) is t)
         self.failUnless((f | t) is t)
         self.failUnless((t | f) is t)
         self.failUnless((f | f) is f)
 
     def test_bitwise_and(self): 
-        f = bool_(False)
-        t = bool_(True)
+        f = False_
+        t = True_
         self.failUnless((t & t) is t)
         self.failUnless((f & t) is f)
         self.failUnless((t & f) is f)
         self.failUnless((f & f) is f)
 
     def test_bitwise_xor(self): 
-        f = bool_(False)
-        t = bool_(True)
+        f = False_
+        t = True_
         self.failUnless((t ^ t) is f)
         self.failUnless((f ^ t) is t)
         self.failUnless((t ^ f) is t)

@@ -16,7 +16,7 @@ __all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
            'seterr', 'geterr', 'setbufsize', 'getbufsize',
            'seterrcall', 'geterrcall',
            'Inf', 'inf', 'infty', 'Infinity',
-           'nan', 'NaN']
+           'nan', 'NaN', 'False_', 'True_']
 
 import sys
 import multiarray
@@ -472,6 +472,8 @@ _setdef()
 
 Inf = inf = infty = Infinity = PINF
 nan = NaN = NAN
+False_ = bool_(False)
+True_ = bool_(True)
 
 import oldnumeric
 from oldnumeric import *
