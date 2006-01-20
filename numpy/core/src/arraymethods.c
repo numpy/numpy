@@ -641,7 +641,7 @@ array_copy(PyArrayObject *self, PyObject *args)
 	int fortran=0;
         if (!PyArg_ParseTuple(args, "|i", &fortran)) return NULL;
 	
-        return _ARET(PyArray_NewCopy(self, fortran));
+        return PyArray_NewCopy(self, fortran);
 }
 
 static char doc_resize[] = "self.resize(new_shape).  "\
