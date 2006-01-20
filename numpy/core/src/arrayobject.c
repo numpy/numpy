@@ -3338,15 +3338,27 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
              or, can be made into one */
 	if ((nd=PySequence_Length(seq)) == -1) {
 		if (PyErr_Occurred()) PyErr_Clear();
+#if SIZEOF_LONG >= SIZEOF_INTP
 		if (!(op = PyNumber_Int(seq))) return -1;
+#else
+		if (!(op = PyNumber_Long(seq))) return -1;
+#endif
 		nd = 1;
+#if SIZEOF_LONG >= SIZEOF_INTP
 		vals[0] = (intp ) PyInt_AsLong(op);
+#else
+		vals[0] = (intp ) PyLong_AsLongLong(op);
+#endif
 		Py_DECREF(op);
 	} else {
 		for(i=0; i < MIN(nd,maxvals); i++) {
 			op = PySequence_GetItem(seq, i);
 			if (op == NULL) return -1;
+#if SIZEOF_LONG >= SIZEOF_INTP
 			vals[i]=(intp )PyInt_AsLong(op);
+#else
+			vals[i]=(intp )PyLong_AsLongLong(op);
+#endif
 			Py_DECREF(op);
 			if(PyErr_Occurred()) return -1;
 		}
