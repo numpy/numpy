@@ -74,7 +74,7 @@ extern "C" {
 #define PY_SUCCEED 1
 
 	/* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x000904
+#define NDARRAY_VERSION 0x00090401
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -803,6 +803,11 @@ typedef struct {
 	PyArray_GetItemFunc *getitem;
 	PyArray_SetItemFunc *setitem;
 
+	/* Copy and/or swap data.  Memory areas may not overlap */
+	/*  Use memmove first if they might */
+	PyArray_CopySwapNFunc *copyswapn;
+        PyArray_CopySwapFunc *copyswap;
+
 	/* Function to compare items */
 	PyArray_CompareFunc *compare;
 
@@ -816,10 +821,6 @@ typedef struct {
 	   place a single value plus possible separator */
 	PyArray_ScanFunc *scanfunc;
 
-	/* Copy and/or swap data.  Memory areas may not overlap */
-	/*  Use memmove first if they might */
-	PyArray_CopySwapNFunc *copyswapn;
-        PyArray_CopySwapFunc *copyswap;
 	
 	/* Function to determine if data is zero or not */
 	PyArray_NonzeroFunc *nonzero;
@@ -1010,14 +1011,33 @@ typedef struct {
 	memset(it->coordinates, 0, (it->nd_m1+1)*sizeof(intp));		\
 }
 
-
+#define _PyArray_ITER_NEXT1(it) {		\
+		it->dataptr += it->strides[0];	\
+		it->coordinates[0]++;		\
+	}
+	
+#define _PyArray_ITER_NEXT2(it) {					\
+		if (it->coordinates[1] < it->dims_m1[1]) {		\
+			it->coordinates[1]++;				\
+			it->dataptr += it->strides[1];			\
+		}							\
+		else {							\
+			it->coordinates[1] = 0;				\
+			it->coordinates[0]++;				\
+			it->dataptr += it->strides[0] -			\
+				it->backstrides[1];			\
+		}							\
+	}
+	
 #define PyArray_ITER_NEXT(it) {						\
 	it->index++;						        \
-        if (it->nd_m1 == 0) {                                           \
-                it->dataptr += it->strides[0];                          \
-                it->coordinates[0]++;                                   \
-        }                                                               \
+        if (it->nd_m1 == 0) {						\
+		_PyArray_ITER_NEXT1(it);				\
+	}								\
 	else if (it->contiguous)  it->dataptr += it->ao->descr->elsize; \
+	else if (it->nd_m1 == 1) {					\
+		_PyArray_ITER_NEXT2(it);				\
+	}								\
 	else {								\
 		int _i_;						\
 		for (_i_ = it->nd_m1; _i_ >= 0; _i_--) {		\

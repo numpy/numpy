@@ -64,9 +64,9 @@ import_array(void)
   if (PyArray_API == NULL) return -1;
   /* Perform runtime check of C API version */
   if (NDARRAY_VERSION != PyArray_GetNDArrayCVersion()) {
-    PyErr_Format(PyExc_RuntimeError, "numpy C-API mismatch: module "\
-        "compiled against version %%X but this version of numpy is %%X", \
-        (uint) PyArray_GetNDArrayCVersion(), (uint) NDARRAY_VERSION);
+    PyErr_Format(PyExc_RuntimeError, "module compiled against "\
+        "version %%x of C-API but this version of numpy is %%x", \
+        (int) PyArray_GetNDArrayCVersion(), (int) NDARRAY_VERSION);
     return -1;
   }
   return 0;
