@@ -7,7 +7,7 @@ collectinput - Collects all files that are included to a main Latex document
 Copyright 1999 Pearu Peterson all rights reserved,
 Pearu Peterson <pearu@ioc.ee>          
 Permission to use, modify, and distribute this software is given under the
-terms of the LGPL.  See http://www.fsf.org
+terms of the NumPy License
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 

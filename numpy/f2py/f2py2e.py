@@ -7,7 +7,7 @@ f2py2e - Fortran to Python C/API generator. 2nd Edition.
 Copyright 1999--2005 Pearu Peterson all rights reserved,
 Pearu Peterson <pearu@cens.ioc.ee>          
 Permission to use, modify, and distribute this software is given under the
-terms of the LGPL.  See http://www.fsf.org
+terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 $Date: 2005/05/06 08:31:19 $

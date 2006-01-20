@@ -8,7 +8,7 @@ Usage:
 Copyright 2001-2005 Pearu Peterson all rights reserved,
 Pearu Peterson <pearu@cens.ioc.ee>          
 Permission to use, modify, and distribute this software is given under the
-terms of the LGPL.  See http://www.fsf.org
+terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 $Revision: 1.32 $
@@ -79,7 +79,7 @@ if __name__ == "__main__":
             'Development Status :: 5 - Production/Stable',
             'Intended Audience :: Developers',
             'Intended Audience :: Science/Research',
-            'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
+            'License :: OSI Approved :: NumPy License',
             'Natural Language :: English',
             'Operating System :: OS Independent',
             'Programming Language :: C',
@@ -94,7 +94,7 @@ if __name__ == "__main__":
           author_email      = "pearu@cens.ioc.ee",
           maintainer        = "Pearu Peterson",
           maintainer_email  = "pearu@cens.ioc.ee",
-          license           = "LGPL",
+          license           = "BSD",
           platforms         = "Unix, Windows (mingw|cygwin), Mac OSX",
           long_description  = """\
 The Fortran to Python Interface Generator, or F2PY for short, is a

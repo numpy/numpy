@@ -6,7 +6,7 @@ Rules for building C/API module with f2py2e.
 Copyright 1999,2000 Pearu Peterson all rights reserved,
 Pearu Peterson <pearu@ioc.ee>          
 Permission to use, modify, and distribute this software is given under the
-terms of the LGPL.  See http://www.fsf.org
+terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 $Date: 2004/11/26 11:13:06 $

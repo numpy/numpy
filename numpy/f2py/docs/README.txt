@@ -5,7 +5,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :Author: Pearu Peterson <pearu@cens.ioc.ee>
-:License: LGPL_.
+:License: NumPy License
 :Web-site: http://cens.ioc.ee/projects/f2py2e/
 :Discussions to: `f2py-users mailing list`_
 :Documentation: `User's Guide`__, FAQ__
@@ -443,7 +443,6 @@ __ http://jrfonseca.dyndns.org/debian/
 .. _Numarray: http://www.stsci.edu/resources/software_hardware/numarray
 .. _docutils: http://docutils.sourceforge.net/
 .. _distutils: http://www.python.org/sigs/distutils-sig/
-.. _LGPL: http://www.fsf.org/copyleft/lesser.html
 .. _Numerical Python: http://www.numpy.org/
 .. _Pyfort: http://pyfortran.sourceforge.net/
 .. _Scientific Python: 
