@@ -30,13 +30,44 @@ MyPyLong_AsUnsignedLongLong(PyObject *vv)
 	return PyLong_AsUnsignedLongLong(vv);	
 }
 
+static double 
+_getNAN(void) {
+#ifdef NAN
+        return NAN;
+#else
+        double mul = 1e100;
+        double tmp = 0.0;
+        double pinf=0;
+        static double nan=0;
+        
+        if (nan == 0) {
+                pinf = mul;
+                for (;;) {
+                        pinf *= mul;
+                        if (pinf == tmp) break;
+                        tmp = pinf;
+                }
+                nan = pinf / pinf;
+        }
+        return nan;
+#endif
+}
+
+static double
+MyPyFloat_AsDouble(PyObject *obj)
+{
+        if (obj == Py_None) return _getNAN();
+        return PyFloat_AsDouble(obj);                
+}
+
+
 /****************** getitem and setitem **********************/
 
 /**begin repeat
 
 #TYP=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,LONG,UINT,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE#
 #func1=PyBool_FromLong, PyInt_FromLong*6, PyLong_FromUnsignedLong*2, PyLong_FromLongLong, PyLong_FromUnsignedLongLong, PyFloat_FromDouble*2#
-#func2=PyObject_IsTrue, PyInt_AsLong*6, MyPyLong_AsUnsignedLong*2, PyLong_AsLongLong, MyPyLong_AsUnsignedLongLong, PyFloat_AsDouble*2#
+#func2=PyObject_IsTrue, PyInt_AsLong*6, MyPyLong_AsUnsignedLong*2, PyLong_AsLongLong, MyPyLong_AsUnsignedLongLong, MyPyFloat_AsDouble*2#
 #typ=Bool, byte, ubyte, short, ushort, int, long, uint, ulong, longlong, ulonglong, float, double#
 #typ1=long*7, ulong*2, longlong, ulonglong, float, double#
 #kind=Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong, LongLong, ULongLong, Float, Double#
