@@ -159,7 +159,12 @@ static int
 		else { 
                         op2 = op; Py_INCREF(op);
                 }
-                oop = PyComplex_AsCComplex (op2);
+                if (op2 == Py_None) {
+                        oop.real = oop.imag = _getNAN();
+                }
+                else {
+                        oop = PyComplex_AsCComplex (op2);
+                }
                 Py_DECREF(op2);
                 if (PyErr_Occurred()) return -1;
                 temp.real = (@typ@) oop.real;
@@ -193,7 +198,8 @@ LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
                 temp = ((PyLongDoubleScalarObject *)op)->obval;
         }
         else {
-                temp = (longdouble)PyFloat_AsDouble(op);
+                if (op == Py_None) temp = (longdouble)_getNAN();
+                else temp = (longdouble)PyFloat_AsDouble(op);
         }
         if (PyErr_Occurred()) return -1;
         if (ap == NULL || PyArray_ISBEHAVED(ap)) 
