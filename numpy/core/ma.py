@@ -160,11 +160,10 @@ def getmaskarray (a):
 def is_mask (m):
     """Is m a legal mask? Does not check contents, only type.
     """
-    if m is nomask or (isinstance(m, ndarray) and \
-                     m.dtype.type is MaskType):
-        return 1
-    else:
-        return 0
+    try:
+        return m.dtype.type is MaskType
+    except AttributeError:
+        return False
 
 def make_mask (m, copy=0, flag=0):
     """make_mask(m, copy=0, flag=0)
@@ -1709,10 +1708,8 @@ def where (condition, x, y):
     fc = filled(not_equal(condition,0), 0)
     xv = filled(x)
     xm = getmask(x)
-    if xm is nomask: xm = numeric.False_
     yv = filled(y)
     ym = getmask(y)
-    if ym is nomask: ym = numeric.False_
     d = numeric.choose(fc, (yv, xv))
     md = numeric.choose(fc, (ym, xm))
     m = getmask(condition)
