@@ -3273,7 +3273,7 @@ _check_axis(PyArrayObject *arr, int *axis, int flags)
 
 	if ((*axis >= MAX_DIMS) || (n==0)) {
 		temp = PyArray_Ravel(arr,0);
-		*axis = 0;
+		*axis = PyArray_NDIM(temp)-1;
 		return temp;
 	}
 	else {

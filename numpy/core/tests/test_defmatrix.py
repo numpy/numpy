@@ -74,6 +74,11 @@ class test_properties(ScipyTestCase):
         assert A[0,0] == mA[0,0]
         assert A[0,0] != mB[0,0]
 
+    def check_noaxis(self):
+        A = matrix([[1,0],[0,1]])
+	assert A.sum() == matrix(2)
+	assert A.mean() == matrix(0.5)
+
 class test_autocasting(ScipyTestCase):
     def check_basic(self):
         A = arange(100).reshape(10,10)
