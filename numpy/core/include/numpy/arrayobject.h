@@ -1342,8 +1342,8 @@ typedef struct {
 	 PyUnicode_Check(obj))
 #define PyArray_IsAnyScalar(obj)					\
 	(PyArray_IsScalar(obj, Generic) || PyArray_IsPythonScalar(obj))
-#define PyArray_CheckAnyScalar(obj) (PyArray_CheckScalar(obj) ||	\
-				     PyArray_IsPythonScalar(obj))
+#define PyArray_CheckAnyScalar(obj) (PyArray_IsPythonScalar(obj) || \
+				     PyArray_CheckScalar(obj))
 	
 #define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ? Py_INCREF(m), m : \
                                   (PyArrayObject *)(PyArray_Copy(m)))
