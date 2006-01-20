@@ -22,7 +22,7 @@ ufunc_domain = {}
 ufunc_fills = {}
 
 MaskType=bool_
-nomask = None # To be changed to MaskType(0)
+nomask = MaskType(0)
 divide_tolerance = 1.e-35
 
 class MAError (Exception):
