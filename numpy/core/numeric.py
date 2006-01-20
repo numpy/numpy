@@ -241,7 +241,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         return cName + "(%s, dtype=%s)" % (lst, typename)
 
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
-    return array2string(a, max_line_width, precision, suppress_small, ' ', "")
+    return array2string(a, max_line_width, precision, suppress_small, ' ', "", str)
 
 set_string_function = multiarray.set_string_function
 set_string_function(array_str, 0)
