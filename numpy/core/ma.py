@@ -1707,20 +1707,12 @@ def where (condition, x, y):
        the value masked.
     """
     fc = filled(not_equal(condition,0), 0)
-    if x is masked:
-        xv = 0
-        xm = 1
-    else:
-        xv = filled(x)
-        xm = getmask(x)
-        if xm is nomask: xm = 0
-    if y is masked:
-        yv = 0
-        ym = 1
-    else:
-        yv = filled(y)
-        ym = getmask(y)
-        if ym is nomask: ym = 0
+    xv = filled(x)
+    xm = getmask(x)
+    if xm is nomask: xm = numeric.False_
+    yv = filled(y)
+    ym = getmask(y)
+    if ym is nomask: ym = numeric.False_
     d = numeric.choose(fc, (yv, xv))
     md = numeric.choose(fc, (ym, xm))
     m = getmask(condition)

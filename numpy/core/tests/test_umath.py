@@ -3,7 +3,7 @@ from numpy.testing import *
 set_package_path()
 from numpy.core.umath import minimum, maximum, exp
 import numpy.core.umath as ncu
-from numpy import zeros, ndarray
+from numpy import zeros, ndarray, array, choose
 restore_path()
 
 class test_log1p(ScipyTestCase):
@@ -131,6 +131,11 @@ class test_special_methods(ScipyTestCase):
         assert_equal(maximum(a, B()), 0)
         assert_equal(maximum(a, C()), 0)
 
+class test_choose(ScipyTestCase):
+    def test_mixed(self):
+        c = array([True,True])
+        a = array([True,True])
+        assert_equal(choose(c, (a, 1)), array([1,1]))
         
 if __name__ == "__main__":
     ScipyTest().run()
