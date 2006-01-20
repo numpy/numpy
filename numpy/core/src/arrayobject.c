@@ -6177,9 +6177,6 @@ static PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth, 
                      int max_depth, int requires, PyObject *context) 
 {
-	if (requires & ENSURECOPY) {
-		requires |= DEFAULT_FLAGS;
-	}
 	if (requires & NOTSWAPPED) {
 		if (!descr && PyArray_Check(op) && \
 		    !PyArray_ISNBO(PyArray_DESCR(op)->byteorder)) {
