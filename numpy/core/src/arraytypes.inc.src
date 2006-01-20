@@ -342,6 +342,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 					"invalid shape in fixed-type tuple.");
 			return NULL;
 		}
+                Py_INCREF(descr->subarray->base);
 		ret = PyArray_NewFromDescr(&PyArray_Type,
 					   descr->subarray->base,
 					   shape.len, shape.ptr,
