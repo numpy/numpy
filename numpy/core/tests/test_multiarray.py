@@ -68,6 +68,16 @@ class test_dtypedescr(ScipyTestCase):
         assert_equal(d1, dtype(int32))
         d2 = dtype('f8')
         assert_equal(d2, dtype(float64))
+
+class test_fromstring(ScipyTestCase):
+    def check_binary(self):
+        a = fromstring('\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@',dtype='<f4')
+        assert_array_equal(a, array([1,2,3,4]))
+
+    def check_ascii(self):
+        a = fromstring('1 , 2 , 3 , 4',sep=',')
+        b = fromstring('1,2,3,4',dtype=float,sep=',')
+        assert_array_equal(a,b)
         
 class test_zero_rank(ScipyTestCase):
     def setUp(self):
