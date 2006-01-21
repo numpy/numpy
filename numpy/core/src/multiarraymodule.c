@@ -4993,7 +4993,7 @@ array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 	
 	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&", kwd, &o_start,
 					&o_stop, &o_step, 
-					PyArray_DescrConverter, 
+					PyArray_DescrConverter2,
 					&typecode)) 
 		return NULL;
 
