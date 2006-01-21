@@ -93,7 +93,7 @@ class chararray(ndarray):
     def __mul__(self, other):
         b = broadcast(self, other)
         arr = b.iters[1].base
-        if not issubclass(arr.dtype, integer):
+        if not issubclass(arr.dtype.type, integer):
             raise ValueError, "Can only multiply by integers"
         outitem = b.iters[0].base.itemsize * arr.max()
         result = chararray(b.shape, outitem, self.dtype is unicode_)
@@ -105,7 +105,7 @@ class chararray(ndarray):
     def __rmul__(self, other):
         b = broadcast(self, other)
         arr = b.iters[1].base
-        if not issubclass(arr.dtype, integer):
+        if not issubclass(arr.dtype.type, integer):
             raise ValueError, "Can only multiply by integers"
         outitem = b.iters[0].base.itemsize * arr.max()
         result = chararray(b.shape, outitem, self.dtype is unicode_)        

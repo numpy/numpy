@@ -208,7 +208,7 @@ def Heigenvalues(a, UPLO='L'):
     return w
 
 def _convertarray(a):
-    if issubclass(a.dtype, complexfloating):
+    if issubclass(a.dtype.type, complexfloating):
         if a.dtype.char == 'D':
             a = _fastCT(a)
         else:
