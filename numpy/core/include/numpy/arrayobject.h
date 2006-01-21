@@ -783,6 +783,7 @@ typedef void (PyArray_DotFunc)(void *, intp, void *, intp, void *, intp,
 			       void *);
 typedef void (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
 typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
+typedef int (PyArray_FromStrFunc)(char *, void *, char **, void *);
 
 typedef int (PyArray_FillFunc)(void *, intp, void *);
 
@@ -821,7 +822,10 @@ typedef struct {
 	   place a single value plus possible separator */
 	PyArray_ScanFunc *scanfunc;
 
-	
+	/* Function to read a single value from a string */
+	/* and adjust the pointer */
+	PyArray_FromStrFunc *fromstr;
+		
 	/* Function to determine if data is zero or not */
 	PyArray_NonzeroFunc *nonzero;
 

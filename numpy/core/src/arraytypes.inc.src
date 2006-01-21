@@ -752,6 +752,48 @@ static int
 /**end repeat**/
 
 
+/****************** fromstr *************************************/
+
+/**begin repeat
+#fname=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+#type=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
+#func=(l,ul)*5#
+#btype=(long,ulong)*5#
+*/
+static int
+@fname@_fromstr(char *str, @type@ *ip, char **endptr, void *ignore)
+{
+	@btype@ result;
+
+	result = PyOS_strto@func@(str, endptr, 0);	
+	*ip = (@type@) result;
+	return 0;
+}
+/**end repeat**/
+
+/**begin repeat
+#fname=FLOAT,DOUBLE,LONGDOUBLE#
+#type=float,double,longdouble#
+*/
+static int
+@fname@_fromstr(char *str, @type@ *ip, char **endptr, void *ignore)
+{
+	double result;
+
+	result = PyOS_ascii_strtod(str, endptr);
+	*ip = (@type@) result;
+	return 0;
+}
+/**end repeat**/
+
+
+
+/**begin repeat
+#fname=BOOL,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
+*/
+#define @fname@_fromstr NULL
+/**end repeat**/
+
 
 /****************** copyswapn *************************************/
 
@@ -1660,6 +1702,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	(PyArray_ArgFunc*)@from@_argmax,
 	(PyArray_DotFunc*)NULL, 
 	(PyArray_ScanFunc*)@from@_scan,
+	(PyArray_FromStrFunc*)@from@_fromstr,
 	(PyArray_NonzeroFunc*)@from@_nonzero,
 	(PyArray_FillFunc*)NULL,
 	{
@@ -1728,6 +1771,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	(PyArray_ArgFunc*)@from@_argmax,
 	(PyArray_DotFunc*)@from@_dot, 
 	(PyArray_ScanFunc*)@from@_scan,
+	(PyArray_FromStrFunc*)@from@_fromstr,
 	(PyArray_NonzeroFunc*)@from@_nonzero,
 	(PyArray_FillFunc*)@from@_fill,
 	{

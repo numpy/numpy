@@ -4327,24 +4327,32 @@ array_set_typeDict(PyObject *ignored, PyObject *args)
 	return Py_None;
 }
 
+static int
+_skip_sep(char **ptr, char *sep)
+{
+	char *a;
+	int n;
+	n = strlen(sep);
+	a = *ptr;
+	while(*a != '\0' && (strncmp(a, sep, n) != 0))
+		a++;
+	if (*a == '\0') return -1;
+	*ptr = a+strlen(sep);
+	return 0;
+}
+
 /* steals a reference to dtype -- accepts NULL */
 /*OBJECT_API*/
 static PyObject *
-PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype, intp n)
+PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype, 
+		   intp n, char *sep)
 {
 	int itemsize;
 	PyArrayObject *ret;
+	Bool binary;
 
 	if (dtype == NULL)
 		dtype=PyArray_DescrFromType(PyArray_LONG);
-	
-	if (dtype == &OBJECT_Descr) {
-		PyErr_SetString(PyExc_ValueError, 
-				"Cannot create an object array from a"\
-				" string.");
-		Py_DECREF(dtype);
-		return NULL;
-	}
 	
 	itemsize = dtype->elsize;
 	if (itemsize == 0) {
@@ -4352,34 +4360,131 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype, intp n)
 		Py_DECREF(dtype);
 		return NULL;
 	}
-	
-	if (n < 0 ) {
-		if (slen % itemsize != 0) {
+
+	binary = ((sep == NULL) || (strlen(sep) == 0));	
+
+	if (binary) {
+		if (dtype == &OBJECT_Descr) {
 			PyErr_SetString(PyExc_ValueError, 
-					"string size must be a multiple"\
-					" of element size");
+					"Cannot create an object array from"\
+					" a binary string");
+			Py_DECREF(dtype);
+			return NULL;
+		}		
+		if (n < 0 ) {
+			if (slen % itemsize != 0) {
+				PyErr_SetString(PyExc_ValueError, 
+						"string size must be a "\
+						"multiple of element size");
+				Py_DECREF(dtype);
+				return NULL;
+			}
+			n = slen/itemsize;
+		} else {
+			if (slen < n*itemsize) {
+				PyErr_SetString(PyExc_ValueError, 
+						"string is smaller than " \
+						"requested size");
+				Py_DECREF(dtype);
+				return NULL;
+			}
+		}
+	
+		if ((ret = (PyArrayObject *)\
+		     PyArray_NewFromDescr(&PyArray_Type, dtype,
+					  1, &n, NULL, NULL,
+					  0, NULL)) == NULL)
+			return NULL;		
+		memcpy(ret->data, data, n*dtype->elsize);
+		return (PyObject *)ret;
+	}
+	else {  /* read from character-based string */
+		char *ptr;		
+		PyArray_FromStrFunc *fromstr;
+		char *dptr;
+		intp nread;
+		intp index;
+
+		fromstr = dtype->f->fromstr;
+		if (fromstr == NULL) {
+			PyErr_SetString(PyExc_ValueError, 
+					"don't know how to read "	\
+					"character strings for given "	\
+					"array type");
 			Py_DECREF(dtype);
 			return NULL;
 		}
-		n = slen/itemsize;
-	} else {
-		if (slen < n*itemsize) {
-			PyErr_SetString(PyExc_ValueError, 
-					"string is smaller than requested"\
-					" size");
-			Py_DECREF(dtype);
-			return NULL;
+
+		if (n!=-1) {
+			ret = (PyArrayObject *) \
+				PyArray_NewFromDescr(&PyArray_Type,
+						     dtype, 1, &n, NULL,
+						     NULL, 0, NULL);
+			if (ret == NULL) return NULL;
+			ptr = data;
+			dptr = ret->data;
+			for (index=0; index < n; index++) {
+				if (fromstr(ptr, dptr, &ptr, ret) < 0)
+					break;
+				nread += 1;
+				dptr += dtype->elsize;
+				if (_skip_sep(&ptr, sep) < 0) 
+					break;
+			}
+			if (nread < n) {
+				fprintf(stderr, "%ld items requested but "\
+					"only %ld read\n", 
+					(long) n, (long) nread);
+				ret->data = \
+					PyDataMem_RENEW(ret->data, 
+							nread *		\
+							ret->descr->elsize);
+				PyArray_DIM(ret,0) = nread;
+			}
+		}
+		else {
+#define _FILEBUFNUM 4096
+			intp thisbuf=0;
+			intp size = _FILEBUFNUM;
+			intp bytes;
+			intp totalbytes;
+			char *end;
+			int val;
+
+			ret = (PyArrayObject *)\
+				PyArray_NewFromDescr(&PyArray_Type, 
+						     dtype,
+						     1, &size, 
+						     NULL, NULL, 
+						     0, NULL);
+			if (ret==NULL) return NULL;
+			totalbytes = bytes = size * dtype->elsize;
+			dptr = ret->data;
+			ptr = data;
+			end = data+slen;
+			while (ptr < end) {
+				val = fromstr(ptr, dptr, &ptr, ret);
+				if (val < 0) break;
+				nread += 1;
+				val = _skip_sep(&ptr, sep);
+				if (val < 0) break;
+				thisbuf += 1;
+				dptr += dtype->elsize;
+				if (thisbuf == size) {
+					totalbytes += bytes;
+					ret->data = PyDataMem_RENEW(ret->data, 
+								  totalbytes);
+					dptr = ret->data + \
+						(totalbytes - bytes);
+					thisbuf = 0;
+				}
+			}
+			ret->data = PyDataMem_RENEW(ret->data, 
+						    nread*ret->descr->elsize);
+			PyArray_DIM(ret,0) = nread;
+#undef _FILEBUFNUM
 		}
 	}
-	
-	if ((ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
-							 dtype,
-							 1, &n, 
-							 NULL, NULL,
-							 0, NULL)) == NULL)
-		return NULL;
-		
-	memcpy(ret->data, data, n*dtype->elsize);
 	return (PyObject *)ret;
 }
 
@@ -4390,18 +4495,19 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
 	char *data;
 	longlong nin=-1;
+	char *sep=NULL;
 	int s;
-	static char *kwlist[] = {"string", "dtype", "count", NULL};
+	static char *kwlist[] = {"string", "dtype", "count", "sep", NULL};
 	PyArray_Descr *descr=NULL;
 
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "s#|O&L", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "s#|O&Ls", kwlist, 
 					 &data, &s, 
 					 PyArray_DescrConverter, &descr,
-					 &nin)) {
+					 &nin, &sep)) {
 		return NULL;
 	}
 
-	return PyArray_FromString(data, (intp)s, descr, (intp)nin);
+	return PyArray_FromString(data, (intp)s, descr, (intp)nin, sep);
 }
 
 /* This needs an open file object and reads it in directly. 
@@ -4425,6 +4531,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 
 	if (typecode->elsize == 0) {
 		PyErr_SetString(PyExc_ValueError, "0-sized elements.");
+		Py_DECREF(typecode);
 		return NULL;
 	}
 
@@ -4438,6 +4545,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 		if (numbytes == -1) {
 			PyErr_SetString(PyExc_IOError, 
 					"could not seek in file");
+			Py_DECREF(typecode);
 			return NULL;
 		}
 		num = numbytes / typecode->elsize;
@@ -4463,6 +4571,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 					"don't know how to read "	\
 					"character files with that "	\
 					"array type");
+			Py_DECREF(typecode);
 			return NULL;
 		}
 
