@@ -4402,7 +4402,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 		char *ptr;		
 		PyArray_FromStrFunc *fromstr;
 		char *dptr;
-		intp nread;
+		intp nread=0;
 		intp index;
 
 		fromstr = dtype->f->fromstr;
