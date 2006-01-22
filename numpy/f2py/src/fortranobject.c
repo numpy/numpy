@@ -703,6 +703,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
 		arr->nd,effrank,rank);
 	return 1;
       }
+    /*
     for (i=0,j=0;i<rank;++i) {
       while (j<arr->nd && arr->dimensions[j]<2) ++j;
       if (j>=arr->nd) d = 1;
@@ -717,6 +718,19 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
 	if (!dims[i]) dims[i] = 1;
       } else
 	dims[i] = d;
+    }
+    */
+    for (i=0; i<rank; ++i) {
+      d = arr->dimensions[i];
+      if (dims[i]>=0) {
+	if (d > 1 && d!=dims[i]) {
+	  fprintf(stderr,"%d-th dimension must be fixed to %" INTP_FMT 
+		  " but got %" INTP_FMT "\n",
+		  i,dims[i],d);
+	  return 1;	  
+	}
+	if (!dims[i]) dims[i] = 1;
+      } else dims[i] = d;
     }
     for (i=rank;i<arr->nd;++i) { /* [[1,2],[3,4]] -> [1,2,3,4] */
       while (j<arr->nd && arr->dimensions[j]<2) ++j;

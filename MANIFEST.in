@@ -4,3 +4,4 @@
 # data, etc files to distribution. Avoid using MANIFEST.in for that.
 #
 include MANIFEST.in
+include LICENSE.txt
