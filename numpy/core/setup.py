@@ -1,6 +1,7 @@
 
 import imp
 import os
+import sys
 from os.path import join
 from glob import glob
 from distutils.dep_util import newer,newer_group
@@ -71,7 +72,12 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append('HAVE_ISNAN')
             if config_cmd.check_func('isinf', **kws_args):
                 moredefs.append('HAVE_ISINF')
-
+                
+            if sys.version[:3] < '2.4':
+                kws_args['headers'].append('stdlib.h')
+                if config_cmd.check_func('strtod', **kws_args):
+                    moredefs.append(('PyOS_ascii_strtod', 'strtod'))
+                    
             if moredefs:
                 target_f = open(target,'a')
                 for d in moredefs:
