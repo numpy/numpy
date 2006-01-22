@@ -703,6 +703,10 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
 		arr->nd,effrank,rank);
 	return 1;
       }
+    /* old f2py used to swap the dimensions so that dims had 
+       reversed dimensions from arr->dimensions -- don't do that 
+       anymore...
+    */ 
     /*
     for (i=0,j=0;i<rank;++i) {
       while (j<arr->nd && arr->dimensions[j]<2) ++j;
