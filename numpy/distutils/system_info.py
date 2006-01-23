@@ -173,9 +173,8 @@ def get_info(name,notfound_action=0):
           'lapack_src':lapack_src_info,
           'blas_src':blas_src_info,
           'numpy':numpy_info,
-          'numeric':numpy_info, # alias to numpy, for build_ext --backends support
+          'Numeric':Numeric_info,
           'numarray':numarray_info,
-          'numpy':numpy_info,
           'lapack_opt':lapack_opt_info,
           'blas_opt':blas_opt_info,
           'boost_python':boost_python_info,
@@ -206,55 +205,50 @@ class AtlasNotFoundError(NotFoundError):
     """
     Atlas (http://math-atlas.sourceforge.net/) libraries not found.
     Directories to search for the libraries can be specified in the
-    numpy_distutils/site.cfg file (section [atlas]) or by setting
+    numpy/distutils/site.cfg file (section [atlas]) or by setting
     the ATLAS environment variable."""
 
 class LapackNotFoundError(NotFoundError):
     """
     Lapack (http://www.netlib.org/lapack/) libraries not found.
     Directories to search for the libraries can be specified in the
-    numpy_distutils/site.cfg file (section [lapack]) or by setting
+    numpy/distutils/site.cfg file (section [lapack]) or by setting
     the LAPACK environment variable."""
 
 class LapackSrcNotFoundError(LapackNotFoundError):
     """
     Lapack (http://www.netlib.org/lapack/) sources not found.
     Directories to search for the sources can be specified in the
-    numpy_distutils/site.cfg file (section [lapack_src]) or by setting
+    numpy/distutils/site.cfg file (section [lapack_src]) or by setting
     the LAPACK_SRC environment variable."""
 
 class BlasNotFoundError(NotFoundError):
     """
     Blas (http://www.netlib.org/blas/) libraries not found.
     Directories to search for the libraries can be specified in the
-    numpy_distutils/site.cfg file (section [blas]) or by setting
+    numpy/distutils/site.cfg file (section [blas]) or by setting
     the BLAS environment variable."""
 
 class BlasSrcNotFoundError(BlasNotFoundError):
     """
     Blas (http://www.netlib.org/blas/) sources not found.
     Directories to search for the sources can be specified in the
-    numpy_distutils/site.cfg file (section [blas_src]) or by setting
+    numpy/distutils/site.cfg file (section [blas_src]) or by setting
     the BLAS_SRC environment variable."""
 
 class FFTWNotFoundError(NotFoundError):
     """
     FFTW (http://www.fftw.org/) libraries not found.
     Directories to search for the libraries can be specified in the
-    numpy_distutils/site.cfg file (section [fftw]) or by setting
+    numpy/distutils/site.cfg file (section [fftw]) or by setting
     the FFTW environment variable."""
 
 class DJBFFTNotFoundError(NotFoundError):
     """
     DJBFFT (http://cr.yp.to/djbfft.html) libraries not found.
     Directories to search for the libraries can be specified in the
-    numpy_distutils/site.cfg file (section [djbfft]) or by setting
+    numpy/distutils/site.cfg file (section [djbfft]) or by setting
     the DJBFFT environment variable."""
-
-class F2pyNotFoundError(NotFoundError):
-    """
-    f2py2e (http://cens.ioc.ee/projects/f2py2e/) module not found.
-    Get it from above location, install it, and retry setup.py."""
 
 class NumericNotFoundError(NotFoundError):
     """
@@ -331,7 +325,7 @@ class system_info:
 
     def get_info(self,notfound_action=0):
         """ Return a dictonary with items that are compatible
-            with numpy_distutils.setup keyword arguments.
+            with numpy.distutils.setup keyword arguments.
         """
         flag = 0
         if not self.has_info():
@@ -1341,8 +1335,8 @@ class x11_info(system_info):
             dict_append(info, include_dirs=[inc_dir])
         self.set_info(**info)
 
-class numpy_info(system_info):
-    section = 'numpy'
+class _numpy_info(system_info):
+    section = 'Numeric'
     modulename = 'Numeric'
     notfounderror = NumericNotFoundError
 
@@ -1406,14 +1400,17 @@ class numpy_info(system_info):
             self.set_info(**info)
         return
 
-class numarray_info(numpy_info):
+class numarray_info(_numpy_info):
     section = 'numarray'
     modulename = 'numarray'
 
-class numpy_info(numpy_info):
+class Numeric_info(_numpy_info):
+    section = 'Numeric'
+    modulename = 'Numeric'
+
+class numpy_info(_numpy_info):
     section = 'numpy'
     modulename = 'numpy'
-
 
 class boost_python_info(system_info):
     section = 'boost_python'
