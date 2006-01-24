@@ -3383,8 +3383,7 @@ _IsContiguous(PyArrayObject *ap)
 	for (i = ap->nd-1; i >= 0; --i) {
 		dim = ap->dimensions[i];
 		/* contiguous by definition */
-		if (dim == 0) return 1; 		
-		if (dim == 1) continue;
+		if (dim == 0) return 1;
 		if (ap->strides[i] != sd) return 0;
 		sd *= dim;
 	}
@@ -3407,7 +3406,6 @@ _IsFortranContiguous(PyArrayObject *ap)
 		dim = ap->dimensions[i];
 		/* contiguous by definition */
 		if (dim == 0) return 1; 
-		if (dim == 1) continue;
 		if (ap->strides[i] != sd) return 0;
 		sd *= dim;
 	}
