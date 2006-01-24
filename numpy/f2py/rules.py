@@ -194,7 +194,7 @@ DL_EXPORT(int) init#modulename#(void) {
 #ifdef F2PY_REPORT_ATEXIT
 \ton_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
-
+return 0;
 }
 #ifdef __cplusplus
 }
