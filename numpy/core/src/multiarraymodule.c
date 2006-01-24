@@ -5112,10 +5112,10 @@ array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 /*MULTIARRAY_API
  GetNDArrayCVersion
 */
-static uint
+static unsigned int
 PyArray_GetNDArrayCVersion(void)
 {
-	return (uint)NDARRAY_VERSION;
+	return (unsigned int)NDARRAY_VERSION;
 }
 
 static char 
