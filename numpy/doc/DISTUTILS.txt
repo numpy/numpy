@@ -293,6 +293,8 @@ in writing setup scripts:
 + ``config.get_config_cmd()`` --- returns ``numpy.distutils`` config
   command instance.
 
++ ``config.get_info(*names)`` ---
+
 Template files
 --------------
 

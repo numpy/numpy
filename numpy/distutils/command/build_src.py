@@ -40,6 +40,7 @@ class build_src(build_ext.build_ext):
         self.extensions = None
         self.package = None
         self.py_modules = None
+        self.py_modules_dict = None
         self.build_src = None
         self.build_lib = None
         self.build_base = None
@@ -59,15 +60,16 @@ class build_src(build_ext.build_ext):
             self.package = self.distribution.ext_package
         self.extensions = self.distribution.ext_modules
         self.libraries = self.distribution.libraries or []
-        self.py_modules = self.distribution.py_modules
+        self.py_modules = self.distribution.py_modules or []
+
         if self.build_src is None:
             self.build_src = os.path.join(self.build_base, 'src')
         if self.inplace is None:
             build_ext = self.get_finalized_command('build_ext')
             self.inplace = build_ext.inplace
 
-        # py_modules is used in build_py.find_package_modules
-        self.py_modules = {}
+        # py_modules_dict is used in build_py.find_package_modules
+        self.py_modules_dict = {}
 
         if self.f2pyflags is None:
             self.f2pyflags = []
@@ -89,6 +91,8 @@ class build_src(build_ext.build_ext):
         
     def build_sources(self):
 
+        self.build_py_modules_sources()
+
         for libname_info in self.libraries:
             self.build_library_sources(*libname_info)
 
@@ -98,6 +102,27 @@ class build_src(build_ext.build_ext):
             for ext in self.extensions:
                 self.build_extension_sources(ext)
 
+        return
+
+    def build_py_modules_sources(self):
+        new_py_modules = []
+        for source in self.py_modules:
+            if type(source) is type(()) and len(source)==3:
+                package, module_base, source = source
+                if callable(source):
+                    target = os.path.join(*([self.build_src]+\
+                                            package.split('.')+\
+                                            [module_base + '.py']))
+                    source = source(target)
+                if source is None:
+                    continue
+                modules = [(package, module_base, source)]
+                if not self.py_modules_dict.has_key(package):
+                    self.py_modules_dict[package] = []
+                self.py_modules_dict[package] += modules
+            else:
+                new_py_modules.append(source)
+        self.py_modules[:] = new_py_modules
         return
 
     def build_library_sources(self, lib_name, build_info):
@@ -150,13 +175,13 @@ class build_src(build_ext.build_ext):
 
         sources, py_files = self.filter_py_files(sources)
 
-        if not self.py_modules.has_key(package):
-            self.py_modules[package] = []
+        if not self.py_modules_dict.has_key(package):
+            self.py_modules_dict[package] = []
         modules = []
         for f in py_files:
             module = os.path.splitext(os.path.basename(f))[0]
             modules.append((package, module, f))
-        self.py_modules[package] += modules
+        self.py_modules_dict[package] += modules
 
         sources, h_files = self.filter_h_files(sources)
 
