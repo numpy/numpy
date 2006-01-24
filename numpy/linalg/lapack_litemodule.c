@@ -682,11 +682,10 @@ initlapack_lite(void)
     m = Py_InitModule4("lapack_lite", lapack_lite_module_methods,
 		       lapack_lite_module_documentation,
 		       (PyObject*)NULL,PYTHON_API_VERSION);
-    import_array();
+    if (import_array() < 0) return;
     d = PyModule_GetDict(m);
     LapackError = PyErr_NewException("lapack_lite.LapackError", NULL, NULL);
     PyDict_SetItemString(d, "LapackError", LapackError);
 
-    if (PyErr_Occurred())
-      Py_FatalError("can't initialize module lapack_lite");
+    return;
 }

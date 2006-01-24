@@ -2056,6 +2056,9 @@ DL_EXPORT(void) initumath(void) {
 
  err:
 	/* Check for errors */
-	if (PyErr_Occurred())
-		Py_FatalError("can't initialize module umath");
+	if (!PyErr_Occurred()) {
+		PyErr_SetString(PyExc_RuntimeError, 
+				"cannot load umath module.");
+	}
+	return;
 }

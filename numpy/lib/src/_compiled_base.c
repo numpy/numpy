@@ -437,7 +437,7 @@ DL_EXPORT(void) init_compiled_base(void) {
     m = Py_InitModule("_compiled_base", methods); 
 
     /* Import the array and ufunc objects */
-    import_array();
+    if (import_array() < 0) return;
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
@@ -454,7 +454,5 @@ DL_EXPORT(void) init_compiled_base(void) {
     /* define PyGetSetDescr_Type and PyMemberDescr_Type */
     define_types();
     
-    /* Check for errors */
-    if (PyErr_Occurred())
-	    Py_FatalError("can't initialize module _compiled_base");
+    return;
 }

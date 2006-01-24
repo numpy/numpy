@@ -5691,11 +5691,10 @@ DL_EXPORT(void) initmultiarray(void) {
 	if (_numpy_internal != NULL) return;
 
  err:	
-	/* Check for errors */
-	if (PyErr_Occurred())
-                PyErr_Print();
-		Py_FatalError("can't initialize module multiarray");
-
+	if (!PyErr_Occurred()) {
+		PyErr_SetString(PyExc_RuntimeError, 
+				"cannot load multiarray module.");
+	}
 	return;
 }
 
