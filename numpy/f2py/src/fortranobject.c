@@ -707,7 +707,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
        reversed dimensions from arr->dimensions -- don't do that 
        anymore...
     */ 
-    /*
+
     for (i=0,j=0;i<rank;++i) {
       while (j<arr->nd && arr->dimensions[j]<2) ++j;
       if (j>=arr->nd) d = 1;
@@ -723,7 +723,8 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
       } else
 	dims[i] = d;
     }
-    */
+
+    /*
     for (i=0; i<rank; ++i) {
       d = arr->dimensions[i];
       if (dims[i]>=0) {
@@ -736,6 +737,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
 	if (!dims[i]) dims[i] = 1;
       } else dims[i] = d;
     }
+    */
     for (i=rank;i<arr->nd;++i) { /* [[1,2],[3,4]] -> [1,2,3,4] */
       while (j<arr->nd && arr->dimensions[j]<2) ++j;
       if (j>=arr->nd) d = 1;
