@@ -1031,6 +1031,11 @@ def analyzeline(m,case,line):
             #    continue
             i=0;j=0;llen=len(l[1])
             for v in rmbadname(map(string.strip,string.split(markoutercomma(l[0]),'@,@'))):
+                if v[0]=='(':
+                    outmess('analyzeline: implied-DO list "%s" is not supported. Skipping.\n'%v)
+                    # XXX: subsequent init expressions may get wrong values.
+                    #      Ignoring since data statements are irrelevant for wrapping.
+                    continue
                 fc=0
                 while (i<llen) and (fc or not l[1][i]==','):
                     if l[1][i]=="'": fc=not fc
