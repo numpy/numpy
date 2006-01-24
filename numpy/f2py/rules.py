@@ -167,7 +167,7 @@ static PyMethodDef f2py_module_methods[] = {
 \t{NULL,NULL}
 };
 
-DL_EXPORT(void) init#modulename#(void) {
+DL_EXPORT(int) init#modulename#(void) {
 \tint i;
 \tPyObject *m,*d, *s;
 \tm = #modulename#_module = Py_InitModule(\"#modulename#\", f2py_module_methods);
@@ -189,7 +189,7 @@ DL_EXPORT(void) init#modulename#(void) {
 #initcommonhooks#
 #interface_usercode#
 \tif (PyErr_Occurred())
-\t\tPy_FatalError(\"can't initialize module #modulename#\");
+\t\treturn -1;
 
 #ifdef F2PY_REPORT_ATEXIT
 \ton_exit(f2py_report_on_exit,(void*)\"#modulename#\");
