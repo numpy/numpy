@@ -120,10 +120,7 @@ def atleast_1d(*arys):
     """
     res = []
     for ary in arys:
-        ary = asarray(ary)
-        if len(ary.shape) == 0:
-            ary = ary.reshape(1)
-        res.append(ary)
+        res.append(asarray(ary,ndmin=1))
     if len(res) == 1:
         return res[0]
     else:
@@ -143,14 +140,7 @@ def atleast_2d(*arys):
     """
     res = []
     for ary in arys:
-        ary = asarray(ary)
-        if len(ary.shape) == 0:
-            result = ary.reshape(1,1)
-        elif len(ary.shape) == 1: 
-            result = ary[newaxis,:]
-        else: 
-            result = ary
-        res.append(result)
+        res.append(asarray(ary,ndmin=2))
     if len(res) == 1:
         return res[0]
     else:

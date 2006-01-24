@@ -4048,11 +4048,39 @@ PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 
 /*** END C-API FUNCTIONS **/
 
+static PyObject *
+_prepend_ones(PyArrayObject *arr, int nd, int ndmin)
+{
+	intp newdims[MAX_DIMS];
+	intp newstrides[MAX_DIMS];
+	int i,k,num;
+	PyObject *ret;
+
+	num = ndmin-nd;
+	for (i=0; i<num; i++) {
+		newdims[i] = 1;
+		newstrides[i] = arr->descr->elsize;
+	}
+	for (i=num;i<ndmin;i++) {
+		k = i-num;
+		newdims[i] = arr->dimensions[k];
+		newstrides[i] = arr->strides[k];
+	}
+	Py_INCREF(arr->descr);
+	ret = PyArray_NewFromDescr(arr->ob_type, arr->descr, ndmin,
+				   newdims, newstrides, arr->data, arr->flags,
+				   (PyObject *)arr);
+	/* steals a reference to arr --- so don't increment
+	   here */
+	PyArray_BASE(ret) = (PyObject *)arr;
+	return ret;
+}
+
 
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))
 
 static char doc_fromobject[] = "array(object, dtype=None, copy=1, fortran=0, "\
-        "subok=0)\n"\
+        "subok=0,ndmin=0)\n"\
         "will return a new array formed from the given object type given.\n"\
         "Object can anything with an __array__ method, or any object\n"\
         "exposing the array interface, or any (nested) sequence.\n"\
@@ -4062,27 +4090,32 @@ static char doc_fromobject[] = "array(object, dtype=None, copy=1, fortran=0, "\
         "type, a reference will be returned.  If the sequence is an array,\n"\
         "type can be used only to upcast the array.  For downcasting \n"\
         "use .astype(t) method.  If subok is true, then subclasses of the\n"\
-        "array may be returned. Otherwise, a base-class ndarray is returned";
+        "array may be returned. Otherwise, a base-class ndarray is returned\n"\
+	"The ndmin argument specifies how many dimensions the returned\n"\
+	"array should have as a minimum. 1's will be pre-pended to the\n"\
+	"shape as needed to meet this requirement.";
 
 static PyObject *
 _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 {
 	PyObject *op, *ret=NULL;
-	static char *kwd[]= {"object", "dtype", "copy", "fortran", "subok", /* XXX ? */
-                             NULL};
+	static char *kwd[]= {"object", "dtype", "copy", "fortran", "subok", 
+			     "ndmin", NULL};
         Bool subok=FALSE;
 	Bool copy=TRUE;
+	int ndmin=0, nd;
 	PyArray_Descr *type=NULL;
 	PyArray_Descr *oldtype=NULL;
 	Bool fortran=FALSE;
 	int flags=0;
 
-	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&", kwd, &op, 
+	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i", kwd, &op, 
 					PyArray_DescrConverter2,
                                         &type, 
 					PyArray_BoolConverter, &copy, 
 					PyArray_BoolConverter, &fortran,
-                                        PyArray_BoolConverter, &subok)) 
+                                        PyArray_BoolConverter, &subok, 
+					&ndmin)) 
 		return NULL;
 
 	/* fast exit if simple call */
@@ -4090,11 +4123,13 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 		if (type==NULL) {
 			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
 				Py_INCREF(op);
-				return op;
+				ret = op;
+				goto finish;
 			}
 			else {
-				return PyArray_NewCopy((PyArrayObject*)op, 
-						       fortran);
+				ret = PyArray_NewCopy((PyArrayObject*)op, 
+						      fortran);
+				goto finish;
 			}
 		}
 		/* One more chance */
@@ -4102,7 +4137,8 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 		if (PyArray_EquivTypes(oldtype, type)) {
 			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
 				Py_INCREF(op);
-				return op;
+				ret = op;
+				goto finish;
 			}
 			else {
 				ret = PyArray_NewCopy((PyArrayObject*)op,
@@ -4111,7 +4147,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 				Py_INCREF(oldtype);
 				Py_DECREF(PyArray_DESCR(ret));
 				PyArray_DESCR(ret) = oldtype;
-				return ret;
+				goto finish;
 			}
 		}
 	}
@@ -4129,7 +4165,12 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	if ((ret = PyArray_CheckFromAny(op, type, 0, 0, flags, NULL)) == NULL) 
 		return NULL;
 
-	return ret;
+ finish:
+
+	if ((nd=PyArray_NDIM(ret)) >= ndmin) return ret;
+	/* create a new array from the same data with ones in the shape */
+	/* steals a reference to ret */
+	return _prepend_ones((PyArrayObject *)ret, nd, ndmin);
 }
 
 /* accepts NULL type */

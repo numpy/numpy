@@ -19,7 +19,6 @@ maintainer email:  oliphant.travis@ieee.org
 Numarray design (which provided guidance) by 
 Space Science Telescope Institute 
   (J. Todd Miller, Perry Greenfield, Rick White)
-
 */
 
 /*OBJECT_API
@@ -3372,18 +3371,22 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
 static int
 _IsContiguous(PyArrayObject *ap) 
 {
-	intp sd;
-	int i;
+	register intp sd;
+	register intp dim;
+	register int i;
+       
 
 	if (ap->nd == 0) return 1;
 	sd = ap->descr->elsize;
-	if (ap->nd == 1) return sd == ap->strides[0];
+	if (ap->nd == 1) return (ap->dimensions[0] == 1 || \
+				 sd == ap->strides[0]);
 	for (i = ap->nd-1; i >= 0; --i) {
+		dim = ap->dimensions[i];
 		/* contiguous by definition */
-		if (ap->dimensions[i] == 0) return 1; 
-		
+		if (dim == 0) return 1; 		
+		if (dim == 1) continue;
 		if (ap->strides[i] != sd) return 0;
-		sd *= ap->dimensions[i];
+		sd *= dim;
 	}
 	return 1;
 }
@@ -3392,18 +3395,21 @@ _IsContiguous(PyArrayObject *ap)
 static int 
 _IsFortranContiguous(PyArrayObject *ap) 
 {
-	intp sd;
-	int i;
+	register intp sd;
+	register intp dim;
+	register int i;
 	
 	if (ap->nd == 0) return 1;
 	sd = ap->descr->elsize;
-	if (ap->nd == 1) return sd == ap->strides[0];
+	if (ap->nd == 1) return (ap->dimensions[0] == 1 || \
+				 sd == ap->strides[0]);
 	for (i=0; i< ap->nd; ++i) {
+		dim = ap->dimensions[i];
 		/* contiguous by definition */
-		if (ap->dimensions[i] == 0) return 1; 
-		
+		if (dim == 0) return 1; 
+		if (dim == 1) continue;
 		if (ap->strides[i] != sd) return 0;
-		sd *= ap->dimensions[i];
+		sd *= dim;
 	}
 	return 1;
 }

@@ -67,17 +67,17 @@ can_cast = multiarray.can_cast
 lexsort = multiarray.lexsort
 
 
-def asarray(a, dtype=None, fortran=False):
+def asarray(a, dtype=None, fortran=False, ndmin=0):
     """returns a as an array.  Unlike array(),
     no copy is performed if a is already an array.  Subclasses are converted
     to base class ndarray.
     """
-    return array(a, dtype, copy=False, fortran=fortran)
+    return array(a, dtype, copy=False, fortran=fortran, ndmin=ndmin)
 
-def asanyarray(a, dtype=None, copy=False, fortran=False):
+def asanyarray(a, dtype=None, copy=False, fortran=False, ndmin=0):
     """will pass subclasses through...
     """
-    return array(a, dtype, copy=False, fortran=fortran, subok=1)
+    return array(a, dtype, copy=False, fortran=fortran, subok=1, ndmin=ndmin)
 
 def isfortran(a):
     return a.flags['FNC']
