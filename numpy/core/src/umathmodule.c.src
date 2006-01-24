@@ -2054,6 +2054,7 @@ DL_EXPORT(void) initumath(void) {
 	PyDict_SetItemString(d, "conj", s);
 	PyDict_SetItemString(d, "mod", s2);
 
+	return;
  err:
 	/* Check for errors */
 	if (!PyErr_Occurred()) {
