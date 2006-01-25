@@ -530,6 +530,41 @@ format_longdouble(char *buf, size_t buflen, longdouble val, int precision)
         }
 }
 
+/* over-ride repr and str of array-scalar strings and unicode to 
+   remove NULL bytes and then call the corresponding functions 
+   of string and unicode. 
+ */
+
+/**begin repeat
+#name=string*2,unicode*2#
+#form=(repr,str)*2#
+#Name=String*2,Unicode*2#
+#NAME=STRING*2,UNICODE*2#
+#extra=AndSize*2,,#
+#type=char*2, Py_UNICODE*2#
+*/
+static PyObject *
+@name@type_@form@(PyObject *self)
+{
+	const @type@ *dptr, *ip;
+	int len;
+	PyObject *new;
+	PyObject *ret;
+
+	ip = dptr = Py@Name@_AS_@NAME@(self);
+	len = Py@Name@_GET_SIZE(self);
+	dptr += len-1;
+	while(len > 0 && *dptr-- == 0) len--;
+	new = Py@Name@_From@Name@@extra@(ip, len);
+	if (new == NULL) return PyString_FromString("");
+	ret = Py@Name@_Type.tp_@form@(new);
+	Py_DECREF(new);
+	return ret;
+}
+/**end repeat**/
+
+
+
 #if SIZEOF_LONGDOUBLE == SIZEOF_DOUBLE
 #define PREC_REPR 15
 #define PREC_STR 15
@@ -2133,6 +2168,12 @@ initialize_numeric_types(void)
 
 	PyStringArrType_Type.tp_alloc = NULL;
 	PyStringArrType_Type.tp_free = NULL;
+	
+	PyStringArrType_Type.tp_repr = stringtype_repr;
+	PyStringArrType_Type.tp_str = stringtype_str;
+
+	PyUnicodeArrType_Type.tp_repr = unicodetype_repr;
+	PyUnicodeArrType_Type.tp_str = unicodetype_str;
 
 	PyVoidArrType_Type.tp_methods = voidtype_methods;
 	PyVoidArrType_Type.tp_getset = voidtype_getsets;

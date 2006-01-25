@@ -35,12 +35,12 @@ _getNAN(void) {
 #ifdef NAN
         return NAN;
 #else
-        double mul = 1e100;
-        double tmp = 0.0;
-        double pinf=0;
         static double nan=0;
         
         if (nan == 0) {
+		double mul = 1e100;
+		double tmp = 0.0;
+		double pinf=0;
                 pinf = mul;
                 for (;;) {
                         pinf *= mul;
@@ -225,13 +225,16 @@ UNICODE_getitem(char *ip, PyArrayObject *ap)
 {
 	PyObject *obj;
 	size_t size = sizeof(Py_UNICODE);
+	int mysize;
+	Py_UNICODE *dptr;
 
-	
-	obj = PyUnicode_FromUnicode((const Py_UNICODE *)ip, 
-				    ap->descr->elsize / size);
+	mysize = ap->descr->elsize / size;
+	dptr = (Py_UNICODE *)ip + mysize-1;
+	while(mysize > 0 && *dptr-- == 0) mysize--;
+	obj = PyUnicode_FromUnicode((const Py_UNICODE *)ip, mysize);
 	if (!PyArray_ISNOTSWAPPED(ap) && (obj != NULL)) {
 		byte_swap_vector(PyUnicode_AS_UNICODE(obj),
-				 ap->descr->elsize / size, size);
+				 mysize, size);
 	}
 	return obj;
 }
@@ -1861,7 +1864,7 @@ PyArray_DescrFromType(int type)
 	}
 	if (ret==NULL) {
 		PyErr_SetString(PyExc_ValueError, 
-				"Invalid type for array"); 
+				"Invalid data-type for array"); 
 	}
 	else Py_INCREF(ret);
 	return ret;
