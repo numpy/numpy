@@ -3459,8 +3459,7 @@ _convert_from_array_descr(PyObject *obj)
 					"two fields with the same name");
                         goto fail;
                 }
-                if (!hasobject && (conv->hasobject || \
-                                   conv->type_num == PyArray_OBJECT))
+                if (!hasobject && conv->hasobject)
                         hasobject = 1;
 		tup = PyTuple_New(2);
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
@@ -3518,8 +3517,7 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
 		tup = PyTuple_New(2);
 		key = PyString_FromFormat("f%d", i+1);
 		ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
-                if (!hasobject && (conv->hasobject || \
-                                   conv->type_num == PyArray_OBJECT))
+                if (!hasobject && conv->hasobject)
                         hasobject=1;                        
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
 		if (align) {
@@ -3688,8 +3686,7 @@ _convert_from_dict(PyObject *obj, int align)
 		tup = PyTuple_New(len);
 		descr = PyObject_GetItem(descrs, index);
 		ret = PyArray_DescrConverter(descr, &newdescr);
-                if (!hasobject && (newdescr->hasobject || \
-                                   newdescr->type_num == PyArray_OBJECT))
+                if (!hasobject && newdescr->hasobject)
                         hasobject = 1;
 		Py_DECREF(descr);
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);

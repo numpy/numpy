@@ -3762,10 +3762,10 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 
 		/* It is bad to have unitialized OBJECT pointers */
                 /* which could also be sub-fields of a VOID array */
-		if (descr == &OBJECT_Descr || descr->hasobject) {
-                        if (descr->hasobject) {
+		if (descr->hasobject) {
+                        if (descr != &OBJECT_Descr) {
                                 PyErr_SetString(PyExc_TypeError,
-                                                "fields with object members "\
+                                                "fields with object members " \
                                                 "not yet supported.");
                                 goto fail;
                         }

@@ -1744,6 +1744,7 @@ static PyArray_Descr @from@_Descr = {
 #NAME= Bool, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble, Object#
 #kind= GENBOOL, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, FLOATING, FLOATING, FLOATING, COMPLEX, COMPLEX, COMPLEX, OBJECT#
 #endian= |*3, =*14, |#
+#isobject= 0*17,1#
 */
 
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
@@ -1794,7 +1795,7 @@ static PyArray_Descr @from@_Descr = {
 	&Py@NAME@ArrType_Type,
 	PyArray_@kind@LTR,
 	PyArray_@from@LTR,
-	'@endian@', 0,
+	'@endian@', @isobject@,
 	PyArray_@from@, 
 	@num@*sizeof(@fromtyp@), 
 	_ALIGN(@fromtyp@),
