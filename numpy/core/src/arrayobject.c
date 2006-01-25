@@ -4475,7 +4475,7 @@ array_protocol_descr_get(PyArrayObject *self)
 	PyObject *res;
 	PyObject *dobj;
 	
-	res = PyObject_GetAttrString((PyObject *)self->descr, "arrdescr");
+	res = PyObject_GetAttrString((PyObject *)self->descr, "descr");
 	if (res) return res;
 	PyErr_Clear();
 
@@ -8150,11 +8150,11 @@ arraydescr_fields_get(PyArray_Descr *self)
 }
 
 static PyGetSetDef arraydescr_getsets[] = {
-	{"subdescr", 
+	{"subdtype", 
 	 (getter)arraydescr_subdescr_get,
 	 NULL,
 	 "A tuple of (descr, shape) or None."},
-	{"arrdescr",
+	{"descr",
 	 (getter)arraydescr_protocol_descr_get,
 	 NULL,
 	 "The array_protocol type descriptor."},

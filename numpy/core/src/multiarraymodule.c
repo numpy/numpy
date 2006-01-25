@@ -3701,6 +3701,11 @@ _convert_from_dict(PyObject *obj, int align)
 		Py_DECREF(index);
 
 		/* Insert into dictionary */
+		if (PyDict_GetItem(fields, name) != NULL) {
+			PyErr_SetString(PyExc_ValueError,
+					"two fields with the same name");
+			ret = PY_FAIL;
+		}
 		PyDict_SetItem(fields, name, tup);
 		Py_DECREF(name);
 		if (len == 3) PyDict_SetItem(fields, item, tup);

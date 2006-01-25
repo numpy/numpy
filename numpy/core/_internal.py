@@ -240,9 +240,9 @@ def _array_descr(descriptor):
             name = (field[2],field[3])
         else:
             name = field[2]
-        if field[0].subdescr:
-            tup = (name, _array_descr(field[0].subdescr[0]),
-                   field[0].subdescr[1])
+        if field[0].subdtype:
+            tup = (name, _array_descr(field[0].subdtype[0]),
+                   field[0].subdtype[1])
         else:
             tup = (name, _array_descr(field[0]))
         offset += field[0].itemsize
