@@ -440,21 +440,23 @@ static int check_and_fix_dimensions(const PyArrayObject* arr,
 				    intp *dims);
 
 #ifdef DEBUG_COPY_ND_ARRAY
+void dump_dims(int rank, intp* dims) {
+  int i;
+  printf("[");
+  for(i=0;i<rank;++i) {
+    printf("%3" INTP_FMT, dims[i]);
+  }
+  printf("]\n");
+}
 void dump_attrs(const PyArrayObject* arr) {
   int rank = arr->nd;
   intp size = PyArray_Size((PyObject *)arr);
-  int i;
   printf("\trank = %d, flags = %d, size = %" INTP_FMT  "\n",
 	 rank,arr->flags,size);
-  printf("\tstrides = [");
-  for(i=0;i<rank;++i) {
-    printf("%3" INTP_FMT,arr->strides[i]);
-  }
-  printf("]\n\t dimensions = [");
-  for(i=0;i<rank;++i) {
-    printf("%3" INTP_FMT, arr->dimensions[i]);
-  }
-  printf("]\n");
+  printf("\tstrides = ");
+  dump_dims(rank,arr->strides);
+  printf("\tdimensions = ");
+  dump_dims(rank,arr->dimensions);
 }
 #endif
 
@@ -650,7 +652,11 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
     match with the corresponding values in arr dimensions.
    */
   const intp arr_size = (arr->nd)?PyArray_Size((PyObject *)arr):1;
-
+#ifdef DEBUG_COPY_ND_ARRAY
+  dump_attrs(arr);
+  printf("check_and_fix_dimensions:init: dims=");
+  dump_dims(rank,dims);
+#endif
   if (rank > arr->nd) { /* [1,2] -> [[1],[2]]; 1 -> [[1]]  */
     intp new_size = 1;
     int free_axe = -1;
@@ -690,6 +696,21 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
 	      " indices)\n", new_size,arr_size);
       return 1;
     }
+  } else if (rank==arr->nd) {
+    int i;
+    intp d;
+    for (i=0; i<rank; ++i) {
+      d = arr->dimensions[i];
+      if (dims[i]>=0) {
+	if (d > 1 && d!=dims[i]) {
+	  fprintf(stderr,"%d-th dimension must be fixed to %" INTP_FMT 
+		  " but got %" INTP_FMT "\n",
+		  i,dims[i],d);
+	  return 1;	  
+	}
+	if (!dims[i]) dims[i] = 1;
+      } else dims[i] = d;
+    }
   } else { /* [[1,2]] -> [[1],[2]] */
     int i,j;
     intp d;
@@ -703,10 +724,6 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
 		arr->nd,effrank,rank);
 	return 1;
       }
-    /* old f2py used to swap the dimensions so that dims had 
-       reversed dimensions from arr->dimensions -- don't do that 
-       anymore...
-    */ 
 
     for (i=0,j=0;i<rank;++i) {
       while (j<arr->nd && arr->dimensions[j]<2) ++j;
@@ -724,20 +741,6 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
 	dims[i] = d;
     }
 
-    /*
-    for (i=0; i<rank; ++i) {
-      d = arr->dimensions[i];
-      if (dims[i]>=0) {
-	if (d > 1 && d!=dims[i]) {
-	  fprintf(stderr,"%d-th dimension must be fixed to %" INTP_FMT 
-		  " but got %" INTP_FMT "\n",
-		  i,dims[i],d);
-	  return 1;	  
-	}
-	if (!dims[i]) dims[i] = 1;
-      } else dims[i] = d;
-    }
-    */
     for (i=rank;i<arr->nd;++i) { /* [[1,2],[3,4]] -> [1,2,3,4] */
       while (j<arr->nd && arr->dimensions[j]<2) ++j;
       if (j>=arr->nd) d = 1;
@@ -756,6 +759,10 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
       return 1;
     }
   }
+#ifdef DEBUG_COPY_ND_ARRAY
+  printf("check_and_fix_dimensions:end: dims=");
+  dump_dims(rank,dims);
+#endif
   return 0;
 }
 
