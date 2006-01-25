@@ -3,7 +3,9 @@ import sys
 import copy
 
 from numpy.testing import *
-from numpy import array, typeinfo, alltrue, ndarray, asarray, can_cast,zeros
+from numpy import array, alltrue, ndarray, asarray, can_cast,zeros, dtype
+from numpy.core.multiarray import typeinfo
+
 set_package_path()
 from array_from_pyobj import wrap
 del sys.path[0]
@@ -85,11 +87,11 @@ class Type(object):
     
     
     def __new__(cls,name):
-        if isinstance(name,type):
-            dtype = name
+        if isinstance(name,dtype):
+            dtype0 = name
             name = None
             for n,i in typeinfo.items():
-                if isinstance(i,tuple) and dtype is i[-1]:
+                if isinstance(i,tuple) and dtype0.type is i[-1]:
                     name = n
                     break
         obj = cls._type_cache.get(name.upper(),None)
@@ -219,7 +221,8 @@ class Array:
     def arr_equal(self,arr1,arr2):
         if arr1.shape != arr2.shape:
             return False
-        return alltrue(arr1==arr2)
+        s = arr1==arr2
+        return alltrue(s.flatten())
 
     def __str__(self):
         return str(self.arr)
@@ -486,8 +489,8 @@ class _test_shared_memory:
             if t is self.type:
                 continue
             obj = array(self.num23seq,dtype=t.dtype)
-            assert obj.dtype==t.dtype
-            assert obj.dtype is not self.type.dtype
+            assert obj.dtype.type==t.dtype
+            assert obj.dtype.type is not self.type.dtype
             assert not obj.flags['FORTRAN'] and obj.flags['CONTIGUOUS']
             shape = obj.shape
             a = self.array(shape,intent.inplace,obj)
@@ -497,7 +500,7 @@ class _test_shared_memory:
             assert a.arr is obj
             assert obj.flags['FORTRAN'] # obj attributes are changed inplace!
             assert not obj.flags['CONTIGUOUS']
-            assert obj.dtype is self.type.dtype # obj type is changed inplace!
+            assert obj.dtype.type is self.type.dtype # obj type is changed inplace!
 
 for t in Type._type_names:
     exec '''\

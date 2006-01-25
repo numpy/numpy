@@ -104,7 +104,7 @@ static PyObject *f2py_rout_wrap_attrs(PyObject *capi_self,
 		       arr->descr->elsize,
 		       arr->descr->alignment,
 		       arr->flags,
-		       arr->itemsize);
+		       PyArray_ITEMSIZE(arr));
 }
 
 static PyMethodDef f2py_module_methods[] = {
@@ -167,17 +167,19 @@ DL_EXPORT(void) initwrap(void) {
   PyDict_SetItemString(d, "CONTIGUOUS", PyInt_FromLong(CONTIGUOUS));
   PyDict_SetItemString(d, "FORTRAN", PyInt_FromLong(FORTRAN));
   PyDict_SetItemString(d, "OWNDATA", PyInt_FromLong(OWNDATA));
+  PyDict_SetItemString(d, "FORCECAST", PyInt_FromLong(FORCECAST));
   PyDict_SetItemString(d, "ENSURECOPY", PyInt_FromLong(ENSURECOPY));
   PyDict_SetItemString(d, "ENSUREARRAY", PyInt_FromLong(ENSUREARRAY));
   PyDict_SetItemString(d, "ALIGNED", PyInt_FromLong(ALIGNED));
-  PyDict_SetItemString(d, "NOTSWAPPED", PyInt_FromLong(NOTSWAPPED));
   PyDict_SetItemString(d, "WRITEABLE", PyInt_FromLong(WRITEABLE));
   PyDict_SetItemString(d, "UPDATEIFCOPY", PyInt_FromLong(UPDATEIFCOPY));
 
   PyDict_SetItemString(d, "BEHAVED_FLAGS", PyInt_FromLong(BEHAVED_FLAGS));
-  PyDict_SetItemString(d, "BEHAVED_FLAGS_RO", PyInt_FromLong(BEHAVED_FLAGS_RO));
+  PyDict_SetItemString(d, "BEHAVED_NS_FLAGS", PyInt_FromLong(BEHAVED_NS_FLAGS));
   PyDict_SetItemString(d, "CARRAY_FLAGS", PyInt_FromLong(CARRAY_FLAGS));
   PyDict_SetItemString(d, "FARRAY_FLAGS", PyInt_FromLong(FARRAY_FLAGS));
+  PyDict_SetItemString(d, "CARRAY_FLAGS_RO", PyInt_FromLong(CARRAY_FLAGS_RO));
+  PyDict_SetItemString(d, "FARRAY_FLAGS_RO", PyInt_FromLong(FARRAY_FLAGS_RO));
   PyDict_SetItemString(d, "DEFAULT_FLAGS", PyInt_FromLong(DEFAULT_FLAGS));
   PyDict_SetItemString(d, "UPDATE_ALL_FLAGS", PyInt_FromLong(UPDATE_ALL_FLAGS));
 
