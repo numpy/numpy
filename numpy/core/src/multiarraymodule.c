@@ -3421,6 +3421,7 @@ _convert_from_array_descr(PyObject *obj)
 	PyObject *nameslist;
 	PyArray_Descr *new;
 	PyArray_Descr *conv;
+        int hasobject=0;
 	
 	n = PyList_GET_SIZE(obj);	
 	nameslist = PyList_New(n);
@@ -3453,6 +3454,14 @@ _convert_from_array_descr(PyObject *obj)
 		}
 		else goto fail;
 		if (ret == PY_FAIL) goto fail;
+                if (PyDict_GetItem(fields, name) != NULL) {
+			PyErr_SetString(PyExc_ValueError,
+					"two fields with the same name");
+                        goto fail;
+                }
+                if (!hasobject && (conv->hasobject || \
+                                   conv->type_num == PyArray_OBJECT))
+                        hasobject = 1;
 		tup = PyTuple_New(2);
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
 		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
@@ -3467,6 +3476,7 @@ _convert_from_array_descr(PyObject *obj)
 	new = PyArray_DescrNewFromType(PyArray_VOID);
 	new->fields = fields;
 	new->elsize = totalsize;
+        new->hasobject=hasobject;
 	return new;
  
  fail:
@@ -3496,6 +3506,7 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
 	PyObject *nameslist=NULL;
        	int ret;
 	int maxalign=0;
+        int hasobject=0;
 	
 	n = PyList_GET_SIZE(obj);
 	totalsize = 0;
@@ -3507,6 +3518,9 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
 		tup = PyTuple_New(2);
 		key = PyString_FromFormat("f%d", i+1);
 		ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
+                if (!hasobject && (conv->hasobject || \
+                                   conv->type_num == PyArray_OBJECT))
+                        hasobject=1;                        
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
 		if (align) {
 			int _align;
@@ -3528,6 +3542,7 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
 	Py_DECREF(nameslist);
 	new = PyArray_DescrNewFromType(PyArray_VOID);
 	new->fields = fields;
+        new->hasobject=hasobject;
 	if (maxalign > 1) {
 		totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
 	}
@@ -3630,6 +3645,7 @@ _convert_from_dict(PyObject *obj, int align)
 	int n, i;
 	int totalsize;
 	int maxalign=0;
+        int hasobject=0;
 	
 	fields = PyDict_New();
 	if (fields == NULL) return (PyArray_Descr *)PyErr_NoMemory();
@@ -3672,6 +3688,9 @@ _convert_from_dict(PyObject *obj, int align)
 		tup = PyTuple_New(len);
 		descr = PyObject_GetItem(descrs, index);
 		ret = PyArray_DescrConverter(descr, &newdescr);
+                if (!hasobject && (newdescr->hasobject || \
+                                   newdescr->type_num == PyArray_OBJECT))
+                        hasobject = 1;
 		Py_DECREF(descr);
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
 		if (offsets) {
@@ -3724,6 +3743,7 @@ _convert_from_dict(PyObject *obj, int align)
 	PyDict_SetItem(fields, key, names);
 	Py_DECREF(key);
 	new->fields = fields;
+        new->hasobject=hasobject;
 	return new;
 
  fail:

@@ -994,7 +994,4 @@ DL_EXPORT(void) init_dotblas(void) {
     Py_DECREF(d);
     Py_DECREF(s);
     
-    /* Check for errors */
-    if (PyErr_Occurred())
-	Py_FatalError("can't initialize module _dotblas");
 }

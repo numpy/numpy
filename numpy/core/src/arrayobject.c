@@ -3761,7 +3761,14 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		self->flags |= OWN_DATA;
 
 		/* It is bad to have unitialized OBJECT pointers */
-		if (descr == &OBJECT_Descr) {
+                /* which could also be sub-fields of a VOID array */
+		if (descr == &OBJECT_Descr || descr->hasobject) {
+                        if (descr->hasobject) {
+                                PyErr_SetString(PyExc_TypeError,
+                                                "fields with object members "\
+                                                "not yet supported.");
+                                goto fail;
+                        }
 			memset(data, 0, sd);
 		}
 	}
@@ -8039,7 +8046,8 @@ static PyMemberDef arraydescr_members[] = {
 	{"byteorder", T_CHAR, offsetof(PyArray_Descr, byteorder), RO, NULL},
 	{"itemsize", T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
 	{"alignment", T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
-	{NULL},
+        {"hasobject", T_UBYTE, offsetof(PyArray_Descr, hasobject), RO, NULL},
+	{NULL}, 
 };
 
 static PyObject *

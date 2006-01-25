@@ -74,7 +74,7 @@ extern "C" {
 #define PY_SUCCEED 1
 
 	/* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x00090402
+#define NDARRAY_VERSION 0x00090403
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -847,6 +847,7 @@ typedef struct {
 	char type;              /* unique-character representing this type */
 	char byteorder;         /* '>' (big), '<' (little), '|' 
 				   (not-applicable), or '=' (native). */
+        char hasobject;         /* non-zero if it has object arrays in fields */
 	int type_num;           /* number representing this type */
 	int elsize;             /* element size for this type */
        	int alignment;          /* alignment needed for this type */
