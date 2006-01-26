@@ -363,10 +363,22 @@ class Configuration:
         if subpackage_name is None:
             assert subpackage_path is not None
             subpackage_name = os.path.basename(subpackage_path)
-        assert '.' not in subpackage_name,`subpackage_name`
+        l = subpackage_name.split('.')
         if subpackage_path is None:
-            subpackage_path = os.path.join(self.local_path,subpackage_name)
+            subpackage_path = os.path.join(*([self.local_path]+l))
+            if '*' in subpackage_name:
+                dirs = filter(os.path.isdir,glob.glob(subpackage_path))
+                config_list = []
+                for d in dirs:
+                    if not os.path.isfile(os.path.join(d,'__init__.py')):
+                        continue
+                    n = '.'.join(d.split(os.sep)[-len(l):])
+                    c = self.get_subpackage(n)
+                    if c:
+                        config_list.append(c)
+                return config_list
         else:
+            subpackage_path = os.path.join(*([subpackage_path]+l[:-1]))
             subpackage_path = self._fix_paths([subpackage_path])[0]
 
         setup_py = os.path.join(subpackage_path,'setup_%s.py' % (subpackage_name))
@@ -407,17 +419,20 @@ class Configuration:
         """ Add subpackage to configuration.
         """
         config = self.get_subpackage(subpackage_name,subpackage_path)
-
-        if not config:
-            print 'No configuration returned, assuming unavailable.'
+        if not isinstance(config, list):
+            config_list = [config]
         else:
-
-            if isinstance(config,Configuration):
-                print 'Appending %s configuration to %s' % (config.name,self.name)
-                self.dict_append(**config.todict())
+            config_list = config
+        for config in config_list:
+            if not config:
+                print 'No configuration returned, assuming unavailable.'
             else:
-                print 'Appending %s configuration to %s' % (config.get('name'),self.name)
-                self.dict_append(**config)
+                if isinstance(config,Configuration):
+                    print 'Appending %s configuration to %s' % (config.name,self.name)
+                    self.dict_append(**config.todict())
+                else:
+                    print 'Appending %s configuration to %s' % (config.get('name'),self.name)
+                    self.dict_append(**config)
 
         dist = self.get_distribution()
         if dist is not None:
