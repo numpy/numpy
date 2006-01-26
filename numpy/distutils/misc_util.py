@@ -381,9 +381,10 @@ class Configuration:
             subpackage_path = os.path.join(*([subpackage_path]+l[:-1]))
             subpackage_path = self._fix_paths([subpackage_path])[0]
 
-        setup_py = os.path.join(subpackage_path,'setup_%s.py' % (subpackage_name))
+        setup_py = os.path.join(subpackage_path,'setup.py')
         if not os.path.isfile(setup_py):
-            setup_py = os.path.join(subpackage_path,'setup.py')
+            setup_py = os.path.join(subpackage_path,'setup_%s.py' % (subpackage_name))
+
         if not os.path.isfile(setup_py):
             print 'Assuming default configuration '\
                   '(%s/{setup_%s,setup}.py was not found)' \
