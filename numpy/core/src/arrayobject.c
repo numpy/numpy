@@ -7017,7 +7017,34 @@ static PyMethodDef iter_methods[] = {
 
 static PyMemberDef iter_members[] = {
 	{"base", T_OBJECT, offsetof(PyArrayIterObject, ao), RO, NULL},
+        {"index", T_INT, offsetof(PyArrayIterObject, index), RO, NULL},
 	{NULL},
+};
+
+static PyObject *
+iter_coords_get(PyArrayIterObject *self)
+{
+        int nd;
+        nd = self->ao->nd;
+        if (self->contiguous) { /* coordinates not kept track of --- need to generate
+                                   from index */
+                intp val;
+                int i;
+                val = self->index;
+                for (i=0;i<nd; i++) {
+                        self->coordinates[i] = val / self->factors[i];
+                        val = val % self->factors[i];
+                }
+        }
+        return PyArray_IntTupleFromIntp(nd, self->coordinates);
+}
+
+static PyGetSetDef iter_getsets[] = {
+	{"coords", 
+	 (getter)iter_coords_get,
+	 NULL,
+	 "An N-d tuple of current coordinates."},
+	{NULL, NULL, NULL, NULL},
 };
 
 static PyTypeObject PyArrayIter_Type = {
@@ -7052,7 +7079,7 @@ static PyTypeObject PyArrayIter_Type = {
         (iternextfunc)arrayiter_next,		/* tp_iternext */
         iter_methods,				/* tp_methods */
         iter_members,	             	        /* tp_members */
-        0,                                      /* tp_getset */
+        iter_getsets,                           /* tp_getset */
 
 };
 

@@ -108,7 +108,7 @@ def inverse_fft(a, n=None, axis=-1):
     run into memory problems if you call this too many times with too many
     different n's."""
 
-    a = asarray(a).astype(Complex)
+    a = asarray(a).astype(complex)
     if n == None:
         n = shape(a)[axis]
     return _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftb, _fft_cache) / n
@@ -131,7 +131,7 @@ def real_fft(a, n=None, axis=-1):
 
     This is most efficient for n a power of two."""
 
-    a = asarray(a).astype(Float)
+    a = asarray(a).astype(float)
     return _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftf, _real_fft_cache)
 
 
@@ -153,7 +153,7 @@ def inverse_real_fft(a, n=None, axis=-1):
     inverse_real_fft(real_fft(a), len(a)) == a
     within numerical accuracy."""
 
-    a = asarray(a).astype(Complex)
+    a = asarray(a).astype(complex)
     if n == None:
         n = (shape(a)[axis] - 1) * 2
     return _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftb,
@@ -282,7 +282,6 @@ def real_fftnd(a, s=None, axes=None):
     for ii in range(len(axes)-1):
         a = fft(a, s[ii], axes[ii])
     return a
-
 
 def real_fft2d(a, s=None, axes=(-2,-1)):
     """real_fft2d(a, s=None, axes=(-2,-1)) 

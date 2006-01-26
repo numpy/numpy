@@ -243,7 +243,6 @@ c_.__doc__ = """Translates slice objects to concatenation along the second axis.
 #col = concatenator(-1,1)
 
 
-
 class ndenumerate(object):
     """
     A simple nd index iterator over an array.
@@ -258,29 +257,13 @@ class ndenumerate(object):
     (1, 1) 4
     """
     def __init__(self, arr):
-        arr = asarray(arr)
-        self.iter = enumerate(arr.flat)
-        self.ashape = arr.shape
-        self.nd = arr.ndim
-        self.factors = [None]*(self.nd-1)
-        val = self.ashape[-1]
-        for i in range(self.nd-1,0,-1):
-            self.factors[i-1] = val
-            val *= self.ashape[i-1]
+        self.iter = asarray(arr).flat
 
     def next(self):
-        res = self.iter.next()
-        indxs = [None]*self.nd
-        val = res[0]
-        for i in range(self.nd-1):
-            indxs[i] = val / self.factors[i]
-            val = val % self.factors[i]
-        indxs[self.nd-1] = val
-        return tuple(indxs), res[1]
+        return self.iter.coords, self.iter.next()
 
     def __iter__(self):
         return self
-
 
 
 # You can do all this with slice() plus a few special objects,
