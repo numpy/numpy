@@ -666,6 +666,15 @@ class test_ufuncs(ScipyTestCase):
             mr = mf(*args)
             self.failUnless(eq(ur.filled(0), mr.filled(0), f))
             self.failUnless(eqmask(ur.mask, mr.mask))
+            
+    def test_reduce(self):
+        a = self.d[0]
+        self.failIf(alltrue(a))
+        self.failUnless(sometrue(a))
+        self.failUnlessEqual(sum(a[:3]), 0)
+        self.failUnlessEqual(product(a), 0)
+
+        
 
 def eqmask(m1, m2):
     if m1 is nomask:
