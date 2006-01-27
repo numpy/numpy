@@ -666,7 +666,8 @@ class Configuration:
 
         for k in build_info.keys():
             v = build_info[k]
-            if k in ['sources','depends']:
+            if k in ['sources','depends','include_dirs','library_dirs',
+                     'module_dirs','extra_objects']:
                 new_v = self._fix_paths(v)
                 build_info[k] = new_v
         self.libraries.append((name,build_info))
