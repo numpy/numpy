@@ -249,9 +249,7 @@ def get_data_files(data):
     filenames = []
     for s in sources:
         if callable(s):
-            s = s()
-            if s is None:
-                continue
+            continue
         if is_local_src_dir(s):
             os.path.walk(s,_gsf_visit_func,filenames)
         elif type(s) is type(''):

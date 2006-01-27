@@ -80,16 +80,6 @@ def setup(**attr):
        and not new_attr.has_key('headers'):
         new_attr['headers'] = []
 
-    # Expand directories in data_files to files
-    if new_attr.has_key('data_files'):
-        new_data_files = []
-        for data in new_attr['data_files']:
-            if type(data) is types.StringType:
-                new_data_files.append(get_data_files(data)[0])
-            else:
-                new_data_files.append((data[0],get_data_files(data)))
-        new_attr['data_files'] = new_data_files
-
     return old_setup(**new_attr)
 
 def _check_append_library(libraries, item):

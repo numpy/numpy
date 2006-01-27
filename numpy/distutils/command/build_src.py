@@ -61,6 +61,7 @@ class build_src(build_ext.build_ext):
         self.extensions = self.distribution.ext_modules
         self.libraries = self.distribution.libraries or []
         self.py_modules = self.distribution.py_modules or []
+        self.data_files = self.distribution.data_files or []
 
         if self.build_src is None:
             self.build_src = os.path.join(self.build_base, 'src')
@@ -102,9 +103,46 @@ class build_src(build_ext.build_ext):
             for ext in self.extensions:
                 self.build_extension_sources(ext)
 
+        self.build_data_files_sources()
+
+        return
+
+    def build_data_files_sources(self):
+        if not self.data_files:
+            return
+        log.info('building data_files sources')
+        from numpy.distutils.misc_util import get_data_files
+        new_data_files = []
+        for data in self.data_files:
+            if isinstance(data,str):
+                new_data_files.append(data)
+            elif isinstance(data,tuple):
+                d,files = data
+                funcs = filter(callable,files)
+                files = filter(lambda f:not callable(f), files)
+                for f in funcs:
+                    if f.func_code.co_argcount==1:
+                        s = f(os.path.join(self.build_src,d))
+                    else:
+                        s = f()
+                    if s is not None:
+                        if isinstance(s,list):
+                            files.extend(s)
+                        elif isinstance(s,str):
+                            files.append(s)
+                        else:
+                            raise TypeError,`s`
+                filenames = get_data_files((d,files))
+                new_data_files.append((d, filenames))
+            else:
+                raise
+        self.data_files[:] = new_data_files
         return
 
     def build_py_modules_sources(self):
+        if not self.py_modules:
+            return
+        log.info('building py_modules sources')
         new_py_modules = []
         for source in self.py_modules:
             if type(source) is type(()) and len(source)==3:
