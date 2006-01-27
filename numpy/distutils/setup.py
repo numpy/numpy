@@ -7,6 +7,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('command')
     config.add_subpackage('fcompiler')
     config.add_data_dir('tests')
+    config.add_data_files('site.cfg')
     config.make_config_py()
     return config.todict()
 
