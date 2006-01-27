@@ -5,7 +5,7 @@ __all__ = ['asarray', 'array', 'concatenate',
            'UFuncType', 'UfuncType', 'ArrayType', 'arraytype',
            'LittleEndian', 'Bool', 
            'Character', 'UnsignedInt8', 'UnsignedInt16', 'UnsignedInt',
-           'UInt8','UInt16','UInt32',
+           'UInt8','UInt16','UInt32', 'UnsignedInt32',
            # UnsignedInt64 and Unsigned128 added below if possible
            # same for Int64 and Int128, Float128, and Complex128
            'Int8', 'Int16', 'Int32',
