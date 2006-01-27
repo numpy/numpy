@@ -5,13 +5,13 @@ __all__ = ['asarray', 'array', 'concatenate',
            'UFuncType', 'UfuncType', 'ArrayType', 'arraytype',
            'LittleEndian', 'Bool', 
            'Character', 'UnsignedInt8', 'UnsignedInt16', 'UnsignedInt',
-           'UInt8','UInt16','UInt32', 'UnsignedInt32',
+           'UInt8','UInt16','UInt32', 'UnsignedInt32', 'UnsignedInteger',
            # UnsignedInt64 and Unsigned128 added below if possible
            # same for Int64 and Int128, Float128, and Complex128
            'Int8', 'Int16', 'Int32',
            'Int0', 'Int', 'Float0', 'Float', 'Complex0', 'Complex',
-           'PyObject', 'Float32', 'Float64',
-           'Complex32', 'Complex64',
+           'PyObject', 'Float32', 'Float64', 'Float16', 'Float8',
+           'Complex32', 'Complex64', 'Complex8', 'Complex16',
            'typecodes', 'sarray', 'arrayrange', 'cross_correlate',
            'matrixmultiply', 'outerproduct', 'innerproduct',
            # from cPickle
@@ -111,6 +111,12 @@ Complex = _dt_(complex)
 PyObject = _dt_(nt.object_)
 Float32 = _dt_(nt.float32)
 Float64 = _dt_(nt.float64)
+
+Float16='f'
+Float8='f'
+UnsignedInteger='L'
+Complex8='F'
+Complex16='F'
 
 try:
     Float128 = _dt_(nt.float128)
