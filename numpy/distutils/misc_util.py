@@ -29,7 +29,7 @@ def get_path(mod_name,parent_path=None):
     if mod_name == '__main__':
         d = os.path.abspath('.')
     elif mod_name == '__builtin__':
-        #builtin if/then added by Pearu for use in core.run_setup.        
+        #builtin if/then added by Pearu for use in core.run_setup.
         d = os.path.dirname(os.path.abspath(sys.argv[0]))
     else:
         __import__(mod_name)
@@ -55,14 +55,14 @@ def terminal_has_colors():
         #          curses.version is 2.2
         #          CYGWIN_98-4.10, release 1.5.7(0.109/3/2))
         return 0
-    if hasattr(sys.stdout,'isatty') and sys.stdout.isatty(): 
+    if hasattr(sys.stdout,'isatty') and sys.stdout.isatty():
         try:
             import curses
             curses.setupterm()
             if (curses.tigetnum("colors") >= 0
                 and curses.tigetnum("pairs") >= 0
-                and ((curses.tigetstr("setf") is not None 
-                      and curses.tigetstr("setb") is not None) 
+                and ((curses.tigetstr("setf") is not None
+                      and curses.tigetstr("setb") is not None)
                      or (curses.tigetstr("setaf") is not None
                          and curses.tigetstr("setab") is not None)
                      or curses.tigetstr("scp") is not None)):
@@ -168,7 +168,7 @@ def filter_sources(sources):
         elif cxx_ext_match(source):
             cxx_sources.append(source)
         else:
-            c_sources.append(source)            
+            c_sources.append(source)
     return c_sources, cxx_sources, f_sources, fmodule_sources
 
 
@@ -328,6 +328,8 @@ class Configuration:
             raise ValueError("%r is not a directory" % (package_path,))
         self.top_path = top_path
         self.package_path = package_path
+        # this is the relative path in the installed package
+        self.path_in_package = os.path.join(*self.name.split('.'))
 
         self.list_keys = copy.copy(self._list_keys)
         self.dict_keys = copy.copy(self._dict_keys)
@@ -484,9 +486,8 @@ class Configuration:
             os.path.walk(path, _gsf_visit_func,filenames)
             if not os.path.isabs(path):
                 if d is None:
-                    ds = os.path.join(*(self.name.split('.')+[data_path]))
-                else:
-                    ds = os.path.join(d,data_path)
+                    d = self.path_in_package
+                ds = os.path.join(d, data_path)
                 self.add_data_files((ds,filenames))
             else:
                 if d is None:
@@ -508,7 +509,7 @@ class Configuration:
         new_files = []
         for p in files:
             if not is_sequence(p):
-                d = os.path.join(*(self.name.split('.')))
+                d = self.path_in_package
                 if is_string(p) and not os.path.isabs(p):
                     d = appendpath(d,os.path.dirname(p))
                 p = (d,p)
@@ -547,7 +548,7 @@ class Configuration:
             self.data_files.extend(data_dict.items())
 
     ### XXX Implement add_py_modules
-    
+
     def add_include_dirs(self,*paths):
         """ Add paths to configuration include directories.
         """
@@ -675,7 +676,7 @@ class Configuration:
 
     def add_library(self,name,sources,**build_info):
         """ Add library to configuration.
-        
+
         Valid keywords for build_info:
           depends
           macros
@@ -876,7 +877,7 @@ class Configuration:
                 f = open(target,'w')
                 f.write('version = %r\n' % (version))
                 f.close()
-    
+
             import atexit
             def rm_file(f=target):
                 try: os.remove(f); print 'removed',f
@@ -887,8 +888,7 @@ class Configuration:
 
             return target
 
-        d = os.path.join(*(self.name.split('.')))
-        self.add_data_files((d, generate_svn_version_py()))
+        self.add_data_files(generate_svn_version_py())
         return
 
     def make_config_py(self,name='__config__'):
@@ -1017,7 +1017,7 @@ def show():
 def generate_svn_version_py(extension, build_dir):
     """ Generate __svn_version__.py file containing SVN
     revision number of a module.
-    
+
     To use, add the following codelet to setup
     configuration(..) function
 
