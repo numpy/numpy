@@ -3,7 +3,6 @@ import re
 import sys
 import imp
 import copy
-import types
 import glob
 
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
@@ -117,11 +116,23 @@ def _get_f90_modules(source):
     f.close()
     return modules
 
+def is_string(s):
+    return isinstance(s, str)
+
 def all_strings(lst):
     """ Return True if all items in lst are string objects. """
     for item in lst:
-        if type(item) is not types.StringType:
+        if not is_string(item):
             return False
+    return True
+
+def is_sequence(seq):
+    if is_string(seq):
+        return False
+    try:
+        len(seq)
+    except:
+        return False
     return True
 
 def has_f_sources(sources):
@@ -185,7 +196,7 @@ def get_dependencies(sources):
 def is_local_src_dir(directory):
     """ Return true if directory is local directory.
     """
-    if type(directory) is not type(''):
+    if not is_string(directory):
         return False
     abs_dir = os.path.abspath(directory)
     c = os.path.commonprefix([os.getcwd(),abs_dir])
@@ -214,7 +225,7 @@ def _gsf_visit_func(filenames,dirname,names):
 def get_ext_source_files(ext):
     # Get sources and any include files in the same directory.
     filenames = []
-    sources = filter(lambda s:type(s) is types.StringType,ext.sources)
+    sources = filter(is_string, ext.sources)
     filenames.extend(sources)
     filenames.extend(get_dependencies(sources))
     for d in ext.depends:
@@ -225,13 +236,13 @@ def get_ext_source_files(ext):
     return filenames
 
 def get_script_files(scripts):
-    scripts = filter(lambda s:type(s) is types.StringType,scripts)
+    scripts = filter(is_string, scripts)
     return scripts
 
 def get_lib_source_files(lib):
     filenames = []
     sources = lib[1].get('sources',[])
-    sources = filter(lambda s:type(s) is types.StringType,sources)
+    sources = filter(is_string, sources)
     filenames.extend(sources)
     filenames.extend(get_dependencies(sources))
     depends = lib[1].get('depends',[])
@@ -243,7 +254,7 @@ def get_lib_source_files(lib):
     return filenames
 
 def get_data_files(data):
-    if type(data) is types.StringType:
+    if is_string(data):
         return [data]
     sources = data[1]
     filenames = []
@@ -252,13 +263,13 @@ def get_data_files(data):
             continue
         if is_local_src_dir(s):
             os.path.walk(s,_gsf_visit_func,filenames)
-        elif type(s) is type(''):
+        elif is_string(s):
             if os.path.isfile(s):
                 filenames.append(s)
             else:
                 print 'Not existing data file:',s
         else:
-            raise TypeError,`s`
+            raise TypeError,repr(s)
     return filenames
 
 def dot_join(*args):
@@ -290,12 +301,22 @@ class Configuration:
                  package_path=None,
                  **attrs):
         """ Construct configuration instance of a package.
+
+        package_name -- name of the package
+                        Ex.: 'distutils'
+        parent_name  -- name of the parent package
+                        Ex.: 'numpy'
+        top_path     -- directory of the toplevel package
+                        Ex.: the directory where the numpy package source sits
+        package_path -- directory of package. Will be computed by magic from the
+                        directory of the caller module if not specified
+                        Ex.: the directory where numpy.distutils is
         """
         self.name = dot_join(parent_name, package_name)
 
         caller_frame = get_frame(1)
         caller_name = eval('__name__',caller_frame.f_globals,caller_frame.f_locals)
-        
+
         self.local_path = get_path(caller_name, top_path)
         if top_path is None:
             top_path = self.local_path
@@ -303,8 +324,10 @@ class Configuration:
             package_path = self.local_path
         elif os.path.isdir(os.path.join(self.local_path,package_path)):
             package_path = os.path.join(self.local_path,package_path)
-        assert os.path.isdir(package_path),`package_path`
+        if not os.path.isdir(package_path):
+            raise ValueError("%r is not a directory" % (package_path,))
         self.top_path = top_path
+        self.package_path = package_path
 
         self.list_keys = copy.copy(self._list_keys)
         self.dict_keys = copy.copy(self._dict_keys)
@@ -322,16 +345,16 @@ class Configuration:
                 continue
             a = attrs[n]
             setattr(self,n,a)
-            if type(a) is types.ListType:
+            if isinstance(a, list):
                 self.list_keys.append(n)
-            elif type(a) is types.DictType:
+            elif isinstance(a, dict):
                 self.dict_keys.append(n)
             else:
                 self.extra_keys.append(n)
 
         if os.path.exists(os.path.join(package_path,'__init__.py')):
             self.packages.append(self.name)
-            self.package_dir[self.name] = package_path        
+            self.package_dir[self.name] = package_path
         return
 
     def todict(self):
@@ -352,7 +375,7 @@ class Configuration:
 
     def get_distribution(self):
         import distutils.core
-        dist = distutils.core._setup_distribution        
+        dist = distutils.core._setup_distribution
         return dist
 
     def get_subpackage(self,subpackage_name,subpackage_path=None):
@@ -447,12 +470,12 @@ class Configuration:
         If path is not absolute then it's datadir suffix is
         package dir + subdirname of the path.
         """
-        if type(data_path) is type(()):
-            assert len(data_path)==2,`data_path`
-            d,data_path = data_path
+        if is_sequence(data_path):
+            d, data_path = data_path
         else:
             d = None
-        assert type(data_path) is type(''),`data_path`
+        if not is_string(data_path):
+            raise TypeError("not a string: %r" % (data_path,))
         for path in self.paths(data_path):
             if not os.path.exists(path):
                 print 'Not existing data path',path
@@ -484,30 +507,30 @@ class Configuration:
         data_dict = {}
         new_files = []
         for p in files:
-            if type(p) is not type(()):
+            if not is_sequence(p):
                 d = os.path.join(*(self.name.split('.')))
-                if type(p) is type('') and not os.path.isabs(p):
+                if is_string(p) and not os.path.isabs(p):
                     d = appendpath(d,os.path.dirname(p))
                 p = (d,p)
             new_files.append(p)
         files = []
         for prefix,filepattern in new_files:
-            if type(filepattern) is type(''):
+            if is_string(filepattern):
                 file_list = self.paths(filepattern)
             elif callable(filepattern):
                 file_list = [filepattern]
             else:
                 file_list = self.paths(*filepattern)
 
-            nof_path_components = [len(f.split(os.sep)) \
-                                   for f in file_list if type(f) is type('')]
+            nof_path_components = [len(f.split(os.sep))
+                                   for f in file_list if is_string(f)]
             if nof_path_components:
                 min_path_components = min(nof_path_components)-1
             else:
                 min_path_components = 0
 
             for f in file_list:
-                if type(f) is type(''):
+                if is_string(f):
                     extra_path_components = f.split(os.sep)[min_path_components:-1]
                     p = os.path.join(*([prefix]+extra_path_components))
                 else:
@@ -522,7 +545,6 @@ class Configuration:
             dist.data_files.extend(data_dict.items())
         else:
             self.data_files.extend(data_dict.items())
-        return            
 
     ### XXX Implement add_py_modules
     
@@ -546,10 +568,11 @@ class Configuration:
         """
         headers = []
         for path in files:
-            if type(path) is type(''):
+            if is_string(path):
                 [headers.append((self.name,p)) for p in self.paths(path)]
             else:
-                assert type(path) in [type(()),type([])] and len(path)==2,`path`
+                if not isinstance(path, (tuple, list)) or len(path) != 2:
+                    raise TypeError(repr(path))
                 [headers.append((path[0],p)) for p in self.paths(path[1])]
         dist = self.get_distribution()
         if dist is not None:
@@ -760,7 +783,7 @@ class Configuration:
     def append_to(self, extlib):
         """ Append libraries, include_dirs to extension or library item.
         """
-        if type(extlib) is type(()):
+        if is_sequence(extlib):
             lib_name, build_info = extlib
             dict_append(build_info,
                         libraries=self.libraries,
