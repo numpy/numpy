@@ -548,26 +548,30 @@ class Configuration:
         If path is not absolute then it's datadir prefix is
         package dir + dirname of the path.
         """
-        new_files = []
-        for p in files:
-            if isinstance(p,str) and '*' in p:
-                new_files.extend(self.paths(p))
-            else:
-                new_files.append(p)
-        files = new_files
         data_dict = {}
         new_files = []
         for p in files:
             if not is_sequence(p):
                 d = self.path_in_package
                 if is_string(p) and not os.path.isabs(p):
-                    d = appendpath(d,os.path.dirname(p))
-                p = (d,p)
+                    pd = os.path.dirname(p)
+                    if '*' in pd:
+                        pn = os.path.basename(p)
+                        n = len(pd.split(os.sep))
+                        for d1 in filter(os.path.isdir,self.paths(pd)):
+                            p = os.path.join(d1,pn)
+                            d1 = os.sep.join(d1.split(os.sep)[-n:])
+                            new_files.append((appendpath(d,d1),p))
+                        continue
+                    d = appendpath(d,pd)
+                p = (d,p)    
             new_files.append(p)
+        
         files = []
         for prefix,filepattern in new_files:
+            assert '*' not in prefix,`prefix,filepattern`
             if is_string(filepattern):
-                file_list = self.paths(filepattern)
+                file_list = self.paths(filepattern,include_non_existing=False)
             elif callable(filepattern):
                 file_list = [filepattern]
             else:
@@ -632,7 +636,7 @@ class Configuration:
             self.headers.extend(headers)
         return
 
-    def _fix_paths(self,paths):
+    def _fix_paths(self,paths,include_non_existing=True):
         assert isinstance(paths,(list,tuple)),`type(paths)`
         new_paths = []
         for n in paths:
@@ -645,24 +649,30 @@ class Configuration:
                     elif p:
                         new_paths.extend(p)
                     else:
-                        new_paths.append(n)
+                        if include_non_existing:
+                            new_paths.append(n)
                         self.warn('could not resolve pattern: %r' % (n))
                 else:
                     n2 = njoin(self.local_path,n)
                     if os.path.exists(n2):
                         new_paths.append(n2)
                     else:
-                        new_paths.append(n)
+                        if os.path.exists(n):
+                            new_paths.append(n)
+                        elif include_non_existing:
+                            new_paths.append(n)
                         if not os.path.exists(n):
                             self.warn('not existing path: %r' % (n))
             else:
                 new_paths.append(n)
         return map(minrelpath,new_paths)
 
-    def paths(self,*paths):
+    def paths(self,*paths,**kws):
         """ Apply glob to paths and prepend local_path if needed.
         """
-        return self._fix_paths(paths)
+        include_non_existing = kws.get('include_non_existing',True)
+        return self._fix_paths(paths,
+                               include_non_existing=include_non_existing)
 
     def add_extension(self,name,sources,**kw):
         """ Add extension to configuration.
