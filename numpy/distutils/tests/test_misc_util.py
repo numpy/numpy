@@ -1,6 +1,6 @@
 import sys
 from numpy.testing import *
-from numpy.distutils.misc_util import appendpath
+from numpy.distutils.misc_util import appendpath, minrelpath
 from os.path import join, sep
 
 ajoin = lambda *paths: join(*((sep,)+paths))
@@ -28,6 +28,17 @@ class test_appendpath(ScipyTestCase):
                      ajoin('prefix','sub','sub2','sup','sup2','name'))
         assert_equal(appendpath('/prefix/sub/sub2','/prefix/sub/sup/name'),
                      ajoin('prefix','sub','sub2','sup','name'))
+
+class test_minrelpath(ScipyTestCase):
+
+    def check_1(self):
+        assert_equal(minrelpath(join('aa/bb')),'aa/bb')
+        assert_equal(minrelpath(join('..')),'..')
+        assert_equal(minrelpath(join('aa/..')),'')
+        assert_equal(minrelpath(join('aa/../bb')),'bb')
+        assert_equal(minrelpath(join('aa/bb/..')),'aa')
+        assert_equal(minrelpath(join('aa/bb/../..')),'')
+        assert_equal(minrelpath(join('aa/bb/../cc/../dd')),'aa/dd')
 
 if __name__ == "__main__":
     ScipyTest().run()

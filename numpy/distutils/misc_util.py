@@ -13,7 +13,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'has_f_sources', 'has_cxx_sources', 'filter_sources',
            'get_dependencies', 'is_local_src_dir', 'get_ext_source_files',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
-           'dot_join', 'get_frame']
+           'dot_join', 'get_frame', 'minrelpath','njoin']
 
 def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."
@@ -41,6 +41,38 @@ def get_path(mod_name,parent_path=None):
         if pd==d[:len(pd)]:
             d = d[len(pd)+1:]
     return d or '.'
+
+def njoin(*path):
+    """ Join two or more pathname components +
+    - convert a /-separated pathname to one using the OS's path separator.
+    - resolve `..` from path.
+    """
+    if isinstance(path,tuple):
+        path = os.path.join(*path)
+    if not isinstance(path,str): return path
+    if not ('/' == os.path.sep):
+        path = path.replace('/',os.path.sep)
+    return minrelpath(path)
+
+def minrelpath(path):
+    """ Resolve `..` from path.
+    """
+    if not isinstance(path, str): return path
+    if '..' not in path: return path
+    l = path.split(os.sep)
+    j = 1
+    while l:
+        try:
+            i = l.index('..',j)
+        except ValueError:
+            break
+        if l[i-1]=='..':
+            j += 1
+        else:
+            del l[i],l[i-1]
+            j = 1
+    if not l: return ''
+    return os.path.join(*l)
 
 # Hooks for colored terminal output.
 # See also http://www.livinglogic.de/Python/ansistyle
@@ -322,8 +354,8 @@ class Configuration:
             top_path = self.local_path
         if package_path is None:
             package_path = self.local_path
-        elif os.path.isdir(os.path.join(self.local_path,package_path)):
-            package_path = os.path.join(self.local_path,package_path)
+        elif os.path.isdir(njoin(self.local_path,package_path)):
+            package_path = njoin(self.local_path,package_path)
         if not os.path.isdir(package_path):
             raise ValueError("%r is not a directory" % (package_path,))
         self.top_path = top_path
@@ -354,9 +386,10 @@ class Configuration:
             else:
                 self.extra_keys.append(n)
 
-        if os.path.exists(os.path.join(package_path,'__init__.py')):
+        if os.path.exists(njoin(package_path,'__init__.py')):
             self.packages.append(self.name)
             self.package_dir[self.name] = package_path
+
         return
 
     def todict(self):
@@ -371,6 +404,12 @@ class Configuration:
         if self.name:
             d['name'] = self.name
         return d
+
+    def info(self, message):
+        print message
+
+    def warn(self, message):
+        print 'Warning:',message
 
     def __dict__(self):
         return self.todict()
@@ -388,12 +427,14 @@ class Configuration:
             subpackage_name = os.path.basename(subpackage_path)
         l = subpackage_name.split('.')
         if subpackage_path is None:
-            subpackage_path = os.path.join(*([self.local_path]+l))
+            subpackage_path = njoin(*([self.local_path]+l))
             if '*' in subpackage_name:
                 dirs = filter(os.path.isdir,glob.glob(subpackage_path))
                 config_list = []
                 for d in dirs:
-                    if not os.path.isfile(os.path.join(d,'__init__.py')):
+                    if not os.path.isfile(njoin(d,'__init__.py')):
+                        continue
+                    if 'build' in d.split(os.sep):
                         continue
                     n = '.'.join(d.split(os.sep)[-len(l):])
                     c = self.get_subpackage(n)
@@ -401,12 +442,11 @@ class Configuration:
                         config_list.append(c)
                 return config_list
         else:
-            subpackage_path = os.path.join(*([subpackage_path]+l[:-1]))
+            subpackage_path = njoin(*([subpackage_path]+l[:-1]))
             subpackage_path = self._fix_paths([subpackage_path])[0]
-
-        setup_py = os.path.join(subpackage_path,'setup.py')
+        setup_py = njoin(subpackage_path,'setup.py')
         if not os.path.isfile(setup_py):
-            setup_py = os.path.join(subpackage_path,'setup_%s.py' % (subpackage_name))
+            setup_py = njoin(subpackage_path,'setup_%s.py' % (subpackage_name))
 
         if not os.path.isfile(setup_py):
             print 'Assuming default configuration '\
@@ -485,9 +525,12 @@ class Configuration:
             filenames = []
             os.path.walk(path, _gsf_visit_func,filenames)
             if not os.path.isabs(path):
+                npath = data_path
+                if '*' in npath:
+                    npath = os.path.join(*(path.split(os.sep)[-len(npath.split(os.sep)):]))
                 if d is None:
                     d = self.path_in_package
-                ds = os.path.join(d, data_path)
+                ds = os.path.join(d, npath)
                 self.add_data_files((ds,filenames))
             else:
                 if d is None:
@@ -505,6 +548,13 @@ class Configuration:
         If path is not absolute then it's datadir prefix is
         package dir + dirname of the path.
         """
+        new_files = []
+        for p in files:
+            if isinstance(p,str) and '*' in p:
+                new_files.extend(self.paths(p))
+            else:
+                new_files.append(p)
+        files = new_files
         data_dict = {}
         new_files = []
         for p in files:
@@ -533,7 +583,7 @@ class Configuration:
             for f in file_list:
                 if is_string(f):
                     extra_path_components = f.split(os.sep)[min_path_components:-1]
-                    p = os.path.join(*([prefix]+extra_path_components))
+                    p = njoin(*([prefix]+extra_path_components))
                 else:
                     p = prefix
                 if not data_dict.has_key(p):
@@ -583,27 +633,31 @@ class Configuration:
         return
 
     def _fix_paths(self,paths):
+        assert isinstance(paths,(list,tuple)),`type(paths)`
         new_paths = []
         for n in paths:
             if isinstance(n,str):
                 if '*' in n or '?' in n:
                     p = glob.glob(n)
-                    p2 = glob.glob(os.path.join(self.local_path,n))
+                    p2 = glob.glob(njoin(self.local_path,n))
                     if p2:
                         new_paths.extend(p2)
                     elif p:
                         new_paths.extend(p)
                     else:
                         new_paths.append(n)
+                        self.warn('could not resolve pattern: %r' % (n))
                 else:
-                    n2 = os.path.join(self.local_path,n)
+                    n2 = njoin(self.local_path,n)
                     if os.path.exists(n2):
                         new_paths.append(n2)
                     else:
                         new_paths.append(n)
+                        if not os.path.exists(n):
+                            self.warn('not existing path: %r' % (n))
             else:
                 new_paths.append(n)
-        return new_paths
+        return map(minrelpath,new_paths)
 
     def paths(self,*paths):
         """ Apply glob to paths and prepend local_path if needed.
@@ -649,7 +703,7 @@ class Configuration:
         for libname in libraries:
             if '@' in libname:
                 lname,lpath = libname.split('@',1)
-                lpath = os.path.abspath(os.path.join(self.local_path,lpath))
+                lpath = os.path.abspath(njoin(self.local_path,lpath))
                 if os.path.isdir(lpath):
                     c = self.get_subpackage(None,lpath)
                     if isinstance(c,Configuration):
@@ -799,7 +853,7 @@ class Configuration:
     def _get_svn_revision(self,path):
         """ Return path's SVN revision number.
         """
-        entries = os.path.join(path,'.svn','entries')
+        entries = njoin(path,'.svn','entries')
         revision = None
         if os.path.isfile(entries):
             f = open(entries)
@@ -825,7 +879,7 @@ class Configuration:
                         '__version__',
                         self.name.split('.')[-1]+'_version']
         for f in files:
-            fn = os.path.join(self.local_path,f)
+            fn = njoin(self.local_path,f)
             if os.path.isfile(fn):
                 info = (open(fn),fn,('.py','U',1))
                 name = os.path.splitext(os.path.basename(fn))[0]
@@ -864,7 +918,7 @@ class Configuration:
 
         If __svn_version__.py existed before, nothing is done.
         """
-        target = os.path.join(self.local_path,'__svn_version__.py')
+        target = njoin(self.local_path,'__svn_version__.py')
         if os.path.isfile(target):
             return
 
@@ -888,7 +942,7 @@ class Configuration:
 
             return target
 
-        self.add_data_files(generate_svn_version_py())
+        self.add_data_files((self.path_in_package, generate_svn_version_py()))
         return
 
     def make_config_py(self,name='__config__'):
@@ -926,12 +980,12 @@ def get_numpy_include_dirs():
         import numpy
         if numpy.show_config is None:
             # running from numpy_core source directory
-            include_dirs.append(os.path.join(os.path.dirname(numpy.__file__),
+            include_dirs.append(njoin(os.path.dirname(numpy.__file__),
                                              'core','include'))
         else:
             # using installed numpy core headers
             import numpy.core as core
-            include_dirs.append(os.path.join(os.path.dirname(core.__file__),'include'))
+            include_dirs.append(njoin(os.path.dirname(core.__file__),'include'))
     # else running numpy/core/setup.py
     return include_dirs
 
@@ -977,7 +1031,11 @@ def appendpath(prefix,path):
             subpath = subpath[1:]
     else:
         subpath = path
-    return os.path.normpath(os.path.join(drive + prefix, subpath))
+    return os.path.normpath(njoin(drive + prefix, subpath))
+
+
+
+
 
 def generate_config_py(target):
     """ Generate config.py file containing system_info information
@@ -1029,8 +1087,8 @@ def generate_svn_version_py(extension, build_dir):
     """
     from distutils import dep_util
     local_path = extension.local_path
-    target = os.path.join(build_dir, '__svn_version__.py')
-    entries = os.path.join(local_path,'.svn','entries')
+    target = njoin(build_dir, '__svn_version__.py')
+    entries = njoin(local_path,'.svn','entries')
     if os.path.isfile(entries):
         if not dep_util.newer(entries, target):
             return target
