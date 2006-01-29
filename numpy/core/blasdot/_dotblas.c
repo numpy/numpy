@@ -228,7 +228,10 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    ap1shape = ap2shape;
 	    ap2shape = _scalar;
 	}
-	if (ap1shape == _column) nd = 1;
+	/* Fix it so that dot(shape=(N,1), shape=(1,))
+	   returns an (N,) array (but uses the fast scalar code)
+	*/
+	if (ap1shape == _column && ap2->nd == 1) nd = 1;
 	else nd = ap1->nd;
 	for (l = 1, j = 0; j < nd; j++) {
 	    dimensions[j] = ap1->dimensions[j];
