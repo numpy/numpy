@@ -1,34 +1,28 @@
 /* -*- c -*- */
 
-static ulong
-MyPyLong_AsUnsignedLong(PyObject *vv)
+/**begin repeat
+#name=UnsignedLong,UnsignedLongLong,LongLong#
+#type=ulong,ulonglong,longlong#
+ */
+static @type@
+MyPyLong_As@name@(PyObject *vv)
 {
-	if ((vv != NULL) && PyInt_Check(vv)) {
-		long val = PyInt_AsLong(vv);
-		if (val < 0) {
-			PyErr_SetString(PyExc_OverflowError,
-			"can't convert negative value to unsigned long");
-			return (ulong) -1;
-		}
-		return val;
-	}
-	return PyLong_AsUnsignedLong(vv);	
-}
+	@type@ ret;
 
-static ulonglong
-MyPyLong_AsUnsignedLongLong(PyObject *vv)
-{
-	if ((vv != NULL) && PyInt_Check(vv)) {
-		longlong val = PyInt_AsLong(vv);
-		if (val < 0) {
-			PyErr_SetString(PyExc_OverflowError,
-			"can't convert negative value to unsigned long");
-			return (ulonglong) -1;
-		}
-		return val;
+	if (!PyLong_Check(vv)) {
+		PyObject *mylong;
+		mylong = PyNumber_Long(vv);
+		if (mylong == NULL) return (@type@) -1;
+		vv = mylong;
 	}
-	return PyLong_AsUnsignedLongLong(vv);	
+	else Py_INCREF(vv);
+
+	ret = PyLong_As@name@(vv);
+	Py_DECREF(vv);
+	return ret;
 }
+/**end repeat**/
+
 
 static double 
 _getNAN(void) {
@@ -67,7 +61,7 @@ MyPyFloat_AsDouble(PyObject *obj)
 
 #TYP=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,LONG,UINT,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE#
 #func1=PyBool_FromLong, PyInt_FromLong*6, PyLong_FromUnsignedLong*2, PyLong_FromLongLong, PyLong_FromUnsignedLongLong, PyFloat_FromDouble*2#
-#func2=PyObject_IsTrue, PyInt_AsLong*6, MyPyLong_AsUnsignedLong*2, PyLong_AsLongLong, MyPyLong_AsUnsignedLongLong, MyPyFloat_AsDouble*2#
+#func2=PyObject_IsTrue, PyInt_AsLong*6, MyPyLong_AsUnsignedLong*2, MyPyLong_AsLongLong, MyPyLong_AsUnsignedLongLong, MyPyFloat_AsDouble*2#
 #typ=Bool, byte, ubyte, short, ushort, int, long, uint, ulong, longlong, ulonglong, float, double#
 #typ1=long*7, ulong*2, longlong, ulonglong, float, double#
 #kind=Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong, LongLong, ULongLong, Float, Double#

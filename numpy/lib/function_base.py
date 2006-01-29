@@ -14,7 +14,7 @@ import types
 import math
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
-     asarray, empty, empty_like
+     asarray, empty, empty_like, asanyarray
 from numpy.core.numeric import ScalarType, dot, where, newaxis, isscalar
 from numpy.core.umath import pi, multiply, add, arctan2, maximum, minimum, \
      frompyfunc, isnan, absolute, cos, less_equal, sqrt, sin, mod, exp
@@ -202,6 +202,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
            |--
 
     """
+    x = asanyarray(x)
     n2 = len(funclist)
     if not isinstance(condlist, type([])):
         condlist = [condlist]
