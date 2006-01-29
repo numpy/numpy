@@ -5189,6 +5189,15 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         else if (PyInt_Check(op)) {
 		chktype = PyArray_DescrFromType(PyArray_LONG);
 		goto finish;
+	} else if (PyLong_Check(op)) {
+		/* if integer can fit into a longlong then return that
+		*/
+		if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
+			PyErr_Clear();
+			goto deflt;
+		}
+		chktype = PyArray_DescrFromType(PyArray_LONGLONG);
+		goto finish;
         } else if (PyFloat_Check(op)) {
 		chktype = PyArray_DescrFromType(PyArray_DOUBLE);
 		goto finish;
