@@ -136,7 +136,7 @@ _select_matrix_shape(PyArrayObject *array)
     case 0:
 	return _scalar;
     case 1:
-	if (array->dimensions[0] > 0)
+	if (array->dimensions[0] > 1)
 	    return _column;
 	return _scalar;
     case 2:
@@ -228,11 +228,12 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    ap1shape = ap2shape;
 	    ap2shape = _scalar;
 	}
-	for (l = 1, j = 0; j < ap1->nd; j++) {
+	if (ap1shape == _column) nd = 1;
+	else nd = ap1->nd;
+	for (l = 1, j = 0; j < nd; j++) {
 	    dimensions[j] = ap1->dimensions[j];
 	    l *= dimensions[j];
 	}
-	nd = ap1->nd;
     }
     else { /* (ap1->nd <= 2 && ap2->nd <= 2) */
 	/*  Both ap1 and ap2 are vectors or matrices */
@@ -287,7 +288,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		*((double *)ret->data) = *((double *)ap2->data) * \
 		    *((double *)ap1->data);
 	    }
-	    else if (ap1->nd < 2) {
+	    else if (ap1->nd < 2 || ap1shape == _column) {
 		cblas_daxpy(l, *((double *)ap2->data), (double *)ap1->data,
 			    ap1->strides[0] / sizeof(double), 
 			    (double *)ret->data, 1);
@@ -321,7 +322,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		res->real = ptr1->real * ptr2->real - ptr1->imag * ptr2->imag;
 		res->imag = ptr1->real * ptr2->imag + ptr1->imag * ptr2->real;
 	    }
-	    else if (ap1->nd < 2) {
+	    else if (ap1->nd < 2 || ap1shape == _column) {
 		cblas_zaxpy(l, (double *)ap2->data, (double *)ap1->data,
 			    ap1->strides[0] / sizeof(cdouble), 
 			    (double *)ret->data, 1);
@@ -351,7 +352,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		*((float *)ret->data) = *((float *)ap2->data) * \
 		    *((float *)ap1->data);
 	    }
-	    else if (ap1->nd < 2) {
+	    else if (ap1->nd < 2 || ap1shape == _column) {
 		cblas_saxpy(l, *((float *)ap2->data), (float *)ap1->data,
 			    ap1->strides[0] / sizeof(float), 
 			    (float *)ret->data, 1);
@@ -385,7 +386,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		res->real = ptr1->real * ptr2->real - ptr1->imag * ptr2->imag;
 		res->imag = ptr1->real * ptr2->imag + ptr1->imag * ptr2->real;
 	    }
-	    else if (ap1->nd < 2) {
+	    else if (ap1->nd < 2 || ap1shape == _column)  {
 		cblas_caxpy(l, (float *)ap2->data, (float *)ap1->data,
 			    ap1->strides[0] / sizeof(cfloat), 
 			    (float *)ret->data, 1);
