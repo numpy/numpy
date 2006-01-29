@@ -183,6 +183,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
       Each function should return an array output for an array input
       Each function can take (the same set) of extra arguments and
       keyword arguments which are passed in after the function list.
+      A constant may be used in funclist for a function that returns a
+      constant (e.g. val  and lambda x: val are equivalent in a funclist). 
 
     The output is the same shape and type as x and is found by
       calling the functions on the appropriate portions of x.

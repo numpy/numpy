@@ -64,6 +64,13 @@ class test_dot(ScipyTestCase):
 	b1 = matrix(ones((3,3),dtype=complex))
 	assert_equal(b1*1.0, b1)
 
+    def check_columnvect(self):
+	b1 = ones((3,1))
+	b2 = [5.3]
+	c1 = dot(b1,b2)
+	c2 = dot_(b1,b2)
+	assert_almost_equal(c1, c2, decimal=self.N)
+
 
 class test_bool_scalar(ScipyTestCase):
     def test_logical(self):
