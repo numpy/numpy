@@ -294,7 +294,10 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
         if shape is not None and retval.shape != shape:
             retval.shape = shape
 
-    return retval.view(recarray)
+    res = retval.view(recarray)
+    res.dtype = sb.dtype((record, res.dtype))
+    return res
+    
 
 def fromstring(datastring, formats, shape=None, names=None, titles=None,
                byteorder=None, aligned=0, offset=0):
@@ -406,6 +409,8 @@ def array(obj, formats=None, names=None, titles=None, shape=None,
                         shape=shape, byteorder=byteorder, aligned=aligned,
                         offset=offset)
     elif isinstance(obj, sb.ndarray):
-        return obj.view(recarray)
+        res = obj.view(recarray)
+        if issubclass(res.dtype, nt.void):
+            res.dtype = sb.dtype((record, res.dtype))
     else:
         raise ValueError("Unknown input type")

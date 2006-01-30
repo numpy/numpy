@@ -3930,12 +3930,12 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		}
 		return PY_SUCCEED;
 	}
-        else {
+        else goto fail; /*{
 		*at = _arraydescr_fromobj(obj);
 		if (*at) return PY_SUCCEED;
 		if (PyErr_Occurred()) return PY_FAIL;
 		goto fail;
-	}
+		} */
 	if (PyErr_Occurred()) goto fail;
 
 	/*
