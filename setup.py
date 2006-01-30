@@ -53,15 +53,15 @@ def setup_package():
             classifiers=filter(None, CLASSIFIERS.split('\n')),
             author = "Travis E. Oliphant, et.al.",
             author_email = "oliphant@ee.byu.edu",
-            platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
+            platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
             )
-        config.add_subpackage('numpy')
 
+
+        config.add_subpackage('numpy')
         from numpy.version import version
         config.name = 'numpy'
         config.dict_append(version=version)
-
-        print config.name,'version',config.version
+        #print config.name,'version',config.version
 
         setup( **config.todict() )
     finally:

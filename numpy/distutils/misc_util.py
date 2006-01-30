@@ -318,6 +318,24 @@ def get_frame(level=0):
 
 ######################
 
+def command_line_ok(_cache=[]):
+    """ Return True if command line does not contain any
+    help or display requests.
+    """
+    if _cache:
+        return _cache[0]
+    ok = True
+    from distutils.dist import Distribution
+    display_opts = ['--'+n for n in Distribution.display_option_names]
+    for o in Distribution.display_options:
+        if o[1]: display_opts.append('-'+o[1])
+    for arg in sys.argv:
+        if arg.startswith('--help') or arg=='-h' or arg in display_opts:
+            ok = False
+            break
+    _cache.append(ok)
+    return ok
+
 class Configuration:
 
     _list_keys = ['packages','ext_modules','data_files','include_dirs',
@@ -409,7 +427,7 @@ class Configuration:
         print message
 
     def warn(self, message):
-        print 'Warning:',message
+        print>>sys.stderr, 'Warning:',message
 
     def __dict__(self):
         return self.todict()
@@ -786,8 +804,9 @@ class Configuration:
         known_keys = self.list_keys + self.dict_keys + self.extra_keys
         for key in dict.keys():
             if key not in known_keys and not hasattr(self,key):
-                print 'Inheriting attribute %r from %r' \
-                      % (key,dict.get('name','?'))
+                if key not in ['version']:
+                    self.warn('Inheriting attribute %r from %r' \
+                              % (key,dict.get('name','?')))
                 setattr(self,key,dict[key])
                 self.extra_keys.append(key)
         return
@@ -970,6 +989,21 @@ class Configuration:
         for a in names:
             dict_append(info_dict,**get_info(a))
         return info_dict
+
+    if not command_line_ok():
+        _do_nothing = lambda *args,**kws: None
+        add_subpackage = _do_nothing
+        add_extension = _do_nothing
+        add_library = _do_nothing
+        add_data_dir = _do_nothing
+        add_data_files = _do_nothing
+        add_scripts = _do_nothing
+        add_headers = _do_nothing
+        add_include_dirs = _do_nothing
+        make_config_py = _do_nothing
+        get_info = lambda *args,**kws:{}
+        have_f77c = lambda *args,**kws: False
+        have_f90c = lambda *args,**kws: False
 
 def get_cmd(cmdname,_cache={}):
     if not _cache.has_key(cmdname):
