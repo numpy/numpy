@@ -5265,6 +5265,12 @@ Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
 						    NULL, NULL, 0, NULL);
 
 	if (ret == NULL) return NULL;
+	if (ret->nd > 0) {
+		PyErr_SetString(PyExc_ValueError,
+				"shape-mismatch on array construction");
+		Py_DECREF(ret);
+		return NULL;
+	}
 
         ret->descr->f->setitem(op, ret->data, ret);
 	
@@ -5277,7 +5283,7 @@ Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
 }
 
 
-/* steals reference to typecode unless return value is NULL*/
+/* steals reference to typecode */
 static PyObject *
 Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran, 
 		   int min_depth, int max_depth)
@@ -5289,7 +5295,6 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 	int stop_at_tuple;
 	int type = typecode->type_num;
 	int itemsize = typecode->elsize;
-	PyArray_Descr *savetype=typecode;
 	
 	stop_at_string = ((type == PyArray_OBJECT) ||	\
 			  (type == PyArray_STRING) ||	\
@@ -5306,23 +5311,20 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 			return Array_FromScalar(s, typecode);
                 PyErr_SetString(PyExc_ValueError, 
 				"invalid input sequence");
-                return NULL;
+		goto fail;
         }
 	
         if ((max_depth && nd > max_depth) ||	\
 	    (min_depth && nd < min_depth)) {
                 PyErr_SetString(PyExc_ValueError, 
 				"invalid number of dimensions");
-                return NULL;
+		goto fail;
         }
 	
-	if(discover_dimensions(s,nd,d, !stop_at_string) == -1) {
-		return NULL;
-	}
+	if(discover_dimensions(s,nd,d, !stop_at_string) == -1) goto fail;
+
 	if (itemsize == 0 && PyTypeNum_ISEXTENDED(type)) {
-		if (discover_itemsize(s, nd, &itemsize) == -1) {
-			return NULL;
-		}
+		if (discover_itemsize(s, nd, &itemsize) == -1) goto fail;
 		if (type == PyArray_UNICODE) itemsize*=sizeof(Py_UNICODE);
 	}
 
@@ -5336,13 +5338,16 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 					       NULL, NULL,
 					       fortran, NULL);
 	
-        if(!r) {Py_XINCREF(savetype); return NULL;}
+        if(!r) return NULL;
         if(Assign_Array(r,s) == -1) {
-		Py_XINCREF(savetype);
 		Py_DECREF(r);
 		return NULL;
 	}
         return (PyObject*)r;
+
+ fail:
+	Py_DECREF(typecode);
+	return NULL;
 }
 
 
@@ -6092,15 +6097,19 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 		}
 		if (PySequence_Check(op)) {
 			/* necessary but not sufficient */
-			
+
+			Py_INCREF(newtype);
 			r = Array_FromSequence(op, newtype, flags & FORTRAN,
 					       min_depth, max_depth);
-			if (PyErr_Occurred() && r == NULL)
+			if (PyErr_Occurred() && r == NULL) {
                             /* It wasn't really a sequence after all.
                              * Try interpreting it as a scalar */
-                            PyErr_Clear();
-                        else
-                            seq = TRUE;
+				PyErr_Clear();
+			}
+                        else {
+				seq = TRUE;
+				Py_DECREF(newtype);
+			}
                 }
                 if (!seq)
 			r = Array_FromScalar(op, newtype);

@@ -3393,6 +3393,7 @@ _convert_from_tuple(PyObject *obj)
 		PyDimMem_FREE(shape.ptr);
 		newdescr->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
 		newdescr->subarray->base = type;
+		if (type->hasobject) newdescr->hasobject = 1;
 		Py_INCREF(val);
 		newdescr->subarray->shape = val;
 		Py_XDECREF(newdescr->fields);
@@ -3517,8 +3518,13 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
 		tup = PyTuple_New(2);
 		key = PyString_FromFormat("f%d", i+1);
 		ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
-                if (!hasobject && conv->hasobject)
-                        hasobject=1;                        
+		if (ret == PY_FAIL) {
+			Py_DECREF(tup);
+			Py_DECREF(key);
+			goto fail;
+		}
+		if (!hasobject && conv->hasobject)
+			hasobject=1;			
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
 		if (align) {
 			int _align;
@@ -3531,7 +3537,6 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
 		PyDict_SetItem(fields, key, tup);
 		Py_DECREF(tup);
 		PyList_SET_ITEM(nameslist, i, key);
-		if (ret == PY_FAIL) goto fail;
 		totalsize += conv->elsize;
 	}
 	key = PyInt_FromLong(-1);
@@ -3686,8 +3691,6 @@ _convert_from_dict(PyObject *obj, int align)
 		tup = PyTuple_New(len);
 		descr = PyObject_GetItem(descrs, index);
 		ret = PyArray_DescrConverter(descr, &newdescr);
-                if (!hasobject && newdescr->hasobject)
-                        hasobject = 1;
 		Py_DECREF(descr);
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
 		if (offsets) {
@@ -3727,6 +3730,8 @@ _convert_from_dict(PyObject *obj, int align)
 		if (len == 3) PyDict_SetItem(fields, item, tup);
 		Py_DECREF(tup);
 		if ((ret == PY_FAIL) || (newdescr->elsize == 0)) goto fail;
+                if (!hasobject && newdescr->hasobject)
+                        hasobject = 1;
 		totalsize += newdescr->elsize;
 	}
 
