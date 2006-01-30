@@ -772,15 +772,38 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 	return 0;
 }
 
+static int
+_signbit_set(PyArrayObject *arr)
+{
+	static char bitmask = 0x80;
+	char *ptr;  /* points to the byte to test */
+	char byteorder;
+	int elsize;
+
+	elsize = arr->descr->elsize;
+	byteorder = arr->descr->byteorder;
+	ptr = arr->data;
+	if (elsize > 1 && \
+	    (byteorder == PyArray_LITTLE ||	\
+	     (byteorder == PyArray_NATIVE &&
+	      PyArray_ISNBO(PyArray_LITTLE))))
+		ptr += elsize-1;
+	
+	return ((*ptr & bitmask) != 0);	
+}
 
 static char
 _scalar_kind(int typenum, PyArrayObject **arr) 
 {
-	if (PyTypeNum_ISSIGNED(typenum)) return UFUNC_INTNEG_SCALAR;
+	if (PyTypeNum_ISSIGNED(typenum)) {
+		if (_signbit_set(*arr)) return UFUNC_INTNEG_SCALAR;
+		else return UFUNC_INTPOS_SCALAR;
+	}
 	if (PyTypeNum_ISFLOAT(typenum)) return UFUNC_FLOAT_SCALAR;
-	if (PyTypeNum_ISCOMPLEX(typenum)) return UFUNC_COMPLEX_SCALAR;
 	if (PyTypeNum_ISUNSIGNED(typenum)) return UFUNC_INTPOS_SCALAR;
+	if (PyTypeNum_ISCOMPLEX(typenum)) return UFUNC_COMPLEX_SCALAR;
 	if (PyTypeNum_ISBOOL(typenum)) return UFUNC_BOOL_SCALAR;
+
 	return UFUNC_OBJECT_SCALAR;
 }
 
