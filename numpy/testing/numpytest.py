@@ -151,6 +151,7 @@ class NumpyTestCase (unittest.TestCase):
                     result.stream.data[-1] = 'ignoring\n'
                 del result.errors[-1]
         map(save_stream.write, result.stream.data)
+        save_stream.flush()
         result.stream = save_stream
 
 ScipyTestCase = NumpyTestCase
