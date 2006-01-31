@@ -7,7 +7,9 @@ import unittest
 import traceback
 
 __all__ = ['set_package_path', 'set_local_path', 'restore_path',
-           'IgnoreException', 'ScipyTestCase', 'ScipyTest']
+           'IgnoreException', 'NumpyTestCase', 'NumpyTest',
+           'ScipyTestCase', 'ScipyTest', # for backward compatibility
+           ]
 
 DEBUG=0
 get_frame = sys._getframe
@@ -78,15 +80,15 @@ def restore_path():
     return
 
 
-def output_exception():
+def output_exception(printstream = sys.stdout):
     try:
         type, value, tb = sys.exc_info()
         info = traceback.extract_tb(tb)
         #this is more verbose
         #traceback.print_exc()
         filename, lineno, function, text = info[-1] # last line only
-        print "%s:%d: %s: %s (in %s)" %\
-              (filename, lineno, type.__name__, str(value), function)
+        print>>printstream, "%s:%d: %s: %s (in %s)" %\
+                            (filename, lineno, type.__name__, str(value), function)
     finally:
         type = value = tb = None # clean up
     return
@@ -106,7 +108,7 @@ class _dummy_stream:
         self.write(message+'\n')
 
 
-class ScipyTestCase (unittest.TestCase):
+class NumpyTestCase (unittest.TestCase):
 
     def measure(self,code_str,times=1):
         """ Return elapsed time for executing code_str in the
@@ -115,7 +117,7 @@ class ScipyTestCase (unittest.TestCase):
         frame = get_frame(1)
         locs,globs = frame.f_locals,frame.f_globals
         code = compile(code_str,
-                       'ScipyTestCase runner for '+self.__class__.__name__,
+                       'NumpyTestCase runner for '+self.__class__.__name__,
                        'exec')
         i = 0
         elapsed = jiffies()
@@ -151,6 +153,8 @@ class ScipyTestCase (unittest.TestCase):
         map(save_stream.write, result.stream.data)
         result.stream = save_stream
 
+ScipyTestCase = NumpyTestCase
+
 def _get_all_method_names(cls):
     names = dir(cls)
     if sys.version[:3]<='2.1':
@@ -184,11 +188,11 @@ class SciPyTextTestRunner(unittest.TextTestRunner):
         return _SciPyTextTestResult(self.stream, self.descriptions, self.verbosity)
     
 
-class ScipyTest:
-    """ Scipy tests site manager.
+class NumpyTest:
+    """ Numpy tests site manager.
 
     Usage:
-      >>> ScipyTest(<package>).test(level=1,verbosity=1)
+      >>> NumpyTest(<package>).test(level=1,verbosity=1)
 
     <package> is package name or its module object.
 
@@ -196,7 +200,7 @@ class ScipyTest:
     with test_*.py files where * refers to the names of submodules.
 
     test_*.py files are supposed to define a classes, derived
-    from ScipyTestCase or unittest.TestCase, with methods having
+    from NumpyTestCase or unittest.TestCase, with methods having
     names starting with test or bench or check.
 
     And that is it! No need to implement test or test_suite functions
@@ -270,11 +274,14 @@ class ScipyTest:
                and short_module_name[:-8]==module.__name__.split('.')[-2]:
                 return []
             if verbosity>1:
-                print test_file
-                print '   !! No test file %r found for %s' \
-                      % (os.path.basename(test_file), mstr(module))
+                self.warn(test_file)
+                self.warn('   !! No test file %r found for %s' \
+                          % (os.path.basename(test_file), mstr(module)))
             return []
 
+        if test_file in self.test_files:
+            return []
+    
         try:
             if sys.version[:3]=='2.1':
                 # Workaround for Python 2.1 .pyc file generator bug
@@ -290,10 +297,12 @@ class ScipyTest:
             if sys.version[:3]=='2.1' and os.path.isfile(test_file+pref+'c'):
                 os.remove(test_file+pref+'c')
         except:
-            print '   !! FAILURE importing tests for ', mstr(module)
-            print '   ',
-            output_exception()
+            self.warn('   !! FAILURE importing tests for %s' % mstr(module))
+            output_exception(self.warn)
             return []
+
+        self.test_files.append(test_file)
+
         return self._get_suite_list(test_module, level, module.__name__)
 
     def _get_suite_list(self, test_module, level, module_name='__main__'):
@@ -304,9 +313,8 @@ class ScipyTest:
                 total_suite = test_module.test_suite(level)
                 return total_suite._tests
             except:
-                print '   !! FAILURE building tests for ', mstr(test_module)
-                print '   ',
-                output_exception()
+                self.warn('   !! FAILURE building tests for %s' % mstr(test_module))
+                output_exception(self.warn)
                 return []
         suite_list = []
         for name in dir(test_module):
@@ -319,11 +327,11 @@ class ScipyTest:
                 suite = obj(mthname)
                 if getattr(suite,'isrunnable',lambda mthname:1)(mthname):
                     suite_list.append(suite)
-        print '  Found',len(suite_list),'tests for',module_name
+        self.info('  Found %s tests for %s' % (len(suite_list),module_name))
         return suite_list
 
     def test(self,level=1,verbosity=1):
-        """ Run Scipy module test suite with level and verbosity.
+        """ Run Numpy module test suite with level and verbosity.
         """
         if type(self.package) is type(''):
             exec 'import %s as this_package' % (self.package)
@@ -332,13 +340,18 @@ class ScipyTest:
 
         package_name = this_package.__name__
 
-        suites = []
+        modules = []
         for name, module in sys.modules.items():
             if package_name != name[:len(package_name)] \
                    or module is None:
                 continue
             if os.path.basename(os.path.dirname(module.__file__))=='tests':
                 continue
+            modules.append(module)
+
+        self.test_files = []
+        suites = []
+        for module in modules:
             suites.extend(self._get_module_tests(module, level, verbosity))
 
         suites.extend(self._get_suite_list(sys.modules[package_name], level))
@@ -360,13 +373,13 @@ class ScipyTest:
         return runner
 
     def run(self):
-        """ Run Scipy module test suite with level and verbosity
+        """ Run Numpy module test suite with level and verbosity
         taken from sys.argv. Requires optparse module.
         """
         try:
             from optparse import OptionParser
         except ImportError:
-            print 'Failed to import optparse module, ignoring.'
+            self.warn('Failed to import optparse module, ignoring.')
             return self.test()
         usage = r'usage: %prog [-v <verbosity>] [-l <level>]'
         parser = OptionParser(usage)
@@ -383,3 +396,12 @@ class ScipyTest:
         (options, args) = parser.parse_args()
         self.test(options.level,options.verbosity)
         return
+
+    def warn(self, message):
+        print>>sys.stderr,'Warning: %s' % (message)
+        sys.stderr.flush()
+    def info(self, message):
+        print>>sys.stdout, message
+        sys.stdout.flush()
+
+ScipyTest = NumpyTest
