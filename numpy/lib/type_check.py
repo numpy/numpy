@@ -7,7 +7,7 @@ __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ndarray, asarray, array, isinf, isnan, \
-     isfinite, signbit, ufunc, ScalarType, obj2arrtype
+     isfinite, signbit, ufunc, ScalarType, obj2sctype
 from ufunclike import isneginf, isposinf
 import numpy.core.umath as umath
 
@@ -44,7 +44,7 @@ def mintypecode(typechars,typeset='GDFgdf',default='d'):
 
 def asfarray(a, dtype=_nx.float_):
     """asfarray(a,dtype=None) returns a as a float array."""
-    dtype = _nx.obj2arrtype(dtype)
+    dtype = _nx.obj2sctype(dtype)
     if not issubclass(dtype, _nx.inexact):
         dtype = _nx.float_
     a = asarray(a,dtype=dtype)
@@ -83,7 +83,7 @@ def nan_to_num(x):
     try:
         t = x.dtype.type
     except AttributeError:
-        t = obj2arrtype(type(x))
+        t = obj2sctype(type(x))
     if issubclass(t, _nx.complexfloating):
         y = nan_to_num(x.real) + 1j * nan_to_num(x.imag)
     elif issubclass(t, _nx.integer):

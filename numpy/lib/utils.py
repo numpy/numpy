@@ -1,6 +1,6 @@
-from numpy.core.numerictypes import obj2arrtype
+from numpy.core.numerictypes import obj2sctype
 
-__all__ = ['issubclass_', 'get_numpy_include', 'issubarrtype']
+__all__ = ['issubclass_', 'get_numpy_include', 'issubsctype']
 
 def issubclass_(arg1, arg2):
     try:
@@ -8,8 +8,8 @@ def issubclass_(arg1, arg2):
     except TypeError:
         return False
 
-def issubarrtype(arg1, arg2):
-    return issubclass(obj2arrtype(arg1), obj2arrtype(arg2))
+def issubsctype(arg1, arg2):
+    return issubclass(obj2sctype(arg1), obj2sctype(arg2))
     
 def get_numpy_include():
     """Return the directory in the package that contains the numpy/*.h header 

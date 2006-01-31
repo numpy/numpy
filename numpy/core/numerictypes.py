@@ -9,7 +9,7 @@ Exported symbols include:
     typeDict
 
   Type objects (not all will be available, depends on platform):
-      see variable arraytypes for which ones you have
+      see variable sctypes for which ones you have
 
     Bit-width names
 
@@ -72,13 +72,13 @@ Exported symbols include:
            unicode_
          void
 
-       object_
+       object_ (not used much)
 
 $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
 
 # we add more at the bottom
-__all__ = ['typeDict', 'typeNA', 'arraytypes', 'ScalarType', 'obj2arrtype', 'cast', 'nbytes', 'arrtype2char','maximum_arrtype', 'isarrtype']
+__all__ = ['typeDict', 'typeNA', 'sctypes', 'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char','maximum_sctype', 'issctype']
 
 from multiarray import typeinfo, ndarray, array, empty
 import types as _types
@@ -228,21 +228,21 @@ def _set_up_aliases():
 _set_up_aliases()
 
 # Now, construct dictionary to lookup character codes from types
-_arrtype2char_dict = {}
+_sctype2char_dict = {}
 def _construct_char_code_lookup():
     for name in typeinfo.keys():
         tup = typeinfo[name]
         if isinstance(tup, tuple):
 	     if tup[0] not in ['p','P']:
-                _arrtype2char_dict[tup[-1]] = tup[0]
+                _sctype2char_dict[tup[-1]] = tup[0]
 _construct_char_code_lookup()
 
 
-arraytypes = {'int': [],
-              'uint':[],
-              'float':[],
-              'complex':[],
-              'others':[bool,object,str,unicode,void]}
+sctypes = {'int': [],
+           'uint':[],
+           'float':[],
+           'complex':[],
+           'others':[bool,object,str,unicode,void]}
 
 def _add_array_type(typename, bits):
     try:
@@ -250,7 +250,7 @@ def _add_array_type(typename, bits):
     except KeyError:
         pass
     else:
-        arraytypes[typename].append(t)
+        sctypes[typename].append(t)
 
 def _set_array_types():
     ibytes = [1, 2, 4, 8, 16, 32, 64]
@@ -273,9 +273,9 @@ genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
                    'complex32', 'complex64', 'complex128', 'complex160',
                    'complex192', 'complex256', 'complex512', 'object']
 
-def maximum_arrtype(t):
-    """returns the arrtype of highest precision of the same general kind as 't'"""
-    g = obj2arrtype(t)
+def maximum_sctype(t):
+    """returns the sctype of highest precision of the same general kind as 't'"""
+    g = obj2sctype(t)
     if g is None:
         return t
     t = g
@@ -284,7 +284,7 @@ def maximum_arrtype(t):
     if bits == 0:
         return t
     else:
-        return arraytypes[base][-1]
+        return sctypes[base][-1]
 
 _python_types = {int : 'int_',
                  float: 'float_',
@@ -300,16 +300,16 @@ def _python_type(t):
         t = type(t)
     return allTypes[_python_types.get(t, 'object_')]
 
-def isarrtype(rep):
+def issctype(rep):
     """Determines whether the given object represents
     a numeric array type."""
     try:
-        char = arrtype2char(rep)
+        char = sctype2char(rep)
         return True
-    except (KeyError, ValueError):
+    except (KeyError, ValueError, TypeError):
         return False
 
-def obj2arrtype(rep, default=None):
+def obj2sctype(rep, default=None):
     try:
         if issubclass(rep, generic):
             return rep
@@ -326,7 +326,7 @@ def obj2arrtype(rep, default=None):
 # This dictionary allows look up based on any alias for an array type
 class _typedict(dict):
     def __getitem__(self, obj):
-        return dict.__getitem__(self, obj2arrtype(obj))
+        return dict.__getitem__(self, obj2sctype(obj))
 
 nbytes = _typedict()
 _alignment = _typedict()
@@ -348,11 +348,11 @@ def _construct_lookups():
 
 _construct_lookups()
 
-def arrtype2char(arrtype):
-    arrtype = obj2arrtype(arrtype)
-    if arrtype is None:
+def sctype2char(sctype):
+    sctype = obj2sctype(sctype)
+    if sctype is None:
         raise ValueError, "unrecognized type"
-    return _arrtype2char_dict[arrtype]
+    return _sctype2char_dict[sctype]
 
 # Create dictionary of casting functions that wrap sequences
 # indexed by type or type character
@@ -362,9 +362,9 @@ cast = _typedict()
 ScalarType = [_types.IntType, _types.FloatType,
               _types.ComplexType, _types.LongType, _types.BooleanType,
               _types.StringType, _types.UnicodeType, _types.BufferType]
-ScalarType.extend(_arrtype2char_dict.keys())
+ScalarType.extend(_sctype2char_dict.keys())
 ScalarType = tuple(ScalarType)
-for key in _arrtype2char_dict.keys():
+for key in _sctype2char_dict.keys():
     cast[key] = lambda x, k=key : array(x, copy=False).astype(k)
 
 
@@ -372,9 +372,9 @@ _unicodesize = array('u','U').itemsize
 
 # Create the typestring lookup dictionary
 _typestr = _typedict()
-for key in _arrtype2char_dict.keys():
+for key in _sctype2char_dict.keys():
     if issubclass(key, allTypes['flexible']):
-        _typestr[key] = _arrtype2char_dict[key]
+        _typestr[key] = _sctype2char_dict[key]
     else:
         _typestr[key] = empty((1,),key).dtype.str[1:]
 

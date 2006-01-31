@@ -27,7 +27,7 @@ class finfo(object):
         if obj is not None:
             return obj
         dtypes = [dtype]
-        newdtype = numeric.obj2arrtype(dtype)
+        newdtype = numeric.obj2sctype(dtype)
         if newdtype is not dtype:
             dtypes.append(newdtype)
             dtype = newdtype

@@ -34,7 +34,7 @@ from numeric import asarray, array, correlate, outer, concatenate
 from umath import sign, absolute, multiply
 import numeric as _nx
 import sys
-_dt_ = nt.arrtype2char
+_dt_ = nt.sctype2char
 
 import types
 
