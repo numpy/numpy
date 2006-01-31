@@ -1,5 +1,4 @@
 
-import types
 from distutils.core import *
 try:
     from setuptools import setup as old_setup
@@ -24,7 +23,7 @@ from numpy.distutils.command import install_data
 from numpy.distutils.command import install_headers
 from numpy.distutils.command import install
 from numpy.distutils.command import bdist_rpm
-from numpy.distutils.misc_util import get_data_files
+from numpy.distutils.misc_util import get_data_files, is_sequence, is_string
 
 numpy_cmdclass = {'build':            build.build,
                   'build_src':        build_src.build_src,
@@ -61,13 +60,15 @@ def setup(**attr):
     for ext in new_attr.get('ext_modules',[]):
         new_libraries = []
         for item in ext.libraries:
-            if type(item) is type(()):
-                lib_name,build_info = item
+            if is_sequence(item):
+                lib_name, build_info = item
                 _check_append_ext_library(libraries, item)
                 new_libraries.append(lib_name)
-            else:
-                assert type(item) is type(''),`item`
+            elif is_string(item):
                 new_libraries.append(item)
+            else:
+                raise TypeError("invalid description of extension module "
+                                "library %r" % (item,))
         ext.libraries = new_libraries
     if libraries:
         if not new_attr.has_key('libraries'):
@@ -85,24 +86,24 @@ def setup(**attr):
 def _check_append_library(libraries, item):
     import warnings
     for libitem in libraries:
-        if type(libitem) is type(()):
-            if type(item) is type(()):
+        if is_sequence(libitem):
+            if is_sequence(item):
                 if item[0]==libitem[0]:
                     if item[1] is libitem[1]:
                         return
-                    warnings.warn("[0] libraries list contains '%s' with"\
-                                  " different build_info" % (item[0]))
+                    warnings.warn("[0] libraries list contains %r with"
+                                  " different build_info" % (item[0],))
                     break
             else:
                 if item==libitem[0]:
-                    warnings.warn("[1] libraries list contains '%s' with"\
-                                  " no build_info" % (item[0]))
+                    warnings.warn("[1] libraries list contains %r with"
+                                  " no build_info" % (item[0],))
                     break
         else:
-            if type(item) is type(()):
+            if is_sequence(item):
                 if item[0]==libitem:
-                    warnings.warn("[2] libraries list contains '%s' with"\
-                                  " no build_info" % (item[0]))
+                    warnings.warn("[2] libraries list contains %r with"
+                                  " no build_info" % (item[0],))
                     break
             else:
                 if item==libitem:
@@ -113,16 +114,16 @@ def _check_append_library(libraries, item):
 def _check_append_ext_library(libraries, (lib_name,build_info)):
     import warnings
     for item in libraries:
-        if type(item) is type(()):
+        if is_sequence(item):
             if item[0]==lib_name:
                 if item[1] is build_info:
                     return
-                warnings.warn("[3] libraries list contains '%s' with"\
-                              " different build_info" % (lib_name))
+                warnings.warn("[3] libraries list contains %r with"
+                              " different build_info" % (lib_name,))
                 break
         elif item==lib_name:
-            warnings.warn("[4] libraries list contains '%s' with"\
-                          " no build_info" % (lib_name))
+            warnings.warn("[4] libraries list contains %r with"
+                          " no build_info" % (lib_name,))
             break
     libraries.append((lib_name,build_info))
     return

@@ -65,7 +65,7 @@ def get_pythonexe():
         fdir,fn = os.path.split(pythonexe)
         fn = fn.upper().replace('PYTHONW','PYTHON')
         pythonexe = os.path.join(fdir,fn)
-        assert os.path.isfile(pythonexe),`pythonexe`+' is not a file'
+        assert os.path.isfile(pythonexe), '%r is not a file' % (pythonexe,)
     return pythonexe
 
 ############################################################
@@ -104,19 +104,19 @@ def splitcmdline(line):
 
 def test_splitcmdline():
     l = splitcmdline('a   b  cc')
-    assert l==['a','b','cc'],`l`
+    assert l==['a','b','cc'], repr(l)
     l = splitcmdline('a')
-    assert l==['a'],`l`
+    assert l==['a'], repr(l)
     l = splitcmdline('a "  b  cc"')
-    assert l==['a','"  b  cc"'],`l`
+    assert l==['a','"  b  cc"'], repr(l)
     l = splitcmdline('"a bcc"  -h')
-    assert l==['"a bcc"','-h'],`l`
+    assert l==['"a bcc"','-h'], repr(l)
     l = splitcmdline(r'"\"a \" bcc" -h')
-    assert l==[r'"\"a \" bcc"','-h'],`l`
+    assert l==[r'"\"a \" bcc"','-h'], repr(l)
     l = splitcmdline(" 'a bcc'  -h")
-    assert l==["'a bcc'",'-h'],`l`
+    assert l==["'a bcc'",'-h'], repr(l)
     l = splitcmdline(r"'\'a \' bcc' -h")
-    assert l==[r"'\'a \' bcc'",'-h'],`l`
+    assert l==[r"'\'a \' bcc'",'-h'], repr(l)
 
 ############################################################
 
@@ -340,7 +340,8 @@ def _exec_command_python(command,
 
     cmd = '%s %s' % (python_exe, cmdfile)
     status = os.system(cmd)
-    assert not status,`cmd`+' failed'
+    if status:
+        raise RuntimeError("%r failed" % (cmd,))
     os.remove(cmdfile)
 
     f = open(stsfile,'r')

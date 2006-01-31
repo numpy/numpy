@@ -95,21 +95,21 @@ Authors:
   David M. Cooke <cookedm@physics.mcmaster.ca>, April 2002
 
 Copyright 2002 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@cens.ioc.ee>          
-Permission to use, modify, and distribute this software is given under the 
+Pearu Peterson <pearu@cens.ioc.ee>
+Permission to use, modify, and distribute this software is given under the
 terms of the SciPy (BSD style) license.  See LICENSE.txt that came with
 this distribution for specifics.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 
-__revision__ = '$Id: system_info.py,v 1.1 2005/04/09 19:29:35 pearu Exp $'
-import sys,os,re,types
+import sys,os,re
 import warnings
 from distutils.errors import DistutilsError
 from glob import glob
 import ConfigParser
 from exec_command import find_executable, exec_command, get_pythonexe
+from numpy.distutils.misc_util import is_sequence, is_string
 
 from distutils.sysconfig import get_config_vars
 
@@ -296,7 +296,7 @@ class system_info:
             self.cp.add_section(self.section)
         self.search_static_first = self.cp.getboolean(self.section,
                                                       'search_static_first')
-        assert isinstance(self.search_static_first, type(0))
+        assert isinstance(self.search_static_first, int)
 
     def calc_libraries_info(self):
         libs = self.get_libraries()
@@ -305,7 +305,7 @@ class system_info:
         for lib in libs:
             i = None
             for d in dirs:
-                i = self.check_libs(d,[lib])        
+                i = self.check_libs(d,[lib])
                 if i is not None:
                     break
             if i is not None:
@@ -315,7 +315,7 @@ class system_info:
         return info
 
     def set_info(self,**info):
-        if info:       
+        if info:
             lib_info = self.calc_libraries_info()
             dict_append(info,**lib_info)
         self.saved_results[self.__class__.__name__] = info
@@ -341,7 +341,7 @@ class system_info:
                     elif notfound_action==2:
                         raise self.notfounderror,self.notfounderror.__doc__
                     else:
-                        raise ValueError,`notfound_action`
+                        raise ValueError(repr(notfound_action))
 
             if self.verbosity>0:
                 if not self.has_info():
@@ -349,7 +349,7 @@ class system_info:
                     self.set_info()
                 else:
                     print '  FOUND:'
-            
+
         res = self.saved_results.get(self.__class__.__name__)
         if self.verbosity>0 and flag:
             for k,v in res.items():
@@ -357,14 +357,14 @@ class system_info:
                 if k=='sources' and len(v)>200: v = v[:60]+' ...\n... '+v[-60:]
                 print '    %s = %s'%(k,v)
             print
-        
+
         return res
 
     def get_paths(self, section, key):
         dirs = self.cp.get(section, key).split(os.pathsep)
         env_var = self.dir_env_var
         if env_var:
-            if type(env_var) is type([]):
+            if is_sequence(env_var):
                 e0 = env_var[-1]
                 for e in env_var:
                     if os.environ.has_key(e):
@@ -423,7 +423,7 @@ class system_info:
         except ConfigParser.NoOptionError:
             if not default:
                 return []
-            if type(default) is type(''):
+            if is_string(default):
                 return [default]
             return default
         return [b for b in [a.strip() for a in libs.split(',')] if b]
@@ -459,7 +459,7 @@ class system_info:
         return
 
     def _lib_list(self, lib_dir, libs, exts):
-        assert type(lib_dir) is type('')
+        assert is_string(lib_dir)
         liblist = []
         for l in libs:
             for ext in exts:
@@ -490,7 +490,7 @@ class system_info:
 
 
 class fft_opt_info(system_info):
-    
+
     def calc_info(self):
         info = {}
         fftw_info = get_info('fftw3') or get_info('fftw2') or get_info('dfftw')
@@ -811,7 +811,7 @@ class atlas_info(system_info):
             warnings.warn(message)
             self.set_info(**info)
             return
-        
+
         # Check if lapack library is complete, only warn if it is not.
         lapack_dir = lapack['library_dirs'][0]
         lapack_name = lapack['libraries'][0]
@@ -894,7 +894,7 @@ class lapack_info(system_info):
         for d in lib_dirs:
             lapack = self.check_libs(d,lapack_libs,[])
             if lapack is not None:
-                info = lapack                
+                info = lapack
                 break
         else:
             return
@@ -1026,7 +1026,7 @@ def get_atlas_version(**config):
     from core import Extension, setup
     from misc_util import get_cmd
     import log
-    magic = hex(hash(`config`))
+    magic = hex(hash(repr(config)))
     def atlas_version_c(extension, build_dir,magic=magic):
         source = os.path.join(build_dir,'atlas_version_%s.c' % (magic))
         if os.path.isfile(source):
@@ -1085,7 +1085,7 @@ def get_atlas_version(**config):
 
 
 class lapack_opt_info(system_info):
-    
+
     def calc_info(self):
 
         if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
@@ -1170,7 +1170,7 @@ class lapack_opt_info(system_info):
 
 
 class blas_opt_info(system_info):
-    
+
     def calc_info(self):
 
         if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
@@ -1248,7 +1248,7 @@ class blas_info(system_info):
         for d in lib_dirs:
             blas = self.check_libs(d,blas_libs,[])
             if blas is not None:
-                info = blas                
+                info = blas
                 break
         else:
             return
@@ -1470,7 +1470,7 @@ class agg2_info(system_info):
         else:
             agg2_srcs = glob(os.path.join(src_dir,'src','*.cpp'))
             agg2_srcs += [os.path.join(src_dir,'src','platform','X11','agg_platform_support.cpp')]
-        
+
         info = {'libraries':[('agg2_src',{'sources':agg2_srcs,
                                           'include_dirs':[os.path.join(src_dir,'include')],
                                           })],
@@ -1628,7 +1628,7 @@ def combine_paths(*args,**kws):
     r = []
     for a in args:
         if not a: continue
-        if type(a) is types.StringType:
+        if is_string(a):
             a = [a]
         r.append(a)
     args = r

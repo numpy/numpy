@@ -408,12 +408,12 @@ class Configuration:
             self.packages.append(self.name)
             self.package_dir[self.name] = package_path
 
-        self.options = dict(\
-        ignore_setup_xxx_py = False,
-        assume_default_configuration = False,
-        delegate_options_to_subpackages = False,
-        quiet = False,
-        )
+        self.options = dict(
+            ignore_setup_xxx_py = False,
+            assume_default_configuration = False,
+            delegate_options_to_subpackages = False,
+            quiet = False,
+            )
 
         for i in range(1,3):
             f = get_frame(i)
@@ -624,12 +624,12 @@ class Configuration:
                             new_files.append((appendpath(d,d1),p))
                         continue
                     d = appendpath(d,pd)
-                p = (d,p)    
+                p = (d,p)
             new_files.append(p)
-        
+
         files = []
         for prefix,filepattern in new_files:
-            assert '*' not in prefix,`prefix,filepattern`
+            assert '*' not in prefix, repr((prefix,filepattern))
             if is_string(filepattern):
                 file_list = self.paths(filepattern,include_non_existing=False)
             elif callable(filepattern):
@@ -697,7 +697,7 @@ class Configuration:
         return
 
     def _fix_paths(self,paths,include_non_existing=True):
-        assert isinstance(paths,(list,tuple)),`type(paths)`
+        assert is_sequence(paths), repr(type(paths))
         new_paths = []
         for n in paths:
             if isinstance(n,str):
@@ -755,10 +755,10 @@ class Configuration:
         if ext_args.has_key('extra_info'):
             extra_info = ext_args['extra_info']
             del ext_args['extra_info']
-            if type(extra_info) is type({}):
+            if isinstance(extra_info, dict):
                 extra_info = [extra_info]
             for info in extra_info:
-                assert type(info) is type({}),`info`
+                assert isinstance(info, dict), repr(info)
                 dict_append(ext_args,**info)
 
         for k in ext_args.keys():
@@ -773,6 +773,7 @@ class Configuration:
         libnames = []
         ext_args['libraries'] = []
         for libname in libraries:
+            # Handle library names of the form libname@relative/path/to/library
             if '@' in libname:
                 lname,lpath = libname.split('@',1)
                 lpath = os.path.abspath(njoin(self.local_path,lpath))
@@ -920,7 +921,7 @@ class Configuration:
                         include_dirs=self.include_dirs)
         else:
             from numpy.distutils.core import Extension
-            assert isinstance(extlib,Extension),`extlib`
+            assert isinstance(extlib,Extension), repr(extlib)
             extlib.libraries.extend(self.libraries)
             extlib.include_dirs.extend(self.include_dirs)
         return
@@ -1085,10 +1086,10 @@ def default_config_dict(name = None, parent_name = None, local_path=None):
     configuration() function defined in file setup_<name>.py.
     """
     import warnings
-    warnings.warn('Use Configuration(%s,%s,top_path=%s) instead of '\
-                  'deprecated default_config_dict(%s,%s,%s)' \
-                  % (`name`,`parent_name`,`local_path`,
-                     `name`,`parent_name`,`local_path`,
+    warnings.warn('Use Configuration(%r,%r,top_path=%r) instead of '\
+                  'deprecated default_config_dict(%r,%r,%r)'
+                  % (name,parent_name,local_path,
+                     name,parent_name,local_path,
                      ))
     c = Configuration(name, parent_name, local_path)
     return c.todict()

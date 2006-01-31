@@ -150,9 +150,9 @@ def _compiler_to_string(compiler):
         if hasattr(compiler,key):
             v = getattr(compiler, key)
             mx = max(mx,len(key))
-            props.append((key,`v`))
+            props.append((key,repr(v)))
     lines = []
-    format = '%-' +`mx+1`+ 's = %s'
+    format = '%-' + repr(mx+1) + 's = %s'
     for prop in props:
         lines.append(format % prop)
     return '\n'.join(lines)
@@ -215,7 +215,8 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
         m = re.match(self.version_pattern,output)
         if m:
             version = m.group('version')
-            assert version,`version`
+            if not m:
+                raise ValueError("compiler version not matched (%r)" % (version,))
             version = LooseVersion(version)
     self.version = version
     return version

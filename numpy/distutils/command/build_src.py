@@ -135,7 +135,7 @@ class build_src(build_ext.build_ext):
                         elif isinstance(s,str):
                             files.append(s)
                         else:
-                            raise TypeError,`s`
+                            raise TypeError(repr(s))
                 filenames = get_data_files((d,files))
                 new_data_files.append((d, filenames))
             else:
@@ -351,9 +351,10 @@ class build_src(build_ext.build_ext):
                     target_dir = appendpath(self.build_src, os.path.dirname(base))
                 if os.path.isfile(source):
                     name = get_f2py_modulename(source)
-                    assert name==ext_name,'mismatch of extension names: '\
-                           +source+' provides'\
-                           ' '+`name`+' but expected '+`ext_name`
+                    if name != ext_name:
+                        raise ValueError('mismatch of extension names: %s '
+                                         'provides %r but expected %r' % (
+                                          source, name, ext_name))
                     target_file = os.path.join(target_dir,name+'module.c')
                 else:
                     log.debug('  source %s does not exist: skipping f2py\'ing.' \
@@ -368,7 +369,8 @@ class build_src(build_ext.build_ext):
                                   % (target_file, name))
                         target_dir = os.path.dirname(base)
                         target_file = os.path.join(target_dir,name+'module.c')
-                        assert os.path.isfile(target_file),`target_file`+' missing'
+                        if not os.path.isfile(target_file):
+                            raise ValueError("%r missing" % (target_file,))
                         log.debug('   Yes! Using %s as up-to-date target.' \
                                   % (target_file))
                 target_dirs.append(target_dir)
@@ -395,9 +397,10 @@ class build_src(build_ext.build_ext):
         log.info("f2py options: %s" % (f2py_options))
 
         if f2py_sources:
-            assert len(f2py_sources)==1,\
-                   'only one .pyf file is allowed per extension module but got'\
-                   ' more:'+`f2py_sources`
+            if len(f2py_sources) != 1:
+                raise ValueError(
+                    'only one .pyf file is allowed per extension module but got'\
+                    ' more: %r' % (f2py_sources,))
             source = f2py_sources[0]
             target_file = f2py_targets[source]
             target_dir = os.path.dirname(target_file) or '.'
@@ -430,7 +433,8 @@ class build_src(build_ext.build_ext):
                 log.debug("  skipping f2py fortran files for '%s' (up-to-date)"\
                           % (target_file))
 
-        assert os.path.isfile(target_file),`target_file`+' missing'
+        if not os.path.isfile(target_file):
+            raise ValueError("%r missing" % (target_file,))
 
         target_c = os.path.join(self.build_src,'fortranobject.c')
         target_h = os.path.join(self.build_src,'fortranobject.h')
@@ -451,9 +455,11 @@ class build_src(build_ext.build_ext):
                 self.copy_file(source_c,target_c)
                 self.copy_file(source_h,target_h)
         else:
-            assert os.path.isfile(target_c),`target_c` + ' missing'
-            assert os.path.isfile(target_h),`target_h` + ' missing'
-   
+            if not os.path.isfile(target_c):
+                raise ValueError("%r missing" % (target_c,))
+            if not os.path.isfile(target_h):
+                raise ValueError("%r missing" % (target_h,))
+ 
         for name_ext in ['-f2pywrappers.f','-f2pywrappers2.f90']:
             filename = os.path.join(target_dir,ext_name + name_ext)
             if os.path.isfile(filename):
@@ -488,16 +494,17 @@ class build_src(build_ext.build_ext):
                     py_target_dir = target_dir
                 if os.path.isfile(source):
                     name = get_swig_modulename(source)
-                    assert name==ext_name[1:],'mismatch of extension names: '\
-                           +source+' provides'\
-                           ' '+`name`+' but expected '+`ext_name[1:]`
+                    if name != ext_name[1:]:
+                        raise ValueError(
+                            'mismatch of extension names: %s provides %r'
+                            ' but expected %r' % (source, name, ext_name[1:]))
                     if typ is None:
                         typ = get_swig_target(source)
                         is_cpp = typ=='c++'
                         if is_cpp:
                             target_ext = '.cpp'
                     else:
-                        assert typ == get_swig_target(source),`typ`
+                        assert typ == get_swig_target(source), repr(typ)
                     target_file = os.path.join(target_dir,'%s_wrap%s' \
                                                % (name, target_ext))
                 else:
@@ -513,7 +520,8 @@ class build_src(build_ext.build_ext):
                                  % (target_file, name))
                         target_dir = os.path.dirname(base)
                         target_file = _find_swig_target(target_dir, name)
-                        assert os.path.isfile(target_file),`target_file`+' missing'
+                        if not os.path.isfile(target_file):
+                            raise ValueError("%r missing" % (target_file,))
                         log.debug('   Yes! Using %s as up-to-date target.' \
                                   % (target_file))
                 target_dirs.append(target_dir)
