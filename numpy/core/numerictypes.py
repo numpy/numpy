@@ -106,7 +106,7 @@ def _evalname(name):
 
 def bitname(obj):
     """Return a bit-width name for a given type object"""
-    name = obj.__name__[:-8]
+    name = obj.__name__[:-6]
     base = ''
     char = ''
     try:
@@ -279,7 +279,7 @@ def maximum_sctype(t):
     if g is None:
         return t
     t = g
-    name = t.__name__[:-8]
+    name = t.__name__[:-6]
     base, bits = _evalname(name)
     if bits == 0:
         return t
