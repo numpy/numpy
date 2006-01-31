@@ -118,11 +118,15 @@ class build_src(build_ext.build_ext):
                 new_data_files.append(data)
             elif isinstance(data,tuple):
                 d,files = data
+                if self.inplace:
+                    build_dir = d
+                else:
+                    build_dir = os.path.join(self.build_src,d)
                 funcs = filter(callable,files)
                 files = filter(lambda f:not callable(f), files)
                 for f in funcs:
                     if f.func_code.co_argcount==1:
-                        s = f(os.path.join(self.build_src,d))
+                        s = f(build_dir)
                     else:
                         s = f()
                     if s is not None:
@@ -144,13 +148,18 @@ class build_src(build_ext.build_ext):
             return
         log.info('building py_modules sources')
         new_py_modules = []
+        if self.inplace:
+            get_package_dir = self.get_finalized_command('build_py').get_package_dir
         for source in self.py_modules:
             if type(source) is type(()) and len(source)==3:
                 package, module_base, source = source
+                if self.inplace:
+                    build_dir = get_package_dir(package)
+                else:
+                    build_dir = os.path.join(self.build_src,
+                                             os.path.join(*package.split('.')))
                 if callable(source):
-                    target = os.path.join(*([self.build_src]+\
-                                            package.split('.')+\
-                                            [module_base + '.py']))
+                    target = os.path.join(build_dir, module_base + '.py')
                     source = source(target)
                 if source is None:
                     continue
@@ -201,7 +210,6 @@ class build_src(build_ext.build_ext):
         if self.inplace:
             build_py = self.get_finalized_command('build_py')
             self.ext_target_dir = build_py.get_package_dir(package)
-
 
         sources = self.generate_sources(sources, ext)
 
