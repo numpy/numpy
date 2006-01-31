@@ -408,6 +408,24 @@ class Configuration:
             self.packages.append(self.name)
             self.package_dir[self.name] = package_path
 
+        self.options = dict(\
+        ignore_setup_xxx_py = False,
+        assume_default_configuration = False,
+        delegate_options_to_subpackages = False,
+        quiet = False,
+        )
+
+        for i in range(1,3):
+            f = get_frame(i)
+            try:
+                caller_instance = eval('self',f.f_globals,f.f_locals)
+                break
+            except NameError:
+                caller_instance = None
+        if isinstance(caller_instance, self.__class__):
+            if caller_instance.options['delegate_options_to_subpackages']:
+                self.set_options(**caller_instance.options)
+
         return
 
     def todict(self):
@@ -424,11 +442,28 @@ class Configuration:
         return d
 
     def info(self, message):
-        print message
+        if not self.options['quiet']:
+            print message
 
     def warn(self, message):
         print>>sys.stderr, 'Warning:',message
 
+
+    def set_options(self, **options):
+        """ Configure Configuration instance.
+
+        The following options are available:
+        - ignore_setup_xxx_py
+        - assume_default_configuration
+        - delegate_options_to_subpackages
+        - quiet
+        """
+        for key, value in options.items():
+            if self.options.has_key(key):
+                self.options[key] = value
+            else:
+                raise ValueError,'Unknown option: '+key
+        return
     def __dict__(self):
         return self.todict()
 
@@ -462,14 +497,17 @@ class Configuration:
         else:
             subpackage_path = njoin(*([subpackage_path]+l[:-1]))
             subpackage_path = self._fix_paths([subpackage_path])[0]
+
         setup_py = njoin(subpackage_path,'setup.py')
-        if not os.path.isfile(setup_py):
-            setup_py = njoin(subpackage_path,'setup_%s.py' % (subpackage_name))
+        if not self.options['ignore_setup_xxx_py']:
+            if not os.path.isfile(setup_py):
+                setup_py = njoin(subpackage_path,'setup_%s.py' % (subpackage_name))
 
         if not os.path.isfile(setup_py):
-            print 'Assuming default configuration '\
-                  '(%s/{setup_%s,setup}.py was not found)' \
-                  % (os.path.dirname(setup_py),subpackage_name)
+            if not self.options['assume_default_configuration']:
+                self.warn('Assuming default configuration '\
+                          '(%s/{setup_%s,setup}.py was not found)' \
+                          % (os.path.dirname(setup_py),subpackage_name))
             config = Configuration(subpackage_name,self.name,
                                    self.top_path,subpackage_path)
         else:
@@ -482,8 +520,10 @@ class Configuration:
                 setup_module = imp.load_module('_'.join(n.split('.')),*info)
 
                 if not hasattr(setup_module,'configuration'):
-                    print 'Assuming default configuration '\
-                          '(%s does not define configuration())' % (setup_module)
+                    if not self.options['assume_default_configuration']:
+                        self.warn('Assuming default configuration '\
+                                  '(%s does not define configuration())'\
+                                  % (setup_module))
                     config = Configuration(subpackage_name,self.name,
                                            self.top_path,subpackage_path)
                 else:
@@ -507,18 +547,21 @@ class Configuration:
             config_list = config
         for config in config_list:
             if not config:
-                print 'No configuration returned, assuming unavailable.'
+                self.warn('No configuration returned, assuming unavailable.')
             else:
                 if isinstance(config,Configuration):
-                    print 'Appending %s configuration to %s' % (config.name,self.name)
+                    self.info('Appending %s configuration to %s' \
+                              % (config.name,self.name))
                     self.dict_append(**config.todict())
                 else:
-                    print 'Appending %s configuration to %s' % (config.get('name'),self.name)
+                    self.info('Appending %s configuration to %s' \
+                              % (config.get('name'),self.name))
                     self.dict_append(**config)
 
         dist = self.get_distribution()
         if dist is not None:
-            print 'distutils distribution has been initialized, it may be too late to add a subpackage', subpackage_name
+            self.warn('distutils distribution has been initialized,'\
+                      ' it may be too late to add a subpackage '+ subpackage_name)
         return
 
     def add_data_dir(self,data_path):
@@ -538,7 +581,7 @@ class Configuration:
             raise TypeError("not a string: %r" % (data_path,))
         for path in self.paths(data_path):
             if not os.path.exists(path):
-                print 'Not existing data path',path
+                self.warn('Not existing data path: '+path)
                 continue
             filenames = []
             os.path.walk(path, _gsf_visit_func,filenames)
@@ -753,7 +796,8 @@ class Configuration:
 
         dist = self.get_distribution()
         if dist is not None:
-            print 'distutils distribution has been initialized, it may be too late to add an extension', name
+            self.warn('distutils distribution has been initialized,'\
+                      ' it may be too late to add an extension '+name)
         return ext
 
     def add_library(self,name,sources,**build_info):
@@ -780,7 +824,8 @@ class Configuration:
 
         dist = self.get_distribution()
         if dist is not None:
-            print 'distutils distribution has been initialized, it may be too late to add a library', name
+            self.warn('distutils distribution has been initialized,'\
+                      ' it may be too late to add a library '+ name)
         return
 
     def add_scripts(self,*files):
@@ -916,7 +961,7 @@ class Configuration:
                 try:
                     version_module = imp.load_module('_'.join(n.split('.')),*info)
                 except ImportError,msg:
-                    print msg
+                    self.warn(str(msg))
                     version_module = None
                 if version_module is None:
                     continue
@@ -950,22 +995,21 @@ class Configuration:
         target = njoin(self.local_path,'__svn_version__.py')
         if os.path.isfile(target):
             return
-
         def generate_svn_version_py():
             if not os.path.isfile(target):
                 revision = self._get_svn_revision(self.local_path)
                 assert revision is not None,'hmm, why I am not inside SVN tree???'
                 version = str(revision)
-                print 'Creating %s (version=%r)' % (target,version)
+                self.info('Creating %s (version=%r)' % (target,version))
                 f = open(target,'w')
                 f.write('version = %r\n' % (version))
                 f.close()
 
             import atexit
-            def rm_file(f=target):
-                try: os.remove(f); print 'removed',f
+            def rm_file(f=target,p=self.info):
+                try: os.remove(f); p('removed '+f)
                 except OSError: pass
-                try: os.remove(f+'c'); print 'removed',f+'c'
+                try: os.remove(f+'c'); p('removed '+f+'c')
                 except OSError: pass
             atexit.register(rm_file)
 

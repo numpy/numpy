@@ -55,7 +55,10 @@ def setup_package():
             author_email = "oliphant@ee.byu.edu",
             platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
             )
-
+        config.set_options(ignore_setup_xxx_py=True,
+                           assume_default_configuration=True,
+                           delegate_options_to_subpackages=True,
+                           quiet=True)
 
         config.add_subpackage('numpy')
         from numpy.version import version
