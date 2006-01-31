@@ -154,6 +154,13 @@ class NumpyTestCase (unittest.TestCase):
         save_stream.flush()
         result.stream = save_stream
 
+    def warn(self, message):
+        print>>sys.stderr,'Warning: %s' % (message)
+        sys.stderr.flush()
+    def info(self, message):
+        print>>sys.stdout, message
+        sys.stdout.flush()
+
 ScipyTestCase = NumpyTestCase
 
 def _get_all_method_names(cls):
