@@ -125,10 +125,16 @@ class record(nt.void):
         return nt.void.__setattr__(self,attr,val)
     
     def __getitem__(self, obj):
-        return self.getfield(*(self.dtype.fields[obj][:2]))
+        myf = self.dtype.fields
+        if isinstance(obj, int):
+            obj = myf[-1][obj]
+        return self.getfield(*(myf[obj][:2]))
        
     def __setitem__(self, obj, val):
-        return self.setfield(val, *(self.dtype.fields[obj][:2]))
+        myf = self.dtype.fields        
+        if isinstance(obj, int):
+            obj = myf[-1][obj]
+        return self.setfield(val, *(myf[obj][:2]))
         
 
 # The recarray is almost identical to a standard array (which supports
@@ -410,7 +416,9 @@ def array(obj, formats=None, names=None, titles=None, shape=None,
                         offset=offset)
     elif isinstance(obj, sb.ndarray):
         res = obj.view(recarray)
-        if issubclass(res.dtype, nt.void):
+        if issubclass(res.dtype.type, nt.void):
             res.dtype = sb.dtype((record, res.dtype))
+        return res
     else:
         raise ValueError("Unknown input type")
+    
