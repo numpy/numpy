@@ -160,7 +160,7 @@ class PackageLoader:
         if options.get('force',False):
             self.imported_packages = []
         self.verbose = verbose = options.get('verbose',False)
-        postpone = options.get('postpone',False)
+        postpone = options.get('postpone',None)
         self._init_info_modules(packages or None)
 
         self.log('Imports to %r namespace\n----------------------------'\
@@ -172,7 +172,8 @@ class PackageLoader:
             info_module = self.info_modules[package_name]
             global_symbols = getattr(info_module,'global_symbols',[])
             postpone_import = getattr(info_module,'postpone_import',False)
-            if (postpone and not global_symbols) or postpone_import:
+            if (postpone and not global_symbols) \
+                   or (postpone_import and postpone is not None):
                 self.log('__all__.append(%r)' % (package_name))
                 if '.' not in package_name:
                     self.parent_export_names.append(package_name)
