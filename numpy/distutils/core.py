@@ -40,7 +40,8 @@ numpy_cmdclass = {'build':            build.build,
                   'bdist_rpm':        bdist_rpm.bdist_rpm,
                   }
 if have_setuptools:
-    from setuptools.command import bdist_egg, develop, easy_install, egg_info
+    from setuptools.command import bdist_egg, develop, easy_install
+    from numpy.distutils.command import egg_info
     numpy_cmdclass['bdist_egg'] = bdist_egg.bdist_egg
     numpy_cmdclass['develop'] = develop.develop
     numpy_cmdclass['easy_install'] = easy_install.easy_install
