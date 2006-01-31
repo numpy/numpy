@@ -124,19 +124,6 @@ class record(nt.void):
 
         return nt.void.__setattr__(self,attr,val)
     
-    def __getitem__(self, obj):
-        myf = self.dtype.fields
-        if isinstance(obj, int):
-            obj = myf[-1][obj]
-        return self.getfield(*(myf[obj][:2]))
-       
-    def __setitem__(self, obj, val):
-        myf = self.dtype.fields        
-        if isinstance(obj, int):
-            obj = myf[-1][obj]
-        return self.setfield(val, *(myf[obj][:2]))
-        
-
 # The recarray is almost identical to a standard array (which supports
 #   named fields already)  The biggest difference is that it can use
 #   attribute-lookup to find the fields and it is constructed using
