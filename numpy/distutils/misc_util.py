@@ -581,7 +581,6 @@ class Configuration:
             raise TypeError("not a string: %r" % (data_path,))
         for path in self.paths(data_path):
             if not os.path.exists(path):
-                self.warn('Not existing data path: '+path)
                 continue
             filenames = []
             os.path.walk(path, _gsf_visit_func,filenames)
@@ -712,7 +711,8 @@ class Configuration:
                     else:
                         if include_non_existing:
                             new_paths.append(n)
-                        self.warn('could not resolve pattern: %r' % (n))
+                        self.warn('could not resolve pattern in %s: %r' \
+                                  % (self.local_path,n))
                 else:
                     n2 = njoin(self.local_path,n)
                     if os.path.exists(n2):
@@ -723,7 +723,8 @@ class Configuration:
                         elif include_non_existing:
                             new_paths.append(n)
                         if not os.path.exists(n):
-                            self.warn('not existing path: %r' % (n))
+                            self.warn('not existing data path in %s: %s' \
+                                      % (self.local_path,n))
             else:
                 new_paths.append(n)
         return map(minrelpath,new_paths)
