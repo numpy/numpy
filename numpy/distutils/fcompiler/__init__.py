@@ -20,6 +20,7 @@ from distutils.util import split_quoted
 from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
 from numpy.distutils.command.config_compiler import config_fc
+from numpy.distutils.misc_util import is_string, is_sequence
 from distutils.spawn import _nt_quote_args
 
 class FCompiler(CCompiler):
@@ -91,7 +92,7 @@ class FCompiler(CCompiler):
     module_dir_switch = None
 
     # Switch to specify where module files are searched for USE statement.
-    module_include_switch = '-I' 
+    module_include_switch = '-I'
 
     pic_flags = []           # Flags to create position-independent code
 
@@ -445,18 +446,18 @@ class FCompiler(CCompiler):
 
         lib_opts = gen_lib_options(self, library_dirs, runtime_library_dirs,
                                    libraries)
-        if type(output_dir) not in (StringType, NoneType):
-            raise TypeError, "'output_dir' must be a string or None"
-        if output_dir is not None:
+        if is_string(output_dir):
             output_filename = os.path.join(output_dir, output_filename)
+        elif output_dir is not None:
+            raise TypeError, "'output_dir' must be a string or None"
 
         if self._need_link(objects, output_filename):
             if self.library_switch[-1]==' ':
                 o_args = [self.library_switch.strip(),output_filename]
             else:
                 o_args = [self.library_switch.strip()+output_filename]
-            
-            if type(self.objects) is type(''):
+
+            if is_string(self.objects):
                 ld_args = objects + [self.objects]
             else:
                 ld_args = objects + self.objects
@@ -489,7 +490,7 @@ class FCompiler(CCompiler):
     def __get_cmd(self, command, envvar=None, confvar=None):
         if command is None:
             var = None
-        elif type(command) is type(''):
+        elif is_string(command):
             var = self.executables[command]
             if var is not None:
                 var = var[0]
@@ -504,7 +505,7 @@ class FCompiler(CCompiler):
     def __get_flags(self, command, envvar=None, confvar=None):
         if command is None:
             var = []
-        elif type(command) is type(''):
+        elif is_string(command):
             var = self.executables[command][1:]
         else:
             var = command()
@@ -512,7 +513,7 @@ class FCompiler(CCompiler):
             var = os.environ.get(envvar, var)
         if confvar is not None:
             var = confvar[0].get(confvar[1], [None,var])[1]
-        if type(var) is type(''):
+        if is_string(var):
             var = split_quoted(var)
         return var
 
@@ -600,7 +601,7 @@ def get_default_fcompiler(osname=None, platform=None):
     for pattern, compiler in _default_compilers:
         if re.match(pattern, platform) is not None or \
                re.match(pattern, osname) is not None:
-            if type(compiler) is type(()):
+            if is_sequence(compiler):
                 matching_compilers.extend(list(compiler))
             else:
                 matching_compilers.append(compiler)

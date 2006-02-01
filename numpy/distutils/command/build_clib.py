@@ -6,14 +6,13 @@ import string
 import sys
 import re
 from glob import glob
-from types import *
 from distutils.command.build_clib import build_clib as old_build_clib
 from distutils.command.build_clib import show_compilers
 
 from numpy.distutils import log
 from distutils.dep_util import newer_group
 from numpy.distutils.misc_util import filter_sources, has_f_sources,\
-     has_cxx_sources, all_strings, get_lib_source_files
+     has_cxx_sources, all_strings, get_lib_source_files, is_sequence
 
 class build_clib(old_build_clib):
 
@@ -102,7 +101,7 @@ class build_clib(old_build_clib):
 
         for (lib_name, build_info) in libraries:
             sources = build_info.get('sources')
-            if sources is None or type(sources) not in (ListType, TupleType):
+            if sources is None or not is_sequence(sources):
                 raise DistutilsSetupError, \
                       ("in 'libraries' option (library '%s'), " +
                        "'sources' must be present and must be " +

@@ -53,6 +53,8 @@ import re
 import sys
 import tempfile
 
+from numpy.distutils.misc_util import is_sequence
+
 ############################################################
 
 from log import _global_log as log
@@ -269,8 +271,8 @@ def _exec_command_posix( command,
                          **env ):
     log.debug('_exec_command_posix(...)')
 
-    if type(command) is type([]):
-        command_str = ' '.join(command)
+    if is_sequence(command):
+        command_str = ' '.join(list(command))
     else:
         command_str = command
 
@@ -312,7 +314,7 @@ def _exec_command_posix( command,
 
     if text[-1:]=='\n':
         text = text[:-1]
-    
+
     return status, text
 
 
@@ -348,12 +350,12 @@ def _exec_command_python(command,
     status = int(f.read())
     f.close()
     os.remove(stsfile)
-    
+
     f = open(outfile,'r')
     text = f.read()
     f.close()
     os.remove(outfile)
-    
+
     return status, text
 
 def quote_arg(arg):
@@ -363,7 +365,7 @@ def quote_arg(arg):
 
 def _exec_command( command, use_shell=None, use_tee = None, **env ):
     log.debug('_exec_command(...)')
-    
+
     if use_shell is None:
         use_shell = os.name=='posix'
     if use_tee is None:
@@ -374,14 +376,14 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         # We use shell (unless use_shell==0) so that wildcards can be
         # used.
         sh = os.environ.get('SHELL','/bin/sh')
-        if type(command) is type([]):
-            argv = [sh,'-c',' '.join(command)]
+        if is_sequence(command):
+            argv = [sh,'-c',' '.join(list(command))]
         else:
             argv = [sh,'-c',command]
     else:
         # On NT, DOS we avoid using command.com as it's exit status is
         # not related to the exit status of a command.
-        if type(command) is type([]):
+        if is_sequence(command):
             argv = command[:]
         else:
             argv = splitcmdline(command)
@@ -483,7 +485,7 @@ def test_nt(**kws):
         s,o=exec_command(pythonexe\
                          +' -c "import os;print os.environ.get(\'AAA\',\'\')"')
         assert s==0 and o=='',(s,o)
-        
+
         s,o=exec_command(pythonexe\
                          +' -c "import os;print os.environ.get(\'AAA\')"',
                          AAA='Tere')
@@ -529,7 +531,7 @@ def test_nt(**kws):
 
     s,o=exec_command('echo path=%path%')
     assert s==0 and o!='',(s,o)
-    
+
     s,o=exec_command('%s -c "import sys;sys.stderr.write(sys.platform)"' \
                      % pythonexe)
     assert s==0 and o=='win32',(s,o)
@@ -579,7 +581,7 @@ def test_posix(**kws):
 
     s,o=exec_command('echo path=$PATH',**kws)
     assert s==0 and o!='',(s,o)
-    
+
     s,o=exec_command('python -c "import sys,os;sys.stderr.write(os.name)"',**kws)
     assert s==0 and o=='posix',(s,o)
 
@@ -594,7 +596,7 @@ def test_posix(**kws):
 
     s,o=exec_command('python -c "print \'Heipa\'"',**kws)
     assert s==0 and o=='Heipa',(s,o)
-    
+
     print 'ok'
 
 def test_execute_in(**kws):

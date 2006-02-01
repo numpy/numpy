@@ -4,13 +4,13 @@ import sys
 from distutils.log import *
 from distutils.log import Log as old_Log
 from distutils.log import _global_log
-from misc_util import red_text, yellow_text, cyan_text
+from misc_util import red_text, yellow_text, cyan_text, is_sequence, is_string
 
 
 def _fix_args(args,flag=1):
-    if type(args) is type(''):
+    if is_string(args):
         return args.replace('%','%%')
-    if flag and type(args) is type(()):
+    if flag and is_sequence(args):
         return tuple([_fix_args(a,flag=0) for a in args])
     return args
 

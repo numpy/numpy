@@ -1,4 +1,3 @@
-
 import re
 import os
 import sys
@@ -11,21 +10,22 @@ from distutils.version import LooseVersion
 
 import log
 from exec_command import exec_command
-from misc_util import cyg2win32
+from misc_util import cyg2win32, is_sequence
 from distutils.spawn import _nt_quote_args
 
 # Using customized CCompiler.spawn.
 def CCompiler_spawn(self, cmd, display=None):
     if display is None:
         display = cmd
-        if type(display) is type([]): display = ' '.join(display)
+        if is_sequence(display):
+            display = ' '.join(list(display))
     log.info(display)
-    if type(cmd) is type([]) and os.name == 'nt':
-        cmd = _nt_quote_args(cmd)
+    if is_sequence(cmd) and os.name == 'nt':
+        cmd = _nt_quote_args(list(cmd))
     s,o = exec_command(cmd)
     if s:
-        if type(cmd) is type([]):
-            cmd = ' '.join(cmd)
+        if is_sequence(cmd):
+            cmd = ' '.join(list(cmd))
         print o
         raise DistutilsExecError,\
               'Command "%s" failed with exit status %d' % (cmd, s)
@@ -90,7 +90,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     if extra_postargs:
         display += "\nextra options: '%s'" % (' '.join(extra_postargs))
     log.info(display)
-    
+
     # build any sources in same order as they were originally specified
     #   especially important for fortran .f90 files using modules
     if isinstance(self, FCompiler):
@@ -105,7 +105,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     else:
         for obj, (src, ext) in build.items():
             self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
-        
+
     # Return *all* object filenames, not just the ones we just built.
     return objects
 
@@ -294,8 +294,8 @@ def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
                                    runtime_library_dirs, libraries)
     lib_opts = []
     for i in r:
-        if type(i) is type([]):
-            lib_opts.extend(i)
+        if is_sequence(i):
+            lib_opts.extend(list(i))
         else:
             lib_opts.append(i)
     return lib_opts

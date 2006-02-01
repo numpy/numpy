@@ -12,7 +12,7 @@ from distutils.dep_util import newer_group, newer
 
 from numpy.distutils import log
 from numpy.distutils.misc_util import fortran_ext_match, all_strings, dot_join,\
-     appendpath
+     appendpath, is_string, is_sequence
 from numpy.distutils.from_template import process_file as process_f_file
 from numpy.distutils.conv_template import process_file as process_c_file
 from numpy.distutils.extension import Extension
@@ -89,7 +89,7 @@ class build_src(build_ext.build_ext):
         self.build_sources()
 
         return
-        
+
     def build_sources(self):
 
         self.build_py_modules_sources()
@@ -151,7 +151,7 @@ class build_src(build_ext.build_ext):
         if self.inplace:
             get_package_dir = self.get_finalized_command('build_py').get_package_dir
         for source in self.py_modules:
-            if type(source) is type(()) and len(source)==3:
+            if is_sequence(source) and len(source)==3:
                 package, module_base, source = source
                 if self.inplace:
                     build_dir = get_package_dir(package)
@@ -214,7 +214,7 @@ class build_src(build_ext.build_ext):
         sources = self.generate_sources(sources, ext)
 
         sources = self.template_sources(sources, ext)
-        
+
         sources = self.swig_sources(sources, ext)
 
         sources = self.f2py_sources(sources, ext)
@@ -244,7 +244,7 @@ class build_src(build_ext.build_ext):
         new_sources = []
         func_sources = []
         for source in sources:
-            if type(source) is type(''):
+            if is_string(source):
                 new_sources.append(source)
             else:
                 func_sources.append(source)
@@ -253,7 +253,7 @@ class build_src(build_ext.build_ext):
         if self.inplace:
             build_dir = self.ext_target_dir
         else:
-            if type(extension) is type(()):
+            if is_sequence(extension):
                 name = extension[0]
             #    if not extension[1].has_key('include_dirs'):
             #        extension[1]['include_dirs'] = []
@@ -270,7 +270,7 @@ class build_src(build_ext.build_ext):
             source = func(extension, build_dir)
             if not source:
                 continue
-            if type(source) is type([]):
+            if is_sequence(source):
                 [log.info("  adding '%s' to sources." % (s)) for s in source]
                 new_sources.extend(source)
             else:
@@ -290,7 +290,7 @@ class build_src(build_ext.build_ext):
         files = []
         for source in sources:
             (base, ext) = os.path.splitext(source)
-            if ext in exts:        
+            if ext in exts:
                 files.append(source)
             else:
                 new_sources.append(source)
@@ -298,10 +298,10 @@ class build_src(build_ext.build_ext):
 
     def template_sources(self, sources, extension):
         new_sources = []
-        if type(extension) is type(()):
+        if is_sequence(sources):
             depends = extension[1].get('depends')
             include_dirs = extension[1].get('include_dirs')
-        else:        
+        else:
             depends = extension.depends
             include_dirs = extension.include_dirs
         for source in sources:
@@ -331,8 +331,8 @@ class build_src(build_ext.build_ext):
                 new_sources.append(target_file)
             else:
                 new_sources.append(source)
-        return new_sources            
-        
+        return new_sources
+
     def f2py_sources(self, sources, extension):
         new_sources = []
         f2py_sources = []
@@ -414,7 +414,8 @@ class build_src(build_ext.build_ext):
                 log.debug("  skipping '%s' f2py interface (up-to-date)" % (source))
         else:
             #XXX TODO: --inplace support for sdist command
-            if type(extension) is type(()): name = extension[0]
+            if is_sequence(extension):
+                name = extension[0]
             else: name = extension.name
             target_dir = os.path.join(*([self.build_src]\
                                         +name.split('.')[:-1]))
@@ -459,7 +460,7 @@ class build_src(build_ext.build_ext):
                 raise ValueError("%r missing" % (target_c,))
             if not os.path.isfile(target_h):
                 raise ValueError("%r missing" % (target_h,))
- 
+
         for name_ext in ['-f2pywrappers.f','-f2pywrappers2.f90']:
             filename = os.path.join(target_dir,ext_name + name_ext)
             if os.path.isfile(filename):
