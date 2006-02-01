@@ -3186,7 +3186,10 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                         return PyArray_GenericBinaryFunction(self, other, 
 							     n_ops.less_equal);
                 case Py_EQ:
-			if (other == Py_None) return Py_False;
+			if (other == Py_None) {
+				Py_INCREF(Py_False);
+				return Py_False;
+			}
                         /* Try to convert other to an array */
 			if (!PyArray_Check(other)) {
 				array_other = PyArray_FromObject(other, 
@@ -3224,7 +3227,10 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                         }
                         return result;
                 case Py_NE:
-			if (other == Py_None) return Py_True;
+			if (other == Py_None) {
+				Py_INCREF(Py_True)
+				return Py_True;
+			}
                         /* Try to convert other to an array */
 			if (!PyArray_Check(other)) {
 				array_other = PyArray_FromObject(other, 
