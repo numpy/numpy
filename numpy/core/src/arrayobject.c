@@ -8135,15 +8135,15 @@ arraydescr_typename_get(PyArray_Descr *self)
         int len;
         PyTypeObject *typeobj = self->typeobj;
 	PyObject *res;
-
-	/* Both are equivalents, but second is more resistent to changes */
-/* 	len = strlen(typeobj->tp_name) - 8; */
+	static int suffix_len=0;
 
 	if (PyTypeNum_ISUSERDEF(self->type_num)) {
 		res = PyString_FromString(typeobj->tp_name);
 	}
 	else {
-		len = strchr(typeobj->tp_name, (int)'_')-(typeobj->tp_name);
+		if (suffix_len == 0) 
+			suffix_len = strlen("scalar");
+		len = strlen(typeobj->tp_name) - suffix_len;
 		res = PyString_FromStringAndSize(typeobj->tp_name, len);
 	}
 	if (PyTypeNum_ISEXTENDED(self->type_num) && self->elsize != 0) {
