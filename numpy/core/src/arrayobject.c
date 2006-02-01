@@ -3228,7 +3228,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                         return result;
                 case Py_NE:
 			if (other == Py_None) {
-				Py_INCREF(Py_True)
+				Py_INCREF(Py_True);
 				return Py_True;
 			}
                         /* Try to convert other to an array */
