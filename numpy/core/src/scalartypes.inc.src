@@ -79,10 +79,13 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 		switch(typecode->type_num) {
 		case PyArray_STRING:
 			*newptr = (void *)PyString_AS_STRING(scalar);
+                        break;
 		case PyArray_UNICODE:
 			*newptr = (void *)PyUnicode_AS_DATA(scalar);
+                        break;
 		default:
 			*newptr = ((PyVoidScalarObject *)scalar)->obval;
+                        break;
 		}
 		return;
 	}
@@ -566,8 +569,8 @@ static PyObject *
 
 
 #if SIZEOF_LONGDOUBLE == SIZEOF_DOUBLE
-#define PREC_REPR 15
-#define PREC_STR 15
+#define PREC_REPR 17
+#define PREC_STR 17
 #else
 #define PREC_REPR 21
 #define PREC_STR 21
