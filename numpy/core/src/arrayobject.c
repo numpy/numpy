@@ -4088,7 +4088,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 						  dims.ptr, strides.ptr)) {
 				PyErr_SetString(PyExc_ValueError, 
 						"strides is incompatible "\
-						"with shape of requested"\
+						"with shape of requested "\
 						"array and size of buffer");
 				goto fail;
 			}
