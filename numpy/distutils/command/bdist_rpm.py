@@ -1,6 +1,5 @@
-
 import os
-from distutils.command.bdist_rpm import *
+import sys
 from distutils.command.bdist_rpm import bdist_rpm as old_bdist_rpm
 
 class bdist_rpm(old_bdist_rpm):

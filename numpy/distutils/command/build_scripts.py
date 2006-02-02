@@ -25,10 +25,10 @@ class build_scripts(old_build_scripts):
             if not script:
                 continue
             if is_string(script):
-                log.info("  adding '%s' to scripts" % (script))
+                log.info("  adding '%s' to scripts" % (script,))
                 new_scripts.append(script)
             else:
-                [log.info("  adding '%s' to scripts" % (s)) for s in script]
+                [log.info("  adding '%s' to scripts" % (s,)) for s in script]
                 new_scripts.extend(list(script))
         return new_scripts
 

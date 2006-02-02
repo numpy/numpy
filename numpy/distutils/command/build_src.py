@@ -3,20 +3,15 @@
 
 import os
 import re
-import copy
 
-from distutils.cmd import Command
-from distutils.command import build_ext, build_py
-from distutils.util import convert_path
+from distutils.command import build_ext
 from distutils.dep_util import newer_group, newer
 
 from numpy.distutils import log
-from numpy.distutils.misc_util import fortran_ext_match, all_strings, dot_join,\
+from numpy.distutils.misc_util import fortran_ext_match, \
      appendpath, is_string, is_sequence
 from numpy.distutils.from_template import process_file as process_f_file
 from numpy.distutils.conv_template import process_file as process_c_file
-from numpy.distutils.extension import Extension
-from numpy.distutils.system_info import get_info, dict_append
 
 class build_src(build_ext.build_ext):
 

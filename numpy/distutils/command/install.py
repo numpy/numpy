@@ -1,6 +1,3 @@
-
-import os
-from distutils.command.install import *
 from distutils.command.install import install as old_install
 from distutils.file_util import write_file
 

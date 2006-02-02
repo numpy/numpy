@@ -1,5 +1,4 @@
 import os
-from distutils.command.install import *
 from distutils.command.install_headers import install_headers as old_install_headers
 
 class install_headers (old_install_headers):

@@ -6,14 +6,14 @@ import string
 import sys
 from glob import glob
 
-from distutils.dep_util import newer_group, newer
+from distutils.dep_util import newer_group
 from distutils.command.build_ext import build_ext as old_build_ext
 
 from numpy.distutils import log
 from numpy.distutils.misc_util import filter_sources, has_f_sources, \
      has_cxx_sources, get_ext_source_files, all_strings, \
      get_numpy_include_dirs, is_sequence
-from distutils.errors import DistutilsFileError
+from distutils.errors import DistutilsFileError, DistutilsSetupError
 
 class build_ext (old_build_ext):
 
@@ -86,7 +86,7 @@ class build_ext (old_build_ext):
         self.compiler.customize(self.distribution,need_cxx=need_cxx_compiler)
         self.compiler.customize_cmd(self)
         self.compiler.show_customization()
- 
+
         # Initialize Fortran/C++ compilers if needed.
         if need_f_compiler:
             from numpy.distutils.fcompiler import new_fcompiler
@@ -239,7 +239,7 @@ class build_ext (old_build_ext):
                         self.move_file(f, module_build_dir)
                     except DistutilsFileError:  # already exists in destination
                         os.remove(f)
-                        
+
             if f_sources:
                 log.info("compiling Fortran sources")
                 f_objects += self.fcompiler.compile(f_sources,
@@ -262,14 +262,14 @@ class build_ext (old_build_ext):
             old_linker_so_0 = self.compiler.linker_so[0]
         except:
             pass
-        
+
         use_fortran_linker = getattr(ext,'language','c') in ['f77','f90'] \
                              and self.fcompiler is not None
         c_libraries = []
         c_library_dirs = []
         if use_fortran_linker or f_sources:
             use_fortran_linker = 1
-        elif self.distribution.has_c_libraries():            
+        elif self.distribution.has_c_libraries():
             build_clib = self.get_finalized_command('build_clib')
             f_libs = []
             for (lib_name, build_info) in build_clib.libraries:
@@ -345,4 +345,3 @@ class build_ext (old_build_ext):
             outputs.append(os.path.join(self.build_lib,
                                         self.get_ext_filename(fullname)))
         return outputs
-

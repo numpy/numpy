@@ -1,13 +1,8 @@
 """ Modified version of build_clib that handles fortran source files.
 """
 
-import os
-import string
-import sys
-import re
-from glob import glob
 from distutils.command.build_clib import build_clib as old_build_clib
-from distutils.command.build_clib import show_compilers
+from distutils.errors import DistutilsSetupError
 
 from numpy.distutils import log
 from distutils.dep_util import newer_group
@@ -76,7 +71,7 @@ class build_clib(old_build_clib):
                                            dry_run=self.dry_run,
                                            force=self.force)
             self.fcompiler.customize(self.distribution)
-    
+
             libraries = self.libraries
             self.libraries = None
             self.fcompiler.customize_cmd(self)
