@@ -271,10 +271,10 @@ class build_src(build_ext.build_ext):
             if not source:
                 continue
             if is_sequence(source):
-                [log.info("  adding '%s' to sources." % (s)) for s in source]
+                [log.info("  adding '%s' to sources." % (s,)) for s in source]
                 new_sources.extend(source)
             else:
-                log.info("  adding '%s' to sources." % (source))
+                log.info("  adding '%s' to sources." % (source,))
                 new_sources.append(source)
 
         return new_sources
@@ -298,7 +298,7 @@ class build_src(build_ext.build_ext):
 
     def template_sources(self, sources, extension):
         new_sources = []
-        if is_sequence(sources):
+        if is_sequence(extension):
             depends = extension[1].get('depends')
             include_dirs = extension[1].get('include_dirs')
         else:
