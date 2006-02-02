@@ -127,11 +127,12 @@ in writing setup scripts:
   ``config.local_path``.
 
 + ``config.get_subpackage(subpackage_name,subpackage_path=None)`` ---
-  returns SciPy subpackage configuration. Subpackage is looked in the
+  returns a list of subpackage configurations. Subpackage is looked in the
   current directory under the name ``subpackage_name`` but the path
   can be specified also via optional ``subpackage_path`` argument.
   If ``subpackage_name`` is specified as ``None`` then the subpackage
   name will be taken the basename of ``subpackage_path``.
+  Any ``*`` used for subpackage names are expanded as wildcards.
 
 + ``config.add_subpackage(subpackage_name,subpackage_path=None)`` ---
   add SciPy subpackage configuration to the current one. The meaning
