@@ -3514,10 +3514,15 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
  walk outside of the memory implied by a single segment array of the provided 
  dimensions and element size.  If numbytes is 0 it will be calculated from 
  the provided shape and element size.
+
+ For axes with a positive stride this function checks for a walk
+ beyond the right end of the buffer, for axes with a negative stride,
+ it checks for a walk beyond the left end of the buffer.  Zero strides
+ are disallowed.
 */
 /*OBJECT_API*/
 static Bool
-PyArray_CheckStrides(int elsize, int nd, intp numbytes, 
+PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
 		     intp *dims, intp *newstrides)
 {
 	int i;
@@ -3526,7 +3531,27 @@ PyArray_CheckStrides(int elsize, int nd, intp numbytes,
 		numbytes = PyArray_MultiplyList(dims, nd) * elsize;
 	
 	for (i=0; i<nd; i++) {
-		if (newstrides[i]*(dims[i]-1)+elsize > numbytes) {
+		intp stride = newstrides[i];
+		if (stride > 0) {
+			/* The last stride does not need to be fully inside
+			   the buffer, only its first elsize bytes */
+			if (offset + stride*(dims[i]-1)+elsize > numbytes) {
+				return FALSE;
+			}
+		}
+		else if (stride < 0) {
+			if (offset + stride*dims[i] < 0) {
+				return FALSE;
+			}
+		} else {
+			/* XXX: Zero strides may be useful, but currently 
+			   XXX: allowing them would lead to strange results,
+			   XXX: for example :
+			   XXX: >>> x = arange(5)
+			   XXX: >>> x.strides = 0
+			   XXX: >>> x += 1
+			   XXX: >>> x
+			   XXX: array([5, 5, 5, 5, 5])  */
 			return FALSE;
 		}
 	}
@@ -4064,10 +4089,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                 }
         }
         else {  /* buffer given -- use it */
-		buffer.len -= offset;
-		buffer.ptr += offset;
                 if (dims.len == 1 && dims.ptr[0] == -1) {
-                        dims.ptr[0] = buffer.len / itemsize;
+                        dims.ptr[offset] = buffer.len / itemsize;
                 }
                 else if (buffer.len < itemsize*                 \
                          PyArray_MultiplyList(dims.ptr, dims.len)) {
@@ -4084,7 +4107,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 				goto fail;
 			}
 			if (!PyArray_CheckStrides(itemsize, strides.len, 
-						  buffer.len,
+						  buffer.len, offset,
 						  dims.ptr, strides.ptr)) {
 				PyErr_SetString(PyExc_ValueError, 
 						"strides is incompatible "\
@@ -4104,7 +4127,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 			PyArray_NewFromDescr(subtype, descr,
 					     dims.len, dims.ptr,
 					     strides.ptr,
-					     (char *)buffer.ptr, 
+					     offset + (char *)buffer.ptr, 
 					     buffer.flags, NULL); 
                 if (ret == NULL) {descr=NULL; goto fail;}
                 PyArray_UpdateFlags(ret, UPDATE_ALL_FLAGS);
@@ -4222,7 +4245,8 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 	numbytes = PyArray_MultiplyList(new->dimensions, 
 					new->nd)*new->descr->elsize;
 	
-	if (!PyArray_CheckStrides(self->descr->elsize, self->nd, numbytes, 
+	if (!PyArray_CheckStrides(self->descr->elsize, self->nd, numbytes,
+				  self->data - new->data,
 				  self->dimensions, newstrides.ptr)) {
 		PyErr_SetString(PyExc_ValueError, "strides is not "\
 				"compatible with available memory");

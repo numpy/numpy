@@ -62,6 +62,34 @@ class test_attributes(ScipyTestCase):
         assert_equal(self.one.dtype.str[1], 'i')
         assert_equal(self.three.dtype.str[1], 'f')
 
+    def check_stridesattr(self):
+        x = self.one
+        def make_array(size, offset, strides):
+            return ndarray([size], buffer=x,
+                           offset=offset*x.itemsize,
+                           strides=strides*x.itemsize)
+        assert_equal(make_array(4, 4, -1), array([4, 3, 2, 1]))
+        self.failUnlessRaises(ValueError, make_array, 4, 4, -2)
+        self.failUnlessRaises(ValueError, make_array, 4, 3, -1)
+        self.failUnlessRaises(ValueError, make_array, 8, 3, 1)
+        self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
+
+    def check_set_stridesattr(self):
+        x = self.one
+        def make_array(size, offset, strides):
+            try:
+                r = ndarray([size], buffer=x, offset=offset*x.itemsize)
+            except:
+                pass
+            r.strides = strides=strides*x.itemsize
+            return r
+        assert_equal(make_array(4, 4, -1), array([4, 3, 2, 1]))
+        self.failUnlessRaises(ValueError, make_array, 4, 4, -2)
+        self.failUnlessRaises(ValueError, make_array, 4, 3, -1)
+        self.failUnlessRaises(ValueError, make_array, 8, 3, 1)
+        self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
+
+
 class test_dtypedescr(ScipyTestCase):
     def check_construction(self):
         d1 = dtype('i4')
