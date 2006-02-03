@@ -4082,7 +4082,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 			PyArray_NewFromDescr(subtype, descr,
 					     (int)dims.len, 
 					     dims.ptr, 
-					     NULL, NULL, fortran, NULL);
+					     strides.ptr, NULL, fortran, NULL);
                 if (ret == NULL) {descr=NULL;goto fail;}
                 if (type_num == PyArray_OBJECT) { /* place Py_None */
                         PyArray_FillObjectArray(ret, Py_None);

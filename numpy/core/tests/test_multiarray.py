@@ -73,6 +73,8 @@ class test_attributes(ScipyTestCase):
         self.failUnlessRaises(ValueError, make_array, 4, 3, -1)
         self.failUnlessRaises(ValueError, make_array, 8, 3, 1)
         self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
+        self.failUnlessRaises(ValueError, lambda: ndarray([1], strides=4))
+        
 
     def check_set_stridesattr(self):
         x = self.one
