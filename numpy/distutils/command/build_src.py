@@ -214,6 +214,8 @@ class build_src(build_ext.build_ext):
 
         sources = self.f2py_sources(sources, ext)
 
+        sources = self.pyrex_sources(sources, ext)
+
         sources, py_files = self.filter_py_files(sources)
 
         if not self.py_modules_dict.has_key(package):
@@ -323,6 +325,45 @@ class build_src(build_ext.build_ext):
                     if d not in include_dirs:
                         log.info("  adding '%s' to include_dirs." % (d))
                         include_dirs.append(d)
+                new_sources.append(target_file)
+            else:
+                new_sources.append(source)
+        return new_sources
+
+    def pyrex_sources(self, sources, extension):
+        have_pyrex = False
+        try:
+            import Pyrex
+            have_pyrex = True
+        except ImportError:
+            pass
+        new_sources = []
+        ext_name = extension.name.split('.')[-1]
+        for source in sources:
+            (base, ext) = os.path.splitext(source)
+            if ext == '.pyx':
+                if self.inplace or not have_pyrex:
+                    target_dir = os.path.dirname(base)
+                else:
+                    target_dir = appendpath(self.build_src, os.path.dirname(base))
+                target_file = os.path.join(target_dir, ext_name + '.c')
+                depends = [source] + extension.depends
+                if (self.force or newer_group(depends, target_file, 'newer')):
+                    if have_pyrex:
+                        log.info("pyrexc:> %s" % (target_file))
+                        self.mkpath(target_dir)
+                        from Pyrex.Compiler import Main
+                        options = Main.CompilationOptions(
+                            defaults=Main.default_options,
+                            output_file=target_file)
+                        pyrex_result = Main.compile(source, options=options)
+                        if pyrex_result.num_errors != 0:
+                            raise RuntimeError("%d errors in Pyrex compile" % 
+                                               pyrex_result.num_errors)
+                    else:
+                        log.info("Pyrex needed to compile %s but not available."\
+                                 " Using old target %s"\
+                                 % (source, target_file))
                 new_sources.append(target_file)
             else:
                 new_sources.append(source)
