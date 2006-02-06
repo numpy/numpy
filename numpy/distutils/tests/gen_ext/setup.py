@@ -1,7 +1,4 @@
-
-import os
-from numpy.distutils.core import setup, Extension
-from distutils.dep_util import newer
+#!/usr/bin/env python
 
 fib3_f = '''
 C FILE: FIB3.F
@@ -27,21 +24,27 @@ Cf2py depend(n) a
 C END FILE FIB3.F
 '''
 
-package = 'gen_ext'
-
-def source_func(ext, src_dir):
-    source = os.path.join(src_dir,'fib3.f')
-    if newer(__file__, source):
-        f = open(source,'w')
+def source_func(ext, build_dir):
+    import os
+    from distutils.dep_util import newer
+    target = os.path.join(build_dir,'fib3.f')
+    if newer(__file__, target):
+        f = open(target,'w')
         f.write(fib3_f)
         f.close()
-    return [source]
+    return [target]
 
-ext = Extension(package+'.fib3',[source_func])
+def configuration(parent_package='',top_path=None):
+    from numpy.distutils.misc_util import Configuration
+    config = Configuration('gen_ext',parent_package,top_path)
+    config.add_extension('fib3',
+                         [source_func]
+                         )
+    return config
 
-setup(
-    name = package,
-    ext_modules = [ext],
-    packages = [package+'.tests',package],
-    package_dir = {package:'.'})
+if __name__ == "__main__":
+    from numpy.distutils.core import setup
+    setup(**configuration(top_path='').todict())
+
+
 

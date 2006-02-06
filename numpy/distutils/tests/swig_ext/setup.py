@@ -1,14 +1,18 @@
+#!/usr/bin/env python
+def configuration(parent_package='',top_path=None):
+    from numpy.distutils.misc_util import Configuration
+    config = Configuration('swig_ext',parent_package,top_path)
+    config.add_extension('_example',
+                         ['src/example.i','src/example.c']
+                         )
+    config.add_extension('_example2',
+                         ['src/zoo.i','src/zoo.cc'],
+                         depends=['src/zoo.h'],
+                         include_dirs=['src']
+                         )
+    config.add_data_dir('tests')
+    return config
 
-import os
-from numpy_distutils.core import setup, Extension
-
-ext_c = Extension('swig_ext._example',['src/example.i','src/example.c'])
-ext_cpp = Extension('swig_ext._example2',['src/zoo.i','src/zoo.cc'],
-                    depends=['src/zoo.h'],include_dirs=['src'])
-
-setup(
-    name = 'swig_ext',
-    ext_modules = [ext_c,ext_cpp],
-    packages = ['swig_ext.tests','swig_ext'],
-    package_dir = {'swig_ext':'.'})
-
+if __name__ == "__main__":
+    from numpy.distutils.core import setup
+    setup(**configuration(top_path='').todict())

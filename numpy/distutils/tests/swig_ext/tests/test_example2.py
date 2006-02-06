@@ -1,8 +1,8 @@
 import sys
-from numpy.base.testing import *
+from numpy.testing import *
 set_package_path()
 from swig_ext import example2
-del sys.path[0]
+restore_path()
 
 class test_example2(ScipyTestCase):
 

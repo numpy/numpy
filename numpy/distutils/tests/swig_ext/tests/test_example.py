@@ -2,7 +2,7 @@ import sys
 from numpy.testing import *
 set_package_path()
 from swig_ext import example
-del sys.path[0]
+restore_path()
 
 class test_example(ScipyTestCase):
 
