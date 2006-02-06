@@ -229,7 +229,7 @@ class Gnu95FCompiler(GnuFCompiler):
         'ranlib'       : ["ranlib"],
         'linker_exe'   : [fc_exe,"-Wall"]
         }
-    module_dir_switch = '-M'
+    module_dir_switch = '-J'
     module_include_switch = '-I'
 
     g2c = 'gfortran'

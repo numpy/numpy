@@ -361,7 +361,7 @@ class build_src(build_ext.build_ext):
                             raise RuntimeError("%d errors in Pyrex compile" % 
                                                pyrex_result.num_errors)
                     else:
-                        log.info("Pyrex needed to compile %s but not available."\
+                        log.warn("Pyrex needed to compile %s but not available."\
                                  " Using old target %s"\
                                  % (source, target_file))
                 new_sources.append(target_file)
