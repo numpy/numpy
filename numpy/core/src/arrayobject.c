@@ -5836,7 +5836,6 @@ _array_typedescr_fromstr(char *str)
 		break;
 	case 'U':
 		type_num = PyArray_UNICODE;
-		size *= sizeof(Py_UNICODE);
 		break;	    
 	case 'V':
 		type_num = PyArray_VOID;
@@ -8179,6 +8178,27 @@ arraydescr_typename_get(PyArray_Descr *self)
 }
 
 static PyObject *
+arraydescr_base_get(PyArray_Descr *self)
+{
+	if (self->subarray == NULL) {
+		Py_INCREF(self);
+                return (PyObject *)self;
+	}
+        Py_INCREF(self->subarray->base);
+        return (PyObject *)(self->subarray->base);
+}
+
+static PyObject *
+arraydescr_shape_get(PyArray_Descr *self)
+{
+	if (self->subarray == NULL) {
+                return Py_BuildValue("(N)", PyInt_FromLong(1));
+	}
+        Py_INCREF(self->subarray->shape);
+        return (PyObject *)(self->subarray->shape);
+}
+
+static PyObject *
 arraydescr_protocol_descr_get(PyArray_Descr *self)
 {
 	PyObject *dobj, *res;
@@ -8247,11 +8267,19 @@ static PyGetSetDef arraydescr_getsets[] = {
 	 (getter)arraydescr_protocol_typestr_get,
 	 NULL,
 	 "The array_protocol typestring."},
-	{"name",
-	 (getter)arraydescr_typename_get,
+        {"name",
+         (getter)arraydescr_typename_get,
+         NULL,
+         "The name of the true data-type"},
+	{"base",
+	 (getter)arraydescr_base_get,
 	 NULL,
-	 "The array_protocol typename."},
-	{"isbuiltin",
+	 "The base data-type or self if no subdtype"},
+        {"shape",
+         (getter)arraydescr_shape_get,
+         NULL,
+         "The shape of the subdtype or (1,)"},
+ 	{"isbuiltin",
 	 (getter)arraydescr_isbuiltin_get,
 	 NULL,
 	 "Is this a buillt-in data-type descriptor?"},
@@ -8629,6 +8657,64 @@ arraydescr_compare(PyArray_Descr *self, PyObject *other)
 	return 1;
 }
 
+/*************************************************************************
+ ****************   Implement Mapping Protocol ***************************
+ *************************************************************************/
+
+static int 
+descr_length(PyArray_Descr *self) 
+{
+
+	if (self->fields && self->fields != Py_None)
+		/* Remove the last entry (root) */
+		return PyDict_Size(self->fields) - 1;
+	else return 0;
+}
+
+static PyObject *
+descr_subscript(PyArray_Descr *self, PyObject *op) 
+{
+
+	if (self->fields) {
+		if (PyString_Check(op) || PyUnicode_Check(op)) {
+			PyObject *obj;
+			obj = PyDict_GetItem(self->fields, op);
+			if (obj != NULL) {
+				PyObject *descr;
+				descr = PyTuple_GET_ITEM(obj, 0);
+				Py_INCREF(descr);
+				return descr;
+			}
+			else {
+				PyErr_Format(PyExc_KeyError, 
+					     "field named \'%s\' not found.",
+					     PyString_AsString(op));
+			}
+		}
+		else {
+		  PyErr_SetString(PyExc_ValueError,  
+				  "only strings or unicode values allowed " \
+				  "for getting fields.");
+		}
+	}
+	else {
+		PyErr_Format(PyExc_KeyError, 
+			     "there are no fields in dtype %s.",
+			     PyString_AsString(arraydescr_str(self)));
+	}
+
+	return NULL;
+}
+
+static PyMappingMethods descr_as_mapping = {
+        (inquiry)descr_length,		    /*mp_length*/
+        (binaryfunc)descr_subscript,	    /*mp_subscript*/
+        (objobjargproc)NULL,	    /*mp_ass_subscript*/
+};
+
+/****************** End of Mapping Protocol ******************************/
+
+
 static PyTypeObject PyArrayDescr_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					 /* ob_size */
@@ -8644,7 +8730,7 @@ static PyTypeObject PyArrayDescr_Type = {
         (reprfunc)arraydescr_repr,	        /* tp_repr */
         0,					/* tp_as_number */
         0,     			                /* tp_as_sequence */
-        0,                      	        /* tp_as_mapping */
+        &descr_as_mapping,            	        /* tp_as_mapping */
         0,					/* tp_hash */
         0,					/* tp_call */
         (reprfunc)arraydescr_str,              /* tp_str */

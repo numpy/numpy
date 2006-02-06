@@ -3849,6 +3849,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	/* or a typecode string */
 
 	if (PyString_Check(obj)) {
+                int hasendian = 0;
 		/* Check for a string typecode. */
 		type = PyString_AS_STRING(obj);
 		len = PyString_GET_SIZE(obj);
@@ -3861,6 +3862,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			type++; len--;
 			check_num = (int) type[0];
 			if (endian == '|') endian = '=';
+                        hasendian = 1;
 		}
 		if (len > 1) {
 			int i;
@@ -3885,7 +3887,8 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			   the number of bytes.
 			*/
 			else if (check_num == PyArray_UNICODELTR) {
-				elsize *= sizeof(Py_UNICODE);
+                                if (!hasendian)
+                                        elsize *= sizeof(Py_UNICODE);
 			}
 			/* Support for generic processing 
 			   c4, i4, f8, etc...
