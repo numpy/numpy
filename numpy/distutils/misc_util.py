@@ -27,9 +27,7 @@ def get_path(mod_name, parent_path=None):
     Returned path is relative to parent_path when given,
     otherwise it is absolute path.
     """
-    if mod_name == '__main__':
-        d = os.path.abspath('.')
-    elif mod_name == '__builtin__':
+    if mod_name == '__builtin__':
         #builtin if/then added by Pearu for use in core.run_setup.
         d = os.path.dirname(os.path.abspath(sys.argv[0]))
     else:
@@ -733,7 +731,7 @@ class Configuration(object):
                         elif include_non_existing:
                             new_paths.append(n)
                         if not os.path.exists(n):
-                            self.warn('not existing data path in %s: %s' \
+                            self.warn('not existing path in %s: %s' \
                                       % (self.local_path,n))
             else:
                 new_paths.append(n)
