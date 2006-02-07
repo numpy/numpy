@@ -3849,7 +3849,6 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	/* or a typecode string */
 
 	if (PyString_Check(obj)) {
-                int hasendian = 0;
 		/* Check for a string typecode. */
 		type = PyString_AS_STRING(obj);
 		len = PyString_GET_SIZE(obj);
@@ -3862,7 +3861,6 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			type++; len--;
 			check_num = (int) type[0];
 			if (endian == '|') endian = '=';
-                        hasendian = 1;
 		}
 		if (len > 1) {
 			int i;
@@ -3887,13 +3885,24 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			   the number of bytes.
 			*/
 			else if (check_num == PyArray_UNICODELTR) {
-                                if (!hasendian)
-                                        elsize *= sizeof(Py_UNICODE);
+				elsize *= sizeof(Py_UNICODE);
+			}
+			else if (check_num == PyArray_UCS2LTR || \
+				 check_num == PyArray_UCS4LTR) {
+				if ((elsize % sizeof(Py_UNICODE) != 0) ||
+				    ((check_num == PyArray_UCS4LTR) &&	\
+				     (sizeof(Py_UNICODE) != 4)) ||
+				    ((check_num == PyArray_UCS2LTR) &&	\
+				     (sizeof(Py_UNICODE) != 2))) {
+					PyErr_SetString(PyExc_TypeError, 
+							"unsupported unicode format");
+					return PY_FAIL;
+				}
 			}
 			/* Support for generic processing 
 			   c4, i4, f8, etc...
 			*/
-			else if ((check_num != PyArray_STRINGLTR) &&
+			else if ((check_num != PyArray_STRINGLTR) && \
 				 (check_num != PyArray_VOIDLTR) &&	\
 				 (check_num != PyArray_STRINGLTR2)) {
 				check_num =				\

@@ -1883,6 +1883,8 @@ set_typeinfo(PyObject *dict)
 	_letter_to_num[PyArray_@name@LTR] = PyArray_@name@;
 /**end repeat**/
 	_letter_to_num[PyArray_STRINGLTR2] = PyArray_STRING;
+	_letter_to_num[PyArray_UCS4LTR] = PyArray_UNICODE;
+	_letter_to_num[PyArray_UCS2LTR] = PyArray_UNICODE;
 
 
 /**begin repeat
@@ -1890,8 +1892,13 @@ set_typeinfo(PyObject *dict)
 */
 	@name@_Descr.fields = Py_None;
 /**end repeat**/
-
-
+	
+	if (sizeof(Py_UNICODE) == 2) {
+		UNICODE_Descr.kind = PyArray_UCS2LTR;
+	}
+	else if (sizeof(Py_UNICODE) == 4) {
+		UNICODE_Descr.kind = PyArray_UCS4LTR;
+	}
 
 	/* Set a dictionary with type information */
 	infodict = PyDict_New();

@@ -5830,13 +5830,22 @@ _array_typedescr_fromstr(char *str)
 		if (size == sizeof(PyObject *))
 			type_num = PyArray_OBJECT;
 		else _MY_FAIL
-			break;
-	case 'S':
+      	        break;
+	case PyArray_STRINGLTR:
 		type_num = PyArray_STRING;
 		break;
-	case 'U':
+	case PyArray_UNICODELTR:
 		type_num = PyArray_UNICODE;
+		size *= sizeof(Py_UNICODE);
 		break;	    
+	case PyArray_UCS2LTR:
+		if (sizeof(Py_UNICODE) != 2) _MY_FAIL
+		type_num = PyArray_UNICODE;
+		break;
+	case PyArray_UCS4LTR:
+		if (sizeof(Py_UNICODE) != 4) _MY_FAIL
+		type_num = PyArray_UNICODE;
+		break;
 	case 'V':
 		type_num = PyArray_VOID;
 		break;
@@ -8147,7 +8156,7 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
                 endian = '<';
                 if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
         }
-
+       
         return PyString_FromFormat("%c%c%d", endian, basic_,
                                    self->elsize);
 }

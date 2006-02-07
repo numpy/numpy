@@ -1645,7 +1645,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 						}
 						else {
 							int size = loop->bufsize;
-							PyObject **objptr = castbuf[i];
+							PyObject **objptr = (PyObject **)castbuf[i];
 							/* size is loop->bufsize unless there
 							   was only one loop */
 							if (ninnerloops == 1) \

@@ -197,6 +197,8 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 			PyArray_STRINGLTR = 'S',
 			PyArray_STRINGLTR2 = 'a',
 			PyArray_UNICODELTR = 'U',
+			PyArray_UCS4LTR = 'W',
+			PyArray_UCS2LTR = 'w',
 		        PyArray_VOIDLTR = 'V',
 
 			/* No Descriptor, just a define -- this let's
