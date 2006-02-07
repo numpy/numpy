@@ -60,11 +60,14 @@ static double atanh(double x)
 float log1pf(float);
 float logf(float);
 float sqrtf(float);
+#ifndef acoshf
 static float acoshf(float x)
 {
 	return 2*logf(sqrtf((x+1.0)/2)+sqrtf((x-1.0)/2));
 }
+#endif
 
+#ifndef asinhf
 static float asinhf(float xx)
 {
 	float x, d;
@@ -84,26 +87,35 @@ static float asinhf(float xx)
 	}
 	return sign*log1pf(x*(1.0 + x/(d+1)));
 }
+#endif
 
+#ifndef atanhf
 static float atanhf(float x)
 {
 	return 0.5*log1pf(2.0*x/(1.0-x));
 }
+#endif
 #else
+#ifndef acoshf
 static float acoshf(float x)
 {
   return (float)acosh((double)(x));
 }
+#endif
 
+#ifndef asinhf
 static float asinhf(float x)
 {
   return (float)asinh((double)(x));
 }
+#endif
 
+#ifndef atanhf
 static float atanhf(float x)
 {
   return (float)atanh((double)(x));
 }
+#endif
 #endif
 #endif
 
@@ -113,11 +125,14 @@ static float atanhf(float x)
 longdouble logl(longdouble);
 longdouble sqrtl(longdouble);
 longdouble log1pl(longdouble);
+#ifndef acoshl
 static longdouble acoshl(longdouble x)
 {
 	return 2*logl(sqrtl((x+1.0)/2)+sqrtl((x-1.0)/2));
 }
+#endif
 
+#ifndef asinhl
 static longdouble asinhl(longdouble xx)
 {
 	longdouble x, d;
@@ -137,26 +152,36 @@ static longdouble asinhl(longdouble xx)
 	}
 	return sign*log1pl(x*(1.0 + x/(d+1)));
 }
+#endif
 
+#ifndef atanhl
 static longdouble atanhl(longdouble x)
 {
 	return 0.5*log1pl(2.0*x/(1.0-x));
 }
+#endif
 #else
+#ifndef acoshl
 static longdouble acoshl(longdouble x)
 {
   return (longdouble)acosh((double)(x));
 }
+#endif
 
+#ifndef asinhl
 static longdouble asinhl(longdouble x)
 {
   return (longdouble)asinh((double)(x));
 }
+#endif
 
+#ifndef atanhl
 static longdouble atanhl(longdouble x)
 {
   return (longdouble)atanh((double)(x));
 }
+#endif
+
 #endif
 #endif
 
@@ -307,9 +332,11 @@ double hypot(double x, double y)
 #TYPE=LONGDOUBLE*16, FLOAT*16#
 */
 #ifndef HAVE_@TYPE@_FUNCS
+#ifndef @kind@@c@
 @typ@ @kind@@c@(@typ@ x) {
 	return (@typ@) @kind@((double)x);
 }
+#endif
 #endif
 /**end repeat**/
 
@@ -321,9 +348,11 @@ double hypot(double x, double y)
 #TYPE=LONGDOUBLE*4,FLOAT*4#
 */
 #ifndef HAVE_@TYPE@_FUNCS
+#ifndef @kind@@c@
 @typ@ @kind@@c@(@typ@ x, @typ@ y) {
 	return (@typ@) @kind@((double)x, (double) y);
 }
+#endif
 #endif
 /**end repeat**/
 
@@ -334,6 +363,7 @@ double hypot(double x, double y)
 #TYPE=LONGDOUBLE, FLOAT#
 */
 #ifndef HAVE_@TYPE@_FUNCS
+#ifndef modf@c@
 @typ@ modf@c@(@typ@ x, @typ@ *iptr) {
         double nx, niptr, y;
         nx = (double) x;
@@ -342,11 +372,13 @@ double hypot(double x, double y)
         return (@typ@) y;
 }
 #endif
+#endif
 /**end repeat**/
 
 
 
 #ifndef HAVE_LOG1P
+#ifndef log1p
 double log1p(double x)
 {
 	double u = 1. + x;
@@ -357,8 +389,10 @@ double log1p(double x)
 	}
 }
 #endif
+#endif
 
 #if !defined(HAVE_LOG1P) || !defined(HAVE_LONGDOUBLE_FUNCS)
+#ifndef log1pl
 longdouble log1pl(longdouble x)
 {
 	longdouble u = 1. + x;
@@ -369,8 +403,10 @@ longdouble log1pl(longdouble x)
 	}
 }
 #endif
+#endif
 
 #if !defined(HAVE_LOG1P) || !defined(HAVE_FLOAT_FUNCS)
+#ifndef log1pf
 float log1pf(float x)
 {
 	float u = 1. + x;
@@ -380,6 +416,7 @@ float log1pf(float x)
 		return logf(u) * x / (u-1.);
 	}
 }
+#endif
 #endif
 
 #ifndef HAVE_EXPM1
@@ -397,6 +434,7 @@ static double expm1(double x)
 #endif
 
 #if !defined(HAVE_EXPM1) || !defined(HAVE_LONGDOUBLE_FUNCS)
+#ifndef expml1
 static longdouble expm1l(longdouble x)
 {
 	longdouble u = expl(x);
@@ -409,8 +447,10 @@ static longdouble expm1l(longdouble x)
 	}
 }
 #endif
+#endif
 
 #if !defined(HAVE_EXPM1) || !defined(HAVE_FLOAT_FUNCS)
+#ifndef expm1f
 static float expm1f(float x)
 {
 	float u = expf(x);
@@ -422,6 +462,7 @@ static float expm1f(float x)
 		return (u-1.0) * x/logf(u);
 	}
 }
+#endif
 #endif
 
 
