@@ -863,7 +863,7 @@ def analyzeline(m,case,line):
             previous_context = ('variable',last_name,groupcounter)
     elif case in ['dimension','intent','optional','required','external','public','private','intrisic']:
         edecl=groupcache[groupcounter]['vars']
-        ll=m.group('after')
+        ll=m.group('after').strip()
         i=string.find(ll,'::')
         if i<0 and case=='intent':
             i=string.find(markouterparen(ll),'@)@')-2
