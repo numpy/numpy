@@ -99,19 +99,19 @@ typedef struct {
 	int swap[MAX_ARGS];
 
 	/* Buffers for the loop */
-	void *buffer[MAX_ARGS];
+	char *buffer[MAX_ARGS];
 	int bufsize;
 	intp bufcnt;
-	void *dptr[MAX_ARGS];
+	char *dptr[MAX_ARGS];
 
 	/* For casting */
-	void *castbuf[MAX_ARGS];
+	char *castbuf[MAX_ARGS];
 	PyArray_VectorUnaryFunc *cast[MAX_ARGS];
 
 	/* usually points to buffer but when a cast is to be
 	   done it switches for that argument to castbuf.
 	*/
-	void *bufptr[MAX_ARGS];  
+	char *bufptr[MAX_ARGS];  
 
 	/* Steps filled in from iters or sizeof(item)
 	   depending on loop method. 
@@ -148,13 +148,13 @@ typedef struct {
         int meth;
         int swap;
 
-        void *buffer;
+        char *buffer;
         int bufsize;
 
-        void *castbuf;
+        char *castbuf;
         PyArray_VectorUnaryFunc *cast;
 
-        void *bufptr[3];
+        char *bufptr[3];
         intp steps[3];
 
         intp N;

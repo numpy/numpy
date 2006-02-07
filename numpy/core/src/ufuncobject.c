@@ -1460,7 +1460,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		PyArray_CopySwapNFunc *copyswapn[MAX_ARGS];
 		PyArrayIterObject **iters=loop->iters;
 		int *swap=loop->swap;
-		void **dptr=loop->dptr;
+		char **dptr=loop->dptr;
 		int mpselsize[MAX_ARGS];
 		intp laststrides[MAX_ARGS];
 		int fastmemcpy[MAX_ARGS];
@@ -1469,9 +1469,9 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		int bufsize;
 		intp bufcnt;
 		int copysizes[MAX_ARGS];
-		void **bufptr = loop->bufptr;
-		void **buffer = loop->buffer;
-		void **castbuf = loop->castbuf;
+		char **bufptr = loop->bufptr;
+		char **buffer = loop->buffer;
+		char **castbuf = loop->castbuf;
 		intp *steps = loop->steps;
 		char *tptr[MAX_ARGS];
 		int ninnerloops = loop->ninnerloops;
@@ -2768,7 +2768,7 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
         fdata->nout = nout;
         fdata->callable = function;
         
-        self->data = (void **)(self->ptr + offset[0]);
+        self->data = (void **)(((char *)self->ptr) + offset[0]);
         self->data[0] = (void *)fdata;
 	
 	self->types = (char *)self->data + sizeof(void *);

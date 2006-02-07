@@ -216,7 +216,7 @@ typedef enum {
 	PyArray_QUICKSORT=0,
 	PyArray_HEAPSORT=1,
 	PyArray_MERGESORT=2,
-	PyArray_TIMSORT=3,    /* the sort Python uses -- specialized */
+	PyArray_TIMSORT=3         /* the sort Python uses -- specialized */
 } PyArray_SORTKIND;
 #define PyArray_NSORTS PyArray_TIMSORT + 1
 

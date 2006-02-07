@@ -2513,7 +2513,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 	optr = PyArray_DATA(ret);
 	str2 = elsize*dims[0];
 	for (i=0; i<dims[0]; i++) {
-		iptr = PyArray_DATA(arr) + i*elsize;
+		iptr = PyArray_BYTES(arr) + i*elsize;
 		for (j=0; j<dims[1]; j++) {
 			/* optr[i,j] = iptr[j,i] */
 			memcpy(optr, iptr, elsize);
@@ -5011,7 +5011,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 	if (length == 1) return range;
 
 	obj = PyFloat_FromDouble(start + step);
-	ret = funcs->setitem(obj, PyArray_DATA(range)+PyArray_ITEMSIZE(range), 
+	ret = funcs->setitem(obj, PyArray_BYTES(range)+PyArray_ITEMSIZE(range), 
 			     (PyArrayObject *)range);
 	Py_DECREF(obj);
 	if (ret < 0) goto fail;
@@ -5136,7 +5136,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 	if (funcs->setitem(start, PyArray_DATA(range), (PyArrayObject *)range) < 0)
 		goto fail;
 	if (length == 1) goto finish;
-	if (funcs->setitem(next, PyArray_DATA(range)+PyArray_ITEMSIZE(range), 
+	if (funcs->setitem(next, PyArray_BYTES(range)+PyArray_ITEMSIZE(range), 
 			   (PyArrayObject *)range) < 0) goto fail;
 	if (length == 2) goto finish;
 
