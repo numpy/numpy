@@ -239,6 +239,10 @@ typedef struct {
 		| ((SW_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0)	\
 		| ((SW_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0);	\
 	}
+
+#define isnan(x) (_isnan(x))
+#define isinf(x) (!_finite(x) && !_isnan(x))
+#define isfinite(x) (_finite(x))
 	
 
 /* Solaris --------------------------------------------------------*/
