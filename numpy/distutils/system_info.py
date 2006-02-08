@@ -173,6 +173,7 @@ def get_info(name,notfound_action=0):
           'lapack_src':lapack_src_info,
           'blas_src':blas_src_info,
           'numpy':numpy_info,
+          'f2py':f2py_info,
           'Numeric':Numeric_info,
           'numarray':numarray_info,
           'lapack_opt':lapack_opt_info,
@@ -1411,6 +1412,17 @@ class Numeric_info(_numpy_info):
 class numpy_info(_numpy_info):
     section = 'numpy'
     modulename = 'numpy'
+
+class f2py_info(system_info):
+    def calc_info(self):
+        try:
+            import numpy.f2py as f2py
+        except ImportError:
+            return
+        f2py_dir = os.path.join(os.path.dirname(f2py.__file__),'src')
+        self.set_info(sources = [os.path.join(f2py_dir,'fortranobject.c')],
+                      include_dirs = [f2py_dir])
+        return
 
 class boost_python_info(system_info):
     section = 'boost_python'
