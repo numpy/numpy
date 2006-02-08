@@ -232,7 +232,7 @@ typedef struct {
 #include <float.h>
 
 #define UFUNC_CHECK_STATUS(ret) {		 \
-	int fpstatus = (int) _clear87();			\
+	int fpstatus = (int) _clearfp();			\
 									\
 	ret = ((SW_ZERODIVIDE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0)	\
 		| ((SW_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)	\
@@ -240,11 +240,11 @@ typedef struct {
 		| ((SW_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0);	\
 	}
 
-#define isnan(x) (_isnan(x))
-#define isinf(x) (!_finite(x) && !_isnan(x))
-#define isfinite(x) (_finite(x))
+#define isnan(x) (_isnan((double)(x)))
+#define isinf(x) ((_fpclass((double)(x)) == _FPCLASS_PINF) ||	\
+		  (_fpclass((double)(x)) == _FPCLASS_NINF))
+#define isfinite(x) (_finite((double) x))
 	
-
 /* Solaris --------------------------------------------------------*/
 /* --------ignoring SunOS ieee_flags approach, someone else can
 **         deal with that! */
