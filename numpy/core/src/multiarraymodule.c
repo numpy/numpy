@@ -5171,7 +5171,14 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 }
 
 
-static char doc_arange[] = "arange(start, stop=None, step=1, dtype=int)\n\n  Just like range() except it returns an array whose type can be\n specified by the keyword argument typecode.";
+static char doc_arange[] = 
+"arange([start,] stop[, step,], dtype=None)\n\n"
+"For integer arguments, just like range() except it returns an array whose type can\n"
+"be specified by the keyword argument dtype.\n\n"
+"If dtype is not specified, the type of the result is deduced from the type of the\n"
+"arguments.\n\n"
+"For floating point arguments, the length of the result is ceil((stop - start)/step).\n"
+"This rule may result in the last element of the result be greater than stop.";
 
 static PyObject *
 array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
