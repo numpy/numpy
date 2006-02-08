@@ -744,6 +744,15 @@ class Configuration(object):
         return self._fix_paths(paths,
                                include_non_existing=include_non_existing)
 
+    def _fix_paths_dict(self,kw):
+        for k in kw.keys():
+            v = kw[k]
+            if k in ['sources','depends','include_dirs','library_dirs',
+                     'module_dirs','extra_objects']:
+                new_v = self._fix_paths(v)
+                kw[k] = new_v
+        return
+
     def add_extension(self,name,sources,**kw):
         """ Add extension to configuration.
 
@@ -769,18 +778,16 @@ class Configuration(object):
                 assert isinstance(info, dict), repr(info)
                 dict_append(ext_args,**info)
 
-        for k in ext_args.keys():
-            v = ext_args[k]
-            if k in ['sources','depends','include_dirs','library_dirs',
-                     'module_dirs','extra_objects']:
-                new_v = self._fix_paths(v)
-                ext_args[k] = new_v
+        self._fix_paths_dict(ext_args)
 
         # Resolve out-of-tree dependencies
         libraries = ext_args.get('libraries',[])
         libnames = []
         ext_args['libraries'] = []
         for libname in libraries:
+            if isinstance(libname,tuple):
+                self._fix_paths_dict(libname[1])
+
             # Handle library names of the form libname@relative/path/to/library
             if '@' in libname:
                 lname,lpath = libname.split('@',1)
@@ -824,12 +831,8 @@ class Configuration(object):
         name = name #+ '__OF__' + self.name
         build_info['sources'] = sources
 
-        for k in build_info.keys():
-            v = build_info[k]
-            if k in ['sources','depends','include_dirs','library_dirs',
-                     'module_dirs','extra_objects']:
-                new_v = self._fix_paths(v)
-                build_info[k] = new_v
+        self._fix_paths_dict(build_info)
+        
         self.libraries.append((name,build_info))
 
         dist = self.get_distribution()
