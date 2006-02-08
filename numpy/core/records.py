@@ -160,7 +160,7 @@ class recarray(sb.ndarray):
         try:
             res = fielddict[attr][:2]
         except:
-            return sb.ndarray.__getattribute__(self,attr)
+            return object.__getattribute__(self,attr)
         
         obj = self.getfield(*res)
         # if it has fields return a recarray, otherwise return
@@ -177,7 +177,7 @@ class recarray(sb.ndarray):
         try:
             res = fielddict[attr][:2]
         except:
-            return sb.ndarray.__setattr__(self,attr,val)
+            return object.__setattr__(self,attr,val)
         
         return self.setfield(val,*res)
 
