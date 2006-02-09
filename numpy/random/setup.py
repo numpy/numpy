@@ -16,7 +16,6 @@ def configuration(parent_package='',top_path=None):
         if config_cmd.try_run(tc):
             libs.append('Advapi32')
         ext.libraries.extend(libs)
-        print "**** got ", libs
         return None
 
     libs = []

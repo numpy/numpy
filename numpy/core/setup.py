@@ -8,7 +8,7 @@ from distutils.dep_util import newer,newer_group
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.system_info import get_info, default_lib_dirs
 
     config = Configuration('core',parent_package,top_path)
     local_dir = config.local_path
@@ -31,7 +31,8 @@ def configuration(parent_package='',top_path=None):
             tc = generate_testcode(target)
             from distutils import sysconfig
             python_include = sysconfig.get_python_inc()
-            result = config_cmd.try_run(tc,include_dirs=[python_include])
+            result = config_cmd.try_run(tc,include_dirs=[python_include],
+                                        library_dirs = default_lib_dirs)
             if not result:
                 raise "ERROR: Failed to test configuration"
             moredefs = []

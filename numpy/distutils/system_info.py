@@ -116,7 +116,8 @@ from distutils.sysconfig import get_config_vars
 
 if sys.platform == 'win32':
     default_lib_dirs = ['C:\\',
-                        os.path.join(distutils.sysconfig.EXEC_PREFIX, 'libs')]
+                        os.path.join(distutils.sysconfig.EXEC_PREFIX,
+                                     'libs')]
     default_include_dirs = []
     default_src_dirs = ['.']
     default_x11_lib_dirs = []
