@@ -17,7 +17,7 @@ class AbsoftFCompiler(FCompiler):
 
     compiler_type = 'absoft'
     #version_pattern = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
-    version_pattern = r'(f90:.*?(Absoft Pro FORTRAN Version|FORTRAN 77 Compiler|Absoft Fortran Compiler Version|Version))'+\
+    version_pattern = r'(f90:.*?(Absoft Pro FORTRAN Version|FORTRAN 77 Compiler|Absoft Fortran Compiler Version))'+\
                        r' (?P<version>[^\s*,]*)(.*?Absoft Corp|)'
 
     # samt5735(8)$ f90 -V -c dummy.f
@@ -114,7 +114,7 @@ class AbsoftFCompiler(FCompiler):
                     "-YCOM_SFX=_","-YEXT_SFX=_","-YEXT_NAMES=LCS"])
         if self.get_version():
             if self.get_version()>'4.6':
-                opt.extend(["-YDEALLOC=ALL"])
+                opt.extend(["-YDEALLOC=ALL"])                
         return opt
 
     def get_flags_fix(self):

@@ -99,7 +99,6 @@ class build_ext (old_build_ext):
                 self.fcompiler.customize_cmd(self)
                 self.fcompiler.show_customization()
             else:
-                print self.fcompiler.get_version()
                 self.warn('fcompiler=%s is not available.' % (self.fcompiler.compiler_type))
                 self.fcompiler = None
 

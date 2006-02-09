@@ -239,6 +239,6 @@ if __name__ == '__main__':
     log.set_verbosity(2)
     from numpy.distutils.fcompiler import new_fcompiler
     #compiler = new_fcompiler(compiler='gnu')
-    compiler = Gnu95FCompiler()
+    compiler = GnuFCompiler()
     compiler.customize()
     print compiler.get_version()
