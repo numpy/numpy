@@ -1648,15 +1648,17 @@ OBJECT_fill(PyObject **buffer, intp length, void *ignored)
 static void
 @NAME@_fill(@typ@ *buffer, intp length, void *ignored)
 {
-	intp i;	
+	@typ@ *buffermax;
 	@typ@ start = buffer[0];
 	@typ@ delta = buffer[1];
 	delta -= start;
 	start += (delta + delta);
+	buffermax = buffer + length;
 	buffer += 2;
-	for (i=2; i<length; i++, buffer++) {
+	while(buffer < buffermax) {
 		*buffer = start;
 		start += delta;
+		buffer++;
 	}
 }
 /**end repeat**/
@@ -1668,9 +1670,9 @@ static void
 static void
 @NAME@_fill(@typ@ *buffer, intp length, void *ignored)
 {
-	intp i;	
 	@typ@ start;
 	@typ@ delta;
+	@typ@ *buffermax;
 
 	start.real = buffer->real;
 	start.imag = buffer->imag;
@@ -1680,12 +1682,14 @@ static void
 	delta.imag -= start.imag;
 	start.real += (delta.real + delta.real);
 	start.imag += (delta.imag + delta.imag);
+	buffermax = buffer + length;
 	buffer += 2;
-	for (i=2; i<length; i++, buffer++) {
+	while (buffer < buffermax) {
 		buffer->real = start.real;
 		buffer->imag = start.imag; 
 		start.real += delta.real;
 		start.imag += delta.imag;
+		buffer++;
 	}
 }
 /**end repeat**/
