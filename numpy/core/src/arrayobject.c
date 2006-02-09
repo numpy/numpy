@@ -408,6 +408,12 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
                 byte_swap_vector(d1, numitems, itemsize);
 }
 
+
+#ifndef Py_UNICODE_WIDE
+#include "ucsnarrow.c"
+#endif
+
+
 static PyArray_Descr **userdescrs=NULL;
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -861,7 +867,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 		}
 		else if (type_num == PyArray_UNICODE) {
 			PyUnicodeObject *uni = (PyUnicodeObject*)obj;
-			int length = itemsize / sizeof(Py_UNICODE);
+			int length = itemsize / 4;
 			/* Need an extra slot and need to use 
 			   Python memory manager */
 			uni->str = NULL;
@@ -876,6 +882,12 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 			uni->length = length;
 			uni->hash = -1;
 			uni->defenc = NULL;
+#ifndef Py_UNICODE_WIDE
+                        /* Allocate enough for 2-characters per itemsize
+                           get the actual number of characters converted 
+                           and reallocate when done.
+                         */
+#endif
 		}
 		else { 
 			PyVoidScalarObject *vobj = (PyVoidScalarObject *)obj;
@@ -5007,7 +5019,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
 	if ((nd == 0) || PyString_Check(s) ||		\
 	    PyUnicode_Check(s) || PyBuffer_Check(s)) {
 		if PyUnicode_Check(s) 
-			*itemsize = MAX(*itemsize, sizeof(Py_UNICODE)*n);
+			*itemsize = MAX(*itemsize, 4*n);
 		else
 			*itemsize = MAX(*itemsize, n);
 		return 0;
@@ -5289,7 +5301,7 @@ Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
 
 	if (itemsize == 0 && PyTypeNum_ISEXTENDED(type)) {
 		itemsize = PyObject_Length(op);
-		if (type == PyArray_UNICODE) itemsize *= sizeof(Py_UNICODE);
+		if (type == PyArray_UNICODE) itemsize *= 4;
 	}
 
 	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, typecode,
@@ -5357,7 +5369,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 
 	if (itemsize == 0 && PyTypeNum_ISEXTENDED(type)) {
 		if (discover_itemsize(s, nd, &itemsize) == -1) goto fail;
-		if (type == PyArray_UNICODE) itemsize*=sizeof(Py_UNICODE);
+		if (type == PyArray_UNICODE) itemsize*=4;
 	}
 
 	if (itemsize != typecode->elsize) {
@@ -5529,10 +5541,10 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
 		if (at == NULL) return NULL;
 		if (mpd->type_num == PyArray_STRING &&	\
 		    at->type_num == PyArray_UNICODE)
-			at->elsize = mpd->elsize*sizeof(Py_UNICODE);
+			at->elsize = mpd->elsize*4;
 		if (mpd->type_num == PyArray_UNICODE &&
 		    at->type_num == PyArray_STRING) 
-			at->elsize = mpd->elsize/sizeof(Py_UNICODE);
+			at->elsize = mpd->elsize/4;
 		if (at->type_num == PyArray_VOID)
 			at->elsize = mpd->elsize;
 	}
@@ -5836,15 +5848,7 @@ _array_typedescr_fromstr(char *str)
 		break;
 	case PyArray_UNICODELTR:
 		type_num = PyArray_UNICODE;
-		size *= sizeof(Py_UNICODE);
-		break;	    
-	case PyArray_UCS2LTR:
-		if (sizeof(Py_UNICODE) != 2) _MY_FAIL
-		type_num = PyArray_UNICODE;
-		break;
-	case PyArray_UCS4LTR:
-		if (sizeof(Py_UNICODE) != 4) _MY_FAIL
-		type_num = PyArray_UNICODE;
+		size *= 4;
 		break;
 	case 'V':
 		type_num = PyArray_VOID;
@@ -6412,7 +6416,7 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 				ret = (from->elsize <= to->elsize);
 			}
 			else if (totype == PyArray_UNICODE) {
-				ret = (from->elsize * sizeof(Py_UNICODE)\
+				ret = (from->elsize * 4 \
 				       <= to->elsize);
 			}
 		}

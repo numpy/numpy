@@ -124,7 +124,7 @@ typedef unsigned char Bool;
 #endif
 
 #ifndef Py_USING_UNICODE
-#define Py_UNICODE char
+#error Must use Python with unicode enabled. 
 #endif
 
 
@@ -197,8 +197,6 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 			PyArray_STRINGLTR = 'S',
 			PyArray_STRINGLTR2 = 'a',
 			PyArray_UNICODELTR = 'U',
-			PyArray_UCS4LTR = 'W',
-			PyArray_UCS2LTR = 'w',
 		        PyArray_VOIDLTR = 'V',
 
 			/* No Descriptor, just a define -- this let's
@@ -734,6 +732,8 @@ typedef Py_uintptr_t uintp;
         #undef INTP_FMT
         #define INTP_FMT "Ld"
 #endif
+
+#define UInt32 PyArray_UCS4
 
 #define ERR(str) fprintf(stderr, #str); fflush(stderr);
 #define ERR2(str) fprintf(stderr, str); fflush(stderr);
