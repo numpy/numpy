@@ -206,6 +206,8 @@ class NumpyTest:
 
     Package is supposed to contain a directory tests/
     with test_*.py files where * refers to the names of submodules.
+    See .rename() method to redefine name mapping between test_*.py files
+    and names of submodules.
 
     test_*.py files are supposed to define a classes, derived
     from NumpyTestCase or unittest.TestCase, with methods having
@@ -221,8 +223,19 @@ class NumpyTest:
         if package is None:
             from numpy.distutils.misc_util import get_frame
             f = get_frame(1)
-            package = f.f_locals['__name__']
+            package = f.f_locals.get('__name__',f.f_globals.get('__name__',None))
+            assert package is not None
         self.package = package
+        self._rename_map = {}
+
+    def rename(self, **kws):
+        """ Apply renaming submodule test file test_<name>.py to test_<newname>.py.
+        Usage: self.rename(name='newname') before calling self.test() method.
+        If 'newname' is None, then no tests will be executed for a given module.
+        """
+        for k,v in kws.items():
+            self._rename_map[k] = v
+        return
 
     def _module_str(self, module):
         filename = module.__file__[-30:]
@@ -260,6 +273,10 @@ class NumpyTest:
         short_module_name = os.path.splitext(os.path.basename(f))[0]
         if short_module_name=='__init__':
             short_module_name = module.__name__.split('.')[-1]
+
+        short_module_name = self._rename_map.get(short_module_name,short_module_name)
+        if short_module_name is None:
+            return []
 
         test_dir = os.path.join(d,'tests')
         test_file = os.path.join(test_dir,'test_'+short_module_name+'.py')
@@ -306,7 +323,7 @@ class NumpyTest:
                 os.remove(test_file+pref+'c')
         except:
             self.warn('   !! FAILURE importing tests for %s' % mstr(module))
-            output_exception(self.warn)
+            output_exception(sys.stderr)
             return []
 
         self.test_files.append(test_file)
@@ -322,7 +339,7 @@ class NumpyTest:
                 return total_suite._tests
             except:
                 self.warn('   !! FAILURE building tests for %s' % mstr(test_module))
-                output_exception(self.warn)
+                output_exception(sys.stderr)
                 return []
         suite_list = []
         for name in dir(test_module):
