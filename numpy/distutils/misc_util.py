@@ -27,18 +27,21 @@ def get_path(mod_name, parent_path=None):
     Returned path is relative to parent_path when given,
     otherwise it is absolute path.
     """
-    if mod_name == '__main__' and not hasattr('__main__', '__file__'):
-        # we're probably running setup.py as execfile("setup.py")
-        # (likely we're building an egg)
-        d = os.path.abspath('.')
-    elif mod_name == '__builtin__':
+    if mod_name == '__builtin__':
         #builtin if/then added by Pearu for use in core.run_setup.
         d = os.path.dirname(os.path.abspath(sys.argv[0]))
     else:
         __import__(mod_name)
         mod = sys.modules[mod_name]
-        filename = mod.__file__
-        d = os.path.dirname(os.path.abspath(filename))
+        if hasattr(mod,'__file__'):
+            filename = mod.__file__
+            d = os.path.dirname(os.path.abspath(mod.__file__))
+        else:
+            # we're probably running setup.py as execfile("setup.py")
+            # (likely we're building an egg)            
+            d = os.path.abspath('.')
+            # hmm, should we use sys.argv[0] like in __builtin__ case?
+
     if parent_path is not None:
         pd = os.path.abspath(parent_path)
         if pd == d[:len(pd)]:
