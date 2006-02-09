@@ -182,7 +182,15 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 		break;
 	case PyArray_UNICODE:
 		memptr = (char *)PyUnicode_AS_DATA(scalar);
+#ifdef Py_UNICODE_WIDE
 		break;
+#else
+		PyUCS2Buffer_AsUCS4((Py_UNICODE *)memptr, 
+				    (PyArray_UCS4 *)PyArray_DATA(r),
+				    PyUnicode_GET_SIZE(scalar),
+				    PyArray_ITEMSIZE(r) >> 2);
+                goto finish;
+#endif
 	default:
 		if (PyTypeNum_ISEXTENDED(typecode->type_num)) {
 			memptr = (((PyVoidScalarObject *)scalar)->obval);
@@ -197,7 +205,8 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 	if (PyArray_ISOBJECT(r)) {
 		Py_INCREF(*((PyObject **)memptr));
 	}
-	
+
+ finish:	
 	if (outcode == NULL) return r;
 	
 	if (outcode->type_num == typecode->type_num) {

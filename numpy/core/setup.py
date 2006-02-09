@@ -148,6 +148,7 @@ def configuration(parent_package='',top_path=None):
             join('src','arraytypes.inc.src'),
             join('src','_signbit.c'),
             join('src','_isnan.c'),
+            join('src','ucsnarrow.c'),
             join('include','numpy','*object.h'),
 	    join(codegen_dir,'genapi.py'),
 	    join(codegen_dir,'*.txt')

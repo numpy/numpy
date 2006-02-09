@@ -128,7 +128,7 @@ typedef unsigned char Bool;
 #endif
 
 #ifndef Py_USING_UNICODE
-#define Py_UNICODE char
+#error Must use Python with unicode enabled. 
 #endif
 
 
@@ -201,8 +201,6 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 			PyArray_STRINGLTR = 'S',
 			PyArray_STRINGLTR2 = 'a',
 			PyArray_UNICODELTR = 'U',
-			PyArray_UCS4LTR = 'W',
-			PyArray_UCS2LTR = 'w',
 		        PyArray_VOIDLTR = 'V',
 
 			/* No Descriptor, just a define -- this let's
@@ -309,6 +307,7 @@ typedef enum {
 #define PyArray_UINT32 PyArray_ULONG
 	typedef long Int32;
 	typedef unsigned long UInt32;
+	typedef unsigned long PyArray_UCS4;
 #define STRBITSOF_LONG "32"
 #elif BITSOF_LONG == 64
 #define PyArray_INT64 PyArray_LONG
@@ -352,6 +351,7 @@ typedef enum {
 #    define PyArray_UINT32 PyArray_ULONGLONG
 	typedef longlong Int32;
 	typedef ulonglong UInt32;
+	typedef ulonglong PyArray_UCS4;
 #  endif
 #  define MAX_LONGLONG MAX_INT32
 #  define MIN_LONGLONG MIN_INT32
@@ -412,6 +412,7 @@ typedef enum {
 #define PyArray_UINT32 PyArray_UINT
 	typedef int Int32;
 	typedef unsigned int UInt32;
+	typedef unsigned int PyArray_UCS4;
 #endif
 #define STRBITSOF_INT "32"
 #elif BITSOF_INT == 64
@@ -454,6 +455,7 @@ typedef enum {
 #define PyArray_UINT32 PyArray_USHORT
 	typedef short Int32;
 	typedef unsigned short UInt32;
+	typedef unsigned short PyArray_UCS4;
 #endif
 #define STRBITSOF_SHORT "32"
 #elif BITSOF_SHORT == 64
@@ -497,6 +499,7 @@ typedef enum {
 #define PyArray_UINT32 PyArray_UBYTE
 	typedef signed char Int32;
 	typedef unsigned char UInt32;
+	typedef unsigned char PyArray_UCS4;
 #endif
 #define STRBITSOF_CHAR "32"
 #elif BITSOF_CHAR == 64

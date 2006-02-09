@@ -3363,7 +3363,10 @@ _convert_from_tuple(PyObject *obj)
 			goto fail;
 		}
 		PyArray_DESCR_REPLACE(type);
-		type->elsize = itemsize;
+		if (type->type_num == PyArray_UNICODE)
+			type->elsize = itemsize << 2; 
+		else
+			type->elsize = itemsize;
 	}
 	else {
 		/* interpret next item as shape (if it's a tuple)
@@ -3885,19 +3888,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			   the number of bytes.
 			*/
 			else if (check_num == PyArray_UNICODELTR) {
-				elsize *= sizeof(Py_UNICODE);
-			}
-			else if (check_num == PyArray_UCS2LTR || \
-				 check_num == PyArray_UCS4LTR) {
-				if ((elsize % sizeof(Py_UNICODE) != 0) ||
-				    ((check_num == PyArray_UCS4LTR) &&	\
-				     (sizeof(Py_UNICODE) != 4)) ||
-				    ((check_num == PyArray_UCS2LTR) &&	\
-				     (sizeof(Py_UNICODE) != 2))) {
-					PyErr_SetString(PyExc_TypeError, 
-							"unsupported unicode format");
-					return PY_FAIL;
-				}
+				elsize <<= 2;
 			}
 			/* Support for generic processing 
 			   c4, i4, f8, etc...
