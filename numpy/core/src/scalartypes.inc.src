@@ -2390,8 +2390,12 @@ PyArray_DescrFromScalar(PyObject *sc)
                 type_num = descr->type_num;
 		if (type_num == PyArray_STRING) 
 			descr->elsize = PyString_GET_SIZE(sc);
-		else if (type_num == PyArray_UNICODE)
+		else if (type_num == PyArray_UNICODE) {
 			descr->elsize = PyUnicode_GET_DATA_SIZE(sc);
+#ifndef Py_UNICODE_WIDE
+			descr->elsize <<= 1;
+#endif		
+		}
 		else {
 			descr->elsize =					\
 				((PyVoidScalarObject *)sc)->ob_size;

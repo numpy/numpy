@@ -164,6 +164,9 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                 data.imag, precision, suppress_small, sign=1)
             format_function = lambda x, f1 = real_format, f2 = imag_format: \
                               _formatComplex(x, f1, f2)
+        elif issubclass(dtype, _nt.unicode_):
+            format = "%s"
+            format_function = lambda x, f = format: repr(x)
         else:
 	    format = '%s'
 	    format_function = lambda x, f = format: format % str(x)
