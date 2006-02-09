@@ -221,7 +221,7 @@ UNICODE_getitem(char *ip, PyArrayObject *ap)
 	int mysize;
 	PyArray_UCS4 *dptr;
 
-	mysize = ap->descr->elsize / 4
+	mysize = ap->descr->elsize >> 2;
 	dptr = (PyArray_UCS4 *)ip + mysize-1;
 	while(mysize > 0 && *dptr-- == 0) mysize--;
 	if (!PyArray_ISNOTSWAPPED(ap) && (obj != NULL)) {
@@ -230,7 +230,16 @@ UNICODE_getitem(char *ip, PyArrayObject *ap)
 #ifdef Py_UNICODE_WIDE
 	obj = PyUnicode_FromUnicode((const PyArray_UCS4 *)ip, mysize);
 #else
-        obj = MyPyUnicode_FromUCS4((const PyArray_UCS4 *)ip, mysize);
+	/* create new empty unicode object of length mysize*2 */
+	obj = MyPyUnicode_New(mysize*2);
+	if (obj == NULL) return obj;
+	mysize = PyUCS2Buffer_FromUCS4(((PyUnicodeObject *)obj)->str, 
+				       (PyArray_UCS4 *)ip, mysize);
+	/* reset length of unicode object to ucs2size */
+	if (MyPyUnicode_Resize((PyUnicodeObject *)obj, mysize) < 0) {
+		Py_DECREF(obj);
+		return NULL;
+	}
 #endif
 
 	return obj;
@@ -240,9 +249,8 @@ static int
 UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap) 
 {
         PyObject *temp;
-	PyArray_UCS4 *ptr;
+	Py_UNICODE *ptr;
 	int datalen;
-	size_t size = sizeof(PyArray_UCS4);
 
 	if ((temp=PyObject_Unicode(op)) == NULL) return -1;
 	ptr = PyUnicode_AS_UNICODE(temp);
@@ -255,16 +263,17 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 #ifdef Py_UNICODE_WIDE
 	memcpy(ov, ptr, MIN(ap->descr->elsize, datalen));
 #else
-        MyPyUnicode_AsUCS4(ov, ptr, MIN(ap->descr->elsize, datalen));
+        datalen = PyUCS2Buffer_AsUCS4(ptr, (PyArray_UCS4 *)ov, datalen >> 1,
+				      ap->descr->elsize >> 2);
+	datalen <<= 2;
 #endif
 	/* Fill in the rest of the space with 0 */
 	if (ap->descr->elsize > datalen) {
 		memset(ov + datalen, 0, (ap->descr->elsize - datalen));
 	}
-
-	if (!PyArray_ISNOTSWAPPED(ap)) 
-		byte_swap_vector(ov, ap->descr->elsize / 4, 4)
 	
+	if (!PyArray_ISNOTSWAPPED(ap)) 
+		byte_swap_vector(ov, ap->descr->elsize >> 2, 4);
 	Py_DECREF(temp);
 	return 0;
 }
@@ -1177,20 +1186,17 @@ VOID_copyswapn (char *dst, char *src, intp n, int swap, int itemsize)
 static void
 UNICODE_copyswapn (char *dst, char *src, intp n, int swap, int itemsize)
 {
-	int size = sizeof(PyArray_UCS4);
 
 	if (src != NULL) 
 		memcpy(dst, src, itemsize * n);
 	
 	if (swap) {
 		register char *a, *b, c;
-		int j, i = size / 2;
 		for (a = (char *)dst; n>0; n--) {
-			b = a + (size-1);
-                        for (j=0; j<i; j++) {
-                                c=*a; *a++ = *b; *b-- = c;
-                        }
-			a += i / 2;
+			b = a + 3;
+			c=*a; *a++ = *b; *b-- = c;
+			c=*a; *a++ = *b; *b-- = c;
+			a += 1;
 		}
 	}
 }
@@ -1222,19 +1228,16 @@ VOID_copyswap (char *dst, char *src, int swap, int itemsize)
 static void
 UNICODE_copyswap (char *dst, char *src, int swap, int itemsize)
 {
-	int size = sizeof(PyArray_UCS4);
 
 	if (src != NULL) 
 		memcpy(dst, src, itemsize);
 	
 	if (swap) {
 		register char *a, *b, c;
-		int j, i = size / 2;
                 a = (char *)dst;
-                b = a + (size-1);
-                for (j=0; j<i; j++) {
-                        c=*a; *a++ = *b; *b-- = c;
-                }
+                b = a + 3;
+		c=*a; *a++ = *b; *b-- = c;
+		c=*a; *a++ = *b; *b-- = c;
 	}
 }
 
@@ -1319,19 +1322,30 @@ STRING_nonzero (char *ip, PyArrayObject *ap)
 #ifdef Py_UNICODE_WIDE
 #define PyArray_UCS4_ISSPACE Py_UNICODE_ISSPACE
 #else
-#define PyArray_UCS4_ISSPACE(x) FALSE
+#define PyArray_UCS4_ISSPACE(ch) Py_STRING_ISSPACE((char)ch)
 #endif
 
-/* fixme:  This must deal with unaligned and byte-swapped data
-   and what-to do for UCS2-builds
- */
 static Bool
 UNICODE_nonzero (PyArray_UCS4 *ip, PyArrayObject *ap)
 {
-	int len = ap->descr->elsize >> 1;
+	int len = ap->descr->elsize >> 2;
 	int i;
 	Bool nonz = FALSE;
-	
+	char *buffer=NULL;	
+
+	if ((!PyArray_ISNOTSWAPPED(ap)) || \
+	    (!PyArray_ISALIGNED(ap))) {
+		buffer = _pya_malloc(ap->descr->elsize);
+		if (buffer == NULL) {
+			return nonz;
+		}
+		memcpy(buffer, ip, ap->descr->elsize);
+		if (!PyArray_ISNOTSWAPPED(ap)) {
+			byte_swap_vector(buffer, len, 4);
+		}
+		ip = (PyArray_UCS4 *)buffer;
+	}
+
 	for (i=0; i<len; i++) {
 		if (!PyArray_UCS4_ISSPACE(*ip)) {
 			nonz = TRUE;
@@ -1339,6 +1353,7 @@ UNICODE_nonzero (PyArray_UCS4 *ip, PyArrayObject *ap)
 		}
 		ip++;
 	}
+	_pya_free(buffer);
 	return nonz;
 }
 
@@ -1897,9 +1912,6 @@ set_typeinfo(PyObject *dict)
 	_letter_to_num[PyArray_@name@LTR] = PyArray_@name@;
 /**end repeat**/
 	_letter_to_num[PyArray_STRINGLTR2] = PyArray_STRING;
-	_letter_to_num[PyArray_UCS4LTR] = PyArray_UNICODE;
-	_letter_to_num[PyArray_UCS2LTR] = PyArray_UNICODE;
-
 
 /**begin repeat
 #name=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
@@ -1907,13 +1919,6 @@ set_typeinfo(PyObject *dict)
 	@name@_Descr.fields = Py_None;
 /**end repeat**/
 	
-	if (sizeof(PyArray_UCS4) == 2) {
-		UNICODE_Descr.kind = PyArray_UCS2LTR;
-	}
-	else if (sizeof(PyArray_UCS4) == 4) {
-		UNICODE_Descr.kind = PyArray_UCS4LTR;
-	}
-
 	/* Set a dictionary with type information */
 	infodict = PyDict_New();
 	if (infodict == NULL) return -1;

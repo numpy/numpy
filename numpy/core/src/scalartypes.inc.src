@@ -184,8 +184,11 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 		memptr = (char *)PyUnicode_AS_DATA(scalar);
 #ifdef Py_UNICODE_WIDE
 		break;
-#else:
-                PyUCS2Unicode_AsUCS4(PyArray_DATA(r), memptr, PyArray_ITEMSIZE(r));
+#else
+		PyUCS2Buffer_AsUCS4((Py_UNICODE *)memptr, 
+				    (PyArray_UCS4 *)PyArray_DATA(r),
+				    PyUnicode_GET_SIZE(scalar),
+				    PyArray_ITEMSIZE(r) >> 2);
                 goto finish;
 #endif
 	default:

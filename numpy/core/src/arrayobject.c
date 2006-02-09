@@ -867,7 +867,11 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 		}
 		else if (type_num == PyArray_UNICODE) {
 			PyUnicodeObject *uni = (PyUnicodeObject*)obj;
-			int length = itemsize / 4;
+			int length = itemsize >> 2;
+
+#ifndef Py_UNICODE_WIDE
+			length *= 2;
+#endif
 			/* Need an extra slot and need to use 
 			   Python memory manager */
 			uni->str = NULL;
@@ -883,10 +887,21 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 			uni->hash = -1;
 			uni->defenc = NULL;
 #ifndef Py_UNICODE_WIDE
-                        /* Allocate enough for 2-characters per itemsize
-                           get the actual number of characters converted 
-                           and reallocate when done.
+                        /* Allocated enough for 2-characters per itemsize.
+			   Now convert from the data-buffer
                          */
+			if (!PyArray_ISNBO(descr->byteorder)) {
+				/* byteswap the data */
+				byte_swap_vector(data, itemsize >> 2, 4);
+			}
+			length = PyUCS2Buffer_FromUCS4(uni->str, (PyArray_UCS4 *)data,
+						       itemsize >> 2);
+			/* Resize the unicode result */
+			if (MyPyUnicode_Resize(uni, length) < 0) {
+				Py_DECREF(obj);
+				return NULL;
+			}
+			return obj;
 #endif
 		}
 		else { 
@@ -5089,7 +5104,7 @@ _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
 		   because string itemsize is twice as large */
 		if (outtype->type_num == PyArray_UNICODE && 
 		    mintype->type_num == PyArray_STRING) {
-			testsize = MAX(chksize, 2*minsize);
+			testsize = MAX(chksize, 4*minsize);
 		}
 		else {
 			testsize = MAX(chksize, minsize);
@@ -5172,6 +5187,9 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 	if (PyUnicode_Check(op)) {
 		chktype = PyArray_DescrNewFromType(PyArray_UNICODE);
 		chktype->elsize = PyUnicode_GET_DATA_SIZE(op);
+#ifndef Py_UNICODE_WIDE
+		chktype->elsize <<= 1;
+#endif		
 		goto finish;
 	}
 
@@ -5541,10 +5559,10 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
 		if (at == NULL) return NULL;
 		if (mpd->type_num == PyArray_STRING &&	\
 		    at->type_num == PyArray_UNICODE)
-			at->elsize = mpd->elsize*4;
+			at->elsize = mpd->elsize << 2;
 		if (mpd->type_num == PyArray_UNICODE &&
 		    at->type_num == PyArray_STRING) 
-			at->elsize = mpd->elsize/4;
+			at->elsize = mpd->elsize >> 2;
 		if (at->type_num == PyArray_VOID)
 			at->elsize = mpd->elsize;
 	}
@@ -5848,7 +5866,7 @@ _array_typedescr_fromstr(char *str)
 		break;
 	case PyArray_UNICODELTR:
 		type_num = PyArray_UNICODE;
-		size *= 4;
+		size <<= 2;
 		break;
 	case 'V':
 		type_num = PyArray_VOID;
@@ -6416,7 +6434,7 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 				ret = (from->elsize <= to->elsize);
 			}
 			else if (totype == PyArray_UNICODE) {
-				ret = (from->elsize * 4 \
+				ret = (from->elsize << 2 \
 				       <= to->elsize);
 			}
 		}
@@ -8155,14 +8173,17 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
 {
         char basic_=self->kind;
         char endian = self->byteorder;
+	int size=self->elsize;
 
         if (endian == '=') {
                 endian = '<';
                 if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
         }
-       
-        return PyString_FromFormat("%c%c%d", endian, basic_,
-                                   self->elsize);
+   
+	if (self->type_num == PyArray_UNICODE) {
+		size >>= 2;
+	}
+        return PyString_FromFormat("%c%c%d", endian, basic_, size);
 }
 
 static PyObject *
@@ -8393,7 +8414,11 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 		Py_INCREF(obj);
 	}
 	else {
-		obj = PyString_FromFormat("%c%d",self->kind, self->elsize);
+		elsize = self->elsize;
+		if (self->type_num == PyArray_UNICODE) {
+			elsize >>= 2;
+		}
+		obj = PyString_FromFormat("%c%d",self->kind, elsize);
 	}
 	PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(Nii)", obj, 0, 1));
 	

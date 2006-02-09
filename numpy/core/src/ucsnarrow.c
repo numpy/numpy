@@ -1,3 +1,7 @@
+/* Functions only needed on narrow builds of Python 
+   for converting back and forth between the NumPy Unicode data-type (always 4-byte)
+   and the Python Unicode scalar (2-bytes on a narrow build). 
+ */
 
 /* the ucs2 buffer must be large enough to hold 2*ucs4length characters
    due to the use of surrogate pairs. 
@@ -29,12 +33,74 @@ PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs4length)
 }
 
 
-/* This converts a UCS2 buffer (from a Python unicode object)
+/* This converts a UCS2 buffer of the given length to UCS4 buffer.
+   It converts up to ucs4len characters of UCS2
 
+   It returns the number of characters converted which can
+   be less than ucslen if there are surrogate pairs in ucs2.
+
+   The return value is the actual size of the used part of the ucs4 buffer. 
 */
 
+static int
+PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs2len, int ucs4len)
+{
+	register int i;
+	register PyArray_UCS4 chr;
+	register Py_UNICODE ch;
+	register int numchars=0;
+
+	for (i=0; (i < ucs2len-1) && (numchars < ucs4len); i++) {
+		ch = *ucs2++;
+		if (ch >= 0xd800 || ch <= 0xdfff) {
+			/* surrogate pair */
+			chr = ((PyArray_UCS4)(ch-0xd800)) << 10;
+			chr += *ucs2++ + 0x2400;  /* -0xdc00 + 0x10000 */
+			i++;
+		}
+		else {
+			chr = (PyArray_UCS4) ch;
+		}
+		*ucs4++ = chr;
+		numchars++;
+	}
+	return numchars;
+}
+
+
+static PyObject *
+MyPyUnicode_New(int length)
+{
+	PyUnicodeObject *unicode;
+	unicode = PyObject_New(PyUnicodeObject, &PyUnicode_Type);
+	if (unicode == NULL) return NULL;
+	unicode->str = PyMem_NEW(Py_UNICODE, length+1);
+	if (!unicode->str) {
+		_Py_ForgetReference((PyObject *)unicode);
+		PyObject_Del(unicode);
+		return PyErr_NoMemory();
+	}
+	unicode->str[0] = 0;
+	unicode->str[length] = 0;
+	unicode->length = length;
+	unicode->hash = -1;
+	unicode->defenc = NULL;
+	return (PyObject *)unicode;
+}
 
 static int
-PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs4length, int ucs2length)
-{
+MyPyUnicode_Resize(PyUnicodeObject *uni, int length)
+{	
+	void *oldstr;
+	
+	oldstr = uni->str;
+	PyMem_RESIZE(uni->str, Py_UNICODE, length+1);
+	if (!uni->str) {
+		uni->str = oldstr;
+		PyErr_NoMemory();
+		return -1;
+	}
+	uni->str[length] = 0;
+	uni->length = length;
+	return 0;
 }

@@ -3885,7 +3885,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			   the number of bytes.
 			*/
 			else if (check_num == PyArray_UNICODELTR) {
-				elsize *= 4;
+				elsize <<= 2;
 			}
 			/* Support for generic processing 
 			   c4, i4, f8, etc...
