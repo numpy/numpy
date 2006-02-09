@@ -7,7 +7,7 @@ import glob
 
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
-           'get_cmd', 'allpath',
+           'get_cmd', 'allpath', 'get_mathlibs',
            'terminal_has_colors', 'red_text', 'green_text', 'yellow_text',
            'blue_text', 'cyan_text', 'cyg2win32', 'all_strings',
            'has_f_sources', 'has_cxx_sources', 'filter_sources',
@@ -69,6 +69,23 @@ def njoin(*path):
         joined = joined.replace('/',os.path.sep)
     return minrelpath(joined)
 
+def get_mathlibs(path=None):
+    """ Return the MATHLIB line from config.h
+    """
+    if path is None:
+        path = get_numpy_include_dirs()[0]
+    config_file = os.path.join(path,'config.h')
+    fid = open(config_file)
+    mathlibs = []
+    s = '#define MATHLIB'
+    for line in fid.readlines():
+        if line.startswith(s):
+            value = line[len(s):].strip()
+            if value:
+                mathlibs.extend(value.split(','))
+    fid.close()
+    return mathlibs
+    
 def minrelpath(path):
     """ Resolve `..` from path.
     """
@@ -76,6 +93,8 @@ def minrelpath(path):
         return path
     if '..' not in path:
         return path
+    if os.sep != '/':
+        path.replace('/',os.sep)
     l = path.split(os.sep)
     j = 1
     while l:

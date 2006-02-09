@@ -50,6 +50,9 @@
 #define max(x,y) ((x>y)?x:y)
 #endif
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338328
+#endif 
 /* log-gamma function to support some of these distributions. The 
  * algorithm comes from SPECFUN by Shanjie Zhang and Jianming Jin and their
  * book "Computation of Special Functions", 1996, John Wiley & Sons, Inc.

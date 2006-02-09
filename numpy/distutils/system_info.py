@@ -110,11 +110,13 @@ from glob import glob
 import ConfigParser
 from exec_command import find_executable, exec_command, get_pythonexe
 from numpy.distutils.misc_util import is_sequence, is_string
+import distutils.sysconfig
 
 from distutils.sysconfig import get_config_vars
 
 if sys.platform == 'win32':
-    default_lib_dirs = ['C:\\'] # probably not very helpful...
+    default_lib_dirs = ['C:\\',
+                        join(distutils.sysconfig.EXEC_PREFIX, 'libs')]
     default_include_dirs = []
     default_src_dirs = ['.']
     default_x11_lib_dirs = []
