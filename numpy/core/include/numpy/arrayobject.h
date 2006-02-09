@@ -1,4 +1,3 @@
-
 /* This expects the following variables to be defined (besides
    the usual ones from pyconfig.h
 
@@ -11,9 +10,14 @@
 #ifndef Py_ARRAYOBJECT_H
 #define Py_ARRAYOBJECT_H
 #ifdef __cplusplus
-extern "C" {
+#define CONFUSE_EMACS {
+#define CONFUSE_EMACS2 }
+extern "C" CONFUSE_EMACS
+#undef CONFUSE_EMACS
+#undef CONFUSE_EMACS2
+/* ... otherwise a semi-smart idententer (like emacs) tries to indent
+       everything when you're typing */
 #endif
-
 #include "config.h"
 
 #ifdef PY_ARRAY_TYPES_PREFIX
@@ -62,9 +66,9 @@ extern "C" {
 
 /* There are several places in the code where an array of dimensions is */
 /* allocated statically.  This is the size of that static allocation. */
-/*  The array creation itself could have arbitrary dimensions but 
+/*  The array creation itself could have arbitrary dimensions but
  *  all the places where static allocation is used would need to
- *  be changed to dynamic (including inside of structures) 
+ *  be changed to dynamic (including inside of structures)
  */
 
 #define MAX_DIMS 32
@@ -184,8 +188,8 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 			PyArray_INTLTR = 'i',
 			PyArray_UINTLTR = 'I',
 			PyArray_LONGLTR = 'l',
-			PyArray_ULONGLTR = 'L',  
-			PyArray_LONGLONGLTR = 'q',   
+			PyArray_ULONGLTR = 'L',
+			PyArray_LONGLONGLTR = 'q',
 			PyArray_ULONGLONGLTR = 'Q',
 			PyArray_FLOATLTR = 'f',
 			PyArray_DOUBLELTR = 'd',
@@ -243,12 +247,12 @@ typedef enum {
 #define MIN_INT256 (-MAX_INT256 - LONGLONG_SUFFIX(1))
 #define MAX_UINT256 ULONGLONG_SUFFIX(115792089237316195423570985008687907853269984665640564039457584007913129639935)
 
-	/* Need to find the number of bits for each type and 
-	   make definitions accordingly. 
+	/* Need to find the number of bits for each type and
+	   make definitions accordingly.
 
-	   C states that sizeof(char) == 1 by definition 
-	   
-	   So, just using the sizeof keyword won't help.  
+	   C states that sizeof(char) == 1 by definition
+
+	   So, just using the sizeof keyword won't help.
 
 	   It also looks like Python itself uses sizeof(char) quite a
 	   bit, which by definition should be 1 all the time.
@@ -258,7 +262,7 @@ typedef enum {
 	*/
 
 	/* Include platform definitions -- These are in the C89/90 standard */
-#include <limits.h>  
+#include <limits.h>
 #define MAX_BYTE SCHAR_MAX
 #define MIN_BYTE SCHAR_MIN
 #define MAX_UBYTE UCHAR_MAX
@@ -659,7 +663,7 @@ typedef enum {
 #endif
 #elif BITSOF_LONGDOUBLE == 80
 #define STRBITSOF_LONGDOUBLE "80"
-#define STRBITSOF_CLONGDOUBLE "160" 
+#define STRBITSOF_CLONGDOUBLE "160"
 #ifndef PyArray_FLOAT80
 #define PyArray_FLOAT80 PyArray_LONGDOUBLE
 #define PyArray_COMPLEX160 PyArray_CLONGDOUBLE
@@ -705,7 +709,7 @@ typedef Py_uintptr_t uintp;
 
 #define INTP_FMT "d"
 
-#if SIZEOF_PY_INTPTR_T == SIZEOF_INT  
+#if SIZEOF_PY_INTPTR_T == SIZEOF_INT
 	#define PyArray_INTP PyArray_INT
 	#define PyArray_UINTP PyArray_UINT
         #define PyIntpArrType_Type PyIntArrType_Type
@@ -739,7 +743,7 @@ typedef Py_uintptr_t uintp;
 #define ERR2(str) fprintf(stderr, str); fflush(stderr);
 
   /* Macros to define how array, and dimension/strides data is
-     allocated. 
+     allocated.
   */
 
   /* Data buffer */
@@ -749,7 +753,7 @@ typedef Py_uintptr_t uintp;
   /* #define PyArrayMem_FREE(ptr) PyMem_Free(ptr) */
 #define PyDataMem_RENEW(ptr,size) ((char *)realloc(ptr,size))
 
-#define PyArray_USE_PYMEM 0 
+#define PyArray_USE_PYMEM 0
 
 #if PyArray_USE_PYMEM == 1
 #define _pya_malloc PyObject_Malloc
@@ -759,7 +763,7 @@ typedef Py_uintptr_t uintp;
 #define _pya_malloc malloc
 #define _pya_free free
 #define _pya_realloc realloc
-#endif 
+#endif
 
 /* Dimensions and strides */
 #define PyDimMem_NEW(size) ((intp *)_pya_malloc(size*sizeof(intp)))
@@ -781,7 +785,7 @@ typedef Bool (PyArray_NonzeroFunc)(void *, void *);
   */
 typedef int (PyArray_CompareFunc)(const void *, const void *, void *);
 typedef int (PyArray_ArgFunc)(void*, intp, intp*, void *);
-typedef void (PyArray_DotFunc)(void *, intp, void *, intp, void *, intp, 
+typedef void (PyArray_DotFunc)(void *, intp, void *, intp, void *, intp,
 			       void *);
 typedef void (PyArray_VectorUnaryFunc)(void *, void *, intp, void *, void *);
 typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
@@ -814,20 +818,20 @@ typedef struct {
 	/* Function to compare items */
 	PyArray_CompareFunc *compare;
 
-  	/* Function to select largest */
+	/* Function to select largest */
 	PyArray_ArgFunc *argmax;
 
 	/* Function to compute dot product */
-	PyArray_DotFunc	*dotfunc;	   
-	
-	/* Function to scan an ASCII file and 
+	PyArray_DotFunc	*dotfunc;
+
+	/* Function to scan an ASCII file and
 	   place a single value plus possible separator */
 	PyArray_ScanFunc *scanfunc;
 
 	/* Function to read a single value from a string */
 	/* and adjust the pointer */
 	PyArray_FromStrFunc *fromstr;
-		
+
 	/* Function to determine if data is zero or not */
 	PyArray_NonzeroFunc *nonzero;
 
@@ -843,16 +847,16 @@ typedef struct {
 
 typedef struct {
 	PyObject_HEAD
- 	PyTypeObject *typeobj;  /* the type object representing an 
+	PyTypeObject *typeobj;  /* the type object representing an
 				   intance of this type */
 	char kind;              /* kind for this type */
 	char type;              /* unique-character representing this type */
-	char byteorder;         /* '>' (big), '<' (little), '|' 
+	char byteorder;         /* '>' (big), '<' (little), '|'
 				   (not-applicable), or '=' (native). */
         char hasobject;         /* non-zero if it has object arrays in fields */
 	int type_num;           /* number representing this type */
 	int elsize;             /* element size for this type */
-       	int alignment;          /* alignment needed for this type */
+	int alignment;          /* alignment needed for this type */
 	struct _arr_descr					\
 	*subarray;              /* Non-NULL if this type is
 				   is an array (C-contiguous)
@@ -872,20 +876,26 @@ typedef struct _arr_descr {
 } PyArray_ArrayDescr;
 
 
+/*
+  The main array object structure. It is recommended to use the macros
+  defined below (PyArray_DATA and friends) access fields here, instead
+  of the members themselves.
+ */
+
 typedef struct PyArrayObject {
 	PyObject_HEAD
 	char *data;             /* pointer to raw data buffer */
-	int nd;                 /* number of dimensions, also called ndim */ 
+	int nd;                 /* number of dimensions, also called ndim */
 	intp *dimensions;       /* size in each dimension */
-        intp *strides;          /* bytes to jump to get to the 
+        intp *strides;          /* bytes to jump to get to the
 				   next element in each dimension */
 	PyObject *base;         /* This object should be decref'd
 				   upon deletion of array */
 	                        /* For views it points to the original array */
-	                        /* For creation from buffer object it points 
-				   to an object that shold be decref'd on 
+	                        /* For creation from buffer object it points
+				   to an object that shold be decref'd on
 				   deletion */
-	                        /* For UPDATEIFCOPY flag this is an array 
+	                        /* For UPDATEIFCOPY flag this is an array
 				   to-be-updated upon deletion of this one */
 	PyArray_Descr *descr;   /* Pointer to type structure */
 	int flags;              /* Flags describing array -- see below*/
@@ -901,47 +911,53 @@ typedef struct {
         PyObject *base;
         void *ptr;
         intp len;
-        int flags;        
+        int flags;
 } PyArray_Chunk;
 
 /* Array flags */
-#define CONTIGUOUS     1      /* means c-style contiguous (last index
-			       varies the fastest) data elements right
-			      after each other. */
 
-	                      /* All 0-d arrays are CONTIGUOUS and FORTRAN
-				 contiguous.  If a 1-d array is CONTIGUOUS
-				 it is also FORTRAN contiguous 
-			      */
+/* Means c-style contiguous (last index varies the fastest). The
+   data elements right after each other. */
+#define CONTIGUOUS    0x0001
+/* set if array is a contiguous Fortran array: the first index
+   varies the fastest in memory (strides array is reverse of
+   C-contiguous array)*/
+#define FORTRAN       0x0002
 
-#define FORTRAN    2    /* set if array is a contiguous Fortran array */
-                       /*  first index varies the fastest in memory
-                           (strides array is reverse of C-contiguous
-			           array)*/
+/*
+  Note: all 0-d arrays are CONTIGUOUS and FORTRAN contiguous. If a
+   1-d array is CONTIGUOUS it is also FORTRAN contiguous
+*/
 
-#define OWNDATA        4
-#define OWN_DATA       OWNDATA
+/* If set, the array owns the data: it will be free'd when the array
+   is deleted. */
+#define OWNDATA       0x0004
+#define OWN_DATA      OWNDATA
 
-	/* array never has these three set -- FromAny flags only */
-#define FORCECAST     0x010    
-#define ENSURECOPY    0x020
-#define ENSUREARRAY   0x040
+/* An array never has these three set; they're only used as parameter
+   flags to the the various FromAny functions */
+/* Cause a cast to occur regardless of whether or not it is safe. */
+#define FORCECAST     0x0010
+/* Always copy the array. Returned arrays are always CONTIGUOUS, ALIGNED,
+   and WRITEABLE. */
+#define ENSURECOPY    0x0020
+/* Make sure the returned array is an ndarray or a bigndarray */
+#define ENSUREARRAY   0x0040
 
-#define ALIGNED       0x100
-#define WRITEABLE     0x400
-
-
-	/* If this flags is set, then base contains a pointer to 
-	   an array of the same size that should be updated with the 
-	   current contents of this array when this array is deallocated
-	*/
+/* Array data is aligned on the appropiate memory address for the
+   type stored (e.g., an array of doubles (8 bytes each) starts on
+   a memory address that's a multiple of 8) */
+#define ALIGNED       0x0100
+/* Array data has the native endianness */
+#define NOTSWAPPED    0x0200
+/* Array data is writeable */
+#define WRITEABLE     0x0400
+/* If this flag is set, then base contains a pointer to an array of
+   the same size that should be updated with the current contents of
+   this array when this array is deallocated
+*/
 #define UPDATEIFCOPY  0x1000
 
-
-/* Size of internal buffers used for alignment */
-#define PyArray_BUFSIZE 10000
-#define PyArray_MIN_BUFSIZE 5
-#define PyArray_MAX_BUFSIZE 100000000
 
 #define BEHAVED_FLAGS ALIGNED | WRITEABLE
 #define BEHAVED_NS_FLAGS ALIGNED | WRITEABLE | NOTSWAPPED
@@ -954,9 +970,13 @@ typedef struct {
 #define UPDATE_ALL_FLAGS CONTIGUOUS | FORTRAN | ALIGNED
 
 
+/* Size of internal buffers used for alignment */
+#define PyArray_BUFSIZE 10000
+#define PyArray_MIN_BUFSIZE 5
+#define PyArray_MAX_BUFSIZE 100000000
 
 /*
- * C API:  consists of Macros and functions.  The MACROS are defined here. 
+ * C API:  consists of Macros and functions.  The MACROS are defined here.
  */
 
 
@@ -973,7 +993,7 @@ typedef struct {
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #endif
 
-        /* Useful if a and b have to be evaluated.  */
+/* Useful if a and b have to be evaluated.  */
 
 #define tMAX(a,b,typ) {typ _x_=(a); typ _y_=(b); _x_>_y_ ? _x_ : _y_}
 #define tMIN(a,b,typ) {typ _x_=(a); typ _y_=(b); _x_<_y_ ? _x_ : _y_}
@@ -990,8 +1010,8 @@ typedef struct {
 #define BEGIN_THREADS
 #define END_THREADS
 #define ALLOW_C_API_DEF
-#define	ALLOW_C_API    
-#define	DISABLE_C_API  
+#define	ALLOW_C_API
+#define	DISABLE_C_API
 #endif
 
 typedef struct {
@@ -1009,9 +1029,9 @@ typedef struct {
 } PyArrayIterObject;
 
 
-/* Iterator API */ 
+/* Iterator API */
 #define PyArrayIter_Check(op) PyObject_TypeCheck(op, &PyArrayIter_Type)
-	
+
 #define PyArray_ITER_RESET(it) {					\
 	it->index = 0;						        \
 	it->dataptr = it->ao->data;					\
@@ -1022,7 +1042,7 @@ typedef struct {
 		it->dataptr += it->strides[0];	\
 		it->coordinates[0]++;		\
 	}
-	
+
 #define _PyArray_ITER_NEXT2(it) {					\
 		if (it->coordinates[1] < it->dims_m1[1]) {		\
 			it->coordinates[1]++;				\
@@ -1035,7 +1055,7 @@ typedef struct {
 				it->backstrides[1];			\
 		}							\
 	}
-	
+
 #define PyArray_ITER_NEXT(it) {						\
 	it->index++;						        \
         if (it->nd_m1 == 0) {						\
@@ -1072,9 +1092,9 @@ typedef struct {
 			it->coordinates[_i_] = destination[_i_];	\
 			it->index += destination[_i_] *			\
 				( _i_==it->nd_m1 ? 1 :			\
-				  it->dims_m1[i+1]+1) ;	  	        \
+				  it->dims_m1[i+1]+1) ;		        \
 		}							\
-	} 
+	}
 
 #define PyArray_ITER_GOTO1D(it, ind) {                                  \
 		int _i_;						\
@@ -1098,11 +1118,11 @@ typedef struct {
 }
 
 #define PyArray_ITER_DATA(it) ((PyArrayIterObject *)it)->dataptr
-	
+
 
 /*
-   Any object passed to PyArray_Broadcast must be binary compatible with 
-   this structure.    
+   Any object passed to PyArray_Broadcast must be binary compatible with
+   this structure.
 */
 
 typedef struct {
@@ -1114,7 +1134,7 @@ typedef struct {
 	int                     nd;                    /* number of dims */
 	intp                    dimensions[MAX_DIMS];  /* dimensions */
 	PyArrayIterObject       *iters[MAX_DIMS];      /* iterators */
-} PyArrayMultiIterObject;  
+} PyArrayMultiIterObject;
 
 #define PyArray_MultiIter_RESET(multi) {			  \
 		int _mi_;					  \
@@ -1124,7 +1144,7 @@ typedef struct {
 			PyArray_ITER_RESET(_mul_->iters[_mi_]);	  \
 		}						  \
 	}
-	
+
 #define PyArray_MultiIter_NEXT(multi) {				 \
 		int _mi_;					 \
 		PyArrayMultiIterObject *_mul_ = (multi);	  \
@@ -1133,7 +1153,7 @@ typedef struct {
 			PyArray_ITER_NEXT(_mul_->iters[_mi_]);	 \
 		}						 \
 	}
-	
+
 #define PyArray_MultiIter_GOTO(multi, dest) {				\
 		int _mi_;						\
 		PyArrayMultiIterObject *_mul_ = (multi);		\
@@ -1142,7 +1162,7 @@ typedef struct {
 		}							\
 		_mul_->index = _mul_->iters[0]->index;			\
 	}
-	
+
 #define PyArray_MultiIter_GOTO1D(multi, ind) {				\
 		int _mi_;						\
 		PyArrayMultiIterObject *_mul_ = (multi);		\
@@ -1157,31 +1177,31 @@ typedef struct {
 
 #define PyArray_MultiIter_SIZE(multi) \
 	((PyArrayMultiIterObject *)multi)->size;
-		
+
 
 /* Store the information needed for fancy-indexing over an array */
 
 typedef struct {
 	PyObject_HEAD
-	/* Multi-iterator portion --- needs to be present in this order to 
+	/* Multi-iterator portion --- needs to be present in this order to
 	   work with PyArray_Broadcast */
 
 	int                     numiter;               /* number of index-array
 							  iterators */
-	intp                    size;                  /* size of broadcasted 
+	intp                    size;                  /* size of broadcasted
 							  result */
 	intp                    index;                 /* current index */
 	int                     nd;                    /* number of dims */
 	intp                    dimensions[MAX_DIMS];  /* dimensions */
-	PyArrayIterObject       *iters[MAX_DIMS];      /* index object 
+	PyArrayIterObject       *iters[MAX_DIMS];      /* index object
 							  iterators */
-	PyArrayIterObject       *ait;                   /* flat Iterator for 
+	PyArrayIterObject       *ait;                   /* flat Iterator for
 							  underlying array */
 
 	/* flat iterator for subspace (when numiter < nd) */
 	PyArrayIterObject       *subspace;
 
-	/* if subspace iteration, then this is the array of 
+	/* if subspace iteration, then this is the array of
 	   axes in the underlying array represented by the
 	   index objects */
 	int                     iteraxes[MAX_DIMS];
@@ -1190,8 +1210,7 @@ typedef struct {
 	*/
 	intp                    bscoord[MAX_DIMS];
 
-	
-	PyObject                *indexobj;             /* reference to 
+	PyObject                *indexobj;             /* reference to
 							  creating obj */
 	int                     view;
 	int                     consec;
@@ -1199,6 +1218,10 @@ typedef struct {
 
 } PyArrayMapIterObject;
 
+/* All sorts of useful ways to look into a PyArrayObject.
+   These are the recommended over casting to PyArrayObject and accessing
+   the members directly.
+ */
 
 #define PyArray_NDIM(obj) (((PyArrayObject *)(obj))->nd)
 #define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || PyArray_CHKFLAGS(m, CONTIGUOUS) || \
@@ -1239,7 +1262,7 @@ typedef struct {
 
 #define PyTypeNum_ISINTEGER(type) ((type >= PyArray_BYTE) &&	\
 				(type <= PyArray_ULONGLONG))
-       
+
 #define PyTypeNum_ISFLOAT(type) ((type >= PyArray_FLOAT) &&  \
 			      (type <= PyArray_LONGDOUBLE))
 
@@ -1250,7 +1273,7 @@ typedef struct {
 
 #define PyTypeNum_ISCOMPLEX(type) ((type >= PyArray_CFLOAT) && \
 				(type <= PyArray_CLONGDOUBLE))
-	
+
 #define PyTypeNum_ISPYTHON(type) ((type == PyArray_LONG) || \
 				  (type == PyArray_DOUBLE) ||	\
 				  (type == PyArray_CDOUBLE) ||	\
@@ -1266,7 +1289,7 @@ typedef struct {
 
 #define PyTypeNum_ISEXTENDED(type) (PyTypeNum_ISFLEXIBLE(type) ||  \
                                     PyTypeNum_ISUSERDEF(type))
-				    
+
 #define PyTypeNum_ISOBJECT(type) ((type) == PyArray_OBJECT)
 
 #define _PyADt(o) ((PyArray_Descr *)o)->type_num
@@ -1326,31 +1349,38 @@ typedef struct {
 #define PyArray_ISBEHAVED(m) PyArray_FLAGSWAP(m, BEHAVED_FLAGS)
 #define PyArray_ISBEHAVED_RO(m) PyArray_FLAGSWAP(m, ALIGNED)
 
-	
-typedef struct {
-        int version;          /* contains the integer 2 as a sanity check */
-        int nd;               /* number of dimensions */
-        char typekind;        /* kind in array --- character code of typestr */
-        int itemsize;         /* size of each element */
-        int flags;            /* how should be data interpreted */
-        intp *shape;          /* A length-nd array of shape information */
-        intp *strides;        /* A length-nd array of stride information */
-        void *data;           /* A pointer to the first element of the array */
-} PyArrayInterface;
-#define NOTSWAPPED 0x200  /* part of the array interface */
 
-        /* Includes the "function" C-API -- these are all stored in a 
-	   list of pointers --- one for each file
-	   The two lists are concatenated into one in multiarray.
-	   
-	   They are available as import_array()
-         */
+
+/* This is the form of the struct that's returned pointed by the
+   PyCObject attribute of an array __array_struct__. See
+   http://numeric.scipy.org/array_interface.html for the full
+   documentation. */
+typedef struct {
+    int version;          /* contains the integer 2 as a sanity check */
+    int nd;               /* number of dimensions */
+    char typekind;        /* kind in array --- character code of typestr */
+    int itemsize;         /* size of each element */
+    int flags;            /* how should be data interpreted. Valid
+                             flags are CONTIGUOUS (1), FORTRAN (2),
+                             ALIGNED (0x100), NOTSWAPPED (0x200), and
+                             WRITEABLE (0x400)*/
+    intp *shape;          /* A length-nd array of shape information */
+    intp *strides;        /* A length-nd array of stride information */
+    void *data;           /* A pointer to the first element of the array */
+} PyArrayInterface;
+
+/* Includes the "function" C-API -- these are all stored in a
+   list of pointers --- one for each file
+   The two lists are concatenated into one in multiarray.
+
+   They are available as import_array()
+*/
 
 
 #include "__multiarray_api.h"
 
 
-        /* C-API that requries previous API to be defined */
+/* C-API that requries previous API to be defined */
 
 #define PyArray_DescrCheck(op) ((op)->ob_type == &PyArrayDescr_Type)
 
@@ -1372,7 +1402,7 @@ typedef struct {
 	(PyArray_IsScalar(obj, Generic) || PyArray_IsPythonScalar(obj))
 #define PyArray_CheckAnyScalar(obj) (PyArray_IsPythonScalar(obj) || \
 				     PyArray_CheckScalar(obj))
-	
+
 #define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ? Py_INCREF(m), m : \
                                   (PyArrayObject *)(PyArray_Copy(m)))
 
@@ -1385,12 +1415,12 @@ typedef struct {
 #define PyArray_FROM_OTF(m, type, flags)                                \
 	PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0,           \
                         (((flags) & ENSURECOPY) ?                       \
-                         ((flags) | DEFAULT_FLAGS) : (flags)), NULL) 
+                         ((flags) | DEFAULT_FLAGS) : (flags)), NULL)
 #define PyArray_FROMANY(m, type, min, max, flags)                       \
 	PyArray_FromAny(m, PyArray_DescrFromType(type), min, max,       \
                         (((flags) & ENSURECOPY) ?                       \
                          (flags) | DEFAULT_FLAGS : (flags)), NULL)
-        
+
 #define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), (val), PyArray_NBYTES(obj))
 
 #define REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
@@ -1399,16 +1429,16 @@ typedef struct {
 #define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)   \
         PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth, \
                               max_depth, DEFAULT_FLAGS, NULL)
-	
+
 #define PyArray_EquivArrTypes(a1, a2)					\
 	PyArray_EquivTypes(PyArray_DESCR(a1), PyArray_DESCR(a2))
 #define PyArray_EquivTypenums(typenum1, typenum2)		\
 	PyArray_EquivTypes(PyArray_DescrFromType(typenum1),	\
 			   PyArray_DescrFromType(typenum2))
-	
+
 #define PyArray_EquivByteorders(b1, b2) \
 	((b1 == b2) || (PyArray_ISNBO(b1) == PyArray_ISNBO(b2)))
-	
+
 #define PyArray_SimpleNew(nd, dims, typenum) \
 	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
 #define PyArray_SimpleNewFromData(nd, dims, typenum, data) \
@@ -1417,23 +1447,23 @@ typedef struct {
 	PyArray_NewFromDescr(&PyArray_Type, descr, nd, dims, NULL, NULL, 0, NULL)
 
 
-	/* These might be faster without the dereferencing of obj
-	   going on inside -- of course an optimizing compiler should 
-	   inline the constants inside a for loop making it a moot point
-	*/
-		
+/* These might be faster without the dereferencing of obj
+   going on inside -- of course an optimizing compiler should
+   inline the constants inside a for loop making it a moot point
+*/
+
 #define PyArray_GETPTR1(obj, i) (PyArray_DATA(obj) +		\
 				 i*PyArray_STRIDE(obj, 0))
-	
+
 #define PyArray_GETPTR2(obj, i, j) (PyArray_DATA(obj) +		\
 				    i*PyArray_STRIDE(obj, 0) +	\
 				    j*PyArray_STRIDE(obj, 1))
-	
+
 #define PyArray_GETPTR3(obj, i, j, k) (PyArray_DATA(obj) +		\
 				       i*PyArray_STRIDE(obj, 0) +	\
 				       j*PyArray_STRIDE(obj, 1) +	\
 				       k*PyArray_STRIDE(obj, 2))	\
-		
+
 #define PyArray_GETPTR4(obj, i, j, k, l) (PyArray_DATA(obj) +		\
 					  i*PyArray_STRIDE(obj, 0) +	\
 					  j*PyArray_STRIDE(obj, 1) +	\
@@ -1447,7 +1477,7 @@ typedef struct {
 		descr = _new_;				\
 	} while(0)
 
-	/* Copy should always return contiguous array */
+/* Copy should always return contiguous array */
 #define PyArray_Copy(obj) PyArray_NewCopy(obj, 0)
 
 #define PyArray_FromObject(op, type, min_depth, max_depth)		\
@@ -1457,15 +1487,15 @@ typedef struct {
 #define PyArray_ContiguousFromObject(op, type, min_depth, max_depth)	\
         PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
                               max_depth, DEFAULT_FLAGS | ENSUREARRAY, NULL)
-        
+
 #define PyArray_CopyFromObject(op, type, min_depth, max_depth)		\
         PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,     \
                         max_depth, ENSURECOPY | DEFAULT_FLAGS | ENSUREARRAY, NULL)
-        
+
 #define PyArray_Cast(mp, type_num) \
 	PyArray_CastToType(mp, PyArray_DescrFromType(type_num), 0)
 
-        /*Compatibility with old Numeric stuff -- don't use in new code */
+/* Compatibility with old Numeric stuff -- don't use in new code */
 
 #define PyArray_FromDimsAndData(nd, d, type, data) \
 	PyArray_FromDimsAndDataAndDescr(nd, d, PyArray_DescrFromType(type), \
