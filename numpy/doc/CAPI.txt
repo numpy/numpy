@@ -139,7 +139,7 @@ because ``sizeof(intp) != sizeof(int)``.
 
 
 Getting an arrayobject from an arbitrary Python object
-==============================================================
+======================================================
 
 ``PyArray_FromAny(...)``
 
@@ -151,184 +151,160 @@ function calls still remain but they are loose wrappers around the
 
   static PyObject *
   PyArray_FromAny(PyObject *op, PyArray_Descr *dtype, int min_depth,
-  		  int max_depth, int requires)
+  		  int max_depth, int requires, PyObject *context)
 
 
-``op``
+``op`` : ``PyObject *``
     The Python object to "convert" to an array object
 
-``dtype``
+``dtype`` : ``PyArray_Descr *``
     The desired data-type descriptor. This can be ``NULL``, if the
     descriptor should be determined by the object. Unless ``FORCECAST`` is
     present in ``flags``, this call will generate an error if the data
     type cannot be safely obtained from the object.
 
-``min_depth``
+``min_depth`` : ``int``
     The minimum depth of array needed or 0 if doesn't matter
 
-``max_depth``
+``max_depth`` : ``int``
     The maximum depth of array allowed or 0 if doesn't matter
 
-``requires``
-    A flag indicating the "requirements" of the returned array.
+``requires`` : ``int``
+    A flag indicating the "requirements" of the returned array. These
+    are the usual ndarray flags (see `NDArray flags`_ below). In
+    addition, there are three flags used only for the ``FromAny``
+    family of functions:
 
-From the code comments, the requires flag is explained.
+      - ``ENSURECOPY``: always copy the array. Returned arrays always
+        have ``CONTIGUOUS``, ``ALIGNED``, and ``WRITEABLE`` set.
+      - ``ENSUREARRAY``: ensure the returned array is an ndarray (or a
+        bigndarray if ``op`` is one).
+      - ``FORCECAST``: cause a cast to occur regardless of whether or
+        not it is safe.
 
-``requires`` can be any of
-
-- ``CONTIGUOUS``,
-- ``FORTRAN``,
-- ``ALIGNED``,
-- ``WRITEABLE``,
-- ``ENSURECOPY``,
-- ``ENSUREARRAY``,
-- ``UPDATEIFCOPY``,
-- ``FORCECAST``,
-
-or'd (|) together
-
-Any of these flags present means that the returned array should
-guarantee that aspect of the array.  Otherwise the returned array
-won't guarantee it -- it will depend on the object as to whether or
-not it has such features.
-
-Note that ENSURECOPY is enough to guarantee CONTIGUOUS, ALIGNED,
-and WRITEABLE and therefore it is redundant to include those as well.
-
-BEHAVED_FLAGS == ALIGNED | WRITEABLE
-BEHAVED_FLAGS_RO == ALIGNED
-CARRAY_FLAGS = CONTIGUOUS | BEHAVED_FLAGS
-FARRAY_FLAGS = FORTRAN | BEHAVED_FLAGS
-
-By default, if the object is an array (or any subclass) and requires is 0,
-the array will just be INCREF'd and returned.
-
-ENSUREARRAY makes sure a base-class ndarray is returned (If the object is a
-bigndarray it will also be returned).
-
-UPDATEIFCOPY flag sets this flag in the returned array *if a copy is
-made*. The base argument of the returned array points to the
-misbehaved array (which is set to READONLY in that case). When the new
-array is deallocated, the original array held in base is updated with
-the contents of the new array. This is useful, if you don't want to
-deal with a possibly mis-behaved array, but want to update it easily
-using a local contiguous copy.
-
-FORCECAST will cause a cast to occur regardless of whether or not it
-is safe.
+``context`` : ``PyObject *``
+    If the Python object ``op`` is not an numpy array, but has an
+    ``__array__`` method, context is passed as the second argument to
+    that method (the first is the typecode). Almost always this
+    parameter is ``NULL``.
 
 
-PyArray_ContiguousFromAny(op, typenum, min_depth, max_depth) is equivalent
-to PyArray_ContiguousFromObject(...) (which is still available), except
-it will return the subclass if op is already a subclass of the ndarray.
-The ContiguousFromObject version will always return an ndarray (or a bigndarray).
+``PyArray_ContiguousFromAny(op, typenum, min_depth, max_depth)`` is
+equivalent to ``PyArray_ContiguousFromObject(...)`` (which is still
+available), except it will return the subclass if op is already a
+subclass of the ndarray. The ``ContiguousFromObject`` version will
+always return an ndarray (or a bigndarray).
 
 Passing Data Type information to C-code
-============================================
+=======================================
 
-All Data-types are handled using the PyArray_Descr * structure.
+All datatypes are handled using the ``PyArray_Descr *`` structure.
 This structure can be obtained from a Python object using
-PyArray_DescrConverter and PyArray_DescrConverter2.  The former
-returns the default PyArray_LONG descriptor when the input object
-is None, while the latter returns NULL when the input object is None.
+``PyArray_DescrConverter`` and ``PyArray_DescrConverter2``.  The former
+returns the default ``PyArray_LONG`` descriptor when the input object
+is None, while the latter returns ``NULL`` when the input object is ``None``.
 
-See the arraymethods.c and multiarraymodule.c files for many examples of usage.
+See the ``arraymethods.c`` and ``multiarraymodule.c`` files for many
+examples of usage.
 
 Getting at the structure of the array.
+--------------------------------------
 
-You should use the #defines provided to access array structure portions:
+You should use the ``#defines`` provided to access array structure portions:
 
-PyArray_DATA(obj) : returns a ``void *`` to the array data
-PyArray_BYTES(obj) : return a ``char *`` to the array data
-PyArray_ITEMSIZE(obj)
-PyArray_NDIM(obj)
-PyArray_DIMS(obj)
-PyArray_DIM(obj, n)
-PyArray_STRIDES(obj)
-PyArray_STRIDE(obj,n)
-PyArray_DESCR(obj)
-PyArray_BASE(obj)
+- ``PyArray_DATA(obj)`` : returns a ``void *`` to the array data
+- ``PyArray_BYTES(obj)`` : return a ``char *`` to the array data
+- ``PyArray_ITEMSIZE(obj)``
+- ``PyArray_NDIM(obj)``
+- ``PyArray_DIMS(obj)``
+- ``PyArray_DIM(obj, n)``
+- ``PyArray_STRIDES(obj)``
+- ``PyArray_STRIDE(obj,n)``
+- ``PyArray_DESCR(obj)``
+- ``PyArray_BASE(obj)``
 
-
-see more in arrayobject.h
+see more in ``arrayobject.h``
 
 
 NDArray Flags
-==========================
+=============
 
-The flags attribute of the PyArrayObject structure contains important
+The ``flags`` attribute of the ``PyArrayObject`` structure contains important
 information about the memory used by the array (pointed to by the data member)
 This flags information must be kept accurate or strange results and even
 segfaults may result.
 
 There are 7 (binary) flags that describe the memory area used by the
-data buffer.  These constants are defined in arrayobject.h and
+data buffer.  These constants are defined in ``arrayobject.h`` and
 determine the bit-position of the flag.  Python exposes a nice dictionary
 interface for getting (and, if appropriate, setting) these flags.
 
 Memory areas of all kinds can be pointed to by an ndarray, necessitating
-these flags.  If you get an arbitrary PyArrayObject in C-code,
+these flags.  If you get an arbitrary ``PyArrayObject`` in C-code,
 you need to be aware of the flags that are set.
 If you need to guarantee a certain kind of array
-(like CONTIGUOUS and BEHAVED), then pass these requirements into the
+(like ``CONTIGUOUS`` and ``BEHAVED``), then pass these requirements into the
 PyArray_FromAny function.
 
 
-CONTIGUOUS  :  True if the array is (C-style) contiguous in memory.
-FORTRAN     :  True if the array is (Fortran-style) contiguous in memory.
+``CONTIGUOUS``
+    True if the array is (C-style) contiguous in memory.
+``FORTRAN``
+    True if the array is (Fortran-style) contiguous in memory.
 
-Notice that 1-d arrays are always both FORTRAN contiguous and C contiguous.
-Both of these flags can be checked and are convenience flags only as whether
-or not an array is CONTIGUOUS or FORTRAN can be determined by the strides,
-dimensions, and itemsize variables..
+Notice that 1-d arrays are always both ``FORTRAN`` contiguous and C
+contiguous. Both of these flags can be checked and are convenience
+flags only as whether or not an array is ``CONTIGUOUS`` or ``FORTRAN``
+can be determined by the ``strides``, ``dimensions``, and ``itemsize``
+attributes.
 
-OWNDATA     :  True if the array owns the memory (it will try and free it
-	        using PyDataMem_FREE() on deallocation ---
-		so it better really own it).
+``OWNDATA``
+    True if the array owns the memory (it will try and free it using
+    ``PyDataMem_FREE()`` on deallocation --- so it better really own it).
 
 These three flags facilitate using a data pointer that is a memory-mapped
 array, or part of some larger record array.  But, they may have other uses...
 
-ALIGNED     :  True if the data buffer is aligned for the type.  This
-	        can be checked.
+``ALIGNED``
+    True if the data buffer is aligned for the type. This can be
+    checked.
 
-WRITEABLE   :  True only if the data buffer can be "written" to.
+``WRITEABLE``
+    True only if the data buffer can be "written" to.
+
+``UPDATEIFCOPY``
+    This is a special flag that is set if this array represents a copy
+    made because a user required certain flags in ``PyArray_FromAny`` and
+    a copy had to be made of some other array (and the user asked for
+    this flag to be set in such a situation). The base attribute then
+    points to the "misbehaved" array (which is set read_only). When
+    the array with this flag set is deallocated, it will copy its
+    contents back to the "misbehaved" array (casting if necessary) and
+    will reset the "misbehaved" array to ``WRITEABLE``. If the
+    "misbehaved" array was not ``WRITEABLE`` to begin with then
+    ``PyArray_FromAny`` would have returned an error because ``UPDATEIFCOPY``
+    would not have been possible.
 
 
-UPDATEIFCOPY :  This is a special flag that is set if this array represents
-	          a copy made because a user required certain FLAGS in
-		  PyArray_FromAny and a copy had to be made of some
-		  other array (and the user asked for this flag to be set in
-	          such a situation). The base attribute then points to the
-		  "misbehaved" array (which is set read_only).
-                  When the array with this flag set is deallocated,
-                  it will copy its contents back to the "misbehaved" array
-                  (casting if necessary) and will reset the "misbehaved"
-	          array to WRITEABLE.  If the "misbehaved" array
-	          was not WRITEABLE to begin with then PyArray_FromAny would
-	          have returned an error because UPDATEIFCOPY would not
-	          have been possible.
-
-
-PyArray_UpdateFlags(obj, FLAGS) will update the obj->flags for FLAGS
-                  which can be any of CONTIGUOUS FORTRAN ALIGNED or WRITEABLE
+``PyArray_UpdateFlags(obj, flags)`` will update the ``obj->flags`` for
+``flags`` which can be any of ``CONTIGUOUS``, ``FORTRAN``, ``ALIGNED``, or
+``WRITEABLE``.
 
 Some useful combinations of these flags:
 
-BEHAVED = ALIGNED | WRITEABLE
-BEHAVED_RO = ALIGNED
-CARRAY_FLAGS = CONTIGUOUS | BEHAVED
-FARRAY_FLAGS = FORTRAN | BEHAVED
+- ``BEHAVED_FLAGS = ALIGNED | WRITEABLE``
+- ``CARRAY_FLAGS = DEFAULT_FLAGS = CONTIGUOUS | BEHAVED_FLAGS``
+- ``CARRAY_FLAGS_RO = CONTIGUOUS | ALIGNED``
+- ``FARRAY_FLAGS = FORTRAN | BEHAVED_FLAGS``
+- ``FARRAY_FLAGS_RO = FORTRAN | ALIGNED``
 
-The macro PyArray_CHECKFLAGS(obj, FLAGS)  can test any combination of flags.
+The macro ``PyArray_CHECKFLAGS(obj, flags)``  can test any combination of flags.
 There are several default combinations defined as macros already
-(see arrayobject.h)
+(see ``arrayobject.h``)
 
-In particular, there are ISBEHAVED, ISBEHAVED_RO, ISCARRAY and ISFARRAY macros
-that also check to make sure the array is in native byte order (as determined)
-by the data-type descriptor.
+In particular, there are ``ISBEHAVED``, ``ISBEHAVED_RO``, ``ISCARRAY``
+and ``ISFARRAY`` macros that also check to make sure the array is in
+native byte order (as determined) by the data-type descriptor.
 
 There are more C-API enhancements which you can discover in the code,
 or buy the book (http://www.trelgol.com)
-
-
