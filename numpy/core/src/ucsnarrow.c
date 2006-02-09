@@ -26,7 +26,7 @@ PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs4length)
                         *ucs2++ = 0xDC00 + (Py_UNICODE) (chr & 0x03FF);
                 }
                 else {
-                        *ucs2++ = (Py_UNICODE) (chr);
+                        *ucs2++ = (Py_UNICODE) chr;
                 }
         }
         return ucs4length + surrpairs;
@@ -50,9 +50,9 @@ PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs2len, int ucs4l
 	register Py_UNICODE ch;
 	register int numchars=0;
 
-	for (i=0; (i < ucs2len-1) && (numchars < ucs4len); i++) {
+	for (i=0; (i < ucs2len) && (numchars < ucs4len); i++) {
 		ch = *ucs2++;
-		if (ch >= 0xd800 || ch <= 0xdfff) {
+		if (ch >= 0xd800 && ch <= 0xdfff) {
 			/* surrogate pair */
 			chr = ((PyArray_UCS4)(ch-0xd800)) << 10;
 			chr += *ucs2++ + 0x2400;  /* -0xdc00 + 0x10000 */

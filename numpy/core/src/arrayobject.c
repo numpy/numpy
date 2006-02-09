@@ -1313,7 +1313,7 @@ array_dealloc(PyArrayObject *self) {
 	
 	PyDimMem_FREE(self->dimensions);
 
-	Py_DECREF(self->descr);
+	Py_XDECREF(self->descr);
 	
         self->ob_type->tp_free((PyObject *)self);
 }
@@ -4507,7 +4507,9 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 		   dimensions, strides and descr from it */
 		PyArrayObject *temp;
 
-		temp = (PyArrayObject *)\
+		/* We would decref newtype here --- temp will 
+		   steal a reference to it */
+		temp = (PyArrayObject *)				\
 			PyArray_NewFromDescr(&PyArray_Type, newtype, self->nd,
 					     self->dimensions, self->strides,
 					     self->data, self->flags, NULL);
@@ -4515,9 +4517,8 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 		self->dimensions = temp->dimensions;
 		self->nd = temp->nd;
 		self->strides = temp->strides;
-		Py_DECREF(newtype);
 		newtype = temp->descr;
-		/* Fool deallocator */
+		/* Fool deallocator not to delete these*/
 		temp->nd = 0;
 		temp->dimensions = NULL;
 		temp->descr = NULL;

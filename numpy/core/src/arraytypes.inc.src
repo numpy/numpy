@@ -258,7 +258,7 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 		Py_DECREF(temp);
 		return -1;
 	}
-	datalen = PyUnicode_GET_DATA_SIZE(op);
+	datalen = PyUnicode_GET_DATA_SIZE(temp);
 
 #ifdef Py_UNICODE_WIDE
 	memcpy(ov, ptr, MIN(ap->descr->elsize, datalen));

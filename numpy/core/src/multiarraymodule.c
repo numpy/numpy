@@ -3363,7 +3363,10 @@ _convert_from_tuple(PyObject *obj)
 			goto fail;
 		}
 		PyArray_DESCR_REPLACE(type);
-		type->elsize = itemsize;
+		if (type->type_num == PyArray_UNICODE)
+			type->elsize = itemsize << 2; 
+		else
+			type->elsize = itemsize;
 	}
 	else {
 		/* interpret next item as shape (if it's a tuple)
