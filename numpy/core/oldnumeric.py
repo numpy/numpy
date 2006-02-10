@@ -192,9 +192,9 @@ def put (a, ind, v):
        is in C for speed):
 
            ind = array(indices, copy=False)
-           v = array(values, copy=False).astype(a, a.dtype)
+           v = array(values, copy=False).astype(a.dtype)
            for i in ind: a.flat[i] = v[i]
-       a must be a contiguous Numeric array.
+       a must be a contiguous numpy array.
     """
     return a.put(v,ind)
 
