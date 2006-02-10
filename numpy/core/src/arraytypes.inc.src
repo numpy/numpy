@@ -1652,9 +1652,8 @@ static void
 	@typ@ start = buffer[0];
 	@typ@ delta = buffer[1];
 	delta -= start;
-	buffer += 2;
-	for (i=2; i<length; i++, buffer++) {
-		*buffer = start + i*delta;
+	for (i=2; i<length; ++i) {
+		buffer[i] = start + i*delta;
 	}
 }
 /**end repeat**/
