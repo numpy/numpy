@@ -3729,7 +3729,16 @@ _convert_from_dict(PyObject *obj, int align)
 		}
 		PyDict_SetItem(fields, name, tup);
 		Py_DECREF(name);
-		if (len == 3) PyDict_SetItem(fields, item, tup);
+		if (len == 3) {
+			if (PyDict_GetItem(fields, item) != NULL) {
+				PyErr_SetString(PyExc_ValueError, 
+						"titles cannot be the same as names");
+				ret=PY_FAIL;
+			}
+			else {
+				PyDict_SetItem(fields, item, tup);
+			}
+		}
 		Py_DECREF(tup);
 		if ((ret == PY_FAIL) || (newdescr->elsize == 0)) goto fail;
                 if (!hasobject && newdescr->hasobject)
