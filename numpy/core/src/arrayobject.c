@@ -868,8 +868,9 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 		else if (type_num == PyArray_UNICODE) {
 			PyUnicodeObject *uni = (PyUnicodeObject*)obj;
 			int length = itemsize >> 2;
-
 #ifndef Py_UNICODE_WIDE
+			char *buffer;
+			int alloc=1;
 			length *= 2;
 #endif
 			/* Need an extra slot and need to use 
@@ -887,15 +888,25 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 			uni->hash = -1;
 			uni->defenc = NULL;
 #ifndef Py_UNICODE_WIDE
+			/* need aligned data buffer */
+			if (!PyArray_ISBEHAVED(base)) {
+				buffer = _pya_malloc(itemsize);
+				if (buffer == NULL)
+					return PyErr_NoMemory();
+				alloc = 1;
+				memcpy(buffer, data, itemsize);
+				if (!PyArray_ISNOTSWAPPED(base)) {
+					byte_swap_vector(buffer, itemsize >> 2, 4);
+				}
+			}
+			else buffer = data;
+
                         /* Allocated enough for 2-characters per itemsize.
 			   Now convert from the data-buffer
                          */
-			if (!PyArray_ISNBO(descr->byteorder)) {
-				/* byteswap the data */
-				byte_swap_vector(data, itemsize >> 2, 4);
-			}
-			length = PyUCS2Buffer_FromUCS4(uni->str, (PyArray_UCS4 *)data,
+			length = PyUCS2Buffer_FromUCS4(uni->str, (PyArray_UCS4 *)buffer,
 						       itemsize >> 2);
+			if (alloc) _pya_free(buffer);
 			/* Resize the unicode result */
 			if (MyPyUnicode_Resize(uni, length) < 0) {
 				Py_DECREF(obj);

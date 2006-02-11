@@ -220,28 +220,40 @@ UNICODE_getitem(char *ip, PyArrayObject *ap)
 	PyObject *obj;
 	int mysize;
 	PyArray_UCS4 *dptr;
+	char *buffer;
+	int alloc=0;
 
 	mysize = ap->descr->elsize >> 2;
 	dptr = (PyArray_UCS4 *)ip + mysize-1;
 	while(mysize > 0 && *dptr-- == 0) mysize--;
-	if (!PyArray_ISNOTSWAPPED(ap) && (obj != NULL)) {
-		byte_swap_vector(PyArray_BYTES(ap), mysize, 4);
+	if (!PyArray_ISBEHAVED(ap)) {
+		buffer = _pya_malloc(mysize << 2);
+		if (buffer == NULL)
+			return PyErr_NoMemory();
+		alloc = 1;
+		memcpy(buffer, ip, mysize << 2);
+		if (!PyArray_ISNOTSWAPPED(ap)) {
+			byte_swap_vector(buffer, mysize, 4);
+		}
 	}
+	else buffer = ip;
 #ifdef Py_UNICODE_WIDE
-	obj = PyUnicode_FromUnicode((const PyArray_UCS4 *)ip, mysize);
+	obj = PyUnicode_FromUnicode((const PyArray_UCS4 *)buffer, mysize);
 #else
 	/* create new empty unicode object of length mysize*2 */
 	obj = MyPyUnicode_New(mysize*2);
 	if (obj == NULL) return obj;
 	mysize = PyUCS2Buffer_FromUCS4(((PyUnicodeObject *)obj)->str, 
-				       (PyArray_UCS4 *)ip, mysize);
+				       (PyArray_UCS4 *)buffer, mysize);
 	/* reset length of unicode object to ucs2size */
 	if (MyPyUnicode_Resize((PyUnicodeObject *)obj, mysize) < 0) {
+		if (alloc) _pya_free(buffer);
 		Py_DECREF(obj);
 		return NULL;
 	}
 #endif
-
+	if (alloc) _pya_free(buffer);
+	
 	return obj;
 }
 
@@ -251,6 +263,9 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         PyObject *temp;
 	Py_UNICODE *ptr;
 	int datalen;
+#ifndef Py_UNICODE_WIDE
+	char *buffer;
+#endif	
 
 	if ((temp=PyObject_Unicode(op)) == NULL) return -1;
 	ptr = PyUnicode_AS_UNICODE(temp);
@@ -263,9 +278,23 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 #ifdef Py_UNICODE_WIDE
 	memcpy(ov, ptr, MIN(ap->descr->elsize, datalen));
 #else
-        datalen = PyUCS2Buffer_AsUCS4(ptr, (PyArray_UCS4 *)ov, datalen >> 1,
+	if (!PyArray_ISALIGNED(ap)) {
+		buffer = _pya_malloc(ap->descr->elsize);
+		if (buffer == NULL) {
+			Py_DECREF(temp);
+			PyErr_NoMemory();
+			return -1;
+		}
+	}
+	else buffer = ov;
+        datalen = PyUCS2Buffer_AsUCS4(ptr, (PyArray_UCS4 *)buffer, 
+				      datalen >> 1,
 				      ap->descr->elsize >> 2);
 	datalen <<= 2;
+	if (!PyArray_ISALIGNED(ap)) {
+		memcpy(ov, buffer, datalen);
+		_pya_free(buffer);
+	}
 #endif
 	/* Fill in the rest of the space with 0 */
 	if (ap->descr->elsize > datalen) {
