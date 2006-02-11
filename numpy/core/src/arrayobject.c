@@ -5739,7 +5739,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 		/* Cast to the desired type if we can do it safely
 		   Also cast if source is a ndim-0 array to mimic
 		   behavior with Python scalars */
-		if (flags & FORCECAST || PyArray_NDIM(arr)==0 ||
+		if ((flags & FORCECAST) || PyArray_NDIM(arr)==0 ||
 		    PyArray_CanCastTo(oldtype, newtype)) {
                         if ((flags & UPDATEIFCOPY) &&		\
                             (!PyArray_ISWRITEABLE(arr))) {

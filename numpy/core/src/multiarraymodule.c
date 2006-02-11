@@ -2898,8 +2898,9 @@ PyArray_Put(PyArrayObject *self, PyObject* values0, PyObject *indices0)
         ni = PyArray_SIZE(indices);
 
 	thistype = self->descr->type_num;
-        values = (PyArrayObject *)\
-		PyArray_ContiguousFromAny(values0, thistype, 0, 0);
+        Py_INCREF(self->descr);
+        values = (PyArrayObject *)PyArray_FromAny(values0, self->descr, 0, 0,
+                                                  DEFAULT_FLAGS | FORCECAST, NULL);
         if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);
         if (nv > 0) { /* nv == 0 for a null array */
