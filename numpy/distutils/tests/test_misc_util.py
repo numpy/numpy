@@ -32,13 +32,15 @@ class test_appendpath(ScipyTestCase):
 class test_minrelpath(ScipyTestCase):
 
     def check_1(self):
-        assert_equal(minrelpath(join('aa/bb')),'aa/bb')
-        assert_equal(minrelpath(join('..')),'..')
-        assert_equal(minrelpath(join('aa/..')),'')
-        assert_equal(minrelpath(join('aa/../bb')),'bb')
-        assert_equal(minrelpath(join('aa/bb/..')),'aa')
-        assert_equal(minrelpath(join('aa/bb/../..')),'')
-        assert_equal(minrelpath(join('aa/bb/../cc/../dd')),'aa/dd')
+        import os
+        n = lambda path: path.replace('/',os.path.sep)
+        assert_equal(minrelpath(n('aa/bb')),n('aa/bb'))
+        assert_equal(minrelpath('..'),'..')
+        assert_equal(minrelpath(n('aa/..')),'')
+        assert_equal(minrelpath(n('aa/../bb')),'bb')
+        assert_equal(minrelpath(n('aa/bb/..')),'aa')
+        assert_equal(minrelpath(n('aa/bb/../..')),'')
+        assert_equal(minrelpath(n('aa/bb/../cc/../dd')),n('aa/dd'))
 
 if __name__ == "__main__":
     ScipyTest().run()

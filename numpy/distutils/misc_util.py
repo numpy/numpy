@@ -93,8 +93,6 @@ def minrelpath(path):
         return path
     if '..' not in path:
         return path
-    if os.sep != '/':
-        path.replace('/',os.sep)
     l = path.split(os.sep)
     j = 1
     while l:
