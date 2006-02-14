@@ -1420,7 +1420,6 @@ _signbit_set(PyArrayObject *arr)
 	char byteorder;
 	int elsize;
 
-	if (arr==NULL) return 0;
 	elsize = arr->descr->elsize;
 	byteorder = arr->descr->byteorder;
 	ptr = arr->data;
@@ -1439,7 +1438,7 @@ static char
 PyArray_ScalarKind(int typenum, PyArrayObject **arr) 
 {
 	if (PyTypeNum_ISSIGNED(typenum)) {
-		if (_signbit_set(*arr)) return UFUNC_INTNEG_SCALAR;
+		if (arr && _signbit_set(*arr)) return UFUNC_INTNEG_SCALAR;
 		else return UFUNC_INTPOS_SCALAR;
 	}
 	if (PyTypeNum_ISFLOAT(typenum)) return UFUNC_FLOAT_SCALAR;
@@ -2975,8 +2974,9 @@ PyArray_Put(PyArrayObject *self, PyObject* values0, PyObject *indices0)
         ni = PyArray_SIZE(indices);
 
 	thistype = self->descr->type_num;
-        values = (PyArrayObject *)\
-		PyArray_ContiguousFromAny(values0, thistype, 0, 0);
+        Py_INCREF(self->descr); 
+	values = (PyArrayObject *)PyArray_FromAny(values0, self->descr, 0, 0, 
+						  DEFAULT_FLAGS | FORCECAST, NULL); 
         if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);
         if (nv > 0) { /* nv == 0 for a null array */
