@@ -1216,6 +1216,51 @@ static void
 }
 /**end repeat**/
 
+/**begin repeat
+#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+*/
+static void
+@TYP@_square(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        @typ@ x = *((@typ@ *)i1);
+        *((@typ@ *)op) = x*x;
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+#TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
+#typ=float, double, longdouble#
+*/
+static void
+@TYP@_square(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+    c@typ@ *x, *y;
+    @typ@ xr, xi;
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        x = (c@typ@ *)i1;
+        y = (c@typ@ *)op;
+        xr = x->real;
+        xi = x->imag;
+        y->real = xr*xr - xi*xi;
+        y->imag = 2*xr*xi;
+    }
+}
+/**end repeat**/
+
+static PyObject *
+Py_square(PyObject *o)
+{
+    return PyNumber_Multiply(o, o);
+}
 
 /**begin repeat
 
@@ -1240,6 +1285,69 @@ static void
 		else v = pow(x,y);
 		*((@typ@ *)op) = (@typ@) v;
 	}
+}
+/**end repeat**/
+
+/**begin repeat
+#TYP=FLOAT,DOUBLE,LONGDOUBLE#
+#typ=float,double,longdouble#
+#powfunc=powf,pow,powl#
+#sqrtfunc=sqrtf,sqrt,sqrtl#
+*/
+static void
+@TYP@_power(char **args, intp *dimensions, intp *steps, void *func)
+{
+    register intp i, is1=steps[0],is2=steps[1];
+    register intp os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    @typ@ x, y, v;
+
+    if (is2 == 0) {
+        y = *((@typ@ *)i2);
+        if (y == 0.0) {
+            for (i = 0; i < n; i++, i1+=is1, op+=os) {
+                *((@typ@ *)op) = 1.0;
+            }
+        } else if (y == 1.0) {
+            for (i = 0; i < n; i++, i1+=is1, op+=os) {
+                x = *((@typ@ *)i1);
+                *((@typ@ *)op) = x;
+            }
+        } else if (y == 2.0) {
+            for (i = 0; i < n; i++, i1+=is1, op+=os) {
+                @typ@ s = *((@typ@ *)i1);
+                *((@typ@ *)op) = s*s;
+            }
+        } else if (y == 3.0) {
+            for (i = 0; i < n; i++, i1+=is1, op+=os) {
+                x = *((@typ@ *)i1);
+                *((@typ@ *)op) = x*x*x;
+            }
+        } else if (y == 4.0) {
+            for (i = 0; i < n; i++, i1+=is1, op+=os) {
+                x = *((@typ@ *)i1);
+                v = x*x;
+                *((@typ@ *)op) = v*v;
+            }
+        } else if (y == 0.5) {
+            for (i = 0; i < n; i++, i1+=is1, op+=os) {
+                x = *((@typ@ *)i1);
+                *((@typ@ *)op) = @sqrtfunc@(x);
+            }
+        } else {
+            for (i = 0; i < n; i++, i1+=is1, op+=os) {
+                x = *((@typ@ *)i1);
+                *((@typ@ *)op) = @powfunc@(x, y);
+            }
+        }
+    } else {
+        for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+            x = *((@typ@ *)i1);
+            y = *((@typ@ *)i2);
+            v = (@typ@) @powfunc@(x,y);
+            *((@typ@ *)op) = v;
+        }
+    }
 }
 /**end repeat**/
 

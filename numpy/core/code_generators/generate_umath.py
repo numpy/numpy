@@ -79,8 +79,9 @@ defdict = {
           (2,1), Zero,
           "computes (C-like) x1 % x2 elementwise."
           ],
-'power' : [nobool,noint,
-           ("pow,"*6,
+'square' : [nobool,'O', ("Py_square",), (1,1), None, "squares x"],
+'power' : [nobool,cmplxO,
+           ("pow,"*3,
             "PyNumber_Power"),
            (2,1), One,
            "computes x1**x2 elementwise."
