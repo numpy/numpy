@@ -15,3 +15,5 @@ Eric Firing for bugfixes.
 Arnd Baecker for 64-bit testing
 David Cooke for many code improvements including the auto-generated C-API
 Alexander Belopolsky (sasha) for Masked array bug-fixes and tests and rank-0 array improvements
+Francesc Altet for unicode and nested record tests and help with nested records
+Tim Hochberg for getting the build working on MSVC
