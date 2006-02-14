@@ -528,15 +528,6 @@ PyUFunc_clearfperr()
 	UFUNC_CHECK_STATUS(retstatus)
 }
 
-
-#define UFUNC_NOSCALAR         0
-#define UFUNC_BOOL_SCALAR      1
-#define UFUNC_INTPOS_SCALAR    2
-#define UFUNC_INTNEG_SCALAR    3
-#define UFUNC_FLOAT_SCALAR     4
-#define UFUNC_COMPLEX_SCALAR   5
-#define UFUNC_OBJECT_SCALAR    6
-
 #define NO_UFUNCLOOP        0
 #define ZERODIM_REDUCELOOP  0
 #define ONE_UFUNCLOOP       1
@@ -578,31 +569,6 @@ _lowest_type(char intype)
 
 /* Called to determine coercion
  */
-
-static int 
-_cancoerce(char thistype, char neededtype, char scalar) 
-{
-
-	switch(scalar) {
-	case UFUNC_NOSCALAR:
-	case UFUNC_BOOL_SCALAR:
-	case UFUNC_OBJECT_SCALAR:
-		return PyArray_CanCastSafely(thistype, neededtype);
-	case UFUNC_INTPOS_SCALAR:
-		return (neededtype >= PyArray_UBYTE);
-	case UFUNC_INTNEG_SCALAR:
-		return (neededtype >= PyArray_BYTE) &&		\
-			!(PyTypeNum_ISUNSIGNED(neededtype));
-	case UFUNC_FLOAT_SCALAR:
-		return (neededtype >= PyArray_FLOAT);
-	case UFUNC_COMPLEX_SCALAR:
-		return (neededtype >= PyArray_CFLOAT);
-	}
-	fprintf(stderr, "\n**Error** coerce fall through: %d %d %d\n\n", 
-		thistype, neededtype, scalar);
-	return 1; /* should never get here... */   
-}
-
 
 static int 
 select_types(PyUFuncObject *self, int *arg_types, 
@@ -669,9 +635,9 @@ select_types(PyUFuncObject *self, int *arg_types,
 
 	for(;i<self->ntypes; i++) {
 		for(j=0; j<self->nin; j++) {
-			if (!_cancoerce(arg_types[j], 
-					self->types[i*self->nargs+j],
-					scalars[j]))
+			if (!PyArray_CanCoerceScalar(arg_types[j], 
+						     self->types[i*self->nargs+j],
+						     scalars[j]))
 				break;
 		}
 		if (j == self->nin) break;
@@ -771,42 +737,6 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 	
 	return 0;
 }
-
-static int
-_signbit_set(PyArrayObject *arr)
-{
-	static char bitmask = 0x80;
-	char *ptr;  /* points to the byte to test */
-	char byteorder;
-	int elsize;
-
-	elsize = arr->descr->elsize;
-	byteorder = arr->descr->byteorder;
-	ptr = arr->data;
-	if (elsize > 1 && \
-	    (byteorder == PyArray_LITTLE ||	\
-	     (byteorder == PyArray_NATIVE &&
-	      PyArray_ISNBO(PyArray_LITTLE))))
-		ptr += elsize-1;
-	
-	return ((*ptr & bitmask) != 0);	
-}
-
-static char
-_scalar_kind(int typenum, PyArrayObject **arr) 
-{
-	if (PyTypeNum_ISSIGNED(typenum)) {
-		if (_signbit_set(*arr)) return UFUNC_INTNEG_SCALAR;
-		else return UFUNC_INTPOS_SCALAR;
-	}
-	if (PyTypeNum_ISFLOAT(typenum)) return UFUNC_FLOAT_SCALAR;
-	if (PyTypeNum_ISUNSIGNED(typenum)) return UFUNC_INTPOS_SCALAR;
-	if (PyTypeNum_ISCOMPLEX(typenum)) return UFUNC_COMPLEX_SCALAR;
-	if (PyTypeNum_ISBOOL(typenum)) return UFUNC_BOOL_SCALAR;
-
-	return UFUNC_OBJECT_SCALAR;
-}
-
 
 /* Create copies for any arrays that are less than loop->bufsize
    in total size and are mis-behaved or in need
@@ -925,7 +855,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 			scalars[i] = UFUNC_NOSCALAR;
 			allscalars=FALSE;
 		}
-		else scalars[i] = _scalar_kind(arg_types[i], &(mps[i]));
+		else scalars[i] = PyArray_ScalarKind(arg_types[i], &(mps[i]));
 
 		/* If any input is a big-array */
 		if (!PyType_IsSubtype(mps[i]->ob_type, &PyArray_Type)) {

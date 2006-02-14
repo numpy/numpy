@@ -1411,6 +1411,75 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
 	return NULL;
 }
 
+
+static int
+_signbit_set(PyArrayObject *arr)
+{
+	static char bitmask = 0x80;
+	char *ptr;  /* points to the byte to test */
+	char byteorder;
+	int elsize;
+
+	if (arr==NULL) return 0;
+	elsize = arr->descr->elsize;
+	byteorder = arr->descr->byteorder;
+	ptr = arr->data;
+	if (elsize > 1 && \
+	    (byteorder == PyArray_LITTLE ||	\
+	     (byteorder == PyArray_NATIVE &&
+	      PyArray_ISNBO(PyArray_LITTLE))))
+		ptr += elsize-1;
+	
+	return ((*ptr & bitmask) != 0);	
+}
+
+
+/*OBJECT_API*/
+static char
+PyArray_ScalarKind(int typenum, PyArrayObject **arr) 
+{
+	if (PyTypeNum_ISSIGNED(typenum)) {
+		if (_signbit_set(*arr)) return UFUNC_INTNEG_SCALAR;
+		else return UFUNC_INTPOS_SCALAR;
+	}
+	if (PyTypeNum_ISFLOAT(typenum)) return UFUNC_FLOAT_SCALAR;
+	if (PyTypeNum_ISUNSIGNED(typenum)) return UFUNC_INTPOS_SCALAR;
+	if (PyTypeNum_ISCOMPLEX(typenum)) return UFUNC_COMPLEX_SCALAR;
+	if (PyTypeNum_ISBOOL(typenum)) return UFUNC_BOOL_SCALAR;
+
+	return UFUNC_OBJECT_SCALAR;
+}
+
+
+/*OBJECT_API*/
+static int 
+PyArray_CanCoerceScalar(char thistype, char neededtype, char scalar) 
+{
+
+	switch(scalar) {
+	case UFUNC_NOSCALAR:
+	case UFUNC_BOOL_SCALAR:
+	case UFUNC_OBJECT_SCALAR:
+		return PyArray_CanCastSafely(thistype, neededtype);
+	case UFUNC_INTPOS_SCALAR:
+		return (neededtype >= PyArray_UBYTE);
+	case UFUNC_INTNEG_SCALAR:
+		return (neededtype >= PyArray_BYTE) &&		\
+			!(PyTypeNum_ISUNSIGNED(neededtype));
+	case UFUNC_FLOAT_SCALAR:
+		return (neededtype >= PyArray_FLOAT);
+	case UFUNC_COMPLEX_SCALAR:
+		return (neededtype >= PyArray_CFLOAT);
+	}
+	fprintf(stderr, "\n**Error** coerce fall through: %d %d %d\n\n", 
+		thistype, neededtype, scalar);
+	return 1; /* should never get here... */   
+}
+
+
+/* This needs to change to allow scalars of a different "kind" to alter the input type
+ */
+
 /*OBJECT_API*/
 static PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn)
@@ -1420,6 +1489,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 	PyObject *otmp;
 	PyArray_Descr *intype=NULL, *stype=NULL;
 	PyArray_Descr *newtype=NULL;
+	char scalarkind;
 
 	
 	*retn = n = PySequence_Length(op);
@@ -1443,6 +1513,13 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 			newtype = PyArray_DescrFromObject(otmp, stype);
 			Py_XDECREF(stype);
 			stype = newtype;
+			scalarkind = PyArray_ScalarKind(newtype->type_num, NULL);
+			if (intype && !PyArray_CanCoerceScalar(newtype->type_num,
+							       intype->type_num, 
+							       scalarkind)) {
+				Py_XDECREF(intype);
+				intype = stype;
+			}
 			mps[i] = (PyArrayObject *)Py_None;
 			Py_INCREF(Py_None);
 		}
@@ -3724,7 +3801,7 @@ _convert_from_dict(PyObject *obj, int align)
 		/* Insert into dictionary */
 		if (PyDict_GetItem(fields, name) != NULL) {
 			PyErr_SetString(PyExc_ValueError,
-					"two fields with the same name");
+					"name already used as a name or title");
 			ret = PY_FAIL;
 		}
 		PyDict_SetItem(fields, name, tup);
@@ -3732,7 +3809,8 @@ _convert_from_dict(PyObject *obj, int align)
 		if (len == 3) {
 			if (PyDict_GetItem(fields, item) != NULL) {
 				PyErr_SetString(PyExc_ValueError, 
-						"titles cannot be the same as names");
+						"title already used as a name or " \
+						" title.");
 				ret=PY_FAIL;
 			}
 			else {

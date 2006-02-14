@@ -870,7 +870,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 			int length = itemsize >> 2;
 #ifndef Py_UNICODE_WIDE
 			char *buffer;
-			int alloc=1;
+			int alloc=0;
 			length *= 2;
 #endif
 			/* Need an extra slot and need to use 
