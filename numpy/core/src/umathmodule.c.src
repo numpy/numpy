@@ -2071,7 +2071,13 @@ DL_EXPORT(void) initumath(void) {
 	m = Py_InitModule("umath", methods);
 
 	/* Import the array */
-	if (import_array() < 0) return;
+	if (import_array() < 0) {
+                if (!PyErr_Occurred()) {
+                        PyErr_SetString(PyExc_ImportError, 
+                                        "umath failed: Could not import array core.");
+                }
+                return;
+        }
 
 	/* Initialize the types */
 	if (PyType_Ready(&PyUFunc_Type) < 0)

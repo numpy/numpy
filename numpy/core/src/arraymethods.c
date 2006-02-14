@@ -155,8 +155,6 @@ array_squeeze(PyArrayObject *self, PyObject *args)
         return _ARET(PyArray_Squeeze(self));
 }
 
-
-
 static char doc_view[] = "a.view(<type>) return a new view of array with same data. type can be either a new sub-type object or a data-descriptor object";
 
 static PyObject *
@@ -171,15 +169,15 @@ array_view(PyArrayObject *self, PyObject *args)
 		if (PyType_Check(otype) &&				\
 		    PyType_IsSubtype((PyTypeObject *)otype, 
 				     &PyBigArray_Type)) {
-			return _ARET(PyArray_View(self, NULL, 
-						  (PyTypeObject *)otype));
-		}
+			return PyArray_View(self, NULL, 
+                                            (PyTypeObject *)otype);
+                }
 		else {
 			if (PyArray_DescrConverter(otype, &type) == PY_FAIL) 
 				return NULL;
 		}
 	}
-	return _ARET(PyArray_View(self, type, NULL));
+	return PyArray_View(self, type, NULL);
 }
 
 static char doc_argmax[] = "a.argmax(axis=None)";
@@ -1521,7 +1519,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 static char doc_newbyteorder[] = "a.newbyteorder(<byteorder>) is equivalent\n" \
-	" to a.view(a.dtypedescr.newbytorder(<byteorder>))\n";
+	" to a.view(a.dtype.newbytorder(<byteorder>))\n";
 
 static PyObject *
 array_newbyteorder(PyArrayObject *self, PyObject *args) 
@@ -1534,7 +1532,7 @@ array_newbyteorder(PyArrayObject *self, PyObject *args)
 
 	new = PyArray_DescrNewByteorder(self->descr, endian);
 	if (!new) return NULL;
-	return _ARET(PyArray_View(self,	new, NULL));
+	return PyArray_View(self, new, NULL));
 
 }
 
