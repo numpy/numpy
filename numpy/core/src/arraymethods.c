@@ -1532,7 +1532,7 @@ array_newbyteorder(PyArrayObject *self, PyObject *args)
 
 	new = PyArray_DescrNewByteorder(self->descr, endian);
 	if (!new) return NULL;
-	return PyArray_View(self, new, NULL));
+	return PyArray_View(self, new, NULL);
 
 }
 
