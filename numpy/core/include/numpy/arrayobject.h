@@ -1465,19 +1465,19 @@ typedef struct {
    inline the constants inside a for loop making it a moot point
 */
 
-#define PyArray_GETPTR1(obj, i) (PyArray_DATA(obj) +		\
+#define PyArray_GETPTR1(obj, i) (void *)(PyArray_BYTES(obj) +		\
 				 i*PyArray_STRIDE(obj, 0))
 
-#define PyArray_GETPTR2(obj, i, j) (PyArray_DATA(obj) +		\
+#define PyArray_GETPTR2(obj, i, j) (void *)(PyArray_BYTES(obj) +		\
 				    i*PyArray_STRIDE(obj, 0) +	\
 				    j*PyArray_STRIDE(obj, 1))
 
-#define PyArray_GETPTR3(obj, i, j, k) (PyArray_DATA(obj) +		\
+#define PyArray_GETPTR3(obj, i, j, k) (void *)(PyArray_BYTES(obj) +		\
 				       i*PyArray_STRIDE(obj, 0) +	\
 				       j*PyArray_STRIDE(obj, 1) +	\
 				       k*PyArray_STRIDE(obj, 2))	\
 
-#define PyArray_GETPTR4(obj, i, j, k, l) (PyArray_DATA(obj) +		\
+#define PyArray_GETPTR4(obj, i, j, k, l) (void *)(PyArray_BYTES(obj) +		\
 					  i*PyArray_STRIDE(obj, 0) +	\
 					  j*PyArray_STRIDE(obj, 1) +	\
 					  k*PyArray_STRIDE(obj, 2) +	\

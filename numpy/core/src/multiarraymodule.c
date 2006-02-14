@@ -93,7 +93,7 @@ PyArray_MultiplyList(register intp *l1, register int n)
 /*MULTIARRAY_API
  Produce a pointer into array
 */
-static char *
+static void *
 PyArray_GetPtr(PyArrayObject *obj, register intp* ind)
 {
 	register int n = obj->nd;
@@ -101,7 +101,7 @@ PyArray_GetPtr(PyArrayObject *obj, register intp* ind)
 	register char *dptr = obj->data;
 	
 	while (n--) dptr += (*strides++) * (*ind++);
-	return dptr;
+	return (void *)dptr;
 }
 
 /*MULTIARRAY_API
