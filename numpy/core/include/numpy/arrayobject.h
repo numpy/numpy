@@ -78,7 +78,7 @@ extern "C" CONFUSE_EMACS
 #define PY_SUCCEED 1
 
 	/* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x00090404
+#define NDARRAY_VERSION 0x00090405
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -1016,6 +1016,16 @@ typedef struct {
 #define	ALLOW_C_API
 #define	DISABLE_C_API
 #endif
+
+
+#define UFUNC_NOSCALAR         0
+#define UFUNC_BOOL_SCALAR      1
+#define UFUNC_INTPOS_SCALAR    2
+#define UFUNC_INTNEG_SCALAR    3
+#define UFUNC_FLOAT_SCALAR     4
+#define UFUNC_COMPLEX_SCALAR   5
+#define UFUNC_OBJECT_SCALAR    6
+
 
 typedef struct {
         PyObject_HEAD

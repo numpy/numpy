@@ -65,3 +65,5 @@ PyArray_FromArray
 PyArray_FromInterface
 PyArray_FromStructInterface
 PyArray_FromArrayAttr
+PyArray_ScalarKind
+PyArray_CanCoerceScalar
