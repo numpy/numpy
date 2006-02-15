@@ -1420,7 +1420,6 @@ static PyMethodDef voidtype_methods[] = {
 
 /************* As_mapping functions for void array scalar ************/
 
-
 static int
 voidtype_length(PyVoidScalarObject *self) 
 {
@@ -1434,7 +1433,7 @@ voidtype_length(PyVoidScalarObject *self)
 		flist = PyDict_GetItem(self->descr->fields, key);
 		Py_DECREF(key);
 		if (!flist) return 0;
-		return PyList_GET_SIZE(flist);
+		return PyTuple_GET_SIZE(flist);
 	}
 }
 
@@ -1472,11 +1471,11 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 	flist = PyDict_GetItem(self->descr->fields, key);
 	Py_DECREF(key);
 	if (!flist) m = 0; 
-	m = PyList_GET_SIZE(flist);
+	m = PyTuple_GET_SIZE(flist);
 	if (n < 0) n += m;
 	if (n < 0 || n >= m) goto fail;
 	fieldinfo = PyDict_GetItem(self->descr->fields, 
-				   PyList_GET_ITEM(flist, n));
+				   PyTuple_GET_ITEM(flist, n));
 	return voidtype_getfield(self, fieldinfo, NULL);
 
  fail:
@@ -1525,11 +1524,11 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
 	flist = PyDict_GetItem(self->descr->fields, key);
 	Py_DECREF(key);
 	if (!flist) m = 0; 
-	m = PyList_GET_SIZE(flist);
+	m = PyTuple_GET_SIZE(flist);
 	if (n < 0) n += m;
 	if (n < 0 || n >= m) goto fail;
 	fieldinfo = PyDict_GetItem(self->descr->fields, 
-				   PyList_GET_ITEM(flist, n));
+				   PyTuple_GET_ITEM(flist, n));
 	newtup = Py_BuildValue("(OOO)", val, 
 			       PyTuple_GET_ITEM(fieldinfo, 0),
 			       PyTuple_GET_ITEM(fieldinfo, 1));

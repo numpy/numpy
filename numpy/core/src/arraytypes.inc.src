@@ -381,11 +381,11 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 		names = PyDict_GetItem(descr->fields, key);
 		Py_DECREF(key);
 		if (!names) goto finish;
-		n = PyList_GET_SIZE(names);
+		n = PyTuple_GET_SIZE(names);
 		ret = PyTuple_New(n);
 		savedflags = ap->flags;
 		for (i=0; i<n; i++) {
-			key = PyList_GET_ITEM(names, i);
+			key = PyTuple_GET_ITEM(names, i);
 			tup = PyDict_GetItem(descr->fields, key);
 			if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, 
 					      &title)) {
@@ -476,7 +476,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 		names = PyDict_GetItem(descr->fields, key);
 		Py_DECREF(key);
 		if (!names) goto finish;
-		n = PyList_GET_SIZE(names);
+		n = PyTuple_GET_SIZE(names);
 		if (PyTuple_GET_SIZE(op) != n) {
 			PyErr_SetString(PyExc_ValueError, 
 					"size of tuple must match"\
@@ -485,7 +485,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 		}
 		savedflags = ap->flags;
 		for (i=0; i<n; i++) {
-			key = PyList_GET_ITEM(names, i);
+			key = PyTuple_GET_ITEM(names, i);
 			tup = PyDict_GetItem(descr->fields, key);
 			if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, 
 					      &title)) {

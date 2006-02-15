@@ -3504,7 +3504,7 @@ _convert_from_array_descr(PyObject *obj)
         int hasobject=0;
 	
 	n = PyList_GET_SIZE(obj);	
-	nameslist = PyList_New(n);
+	nameslist = PyTuple_New(n);
 	if (!nameslist) return NULL;
 	totalsize = 0;
 	fields = PyDict_New();
@@ -3519,7 +3519,7 @@ _convert_from_array_descr(PyObject *obj)
 		else {
 			Py_INCREF(name);
 		}
-		PyList_SET_ITEM(nameslist, i, name);
+		PyTuple_SET_ITEM(nameslist, i, name);
 		if (PyTuple_GET_SIZE(item) == 2) {
 			ret = PyArray_DescrConverter(PyTuple_GET_ITEM(item, 1), 
 						     &conv);
@@ -3590,7 +3590,7 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
 	n = PyList_GET_SIZE(obj);
 	totalsize = 0;
 	if (n==0) return NULL;
-	nameslist = PyList_New(n);
+	nameslist = PyTuple_New(n);
 	if (!nameslist) return NULL;
 	fields = PyDict_New();
 	for (i=0; i<n; i++) {
@@ -3615,7 +3615,7 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
 		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
 		PyDict_SetItem(fields, key, tup);
 		Py_DECREF(tup);
-		PyList_SET_ITEM(nameslist, i, key);
+		PyTuple_SET_ITEM(nameslist, i, key);
 		totalsize += conv->elsize;
 	}
 	key = PyInt_FromLong(-1);
@@ -3831,7 +3831,12 @@ _convert_from_dict(PyObject *obj, int align)
 	if (align) new->alignment = maxalign;
 	new->elsize = totalsize;
 	key = PyInt_FromLong(-1);
-	PyDict_SetItem(fields, key, names);
+        if (!PyTuple_Check(names)) {
+                names = PySequence_Tuple(names);
+                PyDict_SetItem(fields, key, names);
+                Py_DECREF(names);
+        }
+        else PyDict_SetItem(fields, key, names);
 	Py_DECREF(key);
 	new->fields = fields;
         new->hasobject=hasobject;
