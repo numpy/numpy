@@ -30,7 +30,10 @@ class build_ext (old_build_ext):
         return
 
     def finalize_options(self):
+        incl_dirs = self.include_dirs
         old_build_ext.finalize_options(self)
+        if incl_dirs is not None:
+            self.include_dirs.extend(self.distribution.include_dirs or [])
         self.set_undefined_options('config_fc',
                                    ('fcompiler', 'fcompiler'))
         return
