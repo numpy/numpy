@@ -54,11 +54,17 @@ Global parameters:
              in precedence to shared ones (.so, .sl) if enabled.
   system_info.verbosity - output the results to stdout if enabled.
 
-The file 'site.cfg' in the same directory as this module is read
-for configuration options. The format is that used by ConfigParser (i.e.,
-Windows .INI style). The section DEFAULT has options that are the default
-for each section. The available sections are fftw, atlas, and x11. Appropiate
-defaults are used if nothing is specified.
+The file 'site.cfg' is looked for in
+
+1) Directory of main setup.py file being run. 
+2) Home directory of user running the setup.py file (Not implemented yet)
+3) System wide directory (location of this file...)
+
+The first one found is used to get system configuration options The
+format is that used by ConfigParser (i.e., Windows .INI style). The
+section DEFAULT has options that are the default for each section. The
+available sections are fftw, atlas, and x11. Appropiate defaults are
+used if nothing is specified.
 
 The order of finding the locations of resources is the following:
  1. environment variable
@@ -143,6 +149,33 @@ default_include_dirs = filter(os.path.isdir, default_include_dirs)
 default_src_dirs = filter(os.path.isdir, default_src_dirs)
 
 so_ext = get_config_vars('SO')[0] or ''
+
+def get_site_cfg():
+    # back up frame until we can't go back anymore -- get to main setup.py called
+    frame = sys._getframe()
+    while frame.f_back is not None:
+        frame = frame.f_back
+    try:
+        f = frame.f_globals['__file__']
+    except NameError:
+        pass
+    else:
+        cf = os.path.join(os.path.split(os.path.abspath(f))[0],
+                          'site.cfg')
+        if os.path.isfile(cf):
+            return cf
+
+    # implement getting site.cfg from home directory here...
+
+    # otherwise get site.cfg from same directory as this file.
+    try:
+        f = __file__
+    except NameError,msg:
+        f = sys.argv[0]
+
+    cf = os.path.join(os.path.split(os.path.abspath(f))[0],
+                      'site.cfg')
+    return cf
 
 def get_info(name,notfound_action=0):
     """
@@ -289,12 +322,7 @@ class system_info:
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
         defaults['search_static_first'] = str(self.search_static_first)
         self.cp = ConfigParser.ConfigParser(defaults)
-        try:
-            f = __file__
-        except NameError,msg:
-            f = sys.argv[0]
-        cf = os.path.join(os.path.split(os.path.abspath(f))[0],
-                          'site.cfg')
+        cf = get_site_cfg()
         self.cp.read([cf])
         if not self.cp.has_section(self.section):
             self.cp.add_section(self.section)
