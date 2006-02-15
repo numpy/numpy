@@ -181,6 +181,16 @@ class recarray(sb.ndarray):
         
         return self.setfield(val,*res)
 
+    def field(self,attr, val=None):
+        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
+        
+        if isinstance(attr,int):
+            attr=fielddict[-1][attr]
+
+        if val is None:
+            return self.__getattribute__(attr)
+        else:
+            return self.__setattr__(attr,val)
 
 def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
                aligned=0):
