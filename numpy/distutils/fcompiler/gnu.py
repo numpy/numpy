@@ -140,72 +140,79 @@ class GnuFCompiler(FCompiler):
                     opt.append('-mtune='+a)
                     break    
             return opt
-        march_flag = 1
-        # 0.5.25 corresponds to 2.95.x
-        if self.get_version() == '0.5.26': # gcc 3.0
+
+        # default march options in case we find nothing better
+        if cpu.is_i686():
+            march_opt = '-march=i686'
+        elif cpu.is_i586():
+            march_opt = '-march=i586'
+        elif cpu.is_i486():
+            march_opt = '-march=i486'
+        elif cpu.is_i386():
+            march_opt = '-march=i386'
+        else:
+            march_opt = ''
+
+        gnu_ver =  self.get_version()
+
+        if gnu_ver >= '0.5.26': # gcc 3.0
             if cpu.is_AthlonK6():
-                opt.append('-march=k6')
+                march_opt = '-march=k6'
             elif cpu.is_AthlonK7():
-                opt.append('-march=athlon')
-            else:
-                march_flag = 0
-        # Note: gcc 3.2 on win32 has breakage with -march specified
-        elif self.get_version() >= '3.1.1' \
-            and not sys.platform=='win32': # gcc >= 3.1.1
-            if cpu.is_AthlonK6():
-                opt.append('-march=k6')
-            elif cpu.is_AthlonK6_2():
-                opt.append('-march=k6-2')
+                march_opt = '-march=athlon'
+
+        if gnu_ver >= '3.1.1':
+            if cpu.is_AthlonK6_2():
+                march_opt = '-march=k6-2'
             elif cpu.is_AthlonK6_3():
-                opt.append('-march=k6-3')
-            elif cpu.is_AthlonK7():
-                opt.append('-march=athlon')
+                march_opt = '-march=k6-3'
             elif cpu.is_AthlonMP():
-                opt.append('-march=athlon-mp')
+                march_opt = '-march=athlon-mp'
                 # there's also: athlon-tbird, athlon-4, athlon-xp
             elif cpu.is_Nocona():
-                opt.append('-march=nocona')
+                march_opt = '-march=nocona'
             elif cpu.is_Prescott():
-                opt.append('-march=prescott')
+                march_opt = '-march=prescott'
             elif cpu.is_PentiumIV():
-                opt.append('-march=pentium4')
+                march_opt = '-march=pentium4'
             elif cpu.is_PentiumIII():
-                opt.append('-march=pentium3')
+                march_opt = '-march=pentium3'
+            elif cpu.is_PentiumM():
+                march_opt = '-march=pentium3'
             elif cpu.is_PentiumII():
-                opt.append('-march=pentium2')
-            else:
-                march_flag = 0
-            if self.get_version() >= '3.4' and not march_flag:
-                march_flag = 1
-                if cpu.is_Opteron():
-                    opt.append('-march=opteron')
-                elif cpu.is_Athlon64():
-                    opt.append('-march=athlon64')
-                else:
-                    march_flag = 0
-            if cpu.has_mmx(): opt.append('-mmmx')      
-            if self.get_version() > '3.2.2':
-                if cpu.has_sse2(): opt.append('-msse2')
-                if cpu.has_sse(): opt.append('-msse')
-            if self.get_version() >= '3.4':
-                if cpu.has_sse3(): opt.append('-msse3')
+                march_opt = '-march=pentium2'
+
+        if gnu_ver >= '3.4':
+            if cpu.is_Opteron():
+                march_opt = '-march=opteron'
+            elif cpu.is_Athlon64():
+                march_opt = '-march=athlon64'
+
+        if gnu_ver >= '3.4.4':
+            if cpu.is_PentiumM():
+                march_opt = '-march=pentium-m'
+
+        # Note: gcc 3.2 on win32 has breakage with -march specified       
+        if '3.1.1' <= gnu_ver <= '3.4' and sys.platform=='win32':
+            march_opt = ''
+
+        if march_opt:
+            opt.append(march_opt)
+
+        # other CPU flags
+        if gnu_ver >= '3.1.1':
+            if cpu.has_mmx(): opt.append('-mmmx')
             if cpu.has_3dnow(): opt.append('-m3dnow')
-        else:
-            march_flag = 0
-        if march_flag:
-            pass
-        elif cpu.is_i686():
-            opt.append('-march=i686')
-        elif cpu.is_i586():
-            opt.append('-march=i586')
-        elif cpu.is_i486():
-            opt.append('-march=i486')
-        elif cpu.is_i386():
-            opt.append('-march=i386')
+
+        if gnu_ver > '3.2.2':
+            if cpu.has_sse2(): opt.append('-msse2')
+            if cpu.has_sse(): opt.append('-msse')
+        if gnu_ver >= '3.4':
+            if cpu.has_sse3(): opt.append('-msse3')
         if cpu.is_Intel():
             opt.append('-fomit-frame-pointer')
             if cpu.is_32bit():
-                opt.append('-malign-double')
+                opt.append('-malign-double')                
         return opt
 
 class Gnu95FCompiler(GnuFCompiler):
