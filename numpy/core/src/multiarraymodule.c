@@ -4645,7 +4645,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 	return (PyObject *)ret;
 }
 
-static char doc_fromString[] = "fromstring(string, dtype=int, count=-1) returns a new 1d array initialized from the raw binary data in string.  If count is positive, the new array will have count elements, otherwise it's size is determined by the size of string.";
+static char doc_fromString[] = "fromstring(string, dtype=int, count=-1, sep='') returns a new 1d array initialized from the raw binary data in string.  If count is positive, the new array will have count elements, otherwise it's size is determined by the size of string.  If sep is not empty then the string is interpreted in ASCII mode and converted to the desired number type using sep as the separator between elements (extra whitespace is ignored).";
 
 static PyObject *
 array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
