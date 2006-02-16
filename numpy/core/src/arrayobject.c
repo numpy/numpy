@@ -3764,7 +3764,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		intp newdims[2*MAX_DIMS];
 		intp *newstrides=NULL;
 		int isfortran=0;
-		isfortran = (data && (flags & FORTRAN)) || flags;
+		isfortran = (data && (flags & FORTRAN) && !(flags & CONTIGUOUS)) || \
+			(!data && flags);
 		memcpy(newdims, dims, nd*sizeof(intp));
 		if (strides) {
 			newstrides = newdims + MAX_DIMS;
