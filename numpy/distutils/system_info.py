@@ -150,32 +150,40 @@ default_src_dirs = filter(os.path.isdir, default_src_dirs)
 
 so_ext = get_config_vars('SO')[0] or ''
 
-def get_site_cfg():
-    # back up frame until we can't go back anymore -- get to main setup.py called
-    frame = sys._getframe()
-    while frame.f_back is not None:
-        frame = frame.f_back
-    try:
-        f = frame.f_globals['__file__']
-    except NameError:
-        pass
-    else:
-        cf = os.path.join(os.path.split(os.path.abspath(f))[0],
-                          'site.cfg')
-        if os.path.isfile(cf):
-            return cf
-
-    # implement getting site.cfg from home directory here...
-
-    # otherwise get site.cfg from same directory as this file.
+def get_standard_file(fname):
+    """Returns a list of files named 'fname' from
+    1) System-wide directory (directory-location of this module)
+    2) Users HOME directory (os.environ['HOME'])
+    3) Local directory
+    """
+    # System-wide file
+    filenames = []
     try:
         f = __file__
-    except NameError,msg:
+    except NameError:
         f = sys.argv[0]
+    else:
+        sysfile = os.path.join(os.path.split(os.path.abspath(f))[0],
+                               fname)
+        if os.path.isfile(sysfile):
+            filenames.append(sysfile)
+            
+    # Home directory
+    # And look for the user config file
+    try:
+        f = os.environ['HOME']
+    except KeyError:
+        pass
+    else:
+        user_file = os.path.join(f, fname)
+        if os.path.isfile(user_file):
+            filenames.append(user_file)
+                
+    # Local file
+    if os.path.isfile(fname):
+        filenames.append(os.path.abspath(fname))
 
-    cf = os.path.join(os.path.split(os.path.abspath(f))[0],
-                      'site.cfg')
-    return cf
+    return filenames
 
 def get_info(name,notfound_action=0):
     """
@@ -322,13 +330,16 @@ class system_info:
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
         defaults['search_static_first'] = str(self.search_static_first)
         self.cp = ConfigParser.ConfigParser(defaults)
-        cf = get_site_cfg()
-        self.cp.read([cf])
-        if not self.cp.has_section(self.section):
-            self.cp.add_section(self.section)
+        self.files = get_standard_file('site.cfg')
+        self.parse_config_files()
         self.search_static_first = self.cp.getboolean(self.section,
                                                       'search_static_first')
         assert isinstance(self.search_static_first, int)
+
+    def parse_config_files(self):
+        self.cp.read(self.files)
+        if not self.cp.has_section(self.section):
+            self.cp.add_section(self.section)
 
     def calc_libraries_info(self):
         libs = self.get_libraries()
@@ -516,7 +527,10 @@ class system_info:
                 opt_found_libs = self._extract_lib_names(opt_found_libs)
                 info['libraries'].extend(opt_found_libs)
             return info
-
+        else:
+            warnings.warn("Library error: libs=%s found_libs=%s" % \
+                          (libs, found_libs))
+            
     def combine_paths(self,*args):
         return combine_paths(*args,**{'verbosity':self.verbosity})
 
