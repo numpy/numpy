@@ -2,7 +2,7 @@ version='0.9.5'
 
 #import os
 #svn_version_file = os.path.join(os.path.dirname(__file__),
-                                'core','__svn_version__.py')
+#                                'core','__svn_version__.py')
 #if os.path.isfile(svn_version_file):
 #    import imp
 #    svn = imp.load_module('numpy.core.__svn_version__',
