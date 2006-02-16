@@ -605,14 +605,21 @@ class MaskedArray (object):
 
         self.set_fill_value(fill_value)
 
-    def __array__ (self, t = None):
+    def __array__ (self, t=None, context=None):
         "Special hook for numeric. Converts to numeric if possible."
         if self._mask is not nomask:
             if oldnumeric.ravel(self._mask).any():
-                raise MAError, \
-                """Cannot automatically convert masked array to numeric because data
-                   is masked in one or more locations.
-                """
+                if context is None:
+                    raise MAError, \
+                          """Cannot automatically convert masked array to numeric because data
+                          is masked in one or more locations.
+                          """
+                else:
+                    func, args, i = context
+                    fills = ufunc_fills.get(func)
+                    if fills is None:
+                        raise MAError, "%s not known to ma" % func
+                    return self.filled(fills[i])
             else:  # Mask is all false
                    # Optimize to avoid future invocations of this section.
                 self._mask = nomask
@@ -630,11 +637,10 @@ class MaskedArray (object):
         """
         func, args = context[:2]
         domain = ufunc_domain[func]
-        fills = ufunc_fills[func]
         m = reduce(mask_or, [getmask(a) for a in args])
         if domain is not None:
-            m = mask_or(m, domain(*[filled(a,f) for (a,f)
-                                       in zip(args, fills)]))
+            m = mask_or(m, domain(*[getattr(a, '_data', a)
+                                    for a in args]))
         if m is not nomask:
             try:
                 shape = array.shape
