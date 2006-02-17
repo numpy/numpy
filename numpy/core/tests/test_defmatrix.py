@@ -25,6 +25,21 @@ class test_ctor(ScipyTestCase):
         assert mvec.shape == (1,5)
         
 class test_properties(ScipyTestCase):
+    def check_sum(self):
+        """Test whether matrix.sum(axis=1) preserves orientation.
+        Fails in NumPy <= 0.9.6.2127.
+        """
+        M = matrix([[1,2,0,0],
+                   [3,4,0,0],
+                   [1,2,1,2],
+                   [3,4,3,4]])
+        sum0 = matrix([8,12,4,6])
+        sum1 = matrix([3,7,6,14]).T
+        sumall = 30
+        assert_array_equal(sum0, M.sum(axis=0))
+        assert_array_equal(sum1, M.sum(axis=1))
+        assert sumall == M.sum()
+
     def check_basic(self):
         import numpy.linalg as linalg
         
@@ -77,7 +92,7 @@ class test_properties(ScipyTestCase):
 	assert A.sum() == matrix(2)
 	assert A.mean() == matrix(0.5)
 
-class test_autocasting(ScipyTestCase):
+class test_casting(ScipyTestCase):
     def check_basic(self):
         A = arange(100).reshape(10,10)
         mA = matrix(A)
