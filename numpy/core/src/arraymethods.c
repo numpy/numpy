@@ -1198,7 +1198,7 @@ static char doc_sum[] = "a.sum(axis=None, dtype=None)\n\n"\
   "2.0\n"\
   ">>> array([0.5, 1.5]).sum(dtype=int32)\n"\
   "1\n"\
-  ">>> array([[0, 1], [0, 5]]).sum()\n"\
+  ">>> array([[0, 1], [0, 5]]).sum(axis=0)\n"\
   "array([0, 6])\n"\
   ">>> array([[0, 1], [0, 5]]).sum(axis=1)\n"\
   "array([1, 5])";

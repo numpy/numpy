@@ -4203,7 +4203,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
 static char doc_fromobject[] = "array(object, dtype=None, copy=1, fortran=0, "\
         "subok=0,ndmin=0)\n"\
         "will return a new array formed from the given object type given.\n"\
-        "Object can anything with an __array__ method, or any object\n"\
+        "Object can be anything with an __array__ method, or any object\n"\
         "exposing the array interface, or any (nested) sequence.\n"\
         "If no type is given, then the type will be determined as the\n"\
         "minimum type required to hold the objects in the sequence.\n"\
