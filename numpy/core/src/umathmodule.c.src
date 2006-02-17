@@ -7,7 +7,6 @@
 #include "abstract.h"
 #include <math.h>
 
-
 /* A whole slew of basic math functions are provided originally 
    by Konrad Hinsen. */
 

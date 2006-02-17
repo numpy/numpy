@@ -267,7 +267,7 @@ typedef struct {
 #if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__)
 #include <fenv.h>
 #elif defined(__CYGWIN__)
-#include <mingw/fenv.h>
+#include "fenv.c"
 #endif
 
 #define UFUNC_CHECK_STATUS(ret) {                                       \
