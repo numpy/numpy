@@ -167,7 +167,7 @@ def _move_axis_to_0(a, axis):
     axes = range(1, axis+1) + [0,] + range(axis+1, n)
     return a.transpose(axes)
 
-def cross(a, b, axisa=-1, axisb=-1, axisc=-1):
+def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     """Return the cross product of two (arrays of) vectors.
 
     The cross product is performed over the last axis of a and b by default,
@@ -175,6 +175,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1):
     the z-component of the equivalent three-dimensional cross product is
     returned.
     """
+    if axis is not None:
+       axisa,axisb,axisc=(axis,)*3
     a = _move_axis_to_0(asarray(a), axisa)
     b = _move_axis_to_0(asarray(b), axisb)
     msg = "incompatible dimensions for cross product\n"\

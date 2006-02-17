@@ -1,11 +1,62 @@
-
 import string
 import re
 
 Zero = "PyUFunc_Zero"
 One = "PyUFunc_One"
 None_ = "PyUFunc_None"
-#each entry in defdict is 
+
+class TypeDescription(object):
+    def __init__(self, type, f=None, in_=None, out=None):
+        self.type = type
+        self.func_data = f
+        self.in_ = in_
+        self.out = out
+
+_fdata_map = dict(f='%sf', d='%s', g='%sl',
+                  F='nc_%sf', D='nc_%s', G='nc_%sl')
+def build_func_data(types, f):
+    func_data = []
+    for t in types:
+        d = _fdata_map.get(t, '%s') % (f,)
+        func_data.append(d)
+    return func_data
+
+def TD(types, f=None, in_=None, out=None):
+    if f is not None:
+        if isinstance(f, str):
+            func_data = build_func_data(types, f)
+        else:
+            assert len(f) == len(types)
+            func_data = f
+    else:
+        func_data = (None,) * len(types)
+    if isinstance(in_, str):
+        in_ = (in_,) * len(types)
+    elif in_ is None:
+        in_ = (None,) * len(types)
+    if isinstance(out, str):
+        out = (out,) * len(types)
+    elif out is None:
+        out = (None,) * len(types)
+    tds = []
+    for t, fd, i, o in zip(types, func_data, in_, out):
+        tds.append(TypeDescription(t, f=fd, in_=i, out=o))
+    return tds
+
+class Ufunc(object):
+    def __init__(self, nin, nout, identity, docstring,
+                 *type_descriptions):
+        self.nin = nin
+        self.nout = nout
+        if identity is None:
+            identity = None_
+        self.identity = identity
+        self.docstring = docstring
+        self.type_descriptions = []
+        for td in type_descriptions:
+            self.type_descriptions.extend(td)
+
+#each entry in defdict is
 
 #name: [string of chars for which it is defined,
 #	string of characters using func interface,
@@ -17,312 +68,395 @@ None_ = "PyUFunc_None"
 #       ]
 
 all = '?bBhHiIlLqQfdgFDGO'
+O = 'O'
+M = 'M'
 ints = 'bBhHiIlLqQ'
-intsO = ints + 'O'
-bintsO = '?'+ints+'O'
+intsO = ints + O
+bints = '?' + ints
+bintsO = bints + O
 flts = 'fdg'
-fltsO = flts+'O'
-fltsM = flts+'M'
+fltsO = flts + O
+fltsM = flts + M
 cmplx = 'FDG'
-cmplxO = cmplx+'O'
-cmplxM = cmplx+'M'
-noint = flts+cmplx+'O'
-nointM = flts+cmplx+'M'
-allM = '?'+ints+flts+cmplxM
+cmplxO = cmplx + O
+cmplxM = cmplx + M
+inexact = flts + cmplx
+noint = inexact+O
+nointM = inexact+M
+allM = bints+flts+cmplxM
 nobool = all[1:]
 nobool_or_obj = all[1:-1]
 intflt = ints+flts
-nocmplx = '?'+ints+flts
-nocmplxO = nocmplx+'O'
-nocmplxM = nocmplx+'M'
+nocmplx = bints+flts
+nocmplxO = nocmplx+O
+nocmplxM = nocmplx+M
 noobj = all[:-1]
 
 defdict = {
-'add': [all,'O',("PyNumber_Add",),
-        (2,1), Zero,
-        "adds the arguments elementwise."
-        ],
-'subtract' : [all,'O',("PyNumber_Subtract",),
-              (2,1), Zero,
-              "subtracts the arguments elementwise."
-              ],
-'multiply' : [all,cmplxO,
-              ("prod,"*3,"PyNumber_Multiply",),
-              (2,1), One,
-              "multiplies the arguments elementwise."
-              ],
-'divide' : [nobool,cmplxO,
-            ("quot,"*3,"PyNumber_Divide",),
-            (2,1), One,
-            "divides the arguments elementwise."
-            ],
-'floor_divide' : [nobool, cmplxO,
-                  ("floor_quot,"*3,
-                   "PyNumber_FloorDivide"),
-                  (2,1), One,
-                  "floor divides the arguments elementwise."
-                  ],
-'true_divide' : [nobool, cmplxO,
-                 ("quot,"*3,"PyNumber_TrueDivide"),
-                 (2,1), One,
-                 "true divides the arguments elementwise.",
-                 'f'*4+'d'*6+flts+cmplxO
-                 ],
-'conjugate' : [nobool_or_obj, 'M',
-               ('"conjugate"',),
-               (1,1), None,
-               "takes the conjugate of x elementwise."
-               ],
-
-'fmod' : [intflt,fltsM,
-          ("fmod,"*3, "fmod"),
-          (2,1), Zero,
-          "computes (C-like) x1 % x2 elementwise."
-          ],
-'square' : [nobool,'O', ("Py_square",), (1,1), None, "squares x"],
-'power' : [nobool,cmplxO,
-           ("pow,"*3,
-            "PyNumber_Power"),
-           (2,1), One,
-           "computes x1**x2 elementwise."
-           ],
-'absolute' : [all,'O',
-              ("PyNumber_Absolute",),
-              (1,1), None,
-              "takes |x| elementwise.",
-              nocmplx+fltsO
-              ],
-'negative' : [all,cmplxO,
-              ("neg,"*3,"PyNumber_Negative"),
-              (1,1), None,
-              "determines -x elementwise",
-              ],
-'sign' : [nobool,'',(),(1,1),None,
-          "returns -1 if x < 0 and 0 if x==0 and 1 if x > 0"
-          ],
-'greater' : [all,'',(),(2,1), None,
-             "returns elementwise x1 > x2 in a bool array.",
-             '?'*len(all)
-             ],
-'greater_equal' : [all,'',(),(2,1), None,
-                   "returns elementwise x1 >= x2 in a bool array.",
-                   '?'*len(all)
-             ],
-'less' : [all,'',(),(2,1), None,
-          "returns elementwise x1 < x2 in a bool array.",
-          '?'*len(all)
-             ],
-'less_equal' : [all,'',(),(2,1), None,
-                "returns elementwise x1 <= x2 in a bool array",
-                '?'*len(all)
-             ],
-'equal' : [all, '', (), (2,1), None,
-           "returns elementwise x1 == x2 in a bool array",
-           '?'*len(all)
-           ],
-'not_equal' : [all, '', (), (2,1), None,
-               "returns elementwise x1 |= x2",
-               '?'*len(all)
-               ],
-'logical_and': [allM,'M',('"logical_and"',),
-                (2,1), One,
-                "returns x1 and x2 elementwise.",
-                '?'*len(nocmplxM+cmplx)
-                ],
-'logical_or': [allM,'M',('"logical_or"',),
-                (2,1), Zero,               
-                "returns x1 or x2 elementwise.",
-               '?'*len(nocmplxM+cmplx)
-               ],
-'logical_xor': [allM, 'M', ('"logical_xor"',),
-                (2,1), None,
-                "returns x1 xor x2 elementwise.",
-                '?'*len(nocmplxM+cmplx)
-                ],
-'logical_not' : [allM, 'M', ('"logical_not"',),
-                 (1,1), None,
-                 "returns not x elementwise.",
-                 '?'*len(nocmplxM+cmplx)
-                 ],
-'maximum' : [noobj,'',(),
-             (2,1), None,
-             "returns maximum (if x1 > x2: x1;  else: x2) elementwise."],
-'minimum' : [noobj,'',(),
-             (2,1), None,
-             "returns minimum (if x1 < x2: x1;  else: x2) elementwise"],
-'bitwise_and' : [bintsO,'O',("PyNumber_And",),
-                 (2,1), One,
-                 "computes x1 & x2 elementwise."],
-'bitwise_or' : [bintsO, 'O', ("PyNumber_Or",),
-                (2,1), Zero,
-                "computes x1 | x2 elementwise."],
-'bitwise_xor' : [bintsO, 'O', ("PyNumber_Xor",),
-                 (2,1), None,
-                 "computes x1 ^ x2 elementwise."],
-'invert' : [bintsO,'O', ("PyNumber_Invert",),
-            (1,1), None,
-            "computes ~x (bit inversion) elementwise."
-            ],
-'left_shift' : [intsO, 'O', ("PyNumber_Lshift",),
-                (2,1), None,
-                "computes x1 << x2 (x1 shifted to left by x2 bits) elementwise."
-                ],
-'right_shift' : [intsO, 'O', ("PyNumber_Rshift",),
-                (2,1), None,
-                "computes x1 >> x2 (x1 shifted to right by x2 bits) elementwise."
-                ],
-'arccos' : [nointM, nointM,
-            ("acos,"*6, '"arccos"'),
-            (1, 1), None,
-            "inverse cosine elementwise."
-            ],
-'arcsin': [nointM, nointM,
-            ("asin,"*6, '"arcsin"'),
-            (1, 1), None,
-            "inverse sine elementwise."
-            ],
-'arctan': [nointM, nointM,
-            ("atan,"*6, '"arctan"'),
-            (1, 1), None,
-            "inverse tangent elementwise."
-            ],
-'arccosh' : [nointM, nointM,
-            ("acosh,"*6, '"arccosh"'),
-            (1, 1), None,
-            "inverse hyperbolic cosine elementwise."
-            ],
-'arcsinh': [nointM, nointM,
-            ("asinh,"*6, '"arcsinh"'),
-            (1, 1), None,
-            "inverse hyperbolic sine elementwise."
-            ],
-'arctanh': [nointM, nointM,
-            ("atanh,"*6, '"arctanh"'),
-            (1, 1), None,
-            "inverse hyperbolic tangent elementwise."
-            ],
-'cos': [nointM, nointM,
-        ("cos,"*6, '"cos"'),
-        (1, 1), None,
-        "cosine elementwise."
-        ],
-'sin': [nointM, nointM,
-        ("sin,"*6, '"sin"'),
-        (1, 1), None,
-        "sine elementwise."
-        ],
-'tan': [nointM, nointM,
-        ("tan,"*6, '"tan"'),
-        (1, 1), None,
-        "tangent elementwise."
-        ],
-'cosh': [nointM, nointM,
-        ("cosh,"*6, '"cosh"'),
-        (1, 1), None,
-        "hyperbolic cosine elementwise."
-        ],
-'sinh': [nointM, nointM,
-        ("sinh,"*6, '"sinh"'),
-        (1, 1), None,
-        "hyperbolic sine elementwise."
-        ],
-'tanh': [nointM, nointM,
-        ("tanh,"*6, '"tanh"'),
-        (1, 1), None,
-        "hyperbolic tangent elementwise."
-        ],
-'exp' : [nointM, nointM,
-         ("exp,"*6, '"exp"'),
-         (1, 1), None,
-         "e**x elementwise."
-         ],
-'expm1' : [nointM, nointM,
-         ("expm1,"*6, '"expm1"'),
-         (1, 1), None,
-         "e**x-1 elementwise."
-         ],
-'log' : [nointM, nointM,
-         ("log,"*6, '"log"'),
-         (1, 1), None,
-         "logarithm base e elementwise."
-         ],
-'log1p' : [nointM, nointM,
-         ("log1p,"*6, '"log1p"'),
-         (1, 1), None,
-         "log(1+x) to base e elementwise."
-         ],
-'log10' : [nointM, nointM,
-         ("log10,"*6, '"log10"'),
-         (1, 1), None,
-         "logarithm base 10 elementwise."
-         ],
-'sqrt' : [nointM, nointM,
-          ("sqrt,"*6, '"sqrt"'),
-          (1,1), None,
-          "square-root elementwise."
-          ],
-'ceil' : [fltsM, fltsM,
-          ("ceil,"*3, '"ceil"'),
-          (1,1), None,
-          "elementwise smallest integer >= x."
-    ],
-'fabs' : [fltsM, fltsM,
-          ("fabs,"*3, '"fabs"'),
-          (1,1), None,
-          "absolute values."
-          ],
-'floor' : [fltsM, fltsM,
-           ("floor,"*3, '"floor"'),
-           (1,1), None,
-           "elementwise largest integer <= x"
-           ],
-'arctan2' : [fltsM, fltsM,
-             ("atan2,"*3, '"arctan2"'),
-             (2,1), None,
-             "a safe and correct arctan(x1/x2)"
-             ],
-
-'remainder' : [intflt, 'O',
-               ("PyObject_Remainder"),
-               (2,1), None,
-               "computes x1-n*x2 where n is floor(x1 / x2)"],
-
-'hypot' : [fltsM, fltsM,
-           ("hypot,"*3, '"hypot"'),
-           (2,1), None,
-           "sqrt(x1**2 + x2**2) elementwise"
-           ],
-
-'isnan' : [flts+cmplx, '',
-           (), (1,1), None,
-           "returns True where x is Not-A-Number",
-           '?'*len(flts+cmplx)
-           ],
-
-'isinf' : [flts+cmplx, '',
-           (), (1,1), None,
-           "returns True where x is +inf or -inf",
-           '?'*len(flts+cmplx)
-           ],
-
-'isfinite' : [flts+cmplx, '',
-           (), (1,1), None,
-           "returns True where x is finite",
-           '?'*len(flts+cmplx)
-           ],
-
-'signbit' : [flts,'',
-             (),(1,1),None,
-             "returns True where signbit of x is set (x<0).",
-             '?'*len(flts)
-             ],
-
-'modf' : [flts,'',
-          (),(1,2),None,
-          "breaks x into fractional (y1) and integral (y2) parts.\\n\\n    Each output has the same sign as the input."
-          ]
+'add' :
+    Ufunc(2, 1, Zero,
+          'adds the arguments elementwise.',
+          TD(noobj),
+          TD(O, f='PyNumber_Add'),
+          ),
+'subtract' :
+    Ufunc(2, 1, Zero,
+          'subtracts the arguments elementwise.',
+          TD(noobj),
+          TD(O, f='PyNumber_Subtract'),
+          ),
+'multiply' :
+    Ufunc(2, 1, One,
+          'multiplies the arguments elementwise.',
+          TD(nocmplx),
+          TD(cmplx, f='prod'),
+          TD(O, f='PyNumber_Multiply'),
+          ),
+'divide' :
+    Ufunc(2, 1, One,
+          'divides the arguments elementwise.',
+          TD(intflt),
+          TD(cmplx, f='quot'),
+          TD(O, f='PyNumber_Divide'),
+          ),
+'floor_divide' :
+    Ufunc(2, 1, One,
+          'floor divides the arguments elementwise.',
+          TD(intflt),
+          TD(cmplx, f='floor_quot'),
+          TD(O, f='PyNumber_FloorDivide'),
+          ),
+'true_divide' :
+    Ufunc(2, 1, One,
+          'true divides the arguments elementwise.',
+          TD('bBhH', out='f'),
+          TD('iIlLqQ', out='d'),
+          TD(flts),
+          TD(cmplx, f='quot'),
+          TD(O, f='PyNumber_TrueDivide'),
+          ),
+'conjugate' :
+    Ufunc(1, 1, None,
+          'takes the conjugate of x elementwise.',
+          TD(nobool_or_obj),
+          TD(M, f='conjugate'),
+          ),
+'fmod' :
+    Ufunc(2, 1, Zero,
+          'computes (C-like) x1 % x2 elementwise.',
+          TD(ints),
+          TD(flts, f='fmod'),
+          TD(M, f='fmod'),
+          ),
+'square' :
+    Ufunc(1, 1, None,
+          'compute x**2.',
+          TD(nobool_or_obj),
+          TD(O, f='Py_square'),
+          ),
+#'ipower' :
+#    Ufunc(2, 1, One,
+#          'computes x1**n elementwise, where n is an integer or integer array.',
+#          TD(intflt),
+#          TD(cmplx, f='ipow'),
+#          TD(O, f='PyNumber_Power'),
+#          ),
+'power' :
+    Ufunc(2, 1, One,
+          'computes x1**x2 elementwise.',
+          TD(ints),
+          TD(inexact, f='pow'),
+          TD(O, f='PyNumber_Power'),
+          ),
+'absolute' :
+    Ufunc(1, 1, None,
+          'takes |x| elementwise.',
+          TD(nocmplx),
+          TD(cmplx, out=('f', 'd', 'g')),
+          TD(O, f='PyNumber_Absolute'),
+          ),
+'negative' :
+    Ufunc(1, 1, None,
+          'determines -x elementwise',
+          TD(nocmplx),
+          TD(cmplx, f='neg'),
+          TD(O, f='PyNumber_Negative'),
+          ),
+'sign' :
+    Ufunc(1, 1, None,
+          'returns -1 if x < 0 and 0 if x==0 and 1 if x > 0',
+          TD(nobool),
+          ),
+'greater' :
+    Ufunc(2, 1, None,
+          'returns elementwise x1 > x2 in a bool array.',
+          TD(all, out='?'),
+          ),
+'greater_equal' :
+    Ufunc(2, 1, None,
+          'returns elementwise x1 >= x2 in a bool array.',
+          TD(all, out='?'),
+          ),
+'less' :
+    Ufunc(2, 1, None,
+          'returns elementwise x1 < x2 in a bool array.',
+          TD(all, out='?'),
+          ),
+'less_equal' :
+    Ufunc(2, 1, None,
+          'returns elementwise x1 <= x2 in a bool array',
+          TD(all, out='?'),
+          ),
+'equal' :
+    Ufunc(2, 1, None,
+          'returns elementwise x1 == x2 in a bool array',
+          TD(all, out='?'),
+          ),
+'not_equal' :
+    Ufunc(2, 1, None,
+          'returns elementwise x1 |= x2',
+          TD(all, out='?'),
+          ),
+'logical_and' :
+    Ufunc(2, 1, One,
+          'returns x1 and x2 elementwise.',
+          TD(noobj, out='?'),
+          TD(M, f='logical_and', out='?'),
+          ),
+'logical_not' :
+    Ufunc(1, 1, None,
+          'returns not x elementwise.',
+          TD(noobj, out='?'),
+          TD(M, f='logical_not', out='?'),
+          ),
+'logical_or' :
+    Ufunc(2, 1, Zero,
+          'returns x1 or x2 elementwise.',
+          TD(noobj, out='?'),
+          TD(M, f='logical_or', out='?'),
+          ),
+'logical_xor' :
+    Ufunc(2, 1, None,
+          'returns x1 xor x2 elementwise.',
+          TD(noobj, out='?'),
+          TD(M, f='logical_xor', out='?'),
+          ),
+'maximum' :
+    Ufunc(2, 1, None,
+          'returns maximum (if x1 > x2: x1;  else: x2) elementwise.',
+          TD(noobj),
+          ),
+'minimum' :
+    Ufunc(2, 1, None,
+          'returns minimum (if x1 < x2: x1;  else: x2) elementwise',
+          TD(noobj),
+          ),
+'bitwise_and' :
+    Ufunc(2, 1, One,
+          'computes x1 & x2 elementwise.',
+          TD(bints),
+          TD(O, f='PyNumber_And'),
+          ),
+'bitwise_or' :
+    Ufunc(2, 1, Zero,
+          'computes x1 | x2 elementwise.',
+          TD(bints),
+          TD(O, f='PyNumber_Or'),
+          ),
+'bitwise_xor' :
+    Ufunc(2, 1, None,
+          'computes x1 ^ x2 elementwise.',
+          TD(bints),
+          TD(O, f='PyNumber_Xor'),
+          ),
+'invert' :
+    Ufunc(1, 1, None,
+          'computes ~x (bit inversion) elementwise.',
+          TD(bints),
+          TD(O, f='PyNumber_Invert'),
+          ),
+'left_shift' :
+    Ufunc(2, 1, None,
+          'computes x1 << x2 (x1 shifted to left by x2 bits) elementwise.',
+          TD(ints),
+          TD(O, f='PyNumber_Lshift'),
+          ),
+'right_shift' :
+    Ufunc(2, 1, None,
+          'computes x1 >> x2 (x1 shifted to right by x2 bits) elementwise.',
+          TD(ints),
+          TD(O, f='PyNumber_Rshift'),
+          ),
+'arccos' :
+    Ufunc(1, 1, None,
+          'inverse cosine elementwise.',
+          TD(inexact, f='acos'),
+          TD(M, f='arccos'),
+          ),
+'arccosh' :
+    Ufunc(1, 1, None,
+          'inverse hyperbolic cosine elementwise.',
+          TD(inexact, f='acosh'),
+          TD(M, f='arccosh'),
+          ),
+'arcsin' :
+    Ufunc(1, 1, None,
+          'inverse sine elementwise.',
+          TD(inexact, f='asin'),
+          TD(M, f='arcsin'),
+          ),
+'arcsinh' :
+    Ufunc(1, 1, None,
+          'inverse hyperbolic sine elementwise.',
+          TD(inexact, f='asinh'),
+          TD(M, f='arcsinh'),
+          ),
+'arctan' :
+    Ufunc(1, 1, None,
+          'inverse tangent elementwise.',
+          TD(inexact, f='atan'),
+          TD(M, f='arctan'),
+          ),
+'arctanh' :
+    Ufunc(1, 1, None,
+          'inverse hyperbolic tangent elementwise.',
+          TD(inexact, f='atanh'),
+          TD(M, f='arctanh'),
+          ),
+'cos' :
+    Ufunc(1, 1, None,
+          'cosine elementwise.',
+          TD(inexact, f='cos'),
+          TD(M, f='cos'),
+          ),
+'sin' :
+    Ufunc(1, 1, None,
+          'sine elementwise.',
+          TD(inexact, f='sin'),
+          TD(M, f='sin'),
+          ),
+'tan' :
+    Ufunc(1, 1, None,
+          'tangent elementwise.',
+          TD(inexact, f='tan'),
+          TD(M, f='tan'),
+          ),
+'cosh' :
+    Ufunc(1, 1, None,
+          'hyperbolic cosine elementwise.',
+          TD(inexact, f='cosh'),
+          TD(M, f='cosh'),
+          ),
+'sinh' :
+    Ufunc(1, 1, None,
+          'hyperbolic sine elementwise.',
+          TD(inexact, f='sinh'),
+          TD(M, f='sinh'),
+          ),
+'tanh' :
+    Ufunc(1, 1, None,
+          'hyperbolic tangent elementwise.',
+          TD(inexact, f='tanh'),
+          TD(M, f='tanh'),
+          ),
+'exp' :
+    Ufunc(1, 1, None,
+          'e**x elementwise.',
+          TD(inexact, f='exp'),
+          TD(M, f='exp'),
+          ),
+'expm1' :
+    Ufunc(1, 1, None,
+          'e**x-1 elementwise.',
+          TD(inexact, f='expm1'),
+          TD(M, f='expm1'),
+          ),
+'log' :
+    Ufunc(1, 1, None,
+          'logarithm base e elementwise.',
+          TD(inexact, f='log'),
+          TD(M, f='log'),
+          ),
+'log10' :
+    Ufunc(1, 1, None,
+          'logarithm base 10 elementwise.',
+          TD(inexact, f='log10'),
+          TD(M, f='log10'),
+          ),
+'log1p' :
+    Ufunc(1, 1, None,
+          'log(1+x) to base e elementwise.',
+          TD(inexact, f='log1p'),
+          TD(M, f='log1p'),
+          ),
+'sqrt' :
+    Ufunc(1, 1, None,
+          'square-root elementwise.',
+          TD(inexact, f='sqrt'),
+          TD(M, f='sqrt'),
+          ),
+'ceil' :
+    Ufunc(1, 1, None,
+          'elementwise smallest integer >= x.',
+          TD(flts, f='ceil'),
+          TD(M, f='ceil'),
+          ),
+'fabs' :
+    Ufunc(1, 1, None,
+          'absolute values.',
+          TD(flts, f='fabs'),
+          TD(M, f='fabs'),
+       ),
+'floor' :
+    Ufunc(1, 1, None,
+          'elementwise largest integer <= x',
+          TD(flts, f='floor'),
+          TD(M, f='floor'),
+          ),
+'arctan2' :
+    Ufunc(2, 1, None,
+          'a safe and correct arctan(x1/x2)',
+          TD(flts, f='atan2'),
+          TD(M, f='arctan2'),
+          ),
+'remainder' :
+    Ufunc(2, 1, None,
+          'computes x1-n*x2 where n is floor(x1 / x2)',
+          TD(intflt),
+          TD(O, f='PyNumber_Remainder'),
+          ),
+'hypot' :
+    Ufunc(2, 1, None,
+          'sqrt(x1**2 + x2**2) elementwise',
+          TD(flts, f='hypot'),
+          TD(M, f='hypot'),
+          ),
+'isnan' :
+    Ufunc(1, 1, None,
+          'returns True where x is Not-A-Number',
+          TD(inexact, out='?'),
+          ),
+'isinf' :
+    Ufunc(1, 1, None,
+          'returns True where x is +inf or -inf',
+          TD(inexact, out='?'),
+          ),
+'isfinite' :
+    Ufunc(1, 1, None,
+          'returns True where x is finite',
+          TD(inexact, out='?'),
+          ),
+'signbit' :
+    Ufunc(1, 1, None,
+          'returns True where signbit of x is set (x<0).',
+          TD(flts, out='?'),
+          ),
+'modf' :
+    Ufunc(1, 2, None,
+          'breaks x into fractional (y1) and integral (y2) parts.\\n\\n    Each output has the same sign as the input.',
+          TD(flts),
+          ),
 }
-
 
 def indent(st,spaces):
     indention = ' '*spaces
@@ -368,11 +502,11 @@ chartotype2 = {'f': 'ff_f',
                'D': 'DD_D',
                'G': 'GG_G',
                'O': 'OO_O',
-               'M': 'O_O_method'}
+               'M': 'OO_O_method'}
 #for each name
 # 1) create functions, data, and signature
 # 2) fill in functions and data in InitOperators
-# 3) add function. 
+# 3) add function.
 
 def make_arrays(funcdict):
     # functions array contains an entry for every type implemented
@@ -380,56 +514,55 @@ def make_arrays(funcdict):
     #
     code1list = []
     code2list = []
-    for name, vals in funcdict.iteritems():
+    for name, uf in funcdict.iteritems():
         funclist = []
         datalist = []
         siglist = []
-        k=0;
-        sub=0;
-        numin, numout = vals[3]
+        k = 0
+        sub = 0
 
-        if numin > 1:
+        if uf.nin > 1:
+            assert uf.nin == 2
             thedict = chartotype2  # two inputs and one output
-        else:                                                   
+        else:
             thedict = chartotype1  # one input and one output
 
-        instr = ''.join([x*numin for x in list(vals[0])])
-        if len(vals) > 6:
-            if isinstance(vals[6],type('')):
-                outstr = vals[6]
-            else:                # a tuple specifying input signature, output signature
-                instr, outstr = vals[6]
-        else:
-            outstr = ''.join([x*numout for x in list(vals[0])])
-
-        _valslen = len(vals[0])
-        assert _valslen*numout == len(outstr), "input/output signature doesn't match"
-        assert len(instr) == _valslen*numin, "input/output signature doesn't match"
-
-        for char in vals[0]:
-            if char in vals[1]:                # use generic function-based interface
+        for t in uf.type_descriptions:
+            if t.func_data is not None:
                 funclist.append('NULL')
                 astr = '%s_functions[%d] = PyUFunc_%s;' % \
-                       (name, k, thedict[char])
+                       (name, k, thedict[t.type])
                 code2list.append(astr)
-                thisfunc = vals[2][sub]                
-                if len(thisfunc) > 8 and thisfunc[:8] == "PyNumber":                    
+                if t.type == 'O':
                     astr = '%s_data[%d] = (void *) %s;' % \
-                           (name, k, thisfunc)
+                           (name, k, t.func_data)
                     code2list.append(astr)
-                    datalist.append('(void *)NULL');
+                    datalist.append('(void *)NULL')
+                elif t.type == 'M':
+                    datalist.append('(void *)"%s"' % t.func_data)
                 else:
-                    datalist.append('(void *)%s' % thisfunc)
+                    datalist.append('(void *)%s' % t.func_data)
                 sub += 1
-            else:                              # individual wrapper interface
-                datalist.append('(void *)NULL');                
-                funclist.append('%s_%s' % (chartoname[char].upper(), name))
+            else:
+                datalist.append('(void *)NULL');
+                tname = chartoname[t.type].upper()
+                funclist.append('%s_%s' % (tname, name))
 
-            insubstr = instr[numin*k:numin*(k+1)]
-            outsubstr = outstr[numout*k:numout*(k+1)]
-            siglist.extend(['PyArray_%s' % chartoname[x].upper() for x in insubstr])
-            siglist.extend(['PyArray_%s' % chartoname[x].upper() for x in outsubstr])
+            if t.in_ is None:
+                xlist = t.type * uf.nin
+            else:
+                xlist = t.in_
+            for x in xlist:
+                siglist.append('PyArray_%s' % (chartoname[x].upper(),))
+            if t.out is None:
+                xlist = t.type * uf.nout
+            else:
+                xlist = t.out
+            for x in xlist:
+                siglist.append('PyArray_%s' % (chartoname[x].upper(),))
+
             k += 1
+
         funcnames = ', '.join(funclist)
         signames = ', '.join(siglist)
         datanames = ', '.join(datalist)
@@ -438,50 +571,28 @@ def make_arrays(funcdict):
         code1list.append("static void * %s_data[] = { %s };" \
                          % (name, datanames))
         code1list.append("static char %s_signatures[] = { %s };" \
-                         % (name, signames))                        
+                         % (name, signames))
     return "\n".join(code1list),"\n".join(code2list)
 
 def make_ufuncs(funcdict):
     code3list = []
-    for name, vals in funcdict.items():
+    for name, uf in funcdict.items():
         mlist = []
         mlist.append(\
 r"""f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
                                 %d, %d, %s, "%s",
-                                "%s", 0);""" % (name,name,name,len(vals[0]),
-                                                vals[3][0], vals[3][1], vals[4],
-                                                name, vals[5]))
-        mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);"""%name)
+                                "%s", 0);""" % (name, name, name,
+                                                len(uf.type_descriptions),
+                                                uf.nin, uf.nout,
+                                                uf.identity,
+                                                name, uf.docstring))
+        mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
         mlist.append(r"""Py_DECREF(f);""")
-        code3list.append('\n'.join(mlist))        
+        code3list.append('\n'.join(mlist))
     return '\n'.join(code3list)
-        
-
-def convert_vals(funcdict):
-    for name, vals in funcdict.iteritems():
-        if vals[4] is None:
-            vals[4] = None_
-        vals2 = vals[2]
-        if len(vals2) > 0:
-            alist = vals2[0].split(',')
-            if len(alist) == 4:
-                a = alist[0]
-                if 'f' in vals[1]:
-                    newlist = [ a+'f', a, a+'l']
-                else:
-                    newlist = ['nc_'+a+'f', 'nc_'+a, 'nc_'+a+'l']
-            elif len(alist) == 7:
-                a = alist[0]
-                newlist = [a+'f', a, a+'l','nc_'+a+'f', 'nc_'+a, 'nc_'+a+'l']
-            else:
-                newlist = alist
-            newlist = newlist + list(vals2[1:])
-            vals[2] = tuple(newlist)
-            funcdict[name] = vals
 
 
 def make_code(funcdict,filename):
-    convert_vals(funcdict)
     code1, code2 = make_arrays(funcdict)
     code3 = make_ufuncs(funcdict)
     code2 = indent(code2,4)

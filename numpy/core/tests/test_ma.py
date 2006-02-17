@@ -634,8 +634,10 @@ class test_ma(ScipyTestCase):
 
 class test_ufuncs(ScipyTestCase):
     def setUp(self):
-        self.d = (array([1.0, 0, -1, pi/2]*2, mask=[0]*8),
-                  array([1.0, 0, -1, pi/2]*2, mask=[0]*8),)
+        self.d = (array([1.0, 0, -1, pi/2]*2, mask=[0,1]+[0]*6),
+                  array([1.0, 0, -1, pi/2]*2, mask=[1,0]+[0]*6),)
+
+        
     def check_testUfuncRegression(self):
         for f in ['sqrt', 'log', 'log10', 'exp', 'conjugate',
                   'sin', 'cos', 'tan', 

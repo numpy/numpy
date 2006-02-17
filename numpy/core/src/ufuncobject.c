@@ -192,6 +192,39 @@ PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
         return;
 }
 
+/*UFUNC_API*/
+static void
+PyUFunc_OO_O_method(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp i, is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
+    PyObject *tmp, *meth, *arglist, *x1, *x2;
+    char *ip1=args[0], *ip2=args[1], *op=args[2];
+
+    for(i=0; i<n; i++, ip1 += is1, ip2 += is2, op += os) {
+        x1 = *(PyObject **)ip1;
+        x2 = *(PyObject **)ip2;
+        if ((x1 == NULL) || (x2 == NULL)) goto done;
+        meth = PyObject_GetAttrString(x1, (char *)func);
+        if (meth != NULL) {
+            arglist = PyTuple_New(1);
+            if (arglist == NULL) {
+                Py_DECREF(meth);
+                goto done;
+            }
+            Py_INCREF(x2);
+            PyTuple_SET_ITEM(arglist, 0, x2);
+            tmp = PyEval_CallObject(meth, arglist);
+            Py_DECREF(arglist);
+            Py_DECREF(meth);
+            if ((tmp==NULL) || PyErr_Occurred()) goto done;
+            Py_XDECREF(*((PyObject **)op));
+            *((PyObject **)op) = tmp;
+        }
+    }
+ done:
+    return;
+
+}
 
 typedef double DoubleUnaryFunc(double x);
 typedef float FloatUnaryFunc(float x);
@@ -342,6 +375,10 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
 		meth = PyObject_GetAttrString(x1, (char *)func);
 		if (meth != NULL) {
 			arglist = PyTuple_New(0);
+                        if (arglist == NULL) {
+                            Py_DECREF(meth);
+                            goto done;
+                        }
 			tmp = PyEval_CallObject(meth, arglist);
 			Py_DECREF(arglist);
 			Py_DECREF(meth);

@@ -17,7 +17,7 @@ from getlimits import *
 from utils import *
 from arraysetops import *
 
-__all__ = []
+__all__ = ['math']
 __all__ += type_check.__all__
 __all__ += index_tricks.__all__
 __all__ += function_base.__all__

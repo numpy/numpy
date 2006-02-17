@@ -54,11 +54,17 @@ Global parameters:
              in precedence to shared ones (.so, .sl) if enabled.
   system_info.verbosity - output the results to stdout if enabled.
 
-The file 'site.cfg' in the same directory as this module is read
-for configuration options. The format is that used by ConfigParser (i.e.,
-Windows .INI style). The section DEFAULT has options that are the default
-for each section. The available sections are fftw, atlas, and x11. Appropiate
-defaults are used if nothing is specified.
+The file 'site.cfg' is looked for in
+
+1) Directory of main setup.py file being run. 
+2) Home directory of user running the setup.py file (Not implemented yet)
+3) System wide directory (location of this file...)
+
+The first one found is used to get system configuration options The
+format is that used by ConfigParser (i.e., Windows .INI style). The
+section DEFAULT has options that are the default for each section. The
+available sections are fftw, atlas, and x11. Appropiate defaults are
+used if nothing is specified.
 
 The order of finding the locations of resources is the following:
  1. environment variable
@@ -143,6 +149,41 @@ default_include_dirs = filter(os.path.isdir, default_include_dirs)
 default_src_dirs = filter(os.path.isdir, default_src_dirs)
 
 so_ext = get_config_vars('SO')[0] or ''
+
+def get_standard_file(fname):
+    """Returns a list of files named 'fname' from
+    1) System-wide directory (directory-location of this module)
+    2) Users HOME directory (os.environ['HOME'])
+    3) Local directory
+    """
+    # System-wide file
+    filenames = []
+    try:
+        f = __file__
+    except NameError:
+        f = sys.argv[0]
+    else:
+        sysfile = os.path.join(os.path.split(os.path.abspath(f))[0],
+                               fname)
+        if os.path.isfile(sysfile):
+            filenames.append(sysfile)
+            
+    # Home directory
+    # And look for the user config file
+    try:
+        f = os.environ['HOME']
+    except KeyError:
+        pass
+    else:
+        user_file = os.path.join(f, fname)
+        if os.path.isfile(user_file):
+            filenames.append(user_file)
+                
+    # Local file
+    if os.path.isfile(fname):
+        filenames.append(os.path.abspath(fname))
+
+    return filenames
 
 def get_info(name,notfound_action=0):
     """
@@ -289,18 +330,16 @@ class system_info:
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
         defaults['search_static_first'] = str(self.search_static_first)
         self.cp = ConfigParser.ConfigParser(defaults)
-        try:
-            f = __file__
-        except NameError,msg:
-            f = sys.argv[0]
-        cf = os.path.join(os.path.split(os.path.abspath(f))[0],
-                          'site.cfg')
-        self.cp.read([cf])
-        if not self.cp.has_section(self.section):
-            self.cp.add_section(self.section)
+        self.files = get_standard_file('site.cfg')
+        self.parse_config_files()
         self.search_static_first = self.cp.getboolean(self.section,
                                                       'search_static_first')
         assert isinstance(self.search_static_first, int)
+
+    def parse_config_files(self):
+        self.cp.read(self.files)
+        if not self.cp.has_section(self.section):
+            self.cp.add_section(self.section)
 
     def calc_libraries_info(self):
         libs = self.get_libraries()
@@ -488,7 +527,10 @@ class system_info:
                 opt_found_libs = self._extract_lib_names(opt_found_libs)
                 info['libraries'].extend(opt_found_libs)
             return info
-
+        else:
+            warnings.warn("Library error: libs=%s found_libs=%s" % \
+                          (libs, found_libs))
+            
     def combine_paths(self,*args):
         return combine_paths(*args,**{'verbosity':self.verbosity})
 

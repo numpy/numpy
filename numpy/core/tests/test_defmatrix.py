@@ -69,10 +69,8 @@ class test_properties(ScipyTestCase):
     def check_asmatrix(self):
         A = arange(100).reshape(10,10)
         mA = asmatrix(A)
-        mB = matrix(A)
         A[0,0] = -10
         assert A[0,0] == mA[0,0]
-        assert A[0,0] != mB[0,0]
 
     def check_noaxis(self):
         A = matrix([[1,0],[0,1]])

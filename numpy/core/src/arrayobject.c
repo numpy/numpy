@@ -1324,7 +1324,7 @@ array_dealloc(PyArrayObject *self) {
 	
 	PyDimMem_FREE(self->dimensions);
 
-	Py_XDECREF(self->descr);
+	Py_DECREF(self->descr);
 	
         self->ob_type->tp_free((PyObject *)self);
 }
@@ -3670,46 +3670,76 @@ PyArray_New(PyTypeObject *subtype, int nd, intp *dims, int type_num,
 }
 
 /* Change a sub-array field to the base descriptor */
+/*  and update the dimensions and strides 
+    appropriately.  Dimensions and strides are added 
+    to the end unless we have a FORTRAN array
+    and then they are added to the beginning 
+    
+    Strides are only added if given (because data is given).
+*/
 static int
 _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims, 
-			     intp *newstrides, int oldnd)
+			     intp *newstrides, int oldnd, int isfortran)
 {
 	PyArray_Descr *old;
 	int newnd;
 	int numnew;
 	intp *mydim;
 	int i;
+	int tuple;
 	
 	old = *des;
 	*des = old->subarray->base;
 
+
 	mydim = newdims + oldnd;
-	if (PyTuple_Check(old->subarray->shape)) {
+	tuple = PyTuple_Check(old->subarray->shape);
+	if (tuple) {
 		numnew = PyTuple_GET_SIZE(old->subarray->shape);
-		
+	}
+	else {
+		numnew = 1;
+	}
+
+
+	newnd = oldnd + numnew;
+	if (newnd > MAX_DIMS) goto finish;
+	if (isfortran) {
+		memmove(newdims+numnew, newdims, oldnd*sizeof(intp));
+		mydim = newdims;
+	}
+	
+	if (tuple) {
 		for (i=0; i<numnew; i++) {
 			mydim[i] = (intp) PyInt_AsLong			\
 				(PyTuple_GET_ITEM(old->subarray->shape, i));
 		}
+		
 	}
 	else {
-		numnew = 1;
 		mydim[0] = (intp) PyInt_AsLong(old->subarray->shape);
+		
 	}
 	
-	newnd = oldnd + numnew;
 
 	if (newstrides) {
 		intp tempsize;
 		intp *mystrides;
 		mystrides = newstrides + oldnd;
-		/* Make new strides */
+		if (isfortran) {
+			memmove(newstrides+numnew, newstrides, 
+				oldnd*sizeof(intp));
+			mystrides = newstrides;
+		}
+		/* Make new strides -- alwasy C-contiguous */
 		tempsize = (*des)->elsize;
 		for (i=numnew-1; i>=0; i--) {
 			mystrides[i] = tempsize;
 			tempsize *= mydim[i] ? mydim[i] : 1;
 		}
 	}
+
+ finish:
 	Py_INCREF(*des); 
 	Py_DECREF(old); 
 	return newnd;
@@ -3733,13 +3763,16 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		PyObject *ret;
 		intp newdims[2*MAX_DIMS];
 		intp *newstrides=NULL;
+		int isfortran=0;
+		isfortran = (data && (flags & FORTRAN) && !(flags & CONTIGUOUS)) || \
+			(!data && flags);
 		memcpy(newdims, dims, nd*sizeof(intp));
 		if (strides) {
 			newstrides = newdims + MAX_DIMS;
 			memcpy(newstrides, strides, nd*sizeof(intp));
 		}
 		nd =_update_descr_and_dimensions(&descr, newdims, 
-						 newstrides, nd);
+						 newstrides, nd, isfortran);
 		ret = PyArray_NewFromDescr(subtype, descr, nd, newdims, 
 					   newstrides,
 					   data, flags, obj);
@@ -4524,15 +4557,16 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 			PyArray_NewFromDescr(&PyArray_Type, newtype, self->nd,
 					     self->dimensions, self->strides,
 					     self->data, self->flags, NULL);
+		if (temp == NULL) return -1;
 		PyDimMem_FREE(self->dimensions);
 		self->dimensions = temp->dimensions;
 		self->nd = temp->nd;
 		self->strides = temp->strides;
 		newtype = temp->descr;
+		Py_INCREF(temp->descr);
 		/* Fool deallocator not to delete these*/
 		temp->nd = 0;
 		temp->dimensions = NULL;
-		temp->descr = NULL;
 		Py_DECREF(temp);
 	}
 

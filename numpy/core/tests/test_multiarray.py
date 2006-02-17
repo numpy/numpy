@@ -192,7 +192,9 @@ class test_bool(ScipyTestCase):
         self.failUnless(array(True)[...] is a1)
 
 # Import tests from unicode
+set_local_path()
 from test_unicode import *
-        
+restore_path()
+
 if __name__ == "__main__":
-        ScipyTest('numpy.core.multiarray').run()
+    ScipyTest('numpy.core.multiarray').run()
