@@ -148,24 +148,11 @@ defdict = {
           TD(flts, f='fmod'),
           TD(M, f='fmod'),
           ),
-'square' :
-    Ufunc(1, 1, None,
-          'compute x**2.',
-          TD(nobool_or_obj),
-          TD(O, f='Py_square'),
-          ),
-#'ipower' :
-#    Ufunc(2, 1, One,
-#          'computes x1**n elementwise, where n is an integer or integer array.',
-#          TD(intflt),
-#          TD(cmplx, f='ipow'),
-#          TD(O, f='PyNumber_Power'),
-#          ),
 'power' :
     Ufunc(2, 1, One,
           'computes x1**x2 elementwise.',
-          TD(intflt),
-          TD(cmplx, f='pow'),
+          TD(ints),
+          TD(inexact, f='pow'),
           TD(O, f='PyNumber_Power'),
           ),
 'absolute' :
