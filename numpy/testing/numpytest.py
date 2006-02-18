@@ -370,6 +370,8 @@ class NumpyTest:
             if package_name != name[:len(package_name)] \
                    or module is None:
                 continue
+            if not hasattr(module,'__file__'):
+                continue
             if os.path.basename(os.path.dirname(module.__file__))=='tests':
                 continue
             modules.append(module)

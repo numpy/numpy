@@ -10,7 +10,7 @@ from distutils.version import LooseVersion
 
 import log
 from exec_command import exec_command
-from misc_util import cyg2win32, is_sequence
+from misc_util import cyg2win32, is_sequence, mingw32
 from distutils.spawn import _nt_quote_args
 
 # Using customized CCompiler.spawn.
@@ -235,8 +235,7 @@ if sys.platform == 'win32':
    compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
                                 "Mingw32 port of GNU C Compiler for Win32"\
                                 "(for MSC built Python)")
-   if os.environ.get('OSTYPE','')=='msys' or \
-          os.environ.get('MSYSTEM','')=='MINGW32':
+   if mingw32():
        # On windows platforms, we want to default to mingw32 (gcc)
        # because msvc can't build blitz stuff.
        log.info('Setting mingw32 as default compiler for nt.')

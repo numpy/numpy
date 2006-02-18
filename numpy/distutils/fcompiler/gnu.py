@@ -7,6 +7,7 @@ import warnings
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command, find_executable
+from numpy.distutils.misc_util import mingw32
 
 class GnuFCompiler(FCompiler):
 
@@ -104,7 +105,10 @@ class GnuFCompiler(FCompiler):
             g2c = self.g2c
         
         if sys.platform=='win32':
-            opt.append('gcc')
+            # To avoid undefined reference __EH_FRAME_BEGIN__ linker error,
+            # don't use -lgcc option for mingw32 g77 linker.
+            if not mingw32():
+                opt.append('gcc')
         if g2c is not None:
             opt.append(g2c)
         if sys.platform == 'darwin':
