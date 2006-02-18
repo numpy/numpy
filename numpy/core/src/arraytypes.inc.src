@@ -238,7 +238,7 @@ UNICODE_getitem(char *ip, PyArrayObject *ap)
 	}
 	else buffer = ip;
 #ifdef Py_UNICODE_WIDE
-	obj = PyUnicode_FromUnicode((const PyArray_UCS4 *)buffer, mysize);
+	obj = PyUnicode_FromUnicode((const Py_UNICODE *)buffer, mysize);
 #else
 	/* create new empty unicode object of length mysize*2 */
 	obj = MyPyUnicode_New(mysize*2);
