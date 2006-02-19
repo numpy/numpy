@@ -563,7 +563,7 @@ nc_prod@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 static void
 nc_quot@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
-
+ 
 	@typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
 	@typ@ d = br*br + bi*bi;
 	r->real = (ar*br + ai*bi)/d;
@@ -1261,6 +1261,113 @@ Py_square(PyObject *o)
 {
     return PyNumber_Multiply(o, o);
 }
+
+
+/**begin repeat
+#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+*/
+static void
+@TYP@_reciprocal(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        @typ@ x = *((@typ@ *)i1);
+        *((@typ@ *)op) = 1.0 / x;
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+#TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
+#typ=float, double, longdouble#
+*/
+static void
+@TYP@_reciprocal(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+    c@typ@ *x, *y;
+    @typ@ xr, xi, xmag2;
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        x = (c@typ@ *)i1;
+        y = (c@typ@ *)op;
+        xr = x->real;
+        xi = x->imag;
+        xmag2 = xr*xr + xi*xi;
+        y->real = xr*xr - xi*xi;
+        y->imag = 2*xr*xi;
+    }
+}
+/**end repeat**/
+
+
+
+static PyObject *
+Py_reciprocal(PyObject *o)
+{
+    PyObject *one, *result;
+    one = PyInt_FromLong(1);
+    if (!one) return NULL;
+    result = PyNumber_Divide(one, o);
+    Py_DECREF(one);
+    return result;
+}
+
+
+/**begin repeat
+#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+*/
+static void
+@TYP@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        @typ@ x = *((@typ@ *)i1);
+        *((@typ@ *)op) = 1.0;
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+#TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
+#typ=float, double, longdouble#
+*/
+static void
+@TYP@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+    c@typ@ *x, *y;
+    @typ@ xr, xi, xmag2;
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        x = (c@typ@ *)i1;
+        y = (c@typ@ *)op;
+        xr = x->real;
+        xi = x->imag;
+        xmag2 = xr*xr + xi*xi;
+        y->real = 1.0;
+        y->imag = 0.0;
+    }
+}
+/**end repeat**/
+
+
+static PyObject *
+Py_get_one(PyObject *o)
+{
+    return PyInt_FromLong(1.0);
+}
+
+
+
 
 /**begin repeat
 
