@@ -27,7 +27,7 @@ def _fix_real_lt_zero(x):
     x = asarray(x)
     if any(isreal(x) & (x<0)):
         x = _tocomplex(x)
-    return asscalar(x)
+    return x
 
 def _fix_real_abs_gt_1(x):
     x = asarray(x)

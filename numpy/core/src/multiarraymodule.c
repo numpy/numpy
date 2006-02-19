@@ -3385,16 +3385,16 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
 		PyErr_SetString(PyExc_ValueError,
 				"cannot base a new descriptor on an"\
 				" OBJECT descriptor.");
-		return NULL;
+		goto fail;
 	}
 	new = PyArray_DescrNew(type);
-	if (new == NULL) return NULL;
+	if (new == NULL) goto fail;
 
 	if (new->elsize && new->elsize != conv->elsize) {
 		PyErr_SetString(PyExc_ValueError, 
 				"mismatch in size of old"\
 				"and new data-descriptor");
-		return NULL;
+		goto fail;
 	}
 	new->elsize = conv->elsize;
 	if (conv->fields != Py_None) {
@@ -3404,6 +3404,11 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
 	Py_DECREF(conv);
 	*errflag = 0;
 	return new;
+
+ fail:
+	Py_DECREF(conv);
+	return NULL;
+
 }
 
 static PyArray_Descr *
@@ -3448,7 +3453,7 @@ _convert_from_tuple(PyObject *obj)
 	else {
 		/* interpret next item as shape (if it's a tuple)
 		   and reset the type to PyArray_VOID with 
-		   anew fields attribute. 
+		   a new fields attribute. 
 	       */
 		PyArray_Dims shape={NULL,-1};
 		PyArray_Descr *newdescr;
@@ -3460,7 +3465,8 @@ _convert_from_tuple(PyObject *obj)
 			goto fail;
 		}
 		/* If (type, 1) was given, it is equivalent to type... */
-		if (shape.len == 1 && shape.ptr[0] == 1 && PyNumber_Check(val)) {
+		if (shape.len == 1 && shape.ptr[0] == 1 && \
+		    PyNumber_Check(val)) {
 			PyDimMem_FREE(shape.ptr);
 			return type;
 		}
