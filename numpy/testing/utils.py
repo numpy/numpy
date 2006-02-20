@@ -65,6 +65,18 @@ def assert_equal(actual,desired,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
     """
+    if isinstance(desired, dict):
+        assert isinstance(actual, dict),`type(actual)`
+        assert_equal(len(actual),len(desired),err_msg,verbose)
+        for k,i in desired.items():
+            assert actual.has_key(k),`k`
+            assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k,err_msg), verbose)
+        return
+    if isinstance(desired, list) and isinstance(actual, list):
+        assert_equal(len(actual),len(desired),err_msg,verbose)
+        for k in range(len(desired)):
+            assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k,err_msg), verbose)
+        return
     from numpy.core import ArrayType
     if isinstance(actual, ArrayType) or isinstance(desired, ArrayType):
         return assert_array_equal(actual, desired, err_msg)
@@ -79,7 +91,7 @@ def assert_equal(actual,desired,err_msg='',verbose=1):
              + 'DESIRED: ' + repr(desired) \
              + '\nACTUAL: ' + repr(actual)
     assert desired == actual, msg
-
+    return
 
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
