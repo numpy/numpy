@@ -56,10 +56,41 @@ else:
         """ Return number of jiffies (1/100ths of a second) that this
     process has been scheduled in user mode. [Emulation with time.time]. """
         return int(100*(time.time()-_load_time))
-
     def memusage():
         """ Return memory usage of running python. [Not implemented]"""
         return
+
+if os.name=='nt':
+    # Code stolen from enthought/debug/memusage.py
+    import win32pdh    
+    # from win32pdhutil, part of the win32all package
+    def GetPerformanceAttributes(object, counter, instance = None,
+                                 inum=-1, format = win32pdh.PDH_FMT_LONG, machine=None):
+        # NOTE: Many counters require 2 samples to give accurate results,
+        # including "% Processor Time" (as by definition, at any instant, a
+        # thread's CPU usage is either 0 or 100).  To read counters like this,
+        # you should copy this function, but keep the counter open, and call
+        # CollectQueryData() each time you need to know.
+        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
+        # My older explanation for this was that the "AddCounter" process forced
+        # the CPU to 100%, but the above makes more sense :)
+        path = win32pdh.MakeCounterPath( (machine,object,instance, None, inum,counter) )
+        hq = win32pdh.OpenQuery()
+        try:
+            hc = win32pdh.AddCounter(hq, path)
+            try:
+                win32pdh.CollectQueryData(hq)
+                type, val = win32pdh.GetFormattedCounterValue(hc, format)
+                return val
+            finally:
+                win32pdh.RemoveCounter(hc)
+        finally:
+            win32pdh.CloseQuery(hq)
+    
+    def memusage(processName="python", instance=0):
+        return GetPerformanceAttributes("Process", "Virtual Bytes",
+                                        processName, instance,
+                                        win32pdh.PDH_FMT_LONG, None)
 
 def assert_equal(actual,desired,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
