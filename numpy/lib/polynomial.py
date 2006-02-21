@@ -10,9 +10,9 @@ import re
 import numpy.core.numeric as NX
 
 from numpy.core import isscalar
-from twodim_base import diag, vander
-from shape_base import hstack, atleast_1d
-from function_base import trim_zeros, sort_complex
+from numpy.lib.twodim_base import diag, vander
+from numpy.lib.shape_base import hstack, atleast_1d
+from numpy.lib.function_base import trim_zeros, sort_complex
 eigvals = None
 lstsq = None
 
@@ -355,6 +355,9 @@ class poly1d(object):
     p = poly1d([1,2,3], variable='lambda') will use lambda in the
     string representation of p.
     """
+    coeffs = None
+    order = None
+    variable = None
     def __init__(self, c_or_r, r=0, variable=None):
         if isinstance(c_or_r, poly1d):
             for key in c_or_r.__dict__.keys():
@@ -464,7 +467,7 @@ class poly1d(object):
         if not isscalar(val) or int(val) != val or val < 0:
             raise ValueError, "Power to non-negative integers only."
         res = [1]
-        for k in range(val):
+        for _ in range(val):
             res = polymul(self.coeffs, res)
         return poly1d(res)
 

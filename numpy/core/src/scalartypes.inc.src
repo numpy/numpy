@@ -205,8 +205,9 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 	if (PyArray_ISOBJECT(r)) {
 		Py_INCREF(*((PyObject **)memptr));
 	}
-
+#ifndef Py_UNICODE_WIDE
  finish:	
+#endif
 	if (outcode == NULL) return r;
 	
 	if (outcode->type_num == typecode->type_num) {

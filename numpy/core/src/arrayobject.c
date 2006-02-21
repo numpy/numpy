@@ -5771,7 +5771,7 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 	if (simple) {
 		char *inptr;
 		char *optr = out->data;
-		intp obytes = out->descr->elsize * outsize;
+		intp obytes = out->descr->elsize * mpsize;
 		intp ncopies = outsize / mpsize;
 
 		while(ncopies--) {

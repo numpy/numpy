@@ -188,6 +188,17 @@ class matrix(N.ndarray):
     def __str__(self):
         return str(self.__array__())
 
+    def sum(self, axis=None, dtype=None):
+        """Sum the matrix over the given axis.  If the axis is None, sum
+        over all dimensions.  This preserves the orientation of the
+        result as a row or column.
+        """
+        s = N.ndarray.sum(self, axis, dtype)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s
+    
     # Needed becase tolist method expects a[i] 
     #  to have dimension a.ndim-1
     def tolist(self):

@@ -2142,9 +2142,21 @@ array.fill = _m(not_implemented)
 array.flags = property(_m(not_implemented))
 array.flatten = _m(ravel)
 array.getfield = _m(not_implemented)
-array.max = _m(maximum)
+def _max(a, axis=None):
+    if axis is None:
+        return maximum(a)
+    else:
+        return maximum.reduce(a, axis)
+array.max = _m(_max)
+del _max
+def _min(a, axis=None):
+    if axis is None:
+        return minimum(a)
+    else:
+        return minimum.reduce(a, axis)
+array.min = _m(_min)
+del _min
 array.mean = _m(average)
-array.min = _m(minimum)
 array.nbytes = property(_m(not_implemented))
 array.ndim = _m(not_implemented)
 array.newbyteorder = _m(not_implemented)

@@ -151,10 +151,16 @@ def configuration(parent_package='',top_path=None):
             join('src','_isnan.c'),
             join('src','ucsnarrow.c'),
             join('include','numpy','*object.h'),
+            'include/numpy/fenv/fenv.c',
+            'include/numpy/fenv/fenv.h',
 	    join(codegen_dir,'genapi.py'),
 	    join(codegen_dir,'*.txt')
             ]
 
+    # Don't install fenv unless we need them.
+    if sys.platform == 'cygwin':
+        config.add_data_dir('include/numpy/fenv')
+        
     config.add_extension('multiarray',
                          sources = [join('src','multiarraymodule.c'),
                                     generate_config_h,

@@ -9,7 +9,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
            'get_cmd', 'allpath', 'get_mathlibs',
            'terminal_has_colors', 'red_text', 'green_text', 'yellow_text',
-           'blue_text', 'cyan_text', 'cyg2win32', 'all_strings',
+           'blue_text', 'cyan_text', 'cyg2win32','mingw32','all_strings',
            'has_f_sources', 'has_cxx_sources', 'filter_sources',
            'get_dependencies', 'is_local_src_dir', 'get_ext_source_files',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
@@ -157,6 +157,16 @@ def cyg2win32(path):
     if sys.platform=='cygwin' and path.startswith('/cygdrive'):
         path = path[10] + ':' + os.path.normcase(path[11:])
     return path
+
+def mingw32():
+    """ Return true when using mingw32 environment.
+    """
+    if sys.platform=='win32':
+        if os.environ.get('OSTYPE','')=='msys':
+            return True
+        if os.environ.get('MSYSTEM','')=='MINGW32':
+            return True
+    return False
 
 #########################
 

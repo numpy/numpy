@@ -1,5 +1,6 @@
 
 import os
+import re
 import sys
 import imp
 import types
@@ -207,18 +208,27 @@ class NumpyTest:
     Package is supposed to contain a directory tests/
     with test_*.py files where * refers to the names of submodules.
     See .rename() method to redefine name mapping between test_*.py files
-    and names of submodules.
+    and names of submodules. Pattern test_*.py can be overwritten by
+    redefining .get_testfile() method.
 
     test_*.py files are supposed to define a classes, derived
     from NumpyTestCase or unittest.TestCase, with methods having
-    names starting with test or bench or check.
+    names starting with test or bench or check. The names of TestCase
+    classes must have a prefix test. This can be overwritten by
+    redefining .check_testcase_name() method.
 
     And that is it! No need to implement test or test_suite functions
     in each .py file.
 
-    Also old styled test_suite(level=1) hooks are supported but
-    soon to be removed.
+    Also old styled test_suite(level=1) hooks are supported.
     """
+    _check_testcase_name = re.compile(r'test.*').match
+    def check_testcase_name(self, name):
+        return self._check_testcase_name(name) is not None
+
+    def get_testfile(self, short_module_name):
+        return 'test_' + short_module_name + '.py'
+
     def __init__(self, package=None):
         if package is None:
             from numpy.distutils.misc_util import get_frame
@@ -277,13 +287,14 @@ class NumpyTest:
         short_module_name = self._rename_map.get(short_module_name,short_module_name)
         if short_module_name is None:
             return []
+        full_module_name = module.__name__+'.'+short_module_name
 
         test_dir = os.path.join(d,'tests')
-        test_file = os.path.join(test_dir,'test_'+short_module_name+'.py')
+        fn = self.get_testfile(short_module_name)
+        test_file = os.path.join(test_dir,fn)
 
         local_test_dir = os.path.join(os.getcwd(),'tests')
-        local_test_file = os.path.join(local_test_dir,
-                                       'test_'+short_module_name+'.py')
+        local_test_file = os.path.join(local_test_dir, fn)
         if os.path.basename(os.path.dirname(local_test_dir)) \
                == os.path.basename(os.path.dirname(test_dir)) \
            and os.path.isfile(local_test_file):
@@ -308,19 +319,10 @@ class NumpyTest:
             return []
     
         try:
-            if sys.version[:3]=='2.1':
-                # Workaround for Python 2.1 .pyc file generator bug
-                import random
-                pref = '-nopyc'+`random.randint(1,100)`
-            else:
-                pref = ''
             f = open(test_file,'r')
-            test_module = imp.load_module(\
-                module.__name__+'.test_'+short_module_name+pref,
-                f, test_file+pref,('.py', 'r', 1))
+            test_module = imp.load_module(full_module_name,
+                                          f, test_file, ('.py', 'r', 1))
             f.close()
-            if sys.version[:3]=='2.1' and os.path.isfile(test_file+pref+'c'):
-                os.remove(test_file+pref+'c')
         except:
             self.warn('   !! FAILURE importing tests for %s' % mstr(module))
             output_exception(sys.stderr)
@@ -332,21 +334,14 @@ class NumpyTest:
 
     def _get_suite_list(self, test_module, level, module_name='__main__'):
         mstr = self._module_str
-        if hasattr(test_module,'test_suite'):
-            # Using old styled test suite
-            try:
-                total_suite = test_module.test_suite(level)
-                return total_suite._tests
-            except:
-                self.warn('   !! FAILURE building tests for %s' % mstr(test_module))
-                output_exception(sys.stderr)
-                return []
         suite_list = []
+        if hasattr(test_module,'test_suite'):
+            suite_list.extend(test_module.test_suite(level)._tests)
         for name in dir(test_module):
             obj = getattr(test_module, name)
             if type(obj) is not type(unittest.TestCase) \
                or not issubclass(obj, unittest.TestCase) \
-               or obj.__name__[:4] != 'test':
+               or not self.check_testcase_name(obj.__name__):
                 continue
             for mthname in self._get_method_names(obj,level):
                 suite = obj(mthname)
@@ -369,6 +364,8 @@ class NumpyTest:
         for name, module in sys.modules.items():
             if package_name != name[:len(package_name)] \
                    or module is None:
+                continue
+            if not hasattr(module,'__file__'):
                 continue
             if os.path.basename(os.path.dirname(module.__file__))=='tests':
                 continue

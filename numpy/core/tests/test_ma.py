@@ -676,8 +676,16 @@ class test_ufuncs(ScipyTestCase):
         self.failUnlessEqual(sum(a[:3]), 0)
         self.failUnlessEqual(product(a), 0)
 
+    def test_minmax(self):
+        a = arange(1,13).reshape(3,4)
+        amask = masked_where(a < 5,a)
+        self.failUnlessEqual(amask.max(), a.max())
+        self.failUnlessEqual(amask.min(), 5)
+        self.failUnless((amask.max(0) == a.max(0)).all())
+        self.failUnless((amask.min(0) == [5,6,7,8]).all())
+        self.failUnless(amask.max(1)[0].mask)
+        self.failUnless(amask.min(1)[0].mask)
         
-
 def eqmask(m1, m2):
     if m1 is nomask:
         return m2 is nomask

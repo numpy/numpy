@@ -859,7 +859,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 
         /* Check number of arguments */
         nargs = PyTuple_Size(args);
-        if ((nargs != self->nin) && (nargs != self->nargs)) {
+        if ((nargs < self->nin) || (nargs > self->nargs)) {
                 PyErr_SetString(PyExc_ValueError, 
 				"invalid number of arguments");
                 return -1;
@@ -2507,8 +2507,24 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	
 }
 
-static PyObject *
-_find_array_wrap(PyObject *args)
+/* This function analyzes the input arguments
+   and determines an appropriate __array_wrap__ function to call
+   for the outputs.   
+
+   If an output argument is provided, then it is wrapped 
+   with its own __array_wrap__ not with the one determined by
+   the input arguments. 
+
+   if the provided output argument is already an array,
+   the wrapping function is None (which means no wrapping will
+   be done --- not even PyArray_Return). 
+
+   A NULL is placed in output_wrap for outputs that
+   should just have PyArray_Return called.
+ */
+
+static void
+_find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)  
 {
 	int nargs, i;
 	int np = 0;
@@ -2517,7 +2533,7 @@ _find_array_wrap(PyObject *args)
 	PyObject *obj, *wrap = NULL;
 
 	nargs = PyTuple_GET_SIZE(args);
-	for (i=0; i<nargs; i++) {
+	for (i=0; i<nin; i++) {
 		obj = PyTuple_GET_ITEM(args, i);
 		if (PyArray_CheckExact(obj) || PyBigArray_CheckExact(obj) || \
 		    PyArray_IsAnyScalar(obj))
@@ -2537,21 +2553,71 @@ _find_array_wrap(PyObject *args)
 			PyErr_Clear();
 		}
 	}
-	if (np < 2)
-		return wrap;
-	wrap = wraps[0];
-	maxpriority = PyArray_GetPriority(with_wrap[0], PyArray_SUBTYPE_PRIORITY);
-	for (i = 1; i < np; ++i) {
-		priority = PyArray_GetPriority(with_wrap[i], PyArray_SUBTYPE_PRIORITY);
-		if (priority > maxpriority) {
-			maxpriority = priority;
-			Py_DECREF(wrap);
-			wrap = wraps[i];
-		} else {
-			Py_DECREF(wraps[i]);
-		}
-	}
-	return wrap;
+	if (np >= 2) {
+                wrap = wraps[0];
+                maxpriority = PyArray_GetPriority(with_wrap[0], 
+                                                  PyArray_SUBTYPE_PRIORITY);
+                for (i = 1; i < np; ++i) {
+                        priority = \
+                                PyArray_GetPriority(with_wrap[i], 
+                                                    PyArray_SUBTYPE_PRIORITY);
+                        if (priority > maxpriority) {
+                                maxpriority = priority;
+                                Py_DECREF(wrap);
+                                wrap = wraps[i];
+                        } else {
+                                Py_DECREF(wraps[i]);
+                        }
+                }
+        }
+
+        /* Here wrap is the wrapping function determined from the
+           input arrays (could be NULL). 
+
+           For all the output arrays decide what to do.
+           
+           1) Use the wrap function determined from the input arrays
+              This is the default if the output array is not
+              passed in.
+
+           2) Use the __array_wrap__ method of the output object
+              passed in. -- this is special cased for
+              exact ndarray so that no PyArray_Return is 
+              done in that case.              
+        */
+
+        for (i=0; i<nout; i++) {
+                int j = nin + i;
+                int incref=1;
+                output_wrap[i] = wrap;
+                if (j < nargs) {
+                        obj = PyTuple_GET_ITEM(args, j);
+                        if (obj == Py_None)
+                                continue;
+                        if (PyArray_CheckExact(obj) || 
+                            PyBigArray_CheckExact(obj)) {
+                                output_wrap[i] = Py_None;
+                        }
+                        else {
+                                PyObject *owrap;
+                                owrap = PyObject_GetAttrString  \
+                                        (obj,"__array_wrap__");
+                                incref=0;
+                                if (!(owrap) || !(PyCallable_Check(owrap))) {
+                                        Py_XDECREF(owrap);
+                                        owrap = wrap;
+                                        incref=1;
+                                        PyErr_Clear();
+                                }
+                                output_wrap[i] = owrap;
+                        }
+                }
+                if (incref) {
+                        Py_XINCREF(output_wrap[i]);
+                }
+        }
+           
+	return;
 }
 
 static PyObject *
@@ -2561,8 +2627,8 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 	PyTupleObject *ret;
 	PyArrayObject *mps[MAX_ARGS];
 	PyObject *retobj[MAX_ARGS];
+        PyObject *wraparr[MAX_ARGS];
 	PyObject *res;
-	PyObject *wrap;
         int errval;
         
 	/* Initialize all array objects to NULL to make cleanup easier 
@@ -2582,17 +2648,30 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 	
 	for(i=0; i<self->nin; i++) Py_DECREF(mps[i]);
 
+
 	/*  Use __array_wrap__ on all outputs 
 	        if present on one of the input arguments.
 	    If present for multiple inputs:
 	        use __array_wrap__ of input object with largest 
 		__array_priority__ (default = 0.0)
 	 */
-	wrap = _find_array_wrap(args);
+
+        /* Exception:  we should not wrap outputs for items already 
+           passed in as output-arguments.  These items should either
+           be left unwrapped or wrapped by calling their own __array_wrap__
+           routine.
+
+           For each output argument, wrap will be either 
+           NULL --- call PyArray_Return() -- default if no output arguments given
+           None --- array-object passed in don't call PyArray_Return
+           method --- the __array_wrap__ method to call. 
+        */
+        _find_array_wrap(args, wraparr, self->nin, self->nout);
 	
 	/* wrap outputs */
 	for (i=0; i<self->nout; i++) {
 		int j=self->nin+i;
+                PyObject *wrap;
 		/* check to see if any UPDATEIFCOPY flags are set 
 		   which meant that a temporary output was generated 
 		*/
@@ -2603,7 +2682,13 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 					      back into old */
 			mps[j] = (PyArrayObject *)old;
 		}
+                wrap = wraparr[i];
 		if (wrap != NULL) {
+                        if (wrap == Py_None) {
+                                Py_DECREF(wrap);
+                                retobj[i] = (PyObject *)mps[j];
+                                continue;
+                        }
 			res = PyObject_CallFunction(wrap, "O(OOi)",
 						    mps[j], self, args, i);
 			if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
@@ -2619,6 +2704,7 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 				continue;
 			}
 		}
+                /* default behavior */
 		retobj[i] = PyArray_Return(mps[j]);
 	}
 	
