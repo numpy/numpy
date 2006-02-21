@@ -9,8 +9,20 @@ class TypeDescription(object):
     def __init__(self, type, f=None, in_=None, out=None):
         self.type = type
         self.func_data = f
+        if in_ is not None:
+            in_ = in_.replace('.', type)
         self.in_ = in_
+        if out is not None:
+            out = out.replace('.', type)
         self.out = out
+
+    def finish_signature(self, nin, nout):
+        if self.in_ is None:
+            self.in_ = self.type * nin
+        assert len(self.in_) == nin
+        if self.out is None:
+            self.out = self.type * nout
+        assert len(self.out) == nout
 
 _fdata_map = dict(f='%sf', d='%s', g='%sl',
                   F='nc_%sf', D='nc_%s', G='nc_%sl')
@@ -55,6 +67,8 @@ class Ufunc(object):
         self.type_descriptions = []
         for td in type_descriptions:
             self.type_descriptions.extend(td)
+        for td in self.type_descriptions:
+            td.finish_signature(self.nin, self.nout)
 
 #each entry in defdict is
 
@@ -501,7 +515,10 @@ def make_arrays(funcdict):
     #
     code1list = []
     code2list = []
-    for name, uf in funcdict.iteritems():
+    names = funcdict.keys()
+    names.sort()
+    for name in names:
+        uf = funcdict[name]
         funclist = []
         datalist = []
         siglist = []
@@ -535,17 +552,7 @@ def make_arrays(funcdict):
                 tname = chartoname[t.type].upper()
                 funclist.append('%s_%s' % (tname, name))
 
-            if t.in_ is None:
-                xlist = t.type * uf.nin
-            else:
-                xlist = t.in_
-            for x in xlist:
-                siglist.append('PyArray_%s' % (chartoname[x].upper(),))
-            if t.out is None:
-                xlist = t.type * uf.nout
-            else:
-                xlist = t.out
-            for x in xlist:
+            for x in t.in_ + t.out:
                 siglist.append('PyArray_%s' % (chartoname[x].upper(),))
 
             k += 1
@@ -563,7 +570,10 @@ def make_arrays(funcdict):
 
 def make_ufuncs(funcdict):
     code3list = []
-    for name, uf in funcdict.items():
+    names = funcdict.keys()
+    names.sort()
+    for name in names:
+        uf = funcdict[name]
         mlist = []
         mlist.append(\
 r"""f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
