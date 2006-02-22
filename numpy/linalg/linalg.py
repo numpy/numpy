@@ -319,10 +319,9 @@ def eigh(a, UPLO='L'):
 
 # Singular value decomposition
 
-def svd(a, full_matrices = 1):
+def svd(a, full_matrices=1):
     _assertRank2(a)
-    n = a.shape[1]
-    m = a.shape[0]
+    m, n = a.shape
     t =_commonType(a)
     real_t = _array_type[0][_array_precision[t]]
     a = _fastCopyAndTranspose(t, a)
@@ -480,7 +479,7 @@ Singular values less than s[0]*rcond are treated as zero.
     return x,resids,results['rank'],s[:min(n,m)].copy()
 
 def singular_value_decomposition(A, full_matrices=0):
-    return svd(A, 0)
+    return svd(A, full_matrices)
 
 def eigenvectors(A):
     w, v = eig(A)
