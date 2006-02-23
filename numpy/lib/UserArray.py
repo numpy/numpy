@@ -182,6 +182,9 @@ class UserArray:
         if len(shape(a)) == 0: return a
         else: return self.__class__(a)
 
+    def __array_wrap__(self, *args):
+        return self.__class__(args[0])
+
     def __setattr__(self,attr,value):
         if attr=='shape':
             self.array.shape=value

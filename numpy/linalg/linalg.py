@@ -30,10 +30,7 @@ _array_type = [['f', 'd'], ['F', 'D']]
 
 def _makearray(a):
     new = asarray(a)
-    if isinstance(a, ndarray):
-        wrap = a.__array_wrap__
-    else:
-        wrap = new.__array_wrap__
+    wrap = getattr(a, "__array_wrap__", new.__array_wrap__)
     return new, wrap
 
 def _commonType(*arrays):

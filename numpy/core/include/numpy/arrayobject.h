@@ -1,3 +1,4 @@
+
 /* This expects the following variables to be defined (besides
    the usual ones from pyconfig.h
 
@@ -904,6 +905,7 @@ typedef struct PyArrayObject {
 	int flags;              /* Flags describing array -- see below*/
 	PyObject *weakreflist;  /* For weakreferences */
 } PyArrayObject;
+
 
 #define fortran fortran_        /* For some compilers */
 
