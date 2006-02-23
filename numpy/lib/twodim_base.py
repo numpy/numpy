@@ -12,7 +12,7 @@ def fliplr(m):
     """ returns an array m with the rows preserved and columns flipped 
         in the left/right direction.  Works on the first two dimensions of m. 
     """
-    m = asarray(m)
+    m = asanyarray(m)
     if m.ndim < 2:
         raise ValueError, "Input must be >= 2-d."
     return m[:, ::-1]
@@ -21,17 +21,17 @@ def flipud(m):
     """ returns an array with the columns preserved and rows flipped in
         the up/down direction.  Works on the first dimension of m.
     """
-    m = asarray(m)
+    m = asanyarray(m)
     if m.ndim < 1:
         raise ValueError, "Input must be >= 1-d."
-    return m[::-1]
+    return m[::-1,...]
 
 def rot90(m, k=1):
     """ returns the array found by rotating m by k*90
     degrees in the counterclockwise direction.  Works on the first two
     dimensions of m. 
     """
-    m = asarray(m)
+    m = asanyarray(m)
     if m.ndim < 2:
         raise ValueError, "Input must >= 2-d."
     k = k % 4
@@ -92,7 +92,7 @@ def tril(m, k=0):
     """ returns the elements on and below the k-th diagonal of m.  k=0 is the
         main diagonal, k > 0 is above and k < 0 is below the main diagonal.
     """
-    m = asarray(m)
+    m = asanyarray(m)
     out = multiply(tri(m.shape[0], m.shape[1], k=k, dtype=m.dtype),m)
     return out
 
@@ -100,7 +100,7 @@ def triu(m, k=0):
     """ returns the elements on and above the k-th diagonal of m.  k=0 is the
         main diagonal, k > 0 is above and k < 0 is below the main diagonal.
     """
-    m = asarray(m)
+    m = asanyarray(m)
     out = multiply((1-tri(m.shape[0], m.shape[1], k-1, m.dtype)),m)
     return out
 
