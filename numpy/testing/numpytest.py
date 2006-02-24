@@ -385,25 +385,23 @@ class NumpyTest:
         """ Run Numpy module test suite with level and verbosity.
 
         level:
-          None or <= -3  --- do nothing, return None
-          -2             --- import package, return None
-          -1             --- scan for tests and return TestRunner instance
-          > 0            --- scan for tests, run them, return TestRunner
+          None           --- do nothing, return None
+          < 0            --- scan for tests of level=abs(level),
+                             don't run them, return TestSuite-list
+          > 0            --- scan for tests of level, run them,
+                             return TestRunner
 
         verbosity:
           >= 0           --- show information messages
           > 1            --- show warnings on missing tests
         """
-        if level is None or level<=-3: # Do nothing.
+        if level is None: # Do nothing.
             return
 
         if isinstance(self.package, str):
             exec 'import %s as this_package' % (self.package)
         else:
             this_package = self.package
-
-        if level==-2: # Import package and do nothing.
-            return
 
         package_name = this_package.__name__
 
@@ -421,15 +419,15 @@ class NumpyTest:
         self.test_files = []
         suites = []
         for module in modules:
-            suites.extend(self._get_module_tests(module, level, verbosity))
+            suites.extend(self._get_module_tests(module, abs(level), verbosity))
 
-        suites.extend(self._get_suite_list(sys.modules[package_name], level,
-                                           verbosity=verbosity))
+        suites.extend(self._get_suite_list(sys.modules[package_name],
+                                           abs(level), verbosity=verbosity))
 
         all_tests = unittest.TestSuite(suites)
-        #if hasattr(sys,'getobjects'):
-        #    runner = SciPyTextTestRunner(verbosity=verbosity)
-        #else:
+        if level<0:
+            return all_tests
+
         runner = unittest.TextTestRunner(verbosity=verbosity)
         # Use the builtin displayhook. If the tests are being run
         # under IPython (for instance), any doctest test suites will
