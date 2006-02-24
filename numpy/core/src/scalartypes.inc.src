@@ -466,7 +466,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 
 /**begin repeat
 
-#name=negative, absolute, invert, int, long, float, oct, hex#
+#name=positive, negative, absolute, invert, int, long, float, oct, hex#
 */
 
 static PyObject *
@@ -639,7 +639,6 @@ static PyObject *
 /**end repeat**/
 
 
-static PyObject *gentype_copy(PyObject *, PyObject *);
 
 static PyNumberMethods gentype_as_number = {
         (binaryfunc)gentype_add,		    /*nb_add*/
@@ -650,7 +649,7 @@ static PyNumberMethods gentype_as_number = {
         (binaryfunc)gentype_divmod,		    /*nb_divmod*/
         (ternaryfunc)gentype_power,		    /*nb_power*/
         (unaryfunc)gentype_negative,	            
-        (unaryfunc)gentype_copy,		    /*nb_pos*/ 
+        (unaryfunc)gentype_positive,    	    /*nb_pos*/ 
         (unaryfunc)gentype_absolute,		    /*(unaryfunc)gentype_abs,*/
         (inquiry)gentype_nonzero_number,		    /*nb_nonzero*/
         (unaryfunc)gentype_invert,		    /*nb_invert*/
