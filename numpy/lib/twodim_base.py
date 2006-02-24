@@ -104,7 +104,6 @@ def triu(m, k=0):
     out = multiply((1-tri(m.shape[0], m.shape[1], k-1, m.dtype)),m)
     return out
 
-
 # borrowed from John Hunter and matplotlib
 def vander(x, N=None):
     """

@@ -1,11 +1,11 @@
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'column_stack','dstack','array_split','split','hsplit',
            'vsplit','dsplit','apply_over_axes','expand_dims',
-           'apply_along_axis']
+           'apply_along_axis', 'repmat', 'kron']
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import *
-from numpy.core.oldnumeric import product
+from numpy.core.oldnumeric import product, reshape
 
 def apply_along_axis(func1d,axis,arr,*args):
     """ Execute func1d(arr[i],*args) where func1d takes 1-D arrays
@@ -525,3 +525,36 @@ def dsplit(ary,indices_or_sections):
         raise ValueError, 'vsplit only works on arrays of 3 or more dimensions'
     return split(ary,indices_or_sections,2)
 
+# should figure out how to generalize this one.
+def repmat(a, m, n):
+    """Repeat a 0-d to 2-d array mxn times
+    """
+    a = asarray(a)
+    ndim = a.ndim
+    if ndim == 0:
+        origrows, origcols = (1,1)
+    elif ndim == 1:
+        origrows, origcols = (1, a.shape[0])
+    else:
+        origrows, origcols = a.shape
+    rows = origrows * m
+    cols = origcols * n
+    c = a.reshape(1,a.size).repeat(m, 0).reshape(rows, origcols).repeat(n,0)
+    return c.reshape(rows, cols)
+
+
+def kron(a,b):
+    """kronecker product of a and b
+
+    Kronecker product of two matrices is block matrix
+    [[ a[ 0 ,0]*b, a[ 0 ,1]*b, ... , a[ 0 ,n-1]*b  ],
+     [ ...                                   ...   ],
+     [ a[m-1,0]*b, a[m-1,1]*b, ... , a[m-1,n-1]*b  ]]
+    """
+    if not a.flags.contiguous:
+        a = reshape(a, a.shape)
+    if not b.flags.contiguous:
+        b = reshape(b, b.shape)
+    o = outerproduct(a,b)
+    o=o.reshape(a.shape + b.shape)
+    return concatenate(concatenate(o, axis=1), axis=1)
