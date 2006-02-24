@@ -73,6 +73,8 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append('HAVE_ISNAN')
             if config_cmd.check_func('isinf', **kws_args):
                 moredefs.append('HAVE_ISINF')
+            if config_cmd.check_func('rint', **kws_args):
+                moredefs.append('HAVE_RINT')
                 
             if sys.version[:3] < '2.4':
                 kws_args['headers'].append('stdlib.h')

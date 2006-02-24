@@ -6,7 +6,7 @@
 from numpy.core import *
 import string
 
-class UserArray:
+class UserArray(object):
     def __init__(self, data, dtype=None, copy=True):
         self.array = array(data, dtype, copy)
         self.shape = self.array.shape

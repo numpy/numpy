@@ -222,7 +222,7 @@ static longdouble atanhl(longdouble x)
 extern double hypot(double, double);
 #endif
 #else
-double hypot(double x, double y)
+static double hypot(double x, double y)
 {
 	double yx;
 
@@ -239,6 +239,30 @@ double hypot(double x, double y)
 		yx = y/x;
 		return x*sqrt(1.+yx*yx);
 	}
+}
+#endif
+
+
+#ifndef HAVE_RINT
+static double 
+rint (double x)
+{
+	double y, r;
+	
+	y = floor(x);
+	r = x - y;
+	
+	if (r > 0.5) goto rndup;
+
+	/* Round to nearest even */
+	if (r==0.5) {
+		r = y - 2.0*floor(0.5*y);
+		if (r==1.0) {
+		rndup:	      
+			y+=1.0;
+		}
+	}
+	return y;
 }
 #endif
 
@@ -286,7 +310,6 @@ double hypot(double x, double y)
 #if !defined(signbit)
 #include "_signbit.c"
 #endif
-
 
 /* Now defined the extended type macros */
 
