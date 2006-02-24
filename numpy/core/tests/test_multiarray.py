@@ -173,6 +173,14 @@ class test_zero_rank(ScipyTestCase):
         self.failUnlessRaises(IndexError, subscript, a, (newaxis, 0))
         self.failUnlessRaises(IndexError, subscript, a, (newaxis,)*50)
 
+    def check_constructor(self):
+        x = ndarray(())
+        x[()] = 5
+        self.failUnlessEqual(x[()], 5)
+        y = ndarray((),buffer=x)
+        y[()] = 6
+        self.failUnlessEqual(x[()], 6)
+        
 class test_creation(ScipyTestCase):
     def check_from_attribute(self):
         class x(object):
