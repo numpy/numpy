@@ -43,7 +43,7 @@ Available subpackages
     __doc__ += pkgload.get_pkgdocs()
 
     def test(level=1, verbosity=1):
-        return NumpyTest('numpy').test(level, verbosity)
+        return NumpyTest().test(level, verbosity)
 
     import add_newdocs
 
