@@ -7466,8 +7466,19 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 	   therefore we can extract the subspace with a simple
 	   getitem call which will use view semantics
 	*/
-	
-	sub = PyObject_GetItem((PyObject *)arr, mit->indexobj);
+	/* But, be sure to do it with a true array.
+	 */	
+	if (PyArray_CheckExact(arr)) {
+		sub = array_subscript(arr, mit->indexobj);
+	}
+	else {
+		Py_INCREF(arr);
+		obj = PyArray_EnsureArray((PyObject *)arr);
+		if (obj == NULL) goto fail;
+		sub = array_subscript((PyArrayObject *)obj, mit->indexobj);
+		Py_DECREF(obj);
+	}
+
 	if (sub == NULL) goto fail;
 	mit->subspace = (PyArrayIterObject *)PyArray_IterNew(sub);
 	Py_DECREF(sub);
