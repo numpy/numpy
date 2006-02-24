@@ -2180,6 +2180,7 @@ array.trace = _m(not_implemented)
 array.transpose = _m(transpose)
 array.var = _m(not_implemented)
 array.view =  _m(not_implemented)
+array.round = _m(around)
 del _m, MethodType, not_implemented
 
 

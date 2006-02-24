@@ -2334,14 +2334,12 @@ typedef struct {
 		*floor,
 		*ceil,
 		*maximum,
-		*minimum;	
+		*minimum,
+		*rint;
 	
 } NumericOps;
 
-static NumericOps n_ops = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-                           NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                           NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                           NULL, NULL, NULL, NULL, NULL};
+static NumericOps n_ops; /* NB: static objects inlitialized to zero */
 
 /* Dictionary can contain any of the numeric operations, by name. 
   Those not present will not be changed
@@ -2391,6 +2389,7 @@ PyArray_SetNumericOps(PyObject *dict)
 	SET(ceil);
 	SET(maximum);
 	SET(minimum);
+	SET(rint);
         return 0;
 }
 
@@ -2436,6 +2435,7 @@ PyArray_GetNumericOps(void)
 	GET(ceil);
 	GET(maximum);
 	GET(minimum);
+	GET(rint);
 	return dict;	
 
  fail:

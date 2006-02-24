@@ -1451,6 +1451,20 @@ array_ravel(PyArrayObject *self, PyObject *args)
 	return PyArray_Ravel(self, fortran);
 }
 
+static char doc_round[] = "a.round(decimals=0)";
+
+static PyObject *
+array_round(PyArrayObject *self, PyObject *args, PyObject *kwds) 
+{
+	int decimals = 0;
+	static char *kwlist[] = {"decimals", NULL};
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|i", kwlist,
+					 &decimals)) 
+		return NULL;
+	
+	return _ARET(PyArray_Round(self, decimals));
+}
 
 
 static char doc_setflags[] = "a.setflags(write=None, align=None, uic=None)";
@@ -1643,6 +1657,8 @@ static PyMethodDef array_methods[] = {
 	 METH_VARARGS, doc_flatten},
 	{"ravel", (PyCFunction)array_ravel,
 	 METH_VARARGS, doc_ravel},
+	{"round", (PyCFunction)array_round,
+	 METH_VARARGS|METH_KEYWORDS, doc_round},
 	{"setflags", (PyCFunction)array_setflags,
 	 METH_VARARGS|METH_KEYWORDS, doc_setflags},
 	{"newbyteorder", (PyCFunction)array_newbyteorder,
