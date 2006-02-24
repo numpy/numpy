@@ -361,7 +361,8 @@ class NumpyTest:
 
         return self._get_suite_list(test_module, level, module.__name__)
 
-    def _get_suite_list(self, test_module, level, module_name='__main__'):
+    def _get_suite_list(self, test_module, level, module_name='__main__',
+                        verbosity=1):
         mstr = self._module_str
         suite_list = []
         if hasattr(test_module,'test_suite'):
@@ -376,16 +377,33 @@ class NumpyTest:
                 suite = obj(mthname)
                 if getattr(suite,'isrunnable',lambda mthname:1)(mthname):
                     suite_list.append(suite)
-        self.info('  Found %s tests for %s' % (len(suite_list),module_name))
+        if verbosity>=0:
+            self.info('  Found %s tests for %s' % (len(suite_list),module_name))
         return suite_list
 
     def test(self,level=1,verbosity=1):
         """ Run Numpy module test suite with level and verbosity.
+
+        level:
+          None or <= -3  --- do nothing, return None
+          -2             --- import package, return None
+          -1             --- scan for tests and return TestRunner instance
+          > 0            --- scan for tests, run them, return TestRunner
+
+        verbosity:
+          >= 0           --- show information messages
+          > 1            --- show warnings on missing tests
         """
-        if type(self.package) is type(''):
+        if level is None or level<=-3: # Do nothing.
+            return
+
+        if isinstance(self.package, str):
             exec 'import %s as this_package' % (self.package)
         else:
             this_package = self.package
+
+        if level==-2: # Import package and do nothing.
+            return
 
         package_name = this_package.__name__
 
@@ -405,7 +423,8 @@ class NumpyTest:
         for module in modules:
             suites.extend(self._get_module_tests(module, level, verbosity))
 
-        suites.extend(self._get_suite_list(sys.modules[package_name], level))
+        suites.extend(self._get_suite_list(sys.modules[package_name], level,
+                                           verbosity=verbosity))
 
         all_tests = unittest.TestSuite(suites)
         #if hasattr(sys,'getobjects'):
