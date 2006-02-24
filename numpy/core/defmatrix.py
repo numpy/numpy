@@ -101,11 +101,14 @@ class matrix(N.ndarray):
 
     def __array_finalize__(self, obj):
         ndim = self.ndim
+        if (ndim == 2):
+            return
         if (ndim > 2):
             newshape = tuple([x for x in self.shape if x > 1])
             ndim = len(newshape)
             if ndim == 2:
                 self.shape = newshape
+                return
             elif (ndim > 2):
                 raise ValueError, "shape too large to be a matrix."
         if ndim == 0:
