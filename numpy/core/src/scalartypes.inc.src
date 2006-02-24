@@ -1124,7 +1124,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 
 /**begin repeat
 
-#name=take, getfield, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress, sort, argsort#
+#name=take, getfield, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress, sort, argsort, round#
 */
 
 static PyObject *
@@ -1391,6 +1391,8 @@ static PyMethodDef gentype_methods[] = {
 	 METH_VARARGS, NULL},
 	{"ravel", (PyCFunction)gentype_ravel,
 	 METH_VARARGS, NULL},
+	{"round", (PyCFunction)gentype_round,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"setflags", (PyCFunction)gentype_setflags,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"newbyteorder", (PyCFunction)gentype_newbyteorder,
