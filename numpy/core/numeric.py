@@ -236,15 +236,11 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         return cName + "(%s)" % lst
     else:
         typename=arr.dtype.type.__name__[:-6]
+        lf = ''
         if issubclass(arr.dtype.type, flexible):
-            if typename not in ['unicode','string','void']:
-                typename = arr.dtype.type.__name__
-            if typename == 'unicode':
-                size = arr.itemsize >> 2
-            else:
-                size = arr.itemsize;
-            typename = "(%s,%d)" % (typename, size)
-        return cName + "(%s, dtype=%s)" % (lst, typename)
+            typename = str(arr.dtype)
+            lf = '\n'+' '*len("array(")
+        return cName + "(%s, %sdtype=%s)" % (lst, lf, typename)
 
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     return array2string(a, max_line_width, precision, suppress_small, ' ', "", str)
