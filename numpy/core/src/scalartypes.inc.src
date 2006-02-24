@@ -2423,8 +2423,8 @@ PyArray_TypeObjectFromType(int type)
 
 	descr = PyArray_DescrFromType(type);
 	if (descr == NULL) return NULL;
-	Py_INCREF((PyObject *)descr->typeobj);
 	obj = (PyObject *)descr->typeobj;
+	Py_INCREF(obj);
 	Py_DECREF(descr);
 	return obj;
 }

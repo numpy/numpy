@@ -1434,40 +1434,40 @@ _signbit_set(PyArrayObject *arr)
 
 
 /*OBJECT_API*/
-static char
+static PyArray_SCALARKIND
 PyArray_ScalarKind(int typenum, PyArrayObject **arr) 
 {
 	if (PyTypeNum_ISSIGNED(typenum)) {
-		if (arr && _signbit_set(*arr)) return UFUNC_INTNEG_SCALAR;
-		else return UFUNC_INTPOS_SCALAR;
+		if (arr && _signbit_set(*arr)) return PyArray_INTNEG_SCALAR;
+		else return PyArray_INTPOS_SCALAR;
 	}
-	if (PyTypeNum_ISFLOAT(typenum)) return UFUNC_FLOAT_SCALAR;
-	if (PyTypeNum_ISUNSIGNED(typenum)) return UFUNC_INTPOS_SCALAR;
-	if (PyTypeNum_ISCOMPLEX(typenum)) return UFUNC_COMPLEX_SCALAR;
-	if (PyTypeNum_ISBOOL(typenum)) return UFUNC_BOOL_SCALAR;
+	if (PyTypeNum_ISFLOAT(typenum)) return PyArray_FLOAT_SCALAR;
+	if (PyTypeNum_ISUNSIGNED(typenum)) return PyArray_INTPOS_SCALAR;
+	if (PyTypeNum_ISCOMPLEX(typenum)) return PyArray_COMPLEX_SCALAR;
+	if (PyTypeNum_ISBOOL(typenum)) return PyArray_BOOL_SCALAR;
 
-	return UFUNC_OBJECT_SCALAR;
+	return PyArray_OBJECT_SCALAR;
 }
-
 
 /*OBJECT_API*/
 static int 
-PyArray_CanCoerceScalar(char thistype, char neededtype, char scalar) 
+PyArray_CanCoerceScalar(char thistype, char neededtype, 
+			PyArray_SCALARKIND scalar) 
 {
 
 	switch(scalar) {
-	case UFUNC_NOSCALAR:
-	case UFUNC_BOOL_SCALAR:
-	case UFUNC_OBJECT_SCALAR:
+	case PyArray_NOSCALAR:
+	case PyArray_BOOL_SCALAR:
+	case PyArray_OBJECT_SCALAR:
 		return PyArray_CanCastSafely(thistype, neededtype);
-	case UFUNC_INTPOS_SCALAR:
+	case PyArray_INTPOS_SCALAR:
 		return (neededtype >= PyArray_UBYTE);
-	case UFUNC_INTNEG_SCALAR:
+	case PyArray_INTNEG_SCALAR:
 		return (neededtype >= PyArray_BYTE) &&		\
 			!(PyTypeNum_ISUNSIGNED(neededtype));
-	case UFUNC_FLOAT_SCALAR:
+	case PyArray_FLOAT_SCALAR:
 		return (neededtype >= PyArray_FLOAT);
-	case UFUNC_COMPLEX_SCALAR:
+	case PyArray_COMPLEX_SCALAR:
 		return (neededtype >= PyArray_CFLOAT);
 	}
 	fprintf(stderr, "\n**Error** coerce fall through: %d %d %d\n\n", 

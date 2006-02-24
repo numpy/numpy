@@ -610,7 +610,7 @@ _lowest_type(char intype)
 static int 
 select_types(PyUFuncObject *self, int *arg_types, 
              PyUFuncGenericFunction *function, void **data,
-	     char *scalars)
+	     PyArray_SCALARKIND *scalars)
 {
 
 	int i=0, j;
@@ -663,7 +663,7 @@ select_types(PyUFuncObject *self, int *arg_types,
 	/* If the first argument is a scalar we need to place 
 	   the start type as the lowest type in the class
 	*/
-	if (scalars[0] != UFUNC_NOSCALAR) {
+	if (scalars[0] != PyArray_NOSCALAR) {
 		start_type = _lowest_type(start_type);
 	}
 
@@ -850,7 +850,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 {
         int nargs, i, maxsize;
         int arg_types[MAX_ARGS];
-	char scalars[MAX_ARGS];
+	PyArray_SCALARKIND scalars[MAX_ARGS];
 	PyUFuncObject *self=loop->ufunc;
 	Bool allscalars=TRUE;
 	PyTypeObject *subtype=&PyArray_Type;
@@ -889,7 +889,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		   at this point
 		*/
 		if (mps[i]->nd > 0) {
-			scalars[i] = UFUNC_NOSCALAR;
+			scalars[i] = PyArray_NOSCALAR;
 			allscalars=FALSE;
 		}
 		else scalars[i] = PyArray_ScalarKind(arg_types[i], &(mps[i]));
@@ -903,7 +903,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 	/* If everything is a scalar, then use normal coercion rules */
 	if (allscalars) {
 		for (i=0; i<self->nin; i++) {
-			scalars[i] = UFUNC_NOSCALAR;
+			scalars[i] = PyArray_NOSCALAR;
 		}
 	}
        
@@ -1716,7 +1716,8 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 	PyArrayObject *aar;
         intp loop_i[MAX_DIMS];
         int arg_types[3] = {otype, otype, otype};
-	char scalars[3] = {UFUNC_NOSCALAR, UFUNC_NOSCALAR, UFUNC_NOSCALAR};
+	PyArray_SCALARKIND scalars[3] = {PyArray_NOSCALAR, PyArray_NOSCALAR, 
+					 PyArray_NOSCALAR};
 	int i, j;
 	int nd = (*arr)->nd;
 	/* Reduce type is the type requested of the input 
