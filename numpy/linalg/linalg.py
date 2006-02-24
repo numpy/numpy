@@ -10,12 +10,12 @@ __all__ = ['LinAlgError', 'solve_linear_equations', 'solve',
            'inverse', 'inv', 'cholesky_decomposition', 'cholesky', 'eigenvalues',
            'eigvals', 'Heigenvalues', 'eigvalsh', 'generalized_inverse', 'pinv',
            'determinant', 'det', 'singular_value_decomposition', 'svd',
-           'eigenvectors', 'eig', 'Heigenvectors', 'eigh','lstsq', 'linear_least_squares'
+           'eigenvectors', 'eig', 'Heigenvectors', 'eigh','lstsq',
+           'linear_least_squares'
            ]
            
-from numpy import *
+from numpy.core import *
 import lapack_lite
-import math
 
 # Error object
 class LinAlgError(Exception):
@@ -422,6 +422,7 @@ the number of rows, then residuals will be returned as an empty array
 otherwise resids = sum((b-dot(A,x)**2).
 Singular values less than s[0]*rcond are treated as zero.
 """
+    import math
     a = asarray(a)
     b, wrap = _makearray(b)
     one_eq = len(b.shape) == 1

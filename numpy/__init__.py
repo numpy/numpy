@@ -31,7 +31,8 @@ else:
     del _os
     from _import_tools import PackageLoader
     pkgload = PackageLoader()
-    pkgload('testing','core','linalg','lib','dft','random','f2py','distutils',
+    pkgload('testing','core','lib','linalg','dft','random','f2py',
+            'distutils',
             verbose=NUMPY_IMPORT_VERBOSE,postpone=False)
 
     __doc__ += """
@@ -41,7 +42,9 @@ Available subpackages
 """
     __doc__ += pkgload.get_pkgdocs()
 
-    test = ScipyTest('numpy').test
+    def test(level=1, verbosity=1):
+        return NumpyTest('numpy').test(level, verbosity)
+
     import add_newdocs
 
     __doc__ += """

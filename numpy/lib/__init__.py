@@ -30,5 +30,6 @@ __all__ += getlimits.__all__
 __all__ += utils.__all__
 __all__ += arraysetops.__all__
 
-from numpy.testing import ScipyTest 
-test = ScipyTest().test
+def test(level=1, verbosity=1):
+    from numpy.testing import NumpyTest 
+    return NumpyTest().test(level, verbosity)

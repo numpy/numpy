@@ -11,7 +11,6 @@ __all__ = ['logspace', 'linspace',
            ]
 
 import types
-import math
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
      asarray, empty, empty_like, asanyarray

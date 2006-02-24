@@ -4,8 +4,6 @@ Utility function to facilitate testing.
 
 import os
 import sys
-import time
-import math
 
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_equal', 'assert_array_less',
@@ -27,16 +25,19 @@ def rand(*args):
 
 if sys.platform[:5]=='linux':
     def jiffies(_proc_pid_stat = '/proc/%s/stat'%(os.getpid()),
-                _load_time=time.time()):
+                _load_time=[]):
         """ Return number of jiffies (1/100ths of a second) that this
     process has been scheduled in user mode. See man 5 proc. """
+        import time
+        if not _load_time:
+            _load_time.append(time.time())
         try:
             f=open(_proc_pid_stat,'r')
             l = f.readline().split(' ')
             f.close()
             return int(l[13])
         except:
-            return int(100*(time.time()-_load_time))
+            return int(100*(time.time()-_load_time[0]))
 
     def memusage(_proc_pid_stat = '/proc/%s/stat'%(os.getpid())):
         """ Return virtual memory size in bytes of the running python.
@@ -52,10 +53,13 @@ else:
     # os.getpid is not in all platforms available.
     # Using time is safe but inaccurate, especially when process
     # was suspended or sleeping.
-    def jiffies(_load_time=time.time()):
+    def jiffies(_load_time=[]):
         """ Return number of jiffies (1/100ths of a second) that this
     process has been scheduled in user mode. [Emulation with time.time]. """
-        return int(100*(time.time()-_load_time))
+        import time
+        if not _load_time:
+            _load_time.append(time.time())
+        return int(100*(time.time()-_load_time[0]))
     def memusage():
         """ Return memory usage of running python. [Not implemented]"""
         return
@@ -150,6 +154,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
         Approximately equal is defined as the number of significant digits
         correct
     """
+    import math
     msg = '\nItems are not equal to %d significant digits:\n' % significant
     msg += err_msg
     actual, desired = map(float, (actual, desired))

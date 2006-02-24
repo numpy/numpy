@@ -327,3 +327,17 @@ class PackageLoader:
                       self._format_titles(symbols,'-->')
 
         return retstr
+
+class PackageLoaderDebug(PackageLoader):
+    def _execcmd(self,cmdstr):
+        """ Execute command in parent_frame."""
+        frame = self.parent_frame
+        print 'Executing',`cmdstr`,'...',
+        sys.stdout.flush()
+        exec (cmdstr, frame.f_globals,frame.f_locals)
+        print 'ok'
+        sys.stdout.flush()
+        return
+
+if int(os.environ.get('NUMPY_IMPORT_DEBUG','0')):
+    PackageLoader = PackageLoaderDebug

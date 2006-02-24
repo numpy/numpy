@@ -27,4 +27,4 @@ Utility functions
 
 """
 
-global_symbols = ['ScipyTest']
+global_symbols = ['ScipyTest','NumpyTest']
