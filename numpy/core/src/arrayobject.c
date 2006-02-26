@@ -1995,13 +1995,20 @@ array_subscript(PyArrayObject *self, PyObject *op)
 		return NULL;
 	}
         if (self->nd == 0) {
-		if (op == Py_Ellipsis)
-			return PyArray_ToScalar(self->data, self);
+		if (op == Py_Ellipsis) {
+			/* XXX: This leads to a small inconsistency
+			   XXX: with the nd>0 case where (x[...] is x)
+			   XXX: is false for nd>0 case. */
+			Py_INCREF(self);
+			return (PyObject *)self;
+		}
 		if (op == Py_None)
 			return add_new_axes_0d(self, 1);
 		if (PyTuple_Check(op)) {
-			if (0 == PyTuple_GET_SIZE(op))
-				return PyArray_ToScalar(self->data, self);
+			if (0 == PyTuple_GET_SIZE(op))  {
+				Py_INCREF(self);
+				return (PyObject *)self;
+			}
 			if ((nd = count_new_axes_0d(op)) == -1)
 				return NULL;
 			return add_new_axes_0d(self, nd);
@@ -2211,7 +2218,43 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 static PyObject *
 array_subscript_nice(PyArrayObject *self, PyObject *op) 
 {
-	return PyArray_Return((PyArrayObject *)array_subscript(self, op));
+	/* The following is just a copy of PyArray_Return with an
+	   additional logic in the nd == 0 case.  More efficient
+	   implementation may be possible by refactoring
+	   array_subscript */
+
+	PyArrayObject *mp = (PyArrayObject *)array_subscript(self, op);
+
+	if (mp == NULL) return NULL;
+
+        if (PyErr_Occurred()) {
+                Py_XDECREF(mp);
+                return NULL;
+        }
+
+	if (!PyArray_Check(mp)) return (PyObject *)mp;
+	
+	if (mp->nd == 0) {
+		Bool noellipses = TRUE;
+		if (op == Py_Ellipsis)
+			noellipses = FALSE;
+		else if (PySequence_Check(op)) {
+			int n, i;
+			n = PySequence_Size(op);
+			for (i = 0; i < n; ++i) 
+				if (PySequence_GetItem(op, i) == Py_Ellipsis) {
+					noellipses = FALSE;
+					break;
+				}
+		}
+		if (noellipses) {
+			PyObject *ret;
+			ret = PyArray_ToScalar(mp->data, mp);
+			Py_DECREF(mp);
+			return ret;
+		}
+	}
+	return (PyObject *)mp;
 }
 
 

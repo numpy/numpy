@@ -117,8 +117,8 @@ class test_zero_rank(ScipyTestCase):
         a,b = self.d
         self.failUnlessEqual(a[...], 0)
         self.failUnlessEqual(b[...], 'x')
-        self.failUnless(type(a[...]) is a.dtype.type)
-        self.failUnless(type(b[...]) is str)
+        self.failUnless(a[...] is a)
+        self.failUnless(b[...] is b)
         
     def check_empty_subscript(self):
         a,b = self.d
@@ -197,7 +197,7 @@ class test_bool(ScipyTestCase):
         b1 = bool_(True)
         self.failUnless(a1 is b1)
         self.failUnless(array([True])[0] is a1)
-        self.failUnless(array(True)[...] is a1)
+        self.failUnless(array(True)[()] is a1)
 
 
 class test_methods(ScipyTestCase):
@@ -207,7 +207,13 @@ class test_methods(ScipyTestCase):
         assert_equal(array([12.2,15.5]).round(-1), [10,20])
         assert_equal(array([12.15,15.51]).round(1), [12.2,15.5])
 
-        
+
+class test_subscripting(ScipyTestCase):
+    def check_test_zero_rank(self):
+        x = array([1,2,3])
+        self.failUnless(isinstance(x[0], int))
+        self.failUnless(type(x[0, ...]) is ndarray)
+            
 # Import tests from unicode
 set_local_path()
 from test_unicode import *
