@@ -145,11 +145,11 @@ class matrix(N.ndarray):
         return truend
     
     def __mul__(self, other):
-        if isinstance(other, N.ndarray) or N.isscalar(other) \
-                or not hasattr(other, '__rmul__'):
-            return N.dot(self, other)
-        else:
+        if not isinstance(other, N.ndarray) and \
+               hasattr(other, '__rmul__'):
             return NotImplemented
+        else:
+            return N.dot(self, other)
     
     def __rmul__(self, other):
         return N.dot(other, self)
