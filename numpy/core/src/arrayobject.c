@@ -3931,7 +3931,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 
         /* call the __array_finalize__
 	   method if a subtype and some object passed in */
-	if ((obj != NULL) && (subtype != &PyArray_Type) && 
+	if ((subtype != &PyArray_Type) && 
 	    (subtype != &PyBigArray_Type)) {
 		PyObject *res, *func, *args;
 		static PyObject *str=NULL;
@@ -3947,6 +3947,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		func = PyObject_GetAttr((PyObject *)self, str);
 		if (func) {
 			args = PyTuple_New(1);
+			if (obj == NULL) obj=Py_None;
 			Py_INCREF(obj);
 			PyTuple_SET_ITEM(args, 0, obj);
 			res = PyObject_Call(func, args, NULL);

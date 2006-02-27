@@ -80,7 +80,7 @@ class memmap(ndarray):
         return self
 
     def __array_finalize__(self, obj):
-        if not isinstance(obj, memmap):
+        if obj is not None and not isinstance(obj, memmap):
             raise ValueError, "Cannot create a memmap array that way"
         self._mmap = None
 
