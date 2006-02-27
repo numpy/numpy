@@ -145,7 +145,11 @@ class matrix(N.ndarray):
         return truend
     
     def __mul__(self, other):
-        return N.dot(self, other)
+        if isinstance(other, N.ndarray) or N.isscalar(other) \
+                or not hasattr(other, '__rmul__'):
+            return N.dot(self, other)
+        else:
+            return NotImplemented
     
     def __rmul__(self, other):
         return N.dot(other, self)
@@ -190,7 +194,7 @@ class matrix(N.ndarray):
             raise TypeError, "exponent must be an integer"
 
     def __rpow__(self, other):
-        raise NotImplementedError
+        return NotImplemented
 
     def __repr__(self):
         return repr(self.__array__()).replace('array','matrix')
