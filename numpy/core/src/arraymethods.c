@@ -21,7 +21,7 @@ array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_Take(self, indices, dimension));
 }
 
-static char doc_fill[] = "a.fill(value) places the scalar value at every"\
+static char doc_fill[] = "a.fill(value) places the scalar value at every "\
 	"position in the array.";
 
 static PyObject *
@@ -741,7 +741,7 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 static char doc_argsort[] = "a.argsort(axis=-1,kind='quicksort')\n"\
 	"  Return the indexes into a that would sort it along the"\
-	"  given axis; kind can be 'quicksort', 'mergesort', or 'heapsort'";
+	" given axis; kind can be 'quicksort', 'mergesort', or 'heapsort'";
 
 static PyObject *
 array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds) 
@@ -1348,7 +1348,7 @@ array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_Compress(self, condition, axis));
 }
 
-static char doc_nonzero[] = "a.nonzero() return a tuple of indices referencing"\
+static char doc_nonzero[] = "a.nonzero() return a tuple of indices referencing "\
 	"the elements of a that are nonzero.";
 
 static PyObject *
@@ -1360,7 +1360,7 @@ array_nonzero(PyArrayObject *self, PyObject *args)
 }
 
 
-static char doc_trace[] = "a.trace(offset=0, axis1=0, axis2=1, dtype=None) \n"\
+static char doc_trace[] = "a.trace(offset=0, axis1=0, axis2=1, dtype=None)\n"\
 	"return the sum along the offset diagonal of the arrays indicated\n" \
 	"axis1 and axis2.";
 
