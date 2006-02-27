@@ -459,10 +459,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 	Py_DECREF(arr);
 	Py_DECREF(tup);
 	return ret;
-
 }
-
-
 
 /**begin repeat
 

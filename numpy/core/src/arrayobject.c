@@ -3042,8 +3042,8 @@ array_slice(PyArrayObject *self, int ilow, int ihigh)
 				     self->nd, self->dimensions, 
 				     self->strides, data,
 				     self->flags, (PyObject *)self);
-
         self->dimensions[0] = l;
+	if (r == NULL) return NULL;
         r->base = (PyObject *)self;
         Py_INCREF(self);
 	PyArray_UpdateFlags(r, UPDATE_ALL_FLAGS); 
