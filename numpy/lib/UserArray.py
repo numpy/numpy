@@ -9,11 +9,6 @@ import string
 class UserArray(object):
     def __init__(self, data, dtype=None, copy=True):
         self.array = array(data, dtype, copy)
-        self.shape = self.array.shape
-        self.dtype = self.array.dtype
-        self.name = string.split(str(self.__class__))[0]
-        self.flags = self.array.flags
-        self.itemsize = self.array.itemsize
 
     def __repr__(self):
         if len(self.shape) > 0:
@@ -22,7 +17,7 @@ class UserArray(object):
             return self.__class__.__name__+"("+repr(self.array)+")"
 
     def __array__(self,t=None):
-        if t: return asarray(self.array,t)
+        if t: return self.array.astype(t)
         return self.array
 
     def __float__(self):
@@ -186,19 +181,17 @@ class UserArray(object):
         return self.__class__(args[0])
 
     def __setattr__(self,attr,value):
-        if attr=='shape':
-            self.array.shape=value
-        self.__dict__[attr]=value
+        if attr == 'array':
+            object.__setattr__(self, attr, value)
+            return
+        try:
+            self.array.__setattr__(attr, value)
+        except AttributeError:
+            object.__setattr__(self, attr, value)
 
+    # Only called after other approaches fail.
     def __getattr__(self,attr):
-        # for .attributes for example, and any future attributes
-        if attr == 'real':
-            return self._rc(self.array.real)
-        elif attr == 'imag':
-            return self._rc(self.array.imag)
-        elif attr == 'flat':
-            return self._rc(self.array.flat)
-        return getattr(self.array, attr)
+        return self.array.__getattribute__(attr)
 
 #############################################################
 # Test of class UserArray
