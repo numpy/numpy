@@ -3973,9 +3973,9 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
         intp *dimptr;
         char *new_data;
 	
-        if (!PyArray_ISCONTIGUOUS(self)) {
+        if (!PyArray_ISONESEGMENT(self)) {
                 PyErr_SetString(PyExc_ValueError, 
-                                "resize only works on contiguous arrays");
+                                "resize only works on single-segment arrays");
                 return NULL;
         }
 
@@ -4052,7 +4052,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
         /* make new_strides variable */
         sd = (intp) self->descr->elsize;
         sd = _array_fill_strides(new_strides, new_dimensions, new_nd, sd,
-                                 0, &(self->flags));
+                                 self->flags, &(self->flags));
 
         
         memmove(self->dimensions, new_dimensions, new_nd*sizeof(intp));
@@ -4147,6 +4147,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	longlong offset=0;
 	int fortran = 0;
 	PyArrayObject *ret;
+	intp nb, off;
 
 	buffer.ptr = NULL; 
         /* Usually called with shape and type
@@ -4180,12 +4181,42 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	if (itemsize == 0) {
 		PyErr_SetString(PyExc_ValueError, 
 				"data-type with unspecified variable length");
-		Py_DECREF(descr);
-		return NULL;
+		goto fail;
+	}
+	
+	if (strides.ptr != NULL) {
+		if (strides.len != dims.len) {
+			PyErr_SetString(PyExc_ValueError, 
+					"strides, if given, must be "	\
+					"the same length as shape");
+			goto fail;
+		}
 	}
 
+	if (buffer.ptr == NULL) {
+		nb = 0;
+		off = 0;
+	}
+	else {
+		nb = buffer.len;
+		off = offset;
+	}
+	
+
+	if (strides.ptr &&				\
+	    !PyArray_CheckStrides(itemsize, dims.len, 
+				  nb, off,
+				  dims.ptr, strides.ptr)) {
+		PyErr_SetString(PyExc_ValueError, 
+				"strides is incompatible "		\
+				"with shape of requested "		\
+				"array and size of buffer");
+		goto fail;
+	}
+	
+		
         if (buffer.ptr == NULL) {
-                ret = (PyArrayObject *)\
+                ret = (PyArrayObject *)				\
 			PyArray_NewFromDescr(subtype, descr,
 					     (int)dims.len, 
 					     dims.ptr, 
@@ -4206,23 +4237,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                         "buffer is too small for "      \
                                         "requested array");
                         goto fail;
-                }
-                if (strides.ptr != NULL) {
-			if (strides.len != dims.len) {
-				PyErr_SetString(PyExc_ValueError, 
-						"strides, if given, must be "\
-						"the same length as shape");
-				goto fail;
-			}
-			if (!PyArray_CheckStrides(itemsize, strides.len, 
-						  buffer.len, offset,
-						  dims.ptr, strides.ptr)) {
-				PyErr_SetString(PyExc_ValueError, 
-						"strides is incompatible "\
-						"with shape of requested "\
-						"array and size of buffer");
-				goto fail;
-			}
                 }
                 if (type_num == PyArray_OBJECT) {
                         PyErr_SetString(PyExc_TypeError, "cannot construct "\
