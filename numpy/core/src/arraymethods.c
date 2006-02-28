@@ -642,18 +642,29 @@ array_copy(PyArrayObject *self, PyObject *args)
         return PyArray_NewCopy(self, fortran);
 }
 
-static char doc_resize[] = "self.resize(new_shape).  "\
+static char doc_resize[] = "self.resize(new_shape, refcheck=True).  "\
 	"Change size and shape of self inplace.\n"\
 	"\n    Array must own its own memory and not be referenced by other " \
 	"arrays\n    Returns None.";
 
 static PyObject *
-array_resize(PyArrayObject *self, PyObject *args) 
+array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
         PyArray_Dims newshape;
         PyObject *ret;
 	int n;
+	int refcheck = 1;
 	
+	if (kwds != NULL) {
+		PyObject *ref;
+		ref = PyDict_GetItemString(kwds, "refcheck");
+		if (ref) {
+			refcheck = PyInt_AsLong(ref);
+			if (refcheck==-1 && PyErr_Occurred()) {
+				return NULL;
+			}
+		}
+	}
 	n = PyTuple_Size(args);
 	if (n <= 1) {
 		if (!PyArg_ParseTuple(args, "O&", PyArray_IntpConverter, 
@@ -668,7 +679,8 @@ array_resize(PyArrayObject *self, PyObject *args)
 			return NULL;			
 		}
 	}
-	ret = PyArray_Resize(self, &newshape);
+	
+	ret = PyArray_Resize(self, &newshape, refcheck);
         PyDimMem_FREE(newshape.ptr);
         if (ret == NULL) return NULL;
 	Py_DECREF(ret);
@@ -1563,7 +1575,8 @@ static PyMethodDef array_methods[] = {
 	{"setfield", (PyCFunction)array_setfield, 
 	 METH_VARARGS | METH_KEYWORDS, doc_setfield},
         {"copy", (PyCFunction)array_copy, 1, doc_copy},  
-        {"resize", (PyCFunction)array_resize, 1, doc_resize}, 
+        {"resize", (PyCFunction)array_resize, 
+	 METH_VARARGS | METH_KEYWORDS, doc_resize}, 
 
 	/* for subtypes */
 	{"__array__", (PyCFunction)array_getarray, 1, doc_array_getarray},

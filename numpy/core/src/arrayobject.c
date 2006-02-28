@@ -3845,7 +3845,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 	self->nd = nd;
 	self->dimensions = NULL;
 	self->data = NULL;
-	if (data == NULL) {  /* strides is NULL too */
+	if (data == NULL) {  
 		self->flags = DEFAULT_FLAGS;
 		if (flags) {
 			self->flags |= FORTRAN; 
@@ -3872,14 +3872,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 			sd = _array_fill_strides(self->strides, dims, nd, sd,
 						 flags, &(self->flags));
 		}
-		else {
-			if (data == NULL) {
-				PyErr_SetString(PyExc_ValueError, 
-						"if 'strides' is given in " \
-						"array creation, data must " \
-						"be given too");
-				goto fail;
-			} 
+		else { /* we allow strides even when we create
+			  the memory, but be careful with this...
+		       */
 			memcpy(self->strides, strides, sizeof(intp)*nd);
 		}
 	}       	
@@ -3922,17 +3917,17 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 
         /* call the __array_finalize__
 	   method if a subtype and some object passed in */
-	if ((subtype != &PyArray_Type) && 
-	    (subtype != &PyBigArray_Type)) {
+	if ((subtype != &PyArray_Type) && (subtype != &PyBigArray_Type)) {
 		PyObject *res, *func, *args;
 		static PyObject *str=NULL;
 
 		if (str == NULL) {
 			str = PyString_InternFromString("__array_finalize__");
 		}
-		if (!(self->flags & OWNDATA)) { /* did not allocate own data */
-			 /* update flags before calling back into
-			    Python */
+		if (strides != NULL) { /* did not allocate own data 
+					  or funny strides */
+			/* update flags before calling back into
+			   Python */
 			PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
 		}
 		func = PyObject_GetAttr((PyObject *)self, str);
@@ -3961,9 +3956,13 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 /*OBJECT_API
  Resize (reallocate data).  Only works if nothing else is referencing
  this array and it is contiguous.
+ If refcheck is 0, then the reference count is not checked
+ and assumed to be 1.
+ You still must own this data and have no weak-references and no base
+ object.
 */
 static PyObject * 
-PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
+PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
 {
         intp oldsize, newsize;
         int new_nd=newshape->len, k, n, elsize;
@@ -3991,7 +3990,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape)
 			return NULL;
 		}
 		
-		refcnt = REFCOUNT(self);
+		if (refcheck) refcnt = REFCOUNT(self);
+		else refcnt = 1;
 		if ((refcnt > 2) || (self->base != NULL) ||     \
 		    (self->weakreflist != NULL)) {
 			PyErr_SetString(PyExc_ValueError, 
@@ -4177,6 +4177,13 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	type_num = descr->type_num;
 	itemsize = descr->elsize;
 
+	if (itemsize == 0) {
+		PyErr_SetString(PyExc_ValueError, 
+				"data-type with unspecified variable length");
+		Py_DECREF(descr);
+		return NULL;
+	}
+
         if (buffer.ptr == NULL) {
                 ret = (PyArrayObject *)\
 			PyArray_NewFromDescr(subtype, descr,
@@ -4190,9 +4197,10 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
         else {  /* buffer given -- use it */
                 if (dims.len == 1 && dims.ptr[0] == -1) {
-                        dims.ptr[offset] = buffer.len / itemsize;
+                        dims.ptr[0] = (buffer.len-offset) / itemsize;
                 }
-                else if (buffer.len < itemsize*                 \
+                else if ((strides.ptr == NULL) && \
+			 buffer.len < itemsize*				\
                          PyArray_MultiplyList(dims.ptr, dims.len)) {
                         PyErr_SetString(PyExc_TypeError, 
                                         "buffer is too small for "      \
