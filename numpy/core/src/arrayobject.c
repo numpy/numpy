@@ -3592,49 +3592,40 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 }
 
 /* This routine checks to see if newstrides (of length nd) will not 
- walk outside of the memory implied by a single segment array of the provided 
- dimensions and element size.  If numbytes is 0 it will be calculated from 
- the provided shape and element size.
+   ever be able to walk outside of the memory implied numbytes and offset.
 
- For axes with a positive stride this function checks for a walk
- beyond the right end of the buffer, for axes with a negative stride,
- it checks for a walk beyond the left end of the buffer.  Zero strides
- are disallowed.
+   The available memory is assumed to start at -offset and proceed
+   to numbytes-offset.  The strides are checked to ensure 
+   that accessing memory using striding will not try to reach beyond
+   this memory for any of the axes.
+   
+   If numbytes is 0 it will be calculated using the dimensions and
+   element-size.
+   
+   This function checks for walking beyond the beginning and right-end
+   of the buffer and therefore works for any integer stride (positive
+   or negative).
 */
+
 /*OBJECT_API*/
 static Bool
 PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
 		     intp *dims, intp *newstrides)
 {
 	int i;
-	
+	intp byte_begin;
+	intp begin;
+	intp end;
+
 	if (numbytes == 0) 
 		numbytes = PyArray_MultiplyList(dims, nd) * elsize;
-	
+
+	begin = -offset;
+	end = numbytes - offset - elsize;
 	for (i=0; i<nd; i++) {
-		intp stride = newstrides[i];
-		if (stride > 0) {
-			/* The last stride does not need to be fully inside
-			   the buffer, only its first elsize bytes */
-			if (offset + stride*(dims[i]-1)+elsize > numbytes) {
-				return FALSE;
-			}
-		}
-		else if (stride < 0) {
-			if (offset + stride*dims[i] < 0) {
-				return FALSE;
-			}
-		} else {
-			/* XXX: Zero strides may be useful, but currently 
-			   XXX: allowing them would lead to strange results,
-			   XXX: for example :
-			   XXX: >>> x = arange(5)
-			   XXX: >>> x.strides = 0
-			   XXX: >>> x += 1
-			   XXX: >>> x
-			   XXX: array([5, 5, 5, 5, 5])  */
+		byte_begin = newstrides[i]*(dims[i]-1);
+		if ((byte_begin < begin) || (byte_begin > end))
 			return FALSE;
-		}
 	}
 	return TRUE;
 	
@@ -4334,7 +4325,10 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 {
 	PyArray_Dims newstrides = {NULL, 0};
 	PyArrayObject *new;
-	intp numbytes;
+	intp numbytes=-1;
+	intp offset;
+	int buf_len;
+	char *buf;
 
 	if (!PyArray_IntpConverter(obj, &newstrides) || \
 	    newstrides.ptr == NULL) {
@@ -4347,13 +4341,25 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 		goto fail;
 	}
 	new = self;
-	while(new->base != NULL) {
-		if (PyArray_Check(new->base)) 
-			new = (PyArrayObject *)new->base;
+	offset = 0;
+	while(PyArray_Check(new->base)) {
+		new = (PyArrayObject *)(new->base);
 	}
-	numbytes = PyArray_MultiplyList(new->dimensions, 
-					new->nd)*new->descr->elsize;
-	
+	/* Get the available memory through the buffer 
+	   interface on new->base or if that fails 
+	   from the current new */
+	if (PyObject_AsReadBuffer(new->base, (const void **)&buf, 
+				  &buf_len) >= 0) {
+		offset = self->data - buf;
+		numbytes = buf_len + offset;
+	} 
+	else {
+		PyErr_Clear();
+  		numbytes = PyArray_MultiplyList(new->dimensions, 
+						new->nd)*new->descr->elsize;
+		offset = self->data - new->data;
+	}
+
 	if (!PyArray_CheckStrides(self->descr->elsize, self->nd, numbytes,
 				  self->data - new->data,
 				  self->dimensions, newstrides.ptr)) {
