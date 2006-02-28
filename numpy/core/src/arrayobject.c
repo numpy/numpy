@@ -4147,7 +4147,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	longlong offset=0;
 	int fortran = 0;
 	PyArrayObject *ret;
-	intp nb, off;
 
 	buffer.ptr = NULL; 
         /* Usually called with shape and type
@@ -4185,36 +4184,35 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	}
 	
 	if (strides.ptr != NULL) {
+		intp nb, off;
 		if (strides.len != dims.len) {
 			PyErr_SetString(PyExc_ValueError, 
 					"strides, if given, must be "	\
 					"the same length as shape");
 			goto fail;
 		}
-	}
 
-	if (buffer.ptr == NULL) {
-		nb = 0;
-		off = 0;
-	}
-	else {
-		nb = buffer.len;
-		off = offset;
-	}
-	
-
-	if (strides.ptr &&				\
-	    !PyArray_CheckStrides(itemsize, dims.len, 
-				  nb, off,
-				  dims.ptr, strides.ptr)) {
-		PyErr_SetString(PyExc_ValueError, 
-				"strides is incompatible "		\
-				"with shape of requested "		\
-				"array and size of buffer");
-		goto fail;
-	}
-	
+		if (buffer.ptr == NULL) {
+			nb = 0;
+			off = 0;
+		}
+		else {
+			nb = buffer.len;
+			off = offset;
+		}
 		
+
+		if (!PyArray_CheckStrides(itemsize, dims.len, 
+					  nb, off,
+					  dims.ptr, strides.ptr)) {
+			PyErr_SetString(PyExc_ValueError, 
+					"strides is incompatible "	\
+					"with shape of requested "	\
+					"array and size of buffer");
+			goto fail;
+		}
+	}
+			
         if (buffer.ptr == NULL) {
                 ret = (PyArrayObject *)				\
 			PyArray_NewFromDescr(subtype, descr,
