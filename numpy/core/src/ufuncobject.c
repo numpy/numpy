@@ -2547,6 +2547,7 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
 				++np;
 			}
 			else {
+				Py_DECREF(wrap);
 				wrap = NULL;
 			}
 		}
@@ -2617,7 +2618,8 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
                         Py_XINCREF(output_wrap[i]);
                 }
         }
-           
+
+	Py_XDECREF(wrap);
 	return;
 }
 
@@ -2692,9 +2694,12 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
                         }
 			res = PyObject_CallFunction(wrap, "O(OOi)",
 						    mps[j], self, args, i);
-			if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
+			if (res == NULL && \
+			    PyErr_ExceptionMatches(PyExc_TypeError)) {
 				PyErr_Clear();
-				res = PyObject_CallFunctionObjArgs(wrap, mps[j], NULL);
+				res = PyObject_CallFunctionObjArgs(wrap, 
+								   mps[j], 
+								   NULL);
 			}
 			Py_DECREF(wrap);
 			if (res == NULL) goto fail;
