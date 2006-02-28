@@ -4325,8 +4325,8 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 {
 	PyArray_Dims newstrides = {NULL, 0};
 	PyArrayObject *new;
-	intp numbytes=-1;
-	intp offset;
+	intp numbytes=0;
+	intp offset=0;
 	int buf_len;
 	char *buf;
 
@@ -4341,15 +4341,15 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 		goto fail;
 	}
 	new = self;
-	offset = 0;
-	while(PyArray_Check(new->base)) {
+	while(new->base && PyArray_Check(new->base)) {
 		new = (PyArrayObject *)(new->base);
 	}
 	/* Get the available memory through the buffer 
 	   interface on new->base or if that fails 
 	   from the current new */
-	if (PyObject_AsReadBuffer(new->base, (const void **)&buf, 
-				  &buf_len) >= 0) {
+	if (new->base && PyObject_AsReadBuffer(new->base, 
+					       (const void **)&buf, 
+					       &buf_len) >= 0) {
 		offset = self->data - buf;
 		numbytes = buf_len + offset;
 	} 
@@ -4361,7 +4361,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 	}
 
 	if (!PyArray_CheckStrides(self->descr->elsize, self->nd, numbytes,
-				  self->data - new->data,
+				  offset,
 				  self->dimensions, newstrides.ptr)) {
 		PyErr_SetString(PyExc_ValueError, "strides is not "\
 				"compatible with available memory");
