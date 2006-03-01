@@ -1061,7 +1061,7 @@ gentype_wraparray(PyObject *scalar, PyObject *args)
 
 /**begin repeat
 
-#name=tolist, item, tostring, astype, copy, resize, __deepcopy__, choose, searchsorted, argmax, argmin, reshape, view, swapaxes, max, min, ptp, conj, conjugate, nonzero, all, any, flatten, ravel, fill, transpose, newbyteorder#
+#name=tolist, item, tostring, astype, copy, __deepcopy__, choose, searchsorted, reshape, view, swapaxes, conj, conjugate, nonzero, flatten, ravel, fill, transpose, newbyteorder#
 */
 
 static PyObject *
@@ -1120,7 +1120,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 
 /**begin repeat
 
-#name=take, getfield, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress, sort, argsort, round#
+#name=take, getfield, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress, sort, argsort, round, argmax, argmin, max, min, ptp, any, all, resize#
 */
 
 static PyObject *
@@ -1334,9 +1334,9 @@ static PyMethodDef gentype_methods[] = {
 	{"searchsorted",  (PyCFunction)gentype_searchsorted, 
 	 METH_VARARGS, NULL},	
 	{"argmax",	(PyCFunction)gentype_argmax, 
-	 METH_VARARGS, NULL},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"argmin",  (PyCFunction)gentype_argmin,
-	 METH_VARARGS, NULL},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"reshape",	(PyCFunction)gentype_reshape, 
 	 METH_VARARGS, NULL},
 	{"squeeze",	(PyCFunction)gentype_squeeze, 
@@ -1346,11 +1346,11 @@ static PyMethodDef gentype_methods[] = {
 	{"swapaxes", (PyCFunction)gentype_swapaxes,
 	 METH_VARARGS, NULL},
 	{"max", (PyCFunction)gentype_max,
-	 METH_VARARGS, NULL},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"min", (PyCFunction)gentype_min,
-	 METH_VARARGS, NULL},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"ptp", (PyCFunction)gentype_ptp,
-	 METH_VARARGS, NULL},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"mean", (PyCFunction)gentype_mean,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"trace", (PyCFunction)gentype_trace,
@@ -1378,9 +1378,9 @@ static PyMethodDef gentype_methods[] = {
 	{"cumprod", (PyCFunction)gentype_cumprod,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"all", (PyCFunction)gentype_all,
-	 METH_VARARGS, NULL},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"any", (PyCFunction)gentype_any,
-	 METH_VARARGS, NULL},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"compress", (PyCFunction)gentype_compress,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"flatten", (PyCFunction)gentype_flatten,

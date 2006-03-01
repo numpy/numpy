@@ -183,12 +183,15 @@ array_view(PyArrayObject *self, PyObject *args)
 static char doc_argmax[] = "a.argmax(axis=None)";
 
 static PyObject *
-array_argmax(PyArrayObject *self, PyObject *args) 
+array_argmax(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
+	static char *kwlist[] = {"axis", NULL};
 	
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
-			      &axis)) return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist, 
+					 PyArray_AxisConverter,
+					 &axis))
+		return NULL;	
 	
 	return _ARET(PyArray_ArgMax(self, axis));
 }
@@ -196,12 +199,15 @@ array_argmax(PyArrayObject *self, PyObject *args)
 static char doc_argmin[] = "a.argmin(axis=None)";
 
 static PyObject *
-array_argmin(PyArrayObject *self, PyObject *args) 
+array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
+	static char *kwlist[] = {"axis", NULL};
 	
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
-			      &axis)) return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist, 
+					 PyArray_AxisConverter,
+					 &axis))
+		return NULL;	
 	
 	return _ARET(PyArray_ArgMin(self, axis));
 }
@@ -209,12 +215,15 @@ array_argmin(PyArrayObject *self, PyObject *args)
 static char doc_max[] = "a.max(axis=None)";
 
 static PyObject *
-array_max(PyArrayObject *self, PyObject *args) 
+array_max(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
+	static char *kwlist[] = {"axis", NULL};
 	
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
-			      &axis)) return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist, 
+					 PyArray_AxisConverter,
+					 &axis))
+		return NULL;	
 	
 	return PyArray_Max(self, axis);
 }
@@ -222,13 +231,16 @@ array_max(PyArrayObject *self, PyObject *args)
 static char doc_ptp[] = "a.ptp(axis=None) a.max(axis)-a.min(axis)";
 
 static PyObject *
-array_ptp(PyArrayObject *self, PyObject *args) 
+array_ptp(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
+	static char *kwlist[] = {"axis", NULL};
 	
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
-			      &axis)) return NULL;
-	
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist, 
+					 PyArray_AxisConverter,
+					 &axis))
+		return NULL;	
+		
 	return PyArray_Ptp(self, axis);
 }
 
@@ -236,16 +248,18 @@ array_ptp(PyArrayObject *self, PyObject *args)
 static char doc_min[] = "a.min(axis=None)";
 
 static PyObject *
-array_min(PyArrayObject *self, PyObject *args) 
+array_min(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
+	static char *kwlist[] = {"axis", NULL};
 	
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
-			      &axis)) return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist, 
+					 PyArray_AxisConverter,
+					 &axis))
+		return NULL;	
 	
 	return PyArray_Min(self, axis);
 }
-
 
 static char doc_swapaxes[] = "a.swapaxes(axis1, axis2)  returns new view with axes swapped.";
 
@@ -1287,12 +1301,15 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static char doc_any[] = "a.any(axis=None)";
 
 static PyObject *
-array_any(PyArrayObject *self, PyObject *args) 
+array_any(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
+	static char *kwlist[] = {"axis", NULL};
 	
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
-			      &axis)) return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist, 
+					 PyArray_AxisConverter,
+					 &axis))
+		return NULL;	
 	
 	return PyArray_Any(self, axis);
 }
@@ -1300,13 +1317,16 @@ array_any(PyArrayObject *self, PyObject *args)
 static char doc_all[] = "a.all(axis=None)";
 
 static PyObject *
-array_all(PyArrayObject *self, PyObject *args) 
+array_all(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
+	static char *kwlist[] = {"axis", NULL};
 	
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_AxisConverter, 
-			      &axis)) return NULL;
-	
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist, 
+					 PyArray_AxisConverter,
+					 &axis))
+		return NULL;	
+
 	return PyArray_All(self, axis);
 }
 
@@ -1617,9 +1637,9 @@ static PyMethodDef array_methods[] = {
 	{"searchsorted",  (PyCFunction)array_searchsorted, 
 	 METH_VARARGS, doc_searchsorted},	
 	{"argmax",	(PyCFunction)array_argmax, 
-	 METH_VARARGS, doc_argmax},
+	 METH_VARARGS|METH_KEYWORDS, doc_argmax},
 	{"argmin",  (PyCFunction)array_argmin,
-	 METH_VARARGS, doc_argmin},
+	 METH_VARARGS|METH_KEYWORDS, doc_argmin},
 	{"reshape",	(PyCFunction)array_reshape, 
 	 METH_VARARGS, doc_reshape},
 	{"squeeze",	(PyCFunction)array_squeeze,
@@ -1629,11 +1649,11 @@ static PyMethodDef array_methods[] = {
 	{"swapaxes", (PyCFunction)array_swapaxes,
 	 METH_VARARGS, doc_swapaxes},
 	{"max", (PyCFunction)array_max,
-	 METH_VARARGS, doc_max},
+	 METH_VARARGS|METH_KEYWORDS, doc_max},
 	{"min", (PyCFunction)array_min,
-	 METH_VARARGS, doc_min},
+	 METH_VARARGS|METH_KEYWORDS, doc_min},
 	{"ptp", (PyCFunction)array_ptp,
-	 METH_VARARGS, doc_ptp},
+	 METH_VARARGS|METH_KEYWORDS, doc_ptp},
 	{"mean", (PyCFunction)array_mean,
 	 METH_VARARGS|METH_KEYWORDS, doc_mean},
 	{"trace", (PyCFunction)array_trace,
@@ -1661,9 +1681,9 @@ static PyMethodDef array_methods[] = {
 	{"cumprod", (PyCFunction)array_cumprod,
 	 METH_VARARGS|METH_KEYWORDS, doc_cumprod},
 	{"all", (PyCFunction)array_all,
-	 METH_VARARGS, doc_all},
+	 METH_VARARGS|METH_KEYWORDS, doc_all},
 	{"any", (PyCFunction)array_any,
-	 METH_VARARGS, doc_any},
+	 METH_VARARGS|METH_KEYWORDS, doc_any},
 	{"compress", (PyCFunction)array_compress,
 	 METH_VARARGS|METH_KEYWORDS, doc_compress},
 	{"flatten", (PyCFunction)array_flatten,
