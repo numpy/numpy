@@ -166,9 +166,9 @@ array_view(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O", &otype)) return NULL;
 
 	if (otype) {
-		if (PyType_Check(otype) &&				\
+		if (PyType_Check(otype) &&			\
 		    PyType_IsSubtype((PyTypeObject *)otype, 
-				     &PyBigArray_Type)) {
+				     &PyArray_Type)) {
 			return PyArray_View(self, NULL, 
                                             (PyTypeObject *)otype);
                 }
@@ -604,13 +604,13 @@ array_getarray(PyArrayObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "|O&", PyArray_DescrConverter,
 			      &newtype)) return NULL;
 	
-	/* convert to PyArray_Type or PyBigArray_Type */
-	if (!PyArray_CheckExact(self) || !PyBigArray_CheckExact(self)) {
+	/* convert to PyArray_Type */
+	if (!PyArray_CheckExact(self)) {
 		PyObject *new;
 		PyTypeObject *subtype = &PyArray_Type;
 
 		if (!PyType_IsSubtype(self->ob_type, &PyArray_Type)) {
-			subtype = &PyBigArray_Type;
+			subtype = &PyArray_Type;
 		}
 		
 		Py_INCREF(PyArray_DESCR(self));

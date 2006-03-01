@@ -1,4 +1,4 @@
-__all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
+__all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtype',
            'fromstring', 'fromfile', 'frombuffer','newbuffer',
            'getbuffer',
@@ -43,7 +43,6 @@ extend_all(numerictypes)
 newaxis = None
 
 ndarray = multiarray.ndarray
-bigndarray = multiarray.bigndarray
 flatiter = multiarray.flatiter
 broadcast = multiarray.broadcast
 dtype=multiarray.dtype

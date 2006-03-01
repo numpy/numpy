@@ -79,7 +79,7 @@ extern "C" CONFUSE_EMACS
 #define PY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x00090503
+#define NDARRAY_VERSION 0x00090504
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -1408,9 +1408,8 @@ typedef struct {
 
 #define PyArray_DescrCheck(op) ((op)->ob_type == &PyArrayDescr_Type)
 
-#define PyArray_Check(op) ((op)->ob_type == &PyArray_Type || \
-			   PyObject_TypeCheck((op), &PyBigArray_Type))
-#define PyBigArray_CheckExact(op) ((op)->ob_type == &PyBigArray_Type)
+#define PyArray_Check(op) ((op)->ob_type == &PyArray_Type ||		\
+			   PyObject_TypeCheck((op), &PyArray_Type))
 #define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
 
 #define PyArray_IsZeroDim(op) (PyArray_Check(op) && (PyArray_NDIM(op) == 0))

@@ -894,10 +894,6 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		}
 		else scalars[i] = PyArray_ScalarKind(arg_types[i], &(mps[i]));
 
-		/* If any input is a big-array */
-		if (!PyType_IsSubtype(mps[i]->ob_type, &PyArray_Type)) {
-			subtype = &PyBigArray_Type;
-		}
         }
 
 	/* If everything is a scalar, then use normal coercion rules */
@@ -921,7 +917,6 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
             (loop->ufunc->nin==2) && (loop->ufunc->nout == 1)) {
 		PyObject *_obj = PyTuple_GET_ITEM(args, 1);
                 if (!PyArray_CheckExact(_obj) &&			\
-		    !PyBigArray_CheckExact(_obj) &&			\
 		    PyObject_HasAttrString(_obj, "__array_priority__") && \
 		    _has_reflected_op(_obj, loop->ufunc->name)) {
                         loop->notimplemented = 1;
@@ -2536,7 +2531,7 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
 	nargs = PyTuple_GET_SIZE(args);
 	for (i=0; i<nin; i++) {
 		obj = PyTuple_GET_ITEM(args, i);
-		if (PyArray_CheckExact(obj) || PyBigArray_CheckExact(obj) || \
+		if (PyArray_CheckExact(obj) ||	\
 		    PyArray_IsAnyScalar(obj))
 			continue;
 		wrap = PyObject_GetAttrString(obj, "__array_wrap__");
@@ -2596,8 +2591,7 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
                         obj = PyTuple_GET_ITEM(args, j);
                         if (obj == Py_None)
                                 continue;
-                        if (PyArray_CheckExact(obj) || 
-                            PyBigArray_CheckExact(obj)) {
+                        if (PyArray_CheckExact(obj)) {
                                 output_wrap[i] = Py_None;
                         }
                         else {

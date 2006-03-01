@@ -4327,7 +4327,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 		return NULL;
 
 	/* fast exit if simple call */
-	if ((PyArray_CheckExact(op) || PyBigArray_CheckExact(op))) {
+	if (PyArray_CheckExact(op)) {
 		if (type==NULL) {
 			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
 				Py_INCREF(op);
@@ -5831,25 +5831,6 @@ DL_EXPORT(void) initmultiarray(void) {
 	d = PyModule_GetDict(m);
 	if (!d) goto err; 
 
-	/* Create the module and add the functions */
-	if (PyType_Ready(&PyBigArray_Type) < 0) 
-		return;
-
-        PyArray_Type.tp_base = &PyBigArray_Type;
-
-        PyArray_Type.tp_as_mapping = &array_as_mapping;
-	/* Even though, this would be inherited, it needs to be set now
-	   so that the __getitem__ will map to the as_mapping descriptor
-	*/
-        PyArray_Type.tp_as_number = &array_as_number;               
-	/* For good measure */
-	PyArray_Type.tp_as_sequence = &array_as_sequence;
-	PyArray_Type.tp_as_buffer = &array_as_buffer;	
-        PyArray_Type.tp_flags = (Py_TPFLAGS_DEFAULT 
-				 | Py_TPFLAGS_BASETYPE
-				 | Py_TPFLAGS_CHECKTYPES);
-        PyArray_Type.tp_doc = Arraytype__doc__;
-
 	if (PyType_Ready(&PyArray_Type) < 0)
                 return;
 
@@ -5881,8 +5862,6 @@ DL_EXPORT(void) initmultiarray(void) {
 	s = PyString_FromString("3.0");
 	PyDict_SetItemString(d, "__version__", s);
 	Py_DECREF(s);
-        Py_INCREF(&PyBigArray_Type);
-	PyDict_SetItemString(d, "bigndarray", (PyObject *)&PyBigArray_Type);
         Py_INCREF(&PyArray_Type);
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
         Py_INCREF(&PyArrayIter_Type);

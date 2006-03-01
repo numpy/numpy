@@ -32,8 +32,6 @@ PyArray_GetPriority(PyObject *obj, double default_)
 
 	if (PyArray_CheckExact(obj))
 		return priority;
-        if (PyBigArray_CheckExact(obj)) 
-                return PyArray_BIG_PRIORITY;
 
         ret = PyObject_GetAttrString(obj, "__array_priority__");
         if (ret != NULL) priority = PyFloat_AsDouble(ret);
@@ -3917,7 +3915,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 
         /* call the __array_finalize__
 	   method if a subtype and some object passed in */
-	if ((subtype != &PyArray_Type) && (subtype != &PyBigArray_Type)) {
+	if ((subtype != &PyArray_Type)) {
 		PyObject *res, *func, *args;
 		static PyObject *str=NULL;
 
@@ -4421,8 +4419,6 @@ array_priority_get(PyArrayObject *self)
 {
 	if (PyArray_CheckExact(self)) 
 		return PyFloat_FromDouble(PyArray_PRIORITY);
-	else if (PyBigArray_CheckExact(self)) 
-		return PyFloat_FromDouble(PyArray_BIG_PRIORITY);
 	else
 		return PyFloat_FromDouble(PyArray_SUBTYPE_PRIORITY);
 }
@@ -5027,10 +5023,10 @@ static char Arraytype__doc__[] =
 	"   No __init__ method is needed because the array is fully \n"
 	"      initialized after the __new__ method.";
 	
-static PyTypeObject PyBigArray_Type = { 
+static PyTypeObject PyArray_Type = { 
         PyObject_HEAD_INIT(NULL)
         0,					  /*ob_size*/
-        "numpy.bigndarray",		  /*tp_name*/
+        "numpy.ndarray",		          /*tp_name*/
         sizeof(PyArrayObject),		          /*tp_basicsize*/
         0,					  /*tp_itemsize*/
         /* methods */
@@ -5041,7 +5037,7 @@ static PyTypeObject PyBigArray_Type = {
         (cmpfunc)0,     		          /*tp_compare*/
         (reprfunc)array_repr,		          /*tp_repr*/
         &array_as_number,			  /*tp_as_number*/
-        NULL, 			                  /*tp_as_sequence*/
+        &array_as_sequence,	                  /*tp_as_sequence*/
         &array_as_mapping,			  /*tp_as_mapping*/
         (hashfunc)0,			          /*tp_hash*/
         (ternaryfunc)0,			          /*tp_call*/
@@ -5049,7 +5045,7 @@ static PyTypeObject PyBigArray_Type = {
 		
         (getattrofunc)0,			  /*tp_getattro*/
         (setattrofunc)0,			  /*tp_setattro*/
-        NULL,                            	  /*tp_as_buffer*/
+        &array_as_buffer,                      	  /*tp_as_buffer*/
         (Py_TPFLAGS_DEFAULT 
          | Py_TPFLAGS_BASETYPE
          | Py_TPFLAGS_CHECKTYPES),                /*tp_flags*/
@@ -5087,20 +5083,6 @@ static PyTypeObject PyBigArray_Type = {
         0,					  /* tp_subclasses */
         0					  /* tp_weaklist */
 };
-
-/* A standard array will subclass from the Big Array and 
-   add the array_as_sequence table
-   and the array_as_buffer table
- */
-
-static PyTypeObject PyArray_Type = { 
-        PyObject_HEAD_INIT(NULL)
-        0,					  /*ob_size*/
-        "numpy.ndarray",			  /*tp_name*/
-        sizeof(PyArrayObject),		          /*tp_basicsize*/
-        0,					  /*tp_itemsize*/
-};
-
 
 /* The rest of this code is to build the right kind of array from a python */
 /* object. */
@@ -5804,8 +5786,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                                 PyErr_SetString(PyExc_ValueError, msg);
                                 return NULL;
                         }
-                        if ((flags & ENSUREARRAY) && \
-                            (subtype != &PyBigArray_Type)) {
+                        if ((flags & ENSUREARRAY)) {
                                 subtype = &PyArray_Type;
                         }
 			ret = (PyArrayObject *)         \
@@ -5828,8 +5809,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 		/* If no copy then just increase the reference
 		   count and return the input */
 		else {  
-                        if ((flags & ENSUREARRAY) && \
-                            (subtype != &PyBigArray_Type)) {
+                        if ((flags & ENSUREARRAY)) {
 				Py_DECREF(newtype);
 				Py_INCREF(arr->descr);
 				ret = (PyArrayObject *)			\
@@ -5864,8 +5844,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                                 PyErr_SetString(PyExc_ValueError, msg);
                                 return NULL;
                         }
-                        if ((flags & ENSUREARRAY) && \
-                            (subtype != &PyBigArray_Type)) {
+                        if ((flags & ENSUREARRAY)) {
                                 subtype = &PyArray_Type;
                         }
                         ret = (PyArrayObject *)\
@@ -6206,22 +6185,28 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
         array_meth = PyObject_GetAttrString(op, "__array__");
         if (array_meth == NULL) {PyErr_Clear(); return Py_NotImplemented;}
         if (context == NULL) {
-                if (typecode == NULL) new = PyObject_CallFunction(array_meth, NULL);
+                if (typecode == NULL) new = PyObject_CallFunction(array_meth, 
+								  NULL);
                 else new = PyObject_CallFunction(array_meth, "O", typecode);
         }
         else {
                 if (typecode == NULL) {
-                        new = PyObject_CallFunction(array_meth, "OO", Py_None, context);
-                        if (new == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
+                        new = PyObject_CallFunction(array_meth, "OO", Py_None,
+						    context);
+                        if (new == NULL && \
+			    PyErr_ExceptionMatches(PyExc_TypeError)) {
                                 PyErr_Clear();
                                 new = PyObject_CallFunction(array_meth, "");
                         }
                 }
                 else {
-                        new = PyObject_CallFunction(array_meth, "OO", typecode, context);
-                        if (new == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
+                        new = PyObject_CallFunction(array_meth, "OO", 
+						    typecode, context);
+                        if (new == NULL && \
+			    PyErr_ExceptionMatches(PyExc_TypeError)) {
                                 PyErr_Clear();
-                                new = PyObject_CallFunction(array_meth, "O", typecode);
+                                new = PyObject_CallFunction(array_meth, "O", 
+							    typecode);
                         }
                 }
         }
@@ -6266,7 +6251,8 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 PyObject *new;
                 if (r == NULL) return NULL;
                 if (newtype != NULL || flags != 0) {
-                        new = PyArray_FromArray((PyArrayObject *)r, newtype, flags);
+                        new = PyArray_FromArray((PyArrayObject *)r, newtype, 
+						flags);
                         Py_DECREF(r);
                         r = new;
                 }
@@ -6417,7 +6403,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     ENSUREARRAY) */
 /*  that special cases Arrays and PyArray_Scalars up front */
 /*  It *steals a reference* to the object */
-/*  It also guarantees that the result is PyArray_Type or PyBigArray_Type */
+/*  It also guarantees that the result is PyArray_Type */
 
 /*  Because it decrefs op if any conversion needs to take place 
     so it can be used like PyArray_EnsureArray(some_function(...)) */
@@ -6430,7 +6416,7 @@ PyArray_EnsureArray(PyObject *op)
 
         if (op == NULL) return NULL;
 
-        if (PyArray_CheckExact(op) || PyBigArray_CheckExact(op)) return op;
+        if (PyArray_CheckExact(op)) return op;
         
         if (PyArray_IsScalar(op, Generic)) {
                 new = PyArray_FromScalar(op, NULL);
