@@ -90,7 +90,18 @@ class test_attributes(ScipyTestCase):
         self.failUnlessRaises(ValueError, make_array, 4, 2, -1)
         self.failUnlessRaises(ValueError, make_array, 8, 3, 1)
         #self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
+        
+    def check_fill(self):
+        for t in "?bhilqpBHILQPfdgFDGO":
+            x = empty((3,2,1), t)
+            y = empty((3,2,1), t)
+            x.fill(1)
+            y[...] = 1
+            assert_equal(x,y)
 
+        x = array([(0,0.0), (1,1.0)], dtype='i4,f8')
+        x.fill(x[0])
+        assert_equal(x['f1'][1], x['f1'][0])
 
 class test_dtypedescr(ScipyTestCase):
     def check_construction(self):

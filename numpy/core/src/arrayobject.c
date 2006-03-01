@@ -4108,9 +4108,17 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 	copyswap = arr->descr->f->copyswap;
 	if (PyArray_ISONESEGMENT(arr)) {
 		char *toptr=PyArray_DATA(arr);
-		while (size--) {
-			copyswap(toptr, fromptr, swap, itemsize);
-			toptr += itemsize;
+		PyArray_FillWithScalarFunc* fillwithscalar =
+			arr->descr->f->fillwithscalar;
+		if (fillwithscalar && PyArray_ISALIGNED(arr)) {
+			copyswap(fromptr, NULL, swap, itemsize);
+			fillwithscalar(toptr, size, itemsize, fromptr);
+		}
+		else {
+			while (size--) {
+				copyswap(toptr, fromptr, swap, itemsize);
+				toptr += itemsize;
+			}
 		}
 	}
 	else {

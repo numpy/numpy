@@ -811,6 +811,8 @@ typedef int (PyArray_FillFunc)(void *, intp, void *);
 typedef int (PyArray_SortFunc)(void *, intp, void *);
 typedef int (PyArray_ArgSortFunc)(void *, intp *, intp, void *);
 
+typedef int (PyArray_FillWithScalarFunc)(void *, intp, intp, void *);
+
 typedef struct {
         intp *ptr;
         int len;
@@ -852,6 +854,9 @@ typedef struct {
 
 	/* Used for arange */
 	PyArray_FillFunc *fill;
+
+	/* Function to fill arrays with scalar values */
+	PyArray_FillWithScalarFunc *fillwithscalar;
 
 	/* Sorting functions */
 	PyArray_SortFunc *sort[PyArray_NSORTS];

@@ -1713,6 +1713,45 @@ static void
 /**end repeat**/
 
 
+/* this requires buffer to be filled with objects or NULL */
+static void
+OBJECT_fillwithscalar(PyObject **buffer, intp length, intp ignored, PyObject **value)
+{
+	intp i;
+	PyObject *val = *value;
+	for (i=0; i<length; i++) {
+		Py_XDECREF(buffer[i]);
+		Py_INCREF(val);
+		buffer[i] = val;
+	}
+}
+/**begin repeat 
+#NAME=BOOL,BYTE,UBYTE#
+#typ=Bool,byte,ubyte#
+*/
+static void
+@NAME@_fillwithscalar(@typ@ *buffer, intp length, intp ignored, @typ@ *value)
+{
+	memset(buffer, *value, length);
+}
+/**end repeat**/
+
+/**begin repeat 
+#NAME=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE#
+#typ=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
+*/
+static void
+@NAME@_fillwithscalar(@typ@ *buffer, intp length, intp ignored, @typ@ *value)
+{
+	register intp i;
+	@typ@ val = *value;
+	for (i=0; i<length; ++i) {
+		buffer[i] = val;
+	}
+}
+
+/**end repeat**/
+
 #define _ALIGN(type) offsetof(struct {char c; type v;},v)
 
 /**begin repeat
@@ -1758,6 +1797,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	(PyArray_FromStrFunc*)@from@_fromstr,
 	(PyArray_NonzeroFunc*)@from@_nonzero,
 	(PyArray_FillFunc*)NULL,
+	(PyArray_FillWithScalarFunc*)NULL,
 	{
 		NULL, NULL, NULL, NULL
 	},
@@ -1828,6 +1868,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	(PyArray_FromStrFunc*)@from@_fromstr,
 	(PyArray_NonzeroFunc*)@from@_nonzero,
 	(PyArray_FillFunc*)@from@_fill,
+	(PyArray_FillWithScalarFunc*)@from@_fillwithscalar,
 	{
 		NULL, NULL, NULL, NULL
 	},
