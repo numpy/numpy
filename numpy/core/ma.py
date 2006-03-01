@@ -1350,6 +1350,10 @@ array(data = %(data)s,
             v = default_fill_value (self.raw_data())
         self._fill_value = v
 
+    def _get_ndim(self):
+        return self._data.ndim
+    ndim = property(_get_ndim, doc=numeric.ndarray.ndim.__doc__)
+
     def _get_size (self):
         return self._data.size
     size = property(fget=_get_size, doc="Number of elements in the array.")
@@ -2158,7 +2162,6 @@ array.min = _m(_min)
 del _min
 array.mean = _m(average)
 array.nbytes = property(_m(not_implemented))
-array.ndim = _m(not_implemented)
 array.newbyteorder = _m(not_implemented)
 array.nonzero = _m(nonzero)
 array.prod = _m(product)

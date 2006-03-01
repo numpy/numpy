@@ -620,7 +620,12 @@ class test_ma(ScipyTestCase):
         self.failUnless(eq(a.sum(), a.data.sum()))
         self.failUnless(eq(a.take([1,2]), a.data.take([1,2])))
         self.failUnless(eq(m.transpose(), m.data.transpose()))
-        
+
+    def check_testArrayAttributes(self):
+        a = array([1,3,2])
+        b = array([1,3,2], mask=[1,0,1])
+        self.failUnlessEqual(a.ndim, 1)
+
     def check_testAPI(self):
         self.failIf([m for m in dir(numpy.ndarray)
                      if m not in dir(array) and not m.startswith('_')])
