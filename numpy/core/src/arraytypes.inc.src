@@ -1715,7 +1715,7 @@ static void
 
 /* this requires buffer to be filled with objects or NULL */
 static void
-OBJECT_fillwithscalar(PyObject **buffer, intp length, intp ignored, PyObject **value)
+OBJECT_fillwithscalar(PyObject **buffer, intp length, PyObject **value, void *ignored)
 {
 	intp i;
 	PyObject *val = *value;
@@ -1730,7 +1730,7 @@ OBJECT_fillwithscalar(PyObject **buffer, intp length, intp ignored, PyObject **v
 #typ=Bool,byte,ubyte#
 */
 static void
-@NAME@_fillwithscalar(@typ@ *buffer, intp length, intp ignored, @typ@ *value)
+@NAME@_fillwithscalar(@typ@ *buffer, intp length, @typ@ *value, void *ignored)
 {
 	memset(buffer, *value, length);
 }
@@ -1741,7 +1741,7 @@ static void
 #typ=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
 */
 static void
-@NAME@_fillwithscalar(@typ@ *buffer, intp length, intp ignored, @typ@ *value)
+@NAME@_fillwithscalar(@typ@ *buffer, intp length, @typ@ *value, void *ignored)
 {
 	register intp i;
 	@typ@ val = *value;

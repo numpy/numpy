@@ -340,11 +340,11 @@ def ones(shape, dtype=int_, fortran=False):
     """ones(shape, dtype=int_) returns an array of the given
     dimensions which is initialized to all ones. 
     """
-    # This appears to be slower...
-    #a = empty(shape, dtype, fortran)
-    #a.fill(1)
-    a = zeros(shape, dtype, fortran)
-    a+=1
+    a = empty(shape, dtype, fortran)
+    a.fill(1)
+    # Above is faster now after addition of fast loops.
+    #a = zeros(shape, dtype, fortran)
+    #a+=1
     return a
 
 def identity(n,dtype=int_):

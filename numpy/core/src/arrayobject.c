@@ -4112,7 +4112,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 			arr->descr->f->fillwithscalar;
 		if (fillwithscalar && PyArray_ISALIGNED(arr)) {
 			copyswap(fromptr, NULL, swap, itemsize);
-			fillwithscalar(toptr, size, itemsize, fromptr);
+			fillwithscalar(toptr, size, fromptr, arr);
 		}
 		else {
 			while (size--) {
