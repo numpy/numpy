@@ -3255,6 +3255,7 @@ static PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op) 
 {
         PyObject *array_other, *result;
+	int typenum;
 
         switch (cmp_op) 
                 {
@@ -3271,13 +3272,17 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 			}
                         /* Try to convert other to an array */
 			if (!PyArray_Check(other)) {
-				array_other = PyArray_FromObject(other, 
-								 self->descr->type_num, 0, 0);
-				/* If not successful, then return the integer
-				   object 0. This fixes code that used to
+				typenum = self->descr->type_num;
+				if (typenum != PyArray_OBJECT) {
+					typenum = PyArray_NOTYPE;
+				}
+				array_other = PyArray_FromObject	\
+					(other, typenum, 0, 0); 
+				/* If not successful, then return False
+				   This fixes code that used to
 				   allow equality comparisons between arrays
 				   and other objects which would give a result
-				   of 0
+				   of False
 				*/
 				if ((array_other == NULL) ||	\
 				    (array_other == Py_None)) {
@@ -3312,8 +3317,12 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 			}
                         /* Try to convert other to an array */
 			if (!PyArray_Check(other)) {
-				array_other = PyArray_FromObject(other, 
-								 self->descr->type_num, 0, 0);
+				typenum = self->descr->type_num;
+				if (typenum != PyArray_OBJECT) {
+					typenum = PyArray_NOTYPE;
+				}
+				array_other = PyArray_FromObject	\
+					(other, typenum, 0, 0);
 				/* If not successful, then objects cannot be 
 				   compared and cannot be equal, therefore, 
 				   return True;
