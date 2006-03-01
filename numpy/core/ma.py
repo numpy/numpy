@@ -298,6 +298,7 @@ class masked_unary_operation:
         self.fill = fill
         self.domain = domain
         self.__doc__ = getattr(aufunc, "__doc__", str(aufunc))
+        self.__name__ = getattr(aufunc, "__name__", str(aufunc))
         ufunc_domain[aufunc] = domain
         ufunc_fills[aufunc] = fill,
         
@@ -342,6 +343,7 @@ class domained_binary_operation:
         self.fillx = fillx
         self.filly = filly
         self.__doc__ = getattr(abfunc, "__doc__", str(abfunc))
+        self.__name__ = getattr(abfunc, "__name__", str(abfunc))
         ufunc_domain[abfunc] = domain
         ufunc_fills[abfunc] = fillx,filly
 
