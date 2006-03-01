@@ -209,7 +209,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     if n == n2-1:  # compute the "otherwise" condition.
         totlist = condlist[0]
         for k in range(1, n):
-            totlist |= condlist
+            totlist |= condlist[k]
         condlist.append(~totlist)
         n += 1
     if (n != n2):
