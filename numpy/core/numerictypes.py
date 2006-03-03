@@ -368,7 +368,7 @@ for key in _sctype2char_dict.keys():
     cast[key] = lambda x, k=key : array(x, copy=False).astype(k)
 
 
-_unicodesize = array('u','U').itemsize
+_unicodesize = array('u','U1').itemsize
 
 # Create the typestring lookup dictionary
 _typestr = _typedict()

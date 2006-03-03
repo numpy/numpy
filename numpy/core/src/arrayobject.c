@@ -5431,10 +5431,8 @@ Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
 		if (type == PyArray_UNICODE) itemsize *= 4;
 	}
 
-	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, typecode,
-						    0, NULL, 
-						    NULL, NULL, 0, NULL);
-
+	ret = (PyArrayObject *)PyArray_New(&PyArray_Type, 0, NULL, type, 
+					   NULL, NULL, itemsize, 0, NULL);
 	if (ret == NULL) return NULL;
 	if (ret->nd > 0) {
 		PyErr_SetString(PyExc_ValueError,
