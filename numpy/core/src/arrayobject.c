@@ -5776,7 +5776,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 	itemsize = newtype->elsize;
 
 	/* Don't copy if sizes are compatible */
-	if (PyArray_EquivTypes(oldtype, newtype)) {
+	if ((flags & ENSURECOPY) || PyArray_EquivTypes(oldtype, newtype)) {
 		arrflags = arr->flags;
 
 		copy = (flags & ENSURECOPY) || \
