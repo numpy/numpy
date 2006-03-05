@@ -464,7 +464,14 @@ tanh = masked_unary_operation(umath.tanh)
 absolute = masked_unary_operation(umath.absolute)
 fabs = masked_unary_operation(umath.fabs)
 negative = masked_unary_operation(umath.negative)
-nonzero = masked_unary_operation(oldnumeric.nonzero)
+
+def nonzero(a):
+    """returns the indices of the elements of a which are not zero and not masked
+
+    a must be 1d
+    """
+    return asarray(filled(a,0).nonzero())
+    
 around = masked_unary_operation(oldnumeric.round_)
 floor = masked_unary_operation(umath.floor)
 ceil = masked_unary_operation(umath.ceil)

@@ -690,7 +690,12 @@ class test_ufuncs(ScipyTestCase):
         self.failUnless((amask.min(0) == [5,6,7,8]).all())
         self.failUnless(amask.max(1)[0].mask)
         self.failUnless(amask.min(1)[0].mask)
-        
+
+    def test_nonzero(self):
+        for t in "?bhilqpBHILQPfdgFDGO":
+            x = array([1,0,2,0], mask=[0,0,1,1])
+            self.failUnless(eq(nonzero(x), [0]))
+            
 def eqmask(m1, m2):
     if m1 is nomask:
         return m2 is nomask
