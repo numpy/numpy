@@ -310,14 +310,6 @@ class masked_unary_operation:
         if self.domain is not None:
             m = mask_or(m, self.domain(d1))
         result = self.f(d1, *args, **kwargs)
-        if m is not nomask:
-            try:
-                shape = result.shape
-            except AttributeError:
-                pass
-            else:
-                if m.shape != shape:
-                    m = mask_or(getmaskarray(a), getmaskarray(b))
         return masked_array(result, m)
 
     def __str__ (self):
@@ -360,14 +352,6 @@ class domained_binary_operation:
             mb = mask_or(mb, t)
         m = mask_or(ma, mb)
         result =  self.f(d1, d2)
-        if m is not nomask:
-            try:
-                shape = result.shape
-            except AttributeError:
-                pass
-            else:
-                if m.shape != shape:
-                    m = mask_or(getmaskarray(a), getmaskarray(b))
         return masked_array(result, m)
         
     def __str__ (self):
@@ -391,14 +375,6 @@ class masked_binary_operation:
         d1 = filled(a, self.fillx)
         d2 = filled(b, self.filly)
         result = self.f(d1, d2, *args, **kwargs)
-        if m is not nomask:
-            try:
-                shape = result.shape
-            except AttributeError:
-                pass
-            else:
-                if m.shape != shape:
-                    m = mask_or(getmaskarray(a), getmaskarray(b))
         return masked_array(result, m)
 
     def reduce (self, target, axis=0):
