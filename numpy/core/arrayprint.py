@@ -79,7 +79,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     linewidth  the number of characters per line for the purpose of inserting
                    line breaks.
                    (default 75)
-    supress    Boolean value indicating whether or not suppress printing
+    suppress    Boolean value indicating whether or not suppress printing
                    of small floating point values using scientific notation
                    (default False)
     """                        
@@ -95,7 +95,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     if (precision is not None):
         _float_output_precision = precision
     if (suppress is not None):
-        _float_output_supress_small = not not suppress
+        _float_output_suppress_small = not not suppress
     return
 
 def get_printoptions():
@@ -139,8 +139,6 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     else:
         summary_insert = ""
         data = a.ravel()
-
-    items_per_line = a.shape[-1]
     
     try:
         format_function = a._format
@@ -168,9 +166,9 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
             format = "%s"
             format_function = lambda x, f = format: repr(x)
         else:
-	    format = '%s'
-	    format_function = lambda x, f = format: format % str(x)
-	    
+            format = '%s'
+            format_function = lambda x, f = format: format % str(x)
+            
     next_line_prefix = " " # skip over "["
     next_line_prefix += " "*len(prefix)                  # skip over array(
 
@@ -252,7 +250,7 @@ def _formatArray(a, format_function, rank, max_line_len,
             s += _formatArray(a[i], format_function, rank-1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert)
-            s = s.rstrip()+ sep.rstrip() + '\n'*max(rank-1,1)
+            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1,1)
             
         if summary_insert1:
             s += next_line_prefix + summary_insert1 + "\n"

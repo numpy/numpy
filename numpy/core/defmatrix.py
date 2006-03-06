@@ -2,8 +2,7 @@
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import numeric as N
-from numeric import ArrayType, concatenate, integer, multiply, power, \
-     isscalar, binary_repr
+from numeric import ArrayType, concatenate, isscalar, binary_repr
 import types
 import string as str_
 import sys
@@ -265,7 +264,7 @@ def _from_string(str,gdict,ldict):
     return concatenate(rowtup,axis=0)
 
 
-def bmat(obj,ldict=None, gdict=None):
+def bmat(obj, ldict=None, gdict=None):
     """Build a matrix object from string, nested sequence, or array.
 
     Ex:  F = bmat('A, B; C, D') 

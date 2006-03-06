@@ -45,7 +45,7 @@ newaxis = None
 ndarray = multiarray.ndarray
 flatiter = multiarray.flatiter
 broadcast = multiarray.broadcast
-dtype=multiarray.dtype
+dtype = multiarray.dtype
 ufunc = type(sin)
 
 arange = multiarray.arange
@@ -175,7 +175,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     returned.
     """
     if axis is not None:
-       axisa,axisb,axisc=(axis,)*3
+        axisa,axisb,axisc=(axis,)*3
     a = _move_axis_to_0(asarray(a), axisa)
     b = _move_axis_to_0(asarray(b), axisb)
     msg = "incompatible dimensions for cross product\n"\

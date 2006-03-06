@@ -1,12 +1,10 @@
-__all__ = ['record', 'recarray','format_parser']
+__all__ = ['record', 'recarray', 'format_parser']
 
 import numeric as sb
 from defchararray import chararray
 import numerictypes as nt
-import sys
 import types
 import stat, os
-import _internal
 
 _byteorderconv = {'b':'>',
                   'l':'<',

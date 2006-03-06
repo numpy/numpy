@@ -2,6 +2,7 @@ import numpy
 import types, time
 from numpy.core.ma import *
 from numpy.testing import ScipyTestCase, ScipyTest
+pi = numpy.pi
 def eq(v,w, msg=''):
     result = allclose(v,w)
     if not result:
