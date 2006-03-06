@@ -5429,11 +5429,11 @@ Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
 	if (itemsize == 0 && PyTypeNum_ISEXTENDED(type)) {
 		itemsize = PyObject_Length(op);
 		if (type == PyArray_UNICODE) itemsize *= 4;
-	}
 
-	if (itemsize != typecode->elsize) {
-		PyArray_DESCR_REPLACE(typecode);
-		typecode->elsize = itemsize;
+		if (itemsize != typecode->elsize) {
+			PyArray_DESCR_REPLACE(typecode);
+			typecode->elsize = itemsize;
+		}
 	}
 	
         ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, typecode, 
