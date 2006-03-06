@@ -1039,7 +1039,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
 		self->strides = self->dimensions + nd;
 		memcpy(self->dimensions, dimensions, sizeof(intp)*nd);
 		(void) _array_fill_strides(self->strides, dimensions, nd,
-					   self->descr->elsize, fortran, 
+					   self->descr->elsize, 
+                                           (fortran ? FORTRAN : CONTIGUOUS),
 					   &(self->flags));
 	}
 

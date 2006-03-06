@@ -224,6 +224,16 @@ class test_subscripting(ScipyTestCase):
         x = array([1,2,3])
         self.failUnless(isinstance(x[0], int))
         self.failUnless(type(x[0, ...]) is ndarray)
+
+class test_pickling(ScipyTestCase):
+    def setUp(self):
+        self.carray = array([[2,9],[7,0],[3,8]])
+        self.tarray = transpose(self.carray)
+        
+    def check_both(self):
+        import pickle
+        assert_equal(self.carray, pickle.loads(self.carray.dumps()))
+        assert_equal(self.tarray, pickle.loads(self.tarray.dumps()))
             
 # Import tests from unicode
 set_local_path()
