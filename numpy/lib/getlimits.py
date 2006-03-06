@@ -75,13 +75,15 @@ class finfo(object):
         else:
             raise ValueError,`dtype`
 
-        for word in ['tiny', 'precision', 'resolution','iexp',
-                     'maxexp','minexp','epsneg','negep',
+        for word in ['precision', 'iexp',
+                     'maxexp','minexp','negep',
                      'machep']:
             setattr(self,word,getattr(machar, word))
-        self.max = machar.huge
+        for word in ['tiny','resolution','epsneg']:
+            setattr(self,word,getattr(machar, word).squeeze())
+        self.max = machar.huge.squeeze()
         self.min = -self.max
-        self.eps = machar.epsilon
+        self.eps = machar.epsilon.squeeze()
         self.nexp = machar.iexp
         self.nmant = machar.it
         self.machar = machar
