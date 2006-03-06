@@ -35,19 +35,22 @@ else:
             'distutils',
             verbose=NUMPY_IMPORT_VERBOSE,postpone=False)
 
-    __doc__ += """
+    if __doc__ is not None:
+        __doc__ += """
 
 Available subpackages
 ---------------------
 """
-    __doc__ += pkgload.get_pkgdocs()
+    if __doc__ is not None:
+        __doc__ += pkgload.get_pkgdocs()
 
     def test(level=1, verbosity=1):
         return NumpyTest().test(level, verbosity)
 
     import add_newdocs
 
-    __doc__ += """
+    if __doc__ is not None:
+        __doc__ += """
 
 Utility tools
 -------------
