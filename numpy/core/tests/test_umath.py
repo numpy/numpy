@@ -6,6 +6,26 @@ import numpy.core.umath as ncu
 from numpy import zeros, ndarray, array, choose
 restore_path()
 
+class test_power(ScipyTestCase):
+    def check_power_float(self):
+        x = array([1., 2., 3.])
+        assert_equal(x**0, [1., 1., 1.])
+        assert_equal(x**1, x)
+        assert_equal(x**2, [1., 4., 9.])
+        assert_almost_equal(x**(-1), [1., 0.5, 1./3])
+        assert_almost_equal(x**(0.5), [1., ncu.sqrt(2), ncu.sqrt(3)])
+
+    def check_power_complex(self):
+        x = array([1+2j, 2+3j, 3+4j])
+        assert_equal(x**0, [1., 1., 1.])
+        assert_equal(x**1, x)
+        assert_equal(x**2, [-3+4j, -5+12j, -7+24j])
+        assert_almost_equal(x**(-1), [1/(1+2j), 1/(2+3j), 1/(3+4j)])
+        assert_almost_equal(x**(0.5), [ncu.sqrt(1+2j), ncu.sqrt(2+3j),
+                                       ncu.sqrt(3+4j)])
+        assert_almost_equal(x**14, [-76443+16124j, 23161315+58317492j,
+                                    5583548873 +  2465133864j])
+
 class test_log1p(ScipyTestCase):
     def check_log1p(self):
         assert_almost_equal(ncu.log1p(0.2), ncu.log(1.2))

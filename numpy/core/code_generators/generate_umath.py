@@ -162,6 +162,24 @@ defdict = {
           TD(flts, f='fmod'),
           TD(M, f='fmod'),
           ),
+'square' :
+    Ufunc(1, 1, None,
+          'compute x**2.',
+          TD(nobool_or_obj),
+          TD(O, f='Py_square'),
+          ),
+'reciprocal' :
+    Ufunc(1, 1, None,
+          'compute 1/x',
+          TD(nobool_or_obj),
+          TD(O, f='Py_reciprocal'),
+          ),
+'ones_like' :
+    Ufunc(1, 1, None,
+          'return 1',
+          TD(nobool_or_obj),
+          TD(O, f='Py_get_one'),
+          ),
 'power' :
     Ufunc(2, 1, One,
           'computes x1**x2 elementwise.',

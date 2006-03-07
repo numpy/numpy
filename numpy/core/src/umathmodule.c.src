@@ -7,7 +7,7 @@
 #include "abstract.h"
 #include <math.h>
 
-/* A whole slew of basic math functions are provided originally 
+/* A whole slew of basic math functions are provided originally
    by Konrad Hinsen. */
 
 #if !defined(__STDC__) && !defined(_MSC_VER)
@@ -667,22 +667,44 @@ nc_expm1@c@(c@typ@ *x, c@typ@ *r)
 static void
 nc_pow@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
-	@typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+        intp n;
+        @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
 
 	if (br == 0. && bi == 0.) {
 		r->real = 1.;
 		r->imag = 0.;
+                return;
 	}
-	else if (ar == 0. && ai == 0.) {
+	if (ar == 0. && ai == 0.) {
 		r->real = 0.;
 		r->imag = 0.;
+                return;
 	}
-	else {
-		nc_log@c@(a, r);
-		nc_prod@c@(r, b, r);
-		nc_exp@c@(r, r);
-	}
-	return;
+        if (bi == 0 && (n=(intp)br) == br) {
+            if (n > -100 && n < 100) {
+                c@typ@ p, aa;
+                intp mask = 1;
+                if (n < 0) n = -n;
+                aa = nc_1@c@;
+                p.real = ar; p.imag = ai;
+                while (1) {
+                        if (n & mask)
+                            nc_prod@c@(&aa,&p,&aa);
+                        mask <<= 1;
+                        if (n < mask || mask <= 0) break;
+                        nc_prod@c@(&p,&p,&p);
+                }
+                r->real = aa.real; r->imag = aa.imag;
+                if (bi < 0) nc_quot@c@(&nc_1@c@, r, r);
+                return;
+            }
+        }
+        /* complexobect.c uses an inline version of this formula
+           investigate whether this had better performance or accuracy */
+        nc_log@c@(a, r);
+        nc_prod@c@(r, b, r);
+        nc_exp@c@(r, r);
+        return;
 }
 
 
@@ -1238,6 +1260,165 @@ static void
 }
 /**end repeat**/
 
+/**begin repeat
+#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+*/
+static void
+@TYP@_square(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        @typ@ x = *((@typ@ *)i1);
+        *((@typ@ *)op) = x*x;
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+#TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
+#typ=float, double, longdouble#
+*/
+static void
+@TYP@_square(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+    c@typ@ *x, *y;
+    @typ@ xr, xi;
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        x = (c@typ@ *)i1;
+        y = (c@typ@ *)op;
+        xr = x->real;
+        xi = x->imag;
+        y->real = xr*xr - xi*xi;
+        y->imag = 2*xr*xi;
+    }
+}
+/**end repeat**/
+
+static PyObject *
+Py_square(PyObject *o)
+{
+    return PyNumber_Multiply(o, o);
+}
+
+
+/**begin repeat
+#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+*/
+static void
+@TYP@_reciprocal(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        @typ@ x = *((@typ@ *)i1);
+        *((@typ@ *)op) = 1.0 / x;
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+#TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
+#typ=float, double, longdouble#
+*/
+static void
+@TYP@_reciprocal(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+    c@typ@ *x, *y;
+    @typ@ xr, xi, r, denom;
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        x = (c@typ@ *)i1;
+        y = (c@typ@ *)op;
+        xr = x->real;
+        xi = x->imag;
+        if (fabs(xi) <= fabs(xr)) {
+            r = xi / xr;
+            denom = xr + xi * r;
+            y->real = 1 / denom;
+            y->imag = -r / denom;
+        } else {
+            r = xr / xi;
+            denom = xr * r + xi;
+            y->real = r / denom;
+            y->imag = -1 / denom;
+        }
+    }
+}
+/**end repeat**/
+
+
+
+static PyObject *
+Py_reciprocal(PyObject *o)
+{
+    PyObject *one, *result;
+    one = PyInt_FromLong(1);
+    if (!one) return NULL;
+    result = PyNumber_Divide(one, o);
+    Py_DECREF(one);
+    return result;
+}
+
+/* ones_like is defined here because it's used for x**0 */
+
+/**begin repeat
+#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+*/
+static void
+@TYP@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, os = steps[1], n = dimensions[0];
+    char *op = args[1];
+
+    for (i = 0; i < n; i++, op += os) {
+        *((@typ@ *)op) = 1;
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+#TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
+#typ=float, double, longdouble#
+*/
+static void
+@TYP@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+    c@typ@ *x, *y;
+    @typ@ xr, xi, xmag2;
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        x = (c@typ@ *)i1;
+        y = (c@typ@ *)op;
+        xr = x->real;
+        xi = x->imag;
+        xmag2 = xr*xr + xi*xi;
+        y->real = 1.0;
+        y->imag = 0.0;
+    }
+}
+/**end repeat**/
+
+
+static PyObject *
+Py_get_one(PyObject *o)
+{
+    return PyInt_FromLong(1.0);
+}
+
+/**begin repeat
 
 /**begin repeat
 
@@ -1698,7 +1879,7 @@ static void
 		else {
 			*((@typ@ *)op)= x % y;
 		}
-		
+
 	}
 }
 /**end repeat**/
@@ -1727,7 +1908,7 @@ static void
 		register @typ@ t2 = *((@typ@ *)i2);
 		for (i=0; i<n; i++, i1+=is1, op+=os) {
 			*((@typ@ *)op) = *((@typ@ *)i1) @OP@ t2;
-		}	
+		}
 	}
 	else {
 		for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
@@ -2095,7 +2276,7 @@ DL_EXPORT(void) initumath(void) {
 	/* Import the array */
 	if (import_array() < 0) {
                 if (!PyErr_Occurred()) {
-                        PyErr_SetString(PyExc_ImportError, 
+                        PyErr_SetString(PyExc_ImportError,
                                         "umath failed: Could not import array core.");
                 }
                 return;
@@ -2178,7 +2359,7 @@ DL_EXPORT(void) initumath(void) {
  err:
 	/* Check for errors */
 	if (!PyErr_Occurred()) {
-		PyErr_SetString(PyExc_RuntimeError, 
+		PyErr_SetString(PyExc_RuntimeError,
 				"cannot load umath module.");
 	}
 	return;
