@@ -7,11 +7,11 @@ Released for unlimited redistribution.
 Adapted for numpy_core 2005 by Travis Oliphant and
 (mainly) Paul Dubois.
 """
-import string, types, sys
+import types, sys
 
 import umath
 import oldnumeric
-from numeric import e, pi, newaxis, ndarray, inf
+from numeric import newaxis, ndarray, inf
 from oldnumeric import typecodes, amax, amin
 from numerictypes import *
 import numeric
@@ -21,7 +21,7 @@ ufunc_domain = {}
 # Ufunc fills lookup for __array__
 ufunc_fills = {}
 
-MaskType=bool_
+MaskType = bool_
 nomask = MaskType(0)
 divide_tolerance = 1.e-35
 
@@ -77,11 +77,11 @@ def default_fill_value (obj):
     if isinstance(obj, types.FloatType):
         return default_real_fill_value
     elif isinstance(obj, types.IntType) or isinstance(obj, types.LongType):
-            return default_integer_fill_value
+        return default_integer_fill_value
     elif isinstance(obj, types.StringType):
-            return default_character_fill_value
+        return default_character_fill_value
     elif isinstance(obj, types.ComplexType):
-            return default_complex_fill_value
+        return default_complex_fill_value
     elif isinstance(obj, MaskedArray) or isinstance(obj, ndarray):
         x = obj.dtype.char
         if x in typecodes['Float']:
@@ -120,7 +120,7 @@ def maximum_fill_value (obj):
     if isinstance(obj, types.FloatType):
         return -inf
     elif isinstance(obj, types.IntType) or isinstance(obj, types.LongType):
-            return -sys.maxint
+        return -sys.maxint
     elif isinstance(obj, MaskedArray) or isinstance(obj, ndarray):
         x = obj.dtype.char
         if x in typecodes['Float']:
@@ -183,7 +183,7 @@ def make_mask (m, copy=0, flag=0):
         else:
             result = m.astype(MaskType)
     else:
-        result = filled(m,True).astype(MaskType)
+        result = filled(m, True).astype(MaskType)
 
     if flag and not oldnumeric.sometrue(oldnumeric.ravel(result)):
         return nomask
@@ -298,6 +298,7 @@ class masked_unary_operation:
         self.fill = fill
         self.domain = domain
         self.__doc__ = getattr(aufunc, "__doc__", str(aufunc))
+        self.__name__ = getattr(aufunc, "__name__", str(aufunc))
         ufunc_domain[aufunc] = domain
         ufunc_fills[aufunc] = fill,
         
@@ -309,14 +310,6 @@ class masked_unary_operation:
         if self.domain is not None:
             m = mask_or(m, self.domain(d1))
         result = self.f(d1, *args, **kwargs)
-        if m is not nomask:
-            try:
-                shape = result.shape
-            except AttributeError:
-                pass
-            else:
-                if m.shape != shape:
-                    m = mask_or(getmaskarray(a), getmaskarray(b))
         return masked_array(result, m)
 
     def __str__ (self):
@@ -330,8 +323,8 @@ class domain_safe_divide:
         return umath.absolute(a) * self.tolerance >= umath.absolute(b)
 
 class domained_binary_operation:
-    """Binary operations that have a domain, like divide. These are complicated so they
-       are a separate class. They have no reduce, outer or accumulate.
+    """Binary operations that have a domain, like divide. These are complicated
+       so they are a separate class. They have no reduce, outer or accumulate.
     """
     def __init__ (self, abfunc, domain, fillx=0, filly=0):
         """abfunc(fillx, filly) must be defined.
@@ -342,8 +335,9 @@ class domained_binary_operation:
         self.fillx = fillx
         self.filly = filly
         self.__doc__ = getattr(abfunc, "__doc__", str(abfunc))
+        self.__name__ = getattr(abfunc, "__name__", str(abfunc))
         ufunc_domain[abfunc] = domain
-        ufunc_fills[abfunc] = fillx,filly
+        ufunc_fills[abfunc] = fillx, filly
 
     def __call__(self, a, b):
         "Execute the call behavior."
@@ -358,14 +352,6 @@ class domained_binary_operation:
             mb = mask_or(mb, t)
         m = mask_or(ma, mb)
         result =  self.f(d1, d2)
-        if m is not nomask:
-            try:
-                shape = result.shape
-            except AttributeError:
-                pass
-            else:
-                if m.shape != shape:
-                    m = mask_or(getmaskarray(a), getmaskarray(b))
         return masked_array(result, m)
         
     def __str__ (self):
@@ -381,7 +367,7 @@ class masked_binary_operation:
         self.filly = filly
         self.__doc__ = getattr(abfunc, "__doc__", str(abfunc))
         ufunc_domain[abfunc] = None
-        ufunc_fills[abfunc] = fillx,filly
+        ufunc_fills[abfunc] = fillx, filly
 
     def __call__ (self, a, b, *args, **kwargs):
         "Execute the call behavior."
@@ -389,14 +375,6 @@ class masked_binary_operation:
         d1 = filled(a, self.fillx)
         d2 = filled(b, self.filly)
         result = self.f(d1, d2, *args, **kwargs)
-        if m is not nomask:
-            try:
-                shape = result.shape
-            except AttributeError:
-                pass
-            else:
-                if m.shape != shape:
-                    m = mask_or(getmaskarray(a), getmaskarray(b))
         return masked_array(result, m)
 
     def reduce (self, target, axis=0):
@@ -406,8 +384,8 @@ class masked_binary_operation:
         if t.shape == ():
             t = t.reshape(1)
             if m is not nomask:
-               m = make_mask(m, copy=1)
-               m.shape = (1,)
+                m = make_mask(m, copy=1)
+                m.shape = (1,)
         if m is nomask:
             return masked_array (self.f.reduce (t, axis))
         else:
@@ -462,7 +440,14 @@ tanh = masked_unary_operation(umath.tanh)
 absolute = masked_unary_operation(umath.absolute)
 fabs = masked_unary_operation(umath.fabs)
 negative = masked_unary_operation(umath.negative)
-nonzero = masked_unary_operation(oldnumeric.nonzero)
+
+def nonzero(a):
+    """returns the indices of the elements of a which are not zero and not masked
+
+    a must be 1d
+    """
+    return asarray(filled(a, 0).nonzero())
+    
 around = masked_unary_operation(oldnumeric.round_)
 floor = masked_unary_operation(umath.floor)
 ceil = masked_unary_operation(umath.ceil)
@@ -751,11 +736,11 @@ array(data = %(data)s,
 
         n = len(self.shape)
         if self._mask is nomask:
-            if n <=1:
+            if n <= 1:
                 return without_mask1 % {'data':str(self.filled())}
             return without_mask % {'data':str(self.filled())}
         else:
-            if n <=1:
+            if n <= 1:
                 return with_mask % {
                     'data': str(self.filled()),
                     'mask': str(self._mask),
@@ -976,7 +961,7 @@ array(data = %(data)s,
         "Return divide(other, self)"
         return floor_divide(other, self)
 
-    def __pow__(self,other, third=None):
+    def __pow__(self, other, third=None):
         "Return power(self, other, third)"
         return power(self, other, third)
 
@@ -987,7 +972,7 @@ array(data = %(data)s,
     def __iadd__(self, other):
         "Add other to self in place."
         t = self._data.dtype.char
-        f = filled(other,0)
+        f = filled(other, 0)
         t1 = f.dtype.char
         if t == t1:
             pass
@@ -1030,7 +1015,7 @@ array(data = %(data)s,
     def __imul__(self, other):
         "Add other to self in place."
         t = self._data.dtype.char
-        f = filled(other,0)
+        f = filled(other, 0)
         t1 = f.dtype.char
         if t == t1:
             pass
@@ -1073,7 +1058,7 @@ array(data = %(data)s,
     def __isub__(self, other):
         "Subtract other from self in place."
         t = self._data.dtype.char
-        f = filled(other,0)
+        f = filled(other, 0)
         t1 = f.dtype.char
         if t == t1:
             pass
@@ -1118,7 +1103,7 @@ array(data = %(data)s,
     def __idiv__(self, other):
         "Divide self by other in place."
         t = self._data.dtype.char
-        f = filled(other,0)
+        f = filled(other, 0)
         t1 = f.dtype.char
         if t == t1:
             pass
@@ -1154,22 +1139,22 @@ array(data = %(data)s,
             self._shared_mask = 1
         return self
 
-    def __eq__(self,other):
+    def __eq__(self, other):
         return equal(self,other)
 
-    def __ne__(self,other):
+    def __ne__(self, other):
         return not_equal(self,other)
 
-    def __lt__(self,other):
+    def __lt__(self, other):
         return less(self,other)
 
-    def __le__(self,other):
+    def __le__(self, other):
         return less_equal(self,other)
 
-    def __gt__(self,other):
+    def __gt__(self, other):
         return greater(self,other)
 
-    def __ge__(self,other):
+    def __ge__(self, other):
         return greater_equal(self,other)
 
     def astype (self, tc):
@@ -1204,7 +1189,7 @@ array(data = %(data)s,
             if ls == 1:
                 return s[0]
             if axis is None:
-                return reduce(lambda x,y:x*y, s)
+                return reduce(lambda x, y:x*y, s)
             else:
                 n = s[axis]
                 t = list(s)
@@ -1214,9 +1199,9 @@ array(data = %(data)s,
             w = oldnumeric.ravel(m).astype(int)  
             n1 = size(w)
             if n1 == 1:
-                 n2 = w[0]
+                n2 = w[0]
             else:
-                 n2 = umath.add.reduce(w)
+                n2 = umath.add.reduce(w)
             return n1 - n2
         else:
             n1 = size(m, axis)
@@ -1349,6 +1334,10 @@ array(data = %(data)s,
         if v is None:
             v = default_fill_value (self.raw_data())
         self._fill_value = v
+
+    def _get_ndim(self):
+        return self._data.ndim
+    ndim = property(_get_ndim, doc=numeric.ndarray.ndim.__doc__)
 
     def _get_size (self):
         return self._data.size
@@ -1500,7 +1489,7 @@ def left_shift (a, n):
         d = umath.left_shift(filled(a), n)
         return masked_array(d)
     else:
-        d = umath.left_shift(filled(a,0), n)
+        d = umath.left_shift(filled(a, 0), n)
         return masked_array(d, m)
 
 def right_shift (a, n):
@@ -1510,7 +1499,7 @@ def right_shift (a, n):
         d = umath.right_shift(filled(a), n)
         return masked_array(d)
     else:
-        d = umath.right_shift(filled(a,0), n)
+        d = umath.right_shift(filled(a, 0), n)
         return masked_array(d, m)
 
 def resize (a, new_shape):
@@ -1628,7 +1617,7 @@ def average (a, axis=0, weights=None, returned = 0):
         else:
             if weights is None:
                 n = add.reduce(a.ravel())
-                w = oldnumeric.choose(mask, (1.0,0.0)).ravel()
+                w = oldnumeric.choose(mask, (1.0, 0.0)).ravel()
                 d = umath.add.reduce(w)
                 del w
             else:
@@ -1654,7 +1643,7 @@ def average (a, axis=0, weights=None, returned = 0):
                 elif wsh == (ash[axis],):
                     ni = ash[axis]
                     r = [newaxis]*len(ash)
-                    r[axis] = slice(None,None,1)
+                    r[axis] = slice(None, None, 1)
                     w = eval ("w["+ repr(tuple(r)) + "] * ones(ash, float)")
                     n = add.reduce(a*w, axis)
                     d = add.reduce(w, axis)
@@ -1679,7 +1668,7 @@ def average (a, axis=0, weights=None, returned = 0):
                 elif wsh == (ash[axis],):
                     ni = ash[axis]
                     r = [newaxis]*len(ash)
-                    r[axis] = slice(None,None,1)
+                    r[axis] = slice(None, None, 1)
                     w = eval ("w["+ repr(tuple(r)) + "] * masked_array(ones(ash, float), mask)")
                     n = add.reduce(a*w, axis)
                     d = add.reduce(w, axis)
@@ -1711,7 +1700,7 @@ def where (condition, x, y):
        The type depends on x and y. It is integer if both x and y are
        the value masked.
     """
-    fc = filled(not_equal(condition,0), 0)
+    fc = filled(not_equal(condition, 0), 0)
     xv = filled(x)
     xm = getmask(x)
     yv = filled(y)
@@ -1732,7 +1721,7 @@ def choose (indices, t):
         m = getmask(x)
         if m is nomask: return 0
         return m
-    c = filled(indices,0)
+    c = filled(indices, 0)
     masks = [nmask(x) for x in t]
     a = [fmask(x) for x in t]
     d = numeric.choose(c, a)
@@ -1766,7 +1755,7 @@ def masked_less_equal(x, value, copy=1):
 
 def masked_not_equal(x, value, copy=1):
     "masked_not_equal(x, value) = x masked where x != value"
-    d = filled(x,0)
+    d = filled(x, 0)
     c = umath.not_equal(d, value)
     m = mask_or(c, getmask(x))
     return array(d, mask=m, copy=copy)
@@ -1775,7 +1764,7 @@ def masked_equal(x, value, copy=1):
     """masked_equal(x, value) = x masked where x == value
        For floating point consider masked_values(x, value) instead.
     """
-    d = filled(x,0)
+    d = filled(x, 0)
     c = umath.equal(d, value)
     m = mask_or(c, getmask(x))
     return array(d, mask=m, copy=copy)
@@ -1788,7 +1777,7 @@ def masked_inside(x, v1, v2, copy=1):
         t = v2
         v2 = v1
         v1 = t
-    d=filled(x, 0)
+    d = filled(x, 0)
     c = umath.logical_and(umath.less_equal(d, v2), umath.greater_equal(d, v1))
     m = mask_or(c, getmask(x))
     return array(d, mask = m, copy=copy)
@@ -1801,7 +1790,7 @@ def masked_outside(x, v1, v2, copy=1):
         t = v2
         v2 = v1
         v1 = t
-    d = filled(x,0)
+    d = filled(x, 0)
     c = umath.logical_or(umath.less(d, v1), umath.greater(d, v2))
     m = mask_or(c, getmask(x))
     return array(d, mask = m, copy=copy)
@@ -1886,7 +1875,7 @@ def putmask(a, mask, values):
     a.unshare_mask()
     numeric.putmask(a.raw_mask(), mask, 0)
 
-def innerproduct(a,b):
+def innerproduct(a, b):
     """innerproduct(a,b) returns the dot product of two arrays, which has
     shape a.shape[:-1] + b.shape[:-1] with elements computed by summing the
     product of the elements from the last dimensions of a and b.
@@ -1900,8 +1889,8 @@ def innerproduct(a,b):
 
 def outerproduct(a, b):
     """outerproduct(a,b) = {a[i]*b[j]}, has shape (len(a),len(b))"""
-    fa = filled(a,0).ravel()
-    fb = filled(b,0).ravel()
+    fa = filled(a, 0).ravel()
+    fb = filled(b, 0).ravel()
     d = numeric.outerproduct(fa, fb)
     ma = getmask(a)
     mb = getmask(b)
@@ -1909,7 +1898,7 @@ def outerproduct(a, b):
         return masked_array(d)
     ma = getmaskarray(a)
     mb = getmaskarray(b)
-    m = make_mask(1-numeric.outerproduct(1-ma,1-mb), copy=0)
+    m = make_mask(1-numeric.outerproduct(1-ma, 1-mb), copy=0)
     return masked_array(d, m)
 
 def dot(a, b):
@@ -1917,7 +1906,7 @@ def dot(a, b):
     is over the last dimension of a and the second-to-last dimension of b.
     Masked values are replaced by zeros. See also innerproduct.
     """
-    return innerproduct(filled(a,0), numeric.swapaxes(filled(b,0), -1, -2))
+    return innerproduct(filled(a, 0), numeric.swapaxes(filled(b, 0), -1, -2))
 
 def compress(condition, x, dimension=-1):
     """Select those parts of x for which condition is true.
@@ -1926,7 +1915,7 @@ def compress(condition, x, dimension=-1):
     c = filled(condition, 0)
     m = getmask(x)
     if m is not nomask:
-        m=numeric.compress(c, m, dimension)
+        m = numeric.compress(c, m, dimension)
     d = numeric.compress(c, filled(x), dimension)
     return masked_array(d, m)
 
@@ -2093,7 +2082,7 @@ def argmax (x, axis = -1, fill_value=None):
 
 def fromfunction (f, s):
     """apply f to s to create array as in umath."""
-    return masked_array(numeric.fromfunction(f,s))
+    return masked_array(numeric.fromfunction(f, s))
 
 def asarray(data, dtype=None):
     """asarray(data, dtype) = array(data, dtype, copy=0)
@@ -2158,7 +2147,6 @@ array.min = _m(_min)
 del _min
 array.mean = _m(average)
 array.nbytes = property(_m(not_implemented))
-array.ndim = _m(not_implemented)
 array.newbyteorder = _m(not_implemented)
 array.nonzero = _m(nonzero)
 array.prod = _m(product)
@@ -2180,6 +2168,7 @@ array.trace = _m(not_implemented)
 array.transpose = _m(transpose)
 array.var = _m(not_implemented)
 array.view =  _m(not_implemented)
+array.round = _m(around)
 del _m, MethodType, not_implemented
 
 

@@ -1,3 +1,4 @@
+
 /* This expects the following variables to be defined (besides
    the usual ones from pyconfig.h
 
@@ -77,8 +78,8 @@ extern "C" CONFUSE_EMACS
 #define PY_FAIL 0
 #define PY_SUCCEED 1
 
-	/* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x00090500
+        /* Helpful to distinguish what is installed */
+#define NDARRAY_VERSION 0x00090504
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -223,6 +224,17 @@ typedef enum {
 	PyArray_TIMSORT=3         /* the sort Python uses -- specialized */
 } PyArray_SORTKIND;
 #define PyArray_NSORTS PyArray_TIMSORT + 1
+
+
+typedef enum {
+	PyArray_NOSCALAR=0,
+	PyArray_BOOL_SCALAR=1,
+	PyArray_INTPOS_SCALAR=2,
+	PyArray_INTNEG_SCALAR=3,
+	PyArray_FLOAT_SCALAR=4,
+	PyArray_COMPLEX_SCALAR=5,
+	PyArray_OBJECT_SCALAR=6,
+} PyArray_SCALARKIND;
 
 	/* Define bit-width array types and typedefs */
 
@@ -799,6 +811,8 @@ typedef int (PyArray_FillFunc)(void *, intp, void *);
 typedef int (PyArray_SortFunc)(void *, intp, void *);
 typedef int (PyArray_ArgSortFunc)(void *, intp *, intp, void *);
 
+typedef int (PyArray_FillWithScalarFunc)(void *, intp, void *, void *);
+
 typedef struct {
         intp *ptr;
         int len;
@@ -840,6 +854,9 @@ typedef struct {
 
 	/* Used for arange */
 	PyArray_FillFunc *fill;
+
+	/* Function to fill arrays with scalar values */
+	PyArray_FillWithScalarFunc *fillwithscalar;
 
 	/* Sorting functions */
 	PyArray_SortFunc *sort[PyArray_NSORTS];
@@ -904,6 +921,7 @@ typedef struct PyArrayObject {
 	int flags;              /* Flags describing array -- see below*/
 	PyObject *weakreflist;  /* For weakreferences */
 } PyArrayObject;
+
 
 #define fortran fortran_        /* For some compilers */
 
@@ -1018,13 +1036,6 @@ typedef struct {
 #endif
 
 
-#define UFUNC_NOSCALAR         0
-#define UFUNC_BOOL_SCALAR      1
-#define UFUNC_INTPOS_SCALAR    2
-#define UFUNC_INTNEG_SCALAR    3
-#define UFUNC_FLOAT_SCALAR     4
-#define UFUNC_COMPLEX_SCALAR   5
-#define UFUNC_OBJECT_SCALAR    6
 
 
 typedef struct {
@@ -1397,9 +1408,8 @@ typedef struct {
 
 #define PyArray_DescrCheck(op) ((op)->ob_type == &PyArrayDescr_Type)
 
-#define PyArray_Check(op) ((op)->ob_type == &PyArray_Type || \
-			   PyObject_TypeCheck((op), &PyBigArray_Type))
-#define PyBigArray_CheckExact(op) ((op)->ob_type == &PyBigArray_Type)
+#define PyArray_Check(op) ((op)->ob_type == &PyArray_Type ||		\
+			   PyObject_TypeCheck((op), &PyArray_Type))
 #define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
 
 #define PyArray_IsZeroDim(op) (PyArray_Check(op) && (PyArray_NDIM(op) == 0))

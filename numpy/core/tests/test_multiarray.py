@@ -70,10 +70,10 @@ class test_attributes(ScipyTestCase):
                            strides=strides*x.itemsize)
         assert_equal(make_array(4, 4, -1), array([4, 3, 2, 1]))
         self.failUnlessRaises(ValueError, make_array, 4, 4, -2)
-        self.failUnlessRaises(ValueError, make_array, 4, 3, -1)
+        self.failUnlessRaises(ValueError, make_array, 4, 2, -1)
         self.failUnlessRaises(ValueError, make_array, 8, 3, 1)
-        self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
-        self.failUnlessRaises(ValueError, lambda: ndarray([1], strides=4))
+        #self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
+        #self.failUnlessRaises(ValueError, lambda: ndarray([1], strides=4))
         
 
     def check_set_stridesattr(self):
@@ -87,10 +87,21 @@ class test_attributes(ScipyTestCase):
             return r
         assert_equal(make_array(4, 4, -1), array([4, 3, 2, 1]))
         self.failUnlessRaises(ValueError, make_array, 4, 4, -2)
-        self.failUnlessRaises(ValueError, make_array, 4, 3, -1)
+        self.failUnlessRaises(ValueError, make_array, 4, 2, -1)
         self.failUnlessRaises(ValueError, make_array, 8, 3, 1)
-        self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
+        #self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
+        
+    def check_fill(self):
+        for t in "?bhilqpBHILQPfdgFDGO":
+            x = empty((3,2,1), t)
+            y = empty((3,2,1), t)
+            x.fill(1)
+            y[...] = 1
+            assert_equal(x,y)
 
+        x = array([(0,0.0), (1,1.0)], dtype='i4,f8')
+        x.fill(x[0])
+        assert_equal(x['f1'][1], x['f1'][0])
 
 class test_dtypedescr(ScipyTestCase):
     def check_construction(self):
@@ -117,8 +128,8 @@ class test_zero_rank(ScipyTestCase):
         a,b = self.d
         self.failUnlessEqual(a[...], 0)
         self.failUnlessEqual(b[...], 'x')
-        self.failUnless(type(a[...]) is a.dtype.type)
-        self.failUnless(type(b[...]) is str)
+        self.failUnless(a[...] is a)
+        self.failUnless(b[...] is b)
         
     def check_empty_subscript(self):
         a,b = self.d
@@ -173,6 +184,14 @@ class test_zero_rank(ScipyTestCase):
         self.failUnlessRaises(IndexError, subscript, a, (newaxis, 0))
         self.failUnlessRaises(IndexError, subscript, a, (newaxis,)*50)
 
+    def check_constructor(self):
+        x = ndarray(())
+        x[()] = 5
+        self.failUnlessEqual(x[()], 5)
+        y = ndarray((),buffer=x)
+        y[()] = 6
+        self.failUnlessEqual(x[()], 6)
+        
 class test_creation(ScipyTestCase):
     def check_from_attribute(self):
         class x(object):
@@ -189,8 +208,33 @@ class test_bool(ScipyTestCase):
         b1 = bool_(True)
         self.failUnless(a1 is b1)
         self.failUnless(array([True])[0] is a1)
-        self.failUnless(array(True)[...] is a1)
+        self.failUnless(array(True)[()] is a1)
 
+
+class test_methods(ScipyTestCase):
+    def check_test_round(self):
+        assert_equal(array([1.2,1.5]).round(), [1,2])
+        assert_equal(array(1.5).round(), 2)
+        assert_equal(array([12.2,15.5]).round(-1), [10,20])
+        assert_equal(array([12.15,15.51]).round(1), [12.2,15.5])
+
+
+class test_subscripting(ScipyTestCase):
+    def check_test_zero_rank(self):
+        x = array([1,2,3])
+        self.failUnless(isinstance(x[0], int))
+        self.failUnless(type(x[0, ...]) is ndarray)
+
+class test_pickling(ScipyTestCase):
+    def setUp(self):
+        self.carray = array([[2,9],[7,0],[3,8]])
+        self.tarray = transpose(self.carray)
+        
+    def check_both(self):
+        import pickle
+        assert_equal(self.carray, pickle.loads(self.carray.dumps()))
+        assert_equal(self.tarray, pickle.loads(self.tarray.dumps()))
+            
 # Import tests from unicode
 set_local_path()
 from test_unicode import *

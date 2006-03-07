@@ -610,7 +610,7 @@ _lowest_type(char intype)
 static int 
 select_types(PyUFuncObject *self, int *arg_types, 
              PyUFuncGenericFunction *function, void **data,
-	     char *scalars)
+	     PyArray_SCALARKIND *scalars)
 {
 
 	int i=0, j;
@@ -663,7 +663,7 @@ select_types(PyUFuncObject *self, int *arg_types,
 	/* If the first argument is a scalar we need to place 
 	   the start type as the lowest type in the class
 	*/
-	if (scalars[0] != UFUNC_NOSCALAR) {
+	if (scalars[0] != PyArray_NOSCALAR) {
 		start_type = _lowest_type(start_type);
 	}
 
@@ -850,7 +850,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 {
         int nargs, i, maxsize;
         int arg_types[MAX_ARGS];
-	char scalars[MAX_ARGS];
+	PyArray_SCALARKIND scalars[MAX_ARGS];
 	PyUFuncObject *self=loop->ufunc;
 	Bool allscalars=TRUE;
 	PyTypeObject *subtype=&PyArray_Type;
@@ -889,21 +889,17 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		   at this point
 		*/
 		if (mps[i]->nd > 0) {
-			scalars[i] = UFUNC_NOSCALAR;
+			scalars[i] = PyArray_NOSCALAR;
 			allscalars=FALSE;
 		}
 		else scalars[i] = PyArray_ScalarKind(arg_types[i], &(mps[i]));
 
-		/* If any input is a big-array */
-		if (!PyType_IsSubtype(mps[i]->ob_type, &PyArray_Type)) {
-			subtype = &PyBigArray_Type;
-		}
         }
 
 	/* If everything is a scalar, then use normal coercion rules */
 	if (allscalars) {
 		for (i=0; i<self->nin; i++) {
-			scalars[i] = UFUNC_NOSCALAR;
+			scalars[i] = PyArray_NOSCALAR;
 		}
 	}
        
@@ -921,7 +917,6 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
             (loop->ufunc->nin==2) && (loop->ufunc->nout == 1)) {
 		PyObject *_obj = PyTuple_GET_ITEM(args, 1);
                 if (!PyArray_CheckExact(_obj) &&			\
-		    !PyBigArray_CheckExact(_obj) &&			\
 		    PyObject_HasAttrString(_obj, "__array_priority__") && \
 		    _has_reflected_op(_obj, loop->ufunc->name)) {
                         loop->notimplemented = 1;
@@ -1716,7 +1711,8 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 	PyArrayObject *aar;
         intp loop_i[MAX_DIMS];
         int arg_types[3] = {otype, otype, otype};
-	char scalars[3] = {UFUNC_NOSCALAR, UFUNC_NOSCALAR, UFUNC_NOSCALAR};
+	PyArray_SCALARKIND scalars[3] = {PyArray_NOSCALAR, PyArray_NOSCALAR, 
+					 PyArray_NOSCALAR};
 	int i, j;
 	int nd = (*arr)->nd;
 	/* Reduce type is the type requested of the input 
@@ -2535,7 +2531,7 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
 	nargs = PyTuple_GET_SIZE(args);
 	for (i=0; i<nin; i++) {
 		obj = PyTuple_GET_ITEM(args, i);
-		if (PyArray_CheckExact(obj) || PyBigArray_CheckExact(obj) || \
+		if (PyArray_CheckExact(obj) ||	\
 		    PyArray_IsAnyScalar(obj))
 			continue;
 		wrap = PyObject_GetAttrString(obj, "__array_wrap__");
@@ -2546,6 +2542,7 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
 				++np;
 			}
 			else {
+				Py_DECREF(wrap);
 				wrap = NULL;
 			}
 		}
@@ -2594,8 +2591,7 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
                         obj = PyTuple_GET_ITEM(args, j);
                         if (obj == Py_None)
                                 continue;
-                        if (PyArray_CheckExact(obj) || 
-                            PyBigArray_CheckExact(obj)) {
+                        if (PyArray_CheckExact(obj)) {
                                 output_wrap[i] = Py_None;
                         }
                         else {
@@ -2616,7 +2612,8 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
                         Py_XINCREF(output_wrap[i]);
                 }
         }
-           
+
+	Py_XDECREF(wrap);
 	return;
 }
 
@@ -2691,9 +2688,12 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
                         }
 			res = PyObject_CallFunction(wrap, "O(OOi)",
 						    mps[j], self, args, i);
-			if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
+			if (res == NULL && \
+			    PyErr_ExceptionMatches(PyExc_TypeError)) {
 				PyErr_Clear();
-				res = PyObject_CallFunctionObjArgs(wrap, mps[j], NULL);
+				res = PyObject_CallFunctionObjArgs(wrap, 
+								   mps[j], 
+								   NULL);
 			}
 			Py_DECREF(wrap);
 			if (res == NULL) goto fail;

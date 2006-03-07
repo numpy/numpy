@@ -195,6 +195,87 @@ PyArray_Ravel(PyArrayObject *a, int fortran)
 	        return PyArray_Flatten(a, fortran);
 }
 
+static double
+power_of_ten(int n)
+{
+	static const double p10[] = {1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8};
+	double ret;
+	if (n < 9)
+		ret = p10[n];
+	else {
+		ret = 1e9;
+		while (n-- > 9)
+			ret *= 10.;
+	}
+	return ret;
+}
+
+/*MULTIARRAY_API
+ Round
+*/
+static PyObject *
+PyArray_Round(PyArrayObject *a, int decimals)
+{
+	/* do the most common case first */
+	if (decimals == 0) {
+		if (PyArray_ISINTEGER(a)) {
+			Py_INCREF(a);
+			return (PyObject *)a;
+		}
+		return PyArray_GenericUnaryFunction((PyAO *)a, n_ops.rint);
+	}
+	if (decimals > 0) {
+		PyObject *f, *ret;
+		if (PyArray_ISINTEGER(a)) {
+			Py_INCREF(a);
+			return (PyObject *)a;
+		}
+		f = PyFloat_FromDouble(power_of_ten(decimals));
+		if (f==NULL) return NULL;
+		ret = PyNumber_Multiply((PyObject *)a, f);
+		if (ret==NULL) {Py_DECREF(f); return NULL;}
+		if (PyArray_IsScalar(ret, Generic)) {
+			/* array scalars cannot be modified inplace */
+			PyObject *tmp;
+			tmp = PyObject_CallFunction(n_ops.rint, "O", ret);
+			Py_DECREF(ret);
+			ret = PyObject_CallFunction(n_ops.divide, "OO", 
+						    tmp, f);
+			Py_DECREF(tmp);
+		} else {
+			PyObject_CallFunction(n_ops.rint, "OO", ret, ret);
+			PyObject_CallFunction(n_ops.divide, "OOO", ret, 
+					      f, ret);
+		}
+		Py_DECREF(f);
+		return ret;
+	} 
+	else {
+		/* remaining case: decimals < 0 */
+		PyObject *f, *ret;
+		f = PyFloat_FromDouble(power_of_ten(-decimals));
+		if (f==NULL) return NULL;
+		ret = PyNumber_Divide((PyObject *)a, f);
+		if (ret==NULL) {Py_DECREF(f); return NULL;}
+		if (PyArray_IsScalar(ret, Generic)) {
+			/* array scalars cannot be modified inplace */
+			PyObject *tmp;
+			tmp = PyObject_CallFunction(n_ops.rint, "O", ret);
+			Py_DECREF(ret);
+			ret = PyObject_CallFunction(n_ops.multiply, "OO", 
+						    tmp, f);
+			Py_DECREF(tmp);
+		} else {
+			PyObject_CallFunction(n_ops.rint, "OO", ret, ret);
+			PyObject_CallFunction(n_ops.multiply, "OOO", ret, 
+					      f, ret);
+		}
+		Py_DECREF(f);
+		return ret;
+	}
+}
+
+
 /*MULTIARRAY_API
  Flatten
 */
@@ -1434,40 +1515,40 @@ _signbit_set(PyArrayObject *arr)
 
 
 /*OBJECT_API*/
-static char
+static PyArray_SCALARKIND
 PyArray_ScalarKind(int typenum, PyArrayObject **arr) 
 {
 	if (PyTypeNum_ISSIGNED(typenum)) {
-		if (arr && _signbit_set(*arr)) return UFUNC_INTNEG_SCALAR;
-		else return UFUNC_INTPOS_SCALAR;
+		if (arr && _signbit_set(*arr)) return PyArray_INTNEG_SCALAR;
+		else return PyArray_INTPOS_SCALAR;
 	}
-	if (PyTypeNum_ISFLOAT(typenum)) return UFUNC_FLOAT_SCALAR;
-	if (PyTypeNum_ISUNSIGNED(typenum)) return UFUNC_INTPOS_SCALAR;
-	if (PyTypeNum_ISCOMPLEX(typenum)) return UFUNC_COMPLEX_SCALAR;
-	if (PyTypeNum_ISBOOL(typenum)) return UFUNC_BOOL_SCALAR;
+	if (PyTypeNum_ISFLOAT(typenum)) return PyArray_FLOAT_SCALAR;
+	if (PyTypeNum_ISUNSIGNED(typenum)) return PyArray_INTPOS_SCALAR;
+	if (PyTypeNum_ISCOMPLEX(typenum)) return PyArray_COMPLEX_SCALAR;
+	if (PyTypeNum_ISBOOL(typenum)) return PyArray_BOOL_SCALAR;
 
-	return UFUNC_OBJECT_SCALAR;
+	return PyArray_OBJECT_SCALAR;
 }
-
 
 /*OBJECT_API*/
 static int 
-PyArray_CanCoerceScalar(char thistype, char neededtype, char scalar) 
+PyArray_CanCoerceScalar(char thistype, char neededtype, 
+			PyArray_SCALARKIND scalar) 
 {
 
 	switch(scalar) {
-	case UFUNC_NOSCALAR:
-	case UFUNC_BOOL_SCALAR:
-	case UFUNC_OBJECT_SCALAR:
+	case PyArray_NOSCALAR:
+	case PyArray_BOOL_SCALAR:
+	case PyArray_OBJECT_SCALAR:
 		return PyArray_CanCastSafely(thistype, neededtype);
-	case UFUNC_INTPOS_SCALAR:
+	case PyArray_INTPOS_SCALAR:
 		return (neededtype >= PyArray_UBYTE);
-	case UFUNC_INTNEG_SCALAR:
+	case PyArray_INTNEG_SCALAR:
 		return (neededtype >= PyArray_BYTE) &&		\
 			!(PyTypeNum_ISUNSIGNED(neededtype));
-	case UFUNC_FLOAT_SCALAR:
+	case PyArray_FLOAT_SCALAR:
 		return (neededtype >= PyArray_FLOAT);
-	case UFUNC_COMPLEX_SCALAR:
+	case PyArray_COMPLEX_SCALAR:
 		return (neededtype >= PyArray_CFLOAT);
 	}
 	fprintf(stderr, "\n**Error** coerce fall through: %d %d %d\n\n", 
@@ -4246,7 +4327,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 		return NULL;
 
 	/* fast exit if simple call */
-	if ((PyArray_CheckExact(op) || PyBigArray_CheckExact(op))) {
+	if (PyArray_CheckExact(op)) {
 		if (type==NULL) {
 			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
 				Py_INCREF(op);
@@ -5750,25 +5831,6 @@ DL_EXPORT(void) initmultiarray(void) {
 	d = PyModule_GetDict(m);
 	if (!d) goto err; 
 
-	/* Create the module and add the functions */
-	if (PyType_Ready(&PyBigArray_Type) < 0) 
-		return;
-
-        PyArray_Type.tp_base = &PyBigArray_Type;
-
-        PyArray_Type.tp_as_mapping = &array_as_mapping;
-	/* Even though, this would be inherited, it needs to be set now
-	   so that the __getitem__ will map to the as_mapping descriptor
-	*/
-        PyArray_Type.tp_as_number = &array_as_number;               
-	/* For good measure */
-	PyArray_Type.tp_as_sequence = &array_as_sequence;
-	PyArray_Type.tp_as_buffer = &array_as_buffer;	
-        PyArray_Type.tp_flags = (Py_TPFLAGS_DEFAULT 
-				 | Py_TPFLAGS_BASETYPE
-				 | Py_TPFLAGS_CHECKTYPES);
-        PyArray_Type.tp_doc = Arraytype__doc__;
-
 	if (PyType_Ready(&PyArray_Type) < 0)
                 return;
 
@@ -5800,8 +5862,6 @@ DL_EXPORT(void) initmultiarray(void) {
 	s = PyString_FromString("3.0");
 	PyDict_SetItemString(d, "__version__", s);
 	Py_DECREF(s);
-        Py_INCREF(&PyBigArray_Type);
-	PyDict_SetItemString(d, "bigndarray", (PyObject *)&PyBigArray_Type);
         Py_INCREF(&PyArray_Type);
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
         Py_INCREF(&PyArrayIter_Type);

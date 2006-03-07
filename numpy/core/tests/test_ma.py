@@ -2,6 +2,7 @@ import numpy
 import types, time
 from numpy.core.ma import *
 from numpy.testing import ScipyTestCase, ScipyTest
+pi = numpy.pi
 def eq(v,w, msg=''):
     result = allclose(v,w)
     if not result:
@@ -620,7 +621,12 @@ class test_ma(ScipyTestCase):
         self.failUnless(eq(a.sum(), a.data.sum()))
         self.failUnless(eq(a.take([1,2]), a.data.take([1,2])))
         self.failUnless(eq(m.transpose(), m.data.transpose()))
-        
+
+    def check_testArrayAttributes(self):
+        a = array([1,3,2])
+        b = array([1,3,2], mask=[1,0,1])
+        self.failUnlessEqual(a.ndim, 1)
+
     def check_testAPI(self):
         self.failIf([m for m in dir(numpy.ndarray)
                      if m not in dir(array) and not m.startswith('_')])
@@ -685,7 +691,12 @@ class test_ufuncs(ScipyTestCase):
         self.failUnless((amask.min(0) == [5,6,7,8]).all())
         self.failUnless(amask.max(1)[0].mask)
         self.failUnless(amask.min(1)[0].mask)
-        
+
+    def test_nonzero(self):
+        for t in "?bhilqpBHILQPfdgFDGO":
+            x = array([1,0,2,0], mask=[0,0,1,1])
+            self.failUnless(eq(nonzero(x), [0]))
+            
 def eqmask(m1, m2):
     if m1 is nomask:
         return m2 is nomask

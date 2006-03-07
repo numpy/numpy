@@ -229,6 +229,10 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    ap1shape = ap2shape;
 	    ap2shape = _scalar;
 	}
+
+	if (ap1shape == _row) ap1stride = ap1->strides[1];
+	else ap1stride = ap1->strides[0];
+
 	/* Fix it so that dot(shape=(N,1), shape=(1,))
 	   and dot(shape=(1,), shape=(1,N)) both return
 	   an (N,) array (but use the fast scalar code)
@@ -238,16 +242,13 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    nd = 1;
 	    if (ap1shape == _column) {
 		dimensions[0] = ap1->dimensions[0];
-		ap1stride = ap1->strides[0] / sizeof(double);
 	    }
 	    else {
 		dimensions[0] = ap1->dimensions[1];
-		ap1stride = ap1->strides[1] / sizeof(double);
 	    }
 	    l = dimensions[0];
 	}
 	else {
-	    ap1stride = ap1->strides[0] / sizeof(double);
 	    nd = ap1->nd;
 	    for (l = 1, j = 0; j < nd; j++) {
 		dimensions[j] = ap1->dimensions[j];
@@ -310,7 +311,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    }
 	    else if (ap1shape != _matrix) {
 		cblas_daxpy(l, *((double *)ap2->data), (double *)ap1->data,
-			    ap1stride, (double *)ret->data, 1);
+			    ap1stride/sizeof(double), (double *)ret->data, 1);
 	    }
 	    else {
 		int maxind, oind, i, a1s, rets;
@@ -343,7 +344,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    }
 	    else if (ap1shape != _matrix) {
 		cblas_zaxpy(l, (double *)ap2->data, (double *)ap1->data,
-			    ap1stride, (double *)ret->data, 1);
+			    ap1stride/sizeof(cdouble), (double *)ret->data, 1);
 	    }
 	    else {
 		int maxind, oind, i, a1s, rets;
@@ -372,7 +373,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    }
 	    else if (ap1shape != _matrix) {
 		cblas_saxpy(l, *((float *)ap2->data), (float *)ap1->data,
-			    ap1stride, (float *)ret->data, 1);
+			    ap1stride/sizeof(float), (float *)ret->data, 1);
 	    }
 	    else {
 		int maxind, oind, i, a1s, rets;
@@ -405,7 +406,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    }
 	    else if (ap1shape != _matrix) {
 		cblas_caxpy(l, (float *)ap2->data, (float *)ap1->data,
-			    ap1stride, (float *)ret->data, 1);
+			    ap1stride/sizeof(cfloat), (float *)ret->data, 1);
 	    }
 	    else {
 		int maxind, oind, i, a1s, rets;

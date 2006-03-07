@@ -1,4 +1,4 @@
-__all__ = ['newaxis', 'ndarray', 'bigndarray', 'flatiter', 'ufunc',
+__all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtype',
            'fromstring', 'fromfile', 'frombuffer','newbuffer',
            'getbuffer',
@@ -43,10 +43,9 @@ extend_all(numerictypes)
 newaxis = None
 
 ndarray = multiarray.ndarray
-bigndarray = multiarray.bigndarray
 flatiter = multiarray.flatiter
 broadcast = multiarray.broadcast
-dtype=multiarray.dtype
+dtype = multiarray.dtype
 ufunc = type(sin)
 
 arange = multiarray.arange
@@ -176,7 +175,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     returned.
     """
     if axis is not None:
-       axisa,axisb,axisc=(axis,)*3
+        axisa,axisb,axisc=(axis,)*3
     a = _move_axis_to_0(asarray(a), axisa)
     b = _move_axis_to_0(asarray(b), axisb)
     msg = "incompatible dimensions for cross product\n"\
@@ -236,15 +235,11 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         return cName + "(%s)" % lst
     else:
         typename=arr.dtype.type.__name__[:-6]
+        lf = ''
         if issubclass(arr.dtype.type, flexible):
-            if typename not in ['unicode','string','void']:
-                typename = arr.dtype.type.__name__
-            if typename == 'unicode':
-                size = arr.itemsize >> 2
-            else:
-                size = arr.itemsize;
-            typename = "(%s,%d)" % (typename, size)
-        return cName + "(%s, dtype=%s)" % (lst, typename)
+            typename = str(arr.dtype)
+            lf = '\n'+' '*len("array(")
+        return cName + "(%s, %sdtype=%s)" % (lst, lf, typename)
 
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     return array2string(a, max_line_width, precision, suppress_small, ' ', "", str)
@@ -344,11 +339,11 @@ def ones(shape, dtype=int_, fortran=False):
     """ones(shape, dtype=int_) returns an array of the given
     dimensions which is initialized to all ones. 
     """
-    # This appears to be slower...
-    #a = empty(shape, dtype, fortran)
-    #a.fill(1)
-    a = zeros(shape, dtype, fortran)
-    a+=1
+    a = empty(shape, dtype, fortran)
+    a.fill(1)
+    # Above is faster now after addition of fast loops.
+    #a = zeros(shape, dtype, fortran)
+    #a+=1
     return a
 
 def identity(n,dtype=int_):

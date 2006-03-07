@@ -23,6 +23,8 @@ class test_power(ScipyTestCase):
         assert_almost_equal(x**(-1), [1/(1+2j), 1/(2+3j), 1/(3+4j)])
         assert_almost_equal(x**(0.5), [ncu.sqrt(1+2j), ncu.sqrt(2+3j),
                                        ncu.sqrt(3+4j)])
+        assert_almost_equal(x**14, [-76443+16124j, 23161315+58317492j,
+                                    5583548873 +  2465133864j])
 
 class test_log1p(ScipyTestCase):
     def check_log1p(self):

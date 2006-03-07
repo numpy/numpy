@@ -1,5 +1,3 @@
-# Borrowed and adapted from numarray
-
 """numerictypes: Define the numeric type objects
 
 This module is designed so 'from numerictypes import *' is safe.
@@ -78,7 +76,8 @@ $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
 
 # we add more at the bottom
-__all__ = ['typeDict', 'typeNA', 'sctypes', 'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char','maximum_sctype', 'issctype']
+__all__ = ['typeDict', 'typeNA', 'sctypes', 'ScalarType', 'obj2sctype', 'cast', 'nbytes',
+           'sctype2char', 'maximum_sctype', 'issctype']
 
 from multiarray import typeinfo, ndarray, array, empty
 import types as _types
@@ -233,7 +232,7 @@ def _construct_char_code_lookup():
     for name in typeinfo.keys():
         tup = typeinfo[name]
         if isinstance(tup, tuple):
-	     if tup[0] not in ['p','P']:
+            if tup[0] not in ['p','P']:
                 _sctype2char_dict[tup[-1]] = tup[0]
 _construct_char_code_lookup()
 
@@ -368,7 +367,7 @@ for key in _sctype2char_dict.keys():
     cast[key] = lambda x, k=key : array(x, copy=False).astype(k)
 
 
-_unicodesize = array('u','U').itemsize
+_unicodesize = array('u','U1').itemsize
 
 # Create the typestring lookup dictionary
 _typestr = _typedict()

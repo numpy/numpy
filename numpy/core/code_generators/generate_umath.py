@@ -432,6 +432,12 @@ defdict = {
           TD(flts, f='floor'),
           TD(M, f='floor'),
           ),
+'rint' :
+    Ufunc(1, 1, None,
+          'round x elementwise to the nearest integer, round halfway cases away from zero',
+          TD(flts, f='rint'),
+          TD(M, f='rint'),
+          ),
 'arctan2' :
     Ufunc(2, 1, None,
           'a safe and correct arctan(x1/x2)',

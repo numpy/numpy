@@ -11,7 +11,6 @@ __all__ = ['logspace', 'linspace',
            ]
 
 import types
-import math
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
      asarray, empty, empty_like, asanyarray
@@ -210,7 +209,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     if n == n2-1:  # compute the "otherwise" condition.
         totlist = condlist[0]
         for k in range(1, n):
-            totlist |= condlist
+            totlist |= condlist[k]
         condlist.append(~totlist)
         n += 1
     if (n != n2):

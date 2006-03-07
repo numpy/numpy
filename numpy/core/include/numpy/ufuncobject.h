@@ -301,7 +301,7 @@ typedef struct {
 }
 
 #define generate_divbyzero_error() fp_raise_xcp(FP_DIV_BY_ZERO)
-#define generate_overflow_error() fp_raise_xcp(FE_OVERFLOW)
+#define generate_overflow_error() fp_raise_xcp(FP_OVERFLOW)
 
 #else
 

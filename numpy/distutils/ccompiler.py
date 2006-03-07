@@ -13,6 +13,14 @@ from exec_command import exec_command
 from misc_util import cyg2win32, is_sequence, mingw32
 from distutils.spawn import _nt_quote_args
 
+# hack to set compiler optimizing options. Needs to integrated with something.
+import distutils.sysconfig
+_old_init_posix = distutils.sysconfig._init_posix
+def _new_init_posix():
+    _old_init_posix()
+    distutils.sysconfig._config_vars['OPT'] = '-Wall -g -O2'
+#distutils.sysconfig._init_posix = _new_init_posix
+
 # Using customized CCompiler.spawn.
 def CCompiler_spawn(self, cmd, display=None):
     if display is None:

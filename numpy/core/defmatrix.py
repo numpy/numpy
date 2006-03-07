@@ -2,8 +2,7 @@
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import numeric as N
-from numeric import ArrayType, concatenate, integer, multiply, power, \
-     isscalar, binary_repr
+from numeric import ArrayType, concatenate, isscalar, binary_repr
 import types
 import string as str_
 import sys
@@ -101,6 +100,16 @@ class matrix(N.ndarray):
 
     def __array_finalize__(self, obj):
         ndim = self.ndim
+        if (ndim == 2):
+            return
+        if (ndim > 2):
+            newshape = tuple([x for x in self.shape if x > 1])
+            ndim = len(newshape)
+            if ndim == 2:
+                self.shape = newshape
+                return
+            elif (ndim > 2):
+                raise ValueError, "shape too large to be a matrix."
         if ndim == 0:
             self.shape = (1,1)
         elif ndim == 1:
@@ -135,7 +144,11 @@ class matrix(N.ndarray):
         return truend
     
     def __mul__(self, other):
-        return N.dot(self, other)
+        if isinstance(other, N.ndarray) or N.isscalar(other) or \
+               not hasattr(other, '__rmul__'):
+            return N.dot(self, other)
+        else:
+            return NotImplemented
     
     def __rmul__(self, other):
         return N.dot(other, self)
@@ -180,7 +193,7 @@ class matrix(N.ndarray):
             raise TypeError, "exponent must be an integer"
 
     def __rpow__(self, other):
-        raise NotImplementedError
+        return NotImplemented
 
     def __repr__(self):
         return repr(self.__array__()).replace('array','matrix')
@@ -251,7 +264,7 @@ def _from_string(str,gdict,ldict):
     return concatenate(rowtup,axis=0)
 
 
-def bmat(obj,ldict=None, gdict=None):
+def bmat(obj, ldict=None, gdict=None):
     """Build a matrix object from string, nested sequence, or array.
 
     Ex:  F = bmat('A, B; C, D') 

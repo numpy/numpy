@@ -65,4 +65,5 @@ PyArray_ArangeObj
 PyArray_SortkindConverter
 PyArray_LexSort
 PyArray_GetNDArrayCVersion
+PyArray_Round
 

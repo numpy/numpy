@@ -223,24 +223,35 @@ class concatenator(object):
     def __len__(self):
         return 0
 
-r_=concatenator(0)
-r_.__doc__ = """Translates slice objects to concatenation along the first axis.
+# separate classes are used here instead of just making r_ = concatentor(0),
+# etc. because otherwise we couldn't get the doc string to come out right
+# in help(r_)
 
-    For example:
-    >>> r_[array([1,2,3]), 0, 0, array([4,5,6])]
-    array([1, 2, 3, 0, 0, 4, 5, 6])
-"""
-c_=concatenator(-1)
-c_.__doc__ = """Translates slice objects to concatenation along the second axis.
+class r_class(concatenator):
+    """Translates slice objects to concatenation along the first axis.
 
-    For example:
-    >>> c_[array([[1],[2],[3]]), array([[4],[5],[6]])]
-    array([[1, 4],
-           [2, 5],
-           [3, 6]])
-"""
-#row = concatenator(0,1)
-#col = concatenator(-1,1)
+        For example:
+        >>> r_[array([1,2,3]), 0, 0, array([4,5,6])]
+        array([1, 2, 3, 0, 0, 4, 5, 6])
+    """
+    def __init__(self):
+        concatenator.__init__(self, 0)
+
+r_ = r_class()
+
+class c_class(concatenator):
+    """Translates slice objects to concatenation along the second axis.
+
+        For example:
+        >>> c_[array([[1],[2],[3]]), array([[4],[5],[6]])]
+        array([[1, 4],
+               [2, 5],
+               [3, 6]])
+    """
+    def __init__(self):
+        concatenator.__init__(self, -1)
+
+c_ = c_class()
 
 
 class ndenumerate(object):

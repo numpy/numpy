@@ -222,7 +222,7 @@ static longdouble atanhl(longdouble x)
 extern double hypot(double, double);
 #endif
 #else
-double hypot(double x, double y)
+static double hypot(double x, double y)
 {
 	double yx;
 
@@ -239,6 +239,30 @@ double hypot(double x, double y)
 		yx = y/x;
 		return x*sqrt(1.+yx*yx);
 	}
+}
+#endif
+
+
+#ifndef HAVE_RINT
+static double 
+rint (double x)
+{
+	double y, r;
+	
+	y = floor(x);
+	r = x - y;
+	
+	if (r > 0.5) goto rndup;
+
+	/* Round to nearest even */
+	if (r==0.5) {
+		r = y - 2.0*floor(0.5*y);
+		if (r==1.0) {
+		rndup:	      
+			y+=1.0;
+		}
+	}
+	return y;
 }
 #endif
 
@@ -286,7 +310,6 @@ double hypot(double x, double y)
 #if !defined(signbit)
 #include "_signbit.c"
 #endif
-
 
 /* Now defined the extended type macros */
 
@@ -357,10 +380,10 @@ double hypot(double x, double y)
 
 /**begin repeat
 
-#kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan)*2#
-#typ=longdouble*16, float*16#
-#c=l*16,f*16#
-#TYPE=LONGDOUBLE*16, FLOAT*16#
+#kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan,rint)*2#
+#typ=longdouble*17, float*17#
+#c=l*17,f*17#
+#TYPE=LONGDOUBLE*17, FLOAT*17#
 */
 #ifndef HAVE_@TYPE@_FUNCS
 #ifdef @kind@@c@
@@ -659,19 +682,19 @@ nc_pow@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 	}
         if (bi == 0 && (n=(intp)br) == br) {
             if (n > -100 && n < 100) {
-                c@typ@ p, a;
+                c@typ@ p, aa;
                 intp mask = 1;
                 if (n < 0) n = -n;
-                a = nc_1@c@;
+                aa = nc_1@c@;
                 p.real = ar; p.imag = ai;
                 while (1) {
                         if (n & mask)
-                            nc_prod@c@(&a,&p,&a);
+                            nc_prod@c@(&aa,&p,&aa);
                         mask <<= 1;
                         if (n < mask || mask <= 0) break;
                         nc_prod@c@(&p,&p,&p);
                 }
-                r->real = a.real; r->imag = a.imag;
+                r->real = aa.real; r->imag = aa.imag;
                 if (bi < 0) nc_quot@c@(&nc_1@c@, r, r);
                 return;
             }
