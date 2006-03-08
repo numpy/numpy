@@ -112,7 +112,7 @@ def buildhooks(m):
         cadd('\t%s(f2pyinit%s,F2PYINIT%s)(f2py_setup_%s);'\
              %(F_FUNC,lower_name,string.upper(name),name))
         cadd('}\n')
-        iadd('\tPyDict_SetItemString(d, \"%s\", PyFortranObject_New(f2py_%s_def,f2py_init_%s));'%(name,name,name))
+        iadd('\tF2PyDict_SetItemString(d, \"%s\", PyFortranObject_New(f2py_%s_def,f2py_init_%s));'%(name,name,name))
         tname = string.replace(name,'_','\\_')
         dadd('\\subsection{Common block \\texttt{%s}}\n'%(tname))
         dadd('\\begin{description}')

@@ -12,6 +12,20 @@ extern "C" {
   $Date: 2005/07/11 07:44:20 $
 */
 
+int
+F2PyDict_SetItemString(PyObject *dict, char *name, PyObject *obj) 
+{
+        if (obj==NULL) {
+                fprintf(stderr, "Error loading %s\n", name);
+                if (PyErr_Occurred()) {
+                        PyErr_Print();
+                        PyErr_Clear();
+                }
+                return -1;
+        }
+        return PyDict_SetItemString(dict, name, obj);
+}
+
 /************************* FortranObject *******************************/
 
 typedef PyObject *(*fortranfunc)(PyObject *,PyObject *,PyObject *,void *);
@@ -36,11 +50,19 @@ PyFortranObject_New(FortranDataDef* defs, f2py_void_func init) {
       PyDict_SetItemString(fp->dict,fp->defs[i].name,v);
     } else
       if ((fp->defs[i].data)!=NULL) { /* Is Fortran variable or array (not allocatable) */
-	v = PyArray_New(&PyArray_Type, fp->defs[i].rank, fp->defs[i].dims.d,
-			fp->defs[i].type, NULL, fp->defs[i].data, 0, FARRAY_FLAGS,
-			NULL);
-	if (v==NULL) return NULL;
-	PyDict_SetItemString(fp->dict,fp->defs[i].name,v);
+        if (fp->defs[i].type == PyArray_STRING) { 
+          int n = fp->defs[i].rank-1;
+          v = PyArray_New(&PyArray_Type, n, fp->defs[i].dims.d,
+                          PyArray_STRING, NULL, fp->defs[i].data, fp->defs[i].dims.d[n],
+                          FARRAY_FLAGS, NULL);
+        }
+        else {
+          v = PyArray_New(&PyArray_Type, fp->defs[i].rank, fp->defs[i].dims.d,
+                          fp->defs[i].type, NULL, fp->defs[i].data, 0, FARRAY_FLAGS,
+                          NULL);
+        }
+        if (v==NULL) return NULL;
+        PyDict_SetItemString(fp->dict,fp->defs[i].name,v);
       }
   Py_XDECREF(v);
   return (PyObject *)fp;

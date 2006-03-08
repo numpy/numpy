@@ -92,6 +92,7 @@ typedef struct {
 #define PyFortran_Check1(op) (0==strcmp((op)->ob_type->tp_name,"fortran"))
 
   extern PyTypeObject PyFortran_Type;
+  extern int F2PyDict_SetItemString(PyObject* dict, char *name, PyObject *obj);
   extern PyObject * PyFortranObject_New(FortranDataDef* defs, f2py_void_func init);
   extern PyObject * PyFortranObject_NewAsAttr(FortranDataDef* defs);
 
