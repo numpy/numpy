@@ -1,5 +1,4 @@
-from numerictypes import character, string, unicode_, \
-     integer, object_
+from numerictypes import string, unicode_, integer, object_
 from numeric import ndarray, broadcast, empty
 from numeric import array as narray
 import sys
@@ -47,8 +46,8 @@ class chararray(ndarray):
         res = result.flat
         for k, val in enumerate(b):
             r1 = val[0].rstrip('\x00')
-	    r2 = val[1]
-	    res[k] = eval("r1 %s r2" % op, {'r1':r1,'r2':r2})
+            r2 = val[1]
+            res[k] = eval("r1 %s r2" % op, {'r1':r1,'r2':r2})
         return result
         
     # these should probably be moved to C
@@ -142,7 +141,7 @@ class chararray(ndarray):
             maxsize = max(len(newitem), maxsize)
             res[k] = newitem
         newarr = chararray(myiter.shape, maxsize, self.dtype is unicode_)
-	print res, maxsize
+        print res, maxsize
         newarr[:] = res
         return newarr
 
