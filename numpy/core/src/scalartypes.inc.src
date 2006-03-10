@@ -330,50 +330,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
 static PyObject *
 gentype_@name@(PyObject *m1, PyObject *m2)
 {
-	PyObject *arr, *ret=NULL, *tup;
-	
-	if (!PyArray_IsScalar(m1, Generic)) {
-		if (PyArray_Check(m1)) {
-			ret = m1->ob_type->tp_as_number->nb_@name@(m1,m2);
-		}
-                else {
-			PyObject *newarr;
-			/* Convert object to Array scalar and try again */
-			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0, NULL);
-			if (newarr!=NULL) {
-				ret = newarr->ob_type->tp_as_number->nb_@name@(newarr, m2);
-				Py_DECREF(newarr);
-			}
-			else ret=NULL;
-		}
-		return ret;
-	}
-	if (!PyArray_IsScalar(m2, Generic)) {
-		if (PyArray_Check(m2)) {
-			ret = m2->ob_type->tp_as_number->nb_@name@(m1,m2);
-		}
-		else {
-			PyObject *newarr;
-			/* Convert object to Array and try again */
-			newarr = PyArray_FromAny(m2, NULL, 0, 0, 0, NULL);
-			if (newarr!=NULL) {
-				ret = newarr->ob_type->tp_as_number->nb_@name@(m1, newarr);
-				Py_DECREF(newarr);
-			}
-			else ret=NULL;
-		}
-		return ret;
-	}
-	arr=tup=NULL;
-	arr = PyArray_FromScalar(m1, NULL);
-	tup = PyArray_FromScalar(m2, NULL);
-	if (arr == NULL || tup == NULL) {
-		Py_XDECREF(tup); Py_XDECREF(arr); return NULL;
-	}
-	ret = arr->ob_type->tp_as_number->nb_@name@(arr, tup);
-	Py_DECREF(arr);
-	Py_DECREF(tup);
-	return ret;
+	return PyArray_Type.tp_as_number->nb_@name@(m1, m2);
 }
 /**end repeat**/
 
@@ -381,83 +338,31 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 static PyObject *
 gentype_multiply(PyObject *m1, PyObject *m2)
 {
-	PyObject *arr, *ret=NULL, *tup;
+	PyObject *ret=NULL;
 	long repeat;
 
-	if (!PyArray_IsScalar(m1, Generic)) {
-		if (PyArray_Check(m1)) {
-			ret = m1->ob_type->tp_as_number->nb_multiply(m1,m2);
-		}
-		else if ((m1->ob_type->tp_as_number == NULL) ||
-			 (m1->ob_type->tp_as_number->nb_multiply == NULL)) {
-			/* Convert m2 to an int and assume sequence
-			   repeat */
-			repeat = PyInt_AsLong(m2);
-			if (repeat == -1 && PyErr_Occurred()) return NULL;
-			ret = PySequence_Repeat(m1, (int) repeat);
-			if (ret == NULL) {
-				PyErr_Clear();
-				arr = PyArray_FromScalar(m2, NULL);
-				if (arr == NULL) return NULL;
-				ret = arr->ob_type->tp_as_number->\
-					nb_multiply(m1, arr);
-				Py_DECREF(arr);
-			}
-		}
-		else {
-			PyObject *newarr;
-			/* Convert object to Array scalar and try again */
-			newarr = PyArray_FromAny(m1, NULL, 0, 0, 0, NULL);
-			if (newarr!=NULL) {
-				ret = newarr->ob_type->tp_as_number->nb_multiply(newarr, m2);
-				Py_DECREF(newarr);
-			}
-			else ret=NULL;
-		}
-		return ret;
+	if (!PyArray_IsScalar(m1, Generic) && 
+	    ((m1->ob_type->tp_as_number == NULL) ||
+	     (m1->ob_type->tp_as_number->nb_multiply == NULL))) {
+		/* Try to convert m2 to an int and try sequence
+		   repeat */
+		repeat = PyInt_AsLong(m2);
+		if (repeat == -1 && PyErr_Occurred()) return NULL;
+		ret = PySequence_Repeat(m1, (int) repeat);
 	}
-	if (!PyArray_IsScalar(m2, Generic)) {
-		if (PyArray_Check(m2)) {
-			ret = m2->ob_type->tp_as_number->nb_multiply(m1,m2);
-		}
-		else if ((m2->ob_type->tp_as_number == NULL) ||
-			 (m2->ob_type->tp_as_number->nb_multiply == NULL)) {
-			/* Convert m1 to an int and assume sequence
-			   repeat */
-			repeat = PyInt_AsLong(m1);
-			if (repeat == -1 && PyErr_Occurred()) return NULL;
-			ret = PySequence_Repeat(m2, (int) repeat);
-			if (ret == NULL) {
-				PyErr_Clear();
-				arr = PyArray_FromScalar(m1, NULL);
-				if (arr == NULL) return NULL;
-				ret = arr->ob_type->tp_as_number->	\
-					nb_multiply(arr, m2);
-				Py_DECREF(arr);
-			}			
-		}
-		else {
-			PyObject *newarr;
-			/* Convert object to Array scalar and try again */
-			newarr = PyArray_FromAny(m2, NULL, 0, 0, 0, NULL);
-			if (newarr!=NULL) {
-				ret = newarr->ob_type->tp_as_number->nb_multiply(m1, newarr);
-				Py_DECREF(newarr);
-			}
-			else ret =NULL;
-		}
-		return ret;
+	else if (!PyArray_IsScalar(m2, Generic) && 
+		 ((m2->ob_type->tp_as_number == NULL) ||
+		  (m2->ob_type->tp_as_number->nb_multiply == NULL))) {
+		/* Try to convert m1 to an int and try sequence
+		   repeat */
+		repeat = PyInt_AsLong(m1);
+		if (repeat == -1 && PyErr_Occurred()) return NULL;
+		ret = PySequence_Repeat(m2, (int) repeat);
 	}
-	/* Both are array scalar objects */
-	arr=tup=NULL;
-	arr = PyArray_FromScalar(m1, NULL);
-	tup = PyArray_FromScalar(m2, NULL);
-	if (arr == NULL || tup == NULL) {
-		Py_XDECREF(tup); Py_XDECREF(arr); return NULL;
+	if (ret==NULL) {
+		PyErr_Clear(); /* no effect if not set */
+		ret = PyArray_Type.tp_as_number->nb_multiply(m1, m2);
 	}
-	ret = arr->ob_type->tp_as_number->nb_multiply(arr, tup);
-	Py_DECREF(arr);
-	Py_DECREF(tup);
 	return ret;
 }
 
