@@ -27,9 +27,9 @@ py_ver = "%d%d" % tuple(sys.version_info[:2])
 
 DEFAULT_NM = 'nm -Cs'
 
-DEF_HEADER = """LIBRARY		python%s.dll
-;CODE		PRELOAD MOVEABLE DISCARDABLE
-;DATA		PRELOAD SINGLE
+DEF_HEADER = """LIBRARY         python%s.dll
+;CODE           PRELOAD MOVEABLE DISCARDABLE
+;DATA           PRELOAD SINGLE
 
 EXPORTS
 """ % py_ver
@@ -88,7 +88,7 @@ dlist, flist = parse_nm(nm_output)"""
     for sym in data:
         if sym not in flist and (sym[:2] == 'Py' or sym[:3] == '_Py'):
             dlist.append(sym)
-            
+
     dlist.sort()
     flist.sort()
     return dlist, flist

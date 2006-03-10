@@ -38,7 +38,7 @@ def get_path(mod_name, parent_path=None):
             d = os.path.dirname(os.path.abspath(mod.__file__))
         else:
             # we're probably running setup.py as execfile("setup.py")
-            # (likely we're building an egg)            
+            # (likely we're building an egg)
             d = os.path.abspath('.')
             # hmm, should we use sys.argv[0] like in __builtin__ case?
 
@@ -85,7 +85,7 @@ def get_mathlibs(path=None):
                 mathlibs.extend(value.split(','))
     fid.close()
     return mathlibs
-    
+
 def minrelpath(path):
     """ Resolve `..` from path.
     """
@@ -866,7 +866,7 @@ class Configuration(object):
         build_info['sources'] = sources
 
         self._fix_paths_dict(build_info)
-        
+
         self.libraries.append((name,build_info))
 
         dist = self.get_distribution()

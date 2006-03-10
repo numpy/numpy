@@ -75,12 +75,12 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append('HAVE_ISINF')
             if config_cmd.check_func('rint', **kws_args):
                 moredefs.append('HAVE_RINT')
-                
+
             if sys.version[:3] < '2.4':
                 kws_args['headers'].append('stdlib.h')
                 if config_cmd.check_func('strtod', **kws_args):
                     moredefs.append(('PyOS_ascii_strtod', 'strtod'))
-                    
+
             if moredefs:
                 target_f = open(target,'a')
                 for d in moredefs:
@@ -155,14 +155,14 @@ def configuration(parent_package='',top_path=None):
             join('include','numpy','*object.h'),
             'include/numpy/fenv/fenv.c',
             'include/numpy/fenv/fenv.h',
-	    join(codegen_dir,'genapi.py'),
-	    join(codegen_dir,'*.txt')
+            join(codegen_dir,'genapi.py'),
+            join(codegen_dir,'*.txt')
             ]
 
     # Don't install fenv unless we need them.
     if sys.platform == 'cygwin':
         config.add_data_dir('include/numpy/fenv')
-        
+
     config.add_extension('multiarray',
                          sources = [join('src','multiarraymodule.c'),
                                     generate_config_h,

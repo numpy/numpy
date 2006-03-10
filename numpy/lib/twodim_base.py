@@ -9,8 +9,8 @@ from numpy.core.numeric import *
 import sys
 
 def fliplr(m):
-    """ returns an array m with the rows preserved and columns flipped 
-        in the left/right direction.  Works on the first two dimensions of m. 
+    """ returns an array m with the rows preserved and columns flipped
+        in the left/right direction.  Works on the first two dimensions of m.
     """
     m = asanyarray(m)
     if m.ndim < 2:
@@ -29,7 +29,7 @@ def flipud(m):
 def rot90(m, k=1):
     """ returns the array found by rotating m by k*90
     degrees in the counterclockwise direction.  Works on the first two
-    dimensions of m. 
+    dimensions of m.
     """
     m = asanyarray(m)
     if m.ndim < 2:
@@ -41,7 +41,7 @@ def rot90(m, k=1):
     else: return fliplr(m.transpose())  # k==3
 
 def eye(N, M=None, k=0, dtype=int_):
-    """ eye returns a N-by-M 2-d array where the  k-th diagonal is all ones, 
+    """ eye returns a N-by-M 2-d array where the  k-th diagonal is all ones,
         and everything else is zeros.
     """
     if M is None: M = N
@@ -49,7 +49,7 @@ def eye(N, M=None, k=0, dtype=int_):
     return m.astype(dtype)
 
 def diag(v, k=0):
-    """ returns the k-th diagonal if v is a array or returns a array 
+    """ returns the k-th diagonal if v is a array or returns a array
         with v as the k-th diagonal if v is a vector.
     """
     v = asarray(v)
@@ -77,7 +77,7 @@ def diag(v, k=0):
             fi = i + (i-k)*N2
         return v.flat[fi]
     else:
-            raise ValueError, "Input must be 1- or 2-d."
+        raise ValueError, "Input must be 1- or 2-d."
 
 
 def tri(N, M=None, k=0, dtype=int_):

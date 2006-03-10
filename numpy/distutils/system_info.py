@@ -56,7 +56,7 @@ Global parameters:
 
 The file 'site.cfg' is looked for in
 
-1) Directory of main setup.py file being run. 
+1) Directory of main setup.py file being run.
 2) Home directory of user running the setup.py file (Not implemented yet)
 3) System wide directory (location of this file...)
 
@@ -167,7 +167,7 @@ def get_standard_file(fname):
                                fname)
         if os.path.isfile(sysfile):
             filenames.append(sysfile)
-            
+
     # Home directory
     # And look for the user config file
     try:
@@ -178,7 +178,7 @@ def get_standard_file(fname):
         user_file = os.path.join(f, fname)
         if os.path.isfile(user_file):
             filenames.append(user_file)
-                
+
     # Local file
     if os.path.isfile(fname):
         filenames.append(os.path.abspath(fname))
@@ -530,7 +530,7 @@ class system_info:
         else:
             warnings.warn("Library error: libs=%s found_libs=%s" % \
                           (libs, found_libs))
-            
+
     def combine_paths(self,*args):
         return combine_paths(*args,**{'verbosity':self.verbosity})
 

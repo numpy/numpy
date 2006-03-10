@@ -18,7 +18,7 @@ class test_fromrecords(ScipyTestCase):
     def check_method_array2(self):
         r=rec.array([(1,11,'a'),(2,22,'b'),(3,33,'c'),(4,44,'d'),(5,55,'ex'),(6,66,'f'),(7,77,'g')],formats='u1,f4,a1')
         assert_equal(r[1].item(),(2, 22.0, 'b'))
-        
+
     def check_recarray_slices(self):
         r=rec.array([(1,11,'a'),(2,22,'b'),(3,33,'c'),(4,44,'d'),(5,55,'ex'),(6,66,'f'),(7,77,'g')],formats='u1,f4,a1')
         assert_equal(r[1::2][1].item(),(4, 44.0, 'd'))
@@ -38,6 +38,6 @@ class test_fromrecords(ScipyTestCase):
         fd = open(filename)
         fd.seek(2880*2)
         r = rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
-           
+
 if __name__ == "__main__":
     ScipyTest().run()

@@ -107,7 +107,7 @@ def runtest(t):
     except IndexError: pass
     try: raise RuntimeError,`t(())`
     except IndexError: pass
-    
+
     try: raise RuntimeError,`t(t)`
     except TypeError: pass
     try: raise RuntimeError,`t({})`

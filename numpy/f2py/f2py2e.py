@@ -5,7 +5,7 @@ f2py2e - Fortran to Python C/API generator. 2nd Edition.
          See __usage__ below.
 
 Copyright 1999--2005 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@cens.ioc.ee>          
+Pearu Peterson <pearu@cens.ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
@@ -326,7 +326,7 @@ def run_main(comline_list):
     fobjhsrc = os.path.join(f2pydir,'src','fortranobject.h')
     fobjcsrc = os.path.join(f2pydir,'src','fortranobject.c')
     files,options=scaninputline(comline_list)
-    auxfuncs.options=options    
+    auxfuncs.options=options
     postlist=callcrackfortran(files,options)
     isusedby={}
     for i in range(len(postlist)):
@@ -419,7 +419,7 @@ def run_compile():
     f2py_flags.extend(f2py_flags2)
 
     sys.argv = filter(lambda a,flags=f2py_flags2:a not in flags,sys.argv)
-    
+
     flib_flags = filter(re.compile(r'[-][-]((f(90)?compiler([-]exec|)|compiler)=|help[-]compiler)').match,sys.argv[1:])
     sys.argv = filter(lambda a,flags=flib_flags:a not in flags,sys.argv)
     fc_flags = filter(re.compile(r'[-][-]((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help[-]fcompiler))').match,sys.argv[1:])
@@ -552,4 +552,3 @@ def main():
 
 
 # EOF
-

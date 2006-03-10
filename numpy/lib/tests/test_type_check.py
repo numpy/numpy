@@ -10,7 +10,7 @@ restore_path()
 
 def assert_all(x):
     assert(all(x)), x
-       
+
 class test_mintypecode(ScipyTestCase):
 
     def check_default_1(self):
@@ -59,7 +59,7 @@ class test_mintypecode(ScipyTestCase):
         assert_equal(mintypecode('idF'),'D')
         #assert_equal(mintypecode('idF',savespace=1),'F')
         assert_equal(mintypecode('idD'),'D')
-        
+
 class test_isscalar(ScipyTestCase):
     def check_basic(self):
         assert(isscalar(3))
@@ -125,12 +125,12 @@ class test_isnan(ScipyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isnan(z) == 0
-        assert_all(alltrue(res))            
-    def check_posinf(self): 
+        assert_all(alltrue(res))
+    def check_posinf(self):
         assert_all(isnan(array((1.,))/0.) == 0)
-    def check_neginf(self): 
+    def check_neginf(self):
         assert_all(isnan(array((-1.,))/0.) == 0)
-    def check_ind(self): 
+    def check_ind(self):
         assert_all(isnan(array((0.,))/0.) == 1)
     #def check_qnan(self):             log(-1) return pi*j now
     #    assert_all(isnan(log(-1.)) == 1)
@@ -140,19 +140,19 @@ class test_isnan(ScipyTestCase):
         assert_all(isnan(1+1j) == 0)
     def check_complex1(self):
         assert_all(isnan(array(0+0j)/0.) == 1)
-                
+
 class test_isfinite(ScipyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isfinite(z) == 1
-        assert_all(alltrue(res))            
-    def check_posinf(self): 
+        assert_all(alltrue(res))
+    def check_posinf(self):
         assert_all(isfinite(array((1.,))/0.) == 0)
-    def check_neginf(self): 
+    def check_neginf(self):
         assert_all(isfinite(array((-1.,))/0.) == 0)
-    def check_ind(self): 
+    def check_ind(self):
         assert_all(isfinite(array((0.,))/0.) == 0)
-    #def check_qnan(self): 
+    #def check_qnan(self):
     #    assert_all(isfinite(log(-1.)) == 0)
     def check_integer(self):
         assert_all(isfinite(1) == 1)
@@ -160,23 +160,23 @@ class test_isfinite(ScipyTestCase):
         assert_all(isfinite(1+1j) == 1)
     def check_complex1(self):
         assert_all(isfinite(array(1+1j)/0.) == 0)
-        
+
 class test_isinf(ScipyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isinf(z) == 0
-        assert_all(alltrue(res))            
-    def check_posinf(self): 
+        assert_all(alltrue(res))
+    def check_posinf(self):
         assert_all(isinf(array((1.,))/0.) == 1)
-    def check_posinf_scalar(self): 
+    def check_posinf_scalar(self):
         assert_all(isinf(array(1.,)/0.) == 1)
-    def check_neginf(self): 
+    def check_neginf(self):
         assert_all(isinf(array((-1.,))/0.) == 1)
-    def check_neginf_scalar(self): 
+    def check_neginf_scalar(self):
         assert_all(isinf(array(-1.)/0.) == 1)
-    def check_ind(self): 
+    def check_ind(self):
         assert_all(isinf(array((0.,))/0.) == 0)
-    #def check_qnan(self): 
+    #def check_qnan(self):
     #    assert_all(isinf(log(-1.)) == 0)
     #    assert_all(isnan(log(-1.)) == 1)
 
@@ -216,12 +216,12 @@ class test_nan_to_num(ScipyTestCase):
         v = 1+1j
         v += array(-1+1.j)/0.
         vals = nan_to_num(v)
-        assert_all(isfinite(vals))    
-        #assert_all(vals.imag > 1e10)  and assert_all(isfinite(vals))    
+        assert_all(isfinite(vals))
+        #assert_all(vals.imag > 1e10)  and assert_all(isfinite(vals))
         # !! This is actually (unexpectedly) positive
         # !! inf.  Comment out for now, and see if it
         # !! changes
-        #assert_all(vals.real < -1e10) and assert_all(isfinite(vals))    
+        #assert_all(vals.real < -1e10) and assert_all(isfinite(vals))
 
 
 class test_real_if_close(ScipyTestCase):

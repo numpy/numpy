@@ -64,4 +64,3 @@ def fftfreq(n,d=1.0):
     assert isinstance(n,types.IntType) or isinstance(n, integer)
     k = range(0,(n-1)/2+1)+range(-(n/2),0)
     return array(k,'d')/(n*d)
-

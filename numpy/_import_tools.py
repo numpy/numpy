@@ -91,7 +91,7 @@ class PackageLoader:
 
     def _get_sorted_names(self):
         """ Return package names sorted in the order as they should be
-        imported due to dependence relations between packages. 
+        imported due to dependence relations between packages.
         """
 
         depend_dict = {}
@@ -178,14 +178,14 @@ class PackageLoader:
                 if '.' not in package_name:
                     self.parent_export_names.append(package_name)
                 continue
-            
+
             old_object = frame.f_locals.get(package_name,None)
 
             cmdstr = 'import '+package_name
             if self._execcmd(cmdstr):
                 continue
             self.imported_packages.append(package_name)
-    
+
             if verbose!=-1:
                 new_object = frame.f_locals.get(package_name)
                 if old_object is not None and old_object is not new_object:
@@ -242,7 +242,7 @@ class PackageLoader:
             self.error('%s -> failed: %s' % (cmdstr,msg))
             return True
         else:
-            self.log('%s -> success' % (cmdstr))                            
+            self.log('%s -> success' % (cmdstr))
         return
 
     def _obj2repr(self,obj):

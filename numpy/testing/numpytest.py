@@ -197,7 +197,7 @@ class _SciPyTextTestResult(unittest._TextTestResult):
 class SciPyTextTestRunner(unittest.TextTestRunner):
     def _makeResult(self):
         return _SciPyTextTestResult(self.stream, self.descriptions, self.verbosity)
-    
+
 
 class NumpyTest:
     """ Numpy tests site manager.
@@ -295,7 +295,7 @@ class NumpyTest:
             for base in clsobj.__bases__:
                 for n in self._get_method_names(base,level):
                     if n not in names:
-                        names.append(n)        
+                        names.append(n)
         return names
 
     def _get_short_module_name(self, module):
@@ -304,7 +304,7 @@ class NumpyTest:
         if short_module_name=='__init__':
             short_module_name = module.__name__.split('.')[-1]
         short_module_name = self._rename_map.get(short_module_name,short_module_name)
-        return short_module_name        
+        return short_module_name
 
     def _get_module_tests(self,module,level,verbosity):
         mstr = self._module_str

@@ -12,7 +12,7 @@ Functions
 -   fromstring                 - Construct array from (byte) string
 -   take                       - Select sub-arrays using sequence of indices
 -   put                        - Set sub-arrays using sequence of 1-D indices
--   putmask                    - Set portion of arrays using a mask 
+-   putmask                    - Set portion of arrays using a mask
 -   reshape                    - Return array with new shape
 -   repeat                     - Repeat elements of array
 -   choose                     - Construct new array from indexed array tuple
@@ -25,20 +25,20 @@ Functions
 -   cumproduct                 - Cumulative product over a specified dimension
 -   alltrue                    - Logical and over an entire axis
 -   sometrue                   - Logical or over an entire axis
--   allclose		       - Tests if sequences are essentially equal
+-   allclose                   - Tests if sequences are essentially equal
 
 More Functions:
 
 -   arrayrange (arange)        - Return regularly spaced array
 -   asarray                    - Guarantee NumPy array
--   sarray                     - Guarantee a NumPy array that keeps precision 
+-   sarray                     - Guarantee a NumPy array that keeps precision
 -   convolve                   - Convolve two 1-d arrays
 -   swapaxes                   - Exchange axes
 -   concatenate                - Join arrays together
 -   transpose                  - Permute axes
 -   sort                       - Sort elements of array
 -   argsort                    - Indices of sorted array
--   argmax                     - Index of largest value                      
+-   argmax                     - Index of largest value
 -   argmin                     - Index of smallest value
 -   innerproduct               - Innerproduct of two arrays
 -   dot                        - Dot product (matrix multiplication)
@@ -52,7 +52,7 @@ More Functions:
 -   dumps                      - Return pickled string representing data
 -   load                       - Return array stored in file object
 -   loads                      - Return array from pickled string
--   ravel                      - Return array as 1-D 
+-   ravel                      - Return array as 1-D
 -   nonzero                    - Indices of nonzero elements for 1-D array
 -   shape                      - Shape of array
 -   where                      - Construct array from binary result
@@ -61,23 +61,23 @@ More Functions:
 -   ones                       - Array of all ones
 -   identity                   - 2-D identity array (matrix)
 
-(Universal) Math Functions 
+(Universal) Math Functions
 
-       add                    logical_or             exp        
-       subtract               logical_xor            log        
-       multiply               logical_not            log10      
-       divide                 maximum                sin        
-       divide_safe            minimum                sinh       
-       conjugate              bitwise_and            sqrt       
-       power                  bitwise_or             tan        
-       absolute               bitwise_xor            tanh       
-       negative               invert                 ceil       
-       greater                left_shift             fabs       
-       greater_equal          right_shift            floor      
-       less                   arccos                 arctan2    
-       less_equal             arcsin                 fmod       
-       equal                  arctan                 hypot      
-       not_equal              cos                    around     
+       add                    logical_or             exp
+       subtract               logical_xor            log
+       multiply               logical_not            log10
+       divide                 maximum                sin
+       divide_safe            minimum                sinh
+       conjugate              bitwise_and            sqrt
+       power                  bitwise_or             tan
+       absolute               bitwise_xor            tanh
+       negative               invert                 ceil
+       greater                left_shift             fabs
+       greater_equal          right_shift            floor
+       less                   arccos                 arctan2
+       less_equal             arcsin                 fmod
+       equal                  arctan                 hypot
+       not_equal              cos                    around
        logical_and            cosh                   sign
        arccosh                arcsinh                arctanh
 

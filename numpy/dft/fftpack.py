@@ -1,12 +1,12 @@
 """
-Discrete Fourier Transforms - FFT.py 
+Discrete Fourier Transforms - FFT.py
 
 The underlying code for these functions is an f2c translated and modified
 version of the FFTPACK routines.
 
-fft(a, n=None, axis=-1) 
-inverse_fft(a, n=None, axis=-1) 
-real_fft(a, n=None, axis=-1) 
+fft(a, n=None, axis=-1)
+inverse_fft(a, n=None, axis=-1)
+real_fft(a, n=None, axis=-1)
 inverse_real_fft(a, n=None, axis=-1)
 hermite_fft(a, n=None, axis=-1)
 inverse_hermite_fft(a, n=None, axis=-1)
@@ -14,9 +14,9 @@ fftnd(a, s=None, axes=None)
 inverse_fftnd(a, s=None, axes=None)
 real_fftnd(a, s=None, axes=None)
 inverse_real_fftnd(a, s=None, axes=None)
-fft2d(a, s=None, axes=(-2,-1)) 
+fft2d(a, s=None, axes=(-2,-1))
 inverse_fft2d(a, s=None, axes=(-2, -1))
-real_fft2d(a, s=None, axes=(-2,-1)) 
+real_fft2d(a, s=None, axes=(-2,-1))
 inverse_real_fft2d(a, s=None, axes=(-2, -1))
 """
 __all__ = ['fft','inverse_fft', 'ifft', 'real_fft', 'refft',
@@ -33,7 +33,7 @@ from helper import *
 _fft_cache = {}
 _real_fft_cache = {}
 
-def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti, 
+def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
              work_function=fftpack.cfftf, fft_cache = _fft_cache ):
     a = asarray(a)
 
@@ -68,7 +68,7 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
 
 
 def fft(a, n=None, axis=-1):
-    """fft(a, n=None, axis=-1) 
+    """fft(a, n=None, axis=-1)
 
     Will return the n point discrete Fourier transform of a. n defaults to the
     length of a. If n is larger than a, then a will be zero-padded to make up
@@ -90,7 +90,7 @@ def fft(a, n=None, axis=-1):
 
 
 def inverse_fft(a, n=None, axis=-1):
-    """inverse_fft(a, n=None, axis=-1) 
+    """inverse_fft(a, n=None, axis=-1)
 
     Will return the n point inverse discrete Fourier transform of a.  n
     defaults to the length of a. If n is larger than a, then a will be
@@ -115,7 +115,7 @@ def inverse_fft(a, n=None, axis=-1):
 
 
 def real_fft(a, n=None, axis=-1):
-    """real_fft(a, n=None, axis=-1) 
+    """real_fft(a, n=None, axis=-1)
 
     Will return the n point discrete Fourier transform of the real valued
     array a. n defaults to the length of a. n is the length of the input, not
@@ -137,7 +137,7 @@ def real_fft(a, n=None, axis=-1):
 
 def inverse_real_fft(a, n=None, axis=-1):
     """inverse_real_fft(a, n=None, axis=-1)
-    
+
     Will return the real valued n point inverse discrete Fourier transform of
     a, where a contains the nonnegative frequency terms of a Hermite-symmetric
     sequence. n is the length of the result, not the input. If n is not
@@ -189,7 +189,7 @@ def inverse_hermite_fft(a, n=None, axis=-1):
 
     inverse_hermite_fft(hermite_fft(a), len(a)) == a
     within numerical accuracy."""
-    
+
     a = asarray(a).astype(Float)
     if n == None:
         n = shape(a)[axis]
@@ -244,15 +244,15 @@ def fftnd(a, s=None, axes=None):
 
 def inverse_fftnd(a, s=None, axes=None):
     """inverse_fftnd(a, s=None, axes=None)
-    
+
     The inverse of fftnd."""
-    
+
     return _raw_fftnd(a, s, axes, inverse_fft)
 
 
 def fft2d(a, s=None, axes=(-2,-1)):
-    """fft2d(a, s=None, axes=(-2,-1)) 
-    
+    """fft2d(a, s=None, axes=(-2,-1))
+
     The 2d fft of a. This is really just fftnd with different default
     behavior."""
 
@@ -275,7 +275,7 @@ def real_fftnd(a, s=None, axes=None):
     transform as real_fft is performed along the axis specified by the last
     element of axes, then complex transforms as fft are performed along the
     other axes."""
-    
+
     a = asarray(a).astype(Float)
     s, axes = _cook_nd_args(a, s, axes)
     a = real_fft(a, s[-1], axes[-1])
@@ -284,11 +284,11 @@ def real_fftnd(a, s=None, axes=None):
     return a
 
 def real_fft2d(a, s=None, axes=(-2,-1)):
-    """real_fft2d(a, s=None, axes=(-2,-1)) 
+    """real_fft2d(a, s=None, axes=(-2,-1))
 
     The 2d fft of the real valued array a. This is really just real_fftnd with
     different default behavior."""
-    
+
     return real_fftnd(a, s, axes)
 
 
@@ -300,7 +300,7 @@ def inverse_real_fftnd(a, s=None, axes=None):
     inverse_real_fft is performed along the last axis. As with
     inverse_real_fft, the length of the result along that axis must be
     specified if it is to be odd."""
-    
+
     a = asarray(a).astype(Complex)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
     for ii in range(len(axes)-1):
@@ -314,7 +314,7 @@ def inverse_real_fft2d(a, s=None, axes=(-2,-1)):
 
     The inverse of real_fft2d. This is really just inverse_real_fftnd with
     different default behavior."""
-    
+
     return inverse_real_fftnd(a, s, axes)
 
 ifft = inverse_fft

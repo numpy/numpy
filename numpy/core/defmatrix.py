@@ -43,12 +43,12 @@ def _convert_from_string(data):
         newdata.append(newrow)
     return newdata
 
-def asmatrix(data, dtype=None):  
-    """ Returns 'data' as a matrix.  Unlike matrix(), no copy is performed  
-    if 'data' is already a matrix or array.  Equivalent to:  
-    matrix(data, copy=False)  
-    """  
-    return matrix(data, dtype=dtype, copy=False)  
+def asmatrix(data, dtype=None):
+    """ Returns 'data' as a matrix.  Unlike matrix(), no copy is performed
+    if 'data' is already a matrix or array.  Equivalent to:
+    matrix(data, copy=False)
+    """
+    return matrix(data, dtype=dtype, copy=False)
 
 class matrix(N.ndarray):
     __array_priority__ = 10.0
@@ -89,7 +89,7 @@ class matrix(N.ndarray):
         fortran = False
         if (ndim == 2) and arr.flags.fortran:
             fortran = True
-            
+
         if not (fortran or arr.flags.contiguous):
             arr = arr.copy()
 
@@ -142,14 +142,14 @@ class matrix(N.ndarray):
         for val in shp:
             if (val > 1): truend += 1
         return truend
-    
+
     def __mul__(self, other):
         if isinstance(other, N.ndarray) or N.isscalar(other) or \
                not hasattr(other, '__rmul__'):
             return N.dot(self, other)
         else:
             return NotImplemented
-    
+
     def __rmul__(self, other):
         return N.dot(other, self)
 
@@ -211,8 +211,8 @@ class matrix(N.ndarray):
             return s.transpose()
         else:
             return s
-    
-    # Needed becase tolist method expects a[i] 
+
+    # Needed becase tolist method expects a[i]
     #  to have dimension a.ndim-1
     def tolist(self):
         return self.__array__().tolist()
@@ -267,7 +267,7 @@ def _from_string(str,gdict,ldict):
 def bmat(obj, ldict=None, gdict=None):
     """Build a matrix object from string, nested sequence, or array.
 
-    Ex:  F = bmat('A, B; C, D') 
+    Ex:  F = bmat('A, B; C, D')
          F = bmat([[A,B],[C,D]])
          F = bmat(r_[c_[A,B],c_[C,D]])
 

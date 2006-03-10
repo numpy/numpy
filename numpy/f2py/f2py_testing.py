@@ -41,7 +41,7 @@ else:
         """ Return number of jiffies (1/100ths of a second) that this
     process has been scheduled in user mode. [Emulation with time.time]. """
         return int(100*(time.time()-_load_time))
-    
+
     def memusage():
         pass
 

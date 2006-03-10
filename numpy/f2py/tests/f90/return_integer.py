@@ -107,7 +107,7 @@ def runtest(t):
     if sys.version[:3]<='2.2':
         assert t(array([123+3j],'F'))==123
         assert t(array([123],'D'))==123
-    
+
     try: raise RuntimeError,`t(array([123],'c'))`
     except ValueError: pass
     try: raise RuntimeError,`t('abc')`

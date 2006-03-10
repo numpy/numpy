@@ -78,7 +78,7 @@ class nd_grid(object):
 
            >>> ogrid = nd_grid(sparse=True)
            >>> ogrid[0:5,0:5]
-           [array([[0],[1],[2],[3],[4]]), array([[0, 1, 2, 3, 4]])] 
+           [array([[0],[1],[2],[3],[4]]), array([[0, 1, 2, 3, 4]])]
     """
     def __init__(self, sparse=False):
         self.sparse = sparse
@@ -99,7 +99,7 @@ class nd_grid(object):
                 if isinstance(step,types.FloatType) or \
                    isinstance(start, types.FloatType) or \
                    isinstance(key[k].stop, types.FloatType):
-                       typecode = _nx.Float
+                    typecode = _nx.Float
             if self.sparse:
                 nn = map(lambda x,t: _nx.arange(x,dtype=t),size,(typecode,)*len(size))
             else:
@@ -280,7 +280,7 @@ class ndindex(object):
     """Pass in a sequence of integers corresponding
     to the number of dimensions in the counter.  This iterator
     will then return an N-dimensional counter.
-    
+
     Example:
     >>> for index in ndindex(4,3,2):
             print index
@@ -292,7 +292,7 @@ class ndindex(object):
     (3,2,0)
     (3,2,1)
     """
-        
+
     def __init__(self, *args):
         self.nd = len(args)
         self.ind = [0]*self.nd
@@ -311,10 +311,10 @@ class ndindex(object):
         else:
             self.ind[axis] = 0
             self._incrementone(axis-1)
-          
+
     def ndincr(self):
         self._incrementone(self.nd-1)
-        
+
     def next(self):
         if (self.index >= self.total):
             raise StopIteration
@@ -370,4 +370,3 @@ class _index_expression_class(object):
 index_exp = _index_expression_class()
 
 # End contribution from Konrad.
-

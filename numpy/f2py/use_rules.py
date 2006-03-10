@@ -6,7 +6,7 @@ Build 'use others module data' mechanism for f2py2e.
 Unfinished.
 
 Copyright 2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>          
+Pearu Peterson <pearu@ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
@@ -67,7 +67,7 @@ def buildusevars(m,r):
     if r.has_key('only') and r['only']:
         for v in r['map'].keys():
             if m['vars'].has_key(r['map'][v]):
-                
+
                 if revmap[r['map'][v]]==v:
                     varsmap[v]=r['map'][v]
                 else:
@@ -103,13 +103,7 @@ def buildusevar(name,realname,vars,usemodulename):
     if hasnote(vars[realname]): vrd['note']=vars[realname]['note']
     rd=dictappend({},vrd)
     var=vars[realname]
-    
+
     print name,realname,vars[realname]
     ret=applyrules(usemodule_rules,rd)
     return ret
-
-
-
-
-
-

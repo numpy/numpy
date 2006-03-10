@@ -15,11 +15,10 @@ Core Linear Algebra Tools
    eig        --- Find the eigenvalues and vectors of a square matrix
    eigh       --- Find the eigenvalues and eigenvectors of a Hermitian matrix
    eigvals    --- Find the eigenvalues of a square matrix
-   eigvalsh   --- Find the eigenvalues of a Hermitian matrix. 
+   eigvalsh   --- Find the eigenvalues of a Hermitian matrix.
    svd        --- Singular value decomposition of a matrix
-   cholesky   --- Cholesky decomposition of a matrix   
+   cholesky   --- Cholesky decomposition of a matrix
 
 """
 
 depends = ['core']
-

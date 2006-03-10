@@ -12,8 +12,8 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
 
 def rand(*args):
     """Returns an array of random numbers with the given shape.
-    
-    This only uses the standard library, so it is useful for testing purposes. 
+
+    This only uses the standard library, so it is useful for testing purposes.
     """
     import random
     from numpy.core import zeros, Float64
@@ -66,7 +66,7 @@ else:
 
 if os.name=='nt':
     # Code stolen from enthought/debug/memusage.py
-    import win32pdh    
+    import win32pdh
     # from win32pdhutil, part of the win32all package
     def GetPerformanceAttributes(object, counter, instance = None,
                                  inum=-1, format = win32pdh.PDH_FMT_LONG, machine=None):
@@ -90,7 +90,7 @@ if os.name=='nt':
                 win32pdh.RemoveCounter(hc)
         finally:
             win32pdh.CloseQuery(hq)
-    
+
     def memusage(processName="python", instance=0):
         return GetPerformanceAttributes("Process", "Virtual Bytes",
                                         processName, instance,
@@ -260,4 +260,3 @@ def assert_array_less(x,y,err_msg=''):
 
 def runstring(astr, dict):
     exec astr in dict
-    

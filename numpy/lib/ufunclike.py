@@ -56,4 +56,3 @@ def log2(x, y=None):
         umath.log(x, y)
     y /= _log2
     return y
-

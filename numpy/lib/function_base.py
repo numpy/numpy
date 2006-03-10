@@ -1,7 +1,7 @@
 
 __all__ = ['logspace', 'linspace',
            'select', 'piecewise', 'trim_zeros',
-           'copy', 'iterable', #'base_repr', 'binary_repr', 
+           'copy', 'iterable', #'base_repr', 'binary_repr',
            'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
            'unique', 'extract', 'insert', 'nansum', 'nanmax', 'nanargmax',
            'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
@@ -101,9 +101,9 @@ def average(a, axis=0, weights=None, returned=False):
 
     If weights are given, result is:
         sum(a * weights) / sum(weights),
-    where the weights must have a's shape or be 1D with length the 
-    size of a in the given axis. Integer weights are converted to 
-    Float.  Not specifying weights is equivalent to specifying 
+    where the weights must have a's shape or be 1D with length the
+    size of a in the given axis. Integer weights are converted to
+    Float.  Not specifying weights is equivalent to specifying
     weights that are all 1.
 
     If 'returned' is True, return a tuple: the result and the sum of
@@ -121,14 +121,14 @@ def average(a, axis=0, weights=None, returned=False):
         else:
             w = array(weights).ravel() * 1.0
             n = add.reduce(multiply(a, w))
-            d = add.reduce(w) 
+            d = add.reduce(w)
     else:
         a = array(a)
         ash = a.shape
         if ash == ():
             a.shape = (1,)
         if weights is None:
-            n = add.reduce(a, axis) 
+            n = add.reduce(a, axis)
             d = ash[axis] * 1.0
             if returned:
                 d = ones(n.shape) * d
@@ -139,7 +139,7 @@ def average(a, axis=0, weights=None, returned=False):
                 wsh = (1,)
             if wsh == ash:
                 n = add.reduce(a*w, axis)
-                d = add.reduce(w, axis) 
+                d = add.reduce(w, axis)
             elif wsh == (ash[axis],):
                 ni = ash[axis]
                 r = [newaxis]*ni
@@ -176,14 +176,14 @@ def piecewise(x, condlist, funclist, *args, **kw):
       The length of the condition list must be n2 or n2-1 where n2
       is the length of the function list.  If len(condlist)==n2-1, then
       an 'otherwise' condition is formed by |'ing all the conditions
-      and inverting. 
+      and inverting.
 
     funclist is a list of functions to call of length (n2).
       Each function should return an array output for an array input
       Each function can take (the same set) of extra arguments and
       keyword arguments which are passed in after the function list.
       A constant may be used in funclist for a function that returns a
-      constant (e.g. val  and lambda x: val are equivalent in a funclist). 
+      constant (e.g. val  and lambda x: val are equivalent in a funclist).
 
     The output is the same shape and type as x and is found by
       calling the functions on the appropriate portions of x.
@@ -234,7 +234,7 @@ def select(condlist, choicelist, default=0):
         arrays in choicelist.  If condlist is [c0, ..., cN-1] then choicelist
         must be of length N.  The elements of the choicelist can then be
         represented as [v0, ..., vN-1]. The default choice if none of the
-        conditions are met is given as the default argument. 
+        conditions are met is given as the default argument.
 
         The conditions are tested in order and the first one statisfied is
         used to select the choice. In other words, the elements of the
@@ -335,7 +335,7 @@ def gradient(f, *varargs):
         slice2[axis] = slice(2, None)
         slice3[axis] = slice(None, -2)
         # 1D equivalent -- out[1:-1] = (f[2:] - f[:-2])/2.0
-        out[slice1] = (f[slice2] - f[slice3])/2.0   
+        out[slice1] = (f[slice2] - f[slice3])/2.0
         slice1[axis] = 0
         slice2[axis] = 1
         slice3[axis] = 0
@@ -624,7 +624,7 @@ class vectorize(object):
 
 def cov(m,y=None, rowvar=0, bias=0):
     """Estimate the covariance matrix.
-    
+
     If m is a vector, return the variance.  For matrices where each row
     is an observation, and each column a variable, return the covariance
     matrix.  Note that in this case diag(cov(m)) is a vector of
@@ -765,7 +765,7 @@ def _chbevl(x, vals):
         b0 = x*b1 - b2 + vals[i]
 
     return 0.5*(b0 - b2)
-    
+
 def _i0_1(x):
     return exp(x) * _chbevl(x/2.0-2, _i0A)
 

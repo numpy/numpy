@@ -84,8 +84,8 @@ class Type(object):
     _cast_dict['CFLOAT'] = _cast_dict['FLOAT'] + ['CFLOAT']
     _cast_dict['CDOUBLE'] = _cast_dict['DOUBLE'] + ['CFLOAT','CDOUBLE']
     _cast_dict['CLONGDOUBLE'] = _cast_dict['LONGDOUBLE'] + ['CFLOAT','CDOUBLE','CLONGDOUBLE']
-    
-    
+
+
     def __new__(cls,name):
         if isinstance(name,dtype):
             dtype0 = name
@@ -101,7 +101,7 @@ class Type(object):
         obj._init(name)
         cls._type_cache[name.upper()] = obj
         return obj
-    
+
     def _init(self,name):
         self.NAME = name.upper()
         self.type_num = getattr(wrap,'PyArray_'+self.NAME)
@@ -174,7 +174,7 @@ class Array:
         if intent.is_intent('cache'):
             assert isinstance(obj,ndarray),`type(obj)`
             self.pyarr = array(obj).reshape(*dims)
-            
+
         else:
             self.pyarr = array(array(obj,
                                      dtype = typ.dtypechar).reshape(*dims),
@@ -212,7 +212,7 @@ class Array:
             assert self.arr_attr[5][3]==self.type.elsize,\
                    `self.arr_attr[5][3],self.type.elsize`
         assert self.arr_equal(self.pyarr,self.arr)
-        
+
         if isinstance(self.obj,ndarray):
             if typ.elsize==Type(obj.dtype).elsize:
                 if not intent.is_intent('copy') and self.arr_attr[1]<=1:
@@ -357,14 +357,14 @@ class _test_shared_memory:
                 continue
             obj = array(self.num2seq,dtype=t.dtype)
             shape = (len(self.num2seq),)
-            a = self.array(shape,intent.in_.c.cache,obj)        
+            a = self.array(shape,intent.in_.c.cache,obj)
             assert a.has_shared_memory(),`t.dtype`
 
-            a = self.array(shape,intent.in_.cache,obj)        
+            a = self.array(shape,intent.in_.cache,obj)
             assert a.has_shared_memory(),`t.dtype`
-            
+
             obj = array(self.num2seq,dtype=t.dtype,fortran=1)
-            a = self.array(shape,intent.in_.c.cache,obj)        
+            a = self.array(shape,intent.in_.c.cache,obj)
             assert a.has_shared_memory(),`t.dtype`
 
             a = self.array(shape,intent.in_.cache,obj)

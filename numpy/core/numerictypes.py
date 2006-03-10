@@ -172,7 +172,7 @@ def _add_aliases():
             if (name != 'longdouble' and name != 'clongdouble') or \
                    myname not in allTypes.keys():
                 allTypes[myname] = typeobj
-                typeDict[myname] = typeobj                        
+                typeDict[myname] = typeobj
                 if base == 'complex':
                     na_name = '%s%d' % (base.capitalize(), bit/2)
                 elif base == 'bool':
@@ -205,7 +205,7 @@ def _add_integer_aliases():
         bits = val[2]
         intname = 'int%d' % bits
         UIntname = 'UInt%d' % bits
-        Intname = 'Int%d' % bits            
+        Intname = 'Int%d' % bits
         uval = typeinfo['U'+ctype]
         if intname not in allTypes.keys():
             uintname = 'uint%d' % bits
@@ -217,7 +217,7 @@ def _add_integer_aliases():
             typeDict[uintname] = utypeobj
             typeDict[Intname] = typeobj
             typeDict[UIntname] = utypeobj
-            typeNA[Intname] = typeobj            
+            typeNA[Intname] = typeobj
             typeNA[UIntname] = utypeobj
             typeNA[typeobj] = Intname
             typeNA[utypeobj] = UIntname
@@ -227,7 +227,7 @@ def _add_integer_aliases():
             typeNA[typeobj] = Intname
             typeNA[utypeobj] = UIntname
             typeNA[val[0]] = Intname
-            typeNA[uval[0]] = UIntname 
+            typeNA[uval[0]] = UIntname
 _add_integer_aliases()
 
 # We use these later
@@ -426,4 +426,3 @@ for key in allTypes:
     __all__.append(key)
 
 del key
-

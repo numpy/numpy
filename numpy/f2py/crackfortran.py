@@ -4,7 +4,7 @@ crackfortran --- read fortran (77,90) code and extract declaration information.
     Usage is explained in the comment block below.
 
 Copyright 1999-2004 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>          
+Pearu Peterson <pearu@ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
@@ -298,7 +298,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
             ext = os.path.splitext(currentfilename)[1]
             if is_f_file(currentfilename) and \
                    not (_has_f90_header(l) or _has_fix_header(l)):
-                strictf77=1   
+                strictf77=1
             elif is_free_format(currentfilename) and not _has_fix_header(l):
                 sourcecodeform='free'
             if strictf77: beginpattern=beginpattern77
@@ -696,7 +696,7 @@ def _resolvenameargspattern(line):
     m1=callnameargspattern.match(line)
     if m1: return m1.group('name'),m1.group('args'),None
     return None,[],None
-    
+
 def analyzeline(m,case,line):
     global groupcounter,groupname,groupcache,grouplist,filepositiontext,\
            currentfilename,f77modulename,neededinterface,neededmodule,expectbegin,\
@@ -740,7 +740,7 @@ def analyzeline(m,case,line):
             while '' in args:
                 args.remove('')
             outmess('analyzeline: argument list is malformed (missing argument).\n')
-            
+
         # end of crack line => block,name,args,result
         needmodule=0
         needinterface=0
@@ -757,7 +757,7 @@ def analyzeline(m,case,line):
         if f77modulename and neededmodule==-1 and groupcounter<=1:
             neededmodule=groupcounter+2
             needmodule=1
-            needinterface=1        
+            needinterface=1
         # Create new block(s)
         groupcounter=groupcounter+1
         groupcache[groupcounter]={}
@@ -852,7 +852,7 @@ def analyzeline(m,case,line):
         if name is not None:
             if args:
                 args=rmbadname(map(string.strip,string.split(markoutercomma(args),'@,@')))
-            else: args=[]        
+            else: args=[]
             assert result is None,`result`
             groupcache[groupcounter]['entry'][name] = args
             previous_context = ('entry',name,groupcounter)
@@ -1105,7 +1105,7 @@ def analyzeline(m,case,line):
                     groupcache[groupcounter]['use'][name]['map']=rl
             else:
                 pass
-            
+
         else:
             print m.groupdict()
             outmess('analyzeline: Could not crack the use statement.\n')
@@ -1188,7 +1188,7 @@ def markinnerspaces(line):
         if cb=='\\' and c in ['\\','\'','"']:
             l=l+c;
             cb=c
-            continue 
+            continue
         if f==0 and c in ['\'','"']: cc=c; cc1={'\'':'"','"':'\''}[c]
         if c==cc:f=f+1
         elif c==cc:f=f-1
@@ -1292,7 +1292,7 @@ def updatevars(typespec,selector,attrspec,entitydecl):
                                 errmess('updatevars:%s: attempt to change %r to %r. Ignoring.\n' \
                                         % (ename,dm1,dm))
                                 break
-                            
+
                 if d1.has_key('len'):
                     if typespec in ['complex','integer','logical','real']:
                         if (not edecl.has_key('kindselector')) or (not edecl['kindselector']):
@@ -1717,7 +1717,7 @@ def getlincoef(e,xset): # e = a*x+b ; x in xset
                 if (a*0.5+b==c):
                     return a,b,x
             except: pass
-            break    
+            break
     return None,None,None
 
 _varname_match = re.compile(r'\A[a-z]\w*\Z').match
@@ -1807,7 +1807,7 @@ def getarrlen(dl,args,star='*'):
             elif d1[0]==-1: c1='+%s'%c1
             elif d1[0]<0: c1='+%s*%s'%(-d1[0],c1)
             else: c1 = '-%s*%s' % (d1[0],c1)
-            
+
             c2 = str(d2[2])
             if c2 not in args:
                 if _varname_match(c2):
@@ -2174,10 +2174,10 @@ def analyzevars(block):
                            ('required' not in vars[d]['attrspec']):
                             vars[d]['attrspec'].append('optional')
                     elif d not in ['*',':']:
-                        #/----< no check 
+                        #/----< no check
                         #if ni>1: vars[n]['check'].append('shape(%s,%i)==%s'%(n,i,d))
                         #else: vars[n]['check'].append('len(%s)>=%s'%(n,d))
-                        if flag:                            
+                        if flag:
                             if vars.has_key(d):
                                 if n not in ddeps:
                                     vars[n]['depend'].append(d)
@@ -2289,7 +2289,7 @@ def analyzeargs(block):
             else: na=na+'_e'
             a=na
             while block['vars'].has_key(a) or a in block['args']: a=a+'r'
-            block['vars'][a]=at            
+            block['vars'][a]=at
         args.append(a)
         if not block['vars'].has_key(a):
             block['vars'][a]={}

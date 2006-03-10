@@ -29,8 +29,3 @@ print "2-D shape = (%d,%d), first-axis" % (N1,N2)
 print "Numarray: ", t1.repeat(3,100)
 print "NumPy: ", t2.repeat(3,100)
 print "Numeric: ", t3.repeat(3,100)
-
-
-
-
-

@@ -17,7 +17,7 @@ def apply_along_axis(func1d,axis,arr,*args):
     if axis < 0:
         axis += nd
     if (axis >= nd):
-        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d." 
+        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
             % (axis,nd))
     ind = [0]*(nd-1)
     i = zeros(nd,'O')
@@ -150,11 +150,11 @@ def atleast_3d(*arys):
     """ Force a sequence of arrays to each be at least 3D.
 
          Description:
-            Force an array each be at least 3D.  If the array is 0D or 1D, 
-            the array is converted to a single 1xNx1 array of values where 
-            N is the orginal length of the array. If the array is 2D, the 
+            Force an array each be at least 3D.  If the array is 0D or 1D,
+            the array is converted to a single 1xNx1 array of values where
+            N is the orginal length of the array. If the array is 2D, the
             array is converted to a single MxNx1 array of values where MxN
-            is the orginal shape of the array. Otherwise, the array is 
+            is the orginal shape of the array. Otherwise, the array is
             unaltered.
          Arguments:
             arys -- arrays to be converted to 3 or more dimensional array.
@@ -170,7 +170,7 @@ def atleast_3d(*arys):
             result = ary[newaxis,:,newaxis]
         elif len(ary.shape) == 2:
             result = ary[:,:,newaxis]
-        else: 
+        else:
             result = ary
         res.append(result)
     if len(res) == 1:
@@ -185,10 +185,10 @@ def vstack(tup):
         Description:
             Take a sequence of arrays and stack them veritcally
             to make a single array.  All arrays in the sequence
-            must have the same shape along all but the first axis. 
+            must have the same shape along all but the first axis.
             vstack will rebuild arrays divided by vsplit.
         Arguments:
-            tup -- sequence of arrays.  All arrays must have the same 
+            tup -- sequence of arrays.  All arrays must have the same
                    shape.
         Examples:
             >>> import numpy
@@ -219,7 +219,7 @@ def hstack(tup):
             must have the same shape along all but the second axis.
             hstack will rebuild arrays divided by hsplit.
         Arguments:
-            tup -- sequence of arrays.  All arrays must have the same 
+            tup -- sequence of arrays.  All arrays must have the same
                    shape.
         Examples:
             >>> import numpy
@@ -245,7 +245,7 @@ def column_stack(tup):
             to make a single 2D array.  All arrays in the sequence
             must have the same length.
         Arguments:
-            tup -- sequence of 1D arrays.  All arrays must have the same 
+            tup -- sequence of 1D arrays.  All arrays must have the same
                    length.
         Examples:
             >>> import numpy
@@ -265,12 +265,12 @@ def dstack(tup):
 
         Description:
             Take a sequence of arrays and stack them along the third axis.
-            All arrays in the sequence must have the same shape along all 
-            but the third axis.  This is a simple way to stack 2D arrays 
+            All arrays in the sequence must have the same shape along all
+            but the third axis.  This is a simple way to stack 2D arrays
             (images) into a single 3D array for processing.
             dstack will rebuild arrays divided by dsplit.
         Arguments:
-            tup -- sequence of arrays.  All arrays must have the same 
+            tup -- sequence of arrays.  All arrays must have the same
                    shape.
         Examples:
             >>> import numpy
@@ -294,7 +294,7 @@ def _replace_zero_by_x_arrays(sub_arys):
         if len(_nx.shape(sub_arys[i])) == 0:
             sub_arys[i] = _nx.array([])
         elif _nx.sometrue(_nx.equal(_nx.shape(sub_arys[i]),0)):
-            sub_arys[i] = _nx.array([])   
+            sub_arys[i] = _nx.array([])
     return sub_arys
 
 def array_split(ary,indices_or_sections,axis = 0):
@@ -368,9 +368,9 @@ def split(ary,indices_or_sections,axis=0):
            Divide ary into a list of sub-arrays along the
            specified axis.  If indices_or_sections is an integer,
            ary is divided into that many equally sized arrays.
-           If it is impossible to make an equal split, an error is 
+           If it is impossible to make an equal split, an error is
            raised.  This is the only way this function differs from
-           the array_split() function. If indices_or_sections is a 
+           the array_split() function. If indices_or_sections is a
            list of sorted integers, its entries define the indexes
            where ary is split.
 

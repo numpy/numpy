@@ -62,7 +62,7 @@ class _MaskedPrintOption:
         return str(self._display)
 
     __repr__ = __str__
-    
+
 #if you single index into a masked location you get this object.
 masked_print_option = _MaskedPrintOption('--')
 
@@ -302,7 +302,7 @@ class masked_unary_operation:
         self.__name__ = getattr(aufunc, "__name__", str(aufunc))
         ufunc_domain[aufunc] = domain
         ufunc_fills[aufunc] = fill,
-        
+
     def __call__ (self, a, *args, **kwargs):
         "Execute the call behavior."
 # numeric tries to return scalars rather than arrays when given scalars.
@@ -354,7 +354,7 @@ class domained_binary_operation:
         m = mask_or(ma, mb)
         result =  self.f(d1, d2)
         return masked_array(result, m)
-        
+
     def __str__ (self):
         return "Masked version of " + str(self.f)
 
@@ -448,7 +448,7 @@ def nonzero(a):
     a must be 1d
     """
     return asarray(filled(a, 0).nonzero())
-    
+
 around = masked_unary_operation(oldnumeric.round_)
 floor = masked_unary_operation(umath.floor)
 ceil = masked_unary_operation(umath.ceil)
@@ -498,7 +498,7 @@ def size (object, axis=None):
 
 class MaskedArray (object):
     """Arrays with possibly masked values.
-       Masked values of 1 exclude the corresponding element from 
+       Masked values of 1 exclude the corresponding element from
        any computation.
 
        Construction:
@@ -525,7 +525,7 @@ class MaskedArray (object):
        The fill_value is not used for computation within this module.
     """
     __array_priority__ = 10.1
-    def __init__(self, data, dtype=None, copy=True, fortran=False, 
+    def __init__(self, data, dtype=None, copy=True, fortran=False,
                  mask=nomask, fill_value=None):
         """array(data, dtype=None, copy=True, fortran=False, mask=nomask, fill_value=None)
            If data already a numeric array, its dtype becomes the default value of dtype.
@@ -639,9 +639,9 @@ class MaskedArray (object):
             else:
                 if m.shape != shape:
                     m = reduce(mask_or, [getmaskarray(a) for a in args])
-            
+
         return MaskedArray(array, copy=False, mask=m)
-        
+
     def _get_shape(self):
         "Return the current shape."
         return self._data.shape
@@ -789,7 +789,7 @@ array(data = %(data)s,
             return dout
         mi = m[i]
         if mi.size == 1:
-            if mi: 
+            if mi:
                 return masked
             else:
                 return dout
@@ -869,12 +869,12 @@ array(data = %(data)s,
         """
         # XXX: This changes bool conversion logic from MA.
         # XXX: In MA bool(a) == len(a) != 0, but in numpy
-        # XXX: scalars do not have len 
+        # XXX: scalars do not have len
         m = self._mask
         d = self._data
         return bool(m is not nomask and m.any()
                     or d is not nomask and d.any())
-    
+
     def __len__ (self):
         """Return length of first dimension. This is weird but Python's
          slicing behavior depends on it."""
@@ -1201,7 +1201,7 @@ array(data = %(data)s,
                 del t[axis]
                 return ones(t) * n
         if axis is None:
-            w = oldnumeric.ravel(m).astype(int)  
+            w = oldnumeric.ravel(m).astype(int)
             n1 = size(w)
             if n1 == 1:
                 n2 = w[0]
@@ -1314,7 +1314,7 @@ array(data = %(data)s,
             The raw data; portions may be meaningless.
             May be noncontiguous. Expert use only."""
         return self._data
-    data = property(fget=raw_data, 
+    data = property(fget=raw_data,
            doc="The data, but values at masked locations are meaningless.")
 
     def raw_mask (self):
@@ -1322,7 +1322,7 @@ array(data = %(data)s,
             May be noncontiguous. Expert use only.
         """
         return self._mask
-    mask = property(fget=raw_mask, 
+    mask = property(fget=raw_mask,
            doc="The mask, may be nomask. Values where mask true are meaningless.")
 
     def reshape (self, *s):
@@ -1348,7 +1348,7 @@ array(data = %(data)s,
         return self._data.size
     size = property(fget=_get_size, doc="Number of elements in the array.")
 ## CHECK THIS: signature of numeric.array.size?
-    
+
     def _get_dtype(self):
         return self._data.dtype
     dtype = property(fget=_get_dtype, doc="type of the array elements.")

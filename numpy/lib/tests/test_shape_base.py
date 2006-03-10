@@ -118,7 +118,7 @@ class test_array_split(ScipyTestCase):
         desired = [array([]),arange(0,5),arange(5,7),arange(7,10),
                    array([]),array([])]
         compare_results(res,desired)
-        
+
 class test_split(ScipyTestCase):
     """* This function is essentially the same as array_split,
          except that it test if splitting will result in an
@@ -131,7 +131,7 @@ class test_split(ScipyTestCase):
         compare_results(res,desired)
 
     def check_unequal_split(self):
-        a = arange(10) 
+        a = arange(10)
         try:
             res = split(a,3)
             assert(0) # should raise an error
@@ -353,7 +353,7 @@ class test_squeeze(ScipyTestCase):
         assert_array_equal(squeeze(a),reshape(a,(20,10,10)))
         assert_array_equal(squeeze(b),reshape(b,(20,10,20)))
         assert_array_equal(squeeze(c),reshape(c,(20,10)))
-                
+
 # Utility
 
 def compare_results(res,desired):

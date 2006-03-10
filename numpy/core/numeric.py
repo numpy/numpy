@@ -337,7 +337,7 @@ def load(file):
 
 def ones(shape, dtype=int_, fortran=False):
     """ones(shape, dtype=int_) returns an array of the given
-    dimensions which is initialized to all ones. 
+    dimensions which is initialized to all ones.
     """
     a = empty(shape, dtype, fortran)
     a.fill(1)
@@ -381,7 +381,7 @@ def _setpyvals(lst, frame, where=0):
     elif where == 1 or wh == 'g':
         frame.f_globals[UFUNC_PYVALS_NAME] = lst
     elif where == 2 or wh == 'b':
-        frame.f_builtins[UFUNC_PYVALS_NAME] = lst 
+        frame.f_builtins[UFUNC_PYVALS_NAME] = lst
 
     umath.update_use_defaults()
     return

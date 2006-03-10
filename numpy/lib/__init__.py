@@ -31,5 +31,5 @@ __all__ += utils.__all__
 __all__ += arraysetops.__all__
 
 def test(level=1, verbosity=1):
-    from numpy.testing import NumpyTest 
+    from numpy.testing import NumpyTest
     return NumpyTest().test(level, verbosity)

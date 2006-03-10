@@ -38,7 +38,7 @@ class chararray(ndarray):
     def __array_finalize__(self, obj):
         if not _globalvar and self.dtype.char not in 'SU':
             raise ValueError, "Can only create a chararray from string data."
-                
+
 
     def _richcmpfunc(self, other, op):
         b = broadcast(self, other)
@@ -49,7 +49,7 @@ class chararray(ndarray):
             r2 = val[1]
             res[k] = eval("r1 %s r2" % op, {'r1':r1,'r2':r2})
         return result
-        
+
     # these should probably be moved to C
     def __eq__(self, other):
         return self._richcmpfunc(other, '==')
@@ -65,10 +65,10 @@ class chararray(ndarray):
 
     def __gt__(self, other):
         return self._richcmpfunc(other, '>')
-    
+
     def __lt__(self, other):
         return self._richcmpfunc(other, '<')
-        
+
     def __add__(self, other):
         b = broadcast(self, other)
         arr = b.iters[1].base
@@ -77,17 +77,17 @@ class chararray(ndarray):
         res = result.flat
         for k, val in enumerate(b):
             res[k] = (val[0] + val[1])
-        return result 
+        return result
 
     def __radd__(self, other):
         b = broadcast(other, self)
         outitem = b.iters[0].base.itemsize + \
                   b.iters[1].base.itemsize
-        result = chararray(b.shape, outitem, self.dtype is unicode_)        
+        result = chararray(b.shape, outitem, self.dtype is unicode_)
         res = result.flat
         for k, val in enumerate(b):
             res[k] = (val[0] + val[1])
-        return result 
+        return result
 
     def __mul__(self, other):
         b = broadcast(self, other)
@@ -107,7 +107,7 @@ class chararray(ndarray):
         if not issubclass(arr.dtype.type, integer):
             raise ValueError, "Can only multiply by integers"
         outitem = b.iters[0].base.itemsize * arr.max()
-        result = chararray(b.shape, outitem, self.dtype is unicode_)        
+        result = chararray(b.shape, outitem, self.dtype is unicode_)
         res = result.flat
         for k, val in enumerate(b):
             res[k] = val[0]*val[1]
@@ -124,7 +124,7 @@ class chararray(ndarray):
         newarr = chararray(b.shape, maxsize, self.dtype is unicode_)
         newarr[:] = res
         return newarr
-    
+
     def __rmod__(self, other):
         return NotImplemented
 
@@ -186,22 +186,22 @@ class chararray(ndarray):
         def ljust(self, width):
             return self._generalmethod('ljust', broadcast(self, width))
         def rjust(self, width):
-            return self._generalmethod('rjust', broadcast(self, width))        
+            return self._generalmethod('rjust', broadcast(self, width))
         def center(self, width):
-            return self._generalmethod('center', broadcast(self, width))            
+            return self._generalmethod('center', broadcast(self, width))
 
     def count(self, sub, start=None, end=None):
         return self._typedmethod('count', broadcast(self, sub, start, end), int)
 
     def decode(self,encoding=None,errors=None):
         return self._generalmethod('decode', broadcast(self, encoding, errors))
-    
+
     def encode(self,encoding=None,errors=None):
         return self._generalmethod('encode', broadcast(self, encoding, errors))
-    
+
     def endswith(self, suffix, start=None, end=None):
         return self._typedmethod('endswith', broadcast(self, suffix, start, end), bool)
-    
+
     def expandtabs(self, tabsize=None):
         return self._generalmethod('endswith', broadcast(self, tabsize))
 
@@ -211,7 +211,7 @@ class chararray(ndarray):
     def index(self, sub, start=None, end=None):
         return self._typedmethod('index', broadcast(self, sub, start, end), int)
 
-    def _ismethod(self, name):        
+    def _ismethod(self, name):
         result = empty(self.shape, dtype=bool)
         res = result.flat
         for k, val in enumerate(self.flat):
@@ -230,7 +230,7 @@ class chararray(ndarray):
 
     def islower(self):
         return self._ismethod('islower')
-    
+
     def isspace(self):
         return self._ismethod('isspace')
 
@@ -242,7 +242,7 @@ class chararray(ndarray):
 
     def join(self, seq):
         return self._generalmethod('join', broadcast(self, seq))
-        
+
     def lower(self):
         return self._samemethod('lower')
 
@@ -253,25 +253,25 @@ class chararray(ndarray):
         return self._generalmethod('replace', broadcast(self, old, new, count))
 
     def rfind(self, sub, start=None, end=None):
-        return self._typedmethod('rfind', broadcast(self, sub, start, end), int)        
+        return self._typedmethod('rfind', broadcast(self, sub, start, end), int)
 
     def rindex(self, sub, start=None, end=None):
         return self._typedmethod('rindex', broadcast(self, sub, start, end), int)
 
     def rstrip(self, chars=None):
-        return self._generalmethod('rstrip', broadcast(self, chars))        
+        return self._generalmethod('rstrip', broadcast(self, chars))
 
     def split(self, sep=None, maxsplit=None):
         return self._typedmethod('split', broadcast(self, sep, maxsplit), object)
 
     def splitlines(self, keepends=None):
         return self._typedmethod('splitlines', broadcast(self, keepends), object)
-    
+
     def startswith(self, prefix, start=None, end=None):
         return self._typedmethod('startswith', broadcast(self, prefix, start, end), bool)
 
     def strip(self, chars=None):
-        return self._generalmethod('strip', broadcast(self, chars))        
+        return self._generalmethod('strip', broadcast(self, chars))
 
     def swapcase(self):
         return self._samemethod('swapcase')
@@ -284,16 +284,16 @@ class chararray(ndarray):
             return self._generalmethod('translate', broadcast(self, table))
         else:
             return self._generalmethod('translate', broadcast(self, table, deletechars))
-        
+
     def upper(self):
         return self._samemethod('upper')
 
     def zfill(self, width):
         return self._generalmethod('zfill', broadcast(self, width))
 
-    
+
 def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
-        
+
     if isinstance(obj, chararray):
         if itemsize is None:
             itemsize = obj.itemsize
@@ -313,7 +313,7 @@ def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
 
         if copy: return new.copy()
         else: return new
-        
+
     if unicode: dtype = "U"
     else: dtype = "S"
 
@@ -323,13 +323,13 @@ def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
     if isinstance(obj, (str, _unicode)):
         if itemsize is None:
             itemsize = len(obj)
-        shape = len(obj) / itemsize            
+        shape = len(obj) / itemsize
         return chararray(shape, itemsize=itemsize, unicode=unicode,
                          buffer=obj)
 
-    # default 
+    # default
     val = narray(obj, dtype=dtype, fortran=fortran, subok=1)
-    
+
     return val.view(chararray)
 
 def asarray(obj, itemsize=None, unicode=False, fortran=False):

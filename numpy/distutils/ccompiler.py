@@ -240,15 +240,15 @@ ccompiler._default_compilers = ccompiler._default_compilers \
                                + (('linux.*','intel'),('linux.*','intele'))
 
 if sys.platform == 'win32':
-   compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
-                                "Mingw32 port of GNU C Compiler for Win32"\
-                                "(for MSC built Python)")
-   if mingw32():
-       # On windows platforms, we want to default to mingw32 (gcc)
-       # because msvc can't build blitz stuff.
-       log.info('Setting mingw32 as default compiler for nt.')
-       ccompiler._default_compilers = (('nt', 'mingw32'),) \
-                                      + ccompiler._default_compilers
+    compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
+                                 "Mingw32 port of GNU C Compiler for Win32"\
+                                 "(for MSC built Python)")
+    if mingw32():
+        # On windows platforms, we want to default to mingw32 (gcc)
+        # because msvc can't build blitz stuff.
+        log.info('Setting mingw32 as default compiler for nt.')
+        ccompiler._default_compilers = (('nt', 'mingw32'),) \
+                                       + ccompiler._default_compilers
 
 
 _distutils_new_compiler = new_compiler

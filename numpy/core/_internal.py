@@ -64,7 +64,7 @@ class flagsobj(dict):
                     return (self._flagnum & num == num) and not \
                            (self._flagnum & _cnum == _cnum)
         raise KeyError, "Unknown flag: %s" % key
-        
+
     def __setitem__(self, item, val):
         if self.scalar:
             raise ValueError, "Cannot set flags on array scalars."
@@ -80,7 +80,7 @@ class flagsobj(dict):
 
         # now actually update array flags
         self._arr.setflags(**kwds)
-        
+
 
     def get_fnc(self):
         fl = self._flagnum
@@ -152,15 +152,15 @@ class flagsobj(dict):
     behaved = property(get_behaved, None, "")
     carray = property(get_carray, None, "")
     farray = property(get_farray, None, "")
-    
+
 
 
 # make sure the tuple entries are PyArray_Descr
-#	   or convert them
+#          or convert them
 #
-# make sure offsets are all interpretable 
-#	   as positive integers and
-#	   convert them to positive integers if so 
+# make sure offsets are all interpretable
+#          as positive integers and
+#          convert them to positive integers if so
 #
 #
 # return totalsize from last offset and size
@@ -223,7 +223,7 @@ def _usefields(adict, align):
 #  from the fields attribute of a descriptor
 # This calls itself recursively but should eventually hit
 #  a descriptor that has no fields and then return
-#  a simple typestring 
+#  a simple typestring
 
 def _array_descr(descriptor):
     fields = descriptor.fields
@@ -258,7 +258,7 @@ def _reconstruct(subtype, shape, dtype):
 format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[><|A-Za-z0-9.]*)')
 
 def _split(input):
-    """Split the input formats string into field formats without splitting 
+    """Split the input formats string into field formats without splitting
        the tuple used to specify multi-dimensional arrays."""
 
     newlist = []
@@ -274,7 +274,7 @@ def _split(input):
 
         # if the parenthesis is not balanced, hold the string
         if left > right :
-            hold = item  
+            hold = item
 
         # when balanced, append to the output list and reset the hold
         elif left == right:
@@ -301,9 +301,9 @@ def _commastring(astr):
         # convert item
         try:
             (repeats, dtype) = format_re.match(item).groups()
-        except (TypeError, AttributeError): 
+        except (TypeError, AttributeError):
             raise ValueError('format %s is not recognized' % item)
-        
+
         if (repeats == ''):
             newitem = dtype
         else:

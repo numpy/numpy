@@ -32,13 +32,13 @@ def mintypecode(typechars,typeset='GDFgdf',default='d'):
                  for t in typechars]
     intersection = [t for t in typecodes if t in typeset]
     if not intersection:
-       return default
+        return default
     if 'F' in intersection and 'd' in intersection:
-       return 'D'
+        return 'D'
     l = []
     for t in intersection:
-       i = _typecodes_by_elsize.index(t)
-       l.append((i,t))
+        i = _typecodes_by_elsize.index(t)
+        l.append((i,t))
     l.sort()
     return l[0][1]
 

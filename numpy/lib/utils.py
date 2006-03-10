@@ -10,14 +10,14 @@ def issubclass_(arg1, arg2):
 
 def issubsctype(arg1, arg2):
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
-    
+
 def get_numpy_include():
-    """Return the directory in the package that contains the numpy/*.h header 
+    """Return the directory in the package that contains the numpy/*.h header
     files.
-    
+
     Extension modules that need to compile against numpy should use this
     function to locate the appropriate include directory. Using distutils:
-    
+
       import numpy
       Extension('extension_name', ...
                 include_dirs=[numpy.get_numpy_include()])

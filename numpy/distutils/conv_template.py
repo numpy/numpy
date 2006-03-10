@@ -14,7 +14,7 @@
 #  Each replace will use one entry from the list of named replacements
 
 #  Note that all #..# forms in a block must have the same number of
-#    comma-separated entries. 
+#    comma-separated entries.
 
 __all__ = ['process_str', 'process_file']
 
@@ -144,7 +144,7 @@ def process_str(allstr):
     struct = parse_structure(newstr)
     #  return a (sorted) list of tuples for each begin repeat section
     #  each tuple is the start and end of a region to be template repeated
-    
+
     oldend = 0
     for sub in struct:
         writestr += newstr[oldend:sub[0]]

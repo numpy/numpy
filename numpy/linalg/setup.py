@@ -23,7 +23,7 @@ def configuration(parent_package='',top_path=None):
                                    'f2c_lite.c','f2c.h'],
                          extra_info = lapack_info
                          )
-            
+
     return config
 
 if __name__ == '__main__':

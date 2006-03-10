@@ -129,7 +129,7 @@ class test_aso( ScipyTestCase ):
         b = numpy.fix( nItem / 10 * numpy.random.random( nItem ) )
 
         c1 = intersect1d_nu( a, b )
-        c2 = unique1d( intersect1d( a, b ) )    
+        c2 = unique1d( intersect1d( a, b ) )
         assert_array_equal( c1, c2 )
 
         a = numpy.array( [5, 7, 1, 2, 8] )

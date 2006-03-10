@@ -2,7 +2,7 @@
 """
 
 Copyright 1999,2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>          
+Pearu Peterson <pearu@ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
@@ -68,7 +68,7 @@ c2capi_map={'double':'PyArray_DOUBLE',
 if using_newcore:
     c2capi_map={'double':'PyArray_DOUBLE',
             'float':'PyArray_FLOAT',
-            'long_double':'PyArray_LONGDOUBLE',           
+            'long_double':'PyArray_LONGDOUBLE',
             'char':'PyArray_BYTE',
             'unsigned_char':'PyArray_UBYTE',
             'signed_char':'PyArray_BYTE',
@@ -78,11 +78,11 @@ if using_newcore:
             'unsigned':'PyArray_UINT',
             'long':'PyArray_LONG',
             'unsigned_long':'PyArray_ULONG',
-            'long_long':'PyArray_LONGLONG',               
+            'long_long':'PyArray_LONGLONG',
             'unsigned_long_long':'Pyarray_ULONGLONG',
             'complex_float':'PyArray_CFLOAT',
             'complex_double':'PyArray_CDOUBLE',
-            'complex_long_double':'PyArray_CDOUBLE', 
+            'complex_long_double':'PyArray_CDOUBLE',
             'string':'PyArray_STRING'}
 c2pycode_map={'double':'d',
               'float':'f',
@@ -104,7 +104,7 @@ c2pycode_map={'double':'d',
 if using_newcore:
     c2pycode_map={'double':'d',
                  'float':'f',
-                 'long_double':'g', 
+                 'long_double':'g',
                  'char':'b',
                  'unsigned_char':'B',
                  'signed_char':'b',
@@ -114,11 +114,11 @@ if using_newcore:
                  'unsigned':'I',
                  'long':'l',
                  'unsigned_long':'L',
-                 'long_long':'q',                
+                 'long_long':'q',
                  'unsigned_long_long':'Q',
                  'complex_float':'F',
                  'complex_double':'D',
-                 'complex_long_double':'G',   
+                 'complex_long_double':'G',
                  'string':'S'}
 c2buildvalue_map={'double':'d',
                   'float':'f',
@@ -201,7 +201,7 @@ cformat_map={'double':'%g',
              'string':'%s',
              }
 
-############### Auxiliary functions 
+############### Auxiliary functions
 def getctype(var):
     """
     Determines C type
@@ -255,7 +255,7 @@ def getstrlength(var):
         a=var['charselector']
         if a.has_key('*'): len=a['*']
         elif a.has_key('len'): len=a['len']
-    if re.match(r'\(\s*([*]|[:])\s*\)',len) or re.match(r'([*]|[:])',len): 
+    if re.match(r'\(\s*([*]|[:])\s*\)',len) or re.match(r'([*]|[:])',len):
     #if len in ['(*)','*','(:)',':']:
         if isintent_hide(var):
             errmess('getstrlength:intent(hide): expected a string with defined length but got: %s\n'%(`var`))
@@ -330,7 +330,7 @@ def getpydocsign(a,var):
                 break
     init=''
     ctype=getctype(var)
-    
+
     if hasinitvalue(var):
         init,showinit=getinit(a,var)
         init='= %s'%(showinit)
@@ -564,7 +564,7 @@ def routsign2map(rout):
             rout['vars'][a]['note']=['See elsewhere.']
         if c2buildvalue_map.has_key(ret['ctype']):
             ret['rformat']=c2buildvalue_map[ret['ctype']]
-        else: 
+        else:
             ret['rformat']='O'
             errmess('routsign2map: no c2buildvalue key for type %s\n'%(`ret['ctype']`))
         if debugcapi(rout):
@@ -675,7 +675,7 @@ return_value=
         if iscomplexfunction(rout):
             ret['rctype']="""
 #ifdef F2PY_CB_RETURNCOMPLEX
-#ctype#            
+#ctype#
 #else
 void
 #endif
@@ -719,5 +719,3 @@ def common_sign2map(a,var): # obsolute
         var['note']=['See elsewhere.']
     ret['arrdocstr']=getarrdocsign(a,var) # for strings this returns 0-rank but actually is 1-rank
     return ret
-
-

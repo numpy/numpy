@@ -88,7 +88,7 @@ void *PyArray_API[] = {
         (void *) &PyArrayDescr_Type,
         (void *) &PyArrayIter_Type,
         (void *) &PyArrayMultiIter_Type,
-        (int *) &PyArray_NUMUSERTYPES, 
+        (int *) &PyArray_NUMUSERTYPES,
 %s
 };
 """

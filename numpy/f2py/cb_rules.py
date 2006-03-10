@@ -4,7 +4,7 @@
 Build call-back mechanism for f2py2e.
 
 Copyright 2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>          
+Pearu Peterson <pearu@ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
@@ -364,7 +364,7 @@ cb_arg_rules=[
 \tif (#name#_nofargs>capi_i) {
 \t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname#_Dims,#atype#,NULL,(char*)#varname#,0,FARRAY_FLAGS,NULL); /*XXX: Hmm, what will destroy this array??? */
 """,
-                  }, 
+                  },
                  """
 \t\tif (tmp_arr==NULL)
 \t\t\tgoto capi_fail;
@@ -527,8 +527,3 @@ def buildcallback(rout,um):
     #print ar['body']
     return
 ################## Build call-back function #############
-
-
-
-
-

@@ -4,7 +4,7 @@ $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 """
 __all__ = ["set_summary", "summary_off", "set_precision", "set_line_width",
            "array2string"]
-           
+
 #
 # Written by Konrad Hinsen <hinsenk@ere.umontreal.ca>
 # last revision: 1996-3-13
@@ -63,7 +63,7 @@ _float_output_suppress_small = False
 _line_width = 75
 
 
-def set_printoptions(precision=None, threshold=None, edgeitems=None, 
+def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None):
     """Set options associated with printing.
 
@@ -82,8 +82,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     suppress    Boolean value indicating whether or not suppress printing
                    of small floating point values using scientific notation
                    (default False)
-    """                        
-    
+    """
+
     global _summaryThreshhold, _summaryEdgeItems, _float_output_precision, \
            _line_width, _float_output_suppress_small
     if (linewidth is not None):
@@ -126,7 +126,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
 
     if max_line_width is None:
         max_line_width = _line_width
-            
+
     if precision is None:
         precision = _float_output_precision
 
@@ -139,7 +139,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     else:
         summary_insert = ""
         data = a.ravel()
-    
+
     try:
         format_function = a._format
     except AttributeError:
@@ -168,7 +168,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         else:
             format = '%s'
             format_function = lambda x, f = format: format % str(x)
-            
+
     next_line_prefix = " " # skip over "["
     next_line_prefix += " "*len(prefix)                  # skip over array(
 
@@ -211,11 +211,11 @@ def _formatArray(a, format_function, rank, max_line_len,
     1. Full output
 
     2. Summarized output
-    
+
     """
     if rank == 0:
         return str(a.item())
-    
+
     if summary_insert and 2*edge_items < len(a):
         leading_items, trailing_items, summary_insert1 = \
                        edge_items, edge_items, summary_insert
@@ -223,20 +223,20 @@ def _formatArray(a, format_function, rank, max_line_len,
         leading_items, trailing_items, summary_insert1 = 0, len(a), ""
 
     if rank == 1:
-        
+
         s = ""
         line = next_line_prefix
         for i in xrange(leading_items):
             word = format_function(a[i]) + separator
             s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
-            
+
         if summary_insert1:
             s, line = _extendLine(s, line, summary_insert1, max_line_len, next_line_prefix)
 
         for i in xrange(trailing_items, 1, -1):
-            word = format_function(a[-i]) + separator 
+            word = format_function(a[-i]) + separator
             s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
-        
+
         word = format_function(a[-1])
         s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
         s += line + "]\n"
@@ -251,10 +251,10 @@ def _formatArray(a, format_function, rank, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert)
             s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1,1)
-            
+
         if summary_insert1:
             s += next_line_prefix + summary_insert1 + "\n"
-            
+
         for i in xrange(trailing_items, 1, -1):
             if leading_items or i != trailing_items:
                 s += next_line_prefix

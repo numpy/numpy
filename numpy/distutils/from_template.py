@@ -13,7 +13,7 @@ process_file(filename)
 
   The number of comma-separeted words in '<..>' will determine the number of
   replicates.
- 
+
   '<..>' may have two different forms, named and short. For example,
 
   named:
@@ -24,7 +24,7 @@ process_file(filename)
    <_t>  is already defined: <_t=real,double precision,complex,double complex>
 
   short:
-   <s,d,c,z>, a short form of the named, useful when no <p> appears inside 
+   <s,d,c,z>, a short form of the named, useful when no <p> appears inside
    a block.
 
   In general, '<..>' contains a comma separated list of arbitrary
@@ -35,7 +35,7 @@ process_file(filename)
   by <index>-th expression.
 
   Note that all '<..>' forms in a block must have the same number of
-  comma-separated entries. 
+  comma-separated entries.
 
  Predefined named template rules:
   <prefix=s,d,c,z>
@@ -189,7 +189,7 @@ def expand_sub(substr,names):
     newstr = newstr.replace('@rightarrow@','>')
     newstr = newstr.replace('@leftarrow@','<')
     return newstr
-    
+
 def process_str(allstr):
     newstr = allstr
     writestr = '' #_head # using _head will break free-format files

@@ -22,7 +22,7 @@ class test_any(ScipyTestCase):
         assert(any(y1))
         assert_array_equal(sometrue(y1),[1,1,0])
         assert_array_equal(sometrue(y1,axis=1),[0,1,1])
-        
+
 class test_all(ScipyTestCase):
     def check_basic(self):
         y1 = [0,1,1,0]
@@ -53,7 +53,7 @@ class test_average(ScipyTestCase):
         y4[1,0] = 2
         assert_array_equal(y4.mean(0), average(y4, 0))
         assert_array_equal(y4.mean(1), average(y4, 1))
-        
+
         y5 = rand(5,5)
         assert_array_equal(y5.mean(0), average(y5, 0))
         assert_array_equal(y5.mean(1), average(y5, 1))
@@ -147,7 +147,7 @@ class test_prod(ScipyTestCase):
                 self.failUnlessRaises(ArithmeticError, prod, a)
             else:
                 assert_equal(prod(a),26400)
-                assert_array_equal(prod(a2,axis=0), 
+                assert_array_equal(prod(a2,axis=0),
                                    array([50,36,84,180],ctype))
                 assert_array_equal(prod(a2,axis=-1),array([24, 1890, 600],ctype))
 
@@ -242,7 +242,7 @@ class test_extins(ScipyTestCase):
         insert(a,mask,0)
         insert(a,mask,c)
         assert_array_equal(a,ac)
-                
+
 class test_vectorize(ScipyTestCase):
     def check_simple(self):
         def addsubtract(a,b):
@@ -262,75 +262,75 @@ class test_vectorize(ScipyTestCase):
         f = vectorize(addsubtract)
         r = f([0,3,6,9],5)
         assert_array_equal(r,[5,8,1,4])
-        
+
 
 
 class test_unwrap(ScipyTestCase):
-	def check_simple(self):
-		#check that unwrap removes jumps greather that 2*pi
-		assert_array_equal(unwrap([1,1+2*pi]),[1,1])
-		#check that unwrap maintans continuity 
-		assert(all(diff(unwrap(rand(10)*100))<pi))
-		
+    def check_simple(self):
+                #check that unwrap removes jumps greather that 2*pi
+        assert_array_equal(unwrap([1,1+2*pi]),[1,1])
+        #check that unwrap maintans continuity
+        assert(all(diff(unwrap(rand(10)*100))<pi))
+
 
 class test_filterwindows(ScipyTestCase):
-	def check_hanning(self):
-		#check symmetry
-		w=hanning(10)
-		assert_array_almost_equal(w,flipud(w),7)
-		#check known value 
-		assert_almost_equal(sum(w),4.500,4)
+    def check_hanning(self):
+        #check symmetry
+        w=hanning(10)
+        assert_array_almost_equal(w,flipud(w),7)
+        #check known value
+        assert_almost_equal(sum(w),4.500,4)
 
-	def check_hamming(self):
-		#check symmetry
-		w=hamming(10)
-		assert_array_almost_equal(w,flipud(w),7)
-		#check known value 
-		assert_almost_equal(sum(w),4.9400,4)
-	
-	def check_bartlett(self):
-		#check symmetry
-		w=bartlett(10)
-		assert_array_almost_equal(w,flipud(w),7)
-		#check known value 
-		assert_almost_equal(sum(w),4.4444,4)
+    def check_hamming(self):
+        #check symmetry
+        w=hamming(10)
+        assert_array_almost_equal(w,flipud(w),7)
+        #check known value
+        assert_almost_equal(sum(w),4.9400,4)
 
-	def check_blackman(self):
-		#check symmetry
-		w=blackman(10)
-		assert_array_almost_equal(w,flipud(w),7)
-		#check known value 
-		assert_almost_equal(sum(w),3.7800,4)
-	
+    def check_bartlett(self):
+        #check symmetry
+        w=bartlett(10)
+        assert_array_almost_equal(w,flipud(w),7)
+        #check known value
+        assert_almost_equal(sum(w),4.4444,4)
+
+    def check_blackman(self):
+        #check symmetry
+        w=blackman(10)
+        assert_array_almost_equal(w,flipud(w),7)
+        #check known value
+        assert_almost_equal(sum(w),3.7800,4)
+
 
 class test_trapz(ScipyTestCase):
-	def check_simple(self):
-		r=trapz(exp(-1.0/2*(arange(-10,10,.1))**2)/sqrt(2*pi),dx=0.1)
-		#check integral of normal equals 1
-		assert_almost_equal(sum(r),1,7)
-		
+    def check_simple(self):
+        r=trapz(exp(-1.0/2*(arange(-10,10,.1))**2)/sqrt(2*pi),dx=0.1)
+        #check integral of normal equals 1
+        assert_almost_equal(sum(r),1,7)
+
 class test_sinc(ScipyTestCase):
-	def check_simple(self):
-		assert(sinc(0)==1)
-		w=sinc(linspace(-1,1,100))
-		#check symmetry
-		assert_array_almost_equal(w,flipud(w),7)
+    def check_simple(self):
+        assert(sinc(0)==1)
+        w=sinc(linspace(-1,1,100))
+        #check symmetry
+        assert_array_almost_equal(w,flipud(w),7)
 
 class test_histogram(ScipyTestCase):
-	def check_simple(self):
-		n=100
-		v=rand(n)
-		(a,b)=histogram(v)
-		#check if the sum of the bins equals the number of samples
-		assert(sum(a)==n)
-		#check that the bin counts are evenly spaced when the data is from a linear function
-		(a,b)=histogram(linspace(0,10,100))
-		assert(all(a==10))
-		
-		
-		
-		
-		
+    def check_simple(self):
+        n=100
+        v=rand(n)
+        (a,b)=histogram(v)
+        #check if the sum of the bins equals the number of samples
+        assert(sum(a)==n)
+        #check that the bin counts are evenly spaced when the data is from a linear function
+        (a,b)=histogram(linspace(0,10,100))
+        assert(all(a==10))
+
+
+
+
+
 def compare_results(res,desired):
     for i in range(len(desired)):
         assert_array_equal(res[i],desired[i])

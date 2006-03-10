@@ -1,6 +1,6 @@
 __doc_title__ = """Basic functions used by several sub-packages and
 useful to have in the main name-space."""
-__doc__ = __doc_title__ + """ 
+__doc__ = __doc_title__ + """
 
 Type handling
 ==============
@@ -15,7 +15,7 @@ isneginf         --  Tests for negative infinity ---|
 isposinf         --  Tests for positive infinity    |
 isnan            --  Tests for nans                 |----  array results
 isinf            --  Tests for infinity             |
-isfinite         --  Tests for finite numbers    ---| 
+isfinite         --  Tests for finite numbers    ---|
 isscalar         --  True if argument is a scalar
 nan_to_num       --  Replaces NaN's with 0 and infinities with large numbers
 cast             --  Dictionary of functions to force cast to each type
@@ -80,7 +80,7 @@ flipud           --  2D array with rows flipped
 rot90            --  Rotate a 2D array a multiple of 90 degrees
 eye              --  Return a 2D array with ones down a given diagonal
 diag             --  Construct a 2D array from a vector, or return a given
-                       diagonal from a 2D array.                       
+                       diagonal from a 2D array.
 mat              --  Construct a Matrix
 bmat             --  Build a Matrix from blocks
 

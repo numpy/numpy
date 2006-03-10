@@ -13,7 +13,7 @@ __all__ = ['LinAlgError', 'solve_linear_equations', 'solve',
            'eigenvectors', 'eig', 'Heigenvectors', 'eigh','lstsq',
            'linear_least_squares'
            ]
-           
+
 from numpy.core import *
 import lapack_lite
 
@@ -49,7 +49,7 @@ def _castCopyAndTranspose(type, *arrays):
     for a in arrays:
         cast_arrays = cast_arrays + (transpose(a).astype(type),)
     if len(cast_arrays) == 1:
-            return cast_arrays[0]
+        return cast_arrays[0]
     else:
         return cast_arrays
 
@@ -66,7 +66,7 @@ def _fastCopyAndTranspose(type, *arrays):
         else:
             cast_arrays = cast_arrays + (_fastCT(a.astype(type)),)
     if len(cast_arrays) == 1:
-            return cast_arrays[0]
+        return cast_arrays[0]
     else:
         return cast_arrays
 
@@ -385,7 +385,7 @@ def generalized_inverse(a, rcond = 1.e-10):
             s[i] = 1./s[i]
         else:
             s[i] = 0.;
-    return wrap(dot(transpose(vt),                        
+    return wrap(dot(transpose(vt),
                        multiply(s[:, NewAxis],transpose(u))))
 
 # Determinant
@@ -557,5 +557,3 @@ if __name__ == '__main__':
     a = a+0j
     b = b+0j
     test(a, b)
-
-

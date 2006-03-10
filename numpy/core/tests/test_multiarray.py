@@ -24,7 +24,7 @@ class test_flags(ScipyTestCase):
         assert_equal(self.a.flags.writeable, True)
         assert_equal(self.a.flags.aligned, True)
         assert_equal(self.a.flags.updateifcopy, False)
-        
+
 
 class test_attributes(ScipyTestCase):
     def setUp(self):
@@ -47,7 +47,7 @@ class test_attributes(ScipyTestCase):
         assert_equal(self.one.ndim, 1)
         assert_equal(self.two.ndim, 2)
         assert_equal(self.three.ndim, 3)
-        num = self.two.itemsize        
+        num = self.two.itemsize
         assert_equal(self.two.size, 20)
         assert_equal(self.two.nbytes, 20*num)
         assert_equal(self.two.itemsize, self.two.dtype.itemsize)
@@ -74,7 +74,7 @@ class test_attributes(ScipyTestCase):
         self.failUnlessRaises(ValueError, make_array, 8, 3, 1)
         #self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
         #self.failUnlessRaises(ValueError, lambda: ndarray([1], strides=4))
-        
+
 
     def check_set_stridesattr(self):
         x = self.one
@@ -90,7 +90,7 @@ class test_attributes(ScipyTestCase):
         self.failUnlessRaises(ValueError, make_array, 4, 2, -1)
         self.failUnlessRaises(ValueError, make_array, 8, 3, 1)
         #self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
-        
+
     def check_fill(self):
         for t in "?bhilqpBHILQPfdgFDGO":
             x = empty((3,2,1), t)
@@ -119,18 +119,18 @@ class test_fromstring(ScipyTestCase):
         a = fromstring('1 , 2 , 3 , 4',sep=',')
         b = fromstring('1,2,3,4',dtype=float,sep=',')
         assert_array_equal(a,b)
-        
+
 class test_zero_rank(ScipyTestCase):
     def setUp(self):
         self.d = array(0), array('x', object)
-        
+
     def check_ellipsis_subscript(self):
         a,b = self.d
         self.failUnlessEqual(a[...], 0)
         self.failUnlessEqual(b[...], 'x')
         self.failUnless(a[...] is a)
         self.failUnless(b[...] is b)
-        
+
     def check_empty_subscript(self):
         a,b = self.d
         self.failUnlessEqual(a[()], 0)
@@ -151,7 +151,7 @@ class test_zero_rank(ScipyTestCase):
         self.failUnlessEqual(a, 42)
         b[...] = ''
         self.failUnlessEqual(b.item(), '')
-        
+
     def check_empty_subscript_assignment(self):
         a,b = self.d
         a[()] = 42
@@ -191,7 +191,7 @@ class test_zero_rank(ScipyTestCase):
         y = ndarray((),buffer=x)
         y[()] = 6
         self.failUnlessEqual(x[()], 6)
-        
+
 class test_creation(ScipyTestCase):
     def check_from_attribute(self):
         class x(object):
@@ -229,12 +229,12 @@ class test_pickling(ScipyTestCase):
     def setUp(self):
         self.carray = array([[2,9],[7,0],[3,8]])
         self.tarray = transpose(self.carray)
-        
+
     def check_both(self):
         import pickle
         assert_equal(self.carray, pickle.loads(self.carray.dumps()))
         assert_equal(self.tarray, pickle.loads(self.tarray.dumps()))
-            
+
 # Import tests from unicode
 set_local_path()
 from test_unicode import *

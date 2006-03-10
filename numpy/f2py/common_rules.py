@@ -4,7 +4,7 @@
 Build common block mechanism for f2py2e.
 
 Copyright 2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>          
+Pearu Peterson <pearu@ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License
 
@@ -129,4 +129,3 @@ def buildhooks(m):
     ret['latexdoc']=doc[0]
     if len(ret['docs'])<=1: ret['docs']=''
     return ret,fwrap[0]
-

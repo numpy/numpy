@@ -117,4 +117,3 @@ if __name__ == '__main__':
     f = finfo(numeric.longfloat)
     print 'longfloat epsilon:',f.eps
     print 'longfloat tiny:',f.tiny
-

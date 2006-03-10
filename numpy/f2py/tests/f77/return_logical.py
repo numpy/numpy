@@ -132,4 +132,3 @@ if __name__=='__main__':
     test_functions = build(f2py_opts)
     f2py2e.f2py_testing.run(runtest,test_functions,repeat)
     print 'ok'
-

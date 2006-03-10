@@ -1,4 +1,4 @@
-import numpy 
+import numpy
 import types, time
 from numpy.core.ma import *
 from numpy.testing import ScipyTestCase, ScipyTest
@@ -16,7 +16,7 @@ class test_ma(ScipyTestCase):
     def __init__(self, *args, **kwds):
         ScipyTestCase.__init__(self, *args, **kwds)
         self.setUp()
-    
+
     def setUp (self):
         x=numpy.array([1.,1.,1.,-2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
         y=numpy.array([5.,0.,3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
@@ -48,14 +48,14 @@ class test_ma(ScipyTestCase):
 
     def check_testBasic2d(self):
         "Test of basic array creation and properties in 2 dimensions."
-        for s in [(4,3), (6,2)]: 
+        for s in [(4,3), (6,2)]:
             (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
             x.shape = s
             y.shape = s
             xm.shape = s
             ym.shape = s
             xf.shape = s
-    
+
             self.failIf(isMaskedArray(x))
             self.failUnless(isMaskedArray(xm))
             self.assertEqual(shape(xm), s)
@@ -75,7 +75,7 @@ class test_ma(ScipyTestCase):
         self.failUnless(eq (a2d * a2d, a2d * a2dm))
         self.failUnless(eq (a2d + a2d, a2d + a2dm))
         self.failUnless(eq (a2d - a2d, a2d - a2dm))
-        for s in [(12,), (4,3), (2,6)]: 
+        for s in [(12,), (4,3), (2,6)]:
             x = x.reshape(s)
             y = y.reshape(s)
             xm = xm.reshape(s)
@@ -108,7 +108,7 @@ class test_ma(ScipyTestCase):
         ma = array([1])
         self.failUnless(isinstance(na + ma, MaskedArray))
         self.failUnless(isinstance(ma + na, MaskedArray))
-        
+
     def check_testUfuncs1 (self):
         "Test various functions such as sin, cos."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
@@ -138,7 +138,7 @@ class test_ma(ScipyTestCase):
         self.failUnless (eq(numpy.concatenate((x,y)), concatenate((x,y))))
         self.failUnless (eq(numpy.concatenate((x,y)), concatenate((xm,y))))
         self.failUnless (eq(numpy.concatenate((x,y,x)), concatenate((x,ym,x))))
-    
+
     def check_xtestCount (self):
         "Test count"
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
@@ -152,9 +152,9 @@ class test_ma(ScipyTestCase):
         self.failUnless (eq(3, count(ott)))
         assert getmask(count(ott,0)) is nomask
         self.failUnless (eq([1,2],count(ott,0)))
-   
+
     def check_testMinMax (self):
-        "Test minimum and maximum." 
+        "Test minimum and maximum."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         xr = numpy.ravel(x) #max doesn't work if shaped
         xmr = ravel(xm)
@@ -179,8 +179,8 @@ class test_ma(ScipyTestCase):
             self.failUnless (eq(numpy.add.reduce(x,1), add.reduce(x,1)))
             self.failUnless (eq(numpy.sum(x,1), sum(x,1)))
             self.failUnless (eq(numpy.product(x,1), product(x,1)))
-    
-    
+
+
     def check_testCI(self):
         "Test of conversions and indexing"
         x1 = numpy.array([1,2,4,3])
@@ -229,7 +229,7 @@ class test_ma(ScipyTestCase):
         self.assertEqual(type(s1), str)
         self.assertEqual(s1, s2)
         assert x1[1:1].shape == (0,)
-    
+
     def check_testCopySize(self):
         "Tests of some subtle points of copying and sizing."
         n = [0,0,1,0,0]
@@ -238,17 +238,17 @@ class test_ma(ScipyTestCase):
         self.failUnless(m is m2)
         m3 = make_mask(m, copy=1)
         self.failUnless(m is not m3)
-        
+
         x1 = numpy.arange(5)
         y1 = array(x1, mask=m)
         self.failUnless( y1.raw_data() is not x1)
         self.failUnless( allequal(x1,y1.raw_data()))
         self.failUnless( y1.mask is m)
-    
+
         y1a = array(y1, copy=0)
         self.failUnless( y1a.raw_data() is y1.raw_data())
         self.failUnless( y1a.mask is y1.mask)
-        
+
         y2 = array(x1, mask=m, copy=0)
         self.failUnless( y2.raw_data() is x1)
         self.failUnless( y2.mask is m)
@@ -257,10 +257,10 @@ class test_ma(ScipyTestCase):
         self.failUnless( y2[2] is not masked)
         self.failUnless( y2.mask is not m)
         self.failUnless( allequal(y2.mask, 0))
-    
+
         y3 = array(x1*1.0, mask=m)
         self.failUnless(filled(y3).dtype is (x1*1.0).dtype)
-    
+
         x4 = arange(4)
         x4[2] = masked
         y4 = resize(x4, (8,))
@@ -270,7 +270,7 @@ class test_ma(ScipyTestCase):
         self.failUnless( eq(y5, [0,0,1,1,2,2,3,3]))
         y6 = repeat(x4, 2)
         self.failUnless( eq(y5, y6))
-    
+
     def check_testPut(self):
         "Test of put"
         d = arange(5)
@@ -284,24 +284,24 @@ class test_ma(ScipyTestCase):
         self.failUnless( x[3] is masked)
         self.failUnless( x[4] is not masked)
         self.failUnless( eq(x, [0,10,2,-1,40]))
-    
-        x = array(d, mask = m) 
+
+        x = array(d, mask = m)
         x.put([-1,100,200])
         self.failUnless( eq(x, [-1,100,200,0,0]))
         self.failUnless( x[3] is masked)
         self.failUnless( x[4] is masked)
-    
-        x = array(d, mask = m) 
+
+        x = array(d, mask = m)
         x.putmask([30,40])
         self.failUnless( eq(x, [0,1,2,30,40]))
         self.failUnless( x.mask is nomask)
-    
-        x = array(d, mask = m) 
+
+        x = array(d, mask = m)
         y = x.compressed()
         z = array(x, mask = m)
         z.put(y)
         assert eq (x, z)
-    
+
     def check_testMaPut(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
@@ -310,7 +310,7 @@ class test_ma(ScipyTestCase):
         assert take(xm, i) == z
         put(ym, i, zm)
         assert take(ym, i) == zm
-        
+
     def check_testOddFeatures(self):
         "Test of other odd features"
         x = arange(20); x=x.reshape(4,5)
@@ -321,7 +321,7 @@ class test_ma(ScipyTestCase):
         assert eq(z.imag, 10*x)
         assert eq((z*conjugate(z)).real, 101*x*x)
         z.imag[...] = 0.0
-    
+
         x = arange(10)
         x[3] = masked
         assert str(x[3]) == str(masked)
@@ -400,9 +400,9 @@ class test_ma(ScipyTestCase):
         assert eq(z, [99,99,99,1,1,1])
         z = where(c, 1, masked)
         assert eq(z, [99, 1, 1, 99, 99, 99])
-    
+
     def check_testMinMax(self):
-        "Test of minumum, maximum."    
+        "Test of minumum, maximum."
         assert eq(minimum([1,2,3],[4,0,9]), [1,0,3])
         assert eq(maximum([1,2,3],[4,0,9]), [4,2,9])
         x = arange(5)
@@ -413,7 +413,7 @@ class test_ma(ScipyTestCase):
         assert eq(maximum(x,y), where(greater(x,y), x, y))
         assert minimum(x) == 0
         assert maximum(x) == 4
-    
+
     def check_testTakeTransposeInnerOuter(self):
         "Test of take, transpose, inner, outer products"
         x = arange(24)
@@ -433,11 +433,11 @@ class test_ma(ScipyTestCase):
         assert t[0] == 'abc'
         assert t[1] == 2
         assert t[2] == 3
-    
+
     def check_testInplace(self):
         """Test of inplace operations and rich comparisons"""
         y = arange(10)
-    
+
         x = arange(10)
         xm = arange(10)
         xm[2] = masked
@@ -445,7 +445,7 @@ class test_ma(ScipyTestCase):
         assert eq(x, y+1)
         xm += 1
         assert eq(x, y+1)
-    
+
         x = arange(10)
         xm = arange(10)
         xm[2] = masked
@@ -453,7 +453,7 @@ class test_ma(ScipyTestCase):
         assert eq(x, y-1)
         xm -= 1
         assert eq(xm, y-1)
-    
+
         x = arange(10)*1.0
         xm = arange(10)*1.0
         xm[2] = masked
@@ -461,7 +461,7 @@ class test_ma(ScipyTestCase):
         assert eq(x, y*2)
         xm *= 2.0
         assert eq(xm, y*2)
-    
+
         x = arange(10)*2
         xm = arange(10)
         xm[2] = masked
@@ -469,7 +469,7 @@ class test_ma(ScipyTestCase):
         assert eq(x, y)
         xm /= 2
         assert eq(x, y)
-    
+
         x = arange(10)*1.0
         xm = arange(10)*1.0
         xm[2] = masked
@@ -477,7 +477,7 @@ class test_ma(ScipyTestCase):
         assert eq(x, y/2.0)
         xm /= arange(10)
         assert eq(xm, ones((10,)))
-    
+
         x = arange(10).astype(float32)
         xm = arange(10)
         xm[2] = masked
@@ -508,7 +508,7 @@ class test_ma(ScipyTestCase):
         #self.failUnlessRaises(Exception, lambda x,y: x+y, masked, 2)
         #self.failUnlessRaises(Exception, lambda x,y: x+y, masked, xx)
         #self.failUnlessRaises(Exception, lambda x,y: x+y, xx, masked)
-    
+
     def check_testAverage1(self):
         "Test of average."
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
@@ -557,7 +557,7 @@ class test_ma(ScipyTestCase):
         self.failUnless(allclose(average(z, axis=0), [0.,1.,99.,99.,4.0, 7.5]))
         self.failUnless(allclose(average(z, axis=1), [2.5, 5.0]))
         self.failUnless(allclose( average(z,weights=w2), [0.,1., 99., 99., 4.0, 10.0]))
-    
+
         a = arange(6)
         b = arange(6) * 3
         r1, w1 = average([[a,b],[b,a]], axis=1, returned=1)
@@ -643,12 +643,12 @@ class test_ufuncs(ScipyTestCase):
         self.d = (array([1.0, 0, -1, pi/2]*2, mask=[0,1]+[0]*6),
                   array([1.0, 0, -1, pi/2]*2, mask=[1,0]+[0]*6),)
 
-        
+
     def check_testUfuncRegression(self):
         for f in ['sqrt', 'log', 'log10', 'exp', 'conjugate',
-                  'sin', 'cos', 'tan', 
+                  'sin', 'cos', 'tan',
                   'arcsin', 'arccos', 'arctan',
-                  'sinh', 'cosh', 'tanh', 
+                  'sinh', 'cosh', 'tanh',
                   'arcsinh',
                   'arccosh',
                   'arctanh',
@@ -674,7 +674,7 @@ class test_ufuncs(ScipyTestCase):
             mr = mf(*args)
             self.failUnless(eq(ur.filled(0), mr.filled(0), f))
             self.failUnless(eqmask(ur.mask, mr.mask))
-            
+
     def test_reduce(self):
         a = self.d[0]
         self.failIf(alltrue(a))
@@ -696,14 +696,14 @@ class test_ufuncs(ScipyTestCase):
         for t in "?bhilqpBHILQPfdgFDGO":
             x = array([1,0,2,0], mask=[0,0,1,1])
             self.failUnless(eq(nonzero(x), [0]))
-            
+
 def eqmask(m1, m2):
     if m1 is nomask:
         return m2 is nomask
     if m2 is nomask:
         return m1 is nomask
     return (m1 == m2).all()
-        
+
 def timingTest():
     for f in [testf, testinplace]:
         for n in [1000,10000,50000]:
@@ -712,8 +712,8 @@ def timingTest():
             t2 = testtc(n, f)
             print f.test_name
             print """\
-n = %7d 
-numpy time (ms) %6.1f 
+n = %7d
+numpy time (ms) %6.1f
 MA maskless ratio %6.1f
 MA masked ratio %6.1f
 """ % (n, t*1000.0, t1/t, t2/t)
@@ -755,5 +755,5 @@ def testinplace(x):
 testinplace.test_name = 'Inplace operations'
 
 if __name__ == "__main__":
-    ScipyTest('numpy.core.ma').run()    
+    ScipyTest('numpy.core.ma').run()
     #timingTest()

@@ -106,9 +106,9 @@ class create_zeros(ScipyTestCase):
         """Check creation of 0-dimensional objects"""
         h = zeros((), dtype=self._descr)
         self.assert_(normalize_descr(self._descr) == h.dtype.descr)
-        self.assert_(h.dtype.fields['x'][0].name[:4] == 'void') 
-        self.assert_(h.dtype.fields['x'][0].char == 'V') 
-        self.assert_(h.dtype.fields['x'][0].type == numpy.void) 
+        self.assert_(h.dtype.fields['x'][0].name[:4] == 'void')
+        self.assert_(h.dtype.fields['x'][0].char == 'V')
+        self.assert_(h.dtype.fields['x'][0].type == numpy.void)
         # A small check that data is ok
         assert_equal(h['z'], zeros((), dtype='u1'))
 
@@ -116,9 +116,9 @@ class create_zeros(ScipyTestCase):
         """Check creation of single-dimensional objects"""
         h = zeros((2,), dtype=self._descr)
         self.assert_(normalize_descr(self._descr) == h.dtype.descr)
-        self.assert_(h.dtype['y'].name[:4] == 'void') 
-        self.assert_(h.dtype['y'].char == 'V') 
-        self.assert_(h.dtype['y'].type == numpy.void) 
+        self.assert_(h.dtype['y'].name[:4] == 'void')
+        self.assert_(h.dtype['y'].char == 'V')
+        self.assert_(h.dtype['y'].type == numpy.void)
         # A small check that data is ok
         assert_equal(h['z'], zeros((2,), dtype='u1'))
 
@@ -126,9 +126,9 @@ class create_zeros(ScipyTestCase):
         """Check creation of multi-dimensional objects"""
         h = zeros((2,3), dtype=self._descr)
         self.assert_(normalize_descr(self._descr) == h.dtype.descr)
-        self.assert_(h.dtype['z'].name == 'uint8') 
-        self.assert_(h.dtype['z'].char == 'B') 
-        self.assert_(h.dtype['z'].type == numpy.uint8) 
+        self.assert_(h.dtype['z'].name == 'uint8')
+        self.assert_(h.dtype['z'].char == 'B')
+        self.assert_(h.dtype['z'].type == numpy.uint8)
         # A small check that data is ok
         assert_equal(h['z'], zeros((2,3), dtype='u1'))
 
@@ -238,7 +238,7 @@ class test_read_values_plain_multiple(read_values_plain):
 class read_values_nested(ScipyTestCase):
     """Check the reading of values in heterogeneous arrays (nested)"""
 
-    
+
     def check_access_top_fields(self):
         """Check reading the top fields of a nested array"""
         h = array(self._buffer, dtype=self._descr)

@@ -5,7 +5,7 @@ collectinput - Collects all files that are included to a main Latex document
                in separate lines.
 
 Copyright 1999 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>          
+Pearu Peterson <pearu@ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License
 
@@ -72,6 +72,3 @@ for l in fileinput.input(fi):
     else:
         print l+l1
 sys.stdout.close()
-
-
-

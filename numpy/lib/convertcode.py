@@ -15,7 +15,7 @@
 #  * Eliminates savespace=xxx
 #  * Replace xxx.spacesaver() with True
 #  * Convert xx.savespace(?) to pass + ## xx.savespace(?)
-#  #### -- not * Convert a.shape = ? to a.reshape(?) 
+#  #### -- not * Convert a.shape = ? to a.reshape(?)
 #  * Prints warning for use of bool, int, float, copmlex, object, and unicode
 #
 
@@ -128,14 +128,14 @@ def getandcopy(name):
 
 def convertfile(filename):
     """Convert the filename given from using Numeric to using NumPy
-    
+
     Copies the file to filename.orig and then over-writes the file
     with the updated code
     """
     filestr = getandcopy(filename)
     filestr = fromstr(filestr)
     makenewfile(filename, filestr)
-           
+
 def fromargs(args):
     filename = args[1]
     convertfile(filename)
@@ -153,6 +153,3 @@ def convertall(direc=os.path.curdir):
 
 if __name__ == '__main__':
     fromargs(sys.argv)
-    
-             
-

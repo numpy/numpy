@@ -114,7 +114,7 @@ class AbsoftFCompiler(FCompiler):
                     "-YCOM_SFX=_","-YEXT_SFX=_","-YEXT_NAMES=LCS"])
         if self.get_version():
             if self.get_version()>'4.6':
-                opt.extend(["-YDEALLOC=ALL"])                
+                opt.extend(["-YDEALLOC=ALL"])
         return opt
 
     def get_flags_fix(self):

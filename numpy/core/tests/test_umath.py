@@ -60,7 +60,7 @@ class test_special_methods(ScipyTestCase):
                 r = with_wrap()
                 r.arr = arr
                 r.context = context
-                return r 
+                return r
         a = with_wrap()
         x = minimum(a, a)
         assert_equal(x.arr, zeros(1))
@@ -78,7 +78,7 @@ class test_special_methods(ScipyTestCase):
             def __array_wrap__(self, arr):
                 r = with_wrap()
                 r.arr = arr
-                return r 
+                return r
         a = with_wrap()
         x = minimum(a, a)
         assert_equal(x.arr, zeros(1))
@@ -158,6 +158,6 @@ class test_choose(ScipyTestCase):
         c = array([True,True])
         a = array([True,True])
         assert_equal(choose(c, (a, 1)), array([1,1]))
-        
+
 if __name__ == "__main__":
     ScipyTest().run()

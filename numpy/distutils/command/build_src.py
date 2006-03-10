@@ -358,7 +358,7 @@ class build_src(build_ext.build_ext):
                             output_file=target_file)
                         pyrex_result = Main.compile(source, options=options)
                         if pyrex_result.num_errors != 0:
-                            raise RuntimeError("%d errors in Pyrex compile" % 
+                            raise RuntimeError("%d errors in Pyrex compile" %
                                                pyrex_result.num_errors)
                     else:
                         log.warn("Pyrex needed to compile %s but not available."\

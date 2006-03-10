@@ -52,5 +52,3 @@ class config_fc(Command):
     def run(self):
         # Do nothing.
         return
-
-

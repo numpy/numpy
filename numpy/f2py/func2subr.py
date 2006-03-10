@@ -4,7 +4,7 @@
 Rules for building C/API module with f2py2e.
 
 Copyright 1999,2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>          
+Pearu Peterson <pearu@ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
@@ -160,6 +160,6 @@ def assubr(rout):
                 break
         if flag:
             fvar['intent'].append('out=%s' % (rname))
-        
+
     rout['args'] = [fname] + rout['args']
     return rout,createfuncwrapper(rout)

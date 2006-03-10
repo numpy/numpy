@@ -4,7 +4,7 @@
 Build F90 module support for f2py2e.
 
 Copyright 2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>          
+Pearu Peterson <pearu@ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
@@ -52,8 +52,8 @@ fgetdims1 = """\
                ns = .TRUE.
             end if
          end do
-         if (ns) then 
-            deallocate(d) 
+         if (ns) then
+            deallocate(d)
          end if
       end if
       if ((.not.allocated(d)).and.(s(1).ge.1)) then"""
@@ -225,7 +225,7 @@ def buildhooks(pymod):
         fadd('end subroutine f2pyinit%s\n'%(m['name']))
 
         dadd(string.replace(string.join(ret['latexdoc'],'\n'),r'\subsection{',r'\subsubsection{'))
-        
+
         ret['latexdoc']=[]
         ret['docs'].append('"\t%s --- %s"'%(m['name'],
                                             string.join(undo_rmbadname(modobjs),',')))
@@ -236,5 +236,3 @@ def buildhooks(pymod):
     ret['latexdoc']=doc[0]
     if len(ret['docs'])<=1: ret['docs']=''
     return ret,fhooks[0]
-
-

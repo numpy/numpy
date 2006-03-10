@@ -185,7 +185,7 @@ class assign_values(ScipyTestCase):
         """Check assignment of single-dimensional objects with values"""
         ua = zeros((2,), dtype='U%s' % self.ulen)
         ua[0] = self.ucs_value*self.ulen
-        self.content_test(ua, ua[0], 4*self.ulen*2) 
+        self.content_test(ua, ua[0], 4*self.ulen*2)
         ua[1] = self.ucs_value*self.ulen
         self.content_test(ua, ua[1], 4*self.ulen*2)
 

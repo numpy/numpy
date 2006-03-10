@@ -43,7 +43,7 @@ class test_eye(ScipyTestCase):
                                      [0,0,0]]))
         assert_equal(eye(3,4),array([[1,0,0,0],
                                      [0,1,0,0],
-                                     [0,0,1,0]]))        
+                                     [0,0,1,0]]))
     def check_diag2d(self):
         assert_equal(eye(3,4,k=2),array([[0,0,1,0],
                                          [0,0,0,1],

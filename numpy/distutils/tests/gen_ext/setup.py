@@ -16,7 +16,7 @@ Cf2py depend(n) a
             A(I) = 0.0D0
          ELSEIF (I.EQ.2) THEN
             A(I) = 1.0D0
-         ELSE 
+         ELSE
             A(I) = A(I-1) + A(I-2)
          ENDIF
       ENDDO
@@ -45,6 +45,3 @@ def configuration(parent_package='',top_path=None):
 if __name__ == "__main__":
     from numpy.distutils.core import setup
     setup(**configuration(top_path='').todict())
-
-
-

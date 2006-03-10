@@ -60,7 +60,7 @@ class GnuFCompiler(FCompiler):
             major, minor = target.split('.')
             if int(minor) < 3:
                 minor = '3'
-                warnings.warn('Environment variable ' 
+                warnings.warn('Environment variable '
                     'MACOSX_DEPLOYMENT_TARGET reset to 10.3')
             os.environ['MACOSX_DEPLOYMENT_TARGET'] = '%s.%s' % (major,
                 minor)
@@ -103,7 +103,7 @@ class GnuFCompiler(FCompiler):
                 g2c = self.g2c
         else:
             g2c = self.g2c
-        
+
         if sys.platform=='win32':
             # To avoid undefined reference __EH_FRAME_BEGIN__ linker error,
             # don't use -lgcc option for mingw32 g77 linker.
@@ -142,7 +142,7 @@ class GnuFCompiler(FCompiler):
                 if getattr(cpu,'is_ppc%s'%a)():
                     opt.append('-mcpu='+a)
                     opt.append('-mtune='+a)
-                    break    
+                    break
             return opt
 
         # default march options in case we find nothing better
@@ -196,7 +196,7 @@ class GnuFCompiler(FCompiler):
             if cpu.is_PentiumM():
                 march_opt = '-march=pentium-m'
 
-        # Note: gcc 3.2 on win32 has breakage with -march specified       
+        # Note: gcc 3.2 on win32 has breakage with -march specified
         if '3.1.1' <= gnu_ver <= '3.4' and sys.platform=='win32':
             march_opt = ''
 
@@ -216,7 +216,7 @@ class GnuFCompiler(FCompiler):
         if cpu.is_Intel():
             opt.append('-fomit-frame-pointer')
             if cpu.is_32bit():
-                opt.append('-malign-double')                
+                opt.append('-malign-double')
         return opt
 
 class Gnu95FCompiler(GnuFCompiler):

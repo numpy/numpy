@@ -6,7 +6,7 @@ Usage:
    python setup.py install
 
 Copyright 2001-2005 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@cens.ioc.ee>          
+Pearu Peterson <pearu@cens.ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 

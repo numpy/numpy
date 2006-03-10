@@ -9,7 +9,7 @@ distutils_all = [  'build_py',
                    'clean',
                    'install_lib',
                    'install_scripts',
-		   'bdist',
+                   'bdist',
                    'bdist_dumb',
                    'bdist_wininst',
                 ]

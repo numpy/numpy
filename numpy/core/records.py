@@ -22,8 +22,8 @@ _byteorderconv = {'b':'>',
                   'i':'|'}
 
 # formats regular expression
-# allows multidimension spec with a tuple syntax in front 
-# of the letter code '(2,3)f4' and ' (  2 ,  3  )  f4  ' 
+# allows multidimension spec with a tuple syntax in front
+# of the letter code '(2,3)f4' and ' (  2 ,  3  )  f4  '
 # are equally allowed
 
 numfmt = nt.typeDict
@@ -68,7 +68,7 @@ class format_parser:
                 raise NameError, "illegal input names %s" % `names`
 
             self._names = [n.strip() for n in names[:self._nfields]]
-        else: 
+        else:
             self._names = []
 
         # if the names are not specified, they will be assigned as "f1, f2,..."
@@ -89,17 +89,17 @@ class format_parser:
 
         if (self._nfields > len(titles)):
             self._titles += [None]*(self._nfields-len(titles))
-            
+
     def _createdescr(self):
         self._descr = sb.dtype({'names':self._names,
                                 'formats':self._f_formats,
                                 'offsets':self._offsets,
                                 'titles':self._titles})
-        
+
 class record(nt.void):
     def __repr__(self):
         return self.__str__()
-    
+
     def __str__(self):
         return str(self.item())
 
@@ -121,7 +121,7 @@ class record(nt.void):
             return self.setfield(val,*res[:2])
 
         return nt.void.__setattr__(self,attr,val)
-    
+
 # The recarray is almost identical to a standard array (which supports
 #   named fields already)  The biggest difference is that it can use
 #   attribute-lookup to find the fields and it is constructed using
@@ -159,7 +159,7 @@ class recarray(sb.ndarray):
             res = fielddict[attr][:2]
         except:
             return object.__getattribute__(self,attr)
-        
+
         obj = self.getfield(*res)
         # if it has fields return a recarray, otherwise return
         # normal array
@@ -168,20 +168,20 @@ class recarray(sb.ndarray):
         if obj.dtype.char in 'SU':
             return obj.view(chararray)
         return obj.view(sb.ndarray)
-            
-    
+
+
     def __setattr__(self, attr, val):
         fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
         try:
             res = fielddict[attr][:2]
         except:
             return object.__setattr__(self,attr,val)
-        
+
         return self.setfield(val,*res)
 
     def field(self,attr, val=None):
         fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
-        
+
         if isinstance(attr,int):
             attr=fielddict[-1][attr]
 
@@ -210,7 +210,7 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
 
     if isinstance(shape, int):
         shape = (shape,)
-            
+
     if formats is None:
         # go through each object in the list to see if it is an ndarray
         # and determine the formats.
@@ -231,7 +231,7 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
     parsed = format_parser(formats, names, titles, aligned)
     _names = parsed._names
     _array = recarray(shape, parsed._descr)
-    
+
     # populate the record array (makes a copy)
     for i in range(len(arrayList)):
         _array[_names[i]] = arrayList[i]
@@ -264,7 +264,7 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
     chararray(['dbe', 'de'])
     >>> import cPickle
     >>> print cPickle.loads(cPickle.dumps(r))
-    recarray[ 
+    recarray[
     (456, 'dbe', 1.2),
     (2, 'de', 1.3)
     ]
@@ -298,7 +298,7 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
     res = retval.view(recarray)
     res.dtype = sb.dtype((record, res.dtype))
     return res
-    
+
 
 def fromstring(datastring, formats, shape=None, names=None, titles=None,
                byteorder=None, aligned=0, offset=0):
@@ -309,7 +309,7 @@ def fromstring(datastring, formats, shape=None, names=None, titles=None,
     itemsize = parsed._descr.itemsize
     if (shape is None or shape == 0 or shape == -1):
         shape = (len(datastring)-offset) / itemsize
-        
+
     _array = recarray(shape, parsed._descr, names=names,
                       titles=titles, buf=datastring, offset=offset,
                       byteorder=byteorder)
@@ -358,7 +358,7 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
         shape[ shape.index(-1) ] = size / -shapesize
         shape = tuple(shape)
         shapeprod = sb.array(shape).prod()
-        
+
     nbytes = shapeprod*itemsize
 
     if nbytes > size:
@@ -372,13 +372,13 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
         raise IOError("Didn't read as many bytes as expected")
     if name:
         fd.close()
-        
+
     return _array
 
 
 def array(obj, formats=None, names=None, titles=None, shape=None,
           byteorder=None, aligned=0, offset=0, strides=None):
-    
+
     if isinstance(obj, (type(None), str, file)) and (formats is None):
         raise ValueError("Must define formats if object is "\
                          "None, string, or an open file")
@@ -416,4 +416,3 @@ def array(obj, formats=None, names=None, titles=None, shape=None,
         return res
     else:
         raise ValueError("Unknown input type")
-    

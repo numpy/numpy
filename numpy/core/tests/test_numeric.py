@@ -25,7 +25,7 @@ class test_dot(ScipyTestCase):
         assert_almost_equal(c1, c2, decimal=self.N)
 
     def check_matvec2(self):
-        A, b2 = self.A, self.b2 
+        A, b2 = self.A, self.b2
         c1 = dot(A, b2)
         c2 = dot_(A, b2)
         assert_almost_equal(c1, c2, decimal=self.N)
@@ -46,7 +46,7 @@ class test_dot(ScipyTestCase):
         A, b4 = self.A, self.b4
         c1 = dot(A.transpose(),b4)
         c2 = dot_(A.transpose(),b4)
-        assert_almost_equal(c1, c2, decimal=self.N) 
+        assert_almost_equal(c1, c2, decimal=self.N)
 
     def check_vecvecouter(self):
         b1, b3 = self.b1, self.b3
@@ -96,7 +96,7 @@ class test_bool_scalar(ScipyTestCase):
         self.failUnless((t | f) is t)
         self.failUnless((f | f) is f)
 
-    def test_bitwise_and(self): 
+    def test_bitwise_and(self):
         f = False_
         t = True_
         self.failUnless((t & t) is t)
@@ -104,13 +104,10 @@ class test_bool_scalar(ScipyTestCase):
         self.failUnless((t & f) is f)
         self.failUnless((f & f) is f)
 
-    def test_bitwise_xor(self): 
+    def test_bitwise_xor(self):
         f = False_
         t = True_
         self.failUnless((t ^ t) is f)
         self.failUnless((f ^ t) is t)
         self.failUnless((t ^ f) is t)
         self.failUnless((f ^ f) is f)
-        
-        
-        

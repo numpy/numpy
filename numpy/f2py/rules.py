@@ -29,7 +29,7 @@ wrapper_function(args)
           }
 
         }
-        
+
       }
 
     }
@@ -42,7 +42,7 @@ wrapper_function(args)
 """
 """
 Copyright 1999,2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>          
+Pearu Peterson <pearu@ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
@@ -297,7 +297,7 @@ f2py_stop_clock();
 #latexdocstrsigns#
 """],
     'restdoc':['Wrapped function ``#name#``\n'+'-'*80,
-               
+
                ]
     }
 
@@ -770,7 +770,7 @@ if (#varname#_capi==Py_None) {
 #     varname = init
 #   else
 #     from_pyobj(varname)
-# 
+#
 # isoptional and noinitvalue...
 #   if pyobj is not None:
 #     from_pyobj(varname)
@@ -783,7 +783,7 @@ if (#varname#_capi==Py_None) {
     {hasinitvalue:'\tif (#varname#_capi == Py_None) #varname# = #init#; else',
      '_depend':''},
     {l_and(isoptional,l_not(hasinitvalue)):'\tif (#varname#_capi != Py_None)',
-     '_depend':''}, 
+     '_depend':''},
     {l_not(islogical):'''\
 \t\tf2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#pyname#() #nth# (#varname#) can\'t be converted to #ctype#");
 \tif (f2py_success) {'''},
@@ -933,7 +933,7 @@ if (#varname#_capi==Py_None) {
      'frompyobj':'\tcapi_#varname#_intent |= (capi_overwrite_#varname#?0:F2PY_INTENT_COPY);',
      '_check':l_and(isarray,isintent_copy),
      '_depend':'',
-    },{ 
+    },{
     'need':[{hasinitvalue:'forcomb'},{hasinitvalue:'CFUNCSMESS'}],
     '_check':isarray,
     '_depend':''
@@ -946,7 +946,7 @@ if (#varname#_capi==Py_None) {
 #     'pyobjfrom':{isintent_inout:"""\
 # /* Partly because of the following hack, intent(inout) is depreciated,
 #    Use intent(in,out) instead.
-   
+
 # \tif ((#varname#_capi != Py_None) && PyArray_Check(#varname#_capi) \\
 # \t\t&& (#varname#_capi != (PyObject *)capi_#varname#_tmp)) {
 # \t\tif (((PyArrayObject *)#varname#_capi)->nd != capi_#varname#_tmp->nd) {
@@ -1080,7 +1080,7 @@ check_rules=[
 
 def buildmodule(m,um):
     """
-    Return 
+    Return
     """
     global f2py_version,options
     outmess('\tBuilding module "%s"...\n'%(m['name']))
@@ -1098,7 +1098,7 @@ def buildmodule(m,um):
                 continue
             for b in bi['body']:
                 if b['name']==n: nb=b;break
-                    
+
         if not nb:
             errmess('buildmodule: Could not found the body of interfaced routine "%s". Skipping.\n'%(n))
             continue
@@ -1241,7 +1241,7 @@ def buildapi(rout):
     capi_maps.depargs=depargs
     var=rout['vars']
     auxvars = [a for a in var.keys() if isintent_aux(var[a])]
-    
+
     if ismoduleroutine(rout):
         outmess('\t\t\tConstructing wrapper function "%s.%s"...\n'%(rout['modulename'],rout['name']))
     else:
@@ -1270,7 +1270,7 @@ def buildapi(rout):
                 else:
                     nthk=nthk+1
                     vrd['nth']=`nthk`+stnd[nthk%10]+' keyword'
-            else: vrd['nth']='hidden'        
+            else: vrd['nth']='hidden'
         savevrd[a]=vrd
         for r in _rules:
             if r.has_key('_depend'): continue

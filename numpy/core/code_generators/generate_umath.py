@@ -73,11 +73,11 @@ class Ufunc(object):
 #each entry in defdict is
 
 #name: [string of chars for which it is defined,
-#	string of characters using func interface,
-#	tuple of strings giving funcs for data,
+#       string of characters using func interface,
+#       tuple of strings giving funcs for data,
 #       (in, out), or (instr, outstr) giving the signature as character codes,
 #       identity,
-#	docstring,
+#       docstring,
 #       output specification (optional)
 #       ]
 

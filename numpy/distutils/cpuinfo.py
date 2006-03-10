@@ -3,8 +3,8 @@
 cpuinfo
 
 Copyright 2002 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@cens.ioc.ee>          
-Permission to use, modify, and distribute this software is given under the 
+Pearu Peterson <pearu@cens.ioc.ee>
+Permission to use, modify, and distribute this software is given under the
 terms of the SciPy (BSD style) license.  See LICENSE.txt that came with
 this distribution for specifics.
 
@@ -42,7 +42,7 @@ class cpuinfo_base:
                     return lambda func=self._try_call,attr=attr : func(attr)
             else:
                 return lambda : None
-        raise AttributeError,name    
+        raise AttributeError,name
 
     def _getNCPUs(self):
         return 1
@@ -53,7 +53,7 @@ class cpuinfo_base:
 class linux_cpuinfo(cpuinfo_base):
 
     info = None
-    
+
     def __init__(self):
         if self.info is not None:
             return
@@ -242,7 +242,7 @@ class linux_cpuinfo(cpuinfo_base):
 class irix_cpuinfo(cpuinfo_base):
 
     info = None
-    
+
     def __init__(self):
         if self.info is not None:
             return
@@ -315,7 +315,7 @@ class irix_cpuinfo(cpuinfo_base):
 class darwin_cpuinfo(cpuinfo_base):
 
     info = None
-    
+
     def __init__(self):
         if self.info is not None:
             return
@@ -381,7 +381,7 @@ class darwin_cpuinfo(cpuinfo_base):
 class sunos_cpuinfo(cpuinfo_base):
 
     info = None
-    
+
     def __init__(self):
         if self.info is not None:
             return

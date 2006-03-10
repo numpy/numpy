@@ -4,9 +4,9 @@
 Auxiliary functions for f2py2e.
 
 Copyright 1999,2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>          
+Pearu Peterson <pearu@ioc.ee>
 Permission to use, modify, and distribute this software is given under the
-terms of the NumPy (BSD style) LICENSE. 
+terms of the NumPy (BSD style) LICENSE.
 
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
@@ -486,5 +486,3 @@ def applyrules(rules,dict,var={}):
             if len(ret[k])==1: ret[k]=ret[k][0]
             if ret[k]==[]: del ret[k]
     return ret
-
-

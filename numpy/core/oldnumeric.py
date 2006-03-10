@@ -3,7 +3,7 @@
 __all__ = ['asarray', 'array', 'concatenate',
            'NewAxis',
            'UFuncType', 'UfuncType', 'ArrayType', 'arraytype',
-           'LittleEndian', 'Bool', 
+           'LittleEndian', 'Bool',
            'Character', 'UnsignedInt8', 'UnsignedInt16', 'UnsignedInt',
            'UInt8','UInt16','UInt32', 'UnsignedInt32', 'UnsignedInteger',
            # UnsignedInt64 and Unsigned128 added below if possible
@@ -19,7 +19,7 @@ __all__ = ['asarray', 'array', 'concatenate',
            # functions that are now methods
            'take', 'reshape', 'choose', 'repeat', 'put', 'putmask',
            'swapaxes', 'transpose', 'sort', 'argsort', 'argmax', 'argmin',
-           'searchsorted', 'alen', 
+           'searchsorted', 'alen',
            'resize', 'diagonal', 'trace', 'ravel', 'nonzero', 'shape',
            'compress', 'clip', 'sum', 'product', 'prod', 'sometrue', 'alltrue',
            'any', 'all', 'cumsum', 'cumproduct', 'cumprod', 'ptp', 'ndim',
@@ -323,7 +323,7 @@ def shape(a):
         return asarray(a).shape
 
 def compress(condition, m, axis=-1):
-    """compress(condition, x, axis=-1) = those elements of x corresponding 
+    """compress(condition, x, axis=-1) = those elements of x corresponding
     to those elements of condition that are "true".  condition must be the
     same size as the given dimension of x."""
     return asarray(m).compress(condition, axis)

@@ -155,13 +155,13 @@ def test_unique1d_speed( plot_results = False ):
         a = numpy.fix( nItem / 10 * numpy.random.random( nItem ) )
 
         print 'dictionary:'
-        tt = time.clock() 
+        tt = time.clock()
         b = numpy.unique( a )
         dt1 = time.clock() - tt
         print dt1
 
         print 'array:'
-        tt = time.clock() 
+        tt = time.clock()
         c = unique1d( a )
         dt2 = time.clock() - tt
         print dt2

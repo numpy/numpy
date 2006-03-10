@@ -31,7 +31,7 @@ def UnixCCompile_create_static_lib(self, objects, output_libname,
 
     output_filename = \
                     self.library_filename(output_libname, output_dir=output_dir)
-        
+
     if self._need_link(objects, output_filename):
         self.mkpath(os.path.dirname(output_filename))
         tmp_objects = objects + self.objects
