@@ -15,6 +15,7 @@ from numeric import newaxis, ndarray, inf
 from oldnumeric import typecodes, amax, amin
 from numerictypes import *
 import numeric
+import warnings
 
 # Ufunc domain lookup for __array_wrap__
 ufunc_domain = {}
@@ -595,10 +596,14 @@ class MaskedArray (object):
         if self._mask is not nomask:
             if oldnumeric.ravel(self._mask).any():
                 if context is None:
-                    raise MAError, \
-                          """Cannot automatically convert masked array to numeric because data
-                          is masked in one or more locations.
-                          """
+                    warnings.warn("Cannot automatically convert masked array to "\
+                                  "numeric because data\n    is masked in one or "\
+                                  "more locations.");
+                    return self._data
+                    #raise MAError, \
+                    #      """Cannot automatically convert masked array to numeric because data
+                    #      is masked in one or more locations.
+                    #      """
                 else:
                     func, args, i = context
                     fills = ufunc_fills.get(func)
