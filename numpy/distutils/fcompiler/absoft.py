@@ -74,7 +74,7 @@ class AbsoftFCompiler(FCompiler):
     def get_libraries(self):
         opt = FCompiler.get_libraries(self)
         if self.get_version() >= '8.0':
-	    opt.extend(['f90math','fio','f77math','U77'])
+            opt.extend(['f90math','fio','f77math','U77'])
         else:
             opt.extend(['fio','f90math','fmath','U77'])
         if os.name =='nt':

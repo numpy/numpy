@@ -50,8 +50,8 @@ class flagsobj(dict):
                 if (key == 'FNC'):
                     return (self._flagnum & _fnum == _fnum) and not \
                            (self._flagnum & _cnum == _cnum)
-	        if (key == 'FORC'):
-		    return (self._flagnum & _fnum == _fnum) or \
+                if (key == 'FORC'):
+                    return (self._flagnum & _fnum == _fnum) or \
                            (self._flagnum & _cnum == _cnum)
                 if (key == 'BEHAVED'):
                     num = _anum + _wnum

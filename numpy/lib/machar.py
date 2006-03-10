@@ -123,10 +123,10 @@ class MachAr(object):
                 break
             a = a * beta
             negep = negep - 1
-	    # Prevent infinite loop on PPC with gcc 4.0:
-	    if negep < 0:
+            # Prevent infinite loop on PPC with gcc 4.0:
+            if negep < 0:
                 raise RuntimeError, "could not determine machine tolerance " \
-		                    "for 'negep', locals() -> %s" % (locals())
+                                    "for 'negep', locals() -> %s" % (locals())
         negep = -negep
         epsneg = a
 

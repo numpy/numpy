@@ -19,7 +19,7 @@ def get_mat(n):
 
 class test_eye(ScipyTestCase):
     def check_basic(self):
-	assert_equal(eye(4),array([[1,0,0,0],
+        assert_equal(eye(4),array([[1,0,0,0],
                                    [0,1,0,0],
                                    [0,0,1,0],
                                    [0,0,0,1]]))

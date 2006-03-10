@@ -136,7 +136,7 @@ class test_zero_rank(ScipyTestCase):
         self.failUnlessEqual(a[()], 0)
         self.failUnlessEqual(b[()], 'x')
         self.failUnless(type(a[()]) is a.dtype.type)
-	self.failUnless(type(b[()]) is str)
+        self.failUnless(type(b[()]) is str)
 
     def check_invalid_subscript(self):
         a,b = self.d

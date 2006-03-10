@@ -392,8 +392,8 @@ def getinit(a,var):
         init=var['=']
         showinit=init
         if iscomplex(var) or iscomplexarray(var):
-	    ret={}
-            
+            ret={}
+
             try:
                 v = var["="]
                 if ',' in v:
@@ -442,7 +442,7 @@ def sign2map(a,var):
     else: ret['varrformat']='O'
     ret['init'],ret['showinit']=getinit(a,var)
     if hasinitvalue(var) and iscomplex(var) and not isarray(var):
-	ret['init.r'],ret['init.i'] = string.split(markoutercomma(ret['init'][1:-1]),'@,@')
+        ret['init.r'],ret['init.i'] = string.split(markoutercomma(ret['init'][1:-1]),'@,@')
     if isexternal(var):
         ret['cbnamekey']=a
         if lcb_map.has_key(a):

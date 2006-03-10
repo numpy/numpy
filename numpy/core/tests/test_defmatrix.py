@@ -89,8 +89,8 @@ class test_properties(ScipyTestCase):
 
     def check_noaxis(self):
         A = matrix([[1,0],[0,1]])
-	assert A.sum() == matrix(2)
-	assert A.mean() == matrix(0.5)
+        assert A.sum() == matrix(2)
+        assert A.mean() == matrix(0.5)
 
 class test_casting(ScipyTestCase):
     def check_basic(self):
