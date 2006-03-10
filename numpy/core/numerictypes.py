@@ -204,11 +204,11 @@ def _add_integer_aliases():
         val = typeinfo[ctype]
         bits = val[2]
         intname = 'int%d' % bits
+        UIntname = 'UInt%d' % bits
+        Intname = 'Int%d' % bits            
+        uval = typeinfo['U'+ctype]
         if intname not in allTypes.keys():
             uintname = 'uint%d' % bits
-            UIntname = 'UInt%d' % bits
-            Intname = 'Int%d' % bits            
-            uval = typeinfo['U'+ctype]
             typeobj = val[-1]
             utypeobj = uval[-1]
             allTypes[intname] = typeobj
@@ -223,6 +223,11 @@ def _add_integer_aliases():
             typeNA[utypeobj] = UIntname
             typeNA[val[0]] = Intname
             typeNA[uval[0]] = UIntname
+        else:
+            typeNA[typeobj] = Intname
+            typeNA[utypeobj] = UIntname
+            typeNA[val[0]] = Intname
+            typeNA[uval[0]] = UIntname 
 _add_integer_aliases()
 
 # We use these later
