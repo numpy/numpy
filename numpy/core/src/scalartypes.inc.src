@@ -635,6 +635,22 @@ static PyObject *
 }
 /**end repeat**/
 
+#if PY_VERSION_HEX >= 0x02050000
+/* This needs a better implementation */
+static Py_ssize_t
+gentype_index(PyObject *self)
+{
+	PyObject *obj;
+	if (!(PyArray_IsScalar(self, Integer))) {
+		PyErr_SetString(PyExc_TypeError, 
+				"not an integer type.");
+		return -1;
+	}
+	obj = gentype_int(self);
+	if (obj == NULL) return -1;
+	return PyInt_AsSsize_t(obj);	
+}
+#endif
 
 
 static PyNumberMethods gentype_as_number = {
@@ -676,8 +692,11 @@ static PyNumberMethods gentype_as_number = {
         (binaryfunc)gentype_true_divide,	     /*nb_true_divide*/
         0,                                         /*nb_inplace_floor_divide*/
         0,                                         /*nb_inplace_true_divide*/
-
+#if PY_VERSION_HEX >= 0x02050000
+	(lenfunc)gentype_index,                 /* nb_index */
+#endif
 };
+
 
 static PyObject *
 gentype_richcompare(PyObject *self, PyObject *other, int cmp_op) 

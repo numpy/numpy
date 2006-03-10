@@ -163,7 +163,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     PyArrayObject *ap1, *ap2, *ret;
     int j, l, lda, ldb, ldc;
     int typenum, nd;
-    intp ap1stride;
+    intp ap1stride=0;
     intp dimensions[MAX_DIMS];
     static const float oneF[2] = {1.0, 0.0};
     static const float zeroF[2] = {0.0, 0.0};

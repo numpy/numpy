@@ -1264,10 +1264,10 @@ typedef struct {
 #define PyArray_ITEMSIZE(obj) (((PyArrayObject *)(obj))->descr->elsize)
 #define PyArray_TYPE(obj) (((PyArrayObject *)(obj))->descr->type_num)
 #define PyArray_GETITEM(obj,itemptr)			\
-	((PyArrayObject *)(obj))->descr->getitem((char *)itemptr,	\
+	((PyArrayObject *)(obj))->descr->f->getitem((char *)itemptr,	\
 						 (PyArrayObject *)obj);
 #define PyArray_SETITEM(obj,itemptr,v)					\
-	(obj)->descr->setitem((PyObject *)v,(char *)(itemptr),		\
+	(obj)->descr->f->setitem((PyObject *)v,(char *)(itemptr),		\
 			      (PyArrayObject *)(obj));
 
 
