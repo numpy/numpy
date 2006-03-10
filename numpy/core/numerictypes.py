@@ -141,12 +141,11 @@ def bitname(obj):
 
     return base, bits, char
 
-revdict = {}
 
 def _add_types():
     for a in typeinfo.keys():
         name = a.lower()
-        if isinstance(typeinfo[a], type(())):
+        if isinstance(typeinfo[a], tuple):
             typeobj = typeinfo[a][-1]
 
             # define C-name and insert typenum and typechar references also
@@ -155,37 +154,76 @@ def _add_types():
             typeDict[typeinfo[a][0]] = typeobj
             typeDict[typeinfo[a][1]] = typeobj
 
-            # insert bit-width version for this class (if relevant)
-            base, bit, char = bitname(typeobj)
-            revdict[typeobj] = (typeinfo[a][:-1], (base, bit, char), a)
-            if base != '':
-                myname = "%s%d" % (base, bit)
-                if (name != 'longdouble' and name != 'clongdouble') or \
-                       myname not in allTypes.keys():
-                    allTypes[myname] = typeobj
-                    typeDict[myname] = typeobj
-                    if base == 'uint':
-                        tmpstr = 'UInt%d' % bit
-                        typeDict[tmpstr] = typeobj
-                        na_name = tmpstr
-                    elif base == 'complex':
-                        na_name = '%s%d' % (base.capitalize(), bit/2)
-                    elif base == 'bool':
-                        na_name = base.capitalize()
-                        typeDict[na_name] = typeobj
-                    else:
-                        na_name = "%s%d" % (base.capitalize(), bit)
-                        typeDict[na_name] = typeobj
-                    typeNA[na_name] = typeobj
-                    typeNA[typeobj] = na_name
-                    typeNA[typeinfo[a][0]] = na_name
-            if char != '':
-                typeDict[char] = typeobj
-                typeNA[char] = na_name
         else:  # generic class
             allTypes[name] = typeinfo[a]
 _add_types()
 
+def _add_aliases():
+    for a in typeinfo.keys():
+        name = a.lower()
+        if not isinstance(typeinfo[a], tuple):
+            continue
+        typeobj = typeinfo[a][-1]
+        # insert bit-width version for this class (if relevant)
+        base, bit, char = bitname(typeobj)
+        if base[-3:] == 'int': continue
+        if base != '':
+            myname = "%s%d" % (base, bit)
+            if (name != 'longdouble' and name != 'clongdouble') or \
+                   myname not in allTypes.keys():
+                allTypes[myname] = typeobj
+                typeDict[myname] = typeobj                        
+                if base == 'complex':
+                    na_name = '%s%d' % (base.capitalize(), bit/2)
+                elif base == 'bool':
+                    na_name = base.capitalize()
+                    typeDict[na_name] = typeobj
+                else:
+                    na_name = "%s%d" % (base.capitalize(), bit)
+                    typeDict[na_name] = typeobj
+                typeNA[na_name] = typeobj
+                typeNA[typeobj] = na_name
+                typeNA[typeinfo[a][0]] = na_name
+        if char != '':
+            typeDict[char] = typeobj
+            typeNA[char] = na_name
+_add_aliases()
+
+# Integers handled so that
+# The int32, int64 types should agree exactly with
+#  PyArray_INT32, PyArray_INT64 in C
+# We need to enforce the same checking as is done
+#  in arrayobject.h where the order of getting a
+#  bit-width match is:
+#       long, longlong, int, short, char
+#   for int8, int16, int32, int64, int128
+
+def _add_integer_aliases():
+    _ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
+    for ctype in _ctypes:
+        val = typeinfo[ctype]
+        bits = val[2]
+        intname = 'int%d' % bits
+        if intname not in allTypes.keys():
+            uintname = 'uint%d' % bits
+            UIntname = 'UInt%d' % bits
+            Intname = 'Int%d' % bits            
+            uval = typeinfo['U'+ctype]
+            typeobj = val[-1]
+            utypeobj = uval[-1]
+            allTypes[intname] = typeobj
+            allTypes[uintname] = utypeobj
+            typeDict[intname] = typeobj
+            typeDict[uintname] = utypeobj
+            typeDict[Intname] = typeobj
+            typeDict[UIntname] = utypeobj
+            typeNA[Intname] = typeobj            
+            typeNA[UIntname] = utypeobj
+            typeNA[typeobj] = Intname
+            typeNA[utypeobj] = UIntname
+            typeNA[val[0]] = Intname
+            typeNA[uval[0]] = UIntname
+_add_integer_aliases()
 
 # We use these later
 void = allTypes['void']
