@@ -723,7 +723,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 {
         PyArrayObject *src;
         int ret;
-
+	
 	Py_INCREF(dest->descr);
         src = (PyArrayObject *)PyArray_FromAny(src_object,
                                                dest->descr, 0,
@@ -5592,6 +5592,10 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 				"invalid input sequence");
 		goto fail;
         }
+
+	if (max_depth && PyTypeNum_ISOBJECT(type) && (nd > max_depth)) {
+		nd = max_depth;
+	}
 
         if ((max_depth && nd > max_depth) ||	\
 	    (min_depth && nd < min_depth)) {
