@@ -265,10 +265,10 @@ def polysub(a1, a2):
     if diff == 0:
         return a1 - a2
     elif diff > 0:
-        zr = NX.zeros(diff, a1)
+        zr = NX.zeros(diff, a1.dtype)
         val = NX.concatenate((zr, a1)) - a2
     else:
-        zr = NX.zeros(abs(diff), a2)
+        zr = NX.zeros(abs(diff), a2.dtype)
         val = a1 - NX.concatenate((zr, a2))
     if truepoly:
         val = poly1d(val)
