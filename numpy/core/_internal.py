@@ -154,7 +154,6 @@ class flagsobj(dict):
     farray = property(get_farray, None, "")
 
 
-
 # make sure the tuple entries are PyArray_Descr
 #          or convert them
 #
@@ -255,7 +254,6 @@ def _reconstruct(subtype, shape, dtype):
 
 
 # format_re and _split were taken from numarray by J. Todd Miller
-format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[><|A-Za-z0-9.]*)')
 
 def _split(input):
     """Split the input formats string into field formats without splitting
@@ -291,7 +289,10 @@ def _split(input):
 
     return newlist
 
-# str is a string (perhaps comma separated)
+format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[><|A-Za-z0-9.]*)')
+
+# astr is a string (perhaps comma separated)
+
 def _commastring(astr):
     res = _split(astr)
     if (len(res)) == 1:
@@ -311,3 +312,5 @@ def _commastring(astr):
         result.append(newitem)
 
     return result
+
+

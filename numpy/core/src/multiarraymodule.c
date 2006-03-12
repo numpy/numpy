@@ -29,7 +29,7 @@
 
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
 static PyObject *_numpy_internal=NULL; /* A Python module for callbacks */
-
+static int _multiarray_module_loaded=0;
 
 static PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)
@@ -5822,7 +5822,9 @@ set_flaginfo(PyObject *d)
 DL_EXPORT(void) initmultiarray(void) {
 	PyObject *m, *d, *s;
 	PyObject *c_api;
-	
+
+	if (_multiarray_module_loaded) return;
+	_multiarray_module_loaded = 1;
 	/* Create the module and add the functions */
 	m = Py_InitModule("multiarray", array_module_methods);
 	if (!m) goto err;
@@ -5872,10 +5874,6 @@ DL_EXPORT(void) initmultiarray(void) {
 	Py_INCREF(&PyArrayDescr_Type);
 	PyDict_SetItemString(d, "dtype", (PyObject *)&PyArrayDescr_Type);
 
-	/* Doesn't need to be exposed to Python 
-        Py_INCREF(&PyArrayMapIter_Type);
-	PyDict_SetItemString(d, "mapiter", (PyObject *)&PyArrayMapIter_Type);
-	*/
         set_flaginfo(d);
 
 	if (set_typeinfo(d) != 0) goto err;
