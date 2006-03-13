@@ -1879,20 +1879,20 @@ object_arrtype_setattro(PyObjectScalarObject *obj, PyObject *attr, PyObject *val
 	return PyObject_GenericSetAttr((PyObject *)obj, attr, val);
 }
 
-static int 
-object_arrtype_length(PyObjectScalarObject *self) 
-{
-	return PyObject_Length(self->obval);
-}
-
 static PyObject *
 object_arrtype_concat(PyObjectScalarObject *self, PyObject *other)
 {
 	return PySequence_Concat(self->obval, other);
 }
 
+static _int_or_ssize_t
+object_arrtype_length(PyObjectScalarObject *self) 
+{
+	return PyObject_Length(self->obval);
+}
+
 static PyObject *
-object_arrtype_repeat(PyObjectScalarObject *self, int count)
+object_arrtype_repeat(PyObjectScalarObject *self, _int_or_ssize_t count)
 {
 	return PySequence_Repeat(self->obval, count);
 }
@@ -1923,12 +1923,24 @@ object_arrtype_inplace_concat(PyObjectScalarObject *self, PyObject *o)
 }
 
 static PyObject *
-object_arrtype_inplace_repeat(PyObjectScalarObject *self, int count)
+object_arrtype_inplace_repeat(PyObjectScalarObject *self, _int_or_ssize_t count)
 {
 	return PySequence_InPlaceRepeat(self->obval, count);
 }
 
 static PySequenceMethods object_arrtype_as_sequence = {
+#if PY_VERSION_HEX >= 0x02050000
+        (lenfunc)object_arrtype_length, /*sq_length*/
+        (binaryfunc)object_arrtype_concat, /*sq_concat*/
+        (ssizeargfunc)object_arrtype_repeat, /*sq_repeat*/
+        0,                                  /*sq_item*/
+        0,                                  /*sq_slice*/
+        0,                                   /* sq_ass_item */
+        0,                                   /* sq_ass_slice */
+        (objobjproc)object_arrtype_contains,              /* sq_contains */
+        (binaryfunc)object_arrtype_inplace_concat,        /* sq_inplace_concat */
+        (ssizeargfunc)object_arrtype_inplace_repeat,        /* sq_inplace_repeat */
+#else
         (inquiry)object_arrtype_length, /*sq_length*/
         (binaryfunc)object_arrtype_concat, /*sq_concat*/
         (intargfunc)object_arrtype_repeat, /*sq_repeat*/
@@ -1939,16 +1951,23 @@ static PySequenceMethods object_arrtype_as_sequence = {
         (objobjproc)object_arrtype_contains,              /* sq_contains */
         (binaryfunc)object_arrtype_inplace_concat,        /* sq_inplace_concat */
         (intargfunc)object_arrtype_inplace_repeat,        /* sq_inplace_repeat */
+#endif
 };
 
 static PyMappingMethods object_arrtype_as_mapping = {
+#if PY_VERSION_HEX >= 0x02050000
+        (lenfunc)object_arrtype_length,
+        (binaryfunc)object_arrtype_subscript,
+        (objobjargproc)object_arrtype_ass_subscript,
+#else
         (inquiry)object_arrtype_length,
         (binaryfunc)object_arrtype_subscript,
         (objobjargproc)object_arrtype_ass_subscript,
+#endif
 };
 
-static int 
-object_arrtype_getsegcount(PyObjectScalarObject *self, int *lenp) 
+static _int_or_ssize_t
+object_arrtype_getsegcount(PyObjectScalarObject *self, _int_or_ssize_t *lenp) 
 {
 	int newlen;
 	int cnt;
@@ -1965,8 +1984,8 @@ object_arrtype_getsegcount(PyObjectScalarObject *self, int *lenp)
 	return cnt;
 }
 
-static int 
-object_arrtype_getreadbuf(PyObjectScalarObject *self, int segment, void **ptrptr) 
+static _int_or_ssize_t
+object_arrtype_getreadbuf(PyObjectScalarObject *self, _int_or_ssize_t segment, void **ptrptr) 
 {
 	PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
 
@@ -1981,8 +2000,8 @@ object_arrtype_getreadbuf(PyObjectScalarObject *self, int segment, void **ptrptr
 	return (*pb->bf_getreadbuffer)(self->obval, segment, ptrptr);
 }
 
-static int 
-object_arrtype_getwritebuf(PyObjectScalarObject *self, int segment, void **ptrptr) 
+static _int_or_ssize_t
+object_arrtype_getwritebuf(PyObjectScalarObject *self, _int_or_ssize_t segment, void **ptrptr) 
 {
 	PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
 
@@ -1997,8 +2016,8 @@ object_arrtype_getwritebuf(PyObjectScalarObject *self, int segment, void **ptrpt
 	return (*pb->bf_getwritebuffer)(self->obval, segment, ptrptr);
 }
 
-static int 
-object_arrtype_getcharbuf(PyObjectScalarObject *self, int segment, 
+static _int_or_ssize_t 
+object_arrtype_getcharbuf(PyObjectScalarObject *self, _int_or_ssize_t segment, 
 			  const char **ptrptr) 
 {
 	PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
@@ -2015,10 +2034,17 @@ object_arrtype_getcharbuf(PyObjectScalarObject *self, int segment,
 }
 
 static PyBufferProcs object_arrtype_as_buffer = {
+#if PY_VERSION_HEX >= 0x02050000
+        (readbufferproc)object_arrtype_getreadbuf,
+        (writebufferproc)object_arrtype_getwritebuf,
+        (segcountproc)object_arrtype_getsegcount,
+        (charbufferproc)object_arrtype_getcharbuf,
+#else
         (getreadbufferproc)object_arrtype_getreadbuf,
         (getwritebufferproc)object_arrtype_getwritebuf,
         (getsegcountproc)object_arrtype_getsegcount,
         (getcharbufferproc)object_arrtype_getcharbuf,
+#endif
 };
 
 static PyObject *

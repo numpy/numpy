@@ -76,7 +76,7 @@ def asarray(a, dtype=None, fortran=False, ndmin=0):
 def asanyarray(a, dtype=None, copy=False, fortran=False, ndmin=0):
     """will pass subclasses through...
     """
-    return array(a, dtype, copy=False, fortran=fortran, subok=1, ndmin=ndmin)
+    return array(a, dtype, copy=copy, fortran=fortran, subok=1, ndmin=ndmin)
 
 def isfortran(a):
     return a.flags['FNC']

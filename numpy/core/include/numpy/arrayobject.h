@@ -712,7 +712,6 @@ typedef enum {
 	typedef clongdouble Complex512;
 #endif
 
-
 	/* End of typedefs for numarray style bit-width names */
 
 /* This is to typedef Intp to the appropriate pointer size for this platform.
@@ -721,6 +720,12 @@ typedef Py_intptr_t intp;
 typedef Py_uintptr_t uintp;
 #define SIZEOF_INTP SIZEOF_PY_INTPTR_T
 #define SIZEOF_UINTP SIZEOF_PY_INTPTR_T
+
+#if PY_VERSION_HEX >= 0x02050000
+#define _int_or_ssize_t Py_ssize_t
+#else
+#define _int_or_ssize_t int
+#endif
 
 #define INTP_FMT "d"
 
@@ -1468,6 +1473,8 @@ typedef struct {
         PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, CARRAY_FLAGS, NULL)
 #define PyArray_SimpleNewFromDescr(nd, dims, descr) \
 	PyArray_NewFromDescr(&PyArray_Type, descr, nd, dims, NULL, NULL, 0, NULL)
+#define PyArray_EnsureAnyArray(obj) \
+	(PyArray_Check(obj) ? obj : PyArray_EnsureArray(obj))
 
 
 /* These might be faster without the dereferencing of obj

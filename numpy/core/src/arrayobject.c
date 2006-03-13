@@ -1331,7 +1331,7 @@ array_dealloc(PyArrayObject *self) {
  ****************   Implement Mapping Protocol ***************************
  *************************************************************************/
 
-static int
+static _int_or_ssize_t
 array_length(PyArrayObject *self)
 {
         if (self->nd != 0) {
@@ -1371,11 +1371,10 @@ array_big_item(PyArrayObject *self, intp i)
 }
 
 static PyObject *
-array_item_nice(PyArrayObject *self, int i)
+array_item_nice(PyArrayObject *self, _int_or_ssize_t i)
 {
 	return PyArray_Return((PyArrayObject *)array_big_item(self, (intp) i));
 }
-
 
 static int
 array_ass_big_item(PyArrayObject *self, intp i, PyObject *v)
@@ -1415,11 +1414,18 @@ array_ass_big_item(PyArrayObject *self, intp i, PyObject *v)
         return 0;
 }
 
-#if SIZEOF_INT == SIZEOF_INTP
-#define array_ass_item array_ass_big_item
+#if PY_VERSION_HEX < 0x02050000
+ #if SIZEOF_INT == SIZEOF_INTP
+ #define array_ass_item array_ass_big_item
+ #endif
 #else
+ #if SIZEOF_SIZE_T == SIZEOF_INTP
+ #define array_ass_item array_ass_big_item
+ #endif
+#endif
+#ifndef array_ass_item
 static int
-array_ass_item(PyArrayObject *self, int i, PyObject *v)
+array_ass_item(PyArrayObject *self, _int_or_ssize_t i, PyObject *v)
 {
 	return array_ass_big_item(self, (intp) i, v);
 }
@@ -2257,7 +2263,11 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 
 
 static PyMappingMethods array_as_mapping = {
+#if PY_VERSION_HEX >= 0x02050000
+        (lenfunc)array_length,		    /*mp_length*/
+#else
         (inquiry)array_length,		    /*mp_length*/
+#endif
         (binaryfunc)array_subscript_nice,	/*mp_subscript*/
         (objobjargproc)array_ass_sub,	    /*mp_ass_subscript*/
 };
@@ -2271,8 +2281,8 @@ static PyMappingMethods array_as_mapping = {
 
 /* removed multiple segment interface */
 
-static int
-array_getsegcount(PyArrayObject *self, int *lenp)
+static _int_or_ssize_t
+array_getsegcount(PyArrayObject *self, _int_or_ssize_t *lenp)
 {
         if (lenp)
                 *lenp = PyArray_NBYTES(self);
@@ -2286,8 +2296,8 @@ array_getsegcount(PyArrayObject *self, int *lenp)
         return 0;
 }
 
-static int
-array_getreadbuf(PyArrayObject *self, int segment, void **ptrptr)
+static _int_or_ssize_t
+array_getreadbuf(PyArrayObject *self, _int_or_ssize_t segment, void **ptrptr)
 {
         if (segment != 0) {
                 PyErr_SetString(PyExc_ValueError,
@@ -2305,8 +2315,8 @@ array_getreadbuf(PyArrayObject *self, int segment, void **ptrptr)
 }
 
 
-static int
-array_getwritebuf(PyArrayObject *self, int segment, void **ptrptr)
+static _int_or_ssize_t
+array_getwritebuf(PyArrayObject *self, _int_or_ssize_t segment, void **ptrptr)
 {
         if (PyArray_CHKFLAGS(self, WRITEABLE))
                 return array_getreadbuf(self, segment, (void **) ptrptr);
@@ -2317,8 +2327,8 @@ array_getwritebuf(PyArrayObject *self, int segment, void **ptrptr)
         }
 }
 
-static int
-array_getcharbuf(PyArrayObject *self, int segment, const char **ptrptr)
+static _int_or_ssize_t
+array_getcharbuf(PyArrayObject *self, _int_or_ssize_t segment, const char **ptrptr)
 {
         if (self->descr->type_num == PyArray_STRING || \
 	    self->descr->type_num == PyArray_UNICODE)
@@ -2332,10 +2342,17 @@ array_getcharbuf(PyArrayObject *self, int segment, const char **ptrptr)
 }
 
 static PyBufferProcs array_as_buffer = {
+#if PY_VERSION_HEX >= 0x02050000
+        (readbufferproc)array_getreadbuf,    /*bf_getreadbuffer*/
+        (writebufferproc)array_getwritebuf,  /*bf_getwritebuffer*/
+        (segcountproc)array_getsegcount,	    /*bf_getsegcount*/
+        (charbufferproc)array_getcharbuf,    /*bf_getcharbuffer*/
+#else
         (getreadbufferproc)array_getreadbuf,    /*bf_getreadbuffer*/
         (getwritebufferproc)array_getwritebuf,  /*bf_getwritebuffer*/
         (getsegcountproc)array_getsegcount,	    /*bf_getsegcount*/
         (getcharbufferproc)array_getcharbuf,    /*bf_getcharbuffer*/
+#endif
 };
 
 /****************** End of Buffer Protocol *******************************/
@@ -3187,18 +3204,30 @@ array_contains(PyArrayObject *self, PyObject *el)
         return ret;
 }
 
-
 static PySequenceMethods array_as_sequence = {
+#if PY_VERSION_HEX >= 0x02050000
+        (lenfunc)array_length,		/*sq_length*/
+        (binaryfunc)NULL, /* sq_concat is handled by nb_add*/
+        (ssizeargfunc)NULL,
+	(ssizeargfunc)array_item_nice,
+	(ssizessizeargfunc)array_slice,
+        (ssizeobjargproc)array_ass_item,	       /*sq_ass_item*/
+        (ssizessizeobjargproc)array_ass_slice,	/*sq_ass_slice*/
+	(objobjproc) array_contains,           /* sq_contains */
+	(binaryfunc) NULL,                  /* sg_inplace_concat */
+	(ssizeargfunc)NULL,
+#else
         (inquiry)array_length,		/*sq_length*/
         (binaryfunc)NULL, /* sq_concat is handled by nb_add*/
         (intargfunc)NULL, /* sq_repeat is handled nb_multiply*/
         (intargfunc)array_item_nice,		/*sq_item*/
         (intintargfunc)array_slice,		/*sq_slice*/
-        (intobjargproc)array_ass_item,	/*sq_ass_item*/
+        (intobjargproc)array_ass_item,	       /*sq_ass_item*/
         (intintobjargproc)array_ass_slice,	/*sq_ass_slice*/
 	(objobjproc) array_contains,           /* sq_contains */
-	(binaryfunc) NULL,         /* sg_inplace_concat */
+	(binaryfunc) NULL,                  /* sg_inplace_concat */
 	(intargfunc) NULL         /* sg_inplace_repeat */
+#endif
 };
 
 
