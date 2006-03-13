@@ -221,6 +221,8 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     ap2shape = _select_matrix_shape(ap2);
     
     if (ap1shape == _scalar || ap2shape == _scalar) {
+        PyArrayObject *oap1, *oap2;
+        oap1 = ap1; oap2 = ap2;
 	/* One of ap1 or ap2 is a scalar */
 	if (ap1shape == _scalar) { 		/* Make ap2 the scalar */
 	    PyArrayObject *t = ap1;
@@ -231,34 +233,48 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	}
 
 	if (ap1shape == _row) ap1stride = ap1->strides[1];
-	else ap1stride = ap1->strides[0];
+	else if (ap1->nd > 0) ap1stride = ap1->strides[0];
 
-	/* Fix it so that dot(shape=(N,1), shape=(1,))
-	   and dot(shape=(1,), shape=(1,N)) both return
-	   an (N,) array (but use the fast scalar code)
-	*/
-	if ((ap1shape == _column || ap1shape == _row) && \
-	    (ap2->nd == 1)) {
-	    nd = 1;
-	    if (ap1shape == _column) {
-		dimensions[0] = ap1->dimensions[0];
-	    }
-	    else {
-		dimensions[0] = ap1->dimensions[1];
-	    }
-	    l = dimensions[0];
-	}
-	else if (ap1shape == _scalar) {
-            nd = 0;
+ 	if (ap1->nd == 0 || ap2->nd == 0) {
+            intp *thisdims;
+            if (ap1->nd == 0) { 
+                nd = ap2->nd;
+                thisdims = ap2->dimensions;
+            }
+            else { 
+                nd = ap1->nd;
+                thisdims = ap1->dimensions;
+            }
             l = 1;
-            dimensions[0] = 1;
+            for (j=0; j<nd; j++) {
+                dimensions[j] = thisdims[j];
+                l *= dimensions[j];
+            }
         }
-        else {
-            nd = ap1->nd;
-	    for (l = 1, j = 0; j < nd; j++) {
-		dimensions[j] = ap1->dimensions[j];
-		l *= dimensions[j];
-	    }
+        else { 
+            l = oap1->dimensions[oap1->nd-1];
+
+            if (oap2->dimensions[0] != l) {
+                PyErr_SetString(PyExc_ValueError, "matrices are not aligned");
+                goto fail;
+            }
+            nd = ap1->nd + ap2->nd - 2;
+            /* nd = 0 or 1 or 2 */
+            /* If nd == 0 do nothing ... */
+            if (nd == 1) {
+                /* Either ap1->nd is 1 dim or ap2->nd is 1 dim 
+                   and the other is 2-dim */
+                dimensions[0] = (oap1->nd == 2) ? oap1->dimensions[0] : oap2->dimensions[1];
+                l = dimensions[0];
+                /* Fix it so that dot(shape=(N,1), shape=(1,))
+                   and dot(shape=(1,), shape=(1,N)) both return
+                   an (N,) array (but use the fast scalar code)
+                */
+            }
+            else if (nd == 2) {
+                dimensions[0] = oap1->dimensions[0];
+                dimensions[1] = oap2->dimensions[1];
+            }
 	}
     }
     else { /* (ap1->nd <= 2 && ap2->nd <= 2) */

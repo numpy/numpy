@@ -78,6 +78,16 @@ class test_dot(ScipyTestCase):
         c2 = dot_(b2,b1)
         assert_almost_equal(c1, c2, decimal=self.N)
 
+    def check_all(self):
+        dims = [(),(1,),(1,1)]
+        for dim1 in dims:
+            for dim2 in dims:
+                arg1 = rand(*dim1)
+                arg2 = rand(*dim2)
+                c1 = dot(arg1, arg2)
+                c2 = dot_(arg1, arg2)
+                assert (c1.shape == c2.shape)
+                assert_almost_equal(c1, c2, decimal=self.N)
 
 
 class test_bool_scalar(ScipyTestCase):
