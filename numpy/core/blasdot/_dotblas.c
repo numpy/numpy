@@ -248,8 +248,13 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    }
 	    l = dimensions[0];
 	}
-	else {
-	    nd = ap1->nd;
+	else if (ap1shape == _scalar) {
+            nd = 0;
+            l = 1;
+            dimensions[0] = 1;
+        }
+        else {
+            nd = ap1->nd;
 	    for (l = 1, j = 0; j < nd; j++) {
 		dimensions[j] = ap1->dimensions[j];
 		l *= dimensions[j];
