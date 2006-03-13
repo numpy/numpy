@@ -1,9 +1,7 @@
 
 from numpy.testing import *
 set_package_path()
-import numpy.lib;reload(numpy.lib)
-from numpy import *
-from numpy.lib import *
+from numpy import array, ones, r_, mgrid
 restore_path()
 
 class test_grid(ScipyTestCase):

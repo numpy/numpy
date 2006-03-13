@@ -4,9 +4,8 @@
 
 from numpy.testing import *
 set_package_path()
-import numpy.lib;reload(numpy.lib)
-from numpy import *
-from numpy.lib import *
+from numpy import arange, rot90, add, fliplr, flipud, zeros, ones, eye, \
+     array, diag
 restore_path()
 
 ##################################################

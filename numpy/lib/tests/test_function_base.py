@@ -336,4 +336,4 @@ def compare_results(res,desired):
         assert_array_equal(res[i],desired[i])
 
 if __name__ == "__main__":
-    ScipyTest('numpy.base.function_base').run()
+    ScipyTest('numpy.lib.function_base').run()
