@@ -1,4 +1,3 @@
-
 /*
   Python Multiarray Module -- A useful collection of functions for creating and
   using ndarrays
@@ -3617,7 +3616,7 @@ _convert_from_array_descr(PyObject *obj)
 	int n, i, totalsize;
 	int ret;
 	PyObject *fields, *item, *newobj;
-	PyObject *name, *key, *tup;
+	PyObject *name, *key, *tup, *title;
 	PyObject *nameslist;
 	PyArray_Descr *new;
 	PyArray_Descr *conv;
@@ -3630,11 +3629,29 @@ _convert_from_array_descr(PyObject *obj)
 	fields = PyDict_New();
 	for (i=0; i<n; i++) {
 		item = PyList_GET_ITEM(obj, i);
-		if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2) || \
-		    !PyString_Check((name = PyTuple_GET_ITEM(item,0))))
+		if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2))
 			goto fail;
+		name = PyTuple_GET_ITEM(item, 0);
+		if (PyString_Check(name)) {
+			title=NULL;
+		}
+		else if (PyTuple_Check(name)) {
+			if (PyTuple_GET_SIZE(name) != 2) goto fail;
+			title = PyTuple_GET_ITEM(name, 0);
+			name = PyTuple_GET_ITEM(name, 1);
+			if (!PyString_Check(name) || \
+			    (!PyString_Check(title) && \
+			     !PyUnicode_Check(title)))
+				goto fail;
+		}
+		else goto fail;
 		if (PyString_GET_SIZE(name)==0) {
-			name = PyString_FromFormat("f%d", i);
+			if (title==NULL) 
+				name = PyString_FromFormat("f%d", i);
+			else {
+				name = title;
+				Py_INCREF(name);
+			}
 		}
 		else {
 			Py_INCREF(name);
@@ -3654,18 +3671,24 @@ _convert_from_array_descr(PyObject *obj)
 		}
 		else goto fail;
 		if (ret == PY_FAIL) goto fail;
-                if (PyDict_GetItem(fields, name) != NULL) {
+                if ((PyDict_GetItem(fields, name) != NULL) ||
+		    (title && (PyDict_GetItem(fields, title) != NULL))) {
 			PyErr_SetString(PyExc_ValueError,
 					"two fields with the same name");
                         goto fail;
                 }
                 if (!hasobject && conv->hasobject)
                         hasobject = 1;
-		tup = PyTuple_New(2);
+		tup = PyTuple_New((title == NULL ? 2 : 3));
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
 		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
-		totalsize += conv->elsize;
+		if (title != NULL) {			
+			Py_INCREF(title);
+			PyTuple_SET_ITEM(tup, 2, title);
+			PyDict_SetItem(fields, title, tup);
+		}
 		PyDict_SetItem(fields, name, tup);
+		totalsize += conv->elsize;
 		Py_DECREF(tup);
 	}
 	key = PyInt_FromLong(-1);
