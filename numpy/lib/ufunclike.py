@@ -5,7 +5,7 @@ storing results in an output array.
 __all__ = ['fix', 'isneginf', 'isposinf', 'log2']
 
 import numpy.core.numeric as nx
-from numpy.core.numeric import asarray, empty, empty_like, isinf, signbit, zeros
+from numpy.core.numeric import asarray, empty, isinf, signbit
 import numpy.core.umath as umath
 
 def fix(x, y=None):

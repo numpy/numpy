@@ -8,7 +8,6 @@ import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, ScalarType
 
 import function_base
-import twodim_base as matrix_base
 import numpy.core.defmatrix as matrix
 makemat = matrix.matrix
 
@@ -34,7 +33,7 @@ def ix_(*args):
     baseshape = [1]*nd
     for k in range(nd):
         new = _nx.array(args[k])
-        if (new.ndim <> 1):
+        if (new.ndim != 1):
             raise ValueError, "Cross index must be 1 dimensional"
         baseshape[k] = len(new)
         new.shape = tuple(baseshape)

@@ -4,7 +4,6 @@
 #   class as this is not complete.
 
 from numpy.core import *
-import string
 
 class UserArray(object):
     def __init__(self, data, dtype=None, copy=True):

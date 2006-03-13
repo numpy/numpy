@@ -14,11 +14,11 @@ import types
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
      asarray, empty, empty_like, asanyarray
-from numpy.core.numeric import ScalarType, dot, where, newaxis, isscalar
-from numpy.core.umath import pi, multiply, add, arctan2, maximum, minimum, \
-     frompyfunc, isnan, absolute, cos, less_equal, sqrt, sin, mod, exp
+from numpy.core.numeric import ScalarType, dot, where, newaxis
+from numpy.core.umath import pi, multiply, add, arctan2,  \
+     frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp
 from numpy.core.oldnumeric import ravel, nonzero, choose, \
-     sometrue, alltrue, reshape, any, all, typecodes, ArrayType, squeeze,\
+     typecodes, ArrayType, squeeze,\
      sort
 from type_check import ScalarType
 from shape_base import atleast_1d
