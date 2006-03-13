@@ -43,8 +43,8 @@ def setup_package():
 
     try:
         config = Configuration(
-            maintainer = "SciPy Developers",
-            maintainer_email = "scipy-dev@scipy.org",
+            maintainer = "NumPy Developers",
+            maintainer_email = "numpy-discussion@lists.sourceforge.net",
             description = DOCLINES[0],
             long_description = "\n".join(DOCLINES[2:]),
             url = "http://numeric.scipy.org",

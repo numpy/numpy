@@ -1,6 +1,9 @@
 
 BUFFERED General Ufunc explanation:
 
+Note:  This was implemented already, but the notes are kept here for historical 
+       and explanatory purposes.
+
 We need to optimize the section of ufunc code that handles mixed-type
 and misbehaved arrays.  In particular, we need to fix it so that items
 are not copied into the buffer if they don't have to be. 

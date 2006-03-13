@@ -4048,7 +4048,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         self->data = data;
 
         /* call the __array_finalize__
-	   method if a subtype and some object passed in */
+	   method if a subtype.
+	   If obj is NULL, then call method with Py_None 
+	*/
 	if ((subtype != &PyArray_Type)) {
 		PyObject *res, *func, *args;
 		static PyObject *str=NULL;
