@@ -971,7 +971,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 {
 	PyObject *shape;
 	PyArray_Descr *typecode;
-	long fortran;
+	int fortran;
 	PyObject *rawdata;
 	char *datastr;
 	int len;

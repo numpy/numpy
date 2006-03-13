@@ -32,7 +32,6 @@ else:
     from _import_tools import PackageLoader
     pkgload = PackageLoader()
     pkgload('testing','core','lib','linalg','dft','random','f2py',
-            'distutils',
             verbose=NUMPY_IMPORT_VERBOSE,postpone=False)
 
     if __doc__ is not None:
