@@ -1,0 +1,3 @@
+- cimport with a .pxd file vs 'include foo.pxi'?
+
+- the need to repeat: pyrex does NOT parse C headers.
