@@ -64,7 +64,7 @@ else:
         """ Return memory usage of running python. [Not implemented]"""
         return
 
-if os.name=='nt':
+if os.name=='nt' and sys.version[:3] > '2.3':
     # Code stolen from enthought/debug/memusage.py
     import win32pdh
     # from win32pdhutil, part of the win32all package
