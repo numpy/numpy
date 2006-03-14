@@ -3122,10 +3122,11 @@ static PyNumberMethods array_as_number = {
 
 
 static PyObject *
-array_slice(PyArrayObject *self, int ilow, int ihigh)
+array_slice(PyArrayObject *self, _int_or_ssize_t ilow, 
+	    _int_or_ssize_t ihigh)
 {
         PyArrayObject *r;
-        int l;
+        _int_or_ssize_t l;
         char *data;
 
         if (self->nd == 0) {
@@ -3166,7 +3167,8 @@ array_slice(PyArrayObject *self, int ilow, int ihigh)
 
 
 static int
-array_ass_slice(PyArrayObject *self, int ilow, int ihigh, PyObject *v) {
+array_ass_slice(PyArrayObject *self, _int_or_ssize_t ilow, 
+		_int_or_ssize_t ihigh, PyObject *v) {
         int ret;
         PyArrayObject *tmp;
 
@@ -3207,7 +3209,7 @@ array_contains(PyArrayObject *self, PyObject *el)
 static PySequenceMethods array_as_sequence = {
 #if PY_VERSION_HEX >= 0x02050000
         (lenfunc)array_length,		/*sq_length*/
-        (binaryfunc)NULL, /* sq_concat is handled by nb_add*/
+        (binaryfunc)NULL,               /* sq_concat is handled by nb_add*/
         (ssizeargfunc)NULL,
 	(ssizeargfunc)array_item_nice,
 	(ssizessizeargfunc)array_slice,
@@ -6808,10 +6810,10 @@ arrayiter_dealloc(PyArrayIterObject *it)
         _pya_free(it);
 }
 
-static int
+static _int_or_ssize_t
 iter_length(PyArrayIterObject *self)
 {
-        return (int) self->size;
+        return self->size;
 }
 
 
@@ -7282,7 +7284,11 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 
 
 static PyMappingMethods iter_as_mapping = {
+#if PY_VERSION_HEX >= 0x02050000
+        (lenfunc)iter_length,		        /*mp_length*/
+#else
         (inquiry)iter_length,		        /*mp_length*/
+#endif
         (binaryfunc)iter_subscript,	        /*mp_subscript*/
         (objobjargproc)iter_ass_subscript,	/*mp_ass_subscript*/
 };
@@ -8969,7 +8975,7 @@ arraydescr_compare(PyArray_Descr *self, PyObject *other)
  ****************   Implement Mapping Protocol ***************************
  *************************************************************************/
 
-static int
+static _int_or_ssize_t
 descr_length(PyArray_Descr *self)
 {
 
@@ -9010,12 +9016,15 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
 			     "there are no fields in dtype %s.",
 			     PyString_AsString(arraydescr_str(self)));
 	}
-
 	return NULL;
 }
 
 static PyMappingMethods descr_as_mapping = {
+#if PY_VERSION_HEX >= 0x02050000
+        (lenfunc)descr_length,		    /*mp_length*/
+#else
         (inquiry)descr_length,		    /*mp_length*/
+#endif
         (binaryfunc)descr_subscript,	    /*mp_subscript*/
         (objobjargproc)NULL,	    /*mp_ass_subscript*/
 };
