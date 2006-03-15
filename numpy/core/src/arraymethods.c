@@ -1539,7 +1539,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 }
                 else {
                         self->flags &= ~UPDATEIFCOPY;
-                        Py_DECREF(self->base);
+                        Py_XDECREF(self->base);
                         self->base = NULL;
                 }
         }
