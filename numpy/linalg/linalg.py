@@ -15,6 +15,7 @@ __all__ = ['LinAlgError', 'solve_linear_equations', 'solve',
            ]
 
 from numpy.core import *
+from numpy.lib import *
 import lapack_lite
 
 # Error object
@@ -113,7 +114,8 @@ def solve_linear_equations(a, b):
 # Matrix inversion
 
 def inverse(a):
-    return solve_linear_equations(a, identity(a.shape[0]))
+    a, wrap = _makearray(a)
+    return wrap(solve_linear_equations(a, identity(a.shape[0])))
 
 
 # Cholesky decomposition

@@ -1394,34 +1394,31 @@ static void
 static void
 @TYP@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
 {
-    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
-    char *i1 = args[0], *op = args[1];
-    c@typ@ *x, *y;
-    @typ@ xr, xi, xmag2;
-
-    for (i = 0; i < n; i++, i1 += is1, op += os) {
-        x = (c@typ@ *)i1;
-        y = (c@typ@ *)op;
-        xr = x->real;
-        xi = x->imag;
-        xmag2 = xr*xr + xi*xi;
-        y->real = 1.0;
-        y->imag = 0.0;
-    }
+        intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+        char *i1 = args[0], *op = args[1];
+        c@typ@ *x, *y;
+        @typ@ xr, xi, xmag2;
+        
+        for (i = 0; i < n; i++, i1 += is1, op += os) {
+                x = (c@typ@ *)i1;
+                y = (c@typ@ *)op;
+                xr = x->real;
+                xi = x->imag;
+                xmag2 = xr*xr + xi*xi;
+                y->real = 1.0;
+                y->imag = 0.0;
+        }
 }
 /**end repeat**/
-
 
 static PyObject *
 Py_get_one(PyObject *o)
 {
-    return PyInt_FromLong(1.0);
+        return PyInt_FromLong(1);
 }
 
-/**begin repeat
 
 /**begin repeat
-
 #TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
 #typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
 #btyp=float*4, double*6#
@@ -1447,7 +1444,6 @@ static void
 /**end repeat**/
 
 /**begin repeat
-
 #TYP=UBYTE, BYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
 #typ=ubyte, char, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */

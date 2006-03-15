@@ -67,3 +67,4 @@ PyArray_FromStructInterface
 PyArray_FromArrayAttr
 PyArray_ScalarKind
 PyArray_CanCoerceScalar
+PyArray_NewFlagsObject

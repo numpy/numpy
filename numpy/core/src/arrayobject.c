@@ -4434,8 +4434,7 @@ array_ndim_get(PyArrayObject *self)
 static PyObject *
 array_flags_get(PyArrayObject *self)
 {
-        return PyObject_CallMethod(_numpy_internal, "flagsobj", "Oii",
-                                   self, self->flags, 0);
+        return PyArray_NewFlagsObject((PyObject *)self);
 }
 
 static PyObject *
@@ -8414,7 +8413,7 @@ arraydescr_dealloc(PyArray_Descr *self)
 		Py_DECREF(self->subarray->base);
 		_pya_free(self->subarray);
 	}
-	self->ob_type->tp_free(self);
+	self->ob_type->tp_free((PyObject *)self);
 }
 
 /* we need to be careful about setting attributes because these
@@ -9073,6 +9072,389 @@ static PyTypeObject PyArrayDescr_Type = {
         0,		                          /* tp_init */
         0,	                                  /* tp_alloc */
         arraydescr_new,	                          /* tp_new */
+        0,	                                  /* tp_free */
+        0,					  /* tp_is_gc */
+        0,					  /* tp_bases */
+        0,					  /* tp_mro */
+        0,					  /* tp_cache */
+        0,					  /* tp_subclasses */
+        0					  /* tp_weaklist */
+};
+
+
+/** Array Flags Object **/
+
+typedef struct PyArrayFlagsObject {
+        PyObject_HEAD
+        PyObject *arr;
+        int flags;
+} PyArrayFlagsObject;
+
+/*OBJECT_API
+ Get New ArrayFlagsObject
+*/
+static PyObject *
+PyArray_NewFlagsObject(PyObject *obj)
+{
+        PyObject *flagobj;
+        int flags;
+        if (obj == NULL) {
+                flags = CONTIGUOUS | OWNDATA | FORTRAN | ALIGNED;
+        }
+        else {
+                flags = PyArray_FLAGS(obj);
+        }
+        flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
+        if (flagobj == NULL) return NULL;
+        Py_XINCREF(obj);
+        ((PyArrayFlagsObject *)flagobj)->arr = obj;
+        ((PyArrayFlagsObject *)flagobj)->flags = flags;
+
+        return flagobj;
+}
+
+static void
+arrayflags_dealloc(PyArrayFlagsObject *self)
+{
+	Py_XDECREF(self->arr);
+	self->ob_type->tp_free((PyObject *)self);
+}
+
+
+#define _define_get(UPPER, lower)                 \
+static PyObject * \
+arrayflags_ ## lower ## _get(PyArrayFlagsObject *self) \
+{ \
+        PyObject *item; \
+        item = ((self->flags & (UPPER)) == (UPPER)) ? Py_True : Py_False; \
+        Py_INCREF(item); \
+        return item; \
+}
+
+_define_get(CONTIGUOUS, contiguous)
+_define_get(FORTRAN, fortran)
+_define_get(UPDATEIFCOPY, updateifcopy)
+_define_get(OWNDATA, owndata)
+_define_get(ALIGNED, aligned)
+_define_get(WRITEABLE, writeable)
+
+_define_get(ALIGNED|WRITEABLE, behaved)
+_define_get(ALIGNED|WRITEABLE|CONTIGUOUS, carray)
+
+static PyObject *
+arrayflags_forc_get(PyArrayFlagsObject *self)
+{
+        PyObject *item;
+        
+        if (((self->flags & FORTRAN) == FORTRAN) ||
+            ((self->flags & CONTIGUOUS) == CONTIGUOUS))
+                item = Py_True;
+        else
+                item = Py_False;
+        
+        Py_INCREF(item);
+        return item;
+}
+
+static PyObject *
+arrayflags_fnc_get(PyArrayFlagsObject *self)
+{
+        PyObject *item;
+        
+        if (((self->flags & FORTRAN) == FORTRAN) &&
+            !((self->flags & CONTIGUOUS) == CONTIGUOUS))
+                item = Py_True;
+        else
+                item = Py_False;
+        
+        Py_INCREF(item);
+        return item;
+}
+
+static PyObject *
+arrayflags_farray_get(PyArrayFlagsObject *self)
+{
+        PyObject *item;
+        
+        if (((self->flags & (ALIGNED|WRITEABLE|FORTRAN)) ==     \
+             (ALIGNED|WRITEABLE|FORTRAN)) &&
+            !((self->flags & CONTIGUOUS) == CONTIGUOUS))
+                item = Py_True;
+        else
+                item = Py_False;
+        
+        Py_INCREF(item);
+        return item;
+}
+
+static PyObject *
+arrayflags_num_get(PyArrayFlagsObject *self)
+{
+        return PyInt_FromLong(self->flags);
+}
+
+/* relies on setflags order being write, align, uic */
+static int
+arrayflags_updateifcopy_set(PyArrayFlagsObject *self, PyObject *obj)
+{
+        PyObject *res;
+        if (self->arr == NULL) {
+                PyErr_SetString(PyExc_ValueError, "Cannot set flags on array scalars.");
+                return -1;
+        }
+        res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None, Py_None, 
+                                  (PyObject_IsTrue(obj) ? Py_True : Py_False));
+        if (res == NULL) return -1;
+        Py_DECREF(res);
+        return 0;
+}
+
+static int
+arrayflags_aligned_set(PyArrayFlagsObject *self, PyObject *obj)
+{
+        PyObject *res;
+        if (self->arr == NULL) {
+                PyErr_SetString(PyExc_ValueError, "Cannot set flags on array scalars.");
+                return -1;
+        }
+        res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None, 
+                                  (PyObject_IsTrue(obj) ? Py_True : Py_False),
+                                  Py_None);
+        if (res == NULL) return -1;
+        Py_DECREF(res);
+        return 0;
+}
+
+static int
+arrayflags_writeable_set(PyArrayFlagsObject *self, PyObject *obj)
+{
+        PyObject *res;
+        if (self->arr == NULL) {
+                PyErr_SetString(PyExc_ValueError, "Cannot set flags on array scalars.");
+                return -1;
+        }
+        res = PyObject_CallMethod(self->arr, "setflags", "OOO", 
+                                  (PyObject_IsTrue(obj) ? Py_True : Py_False),
+                                   Py_None, Py_None);
+        if (res == NULL) return -1;
+        Py_DECREF(res);
+        return 0;
+}
+
+
+static PyGetSetDef arrayflags_getsets[] = {
+	{"contiguous",
+	 (getter)arrayflags_contiguous_get,
+	 NULL,
+	 ""},
+        {"fortran",
+         (getter)arrayflags_fortran_get,
+         NULL,
+         ""},
+        {"updateifcopy",
+         (getter)arrayflags_updateifcopy_get,
+         (setter)arrayflags_updateifcopy_set,
+         ""},
+        {"owndata",
+         (getter)arrayflags_owndata_get,
+         NULL,
+         ""},
+        {"aligned",
+         (getter)arrayflags_aligned_get,
+         (setter)arrayflags_aligned_set,
+         ""},
+        {"writeable",
+         (getter)arrayflags_writeable_get,
+         (setter)arrayflags_writeable_set,
+         ""},
+        {"fnc",
+         (getter)arrayflags_fnc_get,
+         NULL,
+         ""},
+        {"forc",
+         (getter)arrayflags_forc_get,
+         NULL,
+         ""},
+        {"behaved",
+         (getter)arrayflags_behaved_get,
+         NULL,
+         ""},
+        {"carray",
+         (getter)arrayflags_carray_get,
+         NULL,
+         ""},
+        {"farray",
+         (getter)arrayflags_farray_get,
+         NULL,
+         ""},
+        {"num",
+         (getter)arrayflags_num_get,
+         NULL,
+         ""},
+	{NULL, NULL, NULL, NULL},
+};
+
+static PyObject *
+arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
+{
+        char *key;
+        int n;
+        if (!PyString_Check(ind)) goto fail;
+        key = PyString_AS_STRING(ind);
+        n = PyString_GET_SIZE(ind);
+        if ((strncmp(key,"CONTIGUOUS",n)==0) ||
+            (strncmp(key,"C",n)))
+                return arrayflags_contiguous_get(self);
+        else if ((strncmp(key, "FORTRAN", n)==0) ||
+                 (strncmp(key, "F", n)==0)) 
+                return arrayflags_fortran_get(self);
+        else if ((strncmp(key, "WRITEABLE", n)==0) ||
+                 (strncmp(key, "W", n)==0))
+                return arrayflags_writeable_get(self);
+        else if ((strncmp(key, "BEHAVED", n)==0) ||
+                 (strncmp(key, "B", n)==0))
+                return arrayflags_behaved_get(self);
+        else if ((strncmp(key, "OWNDATA", n)==0) ||
+                 (strncmp(key, "O", n)==0))
+                return arrayflags_owndata_get(self);
+        else if ((strncmp(key, "ALIGNED", n)==0) ||
+                 (strncmp(key, "A", n)==0))
+                return arrayflags_aligned_get(self);
+        else if ((strncmp(key, "UPDATEIFCOPY", n)==0) ||
+                 (strncmp(key, "U", n)==0))
+                return arrayflags_updateifcopy_get(self);
+        else if ((strncmp(key, "FNC", n)==0))
+                return arrayflags_fnc_get(self);
+        else if ((strncmp(key, "FORC", n)==0))
+                return arrayflags_forc_get(self);
+        else if ((strncmp(key, "CARRAY", n)==0) ||
+                 (strncmp(key, "CA", n)==0))
+                return arrayflags_carray_get(self);
+        else if ((strncmp(key, "FARRAY", n)==0) ||
+                 (strncmp(key, "FA", n)==0))
+                return arrayflags_farray_get(self);
+        else goto fail;
+
+ fail:
+        PyErr_SetString(PyExc_KeyError, "Unknown flag");
+        return NULL;
+}
+
+static int
+arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
+{       
+        char *key;
+        int n;
+        if (!PyString_Check(ind)) goto fail;
+        key = PyString_AS_STRING(ind);
+        n = PyString_GET_SIZE(ind);
+        if ((strncmp(key, "WRITEABLE", n)==0) ||
+            (strncmp(key, "W", n)==0))
+                return arrayflags_writeable_set(self, item);
+        else if ((strncmp(key, "ALIGNED", n)==0) ||
+                 (strncmp(key, "A", n)==0))
+                return arrayflags_aligned_set(self, item);
+        else if ((strncmp(key, "UPDATEIFCOPY", n)==0) ||
+                 (strncmp(key, "U", n)==0))
+                return arrayflags_updateifcopy_set(self, item);  
+        else goto fail;
+        return 0;
+
+fail:
+        PyErr_SetString(PyExc_KeyError, "Unknown flag");
+        return -1;
+}
+
+static char *
+_torf_(int flags, int val)
+{
+        if ((flags & val) == val) return "True";
+        else return "False";                
+}
+
+static PyObject *
+arrayflags_print(PyArrayFlagsObject *self)
+{
+        int fl = self->flags;
+                
+        return PyString_FromFormat("  %s : %s\n  %s : %s\n  %s : %s\n"\
+                                   "  %s : %s\n  %s : %s\n  %s : %s",
+                                   "CONTIGUOUS", _torf_(fl, CONTIGUOUS),
+                                   "FORTRAN", _torf_(fl, FORTRAN),
+                                   "OWNDATA", _torf_(fl, OWNDATA),
+                                   "WRITEABLE", _torf_(fl, WRITEABLE),
+                                   "ALIGNED", _torf_(fl, ALIGNED),
+                                   "UPDATEIFCOPY", _torf_(fl, UPDATEIFCOPY));
+}
+
+
+static PyMappingMethods arrayflags_as_mapping = {
+#if PY_VERSION_HEX >= 0x02050000
+        (lenfunc)NULL,       		     /*mp_length*/
+#else
+        (inquiry)NULL,    		     /*mp_length*/
+#endif
+        (binaryfunc)arrayflags_getitem,	     /*mp_subscript*/
+        (objobjargproc)arrayflags_setitem,   /*mp_ass_subscript*/
+};
+
+
+static PyObject *
+arrayflags_new(PyTypeObject *self, PyObject *args, PyObject *kwds)
+{
+        PyObject *arg=NULL;
+        if (!PyArg_UnpackTuple(args, "flagsobj", 0, 1, &arg))
+                return NULL;
+
+        if ((arg != NULL) && PyArray_Check(arg)) {
+                return PyArray_NewFlagsObject(arg);
+        }
+        else {
+                return PyArray_NewFlagsObject(NULL);
+        }
+}
+
+static PyTypeObject PyArrayFlags_Type = {
+        PyObject_HEAD_INIT(NULL)
+        0,
+        "numpy.flagsobj",
+        sizeof(PyArrayFlagsObject),
+        0,					 /* tp_itemsize */
+        /* methods */
+        (destructor)arrayflags_dealloc,		/* tp_dealloc */
+        0,					/* tp_print */
+        0,					/* tp_getattr */
+        0,					/* tp_setattr */
+	0,		                        /* tp_compare */
+        (reprfunc)arrayflags_print,             /* tp_repr */
+        0,					/* tp_as_number */
+        0,			                /* tp_as_sequence */
+        &arrayflags_as_mapping,	                /* tp_as_mapping */
+        0,					/* tp_hash */
+        0,					/* tp_call */
+        (reprfunc)arrayflags_print,             /* tp_str */
+        0,	          	                /* tp_getattro */
+        0,					/* tp_setattro */
+        0,					/* tp_as_buffer */
+        Py_TPFLAGS_DEFAULT,                     /* tp_flags */
+        0,					/* tp_doc */
+        0,	                                /* tp_traverse */
+        0,					/* tp_clear */
+        0,					/* tp_richcompare */
+        0,					/* tp_weaklistoffset */
+        0,	                                /* tp_iter */
+        0,		                        /* tp_iternext */
+        0,	              	                 /* tp_methods */
+        0,	                                 /* tp_members */
+        arrayflags_getsets,                      /* tp_getset */
+        0,				          /* tp_base */
+        0,					  /* tp_dict */
+        0,					  /* tp_descr_get */
+        0,					  /* tp_descr_set */
+        0,					  /* tp_dictoffset */
+        0,                       	          /* tp_init */
+        0,	                                  /* tp_alloc */
+        arrayflags_new,	                          /* tp_new */
         0,	                                  /* tp_free */
         0,					  /* tp_is_gc */
         0,					  /* tp_bases */

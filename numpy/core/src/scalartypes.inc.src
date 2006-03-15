@@ -625,10 +625,7 @@ gentype_ndim_get(PyObject *self)
 static PyObject *
 gentype_flags_get(PyObject *self)
 {
-	static int flags=CONTIGUOUS | OWNDATA | FORTRAN | ALIGNED;
-
-        return PyObject_CallMethod(_numpy_internal, "flagsobj", "Oii", 
-                                   self, flags, 1);
+        return PyArray_NewFlagsObject(NULL);
 }
 
 static PyObject *

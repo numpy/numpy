@@ -15,6 +15,7 @@ h_template = r"""
 static PyTypeObject PyBigArray_Type;
 static PyTypeObject PyArray_Type;
 static PyTypeObject PyArrayDescr_Type;
+static PyTypeObject PyArrayFlags_Type;
 static PyTypeObject PyArrayIter_Type;
 static PyTypeObject PyArrayMapIter_Type;
 static PyTypeObject PyArrayMultiIter_Type;
@@ -41,9 +42,10 @@ static void **PyArray_API=NULL;
 #define PyBigArray_Type (*(PyTypeObject *)PyArray_API[0])
 #define PyArray_Type (*(PyTypeObject *)PyArray_API[1])
 #define PyArrayDescr_Type (*(PyTypeObject *)PyArray_API[2])
-#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[3])
-#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[4])
-#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[5])
+#define PyArrayFlags_Type (*(PyTypeObject *)PyArray_API[3])
+#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[4])
+#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[5])
+#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[6])
 
 %s
 
@@ -86,6 +88,7 @@ void *PyArray_API[] = {
         (void *) &PyBigArray_Type,
         (void *) &PyArray_Type,
         (void *) &PyArrayDescr_Type,
+        (void *) &PyArrayFlags_Type,
         (void *) &PyArrayIter_Type,
         (void *) &PyArrayMultiIter_Type,
         (int *) &PyArray_NUMUSERTYPES,
@@ -100,7 +103,7 @@ def generate_api(output_dir):
                                              'multiarray_api_order.txt')
     # API fixes for __arrayobject_api.h
 
-    fixed = 6
+    fixed = 7
     numtypes = len(types) + fixed
     numobject = len(objectapi_list) + numtypes
     nummulti = len(multiapi_list)

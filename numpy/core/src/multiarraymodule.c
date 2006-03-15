@@ -5908,6 +5908,9 @@ DL_EXPORT(void) initmultiarray(void) {
 	if (PyType_Ready(&PyArrayDescr_Type) < 0)
 		return;
 
+	if (PyType_Ready(&PyArrayFlags_Type) < 0)
+		return;
+
 	c_api = PyCObject_FromVoidPtr((void *)PyArray_API, NULL);
 	if (PyErr_Occurred()) goto err;
 	PyDict_SetItemString(d, "_ARRAY_API", c_api);
@@ -5929,6 +5932,9 @@ DL_EXPORT(void) initmultiarray(void) {
 			     (PyObject *)&PyArrayMultiIter_Type);
 	Py_INCREF(&PyArrayDescr_Type);
 	PyDict_SetItemString(d, "dtype", (PyObject *)&PyArrayDescr_Type);
+
+	Py_INCREF(&PyArrayFlags_Type);
+	PyDict_SetItemString(d, "flagsobj", (PyObject *)&PyArrayFlags_Type);
 
         set_flaginfo(d);
 

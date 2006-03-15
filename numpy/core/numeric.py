@@ -4,7 +4,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'getbuffer',
            'where', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
            'register_dtype', 'set_numeric_ops', 'can_cast',
-           'asarray', 'asanyarray', 'isfortran', 'zeros_like', 'empty_like',
+           'asarray', 'asanyarray', 'isfortran', 'empty_like', 'zeros_like',
            'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
            'alterdot', 'restoredot', 'cross',
            'array2string', 'get_printoptions', 'set_printoptions',
@@ -24,6 +24,47 @@ import umath
 from umath import *
 import numerictypes
 from numerictypes import *
+
+# from Fernando Perez's IPython
+def zeros_like(a):
+    """Return an array of zeros of the shape and typecode of a.
+
+    If you don't explicitly need the array to be zeroed, you should instead
+    use empty_like(), which is faster as it only allocates memory."""
+    try:
+        return zeros(a.shape, a.dtype, a.flags.fnc)
+    except AttributeError:
+        try:
+            wrap = a.__array_wrap__
+        except AttributeError:
+            wrap = None
+        a = asarray(a)
+        res = zeros(a.shape, a.dtype)
+        if wrap:
+            res = wrap(res)
+        return res
+
+def empty_like(a):
+    """Return an empty (uninitialized) array of the shape and typecode of a.
+
+    Note that this does NOT initialize the returned array.  If you require
+    your array to be initialized, you should use zeros_like().
+
+    """
+    try:
+        return empty(a.shape, a.dtype, a.flags.fnc)
+    except AttributeError:
+        try:
+            wrap = a.__array_wrap__
+        except AttributeError:
+            wrap = None
+        a = asarray(a)
+        res = empty(a.shape, a.dtype)
+        if wrap:
+            res = wrap(res)
+        return res
+
+# end Fernando's utilities
 
 def extend_all(module):
     adict = {}
@@ -80,27 +121,6 @@ def asanyarray(a, dtype=None, copy=False, fortran=False, ndmin=0):
 
 def isfortran(a):
     return a.flags['FNC']
-
-# from Fernando Perez's IPython
-def zeros_like(a):
-    """Return an array of zeros of the shape and typecode of a.
-
-    If you don't explicitly need the array to be zeroed, you should instead
-    use empty_like(), which is faster as it only allocates memory."""
-    a = asanyarray(a)
-    return a.__array_wrap__(zeros(a.shape, a.dtype, a.flags['FNC']))
-
-def empty_like(a):
-    """Return an empty (uninitialized) array of the shape and typecode of a.
-
-    Note that this does NOT initialize the returned array.  If you require
-    your array to be initialized, you should use zeros_like().
-
-    """
-    a = asanyarray(a)
-    return a.__array_wrap__(empty(a.shape, a.dtype, a.flags['FNC']))
-
-# end Fernando's utilities
 
 _mode_from_name_dict = {'v': 0,
                         's' : 1,
