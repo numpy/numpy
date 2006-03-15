@@ -16,6 +16,7 @@ __all__ = ['solve',
 
 from numpy.core import *
 from numpy.lib import *
+from old import solve_linear_equations
 import lapack_lite
 
 # Helper routines

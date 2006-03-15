@@ -16,7 +16,7 @@ __all__ = ['LinAlgError', 'solve_linear_equations',
            ]
 
 from numpy.core import transpose
-import numpy.linalg as linalg
+import linalg
 
 # Error object
 class LinAlgError(Exception):
