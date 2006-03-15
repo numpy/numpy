@@ -9302,38 +9302,70 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
         if (!PyString_Check(ind)) goto fail;
         key = PyString_AS_STRING(ind);
         n = PyString_GET_SIZE(ind);
-        if ((strncmp(key,"CONTIGUOUS",n)==0) ||
-            (strncmp(key,"C",n)))
-                return arrayflags_contiguous_get(self);
-        else if ((strncmp(key, "FORTRAN", n)==0) ||
-                 (strncmp(key, "F", n)==0)) 
-                return arrayflags_fortran_get(self);
-        else if ((strncmp(key, "WRITEABLE", n)==0) ||
-                 (strncmp(key, "W", n)==0))
-                return arrayflags_writeable_get(self);
-        else if ((strncmp(key, "BEHAVED", n)==0) ||
-                 (strncmp(key, "B", n)==0))
-                return arrayflags_behaved_get(self);
-        else if ((strncmp(key, "OWNDATA", n)==0) ||
-                 (strncmp(key, "O", n)==0))
-                return arrayflags_owndata_get(self);
-        else if ((strncmp(key, "ALIGNED", n)==0) ||
-                 (strncmp(key, "A", n)==0))
-                return arrayflags_aligned_get(self);
-        else if ((strncmp(key, "UPDATEIFCOPY", n)==0) ||
-                 (strncmp(key, "U", n)==0))
-                return arrayflags_updateifcopy_get(self);
-        else if ((strncmp(key, "FNC", n)==0))
-                return arrayflags_fnc_get(self);
-        else if ((strncmp(key, "FORC", n)==0))
-                return arrayflags_forc_get(self);
-        else if ((strncmp(key, "CARRAY", n)==0) ||
-                 (strncmp(key, "CA", n)==0))
-                return arrayflags_carray_get(self);
-        else if ((strncmp(key, "FARRAY", n)==0) ||
-                 (strncmp(key, "FA", n)==0))
-                return arrayflags_farray_get(self);
-        else goto fail;
+	switch(n) {
+	case 1:
+		switch(key[0]) {
+		case 'C':
+			return arrayflags_contiguous_get(self);
+		case 'F':
+			return arrayflags_fortran_get(self);
+		case 'W':
+			return arrayflags_writeable_get(self);
+		case 'B':
+			return arrayflags_behaved_get(self);
+		case 'O':
+			return arrayflags_owndata_get(self);
+		case 'A':
+			return arrayflags_aligned_get(self);
+		case 'U':
+			return arrayflags_updateifcopy_get(self);
+		default:
+			goto fail;
+		}
+		break;
+	case 2:
+		if (strncmp(key, "CA", n)==0)
+			return arrayflags_carray_get(self);
+		if (strncmp(key, "FA", n)==0)
+			return arrayflags_farray_get(self);
+		break;
+	case 3:
+		if (strncmp(key, "FNC", n)==0)
+			return arrayflags_fnc_get(self);
+		break;
+	case 4:
+		if (strncmp(key, "FORC", n)==0)
+			return arrayflags_forc_get(self);
+		break;
+	case 6:
+		if (strncmp(key, "CARRAY", n)==0)
+			return arrayflags_carray_get(self);
+		if (strncmp(key, "FARRAY", n)==0)
+			return arrayflags_farray_get(self);
+		break;
+	case 7:
+		if (strncmp(key,"FORTRAN",n)==0)
+			return arrayflags_fortran_get(self);
+		if (strncmp(key,"BEHAVED",n)==0)
+			return arrayflags_behaved_get(self);
+		if (strncmp(key,"OWNDATA",n)==0)
+			return arrayflags_owndata_get(self);
+		if (strncmp(key,"ALIGNED",n)==0)
+			return arrayflags_aligned_get(self);
+		break;
+	case 9:	
+		if (strncmp(key,"WRITEABLE",n)==0)
+			return arrayflags_writeable_get(self);
+		break;
+	case 10:
+		if (strncmp(key,"CONTIGUOUS",n)==0)
+			return arrayflags_contiguous_get(self);
+		break;
+	case 12:
+		if (strncmp(key, "UPDATEIFCOPY", n)==0)
+			return arrayflags_updateifcopy_get(self);
+		break;
+	}
 
  fail:
         PyErr_SetString(PyExc_KeyError, "Unknown flag");
@@ -9348,17 +9380,15 @@ arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
         if (!PyString_Check(ind)) goto fail;
         key = PyString_AS_STRING(ind);
         n = PyString_GET_SIZE(ind);
-        if ((strncmp(key, "WRITEABLE", n)==0) ||
-            (strncmp(key, "W", n)==0))
+        if (((n==9) && (strncmp(key, "WRITEABLE", n)==0)) ||
+	    ((n==1) && (strncmp(key, "W", n)==0)))
                 return arrayflags_writeable_set(self, item);
-        else if ((strncmp(key, "ALIGNED", n)==0) ||
-                 (strncmp(key, "A", n)==0))
+        else if (((n==7) && (strncmp(key, "ALIGNED", n)==0)) || 
+                 ((n==1) && (strncmp(key, "A", n)==0)))
                 return arrayflags_aligned_set(self, item);
-        else if ((strncmp(key, "UPDATEIFCOPY", n)==0) ||
-                 (strncmp(key, "U", n)==0))
+        else if (((n==12) && (strncmp(key, "UPDATEIFCOPY", n)==0)) ||
+                 ((n==1) && (strncmp(key, "U", n)==0)))
                 return arrayflags_updateifcopy_set(self, item);  
-        else goto fail;
-        return 0;
 
 fail:
         PyErr_SetString(PyExc_KeyError, "Unknown flag");
