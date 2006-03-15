@@ -10,7 +10,7 @@ __all__ = ['LinAlgError', 'solve_linear_equations', 'solve',
            'inverse', 'inv', 'cholesky_decomposition', 'cholesky', 'eigenvalues',
            'eigvals', 'Heigenvalues', 'eigvalsh', 'generalized_inverse', 'pinv',
            'determinant', 'det', 'singular_value_decomposition', 'svd',
-           'eigenvectors', 'eig', 'Heigenvectors', 'eigh','lstsq',
+           'eigenvectors', 'eig', 'Heigenvectors', 'eigh','lstsq', 'norm',
            'linear_least_squares'
            ]
 
@@ -46,13 +46,10 @@ def _commonType(*arrays):
     return _array_type[kind][precision]
 
 def _castCopyAndTranspose(type, *arrays):
-    cast_arrays = ()
-    for a in arrays:
-        cast_arrays = cast_arrays + (transpose(a).astype(type),)
-    if len(cast_arrays) == 1:
-        return cast_arrays[0]
+    if len(arrays) == 1:
+        return transpose(arrays[0]).astype(type)
     else:
-        return cast_arrays
+        return [transpose(a).astype(type) for a in arrays]
 
 # _fastCopyAndTranpose is an optimized version of _castCopyAndTranspose.
 # It assumes the input is 2D (as all the calls in here are).
@@ -326,24 +323,32 @@ def eigh(a, UPLO='L'):
 
 # Singular value decomposition
 
-def svd(a, full_matrices=1):
+def svd(a, full_matrices=1, compute_uv=1):
     a, wrap = _makearray(a)
     _assertRank2(a)
     m, n = a.shape
     t =_commonType(a)
     real_t = _array_type[0][_array_precision[t]]
     a = _fastCopyAndTranspose(t, a)
-    if full_matrices:
-        nu = m
-        nvt = n
-        option = 'A'
-    else:
-        nu = min(n,m)
-        nvt = min(n,m)
-        option = 'S'
     s = zeros((min(n,m),), real_t)
-    u = zeros((nu, m), t)
-    vt = zeros((n, nvt), t)
+    if compute_uv:
+        if full_matrices:
+            nu = m
+            nvt = n
+            option = 'A'
+        else:
+            nu = min(n,m)
+            nvt = min(n,m)
+            option = 'S'
+        u = zeros((nu, m), t)
+        vt = zeros((n, nvt), t)
+    else:
+        option = 'N'
+        nu = 1
+        nvt = 1
+        u = empty((1,1),t) 
+        vt = empty((1,1),t) 
+
     iwork = zeros((8*min(m,n),), 'i')
     if _array_kind[t] == 1: # Complex routines take different arguments
         lapack_routine = lapack_lite.zgesdd
@@ -363,14 +368,25 @@ def svd(a, full_matrices=1):
         results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
                                  work, -1, iwork, 0)
         lwork = int(work[0])
+        if option == 'N' and lwork==1:
+            # there seems to be a bug in dgesdd of lapack
+            #   (NNemec, 060310)
+            # returning the wrong lwork size for option == 'N'
+            results = lapack_routine('A', m, n, a, m, s, u, m, vt, n,
+                                     work, -1, iwork, 0)
+            lwork = int(work[0])
+            assert lwork > 1
+
         work = zeros((lwork,), t)
         results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
                                  work, lwork, iwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'SVD did not converge'
-    return wrap(transpose(u)), s, \
-           wrap(transpose(vt)) # why copy here?
-
+    if compute_uv:
+        return wrap(transpose(u)), s, \
+               wrap(transpose(vt)) # why copy here?
+    else:
+        return s
 
 # Generalized inverse
 
@@ -496,6 +512,75 @@ def eigenvectors(A):
 def Heigenvectors(A):
     w, v = eigh(A)
     return w, transpose(v)
+
+def norm(x, ord=None):
+    """ norm(x, ord=None) -> n
+
+    Matrix or vector norm.
+
+    Inputs:
+
+      x -- a rank-1 (vector) or rank-2 (matrix) array
+      ord -- the order of the norm.
+
+     Comments:
+       For arrays of any rank, if ord is None:
+         calculate the square norm (Euclidean norm for vectors, Frobenius norm for matrices)
+
+       For vectors ord can be any real number including Inf or -Inf.
+         ord = Inf, computes the maximum of the magnitudes
+         ord = -Inf, computes minimum of the magnitudes
+         ord is finite, computes sum(abs(x)**ord)**(1.0/ord)
+
+       For matrices ord can only be one of the following values:
+         ord = 2 computes the largest singular value
+         ord = -2 computes the smallest singular value
+         ord = 1 computes the largest column sum of absolute values
+         ord = -1 computes the smallest column sum of absolute values
+         ord = Inf computes the largest row sum of absolute values
+         ord = -Inf computes the smallest row sum of absolute values
+         ord = 'fro' computes the frobenius norm sqrt(sum(diag(X.H * X)))
+
+       For values ord < 0, the result is, strictly speaking, not a
+       mathematical 'norm', but it may still be useful for numerical purposes.
+    """
+    x = asarray(x)
+    nd = len(x.shape)    
+    if ord is None: # check the default case first and handle it immediately
+        return sqrt(add.reduce((x.conj() * x).ravel().real))
+
+    if nd == 1:
+        if ord == Inf:
+            return abs(x).max()
+        elif ord == -Inf:
+            return abs(x).min()
+        elif ord == 1:
+            return abs(x).sum() # special case for speedup
+        elif ord == 2:
+            return sqrt(((x.conj()*x).real).sum()) # special case for speedup
+        else:
+            return ((abs(x)**ord).sum())**(1.0/ord)
+    elif nd == 2:
+        if ord == 2:
+            return svd(x,compute_uv=0).max()
+        elif ord == -2:
+            return svd(x,compute_uv=0).min()
+        elif ord == 1:
+            return abs(x).sum(axis=0).max()
+        elif ord == Inf:
+            return abs(x).sum(axis=1).max()
+        elif ord == -1:
+            return abs(x).sum(axis=0).min()
+        elif ord == -Inf:
+            return abs(x).sum(axis=1).min()
+        elif ord in ['fro','f']:
+            return sqrt(add.reduce((x.conj() * x).real.ravel()))
+        else:
+            raise ValueError, "Invalid norm order for matrices."
+    else:
+        raise ValueError, "Improper number of dimensions to norm."
+
+
 
 inv = inverse
 solve = solve_linear_equations

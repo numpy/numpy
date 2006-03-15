@@ -4,8 +4,8 @@
 #  Usage  --- from numpy.dual import fft, inv
 
 __all__ = ['fft','ifft','fftn','ifftn','fft2','ifft2',
-           'inv','svd','solve','det','eig','eigvals','lstsq',
-           'pinv','cholesky','i0']
+           'norm','inv','svd','solve','det','eig','eigvals',
+           'eigh','eigvalsh','lstsq', 'pinv','cholesky','i0']
 
 import numpy.linalg as linpkg
 import numpy.dft as fftpkg
@@ -20,12 +20,15 @@ ifftn = fftpkg.ifftn
 fft2 = fftpkg.fft2
 ifft2 = fftpkg.ifft2
 
+norm = linpkg.norm
 inv = linpkg.inv
 svd = linpkg.svd
 solve = linpkg.solve
 det = linpkg.det
 eig = linpkg.eig
 eigvals = linpkg.eigvals
+eigh = linpkg.eigh
+eigvalsh = linpkg.eigvalsh
 lstsq = linpkg.lstsq
 pinv = linpkg.pinv
 cholesky = linpkg.cholesky
