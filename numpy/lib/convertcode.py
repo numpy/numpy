@@ -99,7 +99,8 @@ def fromstr(filestr):
     filestr, fromall2 = changeimports(filestr, 'numerix', 'numpy')
     filestr, fromall3 = changeimports(filestr, 'numpy_base', 'numpy')
     filestr, fromall3 = changeimports(filestr, 'MLab', 'numpy.lib.mlab')
-    filestr, fromall3 = changeimports(filestr, 'LinearAlgebra', 'numpy.linalg')
+    filestr, fromall3 = changeimports(filestr, 'LinearAlgebra',
+                                      'numpy.linalg.old')
     filestr, fromall3 = changeimports(filestr, 'RNG', 'numpy.random')
     filestr, fromall3 = changeimports(filestr, 'RandomArray', 'numpy.random')
     filestr, fromall3 = changeimports(filestr, 'FFT', 'numpy.dft')

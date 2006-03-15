@@ -6,21 +6,17 @@
 # only accesses the following LAPACK functions: dgesv, zgesv, dgeev,
 # zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf, dpotrf.
 
-__all__ = ['LinAlgError', 'solve_linear_equations', 'solve',
-           'inverse', 'inv', 'cholesky_decomposition', 'cholesky', 'eigenvalues',
-           'eigvals', 'Heigenvalues', 'eigvalsh', 'generalized_inverse', 'pinv',
-           'determinant', 'det', 'singular_value_decomposition', 'svd',
-           'eigenvectors', 'eig', 'Heigenvectors', 'eigh','lstsq', 'norm',
-           'linear_least_squares'
+__all__ = ['solve',
+           'inv', 'cholesky',
+           'eigvals',
+           'eigvalsh', 'pinv',
+           'det', 'svd',
+           'eig', 'eigh','lstsq', 'norm',
            ]
 
 from numpy.core import *
 from numpy.lib import *
 import lapack_lite
-
-# Error object
-class LinAlgError(Exception):
-    pass
 
 # Helper routines
 _lapack_type = {'f': 0, 'd': 1, 'F': 2, 'D': 3}
@@ -78,10 +74,9 @@ def _assertSquareness(*arrays):
         if max(a.shape) != min(a.shape):
             raise LinAlgError, 'Array must be square'
 
-
 # Linear equations
 
-def solve_linear_equations(a, b):
+def solve(a, b):
     one_eq = len(b.shape) == 1
     if one_eq:
         b = b[:, NewAxis]
@@ -110,14 +105,13 @@ def solve_linear_equations(a, b):
 
 # Matrix inversion
 
-def inverse(a):
+def inv(a):
     a, wrap = _makearray(a)
     return wrap(solve_linear_equations(a, identity(a.shape[0])))
 
-
 # Cholesky decomposition
 
-def cholesky_decomposition(a):
+def cholesky(a):
     _assertRank2(a)
     _assertSquareness(a)
     t =_commonType(a)
@@ -135,8 +129,7 @@ def cholesky_decomposition(a):
 
 
 # Eigenvalues
-
-def eigenvalues(a):
+def eigvals(a):
     _assertRank2(a)
     _assertSquareness(a)
     t =_commonType(a)
@@ -177,7 +170,7 @@ def eigenvalues(a):
     return w
 
 
-def Heigenvalues(a, UPLO='L'):
+def eigvalsh(a, UPLO='L'):
     _assertRank2(a)
     _assertSquareness(a)
     t =_commonType(a)
@@ -390,7 +383,7 @@ def svd(a, full_matrices=1, compute_uv=1):
 
 # Generalized inverse
 
-def generalized_inverse(a, rcond = 1.e-10):
+def pinv(a, rcond = 1.e-10):
     a, wrap = _makearray(a)
     if a.dtype.char in typecodes['Complex']:
         a = conjugate(a)
@@ -408,7 +401,7 @@ def generalized_inverse(a, rcond = 1.e-10):
 
 # Determinant
 
-def determinant(a):
+def det(a):
     a = asarray(a)
     _assertRank2(a)
     _assertSquareness(a)
@@ -427,7 +420,7 @@ def determinant(a):
 
 # Linear Least Squares
 
-def linear_least_squares(a, b, rcond=1.e-10):
+def lstsq(a, b, rcond=1.e-10):
     """returns x,resids,rank,s
 where x minimizes 2-norm(|b - Ax|)
       resids is the sum square residuals
@@ -502,17 +495,6 @@ Singular values less than s[0]*rcond are treated as zero.
             resids = sum((transpose(bstar)[n:,:])**2).copy()
     return wrap(x),resids,results['rank'],s[:min(n,m)].copy()
 
-def singular_value_decomposition(A, full_matrices=0):
-    return svd(A, full_matrices)
-
-def eigenvectors(A):
-    w, v = eig(A)
-    return w, transpose(v)
-
-def Heigenvectors(A):
-    w, v = eigh(A)
-    return w, transpose(v)
-
 def norm(x, ord=None):
     """ norm(x, ord=None) -> n
 
@@ -580,33 +562,22 @@ def norm(x, ord=None):
     else:
         raise ValueError, "Improper number of dimensions to norm."
 
-
-
-inv = inverse
-solve = solve_linear_equations
-cholesky = cholesky_decomposition
-eigvals = eigenvalues
-eigvalsh = Heigenvalues
-pinv = generalized_inverse
-det = determinant
-lstsq = linear_least_squares
-
 if __name__ == '__main__':
     def test(a, b):
 
         print "All numbers printed should be (almost) zero:"
 
-        x = solve_linear_equations(a, b)
+        x = solve(a, b)
         check = b - matrixmultiply(a, x)
         print check
 
 
-        a_inv = inverse(a)
+        a_inv = inv(a)
         check = matrixmultiply(a, a_inv)-identity(a.shape[0])
         print check
 
 
-        ev = eigenvalues(a)
+        ev = eigvals(a)
 
         evalues, evectors = eig(a)
         check = ev-evalues
@@ -622,16 +593,16 @@ if __name__ == '__main__':
         print check
 
 
-        a_ginv = generalized_inverse(a)
+        a_ginv = pinv(a)
         check = matrixmultiply(a, a_ginv)-identity(a.shape[0])
         print check
 
 
-        det = determinant(a)
+        det = det(a)
         check = det-multiply.reduce(evalues)
         print check
 
-        x, residuals, rank, sv = linear_least_squares(a, b)
+        x, residuals, rank, sv = lstsq(a, b)
         check = b - matrixmultiply(a, x)
         print check
         print rank-a.shape[0]
