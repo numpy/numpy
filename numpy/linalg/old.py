@@ -18,11 +18,9 @@ __all__ = ['LinAlgError', 'solve_linear_equations',
 from numpy.core import transpose
 import linalg
 
-# Error object
-class LinAlgError(Exception):
-    pass
-
 # Linear equations
+
+LinAlgError = linalg.LinAlgError
 
 def solve_linear_equations(a, b):
     return linalg.solve(a,b)

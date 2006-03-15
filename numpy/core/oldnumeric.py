@@ -514,7 +514,7 @@ def alen(a):
     try:
         return len(a)
     except TypeError:
-        return len(atleast_1d(a))
+        return len(array(a,ndmin=1))
 
 def prod(a, axis=0, dtype=None):
     """Return the product of the elements along the given axis

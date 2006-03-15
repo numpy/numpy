@@ -12,6 +12,7 @@ __all__ = ['solve',
            'eigvalsh', 'pinv',
            'det', 'svd',
            'eig', 'eigh','lstsq', 'norm',
+           'LinAlgError'
            ]
 
 from numpy.core import *
@@ -19,9 +20,11 @@ from numpy.lib import *
 from old import solve_linear_equations
 import lapack_lite
 
+# Error object
+class LinAlgError(Exception):
+    pass
+
 # Helper routines
-_lapack_type = {'f': 0, 'd': 1, 'F': 2, 'D': 3}
-_lapack_letter = ['s', 'd', 'c', 'z']
 _array_kind = {'i':0, 'l': 0, 'f': 0, 'd': 0, 'F': 1, 'D': 1}
 _array_precision = {'i': 1, 'l': 1, 'f': 0, 'd': 1, 'F': 0, 'D': 1}
 _array_type = [['f', 'd'], ['F', 'D']]
@@ -108,7 +111,7 @@ def solve(a, b):
 
 def inv(a):
     a, wrap = _makearray(a)
-    return wrap(solve_linear_equations(a, identity(a.shape[0])))
+    return wrap(solve(a, identity(a.shape[0])))
 
 # Cholesky decomposition
 
@@ -415,8 +418,7 @@ def det(a):
         lapack_routine = lapack_lite.dgetrf
     pivots = zeros((n,), 'i')
     results = lapack_routine(n, n, a, n, pivots, 0)
-    sign = add.reduce(not_equal(pivots,
-                                                arrayrange(1, n+1))) % 2
+    sign = add.reduce(not_equal(pivots, arrayrange(1, n+1))) % 2
     return (1.-2.*sign)*multiply.reduce(diagonal(a),axis=-1)
 
 # Linear Least Squares
