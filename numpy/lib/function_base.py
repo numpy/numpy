@@ -670,10 +670,10 @@ def cov(m,y=None, rowvar=1, bias=0):
     else:
         return (dot(X,X.transpose().conj())/fact).squeeze()
     
-def corrcoef(x, y=None):
+def corrcoef(x, y=None, rowvar=1, bias=0):
     """The correlation coefficients
     """
-    c = cov(x, y)
+    c = cov(x, y, rowvar, bias)
     try:
         d = diag(c)
     except ValueError: # scalar covariance
