@@ -644,10 +644,11 @@ def cov(m,y=None, rowvar=1, bias=0):
         rowvar = 1
     if rowvar:
         axis = 0
-        tup = (newaxis, slice(None))
+        tup = (slice(None),newaxis)
     else:
         axis = 1
-        tup = (slice(None),newaxis)
+        tup = (newaxis, slice(None))
+
         
     if y is not None:
         y = asarray(y,ndmin=2)
