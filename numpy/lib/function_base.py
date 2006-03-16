@@ -622,47 +622,53 @@ class vectorize(object):
         else:
             return tuple([x.astype(c) for x, c in zip(self.ufunc(*args), self.otypes)])
 
-def cov(m,y=None, rowvar=0, bias=0):
+def cov(m,y=None, rowvar=1, bias=0):
     """Estimate the covariance matrix.
 
-    If m is a vector, return the variance.  For matrices where each row
-    is an observation, and each column a variable, return the covariance
-    matrix.  Note that in this case diag(cov(m)) is a vector of
-    variances for each column.
+    If m is a vector, return the variance.  For matrices return the
+    covariance matrix.
 
-    cov(m) is the same as cov(m, m)
+    If y is given it is treated as an additional (set of)
+    variable(s). 
 
     Normalization is by (N-1) where N is the number of observations
     (unbiased estimate).  If bias is 1 then normalization is by N.
 
-    If rowvar is zero, then each row is a variable with
-    observations in the columns.
+    If rowvar is non-zero (default), then each row is a variable with
+    observations in the columns, otherwise each column
+    is a variable and the observations are in the rows.
     """
-    if y is None:
-        y = asarray(m)
-    else:
-        y = asarray(y)
-        m = asarray(m)
+
+    X = asarray(m,ndmin=2)
+    if X.shape[0] == 1:
+        rowvar = 1
     if rowvar:
-        m = m.transpose()
-        y = y.transpose()
-    if (m.shape[0] == 1):
-        m = m.transpose()
-    if (y.shape[0] == 1):
-        y = y.transpose()
-    N = m.shape[0]
-    if (y.shape[0] != N):
-        raise ValueError, "x and y must have the same number of observations."
-    m = m - m.mean(axis=0)
-    y = y - y.mean(axis=0)
+        axis = 0
+        tup = (newaxis, slice(None))
+    else:
+        axis = 1
+        tup = (slice(None),newaxis)
+        
+    if y is not None:
+        y = asarray(y,ndmin=2)
+        X = concatenate((X,y),axis)
+
+    X -= X.mean(axis=axis)[tup]
+    if rowvar:
+        N = X.shape[1]
+    else:
+        N = X.shape[0]
+
     if bias:
         fact = N*1.0
     else:
         fact = N-1.0
 
-    val = squeeze(dot(m.transpose(),y.conj()) / fact)
-    return val
-
+    if not rowvar:
+        return (dot(X.transpose(), X.conj()) / fact).squeeze()
+    else:
+        return (dot(X,X.transpose().conj())/fact).squeeze()
+    
 def corrcoef(x, y=None):
     """The correlation coefficients
     """
