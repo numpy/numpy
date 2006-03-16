@@ -1,33 +1,14 @@
 /* -*- c -*- */
 
+#ifndef _MULTIARRAYMODULE
+#define _MULTIARRAYMODULE
+#endif
+#include "numpy/arrayscalars.h"
 static int PyArrayScalar_Offset[PyArray_NTYPES+1];
-/* to be exposed in C-API */
-#define PyArrayScalar_False ((PyObject *)&_PyArrayScalar_BoolValues[0])
-#define PyArrayScalar_True ((PyObject *)&_PyArrayScalar_BoolValues[1])
-#define PyArrayScalar_RETURN_BOOL_FROM_LONG(i)			\
-	return Py_INCREF(&_PyArrayScalar_BoolValues[((i)!=0)]),	\
-		(PyObject *)&_PyArrayScalar_BoolValues[((i)!=0)]
-#define PyArrayScalar_RETURN_FALSE		\
-	return Py_INCREF(PyArrayScalar_False),	\
-		PyArrayScalar_False
-#define PyArrayScalar_RETURN_TRUE		\
-	return Py_INCREF(PyArrayScalar_True),	\
-		PyArrayScalar_True
-/* end to be exposed in C-API */
 
 #define _SOFFSET_(obj, type_num) ((char *)(obj) + PyArrayScalar_Offset[(type_num)])
 
-/**begin repeat
-#name=Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble,  CFloat, CDouble, CLongDouble, Object,#
-#type=Bool, signed char, short, int, long, longlong, unsigned char, unsigned short, unsigned int, unsigned long, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, PyObject *,char#
-*/
-typedef struct {
-	PyObject_HEAD
-	@type@ obval;
-} Py@name@ScalarObject;
-/**end repeat**/
-
-static PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
+static PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
 	{PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
 	{PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
 };
@@ -50,17 +31,6 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 };
 /**end repeat**/
 
-
-#define PyStringScalarObject PyStringObject
-#define PyUnicodeScalarObject PyUnicodeObject
-
-typedef struct {
-	PyObject_VAR_HEAD
-	char *obval;
-	PyArray_Descr *descr;
-	int flags;
-	PyObject *base;
-} PyVoidScalarObject;
 
 /* no error checking is performed -- ctypeptr must be same type as scalar */
 /* in case of flexible type, the data is not copied 
@@ -1658,9 +1628,9 @@ bool_arrtype_nonzero(PyObject *a)
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
 static PyNumberMethods bool_arrtype_as_number = {
-	0,					/* nb_add */
+	bool_arrtype_or,			/* nb_add */
 	0,					/* nb_subtract */
-	0,					/* nb_multiply */
+	bool_arrtype_and,			/* nb_multiply */
 	0,					/* nb_divide */
 	0,					/* nb_remainder */
 	0,					/* nb_divmod */

@@ -790,7 +790,7 @@ PyArray_FromDims(int nd, int *d, int type)
 	*/
 	if (ret && (PyArray_DESCR(ret)->type_num != PyArray_OBJECT)) {
 		memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
-	}
+	} 
 	return ret;
 }
 

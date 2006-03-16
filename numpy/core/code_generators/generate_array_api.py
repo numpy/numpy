@@ -4,13 +4,18 @@ import genapi
 types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
          'Inexact',
          'Floating', 'ComplexFloating', 'Flexible', 'Character',
-         'Bool','Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
+         'Byte','Short','Int', 'Long', 'LongLong', 'UByte', 'UShort',
          'UInt', 'ULong', 'ULongLong', 'Float', 'Double', 'LongDouble',
          'CFloat', 'CDouble', 'CLongDouble', 'Object', 'String', 'Unicode',
          'Void']
 
 h_template = r"""
 #ifdef _MULTIARRAYMODULE
+
+typedef struct {
+	PyObject_HEAD
+	Bool obval;
+} PyBoolScalarObject;
 
 static PyTypeObject PyBigArray_Type;
 static PyTypeObject PyArray_Type;
@@ -20,6 +25,8 @@ static PyTypeObject PyArrayIter_Type;
 static PyTypeObject PyArrayMapIter_Type;
 static PyTypeObject PyArrayMultiIter_Type;
 static int PyArray_NUMUSERTYPES=0;
+static PyTypeObject PyBoolArrType_Type;
+static PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 
 %s
 
@@ -46,6 +53,8 @@ static void **PyArray_API=NULL;
 #define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[4])
 #define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[5])
 #define PyArray_NUMUSERTYPES (*(int *)PyArray_API[6])
+#define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[7])
+#define _PyArrayScalar_BoolValues (*(PyObject **)PyArray_API[8])
 
 %s
 
@@ -92,6 +101,8 @@ void *PyArray_API[] = {
         (void *) &PyArrayIter_Type,
         (void *) &PyArrayMultiIter_Type,
         (int *) &PyArray_NUMUSERTYPES,
+        (void *) &PyBoolArrType_Type,
+        (void *) &_PyArrayScalar_BoolValues,
 %s
 };
 """
@@ -103,7 +114,7 @@ def generate_api(output_dir):
                                              'multiarray_api_order.txt')
     # API fixes for __arrayobject_api.h
 
-    fixed = 7
+    fixed = 9
     numtypes = len(types) + fixed
     numobject = len(objectapi_list) + numtypes
     nummulti = len(multiapi_list)

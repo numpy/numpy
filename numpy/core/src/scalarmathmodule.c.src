@@ -1,5 +1,7 @@
 /* The purpose of this module is to add faster math for array scalars
-    that does not go through the ufunc machinery
+    that does not go through the ufunc machinery  
+
+    but still supports error-modes. 
 
     NOT FINISHED
  */
@@ -8,9 +10,152 @@
 #include "numpy/ufuncobject.h"
 
 
-/**begin repeat
-name=bool,
+/**end repeat**/
 
+
+/**begin repeat
+#name=byte,ubyte,short,ushort,int,uint,long,ulong,float,double,longdouble,cfloat,cdouble,clongdouble#
+**/
+
+static PyObject *
+@name@_add(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_subtract(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_multiply(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_divide(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_remainder(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_divmod(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_power(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_negative(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_copy(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_absolute(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_nonzero_number(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_invert(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_lshift(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_rshift(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_and(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_xor(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_or(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_int(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_long(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_float(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_oct(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_hex(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_floor_divide(PyObject *a, PyObject *b)
+{
+}
+
+static PyObject *
+@name@_true_divide(PyObject *a, PyObject *b)
+{
+}
+
+#if PY_VERSION_HEX >= 0x02050000
+static Py_ssize_t
+@name@_index(PyObject *a)
+{
+}
+#endif
+
+
+static PyObject*
+@name@_richcompare(PyObject *self, PyObject *other, int cmp_op)
+{
+}
+/**end repeat**/
+
+
+
+
+/**begin repeat
+#name=byte,ubyte,short,ushort,int,uint,long,ulong,float,double,longdouble,cfloat,cdouble,clongdouble#
 **/
 static PyNumberMethods @name@_as_number = {
         (binaryfunc)@name@_add,                    /*nb_add*/
@@ -51,30 +196,17 @@ static PyNumberMethods @name@_as_number = {
         (binaryfunc)@name@_true_divide,             /*nb_true_divide*/
         0,                                         /*nb_inplace_floor_divide*/
         0,                                         /*nb_inplace_true_divide*/
-
+#if PY_VERSION_HEX >= 0x02050000
+	(lenfunc)@name@_index,                     /*nb_index*/
+#endif
 };
-
-/**end repeat**/
-
-
-/**begin repeat
-
-**/
-
-static PyObject*
-@name@_richcompare(PyObject *self, PyObject *other, int cmp_op)
-{
-}
-/**end repeat**/
-
-
 
 static void
 add_scalarmath(void)
 {
 /**begin repeat
-name=bool,
-NAME=Bool
+#name=byte,ubyte,short,ushort,int,uint,long,ulong,float,double,longdouble,cfloat,cdouble,clongdouble#
+#NAME=Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble#
 **/
 	PyArr@NAME@Type_Type.tp_as_number = @name@_as_number;
 	PyArr@NAME@Type_Type.tp_richcompare = @name@_richcompare;
