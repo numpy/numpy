@@ -7,7 +7,6 @@
 
 __all__ = ['MachAr']
 
-from numpy.core.numeric import array
 from numpy.core.oldnumeric import any
 
 # Need to speed this up...especially for longfloat

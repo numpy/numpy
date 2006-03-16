@@ -26,7 +26,8 @@ __all__ = ['fft','inverse_fft', 'ifft', 'real_fft', 'refft',
            'fft2d', 'inverse_fft2d', 'real_fftnd', 'real_fft2d',
            'inverse_real_fftnd', 'inverse_real_fft2d','fftn','ifftn']
 
-from numpy.core import *
+from numpy.core import asarray, zeros, swapaxes, shape, Complex, conjugate, \
+     Float, take
 import fftpack_lite as fftpack
 from helper import *
 

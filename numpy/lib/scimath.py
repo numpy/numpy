@@ -7,21 +7,22 @@ __all__ = ['sqrt', 'log', 'log2', 'logn','log10', 'power', 'arccos',
            'arcsin', 'arctanh']
 
 import numpy.core.numeric as nx
-from numpy.core.numeric import *
+import numpy.core.numerictypes as nt
+from numpy.core.numeric import asarray, any
+from numpy.lib.type_check import isreal, asscalar
 
-from type_check import isreal, asscalar
 
 __all__.extend([key for key in dir(nx.umath)
                 if key[0] != '_' and key not in __all__])
 
-_ln2 = log(2.0)
+_ln2 = nx.log(2.0)
 
 def _tocomplex(arr):
-    if isinstance(arr.dtype, (nx.single, nx.byte, nx.short, nx.ubyte,
-                              nx.ushort)):
-        return arr.astype(nx.csingle)
+    if isinstance(arr.dtype, (nt.single, nt.byte, nt.short, nt.ubyte,
+                              nt.ushort)):
+        return arr.astype(nt.csingle)
     else:
-        return arr.astype(nx.cdouble)
+        return arr.astype(nt.cdouble)
 
 def _fix_real_lt_zero(x):
     x = asarray(x)

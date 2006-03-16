@@ -4,7 +4,8 @@ __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'apply_along_axis', 'repmat', 'kron']
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import *
+from numpy.core.numeric import asarray, zeros, newaxis, outerproduct, \
+     concatenate, isscalar, array
 from numpy.core.oldnumeric import product, reshape
 
 def apply_along_axis(func1d,axis,arr,*args):
