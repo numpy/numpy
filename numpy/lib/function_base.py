@@ -674,7 +674,10 @@ def corrcoef(x, y=None):
     """The correlation coefficients
     """
     c = cov(x, y)
-    d = diag(c)
+    try:
+        d = diag(c)
+    except ValueError: # scalar covariance
+        return 1
     return c/sqrt(multiply.outer(d,d))
 
 def blackman(M):
