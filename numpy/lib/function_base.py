@@ -653,7 +653,7 @@ def cov(m,y=None, rowvar=1, bias=0):
         y = asarray(y,ndmin=2)
         X = concatenate((X,y),axis)
 
-    X -= X.mean(axis=axis)[tup]
+    X -= X.mean(axis=1-axis)[tup]
     if rowvar:
         N = X.shape[1]
     else:
