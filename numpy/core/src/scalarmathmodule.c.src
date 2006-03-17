@@ -1,3 +1,5 @@
+/* -*- c -*- */
+
 /* The purpose of this module is to add faster math for array scalars
     that does not go through the ufunc machinery  
 
@@ -10,8 +12,19 @@
 #include "numpy/ufuncobject.h"
 
 
-/**end repeat**/
+/* The general strategy is to
 
+1) Check to see if it's a scalar of the same type and do 
+   a quick exit. 
+2) Check to see if it's a Python scalar and do a
+   quick exit.
+3) Check to see if it's another array scalar, and cast it
+   and exit
+4) Check to see if it's a 0-d array and convert it 
+   and exit.
+5) Go through the ufunc machinery for all other cases. 
+
+*/
 
 /**begin repeat
 #name=byte,ubyte,short,ushort,int,uint,long,ulong,float,double,longdouble,cfloat,cdouble,clongdouble#
