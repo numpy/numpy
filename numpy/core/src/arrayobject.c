@@ -6711,6 +6711,21 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 	return ret;
 }
 
+/*OBJECT_API
+  See if array scalars can be cast.
+ */
+static Bool
+PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
+{
+	int fromtype;
+	int totype;
+
+	fromtype = _typenum_fromtypeobj((PyObject *)from, 0);
+	totype = _typenum_fromtypeobj((PyObject *)to, 0);
+	if (fromtype == PyArray_NOTYPE || totype == PyArray_NOTYPE) 
+		return FALSE;
+	return (Bool) PyArray_CanCastSafely(fromtype, totype);	
+}
 
 
 /*********************** Element-wise Array Iterator ***********************/

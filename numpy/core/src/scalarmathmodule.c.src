@@ -14,20 +14,24 @@
 
 /* The general strategy is to
 
-1) Check to see if it's a scalar of the same type and do 
-   a quick exit. 
-2) Check to see if it's a Python scalar and do a
-   quick exit.
-3) Check to see if it's another array scalar, and cast it
-   and exit
-4) Check to see if it's a 0-d array and convert it 
-   and exit.
+1) Make self the array scalar and "other" the other data-type
+2) If both are the same data-type, then do a quick exit.
+3) If other is another array scalar, then
+   a) If it can be cast then cast and calculate
+   b) Otherwise, return NotImplemented 
+       (or call the appropriate function on other... ---
+         shortcut what Python will do anyway). 
+4) If other is a 0-d array
+    -- Cast it to an array scalar and do #3
+5) If other is a Python scalar
+    -- Cast it to an array scalar and do #3
 5) Go through the ufunc machinery for all other cases. 
 
 */
 
 /**begin repeat
 #name=byte,ubyte,short,ushort,int,uint,long,ulong,float,double,longdouble,cfloat,cdouble,clongdouble#
+#Name=Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble##
 **/
 
 static PyObject *
