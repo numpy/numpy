@@ -5,6 +5,7 @@ import sys
 import warnings
 
 from numpy.distutils.cpuinfo import cpu
+from numpy.distutils.ccompiler import simple_version_match
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command, find_executable
 from numpy.distutils.misc_util import mingw32
@@ -12,8 +13,7 @@ from numpy.distutils.misc_util import mingw32
 class GnuFCompiler(FCompiler):
 
     compiler_type = 'gnu'
-    version_pattern = r'GNU Fortran ((\(GCC[^\)]*(\)\)|\)))|)\s*'\
-                      '(?P<version>[^\s*\)]+)'
+    version_match = simple_version_match(start=r'GNU Fortran (?!95)')
 
     # 'g77 --version' results
     # SunOS: GNU Fortran (GCC 3.2) 3.2 20020814 (release)
@@ -111,8 +111,8 @@ class GnuFCompiler(FCompiler):
                 opt.append('gcc')
         if g2c is not None:
             opt.append(g2c)
-        if sys.platform == 'darwin':
-            opt.append('cc_dynamic')
+#        if sys.platform == 'darwin':
+#            opt.append('cc_dynamic')
         return opt
 
     def get_flags_debug(self):
@@ -222,10 +222,12 @@ class GnuFCompiler(FCompiler):
 class Gnu95FCompiler(GnuFCompiler):
 
     compiler_type = 'gnu95'
-    version_pattern = r'GNU Fortran 95 \(GCC (?P<version>[^\s*\)]+)'
+    version_match = simple_version_match(start='GNU Fortran 95')
 
     # 'gfortran --version' results:
     # Debian: GNU Fortran 95 (GCC 4.0.3 20051023 (prerelease) (Debian 4.0.2-3))
+    # OS X: GNU Fortran 95 (GCC) 4.1.0
+    #       GNU Fortran 95 (GCC) 4.2.0 20060218 (experimental)
 
     for fc_exe in map(find_executable,['gfortran','f95']):
         if os.path.isfile(fc_exe):

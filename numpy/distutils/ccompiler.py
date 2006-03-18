@@ -206,26 +206,55 @@ def CCompiler_customize(self, dist, need_cxx=0):
 CCompiler.customize = new.instancemethod(\
     CCompiler_customize,None,CCompiler)
 
+def simple_version_match(pat=r'[-.\d]+', ignore=None, start=''):
+    def matcher(self, version_string):
+        pos = 0
+        if start:
+            m = re.match(start, version_string)
+            if not m:
+                return None
+            pos = m.end()
+        while 1:
+            m = re.search(pat, version_string[pos:])
+            if not m:
+                return None
+            if ignore and re.match(ignore, m.group(0)):
+                pos = m.end()
+                continue
+            break
+        return m.group(0)
+    return matcher
+
 def CCompiler_get_version(self, force=0, ok_status=[0]):
     """ Compiler version. Returns None if compiler is not available. """
     if not force and hasattr(self,'version'):
         return self.version
-    if not (hasattr(self,'version_cmd') and
-            hasattr(self,'version_pattern')):
-        #log.warn('%s does not provide version_cmd and version_pattern attributes' \
-        #         % (self.__class__))
+    try:
+        version_cmd = self.version_cmd
+    except AttributeError:
         return
+    cmd = ' '.join(version_cmd)
+    try:
+        matcher = self.version_match
+    except AttributeError:
+        try:
+            pat = self.version_pattern
+        except AttributeError:
+            return
+        def matcher(version_string):
+            m = re.match(pat, version_string)
+            if not m:
+                return None
+            version = m.group('version')
+            return version
 
-    cmd = ' '.join(self.version_cmd)
     status, output = exec_command(cmd,use_tee=0)
     version = None
     if status in ok_status:
-        m = re.match(self.version_pattern,output)
-        if m:
-            version = m.group('version')
-            if not m:
-                raise ValueError("compiler version not matched (%r)" % (version,))
-            version = LooseVersion(version)
+        version = matcher(output)
+        if not version:
+            raise ValueError("compiler version not matched (%r)" % (version,))
+        version = LooseVersion(version)
     self.version = version
     return version
 
