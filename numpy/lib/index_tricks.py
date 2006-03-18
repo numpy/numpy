@@ -113,11 +113,11 @@ class nd_grid(object):
                     step = (key[k].stop - start)/float(step-1)
                 nn[k] = (nn[k]*step+start)
             if self.sparse:
-                slobj = [_nx.NewAxis]*len(size)
+                slobj = [_nx.newaxis]*len(size)
                 for k in range(len(size)):
                     slobj[k] = slice(None,None)
                     nn[k] = nn[k][slobj]
-                    slobj[k] = _nx.NewAxis
+                    slobj[k] = _nx.newaxis
             return nn
         except (IndexError, TypeError):
             step = key.step

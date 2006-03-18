@@ -82,7 +82,7 @@ def _assertSquareness(*arrays):
 def solve(a, b):
     one_eq = len(b.shape) == 1
     if one_eq:
-        b = b[:, NewAxis]
+        b = b[:, newaxis]
     _assertRank2(a, b)
     _assertSquareness(a)
     n_eq = a.shape[0]
@@ -400,7 +400,7 @@ def pinv(a, rcond = 1.e-10):
         else:
             s[i] = 0.;
     return wrap(dot(transpose(vt),
-                       multiply(s[:, NewAxis],transpose(u))))
+                       multiply(s[:, newaxis],transpose(u))))
 
 # Determinant
 
@@ -440,7 +440,7 @@ Singular values less than s[0]*rcond are treated as zero.
     b, wrap = _makearray(b)
     one_eq = len(b.shape) == 1
     if one_eq:
-        b = b[:, NewAxis]
+        b = b[:, newaxis]
     _assertRank2(a, b)
     m  = a.shape[0]
     n  = a.shape[1]

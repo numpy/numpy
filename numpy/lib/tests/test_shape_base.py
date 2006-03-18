@@ -212,7 +212,7 @@ class test_atleast_3d(ScipyTestCase):
     def check_2D_array(self):
         a = array([[1,2],[1,2]]); b = array([[2,3],[2,3]]);
         res=map(atleast_3d,[a,b])
-        desired = [a[:,:,NewAxis],b[:,:,NewAxis]]
+        desired = [a[:,:,newaxis],b[:,:,newaxis]]
         assert_array_equal(res,desired)
     def check_3D_array(self):
         a = array([[1,2],[1,2]]); b = array([[2,3],[2,3]]);
