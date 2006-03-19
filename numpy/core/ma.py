@@ -13,7 +13,7 @@ import umath
 import oldnumeric
 from numeric import newaxis, ndarray, inf
 from oldnumeric import typecodes, amax, amin
-from numerictypes import *
+from numerictypes import bool_
 import numeric
 import warnings
 
