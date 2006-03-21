@@ -17,6 +17,7 @@ typedef struct {
 	Bool obval;
 } PyBoolScalarObject;
 
+static unsigned int PyArray_GetNDArrayCVersion (void);
 static PyTypeObject PyBigArray_Type;
 static PyTypeObject PyArray_Type;
 static PyTypeObject PyArrayDescr_Type;
@@ -46,15 +47,16 @@ static void **PyArray_API=NULL;
 #endif
 #endif
 
-#define PyBigArray_Type (*(PyTypeObject *)PyArray_API[0])
-#define PyArray_Type (*(PyTypeObject *)PyArray_API[1])
-#define PyArrayDescr_Type (*(PyTypeObject *)PyArray_API[2])
-#define PyArrayFlags_Type (*(PyTypeObject *)PyArray_API[3])
-#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[4])
-#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[5])
-#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[6])
-#define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[7])
-#define _PyArrayScalar_BoolValues (*(PyObject **)PyArray_API[8])
+#define PyArray_GetNDArrayCVersion (*(unsigned int (*)(void)) PyArray_API[0])
+#define PyBigArray_Type (*(PyTypeObject *)PyArray_API[1])
+#define PyArray_Type (*(PyTypeObject *)PyArray_API[2])
+#define PyArrayDescr_Type (*(PyTypeObject *)PyArray_API[3])
+#define PyArrayFlags_Type (*(PyTypeObject *)PyArray_API[4])
+#define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[5])
+#define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[6])
+#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[7])
+#define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[8])
+#define _PyArrayScalar_BoolValues (*(PyObject **)PyArray_API[9])
 
 %s
 
@@ -94,6 +96,7 @@ c_template = r"""
 */
 
 void *PyArray_API[] = {
+        (void *) PyArray_GetNDArrayCVersion,
         (void *) &PyBigArray_Type,
         (void *) &PyArray_Type,
         (void *) &PyArrayDescr_Type,
@@ -114,7 +117,7 @@ def generate_api(output_dir):
                                              'multiarray_api_order.txt')
     # API fixes for __arrayobject_api.h
 
-    fixed = 9
+    fixed = 10
     numtypes = len(types) + fixed
     numobject = len(objectapi_list) + numtypes
     nummulti = len(multiapi_list)

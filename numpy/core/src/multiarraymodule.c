@@ -175,20 +175,21 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
  Ravel
 */
 static PyObject *
-PyArray_Ravel(PyArrayObject *a, int fortran)
+PyArray_Ravel(PyArrayObject *a, PyArray_CONDITION fortran)
 {
 	PyArray_Dims newdim = {NULL,1};
 	intp val[1] = {-1};
 
-	if (fortran < 0) fortran = PyArray_ISFORTRAN(a);
-
+	if (fortran == PyArray_DONTCARE) 
+		fortran = PyArray_ISFORTRAN(a);
+	
 	newdim.ptr = val;
 	if (!fortran && PyArray_ISCONTIGUOUS(a)) {
 		if (a->nd == 1) {
 			Py_INCREF(a);
 			return (PyObject *)a;
 		}
-		return PyArray_Newshape(a, &newdim);
+		return PyArray_Newshape(a, &newdim, PyArray_FALSE);
 	}
 	else
 	        return PyArray_Flatten(a, fortran);
@@ -312,12 +313,13 @@ PyArray_Round(PyArrayObject *a, int decimals)
  Flatten
 */
 static PyObject *
-PyArray_Flatten(PyArrayObject *a, int fortran)
+PyArray_Flatten(PyArrayObject *a, PyArray_CONDITION fortran)
 {
 	PyObject *ret, *new;
 	intp size;
 
-	if (fortran < 0) fortran = PyArray_ISFORTRAN(a);
+	if (fortran == PyArray_DONTCARE) 
+		fortran = PyArray_ISFORTRAN(a);
 
 	size = PyArray_SIZE(a);
 	Py_INCREF(a->descr);
@@ -364,7 +366,7 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
         PyArray_Dims newdims;
 
         if (!PyArray_IntpConverter(shape, &newdims)) return NULL;
-        ret = PyArray_Newshape(self, &newdims);
+        ret = PyArray_Newshape(self, &newdims, PyArray_FALSE);
         PyDimMem_FREE(newdims.ptr);
         return ret;
 }
@@ -400,14 +402,11 @@ _check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
 
 /* Returns a new array 
    with the new shape from the data
-   in the old array
+   in the old array --- uses C-contiguous perspective.
 */
 
-/*MULTIARRAY_API
- New shape for an array
-*/
 static PyObject * 
-PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
+_old_newshape(PyArrayObject *self, PyArray_Dims *newdims)
 {
         intp i, s_original, i_unknown, s_known;
         intp *dimensions = newdims->ptr;
@@ -494,6 +493,63 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims)
 	PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
 	
         return (PyObject *)ret;
+}
+
+/* Used to reshape a Fortran Array */
+static void
+_reverse_shape(PyArray_Dims *newshape)
+{
+	int i, n = newshape->len;
+	intp *ptr = newshape->ptr;
+	intp *eptr;
+	intp tmp;
+	int len = n >> 1;
+
+	eptr = ptr+n-1;
+	for(i=0; i<len; i++) {
+		tmp = *eptr;
+		*eptr-- = *ptr;
+		*ptr++ = tmp;
+	}
+}
+
+
+/*MULTIARRAY_API
+ New shape for an array
+*/
+static PyObject * 
+PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newshape, 
+		 PyArray_CONDITION fortran)
+{
+	PyObject *tmp, *ret;
+
+	if (fortran == PyArray_DONTCARE)
+		fortran = PyArray_ISFORTRAN(self);
+
+	if ((newshape->len == 0) || (PyArray_ISCONTIGUOUS(self) && \
+				    (fortran != PyArray_TRUE))) {
+		ret = _old_newshape(self, newshape);
+	}
+	else if ((fortran == PyArray_TRUE) && PyArray_ISFORTRAN(self)) {
+		tmp = PyArray_Transpose(self, NULL);
+		if (tmp == NULL) return NULL;
+		_reverse_shape(newshape);
+		ret = _old_newshape((PyArrayObject *)tmp, newshape);
+		Py_DECREF(tmp);
+		if (ret == NULL) return NULL;
+		tmp = PyArray_Transpose((PyArrayObject *)ret, NULL);
+		Py_DECREF(ret);
+		if (tmp == NULL) return NULL;
+		ret = tmp;
+	}
+	else {
+		tmp = PyArray_Copy(self);
+		if (tmp==NULL) return NULL;
+		ret = _old_newshape((PyArrayObject *)tmp, newshape);
+		Py_DECREF(tmp);
+	}
+
+	return ret;
 }
 
 /* return a new view of the array object with all of its unit-length 
@@ -3244,13 +3300,31 @@ PyArray_Converter(PyObject *object, PyObject **address)
 static int
 PyArray_BoolConverter(PyObject *object, Bool *val)
 {    
-    if (PyObject_IsTrue(object))
-        *val=TRUE;
-    else *val=FALSE;
-    if (PyErr_Occurred())
-        return PY_FAIL;
-    return PY_SUCCEED;
+	if (PyObject_IsTrue(object))
+		*val=TRUE;
+	else *val=FALSE;
+	if (PyErr_Occurred())
+		return PY_FAIL;
+	return PY_SUCCEED;
 }
+
+/*MULTIARRAY_API
+ Convert an object to true / false
+*/
+static int
+PyArray_ConditionConverter(PyObject *object, PyArray_CONDITION *val)
+{    
+
+	if (object == Py_None) 
+		*val = PyArray_DONTCARE;
+	else if (PyObject_IsTrue(object))
+		*val=PyArray_TRUE;
+	else *val=PyArray_FALSE;
+	if (PyErr_Occurred())
+		return PY_FAIL;
+	return PY_SUCCEED;
+}
+
 
 
 /*MULTIARRAY_API
@@ -4370,14 +4444,14 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	int ndmin=0, nd;
 	PyArray_Descr *type=NULL;
 	PyArray_Descr *oldtype=NULL;
-	Bool fortran=FALSE;
+	PyArray_CONDITION fortran=PyArray_DONTCARE;
 	int flags=0;
 
 	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i", kwd, &op, 
 					PyArray_DescrConverter2,
                                         &type, 
 					PyArray_BoolConverter, &copy, 
-					PyArray_BoolConverter, &fortran,
+					PyArray_ConditionConverter, &fortran,
                                         PyArray_BoolConverter, &subok, 
 					&ndmin)) 
 		return NULL;
@@ -4385,7 +4459,8 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	/* fast exit if simple call */
 	if (PyArray_CheckExact(op)) {
 		if (type==NULL) {
-			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
+			if (!copy && (fortran == PyArray_DONTCARE	\
+				      || fortran==PyArray_ISFORTRAN(op))) {
 				Py_INCREF(op);
 				ret = op;
 				goto finish;
@@ -4399,7 +4474,8 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 		/* One more chance */
 		oldtype = PyArray_DESCR(op);
 		if (PyArray_EquivTypes(oldtype, type)) {
-			if (!copy && fortran==PyArray_ISFORTRAN(op)) {
+			if (!copy && (fortran == PyArray_DONTCARE || \
+				      fortran==PyArray_ISFORTRAN(op))) {
 				Py_INCREF(op);
 				ret = op;
 				goto finish;
@@ -4419,10 +4495,12 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	if (copy) {
 		flags = ENSURECOPY;
 	}
-	if (fortran) {
+	if (fortran!=PyArray_FALSE && \
+	    ((fortran == PyArray_TRUE) ||
+	     (PyArray_Check(op) && PyArray_ISFORTRAN(op)))) {
 		flags |= FORTRAN;
 	}
-        if (!subok) {
+	if (!subok) {
                 flags |= ENSUREARRAY;
         }
 
@@ -5421,8 +5499,9 @@ array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 	return PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
 }
 
-/*MULTIARRAY_API
- GetNDArrayCVersion
+/*
+Included at the very first so not auto-grabbed and thus not 
+labeled.
 */
 static unsigned int
 PyArray_GetNDArrayCVersion(void)

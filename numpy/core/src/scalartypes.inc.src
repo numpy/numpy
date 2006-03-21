@@ -952,7 +952,7 @@ gentype_wraparray(PyObject *scalar, PyObject *args)
 
 /**begin repeat
 
-#name=tolist, item, tostring, astype, copy, __deepcopy__, choose, searchsorted, reshape, view, swapaxes, conj, conjugate, nonzero, flatten, ravel, fill, transpose, newbyteorder#
+#name=tolist, item, tostring, astype, copy, __deepcopy__, choose, searchsorted, view, swapaxes, conj, conjugate, nonzero, flatten, ravel, fill, transpose, newbyteorder#
 */
 
 static PyObject *
@@ -1011,7 +1011,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 
 /**begin repeat
 
-#name=take, getfield, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress, sort, argsort, round, argmax, argmin, max, min, ptp, any, all, resize#
+#name=take, getfield, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress, sort, argsort, round, argmax, argmin, max, min, ptp, any, all, resize, reshape#
 */
 
 static PyObject *
@@ -1186,7 +1186,8 @@ static PyMethodDef gentype_methods[] = {
 	{"setfield", (PyCFunction)gentype_setfield, 
 	 METH_VARARGS | METH_KEYWORDS, NULL},
         {"copy", (PyCFunction)gentype_copy, 1, NULL},  
-        {"resize", (PyCFunction)gentype_resize, 1, NULL}, 
+        {"resize", (PyCFunction)gentype_resize, 
+	 METH_VARARGS|METH_KEYWORDS, NULL}, 
 
 	{"__array__", (PyCFunction)gentype_getarray, 1, doc_getarray},
 	{"__array_wrap__", (PyCFunction)gentype_wraparray, 1, doc_sc_wraparray},
@@ -1229,7 +1230,7 @@ static PyMethodDef gentype_methods[] = {
 	{"argmin",  (PyCFunction)gentype_argmin,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"reshape",	(PyCFunction)gentype_reshape, 
-	 METH_VARARGS, NULL},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"squeeze",	(PyCFunction)gentype_squeeze, 
 	 METH_VARARGS, NULL},
 	{"view",  (PyCFunction)gentype_view, 

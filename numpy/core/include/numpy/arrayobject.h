@@ -79,7 +79,7 @@ extern "C" CONFUSE_EMACS
 #define PY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x00090702
+#define NDARRAY_VERSION 0x00090703
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -235,6 +235,12 @@ typedef enum {
 	PyArray_COMPLEX_SCALAR=5,
 	PyArray_OBJECT_SCALAR=6,
 } PyArray_SCALARKIND;
+
+typedef enum {
+	PyArray_DONTCARE=-1,
+	PyArray_FALSE=0,
+	PyArray_TRUE=1,
+} PyArray_CONDITION;
 
 	/* Define bit-width array types and typedefs */
 

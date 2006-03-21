@@ -56,6 +56,7 @@ PyArray_BufferConverter
 PyArray_AxisConverter
 PyArray_BoolConverter
 PyArray_ByteorderConverter
+PyArray_ConditionConverter
 PyArray_EquivTypes
 PyArray_Zeros
 PyArray_Empty
@@ -64,6 +65,4 @@ PyArray_Arange
 PyArray_ArangeObj
 PyArray_SortkindConverter
 PyArray_LexSort
-PyArray_GetNDArrayCVersion
 PyArray_Round
-

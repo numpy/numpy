@@ -801,10 +801,11 @@ PyArray_FromDims(int nd, int *d, int type)
  Copy an array.
 */
 static PyObject *
-PyArray_NewCopy(PyArrayObject *m1, int fortran)
+PyArray_NewCopy(PyArrayObject *m1, PyArray_CONDITION fortran)
 {
 	PyArrayObject *ret;
-	if (fortran < 0) fortran = PyArray_ISFORTRAN(m1);
+	if (fortran == PyArray_DONTCARE) 
+		fortran = PyArray_ISFORTRAN(m1);
 
 	Py_INCREF(m1->descr);
 	ret = (PyArrayObject *)PyArray_NewFromDescr(m1->ob_type,
@@ -4098,7 +4099,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
  object.
 */
 static PyObject *
-PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
+PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
+	       PyArray_CONDITION fortran)
 {
         intp oldsize, newsize;
         int new_nd=newshape->len, k, n, elsize;
@@ -4114,6 +4116,9 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
                                 "resize only works on single-segment arrays");
                 return NULL;
         }
+
+	if (fortran == PyArray_DONTCARE)
+		fortran = PyArray_FALSE;
 
         newsize = PyArray_MultiplyList(new_dimensions, new_nd);
         oldsize = PyArray_SIZE(self);

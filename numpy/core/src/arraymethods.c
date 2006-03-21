@@ -67,36 +67,28 @@ array_putmask(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_PutMask(self, values, mask);
 }
 
-/* Used to reshape a Fortran Array */
-static void
-_reverse_shape(PyArray_Dims *newshape)
-{
-	int i, n = newshape->len;
-	intp *ptr = newshape->ptr;
-	intp *eptr;
-	intp tmp;
-	int len = n >> 1;
-
-	eptr = ptr+n-1;
-	for(i=0; i<len; i++) {
-		tmp = *eptr;
-		*eptr-- = *ptr;
-		*ptr++ = tmp;
-	}
-}
-
 static char doc_reshape[] = \
-	"self.reshape(d1, d2, ..., dn) Return a new array from this one. \n" \
-	"\n  The new array must have the same number of elements as self. "\
+	"self.reshape(d1, d2, ..., dn, fortran=False) \n"	\
+	"Return a new array from this one. \n"				\
+	"\n  The new array must have the same number of elements as self. " \
 	"Also\n   a copy of the data only occurs if necessary.";
 
 static PyObject *
-array_reshape(PyArrayObject *self, PyObject *args) 
+array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
         PyArray_Dims newshape;
-        PyObject *ret, *tmp;
+        PyObject *ret;
+	PyArray_CONDITION fortran=PyArray_FALSE;
 	int n;
 	
+	if (kwds != NULL) {
+		PyObject *ref;
+		ref = PyDict_GetItemString(kwds, "fortran");
+		if (ref == NULL || \
+		    (PyArray_ConditionConverter(ref, &fortran) == PY_FAIL))
+			return NULL;
+	}
+
 	n = PyTuple_Size(args);
 	if (n <= 1) {
 		if (!PyArg_ParseTuple(args, "O&", PyArray_IntpConverter, 
@@ -116,30 +108,11 @@ array_reshape(PyArrayObject *self, PyObject *args)
 		PyDimMem_FREE(newshape.ptr);
 		return PyArray_Ravel(self, 0);
 	}
+	
+	ret = PyArray_Newshape(self, &newshape, fortran);
 
-	if ((newshape.len == 0) || PyArray_ISCONTIGUOUS(self)) {
-		ret = PyArray_Newshape(self, &newshape);
-	}
-	else if PyArray_ISFORTRAN(self) {
-		tmp = PyArray_Transpose(self, NULL);
-		if (tmp == NULL) goto fail;
-		_reverse_shape(&newshape);
-		ret = PyArray_Newshape((PyArrayObject *)tmp, &newshape);
-		Py_DECREF(tmp);
-		if (ret == NULL) goto fail;
-		tmp = PyArray_Transpose((PyArrayObject *)ret, NULL);
-		Py_DECREF(ret);
-		if (tmp == NULL) goto fail;
-		ret = tmp;
-	}
-	else {
-		tmp = PyArray_Copy(self);
-		if (tmp==NULL) goto fail;
-		ret = PyArray_Newshape((PyArrayObject *)tmp, &newshape);
-		Py_DECREF(tmp);
-	}
 	PyDimMem_FREE(newshape.ptr);
-        return _ARET(ret);
+        return ret;
 
  fail:
 	PyDimMem_FREE(newshape.ptr);
@@ -642,21 +615,22 @@ array_getarray(PyArrayObject *self, PyObject *args)
 }
 
 static char doc_copy[] = "m.copy(|fortran). Return a copy of the array.\n"\
-	"If fortran == 0 then the result is contiguous (default). \n"\
-	"If fortran >  0 then the result has fortran data order. \n"\
-	"If fortran <  0 then the result has fortran data order only if m\n"
+	"If fortran is false then the result is contiguous (default). \n"\
+	"If fortran is true  then the result has fortran data order. \n"\
+	"If fortran is None  then the result has fortran data order only if m\n"
 	"   is already in fortran order.";
 
 static PyObject *
 array_copy(PyArrayObject *self, PyObject *args) 
 {
-	int fortran=0;
-        if (!PyArg_ParseTuple(args, "|i", &fortran)) return NULL;
+	PyArray_CONDITION fortran=PyArray_FALSE;
+        if (!PyArg_ParseTuple(args, "|O&", PyArray_ConditionConverter,
+			      &fortran)) return NULL;
 	
         return PyArray_NewCopy(self, fortran);
 }
 
-static char doc_resize[] = "self.resize(new_shape, refcheck=True).  "\
+static char doc_resize[] = "self.resize(new_shape, refcheck=True, fortran=False).  "\
 	"Change size and shape of self inplace.\n"\
 	"\n    Array must own its own memory and not be referenced by other " \
 	"arrays\n    Returns None.";
@@ -668,6 +642,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
         PyObject *ret;
 	int n;
 	int refcheck = 1;
+	PyArray_CONDITION fortran=PyArray_DONTCARE;
 	
 	if (kwds != NULL) {
 		PyObject *ref;
@@ -678,6 +653,10 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 				return NULL;
 			}
 		}
+		ref = PyDict_GetItemString(kwds, "fortran");
+		if (ref != NULL || 
+		    (PyArray_ConditionConverter(ref, &fortran) == PY_FAIL))
+			return NULL;
 	}
 	n = PyTuple_Size(args);
 	if (n <= 1) {
@@ -692,9 +671,8 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 			} 
 			return NULL;			
 		}
-	}
-	
-	ret = PyArray_Resize(self, &newshape, refcheck);
+	}	
+	ret = PyArray_Resize(self, &newshape, refcheck, fortran);
         PyDimMem_FREE(newshape.ptr);
         if (ret == NULL) return NULL;
 	Py_DECREF(ret);
@@ -1465,11 +1443,12 @@ static char doc_flatten[] = "a.flatten([fortran]) return a 1-d array (always cop
 static PyObject *
 array_flatten(PyArrayObject *self, PyObject *args)
 {
-	int fortran=0;
+	PyArray_CONDITION fortran=PyArray_FALSE;
 
-	if (!PyArg_ParseTuple(args, "|i", &fortran)) return NULL;
+	if (!PyArg_ParseTuple(args, "|O&", PyArray_ConditionConverter, 
+			      &fortran)) return NULL;
         
-	return PyArray_Flatten(self, (int) fortran);
+	return PyArray_Flatten(self, fortran);
 }
 
 static char doc_ravel[] = "a.ravel([fortran]) return a 1-d array (copy only if needed)";
@@ -1477,9 +1456,10 @@ static char doc_ravel[] = "a.ravel([fortran]) return a 1-d array (copy only if n
 static PyObject *
 array_ravel(PyArrayObject *self, PyObject *args)
 {
-	int fortran=0;
-
-	if (!PyArg_ParseTuple(args, "|i", &fortran)) return NULL;
+	PyArray_CONDITION fortran=PyArray_FALSE;
+	
+	if (!PyArg_ParseTuple(args, "|O&", PyArray_ConditionConverter, 
+			      &fortran)) return NULL;
 
 	return PyArray_Ravel(self, fortran);
 }
@@ -1642,7 +1622,7 @@ static PyMethodDef array_methods[] = {
 	{"argmin",  (PyCFunction)array_argmin,
 	 METH_VARARGS|METH_KEYWORDS, doc_argmin},
 	{"reshape",	(PyCFunction)array_reshape, 
-	 METH_VARARGS, doc_reshape},
+	 METH_VARARGS|METH_KEYWORDS, doc_reshape},
 	{"squeeze",	(PyCFunction)array_squeeze,
 	 METH_VARARGS, doc_squeeze},
 	{"view",  (PyCFunction)array_view, 
