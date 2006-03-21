@@ -253,8 +253,9 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
     if status in ok_status:
         version = matcher(output)
         if not version:
-            raise ValueError("compiler version not matched (%r)" % (version,))
-        version = LooseVersion(version)
+            log.warn("Couldn't match compiler version for %r" % (output,))
+        else:
+            version = LooseVersion(version)
     self.version = version
     return version
 

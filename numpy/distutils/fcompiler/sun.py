@@ -2,12 +2,16 @@ import os
 import sys
 
 from numpy.distutils.cpuinfo import cpu
+from numpy.distutils.ccompiler import simple_version_match
 from numpy.distutils.fcompiler import FCompiler
 
 class SunFCompiler(FCompiler):
 
     compiler_type = 'sun'
-    version_pattern = r'(f90|f95): (Sun|Forte Developer 7|WorkShop 6 update \d+) Fortran 95 (?P<version>[^\s]+).*'
+    # ex:
+    # f90: Sun WorkShop 6 update 2 Fortran 95 6.2 Patch 111690-10 2003/08/28
+    version_match = simple_version_match(
+                      start=r'f9[05]: (Sun|Forte|WorkShop).*Fortran 95')
 
     executables = {
         'version_cmd'  : ["f90", "-V"],
