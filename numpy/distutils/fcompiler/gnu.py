@@ -111,8 +111,8 @@ class GnuFCompiler(FCompiler):
                 opt.append('gcc')
         if g2c is not None:
             opt.append(g2c)
-#        if sys.platform == 'darwin':
-#            opt.append('cc_dynamic')
+        if sys.platform == 'darwin':
+            opt.append('cc_dynamic')
         return opt
 
     def get_flags_debug(self):
