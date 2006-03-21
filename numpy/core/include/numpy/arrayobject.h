@@ -1428,10 +1428,12 @@ typedef struct {
 	(PyObject_TypeCheck((obj), &Py##cls##ArrType_Type))
 #define PyArray_CheckScalar(m) (PyArray_IsScalar(m, Generic) || \
                                 PyArray_IsZeroDim(m))
-#define PyArray_IsPythonScalar(obj) \
+#define PyArray_IsPythonNumber(obj) \
 	(PyInt_Check(obj) || PyFloat_Check(obj) || PyComplex_Check(obj) || \
-	 PyLong_Check(obj) || PyBool_Check(obj) || PyString_Check(obj) || \
-	 PyUnicode_Check(obj))
+	 PyLong_Check(obj) || PyBool_Check(obj))
+#define PyArray_IsPythonScalar(obj) \
+	(PyArray_IsPythonNumber(obj) || PyString_Check(obj) ||  \
+         PyUnicode_Check(obj))
 #define PyArray_IsAnyScalar(obj)					\
 	(PyArray_IsScalar(obj, Generic) || PyArray_IsPythonScalar(obj))
 #define PyArray_CheckAnyScalar(obj) (PyArray_IsPythonScalar(obj) || \

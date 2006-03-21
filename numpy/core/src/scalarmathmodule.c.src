@@ -29,6 +29,21 @@
 
 */
 
+#define _CREATE_SELF_OTHER(a, b, NAME) {                        \
+                if PyObject_IsScalar(a, NAME) {                 \
+                        self = a;                               \
+                        other = b;                              \
+                }                                               \
+                else {                                          \
+                        self = a;                               \
+                        other = b;                              \
+                        if (!PyObject_IsScalar(self, @NAME@)) { \
+                                Py_INCREF(Py_NotImplemented);   \
+                                return Py_NotImplemented;       \
+                        }                                       \
+                }                                               \
+        }                                                       
+
 /**begin repeat
 #name=byte,ubyte,short,ushort,int,uint,long,ulong,float,double,longdouble,cfloat,cdouble,clongdouble#
 #Name=Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble##
@@ -37,6 +52,19 @@
 static PyObject *
 @name@_add(PyObject *a, PyObject *b)
 {
+        PyObject *self, *other, *arg3, *temp;
+
+        _CREATE_SELF_OTHER(a, b, @NAME@);
+        
+        if PyObject_IsScalar(other, @NAME@) {
+                arg3 = other;
+                Py_INCREF(arg3);
+        }
+        else if ((temp = _object_to_scalar(other)) != NULL) {
+                
+        }
+
+        
 }
 
 static PyObject *
