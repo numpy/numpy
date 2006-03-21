@@ -400,24 +400,73 @@ _check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
 	return 0;
 }
 
+static int
+_fix_unknown_dimension(PyArray_Dims *newshape, intp s_original)
+{
+        intp *dimensions;
+	intp i_unknown, s_known;
+	int i, n;
+	static char msg[] = "total size of new array must be unchanged";	
+	
+	dimensions = newshape->ptr;
+	n = newshape->len;	
+	s_known = 1;
+	i_unknown = -1;
+	
+	for(i=0; i<n; i++) {
+		if (dimensions[i] < 0) {
+			if (i_unknown == -1) {
+				i_unknown = i;
+			} else {
+				PyErr_SetString(PyExc_ValueError, 
+						"can only specify one"	\
+						" unknown dimension");
+				return -1;
+			}
+		} else {
+			s_known *= dimensions[i];
+		}
+	}
+		
+	if (i_unknown >= 0) {
+		if ((s_known == 0) || (s_original % s_known != 0)) {
+			PyErr_SetString(PyExc_ValueError, msg);
+			return -1;
+		}
+		dimensions[i_unknown] = s_original/s_known;
+	} else {
+		if (s_original != s_known) {
+			PyErr_SetString(PyExc_ValueError, msg);
+			return -1;
+		}
+	}
+	return 0;
+}
+
 /* Returns a new array 
    with the new shape from the data
-   in the old array --- uses C-contiguous perspective.
+   in the old array --- order-perspective depends on fortran argument.
 */
 
+/*MULTIARRAY_API
+ New shape for an array
+*/
 static PyObject * 
-_old_newshape(PyArrayObject *self, PyArray_Dims *newdims)
+PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims, 
+		 PyArray_CONDITION fortran)
 {
-        intp i, s_original, i_unknown, s_known;
-        intp *dimensions = newdims->ptr;
+        intp i;
+	intp *dimensions = newdims->ptr;
         PyArrayObject *ret;
-	char msg[] = "total size of new array must be unchanged";
 	int n = newdims->len;
-        Bool same;
+        Bool same, incref;
 	intp *strides = NULL;
 	intp newstrides[MAX_DIMS];
 
-        /*  Quick check to make sure anything needs to be done */
+	if (fortran == PyArray_DONTCARE)
+		fortran = PyArray_ISFORTRAN(self);
+	
+        /*  Quick check to make sure anything actually needs to be done */
         if (n == self->nd) {
                 same = TRUE;
                 i=0;
@@ -428,7 +477,7 @@ _old_newshape(PyArrayObject *self, PyArray_Dims *newdims)
                 }
                 if (same) return PyArray_View(self, NULL, NULL);
         }
-	
+			
 	/* Returns a pointer to an appropriate strides array
 	   if all we are doing is inserting ones into the shape,
 	   or removing ones from the shape 
@@ -436,48 +485,48 @@ _old_newshape(PyArrayObject *self, PyArray_Dims *newdims)
 	i=_check_ones(self, n, dimensions, newstrides);
 	if (i==0) strides=newstrides;
 	
-	if (strides==NULL) {
-		if (!PyArray_ISCONTIGUOUS(self)) {
-			PyErr_SetString(PyExc_ValueError, 
-					"changing shape that way "\
-					"only works on contiguous arrays");
-			return NULL;
+	if (strides==NULL) {		
+		if ((n == 0) ||
+		    (PyArray_ISCONTIGUOUS(self) && (fortran != PyArray_TRUE)) ||
+		    (PyArray_ISFORTRAN(self) && (fortran != PyArray_FALSE))) {
+			incref = TRUE;		
+		}
+		else {
+			PyObject *tmp;
+			tmp = PyArray_NewCopy(self, fortran);
+			if (tmp==NULL) return NULL;
+			self = (PyArrayObject *)tmp;
+			incref = FALSE;
 		}
 		
-		s_known = 1;
-		i_unknown = -1;
-		
-		for(i=0; i<n; i++) {
-			if (dimensions[i] < 0) {
-				if (i_unknown == -1) {
-					i_unknown = i;
-				} else {
-					PyErr_SetString(PyExc_ValueError, 
-							"can only specify one" \
-							" unknown dimension");
-					return NULL;
-				}
-			} else {
-				s_known *= dimensions[i];
+		if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0)
+			goto fail;
+	}
+	else {
+		incref = TRUE;
+		/* replace any 0-valued strides with
+		   appropriate value to preserve contiguousness
+		*/
+		if (fortran == PyArray_TRUE) {
+			if (strides[0] == 0) 
+				strides[0] = self->descr->elsize;
+			for (i=1; i<n; i++) {
+				if (strides[i] == 0)
+					strides[i] = strides[i-1] *	\
+						dimensions[i-1];
 			}
 		}
-		
-		s_original = PyArray_SIZE(self);
-		
-		if (i_unknown >= 0) {
-			if ((s_known == 0) || (s_original % s_known != 0)) {
-				PyErr_SetString(PyExc_ValueError, msg);
-				return NULL;
-			}
-			dimensions[i_unknown] = s_original/s_known;
-		} else {
-			if (s_original != s_known) {
-				PyErr_SetString(PyExc_ValueError, msg);
-				return NULL;
+		else {
+			if (strides[n-1] == 0)
+				strides[n-1] = self->descr->elsize;
+			for (i=n-2; i>-1; i--) {
+				if (strides[i] == 0)
+					strides[i] = strides[i+1] *	\
+						dimensions[i+1];
 			}
 		}
 	}
-        
+	
 	Py_INCREF(self->descr);
 	ret = (PyAO *)PyArray_NewFromDescr(self->ob_type,
 					   self->descr,
@@ -486,71 +535,19 @@ _old_newshape(PyArrayObject *self, PyArray_Dims *newdims)
 					   self->data,
 					   self->flags, (PyObject *)self);
 	
-	if (ret== NULL) return NULL;
+	if (ret== NULL) goto fail;
 	
-        Py_INCREF(self);
+        if (incref) Py_INCREF(self);
         ret->base = (PyObject *)self;
 	PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
 	
         return (PyObject *)ret;
+	
+ fail:
+	if (!incref) {Py_DECREF(self);}
+	return NULL;
 }
 
-/* Used to reshape a Fortran Array */
-static void
-_reverse_shape(PyArray_Dims *newshape)
-{
-	int i, n = newshape->len;
-	intp *ptr = newshape->ptr;
-	intp *eptr;
-	intp tmp;
-	int len = n >> 1;
-
-	eptr = ptr+n-1;
-	for(i=0; i<len; i++) {
-		tmp = *eptr;
-		*eptr-- = *ptr;
-		*ptr++ = tmp;
-	}
-}
-
-
-/*MULTIARRAY_API
- New shape for an array
-*/
-static PyObject * 
-PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newshape, 
-		 PyArray_CONDITION fortran)
-{
-	PyObject *tmp, *ret;
-
-	if (fortran == PyArray_DONTCARE)
-		fortran = PyArray_ISFORTRAN(self);
-
-	if ((newshape->len == 0) || (PyArray_ISCONTIGUOUS(self) && \
-				    (fortran != PyArray_TRUE))) {
-		ret = _old_newshape(self, newshape);
-	}
-	else if ((fortran == PyArray_TRUE) && PyArray_ISFORTRAN(self)) {
-		tmp = PyArray_Transpose(self, NULL);
-		if (tmp == NULL) return NULL;
-		_reverse_shape(newshape);
-		ret = _old_newshape((PyArrayObject *)tmp, newshape);
-		Py_DECREF(tmp);
-		if (ret == NULL) return NULL;
-		tmp = PyArray_Transpose((PyArrayObject *)ret, NULL);
-		Py_DECREF(ret);
-		if (tmp == NULL) return NULL;
-		ret = tmp;
-	}
-	else {
-		tmp = PyArray_Copy(self);
-		if (tmp==NULL) return NULL;
-		ret = _old_newshape((PyArrayObject *)tmp, newshape);
-		Py_DECREF(tmp);
-	}
-
-	return ret;
-}
 
 /* return a new view of the array object with all of its unit-length 
    dimensions squeezed out if needed, otherwise
