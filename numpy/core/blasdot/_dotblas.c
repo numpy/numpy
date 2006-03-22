@@ -274,6 +274,12 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
             else if (nd == 2) {
                 dimensions[0] = oap1->dimensions[0];
                 dimensions[1] = oap2->dimensions[1];
+		/* We need to make sure that dot(shape=(1,1), shape=(1,N))
+		   and dot(shape=(N,1),shape=(1,1)) uses
+		   scalar multiplication appropriately
+		*/
+		if (ap1shape == _row) l = dimensions[1];
+		else l = dimensions[0];
             }
 	}
     }
