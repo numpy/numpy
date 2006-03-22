@@ -2138,12 +2138,8 @@ array.choose = _m(_choose)
 del _choose
 
 def _clip(self,a_min,a_max):
-    try:
-        result = MaskedArray(data = self.data.clip(a_min, a_max),
-                             mask = self.mask)
-    except AttributeError:
-        result = _wrapit(self, 'clip', a_min, a_max)
-    return result
+    return MaskedArray(data = self.data.clip(a_min, a_max),
+                       mask = self.mask)
 array.clip = _m(_clip)
 
 def _compress(self, cond, axis=None):
@@ -2183,11 +2179,8 @@ array.nonzero = _m(nonzero)
 array.prod = _m(product)
 
 def _ptp(a,axis=0):
-    try:
-        result = a.max(axis)-a.min(axis)
-    except AttributeError:
-        result = _wrapit(a, 'ptp', axis)
-    return result
+    return a.max(axis)-a.min(axis)
+
 array.ptp = _m(_ptp)
 array.repeat = _m(repeat)
 array.resize = _m(resize)
@@ -2200,12 +2193,8 @@ array.std = _m(not_implemented)
 array.strides = property(_m(not_implemented))
 array.sum = _m(sum)
 def _swapaxes(self,axis1,axis2):
-    try:
-        result = MaskedArray(data = self.data.swapaxes(axis1, axis2),
-                             mask = self.mask.swapaxes(axis1, axis2))
-    except AttributeError:
-        result = _wrapit(self, 'swapaxes', axis1, axis2)
-    return result
+    return MaskedArray(data = self.data.swapaxes(axis1, axis2),
+                       mask = self.mask.swapaxes(axis1, axis2))
 array.swapaxes = _m(_swapaxes)
 array.take = _m(take)
 array.tofile = _m(not_implemented)
