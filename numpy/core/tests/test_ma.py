@@ -698,6 +698,77 @@ class test_ufuncs(ScipyTestCase):
             x = array([1,0,2,0], mask=[0,0,1,1])
             self.failUnless(eq(nonzero(x), [0]))
 
+
+class test_array_methods(ScipyTestCase):
+        
+    def setUp(self):
+        x = numpy.array([ 8.375,  7.545,  8.828,  8.5  ,  1.757,  5.928,  
+                          8.43 ,  7.78 ,  9.865,  5.878,  8.979,  4.732,  
+                          3.012,  6.022,  5.095,  3.116,  5.238,  3.957,  
+                          6.04 ,  9.63 ,  7.712,  3.382,  4.489,  6.479,
+                          7.189,  9.645,  5.395,  4.961,  9.894,  2.893,  
+                          7.357,  9.828,  6.272,  3.758,  6.693,  0.993])
+        X = x.reshape(6,6)
+        XX = x.reshape(3,2,2,3)
+    
+        m = numpy.array([0, 1, 0, 1, 0, 0, 
+                         1, 0, 1, 1, 0, 1, 
+                         0, 0, 0, 1, 0, 1, 
+                         0, 0, 0, 1, 1, 1, 
+                         1, 0, 0, 1, 0, 0, 
+                         0, 0, 1, 0, 1, 0])
+        mx = array(data=x,mask=m)
+        mX = array(data=X,mask=m.reshape(X.shape))
+        mXX = array(data=XX,mask=m.reshape(XX.shape))
+    
+        m2 = numpy.array([1, 1, 0, 1, 0, 0, 
+                          1, 1, 1, 1, 0, 1, 
+                          0, 0, 1, 1, 0, 1, 
+                          0, 0, 0, 1, 1, 1, 
+                          1, 0, 0, 1, 1, 0, 
+                          0, 0, 1, 0, 1, 1])
+        m2x = array(data=x,mask=m2)
+        m2X = array(data=X,mask=m2.reshape(X.shape))
+        m2XX = array(data=XX,mask=m2.reshape(XX.shape))
+        self.d =  (x,X,XX,m,mx,mX,mXX)
+
+    #------------------------------------------------------
+    def test_trace(self):
+        (x,X,XX,m,mx,mX,mXX,) = self.d
+        mXdiag = mX.diagonal()
+        self.assertEqual(mX.trace(), mX.diagonal().compressed().sum())
+        self.failUnless(eq(mX.trace(),
+                           X.trace() - sum(mXdiag.mask*X.diagonal())))
+
+    def test_clip(self):
+        (x,X,XX,m,mx,mX,mXX,) = self.d
+        clipped = mx.clip(2,8)
+        self.failUnless(eq(clipped.mask,mx.mask))
+        self.failUnless(eq(clipped.data,x.clip(2,8)))
+        self.failUnless(eq(clipped.data,mx.data.clip(2,8)))
+
+    def test_ptp(self):
+        (x,X,XX,m,mx,mX,mXX,) = self.d
+        (n,m) = X.shape
+        self.assertEqual(mx.ptp(),mx.compressed().ptp())
+        rows = numpy.zeros(n,numpy.float_)
+        cols = numpy.zeros(m,numpy.float_)
+        for k in range(m):
+            cols[k] = mX[:,k].compressed().ptp()
+        for k in range(n):
+            rows[k] = mX[k].compressed().ptp()
+        self.failUnless(eq(mX.ptp(0),cols))
+        self.failUnless(eq(mX.ptp(1),rows))
+
+    def test_swapaxes(self):
+        (x,X,XX,m,mx,mX,mXX,) = self.d
+        mXswapped = mX.swapaxes(0,1)
+        self.failUnless(eq(mXswapped[-1],mX[:,-1]))
+        mXXswapped = mXX.swapaxes(0,2)
+        self.assertEqual(mXXswapped.shape,(2,2,3,3))
+
+
+
 def eqmask(m1, m2):
     if m1 is nomask:
         return m2 is nomask

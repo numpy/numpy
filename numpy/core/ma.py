@@ -378,7 +378,7 @@ class masked_binary_operation:
         result = self.f(d1, d2, *args, **kwargs)
         return masked_array(result, m)
 
-    def reduce (self, target, axis=0):
+    def reduce (self, target, axis=0, dtype=None):
         """Reduce target along the given axis with this function."""
         m = getmask(target)
         t = filled(target, self.filly)
@@ -391,7 +391,9 @@ class masked_binary_operation:
             return masked_array (self.f.reduce (t, axis))
         else:
             t = masked_array (t, m)
-            t = self.f.reduce(filled(t, self.filly), axis)
+            # XXX: "or t.dtype" below is a workaround for what appears
+            # XXX: to be a bug in reduce.
+            t = self.f.reduce(filled(t, self.filly), axis, dtype=dtype or t.dtype)
             m = umath.logical_and.reduce(m, axis)
             if isinstance(t, ndarray):
                 return masked_array(t, m, get_fill_value(target))
@@ -1834,10 +1836,21 @@ def concatenate (arrays, axis=0):
     dm = numeric.concatenate(dm, axis)
     return masked_array(d, mask=dm)
 
+def swapaxes (a, axis1, axis2):
+    m = getmask(a)
+    d = masked_array(a).data
+    if m is nomask:
+        return masked_array(data=numeric.swapaxes(d, axis1, axis2))
+    else:
+        return masked_array(data=numeric.swapaxes(d, axis1, axis2),
+                            mask=numeric.swapaxes(m, axis1, axis2),)
+
+
 def take (a, indices, axis=0):
     "take(a, indices, axis=0) returns selection of items from a."
     m = getmask(a)
-    d = masked_array(a).raw_data()
+    # d = masked_array(a).raw_data()
+    d = masked_array(a).data
     if m is nomask:
         return masked_array(numeric.take(d, indices, axis))
     else:
@@ -2049,6 +2062,12 @@ def diagonal(a, k = 0, axis1=0, axis2=1):
         return masked_array(d, m)
     else:
         return masked_array(d, oldnumeric.diagonal(m, k, axis1, axis2))
+    
+def trace (a, offset=0, axis1=0, axis2=1, dtype=None):
+    """trace(a,offset=0, axis1=0, axis2=1) returns the sum along diagonals
+    (defined by the last two dimenions) of the array.
+    """
+    return diagonal(a, offset, axis1, axis2).sum(dtype=dtype)
 
 def argsort (x, axis = -1, fill_value=None):
     """Treating masked values as if they have the value fill_value,
@@ -2118,7 +2137,14 @@ def _choose(self, *args):
 array.choose = _m(_choose)
 del _choose
 
-array.clip = _m(not_implemented)
+def _clip(self,a_min,a_max):
+    try:
+        result = MaskedArray(data = self.data.clip(a_min, a_max),
+                             mask = self.mask)
+    except AttributeError:
+        result = _wrapit(self, 'clip', a_min, a_max)
+    return result
+array.clip = _m(_clip)
 
 def _compress(self, cond, axis=None):
     return compress(cond, self, axis)
@@ -2155,7 +2181,14 @@ array.nbytes = property(_m(not_implemented))
 array.newbyteorder = _m(not_implemented)
 array.nonzero = _m(nonzero)
 array.prod = _m(product)
-array.ptp = _m(not_implemented)
+
+def _ptp(a,axis=0):
+    try:
+        result = a.max(axis)-a.min(axis)
+    except AttributeError:
+        result = _wrapit(a, 'ptp', axis)
+    return result
+array.ptp = _m(_ptp)
 array.repeat = _m(repeat)
 array.resize = _m(resize)
 array.searchsorted = _m(not_implemented)
@@ -2166,10 +2199,17 @@ array.squeeze = _m(not_implemented)
 array.std = _m(not_implemented)
 array.strides = property(_m(not_implemented))
 array.sum = _m(sum)
-array.swapaxes = _m(not_implemented)
+def _swapaxes(self,axis1,axis2):
+    try:
+        result = MaskedArray(data = self.data.swapaxes(axis1, axis2),
+                             mask = self.mask.swapaxes(axis1, axis2))
+    except AttributeError:
+        result = _wrapit(self, 'swapaxes', axis1, axis2)
+    return result
+array.swapaxes = _m(_swapaxes)
 array.take = _m(take)
 array.tofile = _m(not_implemented)
-array.trace = _m(not_implemented)
+array.trace = _m(trace)
 array.transpose = _m(transpose)
 array.var = _m(not_implemented)
 array.view =  _m(not_implemented)
