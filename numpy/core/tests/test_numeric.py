@@ -78,6 +78,20 @@ class test_dot(ScipyTestCase):
         c2 = dot_(b2,b1)
         assert_almost_equal(c1, c2, decimal=self.N)
 
+    def check_vecscalar(self):
+        b1 = rand(1,1)
+        b2 = rand(1,8)
+        c1 = dot(b1,b2)
+        c2 = dot_(b1,b2)
+        assert_almost_equal(c1, c2, decimal=self.N)
+
+    def check_vecscalar2(self):
+        b1 = rand(8,1)
+        b2 = rand(1,1)
+        c1 = dot(b1,b2)
+        c2 = dot_(b1,b2)
+        assert_almost_equal(c1, c2, decimal=self.N)        
+
     def check_all(self):
         dims = [(),(1,),(1,1)]
         for dim1 in dims:

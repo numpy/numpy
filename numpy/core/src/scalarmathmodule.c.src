@@ -46,7 +46,7 @@
 
 /**begin repeat
 #name=byte,ubyte,short,ushort,int,uint,long,ulong,float,double,longdouble,cfloat,cdouble,clongdouble#
-#Name=Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble##
+#Name=Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble#
 **/
 
 static PyObject *
