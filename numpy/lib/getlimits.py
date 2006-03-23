@@ -5,7 +5,9 @@ __all__ = ['finfo']
 
 from machar import MachAr
 import numpy.core.numeric as numeric
+import numpy.core.numerictypes as ntypes
 from numpy.core.numeric import array
+
 
 def _frz(a):
     """fix rank-0 --> rank-1"""
@@ -13,9 +15,9 @@ def _frz(a):
     return a
 
 _convert_to_float = {
-    numeric.csingle: numeric.single,
-    numeric.complex_: numeric.float_,
-    numeric.clongfloat: numeric.longfloat
+    ntypes.csingle: ntypes.single,
+    ntypes.complex_: ntypes.float_,
+    ntypes.clongfloat: ntypes.longfloat
     }
 
 class finfo(object):
@@ -108,12 +110,12 @@ nexp  =%(nexp)6s   min=       -max
 ''' % self.__dict__
 
 if __name__ == '__main__':
-    f = finfo(numeric.single)
+    f = finfo(ntypes.single)
     print 'single epsilon:',f.eps
     print 'single tiny:',f.tiny
-    f = finfo(numeric.float)
+    f = finfo(ntypes.float)
     print 'float epsilon:',f.eps
     print 'float tiny:',f.tiny
-    f = finfo(numeric.longfloat)
+    f = finfo(ntypes.longfloat)
     print 'longfloat epsilon:',f.eps
     print 'longfloat tiny:',f.tiny
