@@ -4,7 +4,8 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'getbuffer',
            'where', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
            'register_dtype', 'set_numeric_ops', 'can_cast',
-           'asarray', 'asanyarray', 'isfortran', 'empty_like', 'zeros_like',
+           'asarray', 'asanyarray', 'ascontiguous', 'asfortran',
+           'isfortran', 'empty_like', 'zeros_like',
            'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
            'alterdot', 'restoredot', 'cross',
            'array2string', 'get_printoptions', 'set_printoptions',
@@ -118,6 +119,12 @@ def asanyarray(a, dtype=None, copy=False, fortran=None, ndmin=0):
     """will pass subclasses through...
     """
     return array(a, dtype, copy=copy, fortran=fortran, subok=1, ndmin=ndmin)
+
+def ascontiguous(a, dtype=None, copy=False):
+    return array(a, dtype, copy=copy, fortran=False, ndmin=1)
+
+def asfortran(a, dtype=None, copy=False):
+    return array(a, dtype, copy=copy, fortran=True, ndmin=1)
 
 def isfortran(a):
     return a.flags.fnc

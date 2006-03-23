@@ -4414,8 +4414,8 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
 
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))
 
-static char doc_fromobject[] = "array(object, dtype=None, copy=1, fortran=0, "\
-        "subok=0,ndmin=0)\n"\
+static char doc_fromobject[] = "array(object, dtype=None, copy=1, "\
+        "fortran=None, subok=0,ndmin=0)\n"\
         "will return a new array formed from the given object type given.\n"\
         "Object can be anything with an __array__ method, or any object\n"\
         "exposing the array interface, or any (nested) sequence.\n"\
@@ -4428,7 +4428,16 @@ static char doc_fromobject[] = "array(object, dtype=None, copy=1, fortran=0, "\
         "array may be returned. Otherwise, a base-class ndarray is returned\n"\
 	"The ndmin argument specifies how many dimensions the returned\n"\
 	"array should have as a minimum. 1's will be pre-pended to the\n"\
-	"shape as needed to meet this requirement.";
+	"shape as needed to meet this requirement. If fortran is None\n"\
+        "then single-segment array is not guaranteed.  If fortran is False\n" \
+        "then a C-style contiguous array will be returned. If fotran is True\n"\
+        "then a Fortran-style contiguous array will be returned.";
+
+#define STRIDING_OK(op, fortran) ((fortran) == PyArray_DONTCARE || \
+                                  ((fortran) == PyArray_FALSE &&   \
+                                   PyArray_ISCONTIGUOUS(op)) ||    \
+                                  ((fortran) == PyArray_TRUE &&    \
+                                   PyArray_ISFORTRAN(op)))
 
 static PyObject *
 _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
@@ -4444,6 +4453,12 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	PyArray_CONDITION fortran=PyArray_DONTCARE;
 	int flags=0;
 
+        if (PyTuple_GET_SIZE(args) > 2) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "only 2 non-keyword arguments accepted");
+                return NULL;
+        }
+
 	if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i", kwd, &op, 
 					PyArray_DescrConverter2,
                                         &type, 
@@ -4456,8 +4471,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	/* fast exit if simple call */
 	if (PyArray_CheckExact(op)) {
 		if (type==NULL) {
-			if (!copy && (fortran == PyArray_DONTCARE	\
-				      || fortran==PyArray_ISFORTRAN(op))) {
+			if (!copy && STRIDING_OK(op, fortran)) {
 				Py_INCREF(op);
 				ret = op;
 				goto finish;
@@ -4471,8 +4485,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 		/* One more chance */
 		oldtype = PyArray_DESCR(op);
 		if (PyArray_EquivTypes(oldtype, type)) {
-			if (!copy && (fortran == PyArray_DONTCARE || \
-				      fortran==PyArray_ISFORTRAN(op))) {
+			if (!copy && STRIDING_OK(op, fortran)) {
 				Py_INCREF(op);
 				ret = op;
 				goto finish;
@@ -4492,11 +4505,13 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	if (copy) {
 		flags = ENSURECOPY;
 	}
-	if (fortran!=PyArray_FALSE && \
-	    ((fortran == PyArray_TRUE) ||
-	     (PyArray_Check(op) && PyArray_ISFORTRAN(op)))) {
-		flags |= FORTRAN;
-	}
+        if (fortran == PyArray_FALSE) {
+                flags |= CONTIGUOUS;
+        }
+	else if ((fortran == PyArray_TRUE) ||
+                 (PyArray_Check(op) && PyArray_ISFORTRAN(op))) {
+                flags |= FORTRAN;
+        }
 	if (!subok) {
                 flags |= ENSUREARRAY;
         }
