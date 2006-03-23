@@ -151,9 +151,9 @@ class concatenator(object):
             res = makemat(res)
             if oldndim == 1 and self.col:
                 res = res.T
-        self.axis=self._axis
-        self.matrix=self._matrix
-        self.col=0
+        self.axis = self._axis
+        self.matrix = self._matrix
+        self.col = 0
         return res
 
     def __init__(self, axis=0, matrix=False):
@@ -306,7 +306,7 @@ class ndindex(object):
         if (axis < 0):  # base case
             return
         if (self.ind[axis] < self.maxvals[axis]-1):
-            self.ind[axis]+=1
+            self.ind[axis] += 1
         else:
             self.ind[axis] = 0
             self._incrementone(axis-1)
@@ -318,7 +318,7 @@ class ndindex(object):
         if (self.index >= self.total):
             raise StopIteration
         val = tuple(self.ind)
-        self.index+=1
+        self.index += 1
         self.ndincr()
         return val
 
