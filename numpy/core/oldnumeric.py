@@ -172,26 +172,26 @@ def _wrapit(obj, method, *args, **kwds):
 
 def take(a, indices, axis=0):
     try:
-        result = a.take(indices, axis)
+        take = a.take
     except AttributeError:
-        result = _wrapit(a, 'take', indices, axis)
-    return result
+        return _wrapit(a, 'take', indices, axis)
+    return take(indices, axis)
 
 def reshape(a, newshape, fortran=False):
     """Change the shape of a to newshape.  Return a new view object.
     """
     try:
-        result = a.reshape(newshape, fortran=fortran)
+        reshape = a.reshape
     except AttributeError:
-        result = _wrapit(a, 'reshape', newshape, fortran=fortran)
-    return result
+        return _wrapit(a, 'reshape', newshape, fortran=fortran)
+    return reshape(newshape, fortran=fortran)
 
 def choose(a, choices):
     try:
-        result = a.choose(choices)
+        choose = a.choose
     except AttributeError:
-        result = _wrapit(a, 'choose', choices)
-    return result
+        return _wrapit(a, 'choose', choices)
+    return choose(choices)
 
 def repeat(a, repeats, axis=0):
     """repeat elements of a repeats times along axis
@@ -202,10 +202,10 @@ def repeat(a, repeats, axis=0):
        The argument a can be anything array(a) will accept.
     """
     try:
-        result = a.repeat(repeats, axis)
+        repeat = a.repeat
     except AttributeError:
-        result = _wrapit(a, 'repeat', repeats, axis)
-    return result
+        return _wrapit(a, 'repeat', repeats, axis)
+    return repeat(repeats, axis)
 
 def put (a, ind, v):
     """put(a, ind, v) results in a[n] = v[n] for all n in ind
@@ -233,10 +233,10 @@ def swapaxes(a, axis1, axis2):
     interchanged.
     """
     try:
-        result = a.swapaxes(axis1, axis2)
+        swapaxes = a.swapaxes
     except AttributeError:
-        result = _wrapit(a, 'swapaxes', axis1, axis2)
-    return result
+        return _wrapit(a, 'swapaxes', axis1, axis2)
+    return swapaxes(axis1, axis2)
 
 def transpose(a, axes=None):
     """transpose(a, axes=None) returns array with dimensions permuted
@@ -244,10 +244,10 @@ def transpose(a, axes=None):
     dimensions reversed.
     """
     try:
-        result = a.transpose(axes)
+        transpose = a.transpose
     except AttributeError:
-        result = _wrapit(a, 'transpose', axes)
-    return result
+        return _wrapit(a, 'transpose', axes)
+    return transpose(axes)
 
 def sort(a, axis=-1):
     """sort(a,axis=-1) returns array with elements sorted along given axis.
@@ -261,39 +261,39 @@ def argsort(a, axis=-1):
     along the given axis, so that take(a,result,axis) is the sorted array.
     """
     try:
-        result = a.argsort(axis)
+        argsort = a.argsort
     except AttributeError:
-        result = _wrapit(a, 'argsort', axis)
-    return result
+        return _wrapit(a, 'argsort', axis)
+    return argsort(axis)
 
 def argmax(a, axis=-1):
     """argmax(a,axis=-1) returns the indices to the maximum value of the
     1-D arrays along the given axis.
     """
     try:
-        result = a.argmax(axis)
+        argmax = a.argmax
     except AttributeError:
-        result = _wrapit(a, 'argmax', axis)
-    return result
+        return _wrapit(a, 'argmax', axis)
+    return argmax(axis)
 
 def argmin(a, axis=-1):
     """argmin(a,axis=-1) returns the indices to the minimum value of the
     1-D arrays along the given axis.
     """
     try:
-        result = a.argmin(axis)
+        argmin = a.argmin
     except AttributeError:
-        result = _wrapit(a, 'argmin', axis)
-    return result
+        return _wrapit(a, 'argmin', axis)
+    return argmin(axis)
     
 def searchsorted(a, v):
     """searchsorted(a, v)
     """
     try:
-        result = a.searchsorted(v)
+        searchsorted = a.searchsorted
     except AttributeError:
-        result = _wrapit(a, 'searchsorted', v)
-    return result
+        return _wrapit(a, 'searchsorted', v)
+    return searchsorted(v)
 
 def resize(a, new_shape):
     """resize(a,new_shape) returns a new array with the specified shape.
@@ -329,10 +329,10 @@ def resize(a, new_shape):
 def squeeze(a):
     "Returns a with any ones from the shape of a removed"
     try:
-        result = a.squeeze()
+        squeeze = a.squeeze
     except AttributeError:
-        result = _wrapit(a, 'squeeze')
-    return result
+        return _wrapit(a, 'squeeze')
+    return squeeze()
 
 def diagonal(a, offset=0, axis1=0, axis2=1):
     """diagonal(a, offset=0, axis1=0, axis2=1) returns the given diagonals
@@ -357,10 +357,10 @@ def nonzero(a):
     a must be 1d
     """
     try:
-        result = a.nonzero()
+        nonzero = a.nonzero
     except AttributeError:
-        result = _wrapit(a, 'nonzero')
-    return result
+        return _wrapit(a, 'nonzero')
+    return nonzero()
 
 def shape(a):
     """shape(a) returns the shape of a (as a function call which
@@ -377,10 +377,10 @@ def compress(condition, m, axis=-1):
     to those elements of condition that are "true".  condition must be the
     same size as the given dimension of x."""
     try:
-        result = m.compress(condition, axis)
+        compress = m.compress
     except AttributeError:
-        result = _wrapit(m, 'compress', condition, axis)
-    return result
+        return _wrapit(m, 'compress', condition, axis)
+    return compress(condition, axis)
 
 def clip(m, m_min, m_max):
     """clip(m, m_min, m_max) = every entry in m that is less than m_min is
@@ -388,10 +388,10 @@ def clip(m, m_min, m_max):
     m_max.
     """
     try:
-        result = m.clip(m_min, m_max)
+        clip = m.clip
     except AttributeError:
-        result = _wrapit(m, 'clip', m_min, m_max)
-    return result
+        return _wrapit(m, 'clip', m_min, m_max)
+    return clip(m_min, m_max)
 
 def sum(x, axis=0, dtype=None):
     """Sum the array over the given axis.  The optional dtype argument
@@ -417,95 +417,95 @@ def sum(x, axis=0, dtype=None):
     if isinstance(x, _gentype):
         return _sum_(x)
     try:
-        result = x.sum(axis, dtype)
+        sum = x.sum
     except AttributeError:
-        result = _wrapit(x, 'sum', axis, dtype)
-    return result
+        return _wrapit(x, 'sum', axis, dtype)
+    return sum(axis, dtype)
 
 def product (x, axis=0, dtype=None):
     """Product of the array elements over the given axis."""
     try:
-        result = x.prod(axis, dtype)
+        prod = x.prod
     except AttributeError:
-        result = _wrapit(x, 'prod', axis, dtype)
-    return result
+        return _wrapit(x, 'prod', axis, dtype)
+    return prod(axis, dtype)
 
 def sometrue (x, axis=0):
     """Perform a logical_or over the given axis."""
     try:
-        result = x.any(axis)
+        any = x.any
     except AttributeError:
-        result = _wrapit(x, 'any', axis)
-    return result
+        return _wrapit(x, 'any', axis)
+    return any(axis)
 
 def alltrue (x, axis=0):
     """Perform a logical_and over the given axis."""
     try:
-        result = x.all(axis)
+        all = x.all
     except AttributeError:
-        result = _wrapit(x, 'all', axis)
-    return result
+        return _wrapit(x, 'all', axis)
+    return all(axis)
 
 def any(x,axis=None):
     """Return true if any elements of x are true:  
     """
     try:
-        result = x.any(axis)
+        any = x.any
     except AttributeError:
-        result = _wrapit(x, 'any', axis)
-    return result
+        return _wrapit(x, 'any', axis)
+    return any(axis)
 
 def all(x,axis=None):
     """Return true if all elements of x are true:  
     """
     try:
-        result = x.all(axis)
+        all = x.all
     except AttributeError:
-        result = _wrapit(x, 'all', axis)
-    return result
+        return _wrapit(x, 'all', axis)
+    return all(axis)
 
 def cumsum (x, axis=0, dtype=None):
     """Sum the array over the given axis."""
     try:
-        result = x.cumsum(axis, dtype)
+        cumsum = x.cumsum
     except AttributeError:
-        result = _wrapit(x, 'cumsum', axis, dtype)
-    return result
+        return _wrapit(x, 'cumsum', axis, dtype)
+    return cumsum(axis, dtype)
 
 def cumproduct (x, axis=0, dtype=None):
     """Sum the array over the given axis."""
     try:
-        result = x.cumprod(axis, dtype)
+        cumprod = x.cumprod
     except AttributeError:
-        result = _wrapit(x, 'cumprod', axis, dtype)
-    return result
+        return _wrapit(x, 'cumprod', axis, dtype)
+    return cumprod(axis, dtype)
 
 def ptp(a, axis=0):
     """Return maximum - minimum along the the given dimension
     """
     try:
-        result = a.ptp(axis)
+        ptp = a.ptp
     except AttributeError:
-        result = _wrapit(a, 'ptp', axis)
-    return result
+        return _wrapit(a, 'ptp', axis)
+    return ptp(axis)
 
 def amax(a, axis=0):
     """Return the maximum of 'a' along dimension axis.
     """
     try:
-        result = a.max(axis)
+        max = a.max
     except AttributeError:
-        result = _wrapit(a, 'max', axis)
-    return result
+        return _wrapit(a, 'max', axis)
+    return max(axis)
 
 def amin(a, axis=0):
     """Return the minimum of a along dimension axis.
     """
     try:
-        result = a.min(axis)
+        min = a.min
     except AttributeError:
-        result = _wrapit(a, 'min', axis)
-    return result
+        return _wrapit(a, 'min', axis)
+    return min(axis)
 
 def alen(a):
     """Return the length of a Python object interpreted as an array
@@ -520,19 +520,19 @@ def prod(a, axis=0, dtype=None):
     """Return the product of the elements along the given axis
     """
     try:
-        result = a.prod(axis, dtype)
+        prod = a.prod
     except AttributeError:
-        result = _wrapit(a, 'prod', axis, dtype)
-    return result
+        return _wrapit(a, 'prod', axis, dtype)
+    return prod(axis, dtype)
 
 def cumprod(a, axis=0, dtype=None):
     """Return the cumulative product of the elments along the given axis
     """
     try:
-        result = a.cumprod(axis, dtype)
+        cumprod = a.cumprod
     except AttributeError:
-        result = _wrapit(a, 'cumprod', axis, dtype)
-    return result
+        return _wrapit(a, 'cumprod', axis, dtype)
+    return cumprod(axis, dtype)
 
 def ndim(a):
     try:
@@ -570,30 +570,30 @@ def round_(a, decimals=0):
     and imaginary parts separately if the array is complex.
     """
     try:
-        result = a.round(decimals)
+        round = a.round
     except AttributeError:
-        result = _wrapit(a, 'round', decimals)
-    return result
+        return _wrapit(a, 'round', decimals)
+    return round(decimals)
 
 around = round_
 
 def mean(a, axis=0, dtype=None):
     try:
-        result = a.mean(axis, dtype)
+        mean = a.mean
     except AttributeError:
-        result = _wrapit(a, 'mean', axis, dtype)
-    return result        
+        return _wrapit(a, 'mean', axis, dtype)
+    return mean(axis, dtype)    
 
 def std(a, axis=0, dtype=None):
     try:
-        result = a.std(axis, dtype)
+        std = a.std
     except AttributeError:
-        result = _wrapit(a, 'std', axis, dtype)
-    return result
+        return _wrapit(a, 'std', axis, dtype)
+    return std(axis, dtype)
 
 def var(a, axis=0, dtype=None):
     try:
-        result = a.std(axis, dtype)
+        var = a.var
     except AttributeError:
-        result = _wrapit(a, 'var', axis, dtype)
-    return result
+        return _wrapit(a, 'var', axis, dtype)
+    return var(axis, dtype)
