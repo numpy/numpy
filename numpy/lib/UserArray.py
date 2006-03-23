@@ -1,9 +1,13 @@
-# Standard container-class for easy backward compatibility
-#   with Numeric.
-#   Try to inherit from the ndarray instead of using this
-#   class as this is not complete.
+"""
+Standard container-class for easy backward compatibility with Numeric.
+Try to inherit from the ndarray instead of using this class as this is not
+complete.
+"""
 
-from numpy.core import *
+from numpy.core import array, asarray, absolute, add, subtract, multiply, \
+     divide, remainder, power, left_shift, right_shift, bitwise_and, \
+     bitwise_or, bitwise_xor, invert, less, less_equal, not_equal, equal, \
+     greater, greater_equal, shape, reshape, arange, sin, sqrt, transpose
 
 class UserArray(object):
     def __init__(self, data, dtype=None, copy=True):
@@ -18,9 +22,6 @@ class UserArray(object):
     def __array__(self,t=None):
         if t: return self.array.astype(t)
         return self.array
-
-    def __float__(self):
-        return float(self.array)
 
     # Array as sequence
     def __len__(self): return len(self.array)
@@ -144,9 +145,9 @@ class UserArray(object):
     def __invert__(self):
         return self._rc(invert(self.array))
 
-    def _scalarfunc(a, func):
-        if len(a.shape) == 0:
-            return func(a[0])
+    def _scalarfunc(self, func):
+        if len(self.shape) == 0:
+            return func(self[0])
         else:
             raise TypeError, "only rank-0 arrays can be converted to Python scalars."
 
@@ -196,8 +197,6 @@ class UserArray(object):
 # Test of class UserArray
 #############################################################
 if __name__ == '__main__':
-    import numpy
-
     temp=reshape(arange(10000),(100,100))
 
     ua=UserArray(temp)
