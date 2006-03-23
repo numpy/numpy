@@ -2635,15 +2635,12 @@ array_remainder(PyArrayObject *m1, PyObject *m2)
         return PyArray_GenericBinaryFunction(m1, m2, n_ops.remainder);
 }
 
-
-static PyObject *array_float(PyArrayObject *v);
-static PyObject *gentype_float(PyObject *v);
-
 static int
 array_power_is_scalar(PyObject *o2, double* exp)
 {
     PyObject *temp;
     const int optimize_fpexps = 1;
+
     if (PyInt_Check(o2)) {
 	    *exp = (double)PyInt_AsLong(o2);
 	    return 1;
@@ -2652,20 +2649,12 @@ array_power_is_scalar(PyObject *o2, double* exp)
 	    *exp = PyFloat_AsDouble(o2);
 	    return 1;
     }
-    if (PyArray_IsZeroDim(o2)) {
-	    if (PyArray_ISINTEGER(o2) || 
-		(optimize_fpexps && PyArray_ISFLOAT(o2))) {
-		    temp = array_float((PyArrayObject *)o2);
-		    if (temp != NULL) {
-			    *exp = PyFloat_AsDouble(o2);
-			    Py_DECREF(temp);
-			    return 1;
-		    }
-	    }
-    }
-    if (PyArray_IsScalar(o2, Integer) || 
+    if ((PyArray_IsZeroDim(o2) && 
+	 ((PyArray_ISINTEGER(o2) || 
+	   (optimize_fpexps && PyArray_ISFLOAT(o2))))) || 
+	PyArray_IsScalar(o2, Integer) || 
 	(optimize_fpexps && PyArray_IsScalar(o2, Floating))) {
-	    temp = gentype_float(o2);
+	    temp = o2->ob_type->tp_as_number->nb_float(o2);
 	    if (temp != NULL) {
 		    *exp = PyFloat_AsDouble(o2);
 		    Py_DECREF(temp);
