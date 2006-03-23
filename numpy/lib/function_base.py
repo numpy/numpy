@@ -20,9 +20,9 @@ from numpy.core.umath import pi, multiply, add, arctan2,  \
 from numpy.core.oldnumeric import ravel, nonzero, choose, \
      typecodes, ArrayType, squeeze,\
      sort
-from type_check import ScalarType
-from shape_base import atleast_1d
-from twodim_base import diag
+from numpy.lib.type_check import ScalarType
+from numpy.lib.shape_base import atleast_1d
+from numpy.lib.twodim_base import diag
 from _compiled_base import digitize, bincount, _insert, add_docstring
 
 #end Fernando's utilities
@@ -305,11 +305,11 @@ def gradient(f, *varargs):
     """
     N = len(f.shape)  # number of dimensions
     n = len(varargs)
-    if n==0:
+    if n == 0:
         dx = [1.0]*N
-    elif n==1:
+    elif n == 1:
         dx = [varargs[0]]*N
-    elif n==N:
+    elif n == N:
         dx = list(varargs)
     else:
         raise SyntaxError, "invalid number of arguments"
@@ -364,9 +364,9 @@ def gradient(f, *varargs):
 def diff(a, n=1, axis=-1):
     """Calculate the nth order discrete difference along given axis.
     """
-    if n==0:
+    if n == 0:
         return a
-    if n<0:
+    if n < 0:
         raise ValueError, 'order must be non-negative but got ' + `n`
     a = asarray(a)
     nd = len(a.shape)
@@ -582,7 +582,7 @@ class vectorize(object):
         else:
             self.__doc__ = doc
         if isinstance(otypes, types.StringType):
-            self.otypes=otypes
+            self.otypes = otypes
         else:
             raise ValueError, "output types must be a string"
         for char in self.otypes:
@@ -824,7 +824,7 @@ def median(m):
         return sorted[int(sorted.shape[0]/2)]
     else:
         sorted = msort(m)
-        index=sorted.shape[0]/2
+        index = sorted.shape[0]/2
         return (sorted[index-1]+sorted[index])/2.0
 
 def trapz(y, x=None, dx=1.0, axis=-1):
