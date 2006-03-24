@@ -1303,7 +1303,7 @@ typedef struct {
 
 #define PyTypeNum_ISNUMBER(type) (type <= PyArray_CLONGDOUBLE)
 
-#define PyTypeNum_ISSTRING(type) ((type == PyArray_UCHAR) || \
+#define PyTypeNum_ISSTRING(type) ((type == PyArray_STRING) || \
 			       (type == PyArray_UNICODE))
 
 #define PyTypeNum_ISCOMPLEX(type) ((type >= PyArray_CFLOAT) && \
