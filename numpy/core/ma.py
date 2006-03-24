@@ -504,7 +504,7 @@ class MaskedArray (object):
        any computation.
 
        Construction:
-           x = array(data, dtype=None, copy=True, fortran=False,
+           x = array(data, dtype=None, copy=True, order=False,
                      mask = nomask, fill_value=None)
 
        If copy=False, every effort is made not to copy the data:
@@ -527,9 +527,9 @@ class MaskedArray (object):
        The fill_value is not used for computation within this module.
     """
     __array_priority__ = 10.1
-    def __init__(self, data, dtype=None, copy=True, fortran=False,
+    def __init__(self, data, dtype=None, copy=True, order=False,
                  mask=nomask, fill_value=None):
-        """array(data, dtype=None, copy=True, fortran=False, mask=nomask, fill_value=None)
+        """array(data, dtype=None, copy=True, order=False, mask=nomask, fill_value=None)
            If data already a numeric array, its dtype becomes the default value of dtype.
         """
         if dtype is None:
@@ -556,12 +556,12 @@ class MaskedArray (object):
                 need_data_copied = True
         else:
             need_data_copied = False #because I'll do it now
-            c = numeric.array(data, dtype=tc, copy=True, fortran=fortran)
+            c = numeric.array(data, dtype=tc, copy=True, order=order)
             tc = c.dtype
 
         if need_data_copied:
             if tc == c.dtype:
-                self._data = numeric.array(c, dtype=tc, copy=True, fortran=fortran)
+                self._data = numeric.array(c, dtype=tc, copy=True, order=order)
             else:
                 self._data = c.astype(tc)
         else:

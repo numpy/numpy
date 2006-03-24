@@ -15,7 +15,7 @@ _unicode = unicode
 
 class chararray(ndarray):
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
-                offset=0, strides=None, fortran=0):
+                offset=0, strides=None, order=None):
         global _globalvar
 
         if unicode:
@@ -26,12 +26,12 @@ class chararray(ndarray):
         _globalvar = 1
         if buffer is None:
             self = ndarray.__new__(subtype, shape, (dtype, itemsize),
-                                   fortran=fortran)
+                                   order=order)
         else:
             self = ndarray.__new__(subtype, shape, (dtype, itemsize),
                                    buffer=buffer,
                                    offset=offset, strides=strides,
-                                   fortran=fortran)
+                                   order=order)
         _globalvar = 0
         return self
 
@@ -292,7 +292,7 @@ class chararray(ndarray):
         return self._generalmethod('zfill', broadcast(self, width))
 
 
-def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
+def array(obj, itemsize=None, copy=True, unicode=False, order=None):
 
     if isinstance(obj, chararray):
         if itemsize is None:
@@ -328,10 +328,10 @@ def array(obj, itemsize=None, copy=True, unicode=False, fortran=False):
                          buffer=obj)
 
     # default
-    val = narray(obj, dtype=dtype, fortran=fortran, subok=1)
+    val = narray(obj, dtype=dtype, order=order, subok=1)
 
     return val.view(chararray)
 
-def asarray(obj, itemsize=None, unicode=False, fortran=False):
+def asarray(obj, itemsize=None, unicode=False, order=None):
     return array(obj, itemsize, copy=False,
-                 unicode=unicode, fortran=fortran)
+                 unicode=unicode, order=order)

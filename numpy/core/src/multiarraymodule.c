@@ -175,12 +175,12 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
  Ravel
 */
 static PyObject *
-PyArray_Ravel(PyArrayObject *a, PyArray_CONDITION fortran)
+PyArray_Ravel(PyArrayObject *a, PyArray_ORDER fortran)
 {
 	PyArray_Dims newdim = {NULL,1};
 	intp val[1] = {-1};
 
-	if (fortran == PyArray_DONTCARE) 
+	if (fortran == PyArray_ANYORDER) 
 		fortran = PyArray_ISFORTRAN(a);
 	
 	newdim.ptr = val;
@@ -189,7 +189,7 @@ PyArray_Ravel(PyArrayObject *a, PyArray_CONDITION fortran)
 			Py_INCREF(a);
 			return (PyObject *)a;
 		}
-		return PyArray_Newshape(a, &newdim, PyArray_FALSE);
+		return PyArray_Newshape(a, &newdim, PyArray_CORDER);
 	}
 	else
 	        return PyArray_Flatten(a, fortran);
@@ -313,12 +313,12 @@ PyArray_Round(PyArrayObject *a, int decimals)
  Flatten
 */
 static PyObject *
-PyArray_Flatten(PyArrayObject *a, PyArray_CONDITION fortran)
+PyArray_Flatten(PyArrayObject *a, PyArray_ORDER fortran)
 {
 	PyObject *ret, *new;
 	intp size;
 
-	if (fortran == PyArray_DONTCARE) 
+	if (fortran == PyArray_ANYORDER) 
 		fortran = PyArray_ISFORTRAN(a);
 
 	size = PyArray_SIZE(a);
@@ -366,7 +366,7 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
         PyArray_Dims newdims;
 
         if (!PyArray_IntpConverter(shape, &newdims)) return NULL;
-        ret = PyArray_Newshape(self, &newdims, PyArray_FALSE);
+        ret = PyArray_Newshape(self, &newdims, PyArray_CORDER);
         PyDimMem_FREE(newdims.ptr);
         return ret;
 }
@@ -453,7 +453,7 @@ _fix_unknown_dimension(PyArray_Dims *newshape, intp s_original)
 */
 static PyObject * 
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims, 
-		 PyArray_CONDITION fortran)
+		 PyArray_ORDER fortran)
 {
         intp i;
 	intp *dimensions = newdims->ptr;
@@ -463,7 +463,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 	intp *strides = NULL;
 	intp newstrides[MAX_DIMS];
 
-	if (fortran == PyArray_DONTCARE)
+	if (fortran == PyArray_ANYORDER)
 		fortran = PyArray_ISFORTRAN(self);
 	
         /*  Quick check to make sure anything actually needs to be done */
@@ -487,8 +487,8 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 	
 	if (strides==NULL) {		
 		if ((n == 0) ||
-		    (PyArray_ISCONTIGUOUS(self) && (fortran != PyArray_TRUE)) ||
-		    (PyArray_ISFORTRAN(self) && (fortran != PyArray_FALSE))) {
+		    (PyArray_ISCONTIGUOUS(self) && (fortran != PyArray_FORTRANORDER)) ||
+		    (PyArray_ISFORTRAN(self) && (fortran != PyArray_CORDER))) {
 			incref = TRUE;		
 		}
 		else {
@@ -507,7 +507,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 		/* replace any 0-valued strides with
 		   appropriate value to preserve contiguousness
 		*/
-		if (fortran == PyArray_TRUE) {
+		if (fortran == PyArray_FORTRANORDER) {
 			if (strides[0] == 0) 
 				strides[0] = self->descr->elsize;
 			for (i=1; i<n; i++) {
@@ -3306,22 +3306,38 @@ PyArray_BoolConverter(PyObject *object, Bool *val)
 }
 
 /*MULTIARRAY_API
- Convert an object to true / false
+ Convert an object to FORTRAN / C / ANY
 */
 static int
-PyArray_ConditionConverter(PyObject *object, PyArray_CONDITION *val)
-{    
-
-	if (object == Py_None) 
-		*val = PyArray_DONTCARE;
-	else if (PyObject_IsTrue(object))
-		*val=PyArray_TRUE;
-	else *val=PyArray_FALSE;
-	if (PyErr_Occurred())
-		return PY_FAIL;
-	return PY_SUCCEED;
+PyArray_OrderConverter(PyObject *object, PyArray_ORDER *val)
+{
+        char *str;
+        if (object == Py_None) {
+                *val = PyArray_ANYORDER;
+        }
+        else if (!PyString_Check(object) || PyString_GET_SIZE(object) < 1) {
+                if (PyObject_IsTrue(object))
+                        *val = PyArray_FORTRANORDER;
+                else
+                        *val = PyArray_CORDER;
+                if (PyErr_Occurred())
+                        return PY_FAIL;
+                return PY_SUCCEED;
+        }
+        else {
+                str = PyString_AS_STRING(object);
+                if (str[0] == 'C' || str[0] == 'c') {
+                        *val = PyArray_CORDER; 
+                }
+                if (str[0] == 'F' || str[0] == 'f') {
+                        *val = PyArray_FORTRANORDER;
+                }
+                if (str[0] == 'A' || str[0] == 'a') {
+                        *val = PyArray_ANYORDER;
+                }
+        }
+        return PY_SUCCEED;
 }
-
 
 
 /*MULTIARRAY_API
@@ -4433,24 +4449,24 @@ static char doc_fromobject[] = "array(object, dtype=None, copy=1, "\
         "then a C-style contiguous array will be returned. If fotran is True\n"\
         "then a Fortran-style contiguous array will be returned.";
 
-#define STRIDING_OK(op, fortran) ((fortran) == PyArray_DONTCARE || \
-                                  ((fortran) == PyArray_FALSE &&   \
-                                   PyArray_ISCONTIGUOUS(op)) ||    \
-                                  ((fortran) == PyArray_TRUE &&    \
-                                   PyArray_ISFORTRAN(op)))
+#define STRIDING_OK(op, order) ((order) == PyArray_ANYORDER ||          \
+                                ((order) == PyArray_CORDER &&           \
+                                 PyArray_ISCONTIGUOUS(op)) ||           \
+                                ((order) == PyArray_FORTRANORDER &&     \
+                                 PyArray_ISFORTRAN(op)))
 
 static PyObject *
 _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 {
 	PyObject *op, *ret=NULL;
-	static char *kwd[]= {"object", "dtype", "copy", "fortran", "subok", 
+	static char *kwd[]= {"object", "dtype", "copy", "order", "subok", 
 			     "ndmin", NULL};
         Bool subok=FALSE;
 	Bool copy=TRUE;
 	int ndmin=0, nd;
 	PyArray_Descr *type=NULL;
 	PyArray_Descr *oldtype=NULL;
-	PyArray_CONDITION fortran=PyArray_DONTCARE;
+	PyArray_ORDER order=PyArray_ANYORDER;
 	int flags=0;
 
         if (PyTuple_GET_SIZE(args) > 2) {
@@ -4463,7 +4479,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 					PyArray_DescrConverter2,
                                         &type, 
 					PyArray_BoolConverter, &copy, 
-					PyArray_ConditionConverter, &fortran,
+					PyArray_OrderConverter, &order,
                                         PyArray_BoolConverter, &subok, 
 					&ndmin)) 
 		return NULL;
@@ -4471,28 +4487,28 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	/* fast exit if simple call */
 	if (PyArray_CheckExact(op)) {
 		if (type==NULL) {
-			if (!copy && STRIDING_OK(op, fortran)) {
+			if (!copy && STRIDING_OK(op, order)) {
 				Py_INCREF(op);
 				ret = op;
 				goto finish;
 			}
 			else {
 				ret = PyArray_NewCopy((PyArrayObject*)op, 
-						      fortran);
+						      order);
 				goto finish;
 			}
 		}
 		/* One more chance */
 		oldtype = PyArray_DESCR(op);
 		if (PyArray_EquivTypes(oldtype, type)) {
-			if (!copy && STRIDING_OK(op, fortran)) {
+			if (!copy && STRIDING_OK(op, order)) {
 				Py_INCREF(op);
 				ret = op;
 				goto finish;
 			}
 			else {
 				ret = PyArray_NewCopy((PyArrayObject*)op,
-						      fortran);
+						      order);
 				if (oldtype == type) return ret;
 				Py_INCREF(oldtype);
 				Py_DECREF(PyArray_DESCR(ret));
@@ -4505,10 +4521,11 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	if (copy) {
 		flags = ENSURECOPY;
 	}
-        if (fortran == PyArray_FALSE) {
+        if (order == PyArray_CORDER) {
                 flags |= CONTIGUOUS;
         }
-	else if ((fortran == PyArray_TRUE) ||
+	else if ((order == PyArray_FORTRANORDER) || 
+                 /* order == PyArray_ANYORDER && */
                  (PyArray_Check(op) && PyArray_ISFORTRAN(op))) {
                 flags |= FORTRAN;
         }
@@ -4551,16 +4568,17 @@ PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 }
 
 
-static char doc_empty[] = "empty((d1,...,dn),dtype=int,fortran=0) will return a new array\n of shape (d1,...,dn) and given type with all its entries uninitialized. This can be faster than zeros.";
+static char doc_empty[] = "empty((d1,...,dn),dtype=int,order='C') will return a new array\n of shape (d1,...,dn) and given type with all its entries uninitialized. This can be faster than zeros.";
 
 static PyObject *
 array_empty(PyObject *ignored, PyObject *args, PyObject *kwds) 
 {
         
-	static char *kwlist[] = {"shape","dtype","fortran",NULL};
+	static char *kwlist[] = {"shape","dtype","order",NULL};
 	PyArray_Descr *typecode=NULL;
         PyArray_Dims shape = {NULL, 0};
-	Bool fortran = FALSE;	
+	PyArray_ORDER order = PyArray_CORDER;	
+        Bool fortran;
         PyObject *ret=NULL;
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&",
@@ -4568,8 +4586,11 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
                                          &shape, 
                                          PyArray_DescrConverter,
 					 &typecode, 
-					 PyArray_BoolConverter, &fortran)) 
+					 PyArray_OrderConverter, &order)) 
 		goto fail;
+
+        if (order == PyArray_FORTRANORDER) fortran = TRUE;
+        else fortran = FALSE;
 
 	ret = PyArray_Empty(shape.len, shape.ptr, typecode, fortran);        
         PyDimMem_FREE(shape.ptr);
@@ -4676,7 +4697,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 
 }
 
-static char doc_zeros[] = "zeros((d1,...,dn),dtype=int,fortran=0) will return a new array of shape (d1,...,dn) and type typecode with all it's entries initialized to zero.";
+static char doc_zeros[] = "zeros((d1,...,dn),dtype=int,order='C') will return a new array of shape (d1,...,dn) and type typecode with all it's entries initialized to zero.";
 
 
 static PyObject *
@@ -4685,6 +4706,7 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
 	static char *kwlist[] = {"shape","dtype","fortran",NULL}; /* XXX ? */
 	PyArray_Descr *typecode=NULL;
         PyArray_Dims shape = {NULL, 0};
+        PyArray_ORDER order = PyArray_CORDER;
 	Bool fortran = FALSE;	
         PyObject *ret=NULL;
 
@@ -4693,10 +4715,12 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
                                          &shape, 
                                          PyArray_DescrConverter,
 					 &typecode, 
-					 PyArray_BoolConverter,
+					 PyArray_OrderConverter,
 					 &fortran)) 
 		goto fail;
 
+        if (order == PyArray_FORTRANORDER) fortran = TRUE;
+        else fortran = FALSE;
 	ret = PyArray_Zeros(shape.len, shape.ptr, typecode, (int) fortran);
         PyDimMem_FREE(shape.ptr);
         return ret;

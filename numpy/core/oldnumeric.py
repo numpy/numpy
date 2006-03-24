@@ -177,14 +177,14 @@ def take(a, indices, axis=0):
         return _wrapit(a, 'take', indices, axis)
     return take(indices, axis)
 
-def reshape(a, newshape, fortran=False):
+def reshape(a, newshape, order=False):
     """Change the shape of a to newshape.  Return a new view object.
     """
     try:
         reshape = a.reshape
     except AttributeError:
-        return _wrapit(a, 'reshape', newshape, fortran=fortran)
-    return reshape(newshape, fortran=fortran)
+        return _wrapit(a, 'reshape', newshape, order=order)
+    return reshape(newshape, order=order)
 
 def choose(a, choices):
     try:

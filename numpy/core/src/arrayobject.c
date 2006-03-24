@@ -801,12 +801,12 @@ PyArray_FromDims(int nd, int *d, int type)
  Copy an array.
 */
 static PyObject *
-PyArray_NewCopy(PyArrayObject *m1, PyArray_CONDITION fortran)
+PyArray_NewCopy(PyArrayObject *m1, PyArray_ORDER fortran)
 {
 	PyArrayObject *ret;
-	if (fortran == PyArray_DONTCARE) 
+	if (fortran == PyArray_ANYORDER) 
 		fortran = PyArray_ISFORTRAN(m1);
-
+        
 	Py_INCREF(m1->descr);
 	ret = (PyArrayObject *)PyArray_NewFromDescr(m1->ob_type,
 						    m1->descr,
@@ -4103,7 +4103,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 */
 static PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
-	       PyArray_CONDITION fortran)
+	       PyArray_ORDER fortran)
 {
         intp oldsize, newsize;
         int new_nd=newshape->len, k, n, elsize;
@@ -4120,9 +4120,9 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                 return NULL;
         }
 
-	if (fortran == PyArray_DONTCARE)
-		fortran = PyArray_FALSE;
-
+	if (fortran == PyArray_ANYORDER)
+		fortran = PyArray_CORDER;
+        
         newsize = PyArray_MultiplyList(new_dimensions, new_nd);
         oldsize = PyArray_SIZE(self);
 
@@ -4289,7 +4289,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
 	static char *kwlist[] = {"shape", "dtype", "buffer",  /* XXX ? */
 				 "offset", "strides",
-				 "fortran", NULL};
+				 "order", NULL};
 	PyArray_Descr *descr=NULL;
 	int type_num;
 	int itemsize;
@@ -4297,6 +4297,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         PyArray_Dims strides = {NULL, 0};
         PyArray_Chunk buffer;
 	longlong offset=0;
+        PyArray_ORDER order=PyArray_CORDER;
 	int fortran = 0;
 	PyArrayObject *ret;
 
@@ -4309,7 +4310,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	   array of a specific type and shape.
 	*/
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&i",
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&O&",
 					 kwlist, PyArray_IntpConverter,
                                          &dims,
                                          PyArray_DescrConverter,
@@ -4319,9 +4320,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 					 &offset,
                                          &PyArray_IntpConverter,
                                          &strides,
-                                         &fortran))
+                                         &PyArray_OrderConverter,
+                                         &order))
 		goto fail;
 
+        if (order == PyArray_FORTRANORDER) fortran = 1;
 
 	if (descr == NULL)
 		descr = PyArray_DescrFromType(PyArray_LONG);

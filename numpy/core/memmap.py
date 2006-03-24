@@ -18,7 +18,7 @@ mode_equivalents = {
 class memmap(ndarray):
     __array_priority__ = -100.0
     def __new__(subtype, name, dtype=uint8, mode='r+', offset=0,
-                shape=None, fortran=0):
+                shape=None, order=0):
         global _globalvar
 
         try:
@@ -70,7 +70,7 @@ class memmap(ndarray):
         mm = mmap.mmap(fid.fileno(), bytes, access=acc)
 
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
-                               offset=offset, fortran=fortran)
+                               offset=offset, order=order)
         self._mmap = mm
         self._offset = offset
         self._mode = mode

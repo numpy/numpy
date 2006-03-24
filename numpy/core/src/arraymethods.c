@@ -68,7 +68,7 @@ array_putmask(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 static char doc_reshape[] = \
-	"self.reshape(d1, d2, ..., dn, fortran=False) \n"	\
+	"self.reshape(d1, d2, ..., dn, order='C') \n"	\
 	"Return a new array from this one. \n"				\
 	"\n  The new array must have the same number of elements as self. " \
 	"Also\n   a copy of the data only occurs if necessary.";
@@ -78,14 +78,14 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
         PyArray_Dims newshape;
         PyObject *ret;
-	PyArray_CONDITION fortran=PyArray_FALSE;
+	PyArray_ORDER order=PyArray_CORDER;
 	int n;
 	
 	if (kwds != NULL) {
 		PyObject *ref;
-		ref = PyDict_GetItemString(kwds, "fortran");
-		if (ref == NULL || \
-		    (PyArray_ConditionConverter(ref, &fortran) == PY_FAIL))
+		ref = PyDict_GetItemString(kwds, "order");
+		if (ref == NULL ||                                      \
+		    (PyArray_OrderConverter(ref, &order) == PY_FAIL))
 			return NULL;
 	}
 
@@ -109,7 +109,7 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
 		return PyArray_Ravel(self, 0);
 	}
 	
-	ret = PyArray_Newshape(self, &newshape, fortran);
+	ret = PyArray_Newshape(self, &newshape, order);
 
 	PyDimMem_FREE(newshape.ptr);
         return ret;
@@ -623,8 +623,8 @@ static char doc_copy[] = "m.copy(|fortran). Return a copy of the array.\n"\
 static PyObject *
 array_copy(PyArrayObject *self, PyObject *args) 
 {
-	PyArray_CONDITION fortran=PyArray_FALSE;
-        if (!PyArg_ParseTuple(args, "|O&", PyArray_ConditionConverter,
+	PyArray_ORDER fortran=PyArray_CORDER;
+        if (!PyArg_ParseTuple(args, "|O&", PyArray_OrderConverter,
 			      &fortran)) return NULL;
 	
         return PyArray_NewCopy(self, fortran);
@@ -642,7 +642,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
         PyObject *ret;
 	int n;
 	int refcheck = 1;
-	PyArray_CONDITION fortran=PyArray_DONTCARE;
+	PyArray_ORDER fortran=PyArray_ANYORDER;
 	
 	if (kwds != NULL) {
 		PyObject *ref;
@@ -655,7 +655,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 		}
 		ref = PyDict_GetItemString(kwds, "fortran");
 		if (ref != NULL || 
-		    (PyArray_ConditionConverter(ref, &fortran) == PY_FAIL))
+		    (PyArray_OrderConverter(ref, &fortran) == PY_FAIL))
 			return NULL;
 	}
 	n = PyTuple_Size(args);
@@ -1443,9 +1443,9 @@ static char doc_flatten[] = "a.flatten([fortran]) return a 1-d array (always cop
 static PyObject *
 array_flatten(PyArrayObject *self, PyObject *args)
 {
-	PyArray_CONDITION fortran=PyArray_FALSE;
+	PyArray_ORDER fortran=PyArray_CORDER;
 
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_ConditionConverter, 
+	if (!PyArg_ParseTuple(args, "|O&", PyArray_OrderConverter, 
 			      &fortran)) return NULL;
         
 	return PyArray_Flatten(self, fortran);
@@ -1456,9 +1456,9 @@ static char doc_ravel[] = "a.ravel([fortran]) return a 1-d array (copy only if n
 static PyObject *
 array_ravel(PyArrayObject *self, PyObject *args)
 {
-	PyArray_CONDITION fortran=PyArray_FALSE;
+	PyArray_ORDER fortran=PyArray_CORDER;
 	
-	if (!PyArg_ParseTuple(args, "|O&", PyArray_ConditionConverter, 
+	if (!PyArg_ParseTuple(args, "|O&", PyArray_OrderConverter, 
 			      &fortran)) return NULL;
 
 	return PyArray_Ravel(self, fortran);

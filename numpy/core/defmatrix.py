@@ -86,16 +86,16 @@ class matrix(N.ndarray):
         elif ndim == 1:
             shape = (1,shape[0])
 
-        fortran = False
+        order = False
         if (ndim == 2) and arr.flags.fortran:
-            fortran = True
+            order = True
 
-        if not (fortran or arr.flags.contiguous):
+        if not (order or arr.flags.contiguous):
             arr = arr.copy()
 
         ret = N.ndarray.__new__(subtype, shape, arr.dtype,
                                 buffer=arr,
-                                fortran=fortran)
+                                order=order)
         return ret
 
     def __array_finalize__(self, obj):

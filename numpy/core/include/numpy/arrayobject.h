@@ -237,10 +237,12 @@ typedef enum {
 } PyArray_SCALARKIND;
 
 typedef enum {
-	PyArray_DONTCARE=-1,
-	PyArray_FALSE=0,
-	PyArray_TRUE=1,
-} PyArray_CONDITION;
+        PyArray_ANYORDER=-1,
+        PyArray_CORDER=0,
+        PyArray_FORTRANORDER=1,
+} PyArray_ORDER;
+
+
 
 	/* Define bit-width array types and typedefs */
 

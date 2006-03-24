@@ -108,23 +108,23 @@ can_cast = multiarray.can_cast
 lexsort = multiarray.lexsort
 
 
-def asarray(a, dtype=None, fortran=None):
+def asarray(a, dtype=None, order=None):
     """returns a as an array.  Unlike array(),
     no copy is performed if a is already an array.  Subclasses are converted
     to base class ndarray.
     """
-    return array(a, dtype, copy=False, fortran=fortran)
+    return array(a, dtype, copy=False, order=order)
 
-def asanyarray(a, dtype=None, copy=False, fortran=None):
+def asanyarray(a, dtype=None, copy=False, order=None):
     """will pass subclasses through...
     """
-    return array(a, dtype, copy=copy, fortran=fortran, subok=1)
+    return array(a, dtype, copy=copy, order=order, subok=1)
 
 def ascontiguous(a, dtype=None, copy=False):
-    return array(a, dtype, copy=copy, fortran=False, ndmin=1)
+    return array(a, dtype, copy=copy, order=False, ndmin=1)
 
 def asfortran(a, dtype=None, copy=False):
-    return array(a, dtype, copy=copy, fortran=True, ndmin=1)
+    return array(a, dtype, copy=copy, order=True, ndmin=1)
 
 def isfortran(a):
     return a.flags.fnc
@@ -362,14 +362,14 @@ def load(file):
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
 
-def ones(shape, dtype=int_, fortran=False):
+def ones(shape, dtype=int_, order='C'):
     """ones(shape, dtype=int_) returns an array of the given
     dimensions which is initialized to all ones.
     """
-    a = empty(shape, dtype, fortran)
+    a = empty(shape, dtype, order)
     a.fill(1)
     # Above is faster now after addition of fast loops.
-    #a = zeros(shape, dtype, fortran)
+    #a = zeros(shape, dtype, order)
     #a+=1
     return a
 
