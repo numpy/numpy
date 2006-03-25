@@ -10,7 +10,7 @@ __all__ = ['sqrt', 'log', 'log2', 'logn','log10', 'power', 'arccos',
 import numpy.core.numeric as nx
 import numpy.core.numerictypes as nt
 from numpy.core.numeric import asarray, any
-from numpy.lib.type_check import isreal, asscalar
+from numpy.lib.type_check import isreal
 
 
 __all__.extend([key for key in dir(nx.umath)
