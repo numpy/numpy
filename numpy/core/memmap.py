@@ -19,8 +19,6 @@ class memmap(ndarray):
     __array_priority__ = -100.0
     def __new__(subtype, name, dtype=uint8, mode='r+', offset=0,
                 shape=None, order=0):
-        global _globalvar
-
         try:
             mode = mode_equivalents[mode]
         except KeyError:
