@@ -18,9 +18,7 @@ from numpy.core.numeric import ScalarType, dot, where, newaxis
 from numpy.core.umath import pi, multiply, add, arctan2,  \
      frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp
 from numpy.core.oldnumeric import ravel, nonzero, choose, \
-     typecodes, ArrayType, squeeze,\
-     sort
-from numpy.lib.type_check import ScalarType
+     typecodes, ArrayType, sort
 from numpy.lib.shape_base import atleast_1d
 from numpy.lib.twodim_base import diag
 from _compiled_base import digitize, bincount, _insert, add_docstring

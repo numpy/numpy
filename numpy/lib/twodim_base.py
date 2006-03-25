@@ -7,7 +7,6 @@ __all__ = ['diag','eye','fliplr','flipud','rot90','tri','triu','tril',
 
 from numpy.core.numeric import asanyarray, int_, equal, subtract, arange, \
      zeros, arange, greater_equal, multiply, ones, asarray
-import sys
 
 def fliplr(m):
     """ returns an array m with the rows preserved and columns flipped
