@@ -154,12 +154,12 @@ class recarray(sb.ndarray):
         return self
 
     def __getattribute__(self, attr):
-        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
         try:
-            res = fielddict[attr][:2]
-        except:
             return object.__getattribute__(self,attr)
-
+        except AttributeError: # attr must be a fieldname
+            pass
+        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
+        res = fielddict[attr][:2]
         obj = self.getfield(*res)
         # if it has fields return a recarray, otherwise return
         # normal array
@@ -169,14 +169,13 @@ class recarray(sb.ndarray):
             return obj.view(chararray)
         return obj.view(sb.ndarray)
 
-
     def __setattr__(self, attr, val):
-        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
         try:
-            res = fielddict[attr][:2]
-        except:
-            return object.__setattr__(self,attr,val)
-
+            return object.__setattr__(self, attr, val)
+        except AttributeError: # Must be a fieldname
+            pass
+        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
+        res = fielddict[attr][:2]
         return self.setfield(val,*res)
 
     def field(self,attr, val=None):
