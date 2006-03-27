@@ -33,6 +33,7 @@ classes are available:
   gtkp_2_info
   xft_info
   freetype2_info
+  umfpack_info
 
 Usage:
     info_dict = get_info(<name>)
@@ -240,6 +241,7 @@ def get_info(name,notfound_action=0):
           'gtk+-2.0':gtkp_2_info,
           'xft':xft_info,
           'freetype2':freetype2_info,
+          'umfpack':umfpack_info,
           }.get(name.lower(),system_info)
     return cl().get_info(notfound_action)
 
@@ -302,6 +304,13 @@ class NumericNotFoundError(NotFoundError):
 
 class X11NotFoundError(NotFoundError):
     """X11 libraries not found."""
+
+class UmfpackNotFoundError(NotFoundError):
+    """
+    UMFPACK sparse solver (http://www.cise.ufl.edu/research/sparse/umfpack/)
+    not found. Directories to search for the libraries can be specified in the
+    numpy/distutils/site.cfg file (section [umfpack]) or by setting
+    the UMFPACK environment variable."""
 
 class system_info:
 
@@ -1666,6 +1675,39 @@ class freetype2_info(_pkg_config_info):
     section = 'freetype2'
     append_config_exe = 'freetype2'
     version_macro_name = 'FREETYPE2_VERSION'
+
+class umfpack_info(system_info):
+    section = 'umfpack'
+    dir_env_var = 'UMFPACK'
+    notfounderror = UmfpackNotFoundError
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        incl_dirs = self.get_include_dirs()
+        info = {}
+        for lib in ['umfpack', 'amd']:
+            for d in lib_dirs:
+#                print d, lib
+                p = self.combine_paths (d,['lib'+lib+'.a'],)
+#                print '->', p
+                if p:
+                    dict_append( info, extra_objects = p )
+                    break
+                p = self.combine_paths (d,['lib'+lib+so_ext])
+                if p:
+                    dict_append( info, libraries = [lib], library_dirs = [d] )
+                    break
+#            print '=>', info
+        if info is None:
+            return
+        for d in incl_dirs:
+#            print d
+            if len(self.combine_paths(d,['umfpack.h']))==1:
+                dict_append(info,include_dirs=[d],
+                            define_macros=[('SCIPY_UMFPACK_H',None)])
+                self.set_info(**info)
+                return
+        return
 
 ## def vstr2hex(version):
 ##     bits = []
