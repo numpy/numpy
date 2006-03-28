@@ -30,6 +30,7 @@ static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
 static PyObject *_numpy_internal=NULL; /* A Python module for callbacks */
 static int _multiarray_module_loaded=0;
 
+
 static PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)
 {
@@ -180,18 +181,8 @@ PyArray_Ravel(PyArrayObject *a, PyArray_ORDER fortran)
 	PyArray_Dims newdim = {NULL,1};
 	intp val[1] = {-1};
 
-	if (fortran == PyArray_ANYORDER) 
-		fortran = PyArray_ISFORTRAN(a);
-	
 	newdim.ptr = val;
-	if (!fortran && PyArray_ISCONTIGUOUS(a)) {
-		return PyArray_Newshape(a, &newdim, PyArray_CORDER);
-	}
-        else if (fortran && PyArray_ISFORTRAN(a)) {
-		return PyArray_Newshape(a, &newdim, PyArray_FORTRANORDER);
-        }
-	else
-	        return PyArray_Flatten(a, fortran);
+	return PyArray_Newshape(a, &newdim, fortran);
 }
 
 static double
@@ -458,7 +449,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 	intp *dimensions = newdims->ptr;
         PyArrayObject *ret;
 	int n = newdims->len;
-        Bool same, incref;
+        Bool same;
 	intp *strides = NULL;
 	intp newstrides[MAX_DIMS];
 
@@ -485,24 +476,17 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 	if (i==0) strides=newstrides;
 	
 	if (strides==NULL) {		
-		if ((n == 0) ||
-		    (PyArray_ISCONTIGUOUS(self) && (fortran != PyArray_FORTRANORDER)) ||
-		    (PyArray_ISFORTRAN(self) && (fortran != PyArray_CORDER))) {
-			incref = TRUE;		
+		if ((n != 0) &&
+		    (!PyArray_ISCONTIGUOUS(self) || (fortran == PyArray_FORTRANORDER)) &&
+		    (!PyArray_ISFORTRAN(self) || (fortran == PyArray_CORDER))) {
+			PyErr_SetString(PyExc_ValueError, 
+					"cannot return a view from reshape.");
+			return NULL;
 		}
-		else {
-			PyObject *tmp;
-			tmp = PyArray_NewCopy(self, fortran);
-			if (tmp==NULL) return NULL;
-			self = (PyArrayObject *)tmp;
-			incref = FALSE;
-		}
-		
 		if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0)
-			goto fail;
+			return NULL;
 	}
 	else {
-		incref = TRUE;
 		/* replace any 0-valued strides with
 		   appropriate value to preserve contiguousness
 		*/
@@ -534,17 +518,13 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 					   self->data,
 					   self->flags, (PyObject *)self);
 	
-	if (ret== NULL) goto fail;
+	if (ret== NULL) return NULL;
 	
-        if (incref) Py_INCREF(self);
+        Py_INCREF(self);
         ret->base = (PyObject *)self;
 	PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
 	
         return (PyObject *)ret;
-	
- fail:
-	if (!incref) {Py_DECREF(self);}
-	return NULL;
 }
 
 

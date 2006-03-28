@@ -177,14 +177,19 @@ def take(a, indices, axis=0):
         return _wrapit(a, 'take', indices, axis)
     return take(indices, axis)
 
-def reshape(a, newshape, order=False):
-    """Change the shape of a to newshape.  Return a new view object.
+# not deprecated --- copy if necessary, view otherwise
+def reshape(a, newshape, order='C'):
+    """Change the shape of a to newshape.  Return a new view object if possible
+    otherwise return a copy.
     """
     try:
         reshape = a.reshape
     except AttributeError:
         return _wrapit(a, 'reshape', newshape, order=order)
-    return reshape(newshape, order=order)
+    try:
+        return reshape(newshape, order=order)
+    except ValueError:
+        return a.copy(order).reshape(newshape, order=None)
 
 def choose(a, choices):
     try:
@@ -239,9 +244,9 @@ def swapaxes(a, axis1, axis2):
     return swapaxes(axis1, axis2)
 
 def transpose(a, axes=None):
-    """transpose(a, axes=None) returns array with dimensions permuted
-    according to axes.  If axes is None (default) returns array with
-    dimensions reversed.
+    """transpose(a, axes=None) returns a view of the array with
+    dimensions permuted according to axes.  If axes is None
+    (default) returns array with dimensions reversed.
     """
     try:
         transpose = a.transpose
@@ -346,11 +351,17 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
     """
     return asarray(a).trace(offset, axis1, axis2, dtype)
 
-def ravel(m):
+# not deprecated --- always returns a 1-d array.  Copy-if-necessary.
+def ravel(m,order='C'):
     """ravel(m) returns a 1d array corresponding to all the elements of it's
-    argument.
+    argument.  The new array is a view of m if possible, otherwise it is
+    a copy.
     """
-    return asarray(m).ravel()
+    a = asarray(m)
+    try:
+        return a.ravel(order)
+    except ValueError:
+        return a.copy(order).ravel(None)
 
 def nonzero(a):
     """nonzero(a) returns the indices of the elements of a which are not zero,

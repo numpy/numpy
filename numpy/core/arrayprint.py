@@ -16,6 +16,7 @@ import sys
 import numeric      as _gen
 import numerictypes as _nt
 import umath        as _uf
+from oldnumeric import ravel
 _nc = _gen
 
 # The following functions are emergency substitutes for numeric functions
@@ -138,7 +139,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         data = _leading_trailing(a)
     else:
         summary_insert = ""
-        data = a.ravel()
+        data = ravel(a)
 
     try:
         format_function = a._format
