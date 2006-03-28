@@ -88,7 +88,7 @@ class CompaqVisualFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from fcompiler import new_fcompiler
+    from numpy.distutils.fcompiler import new_fcompiler
     compiler = new_fcompiler(compiler='compaq')
     compiler.customize()
     print compiler.get_version()
