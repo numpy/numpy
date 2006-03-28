@@ -4,7 +4,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'getbuffer',
            'where', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
            'register_dtype', 'set_numeric_ops', 'can_cast',
-           'asarray', 'asanyarray', 'ascontiguous', 'asfortran',
+           'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
            'isfortran', 'empty_like', 'zeros_like',
            'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
            'alterdot', 'restoredot', 'cross',
@@ -115,16 +115,16 @@ def asarray(a, dtype=None, order=None):
     """
     return array(a, dtype, copy=False, order=order)
 
-def asanyarray(a, dtype=None, copy=False, order=None):
+def asanyarray(a, dtype=None, order=None):
     """will pass subclasses through...
     """
-    return array(a, dtype, copy=copy, order=order, subok=1)
+    return array(a, dtype, copy=False, order=order, subok=1)
 
-def ascontiguous(a, dtype=None, copy=False):
-    return array(a, dtype, copy=copy, order=False, ndmin=1)
+def ascontiguousarray(a, dtype=None):
+    return array(a, dtype, copy=False, order='C', ndmin=1)
 
-def asfortran(a, dtype=None, copy=False):
-    return array(a, dtype, copy=copy, order=True, ndmin=1)
+def asfortranarray(a, dtype=None):
+    return array(a, dtype, copy=False, order='F', ndmin=1)
 
 def isfortran(a):
     return a.flags.fnc

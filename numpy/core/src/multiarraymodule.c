@@ -4409,24 +4409,33 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
 
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))
 
-static char doc_fromobject[] = "array(object, dtype=None, copy=1, "\
-        "fortran=None, subok=0,ndmin=0)\n"\
-        "will return a new array formed from the given object type given.\n"\
-        "Object can be anything with an __array__ method, or any object\n"\
-        "exposing the array interface, or any (nested) sequence.\n"\
-        "If no type is given, then the type will be determined as the\n"\
-        "minimum type required to hold the objects in the sequence.\n"\
-        "If copy is zero and sequence is already an array with the right \n"\
-        "type, a reference will be returned.  If the sequence is an array,\n"\
-        "type can be used only to upcast the array.  For downcasting \n"\
-        "use .astype(t) method.  If subok is true, then subclasses of the\n"\
-        "array may be returned. Otherwise, a base-class ndarray is returned\n"\
-	"The ndmin argument specifies how many dimensions the returned\n"\
-	"array should have as a minimum. 1's will be pre-pended to the\n"\
-	"shape as needed to meet this requirement. If fortran is None\n"\
-        "then single-segment array is not guaranteed.  If fortran is False\n" \
-        "then a C-style contiguous array will be returned. If fotran is True\n"\
-        "then a Fortran-style contiguous array will be returned.";
+static char doc_fromobject[] = "array(object, dtype=None, copy=1, "
+        "order=None, subok=0,ndmin=0)\n"
+	"will return an array from object with the specified date-type\n\n"
+	"Inputs:\n\n"
+	"  object - an array, any object exposing the array interface, any \n"
+	"            object whose __array__ method returns an array, or any \n"
+	"            (nested) sequence.\n"
+	"  dtype  - The desired data-type for the array.  If not given, then\n"
+	"            the type will be determined as the minimum type required\n"
+	"            to hold the objects in the sequence.  This argument can only\n"
+	"            be used to 'upcast' the array.  For downcasting, use the \n"
+	"            .astype(t) method.\n"
+        "  copy   - If true, then force a copy.  Otherwise a copy will only occur\n"
+	"            if __array__ returns a copy, obj is a nested sequence, or \n"
+	"            a copy is needed to satisfy any of the other requirements\n"
+	"  order  - Specify the order of the array.  If order is 'C', then the\n"
+	"            array will be in C-contiguous order (last-index varies the\n"
+	"            fastest).  If order is 'FORTRAN', then the returned array\n"
+	"            will be in Fortran-contiguous order (first-index varies the\n"
+	"            fastest).  If order is None, then the returned array may\n"
+	"            be in either C-, or Fortran-contiguous order or even\n"
+	"            discontiguous.\n"
+	"  subok  - If True, then sub-classes will be passed-through, otherwise\n"
+	"            the returned array will be forced to be a base-class array\n"
+	"  ndmin  - Specifies the minimum number of dimensions that the resulting\n"
+	"            array should have.  1's will be pre-pended to the shape as\n"
+	"            needed to meet this requirement.\n";
 
 #define STRIDING_OK(op, order) ((order) == PyArray_ANYORDER ||          \
                                 ((order) == PyArray_CORDER &&           \
@@ -4464,7 +4473,8 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 		return NULL;
 
 	/* fast exit if simple call */
-	if (PyArray_CheckExact(op)) {
+	if ((subok && PyArray_Check(op)) || 
+	    (!subok && PyArray_CheckExact(op))) {
 		if (type==NULL) {
 			if (!copy && STRIDING_OK(op, order)) {
 				Py_INCREF(op);
