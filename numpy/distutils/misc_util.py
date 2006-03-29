@@ -124,7 +124,7 @@ def minrelpath(path):
             j = 1
     if not l:
         return ''
-    return os.path.join(*l)
+    return os.sep.join(l)
 
 # Hooks for colored terminal output.
 # See also http://www.livinglogic.de/Python/ansistyle
