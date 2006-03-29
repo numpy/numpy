@@ -257,7 +257,7 @@ def transpose(a, axes=None):
 def sort(a, axis=-1):
     """sort(a,axis=-1) returns array with elements sorted along given axis.
     """
-    a = asanyarray(a, copy=True)
+    a = asanyarray(a).copy()
     a.sort(axis)
     return a
 
