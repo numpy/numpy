@@ -637,7 +637,7 @@ def cov(m,y=None, rowvar=1, bias=0):
     is a variable and the observations are in the rows.
     """
 
-    X = asarray(m,ndmin=2)
+    X = array(m,copy=False,ndmin=2)
     if X.shape[0] == 1:
         rowvar = 1
     if rowvar:
@@ -649,7 +649,7 @@ def cov(m,y=None, rowvar=1, bias=0):
 
         
     if y is not None:
-        y = asarray(y,ndmin=2)
+        y = array(y,copy=False,ndmin=2)
         X = concatenate((X,y),axis)
 
     X -= X.mean(axis=1-axis)[tup]
