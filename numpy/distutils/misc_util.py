@@ -466,13 +466,17 @@ class Configuration(object):
             quiet = False,
             )
 
+        caller_instance = None
         for i in range(1,3):
-            f = get_frame(i)
+            try:
+                f = get_frame(i)
+            except ValueError:
+                break
             try:
                 caller_instance = eval('self',f.f_globals,f.f_locals)
                 break
             except NameError:
-                caller_instance = None
+                pass
         if isinstance(caller_instance, self.__class__):
             if caller_instance.options['delegate_options_to_subpackages']:
                 self.set_options(**caller_instance.options)
@@ -518,7 +522,9 @@ class Configuration(object):
         dist = distutils.core._setup_distribution
         return dist
 
-    def _wildcard_get_subpackage(self, subpackage_name, caller_level = 1):
+    def _wildcard_get_subpackage(self, subpackage_name,
+                                 parent_name,
+                                 caller_level = 1):
         l = subpackage_name.split('.')
         subpackage_path = njoin([self.local_path]+l)
         dirs = filter(os.path.isdir,glob.glob(subpackage_path))
@@ -529,12 +535,16 @@ class Configuration(object):
             if 'build' in d.split(os.sep):
                 continue
             n = '.'.join(d.split(os.sep)[-len(l):])
-            c = self.get_subpackage(n, caller_level = caller_level+1)
+            c = self.get_subpackage(n,
+                                    parent_name = parent_name,
+                                    caller_level = caller_level+1)
             config_list.extend(c)
         return config_list
 
     def _get_configuration_from_setup_py(self, setup_py,
-                                         subpackage_name, subpackage_path,
+                                         subpackage_name,
+                                         subpackage_path,
+                                         parent_name,
                                          caller_level = 1):
         # In case setup_py imports local modules:
         sys.path.insert(0,os.path.dirname(setup_py))
@@ -552,11 +562,11 @@ class Configuration(object):
                     self.warn('Assuming default configuration '\
                               '(%s does not define configuration())'\
                               % (setup_module))
-                config = Configuration(subpackage_name, self.name,
+                config = Configuration(subpackage_name, parent_name,
                                        self.top_path, subpackage_path,
                                        caller_level = caller_level + 1)
             else:
-                args = (self.name,)
+                args = (parent_name,)
                 if setup_module.configuration.func_code.co_argcount > 1:
                     args = args + (self.top_path,)
                 config = setup_module.configuration(*args)
@@ -564,7 +574,9 @@ class Configuration(object):
             del sys.path[0]
         return config
 
-    def get_subpackage(self,subpackage_name,subpackage_path=None,
+    def get_subpackage(self,subpackage_name,
+                       subpackage_path=None,
+                       parent_name=None,
                        caller_level = 1):
         """ Return list of subpackage configurations.
 
@@ -580,6 +592,7 @@ class Configuration(object):
         l = subpackage_name.split('.')
         if subpackage_path is None and '*' in subpackage_name:
             return self._wildcard_get_subpackage(subpackage_name,
+                                                 parent_name,
                                                  caller_level = caller_level+1)
 
         if subpackage_path is None:
@@ -598,7 +611,7 @@ class Configuration(object):
                 self.warn('Assuming default configuration '\
                           '(%s/{setup_%s,setup}.py was not found)' \
                           % (os.path.dirname(setup_py), subpackage_name))
-            config = Configuration(subpackage_name, self.name,
+            config = Configuration(subpackage_name, parent_name,
                                    self.top_path, subpackage_path,
                                    caller_level = caller_level+1)
         else:
@@ -606,16 +619,24 @@ class Configuration(object):
                 setup_py,
                 subpackage_name,
                 subpackage_path,
+                parent_name,
                 caller_level = caller_level + 1)
         if config:
             return [config]
         else:
             return []
 
-    def add_subpackage(self,subpackage_name,subpackage_path=None):
+    def add_subpackage(self,subpackage_name,
+                       subpackage_path=None,
+                       standalone = False):
         """ Add subpackage to configuration.
         """
+        if standalone:
+            parent_name = None
+        else:
+            parent_name = self.name
         config_list = self.get_subpackage(subpackage_name,subpackage_path,
+                                          parent_name = parent_name,
                                           caller_level = 2)
         if not config_list:
             self.warn('No configuration returned, assuming unavailable.')
