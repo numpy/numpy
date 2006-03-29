@@ -358,10 +358,7 @@ def ravel(m,order='C'):
     a copy.
     """
     a = asarray(m)
-    try:
-        return a.ravel(order)
-    except ValueError:
-        return a.copy(order).ravel(None)
+    return a.ravel(order)
 
 def nonzero(a):
     """nonzero(a) returns the indices of the elements of a which are not zero,

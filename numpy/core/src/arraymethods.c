@@ -68,10 +68,11 @@ array_putmask(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 static char doc_reshape[] = \
-	"self.reshape(d1, d2, ..., dn, order='C') \n"	\
-	"Return a new array from this one. \n"				\
-	"\n  The new array must have the same number of elements as self. " \
-	"Also\n   a copy of the data only occurs if necessary.";
+	"self.reshape(d1, d2, ..., dn, order='C') \n"	
+	"Return a new array from this one. \n"				
+	"\n  The new array must have the same number of elements as self. " 
+	"Also\n always returns a view or raises a ValueError if that is \n"
+	"impossible.";
 
 static PyObject *
 array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds) 
