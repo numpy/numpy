@@ -4716,7 +4716,7 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
                                          PyArray_DescrConverter,
 					 &typecode, 
 					 PyArray_OrderConverter,
-					 &fortran)) 
+					 &order)) 
 		goto fail;
 
         if (order == PyArray_FORTRANORDER) fortran = TRUE;
