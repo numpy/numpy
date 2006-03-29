@@ -21,6 +21,19 @@ def allpath(name):
     splitted = name.split('/')
     return os.path.join(*splitted)
 
+def rel_path(path, parent_path):
+    """ Return path relative to parent_path.
+    """
+    pd = os.path.abspath(parent_path)
+    if len(path)<len(pd):
+        return path
+    if path==pd:
+        return ''
+    if pd == path[:len(pd)]:
+        assert path[len(pd)] in [os.sep],`path,path[len(pd)]`
+        path = path[len(pd)+1:]
+    return path
+
 def get_path(mod_name, parent_path=None):
     """ Return path of the module.
 
@@ -43,15 +56,13 @@ def get_path(mod_name, parent_path=None):
             # hmm, should we use sys.argv[0] like in __builtin__ case?
 
     if parent_path is not None:
-        pd = os.path.abspath(parent_path)
-        if pd == d[:len(pd)]:
-            d = d[len(pd)+1:]
+        d = rel_path(d, parent_path)
     return d or '.'
 
 def njoin(*path):
     """ Join two or more pathname components +
     - convert a /-separated pathname to one using the OS's path separator.
-    - resolve `..` from path.
+    - resolve `..` and `.` from path.
 
     Either passing n arguments as in njoin('a','b'), or a sequence
     of n names as in njoin(['a','b']) is handled.
@@ -87,13 +98,19 @@ def get_mathlibs(path=None):
     return mathlibs
 
 def minrelpath(path):
-    """ Resolve `..` from path.
+    """ Resolve `..` and '.' from path.
     """
     if not is_string(path):
         return path
-    if '..' not in path:
+    if '.' not in path:
         return path
     l = path.split(os.sep)
+    while l:
+        try:
+            i = l.index('.',1)
+        except ValueError:
+            break
+        del l[i]
     j = 1
     while l:
         try:
@@ -378,6 +395,7 @@ class Configuration(object):
                  parent_name=None,
                  top_path=None,
                  package_path=None,
+                 caller_level=1,
                  **attrs):
         """ Construct configuration instance of a package.
 
@@ -390,15 +408,17 @@ class Configuration(object):
         package_path -- directory of package. Will be computed by magic from the
                         directory of the caller module if not specified
                         Ex.: the directory where numpy.distutils is
+        caller_level -- frame level to caller namespace, internal parameter.
         """
         self.name = dot_join(parent_name, package_name)
 
-        caller_frame = get_frame(1)
+        caller_frame = get_frame(caller_level)
         caller_name = eval('__name__',caller_frame.f_globals,caller_frame.f_locals)
-
         self.local_path = get_path(caller_name, top_path)
+
         if top_path is None:
             top_path = self.local_path
+            self.local_path = '.'
         if package_path is None:
             package_path = self.local_path
         elif os.path.isdir(njoin(self.local_path,package_path)):
@@ -498,7 +518,7 @@ class Configuration(object):
         dist = distutils.core._setup_distribution
         return dist
 
-    def _wildcard_get_subpackage(self, subpackage_name):
+    def _wildcard_get_subpackage(self, subpackage_name, caller_level = 1):
         l = subpackage_name.split('.')
         subpackage_path = njoin([self.local_path]+l)
         dirs = filter(os.path.isdir,glob.glob(subpackage_path))
@@ -509,12 +529,13 @@ class Configuration(object):
             if 'build' in d.split(os.sep):
                 continue
             n = '.'.join(d.split(os.sep)[-len(l):])
-            c = self.get_subpackage(n)
+            c = self.get_subpackage(n, caller_level = caller_level+1)
             config_list.extend(c)
         return config_list
 
     def _get_configuration_from_setup_py(self, setup_py,
-                                         subpackage_name, subpackage_path):
+                                         subpackage_name, subpackage_path,
+                                         caller_level = 1):
         # In case setup_py imports local modules:
         sys.path.insert(0,os.path.dirname(setup_py))
         try:
@@ -532,7 +553,8 @@ class Configuration(object):
                               '(%s does not define configuration())'\
                               % (setup_module))
                 config = Configuration(subpackage_name, self.name,
-                                       self.top_path, subpackage_path)
+                                       self.top_path, subpackage_path,
+                                       caller_level = caller_level + 1)
             else:
                 args = (self.name,)
                 if setup_module.configuration.func_code.co_argcount > 1:
@@ -542,7 +564,8 @@ class Configuration(object):
             del sys.path[0]
         return config
 
-    def get_subpackage(self,subpackage_name,subpackage_path=None):
+    def get_subpackage(self,subpackage_name,subpackage_path=None,
+                       caller_level = 1):
         """ Return list of subpackage configurations.
 
         '*' in subpackage_name is handled as a wildcard.
@@ -556,7 +579,8 @@ class Configuration(object):
         # handle wildcards
         l = subpackage_name.split('.')
         if subpackage_path is None and '*' in subpackage_name:
-            return self._wildcard_get_subpackage(subpackage_name)
+            return self._wildcard_get_subpackage(subpackage_name,
+                                                 caller_level = caller_level+1)
 
         if subpackage_path is None:
             subpackage_path = njoin([self.local_path] + l)
@@ -575,12 +599,14 @@ class Configuration(object):
                           '(%s/{setup_%s,setup}.py was not found)' \
                           % (os.path.dirname(setup_py), subpackage_name))
             config = Configuration(subpackage_name, self.name,
-                                   self.top_path, subpackage_path)
+                                   self.top_path, subpackage_path,
+                                   caller_level = caller_level+1)
         else:
-            config = self._get_configuration_from_setup_py(setup_py,
-                                                           subpackage_name,
-                                                           subpackage_path)
-
+            config = self._get_configuration_from_setup_py(
+                setup_py,
+                subpackage_name,
+                subpackage_path,
+                caller_level = caller_level + 1)
         if config:
             return [config]
         else:
@@ -589,7 +615,8 @@ class Configuration(object):
     def add_subpackage(self,subpackage_name,subpackage_path=None):
         """ Add subpackage to configuration.
         """
-        config_list = self.get_subpackage(subpackage_name,subpackage_path)
+        config_list = self.get_subpackage(subpackage_name,subpackage_path,
+                                          caller_level = 2)
         if not config_list:
             self.warn('No configuration returned, assuming unavailable.')
         for config in config_list:
@@ -827,7 +854,8 @@ class Configuration(object):
                 lname,lpath = libname.split('@',1)
                 lpath = os.path.abspath(njoin(self.local_path,lpath))
                 if os.path.isdir(lpath):
-                    c = self.get_subpackage(None,lpath)
+                    c = self.get_subpackage(None,lpath,
+                                            caller_level = 2)
                     if isinstance(c,Configuration):
                         c = c.todict()
                     for l in [l[0] for l in c.get('libraries',[])]:

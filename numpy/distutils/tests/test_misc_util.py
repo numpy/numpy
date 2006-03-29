@@ -41,6 +41,8 @@ class test_minrelpath(ScipyTestCase):
         assert_equal(minrelpath(n('aa/bb/..')),'aa')
         assert_equal(minrelpath(n('aa/bb/../..')),'')
         assert_equal(minrelpath(n('aa/bb/../cc/../dd')),n('aa/dd'))
+        assert_equal(minrelpath(n('.././..')),n('../..'))
+        assert_equal(minrelpath(n('aa/bb/.././../dd')),n('dd'))
 
 if __name__ == "__main__":
     ScipyTest().run()
