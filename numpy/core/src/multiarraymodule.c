@@ -446,6 +446,7 @@ _fix_unknown_dimension(PyArray_Dims *newshape, intp s_original)
 /* Returns a new array 
    with the new shape from the data
    in the old array --- order-perspective depends on fortran argument.
+   copy-if-necessary
 */
 
 /*MULTIARRAY_API
@@ -459,7 +460,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 	intp *dimensions = newdims->ptr;
         PyArrayObject *ret;
 	int n = newdims->len;
-        Bool same;
+        Bool same, incref;
 	intp *strides = NULL;
 	intp newstrides[MAX_DIMS];
 
@@ -486,18 +487,24 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 	if (i==0) strides=newstrides;
 	
 	if (strides==NULL) {		
-		if ((n != 0) &&
-		    (!PyArray_ISCONTIGUOUS(self) || (fortran == PyArray_FORTRANORDER)) &&
-		    (!PyArray_ISFORTRAN(self) || (fortran == PyArray_CORDER))) {
-			PyErr_SetString(PyExc_ValueError, 
-					"array cannot be reshaped as a view; get a "\
-					"copy first.");
-			return NULL;
+		if ((n == 0) ||
+		    (PyArray_ISCONTIGUOUS(self) && (fortran != PyArray_FORTRANORDER)) ||
+		    (PyArray_ISFORTRAN(self) && (fortran != PyArray_CORDER))) {
+			incref = TRUE;		
 		}
+		else {
+			PyObject *tmp;
+			tmp = PyArray_NewCopy(self, fortran);
+			if (tmp==NULL) return NULL;
+			self = (PyArrayObject *)tmp;
+			incref = FALSE;
+		}
+		
 		if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0)
-			return NULL;
+			goto fail;
 	}
 	else {
+		incref = TRUE;
 		/* replace any 0-valued strides with
 		   appropriate value to preserve contiguousness
 		*/
@@ -529,14 +536,19 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 					   self->data,
 					   self->flags, (PyObject *)self);
 	
-	if (ret== NULL) return NULL;
+	if (ret== NULL) goto fail;
 	
-        Py_INCREF(self);
+        if (incref) Py_INCREF(self);
         ret->base = (PyObject *)self;
 	PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
 	
         return (PyObject *)ret;
+	
+ fail:
+	if (!incref) {Py_DECREF(self);}
+	return NULL;
 }
+
 
 
 /* return a new view of the array object with all of its unit-length 
@@ -1278,7 +1290,7 @@ PyArray_Concatenate(PyObject *op, int axis)
 	
 	mps = PyArray_ConvertToCommonType(op, &n);
 	if (mps == NULL) return NULL;
-	
+
 	/* Make sure these arrays are legal to concatenate. */
 	/* Must have same dimensions except d0 */
 	
@@ -1296,7 +1308,6 @@ PyArray_Concatenate(PyObject *op, int axis)
 			if (prior2 > prior1) {
 				prior1 = prior2;
 				subtype = mps[i]->ob_type;
-				ret = mps[i];
 			}
 		}
 	}

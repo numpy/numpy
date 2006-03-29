@@ -186,10 +186,7 @@ def reshape(a, newshape, order='C'):
         reshape = a.reshape
     except AttributeError:
         return _wrapit(a, 'reshape', newshape, order=order)
-    try:
-        return reshape(newshape, order=order)
-    except ValueError:
-        return a.copy(order).reshape(newshape, order=None)
+    return reshape(newshape, order=order)
 
 def choose(a, choices):
     try:
