@@ -520,11 +520,12 @@ class Configuration(object):
         try:
             fo_setup_py = open(setup_py, 'U')
             setup_name = os.path.splitext(os.path.basename(setup_py))[0]
-            n = dot_join(self.name,setup_name)
+            n = dot_join(self.name,subpackage_name,setup_name)
             setup_module = imp.load_module('_'.join(n.split('.')),
                                            fo_setup_py,
                                            setup_py,
                                            ('.py', 'U', 1))
+            fo_setup_py.close()
             if not hasattr(setup_module,'configuration'):
                 if not self.options['assume_default_configuration']:
                     self.warn('Assuming default configuration '\
@@ -568,7 +569,6 @@ class Configuration(object):
             if not os.path.isfile(setup_py):
                 setup_py = njoin(subpackage_path,
                                  'setup_%s.py' % (subpackage_name))
-
         if not os.path.isfile(setup_py):
             if not self.options['assume_default_configuration']:
                 self.warn('Assuming default configuration '\
