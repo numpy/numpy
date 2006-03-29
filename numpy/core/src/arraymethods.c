@@ -103,14 +103,7 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
 			goto fail;
 		}
 	}
-
-	if (newshape.len == 1) {
-		PyDimMem_FREE(newshape.ptr);
-		return PyArray_Ravel(self, 0);
-	}
-	
 	ret = PyArray_Newshape(self, &newshape, order);
-
 	PyDimMem_FREE(newshape.ptr);
         return ret;
 

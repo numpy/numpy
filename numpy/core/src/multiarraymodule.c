@@ -181,8 +181,18 @@ PyArray_Ravel(PyArrayObject *a, PyArray_ORDER fortran)
 	PyArray_Dims newdim = {NULL,1};
 	intp val[1] = {-1};
 
-	newdim.ptr = val;
-	return PyArray_Newshape(a, &newdim, fortran);
+        if (fortran == PyArray_ANYORDER)  
+		fortran = PyArray_ISFORTRAN(a); 
+              
+	newdim.ptr = val; 
+	if (!fortran && PyArray_ISCONTIGUOUS(a)) { 
+		return PyArray_Newshape(a, &newdim, PyArray_CORDER); 
+	} 
+	else if (fortran && PyArray_ISFORTRAN(a)) { 
+		return PyArray_Newshape(a, &newdim, PyArray_FORTRANORDER); 
+	} 
+	else 
+		return PyArray_Flatten(a, fortran); 
 }
 
 static double
@@ -480,7 +490,8 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 		    (!PyArray_ISCONTIGUOUS(self) || (fortran == PyArray_FORTRANORDER)) &&
 		    (!PyArray_ISFORTRAN(self) || (fortran == PyArray_CORDER))) {
 			PyErr_SetString(PyExc_ValueError, 
-					"cannot return a view from reshape.");
+					"array cannot be reshaped as a view; get a "\
+					"copy first.");
 			return NULL;
 		}
 		if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0)
