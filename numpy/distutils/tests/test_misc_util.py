@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+
+import os
 import sys
 from numpy.testing import *
-from numpy.distutils.misc_util import appendpath, minrelpath
+from numpy.distutils.misc_util import appendpath, minrelpath, gpaths, rel_path
 from os.path import join, sep
 
 ajoin = lambda *paths: join(*((sep,)+paths))
@@ -43,6 +46,15 @@ class test_minrelpath(ScipyTestCase):
         assert_equal(minrelpath(n('aa/bb/../cc/../dd')),n('aa/dd'))
         assert_equal(minrelpath(n('.././..')),n('../..'))
         assert_equal(minrelpath(n('aa/bb/.././../dd')),n('dd'))
+
+class test_gpaths(NumpyTestCase):
+
+    def check_gpaths(self):
+        local_path = minrelpath(os.path.join(os.path.dirname(__file__),'..'))
+        ls = gpaths('command/*.py', local_path)
+        assert os.path.join(local_path,'command','build_src.py') in ls,`ls`
+        f = gpaths('system_info.py', local_path)
+        assert os.path.join(local_path,'system_info.py')==f[0],`f`
 
 if __name__ == "__main__":
     ScipyTest().run()

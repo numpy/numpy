@@ -14,7 +14,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'get_dependencies', 'is_local_src_dir', 'get_ext_source_files',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
            'dot_join', 'get_frame', 'minrelpath','njoin',
-           'is_sequence', 'is_string', 'as_list']
+           'is_sequence', 'is_string', 'as_list', 'gpaths']
 
 def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."
@@ -65,14 +65,20 @@ def njoin(*path):
     - resolve `..` and `.` from path.
 
     Either passing n arguments as in njoin('a','b'), or a sequence
-    of n names as in njoin(['a','b']) is handled.
+    of n names as in njoin(['a','b']) is handled, or a mixture of such arguments.
     """
+    paths = []
+    for p in path:
+        if is_sequence(p):
+            # njoin(['a', 'b'], 'c')
+            paths.append(njoin(*p))
+        else:
+            assert is_string(p)
+            paths.append(p)
+    path = paths
     if not path:
         # njoin()
         joined = ''
-    elif is_sequence(path[0]) and len(path) == 1:
-        # njoin(['a', 'b'])
-        joined = os.path.join(*path[0])
     else:
         # njoin('a', 'b')
         joined = os.path.join(*path)
@@ -125,6 +131,49 @@ def minrelpath(path):
     if not l:
         return ''
     return os.sep.join(l)
+
+def _fix_paths(paths,local_path,include_non_existing):
+    assert is_sequence(paths), repr(type(paths))
+    new_paths = []
+    for n in paths:
+        if is_string(n):
+            if '*' in n or '?' in n:
+                p = glob.glob(n)
+                p2 = glob.glob(njoin(local_path,n))
+                if p2:
+                    new_paths.extend(p2)
+                elif p:
+                    new_paths.extend(p)
+                else:
+                    if include_non_existing:
+                        new_paths.append(n)
+                    print 'could not resolve pattern in %r: %r' \
+                              % (local_path,n)
+            else:
+                n2 = njoin(local_path,n)
+                if os.path.exists(n2):
+                    new_paths.append(n2)
+                else:
+                    if os.path.exists(n):
+                        new_paths.append(n)
+                    elif include_non_existing:
+                        new_paths.append(n)
+                    if not os.path.exists(n):
+                        print 'non-existing path in %r: %s' \
+                              % (local_path,n)
+        elif is_sequence(n):
+            new_paths.extend(_fix_paths(n,local_path,include_non_existing))
+        else:
+            new_paths.append(n)
+    return map(minrelpath,new_paths)
+
+def gpaths(paths, local_path='', include_non_existing=True):
+    """ Apply glob to paths and prepend local_path if needed.
+    """
+    if is_string(paths):
+        paths = (paths,)
+    return _fix_paths(paths,local_path, include_non_existing)
+
 
 # Hooks for colored terminal output.
 # See also http://www.livinglogic.de/Python/ansistyle
@@ -372,6 +421,8 @@ def dot_join(*args):
     return '.'.join([a for a in args if a])
 
 def get_frame(level=0):
+    """ Return frame object from call stack with given level.
+    """
     try:
         return sys._getframe(level+1)
     except AttributeError:
@@ -599,7 +650,7 @@ class Configuration(object):
             subpackage_path = njoin([self.local_path] + l)
         else:
             subpackage_path = njoin([subpackage_path] + l[:-1])
-            subpackage_path = self._fix_paths([subpackage_path])[0]
+            subpackage_path = self.paths([subpackage_path])[0]
 
         setup_py = njoin(subpackage_path, 'setup.py')
         if not self.options['ignore_setup_xxx_py']:
@@ -662,7 +713,7 @@ class Configuration(object):
         - path to data directory where python datadir suffix defaults
           to package dir.
         If path is not absolute then it's datadir suffix is
-        package dir + subdirname of the path.
+        `package dir + basename(subdirname)` of the path.
         """
         if is_sequence(data_path):
             d, data_path = data_path
@@ -672,6 +723,7 @@ class Configuration(object):
             raise TypeError("not a string: %r" % (data_path,))
         for path in self.paths(data_path):
             if not os.path.exists(path):
+                self.warn("Not existing data dir: %s" % (path))
                 continue
             filenames = list(general_source_files(path))
             if not os.path.isabs(path):
@@ -756,7 +808,7 @@ class Configuration(object):
     def add_include_dirs(self,*paths):
         """ Add paths to configuration include directories.
         """
-        include_dirs = self._fix_paths(paths)
+        include_dirs = self.paths(paths)
         dist = self.get_distribution()
         if dist is not None:
             dist.include_dirs.extend(include_dirs)
@@ -786,52 +838,20 @@ class Configuration(object):
             self.headers.extend(headers)
         return
 
-    def _fix_paths(self,paths,include_non_existing=True):
-        assert is_sequence(paths), repr(type(paths))
-        new_paths = []
-        for n in paths:
-            if isinstance(n,str):
-                if '*' in n or '?' in n:
-                    p = glob.glob(n)
-                    p2 = glob.glob(njoin(self.local_path,n))
-                    if p2:
-                        new_paths.extend(p2)
-                    elif p:
-                        new_paths.extend(p)
-                    else:
-                        if include_non_existing:
-                            new_paths.append(n)
-                        self.warn('could not resolve pattern in %s: %r' \
-                                  % (self.local_path,n))
-                else:
-                    n2 = njoin(self.local_path,n)
-                    if os.path.exists(n2):
-                        new_paths.append(n2)
-                    else:
-                        if os.path.exists(n):
-                            new_paths.append(n)
-                        elif include_non_existing:
-                            new_paths.append(n)
-                        if not os.path.exists(n):
-                            self.warn('not existing path in %s: %s' \
-                                      % (self.local_path,n))
-            else:
-                new_paths.append(n)
-        return map(minrelpath,new_paths)
-
     def paths(self,*paths,**kws):
         """ Apply glob to paths and prepend local_path if needed.
         """
         include_non_existing = kws.get('include_non_existing',True)
-        return self._fix_paths(paths,
-                               include_non_existing=include_non_existing)
+        return gpaths(paths,
+                      local_path = self.local_path,
+                      include_non_existing=include_non_existing)
 
     def _fix_paths_dict(self,kw):
         for k in kw.keys():
             v = kw[k]
             if k in ['sources','depends','include_dirs','library_dirs',
                      'module_dirs','extra_objects']:
-                new_v = self._fix_paths(v)
+                new_v = self.paths(v)
                 kw[k] = new_v
         return
 
@@ -927,7 +947,7 @@ class Configuration(object):
     def add_scripts(self,*files):
         """ Add scripts to configuration.
         """
-        scripts = self._fix_paths(files)
+        scripts = self.paths(files)
         dist = self.get_distribution()
         if dist is not None:
             dist.scripts.extend(scripts)

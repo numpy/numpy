@@ -154,7 +154,9 @@ in writing setup scripts:
                           '/full/path/to/can.dat',
                           )
 
-  will install data files to the following locations::
+  will install data files to the following locations
+
+  ::
 
     <installation path of config.name package>/
       foo.dat
@@ -178,8 +180,8 @@ in writing setup scripts:
   If ``data_path`` is a tuple then its first element defines
   the suffix of where data files are copied relative to package installation
   directory and the second element specifies the path to data directory.
-  By default data directory are copied under package installation
-  directory. For example,
+  By default, data directory are copied under package installation
+  directory under the basename of ``data_path``. For example,
  
   ::
 
@@ -188,6 +190,8 @@ in writing setup scripts:
     config.add_data_dir(('gun','/full/path/to/fun'))
 
   will install data files to the following locations 
+
+  ::
 
     <installation path of config.name package>/
       fun/
@@ -316,6 +320,17 @@ Useful functions in ``numpy.distutils.misc_util``
 
 + ``append_path(prefix,path)`` --- smart append ``path`` to ``prefix``.
 
++ ``gpaths(paths, local_path='')`` --- apply glob to paths and prepend
+  ``local_path`` if needed.
+
++ ``njoin(*path)`` --- join pathname components + convert ``/``-separated path
+  to ``os.sep``-separated path and resolve ``..``, ``.`` from paths.
+  Ex. ``njoin('a',['b','./c'],'..','g') -> os.path.join('a','b','g')``.
+
++ ``minrelpath(path)`` --- resolves dots in ``path``.
+
++ ``rel_path(path, parent_path)`` --- return ``path`` relative to ``parent_path``.
+
 + ``def get_cmd(cmdname,_cache={})`` --- returns ``numpy.distutils``
   command instance.
 
@@ -340,18 +355,22 @@ Useful functions in ``numpy.distutils.misc_util``
 
 + ``get_data_files(data)``
 
-+ ``dot_join(*args)``
++ ``dot_join(*args)`` --- join non-zero arguments with a dot.
 
-+ ``get_frame(level=0)``
++ ``get_frame(level=0)`` --- return frame object from call stack with given level.
 
 + ``cyg2win32(path)``
+
++ ``mingw32()`` --- return ``True`` when using mingw32 environment.
 
 + ``terminal_has_colors()``, ``red_text(s)``, ``green_text(s)``,
   ``yellow_text(s)``, ``blue_text(s)``, ``cyan_text(s)``
 
-+ ``get_path(mod_name,parent_path=None)``
++ ``get_path(mod_name,parent_path=None)`` --- return path of a module
+  relative to parent_path when given. Handles also ``__main__`` and
+  ``__builtin__`` modules.
 
-+ ``allpath(name)``
++ ``allpath(name)`` --- replaces ``/`` with ``os.sep`` in ``name``.
 
 + ``cxx_ext_match``, ``fortran_ext_match``, ``f90_ext_match``,
   ``f90_module_name_match``
