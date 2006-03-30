@@ -61,10 +61,14 @@ def setup_package():
                            quiet=True)
 
         config.add_subpackage('numpy')
+
         from numpy.version import version
         config.name = 'numpy'
         config.dict_append(version=version)
         #print config.name,'version',config.version
+
+        config.add_data_files(('numpy',['*.txt','COMPATIBILITY',
+                                        'scipy_compatibility']))
 
         setup( **config.todict() )
     finally:
