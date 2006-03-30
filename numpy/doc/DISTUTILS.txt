@@ -149,7 +149,7 @@ in writing setup scripts:
   ::
 
     config.add_data_files('foo.dat',
-                          ('fun',['gun.dat','nun/pun.dat','/tmp/sun.dat']),
+	                  ('fun',['gun.dat','nun/pun.dat','/tmp/sun.dat']),
                           'bar/car.dat'.
                           '/full/path/to/can.dat',
                           )
@@ -162,9 +162,8 @@ in writing setup scripts:
       foo.dat
       fun/
         gun.dat
-        nun/
-          pun.dat
-      sun.dat
+	pun.dat
+        sun.dat
       bar/
         car.dat
       can.dat 
@@ -204,7 +203,8 @@ in writing setup scripts:
             car.dat
       gun/
          foo.dat
-         car.dat
+         bar/
+            car.dat
 
 + ``config.add_include_dirs(*paths)`` --- prepend ``paths`` to
   ``include_dirs`` list. This list will be visible to all extension

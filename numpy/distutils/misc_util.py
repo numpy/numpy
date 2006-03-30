@@ -5,6 +5,11 @@ import imp
 import copy
 import glob
 
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
            'get_cmd', 'allpath', 'get_mathlibs',
@@ -25,13 +30,14 @@ def rel_path(path, parent_path):
     """ Return path relative to parent_path.
     """
     pd = os.path.abspath(parent_path)
-    if len(path)<len(pd):
+    apath = os.path.abspath(path)
+    if len(apath)<len(pd):
         return path
-    if path==pd:
+    if apath==pd:
         return ''
-    if pd == path[:len(pd)]:
-        assert path[len(pd)] in [os.sep],`path,path[len(pd)]`
-        path = path[len(pd)+1:]
+    if pd == apath[:len(pd)]:
+        assert apath[len(pd)] in [os.sep],`path,apath[len(pd)]`
+        path = apath[len(pd)+1:]
     return path
 
 def get_path(mod_name, parent_path=None):
@@ -135,6 +141,7 @@ def minrelpath(path):
 def _fix_paths(paths,local_path,include_non_existing):
     assert is_sequence(paths), repr(type(paths))
     new_paths = []
+    assert not is_string(paths),`paths`
     for n in paths:
         if is_string(n):
             if '*' in n or '?' in n:
@@ -159,8 +166,9 @@ def _fix_paths(paths,local_path,include_non_existing):
                     elif include_non_existing:
                         new_paths.append(n)
                     if not os.path.exists(n):
-                        print 'non-existing path in %r: %s' \
+                        print 'non-existing path in %r: %r' \
                               % (local_path,n)
+
         elif is_sequence(n):
             new_paths.extend(_fix_paths(n,local_path,include_non_existing))
         else:
@@ -278,6 +286,9 @@ def is_sequence(seq):
         return False
     return True
 
+def is_glob_pattern(s):
+    return '*' in s or '?' is s
+
 def as_list(seq):
     if is_sequence(seq):
         return list(seq)
@@ -366,6 +377,32 @@ def general_source_files(top_path):
         for f in filenames:
             if not prune_file_pat.search(f):
                 yield os.path.join(dirpath, f)
+
+def general_source_directories_files(top_path):
+    """ Return a directory name relative to top_path and
+    files contained.
+    """
+    pruned_directories = ['CVS','.svn','build']
+    prune_file_pat = re.compile(r'(?:^\..*|[~#]|\.py[co]|\.o)$')
+    for dirpath, dirnames, filenames in os.walk(top_path, topdown=True):
+        pruned = [ d for d in dirnames if d not in pruned_directories ]
+        dirnames[:] = pruned
+        for d in dirnames:
+            dpath = os.path.join(dirpath, d)
+            rpath = rel_path(dpath, top_path)
+            files = []
+            for f in os.listdir(dpath):
+                fn = os.path.join(dpath,f)
+                if os.path.isfile(fn) and not prune_file_pat.search(fn):
+                    files.append(fn)
+            yield rpath, files
+    dpath = top_path
+    rpath = rel_path(dpath, top_path)
+    filenames = [os.path.join(dpath,f) for f in os.listdir(dpath) \
+                 if not prune_file_pat.search(f)]
+    files = [f for f in filenames if os.path.isfile(f)]
+    yield rpath, files
+
 
 def get_ext_source_files(ext):
     # Get sources and any include files in the same directory.
@@ -466,7 +503,6 @@ class Configuration(object):
         caller_frame = get_frame(caller_level)
         caller_name = eval('__name__',caller_frame.f_globals,caller_frame.f_locals)
         self.local_path = get_path(caller_name, top_path)
-
         if top_path is None:
             top_path = self.local_path
             self.local_path = '.'
@@ -536,6 +572,7 @@ class Configuration(object):
         """ Return configuration distionary suitable for passing
         to distutils.core.setup() function.
         """
+        self._optimize_data_files()
         d = {}
         for n in self.list_keys + self.dict_keys + self.extra_keys:
             a = getattr(self,n)
@@ -692,10 +729,11 @@ class Configuration(object):
         if not config_list:
             self.warn('No configuration returned, assuming unavailable.')
         for config in config_list:
-            try:
+            d = config
+            if isinstance(config, Configuration):
                 d = config.todict()
-            except AttributeError:
-                d = config
+            assert isinstance(d,dict),`type(d)`
+
             self.info('Appending %s configuration to %s' \
                       % (d.get('name'), self.name))
             self.dict_append(**d)
@@ -712,33 +750,76 @@ class Configuration(object):
         - 2-sequence (<datadir suffix>,<path to data directory>)
         - path to data directory where python datadir suffix defaults
           to package dir.
-        If path is not absolute then it's datadir suffix is
-        `package dir + basename(subdirname)` of the path.
+
+        Rules for installation paths:
+          foo/bar -> (foo/bar, foo/bar) -> parent/foo/bar
+          (gun, foo/bar) -> parent/gun
+          foo/* -> (foo/a, foo/a), (foo/b, foo/b) -> parent/foo/a, parent/foo/b
+          (gun, foo/*) -> (gun, foo/a), (gun, foo/b) -> gun
+          (gun/*, foo/*) -> parent/gun/a, parent/gun/b
+          /foo/bar -> (bar, /foo/bar) -> parent/bar
+          (gun, /foo/bar) -> parent/gun
+          (fun/*/gun/*, sun/foo/bar) -> parent/fun/foo/gun/bar
         """
         if is_sequence(data_path):
             d, data_path = data_path
         else:
             d = None
+        if is_sequence(data_path):
+            [self.add_data_dir((d,p)) for p in data_path]
+            return
         if not is_string(data_path):
             raise TypeError("not a string: %r" % (data_path,))
-        for path in self.paths(data_path):
-            if not os.path.exists(path):
-                self.warn("Not existing data dir: %s" % (path))
-                continue
-            filenames = list(general_source_files(path))
-            if not os.path.isabs(path):
-                npath = data_path
-                if '*' in npath:
-                    npath = os.path.join(*(path.split(os.sep)[-len(npath.split(os.sep)):]))
-                if d is None:
-                    d = self.path_in_package
-                ds = os.path.join(d, npath)
-                self.add_data_files((ds,filenames))
+        if d is None:
+            if os.path.isabs(data_path):
+                return self.add_data_dir((os.path.basename(data_path), data_path))
+            return self.add_data_dir((data_path, data_path))
+        paths = self.paths(data_path, include_non_existing=False)
+        if is_glob_pattern(data_path):
+            if is_glob_pattern(d):
+                pattern_list = d.split(os.sep)
+                pattern_list.reverse()
+                for path in paths:
+                    path_list = path.split(os.sep)
+                    path_list.reverse()
+                    target_list = []
+                    i = 0
+                    for s in pattern_list:
+                        if is_glob_pattern(s):
+                            if i>=len(path_list):
+                                raise ValueError,'cannot fill pattern %r with %r' \
+                                      % (d, path)
+                            target_list.append(path_list[i])
+                            i += 1
+                        else:
+                            target_list.append(s)
+                    target_list.reverse()
+                    self.add_data_dir((os.sep.join(target_list),path))
             else:
-                if d is None:
-                    self.add_data_files(*filenames)
-                else:
-                    self.add_data_files((d,filenames))
+                for path in paths:
+                    self.add_data_dir((d,path))
+            return
+        assert not is_glob_pattern(d),`d`
+        
+        dist = self.get_distribution()
+        if dist is not None:
+            data_files = dist.data_files
+        else:
+            data_files = self.data_files
+
+        for path in paths:
+            for d1,f in list(general_source_directories_files(path)):
+                target_path = os.path.join(self.path_in_package,d,d1)
+                data_files.append((target_path, f))
+        return
+
+    def _optimize_data_files(self):
+        data_dict = {}
+        for p,files in self.data_files:
+            if not data_dict.has_key(p):
+                data_dict[p] = set()
+            map(data_dict[p].add,files)
+        self.data_files[:] = [(p,list(files)) for p,files in data_dict.items()]
         return
 
     def add_data_files(self,*files):
@@ -747,61 +828,82 @@ class Configuration(object):
         - 2-sequence (<datadir prefix>,<path to data file(s)>)
         - paths to data files where python datadir prefix defaults
           to package dir.
-        If path is not absolute then it's datadir prefix is
-        package dir + dirname of the path.
+
+        Rules for installation paths:
+          file.txt -> (., file.txt)-> parent/file.txt
+          foo/file.txt -> (foo, foo/file.txt) -> parent/foo/file.txt
+          /foo/bar/file.txt -> (., /foo/bar/file.txt) -> parent/file.txt
+          *.txt -> parent/a.txt, parent/b.txt
+          foo/*.txt -> parent/foo/a.txt, parent/foo/b.txt
+          */*.txt -> (*, */*.txt) -> parent/c/a.txt, parent/d/b.txt
+          (sun, file.txt) -> parent/sun/file.txt
+          (sun, bar/file.txt) -> parent/sun/file.txt
+          (sun, /foo/bar/file.txt) -> parent/sun/file.txt
+          (sun, *.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          (sun, bar/*.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          (sun/*, */*.txt) -> parent/sun/c/a.txt, parent/d/b.txt
         """
-        data_dict = {}
-        new_files = []
-        for p in files:
-            if not is_sequence(p):
-                d = self.path_in_package
-                if is_string(p) and not os.path.isabs(p):
-                    pd = os.path.dirname(p)
-                    if '*' in pd:
-                        pn = os.path.basename(p)
-                        n = len(pd.split(os.sep))
-                        for d1 in filter(os.path.isdir,self.paths(pd)):
-                            p = os.path.join(d1,pn)
-                            d1 = os.sep.join(d1.split(os.sep)[-n:])
-                            new_files.append((appendpath(d,d1),p))
-                        continue
-                    d = appendpath(d,pd)
-                p = (d,p)
-            new_files.append(p)
 
-        files = []
-        for prefix,filepattern in new_files:
-            assert '*' not in prefix, repr((prefix,filepattern))
-            if is_string(filepattern):
-                file_list = self.paths(filepattern,include_non_existing=False)
-            elif callable(filepattern):
-                file_list = [filepattern]
+        if len(files)>1:
+            map(self.add_data_files, files)
+            return
+        assert len(files)==1
+        if is_sequence(files[0]):
+            d,files = files[0]
+        else:
+            d = None
+        if is_string(files):
+            filepat = files
+        elif is_sequence(files):
+            if len(files)==1:
+                filepat = files[0]
             else:
-                file_list = self.paths(*filepattern)
+                for f in files:
+                    self.add_data_files((d,f))
+                return
+        else:
+            raise TypeError,`type(files)`
 
-            nof_path_components = [len(f.split(os.sep))
-                                   for f in file_list if is_string(f)]
-            if nof_path_components:
-                min_path_components = min(nof_path_components)-1
+        if d is None:
+            if os.path.isabs(filepat):
+                d = ''
             else:
-                min_path_components = 0
+                d = os.path.dirname(filepat)
+            self.add_data_files((d,files))
+            return
 
-            for f in file_list:
-                if is_string(f):
-                    extra_path_components = f.split(os.sep)[min_path_components:-1]
-                    p = njoin([prefix]+extra_path_components)
-                else:
-                    p = prefix
-                if not data_dict.has_key(p):
-                    data_dict[p] = [f]
-                else:
-                    data_dict[p].append(f)
+        paths = self.paths(filepat, include_non_existing=False)
+        if is_glob_pattern(filepat):
+            if is_glob_pattern(d):
+                pattern_list = d.split(os.sep)
+                pattern_list.reverse()
+                for path in paths:
+                    path_list = path.split(os.sep)
+                    path_list.reverse()
+                    path_list.pop() # filename
+                    target_list = []
+                    i = 0
+                    for s in pattern_list:
+                        if is_glob_pattern(s):
+                            target_list.append(path_list[i])
+                            i += 1
+                        else:
+                            target_list.append(s)
+                    target_list.reverse()
+                    self.add_data_files((os.sep.join(target_list), path))
+            else:
+                self.add_data_files((d,paths))
+            return
+        assert not is_glob_pattern(d),`d,filepat`
 
         dist = self.get_distribution()
         if dist is not None:
-            dist.data_files.extend(data_dict.items())
+            data_files = dist.data_files
         else:
-            self.data_files.extend(data_dict.items())
+            data_files = self.data_files
+
+        data_files.append((os.path.join(self.path_in_package,d),paths))
+        return
 
     ### XXX Implement add_py_modules
 
@@ -973,13 +1075,14 @@ class Configuration(object):
         return
 
     def __str__(self):
+        from pprint import pformat
         known_keys = self.list_keys + self.dict_keys + self.extra_keys
         s = '<'+5*'-' + '\n'
         s += 'Configuration of '+self.name+':\n'
         for k in known_keys:
             a = getattr(self,k,None)
             if a:
-                s += '%s = %r\n' % (k,a)
+                s += '%s = %s\n' % (k,pformat(a))
         s += 5*'-' + '>'
         return s
 
@@ -1131,7 +1234,7 @@ class Configuration(object):
 
             return target
 
-        self.add_data_files((self.path_in_package, generate_svn_version_py()))
+        self.add_data_files(('', generate_svn_version_py()))
 
     def make_config_py(self,name='__config__'):
         """ Generate package __config__.py file containing system_info

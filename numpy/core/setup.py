@@ -20,7 +20,7 @@ def configuration(parent_package='',top_path=None):
                                      open(generate_umath_py,'U'),generate_umath_py,
                                      ('.py','U',1))
 
-    header_dir = join(*(config.name.split('.')+['include','numpy']))
+    header_dir = 'include/numpy' # this is relative to config.path_in_package
 
     def generate_config_h(ext, build_dir):
         target = join(build_dir,'config.h')
@@ -140,7 +140,7 @@ def configuration(parent_package='',top_path=None):
             f.close()
         return []
 
-    config.add_data_files(join('include','numpy','*.h'))
+    config.add_data_files('include/numpy/*.h')
     config.add_include_dirs('src')
 
     config.numpy_include_dirs.extend(config.paths('include'))

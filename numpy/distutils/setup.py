@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-from numpy.distutils.core      import setup
-from numpy.distutils.misc_util import Configuration
 
 def configuration(parent_package='',top_path=None):
+    from numpy.distutils.misc_util import Configuration
     config = Configuration('distutils',parent_package,top_path)
     config.add_subpackage('command')
     config.add_subpackage('fcompiler')
     config.add_data_dir('tests')
     config.add_data_files('site.cfg')
     config.make_config_py()
-    return config.todict()
+    return config
 
 if __name__ == '__main__':
-    setup(**configuration(top_path=''))
+    from numpy.distutils.core      import setup
+    setup(**configuration(top_path='').todict())
