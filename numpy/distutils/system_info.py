@@ -1680,34 +1680,34 @@ class umfpack_info(system_info):
     section = 'umfpack'
     dir_env_var = 'UMFPACK'
     notfounderror = UmfpackNotFoundError
+    _lib_names = ['umfpack','amd']
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
-        incl_dirs = self.get_include_dirs()
-        info = {}
-        for lib in ['umfpack', 'amd']:
-            for d in lib_dirs:
-#                print d, lib
-                p = self.combine_paths (d,['lib'+lib+'.a'],)
-#                print '->', p
-                if p:
-                    dict_append( info, extra_objects = p )
-                    break
-                p = self.combine_paths (d,['lib'+lib+so_ext])
-                if p:
-                    dict_append( info, libraries = [lib], library_dirs = [d] )
-                    break
-#            print '=>', info
-        if info is None:
+
+        umfpack_libs = self.get_libs('umfpack_libs', self._lib_names)
+        for d in lib_dirs:
+            umf = self.check_libs(d,umfpack_libs,[])
+            if umf is not None:
+                info = umf
+                break
+        else:
             return
-        for d in incl_dirs:
-#            print d
-            if len(self.combine_paths(d,['umfpack.h']))==1:
-                dict_append(info,include_dirs=[d],
-                            define_macros=[('SCIPY_UMFPACK_H',None)],
-                            swig_opts = ['-I' + d])
-                self.set_info(**info)
-                return
+
+        include_dirs = self.get_include_dirs()
+
+        inc_dir = None
+        for d in include_dirs:
+            d = os.path.join(d,'umfpack')
+            if self.combine_paths(d,'umfpack.h'):
+                inc_dir = d
+                break
+        if inc_dir is not None:
+            dict_append(info, include_dirs=[inc_dir],
+                        define_macros=[('SCIPY_UMFPACK_H',None)],
+                        swig_opts = ['-I' + inc_dir])
+
+        self.set_info(**info)
         return
 
 ## def vstr2hex(version):
