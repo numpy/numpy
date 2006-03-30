@@ -1704,7 +1704,8 @@ class umfpack_info(system_info):
 #            print d
             if len(self.combine_paths(d,['umfpack.h']))==1:
                 dict_append(info,include_dirs=[d],
-                            define_macros=[('SCIPY_UMFPACK_H',None)])
+                            define_macros=[('SCIPY_UMFPACK_H',None)],
+                            swig_opts = ['-I' + d])
                 self.set_info(**info)
                 return
         return
