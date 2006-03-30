@@ -50,6 +50,8 @@ class PackageLoader:
         """
         import imp
         info_files = []
+        info_modules = self.info_modules
+
         if packages is None:
             for path in self.parent_path:
                 info_files.extend(self._get_info_files('*',path))
@@ -62,10 +64,14 @@ class PackageLoader:
                         info_files.extend(names_files)
                         break
                 else:
-                    self.warn('No scipy-style subpackage %r found in %s. Ignoring.'\
-                              % (package_name,':'.join(self.parent_path)))
+                    try:
+                        exec 'import %s.info as info' % (package_name)
+                        info_modules[package_name] = info
+                    except ImportError, msg:
+                        self.warn('No scipy-style subpackage %r found in %s. '\
+                                  'Ignoring: %s'\
+                                  % (package_name,':'.join(self.parent_path), msg))
 
-        info_modules = self.info_modules
         for package_name,info_file in info_files:
             if info_modules.has_key(package_name):
                 continue
