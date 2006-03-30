@@ -1,7 +1,7 @@
 
 from lib import add_newdoc
 
-add_newdoc('numpy.core','dtypedescr',
+add_newdoc('numpy.core','dtype',
            [('fields', "Fields of the data-typedescr if any."),
             ('alignment', "Needed alignment for this data-type"),
             ('byteorder',
