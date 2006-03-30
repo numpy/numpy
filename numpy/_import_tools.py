@@ -13,7 +13,10 @@ class PackageLoader:
 
         self.parent_frame = frame = sys._getframe(1)
         self.parent_name = eval('__name__',frame.f_globals,frame.f_locals)
-        self.parent_path = eval('__path__',frame.f_globals,frame.f_locals)
+        parent_path = eval('__path__',frame.f_globals,frame.f_locals)
+        if isinstance(parent_path, str):
+            parent_path = [parent_path]
+        self.parent_path = parent_path
         if not frame.f_locals.has_key('__all__'):
             exec('__all__ = []',frame.f_globals,frame.f_locals)
         self.parent_export_names = eval('__all__',frame.f_globals,frame.f_locals)
@@ -279,7 +282,7 @@ class PackageLoader:
 
     def _format_titles(self,titles,colsep='---'):
         display_window_width = 70 # How to determine the correct value in runtime??
-        lengths = [len(name)-name.find('.')-1 for (name,title) in titles]
+        lengths = [len(name)-name.find('.')-1 for (name,title) in titles]+[0]
         max_length = max(lengths)
         lines = []
         for (name,title) in titles:
