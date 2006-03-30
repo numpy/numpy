@@ -13,8 +13,8 @@ from numpy.core.numeric import asarray, any
 from numpy.lib.type_check import isreal
 
 
-__all__.extend([key for key in dir(nx.umath)
-                if key[0] != '_' and key not in __all__])
+#__all__.extend([key for key in dir(nx.umath)
+#                if key[0] != '_' and key not in __all__])
 
 _ln2 = nx.log(2.0)
 
