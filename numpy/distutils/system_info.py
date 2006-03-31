@@ -1103,17 +1103,21 @@ def get_atlas_version(**config):
     import distutils.core
     old_dist = distutils.core._setup_distribution
     distutils.core._setup_distribution = None
+    return_flag = True
     try:
         dist = setup(ext_modules=[ext],
                      script_name = 'get_atlas_version',
                      script_args = ['build_src','build_ext']+extra_args)
+        return_flag = False
     except Exception,msg:
         print "##### msg: %s" % msg
         if not msg:
             msg = "Unknown Exception"
         log.warn(msg)
-        return None
     distutils.core._setup_distribution = old_dist
+
+    if return_flag:
+        return
 
     from distutils.sysconfig import get_config_var
     so_ext = get_config_var('SO')
