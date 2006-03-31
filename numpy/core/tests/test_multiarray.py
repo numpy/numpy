@@ -192,6 +192,10 @@ class test_zero_rank(ScipyTestCase):
         y[()] = 6
         self.failUnlessEqual(x[()], 6)
 
+    def check_output(self):
+        x = array(2)
+        self.failUnlessRaises(ValueError, add, x, [1], x)
+        
 class test_creation(ScipyTestCase):
     def check_from_attribute(self):
         class x(object):
