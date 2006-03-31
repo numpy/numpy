@@ -876,12 +876,12 @@ array_reduce(PyArrayObject *self, PyObject *args)
 	Py_DECREF(mod);
 	PyTuple_SET_ITEM(ret, 0, obj);
 	PyTuple_SET_ITEM(ret, 1, 
-			 Py_BuildValue("ONN",
+			 Py_BuildValue("ONc",
 				       (PyObject *)self->ob_type,
 				       Py_BuildValue("(N)",
 						     PyInt_FromLong(0)),
-				       PyObject_GetAttrString((PyObject *)(self->descr),
-							      "char")));
+				       /* dummy data-type */
+				       'b'));
 	
 	/* Now fill in object's state.  This is a tuple with 
 	   4 arguments

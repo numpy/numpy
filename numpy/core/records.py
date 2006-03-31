@@ -106,21 +106,34 @@ class record(nt.void):
     def __getattribute__(self, attr):
         if attr in ['setfield', 'getfield', 'dtype']:
             return nt.void.__getattribute__(self, attr)
+        try:
+            return nt.void.__getattribute__(self, attr)
+        except AttributeError:
+            pass
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
         res = fielddict.get(attr,None)
         if res:
             return self.getfield(*res[:2])
-        return nt.void.__getattribute__(self, attr)
+        else:
+            raise AttributeError, "'record' object has no "\
+                  "attribute '%s'" % attr
+        
 
     def __setattr__(self, attr, val):
         if attr in ['setfield', 'getfield', 'dtype']:
             raise AttributeError, "Cannot set '%s' attribute" % attr;
+        try:
+            return nt.void.__setattr__(self,attr,val)
+        except AttributeError:
+            pass
         fielddict = nt.void.__getattribute__(self,'dtype').fields
         res = fielddict.get(attr,None)
         if res:
             return self.setfield(val,*res[:2])
+        else:
+            raise AttributeError, "'record' object has no "\
+                  "attribute '%s'" % attr
 
-        return nt.void.__setattr__(self,attr,val)
 
 # The recarray is almost identical to a standard array (which supports
 #   named fields already)  The biggest difference is that it can use
@@ -159,7 +172,10 @@ class recarray(sb.ndarray):
         except AttributeError: # attr must be a fieldname
             pass
         fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
-        res = fielddict[attr][:2]
+        try:
+            res = fielddict[attr][:2]
+        except KeyError:
+            raise AttributeError, "record array has no attribute %s" % attr
         obj = self.getfield(*res)
         # if it has fields return a recarray, otherwise return
         # normal array
@@ -175,7 +191,10 @@ class recarray(sb.ndarray):
         except AttributeError: # Must be a fieldname
             pass
         fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
-        res = fielddict[attr][:2]
+        try:
+            res = fielddict[attr][:2]
+        except KeyError:
+            raise AttributeError, "record array has no attribute %s" % attr 
         return self.setfield(val,*res)
 
     def field(self,attr, val=None):

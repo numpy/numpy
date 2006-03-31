@@ -8774,7 +8774,8 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "(cOOii)", &endian, &subarray, &fields,
 			      &elsize, &alignment)) return NULL;
 
-	if (PyArray_IsNativeByteOrder(endian)) endian = '=';
+	if (endian != '|' && 
+	    PyArray_IsNativeByteOrder(endian)) endian = '=';
 
 	self->byteorder = endian;
 	if (self->subarray) {

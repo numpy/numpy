@@ -35,8 +35,8 @@
                         other = b;                              \
                 }                                               \
                 else {                                          \
-                        self = a;                               \
-                        other = b;                              \
+                        self = b;                               \
+                        other = a;                              \
                         if (!PyObject_IsScalar(self, @NAME@)) { \
                                 Py_INCREF(Py_NotImplemented);   \
                                 return Py_NotImplemented;       \
