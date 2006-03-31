@@ -47,6 +47,45 @@ if have_setuptools:
     numpy_cmdclass['easy_install'] = easy_install.easy_install
     numpy_cmdclass['egg_info'] = egg_info.egg_info
 
+def _dict_append(d, **kws):
+    for k,v in kws.items():
+        if not d.has_key(k):
+            d[k] = v
+            continue
+        dv = d[k]
+        if isinstance(dv, tuple):
+            dv += tuple(v)
+            continue
+        if isinstance(dv, list):
+            dv += list(v)
+            continue
+        if isinstance(dv, dict):
+            _dict_append(dv, **v)
+            continue
+        if isinstance(dv, str):
+            assert isinstance(v,str),`type(v)`
+            d[k] = v
+        raise TypeError,`type(dv)`
+    return
+
+def _command_line_ok(_cache=[]):
+    """ Return True if command line does not contain any
+    help or display requests.
+    """
+    if _cache:
+        return _cache[0]
+    ok = True
+    display_opts = ['--'+n for n in Distribution.display_option_names]
+    for o in Distribution.display_options:
+        if o[1]:
+            display_opts.append('-'+o[1])
+    for arg in sys.argv:
+        if arg.startswith('--help') or arg=='-h' or arg in display_opts:
+            ok = False
+            break
+    _cache.append(ok)
+    return ok
+
 def setup(**attr):
 
     cmdclass = numpy_cmdclass.copy()
@@ -55,6 +94,33 @@ def setup(**attr):
     if new_attr.has_key('cmdclass'):
         cmdclass.update(new_attr['cmdclass'])
     new_attr['cmdclass'] = cmdclass
+
+    if new_attr.has_key('configuration'):
+        # To avoid calling configuration if there are any errors
+        # or help request in command in the line.
+        configuration = new_attr.pop('configuration')
+
+        import distutils.core
+        old_dist = distutils.core._setup_distribution
+        old_stop = distutils.core._setup_stop_after
+        distutils.core._setup_distribution = None
+        distutils.core._setup_stop_after = "commandline"
+        try:
+            dist = setup(**new_attr)
+            distutils.core._setup_distribution = old_dist
+            distutils.core._setup_stop_after = old_stop
+        except Exception,msg:
+            distutils.core._setup_distribution = old_dist
+            distutils.core._setup_stop_after = old_stop
+            raise msg
+        if dist.help or not _command_line_ok():
+            # probably displayed help, skip running any commands
+            return dist
+
+        # create setup dictionary and append to new_attr
+        config = configuration()
+        if hasattr(config,'todict'): config = config.todict()
+        _dict_append(new_attr, **config)
 
     # Move extension source libraries to libraries
     libraries = []

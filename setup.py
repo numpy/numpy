@@ -31,10 +31,42 @@ Operating System :: Unix
 Operating System :: MacOS
 """
 
+def configuration(parent_package='',top_path=None):
+    from numpy.distutils.misc_util import Configuration
+
+    config = Configuration(None, parent_package, top_path,
+        maintainer = "NumPy Developers",
+        maintainer_email = "numpy-discussion@lists.sourceforge.net",
+        description = DOCLINES[0],
+        long_description = "\n".join(DOCLINES[2:]),
+        url = "http://numeric.scipy.org",
+        download_url = "http://sourceforge.net/projects/numpy",
+        license = 'BSD',
+        classifiers=filter(None, CLASSIFIERS.split('\n')),
+        author = "Travis E. Oliphant, et.al.",
+        author_email = "oliphant@ee.byu.edu",
+        platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
+        )
+    config.set_options(ignore_setup_xxx_py=True,
+                       assume_default_configuration=True,
+                       delegate_options_to_subpackages=True,
+                       quiet=True)
+    
+    config.add_subpackage('numpy')
+
+
+    config.name = 'numpy'
+    #config.dict_append(version=version)
+    #print config.name,'version',config.version
+    
+    config.add_data_files(('numpy',['*.txt','COMPATIBILITY',
+                                    'scipy_compatibility']))
+    
+    return config
+
 def setup_package():
 
     from numpy.distutils.core import setup
-    from numpy.distutils.misc_util import Configuration
 
     old_path = os.getcwd()
     local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -42,35 +74,11 @@ def setup_package():
     sys.path.insert(0,local_path)
 
     try:
-        config = Configuration(
-            maintainer = "NumPy Developers",
-            maintainer_email = "numpy-discussion@lists.sourceforge.net",
-            description = DOCLINES[0],
-            long_description = "\n".join(DOCLINES[2:]),
-            url = "http://numeric.scipy.org",
-            download_url = "http://sourceforge.net/projects/numpy",
-            license = 'BSD',
-            classifiers=filter(None, CLASSIFIERS.split('\n')),
-            author = "Travis E. Oliphant, et.al.",
-            author_email = "oliphant@ee.byu.edu",
-            platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
-            )
-        config.set_options(ignore_setup_xxx_py=True,
-                           assume_default_configuration=True,
-                           delegate_options_to_subpackages=True,
-                           quiet=True)
-
-        config.add_subpackage('numpy')
 
         from numpy.version import version
-        config.name = 'numpy'
-        config.dict_append(version=version)
-        #print config.name,'version',config.version
-
-        config.add_data_files(('numpy',['*.txt','COMPATIBILITY',
-                                        'scipy_compatibility']))
-
-        setup( **config.todict() )
+        setup( configuration=configuration,
+               version = version
+               )
     finally:
         del sys.path[0]
         os.chdir(old_path)

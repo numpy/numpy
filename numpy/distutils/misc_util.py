@@ -1252,50 +1252,6 @@ class Configuration(object):
             dict_append(info_dict,**get_info(a))
         return info_dict
 
-class BadConfiguration(Configuration):
-    """
-    When the command line is not ok, use this as the configuration class.
-    """
-    def _do_nothing(self, *args, **kw):
-        pass
-    add_subpackage = _do_nothing
-    add_extension = _do_nothing
-    add_library = _do_nothing
-    add_data_dir = _do_nothing
-    add_data_files = _do_nothing
-    add_scripts = _do_nothing
-    add_headers = _do_nothing
-    add_include_dirs = _do_nothing
-    make_config_py = _do_nothing
-
-    def get_info(self, *args, **kw):
-        return {}
-    def have_f77c(self, *args, **kw):
-        return False
-    def have_f90c(self, *args, **kw):
-        return False
-
-def command_line_ok(_cache=[]):
-    """ Return True if command line does not contain any
-    help or display requests.
-    """
-    if _cache:
-        return _cache[0]
-    ok = True
-    from distutils.dist import Distribution
-    display_opts = ['--'+n for n in Distribution.display_option_names]
-    for o in Distribution.display_options:
-        if o[1]:
-            display_opts.append('-'+o[1])
-    for arg in sys.argv:
-        if arg.startswith('--help') or arg=='-h' or arg in display_opts:
-            ok = False
-            break
-    _cache.append(ok)
-    return ok
-
-if not command_line_ok():
-    Configuration = BadConfiguration
 
 def get_cmd(cmdname, _cache={}):
     if not _cache.has_key(cmdname):
