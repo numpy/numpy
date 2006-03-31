@@ -177,6 +177,10 @@ class linux_cpuinfo(cpuinfo_base):
         return re.match(r'.*?Pentium.*?(IV|4)\b',
                         self.info[0]['model name']) is not None
 
+    def _is_PentiumM(self):
+        return re.match(r'.*?Pentium.*?M\b',
+                        self.info[0]['model name']) is not None
+
     def _is_Prescott(self):
         return self.is_PentiumIV() and self.has_sse3()
 

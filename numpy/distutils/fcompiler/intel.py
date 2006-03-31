@@ -48,16 +48,20 @@ class IntelFCompiler(FCompiler):
             opt.append('-fdiv_check')
         if cpu.has_f00f_bug():
             opt.append('-0f_check')
-        if cpu.is_PentiumPro() or cpu.is_PentiumII():
-            opt.extend(['-tpp6','-xi'])
-        elif cpu.is_PentiumIII():
-            opt.append('-tpp6')
+        if cpu.is_PentiumPro() or cpu.is_PentiumII() or cpu.is_PentiumIII():
+            opt.extend(['-tpp6'])
+        elif cpu.is_PentiumM():
+            opt.extend(['-tpp7','-xB'])
         elif cpu.is_Pentium():
             opt.append('-tpp5')
         elif cpu.is_PentiumIV() or cpu.is_XEON():
             opt.extend(['-tpp7','-xW'])
         if cpu.has_mmx():
             opt.append('-xM')
+        if cpu.has_sse2():
+            opt.append('-arch SSE2')
+        elif cpu.has_sse():
+            opt.append('-arch SSE')
         return opt
 
     def get_flags_linker_so(self):
@@ -65,6 +69,7 @@ class IntelFCompiler(FCompiler):
         v = self.get_version()
         if v and v >= '8.0':
             opt.append('-nofor_main')
+        opt.extend(self.get_flags_arch())
         return opt
 
 class IntelItaniumFCompiler(IntelFCompiler):
