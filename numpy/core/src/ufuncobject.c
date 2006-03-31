@@ -856,6 +856,8 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 	PyTypeObject *subtype=&PyArray_Type;
         PyObject *context=NULL;
         PyObject *obj;
+        int flexible=0;
+        int object=0;
 
         /* Check number of arguments */
         nargs = PyTuple_Size(args);
@@ -876,9 +878,11 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                 Py_XDECREF(context);
                 if (mps[i] == NULL) return -1;
                 arg_types[i] = PyArray_TYPE(mps[i]);
-                if (PyTypeNum_ISFLEXIBLE(arg_types[i])) {
-			loop->notimplemented = 1;
-			return nargs;
+                if (!flexible && PyTypeNum_ISFLEXIBLE(arg_types[i])) {
+                        flexible = 1;
+                }
+                if (!object && PyTypeNum_ISOBJECT(arg_types[i])) {
+                        object = 1;
                 }
 		/*
 		fprintf(stderr, "array %d has reference %d\n", i, 
@@ -894,6 +898,11 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		}
 		else scalars[i] = PyArray_ScalarKind(arg_types[i], &(mps[i]));
 
+        }
+
+        if (flexible && !object) {
+                loop->notimplemented = 1;
+                return nargs;
         }
 
 	/* If everything is a scalar, then use normal coercion rules */
@@ -923,7 +932,6 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                         return nargs;
                 }
         }
-        loop->notimplemented=0;
         
 	/* Create copies for some of the arrays if appropriate */
 	if (_create_copies(loop, arg_types, mps) < 0) return -1;
@@ -1288,6 +1296,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
                 loop->cast[i] = NULL;
         }
 	loop->errobj = NULL;
+        loop->notimplemented = 0;
 
 	if (PyUFunc_GetPyValues((self->name ? self->name : ""),
 				&(loop->bufsize), &(loop->errormask), 
