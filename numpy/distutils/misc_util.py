@@ -287,7 +287,7 @@ def is_sequence(seq):
     return True
 
 def is_glob_pattern(s):
-    return '*' in s or '?' is s
+    return is_string(s) and ('*' in s or '?' is s)
 
 def as_list(seq):
     if is_sequence(seq):
@@ -865,7 +865,9 @@ class Configuration(object):
             raise TypeError,`type(files)`
 
         if d is None:
-            if os.path.isabs(filepat):
+            if callable(file):
+                d = ''
+            elif os.path.isabs(filepat):
                 d = ''
             else:
                 d = os.path.dirname(filepat)
