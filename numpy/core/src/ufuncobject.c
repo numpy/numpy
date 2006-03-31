@@ -973,7 +973,8 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 				return -1;
 			}
                 }
-                if (!PyArray_CompareLists(mps[i]->dimensions, 
+                if (mps[i]->nd != loop->nd ||
+		    !PyArray_CompareLists(mps[i]->dimensions, 
 					  loop->dimensions, loop->nd)) {
                         PyErr_SetString(PyExc_ValueError, 
                                         "invalid return array shape");
