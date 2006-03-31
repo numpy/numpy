@@ -54,10 +54,10 @@ def configuration(parent_package='',top_path=None):
     
     config.add_subpackage('numpy')
 
-
-    config.name = 'numpy'
-    #config.dict_append(version=version)
-    #print config.name,'version',config.version
+    config.name = 'numpy' # used in generated file names
+    
+    from numpy.version import version
+    config.dict_append(version=version)
     
     config.add_data_files(('numpy',['*.txt','COMPATIBILITY',
                                     'scipy_compatibility']))
@@ -74,11 +74,7 @@ def setup_package():
     sys.path.insert(0,local_path)
 
     try:
-
-        from numpy.version import version
-        setup( configuration=configuration,
-               version = version
-               )
+        setup( configuration=configuration )
     finally:
         del sys.path[0]
         os.chdir(old_path)
