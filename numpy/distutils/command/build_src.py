@@ -87,6 +87,10 @@ class build_src(build_ext.build_ext):
 
     def build_sources(self):
 
+        if self.inplace:
+            self.get_package_dir = self.get_finalized_command('build_py')\
+                                   .get_package_dir
+
         self.build_py_modules_sources()
 
         for libname_info in self.libraries:
@@ -114,7 +118,7 @@ class build_src(build_ext.build_ext):
             elif isinstance(data,tuple):
                 d,files = data
                 if self.inplace:
-                    build_dir = d
+                    build_dir = self.get_package_dir('.'.join(d.split(os.sep)))
                 else:
                     build_dir = os.path.join(self.build_src,d)
                 funcs = filter(callable,files)
@@ -143,13 +147,11 @@ class build_src(build_ext.build_ext):
             return
         log.info('building py_modules sources')
         new_py_modules = []
-        if self.inplace:
-            get_package_dir = self.get_finalized_command('build_py').get_package_dir
         for source in self.py_modules:
             if is_sequence(source) and len(source)==3:
                 package, module_base, source = source
                 if self.inplace:
-                    build_dir = get_package_dir(package)
+                    build_dir = self.get_package_dir(package)
                 else:
                     build_dir = os.path.join(self.build_src,
                                              os.path.join(*package.split('.')))
@@ -201,10 +203,8 @@ class build_src(build_ext.build_ext):
         modpath = fullname.split('.')
         package = '.'.join(modpath[0:-1])
 
-
         if self.inplace:
-            build_py = self.get_finalized_command('build_py')
-            self.ext_target_dir = build_py.get_package_dir(package)
+            self.ext_target_dir = self.get_package_dir(package)
 
         sources = self.generate_sources(sources, ext)
 
