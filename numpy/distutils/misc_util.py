@@ -865,7 +865,7 @@ class Configuration(object):
             raise TypeError,`type(files)`
 
         if d is None:
-            if callable(file):
+            if callable(filepat):
                 d = ''
             elif os.path.isabs(filepat):
                 d = ''
