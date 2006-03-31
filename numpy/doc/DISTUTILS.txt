@@ -74,7 +74,8 @@ Here follows a minimal example for a pure Python SciPy package
 
   if __name__ == "__main__":
       from numpy.distutils.core import setup
-      setup(**configuration(top_path='').todict())
+      #setup(**configuration(top_path='').todict())
+      setup(configuration=configuration)
 
 The first argument ``parent_package`` of the main configuration
 function will contain a name of the parent SciPy package and the
