@@ -3,7 +3,6 @@
 __all__ = ['run_main','compile','f2py_testing']
 
 import os
-import tempfile
 import sys
 import commands
 
@@ -24,6 +23,7 @@ def compile(source,
     Read the source of this function for more information.
     '''
     from numpy.distutils.exec_command import exec_command
+    import tempfile
     if source_fn is None:
         fname = os.path.join(tempfile.mktemp()+'.f')
     else:

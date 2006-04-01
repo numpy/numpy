@@ -51,7 +51,6 @@ __all__ = ['exec_command','find_executable']
 import os
 import re
 import sys
-import tempfile
 
 from numpy.distutils.misc_util import is_sequence
 
@@ -269,6 +268,7 @@ def _exec_command_posix( command,
                          use_shell = None,
                          use_tee = None,
                          **env ):
+    import tempfile
     log.debug('_exec_command_posix(...)')
 
     if is_sequence(command):
@@ -320,6 +320,7 @@ def _exec_command_posix( command,
 
 def _exec_command_python(command,
                          exec_command_dir='', **env):
+    import tempfile
     log.debug('_exec_command_python(...)')
 
     python_exe = get_pythonexe()
@@ -600,6 +601,7 @@ def test_posix(**kws):
     print 'ok'
 
 def test_execute_in(**kws):
+    import tempfile
     pythonexe = get_pythonexe()
     tmpfile = tempfile.mktemp()
     fn = os.path.basename(tmpfile)

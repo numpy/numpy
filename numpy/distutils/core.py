@@ -4,6 +4,8 @@ try:
     from setuptools import setup as old_setup
     # very old setuptools don't have this
     from setuptools.command import bdist_egg
+    # easy_install imports math, it may be picked up from cwd
+    from setuptools.command import develop, easy_install
     have_setuptools = 1
 except ImportError:
     from distutils.core import setup as old_setup
@@ -40,7 +42,6 @@ numpy_cmdclass = {'build':            build.build,
                   'bdist_rpm':        bdist_rpm.bdist_rpm,
                   }
 if have_setuptools:
-    from setuptools.command import bdist_egg, develop, easy_install
     from numpy.distutils.command import egg_info
     numpy_cmdclass['bdist_egg'] = bdist_egg.bdist_egg
     numpy_cmdclass['develop'] = develop.develop
