@@ -66,6 +66,7 @@ def _dict_append(d, **kws):
         if isinstance(dv, str):
             assert isinstance(v,str),`type(v)`
             d[k] = v
+            continue
         raise TypeError,`type(dv)`
     return
 
