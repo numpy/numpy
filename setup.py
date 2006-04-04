@@ -34,33 +34,18 @@ Operating System :: MacOS
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
 
-    config = Configuration(None, parent_package, top_path,
-        maintainer = "NumPy Developers",
-        maintainer_email = "numpy-discussion@lists.sourceforge.net",
-        description = DOCLINES[0],
-        long_description = "\n".join(DOCLINES[2:]),
-        url = "http://numeric.scipy.org",
-        download_url = "http://sourceforge.net/projects/numpy",
-        license = 'BSD',
-        classifiers=filter(None, CLASSIFIERS.split('\n')),
-        author = "Travis E. Oliphant, et.al.",
-        author_email = "oliphant@ee.byu.edu",
-        platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
-        )
+    config = Configuration(None, parent_package, top_path)
     config.set_options(ignore_setup_xxx_py=True,
                        assume_default_configuration=True,
                        delegate_options_to_subpackages=True,
                        quiet=True)
     
     config.add_subpackage('numpy')
-
-    config.name = 'numpy' # used in generated file names
-    
-    from numpy.version import version
-    config.dict_append(version=version)
-    
+        
     config.add_data_files(('numpy',['*.txt','COMPATIBILITY',
                                     'scipy_compatibility']))
+
+    config.get_version('numpy/version.py') # sets config.version
     
     return config
 
@@ -74,7 +59,22 @@ def setup_package():
     sys.path.insert(0,local_path)
 
     try:
-        setup( configuration=configuration )
+        from numpy.version import version
+        setup(
+            name = 'numpy',
+            version = version, # will be overwritten by configuration version
+            maintainer = "NumPy Developers",
+            maintainer_email = "numpy-discussion@lists.sourceforge.net",
+            description = DOCLINES[0],
+            long_description = "\n".join(DOCLINES[2:]),
+            url = "http://numeric.scipy.org",
+            download_url = "http://sourceforge.net/projects/numpy",
+            license = 'BSD',
+            classifiers=filter(None, CLASSIFIERS.split('\n')),
+            author = "Travis E. Oliphant, et.al.",
+            author_email = "oliphant@ee.byu.edu",
+            platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],            
+            configuration=configuration )
     finally:
         del sys.path[0]
         os.chdir(old_path)

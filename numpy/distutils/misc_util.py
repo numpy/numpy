@@ -475,6 +475,7 @@ class Configuration(object):
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
                   'libraries', 'headers', 'scripts', 'py_modules']
     _dict_keys = ['package_dir']
+    _extra_keys = ['name', 'version']
 
     numpy_include_dirs = []
 
@@ -499,6 +500,7 @@ class Configuration(object):
         caller_level -- frame level to caller namespace, internal parameter.
         """
         self.name = dot_join(parent_name, package_name)
+        self.version = None
 
         caller_frame = get_frame(caller_level)
         caller_name = eval('__name__',caller_frame.f_globals,caller_frame.f_locals)
@@ -529,7 +531,7 @@ class Configuration(object):
             setattr(self, n, v)
 
         known_keys = self.list_keys + self.dict_keys
-        self.extra_keys = []
+        self.extra_keys = self._extra_keys[:]
         for n in attrs.keys():
             if n in known_keys:
                 continue
@@ -574,12 +576,11 @@ class Configuration(object):
         """
         self._optimize_data_files()
         d = {}
-        for n in self.list_keys + self.dict_keys + self.extra_keys:
+        known_keys = self.list_keys + self.dict_keys + self.extra_keys
+        for n in known_keys:
             a = getattr(self,n)
             if a:
                 d[n] = a
-        if self.name:
-            d['name'] = self.name
         return d
 
     def info(self, message):
@@ -588,7 +589,6 @@ class Configuration(object):
 
     def warn(self, message):
         print>>sys.stderr, 'Warning:',message
-
 
     def set_options(self, **options):
         """ Configure Configuration instance.
@@ -733,7 +733,7 @@ class Configuration(object):
             if isinstance(config, Configuration):
                 d = config.todict()
             assert isinstance(d,dict),`type(d)`
-
+            
             self.info('Appending %s configuration to %s' \
                       % (d.get('name'), self.name))
             self.dict_append(**d)
@@ -1068,12 +1068,21 @@ class Configuration(object):
             a.update(dict.get(key,{}))
         known_keys = self.list_keys + self.dict_keys + self.extra_keys
         for key in dict.keys():
-            if key not in known_keys and not hasattr(self,key):
-                if key not in ['version']:
-                    self.warn('Inheriting attribute %r from %r' \
-                              % (key,dict.get('name','?')))
+            if key not in known_keys:
+                a = getattr(self, key, None)
+                if a and a==dict[key]: continue
+                self.warn('Inheriting attribute %r=%r from %r' \
+                          % (key,dict[key],dict.get('name','?')))
                 setattr(self,key,dict[key])
                 self.extra_keys.append(key)
+            elif key in self.extra_keys:
+                self.info('Ignoring attempt to set %r (from %r to %r)' \
+                          % (key, getattr(self,key), dict[key]))
+            elif key in known_keys:
+                # key is already processed above
+                pass
+            else:
+                raise ValueError, "Don't know about key=%r" % (key)
         return
 
     def __str__(self):
@@ -1081,6 +1090,7 @@ class Configuration(object):
         known_keys = self.list_keys + self.dict_keys + self.extra_keys
         s = '<'+5*'-' + '\n'
         s += 'Configuration of '+self.name+':\n'
+        known_keys.sort()
         for k in known_keys:
             a = getattr(self,k,None)
             if a:
@@ -1158,7 +1168,7 @@ class Configuration(object):
                 revision = int(m.group('revision'))
         return revision
 
-    def get_version(self):
+    def get_version(self, version_file=None, version_variable=None):
         """ Try to get version string of a package.
         """
         version = getattr(self,'version',None)
@@ -1166,13 +1176,19 @@ class Configuration(object):
             return version
 
         # Get version from version file.
-        files = ['__version__.py',
-                 self.name.split('.')[-1]+'_version.py',
-                 'version.py',
-                 '__svn_version__.py']
-        version_vars = ['version',
-                        '__version__',
-                        self.name.split('.')[-1]+'_version']
+        if version_file is None:
+            files = ['__version__.py',
+                     self.name.split('.')[-1]+'_version.py',
+                     'version.py',
+                     '__svn_version__.py']
+        else:
+            files = [version_file]
+        if version_variable is None:
+            version_vars = ['version',
+                            '__version__',
+                            self.name.split('.')[-1]+'_version']
+        else:
+            version_vars = [version_variable]
         for f in files:
             fn = njoin(self.local_path,f)
             if os.path.isfile(fn):

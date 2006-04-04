@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import os
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -14,8 +13,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('random')
     config.add_data_dir('doc')
     config.make_config_py() # installs __config__.py
-
-    return config.todict()
+    return config
 
 if __name__ == '__main__':
     # Remove current working directory from sys.path
@@ -24,4 +22,4 @@ if __name__ == '__main__':
     sys.path.remove(os.getcwd())
 
     from numpy.distutils.core import setup
-    setup(**configuration(top_path=''))
+    setup(configuration=configuration)
