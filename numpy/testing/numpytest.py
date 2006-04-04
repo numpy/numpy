@@ -139,10 +139,13 @@ class NumpyTestCase (unittest.TestCase):
         unittest.TestCase.__call__(self, result)
         if nof_errors != len(result.errors):
             test, errstr = result.errors[-1]
-            if type(errstr) is type(()):
+            if isinstance(errstr, tuple):
                 errstr = str(errstr[0])
-            else:
+            elif isinstance(errstr, str):
                 errstr = errstr.split('\n')[-2]
+            else:
+                # allow for proxy classes
+                errstr = str(errstr).split('\n')[-2]
             l = len(result.stream.data)
             if errstr.startswith('IgnoreException:'):
                 if l==1:
