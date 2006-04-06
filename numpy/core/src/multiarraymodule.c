@@ -1839,7 +1839,7 @@ static int
 _new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
 {
 	PyArrayIterObject *it;
-	int needcopy=0;
+	int needcopy=0, swap;
 	intp N, size;
 	int elsize;
 	intp astride;
@@ -1847,6 +1847,7 @@ _new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 	BEGIN_THREADS_DEF 
 
 	it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, axis);
+	swap = !PyArray_ISNOTSWAPPED(op);
 	if (it == NULL) return -1;
 
 	BEGIN_THREADS
@@ -1856,7 +1857,8 @@ _new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 	elsize = op->descr->elsize;
 	astride = op->strides[axis];
 
-	needcopy = !(op->flags & ALIGNED) || (astride != (intp) elsize);
+	needcopy = !(op->flags & ALIGNED) || (astride != (intp) elsize) \
+		|| swap;
 
 	if (needcopy) {
 		char *buffer;
@@ -1864,9 +1866,15 @@ _new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 		while (size--) {
 			_strided_copy(buffer, (intp) elsize, it->dataptr, 
 				      astride, N, elsize);
+			if (swap) {
+				op->descr->f->copyswapn(buffer, NULL, N, 1, elsize);
+			}
 			if (sort(buffer, N, op) < 0) {
 				PyDataMem_FREE(buffer); goto fail;
 			}
+			if (swap) {
+				op->descr->f->copyswapn(buffer, NULL, N, 1, elsize);
+			}			
 			_strided_copy(it->dataptr, astride, buffer, 
 				      (intp) elsize, N, elsize);
 			PyArray_ITER_NEXT(it);
