@@ -768,6 +768,33 @@ class test_array_methods(ScipyTestCase):
         self.assertEqual(mXXswapped.shape,(2,2,3,3))
 
 
+    def test_cumprod(self):
+        (x,X,XX,m,mx,mX,mXX,) = self.d
+        mXcp = mX.cumprod(0)
+        self.failUnless(eq(mXcp.data,mX.filled(1).cumprod(0)))
+        mXcp = mX.cumprod(1)
+        self.failUnless(eq(mXcp.data,mX.filled(1).cumprod(1)))
+                           
+    def test_cumsum(self):
+        (x,X,XX,m,mx,mX,mXX,) = self.d
+        mXcp = mX.cumsum(0)
+        self.failUnless(eq(mXcp.data,mX.filled(0).cumsum(0)))
+        mXcp = mX.cumsum(1)
+        self.failUnless(eq(mXcp.data,mX.filled(0).cumsum(1)))
+                           
+    def test_varstd(self):
+        (x,X,XX,m,mx,mX,mXX,) = self.d
+        self.failUnless(eq(mX.var(axis=None),mX.compressed().var()))
+        self.failUnless(eq(mX.std(axis=None),mX.compressed().std()))
+        self.failUnless(eq(mXX.var(axis=3).shape,XX.var(axis=3).shape))
+        self.failUnless(eq(mX.var().shape,X.var().shape))
+        (mXvar0,mXvar1) = (mX.var(axis=0), mX.var(axis=1))
+        for k in range(6):
+            self.failUnless(eq(mXvar1[k],mX[k].compressed().var()))
+            self.failUnless(eq(mXvar0[k],mX[:,k].compressed().var()))
+            self.failUnless(eq(numpy.sqrt(mXvar0[k]),
+                               mX[:,k].compressed().std()))
+        
 
 def eqmask(m1, m2):
     if m1 is nomask:

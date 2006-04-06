@@ -2138,8 +2138,10 @@ array.choose = _m(_choose)
 del _choose
 
 def _clip(self,a_min,a_max):
-    return MaskedArray(data = self.data.clip(a_min, a_max),
-                       mask = self.mask)
+    return MaskedArray(data = self.data.clip(asarray(a_min).data, 
+                                             asarray(a_max).data),
+                       mask = mask_or(self.mask,
+                                      mask_or(getmask(a_min),getmask(a_max))))
 array.clip = _m(_clip)
 
 def _compress(self, cond, axis=None):
@@ -2149,8 +2151,21 @@ del _compress
 
 array.conj = array.conjugate = _m(conjugate)
 array.copy = _m(not_implemented)
-array.cumprod = _m(not_implemented)
-array.cumsum = _m(not_implemented)
+
+def _cumprod(self, axis=0, dtype=None):
+    m = self.mask
+    if m is not nomask:
+        m = umath.logical_and.accumulate(self.mask, axis)
+    return MaskedArray(data = self.filled(1).cumprod(axis, dtype), mask=m)
+array.cumprod = _m(_cumprod)
+
+def _cumsum(self, axis=0, dtype=None):
+    m = self.mask
+    if m is not nomask:
+        m = umath.logical_and.accumulate(self.mask, axis)
+    return MaskedArray(data=self.filled(0).cumsum(axis, dtype), mask=m)
+array.cumsum = _m(_cumsum)
+
 array.diagonal = _m(diagonal)
 array.dump = _m(not_implemented)
 array.dumps = _m(not_implemented)
@@ -2158,6 +2173,7 @@ array.fill = _m(not_implemented)
 array.flags = property(_m(not_implemented))
 array.flatten = _m(ravel)
 array.getfield = _m(not_implemented)
+
 def _max(a, axis=None):
     if axis is None:
         return maximum(a)
@@ -2180,7 +2196,6 @@ array.prod = _m(product)
 
 def _ptp(a,axis=0):
     return a.max(axis)-a.min(axis)
-
 array.ptp = _m(_ptp)
 array.repeat = _m(repeat)
 array.resize = _m(resize)
@@ -2188,8 +2203,16 @@ array.searchsorted = _m(not_implemented)
 array.setfield = _m(not_implemented)
 array.setflags = _m(not_implemented)
 array.sort = _m(not_implemented)  # NB: ndarray.sort is inplace
-array.squeeze = _m(not_implemented)
-array.std = _m(not_implemented)
+
+def _squeeze(self):
+    try:
+        result = MaskedArray(data = self.data.squeeze(),
+                             mask = self.mask.squeeze())
+    except AttributeError:
+        result = _wrapit(self, 'squeeze')
+    return result
+array.squeeze = _m(_squeeze)      
+
 array.strides = property(_m(not_implemented))
 array.sum = _m(sum)
 def _swapaxes(self,axis1,axis2):
@@ -2200,7 +2223,20 @@ array.take = _m(take)
 array.tofile = _m(not_implemented)
 array.trace = _m(trace)
 array.transpose = _m(transpose)
-array.var = _m(not_implemented)
+
+def _var(self,axis=0,dtype=None):
+    if axis is None:
+        return asarray(self.compressed()).var()
+    a = self.swapaxes(axis,0)
+    a = a - a.mean(axis=0)
+    a *= a
+    a /= (a.count(axis=0)-1)
+    return a.swapaxes(0,axis).sum(axis)
+def _std(self,axis=0,dtype=None):
+    return (self.var(axis,dtype))**0.5
+array.var = _m(_var)
+array.std = _m(_std)
+
 array.view =  _m(not_implemented)
 array.round = _m(around)
 del _m, MethodType, not_implemented
