@@ -2155,14 +2155,14 @@ array.copy = _m(not_implemented)
 def _cumprod(self, axis=0, dtype=None):
     m = self.mask
     if m is not nomask:
-        m = umath.logical_and.accumulate(self.mask, axis)
+        m = umath.logical_or.accumulate(self.mask, axis)
     return MaskedArray(data = self.filled(1).cumprod(axis, dtype), mask=m)
 array.cumprod = _m(_cumprod)
 
 def _cumsum(self, axis=0, dtype=None):
     m = self.mask
     if m is not nomask:
-        m = umath.logical_and.accumulate(self.mask, axis)
+        m = umath.logical_or.accumulate(self.mask, axis)
     return MaskedArray(data=self.filled(0).cumsum(axis, dtype), mask=m)
 array.cumsum = _m(_cumsum)
 
