@@ -247,6 +247,12 @@ class Gnu95FCompiler(GnuFCompiler):
 
     g2c = 'gfortran'
 
+    def get_libraries(self):
+        opt = GnuFCompiler.get_libraries(self)
+        if sys.platform == 'darwin':
+            opt.remove('cc_dynamic')        
+        return opt
+
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
