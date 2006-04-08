@@ -5,6 +5,17 @@ from distutils.core import Command
 #XXX: Implement confic_cc for enhancing C/C++ compiler options.
 #XXX: Linker flags
 
+def show_fortran_compilers(_cache=[]):
+    # Using cache to prevent infinite recursion
+    if _cache: return
+    _cache.append(1)
+    
+    from numpy.distutils.fcompiler import show_fcompilers
+    import distutils.core
+    dist = distutils.core._setup_distribution
+    show_fcompilers(dist)
+    return
+
 class config_fc(Command):
     """ Distutils command to hold user specified options
     to Fortran compilers.
@@ -23,10 +34,14 @@ class config_fc(Command):
         ('debug','g',"compile with debugging information"),
         ('noopt',None,"compile without optimization"),
         ('noarch',None,"compile without arch-dependent optimization"),
-        ('help-fcompiler',None,"list available Fortran compilers"),
         ]
 
-    boolean_options = ['debug','noopt','noarch','help-fcompiler']
+    help_options = [
+        ('help-fcompiler',None, "list available Fortran compilers",
+         show_fortran_compilers),
+        ]
+
+    boolean_options = ['debug','noopt','noarch']
 
     def initialize_options(self):
         self.fcompiler = None
@@ -39,14 +54,10 @@ class config_fc(Command):
         self.debug = None
         self.noopt = None
         self.noarch = None
-        self.help_fcompiler = None
         return
 
     def finalize_options(self):
-        if self.help_fcompiler:
-            from numpy.distutils.fcompiler import show_fcompilers
-            show_fcompilers(self.distribution)
-            sys.exit()
+        # Do nothing.
         return
 
     def run(self):
