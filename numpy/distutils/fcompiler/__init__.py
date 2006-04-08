@@ -241,16 +241,20 @@ class FCompiler(CCompiler):
         instance is needed for (iii) and (iv).
         """
         log.info('customize %s' % (self.__class__.__name__))
+        from distutils.dist import Distribution
         if dist is None:
             # These hooks are for testing only!
-            from distutils.dist import Distribution
             dist = Distribution()
             dist.script_name = os.path.basename(sys.argv[0])
             dist.script_args = ['config_fc'] + sys.argv[1:]
             dist.cmdclass['config_fc'] = config_fc
             dist.parse_config_files()
             dist.parse_command_line()
-        conf = dist.get_option_dict('config_fc')
+        elif isinstance(dist,Distribution):
+            conf = dist.get_option_dict('config_fc')
+        else:
+            assert isinstance(dist,dict)
+            conf = dist
         noopt = conf.get('noopt',[None,0])[1]
         if 0: # change to `if 1:` when making release.
             # Don't use architecture dependent compiler flags:

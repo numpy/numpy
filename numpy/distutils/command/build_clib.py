@@ -91,10 +91,12 @@ class build_clib(old_build_clib):
 
     def build_libraries(self, libraries):
 
-        compiler = self.compiler
-        fcompiler = self.fcompiler
 
         for (lib_name, build_info) in libraries:
+            # default compilers
+            compiler = self.compiler
+            fcompiler = self.fcompiler
+
             sources = build_info.get('sources')
             if sources is None or not is_sequence(sources):
                 raise DistutilsSetupError, \
@@ -103,6 +105,8 @@ class build_clib(old_build_clib):
                        "a list of source filenames") % lib_name
             sources = list(sources)
 
+
+            
             lib_file = compiler.library_filename(lib_name,
                                                  output_dir=self.build_clib)
 
@@ -112,6 +116,18 @@ class build_clib(old_build_clib):
                 continue
             else:
                 log.info("building '%s' library", lib_name)
+
+
+            config_fc = build_info.get('config_fc',{})
+            if fcompiler is not None and config_fc:
+                log.info('using setup script specified config_fc for fortran compiler: %s' \
+                         % (config_fc))
+                from numpy.distutils.fcompiler import new_fcompiler
+                fcompiler = new_fcompiler(compiler=self.fcompiler.compiler_type,
+                                          verbose=self.verbose,
+                                          dry_run=self.dry_run,
+                                          force=self.force)
+                fcompiler.customize(config_fc)
 
             macros = build_info.get('macros')
             include_dirs = build_info.get('include_dirs')
