@@ -120,7 +120,8 @@ class build_clib(old_build_clib):
 
             config_fc = build_info.get('config_fc',{})
             if fcompiler is not None and config_fc:
-                log.info('using setup script specified config_fc for fortran compiler: %s' \
+                log.info('using setup script specified config_fc '\
+                         'for fortran compiler: %s' \
                          % (config_fc))
                 from numpy.distutils.fcompiler import new_fcompiler
                 fcompiler = new_fcompiler(compiler=self.fcompiler.compiler_type,

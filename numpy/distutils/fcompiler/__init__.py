@@ -250,7 +250,7 @@ class FCompiler(CCompiler):
             dist.cmdclass['config_fc'] = config_fc
             dist.parse_config_files()
             dist.parse_command_line()
-        elif isinstance(dist,Distribution):
+        if isinstance(dist,Distribution):
             conf = dist.get_option_dict('config_fc')
         else:
             assert isinstance(dist,dict)
