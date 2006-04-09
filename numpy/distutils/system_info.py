@@ -746,15 +746,16 @@ class mkl_info(system_info):
             system_info.__init__(self)
         else:
             from cpuinfo import cpu
+            l = 'mkl' # use shared library
             if cpu.is_Itanium():
                 plt = '64'
-                l = 'mkl_ipf'
+                #l = 'mkl_ipf'
             elif cpu.is_Xeon():
                 plt = 'em64t'
-                l = 'mkl_em64t'
+                #l = 'mkl_em64t'
             else:
                 plt = '32'
-                l = 'mkl_ia32'
+                #l = 'mkl_ia32'
             if l not in self._lib_mkl:
                 self._lib_mkl.insert(0,l)
             system_info.__init__(self,
@@ -783,7 +784,7 @@ class lapack_mkl_info(mkl_info):
         mkl = get_info('mkl')
         if not mkl:
             return
-        lapack_libs = self.get_libs('lapack_libs',['mkl_lapack'])
+        lapack_libs = self.get_libs('lapack_libs',['mkl_lapack32','mkl_lapack64'])
         info = {'libraries': lapack_libs}
         dict_append(info,**mkl)
         self.set_info(**info)

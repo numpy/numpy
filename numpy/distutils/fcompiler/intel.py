@@ -54,9 +54,9 @@ class IntelFCompiler(FCompiler):
             opt.extend(['-tpp7','-xB'])
         elif cpu.is_Pentium():
             opt.append('-tpp5')
-        elif cpu.is_PentiumIV() or cpu.is_XEON():
+        elif cpu.is_PentiumIV() or cpu.is_Xeon():
             opt.extend(['-tpp7','-xW'])
-        if cpu.has_mmx():
+        if cpu.has_mmx() and not cpu.is_Xeon():
             opt.append('-xM')
         if cpu.has_sse2():
             opt.append('-arch SSE2')
@@ -77,6 +77,27 @@ class IntelItaniumFCompiler(IntelFCompiler):
     version_pattern = r'Intel\(R\) Fortran 90 Compiler Itanium\(TM\) Compiler'\
                       ' for the Itanium\(TM\)-based applications,'\
                       ' Version (?P<version>[^\s*]*)'
+
+    for fc_exe in map(find_executable,['ifort','efort','efc']):
+        if os.path.isfile(fc_exe):
+            break
+
+    executables = {
+        'version_cmd'  : [fc_exe, "-FI -V -c %(fname)s.f -o %(fname)s.o" \
+                          % {'fname':dummy_fortran_file()}],
+        'compiler_f77' : [fc_exe,"-FI","-w90","-w95"],
+        'compiler_fix' : [fc_exe,"-FI"],
+        'compiler_f90' : [fc_exe],
+        'linker_so'    : [fc_exe,"-shared"],
+        'archiver'     : ["ar", "-cr"],
+        'ranlib'       : ["ranlib"]
+        }
+
+class IntelEM64TFCompiler(IntelFCompiler):
+    compiler_type = 'intelem'
+
+    version_pattern = r'Intel\(R\) Fortran Compiler for Intel\(R\) EM64T-based '\
+                      'applications, Version (?P<version>[^\s*]*)'
 
     for fc_exe in map(find_executable,['ifort','efort','efc']):
         if os.path.isfile(fc_exe):

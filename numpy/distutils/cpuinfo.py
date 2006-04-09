@@ -193,7 +193,7 @@ class linux_cpuinfo(cpuinfo_base):
 
     def _is_XEON(self):
         return re.match(r'.*?XEON\b',
-                        self.info[0]['model name']) is not None
+                        self.info[0]['model name'],re.IGNORECASE) is not None
 
     _is_Xeon = _is_XEON
 
