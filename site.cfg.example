@@ -2,7 +2,12 @@
 library_dirs = <location of ATLAS libraries>
 atlas_libs = lapack, blas, cblas, atlas
 
+[amd]
+library_dirs = <location of libamd.a>
+include_dirs = <location of amd.h>
+amd_libs = amd
+
 [umfpack]
-library_dirs = <location of libumfpack.a and libamd.a>
+library_dirs = <location of libumfpack.a>
 include_dirs = <location of umfpack.h>
-umfpack_libs = umfpack, amd
+umfpack_libs = umfpack
