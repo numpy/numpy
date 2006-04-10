@@ -1017,8 +1017,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
 	}
 
 	if (typecode->type_num != PyArray_OBJECT) {
+                int swap=!PyArray_ISNOTSWAPPED(self);
 		self->data = datastr;
-		if (!_IsAligned(self)) {
+		if (!_IsAligned(self) || swap) {
 			intp num = PyArray_NBYTES(self);
 			self->data = PyDataMem_NEW(num);
 			if (self->data == NULL) {
@@ -1026,7 +1027,14 @@ array_setstate(PyArrayObject *self, PyObject *args)
 				PyDimMem_FREE(self->dimensions);
 				return PyErr_NoMemory();
 			}
-			memcpy(self->data, datastr, num);
+                        if (swap) { /* byte-swap on pickle-read */
+                                self->descr->f->copyswapn(self->data, datastr, 
+                                                          num, 1, 
+                                                          self->descr->elsize);
+                        }
+                        else {
+                                memcpy(self->data, datastr, num);
+                        }
 			self->flags |= OWN_DATA;
 			self->base = NULL;
 		}
