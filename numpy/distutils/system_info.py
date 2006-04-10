@@ -242,6 +242,7 @@ def get_info(name,notfound_action=0):
           'xft':xft_info,
           'freetype2':freetype2_info,
           'umfpack':umfpack_info,
+          'amd':amd_info,
           }.get(name.lower(),system_info)
     return cl().get_info(notfound_action)
 
@@ -537,8 +538,8 @@ class system_info:
                 info['libraries'].extend(opt_found_libs)
             return info
         else:
-            warnings.warn("Library error: libs=%s found_libs=%s" % \
-                          (libs, found_libs))
+            print '  looking libraries %s in %s but found %s' % \
+                  (','.join(libs), lib_dir, ','.join(found_libs) or None)
 
     def combine_paths(self,*args):
         return combine_paths(*args,**{'verbosity':self.verbosity})
@@ -1681,11 +1682,44 @@ class freetype2_info(_pkg_config_info):
     append_config_exe = 'freetype2'
     version_macro_name = 'FREETYPE2_VERSION'
 
+class amd_info(system_info):
+    section = 'amd'
+    dir_env_var = 'AMD'
+    _lib_names = ['amd']
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+
+        amd_libs = self.get_libs('amd_libs', self._lib_names)
+        for d in lib_dirs:
+            amd = self.check_libs(d,amd_libs,[])
+            if amd is not None:
+                info = amd
+                break
+        else:
+            return
+
+        include_dirs = self.get_include_dirs()
+
+        inc_dir = None
+        for d in include_dirs:
+            p = self.combine_paths(d,'amd.h')
+            if p:
+                inc_dir = os.path.dirname(p[0])
+                break
+        if inc_dir is not None:
+            dict_append(info, include_dirs=[inc_dir],
+                        define_macros=[('SCIPY_AMD_H',None)],
+                        swig_opts = ['-I' + inc_dir])
+
+        self.set_info(**info)
+        return
+
 class umfpack_info(system_info):
     section = 'umfpack'
     dir_env_var = 'UMFPACK'
     notfounderror = UmfpackNotFoundError
-    _lib_names = ['umfpack','amd']
+    _lib_names = ['umfpack']
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
@@ -1703,14 +1737,17 @@ class umfpack_info(system_info):
 
         inc_dir = None
         for d in include_dirs:
-            d = os.path.join(d,'umfpack')
-            if self.combine_paths(d,'umfpack.h'):
-                inc_dir = d
+            p = self.combine_paths(d,['','umfpack'],'umfpack.h')
+            if p:
+                inc_dir = os.path.dirname(p[0])
                 break
         if inc_dir is not None:
             dict_append(info, include_dirs=[inc_dir],
                         define_macros=[('SCIPY_UMFPACK_H',None)],
                         swig_opts = ['-I' + inc_dir])
+
+        amd = get_info('amd')
+        dict_append(info, **get_info('amd'))
 
         self.set_info(**info)
         return
