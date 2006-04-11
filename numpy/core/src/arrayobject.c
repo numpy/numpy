@@ -8824,6 +8824,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 
 /*OBJECT_API
   Deep bytorder change of a data-type descriptor
+  *** Leaves reference count of self unchanged --- does not DECREF self ***
 */
 static PyArray_Descr *
 PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)

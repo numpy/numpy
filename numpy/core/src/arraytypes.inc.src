@@ -1203,7 +1203,10 @@ STRING_copyswapn (char *dst, char *src, intp n, int swap, int itemsize)
 	return;
 }
 
-/* ignore swap */
+/* ignore swap 
+
+TODO:  Need descriptor argument and then recurse down fields
+*/
 static void
 VOID_copyswapn (char *dst, char *src, intp n, int swap, int itemsize)
 {

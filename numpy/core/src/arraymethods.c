@@ -1028,9 +1028,22 @@ array_setstate(PyArrayObject *self, PyObject *args)
 				return PyErr_NoMemory();
 			}
                         if (swap) { /* byte-swap on pickle-read */
+				intp numels = num / self->descr->elsize;
                                 self->descr->f->copyswapn(self->data, datastr, 
-                                                          num, 1, 
+                                                          numels,
+							  1, 
                                                           self->descr->elsize);
+				if (!PyArray_ISEXTENDED(self)) {
+					self->descr = PyArray_DescrFromType(self->descr->type_num);
+				}
+				else {
+					self->descr = PyArray_DescrNew(typecode);
+					if (self->descr->byteorder == PyArray_BIG) 
+						self->descr->byteorder = PyArray_LITTLE;
+					else if (self->descr->byteorder == PyArray_LITTLE)
+						self->descr->byteorder = PyArray_BIG;
+				}
+				Py_DECREF(typecode);
                         }
                         else {
                                 memcpy(self->data, datastr, num);
