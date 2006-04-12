@@ -2413,7 +2413,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 		indtype = PyArray_DescrFromType(PyArray_INTP);
 		if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iO&", kwlist2, 
 						&op, &obj_ind, &axis, 
-						PyArray_DescrConverter, 
+						PyArray_DescrConverter2, 
 						&otype)) return NULL;
                 indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype, 
 							   1, 1, CARRAY_FLAGS, NULL);
@@ -2423,7 +2423,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 	else {
 		if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&", kwlist1,
 						&op, &axis, 
-						PyArray_DescrConverter, 
+						PyArray_DescrConverter2, 
 						&otype)) return NULL;
 	}
 	
