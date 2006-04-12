@@ -36,7 +36,8 @@ class chararray(ndarray):
         return self
 
     def __array_finalize__(self, obj):
-        if not _globalvar and self.dtype.char not in 'SU':
+        # The b is a special case because it is used for reconstructing. 
+        if not _globalvar and self.dtype.char not in 'SUb':
             raise ValueError, "Can only create a chararray from string data."
 
 
