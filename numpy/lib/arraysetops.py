@@ -117,7 +117,7 @@ def setmember1d( ar1, ar2 ):
     aux2 = tt.take(perm)
     flag = ediff1d( aux, 1 ) == 0
 
-    ii = numpy.where( flag * aux2 )
+    ii = numpy.where( flag * aux2 )[0]
     aux = perm[ii+1]
     perm[ii+1] = perm[ii]
     perm[ii] = aux

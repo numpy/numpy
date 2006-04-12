@@ -366,8 +366,15 @@ def nonzero(a):
     try:
         nonzero = a.nonzero
     except AttributeError:
-        return _wrapit(a, 'nonzero')
-    return nonzero()
+        res = _wrapit(a, 'nonzero')
+    else:
+        res = nonzero()
+
+    if len(res) == 1:
+        return res[0]
+    else:
+        raise ValueError, "Input argument must be 1d"
+    
 
 def shape(a):
     """shape(a) returns the shape of a (as a function call which

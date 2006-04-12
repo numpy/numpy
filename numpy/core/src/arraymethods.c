@@ -1382,7 +1382,7 @@ array_nonzero(PyArrayObject *self, PyObject *args)
 {
 	if (!PyArg_ParseTuple(args, "")) return NULL;
 
-	return _ARET(PyArray_Nonzero(self));
+	return PyArray_Nonzero(self);
 }
 
 

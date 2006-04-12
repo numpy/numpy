@@ -811,7 +811,8 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis)
 
         res = PyArray_Nonzero(cond);
         Py_DECREF(cond);
-	ret = PyArray_Take(self, res, axis);
+        if (res == NULL) return res;
+	ret = PyArray_Take(self, PyTuple_GET_ITEM(res, 0), axis);
 	Py_DECREF(res);
 	return ret;
 }
@@ -838,12 +839,17 @@ PyArray_Nonzero(PyArrayObject *self)
 	}
 
 	PyArray_ITER_RESET(it);
+        ret = PyTuple_New(n);
+        if (ret == NULL) goto fail; 
+        for (j=0; j<n; j++) {
+                item = PyArray_New(self->ob_type, 1, &count, 
+                                   PyArray_INTP, NULL, NULL, 0, 0,
+                                   (PyObject *)self);
+                if (item == NULL) goto fail;
+                PyTuple_SET_ITEM(ret, j, item);
+                dptr[j] = (intp *)PyArray_DATA(item);
+        }
 	if (n==1) {
-		ret = PyArray_New(self->ob_type, 1, &count, PyArray_INTP, 
-				  NULL, NULL, 0, 0, (PyObject *)self);
-		if (ret == NULL) goto fail;
-		dptr[0] = (intp *)PyArray_DATA(ret);
-		
 		for (i=0; i<size; i++) {
 			if (self->descr->f->nonzero(it->dataptr, self)) 
 				*(dptr[0])++ = i;
@@ -851,16 +857,6 @@ PyArray_Nonzero(PyArrayObject *self)
 		}		
 	}
 	else {
-		ret = PyTuple_New(n);
-		for (j=0; j<n; j++) {
-			item = PyArray_New(self->ob_type, 1, &count, 
-					   PyArray_INTP, NULL, NULL, 0, 0,
-					   (PyObject *)self);
-			if (item == NULL) goto fail;
-			PyTuple_SET_ITEM(ret, j, item);
-			dptr[j] = (intp *)PyArray_DATA(item);
-		}
-		
 		/* reset contiguous so that coordinates gets updated */
 		it->contiguous = 0;
 		for (i=0; i<size; i++) {
