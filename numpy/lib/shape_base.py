@@ -544,6 +544,7 @@ def repmat(a, m, n):
     return c.reshape(rows, cols)
 
 
+# TODO:  figure out how to keep arrays the same
 def kron(a,b):
     """kronecker product of a and b
 

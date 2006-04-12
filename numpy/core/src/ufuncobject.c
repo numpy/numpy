@@ -1611,7 +1611,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 
 			if (loop->obj) { /* DECREF castbuf for object arrays */
 				for (i=0; i<self->nargs; i++) {
-					if (pyobject[i]) {
+					if (pyobject[i] && loop->cast[i]) {
 						if (steps[i] == 0) {
 							Py_XDECREF(*((PyObject **)castbuf[i]));
 						}
