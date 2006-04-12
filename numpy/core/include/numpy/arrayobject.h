@@ -1124,25 +1124,29 @@ typedef struct {
 		it->index = 0;						\
 		it->dataptr = it->ao->data;				\
 		for (_i_ = it->nd_m1; _i_>=0; _i_--) {			\
+                        if (destination[_i_] < 0) {                     \
+                                destination[_i_] += it->dims_m1[_i_]+1; \
+                        }                                               \
 			it->dataptr += destination[_i_] *		\
 				it->strides[_i_];			\
 			it->coordinates[_i_] = destination[_i_];	\
 			it->index += destination[_i_] *			\
 				( _i_==it->nd_m1 ? 1 :			\
-				  it->dims_m1[i+1]+1) ;		        \
+				  it->dims_m1[_i_+1]+1) ;		        \
 		}							\
 	}
 
 #define PyArray_ITER_GOTO1D(it, ind) {                                  \
 		int _i_;						\
 		intp _lind_ = (intp) (ind);				\
+                if (_lind_ < 0) _lind_ += it->size;                     \
 		it->index = _lind_;					\
                 if (it->nd_m1 == 0) {                                   \
-                        it->dataptr = it->ao->data + (ind) *            \
+                        it->dataptr = it->ao->data + _lind_ *           \
                                 it->strides[0];                         \
                 }                                                       \
                 else if (it->contiguous)                                \
-			it->dataptr = it->ao->data + (ind) *		\
+			it->dataptr = it->ao->data + _lind_ *		\
 				it->ao->descr->elsize;			\
 		else {							\
 			it->dataptr = it->ao->data;			\

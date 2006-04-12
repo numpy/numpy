@@ -7787,17 +7787,19 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 	/* Here check the indexes (now that we have iteraxes) */
 	mit->size = PyArray_MultiplyList(mit->dimensions, mit->nd);
 	for (i=0; i<mit->numiter; i++) {
+                intp indval;
 		it = mit->iters[i];
 		PyArray_ITER_RESET(it);
 		dimsize = arr->dimensions[mit->iteraxes[i]];
 		while(it->index < it->size) {
 			indptr = ((intp *)it->dataptr);
-			if (*indptr < 0) *indptr += dimsize;
-			if (*indptr < 0 || *indptr >= dimsize) {
+                        indval = *indptr;
+			if (indval < 0) indval += dimsize;
+			if (indval < 0 || indval >= dimsize) {
 				PyErr_Format(PyExc_IndexError,
 					     "index (%d) out of range "\
 					     "(0<=index<=%d) in dimension %d",
-					     (int) *indptr, (int) (dimsize-1),
+					     (int) indval, (int) (dimsize-1),
 					     mit->iteraxes[i]);
 				goto fail;
 			}
