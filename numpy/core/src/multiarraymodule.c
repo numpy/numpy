@@ -4718,7 +4718,7 @@ static char doc_zeros[] = "zeros((d1,...,dn),dtype=int,order='C') will return a 
 static PyObject *
 array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds) 
 {
-	static char *kwlist[] = {"shape","dtype","fortran",NULL}; /* XXX ? */
+	static char *kwlist[] = {"shape","dtype","order",NULL}; /* XXX ? */
 	PyArray_Descr *typecode=NULL;
         PyArray_Dims shape = {NULL, 0};
         PyArray_ORDER order = PyArray_CORDER;
