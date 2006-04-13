@@ -253,7 +253,7 @@ class test_fancy_indexing(ScipyTestCase):
         x = ones((1,1)) 
         x[:,(0,)] = 2.0 
         assert_array_equal(x, array([[2.0]])) 
-        x = ones((1,1)) 
+        x = ones((1,1,1)) 
         x[:,:,(0,)] = 2.0 
         assert_array_equal(x, array([[[2.0]]])) 
 
