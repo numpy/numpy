@@ -4480,9 +4480,16 @@ array_shape_set(PyArrayObject *self, PyObject *val)
 {
 	int nd;
 	PyObject *ret;
-
+       
+        /* Assumes C-order */
 	ret = PyArray_Reshape(self, val);
 	if (ret == NULL) return -1;
+        if (PyArray_DATA(ret) != PyArray_DATA(self)) {
+                Py_DECREF(ret);
+                PyErr_SetString(PyExc_AttributeError, 
+                                "setting the shape of a non-contiguous array");
+                return -1;
+        }
 
 	/* Free old dimensions and strides */
 	PyDimMem_FREE(self->dimensions);

@@ -447,7 +447,9 @@ _fix_unknown_dimension(PyArray_Dims *newshape, intp s_original)
 /* Returns a new array 
    with the new shape from the data
    in the old array --- order-perspective depends on fortran argument.
-   copy-if-necessary
+   copy-if-necessary  (currently if not contiguous or fortran-contiguous)
+   perhaps a more general-purpose strategy for determining this can 
+   be worked out
 */
 
 /*MULTIARRAY_API
