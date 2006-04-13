@@ -967,13 +967,17 @@ static void
    on all the platforms...
 */
 
-static int numeric_zero = 0.0;
+static int numeric_zero = 0;
 
 #if !defined(generate_divbyzero_error)
 static void generate_divbyzero_error(void) {
 	double dummy;
 	dummy = 1./numeric_zero;
-	return;
+        if (dummy) /* to prevent optimizer from eliminating expression */
+	   return;
+	else /* should never be called */
+	   numeric_zero += 1;
+	return;	
 }
 #endif
 
@@ -982,6 +986,11 @@ static double numeric_two = 2.0;
 static void generate_overflow_error(void) {
 	double dummy;
 	dummy = pow(numeric_two,1000);
+        if (dummy)
+           return;
+        else
+           numeric_two += 0.1;
+        return;
 	return;
 }
 #endif
