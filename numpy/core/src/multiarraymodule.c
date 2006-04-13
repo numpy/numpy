@@ -371,6 +371,7 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
         return ret;
 }
 
+/* inserts 0 for strides where dimension will be 1 */
 static int
 _check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
 {

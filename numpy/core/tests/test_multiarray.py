@@ -239,6 +239,25 @@ class test_pickling(ScipyTestCase):
         assert_equal(self.carray, pickle.loads(self.carray.dumps()))
         assert_equal(self.tarray, pickle.loads(self.tarray.dumps()))
 
+class test_fancy_indexing(ScipyTestCase): 
+    def check_list(self): 
+        x = ones((1,1)) 
+        x[:,[0]] = 2.0 
+        assert_array_equal(x, array([[2.0]])) 
+
+        x = ones((1,1,1)) 
+        x[:,:,[0]] = 2.0 
+        assert_array_equal(x, array([[[2.0]]])) 
+
+    def check_tuple(self): 
+        x = ones((1,1)) 
+        x[:,(0,)] = 2.0 
+        assert_array_equal(x, array([[2.0]])) 
+        x = ones((1,1)) 
+        x[:,:,(0,)] = 2.0 
+        assert_array_equal(x, array([[[2.0]]])) 
+
+
 # Import tests from unicode
 set_local_path()
 from test_unicode import *

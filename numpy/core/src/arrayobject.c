@@ -1659,9 +1659,26 @@ _swap_axes(PyArrayMapIterObject *mit, PyArrayObject **ret)
 	int i;
 	PyArray_Dims permute;
 	intp d[MAX_DIMS];
+        PyArrayObject *arr;
 
 	permute.ptr = d;
 	permute.len = mit->nd;
+
+        /* arr might not have the right number of dimensions
+           and need to be reshaped first by pre-pending ones */
+        arr = *ret;        
+        if (arr->nd != mit->nd) {
+                for (i=1; i<=arr->nd; i++) {
+                        permute.ptr[mit->nd-i] = arr->dimensions[arr->nd-i];
+                }
+                for (i=0; i<mit->nd-arr->nd; i++) {
+                        permute.ptr[i] = 1;
+                }        
+                new = PyArray_Newshape(arr, &permute, PyArray_ANYORDER);
+                Py_DECREF(arr);
+                *ret = (PyArrayObject *)new;
+                if (new == NULL) return;
+        }
 
 	/* tuple for transpose is
 	   (n1,..,n1+n2-1,0,..,n1-1,n1+n2,...,n3-1)
