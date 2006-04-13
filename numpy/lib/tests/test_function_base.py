@@ -327,7 +327,12 @@ class test_histogram(ScipyTestCase):
         (a,b)=histogram(linspace(0,10,100))
         assert(all(a==10))
 
-
+class test_vectorize( ScipyTestCase ): 
+    def check_vectorize( self ): 
+        x = linspace(-3,2,10000) 
+        f = vectorize(lambda x: x) 
+        y = f(x) 
+        assert_array_equal(y, x) 
 
 
 

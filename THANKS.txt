@@ -13,7 +13,8 @@ Chris Hanley for help with records.py, testing, and bug fixes.
 Travis Vaught and Joe Cooper for administration of numpy.org web site and SVN 
 Eric Firing for bugfixes.
 Arnd Baecker for 64-bit testing
-David Cooke for many code improvements including the auto-generated C-API
+David Cooke for many code improvements including the auto-generated C-API, and optimizations.
 Alexander Belopolsky (Sasha) for Masked array bug-fixes and tests and rank-0 array improvements and other code additions
 Francesc Altet for unicode and nested record tests and help with nested records
-Tim Hochberg for getting the build working on MSVC
+Tim Hochberg for getting the build working on MSVC, optimization improvements, and code review
+Charles Harris for the sorting code originally written for Numarray.

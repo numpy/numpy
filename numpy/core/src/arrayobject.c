@@ -1777,8 +1777,10 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 	if ((mit->subspace != NULL) && (mit->consec)) {
 		if (mit->iteraxes[0] > 0) {  /* then we need to swap */
 			_swap_axes(mit, (PyArrayObject **)&arr);
+			if (arr == NULL) return -1;
 		}
 	}
+	
 
 	if ((it = (PyArrayIterObject *)PyArray_IterNew(arr))==NULL) {
 		Py_DECREF(arr);
@@ -7522,9 +7524,9 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
 					mit->dimensions[i] = tmp;
 				else if (mit->dimensions[i] != tmp) {
 					PyErr_SetString(PyExc_ValueError,
-							"index objects are " \
-							"not broadcastable " \
-							"to a single shape");
+							"shape mismatch: objects" \
+							" cannot be broadcast" \
+							" to a single shape");
 					return -1;
 				}
 			}
