@@ -1,7 +1,8 @@
 /* Functions only needed on narrow builds of Python 
-   for converting back and forth between the NumPy Unicode data-type (always 4-byte)
+   for converting back and forth between the NumPy Unicode data-type 
+   (always 4-byte)
    and the Python Unicode scalar (2-bytes on a narrow build). 
- */
+*/
 
 /* the ucs2 buffer must be large enough to hold 2*ucs4length characters
    due to the use of surrogate pairs. 

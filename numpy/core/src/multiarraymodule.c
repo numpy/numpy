@@ -1729,6 +1729,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 }
 
 
+
 /*MULTIARRAY_API
  Numeric.choose()
 */

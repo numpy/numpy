@@ -257,6 +257,27 @@ class test_fancy_indexing(ScipyTestCase):
         x[:,:,(0,)] = 2.0 
         assert_array_equal(x, array([[[2.0]]])) 
 
+class test_string_compare(ScipyTestCase):
+    def check_string(self):
+        g1 = array(["This","is","example"])
+        g2 = array(["This","was","example"])
+        assert_array_equal(g1 == g2, [True, False, True])
+        assert_array_equal(g1 != g2, [False, True, False])
+        assert_array_equal(g1 <= g2, [True, True, True])
+        assert_array_equal(g1 >= g2, [True, False, True])
+        assert_array_equal(g1 < g2, [False, True, False])
+        assert_array_equal(g1 > g2, [False, False, False])
+
+    def check_unicode(self):
+        g1 = array([u"This",u"is",u"example"])
+        g2 = array([u"This",u"was",u"example"])
+        assert_array_equal(g1 == g2, [True, False, True])
+        assert_array_equal(g1 != g2, [False, True, False])
+        assert_array_equal(g1 <= g2, [True, True, True])
+        assert_array_equal(g1 >= g2, [True, False, True])
+        assert_array_equal(g1 < g2, [False, True, False])
+        assert_array_equal(g1 > g2, [False, False, False])
+
 
 # Import tests from unicode
 set_local_path()

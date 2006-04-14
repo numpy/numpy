@@ -41,34 +41,34 @@ class chararray(ndarray):
             raise ValueError, "Can only create a chararray from string data."
 
 
-    def _richcmpfunc(self, other, op):
-        b = broadcast(self, other)
-        result = empty(b.shape, dtype=bool)
-        res = result.flat
-        for k, val in enumerate(b):
-            r1 = val[0].rstrip('\x00')
-            r2 = val[1]
-            res[k] = eval("r1 %s r2" % op, {'r1':r1,'r2':r2})
-        return result
+##    def _richcmpfunc(self, other, op):
+##        b = broadcast(self, other)
+##        result = empty(b.shape, dtype=bool)
+##        res = result.flat
+##        for k, val in enumerate(b):
+##            r1 = val[0].rstrip('\x00')
+##            r2 = val[1]
+##            res[k] = eval("r1 %s r2" % op, {'r1':r1,'r2':r2})
+##        return result
 
-    # these should probably be moved to C
-    def __eq__(self, other):
-        return self._richcmpfunc(other, '==')
+    # these have been moved to C
+##    def __eq__(self, other):
+##        return self._richcmpfunc(other, '==')
 
-    def __ne__(self, other):
-        return self._richcmpfunc(other, '!=')
+##    def __ne__(self, other):
+##        return self._richcmpfunc(other, '!=')
 
-    def __ge__(self, other):
-        return self._richcmpfunc(other, '>=')
+##    def __ge__(self, other):
+##        return self._richcmpfunc(other, '>=')
 
-    def __le__(self, other):
-        return self._richcmpfunc(other, '<=')
+##    def __le__(self, other):
+##        return self._richcmpfunc(other, '<=')
 
-    def __gt__(self, other):
-        return self._richcmpfunc(other, '>')
+##    def __gt__(self, other):
+##        return self._richcmpfunc(other, '>')
 
-    def __lt__(self, other):
-        return self._richcmpfunc(other, '<')
+##    def __lt__(self, other):
+##        return self._richcmpfunc(other, '<')
 
     def __add__(self, other):
         b = broadcast(self, other)

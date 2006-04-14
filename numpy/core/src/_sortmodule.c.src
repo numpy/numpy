@@ -355,23 +355,10 @@ static int
 }
 /**end repeat**/
 
-static int
-unincmp(Py_UNICODE *s1, Py_UNICODE *s2, register int len)
-{
-	register Py_UNICODE c1, c2;
-	while(len-- > 0) {
-		c1 = *s1++;
-		c2 = *s2++;
-		if (c1 != c2)
-			return (c1 < c2) ? -1 : 1;
-	}
-	return 0;
-}
-
 /**begin repeat
 #TYPE=STRING,UNICODE#
-#comp=strncmp,unincmp#
-#type=char *, Py_UNICODE *#
+#comp=strncmp,PyArray_CompareUCS4#
+#type=char *, PyArray_UCS4 *#
 */
 static void 
 @TYPE@_amergesort0(intp *pl, intp *pr, @type@*v, intp *pw, int elsize)
