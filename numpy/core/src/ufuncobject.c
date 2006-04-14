@@ -1214,6 +1214,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		if (loop->buffer[0] == NULL) {PyErr_NoMemory(); return -1;}
 		castptr = loop->buffer[0] + loop->bufsize*cnt + scbufsize*scnt;
 		bufptr = loop->buffer[0];
+                loop->objfunc = 0;
 		for (i=0; i<self->nargs; i++) {
 			if (!loop->needbuffer[i]) continue;
 			loop->buffer[i] = bufptr + (last_was_scalar ? scbufsize : \
@@ -1239,6 +1240,11 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 			else {
 				loop->bufptr[i] = loop->buffer[i];
 			}
+                        if (!loop->objfunc && loop->obj) {
+                                if (arg_types[i] == PyArray_OBJECT) { 
+                                        loop->objfunc = 1;
+                                }
+                        }
 		}
 	}
         return nargs;
@@ -1608,10 +1614,12 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 					if (!needbuffer[i]) dptr[i] = tptr[i];
 				}
 			}
+                        /* end inner function over last dimension */
 
-			if (loop->obj) { /* DECREF castbuf for object arrays */
+			if (loop->objfunc) { /* DECREF castbuf when underlying function used object arrays
+                                                    and casting was needed to get to object arrays */
 				for (i=0; i<self->nargs; i++) {
-					if (pyobject[i] && loop->cast[i]) {
+					if (loop->cast[i]) {
 						if (steps[i] == 0) {
 							Py_XDECREF(*((PyObject **)castbuf[i]));
 						}

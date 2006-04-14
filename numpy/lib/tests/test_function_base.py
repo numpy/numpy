@@ -262,8 +262,12 @@ class test_vectorize(ScipyTestCase):
         f = vectorize(addsubtract)
         r = f([0,3,6,9],5)
         assert_array_equal(r,[5,8,1,4])
-
-
+    def check_large(self): 
+        x = linspace(-3,2,10000) 
+        f = vectorize(lambda x: x) 
+        y = f(x) 
+        assert_array_equal(y, x) 
+    
 
 class test_unwrap(ScipyTestCase):
     def check_simple(self):
@@ -326,13 +330,6 @@ class test_histogram(ScipyTestCase):
         #check that the bin counts are evenly spaced when the data is from a linear function
         (a,b)=histogram(linspace(0,10,100))
         assert(all(a==10))
-
-class test_vectorize( ScipyTestCase ): 
-    def check_vectorize( self ): 
-        x = linspace(-3,2,10000) 
-        f = vectorize(lambda x: x) 
-        y = f(x) 
-        assert_array_equal(y, x) 
 
 
 
