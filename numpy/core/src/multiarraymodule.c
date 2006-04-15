@@ -383,14 +383,13 @@ _check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
 	nd = self->nd;
 	dims = self->dimensions;
 
-	memset(strides, 0, newnd*sizeof(intp));
 	for (k=0, j=0; !done && (j<nd || k<newnd);) {
 		if ((j<nd) && (k<newnd) && (newdims[k]==dims[j])) {
 			strides[k] = self->strides[j];
 			j++; k++;
 		}
 		else if ((k<newnd) && (newdims[k]==1)) {
-			/* strides[k] = 0; */
+			strides[k] = 0;
 			k++;
 		}
 		else if ((j<nd) && (dims[j]==1)) {
@@ -464,7 +463,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 	intp *dimensions = newdims->ptr;
         PyArrayObject *ret;
 	int n = newdims->len;
-        Bool same, incref;
+        Bool same, incref=TRUE;
 	intp *strides = NULL;
 	intp newstrides[MAX_DIMS];
 
@@ -507,8 +506,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 		if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0)
 			goto fail;
 	}
-	else {
-		incref = TRUE;
+	else if (n > 0) {
 		/* replace any 0-valued strides with
 		   appropriate value to preserve contiguousness
 		*/

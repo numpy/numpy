@@ -479,7 +479,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 		n = PyTuple_GET_SIZE(names);
 		if (PyTuple_GET_SIZE(op) != n) {
 			PyErr_SetString(PyExc_ValueError, 
-					"size of tuple must match"\
+					"size of tuple must match "\
 					"number of fields.");
 			return -1;
 		}

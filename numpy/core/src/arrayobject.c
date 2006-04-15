@@ -703,7 +703,7 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
         while(ncopies--) {
                 index = ssize;
                 while(index--) {
-                        memmove(dit->dataptr, sit->dataptr, elsize);
+			memmove(dit->dataptr, sit->dataptr, elsize);
 			if (swap)
 				copyswap(dit->dataptr, NULL, 1, elsize);
                         PyArray_ITER_NEXT(dit);
@@ -4191,6 +4191,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 			memcpy(self->strides, strides, sizeof(intp)*nd);
 		}
 	}
+	else { self->dimensions = self->strides = NULL; }
 
 	if (data == NULL) {
 
@@ -5405,7 +5406,7 @@ static PyTypeObject PyArray_Type = {
         (initproc)0,		                  /* tp_init */
         array_alloc,	                          /* tp_alloc */
         (newfunc)array_new,		          /* tp_new */
-        _pya_free,	          /* tp_free */
+        _pya_free,	                          /* tp_free */
         0,					  /* tp_is_gc */
         0,					  /* tp_bases */
         0,					  /* tp_mro */
@@ -7778,10 +7779,13 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
 	else {
 		for (i=0; i<mit->numiter; i++) {
 			it = mit->iters[i];
-			PyArray_ITER_RESET(it);
-			copyswap(coord+i,it->dataptr,
-				 !PyArray_ISNOTSWAPPED(it->ao),
-				 sizeof(intp));
+			if (it->size != 0) {
+				PyArray_ITER_RESET(it);
+				copyswap(coord+i,it->dataptr,
+					 !PyArray_ISNOTSWAPPED(it->ao),
+					 sizeof(intp));
+			}
+			else coord[i] = 0;
 		}
 		PyArray_ITER_GOTO(mit->ait, coord);
 		mit->dataptr = mit->ait->dataptr;

@@ -1582,7 +1582,9 @@ bool_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 		PyArrayScalar_RETURN_TRUE;
 	arr = PyArray_FROM_OTF(obj, PyArray_BOOL, FORCECAST);
 	if (arr && 0 == PyArray_NDIM(arr)) {
-		PyArrayScalar_RETURN_BOOL_FROM_LONG(*(Bool*)PyArray_DATA(arr));
+		Bool val = *((Bool *)PyArray_DATA(arr));
+		Py_DECREF(arr);
+		PyArrayScalar_RETURN_BOOL_FROM_LONG(val);
 	}
 	return PyArray_Return((PyArrayObject *)arr);
 }
