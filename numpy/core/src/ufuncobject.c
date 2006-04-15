@@ -1212,6 +1212,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		/* fprintf(stderr, "Allocated buffer at %p of size %d, cnt=%d, cntcast=%d\n", loop->buffer[0], loop->bufsize * (cnt + cntcast), cnt, cntcast); */
 
 		if (loop->buffer[0] == NULL) {PyErr_NoMemory(); return -1;}
+		if (loop->obj) memset(loop->buffer[0], 0, memsize);
 		castptr = loop->buffer[0] + loop->bufsize*cnt + scbufsize*scnt;
 		bufptr = loop->buffer[0];
                 loop->objfunc = 0;
@@ -1973,7 +1974,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
         case ONEDIM_REDUCELOOP:
 		/*fprintf(stderr, "ONEDIM..%d\n", loop->size); */
                 while(loop->index < loop->size) {
-			if (loop->obj) Py_INCREF(*((PyObject **)loop->it->dataptr));
+			if (loop->obj) 
+				Py_INCREF(*((PyObject **)loop->it->dataptr));
                         memmove(loop->bufptr[1], loop->it->dataptr, 
                                loop->outsize);
 			PyArray_ITER_NEXT(loop->it);

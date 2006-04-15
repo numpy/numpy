@@ -383,13 +383,14 @@ _check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
 	nd = self->nd;
 	dims = self->dimensions;
 
+	memset(strides, 0, newnd*sizeof(intp));
 	for (k=0, j=0; !done && (j<nd || k<newnd);) {
 		if ((j<nd) && (k<newnd) && (newdims[k]==dims[j])) {
 			strides[k] = self->strides[j];
 			j++; k++;
 		}
 		else if ((k<newnd) && (newdims[k]==1)) {
-			strides[k] = 0;
+			/* strides[k] = 0; */
 			k++;
 		}
 		else if ((j<nd) && (dims[j]==1)) {
