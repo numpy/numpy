@@ -2029,9 +2029,9 @@ static void
                 i2c = (@typ@ *)i2;
                 if ((i1c->real @OP@ i2c->real) ||                       \
                     ((i1c->real==i2c->real) && (i1c->imag @OP@ i2c->imag)))
-                        memcpy(op, i1, sizeof(@typ@));
+                        memmove(op, i1, sizeof(@typ@));
                 else
-                        memcpy(op, i2, sizeof(@typ@));
+                        memmove(op, i2, sizeof(@typ@));
 	}
 }
 /**end repeat**/

@@ -875,7 +875,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 			/* Need an extra slot and need to use
 			   Python memory manager */
 			uni->str = NULL;
-			destptr = PyMem_NEW(Py_UNICODE, length+1);
+			destptr = PyMem_NEW(Py_UNICODE,length+1);
 			if (destptr == NULL) {
                                 Py_DECREF(obj);
 				return PyErr_NoMemory();
@@ -3475,7 +3475,6 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 {
         PyObject *result;
 	PyArrayMultiIterObject *mit;
-	double prior1, prior2;
 	int N, val;
 
         /* Cast arrays to a common type */  
@@ -3528,8 +3527,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 				      mit->nd,
 				      mit->dimensions,
 				      NULL, NULL, 0, 
-				      (PyObject *)
-				      (prior2 > prior1 ? self : other));   
+				      NULL);
 	if (result == NULL) goto finish;
 
 	if (self->descr->type_num == PyArray_STRING) {
@@ -8305,9 +8303,10 @@ PyArray_MultiIterNew(int n, ...)
 	}
 
         /* fprintf(stderr, "multi new...");*/
-        multi = PyObject_New(PyArrayMultiIterObject, &PyArrayMultiIter_Type);
-        if (multi == NULL)
-                return NULL;
+
+	multi = _pya_malloc(sizeof(PyArrayMultiIterObject));
+        if (multi == NULL) return PyErr_NoMemory();
+	PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
 	for (i=0; i<n; i++) multi->iters[i] = NULL;
 	multi->numiter = n;
@@ -8417,7 +8416,7 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
 
 	for (i=0; i<multi->numiter; i++)
 		Py_XDECREF(multi->iters[i]);
-	_pya_free(multi);
+	multi->ob_type->tp_free((PyObject *)multi);
 }
 
 static PyObject *
@@ -8550,7 +8549,7 @@ static PyTypeObject PyArrayMultiIter_Type = {
         (initproc)0,		                  /* tp_init */
         0,	                                  /* tp_alloc */
         arraymultiter_new,	                  /* tp_new */
-        0,	                                  /* tp_free */
+        _pya_free,	                          /* tp_free */
         0,					  /* tp_is_gc */
         0,					  /* tp_bases */
         0,					  /* tp_mro */

@@ -1516,13 +1516,6 @@ static PyTypeObject PyGenericArrType_Type = {
 };
 
 static void
-unicode_dealloc(PyObject *v) 
-{
-	PyDataMem_FREE(((PyVoidScalarObject *)v)->obval);
-	v->ob_type->tp_free(v);
-}
-
-static void
 void_dealloc(PyVoidScalarObject *v) 
 {
 	if (v->flags & OWNDATA)
@@ -2158,7 +2151,6 @@ ComplexFloating, Flexible, Character#
 
 	PyStringArrType_Type.tp_itemsize = sizeof(char);
 	PyVoidArrType_Type.tp_dealloc = (destructor) void_dealloc;
-	PyUnicodeArrType_Type.tp_dealloc = unicode_dealloc;
 
 	PyArrayIter_Type.tp_iter = PyObject_SelfIter;
 	PyArrayMapIter_Type.tp_iter = PyObject_SelfIter;
