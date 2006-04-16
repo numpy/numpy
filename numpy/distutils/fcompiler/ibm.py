@@ -31,7 +31,7 @@ class IbmFCompiler(FCompiler):
             l.sort()
             l.reverse()
             l = [d for d in l if os.path.isfile(os.path.join(xlf_dir,d,'xlf.cfg'))]
-            if not l:
+            if l:
                 from distutils.version import LooseVersion
                 self.version = version = LooseVersion(l[0])
         return version
