@@ -395,6 +395,14 @@ def allclose (a, b, rtol=1.e-5, atol=1.e-8):
     return d.ravel().all()
 
 
+class ufunc_values_obj(object):
+    def __init__(self, obj):
+        self._val_obj = obj
+    def __del__(self):
+        umath.seterrobj(self._val_obj)
+        del self._val_obj
+        
+
 _errdict = {"ignore":ERR_IGNORE,
             "warn":ERR_WARN,
             "raise":ERR_RAISE,
@@ -415,9 +423,9 @@ def seterr(divide="ignore", over="ignore", under="ignore",
 
     pyvals = umath.geterrobj()
     old = pyvals[:]
-    pyvals[1] = maskvalue    
+    pyvals[1] = maskvalue
     umath.seterrobj(pyvals)
-    return old
+    return ufunc_values_obj(old)
 
 def geterr():
     maskvalue = umath.geterrobj()[1]
@@ -441,7 +449,7 @@ def setbufsize(size):
     old = pyvals[:]
     pyvals[0] = size
     umath.seterrobj(pyvals)
-    return old
+    return ufunc_values_obj(old)
 
 def getbufsize():
     return umath.geterrobj()[0]
@@ -453,7 +461,7 @@ def seterrcall(func):
     old = pyvals[:]
     pyvals[2] = func
     umath.seterrobj(pyvals)
-    return old
+    return ufunc_values_obj(old)
 
 def geterrcall():
     return umath.geterrobj()[2]

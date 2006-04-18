@@ -2768,6 +2768,7 @@ ufunc_geterr(PyObject *dummy, PyObject *args)
 		return res;
 	}
 	/* Construct list of defaults */
+	fprintf(stderr, "Nothing found... return defaults.\n");
 	res = PyList_New(3);
 	if (res == NULL) return NULL;
 	PyList_SET_ITEM(res, 0, PyInt_FromLong(PyArray_BUFSIZE));
@@ -2799,12 +2800,24 @@ ufunc_seterr(PyObject *dummy, PyObject *args)
 	PyObject *thedict;
 	int res;
 	PyObject *val;
+	static char *msg = "Error object must be a list of length 3";
 	
-	if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &val)) return NULL;
+	if (!PyArg_ParseTuple(args, "O", &val)) return NULL;
+
+	if (!PyList_CheckExact(val)) {
+		PyObject *new;
+		new = PyObject_GetAttrString(val, "_val_obj");
+		if (new == NULL) {
+			PyErr_SetString(PyExc_ValueError, msg);
+			return NULL;
+		}
+		val = new;
+	}
+	else Py_INCREF(val);
 	
-	if (PyList_GET_SIZE(val) < 3) {
-		PyErr_SetString(PyExc_ValueError, 
-				"Error object Must be a list of length 3");
+	if (!PyList_CheckExact(val) || PyList_GET_SIZE(val) != 3) {
+		PyErr_SetString(PyExc_ValueError, msg);
+		Py_DECREF(val);
 		return NULL;
 	}
 	if (PyUFunc_PYVALS_NAME == NULL) {
@@ -2815,6 +2828,7 @@ ufunc_seterr(PyObject *dummy, PyObject *args)
 		thedict = PyEval_GetBuiltins();
 	}
 	res = PyDict_SetItem(thedict, PyUFunc_PYVALS_NAME, val);
+	Py_DECREF(val);
 	if (res < 0) return NULL;
 	if (ufunc_update_use_defaults() < 0) return NULL;
 	Py_INCREF(Py_None);
