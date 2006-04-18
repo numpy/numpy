@@ -192,7 +192,7 @@ class UserArray(object):
     # Only called after other approaches fail.
     def __getattr__(self,attr):
         if (attr == 'array'):
-            return object.__getattr__(self, attr)
+            return object.__getattribute__(self, attr)
         return self.array.__getattribute__(attr)
 
 #############################################################
