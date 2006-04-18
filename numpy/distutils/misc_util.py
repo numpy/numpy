@@ -776,8 +776,9 @@ class Configuration(object):
             return self.add_data_dir((data_path, data_path))
         paths = self.paths(data_path, include_non_existing=False)
         if is_glob_pattern(data_path):
+            pp = self.path_in_package.split(os.sep)
             if is_glob_pattern(d):
-                pattern_list = d.split(os.sep)
+                pattern_list = pp + d.split(os.sep)
                 pattern_list.reverse()
                 for path in paths:
                     path_list = path.split(os.sep)
@@ -790,10 +791,15 @@ class Configuration(object):
                                 raise ValueError,'cannot fill pattern %r with %r' \
                                       % (d, path)
                             target_list.append(path_list[i])
-                            i += 1
                         else:
+                            assert s==path_list[i],`s,path_list[i],data_path,d`
                             target_list.append(s)
+                        i += 1
+                    if path_list[i:]:
+                        self.warn('mismatch of pattern_list=%s and path_list=%s'\
+                                  % (pattern_list,path_list))
                     target_list.reverse()
+                    target_list = target_list[len(pp):]
                     self.add_data_dir((os.sep.join(target_list),path))
             else:
                 for path in paths:
