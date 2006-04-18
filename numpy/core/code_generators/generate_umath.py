@@ -410,7 +410,7 @@ defdict = {
           ),
 'sqrt' :
     Ufunc(1, 1, None,
-          'square-root elementwise.',
+          'square-root elementwise. For real x, the domain is restricted to x>=0.',
           TD(inexact, f='sqrt'),
           TD(M, f='sqrt'),
           ),
