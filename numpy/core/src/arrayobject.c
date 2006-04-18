@@ -1198,8 +1198,15 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                                 return -1;
                         }
                         /* write separator for all but last one */
-                        if (it->index != it->size-1)
-                                fwrite(sep, 1, n3, fp);
+                        if (it->index != it->size-1) 
+                                if (fwrite(sep, 1, n3, fp) < n3) {
+					PyErr_Format(PyExc_IOError,
+						     "problem writing "\
+						     "separator to file");
+					Py_DECREF(strobj);
+					Py_DECREF(it);
+					return -1;
+				}
                         Py_DECREF(strobj);
                         PyArray_ITER_NEXT(it);
                 }
