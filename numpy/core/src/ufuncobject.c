@@ -698,6 +698,7 @@ select_types(PyUFuncObject *self, int *arg_types,
 }
 
 static int PyUFunc_USEDEFAULTS=0;
+static PyObject *PyUFunc_PYVALS_NAME=NULL;
 
 /*UFUNC_API*/
 static int
@@ -706,22 +707,26 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
         PyObject *thedict;
         PyObject *ref=NULL;
 	PyObject *retval;
-	static PyObject *thestring=NULL;
 
 	if (!PyUFunc_USEDEFAULTS) {
-		if (thestring == NULL) {
-			thestring = PyString_InternFromString(UFUNC_PYVALS_NAME);
+		if (PyUFunc_PYVALS_NAME == NULL) {
+			PyUFunc_PYVALS_NAME = PyString_InternFromString(UFUNC_PYVALS_NAME);
 		}
-		thedict = PyEval_GetLocals();
-		ref = PyDict_GetItem(thedict, thestring);
-		if (ref == NULL) {
-			thedict = PyEval_GetGlobals();
-			ref = PyDict_GetItem(thedict, thestring);
-		}
-		if (ref == NULL) {
+		thedict = PyThreadState_GetDict();
+		if (thedict == NULL) {
 			thedict = PyEval_GetBuiltins();
-			ref = PyDict_GetItem(thedict, thestring);
 		}
+		ref = PyDict_GetItem(thedict, PyUFunc_PYVALS_NAME);
+/* 		thedict = PyEval_GetLocals(); */
+/* 		ref = PyDict_GetItem(thedict, thestring); */
+/* 		if (ref == NULL) { */
+/* 			thedict = PyEval_GetGlobals(); */
+/* 			ref = PyDict_GetItem(thedict, thestring); */
+/* 		} */
+/* 		if (ref == NULL) { */
+/* 			thedict = PyEval_GetBuiltins(); */
+/* 			ref = PyDict_GetItem(thedict, thestring); */
+/* 		} */
 	}
 	if (ref == NULL) {
 		*errmask = UFUNC_ERR_DEFAULT;
@@ -2743,25 +2748,80 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 }
 
 static PyObject *
-ufunc_update_use_defaults(PyObject *dummy, PyObject *args)
+ufunc_geterr(PyObject *dummy, PyObject *args)
+{
+	PyObject *thedict;
+	PyObject *res;
+	
+	if (!PyArg_ParseTuple(args, "")) return NULL;
+	
+	if (PyUFunc_PYVALS_NAME == NULL) {
+		PyUFunc_PYVALS_NAME = PyString_InternFromString(UFUNC_PYVALS_NAME);
+	}
+	thedict = PyThreadState_GetDict();
+	if (thedict == NULL) {
+		thedict = PyEval_GetBuiltins();
+	}
+	res = PyDict_GetItem(thedict, PyUFunc_PYVALS_NAME);
+	if (res != NULL) {
+		Py_INCREF(res);
+		return res;
+	}
+	/* Construct list of defaults */
+	res = PyList_New(3);
+	if (res == NULL) return NULL;
+	PyList_SET_ITEM(res, 0, PyInt_FromLong(PyArray_BUFSIZE));
+	PyList_SET_ITEM(res, 1, PyInt_FromLong(UFUNC_ERR_DEFAULT));
+	PyList_SET_ITEM(res, 2, Py_None); Py_INCREF(Py_None);
+	return res;
+}
+
+static int 
+ufunc_update_use_defaults(void)
 {
 	PyObject *errobj;
 	int errmask, bufsize;
 
-	if (!PyArg_ParseTuple(args, "")) return NULL;
-	
 	PyUFunc_USEDEFAULTS = 0;
-	if (PyUFunc_GetPyValues("test", &bufsize, &errmask, &errobj) < 0) return NULL;
+	if (PyUFunc_GetPyValues("test", &bufsize, &errmask, &errobj) < 0) return -1;
 	
 	if ((errmask == UFUNC_ERR_DEFAULT) &&		\
 	    (bufsize == PyArray_BUFSIZE) &&		\
 	    (PyTuple_GET_ITEM(errobj, 1) == Py_None)) {
 		PyUFunc_USEDEFAULTS = 1;
 	}
+	return 0;
+}
+
+static PyObject *
+ufunc_seterr(PyObject *dummy, PyObject *args)
+{
+	PyObject *thedict;
+	int res;
+	PyObject *val;
 	
+	if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &val)) return NULL;
+	
+	if (PyList_GET_SIZE(val) < 3) {
+		PyErr_SetString(PyExc_ValueError, 
+				"Error object Must be a list of length 3");
+		return NULL;
+	}
+	if (PyUFunc_PYVALS_NAME == NULL) {
+		PyUFunc_PYVALS_NAME = PyString_InternFromString(UFUNC_PYVALS_NAME);
+	}
+	thedict = PyThreadState_GetDict();
+	if (thedict == NULL) {
+		thedict = PyEval_GetBuiltins();
+	}
+	res = PyDict_SetItem(thedict, PyUFunc_PYVALS_NAME, val);
+	if (res < 0) return NULL;
+	if (ufunc_update_use_defaults() < 0) return NULL;
 	Py_INCREF(Py_None);
 	return Py_None;
 }
+
+
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 

@@ -2262,8 +2262,10 @@ InitOtherOperators(PyObject *dictionary) {
 static struct PyMethodDef methods[] = {
         {"frompyfunc", (PyCFunction) ufunc_frompyfunc,
          METH_VARARGS | METH_KEYWORDS, doc_frompyfunc},
-	{"update_use_defaults", (PyCFunction) ufunc_update_use_defaults,
-	 METH_VARARGS , NULL},
+	{"seterrlist", (PyCFunction) ufunc_seterr,
+	 METH_VARARGS, NULL},
+	{"geterrlist", (PyCFunction) ufunc_geterr,
+	 METH_VARARGS, NULL},
 	{NULL,		NULL, 0}		/* sentinel */
 };
 
