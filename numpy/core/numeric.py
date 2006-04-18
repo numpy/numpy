@@ -413,14 +413,14 @@ def seterr(divide="ignore", over="ignore", under="ignore",
                  (_errdict[under] << SHIFT_UNDERFLOW) +
                  (_errdict[invalid] << SHIFT_INVALID))
 
-    pyvals = umath.geterrlist()
+    pyvals = umath.geterrobj()
     old = pyvals[:]
     pyvals[1] = maskvalue    
-    umath.seterrlist(pyvals)
+    umath.seterrobj(pyvals)
     return old
 
 def geterr():
-    maskvalue = umath.geterrlist()[1]
+    maskvalue = umath.geterrobj()[1]
     mask = 3
     res = {}
     val = (maskvalue >> SHIFT_DIVIDEBYZERO) & mask
@@ -437,30 +437,30 @@ def setbufsize(size):
     if size > 10e6:
         raise ValueError, "Very big buffers.. %s" % size
 
-    pyvals = umath.geterrlist()
+    pyvals = umath.geterrobj()
     old = pyvals[:]
     pyvals[0] = size
-    umath.seterrlist(pyvals)
+    umath.seterrobj(pyvals)
     return old
 
 def getbufsize():
-    return umath.geterrlist()[0]
+    return umath.geterrobj()[0]
 
 def seterrcall(func):
     if not callable(func):
         raise ValueError, "Only callable can be used as callback"
-    pyvals = umath.geterrlist()
+    pyvals = umath.geterrobj()
     old = pyvals[:]
     pyvals[2] = func
-    umath.seterrlist(pyvals)
+    umath.seterrobj(pyvals)
     return old
 
 def geterrcall():
-    return umath.geterrlist()[2]
+    return umath.geterrobj()[2]
 
 def _setdef():
     defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
-    umath.seterrlist(defval)
+    umath.seterrobj(defval)
 
 # set the default values
 _setdef()
