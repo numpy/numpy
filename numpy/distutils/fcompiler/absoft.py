@@ -68,12 +68,23 @@ class AbsoftFCompiler(FCompiler):
         opt = FCompiler.get_library_dirs(self)
         d = os.environ.get('ABSOFT')
         if d:
-            opt.append(os.path.join(d,'lib'))
+            if self.get_version() >= '10.0':
+                # use shared libraries, the static libraries were not compiled -fPIC
+                prefix = 'sh'
+            else:
+                prefix = ''
+            if cpu.is_64bit():
+                suffix = '64'
+            else:
+                suffix = ''
+            opt.append(os.path.join(d, '%slib%s' % (prefix, suffix)))
         return opt
 
     def get_libraries(self):
         opt = FCompiler.get_libraries(self)
-        if self.get_version() >= '8.0':
+        if self.get_version() >= '10.0':
+            opt.extend(['af90math', 'afio', 'af77math', 'U77'])
+        elif self.get_version() >= '8.0':
             opt.extend(['f90math','fio','f77math','U77'])
         else:
             opt.extend(['fio','f90math','fmath','U77'])
