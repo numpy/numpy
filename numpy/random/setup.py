@@ -18,8 +18,6 @@ def configuration(parent_package='',top_path=None):
         ext.libraries.extend(libs)
         return None
 
-    config.add_headers(join('mtrand', 'randomkit.h'))
-    
     libs = []
     # Configure mtrand
     config.add_extension('mtrand',
@@ -33,6 +31,8 @@ def configuration(parent_package='',top_path=None):
                                     ]
                         )
 
+    config.add_data_files(('.', join('mtrand', 'randomkit.h')))
+    
     return config
 
 def testcode_wincrypt():
