@@ -17,8 +17,11 @@ class AbsoftFCompiler(FCompiler):
 
     compiler_type = 'absoft'
     #version_pattern = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
-    version_pattern = r'(f90:.*?(Absoft Pro FORTRAN Version|FORTRAN 77 Compiler|Absoft Fortran Compiler Version))'+\
+    version_pattern = r'(f90:.*?(Absoft Pro FORTRAN Version|FORTRAN 77 Compiler|Absoft Fortran Compiler Version|Copyright Absoft Corporation.*?Version))'+\
                        r' (?P<version>[^\s*,]*)(.*?Absoft Corp|)'
+
+    # on windows: f90 -V -c dummy.f
+    # f90: Copyright Absoft Corporation 1994-1998 mV2; Cray Research, Inc. 1994-1996 CF90 (2.x.x.x  f36t87) Version 2.3 Wed Apr 19, 2006  13:05:16
 
     # samt5735(8)$ f90 -V -c dummy.f
     # f90: Copyright Absoft Corporation 1994-2002; Absoft Pro FORTRAN Version 8.0
