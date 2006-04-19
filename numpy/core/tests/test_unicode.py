@@ -28,14 +28,14 @@ class create_zeros(ScipyTestCase):
         # Check the length of the data buffer
         self.assert_(len(ua.data) == nbytes)
         # Small check that data in array element is ok
-        self.assert_(ua_scalar == u'\x00'*self.ulen)
+        self.assert_(ua_scalar == u'')
         # Encode to ascii and double check
-        self.assert_(ua_scalar.encode('ascii') == '\x00'*self.ulen)
+        self.assert_(ua_scalar.encode('ascii') == '')
         # Check buffer lengths for scalars
         if ucs4:
-            self.assert_(len(buffer(ua_scalar)) == 4*self.ulen)
+            self.assert_(len(buffer(ua_scalar)) == 0)
         else:
-            self.assert_(len(buffer(ua_scalar)) == 2*self.ulen)
+            self.assert_(len(buffer(ua_scalar)) == 0)
 
     def check_zeros0D(self):
         """Check creation of 0-dimensional objects"""

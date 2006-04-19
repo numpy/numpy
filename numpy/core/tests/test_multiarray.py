@@ -261,22 +261,33 @@ class test_string_compare(ScipyTestCase):
     def check_string(self):
         g1 = array(["This","is","example"])
         g2 = array(["This","was","example"])
-        assert_array_equal(g1 == g2, [True, False, True])
-        assert_array_equal(g1 != g2, [False, True, False])
-        assert_array_equal(g1 <= g2, [True, True, True])
-        assert_array_equal(g1 >= g2, [True, False, True])
-        assert_array_equal(g1 < g2, [False, True, False])
-        assert_array_equal(g1 > g2, [False, False, False])
+        assert_array_equal(g1 == g2, [g1[i] == g2[i] for i in [0,1,2]])
+        assert_array_equal(g1 != g2, [g1[i] != g2[i] for i in [0,1,2]])
+        assert_array_equal(g1 <= g2, [g1[i] <= g2[i] for i in [0,1,2]])
+        assert_array_equal(g1 >= g2, [g1[i] >= g2[i] for i in [0,1,2]])
+        assert_array_equal(g1 < g2, [g1[i] < g2[i] for i in [0,1,2]]) 
+        assert_array_equal(g1 > g2, [g1[i] > g2[i] for i in [0,1,2]]) 
+
+    def check_mixed(self):
+        g1 = array(["spam","spa","spammer","and eggs"])
+        g2 = "spam"
+        assert_array_equal(g1 == g2, [x == g2 for x in g1])
+        assert_array_equal(g1 != g2, [x != g2 for x in g1])
+        assert_array_equal(g1 < g2, [x < g2 for x in g1])
+        assert_array_equal(g1 > g2, [x > g2 for x in g1])
+        assert_array_equal(g1 <= g2, [x <= g2 for x in g1])
+        assert_array_equal(g1 >= g2, [x >= g2 for x in g1])
+        
 
     def check_unicode(self):
         g1 = array([u"This",u"is",u"example"])
         g2 = array([u"This",u"was",u"example"])
-        assert_array_equal(g1 == g2, [True, False, True])
-        assert_array_equal(g1 != g2, [False, True, False])
-        assert_array_equal(g1 <= g2, [True, True, True])
-        assert_array_equal(g1 >= g2, [True, False, True])
-        assert_array_equal(g1 < g2, [False, True, False])
-        assert_array_equal(g1 > g2, [False, False, False])
+        assert_array_equal(g1 == g2, [g1[i] == g2[i] for i in [0,1,2]])
+        assert_array_equal(g1 != g2, [g1[i] != g2[i] for i in [0,1,2]])
+        assert_array_equal(g1 <= g2, [g1[i] <= g2[i] for i in [0,1,2]])
+        assert_array_equal(g1 >= g2, [g1[i] >= g2[i] for i in [0,1,2]])
+        assert_array_equal(g1 < g2,  [g1[i] < g2[i] for i in [0,1,2]]) 
+        assert_array_equal(g1 > g2,  [g1[i] > g2[i] for i in [0,1,2]]) 
 
 
 # Import tests from unicode
