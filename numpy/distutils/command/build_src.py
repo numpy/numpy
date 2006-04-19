@@ -247,7 +247,7 @@ class build_src(build_ext.build_ext):
                 func_sources.append(source)
         if not func_sources:
             return new_sources
-        if self.inplace:
+        if self.inplace and not is_sequence(extension):
             build_dir = self.ext_target_dir
         else:
             if is_sequence(extension):
