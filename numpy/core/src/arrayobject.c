@@ -621,6 +621,23 @@ PyArray_Size(PyObject *op)
         }
 }
 
+
+static void
+_strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides, 
+                   intp N, int elsize)
+{
+        intp i, j;
+        char *tout = dst;
+        char *tin = src;
+        for (i=0; i<N; i++) {
+                for (j=0; j<elsize; j++) {
+                        *tout++ = *tin++;
+                }
+                tin = tin + instrides - elsize;
+                tout = tout + outstrides - elsize;
+        }        
+}
+
 /* If destination is not the right type, then src
    will be cast to destination.
 */
@@ -642,7 +659,7 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
         PyArrayIterObject *dit=NULL;
         PyArrayIterObject *sit=NULL;
 	char *dptr;
-	int swap;
+	int swap, nd;
         PyArray_CopySwapFunc *copyswap;
         PyArray_CopySwapNFunc *copyswapn;
 
@@ -688,6 +705,45 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 			copyswapn(dest->data, NULL, dsize, 1, elsize);
                 PyArray_INCREF(dest);
                 return 0;
+        }
+        
+        /* See if we can iterate over the largest dimension */
+        if (!swap && (nd = dest->nd) == src->nd && (nd > 0) && 
+            PyArray_CompareLists(dest->dimensions, src->dimensions, nd)) { 
+                int maxaxis=0, maxdim=dest->dimensions[0];
+                int i;
+                for (i=1; i<nd; i++) {
+                        if (dest->dimensions[i] > maxdim) {
+                                maxaxis = i;
+                                maxdim = dest->dimensions[i];
+                        }
+                }
+
+                dit = (PyArrayIterObject *)                             \
+                        PyArray_IterAllButAxis((PyObject *)dest, maxaxis);
+                sit = (PyArrayIterObject *)                             \
+                        PyArray_IterAllButAxis((PyObject *)src, maxaxis);
+
+                if ((dit == NULL) || (sit == NULL)) {
+                        Py_XDECREF(dit);
+                        Py_XDECREF(sit);
+                        return -1;
+                }
+
+                PyArray_XDECREF(dest);
+                index = dit->size;
+                while(index--) {
+                        /* strided copy of elsize bytes */
+                        _strided_byte_copy(dit->dataptr, dest->strides[maxaxis],
+                                           sit->dataptr, src->strides[maxaxis],
+                                           maxdim, elsize);
+                        PyArray_ITER_NEXT(dit);
+                        PyArray_ITER_NEXT(sit);
+                }
+                PyArray_INCREF(dest);
+                Py_DECREF(dit);
+                Py_DECREF(sit);
+                return 0;      
         }
 
         dit = (PyArrayIterObject *)PyArray_IterNew((PyObject *)dest);
