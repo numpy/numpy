@@ -621,7 +621,6 @@ PyArray_Size(PyObject *op)
         }
 }
 
-
 static void
 _strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides, 
                    intp N, int elsize)
@@ -629,13 +628,37 @@ _strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides,
         intp i, j;
         char *tout = dst;
         char *tin = src;
-        for (i=0; i<N; i++) {
-                for (j=0; j<elsize; j++) {
-                        *tout++ = *tin++;
+        switch(elsize) {
+        case 8:
+                for (i=0; i<N; i++) {
+                        ((Float64 *)tout)[0] = ((Float64 *)tin)[0];
+                        tin = tin + instrides - elsize;
+                        tout = tout + outstrides - elsize;
                 }
-                tin = tin + instrides - elsize;
-                tout = tout + outstrides - elsize;
-        }        
+                return;
+        case 4:
+                for (i=0; i<N; i++) {
+                        ((Int32 *)tout)[0] = ((Int32 *)tin)[0];
+                        tin = tin + instrides - elsize;
+                        tout = tout + outstrides - elsize;
+                }
+                return;
+        case 2:
+                for (i=0; i<N; i++) {
+                        ((Int16 *)tout)[0] = ((Int16 *)tin)[0];
+                        tin = tin + instrides - elsize;
+                        tout = tout + outstrides - elsize;
+                }
+                return;
+        default:
+                for (i=0; i<N; i++) {
+                        for (j=0; j<elsize; j++) {
+                                *tout++ = *tin++;
+                        }
+                        tin = tin + instrides - elsize;
+                        tout = tout + outstrides - elsize;
+                }        
+        }
 }
 
 /* If destination is not the right type, then src
@@ -708,7 +731,8 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
         }
         
         /* See if we can iterate over the largest dimension */
-        if (!swap && (nd = dest->nd) == src->nd && (nd > 0) && 
+        if (!swap && PyArray_ISALIGNED(dest) && PyArray_ISALIGNED(src) && 
+            (nd = dest->nd) == src->nd && (nd > 0) && 
             PyArray_CompareLists(dest->dimensions, src->dimensions, nd)) { 
                 int maxaxis=0, maxdim=dest->dimensions[0];
                 int i;
