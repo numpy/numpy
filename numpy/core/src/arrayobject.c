@@ -632,22 +632,22 @@ _strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides,
         case 8:
                 for (i=0; i<N; i++) {
                         ((Float64 *)tout)[0] = ((Float64 *)tin)[0];
-                        tin = tin + instrides - elsize;
-                        tout = tout + outstrides - elsize;
+                        tin = tin + instrides;
+                        tout = tout + outstrides;
                 }
                 return;
         case 4:
                 for (i=0; i<N; i++) {
                         ((Int32 *)tout)[0] = ((Int32 *)tin)[0];
-                        tin = tin + instrides - elsize;
-                        tout = tout + outstrides - elsize;
+                        tin = tin + instrides;
+                        tout = tout + outstrides;
                 }
                 return;
         case 2:
                 for (i=0; i<N; i++) {
                         ((Int16 *)tout)[0] = ((Int16 *)tin)[0];
-                        tin = tin + instrides - elsize;
-                        tout = tout + outstrides - elsize;
+                        tin = tin + instrides;
+                        tout = tout + outstrides;
                 }
                 return;
         default:
