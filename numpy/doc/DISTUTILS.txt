@@ -216,7 +216,9 @@ in writing setup scripts:
   ``<prefix>/include/pythonX.X/<config.name.replace('.','/')>/``
   directory. If ``files`` item is a tuple then it's first argument
   specifies the installation suffix relative to
-  ``<prefix>/include/pythonX.X/`` path.
+  ``<prefix>/include/pythonX.X/`` path.  This is a Python distutils
+  method; its use is discouraged for NumPy and SciPy in favour of
+  ``config.add_data_files(*files)``.
 
 + ``config.add_scripts(*files)`` --- prepend ``files`` to ``scripts``
   list. Scripts will be installed under ``<prefix>/bin/`` directory.
