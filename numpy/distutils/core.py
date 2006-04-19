@@ -1,4 +1,5 @@
 
+import sys
 from distutils.core import *
 try:
     from setuptools import setup as old_setup
@@ -90,6 +91,11 @@ def _command_line_ok(_cache=[]):
 
 def setup(**attr):
 
+    interactive = len(sys.argv)<=1
+    if interactive:
+        from interactive import interactive_sys_argv
+        sys.argv[:] = interactive_sys_argv(sys.argv)
+
     cmdclass = numpy_cmdclass.copy()
 
     new_attr = attr.copy()
@@ -150,7 +156,19 @@ def setup(**attr):
        and not new_attr.has_key('headers'):
         new_attr['headers'] = []
 
-    return old_setup(**new_attr)
+    if interactive:
+        try:
+            r = old_setup(**new_attr)
+        except Exception, msg:
+            print '-'*72
+            print 'setup failed with:',msg
+            raw_input('Press ENTER to close the interactive session..')
+            raise msg
+        print '-'*72
+        raw_input('Press ENTER to close the interactive session..')
+        print '='*72
+    else:
+        return old_setup(**new_attr)
 
 def _check_append_library(libraries, item):
     import warnings
