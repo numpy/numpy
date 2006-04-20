@@ -3644,7 +3644,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                 }
                 else {
                         PyErr_SetString(PyExc_TypeError, 
-                                        "invalid string data-types"
+                                        "invalid string data-types "
                                         "in comparison");
                         return NULL;
                 }
@@ -3795,7 +3795,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 /* Try to handle string comparisons */
                 if (self->descr->type_num == PyArray_OBJECT) return result;
                 array_other = PyArray_FromObject(other,PyArray_NOTYPE, 0, 0);
-                if (PyArray_ISSTRING(self) || PyArray_ISSTRING(array_other)) {
+                if (PyArray_ISSTRING(self) && PyArray_ISSTRING(array_other)) {
                         result = _strings_richcompare(self, (PyArrayObject *)
 						      array_other, cmp_op);
                 }
