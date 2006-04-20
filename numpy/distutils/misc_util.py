@@ -654,10 +654,14 @@ class Configuration(object):
                                        self.top_path, subpackage_path,
                                        caller_level = caller_level + 1)
             else:
-                args = (parent_name,)
+                pn = dot_join(*([parent_name] + subpackage_name.split('.')[:-1]))
+                args = (pn,)
                 if setup_module.configuration.func_code.co_argcount > 1:
                     args = args + (self.top_path,)
                 config = setup_module.configuration(*args)
+            if config.name!=dot_join(parent_name,subpackage_name):
+                self.warn('Subpackage %r configuration returned as %r' % \
+                          (dot_join(parent_name,subpackage_name), config.name))
         finally:
             del sys.path[0]
         return config
@@ -682,13 +686,12 @@ class Configuration(object):
             return self._wildcard_get_subpackage(subpackage_name,
                                                  parent_name,
                                                  caller_level = caller_level+1)
-
+        assert '*' not in subpackage_name,`subpackage_name, subpackage_path,parent_name`
         if subpackage_path is None:
             subpackage_path = njoin([self.local_path] + l)
         else:
             subpackage_path = njoin([subpackage_path] + l[:-1])
             subpackage_path = self.paths([subpackage_path])[0]
-
         setup_py = njoin(subpackage_path, 'setup.py')
         if not self.options['ignore_setup_xxx_py']:
             if not os.path.isfile(setup_py):
