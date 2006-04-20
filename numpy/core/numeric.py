@@ -413,19 +413,24 @@ for key in _errdict.keys():
     _errdict_rev[_errdict[key]] = key
 del key
 
-def seterr(divide="ignore", over="ignore", under="ignore",
-           invalid="ignore"):
+def seterr(divide=None, over=None, under=None, invalid=None):
+
+    pyvals = umath.geterrobj()
+    old = geterr()
+
+    if divide is None: divide = old['divide']
+    if over is None: over = old['over']
+    if under is None: under = old['under']
+    if invalid is None: invalid = old['invalid']
 
     maskvalue = ((_errdict[divide] << SHIFT_DIVIDEBYZERO) +
                  (_errdict[over] << SHIFT_OVERFLOW ) +
                  (_errdict[under] << SHIFT_UNDERFLOW) +
                  (_errdict[invalid] << SHIFT_INVALID))
 
-    pyvals = umath.geterrobj()
-    old = pyvals[:]
     pyvals[1] = maskvalue
     umath.seterrobj(pyvals)
-    return ufunc_values_obj(old)
+    return old
 
 def geterr():
     maskvalue = umath.geterrobj()[1]
@@ -446,10 +451,10 @@ def setbufsize(size):
         raise ValueError, "Very big buffers.. %s" % size
 
     pyvals = umath.geterrobj()
-    old = pyvals[:]
+    old = getbufsize()
     pyvals[0] = size
     umath.seterrobj(pyvals)
-    return ufunc_values_obj(old)
+    return old
 
 def getbufsize():
     return umath.geterrobj()[0]
@@ -458,10 +463,10 @@ def seterrcall(func):
     if not callable(func):
         raise ValueError, "Only callable can be used as callback"
     pyvals = umath.geterrobj()
-    old = pyvals[:]
+    old = geterrcall()
     pyvals[2] = func
     umath.seterrobj(pyvals)
-    return ufunc_values_obj(old)
+    return old
 
 def geterrcall():
     return umath.geterrobj()[2]

@@ -135,3 +135,30 @@ class test_bool_scalar(ScipyTestCase):
         self.failUnless((f ^ t) is t)
         self.failUnless((t ^ f) is t)
         self.failUnless((f ^ f) is f)
+
+
+class test_seterr(ScipyTestCase):
+    def test_set(self):
+        err = seterr()
+        old = seterr(divide='warn')
+        self.failUnless(err == old)
+        new = seterr()
+        self.failUnless(new['divide'] == 'warn')
+        seterr(over='raise')
+        self.failUnless(geterr()['over'] == 'raise')
+        self.failUnless(new['divide'] == 'warn')
+        seterr(**old)
+        self.failUnless(geterr() == old)
+    def test_divideerr(self):
+        seterr(divide='raise')
+        try:
+            array([1.]) / array([0.])
+        except FloatingPointError:
+            pass
+        else:
+            self.fail()
+        seterr(divide='ignore')
+        array([1.]) / array([0.])
+
+if __name__ == '__main__':
+    NumpyTest().run()

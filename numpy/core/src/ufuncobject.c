@@ -36,6 +36,9 @@ typedef void (CfloatBinaryFunc)(cfloat *x, cfloat *y, cfloat *res);
 typedef void (ClongdoubleBinaryFunc)(clongdouble *x, clongdouble *y, \
 				     clongdouble *res);
 
+#define USE_USE_DEFAULTS 0
+
+
 /*UFUNC_API*/
 static void
 PyUFunc_ff_f_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
@@ -697,8 +700,11 @@ select_types(PyUFuncObject *self, int *arg_types,
 	return 0;
 }
 
+#if USE_USE_DEFAULTS
 static int PyUFunc_USEDEFAULTS=0;
+#endif
 static PyObject *PyUFunc_PYVALS_NAME=NULL;
+
 
 /*UFUNC_API*/
 static int
@@ -708,7 +714,9 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
         PyObject *ref=NULL;
 	PyObject *retval;
 
+        #if USE_USE_DEFAULTS
 	if (!PyUFunc_USEDEFAULTS) {
+        #endif
 		if (PyUFunc_PYVALS_NAME == NULL) {
 			PyUFunc_PYVALS_NAME = PyString_InternFromString(UFUNC_PYVALS_NAME);
 		}
@@ -717,17 +725,9 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 			thedict = PyEval_GetBuiltins();
 		}
 		ref = PyDict_GetItem(thedict, PyUFunc_PYVALS_NAME);
-/* 		thedict = PyEval_GetLocals(); */
-/* 		ref = PyDict_GetItem(thedict, thestring); */
-/* 		if (ref == NULL) { */
-/* 			thedict = PyEval_GetGlobals(); */
-/* 			ref = PyDict_GetItem(thedict, thestring); */
-/* 		} */
-/* 		if (ref == NULL) { */
-/* 			thedict = PyEval_GetBuiltins(); */
-/* 			ref = PyDict_GetItem(thedict, thestring); */
-/* 		} */
+        #if USE_USE_DEFAULTS
 	}
+        #endif
 	if (ref == NULL) {
 		*errmask = UFUNC_ERR_DEFAULT;
 		*errobj = Py_BuildValue("NO",
@@ -2777,6 +2777,25 @@ ufunc_geterr(PyObject *dummy, PyObject *args)
 	return res;
 }
 
+#if USE_USE_DEFAULTS
+/* 
+This doesn't look it will work in the presence of threads. It updates 
+PyUFunc_USEDEFAULTS based on the current thread. If some other thread is 
+around, it will see an incorrect value for use_defaults.
+
+I think the following strategy would fix this:
+    1. Change PyUFunc_USEDEFAULTS to PyUFunc_NONDEFAULTCOUNT or similar
+    2. Increment PyUFunc_NONDEFAULTCOUNT whenever a value is set to a nondefault
+       value
+    3. Only use defaults when PyUFunc_NONDEFAULTCOUNT is nonzero.
+
+However, I'm not sure that it's worth the trouble. I've done a few small 
+benchmarks and I see at most marginal speed improvements with the
+default values. So, for the time being, I'm simply ifdefing out the 
+nonworking code and not worrying about it. If those benchmarks hold up, we
+should go ahead and rip the code out so as not to confuse future generations.
+
+*/
 static int 
 ufunc_update_use_defaults(void)
 {
@@ -2793,6 +2812,7 @@ ufunc_update_use_defaults(void)
 	}
 	return 0;
 }
+#endif
 
 static PyObject *
 ufunc_seterr(PyObject *dummy, PyObject *args)
@@ -2830,7 +2850,9 @@ ufunc_seterr(PyObject *dummy, PyObject *args)
 	res = PyDict_SetItem(thedict, PyUFunc_PYVALS_NAME, val);
 	Py_DECREF(val);
 	if (res < 0) return NULL;
+#if USE_USE_DEFAULTS
 	if (ufunc_update_use_defaults() < 0) return NULL;
+#endif
 	Py_INCREF(Py_None);
 	return Py_None;
 }
