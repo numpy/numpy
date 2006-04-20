@@ -146,9 +146,11 @@ def interactive_sys_argv(argv):
                     cmd_opts['build_ext'].append('--inplace')
                     cmd_opts['build_src'].append('--inplace')
                 conf = []
-                for k,opts in cmd_opts.items():
-                    if opts:
-                        conf.extend([k]+opts)
+                sorted_keys = ['config','config_fc','build_src',
+                               'build_clib','build_ext']
+                for k in sorted_keys:
+                    opts = cmd_opts[k]
+                    if opts: conf.extend([k]+opts)
                 if task=='0':
                     if 'config' not in conf:
                         conf.append('config')
