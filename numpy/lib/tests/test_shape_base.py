@@ -354,6 +354,38 @@ class test_squeeze(ScipyTestCase):
         assert_array_equal(squeeze(b),reshape(b,(20,10,20)))
         assert_array_equal(squeeze(c),reshape(c,(20,10)))
 
+class test_kron(ScipyTestCase):
+    def check_return_type(self):
+        a = ones([2,2])
+        m = asmatrix(a)
+        assert_equal(type(kron(a,a)), ndarray) 
+        assert_equal(type(kron(m,m)), matrix) 
+        assert_equal(type(kron(a,m)), matrix) 
+        assert_equal(type(kron(m,a)), matrix) 
+        class myarray(ndarray): 
+            __array_priority__ = 0.0
+        ma = myarray(a.shape, a.dtype, a.data)
+        assert_equal(type(kron(a,a)), ndarray) 
+        assert_equal(type(kron(ma,ma)), myarray) 
+        assert_equal(type(kron(a,ma)), ndarray) 
+        assert_equal(type(kron(ma,a)), myarray) 
+    def check_rank_checking(self):
+        one = ones([2])
+        two = ones([2,2])
+        three = ones([2,2,2])
+        for a in [one, two, three]:
+            for b in [one, two, three]:
+                if a is b is two:
+                    continue
+                try:
+                    kron(a, b)
+                except ValueError:
+                    continue
+                except:
+                    pass
+                assert False, "ValueError expected"
+
+
 # Utility
 
 def compare_results(res,desired):
