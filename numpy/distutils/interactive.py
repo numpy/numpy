@@ -26,19 +26,20 @@ def show_compilers(*args):
     from distutils.ccompiler import show_compilers
     show_compilers()
 
-def show_tasks(argv):
+def show_tasks(argv,ccompiler,fcompiler):
     print """\
 
 Tasks: 
-  i   - Show python/platform/machine information
-  ie   - Show environment information
-  f   - Show Fortran compilers information
-  f<name> - Set Fortran compiler
+  i       - Show python/platform/machine information
+  ie      - Show environment information
   c       - Show C compilers information
-  c<name> - Set C compiler
-  e   - Edit proposed sys.argv[1:].
+  c<name> - Set C compiler (current:%s)
+  f       - Show Fortran compilers information
+  f<name> - Set Fortran compiler (current:%s)
+  e       - Edit proposed sys.argv[1:].
 
 Task aliases:
+  0         - Configure
   1         - Build
   2         - Install
   2<prefix> - Install with prefix.
@@ -47,14 +48,20 @@ Task aliases:
   5         - Binary distribution
 
 Proposed sys.argv = %s
-    """ % (argv)
+    """ % (ccompiler, fcompiler, argv)
 
 
 from exec_command import splitcmdline
 
 def edit_argv(*args):
     argv = args[0]
-    s = raw_input('Edit argv [%s]: ' % (' '.join(argv[1:])))
+    readline = args[1]
+    if readline is not None:
+        readline.add_history(' '.join(argv[1:]))
+    try:
+        s = raw_input('Edit argv [UpArrow to retrive %r]: ' % (' '.join(argv[1:])))
+    except EOFError:
+        return
     if s:
         argv[1:] = splitcmdline(s)
     return
@@ -64,6 +71,7 @@ def interactive_sys_argv(argv):
     print 'Starting interactive session'
     print '-'*72
 
+    readline = None
     try:
         try:
             import readline
@@ -93,7 +101,7 @@ def interactive_sys_argv(argv):
     f_compiler_name = None
 
     while 1:
-        show_tasks(argv)
+        show_tasks(argv,c_compiler_name, f_compiler_name)
         try:
             task = raw_input('Choose a task (^D to quit, Enter to continue with setup): ').lower()
         except EOFError:
@@ -105,8 +113,12 @@ def interactive_sys_argv(argv):
         if task_func is None:
             if task[0]=='c':
                 c_compiler_name = task[1:]
+                if c_compiler_name=='none':
+                    c_compiler_name = None
             if task[0]=='f':
                 f_compiler_name = task[1:]
+                if f_compiler_name=='none':
+                    f_compiler_name = None
             if task[0]=='2' and len(task)>1:
                 prefix = task[1:]
                 task = task[0]
@@ -114,20 +126,22 @@ def interactive_sys_argv(argv):
                 prefix = None
             if task == '4':
                 argv[1:] = ['sdist','-f']
-            elif task in '1235':
+            elif task in '01235':
                 cmd_opts = {'config':[],'config_fc':[],
                             'build_ext':[],'build_src':[],
                             'build_clib':[]}
                 if c_compiler_name is not None:
                     c = '--compiler=%s' % (c_compiler_name)
                     cmd_opts['config'].append(c)
-                    cmd_opts['build_ext'].append(c)
-                    cmd_opts['build_clib'].append(c)
+                    if task != '0':
+                        cmd_opts['build_ext'].append(c)
+                        cmd_opts['build_clib'].append(c)
                 if f_compiler_name is not None:
                     c = '--fcompiler=%s' % (f_compiler_name)
                     cmd_opts['config_fc'].append(c)
-                    cmd_opts['build_ext'].append(c)
-                    cmd_opts['build_clib'].append(c)
+                    if task != '0':
+                        cmd_opts['build_ext'].append(c)
+                        cmd_opts['build_clib'].append(c)
                 if task=='3':
                     cmd_opts['build_ext'].append('--inplace')
                     cmd_opts['build_src'].append('--inplace')
@@ -135,7 +149,11 @@ def interactive_sys_argv(argv):
                 for k,opts in cmd_opts.items():
                     if opts:
                         conf.extend([k]+opts)
-                if task=='1':
+                if task=='0':
+                    if 'config' not in conf:
+                        conf.append('config')
+                    argv[1:] = conf
+                elif task=='1':
                     argv[1:] = conf+['build']
                 elif task=='2':
                     if prefix is not None:
@@ -154,7 +172,7 @@ def interactive_sys_argv(argv):
         else:
             print '-'*68
             try:
-                task_func(argv)
+                task_func(argv,readline)
             except Exception,msg:
                 print 'Failed running task %s: %s' % (task,msg)
                 break
