@@ -19,7 +19,8 @@ if __name__ == '__main__':
     # Remove current working directory from sys.path
     # to avoid importing numpy.distutils as Python std. distutils:
     import os, sys
-    sys.path.remove(os.getcwd())
+    for cwd in ['','.',os.getcwd()]:
+        while cwd in sys.path: sys.path.remove(cwd)
 
     from numpy.distutils.core import setup
     setup(configuration=configuration)
