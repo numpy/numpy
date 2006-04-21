@@ -68,7 +68,7 @@ def setup_package():
             description = DOCLINES[0],
             long_description = "\n".join(DOCLINES[2:]),
             url = "http://numeric.scipy.org",
-            download_url = "http://sourceforge.net/projects/numpy",
+            download_url = "http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103",
             license = 'BSD',
             classifiers=filter(None, CLASSIFIERS.split('\n')),
             author = "Travis E. Oliphant, et.al.",
