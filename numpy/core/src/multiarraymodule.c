@@ -896,6 +896,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max)
 		Py_DECREF(two);
 		Py_XDECREF(res1);
 		Py_XDECREF(res2);
+		return NULL;
 	}
 	res3 = PyNumber_Multiply(two, res1);
 	Py_DECREF(two); 
