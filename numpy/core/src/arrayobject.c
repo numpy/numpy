@@ -1468,10 +1468,22 @@ array_big_item(PyArrayObject *self, intp i)
 	return (PyObject *)r;
 }
 
+/* contains optimization for 1-d arrays */
 static PyObject *
 array_item_nice(PyArrayObject *self, _int_or_ssize_t i)
 {
-	return PyArray_Return((PyArrayObject *)array_big_item(self, (intp) i));
+	if (self->nd == 1) {
+		char *item;
+                if (i < 0) {
+			i += self->dimensions[0];
+		}
+		if ((item = index2ptr(self, i)) == NULL) return NULL;
+		return PyArray_Scalar(item, self->descr, (PyObject *)self);
+	}
+	else {
+		return PyArray_Return((PyArrayObject *)\
+				      array_big_item(self, (intp) i));
+	}
 }
 
 static int
@@ -2344,7 +2356,22 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 	   implementation may be possible by refactoring
 	   array_subscript */
 
-	PyArrayObject *mp = (PyArrayObject *)array_subscript(self, op);
+	PyArrayObject *mp;
+
+	/* optimization for integer select and 1-d */
+	if (self->nd == 1 && (PyInt_Check(op) || PyLong_Check(op))) {
+                intp value;
+		char *item;
+                value = PyArray_PyIntAsIntp(op);
+		if (PyErr_Occurred()) 
+			return NULL;
+                else if (value < 0) {
+			value += self->dimensions[0];
+		}
+		if ((item = index2ptr(self, value)) == NULL) return NULL;
+		return PyArray_Scalar(item, self->descr, (PyObject *)self);
+	}
+	mp = (PyArrayObject *)array_subscript(self, op);
 
 	if (mp == NULL) return NULL;
 

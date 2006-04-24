@@ -395,13 +395,6 @@ def allclose (a, b, rtol=1.e-5, atol=1.e-8):
     return d.ravel().all()
 
 
-class ufunc_values_obj(object):
-    def __init__(self, obj):
-        self._val_obj = obj
-    def __del__(self):
-        umath.seterrobj(self._val_obj)
-        del self._val_obj
-        
 
 _errdict = {"ignore":ERR_IGNORE,
             "warn":ERR_WARN,

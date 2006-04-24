@@ -36,7 +36,7 @@ typedef void (CfloatBinaryFunc)(cfloat *x, cfloat *y, cfloat *res);
 typedef void (ClongdoubleBinaryFunc)(clongdouble *x, clongdouble *y, \
 				     clongdouble *res);
 
-#define USE_USE_DEFAULTS 0
+#define USE_USE_DEFAULTS 1
 
 
 /*UFUNC_API*/
@@ -700,8 +700,8 @@ select_types(PyUFuncObject *self, int *arg_types,
 	return 0;
 }
 
-#if USE_USE_DEFAULTS
-static int PyUFunc_USEDEFAULTS=0;
+#if USE_USE_DEFAULTS==1
+static int PyUFunc_NUM_NODEFAULTS=0;
 #endif
 static PyObject *PyUFunc_PYVALS_NAME=NULL;
 
@@ -714,18 +714,19 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
         PyObject *ref=NULL;
 	PyObject *retval;
 
-        #if USE_USE_DEFAULTS
-	if (!PyUFunc_USEDEFAULTS) {
+        #if USE_USE_DEFAULTS==1
+	if (PyUFunc_NUM_NODEFAULTS != 0) {
         #endif
 		if (PyUFunc_PYVALS_NAME == NULL) {
-			PyUFunc_PYVALS_NAME = PyString_InternFromString(UFUNC_PYVALS_NAME);
+			PyUFunc_PYVALS_NAME = \
+				PyString_InternFromString(UFUNC_PYVALS_NAME);
 		}
 		thedict = PyThreadState_GetDict();
 		if (thedict == NULL) {
 			thedict = PyEval_GetBuiltins();
 		}
 		ref = PyDict_GetItem(thedict, PyUFunc_PYVALS_NAME);
-        #if USE_USE_DEFAULTS
+        #if USE_USE_DEFAULTS==1
 	}
         #endif
 	if (ref == NULL) {
@@ -2768,7 +2769,6 @@ ufunc_geterr(PyObject *dummy, PyObject *args)
 		return res;
 	}
 	/* Construct list of defaults */
-	fprintf(stderr, "Nothing found... return defaults.\n");
 	res = PyList_New(3);
 	if (res == NULL) return NULL;
 	PyList_SET_ITEM(res, 0, PyInt_FromLong(PyArray_BUFSIZE));
@@ -2777,38 +2777,34 @@ ufunc_geterr(PyObject *dummy, PyObject *args)
 	return res;
 }
 
-#if USE_USE_DEFAULTS
+#if USE_USE_DEFAULTS==1
 /* 
-This doesn't look it will work in the presence of threads. It updates 
-PyUFunc_USEDEFAULTS based on the current thread. If some other thread is 
-around, it will see an incorrect value for use_defaults.
-
-I think the following strategy would fix this:
-    1. Change PyUFunc_USEDEFAULTS to PyUFunc_NONDEFAULTCOUNT or similar
-    2. Increment PyUFunc_NONDEFAULTCOUNT whenever a value is set to a nondefault
-       value
-    3. Only use defaults when PyUFunc_NONDEFAULTCOUNT is nonzero.
-
-However, I'm not sure that it's worth the trouble. I've done a few small 
-benchmarks and I see at most marginal speed improvements with the
-default values. So, for the time being, I'm simply ifdefing out the 
-nonworking code and not worrying about it. If those benchmarks hold up, we
-should go ahead and rip the code out so as not to confuse future generations.
-
+This is a strategy to buy a little speed up and avoid the dictionary
+look-up in the default case.  It should work in the presence of
+threads.  If it is deemed too complicated or it doesn't actually work
+it could be taken out.
 */
 static int 
 ufunc_update_use_defaults(void)
 {
 	PyObject *errobj;
 	int errmask, bufsize;
-
-	PyUFunc_USEDEFAULTS = 0;
-	if (PyUFunc_GetPyValues("test", &bufsize, &errmask, &errobj) < 0) return -1;
+	int res;
 	
-	if ((errmask == UFUNC_ERR_DEFAULT) &&		\
-	    (bufsize == PyArray_BUFSIZE) &&		\
-	    (PyTuple_GET_ITEM(errobj, 1) == Py_None)) {
-		PyUFunc_USEDEFAULTS = 1;
+	PyUFunc_NUM_NODEFAULTS += 1;
+        res = PyUFunc_GetPyValues("test", &bufsize, &errmask, 
+				  &errobj);
+	PyUFunc_NUM_NODEFAULTS -= 1;
+	
+	if (res < 0) return -1;
+	
+	if ((errmask != UFUNC_ERR_DEFAULT) ||		\
+	    (bufsize != PyArray_BUFSIZE) ||		\
+	    (PyTuple_GET_ITEM(errobj, 1) != Py_None)) {
+		PyUFunc_NUM_NODEFAULTS += 1;
+	}
+	else if (PyUFunc_NUM_NODEFAULTS > 0) {
+		PyUFunc_NUM_NODEFAULTS -= 1;
 	}
 	return 0;
 }
@@ -2823,21 +2819,9 @@ ufunc_seterr(PyObject *dummy, PyObject *args)
 	static char *msg = "Error object must be a list of length 3";
 	
 	if (!PyArg_ParseTuple(args, "O", &val)) return NULL;
-
-	if (!PyList_CheckExact(val)) {
-		PyObject *new;
-		new = PyObject_GetAttrString(val, "_val_obj");
-		if (new == NULL) {
-			PyErr_SetString(PyExc_ValueError, msg);
-			return NULL;
-		}
-		val = new;
-	}
-	else Py_INCREF(val);
 	
 	if (!PyList_CheckExact(val) || PyList_GET_SIZE(val) != 3) {
 		PyErr_SetString(PyExc_ValueError, msg);
-		Py_DECREF(val);
 		return NULL;
 	}
 	if (PyUFunc_PYVALS_NAME == NULL) {
@@ -2848,9 +2832,8 @@ ufunc_seterr(PyObject *dummy, PyObject *args)
 		thedict = PyEval_GetBuiltins();
 	}
 	res = PyDict_SetItem(thedict, PyUFunc_PYVALS_NAME, val);
-	Py_DECREF(val);
 	if (res < 0) return NULL;
-#if USE_USE_DEFAULTS
+#if USE_USE_DEFAULTS==1
 	if (ufunc_update_use_defaults() < 0) return NULL;
 #endif
 	Py_INCREF(Py_None);
