@@ -780,7 +780,7 @@ class Configuration(object):
         paths = self.paths(data_path, include_non_existing=False)
         if is_glob_pattern(data_path):
             if is_glob_pattern(d):
-                pattern_list = d.split(os.sep)
+                pattern_list = abspath(d).split(os.sep)
                 pattern_list.reverse()
                 # /a/*//b/ -> /a/*/b
                 rl = range(len(pattern_list)-1); rl.reverse()
