@@ -3,9 +3,11 @@
 
 import os
 import re
+import sys
 
 from distutils.command import build_ext
 from distutils.dep_util import newer_group, newer
+from distutils.util import get_platform
 
 from numpy.distutils import log
 from numpy.distutils.misc_util import fortran_ext_match, \
@@ -59,7 +61,8 @@ class build_src(build_ext.build_ext):
         self.data_files = self.distribution.data_files or []
 
         if self.build_src is None:
-            self.build_src = os.path.join(self.build_base, 'src')
+            plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])
+            self.build_src = os.path.join(self.build_base, 'src'+plat_specifier)
         if self.inplace is None:
             build_ext = self.get_finalized_command('build_ext')
             self.inplace = build_ext.inplace
