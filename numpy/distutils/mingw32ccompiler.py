@@ -63,7 +63,12 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             entry_point = ''
 
         if self.linker_dll == 'dllwrap':
-            self.linker = 'dllwrap  --driver-name g++'
+            # Commented out '--driver-name g++' part that fixes weird
+            #   g++.exe: g++: No such file or directory
+            # error (mingw 1.0 in Enthon24 tree, gcc-3.4.5).
+            # If the --driver-name part is required for some environment
+            # then make the inclusion of this part specific to that environment.
+            self.linker = 'dllwrap' #  --driver-name g++'
         elif self.linker_dll == 'gcc':
             self.linker = 'g++'
 
