@@ -5113,8 +5113,8 @@ static struct PyMethodDef __pyx_methods[] = {
   {0, 0, 0, 0}
 };
 
-DL_EXPORT(void) initmtrand(void); /*proto*/
-DL_EXPORT(void) initmtrand(void) {
+PyMODINIT_FUNC initmtrand(void); /*proto*/
+PyMODINIT_FUNC initmtrand(void) {
   PyObject *__pyx_1 = 0;
   PyObject *__pyx_2 = 0;
   __pyx_m = Py_InitModule4("mtrand", __pyx_methods, 0, 0, PYTHON_API_VERSION);

@@ -2269,7 +2269,7 @@ static struct PyMethodDef methods[] = {
 	{NULL,		NULL, 0}		/* sentinel */
 };
 
-DL_EXPORT(void) initumath(void) {
+PyMODINIT_FUNC initumath(void) {
 	PyObject *m, *d, *s, *s2, *c_api;
 	double pinf, pzero, mynan;
         int UFUNC_FLOATING_POINT_SUPPORT = 1;

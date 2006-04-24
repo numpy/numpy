@@ -114,7 +114,7 @@ static PyMethodDef f2py_module_methods[] = {
   {NULL,NULL}
 };
 
-DL_EXPORT(void) initwrap(void) {
+PyMODINIT_FUNC initwrap(void) {
   PyObject *m,*d, *s;
   m = wrap_module = Py_InitModule("wrap", f2py_module_methods);
   PyFortran_Type.ob_type = &PyType_Type;

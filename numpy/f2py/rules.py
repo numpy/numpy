@@ -167,7 +167,7 @@ static PyMethodDef f2py_module_methods[] = {
 \t{NULL,NULL}
 };
 
-DL_EXPORT(int) init#modulename#(void) {
+PyMODINIT_FUNC init#modulename#(void) {
 \tint i;
 \tPyObject *m,*d, *s;
 \tm = #modulename#_module = Py_InitModule(\"#modulename#\", f2py_module_methods);

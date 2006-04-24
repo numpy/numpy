@@ -430,7 +430,7 @@ define_types(void)
 
 /* Initialization function for the module (*must* be called initArray) */
 
-DL_EXPORT(void) init_compiled_base(void) {
+PyMODINIT_FUNC init_compiled_base(void) {
     PyObject *m, *d, *s;
   
     /* Create the module and add the functions */

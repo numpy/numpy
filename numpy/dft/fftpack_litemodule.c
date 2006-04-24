@@ -240,8 +240,7 @@ static char fftpack_module_documentation[] =
 ""
 ;
 
-DL_EXPORT(void)
-initfftpack_lite(void)
+PyMODINIT_FUNC initfftpack_lite(void)
 {
 	PyObject *m, *d;
 

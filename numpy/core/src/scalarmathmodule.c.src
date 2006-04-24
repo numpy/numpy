@@ -266,7 +266,7 @@ static struct PyMethodDef methods[] = {
 	{NULL, NULL, 0}
 };
 
-DL_EXPORT(void) initscalarmath(void) {
+PyMODINIT_FUNC initscalarmath(void) {
 	PyObject *m;
 
 	m = Py_initModule("scalarmath", methods);

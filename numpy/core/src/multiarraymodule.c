@@ -6009,7 +6009,7 @@ set_flaginfo(PyObject *d)
 
 /* Initialization function for the module */
 
-DL_EXPORT(void) initmultiarray(void) {
+PyMODINIT_FUNC initmultiarray(void) {
 	PyObject *m, *d, *s;
 	PyObject *c_api;
 

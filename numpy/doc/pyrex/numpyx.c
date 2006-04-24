@@ -778,8 +778,8 @@ static struct PyMethodDef __pyx_methods[] = {
   {0, 0, 0, 0}
 };
 
-DL_EXPORT(void) initnumpyx(void); /*proto*/
-DL_EXPORT(void) initnumpyx(void) {
+PyMODINIT_FUNC initnumpyx(void); /*proto*/
+PyMODINIT_FUNC initnumpyx(void) {
   PyObject *__pyx_1 = 0;
   __pyx_m = Py_InitModule4("numpyx", __pyx_methods, 0, 0, PYTHON_API_VERSION);
   if (!__pyx_m) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3; goto __pyx_L1;};
