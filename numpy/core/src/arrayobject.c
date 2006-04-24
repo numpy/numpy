@@ -6725,9 +6725,11 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         if (PyArray_Check(op))
 		r = PyArray_FromArray((PyArrayObject *)op, newtype, flags);
 	else if (PyArray_IsScalar(op, Generic)) {
+		if (flags & UPDATEIFCOPY) goto err;
 		r = PyArray_FromScalar(op, newtype);
 	} else if (newtype == NULL &&
                    (newtype = _array_find_python_scalar_type(op))) {
+	    if (flags & UPDATEIFCOPY) goto err;
             r = Array_FromScalar(op, newtype);
         }
         else if (((r = PyArray_FromStructInterface(op))!=Py_NotImplemented)|| \
@@ -6744,6 +6746,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 }
         }
 	else {
+		if (flags & UPDATEIFCOPY) goto err;
 		if (newtype == NULL) {
 			newtype = _array_find_type(op, NULL, MAX_DIMS);
 		}
@@ -6793,6 +6796,11 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 return NULL;
         }
         return r;
+
+ err:
+	PyErr_SetString(PyExc_TypeError, 
+			"UPDATEIFCOPY used for non-array input.");
+	return NULL;
 }
 
 /* new reference -- accepts NULL for mintype*/
