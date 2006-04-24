@@ -115,10 +115,12 @@ def interactive_sys_argv(argv):
                 c_compiler_name = task[1:]
                 if c_compiler_name=='none':
                     c_compiler_name = None
+                continue
             if task[0]=='f':
                 f_compiler_name = task[1:]
                 if f_compiler_name=='none':
                     f_compiler_name = None
+                continue
             if task[0]=='2' and len(task)>1:
                 prefix = task[1:]
                 task = task[0]
@@ -126,6 +128,7 @@ def interactive_sys_argv(argv):
                 prefix = None
             if task == '4':
                 argv[1:] = ['sdist','-f']
+                continue
             elif task in '01235':
                 cmd_opts = {'config':[],'config_fc':[],
                             'build_ext':[],'build_src':[],
