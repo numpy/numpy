@@ -290,8 +290,8 @@ int require_size(PyArrayObject* ary, int* size, int n) {
 %define TYPEMAP_IN1(type,typecode)
 %typemap(in) (type* IN_ARRAY1, int DIM1)
              (PyArrayObject* array=NULL, int is_new_object) {
-  array = obj_to_array_contiguous_allow_conversion($input, typecode, &is_new_object);
   int size[1] = {-1};
+  array = obj_to_array_contiguous_allow_conversion($input, typecode, &is_new_object);
   if (!array || !require_dimensions(array,1) || !require_size(array,size,1)) SWIG_fail;
   $1 = (type*) array->data;
   $2 = array->dimensions[0];
@@ -318,8 +318,8 @@ TYPEMAP_IN1(PyObject,      PyArray_OBJECT)
 %define TYPEMAP_IN2(type,typecode)
   %typemap(in) (type* IN_ARRAY2, int DIM1, int DIM2)
                (PyArrayObject* array=NULL, int is_new_object) {
-  array = obj_to_array_contiguous_allow_conversion($input, typecode, &is_new_object);
   int size[2] = {-1,-1};
+  array = obj_to_array_contiguous_allow_conversion($input, typecode, &is_new_object);
   if (!array || !require_dimensions(array,2) || !require_size(array,size,1)) SWIG_fail;
   $1 = (type*) array->data;
   $2 = array->dimensions[0];
