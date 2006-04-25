@@ -70,3 +70,4 @@ PyArray_CanCoerceScalar
 PyArray_NewFlagsObject
 PyArray_CanCastScalar
 PyArray_CompareUCS4
+PyArray_RemoveLargest

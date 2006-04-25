@@ -623,40 +623,29 @@ PyArray_Size(PyObject *op)
 
 static void
 _strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides, 
-                   intp N, int elsize)
+			   intp N, int elsize)
 {
         intp i, j;
         char *tout = dst;
         char *tin = src;
+
+#define _FAST_MOVE(_type_)				    \
+	for (i=0; i<N; i++) {				    \
+		((_type_ *)tout)[0] = ((_type_ *)tin)[0];   \
+		tin += instrides;			    \
+		tout += outstrides;			    \
+	}						    \
+	return
+	
         switch(elsize) {
         case 8:
-                for (i=0; i<N; i++) {
-                        ((Float64 *)tout)[0] = ((Float64 *)tin)[0];
-                        tin += instrides;
-                        tout += outstrides;
-                }
-                return;
+		_FAST_MOVE(Float64);
         case 4:
-                for (i=0; i<N; i++) {
-                        ((Int32 *)tout)[0] = ((Int32 *)tin)[0];
-                        tin += instrides;
-                        tout += outstrides;
-                }
-                return;
+		_FAST_MOVE(Int32);
 	case 1:
-		for (i=0; i<N; i++) {
-			tout[0] = tin[0];
-			tin += instrides; 
-			tout += outstrides;
-		}
-		return;
+		_FAST_MOVE(Int8);
         case 2:
-                for (i=0; i<N; i++) {
-                        ((Int16 *)tout)[0] = ((Int16 *)tin)[0];
-                        tin += instrides;
-                        tout += outstrides;
-                }
-                return;
+		_FAST_MOVE(Int16);
 	case 16:
                 for (i=0; i<N; i++) {
                         ((Float64 *)tout)[0] = ((Float64 *)tin)[0];
@@ -674,7 +663,43 @@ _strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides,
                         tout = tout + outstrides - elsize;
                 }        
         }
+#undef _FAST_MOVE
 }
+	
+
+static void
+_unaligned_strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides, 
+			     intp N, int elsize)
+{
+        intp i;
+        char *tout = dst;
+        char *tin = src;
+
+#define _MOVE_N_SIZE(size)			       \
+	for (i=0; i<N; i++) {			       \
+		memmove(tout, tin, size);	       \
+		tin += instrides;		       \
+		tout += outstrides;		       \
+	}					       \
+	return
+	
+        switch(elsize) {
+        case 8:
+		_MOVE_N_SIZE(8);
+        case 4:
+		_MOVE_N_SIZE(4);
+	case 1:
+		_MOVE_N_SIZE(1);
+        case 2:
+		_MOVE_N_SIZE(2);
+	case 16:
+		_MOVE_N_SIZE(16);
+        default:
+		_MOVE_N_SIZE(elsize);
+        }
+#undef _MOVE_N_SIZE
+}
+
 
 /* If destination is not the right type, then src
    will be cast to destination.
@@ -746,8 +771,7 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
         }
         
         /* See if we can iterate over the largest dimension */
-        if (!swap && PyArray_ISALIGNED(dest) && PyArray_ISALIGNED(src) && 
-            (nd = dest->nd) == src->nd && (nd > 0) && 
+        if (!swap && (nd = dest->nd) == src->nd && (nd > 0) && 
             PyArray_CompareLists(dest->dimensions, src->dimensions, nd)) { 
                 int maxaxis=0, maxdim=dest->dimensions[0];
                 int i;
@@ -771,14 +795,30 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 
                 PyArray_XDECREF(dest);
                 index = dit->size;
-                while(index--) {
-                        /* strided copy of elsize bytes */
-                        _strided_byte_copy(dit->dataptr, dest->strides[maxaxis],
-                                           sit->dataptr, src->strides[maxaxis],
-                                           maxdim, elsize);
-                        PyArray_ITER_NEXT(dit);
-                        PyArray_ITER_NEXT(sit);
-                }
+		if (PyArray_ISALIGNED(dest) && PyArray_ISALIGNED(src)) {
+			while(index--) {
+				/* strided copy of elsize bytes */
+				_strided_byte_copy(dit->dataptr, 
+						   dest->strides[maxaxis],
+						   sit->dataptr, 
+						   src->strides[maxaxis],
+						   maxdim, elsize);
+				PyArray_ITER_NEXT(dit);
+				PyArray_ITER_NEXT(sit);
+			}
+		}
+		else {
+			while(index--) {
+				/* strided copy of elsize bytes */
+				_unaligned_strided_byte_copy(dit->dataptr, 
+							     dest->strides[maxaxis],
+							     sit->dataptr, 
+							     src->strides[maxaxis],
+							     maxdim, elsize);
+				PyArray_ITER_NEXT(dit);
+				PyArray_ITER_NEXT(sit);
+			}
+		}	
                 PyArray_INCREF(dest);
                 Py_DECREF(dit);
                 Py_DECREF(sit);
@@ -7180,6 +7220,46 @@ PyArray_IterAllButAxis(PyObject *obj, int axis)
 	/* (won't fix factors so don't use
 	   PyArray_ITER_GOTO1D with this iterator) */
 	return (PyObject *)it;
+}
+
+
+/* don't use with PyArray_ITER_GOTO1D because factors are not
+   adjusted */
+
+/*OBJECT_API
+  Adjusts previously broadcasted iterators so that the largest axis is not iterated 
+  over.  Returns dimension which is largest in the range [0,multi->nd).  A -1 
+  is returned if multi->nd == 0.
+ */
+static int
+PyArray_RemoveLargest(PyArrayMultiIterObject *multi)
+{
+	PyArrayIterObject *it;
+	int i;
+	int axis=0;
+	intp longest;
+
+	if (multi->nd == 0) return -1;
+	
+	longest = multi->dimensions[0];
+	/* Find longest dimension */
+	for (i=1; i<multi->nd; i++) {
+		if (multi->dimensions[i] > longest) {
+			axis = i;
+			longest = multi->dimensions[i];
+		}
+	}
+	
+	for (i=0; i<multi->numiter; i++) {
+		it = multi->iters[i];
+		it->contiguous = 0;
+		if (it->size != 0)
+			it->size /= (it->dims_m1[axis]+1);
+		it->dims_m1[axis] = 0;
+		it->backstrides[axis] = 0;		
+	}
+
+	return axis;
 }
 
 /* Returns an array scalar holding the element desired */
