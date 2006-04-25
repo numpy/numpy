@@ -1818,21 +1818,44 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op)
 }
 
 static void
-_strided_copy(char *dst, intp dststride, char *src, intp srcstride, intp num, int elsize)
+_strided_copy(char *dst, intp dststride, char *src, intp srcstride, 
+	      intp num, int elsize)
 {
-	while(num--) {
-		memcpy(dst, src, elsize);
-		dst += dststride;
-		src += srcstride;
+	
+#define _FAST_COPY(size)			\
+	while(num--) {				\
+		memcpy(dst, src, 8);		\
+		dst += dststride;		\
+		src += srcstride;		\
+	}					\
+	return
+	
+	switch(elsize) {
+	case 8:
+		_FAST_COPY(8);
+	case 4:
+		_FAST_COPY(4);
+	case 1:
+		_FAST_COPY(1);
+	case 2:
+		_FAST_COPY(2);
+	case 16:
+		_FAST_COPY(16);
+	default:
+		_FAST_COPY(elsize);
 	}
+#undef _FAST_COPY 
 }
 
 /* These algorithms use special sorting.  They are not called unless the 
-   underlying sort function for the type is available.  Note that axis is already
+   underlying sort function for the type is available.  
+   Note that axis is already
    valid. The sort functions require 1-d contiguous and well-behaved data.
-   Therefore, a copy will be made of the data if needed before handing it to the
+   Therefore, a copy will be made of the data if needed before handing 
+   it to the
    sorting routine.
-   An iterator is constructed and adjusted to walk over all but the desired sorting
+   An iterator is constructed and adjusted to walk over all but 
+   the desired sorting
    axis. 
 */
 static int
@@ -1867,13 +1890,15 @@ _new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 			_strided_copy(buffer, (intp) elsize, it->dataptr, 
 				      astride, N, elsize);
 			if (swap) {
-				op->descr->f->copyswapn(buffer, NULL, N, 1, op);
+				op->descr->f->copyswapn(buffer, NULL, N, 1, 
+							op);
 			}
 			if (sort(buffer, N, op) < 0) {
 				PyDataMem_FREE(buffer); goto fail;
 			}
 			if (swap) {
-				op->descr->f->copyswapn(buffer, NULL, N, 1, op);
+				op->descr->f->copyswapn(buffer, NULL, N, 1, 
+							op);
 			}			
 			_strided_copy(it->dataptr, astride, buffer, 
 				      (intp) elsize, N, elsize);

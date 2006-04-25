@@ -7392,7 +7392,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
 			return NULL;
 		}
 		PyArray_ITER_GOTO1D(self, num);
-                copyswap(optr, self->dataptr, swap, self->ao);
+                copyswap(optr, self->dataptr, swap, r);
 		optr += itemsize;
 		PyArray_ITER_NEXT(ind_it);
 	}
@@ -7482,7 +7482,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
                 swap = !PyArray_ISNOTSWAPPED(self->ao);
                 copyswap = PyArray_DESCR(r)->f->copyswap;
 		while(n_steps--) {
-                        copyswap(dptr, self->dataptr, swap, self->ao);
+                        copyswap(dptr, self->dataptr, swap, r);
 			start += step_size;
 			PyArray_ITER_GOTO1D(self, start)
 			dptr += size;
@@ -7664,7 +7664,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 	if (PyBool_Check(ind)) {
 		if (PyObject_IsTrue(ind)) {
                         copyswap(self->dataptr, PyArray_DATA(arrval),
-                                  swap, self->ao);
+                                  swap, arrval);
 		}
 		retval=0;
 		goto finish;
@@ -7684,14 +7684,14 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 		PyArray_ITER_GOTO1D(self, start);
 		if (n_steps == SingleIndex) { /* Integer */
                         copyswap(self->dataptr, PyArray_DATA(arrval),
-                                  swap, self->ao);
+                                  swap, arrval);
 			PyArray_ITER_RESET(self);
 			retval=0;
 			goto finish;
 		}
 		while(n_steps--) {
                         copyswap(self->dataptr, val_it->dataptr,
-                                  swap, self->ao);
+                                  swap, arrval);
 			start += step_size;
 			PyArray_ITER_GOTO1D(self, start)
 			PyArray_ITER_NEXT(val_it);
@@ -8035,7 +8035,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
 			j = mit->iteraxes[i];
 			copyswap(coord+j,it->dataptr,
 				 !PyArray_ISNOTSWAPPED(it->ao),
-				 NULL);
+				 it->ao);
 		}
 		PyArray_ITER_GOTO(mit->ait, coord);
 		mit->subspace->dataptr = mit->ait->dataptr;
@@ -8048,7 +8048,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
 				PyArray_ITER_RESET(it);
 				copyswap(coord+i,it->dataptr,
 					 !PyArray_ISNOTSWAPPED(it->ao),
-					 NULL);
+					 it->ao);
 			}
 			else coord[i] = 0;
 		}
@@ -8087,7 +8087,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
 				j = mit->iteraxes[i];
 				copyswap(coord+j,it->dataptr,
 					 !PyArray_ISNOTSWAPPED(it->ao),
-					 NULL);
+					 it->ao);
 			}
 			PyArray_ITER_GOTO(mit->ait, coord);
 			mit->subspace->dataptr = mit->ait->dataptr;
@@ -8100,7 +8100,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
 			PyArray_ITER_NEXT(it);
 			copyswap(coord+i,it->dataptr,
 				 !PyArray_ISNOTSWAPPED(it->ao),
-				 NULL);
+				 it->ao);
 		}
 		PyArray_ITER_GOTO(mit->ait, coord);
 		mit->dataptr = mit->ait->dataptr;
