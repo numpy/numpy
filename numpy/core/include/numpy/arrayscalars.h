@@ -124,7 +124,7 @@ typedef struct {
 	PyObject *base;
 } PyVoidScalarObject;
 
-/* to be exposed in C-API */
+
 #define PyArrayScalar_False ((PyObject *)&_PyArrayScalar_BoolValues[0])
 #define PyArrayScalar_True ((PyObject *)&_PyArrayScalar_BoolValues[1])
 #define PyArrayScalar_RETURN_BOOL_FROM_LONG(i)			\
@@ -136,4 +136,8 @@ typedef struct {
 #define PyArrayScalar_RETURN_TRUE		\
 	return Py_INCREF(PyArrayScalar_True),	\
 		PyArrayScalar_True
-/* end to be exposed in C-API */
+
+#define PyArrayScalar_New(cls) \
+	Py##cls##ArrType_Type.tp_alloc(&Py##cls##ArrType_Type, 0)
+#define PyArrayScalar_VAL(obj, cls)		\
+	((Py##cls##ScalarObject *)obj)->obval
