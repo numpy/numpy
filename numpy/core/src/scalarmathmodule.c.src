@@ -25,9 +25,13 @@
     -- Cast it to an array scalar and do #3
 5) If other is a Python scalar
     -- Cast it to an array scalar and do #3
-5) Go through the ufunc machinery for all other cases. 
+6) Go through the ufunc machinery for all other cases. 
 
 */
+
+/* For error-handling.  If an error is detected, only then 
+   should we get the current error-handling state.
+ */
 
 #define _CREATE_SELF_OTHER(a, b, NAME) {                        \
                 if PyObject_IsScalar(a, NAME) {                 \

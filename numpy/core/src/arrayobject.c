@@ -1008,6 +1008,8 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 			((PyStringObject *)obj)->ob_shash = -1;
 			((PyStringObject *)obj)->ob_sstate =	\
 				SSTATE_NOT_INTERNED;
+			memcpy(destptr, data, itemsize);
+			return obj;
 		}
 		else if (type_num == PyArray_UNICODE) {
 			PyUnicodeObject *uni = (PyUnicodeObject*)obj;
@@ -1056,8 +1058,12 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 				Py_DECREF(obj);
 				return NULL;
 			}
-			return obj;
+#else
+			memcpy(destptr, data, itemsize);
+			if (swap)
+				byte_swap_vector(destptr, length, 4);
 #endif
+			return obj;
 		}
 		else {
 			PyVoidScalarObject *vobj = (PyVoidScalarObject *)obj;
