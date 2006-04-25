@@ -242,7 +242,7 @@ UNICODE_getitem(char *ip, PyArrayObject *ap)
 #else
 	/* create new empty unicode object of length mysize*2 */
 	obj = MyPyUnicode_New(mysize*2);
-	if (obj == NULL) return obj;
+	if (obj == NULL) {if (alloc) _pya_free(buffer); return obj;}
 	mysize = PyUCS2Buffer_FromUCS4(((PyUnicodeObject *)obj)->str, 
 				       (PyArray_UCS4 *)buffer, mysize);
 	/* reset length of unicode object to ucs2size */
@@ -1230,7 +1230,7 @@ UNICODE_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
 	
 	if (swap) {
 		register char *a, *b, c;
-		n >>= 2;  /* n is the number of characters to swap */
+		n >>= 2; /* n is the number of unicode characters to swap */
 		for (a = (char *)dst; n>0; n--) {
 			b = a + 3;
 			c=*a; *a++ = *b; *b-- = c;
