@@ -15,7 +15,7 @@
 /* Macros to extract array attributes.
  */
 #define is_array(a)            ((a) && PyArray_Check((PyArrayObject *)a))
-#define array_type(a)          (int)(((PyArrayObject *)a)->descr->type_num)
+#define array_type(a)          (int)(PyArray_TYPE(a))
 #define array_dimensions(a)    (((PyArrayObject *)a)->nd)
 #define array_size(a,i)        (((PyArrayObject *)a)->dimensions[i])
 #define array_is_contiguous(a) (PyArray_ISCONTIGUOUS(a))
@@ -64,11 +64,12 @@ int type_match(int actual_type, int desired_type) {
 
 /* Given a PyObject pointer, cast it to a PyArrayObject pointer if
  * legal.  If not, set the python error string appropriately and
- * return NULL.
+ * return NULL./
  */
 PyArrayObject* obj_to_array_no_conversion(PyObject* input, int typecode) {
   PyArrayObject* ary = NULL;
-  if (is_array(input) && (typecode == PyArray_NOTYPE || array_type(input) == typecode)) {
+  if (is_array(input) && (typecode == PyArray_NOTYPE || 
+	PyArray_EquivTypenums(array_type(input), typecode)) {
         ary = (PyArrayObject*) input;
     }
     else if is_array(input) {

@@ -66,3 +66,4 @@ PyArray_ArangeObj
 PyArray_SortkindConverter
 PyArray_LexSort
 PyArray_Round
+PyArray_EquivTypenums
