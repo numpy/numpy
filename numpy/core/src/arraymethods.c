@@ -363,8 +363,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 		
 		size = PyArray_SIZE(self);
 		if (PyArray_ISONESEGMENT(self)) {
-			copyswapn(self->data, NULL, size, 1, 
-				  self->descr->elsize);
+			copyswapn(self->data, NULL, size, 1, self);
 		}
 		else { /* Use iterator */
 			
@@ -372,8 +371,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 				PyArray_IterNew((PyObject *)self);
 			copyswap = self->descr->f->copyswap;
 			while (it->index < it->size) {
-				copyswap(it->dataptr, NULL, 1, 
-					 self->descr->elsize);
+				copyswap(it->dataptr, NULL, 1, self);
 				PyArray_ITER_NEXT(it);
 			}
 			Py_DECREF(it);
@@ -392,8 +390,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 		   byteorder)
 		*/
 
-		ret->descr->f->copyswapn(ret->data, NULL, size, 1, 
-					 ret->descr->elsize);
+		ret->descr->f->copyswapn(ret->data, NULL, size, 1, ret);
 
 		return (PyObject *)ret;
 	}
@@ -1031,8 +1028,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 				intp numels = num / self->descr->elsize;
                                 self->descr->f->copyswapn(self->data, datastr, 
                                                           numels,
-							  1, 
-                                                          self->descr->elsize);
+							  1, self);
 				if (!PyArray_ISEXTENDED(self)) {
 					self->descr = PyArray_DescrFromType(self->descr->type_num);
 				}

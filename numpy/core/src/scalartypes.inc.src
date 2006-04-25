@@ -1000,7 +1000,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 		newmem = _pya_malloc(descr->elsize);
 		if (newmem == NULL) {Py_DECREF(descr); return PyErr_NoMemory();}
 		else memcpy(newmem, data, descr->elsize);
-		descr->f->copyswap(newmem, NULL, 1, descr->elsize);
+ 		byte_swap_vector(newmem, 1, descr->elsize);
 		new = PyArray_Scalar(newmem, descr, NULL);
 		_pya_free(newmem);
 		Py_DECREF(descr);
@@ -1033,9 +1033,8 @@ voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 		PyArray_Descr *new;
 		if (!PyArray_ISNBO(self->descr->byteorder)) {
 			new = PyArray_DescrFromScalar(ret);
-			new->f->copyswap(_SOFFSET_(ret, 
-						   new->type_num),
-					 NULL, 1, new->elsize);
+			byte_swap_vector(_SOFFSET_(ret, new->type_num), 1,
+					 new->elsize);
 			Py_DECREF(new);
 		}
 	}
@@ -1089,7 +1088,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
         if (src == NULL) return NULL;
 	typecode->f->copyswap(dptr, PyArray_DATA(src), 
 			      !PyArray_ISNBO(self->descr->byteorder),
-			      PyArray_ITEMSIZE(src));
+			      src);
 	Py_DECREF(src);
 	Py_INCREF(Py_None);
 	return Py_None;

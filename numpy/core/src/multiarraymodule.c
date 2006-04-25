@@ -1867,13 +1867,13 @@ _new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 			_strided_copy(buffer, (intp) elsize, it->dataptr, 
 				      astride, N, elsize);
 			if (swap) {
-				op->descr->f->copyswapn(buffer, NULL, N, 1, elsize);
+				op->descr->f->copyswapn(buffer, NULL, N, 1, op);
 			}
 			if (sort(buffer, N, op) < 0) {
 				PyDataMem_FREE(buffer); goto fail;
 			}
 			if (swap) {
-				op->descr->f->copyswapn(buffer, NULL, N, 1, elsize);
+				op->descr->f->copyswapn(buffer, NULL, N, 1, op);
 			}			
 			_strided_copy(it->dataptr, astride, buffer, 
 				      (intp) elsize, N, elsize);

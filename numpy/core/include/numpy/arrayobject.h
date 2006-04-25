@@ -79,7 +79,7 @@ extern "C" CONFUSE_EMACS
 #define PY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x00090704
+#define NDARRAY_VERSION 0x00090705
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -803,8 +803,8 @@ typedef Py_uintptr_t uintp;
 typedef PyObject * (PyArray_GetItemFunc) (void *, void *);
 typedef int (PyArray_SetItemFunc)(PyObject *, void *, void *);
 
-typedef void (PyArray_CopySwapNFunc)(void *, void *, intp, int, int);
-typedef void (PyArray_CopySwapFunc)(void *, void *, int, int);
+typedef void (PyArray_CopySwapNFunc)(void *, void *, intp, int, void *);
+typedef void (PyArray_CopySwapFunc)(void *, void *, int, void *);
 typedef Bool (PyArray_NonzeroFunc)(void *, void *);
 
 

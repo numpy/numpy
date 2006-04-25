@@ -1566,7 +1566,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 						/* fprintf(stderr, "swapping...\n");*/
 						copyswapn[i](buffer[i], NULL,
 							     (intp) datasize[i], 1,
-							     mpselsize[i]);
+							     mps[i]);
 					}
 					/* cast to the other buffer if necessary */
 					if (loop->cast[i]) {
@@ -1591,7 +1591,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 					if (swap[i]) {
 						copyswapn[i](buffer[i], NULL,
 							     (intp) datasize[i], 1, 
-							     mpselsize[i]);
+							     mps[i]);
 					}
 					/* copy back to output arrays */
 					/* decref what's already there for object arrays */
@@ -2030,9 +2030,9 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 				/* A little tricky because we need to
 				   cast it first */
 				arr->descr->f->copyswap(loop->buffer,
-						     loop->inptr,
-						     loop->swap,
-						     loop->insize);
+							loop->inptr,
+							loop->swap,
+							NULL);
 				loop->cast(loop->buffer, loop->castbuf,
 					   1, NULL, NULL);
 				if (loop->obj) 
@@ -2042,9 +2042,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
 			}
 			else { /* Simple copy */
 				arr->descr->f->copyswap(loop->bufptr[1], 
-						     loop->inptr,
-						     loop->swap,
-						     loop->insize);
+							loop->inptr,
+							loop->swap, NULL);
 			}
 			loop->inptr += loop->instrides;
                         n = 1;
@@ -2055,9 +2054,9 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
                                 for (i=0; i<loop->bufsize; i++, n++) {
                                         if (n == loop->N) break;
                                         arr->descr->f->copyswap(dptr,
-                                                             loop->inptr,
-                                                             loop->swap,
-                                                             loop->insize);
+								loop->inptr,
+								loop->swap,
+								NULL);
                                         loop->inptr += loop->instrides;
                                         dptr += loop->insize;
                                 }
@@ -2172,9 +2171,9 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
 				/* A little tricky because we need to
 				   cast it first */
 				arr->descr->f->copyswap(loop->buffer,
-						     loop->inptr,
-						     loop->swap,
-						     loop->insize);
+							loop->inptr,
+							loop->swap,
+							NULL);
 				loop->cast(loop->buffer, loop->castbuf,
 					   1, NULL, NULL);
 				if (loop->obj) 
@@ -2184,9 +2183,9 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
 			}
 			else { /* Simple copy */
 				arr->descr->f->copyswap(loop->bufptr[1], 
-						     loop->inptr,
-						     loop->swap,
-						     loop->insize);
+							loop->inptr,
+							loop->swap,
+							NULL);
 			}
 			loop->inptr += loop->instrides;
                         n = 1;
@@ -2197,9 +2196,9 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
                                 for (i=0; i<loop->bufsize; i++, n++) {
                                         if (n == loop->N) break;
                                         arr->descr->f->copyswap(dptr,
-                                                             loop->inptr,
-                                                             loop->swap,
-                                                             loop->insize);
+								loop->inptr,
+								loop->swap,
+								NULL);
                                         loop->inptr += loop->instrides;
                                         dptr += loop->insize;
                                 }
@@ -2344,8 +2343,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 						arr->descr->f->copyswap\
 							(dptr,
 							 loop->inptr,
-							 loop->swap,
-							 loop->insize);
+							 loop->swap, NULL);
 						loop->inptr += loop->instrides;
 						dptr += loop->insize;
 					}

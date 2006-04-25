@@ -77,7 +77,7 @@ static PyObject *
 	}
 	else {
                 ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap),
-				    ap->descr->elsize);
+				    ap);
                 return @func1@((@typ1@)t1);
 	}
 }
@@ -97,7 +97,7 @@ static int
                 *((@typ@ *)ov)=temp;
         else {
                 ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), 
-				    ap->descr->elsize);
+				    ap);
         }
         
         return 0;
@@ -850,7 +850,7 @@ static int
 #type=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble#
 */
 static void
-@fname@_copyswapn (void *dst, void *src, intp n, int swap, int itemsize)
+@fname@_copyswapn (void *dst, void *src, intp n, int swap, void *arr)
 {
 	if (src != NULL) /* copy first if needed */
 		memcpy(dst, src, n*sizeof(@type@));
@@ -916,7 +916,7 @@ static void
 }
 
 static void
-@fname@_copyswap (void *dst, void *src, int swap, int itemsize)
+@fname@_copyswap (void *dst, void *src, int swap, void *arr)
 {
 
 	if (src != NULL) /* copy first if needed */
@@ -985,7 +985,7 @@ static void
 #type=Bool, byte, ubyte#
 */
 static void
-@fname@_copyswapn (void *dst, void *src, intp n, int swap, int itemsize)
+@fname@_copyswapn (void *dst, void *src, intp n, int swap, void *arr)
 {
 	if (src != NULL) /* copy first if needed */
 		memcpy(dst, src, n*sizeof(@type@));
@@ -993,7 +993,7 @@ static void
 }
 
 static void
-@fname@_copyswap (void *dst, void *src, int swap, int itemsize)
+@fname@_copyswap (void *dst, void *src, int swap, void *arr)
 {
 	if (src != NULL) /* copy first if needed */
 		memcpy(dst, src, sizeof(@type@));
@@ -1011,7 +1011,7 @@ static void
 #fsize=FLOAT,DOUBLE,LONGDOUBLE#
 */
 static void
-@fname@_copyswapn (void *dst, void *src, intp n, int swap, int itemsize)
+@fname@_copyswapn (void *dst, void *src, intp n, int swap, void *arr)
 {
 
 	if (src != NULL) /* copy first if needed */
@@ -1077,7 +1077,7 @@ static void
 }
 
 static void
-@fname@_copyswap (void *dst, void *src, int swap, int itemsize)
+@fname@_copyswap (void *dst, void *src, int swap, void *arr)
 {
 	if (src != NULL) /* copy first if needed */
 		memcpy(dst, src, sizeof(@type@));
@@ -1178,7 +1178,7 @@ static void
 /**end repeat**/
 
 static void
-OBJECT_copyswapn (PyObject **dst, PyObject **src, intp n, int swap, int itemsize)
+OBJECT_copyswapn (PyObject **dst, PyObject **src, intp n, int swap, void *arr)
 {
 	register int i, nn=n;
 	PyObject **dp=dst, **sp=src;
@@ -1195,10 +1195,12 @@ OBJECT_copyswapn (PyObject **dst, PyObject **src, intp n, int swap, int itemsize
 
 /* ignore swap */
 static void
-STRING_copyswapn (char *dst, char *src, intp n, int swap, int itemsize)
+STRING_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
 {
-	if (src != NULL) 
+	if (src != NULL) {
+		int itemsize = (arr ? arr->descr->elsize : 0);
 		memcpy(dst, src, itemsize * n);
+	}
 	
 	return;
 }
@@ -1208,19 +1210,23 @@ STRING_copyswapn (char *dst, char *src, intp n, int swap, int itemsize)
 TODO:  Need descriptor argument and then recurse down fields
 */
 static void
-VOID_copyswapn (char *dst, char *src, intp n, int swap, int itemsize)
+VOID_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
 {
-	if (src != NULL) 
-		memcpy(dst, src, itemsize * n);	
+	if (src != NULL) {
+		int itemsize = (arr ? arr->descr->elsize : 0);
+		memcpy(dst, src, itemsize * n); 
+	}
 	return;
 }
 
 static void
-UNICODE_copyswapn (char *dst, char *src, intp n, int swap, int itemsize)
+UNICODE_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
 {
 
-	if (src != NULL) 
-		memcpy(dst, src, itemsize * n);
+	if (src != NULL) {
+		int itemsize = (arr ? arr->descr->elsize : 0);
+		memcpy(dst, src, itemsize * n); 
+	}
 	
 	if (swap) {
 		register char *a, *b, c;
@@ -1235,34 +1241,39 @@ UNICODE_copyswapn (char *dst, char *src, intp n, int swap, int itemsize)
 
 
 static void
-OBJECT_copyswap (PyObject **dst, PyObject **src, int swap, int itemsize)
+OBJECT_copyswap(PyObject **dst, PyObject **src, int swap, PyArrayObject *arr)
 {
-        OBJECT_copyswapn(dst, src, 1, swap, itemsize);
+        OBJECT_copyswapn(dst, src, 1, swap, arr);
 }
 
 static void
-STRING_copyswap (char *dst, char *src, int swap, int itemsize)
+STRING_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 {
-	if (src != NULL) 
+	if (src != NULL) {
+		int itemsize = (arr ? arr->descr->elsize : 0);
 		memcpy(dst, src, itemsize);
-	
+	} 
 }
 
 /* ignore swap */
 static void
-VOID_copyswap (char *dst, char *src, int swap, int itemsize)
+VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 {
-	if (src != NULL) 
-		memcpy(dst, src, itemsize);	
+	if (src != NULL) {
+		int itemsize = (arr ? arr->descr->elsize : 0);
+		memcpy(dst, src, itemsize);
+	}
 	return;
 }
 
 static void
-UNICODE_copyswap (char *dst, char *src, int swap, int itemsize)
+UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 {
 
-	if (src != NULL) 
+	if (src != NULL) {
+		int itemsize = (arr ? arr->descr->elsize : 0);
 		memcpy(dst, src, itemsize);
+	}
 	
 	if (swap) {
 		register char *a, *b, c;
