@@ -1033,7 +1033,11 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 			uni->length = length;
 			uni->hash = -1;
 			uni->defenc = NULL;
-#ifndef Py_UNICODE_WIDE
+#ifdef Py_UNICODE_WIDE
+			memcpy(destptr, data, itemsize);
+			if (swap)
+				byte_swap_vector(destptr, length, 4);
+#else
 			/* need aligned data buffer */
 			if (!PyArray_ISBEHAVED(base)) {
 				buffer = _pya_malloc(itemsize);
@@ -1042,7 +1046,8 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 				alloc = 1;
 				memcpy(buffer, data, itemsize);
 				if (!PyArray_ISNOTSWAPPED(base)) {
-					byte_swap_vector(buffer, itemsize >> 2, 4);
+					byte_swap_vector(buffer, 
+							 itemsize >> 2, 4);
 				}
 			}
 			else buffer = data;
@@ -1050,7 +1055,8 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
                         /* Allocated enough for 2-characters per itemsize.
 			   Now convert from the data-buffer
                          */
-			length = PyUCS2Buffer_FromUCS4(uni->str, (PyArray_UCS4 *)buffer,
+			length = PyUCS2Buffer_FromUCS4(uni->str, 
+						       (PyArray_UCS4 *)buffer,
 						       itemsize >> 2);
 			if (alloc) _pya_free(buffer);
 			/* Resize the unicode result */
@@ -1058,10 +1064,6 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 				Py_DECREF(obj);
 				return NULL;
 			}
-#else
-			memcpy(destptr, data, itemsize);
-			if (swap)
-				byte_swap_vector(destptr, length, 4);
 #endif
 			return obj;
 		}

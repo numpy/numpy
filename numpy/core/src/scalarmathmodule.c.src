@@ -30,7 +30,8 @@
 */
 
 /* For error-handling.  If an error is detected, only then 
-   should we get the current error-handling state.
+   should we lookup get the current error-handling state and
+   act accordingly. 
  */
 
 #define _CREATE_SELF_OTHER(a, b, NAME) {                        \
@@ -41,12 +42,61 @@
                 else {                                          \
                         self = b;                               \
                         other = a;                              \
-                        if (!PyObject_IsScalar(self, @NAME@)) { \
-                                Py_INCREF(Py_NotImplemented);   \
-                                return Py_NotImplemented;       \
-                        }                                       \
-                }                                               \
-        }                                                       
+                        if (!PyObject_IsScalar(self, @NAME@))	\
+				goto default;			\
+		}						\
+	}                                                       
+
+static PyObject *
+_object_to_scalar(PyObject *object)
+{
+	PyObject *ret=NULL;
+	if PyObject_IsScalar(object, Generic) 
+		return object;
+	if PyArray_IsZeroDim(object) 
+		return PyArray_ToScalar(PyArray_DATA(object), object)
+	if PyInt_Check(object) {
+		ret = PyLongArrType_Type.tp_alloc(&PyLongArrType_Type, 0);
+		if (ret == NULL) return NULL;
+		((PyLongScalarObject *)ret)->obval =	\
+			PyInt_AS_LONG(object);
+	}
+	else if PyFloat_Check(object) {
+		ret = PyDoubleArrType_Type.tp_alloc(&PyDoubleArrType_Type, 0);
+		if (ret == NULL) return NULL;
+		((PyDoubleScalarObject *)ret)->obval = \
+			PyFloat_AS_DOUBLE(object);
+	}
+	else if PyComplex_Check(object) {
+		ret = PyCDoubleArrType_Type.tp_alloc(&PyCDoubleArrType_Type, 0);
+		if (ret == NULL) return NULL;
+		((PyCDoubleScalarObject *)ret)->obval.real =	\
+			((PyComplexObject *)object)->cval.real;
+		((PyCDoubleScalarObject *)ret)->obval.imag =	\
+			((PyComplexObject *)object)->cval.imag;
+	}
+	else if PyLong_Check(object) {
+		longlong val;
+		val = PyLong_AsLongLong(object);		
+		if (val==-1 && PyErr_Occurred()) {
+			PyErr_Clear();
+			return NULL;
+		}
+		ret = PyLongLongArrType_Type.tp_alloc\
+			(&PyLongLongArrType_Type, 0);
+		if (ret == NULL) return NULL;
+		((PyLongLongScalarObject *)ret)->obval = val;
+	}
+	else if PyBool_Check(object) {
+		if (object == Py_True) {
+			PyArrayScalar_RETURN_TRUE;
+		}
+		else {
+			PyArrayScalar_RETURN_FALSE;
+		}
+	}
+	return ret;
+}
 
 /**begin repeat
 #name=byte,ubyte,short,ushort,int,uint,long,ulong,float,double,longdouble,cfloat,cdouble,clongdouble#
@@ -65,10 +115,20 @@ static PyObject *
                 Py_INCREF(arg3);
         }
         else if ((temp = _object_to_scalar(other)) != NULL) {
-                
+                if PyObject_IsScalar(temp, @NAME@) arg3 = temp;
+		else { /* see if we can cast it */
+			
+		}
         }
+	else goto default;
 
-        
+	/* here we do the actual calculation with arg3 and self */
+
+	Py_DECREF(arg3);
+
+ default:
+	 if (PyErr_Occurred()) return NULL;
+	 return PyGenericArrType_Type.tp_as_number->nb_add(a,b);
 }
 
 static PyObject *
