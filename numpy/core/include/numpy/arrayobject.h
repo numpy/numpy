@@ -79,7 +79,7 @@ extern "C" CONFUSE_EMACS
 #define PY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x00090705
+#define NDARRAY_VERSION 0x00090706
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -1495,7 +1495,8 @@ typedef struct {
 	PyArray_NewFromDescr(&PyArray_Type, descr, nd, dims, NULL, NULL, 0, NULL)
 #define PyArray_EnsureAnyArray(obj) \
 	(PyArray_Check(obj) ? obj : PyArray_EnsureArray(obj))
-
+#define PyArray_ToScalar(data, arr) \
+	PyArray_Scalar(data, PyArray_DESCR(arr), (PyObject *)arr)
 
 /* These might be faster without the dereferencing of obj
    going on inside -- of course an optimizing compiler should

@@ -19,7 +19,6 @@ PyArray_ConvertToCommonType
 PyArray_DescrFromScalar
 PyArray_Size
 PyArray_Scalar
-PyArray_ToScalar
 PyArray_FromScalar
 PyArray_ScalarAsCtype
 PyArray_CastScalarToCtype

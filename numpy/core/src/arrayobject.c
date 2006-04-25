@@ -990,7 +990,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 	if PyTypeNum_ISSTRING(type_num) { /* Eliminate NULL bytes */
 		char *dptr = data;
 		dptr += itemsize-1;
-		while(*dptr-- == 0 && itemsize) itemsize--;
+		while(itemsize && *dptr-- == 0) itemsize--;
 		if (type_num == PyArray_UNICODE && itemsize) {
 			/* make sure itemsize is a multiple of 4 */
 			/* so round up to nearest multiple */
@@ -1103,15 +1103,6 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
    So, that we simply need the data and the descriptor, and perhaps
    a flag
 */
-
-/*OBJECT_API
- Get scalar-equivalent to 0-d array
-*/
-static PyObject *
-PyArray_ToScalar(void *data, PyArrayObject *arr)
-{
-	return PyArray_Scalar(data, arr->descr, (PyObject *)arr);
-}
 
 
 /* Return Python scalar if 0-d array object is encountered */

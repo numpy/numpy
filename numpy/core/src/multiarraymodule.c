@@ -1824,7 +1824,7 @@ _strided_copy(char *dst, intp dststride, char *src, intp srcstride,
 	
 #define _FAST_COPY(size)			\
 	while(num--) {				\
-		memcpy(dst, src, 8);		\
+		memcpy(dst, src, size);		\
 		dst += dststride;		\
 		src += srcstride;		\
 	}					\
