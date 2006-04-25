@@ -1225,11 +1225,12 @@ UNICODE_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
 	if (arr==NULL) return;
 	n *= arr->descr->elsize;
 	if (src != NULL) {
-		memcpy(dst, src, n); 
+		memcpy(dst, src, n);
 	}
 	
 	if (swap) {
 		register char *a, *b, c;
+		n >>= 2;  /* n is the number of characters to swap */
 		for (a = (char *)dst; n>0; n--) {
 			b = a + 3;
 			c=*a; *a++ = *b; *b-- = c;
@@ -1270,12 +1271,13 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 	int itemsize;
 	if (arr == NULL) return;
 	itemsize = arr->descr->elsize;
-	if (src != NULL && arr != NULL) {
+	if (src != NULL) {
 		memcpy(dst, src, itemsize);
 	}
 	
 	if (swap) {
 		register char *a, *b, c;
+		itemsize >>= 2;
 		for (a = (char *)dst; itemsize>0; itemsize--) {
 			b = a + 3;
 			c=*a; *a++ = *b; *b-- = c;
