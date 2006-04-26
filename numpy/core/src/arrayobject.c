@@ -3766,7 +3766,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 static PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 {
-        PyObject *array_other, *result;
+        PyObject *array_other, *result = Py_NotImplemented;
 	int typenum;
 
         switch (cmp_op)
