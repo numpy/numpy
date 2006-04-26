@@ -168,6 +168,21 @@ class NumpyTestCase (unittest.TestCase):
         print>>sys.stdout, message
         sys.stdout.flush()
 
+    def rundocs(self, filename=None):
+        """ Run doc string tests found in filename.
+        """
+        import doctest
+        if filename is None:
+            f = get_frame(1)
+            filename = f.f_globals['__file__']
+        name = os.path.splitext(os.path.basename(filename))[0]
+        m = imp.load_module(name, open(filename), filename,('.py','U',1))
+        tests = doctest.DocTestFinder().find(m)
+        runner = doctest.DocTestRunner(verbose=False)
+        for test in tests:
+            runner.run(test)
+        return
+
 ScipyTestCase = NumpyTestCase
 
 def _get_all_method_names(cls):

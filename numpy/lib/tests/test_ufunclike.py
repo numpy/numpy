@@ -55,9 +55,8 @@ array([ 2.169925  ,  1.20163386,  2.70043972])
 
 from numpy.testing import *
 
-import doctest
-def test_suite(level=1):
-    return doctest.DocTestSuite()
+class test_docs(NumpyTestCase):
+    def check_doctests(self): return self.rundocs()
 
 if __name__ == "__main__":
-    ScipyTest().run()
+    NumpyTest().run()
