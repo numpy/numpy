@@ -616,9 +616,9 @@ class vectorize(object):
             self.lastcallargs = nargs
 
         if self.nout == 1:
-            return asarray(self.ufunc(*args)).astype(self.otypes[0])
+            return array(self.ufunc(*args),copy=False).astype(self.otypes[0])
         else:
-            return tuple([asarray(x).astype(c) \
+            return tuple([array(x,copy=False).astype(c) \
                           for x, c in zip(self.ufunc(*args), self.otypes)])
 
 def cov(m,y=None, rowvar=1, bias=0):

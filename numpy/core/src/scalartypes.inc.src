@@ -107,6 +107,18 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 	return 0;
 }
 
+/*OBJECT_API
+ Cast Scalar to c-type
+*/
+static int
+PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
+			 void *ctypeptr, int outtype)
+{
+	indescr->f->cast[outtype](_SOFFSET_(scalar, indescr->type_num),
+				  ctypeptr, 1, NULL, NULL);
+	return 0;
+}
+
 /* 0-dim array from array-scalar object */
 /* always contains a copy of the data 
    unless outcode is NULL, it is of void type and the referrer does
