@@ -6,7 +6,7 @@ import numpy.core;reload(numpy.core)
 from numpy.core import *
 restore_path()
 
-class test_fromrecords(ScipyTestCase):
+class test_fromrecords(NumpyTestCase):
     def check_fromrecords(self):
         r = rec.fromrecords([[456,'dbe',1.2],[2,'de',1.3]],names='col1,col2,col3')
         assert_equal(r[0].item(),(456, 'dbe', 1.2))
@@ -34,10 +34,11 @@ class test_fromrecords(ScipyTestCase):
 
     def check_recarray_fromfile(self):
         __path__ = _os.path.split(__file__)
+        print __file__
         filename = _os.path.join(__path__[0], "testdata.fits")
         fd = open(filename)
         fd.seek(2880*2)
         r = rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
 
 if __name__ == "__main__":
-    ScipyTest().run()
+    NumpyTest().run()

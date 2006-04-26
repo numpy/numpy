@@ -99,7 +99,7 @@ def normalize_descr(descr):
 #    Creation tests
 ############################################################
 
-class create_zeros(ScipyTestCase):
+class create_zeros:
     """Check the creation of heterogeneous arrays zero-valued"""
 
     def check_zeros0D(self):
@@ -133,18 +133,17 @@ class create_zeros(ScipyTestCase):
         assert_equal(h['z'], zeros((2,3), dtype='u1'))
 
 
-class test_create_zeros_plain(create_zeros):
+class test_create_zeros_plain(create_zeros, NumpyTestCase):
     """Check the creation of heterogeneous arrays zero-valued (plain)"""
     _descr = Pdescr
 
-class test_create_zeros_nested(create_zeros):
+class test_create_zeros_nested(create_zeros, NumpyTestCase):
     """Check the creation of heterogeneous arrays zero-valued (nested)"""
     _descr = Ndescr
 
 
-class create_values(ScipyTestCase):
+class create_values:
     """Check the creation of heterogeneous arrays with values"""
-
 
     def check_tuple(self):
         """Check creation from tuples"""
@@ -174,25 +173,25 @@ class create_values(ScipyTestCase):
             self.assert_(h.shape == (1,1))
 
 
-class test_create_values_plain_single(create_values):
+class test_create_values_plain_single(create_values, NumpyTestCase):
     """Check the creation of heterogeneous arrays (plain, single row)"""
     _descr = Pdescr
     multiple_rows = 0
     _buffer = PbufferT[0]
 
-class test_create_values_plain_multiple(create_values):
+class test_create_values_plain_multiple(create_values, NumpyTestCase):
     """Check the creation of heterogeneous arrays (plain, multiple rows)"""
     _descr = Pdescr
     multiple_rows = 1
     _buffer = PbufferT
 
-class test_create_values_nested_single(create_values):
+class test_create_values_nested_single(create_values, NumpyTestCase):
     """Check the creation of heterogeneous arrays (nested, single row)"""
     _descr = Ndescr
     multiple_rows = 0
     _buffer = NbufferT[0]
 
-class test_create_values_nested_multiple(create_values):
+class test_create_values_nested_multiple(create_values, NumpyTestCase):
     """Check the creation of heterogeneous arrays (nested, multiple rows)"""
     _descr = Ndescr
     multiple_rows = 1
@@ -203,7 +202,7 @@ class test_create_values_nested_multiple(create_values):
 #    Reading tests
 ############################################################
 
-class read_values_plain(ScipyTestCase):
+class read_values_plain:
     """Check the reading of values in heterogeneous arrays (plain)"""
 
     def check_access_fields(self):
@@ -223,19 +222,19 @@ class read_values_plain(ScipyTestCase):
                                              self._buffer[1][2]], dtype='u1'))
 
 
-class test_read_values_plain_single(read_values_plain):
+class test_read_values_plain_single(read_values_plain, NumpyTestCase):
     """Check the creation of heterogeneous arrays (plain, single row)"""
     _descr = Pdescr
     multiple_rows = 0
     _buffer = PbufferT[0]
 
-class test_read_values_plain_multiple(read_values_plain):
+class test_read_values_plain_multiple(read_values_plain, NumpyTestCase):
     """Check the values of heterogeneous arrays (plain, multiple rows)"""
     _descr = Pdescr
     multiple_rows = 1
     _buffer = PbufferT
 
-class read_values_nested(ScipyTestCase):
+class read_values_nested:
     """Check the reading of values in heterogeneous arrays (nested)"""
 
 
@@ -320,13 +319,13 @@ class read_values_nested(ScipyTestCase):
         self.assert_(h.dtype['Info']['Info2']['z3'].name == 'void64')
 
 
-class test_read_values_nested_single(read_values_nested):
+class test_read_values_nested_single(read_values_nested, NumpyTestCase):
     """Check the values of heterogeneous arrays (nested, single row)"""
     _descr = Ndescr
     multiple_rows = 0
     _buffer = NbufferT[0]
 
-class test_read_values_nested_multiple(read_values_nested):
+class test_read_values_nested_multiple(read_values_nested, NumpyTestCase):
     """Check the values of heterogeneous arrays (nested, multiple rows)"""
     _descr = Ndescr
     multiple_rows = 1
@@ -334,4 +333,4 @@ class test_read_values_nested_multiple(read_values_nested):
 
 
 if __name__ == "__main__":
-    ScipyTest().run()
+    NumpyTest().run()
