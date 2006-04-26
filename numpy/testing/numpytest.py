@@ -11,6 +11,7 @@ import traceback
 __all__ = ['set_package_path', 'set_local_path', 'restore_path',
            'IgnoreException', 'NumpyTestCase', 'NumpyTest',
            'ScipyTestCase', 'ScipyTest', # for backward compatibility
+           'importall'
            ]
 
 DEBUG=0
@@ -477,3 +478,27 @@ class NumpyTest:
         sys.stdout.flush()
 
 ScipyTest = NumpyTest
+
+def importall(package):
+    """
+    Try recursively to import all subpackages under package.
+    """
+    if isinstance(package,str):
+        package = __import__(package)
+
+    package_name = package.__name__
+    package_dir = os.path.dirname(package.__file__)
+    for subpackage_name in os.listdir(package_dir):
+        subdir = os.path.join(package_dir, subpackage_name)
+        if not os.path.isdir(subdir):
+            continue
+        if not os.path.isfile(os.path.join(subdir,'__init__.py')):
+            continue
+        name = package_name+'.'+subpackage_name
+        try:
+            exec 'import %s as m' % (name)
+        except Exception, msg:
+            print 'Failed importing %s: %s' %(name, msg)
+            continue
+        importall(m)
+    return
