@@ -1279,8 +1279,8 @@ typedef struct {
 #define PyArray_BYTES(obj) (((PyArrayObject *)(obj))->data)
 #define PyArray_DIMS(obj) (((PyArrayObject *)(obj))->dimensions)
 #define PyArray_STRIDES(obj) (((PyArrayObject *)(obj))->strides)
-#define PyArray_DIM(obj,n) (((PyArrayObject *)(obj))->dimensions[n])
-#define PyArray_STRIDE(obj,n) (((PyArrayObject *)(obj))->strides[n])
+#define PyArray_DIM(obj,n) (PyArray_DIMS(obj)[n])
+#define PyArray_STRIDE(obj,n) (PyArray_STRIDES(obj)[n])
 #define PyArray_BASE(obj) (((PyArrayObject *)(obj))->base)
 #define PyArray_DESCR(obj) (((PyArrayObject *)(obj))->descr)
 #define PyArray_FLAGS(obj) (((PyArrayObject *)(obj))->flags)
@@ -1501,22 +1501,22 @@ typedef struct {
 */
 
 #define PyArray_GETPTR1(obj, i) (void *)(PyArray_BYTES(obj) +		\
-					 i*PyArray_STRIDE(obj, 0))
+					 i*PyArray_STRIDES(obj)[0])
 
 #define PyArray_GETPTR2(obj, i, j) (void *)(PyArray_BYTES(obj) +	\
-					    i*PyArray_STRIDE(obj, 0) +	\
-					    j*PyArray_STRIDE(obj, 1))
+					    i*PyArray_STRIDES(obj)[0] +	\
+					    j*PyArray_STRIDES(obj)[1])
 
 #define PyArray_GETPTR3(obj, i, j, k) (void *)(PyArray_BYTES(obj) +	\
-					       i*PyArray_STRIDE(obj, 0) + \
-					       j*PyArray_STRIDE(obj, 1) + \
-					       k*PyArray_STRIDE(obj, 2)) \
+					       i*PyArray_STRIDES(obj)[0] + \
+					       j*PyArray_STRIDES(obj)[1] + \
+					       k*PyArray_STRIDES(obj)[2]) \
 
 #define PyArray_GETPTR4(obj, i, j, k, l) (void *)(PyArray_BYTES(obj) +	\
-						  i*PyArray_STRIDE(obj, 0) + \
-						  j*PyArray_STRIDE(obj, 1) + \
-						  k*PyArray_STRIDE(obj, 2) + \
-						  l*PyArray_STRIDE(obj, 3))
+						  i*PyArray_STRIDES(obj)[0] + \
+						  j*PyArray_STRIDES(obj)[1] + \
+						  k*PyArray_STRIDES(obj)[2] + \
+						  l*PyArray_STRIDES(obj)[3])
 
 #define PyArray_DESCR_REPLACE(descr) do {	\
 		PyArray_Descr *_new_;			\
