@@ -34,7 +34,6 @@ class test_fromrecords(NumpyTestCase):
 
     def check_recarray_fromfile(self):
         __path__ = _os.path.split(__file__)
-        print __file__
         filename = _os.path.join(__path__[0], "testdata.fits")
         fd = open(filename)
         fd.seek(2880*2)
