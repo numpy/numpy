@@ -5316,7 +5316,13 @@ array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
 }
 
 
-static char doc_concatenate[] = "concatenate((a1,a2,...),axis=None).";
+static char doc_concatenate[] =
+    "concatenate((a1, a2, ...), axis=None) joins arrays together\n\n" \
+    "The tuple of sequences (a1, a2, ...) are joined along the given axis\n" \
+    "(default is the first one) into a single numpy array.\n\n" \
+    "Example:\n\n" \
+    ">>> concatenate( ([0,1,2], [5,6,7]) )\n" \
+    "array([0, 1, 2, 5, 6, 7])\n";
 
 static PyObject *
 array_concatenate(PyObject *dummy, PyObject *args, PyObject *kwds) 
@@ -5346,7 +5352,7 @@ static PyObject *array_innerproduct(PyObject *dummy, PyObject *args) {
 }
 
 static char doc_matrixproduct[] = \
-	"dot(a,v) returns matrix-multiplication between a and b.  \n"\
+	"dot(a,v) returns matrix-multiplication between a and b.\n"\
 	"The product-sum is over the last dimension of a and the \n"\
 	"second-to-last dimension of b.";
 
