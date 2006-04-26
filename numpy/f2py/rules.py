@@ -188,13 +188,12 @@ PyMODINIT_FUNC init#modulename#(void) {
 #initf90modhooks#
 #initcommonhooks#
 #interface_usercode#
-\tif (PyErr_Occurred())
-\t\treturn -1;
 
 #ifdef F2PY_REPORT_ATEXIT
-\ton_exit(f2py_report_on_exit,(void*)\"#modulename#\");
+\tif (! PyErr_Occurred())
+\t\ton_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
-return 0;
+
 }
 #ifdef __cplusplus
 }
