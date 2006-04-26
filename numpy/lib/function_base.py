@@ -616,9 +616,20 @@ class vectorize(object):
             self.lastcallargs = nargs
 
         if self.nout == 1:
-            return self.ufunc(*args).astype(self.otypes[0])
+            ret = self.ufunc(*args)
+            c = self.otypes[0]
+            try:
+                return ret.astype(c)
+            except AttributeError:  # scalar-case
+                return array(ret).astype(c)
         else:
-            return tuple([x.astype(c) for x, c in zip(self.ufunc(*args), self.otypes)])
+            ret = []
+            for x, c in zip(self.ufunc(*args), self.otypes):
+                try:
+                    ret.append(x.astype(c))
+                except AttributeError:
+                    ret.append(array(x).astype(c))
+            return tuple(ret)
 
 def cov(m,y=None, rowvar=1, bias=0):
     """Estimate the covariance matrix.
