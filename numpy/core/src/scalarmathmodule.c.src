@@ -12,7 +12,7 @@
 #include "numpy/ufuncobject.h"
 
 
-/* The general strategy is to
+/* The general strategy for commutative binary operators is to
 
 1) Make self the array scalar and "other" the other data-type
 2) If both are the same data-type, then do a quick exit.
@@ -96,68 +96,81 @@ _object_to_scalar(PyObject *object)
 	return ret;
 }
 
+
 /**begin repeat
 #name=byte,ubyte,short,ushort,int,uint,long,ulong,float,double,longdouble,cfloat,cdouble,clongdouble#
 #Name=Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble#
 **/
 
-static PyObject *
-@name@_add(PyObject *a, PyObject *b)
+static int
+_@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1, 
+			   PyObject *b, @name@ *arg2)
 {
-        PyObject *self, *other, *arg3, *temp;
+        PyObject *self, *other, *temp, *ret;
 
-        _CREATE_SELF_OTHER(a, b, @NAME@);
+        _CREATE_SELF_OTHER(a, b, @Name@);
         
-        if PyObject_IsScalar(other, @NAME@) {
-                arg3 = other;
-                Py_INCREF(arg3);
+	arg1 = PyArrayScalar_VAL(self, @Name@);
+	
+        if PyObject_IsScalar(other, @Name@) {
+		arg2 = PyArray_Scalar_VAL(self, @Name@);
         }
         else if ((temp = _object_to_scalar(other)) != NULL) {
-                if PyObject_IsScalar(temp, @NAME@) arg3 = temp;
-		else { /* see if we can cast it */
+                if (PyObject_IsScalar(temp, @Name@)) {
+			arg2 = PyArrayScalar_VAL(temp, @Name@)
+		}
+		else if (PyArray_CanCastScalar(temp->ob_type,
+					       &Py@Name@ArrType_Type)) {
+			/* cast it to type of self if we can do it safely */
 			
+		}
+		else { /* use the other add 
+			  (which will cast self to other) */
+			PyObject *res;
+			res = temp->ob_type->tp_as_number->nb_add(temp,self)
+			Py_DECREF(temp);
+			return res;
 		}
         }
 	else goto default;
-
-	/* here we do the actual calculation with arg3 and self */
-
-	Py_DECREF(arg3);
-
- default:
-	 if (PyErr_Occurred()) return NULL;
-	 return PyGenericArrType_Type.tp_as_number->nb_add(a,b);
 }
+
+/**end repeat**/
+
+/**begin repeat
+#name=(byte,ubyte,short,ushort,int,uint,long,ulong,float,double,longdouble,cfloat,cdouble,clongdouble)*10#
+#Name=(Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*10#
+#oper=add*14, subtract*14, multiply*14, divide*14, remainder*14, divmod*14, power*14, 
+**/
 
 static PyObject *
-@name@_subtract(PyObject *a, PyObject *b)
+@name@_@oper@(PyObject *a, PyObject *b)
 {
+	@name@ arg1, arg2, out;
+	
+	switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
+	case 0:
+		break;
+	case -2: /* use ufunc */
+		if (PyErr_Occurred()) return NULL;
+		return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
+	case -1: /* can't cast both safely use different add function */
+		Py_INCREF(Py_NotImplemented);
+		return Py_NotImplemented;
+	}
+	
+	/* here we do the actual calculation with arg1 and arg2 */
+	/* make it a function call. */
+	if (@name@_ctype_@oper@(arg1, arg2, &out) < 0) {
+		/* Look-up error-handling */
+	}
+	ret = PyArrayScalar_New(@Name@);
+	PyArrayScalar_VAL(ret, @Name@) = out;
+	return ret;
 }
 
-static PyObject *
-@name@_multiply(PyObject *a, PyObject *b)
-{
-}
+/**end repeat**/	
 
-static PyObject *
-@name@_divide(PyObject *a, PyObject *b)
-{
-}
-
-static PyObject *
-@name@_remainder(PyObject *a, PyObject *b)
-{
-}
-
-static PyObject *
-@name@_divmod(PyObject *a, PyObject *b)
-{
-}
-
-static PyObject *
-@name@_power(PyObject *a, PyObject *b)
-{
-}
 
 static PyObject *
 @name@_negative(PyObject *a, PyObject *b)
