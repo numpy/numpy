@@ -204,23 +204,9 @@ static void
 /**end repeat**/
 
 /**begin repeat
-   #name=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
-**/
-void /* XXX: Non-zero should probably have Bool *out, not @name@ */
-@name@_ctype_nonzero(@name@ a, @name@ *out)
-{
-    *out = (a != 0);
-}
-/**end repeat**/
-
-/**begin repeat
    #name=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
 **/
-void
-@name@_ctype_invert(@name@ a, @name@ *out)
-{
-    *out = ~a;
-}
+#define @name@_ctype_invert(a, out) *(out) = ~a;
 /**end repeat**/
 
 /*** END OF BASIC CODE **/
