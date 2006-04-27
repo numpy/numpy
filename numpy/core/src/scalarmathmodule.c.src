@@ -203,6 +203,37 @@ static void
 #define @name@_ctype_floor_divide @name@_cfloat_divide
 /**end repeat**/
 
+/**begin repeat
+   #name=byte, short, int, long, longlong, float, double, longdouble#
+**/
+static void
+@name@_ctype_negative(@name@ a, @name@ *out)
+{
+    *out = -a;
+}
+/**end repeat**/
+
+/**begin repeat
+   #name= cfloat, cdouble, clongdouble#
+**/
+static void
+@name@_ctype_negative(@name@ a, @name@ *out)
+{
+    out->real = -a.real;
+    out->imag = -a.imag;
+}
+/**end repeat**/
+
+/**begin repeat
+   #name=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+**/
+static void
+@name@_ctype_positive(@name@ a, @name@ *out)
+{
+    *out = a;
+}
+/**end repeat**/
+
 #define NOP
 /**begin repeat
    #name=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
