@@ -186,7 +186,7 @@ static void
 /**begin repeat
    #name=int,uint,long,ulong,longlong,ulonglong#
    #NAME=INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
-   #char=(s,u)*3
+   #char=(s,u)*3#
  **/
 #if SIZEOF_LONGLONG == SIZEOF_@NAME@
 static void
