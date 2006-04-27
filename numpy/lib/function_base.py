@@ -530,6 +530,37 @@ def disp(mesg, device=None, linefeed=True):
     device.flush()
     return
 
+# return number of input arguments and
+#  number of default arguments
+import re
+def _get_nargs(obj):
+    if not callable(obj):
+        raise TypeError, "Object is not callable."
+    if hasattr(obj,'func_code'):
+        fcode = obj.func_code
+        nargs = fcode.co_argcount
+        if obj.func_defaults is not None:
+            ndefaults = len(obj.func_defaults)
+        else:
+            ndefaults = 0
+        if isinstance(obj, types.MethodType):
+            nargs -= 1
+            return nargs, ndefaults
+    terr = re.compile(r'.*? takes exactly (?P<exargs>\d+) argument(s|) \((?P<gargs>\d+) given\)')
+    try:
+        obj()
+        return 0, 0
+    except TypeError, msg:
+        m = terr.match(str(msg))
+        if m:
+            nargs = int(m.group('exargs'))
+            ndefaults = int(m.group('gargs'))
+            if isinstance(obj, types.MethodType):
+                nargs -= 1
+            return nargs, ndefaults
+    raise ValueError, 'failed to determine the number of arguments for %s' % (obj)
+
+
 class vectorize(object):
     """
  vectorize(somefunction, otypes=None, doc=None)
@@ -562,18 +593,11 @@ class vectorize(object):
 
     """
     def __init__(self, pyfunc, otypes='', doc=None):
-        try:
-            fcode = pyfunc.func_code
-        except AttributeError:
-            raise TypeError, "object is not a callable Python object"
-
+        nin, ndefault = _get_nargs(pyfunc)
         self.thefunc = pyfunc
         self.ufunc = None
-        self.nin = fcode.co_argcount
-        if pyfunc.func_defaults:
-            self.nin_wo_defaults = self.nin - len(pyfunc.func_defaults)
-        else:
-            self.nin_wo_defaults = self.nin
+        self.nin = nin
+        self.nin_wo_defaults = nin - ndefault
         self.nout = None
         if doc is None:
             self.__doc__ = pyfunc.__doc__
