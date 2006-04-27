@@ -203,6 +203,15 @@ static void
 #define @name@_ctype_floor_divide @name@_cfloat_divide
 /**end repeat**/
 
+/**begin repeat
+   #name=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+**/
+void /* XXX: Non-zero should probably have Bool *out, not @name@ */
+@name@_ctype_nonzero(@name@ a, @name@ *out)
+{
+    *out = (a != 0);
+}
+/**end repeat**/
 
 /**begin repeat
    #name=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
