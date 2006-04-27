@@ -545,7 +545,7 @@ def _get_nargs(obj):
             ndefaults = 0
         if isinstance(obj, types.MethodType):
             nargs -= 1
-            return nargs, ndefaults
+        return nargs, ndefaults
     terr = re.compile(r'.*? takes exactly (?P<exargs>\d+) argument(s|) \((?P<gargs>\d+) given\)')
     try:
         obj()
