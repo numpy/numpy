@@ -17,6 +17,7 @@ PyArray_ObjectType
 PyArray_DescrFromObject
 PyArray_ConvertToCommonType
 PyArray_DescrFromScalar
+PyArray_DescrFromTypeObject
 PyArray_Size
 PyArray_Scalar
 PyArray_FromScalar

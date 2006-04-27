@@ -196,6 +196,13 @@ def configuration(parent_package='',top_path=None):
                                   ],
                          )
 
+    config.add_extension('scalarmath',
+                         sources=[join('src','scalarmathmodule.c.src'),
+                                  generate_config_h,
+                                  generate_array_api,
+                                  generate_ufunc_api],
+                         )
+
     # Configure blasdot
     blas_info = get_info('blas_opt',0)
     #blas_info = {}

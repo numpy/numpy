@@ -208,7 +208,8 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 /*OBJECT_API
   Get an Array Scalar From a Python Object
   Returns NULL if unsuccessful but error is only
-  set if another error occurred.
+  set if another error occurred. Currently only Numeric-like
+  object supported.
  */
 static PyObject *
 PyArray_ScalarFromObject(PyObject *object)
@@ -2316,7 +2317,9 @@ _typenum_fromtypeobj(PyObject *type, int user)
 	return typenum;
 }
 
-/* new reference */
+/*New reference */
+/*OBJECT_API
+ */
 static PyArray_Descr *
 PyArray_DescrFromTypeObject(PyObject *type)
 {	

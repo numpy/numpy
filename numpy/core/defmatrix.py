@@ -201,12 +201,90 @@ class matrix(N.ndarray):
     def __str__(self):
         return str(self.__array__())
 
+    # To preserve orientation of result...
     def sum(self, axis=None, dtype=None):
         """Sum the matrix over the given axis.  If the axis is None, sum
         over all dimensions.  This preserves the orientation of the
         result as a row or column.
         """
         s = N.ndarray.sum(self, axis, dtype)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s
+
+    def mean(self, axis=None):
+        s = N.ndarray.mean(self, axis)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s
+
+    def std(self, axis=None, dtype=None):
+        s = N.ndarray.std(self, axis, dtype)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s
+
+    def var(self, axis=None, dtype=None):
+        s = N.ndarray.var(self, axis, dtype)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s
+
+    def prod(self, axis=None, dtype=None):
+        s = N.ndarray.prod(self, axis, dtype)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s
+
+    def any(self, axis=None):
+        s = N.ndarray.any(self, axis)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s        
+
+    def all(self, axis=None):
+        s = N.ndarray.all(self, axis)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s        
+        
+    def max(self, axis=None):
+        s = N.ndarray.max(self, axis)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s
+
+    def argmax(self, axis=None):
+        s = N.ndarray.argmax(self, axis)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s
+ 
+    def min(self, axis=None):
+        s = N.ndarray.min(self, axis)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s        
+
+    def argmin(self, axis=None):
+        s = N.ndarray.argmin(self, axis)
+        if axis==1:
+            return s.transpose()
+        else:
+            return s        
+
+    def ptp(self, axis=None):
+        s = N.ndarray.ptp(self, axis)
         if axis==1:
             return s.transpose()
         else:

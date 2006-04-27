@@ -578,6 +578,7 @@ PyUFunc_clearfperr()
 	PyUFunc_getfperr();
 }
 
+
 #define NO_UFUNCLOOP        0
 #define ZERODIM_REDUCELOOP  0
 #define ONE_UFUNCLOOP       1

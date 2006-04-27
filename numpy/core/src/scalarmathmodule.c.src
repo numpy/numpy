@@ -8,6 +8,7 @@
    NOT FINISHED
 */
 
+#include "Python.h"
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 #include "numpy/ufuncobject.h"
@@ -18,86 +19,86 @@
 
 static int ulonglong_overflow(ulonglong a, ulonglong b)
 {
-        ulonglong ah, al, bh, bl, w, x, y, z;
+    ulonglong ah, al, bh, bl, w, x, y, z;
 
 #if SIZEOF_LONGLONG == 64
-	ah = (a >> 32);
-	al = (a & 0xFFFFFFFFL);
-	bh = (b >> 32);
-	bl = (b & 0xFFFFFFFFL);
+    ah = (a >> 32);
+    al = (a & 0xFFFFFFFFL);
+    bh = (b >> 32);
+    bl = (b & 0xFFFFFFFFL);
 #elif SIZEOF_LONGLONG == 128
-	ah = (a >> 64);
-	al = (a & 0xFFFFFFFFFFFFFFFFL);
-	bh = (b >> 64);
-	bl = (b & 0xFFFFFFFFFFFFFFFFL);
+    ah = (a >> 64);
+    al = (a & 0xFFFFFFFFFFFFFFFFL);
+    bh = (b >> 64);
+    bl = (b & 0xFFFFFFFFFFFFFFFFL);
 #else
-	ah = al = bh = bl = 0;
+    ah = al = bh = bl = 0;
 #endif
 
-        /* 128-bit product:  z*2**64 + (x+y)*2**32 + w  */
-	w = al*bl;
-	x = bh*al;
-	y = ah*bl;
-	z = ah*bh;
+    /* 128-bit product:  z*2**64 + (x+y)*2**32 + w  */
+    w = al*bl;
+    x = bh*al;
+    y = ah*bl;
+    z = ah*bh;
 
-	/* *c = ((x + y)<<32) + w; */
+    /* *c = ((x + y)<<32) + w; */
 #if SIZEOF_LONGLONG == 64
-	return z || (x>>32) || (y>>32) ||
-		(((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 32);
+    return z || (x>>32) || (y>>32) ||
+	(((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 32);
 #elif SIZEOF_LONGLONG == 128
-	return z || (x>>64) || (y>>64) ||
-		(((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 64);
+    return z || (x>>64) || (y>>64) ||
+	(((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 64);
 #else
-	return 0;
+    return 0;
 #endif
 
 }
 
 static int slonglong_overflow(longlong a0, longlong b0)
 {
-	ulonglong a, b;
-        ulonglong ah, al, bh, bl, w, x, y, z;
+    ulonglong a, b;
+    ulonglong ah, al, bh, bl, w, x, y, z;
 
-        /* Convert to non-negative quantities */
-	if (a0 < 0) { a = -a0; } else { a = a0; }
-	if (b0 < 0) { b = -b0; } else { b = b0; }
+    /* Convert to non-negative quantities */
+    if (a0 < 0) { a = -a0; } else { a = a0; }
+    if (b0 < 0) { b = -b0; } else { b = b0; }
 
 
 #if SIZEOF_LONGLONG == 64
-	ah = (a >> 32);
-	al = (a & 0xFFFFFFFFL);
-	bh = (b >> 32);
-	bl = (b & 0xFFFFFFFFL);
+    ah = (a >> 32);
+    al = (a & 0xFFFFFFFFL);
+    bh = (b >> 32);
+    bl = (b & 0xFFFFFFFFL);
 #elif SIZEOF_LONGLONG == 128
-	ah = (a >> 64);
-	al = (a & 0xFFFFFFFFFFFFFFFFL);
-	bh = (b >> 64);
-	bl = (b & 0xFFFFFFFFFFFFFFFFL);
+    ah = (a >> 64);
+    al = (a & 0xFFFFFFFFFFFFFFFFL);
+    bh = (b >> 64);
+    bl = (b & 0xFFFFFFFFFFFFFFFFL);
 #else
-	ah = al = bh = bl = 0;
+    ah = al = bh = bl = 0;
 #endif
 
-	w = al*bl;
-	x = bh*al;
-	y = ah*bl;
-	z = ah*bh;
+    w = al*bl;
+    x = bh*al;
+    y = ah*bl;
+    z = ah*bh;
 
-        /*
-	   ulonglong c = ((x + y)<<32) + w;
-	   if ((a0 < 0) ^ (b0 < 0))
-	   *c = -c;
-	   else
-	   *c = c
-	   */
+    /*
+      ulonglong c = ((x + y)<<32) + w;
+      if ((a0 < 0) ^ (b0 < 0))
+      *c = -c;
+      else
+      *c = c
+      */
 
 #if SIZEOF_LONGLONG == 64
-	return z || (x>>31) || (y>>31) ||
-		(((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 31);
+    return z || (x>>31) || (y>>31) ||
+	(((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 31);
 #elif SIZEOF_LONGLONG == 128
-	return z || (x>>63) || (y>>63) ||
-		(((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 63);
+    return z || (x>>63) || (y>>63) ||
+	(((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 63);
 #else
-	return 0;
+    return 0;
 #endif
 }
 /** end direct numarray code **/
@@ -107,14 +108,14 @@ static int slonglong_overflow(longlong a0, longlong b0)
 
 BINARY:
 
-  add, subtract, multiply, divide, remainder, divmod, power, 
-       floor_divide, true_divide
+add, subtract, multiply, divide, remainder, divmod, power, 
+floor_divide, true_divide
 
-  lshift, rshift, and, or, xor (integers only)
+lshift, rshift, and, or, xor (integers only)
 
 UNARY:
 
-  negative, positive, absolute, nonzero, invert, int, long, float, oct, hex
+negative, positive, absolute, nonzero, invert, int, long, float, oct, hex
 
 */
 
@@ -122,74 +123,77 @@ UNARY:
    #name=byte,short,int,long,longlong#
 **/
 static void
-@name@_add(@name@ a, @name@ b, @name@ *out) {
-	*out = a + b;
-	if ((*out^a) >= 0 || (*out^b) >= 0)
-		return 
-	generate_overflow_error();
+@name@_ctype_add(@name@ a, @name@ b, @name@ *out) {
+    *out = a + b;
+    if ((*out^a) >= 0 || (*out^b) >= 0)
 	return;
+    generate_overflow_error();
+    return;
 }
 static void
-@name@_subtract(@name@ a, @name@ b, @name@ *out) {
-	*out = a - b;
-	if ((*out^a) >= 0 || (*out^~b) >= 0)
-		return;
-	generate_overflow_error();
+@name@_ctype_subtract(@name@ a, @name@ b, @name@ *out) {
+    *out = a - b;
+    if ((*out^a) >= 0 || (*out^~b) >= 0)
 	return;
+    generate_overflow_error();
+    return;
 }
 /**end repeat**/
 /**begin repeat
    #name=ubyte,ushort,uint,ulong,ulonglong#
 **/
-static int
-@name@_add(@name@ a, @name@ b, @name@ *out) {
-	*out = a + b;
-	if (*out >= a && *out >= b)
-		return;
-	generate_overflow_error();
+static void
+@name@_ctype_add(@name@ a, @name@ b, @name@ *out) {
+    *out = a + b;
+    if (*out >= a && *out >= b)
 	return;
+    generate_overflow_error();
+    return;
 }
-static int
-@name@_subtract(@name@ a, @name@ b, @name@ *out) {
-	*out = a - b;
-	if (a >= b) return;
-	generate_overflow_error();
-	return;
+static void
+@name@_ctype_subtract(@name@ a, @name@ b, @name@ *out) {
+    *out = a - b;
+    if (a >= b) return;
+    generate_overflow_error();
+    return;
 }
 /**end repeat**/
 
 /**begin repeat
    #name=float, double, longdouble#
 **/
-#define @name@_add(a, b, outp) *(outp) = a + b
-#define @name@_subtract(a, b, outp) *(outp) = a - b
-#define @name@_multiply(a, b, outp) *(outp) = a * b
-#define @name@_divide(a, b, outp) *(outp) = a / b
-#define @name@_true_divide @name@_divide
+#define @name@_ctype_add(a, b, outp) *(outp) = a + b
+#define @name@_ctype_subtract(a, b, outp) *(outp) = a - b
+#define @name@_ctype_multiply(a, b, outp) *(outp) = a * b
+#define @name@_ctype_divide(a, b, outp) *(outp) = a / b
+#define @name@_ctype_true_divide @name@_ctype_divide
+#define @name@_ctype_floor_divide @name@_ctype_divide
 /**end repeat**/
+
 /**begin repeat
    #name=cfloat, cdouble, clongdouble#
    #rtype=float, double, longdouble#
 **/
-#define @name@_add(a, b, outp) { \
-	outp->real = a.real + b.real \
-	outp->imag = a.imag + b.imag \
-	}
-#define @name@_subtract(a, b, outp) { \
-	outp->real = a.real - b.real; \
-	outp->imag = a.imag - b.imag; \
-	}
-#define @name@_multiply(a, b, outp) {\
-	outp->real = a.real * b.real - a.imag * b.imag; \
-	outp->imag = a.real * b.imag + a.imag * b.real; \
-	}
-#define @name@_divide(a, b, outp) {			\
-	@rtype@ d = a.real*b.real + b.imag*b.imag;	\
-	outp->real = (a.real*b.real + a.imag*b.imag)/d;	\
-	outp->imag = (a.imag*b.real - a.real*b.imag)/d;	\
-	return;
-}
-#define @name@_true_divide @name@_divide
+#define @name@_ctype_add(a, b, outp) do{		\
+    (outp)->real = (a).real + (b).real;			\
+    (outp)->imag = (a).imag + (b).imag;			\
+    }while(0)
+#define @name@_ctype_subtract(a, b, outp) do{		\
+    (outp)->real = (a).real - (b).real;			\
+    (outp)->imag = (a).imag - (b).imag;			\
+    }while(0)
+#define @name@_ctype_multiply(a, b, outp) do{			\
+    (outp)->real = (a).real * (b).real - (a).imag * (b).imag;	\
+    (outp)->imag = (a).real * (b).imag + (a).imag * (b).real;	\
+    }while(0)
+#define @name@_ctype_divide(a, b, outp) do{			\
+    @rtype@ d = (a).real*(b).real + (b).imag*(b).imag;		\
+    (outp)->real = ((a).real*(b).real + (a).imag*(b).imag)/d;	\
+    (outp)->imag = ((a).imag*(b).real - (a).real*(b).imag)/d;	\
+    }while(0)
+#define @name@_ctype_true_divide @name@_cfloat_divide
+#define @name@_ctype_floor_divide @name@_cfloat_divide
+/**end repeat**/
 
 /*** END OF BASIC CODE **/
 
@@ -199,11 +203,11 @@ static int
 1) Convert the types to the common type if both are scalars (0 return)
 2) If both are not scalars use ufunc machinery (-2 return)
 3) If both are scalars but cannot be cast to the right type 
-   return NotImplmented (-1 return)
+return NotImplmented (-1 return)
 
 4) Perform the function on the C-type.
 5) If an error condition occurred, check to see
-   what the current error-handling is and handle the error.
+what the current error-handling is and handle the error.
 
 6) Construct and return the output scalar.
 */
@@ -220,25 +224,25 @@ _@name@_convert_to_ctype(PyObject *a, @name@ *arg1)
 {
     PyObject *temp; 
 
-    if (PyObject_IsScalar(a, @Name@)) {
-	*arg1 = PyArrayScalar_VAL(a);
+    if (PyArray_IsScalar(a, @Name@)) {
+	*arg1 = PyArrayScalar_VAL(a, @Name@);
 	return 0;
     }
-    else if (PyObject_IsScalar(a, Generic)) {
-	PyArray_Descr *descr1, *descr2;
+    else if (PyArray_IsScalar(a, Generic)) {
+	PyArray_Descr *descr1;
 	int ret;
-	if (!PyObject_IsScalar(a, Number)) return -1;
-	descr1 = PyArray_DescrFromTypeObject(a->ob_type);
+	if (!PyArray_IsScalar(a, Number)) return -1;
+	descr1 = PyArray_DescrFromTypeObject((PyObject *)(a->ob_type));
  	if (PyArray_CanCastSafely(descr1->type_num, PyArray_@NAME@)) {
 	    PyArray_CastScalarDirect(a, descr1, arg1, PyArray_@NAME@);
-	    ret = 0
+	    ret = 0;
 	}
 	else ret = -1;
 	Py_DECREF(descr1);
 	return ret;
     }
     else if ((temp = PyArray_ScalarFromObject(a)) != NULL) {
-	return _@nam@_convert_to_ctype(temp, arg1);
+	return _@name@_convert_to_ctype(temp, arg1);
     }
     return -2;
 }	
@@ -247,6 +251,7 @@ static int
 _@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1, 
 			   PyObject *b, @name@ *arg2)
 {
+    int ret;
     ret = _@name@_convert_to_ctype(a, arg1);
     if (ret < 0) return ret;
     ret = _@name@_convert_to_ctype(b, arg2);
@@ -261,12 +266,17 @@ _@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1,
    #Name=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong)*14, (Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*9#
    #oper=add*10, subtract*10, multiply*10, divide*10, remainder*10, divmod*10, power*10, floor_divide*10, true_divide*10, lshift*10, rshift*10, and*10, or*10, xor*10, add*6, subtract*6, multiply*6, divide*6, remainder*6, divmod*6, power*6, floor_divide*6, true_divide*6#
    #fperr=1*110,0*30,1*54#
+   #power=0*60,1*10,0*106,1*6,0*12#
 **/
 
 static PyObject *
 @name@_@oper@(PyObject *a, PyObject *b)
 {
+    PyObject *ret;
     @name@ arg1, arg2, out;
+#if @fperr@
+    int retstatus;
+#endif    
 	
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
     case 0:
@@ -276,7 +286,11 @@ static PyObject *
 	return Py_NotImplemented;
     case -2: /* use ufunc */
 	if (PyErr_Occurred()) return NULL;
+#if @power@
+	return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+#else
 	return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
+#endif
     }
 
 #if @fperr@
@@ -287,17 +301,17 @@ static PyObject *
     /* as a function call. */
     @name@_ctype_@oper@(arg1, arg2, &out);
 
-#if @check_fperr@
+#if @fperr@
     /* Check status flag.  If it is set, then look up what to do */
-    restatus = PyUFunc_getfperr();
+    retstatus = PyUFunc_getfperr();
     if (retstatus) {
-	    int bufsize, errmask;
-	    PyObject *errobj;
-	    if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask, 
-				    &errobj) < 0) 
-		    return NULL;
-	    if (PyUFunc_handlefperr(errmask, errobj, retstatus))
-		    return NULL;
+	int bufsize, errmask;
+	PyObject *errobj;
+	if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask, 
+				&errobj) < 0) 
+	    return NULL;
+	if (PyUFunc_handlefperr(errmask, errobj, retstatus))
+	    return NULL;
     }
 #endif
     ret = PyArrayScalar_New(@Name@);
@@ -317,12 +331,13 @@ static PyObject *
 /**begin repeat
    #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*5#
    #Name=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*5#
-   #oper=negative*14, positive*14, absolute*14, nonzero*14, invert*14#
+   #oper=negative*16, positive*16, absolute*16, nonzero*16, invert*16#
 **/
 
 static PyObject *
 @name@_@oper@(PyObject *a)
 {
+    PyObject *ret;
     @name@ arg1, out;
 	
     switch(_@name@_convert_to_ctype(a, &arg1)) {
@@ -350,10 +365,10 @@ static PyObject *
 
 
 /**begin repeat
-#oper=int*14, long*14, float*14, oct*14, hex*14#
+   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*5#
+   #oper=int*16, long*16, float*16, oct*16, hex*16#
 **/
-
-
+#define @name@_@oper@ NULL
 /**end repeat**/
 
 
@@ -371,6 +386,20 @@ static Py_ssize_t
 #endif
 
 
+/**begin repeat
+   #oper=le,ge,lt,gt,eq,ne#
+   #op=<=,>=,<,>,==,!=#
+**/
+#define def_cmp_@oper@(arg1, arg2) (arg1 @op@ arg2)
+#define cmplx_cmp_@oper@(arg1, arg2) ((arg1.real == arg2.real) ?	\
+				      arg1.imag @op@ arg2.imag :	\
+				      arg1.real @op@ arg2.real)
+/**end repeat**/
+
+/**begin repeat
+   #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
+   #simp=def*13,cmplx*3#
+**/
 static PyObject*
 @name@_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
@@ -385,28 +414,28 @@ static PyObject*
 	return Py_NotImplemented;
     case -2: /* use ufunc */
 	if (PyErr_Occurred()) return NULL;
-	return PyGenericArrType_Type.tp_richcompare(self, other);
+	return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
     }
 
     /* here we do the actual calculation with arg1 and arg2 */
     switch (cmp_op) {
     case Py_EQ:
-	out = arg1 == arg2;
+	out = @simp@_cmp_eq(arg1, arg2);
 	break;
     case Py_NE:
-	out = ag1 != arg2;
+	out = @simp@_cmp_ne(arg1, arg2);
 	break;
     case Py_LE:
-	out = arg1 <= arg2;
+	out = @simp@_cmp_le(arg1, arg2);
 	break;
     case Py_GE:
-	out = arg1 >= arg2;
+	out = @simp@_cmp_ge(arg1, arg2);
 	break;
     case Py_LT:
-	out = arg1 < arg2;
+	out = @simp@_cmp_lt(arg1, arg2);
 	break;
     case Py_GT:
-	out = arg1 > arg2;
+	out = @simp@_cmp_gt(arg1, arg2);
 	break;
     }
     
@@ -416,8 +445,6 @@ static PyObject*
 	PyArrayScalar_RETURN_FALSE;
 }
 /**end repeat**/
-
-
 
 
 /**begin repeat
@@ -466,25 +493,29 @@ static PyNumberMethods @name@_as_number = {
     (lenfunc)@name@_index,                     /*nb_index*/
 #endif
 };
+/**end repeat**/
 
 static void
 add_scalarmath(void)
 {
     /**begin repeat
        #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
-       #NAME=Byte, UShort, Short, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble#
+       #NAME=Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble#
     **/
-    PyArr@NAME@Type_Type.tp_as_number = @name@_as_number;
-    PyArr@NAME@Type_Type.tp_richcompare = @name@_richcompare;
+    Py@NAME@ArrType_Type.tp_as_number = &(@name@_as_number);
+    Py@NAME@ArrType_Type.tp_richcompare = @name@_richcompare;
     /**end repeat**/
 }
 
 static void *saved_tables[9];
 
+char doc_alterpyscalars[] = "";
+
 static PyObject *
 alter_pyscalars(PyObject *dummy, PyObject *args)
 {
     int n;
+    PyObject *obj;
     n = PyTuple_GET_SIZE(args);
     while(n--) {
 	obj = PyTuple_GET_ITEM(args, n);
@@ -512,10 +543,12 @@ alter_pyscalars(PyObject *dummy, PyObject *args)
     }
 }
 
+char doc_restorepyscalars[] = "";
 static PyObject *
 restore_pyscalars(PyObject *dummy, PyObject *args)
 {
     int n;
+    PyObject *obj;
     n = PyTuple_GET_SIZE(args);
     while(n--) {
 	obj = PyTuple_GET_ITEM(args, n);

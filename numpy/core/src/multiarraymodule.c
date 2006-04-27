@@ -654,14 +654,15 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, int variance)
 	Py_DECREF(obj1);
 	Py_DECREF(newshape);
 	if (obj2 == NULL) {Py_DECREF(new); return NULL;}
-
+	
 	/* Compute x = x - mx */
 	obj1 = PyNumber_Subtract((PyObject *)new, obj2);
 	Py_DECREF(obj2);
 	if (obj1 == NULL) {Py_DECREF(new); return NULL;}
-
+	
 	/* Compute x * x */
-	obj2 = PyArray_EnsureArray(PyNumber_Multiply(obj1, obj1));
+	obj2 = PyArray_EnsureArray\
+		(PyArray_GenericBinaryFunction(obj1, obj1, n_ops.multiply));
 	Py_DECREF(obj1);
 	if (obj2 == NULL) {Py_DECREF(new); return NULL;}
 
@@ -680,15 +681,15 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, int variance)
 	Py_DECREF(obj1);
 	Py_DECREF(obj2);
 
-        if (variance) return ret;
-	
-	ret = PyArray_EnsureArray(ret);
-
-	/* sqrt() */
-	obj1 = PyArray_GenericUnaryFunction((PyAO *)ret, n_ops.sqrt);
-	Py_DECREF(ret);
-
-	return obj1;
+        if (!variance) {
+		obj1 = PyArray_EnsureArray(ret);
+		
+		/* sqrt() */
+		ret = PyArray_GenericUnaryFunction((PyAO *)obj1, n_ops.sqrt);
+		Py_DECREF(obj1);
+	}
+	if (PyArray_CheckExact(self)) return ret;
+	return PyArray_View(ret, NULL, self->ob_type);
 }
 
 
