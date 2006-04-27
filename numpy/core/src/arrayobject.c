@@ -3766,7 +3766,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 static PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 {
-        PyObject *array_other, *result = Py_NotImplemented;
+        PyObject *array_other, *result = NULL;
 	int typenum;
 
         switch (cmp_op)
@@ -3871,6 +3871,9 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                         result = PyArray_GenericBinaryFunction(self, other,
                                                                n_ops.greater_equal);
                         break;
+                default:
+                        result = Py_NotImplemented;
+                        Py_INCREF(result);
                 }
         if (result == Py_NotImplemented) {
                 /* Try to handle string comparisons */
