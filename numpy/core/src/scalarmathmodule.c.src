@@ -109,7 +109,7 @@ static int slonglong_overflow(longlong a0, longlong b0)
 BINARY:
 
 add, subtract, multiply, divide, remainder, divmod, power, 
-floor_divide, true_divide
+floor, divide, true_divide
 
 lshift, rshift, and, or, xor (integers only)
 
@@ -206,25 +206,6 @@ static void
  **/
 #define @name@_ctype_@oper@(arg1, arg2, out) *(out) = (arg1) @op@ (arg2)
 /**end repeat**/
-
-
-
-#ifndef HAVE_LONGDOUBLE_FUNCS
-#ifdef floorl
-#undef floorl
-#endif
-longdouble floorl(longdouble x) {
-	return (longdouble) floor((double)x);
-}
-#endif
-#ifndef HAVE_FLOOR_FUNCS
-#ifdef floorf
-#undef floorf
-#endif
-float floorf(float x) {
-	return (float) floor((double)x);
-}
-#endif
 
 /**begin repeat
    #name=float, double, longdouble#
