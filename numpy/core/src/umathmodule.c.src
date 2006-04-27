@@ -576,7 +576,7 @@ nc_neg@c@(c@typ@ *a, c@typ@ *r)
 static void
 nc_prod@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
-	@typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+	register @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
 	r->real = ar*br - ai*bi;
 	r->imag = ar*bi + ai*br;
 	return;
@@ -586,8 +586,8 @@ static void
 nc_quot@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
 
-	@typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
-	@typ@ d = br*br + bi*bi;
+	register @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+	register @typ@ d = br*br + bi*bi;
 	r->real = (ar*br + ai*bi)/d;
 	r->imag = (ai*br - ar*bi)/d;
 	return;
@@ -596,8 +596,8 @@ nc_quot@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 static void
 nc_floor_quot@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
-	@typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
-	@typ@ d = br*br + bi*bi;
+	register @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+	register @typ@ d = br*br + bi*bi;
 	r->real = floor@c@((ar*br + ai*bi)/d);
 	r->imag = 0;
 	return;
@@ -952,137 +952,6 @@ static void
 /**end repeat**/
 
 
-/** Routines borrowed from numarray **/
-
-/* The following routine is used in the event of a detected integer *
-** divide by zero so that a floating divide by zero is generated.   *
-** This is done since Numeric uses the floating point exception    *
-** sticky bits to detect errors. The last bit is an attempt to      *
-** prevent optimization of the divide by zero away, the output value *
-** should always be 0                                               *
-*/
-
-/* These should really be altered to just set the corresponding bit
-   in the floating point status flag.  Need to figure out how to do that
-   on all the platforms...
-*/
-
-static int numeric_zero = 0;
-
-#if !defined(generate_divbyzero_error)
-static void generate_divbyzero_error(void) {
-	double dummy;
-	dummy = 1./numeric_zero;
-        if (dummy) /* to prevent optimizer from eliminating expression */
-	   return;
-	else /* should never be called */
-	   numeric_zero += 1;
-	return;	
-}
-#endif
-
-#if !defined(generate_overflow_error)
-static double numeric_two = 2.0;
-static void generate_overflow_error(void) {
-	double dummy;
-	dummy = pow(numeric_two,1000);
-        if (dummy)
-           return;
-        else
-           numeric_two += 0.1;
-        return;
-	return;
-}
-#endif
-
-
-static int ulonglong_overflow(ulonglong a, ulonglong b)
-{
-        ulonglong ah, al, bh, bl, w, x, y, z;
-
-#if SIZEOF_LONGLONG == 64
-	ah = (a >> 32);
-	al = (a & 0xFFFFFFFFL);
-	bh = (b >> 32);
-	bl = (b & 0xFFFFFFFFL);
-#elif SIZEOF_LONGLONG == 128
-	ah = (a >> 64);
-	al = (a & 0xFFFFFFFFFFFFFFFFL);
-	bh = (b >> 64);
-	bl = (b & 0xFFFFFFFFFFFFFFFFL);
-#else
-	ah = al = bh = bl = 0;
-#endif
-
-        /* 128-bit product:  z*2**64 + (x+y)*2**32 + w  */
-	w = al*bl;
-	x = bh*al;
-	y = ah*bl;
-	z = ah*bh;
-
-	/* *c = ((x + y)<<32) + w; */
-#if SIZEOF_LONGLONG == 64
-	return z || (x>>32) || (y>>32) ||
-		(((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 32);
-#elif SIZEOF_LONGLONG == 128
-	return z || (x>>64) || (y>>64) ||
-		(((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 64);
-#else
-	return 0;
-#endif
-
-}
-
-static int slonglong_overflow(longlong a0, longlong b0)
-{
-	ulonglong a, b;
-        ulonglong ah, al, bh, bl, w, x, y, z;
-
-        /* Convert to non-negative quantities */
-	if (a0 < 0) { a = -a0; } else { a = a0; }
-	if (b0 < 0) { b = -b0; } else { b = b0; }
-
-
-#if SIZEOF_LONGLONG == 64
-	ah = (a >> 32);
-	al = (a & 0xFFFFFFFFL);
-	bh = (b >> 32);
-	bl = (b & 0xFFFFFFFFL);
-#elif SIZEOF_LONGLONG == 128
-	ah = (a >> 64);
-	al = (a & 0xFFFFFFFFFFFFFFFFL);
-	bh = (b >> 64);
-	bl = (b & 0xFFFFFFFFFFFFFFFFL);
-#else
-	ah = al = bh = bl = 0;
-#endif
-
-	w = al*bl;
-	x = bh*al;
-	y = ah*bl;
-	z = ah*bh;
-
-        /*
-	   ulonglong c = ((x + y)<<32) + w;
-	   if ((a0 < 0) ^ (b0 < 0))
-	   *c = -c;
-	   else
-	   *c = c
-	   */
-
-#if SIZEOF_LONGLONG == 64
-	return z || (x>>31) || (y>>31) ||
-		(((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 31);
-#elif SIZEOF_LONGLONG == 128
-	return z || (x>>63) || (y>>63) ||
-		(((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 63);
-#else
-	return 0;
-#endif
-}
-
-/** end direct numarray code **/
-
 static void
 BOOL_multiply(char **args, intp *dimensions, intp *steps, void *func) {
 	register intp i;
@@ -1095,105 +964,20 @@ BOOL_multiply(char **args, intp *dimensions, intp *steps, void *func) {
 
 /**begin repeat
 
-#TYP= UBYTE,USHORT,UINT, ULONG#
-#typ= ubyte, ushort, uint, ulong#
-#bigtyp= int, int, double, double#
-*/
-
-static void
-@TYP@_multiply(char **args, intp *dimensions, intp *steps, void *func)
-{
-	register intp i;
-	intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	@bigtyp@ temp;
-	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		temp = (@bigtyp@)(*((@typ@ *)i1)) * (@bigtyp@)(*((@typ@ *)i2));
-		if (temp > MAX_@TYP@)
-			generate_overflow_error();
-		*((@typ@ *)op) = temp;
-	}
-}
-
-/**end repeat**/
-
-static void
-ULONGLONG_multiply(char **args, intp *dimensions, intp *steps, void *func)
-{
-	register intp i;
-	intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	ulonglong temp;
-	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		temp = *((ulonglong *)i1) * *((ulonglong *)i2);
-		if (ulonglong_overflow(*((ulonglong *)i1), *((ulonglong *)i2)))
-			generate_overflow_error();
-		*((ulonglong *)op) = temp;
-	}
-}
-
-/**begin repeat
-
-#TYP= BYTE,SHORT,INT, LONG#
-#typ= byte, short, int, long#
-#bigtyp= int, int, double, double#
-*/
-
-static void
-@TYP@_multiply(char **args, intp *dimensions, intp *steps, void *func)
-{
-	register intp i;
-	intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	@bigtyp@ temp;
-	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		temp = (@bigtyp@)*((@typ@ *)i1) * (@bigtyp@)*((@typ@ *)i2);
-		if (temp > MAX_@TYP@)
-			generate_overflow_error();
-		else if (temp < MIN_@TYP@)
-			generate_overflow_error();
-		*((@typ@ *)op) = temp;
-	}
-}
-
-/**end repeat**/
-
-static void
-LONGLONG_multiply(char **args, intp *dimensions, intp *steps, void *func)
-{
-	register intp i;
-	intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	longlong temp;
-	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		temp = *((longlong *)i1) * *((longlong *)i2);
-		if (slonglong_overflow(*((longlong *)i1), *((longlong *)i2)))
-			generate_overflow_error();
-		*((longlong *)op) = temp;
-	}
-}
-
-
-/**begin repeat
-
-#TYP=FLOAT,DOUBLE,LONGDOUBLE#
-#typ=float,double,longdouble#
+#TYP= BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+#typ= byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble#
 */
 static void
 @TYP@_multiply(char **args, intp *dimensions, intp *steps, void *func)
 {
 	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+	intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
 	char *i1=args[0], *i2=args[1], *op=args[2];
-	/* fprintf(stderr, "Multiplying %d elements of type @typ@\n", n);
-	fprintf(stderr, "args= %p, %p, %p\n", i1, i2, op);
-	fprintf(stderr, "steps=%d, %d, %d\n", is1, is2, os); */
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((@typ@ *)op)=*((@typ@ *)i1) * *((@typ@ *)i2);
+	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+		*((@typ@ *)op) = (*((@typ@ *)i1)) * (*((@typ@ *)i2));
 	}
 }
 /**end repeat**/
-
 
 /**begin repeat
 
@@ -1426,6 +1210,8 @@ Py_get_one(PyObject *o)
         return PyInt_FromLong(1);
 }
 
+
+static int numeric_zero = 0;
 
 /**begin repeat
 #TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#

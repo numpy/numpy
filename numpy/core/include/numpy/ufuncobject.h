@@ -313,6 +313,39 @@ typedef struct {
 
 #endif
 
+/* These should really be altered to just set the corresponding bit
+   in the floating point status flag.  Need to figure out how to do that
+   on all the platforms...
+*/
+
+#if !defined(generate_divbyzero_error)
+static int numeric_zero2 = 0;
+static void generate_divbyzero_error(void) {
+	double dummy;
+	dummy = 1./numeric_zero2;
+        if (dummy) /* to prevent optimizer from eliminating expression */
+	   return;
+	else /* should never be called */
+	   numeric_zero2 += 1;
+	return;	
+}
+#endif
+
+#if !defined(generate_overflow_error)
+static double numeric_two = 2.0;
+static void generate_overflow_error(void) {
+	double dummy;
+	dummy = pow(numeric_two,1000);
+        if (dummy)
+           return;
+        else
+           numeric_two += 0.1;
+        return;
+	return;
+}
+#endif
+
+
 #ifdef PY_ARRAY_TYPES_PREFIX
 #  undef CAT
 #  undef CAT2

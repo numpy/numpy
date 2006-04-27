@@ -233,13 +233,13 @@ typedef enum {
 	PyArray_INTNEG_SCALAR=3,
 	PyArray_FLOAT_SCALAR=4,
 	PyArray_COMPLEX_SCALAR=5,
-	PyArray_OBJECT_SCALAR=6,
+	PyArray_OBJECT_SCALAR=6
 } PyArray_SCALARKIND;
 
 typedef enum {
         PyArray_ANYORDER=-1,
         PyArray_CORDER=0,
-        PyArray_FORTRANORDER=1,
+        PyArray_FORTRANORDER=1
 } PyArray_ORDER;
 
 

@@ -526,16 +526,12 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus)
 
 /*UFUNC_API*/
 static int
-PyUFunc_checkfperr(int errmask, PyObject *errobj)
+PyUFunc_getfperr(void)
 {
 	int retstatus;
-	int handle;
-
-	/* 1. check hardware flag --- this is platform dependent code */
-
-	UFUNC_CHECK_STATUS(retstatus)  /* no semicolon */
-	
-	/* End platform dependent code */
+	UFUNC_CHECK_STATUS(retstatus);
+	return retstatus;
+}
 
 #define HANDLEIT(NAME, str) {if (retstatus & UFUNC_FPE_##NAME) { \
 			handle = errmask & UFUNC_MASK_##NAME;\
@@ -545,16 +541,32 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj)
 				return -1;		      \
 			}}
 
+/*UFUNC_API*/
+static int
+PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus)
+{
+	int handle;
 	if (errmask && retstatus) {
 		HANDLEIT(DIVIDEBYZERO, "divide by zero");
 		HANDLEIT(OVERFLOW, "overflow");
 		HANDLEIT(UNDERFLOW, "underflow");
 		HANDLEIT(INVALID, "invalid");
-	}
+	}	
+	return 0;
+}
 
 #undef HANDLEIT
 
-	return 0;
+
+/*UFUNC_API*/
+static int
+PyUFunc_checkfperr(int errmask, PyObject *errobj)
+{
+	int retstatus;
+
+	/* 1. check hardware flag --- this is platform dependent code */
+	retstatus = PyUFunc_getfperr();
+	return PyUFunc_handlefperr(errmask, errobj, retstatus);
 }
 
 
@@ -563,9 +575,7 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj)
 static void
 PyUFunc_clearfperr()
 {
-	int retstatus;
-
-	UFUNC_CHECK_STATUS(retstatus)
+	PyUFunc_getfperr();
 }
 
 #define NO_UFUNCLOOP        0

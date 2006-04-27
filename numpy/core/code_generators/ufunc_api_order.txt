@@ -20,8 +20,10 @@ PyUFunc_FF_F
 PyUFunc_GG_G
 PyUFunc_OO_O
 PyUFunc_O_O_method
+PyUFunc_OO_O_method
 PyUFunc_On_Om
 PyUFunc_GetPyValues
 PyUFunc_checkfperr
 PyUFunc_clearfperr
-PyUFunc_OO_O_method
+PyUFunc_getfperr
+PyUFunc_handlefperr

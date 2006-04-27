@@ -205,6 +205,59 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 	return ret;
 }
 
+/*OBJECT_API
+  Get an Array Scalar From a Python Object
+  Returns NULL if unsuccessful but error is only
+  set if another error occurred.
+ */
+static PyObject *
+PyArray_ScalarFromObject(PyObject *object)
+{
+	PyObject *ret=NULL;
+	if PyArray_IsZeroDim(object) {
+		return PyArray_ToScalar(PyArray_DATA(object), object);
+	}
+	if PyInt_Check(object) {
+		ret = PyArrayScalar_New(Long);
+		if (ret == NULL) return NULL;
+		PyArrayScalar_VAL(ret, Long) = PyInt_AS_LONG(object);
+	}
+	else if PyFloat_Check(object) {
+		ret = PyArrayScalar_New(Double);
+		if (ret == NULL) return NULL;
+		PyArrayScalar_VAL(ret, Double) = PFloat_AS_DOUBLE(object);
+	}
+	else if PyComplex_Check(object) {
+		ret = PyArrayScalar_New(CDouble);
+		if (ret == NULL) return NULL;
+		PyArrayScalar_VAL(ret, CDouble).real =		\
+			((PyComplexObject *)object)->cval.real;	
+		PyArrayScalar_VAL(ret, CDouble).imag =		\
+			((PyComplexObject *)object)->cval.imag;
+	}
+	else if PyLong_Check(object) {
+		longlong val;
+		val = PyLong_AsLongLong(object);		
+		if (val==-1 && PyErr_Occurred()) {
+			PyErr_Clear();
+			return NULL;
+		}
+		ret = PyArrayScalar_New(LongLong);
+		if (ret == NULL) return NULL;
+		PyArrayScalar_VAL(ret, LongLong) = val;
+	}
+	else if PyBool_Check(object) {
+		if (object == Py_True) {
+			PyArrayScalar_RETURN_TRUE;
+		}
+		else {
+			PyArrayScalar_RETURN_FALSE;
+		}
+	}
+	return ret;
+}
+
+
 static PyObject *
 gentype_alloc(PyTypeObject *type, int nitems)
 {
