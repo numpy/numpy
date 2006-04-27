@@ -160,6 +160,14 @@ static void
 /**end repeat**/
 
 /**begin repeat
+   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*3#
+   #oper=and*10, xor*10, or*10#
+   #op=&*10, ^*10, |*10#
+ **/
+#define @name@_ctype_@oper@(arg1, arg2, out) *(out) = (arg1) @op@ (arg2)
+/**end repeat**/
+
+/**begin repeat
    #name=float, double, longdouble#
 **/
 #define @name@_ctype_add(a, b, outp) *(outp) = a + b
@@ -280,8 +288,13 @@ _@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1,
    #power=0*60,1*10,0*106,1*6,0*12#
 **/
 
+#if @power@
+static PyObject *
+@name@_power(PyObject *a, PyObject *b, PyObject *c)
+#else
 static PyObject *
 @name@_@oper@(PyObject *a, PyObject *b)
+#endif
 {
     PyObject *ret;
     @name@ arg1, arg2, out;
@@ -291,16 +304,16 @@ static PyObject *
 	
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
     case 0:
-	break;
+        break;
     case -1: /* can't cast both safely use different add function */
-	Py_INCREF(Py_NotImplemented);
-	return Py_NotImplemented;
-    case -2: /* use ufunc */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    case -2: /* use default handling */
 	if (PyErr_Occurred()) return NULL;
 #if @power@
-	return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+        return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
 #else
-	return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
+        return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
 #endif
     }
 
@@ -329,8 +342,8 @@ static PyObject *
     PyArrayScalar_VAL(ret, @Name@) = out;
     return ret;
 }
+/**end repeat**/
 
-/**end repeat**/	
 
 /**begin repeat
    #name=(float,double,longdouble,cfloat,cdouble,clongdouble)*6#
@@ -339,29 +352,29 @@ static PyObject *
 #define @name@_@oper@ NULL
 /**end repeat**/
 
-/**begin repeat
-   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*5#
-   #Name=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*5#
-   #oper=negative*16, positive*16, absolute*16, nonzero*16, invert*16#
-**/
 
+/**begin repeat
+   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*4#
+   #Name=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*4#
+   #oper=negative*16, positive*16, absolute*16, invert*16#
+**/
 static PyObject *
 @name@_@oper@(PyObject *a)
 {
-    PyObject *ret;
     @name@ arg1, out;
+    PyObject *ret;
 	
     switch(_@name@_convert_to_ctype(a, &arg1)) {
     case 0:
-	break;
+        break;
     case -1: /* can't cast both safely use different add function */
 	Py_INCREF(Py_NotImplemented);
 	return Py_NotImplemented;
-    case -2: /* use ufunc */
+    case -2: /* use default handling */
 	if (PyErr_Occurred()) return NULL;
-	return PyGenericArrType_Type.tp_as_number->nb_@oper@(a);
+        return PyGenericArrType_Type.tp_as_number->nb_@oper@(a);
     }
-	
+
     /* here we do the actual calculation with arg1 and arg2 */
     /* make it a function call. */
 
@@ -369,8 +382,37 @@ static PyObject *
 
     ret = PyArrayScalar_New(@Name@);
     PyArrayScalar_VAL(ret, @Name@) = out;
-    return ret;
 
+    return ret;
+}
+/**end repeat**/
+
+
+/**begin repeat
+   #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
+   #simp=1*13,0*3#
+**/
+static int
+@name@_nonzero(PyObject *a)
+{
+    int ret;
+    @name@ arg1;
+	
+    if (_@name@_convert_to_ctype(a, &arg1) < 0) {
+	if (PyErr_Occurred()) return -1;
+        return PyGenericArrType_Type.tp_as_number->nb_nonzero(a);
+    }
+    
+    /* here we do the actual calculation with arg1 and arg2 */
+    /* make it a function call. */
+
+#if @simp@
+    ret = (arg1 != 0);
+#else 
+    ret = ((arg1.real != 0) || (arg1.imag != 0));
+#endif
+    
+    return ret;
 }
 /**end repeat**/
 
@@ -552,6 +594,8 @@ alter_pyscalars(PyObject *dummy, PyObject *args)
 	    return NULL;
 	}
     }
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 char doc_restorepyscalars[] = "";
@@ -584,6 +628,8 @@ restore_pyscalars(PyObject *dummy, PyObject *args)
 	    return NULL;
 	}
     }
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 static struct PyMethodDef methods[] = {
