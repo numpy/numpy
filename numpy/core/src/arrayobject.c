@@ -6999,8 +6999,8 @@ PyArray_EnsureArray(PyObject *op)
         if (PyArray_CheckExact(op)) return op;
 	
 	if (PyArray_Check(op)) 
-		return PyArray_View(op, NULL, &PyArray_Type);
-
+		return PyArray_View((PyArrayObject *)op, NULL, &PyArray_Type);
+	
         if (PyArray_IsScalar(op, Generic)) {
                 new = PyArray_FromScalar(op, NULL);
                 Py_DECREF(op);

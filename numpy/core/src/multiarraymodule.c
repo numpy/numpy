@@ -656,7 +656,7 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, int variance)
 	if (obj2 == NULL) {Py_DECREF(new); return NULL;}
 	
 	/* Compute x = x - mx */
-	obj1 = PyEnsure_Array(PyNumber_Subtract((PyObject *)new, obj2));
+	obj1 = PyArray_EnsureArray(PyNumber_Subtract((PyObject *)new, obj2));
 	Py_DECREF(obj2);
 	if (obj1 == NULL) {Py_DECREF(new); return NULL;}
 	
