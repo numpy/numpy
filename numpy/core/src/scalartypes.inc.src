@@ -225,7 +225,7 @@ PyArray_ScalarFromObject(PyObject *object)
 	else if PyFloat_Check(object) {
 		ret = PyArrayScalar_New(Double);
 		if (ret == NULL) return NULL;
-		PyArrayScalar_VAL(ret, Double) = PFloat_AS_DOUBLE(object);
+		PyArrayScalar_VAL(ret, Double) = PyFloat_AS_DOUBLE(object);
 	}
 	else if PyComplex_Check(object) {
 		ret = PyArrayScalar_New(CDouble);
