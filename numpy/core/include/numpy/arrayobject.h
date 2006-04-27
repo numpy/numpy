@@ -1482,7 +1482,7 @@ typedef struct {
 	PyArray_EquivTypes(PyArray_DESCR(a1), PyArray_DESCR(a2))
 
 #define PyArray_EquivByteorders(b1, b2) \
-	((b1 == b2) || (PyArray_ISNBO(b1) == PyArray_ISNBO(b2)))
+	(((b1) == (b2)) || (PyArray_ISNBO(b1) == PyArray_ISNBO(b2)))
 
 #define PyArray_SimpleNew(nd, dims, typenum) \
 	PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
@@ -1490,8 +1490,7 @@ typedef struct {
         PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, CARRAY_FLAGS, NULL)
 #define PyArray_SimpleNewFromDescr(nd, dims, descr) \
 	PyArray_NewFromDescr(&PyArray_Type, descr, nd, dims, NULL, NULL, 0, NULL)
-#define PyArray_EnsureAnyArray(obj) \
-	((obj && PyArray_Check(obj)) ? obj : PyArray_EnsureArray(obj))
+
 #define PyArray_ToScalar(data, arr) \
 	PyArray_Scalar(data, PyArray_DESCR(arr), (PyObject *)arr)
 

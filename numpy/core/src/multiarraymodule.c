@@ -656,13 +656,13 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, int variance)
 	if (obj2 == NULL) {Py_DECREF(new); return NULL;}
 	
 	/* Compute x = x - mx */
-	obj1 = PyNumber_Subtract((PyObject *)new, obj2);
+	obj1 = PyEnsure_Array(PyNumber_Subtract((PyObject *)new, obj2));
 	Py_DECREF(obj2);
 	if (obj1 == NULL) {Py_DECREF(new); return NULL;}
 	
 	/* Compute x * x */
-	obj2 = PyArray_EnsureArray\
-		(PyArray_GenericBinaryFunction(obj1, obj1, n_ops.multiply));
+	obj2 = PyArray_EnsureArray					\
+		(PyArray_GenericBinaryFunction((PyAO *)obj1, obj1, n_ops.multiply));
 	Py_DECREF(obj1);
 	if (obj2 == NULL) {Py_DECREF(new); return NULL;}
 
@@ -689,7 +689,8 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, int variance)
 		Py_DECREF(obj1);
 	}
 	if (PyArray_CheckExact(self)) return ret;
-	return PyArray_View(ret, NULL, self->ob_type);
+	ret = PyArray_EnsureArray(ret);
+	return PyArray_View((PyAO *)ret, NULL, self->ob_type);
 }
 
 
@@ -904,7 +905,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max)
 	Py_DECREF(res1); 
 	if (res3 == NULL) return NULL;
 
-	selector = PyArray_EnsureArray(PyNumber_Add(res2, res3));
+	selector = PyArray_EnsureAnyArray(PyNumber_Add(res2, res3));
 	Py_DECREF(res2);
 	Py_DECREF(res3);
 	if (selector == NULL) return NULL;
@@ -1070,7 +1071,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 		n1 = self->dimensions[0];
 		for (i=0; i<n1; i++) {
 			new = PyInt_FromLong((long) i);
-			sel = PyArray_EnsureArray(PyObject_GetItem((PyObject *)self, new));
+			sel = PyArray_EnsureAnyArray(PyObject_GetItem((PyObject *)self, new));
 			Py_DECREF(new);
 			if (sel == NULL) {
 				Py_DECREF(self);
@@ -2928,7 +2929,7 @@ PyArray_ArgMin(PyArrayObject *ap, int axis)
 	else 
 		obj = PyInt_FromLong((long) 0);
 	
-	new = PyArray_EnsureArray(PyNumber_Subtract(obj, (PyObject *)ap));
+	new = PyArray_EnsureAnyArray(PyNumber_Subtract(obj, (PyObject *)ap));
 	Py_DECREF(obj);
 	if (new == NULL) return NULL;
 	ret = PyArray_ArgMax((PyArrayObject *)new, axis);
@@ -5698,7 +5699,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
 	zero = PyInt_FromLong((long) 0);
 
-	obj = PyArray_EnsureArray(PyArray_GenericBinaryFunction(arr, zero, 
+	obj = PyArray_EnsureAnyArray(PyArray_GenericBinaryFunction(arr, zero, 
 								n_ops.not_equal));
 	Py_DECREF(zero);
 	Py_DECREF(arr);

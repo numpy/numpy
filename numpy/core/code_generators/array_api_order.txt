@@ -31,6 +31,7 @@ PyArray_FromDims
 PyArray_FromDimsAndDataAndDescr
 PyArray_FromAny
 PyArray_EnsureArray
+PyArray_EnsureAnyArray
 PyArray_FromFile
 PyArray_FromString
 PyArray_FromBuffer

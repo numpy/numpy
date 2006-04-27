@@ -3399,8 +3399,9 @@ array_contains(PyArrayObject *self, PyObject *el)
 
         PyObject *res;
         int ret;
-
-        res = PyArray_EnsureArray(PyObject_RichCompare((PyObject *)self, el, Py_EQ));
+	
+        res = PyArray_EnsureAnyArray(PyObject_RichCompare((PyObject *)self, 
+							  el, Py_EQ));
         if (res == NULL) return -1;
         ret = array_any_nonzero((PyArrayObject *)res);
         Py_DECREF(res);
@@ -7008,6 +7009,14 @@ PyArray_EnsureArray(PyObject *op)
         new = PyArray_FromAny(op, NULL, 0, 0, ENSUREARRAY, NULL);
         Py_DECREF(op);
         return new;
+}
+
+/*OBJECT_API*/
+static PyObject *
+PyArray_EnsureAnyArray(PyObject *op)
+{
+	if (op && PyArray_Check(op)) return op;
+	return PyArray_EnsureArray(op);
 }
 
 /*OBJECT_API
