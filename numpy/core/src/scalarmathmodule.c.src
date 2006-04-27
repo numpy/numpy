@@ -195,6 +195,17 @@ static void
 #define @name@_ctype_floor_divide @name@_cfloat_divide
 /**end repeat**/
 
+
+/**begin repeat
+   #name=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
+**/
+void
+@name@_ctype_invert(@name@ a, @name@ *out)
+{
+    *out = ~a;
+}
+/**end repeat**/
+
 /*** END OF BASIC CODE **/
 
 
