@@ -204,6 +204,16 @@ static void
 /**end repeat**/
 
 /**begin repeat
+   #name= float, double, longdouble#
+   #fun= powf, pow, powl#
+**/
+static void
+@name@_ctype_power(@name@ a, @name@ b, @name@ *out) {
+    *out = @fun@(a, b);
+}
+/**end repeat**/
+
+/**begin repeat
    #name=byte, short, int, long, longlong, float, double, longdouble#
 **/
 static void
