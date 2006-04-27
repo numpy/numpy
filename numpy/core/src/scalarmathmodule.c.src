@@ -203,6 +203,30 @@ static void
 #define @name@_ctype_floor_divide @name@_cfloat_divide
 /**end repeat**/
 
+#define NOP
+/**begin repeat
+   #name=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+   #fun= abs,  NOP,   abs,   NOP,    abs, NOP,  labs, NOP,   llabs,    NOP,       fabsf, fabs,   fabsl#   
+**/
+static void
+@name@_ctype_absolute(@name@ a, @name@ *out)
+{
+    *out = @fun@(a);
+}
+/**end repeat**/
+
+/**begin repeat
+   #name= cfloat, cdouble, clongdouble#
+   #sqrt= sqrtf, sqrt, sqrtl#
+**/
+static void
+@name@_ctype_absolute(@name@ a, @name@ *out)
+{
+    out->real = @sqrt@(a.real*a.real + a.imag*a.imag);
+    out->imag = 0;
+}
+/**end repeat**/
+
 /**begin repeat
    #name=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
 **/
