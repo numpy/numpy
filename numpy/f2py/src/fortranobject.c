@@ -543,6 +543,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 		  NULL,NULL,0,
 		  !(intent&F2PY_INTENT_C),
 		  NULL);
+    if (arr==NULL) return NULL;
     if (!(intent & F2PY_INTENT_CACHE))
       PyArray_FILLWBYTE(arr, 0);
     return arr;
