@@ -160,6 +160,46 @@ static void
 /**end repeat**/
 
 /**begin repeat
+   #name=byte,ubyte,short,ushort,int,uint,long,ulong#
+   #big=(int,uint)*2,(longlong,ulonglong)*2#
+   #NAME=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG#
+   #BIG=(INT,UINT)*2,(LONGLONG,ULONGLONG)*2#
+   #neg=(1,0)*4#
+ **/
+#if SIZEOF_@BIG@ > SIZEOF_@NAME@
+static void
+@name@_ctype_multiply(@name@ a, @name@ b, @name@ *out) {
+        @big@ temp;
+        temp = ((@big@) a) * ((@big@) b);
+        *out = (@name@) temp;
+#if @neg@
+        if (temp > MAX_@NAME@ || temp < MIN_@NAME@)
+#else
+        if (temp > MAX_@NAME@) 
+#endif
+                generate_overflow_error();
+        return;
+}
+#endif
+/**end repeat**/
+
+/**begin repeat
+   #name=int,uint,long,ulong,longlong,ulonglong#
+   #NAME=INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+   #char=(s,u)*3
+ **/
+#if SIZEOF_LONGLONG == SIZEOF_@NAME@
+static void
+@name@_ctype_multiply(@name@ a, @name@ b, @name@ *out) {
+        *out = a * b;
+        if (@char@longlong_overflow(a, b))
+                generate_overflow_error();
+        return;
+}
+#endif
+/**end repeat**/
+
+/**begin repeat
    #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*3#
    #oper=and*10, xor*10, or*10#
    #op=&*10, ^*10, |*10#
@@ -167,20 +207,41 @@ static void
 #define @name@_ctype_@oper@(arg1, arg2, out) *(out) = (arg1) @op@ (arg2)
 /**end repeat**/
 
+
+
+#ifndef HAVE_LONGDOUBLE_FUNCS
+#ifdef floorl
+#undef floorl
+#endif
+longdouble floorl(longdouble x) {
+	return (longdouble) floor((double)x);
+}
+#endif
+#ifndef HAVE_FLOOR_FUNCS
+#ifdef floorf
+#undef floorf
+#endif
+float floorf(float x) {
+	return (float) floor((double)x);
+}
+#endif
+
 /**begin repeat
    #name=float, double, longdouble#
+   #c=f,,l#
 **/
 #define @name@_ctype_add(a, b, outp) *(outp) = a + b
 #define @name@_ctype_subtract(a, b, outp) *(outp) = a - b
 #define @name@_ctype_multiply(a, b, outp) *(outp) = a * b
 #define @name@_ctype_divide(a, b, outp) *(outp) = a / b
 #define @name@_ctype_true_divide @name@_ctype_divide
-#define @name@_ctype_floor_divide @name@_ctype_divide
+#define @name@_ctype_floor_divide(a, b, outp) *(outp) = floor@c@((a) / (b))
 /**end repeat**/
 
 /**begin repeat
    #name=cfloat, cdouble, clongdouble#
    #rtype=float, double, longdouble#
+   #c=f,,l#
 **/
 #define @name@_ctype_add(a, b, outp) do{		\
     (outp)->real = (a).real + (b).real;			\
@@ -200,7 +261,12 @@ static void
     (outp)->imag = ((a).imag*(b).real - (a).real*(b).imag)/d;	\
     }while(0)
 #define @name@_ctype_true_divide @name@_cfloat_divide
-#define @name@_ctype_floor_divide @name@_cfloat_divide
+#define @name@_ctype_floor_divide(a, b, outp) do {               \
+        @rtype@ d = (a).real*(b).real + (b).imag*(b).imag;       \
+        (outp)->real = ((a).real*(b).real + (a).imag*(b).imag) / \
+        ((a).real*(b).real + (b).imag*(b).imag);                 \
+        (outp)->imag = 0;                                        \
+        }while(0)
 /**end repeat**/
 
 /**begin repeat
