@@ -4,8 +4,6 @@
    that does not go through the ufunc machinery  
 
    but still supports error-modes. 
-
-   NOT FINISHED
 */
 
 #include "Python.h"
@@ -901,6 +899,7 @@ get_functions(void)
     void **funcdata;
     char *signatures;
     int i, j;
+    int ret = -1;
 	
     /* Get the nc_pow functions */
     /* Get the pow functions */
@@ -939,10 +938,10 @@ get_functions(void)
     _basic_longdouble_floor = funcdata[j+2];
 
     Py_DECREF(obj);
-    
+    ret = 0;
  fail:
     Py_DECREF(mm);
-    return -1;
+    return ret;
 }
 
 static void *saved_tables[9];
