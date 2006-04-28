@@ -425,10 +425,11 @@ _@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1,
 /**begin repeat
    #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*14, (float, double, longdouble, cfloat, cdouble, clongdouble)*9#
    #Name=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong)*14, (Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*9#
-   #oper=add*10, subtract*10, multiply*10, divide*10, remainder*10, divmod*10, power*10, floor_divide*10, lshift*10, rshift*10, true_divide*10, and*10, or*10, xor*10, add*6, subtract*6, multiply*6, divide*6, remainder*6, divmod*6, power*6, floor_divide*6, true_divide*6#
+   #oper=add*10, subtract*10, multiply*10, divide*10, remainder*10, divmod*10, power*10, floor_divide*10, lshift*10, rshift*10, and*10, or*10, xor*10, true_divide*10, add*6, subtract*6, multiply*6, divide*6, remainder*6, divmod*6, power*6, floor_divide*6, true_divide*6#
    #fperr=1*110,0*30,1*54#
    #power=0*60,1*10,0*106,1*6,0*12#
    #otyp=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*13, float*4, double*6, (float, double, longdouble, cfloat, cdouble, clongdouble)*9#
+   #OName=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong)*13, Float*4, Double*6, (Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*9#
 **/
 
 #if @power@
@@ -440,7 +441,8 @@ static PyObject *
 #endif
 {
     PyObject *ret;
-    @name@ arg1, arg2, out;
+    @name@ arg1, arg2;
+    @otyp@ out;
 #if @fperr@
     int retstatus;
 #endif    
@@ -481,8 +483,8 @@ static PyObject *
 	    return NULL;
     }
 #endif
-    ret = PyArrayScalar_New(@Name@);
-    PyArrayScalar_VAL(ret, @Name@) = out;
+    ret = PyArrayScalar_New(@OName@);
+    PyArrayScalar_VAL(ret, @OName@) = out;
     return ret;
 }
 /**end repeat**/
