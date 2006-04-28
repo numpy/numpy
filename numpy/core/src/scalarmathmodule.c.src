@@ -200,9 +200,9 @@ static void
 /**end repeat**/
 
 /**begin repeat
-   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*3#
-   #oper=and*10, xor*10, or*10#
-   #op=&*10, ^*10, |*10#
+   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*5#
+   #oper=and*10, xor*10, or*10, lshift*10, rshift*10#
+   #op=&*10, ^*10, |*10, <<*10, >>*10#
  **/
 #define @name@_ctype_@oper@(arg1, arg2, out) *(out) = (arg1) @op@ (arg2)
 /**end repeat**/
