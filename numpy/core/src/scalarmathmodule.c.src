@@ -251,6 +251,16 @@ static void
 /**end repeat**/
 
 /**begin repeat
+   #name=float,double,longdouble#
+   #c=f,,l#
+**/
+static void 
+@name@_ctype_remainder(@name@ a, @name@ b, @name@ *out) { 
+    *out = a - floor@c@(a/b)*b;
+} 
+/**end repeat**/ 
+
+/**begin repeat
    #name= float, double, longdouble#
    #fun= powf, pow, powl#
 **/
