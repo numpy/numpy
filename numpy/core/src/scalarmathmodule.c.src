@@ -163,10 +163,10 @@ static void
    #name=byte,ubyte,short,ushort,int,uint,long,ulong#
    #big=(int,uint)*2,(longlong,ulonglong)*2#
    #NAME=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG#
-   #BIG=(INT,UINT)*2,(LONGLONG,ULONGLONG)*2#
+   #SIZE=INT*4,LONGLONG*4#
    #neg=(1,0)*4#
  **/
-#if SIZEOF_@BIG@ > SIZEOF_@NAME@
+#if SIZEOF_@SIZE@ > SIZEOF_@NAME@
 static void
 @name@_ctype_multiply(@name@ a, @name@ b, @name@ *out) {
         @big@ temp;
@@ -185,10 +185,10 @@ static void
 
 /**begin repeat
    #name=int,uint,long,ulong,longlong,ulonglong#
-   #NAME=INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+   #SIZE=INT*2,LONG*2,LONGLONG*2#
    #char=(s,u)*3#
  **/
-#if SIZEOF_LONGLONG == SIZEOF_@NAME@
+#if SIZEOF_LONGLONG == SIZEOF_@SIZE@
 static void
 @name@_ctype_multiply(@name@ a, @name@ b, @name@ *out) {
         *out = a * b;
@@ -197,6 +197,31 @@ static void
         return;
 }
 #endif
+/**end repeat**/
+
+/**begin repeat
+   #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
+ **/
+static void
+@name@_ctype_divide(@name@ a, @name@ b, @name@ *out) {
+	if (b == 0) {
+		generate_divbyzero_error();
+		*out = 0;
+	}
+	else {
+		*out = a / b;
+	}
+}
+#define @name@_ctype_floor_divide @name@_ctype_divide
+/**end repeat**/
+
+
+/**begin repeat
+   #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
+   #otyp=float*4, double*6#
+ **/
+#define @name@_ctype_true_divide(a, b, out)	\
+	*(out) = ((@otyp@) (a)) / ((@otyp@) (b));
 /**end repeat**/
 
 /**begin repeat
@@ -400,9 +425,10 @@ _@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1,
 /**begin repeat
    #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*14, (float, double, longdouble, cfloat, cdouble, clongdouble)*9#
    #Name=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong)*14, (Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*9#
-   #oper=add*10, subtract*10, multiply*10, divide*10, remainder*10, divmod*10, power*10, floor_divide*10, true_divide*10, lshift*10, rshift*10, and*10, or*10, xor*10, add*6, subtract*6, multiply*6, divide*6, remainder*6, divmod*6, power*6, floor_divide*6, true_divide*6#
+   #oper=add*10, subtract*10, multiply*10, divide*10, remainder*10, divmod*10, power*10, floor_divide*10, lshift*10, rshift*10, true_divide*10, and*10, or*10, xor*10, add*6, subtract*6, multiply*6, divide*6, remainder*6, divmod*6, power*6, floor_divide*6, true_divide*6#
    #fperr=1*110,0*30,1*54#
    #power=0*60,1*10,0*106,1*6,0*12#
+   #otyp=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*13, float*4, double*6, (float, double, longdouble, cfloat, cdouble, clongdouble)*9#
 **/
 
 #if @power@
