@@ -8,9 +8,8 @@
 
 #include "Python.h"
 #include "numpy/arrayobject.h"
-#include "numpy/arrayscalars.h"
 #include "numpy/ufuncobject.h"
-
+#include "numpy/arrayscalars.h"
 
 
 /** numarray adapted routines.... **/
@@ -161,10 +160,11 @@ static void
    #name=byte,ubyte,short,ushort,int,uint,long,ulong#
    #big=(int,uint)*2,(longlong,ulonglong)*2#
    #NAME=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG#
+   #SIZENAME=BYTE*2,SHORT*2,INT*2,LONG*2#
    #SIZE=INT*4,LONGLONG*4#
    #neg=(1,0)*4#
 **/
-#if SIZEOF_@SIZE@ > SIZEOF_@NAME@
+#if SIZEOF_@SIZE@ > SIZEOF_@SIZENAME@
 static void
 @name@_ctype_multiply(@name@ a, @name@ b, @name@ *out) {
     @big@ temp;
