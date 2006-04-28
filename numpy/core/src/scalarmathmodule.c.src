@@ -201,6 +201,7 @@ static void
 
 /**begin repeat
    #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
+   #neg=(1,0)*2#
  **/
 static void
 @name@_ctype_divide(@name@ a, @name@ b, @name@ *out) {
@@ -208,13 +209,18 @@ static void
 		generate_divbyzero_error();
 		*out = 0;
 	}
+#if @neg@
+	else if (b == -1 && a < 0 && a == -a) {
+		generate_overflow_error();
+		*out = a / b;
+	}
+#endif
 	else {
 		*out = a / b;
 	}
 }
 #define @name@_ctype_floor_divide @name@_ctype_divide
 /**end repeat**/
-
 
 /**begin repeat
    #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
@@ -284,6 +290,15 @@ static void
     *out = a - floor@c@(a/b)*b;
 } 
 /**end repeat**/ 
+
+/**begin repeat
+   #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
+ **/
+#define @name@_ctype_divmod(a, b, out, out2) {	\
+	@name@_ctype_floor_divide(a, b, out);	\
+	@name@_ctype_remainder(a, b, out2);	\
+	}
+/**end repeat**/
 
 /**begin repeat
    #name= float, double, longdouble#
@@ -428,6 +443,7 @@ _@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1,
    #oper=add*10, subtract*10, multiply*10, divide*10, remainder*10, divmod*10, power*10, floor_divide*10, lshift*10, rshift*10, and*10, or*10, xor*10, true_divide*10, add*6, subtract*6, multiply*6, divide*6, remainder*6, divmod*6, power*6, floor_divide*6, true_divide*6#
    #fperr=1*110,0*30,1*54#
    #power=0*60,1*10,0*106,1*6,0*12#
+   #twoout=0*50,1*10,0*110,1*6,0*18#
    #otyp=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*13, float*4, double*6, (float, double, longdouble, cfloat, cdouble, clongdouble)*9#
    #OName=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong)*13, Float*4, Double*6, (Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*9#
 **/
@@ -443,6 +459,11 @@ static PyObject *
     PyObject *ret;
     @name@ arg1, arg2;
     @otyp@ out;
+#if @twoout@
+    @otyp@ out2;
+    PyObject *obj;
+#endif
+
 #if @fperr@
     int retstatus;
 #endif    
@@ -468,7 +489,11 @@ static PyObject *
 
     /* here we do the actual calculation with arg1 and arg2 */
     /* as a function call. */
+#if @twoout@
+    @name@_ctype_@oper@(arg1, arg2, &out, &out2);
+#else
     @name@_ctype_@oper@(arg1, arg2, &out);
+#endif
 
 #if @fperr@
     /* Check status flag.  If it is set, then look up what to do */
@@ -483,8 +508,23 @@ static PyObject *
 	    return NULL;
     }
 #endif
-    ret = PyArrayScalar_New(@OName@);
+
+#if @tupout@
+    ret = PyTuple_New(2);
+    if (ret==NULL) return NULL;
+    obj = PyArrayScalar_New(@OName@);
+    if (obj == NULL) {Py_DECREF(ret); return;}
     PyArrayScalar_VAL(ret, @OName@) = out;
+    PyTuple_SET_ITEM(ret, 0, obj);
+    obj = PyArrayScalar_New(@OName@);
+    if (obj == NULL) {Py_DECREF(ret); return;}
+    PyArrayScalar_VAL(ret, @OName@) = out2;
+    PyTuple_SET_ITEM(ret, 1, obj);
+#else
+    ret = PyArrayScalar_New(@OName@);
+    if (ret==NULL) return NULL;
+    PyArrayScalar_VAL(ret, @OName@) = out;
+#endif
     return ret;
 }
 /**end repeat**/
