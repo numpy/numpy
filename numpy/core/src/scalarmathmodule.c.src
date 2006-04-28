@@ -109,7 +109,7 @@ static int slonglong_overflow(longlong a0, longlong b0)
 BINARY:
 
 add, subtract, multiply, divide, remainder, divmod, power, 
-floor, divide, true_divide
+floor_divide, true_divide
 
 lshift, rshift, and, or, xor (integers only)
 
@@ -165,20 +165,20 @@ static void
    #NAME=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG#
    #SIZE=INT*4,LONGLONG*4#
    #neg=(1,0)*4#
- **/
+**/
 #if SIZEOF_@SIZE@ > SIZEOF_@NAME@
 static void
 @name@_ctype_multiply(@name@ a, @name@ b, @name@ *out) {
-        @big@ temp;
-        temp = ((@big@) a) * ((@big@) b);
-        *out = (@name@) temp;
+    @big@ temp;
+    temp = ((@big@) a) * ((@big@) b);
+    *out = (@name@) temp;
 #if @neg@
-        if (temp > MAX_@NAME@ || temp < MIN_@NAME@)
+    if (temp > MAX_@NAME@ || temp < MIN_@NAME@)
 #else
         if (temp > MAX_@NAME@) 
 #endif
-                generate_overflow_error();
-        return;
+	    generate_overflow_error();
+    return;
 }
 #endif
 /**end repeat**/
@@ -187,67 +187,100 @@ static void
    #name=int,uint,long,ulong,longlong,ulonglong#
    #SIZE=INT*2,LONG*2,LONGLONG*2#
    #char=(s,u)*3#
- **/
+**/
 #if SIZEOF_LONGLONG == SIZEOF_@SIZE@
 static void
 @name@_ctype_multiply(@name@ a, @name@ b, @name@ *out) {
-        *out = a * b;
-        if (@char@longlong_overflow(a, b))
-                generate_overflow_error();
-        return;
+    *out = a * b;
+    if (@char@longlong_overflow(a, b))
+	generate_overflow_error();
+    return;
 }
 #endif
 /**end repeat**/
 
 /**begin repeat
    #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
-   #neg=(1,0)*2#
- **/
+   #neg=(1,0)*5#
+**/
 static void
 @name@_ctype_divide(@name@ a, @name@ b, @name@ *out) {
-	if (b == 0) {
-		generate_divbyzero_error();
-		*out = 0;
-	}
+    if (b == 0) {
+	generate_divbyzero_error();
+	*out = 0;
+    }
 #if @neg@
-	else if (b == -1 && a < 0 && a == -a) {
-		generate_overflow_error();
-		*out = a / b;
-	}
+    else if (b == -1 && a < 0 && a == -a) {
+	generate_overflow_error();
+	*out = a / b;
+    }
 #endif
-	else {
-		*out = a / b;
-	}
+    else {
+	*out = a / b;
+    }
 }
 #define @name@_ctype_floor_divide @name@_ctype_divide
+static void
+@name@_ctype_remainder(@name@ a, @name@ b, @name@ *out) {
+    if (a == 0 || b == 0) {
+	if (b == 0) generate_divbyzero_error();
+	*out = 0;
+    }
+#if @neg@
+    else if ((a > 0) == (b > 0)) {
+	*out = a % b;
+    }
+    else { /* handled like Python does */
+	*out = a % b;
+	if (*out) *out += b;
+    }
+#else
+    *out = a % b;
+#endif
+}
 /**end repeat**/
 
 /**begin repeat
    #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
    #otyp=float*4, double*6#
- **/
+**/
 #define @name@_ctype_true_divide(a, b, out)	\
-	*(out) = ((@otyp@) (a)) / ((@otyp@) (b));
+    *(out) = ((@otyp@) (a)) / ((@otyp@) (b));
 /**end repeat**/
+
+/* b will always be positive in this call */
+/**begin repeat
+   #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
+**/
+static void
+@name@_ctype_power(@name@ a, @name@ b, @name@ *out) {
+    
+}
+/**end repeat**/
+
+
+
+/* QUESTION:  Should we check for overflow / underflow in (l,r)shift? */
 
 /**begin repeat
    #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*5#
    #oper=and*10, xor*10, or*10, lshift*10, rshift*10#
    #op=&*10, ^*10, |*10, <<*10, >>*10#
- **/
+**/
 #define @name@_ctype_@oper@(arg1, arg2, out) *(out) = (arg1) @op@ (arg2)
 /**end repeat**/
 
 /**begin repeat
    #name=float, double, longdouble#
-   #c=f,,l#
 **/
+static @name@ (*_basic_@name@_floor)(@name@);
 #define @name@_ctype_add(a, b, outp) *(outp) = a + b
 #define @name@_ctype_subtract(a, b, outp) *(outp) = a - b
 #define @name@_ctype_multiply(a, b, outp) *(outp) = a * b
 #define @name@_ctype_divide(a, b, outp) *(outp) = a / b
 #define @name@_ctype_true_divide @name@_ctype_divide
-#define @name@_ctype_floor_divide(a, b, outp) *(outp) = floor@c@((a) / (b))
+#define @name@_ctype_floor_divide(a, b, outp) \
+    *(outp) = _basic_@name@_floor((a) / (b))
 /**end repeat**/
 
 /**begin repeat
@@ -255,13 +288,13 @@ static void
    #rtype=float, double, longdouble#
    #c=f,,l#
 **/
-#define @name@_ctype_add(a, b, outp) do{		\
-    (outp)->real = (a).real + (b).real;			\
-    (outp)->imag = (a).imag + (b).imag;			\
+#define @name@_ctype_add(a, b, outp) do{	\
+    (outp)->real = (a).real + (b).real;		\
+    (outp)->imag = (a).imag + (b).imag;		\
     }while(0)
-#define @name@_ctype_subtract(a, b, outp) do{		\
-    (outp)->real = (a).real - (b).real;			\
-    (outp)->imag = (a).imag - (b).imag;			\
+#define @name@_ctype_subtract(a, b, outp) do{	\
+    (outp)->real = (a).real - (b).real;		\
+    (outp)->imag = (a).imag - (b).imag;		\
     }while(0)
 #define @name@_ctype_multiply(a, b, outp) do{			\
     (outp)->real = (a).real * (b).real - (a).imag * (b).imag;	\
@@ -273,52 +306,57 @@ static void
     (outp)->imag = ((a).imag*(b).real - (a).real*(b).imag)/d;	\
     }while(0)
 #define @name@_ctype_true_divide @name@_ctype_divide
-#define @name@_ctype_floor_divide(a, b, outp) do {               \
-        @rtype@ d = (a).real*(b).real + (b).imag*(b).imag;       \
-        (outp)->real = ((a).real*(b).real + (a).imag*(b).imag) / \
-        ((a).real*(b).real + (b).imag*(b).imag);                 \
-        (outp)->imag = 0;                                        \
-        }while(0)
+#define @name@_ctype_floor_divide(a, b, outp) do {		\
+    (outp)->real = ((a).real*(b).real + (a).imag*(b).imag) /	\
+    ((a).real*(b).real + (b).imag*(b).imag);			\
+    (outp)->imag = 0;						\
+    }while(0)
 /**end repeat**/
 
 /**begin repeat
    #name=float,double,longdouble#
-   #c=f,,l#
 **/
 static void 
 @name@_ctype_remainder(@name@ a, @name@ b, @name@ *out) { 
-    *out = a - floor@c@(a/b)*b;
+    *out = a - _basic_@name@_floor(a/b)*b;
 } 
 /**end repeat**/ 
 
+
+
 /**begin repeat
    #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
- **/
+**/
 #define @name@_ctype_divmod(a, b, out, out2) {	\
-	@name@_ctype_floor_divide(a, b, out);	\
-	@name@_ctype_remainder(a, b, out2);	\
-	}
+    @name@_ctype_floor_divide(a, b, out);	\
+    @name@_ctype_remainder(a, b, out2);		\
+    }
 /**end repeat**/
 
 /**begin repeat
    #name= float, double, longdouble#
-   #fun= powf, pow, powl#
 **/
+static @name@ (*_basic_@name@_pow)(@name@ a, @name@ b);
 static void
 @name@_ctype_power(@name@ a, @name@ b, @name@ *out) {
-    *out = @fun@(a, b);
+    *out = _basic_@name@_pow(a, b);
 }
 /**end repeat**/
 
 /**begin repeat
-   #name=byte, short, int, long, longlong, float, double, longdouble#
+   #name=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+   #uns=(1,0)*5,0*3#
 **/
 static void
 @name@_ctype_negative(@name@ a, @name@ *out)
 {
+#if @uns@
+    generate_overflow_error();
+#endif
     *out = -a;
 }
 /**end repeat**/
+
 
 /**begin repeat
    #name= cfloat, cdouble, clongdouble#
@@ -340,6 +378,30 @@ static void
     *out = a;
 }
 /**end repeat**/
+
+/* Get the nc_powf, nc_pow, and nc_powl functions from 
+   the data area of the power ufunc in umathmodule. 
+*/
+
+
+/**begin repeat
+   #name=cfloat, cdouble, clongdouble#
+**/
+static void
+@name@_ctype_positive(@name@ a, @name@ *out)
+{
+    out->real = a.real;
+    out->imag = a.imag;
+}
+static void (*_basic_@name@_pow)(@name@ *, @name@ *, @name@ *);
+static void
+@name@_ctype_power(@name@ a, @name@ b, @name@ *out)
+{
+    _basic_@name@_pow(&a, &b, out);
+}
+/**end repeat**/
+
+
 
 #define NOP
 /**begin repeat
@@ -438,23 +500,17 @@ _@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1,
 /**end repeat**/
 
 /**begin repeat
-   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*14, (float, double, longdouble, cfloat, cdouble, clongdouble)*9#
-   #Name=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong)*14, (Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*9#
-   #oper=add*10, subtract*10, multiply*10, divide*10, remainder*10, divmod*10, power*10, floor_divide*10, lshift*10, rshift*10, and*10, or*10, xor*10, true_divide*10, add*6, subtract*6, multiply*6, divide*6, remainder*6, divmod*6, power*6, floor_divide*6, true_divide*6#
-   #fperr=1*110,0*30,1*54#
-   #power=0*60,1*10,0*106,1*6,0*12#
-   #twoout=0*50,1*10,0*110,1*6,0*18#
-   #otyp=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*13, float*4, double*6, (float, double, longdouble, cfloat, cdouble, clongdouble)*9#
-   #OName=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong)*13, Float*4, Double*6, (Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*9#
+   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*13, (float, double, longdouble, cfloat, cdouble, clongdouble)*6, (float, double, longdouble)*2#
+   #Name=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong)*13, (Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*6, (Float, Double, LongDouble)*2#
+   #oper=add*10, subtract*10, multiply*10, divide*10, remainder*10, divmod*10, floor_divide*10, lshift*10, rshift*10, and*10, or*10, xor*10, true_divide*10, add*6, subtract*6, multiply*6, divide*6, floor_divide*6, true_divide*6, divmod*3, remainder*3#
+   #fperr=1*70,0*50,1*52#
+   #twoout=0*50,1*10,0*106,1*3,0*3#
+   #otyp=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*12, float*4, double*6, (float, double, longdouble, cfloat, cdouble, clongdouble)*6, (float, double, longdouble)*2#
+   #OName=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong)*12, Float*4, Double*6, (Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*6, (Float, Double, LongDouble)*2#
 **/
 
-#if @power@
-static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *c)
-#else
 static PyObject *
 @name@_@oper@(PyObject *a, PyObject *b)
-#endif
 {
     PyObject *ret;
     @name@ arg1, arg2;
@@ -476,11 +532,7 @@ static PyObject *
         return Py_NotImplemented;
     case -2: /* use default handling */
 	if (PyErr_Occurred()) return NULL;
-#if @power@
-        return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
-#else
         return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
-#endif
     }
 
 #if @fperr@
@@ -509,15 +561,15 @@ static PyObject *
     }
 #endif
 
-#if @tupout@
+#if @twoout@
     ret = PyTuple_New(2);
     if (ret==NULL) return NULL;
     obj = PyArrayScalar_New(@OName@);
-    if (obj == NULL) {Py_DECREF(ret); return;}
+    if (obj == NULL) {Py_DECREF(ret); return NULL;}
     PyArrayScalar_VAL(ret, @OName@) = out;
     PyTuple_SET_ITEM(ret, 0, obj);
     obj = PyArrayScalar_New(@OName@);
-    if (obj == NULL) {Py_DECREF(ret); return;}
+    if (obj == NULL) {Py_DECREF(ret); return NULL;}
     PyArrayScalar_VAL(ret, @OName@) = out2;
     PyTuple_SET_ITEM(ret, 1, obj);
 #else
@@ -529,6 +581,98 @@ static PyObject *
 }
 /**end repeat**/
 
+/**begin repeat
+   #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float, double, longdouble, cfloat, cdouble, clongdouble#
+   #Name=Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble#
+   #otyp=float*4, double*6, float, double, longdouble, cfloat, cdouble, clongdouble#
+   #OName=Float*4, Double*6, Float, Double, LongDouble, CFloat, CDouble, CLongDouble#
+   #isint=(1,0)*5,0*6#
+   #cmplx=0*13,1*3#
+**/
+
+static PyObject *
+@name@_power(PyObject *a, PyObject *b, PyObject *c)
+{
+    PyObject *ret;
+    @name@ arg1, arg2, out;
+    @otyp@ out1;
+    int retstatus;
+	
+    switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
+    case 0:
+        break;
+    case -1: /* can't cast both safely use different add function */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    case -2: /* use default handling */
+	if (PyErr_Occurred()) return NULL;
+        return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+    }
+
+    PyUFunc_clearfperr();
+
+    /* here we do the actual calculation with arg1 and arg2 */
+    /* as a function call. */
+#if @cmplx@
+    if (arg2.real == 0 && arg1.real == 0) {
+	out1.real = out.real = 1.0;
+	out1.imag = out.imag = 0.0;
+    }
+#else
+    if (arg2 == 0) {
+	out1 = out = 1;
+    }    
+#endif
+#if @isint@
+    else if (arg2 < 0) {
+	@name@_ctype_power(arg1, -arg2, &out);
+	out1 = 1.0 / out;
+    }
+#endif
+    else {
+	@name@_ctype_power(arg1, arg2, &out);
+    }
+
+    /* Check status flag.  If it is set, then look up what to do */
+    retstatus = PyUFunc_getfperr();
+    if (retstatus) {
+	int bufsize, errmask;
+	PyObject *errobj;
+	if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask, 
+				&errobj) < 0) 
+	    return NULL;
+	if (PyUFunc_handlefperr(errmask, errobj, retstatus))
+	    return NULL;
+    }
+
+#if @isint@
+    if (arg2 < 0) {
+	ret = PyArrayScalar_New(@OName@);
+	if (ret==NULL) return NULL;
+	PyArrayScalar_VAL(ret, @OName@) = out1;
+    }
+    else {
+	ret = PyArrayScalar_New(@Name@);
+	if (ret==NULL) return NULL;
+	PyArrayScalar_VAL(ret, @Name@) = out;
+    }
+#else
+    ret = PyArrayScalar_New(@Name@);
+    if (ret==NULL) return NULL;
+    PyArrayScalar_VAL(ret, @Name@) = out;
+#endif
+    
+    return ret;
+}
+/**end repeat**/
+
+
+/**begin repeat
+#name=(cfloat,cdouble,clongdouble)*2#
+#oper=divmod*3,remainder*3#
+**/
+#define @name@_@oper@ NULL
+/**end repeat**/
 
 /**begin repeat
    #name=(float,double,longdouble,cfloat,cdouble,clongdouble)*6#
@@ -539,9 +683,9 @@ static PyObject *
 
 
 /**begin repeat
-   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*4#
-   #Name=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*4#
-   #oper=negative*16, positive*16, absolute*16, invert*16#
+   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*3, byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
+   #Name=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*3, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong#
+   #oper=negative*16, positive*16, absolute*16, invert*10#
 **/
 static PyObject *
 @name@_@oper@(PyObject *a)
@@ -572,6 +716,11 @@ static PyObject *
 }
 /**end repeat**/
 
+/**begin repeat
+#name=float,double,longdouble,cfloat,cdouble,clongdouble#
+**/
+#define @name@_invert NULL
+/**end repeat**/
 
 /**begin repeat
    #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
@@ -745,6 +894,57 @@ add_scalarmath(void)
     /**end repeat**/
 }
 
+static int
+get_functions(void)
+{
+    PyObject *mm, *obj;
+    void **funcdata;
+    char *signatures;
+    int i, j;
+	
+    /* Get the nc_pow functions */
+    /* Get the pow functions */
+    mm = PyImport_ImportModule("numpy.core.umath");
+    if (mm == NULL) return -1;
+    
+    obj = PyObject_GetAttrString(mm, "power");
+    if (obj == NULL) goto fail;
+    funcdata = ((PyUFuncObject *)obj)->data;
+    signatures = ((PyUFuncObject *)obj)->types;
+    
+    i = 0;
+    j = 0;
+    while(signatures[i] != PyArray_FLOAT) {i+=3; j++;}
+    _basic_float_pow = funcdata[j];
+    _basic_double_pow = funcdata[j+1];
+    _basic_longdouble_pow = funcdata[j+2];
+    _basic_cfloat_pow = funcdata[j+3];
+    _basic_cdouble_pow = funcdata[j+4];
+    _basic_clongdouble_pow = funcdata[j+5];
+
+    Py_DECREF(obj);
+
+    /* Get the floor functions */
+
+    obj = PyObject_GetAttrString(mm, "floor");
+    if (obj == NULL) goto fail;
+    funcdata = ((PyUFuncObject *)obj)->data;
+    signatures = ((PyUFuncObject *)obj)->types;
+    
+    i = 0;
+    j = 0;
+    while(signatures[i] != PyArray_FLOAT) {i+=3; j++;}
+    _basic_float_floor = funcdata[j];
+    _basic_double_floor = funcdata[j+1];
+    _basic_longdouble_floor = funcdata[j+2];
+
+    Py_DECREF(obj);
+    
+ fail:
+    Py_DECREF(mm);
+    return -1;
+}
+
 static void *saved_tables[9];
 
 char doc_alterpyscalars[] = "";
@@ -832,6 +1032,8 @@ PyMODINIT_FUNC initscalarmath(void) {
 	
     if (import_array() < 0) return;
     if (import_umath() < 0) return;
+
+    if (get_functions() < 0) return;
 
     add_scalarmath();
 

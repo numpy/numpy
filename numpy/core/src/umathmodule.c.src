@@ -1211,8 +1211,6 @@ Py_get_one(PyObject *o)
 }
 
 
-static int numeric_zero = 0;
-
 /**begin repeat
 #TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
 #typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
@@ -1225,14 +1223,11 @@ static void
 	register intp os=steps[2], n=dimensions[0];
 	char *i1=args[0], *i2=args[1], *op=args[2];
 	@btyp@ x, y, v;
-        @typ@ z;
 
 	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
 		x = *((@typ@ *)i1);
 		y = *((@typ@ *)i2);
-		z = (@typ@) y;
-		if ((x < 0.0) && (y != z))  v = 1.0/numeric_zero;
-		else v = pow(x,y);
+		v = pow(x,y);
 		*((@typ@ *)op) = (@typ@) v;
 	}
 }
@@ -1574,7 +1569,6 @@ static void
 /**begin repeat
 #TYPE=BYTE,SHORT,INT,LONG,LONGLONG#
 #typ=byte, short, int, long, longlong#
-#ftyp=float*2,double*2,longdouble*1#
 #c=f*2,,,l*1#
 */
 static void
