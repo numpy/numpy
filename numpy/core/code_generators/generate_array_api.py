@@ -56,7 +56,7 @@ static void **PyArray_API=NULL;
 #define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[6])
 #define PyArray_NUMUSERTYPES (*(int *)PyArray_API[7])
 #define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[8])
-#define _PyArrayScalar_BoolValues (*(PyObject **)PyArray_API[9])
+#define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[9])
 
 %s
 

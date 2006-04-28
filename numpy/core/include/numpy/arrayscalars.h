@@ -125,11 +125,13 @@ typedef struct {
 } PyVoidScalarObject;
 
 
-#define PyArrayScalar_False ((PyObject *)&_PyArrayScalar_BoolValues[0])
-#define PyArrayScalar_True ((PyObject *)&_PyArrayScalar_BoolValues[1])
+#define PyArrayScalar_False ((PyObject *)(&(_PyArrayScalar_BoolValues[0])))
+#define PyArrayScalar_True ((PyObject *)(&(_PyArrayScalar_BoolValues[1])))
+#define PyArrayScalar_FromLong(i) \
+	((PyObject *)(&(_PyArrayScalar_BoolValues[((i)!=0)])))
 #define PyArrayScalar_RETURN_BOOL_FROM_LONG(i)			\
-	return Py_INCREF(&_PyArrayScalar_BoolValues[((i)!=0)]),	\
-		(PyObject *)&_PyArrayScalar_BoolValues[((i)!=0)]
+	return Py_INCREF(PyArrayScalar_FromLong(i)), \
+		PyArrayScalar_FromLong(i)
 #define PyArrayScalar_RETURN_FALSE		\
 	return Py_INCREF(PyArrayScalar_False),	\
 		PyArrayScalar_False

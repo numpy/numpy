@@ -824,10 +824,12 @@ static PyObject*
 	break;
     }
     
-    if (out) 
+    if (out) {
 	PyArrayScalar_RETURN_TRUE;
-    else
+    }
+    else {
 	PyArrayScalar_RETURN_FALSE;
+    }
 }
 /**end repeat**/
 
