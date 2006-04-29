@@ -273,7 +273,6 @@ static void
 **/
 static @name@ (*_basic_@name@_floor)(@name@);
 static @name@ (*_basic_@name@_sqrt)(@name@);
-static @name@ (*_basic_@name@_abs)(@name@);
 #define @name@_ctype_add(a, b, outp) *(outp) = a + b
 #define @name@_ctype_subtract(a, b, outp) *(outp) = a - b
 #define @name@_ctype_multiply(a, b, outp) *(outp) = a * b
@@ -409,7 +408,7 @@ static void
 
 
 /**begin repeat
-   #name=byte, short, int, long, longlong#
+   #name=byte, short, int, long, longlong, float, double, longdouble#
 **/
 static void
 @name@_ctype_absolute(@name@ a, @name@ *out)
@@ -417,17 +416,6 @@ static void
     *out = (a < 0 ? -a : a);
 }
 /**end repeat**/
-
-/**begin repeat
-   #name=float, double, longdouble#
-**/
-static void
-@name@_ctype_absolute(@name@ a, @name@ *out)
-{
-    *out = _basic_@name@_abs(a);
-}
-/**end repeat**/
-
 
 /**begin repeat
    #name= cfloat, cdouble, clongdouble#
@@ -985,19 +973,6 @@ get_functions(void)
     _basic_float_sqrt = funcdata[j];
     _basic_double_sqrt = funcdata[j+1];
     _basic_longdouble_sqrt = funcdata[j+2];
-    Py_DECREF(obj);
-
-    /* Get the abs functions */
-    obj = PyObject_GetAttrString(mm, "absolute");
-    if (obj == NULL) goto fail;
-    funcdata = ((PyUFuncObject *)obj)->data;
-    signatures = ((PyUFuncObject *)obj)->types;
-    i = 0;
-    j = 0;
-    while(signatures[i] != PyArray_FLOAT) {i+=2; j++;}
-    _basic_float_abs = funcdata[j];
-    _basic_double_abs = funcdata[j+1];
-    _basic_longdouble_abs = funcdata[j+2];
     Py_DECREF(obj);
 
     ret = 0;
