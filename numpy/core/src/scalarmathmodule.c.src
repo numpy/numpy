@@ -272,6 +272,8 @@ static void
    #name=float, double, longdouble#
 **/
 static @name@ (*_basic_@name@_floor)(@name@);
+static @name@ (*_basic_@name@_sqrt)(@name@);
+static @name@ (*_basic_@name@_abs)(@name@);
 #define @name@_ctype_add(a, b, outp) *(outp) = a + b
 #define @name@_ctype_subtract(a, b, outp) *(outp) = a - b
 #define @name@_ctype_multiply(a, b, outp) *(outp) = a * b
@@ -381,7 +383,6 @@ static void
    the data area of the power ufunc in umathmodule. 
 */
 
-
 /**begin repeat
    #name=cfloat, cdouble, clongdouble#
 **/
@@ -400,27 +401,42 @@ static void
 /**end repeat**/
 
 
-
-#define NOP
 /**begin repeat
-   #name=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
-   #fun= abs,  NOP,   abs,   NOP,    abs, NOP,  labs, NOP,   llabs,    NOP,       fabsf, fabs,   fabsl#   
+   #name=ubyte, ushort, uint, ulong, ulonglong#
+**/
+#define @name@_ctype_absolute @name@_ctype_positive
+/**end repeat**/
+
+
+/**begin repeat
+   #name=byte, short, int, long, longlong#
 **/
 static void
 @name@_ctype_absolute(@name@ a, @name@ *out)
 {
-    *out = @fun@(a);
+    *out = (a < 0 ? -a : a);
 }
 /**end repeat**/
 
 /**begin repeat
-   #name= cfloat, cdouble, clongdouble#
-   #sqrt= sqrtf, sqrt, sqrtl#
+   #name=float, double, longdouble#
 **/
 static void
 @name@_ctype_absolute(@name@ a, @name@ *out)
 {
-    out->real = @sqrt@(a.real*a.real + a.imag*a.imag);
+    *out = _basic_@name@_abs(a);
+}
+/**end repeat**/
+
+
+/**begin repeat
+   #name= cfloat, cdouble, clongdouble#
+   #rname= float, double, longdouble#
+**/
+static void
+@name@_ctype_absolute(@name@ a, @name@ *out)
+{
+    out->real = _basic_@rname@_sqrt(a.real*a.real + a.imag*a.imag);
     out->imag = 0;
 }
 /**end repeat**/
@@ -922,24 +938,47 @@ get_functions(void)
     _basic_cfloat_pow = funcdata[j+3];
     _basic_cdouble_pow = funcdata[j+4];
     _basic_clongdouble_pow = funcdata[j+5];
-
     Py_DECREF(obj);
 
     /* Get the floor functions */
-
     obj = PyObject_GetAttrString(mm, "floor");
     if (obj == NULL) goto fail;
     funcdata = ((PyUFuncObject *)obj)->data;
     signatures = ((PyUFuncObject *)obj)->types;
-    
     i = 0;
     j = 0;
-    while(signatures[i] != PyArray_FLOAT) {i+=3; j++;}
+    while(signatures[i] != PyArray_FLOAT) {i+=2; j++;}
     _basic_float_floor = funcdata[j];
     _basic_double_floor = funcdata[j+1];
     _basic_longdouble_floor = funcdata[j+2];
-
     Py_DECREF(obj);
+
+    /* Get the sqrt functions */
+    obj = PyObject_GetAttrString(mm, "sqrt");
+    if (obj == NULL) goto fail;
+    funcdata = ((PyUFuncObject *)obj)->data;
+    signatures = ((PyUFuncObject *)obj)->types;
+    i = 0;
+    j = 0;
+    while(signatures[i] != PyArray_FLOAT) {i+=2; j++;}
+    _basic_float_sqrt = funcdata[j];
+    _basic_double_sqrt = funcdata[j+1];
+    _basic_longdouble_sqrt = funcdata[j+2];
+    Py_DECREF(obj);
+
+    /* Get the abs functions */
+    obj = PyObject_GetAttrString(mm, "absolute");
+    if (obj == NULL) goto fail;
+    funcdata = ((PyUFuncObject *)obj)->data;
+    signatures = ((PyUFuncObject *)obj)->types;
+    i = 0;
+    j = 0;
+    while(signatures[i] != PyArray_FLOAT) {i+=2; j++;}
+    _basic_float_abs = funcdata[j];
+    _basic_double_abs = funcdata[j+1];
+    _basic_longdouble_abs = funcdata[j+2];
+    Py_DECREF(obj);
+
     ret = 0;
  fail:
     Py_DECREF(mm);

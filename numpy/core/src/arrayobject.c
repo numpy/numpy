@@ -3764,6 +3764,9 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         return result;
 }
 
+/* What do we do about VOID type arrays?
+ */
+
 static PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 {
