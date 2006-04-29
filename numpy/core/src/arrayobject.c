@@ -9123,8 +9123,17 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 		conv = NULL;
 		if PyDict_Check(odescr)
 			conv =  _convert_from_dict(odescr, 1);
-		else if PyList_Check(odescr)
+		else if PyList_Check(odescr) {
 			conv = _convert_from_list(odescr, 1, 0);
+			if ((conv == NULL) && 
+			    (!PyErr_Occurred())) {
+				PyErr_SetString(PyExc_ValueError,
+						"cannot specify align=1 "\
+						"with array_descriptor "\
+						"specification of the data-"\
+						"type.");
+			}
+		}
 		else if PyString_Check(odescr)
 			conv = _convert_from_commastring(odescr, 1);
 		else {

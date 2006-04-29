@@ -764,12 +764,33 @@ static int
 }
 /**end repeat**/
 
+/**begin repeat
+   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*3#
+   #Name=(Byte,UByte,Short,UShort,Int,UInt,Long,ULong,LongLong,ULongLong,Float,Double,LongDouble,CFloat,CDouble,CLongDouble)*3#
+   #cmplx=(,,,,,,,,,,,,,.real,.real,.real)*3#
+   #which=int*16,long*16,float*16#
+   #func=PyInt_FromLong*16,(PyLong_FromLongLong, PyLong_FromUnsignedLongLong)*5,PyLong_FromDouble*6,PyFloat_FromDouble*16#
+**/
+static PyObject *
+@name@_@which@(PyObject *obj)
+{
+    return @func@((PyArrayScalar_VAL(obj, @Name@))@cmplx@);
+}
+/**end repeat**/
+
 
 /**begin repeat
-   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*5#
-   #oper=int*16, long*16, float*16, oct*16, hex*16#
+   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*2#
+   #oper=oct*16, hex*16#
 **/
-#define @name@_@oper@ NULL
+static PyObject *
+@name@_@oper@(PyObject *obj)
+{
+    PyObject *pyint;
+    pyint = @name@_int(obj);
+    if (pyint == NULL) return NULL;
+    return PyInt_Type.tp_as_number->nb_@oper@(pyint);
+}
 /**end repeat**/
 
 
