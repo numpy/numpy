@@ -481,8 +481,16 @@ _@name@_convert_to_ctype(PyObject *a, @name@ *arg1)
 	Py_DECREF(descr1);
 	return ret;
     }
-    else if ((temp = PyArray_ScalarFromObject(a)) != NULL) {
-	return _@name@_convert_to_ctype(temp, arg1);
+    else { /* Need to be more careful about casting because
+	      regular Python object woun't handle it.  Try 
+	      to fail only if actual problems would occur. 
+	      Py_NotImplemented is returned if the casting won't 
+	      succeed (round trip through data-type causes inequality).
+	   */
+	temp = PyArray_ScalarFromObject(a, PyArray_@NAME@, 0);
+	if (temp == Py_NotImplemented) return -1;
+	if (temp != NULL) 
+	    return _@name@_convert_to_ctype(temp, arg1);
     }
     return -2;
 }	

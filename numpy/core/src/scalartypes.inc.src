@@ -205,55 +205,186 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 	return ret;
 }
 
+
+static PyObject *
+_scalar_from_intobj(PyObject *object, PyTypeObject *scalar, 
+		    int forcecast)
+{
+	PyObject *ret;
+	
+	ret = PyArrayScalar_New(Long);
+	if (ret == NULL) return NULL;
+	PyArrayScalar_VAL(ret, Long) = PyInt_AS_LONG(object);
+	return ret;
+}
+
+static PyObject *
+_scalar_from_floatobj(PyObject *object, PyTypeObject *scalar, 
+		    int forcecast)
+{
+	PyObject *ret;
+
+	ret = PyArrayScalar_New(Double);
+	if (ret == NULL) return NULL;
+	PyArrayScalar_VAL(ret, Double) = PyFloat_AS_DOUBLE(object);
+	return ret;
+}
+
+
+static PyObject *
+_scalar_from_complexobj(PyObject *object, PyArray_Descr *dtype, 
+			int forcecast)
+			int forcecast)
+{
+	PyObject *ret;
+	
+	ret = PyArrayScalar_New(CDouble);
+	if (ret == NULL) return NULL;
+	PyArrayScalar_VAL(ret, CDouble).real =		\
+		((PyComplexObject *)object)->cval.real;	
+	PyArrayScalar_VAL(ret, CDouble).imag =		\
+		((PyComplexObject *)object)->cval.imag;
+	
+	return ret;
+}
+
+static PyObject *
+_scalar_from_longobj(PyObject *object, PyArray_Descr *dtype, 
+			int forcecast)
+{
+	PyObject *ret;	
+	longlong val;
+	
+	val = PyLong_AsLongLong(object);
+	if (val==-1 && PyErr_Occurred()) {
+		PyErr_Clear();
+		return Py_NotImplemented;
+	}
+	ret = PyArrayScalar_New(LongLong);
+	if (ret == NULL) return NULL;
+	PyArrayScalar_VAL(ret, LongLong) = val;
+	
+	return ret;
+}
+
+
+static PyObject *
+_scalar_from_array(PyObject *object, int typenum, int forcecast)
+{
+	PyArray_Descr *dtype, *intype;
+	PyObject *new;
+	if (typenum == PyArray_NOTYPE) {
+		return PyArray_ToScalar(PyArray_DATA(object), object);
+	}
+	dtype = PyArray_DescrFromType(typenum);
+	new = dtype->typeobj->tp_alloc(dtype->typeobj, 0);
+	intype = PyArray_DESCR(object);
+	intype->f->cast[typenum](_SOFFSET_(object, intype->type_num),
+				 _SOFFSET_(new, typenum), 1, NULL, NULL);
+	Py_DECREF(dtype);
+	return new;
+}
+
+
+
 /*OBJECT_API
-  Get an Array Scalar From a Python Object
+  Get an Array Scalar of type scalar From a Python Object
   Returns NULL if unsuccessful but error is only
   set if another error occurred. Currently only Numeric-like
   object supported.
+  Returns Py_NotImplmented if a casting problem occurs unless forcecast
+  is 1.
  */
 static PyObject *
-PyArray_ScalarFromObject(PyObject *object)
+PyArray_ScalarFromObject(PyObject *object, int typenum, int forcecast)
 {
-	PyObject *ret=NULL;
+	PyArray_Descr *dtype;
+	if (typenum != PyArray_NOTYPE && !PyTypeNum_ISNUMBER(typenum))
+		return NULL;
+
 	if PyArray_IsZeroDim(object) {
-		return PyArray_ToScalar(PyArray_DATA(object), object);
-	}
-	if PyInt_Check(object) {
-		ret = PyArrayScalar_New(Long);
-		if (ret == NULL) return NULL;
-		PyArrayScalar_VAL(ret, Long) = PyInt_AS_LONG(object);
-	}
-	else if PyFloat_Check(object) {
-		ret = PyArrayScalar_New(Double);
-		if (ret == NULL) return NULL;
-		PyArrayScalar_VAL(ret, Double) = PyFloat_AS_DOUBLE(object);
-	}
-	else if PyComplex_Check(object) {
-		ret = PyArrayScalar_New(CDouble);
-		if (ret == NULL) return NULL;
-		PyArrayScalar_VAL(ret, CDouble).real =		\
-			((PyComplexObject *)object)->cval.real;	
-		PyArrayScalar_VAL(ret, CDouble).imag =		\
-			((PyComplexObject *)object)->cval.imag;
-	}
-	else if PyLong_Check(object) {
-		longlong val;
-		val = PyLong_AsLongLong(object);		
-		if (val==-1 && PyErr_Occurred()) {
-			PyErr_Clear();
-			return NULL;
+		PyObject *obj, *val;
+		obj = PyArray_GETITEM(object, PyArray_DATA(object));
+		if (PyArray_IsScalar(obj, Generic)) return obj;
+		else {
+			val = PyArray_ScalarFromObject(obj, typenum, 
+						       forcecast);
+			Py_DECREF(obj);
+			return val;
 		}
-		ret = PyArrayScalar_New(LongLong);
-		if (ret == NULL) return NULL;
-		PyArrayScalar_VAL(ret, LongLong) = val;
-	}
-	else if PyBool_Check(object) {
-		if (object == Py_True) {
+	}			
+
+	if (PySequence_Check(object) || PyMapping_Check(object)) return NULL;
+      
+	if (typenum == PyArray_BOOL) {
+		int val;
+		val = PyObject_IsTrue(object);
+		if (val == -1) {PyErr_Clear(); return NULL;}
+		if (val) {
 			PyArrayScalar_RETURN_TRUE;
 		}
 		else {
 			PyArrayScalar_RETURN_FALSE;
 		}
+	}
+
+	switch(typenum) {
+	case PyArray_NOTYPE:
+		if PyInt_Check(object) {
+ 	                ret = PyArrayScalar_New(Long);
+ 	                if (ret == NULL) return NULL;
+ 	                PyArrayScalar_VAL(ret, Long) = PyInt_AS_LONG(object);
+ 	        }
+ 	        else if PyFloat_Check(object) {
+ 	                ret = PyArrayScalar_New(Double);
+ 	                if (ret == NULL) return NULL;
+ 	                PyArrayScalar_VAL(ret, Double) = PyFloat_AS_DOUBLE(object);
+ 	        }
+ 	        else if PyComplex_Check(object) {
+ 	                ret = PyArrayScalar_New(CDouble);
+ 	                if (ret == NULL) return NULL;
+ 	                PyArrayScalar_VAL(ret, CDouble).real =          \
+ 	                        ((PyComplexObject *)object)->cval.real;
+ 	                PyArrayScalar_VAL(ret, CDouble).imag =          \
+ 	                        ((PyComplexObject *)object)->cval.imag;
+ 	        }
+ 	        else if PyLong_Check(object) {
+ 	                longlong val;
+ 	                val = PyLong_AsLongLong(object);               
+ 	                if (val==-1 && PyErr_Occurred()) {
+ 	                        PyErr_Clear();
+ 	                        return NULL;
+ 	                }
+ 	                ret = PyArrayScalar_New(LongLong);
+ 	                if (ret == NULL) return NULL;
+ 	                PyArrayScalar_VAL(ret, LongLong) = val;
+ 	        }
+		break;
+	/**begin repeat
+	   #NAME=BYTE,SHORT,INT,LONG,LONGLONG#
+	**/
+	case(@NAME@):
+		
+		break;
+	/**end repeat**/
+	if (typenum == PyArray_NOTYPE) {
+	}
+	else dtype = PyArray_DescrFromType(typenum);
+
+	if PyInt_Check(object) {
+		return _scalar_from_intobj(object, dtype, forcecast);
+	}
+	else if PyFloat_Check(object) {
+		return _scalar_from_floatobj(object, dtype, forcecast);
+	}
+	else if PyComplex_Check(object) {
+		return _scalar_from_complexobj(object, dtype, forcecast);
+	}
+	else if PyLong_Check(object) {
+		return _scalar_from_longobj(object, dtype, forcecast);
+	}
+	else if PyBool_Check(object) {
+		return _scalar_from_boolobj(object, dtype);
 	}
 	return ret;
 }
