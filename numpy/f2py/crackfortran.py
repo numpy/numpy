@@ -2365,10 +2365,16 @@ def determineexprtype(expr,vars,rules={}):
     return t
 ######
 def crack2fortrangen(block,tab='\n'):
+    global skipfuncs, onlyfuncs
     setmesstext(block)
     ret=''
     if type(block) is type([]):
         for g in block:
+            if g['block'] in ['function','subroutine']:
+                if g['name'] in skipfuncs:
+                    continue
+                if onlyfuncs and g['name'] not in onlyfuncs:
+                    continue
             ret=ret+crack2fortrangen(g,tab)
         return ret
     prefix=''
