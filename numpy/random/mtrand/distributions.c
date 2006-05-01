@@ -197,7 +197,7 @@ double rk_beta(rk_state *state, double a, double b)
 
             if ((X + Y) <= 1.0)
             {
-                return X;
+                return X / (X + Y);
             }
         }
     }
