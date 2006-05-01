@@ -1,3 +1,4 @@
+
 /* -*- c -*- */
 
 #ifndef _MULTIARRAYMODULE
@@ -292,7 +293,8 @@ _scalar_from_array(PyObject *object, int typenum, int forcecast)
   Returns NULL if unsuccessful but error is only
   set if another error occurred. Currently only Numeric-like
   object supported.
-  Returns Py_NotImplmented if a casting problem occurs unless forcecast
+  Returns a borrowed reference to Py_NotImplmented 
+  if a casting problem occurs unless forcecast
   is 1.
  */
 static PyObject *
@@ -316,7 +318,9 @@ PyArray_ScalarFromObject(PyObject *object, int typenum, int forcecast)
 
 	if (PySequence_Check(object) || PyMapping_Check(object)) return NULL;
       
-	if (typenum == PyArray_BOOL) {
+	if (typenum == PyArray_BOOL || 
+	    (typenum == PyArray_NOTYPE &&	\
+	     PyBool_Check(object))) {
 		int val;
 		val = PyObject_IsTrue(object);
 		if (val == -1) {PyErr_Clear(); return NULL;}
@@ -359,6 +363,8 @@ PyArray_ScalarFromObject(PyObject *object, int typenum, int forcecast)
  	                if (ret == NULL) return NULL;
  	                PyArrayScalar_VAL(ret, LongLong) = val;
  	        }
+		else return Py_NotImplemented;
+		return ret;
 		break;
 	/**begin repeat
 	   #NAME=BYTE,SHORT,INT,LONG,LONGLONG#
