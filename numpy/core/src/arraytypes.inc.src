@@ -1959,6 +1959,7 @@ PyArray_DescrFromType(int type)
 		 (type == PyArray_CHARLTR)) {
 		ret = PyArray_DescrNew(_builtin_descrs[PyArray_STRING]);
 		ret->elsize = 1;
+		ret->type = PyArray_CHARLTR;
 		return ret;
 	}
 	else if PyTypeNum_ISUSERDEF(type) {

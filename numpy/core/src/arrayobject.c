@@ -6027,7 +6027,8 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 	int itemsize = typecode->elsize;
 
 	stop_at_string = ((type == PyArray_OBJECT) ||	\
-			  (type == PyArray_STRING) ||	\
+			  (type == PyArray_STRING && \
+			   typecode->type == PyArray_STRINGLTR) ||	\
 			  (type == PyArray_UNICODE) ||  \
 			  (type == PyArray_VOID));
 
