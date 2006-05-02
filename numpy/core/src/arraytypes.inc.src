@@ -1955,6 +1955,12 @@ PyArray_DescrFromType(int type)
 		*/		
 		return NULL;
 	}
+	else if ((type == PyArray_CHAR) || \
+		 (type == PyArray_CHARLTR)) {
+		ret = PyArray_DescrNew(_builtin_descrs[PyArray_STRING]);
+		ret->elsize = 1;
+		return ret;
+	}
 	else if PyTypeNum_ISUSERDEF(type) {
 		ret = userdescrs[type-PyArray_USERDEF];
 	} 

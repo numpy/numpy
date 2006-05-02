@@ -158,6 +158,7 @@ enum PyArray_TYPES {    PyArray_BOOL=0,
 			PyArray_VOID,
 			PyArray_NTYPES,
 			PyArray_NOTYPE,
+			PyArray_CHAR,      /* special flag */
 			PyArray_USERDEF=256  /* leave room for characters */
 };
 
@@ -203,6 +204,7 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 			PyArray_STRINGLTR2 = 'a',
 			PyArray_UNICODELTR = 'U',
 		        PyArray_VOIDLTR = 'V',
+			PyArray_CHARLTR = 'c',
 
 			/* No Descriptor, just a define -- this let's
 			 Python users specify an array of integers
@@ -1550,7 +1552,6 @@ typedef struct {
 
 #define PyArray_UNSIGNED_TYPES
 #define PyArray_SBYTE PyArray_BYTE
-#define PyArray_CHAR PyArray_BYTE
 #define PyArray_CopyArray PyArray_CopyInto
 #define _PyArray_multiply_list PyArray_MultiplyIntList
 #define PyArray_ISSPACESAVER(m) FALSE

@@ -597,7 +597,7 @@ static PyObject *
 {
     PyObject *ret;
     @name@ arg1, arg2, out;
-    @otyp@ out1;
+    @otyp@ out1=0;
     int retstatus;
 	
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
