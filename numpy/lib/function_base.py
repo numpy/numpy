@@ -662,7 +662,7 @@ def cov(m,y=None, rowvar=1, bias=0):
     is a variable and the observations are in the rows.
     """
 
-    X = array(m,copy=False,ndmin=2)
+    X = array(m,ndmin=2)
     if X.shape[0] == 1:
         rowvar = 1
     if rowvar:

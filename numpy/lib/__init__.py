@@ -9,15 +9,16 @@ from shape_base import *
 from twodim_base import *
 from ufunclike import *
 
-import scimath as math
+import scimath as nmath
 from polynomial import *
 from machar import *
 from getlimits import *
 #import convertcode
 from utils import *
 from arraysetops import *
+import math
 
-__all__ = ['math']
+__all__ = ['nmath','math']
 __all__ += type_check.__all__
 __all__ += index_tricks.__all__
 __all__ += function_base.__all__
