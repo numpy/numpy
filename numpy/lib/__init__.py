@@ -9,7 +9,7 @@ from shape_base import *
 from twodim_base import *
 from ufunclike import *
 
-import scimath as nmath
+import scimath as emath
 from polynomial import *
 from machar import *
 from getlimits import *
