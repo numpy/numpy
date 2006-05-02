@@ -370,7 +370,7 @@ def is_local_src_dir(directory):
 
 def general_source_files(top_path):
     pruned_directories = {'CVS':1, '.svn':1, 'build':1}
-    prune_file_pat = re.compile(r'(?:^\..*|[~#]|\.py[co]|\.o)$')
+    prune_file_pat = re.compile(r'(?:[~#]|\.py[co]|\.o)$')
     for dirpath, dirnames, filenames in os.walk(top_path, topdown=True):
         pruned = [ d for d in dirnames if d not in pruned_directories ]
         dirnames[:] = pruned
@@ -383,7 +383,7 @@ def general_source_directories_files(top_path):
     files contained.
     """
     pruned_directories = ['CVS','.svn','build']
-    prune_file_pat = re.compile(r'(?:^\..*|[~#]|\.py[co]|\.o)$')
+    prune_file_pat = re.compile(r'(?:[~#]|\.py[co]|\.o)$')
     for dirpath, dirnames, filenames in os.walk(top_path, topdown=True):
         pruned = [ d for d in dirnames if d not in pruned_directories ]
         dirnames[:] = pruned
