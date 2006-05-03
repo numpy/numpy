@@ -182,10 +182,13 @@ class NumpyTestCase (unittest.TestCase):
             m = imp.load_module(name, file, pathname, description)
         finally:
             file.close()
-        tests = doctest.DocTestFinder().find(m)
-        runner = doctest.DocTestRunner(verbose=False)
-        for test in tests:
-            runner.run(test)
+        if sys.version[:3]<'2.4':
+            doctest.testmod(m, verbose=False)
+        else:
+            tests = doctest.DocTestFinder().find(m)
+            runner = doctest.DocTestRunner(verbose=False)
+            for test in tests:
+                runner.run(test)
         return
 
 ScipyTestCase = NumpyTestCase
