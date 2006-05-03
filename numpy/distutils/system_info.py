@@ -220,7 +220,9 @@ def get_info(name,notfound_action=0):
           'numpy':numpy_info,
           'f2py':f2py_info,
           'Numeric':Numeric_info,
+          'numeric':Numeric_info,
           'numarray':numarray_info,
+          'numerix':numerix_info,
           'lapack_opt':lapack_opt_info,
           'blas_opt':blas_opt_info,
           'boost_python':boost_python_info,
@@ -1472,6 +1474,38 @@ class Numeric_info(_numpy_info):
 class numpy_info(_numpy_info):
     section = 'numpy'
     modulename = 'numpy'
+
+class numerix_info(system_info):
+    section = 'numerix'
+    def calc_info(self):
+        import sys, os
+        which = None, None
+        if os.getenv("NUMERIX"):
+            which = os.getenv("NUMERIX"), "environment var"
+        # If all the above fail, default to numpy.
+        if which[0] is None:
+            which = "numpy", "defaulted"
+            try:
+                import numpy
+                which = "numpy", "defaulted"
+            except ImportError,msg1:
+                try:
+                    import Numeric
+                    which = "numeric", "defaulted"
+                except ImportError,msg2:
+                    try:
+                        import numarray
+                        which = "numarray", "defaulted"
+                    except ImportError,msg3:
+                        print msg1
+                        print msg2
+                        print msg3
+        which = which[0].strip().lower(), which[1]
+        if which[0] not in ["numeric", "numarray", "numpy"]:
+            raise ValueError("numerix selector must be either 'Numeric' "
+                             "or 'numarray' or 'numpy' but the value obtained"
+                             " from the %s was '%s'." % (which[1], which[0]))
+        self.set_info(**get_info(which[0]))
 
 class f2py_info(system_info):
     def calc_info(self):
