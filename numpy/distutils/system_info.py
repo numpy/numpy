@@ -110,7 +110,7 @@ this distribution for specifics.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 
-import sys,os,re
+import sys,os,re,copy
 import warnings
 from distutils.errors import DistutilsError
 from glob import glob
@@ -413,7 +413,7 @@ class system_info:
                 print '    %s = %s'%(k,v)
             print
 
-        return res
+        return copy.deepcopy(res)
 
     def get_paths(self, section, key):
         dirs = self.cp.get(section, key).split(os.pathsep)
