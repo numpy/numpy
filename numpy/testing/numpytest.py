@@ -176,7 +176,12 @@ class NumpyTestCase (unittest.TestCase):
             f = get_frame(1)
             filename = f.f_globals['__file__']
         name = os.path.splitext(os.path.basename(filename))[0]
-        m = imp.load_module(name, open(filename), filename,('.py','U',1))
+        path = [os.path.dirname(filename)]
+        file, pathname, description = imp.find_module(name, path)
+        try:
+            m = imp.load_module(name, file, pathname, description)
+        finally:
+            file.close()
         tests = doctest.DocTestFinder().find(m)
         runner = doctest.DocTestRunner(verbose=False)
         for test in tests:

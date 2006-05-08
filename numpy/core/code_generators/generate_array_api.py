@@ -20,6 +20,7 @@ typedef struct {
 static unsigned int PyArray_GetNDArrayCVersion (void);
 static PyTypeObject PyBigArray_Type;
 static PyTypeObject PyArray_Type;
+static PyTypeObject PyBaseArray_Type;
 static PyTypeObject PyArrayDescr_Type;
 static PyTypeObject PyArrayFlags_Type;
 static PyTypeObject PyArrayIter_Type;
@@ -57,6 +58,8 @@ static void **PyArray_API=NULL;
 #define PyArray_NUMUSERTYPES (*(int *)PyArray_API[7])
 #define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[8])
 #define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[9])
+#define PyBaseArray_Type (*(PyTypeObject *)PyArray_API[10])
+
 
 %s
 
@@ -106,6 +109,7 @@ void *PyArray_API[] = {
         (int *) &PyArray_NUMUSERTYPES,
         (void *) &PyBoolArrType_Type,
         (void *) &_PyArrayScalar_BoolValues,
+        (void *) &PyBaseArray_Type,
 %s
 };
 """
@@ -117,7 +121,7 @@ def generate_api(output_dir):
                                              'multiarray_api_order.txt')
     # API fixes for __arrayobject_api.h
 
-    fixed = 10
+    fixed = 11
     numtypes = len(types) + fixed
     numobject = len(objectapi_list) + numtypes
     nummulti = len(multiapi_list)

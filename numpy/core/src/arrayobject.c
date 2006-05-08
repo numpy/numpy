@@ -1131,7 +1131,7 @@ PyArray_Return(PyArrayObject *mp)
                 return NULL;
         }
 
-	if (!PyArray_Check(mp)) return (PyObject *)mp;
+	if (!PyBaseArray_Check(mp)) return (PyObject *)mp;
 
 	if (mp->nd == 0) {
 		PyObject *ret;
@@ -2087,7 +2087,7 @@ fancy_indexing_check(PyObject *args)
 			}
 		}
 	}
-	else if (PyArray_Check(args)) {
+	else if (PyBaseArray_Check(args)) {
 		if ((PyArray_TYPE(args)==PyArray_BOOL) ||
 		    (PyArray_ISINTEGER(args)))
 			return SOBJ_ISFANCY;
@@ -2434,7 +2434,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
                 return NULL;
         }
 
-	if (!PyArray_Check(mp)) return (PyObject *)mp;
+	if (!PyBaseArray_Check(mp)) return (PyObject *)mp;
 	
 	if (mp->nd == 0) {
 		Bool noellipses = TRUE;
@@ -4482,6 +4482,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 			if (res == NULL) goto fail;
 			else Py_DECREF(res);
 		}
+                else {
+                    PyErr_Clear();
+                }
 	}
 
 	return (PyObject *)self;
@@ -5579,6 +5582,11 @@ static char Arraytype__doc__[] =
 	"   No __init__ method is needed because the array is fully \n"
 	"      initialized after the __new__ method.";
 
+
+
+#include "basearray.c"
+
+
 static PyTypeObject PyArray_Type = {
         PyObject_HEAD_INIT(NULL)
         0,					  /*ob_size*/
@@ -5623,7 +5631,7 @@ static PyTypeObject PyArray_Type = {
         array_methods,			          /* tp_methods */
         0,					  /* tp_members */
         array_getsetlist,		          /* tp_getset */
-        0,					  /* tp_base */
+        &PyBaseArray_Type,		          /* tp_base */
         0,					  /* tp_dict */
         0,					  /* tp_descr_get */
         0,					  /* tp_descr_set */
@@ -5639,6 +5647,18 @@ static PyTypeObject PyArray_Type = {
         0,					  /* tp_subclasses */
         0					  /* tp_weaklist */
 };
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* The rest of this code is to build the right kind of array from a python */
 /* object. */
@@ -6811,7 +6831,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
 	/* Is input object already an array? */
 	/*  This is where the flags are used */
-        if (PyArray_Check(op))
+        if (PyBaseArray_Check(op))
 		r = PyArray_FromArray((PyArrayObject *)op, newtype, flags);
 	else if (PyArray_IsScalar(op, Generic)) {
 		if (flags & UPDATEIFCOPY) goto err;
@@ -6864,7 +6884,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
 	/* Be sure we succeed here */
 
-        if(!PyArray_Check(r)) {
+        if(!PyBaseArray_Check(r)) {
                 PyErr_SetString(PyExc_RuntimeError,
 				"internal error: PyArray_FromAny "\
 				"not producing an array");
@@ -7180,7 +7200,7 @@ PyArray_IterNew(PyObject *obj)
 	int i, nd;
 	PyArrayObject *ao = (PyArrayObject *)obj;
 
-        if (!PyArray_Check(ao)) {
+        if (!PyBaseArray_Check(ao)) {
                 PyErr_BadInternalCall();
                 return NULL;
         }
@@ -7521,7 +7541,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 		obj = ind;
 	}
 
-	if (PyArray_Check(obj)) {
+	if (PyBaseArray_Check(obj)) {
 		/* Check for Boolean object */
 		if (PyArray_TYPE(obj)==PyArray_BOOL) {
 			r = iter_subscript_Bool(self, (PyArrayObject *)obj);
@@ -7736,7 +7756,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 		obj = ind;
 	}
 
-	if (PyArray_Check(obj)) {
+	if (PyBaseArray_Check(obj)) {
 		/* Check for Boolean object */
 		if (PyArray_TYPE(obj)==PyArray_BOOL) {
 			if (iter_ass_sub_Bool(self, (PyArrayObject *)obj,

@@ -5894,6 +5894,47 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS, doc_new_buffer},	
 	{"getbuffer", (PyCFunction)buffer_buffer,
 	 METH_VARARGS | METH_KEYWORDS, doc_buffer_buffer},	
+         
+         /* basearray functions */
+	{"getitem", (PyCFunction)basearray_getitem,
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{"setitem", (PyCFunction)basearray_setitem,
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{"getshape", (PyCFunction)basearray_getshape,
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{"setshape", (PyCFunction)basearray_setshape,
+	 METH_VARARGS | METH_KEYWORDS, NULL},	
+	{"getstrides", (PyCFunction)basearray_getstrides,
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{"setstrides", (PyCFunction)basearray_setstrides,
+	 METH_VARARGS | METH_KEYWORDS, NULL},	
+	{"getdtype", (PyCFunction)basearray_getdescr,
+	 METH_VARARGS | METH_KEYWORDS, NULL},	
+	{"setdtype", (PyCFunction)basearray_setdescr,
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{"getreal", (PyCFunction)basearray_getreal,
+	 METH_VARARGS | METH_KEYWORDS, NULL},	
+	{"setreal", (PyCFunction)basearray_setreal,
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{"getimag", (PyCFunction)basearray_getimag,
+	 METH_VARARGS | METH_KEYWORDS, NULL},	
+	{"setimag", (PyCFunction)basearray_setimag,
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{"getflags", (PyCFunction)basearray_getflags,
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{"copy", (PyCFunction)basearray_copy,
+	 METH_VARARGS | METH_KEYWORDS, NULL},	
+	{"view", (PyCFunction)basearray_view,
+	 METH_VARARGS | METH_KEYWORDS, NULL},	
+	{"astype", (PyCFunction)basearray_astype,
+	 METH_VARARGS | METH_KEYWORDS, NULL},	
+	{"wrap", (PyCFunction)basearray_wrap,
+	 METH_VARARGS | METH_KEYWORDS, NULL},	
+	{"sort", (PyCFunction)basearray_sort,
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+	{"repr", (PyCFunction)basearray_repr,
+	 METH_VARARGS | METH_KEYWORDS, NULL},
+         
 	{NULL,		NULL, 0}		/* sentinel */
 };
 
@@ -6106,6 +6147,8 @@ PyMODINIT_FUNC initmultiarray(void) {
 	Py_DECREF(s);
         Py_INCREF(&PyArray_Type);
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
+        Py_INCREF(&PyBaseArray_Type);
+        PyDict_SetItemString(d, "basearray", (PyObject *)&PyBaseArray_Type);
         Py_INCREF(&PyArrayIter_Type);
 	PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
         Py_INCREF(&PyArrayMultiIter_Type);

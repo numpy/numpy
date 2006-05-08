@@ -1433,6 +1433,8 @@ typedef struct {
 
 #define PyArray_Check(op) ((op)->ob_type == &PyArray_Type ||		\
 			   PyObject_TypeCheck((op), &PyArray_Type))
+#define PyBaseArray_Check(op) ((op)->ob_type == &PyBaseArray_Type ||    \
+			   PyObject_TypeCheck((op), &PyBaseArray_Type))
 #define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
 
 #define PyArray_IsZeroDim(op) (PyArray_Check(op) && (PyArray_NDIM(op) == 0))

@@ -973,7 +973,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
                         continue;
                 }
                 Py_INCREF(mps[i]);
-                if (!PyArray_Check((PyObject *)mps[i])) {
+                if (!PyBaseArray_Check((PyObject *)mps[i])) {
 			PyObject *new;
 			if (PyArrayIter_Check(mps[i])) {
 				new = PyObject_CallMethod((PyObject *)mps[i],
