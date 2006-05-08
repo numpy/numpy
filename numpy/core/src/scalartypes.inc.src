@@ -1689,9 +1689,9 @@ bool_arrtype_nonzero(PyObject *a)
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
 static PyNumberMethods bool_arrtype_as_number = {
-	bool_arrtype_or,			/* nb_add */
+	0, 			                /* nb_add */
 	0,					/* nb_subtract */
-	bool_arrtype_and,			/* nb_multiply */
+	0, 			                /* nb_multiply */
 	0,					/* nb_divide */
 	0,					/* nb_remainder */
 	0,					/* nb_divmod */
