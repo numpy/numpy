@@ -4641,21 +4641,28 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 	intp size;
         PyArray_CopySwapFunc *copyswap;
 
-	descr = PyArray_DESCR(arr);
-	itemsize = descr->elsize;
-	Py_INCREF(descr);
-	newarr = PyArray_FromAny(obj, descr, 0,0, ALIGNED, NULL);
-	if (newarr == NULL) return -1;
-	fromptr = PyArray_DATA(newarr);
+	itemsize = arr->descr->elsize;
+	if (PyArray_ISOBJECT(arr)) {
+		fromptr = &obj;
+		swap = 0;
+		newarr = NULL;
+	}
+	else {
+		descr = PyArray_DESCR(arr);
+		Py_INCREF(descr);
+		newarr = PyArray_FromAny(obj, descr, 0,0, ALIGNED, NULL);
+		if (newarr == NULL) return -1;
+		fromptr = PyArray_DATA(newarr);
+		swap=!PyArray_ISNOTSWAPPED(arr);
+	}
 	size=PyArray_SIZE(arr);
-	swap=!PyArray_ISNOTSWAPPED(arr);
 	copyswap = arr->descr->f->copyswap;
 	if (PyArray_ISONESEGMENT(arr)) {
 		char *toptr=PyArray_DATA(arr);
 		PyArray_FillWithScalarFunc* fillwithscalar =
 			arr->descr->f->fillwithscalar;
 		if (fillwithscalar && PyArray_ISALIGNED(arr)) {
-			copyswap(fromptr, NULL, swap, arr);
+			copyswap(fromptr, NULL, swap, newarr);
 			fillwithscalar(toptr, size, fromptr, arr);
 		}
 		else {
@@ -4671,7 +4678,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 		iter = (PyArrayIterObject *)\
 			PyArray_IterNew((PyObject *)arr);
 		if (iter == NULL) {
-			Py_DECREF(newarr);
+			Py_XDECREF(newarr);
 			return -1;
 		}
 		while(size--) {
@@ -4680,7 +4687,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 		}
 		Py_DECREF(iter);
 	}
-	Py_DECREF(newarr);
+	Py_XDECREF(newarr);
 	return 0;
 }
 
