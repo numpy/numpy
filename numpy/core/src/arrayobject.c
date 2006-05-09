@@ -6848,14 +6848,18 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 			newtype = _array_find_type(op, NULL, MAX_DIMS);
 		}
 		if (PySequence_Check(op)) {
+			PyObject *thiserr;
 			/* necessary but not sufficient */
 
 			Py_INCREF(newtype);
 			r = Array_FromSequence(op, newtype, flags & FORTRAN,
 					       min_depth, max_depth);
-			if (PyErr_Occurred() && r == NULL) {
-                            /* It wasn't really a sequence after all.
-                             * Try interpreting it as a scalar */
+			if (r == NULL && \
+			    ((thiserr = PyErr_Occurred()) &&		\
+			     !PyErr_GivenExceptionMatches(thiserr, 
+							  PyExc_MemoryError))) {
+				/* It wasn't really a sequence after all.
+				 * Try interpreting it as a scalar */
 				PyErr_Clear();
 			}
                         else {
