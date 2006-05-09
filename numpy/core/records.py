@@ -134,7 +134,6 @@ class record(nt.void):
             raise AttributeError, "'record' object has no "\
                   "attribute '%s'" % attr
 
-
 # The recarray is almost identical to a standard array (which supports
 #   named fields already)  The biggest difference is that it can use
 #   attribute-lookup to find the fields and it is constructed using

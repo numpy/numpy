@@ -1,4 +1,3 @@
-
 from numpy.testing import *
 set_package_path()
 import numpy.core;reload(numpy.core)
@@ -132,6 +131,43 @@ class test_algebra(ScipyTestCase):
         assert allclose((mA * mA).A, dot(A, A))
         assert allclose((mA + mA).A, (A + A))
         assert allclose((3*mA).A, (3*A))
+
+class test_matrix_return(ScipyTestCase):
+    def check_instance_methods(self):
+        a = matrix([1.0], dtype='f8')
+        methodargs = {
+            'astype' : ('intc',),
+            'clip' : (0.0, 1.0),
+            'compress' : ([1],),
+            'repeat' : (1,),
+            'reshape' : (1,),
+            'swapaxes' : (0,0)
+            }
+        excluded_methods = [
+            'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
+            'getA', 'item', 'nonzero', 'put', 'putmask', 'resize',
+            'searchsorted', 'setflags', 'setfield', 'sort', 'take',
+            'tofile', 'tolist', 'tostring'
+            ]
+        for attrib in dir(a):
+            if attrib.startswith('_') or attrib in excluded_methods:
+                continue
+            f = eval('a.%s' % attrib)
+            if callable(f):
+                # reset contents of a
+                a.astype('f8')
+                a.fill(1.0)
+                if methodargs.has_key(attrib):
+                    args = methodargs[attrib]
+                else:
+                    args = ()
+                b = f(*args)
+                assert type(b) is matrix
+        assert type(a.real) is matrix
+        assert type(a.imag) is matrix
+        c,d = matrix([0.0]).nonzero()
+        assert type(c) is matrix
+        assert type(d) is matrix
 
 if __name__ == "__main__":
     ScipyTest().run()
