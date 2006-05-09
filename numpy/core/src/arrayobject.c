@@ -7395,7 +7395,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
 	if (ind_it == NULL) {Py_DECREF(r); return NULL;}
 	index = ind_it->size;
         copyswap = PyArray_DESCR(r)->f->copyswap;
-        swap = !PyArray_ISNOTSWAPPED(self->ao);
+        swap = (PyArray_ISNOTSWAPPED(r) != PyArray_ISNOTSWAPPED(self->ao));
 	while(index--) {
 		num = *((intp *)(ind_it->dataptr));
 		if (num < 0) num += self->size;
