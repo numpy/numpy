@@ -4037,6 +4037,11 @@ _convert_from_dict(PyObject *obj, int align)
 		descr = PyObject_GetItem(descrs, index);
 		ret = PyArray_DescrConverter(descr, &newdescr);
 		Py_DECREF(descr);
+		if (ret == PY_FAIL) {
+			Py_DECREF(tup);
+			Py_DECREF(index);
+			goto fail;
+		}
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
 		if (offsets) {
 			long offset;
