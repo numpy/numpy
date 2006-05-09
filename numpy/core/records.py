@@ -203,10 +203,17 @@ class recarray(sb.ndarray):
         if isinstance(attr,int):
             attr=fielddict[-1][attr]
 
+        res = fielddict[attr][:2]
+
         if val is None:
-            return self.__getattribute__(attr)
+            obj = self.getfield(*res)
+            if obj.dtype.fields:
+                return obj
+            if obj.dtype.char in 'SU':
+                return obj.view(chararray)
+            return obj.view(sb.ndarray)
         else:
-            return self.__setattr__(attr,val)
+            return self.setfield(val, *res)
 
 def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
                aligned=0):
