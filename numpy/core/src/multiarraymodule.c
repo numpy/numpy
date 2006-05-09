@@ -4411,6 +4411,24 @@ PyArray_SortkindConverter(PyObject *obj, PyArray_SORTKIND *sortkind)
 }
 
 
+/* compare the field dictionary for two types
+   return 1 if the same or 0 if not   
+ */
+
+static int
+_equivalent_fields(PyObject *field1, PyObject *field2) {
+
+	int same, val;
+	
+	if (field1 == field2) return 1;
+	if (field1 == NULL || field2 == NULL) return 0;
+	val = PyObject_Compare(field1, field2);
+	if (val != 0 || PyErr_Occurred()) same = 0;
+	else same = 1;
+	PyErr_Clear();
+	return same;
+}
+
 /* This function returns true if the two typecodes are 
    equivalent (same basic kind and same itemsize).
 */
@@ -4425,7 +4443,7 @@ PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 	register int size2=typ2->elsize;
 
 	if (size1 != size2) return FALSE;
-	if (typ1->fields != typ2->fields) return FALSE;
+
 	if (PyArray_ISNBO(typ1->byteorder) != PyArray_ISNBO(typ2->byteorder))
 		return FALSE;
 
@@ -4433,7 +4451,7 @@ PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 	    typenum2 == PyArray_VOID) {
 		return ((typenum1 == typenum2) && 
 			(typ1->typeobj == typ2->typeobj) &&
-			(typ1->fields == typ2->fields));
+			_equivalent_fields(typ1->fields, typ2->fields));
 	}
 	return (typ1->kind == typ2->kind);
 }

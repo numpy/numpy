@@ -5365,7 +5365,10 @@ array_imag_get(PyArrayObject *self)
 						     type,
 						     PyArray_ISFORTRAN(self));
 		ret->flags &= ~WRITEABLE;
-		return (PyObject *)ret;
+		if (PyArray_CheckExact(self)) 
+			return (PyObject *)ret;
+		else
+			return PyArray_View(ret, NULL, self->ob_type);
 	}
 }
 
