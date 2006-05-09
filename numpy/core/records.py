@@ -50,6 +50,9 @@ class format_parser:
 
         dtype = sb.dtype(formats, aligned)
         fields = dtype.fields
+        if fields is None:
+            dtype = sb.dtype([formats], aligned)
+            fields = dtype.fields
         keys = fields[-1]
         self._f_formats = [fields[key][0] for key in keys]
         self._offsets = [fields[key][1] for key in keys]

@@ -4118,6 +4118,16 @@ _convert_from_dict(PyObject *obj, int align)
 	return NULL;
 }
 
+static int
+_could_be_commastring(char *type, int len) 
+{
+	int i;
+	if (type[0] >= '1' && type[0] <= '9') return 1;
+	for (i=1;i<len;i++)
+		if (type[i] == ',') return 1;
+	return 0;
+}
+
 /* 
    any object with 
    the .fields attribute and/or .itemsize attribute 
@@ -4229,15 +4239,13 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 			if (endian == '|') endian = '=';
 		}
 		if (len > 1) {
-			int i;
 			elsize = atoi(type+1);
-			/* check for commas present */
-			for (i=1;i<len && type[i]!=',';i++);
-			if (i < len) {
+			/* check for commas present 
+			   or first element a digit */
+			if (_could_be_commastring(type, len)) {
 				/* see if it can be converted from 
 				   a comma-separated string */
-				*at = _convert_from_commastring(obj, 
-								0);
+				*at = _convert_from_commastring(obj, 0);
 				if (*at) return PY_SUCCEED;
 				else return PY_FAIL;
 			}
