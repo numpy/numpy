@@ -120,11 +120,11 @@ def assert_equal(actual,desired,err_msg='',verbose=1):
         if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
             msg =  msg \
                  + 'DESIRED: ' + repr(desired) \
-                 + '\nACTUAL: ' + repr(actual)
+                 + '\n ACTUAL: ' + repr(actual)
     except:
         msg =  msg \
              + 'DESIRED: ' + repr(desired) \
-             + '\nACTUAL: ' + repr(actual)
+             + '\n ACTUAL: ' + repr(actual)
     assert desired == actual, msg
     return
 
@@ -140,11 +140,11 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
         if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
             msg =  msg \
                  + 'DESIRED: ' + repr(desired) \
-                 + '\nACTUAL: ' + repr(actual)
+                 + '\n ACTUAL: ' + repr(actual)
     except:
         msg =  msg \
              + 'DESIRED: ' + repr(desired) \
-             + '\nACTUAL: ' + repr(actual)
+             + '\n ACTUAL: ' + repr(actual)
     assert round(abs(desired - actual),decimal) == 0, msg
 
 
@@ -174,11 +174,11 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
         if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
             msg =  msg \
                  + 'DESIRED: ' + repr(desired) \
-                 + '\nACTUAL: ' + repr(actual)
+                 + '\n ACTUAL: ' + repr(actual)
     except:
         msg =  msg \
              + 'DESIRED: ' + repr(desired) \
-             + '\nACTUAL: ' + repr(actual)
+             + '\n ACTUAL: ' + repr(actual)
     assert math.fabs(sc_desired - sc_actual) < pow(10.,-1*significant), msg
 
 
