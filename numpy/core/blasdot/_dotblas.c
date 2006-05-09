@@ -10,6 +10,8 @@ static char module_doc[] =
 
 #include <stdio.h>
 
+static PyArray_DotFunc *oldFunctions[PyArray_NTYPES];
+
 static void 
 FLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res, 
 	  intp n, void *tmp)
@@ -17,7 +19,12 @@ FLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res,
     register int na = stridea / sizeof(float);
     register int nb = strideb / sizeof(float);
 
-    *((float *)res) = cblas_sdot((int)n, (float *)a, na, (float *)b, nb);
+    if ((sizeof(float) * na == stridea) && 
+	(sizeof(float) * nb == strideb))
+	    *((float *)res) = cblas_sdot((int)n, (float *)a, na, (float *)b, nb);
+    
+    else 
+	    oldFunctions[PyArray_FLOAT](a, stridea, b, strideb, res, n, tmp);
 }
 
 static void 
@@ -27,7 +34,11 @@ DOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res,
     register int na = stridea / sizeof(double);
     register int nb = strideb / sizeof(double);
 
-    *((double *)res) = cblas_ddot((int)n, (double *)a, na, (double *)b, nb);
+    if ((sizeof(double) * na == stridea) && 
+	(sizeof(double) * nb == strideb))    
+	    *((double *)res) = cblas_ddot((int)n, (double *)a, na, (double *)b, nb);
+    else
+	    oldFunctions[PyArray_DOUBLE](a, stridea, b, strideb, res, n, tmp);
 }
 
 static void 
@@ -38,7 +49,11 @@ CFLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res,
     register int na = stridea / sizeof(cfloat);
     register int nb = strideb / sizeof(cfloat);
 
-    cblas_cdotu_sub((int)n, (float *)a, na, (float *)b, nb, (float *)res);
+    if ((sizeof(cfloat) * na == stridea) && 
+	(sizeof(cfloat) * nb == strideb))    
+	    cblas_cdotu_sub((int)n, (float *)a, na, (float *)b, nb, (float *)res);
+    else
+	    oldFunctions[PyArray_CFLOAT](a, stridea, b, strideb, res, n, tmp);
 }
 
 static void 
@@ -48,11 +63,14 @@ CDOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res,
     register int na = stridea / sizeof(cdouble);
     register int nb = strideb / sizeof(cdouble);
 
-    cblas_zdotu_sub((int)n, (double *)a, na, (double *)b, nb, (double *)res);
+    if ((sizeof(cdouble) * na == stridea) && 
+	(sizeof(cdouble) * nb == strideb))    
+	    cblas_zdotu_sub((int)n, (double *)a, na, (double *)b, nb, (double *)res);
+    else
+	    oldFunctions[PyArray_CDOUBLE](a, stridea, b, strideb, res, n, tmp);    
 }
 
 
-static PyArray_DotFunc *oldFunctions[PyArray_NTYPES];
 static Bool altered=FALSE;
 
 static char doc_alterdot[] = "alterdot() changes all dot functions to use blas.";
@@ -217,6 +235,18 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	return PyArray_Return(ret);
     }
     
+    if (!PyArray_ElementStrides((PyObject *)ap1)) {
+	    op1 = PyArray_NewCopy(ap1, PyArray_ANYORDER);
+	    Py_DECREF(ap1);
+	    ap1 = op1;
+	    if (ap1 == NULL) goto fail;
+    }
+    if (!PyArray_ElementStrides((PyObject *)ap2)) {
+	    op2 = PyArray_NewCopy(ap2, PyArray_ANYORDER);
+	    Py_DECREF(ap2);
+	    ap2 = op2;
+	    if (ap2 == NULL) goto fail;
+    }
     ap1shape = _select_matrix_shape(ap1);
     ap2shape = _select_matrix_shape(ap2);
     

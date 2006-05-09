@@ -79,7 +79,7 @@ extern "C" CONFUSE_EMACS
 #define PY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x00090708
+#define NDARRAY_VERSION 0x00090709
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -970,19 +970,28 @@ typedef struct {
 #define OWNDATA       0x0004
 #define OWN_DATA      OWNDATA
 
-/* An array never has these three set; they're only used as parameter
+/* An array never has the next four set; they're only used as parameter
    flags to the the various FromAny functions */
+
 /* Cause a cast to occur regardless of whether or not it is safe. */
 #define FORCECAST     0x0010
+
 /* Always copy the array. Returned arrays are always CONTIGUOUS, ALIGNED,
    and WRITEABLE. */
 #define ENSURECOPY    0x0020
+
 /* Make sure the returned array is an ndarray or a bigndarray */
 #define ENSUREARRAY   0x0040
 
+/* Make sure that the strides are in units of the element size
+   Needed for some operations with record-arrays.
+*/
+#define ELEMENTSTRIDES 0x0080
+
 /* Array data is aligned on the appropiate memory address for the
-   type stored (e.g., an array of doubles (8 bytes each) starts on
-   a memory address that's a multiple of 8) */
+   type stored according to how the compiler would align things
+   (e.g., an array of integers (4 bytes each) starts on
+   a memory address that's a multiple of 4) */
 #define ALIGNED       0x0100
 /* Array data has the native endianness */
 #define NOTSWAPPED    0x0200

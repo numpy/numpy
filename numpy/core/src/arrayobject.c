@@ -4099,6 +4099,22 @@ _IsWriteable(PyArrayObject *ap)
 
 
 /*OBJECT_API
+ */
+static int
+PyArray_ElementStrides(PyObject *arr)
+{
+	register int itemsize = PyArray_ITEMSIZE(arr);
+	register int i, N=PyArray_NDIM(arr);
+	register intp *strides = PyArray_STRIDES(arr);
+
+	for (i=0; i<N; i++) {
+		if ((strides[i] % itemsize) != 0) return 0;
+	}
+
+	return 1;
+}
+
+/*OBJECT_API
  Update Several Flags at once.
 */
 static void
@@ -6945,7 +6961,8 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
   ENSURECOPY,
   UPDATEIFCOPY,
   FORCECAST,
-  ENSUREARRAY
+  ENSUREARRAY,
+  ELEMENTSTRIDES
 
    or'd (|) together
 
@@ -6982,6 +6999,7 @@ static PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
                      int max_depth, int requires, PyObject *context)
 {
+	PyObject *obj;
 	if (requires & NOTSWAPPED) {
 		if (!descr && PyArray_Check(op) && \
 		    !PyArray_ISNBO(PyArray_DESCR(op)->byteorder)) {
@@ -6993,8 +7011,16 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 		descr->byteorder = PyArray_NATIVE;
 	}
 
-	return PyArray_FromAny(op, descr, min_depth, max_depth,
-                               requires, context);
+	obj = PyArray_FromAny(op, descr, min_depth, max_depth,
+			      requires, context);
+	if ((requires & ELEMENTSTRIDES) && 
+	    (obj && !PyArray_ElementStrides(obj))) {
+		PyObject *new;
+		new = PyArray_NewCopy((PyArrayObject *)obj, PyArray_ANYORDER);
+		Py_DECREF(obj);
+		obj = new;
+	}
+	return obj;
 }
 
 /* This is a quick wrapper around PyArray_FromAny(op, NULL, 0, 0,
