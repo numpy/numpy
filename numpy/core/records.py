@@ -217,6 +217,18 @@ class recarray(sb.ndarray):
         else:
             return self.setfield(val, *res)
 
+    def view(self, obj):
+        try:
+            if issubclass(obj, sb.ndarray):
+                return sb.ndarray.view(self, obj)
+        except TypeError:
+            pass
+        dtype = sb.dtype(obj)
+        if dtype.fields is None:
+            return self.__array__().view(dtype)
+        return sb.ndarray.view(self, obj)
+            
+
 def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
                aligned=0):
     """ create a record array from a (flat) list of arrays
