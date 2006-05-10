@@ -183,6 +183,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     int typenum, nd;
     intp ap1stride=0;
     intp dimensions[MAX_DIMS];
+    intp numbytes;
     static const float oneF[2] = {1.0, 0.0};
     static const float zeroF[2] = {0.0, 0.0};
     static const double oneD[2] = {1.0, 0.0};
@@ -238,13 +239,13 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     if (!PyArray_ElementStrides((PyObject *)ap1)) {
 	    op1 = PyArray_NewCopy(ap1, PyArray_ANYORDER);
 	    Py_DECREF(ap1);
-	    ap1 = op1;
+	    ap1 = (PyArrayObject *)op1;
 	    if (ap1 == NULL) goto fail;
     }
     if (!PyArray_ElementStrides((PyObject *)ap2)) {
 	    op2 = PyArray_NewCopy(ap2, PyArray_ANYORDER);
 	    Py_DECREF(ap2);
-	    ap2 = op2;
+	    ap2 = (PyArrayObject *)op2;
 	    if (ap2 == NULL) goto fail;
     }
     ap1shape = _select_matrix_shape(ap1);
@@ -349,8 +350,9 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 				       (prior2 > prior1 ? ap2 : ap1));
     
     if (ret == NULL) goto fail;
-    memset(ret->data, 0, PyArray_NBYTES(ret));
-    if (l==0) {
+    numbytes = PyArray_NBYTES(ret);
+    memset(ret->data, 0, numbytes);
+    if (numbytes==0) {
 	    Py_DECREF(ap1);
 	    Py_DECREF(ap2);
 	    return PyArray_Return(ret);
