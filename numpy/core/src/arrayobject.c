@@ -7389,7 +7389,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
 
         copyswap = self->ao->descr->f->copyswap;
 	/* Loop over Boolean array */
-	swap = !(PyArray_ISNOTSWAPPED(self->ao));
+	swap = (PyArray_ISNOTSWAPPED(self->ao) != PyArray_ISNOTSWAPPED(r));
 	while(index--) {
 		if (*((Bool *)dptr) != 0) {
                         copyswap(optr, self->dataptr, swap, self->ao);
