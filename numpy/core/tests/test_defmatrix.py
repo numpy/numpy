@@ -147,7 +147,9 @@ class test_matrix_return(ScipyTestCase):
             'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
             'getA', 'item', 'nonzero', 'put', 'putmask', 'resize',
             'searchsorted', 'setflags', 'setfield', 'sort', 'take',
-            'tofile', 'tolist', 'tostring'
+            'tofile', 'tolist', 'tostring', 'all', 'any', 'sum',
+            'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
+            'prod', 'std'
             ]
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:
@@ -162,7 +164,7 @@ class test_matrix_return(ScipyTestCase):
                 else:
                     args = ()
                 b = f(*args)
-                assert type(b) is matrix
+                assert type(b) is matrix, "%s" % attrib
         assert type(a.real) is matrix
         assert type(a.imag) is matrix
         c,d = matrix([0.0]).nonzero()

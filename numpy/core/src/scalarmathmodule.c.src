@@ -300,14 +300,15 @@ static @name@ (*_basic_@name@_sqrt)(@name@);
     (outp)->imag = (a).real * (b).imag + (a).imag * (b).real;	\
     }while(0)
 #define @name@_ctype_divide(a, b, outp) do{			\
-    @rtype@ d = (a).real*(b).real + (b).imag*(b).imag;		\
+    @rtype@ d = (b).real*(b).real + (b).imag*(b).imag;		\
     (outp)->real = ((a).real*(b).real + (a).imag*(b).imag)/d;	\
     (outp)->imag = ((a).imag*(b).real - (a).real*(b).imag)/d;	\
     }while(0)
 #define @name@_ctype_true_divide @name@_ctype_divide
 #define @name@_ctype_floor_divide(a, b, outp) do {		\
-    (outp)->real = ((a).real*(b).real + (a).imag*(b).imag) /	\
-    ((a).real*(b).real + (b).imag*(b).imag);			\
+    (outp)->real = _basic_@rtype@_floor				\
+    (((a).real*(b).real + (a).imag*(b).imag) /			\
+     ((b).real*(b).real + (b).imag*(b).imag));			\
     (outp)->imag = 0;						\
     }while(0)
 /**end repeat**/
@@ -529,9 +530,9 @@ static PyObject *
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
     case 0:
         break;
-    case -1: /* can't cast both safely use different add function */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
+    case -1: /* one of them can't be cast safely
+		must be mixed-types*/
+	return PyArray_Type.tp_as_number->nb_@oper@(a,b);
     case -2: /* use default handling */
 	if (PyErr_Occurred()) return NULL;
         return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
@@ -568,16 +569,16 @@ static PyObject *
     if (ret==NULL) return NULL;
     obj = PyArrayScalar_New(@OName@);
     if (obj == NULL) {Py_DECREF(ret); return NULL;}
-    PyArrayScalar_VAL(ret, @OName@) = out;
+    PyArrayScalar_ASSIGN(ret, @OName@, out);
     PyTuple_SET_ITEM(ret, 0, obj);
     obj = PyArrayScalar_New(@OName@);
     if (obj == NULL) {Py_DECREF(ret); return NULL;}
-    PyArrayScalar_VAL(ret, @OName@) = out2;
+    PyArrayScalar_ASSIGN(ret, @OName@, out2);
     PyTuple_SET_ITEM(ret, 1, obj);
 #else
     ret = PyArrayScalar_New(@OName@);
     if (ret==NULL) return NULL;
-    PyArrayScalar_VAL(ret, @OName@) = out;
+    PyArrayScalar_ASSIGN(ret, @OName@, out);
 #endif
     return ret;
 }
@@ -609,9 +610,9 @@ static PyObject *
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
     case 0:
         break;
-    case -1: /* can't cast both safely use different add function */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
+    case -1: /* can't cast both safely 
+		mixed-types? */
+	return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
     case -2: /* use default handling */
 	if (PyErr_Occurred()) return NULL;
         return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
@@ -657,17 +658,17 @@ static PyObject *
     if (arg2 < 0) {
 	ret = PyArrayScalar_New(@OName@);
 	if (ret==NULL) return NULL;
-	PyArrayScalar_VAL(ret, @OName@) = out1;
+	PyArrayScalar_ASSIGN(ret, @OName@, out1);
     }
     else {
 	ret = PyArrayScalar_New(@Name@);
 	if (ret==NULL) return NULL;
-	PyArrayScalar_VAL(ret, @Name@) = out;
+	PyArrayScalar_ASSIGN(ret, @Name@, out);
     }
 #else
     ret = PyArrayScalar_New(@Name@);
     if (ret==NULL) return NULL;
-    PyArrayScalar_VAL(ret, @Name@) = out;
+    PyArrayScalar_ASSIGN(ret, @Name@, out);
 #endif
     
     return ret;
@@ -718,7 +719,7 @@ static PyObject *
     @name@_ctype_@oper@(arg1, &out);
 
     ret = PyArrayScalar_New(@Name@);
-    PyArrayScalar_VAL(ret, @Name@) = out;
+    PyArrayScalar_ASSIGN(ret, @Name@, out);
 
     return ret;
 }
@@ -826,8 +827,6 @@ static PyObject*
     case 0:
 	break;
     case -1: /* can't cast both safely use different add function */
-	Py_INCREF(Py_NotImplemented);
-	return Py_NotImplemented;
     case -2: /* use ufunc */
 	if (PyErr_Occurred()) return NULL;
 	return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);

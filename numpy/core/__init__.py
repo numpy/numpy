@@ -16,6 +16,8 @@ import records as rec
 from records import *
 from memmap import *
 from defchararray import *
+import scalarmath
+del scalarmath
 del nt
 
 __all__ = ['char','rec','memmap','ma']
