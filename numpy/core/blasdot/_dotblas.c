@@ -352,7 +352,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     if (ret == NULL) goto fail;
     numbytes = PyArray_NBYTES(ret);
     memset(ret->data, 0, numbytes);
-    if (numbytes==0) {
+    if (numbytes==0 || l == 0) {
 	    Py_DECREF(ap1);
 	    Py_DECREF(ap2);
 	    return PyArray_Return(ret);
