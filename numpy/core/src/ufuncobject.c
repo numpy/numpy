@@ -1,4 +1,3 @@
-
 /*
   Python Universal Functions Object -- Math for all types, plus fast 
   arrays math
@@ -1131,7 +1130,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 			}
 		}
 
-		loop->size /= maxdim;
+		if (maxdim) loop->size /= maxdim;
                 loop->bufcnt = maxdim;
 		loop->lastdim = ldim;
 
