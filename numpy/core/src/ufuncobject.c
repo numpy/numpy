@@ -1066,8 +1066,8 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
             then must use buffers */
 
         loop->bufcnt = 0;
-
         loop->obj = 0;
+	if (loop->size == 0) return nargs;
 
         /* Determine looping method needed */
         loop->meth = NO_UFUNCLOOP;
@@ -1130,7 +1130,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 			}
 		}
 
-		if (maxdim) loop->size /= maxdim;
+		loop->size /= maxdim;
                 loop->bufcnt = maxdim;
 		loop->lastdim = ldim;
 
