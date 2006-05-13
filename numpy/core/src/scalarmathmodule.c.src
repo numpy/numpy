@@ -624,8 +624,8 @@ static PyObject *
     /* as a function call. */
 #if @cmplx@
     if (arg2.real == 0 && arg1.real == 0) {
-	out1.real = out.real = 1.0;
-	out1.imag = out.imag = 0.0;
+	out1.real = out.real = 1;
+	out1.imag = out.imag = 0;
     }
 #else
     if (arg2 == 0) {
@@ -635,7 +635,7 @@ static PyObject *
 #if @isint@
     else if (arg2 < 0) {
 	@name@_ctype_power(arg1, -arg2, &out);
-	out1 = 1.0 / out;
+	out1 = (@otyp@) (1.0 / out);
     }
 #endif
     else {

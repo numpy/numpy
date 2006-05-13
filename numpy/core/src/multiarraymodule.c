@@ -5153,7 +5153,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 #undef _FILEBUFNUM
 		}
 	}
-	if (nread < num) {
+	if (((intp) nread) < num) {
 		fprintf(stderr, "%ld items requested but only %ld read\n", 
 			(long) num, (long) nread);
 		r->data = PyDataMem_RENEW(r->data, nread * r->descr->elsize);

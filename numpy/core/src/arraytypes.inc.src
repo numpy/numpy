@@ -1771,6 +1771,14 @@ static void
 
 #define _ALIGN(type) offsetof(struct {char c; type v;},v)
 
+/* Disable harmless compiler warning "4116: unnamed type definition in 
+   parentheses" which is caused by the _ALIGN macro.  */ 
+
+#if defined(_MSC_VER) 
+#pragma warning(disable:4116) 
+#endif 
+
+
 /**begin repeat
 
 #from= VOID, STRING, UNICODE#

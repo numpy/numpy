@@ -73,7 +73,7 @@ float sqrtf(float);
 #endif
 static float acoshf(float x)
 {
-	return 2*logf(sqrtf((x+1.0)/2)+sqrtf((x-1.0)/2));
+	return 2*logf(sqrtf((x+1)/2)+sqrtf((x-1)/2));
 }
 
 #ifdef asinhf
@@ -83,7 +83,7 @@ static float asinhf(float xx)
 {
 	float x, d;
 	int sign;
-	if (xx < 0.0) {
+	if (xx < 0) {
 		sign = -1;
 		x = -xx;
 	}
@@ -96,7 +96,7 @@ static float asinhf(float xx)
 	} else {
 		d = sqrtf(x*x + 1);
 	}
-	return sign*log1pf(x*(1.0 + x/(d+1)));
+	return sign*log1pf(x*(1 + x/(d+1)));
 }
 
 #ifdef atanhf
@@ -104,7 +104,7 @@ static float asinhf(float xx)
 #endif
 static float atanhf(float x)
 {
-	return 0.5*log1pf(2.0*x/(1.0-x));
+	return log1pf(2*x/(1-x))/2;
 }
 #else
 #ifdef acoshf
@@ -467,11 +467,11 @@ longdouble log1pl(longdouble x)
 #endif
 float log1pf(float x)
 {
-	float u = 1. + x;
-	if (u == 1.0) {
+	float u = 1 + x;
+	if (u == 1) {
 		return x;
 	} else {
-		return logf(u) * x / (u-1.);
+		return logf(u) * x / (u-1);
 	}
 }
 #endif
@@ -514,16 +514,15 @@ static longdouble expm1l(longdouble x)
 static float expm1f(float x)
 {
 	float u = expf(x);
-	if (u == 1.0) {
+	if (u == 1) {
 		return x;
-	} else if (u-1.0 == -1.0) {
+	} else if (u-1 == -1) {
 		return -1;
 	} else {
-		return (u-1.0) * x/logf(u);
+		return (u-1) * x/logf(u);
 	}
 }
 #endif
-
 
 
 
@@ -610,13 +609,13 @@ nc_sqrt@c@(c@typ@ *x, c@typ@ *r)
 	if (x->real == 0. && x->imag == 0.)
 		*r = *x;
 	else {
-		s = sqrt@c@(0.5*(fabs@c@(x->real) + hypot@c@(x->real,x->imag)));
-		d = 0.5*x->imag/s;
-		if (x->real > 0.) {
+		s = sqrt@c@((fabs@c@(x->real) + hypot@c@(x->real,x->imag))/2);
+		d = x->imag/(2*s);
+		if (x->real > 0) {
 			r->real = s;
 			r->imag = d;
 		}
-		else if (x->imag >= 0.) {
+		else if (x->imag >= 0) {
 			r->real = d;
 			r->imag = s;
 		}
@@ -640,8 +639,8 @@ nc_log@c@(c@typ@ *x, c@typ@ *r)
 static void
 nc_log1p@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ l = hypot@c@(x->real + 1.0,x->imag);
-	r->imag = atan2@c@(x->imag, x->real + 1.0);
+	@typ@ l = hypot@c@(x->real + 1,x->imag);
+	r->imag = atan2@c@(x->imag, x->real + 1);
 	r->real = log@c@(l);
 	return;
 }
@@ -659,7 +658,7 @@ static void
 nc_expm1@c@(c@typ@ *x, c@typ@ *r)
 {
 	@typ@ a = exp@c@(x->real);
-	r->real = a*cos@c@(x->imag) - 1.0;
+	r->real = a*cos@c@(x->imag) - 1;
 	r->imag = a*sin@c@(x->imag);
 	return;
 }
@@ -828,8 +827,8 @@ static void
 nc_cosh@c@(c@typ@ *x, c@typ@ *r)
 {
 	@typ@ xr=x->real, xi=x->imag;
-	r->real = cos(xi)*cosh(xr);
-	r->imag = sin(xi)*sinh(xr);
+	r->real = cos@c@(xi)*cosh@c@(xr);
+	r->imag = sin@c@(xi)*sinh@c@(xr);
 	return;
 }
 
@@ -840,8 +839,8 @@ static void
 nc_log10@c@(c@typ@ *x, c@typ@ *r)
 {
 	nc_log@c@(x, r);
-	r->real *= M_LOG10_E;
-	r->imag *= M_LOG10_E;
+	r->real *= (@typ@) M_LOG10_E;
+	r->imag *= (@typ@) M_LOG10_E;
 	return;
 }
 
@@ -872,8 +871,8 @@ nc_tan@c@(c@typ@ *x, c@typ@ *r)
 	@typ@ xr=x->real, xi=x->imag;
 	sr = sin@c@(xr);
 	cr = cos@c@(xr);
-	shi = sinh(xi);
-	chi = cosh(xi);
+	shi = sinh@c@(xi);
+	chi = cosh@c@(xi);
 	rs = sr*chi;
 	is = cr*shi;
 	rc = cr*chi;
@@ -1112,7 +1111,7 @@ static void
 
     for (i = 0; i < n; i++, i1 += is1, op += os) {
         @typ@ x = *((@typ@ *)i1);
-        *((@typ@ *)op) = 1.0 / x;
+        *((@typ@ *)op) = (@typ@) (1.0 / x);
     }
 }
 /**end repeat**/
@@ -1222,13 +1221,12 @@ static void
 	register intp i, is1=steps[0],is2=steps[1];
 	register intp os=steps[2], n=dimensions[0];
 	char *i1=args[0], *i2=args[1], *op=args[2];
-	@btyp@ x, y, v;
+	@btyp@ x, y;
 
 	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
 		x = *((@typ@ *)i1);
 		y = *((@typ@ *)i2);
-		v = pow(x,y);
-		*((@typ@ *)op) = (@typ@) v;
+		*((@typ@ *)op) = (@typ@) pow(x,y);
 	}
 }
 /**end repeat**/

@@ -1267,7 +1267,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
         PyArrayIterObject *it;
         PyObject *obj, *strobj, *tupobj;
 
-	n3 = (sep ? strlen((const char *)sep) : 0);
+	n3 = (int) (sep ? strlen((const char *)sep) : 0);
 	if (n3 == 0) { /* binary data */
                 if (PyArray_ISOBJECT(self)) {
                         PyErr_SetString(PyExc_ValueError, "cannot write "\
@@ -1309,7 +1309,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
         else {  /* text data */
                 it=(PyArrayIterObject *)                                \
                         PyArray_IterNew((PyObject *)self);
-		n4 = (format ? strlen((const char *)format) : 0);
+		n4 = (int) (format ? strlen((const char *)format) : 0);
                 while(it->index < it->size) {
                         obj = self->descr->f->getitem(it->dataptr, self);
                         if (obj == NULL) {Py_DECREF(it); return -1;}
