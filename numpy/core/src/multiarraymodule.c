@@ -5527,6 +5527,8 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 	PyArray_ArrFuncs *funcs;
 	PyObject *next;
 	intp length;
+	PyArray_Descr *native=NULL;
+	int swap;
 
 	if (!dtype) {
 		PyArray_Descr *deftype;
@@ -5571,7 +5573,19 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 		Py_DECREF(step); Py_DECREF(start); return range;
 	}
 
-	range = PyArray_SimpleNewFromDescr(1, &length, dtype);
+	/* If dtype is not in native byte-order then get native-byte
+	   order version.  And then swap on the way out.
+	*/
+	if (!PyArray_ISNBO(dtype->byteorder)) {
+		native = PyArray_DescrNewByteorder(dtype, PyArray_NATBYTE);
+		swap = 1;
+	}
+	else {
+		native = dtype;
+		swap = 0;
+	}
+
+	range = PyArray_SimpleNewFromDescr(1, &length, native);
 	if (range == NULL) goto fail;
 
 	funcs = PyArray_DESCR(range)->f;
@@ -5593,6 +5607,14 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 	}
 	funcs->fill(PyArray_DATA(range), length, (PyArrayObject *)range);
 	if (PyErr_Occurred()) goto fail;
+
+	if (swap) {
+		PyObject *new;
+		new = PyArray_Byteswap((PyArrayObject *)range, 1);
+		Py_DECREF(new);
+		Py_DECREF(PyArray_DESCR(range));
+		PyArray_DESCR(range) = dtype;  /* steals the reference */
+	}
 
  finish:
 	Py_DECREF(start);
