@@ -172,6 +172,7 @@ _select_matrix_shape(PyArrayObject *array)
 }
 
 
+
 static char doc_matrixproduct[] = "matrixproduct(a,b)\nReturns the dot product of a and b for arrays of floating point types.\nLike the generic numpy equivalent the product sum is over\nthe last dimension of a and the second-to-last dimension of b.\nNB: The first argument is not conjugated.";
 
 static PyObject *
@@ -200,7 +201,6 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
      * Only works for float double and complex types.
      */
 
-
     typenum = PyArray_ObjectType(op1, 0);  
     typenum = PyArray_ObjectType(op2, typenum);
     
@@ -216,7 +216,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     Py_INCREF(dtype);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, ALIGNED, NULL);
     if (ap2 == NULL) goto fail;
-    
+
     if ((ap1->nd > 2) || (ap2->nd > 2)) {  
 	/* This function doesn't handle dimensions greater than 2 -- other
 	   than to ensure the dot function is altered

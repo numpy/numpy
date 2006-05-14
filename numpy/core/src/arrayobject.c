@@ -6408,8 +6408,8 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 		/* If no copy then just increase the reference
 		   count and return the input */
 		else {
+			Py_DECREF(newtype);
                         if ((flags & ENSUREARRAY)) {
-				Py_DECREF(newtype);
 				Py_INCREF(arr->descr);
 				ret = (PyArrayObject *)			\
                                         PyArray_NewFromDescr(&PyArray_Type,
@@ -6467,6 +6467,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 			}
 		}
 		else {
+			Py_DECREF(newtype);
 			PyErr_SetString(PyExc_TypeError,
 					"array cannot be safely cast " \
 					"to required type");
@@ -6853,7 +6854,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                  ((r = PyArray_FromArrayAttr(op, newtype, context))     \
                   != Py_NotImplemented)) {
                 PyObject *new;
-                if (r == NULL) return NULL;
+                if (r == NULL) {Py_XDECREF(newtype); return NULL;}
                 if (newtype != NULL || flags != 0) {
                         new = PyArray_FromArray((PyArrayObject *)r, newtype, 
 						flags);
@@ -6918,6 +6919,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return r;
 
  err:
+	Py_XDECREF(newtype);
 	PyErr_SetString(PyExc_TypeError, 
 			"UPDATEIFCOPY used for non-array input.");
 	return NULL;
