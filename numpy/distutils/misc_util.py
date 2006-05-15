@@ -588,7 +588,7 @@ class Configuration(object):
             print message
 
     def warn(self, message):
-        print>>sys.stderr, 'Warning:',message
+        print>>sys.stderr, blue_text('Warning: %s' % (message,))
 
     def set_options(self, **options):
         """ Configure Configuration instance.
@@ -736,7 +736,7 @@ class Configuration(object):
             if isinstance(config, Configuration):
                 d = config.todict()
             assert isinstance(d,dict),`type(d)`
-            
+
             self.info('Appending %s configuration to %s' \
                       % (d.get('name'), self.name))
             self.dict_append(**d)
@@ -817,7 +817,7 @@ class Configuration(object):
                     self.add_data_dir((d,path))
             return
         assert not is_glob_pattern(d),`d`
-        
+
         dist = self.get_distribution()
         if dist is not None:
             data_files = dist.data_files
