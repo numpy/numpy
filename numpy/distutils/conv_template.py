@@ -26,10 +26,12 @@ else:
     False = 0
     True = 1
 
+
 def parse_structure(astr):
     spanlist = []
     # subroutines
     ind = 0
+    line = 1
     while 1:
         start = astr.find("/**begin repeat", ind)
         if start == -1:
@@ -38,7 +40,9 @@ def parse_structure(astr):
         start2 = astr.find("\n",start2)
         fini1 = astr.find("/**end repeat**/",start2)
         fini2 = astr.find("\n",fini1)
-        spanlist.append((start, start2+1, fini1, fini2+1))
+        line += astr.count("\n", ind, start2+1)
+        spanlist.append((start, start2+1, fini1, fini2+1, line))
+        line += astr.count("\n", start2+1, fini2)
         ind = fini2
     spanlist.sort()
     return spanlist
@@ -86,7 +90,7 @@ def namerepl(match):
     name = match.group(1)
     return _names[name][_thissub]
 
-def expand_sub(substr,namestr):
+def expand_sub(substr, namestr, line):
     global _names, _thissub
     # find all named replacements
     reps = named_re.findall(namestr)
@@ -115,8 +119,8 @@ def expand_sub(substr,namestr):
     mystr = ''
     for k in range(numsubs):
         _thissub = k
-        mystr += template_re.sub(namerepl, substr)
-        mystr += "\n\n"
+        mystr += ("#line %d\n%s\n\n"
+                  % (line, template_re.sub(namerepl, substr)))
     return mystr
 
 
@@ -148,7 +152,8 @@ def process_str(allstr):
     oldend = 0
     for sub in struct:
         writestr += newstr[oldend:sub[0]]
-        expanded = expand_sub(newstr[sub[1]:sub[2]],newstr[sub[0]:sub[1]])
+        expanded = expand_sub(newstr[sub[1]:sub[2]],
+                              newstr[sub[0]:sub[1]], sub[4])
         writestr += expanded
         oldend =  sub[3]
 
@@ -156,7 +161,8 @@ def process_str(allstr):
     writestr += newstr[oldend:]
     return writestr
 
-include_src_re = re.compile(r"(\n|\A)#include\s*['\"](?P<name>[\w\d./\\]+[.]src)['\"]",re.I)
+include_src_re = re.compile(r"(\n|\A)#include\s*['\"]"
+                            r"(?P<name>[\w\d./\\]+[.]src)['\"]", re.I)
 
 def resolve_includes(source):
     d = os.path.dirname(source)
@@ -180,7 +186,8 @@ def resolve_includes(source):
 
 def process_file(source):
     lines = resolve_includes(source)
-    return process_str(''.join(lines))
+    return ('#line 1 "%s"\n%s'
+            % (source, process_str(''.join(lines))))
 
 if __name__ == "__main__":
 
