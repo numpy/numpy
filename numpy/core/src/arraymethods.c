@@ -1140,7 +1140,26 @@ array_dumps(PyArrayObject *self, PyObject *args)
 }
 
 
-static char doc_transpose[] = "m.transpose(<None>)";
+static char doc_transpose[] = "a.transpose(*axes)\n\n"
+"Returns a view of `a` with axes transposed. If no axes are given,\n"
+"or None is passed, switches the order of the axes (for a 2-d array,\n"
+"this is the usual matrix transpose). If axes are given, they\n"
+"describe how the axes are permuted.\n\n"
+"Example:\n"
+">>> a = array([[1,2],[3,4]])\n"
+">>> a\n"
+"array([[1, 2],\n"
+"       [3, 4]])\n"
+">>> a.transpose()\n"
+"array([[1, 3],\n"
+"       [3, 4]])\n"
+">>> a.transpose((1,0))\n"
+"array([[1, 3],\n"
+"       [3, 4]])\n"
+">>> a.transpose(1,0)\n"
+"array([[1, 3],\n"
+"       [3, 4]])\n"
+;
 
 static PyObject *
 array_transpose(PyArrayObject *self, PyObject *args) 
