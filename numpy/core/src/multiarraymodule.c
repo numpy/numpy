@@ -3054,9 +3054,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 	}
 	Py_DECREF(ap);
 
-	SWAPBACK(op, rp);     /* op now contains the return */
-  
-	return (PyObject *)op;
+	return (PyObject *)rp;
 	
  fail:
 	Py_DECREF(ap);
