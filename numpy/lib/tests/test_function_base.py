@@ -87,6 +87,11 @@ class test_linspace(ScipyTestCase):
         y = list(linspace(0,1,2.5))
         assert y == [0.0, 1.0]
 
+    def check_type(self):
+        t1 = linspace(0,1,0).dtype
+        t2 = linspace(0,1,1).dtype
+        assert_equal(t1, t2)
+
 class test_amax(ScipyTestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
