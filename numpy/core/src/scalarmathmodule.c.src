@@ -597,14 +597,16 @@ static PyObject *
 @name@_power(PyObject *a, PyObject *b, PyObject *c)
 {
     PyObject *ret;
-    @name@ arg1, arg2, out;
+    @name@ arg1, arg2;
     int retstatus;
 
 #if @cmplx@
+    @name@ out = {0,0};
     @otyp@ out1;
        out1.real = out.imag = 0;
 #else
-     @otyp@ out1=0;
+    @name@ out = 0;
+    @otyp@ out1=0;
 #endif
 	
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
