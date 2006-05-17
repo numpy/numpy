@@ -35,7 +35,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
     """
     num = int(num)
     if num <= 0:
-        return array([])
+        return array([], float)
     if endpoint:
         if num == 1:
             return array([float(start)])

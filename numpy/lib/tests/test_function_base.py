@@ -90,7 +90,9 @@ class test_linspace(ScipyTestCase):
     def check_type(self):
         t1 = linspace(0,1,0).dtype
         t2 = linspace(0,1,1).dtype
+        t3 = linspace(0,1,2).dtype
         assert_equal(t1, t2)
+        assert_equal(t2, t3)
 
 class test_amax(ScipyTestCase):
     def check_basic(self):
