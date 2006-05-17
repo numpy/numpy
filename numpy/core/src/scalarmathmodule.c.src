@@ -483,7 +483,10 @@ _@name@_convert_to_ctype(PyObject *a, @name@ *arg1)
 	return ret;
     }
     else if ((temp = PyArray_ScalarFromObject(a)) != NULL) {
-	return _@name@_convert_to_ctype(temp, arg1);
+	int retval;
+	retval = _@name@_convert_to_ctype(temp, arg1);
+	Py_DECREF(temp);
+	return retval;
     }
     return -2;
 }	
