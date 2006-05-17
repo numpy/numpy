@@ -258,7 +258,7 @@ PyArray_Round(PyArrayObject *a, int decimals)
 		return PyArray_GenericUnaryFunction((PyAO *)a, n_ops.rint);
 	}
 	if (decimals > 0) {
-		PyObject *f, *ret;
+		PyObject *f, *ret, *tmp;
 		if (PyArray_ISINTEGER(a)) {
 			Py_INCREF(a);
 			return (PyObject *)a;
@@ -269,39 +269,41 @@ PyArray_Round(PyArrayObject *a, int decimals)
 		if (ret==NULL) {Py_DECREF(f); return NULL;}
 		if (PyArray_IsScalar(ret, Generic)) {
 			/* array scalars cannot be modified inplace */
-			PyObject *tmp;
 			tmp = PyObject_CallFunction(n_ops.rint, "O", ret);
 			Py_DECREF(ret);
 			ret = PyObject_CallFunction(n_ops.divide, "OO", 
 						    tmp, f);
 			Py_DECREF(tmp);
 		} else {
-			PyObject_CallFunction(n_ops.rint, "OO", ret, ret);
-			PyObject_CallFunction(n_ops.divide, "OOO", ret, 
-					      f, ret);
+			tmp = PyObject_CallFunction(n_ops.rint, "OO", ret, ret);
+			Py_DECREF(tmp);
+			tmp = PyObject_CallFunction(n_ops.divide, "OOO", ret, 
+						    f, ret);
+			Py_DECREF(tmp);
 		}
 		Py_DECREF(f);
 		return ret;
 	} 
 	else {
 		/* remaining case: decimals < 0 */
-		PyObject *f, *ret;
+		PyObject *f, *ret, *tmp;
 		f = PyFloat_FromDouble(power_of_ten(-decimals));
 		if (f==NULL) return NULL;
 		ret = PyNumber_Divide((PyObject *)a, f);
 		if (ret==NULL) {Py_DECREF(f); return NULL;}
 		if (PyArray_IsScalar(ret, Generic)) {
 			/* array scalars cannot be modified inplace */
-			PyObject *tmp;
 			tmp = PyObject_CallFunction(n_ops.rint, "O", ret);
 			Py_DECREF(ret);
 			ret = PyObject_CallFunction(n_ops.multiply, "OO", 
 						    tmp, f);
 			Py_DECREF(tmp);
 		} else {
-			PyObject_CallFunction(n_ops.rint, "OO", ret, ret);
-			PyObject_CallFunction(n_ops.multiply, "OOO", ret, 
-					      f, ret);
+			tmp = PyObject_CallFunction(n_ops.rint, "OO", ret, ret);
+			Py_DECREF(tmp);
+			tmp = PyObject_CallFunction(n_ops.multiply, "OOO", ret, 
+						    f, ret);
+			Py_DECREF(tmp);
 		}
 		Py_DECREF(f);
 		return ret;
