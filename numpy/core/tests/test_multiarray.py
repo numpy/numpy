@@ -1,6 +1,7 @@
 
 from numpy.testing import *
 from numpy.core import *
+from numpy import random
 
 class test_flags(ScipyTestCase):
     def setUp(self):
@@ -294,6 +295,17 @@ class test_string_compare(ScipyTestCase):
         assert_array_equal(g1 >= g2, [g1[i] >= g2[i] for i in [0,1,2]])
         assert_array_equal(g1 < g2,  [g1[i] < g2[i] for i in [0,1,2]]) 
         assert_array_equal(g1 > g2,  [g1[i] > g2[i] for i in [0,1,2]]) 
+
+
+class test_argmax(ScipyTestCase):
+    def check_all(self):
+        a = random.normal(0,1,(4,5,6,7,8))
+        for i in xrange(a.ndim):
+            amax = a.max(i)
+            aargmax = a.argmax(i)  
+            axes = range(a.ndim)
+            axes.remove(i)
+            assert all(amax == aargmax.choose(*a.transpose(i,*axes)))        
 
 
 # Import tests from unicode
