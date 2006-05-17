@@ -3023,12 +3023,30 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 	PyArray_ArgFunc* arg_func;
 	char *ip;
 	intp *rptr;
-	intp i, n, orign, m;
+	intp i, n, m;
 	int elsize;
 	
 	if ((ap=(PyAO *)_check_axis(op, &axis, 0))==NULL) return NULL;
 
-	SWAPAXES(op, ap);
+	/* We need to permute the array so that axis is placed at the end.
+	   And all other dimensions are shifted left.
+	 */
+	if (axis != ap->nd-1) {
+		PyArray_Dims newaxes;
+		intp dims[MAX_DIMS];
+		int i;
+		newaxes.ptr = dims;
+		newaxes.len = ap->nd;
+		for (i=0; i<axis; i++) dims[i] = i;
+		for (i=axis; i<ap->nd-1; i++) dims[i] = i+1;
+		dims[ap->nd-1] = axis;
+		op = (PyAO *)PyArray_Transpose(ap, &newaxes);
+		Py_DECREF(ap);
+		if (op == NULL) return NULL;
+	}
+	else {
+		op = ap;
+	}
 
 	ap = (PyArrayObject *)\
 		PyArray_ContiguousFromAny((PyObject *)op, 
