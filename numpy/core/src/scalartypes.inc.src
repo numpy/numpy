@@ -462,7 +462,8 @@ gentype_repr(PyObject *self)
 }
 
 static void
-format_longdouble(char *buf, size_t buflen, longdouble val, int precision)
+format_longdouble(char *buf, size_t buflen, longdouble val,
+                  unsigned int precision)
 {
         register char *cp;
 

@@ -5908,6 +5908,31 @@ buffer_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
 		return PyBuffer_FromReadWriteObject(obj, offset, size);
 }
 
+char doc_format_longfloat[] = "";
+static PyObject *
+format_longfloat(PyObject *dummy, PyObject *args, PyObject *kwds)
+{
+    PyObject *obj;
+    unsigned int precision;
+    longdouble x;
+    static char *kwlist[] = {"x", "precision", NULL};
+    static char repr[100];
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OI", kwlist,
+                                     &obj, &precision)) {
+        return NULL;
+    }
+    if (!PyArray_IsScalar(obj, LongDouble)) {
+        PyErr_SetString(PyExc_TypeError, "not a longfloat");
+        return NULL;
+    }
+    x = ((PyLongDoubleScalarObject *)obj)->obval;
+    if (precision > 70) {
+        precision = 70;
+    }
+    format_longdouble(repr, 100, x, precision);
+    return PyString_FromString(repr);
+}
 
 static struct PyMethodDef array_module_methods[] = {
 	{"_get_ndarray_c_version", (PyCFunction)array__get_ndarray_c_version, 
@@ -5957,6 +5982,8 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS, doc_new_buffer},	
 	{"getbuffer", (PyCFunction)buffer_buffer,
 	 METH_VARARGS | METH_KEYWORDS, doc_buffer_buffer},	
+        {"format_longfloat", (PyCFunction)format_longfloat,
+         METH_VARARGS | METH_KEYWORDS, doc_format_longfloat},
 	{NULL,		NULL, 0}		/* sentinel */
 };
 

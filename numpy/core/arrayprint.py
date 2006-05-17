@@ -16,6 +16,7 @@ import sys
 import numeric      as _gen
 import numerictypes as _nt
 import umath        as _uf
+from multiarray import format_longfloat
 from oldnumeric import ravel
 _nc = _gen
 
@@ -155,19 +156,19 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
             format_function = lambda x: _formatInteger(x, format)
         elif issubclass(dtype, _nt.floating):
             if issubclass(dtype, _nt.longfloat):
-                format_function = str
+                format_function = _longfloatFormatter(precision)
             else:
                 format = _floatFormat(data, precision, suppress_small)
                 format_function = lambda x: _formatFloat(x, format)
         elif issubclass(dtype, _nt.complexfloating):
             if issubclass(dtype, _nt.clongfloat):
-                real_format = imag_format = '%s'
+                format_function = _clongfloatFormatter(precision)
             else:
                 real_format = _floatFormat(
                     data.real, precision, suppress_small, sign=0)
                 imag_format = _floatFormat(
                     data.imag, precision, suppress_small, sign=1)
-            format_function = lambda x: \
+                format_function = lambda x: \
                               _formatComplex(x, real_format, imag_format)
         elif issubclass(dtype, _nt.unicode_):
             format = "%s"
@@ -300,9 +301,8 @@ def _floatFormat(data, precision, suppress_small, sign = 0):
         if large_exponent: format = format + '3'
     else:
         format = '%.' + str(precision) + 'f'
-        precision = min(precision, max(tuple(map(lambda x, p=precision,
-                                                 f=format: _digits(x,p,f),
-                                                 data))))
+        precision = min(precision, max([_digits(x, precision, format)
+                                        for x in data]))
         max_str_len = len(str(int(max_val))) + precision + 2
         if sign: format = '%#+'
         else: format = '%#'
@@ -323,6 +323,11 @@ def _formatInteger(x, format):
         return format % x
     else:
         return "%s" % x
+
+def _longfloatFormatter(precision):
+    def formatter(x):
+        return format_longfloat(x, precision)
+    return formatter
 
 def _formatFloat(x, format, strip_zeros = 1):
     if format[-1] == '3':
@@ -346,6 +351,17 @@ def _formatFloat(x, format, strip_zeros = 1):
     else:
         s = format % x
     return s
+
+def _clongfloatFormatter(precision):
+    def formatter(x):
+        r = format_longfloat(x.real, precision)
+        i = format_longfloat(x.imag, precision)
+        if x.imag < 0:
+            i = '-' + i
+        else:
+            i = '+' + i
+        return r + i + 'j'
+    return formatter
 
 def _formatComplex(x, real_format, imag_format):
     r = _formatFloat(x.real, real_format)
