@@ -147,28 +147,34 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         dtype = a.dtype.type
         if issubclass(dtype, _nt.bool):
             format = "%s"
-            format_function = lambda x, f = format: format % x
+            format_function = lambda x: format % x
         if issubclass(dtype, _nt.integer):
             max_str_len = max(len(str(max_reduce(data))),
                               len(str(min_reduce(data))))
             format = '%' + str(max_str_len) + 'd'
-            format_function = lambda x, f = format: _formatInteger(x, f)
+            format_function = lambda x: _formatInteger(x, format)
         elif issubclass(dtype, _nt.floating):
-            format = _floatFormat(data, precision, suppress_small)
-            format_function = lambda x, f = format: _formatFloat(x, f)
+            if issubclass(dtype, _nt.longfloat):
+                format_function = str
+            else:
+                format = _floatFormat(data, precision, suppress_small)
+                format_function = lambda x: _formatFloat(x, format)
         elif issubclass(dtype, _nt.complexfloating):
-            real_format = _floatFormat(
-                data.real, precision, suppress_small, sign=0)
-            imag_format = _floatFormat(
-                data.imag, precision, suppress_small, sign=1)
-            format_function = lambda x, f1 = real_format, f2 = imag_format: \
-                              _formatComplex(x, f1, f2)
+            if issubclass(dtype, _nt.clongfloat):
+                real_format = imag_format = '%s'
+            else:
+                real_format = _floatFormat(
+                    data.real, precision, suppress_small, sign=0)
+                imag_format = _floatFormat(
+                    data.imag, precision, suppress_small, sign=1)
+            format_function = lambda x: \
+                              _formatComplex(x, real_format, imag_format)
         elif issubclass(dtype, _nt.unicode_):
             format = "%s"
-            format_function = lambda x, f = format: repr(x)
+            format_function = lambda x: repr(x)
         else:
             format = '%s'
-            format_function = lambda x, f = format: format % str(x)
+            format_function = lambda x: format % str(x)
 
     next_line_prefix = " " # skip over "["
     next_line_prefix += " "*len(prefix)                  # skip over array(
