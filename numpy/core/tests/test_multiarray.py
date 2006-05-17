@@ -222,6 +222,12 @@ class test_methods(ScipyTestCase):
         assert_equal(array([12.2,15.5]).round(-1), [10,20])
         assert_equal(array([12.15,15.51]).round(1), [12.2,15.5])
 
+    def check_transpose(self):
+        a = array([[1,2],[3,4]])
+        assert_equal(a.transpose(), [[1,3],[2,4]])
+        self.failUnlessRaises(ValueError, lambda: a.transpose(0))
+        self.failUnlessRaises(ValueError, lambda: a.transpose(0,0))
+        self.failUnlessRaises(ValueError, lambda: a.transpose(0,1,2))
 
 class test_subscripting(ScipyTestCase):
     def check_test_zero_rank(self):
