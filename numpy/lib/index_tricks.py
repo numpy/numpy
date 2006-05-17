@@ -1,6 +1,6 @@
 ## Automatically adapted for numpy Sep 19, 2005 by convertcode.py
 
-__all__ = ['fromflat',
+__all__ = ['unravel_index',
            'mgrid',
            'ogrid',
            'r_', 'c_', 's_',
@@ -16,16 +16,15 @@ import function_base
 import numpy.core.defmatrix as matrix
 makemat = matrix.matrix
 
-
-# fromflat contributed by Stefan van der Walt
-def fromflat(x,dims):
+# contributed by Stefan van der Walt
+def unravel_index(x,dims):
     """Convert a flat index into an index tuple for a matrix of given shape.
 
-    e.g. for a 2x2 matrix, fromflat(2,(2,2)) translates to (1,0).
+    e.g. for a 2x2 matrix, unravel_index(2,(2,2)) returns (1,0).
 
     Example usage:
       p = x.argmax()
-      idx = fromflat(p)
+      idx = unravel_index(p)
       x[idx] == x.max()
 
     Note:  x.flat[p] == x.max()

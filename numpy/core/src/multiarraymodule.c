@@ -5801,7 +5801,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 static char doc_where[] = "where(condition, | x, y) is shaped like condition"\
 	" and has elements of x and y where condition is respectively true or"\
 	" false.  If x or y are not given, then it is equivalent to"\
-	" nonzero(condition).";
+	" condition.nonzero().";
 
 static PyObject *
 array_where(PyObject *ignored, PyObject *args)

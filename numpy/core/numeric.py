@@ -1,8 +1,8 @@
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtype',
            'fromstring', 'fromfile', 'frombuffer','newbuffer',
-           'getbuffer',
-           'where', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
+           'getbuffer', 'where', 'argwhere',
+           'concatenate', 'fastCopyAndTranspose', 'lexsort',
            'register_dtype', 'set_numeric_ops', 'can_cast',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
            'isfortran', 'empty_like', 'zeros_like',
@@ -129,6 +129,21 @@ def asfortranarray(a, dtype=None):
 def isfortran(a):
     return a.flags.fnc
 
+def argwhere(a):
+    """Return a 2-d array of shape N x a.ndim where each row
+    is a sequence of indices into a.  This sequence must be
+    converted to a tuple in order to be used to index into a.
+    """
+    if a.ndim == 0:
+        return array([],dtype=intp)
+    else:
+        b = a.nonzero()
+        retarr = empty((b[0].shape[0],a.ndim),dtype=intp)
+        for k in xrange(a.ndim):
+            retarr[:,k] = b[k]
+    return retarr
+
+    
 _mode_from_name_dict = {'v': 0,
                         's' : 1,
                         'f' : 2}
