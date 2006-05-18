@@ -1389,8 +1389,16 @@ array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_Compress(self, condition, axis));
 }
 
-static char doc_nonzero[] = "a.nonzero() return a tuple of indices referencing "\
-	"the elements of a that are nonzero.";
+static char doc_nonzero[] = \
+    "a.nonzero() returns a tuple of arrays, one for each dimension of a,\n"\
+    "containing the indices of the non-zero elements in that dimension.\n"\
+    "The corresponding non-zero values can be obtained with\n"\
+    "    a[a.nonzero()].\n"
+    "\n"\
+    "To group the indices by element, rather than dimension, use\n"\
+    "    transpose(a.nonzero())\n"\
+    "instead. The result of this is always a 2d array, with a row for each\n"\
+    "non-zero element.";
 
 static PyObject *
 array_nonzero(PyArrayObject *self, PyObject *args)
