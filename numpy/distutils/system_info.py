@@ -1505,6 +1505,7 @@ class numerix_info(system_info):
             raise ValueError("numerix selector must be either 'Numeric' "
                              "or 'numarray' or 'numpy' but the value obtained"
                              " from the %s was '%s'." % (which[1], which[0]))
+        os.environ['NUMERIX'] = which[0]
         self.set_info(**get_info(which[0]))
 
 class f2py_info(system_info):
