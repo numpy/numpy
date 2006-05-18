@@ -5798,10 +5798,15 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 	return ret;
 }
 
-static char doc_where[] = "where(condition, | x, y) is shaped like condition"\
-	" and has elements of x and y where condition is respectively true or"\
-	" false.  If x or y are not given, then it is equivalent to"\
-	" condition.nonzero().";
+static char doc_where[] = \
+    "where(condition, | x, y) is shaped like condition and has elements of\n"\
+    "x and y where condition is respectively true or false.  If x or y are\n"\
+    "not given, then it is equivalent to condition.nonzero().\n"\
+    "\n"
+    "To group the indices by element, rather than dimension, use\n"\
+    "    transpose(where(condition, | x, y))\n"\
+    "instead. The result of this is always a 2d array, with a row of indices\n"
+    "for each element that satisfies the condition.";
 
 static PyObject *
 array_where(PyObject *ignored, PyObject *args)
@@ -5814,14 +5819,15 @@ array_where(PyObject *ignored, PyObject *args)
 
 }
 
-static char doc_lexsort[] = "lexsort(keys=, axis=-1) returns an array of indexes"\
-	" similar to argsort except the sorting is done using the provided sorting"\
-	" keys.  First the sort is done using key[0], then the resulting list of"\
-	" indexes is further manipulated by sorting on key[0].  And so forth"\
-	" The result is a sort on multiple keys.  If the keys represented columns" \
-	" of a spread-sheet, for example, this would sort using multiple columns."\
-	" The keys argument must be a tuple of things that can be converted to "\
-	" arrays of the same shape.";
+static char doc_lexsort[] = \
+    "lexsort(keys=, axis=-1) returns an array of indices similar to argsort,\n"\
+    "except the sorting is done using the provided sorting keys.  First the\n"\
+    "sort is done using key[0], then the resulting list of indices is\n"\
+    "further manipulated by sorting on key[0]. And so forth. The result is\n"\
+    "a sort on multiple keys.  If the keys represented columns of a\n"\
+    "spreadsheet, for example, this would sort using multiple columns.\n"\
+	"The keys argument must be a tuple of things that can be converted to\n"\
+	"arrays of the same shape.";
 
 static PyObject *
 array_lexsort(PyObject *ignored, PyObject *args, PyObject *kwds)
