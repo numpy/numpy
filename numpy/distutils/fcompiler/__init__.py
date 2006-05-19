@@ -380,9 +380,11 @@ class FCompiler(CCompiler):
 
     def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
         """Compile 'src' to product 'obj'."""
+        src_flags = {}
         if is_f_file(src) and not has_f90_header(src):
             flavor = ':f77'
             compiler = self.compiler_f77
+            src_flags = get_f77flags(src)
         elif is_free_format(src):
             flavor = ':f90'
             compiler = self.compiler_f90
@@ -403,9 +405,14 @@ class FCompiler(CCompiler):
         assert self.compile_switch.strip()
         s_args = [self.compile_switch, src]
 
+        extra_flags = src_flags.get(self.compiler_type,[])
+        if extra_flags:
+            log.info('using compile options from source: %r' \
+                     % ' '.join(extra_flags))
+
         if os.name == 'nt':
             compiler = _nt_quote_args(compiler)
-        command = compiler + cc_args + s_args + o_args + extra_postargs
+        command = compiler + cc_args + extra_flags + s_args + o_args + extra_postargs
 
         display = '%s: %s' % (os.path.basename(compiler[0]) + flavor,
                               src)
@@ -757,6 +764,27 @@ def has_f90_header(src):
     line = f.readline()
     f.close()
     return _has_f90_header(line) or _has_fix_header(line)
+
+_f77flags_re = re.compile(r'(c|)f77flags\s*\(\s*(?P<fcname>\w+)\s*\)\s*=\s*(?P<fflags>.*)',re.I)
+def get_f77flags(src):
+    """
+    Search the first 20 lines of fortran 77 code for line pattern
+      `CF77FLAGS(<fcompiler type>)=<f77 flags>`
+    Return a dictionary {<fcompiler type>:<f77 flags>}.
+    """
+    flags = {}
+    f = open(src,'r')
+    i = 0
+    for line in f.readlines():
+        i += 1
+        if i>20: break
+        m = _f77flags_re.match(line)
+        if not m: continue
+        fcname = m.group('fcname').strip()
+        fflags = m.group('fflags').strip()
+        flags[fcname] = split_quoted(fflags)
+    f.close()
+    return flags
 
 if __name__ == '__main__':
     show_fcompilers()
