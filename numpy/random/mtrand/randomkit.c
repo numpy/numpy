@@ -123,6 +123,7 @@ void rk_seed(unsigned long seed, rk_state *state)
 
 	state->pos = RK_STATE_LEN;
 	state->has_gauss = 0;
+        state->has_binomial = 0;
 }
 
 /* Thomas Wang 32 bits integer hash function */
@@ -151,6 +152,7 @@ rk_error rk_randomseed(rk_state *state)
 		state->key[0] |= 0x80000000UL; /* ensures non-zero key */
 		state->pos = RK_STATE_LEN;
 		state->has_gauss = 0;
+                state->has_binomial = 0;
 
                 for (i=0; i<624; i++)
                 {

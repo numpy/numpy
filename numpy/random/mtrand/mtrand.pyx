@@ -291,6 +291,7 @@ cdef class RandomState:
     def __dealloc__(self):
         if self.internal_state != NULL:
             PyMem_Free(self.internal_state)
+            self.internal_state = NULL
 
     def seed(self, seed=None):
         """Seed the generator.
