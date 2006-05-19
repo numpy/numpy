@@ -1067,10 +1067,12 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 
         loop->bufcnt = 0;
         loop->obj = 0;
-	if (loop->size == 0) return nargs;
 
         /* Determine looping method needed */
         loop->meth = NO_UFUNCLOOP;
+
+	if (loop->size == 0) return nargs;
+
 
 	maxsize = 0;
         for (i=0; i<self->nargs; i++) {
