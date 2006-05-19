@@ -134,7 +134,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     if suppress_small is None:
         suppress_small = _float_output_suppress_small
 
-    if a.size > _summaryThreshhold:
+    if _uf.multiply.reduce(a.shape) > _summaryThreshhold:
         summary_insert = "..., "
         data = _leading_trailing(a)
     else:

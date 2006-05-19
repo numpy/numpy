@@ -176,6 +176,18 @@ def configuration(parent_package='',top_path=None):
                          depends = deps,
                          )
 
+    #~ config.add_extension('arraykit',
+                         #~ sources = [join('src','arraykitmodule.c'),
+                                    #~ generate_config_h,
+                                    #~ generate_array_api,
+                                    #~ join('src','scalartypes.inc.src'),
+                                    #~ join('src','arraytypes.inc.src'),
+                                    #~ join(codegen_dir,'generate_array_api.py'),
+                                    #~ join('*.py')
+                                    #~ ],
+                         #~ depends = deps,
+                         #~ )
+
     config.add_extension('umath',
                          sources = [generate_config_h,
                                     join('src','umathmodule.c.src'),

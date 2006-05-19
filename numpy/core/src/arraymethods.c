@@ -529,9 +529,9 @@ array_wraparray(PyArrayObject *self, PyObject *args)
 		return NULL;
 	}
 	arr = PyTuple_GET_ITEM(args, 0);
-	if (!PyArray_Check(arr)) {
+	if (!PyBaseArray_Check(arr)) {
 		PyErr_SetString(PyExc_TypeError,
-				"can only be called with ndarray object");
+				"can only be called with basearray object");
 		return NULL;
 	}	
 

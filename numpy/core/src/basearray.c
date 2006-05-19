@@ -115,36 +115,17 @@ basearray_getitem(PyObject *dummy, PyObject *args)
 }
 
 static PyObject *
-basearray_setitem(PyObject *dummy, PyObject *args)
+array_setitem(PyObject *barray, PyObject *args)
 {
-	PyObject *barray, *key, *val;
+	PyObject *key, *val;
     
-	if (!PyArg_ParseTuple(args, "OOO", &barray, &key, &val)) return NULL;
+	if (!PyArg_ParseTuple(args, "OO", &key, &val)) return NULL;
 	
-	if (!PyBaseArray_Check(barray)) {
-		PyErr_SetString(PyExc_ValueError, 
-                "can only set item for basearray instances");
-		return NULL;
-	}
         if (array_ass_sub(barray, key, val) == -1) return NULL;
         Py_INCREF(Py_None);
         return Py_None;
 }
 
-static PyObject *
-basearray_repr(PyObject *dummy, PyObject *args)
-{
-	PyObject *barray;
-    
-	if (!PyArg_ParseTuple(args, "O", &barray)) return NULL;
-	
-	if (!PyBaseArray_Check(barray)) {
-		PyErr_SetString(PyExc_ValueError, 
-                "can only get repr of basearray instances");
-		return NULL;
-	}
-        return array_repr_builtin(barray);
-}
 
 
 static PyObject *
@@ -451,6 +432,52 @@ basearray_sort(PyArrayObject *dummy, PyObject *args, PyObject *kwds)
 }
 
 
+static PyObject *
+basearray_newfromobject(PyTypeObject *dummy, PyObject *args, PyObject *kwds)
+{
+	PyObject *subtype, *op, *ret=NULL;
+	static char *kwd[] = {"subtype", "object", "dtype", "order", NULL};
+	int nd;
+	PyArray_Descr *type = NULL;
+	PyArray_ORDER order=PyArray_ANYORDER;
+	int flags = ENSURECOPY;
+
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O&O&", kwd, &subtype, &op, 
+					PyArray_DescrConverter2,&type, 
+					PyArray_OrderConverter, &order)) 
+		return NULL;
+
+        if (!PyObject_IsSubclass(subtype, &PyBaseArray_Type)) {
+            PyErr_SetString(PyExc_TypeError, "subtype must derive from basearray");
+            return NULL;
+        }
+
+        if (order == PyArray_CORDER) 
+                flags |= CONTIGUOUS;
+	else if (order == PyArray_FORTRANORDER)
+                flags |= CONTIGUOUS;
 
 
+	if ((ret = PyArray_CheckFromAny(op, type, 0, 0, flags, NULL)) == NULL) 
+		return NULL;
+
+        if (subtype != ret->ob_type) {
+                PyObject *arr = ret;
+            	Py_INCREF(PyArray_DESCR(arr));
+                ret = PyArray_NewFromDescr(subtype, 
+                                           PyArray_DESCR(arr),
+                                           PyArray_NDIM(arr),
+                                           PyArray_DIMS(arr), 
+                                           PyArray_STRIDES(arr), PyArray_DATA(arr),
+                                           PyArray_FLAGS(arr), NULL);
+                if (ret == NULL) {
+                    Py_DECREF(arr);
+                    return NULL;
+                }
+                PyArray_BASE(ret) = arr;
+        }
+        return ret;
+}        
+ 
+    
 #undef _ARET

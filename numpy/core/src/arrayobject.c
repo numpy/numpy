@@ -3489,7 +3489,7 @@ dump_data(char **string, int *n, int *max_n, char *data, int nd,
 }
 
 static PyObject *
-array_repr_builtin(PyArrayObject *self)
+array_repr_builtin(PyArrayObject *self, PyObject* dummy)
 {
         PyObject *ret;
         char *string;
@@ -3559,7 +3559,7 @@ array_repr(PyArrayObject *self)
         PyObject *s, *arglist;
 
         if (PyArray_ReprFunction == NULL) {
-                s = array_repr_builtin(self);
+                s = array_repr_builtin(self, NULL);
         } else {
                 arglist = Py_BuildValue("(O)", self);
                 s = PyEval_CallObject(PyArray_ReprFunction, arglist);

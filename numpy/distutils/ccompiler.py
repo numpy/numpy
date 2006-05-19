@@ -37,7 +37,7 @@ def CCompiler_spawn(self, cmd, display=None):
         print o
         raise DistutilsExecError,\
               'Command "%s" failed with exit status %d' % (cmd, s)
-CCompiler.spawn = new.instancemethod(CCompiler_spawn,None,CCompiler)
+#~ CCompiler.spawn = new.instancemethod(CCompiler_spawn,None,CCompiler)
 
 def CCompiler_object_filenames(self, source_filenames, strip_dir=0, output_dir=''):
     if output_dir is None:

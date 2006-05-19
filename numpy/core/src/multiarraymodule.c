@@ -5895,11 +5895,7 @@ static struct PyMethodDef array_module_methods[] = {
 	{"getbuffer", (PyCFunction)buffer_buffer,
 	 METH_VARARGS | METH_KEYWORDS, doc_buffer_buffer},	
          
-         /* basearray functions */
-	{"getitem", (PyCFunction)basearray_getitem,
-	 METH_VARARGS | METH_KEYWORDS, NULL},
-	{"setitem", (PyCFunction)basearray_setitem,
-	 METH_VARARGS | METH_KEYWORDS, NULL},
+         /* basearray getset */
 	{"getshape", (PyCFunction)basearray_getshape,
 	 METH_VARARGS | METH_KEYWORDS, NULL},
 	{"setshape", (PyCFunction)basearray_setshape,
@@ -5922,20 +5918,24 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS, NULL},
 	{"getflags", (PyCFunction)basearray_getflags,
 	 METH_VARARGS | METH_KEYWORDS, NULL},
-	{"copy", (PyCFunction)basearray_copy,
-	 METH_VARARGS | METH_KEYWORDS, NULL},	
-	{"view", (PyCFunction)basearray_view,
-	 METH_VARARGS | METH_KEYWORDS, NULL},	
-	{"astype", (PyCFunction)basearray_astype,
-	 METH_VARARGS | METH_KEYWORDS, NULL},	
-	{"wrap", (PyCFunction)basearray_wrap,
-	 METH_VARARGS | METH_KEYWORDS, NULL},	
-	{"sort", (PyCFunction)basearray_sort,
-	 METH_VARARGS | METH_KEYWORDS, NULL},
-	{"repr", (PyCFunction)basearray_repr,
+         
+        {"newfromobj", (PyCFunction)basearray_newfromobject,
 	 METH_VARARGS | METH_KEYWORDS, NULL},
          
 	{NULL,		NULL, 0}		/* sentinel */
+};
+
+static struct PyMethodDef basearray_methods[] = {
+    {"getitem", (PyCFunction)array_subscript_nice, METH_O, NULL},
+    {"setitem", (PyCFunction)array_setitem, METH_VARARGS, NULL},
+    {"copy", (PyCFunction)array_copy, METH_VARARGS, doc_copy},
+    {"view",  (PyCFunction)array_view, METH_VARARGS, doc_view},
+    {"astype", (PyCFunction)array_cast, METH_VARARGS, doc_cast},
+    {"wrap", (PyCFunction)array_wraparray, 1, doc_wraparray},
+    {"sort", (PyCFunction)array_sort, METH_VARARGS|METH_KEYWORDS, doc_sort},
+    
+    {NULL, NULL, 0, NULL}
+    
 };
 
 #include "__multiarray_api.c"
@@ -6100,6 +6100,7 @@ set_flaginfo(PyObject *d)
 PyMODINIT_FUNC initmultiarray(void) {
 	PyObject *m, *d, *s;
 	PyObject *c_api;
+        PyMethodDef *meth;
 
 	if (_multiarray_module_loaded) return;
 	_multiarray_module_loaded = 1;
@@ -6164,10 +6165,29 @@ PyMODINIT_FUNC initmultiarray(void) {
 
 	if (set_typeinfo(d) != 0) goto err;
 
+        
+        /* Basearray */  
+        for(meth = basearray_methods;meth->ml_name != NULL; meth++) {
+            PyObject *method;
+            if (meth->ml_flags & METH_CLASS) {
+                method = PyDescr_NewClassMethod(&PyBaseArray_Type, meth); 
+            } else {
+                method = PyDescr_NewMethod(&PyBaseArray_Type, meth); 
+            }
+            PyDict_SetItemString(d, meth->ml_name, method);
+        }
+        if (PyErr_Occurred()) goto err;
+
+        
+        
 	_numpy_internal =						\
 		PyImport_ImportModule("numpy.core._internal");
 	if (_numpy_internal != NULL) return;
 
+        
+
+        
+        
  err:	
 	if (!PyErr_Occurred()) {
 		PyErr_SetString(PyExc_RuntimeError, 
