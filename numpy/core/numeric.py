@@ -134,15 +134,7 @@ def argwhere(a):
     is a sequence of indices into a.  This sequence must be
     converted to a tuple in order to be used to index into a.
     """
-    if a.ndim == 0:
-        return array([],dtype=intp)
-    else:
-        b = a.nonzero()
-        retarr = empty((b[0].shape[0],a.ndim),dtype=intp)
-        for k in xrange(a.ndim):
-            retarr[:,k] = b[k]
-    return retarr
-
+    return transpose(a.nonzero())
     
 _mode_from_name_dict = {'v': 0,
                         's' : 1,

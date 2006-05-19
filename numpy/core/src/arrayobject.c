@@ -5383,8 +5383,12 @@ array_imag_get(PyArrayObject *self)
 		ret->flags &= ~WRITEABLE;
 		if (PyArray_CheckExact(self)) 
 			return (PyObject *)ret;
-		else
-			return PyArray_View(ret, NULL, self->ob_type);
+		else {
+			PyObject *newret;
+			newret = PyArray_View(ret, NULL, self->ob_type);
+			Py_DECREF(ret);
+			return newret;
+		}
 	}
 }
 
