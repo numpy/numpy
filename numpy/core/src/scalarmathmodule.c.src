@@ -572,11 +572,11 @@ static PyObject *
     if (ret==NULL) return NULL;
     obj = PyArrayScalar_New(@OName@);
     if (obj == NULL) {Py_DECREF(ret); return NULL;}
-    PyArrayScalar_ASSIGN(ret, @OName@, out);
+    PyArrayScalar_ASSIGN(obj, @OName@, out);
     PyTuple_SET_ITEM(ret, 0, obj);
     obj = PyArrayScalar_New(@OName@);
     if (obj == NULL) {Py_DECREF(ret); return NULL;}
-    PyArrayScalar_ASSIGN(ret, @OName@, out2);
+    PyArrayScalar_ASSIGN(obj, @OName@, out2);
     PyTuple_SET_ITEM(ret, 1, obj);
 #else
     ret = PyArrayScalar_New(@OName@);
