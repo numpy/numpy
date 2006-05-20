@@ -407,13 +407,18 @@ cppmacros['GETSCALARFROMPYTUPLE']="""\
 \t}
 """
 
-needs['MEMCOPY']=['string.h']
+cppmacros['FAILNULL']="""\\
+#define FAILNULL(p) do {                                            \\
+    if ((p) == NULL) {                                              \\
+        PyErr_SetString(PyExc_MemoryError, "NULL pointer found");   \\
+        goto capi_fail;                                             \\
+    }                                                               \\
+} while (0)
+"""
+needs['MEMCOPY']=['string.h', 'FAILNULL']
 cppmacros['MEMCOPY']="""\
 #define MEMCOPY(to,from,n)\\
-\tif ((memcpy(to,from,n)) == NULL) {\\
-\t\tPyErr_SetString(PyExc_MemoryError, \"memcpy failed\");\\
-\t\tgoto capi_fail;\\
-\t}
+    do { FAILNULL(to); FAILNULL(from); (void)memcpy(to,from,n); } while (0)
 """
 cppmacros['STRINGMALLOC']="""\
 #define STRINGMALLOC(str,len)\\
@@ -425,26 +430,28 @@ cppmacros['STRINGMALLOC']="""\
 \t}
 """
 cppmacros['STRINGFREE']="""\
-#define STRINGFREE(str)\\
-\tif (!(str == NULL)) free(str);
+#define STRINGFREE(str) do {if (!(str == NULL)) free(str);} while (0)
 """
-needs['STRINGCOPYN']=['string.h']
+needs['STRINGCOPYN']=['string.h', 'FAILNULL']
 cppmacros['STRINGCOPYN']="""\
-#define STRINGCOPYN(to,from,n)\\
-\tif ((strncpy(to,from,sizeof(char)*(n))) == NULL) {\\
-\t\tPyErr_SetString(PyExc_MemoryError, \"strncpy failed\");\\
-\t\tgoto capi_fail;\\
-\t} else if (strlen(to)<(n)) {\\
-\t\tmemset((to)+strlen(to), ' ', (n)-strlen(to));\\
-\t} /* Padding with spaces instead of nulls. */
+#define STRINGCOPYN(to,from,buf_size)                           \\
+    do {                                                        \\
+        int _m = (buf_size);                                    \\
+        char *_to = (to);                                       \\
+        char *_from = (from);                                   \\
+        FAILNULL(_to); FAILNULL(_from);                         \\
+        (void)strncpy(_to, _from, sizeof(char)*_m);             \\
+        _to[_m-1] = '\\0';                                      \\
+        /* Padding with spaces instead of nulls */              \\
+        for (_m -= 2; _m >= 0 && _to[_m] == '\\0'; _m--) {      \\
+            _to[_m] = ' ';                                      \\
+        }                                                       \\
+    } while (0)
 """
-needs['STRINGCOPY']=['string.h']
+needs['STRINGCOPY']=['string.h', 'FAILNULL']
 cppmacros['STRINGCOPY']="""\
 #define STRINGCOPY(to,from)\\
-\tif ((strcpy(to,from)) == NULL) {\\
-\t\tPyErr_SetString(PyExc_MemoryError, \"strcpy failed\");\\
-\t\tgoto capi_fail;\\
-\t}
+    do { FAILNULL(to); FAILNULL(from); (void)strcpy(to,from); } while (0)
 """
 cppmacros['CHECKGENERIC']="""\
 #define CHECKGENERIC(check,tcheck,name) \\
@@ -567,7 +574,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
 \t\tif (*len == -1)
 \t\t\t*len = strlen(inistr); /* Will this cause problems? */
 \t\tSTRINGMALLOC(*str,*len);
-\t\tSTRINGCOPYN(*str,inistr,*len);
+\t\tSTRINGCOPYN(*str,inistr,*len+1);
 \t\treturn 1;
 \t}
 \tif (PyArray_Check(obj)) {
@@ -580,7 +587,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
 \t\tif (*len == -1)
 \t\t\t*len = (arr->descr->elsize)*PyArray_SIZE(arr);
 \t\tSTRINGMALLOC(*str,*len);
-\t\tSTRINGCOPYN(*str,arr->data,*len);
+\t\tSTRINGCOPYN(*str,arr->data,*len+1);
 \t\treturn 1;
 \t}
 \tif (PyString_Check(obj)) {
@@ -593,7 +600,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
 \tif (*len == -1)
 \t\t*len = PyString_GET_SIZE(tmp);
 \tSTRINGMALLOC(*str,*len);
-\tSTRINGCOPYN(*str,PyString_AS_STRING(tmp),*len);
+\tSTRINGCOPYN(*str,PyString_AS_STRING(tmp),*len+1);
 \tPy_DECREF(tmp);
 \treturn 1;
 capi_fail:
