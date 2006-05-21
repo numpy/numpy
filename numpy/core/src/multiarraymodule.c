@@ -1643,7 +1643,7 @@ PyArray_CanCoerceScalar(char thistype, char neededtype,
 	case PyArray_OBJECT_SCALAR:
 		return PyArray_CanCastSafely(thistype, neededtype);
 	case PyArray_INTPOS_SCALAR:
-		return (neededtype >= PyArray_UBYTE);
+		return (neededtype >= PyArray_BYTE);
 	case PyArray_INTNEG_SCALAR:
 		return (neededtype >= PyArray_BYTE) &&		\
 			!(PyTypeNum_ISUNSIGNED(neededtype));
