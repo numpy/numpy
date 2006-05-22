@@ -2444,7 +2444,6 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
                 indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype, 
 							   1, 1, CARRAY_FLAGS, NULL);
                 if (indices == NULL) return NULL;
-		Py_DECREF(indtype);		
 	}
 	else {
 		if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&", kwlist1,
