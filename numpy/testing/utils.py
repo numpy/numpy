@@ -62,14 +62,12 @@ else:
         return int(100*(time.time()-_load_time[0]))
     def memusage():
         """ Return memory usage of running python. [Not implemented]"""
-        return
+        raise NotImplementedError
 
 if os.name=='nt' and sys.version[:3] > '2.3':
-    # Code stolen from enthought/debug/memusage.py
-    import win32pdh
-    # from win32pdhutil, part of the win32all package
+    # Code "stolen" from enthought/debug/memusage.py
     def GetPerformanceAttributes(object, counter, instance = None,
-                                 inum=-1, format = win32pdh.PDH_FMT_LONG, machine=None):
+                                 inum=-1, format = None, machine=None):
         # NOTE: Many counters require 2 samples to give accurate results,
         # including "% Processor Time" (as by definition, at any instant, a
         # thread's CPU usage is either 0 or 100).  To read counters like this,
@@ -78,6 +76,8 @@ if os.name=='nt' and sys.version[:3] > '2.3':
         # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
         # My older explanation for this was that the "AddCounter" process forced
         # the CPU to 100%, but the above makes more sense :)
+        import win32pdh
+        if format is None: format = win32pdh.PDH_FMT_LONG
         path = win32pdh.MakeCounterPath( (machine,object,instance, None, inum,counter) )
         hq = win32pdh.OpenQuery()
         try:
@@ -91,10 +91,12 @@ if os.name=='nt' and sys.version[:3] > '2.3':
         finally:
             win32pdh.CloseQuery(hq)
 
-    def memusage(processName="python", instance=0):
-        return GetPerformanceAttributes("Process", "Virtual Bytes",
-                                        processName, instance,
-                                        win32pdh.PDH_FMT_LONG, None)
+        def memusage(processName="python", instance=0):
+            # from win32pdhutil, part of the win32all package
+            import win32pdh
+            return GetPerformanceAttributes("Process", "Virtual Bytes",
+                                            processName, instance,
+                                            win32pdh.PDH_FMT_LONG, None)
 
 def assert_equal(actual,desired,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
