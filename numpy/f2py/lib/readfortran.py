@@ -4,14 +4,21 @@ Defines FortranReader classes for reading Fortran codes from
 files and strings. FortranReader handles comments and line continuations
 of both fix and free format Fortran codes.
 
-Copyright 2006 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@cens.ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License. See http://scipy.org.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-Pearu Peterson
+Author: Pearu Peterson <pearu@cens.ioc.ee>
+Created: May 2006
 """
+
+__all__ = ['FortranFileReader',
+           'FortranStringReader',
+           'FortranReaderError',
+           'Line', 'SyntaxErrorLine',
+           'Comment',
+           'MultiLine','SyntaxErrorMultiLine',
+           ]
 
 import re
 import sys
@@ -45,7 +52,7 @@ class Line:
     def __repr__(self):
         return self.__class__.__name__+'(%r,%s,%r)' \
                % (self.line, self.span, self.label)
-    def isempty(self):
+    def isempty(self, ignore_comments=False):
         return not (self.line.strip() or (self.label and self.label.strip()))
 
 class SyntaxErrorLine(Line, FortranReaderError):
@@ -63,8 +70,8 @@ class Comment:
     def __repr__(self):
         return self.__class__.__name__+'(%r,%s)' \
                % (self.comment, self.span)
-    def isempty(self):
-        return len(self.comment)<2 # comment includes comment character
+    def isempty(self, ignore_comments=False):
+        return ignore_comments or len(self.comment)<2
 
 class MultiLine:
     """ Holds (prefix, line list, suffix) representing multiline
@@ -81,7 +88,7 @@ class MultiLine:
         return self.__class__.__name__+'(%r,%r,%r,%s)' \
                % (self.prefix,self.block,self.suffix,
                   self.span)
-    def isempty(self):
+    def isempty(self, ignore_comments=False):
         return not (self.prefix or self.block or self.suffix)
 
 class SyntaxErrorMultiLine(MultiLine, FortranReaderError):
@@ -158,7 +165,7 @@ class FortranReaderBase:
     def __iter__(self):
         return self
 
-    def next(self):
+    def next(self, ignore_comments = False):
         fifo_item_pop = self.fifo_item.pop
         while 1:
             try:
@@ -167,7 +174,7 @@ class FortranReaderBase:
                 item = self.get_source_item()
                 if item is None:
                     raise StopIteration
-            if not item.isempty():
+            if not item.isempty(ignore_comments):
                 break
             # else ignore empty lines and comments
         if not isinstance(item, Comment):
@@ -183,7 +190,7 @@ class FortranReaderBase:
                     item = fifo_item_pop(0)
                 except IndexError:
                     item = self.get_source_item()
-                if item is None or not item.isempty():
+                if item is None or not item.isempty(ignore_comments):
                     break
             if item is None:
                 break # hold raising StopIteration for the next call.
@@ -493,6 +500,8 @@ class FortranReaderBase:
 
     ##  FortranReaderBase
 
+# Fortran file and string readers:
+
 class FortranFileReader(FortranReaderBase):
 
     def __init__(self, filename):
@@ -508,6 +517,8 @@ class FortranStringReader(FortranReaderBase):
     def __init__(self, string, isfree, isstrict):
         source = StringIO(string)
         FortranReaderBase.__init__(self, source, isfree, isstrict)
+
+# Testing:
 
 def test_f77():
     string_f77 = """
