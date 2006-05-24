@@ -273,8 +273,9 @@ class FortranReaderBase:
             # first try a quick method
             newline = line[:i]
             if '"' not in newline and '\'' not in newline:
-                put_item(self.comment_item(line[i:], lineno, lineno))
-                return newline, quotechar
+                if self.isfix77 or not line[i:].startswith('!f2py'):
+                    put_item(self.comment_item(line[i:], lineno, lineno))
+                    return newline, quotechar
         # handle cases where comment char may be a part of a character content
         splitter = LineSplitter(line, quotechar)
         items = [item for item in splitter]
@@ -282,16 +283,24 @@ class FortranReaderBase:
         noncomment_items = []
         noncomment_items_append = noncomment_items.append
         n = len(items)
-        for i in range(n):
-            item = items[i]
+        commentline = None
+        for k in range(n):
+            item = items[k]
             if isinstance(item, String) or '!' not in item:
                 noncomment_items_append(item)
                 continue
             j = item.find('!')
+            # TODO: handle f2py directives in inline comments.
             noncomment_items_append(item[:j])
-            items[i] = item[j:]
-            put_item(self.comment_item(''.join(items[i:]), lineno, lineno))
+            items[k] = item[j:]
+            commentline = ''.join(items[k:])
             break
+        if commentline is not None:
+            if commentline.startswith('!f2py'):
+                # go to next iteration:
+                newline = ''.join(noncomment_items) + commentline[5:]
+                return self.handle_inline_comment(newline, lineno, quotechar)
+            put_item(self.comment_item(commentline, lineno, lineno))
         return ''.join(noncomment_items), newquotechar
 
     def handle_multilines(self, line, startlineno, mlstr):
@@ -556,7 +565,7 @@ cComment
 !
      !4!line cont. with comment symbol
      &5
-
+      a = 3!f2py.14 ! pi!
       end subroutine foo
 """
     reader = FortranStringReader(string_fix90,False, False)
