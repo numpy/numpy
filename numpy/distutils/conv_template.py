@@ -186,8 +186,9 @@ def resolve_includes(source):
 
 def process_file(source):
     lines = resolve_includes(source)
+    sourcefile = os.path.normpath(source).replace("\\","\\\\")
     return ('#line 1 "%s"\n%s'
-            % (source, process_str(''.join(lines))))
+            % (sourcefile, process_str(''.join(lines))))
 
 if __name__ == "__main__":
 
