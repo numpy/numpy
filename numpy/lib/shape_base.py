@@ -1,5 +1,5 @@
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
-           'column_stack','dstack','array_split','split','hsplit',
+           'column_stack','row_stack', 'dstack','array_split','split','hsplit',
            'vsplit','dsplit','apply_over_axes','expand_dims',
            'apply_along_axis', 'repmat', 'kron']
 
@@ -237,6 +237,8 @@ def hstack(tup):
 
     """
     return _nx.concatenate(map(atleast_1d,tup),1)
+
+row_stack = vstack
 
 def column_stack(tup):
     """ Stack 1D arrays as columns into a 2D array
