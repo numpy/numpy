@@ -6,6 +6,7 @@ Created: May 2006
 __all__ = ['get_source_info']
 import re
 import os
+import sys
 
 _has_f_extension = re.compile(r'.*[.](for|ftn|f77|f)\Z',re.I).match
 _has_f_header = re.compile(r'-[*]-\s*fortran\s*-[*]-',re.I).search
@@ -49,12 +50,25 @@ def is_free_format(file):
     elif _has_f90_header(line):
         n = 0
         isfree = True
+    contline = False
     while n>0 and line:
         if line[0]!='!' and line.strip():
             n -= 1
-            if (line[0]!='\t' and _free_f90_start(line[:5])) or line[-2:-1]=='&':
+            if not contline and (line[0]!='\t' and _free_f90_start(line[:5])):
                 isfree = True
                 break
+            elif line[-2:-1]=='&':
+                contline = True
+            else:
+                contline = False
         line = f.readline()
     f.close()
     return isfree
+
+def simple_main():
+    for filename in sys.argv[1:]:
+        isfree, isstrict = get_source_info(filename)
+        print '%s: isfree=%s, isstrict=%s'  % (filename, isfree, isstrict)
+    
+if __name__ == '__main__':
+    simple_main()

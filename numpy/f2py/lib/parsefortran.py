@@ -19,6 +19,7 @@ class FortranParser:
 
     def __init__(self, reader):
         self.reader = reader
+        self.isfix77 = reader.isfix77
 
     def get_item(self):
         try:
@@ -45,7 +46,19 @@ python module foo
 end python module
 """
     reader = FortranStringReader(string, True, True)
-    reader = FortranFileReader(filename)
+    parser = FortranParser(reader)
+    block = parser.parse()
+    print block
+
+def test_f77():
+    string = """\
+c      program foo
+      a = 3
+      end
+      subroutine bar
+      end
+"""
+    reader = FortranStringReader(string, False, True)
     parser = FortranParser(reader)
     block = parser.parse()
     print block
@@ -60,5 +73,6 @@ def simple_main():
         print block
 
 if __name__ == "__main__":
+    #test_f77()
     #test_pyf()
     simple_main()

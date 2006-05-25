@@ -28,13 +28,13 @@ from cStringIO import StringIO
 from numpy.distutils.misc_util import yellow_text, red_text, blue_text
 
 from sourceinfo import get_source_info
-from splitline import LineSplitter, String
+from splitline import LineSplitter, String, string_replace_map
 
 _spacedigits=' 0123456789'
 _cf2py_re = re.compile(r'(?P<indent>\s*)!f2py(?P<rest>.*)',re.I)
 _is_fix_cont = lambda line: line and len(line)>5 and line[5]!=' ' and line[0]==' '
 _is_f90_cont = lambda line: line and '&' in line and line.rstrip()[-1]=='&'
-
+_f90label_re = re.compile(r'\s*(?P<label>(\w+\s*:|\d+))\s*(\b|(?=&)|\Z)',re.I)
 
 class FortranReaderError: # TODO: may be derive it from Exception
     def __init__(self, message):
@@ -49,11 +49,19 @@ class Line:
         self.span = linenospan
         self.label = label
         self.reader = reader
+        self.strline = None
     def __repr__(self):
         return self.__class__.__name__+'(%r,%s,%r)' \
-               % (self.line, self.span, self.label)
+               % (self.get_line(), self.span, self.label)
     def isempty(self, ignore_comments=False):
         return not (self.line.strip() or (self.label and self.label.strip()))
+    def get_line(self):
+        if self.strline is not None:
+            return self.strline
+        line, str_map = string_replace_map(self.line, lower=not self.reader.ispyf)
+        self.strline = line
+        self.strlinemap = str_map
+        return line
 
 class SyntaxErrorLine(Line, FortranReaderError):
     def __init__(self, line, linenospan, label, reader, message):
@@ -376,7 +384,7 @@ class FortranReaderBase:
         if line is None: return
         startlineno = self.linecount
         line = self.handle_cf2py_start(line)
-
+        label = None
         if self.ispyf:
             # handle multilines
             for mlstr in ['"""',"'''"]:
@@ -464,6 +472,13 @@ class FortranReaderBase:
                                                self.linecount, self.linecount))
                     line = get_single_line()
                     continue
+                else:
+                    # first line, check for a f90 label
+                    m = _f90label_re.match(line)
+                    if m:
+                        assert label is None,`label`
+                        label = m.group('label')
+                        line = line[m.end():]
                 line,qc = handle_inline_comment(line, self.linecount, qc)
 
             i = line.rfind('&')
@@ -496,7 +511,7 @@ class FortranReaderBase:
                 'following character continuation: %r, expected None.' % (qc),
                 startlineno, self.linecount)
             print >> sys.stderr, message
-        return self.line_item(''.join(lines),startlineno,self.linecount,None)
+        return self.line_item(''.join(lines),startlineno,self.linecount,label)
 
     ##  FortranReaderBase
 
@@ -559,6 +574,10 @@ python module foo
   b=3! hey, fake line continuation:&
   c=4& !line cont
   &45
+  thisis_label_2 : c = 3
+   xxif_isotropic_2 :     if ( string_upper_compare ( o%opt_aniso, 'ISOTROPIC' ) ) then
+   g=3
+   endif
   end interface
 end python module foo
 ! end of file
