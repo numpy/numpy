@@ -1,3 +1,4 @@
+
 /*
   Provide multidimensional arrays as a basic object type in python.
 
@@ -2123,7 +2124,6 @@ fancy_indexing_check(PyObject *args)
 			if (retval > SOBJ_ISFANCY) return retval;
 		}
 	}
-
 	return retval;
 }
 
@@ -2149,12 +2149,47 @@ static PyObject *iter_subscript(PyArrayIterObject *, PyObject *);
 
 
 static PyObject *
-array_subscript(PyArrayObject *self, PyObject *op)
+array_subscript_simple(PyArrayObject *self, PyObject *op) 
 {
         intp dimensions[MAX_DIMS], strides[MAX_DIMS];
 	intp offset;
+        int nd;
+        PyArrayObject *other;
+	intp value;
+
+	value = PyArray_PyIntAsIntp(op);
+	if (!PyErr_Occurred()) {
+		if (value < 0 && self->nd > 0) value += self->dimensions[0];
+		return array_big_item(self, value);
+	}
+	PyErr_Clear();
+	
+	/* Standard (view-based) Indexing */
+        if ((nd = parse_index(self, op, dimensions, strides, &offset))
+            == -1) return NULL;
+
+	/* This will only work if new array will be a view */
+	Py_INCREF(self->descr);
+	if ((other = (PyArrayObject *)					\
+	     PyArray_NewFromDescr(self->ob_type, self->descr,
+				  nd, dimensions,
+				  strides, self->data+offset,
+				  self->flags,
+				  (PyObject *)self)) == NULL)
+		return NULL;
+	
+	other->base = (PyObject *)self;
+	Py_INCREF(self);
+	
+	PyArray_UpdateFlags(other, UPDATE_ALL_FLAGS);
+	
+	return (PyObject *)other;
+}
+
+static PyObject *
+array_subscript(PyArrayObject *self, PyObject *op)
+{
         int nd, oned, fancy;
-	intp i;
         PyArrayObject *other;
 	PyArrayMapIterObject *mit;
 
@@ -2181,6 +2216,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
 			     PyString_AsString(op));
 		return NULL;
 	}
+
         if (self->nd == 0) {
 		if (op == Py_Ellipsis) {
 			/* XXX: This leads to a small inconsistency
@@ -2204,20 +2240,17 @@ array_subscript(PyArrayObject *self, PyObject *op)
                                 "0-d arrays can't be indexed.");
                 return NULL;
         }
-        if (PyArray_IsScalar(op, Integer) || PyInt_Check(op) || \
-            PyLong_Check(op)) {
-                intp value;
-                value = PyArray_PyIntAsIntp(op);
-		if (PyErr_Occurred())
-			PyErr_Clear();
-                else if (value >= 0) {
-			return array_big_item(self, value);
-                }
-                else /* (value < 0) */ {
-			value += self->dimensions[0];
+
+	if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) || 
+	    PyLong_Check(op)) {
+		intp value;
+		value = PyArray_PyIntAsIntp(op);
+		if (!PyErr_Occurred()) {
+			if (value < 0) value += self->dimensions[0];
 			return array_big_item(self, value);
 		}
-        }
+		PyErr_Clear();
+	}
 
 	fancy = fancy_indexing_check(op);
 
@@ -2245,35 +2278,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 return (PyObject *)other;
         }
 
-	i = PyArray_PyIntAsIntp(op);
-	if (!error_converting(i)) {
-		if (i < 0 && self->nd > 0) i = i+self->dimensions[0];
-		return array_big_item(self, i);
-	}
-	PyErr_Clear();
-
-	/* Standard (view-based) Indexing */
-        if ((nd = parse_index(self, op, dimensions, strides, &offset))
-            == -1)
-                return NULL;
-
-	/* This will only work if new array will be a view */
-	Py_INCREF(self->descr);
-	if ((other = (PyArrayObject *)					\
-	     PyArray_NewFromDescr(self->ob_type, self->descr,
-				  nd, dimensions,
-				  strides, self->data+offset,
-				  self->flags,
-				  (PyObject *)self)) == NULL)
-		return NULL;
-
-
-	other->base = (PyObject *)self;
-	Py_INCREF(self);
-
-	PyArray_UpdateFlags(other, UPDATE_ALL_FLAGS);
-
-	return (PyObject *)other;
+	return array_subscript_simple(self, op); 
 }
 
 
@@ -2289,11 +2294,40 @@ array_subscript(PyArrayObject *self, PyObject *op)
 static int iter_ass_subscript(PyArrayIterObject *, PyObject *, PyObject *);
 
 static int
+array_ass_sub_simple(PyArrayObject *self, PyObject *index, PyObject *op)
+{
+        int ret;
+        PyArrayObject *tmp;
+	intp value;
+
+	value = PyArray_PyIntAsIntp(index);
+	if (!error_converting(value)) {
+		return array_ass_big_item(self, value, op);
+	}
+	PyErr_Clear();
+	
+	/* Rest of standard (view-based) indexing */
+
+        if ((tmp = (PyArrayObject*)\
+	     array_subscript_simple(self, index)) == NULL) {
+		return -1;
+	}
+
+	if (PyArray_ISOBJECT(self) && (tmp->nd == 0)) {
+		ret = tmp->descr->f->setitem(op, tmp->data, tmp);
+	}
+	else {
+		ret = PyArray_CopyObject(tmp, op);
+	}
+	Py_DECREF(tmp);
+	return ret;
+}
+
+
+static int
 array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 {
         int ret, oned, fancy;
-	intp i;
-        PyArrayObject *tmp;
 	PyArrayMapIterObject *mit;
 
         if (op == NULL) {
@@ -2306,16 +2340,6 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 				"array is not writeable");
 		return -1;
 	}
-
-        if (PyArray_IsScalar(index, Integer) || PyInt_Check(index) ||	\
-            PyLong_Check(index)) {
-                intp value;
-                value = PyArray_PyIntAsIntp(index);
-                if (PyErr_Occurred())
-                        PyErr_Clear();
-		else
-			return array_ass_big_item(self, value, op);
-        }
 
 	if (PyString_Check(index) || PyUnicode_Check(index)) {
 		if (self->descr->fields) {
@@ -2376,24 +2400,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
                 return ret;
         }
 
-	i = PyArray_PyIntAsIntp(index);
-	if (!error_converting(i)) {
-		return array_ass_big_item(self, i, op);
-	}
-	PyErr_Clear();
-
-	/* Rest of standard (view-based) indexing */
-
-        if ((tmp = (PyArrayObject *)array_subscript(self, index)) == NULL)
-                return -1;
-	if (PyArray_ISOBJECT(self) && (tmp->nd == 0)) {
-		ret = tmp->descr->f->setitem(op, tmp->data, tmp);
-	}
-	else {
-		ret = PyArray_CopyObject(tmp, op);
-	}
-	Py_DECREF(tmp);
-        return ret;
+	return array_ass_sub_simple(self, index, op);
 }
 
 
