@@ -54,13 +54,13 @@ def is_free_format(file):
     while n>0 and line:
         if line[0]!='!' and line.strip():
             n -= 1
-            if not contline and (line[0]!='\t' and _free_f90_start(line[:5])):
+            if line[0]!='\t' and _free_f90_start(line[:5]) or line[-2:-1]=='&':
                 isfree = True
                 break
-            elif line[-2:-1]=='&':
-                contline = True
-            else:
-                contline = False
+            #elif line[-2:-1]=='&':
+            #    contline = True
+            #else:
+            #    contline = False
         line = f.readline()
     f.close()
     return isfree

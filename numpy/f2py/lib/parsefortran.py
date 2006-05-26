@@ -12,6 +12,8 @@ Created: May 2006
 
 import re
 
+from numpy.distutils.misc_util import yellow_text
+
 from readfortran import FortranFileReader, FortranStringReader
 from block import Block
 
@@ -66,12 +68,12 @@ c      program foo
 def simple_main():
     import sys
     for filename in sys.argv[1:]:
-        print 'Processing',filename
+        print yellow_text('Processing '+filename)
         reader = FortranFileReader(filename)
         parser = FortranParser(reader)
         block = parser.parse()
-        print block
-
+        #print block
+        
 if __name__ == "__main__":
     #test_f77()
     #test_pyf()

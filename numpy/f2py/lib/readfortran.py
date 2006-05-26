@@ -32,7 +32,7 @@ from splitline import LineSplitter, String, string_replace_map
 
 _spacedigits=' 0123456789'
 _cf2py_re = re.compile(r'(?P<indent>\s*)!f2py(?P<rest>.*)',re.I)
-_is_fix_cont = lambda line: line and len(line)>5 and line[5]!=' ' and line[0]==' '
+_is_fix_cont = lambda line: line and len(line)>5 and line[5]!=' ' and line[:5]==5*' '
 _is_f90_cont = lambda line: line and '&' in line and line.rstrip()[-1]=='&'
 _f90label_re = re.compile(r'\s*(?P<label>(\w+\s*:|\d+))\s*(\b|(?=&)|\Z)',re.I)
 
@@ -40,6 +40,7 @@ class FortranReaderError: # TODO: may be derive it from Exception
     def __init__(self, message):
         self.message = message
         print >> sys.stderr,message
+        sys.stderr.flush()
 
 class Line:
     """ Holds a Fortran source line.
@@ -52,9 +53,9 @@ class Line:
         self.strline = None
     def __repr__(self):
         return self.__class__.__name__+'(%r,%s,%r)' \
-               % (self.get_line(), self.span, self.label)
+               % (self.line, self.span, self.label)
     def isempty(self, ignore_comments=False):
-        return not (self.line.strip() or (self.label and self.label.strip()))
+        return not (self.line.strip() or self.label)
     def get_line(self):
         if self.strline is not None:
             return self.strline
@@ -124,6 +125,12 @@ class FortranReaderBase:
         self.isfree  = isfree
         self.isfix   = not isfree
 
+        if self.isfree90: mode = 'free90'
+        elif self.isfix90: mode = 'fix90'
+        elif self.isfix77: mode = 'fix77'
+        else: mode = 'pyf'
+        self.mode = mode
+
         self.linecount = 0
         self.source = source
         self.isclosed = False
@@ -133,6 +140,7 @@ class FortranReaderBase:
         self.source_lines = []
 
     def close_source(self):
+        # called when self.source.next() raises StopIteration.
         pass
 
     # For handling raw source lines:
@@ -174,6 +182,19 @@ class FortranReaderBase:
         return self
 
     def next(self, ignore_comments = False):
+        try:
+            return self._next(ignore_comments)
+        except StopIteration:
+            raise
+        except Exception, msg:
+            message = self.format_message('FATAL ERROR',
+                                          'while processing got exception: %s'\
+                                          '\nSTOP READING' % msg,
+                                          self.linecount, self.linecount)
+            self.show_message(message, sys.stdout)
+            raise StopIteration
+
+    def _next(self, ignore_comments = False):
         fifo_item_pop = self.fifo_item.pop
         while 1:
             try:
@@ -226,9 +247,13 @@ class FortranReaderBase:
 
     # For handling messages:
 
+    def show_message(self, message, stream = sys.stdout):
+        stream.write(message+'\n')
+        stream.flush()
+
     def format_message(self, kind, message, startlineno, endlineno,
                        startcolno=0, endcolno=-1):
-        r = ['%s while processing %s..' % (kind, self.source)]
+        r = ['%s while processing %s (mode=%r)..' % (kind, self.source, self.mode)]
         for i in range(max(1,startlineno-3),startlineno):
             r.append('%5d:%s' % (i,self.source_lines[i-1]))
         for i in range(startlineno,min(endlineno+3,len(self.source_lines))+1):
@@ -305,7 +330,6 @@ class FortranReaderBase:
                 noncomment_items_append(item)
                 continue
             j = item.find('!')
-            # TODO: handle f2py directives in inline comments.
             noncomment_items_append(item[:j])
             items[k] = item[j:]
             commentline = ''.join(items[k:])
@@ -336,7 +360,7 @@ class FortranReaderBase:
                             'multiline prefix contains odd number of %r characters' \
                             % (quote), startlineno, startlineno,
                             0, len(prefix))
-                    print >> sys.stderr, message
+                    self.show_message(message, sys.stderr)
 
             suffix = None
             multilines = []
@@ -363,7 +387,7 @@ class FortranReaderBase:
                             'ASSERTION FAILURE(pyf)',
                         'following character continuation: %r, expected None.' % (qc),
                             startlineno, self.linecount)
-                print >> sys.stderr, message
+                self.show_message(message, sys.stderr)
             # XXX: should we do line.replace('\\'+mlstr[0],mlstr[0])
             #      for line in multilines?
             return self.multiline_item(prefix,multilines,suffix,
@@ -390,9 +414,9 @@ class FortranReaderBase:
             for mlstr in ['"""',"'''"]:
                 r = self.handle_multilines(line, startlineno, mlstr)
                 if r: return r
-
         if self.isfix:
-            label = line[:5]
+            label = line[:5].strip().lower()
+            if label.endswith(':'): label = label[:-1].strip()
             if not line.strip():
                 # empty line
                 return self.line_item(line[6:],startlineno,self.linecount,label)
@@ -406,7 +430,7 @@ class FortranReaderBase:
                         message = message + ', switching to free format mode'
                         message = self.format_warning_message(\
                             message,startlineno, self.linecount)
-                        print >> sys.stderr, message
+                        self.show_message(message, sys.stderr)
                         self.isfree = True
                         self.isfix90 = False
                         self.isfree90 = True
@@ -439,9 +463,9 @@ class FortranReaderBase:
             if qc is not None:
                 message = self.format_message(\
                             'ASSERTION FAILURE(fix90)',
-                            'following character continuation: %r, expected None.' % (qc),
-                            startlineno, self.linecount)
-                print >> sys.stderr, message
+                            'following character continuation: %r, expected None.'\
+                            % (qc), startlineno, self.linecount)
+                self.show_message(message, sys.stderr)
             for i in range(len(lines)):
                 l = lines[i]
                 if l.rstrip().endswith('&'):
@@ -449,7 +473,7 @@ class FortranReaderBase:
                         'f90 line continuation character `&\' detected'\
                         ' in fix format code',
                         startlineno + i, startlineno + i, l.rfind('&')+5)
-                    print >> sys.stderr, message
+                    self.show_message(message, sys.stderr)
             return self.line_item(''.join(lines),startlineno,self.linecount,label)
 
         start_index = 0
@@ -466,18 +490,21 @@ class FortranReaderBase:
                                                 self.linecount,qc)
             else:
                 line_lstrip = line.lstrip()
-                if lines and line_lstrip.startswith('!'):
-                    # check for comment line within line continuation
-                    put_item(self.comment_item(line_lstrip,
-                                               self.linecount, self.linecount))
-                    line = get_single_line()
-                    continue
+                if lines:
+                    if line_lstrip.startswith('!'):
+                        # check for comment line within line continuation
+                        put_item(self.comment_item(line_lstrip,
+                                                   self.linecount, self.linecount))
+                        line = get_single_line()
+                        continue
                 else:
                     # first line, check for a f90 label
                     m = _f90label_re.match(line)
                     if m:
-                        assert label is None,`label`
-                        label = m.group('label')
+                        assert not label,`label,m.group('label')`
+                        label = m.group('label').strip()
+                        if label.endswith(':'): label = label[:-1].strip()
+                        if not self.ispyf: label = label.lower()
                         line = line[m.end():]
                 line,qc = handle_inline_comment(line, self.linecount, qc)
 
@@ -510,7 +537,7 @@ class FortranReaderBase:
             message = self.format_message('ASSERTION FAILURE(free)',
                 'following character continuation: %r, expected None.' % (qc),
                 startlineno, self.linecount)
-            print >> sys.stderr, message
+            self.show_message(message, sys.stderr)
         return self.line_item(''.join(lines),startlineno,self.linecount,label)
 
     ##  FortranReaderBase
@@ -596,6 +623,10 @@ cComment
      !4!line cont. with comment symbol
      &5
       a = 3!f2py.14 ! pi!
+!   KDMO
+     write (obj%print_lun, *) ' KDMO : '
+     write (obj%print_lun, *) '  COORD = ',coord, '  BIN_WID = ',             &
+       obj%bin_wid,'  VEL_DMO = ', obj%vel_dmo
       end subroutine foo
 """
     reader = FortranStringReader(string_fix90,False, False)
@@ -607,7 +638,8 @@ def simple_main():
         print 'Processing',filename
         reader = FortranFileReader(filename)
         for item in reader:
-            #print item
+            #print >> sys.stdout, item
+            #sys.stdout.flush()
             pass
 
 def profile_main():
