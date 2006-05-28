@@ -761,6 +761,19 @@ static void
 
 /****************** scan *************************************/
 
+#define _ENDSCAN \
+	if (num != 1) { \
+		if (num == 0) return -3; \
+		if (num == EOF) return -4; \
+		return -5; \
+	} \
+	if (sep != NULL) { \
+		num = fscanf(fp, sep); \
+		if (num == 0) return 0; \
+		if (num == EOF) return -1; \
+	} \
+	return 0
+
 /**begin repeat
 
 #fname=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
@@ -772,27 +785,45 @@ static int
 {
 	int num;
 	num = fscanf(fp, "%"@format@, ip);
-	if (num != 1) {
-		if (num == 0) return -3;
-		if (num == EOF) return -4;
-		return -5;
-	}
-	if (sep != NULL) {
-		num = fscanf(fp, sep);
-		if (num == 0) return 0;
-		if (num == EOF) return -1;
-	}
-	return 0;
+	_ENDSCAN;
 }
 
 /**end repeat**/
 
 /**begin repeat
-#fname=BOOL,BYTE,UBYTE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
+#fname=BYTE,UBYTE#
+#type=byte,ubyte#
+#btype=int,uint#
+#format="d","u"#
+*/
+static int
+@fname@_scan (FILE *fp, @type@ *ip, char *sep, void *ignore)
+{
+	@btype@ temp;
+	int num;
+	num = fscanf(fp, "%"@format@, &temp);
+	*ip = (@type@) temp;
+	_ENDSCAN;
+}
+/**end repeat**/
+
+static int
+BOOL_scan (FILE *fp, Bool *ip, char *sep, void *ignore)
+{
+	int temp;
+	int num;
+	num = fscanf(fp, "%d", &temp);
+	*ip = (Bool) (temp != 0);
+	_ENDSCAN;
+}
+
+/**begin repeat
+#fname=CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
 */
 #define @fname@_scan NULL
 /**end repeat**/
 
+#undef _ENDSCAN
 
 /****************** fromstr *************************************/
 
