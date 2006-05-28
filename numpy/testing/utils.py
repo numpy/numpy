@@ -48,7 +48,7 @@ if sys.platform[:5]=='linux':
             f.close()
             return int(l[22])
         except:
-            return
+            raise NotImplementedError
 else:
     # os.getpid is not in all platforms available.
     # Using time is safe but inaccurate, especially when process
@@ -62,11 +62,19 @@ else:
         return int(100*(time.time()-_load_time[0]))
     def memusage():
         """ Return memory usage of running python. [Not implemented]"""
-        return
+        raise NotImplementedError
+
+_have_win32pdh = 0
 
 if os.name=='nt' and sys.version[:3] > '2.3':
+    try:
+        import win32pdh
+        _have_win32pdh = 1
+    except:
+        pass
+
+if _have_win32pdh:
     # Code stolen from enthought/debug/memusage.py
-    import win32pdh
     # from win32pdhutil, part of the win32all package
     def GetPerformanceAttributes(object, counter, instance = None,
                                  inum=-1, format = win32pdh.PDH_FMT_LONG, machine=None):
@@ -92,9 +100,14 @@ if os.name=='nt' and sys.version[:3] > '2.3':
             win32pdh.CloseQuery(hq)
 
     def memusage(processName="python", instance=0):
+        import win32pdh
         return GetPerformanceAttributes("Process", "Virtual Bytes",
                                         processName, instance,
                                         win32pdh.PDH_FMT_LONG, None)
+else:
+    def memusage():
+        raise NotImplementedError
+
 
 def assert_equal(actual,desired,err_msg='',verbose=1):
     """ Raise an assertion if two items are not
