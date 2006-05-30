@@ -1528,6 +1528,13 @@ typedef struct {
 						  k*PyArray_STRIDES(obj)[2] + \
 						  l*PyArray_STRIDES(obj)[3])
 
+#define PyArray_XDECREF_ERR(obj) \
+	if (obj && (PyArray_FLAGS(obj) & UPDATEIFCOPY)) {      \
+		PyArray_FLAGS(PyArray_BASE(obj)) |= WRITEABLE; \
+		PyArray_FLAGS(obj) &= ~UPDATEIFCOPY; \
+	}\
+	Py_XDECREF(obj)
+
 #define PyArray_DESCR_REPLACE(descr) do {	\
 		PyArray_Descr *_new_;			\
 		_new_ = PyArray_DescrNew(descr);	\

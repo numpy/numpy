@@ -2669,7 +2669,9 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 	
         errval = PyUFunc_GenericFunction(self, args, mps);
         if (errval < 0) {
-		for(i=0; i<self->nargs; i++) Py_XDECREF(mps[i]);
+		for(i=0; i<self->nargs; i++) {
+			PyArray_XDECREF_ERR(mps[i]);
+		}
 		if (errval == -1)
 			return NULL;
 		else {
