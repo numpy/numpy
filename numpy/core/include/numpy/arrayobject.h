@@ -951,6 +951,10 @@ typedef struct {
 } PyArray_Chunk;
 
 /* Array flags */
+/* For backward's compatibility only */
+#define OWN_DIMENSIONS 0
+#define OWN_STRIDES 0
+#define SAVESPACE 0
 
 /* Means c-style contiguous (last index varies the fastest). The
    data elements right after each other. */
