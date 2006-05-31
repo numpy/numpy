@@ -176,7 +176,7 @@ defdict = {
           ),
 'ones_like' :
     Ufunc(1, 1, None,
-          'return 1',
+          'returns an array of ones of the shape and typecode of x.',
           TD(nobool_or_obj),
           TD(O, f='Py_get_one'),
           ),
