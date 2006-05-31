@@ -859,6 +859,28 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 {
         PyArrayObject *src;
         int ret;
+
+	/* Special code to mimic Numeric behavior for
+	   character arrays.
+	*/
+	if (dest->descr->type == PyArray_CHARLTR && dest->nd > 0 \
+	    && PyString_Check(src_object)) {
+		int n_new, n_old;
+		char *new_string;
+		PyObject *tmp;
+		n_new = dest->dimensions[dest->nd-1];
+		n_old = PyString_Size(src_object);
+		if (n_new > n_old) {
+			new_string = (char *)malloc(n_new);
+			memmove(new_string, 
+				PyString_AS_STRING(src_object),
+				n_old);
+			memset(new_string+n_old, ' ', n_new-n_old);
+			tmp = PyString_FromStringAndSize(new_string, n_new);
+			free(new_string);
+			src_object = tmp;
+		}
+	}
 	
 	Py_INCREF(dest->descr);
         src = (PyArrayObject *)PyArray_FromAny(src_object,
@@ -6060,6 +6082,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 	intp d[MAX_DIMS];
 	int stop_at_string;
 	int stop_at_tuple;
+	int check_it;
 	int type = typecode->type_num;
 	int itemsize = typecode->elsize;
 
@@ -6093,7 +6116,12 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 		goto fail;
         }
 
-	if(discover_dimensions(s,nd,d, !stop_at_string) == -1) goto fail;
+	check_it = !(stop_at_string || type == PyArray_STRING);
+	if(discover_dimensions(s,nd,d, check_it) == -1) goto fail;
+
+	if (typecode->type == PyArray_CHARLTR && nd > 0 && d[nd-1]==1) {
+		nd = nd-1;
+	}
 
 	if (itemsize == 0 && PyTypeNum_ISEXTENDED(type)) {
 		if (discover_itemsize(s, nd, &itemsize) == -1) goto fail;
