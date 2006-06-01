@@ -11,6 +11,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'array2string', 'get_printoptions', 'set_printoptions',
            'array_repr', 'array_str', 'set_string_function',
            'little_endian',
+           'fromiter',
            'indices', 'fromfunction',
            'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
            'ones', 'identity', 'allclose',
@@ -66,6 +67,10 @@ def empty_like(a):
         return res
 
 # end Fernando's utilities
+
+def fromiter(obj, dtype=None):
+    obj = list(obj)
+    return array(obj, dtype=dtype)
 
 def extend_all(module):
     adict = {}
