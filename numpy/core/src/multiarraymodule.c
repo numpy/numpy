@@ -2279,10 +2279,10 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 	intp astride, rstride, *iptr;
 	PyArray_ArgSortFunc *argsort;
 
-	if (!PyTuple_Check(sort_keys) || \
-	    ((n=PyTuple_GET_SIZE(sort_keys)) <= 0)) {
+	if (!PySequence_Check(sort_keys) || \
+	    ((n=PySequence_Size(sort_keys)) <= 0)) {
 		PyErr_SetString(PyExc_TypeError, 
-				"need tuple of keys with len > 0 in lexsort");
+				"need sequence of keys with len > 0 in lexsort");
 		return NULL;
 	}
 	mps = (PyArrayObject **) _pya_malloc(n*sizeof(PyArrayObject));
@@ -2291,8 +2291,10 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 	if (its == NULL) {_pya_free(mps); return PyErr_NoMemory();}
 	for (i=0; i<n; i++) {mps[i] = NULL; its[i] = NULL;}
 	for (i=0; i<n; i++) {
-		mps[i] = (PyArrayObject *)PyArray_FROM_O\
-			(PyTuple_GET_ITEM(sort_keys, i));
+		PyObject *obj;
+		obj = PySequence_GetItem(sort_keys, i);
+		mps[i] = (PyArrayObject *)PyArray_FROM_O(obj);
+		Py_DECREF(obj);
 		if (mps[i] == NULL) goto fail;
 		if (i>0) {
 			if ((mps[i]->nd != mps[0]->nd) ||	\
@@ -5823,11 +5825,11 @@ static char doc_lexsort[] = \
     "lexsort(keys=, axis=-1) returns an array of indices similar to argsort,\n"\
     "except the sorting is done using the provided sorting keys.  First the\n"\
     "sort is done using key[0], then the resulting list of indices is\n"\
-    "further manipulated by sorting on key[0]. And so forth. The result is\n"\
+    "further manipulated by sorting on key[1], and so forth. The result is\n"\
     "a sort on multiple keys.  If the keys represented columns of a\n"\
     "spreadsheet, for example, this would sort using multiple columns.\n"\
-	"The keys argument must be a tuple of things that can be converted to\n"\
-	"arrays of the same shape.";
+    "The keys argument must be a sequence of things that can be converted to\n"\
+    "arrays of the same shape.";
 
 static PyObject *
 array_lexsort(PyObject *ignored, PyObject *args, PyObject *kwds)
@@ -5836,8 +5838,8 @@ array_lexsort(PyObject *ignored, PyObject *args, PyObject *kwds)
 	PyObject *obj;
 	static char *kwlist[] = {"keys", "axis", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!|i", kwlist, 
-					 &PyTuple_Type, &obj, &axis)) return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|i", kwlist, 
+					 &obj, &axis)) return NULL;
 	
 	return _ARET(PyArray_LexSort(obj, axis));
 }
