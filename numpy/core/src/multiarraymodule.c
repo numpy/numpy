@@ -674,9 +674,9 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, int variance)
 	Py_DECREF(obj2);
 	if (obj1 == NULL) {Py_DECREF(new); return NULL;}
 
-	n = PyArray_DIM(new,axis)-1;
+	n = PyArray_DIM(new,axis);
 	Py_DECREF(new);
-	if (n<=0) n=1;
+	if (n==0) n=1;
 	obj2 = PyFloat_FromDouble(1.0/((double )n));
 	if (obj2 == NULL) {Py_DECREF(obj1); return NULL;}
 	ret = PyNumber_Multiply(obj1, obj2);

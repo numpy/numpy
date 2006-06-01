@@ -18,9 +18,9 @@ makemat = matrix.matrix
 
 # contributed by Stefan van der Walt
 def unravel_index(x,dims):
-    """Convert a flat index into an index tuple for a matrix of given shape.
+    """Convert a flat index into an index tuple for an array of given shape.
 
-    e.g. for a 2x2 matrix, unravel_index(2,(2,2)) returns (1,0).
+    e.g. for a 2x2 array, unravel_index(2,(2,2)) returns (1,0).
 
     Example usage:
       p = x.argmax()
@@ -313,6 +313,7 @@ class ndenumerate(object):
 
     def __iter__(self):
         return self
+
 
 class ndindex(object):
     """Pass in a sequence of integers corresponding
