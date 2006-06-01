@@ -7326,9 +7326,10 @@ PyArray_IterAllButAxis(PyObject *obj, int axis)
    adjusted */
 
 /*OBJECT_API
-  Adjusts previously broadcasted iterators so that the largest axis is not iterated 
-  over.  Returns dimension which is largest in the range [0,multi->nd).  A -1 
-  is returned if multi->nd == 0.
+  Adjusts previously broadcasted iterators so that the largest axis 
+  is not iterated over.  
+  Returns dimension which is largest in the range [0,multi->nd).  
+  A -1 is returned if multi->nd == 0.
  */
 static int
 PyArray_RemoveLargest(PyArrayMultiIterObject *multi)

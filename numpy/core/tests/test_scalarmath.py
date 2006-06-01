@@ -63,3 +63,6 @@ class test_types(ScipyTestCase):
                 assert val.dtype.num == typeconv[k,l] and \
                        val.dtype.char == typeconv2[k,l], \
                        "error with (%d,%d)" % (k,l)
+
+if __name__ == "__main__":
+    NumpyTest().run()

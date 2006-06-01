@@ -1598,14 +1598,17 @@ object_arrtype_dealloc(PyObject *v)
 	v->ob_type->tp_free(v);
 }
 
-/* string and unicode inherit from Python Type first and so GET_ITEM is different to
-   get to the Python Type.
+/* string and unicode inherit from Python Type first and so GET_ITEM is different to get to the Python Type.
  */
+/* ok is a work-around for a bug in complex_new that doesn't allocate
+   memory from the sub-types memory allocator. 
+*/
 
 /**begin repeat 
 #name=byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, string, unicode, object#
 #TYPE=BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, OBJECT#
 #num=1*16,0,0,1#
+#ok=0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,1,1,1#
 */
 static PyObject *
 @name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -1614,6 +1617,7 @@ static PyObject *
 	PyObject *arr;
 	PyArray_Descr *typecode;
 
+#if @ok@
 	if (type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases)==2)) {
 		PyTypeObject *sup;
 		PyObject *ret;
@@ -1625,6 +1629,7 @@ static PyObject *
 		PyErr_Clear();
 		/* now do default conversion */
 	}
+#endif
 
 	if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
 
