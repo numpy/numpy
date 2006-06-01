@@ -453,8 +453,10 @@ def geterr():
 
 def setbufsize(size):
     if size > 10e6:
-        raise ValueError, "Very big buffers.. %s" % size
-
+        raise ValueError, "Buffer size too big... %s" % size
+    if size < 5:
+	raise ValueError, "Buffer size too small... %s" %size
+ 
     pyvals = umath.geterrobj()
     old = getbufsize()
     pyvals[0] = size
@@ -465,7 +467,7 @@ def getbufsize():
     return umath.geterrobj()[0]
 
 def seterrcall(func):
-    if not callable(func):
+    if func is not None and not callable(func):
         raise ValueError, "Only callable can be used as callback"
     pyvals = umath.geterrobj()
     old = geterrcall()
