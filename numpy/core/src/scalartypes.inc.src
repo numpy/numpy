@@ -1604,11 +1604,27 @@ object_arrtype_dealloc(PyObject *v)
    memory from the sub-types memory allocator. 
 */
 
+#define _WORK(num)  \
+	if (type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases)==2)) { \
+		PyTypeObject *sup; \
+		PyObject *ret; \
+		/* We are inheriting from a Python type as well so \
+		   give it first dibs on conversion */ \
+		sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, num); \
+		ret = sup->tp_new(type, args, kwds); \
+		if (ret) return ret; \
+		PyErr_Clear(); \
+		/* now do default conversion */ \
+	} 
+
+#define _WORK1 _WORK(1)
+#define _WORKz _WORK(0)
+#define _WORK0
+
 /**begin repeat 
 #name=byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, string, unicode, object#
 #TYPE=BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, OBJECT#
-#num=1*16,0,0,1#
-#ok=0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,1,1,1#
+#work=0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,1#
 */
 static PyObject *
 @name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -1617,19 +1633,7 @@ static PyObject *
 	PyObject *arr;
 	PyArray_Descr *typecode;
 
-#if @ok@
-	if (type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases)==2)) {
-		PyTypeObject *sup;
-		PyObject *ret;
-		/* We are inheriting from a Python type as well so
-		   give it first dibs on conversion */
-		sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, @num@);
-		ret = sup->tp_new(type, args, kwds);
-		if (ret) return ret;
-		PyErr_Clear();
-		/* now do default conversion */
-	}
-#endif
+	_WORK@work@
 
 	if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
 
@@ -1638,6 +1642,11 @@ static PyObject *
 	return PyArray_Return((PyArrayObject *)arr);
 }
 /**end repeat**/
+
+#undef _WORK1
+#undef _WORKz
+#undef _WORK0
+#undef _WORK
 
 /* bool->tp_new only returns Py_True or Py_False */
 static PyObject *
