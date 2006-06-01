@@ -1681,22 +1681,8 @@ static void
 	register intp i;
 	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
 	register char *i1=args[0], *i2=args[1], *op=args[2];
-	if (is1 == 0) {
-		register @typ@ t1 = *((@typ@ *)i1);
-		for (i=0; i<n; i++, i2+=is2, op+=os) {
-			*((@typ@ *)op) = t1 @OP@ *((@typ@ *)i2);
-		}
-	}
-	else if (is2 == 0) {
-		register @typ@ t2 = *((@typ@ *)i2);
-		for (i=0; i<n; i++, i1+=is1, op+=os) {
-			*((@typ@ *)op) = *((@typ@ *)i1) @OP@ t2;
-		}
-	}
-	else {
-		for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-			*((@typ@ *)op)=*((@typ@ *)i1) @OP@ *((@typ@ *)i2);
-		}
+	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+		*((@typ@ *)op)=*((@typ@ *)i1) @OP@ *((@typ@ *)i2);
 	}
 }
 /**end repeat**/
