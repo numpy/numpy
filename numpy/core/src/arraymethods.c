@@ -119,7 +119,7 @@ static PyObject *
 array_squeeze(PyArrayObject *self, PyObject *args)
 {
         if (!PyArg_ParseTuple(args, "")) return NULL;
-        return _ARET(PyArray_Squeeze(self));
+        return PyArray_Squeeze(self);
 }
 
 static char doc_view[] = "a.view(<type>) return a new view of array with same data. type can be either a new sub-type object or a data-descriptor object";
