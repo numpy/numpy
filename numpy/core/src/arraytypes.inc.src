@@ -1850,10 +1850,10 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	(PyArray_FillFunc*)NULL,
 	(PyArray_FillWithScalarFunc*)NULL,
 	{
-		NULL, NULL, NULL, NULL
+		NULL, NULL, NULL
 	},
 	{
-		NULL, NULL, NULL, NULL
+		NULL, NULL, NULL
 	},
 	NULL,
 	(PyArray_ScalarKindFunc*)NULL,
@@ -1925,10 +1925,10 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	(PyArray_FillFunc*)@from@_fill,
 	(PyArray_FillWithScalarFunc*)@from@_fillwithscalar,
 	{
-		NULL, NULL, NULL, NULL
+		NULL, NULL, NULL
 	},
 	{
-		NULL, NULL, NULL, NULL
+		NULL, NULL, NULL
 	},
 	NULL,
 	(PyArray_ScalarKindFunc*)NULL,
