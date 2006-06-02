@@ -417,7 +417,7 @@ def det(a):
         lapack_routine = lapack_lite.dgetrf
     pivots = zeros((n,), 'i')
     results = lapack_routine(n, n, a, n, pivots, 0)
-    sign = add.reduce(not_equal(pivots, arrayrange(1, n+1))) % 2
+    sign = add.reduce(not_equal(pivots, arange(1, n+1))) % 2
     return (1.-2.*sign)*multiply.reduce(diagonal(a),axis=-1)
 
 # Linear Least Squares
