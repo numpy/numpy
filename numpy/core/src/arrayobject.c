@@ -1231,8 +1231,17 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
 {
 	PyObject *cobj, *key;
 	int ret;
+	if (totype < PyArray_NTYPES) {
+		descr->f->cast[totype] = castfunc;
+		return 0;
+	}
+	if (!PyTypeNum_ISUSERDEF(totype)) {
+		PyErr_SetString(PyExc_TypeError, "invalid type number.");
+		return -1;
+	}
 	if (descr->f->castdict == NULL) {
 		descr->f->castdict = PyDict_New();
+		if (descr->f->castdict == NULL) return -1;
 	}
 	key = PyInt_FromLong(totype);
 	if (PyErr_Occurred()) return -1;
@@ -6294,8 +6303,11 @@ PyArray_CastToType(PyArrayObject *mp, PyArray_Descr *at, int fortran)
 static PyArray_VectorUnaryFunc *
 PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 {
-	PyArray_VectorUnaryFunc *castfunc;
-	if (type_num >= PyArray_NTYPES) {
+	PyArray_VectorUnaryFunc *castfunc=NULL;
+	if (type_num < PyArray_NTYPES) {
+		castfunc = descr->f->cast[type_num];
+	}
+	if (castfunc == NULL) {
 		PyObject *obj = descr->f->castdict;
 		if (obj && PyDict_Check(obj)) {
 			PyObject *key;
@@ -6307,12 +6319,9 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 				castfunc = PyCObject_AsVoidPtr(cobj);
 			}
 		}
+		if (castfunc) return castfunc;
 	}
-	else {
-		castfunc = descr->f->cast[type_num];
-	}
-
-	if (castfunc) return castfunc;
+	else return castfunc;
 
 	PyErr_SetString(PyExc_ValueError,
 			"No cast function available.");
