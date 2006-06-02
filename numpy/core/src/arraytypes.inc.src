@@ -564,11 +564,10 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 #incr= ip++*169,ip+=2*39#
 */
 static void 
-@from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip, 
-	       PyArrayObject *aop) {
-	register intp i; 
-	for(i=0;i<n;i++,op++) {
-		*op = (@totyp@)*ip;
+@from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n, 
+	       PyArrayObject *aip, PyArrayObject *aop) {
+	while (n--) {
+		*op++ = (@totyp@)*ip;
 		@incr@;
 	}
 }
@@ -579,11 +578,10 @@ static void
 #fromtyp=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 static void 
-@from@_to_BOOL(@fromtyp@ *ip, Bool *op, intp n, PyArrayObject *aip, 
-	       PyArrayObject *aop) {
-	register intp i; 
-	for(i=0;i<n;i++,op++,ip++) {
-		*op = (Bool)(*ip != FALSE);
+@from@_to_BOOL(register @fromtyp@ *ip, register Bool *op, register intp n, 
+	       PyArrayObject *aip, PyArrayObject *aop) {
+	while (n--) {
+		*op++ = (Bool)(*ip++ != FALSE);
 	}
 }
 /**end repeat**/
@@ -593,11 +591,11 @@ static void
 #fromtyp=cfloat, cdouble, clongdouble#
 */
 static void 
-@from@_to_BOOL(@fromtyp@ *ip, Bool *op, intp n, PyArrayObject *aip, 
-	       PyArrayObject *aop) {
-	register intp i; 
-	for(i=0;i<n;i++,op++,ip++) {
+@from@_to_BOOL(register @fromtyp@ *ip, register Bool *op, register intp n, 
+	       PyArrayObject *aip, PyArrayObject *aop) {
+	while (n--) {
 		*op = (Bool)(((*ip).real != FALSE) || ((*ip).imag != FALSE));
+		op++; ip++;
 	}
 }
 /**end repeat**/
@@ -607,11 +605,10 @@ static void
 #totyp=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 static void 
-BOOL_to_@to@(Bool *ip, @totyp@ *op, intp n, PyArrayObject *aip, 
-	     PyArrayObject *aop) {
-	register intp i; 
-	for(i=0;i<n;i++,op++,ip++) {
-		*op = (@totyp@)(*ip != FALSE);
+BOOL_to_@to@(register Bool *ip, register @totyp@ *op, register intp n, 
+	     PyArrayObject *aip, PyArrayObject *aop) {
+	while (n--) {
+		*op++ = (@totyp@)(*ip++ != FALSE);
 	}
 }
 /**end repeat**/
@@ -624,11 +621,10 @@ BOOL_to_@to@(Bool *ip, @totyp@ *op, intp n, PyArrayObject *aip,
 #totyp= (float, double, longdouble)*14#
 */
 static void 
-@from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip,
-	       PyArrayObject *aop) {
-	register intp i;
-	for(i=0;i<n;i++,ip++) {
-		*op++ = (@totyp@)*ip;
+@from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n, 
+	       PyArrayObject *aip, PyArrayObject *aop) {
+	while (n--) {
+		*op++ = (@totyp@)*ip++;
 		*op++ = 0.0;
 	}
 }
@@ -642,14 +638,13 @@ static void
 #fromtyp=float*3, double*3, longdouble*3#
 */
 static void 
-@from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip,
-	       PyArrayObject *aop) {
-	register intp i; 
-	for(i=0;i<2*n;i++,ip++,op++) {
-		*op = (@totyp@)*ip;
+@from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n, 
+	       PyArrayObject *aip, PyArrayObject *aop) {
+	n <<= 1;
+	while (n--) {
+		*op++ = (@totyp@)*ip++;
 	}
 }
-
 /**end repeat**/
 
 /**begin repeat 

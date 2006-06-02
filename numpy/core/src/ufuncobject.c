@@ -625,65 +625,65 @@ select_types(PyUFuncObject *self, int *arg_types,
              PyUFuncGenericFunction *function, void **data,
 	     PyArray_SCALARKIND *scalars)
 {
-	int i=0, j;
+	int i, j;
 	char start_type;
+	int userdef=-1;
 
-	if (self->userloops) {
-		int userdef=-1;
-		for (i=0; i<self->nin; i++) {
-			if (PyTypeNum_ISUSERDEF(arg_types[i])) {
-				userdef = arg_types[i];
-				break;
-			}
+	for (i=0; i<self->nin; i++) {
+		if (PyTypeNum_ISUSERDEF(arg_types[i])) {
+			userdef = arg_types[i];
+			break;
 		}
-		if (userdef > 0) {
-			PyObject *key, *obj;
-			int *this_types=NULL;
-			
-			obj = NULL;
+	}
+
+	if (userdef > 0) {
+		PyObject *key, *obj;
+		int *this_types=NULL;
+		
+		obj = NULL;
+		if (self->userloops) {
 			key = PyInt_FromLong((long) userdef);
 			if (key == NULL) return -1;
 			obj = PyDict_GetItem(self->userloops, key);
 			Py_DECREF(key);
-			if (obj == NULL) {
-				PyErr_SetString(PyExc_TypeError, 
-						"user-defined type used in ufunc" \
-						" with no registered loops");
-				return -1;
-			}
-			if PyTuple_Check(obj) {
-				PyObject *item;
-				*function = (PyUFuncGenericFunction)	\
-					PyCObject_AsVoidPtr(PyTuple_GET_ITEM(obj, 
-									     0));
-				item = PyTuple_GET_ITEM(obj, 2);
-				if (PyCObject_Check(item)) {
-					*data = PyCObject_AsVoidPtr(item);
-				}
-				item = PyTuple_GET_ITEM(obj, 1);
-				if (PyCObject_Check(item)) {
-					this_types = PyCObject_AsVoidPtr(item);
-				}
-			}
-			else {
-				*function = (PyUFuncGenericFunction)	\
-					PyCObject_AsVoidPtr(obj);
-				*data = NULL;
-			}
-			
-			if (this_types == NULL) {
-				for (i=1; i<self->nargs; i++) {
-					arg_types[i] = userdef;
-				}
-			}
-			else {
-				for (i=1; i<self->nargs; i++) {
-					arg_types[i] = this_types[i];
-				}
-			}
-			Py_DECREF(obj);
-			return 0;
 		}
+		if (obj == NULL) {
+			PyErr_SetString(PyExc_TypeError, 
+					"user-defined type used in ufunc" \
+					" with no registered loops");
+			return -1;
+		}
+		if PyTuple_Check(obj) {
+			PyObject *item;
+			*function = (PyUFuncGenericFunction)		\
+				PyCObject_AsVoidPtr(PyTuple_GET_ITEM(obj,0));
+			item = PyTuple_GET_ITEM(obj, 2);
+			if (PyCObject_Check(item)) {
+				*data = PyCObject_AsVoidPtr(item);
+			}
+			item = PyTuple_GET_ITEM(obj, 1);
+			if (PyCObject_Check(item)) {
+					this_types = PyCObject_AsVoidPtr(item);
+			}
+		}
+		else {
+			*function = (PyUFuncGenericFunction)		\
+				PyCObject_AsVoidPtr(obj);
+			*data = NULL;
+		}
+		
+		if (this_types == NULL) {
+			for (i=1; i<self->nargs; i++) {
+				arg_types[i] = userdef;
+			}
+		}
+		else {
+			for (i=1; i<self->nargs; i++) {
+				arg_types[i] = this_types[i];
+			}
+		}
+		Py_DECREF(obj);
+			return 0;
 	}
 
 	start_type = arg_types[0];
@@ -694,6 +694,7 @@ select_types(PyUFuncObject *self, int *arg_types,
 		start_type = _lowest_type(start_type);
 	}
 
+	i = 0;
 	while (i<self->ntypes && start_type > self->types[i*self->nargs]) 
 		i++;
 
