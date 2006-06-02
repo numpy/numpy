@@ -5818,8 +5818,8 @@ array_where(PyObject *ignored, PyObject *args)
 	if (!PyArg_ParseTuple(args, "O|OO", &obj, &x, &y)) return NULL;
 
 	return PyArray_Where(obj, x, y);
-
 }
+
 
 static char doc_lexsort[] = \
     "lexsort(keys=, axis=-1) returns an array of indices similar to argsort,\n"\
@@ -5846,23 +5846,6 @@ array_lexsort(PyObject *ignored, PyObject *args, PyObject *kwds)
 
 #undef _ARET
 
-
-static char doc_register_dtype[] = \
-	"register_dtype(a) registers a new type object -- gives it a typenum";
-
-static PyObject *
-array_register_dtype(PyObject *dummy, PyObject *args)
-{
-	PyObject *dtype;
-	int ret;
-	
-	if (!PyArg_ParseTuple(args, "O", &dtype)) return NULL;
-	
-	ret = PyArray_RegisterDataType((PyTypeObject *)dtype);
-	if (ret < 0)
-		return NULL;
-	return PyInt_FromLong((long) ret);
-}
 
 static char doc_can_cast_safely[] = \
 	"can_cast_safely(from=d1, to=d2) returns True if data type d1 "\
@@ -6002,8 +5985,6 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS, doc_frombuffer},
 	{"fromfile", (PyCFunction)array_fromfile,
 	 METH_VARARGS | METH_KEYWORDS, doc_fromfile},
-	{"register_dtype", (PyCFunction)array_register_dtype,
-	 METH_VARARGS, doc_register_dtype},
 	{"can_cast", (PyCFunction)array_can_cast_safely,
 	 METH_VARARGS | METH_KEYWORDS, doc_can_cast_safely},		
 	{"newbuffer", (PyCFunction)new_buffer,

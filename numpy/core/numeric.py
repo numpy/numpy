@@ -3,7 +3,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'fromstring', 'fromfile', 'frombuffer','newbuffer',
            'getbuffer', 'where', 'argwhere',
            'concatenate', 'fastCopyAndTranspose', 'lexsort',
-           'register_dtype', 'set_numeric_ops', 'can_cast',
+           'set_numeric_ops', 'can_cast',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
            'isfortran', 'empty_like', 'zeros_like',
            'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
@@ -107,7 +107,6 @@ getbuffer = multiarray.getbuffer
 where = multiarray.where
 concatenate = multiarray.concatenate
 fastCopyAndTranspose = multiarray._fastCopyAndTranspose
-register_dtype = multiarray.register_dtype
 set_numeric_ops = multiarray.set_numeric_ops
 can_cast = multiarray.can_cast
 lexsort = multiarray.lexsort

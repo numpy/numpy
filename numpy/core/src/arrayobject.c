@@ -1025,7 +1025,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 	else
 		obj = type->tp_alloc(type, 0);
 	if (obj == NULL) return NULL;
-	if PyTypeNum_ISEXTENDED(type_num) {
+	if PyTypeNum_ISFLEXIBLE(type_num) {
 		if (type_num == PyArray_STRING) {
 			destptr = PyString_AS_STRING(obj);
 			((PyStringObject *)obj)->ob_shash = -1;
@@ -1136,7 +1136,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 */
 
 
-/* Return Python scalar if 0-d array object is encountered */
+/* Return Array Scalar if 0-d array object is encountered */
 
 /*OBJECT_API
  Return either an array or the appropriate Python object if the array
@@ -1177,106 +1177,37 @@ PyArray_Return(PyArrayObject *mp)
 */
 /*OBJECT_API
  Register Data type
+ Does not change the reference count of descr
 */
 static int
-PyArray_RegisterDataType(PyTypeObject *type)
+PyArray_RegisterDataType(PyArray_Descr *descr)
 {
-	PyArray_Descr *descr;
-	PyObject *obj;
+	PyArray_Descr *descr2;
 	int typenum;
 	int i;
 
-	if ((type == &PyVoidArrType_Type) ||			\
-	    !PyType_IsSubtype(type, &PyVoidArrType_Type)) {
-		PyErr_SetString(PyExc_ValueError,
-				"can only register void subtypes");
-		return -1;
-	}
 	/* See if this type is already registered */
 	for (i=0; i<PyArray_NUMUSERTYPES; i++) {
-		descr = userdescrs[i];
-		if (descr->typeobj == type)
+		descr2 = userdescrs[i];
+		if (descr2 == descr)
 			return descr->type_num;
 	}
-	descr = PyArray_DescrNewFromType(PyArray_VOID);
 	typenum = PyArray_USERDEF + PyArray_NUMUSERTYPES;
 	descr->type_num = typenum;
-        descr->typeobj = type;
-	obj = PyObject_GetAttrString((PyObject *)type,"itemsize");
-	if (obj) {
-		i = PyInt_AsLong(obj);
-		if ((i < 0) && (PyErr_Occurred())) PyErr_Clear();
-		else descr->elsize = i;
-		Py_DECREF(obj);
+	if (descr->elsize == 0) {
+		PyErr_SetString(PyExc_ValueError, "cannot register a" \
+				"flexible data-type");
+		return -1;
 	}
-	Py_INCREF(type);
 	userdescrs = realloc(userdescrs,
 			     (PyArray_NUMUSERTYPES+1)*sizeof(void *));
         if (userdescrs == NULL) {
                 PyErr_SetString(PyExc_MemoryError, "RegisterDataType");
-		Py_DECREF(descr);
                 return -1;
         }
 	userdescrs[PyArray_NUMUSERTYPES++] = descr;
 	return typenum;
 }
-
-
-/*
-   copyies over from the old descr table for anything
-   NULL or zero in what is given.
-   DECREF's the Descr already there.
-   places a pointer to the new one into the slot.
-*/
-
-/* steals a reference to descr */
-/*OBJECT_API
- Insert Descr Table
-*/
-static int
-PyArray_RegisterDescrForType(int typenum, PyArray_Descr *descr)
-{
-	PyArray_Descr *old;
-
-	if (!PyTypeNum_ISUSERDEF(typenum)) {
-		PyErr_SetString(PyExc_TypeError,
-				"data type not registered");
-		Py_DECREF(descr);
-		return -1;
-	}
-	old = userdescrs[typenum-PyArray_USERDEF];
-	descr->typeobj = old->typeobj;
-	descr->type_num = typenum;
-
-	if (descr->f == NULL) descr->f = old->f;
-	if (descr->fields == NULL) {
-		descr->fields = old->fields;
-		Py_XINCREF(descr->fields);
-	}
-	if (descr->subarray == NULL && old->subarray) {
-		descr->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
-		memcpy(descr->subarray, old->subarray,
-		       sizeof(PyArray_ArrayDescr));
-		Py_INCREF(descr->subarray->shape);
-		Py_INCREF(descr->subarray->base);
-	}
-        Py_XINCREF(descr->typeobj);
-
-#define _ZERO_CHECK(member) \
-	if (descr->member == 0) descr->member = old->member
-
-	_ZERO_CHECK(kind);
-	_ZERO_CHECK(type);
-        _ZERO_CHECK(byteorder);
-	_ZERO_CHECK(elsize);
-	_ZERO_CHECK(alignment);
-#undef _ZERO_CHECK
-
-	Py_DECREF(old);
-	userdescrs[typenum-PyArray_USERDEF] = descr;
-	return 0;
-}
-
 
 /*OBJECT_API
  To File
