@@ -1217,14 +1217,14 @@ static int
 PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype, 
 			 PyArray_VectorUnaryFunc *castfunc) 
 {
-	PyObject *cobj;
+	PyObject *cobj, *key;
 	int ret;
 	if (descr->f->castdict == NULL) {
 		descr->f->castdict = PyDict_New();
 	}
 	key = PyInt_FromLong(totype);
 	if (PyErr_Occurred()) return -1;
-	cobj = PyCObject_FromVoidPtr((void *)castfunc);
+	cobj = PyCObject_FromVoidPtr((void *)castfunc, NULL);
 	if (cobj == NULL) {Py_DECREF(key); return -1;}
 	ret = PyDict_SetItem(descr->f->castdict, key, cobj);
 	Py_DECREF(key);
