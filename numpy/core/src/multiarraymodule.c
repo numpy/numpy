@@ -4461,8 +4461,6 @@ PyArray_SortkindConverter(PyObject *obj, PyArray_SORTKIND *sortkind)
 		*sortkind = PyArray_HEAPSORT;
 	else if (str[0] == 'm' || str[0] == 'M')
 		*sortkind = PyArray_MERGESORT;
-	else if (str[0] == 't' || str[0] == 'T')
-		*sortkind = PyArray_TIMSORT;
 	else {
 		PyErr_Format(PyExc_ValueError, 
 			     "%s is an unrecognized kind of sort",
