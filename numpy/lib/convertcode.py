@@ -17,6 +17,7 @@ Makes the following changes:
  * Convert xx.savespace(?) to pass + ## xx.savespace(?)
  #### -- not * Convert a.shape = ? to a.reshape(?)
  * Prints warning for use of bool, int, float, copmlex, object, and unicode
+ * replaces matrixmultiply with dot
 """
 __all__ = ['fromfile', 'fromstr']
 
@@ -65,6 +66,7 @@ def replaceattr(astr):
     astr = astr.replace(".byteswapped()",".byteswap()")
     astr = astr.replace(".toscalar()", ".item()")
     astr = astr.replace(".itemsize()",".itemsize")
+    astr = astr.replace("matrixmultiply","dot")
     # preserve uses of flat that should be o.k.
     tmpstr = flatindex_re.sub("@@@@\\2",astr)
     # replace other uses of flat
