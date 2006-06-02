@@ -427,11 +427,14 @@ cdef class RandomState:
         random numbers from a uniform distribution in the range [0,1).
 
         rand(d0, d1, ..., dn) -> random values
+
+        Note:  This is a convenience function. If you want an
+                    interface that takes a tuple as the first argument
+                    use numpy.random.random_sample(shape_tuple).
+        
         """
         if len(args) == 0:
             return self.random_sample()
-        elif isinstance(args[0], tuple):
-            return self.random_sample(size=args[0])
         else:
             return self.random_sample(size=args)
 
@@ -440,11 +443,13 @@ cdef class RandomState:
         array of shape (d0, d1, ..., dn).
 
         randn(d0, d1, ..., dn) -> random values
+
+        Note:  This is a convenience function. If you want an
+                    interface that takes a tuple as the first argument
+                    use numpy.random.standard_normal(shape_tuple).
         """
         if len(args) == 0:
             return self.standard_normal()
-        elif isinstance(args[0], tuple):
-            return self.standard_normal(args[0])
         else:
             return self.standard_normal(args)
 
