@@ -69,7 +69,7 @@ extern "C" CONFUSE_EMACS
 /* allocated statically.  This is the size of that static allocation. */
 /*  The array creation itself could have arbitrary dimensions but
  *  all the places where static allocation is used would need to
- *  be changed to dynamic (including inside of structures)
+ *  be changed to dynamic (including inside of several structures)
  */
 
 #define MAX_DIMS 32

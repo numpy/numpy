@@ -1658,8 +1658,6 @@ PyArray_CanCoerceScalar(char thistype, char neededtype,
 }
 
 
-/* This needs to change to allow scalars of a different "kind" to alter the input type
- */
 
 /*OBJECT_API*/
 static PyArrayObject **
@@ -1747,7 +1745,6 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 
 
 /*MULTIARRAY_API
- Numeric.choose()
 */
 static PyObject *
 PyArray_Choose(PyArrayObject *ip, PyObject *op)

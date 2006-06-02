@@ -1118,7 +1118,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 		}
 	}
 	else {
-		destptr = _SOFFSET_(obj, type_num);
+		destptr = _SOFFSET_(obj);
 	}
 	/* copyswap for OBJECT increments the reference count */
         copyswap(destptr, data, swap, base);
@@ -7185,6 +7185,12 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 		    see if the length is long enough to hold the
 		    stringified value of the object.
 		*/
+	}
+	if (!ret && (PyTypeNum_ISUSERDEF(fromtype) ||	\
+		     PyTypeNum_ISUSERDEF(totype))) {
+		/* don't restrict casting to and from
+		   additional data-types */
+		return TRUE;
 	}
 	return ret;
 }

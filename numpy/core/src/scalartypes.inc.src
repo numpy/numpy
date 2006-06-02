@@ -5,7 +5,7 @@
 #endif
 #include "numpy/arrayscalars.h"
 
-#define _SOFFSET_(obj,y) ((char *)obj + (offsetof(PyScalarObject, obval)))
+#define _SOFFSET_(obj) ((char *)obj + (offsetof(PyScalarObject, obval)))
 
 static PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
 	{PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
@@ -58,8 +58,7 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 		}
 		return;
 	}
-	memcpy(ctypeptr, _SOFFSET_(scalar, typecode->type_num),
-	       typecode->elsize);
+	memcpy(ctypeptr, _SOFFSET_(scalar), typecode->elsize);
 	Py_DECREF(typecode);
 	return;
 }
@@ -77,8 +76,11 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 			  PyArray_Descr *outcode)
 {
 	PyArray_Descr* descr;
+	PyArray_VectorUnaryFunc* castfunc;
 	
 	descr = PyArray_DescrFromScalar(scalar);
+	castfunc = PyArray_GetCastFunc(descr, outcode->type_num);
+	if (castfunc == NULL) return -1;
 	if (PyTypeNum_ISEXTENDED(descr->type_num) ||
 	    PyTypeNum_ISEXTENDED(outcode->type_num)) {
 		PyArrayObject *ain, *aout;
@@ -92,15 +94,12 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 					     NULL, ctypeptr, 
 					     CARRAY_FLAGS, NULL);
 		if (aout == NULL) {Py_DECREF(ain); return -1;}
-		descr->f->cast[outcode->type_num](ain->data, 
-					       aout->data, 1, ain, aout);
+		castfunc(ain->data, aout->data, 1, ain, aout);
 		Py_DECREF(ain);
 		Py_DECREF(aout);
 	}
 	else {
-		descr->f->cast[outcode->type_num](_SOFFSET_(scalar, 
-							 descr->type_num), 
-					       ctypeptr, 1, NULL, NULL);
+		castfunc(_SOFFSET_(scalar), ctypeptr, 1, NULL, NULL);
 	}
 	Py_DECREF(descr);
 	return 0;
@@ -113,8 +112,10 @@ static int
 PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
 			 void *ctypeptr, int outtype)
 {
-	indescr->f->cast[outtype](_SOFFSET_(scalar, indescr->type_num),
-				  ctypeptr, 1, NULL, NULL);
+	PyArray_VectorUnaryFunc* castfunc;
+	castfunc = PyArray_GetCastFunc(indescr, outtype);
+	if (castfunc == NULL) return -1;
+	castfunc(_SOFFSET_(scalar), ctypeptr, 1, NULL, NULL);
 	return 0;
 }
 
@@ -177,7 +178,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 			memptr = (((PyVoidScalarObject *)scalar)->obval);
 		}
 		else {
-			memptr = _SOFFSET_(scalar, typecode->type_num);
+			memptr = _SOFFSET_(scalar);
 		}
 		break;
 	}
@@ -830,7 +831,7 @@ gentype_real_get(PyObject *self)
 
 	if (PyArray_IsScalar(self, ComplexFloating)) {
 		typecode = _realdescr_fromcomplexscalar(self, &typenum);
-		ret = PyArray_Scalar(_SOFFSET_(self, typenum), typecode,
+		ret = PyArray_Scalar(_SOFFSET_(self), typecode,
 				     NULL);
 		Py_DECREF(typecode);
 		return ret;
@@ -854,7 +855,7 @@ gentype_imag_get(PyObject *self)
 	
 	typecode = _realdescr_fromcomplexscalar(self, &typenum);
 	if (PyArray_IsScalar(self, ComplexFloating)) {
-		ret = PyArray_Scalar(_SOFFSET_(self, typenum)		\
+		ret = PyArray_Scalar(_SOFFSET_(self)		\
 				     + typecode->elsize, typecode, NULL);
 	}
 	else if PyArray_IsScalar(self, Object) {
@@ -1099,8 +1100,7 @@ voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 		PyArray_Descr *new;
 		if (!PyArray_ISNBO(self->descr->byteorder)) {
 			new = PyArray_DescrFromScalar(ret);
-			byte_swap_vector(_SOFFSET_(ret, new->type_num), 1,
-					 new->elsize);
+			byte_swap_vector(_SOFFSET_(ret), 1, new->elsize);
 			Py_DECREF(new);
 		}
 	}
@@ -1529,7 +1529,7 @@ gentype_getreadbuf(PyObject *self, int segment, void **ptrptr)
 			*ptrptr = ((PyVoidScalarObject *)self)->obval;
 	}
 	else 
-		*ptrptr = (void *)_SOFFSET_(self, outcode->type_num);
+		*ptrptr = (void *)_SOFFSET_(self);
 
 	Py_DECREF(outcode);
 	return numbytes;
