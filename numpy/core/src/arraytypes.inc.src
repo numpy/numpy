@@ -1859,7 +1859,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	},
 	{
 		NULL, NULL, NULL, NULL
-	}
+	},
+	NULL
 };
 
 static PyArray_Descr @from@_Descr = { 
@@ -1930,7 +1931,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	},
 	{
 		NULL, NULL, NULL, NULL
-	}
+	},
+	NULL
 };
 
 static PyArray_Descr @from@_Descr = { 

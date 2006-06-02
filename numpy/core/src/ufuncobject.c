@@ -1209,7 +1209,7 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 				else
 					scntcast += descr->elsize;
 				if (i < self->nin) {
-					loop->cast[i] =			\
+					loop->cast[i] = \
 						mps[i]->descr->f->cast[arg_types[i]];
 				}
 				else {
@@ -1935,8 +1935,9 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 			if (loop->obj) memset(loop->buffer, 0, _size);
                         loop->castbuf = loop->buffer + \
                                 loop->bufsize*aar->descr->elsize;
-                        loop->bufptr[0] = loop->castbuf;     
-                        loop->cast = aar->descr->f->cast[otype];
+                        loop->bufptr[0] = loop->castbuf;
+                        loop->cast = PyArray_GetCastFunc(aar->descr, otype);
+			if (loop->cast == NULL) goto fail;
                 }
                 else {
 			_size = loop->bufsize * loop->outsize;

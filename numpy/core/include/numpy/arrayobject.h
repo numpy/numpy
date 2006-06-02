@@ -877,6 +877,12 @@ typedef struct {
 	PyArray_SortFunc *sort[PyArray_NSORTS];
 	PyArray_ArgSortFunc *argsort[PyArray_NSORTS];
 
+	/* Dictionary of additional casting functions
+	   PyArray_VectorUnaryFuncs
+	   which can be populated to support casting
+	   to other registered types */
+	PyObject *castdict;
+
 } PyArray_ArrFuncs;
 
 
