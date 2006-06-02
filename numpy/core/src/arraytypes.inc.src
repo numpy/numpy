@@ -1855,6 +1855,9 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	{
 		NULL, NULL, NULL, NULL
 	},
+	NULL,
+	(PyArray_ScalarKindFunc*)NULL,
+	NULL,
 	NULL
 };
 
@@ -1927,6 +1930,9 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	{
 		NULL, NULL, NULL, NULL
 	},
+	NULL,
+	(PyArray_ScalarKindFunc*)NULL,
+	NULL,
 	NULL
 };
 

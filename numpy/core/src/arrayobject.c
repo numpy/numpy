@@ -1166,6 +1166,51 @@ PyArray_Return(PyArrayObject *mp)
 	}
 }
 
+
+/*MULTIARRAY_API
+  Initialize arrfuncs to NULL
+*/
+static void
+PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
+{
+	int i;
+	for (i=0; i<PyArray_NTYPES; i++) {
+		f->cast[i] = NULL;
+	}
+	f->getitem = NULL;
+	f->setitem = NULL;
+	f->copyswapn = NULL;
+        f->copyswap = NULL;
+	f->compare = NULL;
+	f->argmax = NULL;
+	f->dotfunc = NULL;
+	f->scanfunc = NULL;
+	f->fromstr = NULL;
+	f->nonzero = NULL;
+	f->fill = NULL;
+	f->fillwithscalar = NULL;
+	for (i=0; i<PyArray_NSORTS; i++) {
+		f->sort[i] = NULL;
+		f->argsort[i] = NULL;
+	}
+	f->castdict = NULL;
+	f->scalarkind = NULL;
+	f->cancastscalarkindto = NULL;
+	f->cancastto = NULL;
+}
+
+static Bool
+_default_nonzero(void *ip, void *arr)
+{
+	int elsize = PyArray_ITEMSIZE(arr);
+	char *ptr = ip;
+	while (elsize--) {
+		if (*ptr++ != 0) return TRUE;
+	}
+	return FALSE;
+}
+
+
 /*
   returns typenum to associate with this type >=PyArray_USERDEF.
   Also creates a copy of the VOID_DESCR table inserting it's typeobject in
@@ -1200,9 +1245,11 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
 		return -1;
 	}
 	f = descr->f;
-	if (f->nonzero == NULL || f->copyswap == NULL || 
-	    f->copyswapn == NULL || f->setitem == NULL ||
-	    f->getitem == NULL || f->cast == NULL) {
+	if (f->nonzero == NULL) {
+		f->nonzero = _default_nonzero;
+	}
+	if (f->copyswap == NULL || f->getitem == NULL || 
+	    f->copyswapn == NULL || f->setitem == NULL) {
 		PyErr_SetString(PyExc_ValueError, "a required array function" \
 				" is missing.");
 		return -1;
@@ -1251,6 +1298,62 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
 	Py_DECREF(key);
 	Py_DECREF(cobj);
 	return ret;
+}
+
+static int *
+_append_new(int *types, int insert)
+{
+	int n=0;
+	int *newtypes;
+
+	while (types[n] != PyArray_NOTYPE) n++;
+	newtypes = (int *)realloc(types, (n+2)*sizeof(int));
+	newtypes[n] = insert;
+	newtypes[n+1] = PyArray_NOTYPE;
+	return newtypes;
+}
+
+/*MULTIARRAY_API
+  Register a type number indicating that a descriptor can be cast
+  to it safely
+*/
+static int
+PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
+			PyArray_SCALARKIND scalar) 
+{
+	if (scalar == PyArray_NOSCALAR) {
+		/* register with cancastto */
+		/* These lists won't be freed once created 
+		   -- they become part of the data-type */
+		if (descr->f->cancastto == NULL) {
+			descr->f->cancastto = (int *)malloc(1*sizeof(int));
+			descr->f->cancastto[0] = PyArray_NOTYPE;
+		}
+		descr->f->cancastto = _append_new(descr->f->cancastto, 
+						  totype);
+	}
+	else {
+		/* register with cancastscalarkindto */
+		if (descr->f->cancastscalarkindto == NULL) {
+			int i;
+			descr->f->cancastscalarkindto =			\
+				(int **)malloc(PyArray_NSCALARKINDS*	\
+					       sizeof(int*));
+			for (i=0; i<PyArray_NSCALARKINDS; i++) {
+				descr->f->cancastscalarkindto[i] = NULL;
+			}
+		}
+		if (descr->f->cancastscalarkindto[scalar] == NULL) {
+			descr->f->cancastscalarkindto[scalar] = \
+				(int *)malloc(1*sizeof(int));
+			descr->f->cancastscalarkindto[scalar][0] =	\
+				PyArray_NOTYPE;
+		}
+		descr->f->cancastscalarkindto[scalar] =			\
+			_append_new(descr->f->cancastscalarkindto[scalar],
+				    totype);
+	}
+	return 0;
 }
 
 /*OBJECT_API
@@ -7122,6 +7225,18 @@ PyArray_CanCastSafely(int fromtype, int totype)
 	if (fromtype == PyArray_OBJECT || fromtype == PyArray_VOID) return 0;
 
 	from = PyArray_DescrFromType(fromtype);
+	/* cancastto is a PyArray_NOTYPE terminated C-int-array of types that 
+	   the data-type can be cast to safely.
+	*/
+	if (from->f->cancastto) {
+		int *curtype;
+		curtype = from->f->cancastto;
+		while (*curtype != PyArray_NOTYPE) {
+			if (*curtype++ == totype) return 1;
+		}
+	}
+	if (PyTypeNum_ISUSERDEF(totype)) return 0;
+
 	to = PyArray_DescrFromType(totype);
 	telsize = to->elsize;
 	felsize = from->elsize;
@@ -7229,12 +7344,6 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 		    see if the length is long enough to hold the
 		    stringified value of the object.
 		*/
-	}
-	if (!ret && (PyTypeNum_ISUSERDEF(fromtype) ||	\
-		     PyTypeNum_ISUSERDEF(totype))) {
-		/* don't restrict casting to and from
-		   additional data-types */
-		return TRUE;
 	}
 	return ret;
 }

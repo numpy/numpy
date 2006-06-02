@@ -69,3 +69,5 @@ PyArray_Round
 PyArray_EquivTypenums
 PyArray_RegisterDataType
 PyArray_RegisterCastFunc
+PyArray_RegisterCanCast
+PyArray_InitArrFuncs

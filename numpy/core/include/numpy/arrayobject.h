@@ -79,7 +79,7 @@ extern "C" CONFUSE_EMACS
 #define PY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x00090902
+#define NDARRAY_VERSION 0x00090904
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -229,14 +229,15 @@ typedef enum {
 
 
 typedef enum {
-	PyArray_NOSCALAR=0,
-	PyArray_BOOL_SCALAR=1,
-	PyArray_INTPOS_SCALAR=2,
-	PyArray_INTNEG_SCALAR=3,
-	PyArray_FLOAT_SCALAR=4,
-	PyArray_COMPLEX_SCALAR=5,
-	PyArray_OBJECT_SCALAR=6
+	PyArray_NOSCALAR=-1,
+	PyArray_BOOL_SCALAR,
+	PyArray_INTPOS_SCALAR,
+	PyArray_INTNEG_SCALAR,
+	PyArray_FLOAT_SCALAR,
+	PyArray_COMPLEX_SCALAR,
+	PyArray_OBJECT_SCALAR,
 } PyArray_SCALARKIND;
+#define PyArray_NSCALARKINDS PyArray_OBJECT_SCALAR+1
 
 typedef enum {
         PyArray_ANYORDER=-1,
@@ -828,6 +829,8 @@ typedef int (PyArray_ArgSortFunc)(void *, intp *, intp, void *);
 
 typedef int (PyArray_FillWithScalarFunc)(void *, intp, void *, void *);
 
+typedef int (PyArray_ScalarKindFunc)(void *);
+
 typedef struct {
         intp *ptr;
         int len;
@@ -835,7 +838,10 @@ typedef struct {
 
 typedef struct {
 	/* Functions to cast to all other standard types*/
+	/* Can have some NULL entries */
 	PyArray_VectorUnaryFunc *cast[PyArray_NTYPES];
+
+	/* The next four functions *cannot* be NULL */
 
 	/* Functions to get and set items with standard
 	   Python types -- not array scalars */
@@ -848,40 +854,57 @@ typedef struct {
         PyArray_CopySwapFunc *copyswap;
 
 	/* Function to compare items */
+	/* Can be NULL 
+	 */
 	PyArray_CompareFunc *compare;
 
-	/* Function to select largest */
+	/* Function to select largest 
+	   Can be NULL
+	*/
 	PyArray_ArgFunc *argmax;
 
 	/* Function to compute dot product */
+	/* Can be NULL */
 	PyArray_DotFunc	*dotfunc;
 
 	/* Function to scan an ASCII file and
-	   place a single value plus possible separator */
+	   place a single value plus possible separator 
+	   Can be NULL 
+	*/
 	PyArray_ScanFunc *scanfunc;
 
 	/* Function to read a single value from a string */
-	/* and adjust the pointer */
+	/* and adjust the pointer; Can be NULL */
 	PyArray_FromStrFunc *fromstr;
 
 	/* Function to determine if data is zero or not */
+	/* If NULL a default version is */
+	/* used at Registration time. */
 	PyArray_NonzeroFunc *nonzero;
 
-	/* Used for arange */
+	/* Used for arange. Can be NULL.*/
 	PyArray_FillFunc *fill;
 
-	/* Function to fill arrays with scalar values */
+	/* Function to fill arrays with scalar values 
+	 Can be NULL*/
 	PyArray_FillWithScalarFunc *fillwithscalar;
 
-	/* Sorting functions */
+	/* Sorting functions; Can be NULL*/
 	PyArray_SortFunc *sort[PyArray_NSORTS];
 	PyArray_ArgSortFunc *argsort[PyArray_NSORTS];
 
 	/* Dictionary of additional casting functions
 	   PyArray_VectorUnaryFuncs
 	   which can be populated to support casting
-	   to other registered types */
+	   to other registered types. Can be NULL*/
 	PyObject *castdict;
+
+	/* Functions useful for generalizing
+	   the casting rules.  Can be NULL;
+	*/
+	PyArray_ScalarKindFunc *scalarkind;
+	int **cancastscalarkindto;
+	int *cancastto;
 
 } PyArray_ArrFuncs;
 
@@ -894,8 +917,8 @@ typedef struct {
 	char type;              /* unique-character representing this type */
 	char byteorder;         /* '>' (big), '<' (little), '|'
 				   (not-applicable), or '=' (native). */
-        char hasobject;         /* non-zero if it has object arrays in fields */
-	int type_num;           /* number representing this type */
+        char hasobject;        /* non-zero if it has object arrays in fields */
+	int type_num;          /* number representing this type */
 	int elsize;             /* element size for this type */
 	int alignment;          /* alignment needed for this type */
 	struct _arr_descr					\

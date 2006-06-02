@@ -629,24 +629,24 @@ select_types(PyUFuncObject *self, int *arg_types,
 	char start_type;
 	int userdef=-1;
 
-	for (i=0; i<self->nin; i++) {
-		if (PyTypeNum_ISUSERDEF(arg_types[i])) {
-			userdef = arg_types[i];
-			break;
+	if (self->userloops) {
+		for (i=0; i<self->nin; i++) {
+			if (PyTypeNum_ISUSERDEF(arg_types[i])) {
+				userdef = arg_types[i];
+				break;
+			}
 		}
 	}
-
+	
 	if (userdef > 0) {
 		PyObject *key, *obj;
 		int *this_types=NULL;
 		
 		obj = NULL;
-		if (self->userloops) {
-			key = PyInt_FromLong((long) userdef);
-			if (key == NULL) return -1;
-			obj = PyDict_GetItem(self->userloops, key);
-			Py_DECREF(key);
-		}
+		key = PyInt_FromLong((long) userdef);
+		if (key == NULL) return -1;
+		obj = PyDict_GetItem(self->userloops, key);
+		Py_DECREF(key);
 		if (obj == NULL) {
 			PyErr_SetString(PyExc_TypeError, 
 					"user-defined type used in ufunc" \

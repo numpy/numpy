@@ -1628,33 +1628,57 @@ PyArray_ScalarKind(int typenum, PyArrayObject **arr)
 	if (PyTypeNum_ISCOMPLEX(typenum)) return PyArray_COMPLEX_SCALAR;
 	if (PyTypeNum_ISBOOL(typenum)) return PyArray_BOOL_SCALAR;
 
+	if (PyTypeNum_ISUSERDEF(typenum)) {
+		PyArray_SCALARKIND retval;
+		PyArray_Descr* descr;
+		descr = PyArray_DescrFromType(typenum);
+		if (descr->f->scalarkind) 
+			retval = descr->f->scalarkind((arr ? *arr : NULL));
+		else 
+			retval = PyArray_NOSCALAR;
+		Py_DECREF(descr);
+		return retval;
+	}
 	return PyArray_OBJECT_SCALAR;
 }
 
 /*OBJECT_API*/
 static int 
-PyArray_CanCoerceScalar(char thistype, char neededtype, 
+PyArray_CanCoerceScalar(int thistype, int neededtype, 
 			PyArray_SCALARKIND scalar) 
-{
+{	
+	PyArray_Descr* from;
+	int *castlist;
 
+	if (scalar == PyArray_NOSCALAR) {
+		return PyArray_CanCastSafely(thistype, neededtype);
+	}
+	from = PyArray_DescrFromType(thistype);
+	if (from->f->cancastscalarkindto && 
+	    (castlist = from->f->cancastscalarkindto[scalar])) {
+		while (*castlist != PyArray_NOTYPE) 
+			if (*castlist++ == neededtype) return 1;
+	}
 	switch(scalar) {
-	case PyArray_NOSCALAR:
 	case PyArray_BOOL_SCALAR:
 	case PyArray_OBJECT_SCALAR:
 		return PyArray_CanCastSafely(thistype, neededtype);
-	case PyArray_INTPOS_SCALAR:
-		return (neededtype >= PyArray_BYTE);
-	case PyArray_INTNEG_SCALAR:
-		return (neededtype >= PyArray_BYTE) &&		\
-			!(PyTypeNum_ISUNSIGNED(neededtype));
-	case PyArray_FLOAT_SCALAR:
-		return (neededtype >= PyArray_FLOAT);
-	case PyArray_COMPLEX_SCALAR:
-		return (neededtype >= PyArray_CFLOAT);
+	default:
+		if (PyTypeNum_ISUSERDEF(neededtype)) return FALSE;
+		switch(scalar) {
+		case PyArray_INTPOS_SCALAR:
+			return (neededtype >= PyArray_BYTE);
+		case PyArray_INTNEG_SCALAR:
+			return (neededtype >= PyArray_BYTE) &&	\
+				!(PyTypeNum_ISUNSIGNED(neededtype));
+		case PyArray_FLOAT_SCALAR:
+			return (neededtype >= PyArray_FLOAT);
+		case PyArray_COMPLEX_SCALAR:
+			return (neededtype >= PyArray_CFLOAT);
+		default:
+			return 1; /* should never get here... */
+		}
 	}
-	fprintf(stderr, "\n**Error** coerce fall through: %d %d %d\n\n", 
-		thistype, neededtype, scalar);
-	return 1; /* should never get here... */   
 }
 
 
@@ -1668,8 +1692,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 	PyObject *otmp;
 	PyArray_Descr *intype=NULL, *stype=NULL;
 	PyArray_Descr *newtype=NULL;
-	char scalarkind;
-
+	PyArray_SCALARKIND scalarkind;
 	
 	*retn = n = PySequence_Length(op);
 	if (PyErr_Occurred()) {*retn = 0; return NULL;}
@@ -1692,10 +1715,12 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 			newtype = PyArray_DescrFromObject(otmp, stype);
 			Py_XDECREF(stype);
 			stype = newtype;
-			scalarkind = PyArray_ScalarKind(newtype->type_num, NULL);
-			if (intype && !PyArray_CanCoerceScalar(newtype->type_num,
-							       intype->type_num, 
-							       scalarkind)) {
+			scalarkind = PyArray_ScalarKind(newtype->type_num, 
+							NULL);
+			if (intype && \
+			    !PyArray_CanCoerceScalar(newtype->type_num,
+						     intype->type_num, 
+						     scalarkind)) {
 				Py_XDECREF(intype);
 				intype = stype;
 			}
