@@ -25,7 +25,6 @@ PyArray_ScalarAsCtype
 PyArray_CastScalarToCtype
 PyArray_CastScalarDirect
 PyArray_ScalarFromObject
-PyArray_RegisterDataType
 PyArray_GetCastFunc
 PyArray_FromDims
 PyArray_FromDimsAndDataAndDescr

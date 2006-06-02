@@ -67,3 +67,5 @@ PyArray_SortkindConverter
 PyArray_LexSort
 PyArray_Round
 PyArray_EquivTypenums
+PyArray_RegisterDataType
+PyArray_RegisterCastFunc

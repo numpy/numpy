@@ -1175,7 +1175,7 @@ PyArray_Return(PyArrayObject *mp)
   needs the userdecrs table and PyArray_NUMUSER variables
   defined in arratypes.inc
 */
-/*OBJECT_API
+/*MULTIARRAY_API
  Register Data type
  Does not change the reference count of descr
 */
@@ -1207,6 +1207,29 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         }
 	userdescrs[PyArray_NUMUSERTYPES++] = descr;
 	return typenum;
+}
+
+/*MULTIARRAY_API
+  Register Casting Function  
+  Replaces any function currently stored.
+*/
+static int 
+PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype, 
+			 PyArray_VectorUnaryFunc *castfunc) 
+{
+	PyObject *cobj;
+	int ret;
+	if (descr->f->castdict == NULL) {
+		descr->f->castdict = PyDict_New();
+	}
+	key = PyInt_FromLong(totype);
+	if (PyErr_Occurred()) return -1;
+	cobj = PyCObject_FromVoidPtr((void *)castfunc);
+	if (cobj == NULL) {Py_DECREF(key); return -1;}
+	ret = PyDict_SetItem(descr->f->castdict, key, cobj);
+	Py_DECREF(key);
+	Py_DECREF(cobj);
+	return ret;
 }
 
 /*OBJECT_API
