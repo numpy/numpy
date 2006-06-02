@@ -1146,7 +1146,6 @@ static PyObject *
 PyArray_Return(PyArrayObject *mp)
 {
 
-
 	if (mp == NULL) return NULL;
 
         if (PyErr_Occurred()) {
@@ -1185,6 +1184,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
 	PyArray_Descr *descr2;
 	int typenum;
 	int i;
+	PyArray_ArrFuncs *f;     
 
 	/* See if this type is already registered */
 	for (i=0; i<PyArray_NUMUSERTYPES; i++) {
@@ -1197,6 +1197,18 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
 	if (descr->elsize == 0) {
 		PyErr_SetString(PyExc_ValueError, "cannot register a" \
 				"flexible data-type");
+		return -1;
+	}
+	f = descr->f;
+	if (f->nonzero == NULL || f->copyswap == NULL || 
+	    f->copyswapn == NULL || f->setitem == NULL ||
+	    f->getitem == NULL || f->cast == NULL) {
+		PyErr_SetString(PyExc_ValueError, "a required array function" \
+				" is missing.");
+		return -1;
+	}
+	if (descr->typeobj == NULL) {
+		PyErr_SetString(PyExc_ValueError, "missing typeobject");
 		return -1;
 	}
 	userdescrs = realloc(userdescrs,
