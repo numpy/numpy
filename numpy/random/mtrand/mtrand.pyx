@@ -430,6 +430,8 @@ cdef class RandomState:
         """
         if len(args) == 0:
             return self.random_sample()
+        elif isinstance(args[0], tuple):
+            return self.random_sample(size=args[0])
         else:
             return self.random_sample(size=args)
 
@@ -441,6 +443,8 @@ cdef class RandomState:
         """
         if len(args) == 0:
             return self.standard_normal()
+        elif isinstance(args[0], tuple):
+            return self.standard_normal(args[0])
         else:
             return self.standard_normal(args)
 
