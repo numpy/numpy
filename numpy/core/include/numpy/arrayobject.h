@@ -223,9 +223,8 @@ typedef enum {
 	PyArray_QUICKSORT=0,
 	PyArray_HEAPSORT=1,
 	PyArray_MERGESORT=2,
-	PyArray_TIMSORT=3         /* the sort Python uses -- specialized */
 } PyArray_SORTKIND;
-#define PyArray_NSORTS PyArray_TIMSORT + 1
+#define PyArray_NSORTS PyArray_MERGESORT + 1
 
 
 typedef enum {
@@ -912,7 +911,9 @@ typedef struct {
 typedef struct {
 	PyObject_HEAD
 	PyTypeObject *typeobj;  /* the type object representing an
-				   intance of this type */
+				   instance of this type -- should not
+				   be two type_numbers with the same type
+				   object. */
 	char kind;              /* kind for this type */
 	char type;              /* unique-character representing this type */
 	char byteorder;         /* '>' (big), '<' (little), '|'
