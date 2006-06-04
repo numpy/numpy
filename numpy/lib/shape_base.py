@@ -6,7 +6,7 @@ __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, zeros, newaxis, outer, \
      concatenate, isscalar, array, asanyarray
-from numpy.core.oldnumeric import product, reshape
+from numpy.core.fromnumeric import product, reshape
 
 def apply_along_axis(func1d,axis,arr,*args):
     """ Execute func1d(arr[i],*args) where func1d takes 1-D arrays

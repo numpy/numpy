@@ -8,6 +8,7 @@ import numerictypes as nt
 multiarray.set_typeDict(nt.typeDict)
 import _sort
 from numeric import *
+from fromnumeric import *
 from oldnumeric import *
 from defmatrix import *
 import ma
@@ -22,6 +23,7 @@ del nt
 
 __all__ = ['char','rec','memmap','ma']
 __all__ += numeric.__all__
+__all__ += fromnumeric.__all__
 __all__ += oldnumeric.__all__
 __all__ += defmatrix.__all__
 __all__ += rec.__all__

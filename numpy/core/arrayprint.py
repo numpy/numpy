@@ -17,7 +17,7 @@ import numeric      as _gen
 import numerictypes as _nt
 import umath        as _uf
 from multiarray import format_longfloat
-from oldnumeric import ravel
+from fromnumeric import ravel
 _nc = _gen
 
 # The following functions are emergency substitutes for numeric functions
