@@ -26,8 +26,8 @@ __all__ = ['fft','inverse_fft', 'ifft', 'real_fft', 'refft',
            'fft2d', 'inverse_fft2d', 'real_fftnd', 'real_fft2d',
            'inverse_real_fftnd', 'inverse_real_fft2d','fftn','ifftn']
 
-from numpy.core import asarray, zeros, swapaxes, shape, Complex, conjugate, \
-     Float, take
+from numpy.core import asarray, zeros, swapaxes, shape, conjugate, \
+     take
 import fftpack_lite as fftpack
 from helper import *
 
@@ -173,7 +173,7 @@ def hermite_fft(a, n=None, axis=-1):
     inverse_hermite_fft(hermite_fft(a), len(a)) == a
     within numerical accuracy."""
 
-    a = asarray(a).astype(Complex)
+    a = asarray(a).astype(complex)
     if n == None:
         n = (shape(a)[axis] - 1) * 2
     return inverse_real_fft(conjugate(a), n, axis) * n
@@ -191,7 +191,7 @@ def inverse_hermite_fft(a, n=None, axis=-1):
     inverse_hermite_fft(hermite_fft(a), len(a)) == a
     within numerical accuracy."""
 
-    a = asarray(a).astype(Float)
+    a = asarray(a).astype(float)
     if n == None:
         n = shape(a)[axis]
     return conjugate(real_fft(a, n, axis))/n
@@ -277,7 +277,7 @@ def real_fftnd(a, s=None, axes=None):
     element of axes, then complex transforms as fft are performed along the
     other axes."""
 
-    a = asarray(a).astype(Float)
+    a = asarray(a).astype(float)
     s, axes = _cook_nd_args(a, s, axes)
     a = real_fft(a, s[-1], axes[-1])
     for ii in range(len(axes)-1):
@@ -302,7 +302,7 @@ def inverse_real_fftnd(a, s=None, axes=None):
     inverse_real_fft, the length of the result along that axis must be
     specified if it is to be odd."""
 
-    a = asarray(a).astype(Complex)
+    a = asarray(a).astype(complex)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
     for ii in range(len(axes)-1):
         a = inverse_fft(a, s[ii], axes[ii])

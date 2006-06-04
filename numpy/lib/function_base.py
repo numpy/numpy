@@ -13,12 +13,12 @@ __all__ = ['logspace', 'linspace',
 import types
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
-     asarray, empty, empty_like, asanyarray
+     asarray, empty, empty_like, asanyarray, ndarray
 from numpy.core.numeric import ScalarType, dot, where, newaxis
 from numpy.core.umath import pi, multiply, add, arctan2,  \
      frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp
 from numpy.core.oldnumeric import ravel, nonzero, choose, \
-     typecodes, ArrayType, sort
+     typecodes, sort
 from numpy.lib.shape_base import atleast_1d
 from numpy.lib.twodim_base import diag
 from _compiled_base import digitize, bincount, _insert, add_docstring
@@ -148,7 +148,7 @@ def average(a, axis=0, weights=None, returned=False):
             else:
                 raise ValueError, 'averaging weights have wrong shape'
 
-    if not isinstance(d, ArrayType):
+    if not isinstance(d, ndarray):
         if d == 0.0:
             raise ZeroDivisionError, 'zero denominator in average()'
     if returned:

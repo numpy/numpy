@@ -124,7 +124,7 @@ class nd_grid(object):
     def __getitem__(self,key):
         try:
             size = []
-            typecode = _nx.Int
+            typ = int
             for k in range(len(key)):
                 step = key[k].step
                 start = key[k].start
@@ -132,17 +132,18 @@ class nd_grid(object):
                 if step is None: step=1
                 if type(step) is type(1j):
                     size.append(int(abs(step)))
-                    typecode = _nx.Float
+                    typ = float
                 else:
                     size.append(int((key[k].stop - start)/(step*1.0)))
-                if isinstance(step,types.FloatType) or \
-                   isinstance(start, types.FloatType) or \
-                   isinstance(key[k].stop, types.FloatType):
-                    typecode = _nx.Float
+                if isinstance(step, float) or \
+                    isinstance(start, float) or \
+                    isinstance(key[k].stop, float):
+                    typ = float
             if self.sparse:
-                nn = map(lambda x,t: _nx.arange(x,dtype=t),size,(typecode,)*len(size))
+                nn = map(lambda x,t: _nx.arange(x, dtype=t), size, \
+                                     (typ,)*len(size))
             else:
-                nn = _nx.indices(size,typecode)
+                nn = _nx.indices(size, typ)
             for k in range(len(size)):
                 step = key[k].step
                 start = key[k].start
@@ -169,7 +170,7 @@ class nd_grid(object):
                 length = int(step)
                 step = (key.stop-start)/float(step-1)
                 stop = key.stop+step
-                return _nx.arange(0,length,1,_nx.Float)*step + start
+                return _nx.arange(0, length,1, float)*step + start
             else:
                 return _nx.arange(start, stop, step)
 
@@ -204,18 +205,18 @@ class concatenator(object):
         self.col = 0
 
     def __getitem__(self,key):
-        if isinstance(key,types.StringType):
+        if isinstance(key, str):
             frame = sys._getframe().f_back
             mymat = matrix.bmat(key,frame.f_globals,frame.f_locals)
             return mymat
-        if type(key) is not types.TupleType:
+        if type(key) is not tuple:
             key = (key,)
         objs = []
         scalars = []
         final_dtypedescr = None
         for k in range(len(key)):
             scalar = False
-            if type(key[k]) is types.SliceType:
+            if type(key[k]) is slice:
                 step = key[k].step
                 start = key[k].start
                 stop = key[k].stop
@@ -227,7 +228,7 @@ class concatenator(object):
                     newobj = function_base.linspace(start, stop, num=size)
                 else:
                     newobj = _nx.arange(start, stop, step)
-            elif type(key[k]) is types.StringType:
+            elif type(key[k]) is str:
                 if (key[k] in 'rc'):
                     self.matrix = True
                     self.col = (key[k] == 'c')
@@ -236,7 +237,7 @@ class concatenator(object):
                     self.axis = int(key[k])
                     continue
                 except:
-                    raise ValueError, "Unknown special directive."
+                    raise ValueError, "unknown special directive"
             elif type(key[k]) in ScalarType:
                 newobj = asarray([key[k]])
                 scalars.append(k)
