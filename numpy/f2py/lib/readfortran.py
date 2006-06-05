@@ -23,12 +23,12 @@ __all__ = ['FortranFileReader',
 import re
 import sys
 import tempfile
+import traceback
 from cStringIO import StringIO
-
 from numpy.distutils.misc_util import yellow_text, red_text, blue_text
 
 from sourceinfo import get_source_info
-from splitline import LineSplitter, String, string_replace_map
+from splitline import String, string_replace_map, splitquote
 
 _spacedigits=' 0123456789'
 _cf2py_re = re.compile(r'(?P<indent>\s*)!f2py(?P<rest>.*)',re.I)
@@ -46,7 +46,7 @@ class Line:
     """ Holds a Fortran source line.
     """
     def __init__(self, line, linenospan, label, reader):
-        self.line = line
+        self.line = line.strip()
         self.span = linenospan
         self.label = label
         self.reader = reader
@@ -186,12 +186,13 @@ class FortranReaderBase:
             return self._next(ignore_comments)
         except StopIteration:
             raise
-        except Exception, msg:
+        except:
             message = self.format_message('FATAL ERROR',
-                                          'while processing got exception: %s'\
-                                          '\nSTOP READING' % msg,
+                                          'while processing line',
                                           self.linecount, self.linecount)
             self.show_message(message, sys.stdout)
+            traceback.print_exc(file=sys.stdout)
+            self.show_message(red_text('STOPPED READING'), sys.stdout)
             raise StopIteration
 
     def _next(self, ignore_comments = False):
@@ -257,6 +258,8 @@ class FortranReaderBase:
         for i in range(max(1,startlineno-3),startlineno):
             r.append('%5d:%s' % (i,self.source_lines[i-1]))
         for i in range(startlineno,min(endlineno+3,len(self.source_lines))+1):
+            if i==0 and not self.source_lines:
+                break
             linenostr = '%5d:' % (i)
             if i==endlineno:
                 sourceline = self.source_lines[i-1] 
@@ -317,9 +320,11 @@ class FortranReaderBase:
                     put_item(self.comment_item(line[i:], lineno, lineno))
                     return newline, quotechar
         # handle cases where comment char may be a part of a character content
-        splitter = LineSplitter(line, quotechar)
-        items = [item for item in splitter]
-        newquotechar = splitter.quotechar
+        #splitter = LineSplitter(line, quotechar)
+        #items = [item for item in splitter]
+        #newquotechar = splitter.quotechar
+        items, newquotechar = splitquote(line, quotechar)
+
         noncomment_items = []
         noncomment_items_append = noncomment_items.append
         n = len(items)
@@ -606,6 +611,11 @@ python module foo
    g=3
    endif
   end interface
+  if ( pc_get_lun() .ne. 6) &
+    write ( pc_get_lun(), '( &
+    & /, a, /, " p=", i4, " stopping c_flag=", a, &
+    & /, " print unit=", i8)') &
+    trim(title), pcpsx_i_pel(), trim(c_flag), pc_get_lun()
 end python module foo
 ! end of file
 """
@@ -653,7 +663,7 @@ def profile_main():
     stats.print_stats(30)
 
 if __name__ == "__main__":
-    #test_pyf()
+    test_pyf()
     #test_fix90()
     #profile_main()
-    simple_main()
+    #simple_main()
