@@ -24,7 +24,7 @@ def unravel_index(x,dims):
 
     Example usage:
       p = x.argmax()
-      idx = unravel_index(p)
+      idx = unravel_index(p,x.shape)
       x[idx] == x.max()
 
     Note:  x.flat[p] == x.max()
