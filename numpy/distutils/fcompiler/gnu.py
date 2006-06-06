@@ -27,13 +27,13 @@ class GnuFCompiler(FCompiler):
             break
     executables = {
         'version_cmd'  : [fc_exe,"--version"],
-        'compiler_f77' : [fc_exe,"-Wall","-fno-second-underscore"],
+        'compiler_f77' : [fc_exe, "-g", "-Wall","-fno-second-underscore"],
         'compiler_f90' : None,
         'compiler_fix' : None,
-        'linker_so'    : [fc_exe,"-Wall"],
+        'linker_so'    : [fc_exe, "-g", "-Wall"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
-        'linker_exe'   : [fc_exe,"-Wall"]
+        'linker_exe'   : [fc_exe, "-g", "-Wall"]
         }
     module_dir_switch = None
     module_include_switch = None

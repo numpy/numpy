@@ -249,10 +249,28 @@ static void
 /* b will always be positive in this call */
 /**begin repeat
    #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
+   #upc=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
 **/
 static void
 @name@_ctype_power(@name@ a, @name@ b, @name@ *out) {
-    
+    @name@ temp, ix, mult;
+    /* code from Python's intobject.c, with overflow checking removed. */
+    temp = a;
+    ix = 1;
+    while (b > 0) {
+        if (b & 1) {
+            @name@_ctype_multiply(ix, temp, &mult);
+            ix = mult;
+            if (temp == 0)
+                break; /* Avoid ix / 0 */
+        }
+        b >>= 1;	/* Shift exponent down by 1 bit */
+        if (b==0) break;
+	/* Square the value of temp */
+        @name@_ctype_multiply(temp, temp, &mult);
+        temp = mult;
+    }
+    *out = ix;
 }
 /**end repeat**/
 

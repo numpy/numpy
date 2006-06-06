@@ -232,7 +232,7 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
     try:
         version_cmd = self.version_cmd
     except AttributeError:
-        return
+        return None
     cmd = ' '.join(version_cmd)
     try:
         matcher = self.version_match
@@ -240,7 +240,7 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
         try:
             pat = self.version_pattern
         except AttributeError:
-            return
+            return None
         def matcher(version_string):
             m = re.match(pat, version_string)
             if not m:
@@ -319,7 +319,7 @@ def new_compiler (plat=None,
               ("can't compile C/C++ code: unable to find class '%s' " +
                "in module '%s'") % (class_name, module_name)
     compiler = klass(None, dry_run, force)
-    log.debug('new_fcompiler returns %s' % (klass))
+    log.debug('new_compiler returns %s' % (klass))
     return compiler
 
 ccompiler.new_compiler = new_compiler

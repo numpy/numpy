@@ -13,7 +13,7 @@ types = [N.bool_, N.byte, N.ubyte, N.short, N.ushort, N.intc, N.uintc,
 
 # This compares scalarmath against ufuncs. 
 
-class test_types(ScipyTestCase):
+class test_types(NumpyTestCase):
     def check_types(self, level=1):
         # list of types
         for k, atype in enumerate(types):
@@ -27,6 +27,19 @@ class test_types(ScipyTestCase):
                 assert val.dtype.num == valo.dtype.num and \
                        val.dtype.char == valo.dtype.char, \
                        "error with (%d,%d)" % (k,l)
+
+class test_power(NumpyTestCase):
+    def check_small_types(self):
+        for t in [N.int8, N.int16]:
+            a = t(3)
+            b = a ** 4
+            assert b == 81, "error with %r: got %r" % (t,b)
+
+    def check_large_types(self):
+        for t in [N.int32, N.int64, N.float32, N.float64, N.longdouble]:
+            a = t(51)
+            b = a ** 4
+            assert b == 6765201, "error with %r: got %r" % (t,b)
 
 if __name__ == "__main__":
     NumpyTest().run()
