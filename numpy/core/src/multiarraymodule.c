@@ -6189,6 +6189,10 @@ PyMODINIT_FUNC initmultiarray(void) {
 	d = PyModule_GetDict(m);
 	if (!d) goto err; 
 
+	PyArrayType_Type.tp_base = &PyType_Type;
+	if (PyType_Ready(&PyArrayType_Type) < 0) return;
+	
+	PyArray_Type.ob_type = &PyArrayType_Type;
 	if (PyType_Ready(&PyArray_Type) < 0)
                 return;
 

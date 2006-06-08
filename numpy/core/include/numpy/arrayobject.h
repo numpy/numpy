@@ -967,6 +967,19 @@ typedef struct PyArrayObject {
 	PyObject *weakreflist;  /* For weakreferences */
 } PyArrayObject;
 
+/* The type-object for the ndarray -- a sub-type of PyType_Type and
+ */
+typedef void (array_finalize_func)(PyObject *, PyObject *);
+typedef PyObject * (array_wrap)(PyObject *, PyObject *);
+typedef PyArrayObject * (array_get)(PyObject *, PyArray_Descr *);
+
+typedef struct PyArrayTypeObject {
+	PyTypeObject base;
+	double array_priority;
+	array_finalize_func *array_finalize;
+	array_wrap *array_wrap;
+	array_get *array_get;
+} PyArrayTypeObject;
 
 #define fortran fortran_        /* For some compilers */
 

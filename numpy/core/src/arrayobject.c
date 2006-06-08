@@ -4439,7 +4439,6 @@ _update_descr_and_dimensions(PyArray_Descr **des, intp *newdims,
 	return newnd;
 }
 
-
 /* steals a reference to descr (even on failure) */
 /*OBJECT_API
  Generic new array creation routine.
@@ -5695,6 +5694,14 @@ array_alloc(PyTypeObject *type, int nitems)
         return obj;
 }
 
+static PyTypeObject PyArrayType_Type = {
+	PyObject_HEAD_INIT(NULL)
+	0,
+	"numpy.ndarray_metatype",
+	sizeof(PyArrayTypeObject),
+	0,
+};
+
 
 static char Arraytype__doc__[] =
         "A array object represents a multidimensional, homogeneous array\n"
@@ -5716,8 +5723,8 @@ static char Arraytype__doc__[] =
 	"   No __init__ method is needed because the array is fully \n"
 	"      initialized after the __new__ method.";
 
-static PyTypeObject PyArray_Type = {
-        PyObject_HEAD_INIT(NULL)
+static PyArrayTypeObject PyArray_Type = {{
+	PyObject_HEAD_INIT(NULL)
         0,					  /*ob_size*/
         "numpy.ndarray",		          /*tp_name*/
         sizeof(PyArrayObject),		          /*tp_basicsize*/
@@ -5775,9 +5782,31 @@ static PyTypeObject PyArray_Type = {
         0,					  /* tp_cache */
         0,					  /* tp_subclasses */
         0					  /* tp_weaklist */
+	},
+					 0.0,
+					 default_array_finalize,
+					 default_array_wrap,
+					 default_array_get
 };
 
-/* The rest of this code is to build the right kind of array from a python */
+static int
+PyArrayType_Ready(PyTypeObject *typeobj)
+{
+	int ret;
+	PyArrayTypeObject *atypeobj;
+	ret = PyType_Ready(typeobj);
+	if (ret < 0) return ret;
+	atypeobj = (PyArrayTypeObject *)typeobj;
+	if (atypeobj->array_priority == 0.0) {
+		atypeobj->array_priority = PyArray_SUBTYPE_PRIORITY;
+	}
+	/* we need to check the MRO tuple and grab the first non-NULL
+	   entry for array_finalize, array_wrap, and array_get
+	*/
+       
+}
+
+/* The rest of this code is to build the right kind of array from a Python */
 /* object. */
 
 static int
