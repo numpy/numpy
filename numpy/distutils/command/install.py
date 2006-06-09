@@ -1,4 +1,9 @@
-from distutils.command.install import install as old_install
+import sys
+if 'setuptools' in sys.modules:
+    import setuptools.command.install as old_install_mod
+else:
+    import distutils.command.install as old_install_mod
+old_install = old_install_mod.install
 from distutils.file_util import write_file
 
 class install(old_install):
