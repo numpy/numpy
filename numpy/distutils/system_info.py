@@ -1082,7 +1082,7 @@ def get_atlas_version(**config):
     c = cmd_config(Distribution())
     s, o = c.get_output(atlas_version_c_text,
                         libraries=config.get('libraries', []),
-                        libray_dirs=config.get('library_dirs', []),
+                        library_dirs=config.get('library_dirs', []),
                        )
 
     atlas_version = None
