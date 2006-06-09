@@ -548,14 +548,6 @@ array_wraparray(PyArrayObject *self, PyObject *args)
 	return ret;
 }
 
-/* NO-OP --- just so all subclasses will have one by default. */
-static PyObject *
-array_finalize(PyArrayObject *self, PyObject *args)
-{
-	Py_INCREF(Py_None);
-	return Py_None;
-}
-
 
 static char doc_array_getarray[] = "m.__array__(|dtype) just returns either a new reference to self if dtype is not given or a new array of provided data type if dtype is different from the current dtype of the array.";
 
@@ -1620,9 +1612,6 @@ static PyMethodDef array_methods[] = {
 	/* for subtypes */
 	{"__array__", (PyCFunction)array_getarray, 1, doc_array_getarray},
 	{"__array_wrap__", (PyCFunction)array_wraparray, 1, doc_wraparray},
-	/* default version so it is found... -- only used for subclasses */
-	{"__array_finalize__", (PyCFunction)array_finalize, 1, NULL},
-	
 	
 	/* for the copy module */
         {"__copy__", (PyCFunction)array_copy, 1, doc_copy},	 

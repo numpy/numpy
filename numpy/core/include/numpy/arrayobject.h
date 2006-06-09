@@ -164,7 +164,6 @@ enum PyArray_TYPES {    PyArray_BOOL=0,
 
 	/* basetype array priority */
 #define PyArray_PRIORITY 0.0
-#define PyArray_BIG_PRIORITY 0.1
 	/* default subtype priority */
 #define PyArray_SUBTYPE_PRIORITY 1.0
 
@@ -940,7 +939,6 @@ typedef struct _arr_descr {
 	PyObject *shape;       /* a tuple */
 } PyArray_ArrayDescr;
 
-
 /*
   The main array object structure. It is recommended to use the macros
   defined below (PyArray_DATA and friends) access fields here, instead
@@ -979,6 +977,8 @@ typedef struct {
         intp len;
         int flags;
 } PyArray_Chunk;
+
+typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /* Array flags */
 /* For backward's compatibility only */

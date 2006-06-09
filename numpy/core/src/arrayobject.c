@@ -4587,26 +4587,34 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		if (str == NULL) {
 			str = PyString_InternFromString("__array_finalize__");
 		}
-		if (strides != NULL) { /* did not allocate own data 
-					  or funny strides */
-			/* update flags before calling back into
-			   Python */
-			PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
-		}
 		func = PyObject_GetAttr((PyObject *)self, str);
-		if (func) {
-			args = PyTuple_New(1);
-			if (obj == NULL) obj=Py_None;
-			Py_INCREF(obj);
-			PyTuple_SET_ITEM(args, 0, obj);
-			res = PyObject_Call(func, args, NULL);
-			Py_DECREF(args);
-			Py_DECREF(func);
-			if (res == NULL) goto fail;
-			else Py_DECREF(res);
-		}
-	}
-
+		if (func && func != Py_None) {
+                        if (strides != NULL) { /* did not allocate own data 
+                                                  or funny strides */
+                                /* update flags before finalize function */
+                                PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
+                        }
+                        if PyCObject_Check(func) {
+                                PyArray_FinalizeFunc *cfunc;
+                                cfunc = PyCObject_AsVoidPtr(func);
+                                Py_DECREF(func);
+                                if (cfunc(self, obj) < 0) goto fail;
+                        }
+                        else {
+                                args = PyTuple_New(1);
+                                if (obj == NULL) obj=Py_None;
+                                Py_INCREF(obj);
+                                PyTuple_SET_ITEM(args, 0, obj);
+                                res = PyObject_Call(func, args, NULL);
+                                Py_DECREF(args);
+                                Py_DECREF(func);
+                                if (res == NULL) goto fail;
+                                else Py_DECREF(res);
+                        }
+                }
+                else Py_XDECREF(func);
+        }
+        
 	return (PyObject *)self;
 
  fail:
@@ -5598,6 +5606,14 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 	return retval;
 }
 
+/* If this is None, no function call is made */
+static PyObject *
+array_finalize_get(PyArrayObject *self)
+{
+        Py_INCREF(Py_None);
+        return Py_None;
+}
+
 static PyGetSetDef array_getsetlist[] = {
         {"ndim",
 	 (getter)array_ndim_get,
@@ -5679,6 +5695,10 @@ static PyGetSetDef array_getsetlist[] = {
 	 (getter)array_priority_get,
 	 NULL,
 	 "Array priority"},
+        {"__array_finalize__",
+         (getter)array_finalize_get,
+         NULL,
+         "None"},
 	{NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 

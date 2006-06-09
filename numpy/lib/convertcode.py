@@ -98,13 +98,14 @@ def fromstr(filestr):
                                           'numpy.core.umath')
     filestr, fromall1 = changeimports(filestr, 'Precision', 'numpy')
     filestr, fromall2 = changeimports(filestr, 'numerix', 'numpy')
-    filestr, fromall3 = changeimports(filestr, 'numpy_base', 'numpy')
+    filestr, fromall3 = changeimports(filestr, 'scipy_base', 'numpy')
     filestr, fromall3 = changeimports(filestr, 'MLab', 'numpy.lib.mlab')
     filestr, fromall3 = changeimports(filestr, 'LinearAlgebra',
                                       'numpy.linalg.old')
-    filestr, fromall3 = changeimports(filestr, 'RNG', 'numpy.random')
-    filestr, fromall3 = changeimports(filestr, 'RandomArray', 'numpy.random')
-    filestr, fromall3 = changeimports(filestr, 'FFT', 'numpy.dft')
+    filestr, fromall3 = changeimports(filestr, 'RNG', 'numpy.random.oldrng')
+    filestr, fromall3 = changeimports(filestr, 'RNG.Statistics', 'numpy.random.oldrngstats')
+    filestr, fromall3 = changeimports(filestr, 'RandomArray', 'numpy.random.oldrandomarray')
+    filestr, fromall3 = changeimports(filestr, 'FFT', 'numpy.dft.oldfft')
     filestr, fromall3 = changeimports(filestr, 'MA', 'numpy.core.ma')
     fromall = fromall1 or fromall2 or fromall3
     filestr = replaceattr(filestr)
