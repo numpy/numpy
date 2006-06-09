@@ -81,14 +81,11 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
             fcomp = getattr(self,'compiler_'+fc)
             if fcomp is None:
                 continue
-            display.append("%s(%s) options: '%s'" % (os.path.basename(fcomp[0]),
-                                                     fc,
-                                                     ' '.join(fcomp[1:])))
+            display.append("Fortran %s compiler: %s" % (fc, ' '.join(fcomp)))
         display = '\n'.join(display)
     else:
         ccomp = self.compiler_so
-        display = "%s options: '%s'" % (os.path.basename(ccomp[0]),
-                                        ' '.join(ccomp[1:]))
+        display = "C compiler: %s\n" % (' '.join(ccomp),)
     log.info(display)
     macros, objects, extra_postargs, pp_opts, build = \
             self._setup_compile(output_dir, macros, include_dirs, sources,

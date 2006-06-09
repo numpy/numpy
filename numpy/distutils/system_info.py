@@ -110,16 +110,23 @@ this distribution for specifics.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 
-import sys,os,re,copy
+import sys
+import os
+import re
+import copy
 import warnings
-from distutils.errors import DistutilsError
 from glob import glob
 import ConfigParser
-from exec_command import find_executable, exec_command, get_pythonexe
-from numpy.distutils.misc_util import is_sequence, is_string
-import distutils.sysconfig
 
-from distutils.sysconfig import get_config_vars
+from distutils.errors import DistutilsError
+from distutils.dist import Distribution
+import distutils.sysconfig
+from distutils import log
+
+from numpy.distutils.exec_command import \
+    find_executable, exec_command, get_pythonexe
+from numpy.distutils.misc_util import is_sequence, is_string
+from numpy.distutils.command.config import config as cmd_config
 
 if sys.platform == 'win32':
     default_lib_dirs = ['C:\\',
@@ -149,7 +156,7 @@ default_lib_dirs = filter(os.path.isdir, default_lib_dirs)
 default_include_dirs = filter(os.path.isdir, default_include_dirs)
 default_src_dirs = filter(os.path.isdir, default_src_dirs)
 
-so_ext = get_config_vars('SO')[0] or ''
+so_ext = distutils.sysconfig.get_config_vars('SO')[0] or ''
 
 def get_standard_file(fname):
     """Returns a list of files named 'fname' from
@@ -366,7 +373,7 @@ class system_info:
             if i is not None:
                 dict_append(info,**i)
             else:
-                print 'Library %s was not found. Ignoring' % (lib)
+                log.info('Library %s was not found. Ignoring' % (lib))
         return info
 
     def set_info(self,**info):
@@ -385,8 +392,7 @@ class system_info:
         flag = 0
         if not self.has_info():
             flag = 1
-            if self.verbosity>0:
-                print self.__class__.__name__ + ':'
+            log.info(self.__class__.__name__ + ':')
             if hasattr(self, 'calc_info'):
                 self.calc_info()
             if notfound_action:
@@ -398,20 +404,19 @@ class system_info:
                     else:
                         raise ValueError(repr(notfound_action))
 
-            if self.verbosity>0:
-                if not self.has_info():
-                    print '  NOT AVAILABLE'
-                    self.set_info()
-                else:
-                    print '  FOUND:'
+            if not self.has_info():
+                log.info('  NOT AVAILABLE')
+                self.set_info()
+            else:
+                log.info('  FOUND:')
 
         res = self.saved_results.get(self.__class__.__name__)
         if self.verbosity>0 and flag:
             for k,v in res.items():
                 v = str(v)
                 if k=='sources' and len(v)>200: v = v[:60]+' ...\n... '+v[-60:]
-                print '    %s = %s'%(k,v)
-            print
+                log.info('    %s = %s', k, v)
+            log.info('')
 
         return copy.deepcopy(res)
 
@@ -426,13 +431,13 @@ class system_info:
                         e0 = e
                         break
                 if not env_var[0]==e0:
-                    print 'Setting %s=%s' % (env_var[0],e0)
+                    log.info('Setting %s=%s' % (env_var[0],e0))
                 env_var = e0
         if env_var and os.environ.has_key(env_var):
             d = os.environ[env_var]
             if d=='None':
-                print 'Disabled',self.__class__.__name__,'(%s is None)' \
-                      % (self.dir_env_var)
+                log.info('Disabled',self.__class__.__name__,'(%s is None)' \
+                      % (self.dir_env_var))
                 return []
             if os.path.isfile(d):
                 dirs = [os.path.dirname(d)] + dirs
@@ -441,8 +446,8 @@ class system_info:
                     b = os.path.basename(d)
                     b = os.path.splitext(b)[0]
                     if b[:3]=='lib':
-                        print 'Replacing _lib_names[0]==%r with %r' \
-                              % (self._lib_names[0], b[3:])
+                        log.info('Replacing _lib_names[0]==%r with %r' \
+                              % (self._lib_names[0], b[3:]))
                         self._lib_names[0] = b[3:]
             else:
                 ds = d.split(os.pathsep)
@@ -458,9 +463,10 @@ class system_info:
         default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
         dirs.extend(default_dirs)
         ret = []
-        [ret.append(d) for d in dirs if os.path.isdir(d) and d not in ret]
-        if self.verbosity>1:
-            print '(',key,'=',':'.join(ret),')'
+        for d in dirs:
+            if os.path.isdir(d) and d not in ret:
+                ret.append(d)
+        log.debug('( %s = %s )', key, ':'.join(ret))
         return ret
 
     def get_lib_dirs(self, key='library_dirs'):
@@ -487,61 +493,67 @@ class system_info:
         return self.get_libs(key,'')
 
     def check_libs(self,lib_dir,libs,opt_libs =[]):
-        """ If static or shared libraries are available then return
-            their info dictionary. """
+        """If static or shared libraries are available then return
+        their info dictionary.
+
+        Checks for all libraries as shared libraries first, then
+        static (or vice versa if self.search_static_first is True).
+        """
         if self.search_static_first:
-            exts = ['.a',so_ext]
+            exts = ['.a', so_ext]
         else:
-            exts = [so_ext,'.a']
-        if sys.platform=='cygwin':
+            exts = [so_ext, '.a']
+        if sys.platform == 'cygwin':
             exts.append('.dll.a')
+        info = None
         for ext in exts:
             info = self._check_libs(lib_dir,libs,opt_libs,[ext])
-            if info is not None: return info
-        return
+            if info is not None:
+                break
+        if not info:
+            log.info('  libraries %s not find in %s', ','.join(libs), lib_dir)
+        return info
 
-    def check_libs2(self,lib_dir,libs,opt_libs =[]):
-        """ If static or shared libraries are available then return
-            their info dictionary. """
+    def check_libs2(self, lib_dir, libs, opt_libs =[]):
+        """If static or shared libraries are available then return
+        their info dictionary.
+
+        Checks each library for shared or static.
+        """
         if self.search_static_first:
-            exts = ['.a',so_ext]
+            exts = ['.a', so_ext]
         else:
-            exts = [so_ext,'.a']
+            exts = [so_ext, '.a']
         if sys.platform=='cygwin':
             exts.append('.dll.a')
         info = self._check_libs(lib_dir,libs,opt_libs,exts)
-        if info is not None: return info
-        return
+        if not info:
+            log.info('  libraries %s not find in %s', ','.join(libs), lib_dir)
+        return info
 
     def _lib_list(self, lib_dir, libs, exts):
         assert is_string(lib_dir)
         liblist = []
+        # for each library name, see if we can find a file for it.
         for l in libs:
             for ext in exts:
                 p = self.combine_paths(lib_dir, 'lib'+l+ext)
                 if p:
                     assert len(p)==1
-                    liblist.append(p[0])
+                    liblist.append(l)
                     break
         return liblist
-
-    def _extract_lib_names(self,libs):
-        return [os.path.splitext(os.path.basename(p))[0][3:] \
-                for p in libs]
 
     def _check_libs(self,lib_dir,libs, opt_libs, exts):
         found_libs = self._lib_list(lib_dir, libs, exts)
         if len(found_libs) == len(libs):
-            found_libs = self._extract_lib_names(found_libs)
             info = {'libraries' : found_libs, 'library_dirs' : [lib_dir]}
             opt_found_libs = self._lib_list(lib_dir, opt_libs, exts)
             if len(opt_found_libs) == len(opt_libs):
-                opt_found_libs = self._extract_lib_names(opt_found_libs)
                 info['libraries'].extend(opt_found_libs)
             return info
         else:
-            print '  looking libraries %s in %s but found %s' % \
-                  (','.join(libs), lib_dir, ','.join(found_libs) or None)
+            return None
 
     def combine_paths(self,*args):
         return combine_paths(*args,**{'verbosity':self.verbosity})
@@ -607,8 +619,7 @@ class fftw_info(system_info):
             self.set_info(**info)
             return True
         else:
-            if self.verbosity>0:
-                print '  %s not found' % (ver_param['name'])
+            log.info('  %s not found' % (ver_param['name']))
             return False
 
     def calc_info(self):
@@ -840,7 +851,7 @@ class atlas_info(system_info):
                     break
             if atlas:
                 atlas_1 = atlas
-        print self.__class__
+        log.info(self.__class__)
         if atlas is None:
             atlas = atlas_1
         if atlas is None:
@@ -1060,78 +1071,20 @@ class lapack_src_info(system_info):
 
 atlas_version_c_text = r'''
 /* This file is generated from numpy_distutils/system_info.py */
-#ifdef __CPLUSPLUS__
-extern "C" {
-#endif
-#include "Python.h"
-static PyMethodDef module_methods[] = { {NULL,NULL} };
-PyMODINIT_FUNC initatlas_version(void) {
-  void ATL_buildinfo(void);
+void ATL_buildinfo(void);
+int main(void) {
   ATL_buildinfo();
-  Py_InitModule("atlas_version", module_methods);
+  return 0;
 }
-#ifdef __CPLUSCPLUS__
-}
-#endif
 '''
 
-def _get_build_temp():
-    from distutils.util import get_platform
-    plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])
-    return os.path.join('build','temp'+plat_specifier)
-
 def get_atlas_version(**config):
-    os.environ['NO_SCIPY_IMPORT']='get_atlas_version'
-    from core import Extension, setup
-    from misc_util import get_cmd
-    import log
-    magic = hex(hash(repr(config)))
-    def atlas_version_c(extension, build_dir,magic=magic):
-        source = os.path.join(build_dir,'atlas_version_%s.c' % (magic))
-        if os.path.isfile(source):
-            from distutils.dep_util import newer
-            if newer(source,__file__):
-                return source
-        f = open(source,'w')
-        f.write(atlas_version_c_text)
-        f.close()
-        return source
-    ext = Extension('atlas_version',
-                    sources=[atlas_version_c],
-                    **config)
-    build_dir = _get_build_temp()
-    extra_args = ['--build-lib',build_dir]
-    for a in sys.argv:
-        if re.match('[-][-]compiler[=]',a):
-            extra_args.append(a)
-    import distutils.core
-    old_dist = distutils.core._setup_distribution
-    distutils.core._setup_distribution = None
-    return_flag = True
-    try:
-        dist = setup(ext_modules=[ext],
-                     script_name = 'get_atlas_version',
-                     script_args = ['build_src','build_ext']+extra_args)
-        return_flag = False
-    except Exception,msg:
-        print "##### msg: %s" % msg
-        if not msg:
-            msg = "Unknown Exception"
-        log.warn(msg)
-    distutils.core._setup_distribution = old_dist
+    c = cmd_config(Distribution())
+    s, o = c.get_output(atlas_version_c_text,
+                        libraries=config.get('libraries', []),
+                        libray_dirs=config.get('library_dirs', []),
+                       )
 
-    if return_flag:
-        return
-
-    from distutils.sysconfig import get_config_var
-    so_ext = get_config_var('SO')
-    target = os.path.join(build_dir,'atlas_version'+so_ext)
-    cmd = [get_pythonexe(),'-c',
-           '"import imp,os;os.environ[\\"NO_SCIPY_IMPORT\\"]='\
-           '\\"system_info.get_atlas_version:load atlas_version\\";'\
-           'imp.load_dynamic(\\"atlas_version\\",\\"%s\\")"'\
-           % (os.path.basename(target))]
-    s,o = exec_command(cmd,execute_in=os.path.dirname(target),use_tee=0)
     atlas_version = None
     if not s:
         m = re.search(r'ATLAS version (?P<version>\d+[.]\d+[.]\d+)',o)
@@ -1141,9 +1094,9 @@ def get_atlas_version(**config):
         if re.search(r'undefined symbol: ATL_buildinfo',o,re.M):
             atlas_version = '3.2.1_pre3.3.6'
         else:
-            print 'Command:',' '.join(cmd)
-            print 'Status:',s
-            print 'Output:',o
+            log.info('Command: %s',' '.join(cmd))
+            log.info('Status: %d', s)
+            log.info('Output: %s', o)
     return atlas_version
 
 
@@ -1404,7 +1357,6 @@ class _numpy_info(system_info):
     notfounderror = NumericNotFoundError
 
     def __init__(self):
-        from distutils.sysconfig import get_python_inc
         include_dirs = []
         try:
             module = __import__(self.modulename)
@@ -1413,10 +1365,11 @@ class _numpy_info(system_info):
                 if name=='lib':
                     break
                 prefix.append(name)
-            include_dirs.append(get_python_inc(prefix=os.sep.join(prefix)))
+            include_dirs.append(distutils.sysconfig.get_python_inc(
+                                        prefix=os.sep.join(prefix)))
         except ImportError:
             pass
-        py_incl_dir = get_python_inc()
+        py_incl_dir = distutils.sysconfig.get_python_inc()
         include_dirs.append(py_incl_dir)
         for d in default_include_dirs:
             d = os.path.join(d, os.path.basename(py_incl_dir))
@@ -1478,7 +1431,6 @@ class numpy_info(_numpy_info):
 class numerix_info(system_info):
     section = 'numerix'
     def calc_info(self):
-        import sys, os
         which = None, None
         if os.getenv("NUMERIX"):
             which = os.getenv("NUMERIX"), "environment var"
@@ -1497,9 +1449,9 @@ class numerix_info(system_info):
                         import numarray
                         which = "numarray", "defaulted"
                     except ImportError,msg3:
-                        print msg1
-                        print msg2
-                        print msg3
+                        log.info(msg1)
+                        log.info(msg2)
+                        log.info(msg3)
         which = which[0].strip().lower(), which[1]
         if which[0] not in ["numeric", "numarray", "numpy"]:
             raise ValueError("numerix selector must be either 'Numeric' "
@@ -1531,7 +1483,6 @@ class boost_python_info(system_info):
         return [ d for d in dirs if os.path.isdir(d) ]
 
     def calc_info(self):
-        from distutils.sysconfig import get_python_inc
         src_dirs = self.get_src_dirs()
         src_dir = ''
         for d in src_dirs:
@@ -1540,7 +1491,7 @@ class boost_python_info(system_info):
                 break
         if not src_dir:
             return
-        py_incl_dir = get_python_inc()
+        py_incl_dir = distutils.sysconfig.get_python_inc()
         srcs_dir = os.path.join(src_dir,'libs','python','src')
         bpl_srcs = glob(os.path.join(srcs_dir,'*.cpp'))
         bpl_srcs += glob(os.path.join(srcs_dir,'*','*.cpp'))
@@ -1609,8 +1560,8 @@ class _pkg_config_info(system_info):
     def calc_info(self):
         config_exe = find_executable(self.get_config_exe())
         if not os.path.isfile(config_exe):
-            print 'File not found: %s. Cannot determine %s info.' \
-                  % (config_exe, self.section)
+            log.warn('File not found: %s. Cannot determine %s info.' \
+                  % (config_exe, self.section))
             return
         info = {}
         macros = []
@@ -1820,8 +1771,7 @@ def combine_paths(*args,**kws):
     else:
         result = combine_paths(*(combine_paths(args[0],args[1])+args[2:]))
     verbosity = kws.get('verbosity',1)
-    if verbosity>1 and result:
-        print '(','paths:',','.join(result),')'
+    log.debug('(paths: %s)', ','.join(result))
     return result
 
 language_map = {'c':0,'c++':1,'f77':2,'f90':3}
@@ -1844,25 +1794,45 @@ def dict_append(d,**kws):
         d['language'] = l
     return
 
-def show_all():
-    import system_info
-    import pprint
-    match_info = re.compile(r'.*?_info').match
+def parseCmdLine(argv=(None,)):
+    import optparse
+    parser = optparse.OptionParser("usage: %prog [-v] [info objs]")
+    parser.add_option('-v', '--verbose', action='store_true', dest='verbose',
+                      default=False,
+                      help='be verbose and print more messages')
+
+    opts, args = parser.parse_args(args=argv[1:])
+    return opts, args
+
+def show_all(argv=None):
+    import inspect
+    if argv is None:
+        argv = sys.argv
+    opts, args = parseCmdLine(argv)
+    if opts.verbose:
+        log.set_threshold(log.DEBUG)
+    else:
+        log.set_threshold(log.INFO)
     show_only = []
-    for n in sys.argv[1:]:
+    for n in args:
         if n[-5:] != '_info':
             n = n + '_info'
         show_only.append(n)
     show_all = not show_only
-    for n in filter(match_info,dir(system_info)):
-        if n in ['system_info','get_info']: continue
+    for name, c in globals().iteritems():
+        if not inspect.isclass(c):
+            continue
+        if not issubclass(c, system_info) or c is system_info:
+            continue
         if not show_all:
-            if n not in show_only: continue
-            del show_only[show_only.index(n)]
-        c = getattr(system_info,n)()
-        c.verbosity = 2
-        r = c.get_info()
+            if name not in show_only:
+                continue
+            del show_only[show_only.index(name)]
+        conf = c()
+        conf.verbosity = 2
+        r = conf.get_info()
     if show_only:
-        print 'Info classes not defined:',','.join(show_only)
+        log.info('Info classes not defined: %s',','.join(show_only))
+
 if __name__ == "__main__":
     show_all()
