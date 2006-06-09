@@ -838,7 +838,7 @@ cdef class RandomState:
                    mean.shape[0])
         # Transform matrix of standard normals into matrix where each row
         # contains multivariate normals with the desired covariance.
-        # Compute A such that matrixmultiply(transpose(A),A) == cov.
+        # Compute A such that dot(transpose(A),A) == cov.
         # Then the matrix products of the rows of x and A has the desired
         # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
         # decomposition of cov is such an A.
@@ -846,7 +846,7 @@ cdef class RandomState:
         from numpy.dual import svd
         # XXX: we really should be doing this by Cholesky decomposition
         (u,s,v) = svd(cov)
-        x = _sp.matrixmultiply(x*_sp.sqrt(s),v)
+        x = _sp.dot(x*_sp.sqrt(s),v)
         # The rows of x now have the correct covariance but mean 0. Add
         # mean to each row. Then each row will have mean mean.
         _sp.add(mean,x,x)
