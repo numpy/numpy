@@ -98,7 +98,30 @@ if os.name=='nt' and sys.version[:3] > '2.3':
                                             processName, instance,
                                             win32pdh.PDH_FMT_LONG, None)
 
-def assert_equal(actual,desired,err_msg='',verbose=1):
+def build_err_msg(actual, desired, err_msg, header='Items are not equal:',
+                  verbose=True):
+    msg = ['\n' + header]
+    if err_msg:
+        if err_msg.find('\n') == -1 and len(err_msg) < 79-len(header):
+            msg = [msg[0] + ' ' + err_msg]
+        else:
+            msg.append(err_msg)
+    if verbose:
+        try:
+            rd = repr(desired)
+        except:
+            rd = '[repr failed]'
+        rd = rd[:100]
+        msg.append(' DESIRED: ' + rd)
+        try:
+            ra = repr(actual)
+        except:
+            ra = '[repr failed]'
+        rd = ra[:100]
+        msg.append(' ACTUAL: ' + ra)
+    return '\n'.join(msg)
+
+def assert_equal(actual,desired,err_msg='',verbose=True):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
     """
@@ -117,48 +140,30 @@ def assert_equal(actual,desired,err_msg='',verbose=1):
     from numpy.core import ArrayType
     if isinstance(actual, ArrayType) or isinstance(desired, ArrayType):
         return assert_array_equal(actual, desired, err_msg)
-    msg = '\nItems are not equal:\n' + err_msg
-    try:
-        if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
-            msg =  msg \
-                 + 'DESIRED: ' + repr(desired) \
-                 + '\n ACTUAL: ' + repr(actual)
-    except:
-        msg =  msg \
-             + 'DESIRED: ' + repr(desired) \
-             + '\n ACTUAL: ' + repr(actual)
+    msg = build_err_msg(actual, desired, err_msg, verbose=verbose)
     assert desired == actual, msg
-    return
 
-def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
-    """ Raise an assertion if two items are not
-        equal.  I think this should be part of unittest.py
+def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
+    """ Raise an assertion if two items are not equal.
+
+    I think this should be part of unittest.py
+
+    The test is equivalent to abs(desired-actual) < 0.5 * 10**(-decimal)
     """
     from numpy.core import ArrayType
     if isinstance(actual, ArrayType) or isinstance(desired, ArrayType):
         return assert_array_almost_equal(actual, desired, decimal, err_msg)
-    msg = '\nItems are not equal:\n' + err_msg
-    try:
-        if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
-            msg =  msg \
-                 + 'DESIRED: ' + repr(desired) \
-                 + '\n ACTUAL: ' + repr(actual)
-    except:
-        msg =  msg \
-             + 'DESIRED: ' + repr(desired) \
-             + '\n ACTUAL: ' + repr(actual)
+    msg = build_err_msg(actual, desired, err_msg, verbose=verbose)
     assert round(abs(desired - actual),decimal) == 0, msg
 
 
-def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
+def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
         Approximately equal is defined as the number of significant digits
         correct
     """
     import math
-    msg = '\nItems are not equal to %d significant digits:\n' % significant
-    msg += err_msg
     actual, desired = map(float, (actual, desired))
     if desired==actual:
         return
@@ -172,15 +177,10 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
         sc_actual = actual/scale
     except ZeroDivisionError:
         sc_actual = 0.0
-    try:
-        if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
-            msg =  msg \
-                 + 'DESIRED: ' + repr(desired) \
-                 + '\n ACTUAL: ' + repr(actual)
-    except:
-        msg =  msg \
-             + 'DESIRED: ' + repr(desired) \
-             + '\n ACTUAL: ' + repr(actual)
+    msg = build_err_msg(actual, desired, err_msg,
+                header='Items are not equal to %d significant digits:' %
+                                 significant,
+                verbose=verbose)
     assert math.fabs(sc_desired - sc_actual) < pow(10.,-1*significant), msg
 
 
