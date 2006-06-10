@@ -9391,10 +9391,14 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
 static char doc_arraydescr_reduce[] = "self.__reduce__()  for pickling.";
 
-/* return a tuple of (callable object, args, state) */
+/* return a tuple of (callable object, args, state). */
 static PyObject *
 arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 {
+        /* version number of this pickle type. Increment if we need to
+           change the format. Be sure to handle the old versions in
+           arraydescr_setstate. */
+        const int version = 1;
 	PyObject *ret, *mod, *obj;
 	PyObject *state;
 	char endian;
@@ -9430,15 +9434,16 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 		endian = '<';
 		if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
 	}
-	state = PyTuple_New(5);
-	PyTuple_SET_ITEM(state, 0, PyString_FromFormat("%c", endian));
-	PyTuple_SET_ITEM(state, 1, arraydescr_subdescr_get(self));
+	state = PyTuple_New(6);
+        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+	PyTuple_SET_ITEM(state, 1, PyString_FromFormat("%c", endian));
+	PyTuple_SET_ITEM(state, 2, arraydescr_subdescr_get(self));
 	if (self->fields && self->fields != Py_None) {
 		Py_INCREF(self->fields);
-		PyTuple_SET_ITEM(state, 2, self->fields);
+		PyTuple_SET_ITEM(state, 3, self->fields);
 	}
 	else {
-		PyTuple_SET_ITEM(state, 2, Py_None);
+		PyTuple_SET_ITEM(state, 3, Py_None);
 		Py_INCREF(Py_None);
 	}
 
@@ -9449,8 +9454,8 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 	}
 	else {elsize = -1; alignment = -1;}
 
-	PyTuple_SET_ITEM(state, 3, PyInt_FromLong(elsize));
-	PyTuple_SET_ITEM(state, 4, PyInt_FromLong(alignment));
+	PyTuple_SET_ITEM(state, 4, PyInt_FromLong(elsize));
+	PyTuple_SET_ITEM(state, 5, PyInt_FromLong(alignment));
 
 	PyTuple_SET_ITEM(ret, 2, state);
 	return ret;
@@ -9465,15 +9470,33 @@ static PyObject *
 arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 {
 	int elsize = -1, alignment = -1;
+        int version = 1;
 	char endian;
 	PyObject *subarray, *fields;
 
 	if (self->fields == Py_None) {Py_INCREF(Py_None); return Py_None;}
 
-	if (!PyArg_ParseTuple(args, "(cOOii)", &endian, &subarray, &fields,
-			      &elsize, &alignment)) return NULL;
+	if (!PyArg_ParseTuple(args, "(icOOii)", &version, &endian, &subarray,
+                              &fields, &elsize, &alignment)) {
+            PyErr_Clear();
+            version = 0;
+	    if (!PyArg_ParseTuple(args, "(cOOii)", &endian, &subarray,
+                                  &fields, &elsize, &alignment)) {
+                return NULL;
+            }
+        }
 
-	if (endian != '|' && 
+        /* If we ever need another pickle format, increment the version
+           number. But we should still be able to handle the old versions.
+           We've only got one right now. */
+        if (version != 1 && version != 0) {
+            PyErr_Format(PyExc_ValueError,
+                         "can't handle version %d of numpy.dtype pickle",
+                          version);
+            return NULL;
+        }
+
+	if (endian != '|' &&
 	    PyArray_IsNativeByteOrder(endian)) endian = '=';
 
 	self->byteorder = endian;

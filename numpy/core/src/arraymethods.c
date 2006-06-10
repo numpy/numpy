@@ -849,6 +849,10 @@ static char doc_reduce[] = "a.__reduce__()  for pickling.";
 static PyObject *
 array_reduce(PyArrayObject *self, PyObject *args)
 {
+        /* version number of this pickle type. Increment if we need to
+           change the format. Be sure to handle the old versions in
+           array_setstate. */
+        const int version = 1;
 	PyObject *ret=NULL, *state=NULL, *obj=NULL, *mod=NULL;
 	PyObject *mybool, *thestr=NULL;
 	PyArray_Descr *descr;
@@ -873,29 +877,31 @@ array_reduce(PyArrayObject *self, PyObject *args)
 				       'b'));
 	
 	/* Now fill in object's state.  This is a tuple with 
-	   4 arguments
+	   5 arguments
 
-	   1) a Tuple giving the shape
-	   2) a PyArray_Descr Object (with correct bytorder set)
-	   3) a Bool stating if Fortran or not
-	   4) a binary string with the data (or a list for Object arrays)
+           1) an integer with the pickle version.
+	   2) a Tuple giving the shape
+	   3) a PyArray_Descr Object (with correct bytorder set)
+	   4) a Bool stating if Fortran or not
+	   5) a binary string with the data (or a list for Object arrays)
 
 	   Notice because Python does not describe a mechanism to write 
 	   raw data to the pickle, this performs a copy to a string first
 	*/
 
-	state = PyTuple_New(4);
+	state = PyTuple_New(5);
 	if (state == NULL) {
 		Py_DECREF(ret); return NULL;
 	}
-	PyTuple_SET_ITEM(state, 0, PyObject_GetAttrString((PyObject *)self, 
+        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+	PyTuple_SET_ITEM(state, 1, PyObject_GetAttrString((PyObject *)self, 
 							  "shape"));
 	descr = self->descr;
 	Py_INCREF(descr);
-	PyTuple_SET_ITEM(state, 1, (PyObject *)descr);
+	PyTuple_SET_ITEM(state, 2, (PyObject *)descr);
 	mybool = (PyArray_ISFORTRAN(self) ? Py_True : Py_False);
 	Py_INCREF(mybool);
-	PyTuple_SET_ITEM(state, 2, mybool);
+	PyTuple_SET_ITEM(state, 3, mybool);
 	if (PyArray_ISOBJECT(self)) {
 		thestr = _getobject_pkl(self);
 	}
@@ -907,7 +913,7 @@ array_reduce(PyArrayObject *self, PyObject *args)
 		Py_DECREF(state);
 		return NULL;
 	}
-	PyTuple_SET_ITEM(state, 3, thestr);
+	PyTuple_SET_ITEM(state, 4, thestr);
 	PyTuple_SET_ITEM(ret, 2, state);
 	return ret;
 }
@@ -932,6 +938,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 {
 	PyObject *shape;
 	PyArray_Descr *typecode;
+        int version = 1;
 	int fortran;
 	PyObject *rawdata;
 	char *datastr;
@@ -942,10 +949,27 @@ array_setstate(PyArrayObject *self, PyObject *args)
 	/* This will free any memory associated with a and
 	   use the string in setstate as the (writeable) memory.
 	*/
-	if (!PyArg_ParseTuple(args, "(O!O!iO)", &PyTuple_Type,
+	if (!PyArg_ParseTuple(args, "(iO!O!iO)", &version, &PyTuple_Type,
+			      &shape, &PyArrayDescr_Type, &typecode,
+			      &fortran, &rawdata)) {
+            PyErr_Clear();
+            version = 0;
+	    if (!PyArg_ParseTuple(args, "(O!O!iO)", &PyTuple_Type,
 			      &shape, &PyArrayDescr_Type, &typecode, 
-			      &fortran, &rawdata))
+			      &fortran, &rawdata)) {
 		return NULL;
+            }
+        }
+
+        /* If we ever need another pickle format, increment the version
+           number. But we should still be able to handle the old versions.
+           We've only got one right now. */
+        if (version != 1 && version != 0) {
+            PyErr_Format(PyExc_ValueError,
+                         "can't handle version %d of numpy.ndarray pickle",
+                         version);
+            return NULL;
+        }
 
 	Py_XDECREF(self->descr);
 	self->descr = typecode;

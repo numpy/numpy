@@ -100,6 +100,10 @@ def _array_descr(descriptor):
 
     return result
 
+# Build a new array from the information in a pickle.
+# Note that the name numpy.core._internal._reconstruct is embedded in
+# the pickles of ndarrays, so don't remove the name here, or you'll
+# break backward compatibilty.
 def _reconstruct(subtype, shape, dtype):
     return ndarray.__new__(subtype, shape, dtype)
 
