@@ -196,7 +196,6 @@ def mean_var_test(x, type, mean, var, skew=[]):
        print "Skewness of those random numbers (should be about ", skew, "):", x_skew
 
 def test():
-    from types import *
     obj = mt.get_state()
     mt.set_state(obj)
     obj2 = mt.get_state()
