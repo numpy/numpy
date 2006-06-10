@@ -49,21 +49,47 @@ def asfarray(a, dtype=_nx.float_):
     return a
 
 def real(val):
+    """Return the real part of val.
+
+    Useful if val maybe a scalar or an array.
+    """
     return asarray(val).real
 
 def imag(val):
+    """Return the imaginary part of val.
+
+    Useful if val maybe a scalar or an array.
+    """
     return asarray(val).imag
 
 def iscomplex(x):
-    return imag(x) != _nx.zeros_like(x)
+    """Return a boolean array where elements are True if that element
+    is complex (has non-zero imaginary part).
+
+    For scalars, return a boolean.
+    """
+    return imag(x) != 0
 
 def isreal(x):
-    return imag(x) == _nx.zeros_like(x)
+    """Return a boolean array where elements are True if that element
+    is real (has zero imaginary part)
+
+    For scalars, return a boolean.
+    """
+    return imag(x) == 0
 
 def iscomplexobj(x):
+    """Return True if x is a complex type or an array of complex numbers.
+
+    Unlike iscomplex(x), complex(3.0) is considered a complex object.
+    """
     return issubclass( asarray(x).dtype.type, _nx.complexfloating)
 
 def isrealobj(x):
+    """Return True if x is not a complex type.
+
+    Unlike isreal(x), complex(3.0) is considered a complex object.
+    """
     return not issubclass( asarray(x).dtype.type, _nx.complexfloating)
 
 #-----------------------------------------------------------------------------
@@ -107,8 +133,13 @@ def nan_to_num(x):
 #-----------------------------------------------------------------------------
 
 def real_if_close(a,tol=100):
+    """If a is a complex array, return it as a real array if the imaginary
+    part is close enough to zero.
+
+    "Close enough" is defined as tol*(machine epsilon of a's element type).
+    """
     a = asarray(a)
-    if a.dtype.char not in 'FDG':
+    if not issubclass(a.dtype.type, _nx.complexfloating):
         return a
     if tol > 1:
         import getlimits
@@ -120,6 +151,8 @@ def real_if_close(a,tol=100):
 
 
 def asscalar(a):
+    """Convert an array of size 1 to its scalar equivalent.
+    """
     return a.item()
 
 #-----------------------------------------------------------------------------
@@ -155,17 +188,36 @@ def typename(char):
 
 #-----------------------------------------------------------------------------
 
-#determine the "minimum common type code" for a group of arrays.
-array_kind = {'i':0, 'l': 0, 'f': 0, 'd': 0, 'g':0, 'F': 1, 'D': 1, 'G':1}
-array_precision = {'i': 1, 'l': 1,
-                   'f': 0, 'd': 1, 'g':2,
-                   'F': 0, 'D': 1, 'G':2}
-array_type = [['f', 'd', 'g'], ['F', 'D', 'G']]
+#determine the "minimum common type" for a group of arrays.
+array_type = [[_nx.single, _nx.double, _nx.longdouble],
+              [_nx.csingle, _nx.cdouble, _nx.clongdouble]]
+array_precision = {_nx.single : 0,
+                   _nx.double : 1,
+                   _nx.longdouble : 2,
+                   _nx.csingle : 0,
+                   _nx.cdouble : 1,
+                   _nx.clongdouble : 2}
 def common_type(*arrays):
-    kind = 0
+    """Given a sequence of arrays as arguments, return the best inexact
+    scalar type which is "most" common amongst them.
+
+    The return type will always be a inexact scalar type, even if all
+    the arrays are integer arrays.
+    """
+    is_complex = False
     precision = 0
     for a in arrays:
-        t = a.dtype.char
-        kind = max(kind, array_kind[t])
-        precision = max(precision, array_precision[t])
-    return array_type[kind][precision]
+        t = a.dtype.type
+        if iscomplexobj(a):
+            is_complex = True
+        if issubclass(t, _nx.integer):
+            p = 1
+        else:
+            p = array_precision.get(t, None)
+            if p is None:
+                raise TypeError("can't get common type for non-numeric array")
+        precision = max(precision, p)
+    if is_complex:
+        return array_type[1][precision]
+    else:
+        return array_type[0][precision]
