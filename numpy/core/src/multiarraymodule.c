@@ -5072,6 +5072,108 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 	return PyArray_FromString(data, (intp)s, descr, (intp)nin, sep);
 }
 
+
+/* steals a reference to dtype */
+static PyObject *
+PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
+{
+        PyObject *item, *value;
+        PyObject *iter = PyObject_GetIter(obj);
+        PyArrayObject *ret = NULL;
+        intp i, elsize, elcount;
+        char *new_data;
+    
+        if (iter == NULL) goto done;
+    
+        elcount = (count < 0) ? 0 : count;
+        elsize = dtype->elsize;
+
+        ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, 
+                                    &elcount, NULL,NULL, 0, NULL);            
+        dtype = NULL;
+        if (ret == NULL) goto done;
+        
+        for (i = 0; (i < count || count == -1) && (value = PyIter_Next(iter)); i++) {
+            
+            if (i >= elcount) {
+                /* 
+                   Grow ret->data:
+                   this is similar for the strategy for PyListObject, but we use
+                   50% overallocation => 0, 4, 8, 14, 23, 36, 56, 86 ... 
+                */
+                elcount = (i >> 1) + (i < 4 ? 4 : 2) + i;
+                if (elcount <= ((~(size_t)0) / elsize))
+                    new_data = PyDataMem_RENEW(ret->data, elcount * elsize);
+                else
+                    new_data = NULL;
+                if (new_data == NULL) {
+                    PyErr_SetString(PyExc_MemoryError, 
+                                    "cannot allocate array memory");
+                    goto done;
+                }
+                ret->data = new_data;
+            }
+            ret->dimensions[0] = i+1;
+            
+            if (((item = index2ptr(ret, i)) == NULL) ||
+                    (ret->descr->f->setitem(value, item, ret) == -1)) {
+                        Py_DECREF(item);
+                        goto done;
+                }
+            Py_DECREF(value);
+                
+        } 
+        
+        if (i < count) {
+                PyErr_SetString(PyExc_ValueError, "iteratable too short");
+                goto done;
+        }
+        
+        /*
+            Realloc the data so that don't keep extra memory tied up
+            (assuming realloc is reasonably good about reusing space...)
+        */
+        new_data = PyDataMem_RENEW(ret->data, i * elsize);
+        if (new_data == NULL) {
+            PyErr_SetString(PyExc_MemoryError, "cannot allocate array memory");
+            goto done;
+        }
+        ret->data = new_data;
+
+done:
+        Py_XDECREF(iter);
+        Py_XDECREF(dtype);
+        if (PyErr_Occurred()) {
+            Py_XDECREF(ret);
+            return NULL;
+        }
+        return (PyObject *)ret;
+}
+
+
+static char doc_fromIter[] = "fromiter(iterable, dtype, count=-1) returns a new 1d array initialized from iterable. If count is nonegative, the new array will have count elements, otherwise it's size is determined by the generator.";
+
+static PyObject *
+array_fromIter(PyObject *ignored, PyObject *args, PyObject *keywds)
+{
+	PyObject *iter;
+	longlong nin=-1;
+	static char *kwlist[] = {"iter", "dtype", "count", NULL};
+	PyArray_Descr *descr=NULL;
+
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO&|L", kwlist, 
+					 &iter,
+					 PyArray_DescrConverter, &descr,
+					 &nin)) {
+		return NULL;
+	}
+
+	return PyArray_FromIter(iter, descr, (intp)nin);
+}
+
+
+
+
 /* This needs an open file object and reads it in directly. 
    memory-mapped files handled differently through buffer interface.
 
@@ -5991,6 +6093,8 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS, doc_lexsort},
 	{"fromstring",(PyCFunction)array_fromString,
 	 METH_VARARGS|METH_KEYWORDS, doc_fromString},
+	{"fromiter",(PyCFunction)array_fromIter,
+	 METH_VARARGS|METH_KEYWORDS, doc_fromIter},
 	{"concatenate", (PyCFunction)array_concatenate, 
 	 METH_VARARGS|METH_KEYWORDS, doc_concatenate},
 	{"inner", (PyCFunction)array_innerproduct, 

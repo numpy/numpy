@@ -68,11 +68,6 @@ def empty_like(a):
 
 # end Fernando's utilities
 
-def fromiter(obj, dtype=None):
-    """Return an array object from an iterator.
-    """
-    obj = list(obj)
-    return array(obj, dtype=dtype)
 
 def extend_all(module):
     adict = {}
@@ -102,6 +97,7 @@ array = multiarray.array
 zeros = multiarray.zeros
 empty = multiarray.empty
 fromstring = multiarray.fromstring
+fromiter = multiarray.fromiter
 fromfile = multiarray.fromfile
 frombuffer = multiarray.frombuffer
 newbuffer = multiarray.newbuffer
