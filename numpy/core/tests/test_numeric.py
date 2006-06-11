@@ -159,6 +159,40 @@ class test_seterr(ScipyTestCase):
             self.fail()
         seterr(divide='ignore')
         array([1.]) / array([0.])
+        
+        
+class test_fromiter(ScipyTestCase):
+    
+    def makegen(self):
+        return (x**2 for x in xrange(24)) 
+            
+    def test_types(self):
+        ai32 = fromiter(self.makegen(), int32)
+        ai64 = fromiter(self.makegen(), int64)
+        af = fromiter(self.makegen(), float)
+        self.failUnless(ai32.dtype == dtype(int32))
+        self.failUnless(ai64.dtype == dtype(int64))
+        self.failUnless(af.dtype == dtype(float))
+
+    def test_lengths(self):
+        expected = array(list(self.makegen()))
+        a = fromiter(self.makegen(), int)
+        a20 = fromiter(self.makegen(), int, 20)
+        self.failUnless(len(a) == len(expected))
+        self.failUnless(len(a20) == 20)
+        try:
+            fromiter(self.makegen(), int, len(expected) + 10)
+        except ValueError:
+            pass
+        else:
+            self.fail()
+
+    def test_values(self):
+        expected = array(list(self.makegen()))
+        a = fromiter(self.makegen(), int)
+        a20 = fromiter(self.makegen(), int, 20)
+        self.failUnless(alltrue(a == expected))
+        self.failUnless(alltrue(a20 == expected[:20]))
 
 if __name__ == '__main__':
     NumpyTest().run()

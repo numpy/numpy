@@ -24,8 +24,8 @@ class LinAlgError(Exception):
     pass
 
 # Helper routines
-_array_kind = {'i':0, 'l': 0, 'f': 0, 'd': 0, 'F': 1, 'D': 1}
-_array_precision = {'i': 1, 'l': 1, 'f': 0, 'd': 1, 'F': 0, 'D': 1}
+_array_kind = {'i':0, 'l': 0, 'q': 0, 'f': 0, 'd': 0, 'F': 1, 'D': 1}
+_array_precision = {'i': 1, 'l': 1, 'q': 1, 'f': 0, 'd': 1, 'F': 0, 'D': 1}
 _array_type = [['f', 'd'], ['F', 'D']]
 
 def _makearray(a):
@@ -417,7 +417,7 @@ def det(a):
         lapack_routine = lapack_lite.dgetrf
     pivots = zeros((n,), 'i')
     results = lapack_routine(n, n, a, n, pivots, 0)
-    sign = add.reduce(not_equal(pivots, arrayrange(1, n+1))) % 2
+    sign = add.reduce(not_equal(pivots, arange(1, n+1))) % 2
     return (1.-2.*sign)*multiply.reduce(diagonal(a),axis=-1)
 
 # Linear Least Squares

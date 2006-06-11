@@ -147,14 +147,22 @@ typecodes = {'Character':'S1',
 def sarray(a, dtype=None, copy=False):
     return array(a, dtype, copy)
 
+def _deprecate(func, oldname, newname):
+    import warnings
+    def newfunc(*args,**kwds):
+        warnings.warn("%s is deprecated, use %s" % (oldname, newname),
+                      DeprecationWarning)
+        return func(*args, **kwds)
+    return newfunc
+
 # backward compatibility
-arrayrange = mu.arange
-cross_correlate = correlate
+arrayrange = _deprecate(mu.arange, 'arrayrange', 'arange')
+cross_correlate = _deprecate(correlate, 'cross_correlate', 'correlate')
 
 # deprecated names
-matrixmultiply = mu.dot
-outerproduct = outer
-innerproduct = mu.inner
+matrixmultiply = _deprecate(mu.dot, 'matrixmultiply', 'dot')
+outerproduct = _deprecate(outer, 'outerproduct', 'outer')
+innerproduct = _deprecate(mu.inner, 'innerproduct', 'inner')
 
 from cPickle import dump, dumps
 

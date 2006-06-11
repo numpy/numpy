@@ -249,10 +249,28 @@ static void
 /* b will always be positive in this call */
 /**begin repeat
    #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
+   #upc=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
 **/
 static void
 @name@_ctype_power(@name@ a, @name@ b, @name@ *out) {
-    
+    @name@ temp, ix, mult;
+    /* code from Python's intobject.c, with overflow checking removed. */
+    temp = a;
+    ix = 1;
+    while (b > 0) {
+        if (b & 1) {
+            @name@_ctype_multiply(ix, temp, &mult);
+            ix = mult;
+            if (temp == 0)
+                break; /* Avoid ix / 0 */
+        }
+        b >>= 1;	/* Shift exponent down by 1 bit */
+        if (b==0) break;
+	/* Square the value of temp */
+        @name@_ctype_multiply(temp, temp, &mult);
+        temp = mult;
+    }
+    *out = ix;
 }
 /**end repeat**/
 
@@ -300,14 +318,15 @@ static @name@ (*_basic_@name@_sqrt)(@name@);
     (outp)->imag = (a).real * (b).imag + (a).imag * (b).real;	\
     }while(0)
 #define @name@_ctype_divide(a, b, outp) do{			\
-    @rtype@ d = (a).real*(b).real + (b).imag*(b).imag;		\
+    @rtype@ d = (b).real*(b).real + (b).imag*(b).imag;		\
     (outp)->real = ((a).real*(b).real + (a).imag*(b).imag)/d;	\
     (outp)->imag = ((a).imag*(b).real - (a).real*(b).imag)/d;	\
     }while(0)
 #define @name@_ctype_true_divide @name@_ctype_divide
 #define @name@_ctype_floor_divide(a, b, outp) do {		\
-    (outp)->real = ((a).real*(b).real + (a).imag*(b).imag) /	\
-    ((a).real*(b).real + (b).imag*(b).imag);			\
+    (outp)->real = _basic_@rtype@_floor				\
+    (((a).real*(b).real + (a).imag*(b).imag) /			\
+     ((b).real*(b).real + (b).imag*(b).imag));			\
     (outp)->imag = 0;						\
     }while(0)
 /**end repeat**/
@@ -482,7 +501,10 @@ _@name@_convert_to_ctype(PyObject *a, @name@ *arg1)
 	return ret;
     }
     else if ((temp = PyArray_ScalarFromObject(a)) != NULL) {
-	return _@name@_convert_to_ctype(temp, arg1);
+	int retval;
+	retval = _@name@_convert_to_ctype(temp, arg1);
+	Py_DECREF(temp);
+	return retval;
     }
     return -2;
 }	
@@ -529,9 +551,9 @@ static PyObject *
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
     case 0:
         break;
-    case -1: /* can't cast both safely use different add function */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
+    case -1: /* one of them can't be cast safely
+		must be mixed-types*/
+	return PyArray_Type.tp_as_number->nb_@oper@(a,b);
     case -2: /* use default handling */
 	if (PyErr_Occurred()) return NULL;
         return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
@@ -568,16 +590,16 @@ static PyObject *
     if (ret==NULL) return NULL;
     obj = PyArrayScalar_New(@OName@);
     if (obj == NULL) {Py_DECREF(ret); return NULL;}
-    PyArrayScalar_VAL(ret, @OName@) = out;
+    PyArrayScalar_ASSIGN(obj, @OName@, out);
     PyTuple_SET_ITEM(ret, 0, obj);
     obj = PyArrayScalar_New(@OName@);
     if (obj == NULL) {Py_DECREF(ret); return NULL;}
-    PyArrayScalar_VAL(ret, @OName@) = out2;
+    PyArrayScalar_ASSIGN(obj, @OName@, out2);
     PyTuple_SET_ITEM(ret, 1, obj);
 #else
     ret = PyArrayScalar_New(@OName@);
     if (ret==NULL) return NULL;
-    PyArrayScalar_VAL(ret, @OName@) = out;
+    PyArrayScalar_ASSIGN(ret, @OName@, out);
 #endif
     return ret;
 }
@@ -596,16 +618,24 @@ static PyObject *
 @name@_power(PyObject *a, PyObject *b, PyObject *c)
 {
     PyObject *ret;
-    @name@ arg1, arg2, out;
-    @otyp@ out1;
+    @name@ arg1, arg2;
     int retstatus;
+
+#if @cmplx@
+    @name@ out = {0,0};
+    @otyp@ out1;
+       out1.real = out.imag = 0;
+#else
+    @name@ out = 0;
+    @otyp@ out1=0;
+#endif
 	
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
     case 0:
         break;
-    case -1: /* can't cast both safely use different add function */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
+    case -1: /* can't cast both safely 
+		mixed-types? */
+	return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
     case -2: /* use default handling */
 	if (PyErr_Occurred()) return NULL;
         return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
@@ -617,8 +647,8 @@ static PyObject *
     /* as a function call. */
 #if @cmplx@
     if (arg2.real == 0 && arg1.real == 0) {
-	out1.real = out.real = 1.0;
-	out1.imag = out.imag = 0.0;
+	out1.real = out.real = 1;
+	out1.imag = out.imag = 0;
     }
 #else
     if (arg2 == 0) {
@@ -628,7 +658,7 @@ static PyObject *
 #if @isint@
     else if (arg2 < 0) {
 	@name@_ctype_power(arg1, -arg2, &out);
-	out1 = 1.0 / out;
+	out1 = (@otyp@) (1.0 / out);
     }
 #endif
     else {
@@ -651,17 +681,17 @@ static PyObject *
     if (arg2 < 0) {
 	ret = PyArrayScalar_New(@OName@);
 	if (ret==NULL) return NULL;
-	PyArrayScalar_VAL(ret, @OName@) = out1;
+	PyArrayScalar_ASSIGN(ret, @OName@, out1);
     }
     else {
 	ret = PyArrayScalar_New(@Name@);
 	if (ret==NULL) return NULL;
-	PyArrayScalar_VAL(ret, @Name@) = out;
+	PyArrayScalar_ASSIGN(ret, @Name@, out);
     }
 #else
     ret = PyArrayScalar_New(@Name@);
     if (ret==NULL) return NULL;
-    PyArrayScalar_VAL(ret, @Name@) = out;
+    PyArrayScalar_ASSIGN(ret, @Name@, out);
 #endif
     
     return ret;
@@ -712,7 +742,7 @@ static PyObject *
     @name@_ctype_@oper@(arg1, &out);
 
     ret = PyArrayScalar_New(@Name@);
-    PyArrayScalar_VAL(ret, @Name@) = out;
+    PyArrayScalar_ASSIGN(ret, @Name@, out);
 
     return ret;
 }
@@ -820,8 +850,6 @@ static PyObject*
     case 0:
 	break;
     case -1: /* can't cast both safely use different add function */
-	Py_INCREF(Py_NotImplemented);
-	return Py_NotImplemented;
     case -2: /* use ufunc */
 	if (PyErr_Occurred()) return NULL;
 	return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);

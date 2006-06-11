@@ -119,7 +119,7 @@ static PyObject *
 array_squeeze(PyArrayObject *self, PyObject *args)
 {
         if (!PyArg_ParseTuple(args, "")) return NULL;
-        return _ARET(PyArray_Squeeze(self));
+        return PyArray_Squeeze(self);
 }
 
 static char doc_view[] = "a.view(<type>) return a new view of array with same data. type can be either a new sub-type object or a data-descriptor object";
@@ -548,14 +548,6 @@ array_wraparray(PyArrayObject *self, PyObject *args)
 	return ret;
 }
 
-/* NO-OP --- just so all subclasses will have one by default. */
-static PyObject *
-array_finalize(PyArrayObject *self, PyObject *args)
-{
-	Py_INCREF(Py_None);
-	return Py_None;
-}
-
 
 static char doc_array_getarray[] = "m.__array__(|dtype) just returns either a new reference to self if dtype is not given or a new array of provided data type if dtype is different from the current dtype of the array.";
 
@@ -857,6 +849,10 @@ static char doc_reduce[] = "a.__reduce__()  for pickling.";
 static PyObject *
 array_reduce(PyArrayObject *self, PyObject *args)
 {
+        /* version number of this pickle type. Increment if we need to
+           change the format. Be sure to handle the old versions in
+           array_setstate. */
+        const int version = 1;
 	PyObject *ret=NULL, *state=NULL, *obj=NULL, *mod=NULL;
 	PyObject *mybool, *thestr=NULL;
 	PyArray_Descr *descr;
@@ -881,29 +877,31 @@ array_reduce(PyArrayObject *self, PyObject *args)
 				       'b'));
 	
 	/* Now fill in object's state.  This is a tuple with 
-	   4 arguments
+	   5 arguments
 
-	   1) a Tuple giving the shape
-	   2) a PyArray_Descr Object (with correct bytorder set)
-	   3) a Bool stating if Fortran or not
-	   4) a binary string with the data (or a list for Object arrays)
+           1) an integer with the pickle version.
+	   2) a Tuple giving the shape
+	   3) a PyArray_Descr Object (with correct bytorder set)
+	   4) a Bool stating if Fortran or not
+	   5) a binary string with the data (or a list for Object arrays)
 
 	   Notice because Python does not describe a mechanism to write 
 	   raw data to the pickle, this performs a copy to a string first
 	*/
 
-	state = PyTuple_New(4);
+	state = PyTuple_New(5);
 	if (state == NULL) {
 		Py_DECREF(ret); return NULL;
 	}
-	PyTuple_SET_ITEM(state, 0, PyObject_GetAttrString((PyObject *)self, 
+        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+	PyTuple_SET_ITEM(state, 1, PyObject_GetAttrString((PyObject *)self, 
 							  "shape"));
 	descr = self->descr;
 	Py_INCREF(descr);
-	PyTuple_SET_ITEM(state, 1, (PyObject *)descr);
+	PyTuple_SET_ITEM(state, 2, (PyObject *)descr);
 	mybool = (PyArray_ISFORTRAN(self) ? Py_True : Py_False);
 	Py_INCREF(mybool);
-	PyTuple_SET_ITEM(state, 2, mybool);
+	PyTuple_SET_ITEM(state, 3, mybool);
 	if (PyArray_ISOBJECT(self)) {
 		thestr = _getobject_pkl(self);
 	}
@@ -915,7 +913,7 @@ array_reduce(PyArrayObject *self, PyObject *args)
 		Py_DECREF(state);
 		return NULL;
 	}
-	PyTuple_SET_ITEM(state, 3, thestr);
+	PyTuple_SET_ITEM(state, 4, thestr);
 	PyTuple_SET_ITEM(ret, 2, state);
 	return ret;
 }
@@ -940,6 +938,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 {
 	PyObject *shape;
 	PyArray_Descr *typecode;
+        int version = 1;
 	int fortran;
 	PyObject *rawdata;
 	char *datastr;
@@ -950,10 +949,27 @@ array_setstate(PyArrayObject *self, PyObject *args)
 	/* This will free any memory associated with a and
 	   use the string in setstate as the (writeable) memory.
 	*/
-	if (!PyArg_ParseTuple(args, "(O!O!iO)", &PyTuple_Type,
+	if (!PyArg_ParseTuple(args, "(iO!O!iO)", &version, &PyTuple_Type,
+			      &shape, &PyArrayDescr_Type, &typecode,
+			      &fortran, &rawdata)) {
+            PyErr_Clear();
+            version = 0;
+	    if (!PyArg_ParseTuple(args, "(O!O!iO)", &PyTuple_Type,
 			      &shape, &PyArrayDescr_Type, &typecode, 
-			      &fortran, &rawdata))
+			      &fortran, &rawdata)) {
 		return NULL;
+            }
+        }
+
+        /* If we ever need another pickle format, increment the version
+           number. But we should still be able to handle the old versions.
+           We've only got one right now. */
+        if (version != 1 && version != 0) {
+            PyErr_Format(PyExc_ValueError,
+                         "can't handle version %d of numpy.ndarray pickle",
+                         version);
+            return NULL;
+        }
 
 	Py_XDECREF(self->descr);
 	self->descr = typecode;
@@ -1140,7 +1156,26 @@ array_dumps(PyArrayObject *self, PyObject *args)
 }
 
 
-static char doc_transpose[] = "m.transpose(<None>)";
+static char doc_transpose[] = "a.transpose(*axes)\n\n"
+"Returns a view of `a` with axes transposed. If no axes are given,\n"
+"or None is passed, switches the order of the axes (for a 2-d array,\n"
+"this is the usual matrix transpose). If axes are given, they\n"
+"describe how the axes are permuted.\n\n"
+"Example:\n"
+">>> a = array([[1,2],[3,4]])\n"
+">>> a\n"
+"array([[1, 2],\n"
+"       [3, 4]])\n"
+">>> a.transpose()\n"
+"array([[1, 3],\n"
+"       [3, 4]])\n"
+">>> a.transpose((1,0))\n"
+"array([[1, 3],\n"
+"       [3, 4]])\n"
+">>> a.transpose(1,0)\n"
+"array([[1, 3],\n"
+"       [3, 4]])\n"
+;
 
 static PyObject *
 array_transpose(PyArrayObject *self, PyObject *args) 
@@ -1370,8 +1405,16 @@ array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_Compress(self, condition, axis));
 }
 
-static char doc_nonzero[] = "a.nonzero() return a tuple of indices referencing "\
-	"the elements of a that are nonzero.";
+static char doc_nonzero[] = \
+    "a.nonzero() returns a tuple of arrays, one for each dimension of a,\n"\
+    "containing the indices of the non-zero elements in that dimension.\n"\
+    "The corresponding non-zero values can be obtained with\n"\
+    "    a[a.nonzero()].\n"
+    "\n"\
+    "To group the indices by element, rather than dimension, use\n"\
+    "    transpose(a.nonzero())\n"\
+    "instead. The result of this is always a 2d array, with a row for each\n"\
+    "non-zero element.";
 
 static PyObject *
 array_nonzero(PyArrayObject *self, PyObject *args)
@@ -1593,9 +1636,6 @@ static PyMethodDef array_methods[] = {
 	/* for subtypes */
 	{"__array__", (PyCFunction)array_getarray, 1, doc_array_getarray},
 	{"__array_wrap__", (PyCFunction)array_wraparray, 1, doc_wraparray},
-	/* default version so it is found... -- only used for subclasses */
-	{"__array_finalize__", (PyCFunction)array_finalize, 1, NULL},
-	
 	
 	/* for the copy module */
         {"__copy__", (PyCFunction)array_copy, 1, doc_copy},	 

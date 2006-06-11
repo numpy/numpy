@@ -6,6 +6,9 @@ class bdist_rpm(old_bdist_rpm):
 
     def _make_spec_file(self):
         spec_file = old_bdist_rpm._make_spec_file(self)
+
+        # Replace hardcoded setup.py script name
+        # with the real setup script name.
         setup_py = os.path.basename(sys.argv[0])
         if setup_py == 'setup.py':
             return spec_file

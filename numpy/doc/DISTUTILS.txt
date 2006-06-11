@@ -535,3 +535,37 @@ To run only tests for ``xxx.yyy`` module, execute:
 To take the level and verbosity parameters for tests from
 ``sys.argv``, use ``NumpyTest.run()`` method (this is supported only
 when ``optparse`` is installed).
+
+Extra features in NumPy Distutils
+'''''''''''''''''''''''''''''''''
+
+Specifing config_fc options for libraries in setup.py script
+------------------------------------------------------------
+
+It is possible to specify config_fc options in setup.py scripts.
+For example, using
+
+  config.add_library('library',
+                     sources=[...],
+                     config_fc={'noopt':(__file__,1)})
+
+will compile the ``library`` sources without optimization flags.
+
+It's recommended to specify only those config_fc options in such a way
+that are compiler independent.
+
+Getting extra Fortran 77 compiler options from source 
+-----------------------------------------------------
+
+Some old Fortran codes need special compiler options in order to
+work correctly. In order to specify compiler options per source
+file, ``numpy.distutils`` Fortran compiler looks for the following
+pattern::
+
+  CF77FLAGS(<fcompiler type>) = <fcompiler f77flags>
+
+in the first 20 lines of the source and use the ``f77flags`` for
+specified type of the fcompiler (the first character ``C`` is optional). 
+
+TODO: This feature can be easily extended for Fortran 90 codes as
+well. Let us know if you would need such a feature.

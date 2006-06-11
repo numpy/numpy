@@ -35,10 +35,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
     """
     num = int(num)
     if num <= 0:
-        return array([])
+        return array([], float)
     if endpoint:
         if num == 1:
-            return array([start])
+            return array([float(start)])
         step = (stop-start)/float((num-1))
     else:
         step = (stop-start)/float(num)

@@ -588,7 +588,7 @@ class Configuration(object):
             print message
 
     def warn(self, message):
-        print>>sys.stderr, 'Warning:',message
+        print>>sys.stderr, blue_text('Warning: %s' % (message,))
 
     def set_options(self, **options):
         """ Configure Configuration instance.
@@ -608,6 +608,15 @@ class Configuration(object):
     def get_distribution(self):
         import distutils.core
         dist = distutils.core._setup_distribution
+        # XXX Hack to get numpy installable with easy_install.
+        # The problem is easy_install runs it's own setup(), which
+        # sets up distutils.core._setup_distribution. However,
+        # when our setup() runs, that gets overwritten and lost.
+        # We can't use isinstance, as the DistributionWithoutHelpCommands
+        # class is local to a function in setuptools.command.easy_install
+        if dist is not None and \
+                repr(dist).find('DistributionWithoutHelpCommands') != -1:
+            return None
         return dist
 
     def _wildcard_get_subpackage(self, subpackage_name,
@@ -736,7 +745,7 @@ class Configuration(object):
             if isinstance(config, Configuration):
                 d = config.todict()
             assert isinstance(d,dict),`type(d)`
-            
+
             self.info('Appending %s configuration to %s' \
                       % (d.get('name'), self.name))
             self.dict_append(**d)
@@ -817,7 +826,7 @@ class Configuration(object):
                     self.add_data_dir((d,path))
             return
         assert not is_glob_pattern(d),`d`
-        
+
         dist = self.get_distribution()
         if dist is not None:
             data_files = dist.data_files

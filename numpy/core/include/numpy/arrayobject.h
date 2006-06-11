@@ -69,7 +69,7 @@ extern "C" CONFUSE_EMACS
 /* allocated statically.  This is the size of that static allocation. */
 /*  The array creation itself could have arbitrary dimensions but
  *  all the places where static allocation is used would need to
- *  be changed to dynamic (including inside of structures)
+ *  be changed to dynamic (including inside of several structures)
  */
 
 #define MAX_DIMS 32
@@ -79,7 +79,7 @@ extern "C" CONFUSE_EMACS
 #define PY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x00090708
+#define NDARRAY_VERSION 0x00090904
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -163,7 +163,6 @@ enum PyArray_TYPES {    PyArray_BOOL=0,
 
 	/* basetype array priority */
 #define PyArray_PRIORITY 0.0
-#define PyArray_BIG_PRIORITY 0.1
 	/* default subtype priority */
 #define PyArray_SUBTYPE_PRIORITY 1.0
 
@@ -203,6 +202,7 @@ enum PyArray_TYPECHAR { PyArray_BOOLLTR = '?',
 			PyArray_STRINGLTR2 = 'a',
 			PyArray_UNICODELTR = 'U',
 		        PyArray_VOIDLTR = 'V',
+                        PyArray_CHARLTR = 'c',
 
 			/* No Descriptor, just a define -- this let's
 			 Python users specify an array of integers
@@ -221,20 +221,20 @@ typedef enum {
 	PyArray_QUICKSORT=0,
 	PyArray_HEAPSORT=1,
 	PyArray_MERGESORT=2,
-	PyArray_TIMSORT=3         /* the sort Python uses -- specialized */
 } PyArray_SORTKIND;
-#define PyArray_NSORTS PyArray_TIMSORT + 1
+#define PyArray_NSORTS PyArray_MERGESORT + 1
 
 
 typedef enum {
-	PyArray_NOSCALAR=0,
-	PyArray_BOOL_SCALAR=1,
-	PyArray_INTPOS_SCALAR=2,
-	PyArray_INTNEG_SCALAR=3,
-	PyArray_FLOAT_SCALAR=4,
-	PyArray_COMPLEX_SCALAR=5,
-	PyArray_OBJECT_SCALAR=6
+	PyArray_NOSCALAR=-1,
+	PyArray_BOOL_SCALAR,
+	PyArray_INTPOS_SCALAR,
+	PyArray_INTNEG_SCALAR,
+	PyArray_FLOAT_SCALAR,
+	PyArray_COMPLEX_SCALAR,
+	PyArray_OBJECT_SCALAR,
 } PyArray_SCALARKIND;
+#define PyArray_NSCALARKINDS PyArray_OBJECT_SCALAR+1
 
 typedef enum {
         PyArray_ANYORDER=-1,
@@ -826,6 +826,8 @@ typedef int (PyArray_ArgSortFunc)(void *, intp *, intp, void *);
 
 typedef int (PyArray_FillWithScalarFunc)(void *, intp, void *, void *);
 
+typedef int (PyArray_ScalarKindFunc)(void *);
+
 typedef struct {
         intp *ptr;
         int len;
@@ -833,7 +835,10 @@ typedef struct {
 
 typedef struct {
 	/* Functions to cast to all other standard types*/
+	/* Can have some NULL entries */
 	PyArray_VectorUnaryFunc *cast[PyArray_NTYPES];
+
+	/* The next four functions *cannot* be NULL */
 
 	/* Functions to get and set items with standard
 	   Python types -- not array scalars */
@@ -846,34 +851,57 @@ typedef struct {
         PyArray_CopySwapFunc *copyswap;
 
 	/* Function to compare items */
+	/* Can be NULL 
+	 */
 	PyArray_CompareFunc *compare;
 
-	/* Function to select largest */
+	/* Function to select largest 
+	   Can be NULL
+	*/
 	PyArray_ArgFunc *argmax;
 
 	/* Function to compute dot product */
+	/* Can be NULL */
 	PyArray_DotFunc	*dotfunc;
 
 	/* Function to scan an ASCII file and
-	   place a single value plus possible separator */
+	   place a single value plus possible separator 
+	   Can be NULL 
+	*/
 	PyArray_ScanFunc *scanfunc;
 
 	/* Function to read a single value from a string */
-	/* and adjust the pointer */
+	/* and adjust the pointer; Can be NULL */
 	PyArray_FromStrFunc *fromstr;
 
 	/* Function to determine if data is zero or not */
+	/* If NULL a default version is */
+	/* used at Registration time. */
 	PyArray_NonzeroFunc *nonzero;
 
-	/* Used for arange */
+	/* Used for arange. Can be NULL.*/
 	PyArray_FillFunc *fill;
 
-	/* Function to fill arrays with scalar values */
+	/* Function to fill arrays with scalar values 
+	 Can be NULL*/
 	PyArray_FillWithScalarFunc *fillwithscalar;
 
-	/* Sorting functions */
+	/* Sorting functions; Can be NULL*/
 	PyArray_SortFunc *sort[PyArray_NSORTS];
 	PyArray_ArgSortFunc *argsort[PyArray_NSORTS];
+
+	/* Dictionary of additional casting functions
+	   PyArray_VectorUnaryFuncs
+	   which can be populated to support casting
+	   to other registered types. Can be NULL*/
+	PyObject *castdict;
+
+	/* Functions useful for generalizing
+	   the casting rules.  Can be NULL;
+	*/
+	PyArray_ScalarKindFunc *scalarkind;
+	int **cancastscalarkindto;
+	int *cancastto;
 
 } PyArray_ArrFuncs;
 
@@ -881,13 +909,15 @@ typedef struct {
 typedef struct {
 	PyObject_HEAD
 	PyTypeObject *typeobj;  /* the type object representing an
-				   intance of this type */
+				   instance of this type -- should not
+				   be two type_numbers with the same type
+				   object. */
 	char kind;              /* kind for this type */
 	char type;              /* unique-character representing this type */
 	char byteorder;         /* '>' (big), '<' (little), '|'
 				   (not-applicable), or '=' (native). */
-        char hasobject;         /* non-zero if it has object arrays in fields */
-	int type_num;           /* number representing this type */
+        char hasobject;        /* non-zero if it has object arrays in fields */
+	int type_num;          /* number representing this type */
 	int elsize;             /* element size for this type */
 	int alignment;          /* alignment needed for this type */
 	struct _arr_descr					\
@@ -907,7 +937,6 @@ typedef struct _arr_descr {
 	PyArray_Descr *base;
 	PyObject *shape;       /* a tuple */
 } PyArray_ArrayDescr;
-
 
 /*
   The main array object structure. It is recommended to use the macros
@@ -948,7 +977,13 @@ typedef struct {
         int flags;
 } PyArray_Chunk;
 
+typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
+
 /* Array flags */
+/* For backward's compatibility only */
+#define OWN_DIMENSIONS 0
+#define OWN_STRIDES 0
+#define SAVESPACE 0
 
 /* Means c-style contiguous (last index varies the fastest). The
    data elements right after each other. */
@@ -968,19 +1003,28 @@ typedef struct {
 #define OWNDATA       0x0004
 #define OWN_DATA      OWNDATA
 
-/* An array never has these three set; they're only used as parameter
+/* An array never has the next four set; they're only used as parameter
    flags to the the various FromAny functions */
+
 /* Cause a cast to occur regardless of whether or not it is safe. */
 #define FORCECAST     0x0010
+
 /* Always copy the array. Returned arrays are always CONTIGUOUS, ALIGNED,
    and WRITEABLE. */
 #define ENSURECOPY    0x0020
+
 /* Make sure the returned array is an ndarray or a bigndarray */
 #define ENSUREARRAY   0x0040
 
+/* Make sure that the strides are in units of the element size
+   Needed for some operations with record-arrays.
+*/
+#define ELEMENTSTRIDES 0x0080
+
 /* Array data is aligned on the appropiate memory address for the
-   type stored (e.g., an array of doubles (8 bytes each) starts on
-   a memory address that's a multiple of 8) */
+   type stored according to how the compiler would align things
+   (e.g., an array of integers (4 bytes each) starts on
+   a memory address that's a multiple of 4) */
 #define ALIGNED       0x0100
 /* Array data has the native endianness */
 #define NOTSWAPPED    0x0200
@@ -1518,6 +1562,13 @@ typedef struct {
 						  j*PyArray_STRIDES(obj)[1] + \
 						  k*PyArray_STRIDES(obj)[2] + \
 						  l*PyArray_STRIDES(obj)[3])
+
+#define PyArray_XDECREF_ERR(obj) \
+	if (obj && (PyArray_FLAGS(obj) & UPDATEIFCOPY)) {      \
+		PyArray_FLAGS(PyArray_BASE(obj)) |= WRITEABLE; \
+		PyArray_FLAGS(obj) &= ~UPDATEIFCOPY; \
+	}\
+	Py_XDECREF(obj)
 
 #define PyArray_DESCR_REPLACE(descr) do {	\
 		PyArray_Descr *_new_;			\

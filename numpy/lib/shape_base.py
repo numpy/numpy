@@ -1,10 +1,10 @@
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
-           'column_stack','dstack','array_split','split','hsplit',
+           'column_stack','row_stack', 'dstack','array_split','split','hsplit',
            'vsplit','dsplit','apply_over_axes','expand_dims',
            'apply_along_axis', 'repmat', 'kron']
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, zeros, newaxis, outerproduct, \
+from numpy.core.numeric import asarray, zeros, newaxis, outer, \
      concatenate, isscalar, array, asanyarray
 from numpy.core.oldnumeric import product, reshape
 
@@ -237,6 +237,8 @@ def hstack(tup):
 
     """
     return _nx.concatenate(map(atleast_1d,tup),1)
+
+row_stack = vstack
 
 def column_stack(tup):
     """ Stack 1D arrays as columns into a 2D array
@@ -574,7 +576,7 @@ def kron(a,b):
         a = reshape(a, a.shape)
     if not b.flags.contiguous:
         b = reshape(b, b.shape)
-    o = outerproduct(a,b)
+    o = outer(a,b)
     o=o.reshape(a.shape + b.shape)
     result = concatenate(concatenate(o, axis=1), axis=1)
     if wrapper is not None:

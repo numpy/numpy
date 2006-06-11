@@ -424,10 +424,10 @@ class test_ma(ScipyTestCase):
         y=y.reshape(2,3,4)
         assert eq(numpy.transpose(y,(2,0,1)), transpose(x,(2,0,1)))
         assert eq(numpy.take(y, (2,0,1), 1), take(x, (2,0,1), 1))
-        assert eq(numpy.innerproduct(filled(x,0),filled(y,0)),
-                                innerproduct(x, y))
-        assert eq(numpy.outerproduct(filled(x,0),filled(y,0)),
-                                outerproduct(x, y))
+        assert eq(numpy.inner(filled(x,0),filled(y,0)),
+                                inner(x, y))
+        assert eq(numpy.outer(filled(x,0),filled(y,0)),
+                                outer(x, y))
         y = array(['abc', 1, 'def', 2, 3], object)
         y[2] = masked
         t = take(y,[0,3,4])

@@ -1,9 +1,9 @@
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtype',
            'fromstring', 'fromfile', 'frombuffer','newbuffer',
-           'getbuffer',
-           'where', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
-           'register_dtype', 'set_numeric_ops', 'can_cast',
+           'getbuffer', 'where', 'argwhere',
+           'concatenate', 'fastCopyAndTranspose', 'lexsort',
+           'set_numeric_ops', 'can_cast',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
            'isfortran', 'empty_like', 'zeros_like',
            'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
@@ -11,6 +11,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'array2string', 'get_printoptions', 'set_printoptions',
            'array_repr', 'array_str', 'set_string_function',
            'little_endian',
+           'fromiter',
            'indices', 'fromfunction',
            'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
            'ones', 'identity', 'allclose',
@@ -67,6 +68,7 @@ def empty_like(a):
 
 # end Fernando's utilities
 
+
 def extend_all(module):
     adict = {}
     for a in __all__:
@@ -95,6 +97,7 @@ array = multiarray.array
 zeros = multiarray.zeros
 empty = multiarray.empty
 fromstring = multiarray.fromstring
+fromiter = multiarray.fromiter
 fromfile = multiarray.fromfile
 frombuffer = multiarray.frombuffer
 newbuffer = multiarray.newbuffer
@@ -102,32 +105,45 @@ getbuffer = multiarray.getbuffer
 where = multiarray.where
 concatenate = multiarray.concatenate
 fastCopyAndTranspose = multiarray._fastCopyAndTranspose
-register_dtype = multiarray.register_dtype
 set_numeric_ops = multiarray.set_numeric_ops
 can_cast = multiarray.can_cast
 lexsort = multiarray.lexsort
 
 
 def asarray(a, dtype=None, order=None):
-    """returns a as an array.  Unlike array(),
-    no copy is performed if a is already an array.  Subclasses are converted
-    to base class ndarray.
+    """Returns a as an array.
+
+    Unlike array(), no copy is performed if a is already an array. Subclasses
+    are converted to base class ndarray.
     """
     return array(a, dtype, copy=False, order=order)
 
 def asanyarray(a, dtype=None, order=None):
-    """will pass subclasses through...
+    """Returns a as an array, but will pass subclasses through.
     """
     return array(a, dtype, copy=False, order=order, subok=1)
 
 def ascontiguousarray(a, dtype=None):
+    """Return 'a' as an array contiguous in memory (C order).
+    """
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
 def asfortranarray(a, dtype=None):
+    """Return 'a' as an array laid out in Fortran-order in memory.
+    """
     return array(a, dtype, copy=False, order='F', ndmin=1)
 
 def isfortran(a):
+    """Returns True if 'a' is laid out in Fortran-order in memory.
+    """
     return a.flags.fnc
+
+def argwhere(a):
+    """Return a 2-d array of shape N x a.ndim where each row
+    is a sequence of indices into a.  This sequence must be
+    converted to a tuple in order to be used to index into a.
+    """
+    return transpose(a.nonzero())
 
 _mode_from_name_dict = {'v': 0,
                         's' : 1,
@@ -301,6 +317,8 @@ def fromfunction(function, dimensions, **kwargs):
     return function(*args,**kwargs)
 
 def isscalar(num):
+    """Returns True if the type of num is a scalar type.
+    """
     if isinstance(num, generic):
         return True
     else:
@@ -355,6 +373,9 @@ _cload = load
 _file = file
 
 def load(file):
+    """Wrapper around cPickle.load which accepts either a file-like object or
+    a filename.
+    """
     if isinstance(file, type("")):
         file = _file(file,"rb")
     return _cload(file)
@@ -407,6 +428,23 @@ for key in _errdict.keys():
 del key
 
 def seterr(divide=None, over=None, under=None, invalid=None):
+    """Set how floating-point errors are handled.
+
+    Valid values for each type of error are the strings
+    "ignore", "warn", "raise", and "call". Returns the old settings.
+
+    Note that operations on integer scalar types (such as int16) are
+    handled like floating point, and are affected by these settings.
+
+    Example:
+
+    >>> seterr(over='raise')
+    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
+    >>> int16(32000) * int16(3)
+    Traceback (most recent call last):
+          File "<stdin>", line 1, in ?
+    FloatingPointError: overflow encountered in short_scalars
+    """
 
     pyvals = umath.geterrobj()
     old = geterr()
@@ -426,6 +464,12 @@ def seterr(divide=None, over=None, under=None, invalid=None):
     return old
 
 def geterr():
+    """Get the current way of handling floating-point errors.
+
+    Returns a dictionary with entries "divide", "over", "under", and
+    "invalid", whose values are from the strings
+    "ignore", "warn", "raise", and "call".
+    """
     maskvalue = umath.geterrobj()[1]
     mask = 3
     res = {}
@@ -440,8 +484,12 @@ def geterr():
     return res
 
 def setbufsize(size):
+    """Set the size of the buffer used in ufuncs.
+    """
     if size > 10e6:
-        raise ValueError, "Very big buffers.. %s" % size
+        raise ValueError, "Buffer size too big... %s" % size
+    if size < 5:
+        raise ValueError, "Buffer size too small... %s" %size
 
     pyvals = umath.geterrobj()
     old = getbufsize()
@@ -450,10 +498,21 @@ def setbufsize(size):
     return old
 
 def getbufsize():
+    """Return the size of the buffer used in ufuncs.
+    """
     return umath.geterrobj()[0]
 
 def seterrcall(func):
-    if not callable(func):
+    """Set the callback function used when a floating-point error handler
+    is set to 'call'.
+
+    'func' should be a function that takes two arguments. The first is
+    type of error ("divide", "over", "under", or "invalid"), and the second
+    is the status flag (= divide + 2*over + 4*under + 8*invalid).
+
+    Returns the old handler.
+    """
+    if func is not None and not callable(func):
         raise ValueError, "Only callable can be used as callback"
     pyvals = umath.geterrobj()
     old = geterrcall()
@@ -462,6 +521,8 @@ def seterrcall(func):
     return old
 
 def geterrcall():
+    """Return the current callback function used on floating-point errors.
+    """
     return umath.geterrobj()[2]
 
 def _setdef():

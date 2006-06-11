@@ -3,8 +3,12 @@
 # compilers (they must define linker_exe first).
 # Pearu Peterson
 
+import os, signal
 from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
+from distutils import log
+from numpy.distutils.exec_command import exec_command
+
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
 
@@ -61,3 +65,58 @@ class config(old_config):
         return self._wrap_method(old_config._link,lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))
+
+    def check_func(self, func,
+                   headers=None, include_dirs=None,
+                   libraries=None, library_dirs=None,
+                   decl=False, call=False, call_args=None):
+        # clean up distutils's config a bit: add void to main(), and
+        # return a value.
+        self._check_compiler()
+        body = []
+        if decl:
+            body.append("int %s ();" % func)
+        body.append("int main (void) {")
+        if call:
+            if call_args is None:
+                call_args = ''
+            body.append("  %s(%s);" % (func, call_args))
+        else:
+            body.append("  %s;" % func)
+        body.append("  return 0;")
+        body.append("}")
+        body = '\n'.join(body) + "\n"
+
+        return self.try_link(body, headers, include_dirs,
+                             libraries, library_dirs)
+
+    def get_output(self, body, headers=None, include_dirs=None,
+                   libraries=None, library_dirs=None,
+                   lang="c"):
+        """Try to compile, link to an executable, and run a program
+        built from 'body' and 'headers'. Returns the exit status code
+        of the program and its output.
+        """
+        from distutils.ccompiler import CompileError, LinkError
+        self._check_compiler()
+        try:
+            src, obj, exe = self._link(body, headers, include_dirs,
+                                       libraries, library_dirs, lang)
+            exe = os.path.join('.', exe)
+            exitstatus, output = exec_command(exe, execute_in='.')
+            exitcode = os.WEXITSTATUS(exitstatus)
+            if os.WIFSIGNALED(exitstatus):
+                sig = os.WTERMSIG(exitstatus)
+                log.error('subprocess exited with signal %d' % (sig,))
+                if sig == signal.SIGINT:
+                    # control-C
+                    raise KeyboardInterrupt
+            ok = exitstatus == 0
+            ok = 1
+        except (CompileError, LinkError):
+            ok = 0
+
+        log.info(ok and "success!" or "failure.")
+        self._clean()
+        return exitcode, output
+

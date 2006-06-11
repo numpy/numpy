@@ -1,4 +1,3 @@
-
 /*
   Python Universal Functions Object -- Math for all types, plus fast 
   arrays math
@@ -626,52 +625,66 @@ select_types(PyUFuncObject *self, int *arg_types,
              PyUFuncGenericFunction *function, void **data,
 	     PyArray_SCALARKIND *scalars)
 {
-
-	int i=0, j;
+	int i, j;
 	char start_type;
-	
-	if (PyTypeNum_ISUSERDEF((arg_types[0]))) {
-		PyObject *key, *obj;
+	int userdef=-1;
+
+	if (self->userloops) {
 		for (i=0; i<self->nin; i++) {
-			if (arg_types[i] != arg_types[0]) {
-				PyErr_SetString(PyExc_TypeError,
-						"ufuncs on user defined" \
-						" types don't support "\
-						"coercion");
-				return -1;
+			if (PyTypeNum_ISUSERDEF(arg_types[i])) {
+				userdef = arg_types[i];
+				break;
 			}
 		}
-		for (i=self->nin; i<self->nargs; i++) {
-			arg_types[i] = arg_types[0];
-		}
-
+	}
+	
+	if (userdef > 0) {
+		PyObject *key, *obj;
+		int *this_types=NULL;
+		
 		obj = NULL;
-		if (self->userloops) {
-			key = PyInt_FromLong((long) arg_types[0]);
-			if (key == NULL) return -1;
-			obj = PyDict_GetItem(self->userloops, key);
-			Py_DECREF(key);
-		}
+		key = PyInt_FromLong((long) userdef);
+		if (key == NULL) return -1;
+		obj = PyDict_GetItem(self->userloops, key);
+		Py_DECREF(key);
 		if (obj == NULL) {
 			PyErr_SetString(PyExc_TypeError, 
-					"no registered loop for this "	\
-					"user-defined type");
-			return -1;			
+					"user-defined type used in ufunc" \
+					" with no registered loops");
+			return -1;
 		}
 		if PyTuple_Check(obj) {
-			*function = (PyUFuncGenericFunction) \
-				PyCObject_AsVoidPtr(PyTuple_GET_ITEM(obj, 0));
-			*data = PyCObject_AsVoidPtr(PyTuple_GET_ITEM(obj, 1));
+			PyObject *item;
+			*function = (PyUFuncGenericFunction)		\
+				PyCObject_AsVoidPtr(PyTuple_GET_ITEM(obj,0));
+			item = PyTuple_GET_ITEM(obj, 2);
+			if (PyCObject_Check(item)) {
+				*data = PyCObject_AsVoidPtr(item);
+			}
+			item = PyTuple_GET_ITEM(obj, 1);
+			if (PyCObject_Check(item)) {
+					this_types = PyCObject_AsVoidPtr(item);
+			}
 		}
 		else {
-			*function = (PyUFuncGenericFunction)	\
+			*function = (PyUFuncGenericFunction)		\
 				PyCObject_AsVoidPtr(obj);
 			*data = NULL;
 		}
-                Py_DECREF(obj);
-		return 0;
+		
+		if (this_types == NULL) {
+			for (i=1; i<self->nargs; i++) {
+				arg_types[i] = userdef;
+			}
+		}
+		else {
+			for (i=1; i<self->nargs; i++) {
+				arg_types[i] = this_types[i];
+			}
+		}
+		Py_DECREF(obj);
+			return 0;
 	}
-	
 
 	start_type = arg_types[0];
 	/* If the first argument is a scalar we need to place 
@@ -681,6 +694,7 @@ select_types(PyUFuncObject *self, int *arg_types,
 		start_type = _lowest_type(start_type);
 	}
 
+	i = 0;
 	while (i<self->ntypes && start_type > self->types[i*self->nargs]) 
 		i++;
 
@@ -1067,11 +1081,13 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
             then must use buffers */
 
         loop->bufcnt = 0;
-
         loop->obj = 0;
 
         /* Determine looping method needed */
         loop->meth = NO_UFUNCLOOP;
+
+	if (loop->size == 0) return nargs;
+
 
 	maxsize = 0;
         for (i=0; i<self->nargs; i++) {
@@ -1208,14 +1224,16 @@ construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 				else
 					scntcast += descr->elsize;
 				if (i < self->nin) {
-					loop->cast[i] =			\
-						mps[i]->descr->f->cast[arg_types[i]];
+					loop->cast[i] = \
+						PyArray_GetCastFunc(mps[i]->descr,
+								    arg_types[i]);
 				}
 				else {
-					loop->cast[i] = descr->f->	\
-						cast[mps[i]->descr->type_num];
+					loop->cast[i] =	PyArray_GetCastFunc \
+						(descr, mps[i]->descr->type_num);
 				}
 				Py_DECREF(descr);
+				if (!loop->cast[i]) return -1;
 			}
 			loop->swap[i] = !(PyArray_ISNOTSWAPPED(mps[i]));
 			if (loop->steps[i])
@@ -1934,8 +1952,9 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, int axis,
 			if (loop->obj) memset(loop->buffer, 0, _size);
                         loop->castbuf = loop->buffer + \
                                 loop->bufsize*aar->descr->elsize;
-                        loop->bufptr[0] = loop->castbuf;     
-                        loop->cast = aar->descr->f->cast[otype];
+                        loop->bufptr[0] = loop->castbuf;
+                        loop->cast = PyArray_GetCastFunc(aar->descr, otype);
+			if (loop->cast == NULL) goto fail;
                 }
                 else {
 			_size = loop->bufsize * loop->outsize;
@@ -2443,7 +2462,6 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
                 indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype, 
 							   1, 1, CARRAY_FLAGS, NULL);
                 if (indices == NULL) return NULL;
-		Py_DECREF(indtype);		
 	}
 	else {
 		if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&", kwlist1,
@@ -2669,7 +2687,9 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 	
         errval = PyUFunc_GenericFunction(self, args, mps);
         if (errval < 0) {
-		for(i=0; i<self->nargs; i++) Py_XDECREF(mps[i]);
+		for(i=0; i<self->nargs; i++) {
+			PyArray_XDECREF_ERR(mps[i]);
+		}
 		if (errval == -1)
 			return NULL;
 		else {
@@ -2990,6 +3010,7 @@ static int
 PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc, 
 			    int usertype,
 			    PyUFuncGenericFunction function,
+			    int *arg_types,
 			    void *data)
 {
 	PyArray_Descr *descr;
@@ -2999,7 +3020,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 	descr=PyArray_DescrFromType(usertype);
 	if ((usertype < PyArray_USERDEF) || (descr==NULL)) {
 		PyErr_SetString(PyExc_TypeError, 
-				"unknown type");
+				"unknown user-defined type");
 		return -1;
 	}
 	Py_DECREF(descr);
@@ -3011,21 +3032,40 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 	if (key == NULL) return -1;
 	cobj = PyCObject_FromVoidPtr((void *)function, NULL);
 	if (cobj == NULL) {Py_DECREF(key); return -1;}
-	if (data == NULL) {
+	if (data == NULL && arg_types == NULL) {
 		ret = PyDict_SetItem(ufunc->userloops, key, cobj);
 		Py_DECREF(cobj);
 		Py_DECREF(key);
 		return ret;
 	}
 	else {
-		PyObject *cobj2, *tmp;
-		cobj2 = PyCObject_FromVoidPtr(data, NULL);
-		if (cobj2 == NULL) {
-			Py_DECREF(cobj); 
-			Py_DECREF(key);
-			return -1;
+		PyObject *cobj2, *cobj3, *tmp;
+		if (arg_types == NULL) {
+			cobj2 = Py_None;
+			Py_INCREF(cobj2);
 		}
-		tmp=Py_BuildValue("NN", cobj, cobj2);
+		else {
+			cobj2 = PyCObject_FromVoidPtr((void *)arg_types, NULL);
+			if (cobj2 == NULL) {
+				Py_DECREF(cobj);
+				Py_DECREF(key);
+				return -1;
+			}
+		}
+		if (data == NULL) {
+			cobj3 = Py_None;
+			Py_INCREF(cobj3);
+		}
+		else {
+			cobj3 = PyCObject_FromVoidPtr(data, NULL);
+			if (cobj3 == NULL) {
+				Py_DECREF(cobj2);
+				Py_DECREF(cobj); 
+				Py_DECREF(key);
+				return -1;
+			}
+		}
+		tmp=Py_BuildValue("NNN", cobj, cobj2, cobj3);
 		ret = PyDict_SetItem(ufunc->userloops, key, tmp);
 		Py_DECREF(tmp);
 		Py_DECREF(key);

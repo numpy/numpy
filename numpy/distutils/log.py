@@ -16,7 +16,7 @@ def _fix_args(args,flag=1):
 
 class Log(old_Log):
     def _log(self, level, msg, args):
-        if level>= self.threshold:
+        if level >= self.threshold:
             if args:
                 print _global_color_map[level](msg % _fix_args(args))
             else:
@@ -26,7 +26,7 @@ _global_log.__class__ = Log
 
 def set_verbosity(v):
     prev_level = _global_log.threshold
-    if v<0:
+    if v < 0:
         set_threshold(ERROR)
     elif v == 0:
         set_threshold(WARN)

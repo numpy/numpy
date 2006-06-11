@@ -50,6 +50,9 @@ class format_parser:
 
         dtype = sb.dtype(formats, aligned)
         fields = dtype.fields
+        if fields is None:
+            dtype = sb.dtype([formats], aligned)
+            fields = dtype.fields
         keys = fields[-1]
         self._f_formats = [fields[key][0] for key in keys]
         self._offsets = [fields[key][1] for key in keys]
@@ -134,7 +137,6 @@ class record(nt.void):
             raise AttributeError, "'record' object has no "\
                   "attribute '%s'" % attr
 
-
 # The recarray is almost identical to a standard array (which supports
 #   named fields already)  The biggest difference is that it can use
 #   attribute-lookup to find the fields and it is constructed using
@@ -203,10 +205,29 @@ class recarray(sb.ndarray):
         if isinstance(attr,int):
             attr=fielddict[-1][attr]
 
+        res = fielddict[attr][:2]
+
         if val is None:
-            return self.__getattribute__(attr)
+            obj = self.getfield(*res)
+            if obj.dtype.fields:
+                return obj
+            if obj.dtype.char in 'SU':
+                return obj.view(chararray)
+            return obj.view(sb.ndarray)
         else:
-            return self.__setattr__(attr,val)
+            return self.setfield(val, *res)
+
+    def view(self, obj):
+        try:
+            if issubclass(obj, sb.ndarray):
+                return sb.ndarray.view(self, obj)
+        except TypeError:
+            pass
+        dtype = sb.dtype(obj)
+        if dtype.fields is None:
+            return self.__array__().view(dtype)
+        return sb.ndarray.view(self, obj)
+            
 
 def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
                aligned=0):

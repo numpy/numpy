@@ -143,3 +143,5 @@ typedef struct {
 	Py##cls##ArrType_Type.tp_alloc(&Py##cls##ArrType_Type, 0)
 #define PyArrayScalar_VAL(obj, cls)		\
 	((Py##cls##ScalarObject *)obj)->obval
+#define PyArrayScalar_ASSIGN(obj, cls, val) \
+	PyArrayScalar_VAL(obj, cls) = val

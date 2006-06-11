@@ -1477,13 +1477,13 @@ def masked_object (data, value, copy=1):
     dm = make_mask(umath.equal(d, value), flag=1)
     return array(d, mask=dm, copy=copy, fill_value=value)
 
-def arrayrange(start, stop=None, step=1, dtype=None):
+def arange(start, stop=None, step=1, dtype=None):
     """Just like range() except it returns a array whose type can be specified
     by the keyword argument dtype.
     """
-    return array(numeric.arrayrange(start, stop, step, dtype))
+    return array(numeric.arange(start, stop, step, dtype))
 
-arange = arrayrange
+arrayrange = arange
 
 def fromstring (s, t):
     "Construct a masked array from a string. Result will have no mask."
@@ -1893,8 +1893,8 @@ def putmask(a, mask, values):
     a.unshare_mask()
     numeric.putmask(a.raw_mask(), mask, 0)
 
-def innerproduct(a, b):
-    """innerproduct(a,b) returns the dot product of two arrays, which has
+def inner(a, b):
+    """inner(a,b) returns the dot product of two arrays, which has
     shape a.shape[:-1] + b.shape[:-1] with elements computed by summing the
     product of the elements from the last dimensions of a and b.
     Masked elements are replace by zeros.
@@ -1903,21 +1903,25 @@ def innerproduct(a, b):
     fb = filled(b, 0)
     if len(fa.shape) == 0: fa.shape = (1,)
     if len(fb.shape) == 0: fb.shape = (1,)
-    return masked_array(numeric.innerproduct(fa, fb))
+    return masked_array(numeric.inner(fa, fb))
 
-def outerproduct(a, b):
-    """outerproduct(a,b) = {a[i]*b[j]}, has shape (len(a),len(b))"""
+innerproduct = inner
+
+def outer(a, b):
+    """outer(a,b) = {a[i]*b[j]}, has shape (len(a),len(b))"""
     fa = filled(a, 0).ravel()
     fb = filled(b, 0).ravel()
-    d = numeric.outerproduct(fa, fb)
+    d = numeric.outer(fa, fb)
     ma = getmask(a)
     mb = getmask(b)
     if ma is nomask and mb is nomask:
         return masked_array(d)
     ma = getmaskarray(a)
     mb = getmaskarray(b)
-    m = make_mask(1-numeric.outerproduct(1-ma, 1-mb), copy=0)
+    m = make_mask(1-numeric.outer(1-ma, 1-mb), copy=0)
     return masked_array(d, m)
+
+outerproduct = outer
 
 def dot(a, b):
     """dot(a,b) returns matrix-multiplication between a and b.  The product-sum

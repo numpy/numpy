@@ -1,4 +1,4 @@
-// -*- C -*-  (not really, but good for syntax highlighting)
+/* -*- C -*-  (not really, but good for syntax highlighting) */
 %{
 #ifndef SWIG_FILE_WITH_INIT
 #  define NO_IMPORT_ARRAY
@@ -107,7 +107,7 @@ PyArrayObject* obj_to_array_allow_conversion(PyObject* input, int typecode,
   }
   else {
     py_obj = PyArray_FromObject(input, typecode, 0, 0);
-    // If NULL, PyArray_FromObject will have set python error value.
+    /* If NULL, PyArray_FromObject will have set python error value.*/
     ary = (PyArrayObject*) py_obj;
     *is_new_object = 1;
   }

@@ -564,11 +564,10 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 #incr= ip++*169,ip+=2*39#
 */
 static void 
-@from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip, 
-	       PyArrayObject *aop) {
-	register intp i; 
-	for(i=0;i<n;i++,op++) {
-		*op = (@totyp@)*ip;
+@from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n, 
+	       PyArrayObject *aip, PyArrayObject *aop) {
+	while (n--) {
+		*op++ = (@totyp@)*ip;
 		@incr@;
 	}
 }
@@ -579,11 +578,10 @@ static void
 #fromtyp=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 static void 
-@from@_to_BOOL(@fromtyp@ *ip, Bool *op, intp n, PyArrayObject *aip, 
-	       PyArrayObject *aop) {
-	register intp i; 
-	for(i=0;i<n;i++,op++,ip++) {
-		*op = (Bool)(*ip != FALSE);
+@from@_to_BOOL(register @fromtyp@ *ip, register Bool *op, register intp n, 
+	       PyArrayObject *aip, PyArrayObject *aop) {
+	while (n--) {
+		*op++ = (Bool)(*ip++ != FALSE);
 	}
 }
 /**end repeat**/
@@ -593,11 +591,11 @@ static void
 #fromtyp=cfloat, cdouble, clongdouble#
 */
 static void 
-@from@_to_BOOL(@fromtyp@ *ip, Bool *op, intp n, PyArrayObject *aip, 
-	       PyArrayObject *aop) {
-	register intp i; 
-	for(i=0;i<n;i++,op++,ip++) {
+@from@_to_BOOL(register @fromtyp@ *ip, register Bool *op, register intp n, 
+	       PyArrayObject *aip, PyArrayObject *aop) {
+	while (n--) {
 		*op = (Bool)(((*ip).real != FALSE) || ((*ip).imag != FALSE));
+		op++; ip++;
 	}
 }
 /**end repeat**/
@@ -607,11 +605,10 @@ static void
 #totyp=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 static void 
-BOOL_to_@to@(Bool *ip, @totyp@ *op, intp n, PyArrayObject *aip, 
-	     PyArrayObject *aop) {
-	register intp i; 
-	for(i=0;i<n;i++,op++,ip++) {
-		*op = (@totyp@)(*ip != FALSE);
+BOOL_to_@to@(register Bool *ip, register @totyp@ *op, register intp n, 
+	     PyArrayObject *aip, PyArrayObject *aop) {
+	while (n--) {
+		*op++ = (@totyp@)(*ip++ != FALSE);
 	}
 }
 /**end repeat**/
@@ -624,11 +621,10 @@ BOOL_to_@to@(Bool *ip, @totyp@ *op, intp n, PyArrayObject *aip,
 #totyp= (float, double, longdouble)*14#
 */
 static void 
-@from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip,
-	       PyArrayObject *aop) {
-	register intp i;
-	for(i=0;i<n;i++,ip++) {
-		*op++ = (@totyp@)*ip;
+@from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n, 
+	       PyArrayObject *aip, PyArrayObject *aop) {
+	while (n--) {
+		*op++ = (@totyp@)*ip++;
 		*op++ = 0.0;
 	}
 }
@@ -642,14 +638,13 @@ static void
 #fromtyp=float*3, double*3, longdouble*3#
 */
 static void 
-@from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip,
-	       PyArrayObject *aop) {
-	register intp i; 
-	for(i=0;i<2*n;i++,ip++,op++) {
-		*op = (@totyp@)*ip;
+@from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n, 
+	       PyArrayObject *aip, PyArrayObject *aop) {
+	n <<= 1;
+	while (n--) {
+		*op++ = (@totyp@)*ip++;
 	}
 }
-
 /**end repeat**/
 
 /**begin repeat 
@@ -761,6 +756,19 @@ static void
 
 /****************** scan *************************************/
 
+#define _ENDSCAN \
+	if (num != 1) { \
+		if (num == 0) return -3; \
+		if (num == EOF) return -4; \
+		return -5; \
+	} \
+	if (sep != NULL) { \
+		num = fscanf(fp, sep); \
+		if (num == 0) return 0; \
+		if (num == EOF) return -1; \
+	} \
+	return 0
+
 /**begin repeat
 
 #fname=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
@@ -772,27 +780,45 @@ static int
 {
 	int num;
 	num = fscanf(fp, "%"@format@, ip);
-	if (num != 1) {
-		if (num == 0) return -3;
-		if (num == EOF) return -4;
-		return -5;
-	}
-	if (sep != NULL) {
-		num = fscanf(fp, sep);
-		if (num == 0) return 0;
-		if (num == EOF) return -1;
-	}
-	return 0;
+	_ENDSCAN;
 }
 
 /**end repeat**/
 
 /**begin repeat
-#fname=BOOL,BYTE,UBYTE,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
+#fname=BYTE,UBYTE#
+#type=byte,ubyte#
+#btype=int,uint#
+#format="d","u"#
+*/
+static int
+@fname@_scan (FILE *fp, @type@ *ip, char *sep, void *ignore)
+{
+	@btype@ temp;
+	int num;
+	num = fscanf(fp, "%"@format@, &temp);
+	*ip = (@type@) temp;
+	_ENDSCAN;
+}
+/**end repeat**/
+
+static int
+BOOL_scan (FILE *fp, Bool *ip, char *sep, void *ignore)
+{
+	int temp;
+	int num;
+	num = fscanf(fp, "%d", &temp);
+	*ip = (Bool) (temp != 0);
+	_ENDSCAN;
+}
+
+/**begin repeat
+#fname=CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
 */
 #define @fname@_scan NULL
 /**end repeat**/
 
+#undef _ENDSCAN
 
 /****************** fromstr *************************************/
 
@@ -1738,7 +1764,7 @@ OBJECT_fillwithscalar(PyObject **buffer, intp length, PyObject **value, void *ig
 	PyObject *val = *value;
 	for (i=0; i<length; i++) {
 		Py_XDECREF(buffer[i]);
-		Py_INCREF(val);
+		Py_XINCREF(val);
 		buffer[i] = val;
 	}
 }
@@ -1770,6 +1796,14 @@ static void
 /**end repeat**/
 
 #define _ALIGN(type) offsetof(struct {char c; type v;},v)
+
+/* Disable harmless compiler warning "4116: unnamed type definition in 
+   parentheses" which is caused by the _ALIGN macro.  */ 
+
+#if defined(_MSC_VER) 
+#pragma warning(disable:4116) 
+#endif 
+
 
 /**begin repeat
 
@@ -1816,11 +1850,15 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	(PyArray_FillFunc*)NULL,
 	(PyArray_FillWithScalarFunc*)NULL,
 	{
-		NULL, NULL, NULL, NULL
+		NULL, NULL, NULL
 	},
 	{
-		NULL, NULL, NULL, NULL
-	}
+		NULL, NULL, NULL
+	},
+	NULL,
+	(PyArray_ScalarKindFunc*)NULL,
+	NULL,
+	NULL
 };
 
 static PyArray_Descr @from@_Descr = { 
@@ -1887,11 +1925,15 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	(PyArray_FillFunc*)@from@_fill,
 	(PyArray_FillWithScalarFunc*)@from@_fillwithscalar,
 	{
-		NULL, NULL, NULL, NULL
+		NULL, NULL, NULL
 	},
 	{
-		NULL, NULL, NULL, NULL
-	}
+		NULL, NULL, NULL
+	},
+	NULL,
+	(PyArray_ScalarKindFunc*)NULL,
+	NULL,
+	NULL
 };
 
 static PyArray_Descr @from@_Descr = { 

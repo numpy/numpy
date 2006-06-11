@@ -100,6 +100,10 @@ def _array_descr(descriptor):
 
     return result
 
+# Build a new array from the information in a pickle.
+# Note that the name numpy.core._internal._reconstruct is embedded in
+# the pickles of ndarrays, so don't remove the name here, or you'll
+# break backward compatibilty.
 def _reconstruct(subtype, shape, dtype):
     return ndarray.__new__(subtype, shape, dtype)
 
@@ -146,8 +150,8 @@ format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[><|A-Za-z0-9
 
 def _commastring(astr):
     res = _split(astr)
-    if (len(res)) == 1:
-        raise ValueError, "no commas present"
+    if (len(res)) < 1:
+        raise ValueError, "unrecognized formant"
     result = []
     for k,item in enumerate(res):
         # convert item

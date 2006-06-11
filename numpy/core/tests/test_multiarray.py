@@ -1,6 +1,7 @@
 
 from numpy.testing import *
 from numpy.core import *
+from numpy import random
 
 class test_flags(ScipyTestCase):
     def setUp(self):
@@ -222,6 +223,12 @@ class test_methods(ScipyTestCase):
         assert_equal(array([12.2,15.5]).round(-1), [10,20])
         assert_equal(array([12.15,15.51]).round(1), [12.2,15.5])
 
+    def check_transpose(self):
+        a = array([[1,2],[3,4]])
+        assert_equal(a.transpose(), [[1,3],[2,4]])
+        self.failUnlessRaises(ValueError, lambda: a.transpose(0))
+        self.failUnlessRaises(ValueError, lambda: a.transpose(0,0))
+        self.failUnlessRaises(ValueError, lambda: a.transpose(0,1,2))
 
 class test_subscripting(ScipyTestCase):
     def check_test_zero_rank(self):
@@ -230,14 +237,51 @@ class test_subscripting(ScipyTestCase):
         self.failUnless(type(x[0, ...]) is ndarray)
 
 class test_pickling(ScipyTestCase):
-    def setUp(self):
-        self.carray = array([[2,9],[7,0],[3,8]])
-        self.tarray = transpose(self.carray)
-
     def check_both(self):
         import pickle
-        assert_equal(self.carray, pickle.loads(self.carray.dumps()))
-        assert_equal(self.tarray, pickle.loads(self.tarray.dumps()))
+        carray = array([[2,9],[7,0],[3,8]])
+        tarray = transpose(carray)
+        assert_equal(carray, pickle.loads(carray.dumps()))
+        assert_equal(tarray, pickle.loads(tarray.dumps()))
+
+    # version 0 pickles, using protocol=2 to pickle
+    # version 0 doesn't have a version field
+    def check_version0_int8(self):
+        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
+        a = array([1,2,3,4], dtype=int8)
+        p = loads(s)
+        assert_equal(a, p)
+
+    def check_version0_float32(self):
+        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
+        a = array([1.0, 2.0, 3.0, 4.0], dtype=float32)
+        p = loads(s)
+        assert_equal(a, p)
+
+    def check_version0_object(self):
+        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
+        a = array([{'a':1}, {'b':2}])
+        p = loads(s)
+        assert_equal(a, p)
+
+    # version 1 pickles, using protocol=2 to pickle
+    def check_version1_int8(self):
+        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
+        a = array([1,2,3,4], dtype=int8)
+        p = loads(s)
+        assert_equal(a, p)
+
+    def check_version1_float32(self):
+        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(K\x01U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
+        a = array([1.0, 2.0, 3.0, 4.0], dtype=float32)
+        p = loads(s)
+        assert_equal(a, p)
+
+    def check_version1_object(self):
+        s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
+        a = array([{'a':1}, {'b':2}])
+        p = loads(s)
+        assert_equal(a, p)
 
 class test_fancy_indexing(ScipyTestCase): 
     def check_list(self): 
@@ -288,6 +332,17 @@ class test_string_compare(ScipyTestCase):
         assert_array_equal(g1 >= g2, [g1[i] >= g2[i] for i in [0,1,2]])
         assert_array_equal(g1 < g2,  [g1[i] < g2[i] for i in [0,1,2]]) 
         assert_array_equal(g1 > g2,  [g1[i] > g2[i] for i in [0,1,2]]) 
+
+
+class test_argmax(ScipyTestCase):
+    def check_all(self):
+        a = random.normal(0,1,(4,5,6,7,8))
+        for i in xrange(a.ndim):
+            amax = a.max(i)
+            aargmax = a.argmax(i)  
+            axes = range(a.ndim)
+            axes.remove(i)
+            assert all(amax == aargmax.choose(*a.transpose(i,*axes)))        
 
 
 # Import tests from unicode

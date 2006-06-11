@@ -25,8 +25,7 @@ PyArray_ScalarAsCtype
 PyArray_CastScalarToCtype
 PyArray_CastScalarDirect
 PyArray_ScalarFromObject
-PyArray_RegisterDataType
-PyArray_RegisterDescrForType
+PyArray_GetCastFunc
 PyArray_FromDims
 PyArray_FromDimsAndDataAndDescr
 PyArray_FromAny
@@ -74,3 +73,4 @@ PyArray_NewFlagsObject
 PyArray_CanCastScalar
 PyArray_CompareUCS4
 PyArray_RemoveLargest
+PyArray_ElementStrides

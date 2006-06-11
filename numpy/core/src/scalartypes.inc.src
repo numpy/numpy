@@ -4,9 +4,8 @@
 #define _MULTIARRAYMODULE
 #endif
 #include "numpy/arrayscalars.h"
-static int PyArrayScalar_Offset[PyArray_NTYPES+1];
 
-#define _SOFFSET_(obj, type_num) ((char *)(obj) + PyArrayScalar_Offset[(type_num)])
+#define _SOFFSET_(obj) ((char *)obj + (offsetof(PyScalarObject, obval)))
 
 static PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
 	{PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
@@ -59,8 +58,7 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 		}
 		return;
 	}
-	memcpy(ctypeptr, _SOFFSET_(scalar, typecode->type_num),
-	       typecode->elsize);
+	memcpy(ctypeptr, _SOFFSET_(scalar), typecode->elsize);
 	Py_DECREF(typecode);
 	return;
 }
@@ -78,8 +76,11 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 			  PyArray_Descr *outcode)
 {
 	PyArray_Descr* descr;
+	PyArray_VectorUnaryFunc* castfunc;
 	
 	descr = PyArray_DescrFromScalar(scalar);
+	castfunc = PyArray_GetCastFunc(descr, outcode->type_num);
+	if (castfunc == NULL) return -1;
 	if (PyTypeNum_ISEXTENDED(descr->type_num) ||
 	    PyTypeNum_ISEXTENDED(outcode->type_num)) {
 		PyArrayObject *ain, *aout;
@@ -93,15 +94,12 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 					     NULL, ctypeptr, 
 					     CARRAY_FLAGS, NULL);
 		if (aout == NULL) {Py_DECREF(ain); return -1;}
-		descr->f->cast[outcode->type_num](ain->data, 
-					       aout->data, 1, ain, aout);
+		castfunc(ain->data, aout->data, 1, ain, aout);
 		Py_DECREF(ain);
 		Py_DECREF(aout);
 	}
 	else {
-		descr->f->cast[outcode->type_num](_SOFFSET_(scalar, 
-							 descr->type_num), 
-					       ctypeptr, 1, NULL, NULL);
+		castfunc(_SOFFSET_(scalar), ctypeptr, 1, NULL, NULL);
 	}
 	Py_DECREF(descr);
 	return 0;
@@ -114,8 +112,10 @@ static int
 PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
 			 void *ctypeptr, int outtype)
 {
-	indescr->f->cast[outtype](_SOFFSET_(scalar, indescr->type_num),
-				  ctypeptr, 1, NULL, NULL);
+	PyArray_VectorUnaryFunc* castfunc;
+	castfunc = PyArray_GetCastFunc(indescr, outtype);
+	if (castfunc == NULL) return -1;
+	castfunc(_SOFFSET_(scalar), ctypeptr, 1, NULL, NULL);
 	return 0;
 }
 
@@ -178,7 +178,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 			memptr = (((PyVoidScalarObject *)scalar)->obval);
 		}
 		else {
-			memptr = _SOFFSET_(scalar, typecode->type_num);
+			memptr = _SOFFSET_(scalar);
 		}
 		break;
 	}
@@ -462,7 +462,8 @@ gentype_repr(PyObject *self)
 }
 
 static void
-format_longdouble(char *buf, size_t buflen, longdouble val, int precision)
+format_longdouble(char *buf, size_t buflen, longdouble val,
+                  unsigned int precision)
 {
         register char *cp;
 
@@ -830,7 +831,7 @@ gentype_real_get(PyObject *self)
 
 	if (PyArray_IsScalar(self, ComplexFloating)) {
 		typecode = _realdescr_fromcomplexscalar(self, &typenum);
-		ret = PyArray_Scalar(_SOFFSET_(self, typenum), typecode,
+		ret = PyArray_Scalar(_SOFFSET_(self), typecode,
 				     NULL);
 		Py_DECREF(typecode);
 		return ret;
@@ -854,7 +855,7 @@ gentype_imag_get(PyObject *self)
 	
 	typecode = _realdescr_fromcomplexscalar(self, &typenum);
 	if (PyArray_IsScalar(self, ComplexFloating)) {
-		ret = PyArray_Scalar(_SOFFSET_(self, typenum)		\
+		ret = PyArray_Scalar(_SOFFSET_(self)		\
 				     + typecode->elsize, typecode, NULL);
 	}
 	else if PyArray_IsScalar(self, Object) {
@@ -1099,8 +1100,7 @@ voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 		PyArray_Descr *new;
 		if (!PyArray_ISNBO(self->descr->byteorder)) {
 			new = PyArray_DescrFromScalar(ret);
-			byte_swap_vector(_SOFFSET_(ret, new->type_num), 1,
-					 new->elsize);
+			byte_swap_vector(_SOFFSET_(ret), 1, new->elsize);
 			Py_DECREF(new);
 		}
 	}
@@ -1529,7 +1529,7 @@ gentype_getreadbuf(PyObject *self, int segment, void **ptrptr)
 			*ptrptr = ((PyVoidScalarObject *)self)->obval;
 	}
 	else 
-		*ptrptr = (void *)_SOFFSET_(self, outcode->type_num);
+		*ptrptr = (void *)_SOFFSET_(self);
 
 	Py_DECREF(outcode);
 	return numbytes;
@@ -1597,14 +1597,33 @@ object_arrtype_dealloc(PyObject *v)
 	v->ob_type->tp_free(v);
 }
 
-/* string and unicode inherit from Python Type first and so GET_ITEM is different to
-   get to the Python Type.
+/* string and unicode inherit from Python Type first and so GET_ITEM is different to get to the Python Type.
  */
+/* ok is a work-around for a bug in complex_new that doesn't allocate
+   memory from the sub-types memory allocator. 
+*/
+
+#define _WORK(num)  \
+	if (type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases)==2)) { \
+		PyTypeObject *sup; \
+		PyObject *ret; \
+		/* We are inheriting from a Python type as well so \
+		   give it first dibs on conversion */ \
+		sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, num); \
+		ret = sup->tp_new(type, args, kwds); \
+		if (ret) return ret; \
+		PyErr_Clear(); \
+		/* now do default conversion */ \
+	} 
+
+#define _WORK1 _WORK(1)
+#define _WORKz _WORK(0)
+#define _WORK0
 
 /**begin repeat 
 #name=byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, string, unicode, object#
 #TYPE=BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, OBJECT#
-#num=1*16,0,0,1#
+#work=0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,1#
 */
 static PyObject *
 @name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -1613,17 +1632,7 @@ static PyObject *
 	PyObject *arr;
 	PyArray_Descr *typecode;
 
-	if (type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases)==2)) {
-		PyTypeObject *sup;
-		PyObject *ret;
-		/* We are inheriting from a Python type as well so
-		   give it first dibs on conversion */
-		sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, @num@);
-		ret = sup->tp_new(type, args, kwds);
-		if (ret) return ret;
-		PyErr_Clear();
-		/* now do default conversion */
-	}
+	_WORK@work@
 
 	if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
 
@@ -1632,6 +1641,11 @@ static PyObject *
 	return PyArray_Return((PyArrayObject *)arr);
 }
 /**end repeat**/
+
+#undef _WORK1
+#undef _WORKz
+#undef _WORK0
+#undef _WORK
 
 /* bool->tp_new only returns Py_True or Py_False */
 static PyObject *
@@ -1689,9 +1703,9 @@ bool_arrtype_nonzero(PyObject *a)
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
 static PyNumberMethods bool_arrtype_as_number = {
-	bool_arrtype_or,			/* nb_add */
+	0,			                /* nb_add */
 	0,					/* nb_subtract */
-	bool_arrtype_and,			/* nb_multiply */
+	0,		                        /* nb_multiply */
 	0,					/* nb_divide */
 	0,					/* nb_remainder */
 	0,					/* nb_divmod */
@@ -2253,13 +2267,6 @@ ComplexFloating, Flexible, Character#
 
 	PyArrayIter_Type.tp_iter = PyObject_SelfIter;
 	PyArrayMapIter_Type.tp_iter = PyObject_SelfIter;
-
-/**begin repeat
-#name=Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble,  CFloat, CDouble, CLongDouble, Object,#
-#num=BOOL, BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, NTYPES#
-**/
-        PyArrayScalar_Offset[PyArray_@num@] = (int) offsetof(Py@name@ScalarObject, obval);
-/**end repeat**/
 }
 
 
@@ -2330,7 +2337,6 @@ PyArray_DescrFromTypeObject(PyObject *type)
 	typenum = _typenum_fromtypeobj(type,1);	
 	if (typenum != PyArray_NOTYPE) {
 		new = PyArray_DescrFromType(typenum);
-		if (PyTypeNum_ISUSERDEF(typenum)) goto finish;
 		return new;
 	}
 
@@ -2360,9 +2366,14 @@ PyArray_DescrFromTypeObject(PyObject *type)
 	   currently only VOID allows it -- use it as the type-object.
 	*/
 	/* look for a dtypedescr attribute */
+	if (!PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
+		PyErr_SetString(PyExc_TypeError, 
+				"data-type cannot be detemrined from "	\
+				"type-object");
+		return NULL;
+	}
 	new = PyArray_DescrNewFromType(PyArray_VOID);
 
- finish:
 	conv = _arraydescr_fromobj(type);
 	if (conv) {
 		new->fields = conv->fields;

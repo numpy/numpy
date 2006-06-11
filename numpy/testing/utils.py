@@ -62,14 +62,12 @@ else:
         return int(100*(time.time()-_load_time[0]))
     def memusage():
         """ Return memory usage of running python. [Not implemented]"""
-        return
+        raise NotImplementedError
 
 if os.name=='nt' and sys.version[:3] > '2.3':
-    # Code stolen from enthought/debug/memusage.py
-    import win32pdh
-    # from win32pdhutil, part of the win32all package
+    # Code "stolen" from enthought/debug/memusage.py
     def GetPerformanceAttributes(object, counter, instance = None,
-                                 inum=-1, format = win32pdh.PDH_FMT_LONG, machine=None):
+                                 inum=-1, format = None, machine=None):
         # NOTE: Many counters require 2 samples to give accurate results,
         # including "% Processor Time" (as by definition, at any instant, a
         # thread's CPU usage is either 0 or 100).  To read counters like this,
@@ -78,6 +76,8 @@ if os.name=='nt' and sys.version[:3] > '2.3':
         # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
         # My older explanation for this was that the "AddCounter" process forced
         # the CPU to 100%, but the above makes more sense :)
+        import win32pdh
+        if format is None: format = win32pdh.PDH_FMT_LONG
         path = win32pdh.MakeCounterPath( (machine,object,instance, None, inum,counter) )
         hq = win32pdh.OpenQuery()
         try:
@@ -91,12 +91,37 @@ if os.name=='nt' and sys.version[:3] > '2.3':
         finally:
             win32pdh.CloseQuery(hq)
 
-    def memusage(processName="python", instance=0):
-        return GetPerformanceAttributes("Process", "Virtual Bytes",
-                                        processName, instance,
-                                        win32pdh.PDH_FMT_LONG, None)
+        def memusage(processName="python", instance=0):
+            # from win32pdhutil, part of the win32all package
+            import win32pdh
+            return GetPerformanceAttributes("Process", "Virtual Bytes",
+                                            processName, instance,
+                                            win32pdh.PDH_FMT_LONG, None)
 
-def assert_equal(actual,desired,err_msg='',verbose=1):
+def build_err_msg(actual, desired, err_msg, header='Items are not equal:',
+                  verbose=True):
+    msg = ['\n' + header]
+    if err_msg:
+        if err_msg.find('\n') == -1 and len(err_msg) < 79-len(header):
+            msg = [msg[0] + ' ' + err_msg]
+        else:
+            msg.append(err_msg)
+    if verbose:
+        try:
+            rd = repr(desired)
+        except:
+            rd = '[repr failed]'
+        rd = rd[:100]
+        msg.append(' DESIRED: ' + rd)
+        try:
+            ra = repr(actual)
+        except:
+            ra = '[repr failed]'
+        rd = ra[:100]
+        msg.append(' ACTUAL: ' + ra)
+    return '\n'.join(msg)
+
+def assert_equal(actual,desired,err_msg='',verbose=True):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
     """
@@ -115,48 +140,30 @@ def assert_equal(actual,desired,err_msg='',verbose=1):
     from numpy.core import ArrayType
     if isinstance(actual, ArrayType) or isinstance(desired, ArrayType):
         return assert_array_equal(actual, desired, err_msg)
-    msg = '\nItems are not equal:\n' + err_msg
-    try:
-        if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
-            msg =  msg \
-                 + 'DESIRED: ' + repr(desired) \
-                 + '\nACTUAL: ' + repr(actual)
-    except:
-        msg =  msg \
-             + 'DESIRED: ' + repr(desired) \
-             + '\nACTUAL: ' + repr(actual)
+    msg = build_err_msg(actual, desired, err_msg, verbose=verbose)
     assert desired == actual, msg
-    return
 
-def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=1):
-    """ Raise an assertion if two items are not
-        equal.  I think this should be part of unittest.py
+def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
+    """ Raise an assertion if two items are not equal.
+
+    I think this should be part of unittest.py
+
+    The test is equivalent to abs(desired-actual) < 0.5 * 10**(-decimal)
     """
     from numpy.core import ArrayType
     if isinstance(actual, ArrayType) or isinstance(desired, ArrayType):
         return assert_array_almost_equal(actual, desired, decimal, err_msg)
-    msg = '\nItems are not equal:\n' + err_msg
-    try:
-        if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
-            msg =  msg \
-                 + 'DESIRED: ' + repr(desired) \
-                 + '\nACTUAL: ' + repr(actual)
-    except:
-        msg =  msg \
-             + 'DESIRED: ' + repr(desired) \
-             + '\nACTUAL: ' + repr(actual)
+    msg = build_err_msg(actual, desired, err_msg, verbose=verbose)
     assert round(abs(desired - actual),decimal) == 0, msg
 
 
-def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
+def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     """ Raise an assertion if two items are not
         equal.  I think this should be part of unittest.py
         Approximately equal is defined as the number of significant digits
         correct
     """
     import math
-    msg = '\nItems are not equal to %d significant digits:\n' % significant
-    msg += err_msg
     actual, desired = map(float, (actual, desired))
     if desired==actual:
         return
@@ -170,15 +177,10 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=1):
         sc_actual = actual/scale
     except ZeroDivisionError:
         sc_actual = 0.0
-    try:
-        if ( verbose and len(repr(desired)) < 100 and len(repr(actual)) ):
-            msg =  msg \
-                 + 'DESIRED: ' + repr(desired) \
-                 + '\nACTUAL: ' + repr(actual)
-    except:
-        msg =  msg \
-             + 'DESIRED: ' + repr(desired) \
-             + '\nACTUAL: ' + repr(actual)
+    msg = build_err_msg(actual, desired, err_msg,
+                header='Items are not equal to %d significant digits:' %
+                                 significant,
+                verbose=verbose)
     assert math.fabs(sc_desired - sc_actual) < pow(10.,-1*significant), msg
 
 
