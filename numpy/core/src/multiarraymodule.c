@@ -5077,29 +5077,29 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 static PyObject *
 PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
 {
-        PyObject *item, *value;
+        PyObject *value;
         PyObject *iter = PyObject_GetIter(obj);
         PyArrayObject *ret = NULL;
         intp i, elsize, elcount;
-        char *new_data;
-    
+        char *item, *new_data;
+
         if (iter == NULL) goto done;
-    
+
         elcount = (count < 0) ? 0 : count;
         elsize = dtype->elsize;
 
-        ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, 
-                                    &elcount, NULL,NULL, 0, NULL);            
+        ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1,
+                                    &elcount, NULL,NULL, 0, NULL);
         dtype = NULL;
         if (ret == NULL) goto done;
-        
+
         for (i = 0; (i < count || count == -1) && (value = PyIter_Next(iter)); i++) {
-            
+
             if (i >= elcount) {
                 /* 
                    Grow ret->data:
                    this is similar for the strategy for PyListObject, but we use
-                   50% overallocation => 0, 4, 8, 14, 23, 36, 56, 86 ... 
+                   50% overallocation => 0, 4, 8, 14, 23, 36, 56, 86 ...
                 */
                 elcount = (i >> 1) + (i < 4 ? 4 : 2) + i;
                 if (elcount <= ((~(size_t)0) / elsize))
@@ -5114,21 +5114,20 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
                 ret->data = new_data;
             }
             ret->dimensions[0] = i+1;
-            
+
             if (((item = index2ptr(ret, i)) == NULL) ||
                     (ret->descr->f->setitem(value, item, ret) == -1)) {
-                        Py_DECREF(item);
                         goto done;
                 }
             Py_DECREF(value);
-                
-        } 
-        
+
+        }
+
         if (i < count) {
                 PyErr_SetString(PyExc_ValueError, "iteratable too short");
                 goto done;
         }
-        
+
         /*
             Realloc the data so that don't keep extra memory tied up
             (assuming realloc is reasonably good about reusing space...)
