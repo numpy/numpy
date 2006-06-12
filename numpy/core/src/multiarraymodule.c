@@ -3671,12 +3671,6 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
 		return NULL;
 	}
 	*errflag = 1;
-	if (type == &OBJECT_Descr) {
-		PyErr_SetString(PyExc_ValueError,
-				"cannot base a new descriptor on an"\
-				" OBJECT descriptor.");
-		goto fail;
-	}
 	new = PyArray_DescrNew(type);
 	if (new == NULL) goto fail;
 
@@ -3692,6 +3686,8 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
 		Py_XINCREF(new->fields);
 	}
 	Py_DECREF(conv);
+        if (conv->hasobject)
+                new->hasobject = 1;
 	*errflag = 0;
 	return new;
 
