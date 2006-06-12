@@ -1094,7 +1094,6 @@ def get_atlas_version(**config):
         if re.search(r'undefined symbol: ATL_buildinfo',o,re.M):
             atlas_version = '3.2.1_pre3.3.6'
         else:
-            log.info('Command: %s',' '.join(cmd))
             log.info('Status: %d', s)
             log.info('Output: %s', o)
     return atlas_version
