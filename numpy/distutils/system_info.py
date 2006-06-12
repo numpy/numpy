@@ -436,8 +436,8 @@ class system_info:
         if env_var and os.environ.has_key(env_var):
             d = os.environ[env_var]
             if d=='None':
-                log.info('Disabled',self.__class__.__name__,'(%s is None)' \
-                      % (self.dir_env_var))
+                log.info('Disabled %s: %s',self.__class__.__name__,'(%s is None)' \
+                      % (env_var,))
                 return []
             if os.path.isfile(d):
                 dirs = [os.path.dirname(d)] + dirs
