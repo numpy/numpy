@@ -99,6 +99,7 @@ class config(old_config):
         """
         from distutils.ccompiler import CompileError, LinkError
         self._check_compiler()
+        exitcode, output = 255, ''
         try:
             src, obj, exe = self._link(body, headers, include_dirs,
                                        libraries, library_dirs, lang)
