@@ -128,7 +128,7 @@ cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
     if size is None:
         return func(state)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Float64)
+        array = <ndarray>_sp.empty(size, _sp.float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -144,7 +144,7 @@ cdef object cont1_array(rk_state *state, rk_cont1 func, object size, double a):
     if size is None:
         return func(state, a)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Float64)
+        array = <ndarray>_sp.empty(size, _sp.float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -161,7 +161,7 @@ cdef object cont2_array(rk_state *state, rk_cont2 func, object size, double a,
     if size is None:
         return func(state, a, b)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Float64)
+        array = <ndarray>_sp.empty(size, _sp.float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -179,7 +179,7 @@ cdef object cont3_array(rk_state *state, rk_cont3 func, object size, double a,
     if size is None:
         return func(state, a, b, c)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Float64)
+        array = <ndarray>_sp.empty(size, _sp.float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -195,7 +195,7 @@ cdef object disc0_array(rk_state *state, rk_disc0 func, object size):
     if size is None:
         return func(state)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Int)
+        array = <ndarray>_sp.empty(size, int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -211,7 +211,7 @@ cdef object discnp_array(rk_state *state, rk_discnp func, object size, long n, d
     if size is None:
         return func(state, n, p)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Int)
+        array = <ndarray>_sp.empty(size, int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -228,7 +228,7 @@ cdef object discnmN_array(rk_state *state, rk_discnmN func, object size,
     if size is None:
         return func(state, n, m, N)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Int)
+        array = <ndarray>_sp.empty(size, int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -244,7 +244,7 @@ cdef object discd_array(rk_state *state, rk_discd func, object size, double a):
     if size is None:
         return func(state, a)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Int)
+        array = <ndarray>_sp.empty(size, int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -320,7 +320,7 @@ cdef class RandomState:
         get_state() -> ('MT19937', int key[624], int pos)
         """
         cdef ndarray state "arrayObject_state"
-        state = <ndarray>_sp.empty(624, _sp.Int)
+        state = <ndarray>_sp.empty(624, int)
         memcpy(<void*>(state.data), self.internal_state.key, 624*sizeof(long))
         return ('MT19937', state, self.internal_state.pos)
         
@@ -395,7 +395,7 @@ cdef class RandomState:
         if size is None:
             return rk_interval(diff, self.internal_state) + lo
         else:
-            array = <ndarray>_sp.empty(size, _sp.Int)
+            array = <ndarray>_sp.empty(size, int)
             length = PyArray_SIZE(array)
             array_data = <long *>array.data
             for i from 0 <= i < length:
@@ -883,7 +883,7 @@ cdef class RandomState:
         else:
             shape = size + (d,)
 
-        multin = _sp.zeros(shape, _sp.Int)
+        multin = _sp.zeros(shape, int)
         mnarr = <ndarray>multin
         mnix = <long*>mnarr.data
         i = 0

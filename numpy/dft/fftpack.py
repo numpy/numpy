@@ -22,8 +22,8 @@ irefft2(a, s=None, axes=(-2, -1))
 __all__ = ['fft','ifft', 'refft', 'irefft', 'hfft', 'ihfft', 'refftn',
            'irefftn', 'refft2', 'irefft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
-from numpy.core import asarray, zeros, swapaxes, shape, Complex, conjugate, \
-     Float, take
+from numpy.core import asarray, zeros, swapaxes, shape, conjugate, \
+     take
 import fftpack_lite as fftpack
 from helper import *
 
@@ -169,7 +169,7 @@ def hfft(a, n=None, axis=-1):
     ihfft(hfft(a), len(a)) == a
     within numerical accuracy."""
 
-    a = asarray(a).astype(Complex)
+    a = asarray(a).astype(complex)
     if n == None:
         n = (shape(a)[axis] - 1) * 2
     return irefft(conjugate(a), n, axis) * n
@@ -187,7 +187,7 @@ def ihfft(a, n=None, axis=-1):
     ihfft(hfft(a), len(a)) == a
     within numerical accuracy."""
 
-    a = asarray(a).astype(Float)
+    a = asarray(a).astype(float)
     if n == None:
         n = shape(a)[axis]
     return conjugate(refft(a, n, axis))/n
@@ -273,7 +273,7 @@ def refftn(a, s=None, axes=None):
     element of axes, then complex transforms as fft are performed along the
     other axes."""
 
-    a = asarray(a).astype(Float)
+    a = asarray(a).astype(float)
     s, axes = _cook_nd_args(a, s, axes)
     a = refft(a, s[-1], axes[-1])
     for ii in range(len(axes)-1):
@@ -298,7 +298,7 @@ def irefftn(a, s=None, axes=None):
     inverse_real_fft, the length of the result along that axis must be
     specified if it is to be odd."""
 
-    a = asarray(a).astype(Complex)
+    a = asarray(a).astype(complex)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
     for ii in range(len(axes)-1):
         a = ifft(a, s[ii], axes[ii])

@@ -2,7 +2,7 @@
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import numeric as N
-from numeric import ArrayType, concatenate, isscalar, binary_repr
+from numeric import concatenate, isscalar, binary_repr
 import types
 import string as str_
 import sys
@@ -338,12 +338,12 @@ def bmat(obj, ldict=None, gdict=None):
         # [[A,B],[C,D]]
         arr_rows = []
         for row in obj:
-            if isinstance(row, ArrayType):  # not 2-d
+            if isinstance(row, N.ndarray):  # not 2-d
                 return matrix(concatenate(obj,axis=-1))
             else:
                 arr_rows.append(concatenate(row,axis=-1))
         return matrix(concatenate(arr_rows,axis=0))
-    if isinstance(obj, ArrayType):
+    if isinstance(obj, N.ndarray):
         return matrix(obj)
 
 mat = matrix

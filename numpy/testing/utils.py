@@ -16,8 +16,8 @@ def rand(*args):
     This only uses the standard library, so it is useful for testing purposes.
     """
     import random
-    from numpy.core import zeros, Float64
-    results = zeros(args,Float64)
+    from numpy.core import zeros, float64
+    results = zeros(args, float64)
     f = results.flat
     for i in range(len(f)):
         f[i] = random.random()
@@ -137,8 +137,8 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         for k in range(len(desired)):
             assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k,err_msg), verbose)
         return
-    from numpy.core import ArrayType
-    if isinstance(actual, ArrayType) or isinstance(desired, ArrayType):
+    from numpy.core import ndarray
+    if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg)
     msg = build_err_msg(actual, desired, err_msg, verbose=verbose)
     assert desired == actual, msg
@@ -150,8 +150,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     The test is equivalent to abs(desired-actual) < 0.5 * 10**(-decimal)
     """
-    from numpy.core import ArrayType
-    if isinstance(actual, ArrayType) or isinstance(desired, ArrayType):
+    from numpy.core import ndarray
+    if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_almost_equal(actual, desired, decimal, err_msg)
     msg = build_err_msg(actual, desired, err_msg, verbose=verbose)
     assert round(abs(desired - actual),decimal) == 0, msg
