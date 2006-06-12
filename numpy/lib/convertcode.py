@@ -91,12 +91,12 @@ def replaceother(astr):
 import datetime
 def fromstr(filestr):
     filestr = replacetypechars(filestr)
-    filestr, fromall1 = changeimports(filestr, 'Numeric', 'numpy')
+    filestr, fromall1 = changeimports(filestr, 'Numeric', 'numpy.oldnumeric')
     filestr, fromall1 = changeimports(filestr, 'multiarray',
                                       'numpy.core.multiarray')
     filestr, fromall1 = changeimports(filestr, 'umath',
                                           'numpy.core.umath')
-    filestr, fromall1 = changeimports(filestr, 'Precision', 'numpy')
+    filestr, fromall1 = changeimports(filestr, 'Precision', 'numpy.oldnumeric')
     filestr, fromall2 = changeimports(filestr, 'numerix', 'numpy')
     filestr, fromall3 = changeimports(filestr, 'scipy_base', 'numpy')
     filestr, fromall3 = changeimports(filestr, 'MLab', 'numpy.lib.mlab')

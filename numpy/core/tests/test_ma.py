@@ -668,7 +668,7 @@ class test_ufuncs(ScipyTestCase):
             try:
                 uf = getattr(umath, f)
             except AttributeError:
-                uf = getattr(oldnumeric, f)
+                uf = getattr(fromnumeric, f)
             mf = getattr(numpy.ma, f)
             args = self.d[:uf.nin]
             ur = uf(*args)

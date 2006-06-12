@@ -7,7 +7,7 @@ floating-point arithmetic system
 
 __all__ = ['MachAr']
 
-from numpy.core.oldnumeric import any
+from numpy.core.fromnumeric import any
 
 # Need to speed this up...especially for longfloat
 

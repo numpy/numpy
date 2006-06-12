@@ -537,6 +537,6 @@ nan = NaN = NAN
 False_ = bool_(False)
 True_ = bool_(True)
 
-import oldnumeric
-from oldnumeric import *
-extend_all(oldnumeric)
+import fromnumeric
+from fromnumeric import *
+extend_all(fromnumeric)

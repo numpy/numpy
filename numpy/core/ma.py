@@ -10,10 +10,10 @@ Adapted for numpy_core 2005 by Travis Oliphant and
 import types, sys
 
 import umath
-import oldnumeric
+import fromnumeric
 from numeric import newaxis, ndarray, inf
-from oldnumeric import typecodes, amax, amin
-from numerictypes import bool_
+from fromnumeric import amax, amin
+from numerictypes import bool_, typecodes
 import numeric
 import warnings
 
@@ -186,7 +186,7 @@ def make_mask (m, copy=0, flag=0):
     else:
         result = filled(m, True).astype(MaskType)
 
-    if flag and not oldnumeric.sometrue(oldnumeric.ravel(result)):
+    if flag and not fromnumeric.sometrue(fromnumeric.ravel(result)):
         return nomask
     else:
         return result
@@ -348,7 +348,7 @@ class domained_binary_operation:
         d2 = filled(b, self.filly)
         t = self.domain(d1, d2)
 
-        if oldnumeric.sometrue(t, None):
+        if fromnumeric.sometrue(t, None):
             d2 = where(t, self.filly, d2)
             mb = mask_or(mb, t)
         m = mask_or(ma, mb)
@@ -451,7 +451,7 @@ def nonzero(a):
     """
     return asarray(filled(a, 0).nonzero())
 
-around = masked_unary_operation(oldnumeric.round_)
+around = masked_unary_operation(fromnumeric.round_)
 floor = masked_unary_operation(umath.floor)
 ceil = masked_unary_operation(umath.ceil)
 logical_not = masked_unary_operation(umath.logical_not)
@@ -490,13 +490,13 @@ bitwise_or = masked_binary_operation(umath.bitwise_or)
 bitwise_xor = masked_binary_operation(umath.bitwise_xor)
 
 def rank (object):
-    return oldnumeric.rank(filled(object))
+    return fromnumeric.rank(filled(object))
 
 def shape (object):
-    return oldnumeric.shape(filled(object))
+    return fromnumeric.shape(filled(object))
 
 def size (object, axis=None):
-    return oldnumeric.size(filled(object), axis)
+    return fromnumeric.size(filled(object), axis)
 
 class MaskedArray (object):
     """Arrays with possibly masked values.
@@ -580,10 +580,10 @@ class MaskedArray (object):
                 nd = size(self._data)
                 if nm != nd:
                     if nm == 1:
-                        self._mask = oldnumeric.resize(self._mask, self._data.shape)
+                        self._mask = fromnumeric.resize(self._mask, self._data.shape)
                         self._shared_mask = 0
                     elif nd == 1:
-                        self._data = oldnumeric.resize(self._data, self._mask.shape)
+                        self._data = fromnumeric.resize(self._data, self._mask.shape)
                         self._data.shape = self._mask.shape
                     else:
                         raise MAError, "Mask and data not compatible."
@@ -596,7 +596,7 @@ class MaskedArray (object):
     def __array__ (self, t=None, context=None):
         "Special hook for numeric. Converts to numeric if possible."
         if self._mask is not nomask:
-            if oldnumeric.ravel(self._mask).any():
+            if fromnumeric.ravel(self._mask).any():
                 if context is None:
                     warnings.warn("Cannot automatically convert masked array to "\
                                   "numeric because data\n    is masked in one or "\
@@ -1177,12 +1177,12 @@ array(data = %(data)s,
 
     def compressed (self):
         "A 1-D array of all the non-masked data."
-        d = oldnumeric.ravel(self._data)
+        d = fromnumeric.ravel(self._data)
         if self._mask is nomask:
             return array(d)
         else:
-            m = 1 - oldnumeric.ravel(self._mask)
-            c = oldnumeric.compress(m, d)
+            m = 1 - fromnumeric.ravel(self._mask)
+            c = fromnumeric.compress(m, d)
             return array(c, copy=0)
 
     def count (self, axis = None):
@@ -1203,7 +1203,7 @@ array(data = %(data)s,
                 del t[axis]
                 return ones(t) * n
         if axis is None:
-            w = oldnumeric.ravel(m).astype(int)
+            w = fromnumeric.ravel(m).astype(int)
             n1 = size(w)
             if n1 == 1:
                 n2 = w[0]
@@ -1254,7 +1254,7 @@ array(data = %(data)s,
                     #ok, can't put that value in here
                     value = numeric.array(value, dtype=object)
                     d = d.astype(object)
-                    result = oldnumeric.choose(m, (d, value))
+                    result = fromnumeric.choose(m, (d, value))
                 except IndexError:
                     #ok, if scalar
                     if d.shape:
@@ -1291,7 +1291,7 @@ array(data = %(data)s,
         if self._mask is nomask:
             ind = iota
         else:
-            ind = oldnumeric.compress(1 - self._mask, iota)
+            ind = fromnumeric.compress(1 - self._mask, iota)
         d[ind] =  filled(values).astype(d.dtype)
 
     def putmask (self, values):
@@ -1358,7 +1358,7 @@ array(data = %(data)s,
     def item(self):
         "Return Python scalar if possible."
         if self._mask is not nomask:
-            m = oldnumeric.ravel(self._mask)
+            m = fromnumeric.ravel(self._mask)
             try:
                 if m[0]:
                     return masked
@@ -1428,7 +1428,7 @@ def allclose (a, b, fill_value=1, rtol=1.e-5, atol=1.e-8):
     x = filled(array(d1, copy=0, mask=m), fill_value).astype(float)
     y = filled(array(d2, copy=0, mask=m), 1).astype(float)
     d = umath.less_equal(umath.absolute(x-y), atol + rtol * umath.absolute(y))
-    return oldnumeric.alltrue(oldnumeric.ravel(d))
+    return fromnumeric.alltrue(fromnumeric.ravel(d))
 
 def allequal (a, b, fill_value=1):
     """
@@ -1440,13 +1440,13 @@ def allequal (a, b, fill_value=1):
         x = filled(a)
         y = filled(b)
         d = umath.equal(x, y)
-        return oldnumeric.alltrue(oldnumeric.ravel(d))
+        return fromnumeric.alltrue(fromnumeric.ravel(d))
     elif fill_value:
         x = filled(a)
         y = filled(b)
         d = umath.equal(x, y)
         dm = array(d, mask=m, copy=0)
-        return oldnumeric.alltrue(oldnumeric.ravel(filled(dm, 1)))
+        return fromnumeric.alltrue(fromnumeric.ravel(filled(dm, 1)))
     else:
         return 0
 
@@ -1514,8 +1514,8 @@ def resize (a, new_shape):
     The original array's total size can be any size."""
     m = getmask(a)
     if m is not nomask:
-        m = oldnumeric.resize(m, new_shape)
-    result = array(oldnumeric.resize(filled(a), new_shape), mask=m)
+        m = fromnumeric.resize(m, new_shape)
+    result = array(fromnumeric.resize(filled(a), new_shape), mask=m)
     result.set_fill_value(get_fill_value(a))
     return result
 
@@ -1530,8 +1530,8 @@ def repeat(a, repeats, axis=0):
 
     m = getmask(a)
     if m is not nomask:
-        m = oldnumeric.repeat(m, repeats, axis)
-    d = oldnumeric.repeat(af, repeats, axis)
+        m = fromnumeric.repeat(m, repeats, axis)
+    d = fromnumeric.repeat(af, repeats, axis)
     result = masked_array(d, m)
     result.set_fill_value(get_fill_value(a))
     return result
@@ -1624,7 +1624,7 @@ def average (a, axis=0, weights=None, returned = 0):
         else:
             if weights is None:
                 n = add.reduce(a.ravel())
-                w = oldnumeric.choose(mask, (1.0, 0.0)).ravel()
+                w = fromnumeric.choose(mask, (1.0, 0.0)).ravel()
                 d = umath.add.reduce(w)
                 del w
             else:
@@ -1814,7 +1814,7 @@ def reshape (a, *newshape):
 def ravel (a):
     "a as one-dimensional, may share data and mask"
     m = getmask(a)
-    d = oldnumeric.ravel(filled(a))
+    d = fromnumeric.ravel(filled(a))
     if m is nomask:
         return masked_array(d)
     else:
@@ -2053,19 +2053,19 @@ def sort (x, axis = -1, fill_value=None):
     if fill_value is None:
         fill_value = default_fill_value (x)
     d = filled(x, fill_value)
-    s = oldnumeric.sort(d, axis)
+    s = fromnumeric.sort(d, axis)
     if getmask(x) is nomask:
         return masked_array(s)
     return masked_values(s, fill_value, copy=0)
 
 def diagonal(a, k = 0, axis1=0, axis2=1):
     """diagonal(a,k=0,axis1=0, axis2=1) = the k'th diagonal of a"""
-    d = oldnumeric.diagonal(filled(a), k, axis1, axis2)
+    d = fromnumeric.diagonal(filled(a), k, axis1, axis2)
     m = getmask(a)
     if m is nomask:
         return masked_array(d, m)
     else:
-        return masked_array(d, oldnumeric.diagonal(m, k, axis1, axis2))
+        return masked_array(d, fromnumeric.diagonal(m, k, axis1, axis2))
     
 def trace (a, offset=0, axis1=0, axis2=1, dtype=None):
     """trace(a,offset=0, axis1=0, axis2=1) returns the sum along diagonals
@@ -2080,7 +2080,7 @@ def argsort (x, axis = -1, fill_value=None):
        Returns a numpy array.
     """
     d = filled(x, fill_value)
-    return oldnumeric.argsort(d, axis)
+    return fromnumeric.argsort(d, axis)
 
 def argmin (x, axis = -1, fill_value=None):
     """Treating masked values as if they have the value fill_value,
@@ -2090,7 +2090,7 @@ def argmin (x, axis = -1, fill_value=None):
        Otherwise, returns a scalar index.
     """
     d = filled(x, fill_value)
-    return oldnumeric.argmin(d, axis)
+    return fromnumeric.argmin(d, axis)
 
 def argmax (x, axis = -1, fill_value=None):
     """Treating masked values as if they have the value fill_value,
@@ -2106,7 +2106,7 @@ def argmax (x, axis = -1, fill_value=None):
         except:
             pass
     d = filled(x, fill_value)
-    return oldnumeric.argmax(d, axis)
+    return fromnumeric.argmax(d, axis)
 
 def fromfunction (f, s):
     """apply f to s to create array as in umath."""

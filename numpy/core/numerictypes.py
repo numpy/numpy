@@ -77,7 +77,7 @@ $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 
 # we add more at the bottom
 __all__ = ['typeDict', 'typeNA', 'sctypes', 'ScalarType', 'obj2sctype', 'cast', 'nbytes',
-           'sctype2char', 'maximum_sctype', 'issctype']
+           'sctype2char', 'maximum_sctype', 'issctype', 'typecodes']
 
 from multiarray import typeinfo, ndarray, array, empty
 import types as _types
@@ -421,3 +421,12 @@ for key in allTypes:
     __all__.append(key)
 
 del key
+
+typecodes = {'Character':'S1',
+             'Integer':'bhilqp',
+             'UnsignedInteger':'BHILQP',
+             'Float':'fdg',
+             'Complex':'FDG',
+             'AllInteger':'bBhHiIlLqQpP',
+             'AllFloat':'fdgFDG',
+             'All':'?bhilqpBHILQPfdgFDGSUVO'}

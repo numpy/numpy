@@ -1,7 +1,7 @@
 
 __all__ = ['average', 'histogram', 'standardDeviation', 'variance']
 
-import numpy as Numeric
+import numpy.oldnumeric as Numeric
 
 def average(data):
     data = Numeric.array(data)

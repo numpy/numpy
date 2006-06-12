@@ -17,8 +17,8 @@ from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
 from numpy.core.numeric import ScalarType, dot, where, newaxis
 from numpy.core.umath import pi, multiply, add, arctan2,  \
      frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp
-from numpy.core.oldnumeric import ravel, nonzero, choose, \
-     typecodes, sort
+from numpy.core.fromnumeric import ravel, nonzero, choose, sort
+from numpy.core.numerictypes import typecodes
 from numpy.lib.shape_base import atleast_1d
 from numpy.lib.twodim_base import diag
 from _compiled_base import digitize, bincount, _insert, add_docstring
@@ -160,7 +160,7 @@ def asarray_chkfinite(a):
     """Like asarray, but check that no NaNs or Infs are present.
     """
     a = asarray(a)
-    if (a.dtype.char in _nx.typecodes['AllFloat']) \
+    if (a.dtype.char in typecodes['AllFloat']) \
            and (_nx.isnan(a).any() or _nx.isinf(a).any()):
         raise ValueError, "array must not contain infs or NaNs"
     return a

@@ -3,7 +3,7 @@ NumPy
 ==========
 
 You can support the development of NumPy and SciPy by purchasing
-documentation at
+extended documentation at
 
   http://www.trelgol.com
 
@@ -33,7 +33,7 @@ else:
     pkgload = PackageLoader()
     pkgload('testing','core','lib','linalg','dft','random','f2py',
             verbose=NUMPY_IMPORT_VERBOSE,postpone=False)
-
+        
     if __doc__ is not None:
         __doc__ += """
 
