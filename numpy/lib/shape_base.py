@@ -121,7 +121,7 @@ def atleast_1d(*arys):
     """
     res = []
     for ary in arys:
-        res.append(array(ary,copy=False,ndmin=1))
+        res.append(array(ary,copy=False,subok=True,ndmin=1))
     if len(res) == 1:
         return res[0]
     else:
@@ -141,7 +141,7 @@ def atleast_2d(*arys):
     """
     res = []
     for ary in arys:
-        res.append(array(ary,copy=False,ndmin=2))
+        res.append(array(ary,copy=False,subok=2,ndmin=2))
     if len(res) == 1:
         return res[0]
     else:

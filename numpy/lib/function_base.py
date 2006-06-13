@@ -13,7 +13,7 @@ __all__ = ['logspace', 'linspace',
 import types
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
-     asarray, empty, empty_like, asanyarray, ndarray
+     asarray, asanyarray, empty, empty_like, asanyarray, ndarray
 from numpy.core.numeric import ScalarType, dot, where, newaxis
 from numpy.core.umath import pi, multiply, add, arctan2,  \
      frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp
@@ -365,8 +365,8 @@ def diff(a, n=1, axis=-1):
     if n == 0:
         return a
     if n < 0:
-        raise ValueError, 'order must be non-negative but got ' + `n`
-    a = asarray(a)
+        raise ValueError, 'order must be non-negative but got ' + repr(n)
+    a = asanyarray(a)
     nd = len(a.shape)
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
@@ -835,7 +835,7 @@ def sinc(x):
     return sin(y)/y
 
 def msort(a):
-    b = array(a,copy=True)
+    b = array(a,subok=True,copy=True)
     b.sort(0)
     return b
 
