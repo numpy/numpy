@@ -188,6 +188,19 @@ def CCompiler_customize(self, dist, need_cxx=0):
     log.info('customize %s' % (self.__class__.__name__))
     customize_compiler(self)
     if need_cxx:
+        # In general, distutils uses -Wstrict-prototypes, but this option is
+        # not valid for C++ code, only for C.  Remove it if it's there to
+        # avoid a spurious warning on every compilation.  All the default
+        # options used by distutils can be extracted with:
+        
+        # from distutils import sysconfig
+        # sysconfig.get_config_vars('CC', 'CXX', 'OPT', 'BASECFLAGS',
+        # 'CCSHARED', 'LDSHARED', 'SO')
+        try:
+            self.compiler_so.remove('-Wstrict-prototypes')
+        except ValueError:
+            pass
+        
         if hasattr(self,'compiler') and self.compiler[0].find('gcc')>=0:
             if sys.version[:3]>='2.3':
                 if not self.compiler_cxx:
