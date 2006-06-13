@@ -4,10 +4,15 @@
 
 
 cdef extern from "Python.h":
+    # Not part of the Python API, but we might as well define it here.
+    # Note that the exact type doesn't actually matter for Pyrex.
     ctypedef int size_t
+
+    # String API
     char* PyString_AsString(object string)
     object PyString_FromString(char* c_string)
 
+    # Memory API
     void* PyMem_Malloc(size_t n)
     void* PyMem_Realloc(void* buf, size_t n)
     void PyMem_Free(void* buf)
@@ -16,6 +21,17 @@ cdef extern from "Python.h":
     void Py_XDECREF(object obj)
     void Py_INCREF(object obj)
     void Py_XINCREF(object obj)
+
+    # CObject API
+    ctypedef void (*destructor1)(void* cobj)
+    ctypedef void (*destructor2)(void* cobj, void* desc)
+    int PyCObject_Check(object p)
+    object PyCObject_FromVoidPtr(void* cobj, destructor1 destr)
+    object PyCObject_FromVoidPtrAndDesc(void* cobj, void* desc, 
+        destructor2 destr)
+    void* PyCObject_AsVoidPtr(object self)
+    void* PyCObject_GetDesc(object self)
+    int PyCObject_SetVoidPtr(object self, void* cobj)
    
 cdef extern from "string.h":
     void *memcpy(void *s1, void *s2, int n)
