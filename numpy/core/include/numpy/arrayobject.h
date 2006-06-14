@@ -1004,6 +1004,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define OWNDATA       0x0004
 #define OWN_DATA      OWNDATA
 
+
 /* An array never has the next four set; they're only used as parameter
    flags to the the various FromAny functions */
 
@@ -1036,6 +1037,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
    this array when this array is deallocated
 */
 #define UPDATEIFCOPY  0x1000
+
+/* This flag is for the array interface */
+#define ARR_HAS_DESCR  0x0800
 
 
 #define BEHAVED_FLAGS ALIGNED | WRITEABLE
@@ -1455,10 +1459,14 @@ typedef struct {
     int flags;            /* how should be data interpreted. Valid
                              flags are CONTIGUOUS (1), FORTRAN (2),
                              ALIGNED (0x100), NOTSWAPPED (0x200), and
-                             WRITEABLE (0x400)*/
+                             WRITEABLE (0x400). 
+			     ARR_HAS_DESCR (0x800) states that arrdescr
+                                field is present in structure */
     intp *shape;          /* A length-nd array of shape information */
     intp *strides;        /* A length-nd array of stride information */
     void *data;           /* A pointer to the first element of the array */
+    PyObject *descr;      /* A list of fields or NULL (ignored if flags
+                                does not have ARR_HAS_DESCR flag set) */
 } PyArrayInterface;
 
 /* Includes the "function" C-API -- these are all stored in a

@@ -15,7 +15,7 @@ _unicode = unicode
 
 class chararray(ndarray):
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
-                offset=0, strides=None, order=None):
+                offset=0, strides=None, order='C'):
         global _globalvar
 
         if unicode:

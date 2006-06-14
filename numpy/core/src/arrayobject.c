@@ -5097,15 +5097,6 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 }
 
 
-static PyObject *
-array_protocol_strides_get(PyArrayObject *self)
-{
-	if PyArray_ISCONTIGUOUS(self) {
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	return PyArray_IntTupleFromIntp(self->nd, self->strides);
-}
 
 static PyObject *
 array_priority_get(PyArrayObject *self)
@@ -5116,6 +5107,55 @@ array_priority_get(PyArrayObject *self)
 		return PyFloat_FromDouble(PyArray_SUBTYPE_PRIORITY);
 }
 
+static PyObject *arraydescr_protocol_typestr_get(PyArray_Descr *);
+
+static PyObject *
+array_typestr_get(PyArrayObject *self)
+{
+	return arraydescr_protocol_typestr_get(self->descr);
+}
+
+static PyObject *
+array_descr_get(PyArrayObject *self)
+{
+	Py_INCREF(self->descr);
+	return (PyObject *)self->descr;
+}
+
+static PyObject *arraydescr_protocol_descr_get(PyArray_Descr *self);
+
+static PyObject *
+array_protocol_descr_get(PyArrayObject *self)
+{
+	PyObject *res;
+	PyObject *dobj;
+
+	res = arraydescr_protocol_descr_get(self->descr);
+	if (res) return res;
+	PyErr_Clear();
+
+	/* get default */
+	dobj = PyTuple_New(2);
+	if (dobj == NULL) return NULL;
+	PyTuple_SET_ITEM(dobj, 0, PyString_FromString(""));
+	PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
+	res = PyList_New(1);
+	if (res == NULL) {Py_DECREF(dobj); return NULL;}
+	PyList_SET_ITEM(res, 0, dobj);
+	return res;
+}
+
+static PyObject *
+array_protocol_strides_get(PyArrayObject *self)
+{
+	if PyArray_ISCONTIGUOUS(self) {
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+	return PyArray_IntTupleFromIntp(self->nd, self->strides);
+}
+
+
 
 static PyObject *
 array_dataptr_get(PyArrayObject *self)
@@ -5123,7 +5163,45 @@ array_dataptr_get(PyArrayObject *self)
 	return Py_BuildValue("NO",
 			     PyString_FromFormat("%p", self->data),
 			     (self->flags & WRITEABLE ? Py_False :
-			      Py_True));
+			     Py_True));
+}
+
+static PyObject *
+array_interface_get(PyArrayObject *self)
+{
+	PyObject *dict;
+	PyObject *obj;
+	dict = PyDict_New();
+	if (dict == NULL) return NULL;
+	/* dataptr
+	   typestr
+	   descr
+	   shape
+	   strides
+	*/
+	
+	/* dataptr */
+	obj = array_dataptr_get(self);
+	PyDict_SetItemString(dict, "data", obj);
+	Py_DECREF(obj);
+
+	obj = array_protocol_strides_get(self);
+	PyDict_SetItemString(dict, "strides", obj);
+	Py_DECREF(obj);
+
+	obj = array_protocol_descr_get(self);
+	PyDict_SetItemString(dict, "descr", obj);
+	Py_DECREF(obj);
+
+	obj = arraydescr_protocol_typestr_get(self->descr);
+	PyDict_SetItemString(dict, "typestr", obj);
+	Py_DECREF(obj);
+	
+	obj = array_shape_get(self);
+	PyDict_SetItemString(dict, "shape", obj);
+	Py_DECREF(obj);
+
+	return dict;
 }
 
 static PyObject *
@@ -5223,22 +5301,6 @@ array_nbytes_get(PyArrayObject *self)
 	else
 		return PyInt_FromLong((long) nbytes);
 #endif
-}
-
-
-static PyObject *arraydescr_protocol_typestr_get(PyArray_Descr *);
-
-static PyObject *
-array_typestr_get(PyArrayObject *self)
-{
-	return arraydescr_protocol_typestr_get(self->descr);
-}
-
-static PyObject *
-array_descr_get(PyArrayObject *self)
-{
-	Py_INCREF(self->descr);
-	return (PyObject *)self->descr;
 }
 
 
@@ -5343,27 +5405,6 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 }
 
 static PyObject *
-array_protocol_descr_get(PyArrayObject *self)
-{
-	PyObject *res;
-	PyObject *dobj;
-
-	res = PyObject_GetAttrString((PyObject *)self->descr, "descr");
-	if (res) return res;
-	PyErr_Clear();
-
-	/* get default */
-	dobj = PyTuple_New(2);
-	if (dobj == NULL) return NULL;
-	PyTuple_SET_ITEM(dobj, 0, PyString_FromString(""));
-	PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
-	res = PyList_New(1);
-	if (res == NULL) {Py_DECREF(dobj); return NULL;}
-	PyList_SET_ITEM(res, 0, dobj);
-	return res;
-}
-
-static PyObject *
 array_struct_get(PyArrayObject *self)
 {
         PyArrayInterface *inter;
@@ -5380,6 +5421,11 @@ array_struct_get(PyArrayObject *self)
         inter->strides = self->strides;
         inter->shape = self->dimensions;
         inter->data = self->data;
+	if (self->descr->fields && self->descr->fields != Py_None) {
+		inter->descr = arraydescr_protocol_descr_get(self->descr);
+		if (inter->descr == NULL) PyErr_Clear();
+		else inter->flags &= ARR_HAS_DESCR;
+	}
 	Py_INCREF(self);
         return PyCObject_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
 }
@@ -5667,30 +5713,14 @@ static PyGetSetDef array_getsetlist[] = {
 	 (getter)array_flat_get,
 	 (setter)array_flat_set,
 	 "a 1-d view of a contiguous array"},
-	{"__array_data__",
-	 (getter)array_dataptr_get,
+	{"__array_interface__",
+	 (getter)array_interface_get,
 	 NULL,
-	 "Array protocol: data"},
-	{"__array_typestr__",
-	 (getter)array_typestr_get,
-	 NULL,
-	 "Array protocol: typestr"},
-	{"__array_descr__",
-	 (getter)array_protocol_descr_get,
-	 NULL,
-	 "Array protocol: descr"},
-	{"__array_shape__",
-	 (getter)array_shape_get,
-	 NULL,
-	 "Array protocol: shape"},
-	{"__array_strides__",
-	 (getter)array_protocol_strides_get,
-	 NULL,
-	 "Array protocol: strides"},
+	 "Array protocol: Python side"},
         {"__array_struct__",
          (getter)array_struct_get,
          NULL,
-         "Array protocol: struct"},
+         "Array protocol: C-struct side"},
 	{"__array_priority__",
 	 (getter)array_priority_get,
 	 NULL,
@@ -5724,10 +5754,10 @@ static char Arraytype__doc__[] =
 	"  command. Arrays are sequence, mapping and numeric objects.\n"
 	"  More information is available in the numpy module and by looking\n"
 	"  at the methods and attributes of an array.\n\n"
-	"  ndarray.__new__(subtype, shape=, dtype=int_, buffer=None, \n"
-	"                  offset=0, strides=None, fortran=False)\n\n"
+	"  ndarray.__new__(subtype, shape=, dtype=int, buffer=None, \n"
+	"                  offset=0, strides=None, order=None)\n\n"
 	"   There are two modes of creating an array using __new__:\n"
-	"   1) If buffer is None, then only shape, dtype, and fortran \n"
+	"   1) If buffer is None, then only shape, dtype, and order \n"
 	"      are used\n"
 	"   2) If buffer is an object exporting the buffer interface, then\n"
 	"      all keywords are interpreted.\n"
@@ -5817,14 +5847,32 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
         if(PyString_Check(s) || PyBuffer_Check(s) || PyUnicode_Check(s))
 		return stop_at_string ? 0:1;
 	if (stop_at_tuple && PyTuple_Check(s)) return 0;
-	if ((e=PyObject_GetAttrString(s, "__array_shape__")) != NULL) {
-		if (PyTuple_Check(e)) d=PyTuple_GET_SIZE(e);
-		else d=-1;
+	if ((e=PyObject_GetAttrString(s, "__array_interface__")) != NULL) {
+		d = -1;
+		if (PyDict_Check(e)) {
+			PyObject *new;
+			new = PyDict_GetItemString(e, "shape");
+			if (new && PyTuple_Check(new)) 
+				d = PyTuple_GET_SIZE(new);
+		}
 		Py_DECREF(e);
 		if (d>-1) return d;
 	}
 	else PyErr_Clear();
-
+	if ((e=PyObject_GetAttrString(s, "__array_struct__")) != NULL) {
+		d = -1;
+		if (PyCObject_Check(e)) {
+			PyArrayInterface *inter;
+			inter = (PyArrayInterface *)PyCObject_AsVoidPtr(e);
+			if (inter->version == 2) {
+				d = inter->nd;
+			}
+		}
+		Py_DECREF(e);
+		if (d > -1) return d;
+	}
+	else PyErr_Clear();
+	
         if (PySequence_Length(s) == 0)
 		return 1;
         if ((e=PySequence_GetItem(s,0)) == NULL) return -1;
@@ -5997,9 +6045,14 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
             goto finish;
         }
 
-	if ((ip=PyObject_GetAttrString(op, "__array_typestr__"))!=NULL) {
-		if (PyString_Check(ip)) {
-			chktype =_array_typedescr_fromstr(PyString_AS_STRING(ip));
+	if ((ip=PyObject_GetAttrString(op, "__array_interface__"))!=NULL) {
+		if (PyDict_Check(ip)) {
+			PyObject *new;
+			new = PyDict_GetItemString(ip, "typestr");
+			if (new && PyString_Check(new)) {
+				chktype =_array_typedescr_fromstr	\
+					(PyString_AS_STRING(new));
+			}
 		}
 		Py_DECREF(ip);
                 if (chktype) goto finish;
@@ -6803,6 +6856,7 @@ PyArray_FromInterface(PyObject *input)
 {
 	PyObject *attr=NULL, *item=NULL;
         PyObject *tstr=NULL, *shape=NULL;
+	PyObject *inter=NULL;
         PyArrayObject *ret;
 	PyArray_Descr *type=NULL;
 	char *data;
@@ -6816,12 +6870,16 @@ PyArray_FromInterface(PyObject *input)
 	/* Get the typestring -- ignore array_descr */
 	/* Get the strides */
 
-        shape = PyObject_GetAttrString(input, "__array_shape__");
-        if (shape == NULL) {PyErr_Clear(); return Py_NotImplemented;}
-        tstr = PyObject_GetAttrString(input, "__array_typestr__");
-        if (tstr == NULL) {Py_DECREF(shape); PyErr_Clear(); return Py_NotImplemented;}
+	inter = PyObject_GetAttrString(input, "__array_interface__");
+	if (inter == NULL) {PyErr_Clear(); return Py_NotImplemented;}
+	if (!PyDict_Check(inter)) {Py_DECREF(inter); return Py_NotImplemented;}
 
-	attr = PyObject_GetAttrString(input, "__array_data__");
+	shape = PyDict_GetItemString(inter, "shape");
+        if (shape == NULL) {Py_DECREF(inter); return Py_NotImplemented;}
+        tstr = PyDict_GetItemString(inter, "typestr");
+        if (tstr == NULL) {Py_DECREF(inter); return Py_NotImplemented;}
+	
+	attr = PyDict_GetItemString(inter, "data");
 	if ((attr == NULL) || (attr==Py_None) || (!PyTuple_Check(attr))) {
 		if (attr && (attr != Py_None)) item=attr;
 		else item=input;
@@ -6834,24 +6892,22 @@ PyArray_FromInterface(PyObject *input)
 			if (res < 0) goto fail;
 			dataflags &= ~WRITEABLE;
 		}
-		Py_XDECREF(attr);
-		attr = PyObject_GetAttrString(input, "__array_offset__");
+		attr = PyDict_GetItemString(inter, "offset");
 		if (attr) {
 			long num = PyInt_AsLong(attr);
 			if (error_converting(num)) {
 				PyErr_SetString(PyExc_TypeError,
-						"__array_offset__ "\
+						"offset "\
 						"must be an integer");
 				goto fail;
 			}
 			data += num;
 		}
-		else PyErr_Clear();
 	}
 	else {
 		if (PyTuple_GET_SIZE(attr) != 2) {
 			PyErr_SetString(PyExc_TypeError,
-					"__array_data__ must return "	\
+					"data must return "	\
 					"a 2-tuple with ('data pointer "\
 					"string', read-only flag)");
 			goto fail;
@@ -6860,7 +6916,7 @@ PyArray_FromInterface(PyObject *input)
 			     "%p", (void **)&data);
 		if (res < 1) {
 			PyErr_SetString(PyExc_TypeError,
-					"__array_data__ string cannot be " \
+					"data string cannot be " \
 					"converted");
 			goto fail;
 		}
@@ -6868,20 +6924,16 @@ PyArray_FromInterface(PyObject *input)
 			dataflags &= ~WRITEABLE;
 		}
 	}
-	Py_XDECREF(attr);
 	attr = tstr;
 	if (!PyString_Check(attr)) {
-		PyErr_SetString(PyExc_TypeError, "__array_typestr__ must be a string");
-		Py_INCREF(attr); /* decref'd twice below */
+		PyErr_SetString(PyExc_TypeError, "typestr must be a string");
 		goto fail;
 	}
 	type = _array_typedescr_fromstr(PyString_AS_STRING(attr));
-	Py_DECREF(attr); attr=NULL; tstr=NULL;
 	if (type==NULL) goto fail;
 	attr = shape;
 	if (!PyTuple_Check(attr)) {
-		PyErr_SetString(PyExc_TypeError, "__array_shape__ must be a tuple");
-		Py_INCREF(attr); /* decref'd twice below */
+		PyErr_SetString(PyExc_TypeError, "shape must be a tuple");
 		Py_DECREF(type);
 		goto fail;
 	}
@@ -6891,7 +6943,6 @@ PyArray_FromInterface(PyObject *input)
 		dims[i] = PyArray_PyIntAsIntp(item);
 		if (error_converting(dims[i])) break;
 	}
-	Py_DECREF(attr); shape=NULL;
 
 	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, type,
 						    n, dims,
@@ -6901,21 +6952,18 @@ PyArray_FromInterface(PyObject *input)
 	Py_INCREF(input);
 	ret->base = input;
 
-	attr = PyObject_GetAttrString(input, "__array_strides__");
+	attr = PyDict_GetItemString(inter, "strides");
 	if (attr != NULL && attr != Py_None) {
 		if (!PyTuple_Check(attr)) {
 			PyErr_SetString(PyExc_TypeError,
-					"__array_strides__ must be a tuple");
-			Py_DECREF(attr);
+					"strides must be a tuple");
 			Py_DECREF(ret);
 			return NULL;
 		}
 		if (n != PyTuple_GET_SIZE(attr)) {
 			PyErr_SetString(PyExc_ValueError,
 					"mismatch in length of "\
-					"__array_strides__ and "\
-					"__array_shape__");
-			Py_DECREF(attr);
+					"strides and shape");
 			Py_DECREF(ret);
 			return NULL;
 		}
@@ -6924,18 +6972,16 @@ PyArray_FromInterface(PyObject *input)
 			strides[i] = PyArray_PyIntAsIntp(item);
 			if (error_converting(strides[i])) break;
 		}
-		Py_DECREF(attr);
 		if (PyErr_Occurred()) PyErr_Clear();
 		memcpy(ret->strides, strides, n*sizeof(intp));
 	}
 	else PyErr_Clear();
 	PyArray_UpdateFlags(ret, UPDATE_ALL_FLAGS);
+	Py_DECREF(inter);
 	return (PyObject *)ret;
 
  fail:
-	Py_XDECREF(attr);
-	Py_XDECREF(shape);
-	Py_XDECREF(tstr);
+	Py_XDECREF(inter);
 	return NULL;
 }
 
