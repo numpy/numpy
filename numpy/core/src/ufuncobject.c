@@ -3338,6 +3338,8 @@ ufunc_getattr(PyUFuncObject *self, char *name)
 static int
 ufunc_setattr(PyUFuncObject *self, char *name, PyObject *v) 
 {
+        PyErr_Format(PyExc_TypeError, "attribute '%s' is of 'numpy.ufunc' "\
+                     "objects is not writeable", name);
 	return -1;
 }
 
