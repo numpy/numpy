@@ -314,7 +314,6 @@ def gradient(f, *varargs):
 
     # use central differences on interior and first differences on endpoints
 
-    print dx
     outvals = []
 
     # create slice objects --- initially all are [:, :, ..., :]
