@@ -159,5 +159,17 @@ class test_choose(ScipyTestCase):
         a = array([True,True])
         assert_equal(choose(c, (a, 1)), array([1,1]))
 
+
+class test_choose(ScipyTestCase):
+    def test_attributes(self):
+        add = ncu.add
+        assert_equal(add.__name__, 'add')
+        assert_equal(add.__doc__, 'y = add(x1,x2) adds the arguments elementwise.')
+        self.failUnless(add.ntypes >= 18) # don't fail if types added
+        self.failUnless('ii->i' in add.types)
+        assert_equal(add.nin, 2)
+        assert_equal(add.nout, 1)
+        assert_equal(add.identity, 0)
+
 if __name__ == "__main__":
     ScipyTest().run()

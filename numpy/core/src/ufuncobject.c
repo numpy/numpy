@@ -3210,30 +3210,22 @@ static struct PyMethodDef ufunc_methods[] = {
 /* construct the string
  y1,y2,...,yn
 */
-
-static void
-_makeargs(int num, char ltr, char *str) 
+static PyObject *
+_makeargs(int num, char *ltr) 
 {
-	int ind=0;
-	int k;
-	static char *digits="123456789ABCDE";
-
-	if (num == 1) {
-		str[0] = ltr;
-		ind = 1;
+	PyObject *str;
+	int i;
+	switch (num) {
+	case 0:
+		return PyString_FromString("");
+	case 1:
+		return PyString_FromString(ltr);
 	}
-	else {
-		for (k=0; k<num; k++) {
-			str[3*k] = ltr;
-			str[3*k+1] = digits[k];
-			str[3*k+2] = ',';
-		}
-		/* overwrite last comma */
-		ind = 3*k-1;
+	str = PyString_FromFormat("%s1,%s2", ltr, ltr);
+	for(i = 3; i <= num; ++i) {
+		PyString_ConcatAndDel(&str, PyString_FromFormat(",%s%d", ltr, i));
 	}
-
-	str[ind] = '\0';
-	return;
+	return str;
 }
 
 static char
@@ -3248,104 +3240,123 @@ _typecharfromnum(int num) {
 } 
 
 static PyObject *
-ufunc_getattr(PyUFuncObject *self, char *name)
+ufunc_get_doc(PyUFuncObject *self)
 {
-	PyObject *obj;
 	/* Put docstring first or FindMethod finds it...*/
 	/* could so some introspection on name and nin + nout */
 	/* to automate the first part of it */
 	/* the doc string shouldn't need the calling convention */
-	if (strcmp(name, "__doc__") == 0) {
-		static char doc[256];
-		static char tmp1[3*MAX_ARGS+2];
-		static char tmp2[3*MAX_ARGS+2];
-		/* construct 
-		   y1,y2,,... = name(x1,x2,...) __doc__
-		*/		
-		_makeargs(self->nout, 'y', tmp1);
-		_makeargs(self->nin, 'x', tmp2);
-		snprintf(doc, 256, "%s = %s(%s) %s", tmp1, self->name, 
-			 tmp2, self->doc);
-		return PyString_FromString(doc);
-	}
-	obj = Py_FindMethod(ufunc_methods, (PyObject *)self, name);
-	if (obj != NULL) return obj;
-	PyErr_Clear();
-	if (strcmp(name, "nin") == 0) {
-		return PyInt_FromLong(self->nin);
-	}
-	else if (strcmp(name, "nout") == 0) {
-		return PyInt_FromLong(self->nout);
-	}
-	else if (strcmp(name, "nargs") == 0) {
-		return PyInt_FromLong(self->nargs);
-	}
-	else if (strcmp(name, "ntypes") == 0) {
-		return PyInt_FromLong(self->ntypes);
-	}
-	else if (strcmp(name, "types") == 0) {
-		/* return a list with types grouped
-		 input->output */
-		PyObject *list;
-		PyObject *str;
-		int k, j, n, nt=self->ntypes;
-		int ni = self->nin;
-		int no = self->nout;
-		char *t;
-		list = PyList_New(nt);
-		if (list == NULL) return NULL;
-		t = _pya_malloc(no+ni+2);
-		n = 0;
-		for (k=0; k<nt; k++) {
-			for (j=0; j<ni; j++) {
-				t[j] = _typecharfromnum(self->types[n]);
-				n++;
-			}
-			t[ni] = '-';
-			t[ni+1] = '>';
-			for (j=0; j<no; j++) {
-				t[ni+2+j] =				\
-					_typecharfromnum(self->types[n]);
-				n++;
-			}
-			str = PyString_FromStringAndSize(t, no+ni+2);
-			PyList_SET_ITEM(list, k, str);
-		}
-		_pya_free(t);
-		return list;
-		
-	}
-	else if (strcmp(name, "__name__") == 0) {
-		return PyString_FromString(self->name);
-	}
-	else if (strcmp(name, "identity") == 0) {
-		switch(self->identity) {
-		case PyUFunc_One:
-			return PyInt_FromLong(1);
-		case PyUFunc_Zero:
-			return PyInt_FromLong(0);
-		default:
-			Py_INCREF(Py_None);
-			return Py_None;
-		}
-	}
-	PyErr_SetString(PyExc_AttributeError, name);
-	return NULL;
+	/* construct 
+	   y1,y2,,... = name(x1,x2,...) __doc__
+	*/
+	PyObject *outargs, *inargs, *doc;
+	outargs = _makeargs(self->nout, "y");
+	inargs = _makeargs(self->nin, "x");
+	doc = PyString_FromFormat("%s = %s(%s) %s", 
+				  PyString_AS_STRING(outargs),
+				  self->name, 
+				  PyString_AS_STRING(inargs),
+				  self->doc);
+	Py_DECREF(outargs);
+	Py_DECREF(inargs);
+	return doc;
 }
+
+static PyObject *
+ufunc_get_nin(PyUFuncObject *self)
+{
+	return PyInt_FromLong(self->nin);
+}
+
+static PyObject *
+ufunc_get_nout(PyUFuncObject *self)
+{
+	return PyInt_FromLong(self->nout);
+}
+
+static PyObject *
+ufunc_get_nargs(PyUFuncObject *self)
+{
+	return PyInt_FromLong(self->nargs);
+}
+
+static PyObject *
+ufunc_get_ntypes(PyUFuncObject *self)
+{
+	return PyInt_FromLong(self->ntypes);
+}
+
+static PyObject *
+ufunc_get_types(PyUFuncObject *self)
+{
+	/* return a list with types grouped
+	   input->output */
+	PyObject *list;
+	PyObject *str;
+	int k, j, n, nt=self->ntypes;
+	int ni = self->nin;
+	int no = self->nout;
+	char *t;
+	list = PyList_New(nt);
+	if (list == NULL) return NULL;
+	t = _pya_malloc(no+ni+2);
+	n = 0;
+	for (k=0; k<nt; k++) {
+		for (j=0; j<ni; j++) {
+			t[j] = _typecharfromnum(self->types[n]);
+			n++;
+		}
+		t[ni] = '-';
+		t[ni+1] = '>';
+		for (j=0; j<no; j++) {
+			t[ni+2+j] =					\
+				_typecharfromnum(self->types[n]);
+			n++;
+		}
+		str = PyString_FromStringAndSize(t, no+ni+2);
+		PyList_SET_ITEM(list, k, str);
+	}
+	_pya_free(t);
+	return list;
+	
+}
+
+static PyObject *
+ufunc_get_name(PyUFuncObject *self)
+{
+	return PyString_FromString(self->name);
+}
+
+static PyObject *
+ufunc_get_identity(PyUFuncObject *self)
+{
+	switch(self->identity) {
+	case PyUFunc_One:
+		return PyInt_FromLong(1);
+	case PyUFunc_Zero:
+		return PyInt_FromLong(0);
+	}
+	return Py_None;
+}
+
 
 #undef _typecharfromnum
-
-static int
-ufunc_setattr(PyUFuncObject *self, char *name, PyObject *v) 
-{
-        PyErr_Format(PyExc_TypeError, "attribute '%s' is of 'numpy.ufunc' "\
-                     "objects is not writeable", name);
-	return -1;
-}
 
 static char Ufunctype__doc__[] = 
 	"Optimized functions make it possible to implement arithmetic "\
 	"with arrays efficiently";
+
+static PyGetSetDef ufunc_getset[] = {
+	{"__doc__",  (getter)ufunc_get_doc,      NULL, "documentation string"},
+	{"nin",      (getter)ufunc_get_nin,      NULL, "number of inputs"},
+	{"nout",     (getter)ufunc_get_nout,     NULL, "number of outputs"},
+	{"nargs",    (getter)ufunc_get_nargs,    NULL, "number of arguments"},
+	{"ntypes",   (getter)ufunc_get_ntypes,   NULL, "number of types"},
+	{"types",    (getter)ufunc_get_types,    NULL, "return a list with types grouped input->output"},
+	{"__name__", (getter)ufunc_get_name,     NULL, "function name"},
+	{"identity", (getter)ufunc_get_identity, NULL, "identity value"},
+	{NULL, NULL, NULL, NULL},  /* Sentinel */
+};
 
 static PyTypeObject PyUFunc_Type = {
 	PyObject_HEAD_INIT(0)
@@ -3356,20 +3367,30 @@ static PyTypeObject PyUFunc_Type = {
 	/* methods */
 	(destructor)ufunc_dealloc,	/*tp_dealloc*/
 	(printfunc)0,		        /*tp_print*/
-	(getattrfunc)ufunc_getattr,	/*tp_getattr*/
-	(setattrfunc)ufunc_setattr,	/*tp_setattr*/
+	(getattrfunc)0,         	/*tp_getattr*/
+	(setattrfunc)0,	                /*tp_setattr*/
 	(cmpfunc)0,	          	/*tp_compare*/
 	(reprfunc)ufunc_repr,		/*tp_repr*/
 	0,			       /*tp_as_number*/
 	0,		               /*tp_as_sequence*/
 	0,		               /*tp_as_mapping*/
-	(hashfunc)0,		/*tp_hash*/
+	(hashfunc)0,		       /*tp_hash*/
 	(ternaryfunc)ufunc_generic_call,		/*tp_call*/
-	(reprfunc)ufunc_repr,		/*tp_str*/
-		
-	/* Space for future expansion */
-	0L,0L,0L,0L,
-	Ufunctype__doc__ /* Documentation string */
+	(reprfunc)ufunc_repr,	       /*tp_str*/
+        0,	          	       /* tp_getattro */
+        0,			       /* tp_setattro */
+        0,			       /* tp_as_buffer */
+        Py_TPFLAGS_DEFAULT,            /* tp_flags */
+	Ufunctype__doc__,              /* tp_doc */
+        0,	                       /* tp_traverse */
+        0,			       /* tp_clear */
+        0,			       /* tp_richcompare */
+        0,			       /* tp_weaklistoffset */
+        0,	                       /* tp_iter */
+        0,		               /* tp_iternext */
+	ufunc_methods,                 /* tp_methods */
+        0,		               /* tp_members */
+        ufunc_getset,		       /* tp_getset */
 };
 
 /* End of code for ufunc objects */
