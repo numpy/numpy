@@ -169,7 +169,6 @@ def convolve(a,v,mode='full'):
     mode = _mode_from_name(mode)
     return multiarray.correlate(a,asarray(v)[::-1],mode)
 
-
 inner = multiarray.inner
 dot = multiarray.dot
 

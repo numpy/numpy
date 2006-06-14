@@ -3719,10 +3719,6 @@ _myunincmp(PyArray_UCS4 *s1, PyArray_UCS4 *s2, int len1, int len2)
 	if (len2 > len1) {sptr = s2+len1; val = -1;}
 	else {sptr = s1+len2; val = 1;}
 	if (*sptr != 0) return val;
-
-	if (len2 > len1) {sptr = s2; val = -1;}
-	else {sptr = s1; val = 1;}
-	if (*sptr != 0) return val;
 	return 0;
 }
 

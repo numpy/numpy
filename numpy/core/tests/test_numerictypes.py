@@ -50,7 +50,7 @@ Ndescr = [
         ('z2', 'b1')]),
     ('color', 'S2'),
     ('info', [
-        ('Name', 'U8'),  # Try out 'U8' when interpretation of Unicode strings is more clear
+        ('Name', 'U8'),  
         ('Value', 'c16')]),
     ('y', 'f8', (2, 2)),
     ('z', 'u1')]
