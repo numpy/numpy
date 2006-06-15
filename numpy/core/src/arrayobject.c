@@ -3709,6 +3709,11 @@ PyArray_CompareUCS4(PyArray_UCS4 *s1, PyArray_UCS4 *s2, register size_t len)
 }
 
 /* This also handles possibly mis-aligned data */
+/* Compare s1 and s2 which are not necessarily NULL-terminated.  
+   s1 is of length len1
+   s2 is of length len2
+   If they are NULL terminated, then stop comparison.
+*/
 static int
 _myunincmp(PyArray_UCS4 *s1, PyArray_UCS4 *s2, int len1, int len2)
 {
