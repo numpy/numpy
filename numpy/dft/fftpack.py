@@ -315,9 +315,10 @@ def irfft2(a, s=None, axes=(-2,-1)):
     return irfftn(a, s, axes)
 
 # Deprecated names
-refft = rfft
-irefft = irfft
-refft2 = rfft2
-irefft2 = irfft2
-refftn = rfftn
-irefftn = irfftn
+from numpy import deprecate
+refft = deprecate(rfft, 'refft', 'rfft')
+irefft = deprecate(irfft, 'irefft', 'irfft')
+refft2 = deprecate(rfft2, 'refft2', 'rfft2')
+irefft2 = deprecate(irfft2, 'irefft2', 'irfft2')
+refftn = deprecate(rfftn, 'refftn', 'rfftn')
+irefftn = deprecate(irfftn, 'irefftn', 'irfftn')

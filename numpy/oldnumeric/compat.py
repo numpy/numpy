@@ -129,24 +129,19 @@ except AttributeError:
 else:
     __all__ += ['Complex128']
 
-def _deprecate(func, oldname, newname):
-    import warnings
-    def newfunc(*args,**kwds):
-        warnings.warn("%s is deprecated, use %s" % (oldname, newname),
-                      DeprecationWarning)
-        return func(*args, **kwds)
-    return newfunc
+
+from numpy import deprecate 
 
 # backward compatibility
-arrayrange = _deprecate(mu.arange, 'arrayrange', 'arange')
-cross_correlate = _deprecate(correlate, 'cross_correlate', 'correlate')
-cross_product = _deprecate(cross, 'cross_product', 'cross')
-divide_safe = _deprecate(um.divide, 'divide_safe', 'divide')
+arrayrange = deprecate(mu.arange, 'arrayrange', 'arange')
+cross_correlate = deprecate(correlate, 'cross_correlate', 'correlate')
+cross_product = deprecate(cross, 'cross_product', 'cross')
+divide_safe = deprecate(um.divide, 'divide_safe', 'divide')
 
 # deprecated names
-matrixmultiply = _deprecate(mu.dot, 'matrixmultiply', 'dot')
-outerproduct = _deprecate(outer, 'outerproduct', 'outer')
-innerproduct = _deprecate(mu.inner, 'innerproduct', 'inner')
+matrixmultiply = deprecate(mu.dot, 'matrixmultiply', 'dot')
+outerproduct = deprecate(outer, 'outerproduct', 'outer')
+innerproduct = deprecate(mu.inner, 'innerproduct', 'inner')
 
 
 
