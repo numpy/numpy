@@ -41,5 +41,10 @@ def deprecate(func, oldname, newname):
     else:
         doc = '\n'.join([depdoc, doc])
     newfunc.__doc__ = doc
-    newfunc.__dict__.update(func.__dict__)
+    try:
+        d = func.__dict__
+    except AttributeError:
+        pass
+    else:
+        newfunc.__dict__.update(d)
     return newfunc
