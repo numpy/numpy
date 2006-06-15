@@ -33,4 +33,13 @@ def deprecate(func, oldname, newname):
         warnings.warn("%s is deprecated, use %s" % (oldname, newname),
                       DeprecationWarning)
         return func(*args, **kwds)
+    newfunc.__name__ = oldname
+    doc = func.__doc__
+    depdoc = '%s is DEPRECATED in numpy: use %s instead' % (oldname, newname,)
+    if doc is None:
+        doc = depdoc
+    else:
+        doc = '\n'.join([depdoc, doc])
+    newfunc.__doc__ = doc
+    newfunc.__dict__.update(func.__dict__)
     return newfunc
