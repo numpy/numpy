@@ -270,7 +270,7 @@ def rfftn(a, s=None, axes=None):
     """rfftn(a, s=None, axes=None)
 
     The n-dimensional discrete Fourier transform of a real array a. A real
-    transform as real_fft is performed along the axis specified by the last
+    transform as rfft is performed along the axis specified by the last
     element of axes, then complex transforms as fft are performed along the
     other axes."""
 
@@ -287,16 +287,15 @@ def rfft2(a, s=None, axes=(-2,-1)):
     The 2d fft of the real valued array a. This is really just rfftn with
     different default behavior."""
 
-    return real_fftnd(a, s, axes)
-
+    return rfftn(a, s, axes)
 
 def irfftn(a, s=None, axes=None):
     """irfftn(a, s=None, axes=None)
 
-    The inverse of rfftn. The transform implemented in inverse_fft is
+    The inverse of rfftn. The transform implemented in ifft is
     applied along all axes but the last, then the transform implemented in
-    inverse_real_fft is performed along the last axis. As with
-    inverse_real_fft, the length of the result along that axis must be
+    irfft is performed along the last axis. As with
+    irfft, the length of the result along that axis must be
     specified if it is to be odd."""
 
     a = asarray(a).astype(complex)

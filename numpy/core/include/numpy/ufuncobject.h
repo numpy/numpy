@@ -249,7 +249,7 @@ typedef struct {
 /* Solaris --------------------------------------------------------*/
 /* --------ignoring SunOS ieee_flags approach, someone else can
 **         deal with that! */
-#elif defined(sun) || defined(__BSD__) 
+#elif defined(sun) || defined(__BSD__) || defined(__OpenBSD__) 
 #include <ieeefp.h>
 
 #define UFUNC_CHECK_STATUS(ret) {				\
