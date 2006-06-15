@@ -3708,19 +3708,38 @@ PyArray_CompareUCS4(PyArray_UCS4 *s1, PyArray_UCS4 *s2, register size_t len)
 	return 0;
 }
 
+/* This also handles possibly mis-aligned data */
 static int
 _myunincmp(PyArray_UCS4 *s1, PyArray_UCS4 *s2, int len1, int len2)
 {
 	PyArray_UCS4 *sptr;
+	PyArray_UCS4 *s1t=s1, *s2t=s2;
 	int val;
+	intp size;
 
-	val = PyArray_CompareUCS4(s1, s2, MIN(len1, len2));
-	if ((val != 0) || (len1 == len2)) return val;
-	if (len2 > len1) {sptr = s2+len1; val = -1;}
-	else {sptr = s1+len2; val = 1;}
-	if (*sptr != 0) return val;
-	return 0;
+	if ((intp)s1 % sizeof(PyArray_UCS4) != 0) {
+		size = len1*sizeof(PyArray_UCS4);
+		s1t = malloc(size);
+		memcpy(s1t, s1, size);
+	}
+	if ((intp)s2 % sizeof(PyArray_UCS4) != 0) {
+		size = len2*sizeof(PyArray_UCS4);
+		s2t = malloc(size);
+		memcpy(s2t, s2, size);
+	}	
+	val = PyArray_CompareUCS4(s1t, s2t, MIN(len1,len2));
+	if ((val != 0) || (len1 == len2)) goto finish;
+	if (len2 > len1) {sptr = s2t+len1; val = -1;}
+	else {sptr = s1t+len2; val = 1;}
+	if (*sptr != 0) goto finish;
+	val = 0;
+	
+ finish:
+	if (s1t != s1) free(s1t);
+	if (s2t != s2) free(s2t);
+	return val;
 }
+
 
 
 
