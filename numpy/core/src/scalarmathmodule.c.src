@@ -441,10 +441,9 @@ static void
    #rname= float, double, longdouble#
 **/
 static void
-@name@_ctype_absolute(@name@ a, @name@ *out)
+@name@_ctype_absolute(@name@ a, @rname@ *out)
 {
-    out->real = _basic_@rname@_sqrt(a.real*a.real + a.imag*a.imag);
-    out->imag = 0;
+    *out = _basic_@rname@_sqrt(a.real*a.real + a.imag*a.imag);
 }
 /**end repeat**/
 
@@ -716,13 +715,15 @@ static PyObject *
 
 /**begin repeat
    #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*3, byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
-   #Name=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*3, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong#
+   #otyp=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*2,byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,float,double,longdouble,byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
+   #OName=(Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble)*2, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, Float, Double, LongDouble, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong#
    #oper=negative*16, positive*16, absolute*16, invert*10#
 **/
 static PyObject *
 @name@_@oper@(PyObject *a)
 {
-    @name@ arg1, out;
+    @name@ arg1;
+    @otyp@ out;
     PyObject *ret;
 	
     switch(_@name@_convert_to_ctype(a, &arg1)) {
@@ -741,8 +742,8 @@ static PyObject *
 
     @name@_ctype_@oper@(arg1, &out);
 
-    ret = PyArrayScalar_New(@Name@);
-    PyArrayScalar_ASSIGN(ret, @Name@, out);
+    ret = PyArrayScalar_New(@OName@);
+    PyArrayScalar_ASSIGN(ret, @OName@, out);
 
     return ret;
 }
