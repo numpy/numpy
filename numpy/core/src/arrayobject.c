@@ -5181,7 +5181,7 @@ static PyObject *
 array_dataptr_get(PyArrayObject *self)
 {
 	return Py_BuildValue("NO",
-			     PyString_FromFormat("%p", self->data),
+			     PyLong_FromVoidPtr(self->data),
 			     (self->flags & WRITEABLE ? Py_False :
 			     Py_True));
 }
@@ -5193,12 +5193,6 @@ array_interface_get(PyArrayObject *self)
 	PyObject *obj;
 	dict = PyDict_New();
 	if (dict == NULL) return NULL;
-	/* dataptr
-	   typestr
-	   descr
-	   shape
-	   strides
-	*/
 	
 	/* dataptr */
 	obj = array_dataptr_get(self);
@@ -5219,6 +5213,10 @@ array_interface_get(PyArrayObject *self)
 	
 	obj = array_shape_get(self);
 	PyDict_SetItemString(dict, "shape", obj);
+	Py_DECREF(obj);
+
+	obj = PyInt_FromLong(3);
+	PyDict_SetItemString(dict, "version", obj);
 	Py_DECREF(obj);
 
 	return dict;
@@ -5428,9 +5426,10 @@ static PyObject *
 array_struct_get(PyArrayObject *self)
 {
         PyArrayInterface *inter;
+	PyObject *tup;
 
         inter = (PyArrayInterface *)_pya_malloc(sizeof(PyArrayInterface));
-        inter->version = 2;
+        inter->dummy = 2;
         inter->nd = self->nd;
         inter->typekind = self->descr->kind;
         inter->itemsize = self->descr->elsize;
@@ -5438,16 +5437,31 @@ array_struct_get(PyArrayObject *self)
         /* reset unused flags */
 	inter->flags &= ~(UPDATEIFCOPY | OWNDATA);
 	if (PyArray_ISNOTSWAPPED(self)) inter->flags |= NOTSWAPPED;
-        inter->strides = self->strides;
-        inter->shape = self->dimensions;
+	/* Copy shape and strides over since these can be reset 
+	   when the array is "reshaped".
+	*/
+	if (self->nd > 0) {
+		inter->shape = (intp *)_pya_malloc(2*sizeof(intp)*self->nd);
+		inter->strides = inter->shape + self->nd;
+		memcpy(inter->shape, self->dimensions, self->nd);
+		memcpy(inter->strides, self->strides, self->nd);
+	}
+	else {
+		inter->shape = NULL;
+		inter->strides = NULL;
+	}
         inter->data = self->data;
 	if (self->descr->fields && self->descr->fields != Py_None) {
 		inter->descr = arraydescr_protocol_descr_get(self->descr);
 		if (inter->descr == NULL) PyErr_Clear();
 		else inter->flags &= ARR_HAS_DESCR;
 	}
+	tup = PyTuple_New(2);
+	PyTuple_SET_ITEM(tup, 0, 
+			 PyString_FromString("PyArrayInterface Version 3"));
+	PyTuple_SET_ITEM(tup, 1, (PyObject *)self);
 	Py_INCREF(self);
-        return PyCObject_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
+        return PyCObject_FromVoidPtrAndDesc(inter, tup, gentype_struct_free);
 }
 
 static PyObject *
@@ -5884,7 +5898,7 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
 		if (PyCObject_Check(e)) {
 			PyArrayInterface *inter;
 			inter = (PyArrayInterface *)PyCObject_AsVoidPtr(e);
-			if (inter->version == 2) {
+			if (inter->dummy == 2) {
 				d = inter->nd;
 			}
 		}
@@ -6084,7 +6098,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
                 char buf[40];
                 if (PyCObject_Check(ip)) {
                         inter=(PyArrayInterface *)PyCObject_AsVoidPtr(ip);
-                        if (inter->version == 2) {
+                        if (inter->dummy == 2) {
                                 snprintf(buf, 40, "|%c%d", inter->typekind,
 					 inter->itemsize);
 				chktype = _array_typedescr_fromstr(buf);
@@ -6843,7 +6857,7 @@ PyArray_FromStructInterface(PyObject *input)
 	}
         if (!PyCObject_Check(attr) ||                                   \
             ((inter=((PyArrayInterface *)\
-		     PyCObject_AsVoidPtr(attr)))->version != 2)) {
+		     PyCObject_AsVoidPtr(attr)))->dummy != 2)) {
                 PyErr_SetString(PyExc_ValueError, "invalid __array_struct__");
 		Py_DECREF(attr);
                 return NULL;
@@ -6869,6 +6883,8 @@ PyArray_FromStructInterface(PyObject *input)
         PyArray_UpdateFlags((PyArrayObject *)r, UPDATE_ALL_FLAGS);
         return r;
 }
+
+#define PyIntOrLong_Check(obj) (PyInt_Check(obj) || PyLong_Check(obj))
 
 /*OBJECT_API*/
 static PyObject *
@@ -6925,19 +6941,32 @@ PyArray_FromInterface(PyObject *input)
 		}
 	}
 	else {
+		PyObject *dataptr;
 		if (PyTuple_GET_SIZE(attr) != 2) {
 			PyErr_SetString(PyExc_TypeError,
 					"data must return "	\
-					"a 2-tuple with ('data pointer "\
-					"string', read-only flag)");
+					"a 2-tuple with (data pointer "\
+					"integer, read-only flag)");
 			goto fail;
 		}
-		res = sscanf(PyString_AsString(PyTuple_GET_ITEM(attr,0)),
-			     "%p", (void **)&data);
-		if (res < 1) {
-			PyErr_SetString(PyExc_TypeError,
-					"data string cannot be " \
-					"converted");
+		dataptr = PyTuple_GET_ITEM(attr, 0);
+		if (PyString_Check(dataptr)) {
+			res = sscanf(PyString_AsString(dataptr),
+				     "%p", (void **)&data);
+			if (res < 1) {
+				PyErr_SetString(PyExc_TypeError,
+						"data string cannot be " \
+						"converted");
+				goto fail;
+			}
+		}
+		else if (PyIntOrLong_Check(dataptr)) {
+			data = PyLong_AsVoidPtr(dataptr);
+		}
+		else {
+			PyErr_SetString(PyExc_TypeError, "first element " \
+					"of data tuple must be integer"	\
+					" or string.");
 			goto fail;
 		}
 		if (PyObject_IsTrue(PyTuple_GET_ITEM(attr,1))) {

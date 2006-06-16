@@ -712,9 +712,12 @@ gentype_size_get(PyObject *self)
 }
 
 static void
-gentype_struct_free(void *ptr, void *arr)
+gentype_struct_free(void *ptr, void *arg)
 {
-        Py_DECREF((PyObject *)arr);
+        Py_DECREF((PyObject *)arg);
+	if (((PyArrayInterface *)ptr)->shape != NULL) {
+		_pya_free(((PyArrayInterface *)ptr)->shape);
+	}
         _pya_free(ptr);
 }
 
@@ -723,10 +726,11 @@ gentype_struct_get(PyObject *self)
 {
         PyArrayObject *arr;
         PyArrayInterface *inter;
-        
+	PyObject *tup;
+ 
         arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
         inter = (PyArrayInterface *)_pya_malloc(sizeof(PyArrayInterface));
-        inter->version = 2;
+        inter->dummy = 2;
         inter->nd = 0;
         inter->flags = arr->flags;
         inter->typekind = arr->descr->kind;
@@ -734,7 +738,12 @@ gentype_struct_get(PyObject *self)
         inter->strides = NULL;
         inter->shape = NULL;
         inter->data = arr->data;
-        return PyCObject_FromVoidPtrAndDesc(inter, arr, gentype_struct_free);
+
+	tup = PyTuple_New(2);
+	PyTuple_SET_ITEM(tup, 0, 
+			 PyString_FromString("PyArrayInterface Version 3"));
+	PyTuple_SET_ITEM(tup, 1, (PyObject *)arr);
+	return PyCObject_FromVoidPtrAndDesc(inter, tup, gentype_struct_free);
 }
 
 static PyObject *
