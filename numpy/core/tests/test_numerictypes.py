@@ -322,13 +322,13 @@ class read_values_nested:
 class test_read_values_nested_single(read_values_nested, NumpyTestCase):
     """Check the values of heterogeneous arrays (nested, single row)"""
     _descr = Ndescr
-    multiple_rows = 0
+    multiple_rows = False
     _buffer = NbufferT[0]
 
 class test_read_values_nested_multiple(read_values_nested, NumpyTestCase):
     """Check the values of heterogeneous arrays (nested, multiple rows)"""
     _descr = Ndescr
-    multiple_rows = 1
+    multiple_rows = True
     _buffer = NbufferT
 
 

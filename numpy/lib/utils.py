@@ -1,3 +1,4 @@
+import sys
 from numpy.core.numerictypes import obj2sctype
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype', 'deprecate']
@@ -27,13 +28,25 @@ def get_numpy_include():
     assert len(include_dirs)==1,`include_dirs`
     return include_dirs[0]
 
+if sys.version_info < (2, 4):
+    # Can't set __name__ in 2.3
+    import new
+    def _set_function_name(func, name):
+        func = new.function(func.func_code, func.func_globals,
+                            name, func.func_defaults, func.func_closure)
+        return func
+else:
+    def _set_function_name(func, name):
+        func.__name__ = name
+        return func
+
 def deprecate(func, oldname, newname):
     import warnings
     def newfunc(*args,**kwds):
         warnings.warn("%s is deprecated, use %s" % (oldname, newname),
                       DeprecationWarning)
         return func(*args, **kwds)
-    newfunc.__name__ = oldname
+    newfunc = _set_function_name(newfunc, oldname)
     doc = func.__doc__
     depdoc = '%s is DEPRECATED in numpy: use %s instead' % (oldname, newname,)
     if doc is None:

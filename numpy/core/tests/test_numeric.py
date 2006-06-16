@@ -164,7 +164,8 @@ class test_seterr(ScipyTestCase):
 class test_fromiter(ScipyTestCase):
     
     def makegen(self):
-        return (x**2 for x in xrange(24)) 
+        for x in xrange(24):
+            yield x**2
             
     def test_types(self):
         ai32 = fromiter(self.makegen(), int32)
