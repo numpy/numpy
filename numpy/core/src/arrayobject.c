@@ -5443,8 +5443,8 @@ array_struct_get(PyArrayObject *self)
 	if (self->nd > 0) {
 		inter->shape = (intp *)_pya_malloc(2*sizeof(intp)*self->nd);
 		inter->strides = inter->shape + self->nd;
-		memcpy(inter->shape, self->dimensions, self->nd);
-		memcpy(inter->strides, self->strides, self->nd);
+		memcpy(inter->shape, self->dimensions, sizeof(intp)*self->nd);
+		memcpy(inter->strides, self->strides, sizeof(intp)*self->nd);
 	}
 	else {
 		inter->shape = NULL;
@@ -6845,6 +6845,7 @@ static PyObject *
 PyArray_FromStructInterface(PyObject *input)
 {
 	PyArray_Descr *thetype;
+	PyObject *obj;
 	char buf[40];
 	PyArrayInterface *inter;
 	PyObject *attr, *r;
@@ -6855,13 +6856,13 @@ PyArray_FromStructInterface(PyObject *input)
 		PyErr_Clear();
 		return Py_NotImplemented;
 	}
-        if (!PyCObject_Check(attr) ||                                   \
-            ((inter=((PyArrayInterface *)\
-		     PyCObject_AsVoidPtr(attr)))->dummy != 2)) {
-                PyErr_SetString(PyExc_ValueError, "invalid __array_struct__");
-		Py_DECREF(attr);
-                return NULL;
-        }
+	if (!PyCObject_Check(attr)) goto fail;
+	if (PyTuple_Check((obj = (PyObject *)PyCObject_GetDesc(attr))) && 
+	    PyString_Check(PyTuple_GET_ITEM(obj, 0)) &&
+	    strncmp(PyString_AsString(PyTuple_GET_ITEM(obj, 0)),
+		    "PyArrayInterface Version", 24)) goto fail;
+
+	inter = PyCObject_AsVoidPtr(attr);
 	if ((inter->flags & NOTSWAPPED) != NOTSWAPPED) {
 		endian = PyArray_OPPBYTE;
 		inter->flags &= ~NOTSWAPPED;
@@ -6882,6 +6883,11 @@ PyArray_FromStructInterface(PyObject *input)
         Py_DECREF(attr);
         PyArray_UpdateFlags((PyArrayObject *)r, UPDATE_ALL_FLAGS);
         return r;
+
+ fail:
+	PyErr_SetString(PyExc_ValueError, "invalid __array_struct__");
+	Py_DECREF(attr);
+	return NULL;
 }
 
 #define PyIntOrLong_Check(obj) (PyInt_Check(obj) || PyLong_Check(obj))
