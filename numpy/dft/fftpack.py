@@ -251,7 +251,7 @@ def ifftn(a, s=None, axes=None):
 def fft2(a, s=None, axes=(-2,-1)):
     """fft2(a, s=None, axes=(-2,-1))
 
-    The 2d fft of a. This is really just fftnd with different default
+    The 2d fft of a. This is really just fftn with different default
     behavior."""
 
     return _raw_fftnd(a,s,axes,fft)
@@ -260,7 +260,7 @@ def fft2(a, s=None, axes=(-2,-1)):
 def ifft2(a, s=None, axes=(-2,-1)):
     """ifft2(a, s=None, axes=(-2, -1))
 
-    The inverse of fft2d. This is really just inverse_fftnd with different
+    The inverse of fft2d. This is really just ifftn with different
     default behavior."""
 
     return _raw_fftnd(a, s, axes, ifft)
