@@ -1385,7 +1385,7 @@ def generate_config_py(target):
     f.write('__all__ = ["get_info","show"]\n\n')
     for k, i in system_info.saved_results.items():
         f.write('%s=%r\n' % (k, i))
-    f.write('\ndef get_info(name): g=globals(); return g.get(name,g.get(name+"_info",{}))\n')
+    f.write('\ndef get_info(name):\n    g=globals()\n    return g.get(name,g.get(name+"_info",{}))\n')
     f.write('''
 def show():
     for name,info_dict in globals().items():
