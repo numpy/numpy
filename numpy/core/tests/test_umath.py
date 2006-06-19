@@ -12,6 +12,9 @@ class test_power(ScipyTestCase):
         assert_equal(x**0, [1., 1., 1.])
         assert_equal(x**1, x)
         assert_equal(x**2, [1., 4., 9.])
+        y = x.copy()
+        y **= 2
+        assert_equal(y, [1., 4., 9.])
         assert_almost_equal(x**(-1), [1., 0.5, 1./3])
         assert_almost_equal(x**(0.5), [1., ncu.sqrt(2), ncu.sqrt(3)])
 

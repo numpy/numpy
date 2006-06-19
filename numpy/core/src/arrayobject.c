@@ -2999,7 +2999,7 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace) {
 				return NULL;
 			}
 			if (inplace) {
-				PyArray_GenericInplaceUnaryFunction(a1, 
+				return PyArray_GenericInplaceUnaryFunction(a1, 
 								    fastop);
 			} else {
 				return PyArray_GenericUnaryFunction(a1, 
