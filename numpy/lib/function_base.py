@@ -7,7 +7,7 @@ __all__ = ['logspace', 'linspace',
            'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
            'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort',
            'median', 'sinc', 'hamming', 'hanning', 'bartlett', 'blackman',
-           'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
+           'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring', 'meshgrid'
            ]
 
 import types
@@ -879,3 +879,38 @@ def add_newdoc(place, obj, doc):
                 add_docstring(getattr(new[obj], val[0]), val[1].strip())
     except:
         pass
+
+
+# From matplotlib
+def meshgrid(x,y):
+    """
+    For vectors x, y with lengths Nx=len(x) and Ny=len(y), return X, Y
+    where X and Y are (Ny, Nx) shaped arrays with the elements of x
+    and y repeated to fill the matrix
+
+    EG,
+
+      [X, Y] = meshgrid([1,2,3], [4,5,6,7])
+
+       X =
+         1   2   3
+         1   2   3
+         1   2   3
+         1   2   3
+
+
+       Y =
+         4   4   4
+         5   5   5
+         6   6   6
+         7   7   7
+  """
+    x = asarray(x)
+    y = asarray(y)
+    numRows, numCols = len(y), len(x)  # yes, reversed
+    x.shape = 1, numCols
+    X = x.repeat(numRows, axis=0)
+    
+    y.shape = numRows,1
+    Y = y.repeat(numCols, axis=1)
+    return X, Y
