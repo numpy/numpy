@@ -32,7 +32,7 @@ def handleError(errorStatus, sourcemsg):
 
 import os
 import numpy
-def get_numarray_headers():
+def get_numarray_include_dirs():
     base = os.path.dirname(numpy.__file__)
     newdirs = [os.path.join(base, 'numarray')]
     return newdirs
