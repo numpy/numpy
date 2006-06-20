@@ -326,8 +326,6 @@ typedef enum
 
 #define BOOLEAN_BITWISE_NOT(x) ((x) ^ 1)
 
-#define NA_elements PyArray_SIZE
-
 #define NA_NBYTES(a) (a->descr->elsize * NA_elements(a))
 
 #if defined(NA_SMP)

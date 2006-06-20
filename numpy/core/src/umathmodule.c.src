@@ -2045,7 +2045,7 @@ PyMODINIT_FUNC initumath(void) {
 	m = Py_InitModule("umath", methods);
 
 	/* Import the array */
-	if (import_array() < 0) {
+	if (_import_array() < 0) {
                 if (!PyErr_Occurred()) {
                         PyErr_SetString(PyExc_ImportError,
                                         "umath failed: Could not import array core.");

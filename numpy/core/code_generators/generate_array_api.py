@@ -62,7 +62,7 @@ static void **PyArray_API=NULL;
 
 #if !defined(NO_IMPORT_ARRAY) && !defined(NO_IMPORT)
 static int
-import_array(void)
+_import_array(void)
 {
   PyObject *numpy = PyImport_ImportModule("numpy.core.multiarray");
   PyObject *c_api = NULL;
@@ -84,6 +84,9 @@ import_array(void)
   }
   return 0;
 }
+
+#define import_array() { if (_import_array() < 0) {PyErr_Print(); Py_FatalError("numpy.core.multiarray failed to import... exiting.\n"); } }
+
 #endif
 
 #endif

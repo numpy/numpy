@@ -437,8 +437,8 @@ PyMODINIT_FUNC init_compiled_base(void) {
     /* Create the module and add the functions */
     m = Py_InitModule("_compiled_base", methods); 
 
-    /* Import the array and ufunc objects */
-    if (import_array() < 0) return;
+    /* Import the array objects */
+    import_array();
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);

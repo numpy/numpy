@@ -682,7 +682,7 @@ initlapack_lite(void)
     m = Py_InitModule4("lapack_lite", lapack_lite_module_methods,
 		       lapack_lite_module_documentation,
 		       (PyObject*)NULL,PYTHON_API_VERSION);
-    if (import_array() < 0) return;
+    import_array();
     d = PyModule_GetDict(m);
     LapackError = PyErr_NewException("lapack_lite.LapackError", NULL, NULL);
     PyDict_SetItemString(d, "LapackError", LapackError);

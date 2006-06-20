@@ -464,6 +464,6 @@ init_sort(void) {
 
 	m = Py_InitModule("_sort", methods);
 	
-	if (import_array() < 0) return;
+	import_array();
 	add_sortfuncs();
 }

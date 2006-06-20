@@ -8,7 +8,7 @@
 
 typedef enum
 {
-  tAny,
+  tAny=-1,
   tBool=PyArray_BOOL,
   tInt8=PyArray_INT8,
   tUInt8=PyArray_UINT8,
@@ -23,16 +23,16 @@ typedef enum
   tComplex32=PyArray_COMPLEX64,
   tComplex64=PyArray_COMPLEX128,
   tObject=PyArray_OBJECT,        /* placeholder... does nothing */
+  tMaxType=PyArray_NTYPES,
   tDefault = tFloat64,
 #if BITSOF_LONG == 64
   tLong = tInt64,
 #else
   tLong = tInt32,
 #endif
-  tMaxType
 } NumarrayType;
 
-#define nNumarrayType 16
+#define nNumarrayType PyArray_NTYPES
 
 #define HAS_UINT64 1
 
@@ -41,7 +41,6 @@ typedef enum
         NUM_LITTLE_ENDIAN=0,
         NUM_BIG_ENDIAN = 1
 } NumarrayByteOrder;
-
 
 
 #define Complex64 Complex64_

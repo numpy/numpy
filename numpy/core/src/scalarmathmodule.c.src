@@ -1095,8 +1095,8 @@ PyMODINIT_FUNC initscalarmath(void) {
 
     m = Py_InitModule("scalarmath", methods);
 	
-    if (import_array() < 0) return;
-    if (import_umath() < 0) return;
+    import_array(); return;
+    import_umath(); return;
 
     if (get_functions() < 0) return;
 

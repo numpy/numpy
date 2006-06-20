@@ -29,7 +29,7 @@ static void **PyUFunc_API=NULL;
 %s
 
 static int
-import_umath(void)
+_import_umath(void)
 {
   PyObject *numpy = PyImport_ImportModule("numpy.core.umath");
   PyObject *c_api = NULL;
@@ -45,6 +45,8 @@ import_umath(void)
   if (PyUFunc_API == NULL) return -1;
   return 0;
 }
+
+#define import_umath() { if (_import_umath() < 0) {PyErr_Print(); Py_FatalError("numpy.core.umath failed to import... exiting.\n"); }}
 
 #define import_ufunc import_umath
 
