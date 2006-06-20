@@ -87,7 +87,6 @@ typedef enum
 /* from here down, type("ai") is NDInfo*  */
 
 #define NA_PTR(ai)   ((char *) NA_OFFSETDATA((ai)))
-#define NA_TEMP(ai)  ((char *) &((ai)->temp))
 #define NA_PTR1(ai, i)       (NA_PTR(ai) +                                   \
                               (i)*(ai)->strides[0])
 #define NA_PTR2(ai, i, j)    (NA_PTR(ai) +                                   \
@@ -97,12 +96,11 @@ typedef enum
                               (i)*(ai)->strides[0] +                         \
                               (j)*(ai)->strides[1] +                         \
                               (k)*(ai)->strides[2])
-#define NA_RESULT(ai, type)   (*((type *) NA_TEMP(ai)))
 
-
-#define NA_SET_TEMP(ai, type, v) (((type *) &(ai)->temp)[0] = v)
+#define NA_SET_TEMP(ai, type, v) (((type *) &__temp__)[0] = v)
 
 #define NA_SWAPComplex64 NA_COMPLEX_SWAP16
+#define NA_SWAPComplex64_ NA_COMPLEX_SWAP16
 #define NA_SWAPComplex32 NA_COMPLEX_SWAP8
 #define NA_SWAPFloat64   NA_SWAP8
 #define NA_SWAPFloat32   NA_SWAP4
@@ -117,6 +115,7 @@ typedef enum
 #define NA_SWAPBool      NA_SWAP1
 
 #define NA_COPYComplex64 NA_COPY16
+#define NA_COPYComplex64_ NA_COPY16
 #define NA_COPYComplex32 NA_COPY8
 #define NA_COPYFloat64   NA_COPY8
 #define NA_COPYFloat32   NA_COPY4
@@ -130,20 +129,113 @@ typedef enum
 #define NA_COPYUInt8     NA_COPY1
 #define NA_COPYBool      NA_COPY1
 
-#define NA_REM(ai, ptr)  ((ai)->wptr = (ptr))
-#define NA_REC(ai)       ((ai)->wptr)
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define _makeGetPb(type)		\
+static type _NA_GETPb_##type(char *ptr)	\
+{						\
+	type temp;				\
+	NA_SWAP##type(ptr, (char *)&temp);	\
+	return temp;				\
+}
+
+#define _makeGetPa(type)	             	\
+static type _NA_GETPa_##type(char *ptr)         \
+{						\
+	type temp;				\
+	NA_COPY##type(ptr, (char *)&temp);	\
+	return temp;				\
+}
+
+_makeGetPb(Complex64_)
+_makeGetPb(Complex32)
+_makeGetPb(Float64)
+_makeGetPb(Float32)
+_makeGetPb(Int64)
+_makeGetPb(UInt64)
+_makeGetPb(Int32)
+_makeGetPb(UInt32)
+_makeGetPb(Int16)
+_makeGetPb(UInt16)
+_makeGetPb(Int8)
+_makeGetPb(UInt8)
+_makeGetPb(Bool)
+
+_makeGetPa(Complex64_)
+_makeGetPa(Complex32)
+_makeGetPa(Float64)
+_makeGetPa(Float32)
+_makeGetPa(Int64)
+_makeGetPa(UInt64)
+_makeGetPa(Int32)
+_makeGetPa(UInt32)
+_makeGetPa(Int16)
+_makeGetPa(UInt16)
+_makeGetPa(Int8)
+_makeGetPa(UInt8)
+_makeGetPa(Bool)
+
+#undef _makeGetPb
+#undef _makeGetPa
+
+#define _makeSetPb(type)		\
+static void _NA_SETPb_##type(char *ptr, type v)	\
+{						\
+	NA_SWAP##type(((char *)&v), ptr);	\
+	return;					\
+}
+
+#define _makeSetPa(type) \
+static void _NA_SETPa_##type(char *ptr, type v)	\
+{						\
+	NA_COPY##type(((char *)&v), ptr);	\
+	return;					\
+}
+
+_makeSetPb(Complex64_)
+_makeSetPb(Complex32)
+_makeSetPb(Float64)
+_makeSetPb(Float32)
+_makeSetPb(Int64)
+_makeSetPb(UInt64)
+_makeSetPb(Int32)
+_makeSetPb(UInt32)
+_makeSetPb(Int16)
+_makeSetPb(UInt16)
+_makeSetPb(Int8)
+_makeSetPb(UInt8)
+_makeSetPb(Bool)
+
+_makeSetPa(Complex64_)
+_makeSetPa(Complex32)
+_makeSetPa(Float64)
+_makeSetPa(Float32)
+_makeSetPa(Int64)
+_makeSetPa(UInt64)
+_makeSetPa(Int32)
+_makeSetPa(UInt32)
+_makeSetPa(Int16)
+_makeSetPa(UInt16)
+_makeSetPa(Int8)
+_makeSetPa(UInt8)
+_makeSetPa(Bool)
+
+#undef _makeSetPb
+#undef _makeSetPa
+
+#ifdef __cplusplus
+	}
+#endif
 
 /* ========================== ptr get/set ================================ */
 
 /* byteswapping */
-#define NA_GETPb(ai, type, ptr)                                               \
-         (NA_REM(ai, ptr), NA_SWAP##type(NA_REC(ai), NA_TEMP(ai)),            \
-	  NA_RESULT(ai, type))        
+#define NA_GETPb(ai, type, ptr) _NA_GETPb_##type(ptr)
 
 /* aligning */
-#define NA_GETPa(ai, type, ptr)                                               \
-         (NA_REM(ai, ptr), NA_COPY##type(NA_REC(ai), NA_TEMP(ai)),            \
-	  NA_RESULT(ai, type))
+#define NA_GETPa(ai, type, ptr) _NA_GETPa_##type(ptr)
 
 /* fast (aligned, !byteswapped) */
 #define NA_GETPf(ai, type, ptr) (*((type *) (ptr)))
@@ -157,14 +249,10 @@ typedef enum
 /* NOTE:  NA_SET* macros cannot be used as values. */
 
 /* byteswapping */
-#define NA_SETPb(ai, type, ptr, v)                                            \
-         (NA_REM(ai, ptr), NA_SET_TEMP(ai, type, v),                          \
-	  NA_SWAP##type(NA_TEMP(ai), NA_REC(ai)))
+#define NA_SETPb(ai, type, ptr, v) _NA_SETPb_##type(ptr, v)
 
 /* aligning */
-#define NA_SETPa(ai, type, ptr, v)                                            \
-         (NA_REM(ai, ptr), NA_SET_TEMP(ai, type, v),                          \
-          NA_COPY##type(NA_TEMP(ai), NA_REC(ai)))
+#define NA_SETPa(ai, type, ptr, v) _NA_SETPa_##type(ptr, v)
 
 /* fast (aligned, !byteswapped) */
 #define NA_SETPf(ai, type, ptr, v) ((*((type *) ptr)) = (v))

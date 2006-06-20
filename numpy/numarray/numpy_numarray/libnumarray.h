@@ -4,7 +4,6 @@
 #ifndef NUMPY_LIBNUMARRAY_H
 #define NUMPY_LIBNUMARRAY_H
 
-#define PY_ARRAY_UNIQUE_SYMBOL NUMPY_LIBNUMARRAY
 #include "numpy/arrayobject.h"
 #include "arraybase.h"
 #include "nummacro.h"

@@ -43,7 +43,6 @@ typedef enum
         NUM_BIG_ENDIAN = 1
 } NumarrayByteOrder;
 
-
 #define Complex64 Complex64_
 typedef struct { Float32 r, i; } Complex32;
 typedef struct { Float64 r, i; } Complex64;

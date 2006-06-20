@@ -4056,6 +4056,9 @@ _check_axis(PyArrayObject *arr, int *axis, int flags)
 #include "arraymethods.c"
 
 /* Lifted from numarray */
+/*MULTIARRAY_API
+ PyArray_IntTupleFromIntp
+*/
 static PyObject *
 PyArray_IntTupleFromIntp(int len, intp *vals)
 {
@@ -6841,7 +6844,7 @@ _array_typedescr_fromstr(char *str)
     return descr;
 }
 
-/* OBJECT_API */
+/*OBJECT_API */
 static PyObject *
 PyArray_FromStructInterface(PyObject *input)
 {
@@ -7041,7 +7044,7 @@ PyArray_FromInterface(PyObject *input)
 	return NULL;
 }
 
-/* OBJECT_API*/
+/*OBJECT_API*/
 static PyObject *
 PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
 {

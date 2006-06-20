@@ -1,8 +1,8 @@
-
 #include <Python.h>
 
 #define _libnumarray_MODULE
 #include "numpy_numarray/libnumarray.h"
+#include <float.h>
 
 static PyObject *pCfuncClass;
 static PyTypeObject CfuncType;
@@ -973,7 +973,8 @@ NA_InputArray(PyObject *a, NumarrayType t, int requires)
         PyArray_Descr *descr;
         if (t == tAny) descr = NULL;
         else descr = PyArray_DescrFromType(t);
-        return PyArray_CheckFromAny(a, descr, 0, 0, requires, NULL);
+        return (PyArrayObject *)					\
+		PyArray_CheckFromAny(a, descr, 0, 0, requires, NULL);
 }
 
 /* satisfies ensures that 'a' meets a set of requirements and matches 
@@ -1072,11 +1073,12 @@ NA_OptionalOutputArray(PyObject *optional, NumarrayType t, int requires,
 		       PyArrayObject *master)
 {
 	if ((optional == Py_None) || (optional == NULL)) {
-		PyArrayObject *rval;
+		PyObject *rval;
+		PyArray_Descr *descr;
 		if (t == tAny) descr=NULL;
 		else descr = PyArray_DescrFromType(t);
 		rval = PyArray_FromArray(master, descr, 0);
-		return rval;
+		return (PyArrayObject *)rval;
 	} else {
 		return NA_OutputArray(optional, t, requires);
 	}
@@ -1887,24 +1889,9 @@ NA_nameToTypeNo(char *typename)
 }
 
 static PyObject *
-setTypeException(int type)
-{
-	/* Check if it is a printable character */
-	if ((type >= 32) && (type <= 126)) 
-		PyErr_Format(_Error, 
-			     "Type object lookup returned"
-			     " NULL for type \'%c\'", type);
-	else
-		PyErr_Format(_Error,
-			     "Type object lookup returned"
-			     " NULL for type %d", type);
-	return NULL;
-}
-
-static PyObject *
 getTypeObject(NumarrayType type) 
 {
-        return PyArray_DescrFromType(type)
+        return (PyObject *)PyArray_DescrFromType(type);
 }
 
 
@@ -2237,32 +2224,12 @@ NA_isPythonScalar(PyObject *o)
 #define PlatBigUInt PyLong_FromUnsignedLongLong
 #endif
 
-static int 
-_checkOffset(PyArrayObject *a, long offset)
-{
-	long finaloffset = a->byteoffset + offset;
-	long size = getBufferSize(a->_data);	
-	if (size < 0) {
-		PyErr_Format(_Error,
-			     "can't get buffer size");
-		return -1;
-	}
-	if (finaloffset < 0 || finaloffset > size) {
-		PyErr_Format(_Error,
-			     "invalid buffer offset");
-		return -1;
-	}
-	return 0;
-}
 
 static PyObject *
 NA_getPythonScalar(PyArrayObject *a, long offset)
 {
 	int type = a->descr->type_num;
 	PyObject *rval = NULL;
-
-	if (_checkOffset(a, offset) < 0)
-		goto _exit;
 
 	switch(type) {
 	case tBool:
@@ -2308,8 +2275,66 @@ NA_getPythonScalar(PyArrayObject *a, long offset)
 				    "NA_getPythonScalar: bad type %d\n", 
 				    type);
 	}
-  _exit:
 	return rval;
+}
+
+static int 
+NA_overflow(PyArrayObject *a, Float64 v)
+{
+	if ((a->flags & CHECKOVERFLOW) == 0) return 0;
+
+	switch(a->descr->type_num) {
+	case tBool:  
+		return 0;
+	case tInt8:     
+		if ((v < -128) || (v > 127))      goto _fail;
+		return 0;
+	case tUInt8:    
+		if ((v < 0) || (v > 255))         goto _fail;
+		return 0;
+	case tInt16:    
+		if ((v < -32768) || (v > 32767))  goto _fail;
+		return 0;
+	case tUInt16:	
+		if ((v < 0) || (v > 65535))       goto _fail;
+		return 0;
+	case tInt32:   	
+		if ((v < -2147483648.) || 
+		    (v > 2147483647.))           goto _fail;
+		return 0;
+	case tUInt32:  	
+		if ((v < 0) || (v > 4294967295.)) goto _fail;
+		return 0;
+	case tInt64: 	
+		if ((v < -9223372036854775808.) || 
+		    (v > 9223372036854775807.))    goto _fail;
+		return 0;
+        #if HAS_UINT64
+	case tUInt64:	
+		if ((v < 0) || 
+		    (v > 18446744073709551615.))    goto _fail;
+		return 0;
+	#endif
+	case tFloat32: 
+		if ((v < -FLT_MAX) || (v > FLT_MAX)) goto _fail;
+		return 0;
+	case tFloat64: 
+		return 0;
+	case tComplex32: 
+		if ((v < -FLT_MAX) || (v > FLT_MAX)) goto _fail;
+		return 0;
+	case tComplex64: 
+		return 0;
+	default:
+		PyErr_Format( PyExc_TypeError, 
+			      "Unknown type %d in NA_overflow",
+			      a->descr->type_num ); 
+		PyErr_Print();
+		return -1;
+	}
+  _fail:
+	PyErr_Format(PyExc_OverflowError, "value out of range for array");
+	return -1;
 }
 
 static int        
@@ -2383,8 +2408,6 @@ _setFromPythonScalarCore(PyArrayObject *a, long offset, PyObject*value, int entr
 static int
 NA_setFromPythonScalar(PyArrayObject *a, long offset, PyObject *value)
 {
-	if (_checkOffset(a, offset) < 0)
-		return -1;
 	if (a->flags & WRITABLE)
 		return _setFromPythonScalarCore(a, offset, value, 0);
 	else {
@@ -2444,8 +2467,7 @@ NA_typeObjectToTypeNo(PyObject *typeObj)
 static int
 NA_copyArray(PyArrayObject *to, const PyArrayObject *from)
 {
-        PyArrayObject *from0 = from;
-        return PyArray_CopyInto(to, from0);
+        return PyArray_CopyInto(to, (PyArrayObject *)from);
 }
 
 static PyArrayObject *
@@ -2463,7 +2485,7 @@ NA_getType( PyObject *type)
                 PyErr_Format(PyExc_ValueError, "NA_getType: unknown type.");
                 typeobj = NULL;
         }
-        return typeobj;
+        return (PyObject *)typeobj;
 }
 
 
@@ -2612,7 +2634,7 @@ NA_UfuncCheck(PyObject *op) {
 
 static int 
 NA_CfuncCheck(PyObject *op) {
-        return PyObject_TypeCheck(ob, &CfuncType);
+        return PyObject_TypeCheck(op, &CfuncType);
 }
 
 static int
@@ -2714,7 +2736,6 @@ NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
 		    PyObject *bufferObject, maybelong byteoffset, maybelong bytestride,
 		    int byteorder, int aligned, int writeable)
 {
-	PyObject *typeObject;
 	PyArrayObject *self = NULL;
         PyArray_Descr *dtype;
 
@@ -2733,8 +2754,10 @@ NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
         }
 
         if (bufferObject == Py_None || bufferObject == NULL) {
-                self = PyArray_NewFromDescr(&PyArray_Type, dtype,
-                                            ndim, shape, NULL, NULL, 0, NULL);
+                self = (PyArrayObject *)	\
+			PyArray_NewFromDescr(&PyArray_Type, dtype,
+					     ndim, shape, NULL, NULL, 
+					     0, NULL);
         }
         else {
 		intp size = dtype->elsize;
@@ -2742,34 +2765,12 @@ NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
 		for(i=0; i<self->nd; i++) {
 			size *= self->dimensions[i];
 		}
-                self = PyArray_FromBuffer(bufferObject, dtype, size, byteoffset);
+                self = (PyArrayObject *)\
+			PyArray_FromBuffer(bufferObject, dtype, 
+					   size, byteoffset);
         }
 
         return self;
-}
-
-static Float64 *
-NA_alloc1D_Float64(PyArrayObject *a, long offset, int cnt)
-{
-	Float64 *result = PyMem_New(Float64, cnt);
-	if (!result) return NULL;
-	if (NA_get1D_Float64(a, offset, cnt, result) < 0) {
-		PyMem_Free(result);
-		return NULL;
-	}
-	return result;
-}
-
-static Int64 *
-NA_alloc1D_Int64(PyArrayObject *a, long offset, int cnt)
-{
-	Int64 *result = PyMem_New(Int64, cnt);
-	if (!result) return NULL;
-	if (NA_get1D_Int64(a, offset, cnt, result) < 0) {
-		PyMem_Free(result);
-		return NULL;
-	}
-	return result;
 }
 
 static void
@@ -3075,7 +3076,9 @@ NA_IeeeMask64( Float64 f, Int32 mask)
 static PyArrayObject *
 NA_FromDimsStridesDescrAndData(int nd, maybelong *d, maybelong *s, PyArray_Descr *descr, char *data) 
 {
-        return PyArray_NewFromDescr(&PyArray_Type, descr, nd, d, s, data, 0, NULL);
+        return (PyArrayObject *)\
+		PyArray_NewFromDescr(&PyArray_Type, descr, nd, d, 
+				     s, data, 0, NULL);
 }
 
 static PyArrayObject *

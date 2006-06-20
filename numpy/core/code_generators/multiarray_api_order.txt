@@ -71,3 +71,4 @@ PyArray_RegisterDataType
 PyArray_RegisterCastFunc
 PyArray_RegisterCanCast
 PyArray_InitArrFuncs
+PyArray_IntTupleFromIntp
