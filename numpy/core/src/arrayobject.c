@@ -2983,6 +2983,7 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace) {
 				   by PyArray_SetNumericOps.
 				*/
 				if (inplace) {
+					Py_INCREF(a1);
 					return (PyObject *)a1;
 				} else {
 					return PyArray_Copy(a1);

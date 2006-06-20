@@ -28,3 +28,12 @@ def handleError(errorStatus, sourcemsg):
             print "Warning: Encountered underflow(s)", sourcemsg
         if modes['underflow'] == "raise":
             raise UnderflowError(sourcemsg)
+
+
+import os
+import numpy
+def get_numarray_headers():
+    base = os.path.dirname(numpy.__file__)
+    newdirs = [os.path.join(base, 'numarray')]
+    return newdirs
+        

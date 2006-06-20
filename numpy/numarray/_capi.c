@@ -4,7 +4,6 @@
 #define _libnumarray_MODULE
 #include "numpy_numarray/libnumarray.h"
 
-static PyObject *pNumType[nNumarrayType];
 static PyObject *pCfuncClass;
 static PyTypeObject CfuncType;
 static PyObject *pHandleErrorFunc;
@@ -12,45 +11,12 @@ static PyObject *pHandleErrorFunc;
 static int 
 deferred_libnumarray_init(void)
 {
-	int i;
-        static initialized=0;
+        static int initialized=0;
 
 	if (initialized) return 0;
 
 	pCfuncClass = (PyObject *) &CfuncType;
-	Py_INCREF(pCfuncClass);
-		
-	/* Set up table of type objects */
-	for(i=0; i<ELEM(pNumType); i++) {
-		PyObject *typeobj = init_object(NA_typeNoToName(i),
-						pNumericTypesTDict);
-		if (!typeobj) return -1;
-		if (typeobj) {
-			Py_INCREF(typeobj);
-			pNumType[i] = typeobj;
-		} else {
-			pNumType[i] = NULL;
-		}
-	}
-
-	/* Set up _get/_set descriptor hooks for numerical types */
-	for(i=0; i<nNumarrayType; i++) {
-		PyArray_Descr *ptr;
-		switch(i) {
-		case tAny: case tObject: 
-			break;
-		default: 
-			ptr = NA_DescrFromType( i );
-			if (!ptr) {
-				PyErr_Format(PyExc_RuntimeError, 
-					     "error initializing array descriptors");
-				goto _fail;
-			}
-			ptr->_get = NA_getPythonScalar;
-			ptr->_set = NA_setFromPythonScalar;
-			break;
-		}
-	}
+	Py_INCREF(pCfuncClass);		
 
 	pHandleErrorFunc = 
 		NA_initModuleGlobal("numpy.numarray.util", "handleError");
@@ -260,6 +226,7 @@ static int int_dividebyzero_error(long value, long unused) {
 
 /* Likewise for Integer overflows */
 #if defined(linux)
+#include <fenv.h>
 static int int_overflow_error(Float64 value) { /* For x86_64 */
 	feraiseexcept(FE_OVERFLOW);
 	return (int) value;
@@ -369,7 +336,6 @@ NA_NewAllStrides(int ndim, maybelong *shape, maybelong *strides,
 					  byteorder, aligned, writeable);
 	for(i=0; i<ndim; i++)
 		result->strides[i] = strides[i];
-	result->nstrides = ndim;
 	return result;
 }
 
@@ -563,6 +529,7 @@ static int NA_checkOneStriding(char *name, long dim, maybelong *shape,
 ** Returns None
 */
 
+
 static PyObject *
 NA_callCUFuncCore(PyObject *self, 
 		  long niter, long ninargs, long noutargs,
@@ -649,6 +616,250 @@ callCUFunc(PyObject *self, PyObject *args) {
 	return NA_callCUFuncCore(self, niter, ninargs, noutargs, BufferObj, offset);
 }
 
+static PyObject *
+callStrideConvCFunc(PyObject *self, PyObject *args) {
+    PyObject *inbuffObj, *outbuffObj, *shapeObj;
+    PyObject *inbstridesObj, *outbstridesObj;
+    CfuncObject *me = (CfuncObject *) self;
+    int  nshape, ninbstrides, noutbstrides, nargs;
+    maybelong shape[MAXDIM], inbstrides[MAXDIM], 
+	    outbstrides[MAXDIM], *outbstrides1 = outbstrides;
+    long inboffset, outboffset, nbytes=0;
+
+    nargs = PyObject_Length(args);
+    if (!PyArg_ParseTuple(args, "OOlOOlO|l",
+            &shapeObj, &inbuffObj,  &inboffset, &inbstridesObj,
+            &outbuffObj, &outboffset, &outbstridesObj,
+            &nbytes)) {
+        return PyErr_Format(_Error,
+                 "%s: Problem with argument list",
+		  me->descr.name);
+    }
+
+    nshape = NA_maybeLongsFromIntTuple(MAXDIM, shape, shapeObj);
+    if (nshape < 0) return NULL;
+    
+    ninbstrides = NA_maybeLongsFromIntTuple(MAXDIM, inbstrides, inbstridesObj);
+    if (ninbstrides < 0) return NULL;
+
+    noutbstrides=  NA_maybeLongsFromIntTuple(MAXDIM, outbstrides, outbstridesObj);
+    if (noutbstrides < 0) return NULL;
+
+    if (nshape && (nshape != ninbstrides)) {
+        return PyErr_Format(_Error,
+            "%s: Missmatch between input iteration and strides tuples",
+	    me->descr.name);
+    }
+
+    if (nshape && (nshape != noutbstrides)) {
+	    if (noutbstrides < 1 || 
+		outbstrides[ noutbstrides - 1 ])/* allow 0 for reductions. */
+		    return PyErr_Format(_Error,
+					"%s: Missmatch between output "
+					"iteration and strides tuples",
+					me->descr.name);
+    }
+    
+    return NA_callStrideConvCFuncCore(
+	    self, nshape, shape,
+	    inbuffObj,  inboffset,  ninbstrides, inbstrides,
+	    outbuffObj, outboffset, noutbstrides, outbstrides1, nbytes);
+}
+
+static int 
+_NA_callStridingHelper(PyObject *aux, long dim, 
+		       long nnumarray, PyArrayObject *numarray[], char *data[],
+		       CFUNC_STRIDED_FUNC f)
+{
+	int i, j, status=0;
+	dim -= 1;
+	for(i=0; i<numarray[0]->dimensions[dim]; i++) {
+		for (j=0; j<nnumarray; j++)
+			data[j] += numarray[j]->strides[dim]*i;
+		if (dim == 0)
+			status |= f(aux, nnumarray, numarray, data);
+		else
+			status |= _NA_callStridingHelper(
+				aux, dim, nnumarray, numarray, data, f);
+		for (j=0; j<nnumarray; j++)
+			data[j] -= numarray[j]->strides[dim]*i;
+	}
+	return status;
+}
+
+
+static PyObject *
+callStridingCFunc(PyObject *self, PyObject *args) {
+    CfuncObject *me = (CfuncObject *) self;
+    PyObject *aux;
+    PyArrayObject *numarray[MAXARRAYS];
+    char *data[MAXARRAYS];
+    CFUNC_STRIDED_FUNC f;
+    int i;
+
+    int nnumarray = PySequence_Length(args)-1;
+    if ((nnumarray < 1) || (nnumarray > MAXARRAYS))
+	    return PyErr_Format(_Error, "%s, too many or too few numarray.",
+				me->descr.name);
+
+    aux = PySequence_GetItem(args, 0);
+    if (!aux)
+	    return NULL;
+
+    for(i=0; i<nnumarray; i++) {
+	    PyObject *otemp = PySequence_GetItem(args, i+1);
+	    if (!otemp)
+		    return PyErr_Format(_Error, "%s couldn't get array[%d]", 
+					me->descr.name, i);
+	    if (!NA_NDArrayCheck(otemp))
+		    return PyErr_Format(PyExc_TypeError, 
+				 "%s arg[%d] is not an array.",
+				 me->descr.name, i);
+	    numarray[i] = (PyArrayObject *) otemp;
+	    data[i] = numarray[i]->data;
+	    Py_DECREF(otemp);
+	    if (!NA_updateDataPtr(numarray[i]))
+		    return NULL;
+    }
+	    
+    /* Cast function pointer and perform stride operation */
+    f = (CFUNC_STRIDED_FUNC) me->descr.fptr;
+    
+    if (_NA_callStridingHelper(aux, numarray[0]->nd, 
+			       nnumarray, numarray, data, f)) {
+	    return NULL;
+    } else {
+	    Py_INCREF(Py_None);
+	    return Py_None;
+    }
+}
+
+/* Convert a standard C numeric value to a Python numeric value.
+**
+** Handles both nonaligned and/or byteswapped C data.
+**
+** Input arguments are:
+**
+**   Buffer object that contains the C numeric value.
+**   Offset (in bytes) into the buffer that the data is located at.
+**   The size of the C numeric data item in bytes.
+**   Flag indicating if the C data is byteswapped from the processor's
+**     natural representation.
+**
+**   Returns a Python numeric value.
+*/
+
+static PyObject *
+NumTypeAsPyValue(PyObject *self, PyObject *args) {
+    PyObject *bufferObj;
+    long offset, itemsize, byteswap, i, buffersize;
+    Py_complex temp;  /* to hold copies of largest possible type */
+    void *buffer;
+    char *tempptr;
+    CFUNCasPyValue funcptr;
+    CfuncObject *me = (CfuncObject *) self;
+
+    if (!PyArg_ParseTuple(args, "Olll", 
+			  &bufferObj, &offset, &itemsize, &byteswap))
+        return PyErr_Format(_Error,
+		"NumTypeAsPyValue: Problem with argument list");
+
+    if ((buffersize = NA_getBufferPtrAndSize(bufferObj, 1, &buffer)) < 0)
+        return PyErr_Format(_Error,
+                "NumTypeAsPyValue: Problem with array buffer");
+
+    if (offset < 0)
+	return PyErr_Format(_Error,
+		"NumTypeAsPyValue: invalid negative offset: %d", (int) offset);
+
+    /* Guarantee valid buffer pointer */
+    if (offset+itemsize > buffersize)
+	    return PyErr_Format(_Error,
+		"NumTypeAsPyValue: buffer too small for offset and itemsize.");
+
+    /* Do byteswapping.  Guarantee double alignment by using temp. */
+    tempptr = (char *) &temp;
+    if (!byteswap) {
+        for (i=0; i<itemsize; i++)
+            *(tempptr++) = *(((char *) buffer)+offset+i);
+    } else {
+        tempptr += itemsize-1;
+        for (i=0; i<itemsize; i++)
+            *(tempptr--) = *(((char *) buffer)+offset+i);
+    }
+
+    funcptr = (CFUNCasPyValue) me->descr.fptr;
+
+    /* Call function to build PyObject.  Bad parameters to this function
+       may render call meaningless, but "temp" guarantees that its safe.  */
+    return (*funcptr)((void *)(&temp));
+}
+
+/* Convert a Python numeric value to a standard C numeric value.
+**
+** Handles both nonaligned and/or byteswapped C data.
+**
+** Input arguments are:
+**
+**   The Python numeric value to be converted.
+**   Buffer object to contain the C numeric value.
+**   Offset (in bytes) into the buffer that the data is to be copied to.
+**   The size of the C numeric data item in bytes.
+**   Flag indicating if the C data is byteswapped from the processor's
+**     natural representation.
+**
+**   Returns None
+*/
+
+static PyObject *
+NumTypeFromPyValue(PyObject *self, PyObject *args) {
+    PyObject *bufferObj, *valueObj;
+    long offset, itemsize, byteswap, i, buffersize;
+    Py_complex temp;  /* to hold copies of largest possible type */
+    void *buffer;
+    char *tempptr;
+    CFUNCfromPyValue funcptr;
+    CfuncObject *me = (CfuncObject *) self;
+
+    if (!PyArg_ParseTuple(args, "OOlll", 
+		  &valueObj, &bufferObj, &offset, &itemsize, &byteswap)) 
+        return PyErr_Format(_Error,
+                 "%s: Problem with argument list", me->descr.name);
+
+    if ((buffersize = NA_getBufferPtrAndSize(bufferObj, 0, &buffer)) < 0)
+	    return PyErr_Format(_Error,
+                "%s: Problem with array buffer (read only?)", me->descr.name);
+
+    funcptr = (CFUNCfromPyValue) me->descr.fptr;
+
+    /* Convert python object into "temp". Always safe. */
+    if (!((*funcptr)(valueObj, (void *)( &temp))))
+        return PyErr_Format(_Error,
+		 "%s: Problem converting value", me->descr.name);
+
+    /* Check buffer offset. */
+    if (offset < 0)
+	return PyErr_Format(_Error,
+		"%s: invalid negative offset: %d", me->descr.name, (int) offset);
+
+    if (offset+itemsize > buffersize)
+	return PyErr_Format(_Error,
+		"%s: buffer too small(%d) for offset(%d) and itemsize(%d)",
+			me->descr.name, (int) buffersize, (int) offset, (int) itemsize);
+
+    /* Copy "temp" to array buffer. */
+    tempptr = (char *) &temp;
+    if (!byteswap) {
+        for (i=0; i<itemsize; i++)
+            *(((char *) buffer)+offset+i) = *(tempptr++);
+    } else {
+        tempptr += itemsize-1;
+        for (i=0; i<itemsize; i++)
+            *(((char *) buffer)+offset+i) = *(tempptr--);
+    }
+    Py_INCREF(Py_None);
+    return Py_None;
+}
 
 /* Handle "calling" the cfunc object at the python level. 
    Dispatch the call to the appropriate python-c wrapper based
@@ -680,6 +891,26 @@ cfunc_call(PyObject *self, PyObject *argsTuple, PyObject *argsDict)
 		     "cfunc_call: Can't dispatch cfunc '%s' with type: %d.", 
 		     me->descr.name, me->descr.type);
 	}
+}
+
+staticforward PyTypeObject CfuncType;
+
+static void
+cfunc_dealloc(PyObject* self)
+{
+	PyObject_Del(self);
+}
+
+static PyObject *
+cfunc_repr(PyObject *self)
+{
+	char buf[256];
+	CfuncObject *me = (CfuncObject *) self;
+	sprintf(buf, "<cfunc '%s' at %08lx check-self:%d align:%d  io:(%d, %d)>", 
+		 me->descr.name, (unsigned long ) me->descr.fptr, 
+		 me->descr.chkself, me->descr.align, 
+		 me->descr.wantIn, me->descr.wantOut);
+	return PyString_FromString(buf);
 }
 
 static PyTypeObject CfuncType = {
@@ -740,8 +971,8 @@ static PyArrayObject*
 NA_InputArray(PyObject *a, NumarrayType t, int requires)
 {
         PyArray_Descr *descr;
-        if (type == tAny) descr = NULL;
-        else descr = PyArray_DescrFromType(type);
+        if (t == tAny) descr = NULL;
+        else descr = PyArray_DescrFromType(t);
         return PyArray_CheckFromAny(a, descr, 0, 0, requires, NULL);
 }
 
@@ -772,7 +1003,7 @@ satisfies(PyArrayObject *a, int requirements, NumarrayType t)
 static PyArrayObject *
 NA_OutputArray(PyObject *a, NumarrayType t, int requires)
 {
-        PyObject *dtype;
+        PyArray_Descr *dtype;
         PyArrayObject *ret;
 
         if (!PyArray_Check(a) || !PyArray_ISWRITEABLE(a)) {
@@ -783,11 +1014,11 @@ NA_OutputArray(PyObject *a, NumarrayType t, int requires)
 
         if (satisfies((PyArrayObject *)a, requires, t)) {
                 Py_INCREF(a);
-                return a;
+                return (PyArrayObject *)a;
         }
         if (t == tAny) {
                 dtype = PyArray_DESCR(a);
-                Py_INCREF(dtype):
+                Py_INCREF(dtype);
         }
         else {
                 dtype = PyArray_DescrFromType(t);
@@ -842,6 +1073,8 @@ NA_OptionalOutputArray(PyObject *optional, NumarrayType t, int requires,
 {
 	if ((optional == Py_None) || (optional == NULL)) {
 		PyArrayObject *rval;
+		if (t == tAny) descr=NULL;
+		else descr = PyArray_DescrFromType(t);
 		rval = PyArray_FromArray(master, descr, 0);
 		return rval;
 	} else {
@@ -2837,28 +3070,6 @@ NA_IeeeMask64( Float64 f, Int32 mask)
 		}
 	}	
 	return (category & mask) != 0;	
-}
-
-
-static int 
-_NA_callStridingHelper(PyObject *aux, long dim, 
-		       long nnumarray, PyArrayObject *numarray[], char *data[],
-		       CFUNC_STRIDED_FUNC f)
-{
-	int i, j, status=0;
-	dim -= 1;
-	for(i=0; i<numarray[0]->dimensions[dim]; i++) {
-		for (j=0; j<nnumarray; j++)
-			data[j] += numarray[j]->strides[dim]*i;
-		if (dim == 0)
-			status |= f(aux, nnumarray, numarray, data);
-		else
-			status |= _NA_callStridingHelper(
-				aux, dim, nnumarray, numarray, data, f);
-		for (j=0; j<nnumarray; j++)
-			data[j] -= numarray[j]->strides[dim]*i;
-	}
-	return status;
 }
 
 static PyArrayObject *

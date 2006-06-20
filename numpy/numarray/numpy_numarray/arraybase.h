@@ -3,6 +3,7 @@
 
 #define SZ_BUF  79
 #define MAXDIM MAX_DIMS
+#define MAXARGS 18
 
 #define maybelong intp
 
@@ -57,8 +58,6 @@ typedef struct { Float64 r, i; } Complex64;
 #define PyArray_ISFORTRAN_CONTIGUOUS(m) (((PyArray(m))->flags & FORTRAN_CONTIGUOUS) != 0)
 #define PyArray_ISBYTESWAPPED(m) (!PyArray_ISNOTSWAPPED(m))
 #define PyArray_ISWRITABLE  PyArray_ISWRITEABLE 
-#define PyArray_ISSPACESAVER(m)  0
-#define PyArray_ISCARRAY(m)      (((PyArray(m))->flags & IS_CARRAY) == IS_CARRAY)
 
 
-#endif /* 
+#endif 

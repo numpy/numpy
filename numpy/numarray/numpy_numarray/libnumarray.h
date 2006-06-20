@@ -10,6 +10,7 @@
 #include "nummacro.h"
 #include "numcomplex.h"
 #include "ieeespecial.h"
+#include "cfunc.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -603,10 +604,6 @@ static PyArrayObject *  NA_FromArrayStruct  (PyObject *a);
 
   /* Total number of C API pointers */
 #define libnumarray_API_pointers 131
-
-
-#endif /* !defined(_libnumarray) */
-
 
 #ifdef __cplusplus
 }
