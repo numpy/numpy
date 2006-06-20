@@ -2776,20 +2776,20 @@ NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
 static void
 NA_updateAlignment(PyArrayObject *self)
 {
-        return PyArray_UpdateFlags(self, ALIGNED);
+        PyArray_UpdateFlags(self, ALIGNED);
 }
 
 static void
 NA_updateContiguous(PyArrayObject *self)
 {
-        return PyArray_UpdateFlags(self, CONTIGUOUS | FORTRAN);
+        PyArray_UpdateFlags(self, CONTIGUOUS | FORTRAN);
 }
 
 
 static void 
 NA_updateStatus(PyArrayObject *self)
 {
-        return PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
+        PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
 }
 
 static int
