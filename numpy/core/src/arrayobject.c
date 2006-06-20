@@ -5459,12 +5459,8 @@ array_struct_get(PyArrayObject *self)
 		if (inter->descr == NULL) PyErr_Clear();
 		else inter->flags &= ARR_HAS_DESCR;
 	}
-	tup = PyTuple_New(2);
-	PyTuple_SET_ITEM(tup, 0, 
-			 PyString_FromString("PyArrayInterface Version 3"));
-	PyTuple_SET_ITEM(tup, 1, (PyObject *)self);
 	Py_INCREF(self);
-        return PyCObject_FromVoidPtrAndDesc(inter, tup, gentype_struct_free);
+        return PyCObject_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
 }
 
 static PyObject *
@@ -6847,7 +6843,7 @@ _array_typedescr_fromstr(char *str)
 static PyObject *
 PyArray_FromStructInterface(PyObject *input)
 {
-	PyArray_Descr *thetype;
+	PyArray_Descr *thetype=NULL;
 	PyObject *obj;
 	char buf[40];
 	PyArrayInterface *inter;
@@ -6860,22 +6856,27 @@ PyArray_FromStructInterface(PyObject *input)
 		return Py_NotImplemented;
 	}
 	if (!PyCObject_Check(attr)) goto fail;
-	if (PyTuple_Check((obj = (PyObject *)PyCObject_GetDesc(attr))) && 
-	    PyString_Check(PyTuple_GET_ITEM(obj, 0)) &&
-	    strncmp(PyString_AsString(PyTuple_GET_ITEM(obj, 0)),
-		    "PyArrayInterface Version", 24)) goto fail;
-
 	inter = PyCObject_AsVoidPtr(attr);
+	if (inter->dummy != 2) goto fail;
 	if ((inter->flags & NOTSWAPPED) != NOTSWAPPED) {
 		endian = PyArray_OPPBYTE;
 		inter->flags &= ~NOTSWAPPED;
 	}
 
-        snprintf(buf, 40, "%c%c%d", endian, inter->typekind, inter->itemsize);
-        if (!(thetype=_array_typedescr_fromstr(buf))) {
-		Py_DECREF(attr);
-                return NULL;
-        }
+	if (inter->flags & ARR_HAS_DESCR) {
+		if (PyArray_DescrConverter(inter->descr, &thetype) == PY_FAIL) {
+			thetype = NULL;
+			PyErr_Clear();
+		}
+	}
+
+	if (thetype == NULL) {
+		snprintf(buf, 40, "%c%c%d", endian, inter->typekind, inter->itemsize);
+		if (!(thetype=_array_typedescr_fromstr(buf))) {
+			Py_DECREF(attr);
+			return NULL;
+		}
+	}
 
         r = PyArray_NewFromDescr(&PyArray_Type, thetype,
 				 inter->nd, inter->shape,

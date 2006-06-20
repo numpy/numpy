@@ -739,11 +739,7 @@ gentype_struct_get(PyObject *self)
         inter->shape = NULL;
         inter->data = arr->data;
 
-	tup = PyTuple_New(2);
-	PyTuple_SET_ITEM(tup, 0, 
-			 PyString_FromString("PyArrayInterface Version 3"));
-	PyTuple_SET_ITEM(tup, 1, (PyObject *)arr);
-	return PyCObject_FromVoidPtrAndDesc(inter, tup, gentype_struct_free);
+	return PyCObject_FromVoidPtrAndDesc(inter, arr, gentype_struct_free);
 }
 
 static PyObject *
