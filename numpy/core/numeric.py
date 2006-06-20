@@ -323,15 +323,24 @@ def isscalar(num):
     else:
         return type(num) in ScalarType
 
-_lkup = {'0':'000',
-         '1':'001',
-         '2':'010',
-         '3':'011',
-         '4':'100',
-         '5':'101',
-         '6':'110',
-         '7':'111',
-         'L':''}
+_lkup = {
+    '0':'0000',
+    '1':'0001',
+    '2':'0010',
+    '3':'0011',
+    '4':'0100',
+    '5':'0101',
+    '6':'0110',
+    '7':'0111',
+    '8':'1000',
+    '9':'1001',
+    'a':'1010',
+    'b':'1011',
+    'c':'1100',
+    'd':'1101',
+    'e':'1110',
+    'f':'1111',
+    'L':''}
 
 def binary_repr(num):
     """Return the binary representation of the input number as a string.
@@ -339,14 +348,17 @@ def binary_repr(num):
     This is equivalent to using base_repr with base 2, but about 25x
     faster.
     """
-    ostr = oct(num)
+    ostr = hex(num)
     bin = ''
-    for ch in ostr[1:]:
+    for ch in ostr[2:]:
         bin += _lkup[ch]
-    ind = 0
-    while bin[ind] == '0':
-        ind += 1
-    return bin[ind:]
+    if '1' in bin:
+        ind = 0
+        while bin[ind] == '0':
+            ind += 1
+        return bin[ind:]
+    else:
+        return '0'
 
 def base_repr (number, base=2, padding=0):
     """Return the representation of a number in any given base.
