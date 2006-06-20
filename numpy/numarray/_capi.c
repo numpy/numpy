@@ -2,7 +2,7 @@
 #include <Python.h>
 
 #define _libnumarray_MODULE
-#include "libnumarray.h"
+#include "numpy_numarray/libnumarray.h"
 
 static PyObject *pNumType[nNumarrayType];
 static PyObject *pCfuncClass;
