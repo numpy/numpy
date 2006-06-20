@@ -4676,8 +4676,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 		return NULL;
 
  finish:
-
-	if ((nd=PyArray_NDIM(ret)) >= ndmin) return ret;
+	if (!ret || (nd=PyArray_NDIM(ret)) >= ndmin) return ret;
 	/* create a new array from the same data with ones in the shape */
 	/* steals a reference to ret */
 	return _prepend_ones((PyArrayObject *)ret, nd, ndmin);
