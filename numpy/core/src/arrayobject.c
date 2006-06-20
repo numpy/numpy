@@ -1003,7 +1003,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 	if (type_num == PyArray_BOOL)
 		PyArrayScalar_RETURN_BOOL_FROM_LONG(*(Bool*)data);
 	else if (type_num == PyArray_OBJECT) {
-		descr->f->getitem(data, base);
+		return descr->f->getitem(data, base);
 	}
 	itemsize = descr->elsize;
         type = descr->typeobj;
