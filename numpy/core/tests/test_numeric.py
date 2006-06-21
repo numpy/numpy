@@ -1,9 +1,9 @@
 from numpy.core import *
-from numpy.random import rand
+from numpy.random import rand, randint
 from numpy.testing import *
 from numpy.core.multiarray import dot as dot_
 
-class test_dot(ScipyTestCase):
+class test_dot(NumpyTestCase):
     def setUp(self):
         self.A = rand(10,8)
         self.b1 = rand(8,1)
@@ -104,7 +104,7 @@ class test_dot(ScipyTestCase):
                 assert_almost_equal(c1, c2, decimal=self.N)
 
 
-class test_bool_scalar(ScipyTestCase):
+class test_bool_scalar(NumpyTestCase):
     def test_logical(self):
         f = False_
         t = True_
@@ -137,7 +137,7 @@ class test_bool_scalar(ScipyTestCase):
         self.failUnless((f ^ f) is f)
 
 
-class test_seterr(ScipyTestCase):
+class test_seterr(NumpyTestCase):
     def test_set(self):
         err = seterr()
         old = seterr(divide='warn')
@@ -161,7 +161,7 @@ class test_seterr(ScipyTestCase):
         array([1.]) / array([0.])
         
         
-class test_fromiter(ScipyTestCase):
+class test_fromiter(NumpyTestCase):
     
     def makegen(self):
         for x in xrange(24):
@@ -195,7 +195,16 @@ class test_fromiter(ScipyTestCase):
         self.failUnless(alltrue(a == expected))
         self.failUnless(alltrue(a20 == expected[:20]))
 
-class test_binary_repr(ScipyTestCase):
+class test_index(NumpyTestCase):
+    def test_boolean(self):
+        a = rand(3,5,8)
+        V = rand(5,8)
+        g1 = randint(0,5,size=15)
+        g2 = randint(0,8,size=15)
+        V[g1,g2] = -V[g1,g2]
+        assert (array([a[0][V>0],a[1][V>0],a[2][V>0]]) == a[:,V>0]).all()
+
+class test_binary_repr(NumpyTestCase):
     def test_zero(self):
         assert_equal(binary_repr(0),'0')
 

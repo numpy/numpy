@@ -726,7 +726,6 @@ gentype_struct_get(PyObject *self)
 {
         PyArrayObject *arr;
         PyArrayInterface *inter;
-	PyObject *tup;
  
         arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
         inter = (PyArrayInterface *)_pya_malloc(sizeof(PyArrayInterface));
