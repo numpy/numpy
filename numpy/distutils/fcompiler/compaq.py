@@ -63,7 +63,9 @@ class CompaqVisualFCompiler(FCompiler):
     fc_exe = 'DF'
     if sys.platform=='win32':
         from distutils.msvccompiler import MSVCCompiler
-        ar_exe = MSVCCompiler().lib
+        m = MSVCCompiler()
+        m.initialize()
+        ar_exe = m.lib
 
     executables = {
         'version_cmd'  : ['DF', "/what"],

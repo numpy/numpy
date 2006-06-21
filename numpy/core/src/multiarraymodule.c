@@ -1597,7 +1597,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
 static int
 _signbit_set(PyArrayObject *arr)
 {
-	static char bitmask = 0x80;
+	static char bitmask = (char) 0x80;
 	char *ptr;  /* points to the byte to test */
 	char byteorder;
 	int elsize;

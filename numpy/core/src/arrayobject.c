@@ -1363,11 +1363,11 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 {
         intp size;
         intp n, n2;
-        int n3, n4;
+        size_t n3, n4;
         PyArrayIterObject *it;
         PyObject *obj, *strobj, *tupobj;
 
-	n3 = (int) (sep ? strlen((const char *)sep) : 0);
+	n3 = (sep ? strlen((const char *)sep) : 0);
 	if (n3 == 0) { /* binary data */
                 if (PyArray_ISOBJECT(self)) {
                         PyErr_SetString(PyExc_ValueError, "cannot write "\
@@ -1409,7 +1409,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
         else {  /* text data */
                 it=(PyArrayIterObject *)                                \
                         PyArray_IterNew((PyObject *)self);
-		n4 = (int) (format ? strlen((const char *)format) : 0);
+		n4 = (format ? strlen((const char *)format) : 0);
                 while(it->index < it->size) {
                         obj = self->descr->f->getitem(it->dataptr, self);
                         if (obj == NULL) {Py_DECREF(it); return -1;}
@@ -4914,7 +4914,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 		}
 		else {
 			nb = buffer.len;
-			off = offset;
+			off = (intp) offset;
 		}
 		
 
@@ -4942,7 +4942,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
         else {  /* buffer given -- use it */
                 if (dims.len == 1 && dims.ptr[0] == -1) {
-                        dims.ptr[0] = (buffer.len-offset) / itemsize;
+                        dims.ptr[0] = (buffer.len-(intp)offset) / itemsize;
                 }
                 else if ((strides.ptr == NULL) && \
 			 buffer.len < itemsize*				\
