@@ -195,5 +195,12 @@ class test_fromiter(ScipyTestCase):
         self.failUnless(alltrue(a == expected))
         self.failUnless(alltrue(a20 == expected[:20]))
 
+class test_binary_repr(ScipyTestCase):
+    def test_zero(self):
+        assert_equal(binary_repr(0),'0')
+
+    def test_large(self):
+        assert_equal(binary_repr(10736848),'101000111101010011010000')
+
 if __name__ == '__main__':
     NumpyTest().run()
