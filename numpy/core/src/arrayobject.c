@@ -2428,6 +2428,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 {
         int ret, oned, fancy;
 	PyArrayMapIterObject *mit;
+	intp vals[MAX_DIMS];
 
         if (op == NULL) {
                 PyErr_SetString(PyExc_ValueError,
@@ -2474,6 +2475,29 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
                 return -1;
         }
 
+	/* optimization for integer-tuple */
+	if ((PyInt_Check(index) || PyArray_IsScalar(index, Integer) ||	\
+	     PyLong_Check(index) ||					\
+	     (PyTuple_Check(index) && (PyTuple_GET_SIZE(index) == self->nd))) \
+	    && PyArray_IntpFromSequence(index, vals, self->nd) == self->nd) {
+		int i;
+		char *item;
+		for (i=0; i<self->nd; i++) {
+			if (vals[i] < 0) vals[i] += self->dimensions[i];
+			if ((vals[i] < 0) || (vals[i] >= self->dimensions[i])) {
+				PyErr_Format(PyExc_IndexError,
+					     "index (%d) out of range "\
+					     "(0<=index<%d) in dimension %d",
+					     vals[i], self->dimensions[i], i);
+				return -1;
+			}
+		}
+		item = PyArray_GetPtr(self, vals);
+		/* fprintf(stderr, "Here I am...\n");*/
+		return self->descr->f->setitem(op, item, self);
+	}
+	PyErr_Clear();
+
 	fancy = fancy_indexing_check(index);
 
 	if (fancy != SOBJ_NOTFANCY) {
@@ -2511,36 +2535,45 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 static PyObject *
 array_subscript_nice(PyArrayObject *self, PyObject *op)
 {
-	/* The following is just a copy of PyArray_Return with an
-	   additional logic in the nd == 0 case.  More efficient
-	   implementation may be possible by refactoring
-	   array_subscript */
 
 	PyArrayObject *mp;
+	intp vals[MAX_DIMS];
 
-	/* optimization for integer select and 1-d */
-	if (self->nd == 1 && (PyInt_Check(op) || PyLong_Check(op))) {
-                intp value;
+	/* optimization for a tuple of integers */
+	if (self->nd > 0 && 
+	    (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||	\
+	     PyLong_Check(op) ||					\
+	     (PyTuple_Check(op) && (PyTuple_GET_SIZE(op) == self->nd))) \
+	    && PyArray_IntpFromSequence(op, vals, self->nd) == self->nd) {
+		int i;
 		char *item;
-                value = PyArray_PyIntAsIntp(op);
-		if (PyErr_Occurred()) 
-			return NULL;
-                else if (value < 0) {
-			value += self->dimensions[0];
+		for (i=0; i<self->nd; i++) {
+			if (vals[i] < 0) vals[i] += self->dimensions[i];
+			if ((vals[i] < 0) || (vals[i] >= self->dimensions[i])) {
+				PyErr_Format(PyExc_IndexError,
+					     "index (%d) out of range "\
+					     "(0<=index<=%d) in dimension %d",
+					     vals[i], self->dimensions[i], i);
+				return NULL;
+			}
 		}
-		if ((item = index2ptr(self, value)) == NULL) return NULL;
+		item = PyArray_GetPtr(self, vals);
 		return PyArray_Scalar(item, self->descr, (PyObject *)self);
 	}
+	PyErr_Clear();
+
 	mp = (PyArrayObject *)array_subscript(self, op);
 
-	if (mp == NULL) return NULL;
+	/* The following is just a copy of PyArray_Return with an
+	   additional logic in the nd == 0 case. 
+	*/
+
+ 	if (mp == NULL) return NULL;
 
         if (PyErr_Occurred()) {
                 Py_XDECREF(mp);
                 return NULL;
         }
-
-	if (!PyArray_Check(mp)) return (PyObject *)mp;
 	
 	if (mp->nd == 0) {
 		Bool noellipses = TRUE;
@@ -2566,7 +2599,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 			Py_DECREF(mp);
 			return ret;
 		}
-	}
+ 	}
 	return (PyObject *)mp;
 }
 
