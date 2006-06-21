@@ -2548,12 +2548,17 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 			noellipses = FALSE;
 		else if (PySequence_Check(op)) {
 			int n, i;
+			PyObject *temp;
 			n = PySequence_Size(op);
-			for (i = 0; i < n; ++i) 
-				if (PySequence_GetItem(op, i) == Py_Ellipsis) {
+			for (i = 0; i < n; ++i) {
+				temp = PySequence_GetItem(op, i);
+				if (temp == Py_Ellipsis) {
 					noellipses = FALSE;
+					Py_DECREF(temp);
 					break;
 				}
+				Py_DECREF(temp);
+			}
 		}
 		if (noellipses) {
 			PyObject *ret;
