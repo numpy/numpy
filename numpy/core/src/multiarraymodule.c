@@ -5186,11 +5186,15 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 	binary = ((sep == NULL) || (strlen(sep) == 0));
 	if (num == -1 && binary) {  /* Get size for binary file*/
 		intp start, numbytes;
+		int fail=0;
 		start = (intp )ftell(fp);
-		fseek(fp, 0, SEEK_END);
-		numbytes = (intp )ftell(fp) - start;
-		rewind(fp);
-		if (numbytes == -1) {
+		if (start < 0) fail=1;
+		if (fseek(fp, 0, SEEK_END) < 0) fail=1;
+		numbytes = (intp) ftell(fp);
+		if (numbytes < 0) fail=1;
+		numbytes -= start;
+		if (fseek(fp, start, SEEK_SET) < 0) fail=1;
+		if (fail) {
 			PyErr_SetString(PyExc_IOError, 
 					"could not seek in file");
 			Py_DECREF(typecode);
