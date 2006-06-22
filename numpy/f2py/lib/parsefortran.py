@@ -16,7 +16,7 @@ import traceback
 from numpy.distutils.misc_util import yellow_text, red_text
 
 from readfortran import FortranFileReader, FortranStringReader
-from block import Block
+from block_statements import BeginSource
 
 class FortranParser:
 
@@ -37,8 +37,7 @@ class FortranParser:
     def parse(self):
         import init
         try:
-            main = Block(self)
-            main.fill()
+            main = BeginSource(self)
             return main
         except KeyboardInterrupt:
             raise
@@ -53,11 +52,11 @@ class FortranParser:
 def test_pyf():
     string = """
 python module foo
-  interface
+  interface tere
     subroutine bar
     real r
     end subroutine bar
-  end interface
+  end interface tere
 end python module foo
 """
     reader = FortranStringReader(string, True, True)
@@ -79,8 +78,15 @@ module foo
     if (.true.) then
       call smth
     end if
+    aaa : if (.false.) then
+    else if (a) then aaa
+    else aaa
+    end if aaa
+    hey = 1
     end subroutine bar
+    abstract interface
 
+    end interface
 end module foo
 """
     reader = FortranStringReader(string, True, False)
@@ -109,7 +115,7 @@ def simple_main():
 
         parser = FortranParser(reader)
         block = parser.parse()
-        print block
+        #print block
 
 def profile_main():
     import hotshot, hotshot.stats
@@ -127,3 +133,4 @@ if __name__ == "__main__":
     #test_pyf()
     simple_main()
     #profile_main()
+    

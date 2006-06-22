@@ -58,28 +58,28 @@ StatementBlock.classes['pyf'] = StatementBlock.classes['free90']
 
 # Initialize stmt_cls attributes
 
-ProgramBlock.stmt_cls = Program
-ModuleBlock.stmt_cls = Module
-PythonModuleBlock.stmt_cls = PythonModule
-BlockDataBlock.stmt_cls = BlockData
-InterfaceBlock.stmt_cls = Interface
-SubroutineBlock.stmt_cls = Subroutine
-FunctionBlock.stmt_cls = Function
-TypeBlock.stmt_cls = Type
+## ProgramBlock.stmt_cls = Program
+## ModuleBlock.stmt_cls = Module
+## PythonModuleBlock.stmt_cls = PythonModule
+## BlockDataBlock.stmt_cls = BlockData
+## InterfaceBlock.stmt_cls = Interface
+## SubroutineBlock.stmt_cls = Subroutine
+## FunctionBlock.stmt_cls = Function
+## TypeBlock.stmt_cls = Type
 
-IfThenBlock.stmt_cls = IfThen
-DoBlock.stmt_cls = Do
-SelectBlock.stmt_cls = Select
+## IfThenBlock.stmt_cls = IfThen
+## DoBlock.stmt_cls = Do
+## SelectBlock.stmt_cls = Select
 
-ProgramBlock.end_stmt_cls = EndProgram
-ModuleBlock.end_stmt_cls = EndModule
-PythonModuleBlock.end_stmt_cls = EndPythonModule
-BlockDataBlock.end_stmt_cls = EndBlockData
-InterfaceBlock.end_stmt_cls = EndInterface
-SubroutineBlock.end_stmt_cls = EndSubroutine
-FunctionBlock.end_stmt_cls = EndFunction
-TypeBlock.end_stmt_cls = EndType
+## ProgramBlock.end_stmt_cls = EndProgram
+## ModuleBlock.end_stmt_cls = EndModule
+## PythonModuleBlock.end_stmt_cls = EndPythonModule
+## BlockDataBlock.end_stmt_cls = EndBlockData
+## InterfaceBlock.end_stmt_cls = EndInterface
+## SubroutineBlock.end_stmt_cls = EndSubroutine
+## FunctionBlock.end_stmt_cls = EndFunction
+## TypeBlock.end_stmt_cls = EndType
 
-IfThenBlock.end_stmt_cls = EndIfThen
-DoBlock.end_stmt_cls = EndDo
-SelectBlock.end_stmt_cls = EndSelect
+## IfThenBlock.end_stmt_cls = EndIfThen
+## DoBlock.end_stmt_cls = EndDo
+## SelectBlock.end_stmt_cls = EndSelect

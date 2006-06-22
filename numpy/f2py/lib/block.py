@@ -21,7 +21,7 @@ import sys
 
 from readfortran import Line
 from splitline import string_replace_map
-from stmt import statements, end_stmts, block_stmts
+from stmt import statements #, end_stmts, block_stmts
 
 class Block:
     """
@@ -34,6 +34,8 @@ class Block:
       get_item, put_item - methods to retrive/submit Line instaces
                 from/to Fortran reader.
       isvalid - boolean, when False, the Block instance will be ignored.
+
+      stmt_cls, end_stmt_cls
     """
 
     classes = {}
@@ -52,7 +54,7 @@ class Block:
         self.get_item = parent.get_item # get line function
         self.put_item = parent.put_item # put line function
 
-        self.content = []
+        self.content = []  # list of statement instances in block
         self.name = None
 
         self.item = item
@@ -64,6 +66,19 @@ class Block:
             self.content.append(stmt)
             self.name = stmt.name
             self.fill() # read block content
+
+        return
+
+    def init_class(self):
+        if hasattr(self.__class__, 'stmt_cls'):
+            return
+        name = self.__class__.__name__
+        assert name[-5:]=='Block',`name`
+        name = name[:-5]
+        import stmt
+        setattr(self.__class__,'stmt_cls',getattr(stmt,name))
+        setattr(self.__class__,'end_stmt_cls',getattr(stmt,'End'+name))        
+        return
 
     def get_name(self):
         if self.__class__ is Block: return '__F2PY_MAIN__'
@@ -137,7 +152,7 @@ class Block:
                     end_flag = True
                     break
                 elif not self.isstmt(item):
-                    # put unknown item's to content.
+                    # put unknown items to content list.
                     self.content.append(item)
             item = self.get_item()
         if not end_flag:
@@ -247,7 +262,7 @@ class DoBlock(StatementBlock):
             #   ..
             # 1 continue 
             if item.label==self.endlabel:
-                # item may contain computational statemets
+                # item may contain computational statements
                 self.content.append(item)
                 # the same item label may be used for different block ends
                 self.put_item(item)       

@@ -1,8 +1,11 @@
+#!/usr/bin/env python
 """Single line Fortran statements.
 
 """
 
-__all__ = ['statements', 'end_stmts', 'block_stmts',
+__all__ = ['statements',
+           #'end_stmts',
+           'block_stmts',
            'IfThen', 'Program', 'Module', 'PythonModule',
            'BlockData','Interface', 'Subroutine','Function',
            'Type','Do','Select',
@@ -13,7 +16,15 @@ __all__ = ['statements', 'end_stmts', 'block_stmts',
 
 import re
 import sys
+
 class Statement:
+    """
+    Statement instance has attributes:
+      parent  - Block or FortranParser instance
+      item    - Line instance containing the statement line
+      name    - statement label
+      isvalid - boolean, when False, the Statement instance will be ignored
+    """
 
     def __init__(self, parent, item, name=None):
         self.parent = parent
@@ -42,7 +53,21 @@ class Statement:
             tab = s + colon + tab
         return tab
 
-# End statements
+
+# Base classes for block begin and end statements:
+
+class BeginStatement(Statement):
+    """ <blocktype> <name>
+
+    BeginStatement instances have the following attributes:
+      name
+      isvalid
+    """
+    def __init__(self, parent, item):
+        name = item.get_line().replace(' ','')[len(self.blocktype):].strip()
+        if not name:
+            name = '__'+self.blocktype.upper()+'__'
+        Statement.__init__(self, parent, item, name)
 
 class EndStatement(Statement):
     """
@@ -78,12 +103,21 @@ class EndStatement(Statement):
         return self.get_intent_tab()[:-2] + 'END %s %s'\
                % (self.blocktype.upper(),self.name or '')
 
+##
+
+class Program(BeginStatement):
+    """ PROGRAM [name]
+    """
+    blocktype = 'program'
+    start_re = re.compile(r'program\s*\w*\Z', re.I).match
+
 class EndProgram(EndStatement):
     """
     END [PROGRAM [name]]
     """
-    start_re = re.compile(r'end(\s*program\s*\w*|)\Z', re.I).match
     blocktype = 'program'
+    start_re = re.compile(r'end(\s*program\s*\w*|)\Z', re.I).match
+
 
 class EndModule(EndStatement):
     """
@@ -156,26 +190,8 @@ class EndDo(EndStatement):
     start_re = re.compile(r'end\s*do\s*\w*', re.I).match
     blocktype = 'do'
 
-# Begin statements
 
-class BeginStatement(Statement):
-    """ <blocktype> <name>
 
-    BeginStatement instances have the following attributes:
-      name
-      isvalid
-    """
-    def __init__(self, parent, item):
-        name = item.get_line().replace(' ','')[len(self.blocktype):].strip()
-        if not name:
-            name = '__'+self.blocktype.upper()+'__'
-        Statement.__init__(self, parent, item, name)
-
-class Program(BeginStatement):
-    """ PROGRAM [name]
-    """
-    blocktype = 'program'
-    start_re = re.compile(r'program\s*\w*\Z', re.I).match
 
 class Module(BeginStatement):
     """
@@ -554,11 +570,11 @@ class Format(Statement):
     def __str__(self):
         return self.get_intent_tab() + 'FORMAT (%s)' % (self.spec)
 
-end_stmts = {'ModuleBlock':EndModule, 'PythonModuleBlock':EndPythonModule,
-             'TypeBlock':EndType,
-             'SubroutineBlock':EndSubroutine,'FunctionBlock':EndFunction,
-             'IfThenBlock':EndIfThen,'DoBlock':EndDo,'InterfaceBlock':EndInterface,
-             'SelectBlock':EndSelect}
+#end_stmts = {'ModuleBlock':EndModule, 'PythonModuleBlock':EndPythonModule,
+#             'TypeBlock':EndType,
+#             'SubroutineBlock':EndSubroutine,'FunctionBlock':EndFunction,
+#             'IfThenBlock':EndIfThen,'DoBlock':EndDo,'InterfaceBlock':EndInterface,
+#             'SelectBlock':EndSelect}
 
 block_stmts = {'IfThenBlock':IfThen}
 

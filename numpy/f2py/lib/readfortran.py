@@ -51,6 +51,21 @@ class Line:
         self.label = label
         self.reader = reader
         self.strline = None
+    def copy(self, line = None, apply_map = False):
+        if line is None:
+            line = self.line
+        if apply_map and hasattr(self,'strlinemap'):
+            str_map = self.strlinemap
+            keys = str_map.keys()
+            flag = True
+            while flag:
+                flag = False
+                for k in keys:
+                    if k in line:
+                        flag = True
+                        line = line.replace(k, str_map[k])
+                        assert k not in line, `k,line`
+        return Line(line, self.span, self.label, self.reader)
     def __repr__(self):
         return self.__class__.__name__+'(%r,%s,%r)' \
                % (self.line, self.span, self.label)
@@ -139,6 +154,8 @@ class FortranReaderBase:
         self.fifo_item = []
         self.source_lines = []
 
+        self.name = '%s mode=%s' % (source, mode)
+
     def close_source(self):
         # called when self.source.next() raises StopIteration.
         pass
@@ -208,6 +225,15 @@ class FortranReaderBase:
                 break
             # else ignore empty lines and comments
         if not isinstance(item, Comment):
+            if isinstance(item, Line) and ';' in item.get_line():
+                items = []
+                for line in item.get_line().split(';'):
+                    line = line.strip()
+                    items.append(item.copy(line, apply_map=True))
+                items.reverse()
+                for newitem in items:
+                    self.fifo_item.insert(0, newitem)
+                return fifo_item_pop(0)
             return item
         # collect subsequent comments to one comment instance
         comments = []
