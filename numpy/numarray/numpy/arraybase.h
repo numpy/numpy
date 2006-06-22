@@ -55,7 +55,6 @@ typedef struct { Float64 r, i; } Complex64;
 
 #define PyArray(m)                      ((PyArrayObject *)(m))
 #define PyArray_ISFORTRAN_CONTIGUOUS(m) (((PyArray(m))->flags & FORTRAN_CONTIGUOUS) != 0)
-#define PyArray_ISBYTESWAPPED(m) (!PyArray_ISNOTSWAPPED(m))
 #define PyArray_ISWRITABLE  PyArray_ISWRITEABLE 
 
 

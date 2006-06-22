@@ -340,40 +340,40 @@ PyArray_XDECREF(PyArrayObject *mp)
         return 0;
 }
 
-/* byte-swap inplace (unrolled loops for special cases) */
 static void
-byte_swap_vector(void *p, int n, int size) {
-        char *a, *b, c=0;
+_strided_byte_swap(void *p, intp stride, intp n, int size)
+{
+	char *a, *b, c=0;
         int j,m;
-
+	
         switch(size) {
         case 1: /* no byteswap necessary */
                 break;
-        case 2:
-                for (a = (char*)p ; n > 0; n--, a += 1) {
-                        b = a + 1;
-                        c = *a; *a++ = *b; *b   = c;
-                }
-                break;
         case 4:
-                for (a = (char*)p ; n > 0; n--, a += 2) {
+                for (a = (char*)p ; n > 0; n--, a += stride-1) {
                         b = a + 3;
                         c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
+                        c = *a; *a = *b; *b   = c;
                 }
                 break;
         case 8:
-                for (a = (char*)p ; n > 0; n--, a += 4) {
+                for (a = (char*)p ; n > 0; n--, a += stride-3) {
                         b = a + 7;
                         c = *a; *a++ = *b; *b-- = c;
                         c = *a; *a++ = *b; *b-- = c;
                         c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
+                        c = *a; *a = *b; *b   = c;
+                }
+                break;
+        case 2:
+                for (a = (char*)p ; n > 0; n--, a += stride) {
+                        b = a + 1;
+                        c = *a; *a = *b; *b = c;
                 }
                 break;
         default:
                 m = size / 2;
-                for (a = (char *)p ; n > 0; n--, a += m) {
+                for (a = (char *)p ; n > 0; n--, a += stride-m) {
                         b = a + (size-1);
                         for (j=0; j<m; j++) {
                                 c=*a; *a++ = *b; *b-- = c;
@@ -383,6 +383,12 @@ byte_swap_vector(void *p, int n, int size) {
         }
 }
 
+static void
+byte_swap_vector(void *p, intp n, int size)
+{
+	_strided_byte_swap(p, (intp) size, n, size);
+	return;
+}
 
 /* If numitems > 1, then dst must be contiguous */
 static void
@@ -737,18 +743,17 @@ _unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
 
 
 static int
-_copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy) 
+_copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap) 
 {
 	char *aligned=NULL;
 	char *sptr;
-	int numcopies;
-	intp nbytes;
+	int numcopies, nbytes;
 	void (*myfunc)(char *, intp, char *, intp, intp, int);
 	int retval=-1;
 
 	numcopies = PyArray_SIZE(dest);
 	if (numcopies < 1) return 0;
-	nbytes = PyArray_NBYTES(src);
+	nbytes = PyArray_ITEMSIZE(src);
 
 	if (!PyArray_ISALIGNED(src)) {
 		aligned = malloc((size_t)nbytes);
@@ -781,6 +786,8 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy)
 			dstride = nbytes;
 		PyArray_XDECREF(dest);
 		myfunc(dptr, dstride, sptr, 0, numcopies, (int) nbytes);
+		if (swap) 
+			_strided_byte_swap(dptr, dstride, numcopies, (int) nbytes);
 		PyArray_INCREF(dest);
 	}
 	else {
@@ -794,6 +801,10 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy)
 			myfunc(dit->dataptr, PyArray_STRIDE(dest, axis),
 			       sptr, 0,
 			       PyArray_DIM(dest, axis), nbytes);
+			if (swap) 
+				_strided_byte_swap(dit->dataptr, 
+						   PyArray_STRIDE(dest, axis),
+						   PyArray_DIM(dest, axis), nbytes);
 			PyArray_ITER_NEXT(dit);
 		}
 		PyArray_INCREF(dest);
@@ -858,52 +869,6 @@ int _flat_copyinto(PyObject *dst, PyObject *src, PyArray_ORDER order) {
 	return 0;
 }
 
-static void
-_strided_byte_swap(void *p, intp stride, intp n, int size)
-{
-	char *a, *b, c=0;
-        int j,m;
-	
-        switch(size) {
-        case 1: /* no byteswap necessary */
-                break;
-        case 4:
-                for (a = (char*)p ; n > 0; n--, a += 2) {
-                        b = a + 3;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a = *b; *b   = c;
-			a += stride-1;
-                }
-                break;
-        case 8:
-                for (a = (char*)p ; n > 0; n--, a += 4) {
-                        b = a + 7;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a = *b; *b   = c;
-			a += stride-3;
-                }
-                break;
-        case 2:
-                for (a = (char*)p ; n > 0; n--, a += 1) {
-                        b = a + 1;
-                        c = *a; *a = *b; *b = c;
-			a += stride;
-                }
-                break;
-        default:
-                m = size / 2;
-                for (a = (char *)p ; n > 0; n--, a += m) {
-                        b = a + (size-1);
-                        for (j=0; j<m; j++) {
-                                c=*a; *a++ = *b; *b-- = c;
-			}
-			a += stride-m;
-                }
-                break;
-        }
-}
 
 static int
 _copy_from_same_shape(PyArrayObject *dest, PyArrayObject *src, 
@@ -1028,11 +993,12 @@ _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
 		return 0;
 	}
 
+	swap = PyArray_ISNOTSWAPPED(dest) != PyArray_ISNOTSWAPPED(src);
+
 	if (src->nd == 0) {
-		return _copy_from0d(dest, src, usecopy);
+		return _copy_from0d(dest, src, usecopy, swap);
 	}
 
-	swap = PyArray_ISNOTSWAPPED(dest) != PyArray_ISNOTSWAPPED(src);
 	if (PyArray_ISALIGNED(dest) && PyArray_ISALIGNED(src)) {
 		myfunc = _strided_byte_copy;
 	}
@@ -1104,19 +1070,14 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 		}
 	}
 	
-	
-	/*
 	if (PyArray_Check(src_object)) {
 		dtype = NULL;
 	}
-	else {
-		dtype = dest->descr;
+ 	else {
+	 	dtype = dest->descr;
 		Py_INCREF(dtype);
 	}
-	*/
-	dtype = dest->descr;
-	Py_INCREF(dtype);
-	src = (PyArrayObject *)PyArray_FromAny(src_object, dtype, 0, 
+ 	src = (PyArrayObject *)PyArray_FromAny(src_object, dtype, 0, 
 					       dest->nd,
 					       FORTRAN_IF(dest), NULL);
         if (src == NULL) return -1;
@@ -6620,103 +6581,6 @@ PyArray_ValidType(int type)
 	return res;
 }
 
-
-/* If the output is not a CARRAY, then it is buffered also */
-
-static int
-_bufferedcast(PyArrayObject *out, PyArrayObject *in, 
-	      PyArray_VectorUnaryFunc *castfunc)
-{
-	char *inbuffer, *bptr, *optr;
-	char *outbuffer=NULL;
-	PyArrayIterObject *it_in=NULL, *it_out=NULL;
-	register intp i, index;
-	int elsize=in->descr->elsize;
-	int nels = PyArray_BUFSIZE;
-	int el;
-	int inswap, outswap=0;
-	int obuf=!PyArray_ISCARRAY(out);
-	int oelsize = out->descr->elsize;
-        PyArray_CopySwapFunc *in_csn;
-        PyArray_CopySwapFunc *out_csn;
-	int retval = -1;
-
-        in_csn = in->descr->f->copyswap;
-        out_csn = out->descr->f->copyswap;
-
-	/* If the input or output is STRING, UNICODE, or VOID */
-	/*  then getitem and setitem are used for the cast */
-	/*  and byteswapping is handled by those methods */
-
-	inswap = !(PyArray_ISFLEXIBLE(in) || PyArray_ISNOTSWAPPED(in));
-
-	inbuffer = PyDataMem_NEW(PyArray_BUFSIZE*elsize);
-	if (inbuffer == NULL) return -1;
-	if (PyArray_ISOBJECT(in))
-		memset(inbuffer, 0, PyArray_BUFSIZE*elsize);
-	it_in = (PyArrayIterObject *)PyArray_IterNew((PyObject *)in);
-	if (it_in == NULL) goto exit;
-
-	if (obuf) {
-		outswap = !(PyArray_ISFLEXIBLE(out) || \
-			    PyArray_ISNOTSWAPPED(out));
-		outbuffer = PyDataMem_NEW(PyArray_BUFSIZE*oelsize);
-		if (outbuffer == NULL) goto exit;
-		if (PyArray_ISOBJECT(out))
-			memset(outbuffer, 0, PyArray_BUFSIZE*oelsize);
-
-		it_out = (PyArrayIterObject *)PyArray_IterNew((PyObject *)out);
-		if (it_out == NULL) goto exit;
-
-		nels = MIN(nels, PyArray_BUFSIZE);
-	}
-
-	optr = (obuf) ? outbuffer: out->data;
-	bptr = inbuffer;
-	el = 0;
-
-	index = it_in->size;
-	PyArray_ITER_RESET(it_in);
-	while(index--) {
-		in_csn(bptr, it_in->dataptr, inswap, in);
-		bptr += elsize;
-		PyArray_ITER_NEXT(it_in);
-		el += 1;
-		if ((el == nels) || (index == 0)) {
-			/* buffer filled, do cast */
-			
-			castfunc(inbuffer, optr, el, in, out);
-			
-			if (obuf) {
-				/* Copy from outbuffer to array */
-				for(i=0; i<el; i++) {
-					out_csn(it_out->dataptr,
-						optr, outswap,
-						out);
-					optr += oelsize;
-					PyArray_ITER_NEXT(it_out);
-				}
-				optr = outbuffer;
-			}
-			else {
-				optr += out->descr->elsize * nels;
-			}
-			el = 0;
-			bptr = inbuffer;
-		}
-	}
-	retval = 0;
- exit:
-	Py_XDECREF(it_in);
-	PyDataMem_FREE(inbuffer);
-	PyDataMem_FREE(outbuffer);
-	if (obuf) {
-		Py_XDECREF(it_out);
-	}
-	return retval;
-}
-
-
 /* For backward compatibility */
 
 /* steals reference to at --- cannot be NULL*/
@@ -6805,7 +6669,109 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 	return NULL; 
 }
 
+/* buffer[0] is the destination
+   buffer[1] is the source
+*/
+static void
+_strided_buffered_cast(char *dptr, intp dstride, int delsize, int dswap,
+		       void (*dcopyfunc)(char *, intp, char *, intp, intp, int),
+		       char *sptr, intp sstride, int selsize, int sswap,
+		       void (*scopyfunc)(char *, intp, char *, intp, intp, int),
+		       intp N, char **buffers, int bufsize,
+		       PyArray_VectorUnaryFunc *castfunc,
+		       PyArrayObject *dest, PyArrayObject *src)
+{
+	if (N <= bufsize) {
+		/* 1. copy input to buffer
+		   2. swap if necessary
+		   3. cast input to output
+		   4. swap output if necessary
+		   5. copy output from buffer
+		*/
+		scopyfunc(buffers[1], selsize, sptr, sstride, N, selsize);
+		if (sswap)
+			byte_swap_vector(buffers[1], N, selsize);
+		castfunc(buffers[1], buffers[0], N, src, dest);
+		if (dswap) 
+			byte_swap_vector(buffers[0], N, delsize);
+		dcopyfunc(dptr, dstride, buffers[0], delsize, N, delsize);
+		return;
+	}
+
+	/* otherwise we need to divide up into bufsize pieces */
+	while(N > 0) {
+		int newN;
+		newN = MIN(N, bufsize);
+		_strided_buffered_cast(dptr, dstride, delsize, dswap, dcopyfunc,
+				       sptr, sstride, selsize, sswap, scopyfunc,
+				       newN, buffers, bufsize, castfunc, dest, src);
+		N -= bufsize;
+	}
+	return;
+}
+
+static int 
+_broadcast_cast(PyArrayObject *out, PyArrayObject *in, 
+		PyArray_VectorUnaryFunc *castfunc, int iswap, int oswap)
+{
+	int delsize, selsize, maxaxis;
+	PyArrayMultiIterObject *multi;
+	intp maxdim;
+	char *buffers[2];
+	void (*ocopyfunc)(char *, intp, char *, intp, intp, int);
+	void (*icopyfunc)(char *, intp, char *, intp, intp, int);
+
+	delsize = PyArray_ITEMSIZE(out);
+	selsize = PyArray_ITEMSIZE(in);
+	multi = (PyArrayMultiIterObject *)PyArray_MultiIterNew(2, out, in);
+	if (multi == NULL) return -1;
+	maxaxis = PyArray_RemoveLargest(multi);
+	if (maxaxis < 0) return -1;
+	maxdim = multi->dimensions[maxaxis];
+	buffers[0] = malloc(PyArray_BUFSIZE*delsize);
+	if (buffers[0] == NULL) {
+		PyErr_NoMemory();
+		return -1;
+	}
+	buffers[1] = malloc(PyArray_BUFSIZE*selsize);
+	if (buffers[1] == NULL) {
+		PyErr_NoMemory();
+		free(buffers[0]);
+		return -1;
+	}
+	if (out->descr->hasobject == 1) 
+		memset(buffers[0], 0, PyArray_BUFSIZE*delsize);
+	if (in->descr->hasobject == 1) 
+		memset(buffers[1], 0, PyArray_BUFSIZE*selsize);
+
+	if (PyArray_ISALIGNED(in)) icopyfunc = _strided_byte_copy;
+	else icopyfunc = _unaligned_strided_byte_copy;
+
+	if (PyArray_ISALIGNED(out)) ocopyfunc = _strided_byte_copy;
+	else ocopyfunc = _unaligned_strided_byte_copy;
+
+	PyArray_XDECREF(out);
+	while(multi->index < multi->size) {
+		_strided_buffered_cast(multi->iters[0]->dataptr,
+				       multi->iters[0]->strides[maxaxis],
+				       delsize, oswap, ocopyfunc,
+				       multi->iters[1]->dataptr, 
+				       multi->iters[1]->strides[maxaxis],
+				       selsize, iswap, icopyfunc,
+				       maxdim, buffers, PyArray_BUFSIZE, 
+				       castfunc, out, in);
+		PyArray_MultiIter_NEXT(multi);
+	}
+	Py_DECREF(multi);
+	free(buffers[0]);
+	free(buffers[1]);
+	return 0;
+}
+
 /* Must be broadcastable. 
+   This code is very similar to PyArray_CopyInto/PyArray_MoveInto
+   except casting is done --- PyArray_BUFSIZE is used 
+   as the size of the casting buffer. 
 */
 
 /*OBJECT_API
@@ -6816,8 +6782,10 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 {
 
 	int simple;
+	int same;
 	PyArray_VectorUnaryFunc *castfunc=NULL;
-	intp mpsize = PyArray_SIZE(mp);
+	int mpsize = PyArray_SIZE(mp);
+	int iswap, oswap;
 
 	if (mpsize == 0) return 0;
 	if (!PyArray_ISWRITEABLE(out)) {
@@ -6825,35 +6793,54 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 				"output array is not writeable");
 		return -1;
 	}
-	if (!PyArray_SAMESHAPE(out, mp)) {
-		PyErr_SetString(PyExc_ValueError,
-				"arrays must have the same shape.");
-		return -1;
-	}
 
 	castfunc = PyArray_GetCastFunc(mp->descr, out->descr->type_num);
-		
 	if (castfunc == NULL) return -1;
 
-	simple = ((PyArray_ISCARRAY_RO(mp) && PyArray_ISCARRAY(out)) || 
-		  (PyArray_ISFARRAY_RO(mp) && PyArray_ISFARRAY(out))) && 
-		PyArray_SAMESHAPE(out, mp);
+
+	same = PyArray_SAMESHAPE(out, mp);
+	simple = same && ((PyArray_ISCARRAY_RO(mp) && PyArray_ISCARRAY(out)) || 
+			  (PyArray_ISFARRAY_RO(mp) && PyArray_ISFARRAY(out)));
 
 	if (simple) {
-		char *inptr;
-		char *optr = out->data;
-		intp obytes = out->descr->elsize * mpsize;
-		inptr = mp->data;
-		castfunc(inptr, optr, mpsize, mp, out);
-		optr += obytes;
+		castfunc(mp->data, out->data, mpsize, mp, out);
 		return 0;
 	}
+
+	iswap = PyArray_ISBYTESWAPPED(mp);
+	oswap = PyArray_ISBYTESWAPPED(out);
 	
-	/* If not a well-behaved cast, then use buffers */
-	if (_bufferedcast(out, mp, castfunc) == -1) {
-		return -1;
+	if (same && mpsize < PyArray_BUFSIZE) {
+		PyArrayObject *mp2, *out2;
+		if (!PyArray_ISCARRAY_RO(mp)) {
+			mp2 = (PyArrayObject *)PyArray_NewCopy(mp, 
+							       PyArray_CORDER);
+		}
+		else {
+			mp2 = mp;
+			Py_INCREF(mp2);
+		}
+		if (mp2 == NULL) return -1;
+		if (!PyArray_ISCARRAY(out)) {
+			out2 = (PyArrayObject *)PyArray_NewCopy(out, 
+								PyArray_CORDER);
+		}
+		else {
+			out2 = out;
+			Py_INCREF(out2);
+		}
+		if (out2 == NULL) { Py_DECREF(mp2); return -1;}
+		if (iswap) byte_swap_vector(mp2->data, mpsize, 
+					    PyArray_ITEMSIZE(mp2));
+		castfunc(mp2->data, out2->data, mpsize, mp2, out2);
+		if (oswap) byte_swap_vector(out2->data, mpsize,
+					    PyArray_ITEMSIZE(out2));
+		Py_DECREF(out2);
+		Py_DECREF(mp2);
+		return 0;
 	}
-	return 0;
+
+	return _broadcast_cast(out, mp, castfunc, iswap, oswap);
 }
 
 /* steals reference to newtype --- acc. NULL */

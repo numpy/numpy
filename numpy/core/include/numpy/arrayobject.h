@@ -1060,9 +1060,11 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 
 /* Size of internal buffers used for alignment */
+/* Make BUFSIZE a multiple of sizeof(cdouble) -- ususally 16 */
+/* So that ufunc buffers are aligned */
 #define PyArray_BUFSIZE 10000
-#define PyArray_MIN_BUFSIZE 5
-#define PyArray_MAX_BUFSIZE 100000000
+#define PyArray_MIN_BUFSIZE sizeof(cdouble)
+#define PyArray_MAX_BUFSIZE sizeof(cdouble)*1000000
 
 /*
  * C API:  consists of Macros and functions.  The MACROS are defined here.
@@ -1435,6 +1437,7 @@ typedef struct {
 #define PyArray_ISNBO(arg) ((arg) != PyArray_OPPBYTE)
 #define PyArray_IsNativeByteOrder PyArray_ISNBO
 #define PyArray_ISNOTSWAPPED(m) PyArray_ISNBO(PyArray_DESCR(m)->byteorder)
+#define PyArray_ISBYTESWAPPED(m) (!PyArray_ISNOTSWAPPED(m))
 
 #define PyArray_FLAGSWAP(m, flags) (PyArray_CHKFLAGS(m, flags) &&	\
 				    PyArray_ISNOTSWAPPED(m))

@@ -2234,7 +2234,7 @@ def _var(self,axis=0,dtype=None):
     a = self.swapaxes(axis,0)
     a = a - a.mean(axis=0)
     a *= a
-    a /= (a.count(axis=0)-1)
+    a /= a.count(axis=0)
     return a.swapaxes(0,axis).sum(axis)
 def _std(self,axis=0,dtype=None):
     return (self.var(axis,dtype))**0.5
