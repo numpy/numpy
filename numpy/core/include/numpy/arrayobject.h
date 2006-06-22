@@ -1060,9 +1060,10 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /* Size of internal buffers used for alignment */
 /* Make BUFSIZE a multiple of sizeof(cdouble) -- ususally 16 */
 /* So that ufunc buffers are aligned */
-#define PyArray_BUFSIZE 10000
 #define PyArray_MIN_BUFSIZE sizeof(cdouble)
 #define PyArray_MAX_BUFSIZE sizeof(cdouble)*1000000
+#define PyArray_BUFSIZE 10000
+
 
 /*
  * C API:  consists of Macros and functions.  The MACROS are defined here.

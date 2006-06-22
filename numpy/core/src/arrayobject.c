@@ -6728,17 +6728,12 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 	maxaxis = PyArray_RemoveLargest(multi);
 	if (maxaxis < 0) return -1;
 	maxdim = multi->dimensions[maxaxis];
-	buffers[0] = malloc(PyArray_BUFSIZE*delsize);
+	buffers[0] = malloc(PyArray_BUFSIZE*(delsize+selsize));
 	if (buffers[0] == NULL) {
 		PyErr_NoMemory();
 		return -1;
 	}
-	buffers[1] = malloc(PyArray_BUFSIZE*selsize);
-	if (buffers[1] == NULL) {
-		PyErr_NoMemory();
-		free(buffers[0]);
-		return -1;
-	}
+	buffers[1] = buffers[0] + PyArray_BUFSIZE*delsize;
 	if (out->descr->hasobject == 1) 
 		memset(buffers[0], 0, PyArray_BUFSIZE*delsize);
 	if (in->descr->hasobject == 1) 
@@ -6764,7 +6759,6 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 	}
 	Py_DECREF(multi);
 	free(buffers[0]);
-	free(buffers[1]);
 	return 0;
 }
 
@@ -6810,36 +6804,6 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 	iswap = PyArray_ISBYTESWAPPED(mp);
 	oswap = PyArray_ISBYTESWAPPED(out);
 	
-	if (same && mpsize < PyArray_BUFSIZE) {
-		PyArrayObject *mp2, *out2;
-		if (!PyArray_ISCARRAY_RO(mp)) {
-			mp2 = (PyArrayObject *)PyArray_NewCopy(mp, 
-							       PyArray_CORDER);
-		}
-		else {
-			mp2 = mp;
-			Py_INCREF(mp2);
-		}
-		if (mp2 == NULL) return -1;
-		if (!PyArray_ISCARRAY(out)) {
-			out2 = (PyArrayObject *)PyArray_NewCopy(out, 
-								PyArray_CORDER);
-		}
-		else {
-			out2 = out;
-			Py_INCREF(out2);
-		}
-		if (out2 == NULL) { Py_DECREF(mp2); return -1;}
-		if (iswap) byte_swap_vector(mp2->data, mpsize, 
-					    PyArray_ITEMSIZE(mp2));
-		castfunc(mp2->data, out2->data, mpsize, mp2, out2);
-		if (oswap) byte_swap_vector(out2->data, mpsize,
-					    PyArray_ITEMSIZE(out2));
-		Py_DECREF(out2);
-		Py_DECREF(mp2);
-		return 0;
-	}
-
 	return _broadcast_cast(out, mp, castfunc, iswap, oswap);
 }
 
