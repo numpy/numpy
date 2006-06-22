@@ -774,10 +774,10 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 	if ((*bufsize < PyArray_MIN_BUFSIZE) ||	\
 	    (*bufsize > PyArray_MAX_BUFSIZE) || \
 	    (*bufsize % 16 != 0)) {
-		PyErr_Format(PyExc_ValueError,  
-			     "buffer size (%d) is not "	\
-			     "in range (%d - %d) or not a multiple of 16", 
-			     *bufsize, PyArray_MIN_BUFSIZE, 
+		PyErr_Format(PyExc_ValueError,
+			     "buffer size (%d) is not in range "
+                             "(%"INTP_FMT" - %"INTP_FMT") or not a multiple of 16",
+			     *bufsize, PyArray_MIN_BUFSIZE,
 			     PyArray_MAX_BUFSIZE);
 		return -1;
 	}
@@ -786,7 +786,7 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 	if (*errmask < 0) {
 		if (PyErr_Occurred()) return -1;
 		PyErr_Format(PyExc_ValueError,		\
-			     "invalid error mask (%d)", 
+			     "invalid error mask (%d)",
 			     *errmask);
 		return -1;
 	}

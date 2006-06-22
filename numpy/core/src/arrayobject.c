@@ -2680,8 +2680,8 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 			if (vals[i] < 0) vals[i] += self->dimensions[i];
 			if ((vals[i] < 0) || (vals[i] >= self->dimensions[i])) {
 				PyErr_Format(PyExc_IndexError,
-					     "index (%d) out of range "\
-					     "(0<=index<%d) in dimension %d",
+					     "index (%"INTP_FMT") out of range "\
+					     "(0<=index<%"INTP_FMT") in dimension %d",
 					     vals[i], self->dimensions[i], i);
 				return -1;
 			}
@@ -2745,8 +2745,8 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 			if (vals[i] < 0) vals[i] += self->dimensions[i];
 			if ((vals[i] < 0) || (vals[i] >= self->dimensions[i])) {
 				PyErr_Format(PyExc_IndexError,
-					     "index (%d) out of range "\
-					     "(0<=index<=%d) in dimension %d",
+					     "index (%"INTP_FMT") out of range "\
+					     "(0<=index<=%"INTP_FMT") in dimension %d",
 					     vals[i], self->dimensions[i], i);
 				return NULL;
 			}

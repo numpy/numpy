@@ -2662,12 +2662,11 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	PyArrayObject *ap1, *ap2, *ret=NULL;
 	PyArrayIterObject *it1, *it2;
 	intp i, j, l;
-	int typenum, nd, axis;
+	int typenum, nd, axis, matchDim;
 	intp is1, is2, os;
 	char *op;
 	intp dimensions[MAX_DIMS];
 	PyArray_DotFunc *dot;
-	intp matchDim;
 	PyArray_Descr *typec;
 
 	typenum = PyArray_ObjectType(op1, 0);  
