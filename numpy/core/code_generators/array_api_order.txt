@@ -39,8 +39,10 @@ PyArray_GetField
 PyArray_SetField
 PyArray_Byteswap
 PyArray_Resize
-PyArray_NewCopy
+PyArray_MoveInto
 PyArray_CopyInto
+PyArray_CopyObject
+PyArray_NewCopy
 PyArray_ToList
 PyArray_ToFile
 PyArray_Dump

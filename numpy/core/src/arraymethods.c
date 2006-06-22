@@ -597,11 +597,11 @@ array_getarray(PyArrayObject *self, PyObject *args)
 	}
 }
 
-static char doc_copy[] = "m.copy(|fortran). Return a copy of the array.\n"\
-	"If fortran is false then the result is contiguous (default). \n"\
-	"If fortran is true  then the result has fortran data order. \n"\
-	"If fortran is None  then the result has fortran data order only if m\n"
-	"   is already in fortran order.";
+static char doc_copy[] = "m.copy(|order). Return a copy of the array.\n"\
+	"If order is 'C' (False) then the result is contiguous (default). \n"\
+	"If order is 'Fortran' (True) then the result has fortran order. \n"\
+	"If order is 'Any' (None) then the result has fortran order \n"\
+	"only if m is already in fortran order.";
 
 static PyObject *
 array_copy(PyArrayObject *self, PyObject *args) 

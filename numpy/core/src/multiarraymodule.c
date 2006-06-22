@@ -315,13 +315,13 @@ PyArray_Round(PyArrayObject *a, int decimals)
  Flatten
 */
 static PyObject *
-PyArray_Flatten(PyArrayObject *a, PyArray_ORDER fortran)
+PyArray_Flatten(PyArrayObject *a, PyArray_ORDER order)
 {
-	PyObject *ret, *new;
+	PyObject *ret;
 	intp size;
 
-	if (fortran == PyArray_ANYORDER) 
-		fortran = PyArray_ISFORTRAN(a);
+	if (order == PyArray_ANYORDER) 
+		order = PyArray_ISFORTRAN(a);
 
 	size = PyArray_SIZE(a);
 	Py_INCREF(a->descr);
@@ -333,23 +333,10 @@ PyArray_Flatten(PyArrayObject *a, PyArray_ORDER fortran)
 				   0, (PyObject *)a);
 	
 	if (ret== NULL) return NULL;
-	if (fortran) {
-		new = PyArray_Transpose(a, NULL);
-		if (new == NULL) {
-			Py_DECREF(ret);
-			return NULL;
-		}
-	}
-	else {
-		Py_INCREF(a);
-		new = (PyObject *)a;
-	}
-	if (PyArray_CopyInto((PyArrayObject *)ret, (PyArrayObject *)new) < 0) {
+	if (_flat_copyinto(ret, (PyObject *)a, order) < 0) {
 		Py_DECREF(ret);
-		Py_DECREF(new);
 		return NULL;
 	}
-	Py_DECREF(new);
 	return ret;
 }
 
@@ -1907,7 +1894,7 @@ _new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 	PyArray_SortFunc *sort;
 	BEGIN_THREADS_DEF 
 
-	it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, axis);
+	it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
 	swap = !PyArray_ISNOTSWAPPED(op);
 	if (it == NULL) return -1;
 
@@ -1982,8 +1969,8 @@ _new_argsort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 			  NULL, NULL, 0, 0, (PyObject *)op);
 	if (ret == NULL) return NULL;
 
-	it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, axis);
-	rit = (PyArrayIterObject *)PyArray_IterAllButAxis(ret, axis);
+	it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
+	rit = (PyArrayIterObject *)PyArray_IterAllButAxis(ret, &axis);
 	if (rit == NULL || it == NULL) goto fail;
 
 	BEGIN_THREADS
@@ -2334,7 +2321,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 			goto fail;
 		}
 		its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis	\
-			((PyObject *)mps[i], axis);
+			((PyObject *)mps[i], &axis);
 		if (its[i]==NULL) goto fail;
 	}
 
@@ -2364,7 +2351,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 	if (ret == NULL) goto fail;
 
 	rit = (PyArrayIterObject *)\
-		PyArray_IterAllButAxis((PyObject *)ret, axis);
+		PyArray_IterAllButAxis((PyObject *)ret, &axis);
 	if (rit == NULL) goto fail;
 
 	size = rit->size;
@@ -2567,13 +2554,13 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	PyArrayObject *ap1, *ap2, *ret=NULL;
 	PyArrayIterObject *it1, *it2;
 	intp i, j, l;
-	int typenum, nd;
+	int typenum, nd, axis;
 	intp is1, is2, os;
 	char *op;
 	intp dimensions[MAX_DIMS];
 	PyArray_DotFunc *dot;
 	PyArray_Descr *typec;
-	
+
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);
 
@@ -2629,11 +2616,13 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	is1 = ap1->strides[ap1->nd-1]; 
 	is2 = ap2->strides[ap2->nd-1];
 	op = ret->data; os = ret->descr->elsize;
-	
+
+	axis = ap1->nd-1;
 	it1 = (PyArrayIterObject *)\
-		PyArray_IterAllButAxis((PyObject *)ap1, ap1->nd-1);
+		PyArray_IterAllButAxis((PyObject *)ap1, &axis);
+	axis = ap2->nd-1;
 	it2 = (PyArrayIterObject *)\
-		PyArray_IterAllButAxis((PyObject *)ap2, ap2->nd-1);
+		PyArray_IterAllButAxis((PyObject *)ap2, &axis);
 
 	while(1) {
 		while(it2->index < it2->size) {
@@ -2673,7 +2662,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	PyArrayObject *ap1, *ap2, *ret=NULL;
 	PyArrayIterObject *it1, *it2;
 	intp i, j, l;
-	int typenum, nd;
+	int typenum, nd, axis;
 	intp is1, is2, os;
 	char *op;
 	intp dimensions[MAX_DIMS];
@@ -2751,10 +2740,11 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 		
 	op = ret->data; os = ret->descr->elsize;
 
+	axis = ap1->nd-1;
 	it1 = (PyArrayIterObject *)\
-		PyArray_IterAllButAxis((PyObject *)ap1, ap1->nd-1);
+		PyArray_IterAllButAxis((PyObject *)ap1, &axis);
 	it2 = (PyArrayIterObject *)\
-		PyArray_IterAllButAxis((PyObject *)ap2, matchDim);
+		PyArray_IterAllButAxis((PyObject *)ap2, &matchDim);
 
 	while(1) {
 		while(it2->index < it2->size) {
