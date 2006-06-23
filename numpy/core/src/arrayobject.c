@@ -8270,6 +8270,8 @@ static PyMappingMethods iter_as_mapping = {
         (objobjargproc)iter_ass_subscript,	/*mp_ass_subscript*/
 };
 
+
+
 static char doc_iter_array[] = "__array__(type=None)\n Get array "\
         "from iterator";
 
@@ -8338,6 +8340,19 @@ static PyMethodDef iter_methods[] = {
         {NULL,		NULL}		/* sentinel */
 };
 
+static PyObject *
+iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
+{
+        PyArrayObject *new;
+        PyObject *ret;
+        new = (PyArrayObject *)iter_array(self, NULL);
+        if (new == NULL) return NULL;
+        ret = array_richcompare(new, other, cmp_op);
+        Py_DECREF(new);
+        return ret;
+}
+
+
 static PyMemberDef iter_members[] = {
 	{"base", T_OBJECT, offsetof(PyArrayIterObject, ao), RO, NULL},
         {"index", T_INT, offsetof(PyArrayIterObject, index), RO, NULL},
@@ -8385,18 +8400,18 @@ static PyTypeObject PyArrayIter_Type = {
         0,					/* tp_repr */
         0,					/* tp_as_number */
         0,			                /* tp_as_sequence */
-        &iter_as_mapping,	        /* tp_as_mapping */
+        &iter_as_mapping,	                /* tp_as_mapping */
         0,					/* tp_hash */
         0,					/* tp_call */
         0,					/* tp_str */
-        0,		/* tp_getattro */
+        0,		                        /* tp_getattro */
         0,					/* tp_setattro */
         0,					/* tp_as_buffer */
         Py_TPFLAGS_DEFAULT,                     /* tp_flags */
         0,					/* tp_doc */
-        0,	                        /* tp_traverse */
+        0,	                                /* tp_traverse */
         0,					/* tp_clear */
-        0,					/* tp_richcompare */
+        (richcmpfunc)iter_richcompare,	        /* tp_richcompare */
         0,					/* tp_weaklistoffset */
         0,	                        /* tp_iter */
         (iternextfunc)arrayiter_next,		/* tp_iternext */
