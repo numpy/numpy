@@ -131,153 +131,6 @@ PyArray_One(PyArrayObject *arr)
 /* End deprecated */
 
 
-static int
-do_sliced_copy(char *dest, intp *dest_strides, intp *dest_dimensions,
-	       int dest_nd, char *src, intp *src_strides,
-	       intp *src_dimensions, int src_nd, int elsize,
-	       int copies) {
-        intp i, j;
-
-        if (src_nd == 0 && dest_nd == 0) {
-                for(j=0; j<copies; j++) {
-                        memmove(dest, src, elsize);
-                        dest += elsize;
-                }
-                return 0;
-        }
-
-        if (dest_nd > src_nd) {
-                for(i=0; i<*dest_dimensions; i++, dest += *dest_strides) {
-                        if (do_sliced_copy(dest, dest_strides+1,
-                                           dest_dimensions+1, dest_nd-1,
-                                           src, src_strides,
-                                           src_dimensions, src_nd,
-                                           elsize, copies) == -1)
-                                return -1;
-                }
-                return 0;
-        }
-
-        if (dest_nd == 1) {
-                if (*dest_dimensions != *src_dimensions) {
-                        PyErr_SetString(PyExc_ValueError,
-                                        "matrices are not aligned for copy");
-                        return -1;
-                }
-                for(i=0; i<*dest_dimensions; i++, src += *src_strides) {
-                        for(j=0; j<copies; j++) {
-                                memmove(dest, src, elsize);
-                                dest += *dest_strides;
-                        }
-                }
-        } else {
-                for(i=0; i<*dest_dimensions; i++, dest += *dest_strides,
-                            src += *src_strides) {
-                        if (do_sliced_copy(dest, dest_strides+1,
-                                           dest_dimensions+1, dest_nd-1,
-                                           src, src_strides+1,
-                                           src_dimensions+1, src_nd-1,
-                                           elsize, copies) == -1)
-                                return -1;
-                }
-        }
-        return 0;
-}
-
-/* This function reduces a source and destination array until a
-   discontiguous segment is found in either the source or
-   destination. Thus, an N dimensional array where the last dimension
-   is contiguous and has size n while the items are of size elsize,
-   will be reduced to an N-1 dimensional array with items of size n *
-   elsize.
-
-   This process is repeated until a discontiguous section is found.
-   Thus, a contiguous array will be reduced to a 0-dimensional array
-   with items of size elsize * sizeof(N-dimensional array).
-
-   Finally, if a source array has been reduced to a 0-dimensional
-   array with large element sizes, the contiguous destination array is
-   reduced as well.
-
-   The only thing this function changes is the element size, the
-   number of copies, and the source and destination number of
-   dimensions.  The strides and dimensions are not changed.
-*/
-
-static int
-optimize_slices(intp **dest_strides, intp **dest_dimensions,
-		    int *dest_nd, intp **src_strides,
-		    intp **src_dimensions, int *src_nd,
-		    int *elsize, int *copies)
-{
-        while (*src_nd > 0) {
-                if (((*dest_strides)[*dest_nd-1] == *elsize) &&
-                    ((*src_strides)[*src_nd-1] == *elsize)) {
-                        if ((*dest_dimensions)[*dest_nd-1] !=
-                            (*src_dimensions)[*src_nd-1]) {
-				PyErr_SetString(PyExc_ValueError,
-						"matrices are not aligned");
-                                return -1;
-                        }
-                        *elsize *= (*dest_dimensions)[*dest_nd-1];
-                        *dest_nd-=1; *src_nd-=1;
-                } else {
-                        break;
-                }
-        }
-        if (*src_nd == 0) {
-                while (*dest_nd > 0) {
-                        if (((*dest_strides)[*dest_nd-1] == *elsize)) {
-                                *copies *= (*dest_dimensions)[*dest_nd-1];
-                                *dest_nd-=1;
-                        } else {
-                                break;
-                        }
-                }
-        }
-        return 0;
-}
-
-static char *
-contiguous_data(PyArrayObject *src)
-{
-        intp dest_strides[MAX_DIMS], *dest_strides_ptr;
-        intp *dest_dimensions=src->dimensions;
-        int dest_nd=src->nd;
-        intp *src_strides = src->strides;
-        intp *src_dimensions=src->dimensions;
-        int src_nd=src->nd;
-        int elsize=src->descr->elsize;
-        int copies=1;
-        int ret, i;
-        intp stride=elsize;
-        char *new_data;
-
-        for(i=dest_nd-1; i>=0; i--) {
-                dest_strides[i] = stride;
-                stride *= dest_dimensions[i];
-        }
-
-        dest_strides_ptr = dest_strides;
-
-        if (optimize_slices(&dest_strides_ptr, &dest_dimensions, &dest_nd,
-                            &src_strides, &src_dimensions, &src_nd,
-                            &elsize, &copies) == -1)
-                return NULL;
-
-        new_data = (char *)_pya_malloc(stride);
-
-        ret = do_sliced_copy(new_data, dest_strides_ptr, dest_dimensions,
-                             dest_nd, src->data, src_strides,
-                             src_dimensions, src_nd, elsize, copies);
-
-        if (ret != -1) { return new_data; }
-        else { _pya_free(new_data); return NULL; }
-}
-
-/* end Helper functions */
-
-
 static PyObject *PyArray_New(PyTypeObject *, int nd, intp *,
                              int, intp *, void *, int, int, PyObject *);
 
@@ -295,48 +148,119 @@ PyArray_INCREF(PyArrayObject *mp)
 
         PyObject **data, **data2;
 
-        if (mp->descr->type_num != PyArray_OBJECT) return 0;
+        if (mp->descr->hasobject == 0) return 0;
+        
+        if (mp->descr->type_num != PyArray_OBJECT) return -1;
+        /*                return _incref_rec_wobject(mp); */
 
         if (PyArray_ISONESEGMENT(mp)) {
                 data = (PyObject **)mp->data;
+                n = PyArray_SIZE(mp);
+                if (PyArray_ISALIGNED(mp)) {
+                        for(i=0; i<n; i++, data++) Py_INCREF(*data);
+                }
+                else {
+                        PyObject **temp;
+                        for (i=0; i<n; i++, data++) {
+                                memcpy(temp, data, sizeof(void *));
+                                Py_INCREF(*temp);
+                        }
+                }
         } else {
-                if ((data = (PyObject **)contiguous_data(mp)) == NULL)
-                        return -1;
+                PyArrayIterObject *it;
+                int maxaxis=-1;
+                intp stride;
+                it = (PyArrayIterObject *)\
+                        PyArray_IterAllButAxis((PyObject *)mp, &maxaxis);
+                if (it == NULL) return -1;
+                n = mp->dimensions[maxaxis];
+                stride = mp->strides[maxaxis] / sizeof(PyObject **);
+                if (PyArray_ISALIGNED(mp)) {
+                        while(it->index < it->size) {
+                                data = (PyObject **)(it->dataptr);
+                                for (i=0; i<n; i++) {
+                                        Py_INCREF(*data);
+                                        data += stride;
+                                }
+                                PyArray_ITER_NEXT(it);
+                        }
+                }
+                else {
+                        PyObject **temp;
+                        while(it->index < it->size) {
+                                data = (PyObject **)(it->dataptr);
+                                for (i=0; i<n; i++) {
+                                        memcpy(temp, data, sizeof(void *));
+                                        Py_INCREF(*temp);
+                                        data += stride;
+                                }
+                                PyArray_ITER_NEXT(it);
+                        }
+                }
         }
-
-        n = PyArray_SIZE(mp);
-        data2 = data;
-        for(i=0; i<n; i++, data++) Py_XINCREF(*data);
-
-        if (!PyArray_ISONESEGMENT(mp)) _pya_free(data2);
-
         return 0;
 }
 
 /*OBJECT_API
  Decrement all internal references for object arrays.
+ (or arrays with object fields)
 */
 static int
 PyArray_XDECREF(PyArrayObject *mp)
 {
         intp i, n;
-        PyObject **data, **data2;
+        PyObject **data;
 
-        if (mp->descr->type_num != PyArray_OBJECT) return 0;
-
+        if (mp->descr->hasobject == 0) return 0;
+        
+        if (mp->descr->type_num != PyArray_OBJECT) return -1;
+                /* return _xdecref_rec_wobject(mp); */
+        
         if (PyArray_ISONESEGMENT(mp)) {
                 data = (PyObject **)mp->data;
+                n = PyArray_SIZE(mp);
+                if (PyArray_ISALIGNED(mp)) {
+                        for(i=0; i<n; i++, data++) Py_XDECREF(*data);
+                }
+                else {
+                        PyObject **temp;
+                        for (i=0; i<n; i++, data++) {
+                                memcpy(temp, data, sizeof(void *));
+                                Py_XDECREF(*temp);
+                        }
+                }
         } else {
-                if ((data = (PyObject **)contiguous_data(mp)) == NULL)
-                        return -1;
+                PyArrayIterObject *it;
+                int maxaxis=-1;
+                intp stride;
+                it = (PyArrayIterObject *)\
+                        PyArray_IterAllButAxis((PyObject *)mp, &maxaxis);
+                if (it == NULL) return -1;
+                n = mp->dimensions[maxaxis];
+                stride = mp->strides[maxaxis] / sizeof(PyObject **);
+                if (PyArray_ISALIGNED(mp)) {
+                        while(it->index < it->size) {
+                                data = (PyObject **)(it->dataptr);
+                                for (i=0; i<n; i++) {
+                                        Py_XDECREF(*data);
+                                        data += stride;
+                                }
+                                PyArray_ITER_NEXT(it);
+                        }
+                }
+                else {
+                        PyObject **temp;
+                        while(it->index < it->size) {
+                                data = (PyObject **)(it->dataptr);
+                                for (i=0; i<n; i++) {
+                                        memcpy(temp, data, sizeof(void *));
+                                        Py_XDECREF(*temp);
+                                        data += stride;
+                                }
+                                PyArray_ITER_NEXT(it);
+                        }
+                }
         }
-
-        n = PyArray_SIZE(mp);
-        data2 = data;
-        for(i=0; i<n; i++, data++) Py_XDECREF(*data);
-
-        if (!PyArray_ISONESEGMENT(mp)) _pya_free(data2);
-
         return 0;
 }
 

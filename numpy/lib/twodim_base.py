@@ -49,8 +49,9 @@ def eye(N, M=None, k=0, dtype=int_):
     return m.astype(dtype)
 
 def diag(v, k=0):
-    """ returns the k-th diagonal if v is a array or returns a array
-        with v as the k-th diagonal if v is a vector.
+    """ returns a copy of the the k-th diagonal if v is a 2-d array 
+        or returns a 2-d array with v as the k-th diagonal if v is a
+	1-d array.
     """
     v = asarray(v)
     s = v.shape
