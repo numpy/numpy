@@ -452,13 +452,15 @@ def trim_zeros(filt, trim='fb'):
     return filt[first:last]
 
 def unique(inseq):
-    """Return unique items from a 1-dimensional sequence.
+    """Return unique items (in sorted order) from a 1-dimensional sequence.
     """
     # Dictionary setting is quite fast.
     set = {}
     for item in inseq:
         set[item] = None
-    return asarray(set.keys())
+    val = asarray(set.keys())
+    val.sort()
+    return val
 
 def extract(condition, arr):
     """Return the elements of ravel(arr) where ravel(condition) is True

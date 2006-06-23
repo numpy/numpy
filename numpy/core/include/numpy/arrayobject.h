@@ -1403,7 +1403,9 @@ typedef struct {
 #define PyDescr_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(_PyADt(obj))
 #define PyDescr_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(_PyADt(obj))
 #define PyDescr_ISOBJECT(obj) PyTypeNum_ISOBJECT(_PyADt(obj))
-#undef _PyAD
+#define PyDescr_HASFIELDS(obj) (((PyArray_Descr *)obj)->fields && \
+                                ((PyArray_Descr *)obj)->fields != Py_None)
+#undef _PyADt
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
 #define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))
@@ -1418,6 +1420,7 @@ typedef struct {
 #define PyArray_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyArray_TYPE(obj))
 #define PyArray_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyArray_TYPE(obj))
 #define PyArray_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyArray_TYPE(obj))
+#define PyArray_HASFIELDS(obj) PyDescr_HASFIELDS(PyArray_DESCR(obj))
 
 #define PyArray_LITTLE '<'
 #define PyArray_BIG '>'

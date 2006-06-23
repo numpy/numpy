@@ -134,18 +134,55 @@ PyArray_One(PyArrayObject *arr)
 static PyObject *PyArray_New(PyTypeObject *, int nd, intp *,
                              int, intp *, void *, int, int, PyObject *);
 
-/* Called when mp has objects inside of it's fields */
 
-static int
-_incref_rec_wobject(PyArrayObject *mp)
+/* Incref all objects found at this record */
+static void
+_incref_all(char *data, PyArray_Descr *descr)
 {
-        return -1;
+        PyObject **temp;
+
+        if (descr->hasobject == 0) return;
+
+        if (descr->type_num == PyArray_OBJECT) {
+                temp = (PyObject **)data;
+                Py_XINCREF(*temp);
+        }
+        else if PyDescr_HASFIELDS(descr) {
+                PyObject *key, *value, *title=NULL;
+                PyArray_Descr *new;
+                int offset, pos=0;
+                while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+ 			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
+					      &title)) return;
+                        _incref_all(data + offset, new);
+                }
+        }
+        return;
 }
 
-static int
-_xdecref_rec_wobject(PyArrayObject *mp)
+/* XDECREF all objects found at this record */
+static void
+_xdecref_all(char *data, PyArray_Descr *descr)
 {
-        return -1;
+        PyObject **temp;
+
+        if (descr->hasobject == 0) return;
+
+        if (descr->type_num == PyArray_OBJECT) {
+                temp = (PyObject **)data;
+                Py_XDECREF(*temp);
+        }
+        else if PyDescr_HASFIELDS(descr) {
+                PyObject *key, *value, *title=NULL;
+                PyArray_Descr *new;
+                int offset, pos=0;
+                while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+ 			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
+					      &title)) return;
+                        _xdecref_all(data + offset, new);
+                }
+        }
+        return;
 }
 
 /* C-API functions */
@@ -159,57 +196,44 @@ static int
 PyArray_INCREF(PyArrayObject *mp)
 {
 	intp i, n;
-        PyObject **data;
-
+        PyObject **data, **temp;
+        PyArrayIterObject *it;
+                
         if (mp->descr->hasobject == 0) return 0;
         
-        if (mp->descr->type_num != PyArray_OBJECT) 
-                return _incref_rec_wobject(mp); 
+        if (mp->descr->type_num != PyArray_OBJECT) {
+                it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
+                if (it == NULL) return -1;
+                while(it->index < it->size) {
+                        _incref_all(it->dataptr, mp->descr);
+                        PyArray_ITER_NEXT(it);
+                }
+                Py_DECREF(it);
+                return 0;
+        }
 
         if (PyArray_ISONESEGMENT(mp)) {
                 data = (PyObject **)mp->data;
                 n = PyArray_SIZE(mp);
                 if (PyArray_ISALIGNED(mp)) {
-                        for(i=0; i<n; i++, data++) Py_INCREF(*data);
+                        for(i=0; i<n; i++, data++) Py_XINCREF(*data);
                 }
                 else {
-                        PyObject **temp;
                         for (i=0; i<n; i++, data++) {
                                 temp = data;
-                                Py_INCREF(*temp);
+                                Py_XINCREF(*temp);
                         }
                 }
-        } else {
-                PyArrayIterObject *it;
-                int maxaxis=-1;
-                intp stride;
-                it = (PyArrayIterObject *)\
-                        PyArray_IterAllButAxis((PyObject *)mp, &maxaxis);
+        }
+        else { /* handles misaligned data too */
+                it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
                 if (it == NULL) return -1;
-                n = mp->dimensions[maxaxis];
-                stride = mp->strides[maxaxis] / sizeof(PyObject **);
-                if (PyArray_ISALIGNED(mp)) {
-                        while(it->index < it->size) {
-                                data = (PyObject **)(it->dataptr);
-                                for (i=0; i<n; i++) {
-                                        Py_INCREF(*data);
-                                        data += stride;
-                                }
-                                PyArray_ITER_NEXT(it);
-                        }
+                while(it->index < it->size) {
+                        temp = (PyObject **)it->dataptr;
+                        Py_XINCREF(*temp);
+                        PyArray_ITER_NEXT(it);
                 }
-                else {
-                        PyObject **temp;
-                        while(it->index < it->size) {
-                                data = (PyObject **)(it->dataptr);
-                                for (i=0; i<n; i++) {
-                                        temp = data;
-                                        Py_INCREF(*temp);
-                                        data += stride;
-                                }
-                                PyArray_ITER_NEXT(it);
-                        }
-                }
+                Py_DECREF(it);
         }
         return 0;
 }
@@ -223,11 +247,21 @@ PyArray_XDECREF(PyArrayObject *mp)
 {
         intp i, n;
         PyObject **data;
+        PyObject **temp;
+        PyArrayIterObject *it;
 
         if (mp->descr->hasobject == 0) return 0;
         
-        if (mp->descr->type_num != PyArray_OBJECT) 
-                return _xdecref_rec_wobject(mp); 
+        if (mp->descr->type_num != PyArray_OBJECT) {
+                it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
+                if (it == NULL) return -1;
+                while(it->index < it->size) {
+                        _xdecref_all(it->dataptr, mp->descr);
+                        PyArray_ITER_NEXT(it);
+                }
+                Py_DECREF(it);
+                return 0;
+        }
 
         if (PyArray_ISONESEGMENT(mp)) {
                 data = (PyObject **)mp->data;
@@ -236,43 +270,21 @@ PyArray_XDECREF(PyArrayObject *mp)
                         for(i=0; i<n; i++, data++) Py_XDECREF(*data);
                 }
                 else {
-                        PyObject **temp;
                         for (i=0; i<n; i++, data++) {
-                                memcpy(temp, data, sizeof(void *));
+                                temp = data;
                                 Py_XDECREF(*temp);
                         }
                 }
-        } else {
-                PyArrayIterObject *it;
-                int maxaxis=-1;
-                intp stride;
-                it = (PyArrayIterObject *)\
-                        PyArray_IterAllButAxis((PyObject *)mp, &maxaxis);
+        }
+        else { /* handles misaligned data too */
+                it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
                 if (it == NULL) return -1;
-                n = mp->dimensions[maxaxis];
-                stride = mp->strides[maxaxis] / sizeof(PyObject **);
-                if (PyArray_ISALIGNED(mp)) {
-                        while(it->index < it->size) {
-                                data = (PyObject **)(it->dataptr);
-                                for (i=0; i<n; i++) {
-                                        Py_XDECREF(*data);
-                                        data += stride;
-                                }
-                                PyArray_ITER_NEXT(it);
-                        }
+                while(it->index < it->size) {
+                        temp = (PyObject **)it->dataptr;
+                        Py_XDECREF(*temp);
+                        PyArray_ITER_NEXT(it);
                 }
-                else {
-                        PyObject **temp;
-                        while(it->index < it->size) {
-                                data = (PyObject **)(it->dataptr);
-                                for (i=0; i<n; i++) {
-                                        memcpy(temp, data, sizeof(void *));
-                                        Py_XDECREF(*temp);
-                                        data += stride;
-                                }
-                                PyArray_ITER_NEXT(it);
-                        }
-                }
+                Py_DECREF(it);
         }
         return 0;
 }
