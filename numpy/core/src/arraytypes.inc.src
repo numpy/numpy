@@ -368,7 +368,7 @@ OBJECT_setitem(PyObject *op, char *ov, PyArrayObject *ap)
                 PyObject **obj;
                 obj = (PyObject **)ov;
                 Py_XDECREF(*obj);
-                memcpy(ov, &op, sizeof(PyObject **));
+                memcpy(ov, &op, sizeof(PyObject *));
         }
 	return PyErr_Occurred() ? -1:0;
 }
@@ -1217,14 +1217,13 @@ static void
         }
 }
 
-
 /**end repeat**/
 
 #define __ALIGNED(obj) ((((size_t) obj) % sizeof(PyObject **))==0)
 static void
-OBJECT_copyswapn (PyObject **dst, PyObject **src, intp n, int swap, void *arr)
+OBJECT_copyswapn (PyObject **dst, PyObject **src, register intp n, int swap, void *arr)
 {
-	register int i, nn=n;
+	register intp i;
 	if (src != NULL) {
                 if (__ALIGNED(dst) && __ALIGNED(src)) {
                         for (i=0; i<nn; i++) {
@@ -1240,13 +1239,33 @@ OBJECT_copyswapn (PyObject **dst, PyObject **src, intp n, int swap, void *arr)
                                 sp = src;
                                 Py_XDECREF(*dp);
                                 Py_INCREF(*sp);
-                                *dst++ = *src++;
+                                memcpy(dst, src, sizeof(PyObject *));
                         }
                 }
 	}
 	/* ignore swap */
 	return;
 }
+
+static void
+OBJECT_copyswap(PyObject **dst, PyObject **src, int swap, void *arr)
+{
+        
+	if (src != NULL) {
+                if (__ALIGNED(dst) && __ALIGNED(src)) {
+                        Py_XDECREF(*dst);
+                        Py_INCREF(*src);
+                        *dst = *src;
+                }
+                else {
+                        PyObject **dp=dst, **sp=src;
+                        Py_XDECREF(*dp);
+                        Py_INCREF(*sp);
+                        memcpy(dst, src, sizeof(PyObject *));
+                }
+        }
+}
+
 #undef __ALIGNED
 
 /* ignore swap */
@@ -1296,12 +1315,6 @@ UNICODE_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
 	}
 }
 
-
-static void
-OBJECT_copyswap(PyObject **dst, PyObject **src, int swap, void *arr)
-{
-        OBJECT_copyswapn(dst, src, 1, swap, arr);
-}
 
 static void
 STRING_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
