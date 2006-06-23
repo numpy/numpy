@@ -145,8 +145,7 @@ static int
 PyArray_INCREF(PyArrayObject *mp)
 {
 	intp i, n;
-
-        PyObject **data, **data2;
+        PyObject **data;
 
         if (mp->descr->hasobject == 0) return 0;
         
@@ -162,7 +161,7 @@ PyArray_INCREF(PyArrayObject *mp)
                 else {
                         PyObject **temp;
                         for (i=0; i<n; i++, data++) {
-                                memcpy(temp, data, sizeof(void *));
+                                temp = data;
                                 Py_INCREF(*temp);
                         }
                 }
@@ -190,7 +189,7 @@ PyArray_INCREF(PyArrayObject *mp)
                         while(it->index < it->size) {
                                 data = (PyObject **)(it->dataptr);
                                 for (i=0; i<n; i++) {
-                                        memcpy(temp, data, sizeof(void *));
+                                        temp = data;
                                         Py_INCREF(*temp);
                                         data += stride;
                                 }
@@ -215,7 +214,7 @@ PyArray_XDECREF(PyArrayObject *mp)
         
         if (mp->descr->type_num != PyArray_OBJECT) return -1;
                 /* return _xdecref_rec_wobject(mp); */
-        
+
         if (PyArray_ISONESEGMENT(mp)) {
                 data = (PyObject **)mp->data;
                 n = PyArray_SIZE(mp);

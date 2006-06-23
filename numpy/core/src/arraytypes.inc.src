@@ -343,16 +343,33 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 static PyObject * 
 OBJECT_getitem(char *ip, PyArrayObject *ap) 
 {
-	Py_INCREF(*(PyObject **)ip);
-	return *(PyObject **)ip;
+        if (PyArray_ISALIGNED(ap)) {
+                Py_INCREF(*(PyObject **)ip);
+                return *(PyObject **)ip;
+        }
+        else {
+                PyObject **obj;
+                obj = (PyObject **)ip;
+                Py_INCREF(*obj);
+                return *obj;
+        }
 }
+
 
 static int 
 OBJECT_setitem(PyObject *op, char *ov, PyArrayObject *ap) 
 {
-	Py_XDECREF(*(PyObject **)ov);
-	Py_INCREF(op);
-	*(PyObject **)ov = op;
+        Py_INCREF(op);
+        if (PyArray_ISALIGNED(ap)) {
+                Py_XDECREF(*(PyObject **)ov);
+                *(PyObject **)ov = op;
+        }
+        else {
+                PyObject **obj;
+                obj = (PyObject **)ov;
+                Py_XDECREF(*obj);
+                memcpy(ov, &op, sizeof(PyObject **));
+        }
 	return PyErr_Occurred() ? -1:0;
 }
 
@@ -1203,21 +1220,34 @@ static void
 
 /**end repeat**/
 
+#define __ALIGNED(obj) ((((size_t) obj) % sizeof(PyObject **))==0)
 static void
 OBJECT_copyswapn (PyObject **dst, PyObject **src, intp n, int swap, void *arr)
 {
 	register int i, nn=n;
-	PyObject **dp=dst, **sp=src;
 	if (src != NULL) {
-		for (i=0; i<nn; i++) {
-			Py_XDECREF(*dp);
-			Py_INCREF(*sp);
-			*dp++ = *sp++;
-		}
+                if (__ALIGNED(dst) && __ALIGNED(src)) {
+                        for (i=0; i<nn; i++) {
+                                Py_XDECREF(*dst);
+                                Py_INCREF(*src);
+                                *dst++ = *src++;
+                        }
+                }
+                else {
+                        PyObject **dp, **sp;
+                        for (i=0; i<nn; i++) {
+                                dp = dst;
+                                sp = src;
+                                Py_XDECREF(*dp);
+                                Py_INCREF(*sp);
+                                *dst++ = *src++;
+                        }
+                }
 	}
 	/* ignore swap */
 	return;
 }
+#undef __ALIGNED
 
 /* ignore swap */
 static void
@@ -1432,7 +1462,15 @@ UNICODE_nonzero (PyArray_UCS4 *ip, PyArrayObject *ap)
 static Bool
 OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
 {
-	return (Bool) PyObject_IsTrue(*ip);
+        
+        if (PyArray_ISALIGNED(ap)) {
+                return (Bool) PyObject_IsTrue(*ip);
+        }
+        else {
+                PyObject **obj;
+                obj = ip;
+                return (Bool) PyObject_IsTrue(*obj);
+        }
 }
 
 /* fixme:  if we have fields, then nonzero if all sub-fields are nonzero.
