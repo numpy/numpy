@@ -1226,7 +1226,7 @@ OBJECT_copyswapn (PyObject **dst, PyObject **src, register intp n, int swap, voi
 	register intp i;
 	if (src != NULL) {
                 if (__ALIGNED(dst) && __ALIGNED(src)) {
-                        for (i=0; i<nn; i++) {
+                        for (i=0; i<n; i++) {
                                 Py_XDECREF(*dst);
                                 Py_INCREF(*src);
                                 *dst++ = *src++;
@@ -1234,7 +1234,7 @@ OBJECT_copyswapn (PyObject **dst, PyObject **src, register intp n, int swap, voi
                 }
                 else {
                         PyObject **dp, **sp;
-                        for (i=0; i<nn; i++) {
+                        for (i=0; i<n; i++) {
                                 dp = dst;
                                 sp = src;
                                 Py_XDECREF(*dp);

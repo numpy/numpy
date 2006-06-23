@@ -134,6 +134,20 @@ PyArray_One(PyArrayObject *arr)
 static PyObject *PyArray_New(PyTypeObject *, int nd, intp *,
                              int, intp *, void *, int, int, PyObject *);
 
+/* Called when mp has objects inside of it's fields */
+
+static int
+_incref_rec_wobject(PyArrayObject *mp)
+{
+        return -1;
+}
+
+static int
+_xdecref_rec_wobject(PyArrayObject *mp)
+{
+        return -1;
+}
+
 /* C-API functions */
 
 /* Used for arrays of python objects to increment the reference count of */
@@ -149,8 +163,8 @@ PyArray_INCREF(PyArrayObject *mp)
 
         if (mp->descr->hasobject == 0) return 0;
         
-        if (mp->descr->type_num != PyArray_OBJECT) return -1;
-        /*                return _incref_rec_wobject(mp); */
+        if (mp->descr->type_num != PyArray_OBJECT) 
+                return _incref_rec_wobject(mp); 
 
         if (PyArray_ISONESEGMENT(mp)) {
                 data = (PyObject **)mp->data;
@@ -212,8 +226,8 @@ PyArray_XDECREF(PyArrayObject *mp)
 
         if (mp->descr->hasobject == 0) return 0;
         
-        if (mp->descr->type_num != PyArray_OBJECT) return -1;
-                /* return _xdecref_rec_wobject(mp); */
+        if (mp->descr->type_num != PyArray_OBJECT) 
+                return _xdecref_rec_wobject(mp); 
 
         if (PyArray_ISONESEGMENT(mp)) {
                 data = (PyObject **)mp->data;
@@ -8279,7 +8293,7 @@ iter_array(PyArrayIterObject *it, PyObject *op)
         size = PyArray_SIZE(it->ao);
 	Py_INCREF(it->ao->descr);
         if (PyArray_ISCONTIGUOUS(it->ao)) {
-                r = PyArray_NewFromDescr(it->ao->ob_type,
+                r = PyArray_NewFromDescr(&PyArray_Type,
 					 it->ao->descr,
 					 1, &size,
 					 NULL, it->ao->data,
@@ -8288,7 +8302,7 @@ iter_array(PyArrayIterObject *it, PyObject *op)
 		if (r==NULL) return NULL;
         }
         else {
-                r = PyArray_NewFromDescr(it->ao->ob_type,
+                r = PyArray_NewFromDescr(&PyArray_Type,
 					 it->ao->descr,
 					 1, &size,
 					 NULL, NULL,
