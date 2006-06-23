@@ -407,7 +407,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 			if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, 
 					      &title)) {
 				Py_DECREF(ret); 
-				ap->descr = descr;
+                                ap->descr = descr;
 				return NULL;
 			}
 			ap->descr = new;
@@ -1282,17 +1282,57 @@ STRING_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
 
 /* ignore swap 
 
-TODO:  Need descriptor argument and then recurse down fields
 */
 static void
 VOID_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
 {
-	if (src != NULL && arr != NULL) {
-		int itemsize = arr->descr->elsize;
+        int itemsize;
+        if (arr == NULL) return;
+        itemsize = arr->descr->elsize;
+        if (PyArray_HASFIELDS(arr)) {
+                PyObject *key, *value, *title=NULL;
+                PyArray_Descr *new, *descr;
+                int offset, pos=0;
+                descr = arr->descr;
+                while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+ 			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
+					      &title)) {arr->descr=descr;return;}
+                        arr->descr = new;
+                        new->f->copyswapn(dst+offset, src+offset, n, swap, arr);
+                }
+                arr->descr = descr;
+                return;
+        }
+	if (src != NULL) {
 		memcpy(dst, src, itemsize * n); 
 	}
 	return;
 }
+
+static void
+VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
+{
+        if (arr==NULL) return;
+        if (PyArray_HASFIELDS(arr)) {
+                PyObject *key, *value, *title=NULL;
+                PyArray_Descr *new, *descr;
+                int offset, pos=0;
+                descr = arr->descr;  /* Save it */
+                while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+ 			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
+					      &title)) {arr->descr=descr;return;}
+                        arr->descr = new;
+                        new->f->copyswap(dst+offset, src+offset, swap, arr);
+                }
+                arr->descr = descr;
+                return;
+        }
+	if (src != NULL) {
+		memcpy(dst, src, arr->descr->elsize);
+	}
+	return;
+}
+
 
 static void
 UNICODE_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
@@ -1322,16 +1362,6 @@ STRING_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 	if (src != NULL && arr != NULL) {
 		memcpy(dst, src, arr->descr->elsize);
 	} 
-}
-
-/* ignore swap */
-static void
-VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
-{
-	if (src != NULL && arr != NULL) {
-		memcpy(dst, src, arr->descr->elsize);
-	}
-	return;
 }
 
 static void
