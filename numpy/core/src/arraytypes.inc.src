@@ -893,69 +893,21 @@ static int
 #type=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble#
 */
 static void
-@fname@_copyswapn (void *dst, void *src, intp n, int swap, void *arr)
+@fname@_copyswapn (void *dst, intp dstride, void *src, intp sstride, 
+                   intp n, int swap, void *arr)
 {
-	if (src != NULL) /* copy first if needed */
-		memcpy(dst, src, n*sizeof(@type@));
-
+	if (src != NULL) { 
+                if (sstride == sizeof(@type@) && dstride == sizeof(@type@)) {
+                        memcpy(dst, src, n*sizeof(@type@));
+                }
+                else {
+                        _unaligned_strided_byte_copy(dst, dstride, src, sstride, 
+                                                     n, sizeof(@type@));
+                }
+        }
 	if (swap) {
-		register char *a, *b, c;
-		for (a = (char *)dst; n>0; n--) {
-#if SIZEOF_@fsize@ == 2
-			b = a + 1;
-			c = *a; *a++ = *b; *b = c;
-			a += 1;
-#elif SIZEOF_@fsize@ == 4
-			b = a + 3;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
-			a += 2;
-#elif SIZEOF_@fsize@ == 8
-                        b = a + 7;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
-			a += 4;
-#elif SIZEOF_@fsize@ == 10
-                        b = a + 9;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
-			a += 5;
-#elif SIZEOF_@fsize@ == 12
-                        b = a + 11;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
-			a += 6;
-#elif SIZEOF_@fsize@ == 16
-                        b = a + 15;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
-			a += 8;
-#else
-			register int i, nn;
-                        b = a + (SIZEOF_@fsize@-1);
-			nn = SIZEOF_@fsize@ / 2;
-                        for (i=0; i<nn; i++) {
-                                c=*a; *a++ = *b; *b-- = c;
-                        }
-			a += nn / 2;
-#endif			
-		}
-	}
+                _strided_byte_swap(dst, dstride, n, sizeof(@type@));
+        }
 }
 
 static void
@@ -1028,11 +980,19 @@ static void
 #type=Bool, byte, ubyte#
 */
 static void
-@fname@_copyswapn (void *dst, void *src, intp n, int swap, void *arr)
+@fname@_copyswapn (void *dst, intp dstride, void *src, intp sstride, intp n, 
+                   int swap, void *arr)
 {
-	if (src != NULL) /* copy first if needed */
-		memcpy(dst, src, n*sizeof(@type@));
-	/* ignore swap */
+	if (src != NULL) {
+                if (sstride == sizeof(@type@) && dstride == sizeof(@type@)) {
+                        memcpy(dst, src, n*sizeof(@type@));
+                }
+                else {
+                        _unaligned_strided_byte_copy(dst, dstride, src, sstride, 
+                                                     n, sizeof(@type@));
+                }
+        }
+        /* ignore swap */
 }
 
 static void
@@ -1054,69 +1014,23 @@ static void
 #fsize=FLOAT,DOUBLE,LONGDOUBLE#
 */
 static void
-@fname@_copyswapn (void *dst, void *src, intp n, int swap, void *arr)
+@fname@_copyswapn (void *dst, intp dstride, void *src, intp sstride, intp n, 
+                   int swap, void *arr)
 {
 
-	if (src != NULL) /* copy first if needed */
-		memcpy(dst, src, n*sizeof(@type@));
+	if (src != NULL) { /* copy first if needed */
+                if (sstride == sizeof(@type@) && dstride == sizeof(@type@)) {
+                        memcpy(dst, src, n*sizeof(@type@));
+                }
+                else {
+                        _unaligned_strided_byte_copy(dst, dstride, src, sstride, 
+                                                     n, sizeof(@type@));
+                }
+        }
 
 	if (swap) {
-		register char *a, *b, c;
-		/* complex type -- swap twice as many */
-		register intp nn = 2*n;  
-		for (a = (char *)dst; nn>0; nn--) {
-#if SIZEOF_@fsize@ == 4
-			b = a + 3;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
-			a += 2;
-#elif SIZEOF_@fsize@ == 8
-                        b = a + 7;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
-			a += 4;
-#elif SIZEOF_@fsize@ == 10
-                        b = a + 9;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
-			a += 5;
-#elif SIZEOF_@fsize@ == 12
-                        b = a + 11;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
-			a += 6;
-#elif SIZEOF_@fsize@ == 16
-                        b = a + 15;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b-- = c;
-                        c = *a; *a++ = *b; *b   = c;
-			a += 8;
-#else
-			register int i, kn;
-
-                        b = a + (SIZEOF_@fsize@-1);
-			kn = SIZEOF_@fsize@ / 2;
-                        for (i=0; i<kn; i++) {
-                                c=*a; *a++ = *b; *b-- = c;
-                        }
-			a += kn / 2;
-#endif			
-		}
-	}
+                _strided_byte_swap(dst, dstride, n, sizeof(@type@));
+        }
 }
 
 static void
@@ -1221,7 +1135,8 @@ static void
 
 #define __ALIGNED(obj) ((((size_t) obj) % sizeof(PyObject **))==0)
 static void
-OBJECT_copyswapn (PyObject **dst, PyObject **src, register intp n, int swap, void *arr)
+OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride, 
+                  register intp n, int swap, void *arr)
 {
 	register intp i;
 	if (src != NULL) {
@@ -1229,7 +1144,9 @@ OBJECT_copyswapn (PyObject **dst, PyObject **src, register intp n, int swap, voi
                         for (i=0; i<n; i++) {
                                 Py_XDECREF(*dst);
                                 Py_INCREF(*src);
-                                *dst++ = *src++;
+                                *dst = *src;
+                                dst += dstride;
+                                src += sstride;
                         }
                 }
                 else {
@@ -1240,6 +1157,8 @@ OBJECT_copyswapn (PyObject **dst, PyObject **src, register intp n, int swap, voi
                                 Py_XDECREF(*dp);
                                 Py_INCREF(*sp);
                                 memcpy(dst, src, sizeof(PyObject *));
+                                dst += dstride;
+                                src += sstride;
                         }
                 }
 	}
@@ -1270,19 +1189,25 @@ OBJECT_copyswap(PyObject **dst, PyObject **src, int swap, void *arr)
 
 /* ignore swap */
 static void
-STRING_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
+STRING_copyswapn (char *dst, intp dstride, char *src, intp sstride, 
+                  intp n, int swap, PyArrayObject *arr)
 {
 	if (src != NULL && arr != NULL) {
 		int itemsize = arr->descr->elsize;
-		memcpy(dst, src, itemsize * n);
-	}
-	
+                if (dstride == itemsize && sstride == itemsize) {
+                        memcpy(dst, src, itemsize * n);
+                }
+                else {
+                        _unaligned_strided_byte_copy(dst, dstride, src, sstride, n, itemsize);
+                }
+	}	
 	return;
 }
 
 /* */
 static void
-VOID_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
+VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride, 
+                intp n, int swap, PyArrayObject *arr)
 {
         int itemsize;
         if (arr == NULL) return;
@@ -1296,7 +1221,7 @@ VOID_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) {arr->descr=descr;return;}
                         arr->descr = new;
-                        new->f->copyswapn(dst+offset, src+offset, n, swap, arr);
+                        new->f->copyswapn(dst+offset, dstride, src+offset, sstride, n, swap, arr);
                 }
                 arr->descr = descr;
                 return;
@@ -1333,14 +1258,21 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 
 
 static void
-UNICODE_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
+UNICODE_copyswapn (char *dst, intp dstride, char *src, intp sstride, 
+                   intp n, int swap, PyArrayObject *arr)
 {
+        int itemsize;
 	if (arr==NULL) return;
-	n *= arr->descr->elsize;
+        itemsize = arr->descr->elsize;
 	if (src != NULL) {
-		memcpy(dst, src, n);
+                if (dstride == itemsize && sstride == itemsize)
+                        memcpy(dst, src, n * itemsize);
+                else
+                        _unaligned_strided_byte_copy(dst, dstride, src, 
+                                                     sstride, n, itemsize);
 	}
-	
+        
+        n *= itemsize;
 	if (swap) {
 		register char *a, *b, c;
 		n >>= 2; /* n is the number of unicode characters to swap */

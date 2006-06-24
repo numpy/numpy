@@ -1593,7 +1593,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 					/* swap the buffer if necessary */
 					if (swap[i]) {
 						/* fprintf(stderr, "swapping...\n");*/
-						copyswapn[i](buffer[i], NULL,
+						copyswapn[i](buffer[i], mpselsize[i], NULL, -1,
 							     (intp) datasize[i], 1,
 							     mps[i]);
 					}
@@ -1618,7 +1618,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 							      NULL, NULL);
 					}
 					if (swap[i]) {
-						copyswapn[i](buffer[i], NULL,
+						copyswapn[i](buffer[i], mpselsize[i], NULL, -1,
 							     (intp) datasize[i], 1, 
 							     mps[i]);
 					}

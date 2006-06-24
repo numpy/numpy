@@ -355,23 +355,23 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
         PyArrayObject *ret;
 	intp size;
 	PyArray_CopySwapNFunc *copyswapn;
-	PyArray_CopySwapFunc *copyswap;
 	PyArrayIterObject *it;
 
+        copyswapn = self->descr->f->copyswapn;
 	if (inplace) {
-		copyswapn = self->descr->f->copyswapn;
-		
 		size = PyArray_SIZE(self);
 		if (PyArray_ISONESEGMENT(self)) {
-			copyswapn(self->data, NULL, size, 1, self);
+			copyswapn(self->data, self->descr->elsize, NULL, -1, size, 1, self);
 		}
 		else { /* Use iterator */
-			
-			it = (PyArrayIterObject *)\
-				PyArray_IterNew((PyObject *)self);
-			copyswap = self->descr->f->copyswap;
+                        int axis = -1;
+                        intp stride;
+			it = (PyArrayIterObject *)                      \
+				PyArray_IterAllButAxis((PyObject *)self, &axis);
+                        stride = self->strides[axis];
+                        size = self->dimensions[axis];
 			while (it->index < it->size) {
-				copyswap(it->dataptr, NULL, 1, self);
+                                copyswapn(it->dataptr, stride, NULL, -1, size, 1, self);
 				PyArray_ITER_NEXT(it);
 			}
 			Py_DECREF(it);
@@ -381,17 +381,11 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 		return (PyObject *)self;
 	}
 	else {
+                PyObject *new;
 		if ((ret = (PyArrayObject *)PyArray_NewCopy(self,-1)) == NULL) 
 			return NULL;
-		
-		size = PyArray_SIZE(self);
-
-		/* now ret has the same dtypedescr as self (including
-		   byteorder)
-		*/
-
-		ret->descr->f->copyswapn(ret->data, NULL, size, 1, ret);
-
+                new = PyArray_Byteswap(ret, TRUE);
+                Py_DECREF(new);
 		return (PyObject *)ret;
 	}
 }
@@ -861,6 +855,10 @@ array_reduce(PyArrayObject *self, PyObject *args)
 	/*  We will put everything in the object's state, so that on UnPickle
 	    it can use the string object as memory without a copy */
 
+        if (self->descr->hasobject && self->descr->type_num != PyArray_OBJECT) {
+                PyErr_SetString(PyExc_ValueError, "cannot pickle object-records.");
+                return NULL;
+        }
 	ret = PyTuple_New(3);
 	if (ret == NULL) return NULL;
 	mod = PyImport_ImportModule("numpy.core._internal");
@@ -1029,7 +1027,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 					   &(self->flags));
 	}
 
-	if (typecode->type_num != PyArray_OBJECT) {
+	if (typecode->hasobject != 1) {
                 int swap=!PyArray_ISNOTSWAPPED(self);
 		self->data = datastr;
 		if (!_IsAligned(self) || swap) {
@@ -1042,9 +1040,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
 			}
                         if (swap) { /* byte-swap on pickle-read */
 				intp numels = num / self->descr->elsize;
-                                self->descr->f->copyswapn(self->data, datastr, 
-                                                          numels,
-							  1, self);
+                                self->descr->f->copyswapn(self->data, self->descr->elsize,
+                                                          datastr, self->descr->elsize,
+                                                          numels, 1, self);
 				if (!PyArray_ISEXTENDED(self)) {
 					self->descr = PyArray_DescrFromType(self->descr->type_num);
 				}

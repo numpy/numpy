@@ -802,7 +802,7 @@ typedef Py_uintptr_t uintp;
 typedef PyObject * (PyArray_GetItemFunc) (void *, void *);
 typedef int (PyArray_SetItemFunc)(PyObject *, void *, void *);
 
-typedef void (PyArray_CopySwapNFunc)(void *, void *, intp, int, void *);
+typedef void (PyArray_CopySwapNFunc)(void *, intp, void *, intp, intp, int, void *);
 typedef void (PyArray_CopySwapFunc)(void *, void *, int, void *);
 typedef Bool (PyArray_NonzeroFunc)(void *, void *);
 
