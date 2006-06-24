@@ -1391,7 +1391,7 @@ static PyMethodDef voidtype_methods[] = {
 
 /************* As_mapping functions for void array scalar ************/
 
-static int
+static _int_or_ssize_t
 voidtype_length(PyVoidScalarObject *self) 
 {
 	if (!self->descr->fields || self->descr->fields == Py_None) {
@@ -1408,13 +1408,38 @@ voidtype_length(PyVoidScalarObject *self)
 	}
 }
 
+static PyObject *
+voidtype_item(PyVoidScalarObject *self, _int_or_ssize_t n)
+{
+	intp m;
+	PyObject *flist=NULL, *key, *fieldinfo;
+
+	if (!(PyDescr_HASFIELDS(self->descr))) {
+		PyErr_SetString(PyExc_IndexError, 
+				"can't index void scalar without fields");
+		return NULL;	
+	}
+	key = PyInt_FromLong(-1);
+	flist = PyDict_GetItem(self->descr->fields, key);
+	Py_DECREF(key);
+	m = PyTuple_GET_SIZE(flist);
+	if (n < 0) n += m;
+	if (n < 0 || n >= m) {
+		PyErr_Format(PyExc_IndexError, "invalid index (%d)", (int) n);
+		return NULL;
+	}
+	fieldinfo = PyDict_GetItem(self->descr->fields, 
+				   PyTuple_GET_ITEM(flist, n));
+	return voidtype_getfield(self, fieldinfo, NULL);
+}
+
+
 /* get field by name or number */
 static PyObject *
 voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 {
-	int n, m;
-	char *msg = "invalid index";
-	PyObject *flist=NULL, *key, *fieldinfo;
+	intp n;
+	PyObject *fieldinfo;
 
 	if (!self->descr->fields || self->descr->fields == Py_None) {
 		PyErr_SetString(PyExc_IndexError, 
@@ -1425,41 +1450,64 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 	if (PyString_Check(ind) || PyUnicode_Check(ind)) {
 		/* look up in fields */
 		fieldinfo = PyDict_GetItem(self->descr->fields, ind);
-		if (!fieldinfo) {
-			PyErr_SetString(PyExc_IndexError, msg);
-			return NULL;
-		}
+		if (!fieldinfo) goto fail;
 		return voidtype_getfield(self, fieldinfo, NULL);
 	}
 	
 	/* try to convert it to a number */
 	n = PyArray_PyIntAsIntp(ind);
-	if (error_converting(n)) {
-		PyErr_Clear();
-		goto fail;
+	if (error_converting(n)) goto fail;
+
+	return voidtype_item(self, (_int_or_ssize_t)n);
+
+ fail:
+	PyErr_SetString(PyExc_IndexError, "invalid index");
+	return NULL;
+
+}
+
+static int
+voidtype_ass_item(PyVoidScalarObject *self, _int_or_ssize_t n, PyObject *val)
+{
+	intp m;
+	PyObject *flist=NULL, *key, *fieldinfo, *newtup;
+	PyObject *res;
+
+	if (!(PyDescr_HASFIELDS(self->descr))) {
+		PyErr_SetString(PyExc_IndexError, 
+				"can't index void scalar without fields");
+		return -1;
 	}
+
 	key = PyInt_FromLong(-1);
 	flist = PyDict_GetItem(self->descr->fields, key);
 	Py_DECREF(key);
-	if (!flist) m = 0; 
 	m = PyTuple_GET_SIZE(flist);
 	if (n < 0) n += m;
 	if (n < 0 || n >= m) goto fail;
 	fieldinfo = PyDict_GetItem(self->descr->fields, 
 				   PyTuple_GET_ITEM(flist, n));
-	return voidtype_getfield(self, fieldinfo, NULL);
+	newtup = Py_BuildValue("(OOO)", val, 
+			       PyTuple_GET_ITEM(fieldinfo, 0),
+			       PyTuple_GET_ITEM(fieldinfo, 1));
+	res = voidtype_setfield(self, newtup, NULL);
+	Py_DECREF(newtup);
+	if (!res) return -1;
+	Py_DECREF(res);
+	return 0;
 
  fail:
-	PyErr_SetString(PyExc_IndexError, msg);
-	return NULL;
+	PyErr_Format(PyExc_IndexError, "invalid index (%d)", (int) n);
+	return -1;
+
 }
 
 static int
 voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val) 
 {
-	int n, m;
+	intp n;
 	char *msg = "invalid index";
-	PyObject *flist=NULL, *key, *fieldinfo, *newtup;
+	PyObject *fieldinfo, *newtup;
 	PyObject *res;
 
 	if (!self->descr->fields || self->descr->fields == Py_None) {
@@ -1471,10 +1519,7 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
 	if (PyString_Check(ind) || PyUnicode_Check(ind)) {
 		/* look up in fields */
 		fieldinfo = PyDict_GetItem(self->descr->fields, ind);
-		if (!fieldinfo) {
-			PyErr_SetString(PyExc_IndexError, msg);
-			return -1;
-		}
+		if (!fieldinfo) goto fail;
 		newtup = Py_BuildValue("(OOO)", val, 
 				       PyTuple_GET_ITEM(fieldinfo, 0),
 				       PyTuple_GET_ITEM(fieldinfo, 1));
@@ -1487,27 +1532,8 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
 	
 	/* try to convert it to a number */
 	n = PyArray_PyIntAsIntp(ind);
-	if (error_converting(n)) {
-		PyErr_Clear();
-		goto fail;
-	}
-	key = PyInt_FromLong(-1);
-	flist = PyDict_GetItem(self->descr->fields, key);
-	Py_DECREF(key);
-	if (!flist) m = 0; 
-	m = PyTuple_GET_SIZE(flist);
-	if (n < 0) n += m;
-	if (n < 0 || n >= m) goto fail;
-	fieldinfo = PyDict_GetItem(self->descr->fields, 
-				   PyTuple_GET_ITEM(flist, n));
-	newtup = Py_BuildValue("(OOO)", val, 
-			       PyTuple_GET_ITEM(fieldinfo, 0),
-			       PyTuple_GET_ITEM(fieldinfo, 1));
-	res = voidtype_setfield(self, fieldinfo, NULL);
-	Py_DECREF(newtup);
-	if (!res) return -1;
-	Py_DECREF(res);
-	return 0;
+	if (error_converting(n)) goto fail;
+	return voidtype_ass_item(self, (_int_or_ssize_t)n, val);
 
  fail:
 	PyErr_SetString(PyExc_IndexError, msg);
@@ -1515,10 +1541,34 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
 }
 
 static PyMappingMethods voidtype_as_mapping = {
+#if PY_VERSION_HEX >= 0x02050000
+        (lenfunc)voidtype_length,		        /*mp_length*/
+#else
         (inquiry)voidtype_length,		        /*mp_length*/
+#endif
         (binaryfunc)voidtype_subscript,	                /*mp_subscript*/
         (objobjargproc)voidtype_ass_subscript,	        /*mp_ass_subscript*/
 };
+
+
+static PySequenceMethods voidtype_as_sequence = {
+#if PY_VERSION_HEX >= 0x02050000
+        (lenfunc)voidtype_length,           /*sq_length*/
+        0,                                  /*sq_concat*/
+        0,                                  /*sq_repeat*/
+	(ssizeargfunc)voidtype_item,        /*sq_item*/
+	0,                                   /*sq_slice*/
+        (ssizeobjargproc)voidtype_ass_item  /*sq_ass_item*/
+#else
+        (inquiry)voidtype_length,          /*sq_length*/
+        0,                                  /*sq_concat*/
+        0,                                  /*sq_repeat*/
+	(intargfunc)voidtype_item,           /*sq_item*/
+	0,                                   /*sq_slice*/
+        (intobjargproc)voidtype_ass_item  /*sq_ass_item*/
+#endif
+};
+
 
 
 static int
@@ -2227,6 +2277,7 @@ initialize_numeric_types(void)
 	PyVoidArrType_Type.tp_methods = voidtype_methods;
 	PyVoidArrType_Type.tp_getset = voidtype_getsets;
 	PyVoidArrType_Type.tp_as_mapping = &voidtype_as_mapping;
+	PyVoidArrType_Type.tp_as_sequence = &voidtype_as_sequence;
 	
 	/**begin repeat
 #NAME=Number, Integer, SignedInteger, UnsignedInteger, Inexact, Floating, 

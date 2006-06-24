@@ -411,13 +411,7 @@ static char doc_tolist[] = "m.tolist().	 Copy the data portion of the array"\
 static PyObject *
 array_tolist(PyArrayObject *self, PyObject *args) 
 {
-        if (!PyArg_ParseTuple(args, "")) return NULL;
-        if (self->nd <= 0) {
-                PyErr_SetString(PyExc_ValueError, 
-				"can't convert a 0-d array to a list");
-                return NULL;
-        }
-	
+        if (!PyArg_ParseTuple(args, "")) return NULL;	
         return PyArray_ToList(self);
 }
 
