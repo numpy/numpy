@@ -401,7 +401,6 @@ _unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
 #undef _COPY_N_SIZE
 }
 
-
 static void
 _strided_byte_swap(void *p, intp stride, intp n, int size)
 {
@@ -690,119 +689,6 @@ PyArray_Size(PyObject *op)
                 return 0;
         }
 }
-
-static void
-_strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides, 
-		   intp N, int elsize)
-{
-        intp i, j;
-        char *tout = dst;
-        char *tin = src;
-
-#define _FAST_MOVE(_type_)				    \
-	for (i=0; i<N; i++) {				    \
-		((_type_ *)tout)[0] = ((_type_ *)tin)[0];   \
-		tin += instrides;			    \
-		tout += outstrides;			    \
-	}						    \
-	return
-	
-        switch(elsize) {
-        case 8:
-		_FAST_MOVE(Float64);
-        case 4:
-		_FAST_MOVE(Int32);
-	case 1:
-		_FAST_MOVE(Int8);
-        case 2:
-		_FAST_MOVE(Int16);
-	case 16:
-                for (i=0; i<N; i++) {
-                        ((Float64 *)tout)[0] = ((Float64 *)tin)[0];
-                        ((Float64 *)tout)[1] = ((Float64 *)tin)[1];
-                        tin += instrides;
-                        tout += outstrides;
-                }
-                return;		
-        default:
-                for (i=0; i<N; i++) {
-                        for (j=0; j<elsize; j++) {
-                                *tout++ = *tin++;
-                        }
-                        tin = tin + instrides - elsize;
-                        tout = tout + outstrides - elsize;
-                }        
-        }
-#undef _FAST_MOVE
-}
-	
-
-static void
-_unaligned_strided_byte_move(char *dst, intp outstrides, char *src, 
-			     intp instrides, intp N, int elsize)
-{
-        intp i;
-        char *tout = dst;
-        char *tin = src;
-
-#define _MOVE_N_SIZE(size)			       \
-	for (i=0; i<N; i++) {			       \
-		memmove(tout, tin, size);	       \
-		tin += instrides;		       \
-		tout += outstrides;		       \
-	}					       \
-	return
-	
-        switch(elsize) {
-        case 8:
-		_MOVE_N_SIZE(8);
-        case 4:
-		_MOVE_N_SIZE(4);
-	case 1:
-		_MOVE_N_SIZE(1);
-        case 2:
-		_MOVE_N_SIZE(2);
-	case 16:
-		_MOVE_N_SIZE(16);
-        default:
-		_MOVE_N_SIZE(elsize);
-        }
-#undef _MOVE_N_SIZE
-}
-
-static void
-_unaligned_strided_byte_copy(char *dst, intp outstrides, char *src, 
-			     intp instrides, intp N, int elsize)
-{
-        intp i;
-        char *tout = dst;
-        char *tin = src;
-
-#define _COPY_N_SIZE(size)			       \
-	for (i=0; i<N; i++) {			       \
-		memcpy(tout, tin, size);	       \
-		tin += instrides;		       \
-		tout += outstrides;		       \
-	}					       \
-	return
-	
-        switch(elsize) {
-        case 8:
-		_COPY_N_SIZE(8);
-        case 4:
-		_COPY_N_SIZE(4);
-	case 1:
-		_COPY_N_SIZE(1);
-        case 2:
-		_COPY_N_SIZE(2);
-	case 16:
-		_COPY_N_SIZE(16);
-        default:
-		_COPY_N_SIZE(elsize);
-        }
-#undef _COPY_N_SIZE
-}
-
 
 static int
 _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap) 

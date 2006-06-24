@@ -1280,9 +1280,7 @@ STRING_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
 	return;
 }
 
-/* ignore swap 
-
-*/
+/* */
 static void
 VOID_copyswapn (char *dst, char *src, intp n, int swap, PyArrayObject *arr)
 {

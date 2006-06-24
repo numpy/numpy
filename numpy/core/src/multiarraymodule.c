@@ -1842,36 +1842,6 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op)
 	return NULL;
 }
 
-static void
-_strided_copy(char *dst, intp dststride, char *src, intp srcstride, 
-	      intp num, int elsize)
-{
-	
-#define _FAST_COPY(size)			\
-	while(num--) {				\
-		memcpy(dst, src, size);		\
-		dst += dststride;		\
-		src += srcstride;		\
-	}					\
-	return
-	
-	switch(elsize) {
-	case 8:
-		_FAST_COPY(8);
-	case 4:
-		_FAST_COPY(4);
-	case 1:
-		_FAST_COPY(1);
-	case 2:
-		_FAST_COPY(2);
-	case 16:
-		_FAST_COPY(16);
-	default:
-		_FAST_COPY(elsize);
-	}
-#undef _FAST_COPY 
-}
-
 /* These algorithms use special sorting.  They are not called unless the 
    underlying sort function for the type is available.  
    Note that axis is already
@@ -1912,21 +1882,16 @@ _new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 		char *buffer;
 		buffer = PyDataMem_NEW(N*elsize);
 		while (size--) {
-			_strided_copy(buffer, (intp) elsize, it->dataptr, 
-				      astride, N, elsize);
-			if (swap) {
-				op->descr->f->copyswapn(buffer, NULL, N, 1, 
-							op);
-			}
+			_unaligned_strided_byte_copy(buffer, (intp) elsize, it->dataptr, 
+                                                     astride, N, elsize);
+			if (swap) _strided_byte_swap(buffer, (intp) elsize, N, elsize);
 			if (sort(buffer, N, op) < 0) {
 				PyDataMem_FREE(buffer); goto fail;
 			}
-			if (swap) {
-				op->descr->f->copyswapn(buffer, NULL, N, 1, 
-							op);
-			}			
-			_strided_copy(it->dataptr, astride, buffer, 
-				      (intp) elsize, N, elsize);
+			if (swap) _strided_byte_swap(buffer, (intp) elsize, N, elsize);
+                        
+			_unaligned_strided_byte_copy(it->dataptr, astride, buffer, 
+                                                     (intp) elsize, N, elsize);
 			PyArray_ITER_NEXT(it);
 		}
 		PyDataMem_FREE(buffer);
@@ -1959,7 +1924,7 @@ _new_argsort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 	PyObject *ret;
 	int needcopy=0, i;
 	intp N, size;
-	int elsize;
+	int elsize, swap;
 	intp astride, rstride, *iptr;
 	PyArray_ArgSortFunc *argsort;
 	BEGIN_THREADS_DEF 
@@ -1973,6 +1938,8 @@ _new_argsort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 	rit = (PyArrayIterObject *)PyArray_IterAllButAxis(ret, &axis);
 	if (rit == NULL || it == NULL) goto fail;
 
+	swap = !PyArray_ISNOTSWAPPED(op);
+
 	BEGIN_THREADS
 
 	argsort = op->descr->f->argsort[which];
@@ -1982,27 +1949,31 @@ _new_argsort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 	astride = op->strides[axis];
 	rstride = PyArray_STRIDE(ret,axis);
 
-	needcopy = !(op->flags & ALIGNED) || (astride != (intp) elsize) || \
+	needcopy = swap || !(op->flags & ALIGNED) || (astride != (intp) elsize) || \
 		(rstride != sizeof(intp));
 	
 	if (needcopy) {
 		char *valbuffer, *indbuffer;
-		valbuffer = PyDataMem_NEW(N*(elsize+sizeof(intp)));
-		indbuffer = valbuffer + (N*elsize);
+		valbuffer = PyDataMem_NEW(N*elsize);
+		indbuffer = PyDataMem_NEW(N*sizeof(intp));
 		while (size--) {
-			_strided_copy(valbuffer, (intp) elsize, it->dataptr,
-				      astride, N, elsize);
+			_unaligned_strided_byte_copy(valbuffer, (intp) elsize, it->dataptr,
+                                                     astride, N, elsize);
+			if (swap) _strided_byte_swap(valbuffer, (intp) elsize, N, elsize);
 			iptr = (intp *)indbuffer;
 			for (i=0; i<N; i++) *iptr++ = i;
 			if (argsort(valbuffer, (intp *)indbuffer, N, op) < 0) {
-				PyDataMem_FREE(valbuffer); goto fail;
+				PyDataMem_FREE(valbuffer); 
+                                PyDataMem_FREE(indbuffer);
+                                goto fail;
 			}
-			_strided_copy(rit->dataptr, rstride, indbuffer, 
-				      sizeof(intp), N, sizeof(intp));
+			_unaligned_strided_byte_copy(rit->dataptr, rstride, indbuffer, 
+                                                     sizeof(intp), N, sizeof(intp));
 			PyArray_ITER_NEXT(it);
 			PyArray_ITER_NEXT(rit);
 		}
 		PyDataMem_FREE(valbuffer);
+                PyDataMem_FREE(indbuffer);
 	}
 	else {
 		while (size--) {
@@ -2361,7 +2332,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         maxelsize = mps[0]->descr->elsize;
 	needcopy = (rstride != sizeof(intp));
 	for (j=0; j<n && !needcopy; j++) {
-		needcopy = !(mps[j]->flags & ALIGNED) || \
+		needcopy = PyArray_ISBYTESWAPPED(mps[j]) ||             \
+                        !(mps[j]->flags & ALIGNED) ||                   \
 			(mps[j]->strides[axis] != (intp)mps[j]->descr->elsize);
                 if (mps[j]->descr->elsize > maxelsize) 
                         maxelsize = mps[j]->descr->elsize;
@@ -2369,8 +2341,11 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 
 	if (needcopy) {
 		char *valbuffer, *indbuffer;
-		valbuffer = PyDataMem_NEW(N*(maxelsize+sizeof(intp)));
-		indbuffer = valbuffer + (N*maxelsize);
+                int *swaps;
+		valbuffer = PyDataMem_NEW(N*maxelsize);
+                indbuffer = PyDataMem_NEW(N*sizeof(intp));
+                swaps = malloc(n*sizeof(int));
+                for (j=0; j<n; j++) swaps[j] = PyArray_ISBYTESWAPPED(mps[j]);
 		while (size--) {
 			iptr = (intp *)indbuffer;
 			for (i=0; i<N; i++) *iptr++ = i;
@@ -2378,18 +2353,25 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 				elsize = mps[j]->descr->elsize;
 				astride = mps[j]->strides[axis];	
 				argsort = mps[j]->descr->f->argsort[PyArray_MERGESORT];
-				_strided_copy(valbuffer, (intp) elsize, its[j]->dataptr,
-					      astride, N, elsize);
+				_unaligned_strided_byte_copy(valbuffer, (intp) elsize, 
+                                                             its[j]->dataptr, astride, N, elsize);
+                                if (swaps[j]) 
+                                        _strided_byte_swap(valbuffer, (intp) elsize, N, elsize);
 				if (argsort(valbuffer, (intp *)indbuffer, N, mps[j]) < 0) {
-					PyDataMem_FREE(valbuffer); goto fail;
+					PyDataMem_FREE(valbuffer); 
+                                        PyDataMem_FREE(indbuffer);
+                                        free(swaps);
+                                        goto fail;
 				}
 				PyArray_ITER_NEXT(its[j]);
 			}
-			_strided_copy(rit->dataptr, rstride, indbuffer,
-				      sizeof(intp), N, sizeof(intp));
+			_unaligned_strided_byte_copy(rit->dataptr, rstride, indbuffer,
+                                                     sizeof(intp), N, sizeof(intp));
 			PyArray_ITER_NEXT(rit);
 		}
 		PyDataMem_FREE(valbuffer);
+                PyDataMem_FREE(indbuffer);
+                free(swaps);
 	}
 	else {
 		while (size--) {
