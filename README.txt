@@ -11,5 +11,5 @@ If fast BLAS and LAPACK cannot be found, then a slower default version is used.
 
 The current version is always available from a Subversion repostiory:
 
-http://svn.numpy.org/svn/numpy/trunk 
+http://svn.scipy.org/svn/numpy/trunk 
 
