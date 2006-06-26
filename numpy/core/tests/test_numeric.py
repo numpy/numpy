@@ -130,12 +130,14 @@ class test_dot(NumpyTestCase):
                 assert (c1.shape == c2.shape)
                 assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_vecobject(self,level=2):
+    def check_vecobject(self):
         U_non_cont = transpose([[1.,1.],[1.,2.]])
         U_cont = ascontiguousarray(U_non_cont)
         x = array([Vec([1.,0.]),Vec([0.,1.])])
-        assert_almost_equal(dot(U_cont,x),
-                            dot(U_non_cont,x))
+        zeros = array([Vec([0.,0.]),Vec([0.,0.])])
+        zeros_test = dot(U_cont,x) - dot(U_non_cont,x)
+        assert_equal(zeros[0].array, zeros_test[0].array)
+        assert_equal(zeros[1].array, zeros_test[1].array)
 
 
 class test_bool_scalar(NumpyTestCase):

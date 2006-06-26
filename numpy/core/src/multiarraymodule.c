@@ -216,6 +216,7 @@ power_of_ten(int n)
 static PyObject *
 PyArray_Round(PyArrayObject *a, int decimals)
 {
+	PyObject *f, *ret=NULL, *tmp;
 	if (PyArray_ISCOMPLEX(a)) {
 		PyObject *part;
 		PyObject *round_part;
@@ -258,7 +259,6 @@ PyArray_Round(PyArrayObject *a, int decimals)
 		return PyArray_GenericUnaryFunction((PyAO *)a, n_ops.rint);
 	}
 	if (decimals > 0) {
-		PyObject *f, *ret, *tmp;
 		if (PyArray_ISINTEGER(a)) {
 			Py_INCREF(a);
 			return (PyObject *)a;
@@ -266,48 +266,53 @@ PyArray_Round(PyArrayObject *a, int decimals)
 		f = PyFloat_FromDouble(power_of_ten(decimals));
 		if (f==NULL) return NULL;
 		ret = PyNumber_Multiply((PyObject *)a, f);
-		if (ret==NULL) {Py_DECREF(f); return NULL;}
+		if (ret==NULL) goto finish;
 		if (PyArray_IsScalar(ret, Generic)) {
 			/* array scalars cannot be modified inplace */
 			tmp = PyObject_CallFunction(n_ops.rint, "O", ret);
 			Py_DECREF(ret);
+			if (tmp == NULL) {ret=NULL; goto finish;}
 			ret = PyObject_CallFunction(n_ops.divide, "OO", 
 						    tmp, f);
 			Py_DECREF(tmp);
 		} else {
 			tmp = PyObject_CallFunction(n_ops.rint, "OO", ret, ret);
-			Py_DECREF(tmp);
+			if (tmp == NULL) {Py_DECREF(ret); ret=NULL; goto finish;}
 			tmp = PyObject_CallFunction(n_ops.divide, "OOO", ret, 
 						    f, ret);
+			if (tmp == NULL) {Py_DECREF(ret); ret=NULL; goto finish;}
 			Py_DECREF(tmp);
 		}
-		Py_DECREF(f);
-		return ret;
 	} 
 	else {
 		/* remaining case: decimals < 0 */
-		PyObject *f, *ret, *tmp;
 		f = PyFloat_FromDouble(power_of_ten(-decimals));
 		if (f==NULL) return NULL;
 		ret = PyNumber_Divide((PyObject *)a, f);
-		if (ret==NULL) {Py_DECREF(f); return NULL;}
+		if (ret==NULL) goto finish;
 		if (PyArray_IsScalar(ret, Generic)) {
 			/* array scalars cannot be modified inplace */
 			tmp = PyObject_CallFunction(n_ops.rint, "O", ret);
 			Py_DECREF(ret);
+			if (tmp == NULL) {ret=NULL; goto finish;}
 			ret = PyObject_CallFunction(n_ops.multiply, "OO", 
 						    tmp, f);
 			Py_DECREF(tmp);
 		} else {
 			tmp = PyObject_CallFunction(n_ops.rint, "OO", ret, ret);
+			if (tmp == NULL) {Py_DECREF(ret); ret=NULL; goto finish;}
 			Py_DECREF(tmp);
 			tmp = PyObject_CallFunction(n_ops.multiply, "OOO", ret, 
 						    f, ret);
+			if (tmp==NULL) {Py_DECREF(ret); ret=NULL; goto finish;}
 			Py_DECREF(tmp);
 		}
-		Py_DECREF(f);
-		return ret;
 	}
+
+ finish:
+	Py_DECREF(f);
+	return ret;
+	
 }
 
 
