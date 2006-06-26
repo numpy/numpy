@@ -3,6 +3,33 @@ from numpy.random import rand, randint
 from numpy.testing import *
 from numpy.core.multiarray import dot as dot_
 
+class Vec:
+    def __init__(self,sequence=None):
+        if sequence is None:
+            sequence=[]
+        self.array=array(sequence)    
+    def __add__(self,other):
+        out=Vec()
+        out.array=self.array+other.array
+        return out
+    def __sub__(self,other):
+        out=Vec()
+        out.array=self.array-other.array
+        return out
+    def __mul__(self,other): # with scalar
+        out=Vec(self.array.copy())
+        out.array*=other
+        return out
+    def __rmul__(self,other):
+        return self*other
+    def __abs__(self):
+        out=Vec()
+        out.array=abs(self.array)
+        return out
+    def __repr__(self):
+        return "Vec("+repr(self.array.tolist())+")"
+    __str__=__repr__
+
 class test_dot(NumpyTestCase):
     def setUp(self):
         self.A = rand(10,8)
@@ -102,6 +129,13 @@ class test_dot(NumpyTestCase):
                 c2 = dot_(arg1, arg2)
                 assert (c1.shape == c2.shape)
                 assert_almost_equal(c1, c2, decimal=self.N)
+
+    def check_vecobject(self,level=2):
+        U_non_cont = transpose([[1.,1.],[1.,2.]])
+        U_cont = ascontiguousarray(U_non_cont)
+        x = array([Vec([1.,0.]),Vec([0.,1.])])
+        assert_almost_equal(dot(U_cont,x),
+                            dot(U_non_cont,x))
 
 
 class test_bool_scalar(NumpyTestCase):
