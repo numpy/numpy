@@ -15,6 +15,8 @@ Pearu Peterson
 
 __all__ = ['String','string_replace_map','splitquote','splitparen']
 
+import re
+
 class String(str): pass
 class ParenString(str): pass
 
@@ -25,6 +27,8 @@ def split2(line, lower=False):
     of a string part.
     """
     return LineSplitter(line,lower=lower).split2()
+
+_f2py_str_findall = re.compile(r' _F2PY_STRING_CONSTANT_\d+_ ').findall
 
 def string_replace_map(line, lower=False,
                        _cache={'index':0,'pindex':0}):
@@ -50,8 +54,9 @@ def string_replace_map(line, lower=False,
             items.append(item)
     newline = ''.join(items)
     items = []
+    expr_keys = []
     for item in splitparen(newline):
-        if isinstance(item,ParenString):
+        if isinstance(item, ParenString):
             key = rev_string_map.get(item)
             if key is None:
                 _cache['pindex'] += 1
@@ -59,9 +64,21 @@ def string_replace_map(line, lower=False,
                 key = '(F2PY_EXPR_TUPLE_%s)' % (index)
                 string_map[key] = item
                 rev_string_map[item] = key
+                expr_keys.append(key)
             items.append(key)
         else:
             items.append(item)
+    found_keys = set()
+    for k in expr_keys:
+        v = string_map[k]
+        l = _f2py_str_findall(v)
+        if l:
+            found_keys = found_keys.union(l)
+            for k1 in l:
+                v = v.replace(k1, string_map[k1])
+            string_map[k] = v
+    for k in found_keys:
+        del string_map[k]
     return ''.join(items), string_map
 
 def splitquote(line, stopchar=None, lower=False, quotechars = '"\''):

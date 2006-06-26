@@ -42,10 +42,13 @@ class FortranParser:
         except KeyboardInterrupt:
             raise
         except:
-            message = self.reader.format_message('FATAL ERROR',
-                                                 'while processing line',
-                                                 self.reader.linecount, self.reader.linecount)
-            self.reader.show_message(message, sys.stdout)
+            reader = self.reader
+            while reader is not None:
+                message = reader.format_message('FATAL ERROR',
+                                                'while processing line',
+                                                reader.linecount, reader.linecount)
+                reader.show_message(message, sys.stdout)
+                reader = reader.reader
             traceback.print_exc(file=sys.stdout)
             self.reader.show_message(red_text('STOPPED PARSING'), sys.stdout)
 

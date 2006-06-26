@@ -21,6 +21,7 @@ __all__ = ['FortranFileReader',
            ]
 
 import re
+import os
 import sys
 import tempfile
 import traceback
@@ -35,6 +36,7 @@ _cf2py_re = re.compile(r'(?P<indent>\s*)!f2py(?P<rest>.*)',re.I)
 _is_fix_cont = lambda line: line and len(line)>5 and line[5]!=' ' and line[:5]==5*' '
 _is_f90_cont = lambda line: line and '&' in line and line.rstrip()[-1]=='&'
 _f90label_re = re.compile(r'\s*(?P<label>(\w+\s*:|\d+))\s*(\b|(?=&)|\Z)',re.I)
+_is_include_line = re.compile(r'\s*include\s*"[^"]+"\s*\Z',re.I).match
 
 class FortranReaderError: # TODO: may be derive it from Exception
     def __init__(self, message):
@@ -45,6 +47,9 @@ class FortranReaderError: # TODO: may be derive it from Exception
 class Line:
     """ Holds a Fortran source line.
     """
+    
+    f2py_strmap_findall = re.compile(r'( _F2PY_STRING_CONSTANT_\d+_ |\(F2PY_EXPR_TUPLE_\d+\))').findall
+    
     def __init__(self, line, linenospan, label, reader):
         self.line = line.strip()
         self.span = linenospan
@@ -55,16 +60,11 @@ class Line:
         if line is None:
             line = self.line
         if apply_map and hasattr(self,'strlinemap'):
+            findall = self.f2py_strmap_findall
             str_map = self.strlinemap
-            keys = str_map.keys()
-            flag = True
-            while flag:
-                flag = False
-                for k in keys:
-                    if k in line:
-                        flag = True
-                        line = line.replace(k, str_map[k])
-                        assert k not in line, `k,line`
+            keys = findall(line)
+            for k in keys:
+                line = line.replace(k, str_map[k])
         return Line(line, self.span, self.label, self.reader)
     def __repr__(self):
         return self.__class__.__name__+'(%r,%s,%r)' \
@@ -139,6 +139,7 @@ class FortranReaderBase:
         self.ispyf   = isfree and isstrict
         self.isfree  = isfree
         self.isfix   = not isfree
+        self.isstrict = isstrict
 
         if self.isfree90: mode = 'free90'
         elif self.isfix90: mode = 'fix90'
@@ -155,6 +156,10 @@ class FortranReaderBase:
         self.source_lines = []
 
         self.name = '%s mode=%s' % (source, mode)
+
+        self.reader = None
+        self.include_dirs = ['.']
+        return
 
     def close_source(self):
         # called when self.source.next() raises StopIteration.
@@ -184,7 +189,9 @@ class FortranReaderBase:
         self.linecount += 1
         # expand tabs, replace special symbols, get rid of nl characters
         line = line.expandtabs().replace('\xa0',' ').rstrip('\n\r\f')
-        self.source_lines.append(line)            
+        self.source_lines.append(line)
+        if not line:
+            return self.get_single_line()
         return line
 
     def get_next_line(self):
@@ -199,8 +206,36 @@ class FortranReaderBase:
         return self
 
     def next(self, ignore_comments = False):
+            
         try:
-            return self._next(ignore_comments)
+            if self.reader is not None:
+                try:
+                    return self.reader.next()
+                except StopIteration:
+                    self.reader = None
+            item = self._next(ignore_comments)
+            if isinstance(item, Line) and _is_include_line(item.line):
+                filename = item.line.strip()[7:].lstrip()[1:-1]
+                include_dirs = self.include_dirs[:]
+                path = filename
+                for incl_dir in include_dirs:
+                    path = os.path.join(incl_dir, filename)
+                    if os.path.exists(path):
+                        break
+                if not os.path.isfile(path):
+                    dirs = os.pathsep.join(include_dirs)
+                    message = self.format_message('WARNING',
+                                                  'include file not found in %s, ignoring.' % (dirs),
+                                                  self.linecount, self.linecount)
+                    self.show_message(message, sys.stdout)
+                    return item
+                message = self.format_message('INFORMATION',
+                                              'found file %r' % (path),
+                                              self.linecount, self.linecount)
+                self.show_message(message, sys.stdout)
+                self.reader = FortranFileReader(path, include_dirs = include_dirs)
+                return self.reader.next()
+            return item
         except StopIteration:
             raise
         except:
@@ -577,10 +612,16 @@ class FortranReaderBase:
 
 class FortranFileReader(FortranReaderBase):
 
-    def __init__(self, filename):
+    def __init__(self, filename,
+                 include_dirs = None):
         isfree, isstrict = get_source_info(filename)
         self.file = open(filename,'r')
         FortranReaderBase.__init__(self, self.file, isfree, isstrict)
+        if include_dirs is None:
+            self.include_dirs.insert(0, os.path.dirname(filename))
+        else:
+            self.include_dirs = include_dirs[:]
+        return
 
     def close_source(self):
         self.file.close()
@@ -638,6 +679,7 @@ python module foo
    endif
   end interface
   if ( pc_get_lun() .ne. 6) &
+
     write ( pc_get_lun(), '( &
     & /, a, /, " p=", i4, " stopping c_flag=", a, &
     & /, " print unit=", i8)') &
@@ -689,7 +731,7 @@ def profile_main():
     stats.print_stats(30)
 
 if __name__ == "__main__":
-    test_pyf()
+    #test_pyf()
     #test_fix90()
     #profile_main()
-    #simple_main()
+    simple_main()

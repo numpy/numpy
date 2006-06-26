@@ -126,7 +126,13 @@ class BeginStatement(Statement):
         return False
 
     def handle_unknown_item(self, item):
-        print self.__class__.__name__,item,item.get_line()
+        message = item.reader.format_message(\
+                        'WARNING',
+                        'no parse pattern found for "%s" in %r block.'\
+                        % (item.get_line(),self.__class__.__name__),
+                        item.span[0], item.span[1])
+        print >> sys.stderr, message
+        sys.stderr.flush()
         self.content.append(item)
         return
 
@@ -148,7 +154,7 @@ class BeginStatement(Statement):
             item = self.get_item()
 
         if not end_flag:
-            message = self.reader.format_message(\
+            message = self.item.reader.format_message(\
                         'WARNING',
                         'failed to find the end of block for %s'\
                         % (self.__class__.__name__),
@@ -184,7 +190,7 @@ class EndStatement(Statement):
                 self.isvalid = False
         if line:
             if not line==self.parent.name:
-                message = self.reader.format_message(\
+                message = item.reader.format_message(\
                         'WARNING',
                         'expected the end of %r block but got end of %r, skipping.'\
                         % (self.parent.name, line),

@@ -82,15 +82,16 @@ class TypeDeclarationStatement(Statement):
                 selector += line[:i+1].rstrip()
                 line = line[i+1:].lstrip()
             else:
-                i = line.find(',')
-                if i!=-1:
-                    selector += line[:i].rstrip()
-                    line = line[i+1:].lstrip()
-                else:
-                    i = line.find('::')
-                    assert i!=-1,`line`
-                    selector += line[:i].rstrip()
-                    line = line[i+2:].lstrip()
+                i = len(line)
+                ci = ''
+                for c in [',','::',' ']:
+                    j = line.find(c)
+                    if j!=-1 and j<i:
+                        i = j
+                        ci = c
+                assert i!=len(line),`i,line`
+                selector += line[:i].rstrip()
+                line = line[i+len(ci):].lstrip()
         else:
             selector = ''
         if line.startswith(','):
@@ -98,7 +99,6 @@ class TypeDeclarationStatement(Statement):
 
         self.raw_selector = selector
         i = line.find('::')
-
         if i==-1:
             self.attrspec = ''
             self.entity_decls = line
@@ -124,6 +124,10 @@ class DoublePrecision(TypeDeclarationStatement):
 
 class Complex(TypeDeclarationStatement):
     match = re.compile(r'complex\b',re.I).match
+
+class DoubleComplex(TypeDeclarationStatement):
+    match = re.compile(r'double\s*complex\b',re.I).match
+    modes = ['pyf','fix77']
 
 class Logical(TypeDeclarationStatement):
     match = re.compile(r'logical\b',re.I).match

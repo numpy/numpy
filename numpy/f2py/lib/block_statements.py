@@ -38,7 +38,7 @@ class BeginSource(BeginStatement):
         if self.reader.isfix77:
             line = item.get_line()
             if line=='end':
-                message = self.reader.format_message(\
+                message = item.reader.format_message(\
                         'WARNING',
                         'assuming the end of undefined PROGRAM statement',
                         item.span[0],item.span[1])
@@ -131,11 +131,21 @@ class EndInterface(EndStatement):
 
 class Interface(BeginStatement):
     """
-    INTERFACE [generic-spec] | ABSTRACT INTERFACE
-    END INTERFACE [generic-spec]
+    INTERFACE [<generic-spec>] | ABSTRACT INTERFACE
+    END INTERFACE [<generic-spec>]
+
+    <generic-spec> = <generic-name>
+                   | OPERATOR ( <defined-operator> )
+                   | ASSIGNMENT ( = )
+                   | <dtio-generic-spec>
+    <dtio-generic-spec> = READ ( FORMATTED )
+                        | READ ( UNFORMATTED )
+                        | WRITE ( FORMATTED )
+                        | WRITE ( UNFORMATTED )
+    
     """
     modes = ['free90', 'fix90', 'pyf']
-    match = re.compile(r'(interface\s*\w*|abstract\s*interface)\Z',re.I).match
+    match = re.compile(r'(interface\s*(\w+\s*\(.*\)|\w*)|abstract\s*interface)\Z',re.I).match
     end_stmt_cls = EndInterface
     blocktype = 'interface'
 
@@ -252,6 +262,34 @@ class Select(BeginStatement):
     def get_classes(self):
         return [Case] + execution_part_construct
 
+# Where
+
+class EndWhere(EndStatement):
+    match = re.compile(r'end\s*\w*\Z',re.I).match
+    
+
+class Where(BeginStatement):
+    """
+    [ <where-construct-name> : ] WHERE ( <mask-expr> )
+    <mask-expr> = <logical-expr>
+    """
+    match = re.compile(r'where\s*\([^)]*\)\Z',re.I).match
+    end_stmt_cls = EndWhere
+    name = ''
+    def tostr(self):
+        return 'WHERE ( %s )' % (self.expr)
+    def process_item(self):
+        self.expr = self.item.get_line()[5:].lstrip()[1:-1].strip()
+        self.name = self.item.label
+        return BeginStatement.process_item(self)
+
+    def get_classes(self):
+        return [Assignment, WhereStmt,
+                WhereConstruct, ElseWhere
+                ]
+
+WhereConstruct = Where
+
 # IfThen
 
 class EndIfThen(EndStatement):
@@ -313,7 +351,7 @@ class If(BeginStatement):
                 if stmt.isvalid:
                     self.content.append(stmt)
                     return
-        self.handle_unknown_item(newitem)
+        self.isvalid = False
         return
         
     def tostr(self):
@@ -387,6 +425,7 @@ class Type(BeginStatement):
     """
     match = re.compile(r'type\b\s*').match
     end_stmt_cls = EndType
+    is_name = re.compile(r'\w+\Z').match
 
     def process_item(self):
         line = self.item.get_line()[4:].lstrip()
@@ -409,6 +448,9 @@ class Type(BeginStatement):
         else:
             self.name = line
             self.params = ''
+        if not self.is_name(self.name):
+            self.isvalid = False
+            return
         return BeginStatement.process_item(self)
 
     def tostr(self):
@@ -443,14 +485,17 @@ module_subprogram_part = [
     ]
 
 specification_stmt = [
-    # Access, Allocatable, Asynchronous, Bind, Common,
+    # Access, Allocatable, Asynchronous, Bind,
+    Common,
     Data, Dimension,
-    Equivalence, #External, Intent
-    # Intrinsic, Namelist, Optional, Pointer, Protected,
+    Equivalence, External, #Intent
+    Intrinsic,
+    #Namelist,
+    Optional, #Pointer, Protected,
     Save, #Target, Volatile, Value
     ]
 intrinsic_type_spec = [
-    Integer , Real, DoublePrecision, Complex, Character, Logical
+    Integer , Real, DoublePrecision, Complex, DoubleComplex, Character, Logical
     ]
 declaration_type_spec = intrinsic_type_spec + [
     TypeStmt,
@@ -459,7 +504,7 @@ declaration_type_spec = intrinsic_type_spec + [
 type_declaration_stmt = declaration_type_spec
 
 private_or_sequence = [
-    Private, #Sequence
+    Private, Sequence
     ]
 
 component_part = declaration_type_spec + [
@@ -483,24 +528,26 @@ action_stmt = [
     Endfile, #EndFunction, EndProgram, EndSubroutine,
     Exit,
     # Flush, Forall,
-    Goto, If, #Inquire,
+    Goto, If, Inquire,
     Nullify,
     Open, 
     Print, Read,
     Return,
     Rewind,
-    Stop, #Wait, Where,
+    Stop, #Wait,
+    WhereStmt,
     Write,
-    # arithmetic-if-stmt, computed-goto-stmt
+    ArithmeticIf,
+    ComputedGoto
     ]
 
-executable_construct = action_stmt + [
+executable_construct = [
     # Associate, Case,
     Do,
     # Forall,
     IfThen,
-    Select, #Where
-    ]
+    Select, WhereConstruct
+    ] + action_stmt
 execution_part_construct = executable_construct + [
     Format, #Entry, Data
     ]
