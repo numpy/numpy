@@ -756,6 +756,7 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
 			PyArray_ITER_NEXT(dit);
 		}
 		PyArray_INCREF(dest);
+		Py_DECREF(dit);
 	}
 	retval = 0;
  finish:
@@ -814,6 +815,7 @@ int _flat_copyinto(PyObject *dst, PyObject *src, PyArray_ORDER order) {
 	}
 	PyArray_INCREF((PyArrayObject *)dst);
 
+	Py_DECREF(it);
 	return 0;
 }
 
@@ -2725,14 +2727,13 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 			int n, i;
 			PyObject *temp;
 			n = PySequence_Size(op);
-			for (i = 0; i < n; ++i) {
+			i=0;
+			while (i<n && noellipses) {
 				temp = PySequence_GetItem(op, i);
-				if (temp == Py_Ellipsis) {
+				if (temp == Py_Ellipsis) 
 					noellipses = FALSE;
-					Py_DECREF(temp);
-					break;
-				}
 				Py_DECREF(temp);
+				i++;
 			}
 		}
 		if (noellipses) {
@@ -6617,43 +6618,47 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 	return NULL; 
 }
 
-/* buffer[0] is the destination
-   buffer[1] is the source
+/* Reference counts:
+   copyswapn is used which increases and decreases reference counts for OBJECT arrays.
+   All that needs to happen is for any reference counts in the buffers to be 
+   decreased when completely finished with the buffers. 
+
+   buffers[0] is the destination
+   buffers[1] is the source
 */
 static void
 _strided_buffered_cast(char *dptr, intp dstride, int delsize, int dswap,
-		       void (*dcopyfunc)(char *, intp, char *, intp, intp, int),
+		       PyArray_CopySwapNFunc *dcopyfunc,
 		       char *sptr, intp sstride, int selsize, int sswap,
-		       void (*scopyfunc)(char *, intp, char *, intp, intp, int),
+		       PyArray_CopySwapNFunc *scopyfunc,
 		       intp N, char **buffers, int bufsize,
 		       PyArray_VectorUnaryFunc *castfunc,
 		       PyArrayObject *dest, PyArrayObject *src)
 {
+	int i;
 	if (N <= bufsize) {
-		/* 1. copy input to buffer
-		   2. swap if necessary
-		   3. cast input to output
-		   4. swap output if necessary
-		   5. copy output from buffer
+		/* 1. copy input to buffer and swap
+		   2. cast input to output
+		   3. swap output if necessary and copy from output buffer
 		*/
-		scopyfunc(buffers[1], selsize, sptr, sstride, N, selsize);
-		if (sswap)
-			byte_swap_vector(buffers[1], N, selsize);
+		scopyfunc(buffers[1], selsize, sptr, sstride, N, sswap, src);
 		castfunc(buffers[1], buffers[0], N, src, dest);
-		if (dswap) 
-			byte_swap_vector(buffers[0], N, delsize);
-		dcopyfunc(dptr, dstride, buffers[0], delsize, N, delsize);
+		dcopyfunc(dptr, dstride, buffers[0], delsize, N, dswap, dest);
 		return;
 	}
 
 	/* otherwise we need to divide up into bufsize pieces */
+	i = 0;
 	while(N > 0) {
 		int newN;
 		newN = MIN(N, bufsize);
-		_strided_buffered_cast(dptr, dstride, delsize, dswap, dcopyfunc,
-				       sptr, sstride, selsize, sswap, scopyfunc,
+		_strided_buffered_cast(dptr+i*dstride, dstride, delsize, 
+				       dswap, dcopyfunc,
+				       sptr+i*sstride, sstride, selsize, 
+				       sswap, scopyfunc,
 				       newN, buffers, bufsize, castfunc, dest, src);
 		N -= bufsize;
+		i++;
 	}
 	return;
 }
@@ -6662,38 +6667,40 @@ static int
 _broadcast_cast(PyArrayObject *out, PyArrayObject *in, 
 		PyArray_VectorUnaryFunc *castfunc, int iswap, int oswap)
 {
-	int delsize, selsize, maxaxis;
+	int delsize, selsize, maxaxis, i, N;
 	PyArrayMultiIterObject *multi;
 	intp maxdim;
 	char *buffers[2];
-	void (*ocopyfunc)(char *, intp, char *, intp, intp, int);
-	void (*icopyfunc)(char *, intp, char *, intp, intp, int);
+	PyArray_CopySwapNFunc *ocopyfunc, *icopyfunc;	
+	PyObject **obptr;
 
-	delsize = PyArray_ITEMSIZE(out);
+ 	delsize = PyArray_ITEMSIZE(out);
 	selsize = PyArray_ITEMSIZE(in);
 	multi = (PyArrayMultiIterObject *)PyArray_MultiIterNew(2, out, in);
 	if (multi == NULL) return -1;
 	maxaxis = PyArray_RemoveLargest(multi);
 	if (maxaxis < 0) return -1;
 	maxdim = multi->dimensions[maxaxis];
-	buffers[0] = malloc(PyArray_BUFSIZE*(delsize+selsize));
+	N = (int) (MIN(maxdim, PyArray_BUFSIZE));
+	buffers[0] = _pya_malloc(N*delsize);
 	if (buffers[0] == NULL) {
 		PyErr_NoMemory();
 		return -1;
 	}
-	buffers[1] = buffers[0] + PyArray_BUFSIZE*delsize;
-	if (out->descr->hasobject == 1) 
-		memset(buffers[0], 0, PyArray_BUFSIZE*delsize);
-	if (in->descr->hasobject == 1) 
-		memset(buffers[1], 0, PyArray_BUFSIZE*selsize);
+	buffers[1] = _pya_malloc(N*selsize);
+	if (buffers[1] == NULL) {
+		free(buffers[0]);
+		PyErr_NoMemory();
+		return -1;
+	}
+	if (out->descr->hasobject) 
+		memset(buffers[0], 0, N*delsize);
+	if (in->descr->hasobject) 
+		memset(buffers[1], 0, N*selsize);
 
-	if (PyArray_ISALIGNED(in)) icopyfunc = _strided_byte_copy;
-	else icopyfunc = _unaligned_strided_byte_copy;
+	icopyfunc = in->descr->f->copyswapn;
+	ocopyfunc = out->descr->f->copyswapn;
 
-	if (PyArray_ISALIGNED(out)) ocopyfunc = _strided_byte_copy;
-	else ocopyfunc = _unaligned_strided_byte_copy;
-
-	PyArray_XDECREF(out);
 	while(multi->index < multi->size) {
 		_strided_buffered_cast(multi->iters[0]->dataptr,
 				       multi->iters[0]->strides[maxaxis],
@@ -6701,12 +6708,23 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 				       multi->iters[1]->dataptr, 
 				       multi->iters[1]->strides[maxaxis],
 				       selsize, iswap, icopyfunc,
-				       maxdim, buffers, PyArray_BUFSIZE, 
+				       maxdim, buffers, N,
 				       castfunc, out, in);
 		PyArray_MultiIter_NEXT(multi);
 	}
 	Py_DECREF(multi);
-	free(buffers[0]);
+	if (in->descr->hasobject) {
+		obptr = (PyObject **)buffers[1];
+		for (i=0; i<N; i++, obptr++) 
+			_xdecref_all((char *)obptr, out->descr);
+	}
+	if (out->descr->hasobject) {
+		obptr = (PyObject **)buffers[0];
+		for (i=0; i<N; i++, obptr++) 
+			_xdecref_all((char *)obptr, out->descr);
+	}
+	_pya_free(buffers[0]);
+	_pya_free(buffers[1]);
 	return 0;
 }
 
@@ -6749,8 +6767,12 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 		return 0;
 	}
 
-	iswap = PyArray_ISBYTESWAPPED(mp);
-	oswap = PyArray_ISBYTESWAPPED(out);
+        /* If the input or output is STRING, UNICODE, or VOID */
+        /*  then getitem and setitem are used for the cast */
+        /*  and byteswapping is handled by those methods */
+
+	iswap = PyArray_ISBYTESWAPPED(mp) && !PyArray_ISFLEXIBLE(mp);
+	oswap = PyArray_ISBYTESWAPPED(out) && !PyArray_ISFLEXIBLE(out);
 	
 	return _broadcast_cast(out, mp, castfunc, iswap, oswap);
 }
