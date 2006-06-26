@@ -1,7 +1,7 @@
 #include <Python.h>
 
 #define _libnumarray_MODULE
-#include "numpy/libnumarray.h"
+#include "numpy_numarray/libnumarray.h"
 #include <float.h>
 
 static PyObject *pCfuncClass;
