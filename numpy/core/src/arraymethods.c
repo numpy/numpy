@@ -919,7 +919,7 @@ static char doc_setstate[] = "a.__setstate__(tuple) for unpickling.";
 	   4) a binary string with the data (or a list if Object array) 
 */
 
-static intp _array_fill_strides(intp *, intp *, int, intp, int, int *);
+static size_t _array_fill_strides(intp *, intp *, int, size_t, int, int *);
 
 static int _IsAligned(PyArrayObject *); 
 
@@ -935,7 +935,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 	PyObject *rawdata;
 	char *datastr;
 	int len;
-	intp dimensions[MAX_DIMS];
+	intp size, dimensions[MAX_DIMS];
 	int nd;
 	
 	/* This will free any memory associated with a and
@@ -967,6 +967,17 @@ array_setstate(PyArrayObject *self, PyObject *args)
 	self->descr = typecode;
 	Py_INCREF(typecode);
 	nd = PyArray_IntpFromSequence(shape, dimensions, MAX_DIMS);
+	if (nd < 0) return NULL;
+	size = PyArray_MultiplyList(dimensions, nd);
+	if (self->descr->elsize == 0) {
+		PyErr_SetString(PyExc_ValueError, "Invalid data-type size.");
+		return NULL;
+	}
+	if (size > MAX_INTP / self->descr->elsize) {
+		PyErr_NoMemory();
+		return NULL;
+	}
+
 	if (typecode->type_num == PyArray_OBJECT) {
 		if (!PyList_Check(rawdata)) {
 			PyErr_SetString(PyExc_TypeError, 
@@ -984,8 +995,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 		if (PyString_AsStringAndSize(rawdata, &datastr, &len))
 			return NULL;
 
-		if ((len != (self->descr->elsize *			\
-			     (int) PyArray_MultiplyList(dimensions, nd)))) {
+		if ((len != (self->descr->elsize * size))) {
 			PyErr_SetString(PyExc_ValueError, 
 					"buffer size does not"	\
 					" match array size");
@@ -1016,7 +1026,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 		self->strides = self->dimensions + nd;
 		memcpy(self->dimensions, dimensions, sizeof(intp)*nd);
 		(void) _array_fill_strides(self->strides, dimensions, nd,
-					   self->descr->elsize, 
+					   (size_t) self->descr->elsize, 
                                            (fortran ? FORTRAN : CONTIGUOUS),
 					   &(self->flags));
 	}

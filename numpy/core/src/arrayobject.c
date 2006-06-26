@@ -4515,8 +4515,8 @@ PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
    array is desired.
 */
 
-static intp
-_array_fill_strides(intp *strides, intp *dims, int nd, intp itemsize,
+static size_t
+_array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
 		    int inflag, int *objflags)
 {
 	int i;
@@ -4655,7 +4655,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 {
 	PyArrayObject *self;
 	register int i;
-	intp sd;
+	size_t sd;
+	intp largest;
+	intp size;
 
 	if (descr->subarray) {
 		PyObject *ret;
@@ -4691,7 +4693,16 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 	}
 
 	/* Check dimensions */
-	for (i=nd-1;i>=0;i--) {
+	size = 1;
+	sd = (size_t) descr->elsize;
+	if (sd == 0) {
+		PyErr_SetString(PyExc_ValueError, "Empty data-type");
+		Py_DECREF(descr);
+		return NULL;
+	}
+	largest = MAX_INTP / sd;
+	for (i=0;i<nd;i++) {
+		if (dims[i] == 0) continue;
 		if (dims[i] < 0) {
 			PyErr_SetString(PyExc_ValueError,
 					"negative dimensions "	\
@@ -4699,8 +4710,15 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 			Py_DECREF(descr);
 			return NULL;
 		}
+		size *= dims[i];
+		if (size <=0 || size > largest) {
+			PyErr_SetString(PyExc_ValueError,
+					"dimensions too large.");
+			Py_DECREF(descr);
+			return NULL;
+		}
 	}
-
+	
 	self = (PyArrayObject *) subtype->tp_alloc(subtype, 0);
 	if (self == NULL) {
 		Py_DECREF(descr);
@@ -4719,7 +4737,6 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 	}
 	else self->flags = (flags & ~UPDATEIFCOPY);
 
-	sd = descr->elsize;
 	self->descr = descr;
 	self->base = (PyObject *)NULL;
         self->weakreflist = (PyObject *)NULL;
@@ -4740,6 +4757,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 			  the memory, but be careful with this...
 		       */
 			memcpy(self->strides, strides, sizeof(intp)*nd);
+			sd *= size;
 		}
 	}
 	else { self->dimensions = self->strides = NULL; }
@@ -4749,7 +4767,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		/* Allocate something even for zero-space arrays
 		 e.g. shape=(0,) -- otherwise buffer exposure
 		 (a.data) doesn't work as it should. */
-
+		
 		if (sd==0) sd = descr->elsize;
 
 		if ((data = PyDataMem_NEW(sd))==NULL) {
@@ -4845,9 +4863,10 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         int refcnt;
         intp* new_dimensions=newshape->ptr;
         intp new_strides[MAX_DIMS];
-        intp sd;
+        size_t sd;
         intp *dimptr;
         char *new_data;
+	intp largest;
 
         if (!PyArray_ISONESEGMENT(self)) {
                 PyErr_SetString(PyExc_ValueError,
@@ -4858,7 +4877,24 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
 	if (fortran == PyArray_ANYORDER)
 		fortran = PyArray_CORDER;
         
-        newsize = PyArray_MultiplyList(new_dimensions, new_nd);
+	if (self->descr->elsize == 0) {
+		PyErr_SetString(PyExc_ValueError, "Bad data-type size.");
+		return NULL;
+	}
+	newsize = 1;
+	largest = MAX_INTP / self->descr->elsize;
+	for (k=0; k<new_nd; k++) {
+		if (new_dimensions[k]==0) break;
+		if (new_dimensions[k] < 0) {
+			PyErr_SetString(PyExc_ValueError, 
+					"negative dimensions not allowed");
+			return NULL;
+		}
+		newsize *= new_dimensions[k];
+		if (newsize <=0 || newsize > largest) {
+			return PyErr_NoMemory();
+		}
+	}
         oldsize = PyArray_SIZE(self);
 
 	if (oldsize != newsize) {
@@ -4929,10 +4965,9 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
 
         /* make new_strides variable */
-        sd = (intp) self->descr->elsize;
-        sd = _array_fill_strides(new_strides, new_dimensions, new_nd, sd,
-                                 self->flags, &(self->flags));
-
+        sd = (size_t) self->descr->elsize;
+        sd = (size_t) _array_fill_strides(new_strides, new_dimensions, new_nd, sd,
+					  self->flags, &(self->flags));
 
         memmove(self->dimensions, new_dimensions, new_nd*sizeof(intp));
         memmove(self->strides, new_strides, new_nd*sizeof(intp));
