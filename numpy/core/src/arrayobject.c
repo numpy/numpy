@@ -2578,11 +2578,23 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *index, PyObject *op)
 	
 	/* Rest of standard (view-based) indexing */
 
-        if ((tmp = (PyArrayObject*)\
-	     array_subscript_simple(self, index)) == NULL) {
-		return -1;
+	if (PyArray_CheckExact(self)) {
+		tmp = (PyArrayObject *)array_subscript_simple(self, index);
+		if (tmp == NULL) return -1;
 	}
-
+	else {
+		PyObject *tmp0;
+		tmp0 = PyObject_GetItem((PyObject *)self, index);
+		if (tmp0 == NULL) return -1;
+		if (!PyArray_Check(tmp0)) {
+			PyErr_SetString(PyExc_RuntimeError, 
+					"Getitem not returning array.");
+			Py_DECREF(tmp0);
+			return -1;
+		}
+		tmp = (PyArrayObject *)tmp0;
+	}
+	
 	if (PyArray_ISOBJECT(self) && (tmp->nd == 0)) {
 		ret = tmp->descr->f->setitem(op, tmp->data, tmp);
 	}
@@ -8866,13 +8878,13 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 	/* But, be sure to do it with a true array.
 	 */
 	if (PyArray_CheckExact(arr)) {
-		sub = array_subscript(arr, mit->indexobj);
+		sub = array_subscript_simple(arr, mit->indexobj);
 	}
 	else {
 		Py_INCREF(arr);
 		obj = PyArray_EnsureArray((PyObject *)arr);
 		if (obj == NULL) goto fail;
-		sub = array_subscript((PyArrayObject *)obj, mit->indexobj);
+		sub = array_subscript_simple((PyArrayObject *)obj, mit->indexobj);
 		Py_DECREF(obj);
 	}
 
