@@ -1139,7 +1139,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 	PyObject *value, *src;
 	int mysize;
 	char *dptr;
-	static char *kwlist[] = {"value", "dtype", "offset", 0};/* XXX ? */
+	static char *kwlist[] = {"value", "dtype", "offset", 0};
 	
 	if ((self->flags & WRITEABLE) != WRITEABLE) {
 		PyErr_SetString(PyExc_RuntimeError,

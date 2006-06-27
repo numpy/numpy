@@ -5035,7 +5035,21 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
 static void
 _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
 {
-	if (!dtype->hasobject) return;
+	if (!dtype->hasobject) {
+		if ((obj == Py_None) || 
+		    (PyInt_Check(obj) && PyInt_AsLong(obj)==0))
+			return;
+		else {
+			PyObject *arr;
+			Py_INCREF(dtype);
+			arr = PyArray_NewFromDescr(&PyArray_Type, dtype,
+						   0, NULL, NULL, NULL, 
+						   0, NULL);
+			if (arr!=NULL)
+				dtype->f->setitem(obj, optr, arr);
+			Py_XDECREF(arr);
+		}
+	}
 	if (PyDescr_ISOBJECT(dtype)) {
 		PyObject **temp;
 		Py_XINCREF(obj);
