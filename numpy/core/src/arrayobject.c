@@ -1373,12 +1373,32 @@ _default_nonzero(void *ip, void *arr)
 	return FALSE;
 }
 
+/*
+  Given a string return the type-number for 
+  the data-type with that string as the type-object name.
+  Returns PyArray_NOTYPE without setting an error if no type can be
+  found.  Only works for user-defined data-types.
+*/
+
+/*MULTIARRAY_API
+ */
+static int
+PyArray_TypeNumFromName(char *str)
+{
+	int i;
+	PyArray_Descr *descr;
+
+	for (i=0; i<PyArray_NUMUSERTYPES; i++) {
+		descr = userdescrs[i];
+		if (strcmp(descr->typeobj->tp_name, str) == 0)
+			return descr->type_num;
+	}
+	
+	return PyArray_NOTYPE;
+}
 
 /*
   returns typenum to associate with this type >=PyArray_USERDEF.
-  Also creates a copy of the VOID_DESCR table inserting it's typeobject in
-  and it's typenum in the appropriate place.
-
   needs the userdecrs table and PyArray_NUMUSER variables
   defined in arratypes.inc
 */
