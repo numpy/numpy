@@ -269,7 +269,6 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
 
     parsed = format_parser(formats, names, titles, aligned)
     _names = parsed._names
-    raise
     _array = recarray(shape, parsed._descr)
 
     # populate the record array (makes a copy)
