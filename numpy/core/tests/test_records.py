@@ -39,5 +39,20 @@ class test_fromrecords(NumpyTestCase):
         fd.seek(2880*2)
         r = rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
 
+    def check_recarray_from_obj(self):
+        count = 10
+        a = zeros(count, dtype='O')
+        b = zeros(count, dtype='f8')
+        c = zeros(count, dtype='f8')
+        for i in range(len(a)):
+            a[i] = range(1,10)
+
+        mine = numpy.rec.fromarrays([a,b,c],
+                                    names='date,data1,data2')
+        for i in range(len(a)):
+            assert(mine.date[i]==range(1,10))
+            assert(mine.data1[i]==0.0)
+            assert(mine.data2[i]==0.0)
+
 if __name__ == "__main__":
     NumpyTest().run()

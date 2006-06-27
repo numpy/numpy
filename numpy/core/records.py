@@ -176,7 +176,7 @@ class recarray(sb.ndarray):
         fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
         try:
             res = fielddict[attr][:2]
-        except KeyError:
+        except (TypeError, KeyError):
             raise AttributeError, "record array has no attribute %s" % attr
         obj = self.getfield(*res)
         # if it has fields return a recarray, otherwise return
@@ -195,9 +195,15 @@ class recarray(sb.ndarray):
         fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
         try:
             res = fielddict[attr][:2]
-        except KeyError:
+        except (TypeError,KeyError):
             raise AttributeError, "record array has no attribute %s" % attr 
         return self.setfield(val,*res)
+
+    def __getitem__(self, indx):
+        obj = sb.ndarray.__getitem__(self, indx)
+        if (isinstance(obj, sb.ndarray) and obj.dtype.isbuiltin):
+            return obj.view(sb.ndarray)
+        return obj
 
     def field(self,attr, val=None):
         fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
