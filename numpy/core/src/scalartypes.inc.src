@@ -1164,13 +1164,22 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 
 	dptr = self->obval + offset;
 
-	/* Copy data from value to correct place in dptr */
-        src = PyArray_FromAny(value, typecode, 0, 0, CARRAY_FLAGS, NULL);
-        if (src == NULL) return NULL;
-	typecode->f->copyswap(dptr, PyArray_DATA(src), 
-			      !PyArray_ISNBO(self->descr->byteorder),
-			      src);
-	Py_DECREF(src);
+	if (typecode->type_num == PyArray_OBJECT) {
+		PyObject **temp;
+		Py_INCREF(value);
+		temp = (PyObject **)dptr;
+		Py_XDECREF(*temp);
+		memcpy(temp, &value, sizeof(PyObject *));
+	}
+	else {
+		/* Copy data from value to correct place in dptr */
+		src = PyArray_FromAny(value, typecode, 0, 0, CARRAY_FLAGS, NULL);
+		if (src == NULL) return NULL;
+		typecode->f->copyswap(dptr, PyArray_DATA(src), 
+				      !PyArray_ISNBO(self->descr->byteorder),
+				      src);
+		Py_DECREF(src);
+	}
 	Py_INCREF(Py_None);
 	return Py_None;
 }

@@ -4677,6 +4677,7 @@ PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 	
 	if (type->hasobject) {
                 PyArray_FillObjectArray(ret, Py_None);
+		if (PyErr_Occurred()) {Py_DECREF(ret); return NULL;}
 	}
 	return (PyObject *)ret;
 }
@@ -4802,6 +4803,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 		PyObject *zero = PyInt_FromLong(0);
                 PyArray_FillObjectArray(ret, zero);
                 Py_DECREF(zero);
+		if (PyErr_Occurred()) {Py_DECREF(ret); return NULL;}
 	}
 	else {
 		n = PyArray_NBYTES(ret);

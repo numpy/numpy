@@ -773,6 +773,8 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
                 PyArray_Descr *new;
                 int offset, pos=0;
                 while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
+				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) return;
                         _deepcopy_call(iptr + offset, optr + offset, new,

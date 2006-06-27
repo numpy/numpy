@@ -166,6 +166,8 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
                 PyArray_Descr *new;
                 int offset, pos=0;
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
+				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) return;
                         PyArray_Item_INCREF(data + offset, new);
@@ -193,6 +195,8 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
                 PyArray_Descr *new;
                 int offset, pos=0;
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
+				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) return;
                         PyArray_Item_XDECREF(data + offset, new);
@@ -1727,8 +1731,12 @@ array_dealloc(PyArrayObject *self) {
 
         if ((self->flags & OWN_DATA) && self->data) {
 		/* Free internal references if an Object array */
-		if (self->descr->hasobject)
+		if (self->descr->hasobject) {
+			Py_INCREF(self); /*hold on to self */
 			PyArray_XDECREF(self);
+			/* Don't need to DECREF -- because we are deleting
+			   self already... */
+		}
                 PyDataMem_FREE(self->data);
         }
 
@@ -4882,6 +4890,8 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
                 PyArray_Descr *new;
                 int offset, pos=0;
                 while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
+				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) return;
                         _putzero(optr + offset, zero, new);
@@ -5038,6 +5048,8 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
                 PyArray_Descr *new;
                 int offset, pos=0;
                 while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
+				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) return;
                         _fillobject(optr + offset, obj, new);
@@ -5070,6 +5082,7 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
 	}
 	else {
 		char *optr;
+		optr = arr->data;
 		for (i=0; i<n; i++) {
 			_fillobject(optr, obj, arr->descr);
 			optr += arr->descr->elsize;
@@ -5231,6 +5244,10 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                 if (ret == NULL) {descr=NULL;goto fail;}
                 if (descr->hasobject) { /* place Py_None in object positions */
                         PyArray_FillObjectArray(ret, Py_None);
+			if (PyErr_Occurred()) {
+				descr=NULL;
+				goto fail;
+			}
                 }
         }
         else {  /* buffer given -- use it */

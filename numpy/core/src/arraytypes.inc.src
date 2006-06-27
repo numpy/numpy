@@ -1220,6 +1220,8 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
                 int offset, pos=0;
                 descr = arr->descr;
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
+				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) {arr->descr=descr;return;}
                         arr->descr = new;
@@ -1244,6 +1246,8 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 int offset, pos=0;
                 descr = arr->descr;  /* Save it */
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
+				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) {arr->descr=descr;return;}
                         arr->descr = new;
