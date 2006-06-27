@@ -1133,7 +1133,7 @@ static void
 
 /**end repeat**/
 
-#define __ALIGNED(obj) ((((size_t) obj) % sizeof(PyObject **))==0)
+#define __ALIGNED(obj, sz) ((((size_t) obj) % (sz))==0)
 static void
 OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride, 
                   register intp n, int swap, void *arr)
@@ -1142,7 +1142,7 @@ OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
 	if (src != NULL) {
 		dstride /= sizeof(PyObject **);
 		sstride /= sizeof(PyObject **);
-                if (__ALIGNED(dst) && __ALIGNED(src)) {
+                if (__ALIGNED(dst,sizeof(PyObject **)) && __ALIGNED(src, sizeof(PyObject **))) {
                         for (i=0; i<n; i++) {
                                 Py_INCREF(*src);
                                 Py_XDECREF(*dst);
@@ -1173,7 +1173,7 @@ OBJECT_copyswap(PyObject **dst, PyObject **src, int swap, void *arr)
 {
         
 	if (src != NULL) {
-                if (__ALIGNED(dst) && __ALIGNED(src)) {
+                if (__ALIGNED(dst,sizeof(PyObject **)) && __ALIGNED(src,sizeof(PyObject **))) {
                         Py_INCREF(*src);
                         Py_XDECREF(*dst);
                         *dst = *src;
@@ -1186,8 +1186,6 @@ OBJECT_copyswap(PyObject **dst, PyObject **src, int swap, void *arr)
                 }
         }
 }
-
-#undef __ALIGNED
 
 /* ignore swap */
 static void
@@ -1452,15 +1450,42 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
         }
 }
 
-/* fixme:  if we have fields, then nonzero if all sub-fields are nonzero.
+/* if we have fields, then nonzero only if all sub-fields are nonzero.
 */
 static Bool
 VOID_nonzero (char *ip, PyArrayObject *ap)
 {
 	int i;
-	int len = ap->descr->elsize;
+	int len;
 	Bool nonz = FALSE;
-	
+
+	if (PyArray_HASFIELDS(ap)) {
+		PyArray_Descr *descr, *new;
+		PyObject *key, *value, *title;
+                int savedflags, offset, pos=0;
+		descr = ap->descr;
+		savedflags = ap->flags;
+                while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
+				continue;
+ 			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
+					      &title)) {PyErr_Clear(); continue;}
+                        ap->descr = new;
+			ap->flags = savedflags;
+			if ((new->alignment > 1) && !__ALIGNED(ip+offset, new->alignment))
+				ap->flags &= ~ALIGNED;
+			else
+				ap->flags |= ALIGNED;
+                        if (new->f->nonzero(ip+offset, ap)) {
+				nonz=TRUE;
+				break;
+			}
+                }
+                ap->descr = descr;
+		ap->flags = savedflags;
+		return nonz;
+	}
+	len = ap->descr->elsize;
 	for (i=0; i<len; i++) {
 		if (*ip != '\0') {
 			nonz = TRUE;
@@ -1470,6 +1495,8 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
 	}
 	return nonz;
 }
+
+#undef __ALIGNED
 
 
 /****************** compare **********************************/
