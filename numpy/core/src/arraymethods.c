@@ -750,19 +750,50 @@ array_searchsorted(PyArrayObject *self, PyObject *args)
 	return _ARET(PyArray_SearchSorted(self, values));
 }
 
+static void
+_deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
+	       PyObject *deepcopy, PyObject *visit)
+{
+	if (dtype->hasobject == 0) return;
+	if (dtype->type_num == PyArray_OBJECT) {
+		PyObject **itemp, **otemp;
+		PyObject *res;
+		itemp = (PyObject **)iptr;
+		otemp = (PyObject **)optr;
+		Py_XINCREF(*itemp);
+		/* call deepcopy on this argument */
+		res = PyObject_CallFunctionObjArgs(deepcopy, 
+						   *itemp, visit, NULL);
+		Py_XDECREF(*itemp);
+		Py_XDECREF(*otemp);
+		*otemp = res;
+	}
+	else if (PyDescr_HASFIELDS(dtype)) {
+                PyObject *key, *value, *title=NULL;
+                PyArray_Descr *new;
+                int offset, pos=0;
+                while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+ 			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
+					      &title)) return;
+                        _deepcopy_call(iptr + offset, optr + offset, new,
+				       deepcopy, visit);
+                }
+        }
+}
+
 static char doc_deepcopy[] = "Used if copy.deepcopy is called on an array.";
 
 static PyObject *
 array_deepcopy(PyArrayObject *self, PyObject *args) 
 {
         PyObject* visit;
-        PyObject **optr;
+	char *optr;
         PyArrayIterObject *it;
-        PyObject *copy, *ret, *deepcopy, *temp, *res;
+        PyObject *copy, *ret, *deepcopy;
 
         if (!PyArg_ParseTuple(args, "O", &visit)) return NULL;
         ret = PyArray_Copy(self);
-        if (PyArray_ISOBJECT(self)) {
+        if (self->descr->hasobject) {
                 copy = PyImport_ImportModule("copy");
                 if (copy == NULL) return NULL;
                 deepcopy = PyObject_GetAttrString(copy, "deepcopy");
@@ -770,16 +801,11 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
                 if (deepcopy == NULL) return NULL;
                 it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
                 if (it == NULL) {Py_DECREF(deepcopy); return NULL;}
-                optr = (PyObject **)PyArray_DATA(ret);
+                optr = PyArray_DATA(ret);
                 while(it->index < it->size) {
-                        temp = *((PyObject **)it->dataptr);
-                        Py_INCREF(temp);
-                        /* call deepcopy on this argument */
-                        res = PyObject_CallFunctionObjArgs(deepcopy, 
-                                                           temp, visit, NULL);
-                        Py_DECREF(temp);
-                        Py_DECREF(*optr);
-                        *optr++ = res;
+			_deepcopy_call(it->dataptr, optr, self->descr,
+				       deepcopy, visit);
+			optr += self->descr->elsize;
                         PyArray_ITER_NEXT(it);
                 }
                 Py_DECREF(deepcopy);
@@ -788,22 +814,22 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
         return _ARET(ret);
 }
 
-/* Convert Object Array to flat list and pickle the flat list string */
+/* Convert Array to flat list (using getitem) */
 static PyObject *
-_getobject_pkl(PyArrayObject *self)
+_getlist_pkl(PyArrayObject *self)
 {
 	PyObject *theobject;
 	PyArrayIterObject *iter=NULL;
 	PyObject *list;
+	PyArray_GetItemFunc *getitem;
 
-	
+	getitem = self->descr->f->getitem;
 	iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
 	if (iter == NULL) return NULL;
 	list = PyList_New(iter->size);
 	if (list == NULL) {Py_DECREF(iter); return NULL;}
 	while (iter->index < iter->size) {
-		theobject = *((PyObject **)iter->dataptr);
-		Py_INCREF(theobject);
+		theobject = getitem(iter->dataptr, self);
 		PyList_SET_ITEM(list, (int) iter->index, theobject);
 		PyArray_ITER_NEXT(iter);
 	}
@@ -812,20 +838,18 @@ _getobject_pkl(PyArrayObject *self)
 }
 
 static int
-_setobject_pkl(PyArrayObject *self, PyObject *list)
+_setlist_pkl(PyArrayObject *self, PyObject *list)
 {
 	PyObject *theobject;
 	PyArrayIterObject *iter=NULL;
-	int size;
+	PyArray_SetItemFunc *setitem;
 
-	size = self->descr->elsize;
-	
+	setitem = self->descr->f->setitem;
 	iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
 	if (iter == NULL) return -1;
 	while(iter->index < iter->size) {
 		theobject = PyList_GET_ITEM(list, (int) iter->index);
-		Py_INCREF(theobject);
-		*((PyObject **)iter->dataptr) = theobject;
+		setitem(theobject, iter->dataptr, self);
 		PyArray_ITER_NEXT(iter);
 	}
 	Py_XDECREF(iter);
@@ -849,10 +873,6 @@ array_reduce(PyArrayObject *self, PyObject *args)
 	/*  We will put everything in the object's state, so that on UnPickle
 	    it can use the string object as memory without a copy */
 
-        if (self->descr->hasobject && self->descr->type_num != PyArray_OBJECT) {
-                PyErr_SetString(PyExc_ValueError, "cannot pickle object-records.");
-                return NULL;
-        }
 	ret = PyTuple_New(3);
 	if (ret == NULL) return NULL;
 	mod = PyImport_ImportModule("numpy.core._internal");
@@ -875,7 +895,8 @@ array_reduce(PyArrayObject *self, PyObject *args)
 	   2) a Tuple giving the shape
 	   3) a PyArray_Descr Object (with correct bytorder set)
 	   4) a Bool stating if Fortran or not
-	   5) a binary string with the data (or a list for Object arrays)
+	   5) a Python object representing the data (a string, or
+	        a list or any user-defined object).
 
 	   Notice because Python does not describe a mechanism to write 
 	   raw data to the pickle, this performs a copy to a string first
@@ -894,8 +915,8 @@ array_reduce(PyArrayObject *self, PyObject *args)
 	mybool = (PyArray_ISFORTRAN(self) ? Py_True : Py_False);
 	Py_INCREF(mybool);
 	PyTuple_SET_ITEM(state, 3, mybool);
-	if (PyArray_ISOBJECT(self)) {
-		thestr = _getobject_pkl(self);
+	if (self->descr->hasobject || self->descr->f->listpickle) {
+		thestr = _getlist_pkl(self);
 	}
 	else {
                 thestr = PyArray_ToString(self);
@@ -973,12 +994,12 @@ array_setstate(PyArrayObject *self, PyObject *args)
 		PyErr_SetString(PyExc_ValueError, "Invalid data-type size.");
 		return NULL;
 	}
-	if (size > MAX_INTP / self->descr->elsize) {
+	if (size < 0 || size > MAX_INTP / self->descr->elsize) {
 		PyErr_NoMemory();
 		return NULL;
 	}
 
-	if (typecode->type_num == PyArray_OBJECT) {
+	if (typecode->hasobject || typecode->f->listpickle) {
 		if (!PyList_Check(rawdata)) {
 			PyErr_SetString(PyExc_TypeError, 
 					"object pickle not returning list");
@@ -1031,7 +1052,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 					   &(self->flags));
 	}
 
-	if (typecode->hasobject != 1) {
+	if (typecode->hasobject != 1 && !typecode->f->listpickle) {
                 int swap=!PyArray_ISNOTSWAPPED(self);
 		self->data = datastr;
 		if (!_IsAligned(self) || swap) {
@@ -1078,9 +1099,10 @@ array_setstate(PyArrayObject *self, PyObject *args)
 			if (self->dimensions) PyDimMem_FREE(self->dimensions);
 			return PyErr_NoMemory();
 		}
+		if (self->descr->hasobject) memset(self->data, 0, PyArray_NBYTES(self));
 		self->flags |= OWN_DATA;
 		self->base = NULL;
-		if (_setobject_pkl(self, rawdata) < 0) 
+		if (_setlist_pkl(self, rawdata) < 0) 
 			return NULL;
 	}
 

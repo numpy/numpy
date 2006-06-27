@@ -1808,6 +1808,7 @@ static void
 
 /**end repeat**/
 
+
 #define _ALIGN(type) offsetof(struct {char c; type v;},v)
 
 /* Disable harmless compiler warning "4116: unnamed type definition in 
@@ -1871,7 +1872,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	NULL,
 	(PyArray_ScalarKindFunc*)NULL,
 	NULL,
-	NULL
+	NULL,
+	0
 };
 
 static PyArray_Descr @from@_Descr = { 
@@ -1946,7 +1948,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 	NULL,
 	(PyArray_ScalarKindFunc*)NULL,
 	NULL,
-	NULL
+	NULL,
+	0
 };
 
 static PyArray_Descr @from@_Descr = { 
@@ -2060,7 +2063,7 @@ set_typeinfo(PyObject *dict)
 */
 	@name@_Descr.fields = Py_None;
 /**end repeat**/
-	
+
 	/* Set a dictionary with type information */
 	infodict = PyDict_New();
 	if (infodict == NULL) return -1;

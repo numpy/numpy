@@ -79,7 +79,7 @@ extern "C" CONFUSE_EMACS
 #define PY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NDARRAY_VERSION 0x00090906
+#define NDARRAY_VERSION 0x00090907
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -902,6 +902,11 @@ typedef struct {
 	int **cancastscalarkindto;
 	int *cancastto;
 
+	/* Set to 1 if you want pickles of this type
+	   to go out as lists of _getitem objects
+	*/
+	int listpickle;
+
 } PyArray_ArrFuncs;
 
 
@@ -1389,23 +1394,21 @@ typedef struct {
 
 #define PyTypeNum_ISOBJECT(type) ((type) == PyArray_OBJECT)
 
-#define _PyADt(o) ((PyArray_Descr *)o)->type_num
 #define PyDescr_ISBOOL(obj) PyTypeNum_ISBOOL(_PyADt(obj))
-#define PyDescr_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(_PyADt(obj))
-#define PyDescr_ISSIGNED(obj) PyTypeNum_ISSIGNED(_PyADt(obj))
-#define PyDescr_ISINTEGER(obj) PyTypeNum_ISINTEGER(_PyADt(obj))
-#define PyDescr_ISFLOAT(obj) PyTypeNum_ISFLOAT(_PyADt(obj))
-#define PyDescr_ISNUMBER(obj) PyTypeNum_ISNUMBER(_PyADt(obj))
-#define PyDescr_ISSTRING(obj) PyTypeNum_ISSTRING(_PyADt(obj))
-#define PyDescr_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(_PyADt(obj))
-#define PyDescr_ISPYTHON(obj) PyTypeNum_ISPYTHON(_PyADt(obj))
-#define PyDescr_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(_PyADt(obj))
-#define PyDescr_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(_PyADt(obj))
-#define PyDescr_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(_PyADt(obj))
-#define PyDescr_ISOBJECT(obj) PyTypeNum_ISOBJECT(_PyADt(obj))
+#define PyDescr_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(((PyArray_Descr*)obj)->type_num)
+#define PyDescr_ISSIGNED(obj) PyTypeNum_ISSIGNED(((PyArray_Descr*)obj)->type_num)
+#define PyDescr_ISINTEGER(obj) PyTypeNum_ISINTEGER(((PyArray_Descr*)obj)->type_num )
+#define PyDescr_ISFLOAT(obj) PyTypeNum_ISFLOAT(((PyArray_Descr*)obj)->type_num)
+#define PyDescr_ISNUMBER(obj) PyTypeNum_ISNUMBER(((PyArray_Descr*)obj)->type_num)
+#define PyDescr_ISSTRING(obj) PyTypeNum_ISSTRING(((PyArray_Descr*)obj)->type_num)
+#define PyDescr_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(((PyArray_Descr*)obj)->type_num)
+#define PyDescr_ISPYTHON(obj) PyTypeNum_ISPYTHON(((PyArray_Descr*)obj)->type_num)
+#define PyDescr_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(((PyArray_Descr*)obj)->type_num)
+#define PyDescr_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)obj)->type_num)
+#define PyDescr_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)obj)->type_num)
+#define PyDescr_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)obj)->type_num)
 #define PyDescr_HASFIELDS(obj) (((PyArray_Descr *)obj)->fields && \
                                 ((PyArray_Descr *)obj)->fields != Py_None)
-#undef _PyADt
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
 #define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))

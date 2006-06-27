@@ -44,6 +44,16 @@ PyArray_GetPriority(PyObject *obj, double default_)
         return priority;
 }
 
+static int
+_check_object_rec(PyArray_Descr *descr)
+{
+	if (descr->hasobject && !PyDescr_ISOBJECT(descr)) {
+		PyErr_SetString(PyExc_TypeError, "Not supported for this data-type.");
+		return -1;
+	}
+	return 0;
+}
+
 /* Backward compatibility only */
 /* In both Zero and One
 
@@ -69,6 +79,7 @@ PyArray_Zero(PyArrayObject *arr)
         int ret, storeflags;
         PyObject *obj;
 
+	if (_check_object_rec(arr->descr) < 0) return NULL;
         zeroval = PyDataMem_NEW(arr->descr->elsize);
         if (zeroval == NULL) {
                 PyErr_SetNone(PyExc_MemoryError);
@@ -103,6 +114,7 @@ PyArray_One(PyArrayObject *arr)
         int ret, storeflags;
         PyObject *obj;
 
+	if (_check_object_rec(arr->descr) < 0) return NULL;
         oneval = PyDataMem_NEW(arr->descr->elsize);
         if (oneval == NULL) {
                 PyErr_SetNone(PyExc_MemoryError);
@@ -136,8 +148,10 @@ static PyObject *PyArray_New(PyTypeObject *, int nd, intp *,
 
 
 /* Incref all objects found at this record */
+/*OBJECT_API
+ */
 static void
-_incref_all(char *data, PyArray_Descr *descr)
+PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
 {
         PyObject **temp;
 
@@ -154,15 +168,17 @@ _incref_all(char *data, PyArray_Descr *descr)
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) return;
-                        _incref_all(data + offset, new);
+                        PyArray_Item_INCREF(data + offset, new);
                 }
         }
         return;
 }
 
 /* XDECREF all objects found at this record */
+/*OBJECT_API
+ */
 static void
-_xdecref_all(char *data, PyArray_Descr *descr)
+PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
 {
         PyObject **temp;
 
@@ -179,7 +195,7 @@ _xdecref_all(char *data, PyArray_Descr *descr)
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) return;
-                        _xdecref_all(data + offset, new);
+                        PyArray_Item_XDECREF(data + offset, new);
                 }
         }
         return;
@@ -205,7 +221,7 @@ PyArray_INCREF(PyArrayObject *mp)
                 it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
                 if (it == NULL) return -1;
                 while(it->index < it->size) {
-                        _incref_all(it->dataptr, mp->descr);
+                        PyArray_Item_INCREF(it->dataptr, mp->descr);
                         PyArray_ITER_NEXT(it);
                 }
                 Py_DECREF(it);
@@ -256,7 +272,7 @@ PyArray_XDECREF(PyArrayObject *mp)
                 it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
                 if (it == NULL) return -1;
                 while(it->index < it->size) {
-                        _xdecref_all(it->dataptr, mp->descr);
+                        PyArray_Item_XDECREF(it->dataptr, mp->descr);
                         PyArray_ITER_NEXT(it);
                 }
                 Py_DECREF(it);
@@ -1513,7 +1529,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 
 	n3 = (sep ? strlen((const char *)sep) : 0);
 	if (n3 == 0) { /* binary data */
-                if (PyArray_ISOBJECT(self)) {
+                if (self->descr->hasobject) {
                         PyErr_SetString(PyExc_ValueError, "cannot write "\
 					"object arrays to a file in "	\
 					"binary mode");
@@ -1711,7 +1727,7 @@ array_dealloc(PyArrayObject *self) {
 
         if ((self->flags & OWN_DATA) && self->data) {
 		/* Free internal references if an Object array */
-		if (PyArray_ISOBJECT(self))
+		if (self->descr->hasobject)
 			PyArray_XDECREF(self);
                 PyDataMem_FREE(self->data);
         }
@@ -2217,12 +2233,14 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 
         copyswap = PyArray_DESCR(arr)->f->copyswap;
 	PyArray_MapIterReset(mit);
-        /* Need to decref OBJECT arrays */
-        if (PyTypeNum_ISOBJECT(descr->type_num)) {
+        /* Need to decref hasobject arrays */
+        if (descr->hasobject) {
                 while (index--) {
-                        Py_XDECREF(*((PyObject **)mit->dataptr));
-                        Py_INCREF(*((PyObject **)it->dataptr));
+			PyArray_Item_XDECREF(mit->dataptr, PyArray_DESCR(arr));
+			PyArray_Item_INCREF(it->dataptr, PyArray_DESCR(arr));
                         memmove(mit->dataptr, it->dataptr, sizeof(PyObject *));
+			/* ignored unless VOID array with object's */
+			copyswap(mit->dataptr, NULL, swap, arr);
                         PyArray_MapIterNext(mit);
                         PyArray_ITER_NEXT(it);
                         if (it->index == it->size)
@@ -2234,7 +2252,8 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
         }
 	while(index--) {
 		memmove(mit->dataptr, it->dataptr, PyArray_ITEMSIZE(arr));
-                copyswap(mit->dataptr, NULL, swap, arr);
+		if (swap)
+			copyswap(mit->dataptr, NULL, swap, arr);
 		PyArray_MapIterNext(mit);
 		PyArray_ITER_NEXT(it);
 		if (it->index == it->size)
@@ -4779,12 +4798,14 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		/* It is bad to have unitialized OBJECT pointers */
                 /* which could also be sub-fields of a VOID array */
 		if (descr->hasobject) {
+			/*
                         if (descr != &OBJECT_Descr) {
                                 PyErr_SetString(PyExc_TypeError,
                                                 "fields with object members " \
                                                 "not yet supported.");
                                 goto fail;
                         }
+			*/
 			memset(data, 0, sd);
 		}
 	}
@@ -4844,6 +4865,30 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 	return NULL;
 }
 
+static void
+_putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
+{
+	if (dtype->hasobject == 0) {
+		memset(optr, 0, dtype->elsize);
+	}
+	else if (PyDescr_ISOBJECT(dtype)) {
+		PyObject **temp;
+		Py_INCREF(zero);
+		temp = (PyObject **)optr;
+		*temp = zero;
+	}
+	else if (PyDescr_HASFIELDS(dtype)) {
+                PyObject *key, *value, *title=NULL;
+                PyArray_Descr *new;
+                int offset, pos=0;
+                while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+ 			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
+					      &title)) return;
+                        _putzero(optr + offset, zero, new);
+                }
+        }
+	return;
+}
 
 
 /*OBJECT_API
@@ -4932,14 +4977,14 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         if ((newsize > oldsize) && PyArray_ISWRITEABLE(self)) {
 		/* Fill new memory with zeros */
                 elsize = self->descr->elsize;
-		if ((PyArray_TYPE(self) == PyArray_OBJECT)) {
+		if (self->descr->hasobject) {
 			PyObject *zero = PyInt_FromLong(0);
-                        PyObject **optr;
-			optr = ((PyObject **)self->data) + oldsize;
+                        char *optr;
+			optr = self->data + oldsize*elsize;
 			n = newsize - oldsize;
 			for (k=0; k<n; k++) {
-                                Py_INCREF(zero);
-                                *optr++ = zero;
+				_putzero((char *)optr, zero, self->descr);
+				optr += elsize;
 			}
 			Py_DECREF(zero);
 		}
@@ -4977,27 +5022,59 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
 
 }
 
+static void
+_fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
+{
+	if (!dtype->hasobject) return;
+	if (PyDescr_ISOBJECT(dtype)) {
+		PyObject **temp;
+		Py_XINCREF(obj);
+		temp = (PyObject **)optr;
+		*temp = obj;
+		return;
+	}
+	if (PyDescr_HASFIELDS(dtype)) {
+                PyObject *key, *value, *title=NULL;
+                PyArray_Descr *new;
+                int offset, pos=0;
+                while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+ 			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
+					      &title)) return;
+                        _fillobject(optr + offset, obj, new);
+                }
+        }
+}
 
 /* Assumes contiguous */
 /*OBJECT_API*/
 static void
 PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
 {
-        PyObject **optr;
         intp i,n;
-        optr = (PyObject **)(arr->data);
-        n = PyArray_SIZE(arr);
-        if (obj == NULL) {
-                for (i=0; i<n; i++) {
-                        *optr++ = NULL;
-                }
-        }
-        else {
-                for (i=0; i<n; i++) {
-                        Py_INCREF(obj);
-                        *optr++ = obj;
-                }
-        }
+	n = PyArray_SIZE(arr);
+	if (arr->descr->type_num == PyArray_OBJECT) {
+		PyObject **optr;
+		optr = (PyObject **)(arr->data);
+		n = PyArray_SIZE(arr);
+		if (obj == NULL) {
+			for (i=0; i<n; i++) {
+				*optr++ = NULL;
+			}
+		}
+		else {
+			for (i=0; i<n; i++) {
+				Py_INCREF(obj);
+				*optr++ = obj;
+			}
+		}
+	}
+	else {
+		char *optr;
+		for (i=0; i<n; i++) {
+			_fillobject(optr, obj, arr->descr);
+			optr += arr->descr->elsize;
+		}
+	}
 }
 
 /*OBJECT_API*/
@@ -5064,7 +5141,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
-	static char *kwlist[] = {"shape", "dtype", "buffer",  /* XXX ? */
+	static char *kwlist[] = {"shape", "dtype", "buffer",  
 				 "offset", "strides",
 				 "order", NULL};
 	PyArray_Descr *descr=NULL;
@@ -5152,7 +5229,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 					     dims.ptr,
 					     strides.ptr, NULL, fortran, NULL);
                 if (ret == NULL) {descr=NULL;goto fail;}
-                if (type_num == PyArray_OBJECT) { /* place Py_None */
+                if (descr->hasobject) { /* place Py_None in object positions */
                         PyArray_FillObjectArray(ret, Py_None);
                 }
         }
@@ -5168,8 +5245,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                         "requested array");
                         goto fail;
                 }
-                if (type_num == PyArray_OBJECT) {
-                        PyErr_SetString(PyExc_TypeError, "cannot construct "\
+                if (descr->hasobject) {
+                        PyErr_SetString(PyExc_TypeError, "cannot construct " \
                                         "an object array from buffer data");
                         goto fail;
                 }
@@ -5869,12 +5946,13 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 
         swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
         copyswap = self->descr->f->copyswap;
-        if (PyArray_ISOBJECT(self)) {
+        if (self->descr->hasobject) {
                 while(selfit->index < selfit->size) {
-                        Py_XDECREF(*((PyObject **)selfit->dataptr));
-                        Py_INCREF(*((PyObject **)arrit->dataptr));
+			PyArray_Item_XDECREF(selfit->dataptr, self->descr);
+			PyArray_Item_INCREF(arrit->dataptr, PyArray_DESCR(arr));
                         memmove(selfit->dataptr, arrit->dataptr,
                                 sizeof(PyObject *));
+			copyswap(selfit->dataptr, NULL, swap, self);
                         PyArray_ITER_NEXT(selfit);
                         PyArray_ITER_NEXT(arrit);
                         if (arrit->index == arrit->size)
@@ -6707,7 +6785,7 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 	intp maxdim;
 	char *buffers[2];
 	PyArray_CopySwapNFunc *ocopyfunc, *icopyfunc;	
-	PyObject **obptr;
+	char *obptr;
 
  	delsize = PyArray_ITEMSIZE(out);
 	selsize = PyArray_ITEMSIZE(in);
@@ -6749,14 +6827,14 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 	}
 	Py_DECREF(multi);
 	if (in->descr->hasobject) {
-		obptr = (PyObject **)buffers[1];
-		for (i=0; i<N; i++, obptr++) 
-			_xdecref_all((char *)obptr, out->descr);
+		obptr = buffers[1];
+		for (i=0; i<N; i++, obptr+=selsize)
+			PyArray_Item_XDECREF(obptr, out->descr);
 	}
 	if (out->descr->hasobject) {
-		obptr = (PyObject **)buffers[0];
-		for (i=0; i<N; i++, obptr++) 
-			_xdecref_all((char *)obptr, out->descr);
+		obptr = buffers[0];
+		for (i=0; i<N; i++, obptr+=delsize) 
+			PyArray_Item_XDECREF(obptr, out->descr);
 	}
 	_pya_free(buffers[0]);
 	_pya_free(buffers[1]);

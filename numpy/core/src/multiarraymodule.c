@@ -3212,7 +3212,7 @@ PyArray_Put(PyArrayObject *self, PyObject* values0, PyObject *indices0)
         if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);
         if (nv > 0) { /* nv == 0 for a null array */
-                if (thistype == PyArray_OBJECT) {   
+                if (self->descr->hasobject) {   
                         for(i=0; i<ni; i++) {
                                 src = values->data + chunk * (i % nv);
                                 tmp = ((intp *)(indices->data))[i];
@@ -3221,8 +3221,8 @@ PyArray_Put(PyArrayObject *self, PyObject* values0, PyObject *indices0)
                                         PyErr_SetString(PyExc_IndexError, "index out of range for array");
                                         goto fail;
                                 }
-                                Py_INCREF(*((PyObject **)src));
-                                Py_XDECREF(*((PyObject **)(dest+tmp*chunk)));
+				PyArray_Item_INCREF(src, self->descr);
+				PyArray_Item_XDECREF(dest+tmp*chunk, self->descr);
                                 memmove(dest + tmp * chunk, src, chunk);
                         }
                 }
@@ -3298,13 +3298,13 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 	if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);	 /* zero if null array */
         if (nv > 0) {
-                if (thistype == PyArray_OBJECT) {
+                if (self->descr->hasobject) {
                         for(i=0; i<ni; i++) {
                                 src = values->data + chunk * (i % nv);
                                 tmp = ((Bool *)(mask->data))[i];
                                 if (tmp) {
-					Py_INCREF(*((PyObject **)src));
-                                        Py_XDECREF(*((PyObject **)(dest+i*chunk)));
+					PyArray_Item_INCREF(src, self->descr);
+					PyArray_Item_XDECREF(dest+i*chunk, self->descr);
                                         memmove(dest + i * chunk, src, chunk);
                                 }
 			}
@@ -4674,8 +4674,8 @@ PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 						    NULL, NULL,
 						    fortran, NULL);
 	if (ret == NULL) return NULL;
-        
-	if ((PyArray_TYPE(ret) == PyArray_OBJECT)) {
+	
+	if (type->hasobject) {
                 PyArray_FillObjectArray(ret, Py_None);
 	}
 	return (PyObject *)ret;
@@ -4741,7 +4741,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 		return NULL;
 	}
 
-	if (typecode->type_num == PyArray_OBJECT) {
+	if (typecode->type_num == PyArray_OBJECT || typecode->f->listpickle) {
 		if (obj == NULL) obj = Py_None;
 		dptr = &obj;
 	}
@@ -4798,7 +4798,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 						    fortran, NULL);
 	if (ret == NULL) return NULL;
         
-	if ((PyArray_TYPE(ret) == PyArray_OBJECT)) {
+	if (type->hasobject) {
 		PyObject *zero = PyInt_FromLong(0);
                 PyArray_FillObjectArray(ret, zero);
                 Py_DECREF(zero);
@@ -4897,9 +4897,9 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 	binary = ((sep == NULL) || (strlen(sep) == 0));	
 
 	if (binary) {
-		if (dtype == &OBJECT_Descr) {
+		if (dtype->hasobject) {
 			PyErr_SetString(PyExc_ValueError, 
-					"Cannot create an object array from"\
+					"Cannot create an object array from" \
 					" a binary string");
 			Py_DECREF(dtype);
 			return NULL;
@@ -5359,7 +5359,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 	int write=1;
 
 
-	if (type->type_num == PyArray_OBJECT) {
+	if (type->hasobject) {
 		PyErr_SetString(PyExc_ValueError, 
 				"cannot create an OBJECT array from memory"\
 				" buffer");
