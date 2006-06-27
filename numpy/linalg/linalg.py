@@ -80,6 +80,8 @@ def _assertSquareness(*arrays):
 # Linear equations
 
 def solve(a, b):
+    """Return the solution of a*x = b
+    """
     one_eq = len(b.shape) == 1
     if one_eq:
         b = b[:, newaxis]
@@ -281,6 +283,8 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
 
 
 def eigh(a, UPLO='L'):
+    """Compute eigenvalues for a Hermitian-symmetric matrix.
+    """
     a, wrap = _makearray(a)
     _assertRank2(a)
     _assertSquareness(a)
@@ -320,6 +324,22 @@ def eigh(a, UPLO='L'):
 # Singular value decomposition
 
 def svd(a, full_matrices=1, compute_uv=1):
+    """Singular Value Decomposition.
+
+    u,s,vh = svd(a)
+
+    If a is an M x N array, then the svd produces a factoring of the array
+    into two unitary (orthogonal) 2-d arrays u (MxM) and vh (NxN) and a 
+    min(M,N)-length array of singular values such that
+       
+                     a == dot(u,dot(S,vh)) 
+    
+    where S is an MxN array of zeros whose main diagonal is s. 
+   
+    if compute_uv == 0, then return only the singular values
+    if full_matrices == 0, then only part of either u or vh is 
+                           returned so that it is MxN
+    """
     a, wrap = _makearray(a)
     _assertRank2(a)
     m, n = a.shape
@@ -387,6 +407,12 @@ def svd(a, full_matrices=1, compute_uv=1):
 # Generalized inverse
 
 def pinv(a, rcond = 1.e-10):
+    """Return the (Moore-Penrose) pseudo-inverse of a 2-d array
+
+    This method computes the generalized inverse using the 
+    singular-value decomposition and all singular values larger than
+    rcond of the largest. 
+    """
     a, wrap = _makearray(a)
     if a.dtype.char in typecodes['Complex']:
         a = conjugate(a)
@@ -405,6 +431,7 @@ def pinv(a, rcond = 1.e-10):
 # Determinant
 
 def det(a):
+    "The determinant of the 2-d array a"
     a = asarray(a)
     _assertRank2(a)
     _assertSquareness(a)
