@@ -1,16 +1,15 @@
 
 import sys
 from distutils.core import *
-try:
+
+if 'setuptools' in sys.modules:
+    have_setuptools = True
     from setuptools import setup as old_setup
-    # very old setuptools don't have this
-    from setuptools.command import bdist_egg
     # easy_install imports math, it may be picked up from cwd
     from setuptools.command import develop, easy_install
-    have_setuptools = 1
-except ImportError:
+else:
     from distutils.core import setup as old_setup
-    have_setuptools = 0
+    have_setuptools = False
 
 from numpy.distutils.extension import Extension
 from numpy.distutils.command import config
