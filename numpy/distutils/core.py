@@ -7,6 +7,11 @@ if 'setuptools' in sys.modules:
     from setuptools import setup as old_setup
     # easy_install imports math, it may be picked up from cwd
     from setuptools.command import develop, easy_install
+    try:
+        # very old versions of setuptools don't have this
+        from setuptools.command import bdist_egg
+    except ImportError:
+        have_setuptools = False
 else:
     from distutils.core import setup as old_setup
     have_setuptools = False
