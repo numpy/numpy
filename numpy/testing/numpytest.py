@@ -139,7 +139,7 @@ class NumpyTestCase (unittest.TestCase):
         result.stream = _dummy_stream(save_stream)
         unittest.TestCase.__call__(self, result)
         if nof_errors != len(result.errors):
-            test, errstr = result.errors[-1]
+            test, errstr = result.errors[-1][:2]
             if isinstance(errstr, tuple):
                 errstr = str(errstr[0])
             elif isinstance(errstr, str):
