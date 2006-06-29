@@ -52,15 +52,12 @@ def is_free_format(file):
         isfree = True
     contline = False
     while n>0 and line:
-        if line[0]!='!' and line.strip():
+        line = line.rstrip()
+        if line and line[0]!='!':
             n -= 1
-            if line[0]!='\t' and _free_f90_start(line[:5]) or line[-2:-1]=='&':
+            if line[0]!='\t' and _free_f90_start(line[:5]) or line[-1:]=='&':
                 isfree = True
                 break
-            #elif line[-2:-1]=='&':
-            #    contline = True
-            #else:
-            #    contline = False
         line = f.readline()
     f.close()
     return isfree

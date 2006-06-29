@@ -118,11 +118,36 @@ class Program(BeginStatement):
         return specification_part + execution_part + internal_subprogram_part
 
     def process_item(self):
-        name = self.item.get_line().replace(' ','')[len(self.blocktype):].strip()
-        if name:
-            self.name = name
+        if self.item is not None:
+            name = self.item.get_line().replace(' ','')\
+                   [len(self.blocktype):].strip()
+            if name:
+                self.name = name
         return BeginStatement.process_item(self)
 
+# BlockData
+
+class EndBlockData(EndStatement):
+    """
+    END [ BLOCK DATA [ <block-data-name> ] ] 
+    """
+    match = re.compile(r'end(\s*block\s*data\s*\w*|)\Z', re.I).match
+    blocktype = 'blockdata'
+
+class BlockData(BeginStatement):
+    """
+    BLOCK DATA [ <block-data-name> ]
+    """
+    end_stmt_cls = EndBlockData
+    match = re.compile(r'block\s*data\s*\w*\Z', re.I).match
+
+    def process_item(self):
+        self.name = self.item.get_line()[5:].lstrip()[4:].lstrip()
+        return BeginStatement.process_item(self)
+
+    def get_classes(self):
+        return specification_part
+        
 # Interface
 
 class EndInterface(EndStatement):
@@ -150,7 +175,7 @@ class Interface(BeginStatement):
     blocktype = 'interface'
 
     def get_classes(self):
-        return interface_specification
+        return intrinsic_type_spec + interface_specification
 
     def process_item(self):
         line = self.item.get_line()
@@ -170,35 +195,64 @@ class Interface(BeginStatement):
 
 # Subroutine
 
+class SubProgramStatement(BeginStatement):
+    """
+    [ <prefix> ] <FUNCTION|SUBROUTINE> <name> [ ( <args> ) ] [ <suffix> ]
+    """
+
+    def process_item(self):
+        clsname = self.__class__.__name__.lower()
+        item = self.item
+        line = item.get_line()
+        m = self.match(line)
+        i = line.find(clsname)
+        assert i!=-1,`line`
+        self.prefix = line[:i].rstrip()
+        self.name = line[i:m.end()].lstrip()[len(clsname):].strip()
+        line = line[m.end():].lstrip()
+        args = []
+        if line.startswith('('):
+            i = line.find(')')
+            assert i!=-1,`line`
+            line2 = item.apply_map(line[:i+1])
+            for a in line2[1:-1].split(','):
+                a=a.strip()
+                if not a: continue
+                args.append(a)
+            line = line[i+1:].lstrip()
+        self.suffix = item.apply_map(line)
+        self.args = args
+        self.typedecl = None
+        return BeginStatement.process_item(self)
+
+    def tostr(self):
+        clsname = self.__class__.__name__.upper()
+        s = ''
+        if self.prefix:
+            s += self.prefix + ' '
+        if self.typedecl is not None:
+            assert isinstance(self, Function),`self.__class__.__name__`
+            s += self.typedecl.tostr() + ' '
+        s += clsname
+        return '%s %s(%s) %s' % (s, self.name,', '.join(self.args),self.suffix)
+
+    def get_classes(self):
+        return f2py_stmt + specification_part + execution_part \
+               + internal_subprogram_part
+
 class EndSubroutine(EndStatement):
     """
     END [SUBROUTINE [name]]
     """
     match = re.compile(r'end(\s*subroutine\s*\w*|)\Z', re.I).match
 
-class Subroutine(BeginStatement):
+
+class Subroutine(SubProgramStatement):
     """
     [prefix] SUBROUTINE <name> [ ( [<dummy-arg-list>] ) [<proc-language-binding-spec>]]
     """
     end_stmt_cls = EndSubroutine
-    match = re.compile(r'[\w\s]*subroutine\s*\w+', re.I).match
-    
-    item_re = re.compile(r'(?P<prefix>[\w\s]*)\s*subroutine\s*(?P<name>\w+)', re.I).match
-    def process_item(self):
-        line = self.item.get_line()
-        m = self.item_re(line)
-        self.name = m.group('name')
-        line = line[m.end():].strip()
-        args = []
-        if line.startswith('('):
-            assert line.endswith(')'),`line`
-            for a in line.split(','):
-                args.append(a.strip())
-        self.args = args
-        return BeginStatement.process_item(self)
-
-    def get_classes(self):
-        return specification_part + execution_part + internal_subprogram_part
+    match = re.compile(r'(recursive|pure|elemental|\s)*subroutine\s*\w+', re.I).match
 
 # Function
 
@@ -208,35 +262,40 @@ class EndFunction(EndStatement):
     """
     match = re.compile(r'end(\s*function\s*\w*|)\Z', re.I).match
 
-class Function(BeginStatement):
+class Function(SubProgramStatement):
     """
-    [prefix] SUBROUTINE <name> [ ( [<dummy-arg-list>] ) [suffix]
+    [ <prefix> ] FUNCTION <name> ( [<dummy-arg-list>] ) [<suffix>]
+    <prefix> = <prefix-spec> [ <prefix-spec> ]...
+    <prefix-spec> = <declaration-type-spec>
+                  | RECURSIVE | PURE | ELEMENTAL
     """
     end_stmt_cls = EndFunction
-    match = re.compile(r'([\w\s]+(\(\s*\w+\s*\)|)|)\s*function\s*\w+', re.I).match
-    item_re = re.compile(r'(?P<prefix>([\w\s](\(\s*\w+\s*\)|))*)\s*function\s*(?P<name>\w+)\s*\((?P<args>.*)\)\s*(?P<suffix>.*)\Z', re.I).match    
+    match = re.compile(r'(recursive|pure|elemental|\s)*function\s*\w+', re.I).match
 
+# Handle subprogram prefixes
+
+class SubprogramPrefix(Statement):
+    """
+    <prefix> <declaration-type-spec> <function|subroutine> ...
+    """
+    match = re.compile(r'(pure|elemental|recursive|\s)+\b',re.I).match
     def process_item(self):
         line = self.item.get_line()
-        m = self.item_re(line)
-        if m is None:
+        m = self.match(line)
+        prefix = line[:m.end()].rstrip()
+        rest = self.item.get_line()[m.end():].lstrip()
+        if rest:
+            self.parent.put_item(self.item.copy(prefix))
+            self.item.clone(rest)
             self.isvalid = False
             return
-        self.name = m.group('name')
-        self.prefix = m.group('prefix').strip()
-        self.suffix = m.group('suffix').strip()
-        args = []
-        for a in m.group('args').split(','):
-            args.append(a.strip())
-        self.args = args
-        return BeginStatement.process_item(self)
-
-    def tostr(self):
-        return '%s FUNCTION %s(%s) %s' % (self.prefix, self.name,
-                                          ', '.join(self.args), self.suffix)
-
-    def get_classes(self):
-        return specification_part + execution_part + internal_subprogram_part
+        if self.parent.__class__ not in [Function,Subroutine]:
+            self.isvalid = False
+            return
+        prefix = prefix + ' ' + self.parent.prefix
+        self.parent.prefix = prefix.strip()
+        self.ignore = True
+        return
 
 # SelectCase
 
@@ -265,7 +324,10 @@ class Select(BeginStatement):
 # Where
 
 class EndWhere(EndStatement):
-    match = re.compile(r'end\s*\w*\Z',re.I).match
+    """
+    END WHERE [ <where-construct-name> ]
+    """
+    match = re.compile(r'end\s*\where\s*\w*\Z',re.I).match
     
 
 class Where(BeginStatement):
@@ -290,9 +352,47 @@ class Where(BeginStatement):
 
 WhereConstruct = Where
 
+# Forall
+
+class EndForall(EndStatement):
+    """
+    END FORALL [ <forall-construct-name> ]
+    """
+    match = re.compile(r'end\s*forall\s*\w*\Z',re.I).match
+    
+class Forall(BeginStatement):
+    """
+    [ <forall-construct-name> : ] FORALL <forall-header>
+      [ <forall-body-construct> ]...
+    <forall-body-construct> = <forall-assignment-stmt>
+                            | <where-stmt>
+                            | <where-construct>
+                            | <forall-construct>
+                            | <forall-stmt>
+    <forall-header> = ( <forall-triplet-spec-list> [ , <scalar-mask-expr> ] )
+    <forall-triplet-spec> = <index-name> = <subscript> : <subscript> [ : <stride> ]
+    <subscript|stride> = <scalar-int-expr>
+    <forall-assignment-stmt> = <assignment-stmt> | <pointer-assignment-stmt>
+    """
+    end_stmt_cls = EndForall
+    match = re.compile(r'forarr\s*\(.*\)\Z',re.I).match
+    name = ''
+    def process_item(self):
+        self.specs = self.item.get_line()[6:].lstrip()[1:-1].strip()
+        return BeginStatement.process_item(self)
+    def tostr(self):
+        return 'FORALL (%s)' % (self.specs)
+    def get_classes(self):
+        return [Assignment, WhereStmt, WhereConstruct, ForallConstruct, ForallStmt]
+
+ForallConstruct = Forall
+
 # IfThen
 
 class EndIfThen(EndStatement):
+    """
+    END IF [ <if-construct-name> ]
+    """
     match = re.compile(r'end\s*if\s*\w*\Z', re.I).match
     blocktype = 'if'
 
@@ -344,13 +444,19 @@ class If(BeginStatement):
             return
         self.expr = expr[1:-1]
 
-        newitem = item.copy(line)
+        if not line:
+            newitem = self.get_item()
+        else:
+            newitem = item.copy(line)
+        newline = newitem.get_line()
         for cls in classes:
-            if cls.match(line):
+            if cls.match(newline):
                 stmt = cls(self, newitem)
                 if stmt.isvalid:
                     self.content.append(stmt)
                     return
+        if not line:
+            self.put_item(newitem)
         self.isvalid = False
         return
         
@@ -368,6 +474,7 @@ class If(BeginStatement):
 
 class EndDo(EndStatement):
     """
+    END DO [ <do-construct-name> ]
     """
     match = re.compile(r'end\s*do\s*\w*\Z', re.I).match
     blocktype = 'do'
@@ -409,6 +516,36 @@ class Do(BeginStatement):
 
     def get_classes(self):
         return execution_part_construct
+
+# Associate
+
+class EndAssociate(EndStatement):
+    """
+    END ASSOCIATE [ <associate-construct-name> ]
+    """
+    match = re.compile(r'end\s*associate\s*\w*\Z',re.I).match
+
+class Associate(BeginStatement):
+    """
+    [ <associate-construct-name> : ] ASSOCIATE ( <association-list> )
+      <block>
+
+    <association> = <associate-name> => <selector>
+    <selector> = <expr> | <variable>
+    """
+    match = re.compile(r'associate\s*\(.*\)\Z',re.I).match
+    end_stmt_cls = EndAssociate
+    
+    def process_item(self):
+        line = self.item.get_line()[9:].lstrip()
+        self.associations = line[1:-1].strip()
+        return BeginStatement.process_item(self)
+    def tostr(self):
+        return 'ASSOCIATE (%s)' % (self.associations)
+    def get_classes(self):
+        return execution_part_construct
+
+# Type
 
 class EndType(EndStatement):
     """
@@ -467,10 +604,36 @@ class Type(BeginStatement):
 
 TypeDecl = Type
 
+# Enum
+
+class EndEnum(EndStatement):
+    """
+    END ENUM
+    """
+    match = re.compile(r'end\s*enum\Z',re.I).match
+    blocktype = 'enum'
+
+class Enum(BeginStatement):
+    """
+    ENUM , BIND(C)
+      <enumerator-def-stmt>
+      [ <enumerator-def-stmt> ]...
+    """
+    blocktype = 'enum'
+    end_stmt_cls = EndEnum
+    match = re.compile(r'enum\s*,\s*bind\s*\(\s*c\s*\)\Z',re.I).match
+    def process_item(self):
+        return BeginStatement.process_item(self)
+    def get_classes(self):
+        return [Enumerator]
+
 ###################################################
 
 from statements import *
 from typedecl_statements import *
+
+f2py_stmt = [ThreadSafe, FortranName, Depend, Check, CallStatement,
+             CallProtoArgument]
 
 access_spec = [Public, Private]
 
@@ -478,79 +641,44 @@ interface_specification = [Function, Subroutine,
                            ModuleProcedure
                            ]
 
-module_subprogram_part = [
-    Contains,
-    Function,
-    Subroutine
+module_subprogram_part = [ Contains, Function, Subroutine ]
+
+specification_stmt = access_spec + [ Allocatable, Asynchronous, Bind,
+    Common, Data, Dimension, Equivalence, External, Intent, Intrinsic,
+    Namelist, Optional, Pointer, Protected, Save, Target, Volatile,
+    Value ]
+
+intrinsic_type_spec = [ SubprogramPrefix, Integer , Real,
+    DoublePrecision, Complex, DoubleComplex, Character, Logical, Byte
     ]
 
-specification_stmt = [
-    # Access, Allocatable, Asynchronous, Bind,
-    Common,
-    Data, Dimension,
-    Equivalence, External, #Intent
-    Intrinsic,
-    #Namelist,
-    Optional, #Pointer, Protected,
-    Save, #Target, Volatile, Value
-    ]
-intrinsic_type_spec = [
-    Integer , Real, DoublePrecision, Complex, DoubleComplex, Character, Logical
-    ]
-declaration_type_spec = intrinsic_type_spec + [
-    TypeStmt,
-    Class
-    ]
+declaration_type_spec = intrinsic_type_spec + [ TypeStmt, Class ]
+    
 type_declaration_stmt = declaration_type_spec
 
-private_or_sequence = [
-    Private, Sequence
-    ]
+private_or_sequence = [ Private, Sequence ]
 
-component_part = declaration_type_spec + [
-    #Procedure
-    ]
+component_part = declaration_type_spec + [ ModuleProcedure ]
 
-type_bound_procedure_part = [
-    Contains, Private, #Procedure, Generic, Final
-    ]
+proc_binding_stmt = [SpecificBinding, GenericBinding, FinalBinding]
+
+type_bound_procedure_part = [Contains, Private] + proc_binding_stmt
 
 #R214
-action_stmt = [
-    Allocate,
-    Assignment, #PointerAssignment,
-    Backspace,
-    Call,
-    Close,
-    Continue,
-    Cycle,
-    Deallocate,
-    Endfile, #EndFunction, EndProgram, EndSubroutine,
-    Exit,
-    # Flush, Forall,
-    Goto, If, Inquire,
-    Nullify,
-    Open, 
-    Print, Read,
-    Return,
-    Rewind,
-    Stop, #Wait,
-    WhereStmt,
-    Write,
-    ArithmeticIf,
-    ComputedGoto
-    ]
+action_stmt = [ Allocate, Assignment, Assign, Backspace, Call, Close,
+    Continue, Cycle, Deallocate, Endfile, Exit, Flush, ForallStmt,
+    Goto, If, Inquire, Nullify, Open, Print, Read, Return, Rewind,
+    Stop, Wait, WhereStmt, Write, ArithmeticIf, ComputedGoto,
+    AssignedGoto, Pause ]
+#PointerAssignment,EndFunction, EndProgram, EndSubroutine,
 
-executable_construct = [
-    # Associate, Case,
-    Do,
-    # Forall,
-    IfThen,
-    Select, WhereConstruct
-    ] + action_stmt
-execution_part_construct = executable_construct + [
-    Format, #Entry, Data
-    ]
+executable_construct = [ Associate, Do, ForallConstruct, IfThen,
+    Select, WhereConstruct ] + action_stmt
+#Case, see Select
+
+execution_part_construct = executable_construct + [ Format, Entry,
+    Data ]
+
 execution_part = execution_part_construct[:]
 
 #C201, R208
@@ -559,24 +687,24 @@ for cls in [EndFunction, EndProgram, EndSubroutine]:
     except ValueError: pass
 
 internal_subprogram = [Function, Subroutine]
-internal_subprogram_part = [
-    Contains,
-    ] + internal_subprogram
 
-declaration_construct = [
-    TypeDecl, #Entry, Enum,
-    Format,
-    Interface,
-    Parameter, #Procedure,
-    ] + specification_stmt + type_declaration_stmt # stmt-function-stmt
-implicit_part = [
-    Implicit, Parameter, Format, #Entry
-    ]
-specification_part = [
-    Use, #Import 
-    ] + implicit_part + declaration_construct
+internal_subprogram_part = [ Contains, ] + internal_subprogram
+
+declaration_construct = [ TypeDecl, Entry, Enum, Format, Interface,
+    Parameter, ModuleProcedure, ] + specification_stmt + \
+    type_declaration_stmt
+# stmt-function-stmt
+
+implicit_part = [ Implicit, Parameter, Format, Entry ]
+
+specification_part = [ Use, Import ] + implicit_part + \
+                     declaration_construct
+
+
 external_subprogram = [Function, Subroutine]
-main_program = [Program] + specification_part + execution_part + internal_subprogram_part
+
+main_program = [Program] + specification_part + execution_part + \
+               internal_subprogram_part
+
 program_unit = main_program + external_subprogram + [Module,
-                                                     #BlockData
-                                                     ]
+                                                     BlockData ]

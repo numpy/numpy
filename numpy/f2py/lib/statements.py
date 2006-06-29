@@ -4,6 +4,8 @@ import sys
 
 from base_classes import Statement
 
+is_name = re.compile(r'\w+\Z').match
+
 # Execution statements
 
 class Assignment(Statement):
@@ -12,8 +14,6 @@ class Assignment(Statement):
     <pointer variable> => <expr>
     """
 
-    #match = re.compile(r'\w(\s*\(\s*[^)]*\)|[\w%]*)*\s*=\>?',re.I).match
-    #item_re = re.compile(r'(?P<variable>\w(\s*\(\s*[^)]*\)|[\w%]*)*)\s*(?P<sign>=\>?)\s*(?P<expr>.*)\Z',re.I).match
     match = re.compile(r'\w[^=]*\s*=\>?').match
     item_re = re.compile(r'(?P<variable>\w[^=]*)\s*(?P<sign>=\>?)\s*(?P<expr>.*)\Z',re.I).match
 
@@ -27,6 +27,22 @@ class Assignment(Statement):
     def __str__(self):
         return self.get_indent_tab() + '%s %s %s' \
                % (self.variable, self.sign, self.expr)
+
+class Assign(Statement):
+    """
+    ASSIGN <label> TO <int-variable-name>
+    """
+    modes = ['fix77']
+    match = re.compile(r'assign\s*\d+\s*to\s*\w+\s*\Z',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[6:].lstrip()
+        i = line.find('to')
+        self.items = [line[:i].rstrip(),line[i+2:].lstrip()]
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'ASSIGN %s TO %s' \
+               % (self.items[0], self.items[1])
+
     
 class Call(Statement):
     """Call statement class
@@ -46,6 +62,10 @@ class Call(Statement):
         if i==-1:
             self.designator = line.strip()
         else:
+            j = line.find(')')
+            if j == -1 or len(line)-1 != j:
+                self.isvalid = False
+                return
             self.designator = line[:i].strip()
             for n in line[i+1:-1].split(','):
                 n = n.strip()
@@ -88,8 +108,26 @@ class ComputedGoto(Statement):
         return  self.get_indent_tab() + 'GO TO (%s) %s' \
                % (', '.join(self.items), self.expr)
 
+class AssignedGoto(Statement):
+    """
+    GO TO <int-variable-name> [ ( <label> [ , <label> ]... ) ]
+    """
+    modes = ['fix77']
+    match = re.compile(r'go\s*to\s*\w+\s*,?\s*\(',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[2:].lstrip()[2:].lstrip()
+        i = line.find('(')
+        assert line[-1]==')',`line`
+        varname = line[:i].rstrip()
+        if varname.endswith(','):
+            varname = varname[:-1].rstrip()
+        self.varname = varname
+        self.items = [s.strip() for s in line[i+1:-1].split(',')]
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'GO TO %s (%s)' \
+               % (self.varname, ', '.join(self.items)) 
 
-    
 class Continue(Statement):
     """
     CONTINUE
@@ -106,13 +144,12 @@ class Continue(Statement):
 
 class Return(Statement):
     """
-    RETURN [scalar-int-expr]
+    RETURN [ <scalar-int-expr> ]
     """
     match = re.compile(r'return\b',re.I).match
 
     def process_item(self):
-        line = self.item.get_line()[6:].lstrip()
-        self.expr = line
+        self.expr = self.item.get_line()[6:].lstrip()
         return
 
     def __str__(self):
@@ -120,9 +157,10 @@ class Return(Statement):
 
 class Stop(Statement):
     """
-    STOP [stop-code]
+    STOP [ <stop-code> ]
+    <stop-code> = <scalar-char-constant> | <1-5-digit>
     """
-    match = re.compile(r'stop\b\s*\w*\s*\Z',re.I).match
+    match = re.compile(r'stop\s*(\'\w*\'|\d+|)\Z',re.I).match
 
     def process_item(self):
         self.stopcode = self.item.get_line()[4:].lstrip()
@@ -134,9 +172,15 @@ class Stop(Statement):
 class Print(Statement):
     """
     PRINT <format> [, <output-item-list>]
-    <format> == <default-char-expr> | <label> | *
+    <format> = <default-char-expr> | <label> | *
+
+    <output-item> = <expr> | <io-implied-do>
+    <io-implied-do> = ( <io-implied-do-object-list> , <implied-do-control> )
+    <io-implied-do-object> = <input-item> | <output-item>
+    <implied-do-control> = <do-variable> = <scalar-int-expr> , <scalar-int-expr> [ , <scalar-int-expr> ]
+    <input-item> = <variable> | <io-implied-do>
     """
-    match = re.compile(r'print\b\s*[\w*]', re.I).match
+    match = re.compile(r'print\s*(\'\w*\'|\d+|[*]|\b\w)', re.I).match
 
     def process_item(self):
         item = self.item
@@ -209,13 +253,59 @@ class Write(Statement):
         return self.get_indent_tab() + 'WRITE (%s) %s' \
                % (self.io_control_specs, ', '.join(self.items))        
 
+class Flush(Statement):
+    """
+    FLUSH <file-unit-number>
+    FLUSH ( <flush-spec-list> )
+    <flush-spec> = [ UNIT = ] <file-unit-number>
+                 | IOSTAT = <scalar-int-variable>
+                 | IOMSG = <iomsg-variable>
+                 | ERR = <label>
+    """
+    match = re.compile(r'flush\b',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[5:].lstrip()
+        if not line:
+            self.isvalid = False
+            return
+        if line.startswith('('):
+            if not line.endswith(')'):
+                self.isvalid = False
+                return
+            self.specs = line[1:-1].strip()
+        else:
+            self.specs = line
+        return
+    def __str__(self):
+        tab = self.get_indent_tab()
+        return tab + 'FLUSH (%s)' % (self.specs)
+
+class Wait(Statement):
+    """
+    WAIT ( <wait-spec-list> )
+    <wait-spec> = [ UNIT = ] <file-unit-number>
+                | END = <label>
+                | EOR = <label>
+                | ERR = <label>
+                | ID = <scalar-int-expr>
+                | IOMSG = <iomsg-variable>
+                | IOSTAT = <scalar-int-variable>
+
+    """
+    match = re.compile(r'wait\s*\(.*\)\Z',re.I).match
+    def process_item(self):
+        self.specs = self.item.get_line()[4:].lstrip()[1:-1].strip()
+        return
+    def __str__(self):
+        tab = self.get_indent_tab()
+        return tab + 'WAIT (%s)' % (self.specs)
+
 class Contains(Statement):
     """
     CONTAINS
     """
     match = re.compile(r'contains\Z',re.I).match
-    def process_item(self):
-        return
+    def process_item(self): return
     def __str__(self): return self.get_indent_tab() + 'CONTAINS'
 
 class Allocate(Statement):
@@ -393,7 +483,6 @@ class Save(Statement):
     <object-name> = <name>
     """
     match = re.compile(r'save\b',re.I).match
-    is_name = re.compile(r'\w+\Z').match
     def process_item(self):
         line = self.item.get_line()[4:].lstrip()
         if line.startswith('::'):
@@ -405,9 +494,9 @@ class Save(Statement):
             if s.startswith('/'):
                 assert s.endswith('/'),`s`
                 n = s[1:-1].strip()
-                assert self.is_name(n)
-                items.append('/%s/' % ())
-            elif self.is_name(s):
+                assert is_name(n),`n`
+                items.append('/%s/' % (n))
+            elif is_name(s):
                 items.append(s)
             else:
                 self.isvalid = False
@@ -522,7 +611,7 @@ class Use(Statement):
             s += ','
         if self.items:
             s += ' ' + ', '.join(self.items)
-        return s
+        return tab + s
 
 class Exit(Statement):
     """
@@ -556,9 +645,9 @@ class Equivalence(Statement):
     match = re.compile(r'equivalence\s*\(.*\)\Z', re.I).match
     def process_item(self):
         items = []
-        for s in self.item.get_line()[12:].lstrip().split(','):
+        for s in self.item.get_line()[11:].lstrip().split(','):
             s = s.strip()
-            assert s[0]+s[-1]=='()',`s`
+            assert s[0]+s[-1]=='()',`s,self.item.get_line()`
             items.append(s)
         self.items = items
     def __str__(self):
@@ -574,10 +663,84 @@ class Dimension(Statement):
         line = self.item.get_line()[9:].lstrip()
         if line.startswith('::'):
             line = line[2:].lstrip()
-        self.items = [s.split() for s in line.split(',')]
+        self.items = [s.strip() for s in line.split(',')]
         return
     def __str__(self):
         return self.get_indent_tab() + 'DIMENSION %s' % (', '.join(self.items))
+
+class Target(Statement):
+    """
+    TARGET [ :: ] <object-name> ( <array-spec> ) [ , <object-name> ( <array-spec> ) ]...
+    
+    """
+    match = re.compile(r'target\b').match
+    def process_item(self):
+        line = self.item.get_line()[6:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        self.items = [s.strip() for s in line.split(',')]
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'TARGET %s' % (', '.join(self.items))
+
+class Pointer(Statement):
+    """
+    POINTER [ :: ] <pointer-decl-list>
+    <pointer-decl> = <object-name> [ ( <deferred-shape-spec-list> ) ]
+                   | <proc-entity-name>
+    
+    """
+    match = re.compile(r'pointer\b',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[7:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        self.items = [s.strip() for s in line.split(',')]
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'POINTER %s' % (', '.join(self.items))
+
+class Protected(Statement):
+    """
+    PROTECTED [ :: ] <entity-name-list>
+    """
+    match = re.compile(r'protected\b',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[9:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        self.items = [s.strip() for s in line.split(',')]
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'PROTECTED %s' % (', '.join(self.items))
+
+class Volatile(Statement):
+    """
+    Volatile [ :: ] <object-name-list>
+    """
+    match = re.compile(r'volatile\b',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[8:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        self.items = [s.strip() for s in line.split(',')]
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'VOLATILE %s' % (', '.join(self.items))
+
+class Value(Statement):
+    """
+    VALUE [ :: ] <dummy-arg-name-list>
+    """
+    match = re.compile(r'value\b',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[5:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        self.items = [s.strip() for s in line.split(',')]
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'VALUE %s' % (', '.join(self.items))
 
 class ArithmeticIf(Statement):
     """
@@ -655,6 +818,41 @@ class External(Statement):
     def __str__(self):
         return self.get_indent_tab() + 'EXTERNAL ' + ', '.join(self.items)
 
+class Namelist(Statement):
+    """
+    NAMELIST / <namelist-group-name> / <namelist-group-object-list> [ [ , ] / <namelist-group-name> / <namelist-group-object-list> ]...
+    <namelist-group-object> = <variable-name>
+    """
+    match = re.compile(r'namelist\b',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[8:].lstrip()
+        items = []
+        while line:
+            assert line.startswith('/'),`line`
+            i = line.find('/',1)
+            assert i!=-1,`line`
+            name = line[:i+1]
+            line = line[i+1:].lstrip()
+            i = line.find('/')
+            if i==-1:
+                items.append((name,line))
+                line = ''
+                continue
+            s = line[:i].rstrip()
+            if s.endswith(','):
+                s = s[:-1].rstrip()
+            items.append((name,s))
+            line = line[i+1:].lstrip()
+        self.items = items
+        return
+
+    def __str__(self):
+        l = []
+        for name,s in self.items:
+            l.append('%s %s' % (name,s))
+        tab = self.get_indent_tab()
+        return tab + 'NAMELIST ' + ', '.join(l)
+
 class Common(Statement):
     """
     COMMON [ / [ <common-block-name> ] / ]  <common-block-object-list> \
@@ -708,6 +906,242 @@ class Optional(Statement):
         return
     def __str__(self):
         return self.get_indent_tab() + 'OPTIONAL ' + ', '.join(self.items)
+
+class Intent(Statement):
+    """
+    INTENT ( <intent-spec> ) [ :: ] <dummy-arg-name-list>
+    <intent-spec> = IN | OUT | INOUT
+    """
+    match = re.compile(r'intent\s*\(',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[6:].lstrip()
+        i = line.find(')')
+        self.specs = [s.strip() for s in line[1:i].strip().split(',')]
+        line = line[i+1:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        self.items = [s.strip() for s in line.split(',')]
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'INTENT (%s) %s' \
+               % (', '.join(self.specs), ', '.join(self.items))
+
+class Entry(Statement):
+    """
+    ENTRY <entry-name> [ ( [ <dummy-arg-list> ] ) [ <suffix> ] ]
+    <suffix> = <proc-language-binding-spec> [ RESULT ( <result-name> ) ]
+             | RESULT ( <result-name> ) [ <proc-language-binding-spec> ]
+    <proc-language-binding-spec> = <language-binding-spec>
+    <language-binding-spec> = BIND ( C [ , NAME = <scalar-char-initialization-expr> ] )
+    """
+    match = re.compile(r'entry\b', re.I).match
+    def process_item(self):
+        line = self.item.get_line()[5:].lstrip()
+        i = line.find('(')
+        if i==-1:
+            self.entryname = line
+            self.items = []
+            self.suffix = ''
+        else:
+            self.entryname = line[:i].rstrip()
+            line = line[i:]
+            i = line.find(')')
+            self.items = [s.split() for s in line[1:i].split(',')]
+            self.suffix = line[i+1:].lstrip()
+        return
+    def __str__(self):
+        tab = self.get_indent_tab()
+        s = tab + 'ENTRY '+self.entryname
+        if self.items:
+            s += ' (%s)' % (', '.join(self.items))
+        if self.suffix:
+            if not self.items:
+                s += ' ()'
+            s += ' ' + self.suffix
+        return s
+
+class Import(Statement):
+    """
+    IMPORT [ [ :: ] <import-name-list> ]
+    """
+    match = re.compile(r'import\b',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[6:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        items = []
+        for s in line.split(','):
+            s = s.strip()
+            if not is_name(s):
+                self.isvalid = False
+                return
+            items.append(s)
+        self.items = items
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'IMPORT ' + ', '.join(self.items)
+
+class Forall(Statement):
+    """
+    FORALL <forall-header> <forall-assignment-stmt>
+    <forall-header> = ( <forall-triplet-spec-list> [ , <scalar-mask-expr> ] )
+    <forall-triplet-spec> = <index-name> = <subscript> : <subscript> [ : <stride> ]
+    <subscript|stride> = <scalar-int-expr>
+    <forall-assignment-stmt> = <assignment-stmt> | <pointer-assignment-stmt>
+    """
+    match = re.compile(r'forall\s*\(.*\).*=', re.I).match
+    def process_item(self):
+        line = self.item.get_line()[6:].lstrip()
+        i = line.index(')')
+        self.specs = line[1:i].strip()
+        line = line[i+1:].lstrip()
+        stmt = Assignment(self, self.item.copy(line))
+        if stmt.isvalid:
+            self.content = [stmt]
+        else:
+            self.isvalid = False
+        return
+    def __str__(self):
+        tab = self.get_indent_tab()
+        return tab + 'FORALL (%s) %s' % (self.specs, str(self.content[0]).lstrip())
+
+ForallStmt = Forall
+
+class SpecificBinding(Statement):
+    """
+    PROCEDURE [ (<interface-name>) ]  [ [ , <binding-attr-list> ] :: ] <binding-name> [ => <procedure-name> ]
+    <binding-attr> = PASS [ ( <arg-name> ) ]
+                   | NOPASS
+                   | NON_OVERRIDABLE
+                   | DEFERRED
+                   | <access-spec>
+    """
+    match = re.compile(r'procedure\b',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[9:].lstrip()
+        if line.startswith('('):
+            i = line.index(')')
+            name = line[1:i].strip()
+            line = line[i+1:].lstrip()
+        else:
+            name = ''
+        self.interface_name = name
+        if line.startswith(','):
+            line = line[1:].lstrip()
+        i = line.find('::')
+        if i != -1:
+            attrs = line[:i].rstrip()
+            line = line[i+2:].lstrip()
+        else:
+            attrs = ''
+        self.attrs = attrs
+        self.rest = line
+        return
+    def __str__(self):
+        tab = self.get_indent_tab()
+        s = 'PROCEDURE '
+        if self.interface_name:
+            s += ' (' + self.interface_name + ')'
+        if self.attrs:
+            s += ' , ' + self.attrs + ' :: '
+        return tab + s + rest
+
+class GenericBinding(Statement):
+    """
+    GENERIC [ , <access-spec> ] :: <generic-spec> => <binding-name-list>
+    """
+    match = re.compile(r'generic\b.*::.*=.*\Z', re.I).match
+    def process_item(self):
+        line = self.item.get_line()[7:].lstrip()
+        if line.startswith(','):
+            line = line[1:].lstrip()
+        i = line.index('::')
+        self.specs = line[:i].lstrip()
+        self.rest = line[i+2:].lstrip()
+        return
+    def __str__(self):
+        tab = self.get_indent_tab()
+        s = 'GENERIC'
+        if self.specs:
+            s += ', '+self.specs
+        s += ' :: ' + self.rest
+        return tab + s
+
+        
+class FinalBinding(Statement):
+    """
+    FINAL [ :: ] <final-subroutine-name-list>
+    """
+    match = re.compile(r'final\b', re.I).match
+    def process_item(self):
+        line = self.item.get_line()[5:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        items = []
+        for s in line.split(','):
+            s = s.strip()
+            if not is_name(s):
+                self.isvalid = False
+                return
+            items.append(s)
+        self.items = items
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'FINAL ' + ', '.join(self.items)
+
+class Allocatable(Statement):
+    """
+    ALLOCATABLE [ :: ] <object-name> [ ( <deferred-shape-spec-list> ) ] [ , <object-name> [ ( <deferred-shape-spec-list> ) ] ]...
+    """
+    match = re.compile(r'allocatable\b',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[11:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        items = []
+        for s in line.split(','):
+            s = s.strip()
+            items.append(s)
+        self.items = items
+        return
+    def __str__(self):
+        return self.get_tab_indent() + 'ALLOCATABLE ' + ', '.join(self.items) 
+
+class Asynchronous(Statement):
+    """
+    ASYNCHRONOUS [ :: ] <object-name-list>
+    """
+    match = re.compile(r'asynchronous\b',re.I).match
+
+    def process_item(self):
+        line = self.item.get_line()[12:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        items = []
+        for s in line.split(','):
+            s = s.strip()
+            if not is_name(s):
+                self.isvalid = False
+                return
+            items.append(s)
+        self.items = items
+        return
+
+    def __str__(self):
+        return self.get_indent_tab() + 'ASYNCHRONOUS ' + ', '.join(self.items)
+
+class Bind(Statement):
+    """
+    <language-binding-spec> [ :: ] <bind-entity-list>
+    <language-binding-spec> = BIND ( C [ , NAME = <scalar-char-initialization-expr> ] )
+    <bind-entity> = <entity-name> | / <common-block-name> /
+    """
+    match = re.compile(r'bind\s*\(.*\)\Z',re.I).match
+    def process_item(self):
+        self.value = self.item.get_line()[4].lstrip()[1:-1].strip()
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'BIND (%s)' % (self.value)
 
 # IF construct statements
 
@@ -824,8 +1258,8 @@ WhereStmt = Where
 
 class ElseWhere(Statement):
     """
-    ELSEWHERE ( <mask-expr> ) [ <where-construct-name> ]
-    ELSEWHERE [ <where-construct-name> ]
+    ELSE WHERE ( <mask-expr> ) [ <where-construct-name> ]
+    ELSE WHERE [ <where-construct-name> ]
     """
     match = re.compile(r'else\s*where\b').match
     def process_item(self):
@@ -850,5 +1284,119 @@ class ElseWhere(Statement):
     def __str__(self):
         tab = self.get_indent_tab()
         if self.expr is None:
-            return tab + 'ELSEWHERE ' + self.name
-        return tab + 'ELSEWHERE (%s) ' % (self.expr) + self.name
+            return tab + 'ELSE WHERE ' + self.name
+        return tab + 'ELSE WHERE (%s) ' % (self.expr) + self.name
+
+# Enum construct statements
+
+class Enumerator(Statement):
+    """
+    ENUMERATOR [ :: ] <enumerator-list>
+    <enumerator> = <named-constant> [ = <scalar-int-initialization-expr> ]
+    """
+    match = re.compile(r'enumerator\b',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[10:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        self.rest = line
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'ENUMERATOR ' + self.rest
+
+# F2PY specific statements
+
+class FortranName(Statement):
+    """
+    FORTRANNAME <name>
+    """
+    match = re.compile(r'fortranname\s*\w+\Z',re.I).match
+    def process_item(self):
+        self.value = self.item.get_line()[11:].lstrip()
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'FORTRANNAME ' + self.value
+
+class ThreadSafe(Statement):
+    """
+    THREADSAFE
+    """
+    match = re.compile(r'threadsafe\Z',re.I).match
+    def process_item(self):
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'THREADSAFE'
+
+class Depend(Statement):
+    """
+    DEPEND ( <name-list> ) [ :: ] <dummy-arg-name-list>
+
+    """
+    match = re.compile(r'depend\s*\(',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[6:].lstrip()
+        i = line.find(')')
+        self.depends = [s.strip() for s in line[1:i].strip().split(',')]
+        line = line[i+1:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        self.items = [s.strip() for s in line.split(',')]
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'DEPEND (%s) %s' \
+               % (', '.join(self.depends), ', '.join(self.items))
+
+class Check(Statement):
+    """
+    CHECK ( <c-int-scalar-expr> ) [ :: ] <dummy-arg-name-list>
+
+    """
+    match = re.compile(r'check\s*\(',re.I).match
+    def process_item(self):
+        line = self.item.get_line()[5:].lstrip()
+        i = line.find(')')
+        self.expr = line[1:i].strip()
+        line = line[i+1:].lstrip()
+        if line.startswith('::'):
+            line = line[2:].lstrip()
+        self.items = [s.strip() for s in line.split(',')]
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'CHECK (%s) %s' \
+               % (self.expr, ', '.join(self.items))
+
+class CallStatement(Statement):
+    """
+    CALLSTATEMENT <c-expr>
+    """
+    match = re.compile(r'callstatement\b', re.I).match
+    def process_item(self):
+        self.expr = self.item.get_line()[13:].lstrip()
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'CALLSTATEMENT ' + self.expr
+
+class CallProtoArgument(Statement):
+    """
+    CALLPROTOARGUMENT <c-type-spec-list>
+    """
+    match = re.compile(r'callprotoargument\b', re.I).match
+    def process_item(self):
+        self.specs = self.item.get_line()[17:].lstrip()
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'CALLPROTOARGUMENT ' + self.specs
+
+# Non-standard statements
+
+class Pause(Statement):
+    """
+    PAUSE [ <char-literal-constant|int-literal-constant> ]
+    """
+    match = re.compile(r'pause\b\s*(\d+|\'\w*\')\Z', re.I).match
+    def process_item(self):
+        self.value = self.item.get_line()[5:].lstrip()
+        return
+    def __str__(self):
+        return self.get_indent_tab() + 'PAUSE ' + self.value
+

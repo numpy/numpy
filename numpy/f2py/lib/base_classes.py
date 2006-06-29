@@ -20,8 +20,10 @@ class Statement:
         self.reader = parent.reader
         self.item = item
 
-        # If statement instance is constructed by error, set isvalid to False
+        # when a statement instance is constructed by error, set isvalid to False
         self.isvalid = True
+        # when a statement should be ignored, set ignore to True
+        self.ignore = False
 
         self.process_item()
 
@@ -47,6 +49,11 @@ class Statement:
             if not tab: tab = ' '
             tab = c + s + colon + tab
         return tab
+
+    def show_message(self, message):
+        print >> sys.stderr, message
+        sys.stderr.flush()
+        return
 
 class BeginStatement(Statement):
     """ <blocktype> <name>
@@ -82,14 +89,6 @@ class BeginStatement(Statement):
         Statement.__init__(self, parent, item)
         return
 
-    def process_item(self):
-        """ Process the line
-        """
-        item = self.item
-        if item is None: return
-        self.fill()
-        return
-
     def tostr(self):
         return self.blocktype.upper() + ' '+ self.name
     
@@ -98,6 +97,41 @@ class BeginStatement(Statement):
         for c in self.content:
             l.append(str(c))
         return '\n'.join(l)
+
+    def process_item(self):
+        """ Process the line
+        """
+        item = self.item
+        if item is None: return
+        self.fill()
+        return
+
+    def fill(self, end_flag = False):
+        """
+        Fills blocks content until the end of block statement.
+        """
+
+        mode = self.reader.mode
+        classes = self.get_classes()
+        self.classes = [cls for cls in classes if mode in cls.modes]
+        self.pyf_classes = [cls for cls in classes if 'pyf' in cls.modes]
+
+        item = self.get_item()
+        while item is not None:
+            if isinstance(item, Line):
+                if self.process_subitem(item):
+                    end_flag = True
+                    break
+            item = self.get_item()
+
+        if not end_flag:
+            message = self.item.reader.format_message(\
+                        'WARNING',
+                        'failed to find the end of block for %s'\
+                        % (self.__class__.__name__),
+                        self.item.span[0],self.item.span[1])
+            self.show_message(message)
+        return
 
     def process_subitem(self, item):
         """
@@ -115,15 +149,77 @@ class BeginStatement(Statement):
                 self.content.append(stmt)
                 return True
 
+        if item.is_f2py_directive:
+            classes = self.pyf_classes
+        else:
+            classes = self.classes
+
         # Look for statement match
-        for cls in self.classes:
+        for cls in classes:
             if cls.match(line):
                 stmt = cls(self, item)
                 if stmt.isvalid:
-                    self.content.append(stmt)
+                    if not stmt.ignore:
+                        self.content.append(stmt)
                     return False
+                # item may be cloned that changes the items line:
+                line = item.get_line()
+                
+        # Check if f77 code contains inline comments or other f90
+        # constructs that got undetected by get_source_info.
+        if item.reader.isfix77:
+            i = line.find('!')
+            if i != -1:
+                message = item.reader.format_message(\
+                        'WARNING',
+                        'no parse pattern found for "%s" in %r block'\
+                        ' maybe due to inline comment.'\
+                        ' Trying to remove the comment.'\
+                        % (item.get_line(),self.__class__.__name__),
+                        item.span[0], item.span[1])
+                # .. but at the expense of loosing the comment.
+                self.show_message(message)
+                newitem = item.copy(line[:i].rstrip())
+                return self.process_subitem(newitem)
+
+            # try fix90 statement classes
+            f77_classes = self.classes
+            classes = []
+            for cls in self.get_classes():
+                if 'fix90' in cls.modes and cls not in f77_classes:
+                    classes.append(cls)
+            if classes:
+                message = item.reader.format_message(\
+                        'WARNING',
+                        'no parse pattern found for "%s" in %r block'\
+                        ' maybe due to strict f77 mode.'\
+                        ' Trying f90 fix mode patterns..'\
+                        % (item.get_line(),self.__class__.__name__),
+                        item.span[0], item.span[1])
+                self.show_message(message)
+    
+                item.reader.set_mode(False, False)
+                self.classes = classes
+            
+                r = BeginStatement.process_subitem(self, item)
+                if r is None:
+                    # restore f77 fix mode
+                    self.classes = f77_classes
+                    item.reader.set_mode(False, True)
+                else:
+                    message = item.reader.format_message(\
+                        'INFORMATION',
+                        'The f90 fix mode resolved the parse pattern issue.'\
+                        ' Setting reader to f90 fix mode.',
+                        item.span[0], item.span[1])
+                    self.show_message(message)
+                    # set f90 fix mode
+                    self.classes = f77_classes + classes
+                    self.reader.set_mode(False, False)
+                return r
+
         self.handle_unknown_item(item)
-        return False
+        return
 
     def handle_unknown_item(self, item):
         message = item.reader.format_message(\
@@ -131,37 +227,11 @@ class BeginStatement(Statement):
                         'no parse pattern found for "%s" in %r block.'\
                         % (item.get_line(),self.__class__.__name__),
                         item.span[0], item.span[1])
-        print >> sys.stderr, message
-        sys.stderr.flush()
+        self.show_message(message)
         self.content.append(item)
+        #sys.exit()
         return
 
-    def fill(self, end_flag = False):
-        """
-        Fills blocks content until the end of block statement.
-        """
-
-        mode = self.reader.mode
-        classes = self.get_classes()
-        self.classes = [cls for cls in classes if mode in cls.modes]
-
-        item = self.get_item()
-        while item is not None:
-            if isinstance(item, Line):
-                if self.process_subitem(item):
-                    end_flag = True
-                    break
-            item = self.get_item()
-
-        if not end_flag:
-            message = self.item.reader.format_message(\
-                        'WARNING',
-                        'failed to find the end of block for %s'\
-                        % (self.__class__.__name__),
-                        self.item.span[0],self.item.span[1])
-            print >> sys.stderr, message
-            sys.stderr.flush()
-        return
 
 class EndStatement(Statement):
     """
@@ -195,7 +265,7 @@ class EndStatement(Statement):
                         'expected the end of %r block but got end of %r, skipping.'\
                         % (self.parent.name, line),
                         item.span[0],item.span[1])
-                print >> sys.stderr, message
+                self.show_message(message)
                 self.isvalid = False
         self.name = self.parent.name
 

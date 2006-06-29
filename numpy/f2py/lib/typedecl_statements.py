@@ -30,7 +30,7 @@ class TypeDeclarationStatement(Statement):
                       | ( KIND = <scalar-int-initialization-expr> [, LEN = <type-param-value>] )
     <length-selector> = ( [ LEN = ] <type-param-value> )
                         | * <char-length> [ , ]
-    <char-length> = ( <type-param-value> ) | <scalar-int-literal-expr>
+    <char-length> = ( <type-param-value> ) | <scalar-int-literal-constant>
 
     <attr-spec> = <access-spec> | ALLOCATABLE | ASYNCHRONOUS
                   | DIMENSION ( <array-spec> ) | EXTERNAL
@@ -54,6 +54,9 @@ class TypeDeclarationStatement(Statement):
     <assumed-size-spec> = [ <explicit-shape-spec-list> , ] [ <lower-bound> : ] *
     <bound> = <specification-expr>
 
+    <int-literal-constant> = <digit-string> [ _ <kind-param> ]
+    <digit-string> = <digit> [ <digit> ]..
+    <kind-param> = <digit-string> | <scalar-int-constant-name>
     """
 
     def process_item(self):
@@ -61,11 +64,17 @@ class TypeDeclarationStatement(Statement):
         clsname = self.__class__.__name__.lower()
         line = item.get_line()
         from block_statements import Function
-        if Function.match(line):
-            self.isvalid = False
-            return
+
         if not line.startswith(clsname):
-            line = line[:len(clsname)].replace(' ','') + line[len(clsname):]
+            i = 0
+            j = 0
+            for c in line:
+                i += 1
+                if c==' ': continue
+                j += 1
+                if j==len(clsname):
+                    break
+            line = line[:i].replace(' ','') + line[i:]
 
         assert line.startswith(clsname),`line,clsname`
         line = line[len(clsname):].lstrip()
@@ -82,18 +91,31 @@ class TypeDeclarationStatement(Statement):
                 selector += line[:i+1].rstrip()
                 line = line[i+1:].lstrip()
             else:
-                i = len(line)
-                ci = ''
-                for c in [',','::',' ']:
-                    j = line.find(c)
-                    if j!=-1 and j<i:
-                        i = j
-                        ci = c
-                assert i!=len(line),`i,line`
+                m = re.match(r'\d+(_\w+|)|[*]',line)
+                if not m:
+                    self.isvalid = False
+                    return
+                i = m.end()
                 selector += line[:i].rstrip()
-                line = line[i+len(ci):].lstrip()
+                line = line[i:].lstrip()
         else:
             selector = ''
+
+        fm = Function.match(line)
+        if fm:
+            l2 = line[:fm.end()]
+            m2 = re.match(r'.*?\b(?P<name>\w+)\Z',l2)
+            if not m2:
+                self.isvalid = False
+                return
+            fname = m2.group('name')
+            fitem = item.copy(clsname+selector+' :: '+fname,
+                              apply_map=True)
+            self.parent.put_item(fitem)
+            item.clone(line)
+            self.isvalid = False
+            return
+
         if line.startswith(','):
             line = line[1:].lstrip()
 
@@ -105,13 +127,23 @@ class TypeDeclarationStatement(Statement):
         else:
             self.attrspec = line[:i].rstrip()
             self.entity_decls = line[i+2:].lstrip()
+        if isinstance(self.parent, Function) and self.parent.name==self.entity_decls:
+            assert self.parent.typedecl is None,`self.parent.typedecl`
+            self.parent.typedecl = self
+            self.ignore = True
         return
 
+    def tostr(self):
+        clsname = self.__class__.__name__.upper()        
+        return clsname + self.raw_selector
+
     def __str__(self):
-        clsname = self.__class__.__name__.upper()
         tab = self.get_indent_tab()
-        return tab + clsname + '%s, %s :: %s' \
-               % (self.raw_selector, self.attrspec, self.entity_decls)
+        if not self.attrspec:
+            return tab + '%s :: %s' \
+                   % (self.tostr(), self.entity_decls)
+        return tab + '%s, %s :: %s' \
+               % (self.tostr(), self.attrspec, self.entity_decls)
         
 class Integer(TypeDeclarationStatement):
     match = re.compile(r'integer\b',re.I).match
@@ -126,14 +158,18 @@ class Complex(TypeDeclarationStatement):
     match = re.compile(r'complex\b',re.I).match
 
 class DoubleComplex(TypeDeclarationStatement):
+    # not in standard
     match = re.compile(r'double\s*complex\b',re.I).match
-    modes = ['pyf','fix77']
 
 class Logical(TypeDeclarationStatement):
     match = re.compile(r'logical\b',re.I).match
 
 class Character(TypeDeclarationStatement):
     match = re.compile(r'character\b',re.I).match
+
+class Byte(TypeDeclarationStatement):
+    # not in standard
+    match = re.compile(r'byte\b',re.I).match
 
 class Type(TypeDeclarationStatement):
     match = re.compile(r'type\s*\(', re.I).match
@@ -142,7 +178,6 @@ TypeStmt = Type
 class Class(TypeDeclarationStatement):
     match = re.compile(r'class\s*\(', re.I).match
 
-
 class Implicit(Statement):
     """
     IMPLICIT <implicit-spec-list>
@@ -150,7 +185,7 @@ class Implicit(Statement):
     <implicit-spec> = <declaration-type-spec> ( <letter-spec-list> )
     <letter-spec> = <letter> [ - <letter> ]
     """
-    match = re.compile(r'implicit\b').match
+    match = re.compile(r'implicit\b',re.I).match
     def process_item(self):
         line = self.item.get_line()[8:].lstrip()
         if line=='none':
@@ -164,3 +199,5 @@ class Implicit(Statement):
         if not self.items:
             return tab + 'IMPLICIT NONE'
         return tab + 'IMPLICIT ' + ', '.join(self.items)
+
+

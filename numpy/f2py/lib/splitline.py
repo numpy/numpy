@@ -28,12 +28,12 @@ def split2(line, lower=False):
     """
     return LineSplitter(line,lower=lower).split2()
 
-_f2py_str_findall = re.compile(r' _F2PY_STRING_CONSTANT_\d+_ ').findall
+_f2py_str_findall = re.compile(r"'_F2PY_STRING_CONSTANT_\d+_'").findall
 
 def string_replace_map(line, lower=False,
                        _cache={'index':0,'pindex':0}):
     """
-    1) Replaces string constants with symbol ` _F2PY_STRING_CONSTANT_<index>_ `
+    1) Replaces string constants with symbol `'_F2PY_STRING_CONSTANT_<index>_'`
     2) Replaces (expression) with symbol `(F2PY_EXPR_TUPLE_<index>)`
     Returns a new line and the replacement map.
     """
@@ -46,7 +46,7 @@ def string_replace_map(line, lower=False,
             if key is None:
                 _cache['index'] += 1
                 index = _cache['index']
-                key = ' _F2PY_STRING_CONSTANT_%s_ ' % (index)
+                key = "'_F2PY_STRING_CONSTANT_%s_'" % (index)
                 string_map[key] = item
                 rev_string_map[item] = key
             items.append(key)

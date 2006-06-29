@@ -88,8 +88,9 @@ module foo
     hey = 1
     end subroutine bar
     abstract interface
-
+ 
     end interface
+ 
 end module foo
 """
     reader = FortranStringReader(string, True, False)
@@ -99,10 +100,14 @@ end module foo
 
 def test_f77():
     string = """\
-c      program foo
+      program foo
       a = 3
       end
       subroutine bar
+      end
+      pure function foo(a)
+      end
+      pure real*4 recursive function bar()
       end
 """
     reader = FortranStringReader(string, False, True)
@@ -112,6 +117,8 @@ c      program foo
 
 def simple_main():
     import sys
+    if not sys.argv[1:]:
+        return parse_all_f()
     for filename in sys.argv[1:]:
         reader = FortranFileReader(filename)
         print yellow_text('Processing '+filename+' (mode=%r)' % (reader.mode))
@@ -130,10 +137,20 @@ def profile_main():
     stats.sort_stats('time', 'calls')
     stats.print_stats(30)
 
+def parse_all_f():
+    for filename in open('opt_all_f90.txt'):
+        filename = filename.strip()
+        reader = FortranFileReader(filename)
+        #print yellow_text('Processing '+filename+' (mode=%r)' % (reader.mode))
+
+        parser = FortranParser(reader)
+        block = parser.parse()
+
 if __name__ == "__main__":
     #test_f77()
     #test_free90()
     #test_pyf()
     simple_main()
     #profile_main()
+    #parse_all_f()
     
