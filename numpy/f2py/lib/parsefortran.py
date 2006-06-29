@@ -35,7 +35,6 @@ class FortranParser:
         self.reader.fifo_item.insert(0, item)
 
     def parse(self):
-        import init
         try:
             main = BeginSource(self)
             return main
