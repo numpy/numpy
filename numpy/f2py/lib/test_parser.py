@@ -3,18 +3,15 @@ from numpy.testing import *
 from block_statements import *
 from readfortran import Line, FortranStringReader
 
-def toLine(line, label=''):
+
+def parse(cls, line, label=''):
     if label:
         line = label + ' : ' + line
     reader = FortranStringReader(line, True, False)
-    return reader.next()
-
-def parse(cls, line, label=''):
-    item = toLine(line, label=label)
+    item = reader.next()
     if not cls.match(item.get_line()):
         raise ValueError, '%r does not match %s pattern' % (line, cls.__name__)
     stmt = cls(item, item)
-
     if stmt.isvalid:
         return str(stmt)
     raise ValueError, 'parsing %r with %s pattern failed' % (line, cls.__name__)
@@ -306,5 +303,74 @@ class test_Statements(NumpyTestCase):
         assert_equal(parse(Import,'import::a'),'IMPORT a')
         assert_equal(parse(Import,'import a , b'),'IMPORT a, b')
 
+    def check_forall(self):
+        assert_equal(parse(ForallStmt,'forall (i = 1:n(k,:) : 2) a(i) = i*i*b(i)'),
+                     'FORALL (i = 1 : n(k,:) : 2) a(i) = i*i*b(i)')
+        assert_equal(parse(ForallStmt,'forall (i=1:n,j=2:3) a(i) = b(i,i)'),
+                     'FORALL (i = 1 : n, j = 2 : 3) a(i) = b(i,i)')
+        assert_equal(parse(ForallStmt,'forall (i=1:n,j=2:3, 1+a(1,2)) a(i) = b(i,i)'),
+                     'FORALL (i = 1 : n, j = 2 : 3, 1+a(1,2)) a(i) = b(i,i)')
+
+    def check_specificbinding(self):
+        assert_equal(parse(SpecificBinding,'procedure a'),'PROCEDURE a')
+        assert_equal(parse(SpecificBinding,'procedure :: a'),'PROCEDURE a')
+        assert_equal(parse(SpecificBinding,'procedure , NOPASS :: a'),'PROCEDURE , NOPASS :: a')
+        assert_equal(parse(SpecificBinding,'procedure , public, pass(x ) :: a'),'PROCEDURE , PUBLIC, PASS (x) :: a')
+        assert_equal(parse(SpecificBinding,'procedure(n) a'),'PROCEDURE (n) a')
+        assert_equal(parse(SpecificBinding,'procedure(n),pass :: a'),
+                     'PROCEDURE (n) , PASS :: a')
+        assert_equal(parse(SpecificBinding,'procedure(n) :: a'),
+                     'PROCEDURE (n) a')
+        assert_equal(parse(SpecificBinding,'procedure a= >b'),'PROCEDURE a => b')
+        assert_equal(parse(SpecificBinding,'procedure(n),pass :: a =>c'),
+                     'PROCEDURE (n) , PASS :: a => c')
+
+    def check_genericbinding(self):
+        assert_equal(parse(GenericBinding,'generic :: a=>b'),'GENERIC :: a => b')
+        assert_equal(parse(GenericBinding,'generic, public :: a=>b'),'GENERIC, PUBLIC :: a => b')
+        assert_equal(parse(GenericBinding,'generic, public :: a(1,2)=>b ,c'),
+                     'GENERIC, PUBLIC :: a(1,2) => b, c')
+
+    def check_finalbinding(self):
+        assert_equal(parse(FinalBinding,'final a'),'FINAL a')
+        assert_equal(parse(FinalBinding,'final::a'),'FINAL a')
+        assert_equal(parse(FinalBinding,'final a , b'),'FINAL a, b')
+
+    def check_allocatable(self):
+        assert_equal(parse(Allocatable,'allocatable a'),'ALLOCATABLE a')
+        assert_equal(parse(Allocatable,'allocatable :: a'),'ALLOCATABLE a')
+        assert_equal(parse(Allocatable,'allocatable a (1,2)'),'ALLOCATABLE a (1,2)')
+        assert_equal(parse(Allocatable,'allocatable a (1,2) ,b'),'ALLOCATABLE a (1,2), b')
+
+    def check_asynchronous(self):
+        assert_equal(parse(Asynchronous,'asynchronous a'),'ASYNCHRONOUS a')
+        assert_equal(parse(Asynchronous,'asynchronous::a'),'ASYNCHRONOUS a')
+        assert_equal(parse(Asynchronous,'asynchronous a , b'),'ASYNCHRONOUS a, b')
+
+    def check_bind(self):
+        assert_equal(parse(Bind,'bind(c) a'),'BIND (C) a')
+        assert_equal(parse(Bind,'bind(c) :: a'),'BIND (C) a')
+        assert_equal(parse(Bind,'bind(c) a ,b'),'BIND (C) a, b')
+        assert_equal(parse(Bind,'bind(c) /a/'),'BIND (C) / a /')
+        assert_equal(parse(Bind,'bind(c) /a/ ,b'),'BIND (C) / a /, b')
+        assert_equal(parse(Bind,'bind(c,name="hey") a'),'BIND (C, NAME = "hey") a')
+
+    def check_else(self):
+        assert_equal(parse(Else,'else'),'ELSE')
+        assert_equal(parse(ElseIf,'else if (a) then'),'ELSE IF (a) THEN')
+        assert_equal(parse(ElseIf,'else if (a.eq.b(1,2)) then'),
+                     'ELSE IF (a.eq.b(1,2)) THEN')
+
+    def check_case(self):
+        assert_equal(parse(Case,'case (1)'),'CASE ( 1 )')
+        assert_equal(parse(Case,'case (1:)'),'CASE ( 1 : )')
+        assert_equal(parse(Case,'case (:1)'),'CASE ( : 1 )')
+        assert_equal(parse(Case,'case (1:2)'),'CASE ( 1 : 2 )')
+        assert_equal(parse(Case,'case (a(1,2))'),'CASE ( a(1,2) )')
+        assert_equal(parse(Case,'case ("ab")'),'CASE ( "ab" )')
+        assert_equal(parse(Case,'case default'),'CASE DEFAULT')
+        assert_equal(parse(Case,'case (1:2 ,3:4)'),'CASE ( 1 : 2, 3 : 4 )')
+        assert_equal(parse(Case,'case (a(1,:):)'),'CASE ( a(1,:) : )')
+    
 if __name__ == "__main__":
     NumpyTest().run()
