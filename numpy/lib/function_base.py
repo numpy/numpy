@@ -21,10 +21,10 @@ from numpy.core.fromnumeric import ravel, nonzero, choose, sort
 from numpy.core.numerictypes import typecodes
 from numpy.lib.shape_base import atleast_1d
 from numpy.lib.twodim_base import diag
-from _compiled_base import digitize, bincount, _insert, add_docstring
+from _compiled_base import bincount, _insert, add_docstring
+from _compiled_base import digitize as _digitize
 
 #end Fernando's utilities
-
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False):
     """Return evenly spaced numbers.
@@ -378,6 +378,17 @@ def diff(a, n=1, axis=-1):
     else:
         return a[slice1]-a[slice2]
 
+def digitize(x,bins):
+    """For each value in x, return the index of the bin to which it belongs.
+
+    Each index i returned is such that bins[i-1] <= x < bins[i] if
+    bins is monotonically increasing, or bins [i-1] > x >= bins[i] if
+    bins is monotonically decreasing.
+
+    Beyond the bounds of the bins 0 or len(bins) is returned as appropriate.
+    """
+    return _digitize(x,bins)
+    
 def angle(z, deg=0):
     """Return the angle of the complex argument z.
     """

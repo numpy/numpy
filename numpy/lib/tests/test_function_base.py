@@ -8,7 +8,7 @@ from numpy.lib import *
 from numpy.core import *
 del sys.path[0]
 
-class test_any(ScipyTestCase):
+class test_any(NumpyTestCase):
     def check_basic(self):
         y1 = [0,0,1,0]
         y2 = [0,0,0,0]
@@ -23,7 +23,7 @@ class test_any(ScipyTestCase):
         assert_array_equal(sometrue(y1),[1,1,0])
         assert_array_equal(sometrue(y1,axis=1),[0,1,1])
 
-class test_all(ScipyTestCase):
+class test_all(NumpyTestCase):
     def check_basic(self):
         y1 = [0,1,1,0]
         y2 = [0,0,0,0]
@@ -39,7 +39,7 @@ class test_all(ScipyTestCase):
         assert_array_equal(alltrue(y1),[0,0,1])
         assert_array_equal(alltrue(y1,axis=1),[0,0,1])
 
-class test_average(ScipyTestCase):
+class test_average(NumpyTestCase):
     def check_basic(self):
         y1 = array([1,2,3])
         assert(average(y1) == 2.)
@@ -58,7 +58,7 @@ class test_average(ScipyTestCase):
         assert_array_equal(y5.mean(0), average(y5, 0))
         assert_array_equal(y5.mean(1), average(y5, 1))
 
-class test_logspace(ScipyTestCase):
+class test_logspace(NumpyTestCase):
     def check_basic(self):
         y = logspace(0,6)
         assert(len(y)==50)
@@ -69,7 +69,7 @@ class test_logspace(ScipyTestCase):
         y = logspace(0,6,num=7)
         assert_array_equal(y,[1,10,100,1e3,1e4,1e5,1e6])
 
-class test_linspace(ScipyTestCase):
+class test_linspace(NumpyTestCase):
     def check_basic(self):
         y = linspace(0,10)
         assert(len(y)==50)
@@ -94,7 +94,7 @@ class test_linspace(ScipyTestCase):
         assert_equal(t1, t2)
         assert_equal(t2, t3)
 
-class test_amax(ScipyTestCase):
+class test_amax(NumpyTestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
         assert_equal(amax(a),10.0)
@@ -104,7 +104,7 @@ class test_amax(ScipyTestCase):
         assert_equal(amax(b,axis=0),[8.0,10.0,9.0])
         assert_equal(amax(b,axis=1),[9.0,10.0,8.0])
 
-class test_amin(ScipyTestCase):
+class test_amin(NumpyTestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
         assert_equal(amin(a),-5.0)
@@ -114,7 +114,7 @@ class test_amin(ScipyTestCase):
         assert_equal(amin(b,axis=0),[3.0,3.0,2.0])
         assert_equal(amin(b,axis=1),[3.0,4.0,2.0])
 
-class test_ptp(ScipyTestCase):
+class test_ptp(NumpyTestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
         assert_equal(ptp(a),15.0)
@@ -124,7 +124,7 @@ class test_ptp(ScipyTestCase):
         assert_equal(ptp(b,axis=0),[5.0,7.0,7.0])
         assert_equal(ptp(b,axis=-1),[6.0,6.0,6.0])
 
-class test_cumsum(ScipyTestCase):
+class test_cumsum(NumpyTestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
@@ -140,7 +140,7 @@ class test_cumsum(ScipyTestCase):
                                       [5,11,18,27],
                                       [10,13,17,22]],ctype))
 
-class test_prod(ScipyTestCase):
+class test_prod(NumpyTestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
@@ -158,7 +158,7 @@ class test_prod(ScipyTestCase):
                                    array([50,36,84,180],ctype))
                 assert_array_equal(prod(a2,axis=-1),array([24, 1890, 600],ctype))
 
-class test_cumprod(ScipyTestCase):
+class test_cumprod(NumpyTestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
@@ -183,7 +183,7 @@ class test_cumprod(ScipyTestCase):
                                           [ 5, 30, 210, 1890],
                                           [10, 30, 120,  600]],ctype))
 
-class test_diff(ScipyTestCase):
+class test_diff(NumpyTestCase):
     def check_basic(self):
         x = [1,4,6,7,12]
         out = array([3,2,1,5])
@@ -204,7 +204,7 @@ class test_diff(ScipyTestCase):
         assert_array_equal(diff(x,axis=0),out3)
         assert_array_equal(diff(x,n=2,axis=0),out4)
 
-class test_angle(ScipyTestCase):
+class test_angle(NumpyTestCase):
     def check_basic(self):
         x = [1+3j,sqrt(2)/2.0+1j*sqrt(2)/2,1,1j,-1,-1j,1-3j,-1+3j]
         y = angle(x)
@@ -215,7 +215,7 @@ class test_angle(ScipyTestCase):
         assert_array_almost_equal(y,yo,11)
         assert_array_almost_equal(z,zo,11)
 
-class test_trim_zeros(ScipyTestCase):
+class test_trim_zeros(NumpyTestCase):
     """ only testing for integer splits.
     """
     def check_basic(self):
@@ -232,7 +232,7 @@ class test_trim_zeros(ScipyTestCase):
         assert_array_equal(res,array([1,0,2,3,0,4]))
 
 
-class test_extins(ScipyTestCase):
+class test_extins(NumpyTestCase):
     def check_basic(self):
         a = array([1,3,2,1,2,3,3])
         b = extract(a>1,a)
@@ -250,7 +250,7 @@ class test_extins(ScipyTestCase):
         insert(a,mask,c)
         assert_array_equal(a,ac)
 
-class test_vectorize(ScipyTestCase):
+class test_vectorize(NumpyTestCase):
     def check_simple(self):
         def addsubtract(a,b):
             if a > b:
@@ -274,9 +274,19 @@ class test_vectorize(ScipyTestCase):
         f = vectorize(lambda x: x) 
         y = f(x) 
         assert_array_equal(y, x) 
-    
 
-class test_unwrap(ScipyTestCase):
+class test_digitize(NumpyTestCase):
+    def check_forward(self):
+	x = arange(-6,5)
+	bins = arange(-5,5)
+	assert_array_equal(digitize(x,bins),arange(11))
+	
+    def check_reverse(self):
+	x = arange(5,-6,-1)
+	bins = arange(5,-5,-1)
+	assert_array_equal(digitize(x,bins),arange(11))
+
+class test_unwrap(NumpyTestCase):
     def check_simple(self):
                 #check that unwrap removes jumps greather that 2*pi
         assert_array_equal(unwrap([1,1+2*pi]),[1,1])
@@ -284,7 +294,7 @@ class test_unwrap(ScipyTestCase):
         assert(all(diff(unwrap(rand(10)*100))<pi))
 
 
-class test_filterwindows(ScipyTestCase):
+class test_filterwindows(NumpyTestCase):
     def check_hanning(self):
         #check symmetry
         w=hanning(10)
@@ -314,20 +324,20 @@ class test_filterwindows(ScipyTestCase):
         assert_almost_equal(sum(w),3.7800,4)
 
 
-class test_trapz(ScipyTestCase):
+class test_trapz(NumpyTestCase):
     def check_simple(self):
         r=trapz(exp(-1.0/2*(arange(-10,10,.1))**2)/sqrt(2*pi),dx=0.1)
         #check integral of normal equals 1
         assert_almost_equal(sum(r),1,7)
 
-class test_sinc(ScipyTestCase):
+class test_sinc(NumpyTestCase):
     def check_simple(self):
         assert(sinc(0)==1)
         w=sinc(linspace(-1,1,100))
         #check symmetry
         assert_array_almost_equal(w,flipud(w),7)
 
-class test_histogram(ScipyTestCase):
+class test_histogram(NumpyTestCase):
     def check_simple(self):
         n=100
         v=rand(n)
