@@ -1547,16 +1547,15 @@ def indices (dimensions, dtype=None):
     """
     return array(numeric.indices(dimensions, dtype))
 
-def zeros (shape, dtype=int):
-    """zeros(n, dtype=int) =
+def zeros (shape, dtype=float):
+    """zeros(n, dtype=float) =
      an array of all zeros of the given length or shape."""
     return array(numeric.zeros(shape, dtype))
 
-def ones (shape, dtype=int):
-    """ones(n, dtype=int) =
+def ones (shape, dtype=float):
+    """ones(n, dtype=float) =
      an array of all ones of the given length or shape."""
     return array(numeric.ones(shape, dtype))
-
 
 def count (a, axis = None):
     "Count of the non-masked elements in a, or along a certain axis."

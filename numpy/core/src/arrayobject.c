@@ -5240,7 +5240,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         if (order == PyArray_FORTRANORDER) fortran = 1;
 
 	if (descr == NULL)
-		descr = PyArray_DescrFromType(PyArray_LONG);
+		descr = PyArray_DescrFromType(PyArray_DEFAULT);
 
 	type_num = descr->type_num;
 	itemsize = descr->elsize;
@@ -10225,17 +10225,65 @@ arraydescr_repr(PyArray_Descr *self)
 	return s;
 }
 
-static int
-arraydescr_compare(PyArray_Descr *self, PyObject *other)
+static PyObject *
+arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
 {
+        PyArray_Descr *new=NULL;
+        PyObject *result = Py_NotImplemented;
 	if (!PyArray_DescrCheck(other)) {
-		PyErr_SetString(PyExc_TypeError,
-				"not a dtype object.");
-		return -1;
+                if (PyArray_DescrConverter(other, &new) == PY_FAIL)
+                        return NULL;
 	}
-	if (PyArray_EquivTypes(self, (PyArray_Descr *)other)) return 0;
-	if (PyArray_CanCastTo(self, (PyArray_Descr *)other)) return -1;
-	return 1;
+        else {
+                new = (PyArray_Descr *)other;
+                Py_INCREF(new);
+        }
+        switch (cmp_op) {
+        case Py_LT:
+                if (PyArray_CanCastTo(self, new))
+                        result = Py_True;
+                else
+                        result = Py_False;
+                break;
+        case Py_LE:
+                if (PyArray_EquivTypes(self, new) || 
+                    PyArray_CanCastTo(self, new))
+                        result = Py_True;
+                else
+                        result = Py_False;
+                break;
+        case Py_EQ:
+                if (PyArray_EquivTypes(self, new)) 
+                        result = Py_True;
+                else
+                        result = Py_False;
+                break;
+        case Py_NE:
+                if (PyArray_EquivTypes(self, new)) 
+                        result = Py_False;
+                else
+                        result = Py_True;
+                break;
+        case Py_GT:
+                if (PyArray_CanCastTo(new, self)) 
+                        result = Py_True;
+                else
+                        result = Py_False;
+                break;
+        case Py_GE:
+                if (PyArray_EquivTypes(self, new) ||
+                    PyArray_CanCastTo(new, self)) 
+                        result = Py_True;
+                else
+                        result = Py_False;
+                break;
+        default:
+                result = Py_NotImplemented;
+        }
+
+        Py_XDECREF(new);
+        Py_INCREF(result);
+        return result;
 }
 
 /*************************************************************************
@@ -10310,7 +10358,7 @@ static PyTypeObject PyArrayDescr_Type = {
         0,					/* tp_print */
         0,					/* tp_getattr */
         0,					/* tp_setattr */
-	(cmpfunc)arraydescr_compare,		/* tp_compare */
+	0, 	                         	/* tp_compare */
         (reprfunc)arraydescr_repr,	        /* tp_repr */
         0,					/* tp_as_number */
         0,			                /* tp_as_sequence */
@@ -10323,9 +10371,9 @@ static PyTypeObject PyArrayDescr_Type = {
         0,					/* tp_as_buffer */
         Py_TPFLAGS_DEFAULT,                     /* tp_flags */
         0,					/* tp_doc */
-        0,	                        /* tp_traverse */
+        0,	                                /* tp_traverse */
         0,					/* tp_clear */
-        0,					/* tp_richcompare */
+        (richcmpfunc)arraydescr_richcompare,    /* tp_richcompare */
         0,					/* tp_weaklistoffset */
         0,	                        /* tp_iter */
         0,		/* tp_iternext */

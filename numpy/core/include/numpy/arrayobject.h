@@ -1320,6 +1320,9 @@ typedef struct {
 
 } PyArrayMapIterObject;
 
+/* The default array type
+ */
+#define PyArray_DEFAULT PyArray_DOUBLE
 /* All sorts of useful ways to look into a PyArrayObject.
    These are the recommended over casting to PyArrayObject and accessing
    the members directly.

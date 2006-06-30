@@ -4207,7 +4207,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	
 	/* default */
         if (obj == Py_None) {
-		*at = PyArray_DescrFromType(PyArray_LONG);
+		*at = PyArray_DescrFromType(PyArray_DEFAULT);
 		return PY_SUCCEED;
 	}
 	
@@ -4668,7 +4668,7 @@ PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 {
 	PyArrayObject *ret;
         
-	if (!type) type = PyArray_DescrFromType(PyArray_LONG);
+	if (!type) type = PyArray_DescrFromType(PyArray_DEFAULT);
 	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
 						    type, nd, dims, 
 						    NULL, NULL,
@@ -4791,7 +4791,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 	PyArrayObject *ret;
 	intp n;
 
-	if (!type) type = PyArray_DescrFromType(PyArray_LONG);
+	if (!type) type = PyArray_DescrFromType(PyArray_DEFAULT);
 	ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, 
 						    type,
 						    nd, dims, 
@@ -4887,7 +4887,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 	Bool binary;
 
 	if (dtype == NULL)
-		dtype=PyArray_DescrFromType(PyArray_LONG);
+		dtype=PyArray_DescrFromType(PyArray_DEFAULT);
 	
 	itemsize = dtype->elsize;
 	if (itemsize == 0) {
@@ -5325,7 +5325,7 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 		return NULL;
 	}
 
-	if (type == NULL) type = PyArray_DescrFromType(PyArray_LONG);
+	if (type == NULL) type = PyArray_DescrFromType(PyArray_DEFAULT);
 
 	if (PyString_Check(file)) {
 		if (sep == "") mode="rb";
@@ -5473,7 +5473,7 @@ array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
 		return NULL;
 	}
 	if (type==NULL)
-		type = PyArray_DescrFromType(PyArray_LONG);
+		type = PyArray_DescrFromType(PyArray_DEFAULT);
 	
 	return PyArray_FromBuffer(obj, type, (intp)nin, (intp)offset);
 }
@@ -5663,6 +5663,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 	if (!dtype) {
 		PyArray_Descr *deftype;
 		PyArray_Descr *newtype;
+                /* intentionally made to be PyArray_LONG default */
 		deftype = PyArray_DescrFromType(PyArray_LONG);
 		newtype = PyArray_DescrFromObject(start, deftype);
 		Py_DECREF(deftype);

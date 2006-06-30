@@ -293,8 +293,8 @@ set_string_function(array_repr, 1)
 
 little_endian = (sys.byteorder == 'little')
 
-def indices(dimensions, dtype=int_):
-    """indices(dimensions,dtype=int_) returns an array representing a grid
+def indices(dimensions, dtype=int):
+    """indices(dimensions,dtype=int) returns an array representing a grid
     of indices with row-only, and column-only variation.
     """
     tmp = ones(dimensions, dtype)
@@ -400,8 +400,8 @@ def load(file):
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
 
-def ones(shape, dtype=int_, order='C'):
-    """ones(shape, dtype=int_) returns an array of the given
+def ones(shape, dtype=None, order='C'):
+    """ones(shape, dtype=None) returns an array of the given
     dimensions which is initialized to all ones.
     """
     a = empty(shape, dtype, order)
@@ -411,7 +411,7 @@ def ones(shape, dtype=int_, order='C'):
     #a+=1
     return a
 
-def identity(n,dtype=int_):
+def identity(n,dtype=None):
     """identity(n) returns the identity 2-d array of shape n x n.
     """
     a = array([1]+n*[0],dtype=dtype)

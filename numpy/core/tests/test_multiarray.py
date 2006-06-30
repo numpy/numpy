@@ -66,7 +66,7 @@ class test_attributes(ScipyTestCase):
     def check_stridesattr(self):
         x = self.one
         def make_array(size, offset, strides):
-            return ndarray([size], buffer=x,
+            return ndarray([size], buffer=x, dtype=int,
                            offset=offset*x.itemsize,
                            strides=strides*x.itemsize)
         assert_equal(make_array(4, 4, -1), array([4, 3, 2, 1]))
@@ -81,7 +81,7 @@ class test_attributes(ScipyTestCase):
         x = self.one
         def make_array(size, offset, strides):
             try:
-                r = ndarray([size], buffer=x, offset=offset*x.itemsize)
+                r = ndarray([size], dtype=int, buffer=x, offset=offset*x.itemsize)
             except:
                 pass
             r.strides = strides=strides*x.itemsize

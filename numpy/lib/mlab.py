@@ -2,7 +2,11 @@
 
 from numpy.core.numeric import *
 
-from twodim_base import eye, tri, diag, fliplr, flipud, rot90, tril, triu
+from twodim_base import diag, fliplr, flipud, rot90, tril, triu
+
+# use old defaults
+from numpy.oldnumeric import eye, tri
+
 from numpy.core.fromnumeric import amax as max, amin as min
 from function_base import msort, median, trapz, diff, cov, corrcoef, \
      kaiser, blackman, bartlett, hanning, hamming, sinc, angle
