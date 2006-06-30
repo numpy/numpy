@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/bin/env python
 """
 This file defines a set of system_info classes for getting
 information about various resources (libraries, library directories,
@@ -1098,6 +1098,7 @@ def get_atlas_version(**config):
             log.info('Output: %s', o)
     return atlas_version
 
+from distutils.util import get_platform
 
 class lapack_opt_info(system_info):
 
@@ -1106,11 +1107,21 @@ class lapack_opt_info(system_info):
         if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
             args = []
             link_args = []
+            if get_platform()[-4:] == 'i386':
+                intel = 1
+            else:
+                intel = 0
             if os.path.exists('/System/Library/Frameworks/Accelerate.framework/'):
-                args.extend(['-faltivec'])
+                if intel:
+                    args.extend(['-msse3'])
+                else:
+                    args.extend(['-faltivec'])
                 link_args.extend(['-Wl,-framework','-Wl,Accelerate'])
             elif os.path.exists('/System/Library/Frameworks/vecLib.framework/'):
-                args.extend(['-faltivec'])
+                if intel:
+                    args.extend(['-msse3'])
+                else:
+                    args.extend(['-faltivec'])
                 link_args.extend(['-Wl,-framework','-Wl,vecLib'])
             if args:
                 self.set_info(extra_compile_args=args,
@@ -1191,15 +1202,25 @@ class blas_opt_info(system_info):
         if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
             args = []
             link_args = []
+            if get_platform()[-4:] == 'i386':
+                intel = 1
+            else:
+                intel = 0
             if os.path.exists('/System/Library/Frameworks/Accelerate.framework/'):
-                args.extend(['-faltivec',
-                    '-I/System/Library/Frameworks/vecLib.framework/Headers',
-                    ])
+                if intel:
+                    args.extend(['-msse3'])
+                else:
+                    args.extend(['-faltivec'])
+                args.extend([
+                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
                 link_args.extend(['-Wl,-framework','-Wl,Accelerate'])
             elif os.path.exists('/System/Library/Frameworks/vecLib.framework/'):
-                args.extend(['-faltivec',
-                    '-I/System/Library/Frameworks/vecLib.framework/Headers',
-                    ])
+                if intel:
+                    args.extend(['-msse3'])
+                else:
+                    args.extend(['-faltivec'])
+                args.extend([
+                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
                 link_args.extend(['-Wl,-framework','-Wl,vecLib'])
             if args:
                 self.set_info(extra_compile_args=args,
@@ -1818,7 +1839,8 @@ def show_all(argv=None):
             n = n + '_info'
         show_only.append(n)
     show_all = not show_only
-    for name, c in globals().iteritems():
+    _gdict_ = globals().copy()
+    for name, c in _gdict_.iteritems():
         if not inspect.isclass(c):
             continue
         if not issubclass(c, system_info) or c is system_info:
