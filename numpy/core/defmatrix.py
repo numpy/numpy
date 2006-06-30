@@ -205,7 +205,14 @@ class matrix(N.ndarray):
         return NotImplemented
 
     def __repr__(self):
-        return repr(self.__array__()).replace('array','matrix')
+        s = repr(self.__array__()).replace('array', 'matrix')
+        # now, 'matrix' has 6 letters, and 'array' 5, so the columns don't
+        # line up anymore. We need to add a space.
+        l = s.splitlines()
+        for i in range(1, len(l)):
+            if l[i]:
+                l[i] = ' ' + l[i]
+        return '\n'.join(l)
 
     def __str__(self):
         return str(self.__array__())
