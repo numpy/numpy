@@ -61,6 +61,7 @@ class TypeDeclarationStatement(Statement):
 
     def process_item(self):
         item = self.item
+        apply_map = item.apply_map
         clsname = self.__class__.__name__.lower()
         line = item.get_line()
         from block_statements import Function
@@ -81,14 +82,14 @@ class TypeDeclarationStatement(Statement):
 
         if line.startswith('('):
             i = line.find(')')
-            selector = line[:i+1].strip()
+            selector = apply_map(line[:i+1].strip())
             line = line[i+1:].lstrip()
         elif line.startswith('*'):
             selector = '*'
             line = line[1:].lstrip()
             if line.startswith('('):
                 i = line.find(')')
-                selector += line[:i+1].rstrip()
+                selector += apply_map(line[:i+1].rstrip())
                 line = line[i+1:].lstrip()
             else:
                 m = re.match(r'\d+(_\w+|)|[*]',line)

@@ -27,7 +27,7 @@ class Statement:
 
         self.process_item()
 
-    def get_indent_tab(self,colon='',deindent=False):
+    def get_indent_tab(self,colon=None,deindent=False):
         if self.reader.isfix:
             tab = ' '*6
         else:
@@ -41,6 +41,11 @@ class Statement:
         if self.item is None:
             return tab
         s = self.item.label
+        if colon is None:
+            if self.reader.isfix:
+                colon = ''
+            else:
+                colon = ':'
         if s:
             c = ''
             if self.reader.isfix:

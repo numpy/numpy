@@ -22,6 +22,9 @@ class BeginSource(BeginStatement):
 
     end_stmt_cls = EndSource
 
+    def tostr(self):
+        return '!' + self.blocktype.upper() + ' '+ self.name
+
     def process_item(self):
         self.name = self.reader.name
         self.fill(end_flag = True)
@@ -383,7 +386,8 @@ class Forall(BeginStatement):
     def tostr(self):
         return 'FORALL (%s)' % (self.specs)
     def get_classes(self):
-        return [Assignment, WhereStmt, WhereConstruct, ForallConstruct, ForallStmt]
+        return [GeneralAssignment, WhereStmt, WhereConstruct,
+                ForallConstruct, ForallStmt]
 
 ForallConstruct = Forall
 
@@ -569,14 +573,14 @@ class Type(BeginStatement):
         if line.startswith('('):
             self.isvalid = False
             return
-        attr_specs = []
+        specs = []
         i = line.find('::')
         if i!=-1:
             for s in line[:i].split(','):
                 s = s.strip()
-                if s: attr_specs.append(s)
+                if s: specs.append(s)
             line = line[i+2:].lstrip()
-        self.attr_specs = attr_specs
+        self.specs = specs
         i = line.find('(')
         if i!=-1:
             self.name = line[:i].rstrip()
@@ -592,15 +596,16 @@ class Type(BeginStatement):
 
     def tostr(self):
         s = 'TYPE'
-        if self.attr_specs:
-            s += ', '.join(['']+self.attr_specs) + ' ::'
+        if self.specs:
+            s += ', '.join(['']+self.specs) + ' ::'
         s += ' ' + self.name
         if self.params:
             s += ' ('+self.params+')'
         return s
 
     def get_classes(self):
-        return [Integer] + private_or_sequence + component_part + type_bound_procedure_part
+        return [Integer] + private_or_sequence + component_part +\
+               type_bound_procedure_part
 
 TypeDecl = Type
 
@@ -652,6 +657,8 @@ intrinsic_type_spec = [ SubprogramPrefix, Integer , Real,
     DoublePrecision, Complex, DoubleComplex, Character, Logical, Byte
     ]
 
+derived_type_spec = [  ]
+type_spec = intrinsic_type_spec + derived_type_spec
 declaration_type_spec = intrinsic_type_spec + [ TypeStmt, Class ]
     
 type_declaration_stmt = declaration_type_spec
@@ -665,12 +672,13 @@ proc_binding_stmt = [SpecificBinding, GenericBinding, FinalBinding]
 type_bound_procedure_part = [Contains, Private] + proc_binding_stmt
 
 #R214
-action_stmt = [ Allocate, Assignment, Assign, Backspace, Call, Close,
+action_stmt = [ Allocate, GeneralAssignment, Assign, Backspace, Call, Close,
     Continue, Cycle, Deallocate, Endfile, Exit, Flush, ForallStmt,
     Goto, If, Inquire, Nullify, Open, Print, Read, Return, Rewind,
     Stop, Wait, WhereStmt, Write, ArithmeticIf, ComputedGoto,
     AssignedGoto, Pause ]
-#PointerAssignment,EndFunction, EndProgram, EndSubroutine,
+# GeneralAssignment = Assignment + PointerAssignment
+# EndFunction, EndProgram, EndSubroutine - part of the corresponding blocks
 
 executable_construct = [ Associate, Do, ForallConstruct, IfThen,
     Select, WhereConstruct ] + action_stmt

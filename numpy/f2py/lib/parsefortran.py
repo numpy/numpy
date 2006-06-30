@@ -22,22 +22,22 @@ class FortranParser:
 
     def __init__(self, reader):
         self.reader = reader
-        self.isfix77 = reader.isfix77
+        return
 
     def get_item(self):
         try:
-            item = self.reader.next(ignore_comments = True)
-            return item
+            return self.reader.next(ignore_comments = True)
         except StopIteration:
             pass
+        return
 
     def put_item(self, item):
         self.reader.fifo_item.insert(0, item)
+        return
 
     def parse(self):
         try:
-            main = BeginSource(self)
-            return main
+            return BeginSource(self)
         except KeyboardInterrupt:
             raise
         except:
@@ -50,6 +50,7 @@ class FortranParser:
                 reader = reader.reader
             traceback.print_exc(file=sys.stdout)
             self.reader.show_message(red_text('STOPPED PARSING'), sys.stdout)
+        return
 
 def test_pyf():
     string = """
@@ -121,7 +122,6 @@ def simple_main():
     for filename in sys.argv[1:]:
         reader = FortranFileReader(filename)
         print yellow_text('Processing '+filename+' (mode=%r)' % (reader.mode))
-
         parser = FortranParser(reader)
         block = parser.parse()
         #print block
@@ -137,13 +137,13 @@ def profile_main():
     stats.print_stats(30)
 
 def parse_all_f():
-    for filename in open('opt_all_f90.txt'):
+    for filename in open('opt_all_f.txt'):
         filename = filename.strip()
         reader = FortranFileReader(filename)
-        #print yellow_text('Processing '+filename+' (mode=%r)' % (reader.mode))
-
+        print yellow_text('Processing '+filename+' (mode=%r)' % (reader.mode))
         parser = FortranParser(reader)
         block = parser.parse()
+        print block
 
 if __name__ == "__main__":
     #test_f77()

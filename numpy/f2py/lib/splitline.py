@@ -28,7 +28,9 @@ def split2(line, lower=False):
     """
     return LineSplitter(line,lower=lower).split2()
 
-_f2py_str_findall = re.compile(r"'_F2PY_STRING_CONSTANT_\d+_'").findall
+_f2py_str_findall = re.compile(r"_F2PY_STRING_CONSTANT_\d+_").findall
+_is_name = re.compile(r'\w*\Z',re.I).match
+_is_simple_str = re.compile(r'\w*\Z',re.I).match
 
 def string_replace_map(line, lower=False,
                        _cache={'index':0,'pindex':0}):
@@ -41,31 +43,33 @@ def string_replace_map(line, lower=False,
     string_map = {}
     rev_string_map = {}
     for item in splitquote(line, lower=lower)[0]:
-        if isinstance(item, String):
+        if isinstance(item, String) and not _is_simple_str(item[1:-1]):
             key = rev_string_map.get(item)
             if key is None:
                 _cache['index'] += 1
                 index = _cache['index']
-                key = "'_F2PY_STRING_CONSTANT_%s_'" % (index)
-                string_map[key] = item
-                rev_string_map[item] = key
-            items.append(key)
+                key = "_F2PY_STRING_CONSTANT_%s_" % (index)
+                it = item[1:-1]
+                string_map[key] = it
+                rev_string_map[it] = key
+            items.append(item[0]+key+item[-1])
         else:
             items.append(item)
     newline = ''.join(items)
     items = []
     expr_keys = []
     for item in splitparen(newline):
-        if isinstance(item, ParenString):
+        if isinstance(item, ParenString) and not _is_name(item[1:-1]):
             key = rev_string_map.get(item)
             if key is None:
                 _cache['pindex'] += 1
                 index = _cache['pindex']
-                key = '(F2PY_EXPR_TUPLE_%s)' % (index)
-                string_map[key] = item
-                rev_string_map[item] = key
+                key = 'F2PY_EXPR_TUPLE_%s' % (index)
+                it = item[1:-1]
+                string_map[key] = it
+                rev_string_map[it] = key
                 expr_keys.append(key)
-            items.append(key)
+            items.append(item[0]+key+item[-1])
         else:
             items.append(item)
     found_keys = set()

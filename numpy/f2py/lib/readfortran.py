@@ -51,7 +51,7 @@ class Line:
     """ Holds a Fortran source line.
     """
     
-    f2py_strmap_findall = re.compile(r'( _F2PY_STRING_CONSTANT_\d+_ |\(F2PY_EXPR_TUPLE_\d+\))').findall
+    f2py_strmap_findall = re.compile(r'(_F2PY_STRING_CONSTANT_\d+_|F2PY_EXPR_TUPLE_\d+)').findall
     
     def __init__(self, line, linenospan, label, reader):
         self.line = line.strip()
@@ -61,8 +61,12 @@ class Line:
         self.strline = None
         self.is_f2py_directive = linenospan[0] in reader.f2py_comment_lines
 
+    def has_map(self):
+        return not not (hasattr(self,'strlinemap') and self.strlinemap)
+
     def apply_map(self, line):
-        if not hasattr(self,'strlinemap'): return line
+        if not hasattr(self,'strlinemap') or not self.strlinemap:
+            return line
         findall = self.f2py_strmap_findall
         str_map = self.strlinemap
         keys = findall(line)
