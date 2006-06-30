@@ -190,11 +190,11 @@ arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
         m = monotonic_ (dbins, lbins) ;
 	if ( m == -1 ) {
             for ( i = 0 ; i < lx ; i ++ )
-		iret [i] = decr_slot_ (dx [i], dbins, lbins) ;
+		iret [i] = decr_slot_ ((double)dx [i], dbins, lbins) ;
 	}
         else if ( m == 1 ) {
             for ( i = 0 ; i < lx ; i ++ )
-                iret [i] = incr_slot_ ((float)dx [i], dbins, lbins) ;
+                iret [i] = incr_slot_ ((double)dx [i], dbins, lbins) ;
         }
         else Py_Assert(0, "bins must be montonically increasing or decreasing");
     }
