@@ -1463,7 +1463,7 @@ typedef struct {
    http://numeric.scipy.org/array_interface.html for the full
    documentation. */
 typedef struct {
-    int dummy;            /* contains the integer 2 as a sanity check */
+    int two;              /* contains the integer 2 as a sanity check */
     int nd;               /* number of dimensions */
     char typekind;        /* kind in array --- character code of typestr */
     int itemsize;         /* size of each element */

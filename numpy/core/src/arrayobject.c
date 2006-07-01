@@ -540,7 +540,7 @@ PyArray_PyIntAsIntp(PyObject *o)
 #elif SIZEOF_INTP == SIZEOF_INT
 	descr = &INT_Descr;
 #else
-	descr = &LONGLONG_DESCR;
+	descr = &LONGLONG_Descr;
 #endif
 	arr = NULL;
 
@@ -5787,7 +5787,7 @@ array_struct_get(PyArrayObject *self)
         PyArrayInterface *inter;
 
         inter = (PyArrayInterface *)_pya_malloc(sizeof(PyArrayInterface));
-        inter->dummy = 2;
+        inter->two = 2;
         inter->nd = self->nd;
         inter->typekind = self->descr->kind;
         inter->itemsize = self->descr->elsize;
@@ -6253,7 +6253,7 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
 		if (PyCObject_Check(e)) {
 			PyArrayInterface *inter;
 			inter = (PyArrayInterface *)PyCObject_AsVoidPtr(e);
-			if (inter->dummy == 2) {
+			if (inter->two == 2) {
 				d = inter->nd;
 			}
 		}
@@ -6453,7 +6453,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
                 char buf[40];
                 if (PyCObject_Check(ip)) {
                         inter=(PyArrayInterface *)PyCObject_AsVoidPtr(ip);
-                        if (inter->dummy == 2) {
+                        if (inter->two == 2) {
                                 snprintf(buf, 40, "|%c%d", inter->typekind,
 					 inter->itemsize);
 				chktype = _array_typedescr_fromstr(buf);
@@ -7214,7 +7214,7 @@ PyArray_FromStructInterface(PyObject *input)
 	}
 	if (!PyCObject_Check(attr)) goto fail;
 	inter = PyCObject_AsVoidPtr(attr);
-	if (inter->dummy != 2) goto fail;
+	if (inter->two != 2) goto fail;
 	if ((inter->flags & NOTSWAPPED) != NOTSWAPPED) {
 		endian = PyArray_OPPBYTE;
 		inter->flags &= ~NOTSWAPPED;
