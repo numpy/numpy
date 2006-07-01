@@ -16,7 +16,7 @@ def get_mat(n):
     data = add.outer(data,data)
     return data
 
-class test_eye(ScipyTestCase):
+class test_eye(NumpyTestCase):
     def check_basic(self):
         assert_equal(eye(4),array([[1,0,0,0],
                                    [0,1,0,0],
@@ -52,7 +52,7 @@ class test_eye(ScipyTestCase):
                                           [1,0,0],
                                           [0,1,0]]))
 
-class test_diag(ScipyTestCase):
+class test_diag(NumpyTestCase):
     def check_vector(self):
         vals = (100*arange(5)).astype('l')
         b = zeros((5,5))
@@ -81,7 +81,7 @@ class test_diag(ScipyTestCase):
             b[k] = vals[k+2,k]
         assert_equal(diag(vals,-2),b[:3])
 
-class test_fliplr(ScipyTestCase):
+class test_fliplr(NumpyTestCase):
     def check_basic(self):
         self.failUnlessRaises(ValueError, fliplr, ones(4))
         a = get_mat(4)
@@ -93,7 +93,7 @@ class test_fliplr(ScipyTestCase):
              [5,4,3]]
         assert_equal(fliplr(a),b)
 
-class test_flipud(ScipyTestCase):
+class test_flipud(NumpyTestCase):
     def check_basic(self):
         a = get_mat(4)
         b = a[::-1,:]
@@ -104,7 +104,7 @@ class test_flipud(ScipyTestCase):
              [0,1,2]]
         assert_equal(flipud(a),b)
 
-class test_rot90(ScipyTestCase):
+class test_rot90(NumpyTestCase):
     def check_basic(self):
         self.failUnlessRaises(ValueError, rot90, ones(4))
 
@@ -130,5 +130,26 @@ class test_rot90(ScipyTestCase):
         for k in range(0,13,4):
             assert_equal(rot90(a,k=k),b4)
 
+
+class test_histogram2d(NumpyTestCase):
+    def check_simple(self):
+        import numpy as np
+        np.random.seed(1)   
+        x = np.rand(5)
+        y = np.rand(5)
+        xedges = np.linspace(0,1,10)
+        yedges = np.linspace(0,1,10)
+        H = np.histogram2d(x,y, (xedges, yedges))[0]
+        answer = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 1, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [1, 0, 1, 0, 0, 0, 0, 0, 0],
+                           [0, 1, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0]])
+        assert_equal(H, answer)
+
 if __name__ == "__main__":
-    ScipyTest().run()
+    NumpyTest().run()

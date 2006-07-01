@@ -27,7 +27,7 @@ def eye(N, M=None, k=0, dtype=int):
         and everything else is zeros.
     """
     if M is None: M = N
-    m = equal(subtract.outer(arange(N), arange(M)),-k)
+    m = nn.equal(nn.subtract.outer(nn.arange(N), nn.arange(M)),-k)
     if m.dtype != dtype:
         return m.astype(dtype)
     
@@ -36,7 +36,7 @@ def tri(N, M=None, k=0, dtype=int):
         lower left corner up to the k-th are all ones.
     """
     if M is None: M = N
-    m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
+    m = nn.greater_equal(nn.subtract.outer(nn.arange(N), nn.arange(M)),-k)
     if m.dtype != dtype:
         return m.astype(dtype)
 

@@ -3,7 +3,7 @@
 """
 
 __all__ = ['diag','eye','fliplr','flipud','rot90','tri','triu','tril',
-           'vander']
+           'vander','histogram2d']
 
 from numpy.core.numeric import asanyarray, int_, equal, subtract, arange, \
      zeros, arange, greater_equal, multiply, ones, asarray
@@ -123,3 +123,75 @@ def vander(x, N=None):
     for i in range(N-1):
         X[:,i] = x**(N-i-1)
     return X
+
+
+# David Huard, June 2006
+# Adapted for python from the matlab function hist2d written by Laszlo Balkay, 2006.
+# Numpy compatible license. 
+def  histogram2d(x,y, bins, normed = False):
+    """Compute the 2D histogram for a dataset (x,y) given the edges or
+         the number of bins. 
+
+    Returns histogram, xedges, yedges.
+    The histogram array is a count of the number of samples in each bin. 
+    The array is oriented such that H[i,j] is the number of samples falling
+        into binx[j] and biny[i]. 
+    Setting normed to True returns a density rather than a bin count. 
+    Data falling outside of the edges are not counted.
+    """
+    import numpy as np
+    if len(bins)==2:
+        if np.isscalar(bins[0]):
+            xnbin = bins[0]
+            xedges = np.linspace(x.min(), x.max(), xnbin+1)
+            
+        else:
+            xedges = bins[0]
+            xnbin = len(xedges)-1
+        
+        if np.isscalar(bins[1]):
+            ynbin = bins[1]
+            yedges = np.linspace(y.min(), y.max(), ynbin+1)
+        else:
+            yedges = bins[1]
+            ynbin = len(yedges)-1
+    else:
+        raise AttributeError, 'bins must be a sequence of length 2, with either the number of bins or the bin edges.'
+        
+    
+    # Flattened histogram matrix (1D)
+    hist = np.zeros((xnbin)*(ynbin), int)
+
+    # Count the number of sample in each bin (1D)
+    xbin = np.digitize(x,xedges) 
+    ybin = np.digitize(y,yedges) 
+ 
+    # Remove the outliers
+    outliers = (xbin==0) | (xbin==xnbin+1) | (ybin==0) | (ybin == ynbin+1)
+
+    xbin = xbin[outliers==False]
+    ybin = ybin[outliers == False]
+    
+    # Compute the sample indices in the flattened histogram matrix.
+    if xnbin >= ynbin:
+        xy = ybin*(xnbin) + xbin
+        shift = xnbin
+    else:
+        xy = xbin*(ynbin) + ybin
+        shift = ynbin
+       
+    # Compute the number of repetitions in xy and assign it to the flattened
+    #  histogram matrix.
+    edges = np.unique(xy) 
+    edges.sort()
+    flatcount = np.histogram(xy, edges)[0]
+    indices = edges - shift - 1
+    hist[indices] = flatcount
+
+    # Shape into a proper matrix
+    histmat = hist.reshape(xnbin, ynbin)
+    
+    if normed:
+        diff2 = np.outer(np.diff(yedges), np.diff(xedges))
+        histmat = histmat / diff2 / histmat.sum()
+    return histmat, xedges, yedges
