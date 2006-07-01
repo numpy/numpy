@@ -140,7 +140,12 @@ def  histogram2d(x,y, bins, normed = False):
     Data falling outside of the edges are not counted.
     """
     import numpy as np
-    if len(bins)==2:
+    try:
+        N = len(bins)
+    except TypeError:
+        N = 1
+        bins = [bins]
+    if N == 2:
         if np.isscalar(bins[0]):
             xnbin = bins[0]
             xedges = np.linspace(x.min(), x.max(), xnbin+1)
@@ -155,9 +160,15 @@ def  histogram2d(x,y, bins, normed = False):
         else:
             yedges = bins[1]
             ynbin = len(yedges)-1
+    elif N == 1:
+        ynbin = xnbin = bins[0]
+        xedges = np.linspace(x.min(), x.max(), xnbin+1)
+        yedges = np.linspace(y.max(), y.min(), ynbin+1)
     else:
-        raise AttributeError, 'bins must be a sequence of length 2, with either the number of bins or the bin edges.'
-        
+        yedges = asarray(bins)
+        xedges = yedges.copy()
+        ynbin = len(yedges)-1
+        xnbin = len(xedges)-1
     
     # Flattened histogram matrix (1D)
     hist = np.zeros((xnbin)*(ynbin), int)
@@ -170,7 +181,7 @@ def  histogram2d(x,y, bins, normed = False):
     outliers = (xbin==0) | (xbin==xnbin+1) | (ybin==0) | (ybin == ynbin+1)
 
     xbin = xbin[outliers==False]
-    ybin = ybin[outliers == False]
+    ybin = ybin[outliers==False]
     
     # Compute the sample indices in the flattened histogram matrix.
     if xnbin >= ynbin:

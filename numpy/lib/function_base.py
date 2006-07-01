@@ -29,8 +29,8 @@ from _compiled_base import digitize as _digitize
 def linspace(start, stop, num=50, endpoint=True, retstep=False):
     """Return evenly spaced numbers.
 
-    Return 'num' evenly spaced samples from 'start' to 'stop'.  If
-    'endpoint' is True, the last sample is 'stop'. If 'retstep' is
+    Return num evenly spaced samples from start to stop.  If
+    endpoint is True, the last sample is stop. If retstep is
     True then return the step value used.
     """
     num = int(num)
@@ -51,9 +51,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
 def logspace(start,stop,num=50,endpoint=True,base=10.0):
     """Evenly spaced numbers on a logarithmic scale.
 
-    Computes int(num) evenly spaced exponents from start to stop.
-    If endpoint=True, then last exponent is stop.
-    Returns base**exponents.
+    Computes int(num) evenly spaced exponents from base**start to
+    base**stop. If endpoint=True, then last number is base**stop
     """
     y = linspace(start,stop,num=num,endpoint=endpoint)
     return _nx.power(base,y)
