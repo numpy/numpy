@@ -52,7 +52,7 @@ def eye(N, M=None, k=0, dtype=float):
 def diag(v, k=0):
     """ returns a copy of the the k-th diagonal if v is a 2-d array 
         or returns a 2-d array with v as the k-th diagonal if v is a
-	1-d array.
+        1-d array.
     """
     v = asarray(v)
     s = v.shape

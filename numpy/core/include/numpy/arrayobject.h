@@ -1536,6 +1536,10 @@ typedef struct {
 	PyArray_FromAny(m, PyArray_DescrFromType(type), min, max,       \
                         (((flags) & ENSURECOPY) ?                       \
                          (flags) | DEFAULT_FLAGS : (flags)), NULL)
+#define PyArray_ZEROS(m, dims, type, fortran) \
+	PyArray_Zeros(m, dims, PyArray_DescrFromType(type), fortran)
+#define PyArray_EMPTY(m, dims, type, fortran) \
+	PyArray_Empty(m, dims, PyArray_DescrFromType(type), fortran)
 
 #define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), (val), PyArray_NBYTES(obj))
 

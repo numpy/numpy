@@ -1,7 +1,8 @@
 import sys
 from numpy.core.numerictypes import obj2sctype
 
-__all__ = ['issubclass_', 'get_numpy_include', 'issubsctype', 'deprecate']
+__all__ = ['issubclass_', 'get_numpy_include', 'issubsctype', 'deprecate',
+	   'get_include']
 
 def issubclass_(arg1, arg2):
     try:
@@ -12,7 +13,7 @@ def issubclass_(arg1, arg2):
 def issubsctype(arg1, arg2):
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
-def get_numpy_include():
+def get_include():
     """Return the directory in the package that contains the numpy/*.h header
     files.
 
@@ -21,7 +22,7 @@ def get_numpy_include():
 
       import numpy
       Extension('extension_name', ...
-                include_dirs=[numpy.get_numpy_include()])
+                include_dirs=[numpy.get_include()])
     """
     from numpy.distutils.misc_util import get_numpy_include_dirs
     include_dirs = get_numpy_include_dirs()
@@ -61,3 +62,6 @@ def deprecate(func, oldname, newname):
     else:
         newfunc.__dict__.update(d)
     return newfunc
+
+
+get_numpy_include = deprecate(get_include, 'get_numpy_include', 'get_include')
