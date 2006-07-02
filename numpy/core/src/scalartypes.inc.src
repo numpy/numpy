@@ -1400,7 +1400,7 @@ static PyMethodDef voidtype_methods[] = {
 
 /************* As_mapping functions for void array scalar ************/
 
-static _int_or_ssize_t
+static Py_ssize_t
 voidtype_length(PyVoidScalarObject *self) 
 {
 	if (!self->descr->fields || self->descr->fields == Py_None) {
@@ -1418,7 +1418,7 @@ voidtype_length(PyVoidScalarObject *self)
 }
 
 static PyObject *
-voidtype_item(PyVoidScalarObject *self, _int_or_ssize_t n)
+voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
 {
 	intp m;
 	PyObject *flist=NULL, *key, *fieldinfo;
@@ -1467,7 +1467,7 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 	n = PyArray_PyIntAsIntp(ind);
 	if (error_converting(n)) goto fail;
 
-	return voidtype_item(self, (_int_or_ssize_t)n);
+	return voidtype_item(self, (Py_ssize_t)n);
 
  fail:
 	PyErr_SetString(PyExc_IndexError, "invalid index");
@@ -1476,7 +1476,7 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 }
 
 static int
-voidtype_ass_item(PyVoidScalarObject *self, _int_or_ssize_t n, PyObject *val)
+voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
 {
 	intp m;
 	PyObject *flist=NULL, *key, *fieldinfo, *newtup;
@@ -1542,7 +1542,7 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
 	/* try to convert it to a number */
 	n = PyArray_PyIntAsIntp(ind);
 	if (error_converting(n)) goto fail;
-	return voidtype_ass_item(self, (_int_or_ssize_t)n, val);
+	return voidtype_ass_item(self, (Py_ssize_t)n, val);
 
  fail:
 	PyErr_SetString(PyExc_IndexError, msg);
@@ -2001,14 +2001,14 @@ object_arrtype_concat(PyObjectScalarObject *self, PyObject *other)
 	return PySequence_Concat(self->obval, other);
 }
 
-static _int_or_ssize_t
+static Py_ssize_t
 object_arrtype_length(PyObjectScalarObject *self) 
 {
 	return PyObject_Length(self->obval);
 }
 
 static PyObject *
-object_arrtype_repeat(PyObjectScalarObject *self, _int_or_ssize_t count)
+object_arrtype_repeat(PyObjectScalarObject *self, Py_ssize_t count)
 {
 	return PySequence_Repeat(self->obval, count);
 }
@@ -2039,7 +2039,7 @@ object_arrtype_inplace_concat(PyObjectScalarObject *self, PyObject *o)
 }
 
 static PyObject *
-object_arrtype_inplace_repeat(PyObjectScalarObject *self, _int_or_ssize_t count)
+object_arrtype_inplace_repeat(PyObjectScalarObject *self, Py_ssize_t count)
 {
 	return PySequence_InPlaceRepeat(self->obval, count);
 }
@@ -2082,8 +2082,8 @@ static PyMappingMethods object_arrtype_as_mapping = {
 #endif
 };
 
-static _int_or_ssize_t
-object_arrtype_getsegcount(PyObjectScalarObject *self, _int_or_ssize_t *lenp) 
+static Py_ssize_t
+object_arrtype_getsegcount(PyObjectScalarObject *self, Py_ssize_t *lenp) 
 {
 	int newlen;
 	int cnt;
@@ -2100,8 +2100,8 @@ object_arrtype_getsegcount(PyObjectScalarObject *self, _int_or_ssize_t *lenp)
 	return cnt;
 }
 
-static _int_or_ssize_t
-object_arrtype_getreadbuf(PyObjectScalarObject *self, _int_or_ssize_t segment, void **ptrptr) 
+static Py_ssize_t
+object_arrtype_getreadbuf(PyObjectScalarObject *self, Py_ssize_t segment, void **ptrptr) 
 {
 	PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
 
@@ -2116,8 +2116,8 @@ object_arrtype_getreadbuf(PyObjectScalarObject *self, _int_or_ssize_t segment, v
 	return (*pb->bf_getreadbuffer)(self->obval, segment, ptrptr);
 }
 
-static _int_or_ssize_t
-object_arrtype_getwritebuf(PyObjectScalarObject *self, _int_or_ssize_t segment, void **ptrptr) 
+static Py_ssize_t
+object_arrtype_getwritebuf(PyObjectScalarObject *self, Py_ssize_t segment, void **ptrptr) 
 {
 	PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
 
@@ -2132,8 +2132,8 @@ object_arrtype_getwritebuf(PyObjectScalarObject *self, _int_or_ssize_t segment, 
 	return (*pb->bf_getwritebuffer)(self->obval, segment, ptrptr);
 }
 
-static _int_or_ssize_t 
-object_arrtype_getcharbuf(PyObjectScalarObject *self, _int_or_ssize_t segment, 
+static Py_ssize_t 
+object_arrtype_getcharbuf(PyObjectScalarObject *self, Py_ssize_t segment, 
 			  const char **ptrptr) 
 {
 	PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;

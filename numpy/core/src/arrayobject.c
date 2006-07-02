@@ -1771,7 +1771,7 @@ array_dealloc(PyArrayObject *self) {
  ****************   Implement Mapping Protocol ***************************
  *************************************************************************/
 
-static _int_or_ssize_t
+static Py_ssize_t
 array_length(PyArrayObject *self)
 {
         if (self->nd != 0) {
@@ -1812,7 +1812,7 @@ array_big_item(PyArrayObject *self, intp i)
 
 /* contains optimization for 1-d arrays */
 static PyObject *
-array_item_nice(PyArrayObject *self, _int_or_ssize_t i)
+array_item_nice(PyArrayObject *self, Py_ssize_t i)
 {
 	if (self->nd == 1) {
 		char *item;
@@ -1877,7 +1877,7 @@ array_ass_big_item(PyArrayObject *self, intp i, PyObject *v)
 #endif
 #ifndef array_ass_item
 static int
-array_ass_item(PyArrayObject *self, _int_or_ssize_t i, PyObject *v)
+array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
 {
 	return array_ass_big_item(self, (intp) i, v);
 }
@@ -2825,8 +2825,8 @@ static PyMappingMethods array_as_mapping = {
 
 /* removed multiple segment interface */
 
-static _int_or_ssize_t
-array_getsegcount(PyArrayObject *self, _int_or_ssize_t *lenp)
+static Py_ssize_t
+array_getsegcount(PyArrayObject *self, Py_ssize_t *lenp)
 {
         if (lenp)
                 *lenp = PyArray_NBYTES(self);
@@ -2840,8 +2840,8 @@ array_getsegcount(PyArrayObject *self, _int_or_ssize_t *lenp)
         return 0;
 }
 
-static _int_or_ssize_t
-array_getreadbuf(PyArrayObject *self, _int_or_ssize_t segment, void **ptrptr)
+static Py_ssize_t
+array_getreadbuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 {
         if (segment != 0) {
                 PyErr_SetString(PyExc_ValueError,
@@ -2859,8 +2859,8 @@ array_getreadbuf(PyArrayObject *self, _int_or_ssize_t segment, void **ptrptr)
 }
 
 
-static _int_or_ssize_t
-array_getwritebuf(PyArrayObject *self, _int_or_ssize_t segment, void **ptrptr)
+static Py_ssize_t
+array_getwritebuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 {
         if (PyArray_CHKFLAGS(self, WRITEABLE))
                 return array_getreadbuf(self, segment, (void **) ptrptr);
@@ -2871,8 +2871,8 @@ array_getwritebuf(PyArrayObject *self, _int_or_ssize_t segment, void **ptrptr)
         }
 }
 
-static _int_or_ssize_t
-array_getcharbuf(PyArrayObject *self, _int_or_ssize_t segment, const char **ptrptr)
+static Py_ssize_t
+array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, const char **ptrptr)
 {
         if (self->descr->type_num == PyArray_STRING || \
 	    self->descr->type_num == PyArray_UNICODE)
@@ -3670,11 +3670,11 @@ static PyNumberMethods array_as_number = {
 
 
 static PyObject *
-array_slice(PyArrayObject *self, _int_or_ssize_t ilow, 
-	    _int_or_ssize_t ihigh)
+array_slice(PyArrayObject *self, Py_ssize_t ilow, 
+	    Py_ssize_t ihigh)
 {
         PyArrayObject *r;
-        _int_or_ssize_t l;
+        Py_ssize_t l;
         char *data;
 
         if (self->nd == 0) {
@@ -3715,8 +3715,8 @@ array_slice(PyArrayObject *self, _int_or_ssize_t ilow,
 
 
 static int
-array_ass_slice(PyArrayObject *self, _int_or_ssize_t ilow, 
-		_int_or_ssize_t ihigh, PyObject *v) {
+array_ass_slice(PyArrayObject *self, Py_ssize_t ilow, 
+		Py_ssize_t ihigh, PyObject *v) {
         int ret;
         PyArrayObject *tmp;
 
@@ -5546,6 +5546,13 @@ array_dataptr_get(PyArrayObject *self)
 }
 
 static PyObject *
+array_ctypes_get(PyArrayObject *self)
+{
+	return PyObject_CallMethod(_numpy_internal, "_ctypes",
+				   "O", self);
+}
+
+static PyObject *
 array_interface_get(PyArrayObject *self)
 {
 	PyObject *dict;
@@ -6102,6 +6109,10 @@ static PyGetSetDef array_getsetlist[] = {
 	 (getter)array_flat_get,
 	 (setter)array_flat_set,
 	 "a 1-d view of a contiguous array"},
+	{"ctypes",
+	 (getter)array_ctypes_get,
+	 NULL,
+	 "Ctypes interface object"},
 	{"__array_interface__",
 	 (getter)array_interface_get,
 	 NULL,
@@ -7997,7 +8008,7 @@ arrayiter_dealloc(PyArrayIterObject *it)
         _pya_free(it);
 }
 
-static _int_or_ssize_t
+static Py_ssize_t
 iter_length(PyArrayIterObject *self)
 {
         return self->size;
@@ -10290,9 +10301,11 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
  ****************   Implement Mapping Protocol ***************************
  *************************************************************************/
 
-static _int_or_ssize_t
-descr_length(PyArray_Descr *self)
+static Py_ssize_t
+descr_length(PyObject *self0)
 {
+	
+	PyArray_Descr *self = (PyArray_Descr *)self0;
 
 	if (self->fields && self->fields != Py_None)
 		/* Remove the last entry (root) */
@@ -10335,13 +10348,9 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
 }
 
 static PyMappingMethods descr_as_mapping = {
-#if PY_VERSION_HEX >= 0x02050000
-        (lenfunc)descr_length,		    /*mp_length*/
-#else
-        (inquiry)descr_length,		    /*mp_length*/
-#endif
+        descr_length,		            /*mp_length*/
         (binaryfunc)descr_subscript,	    /*mp_subscript*/
-        (objobjargproc)NULL,	    /*mp_ass_subscript*/
+        (objobjargproc)NULL,	            /*mp_ass_subscript*/
 };
 
 /****************** End of Mapping Protocol ******************************/

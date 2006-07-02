@@ -15,6 +15,7 @@
 
 /* $Id: multiarraymodule.c,v 1.36 2005/09/14 00:14:00 teoliphant Exp $ */
 
+#define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "structmember.h"
 /*#include <string.h>
@@ -5031,7 +5032,7 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 	char *data;
 	longlong nin=-1;
 	char *sep=NULL;
-	int s;
+	Py_ssize_t s;
 	static char *kwlist[] = {"string", "dtype", "count", "sep", NULL};
 	PyArray_Descr *descr=NULL;
 
@@ -5807,6 +5808,37 @@ array__get_ndarray_c_version(PyObject *dummy, PyObject *args, PyObject *kwds)
 	return PyInt_FromLong( (long) PyArray_GetNDArrayCVersion() );
 }
 
+static char
+doc__reconstruct[] = "_reconstruct(subtype, shape, dtype) constructs an empty array. Used by Pickles.";
+
+static PyObject *
+array__reconstruct(PyObject *dummy, PyObject *args) 
+{
+
+	PyTypeObject *subtype;
+	PyArray_Dims shape = {NULL, 0};
+	PyArray_Descr *dtype=NULL;
+	if (!PyArg_ParseTuple(args, "O!O&O&", &PyType_Type, &subtype, 
+			      PyArray_IntpConverter, &shape,
+			      PyArray_DescrConverter, &dtype)) 
+		goto fail;
+
+	if (!PyType_IsSubtype(subtype, &PyArray_Type)) {
+		PyErr_SetString(PyExc_TypeError, 
+				"_reconstruct: First argument must be "	\
+				"a sub-type of ndarray");
+		goto fail;
+	}
+	
+	return PyArray_NewFromDescr(subtype, dtype, 
+				    (int)shape.len, shape.ptr,
+				    NULL, NULL, 0, NULL);
+ fail:
+	Py_XDECREF(dtype);
+        if (shape.ptr) PyDimMem_FREE(shape.ptr);
+	return NULL;
+}
+
 static char 
 doc_set_string_function[] = "set_string_function(f, repr=1) sets the python function f to be the function used to obtain a pretty printable string version of a array whenever a array is printed.  f(M) should expect a array argument M, and should return a string consisting of the desired representation of M for printing.";
 
@@ -6047,6 +6079,8 @@ format_longfloat(PyObject *dummy, PyObject *args, PyObject *kwds)
 static struct PyMethodDef array_module_methods[] = {
 	{"_get_ndarray_c_version", (PyCFunction)array__get_ndarray_c_version, 
 	 METH_VARARGS|METH_KEYWORDS, doc__get_ndarray_c_version},
+	{"_reconstruct", (PyCFunction)array__reconstruct,
+	 METH_VARARGS, doc__reconstruct},
 	{"set_string_function", (PyCFunction)array_set_string_function, 
 	 METH_VARARGS|METH_KEYWORDS, doc_set_string_function},
 	{"set_numeric_ops", (PyCFunction)array_set_ops_function,

@@ -877,7 +877,7 @@ array_reduce(PyArrayObject *self, PyObject *args)
 
 	ret = PyTuple_New(3);
 	if (ret == NULL) return NULL;
-	mod = PyImport_ImportModule("numpy.core._internal");
+	mod = PyImport_ImportModule("numpy.core.multiarray");
 	if (mod == NULL) {Py_DECREF(ret); return NULL;}
 	obj = PyObject_GetAttrString(mod, "_reconstruct");
 	Py_DECREF(mod);

@@ -102,7 +102,8 @@ def _array_descr(descriptor):
 
 # Build a new array from the information in a pickle.
 # Note that the name numpy.core._internal._reconstruct is embedded in
-# the pickles of ndarrays, so don't remove the name here, or you'll
+# pickles of ndarrays made with NumPy before release 1.0
+# so don't remove the name here, or you'll
 # break backward compatibilty.
 def _reconstruct(subtype, shape, dtype):
     return ndarray.__new__(subtype, shape, dtype)
@@ -168,4 +169,42 @@ def _commastring(astr):
 
     return result
 
+def _getintp_ctype():
+    if _getintp_ctype.cache:
+        return _getintp_ctype.cache
+    import ctypes
+    char = dtype('p').char
+    if (char == 'i'):
+        val = ctypes.c_int
+    elif char == 'l':
+        val = ctypes.c_long
+    elif char == 'q':
+        val = ctypes.c_longlong
+    else:
+        raise ValueError, "confused about intp->ctypes."
+    _getintp_ctype.cache = val
+    return val
+_getintp_ctype.cache = None
 
+# Used for .ctypes attribute of ndarray
+class _ctypes(object):
+    def __init__(self, array):
+        try:
+            import ctypes
+            self._ctypes = ctypes
+        except ImportError:
+            raise AttributeError, "ctypes not available"
+        self._arr = array
+        
+    def get_data(self):
+        return self._ctypes.c_void_p(self._arr.__array_interface__['data'][0])
+
+    def get_dims(self):
+        return (_getintp_ctype()*self._arr.ndim)(*self._arr.shape)
+
+    def get_strides(self):
+        return (_getintp_ctype()*self._arr.ndim)(*self._arr.strides)
+        
+    data = property(get_data, None, doc="c-types data")
+    dims = property(get_dims, None, doc="c-types dims")
+    strides = property(get_strides, None, doc="c-types strides")
