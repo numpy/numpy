@@ -206,5 +206,5 @@ class _ctypes(object):
         return (_getintp_ctype()*self._arr.ndim)(*self._arr.strides)
         
     data = property(get_data, None, doc="c-types data")
-    shape = property(get_shape, None, doc="c-types dims")
+    shape = property(get_shape, None, doc="c-types shape")
     strides = property(get_strides, None, doc="c-types strides")

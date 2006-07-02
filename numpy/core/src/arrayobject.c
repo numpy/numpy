@@ -5553,6 +5553,12 @@ array_ctypes_get(PyArrayObject *self)
 }
 
 static PyObject *
+array_as_parameter_get(PyArrayObject *self)
+{
+	return PyLong_FromVoidPtr(self->data);
+}
+
+static PyObject *
 array_interface_get(PyArrayObject *self)
 {
 	PyObject *dict;
@@ -6113,6 +6119,10 @@ static PyGetSetDef array_getsetlist[] = {
 	 (getter)array_ctypes_get,
 	 NULL,
 	 "Ctypes interface object"},
+	{"_as_parameter_",
+	 (getter)array_as_parameter_get,
+	 NULL,
+	 "interpret array directly"},
 	{"__array_interface__",
 	 (getter)array_interface_get,
 	 NULL,
