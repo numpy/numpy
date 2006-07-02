@@ -1388,6 +1388,9 @@ array(data = %(data)s,
             self._mask = make_mask (self._mask, copy=1, flag=0)
             self._shared_mask = 0
 
+    def _get_ctypes(self):
+        return self._data.ctypes
+
     shape = property(_get_shape, _set_shape,
            doc = 'tuple giving the shape of the array')
 
@@ -1401,6 +1404,8 @@ array(data = %(data)s,
            doc = 'Access the imaginary part of the array')
 
     imag = imaginary
+
+    ctypes = property(_get_ctypes, None, doc="ctypes")
 
 #end class MaskedArray
 

@@ -199,12 +199,12 @@ class _ctypes(object):
     def get_data(self):
         return self._ctypes.c_void_p(self._arr.__array_interface__['data'][0])
 
-    def get_dims(self):
+    def get_shape(self):
         return (_getintp_ctype()*self._arr.ndim)(*self._arr.shape)
 
     def get_strides(self):
         return (_getintp_ctype()*self._arr.ndim)(*self._arr.strides)
         
     data = property(get_data, None, doc="c-types data")
-    dims = property(get_dims, None, doc="c-types dims")
+    shape = property(get_shape, None, doc="c-types dims")
     strides = property(get_strides, None, doc="c-types strides")
