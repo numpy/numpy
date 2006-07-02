@@ -637,7 +637,7 @@ class Enum(BeginStatement):
 from statements import *
 from typedecl_statements import *
 
-f2py_stmt = [ThreadSafe, FortranName, Depend, Check, CallStatement,
+f2py_stmt = [Threadsafe, FortranName, Depend, Check, CallStatement,
              CallProtoArgument]
 
 access_spec = [Public, Private]

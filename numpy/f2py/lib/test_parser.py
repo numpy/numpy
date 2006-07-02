@@ -4,10 +4,11 @@ from block_statements import *
 from readfortran import Line, FortranStringReader
 
 
-def parse(cls, line, label=''):
+def parse(cls, line, label='',
+          isfree=True, isstrict=False):
     if label:
         line = label + ' : ' + line
-    reader = FortranStringReader(line, True, False)
+    reader = FortranStringReader(line, isfree, isstrict)
     item = reader.next()
     if not cls.match(item.get_line()):
         raise ValueError, '%r does not match %s pattern' % (line, cls.__name__)
@@ -371,6 +372,56 @@ class test_Statements(NumpyTestCase):
         assert_equal(parse(Case,'case default'),'CASE DEFAULT')
         assert_equal(parse(Case,'case (1:2 ,3:4)'),'CASE ( 1 : 2, 3 : 4 )')
         assert_equal(parse(Case,'case (a(1,:):)'),'CASE ( a(1,:) : )')
-    
+        assert_equal(parse(Case,'case default'),'CASE DEFAULT')
+
+    def check_where(self):
+        assert_equal(parse(WhereStmt,'where (1) a=1'),'WHERE ( 1 ) a = 1')
+        assert_equal(parse(WhereStmt,'where (a(1,2)) a=1'),'WHERE ( a(1,2) ) a = 1')
+
+    def check_elsewhere(self):
+        assert_equal(parse(ElseWhere,'else where'),'ELSE WHERE')
+        assert_equal(parse(ElseWhere,'elsewhere (1)'),'ELSE WHERE ( 1 )')
+        assert_equal(parse(ElseWhere,'elsewhere(a(1,2))'),'ELSE WHERE ( a(1,2) )')
+
+    def check_enumerator(self):
+        assert_equal(parse(Enumerator,'enumerator a'), 'ENUMERATOR a')
+        assert_equal(parse(Enumerator,'enumerator:: a'), 'ENUMERATOR a')
+        assert_equal(parse(Enumerator,'enumerator a,b'), 'ENUMERATOR a, b')
+        assert_equal(parse(Enumerator,'enumerator a=1'), 'ENUMERATOR a=1')
+        assert_equal(parse(Enumerator,'enumerator a=1 , b=c(1,2)'), 'ENUMERATOR a=1, b=c(1,2)')
+
+    def check_fortranname(self):
+        assert_equal(parse(FortranName,'fortranname a'),'FORTRANNAME a')
+
+    def check_threadsafe(self):
+        assert_equal(parse(Threadsafe,'threadsafe'),'THREADSAFE')
+
+    def check_depend(self):
+        assert_equal(parse(Depend,'depend( a) b'), 'DEPEND ( a ) b')
+        assert_equal(parse(Depend,'depend( a) ::b'), 'DEPEND ( a ) b')
+        assert_equal(parse(Depend,'depend( a,c) b,e'), 'DEPEND ( a, c ) b, e')
+
+    def check_check(self):
+        assert_equal(parse(Check,'check(1) a'), 'CHECK ( 1 ) a')
+        assert_equal(parse(Check,'check(1) :: a'), 'CHECK ( 1 ) a')
+        assert_equal(parse(Check,'check(b(1,2)) a'), 'CHECK ( b(1,2) ) a')
+        assert_equal(parse(Check,'check(a>1) :: a'), 'CHECK ( a>1 ) a')
+
+    def check_callstatement(self):
+        assert_equal(parse(CallStatement,'callstatement (*func)()',isstrict=1),
+                     'CALLSTATEMENT (*func)()')
+        assert_equal(parse(CallStatement,'callstatement i=1;(*func)()',isstrict=1),
+                     'CALLSTATEMENT i=1;(*func)()')
+
+    def check_callprotoargument(self):
+        assert_equal(parse(CallProtoArgument,'callprotoargument int(*), double'),
+                     'CALLPROTOARGUMENT int(*), double')
+
+    def check_pause(self):
+        assert_equal(parse(Pause,'pause'),'PAUSE')
+        assert_equal(parse(Pause,'pause 1'),'PAUSE 1')
+        assert_equal(parse(Pause,'pause "hey"'),'PAUSE "hey"')
+        assert_equal(parse(Pause,'pause "hey pa"'),'PAUSE "hey pa"')
+
 if __name__ == "__main__":
     NumpyTest().run()

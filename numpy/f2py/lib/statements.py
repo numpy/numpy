@@ -1507,7 +1507,7 @@ class Where(Statement):
     def process_item(self):
         line = self.item.get_line()[5:].lstrip()
         i = line.index(')')
-        self.expr = line[1:i].strip()
+        self.expr = self.item.apply_map(line[1:i].strip())
         line = line[i+1:].lstrip()
         newitem = self.item.copy(line)
         cls = Assignment
@@ -1518,9 +1518,10 @@ class Where(Statement):
                 return
         self.isvalid = False
         return
+
     def __str__(self):
         tab = self.get_indent_tab()
-        return tab + 'WHERE (%s) %s' % (self.expr, self.content[0])
+        return tab + 'WHERE ( %s ) %s' % (self.expr, str(self.content[0]).lstrip())
 
 WhereStmt = Where
 
@@ -1536,14 +1537,15 @@ class ElseWhere(Statement):
         if line.startswith('('):
             i = line.index(')')
             assert i != -1,`line`
-            self.expr = line[1:i].strip()
+            self.expr = self.item.apply_map(line[1:i].strip())
             line = line[i+1:].lstrip()
         self.name = line
-        if self.name and not self.name==self.parent.name:
+        parent_name = getattr(self.parent,'name','')
+        if self.name and not self.name==parent_name:
             message = self.reader.format_message(\
                         'WARNING',
                         'expected where-construct-name %r but got %r, skipping.'\
-                        % (self.parent.name, self.name),
+                        % (parent_name, self.name),
                         self.item.span[0],self.item.span[1])
             print >> sys.stderr, message
             self.isvalid = False
@@ -1551,9 +1553,12 @@ class ElseWhere(Statement):
 
     def __str__(self):
         tab = self.get_indent_tab()
-        if self.expr is None:
-            return tab + 'ELSE WHERE ' + self.name
-        return tab + 'ELSE WHERE (%s) ' % (self.expr) + self.name
+        s = 'ELSE WHERE'
+        if self.expr is not None:
+            s += ' ( %s )' % (self.expr)
+        if self.name:
+            s += ' ' + self.name
+        return tab + s
 
 # Enum construct statements
 
@@ -1567,10 +1572,10 @@ class Enumerator(Statement):
         line = self.item.get_line()[10:].lstrip()
         if line.startswith('::'):
             line = line[2:].lstrip()
-        self.rest = line
+        self.items = split_comma(line, self.item)
         return
     def __str__(self):
-        return self.get_indent_tab() + 'ENUMERATOR ' + self.rest
+        return self.get_indent_tab() + 'ENUMERATOR ' + ', '.join(self.items)
 
 # F2PY specific statements
 
@@ -1585,7 +1590,7 @@ class FortranName(Statement):
     def __str__(self):
         return self.get_indent_tab() + 'FORTRANNAME ' + self.value
 
-class ThreadSafe(Statement):
+class Threadsafe(Statement):
     """
     THREADSAFE
     """
@@ -1604,34 +1609,36 @@ class Depend(Statement):
     def process_item(self):
         line = self.item.get_line()[6:].lstrip()
         i = line.find(')')
-        self.depends = [s.strip() for s in line[1:i].strip().split(',')]
+        self.depends = split_comma(line[1:i].strip(), self.item)
         line = line[i+1:].lstrip()
         if line.startswith('::'):
             line = line[2:].lstrip()
-        self.items = [s.strip() for s in line.split(',')]
+        self.items = split_comma(line)
         return
+
     def __str__(self):
-        return self.get_indent_tab() + 'DEPEND (%s) %s' \
+        return self.get_indent_tab() + 'DEPEND ( %s ) %s' \
                % (', '.join(self.depends), ', '.join(self.items))
 
 class Check(Statement):
     """
-    CHECK ( <c-int-scalar-expr> ) [ :: ] <dummy-arg-name-list>
+    CHECK ( <c-int-scalar-expr> ) [ :: ] <name>
 
     """
     match = re.compile(r'check\s*\(',re.I).match
     def process_item(self):
         line = self.item.get_line()[5:].lstrip()
         i = line.find(')')
-        self.expr = line[1:i].strip()
+        assert i!=-1,`line`
+        self.expr = self.item.apply_map(line[1:i].strip())
         line = line[i+1:].lstrip()
         if line.startswith('::'):
             line = line[2:].lstrip()
-        self.items = [s.strip() for s in line.split(',')]
+        self.value = line
         return
     def __str__(self):
-        return self.get_indent_tab() + 'CHECK (%s) %s' \
-               % (self.expr, ', '.join(self.items))
+        return self.get_indent_tab() + 'CHECK ( %s ) %s' \
+               % (self.expr, self.value)
 
 class CallStatement(Statement):
     """
@@ -1639,7 +1646,7 @@ class CallStatement(Statement):
     """
     match = re.compile(r'callstatement\b', re.I).match
     def process_item(self):
-        self.expr = self.item.get_line()[13:].lstrip()
+        self.expr = self.item.apply_map(self.item.get_line()[13:].lstrip())
         return
     def __str__(self):
         return self.get_indent_tab() + 'CALLSTATEMENT ' + self.expr
@@ -1650,7 +1657,7 @@ class CallProtoArgument(Statement):
     """
     match = re.compile(r'callprotoargument\b', re.I).match
     def process_item(self):
-        self.specs = self.item.get_line()[17:].lstrip()
+        self.specs = self.item.apply_map(self.item.get_line()[17:].lstrip())
         return
     def __str__(self):
         return self.get_indent_tab() + 'CALLPROTOARGUMENT ' + self.specs
@@ -1661,10 +1668,11 @@ class Pause(Statement):
     """
     PAUSE [ <char-literal-constant|int-literal-constant> ]
     """
-    match = re.compile(r'pause\b\s*(\d+|\'\w*\')\Z', re.I).match
+    match = re.compile(r'pause\s*(\d+|\'\w*\'|"\w*"|)\Z', re.I).match
     def process_item(self):
-        self.value = self.item.get_line()[5:].lstrip()
+        self.value = self.item.apply_map(self.item.get_line()[5:].lstrip())
         return
     def __str__(self):
-        return self.get_indent_tab() + 'PAUSE ' + self.value
-
+        if self.value:
+            return self.get_indent_tab() + 'PAUSE ' + self.value
+        return self.get_indent_tab() + 'PAUSE'
