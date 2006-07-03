@@ -6170,7 +6170,7 @@ static char Arraytype__doc__[] =
 	"  command. Arrays are sequence, mapping and numeric objects.\n"
 	"  More information is available in the numpy module and by looking\n"
 	"  at the methods and attributes of an array.\n\n"
-	"  ndarray.__new__(subtype, shape=, dtype=int, buffer=None, \n"
+	"  ndarray.__new__(subtype, shape=, dtype=float, buffer=None, \n"
 	"                  offset=0, strides=None, order=None)\n\n"
 	"   There are two modes of creating an array using __new__:\n"
 	"   1) If buffer is None, then only shape, dtype, and order \n"

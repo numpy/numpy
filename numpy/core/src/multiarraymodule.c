@@ -4684,7 +4684,7 @@ PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 }
 
 
-static char doc_empty[] = "empty((d1,...,dn),dtype=int,order='C') will return a new array\n of shape (d1,...,dn) and given type with all its entries uninitialized. This can be faster than zeros.";
+static char doc_empty[] = "empty((d1,...,dn),dtype=float,order='C') will return a new array\n of shape (d1,...,dn) and given type with all its entries uninitialized. This can be faster than zeros.";
 
 static PyObject *
 array_empty(PyObject *ignored, PyObject *args, PyObject *kwds) 
@@ -4814,7 +4814,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 
 }
 
-static char doc_zeros[] = "zeros((d1,...,dn),dtype=int,order='C') will return a new array of shape (d1,...,dn) and type typecode with all it's entries initialized to zero.";
+static char doc_zeros[] = "zeros((d1,...,dn),dtype=float,order='C') will return a new array of shape (d1,...,dn) and type typecode with all it's entries initialized to zero.";
 
 
 static PyObject *
@@ -5024,7 +5024,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 	return (PyObject *)ret;
 }
 
-static char doc_fromString[] = "fromstring(string, dtype=int, count=-1, sep='') returns a new 1d array initialized from the raw binary data in string.  If count is positive, the new array will have count elements, otherwise it's size is determined by the size of string.  If sep is not empty then the string is interpreted in ASCII mode and converted to the desired number type using sep as the separator between elements (extra whitespace is ignored).";
+static char doc_fromString[] = "fromstring(string, dtype=float, count=-1, sep='') returns a new 1d array initialized from the raw binary data in string.  If count is positive, the new array will have count elements, otherwise it's size is determined by the size of string.  If sep is not empty then the string is interpreted in ASCII mode and converted to the desired number type using sep as the separator between elements (extra whitespace is ignored).";
 
 static PyObject *
 array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
@@ -5294,7 +5294,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 }
 
 static char doc_fromfile[] = \
-	"fromfile(file=, dtype=int, count=-1, sep='')\n"	\
+	"fromfile(file=, dtype=float, count=-1, sep='')\n"	\
 	"\n"\
 	"  Return an array of the given data type from a \n"\
 	"  (text or binary) file.   The file argument can be an open file\n"\
@@ -5447,7 +5447,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 }
 
 static char doc_frombuffer[] = \
-	"frombuffer(buffer=, dtype=int, count=-1, offset=0)\n"\
+	"frombuffer(buffer=, dtype=float, count=-1, offset=0)\n"\
 	"\n"								\
 	"  Returns a 1-d array of data type dtype from buffer. The buffer\n"\
 	"   argument must be an object that exposes the buffer interface.\n"\
