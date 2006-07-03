@@ -2490,7 +2490,8 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         }
 
         /* Check to see that type (and otype) is not FLEXIBLE */
-	if (PyArray_ISFLEXIBLE(mp) || (otype && PyTypeNum_ISFLEXIBLE(otype->type_num))) {
+	if (PyArray_ISFLEXIBLE(mp) || 
+	    (otype && PyTypeNum_ISFLEXIBLE(otype->type_num))) {
                 PyErr_Format(PyExc_TypeError, 
 			     "cannot perform %s with flexible type",
                              _reduce_type[operation]);
