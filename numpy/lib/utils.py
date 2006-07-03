@@ -1,8 +1,10 @@
-import sys
+import sys, os
 from numpy.core.numerictypes import obj2sctype
+from numpy.core.multiarray import dtype
 
-__all__ = ['issubclass_', 'get_numpy_include', 'issubsctype', 'deprecate',
-	   'get_include']
+__all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
+           'issubdtype', 'deprecate',
+	   'get_include', 'load_ctypes_library']
 
 def issubclass_(arg1, arg2):
     try:
@@ -12,6 +14,9 @@ def issubclass_(arg1, arg2):
 
 def issubsctype(arg1, arg2):
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
+
+def issubdtype(arg1, arg2):
+    return issubclass(dtype(arg1).type, dtype(arg2).type)
 
 def get_include():
     """Return the directory in the package that contains the numpy/*.h header
@@ -28,6 +33,25 @@ def get_include():
     include_dirs = get_numpy_include_dirs()
     assert len(include_dirs)==1,`include_dirs`
     return include_dirs[0]
+
+# Adapted from Albert Strasheim
+def load_ctypes_library(libname, loader_path):
+    if '.' not in libname:
+        if sys.platform == 'win32':
+            libname = '%s.dll' % libname
+        elif sys.platform == 'darwin':
+            libname = '%s.dylib' % libname
+        else:
+            libname = '%s.so' % libname
+    loader_path = os.path.abspath(loader_path)
+    if not os.path.isdir(loader_path):
+        libdir = os.path.dirname(loader_path)
+    else:
+        libdir = loader_path
+    import ctypes
+    libpath = os.path.join(libdir, libname)
+    return ctypes.cdll[libpath]
+
 
 if sys.version_info < (2, 4):
     # Can't set __name__ in 2.3
@@ -65,3 +89,5 @@ def deprecate(func, oldname, newname):
 
 
 get_numpy_include = deprecate(get_include, 'get_numpy_include', 'get_include')
+
+

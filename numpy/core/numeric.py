@@ -10,7 +10,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'alterdot', 'restoredot', 'cross',
            'array2string', 'get_printoptions', 'set_printoptions',
            'array_repr', 'array_str', 'set_string_function',
-           'little_endian',
+           'little_endian', 'require',
            'fromiter',
            'indices', 'fromfunction',
            'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
@@ -132,6 +132,39 @@ def asfortranarray(a, dtype=None):
     """Return 'a' as an array laid out in Fortran-order in memory.
     """
     return array(a, dtype, copy=False, order='F', ndmin=1)
+
+def require(a, dtype=None, requirements=None):
+    if requirements is None:
+        requirements = []
+    else:
+        requirements = [x.upper() for x in requirements]
+
+    if not requirements:
+        return asanyarray(a, dtype=dtype)
+
+    if 'ENSUREARRAY' in requirements or 'E' in requirements:
+        func = asarray
+    else:
+        func = asanyarray
+
+    if 'FORCECAST' in requirements or 'FORCE' in requirements:
+        arr = func(a)
+        if dtype is not None and arr.dtype != dtype:
+            arr = arr.astype(dtype)
+    else:
+        arr = func(a, dtype=dtype)
+
+    copychar = 'A'
+    if 'FORTRAN' in requirements or 'F' in requirements:
+        copychar = 'F'
+    elif 'CONTIGUOUS' in requirements or 'C' in requirements:
+        copychar = 'C'
+
+    for prop in requirements:
+        if not arr.flags[prop]:
+            arr = arr.copy(copychar)
+            break
+    return arr   
 
 def isfortran(a):
     """Returns True if 'a' is laid out in Fortran-order in memory.
