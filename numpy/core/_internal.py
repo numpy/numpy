@@ -195,23 +195,35 @@ class _ctypes(object):
         except ImportError:
             raise AttributeError, "ctypes not available"
         self._arr = array
+        if self._arr.ndim == 0:
+            self._zerod = True
+        else:
+            self._zerod = False
     
     def data_as(self, obj):
         return self._ctypes.cast(self._arr._as_parameter_, obj)
 
     def shape_as(self, obj):
+        if self._zerod:
+            return None
         return (obj*self._arr.ndim)(*self._arr.shape)
 
     def strides_as(self, obj):
+        if self._zerod:
+            return None
         return (obj*self._arr.ndim)(*self._arr.strides)
     
     def get_data(self):
         return self._ctypes.c_void_p(self._arr._as_parameter_)
 
     def get_shape(self):
+        if self._zerod: 
+            return None
         return (_getintp_ctype()*self._arr.ndim)(*self._arr.shape)
 
     def get_strides(self):
+        if self._zerod:
+            return None
         return (_getintp_ctype()*self._arr.ndim)(*self._arr.strides)
         
     data = property(get_data, None, doc="c-types data")
