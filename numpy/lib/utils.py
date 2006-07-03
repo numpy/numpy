@@ -4,7 +4,7 @@ from numpy.core.multiarray import dtype
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
            'issubdtype', 'deprecate',
-	   'get_include', 'load_ctypes_library']
+	   'get_include', 'ctypes_load_library']
 
 def issubclass_(arg1, arg2):
     try:
@@ -35,7 +35,7 @@ def get_include():
     return include_dirs[0]
 
 # Adapted from Albert Strasheim
-def load_ctypes_library(libname, loader_path):
+def ctypes_load_library(libname, loader_path):
     if '.' not in libname:
         if sys.platform == 'win32':
             libname = '%s.dll' % libname
