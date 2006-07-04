@@ -5,29 +5,113 @@
 import re
 import sys
 
-from base_classes import BeginStatement, EndStatement, Statement
+from base_classes import BeginStatement, EndStatement, Statement,\
+     AttributeHolder, ProgramBlock
 from readfortran import Line
+from utils import filter_stmts, parse_bind, parse_result
+
+class HasImplicitStmt:
+
+    a = AttributeHolder(implicit_rules = None)
+
+    def get_type(self, name):
+        implicit_rules = self.a.implicit_rules
+        if implicit_rules=={}:
+            raise ValueError,'Implicit rules mapping is null'
+        l = name[0].lower()
+        if implicit_rules.has_key(l):
+            return implicit_rules[l]
+        # default rules
+        if l in 'ijklmn':
+            return implicit_rules['default_integer']
+        return implicit_rules['default_real']
+
+    def initialize(self):
+        implicit_rules = self.a.implicit_rules
+        if implicit_rules is not None:
+            return
+        self.a.implicit_rules = implicit_rules = {}
+        real = Real(self, self.item.copy('real'))
+        assert real.isvalid
+        integer = Integer(self, self.item.copy('integer'))
+        assert integer.isvalid
+        implicit_rules['default_real'] = real
+        implicit_rules['default_integer'] = integer
+        return
+
+class HasUseStmt:
+
+    a = AttributeHolder(use = {})
+
+    def get_entity(self, name):
+        for modname, modblock in self.top.a.module.items():
+            for stmt in modblock.content:
+                if getattr(stmt,'name','') == name:
+                    return stmt
+        return
+    
+    def initialize(self):
+        
+        return
+
+class HasVariables:
+
+    a = AttributeHolder(variables = {})
+
+class HasTypeDecls:
+
+    a = AttributeHolder(type_decls = {})
+
+class HasExternal:
+
+    a = AttributeHolder(external = [])
+
+class HasAttributes:
+
+    a = AttributeHolder(attributes = [])
 
 # File block
 
 class EndSource(EndStatement):
     """
+    Dummy End statement for BeginSource.
     """
     match = staticmethod(lambda s: False)
 
 class BeginSource(BeginStatement):
     """
+    Fortran source content.
     """
     match = staticmethod(lambda s: True)
-
     end_stmt_cls = EndSource
+    a = AttributeHolder(module = {},
+                        external_subprogram = {},
+                        blockdata = {},
+                        )
 
     def tostr(self):
         return '!' + self.blocktype.upper() + ' '+ self.name
 
     def process_item(self):
         self.name = self.reader.name
+        self.top = self
         self.fill(end_flag = True)
+        return
+
+    def analyze(self):
+        for stmt in self.content:
+            if isinstance(stmt, Module):
+                stmt.analyze()
+                self.a.module[stmt.name] = stmt
+            elif isinstance(stmt, SubProgramStatement):
+                stmt.analyze()
+                self.a.external_subprogram[stmt.name] = stmt
+            elif isinstance(stmt, BlockData):
+                stmt.analyze()
+                self.a.blockdata[stmt.name] = stmt
+            else:
+                message = 'Unexpected statement %r in %r block. Ignoring.' \
+                          % (stmt.__class__, self.__class__)
         return
 
     def get_classes(self):
@@ -58,7 +142,9 @@ class BeginSource(BeginStatement):
 class EndModule(EndStatement):
     match = re.compile(r'end(\s*module\s*\w*|)\Z', re.I).match
 
-class Module(BeginStatement):
+class Module(BeginStatement, HasAttributes,
+             HasImplicitStmt, HasUseStmt, HasVariables,
+             HasTypeDecls):
     """
     MODULE <name>
      ..
@@ -66,6 +152,9 @@ class Module(BeginStatement):
     """
     match = re.compile(r'module\s*\w+\Z', re.I).match
     end_stmt_cls = EndModule
+    a = AttributeHolder(module_subprogram = {},
+                        module_data = {},
+                        )
 
     def get_classes(self):
         return access_spec + specification_part + module_subprogram_part
@@ -75,17 +164,37 @@ class Module(BeginStatement):
         self.name = name
         return BeginStatement.process_item(self)
 
-    #def __str__(self):
-    #    s = self.get_indent_tab(deindent=True)
-    #    s += 'MODULE '+ self.name
-    #    return s
+    def analyze(self):
+        content = self.content[:]
+
+        [stmt.analyze() for stmt in filter_stmts(content, Use)]
+        HasUseStmt.initialize(self)
+
+        [stmt.analyze() for stmt in filter_stmts(content, Implicit)]
+        HasImplicitStmt.initialize(self)
+
+        while content:
+            stmt = content.pop(0)
+            if isinstance(stmt, Contains):
+                for stmt in filter_stmts(content, SubProgramStatement):
+                    stmt.analyze()
+                    self.a.module_subprogram[stmt.name] = stmt
+                stmt = content.pop(0)
+                assert isinstance(stmt, EndModule),`stmt`
+                continue
+            stmt.analyze()
+
+        if content:
+            print 'Not analyzed content:',content
+
+        return
 
 # Python Module
 
 class EndPythonModule(EndStatement):
     match = re.compile(r'end(\s*python\s*module\s*\w*|)\Z', re.I).match
 
-class PythonModule(BeginStatement):
+class PythonModule(BeginStatement, HasImplicitStmt, HasUseStmt):
     """
     PYTHON MODULE <name>
      ..
@@ -111,7 +220,8 @@ class EndProgram(EndStatement):
     """
     match = re.compile(r'end(\s*program\s*\w*|)\Z', re.I).match
 
-class Program(BeginStatement):
+class Program(BeginStatement, ProgramBlock, HasAttributes,
+              HasImplicitStmt, HasUseStmt):
     """ PROGRAM [name]
     """
     match = re.compile(r'program\s*\w*\Z', re.I).match
@@ -137,7 +247,8 @@ class EndBlockData(EndStatement):
     match = re.compile(r'end(\s*block\s*data\s*\w*|)\Z', re.I).match
     blocktype = 'blockdata'
 
-class BlockData(BeginStatement):
+class BlockData(BeginStatement, HasImplicitStmt, HasUseStmt,
+                HasVariables):
     """
     BLOCK DATA [ <block-data-name> ]
     """
@@ -157,7 +268,7 @@ class EndInterface(EndStatement):
     match = re.compile(r'end\s*interface\s*\w*\Z', re.I).match
     blocktype = 'interface'
 
-class Interface(BeginStatement):
+class Interface(BeginStatement, HasImplicitStmt, HasUseStmt):
     """
     INTERFACE [<generic-spec>] | ABSTRACT INTERFACE
     END INTERFACE [<generic-spec>]
@@ -198,10 +309,14 @@ class Interface(BeginStatement):
 
 # Subroutine
 
-class SubProgramStatement(BeginStatement):
+class SubProgramStatement(BeginStatement, ProgramBlock,
+                          HasImplicitStmt, HasAttributes,
+                          HasUseStmt, HasVariables, HasTypeDecls,
+                          HasExternal):
     """
     [ <prefix> ] <FUNCTION|SUBROUTINE> <name> [ ( <args> ) ] [ <suffix> ]
     """
+    a = AttributeHolder(internal_subprogram = {})
 
     def process_item(self):
         clsname = self.__class__.__name__.lower()
@@ -223,7 +338,17 @@ class SubProgramStatement(BeginStatement):
                 if not a: continue
                 args.append(a)
             line = line[i+1:].lstrip()
-        self.suffix = item.apply_map(line)
+        suffix = item.apply_map(line)
+        self.bind, suffix = parse_bind(suffix, item)
+        self.result = None
+        if isinstance(self, Function):
+            self.result, suffix = parse_result(suffix, item)
+            if suffix:
+                assert self.bind is None,`self.bind`
+                self.bind, suffix = parse_result(suffix, item)
+            if self.result is None:
+                self.result = self.name
+        assert not suffix,`suffix`
         self.args = args
         self.typedecl = None
         return BeginStatement.process_item(self)
@@ -237,11 +362,59 @@ class SubProgramStatement(BeginStatement):
             assert isinstance(self, Function),`self.__class__.__name__`
             s += self.typedecl.tostr() + ' '
         s += clsname
-        return '%s %s(%s) %s' % (s, self.name,', '.join(self.args),self.suffix)
+        suf = ''
+        if self.result and self.result!=self.name:
+            suf += ' RESULT ( %s )' % (self.result)
+        if self.bind:
+            suf += ' BIND ( %s )' % (', '.join(self.bind))
+        return '%s %s(%s)%s' % (s, self.name,', '.join(self.args),suf)
 
     def get_classes(self):
         return f2py_stmt + specification_part + execution_part \
                + internal_subprogram_part
+
+    def analyze(self):
+        content = self.content[:]
+
+        variables = self.a.variables
+        for a in self.args:
+            assert not variables.has_key(a)
+            assert is_name(a)
+            variables[a] = Variable(self, a)
+
+        if isinstance(self, Function):
+            variables[self.result] = Variable(self, self.result)
+
+        [stmt.analyze() for stmt in filter_stmts(content, Use)]
+        HasUseStmt.initialize(self)
+
+        [stmt.analyze() for stmt in filter_stmts(content, Implicit)]
+        HasImplicitStmt.initialize(self)
+
+        while content:
+            stmt = content.pop(0)
+            if isinstance(stmt, Contains):
+                for stmt in filter_stmts(content, SubProgramStatement):
+                    stmt.analyze()
+                    self.a.internal_subprogram[stmt.name] = stmt
+                stmt = content.pop(0)
+                assert isinstance(stmt, self.end_stmt_cls),`stmt`
+            elif isinstance(stmt, TypeDecl):
+                stmt.analyze()
+                self.a.type_declaration[stmt.name] = stmt
+            elif isinstance(stmt, self.end_stmt_cls):
+                continue
+            elif isinstance(stmt, External):
+                self.a.external.extend(stmt.items)
+                continue
+            elif isinstance(stmt, tuple(declaration_type_spec)):
+                stmt.analyze()
+            else:
+                stmt.analyze()
+        if content:
+            print 'Not analyzed content:',content
+
+        return
 
 class EndSubroutine(EndStatement):
     """
@@ -252,7 +425,7 @@ class EndSubroutine(EndStatement):
 
 class Subroutine(SubProgramStatement):
     """
-    [prefix] SUBROUTINE <name> [ ( [<dummy-arg-list>] ) [<proc-language-binding-spec>]]
+    [ <prefix> ] SUBROUTINE <name> [ ( [ <dummy-arg-list> ] ) [ <proc-language-binding-spec> ]]
     """
     end_stmt_cls = EndSubroutine
     match = re.compile(r'(recursive|pure|elemental|\s)*subroutine\s*\w+', re.I).match
@@ -271,6 +444,8 @@ class Function(SubProgramStatement):
     <prefix> = <prefix-spec> [ <prefix-spec> ]...
     <prefix-spec> = <declaration-type-spec>
                   | RECURSIVE | PURE | ELEMENTAL
+    <suffix> = <proc-language-binding-spec> [ RESULT ( <result-name> ) ]
+             | RESULT ( <result-name> ) [ <proc-language-binding-spec> ]
     """
     end_stmt_cls = EndFunction
     match = re.compile(r'(recursive|pure|elemental|\s)*function\s*\w+', re.I).match
@@ -292,7 +467,7 @@ class SubprogramPrefix(Statement):
             self.item.clone(rest)
             self.isvalid = False
             return
-        if self.parent.__class__ not in [Function,Subroutine]:
+        if self.parent.__class__ not in [Function, Subroutine]:
             self.isvalid = False
             return
         prefix = prefix + ' ' + self.parent.prefix
@@ -558,7 +733,7 @@ class EndType(EndStatement):
     match = re.compile(r'end\s*type\s*\w*\Z', re.I).match
     blocktype = 'type'
 
-class Type(BeginStatement):
+class Type(BeginStatement, HasVariables, HasAttributes):
     """
     TYPE [ [, <type-attr-spec-list>] ::] <type-name> [ ( <type-param-name-list> ) ]
     <type-attr-spec> = <access-spec> | EXTENDS ( <parent-type-name> )
@@ -606,6 +781,12 @@ class Type(BeginStatement):
     def get_classes(self):
         return [Integer] + private_or_sequence + component_part +\
                type_bound_procedure_part
+
+    def analyze(self):
+        BeginStatement.analyze(self)
+        assert isinstance(self.parent,HasTypeDecls)
+        self.parent.a.type_decls[self.name] = self
+        return
 
 TypeDecl = Type
 

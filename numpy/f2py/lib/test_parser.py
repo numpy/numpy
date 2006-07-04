@@ -14,7 +14,12 @@ def parse(cls, line, label='',
         raise ValueError, '%r does not match %s pattern' % (line, cls.__name__)
     stmt = cls(item, item)
     if stmt.isvalid:
-        return str(stmt)
+        r = str(stmt)
+        if not isstrict:
+            r1 = parse(cls, r, isstrict=True)
+            if r != r1:
+                raise ValueError, 'Failed to parse %r with %s pattern in pyf mode, got %r' % (r, cls.__name__, r1)
+        return r
     raise ValueError, 'parsing %r with %s pattern failed' % (line, cls.__name__)
 
 class test_Statements(NumpyTestCase):
@@ -107,7 +112,7 @@ class test_Statements(NumpyTestCase):
                            'allocate (a, stat=b)'), 'ALLOCATE (a, STAT = b)')
         assert_equal(parse(Allocate, 'allocate (a,b(:1))'), 'ALLOCATE (a, b(:1))')
         assert_equal(parse(Allocate, \
-                           'allocate (real(8)::a)'), 'ALLOCATE (REAL(8) :: a)')
+                           'allocate (real(8)::a)'), 'ALLOCATE (REAL(KIND=8) :: a)')
     def check_deallocate(self):
         assert_equal(parse(Deallocate, 'deallocate (a)'), 'DEALLOCATE (a)')
         assert_equal(parse(Deallocate, 'deallocate (a, stat=b)'), 'DEALLOCATE (a, STAT = b)')
@@ -289,12 +294,12 @@ class test_Statements(NumpyTestCase):
         assert_equal(parse(Entry,'entry a(b)'), 'ENTRY a (b)')
         assert_equal(parse(Entry,'entry a(b,*)'), 'ENTRY a (b, *)')
         assert_equal(parse(Entry,'entry a bind(c , name="a b")'),
-                     'ENTRY a BIND (c, name="a b")')
+                     'ENTRY a BIND (C, NAME = "a b")')
         assert_equal(parse(Entry,'entry a result (b)'), 'ENTRY a RESULT (b)')
         assert_equal(parse(Entry,'entry a bind(d) result (b)'),
                      'ENTRY a RESULT (b) BIND (d)')
-        assert_equal(parse(Entry,'entry a result (b) bind(c)'),
-                     'ENTRY a RESULT (b) BIND (c)')
+        assert_equal(parse(Entry,'entry a result (b) bind( c )'),
+                     'ENTRY a RESULT (b) BIND (C)')
         assert_equal(parse(Entry,'entry a(b,*) result (g)'),
                      'ENTRY a (b, *) RESULT (g)')
 
@@ -422,6 +427,54 @@ class test_Statements(NumpyTestCase):
         assert_equal(parse(Pause,'pause 1'),'PAUSE 1')
         assert_equal(parse(Pause,'pause "hey"'),'PAUSE "hey"')
         assert_equal(parse(Pause,'pause "hey pa"'),'PAUSE "hey pa"')
+
+    def check_integer(self):
+        assert_equal(parse(Integer,'integer'),'INTEGER')
+        assert_equal(parse(Integer,'integer*4'),'INTEGER(KIND=4)')
+        assert_equal(parse(Integer,'integer*4 a'),'INTEGER(KIND=4) a')
+        assert_equal(parse(Integer,'integer*4, a'),'INTEGER(KIND=4) a')
+        assert_equal(parse(Integer,'integer*4 a ,b'),'INTEGER(KIND=4) a, b')
+        assert_equal(parse(Integer,'integer*4 :: a ,b'),'INTEGER(KIND=4) a, b')
+        assert_equal(parse(Integer,'integer*4 a(1,2)'),'INTEGER(KIND=4) a(1,2)')
+        assert_equal(parse(Integer,'integer*4 :: a(1,2),b'),'INTEGER(KIND=4) a(1,2), b')
+        assert_equal(parse(Integer,'integer*4 external :: a'),
+                     'INTEGER(KIND=4), external :: a')
+        assert_equal(parse(Integer,'integer*4, external :: a'),
+                     'INTEGER(KIND=4), external :: a')
+        assert_equal(parse(Integer,'integer*4 external , intent(in) :: a'),
+                     'INTEGER(KIND=4), external, intent(in) :: a')
+        assert_equal(parse(Integer,'integer(kind=4)'),'INTEGER(KIND=4)')
+        assert_equal(parse(Integer,'integer ( kind = 4)'),'INTEGER(KIND=4)')
+        assert_equal(parse(Integer,'integer(kind=2+2)'),'INTEGER(KIND=2+2)')
+        assert_equal(parse(Integer,'integer(kind=f(4,5))'),'INTEGER(KIND=f(4,5))')
+
+    def check_character(self):
+        assert_equal(parse(Character,'character'),'CHARACTER')
+        assert_equal(parse(Character,'character*2'),'CHARACTER(LEN=2)')
+        assert_equal(parse(Character,'character**'),'CHARACTER(LEN=*)')
+        assert_equal(parse(Character,'character*(2)'),'CHARACTER(LEN=2)')
+        assert_equal(parse(Character,'character*(len =2)'),'CHARACTER(LEN=2)')
+        assert_equal(parse(Character,'character*(len =2),'),'CHARACTER(LEN=2)')
+        assert_equal(parse(Character,'character*(len =:)'),'CHARACTER(LEN=:)')
+        assert_equal(parse(Character,'character(len =2)'),'CHARACTER(LEN=2)')
+        assert_equal(parse(Character,'character(2)'),'CHARACTER(LEN=2)')
+        assert_equal(parse(Character,'character(kind=2)'),'CHARACTER(KIND=2)')
+        assert_equal(parse(Character,'character(kind=2,len=3)'),
+                     'CHARACTER(LEN=3, KIND=2)')
+        assert_equal(parse(Character,'character(lEN=3,kind=2)'),
+                     'CHARACTER(LEN=3, KIND=2)')
+        assert_equal(parse(Character,'character(len=3,kind=2)', isstrict=True),
+                     'CHARACTER(LEN=3, KIND=2)')
+        assert_equal(parse(Character,'chaRACTER(len=3,kind=fA(1,2))', isstrict=True),
+                     'CHARACTER(LEN=3, KIND=fA(1,2))')
+        assert_equal(parse(Character,'character(len=3,kind=fA(1,2))'),
+                     'CHARACTER(LEN=3, KIND=fa(1,2))')
+        
+    def check_implicit(self):
+        assert_equal(parse(Implicit,'implicit none'),'IMPLICIT NONE')
+        assert_equal(parse(Implicit,'implicit'),'IMPLICIT NONE')
+        assert_equal(parse(Implicit,'implicit integer (i-m)'),
+                     'IMPLICIT INTEGER ( i-m )')
 
 if __name__ == "__main__":
     NumpyTest().run()

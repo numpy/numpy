@@ -2,40 +2,15 @@
 import re
 import sys
 
-from base_classes import Statement
+from base_classes import Statement, Variable
+from expression import Expression
 
 # Auxiliary tools
 
+from utils import split_comma, specs_split_comma, AnalyzeError, ParseError,\
+     get_module_file, parse_bind, parse_result
+
 is_name = re.compile(r'\w+\Z').match
-
-def split_comma(line, item = None, comma=','):
-    items = []
-    if item is None:
-        for s in line.split(comma):
-            s = s.strip()
-            if not s: continue
-            items.append(s)
-        return items
-    newitem = item.copy(line, True)
-    apply_map = newitem.apply_map
-    for s in newitem.get_line().split(comma):
-        s = apply_map(s).strip()
-        if not s: continue
-        items.append(s)
-    return items
-
-def specs_split_comma(line, item):
-    specs0 = split_comma(line, item)
-    specs = []
-    for spec in specs0:
-        i = spec.find('=')
-        if i!=-1:
-            kw = spec[:i].strip().upper()
-            v  = spec[i+1:].strip()
-            specs.append('%s = %s' % (kw, v))
-        else:
-            specs.append(spec)
-    return specs
 
 class StatementWithNamelist(Statement):
     """
@@ -113,7 +88,7 @@ class Assign(Statement):
     match = re.compile(r'assign\s*\d+\s*to\s*\w+\s*\Z',re.I).match
     def process_item(self):
         line = self.item.get_line()[6:].lstrip()
-        i = line.find('to')
+        i = line.lower().find('to')
         assert not self.item.has_map()
         self.items = [line[:i].rstrip(),line[i+2:].lstrip()]
         return
@@ -121,7 +96,6 @@ class Assign(Statement):
         return self.get_indent_tab() + 'ASSIGN %s TO %s' \
                % (self.items[0], self.items[1])
 
-    
 class Call(Statement):
     """Call statement class
     CALL <procedure-designator> [ ( [ <actual-arg-spec-list> ] ) ]
@@ -171,6 +145,14 @@ class Call(Statement):
         if self.items:
             s += '('+', '.join(map(str,self.items))+ ')'
         return s
+
+    def analyze(self):
+        a = self.programblock.a
+        if hasattr(a, 'external'):
+            external = a.external
+            if self.designator in external:
+                print 'Need to analyze:',self
+        return
 
 class Goto(Statement):
     """
@@ -244,6 +226,7 @@ class Continue(Statement):
     def __str__(self):
         return self.get_indent_tab(deindent=True) + 'CONTINUE'
 
+    def analyze(self): return
 
 class Return(Statement):
     """
@@ -261,6 +244,8 @@ class Return(Statement):
             return tab + 'RETURN %s' % (self.expr)
         return tab + 'RETURN'
 
+    def analyze(self): return
+
 class Stop(Statement):
     """
     STOP [ <stop-code> ]
@@ -277,6 +262,8 @@ class Stop(Statement):
         if self.code:
             return tab + 'STOP %s' % (self.code)
         return tab + 'STOP'
+
+    def analyze(self): return
 
 class Print(Statement):
     """
@@ -526,7 +513,7 @@ class Access(Statement):
     def process_item(self):
         clsname = self.__class__.__name__.lower()
         line = self.item.get_line()
-        if not line.startswith(clsname):
+        if not line.lower().startswith(clsname):
             self.isvalid = False
             return
         line = line[len(clsname):].lstrip()
@@ -542,8 +529,23 @@ class Access(Statement):
             return tab + clsname + ' ' + ', '.join(self.items)
         return tab + clsname
 
-class Public(Access): pass
-class Private(Access): pass
+    def analyze(self):
+        clsname = self.__class__.__name__.upper()
+        if self.items:
+            variables = self.parent.a.variables
+            for n in self.items:
+                if not variables.has_key(n):
+                    variables[n] = Variable(self, n)
+                var = variables[n]
+                var.update([clsname])
+        else:
+            self.parent.a.attributes.append(clsname)
+        return
+
+class Public(Access):
+    is_public = True
+class Private(Access):
+    is_public = False
 
 class Close(Statement):
     """
@@ -591,7 +593,7 @@ class FilePositioningStatement(Statement):
     def process_item(self):
         clsname = self.__class__.__name__.lower()
         line = self.item.get_line()
-        if not line.startswith(clsname):
+        if not line.lower().startswith(clsname):
             self.isvalid = False
             return
         line = line[len(clsname):].lstrip()
@@ -799,7 +801,7 @@ class Use(Statement):
         else:
             self.name = line[:i].rstrip()
             line = line[i+1:].lstrip()
-            if line.startswith('only') and line[4:].lstrip().startswith(':'):
+            if line.lower().startswith('only') and line[4:].lstrip().startswith(':'):
                 self.isonly = True
                 line = line[4:].lstrip()[1:].lstrip()
             self.items = split_comma(line, self.item)
@@ -818,6 +820,39 @@ class Use(Statement):
         if self.items:
             s += ' ' + ', '.join(self.items)
         return tab + s
+
+    def analyze(self):
+        modules = self.top.a.module
+
+        if not modules.has_key(self.name):
+            fn = None
+            for d in self.reader.include_dirs:
+                fn = get_module_file(self.name, d)
+                if fn is not None:
+                    break
+
+            if fn is not None:
+                from readfortran import FortranFileReader
+                from parsefortran import FortranParser
+                self.show_message('Processing %r (parent file=%r)' % (fn, self.reader.name))
+                reader = FortranFileReader(fn)
+                parser = FortranParser(reader)
+                parser.parse()
+                parser.block.a.module.update(modules)
+                parser.analyze()
+                modules.update(parser.block.a.module)
+
+        if not modules.has_key(self.name):
+            message = self.reader.format_message(\
+                        'ERROR',
+                        'No information about the use module %r.' \
+                        % (self.name),
+                        self.item.span[0],self.item.span[1])
+            self.show_message(message)
+            raise AnalyzeError
+            return
+
+        return
 
 class Exit(Statement):
     """
@@ -869,7 +904,7 @@ class Dimension(Statement):
     DIMENSION [ :: ] <array-name> ( <array-spec> ) [ , <array-name> ( <array-spec> ) ]...
     
     """
-    match = re.compile(r'dimension\b').match
+    match = re.compile(r'dimension\b', re.I).match
     def process_item(self):
         line = self.item.get_line()[9:].lstrip()
         if line.startswith('::'):
@@ -884,7 +919,7 @@ class Target(Statement):
     TARGET [ :: ] <object-name> ( <array-spec> ) [ , <object-name> ( <array-spec> ) ]...
     
     """
-    match = re.compile(r'target\b').match
+    match = re.compile(r'target\b', re.I).match
     def process_item(self):
         line = self.item.get_line()[6:].lstrip()
         if line.startswith('::'):
@@ -992,7 +1027,7 @@ class External(StatementWithNamelist):
     """
     EXTERNAL [ :: ] <external-name-list>
     """
-    match = re.compile(r'external\b').match
+    match = re.compile(r'external\b', re.I).match
 
 class Namelist(Statement):
     """
@@ -1129,33 +1164,14 @@ class Entry(Statement):
             line = line[i+1:].lstrip()
         else:
             items = []
-        binds = []
-        result = ''
-        if line.startswith('bind'):
-            line = line[4:].lstrip()
-            i = line.find(')')
-            assert line.startswith('(') and i != -1,`line`
-            binds = split_comma(line[1:i], self.item)
-            line = line[i+1:].lstrip()
-        if line.startswith('result'):
-            line = line[6:].lstrip()
-            i = line.find(')')
-            assert line.startswith('(') and i != -1,`line`
-            result = line[1:i].strip()
-            assert is_name(result),`result,line`
-            line = line[i+1:].lstrip()
-        if line.startswith('bind'):
-            assert not binds
-            line = line[4:].lstrip()
-            i = line.find(')')
-            assert line.startswith('(') and i != -1,`line`
-            binds = split_comma(line[1:i], self.item)
-            line = line[i+1:].lstrip()
+        self.bind, line = parse_bind(line, self.item)
+        self.result, line = parse_result(line, self.item)
+        if line:
+            assert self.bind is None,`self.bind`
+            self.bind, line = parse_bind(line, self.item)
         assert not line,`line`
         self.name = name
         self.items = items
-        self.result = result
-        self.binds = binds
         return
     def __str__(self):
         tab = self.get_indent_tab()
@@ -1164,8 +1180,8 @@ class Entry(Statement):
             s += ' (%s)' % (', '.join(self.items))
         if self.result:
             s += ' RESULT (%s)' % (self.result)
-        if self.binds:
-            s += ' BIND (%s)' % (', '.join(self.binds))
+        if self.bind:
+            s += ' BIND (%s)' % (', '.join(self.bind))
         return s
 
 class Import(StatementWithNamelist):
@@ -1359,15 +1375,8 @@ class Bind(Statement):
     """
     match = re.compile(r'bind\s*\(.*\)',re.I).match
     def process_item(self):
-        line = self.item.get_line()[4:].lstrip()
-        specs = []
-        for spec in specs_split_comma(line[1:line.index(')')].strip(), self.item):
-            if is_name(spec):
-                specs.append(spec.upper())
-            else:
-                specs.append(spec)            
-        self.specs = specs
-        line = line[line.index(')')+1:].lstrip()
+        line = self.item.line
+        self.specs, line = parse_bind(line, self.item)
         if line.startswith('::'):
             line = line[2:].lstrip()
         items = []
@@ -1461,7 +1470,7 @@ class Case(Statement):
             items = split_comma(line[1:i].strip(), self.item)
             line = line[i+1:].lstrip()
         else:
-            assert line.startswith('default'),`line`
+            assert line.lower().startswith('default'),`line`
             items = []
             line = line[7:].lstrip()
         for i in range(len(items)):
@@ -1530,7 +1539,7 @@ class ElseWhere(Statement):
     ELSE WHERE ( <mask-expr> ) [ <where-construct-name> ]
     ELSE WHERE [ <where-construct-name> ]
     """
-    match = re.compile(r'else\s*where\b').match
+    match = re.compile(r'else\s*where\b',re.I).match
     def process_item(self):
         line = self.item.get_line()[4:].lstrip()[5:].lstrip()
         self.expr = None

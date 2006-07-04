@@ -17,6 +17,7 @@ from numpy.distutils.misc_util import yellow_text, red_text
 
 from readfortran import FortranFileReader, FortranStringReader
 from block_statements import BeginSource
+from utils import AnalyzeError
 
 class FortranParser:
 
@@ -37,7 +38,7 @@ class FortranParser:
 
     def parse(self):
         try:
-            return BeginSource(self)
+            block = self.block = BeginSource(self)
         except KeyboardInterrupt:
             raise
         except:
@@ -50,6 +51,16 @@ class FortranParser:
                 reader = reader.reader
             traceback.print_exc(file=sys.stdout)
             self.reader.show_message(red_text('STOPPED PARSING'), sys.stdout)
+            return
+        return
+
+    def analyze(self):
+        try:
+            self.block.analyze()
+        except AnalyzeError:
+            pass
+        except:
+            raise
         return
 
 def test_pyf():
@@ -123,8 +134,9 @@ def simple_main():
         reader = FortranFileReader(filename)
         print yellow_text('Processing '+filename+' (mode=%r)' % (reader.mode))
         parser = FortranParser(reader)
-        block = parser.parse()
-        #print block
+        parser.parse()
+        parser.analyze()
+        #print parser.block
 
 def profile_main():
     import hotshot, hotshot.stats

@@ -65,7 +65,7 @@ def string_replace_map(line, lower=False,
                 _cache['pindex'] += 1
                 index = _cache['pindex']
                 key = 'F2PY_EXPR_TUPLE_%s' % (index)
-                it = item[1:-1]
+                it = item[1:-1].strip()
                 string_map[key] = it
                 rev_string_map[it] = key
                 expr_keys.append(key)
