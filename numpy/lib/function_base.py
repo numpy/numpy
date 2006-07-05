@@ -920,9 +920,9 @@ def meshgrid(x,y):
     x = asarray(x)
     y = asarray(y)
     numRows, numCols = len(y), len(x)  # yes, reversed
-    x.shape = 1, numCols
+    x = x.reshape(1,numCols)
     X = x.repeat(numRows, axis=0)
     
-    y.shape = numRows,1
+    y = y.reshape(numRows,1)
     Y = y.repeat(numCols, axis=1)
     return X, Y
