@@ -9,6 +9,9 @@ class AnalyzeError(Exception):
     pass
 
 is_name = re.compile(r'^[a-z_]\w*$',re.I).match
+name_re = re.compile(r'[a-z_]\w*',re.I).match
+is_entity_decl = re.compile(r'^[a-z_]\w*',re.I).match
+is_int_literal_constant = re.compile(r'^\d+(_\w+|)$').match
 
 def split_comma(line, item = None, comma=','):
     items = []
@@ -26,7 +29,7 @@ def split_comma(line, item = None, comma=','):
         items.append(s)
     return items
 
-def specs_split_comma(line, item = None):
+def specs_split_comma(line, item = None, upper=False):
     specs0 = split_comma(line, item)
     specs = []
     for spec in specs0:
@@ -36,6 +39,8 @@ def specs_split_comma(line, item = None):
             v  = spec[i+1:].strip()
             specs.append('%s = %s' % (kw, v))
         else:
+            if upper:
+                spec = spec.upper()
             specs.append(spec)
     return specs
 
@@ -51,8 +56,7 @@ def parse_bind(line, item = None):
     i = newline.find(')')
     assert i!=-1,`newline`
     args = []
-    for a in specs_split_comma(newline[1:i].strip(), newitem):
-        if a=='c': a = a.upper()
+    for a in specs_split_comma(newline[1:i].strip(), newitem, upper=True):
         args.append(a)
     rest = newline[i+1:].lstrip()
     if item is not None:

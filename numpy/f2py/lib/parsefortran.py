@@ -21,8 +21,19 @@ from utils import AnalyzeError
 
 class FortranParser:
 
+    cache = {}
+
     def __init__(self, reader):
         self.reader = reader
+        if self.cache.has_key(reader.id):
+            parser = self.cache[reader.id]
+            self.block = parser.block
+            self.is_analyzed = parser.is_analyzed
+            self.block.show_message('using cached %s' % (reader.id))
+        else:
+            self.cache[reader.id] = self
+            self.block = None
+            self.is_analyzed = False
         return
 
     def get_item(self):
@@ -37,6 +48,8 @@ class FortranParser:
         return
 
     def parse(self):
+        if self.block is not None:
+            return
         try:
             block = self.block = BeginSource(self)
         except KeyboardInterrupt:
@@ -55,12 +68,19 @@ class FortranParser:
         return
 
     def analyze(self):
+        if self.is_analyzed:
+            return
+        if self.block is None:
+            self.reader.show_message('Nothing to analyze.')
+            return
+        
         try:
             self.block.analyze()
         except AnalyzeError:
             pass
         except:
             raise
+        self.is_analyzed = True
         return
 
 def test_pyf():

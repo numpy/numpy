@@ -3,7 +3,7 @@ import re
 import string
 from base_classes import Statement, BeginStatement, EndStatement,\
      AttributeHolder, Variable
-from utils import split_comma, AnalyzeError
+from utils import split_comma, AnalyzeError, name_re, is_entity_decl
 
 # Intrinsic type specification statements
 
@@ -136,6 +136,11 @@ class TypeDeclarationStatement(Statement):
         else:
             self.attrspec = split_comma(line[:i].rstrip(), self.item)
             self.entity_decls = split_comma(line[i+2:].lstrip(), self.item)
+        for entity in self.entity_decls:
+            if not is_entity_decl(entity):
+                self.isvalid = False
+                return
+
         if isinstance(self.parent, Function) \
                and self.parent.name in self.entity_decls:
             assert self.parent.typedecl is None,`self.parent.typedecl`
@@ -246,14 +251,50 @@ class TypeDeclarationStatement(Statement):
             return
         variables = self.parent.a.variables
         typedecl = self.astypedecl()
-        for name in self.entity_decls:
+        for item in self.entity_decls:
+            name, array_spec, char_length, value = self._parse_entity(item)
             if not variables.has_key(name):
                 variables[name] = var = Variable(self, name)
             else:
                 var = variables[name]
-            var.set_type(typedecl)
+                var.add_parent(self)
+            if char_length:
+                var.set_length(char_length)
+            else:
+                var.set_type(typedecl)
             var.update(self.attrspec)
+            if array_spec:
+                var.set_bounds(array_spec)
+            if value:
+                var.set_init(value)
         return
+
+    def _parse_entity(self, line):
+        m = name_re(line)
+        assert m,`line,self.item,self.__class__.__name__`
+        name = line[:m.end()]
+        line = line[m.end():].lstrip()
+        array_spec = None
+        item = self.item.copy(line)
+        line = item.get_line()
+        if line.startswith('('):
+            i = line.find(')')
+            assert i!=-1,`line`
+            array_spec = split_comma(line[1:i].strip(), item)
+            line = line[i+1:].lstrip()
+        char_length = None
+        if line.startswith('*'):
+            i = line.find('=')
+            if i==-1:
+                char_length = item.apply_map(line[1:].lstrip())
+                line = ''
+            else:
+                char_length = item.apply_map(line[1:i].strip())
+                line = line[i:]
+        value = None
+        if line.startswith('='):
+            value = item.apply_map(line[1:].lstrip())
+        return name, array_spec, char_length, value
 
 class Integer(TypeDeclarationStatement):
     match = re.compile(r'integer\b',re.I).match

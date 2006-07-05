@@ -5,7 +5,8 @@ import re
 import sys
 import copy
 from readfortran import Line
-from utils import split_comma, specs_split_comma
+from numpy.distutils.misc_util import yellow_text, red_text
+from utils import split_comma, specs_split_comma, is_int_literal_constant
 
 class AttributeHolder:
     # copied from symbolic.base module
@@ -81,27 +82,111 @@ class Variable:
     """
     def __init__(self, parent, name):
         self.parent = parent
+        self.parents = [parent]
         self.name = name
         self.typedecl = None
         self.dimension = None
+        self.bounds = None
+        self.length = None
         self.attributes = []
         self.intent = None
         self.bind = []
         self.check = []
+        self.init = None
+        return
+
+    def add_parent(self, parent):
+        if id(parent) not in map(id, self.parents):
+            self.parents.append(parent)
+        self.parent = parent
         return
 
     def set_type(self, typedecl):
         if self.typedecl is not None:
             if not self.typedecl==typedecl:
-                message = 'Warning: variable %r already has type %s' \
-                          % (self.name, self.typedecl.tostr())
-                message += '.. resetting to %s' % (typedecl.tostr())
-                self.parent.show_message(message)
+                self.parent.warning(\
+                    'variable %r already has type %s,'\
+                    ' resetting to %s' \
+                    % (self.name, self.typedecl.tostr(),typedecl.tostr()))
         self.typedecl = typedecl
         return
 
-    def update(self, attrs):
+    def set_init(self, expr):
+        if self.init is not None:
+            if not self.init==expr:
+                self.parent.warning(\
+                    'variable %r already has initialization %r, '\
+                    ' resetting to %r' % (self.name, self.expr, expr))
+        self.init = expr
+        return
+
+    def set_dimension(self, dims):
+        if self.dimension is not None:
+            if not self.dimension==dims:
+                self.parent.warning(\
+                    'variable %r already has dimension %r, '\
+                    ' resetting to %r' % (self.name, self.dimension, dims))
+        self.dimension = dims
+        return
+
+    def set_bounds(self, bounds):
+        if self.bounds is not None:
+            if not self.bounds==bounds:
+                self.parent.warning(\
+                    'variable %r already has bounds %r, '\
+                    ' resetting to %r' % (self.name, self.bounds, bounds))
+        self.bounds = bounds
+        return
+
+    def set_length(self, length):
+        if self.length is not None:
+            if not self.length==length:
+                self.parent.warning(\
+                    'variable %r already has length %r, '\
+                    ' resetting to %r' % (self.name, self.length, length))
+        self.length = length
+        return
+
+    known_intent_specs = ['IN','OUT','INOUT','CACHE','HIDE', 'COPY',
+                          'OVERWRITE', 'CALLBACK', 'AUX', 'C', 'INPLACE',
+                          'OUT=']
+
+    def set_intent(self, intent):
+        if self.intent is None:
+            self.intent = []
+        for i in intent:
+            if i not in self.intent:
+                if i not in self.known_intent_specs:
+                    self.parent.warning('unknown intent-spec %r for %r'\
+                                        % (i, self.name))
+                self.intent.append(i)
+        return
+
+    known_attributes = ['PUBLIC', 'PRIVATE', 'ALLOCATABLE', 'ASYNCHRONOUS',
+                        'EXTERNAL', 'INTRINSIC', 'OPTIONAL', 'PARAMETER',
+                        'POINTER', 'PROTECTED', 'SAVE', 'TARGET', 'VALUE',
+                        'VOLATILE', 'REQUIRED']
+
+    def is_private(self):
+        if 'PUBLIC' in self.attributes: return False
+        if 'PRIVATE' in self.attributes: return True
+        parent_attrs = self.parent.parent.a.attributes
+        if 'PUBLIC' in parent_attrs: return False
+        if 'PRIVATE' in parent_attrs: return True
+        return
+    def is_public(self): return not self.is_private()
+
+    def is_allocatable(self): return 'ALLOCATABLE' in self.attributes
+    def is_external(self): return 'EXTERNAL' in self.attributes
+    def is_intrinsic(self): return 'INTRINSIC' in self.attributes
+    def is_parameter(self): return 'PARAMETER' in self.attributes
+    def is_optional(self): return 'OPTIONAL' in self.attributes
+    def is_required(self): return 'REQUIRED' in self.attributes
+
+    def update(self, *attrs):
         attributes = self.attributes
+        if len(attrs)==1 and isinstance(attrs[0],(tuple,list)):
+            attrs = attrs[0]
         for attr in attrs:
             lattr = attr.lower()
             uattr = attr.upper()
@@ -109,20 +194,19 @@ class Variable:
                 assert self.dimension is None, `self.dimension,attr`
                 l = attr[9:].lstrip()
                 assert l[0]+l[-1]=='()',`l`
-                self.dimension = split_comma(l[1:-1].strip(), self.parent.item)
+                self.set_dimension(split_comma(l[1:-1].strip(), self.parent.item))
                 continue
             if lattr.startswith('intent'):
                 l = attr[6:].lstrip()
                 assert l[0]+l[-1]=='()',`l`
-                self.intent = intent = []
-                for i in split_comma(l[1:-1].strip(), self.parent.item):
-                    if i not in intent:
-                        intent.append(i)
+                self.set_intent(specs_split_comma(l[1:-1].strip(),
+                                                  self.parent.item, upper=True))
                 continue
             if lattr.startswith('bind'):
                 l = attr[4:].lstrip()
                 assert l[0]+l[-1]=='()',`l`
-                self.bind = specs_split_comma(l[1:-1].strip(), self.parent.item)
+                self.bind = specs_split_comma(l[1:-1].strip(), self.parent.item,
+                                              upper = True)
                 continue
             if lattr.startswith('check'):
                 l = attr[5:].lstrip()
@@ -130,6 +214,8 @@ class Variable:
                 self.check.extend(split_comma(l[1:-1].strip()), self.parent.item)
                 continue
             if uattr not in attributes:
+                if uattr not in self.known_attributes:
+                    self.parent.warning('unknown attribute %r' % (attr))
                 attributes.append(uattr)
         return
 
@@ -148,7 +234,17 @@ class Variable:
             a.append('CHECK(%s)' % (', '.join(self.check)))
         if a:
             s += ', '.join(a) + ' :: '
-        return s + self.name
+        s += self.name
+        if self.bounds:
+            s += '(%s)' % (', '.join(self.bounds))
+        if self.length:
+            if is_int_literal_constant(self.length):
+                s += '*%s' % (self.length)
+            else:
+                s += '*(%s)' % (self.length)
+        if self.init:
+            s += ' = ' + self.init
+        return s
 
 class ProgramBlock:
     pass
@@ -164,7 +260,10 @@ class Statement:
 
     def __init__(self, parent, item):
         self.parent = parent
-        self.reader = parent.reader
+        if item is not None:
+            self.reader = item.reader
+        else:
+            self.reader = parent.reader
         self.top = getattr(parent,'top',None)
         if isinstance(parent, ProgramBlock):
             self.programblock = parent
@@ -221,14 +320,43 @@ class Statement:
             tab = c + s + colon + tab
         return tab
 
-    def show_message(self, message):
-        print >> sys.stderr, message
-        sys.stderr.flush()
+    def format_message(self, kind, message):
+        message = self.reader.format_message(kind, message,
+                                             self.item.span[0], self.item.span[1])
+        return message
+
+    def show_message(self, message, stream=sys.stderr):
+        print >> stream, message
+        stream.flush()
+        return
+
+    def error(self, message):
+        message = self.format_message('ERROR', red_text(message))
+        self.show_message(message)
+        return
+
+    def warning(self, message):
+        message = self.format_message('WARNING', yellow_text(message))
+        self.show_message(message)
+        return
+
+    def info(self, message):
+        message = self.format_message('INFO', message)
+        self.show_message(message)
         return
 
     def analyze(self):
-        self.show_message('nothing analyzed in %s' % (self.__class__.__name__))
+        self.warning('nothing analyzed')
         return
+
+    def get_variable(self, name):
+        variables = self.parent.a.variables
+        if not variables.has_key(name):
+            variables[name] = var = Variable(self, name)
+        else:
+            var = variables[name]
+            var.add_parent(self)
+        return var
 
 class BeginStatement(Statement):
     """ <blocktype> <name>
@@ -300,12 +428,7 @@ class BeginStatement(Statement):
             item = self.get_item()
 
         if not end_flag:
-            message = self.item.reader.format_message(\
-                        'WARNING',
-                        'failed to find the end of block for %s'\
-                        % (self.__class__.__name__),
-                        self.item.span[0],self.item.span[1])
-            self.show_message(message)
+            self.warning('failed to find the end of block')
         return
 
     def process_subitem(self, item):
@@ -439,12 +562,9 @@ class EndStatement(Statement):
                 self.isvalid = False
         if line:
             if not line==self.parent.name:
-                message = item.reader.format_message(\
-                        'WARNING',
-                        'expected the end of %r block but got end of %r, skipping.'\
-                        % (self.parent.name, line),
-                        item.span[0],item.span[1])
-                self.show_message(message)
+                self.warning(\
+                    'expected the end of %r block but got the end of %r, skipping.'\
+                    % (self.parent.name, line))
                 self.isvalid = False
         self.name = self.parent.name
 

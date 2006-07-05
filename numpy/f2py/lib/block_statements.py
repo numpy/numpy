@@ -62,13 +62,13 @@ class HasTypeDecls:
 
     a = AttributeHolder(type_decls = {})
 
-class HasExternal:
-
-    a = AttributeHolder(external = [])
-
 class HasAttributes:
 
     a = AttributeHolder(attributes = [])
+
+class HasModuleProcedures:
+
+    a = AttributeHolder(module_procedures = [])
 
 # File block
 
@@ -110,8 +110,7 @@ class BeginSource(BeginStatement):
                 stmt.analyze()
                 self.a.blockdata[stmt.name] = stmt
             else:
-                message = 'Unexpected statement %r in %r block. Ignoring.' \
-                          % (stmt.__class__, self.__class__)
+                stmt.analyze()
         return
 
     def get_classes(self):
@@ -185,7 +184,7 @@ class Module(BeginStatement, HasAttributes,
             stmt.analyze()
 
         if content:
-            print 'Not analyzed content:',content
+            self.show_message('Not analyzed content: %s' % content)
 
         return
 
@@ -208,8 +207,8 @@ class PythonModule(BeginStatement, HasImplicitStmt, HasUseStmt):
         return [Interface, Function, Subroutine, Module]
 
     def process_item(self):
-        name = self.item.get_line().replace(' ','')[len(self.blocktype):].strip()
-        self.name = name
+        self.name = self.item.get_line().replace(' ','')\
+                    [len(self.blocktype):].strip()
         return BeginStatement.process_item(self)
 
 # Program
@@ -268,7 +267,9 @@ class EndInterface(EndStatement):
     match = re.compile(r'end\s*interface\s*\w*\Z', re.I).match
     blocktype = 'interface'
 
-class Interface(BeginStatement, HasImplicitStmt, HasUseStmt):
+class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
+                HasModuleProcedures
+                ):
     """
     INTERFACE [<generic-spec>] | ABSTRACT INTERFACE
     END INTERFACE [<generic-spec>]
@@ -311,8 +312,8 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt):
 
 class SubProgramStatement(BeginStatement, ProgramBlock,
                           HasImplicitStmt, HasAttributes,
-                          HasUseStmt, HasVariables, HasTypeDecls,
-                          HasExternal):
+                          HasUseStmt, HasVariables, HasTypeDecls
+                          ):
     """
     [ <prefix> ] <FUNCTION|SUBROUTINE> <name> [ ( <args> ) ] [ <suffix> ]
     """
@@ -399,20 +400,12 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
                     self.a.internal_subprogram[stmt.name] = stmt
                 stmt = content.pop(0)
                 assert isinstance(stmt, self.end_stmt_cls),`stmt`
-            elif isinstance(stmt, TypeDecl):
-                stmt.analyze()
-                self.a.type_declaration[stmt.name] = stmt
             elif isinstance(stmt, self.end_stmt_cls):
                 continue
-            elif isinstance(stmt, External):
-                self.a.external.extend(stmt.items)
-                continue
-            elif isinstance(stmt, tuple(declaration_type_spec)):
-                stmt.analyze()
             else:
                 stmt.analyze()
         if content:
-            print 'Not analyzed content:',content
+            self.show_message('Not analyzed content: %s' % content)
 
         return
 
@@ -618,7 +611,7 @@ class If(BeginStatement):
         i = line.find(')')
         expr = line[1:i].strip()
         line = line[i+1:].strip()
-        if line=='then':
+        if line.lower()=='then':
             self.isvalid = False
             return
         self.expr = expr[1:-1]

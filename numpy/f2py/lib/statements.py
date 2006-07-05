@@ -3,29 +3,34 @@ import re
 import sys
 
 from base_classes import Statement, Variable
-from expression import Expression
+#from expression import Expression
 
 # Auxiliary tools
 
 from utils import split_comma, specs_split_comma, AnalyzeError, ParseError,\
-     get_module_file, parse_bind, parse_result
-
-is_name = re.compile(r'\w+\Z').match
+     get_module_file, parse_bind, parse_result, is_name
 
 class StatementWithNamelist(Statement):
     """
     <statement> [ :: ] <name-list>
     """
     def process_item(self):
-        assert not self.item.has_map()
+        if self.item.has_map():
+            self.isvalid = False
+            return
         if hasattr(self,'stmtname'):
             clsname = self.stmtname
         else:
-            clsname = self.__class__.__name__.lower()
+            clsname = self.__class__.__name__
         line = self.item.get_line()[len(clsname):].lstrip()
         if line.startswith('::'):
             line = line[2:].lstrip()
-        self.items = [s.strip() for s in line.split(',')]
+        self.items = items = []
+        for item in split_comma(line):
+            if not is_name(item):
+                self.isvalid = False
+                return
+            items.append(item)
         return
     def __str__(self):
         if hasattr(self,'stmtname'):
@@ -74,6 +79,8 @@ class GeneralAssignment(Statement):
         return self.get_indent_tab() + '%s %s %s' \
                % (self.variable, self.sign, self.expr)
 
+    def analyze(self): return
+
 class Assignment(GeneralAssignment):
     pass
 
@@ -95,6 +102,7 @@ class Assign(Statement):
     def __str__(self):
         return self.get_indent_tab() + 'ASSIGN %s TO %s' \
                % (self.items[0], self.items[1])
+    def analyze(self): return
 
 class Call(Statement):
     """Call statement class
@@ -167,6 +175,7 @@ class Goto(Statement):
 
     def __str__(self):
         return self.get_indent_tab() + 'GO TO %s' % (self.label)
+    def analyze(self): return
 
 class ComputedGoto(Statement):
     """
@@ -186,6 +195,7 @@ class ComputedGoto(Statement):
     def __str__(self):
         return  self.get_indent_tab() + 'GO TO (%s) %s' \
                % (', '.join(self.items), self.expr)
+    def analyze(self): return
 
 class AssignedGoto(Statement):
     """
@@ -212,6 +222,7 @@ class AssignedGoto(Statement):
             return tab + 'GO TO %s (%s)' \
                    % (self.varname, ', '.join(self.items)) 
         return tab + 'GO TO %s' % (self.varname)
+    def analyze(self): return
 
 class Continue(Statement):
     """
@@ -290,6 +301,7 @@ class Print(Statement):
     def __str__(self):
         return self.get_indent_tab() + 'PRINT %s' \
                % (', '.join([self.format]+self.items))
+    def analyze(self): return
 
 class Read(Statement):
     """
@@ -315,6 +327,7 @@ Read1:    READ <format> [, <input-item-list>]
             self.__class__ = Read1
         self.process_item()
         return
+    def analyze(self): return
 
 class Read0(Read):
 
@@ -365,7 +378,7 @@ class Write(Statement):
         if self.items:
             s += ' ' + ', '.join(self.items)
         return s
-
+    def analyze(self): return
 
 
 class Flush(Statement):
@@ -394,6 +407,7 @@ class Flush(Statement):
     def __str__(self):
         tab = self.get_indent_tab()
         return tab + 'FLUSH (%s)' % (', '.join(self.specs))
+    def analyze(self): return
 
 class Wait(Statement):
     """
@@ -415,6 +429,7 @@ class Wait(Statement):
     def __str__(self):
         tab = self.get_indent_tab()
         return tab + 'WAIT (%s)' % (', '.join(self.specs))
+    def analyze(self): return
 
 class Contains(Statement):
     """
@@ -450,7 +465,7 @@ class Allocate(Statement):
             if stmt is not None and stmt.isvalid:
                 spec = stmt
             else:
-                print 'TODO: unparsed type-spec',`spec`
+                self.warning('TODO: unparsed type-spec' + `spec`)
             line2 = line2[i+2:].lstrip()
         else:
             spec = None
@@ -464,6 +479,7 @@ class Allocate(Statement):
             t = self.spec.tostr() + ' :: '
         return self.get_indent_tab() \
                + 'ALLOCATE (%s%s)' % (t,', '.join(self.items))
+    def analyze(self): return
 
 class Deallocate(Statement):
     """
@@ -481,7 +497,8 @@ class Deallocate(Statement):
         return
     def __str__(self): return self.get_indent_tab() \
         + 'DEALLOCATE (%s)' % (', '.join(self.items))
-
+    def analyze(self): return
+    
 class ModuleProcedure(Statement):
     """
     [ MODULE ] PROCEDURE <procedure-name-list>
@@ -502,6 +519,11 @@ class ModuleProcedure(Statement):
     def __str__(self):
         tab = self.get_indent_tab()
         return tab + 'MODULE PROCEDURE %s' % (', '.join(self.items))
+
+    def analyze(self):
+        module_procedures = self.parent.a.module_procedures
+        module_procedures.extend(self.items)
+        return
 
 class Access(Statement):
     """
@@ -532,12 +554,9 @@ class Access(Statement):
     def analyze(self):
         clsname = self.__class__.__name__.upper()
         if self.items:
-            variables = self.parent.a.variables
-            for n in self.items:
-                if not variables.has_key(n):
-                    variables[n] = Variable(self, n)
-                var = variables[n]
-                var.update([clsname])
+            for name in self.items:
+                var = self.get_variable(name)
+                var.update(clsname)
         else:
             self.parent.a.attributes.append(clsname)
         return
@@ -564,6 +583,7 @@ class Close(Statement):
     def __str__(self):
         tab = self.get_indent_tab()
         return tab + 'CLOSE (%s)' % (', '.join(self.specs))
+    def analyze(self): return
 
 class Cycle(Statement):
     """
@@ -577,6 +597,7 @@ class Cycle(Statement):
         if self.name:
             return self.get_indent_tab() + 'CYCLE ' + self.name
         return self.get_indent_tab() + 'CYCLE'
+    def analyze(self): return
 
 class FilePositioningStatement(Statement):
     """
@@ -608,6 +629,7 @@ class FilePositioningStatement(Statement):
     def __str__(self):
         clsname = self.__class__.__name__.upper()
         return self.get_indent_tab() + clsname + ' (%s)' % (', '.join(self.specs))
+    def analyze(self): return
 
 class Backspace(FilePositioningStatement): pass
 
@@ -629,6 +651,7 @@ class Open(Statement):
         return
     def __str__(self):
         return self.get_indent_tab() + 'OPEN (%s)' % (', '.join(self.specs))
+    def analyze(self): return
 
 class Format(Statement):
     """
@@ -659,18 +682,15 @@ class Format(Statement):
         item = self.item
         if not item.label:
             # R1001:
-            message = self.reader.format_message(\
-                        'WARNING',
-                        'R1001: FORMAT statement must be labeled but got %r.' \
-                        % (item.label),
-                        item.span[0],item.span[1])
-            self.show_message(message)
+            self.warning('R1001: FORMAT statement must be labeled but got %r.' \
+                         % (item.label))
         line = item.get_line()[6:].lstrip()
         assert line[0]+line[-1]=='()',`line`
         self.specs = split_comma(line[1:-1], item)
         return
     def __str__(self):
         return self.get_indent_tab() + 'FORMAT (%s)' % (', '.join(self.specs))
+    def analyze(self): return
 
 class Save(Statement):
     """
@@ -708,6 +728,7 @@ class Save(Statement):
         if not self.items:
             return tab + 'SAVE'
         return tab + 'SAVE %s' % (', '.join(self.items))
+    def analyze(self): return
 
 class Data(Statement):
     """
@@ -755,6 +776,7 @@ class Data(Statement):
         for o,v in self.stmts:
             l.append('%s / %s /' %(', '.join(o),', '.join(v)))
         return tab + 'DATA ' + ' '.join(l)
+    def analyze(self): return
 
 class Nullify(Statement):
     """
@@ -768,6 +790,7 @@ class Nullify(Statement):
         return
     def __str__(self):
         return self.get_indent_tab() + 'NULLIFY (%s)' % (', '.join(self.items))
+    def analyze(self): return
 
 class Use(Statement):
     """
@@ -830,11 +853,10 @@ class Use(Statement):
                 fn = get_module_file(self.name, d)
                 if fn is not None:
                     break
-
-            if fn is not None:
+            if 1 and fn is not None:
                 from readfortran import FortranFileReader
                 from parsefortran import FortranParser
-                self.show_message('Processing %r (parent file=%r)' % (fn, self.reader.name))
+                self.info('looking module information from %r' % (fn))
                 reader = FortranFileReader(fn)
                 parser = FortranParser(reader)
                 parser.parse()
@@ -843,15 +865,7 @@ class Use(Statement):
                 modules.update(parser.block.a.module)
 
         if not modules.has_key(self.name):
-            message = self.reader.format_message(\
-                        'ERROR',
-                        'No information about the use module %r.' \
-                        % (self.name),
-                        self.item.span[0],self.item.span[1])
-            self.show_message(message)
-            raise AnalyzeError
-            return
-
+            self.warning('no information about the use module %r' % (self.name))
         return
 
 class Exit(Statement):
@@ -866,6 +880,7 @@ class Exit(Statement):
         if self.name:
             return self.get_indent_tab() + 'EXIT ' + self.name
         return self.get_indent_tab() + 'EXIT'
+    def analyze(self): return
 
 class Parameter(Statement):
     """
@@ -879,6 +894,16 @@ class Parameter(Statement):
         return
     def __str__(self):
         return self.get_indent_tab() + 'PARAMETER (%s)' % (', '.join(self.items))
+    def analyze(self):
+        for item in self.items:
+            i = item.find('=')
+            assert i!=-1,`item`
+            name = item[:i].rstrip()
+            value = item[i+1:].lstrip()
+            var = self.get_variable(name)
+            var.update('parameter')
+            var.set_init(value)
+        return
 
 class Equivalence(Statement):
     """
@@ -898,6 +923,7 @@ class Equivalence(Statement):
         return
     def __str__(self):
         return self.get_indent_tab() + 'EQUIVALENCE %s' % (', '.join(self.items))
+    def analyze(self): return
 
 class Dimension(Statement):
     """
@@ -913,6 +939,15 @@ class Dimension(Statement):
         return
     def __str__(self):
         return self.get_indent_tab() + 'DIMENSION %s' % (', '.join(self.items))
+    def analyze(self):
+        for line in self.items:
+            i = line.find('(')
+            assert i!=-1 and line.endswith(')'),`line`
+            name = line[:i].rstrip()
+            array_spec = split_comma(line[i+1:-1].strip(), self.item)
+            var = self.get_variable(name)
+            var.set_bounds(array_spec)
+        return
 
 class Target(Statement):
     """
@@ -928,6 +963,17 @@ class Target(Statement):
         return
     def __str__(self):
         return self.get_indent_tab() + 'TARGET %s' % (', '.join(self.items))
+    def analyze(self):
+        for line in self.items:
+            i = line.find('(')
+            assert i!=-1 and line.endswith(')'),`line`
+            name = line[:i].rstrip()
+            array_spec = split_comma(line[i+1:-1].strip(), self.item)
+            var = self.get_variable(name)
+            var.set_bounds(array_spec)
+            var.update('target')
+        return
+
 
 class Pointer(Statement):
     """
@@ -945,25 +991,53 @@ class Pointer(Statement):
         return
     def __str__(self):
         return self.get_indent_tab() + 'POINTER %s' % (', '.join(self.items))
+    def analyze(self):
+        for line in self.items:
+            i = line.find('(')
+            if i==-1:
+                name = line
+                array_spec = None
+            else:
+                assert line.endswith(')'),`line`
+                name = line[:i].rstrip()
+                array_spec = split_comma(line[i+1:-1].strip(), self.item)
+            var = self.get_variable(name)
+            var.set_bounds(array_spec)
+            var.update('pointer')
+        return
 
 class Protected(StatementWithNamelist):
     """
     PROTECTED [ :: ] <entity-name-list>
     """
     match = re.compile(r'protected\b',re.I).match
-
+    def analyze(self):
+        for name in self.items:
+            var = self.get_variable(name)
+            var.update('protected')
+        return
 
 class Volatile(StatementWithNamelist):
     """
-    Volatile [ :: ] <object-name-list>
+    VOLATILE [ :: ] <object-name-list>
     """
     match = re.compile(r'volatile\b',re.I).match
+    def analyze(self):
+        for name in self.items:
+            var = self.get_variable(name)
+            var.update('volatile')
+        return
 
 class Value(StatementWithNamelist):
     """
     VALUE [ :: ] <dummy-arg-name-list>
     """
     match = re.compile(r'value\b',re.I).match
+    def analyze(self):
+        for name in self.items:
+            var = self.get_variable(name)
+            var.update('value')
+        return
 
 class ArithmeticIf(Statement):
     """
@@ -982,12 +1056,18 @@ class ArithmeticIf(Statement):
     def __str__(self):
         return self.get_indent_tab() + 'IF (%s) %s' \
                % (self.expr,', '.join(self.labels))
+    def analyze(self): return
 
 class Intrinsic(StatementWithNamelist):
     """
     INTRINSIC [ :: ] <intrinsic-procedure-name-list>
     """
     match = re.compile(r'intrinsic\b',re.I).match
+    def analyze(self):
+        for name in self.items:
+            var = self.get_variable(name)
+            var.update('intrinsic')
+        return
 
 class Inquire(Statement):
     """
@@ -1013,6 +1093,7 @@ class Inquire(Statement):
                    % (', '.join(self.specs), ', '.join(self.items))
         return self.get_indent_tab() + 'INQUIRE (%s)' \
                    % (', '.join(self.specs))
+    def analyze(self): return
 
 class Sequence(Statement):
     """
@@ -1022,12 +1103,21 @@ class Sequence(Statement):
     def process_item(self):
         return
     def __str__(self): return self.get_indent_tab() + 'SEQUENCE'
+    def analyze(self):
+        self.parent.a.attributes.append('SEQUENCE')
+        return
 
 class External(StatementWithNamelist):
     """
     EXTERNAL [ :: ] <external-name-list>
     """
     match = re.compile(r'external\b', re.I).match
+    def analyze(self):
+        for name in self.items:
+            var = self.get_variable(name)
+            var.update('external')
+        return
+
 
 class Namelist(Statement):
     """
@@ -1107,6 +1197,21 @@ class Common(Statement):
                 l.append(s)
         tab = self.get_indent_tab()
         return tab + 'COMMON ' + ' '.join(l)
+    def analyze(self):
+        for cname, items in self.items:
+            for item in items:
+                i = item.find('(')
+                if i!=-1:
+                    assert item.endswith(')'),`item`
+                    name = item[:i].rstrip()
+                    shape = split_comma(item[i+1:-1].strip(), self.item)
+                else:
+                    name = item
+                    shape = None
+                var = self.get_variable(name)
+                if shape is not None:
+                    var.set_bounds(shape)
+        return
 
 class Optional(StatementWithNamelist):
     """
@@ -1114,6 +1219,11 @@ class Optional(StatementWithNamelist):
     <dummy-arg-name> = <name>
     """
     match = re.compile(r'optional\b',re.I).match
+    def analyze(self):
+        for name in self.items:
+            var = self.get_variable(name)
+            var.update('optional')
+        return
 
 class Intent(Statement):
     """
@@ -1128,7 +1238,7 @@ class Intent(Statement):
     def process_item(self):
         line = self.item.get_line()[6:].lstrip()
         i = line.find(')')
-        self.specs = split_comma(line[1:i], self.item)
+        self.specs = specs_split_comma(line[1:i], self.item, upper=True)
         line = line[i+1:].lstrip()
         if line.startswith('::'):
             line = line[2:].lstrip()
@@ -1141,6 +1251,12 @@ class Intent(Statement):
     def __str__(self):
         return self.get_indent_tab() + 'INTENT (%s) %s' \
                % (', '.join(self.specs), ', '.join(self.items))
+    def analyze(self):
+        for name in self.items:
+            var = self.get_variable(name)
+            var.set_intent(self.specs)
+        return
+
 
 class Entry(Statement):
     """
@@ -1252,6 +1368,7 @@ class Forall(Statement):
             s += ', ' + self.mask
         return tab + 'FORALL (%s) %s' % \
                (s, str(self.content[0]).lstrip())
+    def analyze(self): return
 
 ForallStmt = Forall
 
@@ -1360,12 +1477,33 @@ class Allocatable(Statement):
         return
     def __str__(self):
         return self.get_indent_tab() + 'ALLOCATABLE ' + ', '.join(self.items) 
+    def analyze(self):
+        for line in self.items:
+            i = line.find('(')
+            if i==-1:
+                name = line
+                array_spec = None
+            else:
+                assert line.endswith(')')
+                name = line[:i].rstrip()
+                array_spec = split_comma(line[i+1:-1], self.item)
+            var = self.get_variable(name)
+            var.update('allocatable')
+            if array_spec is not None:
+                var.set_bounds(array_spec)
+        return
 
 class Asynchronous(StatementWithNamelist):
     """
     ASYNCHRONOUS [ :: ] <object-name-list>
     """
     match = re.compile(r'asynchronous\b',re.I).match
+    def analyze(self):
+        for name in self.items:
+            var = self.get_variable(name)
+            var.update('asynchronous')
+        return
+
 
 class Bind(Statement):
     """
@@ -1404,12 +1542,8 @@ class Else(Statement):
         self.name = item.get_line()[4:].strip()
         parent_name = getattr(self.parent,'name','')
         if self.name and self.name!=parent_name:
-            message = self.reader.format_message(\
-                        'WARNING',
-                        'expected if-construct-name %r but got %r, skipping.'\
-                        % (parent_name, self.name),
-                        item.span[0],item.span[1])
-            print >> sys.stderr, message
+            self.warning('expected if-construct-name %r but got %r, skipping.'\
+                         % (parent_name, self.name))
             self.isvalid = False        
         return
 
@@ -1417,6 +1551,8 @@ class Else(Statement):
         if self.name:
             return self.get_indent_tab(deindent=True) + 'ELSE ' + self.name
         return self.get_indent_tab(deindent=True) + 'ELSE'
+
+    def analyze(self): return
 
 class ElseIf(Statement):
     """
@@ -1433,12 +1569,8 @@ class ElseIf(Statement):
         self.name = line[i+1:].lstrip()[4:].strip()
         parent_name = getattr(self.parent,'name','')
         if self.name and self.name!=parent_name:
-            message = self.reader.format_message(\
-                        'WARNING',
-                        'expected if-construct-name %r but got %r, skipping.'\
-                        % (parent_name, self.name),
-                        item.span[0],item.span[1])
-            self.show_message(message)
+            self.warning('expected if-construct-name %r but got %r, skipping.'\
+                         % (parent_name, self.name))
             self.isvalid = False        
         return
         
@@ -1448,6 +1580,8 @@ class ElseIf(Statement):
             s = ' ' + self.name
         return self.get_indent_tab(deindent=True) + 'ELSE IF (%s) THEN%s' \
                % (self.expr, s)
+
+    def analyze(self): return
 
 # SelectCase construct statements
 
@@ -1483,12 +1617,8 @@ class Case(Statement):
         self.name = line
         parent_name = getattr(self.parent, 'name', '')
         if self.name and self.name!=parent_name:
-            message = self.reader.format_message(\
-                        'WARNING',
-                        'expected case-construct-name %r but got %r, skipping.'\
-                        % (parent_name, self.name),
-                        self.item.span[0],self.item.span[1])
-            self.show_message(message)
+            self.warning('expected case-construct-name %r but got %r, skipping.'\
+                         % (parent_name, self.name))
             self.isvalid = False        
         return
 
@@ -1505,6 +1635,7 @@ class Case(Statement):
         if self.name:
             s += ' ' + self.name
         return s
+    def analyze(self): return
 
 # Where construct statements
 
@@ -1531,6 +1662,7 @@ class Where(Statement):
     def __str__(self):
         tab = self.get_indent_tab()
         return tab + 'WHERE ( %s ) %s' % (self.expr, str(self.content[0]).lstrip())
+    def analyze(self): return
 
 WhereStmt = Where
 
@@ -1551,12 +1683,8 @@ class ElseWhere(Statement):
         self.name = line
         parent_name = getattr(self.parent,'name','')
         if self.name and not self.name==parent_name:
-            message = self.reader.format_message(\
-                        'WARNING',
-                        'expected where-construct-name %r but got %r, skipping.'\
-                        % (parent_name, self.name),
-                        self.item.span[0],self.item.span[1])
-            print >> sys.stderr, message
+            self.warning('expected where-construct-name %r but got %r, skipping.'\
+                         % (parent_name, self.name))
             self.isvalid = False
         return
 
@@ -1568,6 +1696,7 @@ class ElseWhere(Statement):
         if self.name:
             s += ' ' + self.name
         return tab + s
+    def analyze(self): return
 
 # Enum construct statements
 
@@ -1685,3 +1814,5 @@ class Pause(Statement):
         if self.value:
             return self.get_indent_tab() + 'PAUSE ' + self.value
         return self.get_indent_tab() + 'PAUSE'
+    def analyze(self): return
+
