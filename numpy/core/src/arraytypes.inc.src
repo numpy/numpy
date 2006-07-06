@@ -1571,9 +1571,18 @@ UNICODE_compare(register PyArray_UCS4 *ip1, register PyArray_UCS4 *ip2,
 }
 
 /* possibly redefine compare in terms of fields and subarrays if any */
+/* this would have to properly align data (if needed for the type) 
+   before passing on to the _compare function of sub-fields 
 
-/* as it is, it compares raw-bytes as it they were strings */
-#define VOID_compare STRING_compare
+   More importantly, it's unclear what is meant by < and > so we really 
+   can't implement it correctly. 
+*/
+
+static int
+VOID_compare(char *ip1, char *ip2, PyArrayObject *ap) 
+{
+	return STRING_compare(ip1, ip2, ap);
+}
 
 /****************** argfunc **********************************/
 
