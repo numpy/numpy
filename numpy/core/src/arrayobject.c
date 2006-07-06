@@ -698,15 +698,18 @@ PyArray_PyIntAsInt(PyObject *o)
 static char *
 index2ptr(PyArrayObject *mp, intp i)
 {
+	intp dim0;
 	if(mp->nd == 0) {
 		PyErr_SetString(PyExc_IndexError,
 				"0-d arrays can't be indexed");
 		return NULL;
 	}
-	if (i==0 && mp->dimensions[0] > 0)
+	dim0 = mp->dimensions[0];
+	if (i<0) i += dim0;
+	if (i==0 && dim0 > 0)
 		return mp->data;
-
-        if (mp->nd>0 &&  i>0 && i < mp->dimensions[0]) {
+	
+        if (mp->nd>0 &&  i>0 && i < dim0) {
                 return mp->data+i*mp->strides[0];
         }
         PyErr_SetString(PyExc_IndexError,"index out of bounds");
@@ -1839,9 +1842,6 @@ array_item_nice(PyArrayObject *self, Py_ssize_t i)
 {
 	if (self->nd == 1) {
 		char *item;
-                if (i < 0) {
-			i += self->dimensions[0];
-		}
 		if ((item = index2ptr(self, i)) == NULL) return NULL;
 		return PyArray_Scalar(item, self->descr, (PyObject *)self);
 	}
@@ -1874,7 +1874,6 @@ array_ass_big_item(PyArrayObject *self, intp i, PyObject *v)
                 return -1;
         }
 
-        if (i < 0) i = i+self->dimensions[0];
 
         if (self->nd > 1) {
                 if((tmp = (PyArrayObject *)array_big_item(self, i)) == NULL)
@@ -2472,7 +2471,6 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
 
 	value = PyArray_PyIntAsIntp(op);
 	if (!PyErr_Occurred()) {
-		if (value < 0 && self->nd > 0) value += self->dimensions[0];
 		return array_big_item(self, value);
 	}
 	PyErr_Clear();
@@ -2559,7 +2557,6 @@ array_subscript(PyArrayObject *self, PyObject *op)
 		intp value;
 		value = PyArray_PyIntAsIntp(op);
 		if (!PyErr_Occurred()) {
-			if (value < 0) value += self->dimensions[0];
 			return array_big_item(self, value);
 		}
 		PyErr_Clear();
@@ -2667,6 +2664,15 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 		return -1;
 	}
 
+	if (PyInt_Check(index) || PyArray_IsScalar(index, Integer)) {
+		intp value;
+		value = PyArray_PyIntAsIntp(index);
+		if (PyErr_Occurred())
+			PyErr_Clear();
+		else
+			return array_ass_big_item(self, value, op);
+	}
+
 	if (PyString_Check(index) || PyUnicode_Check(index)) {
 		if (self->descr->fields) {
 			PyObject *obj;
@@ -2765,11 +2771,19 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 	PyArrayObject *mp;
 	intp vals[MAX_DIMS];
 
+	if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) || \
+	    PyLong_Check(op)) {
+		intp value;
+		value = PyArray_PyIntAsIntp(op);
+		if (PyErr_Occurred())
+			PyErr_Clear();
+		else {
+			return array_item_nice(self, (Py_ssize_t) value);
+		}
+	}
 	/* optimization for a tuple of integers */
-	if (self->nd > 0 && 
-	    (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||	\
-	     PyLong_Check(op) ||					\
-	     (PyTuple_Check(op) && (PyTuple_GET_SIZE(op) == self->nd))) \
+	if (self->nd > 1 && PyTuple_Check(op) && 
+	    (PyTuple_GET_SIZE(op) == self->nd)
 	    && PyArray_IntpFromSequence(op, vals, self->nd) == self->nd) {
 		int i;
 		char *item;
@@ -3706,13 +3720,10 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow,
         }
 
         l=self->dimensions[0];
-        if (ihigh < 0) ihigh += l;
-        if (ilow  < 0) ilow += l;
         if (ilow < 0) ilow = 0;
         else if (ilow > l) ilow = l;
-        if (ihigh < 0) ihigh = 0;
-        else if (ihigh > l) ihigh = l;
         if (ihigh < ilow) ihigh = ilow;
+        else if (ihigh > l) ihigh = l;
 
         if (ihigh != ilow) {
                 data = index2ptr(self, ilow);
