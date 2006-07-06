@@ -180,7 +180,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
                 verbose=verbose)
     assert math.fabs(sc_desired - sc_actual) < pow(10.,-1*significant), msg
 
-def assert_array_compare(comparision, x, y, err_msg='', verbose=True,
+def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header=''):
     from numpy.core import asarray
     x = asarray(x)
@@ -195,10 +195,16 @@ def assert_array_compare(comparision, x, y, err_msg='', verbose=True,
                                 verbose=verbose, header=header,
                                 names=('x', 'y'))
             assert cond, msg
-        reduced = comparision(x, y).ravel()
-        cond = reduced.all()
+        val = comparison(x,y)
+        if isinstance(val, bool):
+            cond = val
+            reduced = [0]
+        else:
+            reduced = val.ravel()
+            cond = reduced.all()
+            reduced = reduced.tolist()
         if not cond:
-            match = 100-100.0*reduced.tolist().count(1)/len(reduced)
+            match = 100-100.0*reduced.count(1)/len(reduced)
             msg = build_err_msg([x, y],
                                 err_msg
                                 + '\n(mismatch %s%%)' % (match,),
