@@ -606,18 +606,8 @@ class Configuration(object):
                 raise ValueError,'Unknown option: '+key
 
     def get_distribution(self):
-        import distutils.core
-        dist = distutils.core._setup_distribution
-        # XXX Hack to get numpy installable with easy_install.
-        # The problem is easy_install runs it's own setup(), which
-        # sets up distutils.core._setup_distribution. However,
-        # when our setup() runs, that gets overwritten and lost.
-        # We can't use isinstance, as the DistributionWithoutHelpCommands
-        # class is local to a function in setuptools.command.easy_install
-        if dist is not None and \
-                repr(dist).find('DistributionWithoutHelpCommands') != -1:
-            return None
-        return dist
+        from numpy.distutils.core import get_distribution
+        return get_distribution()
 
     def _wildcard_get_subpackage(self, subpackage_name,
                                  parent_name,

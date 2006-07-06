@@ -315,7 +315,8 @@ def new_compiler (plat=None,
     try:
         __import__ (module_name)
     except ImportError, msg:
-        print msg,'in numpy.distutils, trying from distutils..'
+        log.info('%s in numpy.distutils; trying from distutils',
+                 str(msg))
         module_name = module_name[6:]
         try:
             __import__(module_name)

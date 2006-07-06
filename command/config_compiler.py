@@ -7,14 +7,12 @@ from distutils.core import Command
 
 def show_fortran_compilers(_cache=[]):
     # Using cache to prevent infinite recursion
-    if _cache: return
+    if _cache:
+        return
     _cache.append(1)
-    
     from numpy.distutils.fcompiler import show_fcompilers
-    import distutils.core
-    dist = distutils.core._setup_distribution
-    show_fcompilers(dist)
-    return
+    from numpy.distutils.core import get_distribution
+    show_fcompilers(get_distribution())
 
 class config_fc(Command):
     """ Distutils command to hold user specified options

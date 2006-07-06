@@ -20,6 +20,7 @@ from distutils.util import split_quoted
 from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
 from numpy.distutils.command.config_compiler import config_fc
+from numpy.distutils.core import get_distribution
 from numpy.distutils.misc_util import is_string, is_sequence
 from distutils.spawn import _nt_quote_args
 
@@ -229,7 +230,7 @@ class FCompiler(CCompiler):
 
     ## Public methods:
 
-    def customize(self, dist=None):
+    def customize(self, dist):
         """ Customize Fortran compiler.
 
         This method gets Fortran compiler specific information from
@@ -245,12 +246,12 @@ class FCompiler(CCompiler):
         if dist is None:
             # These hooks are for testing only!
             dist = Distribution()
-            dist.script_name = os.path.basename(sys.argv[0])
-            dist.script_args = ['config_fc'] + sys.argv[1:]
-            dist.cmdclass['config_fc'] = config_fc
-            dist.parse_config_files()
-            dist.parse_command_line()
-        if isinstance(dist,Distribution):
+#            dist.script_name = os.path.basename(sys.argv[0])
+#            dist.script_args = ['config_fc'] + sys.argv[1:]
+#            dist.cmdclass['config_fc'] = config_fc
+#            dist.parse_config_files()
+#            dist.parse_command_line()
+        if isinstance(dist, Distribution):
             conf = dist.get_option_dict('config_fc')
         else:
             assert isinstance(dist,dict)
@@ -262,7 +263,6 @@ class FCompiler(CCompiler):
         else:
             noarch = conf.get('noarch',[None,noopt])[1]
         debug = conf.get('debug',[None,0])[1]
-
 
         f77 = self.__get_cmd('compiler_f77','F77',(conf,'f77exec'))
         f90 = self.__get_cmd('compiler_f90','F90',(conf,'f90exec'))
@@ -590,16 +590,17 @@ _default_compilers = (
     )
 
 def _find_existing_fcompiler(compilers, osname=None, platform=None):
+    dist = get_distribution(always=True)
     for compiler in compilers:
         v = None
         try:
             c = new_fcompiler(plat=platform, compiler=compiler)
-            c.customize()
+            c.customize(dist)
             v = c.get_version()
         except DistutilsModuleError:
             pass
-        except Exception, msg:
-            log.warn(msg)
+        except Exception, e:
+            log.warn(str(e))
         if v is not None:
             return compiler
     return
