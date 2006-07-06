@@ -229,9 +229,8 @@ PyArray_Round(PyArrayObject *a, int decimals)
 		/* new.real = a.real.round(decimals) */
 		part = PyObject_GetAttrString(new, "real");
 		if (part == NULL) {Py_DECREF(new); return NULL;}
-		round_part = PyArray_Round\
-			((PyArrayObject *)PyArray_EnsureAnyArray(part), 
-			 decimals);
+		part = PyArray_EnsureAnyArray(part);
+		round_part = PyArray_Round((PyArrayObject *)part, decimals);
 		Py_DECREF(part);
 		if (round_part == NULL) {Py_DECREF(new); return NULL;}
 		res = PyObject_SetAttrString(new, "real", round_part);
@@ -241,9 +240,8 @@ PyArray_Round(PyArrayObject *a, int decimals)
 		/* new.imag = a.imag.round(decimals) */
 		part = PyObject_GetAttrString(new, "imag");
 		if (part == NULL) {Py_DECREF(new); return NULL;}
-		round_part = PyArray_Round\
-			((PyArrayObject *)PyArray_EnsureAnyArray(part), 
-			 decimals);
+		part = PyArray_EnsureAnyArray(part); 
+		round_part = PyArray_Round((PyArrayObject *)part, decimals);
 		Py_DECREF(part);
 		if (round_part == NULL) {Py_DECREF(new); return NULL;}
 		res = PyObject_SetAttrString(new, "imag", round_part);
@@ -279,6 +277,7 @@ PyArray_Round(PyArrayObject *a, int decimals)
 		} else {
 			tmp = PyObject_CallFunction(n_ops.rint, "OO", ret, ret);
 			if (tmp == NULL) {Py_DECREF(ret); ret=NULL; goto finish;}
+			Py_DECREF(tmp);
 			tmp = PyObject_CallFunction(n_ops.divide, "OOO", ret, 
 						    f, ret);
 			if (tmp == NULL) {Py_DECREF(ret); ret=NULL; goto finish;}
