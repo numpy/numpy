@@ -511,7 +511,7 @@ class system_info:
             if info is not None:
                 break
         if not info:
-            log.info('  libraries %s not find in %s', ','.join(libs), lib_dir)
+            log.info('  libraries %s not found in %s', ','.join(libs), lib_dir)
         return info
 
     def check_libs2(self, lib_dir, libs, opt_libs =[]):
@@ -528,7 +528,7 @@ class system_info:
             exts.append('.dll.a')
         info = self._check_libs(lib_dir,libs,opt_libs,exts)
         if not info:
-            log.info('  libraries %s not find in %s', ','.join(libs), lib_dir)
+            log.info('  libraries %s not found in %s', ','.join(libs), lib_dir)
         return info
 
     def _lib_list(self, lib_dir, libs, exts):
