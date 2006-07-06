@@ -52,14 +52,7 @@ char* typecode_string(int typecode) {
  * to match.  Also allow int and long to match.
  */
 int type_match(int actual_type, int desired_type) {
-  int match = 1;
-  if ( actual_type != desired_type &&
-       !(desired_type == PyArray_CHAR  && actual_type == PyArray_SBYTE) &&
-       !(desired_type == PyArray_SBYTE && actual_type == PyArray_CHAR)  &&
-       !(desired_type == PyArray_INT   && actual_type == PyArray_LONG)  &&
-       !(desired_type == PyArray_LONG  && actual_type == PyArray_INT)) 
-    match = 0;
-  return match;
+  return PyArray_EquivTypenums(actual_type, desired_type);
 }
 
 /* Given a PyObject pointer, cast it to a PyArrayObject pointer if
@@ -69,7 +62,8 @@ int type_match(int actual_type, int desired_type) {
 PyArrayObject* obj_to_array_no_conversion(PyObject* input, int typecode) {
   PyArrayObject* ary = NULL;
   if (is_array(input) && (typecode == PyArray_NOTYPE || 
-	PyArray_EquivTypenums(array_type(input), typecode)) {
+			  PyArray_EquivTypenums(array_type(input), 
+						typecode))) {
         ary = (PyArrayObject*) input;
     }
     else if is_array(input) {
