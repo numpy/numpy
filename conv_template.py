@@ -18,14 +18,9 @@
 
 __all__ = ['process_str', 'process_file']
 
-import string,os,sys
-if sys.version[:3]>='2.3':
-    import re
-else:
-    import pre as re
-    False = 0
-    True = 1
-
+import os
+import sys
+import re
 
 def parse_structure(astr):
     spanlist = []
@@ -66,7 +61,8 @@ def conv(astr):
     #  with 'a,b,c,a,b,c,a,b,c,a,b,c'
     astr = parenrep.sub(paren_repl,astr)
     # replaces occurences of xxx*3 with xxx, xxx, xxx
-    astr = ','.join([plainrep.sub(paren_repl,x.strip()) for x in astr.split(',')])
+    astr = ','.join([plainrep.sub(paren_repl,x.strip())
+                     for x in astr.split(',')])
     return astr
 
 def unique_key(adict):
@@ -85,40 +81,38 @@ def unique_key(adict):
             done = True
     return newkey
 
-def namerepl(match):
-    global _names, _thissub
-    name = match.group(1)
-    return _names[name][_thissub]
-
 def expand_sub(substr, namestr, line):
-    global _names, _thissub
     # find all named replacements
     reps = named_re.findall(namestr)
-    _names = {}
-    _names.update(_special_names)
+    names = {}
+    names.update(_special_names)
     numsubs = None
     for rep in reps:
         name = rep[0].strip()
         thelist = conv(rep[1])
-        _names[name] = thelist
+        names[name] = thelist
 
     # make lists out of string entries in name dictionary
-    for name in _names.keys():
-        entry = _names[name]
+    for name in names.keys():
+        entry = names[name]
         entrylist = entry.split(',')
-        _names[name] = entrylist
+        names[name] = entrylist
         num = len(entrylist)
         if numsubs is None:
             numsubs = num
-        elif (numsubs != num):
+        elif numsubs != num:
             print namestr
             print substr
             raise ValueError, "Mismatch in number to replace"
 
     # now replace all keys for each of the lists
     mystr = ''
+    thissub = [None]
+    def namerepl(match):
+        name = match.group(1)
+        return names[name][thissub[0]]
     for k in range(numsubs):
-        _thissub = k
+        thissub[0] = k
         mystr += ("#line %d\n%s\n\n"
                   % (line, template_re.sub(namerepl, substr)))
     return mystr

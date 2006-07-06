@@ -48,15 +48,9 @@ process_file(filename)
 
 __all__ = ['process_str','process_file']
 
-import string,os,sys
-if sys.version[:3]>='2.3':
-    import re
-else:
-    import pre as re
-    False = 0
-    True = 1
-if sys.version[:5]=='2.2.1':
-    import re
+import os
+import sys
+import re
 
 routine_start_re = re.compile(r'(\n|\A)((     (\$|\*))|)\s*(subroutine|function)\b',re.I)
 routine_end_re = re.compile(r'\n\s*end\s*(subroutine|function)\b.*(\n|\Z)',re.I)

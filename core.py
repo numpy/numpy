@@ -16,6 +16,10 @@ else:
     from distutils.core import setup as old_setup
     have_setuptools = False
 
+import warnings
+import distutils.core
+import distutils.dist
+
 from numpy.distutils.extension import Extension
 from numpy.distutils.command import config
 from numpy.distutils.command import build
@@ -60,20 +64,15 @@ def _dict_append(d, **kws):
             continue
         dv = d[k]
         if isinstance(dv, tuple):
-            dv += tuple(v)
-            continue
-        if isinstance(dv, list):
-            dv += list(v)
-            continue
-        if isinstance(dv, dict):
+            d[k] = dv + tuple(v)
+        elif isinstance(dv, list):
+            d[k] = dv + list(v)
+        elif isinstance(dv, dict):
             _dict_append(dv, **v)
-            continue
-        if isinstance(dv, str):
-            assert isinstance(v,str),`type(v)`
-            d[k] = v
-            continue
-        raise TypeError,`type(dv)`
-    return
+        elif is_string(dv):
+            d[k] = dv + v
+        else:
+            raise TypeError,`type(dv)`
 
 def _command_line_ok(_cache=[]):
     """ Return True if command line does not contain any
@@ -101,6 +100,21 @@ def _exit_interactive_session(_cache=[]):
     raw_input('Press ENTER to close the interactive session..')
     print '='*72
 
+def get_distribution(always=False):
+    dist = distutils.core._setup_distribution
+    # XXX Hack to get numpy installable with easy_install.
+    # The problem is easy_install runs it's own setup(), which
+    # sets up distutils.core._setup_distribution. However,
+    # when our setup() runs, that gets overwritten and lost.
+    # We can't use isinstance, as the DistributionWithoutHelpCommands
+    # class is local to a function in setuptools.command.easy_install
+    if dist is not None and \
+            repr(dist).find('DistributionWithoutHelpCommands') != -1:
+        dist = None
+    if always and dist is None:
+        dist = distutils.dist.Distribution()
+    return dist
+
 def setup(**attr):
 
     if len(sys.argv)<=1:
@@ -123,26 +137,23 @@ def setup(**attr):
         # or help request in command in the line.
         configuration = new_attr.pop('configuration')
 
-        import distutils.core
         old_dist = distutils.core._setup_distribution
         old_stop = distutils.core._setup_stop_after
         distutils.core._setup_distribution = None
         distutils.core._setup_stop_after = "commandline"
         try:
             dist = setup(**new_attr)
+        finally:
             distutils.core._setup_distribution = old_dist
             distutils.core._setup_stop_after = old_stop
-        except Exception,msg:
-            distutils.core._setup_distribution = old_dist
-            distutils.core._setup_stop_after = old_stop
-            raise msg
         if dist.help or not _command_line_ok():
             # probably displayed help, skip running any commands
             return dist
 
         # create setup dictionary and append to new_attr
         config = configuration()
-        if hasattr(config,'todict'): config = config.todict()
+        if hasattr(config,'todict'):
+            config = config.todict()
         _dict_append(new_attr, **config)
 
     # Move extension source libraries to libraries
@@ -174,7 +185,6 @@ def setup(**attr):
     return old_setup(**new_attr)
 
 def _check_append_library(libraries, item):
-    import warnings
     for libitem in libraries:
         if is_sequence(libitem):
             if is_sequence(item):
@@ -199,10 +209,8 @@ def _check_append_library(libraries, item):
                 if item==libitem:
                     return
     libraries.append(item)
-    return
 
 def _check_append_ext_library(libraries, (lib_name,build_info)):
-    import warnings
     for item in libraries:
         if is_sequence(item):
             if item[0]==lib_name:
@@ -216,4 +224,3 @@ def _check_append_ext_library(libraries, (lib_name,build_info)):
                           " no build_info" % (lib_name,))
             break
     libraries.append((lib_name,build_info))
-    return
