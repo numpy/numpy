@@ -1077,7 +1077,8 @@ NA_OptionalOutputArray(PyObject *optional, NumarrayType t, int requires,
 		PyArray_Descr *descr;
 		if (t == tAny) descr=NULL;
 		else descr = PyArray_DescrFromType(t);
-		rval = PyArray_FromArray(master, descr, 0);
+		rval = PyArray_FromArray(
+			master, descr, NUM_C_ARRAY | NUM_COPY | NUM_WRITABLE);
 		return (PyArrayObject *)rval;
 	} else {
 		return NA_OutputArray(optional, t, requires);
