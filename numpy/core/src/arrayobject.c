@@ -709,7 +709,7 @@ index2ptr(PyArrayObject *mp, intp i)
 	if (i==0 && dim0 > 0)
 		return mp->data;
 	
-        if (mp->nd>0 &&  i>0 && i < dim0) {
+        if (i>0 && i < dim0) {
                 return mp->data+i*mp->strides[0];
         }
         PyErr_SetString(PyExc_IndexError,"index out of bounds");

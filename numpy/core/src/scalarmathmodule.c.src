@@ -546,7 +546,7 @@ static PyObject *
 #if @fperr@
     int retstatus;
 #endif    
-	
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
     case 0:
         break;
@@ -583,6 +583,7 @@ static PyObject *
 	    return NULL;
     }
 #endif
+
 
 #if @twoout@
     ret = PyTuple_New(2);
@@ -1095,8 +1096,8 @@ PyMODINIT_FUNC initscalarmath(void) {
 
     m = Py_InitModule("scalarmath", methods);
 	
-    import_array(); return;
-    import_umath(); return;
+    import_array(); 
+    import_umath(); 
 
     if (get_functions() < 0) return;
 
