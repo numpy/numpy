@@ -1078,12 +1078,16 @@ int main(void) {
 }
 '''
 
+_cached_atlas_version = {}
 def get_atlas_version(**config):
+    libraries = config.get('libraries', [])
+    library_dirs = config.get('library_dirs', [])
+    key = (tuple(libraries), tuple(library_dirs))
+    if _cached_atlas_version.has_key(key):
+        return _cached_atlas_version[key]
     c = cmd_config(Distribution())
     s, o = c.get_output(atlas_version_c_text,
-                        libraries=config.get('libraries', []),
-                        library_dirs=config.get('library_dirs', []),
-                       )
+                        libraries=libraries, library_dirs=library_dirs)
 
     atlas_version = None
     if not s:
@@ -1096,6 +1100,7 @@ def get_atlas_version(**config):
         else:
             log.info('Status: %d', s)
             log.info('Output: %s', o)
+    _cached_atlas_version[key] = atlas_version
     return atlas_version
 
 from distutils.util import get_platform
