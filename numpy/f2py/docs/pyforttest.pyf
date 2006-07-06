@@ -1,5 +1,0 @@
-subroutine foo(a,m,n)
-integer m = size(a,1)
-integer n = size(a,2)
-real, intent(inout) :: a(m,n)
-end subroutine foo

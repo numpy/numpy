@@ -1,5 +1,0 @@
->>> import spam
->>> status = spam.system('whoami')
-pearu
->> status = spam.system('blah')
-sh: line 1: blah: command not found
