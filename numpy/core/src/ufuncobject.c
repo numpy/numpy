@@ -2097,6 +2097,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
                                 loop->function((char **)loop->bufptr,
                                                &i, 
 					       loop->steps, loop->funcdata);
+				loop->bufptr[1] += loop->steps[1]*i;
+				loop->bufptr[2] += loop->steps[2]*i;
 				UFUNC_CHECK_ERROR(loop);
                         }                       
                         PyArray_ITER_NEXT(loop->it);
@@ -2239,6 +2241,8 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
                                 loop->function((char **)loop->bufptr,
                                                &i, 
 					       loop->steps, loop->funcdata);
+				loop->bufptr[1] += loop->steps[1]*i;
+				loop->bufptr[2] += loop->steps[2]*i;
 				UFUNC_CHECK_ERROR(loop);
                         }                       
                         PyArray_ITER_NEXT(loop->it);
@@ -2386,6 +2390,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 						       &j, loop->steps,
 						       loop->funcdata);
 					UFUNC_CHECK_ERROR(loop);
+					loop->bufptr[1] += j*loop->steps[1];
 				} 
 				loop->bufptr[1] += loop->ret->strides[axis];
 				ptr++;

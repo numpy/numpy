@@ -19,7 +19,7 @@ from numpy.core import *
 from numpy.lib import *
 import lapack_lite
 
-fortran_int = int32
+fortran_int = intc
 
 # Error object
 class LinAlgError(Exception):

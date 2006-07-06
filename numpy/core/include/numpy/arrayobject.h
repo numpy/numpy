@@ -1604,7 +1604,7 @@ typedef struct {
 	} while(0)
 
 /* Copy should always return contiguous array */
-#define PyArray_Copy(obj) PyArray_NewCopy(obj, 0)
+#define PyArray_Copy(obj) PyArray_NewCopy(obj, PyArray_CORDER)
 
 #define PyArray_FromObject(op, type, min_depth, max_depth)		\
 	PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\
