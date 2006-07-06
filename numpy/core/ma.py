@@ -1391,6 +1391,22 @@ array(data = %(data)s,
     def _get_ctypes(self):
         return self._data.ctypes
 
+    def _get_M(self):
+        if self._mask is nomask:
+            return self._data.M
+        return self.filled().M
+
+    def _get_A(self):
+        if self._mask is nomask:
+            return self._data.A
+        return self.filled().A
+
+    def _get_T(self):
+        return self.swapaxes(-2,-1)
+
+    def _get_H(self):
+        return self.conjugate().swapaxes(-2,-1)
+
     shape = property(_get_shape, _set_shape,
            doc = 'tuple giving the shape of the array')
 
@@ -1406,6 +1422,10 @@ array(data = %(data)s,
     imag = imaginary
 
     ctypes = property(_get_ctypes, None, doc="ctypes")
+    M = property(_get_M, None, doc="get matrix")
+    A = property(_get_A, None, doc="get array")
+    T = property(_get_T, None, doc="get transpose")
+    H = property(_get_H, None, doc="get conj. transpose")
 
 #end class MaskedArray
 
