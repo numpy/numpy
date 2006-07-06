@@ -504,6 +504,23 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
 static PyArray_Descr **userdescrs=NULL;
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
+static PyTypeObject *matrix_type=NULL;
+
+static PyTypeObject *
+_load_matrix_type(void)
+{
+	PyObject *mod;
+	PyTypeObject *ret;
+	/* Load it from numpy */
+	mod = PyImport_ImportModule("numpy");
+	if (mod == NULL) return NULL;
+	ret = (PyTypeObject *)				\
+		PyObject_GetAttrString(mod, "matrix");
+	Py_DECREF(mod);
+	return ret;
+}
+	
+
 /* Computer-generated arraytype and scalartype code */
 #include "scalartypes.inc"
 #include "arraytypes.inc"
@@ -6198,15 +6215,8 @@ array_asarray_get(PyArrayObject *self)
 static PyObject *
 array_asmatrix_get(PyArrayObject *self)
 {
-	/* Keeps a reference */
-	static PyTypeObject *matrix_type = NULL;
 	if (matrix_type == NULL) {
-		PyObject *mod;
-		/* Load it from numpy */
-		mod = PyImport_ImportModule("numpy");
-		if (mod == NULL) return NULL;
-		matrix_type = (PyTypeObject *)			\
-			PyObject_GetAttrString(mod, "matrix");
+		matrix_type = _load_matrix_type();
 		if (matrix_type == NULL) return NULL;
 	}
 	if (self->nd > 2) {
