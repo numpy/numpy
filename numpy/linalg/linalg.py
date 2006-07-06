@@ -49,7 +49,10 @@ def _commonType(*arrays):
     return maxtype[1]
 
 def _realType(t):
-    return {double : double, cdouble : double}
+    try:
+        return {double : double, cdouble : double}[t]
+    except KeyError:
+        return double
 
 def _castCopyAndTranspose(type, *arrays):
     if len(arrays) == 1:
