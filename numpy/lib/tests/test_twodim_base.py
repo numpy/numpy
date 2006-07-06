@@ -134,9 +134,8 @@ class test_rot90(NumpyTestCase):
 class test_histogram2d(NumpyTestCase):
     def check_simple(self):
         import numpy as np
-        np.random.seed(1)   
-        x = np.rand(5)
-        y = np.rand(5)
+        x = array([ 0.41702200,  0.72032449,  0.00011437481, 0.302332573,  0.146755891])
+        y = array([ 0.09233859,  0.18626021,  0.34556073,  0.39676747,  0.53881673])
         xedges = np.linspace(0,1,10)
         yedges = np.linspace(0,1,10)
         H = np.histogram2d(x,y, (xedges, yedges))[0]
