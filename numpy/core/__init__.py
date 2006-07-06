@@ -17,7 +17,6 @@ from records import *
 from memmap import *
 from defchararray import *
 import scalarmath
-del scalarmath
 del nt
 
 __all__ = ['char','rec','memmap','ma']
@@ -26,6 +25,8 @@ __all__ += fromnumeric.__all__
 __all__ += defmatrix.__all__
 __all__ += rec.__all__
 __all__ += char.__all__
+
+
 
 def test(level=1, verbosity=1):
     from numpy.testing import NumpyTest

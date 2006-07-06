@@ -223,6 +223,7 @@ static void
     if (a == 0 || b == 0) {
 	if (b == 0) generate_divbyzero_error();
 	*out = 0;
+        return;
     }
 #if @neg@
     else if ((a > 0) == (b > 0)) {
@@ -291,6 +292,7 @@ static void
 **/
 static @name@ (*_basic_@name@_floor)(@name@);
 static @name@ (*_basic_@name@_sqrt)(@name@);
+static @name@ (*_basic_@name@_fmod)(@name@, @name@);
 #define @name@_ctype_add(a, b, outp) *(outp) = a + b
 #define @name@_ctype_subtract(a, b, outp) *(outp) = a - b
 #define @name@_ctype_multiply(a, b, outp) *(outp) = a * b
@@ -336,7 +338,10 @@ static @name@ (*_basic_@name@_sqrt)(@name@);
 **/
 static void 
 @name@_ctype_remainder(@name@ a, @name@ b, @name@ *out) { 
-    *out = a - _basic_@name@_floor(a/b)*b;
+    @name@ mod;
+    mod = _basic_@name@_fmod(a, b);
+    if (mod && ((b < 0 != (mod < 0)))) mod += b;
+    *out = mod;
 } 
 /**end repeat**/ 
 
@@ -937,6 +942,8 @@ static PyNumberMethods @name@_as_number = {
 };
 /**end repeat**/
 
+static void *saved_tables_arrtype[9];
+
 static void
 add_scalarmath(void)
 {
@@ -947,6 +954,16 @@ add_scalarmath(void)
     Py@NAME@ArrType_Type.tp_as_number = &(@name@_as_number);
     Py@NAME@ArrType_Type.tp_richcompare = @name@_richcompare;
     /**end repeat**/
+
+    saved_tables_arrtype[0] = PyLongArrType_Type.tp_as_number;
+    saved_tables_arrtype[1] = PyLongArrType_Type.tp_compare;
+    saved_tables_arrtype[2] = PyLongArrType_Type.tp_richcompare;
+    saved_tables_arrtype[3] = PyDoubleArrType_Type.tp_as_number;
+    saved_tables_arrtype[4] = PyDoubleArrType_Type.tp_compare;
+    saved_tables_arrtype[5] = PyDoubleArrType_Type.tp_richcompare;
+    saved_tables_arrtype[6] = PyCDoubleArrType_Type.tp_as_number;
+    saved_tables_arrtype[7] = PyCDoubleArrType_Type.tp_compare;
+    saved_tables_arrtype[8] = PyCDoubleArrType_Type.tp_richcompare;
 }
 
 static int
@@ -1004,6 +1021,20 @@ get_functions(void)
     _basic_double_sqrt = funcdata[j+1];
     _basic_longdouble_sqrt = funcdata[j+2];
     Py_DECREF(obj);
+
+    /* Get the fmod functions */
+    obj = PyObject_GetAttrString(mm, "fmod");
+    if (obj == NULL) goto fail;
+    funcdata = ((PyUFuncObject *)obj)->data;
+    signatures = ((PyUFuncObject *)obj)->types;
+    i = 0;
+    j = 0;
+    while(signatures[i] != PyArray_FLOAT) {i+=3; j++;}
+    _basic_float_fmod = funcdata[j];
+    _basic_double_fmod = funcdata[j+1];
+    _basic_longdouble_fmod = funcdata[j+2];
+    Py_DECREF(obj);
+    return
 
     ret = 0;
  fail:
@@ -1083,11 +1114,83 @@ restore_pyscalars(PyObject *dummy, PyObject *args)
     return Py_None;
 }
 
+char doc_usepythonmath[] = "";
+static PyObject *
+use_pythonmath(PyObject *dummy, PyObject *args)
+{
+    int n;
+    PyObject *obj;
+    n = PyTuple_GET_SIZE(args);
+    while(n--) {
+	obj = PyTuple_GET_ITEM(args, n);
+	if (obj == (PyObject *)(&PyInt_Type)) {
+	    PyLongArrType_Type.tp_as_number = saved_tables[0];
+	    PyLongArrType_Type.tp_compare = saved_tables[1];
+	    PyLongArrType_Type.tp_richcompare = saved_tables[2];
+	}
+	else if (obj == (PyObject *)(&PyFloat_Type)) {
+	    PyDoubleArrType_Type.tp_as_number = saved_tables[3];
+	    PyDoubleArrType_Type.tp_compare = saved_tables[4];
+	    PyDoubleArrType_Type.tp_richcompare = saved_tables[5];
+	}
+	else if (obj == (PyObject *)(&PyComplex_Type)) {
+	    PyCDoubleArrType_Type.tp_as_number = saved_tables[6];
+	    PyCDoubleArrType_Type.tp_compare = saved_tables[7];
+	    PyCDoubleArrType_Type.tp_richcompare = saved_tables[8];
+	} 
+	else {
+	    PyErr_SetString(PyExc_ValueError, 
+			    "arguments must be int, float, or complex");
+	    return NULL;
+	}
+    }
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+char doc_usescalarmath[] = "";
+static PyObject *
+use_scalarmath(PyObject *dummy, PyObject *args)
+{
+    int n;
+    PyObject *obj;
+    n = PyTuple_GET_SIZE(args);
+    while(n--) {
+	obj = PyTuple_GET_ITEM(args, n);
+	if (obj == (PyObject *)(&PyInt_Type)) {
+	    PyLongArrType_Type.tp_as_number = saved_tables_arrtype[0];
+	    PyLongArrType_Type.tp_compare = saved_tables_arrtype[1];
+	    PyLongArrType_Type.tp_richcompare = saved_tables_arrtype[2];
+	}
+	else if (obj == (PyObject *)(&PyFloat_Type)) {
+	    PyDoubleArrType_Type.tp_as_number = saved_tables_arrtype[3];
+	    PyDoubleArrType_Type.tp_compare = saved_tables_arrtype[4];
+	    PyDoubleArrType_Type.tp_richcompare = saved_tables_arrtype[5];
+	}
+	else if (obj == (PyObject *)(&PyComplex_Type)) {
+	    PyCDoubleArrType_Type.tp_as_number = saved_tables_arrtype[6];
+	    PyCDoubleArrType_Type.tp_compare = saved_tables_arrtype[7];
+	    PyCDoubleArrType_Type.tp_richcompare = saved_tables_arrtype[8];
+	} 
+	else {
+	    PyErr_SetString(PyExc_ValueError, 
+			    "arguments must be int, float, or complex");
+	    return NULL;
+	}
+    }
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static struct PyMethodDef methods[] = {
-    {"alter_scalars", (PyCFunction) alter_pyscalars,
+    {"alter_pythonmath", (PyCFunction) alter_pyscalars,
      METH_VARARGS, doc_alterpyscalars},
-    {"restore_scalars", (PyCFunction) restore_pyscalars,
+    {"restore_pythonmath", (PyCFunction) restore_pyscalars,
      METH_VARARGS, doc_restorepyscalars},
+    {"use_pythonmath", (PyCFunction) use_pythonmath,
+     METH_VARARGS, doc_usepythonmath},
+    {"use_scalarmath", (PyCFunction) use_scalarmath,
+     METH_VARARGS, doc_usescalarmath},
     {NULL, NULL, 0}
 };
 

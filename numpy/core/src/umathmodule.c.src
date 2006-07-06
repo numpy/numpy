@@ -1633,8 +1633,11 @@ static void
 	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
 		x = *((@typ@ *)i1);
 		y = *((@typ@ *)i2);
-		res = x - floor@c@(x/y)*y;
-		*((@typ@ *)op)= res;
+                res = fmod@c@(x, y);
+                if (res && ((y < 0) != (res < 0))) {
+                        res += y;
+                }
+                *((@typ@ *)op)= res;
 	}
 }
 /**end repeat**/
