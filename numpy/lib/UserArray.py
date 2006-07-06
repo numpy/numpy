@@ -11,7 +11,7 @@ from numpy.core import array, asarray, absolute, add, subtract, multiply, \
 
 class UserArray(object):
     def __init__(self, data, dtype=None, copy=True):
-        self.array = array(data, dtype, copy)
+        self.array = array(data, dtype, copy=copy)
 
     def __repr__(self):
         if len(self.shape) > 0:

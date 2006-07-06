@@ -63,8 +63,8 @@ def test_methods(c_numpy.ndarray arr):
     This illustrates how the pyrex-visible object is in practice a strange
     hybrid of the C PyArrayObject struct and the python object.  Some
     properties (like .nd) are visible here but not in python, while others
-    like flags behave very differently: in python flags appears as a dict,
-    while here we see the raw int holding the bit pattern.
+    like flags behave very differently: in python flags appears as a separate,
+    object while here we see the raw int holding the bit pattern.
 
     This makes sense when we think of how pyrex resolves arr.foo: if foo is
     listed as a field in the c_numpy.ndarray struct description, it will be
@@ -81,10 +81,10 @@ def test_methods(c_numpy.ndarray arr):
 
 def test():
     """this function is pure Python"""
-    arr1 = numpy.array(-1e-30,dtype=numpy.Float64)
-    arr2 = numpy.array([1.0,2.0,3.0],dtype=numpy.Float64)
+    arr1 = numpy.array(-1e-30,dtype=numpy.float64)
+    arr2 = numpy.array([1.0,2.0,3.0],dtype=numpy.float64)
 
-    arr3 = numpy.arange(9,dtype=numpy.Float64)
+    arr3 = numpy.arange(9,dtype=numpy.float64)
     arr3.shape = 3,3
 
     four = 4
