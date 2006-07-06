@@ -276,25 +276,14 @@ class matrix(N.ndarray):
     def tolist(self):
         return self.__array__().tolist()
 
-    def getA(self):
-        return self.__array__()
-
-    def getT(self):
-        return self.transpose()
-
-    def getH(self):
-        if issubclass(self.dtype.type, N.complexfloating):
-            return self.transpose().conjugate()
-        else:
-            return self.transpose()
-
     def getI(self):
-        from numpy.dual import inv
-        return matrix(inv(self))
-
-    A = property(getA, None, doc="base array")
-    T = property(getT, None, doc="transpose")
-    H = property(getH, None, doc="hermitian (conjugate) transpose")
+        M,N = self.shape
+        if M == N:
+            from numpy.dual import inv as func
+        else:
+            from numpy.dual import pinv as func
+        return func(self).M
+        
     I = property(getI, None, doc="inverse")
 
 

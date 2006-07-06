@@ -6162,6 +6162,62 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 	return retval;
 }
 
+static PyObject *
+array_swaplast_get(PyArrayObject *self)
+{
+	if (self->nd < 2) {
+		Py_INCREF(self);
+		return (PyObject *)self;
+	}
+	return PyArray_SwapAxes(self, -2, -1);
+}
+
+static PyObject *
+array_conj_swaplast_get(PyArrayObject *self)
+{
+	PyObject *a, *b;
+	a = PyArray_Conjugate(self);
+	if (self->nd < 2) {
+		return a;
+	}
+	b = PyArray_SwapAxes((PyArrayObject *)a, -2, -1);
+	Py_DECREF(a);
+	return b;
+}
+
+static PyObject *
+array_asarray_get(PyArrayObject *self)
+{
+	if (PyArray_CheckExact(self)) {
+		Py_INCREF(self);
+		return (PyObject *)self;
+	}
+	return PyArray_View(self, NULL, &PyArray_Type);
+}
+
+static PyObject *
+array_asmatrix_get(PyArrayObject *self)
+{
+	/* Keeps a reference */
+	static PyTypeObject *matrix_type = NULL;
+	if (matrix_type == NULL) {
+		PyObject *mod;
+		/* Load it from numpy */
+		mod = PyImport_ImportModule("numpy");
+		if (mod == NULL) return NULL;
+		matrix_type = (PyTypeObject *)			\
+			PyObject_GetAttrString(mod, "matrix");
+		if (matrix_type == NULL) return NULL;
+	}
+	if (self->nd > 2) {
+		PyErr_SetString(PyExc_ValueError, 
+				"too many dimensions.");
+		return NULL;
+	}
+	return PyArray_View(self, NULL, matrix_type);
+}
+
+
 /* If this is None, no function call is made */
 static PyObject *
 array_finalize_get(PyArrayObject *self)
@@ -6231,6 +6287,22 @@ static PyGetSetDef array_getsetlist[] = {
 	 (getter)array_as_parameter_get,
 	 NULL,
 	 "allow array to be interpreted as a ctypes object"},
+	{"T",
+	 (getter)array_swaplast_get,
+	 NULL,
+	 "swap last two axes."},
+	{"H",
+	 (getter)array_conj_swaplast_get,
+	 NULL,
+	 "conjugate and swap last two axes."},
+	{"M",
+	 (getter)array_asmatrix_get,
+	 NULL,
+	 "same as .view(asmatrix)"},
+	{"A",
+	 (getter)array_asarray_get,
+	 NULL,
+	 "same as .view(ndarray)"},
 	{"__array_interface__",
 	 (getter)array_interface_get,
 	 NULL,
