@@ -21,8 +21,9 @@ from numpy.core.fromnumeric import ravel, nonzero, choose, sort
 from numpy.core.numerictypes import typecodes
 from numpy.lib.shape_base import atleast_1d
 from numpy.lib.twodim_base import diag
-from _compiled_base import bincount, _insert, add_docstring
+from _compiled_base import _insert, add_docstring
 from _compiled_base import digitize as _digitize
+from _compiled_base import bincount as _bincount
 
 #end Fernando's utilities
 
@@ -387,6 +388,18 @@ def digitize(x,bins):
     Beyond the bounds of the bins 0 or len(bins) is returned as appropriate.
     """
     return _digitize(x,bins)
+
+def bincount(x,weights=None):
+    """Count the number of occurrences of each value in x.
+
+    x must be a list of non-negative integers.  The output, b[i],
+    represents the number of times that i is found in x.  If weights
+    is specified, every occurrence of i at a position p contributes
+    weights[p] instead of 1.
+
+    See also: histogram, digitize, unique.
+    """
+    return _bincount(x,weights)
     
 def angle(z, deg=0):
     """Return the angle of the complex argument z.
