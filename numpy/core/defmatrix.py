@@ -1,5 +1,5 @@
 
-__all__ = ['matrix', 'bmat', 'mat', 'asmatrix', 'asmat']
+__all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import numeric as N
 from numeric import concatenate, isscalar, binary_repr
@@ -362,5 +362,4 @@ def bmat(obj, ldict=None, gdict=None):
     if isinstance(obj, N.ndarray):
         return matrix(obj)
 
-mat = matrix
-asmat = asmatrix
+mat = asmatrix
