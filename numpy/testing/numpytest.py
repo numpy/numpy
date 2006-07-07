@@ -569,7 +569,7 @@ class NumpyTest:
                            or not issubclass(obj, unittest.TestCase) \
                            or not self.check_testcase_name(obj.__name__):
                         continue
-                    for mthname in self._get_method_names(obj,level):
+                    for mthname in self._get_method_names(obj,abs(level)):
                         suite = obj(mthname)
                         if getattr(suite,'isrunnable',lambda mthname:1)(mthname):
                             suite_list.append(suite)
