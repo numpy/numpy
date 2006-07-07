@@ -1392,12 +1392,8 @@ array(data = %(data)s,
         return self._data.ctypes
 
     def _get_T(self):
-        if (self.ndim == 0):
+        if (self.ndim < 2):
             return self
-        if (self.ndim == 1):
-            ret = self.view()
-            ret.shape = (self.shape[0], 1)
-            return ret
         return self.transpose()
 
     shape = property(_get_shape, _set_shape,

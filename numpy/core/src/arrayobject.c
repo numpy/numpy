@@ -6184,34 +6184,11 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 static PyObject *
 array_transpose_get(PyArrayObject *self)
 {
-	intp dims[2];
-	intp strides[2];
-	PyObject *new;
-
-	switch(self->nd) {
-	case 0:
+	if (self->nd < 2) {
 		Py_INCREF(self);
 		return (PyObject *)self;
-	case 1:
-		dims[0] = self->dimensions[0];
-		dims[1] = 1;
-		strides[0] = self->strides[0];
-		strides[1] = 0;
-		Py_INCREF(self->descr);
-		new = PyArray_NewFromDescr(self->ob_type,
-					   self->descr,
-					   2, dims,
-					   strides,
-					   self->data,
-					   self->flags, 
-					   (PyObject *)self);
-		if (new==NULL) return NULL;
-		Py_INCREF(self);
-		PyArray_BASE(new) = (PyObject *)self;
-		return new;
-	default:
-		return PyArray_Transpose(self, NULL);
 	}
+	return PyArray_Transpose(self, NULL);
 }
 
 /* If this is None, no function call is made 
