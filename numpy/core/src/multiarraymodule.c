@@ -5814,6 +5814,7 @@ static PyObject *
 array__reconstruct(PyObject *dummy, PyObject *args) 
 {
 
+	PyObject *ret;
 	PyTypeObject *subtype;
 	PyArray_Dims shape = {NULL, 0};
 	PyArray_Descr *dtype=NULL;
@@ -5829,9 +5830,12 @@ array__reconstruct(PyObject *dummy, PyObject *args)
 		goto fail;
 	}
 	
-	return PyArray_NewFromDescr(subtype, dtype, 
-				    (int)shape.len, shape.ptr,
-				    NULL, NULL, 0, NULL);
+	ret = PyArray_NewFromDescr(subtype, dtype, 
+				   (int)shape.len, shape.ptr,
+				   NULL, NULL, 0, NULL);
+	if (shape.ptr) PyDimMem_FREE(shape.ptr);
+	return ret;
+
  fail:
 	Py_XDECREF(dtype);
         if (shape.ptr) PyDimMem_FREE(shape.ptr);
