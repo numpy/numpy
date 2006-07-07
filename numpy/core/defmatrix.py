@@ -1,5 +1,5 @@
 
-__all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
+__all__ = ['matrix', 'bmat', 'mat', 'asmatrix', 'asmat']
 
 import numeric as N
 from numeric import concatenate, isscalar, binary_repr
@@ -282,10 +282,24 @@ class matrix(N.ndarray):
             from numpy.dual import inv as func
         else:
             from numpy.dual import pinv as func
-        return func(self).M
-        
-    I = property(getI, None, doc="inverse")
+        return asmatrix(func(self))
 
+    def getA(self):
+        return self.__array__()
+
+    def getT(self):
+        return self.transpose()
+
+    def getH(self):
+        if issubclass(self.dtype.type, N.complexfloating):
+            return self.transpose().conjugate()
+        else:
+            return self.transpose()    
+
+    T = property(getT, None, doc="transpose")
+    A = property(getA, None, doc="base array")
+    H = property(getH, None, doc="hermitian (conjugate) transpose")
+    I = property(getI, None, doc="inverse")
 
 def _from_string(str,gdict,ldict):
     rows = str.split(';')
@@ -349,3 +363,4 @@ def bmat(obj, ldict=None, gdict=None):
         return matrix(obj)
 
 mat = matrix
+asmat = asmatrix

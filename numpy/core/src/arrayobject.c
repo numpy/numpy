@@ -503,22 +503,6 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
 
 static PyArray_Descr **userdescrs=NULL;
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
-
-static PyTypeObject *matrix_type=NULL;
-
-static PyTypeObject *
-_load_matrix_type(void)
-{
-	PyObject *mod;
-	PyTypeObject *ret;
-	/* Load it from numpy */
-	mod = PyImport_ImportModule("numpy");
-	if (mod == NULL) return NULL;
-	ret = (PyTypeObject *)				\
-		PyObject_GetAttrString(mod, "matrix");
-	Py_DECREF(mod);
-	return ret;
-}
 	
 
 /* Computer-generated arraytype and scalartype code */
@@ -2037,7 +2021,6 @@ parse_index(PyArrayObject *self, PyObject *op,
         PyObject *op1=NULL;
         int is_slice;
 
-
         if (PySlice_Check(op) || op == Py_Ellipsis || op == Py_None) {
                 n = 1;
                 op1 = op;
@@ -2075,7 +2058,8 @@ parse_index(PyArrayObject *self, PyObject *op,
                 if (start == -1) break;
 
                 if (n_steps == PseudoIndex) {
-                        dimensions[nd_new] = 1; strides[nd_new] = 0; nd_new++;
+                        dimensions[nd_new] = 1; strides[nd_new] = 0;
+			nd_new++;
                 } else {
                         if (n_steps == RubberIndex) {
                                 for(j=i+1, n_pseudo=0; j<n; j++) {
@@ -4509,6 +4493,7 @@ _IsContiguous(PyArrayObject *ap)
 	register intp sd;
 	register intp dim;
 	register int i;
+	register intp stride;
 
 
 	if (ap->nd == 0) return 1;
@@ -4519,7 +4504,9 @@ _IsContiguous(PyArrayObject *ap)
 		dim = ap->dimensions[i];
 		/* contiguous by definition */
 		if (dim == 0) return 1;
-		if (ap->strides[i] != sd) return 0;
+		stride = ap->strides[i];
+		if (stride == 0 && dim == 1) continue;
+		if (stride != sd) return 0;
 		sd *= dim;
 	}
 	return 1;
@@ -4532,6 +4519,7 @@ _IsFortranContiguous(PyArrayObject *ap)
 	register intp sd;
 	register intp dim;
 	register int i;
+	register intp stride;
 
 	if (ap->nd == 0) return 1;
 	sd = ap->descr->elsize;
@@ -4539,9 +4527,11 @@ _IsFortranContiguous(PyArrayObject *ap)
 				 sd == ap->strides[0]);
 	for (i=0; i< ap->nd; ++i) {
 		dim = ap->dimensions[i];
-		/* contiguous by definition */
+		/* fortran contiguous by definition */
 		if (dim == 0) return 1;
-		if (ap->strides[i] != sd) return 0;
+		stride = ap->strides[i];
+		if (stride == 0 && dim == 1) continue;
+		if (stride != sd) return 0;
 		sd *= dim;
 	}
 	return 1;
@@ -4645,7 +4635,8 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 		if (_IsAligned(ret)) ret->flags |= ALIGNED;
 		else ret->flags &= ~ALIGNED;
 	}
-	/* This is not checked by default WRITEABLE is not part of UPDATE_ALL_FLAGS */
+	/* This is not checked by default WRITEABLE is not 
+	   part of UPDATE_ALL_FLAGS */
 	if (flagmask & WRITEABLE) {
 	        if (_IsWriteable(ret)) ret->flags |= WRITEABLE;
 		else ret->flags &= ~WRITEABLE;
@@ -6191,55 +6182,41 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 }
 
 static PyObject *
-array_swaplast_get(PyArrayObject *self)
+array_transpose_get(PyArrayObject *self)
 {
-	if (self->nd < 2) {
+	intp dims[2];
+	intp strides[2];
+	PyObject *new;
+
+	switch(self->nd) {
+	case 0:
 		Py_INCREF(self);
 		return (PyObject *)self;
-	}
-	return PyArray_SwapAxes(self, -2, -1);
-}
-
-static PyObject *
-array_conj_swaplast_get(PyArrayObject *self)
-{
-	PyObject *a, *b;
-	a = PyArray_Conjugate(self);
-	if (self->nd < 2) {
-		return a;
-	}
-	b = PyArray_SwapAxes((PyArrayObject *)a, -2, -1);
-	Py_DECREF(a);
-	return b;
-}
-
-static PyObject *
-array_asarray_get(PyArrayObject *self)
-{
-	if (PyArray_CheckExact(self)) {
+	case 1:
+		dims[0] = self->dimensions[0];
+		dims[1] = 1;
+		strides[0] = self->strides[0];
+		strides[1] = 0;
+		Py_INCREF(self->descr);
+		new = PyArray_NewFromDescr(self->ob_type,
+					   self->descr,
+					   2, dims,
+					   strides,
+					   self->data,
+					   self->flags, 
+					   (PyObject *)self);
+		if (new==NULL) return NULL;
 		Py_INCREF(self);
-		return (PyObject *)self;
+		PyArray_BASE(new) = (PyObject *)self;
+		return new;
+	default:
+		return PyArray_Transpose(self, NULL);
 	}
-	return PyArray_View(self, NULL, &PyArray_Type);
 }
 
-static PyObject *
-array_asmatrix_get(PyArrayObject *self)
-{
-	if (matrix_type == NULL) {
-		matrix_type = _load_matrix_type();
-		if (matrix_type == NULL) return NULL;
-	}
-	if (self->nd > 2) {
-		PyErr_SetString(PyExc_ValueError, 
-				"too many dimensions.");
-		return NULL;
-	}
-	return PyArray_View(self, NULL, matrix_type);
-}
-
-
-/* If this is None, no function call is made */
+/* If this is None, no function call is made 
+   --- default sub-class behavior 
+*/
 static PyObject *
 array_finalize_get(PyArrayObject *self)
 {
@@ -6307,23 +6284,11 @@ static PyGetSetDef array_getsetlist[] = {
 	{"_as_parameter_",
 	 (getter)array_as_parameter_get,
 	 NULL,
-	 "allow array to be interpreted as a ctypes object"},
+	 "allow array to be interpreted as a ctypes object by returning the data memory location as an integer"},
 	{"T",
-	 (getter)array_swaplast_get,
+	 (getter)array_transpose_get,
 	 NULL,
-	 "swap last two axes."},
-	{"H",
-	 (getter)array_conj_swaplast_get,
-	 NULL,
-	 "conjugate and swap last two axes."},
-	{"M",
-	 (getter)array_asmatrix_get,
-	 NULL,
-	 "same as .view(asmatrix)"},
-	{"A",
-	 (getter)array_asarray_get,
-	 NULL,
-	 "same as .view(ndarray)"},
+	 "return transpose for self.ndim <= 2 "},
 	{"__array_interface__",
 	 (getter)array_interface_get,
 	 NULL,

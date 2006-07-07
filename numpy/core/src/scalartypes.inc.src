@@ -926,38 +926,6 @@ gentype_flat_get(PyObject *self)
 	return ret;
 }
 
-static PyObject *
-gentype_asmatrix_get(PyObject *self)
-{
-	PyObject *ret, *arr;
-	arr = PyArray_FromScalar(self, NULL);
-	if (arr == NULL) return NULL;
-	if (matrix_type == NULL) {
-		matrix_type = _load_matrix_type();
-		if (matrix_type == NULL) return NULL;
-	}
-	ret = PyArray_View((PyArrayObject *)arr, NULL, matrix_type); 
-	Py_DECREF(arr);
-	return ret;
-}
-
-static PyObject *
-gentype_asarray_get(PyObject *self)
-{
-	return PyArray_FromScalar(self, NULL);
-}
-
-static PyObject *
-gentype_ctranspose_get(PyObject *self)
-{
-	if (PyArray_IsScalar(self, ComplexFloating)) {
-		return PyObject_CallMethod(self, "conjugate", "()");
-	}
-	else {
-		Py_INCREF(self);
-		return self;
-	}
-}
 
 static PyObject *
 gentype_transpose_get(PyObject *self)
@@ -1020,22 +988,10 @@ static PyGetSetDef gentype_getsets[] = {
 	 (getter)gentype_flat_get, 
 	 (setter)0, 
 	 "a 1-d view of scalar"}, 
-	{"M",
-	 (getter)gentype_asmatrix_get,
-	 (setter)0,
-	 "scalars as a matrix"},
-	{"A",
-	 (getter)gentype_asarray_get,
-	 (setter)0,
-	 "scalars as array"},
 	{"T",
 	 (getter)gentype_transpose_get,
 	 (setter)0,
 	 "transpose"},
-	{"H",
-	 (getter)gentype_ctranspose_get,
-	 (setter)0,
-	 "conjugate transpose"},
         {"__array_interface__",
          (getter)gentype_interface_get,
          NULL,

@@ -1391,21 +1391,14 @@ array(data = %(data)s,
     def _get_ctypes(self):
         return self._data.ctypes
 
-    def _get_M(self):
-        if self._mask is nomask:
-            return self._data.M
-        return self.filled().M
-
-    def _get_A(self):
-        if self._mask is nomask:
-            return self._data.A
-        return self.filled().A
-
     def _get_T(self):
-        return self.swapaxes(-2,-1)
-
-    def _get_H(self):
-        return self.conjugate().swapaxes(-2,-1)
+        if (self.ndim == 0):
+            return self
+        if (self.ndim == 1):
+            ret = self.view()
+            ret.shape = (self.shape[0], 1)
+            return ret
+        return self.transpose()
 
     shape = property(_get_shape, _set_shape,
            doc = 'tuple giving the shape of the array')
@@ -1422,10 +1415,8 @@ array(data = %(data)s,
     imag = imaginary
 
     ctypes = property(_get_ctypes, None, doc="ctypes")
-    M = property(_get_M, None, doc="get matrix")
-    A = property(_get_A, None, doc="get array")
+
     T = property(_get_T, None, doc="get transpose")
-    H = property(_get_H, None, doc="get conj. transpose")
 
 #end class MaskedArray
 
@@ -1871,7 +1862,7 @@ def swapaxes (a, axis1, axis2):
 
 
 def take (a, indices, axis=0):
-    "take(a, indices, axis=0) returns selection of items from a."
+    "returns selection of items from a."
     m = getmask(a)
     # d = masked_array(a).raw_data()
     d = masked_array(a).data
@@ -1882,7 +1873,7 @@ def take (a, indices, axis=0):
                      mask = numeric.take(m, indices, axis))
 
 def transpose(a, axes=None):
-    "transpose(a, axes=None) reorder dimensions per tuple axes"
+    "reorder dimensions per tuple axes"
     m = getmask(a)
     d = filled(a)
     if m is nomask:
@@ -1893,7 +1884,7 @@ def transpose(a, axes=None):
 
 
 def put(a, indices, values):
-    """put(a, indices, values) sets storage-indexed locations to corresponding values.
+    """sets storage-indexed locations to corresponding values.
 
     Values and indices are filled if necessary.
 
