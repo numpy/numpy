@@ -45,6 +45,7 @@ Available subpackages
 
     def test(level=1, verbosity=1):
         return NumpyTest().test(level, verbosity)
+    test.__doc__ = NumpyTest.test.__doc__
 
     import add_newdocs
 
