@@ -4661,7 +4661,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 */
 
 /*OBJECT_API*/
-static Bool
+static unsigned char
 PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
 		     intp *dims, intp *newstrides)
 {
@@ -7974,7 +7974,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
 
 /* leaves reference count alone --- cannot be NULL*/
 /*OBJECT_API*/
-static Bool
+static unsigned char
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
 	int fromtype=from->type_num;
@@ -8008,7 +8008,7 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 /*OBJECT_API
   See if array scalars can be cast.
  */
-static Bool
+static unsigned char
 PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
 {
 	int fromtype;

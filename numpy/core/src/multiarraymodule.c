@@ -4466,7 +4466,7 @@ _equivalent_fields(PyObject *field1, PyObject *field2) {
 */
 
 /*MULTIARRAY_API*/
-static Bool
+static unsigned char
 PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 {
 	register int typenum1=typ1->type_num;
@@ -4489,7 +4489,7 @@ PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 }
 
 /*MULTIARRAY_API*/
-static Bool
+static unsigned char
 PyArray_EquivTypenums(int typenum1, int typenum2)
 {
         PyArray_Descr *d1, *d2;

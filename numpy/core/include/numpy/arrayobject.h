@@ -1081,17 +1081,22 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, WRITEABLE)
 #define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, ALIGNED)
 
+#ifndef PYA_NOMAXMIN
 #ifndef MAX
 #define MAX(a,b) (((a)>(b))?(a):(b))
+#endif
+/* Useful if a and b have to be evaluated.  */
+#ifndef tMAX
+#define tMAX(a,b,typ) {typ _x_=(a); typ _y_=(b); _x_>_y_ ? _x_ : _y_}
 #endif
 #ifndef MIN
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #endif
-
-/* Useful if a and b have to be evaluated.  */
-
-#define tMAX(a,b,typ) {typ _x_=(a); typ _y_=(b); _x_>_y_ ? _x_ : _y_}
+#ifndef tMIN
 #define tMIN(a,b,typ) {typ _x_=(a); typ _y_=(b); _x_<_y_ ? _x_ : _y_}
+#endif
+#endif
+
 
 #if defined(ALLOW_THREADS)
 #define BEGIN_THREADS_DEF PyThreadState *_save;
