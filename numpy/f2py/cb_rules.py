@@ -358,11 +358,11 @@ cb_arg_rules=[
     'pyobjfrom':[{debugcapi:'\tfprintf(stderr,"debug-capi:cb:#varname#\\n");'},
                  {isintent_c:"""\
 \tif (#name#_nofargs>capi_i) {
-\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname#_Dims,#atype#,NULL,(char*)#varname#,0,CARRAY_FLAGS,NULL); /*XXX: Hmm, what will destroy this array??? */
+\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname#_Dims,#atype#,NULL,(char*)#varname#,0,NPY_CARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
 """,
                   l_not(isintent_c):"""\
 \tif (#name#_nofargs>capi_i) {
-\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname#_Dims,#atype#,NULL,(char*)#varname#,0,FARRAY_FLAGS,NULL); /*XXX: Hmm, what will destroy this array??? */
+\t\tPyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname#_Dims,#atype#,NULL,(char*)#varname#,0,NPY_FARRAY,NULL); /*XXX: Hmm, what will destroy this array??? */
 """,
                   },
                  """

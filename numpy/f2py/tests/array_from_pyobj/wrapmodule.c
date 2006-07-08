@@ -174,14 +174,14 @@ PyMODINIT_FUNC initwrap(void) {
   PyDict_SetItemString(d, "WRITEABLE", PyInt_FromLong(WRITEABLE));
   PyDict_SetItemString(d, "UPDATEIFCOPY", PyInt_FromLong(UPDATEIFCOPY));
 
-  PyDict_SetItemString(d, "BEHAVED_FLAGS", PyInt_FromLong(BEHAVED_FLAGS));
-  PyDict_SetItemString(d, "BEHAVED_NS_FLAGS", PyInt_FromLong(BEHAVED_NS_FLAGS));
-  PyDict_SetItemString(d, "CARRAY_FLAGS", PyInt_FromLong(CARRAY_FLAGS));
-  PyDict_SetItemString(d, "FARRAY_FLAGS", PyInt_FromLong(FARRAY_FLAGS));
-  PyDict_SetItemString(d, "CARRAY_FLAGS_RO", PyInt_FromLong(CARRAY_FLAGS_RO));
-  PyDict_SetItemString(d, "FARRAY_FLAGS_RO", PyInt_FromLong(FARRAY_FLAGS_RO));
-  PyDict_SetItemString(d, "DEFAULT_FLAGS", PyInt_FromLong(DEFAULT_FLAGS));
-  PyDict_SetItemString(d, "UPDATE_ALL_FLAGS", PyInt_FromLong(UPDATE_ALL_FLAGS));
+  PyDict_SetItemString(d, "BEHAVED", PyInt_FromLong(NPY_BEHAVED));
+  PyDict_SetItemString(d, "BEHAVED_NS", PyInt_FromLong(NPY_BEHAVED_NS));
+  PyDict_SetItemString(d, "CARRAY", PyInt_FromLong(NPY_CARRAY));
+  PyDict_SetItemString(d, "FARRAY", PyInt_FromLong(NPY_FARRAY));
+  PyDict_SetItemString(d, "CARRAY_RO", PyInt_FromLong(NPY_CARRAY_RO));
+  PyDict_SetItemString(d, "FARRAY_RO", PyInt_FromLong(NPY_FARRAY_RO));
+  PyDict_SetItemString(d, "DEFAULT", PyInt_FromLong(NPY_DEFAULT));
+  PyDict_SetItemString(d, "UPDATE_ALL", PyInt_FromLong(NPY_UPDATE_ALL));
 
   if (PyErr_Occurred())
     Py_FatalError("can't initialize module wrap");

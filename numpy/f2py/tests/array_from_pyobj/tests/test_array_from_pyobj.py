@@ -18,8 +18,8 @@ def flags2names(flags):
     info = []
     for flagname in ['CONTIGUOUS','FORTRAN','OWNDATA','ENSURECOPY',
                      'ENSUREARRAY','ALIGNED','NOTSWAPPED','WRITEABLE',
-                     'UPDATEIFCOPY','BEHAVED_FLAGS','BEHAVED_FLAGS_RO',
-                     'CARRAY_FLAGS','FARRAY_FLAGS'
+                     'UPDATEIFCOPY','BEHAVED','BEHAVED_RO',
+                     'CARRAY','FARRAY'
                      ]:
         if abs(flags) & getattr(wrap,flagname):
             info.append(flagname)
