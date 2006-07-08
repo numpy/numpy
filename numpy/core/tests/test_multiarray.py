@@ -344,6 +344,11 @@ class test_argmax(ScipyTestCase):
             axes.remove(i)
             assert all(amax == aargmax.choose(*a.transpose(i,*axes)))        
 
+class test_newaxis(ScipyTestCase):
+    def check_basic(self):
+        sk = array([0,-0.1,0.1])
+        res = 250*sk[:,newaxis]
+        assert_almost_equal(res.ravel(),250*sk)
 
 # Import tests from unicode
 set_local_path()

@@ -4566,8 +4566,6 @@ _IsContiguous(PyArrayObject *ap)
 	register intp sd;
 	register intp dim;
 	register int i;
-	register intp stride;
-
 
 	if (ap->nd == 0) return 1;
 	sd = ap->descr->elsize;
@@ -4577,9 +4575,7 @@ _IsContiguous(PyArrayObject *ap)
 		dim = ap->dimensions[i];
 		/* contiguous by definition */
 		if (dim == 0) return 1;
-		stride = ap->strides[i];
-		if (stride == 0 && dim == 1) continue;
-		if (stride != sd) return 0;
+		if (ap->strides[i] != sd) return 0;
 		sd *= dim;
 	}
 	return 1;
@@ -4592,7 +4588,6 @@ _IsFortranContiguous(PyArrayObject *ap)
 	register intp sd;
 	register intp dim;
 	register int i;
-	register intp stride;
 
 	if (ap->nd == 0) return 1;
 	sd = ap->descr->elsize;
@@ -4602,9 +4597,7 @@ _IsFortranContiguous(PyArrayObject *ap)
 		dim = ap->dimensions[i];
 		/* fortran contiguous by definition */
 		if (dim == 0) return 1;
-		stride = ap->strides[i];
-		if (stride == 0 && dim == 1) continue;
-		if (stride != sd) return 0;
+		if (ap->strides[i] != sd) return 0;
 		sd *= dim;
 	}
 	return 1;
