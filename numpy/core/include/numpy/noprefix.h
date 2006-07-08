@@ -1,3 +1,6 @@
+#ifndef NPY_NOPREFIX_H
+#define NPY_NOPREFIX_H
+
 #include "arrayobject.h"
 
 #define MAX_DIMS NPY_MAXDIMS
@@ -174,3 +177,5 @@
 
 #define REFCOUNT NPY_REFCOUNT
 #define MAX_ELSIZE NPY_MAX_ELSIZE
+
+#endif 
