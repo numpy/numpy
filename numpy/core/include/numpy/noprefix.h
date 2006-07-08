@@ -9,12 +9,12 @@
 #define byte        npy_byte
 
 #ifndef _BSD_SOURCE
-#define ushort      npy_ushort;
-#define uint        npy_uint;
-#define ulong       npy_ulong;
+#define ushort      npy_ushort
+#define uint        npy_uint
+#define ulong       npy_ulong
 #endif
 
-#define ubyte       npy_ubyteq
+#define ubyte       npy_ubyte
 #define ushort      npy_ushort
 #define uint        npy_uint
 #define ulong       npy_ulong
@@ -154,3 +154,13 @@
 #define OUT_FARRAY         NPY_OUT_FARRAY         
 #define INOUT_FARRAY       NPY_INOUT_FARRAY       
 #define UPDATE_ALL         NPY_UPDATE_ALL   
+
+#define MIN NPY_MIN
+#define MAX NPY_MAX
+#define MAX_INTP NPY_MAX_INTP
+#define MIN_INTP NPY_MIN_INTP
+#define MAX_UINTP NPY_MAX_UINTP
+#define INTP_FMT NPY_INTP_FMT
+
+#define REFCOUNT NPY_REFCOUNT
+#define MAX_ELSIZE NPY_MAX_ELSIZE
