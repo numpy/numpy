@@ -1,6 +1,9 @@
 
 from numpy import geterr
 
+__all__ = ['MathDomainError', 'UnderflowError', 'NumOverflowError', 'handleError',
+           'get_numarray_include_dirs']
+
 class MathDomainError(ArithmeticError): pass
 class UnderflowError(ArithmeticError): pass
 class NumOverflowError(OverflowError, ArithmeticError): pass

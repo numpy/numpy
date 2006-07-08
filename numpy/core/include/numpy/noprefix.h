@@ -178,4 +178,7 @@
 #define REFCOUNT NPY_REFCOUNT
 #define MAX_ELSIZE NPY_MAX_ELSIZE
 
+#define MAX NPY_MAX
+#define MIN NPY_MIN
+
 #endif 
