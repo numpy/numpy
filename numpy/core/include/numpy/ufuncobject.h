@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-#define MAX_ARGS 40
+#define NPY_MAXARGS 40
 
 typedef void (*PyUFuncGenericFunction) (char **, intp *, intp *, void *);
 
@@ -24,13 +24,6 @@ typedef struct {
 } PyUFuncObject;
 
 #include "arrayobject.h"
-
-#ifdef PY_ARRAY_TYPES_PREFIX
-#  define CAT2(x,y)   x ## y
-#  define CAT(x,y)    CAT2(x,y)
-#  define NS(name)    CAT(PY_ARRAY_TYPES_PREFIX, name)
-#  define intp        NS(intp)
-#endif
 
 #define UFUNC_ERR_IGNORE 0
 #define UFUNC_ERR_WARN   1
@@ -66,11 +59,11 @@ typedef struct {
 	   to work with PyArray_Broadcast */
 	PyObject_HEAD
 	int  numiter;
-	intp size;
-	intp index;
+	npy_intp size;
+	npy_intp index;
 	int nd;
-	intp dimensions[MAX_DIMS];	
-	PyArrayIterObject *iters[MAX_ARGS];
+	npy_intp dimensions[NPY_MAXDIMS];	
+	PyArrayIterObject *iters[NPY_MAXARGS];
         /*  End of Multi-iterator portion */
 
 	/* The ufunc */
@@ -90,33 +83,33 @@ typedef struct {
 	int meth;
 
 	/* Whether we need to copy to a buffer or not.*/
-	int needbuffer[MAX_ARGS];
+	int needbuffer[NPY_MAXARGS];
 	int leftover;
 	int ninnerloops;
 	int lastdim;
 	
 	/* Whether or not to swap */
-	int swap[MAX_ARGS];
+	int swap[NPY_MAXARGS];
 
 	/* Buffers for the loop */
-	char *buffer[MAX_ARGS];
+	char *buffer[NPY_MAXARGS];
 	int bufsize;
-	intp bufcnt;
-	char *dptr[MAX_ARGS];
+	npy_intp bufcnt;
+	char *dptr[NPY_MAXARGS];
 
 	/* For casting */
-	char *castbuf[MAX_ARGS];
-	PyArray_VectorUnaryFunc *cast[MAX_ARGS];
+	char *castbuf[NPY_MAXARGS];
+	PyArray_VectorUnaryFunc *cast[NPY_MAXARGS];
 
 	/* usually points to buffer but when a cast is to be
 	   done it switches for that argument to castbuf.
 	*/
-	char *bufptr[MAX_ARGS];  
+	char *bufptr[NPY_MAXARGS];  
 
 	/* Steps filled in from iters or sizeof(item)
 	   depending on loop method. 
 	*/
-	intp steps[MAX_ARGS];
+	npy_intp steps[NPY_MAXARGS];
 
         int obj;  /* This loop uses object arrays */
         int notimplemented; /* The loop caused notimplemented */	
@@ -133,8 +126,8 @@ typedef struct {
         PyArrayObject *ret;
 	PyArrayIterObject *rit;   /* Needed for Accumulate */
         int  outsize;
-	intp  index;
-	intp  size;
+	npy_intp  index;
+	npy_intp  size;
         char idptr[UFUNC_MAXIDENTITY];
 
 	/* The ufunc */
@@ -156,9 +149,9 @@ typedef struct {
         PyArray_VectorUnaryFunc *cast;
 
         char *bufptr[3];
-        intp steps[3];
+        npy_intp steps[3];
 
-        intp N;
+        npy_intp N;
         int  instrides;
         int  insize;
         char *inptr;
@@ -343,14 +336,6 @@ static void generate_overflow_error(void) {
         return;
 	return;
 }
-#endif
-
-
-#ifdef PY_ARRAY_TYPES_PREFIX
-#  undef CAT
-#  undef CAT2
-#  undef NS
-#  undef inpt
 #endif
 
 

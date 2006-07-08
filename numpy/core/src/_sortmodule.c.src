@@ -24,7 +24,7 @@
 
 
 #include "Python.h"
-#include "numpy/arrayobject.h"
+#include "numpy/noprefix.h"
 
 #define PYA_QS_STACK 100
 #define SMALL_QUICKSORT 15

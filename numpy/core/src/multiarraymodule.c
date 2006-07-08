@@ -8,9 +8,7 @@
   Modified extensively for numpy in 2005 
 
   Travis E. Oliphant
-  Assistant Professor at
-  Brigham Young University
- 
+  oliphant@ee.byu.edu 
 */
 
 /* $Id: multiarraymodule.c,v 1.36 2005/09/14 00:14:00 teoliphant Exp $ */
@@ -23,7 +21,7 @@
 */
 
 #define _MULTIARRAYMODULE
-#include "numpy/arrayobject.h"
+#include "numpy/noprefix.h"
 
 #define PyAO PyArrayObject
 
@@ -585,7 +583,7 @@ PyArray_Squeeze(PyArrayObject *self)
 				   self->flags,
 				   (PyObject *)self);
 	if (ret == NULL) return NULL;
-	PyArray_FLAGS(ret) &= ~OWN_DATA;
+	PyArray_FLAGS(ret) &= ~OWNDATA;
 	PyArray_BASE(ret) = (PyObject *)self;
 	Py_INCREF(self);
 	return (PyObject *)ret;
@@ -1124,7 +1122,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, intp *dims, int nd,
 		return -1;
 	}
 	if ((ap = (PyArrayObject*)PyArray_FromAny(*op, typedescr, nd, nd,
-						  CARRAY_FLAGS, NULL)) == NULL)
+						  CARRAY, NULL)) == NULL)
 		return -1;
 	switch(nd) {
 	case 1:
@@ -1504,7 +1502,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
 	nd = repeats->nd;
 	counts = (intp *)repeats->data;
 
-	if ((ap=_check_axis(aop, &axis, CARRAY_FLAGS))==NULL) {
+	if ((ap=_check_axis(aop, &axis, CARRAY))==NULL) {
 		Py_DECREF(repeats);
 		return NULL;
 	}
@@ -1732,7 +1730,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 	}
 	/* Make sure all arrays are actual array objects. */
 	for(i=0; i<n; i++) {
-		int flags = CARRAY_FLAGS;
+		int flags = CARRAY;
 		if ((otmp = PySequence_GetItem(op, i)) == NULL) 
 			goto fail;
 		if (!allscalars && ((PyObject *)(mps[i]) == Py_None)) {
@@ -2108,7 +2106,7 @@ PyArray_Sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 
         ap = (PyArrayObject *)PyArray_FromAny((PyObject *)op, 
 					      NULL, 1, 0, 
-					      DEFAULT_FLAGS | UPDATEIFCOPY, NULL);	
+					      DEFAULT | UPDATEIFCOPY, NULL);	
 	if (ap == NULL) goto fail;
 	
 	elsize = ap->descr->elsize;
@@ -2554,10 +2552,10 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	typec = PyArray_DescrFromType(typenum);
 	Py_INCREF(typec);
 	ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, 
-					       BEHAVED_FLAGS, NULL);
+					       BEHAVED, NULL);
 	if (ap1 == NULL) {Py_DECREF(typec); return NULL;}
 	ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
-					       BEHAVED_FLAGS, NULL);
+					       BEHAVED, NULL);
 	if (ap2 == NULL) goto fail;
 	
 	if (ap1->nd == 0 || ap2->nd == 0) {
@@ -2662,10 +2660,10 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	typec = PyArray_DescrFromType(typenum);
 	Py_INCREF(typec);
 	ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, 
-					       BEHAVED_FLAGS, NULL);
+					       BEHAVED, NULL);
 	if (ap1 == NULL) {Py_DECREF(typec); return NULL;}
 	ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
-					       BEHAVED_FLAGS, NULL);
+					       BEHAVED, NULL);
 	if (ap2 == NULL) goto fail;
 	
 	if (ap1->nd == 0 || ap2->nd == 0) {
@@ -2772,7 +2770,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 	char *optr;
 
 	/* make sure it is well-behaved */
-	arr = PyArray_FromAny(op, NULL, 0, 0, CARRAY_FLAGS, NULL);
+	arr = PyArray_FromAny(op, NULL, 0, 0, CARRAY, NULL);
 	nd = PyArray_NDIM(arr);
 	if (nd == 1) {     /* we will give in to old behavior */
 		ret = PyArray_Copy((PyArrayObject *)arr);
@@ -2838,10 +2836,10 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	typec = PyArray_DescrFromType(typenum);
 	Py_INCREF(typec);
 	ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
-					       DEFAULT_FLAGS, NULL);
+					       DEFAULT, NULL);
 	if (ap1 == NULL) {Py_DECREF(typec); return NULL;}
 	ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
-					       DEFAULT_FLAGS, NULL);
+					       DEFAULT, NULL);
 	if (ap2 == NULL) goto fail;
 	
 	n1 = ap1->dimensions[0];
@@ -3107,7 +3105,7 @@ PyArray_Take(PyArrayObject *self0, PyObject *indices0, int axis)
         char *src, *dest;
 	
         indices = ret = NULL;
-	self = (PyAO *)_check_axis(self0, &axis, CARRAY_FLAGS);
+	self = (PyAO *)_check_axis(self0, &axis, CARRAY);
         if (self == NULL) return NULL;
 	
         indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0, 
@@ -3208,7 +3206,7 @@ PyArray_Put(PyArrayObject *self, PyObject* values0, PyObject *indices0)
 	thistype = self->descr->type_num;
         Py_INCREF(self->descr); 
 	values = (PyArrayObject *)PyArray_FromAny(values0, self->descr, 0, 0, 
-						  DEFAULT_FLAGS | FORCECAST, NULL); 
+						  DEFAULT | FORCECAST, NULL); 
         if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);
         if (nv > 0) { /* nv == 0 for a null array */
@@ -3282,7 +3280,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         chunk = self->descr->elsize;
 
         mask = (PyArrayObject *)\
-		PyArray_FROM_OTF(mask0, PyArray_BOOL, CARRAY_FLAGS | FORCECAST);
+		PyArray_FROM_OTF(mask0, PyArray_BOOL, CARRAY | FORCECAST);
 	if (mask == NULL) goto fail;
         ni = PyArray_SIZE(mask);
         if (ni != max_item) {
@@ -3351,7 +3349,7 @@ PyArray_Converter(PyObject *object, PyObject **address)
                 return PY_SUCCEED;
         }
         else {
-		*address = PyArray_FromAny(object, NULL, 0, 0, CARRAY_FLAGS, NULL);
+		*address = PyArray_FromAny(object, NULL, 0, 0, CARRAY, NULL);
 		if (*address == NULL) return PY_FAIL;
 		return PY_SUCCEED;
         }
@@ -3548,7 +3546,7 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
         int buflen;
 
         buf->ptr = NULL;
-        buf->flags = BEHAVED_FLAGS;
+        buf->flags = BEHAVED;
         buf->base = NULL;
 
 	if (obj == Py_None)
@@ -5431,7 +5429,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 							 type, 
 							 1, &n, 
 							 NULL, data, 
-							 DEFAULT_FLAGS,
+							 DEFAULT,
 							 NULL)) == NULL) {
 		Py_DECREF(buf);
 		return NULL;

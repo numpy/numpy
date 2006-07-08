@@ -446,7 +446,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 		if (!ret) return NULL;
 		PyArray_BASE(ret) = (PyObject *)ap;
 		Py_INCREF(ap);
-		PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
+		PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL);
 		return ret;
 	}
 
@@ -546,7 +546,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 		if (!ret) return -1;
 		PyArray_BASE(ret) = (PyObject *)ap;
 		Py_INCREF(ap);
-		PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
+		PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL);
 		res = PyArray_CopyObject((PyArrayObject *)ret, op);
 		Py_DECREF(ret);
 		return res;

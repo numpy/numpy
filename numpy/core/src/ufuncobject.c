@@ -7,9 +7,7 @@
   This supports mathematical (and Boolean) functions on arrays and other python
   objects.  Math on large arrays of basic C types is rather efficient.
 
-  Travis E. Oliphant  (2005)
-  Assistant Professor
-  Brigham Young University
+  Travis E. Oliphant  (2005-2006), oliphant@ee.byu.edu (oliphant.travis@ieee.org)
 
   based on the 
 
@@ -410,7 +408,7 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
         int nin = data->nin, nout=data->nout;
         int ntot;
         PyObject *tocall = data->callable;        
-        char *ptrs[MAX_ARGS];
+        char *ptrs[NPY_MAXARGS];
         PyObject *arglist, *result;
         PyObject *in, **op;
 
@@ -880,8 +878,8 @@ static int
 construct_matrices(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 {
         int nargs, i, maxsize;
-        int arg_types[MAX_ARGS];
-	PyArray_SCALARKIND scalars[MAX_ARGS];
+        int arg_types[NPY_MAXARGS];
+	PyArray_SCALARKIND scalars[NPY_MAXARGS];
 	PyUFuncObject *self=loop->ufunc;
 	Bool allscalars=TRUE;
 	PyTypeObject *subtype=&PyArray_Type;
@@ -1471,26 +1469,26 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		}
 		break;
 	case BUFFER_UFUNCLOOP: {
-		PyArray_CopySwapNFunc *copyswapn[MAX_ARGS];
+		PyArray_CopySwapNFunc *copyswapn[NPY_MAXARGS];
 		PyArrayIterObject **iters=loop->iters;
 		int *swap=loop->swap;
 		char **dptr=loop->dptr;
-		int mpselsize[MAX_ARGS];
-		intp laststrides[MAX_ARGS];
-		int fastmemcpy[MAX_ARGS];
+		int mpselsize[NPY_MAXARGS];
+		intp laststrides[NPY_MAXARGS];
+		int fastmemcpy[NPY_MAXARGS];
 		int *needbuffer=loop->needbuffer;
 		intp index=loop->index, size=loop->size;
 		int bufsize;
 		intp bufcnt;
-		int copysizes[MAX_ARGS];
+		int copysizes[NPY_MAXARGS];
 		char **bufptr = loop->bufptr;
 		char **buffer = loop->buffer;
 		char **castbuf = loop->castbuf;
 		intp *steps = loop->steps;
-		char *tptr[MAX_ARGS];
+		char *tptr[NPY_MAXARGS];
 		int ninnerloops = loop->ninnerloops;
-		Bool pyobject[MAX_ARGS];
-		int datasize[MAX_ARGS];
+		Bool pyobject[NPY_MAXARGS];
+		int datasize[NPY_MAXARGS];
                 int i, j, k, stopcondition;
 		char *myptr1, *myptr2;
 
@@ -1718,7 +1716,7 @@ _getidentity(PyUFuncObject *self, int otype, char *str)
         }
 
 	typecode = PyArray_DescrFromType(otype); 
-        arr = PyArray_FromAny(obj, typecode, 0, 0, CARRAY_FLAGS, NULL);
+        arr = PyArray_FromAny(obj, typecode, 0, 0, CARRAY, NULL);
         Py_DECREF(obj);
         return (PyArrayObject *)arr;
 }
@@ -2465,7 +2463,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 						PyArray_DescrConverter2, 
 						&otype)) return NULL;
                 indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype, 
-							   1, 1, CARRAY_FLAGS, NULL);
+							   1, 1, CARRAY, NULL);
                 if (indices == NULL) return NULL;
 	}
 	else {
@@ -2584,7 +2582,7 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
 	int nargs, i;
 	int np = 0;
 	double priority, maxpriority;
-	PyObject *with_wrap[MAX_ARGS], *wraps[MAX_ARGS];
+	PyObject *with_wrap[NPY_MAXARGS], *wraps[NPY_MAXARGS];
 	PyObject *obj, *wrap = NULL;
 
 	nargs = PyTuple_GET_SIZE(args);
@@ -2681,9 +2679,9 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 {
 	int i;
 	PyTupleObject *ret;
-	PyArrayObject *mps[MAX_ARGS];
-	PyObject *retobj[MAX_ARGS];
-        PyObject *wraparr[MAX_ARGS];
+	PyArrayObject *mps[NPY_MAXARGS];
+	PyObject *retobj[NPY_MAXARGS];
+        PyObject *wraparr[NPY_MAXARGS];
 	PyObject *res;
         int errval;
         

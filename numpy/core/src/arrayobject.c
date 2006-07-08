@@ -11,9 +11,7 @@ Heavily modified in 2005 with inspiration from Numarray
 
 by
 
-Travis Oliphant
-Assistant Professor at
-Brigham Young University
+Travis Oliphant,  oliphant@ee.byu.edu
 
 maintainer email:  oliphant.travis@ieee.org
 
@@ -93,7 +91,7 @@ PyArray_Zero(PyArrayObject *arr)
                 return zeroval;
         }
 	storeflags = arr->flags;
-	arr->flags |= BEHAVED_FLAGS;
+	arr->flags |= BEHAVED;
         ret = arr->descr->f->setitem(obj, zeroval, arr);
 	arr->flags = storeflags;
 	Py_DECREF(obj);
@@ -129,7 +127,7 @@ PyArray_One(PyArrayObject *arr)
         }
 
 	storeflags = arr->flags;
-	arr->flags |= BEHAVED_FLAGS;
+	arr->flags |= BEHAVED;
         ret = arr->descr->f->setitem(obj, oneval, arr);
 	arr->flags = storeflags;
         Py_DECREF(obj);
@@ -1096,12 +1094,12 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
         ret = PyArray_NewFromDescr(&PyArray_Type, descr,
 				   nd, newd,
 				   NULL, data,
-				   (data ? CARRAY_FLAGS : 0), NULL);
+				   (data ? CARRAY : 0), NULL);
 #else
 	ret = PyArray_NewFromDescr(&PyArray_Type, descr,
 				   nd, (intp *)d,
 				   NULL, data,
-				   (data ? CARRAY_FLAGS : 0), NULL);
+				   (data ? CARRAY : 0), NULL);
 #endif
 	return ret;
 }
@@ -1270,7 +1268,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 			Py_INCREF(descr);
 			vobj->obval = NULL;
 			vobj->ob_size = itemsize;
-			vobj->flags = BEHAVED_FLAGS | OWNDATA;
+			vobj->flags = BEHAVED | OWNDATA;
 			swap = 0;
 			if (descr->fields) {
 				if (base) {
@@ -1759,7 +1757,7 @@ array_dealloc(PyArrayObject *self) {
                 Py_DECREF(self->base);
         }
 
-        if ((self->flags & OWN_DATA) && self->data) {
+        if ((self->flags & OWNDATA) && self->data) {
 		/* Free internal references if an Object array */
 		if (self->descr->hasobject) {
 			Py_INCREF(self); /*hold on to self */
@@ -2476,7 +2474,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
 	other->base = (PyObject *)self;
 	Py_INCREF(self);
 	
-	PyArray_UpdateFlags(other, UPDATE_ALL_FLAGS);
+	PyArray_UpdateFlags(other, UPDATE_ALL);
 	
 	return (PyObject *)other;
 }
@@ -3727,7 +3725,7 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow,
 	if (r == NULL) return NULL;
         r->base = (PyObject *)self;
         Py_INCREF(self);
-	PyArray_UpdateFlags(r, UPDATE_ALL_FLAGS);
+	PyArray_UpdateFlags(r, UPDATE_ALL);
         return (PyObject *)r;
 }
 
@@ -3953,7 +3951,7 @@ array_str(PyArrayObject *self)
 /*OBJECT_API
  */
 static int
-PyArray_CompareUCS4(PyArray_UCS4 *s1, PyArray_UCS4 *s2, register size_t len)
+PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, register size_t len)
 {
         register PyArray_UCS4 c1, c2;
         while(len-- > 0) {
@@ -4565,7 +4563,7 @@ _IsWriteable(PyArrayObject *ap)
 	int n;
 
 	/* If we own our own data, then no-problem */
-	if ((base == NULL) || (ap->flags & OWN_DATA)) return TRUE;
+	if ((base == NULL) || (ap->flags & OWNDATA)) return TRUE;
 
 	/* Get to the final base object
 	   If it is a writeable array, then return TRUE
@@ -4577,7 +4575,7 @@ _IsWriteable(PyArrayObject *ap)
 	*/
 
 	while(PyArray_Check(base)) {
-		if (PyArray_CHKFLAGS(base, OWN_DATA))
+		if (PyArray_CHKFLAGS(base, OWNDATA))
 			return (Bool) (PyArray_ISWRITEABLE(base));
 		base = PyArray_BASE(base);
 	}
@@ -4636,7 +4634,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 		else ret->flags &= ~ALIGNED;
 	}
 	/* This is not checked by default WRITEABLE is not 
-	   part of UPDATE_ALL_FLAGS */
+	   part of UPDATE_ALL */
 	if (flagmask & WRITEABLE) {
 	        if (_IsWriteable(ret)) ret->flags |= WRITEABLE;
 		else ret->flags &= ~WRITEABLE;
@@ -4661,7 +4659,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 */
 
 /*OBJECT_API*/
-static unsigned char
+static Bool
 PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
 		     intp *dims, intp *newstrides)
 {
@@ -4696,7 +4694,7 @@ PyArray_CheckStrides(int elsize, int nd, intp numbytes, intp offset,
    has the FORTRAN bit set, then a FORTRAN-style strides array will be
    created (and of course the FORTRAN flag bit will be set).
 
-   If data is not given but created here, then flags will be DEFAULT_FLAGS
+   If data is not given but created here, then flags will be DEFAULT
    and a non-zero flags argument can be used to indicate a FORTRAN style
    array is desired.
 */
@@ -4914,7 +4912,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 	self->dimensions = NULL;
 	self->data = NULL;
 	if (data == NULL) {  
-		self->flags = DEFAULT_FLAGS;
+		self->flags = DEFAULT;
 		if (flags) {
 			self->flags |= FORTRAN;
 			if (nd > 1) self->flags &= ~CONTIGUOUS;
@@ -4960,7 +4958,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 			PyErr_NoMemory();
 			goto fail;
 		}
-		self->flags |= OWN_DATA;
+		self->flags |= OWNDATA;
 
 		/* It is bad to have unitialized OBJECT pointers */
                 /* which could also be sub-fields of a VOID array */
@@ -4977,7 +4975,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 		}
 	}
 	else {
-                self->flags &= ~OWN_DATA;  /* If data is passed in,
+                self->flags &= ~OWNDATA;  /* If data is passed in,
 					   this object won't own it
 					   by default.
 					   Caller must arrange for
@@ -5002,7 +5000,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                         if (strides != NULL) { /* did not allocate own data 
                                                   or funny strides */
                                 /* update flags before finalize function */
-                                PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
+                                PyArray_UpdateFlags(self, UPDATE_ALL);
                         }
                         if PyCObject_Check(func) {
                                 PyArray_FinalizeFunc *cfunc;
@@ -5112,7 +5110,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         oldsize = PyArray_SIZE(self);
 
 	if (oldsize != newsize) {
-		if (!(self->flags & OWN_DATA)) {
+		if (!(self->flags & OWNDATA)) {
 			PyErr_SetString(PyExc_ValueError,
 					"cannot resize this array:  "	\
 					"it does not own its data");
@@ -5449,7 +5447,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 					     offset + (char *)buffer.ptr,
 					     buffer.flags, NULL);
                 if (ret == NULL) {descr=NULL; goto fail;}
-                PyArray_UpdateFlags(ret, UPDATE_ALL_FLAGS);
+                PyArray_UpdateFlags(ret, UPDATE_ALL);
                 ret->base = buffer.base;
                 Py_INCREF(buffer.base);
         }
@@ -5765,7 +5763,7 @@ array_data_set(PyArrayObject *self, PyObject *op)
 				"not enough data for array");
 		return -1;
 	}
-	if (self->flags & OWN_DATA) {
+	if (self->flags & OWNDATA) {
 		PyArray_XDECREF(self);
 		PyDataMem_FREE(self->data);
 	}
@@ -5779,7 +5777,7 @@ array_data_set(PyArrayObject *self, PyObject *op)
 	Py_INCREF(op);
 	self->base = op;
 	self->data = buf;
-	self->flags = CARRAY_FLAGS;
+	self->flags = CARRAY;
 	if (!writeable)
 		self->flags &= ~WRITEABLE;
 	return 0;
@@ -5911,7 +5909,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 	}
 
 	self->descr = newtype;
-	PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
+	PyArray_UpdateFlags(self, UPDATE_ALL);
 
         return 0;
 
@@ -7415,7 +7413,7 @@ PyArray_FromStructInterface(PyObject *input)
 	Py_INCREF(input);
 	PyArray_BASE(r) = input;
         Py_DECREF(attr);
-        PyArray_UpdateFlags((PyArrayObject *)r, UPDATE_ALL_FLAGS);
+        PyArray_UpdateFlags((PyArrayObject *)r, UPDATE_ALL);
         return r;
 
  fail:
@@ -7439,7 +7437,7 @@ PyArray_FromInterface(PyObject *input)
 	int buffer_len;
 	int res, i, n;
 	intp dims[MAX_DIMS], strides[MAX_DIMS];
-	int dataflags = BEHAVED_FLAGS;
+	int dataflags = BEHAVED;
 
 	/* Get the memory from __array_data__ and __array_offset__ */
 	/* Get the shape */
@@ -7565,7 +7563,7 @@ PyArray_FromInterface(PyObject *input)
 		memcpy(ret->strides, strides, n*sizeof(intp));
 	}
 	else PyErr_Clear();
-	PyArray_UpdateFlags(ret, UPDATE_ALL_FLAGS);
+	PyArray_UpdateFlags(ret, UPDATE_ALL);
 	Py_DECREF(inter);
 	return (PyObject *)ret;
 
@@ -7776,9 +7774,9 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
    to guarantee CONTIGUOUS, ALIGNED and WRITEABLE
    and therefore it is redundant to include those as well.
 
-   BEHAVED_FLAGS == ALIGNED | WRITEABLE
-   CARRAY_FLAGS = CONTIGUOUS | BEHAVED_FLAGS
-   FARRAY_FLAGS = FORTRAN | BEHAVED_FLAGS
+   BEHAVED == ALIGNED | WRITEABLE
+   CARRAY = CONTIGUOUS | BEHAVED
+   FARRAY = FORTRAN | BEHAVED
 
    FORTRAN can be set in the FLAGS to request a FORTRAN array.
    Fortran arrays are always behaved (aligned,
@@ -7974,7 +7972,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
 
 /* leaves reference count alone --- cannot be NULL*/
 /*OBJECT_API*/
-static unsigned char
+static Bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
 	int fromtype=from->type_num;
@@ -8008,7 +8006,7 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 /*OBJECT_API
   See if array scalars can be cast.
  */
-static unsigned char
+static Bool
 PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
 {
 	int fromtype;
@@ -8620,7 +8618,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 			PyObject *new;
 			Py_INCREF(indtype);
 			new = PyArray_CheckFromAny(obj, indtype, 0, 0,
-                                                   FORCECAST | BEHAVED_NS_FLAGS, NULL);
+                                                   FORCECAST | BEHAVED_NS, NULL);
 			Py_DECREF(obj);
 			obj = new;
 			if (new==NULL) goto finish;
@@ -9192,7 +9190,7 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
 
 	typecode=PyArray_DescrFromType(PyArray_BOOL);
 	ba = (PyArrayObject *)PyArray_FromAny(myBool, typecode, 0, 0,
-					      CARRAY_FLAGS, NULL);
+					      CARRAY, NULL);
 	if (ba == NULL) return -1;
 	nd = ba->nd;
 	for (j=0; j<nd; j++) iters[j] = NULL;

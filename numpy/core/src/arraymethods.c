@@ -272,7 +272,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 	Py_INCREF(self);
 	((PyArrayObject *)ret)->base = (PyObject *)self; 
 
-	PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);
+	PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL);
 	return ret;
 }
 
@@ -321,7 +321,7 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
 	Py_INCREF(self);
 	((PyArrayObject *)ret)->base = (PyObject *)self;
 
-	PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL_FLAGS);	
+	PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL);	
 	retval = PyArray_CopyObject((PyArrayObject *)ret, val);
 	Py_DECREF(ret);
 	return retval;
@@ -1026,10 +1026,10 @@ array_setstate(PyArrayObject *self, PyObject *args)
 		}
 	}
 
-        if ((self->flags & OWN_DATA)) {
+        if ((self->flags & OWNDATA)) {
 		if (self->data != NULL)
 			PyDataMem_FREE(self->data);
-		self->flags &= ~OWN_DATA;
+		self->flags &= ~OWNDATA;
         }
 	Py_XDECREF(self->base);
 
@@ -1040,7 +1040,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 		self->dimensions = NULL;
 	}
 
-	self->flags = DEFAULT_FLAGS;
+	self->flags = DEFAULT;
 
 	self->nd = nd;
 
@@ -1085,7 +1085,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
                         else {
                                 memcpy(self->data, datastr, num);
                         }
-			self->flags |= OWN_DATA;
+			self->flags |= OWNDATA;
 			self->base = NULL;
 		}
 		else {
@@ -1102,13 +1102,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
 			return PyErr_NoMemory();
 		}
 		if (self->descr->hasobject) memset(self->data, 0, PyArray_NBYTES(self));
-		self->flags |= OWN_DATA;
+		self->flags |= OWNDATA;
 		self->base = NULL;
 		if (_setlist_pkl(self, rawdata) < 0) 
 			return NULL;
 	}
 
-	PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
+	PyArray_UpdateFlags(self, UPDATE_ALL);
 	
 	Py_INCREF(Py_None);
 	return Py_None;	

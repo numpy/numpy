@@ -1,7 +1,7 @@
 #ifndef _MULTIARRAYMODULE
 typedef struct {
 	PyObject_HEAD
-	Bool obval;
+	npy_bool obval;
 } PyBoolScalarObject;
 #endif
 
@@ -32,7 +32,7 @@ typedef struct {
 
 typedef struct {
 	PyObject_HEAD
-	longlong obval;
+	npy_longlong obval;
 } PyLongLongScalarObject;
 
 
@@ -62,7 +62,7 @@ typedef struct {
 
 typedef struct {
 	PyObject_HEAD
-	ulonglong obval;
+	npy_ulonglong obval;
 } PyULongLongScalarObject;
 
 
@@ -80,25 +80,25 @@ typedef struct {
 
 typedef struct {
 	PyObject_HEAD
-	longdouble obval;
+	npy_longdouble obval;
 } PyLongDoubleScalarObject;
 
 
 typedef struct {
 	PyObject_HEAD
-	cfloat obval;
+	npy_cfloat obval;
 } PyCFloatScalarObject;
 
 
 typedef struct {
 	PyObject_HEAD
-	cdouble obval;
+	npy_cdouble obval;
 } PyCDoubleScalarObject;
 
 
 typedef struct {
 	PyObject_HEAD
-	clongdouble obval;
+	npy_clongdouble obval;
 } PyCLongDoubleScalarObject;
 
 

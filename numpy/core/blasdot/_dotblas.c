@@ -2,7 +2,7 @@ static char module_doc[] =
 "This module provides a BLAS optimized\nmatrix multiply, inner product and dot for numpy arrays";
 
 #include "Python.h"
-#include "numpy/arrayobject.h"
+#include "numpy/noprefix.h"
 #ifndef CBLAS_HEADER
 #define CBLAS_HEADER "cblas.h"
 #endif

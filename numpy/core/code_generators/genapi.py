@@ -14,10 +14,13 @@ API_FILES = [os.path.join(THIS_DIR, '..', 'src', a) for a in API_FILES]
 def remove_whitespace(s):
     return ''.join(s.split())
 
+def _repl(str):
+    return str.replace('intp', 'npy_intp').replace('Bool','npy_bool')
+
 class Function(object):
     def __init__(self, name, return_type, args, doc=''):
         self.name = name
-        self.return_type = return_type
+        self.return_type = _repl(return_type)
         self.args = args
         self.doc = doc
 
@@ -30,7 +33,7 @@ class Function(object):
     def argtypes_string(self):
         if not self.args:
             return 'void'
-        argstr = ', '.join([a[0] for a in self.args])
+        argstr = ', '.join([_repl(a[0]) for a in self.args])
         return argstr
 
     def __str__(self):

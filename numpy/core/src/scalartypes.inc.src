@@ -92,7 +92,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 					     outcode,
 					     0, NULL, 
 					     NULL, ctypeptr, 
-					     CARRAY_FLAGS, NULL);
+					     CARRAY, NULL);
 		if (aout == NULL) {Py_DECREF(ain); return -1;}
 		castfunc(ain->data, aout->data, 1, ain, aout);
 		Py_DECREF(ain);
@@ -1186,7 +1186,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 	}
 	else {
 		/* Copy data from value to correct place in dptr */
-		src = PyArray_FromAny(value, typecode, 0, 0, CARRAY_FLAGS, NULL);
+		src = PyArray_FromAny(value, typecode, 0, 0, CARRAY, NULL);
 		if (src == NULL) return NULL;
 		typecode->f->copyswap(dptr, PyArray_DATA(src), 
 				      !PyArray_ISNBO(self->descr->byteorder),
@@ -1851,7 +1851,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 		((PyVoidScalarObject *)ret)->descr = \
 			PyArray_DescrNewFromType(PyArray_VOID);
 		((PyVoidScalarObject *)ret)->descr->elsize = (int) memu;
-		((PyVoidScalarObject *)ret)->flags = BEHAVED_FLAGS | OWNDATA;
+		((PyVoidScalarObject *)ret)->flags = BEHAVED | OWNDATA;
 		((PyVoidScalarObject *)ret)->base = NULL;
 		memset(destptr, '\0', (size_t) memu);
 		return ret;
@@ -2223,13 +2223,31 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 #name=int*5, uint*5, float*3#
 #CNAME=(CHAR, SHORT, INT, LONG, LONGLONG)*2, FLOAT, DOUBLE, LONGDOUBLE#
 */
+#if BITSOF_@CNAME@ == 8
+#define _THIS_SIZE "8"
+#elif BITSOF_@CNAME@ == 16
+#define _THIS_SIZE "16"
+#elif BITSOF_@CNAME@ == 32
+#define _THIS_SIZE "32"
+#elif BITSOF_@CNAME@ == 64
+#define _THIS_SIZE "64"
+#elif BITSOF_@CNAME@ == 80
+#define _THIS_SIZE "80"
+#elif BITSOF_@CNAME@ == 96
+#define _THIS_SIZE "96"
+#elif BITSOF_@CNAME@ == 128
+#define _THIS_SIZE "128"
+#elif BITSOF_@CNAME@ == 256
+#define _THIS_SIZE "256"
+#endif
 static PyTypeObject Py@NAME@ArrType_Type = { 
         PyObject_HEAD_INIT(NULL)
-        0,					  /*ob_size*/
-        "@name@" STRBITSOF_@CNAME@ "scalar",	  /*tp_name*/
-        sizeof(Py@NAME@ScalarObject),	          /*tp_basicsize*/
+        0,					     /*ob_size*/
+        "@name@" _THIS_SIZE "scalar", /*tp_name*/
+        sizeof(Py@NAME@ScalarObject),	             /*tp_basicsize*/
 };
 
+#undef _THIS_SIZE
 /**end repeat**/
 
 /**begin repeat
@@ -2237,10 +2255,32 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 #name=complex*3#
 #CNAME=FLOAT, DOUBLE, LONGDOUBLE#
 */
+#if BITSOF_@CNAME@ == 16
+#define _THIS_SIZE2 "16"
+#define _THIS_SIZE1 "32"
+#elif BITSOF_@CNAME@ == 32
+#define _THIS_SIZE2 "32"
+#define _THIS_SIZE1 "64"
+#elif BITSOF_@CNAME@ == 64
+#define _THIS_SIZE2 "64"
+#define _THIS_SIZE1 "128"
+#elif BITSOF_@CNAME@ == 80
+#define _THIS_SIZE2 "80"
+#define _THIS_SIZE1 "160"
+#elif BITSOF_@CNAME@ == 96
+#define _THIS_SIZE2 "96"
+#define _THIS_SIZE1 "192"
+#elif BITSOF_@CNAME@ == 128
+#define _THIS_SIZE2 "128"
+#define _THIS_SIZE1 "256"
+#elif BITSOF_@CNAME@ == 256
+#define _THIS_SIZE2 "256"
+#define _THIS_SIZE1 "512"
+#endif
 static PyTypeObject Py@NAME@ArrType_Type = { 
         PyObject_HEAD_INIT(NULL)
-        0,					  /*ob_size*/
-        "@name@" STRBITSOF_C@CNAME@ "scalar",	  /*tp_name*/
+        0,					    /*ob_size*/
+        "@name@" _THIS_SIZE1 "scalar", /*tp_name*/
         sizeof(Py@NAME@ScalarObject),	          /*tp_basicsize*/
         0,                         /*tp_itemsize*/
         0,                         /*tp_dealloc*/
@@ -2259,10 +2299,13 @@ static PyTypeObject Py@NAME@ArrType_Type = {
         0,                         /*tp_setattro*/
         0,                         /*tp_as_buffer*/
         Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-        "Composed of two " STRBITSOF_@CNAME@ " bit floats",           /* tp_doc */
+        "Composed of two " _THIS_SIZE2 " bit floats",           /* tp_doc */
 };
+#undef _THIS_SIZE1
+#undef _THIS_SIZE2
 
 /**end repeat**/
+
 
 
 static PyNumberMethods longdoubletype_as_number;

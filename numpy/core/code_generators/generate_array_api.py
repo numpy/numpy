@@ -14,7 +14,7 @@ h_template = r"""
 
 typedef struct {
 	PyObject_HEAD
-	Bool obval;
+	npy_bool obval;
 } PyBoolScalarObject;
 
 static unsigned int PyArray_GetNDArrayCVersion (void);

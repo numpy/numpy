@@ -1026,9 +1026,9 @@ NA_OutputArray(PyObject *a, NumarrayType t, int requires)
         }
         ret = (PyArrayObject *)PyArray_Empty(PyArray_NDIM(a), PyArray_DIMS(a),
                                              dtype, 0);
-        ret->flags |= UPDATEIFCOPY;
+        ret->flags |= NPY_UPDATEIFCOPY;
         ret->base = a;
-        PyArray_FLAGS(a) &= ~WRITEABLE;
+        PyArray_FLAGS(a) &= ~NPY_WRITEABLE;
         Py_INCREF(a);
         return ret;
 }
@@ -1045,7 +1045,7 @@ copy from the temporary back to the original.
 static PyArrayObject *
 NA_IoArray(PyObject *a, NumarrayType t, int requires)
 {
-	PyArrayObject *shadow = NA_InputArray(a, t, requires | UPDATEIFCOPY );
+	PyArrayObject *shadow = NA_InputArray(a, t, requires | NPY_UPDATEIFCOPY );
 
 	if (!shadow) return NULL;
 
@@ -2217,7 +2217,7 @@ NA_isPythonScalar(PyObject *o)
 	return rval;
 }
 
-#if (SIZEOF_INTP == 8)
+#if (NPY_SIZEOF_INTP == 8)
 #define PlatBigInt PyInt_FromLong
 #define PlatBigUInt PyLong_FromUnsignedLong
 #else
@@ -2460,7 +2460,7 @@ NA_typeObjectToTypeNo(PyObject *typeObj)
 {
         PyArray_Descr *dtype;
         int i;
-        if (PyArray_DescrConverter(typeObj, &dtype) == PY_FAIL) i=-1;
+        if (PyArray_DescrConverter(typeObj, &dtype) == NPY_FAIL) i=-1;
         else i=dtype->type_num;
 	return i;
 }
@@ -2482,7 +2482,7 @@ static PyObject *
 NA_getType( PyObject *type)
 {
 	PyArray_Descr *typeobj = NULL;
-        if (!type && PyArray_DescrConverter(type, &typeobj) == PY_FAIL) {
+        if (!type && PyArray_DescrConverter(type, &typeobj) == NPY_FAIL) {
                 PyErr_Format(PyExc_ValueError, "NA_getType: unknown type.");
                 typeobj = NULL;
         }
@@ -2672,7 +2672,7 @@ NA_swapAxes(PyArrayObject *array, int x, int y)
 	array->strides[x] = array->strides[y];
 	array->strides[y] = temp;
 
-        PyArray_UpdateFlags(array, UPDATE_ALL_FLAGS);	
+        PyArray_UpdateFlags(array, NPY_UPDATE_ALL);	
 
 	return 0;
 }
@@ -2761,7 +2761,7 @@ NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
 					     0, NULL);
         }
         else {
-		intp size = dtype->elsize;
+		npy_intp size = dtype->elsize;
                 int i;
 		for(i=0; i<self->nd; i++) {
 			size *= self->dimensions[i];
@@ -2777,20 +2777,20 @@ NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
 static void
 NA_updateAlignment(PyArrayObject *self)
 {
-        PyArray_UpdateFlags(self, ALIGNED);
+        PyArray_UpdateFlags(self, NPY_ALIGNED);
 }
 
 static void
 NA_updateContiguous(PyArrayObject *self)
 {
-        PyArray_UpdateFlags(self, CONTIGUOUS | FORTRAN);
+        PyArray_UpdateFlags(self, NPY_CONTIGUOUS | NPY_FORTRAN);
 }
 
 
 static void 
 NA_updateStatus(PyArrayObject *self)
 {
-        PyArray_UpdateFlags(self, UPDATE_ALL_FLAGS);
+        PyArray_UpdateFlags(self, NPY_UPDATE_ALL);
 }
 
 static int

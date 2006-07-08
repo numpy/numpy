@@ -1,6 +1,6 @@
 #include "Python.h"
 #include "structmember.h"
-#include "numpy/arrayobject.h"
+#include "numpy/noprefix.h"
 
 static PyObject *ErrorObject;
 #define Py_Try(BOOLEAN) {if (!(BOOLEAN)) goto fail;}
@@ -165,9 +165,9 @@ arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
 				       &ox, &obins));
 
     type = PyArray_DescrFromType(PyArray_DOUBLE);
-    Py_Try(ax=PyArray_FromAny(ox, type, 1, 1, CARRAY_FLAGS, NULL));
+    Py_Try(ax=PyArray_FromAny(ox, type, 1, 1, CARRAY, NULL));
     Py_INCREF(type);
-    Py_Try(abins = PyArray_FromAny(obins, type, 1, 1, CARRAY_FLAGS, NULL));
+    Py_Try(abins = PyArray_FromAny(obins, type, 1, 1, CARRAY, NULL));
     
     lx = PyArray_SIZE(ax);
     dx = (double *)PyArray_DATA(ax);
@@ -236,7 +236,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 				     &mask, &vals))
             goto fail;
         
-    amask = (PyArrayObject *) PyArray_FROM_OF(mask, CARRAY_FLAGS);
+    amask = (PyArrayObject *) PyArray_FROM_OF(mask, CARRAY);
     if (amask == NULL) goto fail;
     /* Cast an object array */
     if (amask->descr->type_num == PyArray_OBJECT) {

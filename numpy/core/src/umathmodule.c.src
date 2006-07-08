@@ -1,7 +1,7 @@
 /* -*- c -*- */
 
 #include "Python.h"
-#include "numpy/arrayobject.h"
+#include "numpy/noprefix.h"
 #define _UMATHMODULE
 #include "numpy/ufuncobject.h"
 #include "abstract.h"

@@ -100,7 +100,6 @@ typedef enum
 #define NA_SET_TEMP(ai, type, v) (((type *) &__temp__)[0] = v)
 
 #define NA_SWAPComplex64 NA_COMPLEX_SWAP16
-#define NA_SWAPComplex64_ NA_COMPLEX_SWAP16
 #define NA_SWAPComplex32 NA_COMPLEX_SWAP8
 #define NA_SWAPFloat64   NA_SWAP8
 #define NA_SWAPFloat32   NA_SWAP4
@@ -115,7 +114,6 @@ typedef enum
 #define NA_SWAPBool      NA_SWAP1
 
 #define NA_COPYComplex64 NA_COPY16
-#define NA_COPYComplex64_ NA_COPY16
 #define NA_COPYComplex32 NA_COPY8
 #define NA_COPYFloat64   NA_COPY8
 #define NA_COPYFloat32   NA_COPY4
@@ -149,7 +147,7 @@ static type _NA_GETPa_##type(char *ptr)         \
 	return temp;				\
 }
 
-_makeGetPb(Complex64_)
+_makeGetPb(Complex64)
 _makeGetPb(Complex32)
 _makeGetPb(Float64)
 _makeGetPb(Float32)
@@ -163,7 +161,7 @@ _makeGetPb(Int8)
 _makeGetPb(UInt8)
 _makeGetPb(Bool)
 
-_makeGetPa(Complex64_)
+_makeGetPa(Complex64)
 _makeGetPa(Complex32)
 _makeGetPa(Float64)
 _makeGetPa(Float32)
@@ -194,7 +192,7 @@ static void _NA_SETPa_##type(char *ptr, type v)	\
 	return;					\
 }
 
-_makeSetPb(Complex64_)
+_makeSetPb(Complex64)
 _makeSetPb(Complex32)
 _makeSetPb(Float64)
 _makeSetPb(Float32)
@@ -208,7 +206,7 @@ _makeSetPb(Int8)
 _makeSetPb(UInt8)
 _makeSetPb(Bool)
 
-_makeSetPa(Complex64_)
+_makeSetPa(Complex64)
 _makeSetPa(Complex32)
 _makeSetPa(Float64)
 _makeSetPa(Float32)
