@@ -947,14 +947,14 @@ _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
 	int simple;
 	int same;
 
+        if (!PyArray_EquivArrTypes(dest, src)) {
+                return PyArray_CastTo(dest, src);
+        }
+
         if (!PyArray_ISWRITEABLE(dest)) {
                 PyErr_SetString(PyExc_RuntimeError,
                                 "cannot write to array");
                 return -1;
-        }
-
-        if (!PyArray_EquivArrTypes(dest, src)) {
-                return PyArray_CastTo(dest, src);
         }
 
 	same = PyArray_SAMESHAPE(dest, src);
@@ -996,6 +996,77 @@ _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
 	else {
 		return _broadcast_copy(dest, src, myfunc, swap);
 	}
+}
+
+/*OBJECT_API
+ Copy an Array into another array -- memory must not overlap
+ Does not require src and dest to have "broadcastable" shapes
+ (only the same number of elements).
+*/
+static int
+PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
+{
+
+        intp size;
+        int elsize, simple;
+        PyArrayIterObject *idest, *isrc;
+	void (*myfunc)(char *, intp, char *, intp, intp, int);
+        
+        if (!PyArray_EquivArrTypes(dest, src)) {
+                return PyArray_CastAnyTo(dest, src);
+        }
+        
+        if (!PyArray_ISWRITEABLE(dest)) {
+                PyErr_SetString(PyExc_RuntimeError,
+                                "cannot write to array");
+                return -1;
+        }
+        
+	if ((size=PyArray_SIZE(dest)) != PyArray_SIZE(src)) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "arrays must have the same number of elements"
+                                " for copy");
+                return -1;
+        }
+        
+	simple = ((PyArray_ISCARRAY_RO(src) && PyArray_ISCARRAY(dest)) || 
+                  (PyArray_ISFARRAY_RO(src) && PyArray_ISFARRAY(dest)));
+	
+	if (simple) {
+		PyArray_XDECREF(dest);
+                memcpy(dest->data, src->data, PyArray_NBYTES(dest));
+		PyArray_INCREF(dest);
+		return 0;
+	}
+
+        if (PyArray_SAMESHAPE(dest, src)) {
+                int swap;
+                if (PyArray_ISALIGNED(dest) && PyArray_ISALIGNED(src)) {
+                        myfunc = _strided_byte_copy;
+                }
+		else {
+                        myfunc = _unaligned_strided_byte_copy;
+                }
+                swap = PyArray_ISNOTSWAPPED(dest) != PyArray_ISNOTSWAPPED(src);
+		return _copy_from_same_shape(dest, src, myfunc, swap);
+        }
+
+        /* Otherwise we have to do an iterator-based copy */
+        idest = (PyArrayIterObject *)PyArray_IterNew((PyObject *)dest);
+        if (idest == NULL) return -1;
+        isrc = (PyArrayIterObject *)PyArray_IterNew((PyObject *)src);
+        if (isrc == NULL) {Py_DECREF(idest); return -1;}
+        elsize = dest->descr->elsize;
+        PyArray_XDECREF(dest);
+        while(idest->index < idest->size) {
+                memcpy(idest->dataptr, isrc->dataptr, elsize);
+                PyArray_ITER_NEXT(idest);
+                PyArray_ITER_NEXT(isrc);
+        }
+        PyArray_INCREF(dest);
+        Py_DECREF(idest);
+        Py_DECREF(isrc);
+        return 0;
 }
 
 /*OBJECT_API
@@ -1748,7 +1819,11 @@ array_dealloc(PyArrayObject *self) {
 		if (self->flags & UPDATEIFCOPY) {
                         ((PyArrayObject *)self->base)->flags |= WRITEABLE;
 			Py_INCREF(self); /* hold on to self in next call */
-                        PyArray_CopyInto((PyArrayObject *)self->base, self);
+                        if (PyArray_CopyAnyInto((PyArrayObject *)self->base, 
+                                                self) < 0) {
+                                PyErr_Print();
+                                PyErr_Clear();
+                        }
 			/* Don't need to DECREF -- because we are deleting
 			   self already... */
 		}
@@ -7075,6 +7150,8 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 	return 0;
 }
 
+
+
 /* Must be broadcastable. 
    This code is very similar to PyArray_CopyInto/PyArray_MoveInto
    except casting is done --- PyArray_BUFSIZE is used 
@@ -7123,6 +7200,151 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 	
 	return _broadcast_cast(out, mp, castfunc, iswap, oswap);
 }
+
+
+static int
+_bufferedcast(PyArrayObject *out, PyArrayObject *in, 
+              PyArray_VectorUnaryFunc *castfunc)
+{
+	char *inbuffer, *bptr, *optr;
+	char *outbuffer=NULL;
+	PyArrayIterObject *it_in=NULL, *it_out=NULL;
+	register intp i, index;
+	intp ncopies = PyArray_SIZE(out) / PyArray_SIZE(in);
+	int elsize=in->descr->elsize;
+	int nels = PyArray_BUFSIZE;
+	int el;
+	int inswap, outswap=0;
+	int obuf=!PyArray_ISCARRAY(out);
+	int oelsize = out->descr->elsize;
+        PyArray_CopySwapFunc *in_csn;
+        PyArray_CopySwapFunc *out_csn;
+	int retval = -1;
+
+        in_csn = in->descr->f->copyswap;
+        out_csn = out->descr->f->copyswap;
+
+	/* If the input or output is STRING, UNICODE, or VOID */
+	/*  then getitem and setitem are used for the cast */
+	/*  and byteswapping is handled by those methods */
+
+	inswap = !(PyArray_ISFLEXIBLE(in) || PyArray_ISNOTSWAPPED(in));
+
+	inbuffer = PyDataMem_NEW(PyArray_BUFSIZE*elsize);
+	if (inbuffer == NULL) return -1;
+	if (PyArray_ISOBJECT(in))
+		memset(inbuffer, 0, PyArray_BUFSIZE*elsize);
+	it_in = (PyArrayIterObject *)PyArray_IterNew((PyObject *)in);
+	if (it_in == NULL) goto exit;
+
+	if (obuf) {
+		outswap = !(PyArray_ISFLEXIBLE(out) || \
+			    PyArray_ISNOTSWAPPED(out));
+		outbuffer = PyDataMem_NEW(PyArray_BUFSIZE*oelsize);
+		if (outbuffer == NULL) goto exit;
+		if (PyArray_ISOBJECT(out))
+			memset(outbuffer, 0, PyArray_BUFSIZE*oelsize);
+
+		it_out = (PyArrayIterObject *)PyArray_IterNew((PyObject *)out);
+		if (it_out == NULL) goto exit;
+
+		nels = MIN(nels, PyArray_BUFSIZE);
+	}
+
+	optr = (obuf) ? outbuffer: out->data;
+	bptr = inbuffer;
+	el = 0;
+	while(ncopies--) {
+		index = it_in->size;
+		PyArray_ITER_RESET(it_in);
+		while(index--) {
+                        in_csn(bptr, it_in->dataptr, inswap, in);
+			bptr += elsize;
+			PyArray_ITER_NEXT(it_in);
+			el += 1;
+			if ((el == nels) || (index == 0)) {
+				/* buffer filled, do cast */
+
+				castfunc(inbuffer, optr, el, in, out);
+
+				if (obuf) {
+					/* Copy from outbuffer to array */
+					for(i=0; i<el; i++) {
+                                                out_csn(it_out->dataptr,
+                                                        optr, outswap,
+                                                        out);
+						optr += oelsize;
+						PyArray_ITER_NEXT(it_out);
+					}
+					optr = outbuffer;
+				}
+				else {
+					optr += out->descr->elsize * nels;
+				}
+				el = 0;
+				bptr = inbuffer;
+			}
+		}
+	}
+	retval = 0;
+ exit:
+	Py_XDECREF(it_in);
+	PyDataMem_FREE(inbuffer);
+	PyDataMem_FREE(outbuffer);
+	if (obuf) {
+		Py_XDECREF(it_out);
+	}
+	return retval;
+}
+
+/*OBJECT_API
+ Cast to an already created array.  Arrays don't have to be "broadcastable"
+ Only requirement is they have the same number of elements. 
+*/
+static int
+PyArray_CastAnyTo(PyArrayObject *out, PyArrayObject *mp)
+{
+	int simple;
+	PyArray_VectorUnaryFunc *castfunc=NULL;
+	int mpsize = PyArray_SIZE(mp);
+
+	if (mpsize == 0) return 0;
+	if (!PyArray_ISWRITEABLE(out)) {
+		PyErr_SetString(PyExc_ValueError,
+				"output array is not writeable");
+		return -1;
+	}
+
+	if (!(mpsize == PyArray_SIZE(out))) {
+                PyErr_SetString(PyExc_ValueError,
+                                "arrays must have the same number of"
+                                " elements for the cast.");
+                return -1;
+        }
+        
+	castfunc = PyArray_GetCastFunc(mp->descr, out->descr->type_num);
+	if (castfunc == NULL) return -1;
+        
+        
+        simple = ((PyArray_ISCARRAY_RO(mp) && PyArray_ISCARRAY(out)) || 
+                  (PyArray_ISFARRAY_RO(mp) && PyArray_ISFARRAY(out)));
+        
+	if (simple) {
+		castfunc(mp->data, out->data, mpsize, mp, out);
+		return 0;
+	}
+
+        if (PyArray_SAMESHAPE(out, mp)) {
+                int iswap, oswap;
+                iswap = PyArray_ISBYTESWAPPED(mp) && !PyArray_ISFLEXIBLE(mp);
+                oswap = PyArray_ISBYTESWAPPED(out) && !PyArray_ISFLEXIBLE(out);	
+                return _broadcast_cast(out, mp, castfunc, iswap, oswap);
+        }
+
+        return _bufferedcast(out, mp, castfunc);
+}
+
+
 
 /* steals reference to newtype --- acc. NULL */
 /*OBJECT_API*/

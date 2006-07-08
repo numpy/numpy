@@ -11,6 +11,7 @@ PyArray_Zero
 PyArray_One
 PyArray_CastToType
 PyArray_CastTo
+PyArray_CastAnyTo
 PyArray_CanCastSafely
 PyArray_CanCastTo
 PyArray_ObjectType
@@ -41,6 +42,7 @@ PyArray_Byteswap
 PyArray_Resize
 PyArray_MoveInto
 PyArray_CopyInto
+PyArray_CopyAnyInto
 PyArray_CopyObject
 PyArray_NewCopy
 PyArray_ToList
