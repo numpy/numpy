@@ -220,7 +220,7 @@ cppmacros['SWAP']="""\
 \ta = b;\\
 \tb = c;}
 """
-#cppmacros['ISCONTIGUOUS']='#define ISCONTIGUOUS(m) ((m)->flags & CONTIGUOUS)'
+#cppmacros['ISCONTIGUOUS']='#define ISCONTIGUOUS(m) ((m)->flags & NPY_CONTIGUOUS)'
 cppmacros['PRINTPYOBJERR']="""\
 #define PRINTPYOBJERR(obj)\\
 \tfprintf(stderr,\"#modulename#.error is related to \");\\

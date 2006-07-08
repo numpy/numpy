@@ -26,7 +26,7 @@ of the API) that will need to be changed:
 
   * If you passed ``array->dimensions`` and ``array->strides`` around
     to functions, you will need to fix some code. These are now
-    ``intp*`` pointers. On 32-bit systems there won't be a problem.
+    ``npy_intp*`` pointers. On 32-bit systems there won't be a problem.
     However, on 64-bit systems, you will need to make changes to avoid
     errors and segfaults.
 
@@ -54,8 +54,8 @@ This is a very flexible function.
 ::
 
   PyObject * PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr,
-                                int nd, intp *dims,
-                                intp *strides, char *data,
+                                int nd, npy_intp *dims,
+                                npy_intp *strides, char *data,
                                 int flags, PyObject *obj);
 
 ``subtype`` : ``PyTypeObject *``
@@ -76,11 +76,11 @@ This is a very flexible function.
 ``nd`` : ``int``
     The number of dimensions (<``MAX_DIMS``)
 
-``*dims`` : ``intp *``
+``*dims`` : ``npy_intp *``
     A pointer to the size in each dimension. Information will be
     copied from here.
 
-``*strides`` : ``intp *``
+``*strides`` : ``npy_intp *``
     The strides this array should have. For new arrays created by this
     routine, this should be ``NULL``. If you pass in memory for this array
     to use, then you can pass in the strides information as well
@@ -123,7 +123,7 @@ Note: The returned array object will be unitialized unless the type is
 ``PyArray_OBJECT`` in which case the memory will be set to ``NULL``.
 
 ``PyArray_SimpleNew(nd, dims, typenum)`` is a drop-in replacement for
-``PyArray_FromDims`` (except it takes ``intp*`` dims instead of ``int*`` dims
+``PyArray_FromDims`` (except it takes ``npy_intp*`` dims instead of ``int*`` dims
 which matters on 64-bit systems) and it does not initialize the memory
 to zero.
 
@@ -135,7 +135,7 @@ are loose wrappers around this function.  These functions still take
 ``int *`` arguments.  This should be fine on 32-bit systems, but on 64-bit
 systems you may run into trouble if you frequently passed
 ``PyArray_FromDims`` the dimensions member of the old ``PyArrayObject`` structure
-because ``sizeof(intp) != sizeof(int)``.
+because ``sizeof(npy_intp) != sizeof(int)``.
 
 
 Getting an arrayobject from an arbitrary Python object
@@ -292,11 +292,11 @@ array, or part of some larger record array.  But, they may have other uses...
 
 Some useful combinations of these flags:
 
-- ``BEHAVED_FLAGS = ALIGNED | WRITEABLE``
-- ``CARRAY_FLAGS = DEFAULT_FLAGS = CONTIGUOUS | BEHAVED_FLAGS``
-- ``CARRAY_FLAGS_RO = CONTIGUOUS | ALIGNED``
-- ``FARRAY_FLAGS = FORTRAN | BEHAVED_FLAGS``
-- ``FARRAY_FLAGS_RO = FORTRAN | ALIGNED``
+- ``BEHAVED = ALIGNED | WRITEABLE``
+- ``CARRAY = DEFAULT = CONTIGUOUS | BEHAVED``
+- ``CARRAY_RO = CONTIGUOUS | ALIGNED``
+- ``FARRAY = FORTRAN | BEHAVED``
+- ``FARRAY_RO = FORTRAN | ALIGNED``
 
 The macro ``PyArray_CHECKFLAGS(obj, flags)``  can test any combination of flags.
 There are several default combinations defined as macros already

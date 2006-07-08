@@ -96,7 +96,7 @@ typedef struct {
   extern PyObject * PyFortranObject_New(FortranDataDef* defs, f2py_void_func init);
   extern PyObject * PyFortranObject_NewAsAttr(FortranDataDef* defs);
 
-#define ISCONTIGUOUS(m) ((m)->flags & CONTIGUOUS)
+#define ISCONTIGUOUS(m) ((m)->flags & NPY_CONTIGUOUS)
 #define F2PY_INTENT_IN 1
 #define F2PY_INTENT_INOUT 2
 #define F2PY_INTENT_OUT 4
