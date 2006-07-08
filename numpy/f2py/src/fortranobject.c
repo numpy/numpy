@@ -145,7 +145,7 @@ fortran_doc (FortranDataDef def) {
 }
 
 static FortranDataDef *save_def; /* save pointer of an allocatable array */
-static void set_data(char *d,intp *f) {  /* callback from Fortran */
+static void set_data(char *d,npy_intp *f) {  /* callback from Fortran */
   if (*f)                               /* In fortran f=allocated(d) */
     save_def->data = d;
   else
@@ -219,7 +219,7 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v) {
       return -1;
     }
     if (fp->defs[i].func!=NULL) { /* is allocatable array */
-      intp dims[F2PY_MAX_DIMS];
+      npy_intp dims[F2PY_MAX_DIMS];
       int k;
       save_def = &fp->defs[i];
       if (v!=Py_None) {     /* set new value (reallocate if needed --
@@ -234,13 +234,13 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v) {
 	(*(fp->defs[i].func))(&fp->defs[i].rank,dims,set_data,&flag);
 	for(k=0;k<fp->defs[i].rank;k++) dims[k]=-1;
       }
-      memcpy(fp->defs[i].dims.d,dims,fp->defs[i].rank*sizeof(intp));
+      memcpy(fp->defs[i].dims.d,dims,fp->defs[i].rank*sizeof(npy_intp));
     } else {                     /* not allocatable array */
       if ((arr = array_from_pyobj(fp->defs[i].type,fp->defs[i].dims.d,fp->defs[i].rank,F2PY_INTENT_IN,v))==NULL)
 	return -1;      
     }
     if (fp->defs[i].data!=NULL) { /* copy Python object to Fortran array */
-      intp s = PyArray_MultiplyList(fp->defs[i].dims.d,arr->nd);
+      npy_intp s = PyArray_MultiplyList(fp->defs[i].dims.d,arr->nd);
       if (s==-1)
 	s = PyArray_MultiplyList(arr->dimensions,arr->nd);
       if (s<0 ||
@@ -448,7 +448,7 @@ static void f2py_report_on_array_copy_fromany(void) {
 
 static int 
 count_nonpos(const int rank,
-	     const intp *dims) {
+	     const npy_intp *dims) {
   int i=0,r=0;
   while (i<rank) {
     if (dims[i] <= 0) ++r;
@@ -459,10 +459,10 @@ count_nonpos(const int rank,
 
 static int check_and_fix_dimensions(const PyArrayObject* arr,
 				    const int rank,
-				    intp *dims);
+				    npy_intp *dims);
 
 #ifdef DEBUG_COPY_ND_ARRAY
-void dump_dims(int rank, intp* dims) {
+void dump_dims(int rank, npy_intp* dims) {
   int i;
   printf("[");
   for(i=0;i<rank;++i) {
@@ -472,7 +472,7 @@ void dump_dims(int rank, intp* dims) {
 }
 void dump_attrs(const PyArrayObject* arr) {
   int rank = arr->nd;
-  intp size = PyArray_Size((PyObject *)arr);
+  npy_intp size = PyArray_Size((PyObject *)arr);
   printf("\trank = %d, flags = %d, size = %" INTP_FMT  "\n",
 	 rank,arr->flags,size);
   printf("\tstrides = ");
@@ -487,8 +487,8 @@ void dump_attrs(const PyArrayObject* arr) {
 static int swap_arrays(PyArrayObject* arr1, PyArrayObject* arr2) {
   SWAPTYPE(arr1->data,arr2->data,char*);
   SWAPTYPE(arr1->nd,arr2->nd,int);
-  SWAPTYPE(arr1->dimensions,arr2->dimensions,intp*);
-  SWAPTYPE(arr1->strides,arr2->strides,intp*);
+  SWAPTYPE(arr1->dimensions,arr2->dimensions,npy_intp*);
+  SWAPTYPE(arr1->strides,arr2->strides,npy_intp*);
   SWAPTYPE(arr1->base,arr2->base,PyObject*);
   SWAPTYPE(arr1->descr,arr2->descr,PyArray_Descr*);
   SWAPTYPE(arr1->flags,arr2->flags,int);
@@ -504,7 +504,7 @@ static int swap_arrays(PyArrayObject* arr1, PyArrayObject* arr2) {
 
 extern
 PyArrayObject* array_from_pyobj(const int type_num,
-				intp *dims,
+				npy_intp *dims,
 				const int rank,
 				const int intent,
 				PyObject *obj) {
@@ -668,20 +668,20 @@ PyArrayObject* array_from_pyobj(const int type_num,
            /*****************************************/
 
 static
-int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims) {
+int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,npy_intp *dims) {
   /*
     This function fills in blanks (that are -1\'s) in dims list using
     the dimensions from arr. It also checks that non-blank dims will
     match with the corresponding values in arr dimensions.
    */
-  const intp arr_size = (arr->nd)?PyArray_Size((PyObject *)arr):1;
+  const npy_intp arr_size = (arr->nd)?PyArray_Size((PyObject *)arr):1;
 #ifdef DEBUG_COPY_ND_ARRAY
   dump_attrs(arr);
   printf("check_and_fix_dimensions:init: dims=");
   dump_dims(rank,dims);
 #endif
   if (rank > arr->nd) { /* [1,2] -> [[1],[2]]; 1 -> [[1]]  */
-    intp new_size = 1;
+    npy_intp new_size = 1;
     int free_axe = -1;
     int i;
     /* Fill dims where -1 or 0; check dimensions; calc new_size; */
@@ -721,7 +721,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
     }
   } else if (rank==arr->nd) {
     int i;
-    intp d;
+    npy_intp d;
     for (i=0; i<rank; ++i) {
       d = arr->dimensions[i];
       if (dims[i]>=0) {
@@ -736,9 +736,9 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,intp *dims)
     }
   } else { /* [[1,2]] -> [[1],[2]] */
     int i,j;
-    intp d;
+    npy_intp d;
     int effrank;
-    intp size;
+    npy_intp size;
     for (i=0,effrank=0;i<arr->nd;++i)
       if (arr->dimensions[i]>1) ++effrank;
     if (dims[rank-1]>=0)

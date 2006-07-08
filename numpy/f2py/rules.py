@@ -562,7 +562,7 @@ aux_rules=[
 # Array
     { # Common
     'decl':['\t#ctype# *#varname# = NULL;',
-            '\tintp #varname#_Dims[#rank#] = {#rank*[-1]#};',
+            '\tnpy_intp #varname#_Dims[#rank#] = {#rank*[-1]#};',
             '\tconst int #varname#_Rank = #rank#;',
             ],
     'need':['len..',{hasinitvalue:'forcomb'},{hasinitvalue:'CFUNCSMESS'}],
@@ -896,7 +896,7 @@ if (#varname#_capi==Py_None) {
 # Array
     { # Common
     'decl':['\t#ctype# *#varname# = NULL;',
-            '\tintp #varname#_Dims[#rank#] = {#rank*[-1]#};',
+            '\tnpy_intp #varname#_Dims[#rank#] = {#rank*[-1]#};',
             '\tconst int #varname#_Rank = #rank#;',
             '\tPyArrayObject *capi_#varname#_tmp = NULL;',
             '\tint capi_#varname#_intent = 0;',

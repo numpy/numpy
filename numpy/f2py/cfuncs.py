@@ -294,17 +294,17 @@ cppmacros['TRYPYARRAYTEMPLATE']="""\
                 case PyArray_FLOAT: *(float *)(arr->data)=*v; break;\\
                 case PyArray_CDOUBLE: *(double *)(arr->data)=*v; break;\\
                 case PyArray_CFLOAT: *(float *)(arr->data)=*v; break;\\
-                case PyArray_BOOL: *(Bool *)(arr->data)=(*v!=0); break;\\
+                case PyArray_BOOL: *(npy_bool *)(arr->data)=(*v!=0); break;\\
                 case PyArray_UBYTE: *(unsigned char *)(arr->data)=*v; break;\\
                 case PyArray_BYTE: *(signed char *)(arr->data)=*v; break;\\
                 case PyArray_SHORT: *(short *)(arr->data)=*v; break;\\
-                case PyArray_USHORT: *(ushort *)(arr->data)=*v; break;\\
-                case PyArray_UINT: *(uint *)(arr->data)=*v; break;\\
-                case PyArray_ULONG: *(ulong *)(arr->data)=*v; break;\\
-                case PyArray_LONGLONG: *(longlong *)(arr->data)=*v; break;\\
-                case PyArray_ULONGLONG: *(ulonglong *)(arr->data)=*v; break;\\
-                case PyArray_LONGDOUBLE: *(longdouble *)(arr->data)=*v; break;\\
-                case PyArray_CLONGDOUBLE: *(longdouble *)(arr->data)=*v; break;\\
+                case PyArray_USHORT: *(npy_ushort *)(arr->data)=*v; break;\\
+                case PyArray_UINT: *(npy_uint *)(arr->data)=*v; break;\\
+                case PyArray_ULONG: *(npy_ulong *)(arr->data)=*v; break;\\
+                case PyArray_LONGLONG: *(npy_longlong *)(arr->data)=*v; break;\\
+                case PyArray_ULONGLONG: *(npy_ulonglong *)(arr->data)=*v; break;\\
+                case PyArray_LONGDOUBLE: *(npy_longdouble *)(arr->data)=*v; break;\\
+                case PyArray_CLONGDOUBLE: *(npy_longdouble *)(arr->data)=*v; break;\\
                 case PyArray_OBJECT: (arr->descr->f->setitem)(pyobj_from_ ## ctype ## 1(*v),arr->data, arr); break;\\
         default: return -2;\\
         };\\
@@ -334,17 +334,17 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
                 case PyArray_SHORT: *(short *)(arr->data)=(*v).r; break;\\
                 case PyArray_UBYTE: *(unsigned char *)(arr->data)=(*v).r; break;\\
                 case PyArray_BYTE: *(signed char *)(arr->data)=(*v).r; break;\\
-                case PyArray_BOOL: *(Bool *)(arr->data)=((*v).r!=0 && (*v).i!=0)); break;\\
+                case PyArray_BOOL: *(npy_bool *)(arr->data)=((*v).r!=0 && (*v).i!=0)); break;\\
                 case PyArray_UBYTE: *(unsigned char *)(arr->data)=(*v).r; break;\\
                 case PyArray_BYTE: *(signed char *)(arr->data)=(*v).r; break;\\
                 case PyArray_SHORT: *(short *)(arr->data)=(*v).r; break;\\
-                case PyArray_USHORT: *(ushort *)(arr->data)=(*v).r; break;\\
-                case PyArray_UINT: *(uint *)(arr->data)=(*v).r; break;\\
-                case PyArray_ULONG: *(ulong *)(arr->data)=(*v).r; break;\\
-                case PyArray_LONGLONG: *(longlong *)(arr->data)=(*v).r; break;\\
-                case PyArray_ULONGLONG: *(ulonglong *)(arr->data)=(*v).r; break;\\
-                case PyArray_LONGDOUBLE: *(longdouble *)(arr->data)=(*v).r; break;\\
-                case PyArray_CLONGDOUBLE: *(longdouble *)(arr->data)=(*v).r;*(longdouble *)(arr->data+sizeof(longdouble))=(*v).i;break;\\
+                case PyArray_USHORT: *(npy_ushort *)(arr->data)=(*v).r; break;\\
+                case PyArray_UINT: *(npy_uint *)(arr->data)=(*v).r; break;\\
+                case PyArray_ULONG: *(npy_ulong *)(arr->data)=(*v).r; break;\\
+                case PyArray_LONGLONG: *(npy_longlong *)(arr->data)=(*v).r; break;\\
+                case PyArray_ULONGLONG: *(npy_ulonglong *)(arr->data)=(*v).r; break;\\
+                case PyArray_LONGDOUBLE: *(npy_longdouble *)(arr->data)=(*v).r; break;\\
+                case PyArray_CLONGDOUBLE: *(npy_longdouble *)(arr->data)=(*v).r;*(npy_longdouble *)(arr->data+sizeof(npy_longdouble))=(*v).i;break;\\
                 case PyArray_OBJECT: (arr->descr->f->setitem)(pyobj_from_complex_ ## ctype ## 1((*v)),arr->data, arr); break;\\
                 default: return -2;\\
         };\\
@@ -510,8 +510,8 @@ static int calcarrindextr(int *i,PyArrayObject *arr) {
 \treturn ii;
 }"""
 cfuncs['forcomb']="""\
-static struct { int nd;intp *d;int *i,*i_tr,tr; } forcombcache;
-static int initforcomb(intp *dims,int nd,int tr) {
+static struct { int nd;npy_intp *d;int *i,*i_tr,tr; } forcombcache;
+static int initforcomb(npy_intp *dims,int nd,int tr) {
   int k;
   if (dims==NULL) return 0;
   if (nd<0) return 0;
@@ -757,7 +757,7 @@ static int long_double_from_pyobj(long_double* v,PyObject *obj,const char *errme
 \t\t\treturn 1;
 \t\t}
 \t\telse if (PyArray_Check(obj) && PyArray_TYPE(obj)==PyArray_LONGDOUBLE) {
-\t\t\t(*v) = *((longdouble *)PyArray_DATA(obj))
+\t\t\t(*v) = *((npy_longdouble *)PyArray_DATA(obj))
 \t\t\treturn 1;
 \t\t}
 \t}
@@ -830,8 +830,8 @@ static int complex_long_double_from_pyobj(complex_long_double* v,PyObject *obj,c
 \t\t\treturn 1;
 \t\t}
 \t\telse if (PyArray_Check(obj) && PyArray_TYPE(obj)==PyArray_CLONGDOUBLE) {
-\t\t\t(*v).r = ((clongdouble *)PyArray_DATA(obj))->real;
-\t\t\t(*v).i = ((clongdouble *)PyArray_DATA(obj))->imag;
+\t\t\t(*v).r = ((npy_clongdouble *)PyArray_DATA(obj))->real;
+\t\t\t(*v).i = ((npy_clongdouble *)PyArray_DATA(obj))->imag;
 \t\t\treturn 1;
 \t\t}
 \t}
@@ -854,13 +854,13 @@ static int complex_double_from_pyobj(complex_double* v,PyObject *obj,const char 
 \t}
 \tif (PyArray_IsScalar(obj, ComplexFloating)) {
 \t\tif (PyArray_IsScalar(obj, CFloat)) {
-\t\t\tcfloat new;
+\t\t\tnpy_cfloat new;
 \t\t\tPyArray_ScalarAsCtype(obj, &new);
 \t\t\t(*v).r = (double)new.real;
 \t\t\t(*v).i = (double)new.imag;
 \t\t}
 \t\telse if (PyArray_IsScalar(obj, CLongDouble)) {
-\t\t\tclongdouble new;
+\t\t\tnpy_clongdouble new;
 \t\t\tPyArray_ScalarAsCtype(obj, &new);
 \t\t\t(*v).r = (double)new.real;
 \t\t\t(*v).i = (double)new.imag;
@@ -879,8 +879,8 @@ static int complex_double_from_pyobj(complex_double* v,PyObject *obj,const char 
 \t\t\tarr = PyArray_FromScalar(obj, PyArray_DescrFromType(PyArray_CDOUBLE));
 \t\t}
 \t\tif (arr==NULL) return 0;
-\t\t(*v).r = ((cdouble *)PyArray_DATA(arr))->real;
-\t\t(*v).i = ((cdouble *)PyArray_DATA(arr))->imag;
+\t\t(*v).r = ((npy_cdouble *)PyArray_DATA(arr))->real;
+\t\t(*v).i = ((npy_cdouble *)PyArray_DATA(arr))->imag;
 \t\treturn 1;
 \t}
 \t/* Python does not provide PyNumber_Complex function :-( */

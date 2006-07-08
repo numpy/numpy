@@ -58,9 +58,9 @@ Author: Pearu Peterson <pearu@cens.ioc.ee>
 
 #define F2PY_MAX_DIMS 40
 
-typedef void (*f2py_set_data_func)(char*,intp*);
+typedef void (*f2py_set_data_func)(char*,npy_intp*);
 typedef void (*f2py_void_func)(void);
-typedef void (*f2py_init_func)(int*,intp*,f2py_set_data_func,int*);
+typedef void (*f2py_init_func)(int*,npy_intp*,f2py_set_data_func,int*);
 
   /*typedef void* (*f2py_c_func)(void*,...);*/
 
@@ -70,7 +70,7 @@ typedef struct {
   char *name;                /* attribute (array||routine) name */
   int rank;                  /* array rank, 0 for scalar, max is F2PY_MAX_DIMS,
 				|| rank=-1 for Fortran routine */
-  struct {intp d[F2PY_MAX_DIMS];} dims; /* dimensions of the array, || not used */
+  struct {npy_intp d[F2PY_MAX_DIMS];} dims; /* dimensions of the array, || not used */
   int type;                  /* PyArray_<type> || not used */
   char *data;                /* pointer to array || Fortran routine */
   f2py_init_func func;            /* initialization function for
@@ -108,7 +108,7 @@ typedef struct {
 #define F2PY_INTENT_INPLACE 256
 
   extern PyArrayObject* array_from_pyobj(const int type_num,
-					 intp *dims,
+					 npy_intp *dims,
 					 const int rank,
 					 const int intent,
 					 PyObject *obj);
