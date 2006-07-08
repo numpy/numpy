@@ -3,7 +3,7 @@ from numpy.core.numerictypes import obj2sctype
 from numpy.core.multiarray import dtype
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
-           'issubdtype', 'deprecate',
+           'issubdtype', 'deprecate', 'get_numarray_include',
 	   'get_include', 'ctypes_load_library']
 
 def issubclass_(arg1, arg2):
@@ -33,6 +33,22 @@ def get_include():
     include_dirs = get_numpy_include_dirs()
     assert len(include_dirs)==1,`include_dirs`
     return include_dirs[0]
+
+def get_numarray_include():
+    """Return the directory in the package that contains the numpy/*.h header
+    files.
+
+    Extension modules that need to compile against numpy should use this
+    function to locate the appropriate include directory. Using distutils:
+
+      import numpy
+      Extension('extension_name', ...
+                include_dirs=[numpy.get_include()])
+    """
+    from numpy.numarray import get_numarray_include_dirs
+    include_dirs = get_numarray_include_dirs()
+    return include_dirs[0]
+
 
 # Adapted from Albert Strasheim
 def ctypes_load_library(libname, loader_path):

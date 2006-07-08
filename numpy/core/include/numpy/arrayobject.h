@@ -70,6 +70,7 @@ typedef unsigned long npy_ulonglong;
 #  define NPY_ULONGLONG_SUFFIX(x) (x##UL)
 #endif
 
+
 typedef unsigned char npy_bool;
 #define NPY_FALSE 0
 #define NPY_TRUE 1
@@ -92,6 +93,14 @@ typedef unsigned char npy_ubyte;
 typedef unsigned short npy_ushort;
 typedef unsigned int npy_uint;
 typedef unsigned long npy_ulong;
+
+/* These are for completeness */
+typedef float npy_float;
+typedef double npy_double;
+typedef short npy_short;
+typedef int npy_int;
+typedef long npy_long;
+
 
 typedef struct { float real, imag; } npy_cfloat;
 typedef struct { double real, imag; } npy_cdouble;
@@ -248,6 +257,7 @@ typedef enum {
 #define NPY_MAX_LONG  LONG_MAX
 #define NPY_MIN_LONG  LONG_MIN
 #define NPY_MAX_ULONG  ULONG_MAX
+
 
 #define NPY_SIZEOF_LONG SIZEOF_LONG
 #define NPY_SIZEOF_INT SIZEOF_INT
