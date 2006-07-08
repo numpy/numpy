@@ -7804,10 +7804,12 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 		    !PyArray_ISNBO(PyArray_DESCR(op)->byteorder)) {
 			descr = PyArray_DescrNew(PyArray_DESCR(op));
 		}
-		else if ((descr && !PyArray_ISNBO(descr->byteorder))) {
+		else if (descr && !PyArray_ISNBO(descr->byteorder)) {
 			PyArray_DESCR_REPLACE(descr);
-		}
-		descr->byteorder = PyArray_NATIVE;
+                }
+                if (descr) {
+                        descr->byteorder = PyArray_NATIVE;
+                }
 	}
 
 	obj = PyArray_FromAny(op, descr, min_depth, max_depth,
