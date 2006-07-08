@@ -4560,6 +4560,8 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
 
 /* Check whether the given array is stored contiguously (row-wise) in
    memory. */
+
+/* 0-strided arrays are not contiguous (even if dimension == 1) */
 static int
 _IsContiguous(PyArrayObject *ap)
 {
@@ -4582,6 +4584,7 @@ _IsContiguous(PyArrayObject *ap)
 }
 
 
+/* 0-strided arrays are not contiguous (even if dimension == 1) */
 static int
 _IsFortranContiguous(PyArrayObject *ap)
 {
