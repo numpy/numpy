@@ -968,9 +968,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, NPY_ALIGNED)
 
 #define NPY_MAX(a,b) (((a)>(b))?(a):(b))
-#define NPY_tMAX(a,b,typ) {typ _x_=(a); typ _y_=(b); _x_>_y_ ? _x_ : _y_}
 #define NPY_MIN(a,b) (((a)<(b))?(a):(b))
-#define NPY_tMIN(a,b,typ) {typ _x_=(a); typ _y_=(b); _x_<_y_ ? _x_ : _y_}
 
 #if defined(ALLOW_THREADS)
 #define NPY_BEGIN_THREADS_DEF PyThreadState *_save;
