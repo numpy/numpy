@@ -31,8 +31,8 @@ def identity(n,dtype=None):
     b.flat = a
     return b
 
-def eye(N,M=None, k=0, dtype=float):
-    return asmatrix(N.eye(N,M,k,dtype))
+def eye(n,M=None, k=0, dtype=float):
+    return asmatrix(N.eye(n,M,k,dtype))
 
 def rand(*args):
     return asmatrix(N.rand(*args))
