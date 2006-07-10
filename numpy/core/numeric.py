@@ -333,8 +333,8 @@ def indices(dimensions, dtype=int):
     tmp = ones(dimensions, dtype)
     lst = []
     for i in range(len(dimensions)):
-        lst.append( add.accumulate(tmp, i, )-1 )
-    return array(lst, dtype)
+        lst.append( add.accumulate(tmp, i, dtype)-1 )
+    return array(lst)
 
 def fromfunction(function, dimensions, **kwargs):
     """fromfunction(function, dimensions) returns an array constructed by
