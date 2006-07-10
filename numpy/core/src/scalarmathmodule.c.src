@@ -340,7 +340,7 @@ static void
 @name@_ctype_remainder(@name@ a, @name@ b, @name@ *out) { 
     @name@ mod;
     mod = _basic_@name@_fmod(a, b);
-    if (mod && ((b < 0 != (mod < 0)))) mod += b;
+    if (mod && (((b < 0) != (mod < 0)))) mod += b;
     *out = mod;
 } 
 /**end repeat**/ 
