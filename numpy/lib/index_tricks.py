@@ -238,7 +238,7 @@ class concatenator(object):
                 try:
                     self.axis = int(key[k])
                     continue
-                except:
+                except (ValueError, TypeError):
                     raise ValueError, "unknown special directive"
             elif type(key[k]) in ScalarType:
                 newobj = asarray([key[k]])

@@ -4,7 +4,7 @@ import numeric as sb
 from defchararray import chararray
 import numerictypes as nt
 import types
-import stat, os
+import os
 
 _byteorderconv = {'b':'>',
                   'l':'<',
@@ -360,6 +360,15 @@ def fromstring(datastring, formats, shape=None, names=None, titles=None,
                       byteorder=byteorder)
     return _array
 
+def get_remaining_size(fd):
+    try:
+        fn = fd.fileno()
+    except AttributeError:
+        return os.path.getsize(fd.name) - fd.tell()
+    st = os.fstat(fn)
+    size = st.st_size - fd.tell()
+    return size
+
 def fromfile(fd, formats, shape=None, names=None, titles=None,
              byteorder=None, aligned=0, offset=0):
     """Create an array from binary file data
@@ -388,10 +397,7 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
         fd = open(fd, 'rb')
     if (offset > 0):
         fd.seek(offset, 1)
-    try:
-        size = os.fstat(fd.fileno())[stat.ST_SIZE] - fd.tell()
-    except:
-        size = os.path.getsize(fd.name) - fd.tell()
+    size = get_remaining_size(fd)
 
     parsed = format_parser(formats, names, titles, aligned)
     itemsize = parsed._descr.itemsize
