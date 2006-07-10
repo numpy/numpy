@@ -2,7 +2,6 @@ __all__ = ['memmap']
 
 import mmap
 from numeric import uint8, ndarray, dtype
-from numerictypes import nbytes
 
 dtypedescr = dtype
 valid_filemodes = ["r", "c", "r+", "w+"]
