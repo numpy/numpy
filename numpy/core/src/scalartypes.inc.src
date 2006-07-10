@@ -1416,17 +1416,11 @@ static PyMethodDef voidtype_methods[] = {
 static Py_ssize_t
 voidtype_length(PyVoidScalarObject *self) 
 {
-	if (!self->descr->fields || self->descr->fields == Py_None) {
+	if (!self->descr->names) {
 		return 0;
 	}
 	else { /* return the number of fields */
-		PyObject *key;
-		PyObject *flist;
-		key = PyInt_FromLong(-1);
-		flist = PyDict_GetItem(self->descr->fields, key);
-		Py_DECREF(key);
-		if (!flist) return 0;
-		return PyTuple_GET_SIZE(flist);
+                return (Py_ssize_t) PyTuple_GET_SIZE(self->descr->names);
 	}
 }
 
@@ -1434,16 +1428,14 @@ static PyObject *
 voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
 {
 	intp m;
-	PyObject *flist=NULL, *key, *fieldinfo;
+	PyObject *flist=NULL, *fieldinfo;
 
 	if (!(PyDescr_HASFIELDS(self->descr))) {
 		PyErr_SetString(PyExc_IndexError, 
 				"can't index void scalar without fields");
 		return NULL;	
 	}
-	key = PyInt_FromLong(-1);
-	flist = PyDict_GetItem(self->descr->fields, key);
-	Py_DECREF(key);
+        flist = self->descr->names;
 	m = PyTuple_GET_SIZE(flist);
 	if (n < 0) n += m;
 	if (n < 0 || n >= m) {
@@ -1463,7 +1455,7 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 	intp n;
 	PyObject *fieldinfo;
 
-	if (!self->descr->fields || self->descr->fields == Py_None) {
+	if (!(PyDescr_HASFIELDS(self->descr))) {
 		PyErr_SetString(PyExc_IndexError, 
 				"can't index void scalar without fields");
 		return NULL;
@@ -1492,7 +1484,7 @@ static int
 voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
 {
 	intp m;
-	PyObject *flist=NULL, *key, *fieldinfo, *newtup;
+	PyObject *flist=NULL, *fieldinfo, *newtup;
 	PyObject *res;
 
 	if (!(PyDescr_HASFIELDS(self->descr))) {
@@ -1501,9 +1493,7 @@ voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
 		return -1;
 	}
 
-	key = PyInt_FromLong(-1);
-	flist = PyDict_GetItem(self->descr->fields, key);
-	Py_DECREF(key);
+        flist = self->descr->names;
 	m = PyTuple_GET_SIZE(flist);
 	if (n < 0) n += m;
 	if (n < 0 || n >= m) goto fail;
@@ -1532,7 +1522,7 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
 	PyObject *fieldinfo, *newtup;
 	PyObject *res;
 
-	if (!self->descr->fields || self->descr->fields == Py_None) {
+	if (!PyDescr_HASFIELDS(self->descr)) {
 		PyErr_SetString(PyExc_IndexError, 
 				"can't index void scalar without fields");
 		return -1;
@@ -2509,6 +2499,8 @@ PyArray_DescrFromTypeObject(PyObject *type)
 	if (conv) {
 		new->fields = conv->fields;
 		Py_INCREF(new->fields);
+                new->names = conv->names;
+                Py_INCREF(new->names);
 		new->elsize = conv->elsize;
 		new->subarray = conv->subarray;
 		conv->subarray = NULL;
@@ -2518,6 +2510,27 @@ PyArray_DescrFromTypeObject(PyObject *type)
         new->typeobj = (PyTypeObject *)type;
         Py_INCREF(type);
 	return new;
+}
+
+/*OBJECT_API
+  Return the tuple of ordered field names from a dictionary.
+*/
+static PyObject *
+PyArray_FieldNames(PyObject *fields)
+{
+        PyObject *tup;
+        PyObject *ret;
+        if (!PyDict_Check(fields)) {
+                PyErr_SetString(PyExc_TypeError,
+                                "Fields must be a dictionary");
+                return NULL;
+        }
+	tup = PyObject_CallMethod(_numpy_internal, "_makenames_list", "O", fields);
+        if (tup == NULL) return NULL;
+        ret = PyTuple_GET_ITEM(tup, 0);
+        ret = PySequence_Tuple(ret);
+        Py_DECREF(tup);
+        return ret;
 }
 
 /* New reference */
@@ -2556,6 +2569,8 @@ PyArray_DescrFromScalar(PyObject *sc)
 				Py_XDECREF(descr->fields);
 				descr->fields = NULL;
 			}
+                        if (descr->fields) 
+                                descr->names = PyArray_FieldNames(descr->fields);
 			PyErr_Clear();
 		}
         }

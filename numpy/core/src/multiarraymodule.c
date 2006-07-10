@@ -3655,9 +3655,11 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
 		goto fail;
 	}
 	new->elsize = conv->elsize;
-	if (conv->fields != Py_None) {
+	if (conv->names) {
 		new->fields = conv->fields;
 		Py_XINCREF(new->fields);
+                new->names = conv->names;
+                Py_XINCREF(new->names);
 	}
 	Py_DECREF(conv);
         if (conv->hasobject)
@@ -3742,7 +3744,9 @@ _convert_from_tuple(PyObject *obj)
 		Py_INCREF(val);
 		newdescr->subarray->shape = val;
 		Py_XDECREF(newdescr->fields);
+                Py_XDECREF(newdescr->names);
 		newdescr->fields = NULL;
+                newdescr->names = NULL;
 		type = newdescr;
 	}
 	return type;
@@ -3763,7 +3767,7 @@ _convert_from_array_descr(PyObject *obj)
 	int n, i, totalsize;
 	int ret;
 	PyObject *fields, *item, *newobj;
-	PyObject *name, *key, *tup, *title;
+	PyObject *name, *tup, *title;
 	PyObject *nameslist;
 	PyArray_Descr *new;
 	PyArray_Descr *conv;
@@ -3838,12 +3842,9 @@ _convert_from_array_descr(PyObject *obj)
 		totalsize += conv->elsize;
 		Py_DECREF(tup);
 	}
-	key = PyInt_FromLong(-1);
-	PyDict_SetItem(fields, key, nameslist);
-	Py_DECREF(key);
-	Py_DECREF(nameslist);
 	new = PyArray_DescrNewFromType(PyArray_VOID);
 	new->fields = fields;
+        new->names = nameslist;
 	new->elsize = totalsize;
         new->hasobject=hasobject;
 	return new;
@@ -3908,12 +3909,9 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
 		PyTuple_SET_ITEM(nameslist, i, key);
 		totalsize += conv->elsize;
 	}
-	key = PyInt_FromLong(-1);
-	PyDict_SetItem(fields, key, nameslist);
-	Py_DECREF(key);
-	Py_DECREF(nameslist);
 	new = PyArray_DescrNewFromType(PyArray_VOID);
 	new->fields = fields;
+        new->names = nameslist;
         new->hasobject=hasobject;
 	if (maxalign > 1) {
 		totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
@@ -4013,7 +4011,7 @@ _convert_from_dict(PyObject *obj, int align)
 {
 	PyArray_Descr *new;
 	PyObject *fields=NULL;
-	PyObject *names, *offsets, *descrs, *titles, *key;
+	PyObject *names, *offsets, *descrs, *titles;
 	int n, i;
 	int totalsize;
 	int maxalign=0;
@@ -4125,14 +4123,13 @@ _convert_from_dict(PyObject *obj, int align)
 		totalsize = ((totalsize + maxalign - 1)/maxalign)*maxalign;
 	if (align) new->alignment = maxalign;
 	new->elsize = totalsize;
-	key = PyInt_FromLong(-1);
         if (!PyTuple_Check(names)) {
                 names = PySequence_Tuple(names);
-                PyDict_SetItem(fields, key, names);
-                Py_DECREF(names);
         }
-        else PyDict_SetItem(fields, key, names);
-	Py_DECREF(key);
+        else {
+                Py_INCREF(names);
+        }
+        new->names = names;
 	new->fields = fields;
         new->hasobject=hasobject;
 	return new;

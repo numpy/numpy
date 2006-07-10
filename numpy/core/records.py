@@ -53,7 +53,7 @@ class format_parser:
         if fields is None:
             dtype = sb.dtype([formats], aligned)
             fields = dtype.fields
-        keys = fields[-1]
+        keys = dtype.names
         self._f_formats = [fields[key][0] for key in keys]
         self._offsets = [fields[key][1] for key in keys]
         self._nfields = len(keys)
@@ -206,10 +206,11 @@ class recarray(sb.ndarray):
         return obj
 
     def field(self,attr, val=None):
-        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
-
         if isinstance(attr,int):
-            attr=fielddict[-1][attr]
+            names = sb.ndarray.__getattribute__(self,'dtype').names
+            attr=names[attr]
+
+        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
 
         res = fielddict[attr][:2]
 

@@ -383,7 +383,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         int itemsize;
 
 	descr = ap->descr;
-	if (descr->fields && descr->fields != Py_None) {
+	if (descr->names) {
 		PyObject *key;
 		PyObject *names;
 		int i, n;
@@ -394,9 +394,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 		int savedflags;
 
 		/* get the names from the fields dictionary*/
-		key = PyInt_FromLong(-1);
-		names = PyDict_GetItem(descr->fields, key);
-		Py_DECREF(key);
+                names = descr->names;
 		if (!names) goto finish;
 		n = PyTuple_GET_SIZE(names);
 		ret = PyTuple_New(n);
@@ -478,8 +476,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 	int res;
 
 	descr = ap->descr;
-	if (descr->fields && (descr->fields != Py_None) && \
-	    PyTuple_Check(op)) {
+	if (descr->names && PyTuple_Check(op)) {
 		PyObject *key;
 		PyObject *names;
 		int i, n;
@@ -489,10 +486,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 		int savedflags;
 		res = -1;
 		/* get the names from the fields dictionary*/
-		key = PyInt_FromLong(-1);
-		names = PyDict_GetItem(descr->fields, key);
-		Py_DECREF(key);
-		if (!names) goto finish;
+                names = descr->names;
 		n = PyTuple_GET_SIZE(names);
 		if (PyTuple_GET_SIZE(op) != n) {
 			PyErr_SetString(PyExc_ValueError, 
@@ -552,7 +546,6 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 		return res;
 	}
 
- finish:
 	/* Default is to use buffer interface to set item */
 	{
 		const void *buffer;
@@ -1218,8 +1211,6 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
                 int offset, pos=0;
                 descr = arr->descr;
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
-				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) {arr->descr=descr;return;}
                         arr->descr = new;
@@ -1244,8 +1235,6 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 int offset, pos=0;
                 descr = arr->descr;  /* Save it */
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
-				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) {arr->descr=descr;return;}
                         arr->descr = new;
@@ -1466,8 +1455,6 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
 		descr = ap->descr;
 		savedflags = ap->flags;
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
-				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) {PyErr_Clear(); continue;}
                         ap->descr = new;
@@ -1926,6 +1913,7 @@ static PyArray_Descr @from@_Descr = {
 	_ALIGN(@align@),
 	NULL,
 	NULL,
+        NULL,
 	&_Py@NAME@_ArrFuncs,
 };
 
@@ -2003,6 +1991,7 @@ static PyArray_Descr @from@_Descr = {
 	_ALIGN(@fromtyp@),
 	NULL,
 	NULL,
+        NULL,
 	&_Py@NAME@_ArrFuncs,
 };
 

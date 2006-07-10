@@ -5,16 +5,36 @@
 import re
 from multiarray import dtype, ndarray
 
-# make sure the tuple entries are PyArray_Descr
-#          or convert them
-#
-# make sure offsets are all interpretable
-#          as positive integers and
-#          convert them to positive integers if so
-#
-#
-# return totalsize from last offset and size
+def _makenames_list(adict):
+    allfields = []
+    fnames = adict.keys()
+    for fname in fnames:
+        obj = adict[fname]
+        n = len(obj)
+        if not isinstance(obj, tuple) or n not in [2,3]:
+            raise ValueError, "entry not a 2- or 3- tuple"
+        if (n > 2) and (obj[2] == fname):
+            continue
+        num = int(obj[1])
+        if (num < 0):
+            raise ValueError, "invalid offset."
+        format = dtype(obj[0])
+        if (format.itemsize == 0):
+            raise ValueError, "all itemsizes must be fixed."
+        if (n > 2):
+            title = obj[2]
+        else:
+            title = None
+        allfields.append((fname, format, num, title))
+    # sort by offsets
+    allfields.sort(lambda x,y: cmp(x[2],y[2]))
+    names = [x[0] for x in allfields]
+    formats = [x[1] for x in allfields]
+    offsets = [x[2] for x in allfields]
+    titles = [x[3] for x in allfields]
 
+    return names, formats, offsets, titles
+    
 # Called in PyArray_DescrConverter function when
 #  a dictionary without "names" and "formats"
 #  fields is used as a data-type descriptor.
@@ -24,32 +44,7 @@ def _usefields(adict, align):
     except KeyError:
         names = None
     if names is None:
-        allfields = []
-        fnames = adict.keys()
-        for fname in fnames:
-            obj = adict[fname]
-            n = len(obj)
-            if not isinstance(obj, tuple) or n not in [2,3]:
-                raise ValueError, "entry not a 2- or 3- tuple"
-            if (n > 2) and (obj[2] == fname):
-                continue
-            num = int(obj[1])
-            if (num < 0):
-                raise ValueError, "invalid offset."
-            format = dtype(obj[0])
-            if (format.itemsize == 0):
-                raise ValueError, "all itemsizes must be fixed."
-            if (n > 2):
-                title = obj[2]
-            else:
-                title = None
-            allfields.append((fname, format, num, title))
-        # sort by offsets
-        allfields.sort(lambda x,y: cmp(x[2],y[2]))
-        names = [x[0] for x in allfields]
-        formats = [x[1] for x in allfields]
-        offsets = [x[2] for x in allfields]
-        titles = [x[3] for x in allfields]
+        names, formats, offsets, titles = _makenames_list(adict)
     else:
         formats = []
         offsets = []
@@ -80,7 +75,8 @@ def _array_descr(descriptor):
     if fields is None:
         return descriptor.str
 
-    ordered_fields = [fields[x] + (x,) for x in fields[-1]]
+    names = descriptor.names
+    ordered_fields = [fields[x] + (x,) for x in names]
     result = []
     offset = 0
     for field in ordered_fields:

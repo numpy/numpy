@@ -164,8 +164,6 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
                 PyArray_Descr *new;
                 int offset, pos=0;
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
-				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) return;
                         PyArray_Item_INCREF(data + offset, new);
@@ -193,8 +191,6 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
                 PyArray_Descr *new;
                 int offset, pos=0;
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
-				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) return;
                         PyArray_Item_XDECREF(data + offset, new);
@@ -1341,7 +1337,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 			vobj->ob_size = itemsize;
 			vobj->flags = BEHAVED | OWNDATA;
 			swap = 0;
-			if (descr->fields) {
+			if (descr->names) {
 				if (base) {
 					Py_INCREF(base);
 					vobj->base = base;
@@ -2562,7 +2558,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
 	PyArrayMapIterObject *mit;
 
 	if (PyString_Check(op) || PyUnicode_Check(op)) {
-		if (self->descr->fields) {
+		if (self->descr->names) {
 			PyObject *obj;
 			obj = PyDict_GetItem(self->descr->fields, op);
 			if (obj != NULL) {
@@ -2731,7 +2727,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 	}
 
 	if (PyString_Check(index) || PyUnicode_Check(index)) {
-		if (self->descr->fields) {
+                if (self->descr->names) {
 			PyObject *obj;
 			obj = PyDict_GetItem(self->descr->fields, index);
 			if (obj != NULL) {
@@ -4248,7 +4244,6 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 		op = (cmp_op == Py_EQ ? n_ops.equal : n_ops.not_equal);
 		op2 = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
                 while (PyDict_Next(self->descr->fields, &pos, &key, &value)) {
-			if (!PyString_Check(key)) continue;
 			a = array_subscript(self, key);
 			if (a==NULL) {Py_XDECREF(res); return NULL;}
 			b = array_subscript(other, key);
@@ -5118,8 +5113,6 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
                 PyArray_Descr *new;
                 int offset, pos=0;
                 while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
-			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
-				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) return;
                         _putzero(optr + offset, zero, new);
@@ -5290,8 +5283,6 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
                 PyArray_Descr *new;
                 int offset, pos=0;
                 while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
-			if (PyInt_Check(key) && PyInt_AsLong(key) == -1) 
-				continue;
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
 					      &title)) return;
                         _fillobject(optr + offset, obj, new);
@@ -6018,7 +6009,7 @@ array_struct_get(PyArrayObject *self)
 		inter->strides = NULL;
 	}
         inter->data = self->data;
-	if (self->descr->fields && self->descr->fields != Py_None) {
+	if (self->descr->names) {
 		inter->descr = arraydescr_protocol_descr_get(self->descr);
 		if (inter->descr == NULL) PyErr_Clear();
 		else inter->flags &= ARR_HAS_DESCR;
@@ -6597,6 +6588,8 @@ _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
 			outtype->elsize = testsize;
 			Py_XDECREF(outtype->fields);
 			outtype->fields = NULL;
+			Py_XDECREF(outtype->names);
+			outtype->names = NULL;
 		}
 	}
 	return outtype;
@@ -6865,9 +6858,8 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 			  (type == PyArray_UNICODE) ||  \
 			  (type == PyArray_VOID));
 
-	stop_at_tuple = (type == PyArray_VOID && ((typecode->fields &&	\
-						   typecode->fields!=Py_None) \
-						  || (typecode->subarray)));
+	stop_at_tuple = (type == PyArray_VOID && (typecode->names       \
+						  || typecode->subarray));
 
         if (!((nd=discover_depth(s, MAX_DIMS+1, stop_at_string,
 				 stop_at_tuple)) > 0)) {
@@ -10016,6 +10008,7 @@ PyArray_DescrNew(PyArray_Descr *base)
 
 	if (new->fields == Py_None) new->fields = NULL;
 	Py_XINCREF(new->fields);
+        Py_XINCREF(new->names);
 	if (new->subarray) {
 		new->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
 		memcpy(new->subarray, base->subarray,
@@ -10034,6 +10027,7 @@ static void
 arraydescr_dealloc(PyArray_Descr *self)
 {
 	Py_XDECREF(self->typeobj);
+        Py_XDECREF(self->names);
 	Py_XDECREF(self->fields);
 	if (self->subarray) {
 		Py_DECREF(self->subarray->shape);
@@ -10056,6 +10050,7 @@ static PyMemberDef arraydescr_members[] = {
 	{"itemsize", T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
 	{"alignment", T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
         {"hasobject", T_UBYTE, offsetof(PyArray_Descr, hasobject), RO, NULL},
+        {"names", T_OBJECT, offsetof(PyArray_Descr, names), RO, NULL},
 	{NULL},
 };
 
@@ -10139,7 +10134,7 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
 {
 	PyObject *dobj, *res;
 
-	if (self->fields == NULL || self->fields == Py_None) {
+	if (self->names == NULL) {
 		/* get default */
 		dobj = PyTuple_New(2);
 		if (dobj == NULL) return NULL;
@@ -10183,7 +10178,7 @@ arraydescr_isnative_get(PyArray_Descr *self)
 static PyObject *
 arraydescr_fields_get(PyArray_Descr *self)
 {
-	if (self->fields == NULL || self->fields == Py_None) {
+	if (self->names == NULL) {
 		Py_INCREF(Py_None);
 		return Py_None;
 	}
@@ -10308,7 +10303,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
         /* version number of this pickle type. Increment if we need to
            change the format. Be sure to handle the old versions in
            arraydescr_setstate. */
-        const int version = 1;
+        const int version = 2;
 	PyObject *ret, *mod, *obj;
 	PyObject *state;
 	char endian;
@@ -10344,17 +10339,21 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 		endian = '<';
 		if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
 	}
-	state = PyTuple_New(6);
+	state = PyTuple_New(7);
         PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
 	PyTuple_SET_ITEM(state, 1, PyString_FromFormat("%c", endian));
 	PyTuple_SET_ITEM(state, 2, arraydescr_subdescr_get(self));
-	if (self->fields && self->fields != Py_None) {
+	if (self->names) {
+                Py_INCREF(self->names);
 		Py_INCREF(self->fields);
-		PyTuple_SET_ITEM(state, 3, self->fields);
+		PyTuple_SET_ITEM(state, 3, self->names);
+                PyTuple_SET_ITEM(state, 4, self->fields);
 	}
 	else {
 		PyTuple_SET_ITEM(state, 3, Py_None);
+		PyTuple_SET_ITEM(state, 4, Py_None);
 		Py_INCREF(Py_None);
+                Py_INCREF(Py_None);
 	}
 
 	/* for extended types it also includes elsize and alignment */
@@ -10364,8 +10363,8 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 	}
 	else {elsize = -1; alignment = -1;}
 
-	PyTuple_SET_ITEM(state, 4, PyInt_FromLong(elsize));
-	PyTuple_SET_ITEM(state, 5, PyInt_FromLong(alignment));
+	PyTuple_SET_ITEM(state, 5, PyInt_FromLong(elsize));
+	PyTuple_SET_ITEM(state, 6, PyInt_FromLong(alignment));
 
 	PyTuple_SET_ITEM(ret, 2, state);
 	return ret;
@@ -10380,32 +10379,61 @@ static PyObject *
 arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 {
 	int elsize = -1, alignment = -1;
-        int version = 1;
+        int version = 2;
 	char endian;
-	PyObject *subarray, *fields;
-
+	PyObject *subarray, *fields, *names=NULL;
+        int incref_names = 1;
+        
 	if (self->fields == Py_None) {Py_INCREF(Py_None); return Py_None;}
-
-	if (!PyArg_ParseTuple(args, "(icOOii)", &version, &endian, &subarray,
-                              &fields, &elsize, &alignment)) {
+        
+        if (!PyArg_ParseTuple(args, "(icOOOii)", &version, &endian, &subarray,
+                              &names, &fields, &elsize, &alignment)) {
             PyErr_Clear();
-            version = 0;
-	    if (!PyArg_ParseTuple(args, "(cOOii)", &endian, &subarray,
+            if (!PyArg_ParseTuple(args, "(icOOii)", &version, &endian, &subarray,
                                   &fields, &elsize, &alignment)) {
-                return NULL;
+                PyErr_Clear();
+                version = 0;
+                if (!PyArg_ParseTuple(args, "(cOOii)", &endian, &subarray,
+                                      &fields, &elsize, &alignment)) {
+                    return NULL;
+                }
             }
         }
 
+        if (version == 1 || version == 0) {
+            if (fields != Py_None) {
+                PyObject *key, *list;
+                key = PyInt_FromLong(-1);
+                list = PyDict_GetItem(fields, key);
+                if (!list) return NULL;
+                    Py_INCREF(list);
+                    names = list;
+                    PyDict_DelItem(fields, key);
+                    incref_names = 0;
+            }
+            else {
+                names = Py_None;
+            }
+            version = 2;
+        }
+        
         /* If we ever need another pickle format, increment the version
            number. But we should still be able to handle the old versions.
-           We've only got one right now. */
-        if (version != 1 && version != 0) {
+        */
+        if (version != 2) {
             PyErr_Format(PyExc_ValueError,
                          "can't handle version %d of numpy.dtype pickle",
-                          version);
+                         version);
             return NULL;
         }
-
+        
+        if ((fields == Py_None && names != Py_None) ||  \
+            (names == Py_None && fields != Py_None)) {
+            PyErr_Format(PyExc_ValueError,
+                         "inconsistent fields and names");
+            return NULL;
+        }
+        
 	if (endian != '|' &&
 	    PyArray_IsNativeByteOrder(endian)) endian = '=';
 
@@ -10429,6 +10457,10 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 		Py_XDECREF(self->fields);
 		self->fields = fields;
 		Py_INCREF(fields);
+                Py_XDECREF(self->names);
+                self->names = names;
+                if (incref_names)
+                    Py_INCREF(names);
 	}
 
 	if (PyTypeNum_ISEXTENDED(self->type_num)) {
@@ -10476,7 +10508,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
 			new->byteorder = newendian;
 		}
 	}
-	if (new->fields) {
+	if (new->names) {
 		PyObject *newfields;
 		PyObject *key, *value;
 		PyObject *newvalue;
@@ -10487,11 +10519,6 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
 		/* make new dictionary with replaced */
 		/* PyArray_Descr Objects */
 		while(PyDict_Next(self->fields, &pos, &key, &value)) {
-			if (PyInt_Check(key) &&			\
-			    PyInt_AsLong(key) == -1) {
-				PyDict_SetItem(newfields, key, value);
-				continue;
-			}
 			if (!PyString_Check(key) ||	     \
 			    !PyTuple_Check(value) ||			\
 			    ((len=PyTuple_GET_SIZE(value)) < 2))
@@ -10563,7 +10590,7 @@ arraydescr_str(PyArray_Descr *self)
 {
 	PyObject *sub;
 
-	if (self->fields && self->fields != Py_None) {
+	if (self->names) {
 		PyObject *lst;
 		lst = arraydescr_protocol_descr_get(self);
 		if (!lst) {
@@ -10689,9 +10716,8 @@ descr_length(PyObject *self0)
 	
 	PyArray_Descr *self = (PyArray_Descr *)self0;
 
-	if (self->fields && self->fields != Py_None)
-		/* Remove the last entry (root) */
-		return PyDict_Size(self->fields) - 1;
+	if (self->names) 
+                return PyDict_Size(self->fields);
 	else return 0;
 }
 
@@ -10699,7 +10725,7 @@ static PyObject *
 descr_subscript(PyArray_Descr *self, PyObject *op)
 {
 
-	if (self->fields) {
+	if (self->names) {
 		if (PyString_Check(op) || PyUnicode_Check(op)) {
 			PyObject *obj;
 			obj = PyDict_GetItem(self->fields, op);
@@ -10716,15 +10742,33 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
 			}
 		}
 		else {
-		  PyErr_SetString(PyExc_ValueError,
-				  "only strings or unicode values allowed " \
-				  "for getting fields.");
-		}
-	}
+                        PyObject *name;
+                        int value;
+                        value = PyArray_PyIntAsInt(op);
+                        if (!PyErr_Occurred()) {
+                                int size;
+                                size = PyTuple_GET_SIZE(self->names);
+                                if (value < 0) value += size;
+                                if (value < 0 || value >= size) {
+                                        PyErr_Format(PyExc_IndexError,
+                                                     "0<=index<%d not %d",
+                                                     size, value);
+                                }
+                                name = PyTuple_GET_ITEM(self->names, value);
+                                return descr_subscript(self, name);
+                        }
+                }
+                PyErr_SetString(PyExc_ValueError,
+                                "only integers, strings or unicode values allowed " \
+                                "for getting fields.");
+        }
 	else {
+                PyObject *astr;
+                astr = arraydescr_str(self);
 		PyErr_Format(PyExc_KeyError,
 			     "there are no fields in dtype %s.",
-			     PyString_AsString(arraydescr_str(self)));
+			     PyString_AsString(astr));
+                Py_DECREF(astr);
 	}
 	return NULL;
 }
