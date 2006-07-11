@@ -152,6 +152,8 @@ class recarray(sb.ndarray):
 
         if dtype is not None:
             formats = sb.dtype(dtype)
+            if byteorder is not None:
+                byteorder = formats.byteorder
 
         if isinstance(formats, sb.dtype):
             descr = formats
@@ -239,7 +241,7 @@ class recarray(sb.ndarray):
         return sb.ndarray.view(self, obj)            
     
 def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
-               aligned=0, dtype=None):
+               aligned=0, byteorder=None, dtype=None):
     """ create a record array from a (flat) list of arrays
 
     >>> x1=array([1,2,3,4])
@@ -255,6 +257,8 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
 
     if dtype is not None:
         formats = sb.dtype(dtype)
+        if byteorder is not None:
+            byteorder = formats.byteorder 
         
     if shape is None or shape == 0:
         shape = arrayList[0].shape
@@ -286,7 +290,7 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
         parsed = format_parser(formats, names, titles, aligned)
         _names = parsed._names
         descr = parsed._descr
-    _array = recarray(shape, descr)
+    _array = recarray(shape, descr, byteorder=byteorder)
 
     # populate the record array (makes a copy)
     for i in range(len(arrayList)):
@@ -370,6 +374,8 @@ def fromstring(datastring, formats, shape=None, names=None, titles=None,
 
     if dtype is not None:
         formats = sb.dtype(dtype)
+        if byteorder is not None:
+            byteorder = formats.byteorder
 
     if isinstance(formats, sb.dtype):
         descr = formats
@@ -414,6 +420,8 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
 
     if dtype is not None:
         formats = sb.dtype(dtype)
+        if byteorder is not None:
+            byteorder = formats.byteorder
 
     if (shape is None or shape == 0):
         shape = (-1,)
@@ -465,9 +473,10 @@ def array(obj, formats=None, names=None, titles=None, shape=None,
     """
 
     if dtype is not None: 
-        dtype = sb.dtype(dtype)
-        formats = dtype
-
+        formats = sb.dtype(dtype)
+        if byteorder is not None:
+            byteorder = formats.byteorder
+        
     if isinstance(obj, (type(None), str, file)) and (formats is None):
         raise ValueError("Must define formats if object is "\
                          "None, string, or an open file")
