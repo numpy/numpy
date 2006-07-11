@@ -617,11 +617,15 @@ class vectorize(object):
 
     """
     def __init__(self, pyfunc, otypes='', doc=None):
-        nin, ndefault = _get_nargs(pyfunc)
         self.thefunc = pyfunc
         self.ufunc = None
-        self.nin = nin
-        self.nin_wo_defaults = nin - ndefault
+        nin, ndefault = _get_nargs(pyfunc)
+        if nin == 0 and ndefault == 0:
+            self.nin = None
+            self.nin_wo_defaults = None
+        else:
+            self.nin = nin
+            self.nin_wo_defaults = nin - ndefault
         self.nout = None
         if doc is None:
             self.__doc__ = pyfunc.__doc__
@@ -640,9 +644,10 @@ class vectorize(object):
         # get number of outputs and output types by calling
         #  the function on the first entries of args
         nargs = len(args)
-        if (nargs > self.nin) or (nargs < self.nin_wo_defaults):
-            raise ValueError, "mismatch between python function inputs"\
-                  " and received arguments"
+        if self.nin:
+            if (nargs > self.nin) or (nargs < self.nin_wo_defaults):
+                raise ValueError, "mismatch between python function inputs"\
+                      " and received arguments"
         if self.nout is None or self.otypes == '':
             newargs = []
             for arg in args:

@@ -670,11 +670,12 @@ array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
 }
 
 static char doc_choose[] = "a.choose(b0, b1, ..., bn)\n"\
-	"\n"\
-	"Return an array with elements chosen from 'a' at the positions\n"\
-        "of the given arrays b_i.  The array 'a' should be an integer array\n"\
-        "with entries from 0 to n+1, and the b_i arrays should have the same\n"\
-        "shape as 'a'.";
+	"\n"                                                            \
+	"Return an array that merges the b_i arrays together using 'a' as the index\n"
+        "The b_i arrays and 'a' must all be broadcastable to the same shape.\n"
+        "The output at a particular position is the input array b_i at that position\n"
+        "depending on the value of 'a' at that position.  Therefore, 'a' must be\n"
+        "an integer array with entries from 0 to n+1.";
 
 static PyObject *
 array_choose(PyArrayObject *self, PyObject *args) 
