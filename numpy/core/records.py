@@ -238,7 +238,7 @@ class recarray(sb.ndarray):
         return sb.ndarray.view(self, obj)            
     
 def fromarrays(arrayList, dtype=None, shape=None, formats=None,
-               names=None, titles=None, aligned=0, byteorder=None):
+               names=None, titles=None, aligned=False, byteorder=None):
     """ create a record array from a (flat) list of arrays
 
     >>> x1=array([1,2,3,4])
@@ -293,7 +293,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
 # shape must be 1-d if you use list of lists...
 def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
-                titles=None, aligned=0, byteorder=None):
+                titles=None, aligned=False, byteorder=None):
     """ create a recarray from a list of records in text form
 
         The data in the same field can be heterogeneous, they will be promoted
@@ -359,7 +359,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
 
 def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
-               names=None, titles=None, byteorder=None, aligned=0):
+               names=None, titles=None, aligned=False, byteorder=None):
     """ create a (read-only) record array from binary data contained in
     a string"""
     
@@ -389,7 +389,7 @@ def get_remaining_size(fd):
     return size
 
 def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
-             names=None, titles=None, byteorder=None, aligned=0):
+             names=None, titles=None, aligned=False, byteorder=None):
     """Create an array from binary file data
 
     If file is a string then that file is opened, else it is assumed
@@ -451,7 +451,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     return _array
 
 def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
-          names=None, titles=None, byteorder=None, aligned=0):
+          names=None, titles=None, aligned=False, byteorder=None):
     """Construct a record array from a wide-variety of objects.
     """
 

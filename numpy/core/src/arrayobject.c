@@ -8118,7 +8118,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
 	case PyArray_LONGLONG:
 		if (PyTypeNum_ISINTEGER(totype)) {
 			if (PyTypeNum_ISUNSIGNED(totype)) {
-				return (telsize > felsize);
+				return 0;
 			}
 			else {
 				return (telsize >= felsize);
