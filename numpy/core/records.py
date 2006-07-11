@@ -146,7 +146,7 @@ class record(nt.void):
 #  the fields (and any subfields)
 
 class recarray(sb.ndarray):
-    def __new__(subtype, shape, formats, names=None, titles=None,
+    def __new__(subtype, shape, dtype=formats, names=None, titles=None,
                 buf=None, offset=0, strides=None, byteorder=None,
                 aligned=0):
 
