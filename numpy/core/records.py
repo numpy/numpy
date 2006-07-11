@@ -1,3 +1,4 @@
+# All of the functions allow formats to be a dtype 
 __all__ = ['record', 'recarray', 'format_parser']
 
 import numeric as sb
@@ -37,7 +38,6 @@ def find_duplicate(list):
             if (list[i] not in dup):
                 dup.append(list[i])
     return dup
-
 
 class format_parser:
     def __init__(self, formats, names, titles, aligned=False):
@@ -146,9 +146,12 @@ class record(nt.void):
 #  the fields (and any subfields)
 
 class recarray(sb.ndarray):
-    def __new__(subtype, shape, dtype=formats, names=None, titles=None,
+    def __new__(subtype, shape, formats, names=None, titles=None,
                 buf=None, offset=0, strides=None, byteorder=None,
-                aligned=0):
+                aligned=0, dtype=None):
+
+        if dtype is not None:
+            formats = sb.dtype(dtype)
 
         if isinstance(formats, sb.dtype):
             descr = formats
@@ -233,11 +236,10 @@ class recarray(sb.ndarray):
         dtype = sb.dtype(obj)
         if dtype.fields is None:
             return self.__array__().view(dtype)
-        return sb.ndarray.view(self, obj)
-            
-
+        return sb.ndarray.view(self, obj)            
+    
 def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
-               aligned=0):
+               aligned=0, dtype=None):
     """ create a record array from a (flat) list of arrays
 
     >>> x1=array([1,2,3,4])
@@ -251,6 +253,9 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
     array([1, 2, 3, 4])
     """
 
+    if dtype is not None:
+        formats = sb.dtype(dtype)
+        
     if shape is None or shape == 0:
         shape = arrayList[0].shape
 
@@ -274,9 +279,14 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
         if obj.shape != shape:
             raise ValueError, "array has different shape"
 
-    parsed = format_parser(formats, names, titles, aligned)
-    _names = parsed._names
-    _array = recarray(shape, parsed._descr)
+    if isinstance(formats, sb.dtype):
+        descr = formats
+        _names = descr.names
+    else:
+        parsed = format_parser(formats, names, titles, aligned)
+        _names = parsed._names
+        descr = parsed._descr
+    _array = recarray(shape, descr)
 
     # populate the record array (makes a copy)
     for i in range(len(arrayList)):
@@ -286,7 +296,7 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
 
 # shape must be 1-d if you use list of lists...
 def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
-                aligned=0):
+                aligned=0, dtype=None):
     """ create a recarray from a list of records in text form
 
         The data in the same field can be heterogeneous, they will be promoted
@@ -316,6 +326,9 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
     ]
     """
 
+    if dtype is not None:
+        formats = sb.dtype(dtype)
+    
     nfields = len(recList[0])
     if formats is None:  # slower
         obj = sb.array(recList,dtype=object)
@@ -323,9 +336,13 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
         return fromarrays(arrlist, formats=formats, shape=shape, names=names,
                           titles=titles, aligned=aligned)
 
-    parsed = format_parser(formats, names, titles, aligned)
+    if isinstance(formats, sb.dtype):
+        descr = formats
+    else:
+        parsed = format_parser(formats, names, titles, aligned)
+        descr = parsed._descr
     try:
-        retval = sb.array(recList, dtype = parsed._descr)
+        retval = sb.array(recList, dtype = descr)
     except TypeError:  # list of lists instead of list of tuples
         if (shape is None or shape == 0):
             shape = len(recList)
@@ -333,7 +350,7 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
             shape = (shape,)
         if len(shape) > 1:
             raise ValueError, "Can only deal with 1-d array."
-        _array = recarray(shape, parsed._descr)
+        _array = recarray(shape, descr)
         for k in xrange(_array.size):
             _array[k] = tuple(recList[k])
         return _array
@@ -347,16 +364,24 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
 
 
 def fromstring(datastring, formats, shape=None, names=None, titles=None,
-               byteorder=None, aligned=0, offset=0):
+               byteorder=None, aligned=0, offset=0, dtype=None):
     """ create a (read-only) record array from binary data contained in
     a string"""
 
-    parsed = format_parser(formats, names, titles, aligned)
-    itemsize = parsed._descr.itemsize
+    if dtype is not None:
+        formats = sb.dtype(dtype)
+
+    if isinstance(formats, sb.dtype):
+        descr = formats
+    else:
+        parsed = format_parser(formats, names, titles, aligned)
+        descr = parsed._descr
+        
+    itemsize = descr.itemsize
     if (shape is None or shape == 0 or shape == -1):
         shape = (len(datastring)-offset) / itemsize
 
-    _array = recarray(shape, parsed._descr, names=names,
+    _array = recarray(shape, descr, names=names,
                       titles=titles, buf=datastring, offset=offset,
                       byteorder=byteorder)
     return _array
@@ -371,7 +396,7 @@ def get_remaining_size(fd):
     return size
 
 def fromfile(fd, formats, shape=None, names=None, titles=None,
-             byteorder=None, aligned=0, offset=0):
+             byteorder=None, aligned=0, offset=0, dtype=None):
     """Create an array from binary file data
 
     If file is a string then that file is opened, else it is assumed
@@ -387,6 +412,9 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
     (3,)
     """
 
+    if dtype is not None:
+        formats = sb.dtype(dtype)
+
     if (shape is None or shape == 0):
         shape = (-1,)
     elif isinstance(shape, (int, long)):
@@ -400,8 +428,12 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
         fd.seek(offset, 1)
     size = get_remaining_size(fd)
 
-    parsed = format_parser(formats, names, titles, aligned)
-    itemsize = parsed._descr.itemsize
+    if isinstance(formats, sb.dtype):
+        descr = formats
+    else:
+        parsed = format_parser(formats, names, titles, aligned)
+        descr = parsed._descr
+    itemsize = descr.itemsize
 
     shapeprod = sb.array(shape).prod()
     shapesize = shapeprod*itemsize
@@ -418,7 +450,7 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
                 "Not enough bytes left in file for specified shape and type")
 
     # create the array
-    _array = recarray(shape, parsed._descr, byteorder=byteorder)
+    _array = recarray(shape, descr, byteorder=byteorder)
     nbytesread = fd.readinto(_array.data)
     if nbytesread != nbytes:
         raise IOError("Didn't read as many bytes as expected")
@@ -427,9 +459,14 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
 
     return _array
 
-
 def array(obj, formats=None, names=None, titles=None, shape=None,
-          byteorder=None, aligned=0, offset=0, strides=None):
+          byteorder=None, aligned=0, offset=0, strides=None, dtype=None):
+    """Construct a record array from a wide-variety of objects.
+    """
+
+    if dtype is not None: 
+        dtype = sb.dtype(dtype)
+        formats = dtype
 
     if isinstance(obj, (type(None), str, file)) and (formats is None):
         raise ValueError("Must define formats if object is "\
@@ -454,8 +491,10 @@ def array(obj, formats=None, names=None, titles=None, shape=None,
                                shape=shape, aligned=aligned)
     elif isinstance(obj, recarray):
         new = obj.copy()
-        parsed = format_parser(formats, names, titles, aligned)
-        new.dtype = parsed._descr
+        if not isinstance(formats, sb.dtype):
+            parsed = format_parser(formats, names, titles, aligned)
+            formats = parsed._descr
+        new.dtype = formats
         return new
     elif isinstance(obj, file):
         return fromfile(obj, formats=formats, names=names, titles=titles,

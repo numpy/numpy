@@ -10263,7 +10263,7 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 			conv = _convert_from_commastring(odescr, 1);
 		else {
 			PyErr_SetString(PyExc_ValueError,
-					"align can only be non-zero for" \
+					"align can only be non-zero for " \
 					"dictionary, list, and string objects.");
 		}
 		if (conv) return (PyObject *)conv;
