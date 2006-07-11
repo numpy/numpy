@@ -7641,6 +7641,7 @@ PyArray_FromInterface(PyObject *input)
 	PyObject *attr=NULL, *item=NULL;
         PyObject *tstr=NULL, *shape=NULL;
 	PyObject *inter=NULL;
+        PyObject *base=NULL;
         PyArrayObject *ret;
 	PyArray_Descr *type=NULL;
 	char *data;
@@ -7664,6 +7665,7 @@ PyArray_FromInterface(PyObject *input)
         if (tstr == NULL) {Py_DECREF(inter); return Py_NotImplemented;}
 	
 	attr = PyDict_GetItemString(inter, "data");
+        base = input;
 	if ((attr == NULL) || (attr==Py_None) || (!PyTuple_Check(attr))) {
 		if (attr && (attr != Py_None)) item=attr;
 		else item=input;
@@ -7687,6 +7689,7 @@ PyArray_FromInterface(PyObject *input)
 			}
 			data += num;
 		}
+                base = item;
 	}
 	else {
 		PyObject *dataptr;
@@ -7746,8 +7749,8 @@ PyArray_FromInterface(PyObject *input)
 						    NULL, data,
 						    dataflags, NULL);
 	if (ret == NULL) return NULL;
-	Py_INCREF(input);
-	ret->base = input;
+	Py_INCREF(base);
+	ret->base = base;
 
 	attr = PyDict_GetItemString(inter, "strides");
 	if (attr != NULL && attr != Py_None) {
