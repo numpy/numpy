@@ -40,14 +40,16 @@ def find_duplicate(list):
     return dup
 
 class format_parser:
-    def __init__(self, formats, names, titles, aligned=False):
+    def __init__(self, formats, names, titles, aligned=False, byteorder=None):
         self._parseFormats(formats, aligned)
         self._setfieldnames(names, titles)
-        self._createdescr()
+        self._createdescr(byteorder)
 
     def _parseFormats(self, formats, aligned=0):
         """ Parse the field formats """
 
+        if formats is None:
+            raise ValueError, "Need formats argument"
         dtype = sb.dtype(formats, aligned)
         fields = dtype.fields
         if fields is None:
@@ -93,11 +95,16 @@ class format_parser:
         if (self._nfields > len(titles)):
             self._titles += [None]*(self._nfields-len(titles))
 
-    def _createdescr(self):
-        self._descr = sb.dtype({'names':self._names,
-                                'formats':self._f_formats,
-                                'offsets':self._offsets,
-                                'titles':self._titles})
+    def _createdescr(self, byteorder):
+        descr = sb.dtype({'names':self._names,
+                          'formats':self._f_formats,
+                          'offsets':self._offsets,
+                          'titles':self._titles})
+        if (byteorder is not None):
+            byteorder = _byteorderconv[byteorder[0]]
+            descr = descr.newbyteorder(byteorder)
+            
+        self._descr = descr
 
 class record(nt.void):
     def __repr__(self):
@@ -146,24 +153,17 @@ class record(nt.void):
 #  the fields (and any subfields)
 
 class recarray(sb.ndarray):
-    def __new__(subtype, shape, formats, names=None, titles=None,
-                buf=None, offset=0, strides=None, byteorder=None,
-                aligned=0, dtype=None):
-
+    def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
+                formats=None, names=None, titles=None,
+                byteorder=None, aligned=False):
+        
         if dtype is not None:
             formats = sb.dtype(dtype)
-            if byteorder is not None:
-                byteorder = formats.byteorder
 
         if isinstance(formats, sb.dtype):
             descr = formats
         else:
-            parsed = format_parser(formats, names, titles, aligned)
-            descr = parsed._descr
-
-        if (byteorder is not None):
-            byteorder = _byteorderconv[byteorder[0]]
-            descr = descr.newbyteorder(byteorder)
+            descr = format_parser(formats, names, titles, aligned, byteorder)._descr
 
         if buf is None:
             self = sb.ndarray.__new__(subtype, shape, (record, descr))
@@ -240,8 +240,8 @@ class recarray(sb.ndarray):
             return self.__array__().view(dtype)
         return sb.ndarray.view(self, obj)            
     
-def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
-               aligned=0, byteorder=None, dtype=None):
+def fromarrays(arrayList, dtype=None, shape=None, formats=None,
+               names=None, titles=None, aligned=0, byteorder=None):
     """ create a record array from a (flat) list of arrays
 
     >>> x1=array([1,2,3,4])
@@ -257,8 +257,6 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
 
     if dtype is not None:
         formats = sb.dtype(dtype)
-        if byteorder is not None:
-            byteorder = formats.byteorder 
         
     if shape is None or shape == 0:
         shape = arrayList[0].shape
@@ -287,10 +285,11 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
         descr = formats
         _names = descr.names
     else:
-        parsed = format_parser(formats, names, titles, aligned)
+        parsed = format_parser(formats, names, titles, aligned, byteorder)
         _names = parsed._names
         descr = parsed._descr
-    _array = recarray(shape, descr, byteorder=byteorder)
+        
+    _array = recarray(shape, descr)
 
     # populate the record array (makes a copy)
     for i in range(len(arrayList)):
@@ -299,8 +298,8 @@ def fromarrays(arrayList, formats=None, names=None, titles=None, shape=None,
     return _array
 
 # shape must be 1-d if you use list of lists...
-def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
-                aligned=0, dtype=None):
+def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
+                titles=None, aligned=0, byteorder=None):
     """ create a recarray from a list of records in text form
 
         The data in the same field can be heterogeneous, they will be promoted
@@ -338,13 +337,13 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
         obj = sb.array(recList,dtype=object)
         arrlist = [sb.array(obj[...,i].tolist()) for i in xrange(nfields)]
         return fromarrays(arrlist, formats=formats, shape=shape, names=names,
-                          titles=titles, aligned=aligned)
+                          titles=titles, aligned=aligned, byteorder=byteorder)
 
     if isinstance(formats, sb.dtype):
         descr = formats
     else:
-        parsed = format_parser(formats, names, titles, aligned)
-        descr = parsed._descr
+        descr = format_parser(formats, names, titles, aligned, byteorder)._descr
+
     try:
         retval = sb.array(recList, dtype = descr)
     except TypeError:  # list of lists instead of list of tuples
@@ -363,33 +362,32 @@ def fromrecords(recList, formats=None, names=None, titles=None, shape=None,
             retval.shape = shape
 
     res = retval.view(recarray)
+        
     res.dtype = sb.dtype((record, res.dtype))
     return res
 
 
-def fromstring(datastring, formats, shape=None, names=None, titles=None,
-               byteorder=None, aligned=0, offset=0, dtype=None):
+def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
+               names=None, titles=None, byteorder=None, aligned=0):
     """ create a (read-only) record array from binary data contained in
     a string"""
-
+    
     if dtype is not None:
         formats = sb.dtype(dtype)
-        if byteorder is not None:
-            byteorder = formats.byteorder
+
+    if formats is None:
+        raise ValueError, "Must have dtype= or formats="
 
     if isinstance(formats, sb.dtype):
         descr = formats
     else:
-        parsed = format_parser(formats, names, titles, aligned)
-        descr = parsed._descr
+        descr = format_parser(formats, names, titles, aligned, byteorder)._descr
         
     itemsize = descr.itemsize
     if (shape is None or shape == 0 or shape == -1):
         shape = (len(datastring)-offset) / itemsize
-
-    _array = recarray(shape, descr, names=names,
-                      titles=titles, buf=datastring, offset=offset,
-                      byteorder=byteorder)
+        
+    _array = recarray(shape, descr, buf=datastring, offset=offset)
     return _array
 
 def get_remaining_size(fd):
@@ -401,8 +399,8 @@ def get_remaining_size(fd):
     size = st.st_size - fd.tell()
     return size
 
-def fromfile(fd, formats, shape=None, names=None, titles=None,
-             byteorder=None, aligned=0, offset=0, dtype=None):
+def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
+             names=None, titles=None, byteorder=None, aligned=0):
     """Create an array from binary file data
 
     If file is a string then that file is opened, else it is assumed
@@ -420,8 +418,6 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
 
     if dtype is not None:
         formats = sb.dtype(dtype)
-        if byteorder is not None:
-            byteorder = formats.byteorder
 
     if (shape is None or shape == 0):
         shape = (-1,)
@@ -439,8 +435,8 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
     if isinstance(formats, sb.dtype):
         descr = formats
     else:
-        parsed = format_parser(formats, names, titles, aligned)
-        descr = parsed._descr
+        descr = format_parser(formats, names, titles, aligned, byteorder)._descr
+
     itemsize = descr.itemsize
 
     shapeprod = sb.array(shape).prod()
@@ -458,7 +454,7 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
                 "Not enough bytes left in file for specified shape and type")
 
     # create the array
-    _array = recarray(shape, descr, byteorder=byteorder)
+    _array = recarray(shape, descr)
     nbytesread = fd.readinto(_array.data)
     if nbytesread != nbytes:
         raise IOError("Didn't read as many bytes as expected")
@@ -467,52 +463,53 @@ def fromfile(fd, formats, shape=None, names=None, titles=None,
 
     return _array
 
-def array(obj, formats=None, names=None, titles=None, shape=None,
-          byteorder=None, aligned=0, offset=0, strides=None, dtype=None):
+def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
+          names=None, titles=None, byteorder=None, aligned=0):
     """Construct a record array from a wide-variety of objects.
     """
 
     if dtype is not None: 
         formats = sb.dtype(dtype)
-        if byteorder is not None:
-            byteorder = formats.byteorder
-        
+
     if isinstance(obj, (type(None), str, file)) and (formats is None):
         raise ValueError("Must define formats if object is "\
                          "None, string, or an open file")
 
-    elif obj is None:
+    else:
+        if not isinstance(formats, sb.dtype):
+            formats = format_parser(formats, names, titles,
+                                    aligned, byteorder)._descr
+    dtype = formats
+
+    if obj is None:
         if shape is None:
             raise ValueError("Must define a shape if obj is None")
-        return recarray(shape, formats, names=names, titles=titles,
-                        buf=obj, offset=offset, strides=strides,
-                        byteorder=byteorder, aligned=aligned)
+        return recarray(shape, dtype, buf=obj, offset=offset, strides=strides)
     elif isinstance(obj, str):
-        return fromstring(obj, formats, names=names, titles=titles,
-                          shape=shape, byteorder=byteorder, aligned=aligned,
-                          offset=offset)
+        return fromstring(obj, dtype, shape=shape, offset=offset)
+
     elif isinstance(obj, (list, tuple)):
         if isinstance(obj[0], sb.ndarray):
-            return fromarrays(obj, formats=formats, names=names, titles=titles,
-                              shape=shape, aligned=aligned)
+            return fromarrays(obj, dtype=dtype, shape=shape)
         else:
-            return fromrecords(obj, formats=formats, names=names, titles=titles,
-                               shape=shape, aligned=aligned)
+            return fromrecords(obj, dtype=dtype, shape=shape)
+
     elif isinstance(obj, recarray):
         new = obj.copy()
         if not isinstance(formats, sb.dtype):
-            parsed = format_parser(formats, names, titles, aligned)
+            parsed = format_parser(formats, names, titles, aligned, byteorder)
             formats = parsed._descr
         new.dtype = formats
         return new
+
     elif isinstance(obj, file):
-        return fromfile(obj, formats=formats, names=names, titles=titles,
-                        shape=shape, byteorder=byteorder, aligned=aligned,
-                        offset=offset)
+        return fromfile(obj, dtype=dtype, shape=shape, offset=offset)
+
     elif isinstance(obj, sb.ndarray):
         res = obj.view(recarray)
         if issubclass(res.dtype.type, nt.void):
             res.dtype = sb.dtype((record, res.dtype))
         return res
+
     else:
         raise ValueError("Unknown input type")
