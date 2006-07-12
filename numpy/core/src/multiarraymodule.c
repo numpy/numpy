@@ -2712,8 +2712,14 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	ret = new_array_for_sum(ap1, ap2, nd, dimensions, typenum);
 	if (ret == NULL) goto fail;
 
-	/* Ensure that multiarray.dot([],[]) -> 0 */
-	memset(PyArray_DATA(ret), 0, PyArray_ITEMSIZE(ret));
+	/* Ensure that multiarray.dot(<Nx0>,<0xM>) -> zeros((N,M)) */
+	if (PyArray_SIZE(ap1) == 0 && PyArray_SIZE(ap2) == 0) {
+		memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
+	}
+	else { 	/* Ensure that multiarray.dot([],[]) -> 0 */
+		memset(PyArray_DATA(ret), 0, PyArray_ITEMSIZE(ret));
+	}
+
 
 	dot = ret->descr->f->dotfunc;
 	if (dot == NULL) {

@@ -343,7 +343,6 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	subtype = ap1->ob_type;
     }
     
-    if (l==0) nd = 0;
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
 				       typenum, NULL, NULL, 0, 0,
 				       (PyObject *)
