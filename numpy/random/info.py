@@ -5,7 +5,6 @@ Core Random Tools
 """
 
 depends = ['core']
-global_symbols = ['rand','randn']
 
 __all__ = [
     'beta',

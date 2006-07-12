@@ -27,4 +27,3 @@ Core FFT routines
 """
 
 depends = ['core']
-global_symbols = ['fft','ifft']

@@ -28,12 +28,13 @@ import glob
 
 flatindex_re = re.compile('([.]flat(\s*?[[=]))')
 
+# Not very safe.  Disabled for now..
 def replacetypechars(astr):
-#    astr = astr.replace("'s'","'h'")
-#    astr = astr.replace("'c'","'S1'")
+    astr = astr.replace("'s'","'h'")
+    astr = astr.replace("'c'","'S1'")
     astr = astr.replace("'b'","'B'")
     astr = astr.replace("'1'","'b'")
-#    astr = astr.replace("'w'","'H'")
+    astr = astr.replace("'w'","'H'")
     astr = astr.replace("'u'","'I'")
     return astr
 
@@ -90,7 +91,7 @@ def replaceother(astr):
 
 import datetime
 def fromstr(filestr):
-    filestr = replacetypechars(filestr)
+    #filestr = replacetypechars(filestr)
     filestr, fromall1 = changeimports(filestr, 'Numeric', 'numpy.oldnumeric')
     filestr, fromall1 = changeimports(filestr, 'multiarray',
                                       'numpy.core.multiarray')
