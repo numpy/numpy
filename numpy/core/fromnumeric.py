@@ -134,7 +134,7 @@ def sort(a, axis=-1):
 
 def argsort(a, axis=-1):
     """argsort(a,axis=-1) return the indices into a of the sorted array
-    along the given axis, so that take(a,result,axis) is the sorted array.
+    along the given axis.
     """
     try:
         argsort = a.argsort

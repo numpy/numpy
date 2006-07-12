@@ -1193,13 +1193,13 @@ static char doc_transpose[] = "a.transpose(*axes)\n\n"
 "       [3, 4]])\n"
 ">>> a.transpose()\n"
 "array([[1, 3],\n"
-"       [3, 4]])\n"
+"       [2, 4]])\n"
 ">>> a.transpose((1,0))\n"
 "array([[1, 3],\n"
-"       [3, 4]])\n"
+"       [2, 4]])\n"
 ">>> a.transpose(1,0)\n"
 "array([[1, 3],\n"
-"       [3, 4]])\n"
+"       [2, 4]])\n"
 ;
 
 static PyObject *
