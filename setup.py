@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """NumPy: array processing for numbers, strings, records, and objects.
 
 NumPy is a general-purpose array-processing package designed to
@@ -30,6 +31,10 @@ Operating System :: POSIX
 Operating System :: Unix
 Operating System :: MacOS
 """
+
+# BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
+# update it when the contents of directories change.
+if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
