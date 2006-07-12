@@ -1,8 +1,12 @@
-__all__ = ['ones','zeros','empty','identity','rand','randn','eye']
-
 from numpy.core.defmatrix import matrix, asmatrix
 from numpy import ndarray, array
 import numpy as N
+from numpy import *
+
+__version__ = N.__version__
+
+__all__ = N.__all__
+__all__ += ['rand', 'randn']
 
 def empty(shape, dtype=None, order='C'):
     """return an empty matrix of the given shape
@@ -35,7 +39,11 @@ def eye(n,M=None, k=0, dtype=float):
     return asmatrix(N.eye(n,M,k,dtype))
 
 def rand(*args):
+    if isinstance(args[0], tuple):
+       args = args[0]
     return asmatrix(N.random.rand(*args))
 
 def randn(*args):
+    if isinstance(args[0], tuple):
+       args = args[0]
     return asmatrix(N.random.rand(*args))
