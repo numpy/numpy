@@ -672,7 +672,7 @@ doublereal dlamc3_(doublereal *a, doublereal *b)
 */
 /* >>Start of File<<   
        System generated locals */
-    doublereal ret_val;
+    volatile doublereal ret_val;
 
 
 
