@@ -35,7 +35,7 @@ def eye(n,M=None, k=0, dtype=float):
     return asmatrix(N.eye(n,M,k,dtype))
 
 def rand(*args):
-    return asmatrix(N.rand(*args))
+    return asmatrix(N.random.rand(*args))
 
 def randn(*args):
-    return asmatrix(N.rand(*args))
+    return asmatrix(N.random.rand(*args))
