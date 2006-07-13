@@ -68,7 +68,7 @@ _fastCT = fastCopyAndTranspose
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
     for a in arrays:
-        if a.dtype.char == type:
+        if a.dtype is type:
             cast_arrays = cast_arrays + (_fastCT(a),)
         else:
             cast_arrays = cast_arrays + (_fastCT(a.astype(type)),)
@@ -222,16 +222,10 @@ def eigvalsh(a, UPLO='L'):
 
 def _convertarray(a):
     if issubclass(a.dtype.type, complexfloating):
-        if a.dtype.char == 'D':
-            a = _fastCT(a)
-        else:
-            a = _fastCT(a.astype('D'))
+        a = _fastCT(asarray(a, dtype=cdouble))
     else:
-        if a.dtype.char == 'd':
-            a = _fastCT(a)
-        else:
-            a = _fastCT(a.astype('d'))
-    return a, a.dtype.char
+        a = _fastCT(asarray(a, dtype=double))
+    return a, a.dtype
 
 # Eigenvectors
 
@@ -243,11 +237,12 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
     a, wrap = _makearray(a)
     _assertRank2(a)
     _assertSquareness(a)
-    a,t = _convertarray(a) # convert to float_ or complex_ type
-    real_t = 'd'
+    a, t = _convertarray(a) # convert to float_ or complex_ type
+    real_t = _realType(t)
     n = a.shape[0]
     dummy = zeros((1,), t)
-    if t == 'D': # Complex routines take different arguments
+    if issubclass(t, complexfloating):
+        # Complex routines take different arguments
         lapack_routine = lapack_lite.zgeev
         w = zeros((n,), t)
         v = zeros((n,n), t)
@@ -311,21 +306,25 @@ def eigh(a, UPLO='L'):
         work = zeros((lwork,), t)
         lrwork = 1
         rwork = zeros((lrwork,),real_t)
-        results = lapack_routine('V', UPLO, n, a, n,w, work, -1, rwork, -1, iwork, liwork,  0)
+        results = lapack_routine('V', UPLO, n, a, n,w, work, -1,
+                rwork, -1, iwork, liwork,  0)
         lwork = int(abs(work[0]))
         work = zeros((lwork,), t)
         lrwork = int(rwork[0])
         rwork = zeros((lrwork,),real_t)
-        results = lapack_routine('V', UPLO, n, a, n,w, work, lwork, rwork, lrwork, iwork, liwork,  0)
+        results = lapack_routine('V', UPLO, n, a, n,w, work, lwork,
+                rwork, lrwork, iwork, liwork,  0)
     else:
         lapack_routine = lapack_lite.dsyevd
         w = zeros((n,), t)
         lwork = 1
         work = zeros((lwork,),t)
-        results = lapack_routine('V', UPLO, n, a, n,w, work, -1, iwork, liwork, 0)
+        results = lapack_routine('V', UPLO, n, a, n,w, work, -1,
+                iwork, liwork, 0)
         lwork = int(work[0])
         work = zeros((lwork,),t)
-        results = lapack_routine('V', UPLO, n, a, n,w, work, lwork, iwork, liwork, 0)
+        results = lapack_routine('V', UPLO, n, a, n,w, work, lwork,
+                iwork, liwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
     return w,wrap(a.transpose())
@@ -341,13 +340,13 @@ def svd(a, full_matrices=1, compute_uv=1):
     If a is an M x N array, then the svd produces a factoring of the array
     into two unitary (orthogonal) 2-d arrays u (MxM) and vh (NxN) and a 
     min(M,N)-length array of singular values such that
-       
-                     a == dot(u,dot(S,vh)) 
-    
-    where S is an MxN array of zeros whose main diagonal is s. 
-   
+
+                     a == dot(u,dot(S,vh))
+
+    where S is an MxN array of zeros whose main diagonal is s.
+
     if compute_uv == 0, then return only the singular values
-    if full_matrices == 0, then only part of either u or vh is 
+    if full_matrices == 0, then only part of either u or vh is
                            returned so that it is MxN
     """
     a, wrap = _makearray(a)
@@ -372,8 +371,8 @@ def svd(a, full_matrices=1, compute_uv=1):
         option = 'N'
         nu = 1
         nvt = 1
-        u = empty((1,1),t) 
-        vt = empty((1,1),t) 
+        u = empty((1,1), t)
+        vt = empty((1,1), t)
 
     iwork = zeros((8*min(m,n),), fortran_int)
     if issubclass(t, complexfloating):
@@ -421,10 +420,10 @@ def pinv(a, rcond = 1.e-10):
 
     This method computes the generalized inverse using the 
     singular-value decomposition and all singular values larger than
-    rcond of the largest. 
+    rcond of the largest.
     """
     a, wrap = _makearray(a)
-    if a.dtype.char in typecodes['Complex']:
+    if issubclass(a.dtype.dtype, complexfloating):
         a = conjugate(a)
     u, s, vt = svd(a, 0)
     m = u.shape[0]
@@ -445,7 +444,7 @@ def det(a):
     a = asarray(a)
     _assertRank2(a)
     _assertSquareness(a)
-    t =_commonType(a)
+    t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
     n = a.shape[0]
     if issubclass(t, complexfloating):
@@ -546,7 +545,8 @@ def norm(x, ord=None):
 
      Comments:
        For arrays of any rank, if ord is None:
-         calculate the square norm (Euclidean norm for vectors, Frobenius norm for matrices)
+         calculate the square norm (Euclidean norm for vectors,
+         Frobenius norm for matrices)
 
        For vectors ord can be any real number including Inf or -Inf.
          ord = Inf, computes the maximum of the magnitudes
@@ -566,7 +566,7 @@ def norm(x, ord=None):
        mathematical 'norm', but it may still be useful for numerical purposes.
     """
     x = asarray(x)
-    nd = len(x.shape)    
+    nd = len(x.shape)
     if ord is None: # check the default case first and handle it immediately
         return sqrt(add.reduce((x.conj() * x).ravel().real))
 
