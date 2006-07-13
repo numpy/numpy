@@ -278,7 +278,7 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
             v = vr
         else:
             w = wr+1j*wi
-            v = array(vr,Complex)
+            v = array(vr, w.dtype)
             ind = nonzero(
                           equal(
                               equal(wi,0.0) # true for real e-vals
