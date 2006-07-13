@@ -105,19 +105,20 @@ class config(old_config):
                                        libraries, library_dirs, lang)
             exe = os.path.join('.', exe)
             exitstatus, output = exec_command(exe, execute_in='.')
-            exitcode = os.WEXITSTATUS(exitstatus)
-            if os.WIFSIGNALED(exitstatus):
-                sig = os.WTERMSIG(exitstatus)
-                log.error('subprocess exited with signal %d' % (sig,))
-                if sig == signal.SIGINT:
-                    # control-C
-                    raise KeyboardInterrupt
-            ok = exitstatus == 0
-            ok = 1
+            if hasattr(os, 'WEXITSTATUS'):
+                exitcode = os.WEXITSTATUS(exitstatus)
+                if os.WIFSIGNALED(exitstatus):
+                    sig = os.WTERMSIG(exitstatus)
+                    log.error('subprocess exited with signal %d' % (sig,))
+                    if sig == signal.SIGINT:
+                        # control-C
+                        raise KeyboardInterrupt
+            else:
+                exitcode = exitstatus
+            log.info("success!")
         except (CompileError, LinkError):
-            ok = 0
+            log.info("failure.")
 
-        log.info(ok and "success!" or "failure.")
         self._clean()
         return exitcode, output
 
