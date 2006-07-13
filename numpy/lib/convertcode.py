@@ -69,7 +69,7 @@ def replaceattr(astr):
     astr = astr.replace(".itemsize()",".itemsize")
     astr = astr.replace("matrixmultiply","dot")
     # preserve uses of flat that should be o.k.
-    tmpstr = flatindex_re.sub("@@@@\\2",astr)
+    tmpstr = flatindex_re.sub(r"@@@@\2",astr)
     # replace other uses of flat
     tmpstr = tmpstr.replace(".flat",".ravel()")
     # put back .flat where it was valid
@@ -81,11 +81,13 @@ svspc2 = re.compile(r'([^,(\s]+[.]spacesaver[(][)])')
 svspc3 = re.compile(r'(\S+[.]savespace[(].*[)])')
 #shpe = re.compile(r'(\S+\s*)[.]shape\s*=[^=]\s*(.+)')
 def replaceother(astr):
-    astr = astr.replace("typecode=","dtype=")
+    astr = re.sub(r'typecode\s*=', 'dtype=', astr)
     astr = astr.replace("UserArray","ndarray")
-    astr = svspc.sub('\\1)',astr)
+    astr = astr.replace('ArrayType', 'ndarray')
+    astr = astr.replace('NewAxis', 'newaxis')
+    astr = svspc.sub(r'\1)',astr)
     astr = svspc2.sub('True',astr)
-    astr = svspc3.sub('pass  ## \\1', astr)
+    astr = svspc3.sub(r'pass  ## \1', astr)
     #astr = shpe.sub('\\1=\\1.reshape(\\2)', astr)
     return astr
 
