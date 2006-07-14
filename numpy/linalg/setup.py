@@ -6,6 +6,8 @@ def configuration(parent_package='',top_path=None):
     from numpy.distutils.system_info import get_info
     config = Configuration('linalg',parent_package,top_path)
 
+    config.add_data_dir('tests')
+
     # Configure lapack_lite
     lapack_info = get_info('lapack_opt',0)
     def get_lapack_lite_sources(ext, build_dir):
