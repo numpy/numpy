@@ -114,7 +114,9 @@ def build_err_msg(arrays, err_msg, header='Items are not equal:',
                 r = repr(a)
             except:
                 r = '[repr failed]'
-            r = r[:100]
+            if r.count('\n') > 3:
+                r = '\n'.join(r.splitlines()[:3])
+                r += '...'
             msg.append(' %s: %s' % (names[i], r))
     return '\n'.join(msg)
 
