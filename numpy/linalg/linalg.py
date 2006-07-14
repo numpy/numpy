@@ -1,10 +1,10 @@
-
 """Lite version of scipy.linalg.
+
+This module is a lite version of the linalg.py module in SciPy which contains
+high-level Python interface to the LAPACK library.  The lite version
+only accesses the following LAPACK functions: dgesv, zgesv, dgeev,
+zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf, dpotrf.
 """
-# This module is a lite version of the linalg.py module in SciPy which contains
-# high-level Python interface to the LAPACK library.  The lite version
-# only accesses the following LAPACK functions: dgesv, zgesv, dgeev,
-# zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf, dpotrf.
 
 __all__ = ['solve',
            'inv', 'cholesky',
@@ -15,9 +15,12 @@ __all__ = ['solve',
            'LinAlgError'
            ]
 
-from numpy.core import *
-from numpy.lib import *
-import lapack_lite
+from numpy.core import array, asarray, zeros, empty, transpose, \
+        intc, single, double, csingle, cdouble, inexact, complexfloating, \
+        newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
+        maximum, nonzero, diagonal, arange, fastCopyAndTranspose, sum
+from numpy.lib import triu
+from numpy.linalg import lapack_lite
 
 fortran_int = intc
 
@@ -30,29 +33,49 @@ def _makearray(a):
     wrap = getattr(a, "__array_wrap__", new.__array_wrap__)
     return new, wrap
 
+def isComplexType(t):
+    return issubclass(t, complexfloating)
+
+_real_types_map = {single : single,
+                   double : double,
+                   csingle : single,
+                   cdouble : double}
+
+def _realType(t, default=double):
+    return _real_types_map.get(t, default)
+
+def _linalgRealType(t):
+    """Cast the type t to either double or cdouble."""
+    return double
+
+_complex_types_map = {single : csingle,
+                      double : cdouble,
+                      csingle : csingle,
+                      cdouble : cdouble}
+
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
-    maxtype = (0, double)
+    result_type = single
+    is_complex = False
     for a in arrays:
         if issubclass(a.dtype.type, inexact):
-            if a.dtype.type in (single, double):
-                t = (0, double)
-            elif a.dtype.type in (csingle, cdouble):
-                t = (1, cdouble)
-            else:
+            if isComplexType(a.dtype.type):
+                is_complex = True
+            rt = _realType(a.dtype.type, default=None)
+            if rt is None:
                 # unsupported inexact scalar
                 raise TypeError("array type %s is unsupported in linalg" %
                         (a.dtype.name,))
         else:
-            t = (0, double)
-        maxtype = max(maxtype, t)
-    return maxtype[1]
-
-def _realType(t):
-    try:
-        return {double : double, cdouble : double}[t]
-    except KeyError:
-        return double
+            rt = double
+        if rt is double:
+            result_type = double
+    if is_complex:
+        t = cdouble
+        result_type = _complex_types_map[result_type]
+    else:
+        t = double
+    return t, rt
 
 def _castCopyAndTranspose(type, *arrays):
     if len(arrays) == 1:
@@ -68,7 +91,7 @@ _fastCT = fastCopyAndTranspose
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
     for a in arrays:
-        if a.dtype is type:
+        if a.dtype.type is type:
             cast_arrays = cast_arrays + (_fastCT(a),)
         else:
             cast_arrays = cast_arrays + (_fastCT(a.astype(type)),)
@@ -101,9 +124,9 @@ def solve(a, b):
     n_rhs = b.shape[1]
     if n_eq != b.shape[0]:
         raise LinAlgError, 'Incompatible dimensions'
-    t =_commonType(a, b)
+    t, result_t = _commonType(a, b)
 #    lapack_routine = _findLapackRoutine('gesv', t)
-    if issubclass(t, complexfloating):
+    if isComplexType(t):
         lapack_routine = lapack_lite.zgesv
     else:
         lapack_routine = lapack_lite.dgesv
@@ -113,49 +136,49 @@ def solve(a, b):
     if results['info'] > 0:
         raise LinAlgError, 'Singular matrix'
     if one_eq:
-        return ravel(b) # I see no need to copy here
+        return b.ravel().astype(result_t)
     else:
-        return transpose(b) # no need to copy
+        return b.transpose().astype(result_t)
 
 
 # Matrix inversion
 
 def inv(a):
     a, wrap = _makearray(a)
-    return wrap(solve(a, identity(a.shape[0])))
+    return wrap(solve(a, identity(a.shape[0], dtype=a.dtype)))
 
 # Cholesky decomposition
 
 def cholesky(a):
     _assertRank2(a)
     _assertSquareness(a)
-    t =_commonType(a)
+    t, result_t = _commonType(a)
     a = _castCopyAndTranspose(t, a)
     m = a.shape[0]
     n = a.shape[1]
-    if issubclass(t, complexfloating):
+    if isComplexType(t):
         lapack_routine = lapack_lite.zpotrf
     else:
         lapack_routine = lapack_lite.dpotrf
     results = lapack_routine('L', n, a, m, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Matrix is not positive definite - Cholesky decomposition cannot be computed'
-    return transpose(triu(a,k=0)).copy()
-
+    s = triu(a, k=0).transpose()
+    return array(s, dtype=result_t, copy=True)
 
 # Eigenvalues
 def eigvals(a):
     _assertRank2(a)
     _assertSquareness(a)
-    t =_commonType(a)
-    real_t = _realType(t)
+    t, result_t = _commonType(a)
+    real_t = _linalgRealType(t)
     a = _fastCopyAndTranspose(t, a)
     n = a.shape[0]
     dummy = zeros((1,), t)
-    if issubclass(t, complexfloating):
+    if isComplexType(t):
         lapack_routine = lapack_lite.zgeev
         w = zeros((n,), t)
-        rwork = zeros((n,),real_t)
+        rwork = zeros((n,), real_t)
         lwork = 1
         work = zeros((lwork,), t)
         results = lapack_routine('N', 'N', n, a, n, w,
@@ -176,56 +199,59 @@ def eigvals(a):
         work = zeros((lwork,), t)
         results = lapack_routine('N', 'N', n, a, n, wr, wi,
                                  dummy, 1, dummy, 1, work, lwork, 0)
-        if logical_and.reduce(equal(wi, 0.)):
+        if all(wi == 0.):
             w = wr
+            result_t = _realType(result_t)
         else:
             w = wr+1j*wi
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
-    return w
+    return w.astype(result_t)
 
 
 def eigvalsh(a, UPLO='L'):
     _assertRank2(a)
     _assertSquareness(a)
-    t = _commonType(a)
-    real_t = _realType(t)
+    t, result_t = _commonType(a)
+    real_t = _linalgRealType(t)
     a = _castCopyAndTranspose(t, a)
     n = a.shape[0]
     liwork = 5*n+3
     iwork = zeros((liwork,), fortran_int)
-    if issubclass(t, complexfloating):
+    if isComplexType(t):
         lapack_routine = lapack_lite.zheevd
         w = zeros((n,), real_t)
         lwork = 1
         work = zeros((lwork,), t)
         lrwork = 1
         rwork = zeros((lrwork,),real_t)
-        results = lapack_routine('N', UPLO, n, a, n,w, work, -1, rwork, -1, iwork, liwork,  0)
+        results = lapack_routine('N', UPLO, n, a, n, w, work, -1,
+                                 rwork, -1, iwork, liwork,  0)
         lwork = int(abs(work[0]))
         work = zeros((lwork,), t)
         lrwork = int(rwork[0])
         rwork = zeros((lrwork,),real_t)
-        results = lapack_routine('N', UPLO, n, a, n,w, work, lwork, rwork, lrwork, iwork, liwork,  0)
+        results = lapack_routine('N', UPLO, n, a, n, w, work, lwork,
+                                rwork, lrwork, iwork, liwork,  0)
     else:
         lapack_routine = lapack_lite.dsyevd
         w = zeros((n,), t)
         lwork = 1
         work = zeros((lwork,), t)
-        results = lapack_routine('N', UPLO, n, a, n,w, work, -1, iwork, liwork, 0)
+        results = lapack_routine('N', UPLO, n, a, n, w, work, -1,
+                                 iwork, liwork, 0)
         lwork = int(work[0])
         work = zeros((lwork,), t)
-        results = lapack_routine('N', UPLO, n, a, n,w, work, lwork, iwork, liwork, 0)
+        results = lapack_routine('N', UPLO, n, a, n, w, work, lwork,
+                                 iwork, liwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
-    return w
+    return w.astype(result_t)
 
 def _convertarray(a):
-    if issubclass(a.dtype.type, complexfloating):
-        a = _fastCT(asarray(a, dtype=cdouble))
-    else:
-        a = _fastCT(asarray(a, dtype=double))
-    return a, a.dtype
+    t, result_t = _commonType(a)
+    a = _fastCT(a.astype(t))
+    return a, t, result_t
 
 # Eigenvectors
 
@@ -237,11 +263,11 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
     a, wrap = _makearray(a)
     _assertRank2(a)
     _assertSquareness(a)
-    a, t = _convertarray(a) # convert to float_ or complex_ type
-    real_t = _realType(t)
+    a, t, result_t = _convertarray(a) # convert to double or cdouble type
+    real_t = _linalgRealType(t)
     n = a.shape[0]
     dummy = zeros((1,), t)
-    if issubclass(t, complexfloating):
+    if isComplexType(t):
         # Complex routines take different arguments
         lapack_routine = lapack_lite.zgeev
         w = zeros((n,), t)
@@ -250,11 +276,11 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
         work = zeros((lwork,),t)
         rwork = zeros((2*n,),real_t)
         results = lapack_routine('N', 'V', n, a, n, w,
-                                  dummy, 1, v, n, work, -1, rwork, 0)
+                                 dummy, 1, v, n, work, -1, rwork, 0)
         lwork = int(abs(work[0]))
         work = zeros((lwork,),t)
         results = lapack_routine('N', 'V', n, a, n, w,
-                                  dummy, 1, v, n, work, lwork, rwork, 0)
+                                 dummy, 1, v, n, work, lwork, rwork, 0)
     else:
         lapack_routine = lapack_lite.dgeev
         wr = zeros((n,), t)
@@ -268,24 +294,21 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
         work = zeros((lwork,),t)
         results = lapack_routine('N', 'V', n, a, n, wr, wi,
                                   dummy, 1, vr, n, work, lwork, 0)
-        if logical_and.reduce(equal(wi, 0.)):
+        if all(wi == 0.0):
             w = wr
             v = vr
+            result_t = _realType(result_t)
         else:
             w = wr+1j*wi
             v = array(vr, w.dtype)
-            ind = nonzero(
-                          equal(
-                              equal(wi,0.0) # true for real e-vals
-                                       ,0)          # true for complex e-vals
-                                 )                  # indices of complex e-vals
+            ind = nonzero(wi != 0.0)        # indices of complex e-vals
             for i in range(len(ind)/2):
                 v[ind[2*i]] = vr[ind[2*i]] + 1j*vr[ind[2*i+1]]
                 v[ind[2*i+1]] = vr[ind[2*i]] - 1j*vr[ind[2*i+1]]
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
-    return w,wrap(v.transpose())
-
+    vt = v.transpose().astype(result_t)
+    return w.astype(result_t), wrap(vt)
 
 def eigh(a, UPLO='L'):
     """Compute eigenvalues for a Hermitian-symmetric matrix.
@@ -293,13 +316,13 @@ def eigh(a, UPLO='L'):
     a, wrap = _makearray(a)
     _assertRank2(a)
     _assertSquareness(a)
-    t = _commonType(a)
-    real_t = _realType(t)
+    t, result_t = _commonType(a)
+    real_t = _linalgRealType(t)
     a = _castCopyAndTranspose(t, a)
     n = a.shape[0]
     liwork = 5*n+3
     iwork = zeros((liwork,), fortran_int)
-    if issubclass(t, complexfloating):
+    if isComplexType(t):
         lapack_routine = lapack_lite.zheevd
         w = zeros((n,), real_t)
         lwork = 1
@@ -307,13 +330,13 @@ def eigh(a, UPLO='L'):
         lrwork = 1
         rwork = zeros((lrwork,),real_t)
         results = lapack_routine('V', UPLO, n, a, n,w, work, -1,
-                rwork, -1, iwork, liwork,  0)
+                                 rwork, -1, iwork, liwork,  0)
         lwork = int(abs(work[0]))
         work = zeros((lwork,), t)
         lrwork = int(rwork[0])
-        rwork = zeros((lrwork,),real_t)
+        rwork = zeros((lrwork,), real_t)
         results = lapack_routine('V', UPLO, n, a, n,w, work, lwork,
-                rwork, lrwork, iwork, liwork,  0)
+                                 rwork, lrwork, iwork, liwork,  0)
     else:
         lapack_routine = lapack_lite.dsyevd
         w = zeros((n,), t)
@@ -327,7 +350,8 @@ def eigh(a, UPLO='L'):
                 iwork, liwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
-    return w,wrap(a.transpose())
+    at = a.transpose().astype(result_t)
+    return w.astype(result_t), wrap(at)
 
 
 # Singular value decomposition
@@ -352,8 +376,8 @@ def svd(a, full_matrices=1, compute_uv=1):
     a, wrap = _makearray(a)
     _assertRank2(a)
     m, n = a.shape
-    t = _commonType(a)
-    real_t = _realType(t)
+    t, result_t = _commonType(a)
+    real_t = _linalgRealType(t)
     a = _fastCopyAndTranspose(t, a)
     s = zeros((min(n,m),), real_t)
     if compute_uv:
@@ -375,7 +399,7 @@ def svd(a, full_matrices=1, compute_uv=1):
         vt = empty((1,1), t)
 
     iwork = zeros((8*min(m,n),), fortran_int)
-    if issubclass(t, complexfloating):
+    if isComplexType(t):
         lapack_routine = lapack_lite.zgesdd
         rwork = zeros((5*min(m,n)*min(m,n) + 5*min(m,n),), real_t)
         lwork = 1
@@ -407,9 +431,11 @@ def svd(a, full_matrices=1, compute_uv=1):
                                  work, lwork, iwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'SVD did not converge'
+    s = s.astype(_realType(result_t))
     if compute_uv:
-        return wrap(transpose(u)), s, \
-               wrap(transpose(vt)) # why copy here?
+        u = u.transpose().astype(result_t)
+        vt = vt.transpose().astype(result_t)
+        return wrap(u), s, wrap(vt)
     else:
         return s
 
@@ -423,8 +449,7 @@ def pinv(a, rcond = 1.e-10):
     rcond of the largest.
     """
     a, wrap = _makearray(a)
-    if issubclass(a.dtype.dtype, complexfloating):
-        a = conjugate(a)
+    a = a.conjugate()
     u, s, vt = svd(a, 0)
     m = u.shape[0]
     n = vt.shape[1]
@@ -444,16 +469,16 @@ def det(a):
     a = asarray(a)
     _assertRank2(a)
     _assertSquareness(a)
-    t = _commonType(a)
+    t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
     n = a.shape[0]
-    if issubclass(t, complexfloating):
+    if isComplexType(t):
         lapack_routine = lapack_lite.zgetrf
     else:
         lapack_routine = lapack_lite.dgetrf
     pivots = zeros((n,), fortran_int)
     results = lapack_routine(n, n, a, n, pivots, 0)
-    sign = add.reduce(not_equal(pivots, arange(1, n+1))) % 2
+    sign = add.reduce(pivots != arange(1, n+1)) % 2
     return (1.-2.*sign)*multiply.reduce(diagonal(a),axis=-1)
 
 # Linear Least Squares
@@ -484,54 +509,56 @@ Singular values less than s[0]*rcond are treated as zero.
     ldb = max(n,m)
     if m != b.shape[0]:
         raise LinAlgError, 'Incompatible dimensions'
-    t = _commonType(a, b)
-    real_t = _realType(t)
+    t, result_t = _commonType(a, b)
+    real_t = _linalgRealType(t)
     bstar = zeros((ldb,n_rhs),t)
     bstar[:b.shape[0],:n_rhs] = b.copy()
-    a,bstar = _castCopyAndTranspose(t, a, bstar)
+    a, bstar = _castCopyAndTranspose(t, a, bstar)
     s = zeros((min(m,n),),real_t)
     nlvl = max( 0, int( math.log( float(min( m,n ))/2. ) ) + 1 )
     iwork = zeros((3*min(m,n)*nlvl+11*min(m,n),), fortran_int)
-    if issubclass(t, complexfloating):
+    if isComplexType(t):
         lapack_routine = lapack_lite.zgelsd
         lwork = 1
         rwork = zeros((lwork,), real_t)
         work = zeros((lwork,),t)
-        results = lapack_routine( m, n, n_rhs, a, m, bstar,ldb , s, rcond,
-                        0,work,-1,rwork,iwork,0 )
+        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
+                                 0, work, -1, rwork, iwork, 0)
         lwork = int(abs(work[0]))
         rwork = zeros((lwork,),real_t)
         a_real = zeros((m,n),real_t)
         bstar_real = zeros((ldb,n_rhs,),real_t)
-        results = lapack_lite.dgelsd( m, n, n_rhs, a_real, m, bstar_real,ldb , s, rcond,
-                        0,rwork,-1,iwork,0 )
+        results = lapack_lite.dgelsd(m, n, n_rhs, a_real, m,
+                                     bstar_real, ldb, s, rcond,
+                                     0, rwork, -1, iwork, 0)
         lrwork = int(rwork[0])
         work = zeros((lwork,), t)
         rwork = zeros((lrwork,), real_t)
-        results = lapack_routine( m, n, n_rhs, a, m, bstar,ldb , s, rcond,
-                        0,work,lwork,rwork,iwork,0 )
+        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
+                                 0, work, lwork, rwork, iwork, 0)
     else:
         lapack_routine = lapack_lite.dgelsd
         lwork = 1
         work = zeros((lwork,), t)
-        results = lapack_routine( m, n, n_rhs, a, m, bstar,ldb , s, rcond,
-                        0,work,-1,iwork,0 )
+        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
+                                 0, work, -1, iwork, 0)
         lwork = int(work[0])
         work = zeros((lwork,), t)
-        results = lapack_routine( m, n, n_rhs, a, m, bstar,ldb , s, rcond,
-                        0,work,lwork,iwork,0 )
+        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
+                                 0, work, lwork, iwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'SVD did not converge in Linear Least Squares'
-    resids = array([],t)
+    resids = array([], t)
     if one_eq:
-        x = ravel(bstar)[:n].copy()
-        if (results['rank']==n) and (m>n):
-            resids = array([sum((ravel(bstar)[n:])**2)])
+        x = array(ravel(bstar)[:n], dtype=result_t, copy=True)
+        if results['rank']==n and m>n:
+            resids = array([sum((ravel(bstar)[n:])**2)], dtype=result_t)
     else:
-        x = transpose(bstar)[:n,:].copy()
-        if (results['rank']==n) and (m>n):
-            resids = sum((transpose(bstar)[n:,:])**2).copy()
-    return wrap(x),resids,results['rank'],s[:min(n,m)].copy()
+        x = array(transpose(bstar)[:n,:], dtype=result_t, copy=True)
+        if results['rank']==n and m>n:
+            resids = sum((transpose(bstar)[n:,:])**2).astype(result_t)
+    st = s[:min(n,m)].copy().astype(_realType(result_t))
+    return wrap(x), resids, results['rank'], st
 
 def norm(x, ord=None):
     """ norm(x, ord=None) -> n
@@ -600,57 +627,3 @@ def norm(x, ord=None):
             raise ValueError, "Invalid norm order for matrices."
     else:
         raise ValueError, "Improper number of dimensions to norm."
-
-if __name__ == '__main__':
-    def test(a, b):
-
-        print "All numbers printed should be (almost) zero:"
-
-        x = solve(a, b)
-        check = b - matrixmultiply(a, x)
-        print check
-
-
-        a_inv = inv(a)
-        check = matrixmultiply(a, a_inv)-identity(a.shape[0])
-        print check
-
-
-        ev = eigvals(a)
-
-        evalues, evectors = eig(a)
-        check = ev-evalues
-        print check
-
-        evectors = transpose(evectors)
-        check = matrixmultiply(a, evectors)-evectors*evalues
-        print check
-
-
-        u, s, vt = svd(a,0)
-        check = a - matrixmultiply(u*s, vt)
-        print check
-
-
-        a_ginv = pinv(a)
-        check = matrixmultiply(a, a_ginv)-identity(a.shape[0])
-        print check
-
-
-        det = det(a)
-        check = det-multiply.reduce(evalues)
-        print check
-
-        x, residuals, rank, sv = lstsq(a, b)
-        check = b - matrixmultiply(a, x)
-        print check
-        print rank-a.shape[0]
-        print sv-s
-
-    a = array([[1.,2.], [3.,4.]])
-    b = array([2., 1.])
-    test(a, b)
-
-    a = a+0j
-    b = b+0j
-    test(a, b)
