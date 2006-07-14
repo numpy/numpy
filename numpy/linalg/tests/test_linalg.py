@@ -71,7 +71,11 @@ class test_pinv(LinalgTestCase):
 class test_det(LinalgTestCase):
     def do(self, a, b):
         d = linalg.det(a)
-        ev = linalg.eigvals(a)
+        if a.dtype.type in (single, double):
+            ad = a.astype(double)
+        else:
+            ad = a.astype(cdouble)
+        ev = linalg.eigvals(ad)
         assert_almost_equal(d, multiply.reduce(ev))
 
 class test_lstsq(LinalgTestCase):
