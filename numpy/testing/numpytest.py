@@ -150,10 +150,12 @@ class NumpyTestCase (unittest.TestCase):
             l = len(result.stream.data)
             if errstr.startswith('IgnoreException:'):
                 if l==1:
-                    assert result.stream.data[-1]=='E',`result.stream.data`
+                    assert result.stream.data[-1]=='E', \
+                            repr(result.stream.data)
                     result.stream.data[-1] = 'i'
                 else:
-                    assert result.stream.data[-1]=='ERROR\n',`result.stream.data`
+                    assert result.stream.data[-1]=='ERROR\n', \
+                            repr(result.stream.data)
                     result.stream.data[-1] = 'ignoring\n'
                 del result.errors[-1]
         map(save_stream.write, result.stream.data)
@@ -300,7 +302,7 @@ class NumpyTest:
         filename = module.__file__[-30:]
         if filename!=module.__file__:
             filename = '...'+filename
-        return '<module %s from %s>' % (`module.__name__`, `filename`)
+        return '<module %r from %r>' % (module.__name__, filename)
 
     def _get_method_names(self,clsobj,level):
         names = []
