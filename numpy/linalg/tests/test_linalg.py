@@ -17,19 +17,25 @@ def assert_almost_equal(a, b, **kw):
     old_assert_almost_equal(a, b, decimal=decimal, **kw)
 
 class LinalgTestCase(NumpyTestCase):
-    def _check(self, dtype):
-        a = array([[1.,2.], [3.,4.]], dtype=dtype)
-        b = array([2., 1.], dtype=dtype)
+    def check_single(self):
+        a = array([[1.,2.], [3.,4.]], dtype=single)
+        b = array([2., 1.], dtype=single)
         self.do(a, b)
 
-    def check_single(self):
-        self._check(single)
     def check_double(self):
-        self._check(double)
+        a = array([[1.,2.], [3.,4.]], dtype=double)
+        b = array([2., 1.], dtype=double)
+        self.do(a, b)
+
     def check_csingle(self):
-        self._check(csingle)
+        a = array([[1.+2j,2+3j], [3+4j,4+5j]], dtype=csingle)
+        b = array([2.+1j, 1.+2j], dtype=csingle)
+        self.do(a, b)
+
     def check_cdouble(self):
-        self._check(cdouble)
+        a = array([[1.+2j,2+3j], [3+4j,4+5j]], dtype=cdouble)
+        b = array([2.+1j, 1.+2j], dtype=cdouble)
+        self.do(a, b)
 
 class test_solve(LinalgTestCase):
     def do(self, a, b):

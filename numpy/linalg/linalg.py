@@ -18,7 +18,8 @@ __all__ = ['solve',
 from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
         newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
-        maximum, nonzero, diagonal, arange, fastCopyAndTranspose, sum
+        maximum, nonzero, diagonal, arange, fastCopyAndTranspose, sum, \
+        argsort
 from numpy.lib import triu
 from numpy.linalg import lapack_lite
 
@@ -75,7 +76,7 @@ def _commonType(*arrays):
         result_type = _complex_types_map[result_type]
     else:
         t = double
-    return t, rt
+    return t, result_type
 
 def _castCopyAndTranspose(type, *arrays):
     if len(arrays) == 1:
@@ -351,7 +352,7 @@ def eigh(a, UPLO='L'):
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
     at = a.transpose().astype(result_t)
-    return w.astype(result_t), wrap(at)
+    return w.astype(_realType(result_t)), wrap(at)
 
 
 # Singular value decomposition
