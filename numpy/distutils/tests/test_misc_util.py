@@ -8,7 +8,7 @@ from os.path import join, sep
 
 ajoin = lambda *paths: join(*((sep,)+paths))
 
-class test_appendpath(ScipyTestCase):
+class test_appendpath(NumpyTestCase):
 
     def check_1(self):
         assert_equal(appendpath('prefix','name'),join('prefix','name'))
@@ -32,7 +32,7 @@ class test_appendpath(ScipyTestCase):
         assert_equal(appendpath('/prefix/sub/sub2','/prefix/sub/sup/name'),
                      ajoin('prefix','sub','sub2','sup','name'))
 
-class test_minrelpath(ScipyTestCase):
+class test_minrelpath(NumpyTestCase):
 
     def check_1(self):
         import os
@@ -57,4 +57,4 @@ class test_gpaths(NumpyTestCase):
         assert os.path.join(local_path,'system_info.py')==f[0],`f`
 
 if __name__ == "__main__":
-    ScipyTest().run()
+    NumpyTest().run()

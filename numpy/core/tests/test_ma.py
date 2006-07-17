@@ -2,7 +2,7 @@ import numpy
 import types, time
 from numpy.core.ma import *
 from numpy.core.numerictypes import float32
-from numpy.testing import ScipyTestCase, ScipyTest
+from numpy.testing import NumpyTestCase, NumpyTest
 pi = numpy.pi
 def eq(v,w, msg=''):
     result = allclose(v,w)
@@ -13,9 +13,9 @@ def eq(v,w, msg=''):
 %s"""% (msg, str(v), str(w))
     return result
 
-class test_ma(ScipyTestCase):
+class test_ma(NumpyTestCase):
     def __init__(self, *args, **kwds):
-        ScipyTestCase.__init__(self, *args, **kwds)
+        NumpyTestCase.__init__(self, *args, **kwds)
         self.setUp()
 
     def setUp (self):
@@ -639,7 +639,7 @@ class test_ma(ScipyTestCase):
         self.failUnlessEqual(b[0].shape, ())
         self.failUnlessEqual(b[1].shape, ())
 
-class test_ufuncs(ScipyTestCase):
+class test_ufuncs(NumpyTestCase):
     def setUp(self):
         self.d = (array([1.0, 0, -1, pi/2]*2, mask=[0,1]+[0]*6),
                   array([1.0, 0, -1, pi/2]*2, mask=[1,0]+[0]*6),)
@@ -699,7 +699,7 @@ class test_ufuncs(ScipyTestCase):
             self.failUnless(eq(nonzero(x), [0]))
 
 
-class test_array_methods(ScipyTestCase):
+class test_array_methods(NumpyTestCase):
         
     def setUp(self):
         x = numpy.array([ 8.375,  7.545,  8.828,  8.5  ,  1.757,  5.928,  
@@ -854,5 +854,5 @@ def testinplace(x):
 testinplace.test_name = 'Inplace operations'
 
 if __name__ == "__main__":
-    ScipyTest('numpy.core.ma').run()
+    NumpyTest('numpy.core.ma').run()
     #timingTest()

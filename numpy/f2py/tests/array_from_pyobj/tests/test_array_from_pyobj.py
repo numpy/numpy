@@ -512,4 +512,4 @@ class test_%s_gen(unittest.TestCase,
 ''' % (t,t,t)
 
 if __name__ == "__main__":
-    ScipyTest().run()
+    NumpyTest().run()

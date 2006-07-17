@@ -10,7 +10,7 @@ restore_path()
 
 ##################################################
 
-class test_aso( ScipyTestCase ):
+class test_aso(NumpyTestCase):
     ##
     # 03.11.2005, c
     def check_unique1d( self ):
@@ -142,4 +142,4 @@ class test_aso( ScipyTestCase ):
         assert_array_equal( c1, c2 )
 
 if __name__ == "__main__":
-    ScipyTest().run()
+    NumpyTest().run()
