@@ -3112,10 +3112,9 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 		arg_func(ip, m, rptr, ap);
 		rptr += 1;
 	}
-	Py_DECREF(ap);
 	NPY_END_THREADS_DESCR(ap->descr)
 
-
+	Py_DECREF(ap);
 	return (PyObject *)rp;
 	
  fail:
