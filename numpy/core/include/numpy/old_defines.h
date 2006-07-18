@@ -37,6 +37,7 @@
 #define PyArray_NOTYPE      NPY_NOTYPE      
 #define PyArray_CHAR        NPY_CHAR        
 #define PyArray_USERDEF     NPY_USERDEF     
+#define PyArray_NUMUSERTYPES NPY_NUMUSERTYPES
 
 #define PyArray_INTP        NPY_INTP
 #define PyArray_UINTP       NPY_UINTP

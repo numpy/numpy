@@ -802,7 +802,7 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
    PyArray_CopyInto requires broadcastable arrays while 
    this one is a flattening operation...
  */
-int _flat_copyinto(PyObject *dst, PyObject *src, PyArray_ORDER order) {
+int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
 	PyArrayIterObject *it;
 	void (*myfunc)(char *, intp, char *, intp, intp, int);
 	char *dptr;
@@ -1237,7 +1237,7 @@ PyArray_FromDims(int nd, int *d, int type)
  Copy an array.
 */
 static PyObject *
-PyArray_NewCopy(PyArrayObject *m1, PyArray_ORDER fortran)
+PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER fortran)
 {
 	PyArrayObject *ret;
 	if (fortran == PyArray_ANYORDER) 
@@ -1502,7 +1502,7 @@ PyArray_TypeNumFromName(char *str)
 	int i;
 	PyArray_Descr *descr;
 
-	for (i=0; i<PyArray_NUMUSERTYPES; i++) {
+	for (i=0; i<NPY_NUMUSERTYPES; i++) {
 		descr = userdescrs[i];
 		if (strcmp(descr->typeobj->tp_name, str) == 0)
 			return descr->type_num;
@@ -1529,12 +1529,12 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
 	PyArray_ArrFuncs *f;     
 
 	/* See if this type is already registered */
-	for (i=0; i<PyArray_NUMUSERTYPES; i++) {
+	for (i=0; i<NPY_NUMUSERTYPES; i++) {
 		descr2 = userdescrs[i];
 		if (descr2 == descr)
 			return descr->type_num;
 	}
-	typenum = PyArray_USERDEF + PyArray_NUMUSERTYPES;
+	typenum = PyArray_USERDEF + NPY_NUMUSERTYPES;
 	descr->type_num = typenum;
 	if (descr->elsize == 0) {
 		PyErr_SetString(PyExc_ValueError, "cannot register a" \
@@ -1556,12 +1556,12 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
 		return -1;
 	}
 	userdescrs = realloc(userdescrs,
-			     (PyArray_NUMUSERTYPES+1)*sizeof(void *));
+			     (NPY_NUMUSERTYPES+1)*sizeof(void *));
         if (userdescrs == NULL) {
                 PyErr_SetString(PyExc_MemoryError, "RegisterDataType");
                 return -1;
         }
-	userdescrs[PyArray_NUMUSERTYPES++] = descr;
+	userdescrs[NPY_NUMUSERTYPES++] = descr;
 	return typenum;
 }
 
@@ -1616,7 +1616,7 @@ _append_new(int *types, int insert)
 */
 static int
 PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
-			PyArray_SCALARKIND scalar) 
+			NPY_SCALARKIND scalar) 
 {
 	if (scalar == PyArray_NOSCALAR) {
 		/* register with cancastto */
@@ -5171,7 +5171,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
 */
 static PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
-	       PyArray_ORDER fortran)
+	       NPY_ORDER fortran)
 {
         intp oldsize, newsize;
         int new_nd=newshape->len, k, n, elsize;
@@ -5436,7 +5436,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         PyArray_Dims strides = {NULL, 0};
         PyArray_Chunk buffer;
 	longlong offset=0;
-        PyArray_ORDER order=PyArray_CORDER;
+        NPY_ORDER order=PyArray_CORDER;
 	int fortran = 0;
 	PyArrayObject *ret;
 

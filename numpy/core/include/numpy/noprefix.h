@@ -107,9 +107,9 @@
 #define BITSOF_LONGDOUBLE NPY_BITSOF_LONGDOUBLE 
 
 #define PyArray_UCS4 npy_ucs4
-#define _pya_malloc npy_malloc
-#define _pya_free npy_free
-#define _pya_realloc npy_realloc
+#define _pya_malloc PyArray_malloc
+#define _pya_free PyArray_free
+#define _pya_realloc PyArray_realloc
 
 #define BEGIN_THREADS_DEF NPY_BEGIN_THREADS_DEF
 #define BEGIN_THREADS     NPY_BEGIN_THREADS    
@@ -168,17 +168,18 @@
 #define DEFAULT_FLAGS     NPY_DEFAULT
 #define UPDATE_ALL_FLAGS  NPY_UPDATE_ALL_FLAGS
 
-#define MIN NPY_MIN
-#define MAX NPY_MAX
+#ifndef MIN
+#define MIN PyArray_MIN
+#endif
+#ifndef MAX
+#define MAX PyArray_MAX
+#endif
 #define MAX_INTP NPY_MAX_INTP
 #define MIN_INTP NPY_MIN_INTP
 #define MAX_UINTP NPY_MAX_UINTP
 #define INTP_FMT NPY_INTP_FMT
 
-#define REFCOUNT NPY_REFCOUNT
+#define REFCOUNT PyArray_REFCOUNT
 #define MAX_ELSIZE NPY_MAX_ELSIZE
-
-#define MAX NPY_MAX
-#define MIN NPY_MIN
 
 #endif 

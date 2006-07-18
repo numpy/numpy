@@ -25,7 +25,7 @@ static PyTypeObject PyArrayFlags_Type;
 static PyTypeObject PyArrayIter_Type;
 static PyTypeObject PyArrayMapIter_Type;
 static PyTypeObject PyArrayMultiIter_Type;
-static int PyArray_NUMUSERTYPES=0;
+static int NPY_NUMUSERTYPES=0;
 static PyTypeObject PyBoolArrType_Type;
 static PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 
@@ -54,7 +54,7 @@ static void **PyArray_API=NULL;
 #define PyArrayFlags_Type (*(PyTypeObject *)PyArray_API[4])
 #define PyArrayIter_Type (*(PyTypeObject *)PyArray_API[5])
 #define PyArrayMultiIter_Type (*(PyTypeObject *)PyArray_API[6])
-#define PyArray_NUMUSERTYPES (*(int *)PyArray_API[7])
+#define NPY_NUMUSERTYPES (*(int *)PyArray_API[7])
 #define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[8])
 #define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[9])
 
@@ -106,7 +106,7 @@ void *PyArray_API[] = {
         (void *) &PyArrayFlags_Type,
         (void *) &PyArrayIter_Type,
         (void *) &PyArrayMultiIter_Type,
-        (int *) &PyArray_NUMUSERTYPES,
+        (int *) &NPY_NUMUSERTYPES,
         (void *) &PyBoolArrType_Type,
         (void *) &_PyArrayScalar_BoolValues,
 %s

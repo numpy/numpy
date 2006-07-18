@@ -36,7 +36,7 @@ extern "C" CONFUSE_EMACS
 #define NPY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NPY_VERSION 0x0009090B
+#define NPY_VERSION 0x0009090C
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -684,19 +684,19 @@ typedef int Py_ssize_t;
 #define NPY_USE_PYMEM 0
 
 #if NPY_USE_PYMEM == 1
-#define npy_malloc PyObject_Malloc
-#define npy_free PyObject_Free
-#define npy_realloc PyObject_Realloc
+#define PyArray_malloc PyObject_Malloc
+#define PyArray_free PyObject_Free
+#define PyArray_realloc PyObject_Realloc
 #else
-#define npy_malloc malloc
-#define npy_free free
-#define npy_realloc realloc
+#define PyArray_malloc malloc
+#define PyArray_free free
+#define PyArray_realloc realloc
 #endif
 
 /* Dimensions and strides */
-#define PyDimMem_NEW(size) ((npy_intp *)npy_malloc(size*sizeof(npy_intp)))
-#define PyDimMem_FREE(ptr) npy_free(ptr)
-#define PyDimMem_RENEW(ptr,size) ((npy_intp *)npy_realloc(ptr,size*sizeof(npy_intp)))
+#define PyDimMem_NEW(size) ((npy_intp *)PyArray_malloc(size*sizeof(npy_intp)))
+#define PyDimMem_FREE(ptr) PyArray_free(ptr)
+#define PyDimMem_RENEW(ptr,size) ((npy_intp *)PyArray_realloc(ptr,size*sizeof(npy_intp)))
 
 
   /* These must deal with unaligned and swapped data if necessary */
@@ -966,7 +966,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_MAX_BUFSIZE sizeof(cdouble)*1000000
 #define NPY_BUFSIZE 10000
 
-#include "old_defines.h"
+#define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
+#define PyArray_MIN(a,b) (((a)<(b))?(a):(b))
+
 
 /*
  * C API:  consists of Macros and functions.  The MACROS are defined here.
@@ -979,8 +981,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, NPY_WRITEABLE)
 #define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, NPY_ALIGNED)
 
-#define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
-#define PyArray_MIN(a,b) (((a)<(b))?(a):(b))
 
 #if defined(ALLOW_THREADS)
 #define NPY_BEGIN_THREADS_DEF PyThreadState *_save;
@@ -1242,50 +1242,50 @@ typedef struct {
 			      (PyArrayObject *)(obj));
 
 
-#define PyTypeNum_ISBOOL(type) (type == PyArray_BOOL)
-#define PyTypeNum_ISUNSIGNED(type) ((type == PyArray_UBYTE) || \
-				 (type == PyArray_USHORT) || \
-				 (type == PyArray_UINT) ||	\
-				 (type == PyArray_ULONG) || \
-				 (type == PyArray_ULONGLONG))
+#define PyTypeNum_ISBOOL(type) (type == NPY_BOOL)
+#define PyTypeNum_ISUNSIGNED(type) ((type == NPY_UBYTE) || \
+				 (type == NPY_USHORT) || \
+				 (type == NPY_UINT) ||	\
+				 (type == NPY_ULONG) || \
+				 (type == NPY_ULONGLONG))
 
-#define PyTypeNum_ISSIGNED(type) ((type == PyArray_BYTE) ||	\
-			       (type == PyArray_SHORT) ||	\
-			       (type == PyArray_INT) ||	\
-			       (type == PyArray_LONG) ||	\
-			       (type == PyArray_LONGLONG))
+#define PyTypeNum_ISSIGNED(type) ((type == NPY_BYTE) ||	\
+			       (type == NPY_SHORT) ||	\
+			       (type == NPY_INT) ||	\
+			       (type == NPY_LONG) ||	\
+			       (type == NPY_LONGLONG))
 
-#define PyTypeNum_ISINTEGER(type) ((type >= PyArray_BYTE) &&	\
-				(type <= PyArray_ULONGLONG))
+#define PyTypeNum_ISINTEGER(type) ((type >= NPY_BYTE) &&	\
+				(type <= NPY_ULONGLONG))
 
-#define PyTypeNum_ISFLOAT(type) ((type >= PyArray_FLOAT) &&  \
-			      (type <= PyArray_LONGDOUBLE))
+#define PyTypeNum_ISFLOAT(type) ((type >= NPY_FLOAT) &&  \
+			      (type <= NPY_LONGDOUBLE))
 
-#define PyTypeNum_ISNUMBER(type) (type <= PyArray_CLONGDOUBLE)
+#define PyTypeNum_ISNUMBER(type) (type <= NPY_CLONGDOUBLE)
 
-#define PyTypeNum_ISSTRING(type) ((type == PyArray_STRING) || \
-			       (type == PyArray_UNICODE))
+#define PyTypeNum_ISSTRING(type) ((type == NPY_STRING) || \
+			       (type == NPY_UNICODE))
 
-#define PyTypeNum_ISCOMPLEX(type) ((type >= PyArray_CFLOAT) && \
-				(type <= PyArray_CLONGDOUBLE))
+#define PyTypeNum_ISCOMPLEX(type) ((type >= NPY_CFLOAT) && \
+				(type <= NPY_CLONGDOUBLE))
 
-#define PyTypeNum_ISPYTHON(type) ((type == PyArray_LONG) || \
-				  (type == PyArray_DOUBLE) ||	\
-				  (type == PyArray_CDOUBLE) ||	\
-		                  (type == PyArray_BOOL) || \
-				  (type == PyArray_OBJECT ))
+#define PyTypeNum_ISPYTHON(type) ((type == NPY_LONG) || \
+				  (type == NPY_DOUBLE) ||	\
+				  (type == NPY_CDOUBLE) ||	\
+		                  (type == NPY_BOOL) || \
+				  (type == NPY_OBJECT ))
 
-#define PyTypeNum_ISFLEXIBLE(type) ((type>=PyArray_STRING) && \
-				    (type<=PyArray_VOID))
+#define PyTypeNum_ISFLEXIBLE(type) ((type>=NPY_STRING) && \
+				    (type<=NPY_VOID))
 
-#define PyTypeNum_ISUSERDEF(type) ((type >= PyArray_USERDEF) && \
-				   (type < PyArray_USERDEF+\
-				    PyArray_NUMUSERTYPES))
+#define PyTypeNum_ISUSERDEF(type) ((type >= NPY_USERDEF) && \
+				   (type < NPY_USERDEF+\
+				    NPY_NUMUSERTYPES))
 
 #define PyTypeNum_ISEXTENDED(type) (PyTypeNum_ISFLEXIBLE(type) ||  \
                                     PyTypeNum_ISUSERDEF(type))
 
-#define PyTypeNum_ISOBJECT(type) ((type) == PyArray_OBJECT)
+#define PyTypeNum_ISOBJECT(type) ((type) == NPY_OBJECT)
 
 #define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(_PyADt(obj))
 #define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(((PyArray_Descr*)obj)->type_num)
@@ -1516,6 +1516,8 @@ typedef struct {
 #define PyArray_FromDimsAndData(nd, d, type, data) \
 	PyArray_FromDimsAndDataAndDescr(nd, d, PyArray_DescrFromType(type), \
 					data)
+
+#include "old_defines.h"
 
 #ifdef __cplusplus
 }

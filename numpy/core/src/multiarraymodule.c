@@ -175,7 +175,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
  Ravel
 */
 static PyObject *
-PyArray_Ravel(PyArrayObject *a, PyArray_ORDER fortran)
+PyArray_Ravel(PyArrayObject *a, NPY_ORDER fortran)
 {
 	PyArray_Dims newdim = {NULL,1};
 	intp val[1] = {-1};
@@ -318,7 +318,7 @@ PyArray_Round(PyArrayObject *a, int decimals)
  Flatten
 */
 static PyObject *
-PyArray_Flatten(PyArrayObject *a, PyArray_ORDER order)
+PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
 {
 	PyObject *ret;
 	intp size;
@@ -449,7 +449,7 @@ _fix_unknown_dimension(PyArray_Dims *newshape, intp s_original)
 */
 static PyObject * 
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims, 
-		 PyArray_ORDER fortran)
+		 NPY_ORDER fortran)
 {
         intp i;
 	intp *dimensions = newdims->ptr;
@@ -1606,7 +1606,7 @@ _signbit_set(PyArrayObject *arr)
 
 
 /*OBJECT_API*/
-static PyArray_SCALARKIND
+static NPY_SCALARKIND
 PyArray_ScalarKind(int typenum, PyArrayObject **arr) 
 {
 	if (PyTypeNum_ISSIGNED(typenum)) {
@@ -1619,7 +1619,7 @@ PyArray_ScalarKind(int typenum, PyArrayObject **arr)
 	if (PyTypeNum_ISBOOL(typenum)) return PyArray_BOOL_SCALAR;
 
 	if (PyTypeNum_ISUSERDEF(typenum)) {
-		PyArray_SCALARKIND retval;
+		NPY_SCALARKIND retval;
 		PyArray_Descr* descr;
 		descr = PyArray_DescrFromType(typenum);
 		if (descr->f->scalarkind) 
@@ -1635,7 +1635,7 @@ PyArray_ScalarKind(int typenum, PyArrayObject **arr)
 /*OBJECT_API*/
 static int 
 PyArray_CanCoerceScalar(int thistype, int neededtype, 
-			PyArray_SCALARKIND scalar) 
+			NPY_SCALARKIND scalar) 
 {	
 	PyArray_Descr* from;
 	int *castlist;
@@ -1682,7 +1682,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 	PyObject *otmp;
 	PyArray_Descr *intype=NULL, *stype=NULL;
 	PyArray_Descr *newtype=NULL;
-	PyArray_SCALARKIND scalarkind;
+	NPY_SCALARKIND scalarkind;
 	
 	*retn = n = PySequence_Length(op);
 	if (PyErr_Occurred()) {*retn = 0; return NULL;}
@@ -1857,7 +1857,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op)
    axis. 
 */
 static int
-_new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
+_new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which) 
 {
 	PyArrayIterObject *it;
 	int needcopy=0, swap;
@@ -1919,7 +1919,7 @@ _new_sort(PyArrayObject *op, int axis, PyArray_SORTKIND which)
 }
 
 static PyObject*
-_new_argsort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
+_new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which) 
 {
 
 	PyArrayIterObject *it=NULL;
@@ -2069,7 +2069,7 @@ qsortCompare (const void *a, const void *b)
  Sort an array in-place
 */
 static int
-PyArray_Sort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
+PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which) 
 {
 	PyArrayObject *ap=NULL, *store_arr=NULL;
 	char *ip;
@@ -2155,7 +2155,7 @@ argsort_static_compare(const void *ip1, const void *ip2)
  ArgSort an array
 */
 static PyObject *
-PyArray_ArgSort(PyArrayObject *op, int axis, PyArray_SORTKIND which) 
+PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which) 
 {
 	PyArrayObject *ap=NULL, *ret=NULL, *store;
 	intp *ip;
@@ -3405,7 +3405,7 @@ PyArray_BoolConverter(PyObject *object, Bool *val)
  Convert an object to FORTRAN / C / ANY
 */
 static int
-PyArray_OrderConverter(PyObject *object, PyArray_ORDER *val)
+PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
 {
         char *str;
         if (object == Py_None) {
@@ -4443,7 +4443,7 @@ PyArray_ByteorderConverter(PyObject *obj, char *endian)
   Convert object to sort kind 
 */
 static int
-PyArray_SortkindConverter(PyObject *obj, PyArray_SORTKIND *sortkind)
+PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
 {
 	char *str;
 	*sortkind = PyArray_QUICKSORT;
@@ -4607,7 +4607,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 	int ndmin=0, nd;
 	PyArray_Descr *type=NULL;
 	PyArray_Descr *oldtype=NULL;
-	PyArray_ORDER order=PyArray_ANYORDER;
+	NPY_ORDER order=PyArray_ANYORDER;
 	int flags=0;
 
         if (PyTuple_GET_SIZE(args) > 2) {
@@ -4719,7 +4719,7 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
 	static char *kwlist[] = {"shape","dtype","order",NULL};
 	PyArray_Descr *typecode=NULL;
         PyArray_Dims shape = {NULL, 0};
-	PyArray_ORDER order = PyArray_CORDER;	
+	NPY_ORDER order = PyArray_CORDER;	
         Bool fortran;
         PyObject *ret=NULL;
 
@@ -4842,14 +4842,13 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 
 static char doc_zeros[] = "zeros((d1,...,dn),dtype=float,order='C') will return a new array of shape (d1,...,dn) and type typecode with all it's entries initialized to zero.";
 
-
 static PyObject *
 array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds) 
 {
 	static char *kwlist[] = {"shape","dtype","order",NULL}; /* XXX ? */
 	PyArray_Descr *typecode=NULL;
         PyArray_Dims shape = {NULL, 0};
-        PyArray_ORDER order = PyArray_CORDER;
+        NPY_ORDER order = PyArray_CORDER;
 	Bool fortran = FALSE;	
         PyObject *ret=NULL;
 
