@@ -68,7 +68,7 @@ class matrix(N.ndarray):
                 intype = data.dtype
             else:
                 intype = N.dtype(dtype)
-            new = data.view(matrix)
+            new = data.view(subtype)
             if intype != data.dtype:
                 return new.astype(intype)
             if copy: return new.copy()
