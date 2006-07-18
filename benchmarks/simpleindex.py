@@ -29,7 +29,7 @@ for k in xrange(%d):
 """ % (N,N,N,N)
 t1 = timeit.Timer(code, 'import numpy as N; a = N.random.rand(%d,%d)' % (N,N))
 t2 = timeit.Timer(code, 'import MLab as N; a=N.rand(%d,%d)' % (N,N))
-t3 = timeit.Timer(code, 'import numarray.mlab as N; a=N.random.rand(%d,%d)' % (N,N))
+t3 = timeit.Timer(code, 'import numarray.mlab as N; a=N.rand(%d,%d)' % (N,N))
 t4 = timeit.Timer(code2, 'import numpy as N; a = N.random.rand(%d,%d)' % (N,N))
 t5 = timeit.Timer(code3, setup3)
 t6 = timeit.Timer("res = a + a.transpose()","import numpy as N; a=N.random.rand(%d,%d)" % (N,N))
