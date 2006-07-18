@@ -1676,9 +1676,12 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 
                 if (PyArray_ISCONTIGUOUS(self)) {
                         size = PyArray_SIZE(self);
-                        if ((n=fwrite((const void *)self->data,
-                                      (size_t) self->descr->elsize,
-                                      (size_t) size, fp)) < size) {
+			NPY_BEGIN_ALLOW_THREADS
+			n=fwrite((const void *)self->data,
+				 (size_t) self->descr->elsize,
+				 (size_t) size, fp);
+			NPY_END_ALLOW_THREADS
+			if (n < size) {
                                 PyErr_Format(PyExc_ValueError,
                                              "%ld requested and %ld written",
                                              (long) size, (long) n);
@@ -1686,12 +1689,16 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                         }
                 }
                 else {
+			NPY_BEGIN_THREADS_DEF
+
                         it=(PyArrayIterObject *)                        \
                                 PyArray_IterNew((PyObject *)self);
+			NPY_BEGIN_THREADS
                         while(it->index < it->size) {
                                 if (fwrite((const void *)it->dataptr,
                                            (size_t) self->descr->elsize,
                                            1, fp) < 1) {
+					NPY_END_THREADS
                                         PyErr_Format(PyExc_IOError,
                                                      "problem writing element"\
                                                      " %d to file",
@@ -1701,10 +1708,12 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                                 }
                                 PyArray_ITER_NEXT(it);
                         }
+			NPY_END_THREADS
                         Py_DECREF(it);
                 }
         }
         else {  /* text data */
+
                 it=(PyArrayIterObject *)                                \
                         PyArray_IterNew((PyObject *)self);
 		n4 = (format ? strlen((const char *)format) : 0);
@@ -1728,9 +1737,11 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 				Py_DECREF(tupobj);
 				if (strobj == NULL) {Py_DECREF(it); return -1;}
 			}
-                        if ((n=fwrite(PyString_AS_STRING(strobj),
-                                      1, n2=PyString_GET_SIZE(strobj),
-                                      fp)) < n2) {
+			NPY_BEGIN_ALLOW_THREADS
+		        n=fwrite(PyString_AS_STRING(strobj), 1, 
+				 n2=PyString_GET_SIZE(strobj), fp);
+			NPY_END_ALLOW_THREADS
+                        if (n < n2) {
                                 PyErr_Format(PyExc_IOError,
                                              "problem writing element %d"\
                                              " to file",
