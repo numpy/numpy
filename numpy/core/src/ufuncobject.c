@@ -1430,12 +1430,12 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 {
 	PyUFuncLoopObject *loop;
 	int i;
-        BEGIN_THREADS_DEF
+        NPY_BEGIN_THREADS_DEF
 
 	if (!(loop = construct_loop(self, args, mps))) return -1;
         if (loop->notimplemented) {ufuncloop_dealloc(loop); return -2;}
 
-	LOOP_BEGIN_THREADS
+	NPY_LOOP_BEGIN_THREADS
 
 	switch(loop->meth) {
 	case ONE_UFUNCLOOP:
@@ -1685,13 +1685,13 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
         }
         }
                 
-        LOOP_END_THREADS
+        NPY_LOOP_END_THREADS
                 
         ufuncloop_dealloc(loop);
 	return 0;
 
  fail:
-        LOOP_END_THREADS
+        NPY_LOOP_END_THREADS
 
 	if (loop) ufuncloop_dealloc(loop);
 	return -1;
@@ -1988,14 +1988,14 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
         PyUFuncReduceObject *loop;
         intp i, n;
         char *dptr;
-        BEGIN_THREADS_DEF
+        NPY_BEGIN_THREADS_DEF
         	
         /* Construct loop object */
         loop = construct_reduce(self, &arr, axis, otype, UFUNC_REDUCE, 0,
 				"reduce");
 	if (!loop) return NULL;
 
-        LOOP_BEGIN_THREADS
+        NPY_LOOP_BEGIN_THREADS
         switch(loop->meth) {
         case ZERODIM_REDUCELOOP:
 		/* fprintf(stderr, "ZERO..%d\n", loop->size); */
@@ -2106,7 +2106,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
                 }
         }
 
-        LOOP_END_THREADS
+        NPY_LOOP_END_THREADS
 
         ret = loop->ret;
 	/* Hang on to this reference -- will be decref'd with loop */
@@ -2115,7 +2115,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, int axis, int otype)
         return (PyObject *)ret;
 
  fail:
-        LOOP_END_THREADS
+        NPY_LOOP_END_THREADS
 
         if (loop) ufuncreduce_dealloc(loop);
         return NULL;
@@ -2130,13 +2130,14 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
         PyUFuncReduceObject *loop;
         intp i, n;
         char *dptr;
+	NPY_BEGIN_THREADS_DEF
         
         /* Construct loop object */
         loop = construct_reduce(self, &arr, axis, otype, UFUNC_ACCUMULATE, 0,
 				"accumulate");
 	if (!loop) return NULL;
 
-	LOOP_BEGIN_THREADS
+	NPY_LOOP_BEGIN_THREADS
         switch(loop->meth) {
         case ZERODIM_REDUCELOOP: /* Accumulate */
 		/* fprintf(stderr, "ZERO..%d\n", loop->size); */
@@ -2251,7 +2252,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
                 }
         }
 
-	LOOP_END_THREADS
+	NPY_LOOP_END_THREADS
         ret = loop->ret;
 	/* Hang on to this reference -- will be decref'd with loop */
         Py_INCREF(ret);
@@ -2259,7 +2260,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, int axis,
         return (PyObject *)ret;
 
  fail:
-	LOOP_END_THREADS
+	NPY_LOOP_END_THREADS
 
         if (loop) ufuncreduce_dealloc(loop);
         return NULL;
@@ -2295,6 +2296,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 	intp mm=arr->dimensions[axis]-1;
 	intp n, i, j;
 	char *dptr;
+	NPY_BEGIN_THREADS_DEF
 
 	/* Check for out-of-bounds values in indices array */		
 	for (i=0; i<nn; i++) {
@@ -2312,7 +2314,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 				"reduceat");
 	if (!loop) return NULL;
 
-	LOOP_BEGIN_THREADS
+	NPY_LOOP_BEGIN_THREADS
 	switch(loop->meth) {
 	/* zero-length index -- return array immediately */
 	case ZERODIM_REDUCELOOP:
@@ -2401,7 +2403,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 		break;
 	}
 
-	LOOP_END_THREADS
+	NPY_LOOP_END_THREADS
 	
         ret = loop->ret;
 	/* Hang on to this reference -- will be decref'd with loop */
@@ -2410,7 +2412,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
         return (PyObject *)ret;
 	
  fail:
-	LOOP_END_THREADS
+	NPY_LOOP_END_THREADS
 
         if (loop) ufuncreduce_dealloc(loop);
 	return NULL;

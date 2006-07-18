@@ -982,16 +982,20 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, NPY_ALIGNED)
 
 
-#if defined(ALLOW_THREADS)
-#define NPY_BEGIN_THREADS_DEF PyThreadState *_save;
+#if NPY_ALLOW_THREADS
+#define NPY_BEGIN_ALLOW_THREADS Py_BEGIN_ALLOW_THREADS
+#define NPY_END_ALLOW_THREADS Py_END_ALLOW_THREADS
+#define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
 #define NPY_BEGIN_THREADS _save = PyEval_SaveThread();
-#define NPY_END_THREADS   PyEval_RestoreThread(_save);
+#define NPY_END_THREADS   if (_save) PyEval_RestoreThread(_save);
 #define NPY_BEGIN_THREADS_DESCR(dtype) if (!((dtype)->hasobject)) NPY_BEGIN_THREADS
 #define NPY_END_THREADS_DESCR(dtype) if (!((dtype)->hasobject)) NPY_END_THREADS
 #define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__;
 #define NPY_ALLOW_C_API      __save__ = PyGILState_Ensure();
 #define NPY_DISABLE_C_API    PyGILState_Release(__save__);
 #else
+#define NPY_BEGIN_ALLOW_THREADS 
+#define NPY_END_ALLOW_THREADS 
 #define NPY_BEGIN_THREADS_DEF
 #define NPY_BEGIN_THREADS
 #define NPY_END_THREADS
@@ -1331,7 +1335,7 @@ typedef struct {
 #define NPY_OPPBYTE NPY_BIG
 #endif
 
-#define PyArray_ISNBO(arg) ((arg) != PyArray_OPPBYTE)
+#define PyArray_ISNBO(arg) ((arg) != NPY_OPPBYTE)
 #define PyArray_IsNativeByteOrder PyArray_ISNBO
 #define PyArray_ISNOTSWAPPED(m) PyArray_ISNBO(PyArray_DESCR(m)->byteorder)
 #define PyArray_ISBYTESWAPPED(m) (!PyArray_ISNOTSWAPPED(m))
@@ -1494,7 +1498,7 @@ typedef struct {
 	} while(0)
 
 /* Copy should always return contiguous array */
-#define PyArray_Copy(obj) PyArray_NewCopy(obj, PyArray_CORDER)
+#define PyArray_Copy(obj) PyArray_NewCopy(obj, NPY_CORDER)
 
 #define PyArray_FromObject(op, type, min_depth, max_depth)		\
 	PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,	\

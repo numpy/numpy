@@ -356,13 +356,14 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    return PyArray_Return(ret);
     }
 
-    Py_BEGIN_ALLOW_THREADS
 
     if (ap2shape == _scalar) {
 	/* Multiplication by a scalar -- Level 1 BLAS */
 	/* if ap1shape is a matrix and we are not contiguous, then we can't
 	   just blast through the entire array using a single
 	   striding factor */
+	NPY_BEGIN_ALLOW_THREADS
+
 	if (typenum == PyArray_DOUBLE) {
 	    if (l == 1) {
 		*((double *)ret->data) = *((double *)ap2->data) * \
@@ -487,9 +488,12 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		}
 	    }
 	}
+	NPY_END_ALLOW_THREADS
     }
     else if ((ap2shape == _column) && (ap1shape != _matrix)) {
 	int ap1s, ap2s;
+	NPY_BEGIN_ALLOW_THREADS
+
 	ap2s = ap2->strides[0] / ap2->descr->elsize;
 	if (ap1shape == _row) {
 	    ap1s = ap1->strides[1] / ap1->descr->elsize;
@@ -517,6 +521,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    cblas_cdotu_sub(l, (float *)ap1->data, ap1s, 
 			    (float *)ap2->data, ap2s, (float *)ret->data);
 	}
+	NPY_END_ALLOW_THREADS
     }
     else if (ap1shape == _matrix && ap2shape != _matrix) {
 	/* Matrix vector multiplication -- Level 2 BLAS */
@@ -531,6 +536,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    ap1 = (PyArrayObject *)new;
 	    if (new == NULL) goto fail;
 	}
+	NPY_BEGIN_ALLOW_THREADS
 	if (PyArray_ISCONTIGUOUS(ap1)) {
             Order = CblasRowMajor;
             lda = (ap1->dimensions[1] > 1 ? ap1->dimensions[1] : 1);
@@ -566,6 +572,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 			(float *)ap2->data, ap2s, zeroF, 
 			(float *)ret->data, 1);
 	}
+	NPY_END_ALLOW_THREADS
     }
     else if (ap1shape != _matrix && ap2shape == _matrix) {
 	/* Vector matrix multiplication -- Level 2 BLAS */
@@ -579,6 +586,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    ap2 = (PyArrayObject *)new;
 	    if (new == NULL) goto fail;
 	}
+	NPY_BEGIN_ALLOW_THREADS
 	if (PyArray_ISCONTIGUOUS(ap2)) {
 	    Order = CblasRowMajor;
             lda = (ap2->dimensions[1] > 1 ? ap2->dimensions[1] : 1);
@@ -617,6 +625,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 			oneF, (float *)ap2->data, lda,
 			(float *)ap1->data, ap1s, zeroF, (float *)ret->data, 1);
 	}
+	NPY_END_ALLOW_THREADS
     }
     else { /* (ap1->nd == 2 && ap2->nd == 2) */
 	/* Matrix matrix multiplication -- Level 3 BLAS */  
@@ -644,6 +653,8 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    ap1 = (PyArrayObject *)new;
 	    if (new == NULL) goto fail;
 	}
+
+	NPY_BEGIN_ALLOW_THREADS
 	
 	Order = CblasRowMajor;
 	Trans1 = CblasNoTrans;
@@ -682,9 +693,9 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 			(float *)ap2->data, ldb,
 			zeroF, (float *)ret->data, ldc);
 	}
+	NPY_END_ALLOW_THREADS
     }
 
-    Py_END_ALLOW_THREADS
 
     Py_DECREF(ap1);
     Py_DECREF(ap2);
@@ -800,7 +811,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 				       (prior2 > prior1 ? ap2 : ap1));
     
     if (ret == NULL) goto fail;
-    Py_BEGIN_ALLOW_THREADS
+    NPY_BEGIN_ALLOW_THREADS
     memset(ret->data, 0, PyArray_NBYTES(ret));
 
     if (ap2->nd == 0) {
@@ -933,7 +944,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 			zeroF, (float *)ret->data, ldc);
 	}
     }
-    Py_END_ALLOW_THREADS
+    NPY_END_ALLOW_THREADS
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     return PyArray_Return(ret);
@@ -1015,7 +1026,7 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
     ret = (PyArrayObject *)PyArray_SimpleNew(0, dimensions, typenum);
     if (ret == NULL) goto fail;
 
-    Py_BEGIN_ALLOW_THREADS
+    NPY_BEGIN_ALLOW_THREADS
 
     /* Dot product between two vectors -- Level 1 BLAS */
     if (typenum == PyArray_DOUBLE) {
@@ -1035,7 +1046,7 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
 			(float *)ap2->data, 1, (float *)ret->data);
     }
 
-    Py_END_ALLOW_THREADS
+    NPY_END_ALLOW_THREADS
 
     Py_DECREF(ap1);
     Py_DECREF(ap2);

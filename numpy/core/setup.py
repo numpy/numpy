@@ -35,8 +35,16 @@ def configuration(parent_package='',top_path=None):
                                         library_dirs = default_lib_dirs)
             if not result:
                 raise "ERROR: Failed to test configuration"
-            moredefs = []
-
+            # Perhaps a fancier check is in order here.
+            try:
+                nosmp = os.environ['NPY_NOSMP']
+                nosmp = 1
+            except KeyError:
+                nosmp = 0
+            if nosmp:
+                moredefs = [('NPY_ALLOW_THREADS', '0')]
+            else:
+                moredefs = [('NPY_ALLOW_THREADS','WITH_THREAD')]
             #
             mathlibs = []
             tc = testcode_mathlib()

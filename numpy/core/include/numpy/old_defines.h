@@ -134,7 +134,7 @@
 #define PyArray_NSCALARKINDS   NPY_NSCALARKINDS 
 
 #define PyArray_ANYORDER     NPY_ANYORDER     
-#define PyArray_CORDER       NPY_CORDER       
+#define PyArray_CORDER       NPY_CORDER
 #define PyArray_FORTRANORDER NPY_FORTRANORDER 
 #define PyArray_ORDER        NPY_ORDER        
 

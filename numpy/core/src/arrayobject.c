@@ -1242,7 +1242,7 @@ PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER fortran)
 	PyArrayObject *ret;
 	if (fortran == PyArray_ANYORDER) 
 		fortran = PyArray_ISFORTRAN(m1);
-        
+
 	Py_INCREF(m1->descr);
 	ret = (PyArrayObject *)PyArray_NewFromDescr(m1->ob_type,
 						    m1->descr,
@@ -5076,6 +5076,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                                 goto fail;
                         }
 			*/
+
 			memset(data, 0, sd);
 		}
 	}
@@ -7114,6 +7115,8 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 	PyArray_CopySwapNFunc *ocopyfunc, *icopyfunc;	
 	char *obptr;
 
+	NPY_BEGIN_THREADS_DEF
+
  	delsize = PyArray_ITEMSIZE(out);
 	selsize = PyArray_ITEMSIZE(in);
 	multi = (PyArrayMultiIterObject *)PyArray_MultiIterNew(2, out, in);
@@ -7150,6 +7153,12 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 	if (in->descr->hasobject) 
 		memset(buffers[1], 0, N*selsize);
 
+#if NPY_ALLOW_THREADS 
+	if (!in->descr->hasobject && !out->descr->hasobject) {
+		NPY_BEGIN_THREADS		       
+			}
+#endif
+
 	while(multi->index < multi->size) {
 		_strided_buffered_cast(multi->iters[0]->dataptr,
 				       ostrides,
@@ -7161,6 +7170,11 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 				       castfunc, out, in);
 		PyArray_MultiIter_NEXT(multi);
 	}
+#if NPY_ALLOW_THREADS
+	if (!in->descr->hasobject && !out->descr->hasobject) {
+		NPY_END_THREADS		       
+			}
+#endif
 	Py_DECREF(multi);
 	if (in->descr->hasobject) {
 		obptr = buffers[1];
@@ -7197,6 +7211,8 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 	PyArray_VectorUnaryFunc *castfunc=NULL;
 	int mpsize = PyArray_SIZE(mp);
 	int iswap, oswap;
+	
+	NPY_BEGIN_THREADS_DEF
 
 	if (mpsize == 0) return 0;
 	if (!PyArray_ISWRITEABLE(out)) {
@@ -7214,7 +7230,17 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 			  (PyArray_ISFARRAY_RO(mp) && PyArray_ISFARRAY(out)));
 
 	if (simple) {
+
+#if NPY_ALLOW_THREADS
+		if (!mp->descr->hasobject && !out->descr->hasobject) {
+			NPY_BEGIN_THREADS }
+#endif
 		castfunc(mp->data, out->data, mpsize, mp, out);
+
+#if NPY_ALLOW_THREADS
+		if (!mp->descr->hasobject && !out->descr->hasobject) {
+			NPY_END_THREADS   }
+#endif
 		return 0;
 	}
 

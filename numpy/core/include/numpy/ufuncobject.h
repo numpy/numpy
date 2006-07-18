@@ -164,12 +164,12 @@ typedef struct {
 } PyUFuncReduceObject;
 
 
-#if defined(ALLOW_THREADS)
-#define LOOP_BEGIN_THREADS if (!(loop->obj)) {_save = PyEval_SaveThread();}
-#define LOOP_END_THREADS   if (!(loop->obj)) {PyEval_RestoreThread(_save);}
+#if NPY_ALLOW_THREADS
+#define NPY_LOOP_BEGIN_THREADS if (!(loop->obj)) {_save = PyEval_SaveThread();}
+#define NPY_LOOP_END_THREADS   if (!(loop->obj)) {PyEval_RestoreThread(_save);}
 #else
-#define LOOP_BEGIN_THREADS
-#define LOOP_END_THREADS
+#define NPY_LOOP_BEGIN_THREADS
+#define NPY_LOOP_END_THREADS
 #endif
 
 #define PyUFunc_One 1

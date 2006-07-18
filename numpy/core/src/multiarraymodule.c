@@ -2819,7 +2819,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 		return NULL;
 	}
 	/* do 2-d loop */
-	Py_BEGIN_ALLOW_THREADS
+	NPY_BEGIN_ALLOW_THREADS
 	optr = PyArray_DATA(ret);
 	str2 = elsize*dims[0];
 	for (i=0; i<dims[0]; i++) {
@@ -2831,7 +2831,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 			iptr += str2;
 		}
 	}
-	Py_END_ALLOW_THREADS
+	NPY_END_ALLOW_THREADS
 	Py_DECREF(arr);
 	return ret;
 }
@@ -4982,7 +4982,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 						     dtype, 1, &n, NULL,
 						     NULL, 0, NULL);
 			if (ret == NULL) return NULL;
-			Py_BEGIN_ALLOW_THREADS
+			NPY_BEGIN_ALLOW_THREADS
 			ptr = data;
 			dptr = ret->data;
 			for (index=0; index < n; index++) {
@@ -5004,7 +5004,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 				PyArray_DIM(ret,0) = nread;
 			
 			}
-			Py_END_ALLOW_THREADS
+			NPY_END_ALLOW_THREADS
 		}
 		else {
 #define _FILEBUFNUM 4096
@@ -5022,7 +5022,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 						     NULL, NULL, 
 						     0, NULL);
 			if (ret==NULL) return NULL;
-			Py_BEGIN_ALLOW_THREADS
+			NPY_BEGIN_ALLOW_THREADS
 			totalbytes = bytes = size * dtype->elsize;
 			dptr = ret->data;
 			ptr = data;
@@ -5048,7 +5048,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 						    nread*ret->descr->elsize);
 			PyArray_DIM(ret,0) = nread;
 #undef _FILEBUFNUM
-			Py_END_ALLOW_THREADS
+			NPY_END_ALLOW_THREADS
 		}
 	}
 	return (PyObject *)ret;
@@ -5230,9 +5230,9 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 							  NULL, NULL, 
 							  0, NULL);
 		if (r==NULL) return NULL;
-		Py_BEGIN_ALLOW_THREADS
+		NPY_BEGIN_ALLOW_THREADS
 		nread = fread(r->data, typecode->elsize, num, fp);
-		Py_END_ALLOW_THREADS
+		NPY_END_ALLOW_THREADS
 	}
 	else {  /* character reading */
 		intp i;
@@ -5257,7 +5257,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 						     NULL, NULL, 
 						     0, NULL);
 			if (r==NULL) return NULL;
-			Py_BEGIN_ALLOW_THREADS			
+			NPY_BEGIN_ALLOW_THREADS			
 			dptr = r->data;
 			for (i=0; i < num; i++) {
 				if (done) break;
@@ -5266,7 +5266,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 				nread += 1;
 				dptr += r->descr->elsize;
 			}
-			Py_END_ALLOW_THREADS			
+			NPY_END_ALLOW_THREADS			
 			if (PyErr_Occurred()) {
 				Py_DECREF(r);
 				return NULL;
@@ -5287,7 +5287,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 						     NULL, NULL, 
 						     0, NULL);
 			if (r==NULL) return NULL;
-			Py_BEGIN_ALLOW_THREADS	
+			NPY_BEGIN_ALLOW_THREADS	
 			totalbytes = bytes = size * typecode->elsize;
 			dptr = r->data;
 			while (!done) {
@@ -5313,7 +5313,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 			r->data = PyDataMem_RENEW(r->data, nread*r->descr->elsize);
 			PyArray_DIM(r,0) = nread;
 			num = nread;
-			Py_END_ALLOW_THREADS
+			NPY_END_ALLOW_THREADS
 #undef _FILEBUFNUM
 		}
 		if (PyErr_Occurred()) {
@@ -6379,6 +6379,9 @@ PyMODINIT_FUNC initmultiarray(void) {
 	
 	s = PyString_FromString("3.0");
 	PyDict_SetItemString(d, "__version__", s);
+	Py_DECREF(s);
+	s = PyInt_FromLong(NPY_ALLOW_THREADS);
+	PyDict_SetItemString(d, "ALLOW_THREADS", s);
 	Py_DECREF(s);
         Py_INCREF(&PyArray_Type);
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);

@@ -2,74 +2,73 @@
 # :Copyright: 2004, Enthought, Inc.
 # :License:   BSD Style
 
-
 cdef extern from "numpy/arrayobject.h":
 
-    cdef enum PyArray_TYPES:
-        PyArray_BOOL
-        PyArray_BYTE
-        PyArray_UBYTE
-        PyArray_SHORT
-        PyArray_USHORT 
-        PyArray_INT
-        PyArray_UINT 
-        PyArray_LONG
-        PyArray_ULONG
-        PyArray_LONGLONG
-        PyArray_ULONGLONG
-        PyArray_FLOAT
-        PyArray_DOUBLE 
-        PyArray_LONGDOUBLE
-        PyArray_CFLOAT
-        PyArray_CDOUBLE
-        PyArray_CLONGDOUBLE
-        PyArray_OBJECT
-        PyArray_STRING
-        PyArray_UNICODE
-        PyArray_VOID
-        PyArray_NTYPES
-        PyArray_NOTYPE
+    cdef enum NPY_TYPES:
+        NPY_BOOL
+        NPY_BYTE
+        NPY_UBYTE
+        NPY_SHORT
+        NPY_USHORT 
+        NPY_INT
+        NPY_UINT 
+        NPY_LONG
+        NPY_ULONG
+        NPY_LONGLONG
+        NPY_ULONGLONG
+        NPY_FLOAT
+        NPY_DOUBLE 
+        NPY_LONGDOUBLE
+        NPY_CFLOAT
+        NPY_CDOUBLE
+        NPY_CLONGDOUBLE
+        NPY_OBJECT
+        NPY_STRING
+        NPY_UNICODE
+        NPY_VOID
+        NPY_NTYPES
+        NPY_NOTYPE
 
     cdef enum requirements:
-        CONTIGUOUS
-        FORTRAN
-        OWNDATA
-        FORCECAST
-        ENSURECOPY
-        ENSUREARRAY
-        ELEMENTSTRIDES
-        ALIGNED
-        NOTSWAPPED
-        WRITEABLE
-        UPDATEIFCOPY
-        ARR_HAS_DESCR
+        NPY_CONTIGUOUS
+        NPY_FORTRAN
+        NPY_OWNDATA
+        NPY_FORCECAST
+        NPY_ENSURECOPY
+        NPY_ENSUREARRAY
+        NPY_ELEMENTSTRIDES
+        NPY_ALIGNED
+        NPY_NOTSWAPPED
+        NPY_WRITEABLE
+        NPY_UPDATEIFCOPY
+        NPY_ARR_HAS_DESCR
 
-        BEHAVED_FLAGS
-        BEHAVED_NS_FLAGS
-        CARRAY_FLAGS
-        CARRAY_FLAGS_RO
-        FARRAY_FLAGS
-        FARRAY_FLAGS_RO
-        DEFAULT_FLAGS
+        NPY_BEHAVED
+        NPY_BEHAVED_NS
+        NPY_CARRAY
+        NPY_CARRAY_RO
+        NPY_FARRAY
+        NPY_FARRAY_RO
+        NPY_DEFAULT
 
-        IN_ARRAY
-        OUT_ARRAY
-        INOUT_ARRAY
-        IN_FARRAY
-        OUT_FARRAY
-        INOUT_FARRAY
+        NPY_IN_ARRAY
+        NPY_OUT_ARRAY
+        NPY_INOUT_ARRAY
+        NPY_IN_FARRAY
+        NPY_OUT_FARRAY
+        NPY_INOUT_FARRAY
 
-        UPDATE_ALL_FLAGS 
+        NPY_UPDATE_ALL 
 
-    ctypedef struct cdouble:
+    ctypedef struct npy_cdouble:
         double real
         double imag
 
-    ctypedef struct cfloat:
+    ctypedef struct npy_cfloat:
         double real
         double imag
 
-    ctypedef int intp 
+    ctypedef int npy_intp 
 
     ctypedef extern class numpy.dtype [object PyArray_Descr]:
         cdef int type_num, elsize, alignment
@@ -79,28 +78,28 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef extern class numpy.ndarray [object PyArrayObject]:
         cdef char *data
         cdef int nd
-        cdef intp *dimensions
-        cdef intp *strides
+        cdef npy_intp *dimensions
+        cdef npy_intp *strides
         cdef object base
         cdef dtype descr
         cdef int flags
 
-    object PyArray_ZEROS(int ndims, intp* dims, PyArray_TYPES type_num, int fortran)
-    object PyArray_EMPTY(int ndims, intp* dims, PyArray_TYPES type_num, int fortran)
-    dtype PyArray_DescrFromTypeNum(PyArray_TYPES type_num)
-    object PyArray_SimpleNew(int ndims, intp* dims, PyArray_TYPES type_num)
+    object PyArray_ZEROS(int ndims, npy_intp* dims, NPY_TYPES type_num, int fortran)
+    object PyArray_EMPTY(int ndims, npy_intp* dims, NPY_TYPES type_num, int fortran)
+    dtype PyArray_DescrFromTypeNum(NPY_TYPES type_num)
+    object PyArray_SimpleNew(int ndims, npy_intp* dims, NPY_TYPES type_num)
     int PyArray_Check(object obj)
-    object PyArray_ContiguousFromAny(object obj, PyArray_TYPES type, 
+    object PyArray_ContiguousFromAny(object obj, NPY_TYPES type, 
         int mindim, int maxdim)
-    intp PyArray_SIZE(ndarray arr)
-    intp PyArray_NBYTES(ndarray arr)
+    npy_intp PyArray_SIZE(ndarray arr)
+    npy_intp PyArray_NBYTES(ndarray arr)
     void *PyArray_DATA(ndarray arr)
     object PyArray_FromAny(object obj, dtype newtype, int mindim, int maxdim,
 		    int requirements, object context)
-    object PyArray_FROMANY(object obj, PyArray_TYPES type_num, int min,
+    object PyArray_FROMANY(object obj, NPY_TYPES type_num, int min,
                            int max, int requirements)
     object PyArray_NewFromDescr(object subtype, dtype newtype, int nd,
-                                intp* dims, intp* strides, void* data,
+                                npy_intp* dims, npy_intp* strides, void* data,
                                 int flags, object parent)
 
     void import_array()
