@@ -1819,7 +1819,18 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
                 ret = PyString_FromStringAndSize(self->data, (int) numbytes);
         }
         else {
-                it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+		PyObject *new;
+		if (order == NPY_FORTRANORDER) {
+			/* iterators are always in C-order */
+			new = PyArray_Transpose(self, NULL);
+			if (new == NULL) return NULL;
+		}
+		else {
+			Py_INCREF(self);
+			new = (PyObject *)self;
+		}
+                it = (PyArrayIterObject *)PyArray_IterNew(new);
+		Py_DECREF(new);
                 if (it==NULL) return NULL;
                 ret = PyString_FromStringAndSize(NULL, (int) numbytes);
                 if (ret == NULL) {Py_DECREF(it); return NULL;}
