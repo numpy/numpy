@@ -1585,7 +1585,7 @@ def power (a, b, third=None):
     fb = filled(b, 1)
     if fb.dtype.char in typecodes["Integer"]:
         return masked_array(umath.power(fa, fb), m)
-    md = make_mask(umath.less_equal (fa, 0), flag=1)
+    md = make_mask(umath.less(fa, 0), flag=1)
     m = mask_or(m, md)
     if m is nomask:
         return masked_array(umath.power(fa, fb))
