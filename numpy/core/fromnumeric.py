@@ -468,9 +468,17 @@ def mean(a, axis=0, dtype=None):
         mean = a.mean
     except AttributeError:
         return _wrapit(a, 'mean', axis, dtype)
-    return mean(axis, dtype)    
+    return mean(axis, dtype)
 
 def std(a, axis=0, dtype=None):
+    """std(sample, axis=0, dtype=None)
+    Return the standard deviation, a measure of the spread of a distribution.
+
+    The standard deviation is the square root of the average of the squared
+    deviations from the mean, i.e. std = sqrt(mean((x - x.mean())**2)).
+
+    For multidimensional arrays, std is computed by default along the first axis.
+    """
     try:
         std = a.std
     except AttributeError:

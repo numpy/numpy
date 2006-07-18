@@ -64,6 +64,23 @@ def iterable(y):
     return 1
 
 def histogram(a, bins=10, range=None, normed=False):
+    """histogram(sample, bins = 10, range = None, normed = False) -> H, ledges
+
+    Return the distribution of a sample.
+
+    Parameters
+    ----------
+    bins: Number of bins
+    range: Lower and upper bin edges (default: [sample.min(), sample.max()]).
+        Does not really work, all values greater than range are stored in
+        the last bin.
+    normed: If False (default), return the number of samples in each bin.
+        If True, return a frequency distribution.
+
+    Output
+    ------
+    histogram array, left bin edges array.
+    """
     a = asarray(a).ravel()
     if not iterable(bins):
         if range is None:

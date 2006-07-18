@@ -1385,7 +1385,13 @@ array_all(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_All(self, axis);
 }
 
-static char doc_stddev[] = "a.std(axis=None, dtype=None)";
+static char doc_stddev[] = "a.std(axis=None, dtype=None)\n"
+"Return the standard deviation, a measure of the spread of a distribution.\n"
+"\n"
+"The standard deviation is the square root of the average of the squared\n"
+"deviations from the mean, i.e. std = sqrt(mean((x - x.mean())**2)).\n"
+"\n"
+"For multidimensional arrays, std is computed by default along the first axis.\n";
 
 static PyObject *
 array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds) 
