@@ -47,6 +47,7 @@ PyArray_CopyAnyInto
 PyArray_CopyObject
 PyArray_NewCopy
 PyArray_ToList
+PyArray_ToString
 PyArray_ToFile
 PyArray_Dump
 PyArray_Dumps

@@ -1792,8 +1792,9 @@ PyArray_ToList(PyArrayObject *self)
         return lp;
 }
 
+/*OBJECT_API*/
 static PyObject *
-PyArray_ToString(PyArrayObject *self)
+PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 {
         intp numbytes;
         intp index;
@@ -1801,6 +1802,9 @@ PyArray_ToString(PyArrayObject *self)
         int elsize;
         PyObject *ret;
         PyArrayIterObject *it;
+
+	if (order == NPY_ANYORDER)
+		order = PyArray_ISFORTRAN(self);
 
 	/*        if (PyArray_TYPE(self) == PyArray_OBJECT) {
 		  PyErr_SetString(PyExc_ValueError, "a string for the data" \
@@ -1810,7 +1814,8 @@ PyArray_ToString(PyArrayObject *self)
 	*/
 
         numbytes = PyArray_NBYTES(self);
-        if (PyArray_ISONESEGMENT(self)) {
+        if ((PyArray_ISCONTIGUOUS(self) && (order == NPY_CORDER)) ||	\
+	    (PyArray_ISFORTRAN(self) && (order == NPY_FORTRANORDER))) {
                 ret = PyString_FromStringAndSize(self->data, (int) numbytes);
         }
         else {

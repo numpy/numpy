@@ -415,14 +415,19 @@ array_tolist(PyArrayObject *self, PyObject *args)
         return PyArray_ToList(self);
 }
 
-static char doc_tostring[] = "m.tostring()  Construct a Python string "\
+static char doc_tostring[] = "m.tostring(order='C')  Construct a Python string "\
         "containing the raw bytes in the array";
 
 static PyObject *
-array_tostring(PyArrayObject *self, PyObject *args)
+array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-        if (!PyArg_ParseTuple(args, "")) return NULL;
-        return PyArray_ToString(self);
+	NPY_ORDER order=NPY_CORDER;
+	static char *kwlist[] = {"order", NULL};
+	
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
+					 PyArray_OrderConverter,
+					 &order)) return NULL;
+        return PyArray_ToString(self, order);
 }
 
 static char doc_tofile[] = "m.tofile(fid, sep="") write the data to a file.";
@@ -920,7 +925,7 @@ array_reduce(PyArrayObject *self, PyObject *args)
 		thestr = _getlist_pkl(self);
 	}
 	else {
-                thestr = PyArray_ToString(self);
+                thestr = PyArray_ToString(self, NPY_ANYORDER);
 	}
 	if (thestr == NULL) {
 		Py_DECREF(ret);
@@ -1647,7 +1652,8 @@ static PyMethodDef array_methods[] = {
         {"item", (PyCFunction)array_toscalar, METH_VARARGS, doc_toscalar},
 	{"tofile", (PyCFunction)array_tofile, 
          METH_VARARGS | METH_KEYWORDS, doc_tofile},
-        {"tostring", (PyCFunction)array_tostring, METH_VARARGS, doc_tostring},
+        {"tostring", (PyCFunction)array_tostring, 
+	 METH_VARARGS | METH_KEYWORDS, doc_tostring},
         {"byteswap",   (PyCFunction)array_byteswap,	1, doc_byteswap},
         {"astype", (PyCFunction)array_cast, 1, doc_cast},
 	{"getfield", (PyCFunction)array_getfield, 
