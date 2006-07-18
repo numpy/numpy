@@ -356,7 +356,9 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    Py_DECREF(ap2);
 	    return PyArray_Return(ret);
     }
-    
+
+    Py_BEGIN_ALLOW_THREADS
+
     if (ap2shape == _scalar) {
 	/* Multiplication by a scalar -- Level 1 BLAS */
 	/* if ap1shape is a matrix and we are not contiguous, then we can't
@@ -683,6 +685,8 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	}
     }
 
+    Py_END_ALLOW_THREADS
+
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     return PyArray_Return(ret);
@@ -695,7 +699,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 }
 
 
-static char doc_innerproduct[] = "innerproduct(a,b)\nReturns the inner product of a and b for arrays of floating point types.\nLike the generic Numeric equivalent the product sum is over\nthe last dimension of a and b.\nNB: The first argument is not conjugated.";
+static char doc_innerproduct[] = "innerproduct(a,b)\nReturns the inner product of a and b for arrays of floating point types.\nLike the generic NumPy equivalent the product sum is over\nthe last dimension of a and b.\nNB: The first argument is not conjugated.";
 
 static PyObject *
 dotblas_innerproduct(PyObject *dummy, PyObject *args) 
@@ -797,6 +801,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 				       (prior2 > prior1 ? ap2 : ap1));
     
     if (ret == NULL) goto fail;
+    Py_BEGIN_ALLOW_THREADS
     memset(ret->data, 0, PyArray_NBYTES(ret));
 
     if (ap2->nd == 0) {
@@ -929,6 +934,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 			zeroF, (float *)ret->data, ldc);
 	}
     }
+    Py_END_ALLOW_THREADS
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     return PyArray_Return(ret);
@@ -1010,6 +1016,7 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
     ret = (PyArrayObject *)PyArray_SimpleNew(0, dimensions, typenum);
     if (ret == NULL) goto fail;
 
+    Py_BEGIN_ALLOW_THREADS
 
     /* Dot product between two vectors -- Level 1 BLAS */
     if (typenum == PyArray_DOUBLE) {
@@ -1028,6 +1035,8 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
 	cblas_cdotc_sub(l, (float *)ap1->data, 1, 
 			(float *)ap2->data, 1, (float *)ret->data);
     }
+
+    Py_END_ALLOW_THREADS
 
     Py_DECREF(ap1);
     Py_DECREF(ap2);

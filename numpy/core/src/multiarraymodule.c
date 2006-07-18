@@ -2262,6 +2262,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 	intp astride, rstride, *iptr;
 	PyArray_ArgSortFunc *argsort;
 
+	NPY_BEGIN_THREADS_DEF
+
 	if (!PySequence_Check(sort_keys) || \
 	    ((n=PySequence_Size(sort_keys)) <= 0)) {
 		PyErr_SetString(PyExc_TypeError, 
@@ -2328,6 +2330,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 		PyArray_IterAllButAxis((PyObject *)ret, &axis);
 	if (rit == NULL) goto fail;
 
+	NPY_BEGIN_THREADS
+
 	size = rit->size;
 	N = mps[0]->dimensions[axis];
 	rstride = PyArray_STRIDE(ret,axis);
@@ -2390,6 +2394,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 		}
 	}
 
+	NPY_END_THREADS
+
 	for (i=0; i<n; i++) {Py_XDECREF(mps[i]); Py_XDECREF(its[i]);}	
 	Py_DECREF(rit);
 	_pya_free(mps);
@@ -2397,6 +2403,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 	return (PyObject *)ret;
 
  fail:
+	NPY_END_THREADS
+
 	Py_XDECREF(rit);
 	Py_XDECREF(ret);
 	for (i=0; i<n; i++) {Py_XDECREF(mps[i]); Py_XDECREF(its[i]);}
@@ -2454,13 +2462,8 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 	PyArrayObject *ap1=NULL, *ap2=NULL, *ret=NULL;
 	int typenum = 0;
 
-	/* 
-        PyObject *args;
-        args = Py_BuildValue("O",op2);
-	Py_DELEGATE_ARGS(((PyObject *)op1), searchsorted, args);
-        Py_XDECREF(args);
-	*/
-
+	NPY_BEGIN_THREADS_DEF
+	
 	typenum = PyArray_ObjectType((PyObject *)op1, 0);
 	typenum = PyArray_ObjectType(op2, typenum);
 	ret = NULL;
@@ -2482,8 +2485,10 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 				"compare not supported for type");
 		goto fail;
 	}
-	
+
+	NPY_BEGIN_THREADS_DESCR(ap2->descr)
 	local_where(ap1, ap2, ret);   
+	NPY_END_THREADS_DESCR(ap2->descr)
 	
 	Py_DECREF(ap1);
 	Py_DECREF(ap2);
@@ -2545,6 +2550,8 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	intp dimensions[MAX_DIMS];
 	PyArray_DotFunc *dot;
 	PyArray_Descr *typec;
+
+	NPY_BEGIN_THREADS_DEF
 
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);
@@ -2609,6 +2616,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 	it2 = (PyArrayIterObject *)\
 		PyArray_IterAllButAxis((PyObject *)ap2, &axis);
 
+	NPY_BEGIN_THREADS_DESCR(ap2->descr)	
 	while(1) {
 		while(it2->index < it2->size) {
 			dot(it1->dataptr, is1, it2->dataptr, is2, op, l, ret);
@@ -2619,6 +2627,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 		if (it1->index >= it1->size) break;
 		PyArray_ITER_RESET(it2);
 	}
+	NPY_END_THREADS_DESCR(ap2->descr)
 	Py_DECREF(it1);
 	Py_DECREF(it2);
 
@@ -2653,6 +2662,8 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	intp dimensions[MAX_DIMS];
 	PyArray_DotFunc *dot;
 	PyArray_Descr *typec;
+
+	NPY_BEGIN_THREADS_DEF
 
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);	
@@ -2736,6 +2747,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	it2 = (PyArrayIterObject *)\
 		PyArray_IterAllButAxis((PyObject *)ap2, &matchDim);
 
+	NPY_BEGIN_THREADS_DESCR(ap2->descr)	
 	while(1) {
 		while(it2->index < it2->size) {
 			dot(it1->dataptr, is1, it2->dataptr, is2, op, l, ret);
@@ -2746,6 +2758,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 		if (it1->index >= it1->size) break;
 		PyArray_ITER_RESET(it2);
 	}
+	NPY_END_THREADS_DESCR(ap2->descr)
 	Py_DECREF(it1);
 	Py_DECREF(it2);
 	if (PyErr_Occurred()) goto fail;  /* only for OBJECT arrays */
@@ -2806,6 +2819,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 		return NULL;
 	}
 	/* do 2-d loop */
+	Py_BEGIN_ALLOW_THREADS
 	optr = PyArray_DATA(ret);
 	str2 = elsize*dims[0];
 	for (i=0; i<dims[0]; i++) {
@@ -2817,6 +2831,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 			iptr += str2;
 		}
 	}
+	Py_END_ALLOW_THREADS
 	Py_DECREF(arr);
 	return ret;
 }
@@ -2835,6 +2850,8 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 	char *ip1, *ip2, *op;
 	PyArray_DotFunc *dot;
 	PyArray_Descr *typec;
+
+	NPY_BEGIN_THREADS_DEF
 	
 	typenum = PyArray_ObjectType(op1, 0);  
 	typenum = PyArray_ObjectType(op2, typenum);
@@ -2889,7 +2906,9 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 				"function not available for this data type");
 		goto fail;
 	}
-	
+
+	NPY_BEGIN_THREADS_DESCR(ret->descr)
+
 	is1 = ap1->strides[0]; is2 = ap2->strides[0];
 	op = ret->data; os = ret->descr->elsize;
 	
@@ -2912,6 +2931,8 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 		ip1 += is1;
 		op += os;
 	}
+	NPY_END_THREADS_DESCR(ret->descr)
+
 	if (PyErr_Occurred()) goto fail;
 	Py_DECREF(ap1);
 	Py_DECREF(ap2);
@@ -3031,6 +3052,8 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 	intp *rptr;
 	intp i, n, m;
 	int elsize;
+
+	NPY_BEGIN_THREADS_DEF
 	
 	if ((ap=(PyAO *)_check_axis(op, &axis, 0))==NULL) return NULL;
 
@@ -3082,6 +3105,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 				"of an empty sequence??");
 		goto fail;
 	}
+	NPY_BEGIN_THREADS_DESCR(ap->descr)
 	n = PyArray_SIZE(ap)/m;
 	rptr = (intp *)rp->data;
 	for (ip = ap->data, i=0; i<n; i++, ip+=elsize*m) {
@@ -3089,6 +3113,8 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 		rptr += 1;
 	}
 	Py_DECREF(ap);
+	NPY_END_THREADS_DESCR(ap->descr)
+
 
 	return (PyObject *)rp;
 	
@@ -4957,6 +4983,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 						     dtype, 1, &n, NULL,
 						     NULL, 0, NULL);
 			if (ret == NULL) return NULL;
+			Py_BEGIN_ALLOW_THREADS
 			ptr = data;
 			dptr = ret->data;
 			for (index=0; index < n; index++) {
@@ -4976,7 +5003,9 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 							nread *		\
 							ret->descr->elsize);
 				PyArray_DIM(ret,0) = nread;
+			
 			}
+			Py_END_ALLOW_THREADS
 		}
 		else {
 #define _FILEBUFNUM 4096
@@ -4994,6 +5023,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 						     NULL, NULL, 
 						     0, NULL);
 			if (ret==NULL) return NULL;
+			Py_BEGIN_ALLOW_THREADS
 			totalbytes = bytes = size * dtype->elsize;
 			dptr = ret->data;
 			ptr = data;
@@ -5019,6 +5049,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 						    nread*ret->descr->elsize);
 			PyArray_DIM(ret,0) = nread;
 #undef _FILEBUFNUM
+			Py_END_ALLOW_THREADS
 		}
 	}
 	return (PyObject *)ret;
@@ -5048,6 +5079,7 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 
 
 /* steals a reference to dtype */
+/*OBJECT_API */
 static PyObject *
 PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
 {
@@ -5199,7 +5231,9 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 							  NULL, NULL, 
 							  0, NULL);
 		if (r==NULL) return NULL;
+		Py_BEGIN_ALLOW_THREADS
 		nread = fread(r->data, typecode->elsize, num, fp);
+		Py_END_ALLOW_THREADS
 	}
 	else {  /* character reading */
 		intp i;
@@ -5224,6 +5258,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 						     NULL, NULL, 
 						     0, NULL);
 			if (r==NULL) return NULL;
+			Py_BEGIN_ALLOW_THREADS			
 			dptr = r->data;
 			for (i=0; i < num; i++) {
 				if (done) break;
@@ -5232,6 +5267,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 				nread += 1;
 				dptr += r->descr->elsize;
 			}
+			Py_END_ALLOW_THREADS			
 			if (PyErr_Occurred()) {
 				Py_DECREF(r);
 				return NULL;
@@ -5252,6 +5288,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 						     NULL, NULL, 
 						     0, NULL);
 			if (r==NULL) return NULL;
+			Py_BEGIN_ALLOW_THREADS	
 			totalbytes = bytes = size * typecode->elsize;
 			dptr = r->data;
 			while (!done) {
@@ -5274,15 +5311,17 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 					thisbuf = 0;
 				}
 			}
-			if (PyErr_Occurred()) {
-				Py_DECREF(r);
-				return NULL;
-			}
 			r->data = PyDataMem_RENEW(r->data, nread*r->descr->elsize);
 			PyArray_DIM(r,0) = nread;
 			num = nread;
+			Py_END_ALLOW_THREADS
 #undef _FILEBUFNUM
 		}
+		if (PyErr_Occurred()) {
+			Py_DECREF(r);
+			return NULL;
+		}
+
 	}
 	if (((intp) nread) < num) {
 		fprintf(stderr, "%ld items requested but only %ld read\n", 

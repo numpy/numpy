@@ -36,7 +36,7 @@ extern "C" CONFUSE_EMACS
 #define NPY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NPY_VERSION 0x0009090A
+#define NPY_VERSION 0x0009090B
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -986,6 +986,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_THREADS_DEF PyThreadState *_save;
 #define NPY_BEGIN_THREADS _save = PyEval_SaveThread();
 #define NPY_END_THREADS   PyEval_RestoreThread(_save);
+#define NPY_BEGIN_THREADS_DESCR(dtype) if (!((dtype)->hasobject)) NPY_BEGIN_THREADS
+#define NPY_END_THREADS_DESCR(dtype) if (!((dtype)->hasobject)) NPY_END_THREADS
 #define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__;
 #define NPY_ALLOW_C_API      __save__ = PyGILState_Ensure();
 #define NPY_DISABLE_C_API    PyGILState_Release(__save__);
@@ -993,6 +995,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_THREADS_DEF
 #define NPY_BEGIN_THREADS
 #define NPY_END_THREADS
+#define NPY_BEGIN_THREADS_DESCR(dtype)
+#define NPY_END_THREADS_DESCR(dtype)
 #define NPY_ALLOW_C_API_DEF
 #define	NPY_ALLOW_C_API
 #define	NPY_DISABLE_C_API

@@ -576,10 +576,12 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 static void 
 @from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n, 
 	       PyArrayObject *aip, PyArrayObject *aop) {
+	Py_BEGIN_ALLOW_THREADS
 	while (n--) {
 		*op++ = (@totyp@)*ip;
 		@incr@;
 	}
+	Py_END_ALLOW_THREADS
 }
 /**end repeat**/
 
@@ -590,9 +592,11 @@ static void
 static void 
 @from@_to_BOOL(register @fromtyp@ *ip, register Bool *op, register intp n, 
 	       PyArrayObject *aip, PyArrayObject *aop) {
+	Py_BEGIN_ALLOW_THREADS
 	while (n--) {
 		*op++ = (Bool)(*ip++ != FALSE);
 	}
+	Py_END_ALLOW_THREADS
 }
 /**end repeat**/
 
@@ -603,10 +607,12 @@ static void
 static void 
 @from@_to_BOOL(register @fromtyp@ *ip, register Bool *op, register intp n, 
 	       PyArrayObject *aip, PyArrayObject *aop) {
+	Py_BEGIN_ALLOW_THREADS
 	while (n--) {
 		*op = (Bool)(((*ip).real != FALSE) || ((*ip).imag != FALSE));
 		op++; ip++;
 	}
+	Py_END_ALLOW_THREADS
 }
 /**end repeat**/
 
@@ -616,10 +622,13 @@ static void
 */
 static void 
 BOOL_to_@to@(register Bool *ip, register @totyp@ *op, register intp n, 
-	     PyArrayObject *aip, PyArrayObject *aop) {
+	     PyArrayObject *aip, PyArrayObject *aop) 
+{
+	Py_BEGIN_ALLOW_THREADS
 	while (n--) {
 		*op++ = (@totyp@)(*ip++ != FALSE);
 	}
+	Py_END_ALLOW_THREADS
 }
 /**end repeat**/
 
@@ -632,11 +641,14 @@ BOOL_to_@to@(register Bool *ip, register @totyp@ *op, register intp n,
 */
 static void 
 @from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n, 
-	       PyArrayObject *aip, PyArrayObject *aop) {
+	       PyArrayObject *aip, PyArrayObject *aop) 
+{	
+	Py_BEGIN_ALLOW_THREADS
 	while (n--) {
 		*op++ = (@totyp@)*ip++;
 		*op++ = 0.0;
 	}
+	Py_END_ALLOW_THREADS
 }
 /**end repeat**/
 
@@ -650,10 +662,12 @@ static void
 static void 
 @from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n, 
 	       PyArrayObject *aip, PyArrayObject *aop) {
+	Py_BEGIN_ALLOW_THREADS
 	n <<= 1;
 	while (n--) {
 		*op++ = (@totyp@)*ip++;
 	}
+	Py_END_ALLOW_THREADS
 }
 /**end repeat**/
 

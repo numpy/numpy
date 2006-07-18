@@ -424,9 +424,6 @@ _strided_byte_swap(void *p, intp stride, intp n, int size)
 {
 	char *a, *b, c=0;
         int j,m;
-
-        NPY_BEGIN_THREADS_DEF
-        NPY_BEGIN_THREADS                 
 	
         switch(size) {
         case 1: /* no byteswap necessary */
@@ -463,10 +460,6 @@ _strided_byte_swap(void *p, intp stride, intp n, int size)
                 }
                 break;
         }
-
-        NPY_BEGIN_THREADS_DEF
-        NPY_BEGIN_THREADS                 
-
 }
 
 static void

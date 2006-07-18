@@ -35,6 +35,7 @@ PyArray_EnsureAnyArray
 PyArray_FromFile
 PyArray_FromString
 PyArray_FromBuffer
+PyArray_FromIter
 PyArray_Return
 PyArray_GetField
 PyArray_SetField
