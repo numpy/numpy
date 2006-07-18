@@ -7098,8 +7098,8 @@ _strided_buffered_cast(char *dptr, intp dstride, int delsize, int dswap,
 				       sptr+i*sstride, sstride, selsize, 
 				       sswap, scopyfunc,
 				       newN, buffers, bufsize, castfunc, dest, src);
+		i += newN;
 		N -= bufsize;
-		i++;
 	}
 	return;
 }

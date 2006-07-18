@@ -964,7 +964,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /* So that ufunc buffers are aligned */
 #define NPY_MIN_BUFSIZE sizeof(cdouble)
 #define NPY_MAX_BUFSIZE sizeof(cdouble)*1000000
-#define NPY_BUFSIZE 10000
+#define NPY_BUFSIZE 10000 
+/* #define NPY_BUFSIZE 80*/
 
 #define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
 #define PyArray_MIN(a,b) (((a)<(b))?(a):(b))

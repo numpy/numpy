@@ -6383,6 +6383,11 @@ PyMODINIT_FUNC initmultiarray(void) {
 	s = PyInt_FromLong(NPY_ALLOW_THREADS);
 	PyDict_SetItemString(d, "ALLOW_THREADS", s);
 	Py_DECREF(s);
+
+	s = PyInt_FromLong(NPY_BUFSIZE);
+	PyDict_SetItemString(d, "BUFSIZE", s);
+	Py_DECREF(s);
+
         Py_INCREF(&PyArray_Type);
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
         Py_INCREF(&PyArrayIter_Type);

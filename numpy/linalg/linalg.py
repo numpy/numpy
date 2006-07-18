@@ -154,7 +154,7 @@ def cholesky(a):
     _assertRank2(a)
     _assertSquareness(a)
     t, result_t = _commonType(a)
-    a = _castCopyAndTranspose(t, a)
+    a = _fastCopyAndTranspose(t, a)
     m = a.shape[0]
     n = a.shape[1]
     if isComplexType(t):
@@ -215,7 +215,7 @@ def eigvalsh(a, UPLO='L'):
     _assertSquareness(a)
     t, result_t = _commonType(a)
     real_t = _linalgRealType(t)
-    a = _castCopyAndTranspose(t, a)
+    a = _fastCopyAndTranspose(t, a)
     n = a.shape[0]
     liwork = 5*n+3
     iwork = zeros((liwork,), fortran_int)
@@ -319,7 +319,7 @@ def eigh(a, UPLO='L'):
     _assertSquareness(a)
     t, result_t = _commonType(a)
     real_t = _linalgRealType(t)
-    a = _castCopyAndTranspose(t, a)
+    a = _fastCopyAndTranspose(t, a)
     n = a.shape[0]
     liwork = 5*n+3
     iwork = zeros((liwork,), fortran_int)
@@ -514,7 +514,7 @@ Singular values less than s[0]*rcond are treated as zero.
     real_t = _linalgRealType(t)
     bstar = zeros((ldb,n_rhs),t)
     bstar[:b.shape[0],:n_rhs] = b.copy()
-    a, bstar = _castCopyAndTranspose(t, a, bstar)
+    a, bstar = _fastCopyAndTranspose(t, a, bstar)
     s = zeros((min(m,n),),real_t)
     nlvl = max( 0, int( math.log( float(min( m,n ))/2. ) ) + 1 )
     iwork = zeros((3*min(m,n)*nlvl+11*min(m,n),), fortran_int)
