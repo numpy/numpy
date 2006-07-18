@@ -159,7 +159,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
                 temp = (PyObject **)data;
                 Py_XINCREF(*temp);
         }
-        else if PyDescr_HASFIELDS(descr) {
+        else if (PyDescr_HASFIELDS(descr)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new;
                 int offset, pos=0;
@@ -10465,6 +10465,34 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 	return ret;
 }
 
+/* returns 1 if this data-type has an object portion
+
+   used when setting the state because hasobject is not stored.
+ */
+static int
+_descr_find_object(PyArray_Descr *self)
+{
+	if (self->hasobject || self->type_num == PyArray_OBJECT || self->kind == 'O')
+		return 1;
+        if (PyDescr_HASFIELDS(self)) {
+                PyObject *key, *value, *title=NULL;
+                PyArray_Descr *new;
+                int offset, pos=0;
+                while (PyDict_Next(self->fields, &pos, &key, &value)) {
+ 			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, 
+					      &title)) {
+				PyErr_Clear();
+				return 0;
+			}
+			if (_descr_find_object(new)) {
+				new->hasobject = 1;
+				return 1;
+			}
+                }
+        }
+	return 0;
+}
+
 /* state is at least byteorder, subarray, and fields but could include elsize
    and alignment for EXTENDED arrays
 */
@@ -10484,8 +10512,9 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         if (!PyArg_ParseTuple(args, "(icOOOii)", &version, &endian, &subarray,
                               &names, &fields, &elsize, &alignment)) {
             PyErr_Clear();
-            if (!PyArg_ParseTuple(args, "(icOOii)", &version, &endian, &subarray,
-                                  &fields, &elsize, &alignment)) {
+            if (!PyArg_ParseTuple(args, "(icOOii)", &version, &endian, 
+				  &subarray, &fields, &elsize, 
+				  &alignment)) {
                 PyErr_Clear();
                 version = 0;
                 if (!PyArg_ParseTuple(args, "(cOOii)", &endian, &subarray,
@@ -10563,6 +10592,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 		self->alignment = alignment;
 	}
 
+	self->hasobject = _descr_find_object(self);
 	Py_INCREF(Py_None);
 	return Py_None;
 }
