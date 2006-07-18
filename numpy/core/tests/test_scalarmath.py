@@ -15,6 +15,11 @@ types = [N.bool_, N.byte, N.ubyte, N.short, N.ushort, N.intc, N.uintc,
 
 class test_types(NumpyTestCase):
     def check_types(self, level=1):
+        for atype in types:
+            a = atype(1)
+            assert a == 1, "error with %r: got %r" % (atype,a)
+
+    def check_type_add(self, level=1):
         # list of types
         for k, atype in enumerate(types):
             vala = atype(3)
