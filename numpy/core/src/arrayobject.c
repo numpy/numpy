@@ -7257,7 +7257,7 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 		memset(buffers[1], 0, N*selsize);
 
 #if NPY_ALLOW_THREADS 
-	if (!in->descr->hasobject && !out->descr->hasobject) {
+	if (!PyArray_ISEXTENDED(in) && !PyArray_ISEXTENDED(out)) {
 		NPY_BEGIN_THREADS		       
 			}
 #endif
@@ -7274,7 +7274,7 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 		PyArray_MultiIter_NEXT(multi);
 	}
 #if NPY_ALLOW_THREADS
-	if (!in->descr->hasobject && !out->descr->hasobject) {
+	if (!PyArray_ISEXTENDED(in) && !PyArray_ISEXTENDED(out)) {
 		NPY_END_THREADS		       
 			}
 #endif
@@ -7335,13 +7335,13 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 	if (simple) {
 
 #if NPY_ALLOW_THREADS
-		if (!mp->descr->hasobject && !out->descr->hasobject) {
+		if (!PyArray_ISEXTENDED(mp) && !PyArray_ISEXTENDED(out)) {
 			NPY_BEGIN_THREADS }
 #endif
 		castfunc(mp->data, out->data, mpsize, mp, out);
 
 #if NPY_ALLOW_THREADS
-		if (!mp->descr->hasobject && !out->descr->hasobject) {
+		if (!PyArray_ISEXTENDED(mp) && !PyArray_ISEXTENDED(out)) {
 			NPY_END_THREADS   }
 #endif
 		return 0;
