@@ -54,5 +54,21 @@ class test_fromrecords(NumpyTestCase):
             assert(mine.data1[i]==0.0)
             assert(mine.data2[i]==0.0)
 
+    def check_recarray_from_names(self):
+        ra = rec.array([
+            (1, 'abc', 3.7000002861022949, 0),
+            (2, 'xy', 6.6999998092651367, 1),
+            (0, ' ', 0.40000000596046448, 0)],
+                       names='c1, c2, c3, c4')
+        pa = rec.fromrecords([
+            (1, 'abc', 3.7000002861022949, 0),
+            (2, 'xy', 6.6999998092651367, 1),
+            (0, ' ', 0.40000000596046448, 0)],
+                       names='c1, c2, c3, c4')
+        assert ra.dtype == pa.dtype
+        assert ra.shape == pa.shape
+        for k in xrange(len(ra)):
+            assert ra[k].item() == pa[k].item()
+
 if __name__ == "__main__":
     NumpyTest().run()

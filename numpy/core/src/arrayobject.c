@@ -6913,10 +6913,13 @@ object_depth_and_dimension(PyObject *s, int max, intp *dims)
 {
 	intp *newdims, *test_dims;
 	int nd, test_nd;
-	int i;
+	int i, islist;
 	intp size;
+	PyObject *obj;
 
-	if (!PyList_Check(s) || ((size=PyList_GET_SIZE(s)) == 0)) 
+	islist = PyList_Check(s);
+	if (!(islist || PyTuple_Check(s)) ||
+	    ((size = PySequence_Size(s)) == 0)) 
 		return 0;
 	if (max < 2) {
 		if (max < 1) return 0;
@@ -6925,11 +6928,13 @@ object_depth_and_dimension(PyObject *s, int max, intp *dims)
 	}
 	newdims = PyDimMem_NEW(2*(max-1));
 	test_dims = newdims + (max-1);
-	nd = object_depth_and_dimension(PyList_GET_ITEM(s, 0),
-					max-1, newdims);
+	if (islist) obj = PyList_GET_ITEM(s, 0);
+	else obj = PyTuple_GET_ITEM(s, 0);
+	nd = object_depth_and_dimension(obj, max-1, newdims);
 	for (i=1; i<size; i++) {
-		test_nd = object_depth_and_dimension(PyList_GET_ITEM(s, i),
-						     max-1, test_dims);
+		if (islist) obj = PyList_GET_ITEM(s, 0);
+		else obj = PyTuple_GET_ITEM(s, 0);
+		test_nd = object_depth_and_dimension(obj, max-1, test_dims);
 		if ((nd != test_nd) || 
 		    (!PyArray_CompareLists(newdims, test_dims, nd))) {
 			nd = 0;

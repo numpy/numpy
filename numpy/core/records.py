@@ -460,35 +460,44 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         raise ValueError("Must define formats (or dtype) if object is "\
                          "None, string, or an open file")
 
+    kwds = {}
     if dtype is not None:
         dtype = sb.dtype(dtype)
-    else:
+    elif formats is not None:
         dtype = format_parser(formats, names, titles,
                               aligned, byteorder)._descr
+    else:
+        kwds = {'formats': formats,
+                'names' : names,
+                'titles' : titles,
+                'aligned' : aligned,
+                'byteorder' : byteorder
+                }
         
     if obj is None:
         if shape is None:
             raise ValueError("Must define a shape if obj is None")
         return recarray(shape, dtype, buf=obj, offset=offset, strides=strides)
     elif isinstance(obj, str):
-        return fromstring(obj, dtype, shape=shape, offset=offset)
+        return fromstring(obj, dtype, shape=shape, offset=offset, **kwds)
 
     elif isinstance(obj, (list, tuple)):
         if isinstance(obj[0], sb.ndarray):
-            return fromarrays(obj, dtype=dtype, shape=shape)
+            return fromarrays(obj, dtype=dtype, shape=shape, **kwds)
         else:
-            return fromrecords(obj, dtype=dtype, shape=shape)
+            return fromrecords(obj, dtype=dtype, shape=shape, **kwds)
 
     elif isinstance(obj, recarray):
         new = obj.copy()
-        new.dtype = dtype
+        if dtype is not None:
+            new.dtype = dtype
         return new
 
     elif isinstance(obj, file):
         return fromfile(obj, dtype=dtype, shape=shape, offset=offset)
 
     elif isinstance(obj, sb.ndarray):
-        if (obj.dtype != dtype):
+        if dtype is not None and (obj.dtype != dtype):
             obj.dtype = dtype
         res = obj.view(recarray)
         if issubclass(res.dtype.type, nt.void):
