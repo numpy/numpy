@@ -6859,7 +6859,7 @@ Assign_Array(PyArrayObject *self, PyObject *v)
 /* "Array Scalars don't call this code" */
 /* steals reference to typecode -- no NULL*/
 static PyObject *
-Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
+Array_FromPyScalar(PyObject *op, PyArray_Descr *typecode)
 {
         PyArrayObject *ret;
 	int itemsize;
@@ -6900,10 +6900,83 @@ Array_FromScalar(PyObject *op, PyArray_Descr *typecode)
 }
 
 
+/* If s is not a list, return 0
+   Otherwise:
+
+   run object_depth_and_dimension on all the elements
+   and make sure the returned shape and size 
+   is the same for each element
+
+*/
+static int
+object_depth_and_dimension(PyObject *s, int max, intp *dims)
+{
+	intp *newdims, *test_dims;
+	int nd, test_nd;
+	int i;
+	intp size;
+
+	if (!PyList_Check(s) || ((size=PyList_GET_SIZE(s)) == 0)) 
+		return 0;
+	if (max < 2) {
+		if (max < 1) return 0;
+		dims[0] = size;
+		return 1;
+	}
+	newdims = PyDimMem_NEW(2*(max-1));
+	test_dims = newdims + (max-1);
+	nd = object_depth_and_dimension(PyList_GET_ITEM(s, 0),
+					max-1, newdims);
+	for (i=1; i<size; i++) {
+		test_nd = object_depth_and_dimension(PyList_GET_ITEM(s, i),
+						     max-1, test_dims);
+		if ((nd != test_nd) || 
+		    (!PyArray_CompareLists(newdims, test_dims, nd))) {
+			nd = 0;
+			break;
+		}
+	}
+	
+	for (i=1; i<=nd; i++) dims[i] = newdims[i-1];
+	dims[0] = size;
+	PyDimMem_FREE(newdims);
+	return nd+1;
+}
+
+static PyObject *
+ObjectArray_FromNestedList(PyObject *s, PyArray_Descr *typecode, int fortran)
+{
+	int nd;
+	intp d[MAX_DIMS];
+	PyArrayObject *r;
+
+	/* Get the depth and the number of dimensions */
+	nd = object_depth_and_dimension(s, MAX_DIMS, d);
+	if (nd < 0) return NULL;
+
+	if (nd == 0) return Array_FromPyScalar(s, typecode);
+	
+        r=(PyArrayObject*)PyArray_NewFromDescr(&PyArray_Type, typecode,
+					       nd, d,
+					       NULL, NULL,
+					       fortran, NULL);
+	
+        if(!r) return NULL;
+        if(Assign_Array(r,s) == -1) {
+		Py_DECREF(r);
+		return NULL;
+	}
+        return (PyObject*)r;
+}
+
+/* isobject means that we are constructing an
+   object array on-purpose with a nested list.
+   Only a list is interpreted as a sequence with these rules
+ */
 /* steals reference to typecode */
 static PyObject *
 Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
-		   int min_depth, int max_depth)
+		   int min_depth, int max_depth, int isobject)
 {
         PyArrayObject *r;
         int nd;
@@ -6913,6 +6986,9 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 	int check_it;
 	int type = typecode->type_num;
 	int itemsize = typecode->elsize;
+
+	if (isobject) 
+		return ObjectArray_FromNestedList(s, typecode, fortran);
 
 	stop_at_string = ((type == PyArray_OBJECT) ||	\
 			  (type == PyArray_STRING && \
@@ -6926,7 +7002,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
         if (!((nd=discover_depth(s, MAX_DIMS+1, stop_at_string,
 				 stop_at_tuple)) > 0)) {
 		if (nd==0)
-			return Array_FromScalar(s, typecode);
+			return Array_FromPyScalar(s, typecode);
                 PyErr_SetString(PyExc_ValueError,
 				"invalid input sequence");
 		goto fail;
@@ -7944,7 +8020,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 	} else if (newtype == NULL &&
                    (newtype = _array_find_python_scalar_type(op))) {
 	    if (flags & UPDATEIFCOPY) goto err;
-            r = Array_FromScalar(op, newtype);
+            r = Array_FromPyScalar(op, newtype);
         }
         else if (((r = PyArray_FromStructInterface(op))!=Py_NotImplemented)|| \
                  ((r = PyArray_FromInterface(op)) != Py_NotImplemented) || \
@@ -7960,9 +8036,14 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 }
         }
 	else {
+		int isobject;
 		if (flags & UPDATEIFCOPY) goto err;
+		isobject = 0;
 		if (newtype == NULL) {
 			newtype = _array_find_type(op, NULL, MAX_DIMS);
+		}
+		else if (newtype->type_num == PyArray_OBJECT) {
+			isobject = 1;
 		}
 		if (PySequence_Check(op)) {
 			PyObject *thiserr;
@@ -7970,7 +8051,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
 			Py_INCREF(newtype);
 			r = Array_FromSequence(op, newtype, flags & FORTRAN,
-					       min_depth, max_depth);
+					       min_depth, max_depth, isobject);
 			if (r == NULL && \
 			    ((thiserr = PyErr_Occurred()) &&		\
 			     !PyErr_GivenExceptionMatches(thiserr, 
@@ -7985,7 +8066,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 			}
                 }
                 if (!seq)
-			r = Array_FromScalar(op, newtype);
+			r = Array_FromPyScalar(op, newtype);
 	}
 
         /* If we didn't succeed return NULL */

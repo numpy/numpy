@@ -6387,6 +6387,10 @@ PyMODINIT_FUNC initmultiarray(void) {
 	PyDict_SetItemString(d, "BUFSIZE", s);
 	Py_DECREF(s);
 
+	s = PyInt_FromLong(NPY_MAXDIMS);
+	PyDict_SetItemString(d, "MAXDIMS", s);
+	Py_DECREF(s);
+
         Py_INCREF(&PyArray_Type);
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
         Py_INCREF(&PyArrayIter_Type);
