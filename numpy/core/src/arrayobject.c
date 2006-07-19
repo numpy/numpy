@@ -5562,11 +5562,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                         "requested array");
                         goto fail;
                 }
-                if (descr->hasobject) {
-                        PyErr_SetString(PyExc_TypeError, "cannot construct " \
-                                        "an object array from buffer data");
-                        goto fail;
-                }
                 /* get writeable and aligned */
                 if (fortran) buffer.flags |= FORTRAN;
                 ret = (PyArrayObject *)\

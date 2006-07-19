@@ -122,6 +122,8 @@ class matrix(N.ndarray):
 
     def __getitem__(self, index):
         out = N.ndarray.__getitem__(self, index)
+        if not isinstance(out, matrix):
+            return out
         # Need to swap if slice is on first index
         # or there is an integer on the second
         retscal = False
