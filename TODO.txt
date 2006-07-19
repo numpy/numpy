@@ -1,9 +1,0 @@
-Extend RichCompare function for arrays to handle string and unicode types
-  using comparisons in C. 
-
-Fix reduce, accumululate, and reduceat buffered method to be similar
-  to the fix for the generic function (use a specialized inner loop, 
-  but other than that it should be the same code as NOBUFFER...)
-
-Add specialized scalar math functions so that scalars do not go through 
-  the ufunc machinery but still use error-setting mode.
