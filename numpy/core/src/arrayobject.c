@@ -2783,7 +2783,8 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 		return -1;
 	}
 
-	if (PyInt_Check(index) || PyArray_IsScalar(index, Integer)) {
+	if (PyInt_Check(index) || PyArray_IsScalar(index, Integer) || 
+	    PyLong_Check(index)) {
 		intp value;
 		value = PyArray_PyIntAsIntp(index);
 		if (PyErr_Occurred())
@@ -2827,9 +2828,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
         }
 
 	/* optimization for integer-tuple */
-	if ((PyInt_Check(index) || PyArray_IsScalar(index, Integer) ||	\
-	     PyLong_Check(index) ||					\
-	     (PyTuple_Check(index) && (PyTuple_GET_SIZE(index) == self->nd))) \
+	if (self->nd > 1 && (PyTuple_Check(index) && (PyTuple_GET_SIZE(index) == self->nd)) \
 	    && PyArray_IntpFromSequence(index, vals, self->nd) == self->nd) {
 		int i;
 		char *item;
@@ -7257,7 +7256,7 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 		memset(buffers[1], 0, N*selsize);
 
 #if NPY_ALLOW_THREADS 
-	if (!PyArray_ISEXTENDED(in) && !PyArray_ISEXTENDED(out)) {
+	if (PyArray_ISNUMBER(in) && PyArray_ISNUMBER(out)) {
 		NPY_BEGIN_THREADS		       
 			}
 #endif
@@ -7274,7 +7273,7 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 		PyArray_MultiIter_NEXT(multi);
 	}
 #if NPY_ALLOW_THREADS
-	if (!PyArray_ISEXTENDED(in) && !PyArray_ISEXTENDED(out)) {
+	if (PyArray_ISNUMBER(in) && PyArray_ISNUMBER(out)) {
 		NPY_END_THREADS		       
 			}
 #endif
@@ -7335,13 +7334,13 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 	if (simple) {
 
 #if NPY_ALLOW_THREADS
-		if (!PyArray_ISEXTENDED(mp) && !PyArray_ISEXTENDED(out)) {
+		if (PyArray_ISNUMBER(mp) && PyArray_ISNUMBER(out)) {
 			NPY_BEGIN_THREADS }
 #endif
 		castfunc(mp->data, out->data, mpsize, mp, out);
 
 #if NPY_ALLOW_THREADS
-		if (!PyArray_ISEXTENDED(mp) && !PyArray_ISEXTENDED(out)) {
+		if (PyArray_ISNUMBER(mp) && PyArray_ISNUMBER(out)) {
 			NPY_END_THREADS   }
 #endif
 		return 0;

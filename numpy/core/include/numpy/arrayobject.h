@@ -1292,6 +1292,7 @@ typedef struct {
 
 #define PyTypeNum_ISOBJECT(type) ((type) == NPY_OBJECT)
 
+
 #define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(_PyADt(obj))
 #define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(((PyArray_Descr*)obj)->type_num)
 #define PyDataType_ISSIGNED(obj) PyTypeNum_ISSIGNED(((PyArray_Descr*)obj)->type_num)
