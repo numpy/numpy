@@ -491,17 +491,28 @@ def trim_zeros(filt, trim='fb'):
             else: last = last - 1
     return filt[first:last]
 
-def unique(inseq):
-    """Return unique items (in sorted order) from a 1-dimensional sequence.
-    """
-    # Dictionary setting is quite fast.
-    set = {}
-    for item in inseq:
-        set[item] = None
-    val = asarray(set.keys())
-    val.sort()
-    return val
 
+import sys
+if sys.hexversion < 0x2040000:
+   from sets import Set as set
+
+def unique(x):
+    """Return sorted unique items from an array or sequence.
+
+    Example:
+    >>> unique([5,2,4,0,4,4,2,2,1])
+    array([0,1,2,4,5])
+    """
+    try:
+        tmp = x.flatten()
+        tmp.sort()
+        idx = concatenate(([True],tmp[1:]!=tmp[:-1]))
+        return tmp[idx]
+    except AttributeError:
+        items = list(set(x))
+        items.sort()
+        return asarray(items)
+        
 def extract(condition, arr):
     """Return the elements of ravel(arr) where ravel(condition) is True
     (in 1D).

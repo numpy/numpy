@@ -353,7 +353,15 @@ class test_histogram(NumpyTestCase):
         (a,b)=histogram(linspace(0,10,100))
         assert(all(a==10))
 
-
+class test_unique(NumpyTestCase):
+    def check_simple(self):
+        x = array([4,3,2,1,1,2,3,4, 0])
+        assert(all(unique(x) == [0,1,2,3,4]))
+        assert(unique(array([1,1,1,1,1])) == array([1]))
+        x = ['widget', 'ham', 'foo', 'bar', 'foo', 'ham']
+        assert(all(unique(x) ==  ['bar', 'foo', 'ham', 'widget']))
+        x = array([5+6j, 1+1j, 1+10j, 10, 5+6j])
+        assert(all(unique(x) == [1+1j, 1+10j, 5+6j, 10]))
 
 def compare_results(res,desired):
     for i in range(len(desired)):
