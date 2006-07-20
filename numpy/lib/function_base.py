@@ -22,8 +22,7 @@ from numpy.core.numerictypes import typecodes
 from numpy.lib.shape_base import atleast_1d
 from numpy.lib.twodim_base import diag
 from _compiled_base import _insert, add_docstring
-from _compiled_base import digitize as _digitize
-from _compiled_base import bincount as _bincount
+from _compiled_base import digitize, bincount
 
 #end Fernando's utilities
 
@@ -395,19 +394,18 @@ def diff(a, n=1, axis=-1):
     else:
         return a[slice1]-a[slice2]
 
-def digitize(x,bins):
-    """For each value in x, return the index of the bin to which it belongs.
-
+add_docstring(digitize, 
+   r"""(x,bins) --> index of the bin to which each value of x belongs.
+   
     Each index i returned is such that bins[i-1] <= x < bins[i] if
     bins is monotonically increasing, or bins [i-1] > x >= bins[i] if
     bins is monotonically decreasing.
 
     Beyond the bounds of the bins 0 or len(bins) is returned as appropriate.
-    """
-    return _digitize(x,bins)
+    """)
 
-def bincount(x,weights=None):
-    """Count the number of occurrences of each value in x.
+add_docstring(bincount,
+   r"""(x,weights=None) --> the number of occurrences of each value in x.
 
     x must be a list of non-negative integers.  The output, b[i],
     represents the number of times that i is found in x.  If weights
@@ -415,8 +413,16 @@ def bincount(x,weights=None):
     weights[p] instead of 1.
 
     See also: histogram, digitize, unique.
-    """
-    return _bincount(x,weights)
+    """)
+
+add_docstring(add_docstring,
+   r"""(obj, docstring) --> None
+
+   Add a docstring to a built-in obj if possible.
+   If the obj already has a docstring raise a RuntimeError
+   If this routine does not know how to add a docstring to the object
+      raise a TypeError
+   """)
     
 def angle(z, deg=0):
     """Return the angle of the complex argument z.
@@ -925,6 +931,20 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
 #always succeed
 def add_newdoc(place, obj, doc):
+    """Adds documentation to obj which is in module place. 
+
+    If doc is a string add it to obj as a docstring
+
+    If doc is a tuple, then the first element is interpreted as
+       an attribute of obj and the second as the docstring
+          (method, docstring)
+          
+    If doc is a list, then each element of the list should be a
+       sequence of length two --> [(method1, docstring1),
+       (method2, docstring2), ...]
+
+    This routine never raises an error. 
+       """
     try:
         new = {}
         exec 'from %s import %s' % (place, obj) in new

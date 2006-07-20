@@ -464,6 +464,13 @@ def round_(a, decimals=0):
 around = round_
 
 def mean(a, axis=0, dtype=None):
+    """mean(a, axis=0, dtype=None)
+    Return the arithmetic mean.
+    
+    The mean is the sum of the elements divided by the number of elements. 
+    
+    See also: average
+    """
     try:
         mean = a.mean
     except AttributeError:
@@ -476,8 +483,8 @@ def std(a, axis=0, dtype=None):
 
     The standard deviation is the square root of the average of the squared
     deviations from the mean, i.e. std = sqrt(mean((x - x.mean())**2)).
-
-    For multidimensional arrays, std is computed by default along the first axis.
+    
+    See also: var
     """
     try:
         std = a.std
@@ -486,6 +493,14 @@ def std(a, axis=0, dtype=None):
     return std(axis, dtype)
 
 def var(a, axis=0, dtype=None):
+    """var(sample, axis=0, dtype=None)
+    Return the variance, a measure of the spread of a distribution.
+
+    The variance is the average of the squared deviations from the mean,
+    i.e. var = mean((x - x.mean())**2).
+    
+    See also: std
+    """
     try:
         var = a.var
     except AttributeError:

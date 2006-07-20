@@ -34,7 +34,7 @@ def get_include():
     assert len(include_dirs)==1,`include_dirs`
     return include_dirs[0]
 
-def get_numarray_include():
+def get_numarray_include(type=None):
     """Return the directory in the package that contains the numpy/*.h header
     files.
 
@@ -46,8 +46,12 @@ def get_numarray_include():
                 include_dirs=[numpy.get_include()])
     """
     from numpy.numarray import get_numarray_include_dirs
+    from numpy.distutils.misc_util import get_numpy_include_dirs
     include_dirs = get_numarray_include_dirs()
-    return include_dirs[0]
+    if type is None:
+        return include_dirs[0]
+    else:
+        return include_dirs + get_numpy_include_dirs()
 
 
 # Adapted from Albert Strasheim
