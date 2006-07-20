@@ -8233,8 +8233,8 @@ PyArray_EnsureArray(PyObject *op)
 	if (PyArray_Check(op)) {
 		new = PyArray_View((PyArrayObject *)op, NULL, &PyArray_Type);
 		Py_DECREF(op);
+		return new;
 	}
-	
         if (PyArray_IsScalar(op, Generic)) {
                 new = PyArray_FromScalar(op, NULL);
                 Py_DECREF(op);

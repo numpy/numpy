@@ -138,7 +138,7 @@ class test_histogram2d(NumpyTestCase):
         y = array([ 0.09233859,  0.18626021,  0.34556073,  0.39676747,  0.53881673])
         xedges = np.linspace(0,1,10)
         yedges = np.linspace(0,1,10)
-        H = np.histogram2d(x,y, (xedges, yedges))[0]
+        H = np.histogram2d(x, y, (xedges, yedges))[0]
         answer = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 1, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0, 0],

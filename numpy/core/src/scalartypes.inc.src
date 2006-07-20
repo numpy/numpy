@@ -742,6 +742,12 @@ gentype_struct_get(PyObject *self)
 }
 
 static PyObject *
+gentype_priority_get(PyObject *self)
+{
+	return PyFloat_FromDouble(NPY_SCALAR_PRIORITY);
+}
+
+static PyObject *
 gentype_typestr_get(PyObject *self)
 {
 	PyArrayObject *arr;
@@ -1000,8 +1006,10 @@ static PyGetSetDef gentype_getsets[] = {
          (getter)gentype_struct_get,
          NULL,
          "Array protocol: struct"},
-	/* Does not have __array_priority__ because it is not a subtype.
-	 */
+	{"__array_priority__",
+	 (getter)gentype_priority_get,
+	 NULL,
+	 "Array priority."},
        	{NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 

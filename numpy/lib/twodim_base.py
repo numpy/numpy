@@ -124,10 +124,6 @@ def vander(x, N=None):
         X[:,i] = x**(N-i-1)
     return X
 
-
-# David Huard, June 2006
-# Adapted for python from the matlab function hist2d written by Laszlo Balkay, 2006.
-# Numpy compatible license. 
 def  histogram2d(x,y, bins, normed = False):
     """Compute the 2D histogram for a dataset (x,y) given the edges or
          the number of bins. 
@@ -151,21 +147,23 @@ def  histogram2d(x,y, bins, normed = False):
             xedges = np.linspace(x.min(), x.max(), xnbin+1)
             
         else:
-            xedges = bins[0]
+            xedges = asarray(bins[0], float)
             xnbin = len(xedges)-1
         
         if np.isscalar(bins[1]):
             ynbin = bins[1]
             yedges = np.linspace(y.min(), y.max(), ynbin+1)
         else:
-            yedges = bins[1]
+            yedges = asarray(bins[1], float)
             ynbin = len(yedges)-1
     elif N == 1:
         ynbin = xnbin = bins[0]
         xedges = np.linspace(x.min(), x.max(), xnbin+1)
         yedges = np.linspace(y.max(), y.min(), ynbin+1)
+        xedges[-1] *= 1.0001
+        yedges[-1] *= 1.0001         
     else:
-        yedges = asarray(bins)
+        yedges = asarray(bins, float)
         xedges = yedges.copy()
         ynbin = len(yedges)-1
         xnbin = len(xedges)-1
@@ -186,18 +184,16 @@ def  histogram2d(x,y, bins, normed = False):
     # Compute the sample indices in the flattened histogram matrix.
     if xnbin >= ynbin:
         xy = ybin*(xnbin) + xbin
-        shift = xnbin
+        shift = xnbin + 1
     else:
         xy = xbin*(ynbin) + ybin
-        shift = ynbin
+        shift = ynbin + 1
        
     # Compute the number of repetitions in xy and assign it to the flattened
     #  histogram matrix.
-    edges = np.unique(xy) 
-    edges.sort()
-    flatcount = np.histogram(xy, edges)[0]
-    indices = edges - shift - 1
-    hist[indices] = flatcount
+    flatcount = np.bincount(xy)
+    indices = np.arange(len(flatcount)-shift)
+    hist[indices] = flatcount[shift:]
 
     # Shape into a proper matrix
     histmat = hist.reshape(xnbin, ynbin)

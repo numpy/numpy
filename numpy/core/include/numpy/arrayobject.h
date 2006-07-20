@@ -127,6 +127,9 @@ enum NPY_TYPES {    NPY_BOOL=0,
 /* default subtype priority */
 #define NPY_SUBTYPE_PRIORITY 1.0
 
+/* default scalar priority */
+#define NPY_SCALAR_PRIORITY -1000000.0
+
 /* How many floating point types are there */
 #define NPY_NUM_FLOATTYPE 3
 
