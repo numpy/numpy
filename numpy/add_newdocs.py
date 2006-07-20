@@ -9,7 +9,7 @@ add_newdoc('numpy.core','dtype',
              "Little-endian (<), big-endian (>), native (=), or "\
              "not-applicable (|)"),
             ('char', "Letter typecode for this data-type"),
-            ('type', "Typeobject associated with this data-type"),
+            ('type', "Type object associated with this data-type"),
             ('kind', "Character giving type-family of this data-type"),
             ('itemsize', "Size of each item"),
             ('hasobject', "Non-zero if Python objects are in "\
