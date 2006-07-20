@@ -257,6 +257,30 @@ class test_regression(NumpyTestCase):
                          [2,2.2,'2.0']],dtype=descr)
         x[0].tolist()
         [i for i in x[0]]
-        
+
+    def check_unicode_string_comparison(self,level=rlevel):
+        """Ticket #190"""
+        a = N.array('hello',N.unicode_)
+        b = N.array('world')
+        a == b
+
+    def check_tostring_FORTRANORDER_discontiguous(self,level=rlevel):
+        """Fix in r2836"""
+        # Create discontiguous Fortran-ordered array
+        x = N.empty((3,3),order='F')[:,:2]
+        assert_array_almost_equal(x.ravel(),N.fromstring(x.tostring()))
+
+    def check_flat_assignment(self,level=rlevel):
+        """Correct behaviour of ticket #194"""
+        x = N.empty((3,1))
+        x.flat = N.arange(3)
+        assert_array_almost_equal(x,[[0],[1],[2]])
+
+    def check_broadcast_flat_assignment(self,level=rlevel):
+        """Invalid ticket #194"""
+        x = N.empty((3,1))
+        x[:] = N.arange(3)
+        assert_array_almost_equal(x,[[2],[2],[2]])
+
 if __name__ == "__main__":
     NumpyTest().run()
