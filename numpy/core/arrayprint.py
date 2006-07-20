@@ -57,7 +57,7 @@ else:
     min_reduce = _uf.minimum.reduce
 
 _summaryEdgeItems = 3     # repr N leading and trailing items of each dimension
-_summaryThreshhold = 1000 # total items > triggers array summarization
+_summaryThreshold = 1000 # total items > triggers array summarization
 
 _float_output_precision = 8
 _float_output_suppress_small = False
@@ -85,12 +85,12 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
                    (default False)
     """
 
-    global _summaryThreshhold, _summaryEdgeItems, _float_output_precision, \
+    global _summaryThreshold, _summaryEdgeItems, _float_output_precision, \
            _line_width, _float_output_suppress_small
     if (linewidth is not None):
         _line_width = linewidth
     if (threshold is not None):
-        _summaryThreshhold = threshold
+        _summaryThreshold = threshold
     if (edgeitems is not None):
         _summaryEdgeItems = edgeitems
     if (precision is not None):
@@ -100,7 +100,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     return
 
 def get_printoptions():
-    return _float_output_precision, _summaryThreshhold, _summaryEdgeItems, \
+    return _float_output_precision, _summaryThreshold, _summaryEdgeItems, \
            _line_width, _float_output_suppress_small
 
 
@@ -134,7 +134,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     if suppress_small is None:
         suppress_small = _float_output_suppress_small
 
-    if a.size > _summaryThreshhold:
+    if a.size > _summaryThreshold:
         summary_insert = "..., "
         data = _leading_trailing(a)
     else:
