@@ -11,6 +11,7 @@ cdef extern from "Python.h":
     # String API
     char* PyString_AsString(object string)
     object PyString_FromString(char* c_string)
+    object PyString_FromStringAndSize(char* c_string, int length)
 
     # Memory API
     void* PyMem_Malloc(size_t n)

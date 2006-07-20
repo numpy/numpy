@@ -410,7 +410,7 @@ cdef class RandomState:
         cdef void *bytes
         bytes = PyMem_Malloc(length)
         rk_fill(bytes, length, self.internal_state)
-        bytestring = PyString_FromString(<char*>bytes)
+        bytestring = PyString_FromStringAndSize(<char*>bytes, length)
         PyMem_Free(bytes)
         return bytestring
 
