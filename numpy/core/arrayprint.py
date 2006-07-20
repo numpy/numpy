@@ -2,8 +2,7 @@
 
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 """
-__all__ = ["set_summary", "summary_off", "set_precision", "set_line_width",
-           "array2string"]
+__all__ = ["array2string", "set_printoptions", "get_printoptions"]
 
 #
 # Written by Konrad Hinsen <hinsenk@ere.umontreal.ca>
