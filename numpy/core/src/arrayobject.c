@@ -4293,6 +4293,9 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
     memory at each location directly (using string-code).
  */
 
+static PyObject *array_richcompare(PyArrayObject *, PyObject *, int);
+
+
 static PyObject *
 _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op) 
 {
@@ -4304,16 +4307,15 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 	if (PyArray_HASFIELDS(self)) {
 		PyObject *res=NULL, *temp, *a, *b;
                 PyObject *key, *value, *temp2;
-		PyObject *op, *op2;
+		PyObject *op;
                 int pos=0;
-		op = (cmp_op == Py_EQ ? n_ops.equal : n_ops.not_equal);
-		op2 = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
+		op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
                 while (PyDict_Next(self->descr->fields, &pos, &key, &value)) {
-			a = array_subscript(self, key);
+			a = PyArray_EnsureAnyArray(array_subscript(self, key));
 			if (a==NULL) {Py_XDECREF(res); return NULL;}
 			b = array_subscript(other, key);
 			if (b==NULL) {Py_XDECREF(res); Py_DECREF(a); return NULL;}
-			temp = PyObject_CallFunction(op, "OO", a, b);
+			temp = array_richcompare((PyArrayObject *)a,b,cmp_op);
 			Py_DECREF(a);
 			Py_DECREF(b);
 			if (temp == NULL) {Py_XDECREF(res); return NULL;}
@@ -4321,7 +4323,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 				res = temp;
 			}
 			else {
-				temp2 = PyObject_CallFunction(op2, "OO", res, temp);
+				temp2 = PyObject_CallFunction(op, "OO", res, temp);
 				Py_DECREF(temp);
 				Py_DECREF(res);
 				if (temp2 == NULL) return NULL;
