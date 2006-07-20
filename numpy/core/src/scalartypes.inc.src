@@ -1689,6 +1689,7 @@ object_arrtype_dealloc(PyObject *v)
 		sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, num); \
 		ret = sup->tp_new(type, args, kwds); \
 		if (ret) return ret; \
+		if (PyTuple_GET_SIZE(args)!=1) return NULL; \
 		PyErr_Clear(); \
 		/* now do default conversion */ \
 	} 
