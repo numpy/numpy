@@ -440,16 +440,14 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	FILE *fd;
         char *sep="";
 	char *format="";
-	char *mode="";
 	static char *kwlist[] = {"file", "sep", "format", NULL};
         
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ss", kwlist, 
                                          &file, &sep, &format)) return NULL;
 
 	if (PyString_Check(file)) {
-		if (sep == "") mode="wb";
-		else mode="w";
-		file = PyFile_FromString(PyString_AS_STRING(file), mode);
+		file = PyObject_CallFunction((PyObject *)&PyFile_Type,
+					     "Os", file, "wb");
 		if (file==NULL) return NULL;
 	}
 	else {

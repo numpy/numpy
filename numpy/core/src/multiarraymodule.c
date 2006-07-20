@@ -5351,7 +5351,6 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 	PyObject *file=NULL, *ret;
 	FILE *fp;
 	char *sep="";
-	char *mode=NULL;
 	longlong nin=-1;
 	static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
 	PyArray_Descr *type=NULL;
@@ -5366,9 +5365,8 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 	if (type == NULL) type = PyArray_DescrFromType(PyArray_DEFAULT);
 
 	if (PyString_Check(file)) {
-		if (sep == "") mode="rb";
-		else mode="r";
-		file = PyFile_FromString(PyString_AS_STRING(file), mode);
+		file = PyObject_CallFunction((PyObject *)&PyFile_Type,
+					     "Os", file, "rb");
 		if (file==NULL) return NULL;
 	}
 	else {
