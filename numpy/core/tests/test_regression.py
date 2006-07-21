@@ -267,7 +267,7 @@ class test_regression(NumpyTestCase):
     def check_tostring_FORTRANORDER_discontiguous(self,level=rlevel):
         """Fix in r2836"""
         # Create discontiguous Fortran-ordered array
-        x = N.empty((3,3),order='F')[:,:2]
+        x = N.array(N.random.rand(3,3),order='F')[:,:2]
         assert_array_almost_equal(x.ravel(),N.fromstring(x.tostring()))
 
     def check_flat_assignment(self,level=rlevel):
