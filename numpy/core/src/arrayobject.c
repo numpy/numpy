@@ -921,6 +921,15 @@ _broadcast_copy(PyArrayObject *dest, PyArrayObject *src,
 	elsize = PyArray_ITEMSIZE(dest);
 	multi = (PyArrayMultiIterObject *)PyArray_MultiIterNew(2, dest, src);
 	if (multi == NULL) return -1;
+
+	if (multi->size != PyArray_SIZE(dest)) {
+		PyErr_SetString(PyExc_ValueError,
+				"array dimensions are not "\
+				"compatible for copy");
+		Py_DECREF(multi);
+		return -1;
+	}
+
 	maxaxis = PyArray_RemoveLargest(multi);
 	if (maxaxis < 0) { /* copy 1 0-d array to another */
 		PyArray_XDECREF(dest);
@@ -7225,6 +7234,15 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 	selsize = PyArray_ITEMSIZE(in);
 	multi = (PyArrayMultiIterObject *)PyArray_MultiIterNew(2, out, in);
 	if (multi == NULL) return -1;
+
+	if (multi->size != PyArray_SIZE(out)) {
+		PyErr_SetString(PyExc_ValueError,
+				"array dimensions are not "\
+				"compatible for copy");
+		Py_DECREF(multi);
+		return -1;
+	}
+	
 	icopyfunc = in->descr->f->copyswapn;
 	ocopyfunc = out->descr->f->copyswapn;
 	maxaxis = PyArray_RemoveLargest(multi);
