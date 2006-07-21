@@ -35,12 +35,27 @@ def configuration(parent_package='',top_path=None):
                                         library_dirs = default_lib_dirs)
             if not result:
                 raise "ERROR: Failed to test configuration"
-            # Perhaps a fancier check is in order here.
-            try:
-                nosmp = os.environ['NPY_NOSMP']
+
+                # Python 2.3 causes a segfault when
+                #  trying to re-acquire the thread-state
+                #  which is done in error-handling
+                #  ufunc code.  NPY_ALLOW_C_API and friends
+                #  cause the segfault. So, we disable threading
+                #  for now. 
+            if sys.version[:3] < '2.4':
                 nosmp = 1
-            except KeyError:
-                nosmp = 0
+            else:
+                # Perhaps a fancier check is in order here.
+                #  so that threads are only enabled if there
+                #  are actually multiple CPUS? -- but
+                #  threaded code can be nice even on a single
+                #  CPU so that long-calculating code doesn't
+                #  block. 
+                try:
+                    nosmp = os.environ['NPY_NOSMP']
+                    nosmp = 1
+                except KeyError:
+                    nosmp = 0
             if nosmp: moredefs = [('NPY_ALLOW_THREADS', '0')]
             else: moredefs = []                
             #

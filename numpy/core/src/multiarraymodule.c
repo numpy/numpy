@@ -680,9 +680,13 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, int variance)
 		ret = PyArray_GenericUnaryFunction((PyAO *)obj1, n_ops.sqrt);
 		Py_DECREF(obj1);
 	}
-	if (PyArray_CheckExact(self)) return ret;
-	ret = PyArray_EnsureArray(ret);
-	return PyArray_View((PyAO *)ret, NULL, self->ob_type);
+	if (ret == NULL || PyArray_CheckExact(self)) return ret;
+	if (PyArray_Check(self) && self->ob_type == ret->ob_type) return ret;
+	obj1 = PyArray_EnsureArray(ret);
+	if (obj1 == NULL) return NULL;
+	ret = PyArray_View((PyAO *)obj1, NULL, self->ob_type);
+	Py_DECREF(obj1);
+	return ret;
 }
 
 
@@ -3059,7 +3063,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis)
 
 	/* We need to permute the array so that axis is placed at the end.
 	   And all other dimensions are shifted left.
-	 */
+	*/
 	if (axis != ap->nd-1) {
 		PyArray_Dims newaxes;
 		intp dims[MAX_DIMS];
