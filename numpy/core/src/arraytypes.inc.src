@@ -449,6 +449,13 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 	}
 
  finish:
+	if (descr->hasobject) {
+		PyErr_SetString(PyExc_ValueError, 
+				"tried to get void-array with object"
+				" members as buffer.");
+		return NULL;
+	}
+
 	itemsize=ap->descr->elsize;
 	if (PyArray_ISWRITEABLE(ap))
 		u = PyBuffer_FromReadWriteMemory(ip, itemsize);
@@ -550,6 +557,12 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 	{
 		const void *buffer;
 		int buflen;
+		if (descr->hasobject) {
+			PyErr_SetString(PyExc_ValueError, 
+					"tried to set void-array with object"
+					" members using buffer.");
+		        return -1;
+		}
 		res = PyObject_AsReadBuffer(op, &buffer, &buflen);
 		if (res == -1) goto fail;
 		memcpy(ip, buffer, MIN(buflen, itemsize));
