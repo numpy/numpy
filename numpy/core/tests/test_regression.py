@@ -1,4 +1,6 @@
 from numpy.testing import *
+from StringIO import StringIO
+import pickle
 
 set_local_path()
 import numpy as N
@@ -18,14 +20,12 @@ class test_regression(NumpyTestCase):
 
     def check_pickle_transposed(self,level=rlevel):
         """Ticket #16"""
-        import pickle
-        import tempfile
-        
         a = N.transpose(N.array([[2,9],[7,0],[3,8]]))
-        f = tempfile.TemporaryFile()
+        f = StringIO()
         pickle.dump(a,f)
         f.seek(0)
         b = pickle.load(f)
+        f.close()
         assert_array_equal(a,b)
 
     def check_masked_array_create(self,level=rlevel):
@@ -75,11 +75,12 @@ class test_regression(NumpyTestCase):
     def check_char_dump(self,level=rlevel):
         """Ticket #50"""
         import tempfile
-        f = tempfile.TemporaryFile()        
+        f = StringIO()
         ca = N.char.array(N.arange(1000,1010),itemsize=4)
         ca.dump(f)
         f.seek(0)
         ca = N.load(f)
+        f.close()
 
     def check_noncontiguous_fill(self,level=rlevel):
         """Ticket #58."""
@@ -285,6 +286,21 @@ class test_regression(NumpyTestCase):
         def bfb(): x[:] = N.arange(3,dtype=float)
         self.failUnlessRaises(ValueError, bfa)
         self.failUnlessRaises(ValueError, bfb)
+
+    def check_unpickle_dtype_with_object(self,level=rlevel):
+        """Implemented in r2840"""
+        dt = N.dtype([('x',int),('y',N.object_),('z','O')])
+        f = StringIO()
+        pickle.dump(dt,f)
+        f.seek(0)
+        dt_ = pickle.load(f)
+        f.close()
+        assert_equal(dt,dt_)
+
+    def check_array_creation_invalid_object(self,level=rlevel):
+        """Ticket #196"""
+        dt = N.dtype([('x',int),('y',N.object_)])
+        self.failUnlessRaises(ValueError, N.array, [1,'object'], dt)
 
 if __name__ == "__main__":
     NumpyTest().run()
