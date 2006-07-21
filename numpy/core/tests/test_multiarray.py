@@ -353,6 +353,7 @@ class test_newaxis(NumpyTestCase):
 # Import tests from unicode
 set_local_path()
 from test_unicode import *
+from test_regression import *
 restore_path()
 
 if __name__ == "__main__":
