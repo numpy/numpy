@@ -275,12 +275,16 @@ class test_regression(NumpyTestCase):
         x = N.empty((3,1))
         x.flat = N.arange(3)
         assert_array_almost_equal(x,[[0],[1],[2]])
+        x.flat = N.arange(3,dtype=float)
+        assert_array_almost_equal(x,[[0],[1],[2]])
 
     def check_broadcast_flat_assignment(self,level=rlevel):
         """Ticket #194"""
         x = N.empty((3,1))
         def bfa(): x[:] = N.arange(3)
+        def bfb(): x[:] = N.arange(3,dtype=float)
         self.failUnlessRaises(ValueError, bfa)
+        self.failUnlessRaises(ValueError, bfb)
 
 if __name__ == "__main__":
     NumpyTest().run()
