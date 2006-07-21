@@ -177,6 +177,27 @@ class test_regression(NumpyTestCase):
             N.digitize([1,2,3,4],[1,3])
             N.digitize([0,1,2,3,4],[1,3])
 
+    def check_intp(self,level=rlevel):
+        """Ticket #99"""
+        self.failUnlessRaises(OverflowError,N.intp,'0xb72a7008',16)
+        self.failUnlessRaises(ValueError,N.intp,'0x1',32)
+        assert_equal(255,N.intp('0xFF',16))
+        assert_equal(1024,N.intp(1024))
+
+    def check_fromfile(self,level=rlevel):
+        """Ticket #103"""
+        from tempfile import TemporaryFile
+        import os        
+
+        dt = '<f8'
+        x = N.random.randn(2048,39).astype(dt)
+        f = TemporaryFile()
+        x.tofile(f)
+        f.seek(0)
+        y = N.fromfile(f,dtype=dt)
+        assert_equal(os.fstat(f.fileno())[6], x.size * 8)
+        assert_equal(x.size, y.size)
+
     def check_endian_bool_indexing(self,level=rlevel):
         """Ticket #105"""
         a = N.arange(10.,dtype='>f8')
@@ -297,10 +318,13 @@ class test_regression(NumpyTestCase):
         f.close()
         assert_equal(dt,dt_)
 
-    def check_mem_array_creation_invalid_object(self,level=rlevel):
+    def check_mem_array_creation_invalid_specification(self,level=rlevel):
         """Ticket #196"""
         dt = N.dtype([('x',int),('y',N.object_)])
+        # Wrong way
         self.failUnlessRaises(ValueError, N.array, [1,'object'], dt)
+        # Correct way
+        N.array([(1,'object')],dt)
 
 if __name__ == "__main__":
     NumpyTest().run()
