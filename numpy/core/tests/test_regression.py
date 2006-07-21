@@ -297,7 +297,7 @@ class test_regression(NumpyTestCase):
         f.close()
         assert_equal(dt,dt_)
 
-    def check_array_creation_invalid_object(self,level=rlevel):
+    def check_mem_array_creation_invalid_object(self,level=rlevel):
         """Ticket #196"""
         dt = N.dtype([('x',int),('y',N.object_)])
         self.failUnlessRaises(ValueError, N.array, [1,'object'], dt)
