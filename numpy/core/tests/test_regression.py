@@ -184,20 +184,6 @@ class test_regression(NumpyTestCase):
         assert_equal(255,N.intp('0xFF',16))
         assert_equal(1024,N.intp(1024))
 
-    def check_fromfile(self,level=rlevel):
-        """Ticket #103"""
-        from tempfile import TemporaryFile
-        import os        
-
-        dt = '<f8'
-        x = N.random.randn(2048,39).astype(dt)
-        f = TemporaryFile()
-        x.tofile(f)
-        f.seek(0)
-        y = N.fromfile(f,dtype=dt)
-        assert_equal(os.fstat(f.fileno())[6], x.size * 8)
-        assert_equal(x.size, y.size)
-
     def check_endian_bool_indexing(self,level=rlevel):
         """Ticket #105"""
         a = N.arange(10.,dtype='>f8')
