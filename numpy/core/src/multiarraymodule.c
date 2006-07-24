@@ -3685,7 +3685,7 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
 
 	if (new->elsize && new->elsize != conv->elsize) {
 		PyErr_SetString(PyExc_ValueError, 
-				"mismatch in size of old"\
+				"mismatch in size of old "\
 				"and new data-descriptor");
 		goto fail;
 	}
