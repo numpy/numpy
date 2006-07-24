@@ -5,7 +5,7 @@ from numpy import *
 
 __version__ = N.__version__
 
-__all__ = N.__all__
+__all__ = N.__all__[:] # copy numpy namespace
 __all__ += ['rand', 'randn']
 
 def empty(shape, dtype=None, order='C'):
