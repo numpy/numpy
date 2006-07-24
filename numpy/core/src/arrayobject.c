@@ -10445,13 +10445,30 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 			conv =  _convert_from_dict(odescr, 1);
 		else if PyList_Check(odescr) {
 			conv = _convert_from_list(odescr, 1, 0);
-			if ((conv == NULL) && 
-			    (!PyErr_Occurred())) {
-				PyErr_SetString(PyExc_ValueError,
-						"cannot specify align=1 "\
-						"with array_descriptor "\
-						"specification of the data-"\
-						"type.");
+			if (conv == NULL) {
+				/* There is an errror.  Possibly it's 
+				   because we have an array_descriptor.
+				   Try converting from an array_descriptor. 
+				   If that fails then raise the old error. 
+				*/
+				PyObject *type, *value, *traceback;
+				PyArray_Descr *temp;
+				PyErr_Fetch(&type, &value, &traceback);
+				temp = _convert_from_array_descr(odescr);
+				if (!PyErr_Occurred()) {
+					Py_DECREF(temp);
+					Py_XDECREF(type);
+					Py_XDECREF(value);
+					Py_XDECREF(traceback);
+					PyErr_SetString(PyExc_ValueError,
+							"alignment cannot be True" \
+							" with array_descriptor " \
+							"specification.");
+				}
+				else {
+					PyErr_Restore(type, value, traceback);
+				}
+				return NULL;
 			}
 		}
 		else if PyString_Check(odescr)
