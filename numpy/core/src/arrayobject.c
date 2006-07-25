@@ -10461,7 +10461,7 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 					Py_XDECREF(value);
 					Py_XDECREF(traceback);
 					PyErr_SetString(PyExc_ValueError,
-							"alignment cannot be True" \
+							"align cannot be True" \
 							" with array_descriptor " \
 							"specification.");
 				}
