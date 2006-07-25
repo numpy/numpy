@@ -3990,7 +3990,20 @@ _convert_from_commastring(PyObject *obj, int align)
         listobj = PyObject_CallMethod(_numpy_internal, "_commastring",
 				      "O", obj);
 	if (!listobj) return NULL;
-	res = _convert_from_list(listobj, align, 0);
+	if (!PyList_Check(listobj) || PyList_GET_SIZE(listobj)<1) {
+		PyErr_SetString(PyExc_RuntimeError, "_commastring is "	\
+				"not returning a list with len >= 1");
+		return NULL;
+	}
+	if (PyList_GET_SIZE(listobj) == 1) {
+		if (PyArray_DescrConverter(PyList_GET_ITEM(listobj, 0),
+					   &res) == NPY_FAIL) {
+			res = NULL;
+		}
+	}
+	else {
+		res = _convert_from_list(listobj, align, 0);
+	}
 	Py_DECREF(listobj);
 	if (!res && !PyErr_Occurred()) {
 		PyErr_SetString(PyExc_ValueError, "invalid data-type");
