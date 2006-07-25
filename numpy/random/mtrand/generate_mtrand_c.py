@@ -8,7 +8,6 @@ unused_internal_funcs = ['__Pyx_PrintItem',
                          '__Pyx_ReRaise',
                          '__Pyx_GetExcValue',
                          '__Pyx_ArgTypeTest',
-                         '__Pyx_TypeTest',
                          '__Pyx_SetVtable',
                          '__Pyx_GetVtable',
                          '__Pyx_CreateClass']

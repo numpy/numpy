@@ -165,7 +165,8 @@ def cholesky(a):
     if results['info'] > 0:
         raise LinAlgError, 'Matrix is not positive definite - Cholesky decomposition cannot be computed'
     s = triu(a, k=0).transpose()
-    return array(s, dtype=result_t, copy=True)
+    if (s.dtype != result_t):
+        return s.astype(result_t)
 
 # Eigenvalues
 def eigvals(a):
