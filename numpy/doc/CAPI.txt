@@ -234,45 +234,47 @@ information about the memory used by the array (pointed to by the data member)
 This flags information must be kept accurate or strange results and even
 segfaults may result.
 
-There are 7 (binary) flags that describe the memory area used by the
+There are 6 (binary) flags that describe the memory area used by the
 data buffer.  These constants are defined in ``arrayobject.h`` and
-determine the bit-position of the flag.  Python exposes a nice dictionary
-interface for getting (and, if appropriate, setting) these flags.
+determine the bit-position of the flag.  Python exposes a nice attribute-
+based interface as well as a dictionary-like interface for getting 
+(and, if appropriate, setting) these flags.
 
 Memory areas of all kinds can be pointed to by an ndarray, necessitating
 these flags.  If you get an arbitrary ``PyArrayObject`` in C-code,
 you need to be aware of the flags that are set.
 If you need to guarantee a certain kind of array
-(like ``CONTIGUOUS`` and ``BEHAVED``), then pass these requirements into the
+(like ``NPY_CONTIGUOUS`` and ``NPY_BEHAVED``), then pass these requirements into the
 PyArray_FromAny function.
 
 
-``CONTIGUOUS``
+``NPY_CONTIGUOUS``
     True if the array is (C-style) contiguous in memory.
-``FORTRAN``
+``NPY_FORTRAN``
     True if the array is (Fortran-style) contiguous in memory.
 
-Notice that 1-d arrays are always both ``FORTRAN`` contiguous and C
-contiguous. Both of these flags can be checked and are convenience
-flags only as whether or not an array is ``CONTIGUOUS`` or ``FORTRAN``
+Notice that contiguous 1-d arrays are always both ``NPY_FORTRAN`` contiguous 
+and C contiguous. Both of these flags can be checked and are convenience
+flags only as whether or not an array is ``NPY_CONTIGUOUS`` or ``NPY_FORTRAN``
 can be determined by the ``strides``, ``dimensions``, and ``itemsize``
 attributes.
 
-``OWNDATA``
+``NPY_OWNDATA``
     True if the array owns the memory (it will try and free it using
     ``PyDataMem_FREE()`` on deallocation --- so it better really own it).
 
 These three flags facilitate using a data pointer that is a memory-mapped
 array, or part of some larger record array.  But, they may have other uses...
 
-``ALIGNED``
-    True if the data buffer is aligned for the type. This can be
+``NPY_ALIGNED``
+    True if the data buffer is aligned for the type and the strides
+    are multiples of the alignment factor as well.  This can be
     checked.
 
-``WRITEABLE``
+``NPY_WRITEABLE``
     True only if the data buffer can be "written" to.
 
-``UPDATEIFCOPY``
+``NPY_UPDATEIFCOPY``
     This is a special flag that is set if this array represents a copy
     made because a user required certain flags in ``PyArray_FromAny`` and
     a copy had to be made of some other array (and the user asked for
@@ -287,16 +289,16 @@ array, or part of some larger record array.  But, they may have other uses...
 
 
 ``PyArray_UpdateFlags(obj, flags)`` will update the ``obj->flags`` for
-``flags`` which can be any of ``CONTIGUOUS``, ``FORTRAN``, ``ALIGNED``, or
-``WRITEABLE``.
+``flags`` which can be any of ``NPY_CONTIGUOUS``, ``NPY_FORTRAN``, ``NPY_ALIGNED``, or
+``NPY_WRITEABLE``.
 
 Some useful combinations of these flags:
 
-- ``BEHAVED = ALIGNED | WRITEABLE``
-- ``CARRAY = DEFAULT = CONTIGUOUS | BEHAVED``
-- ``CARRAY_RO = CONTIGUOUS | ALIGNED``
-- ``FARRAY = FORTRAN | BEHAVED``
-- ``FARRAY_RO = FORTRAN | ALIGNED``
+- ``NPY_BEHAVED = NPY_ALIGNED | NPY_WRITEABLE``
+- ``NPY_CARRAY = NPY_DEFAULT = NPY_CONTIGUOUS | NPY_BEHAVED``
+- ``NPY_CARRAY_RO = NPY_CONTIGUOUS | NPY_ALIGNED``
+- ``NPY_FARRAY = NPY_FORTRAN | NPY_BEHAVED``
+- ``NPY_FARRAY_RO = NPY_FORTRAN | NPY_ALIGNED``
 
 The macro ``PyArray_CHECKFLAGS(obj, flags)``  can test any combination of flags.
 There are several default combinations defined as macros already
