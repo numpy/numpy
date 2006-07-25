@@ -167,6 +167,7 @@ def cholesky(a):
     s = triu(a, k=0).transpose()
     if (s.dtype != result_t):
         return s.astype(result_t)
+    return s
 
 # Eigenvalues
 def eigvals(a):
