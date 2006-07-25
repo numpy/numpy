@@ -1211,7 +1211,7 @@ gentype_reduce(PyObject *self, PyObject *args)
 {
 	PyObject *ret=NULL, *obj=NULL, *mod=NULL;
 	const char *buffer; 
-	int buflen;
+	Py_ssize_t buflen;
 
 	/* Return a tuple of (callable object, arguments) */
 

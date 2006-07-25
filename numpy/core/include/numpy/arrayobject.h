@@ -633,9 +633,12 @@ typedef Py_uintptr_t npy_uintp;
 #define NPY_SIZEOF_UINTP SIZEOF_PY_INTPTR_T
 
 #if (PY_VERSION_HEX < 0x02050000)
-typedef int Py_ssize_t;
+typedef int Py_ssize_t
 #define PY_SSIZE_T_MAX INT_MAX
 #define PY_SSIZE_T_MIN INT_MIN
+#define NPY_SSIZE_T_PYFMT "i"
+#else
+#define NPY_SSIZE_T_PYFMT "n"
 #endif
 
 #if SIZEOF_PY_INTPTR_T == SIZEOF_INT

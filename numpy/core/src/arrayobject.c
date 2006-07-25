@@ -4702,7 +4702,7 @@ _IsWriteable(PyArrayObject *ap)
 {
 	PyObject *base=ap->base;
 	void *dummy;
-	int n;
+	Py_ssize_t n;
 
 	/* If we own our own data, then no-problem */
 	if ((base == NULL) || (ap->flags & OWNDATA)) return TRUE;
@@ -5565,8 +5565,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                         dims.ptr[0] = (buffer.len-(intp)offset) / itemsize;
                 }
                 else if ((strides.ptr == NULL) && \
-			 buffer.len < itemsize*				\
-                         PyArray_MultiplyList(dims.ptr, dims.len)) {
+			 (buffer.len < ((intp)itemsize)*		\
+			  PyArray_MultiplyList(dims.ptr, dims.len))) {
                         PyErr_SetString(PyExc_TypeError,
                                         "buffer is too small for "      \
                                         "requested array");
@@ -5684,7 +5684,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 	PyArrayObject *new;
 	intp numbytes=0;
 	intp offset=0;
-	int buf_len;
+	Py_ssize_t buf_len;
 	char *buf;
 
 	if (!PyArray_IntpConverter(obj, &newstrides) || \
@@ -5874,7 +5874,7 @@ static int
 array_data_set(PyArrayObject *self, PyObject *op)
 {
 	void *buf;
-	int buf_len;
+	Py_ssize_t buf_len;
 	int writeable=1;
 
 	if (PyObject_AsWriteBuffer(op, &buf, &buf_len) < 0) {
@@ -7832,7 +7832,7 @@ PyArray_FromInterface(PyObject *input)
         PyArrayObject *ret;
 	PyArray_Descr *type=NULL;
 	char *data;
-	int buffer_len;
+	Py_ssize_t buffer_len;
 	int res, i, n;
 	intp dims[MAX_DIMS], strides[MAX_DIMS];
 	int dataflags = BEHAVED;
@@ -7867,7 +7867,7 @@ PyArray_FromInterface(PyObject *input)
 		}
 		attr = PyDict_GetItemString(inter, "offset");
 		if (attr) {
-			long num = PyInt_AsLong(attr);
+			longlong num = PyLong_AsLongLong(attr);
 			if (error_converting(num)) {
 				PyErr_SetString(PyExc_TypeError,
 						"offset "\

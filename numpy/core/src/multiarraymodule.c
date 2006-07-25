@@ -3578,7 +3578,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
 static int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 {
-        int buflen;
+        Py_ssize_t buflen;
 
         buf->ptr = NULL;
         buf->flags = BEHAVED;
@@ -5395,7 +5395,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 {
 	PyArrayObject *ret;
 	char *data;
-	int ts;
+	Py_ssize_t ts;
 	intp s, n;
 	int itemsize;
 	int write=1;
@@ -6076,11 +6076,12 @@ static PyObject *
 buffer_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
 {
 	PyObject *obj;
-	int offset=0, size=Py_END_OF_BUFFER, n;
+	Py_ssize_t offset=0, size=Py_END_OF_BUFFER, n;
 	void *unused;
 	static char *kwlist[] = {"object", "offset", "size", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ii", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|" NPY_SSIZE_T_PYFMT \
+					 NPY_SSIZE_T_PYFMT, kwlist, 
 					 &obj, &offset, &size))
 		return NULL;
 
