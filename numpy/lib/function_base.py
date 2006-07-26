@@ -511,6 +511,8 @@ def unique(x):
     """
     try:
         tmp = x.flatten()
+        if tmp.size == 0:
+            return tmp
         tmp.sort()
         idx = concatenate(([True],tmp[1:]!=tmp[:-1]))
         return tmp[idx]
