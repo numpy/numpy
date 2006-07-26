@@ -497,7 +497,6 @@ def trim_zeros(filt, trim='fb'):
             else: last = last - 1
     return filt[first:last]
 
-
 import sys
 if sys.hexversion < 0x2040000:
    from sets import Set as set
