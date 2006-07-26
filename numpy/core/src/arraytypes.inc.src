@@ -554,7 +554,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         /* Default is to use buffer interface to set item */
         {
                 const void *buffer;
-                int buflen;
+                Py_ssize_t buflen;
                 if (descr->hasobject) {
                         PyErr_SetString(PyExc_ValueError, 
                                         "tried to set void-array with object"
@@ -1368,7 +1368,6 @@ static Bool
         }
 }
 /**end repeat**/
-
 
 
 #define WHITESPACE " \t\n\r\v\f"

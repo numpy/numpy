@@ -884,7 +884,8 @@ gentype_real_get(PyObject *self)
 
         if (PyArray_IsScalar(self, ComplexFloating)) {
                 typecode = _realdescr_fromcomplexscalar(self, &typenum);
-                ret = PyArray_Scalar(scalar_value(self, NULL), typecode, NULL);
+                ret = PyArray_Scalar(scalar_value(self, NULL), 
+                                     typecode, NULL);
                 Py_DECREF(typecode);
                 return ret;
         }
@@ -1226,7 +1227,7 @@ gentype_reduce(PyObject *self, PyObject *args)
 {
         PyObject *ret=NULL, *obj=NULL, *mod=NULL;
         const char *buffer;
-        int buflen;
+        Py_ssize_t buflen;
 
         /* Return a tuple of (callable object, arguments) */
 
