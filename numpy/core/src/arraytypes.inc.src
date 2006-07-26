@@ -178,13 +178,13 @@ static int
 }
 /**end repeat**/
 
-static PyObject * 
-LONGDOUBLE_getitem(char *ip, PyArrayObject *ap) 
+static PyObject *
+LONGDOUBLE_getitem(char *ip, PyArrayObject *ap)
 {
-        return PyArray_Scalar(ip, ap->descr, NULL);
+	return PyArray_Scalar(ip, ap->descr, NULL);
 }
 
-static int 
+static int
 LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
         longdouble temp;  /* ensures alignment */
 
@@ -192,17 +192,15 @@ LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
                 temp = ((PyLongDoubleScalarObject *)op)->obval;
         }
         else {
-                if (op == Py_None) temp = (longdouble)_getNAN();
-                else temp = (longdouble)PyFloat_AsDouble(op);
+		temp = (longdouble) MyPyFloat_AsDouble(op);
         }
         if (PyErr_Occurred()) return -1;
-        if (ap == NULL || PyArray_ISBEHAVED(ap)) 
+	if (ap == NULL || PyArray_ISBEHAVED(ap))
                 *((longdouble *)ov)=temp;
         else {
                 copy_and_swap(ov, &temp, ap->descr->elsize, 1, 0,
                               !PyArray_ISNOTSWAPPED(ap));
         }
-        
         return 0;
 }
 
