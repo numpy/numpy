@@ -312,6 +312,14 @@ class test_regression(NumpyTestCase):
         # Correct way
         N.array([(1,'object')],dt)
 
+    def check_recarray_single_element(self,level=rlevel):
+        """Ticket #202"""
+        a = N.array([1,2,3],dtype=N.int32)
+        b = a.copy()
+        r = N.rec.array(a,shape=1,formats=['3i4'],names=['d'])
+        assert_array_equal(a,b)
+        assert_equal(a,r[0][0])
+
     def check_zero_sized_array_indexing(self,level=rlevel):
         """Ticket #205"""
         tmp = N.array([])
