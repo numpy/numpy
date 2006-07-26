@@ -117,6 +117,7 @@ cdef extern from "numpy/arrayobject.h":
                                 int flags, object parent)
 
     object PyArray_FROM_OTF(object obj, NPY_TYPES type, int flags)
+    object PyArray_EnsureArray(object)
 
     object PyArray_MultiIterNew(int n, ...)
 

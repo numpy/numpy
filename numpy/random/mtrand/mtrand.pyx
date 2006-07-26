@@ -169,17 +169,18 @@ cdef object cont1_array(rk_state *state, rk_cont1 func, object size, ndarray oa)
             for i from 0 <= i < length:
                 array_data[i] = func(state, oa_data[0])
         else:
-            multi = <broadcast>PyArray_MultiIterNew(2, <void *>array, <void *>oa)
+            multi = <broadcast>PyArray_MultiIterNew(2, <void *>array,
+                                                    <void *>oa)
             if (multi.size != PyArray_SIZE(array)): 
-                raise ValueError("size is not compatible with inputs")                
+                raise ValueError("size is not compatible with inputs")
             for i from 0 <= i < multi.size:
                 oa_data = <double *>PyArray_MultiIter_DATA(multi, 1)
                 array_data[i] = func(state, oa_data[0])
                 PyArray_MultiIter_NEXTi(multi, 1)
     return array
 
-cdef object cont2_array(rk_state *state, rk_cont2 func, object size, ndarray oa, 
-    ndarray ob):
+cdef object cont2_array(rk_state *state, rk_cont2 func, object size,
+                        ndarray oa, ndarray ob):
     cdef double *array_data
     cdef double *oa_data
     cdef double *ob_data
@@ -610,9 +611,13 @@ cdef class RandomState:
         cdef ndarray olow
         cdef ndarray ohigh
         cdef ndarray odiff
+        cdef object temp
         olow = <ndarray>PyArray_FROM_OTF(low, NPY_DOUBLE, NPY_ALIGNED)
         ohigh = <ndarray>PyArray_FROM_OTF(high, NPY_DOUBLE, NPY_ALIGNED)
-        odiff = <ndarray>_sp.subtract(ohigh,olow)
+        temp = _sp.subtract(ohigh, olow)
+        Py_INCREF(temp) # needed to get around Pyrex's automatic reference-counting
+                        #  rules because EnsureArray steals a reference
+        odiff = <ndarray>PyArray_EnsureArray(temp)
         return cont2_array(self.internal_state, rk_uniform, size, olow, odiff)
 
     def rand(self, *args):
