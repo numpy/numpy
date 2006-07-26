@@ -2693,8 +2693,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
         fancy = fancy_indexing_check(op);
 
         if (fancy != SOBJ_NOTFANCY) {
-                oned = ((self->nd == 1) && !(PyTuple_Check(op) &&       \
-                                             PyTuple_GET_SIZE(op) > 1));
+                oned = ((self->nd == 1) && 
+                        !(PyTuple_Check(op) && PyTuple_GET_SIZE(op) > 1));
 
                 /* wrap arguments into a mapiter object */
                 mit = (PyArrayMapIterObject *)\
@@ -2860,8 +2860,8 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
         fancy = fancy_indexing_check(index);
 
         if (fancy != SOBJ_NOTFANCY) {
-                oned = ((self->nd == 1) && !(PyTuple_Check(index) && \
-                                             PyTuple_GET_SIZE(index) > 1));
+                oned = ((self->nd == 1) && 
+                        !(PyTuple_Check(index) && PyTuple_GET_SIZE(index) > 1));
 
                 mit = (PyArrayMapIterObject *)                  \
                         PyArray_MapIterNew(index, oned, fancy);
@@ -8600,7 +8600,13 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
                                 "boolean index array should have 1 dimension");
                 return NULL;
         }
-        index = (ind->dimensions[0]);
+        index = ind->dimensions[0];
+        if (index > self->size) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "too many boolean indices");
+                return NULL;
+        }
+
         strides = ind->strides[0];
         dptr = ind->data;
         /* Get size of return array */
@@ -8652,8 +8658,18 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
         itemsize = self->ao->descr->elsize;
         if (ind->nd == 0) {
                 num = *((intp *)ind->data);
-                PyArray_ITER_GOTO1D(self, num);
-                r = PyArray_ToScalar(self->dataptr, self->ao);
+                if (num < 0) num += self->size;
+                if (num < 0 || num >= self->size) {
+                        PyErr_Format(PyExc_IndexError,
+                                     "index %d out of bounds"   \
+                                     " 0<=index<%d", (int) num,
+                                     (int) self->size);
+                        r = NULL;
+                }
+                else {
+                        PyArray_ITER_GOTO1D(self, num);
+                        r = PyArray_ToScalar(self->dataptr, self->ao);
+                }
                 PyArray_ITER_RESET(self);
                 return r;
         }
@@ -8718,6 +8734,10 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
                 int len;
                 len = PyTuple_GET_SIZE(ind);
                 if (len > 1) goto fail;
+                if (len == 0) {
+                        Py_INCREF(self->ao);
+                        return (PyObject *)self->ao;
+                }
                 ind = PyTuple_GET_ITEM(ind, 0);
         }
 
@@ -9550,6 +9570,12 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
  finish:
         /* Here check the indexes (now that we have iteraxes) */
         mit->size = PyArray_MultiplyList(mit->dimensions, mit->nd);
+        if (mit->ait->size == 0 && mit->size != 0) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "invalid index into a 0-size array");
+                goto fail;
+        }
+        
         for (i=0; i<mit->numiter; i++) {
                 intp indval;
                 it = mit->iters[i];
