@@ -3578,7 +3578,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
 static int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 {
-        int buflen;
+        Py_ssize_t buflen;
 
         buf->ptr = NULL;
         buf->flags = BEHAVED;
@@ -3990,7 +3990,20 @@ _convert_from_commastring(PyObject *obj, int align)
         listobj = PyObject_CallMethod(_numpy_internal, "_commastring",
 				      "O", obj);
 	if (!listobj) return NULL;
-	res = _convert_from_list(listobj, align, 0);
+	if (!PyList_Check(listobj) || PyList_GET_SIZE(listobj)<1) {
+		PyErr_SetString(PyExc_RuntimeError, "_commastring is "	\
+				"not returning a list with len >= 1");
+		return NULL;
+	}
+	if (PyList_GET_SIZE(listobj) == 1) {
+		if (PyArray_DescrConverter(PyList_GET_ITEM(listobj, 0),
+					   &res) == NPY_FAIL) {
+			res = NULL;
+		}
+	}
+	else {
+		res = _convert_from_list(listobj, align, 0);
+	}
 	Py_DECREF(listobj);
 	if (!res && !PyErr_Occurred()) {
 		PyErr_SetString(PyExc_ValueError, "invalid data-type");
@@ -5395,7 +5408,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 {
 	PyArrayObject *ret;
 	char *data;
-	int ts;
+	Py_ssize_t ts;
 	intp s, n;
 	int itemsize;
 	int write=1;
@@ -6076,11 +6089,12 @@ static PyObject *
 buffer_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
 {
 	PyObject *obj;
-	int offset=0, size=Py_END_OF_BUFFER, n;
+	Py_ssize_t offset=0, size=Py_END_OF_BUFFER, n;
 	void *unused;
 	static char *kwlist[] = {"object", "offset", "size", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ii", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|" NPY_SSIZE_T_PYFMT \
+					 NPY_SSIZE_T_PYFMT, kwlist, 
 					 &obj, &offset, &size))
 		return NULL;
 

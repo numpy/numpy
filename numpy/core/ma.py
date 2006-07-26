@@ -512,7 +512,7 @@ class MaskedArray (object):
            then the candidate data is data.data and the
            mask used is data.mask. If data is a numeric array,
            it is used as the candidate raw data.
-           If dtype.char is not None and
+           If dtype is not None and
            is != data.dtype.char then a data copy is required.
            Otherwise, the candidate is used.
 

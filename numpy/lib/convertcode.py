@@ -31,7 +31,6 @@ flatindex_re = re.compile('([.]flat(\s*?[[=]))')
 # Not very safe.  Disabled for now..
 def replacetypechars(astr):
     astr = astr.replace("'s'","'h'")
-    astr = astr.replace("'c'","'S1'")
     astr = astr.replace("'b'","'B'")
     astr = astr.replace("'1'","'b'")
     astr = astr.replace("'w'","'H'")
@@ -108,7 +107,7 @@ def fromstr(filestr):
     filestr, fromall3 = changeimports(filestr, 'RNG', 'numpy.random.oldrng')
     filestr, fromall3 = changeimports(filestr, 'RNG.Statistics', 'numpy.random.oldrngstats')
     filestr, fromall3 = changeimports(filestr, 'RandomArray', 'numpy.random.oldrandomarray')
-    filestr, fromall3 = changeimports(filestr, 'FFT', 'numpy.dft.oldfft')
+    filestr, fromall3 = changeimports(filestr, 'FFT', 'numpy.dft.old')
     filestr, fromall3 = changeimports(filestr, 'MA', 'numpy.core.ma')
     fromall = fromall1 or fromall2 or fromall3
     filestr = replaceattr(filestr)

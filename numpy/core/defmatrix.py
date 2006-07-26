@@ -101,6 +101,8 @@ class matrix(N.ndarray):
         return ret
 
     def __array_finalize__(self, obj):
+        self._getitem = False
+        if (isinstance(obj, matrix) and obj._getitem): return
         ndim = self.ndim
         if (ndim == 2):
             return
@@ -121,31 +123,30 @@ class matrix(N.ndarray):
         return
 
     def __getitem__(self, index):
-        out = N.ndarray.__getitem__(self, index)
-        if not isinstance(out, matrix):
-            return out
-        # Need to swap if slice is on first index
-        # or there is an integer on the second
-        retscal = False
+        self._getitem = True
         try:
-            n = len(index)
-            if (n==2):
-                if isscalar(index[1]):
-                    if isscalar(index[0]):
-                        retscal = True
-                    elif out.shape[0] == 1:
-                        sh = out.shape
-                        out.shape = (sh[1], sh[0])
-                elif isinstance(index[1], (slice, types.EllipsisType)):
-                    if out.shape[0] == 1 and not isscalar(index[0]):
-                        sh = out.shape
-                        out.shape = (sh[1], sh[0])
-        except (TypeError, IndexError):
-            pass
-        if retscal and out.shape == (1,1): # convert scalars
-            return out.A[0,0]
-        return out
+            out = N.ndarray.__getitem__(self, index)
+        finally:
+            self._getitem = False
 
+        if not isinstance(out, N.ndarray):
+            return out
+
+        if out.ndim == 0:
+            return out[()]
+        if out.ndim == 1:
+            sh = out.shape[0] 
+            # Determine when we should have a column array
+            try:
+                n = len(index)
+            except:
+                n = 0
+            if n > 1 and isscalar(index[1]):
+                out.shape = (sh,1)
+            else:
+                out.shape = (1,sh)
+        return out
+            
     def _get_truendim(self):
         shp = self.shape
         truend = 0

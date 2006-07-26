@@ -498,7 +498,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
 
     elif isinstance(obj, sb.ndarray):
         if dtype is not None and (obj.dtype != dtype):
-            obj.dtype = dtype
+            obj = obj.view(dtype)
         res = obj.view(recarray)
         if issubclass(res.dtype.type, nt.void):
             res.dtype = sb.dtype((record, res.dtype))

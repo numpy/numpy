@@ -1,6 +1,4 @@
-# :Author:    Robert Kern
-# :Copyright: 2004, Enthought, Inc.
-# :License:   BSD Style
+# :Author:    Travis Oliphant
 
 cdef extern from "numpy/arrayobject.h":
 
@@ -60,6 +58,9 @@ cdef extern from "numpy/arrayobject.h":
 
         NPY_UPDATE_ALL 
 
+    cdef enum defines:
+        NPY_MAXDIMS
+
     ctypedef struct npy_cdouble:
         double real
         double imag
@@ -84,6 +85,19 @@ cdef extern from "numpy/arrayobject.h":
         cdef dtype descr
         cdef int flags
 
+    ctypedef extern class numpy.flatiter [object PyArrayIterObject]:
+        cdef int  nd_m1
+        cdef npy_intp index, size
+        cdef ndarray ao
+        cdef char *dataptr
+        
+    ctypedef extern class numpy.broadcast [object PyArrayMultiIterObject]:
+        cdef int numiter
+        cdef npy_intp size, index
+        cdef int nd
+        cdef npy_intp dimensions[NPY_MAXDIMS]
+        cdef flatiter iters[NPY_MAXDIMS]
+
     object PyArray_ZEROS(int ndims, npy_intp* dims, NPY_TYPES type_num, int fortran)
     object PyArray_EMPTY(int ndims, npy_intp* dims, NPY_TYPES type_num, int fortran)
     dtype PyArray_DescrFromTypeNum(NPY_TYPES type_num)
@@ -101,5 +115,7 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(object subtype, dtype newtype, int nd,
                                 npy_intp* dims, npy_intp* strides, void* data,
                                 int flags, object parent)
+
+    void PyArray_ITER_NEXT(flatiter it)
 
     void import_array()

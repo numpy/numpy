@@ -42,7 +42,7 @@ def configuration(parent_package='',top_path=None):
                 #  ufunc code.  NPY_ALLOW_C_API and friends
                 #  cause the segfault. So, we disable threading
                 #  for now. 
-            if sys.version[:3] < '2.4':
+            if sys.version[:5] < '2.4.2':
                 nosmp = 1
             else:
                 # Perhaps a fancier check is in order here.
