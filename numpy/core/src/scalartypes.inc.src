@@ -907,7 +907,7 @@ gentype_imag_get(PyObject *self)
 
 	typecode = _realdescr_fromcomplexscalar(self, &typenum);
 	if (PyArray_IsScalar(self, ComplexFloating)) {
-            ret = PyArray_Scalar(scalar_value(self, NULL)
+            ret = PyArray_Scalar((char *)scalar_value(self, NULL)
                                  + typecode->elsize, typecode, NULL);
 	}
 	else if (PyArray_IsScalar(self, Object)) {
