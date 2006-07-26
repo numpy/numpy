@@ -312,5 +312,15 @@ class test_regression(NumpyTestCase):
         # Correct way
         N.array([(1,'object')],dt)
 
+    def check_zero_sized_array_indexing(self,level=rlevel):
+        """Ticket #205"""
+        tmp = N.array([])
+        def index_tmp(): tmp[N.array(10)]
+        self.failUnlessRaises(IndexError, index_tmp)
+
+    def check_unique_zero_sized(self,level=rlevel):
+        """Ticket #205"""
+        assert_array_equal([], N.unique(N.array([])))
+
 if __name__ == "__main__":
     NumpyTest().run()
