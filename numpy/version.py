@@ -1,4 +1,4 @@
-version='0.9.9'
+version='1.0b2'
 
 import os
 svn_version_file = os.path.join(os.path.dirname(__file__),
@@ -9,4 +9,4 @@ if os.path.isfile(svn_version_file):
                           open(svn_version_file),
                           svn_version_file,
                           ('.py','U',1))
-    version += '.'+svn.version
+    version += '.dev-r'+svn.version
