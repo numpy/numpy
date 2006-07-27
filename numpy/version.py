@@ -9,4 +9,4 @@ if os.path.isfile(svn_version_file):
                           open(svn_version_file),
                           svn_version_file,
                           ('.py','U',1))
-    version += '.dev-r'+svn.version
+    version += '.dev'+svn.version
