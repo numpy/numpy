@@ -1086,10 +1086,25 @@ def get_atlas_version(**config):
     if _cached_atlas_version.has_key(key):
         return _cached_atlas_version[key]
     c = cmd_config(Distribution())
-    s, o = c.get_output(atlas_version_c_text,
-                        libraries=libraries, library_dirs=library_dirs)
+    atlas_version = None    
 
-    atlas_version = None
+    try:
+        s, o = c.get_output(atlas_version_c_text,
+                            libraries=libraries, library_dirs=library_dirs)
+    except: # failed to get version from file -- maybe on Windows
+        # look at directory name
+        for o in library_dirs:
+            m = re.search(r'ATLAS_(?P<version>\d+[.]\d+[.]\d+)_',o)
+            if m:
+                atlas_version = m.group('version')
+            if atlas_version is not None:
+                break
+        # final choice --- look at ATLAS_VERSION environment
+        #   variable
+        if altas_version is None:
+            altas_version = os.environ.get('ATLAS_VERSION',None)
+        return atlas_version or '?.?.?'
+
     if not s:
         m = re.search(r'ATLAS version (?P<version>\d+[.]\d+[.]\d+)',o)
         if m:

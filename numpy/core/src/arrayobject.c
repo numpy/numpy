@@ -9925,10 +9925,10 @@ PyArray_MultiIterNew(int n, ...)
 
         int i, err=0;
 
-        if (n < 2 || n > MAX_DIMS) {
+        if (n < 2 || n > NPY_MAXARGS) {
                 PyErr_Format(PyExc_ValueError,
                              "Need between 2 and (%d) "                 \
-                             "array objects (inclusive).", MAX_DIMS);
+                             "array objects (inclusive).", NPY_MAXARGS);
         }
 
         /* fprintf(stderr, "multi new...");*/
@@ -9983,11 +9983,11 @@ arraymultiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
 
         n = PyTuple_Size(args);
-        if (n < 2 || n > MAX_DIMS) {
+        if (n < 2 || n > NPY_MAXARGS) {
                 if (PyErr_Occurred()) return NULL;
                 PyErr_Format(PyExc_ValueError,
                              "Need at least two and fewer than (%d) "   \
-                             "array objects.", MAX_DIMS);
+                             "array objects.", NPY_MAXARGS);
                 return NULL;
         }
 

@@ -30,6 +30,7 @@ extern "C" CONFUSE_EMACS
  */
 
 #define NPY_MAXDIMS 32
+#define NPY_MAXARGS 32
 
 /* Used for Converter Functions "O&" code in ParseTuple */
 #define NPY_FAIL 0
@@ -1135,7 +1136,7 @@ typedef struct {
 	npy_intp             index;                   /* current index */
 	int                  nd;                      /* number of dims */
 	npy_intp             dimensions[NPY_MAXDIMS]; /* dimensions */
-	PyArrayIterObject    *iters[NPY_MAXDIMS];     /* iterators */
+	PyArrayIterObject    *iters[NPY_MAXARGS];     /* iterators */
 } PyArrayMultiIterObject;
 
 #define PyArray_MultiIter_RESET(multi) {			  \

@@ -4,8 +4,6 @@
 extern "C" {
 #endif
 
-#define NPY_MAXARGS 40
-
 typedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *);
 
 typedef struct {
