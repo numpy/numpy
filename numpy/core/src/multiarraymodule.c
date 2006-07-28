@@ -4138,6 +4138,11 @@ _convert_from_dict(PyObject *obj, int align)
 		if (len == 3) PyTuple_SET_ITEM(tup, 2, item);
 		name = PyObject_GetItem(names, index);
 		Py_DECREF(index);
+                if (!(PyString_Check(name) || PyUnicode_Check(name))) {
+                        PyErr_SetString(PyExc_ValueError, 
+                                        "field names must be strings");
+                        ret = PY_FAIL;
+                }
 
 		/* Insert into dictionary */
 		if (PyDict_GetItem(fields, name) != NULL) {
@@ -4150,8 +4155,8 @@ _convert_from_dict(PyObject *obj, int align)
 		if (len == 3) {
 			if (PyDict_GetItem(fields, item) != NULL) {
 				PyErr_SetString(PyExc_ValueError, 
-						"title already used as a name or " \
-						" title.");
+						"title already used as a "\
+                                                "name or title.");
 				ret=PY_FAIL;
 			}
 			else {

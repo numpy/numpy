@@ -11021,14 +11021,15 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
                                         PyErr_Format(PyExc_IndexError,
                                                      "0<=index<%d not %d",
                                                      size, value);
+                                        return NULL;
                                 }
                                 name = PyTuple_GET_ITEM(self->names, value);
                                 return descr_subscript(self, name);
                         }
                 }
                 PyErr_SetString(PyExc_ValueError,
-                                "only integers, strings or unicode values allowed " \
-                                "for getting fields.");
+                                "only integers, strings or unicode values "
+                                "allowed for getting fields.");
         }
         else {
                 PyObject *astr;

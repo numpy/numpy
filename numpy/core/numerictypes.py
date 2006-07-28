@@ -66,7 +66,7 @@ Exported symbols include:
 
        flexible
          character
-           str_     (string)
+           str_     (string_)
            unicode_
          void
 
@@ -251,13 +251,14 @@ def _set_up_aliases():
                   ('bool_', 'bool'),
                   ('unicode_', 'unicode'),
                   ('str_', 'string'),
+                  ('string_', 'string'),
                   ('object_', 'object')]
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
         typeDict[alias] = typeDict[t]
-    # Remove aliases overriding python types
+    # Remove aliases overriding python types and modules
     for t in ['ulong', 'object', 'unicode', 'int', 'long', 'float',
-              'complex', 'bool']:
+              'complex', 'bool', 'string']:
         try:
             del allTypes[t]
             del typeDict[t]

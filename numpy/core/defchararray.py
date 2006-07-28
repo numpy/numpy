@@ -1,4 +1,4 @@
-from numerictypes import string, unicode_, integer, object_
+from numerictypes import string_, unicode_, integer, object_
 from numeric import ndarray, broadcast, empty
 from numeric import array as narray
 import sys
@@ -8,7 +8,7 @@ __all__ = ['chararray']
 _globalvar = 0
 _unicode = unicode
 
-# special sub-class for character arrays (string and unicode_)
+# special sub-class for character arrays (string_ and unicode_)
 # This adds equality testing and methods of str and unicode types
 #  which operate on an element-by-element basis
 
@@ -21,7 +21,7 @@ class chararray(ndarray):
         if unicode:
             dtype = unicode_
         else:
-            dtype = string
+            dtype = string_
 
         _globalvar = 1
         if buffer is None:
@@ -300,17 +300,17 @@ def array(obj, itemsize=None, copy=True, unicode=False, order=None):
             itemsize = obj.itemsize
         if copy or (itemsize != obj.itemsize) \
            or (not unicode and obj.dtype == unicode_) \
-           or (unicode and obj.dtype == string):
+           or (unicode and obj.dtype == string_):
             return obj.astype("%s%d" % (obj.dtype.char, itemsize))
         else:
             return obj
 
-    if isinstance(obj, ndarray) and (obj.dtype in [unicode_, string]):
+    if isinstance(obj, ndarray) and (obj.dtype in [unicode_, string_]):
         new = obj.view(chararray)
-        if unicode and obj.dtype == string:
+        if unicode and obj.dtype == string_:
             return new.astype((unicode_, obj.itemsize))
         elif obj.dtype == unicode_:
-            return new.astype((string, obj.itemsize))
+            return new.astype((string_, obj.itemsize))
 
         if copy: return new.copy()
         else: return new
