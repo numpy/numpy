@@ -18,7 +18,7 @@ import distutils.sysconfig
 _old_init_posix = distutils.sysconfig._init_posix
 def _new_init_posix():
     _old_init_posix()
-    distutils.sysconfig._config_vars['OPT'] = '-Wall -g -O2'
+    distutils.sysconfig._config_vars['OPT'] = '-Wall -g -O0'
 #distutils.sysconfig._init_posix = _new_init_posix
 
 # Using customized CCompiler.spawn.

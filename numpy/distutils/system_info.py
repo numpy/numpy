@@ -492,6 +492,18 @@ class system_info:
     def get_libraries(self, key='libraries'):
         return self.get_libs(key,'')
 
+    def library_extensions(self):
+        static_exts = ['.a']
+        if sys.platform == 'win32':
+            static_exts.append('.lib')  # .lib is used by MSVC
+        if self.search_static_first:
+            exts = static_exts + [so_ext]
+        else:
+            exts = [so_ext] + static_exts
+        if sys.platform == 'cygwin':
+            exts.append('.dll.a')
+        return exts
+
     def check_libs(self,lib_dir,libs,opt_libs =[]):
         """If static or shared libraries are available then return
         their info dictionary.
@@ -499,12 +511,7 @@ class system_info:
         Checks for all libraries as shared libraries first, then
         static (or vice versa if self.search_static_first is True).
         """
-        if self.search_static_first:
-            exts = ['.a', so_ext]
-        else:
-            exts = [so_ext, '.a']
-        if sys.platform == 'cygwin':
-            exts.append('.dll.a')
+        exts = self.library_extensions()
         info = None
         for ext in exts:
             info = self._check_libs(lib_dir,libs,opt_libs,[ext])
@@ -520,12 +527,7 @@ class system_info:
 
         Checks each library for shared or static.
         """
-        if self.search_static_first:
-            exts = ['.a', so_ext]
-        else:
-            exts = [so_ext, '.a']
-        if sys.platform=='cygwin':
-            exts.append('.dll.a')
+        exts = self.library_extensions()
         info = self._check_libs(lib_dir,libs,opt_libs,exts)
         if not info:
             log.info('  libraries %s not found in %s', ','.join(libs), lib_dir)
@@ -534,17 +536,29 @@ class system_info:
     def _lib_list(self, lib_dir, libs, exts):
         assert is_string(lib_dir)
         liblist = []
+        # under windows first try without 'lib' prefix
+        if sys.platform == 'win32':
+            lib_prefixes = ['', 'lib']
+        else:
+            lib_prefixes = ['lib']
         # for each library name, see if we can find a file for it.
         for l in libs:
             for ext in exts:
-                p = self.combine_paths(lib_dir, 'lib'+l+ext)
+                for prefix in lib_prefixes:
+                    p = self.combine_paths(lib_dir, prefix+l+ext)
+                    if p:
+                        break
                 if p:
                     assert len(p)==1
+                    # ??? splitext on p[0] would do this for cygwin
+                    # doesn't seem correct
+                    if ext == '.dll.a':
+                        l += '.dll'
                     liblist.append(l)
                     break
         return liblist
 
-    def _check_libs(self,lib_dir,libs, opt_libs, exts):
+    def _check_libs(self, lib_dir, libs, opt_libs, exts):
         found_libs = self._lib_list(lib_dir, libs, exts)
         if len(found_libs) == len(libs):
             info = {'libraries' : found_libs, 'library_dirs' : [lib_dir]}
@@ -556,6 +570,9 @@ class system_info:
             return None
 
     def combine_paths(self,*args):
+        """Return a list of existing paths composed by all combinations
+        of items from the arguments.
+        """
         return combine_paths(*args,**{'verbosity':self.verbosity})
 
 
@@ -837,12 +854,12 @@ class atlas_info(system_info):
         lapack = None
         atlas_1 = None
         for d in lib_dirs:
-            atlas = self.check_libs(d,atlas_libs,[])
-            lapack_atlas = self.check_libs(d,['lapack_atlas'],[])
+            atlas = self.check_libs2(d,atlas_libs,[])
+            lapack_atlas = self.check_libs2(d,['lapack_atlas'],[])
             if atlas is not None:
-                lib_dirs2 = self.combine_paths(d,['atlas*','ATLAS*'])+[d]
+                lib_dirs2 = [d] + self.combine_paths(d,['atlas*','ATLAS*'])
                 for d2 in lib_dirs2:
-                    lapack = self.check_libs(d2,lapack_libs,[])
+                    lapack = self.check_libs2(d2,lapack_libs,[])
                     if lapack is not None:
                         break
                 else:
@@ -886,10 +903,16 @@ class atlas_info(system_info):
         lapack_dir = lapack['library_dirs'][0]
         lapack_name = lapack['libraries'][0]
         lapack_lib = None
-        for e in ['.a',so_ext]:
-            fn = os.path.join(lapack_dir,'lib'+lapack_name+e)
-            if os.path.exists(fn):
-                lapack_lib = fn
+        lib_prefixes = ['lib']
+        if sys.platform == 'win32':
+            lib_prefixes.append('')
+        for e in self.library_extensions():
+            for prefix in lib_prefixes:
+                fn = os.path.join(lapack_dir,prefix+lapack_name+e)
+                if os.path.exists(fn):
+                    lapack_lib = fn
+                    break
+            if lapack_lib:
                 break
         if lapack_lib is not None:
             sz = os.stat(lapack_lib)[6]
@@ -919,7 +942,7 @@ class atlas_blas_info(atlas_info):
                                    self._lib_names + self._lib_atlas)
         atlas = None
         for d in lib_dirs:
-            atlas = self.check_libs(d,atlas_libs,[])
+            atlas = self.check_libs2(d,atlas_libs,[])
             if atlas is not None:
                 break
         if atlas is None:
