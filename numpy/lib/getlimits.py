@@ -53,29 +53,26 @@ class finfo(object):
 
     def _init(self, dtype):
         self.dtype = dtype
-        if dtype is numeric.float_:
-            machar = MachAr(lambda v:array([v],'d'),
-                            lambda v:_frz(v.astype('i'))[0],
-                            lambda v:array(_frz(v)[0],'d'),
-                            lambda v:'%24.16e' % array(_frz(v)[0],'d'),
-                            'numpy float precision floating point '\
-                            'number')
-        elif dtype is numeric.single:
-            machar =  MachAr(lambda v:array([v],'f'),
-                             lambda v:_frz(v.astype('i'))[0],
-                             lambda v:array(_frz(v)[0],'f'),  #
-                             lambda v:'%15.7e' % array(_frz(v)[0],'f'),
-                             "numpy single precision floating "\
-                             "point number")
-        elif dtype is numeric.longfloat:
-            machar = MachAr(lambda v:array([v],'g'),
-                            lambda v:_frz(v.astype('i'))[0],
-                            lambda v:array(_frz(v)[0],'g'),  #
-                            lambda v:str(array(_frz(v)[0],'g')),
-                            "numpy longfloat precision floating "\
-                            "point number")
+        if dtype is ntypes.double:
+            itype = ntypes.int64
+            fmt = '%24.16e'
+            precname = 'double'
+        elif dtype is ntypes.single:
+            itype = ntypes.int32
+            fmt = '%15.7e'
+            precname = 'single'
+        elif dtype is ntypes.longdouble:
+            itype = ntypes.longlong
+            fmt = '%s'
+            precname = 'long double'
         else:
-            raise ValueError,`dtype`
+            raise ValueError, repr(dtype)
+
+        machar = MachAr(lambda v:array([v], dtype),
+                        lambda v:_frz(v.astype(itype))[0],
+                        lambda v:array(_frz(v)[0], dtype),
+                        lambda v: fmt % array(_frz(v)[0], dtype),
+                        'numpy %s precision floating point number' % precname)
 
         for word in ['precision', 'iexp',
                      'maxexp','minexp','negep',
