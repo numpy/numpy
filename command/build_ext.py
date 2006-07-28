@@ -8,12 +8,16 @@ from glob import glob
 
 from distutils.dep_util import newer_group
 from distutils.command.build_ext import build_ext as old_build_ext
+from distutils.errors import DistutilsFileError, DistutilsSetupError
+from distutils.file_util import copy_file
 
 from numpy.distutils import log
+from numpy.distutils.exec_command import exec_command
+from numpy.distutils.system_info import combine_paths
 from numpy.distutils.misc_util import filter_sources, has_f_sources, \
      has_cxx_sources, get_ext_source_files, all_strings, \
      get_numpy_include_dirs, is_sequence
-from distutils.errors import DistutilsFileError, DistutilsSetupError
+
 
 class build_ext (old_build_ext):
 
@@ -290,9 +294,8 @@ class build_ext (old_build_ext):
 
         # Always use system linker when using MSVC compiler.
         if self.compiler.compiler_type=='msvc' and use_fortran_linker:
-            c_libraries.extend(self.fcompiler.libraries)
-            c_library_dirs.extend(self.fcompiler.library_dirs)
-            use_fortran_linker = 0
+            self._libs_with_msvc_and_fortran(c_libraries, c_library_dirs)
+            use_fortran_linker = False
 
         if use_fortran_linker:
             if cxx_sources:
@@ -329,6 +332,32 @@ class build_ext (old_build_ext):
             pass
 
         return
+
+    def _libs_with_msvc_and_fortran(self, c_libraries, c_library_dirs):
+        # Always use system linker when using MSVC compiler.
+        f_lib_dirs = []
+        for dir in self.fcompiler.library_dirs:
+            # correct path when compiling in Cygwin but with normal Win
+            # Python
+            if dir.startswith('/usr/lib'):
+                s,o = exec_command(['cygpath', '-w', dir], use_tee=False)
+                if not s:
+                    dir = o
+            f_lib_dirs.append(dir)
+        c_library_dirs.extend(f_lib_dirs)
+
+        # make g77-compiled static libs available to MSVC
+        lib_added = False
+        for lib in self.fcompiler.libraries:
+            if not lib.startswtih('msvcr'):
+                c_libraries.append(lib)
+                p = combine_paths(f_lib_dirs, 'lib' + lib + '.a')
+                if p:
+                    dst_name = os.path.join(self.build_temp, lib + '.lib')
+                    copy_file(p[0], dst_name)
+                    if not lib_added:
+                        c_library_dirs.append(self.build_temp)
+                        lib_added = True
 
     def get_source_files (self):
         self.check_extensions_list(self.extensions)

@@ -27,6 +27,7 @@ from numpy.distutils.ccompiler import gen_preprocess_options, gen_lib_options
 from distutils.errors import DistutilsExecError, CompileError, UnknownFileError
 
 from distutils.unixccompiler import UnixCCompiler
+from numpy.distutils.misc_util import msvc_runtime_library
 
 # the same as cygwin plus some additional parameters
 class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
@@ -93,9 +94,9 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                                  % (self.linker, entry_point))
         else:
             self.set_executables(compiler='gcc -mno-cygwin -O2 -Wall',
-                                 compiler_so='gcc -O2 -Wall -Wstrict-prototypes',
-                                 linker_exe='g++ ',
-                                 linker_so='g++ -shared')
+                                 compiler_so='gcc -mno-cygwin -O2 -Wall -Wstrict-prototypes',
+                                 linker_exe='g++ -mno-cygwin',
+                                 linker_so='g++ -mno-cygwin -shared')
         # added for python2.3 support
         # we can't pass it through set_executables because pre 2.2 would fail
         self.compiler_cxx = ['g++']
@@ -104,7 +105,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # dlls need another dll (mingwm10.dll see Mingw32 docs)
         # (-mthreads: Support thread-safe exception handling on `Mingw32')
 
-        # no additional libraries needed -- maybe need msvcr71
+        # no additional libraries needed
         #self.dll_libraries=[]
         return
 
@@ -124,11 +125,13 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
              extra_postargs=None,
              build_temp=None,
              target_lang=None):
-        if sys.version[:3] > '2.3':
-            if libraries:
-                libraries.append('msvcr71')
-            else:
-                libraries = ['msvcr71']
+        # Include the appropiate MSVC runtime library if Python was built
+        # with MSVC >= 7.0 (MinGW standard is msvcrt)
+        runtime_library = msvc_runtime_library()
+        if runtime_library:
+            if not libraries:
+                libraries = []
+            libraries.append(runtime_library)
         args = (self,
                 target_desc,
                 objects,

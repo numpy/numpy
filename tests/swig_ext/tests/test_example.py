@@ -4,7 +4,7 @@ set_package_path()
 from swig_ext import example
 restore_path()
 
-class test_example(ScipyTestCase):
+class test_example(NumpyTestCase):
 
     def check_fact(self):
         assert_equal(example.fact(10),3628800)
@@ -15,4 +15,4 @@ class test_example(ScipyTestCase):
         assert_equal(example.cvar.My_variable,5.0)
 
 if __name__ == "__main__":
-    ScipyTest().run()
+    NumpyTest().run()

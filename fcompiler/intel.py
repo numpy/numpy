@@ -114,6 +114,12 @@ class IntelEM64TFCompiler(IntelFCompiler):
         'ranlib'       : ["ranlib"]
         }
 
+    def get_flags_arch(self):
+        opt = []
+        if cpu.is_PentiumIV() or cpu.is_Xeon():
+            opt.extend(['-tpp7', '-xW'])
+        return opt
+
 class IntelVisualFCompiler(FCompiler):
 
     compiler_type = 'intelv'

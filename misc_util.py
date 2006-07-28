@@ -242,6 +242,19 @@ def mingw32():
             return True
     return False
 
+def msvc_runtime_library():
+    "return name of MSVC runtime library if Python was built with MSVC >= 7"
+    msc_pos = sys.version.find('MSC v.')
+    if msc_pos != -1:
+        msc_ver = sys.version[msc_pos+6:msc_pos+10]
+        lib = {'1300' : 'msvcr70',    # MSVC 7.0
+               '1310' : 'msvcr71',    # MSVC 7.1
+               '1400' : 'msvcr80',    # MSVC 8
+              }.get(msc_ver, None)
+    else:
+        lib = None
+    return lib
+
 #########################
 
 #XXX need support for .C that is also C++
