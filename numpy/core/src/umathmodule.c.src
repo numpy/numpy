@@ -710,9 +710,10 @@ nc_pow@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 static void
 nc_prodi@c@(c@typ@ *x, c@typ@ *r)
 {
-	r->real = -x->imag;
-	r->imag = x->real;
-	return;
+        @typ@ xr = x->real;
+        r->real = -x->imag;
+        r->imag = xr;
+        return;
 }
 
 
