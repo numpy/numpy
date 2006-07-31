@@ -179,7 +179,9 @@ class test_regression(NumpyTestCase):
 
     def check_intp(self,level=rlevel):
         """Ticket #99"""
-        self.failUnlessRaises(OverflowError,N.intp,'0xb72a7008',16)
+	i_width = N.int_(0).nbytes*2 - 1
+	N.intp('0x' + 'f'*i_width,16)
+        self.failUnlessRaises(OverflowError,N.intp,'0x' + 'f'*(i_width+1),16)
         self.failUnlessRaises(ValueError,N.intp,'0x1',32)
         assert_equal(255,N.intp('0xFF',16))
         assert_equal(1024,N.intp(1024))
