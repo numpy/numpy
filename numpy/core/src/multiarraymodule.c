@@ -4894,6 +4894,10 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 	PyArrayObject *ret;
 	Bool binary;
 
+
+	if (dtype == NULL)
+		dtype=PyArray_DescrFromType(PyArray_DEFAULT);
+
         if (dtype->hasobject) {
                 PyErr_SetString(PyExc_ValueError, 
                                 "Cannot create an object array from"    \
@@ -4901,9 +4905,6 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
                 Py_DECREF(dtype);
                 return NULL;
         }		
-
-	if (dtype == NULL)
-		dtype=PyArray_DescrFromType(PyArray_DEFAULT);
 	
 	itemsize = dtype->elsize;
 	if (itemsize == 0) {
