@@ -6342,84 +6342,71 @@ array_finalize_get(PyArrayObject *self)
 static PyGetSetDef array_getsetlist[] = {
         {"ndim",
          (getter)array_ndim_get,
-         NULL,
-         "number of array dimensions"},
+         NULL, NULL},
         {"flags",
          (getter)array_flags_get,
-         NULL,
-         "special dictionary of flags"},
+         NULL, NULL},
         {"shape",
          (getter)array_shape_get,
          (setter)array_shape_set,
-         "tuple of array dimensions"},
+         NULL},
         {"strides",
          (getter)array_strides_get,
          (setter)array_strides_set,
-         "tuple of bytes steps in each dimension"},
+         NULL},
         {"data",
          (getter)array_data_get,
          (setter)array_data_set,
-         "pointer to start of data"},
+         NULL},
         {"itemsize",
          (getter)array_itemsize_get,
-         NULL,
-         "length of one element in bytes"},
+         NULL, NULL},
         {"size",
          (getter)array_size_get,
-         NULL,
-         "number of elements in the array"},
+         NULL, NULL},
         {"nbytes",
          (getter)array_nbytes_get,
-         NULL,
-         "number of bytes in the array"},
+         NULL, NULL},
         {"base",
          (getter)array_base_get,
-         NULL,
-         "base object"},
+         NULL, NULL},
         {"dtype",
          (getter)array_descr_get,
          (setter)array_descr_set,
-         "get(set) data-type-descriptor for array"},
+         NULL},
         {"real",
          (getter)array_real_get,
          (setter)array_real_set,
-         "real part of array"},
+         NULL},
         {"imag",
          (getter)array_imag_get,
          (setter)array_imag_set,
-         "imaginary part of array"},
+         NULL},
         {"flat",
          (getter)array_flat_get,
          (setter)array_flat_set,
-         "a 1-d view of a contiguous array"},
+         NULL},
         {"ctypes",
          (getter)array_ctypes_get,
-         NULL,
-         "ctypes interface object"},
+         NULL, NULL},
         {"_as_parameter_",
          (getter)array_as_parameter_get,
-         NULL,
-         "allow array to be interpreted as a ctypes object by returning the data memory location as an integer"},
+         NULL, NULL},
         {"T",
          (getter)array_transpose_get,
-         NULL,
-         "return transpose for self.ndim <= 2 "},
+         NULL, NULL},
         {"__array_interface__",
          (getter)array_interface_get,
-         NULL,
-         "Array protocol: Python side"},
+         NULL, NULL},
         {"__array_struct__",
          (getter)array_struct_get,
-         NULL,
-         "Array protocol: C-struct side"},
+         NULL, NULL},
         {"__array_priority__",
          (getter)array_priority_get,
-         NULL,
-         "Array priority"},
+         NULL, NULL},
         {"__array_finalize__",
          (getter)array_finalize_get,
-         NULL,
-         "None"},
+         NULL, NULL},
         {NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 
@@ -6436,26 +6423,6 @@ array_alloc(PyTypeObject *type, int nitems)
         return obj;
 }
 
-
-static char Arraytype__doc__[] =
-        "A array object represents a multidimensional, homogeneous array\n"
-        "  of fixed-size items.  An associated data-type-descriptor object\n"
-        "  details the data-type in an array (including byteorder and any\n"
-        "  fields).  An array can be constructed using the numpy.array\n"
-        "  command. Arrays are sequence, mapping and numeric objects.\n"
-        "  More information is available in the numpy module and by looking\n"
-        "  at the methods and attributes of an array.\n\n"
-        "  ndarray.__new__(subtype, shape=, dtype=float, buffer=None, \n"
-        "                  offset=0, strides=None, order=None)\n\n"
-        "   There are two modes of creating an array using __new__:\n"
-        "   1) If buffer is None, then only shape, dtype, and order \n"
-        "      are used\n"
-        "   2) If buffer is an object exporting the buffer interface, then\n"
-        "      all keywords are interpreted.\n"
-        "   The dtype parameter can be any object that can be interpreted \n"
-        "      as a numpy.dtype object.\n\n"
-        "   No __init__ method is needed because the array is fully \n"
-        "      initialized after the __new__ method.";
 
 static PyTypeObject PyArray_Type = {
         PyObject_HEAD_INIT(NULL)
@@ -6484,7 +6451,7 @@ static PyTypeObject PyArray_Type = {
          | Py_TPFLAGS_BASETYPE
          | Py_TPFLAGS_CHECKTYPES),                /*tp_flags*/
         /*Documentation string */
-        Arraytype__doc__,                         /*tp_doc*/
+        0,                                        /*tp_doc*/
 
         (traverseproc)0,                          /*tp_traverse */
         (inquiry)0,                               /*tp_clear */
@@ -9087,9 +9054,6 @@ static PyMappingMethods iter_as_mapping = {
 
 
 
-static char doc_iter_array[] = "__array__(type=None)\n Get array "\
-        "from iterator";
-
 static PyObject *
 iter_array(PyArrayIterObject *it, PyObject *op)
 {
@@ -9139,8 +9103,6 @@ iter_array(PyArrayIterObject *it, PyObject *op)
 
 }
 
-static char doc_iter_copy[] = "copy()\n Get a copy of 1-d array";
-
 static PyObject *
 iter_copy(PyArrayIterObject *it, PyObject *args)
 {
@@ -9150,8 +9112,8 @@ iter_copy(PyArrayIterObject *it, PyObject *args)
 
 static PyMethodDef iter_methods[] = {
         /* to get array */
-        {"__array__", (PyCFunction)iter_array, 1, doc_iter_array},
-        {"copy", (PyCFunction)iter_copy, 1, doc_iter_copy},
+        {"__array__", (PyCFunction)iter_array, 1, NULL},
+        {"copy", (PyCFunction)iter_copy, 1, NULL},
         {NULL,          NULL}           /* sentinel */
 };
 
@@ -9195,8 +9157,8 @@ iter_coords_get(PyArrayIterObject *self)
 static PyGetSetDef iter_getsets[] = {
         {"coords",
          (getter)iter_coords_get,
-         NULL,
-         "An N-d tuple of current coordinates."},
+         NULL, 
+         NULL},
         {NULL, NULL, NULL, NULL},
 };
 
@@ -10104,20 +10066,16 @@ arraymultiter_iters_get(PyArrayMultiIterObject *self)
 static PyGetSetDef arraymultiter_getsetlist[] = {
         {"size",
          (getter)arraymultiter_size_get,
-         NULL,
-         "total size of broadcasted result"},
+         NULL, NULL},
         {"index",
          (getter)arraymultiter_index_get,
-         NULL,
-         "current index in broadcasted result"},
+         NULL, NULL},
         {"shape",
          (getter)arraymultiter_shape_get,
-         NULL,
-         "shape of broadcasted result"},
+         NULL, NULL},
         {"iters",
          (getter)arraymultiter_iters_get,
-         NULL,
-         "tuple of individual iterators"},
+         NULL, NULL},
         {NULL, NULL, NULL, NULL},
 };
 
@@ -10415,36 +10373,28 @@ arraydescr_fields_get(PyArray_Descr *self)
 static PyGetSetDef arraydescr_getsets[] = {
         {"subdtype",
          (getter)arraydescr_subdescr_get,
-         NULL,
-         "A tuple of (descr, shape) or None."},
+         NULL, NULL},
         {"descr",
          (getter)arraydescr_protocol_descr_get,
-         NULL,
-         "The array_protocol type descriptor."},
+         NULL, NULL},
         {"str",
          (getter)arraydescr_protocol_typestr_get,
-         NULL,
-         "The array_protocol typestring."},
+         NULL, NULL},
         {"name",
          (getter)arraydescr_typename_get,
-         NULL,
-         "The name of the true data-type"},
+         NULL, NULL},
         {"base",
          (getter)arraydescr_base_get,
-         NULL,
-         "The base data-type or self if no subdtype"},
+         NULL, NULL},
         {"shape",
          (getter)arraydescr_shape_get,
-         NULL,
-         "The shape of the subdtype or (1,)"},
+         NULL, NULL},
         {"isbuiltin",
          (getter)arraydescr_isbuiltin_get,
-         NULL,
-         "Is this a buillt-in data-type descriptor?"},
+         NULL, NULL},
         {"isnative",
          (getter)arraydescr_isnative_get,
-         NULL,
-         "Is the byte-order of this descriptor native?"},
+         NULL, NULL},
         {"fields",
          (getter)arraydescr_fields_get,
          NULL,
@@ -10538,7 +10488,6 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         return (PyObject *)conv;
 }
 
-static char doc_arraydescr_reduce[] = "self.__reduce__()  for pickling.";
 
 /* return a tuple of (callable object, args, state). */
 static PyObject *
@@ -10645,7 +10594,6 @@ _descr_find_object(PyArray_Descr *self)
 /* state is at least byteorder, subarray, and fields but could include elsize
    and alignment for EXTENDED arrays
 */
-static char doc_arraydescr_setstate[] = "self.__setstate__()  for pickling.";
 
 static PyObject *
 arraydescr_setstate(PyArray_Descr *self, PyObject *args)
@@ -10829,13 +10777,6 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
 }
 
 
-static char doc_arraydescr_newbyteorder[] = "self.newbyteorder(<endian>)"
-        " returns a copy of the dtype object\n"
-        " with altered byteorders.  If <endian> is not given all byteorders\n"
-        " are swapped.  Otherwise endian can be '>', '<', or '=' to force\n"
-        " a byteorder.  Descriptors in all fields are also updated in the\n"
-        " new dtype object.";
-
 static PyObject *
 arraydescr_newbyteorder(PyArray_Descr *self, PyObject *args)
 {
@@ -10850,12 +10791,11 @@ arraydescr_newbyteorder(PyArray_Descr *self, PyObject *args)
 static PyMethodDef arraydescr_methods[] = {
         /* for pickling */
         {"__reduce__", (PyCFunction)arraydescr_reduce, METH_VARARGS,
-         doc_arraydescr_reduce},
+         NULL},
         {"__setstate__", (PyCFunction)arraydescr_setstate, METH_VARARGS,
-         doc_arraydescr_setstate},
-
+         NULL},
         {"newbyteorder", (PyCFunction)arraydescr_newbyteorder, METH_VARARGS,
-         doc_arraydescr_newbyteorder},
+         NULL},
         {NULL,          NULL}           /* sentinel */
 };
 

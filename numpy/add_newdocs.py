@@ -13,7 +13,96 @@ add_newdoc('numpy.core','dtype',
             ('itemsize', "Size of each item"),
             ('hasobject', "Non-zero if Python objects are in "\
              "this data-type"),
-            ('num', "Internally-used number for builtin base")
+            ('num', "Internally-used number for builtin base"),
+            ('newbyteorder',
+"""self.newbyteorder(<endian>)
+returns a copy of the dtype object with altered byteorders.
+If <endian> is not given all byteorders are swapped.
+Otherwise endian can be '>', '<', or '=' to force a particular
+byteorder.  Data-types in all fields are also updated in the
+new dtype object.
+"""),
+            ("__reduce__", "self.__reduce__() for pickling"),
+            ("__setstate__", "self.__setstate__() for pickling"),
+            ("subdtype", "A tuple of (descr, shape) or None"),
+            ("descr", "The array_interface data-type descriptor."),
+            ("str", "The array interface typestring."),
+            ("name", "The name of the true data-type"),
+            ("base", "The base data-type or self if no subdtype"),
+            ("shape", "The shape of the subdtype or (1,)"),
+            ("isbuiltin", "Is this a built-in data-type?"),
+            ("isnative", "Is the byte-order of this data-type native?")
+            ]
+           )
+
+add_newdoc('numpy.core', 'ndarray',
+"""An array object represents a multidimensional, homogeneous array
+of fixed-size items.  An associated data-type-descriptor object
+details the data-type in an array (including byteorder and any
+fields).  An array can be constructed using the numpy.array
+command. Arrays are sequence, mapping and numeric objects.
+More information is available in the numpy module and by looking
+at the methods and attributes of an array.
+
+ndarray.__new__(subtype, shape=, dtype=float, buffer=None,
+                offset=0, strides=None, order=None)
+                
+ There are two modes of creating an array using __new__:
+ 1) If buffer is None, then only shape, dtype, and order 
+    are used
+ 2) If buffer is an object exporting the buffer interface, then
+    all keywords are interpreted.
+ The dtype parameter can be any object that can be interpreted 
+    as a numpy.dtype object.
+    
+ No __init__ method is needed because the array is fully 
+ initialized after the __new__ method.
+"""
+           )
+
+add_newdoc('numpy.core', 'ndarray',
+           [('ndim', 'number of array dimensions'),
+            ('flags', 'special object providing array flags'),
+            ('shape', 'tuple of array dimensions'),
+            ('strides', 'tuple of bytes to step in each dimension'),
+            ('data', 'buffer object pointing to the start of the data'),
+            ('itemsize', 'length of one element in bytes'),
+            ('size', 'number of elements in the array'),
+            ('nbytes', 'number of bytes in the array'),
+            ('base', 'base object if memory is from some other object'),
+            ('dtype', 'data-type for the array'),
+            ('real', 'real part of the array'),
+            ('imag', 'imaginary part of the array'),
+            ('flat', 'a 1-d flat iterator'),
+            ('ctypes', 'a ctypes interface object'),
+            ('_as_parameter_', 'allow the array to be interpreted as a ctypes object by returning the data-memory location as an integer'),
+            ('T', 'equivalent to self.transpose() except self is returned for self.ndim < 2'),
+            ('__array_interface__', 'Array protocol: Python side'),
+            ('__array_struct__', 'Array protocol: C-struct side'),
+            ('__array_priority__', 'Array priority'),
+            ('__array_finalize__', 'None')
+            ]
+           )           
+
+
+add_newdoc('numpy.core', 'flatiter',
+           [('__array__',
+"""__array__(type=None)
+Get array from iterator"""),
+            ('copy',
+"""copy()
+Get a copy of the iterator as a 1-d array"""),
+            ('coords', "An N-d tuple of current coordinates.")
+            ]
+           )
+
+add_newdoc('numpy.core', 'broadcast',
+           [('size', "total size of broadcasted result"),
+            ('index', "current index in broadcasted result"),
+            ('shape', "shape of broadcasted result"),
+            ('iters', "tuple of individual iterators"),
+            ('numiter', "number of iterators"),
+            ('nd', "number of dimensions of broadcasted result")
             ]
            )
 
@@ -267,3 +356,5 @@ length size starting at offset.  Default is the entire buffer. A
 read-write buffer is attempted followed by a read-only buffer.
 
 """)
+
+
