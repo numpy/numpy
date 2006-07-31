@@ -1,4 +1,3 @@
-
 from lib import add_newdoc
 
 add_newdoc('numpy.core','dtype',

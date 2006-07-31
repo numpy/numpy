@@ -342,6 +342,7 @@ static PyTypeObject *PyMemberDescr_TypePtr=NULL;
 static PyTypeObject *PyGetSetDescr_TypePtr=NULL;
 static PyTypeObject *PyMethodDescr_TypePtr=NULL;
 
+extern int Py_OptimizeFlag;
 /* Can only be called if doc is currently NULL
 */
 static PyObject *
@@ -351,6 +352,12 @@ arr_add_docstring(PyObject *dummy, PyObject *args)
 	PyObject *str;
 	char *docstr;
 	static char *msg = "already has a docstring";
+
+	/* Don't add docstrings */
+        if (Py_OptimizeFlag > 1) {
+                Py_INCREF(Py_None);
+                return Py_None;	
+	}
 	
 	if (!PyArg_ParseTuple(args, "OO!", &obj, &PyString_Type, &str))
 		return NULL;
