@@ -342,7 +342,6 @@ static PyTypeObject *PyMemberDescr_TypePtr=NULL;
 static PyTypeObject *PyGetSetDescr_TypePtr=NULL;
 static PyTypeObject *PyMethodDescr_TypePtr=NULL;
 
-extern int Py_OptimizeFlag;
 /* Can only be called if doc is currently NULL
 */
 static PyObject *
