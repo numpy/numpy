@@ -18,7 +18,7 @@ add_newdoc('numpy.core','dtype',
             ]
            )
 
-add_newdoc('numpy.core','fromobject',
+add_newdoc('numpy.core.multiarray','array',
 """array(object, dtype=None, copy=1,order=None, subok=0,ndmin=0)
               
 Return an array from object with the specified date-type.
@@ -50,7 +50,7 @@ Inputs:
 
 """)
 
-add_newdoc('numpy.core','empty',
+add_newdoc('numpy.core.multiarray','empty',
 """empty((d1,...,dn),dtype=float,order='C')
 
 Return a new array of shape (d1,...,dn) and given type with all its
@@ -59,7 +59,7 @@ entries uninitialized. This can be faster than zeros.
 """)
 
 
-add_newdoc('numpy.core','scalar',
+add_newdoc('numpy.core.multiarray','scalar',
 """scalar(dtype,obj)
 
 Return a new scalar array of the given type initialized with
@@ -71,7 +71,7 @@ types.
 
 """)
 
-add_newdoc('numpy.core','zeros',
+add_newdoc('numpy.core.multiarray','zeros',
 """zeros((d1,...,dn),dtype=float,order='C')
 
 Return a new array of shape (d1,...,dn) and type typecode with all
@@ -79,7 +79,7 @@ it's entries initialized to zero.
 
 """)
 
-add_newdoc('numpy.core','set_typeDict',
+add_newdoc('numpy.core.multiarray','set_typeDict',
 """set_typeDict(dict)
 
 Set the internal dictionary that can look up an array type using a
@@ -87,7 +87,7 @@ registered code.
 
 """)
 
-add_newdoc('numpy.core','fromstring',
+add_newdoc('numpy.core.multiarray','fromstring',
 """fromstring(string, dtype=float, count=-1, sep='')
 
 Return a new 1d array initialized from the raw binary data in string.
@@ -99,7 +99,7 @@ using sep as the separator between elements (extra whitespace is ignored).
 
 """)
 
-add_newdoc('numpy.core','fromstring',
+add_newdoc('numpy.core.multiarray','fromstring',
 """fromiter(iterable, dtype, count=-1)
 
 Return a new 1d array initialized from iterable. If count is
@@ -108,7 +108,7 @@ size is determined by the generator.
 
 """)
 
-add_newdoc('numpy.core','fromfile',
+add_newdoc('numpy.core.multiarray','fromfile',
 """fromfile(file=, dtype=float, count=-1, sep='')
 
 Return an array of the given data type from a (text or binary) file.
@@ -124,7 +124,7 @@ read in simply-formatted or binary data quickly.
 
 """)
 
-add_newdoc('numpy.core','frombuffer',
+add_newdoc('numpy.core.multiarray','frombuffer',
 """frombuffer(buffer=, dtype=float, count=-1, offset=0)
 
 Returns a 1-d array of data type dtype from buffer. The buffer
@@ -137,7 +137,7 @@ byteswapped, but the array will manage it in future operations.
 
 """)
 
-add_newdoc('numpy.core','concatenate',
+add_newdoc('numpy.core.multiarray','concatenate',
 """concatenate((a1, a2, ...), axis=None)
 
 Join arrays together.
@@ -152,7 +152,7 @@ array([0, 1, 2, 5, 6, 7])
 
 """)
 
-add_newdoc('numpy.core','inner',
+add_newdoc('numpy.core.multiarray','inner',
 """inner(a,b)
 
 Returns the dot product of two arrays, which has shape a.shape[:-1] +
@@ -161,23 +161,13 @@ from the last dimensions of a and b.
 
 """)
 
-add_newdoc('numpy.core','matrixproduct',
-"""dot(a,v)
-
-Return matrix-multiplication between a and b.
-
-The product-sum is over the last dimension of a and the 
-second-to-last dimension of b.
-
-""")
-
 add_newdoc('numpy.core','fastCopyAndTranspose',
 """_fastCopyAndTranspose(a)""")
 
-add_newdoc('numpy.core','cross_correlate',
+add_newdoc('numpy.core.multiarray','correlate',
 """cross_correlate(a,v, mode=0)""")
 
-add_newdoc('numpy.core','arange',
+add_newdoc('numpy.core.multiarray','arange',
 """arange([start,] stop[, step,], dtype=None)
 
 For integer arguments, just like range() except it returns an array
@@ -191,14 +181,14 @@ being greater than stop.
 
 """)
 
-add_newdoc('numpy.core','_get_ndarray_c_version',
+add_newdoc('numpy.core.multiarray','_get_ndarray_c_version',
 """_get_ndarray_c_version()
 
 Return the compile time NDARRAY_VERSION number.
 
 """)
 
-add_newdoc('numpy.core','_reconstruct',
+add_newdoc('numpy.core.multiarray','_reconstruct',
 """_reconstruct(subtype, shape, dtype)
 
 Construct an empty array. Used by Pickles.
@@ -206,7 +196,7 @@ Construct an empty array. Used by Pickles.
 """)
 
 
-add_newdoc('numpy.core','set_string_function',
+add_newdoc('numpy.core.multiarray','set_string_function',
 """set_string_function(f, repr=1)
 
 Set the python function f to be the function used to obtain a pretty
@@ -216,7 +206,7 @@ consisting of the desired representation of M for printing.
 
 """)
 
-add_newdoc('numpy.core','set_numeric_ops',
+add_newdoc('numpy.core.multiarray','set_numeric_ops',
 """set_numeric_ops(op=func, ...)
 
 Set some or all of the number methods for all array objects.  Don't
@@ -225,7 +215,7 @@ that were replaced, which can be stored and set later.
 
 """)
 
-add_newdoc('numpy.core','where',
+add_newdoc('numpy.core.multiarray','where',
 """where(condition, | x, y)
 
 The result is shaped like condition and has elements of x and y where
@@ -242,7 +232,7 @@ each element that satisfies the condition.
 """)
 
 
-add_newdoc('numpy.core','lexsort',
+add_newdoc('numpy.core.multiarray','lexsort',
 """lexsort(keys=, axis=-1)
 
 Return an array of indices similar to argsort, except the sorting is
@@ -255,22 +245,22 @@ sequence of things that can be converted to arrays of the same shape.
 
 """)
 
-add_newdoc('numpy.core','can_cast_safely',
-"""can_cast_safely(from=d1, to=d2)
+add_newdoc('numpy.core.multiarray','can_cast',
+"""can_cast(from=d1, to=d2)
 
 Returns True if data type d1 can be cast to data type d2 without
 losing precision.
 
 """)
 
-add_newdoc('numpy.core','new_buffer',
+add_newdoc('numpy.core.multiarray','newbuffer',
 """newbuffer(size)
 
 Return a new uninitialized buffer object of size bytes
 
 """)
 
-add_newdoc('numpy.core','getbuffer',
+add_newdoc('numpy.core.multiarray','getbuffer',
 """getbuffer(obj [,offset[, size]])
 
 Create a buffer object from the given object referencing a slice of
