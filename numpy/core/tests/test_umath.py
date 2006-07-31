@@ -172,7 +172,9 @@ class _test_complex_real(NumpyTestCase):
                       'log10']
     def test_it(self):
         for fun in self.funcs:
-            assert_almost_equal(fun(self.x),fun(self.z).real)
+            cr = fun(self.z)
+            assert_almost_equal(fun(self.x),cr.real)
+            assert_almost_equal(0, cr.imag)
 
 class test_choose(NumpyTestCase):
     def test_attributes(self):

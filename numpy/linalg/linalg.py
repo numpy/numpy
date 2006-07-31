@@ -430,7 +430,7 @@ def svd(a, full_matrices=1, compute_uv=1):
         work = zeros((lwork,), t)
         results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
                                  work, -1, iwork, 0)
-        lwork = int(work[0])
+        lwork = int(abs(work[0]))
         if option == 'N' and lwork==1:
             # there seems to be a bug in dgesdd of lapack
             #   (NNemec, 060310)
