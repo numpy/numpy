@@ -4239,7 +4239,7 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
 
 /* new reference in *at */
 /*MULTIARRAY_API
- Get typenum from an object -- None goes to &LONG_descr
+ Get typenum from an object -- None goes to PyArray_DEFAULT
 */
 static int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
@@ -4894,6 +4894,14 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 	PyArrayObject *ret;
 	Bool binary;
 
+        if (dtype->hasobject) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "Cannot create an object array from"    \
+                                " a string");
+                Py_DECREF(dtype);
+                return NULL;
+        }		
+
 	if (dtype == NULL)
 		dtype=PyArray_DescrFromType(PyArray_DEFAULT);
 	
@@ -4907,13 +4915,6 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 	binary = ((sep == NULL) || (strlen(sep) == 0));	
 
 	if (binary) {
-		if (dtype->hasobject) {
-			PyErr_SetString(PyExc_ValueError, 
-					"Cannot create an object array from" \
-					" a binary string");
-			Py_DECREF(dtype);
-			return NULL;
-		}		
 		if (n < 0 ) {
 			if (slen % itemsize != 0) {
 				PyErr_SetString(PyExc_ValueError, 
@@ -5040,13 +5041,14 @@ static PyObject *
 array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
 	char *data;
-	longlong nin=-1;
+	Py_ssize_t nin=-1;
 	char *sep=NULL;
 	Py_ssize_t s;
 	static char *kwlist[] = {"string", "dtype", "count", "sep", NULL};
 	PyArray_Descr *descr=NULL;
 
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "s#|O&Ls", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "s#|O&" 
+                                         NPY_SSIZE_T_PYFMT "s", kwlist, 
 					 &data, &s, 
 					 PyArray_DescrConverter, &descr,
 					 &nin, &sep)) {
@@ -5057,7 +5059,7 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 }
 
 
-/* steals a reference to dtype */
+/* steals a reference to dtype (which cannot be NULL) */
 /*OBJECT_API */
 static PyObject *
 PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
@@ -5072,14 +5074,24 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
 
         elcount = (count < 0) ? 0 : count;
         elsize = dtype->elsize;
+        
+        /* We would need to alter the memory RENEW code to decrement any
+           reference counts before just throwing away the memory. 
+         */
+        if (dtype->hasobject) {
+                PyErr_SetString(PyExc_ValueError, "cannot create "\
+                                "object arrays from iterator");
+                goto done;
+        }
 
         ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1,
                                     &elcount, NULL,NULL, 0, NULL);
         dtype = NULL;
         if (ret == NULL) goto done;
 
-        for (i = 0; (i < count || count == -1) && (value = PyIter_Next(iter)); i++) {
-
+        for (i = 0; (i < count || count == -1) && 
+                     (value = PyIter_Next(iter)); i++) {
+                
             if (i >= elcount) {
                 /* 
                    Grow ret->data:
@@ -5094,6 +5106,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
                 if (new_data == NULL) {
                     PyErr_SetString(PyExc_MemoryError, 
                                     "cannot allocate array memory");
+                    Py_DECREF(value);
                     goto done;
                 }
                 ret->data = new_data;
@@ -5101,9 +5114,10 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
             ret->dimensions[0] = i+1;
 
             if (((item = index2ptr(ret, i)) == NULL) ||
-                    (ret->descr->f->setitem(value, item, ret) == -1)) {
-                        goto done;
-                }
+                (ret->descr->f->setitem(value, item, ret) == -1)) {
+                    Py_DECREF(value);
+                    goto done;
+            }
             Py_DECREF(value);
 
         }
@@ -5117,12 +5131,12 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
             Realloc the data so that don't keep extra memory tied up
             (assuming realloc is reasonably good about reusing space...)
         */
-        new_data = PyDataMem_RENEW(ret->data, i * elsize);
-        if (new_data == NULL) {
+        if (i==0) i = 1;
+        ret->data = PyDataMem_RENEW(ret->data, i * elsize);
+        if (ret->data == NULL) {
             PyErr_SetString(PyExc_MemoryError, "cannot allocate array memory");
             goto done;
         }
-        ret->data = new_data;
 
 done:
         Py_XDECREF(iter);
@@ -5138,11 +5152,13 @@ static PyObject *
 array_fromIter(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
 	PyObject *iter;
-	longlong nin=-1;
+	Py_ssize_t nin=-1;
 	static char *kwlist[] = {"iter", "dtype", "count", NULL};
 	PyArray_Descr *descr=NULL;
 
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO&|L", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, 
+                                         "OO&|" NPY_SSIZE_T_PYFMT, 
+                                         kwlist, 
 					 &iter,
 					 PyArray_DescrConverter, &descr,
 					 &nin)) {
@@ -5174,6 +5190,12 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 	PyArray_ScanFunc *scan;
 	Bool binary;
 
+        if (typecode->hasobject) {
+                PyErr_SetString(PyExc_ValueError, "cannot read into"
+                                "object array");
+                Py_DECREF(typecode);
+                return NULL;
+        }
 	if (typecode->elsize == 0) {
 		PyErr_SetString(PyExc_ValueError, "0-sized elements.");
 		Py_DECREF(typecode);
@@ -5314,11 +5336,13 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 	PyObject *file=NULL, *ret;
 	FILE *fp;
 	char *sep="";
-	longlong nin=-1;
+	Py_ssize_t nin=-1;
 	static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
 	PyArray_Descr *type=NULL;
 	
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&Ls", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, 
+                                         "O|O&" NPY_SSIZE_T_PYFMT "s", 
+                                         kwlist, 
 					 &file,
 					 PyArray_DescrConverter, &type,
 					 &nin, &sep)) {
@@ -5448,11 +5472,13 @@ static PyObject *
 array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
 	PyObject *obj=NULL;
-	longlong nin=-1, offset=0;
+	Py_ssize_t nin=-1, offset=0;
 	static char *kwlist[] = {"buffer", "dtype", "count", "offset", NULL};
 	PyArray_Descr *type=NULL;
 
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&LL", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O&"
+                                         NPY_SSIZE_T_PYFMT 
+                                         NPY_SSIZE_T_PYFMT, kwlist, 
 					 &obj,
 					 PyArray_DescrConverter, &type,
 					 &nin, &offset)) {

@@ -5226,6 +5226,12 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                                 "resize only works on single-segment arrays");
                 return NULL;
         }
+        
+        if (self->descr->hasobject) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "cannot resize an object-array like this");
+                return NULL;
+        }
 
         if (fortran == PyArray_ANYORDER)
                 fortran = PyArray_CORDER;

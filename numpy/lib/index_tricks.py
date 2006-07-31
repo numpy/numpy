@@ -336,6 +336,8 @@ class ndindex(object):
     """
 
     def __init__(self, *args):
+        if len(args) == 1 and isinstance(args[0], tuple):
+            args = args[0]
         self.nd = len(args)
         self.ind = [0]*self.nd
         self.index = 0
