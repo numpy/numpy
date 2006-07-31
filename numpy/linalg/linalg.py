@@ -42,8 +42,16 @@ _real_types_map = {single : single,
                    csingle : single,
                    cdouble : double}
 
+_complex_types_map = {single : csingle,
+                      double : cdouble,
+                      csingle : csingle,
+                      cdouble : cdouble}
+
 def _realType(t, default=double):
     return _real_types_map.get(t, default)
+
+def _complexType(t, default=cdouble):
+    return _complex_types_map.get(t, default)
 
 def _linalgRealType(t):
     """Cast the type t to either double or cdouble."""
@@ -207,6 +215,7 @@ def eigvals(a):
             result_t = _realType(result_t)
         else:
             w = wr+1j*wi
+            result_t = _complexType(result_t)
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
     return w.astype(result_t)
@@ -308,6 +317,8 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
             for i in range(len(ind)/2):
                 v[ind[2*i]] = vr[ind[2*i]] + 1j*vr[ind[2*i+1]]
                 v[ind[2*i+1]] = vr[ind[2*i]] - 1j*vr[ind[2*i+1]]
+            result_t = _complexType(result_t)
+            
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
     vt = v.transpose().astype(result_t)
