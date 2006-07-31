@@ -5982,14 +5982,21 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
                 PyErr_SetString(PyExc_TypeError, "invalid data-type for array");
                 return -1;
         }
-        if (newtype->type_num == PyArray_OBJECT || \
-            self->descr->type_num == PyArray_OBJECT) {
-                PyErr_SetString(PyExc_TypeError, \
-                                "Cannot change descriptor for object"\
+        if (newtype->hasobject || self->descr->hasobject) {
+                PyErr_SetString(PyExc_TypeError,                        \
+                                "Cannot change data-type for object"    \
                                 "array.");
                 Py_DECREF(newtype);
                 return -1;
         }
+
+        if (newtype->elsize == 0) {
+                PyErr_SetString(PyExc_TypeError, 
+                                "data-type must not be 0-sized");
+                Py_DECREF(newtype);
+                return -1;
+        }
+
 
         if ((newtype->elsize != self->descr->elsize) &&         \
             (self->nd == 0 || !PyArray_ISONESEGMENT(self) || \
