@@ -4583,34 +4583,6 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
 
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))
 
-static char doc_fromobject[] = "array(object, dtype=None, copy=1, "
-        "order=None, subok=0,ndmin=0)\n"
-	"will return an array from object with the specified date-type\n\n"
-	"Inputs:\n\n"
-	"  object - an array, any object exposing the array interface, any \n"
-	"            object whose __array__ method returns an array, or any \n"
-	"            (nested) sequence.\n"
-	"  dtype  - The desired data-type for the array.  If not given, then\n"
-	"            the type will be determined as the minimum type required\n"
-	"            to hold the objects in the sequence.  This argument can only\n"
-	"            be used to 'upcast' the array.  For downcasting, use the \n"
-	"            .astype(t) method.\n"
-        "  copy   - If true, then force a copy.  Otherwise a copy will only occur\n"
-	"            if __array__ returns a copy, obj is a nested sequence, or \n"
-	"            a copy is needed to satisfy any of the other requirements\n"
-	"  order  - Specify the order of the array.  If order is 'C', then the\n"
-	"            array will be in C-contiguous order (last-index varies the\n"
-	"            fastest).  If order is 'FORTRAN', then the returned array\n"
-	"            will be in Fortran-contiguous order (first-index varies the\n"
-	"            fastest).  If order is None, then the returned array may\n"
-	"            be in either C-, or Fortran-contiguous order or even\n"
-	"            discontiguous.\n"
-	"  subok  - If True, then sub-classes will be passed-through, otherwise\n"
-	"            the returned array will be forced to be a base-class array\n"
-	"  ndmin  - Specifies the minimum number of dimensions that the resulting\n"
-	"            array should have.  1's will be pre-pended to the shape as\n"
-	"            needed to meet this requirement.\n";
-
 #define STRIDING_OK(op, order) ((order) == PyArray_ANYORDER ||          \
                                 ((order) == PyArray_CORDER &&           \
                                  PyArray_ISCONTIGUOUS(op)) ||           \
@@ -4730,9 +4702,6 @@ PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 	return (PyObject *)ret;
 }
 
-
-static char doc_empty[] = "empty((d1,...,dn),dtype=float,order='C') will return a new array\n of shape (d1,...,dn) and given type with all its entries uninitialized. This can be faster than zeros.";
-
 static PyObject *
 array_empty(PyObject *ignored, PyObject *args, PyObject *kwds) 
 {
@@ -4763,8 +4732,6 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
 	PyDimMem_FREE(shape.ptr);
 	return ret;
 }
-
-static char doc_scalar[] = "scalar(dtype,obj) will return a new scalar array of the given type initialized with obj. Mainly for pickle support.  The dtype must be a valid data-type descriptor.  If dtype corresponds to an OBJECT descriptor, then obj can be any object, otherwise obj must be a string. If obj is not given it will be interpreted as None for object type and zeros for all other types.";
 
 static PyObject *
 array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds) 
@@ -4861,8 +4828,6 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 
 }
 
-static char doc_zeros[] = "zeros((d1,...,dn),dtype=float,order='C') will return a new array of shape (d1,...,dn) and type typecode with all it's entries initialized to zero.";
-
 static PyObject *
 array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds) 
 {
@@ -4892,10 +4857,6 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
 	PyDimMem_FREE(shape.ptr);
 	return ret;
 }
-
-static char doc_set_typeDict[] = "set_typeDict(dict) set the internal "\
-	"dictionary that can look up an array type using a registered "\
-	"code";
 
 static PyObject *
 array_set_typeDict(PyObject *ignored, PyObject *args)
@@ -5075,8 +5036,6 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 	return (PyObject *)ret;
 }
 
-static char doc_fromString[] = "fromstring(string, dtype=float, count=-1, sep='') returns a new 1d array initialized from the raw binary data in string.  If count is positive, the new array will have count elements, otherwise it's size is determined by the size of string.  If sep is not empty then the string is interpreted in ASCII mode and converted to the desired number type using sep as the separator between elements (extra whitespace is ignored).";
-
 static PyObject *
 array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
@@ -5174,9 +5133,6 @@ done:
         }
         return (PyObject *)ret;
 }
-
-
-static char doc_fromIter[] = "fromiter(iterable, dtype, count=-1) returns a new 1d array initialized from iterable. If count is nonegative, the new array will have count elements, otherwise it's size is determined by the generator.";
 
 static PyObject *
 array_fromIter(PyObject *ignored, PyObject *args, PyObject *keywds)
@@ -5352,21 +5308,6 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 	return (PyObject *)r;
 }
 
-static char doc_fromfile[] = \
-	"fromfile(file=, dtype=float, count=-1, sep='')\n"	\
-	"\n"\
-	"  Return an array of the given data type from a \n"\
-	"  (text or binary) file.   The file argument can be an open file\n"\
-	"  or a string with the name of a file to read from.  If\n"\
-	"  count==-1, then the entire file is read, otherwise count is\n"\
-	"  the number of items of the given type read in.  If sep is ''\n"\
-	"  then read a binary file, otherwise it gives the separator\n"\
-	"  between elements in a text file.\n"\
-	"\n"\
-	"  WARNING: This function should be used sparingly, as it is not\n"\
-	"  a platform-independent method of persistence.  But it can be \n"\
-	"  useful to read in simply-formatted or binary data quickly.";
-
 static PyObject *
 array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
@@ -5503,19 +5444,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 	return (PyObject *)ret;
 }
 
-static char doc_frombuffer[] = \
-	"frombuffer(buffer=, dtype=float, count=-1, offset=0)\n"\
-	"\n"								\
-	"  Returns a 1-d array of data type dtype from buffer. The buffer\n"\
-	"   argument must be an object that exposes the buffer interface.\n"\
-	"   If count is -1 then the entire buffer is used, otherwise, count\n"\
-	"   is the size of the output.  If offset is given then jump that\n"\
-	"   far into the buffer. If the buffer has data that is out\n" \
-	"   not in machine byte-order, than use a propert data type\n"\
-	"   descriptor. The data will not\n" \
-	"   be byteswapped, but the array will manage it in future\n"\
-	"   operations.\n";
-
 static PyObject *
 array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
@@ -5536,15 +5464,6 @@ array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
 	return PyArray_FromBuffer(obj, type, (intp)nin, (intp)offset);
 }
 
-
-static char doc_concatenate[] =
-    "concatenate((a1, a2, ...), axis=None) joins arrays together\n\n" \
-    "The tuple of sequences (a1, a2, ...) are joined along the given axis\n" \
-    "(default is the first one) into a single numpy array.\n\n" \
-    "Example:\n\n" \
-    ">>> concatenate( ([0,1,2], [5,6,7]) )\n" \
-    "array([0, 1, 2, 5, 6, 7])\n";
-
 static PyObject *
 array_concatenate(PyObject *dummy, PyObject *args, PyObject *kwds) 
 {
@@ -5559,11 +5478,6 @@ array_concatenate(PyObject *dummy, PyObject *args, PyObject *kwds)
 	return PyArray_Concatenate(a0, axis);
 }
 
-static char doc_innerproduct[] = \
-	"inner(a,b) returns the dot product of two arrays, which has\n"\
-	"shape a.shape[:-1] + b.shape[:-1] with elements computed by\n" \
-	"the product of the elements from the last dimensions of a and b.";
-
 static PyObject *array_innerproduct(PyObject *dummy, PyObject *args) {
 	PyObject *b0, *a0;
 	
@@ -5571,11 +5485,6 @@ static PyObject *array_innerproduct(PyObject *dummy, PyObject *args) {
 	
 	return _ARET(PyArray_InnerProduct(a0, b0));
 }
-
-static char doc_matrixproduct[] = \
-	"dot(a,v) returns matrix-multiplication between a and b.\n"\
-	"The product-sum is over the last dimension of a and the \n"\
-	"second-to-last dimension of b.";
 
 static PyObject *array_matrixproduct(PyObject *dummy, PyObject *args) {
 	PyObject *v, *a;
@@ -5585,8 +5494,6 @@ static PyObject *array_matrixproduct(PyObject *dummy, PyObject *args) {
 	return _ARET(PyArray_MatrixProduct(a, v));
 }
 
-static char doc_fastCopyAndTranspose[] = "_fastCopyAndTranspose(a)";
-
 static PyObject *array_fastCopyAndTranspose(PyObject *dummy, PyObject *args) {
 	PyObject *a0;
 	
@@ -5594,8 +5501,6 @@ static PyObject *array_fastCopyAndTranspose(PyObject *dummy, PyObject *args) {
 	
 	return _ARET(PyArray_CopyAndTranspose(a0));
 }
-
-static char doc_correlate[] = "cross_correlate(a,v, mode=0)";
 
 static PyObject *array_correlate(PyObject *dummy, PyObject *args, PyObject *kwds) {
 	PyObject *shape, *a0;
@@ -5818,16 +5723,6 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 	return NULL;
 }
 
-
-static char doc_arange[] = 
-"arange([start,] stop[, step,], dtype=None)\n\n"
-"For integer arguments, just like range() except it returns an array whose type can\n"
-"be specified by the keyword argument dtype.\n\n"
-"If dtype is not specified, the type of the result is deduced from the type of the\n"
-"arguments.\n\n"
-"For floating point arguments, the length of the result is ceil((stop - start)/step).\n"
-"This rule may result in the last element of the result be greater than stop.";
-
 static PyObject *
 array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
 	PyObject *o_start=NULL, *o_stop=NULL, *o_step=NULL;
@@ -5853,9 +5748,6 @@ PyArray_GetNDArrayCVersion(void)
 	return (unsigned int)NDARRAY_VERSION;
 }
 
-static char 
-doc__get_ndarray_c_version[] = "_get_ndarray_c_version() gets the compile time NDARRAY_VERSION number";
-
 static PyObject *
 array__get_ndarray_c_version(PyObject *dummy, PyObject *args, PyObject *kwds) 
 {
@@ -5864,9 +5756,6 @@ array__get_ndarray_c_version(PyObject *dummy, PyObject *args, PyObject *kwds)
 	
 	return PyInt_FromLong( (long) PyArray_GetNDArrayCVersion() );
 }
-
-static char
-doc__reconstruct[] = "_reconstruct(subtype, shape, dtype) constructs an empty array. Used by Pickles.";
 
 static PyObject *
 array__reconstruct(PyObject *dummy, PyObject *args) 
@@ -5900,9 +5789,6 @@ array__reconstruct(PyObject *dummy, PyObject *args)
 	return NULL;
 }
 
-static char 
-doc_set_string_function[] = "set_string_function(f, repr=1) sets the python function f to be the function used to obtain a pretty printable string version of a array whenever a array is printed.  f(M) should expect a array argument M, and should return a string consisting of the desired representation of M for printing.";
-
 static PyObject *
 array_set_string_function(PyObject *dummy, PyObject *args, PyObject *kwds) 
 {
@@ -5921,9 +5807,6 @@ array_set_string_function(PyObject *dummy, PyObject *args, PyObject *kwds)
 	Py_INCREF(Py_None);
 	return Py_None;
 }
-
-static char 
-doc_set_ops_function[] = "set_numeric_ops(op=func, ...) sets some or all of the number methods for all array objects.  Don't forget **dict can be used as the argument list.  Returns the functions that were replaced -- can be stored and set later.";
 
 static PyObject *
 array_set_ops_function(PyObject *self, PyObject *args, PyObject *kwds) 
@@ -5992,16 +5875,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 	return ret;
 }
 
-static char doc_where[] = \
-    "where(condition, | x, y) is shaped like condition and has elements of\n"\
-    "x and y where condition is respectively true or false.  If x or y are\n"\
-    "not given, then it is equivalent to condition.nonzero().\n"\
-    "\n"
-    "To group the indices by element, rather than dimension, use\n"\
-    "    transpose(where(condition, | x, y))\n"\
-    "instead. The result of this is always a 2d array, with a row of indices\n"
-    "for each element that satisfies the condition.";
-
 static PyObject *
 array_where(PyObject *ignored, PyObject *args)
 {
@@ -6011,17 +5884,6 @@ array_where(PyObject *ignored, PyObject *args)
 
 	return PyArray_Where(obj, x, y);
 }
-
-
-static char doc_lexsort[] = \
-    "lexsort(keys=, axis=-1) returns an array of indices similar to argsort,\n"\
-    "except the sorting is done using the provided sorting keys.  First the\n"\
-    "sort is done using key[0], then the resulting list of indices is\n"\
-    "further manipulated by sorting on key[1], and so forth. The result is\n"\
-    "a sort on multiple keys.  If the keys represented columns of a\n"\
-    "spreadsheet, for example, this would sort using multiple columns.\n"\
-    "The keys argument must be a sequence of things that can be converted to\n"\
-    "arrays of the same shape.";
 
 static PyObject *
 array_lexsort(PyObject *ignored, PyObject *args, PyObject *kwds)
@@ -6037,11 +5899,6 @@ array_lexsort(PyObject *ignored, PyObject *args, PyObject *kwds)
 }
 
 #undef _ARET
-
-
-static char doc_can_cast_safely[] = \
-	"can_cast_safely(from=d1, to=d2) returns True if data type d1 "\
-	"can be cast to data type d2 without losing precision.";
 
 static PyObject *
 array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
@@ -6069,10 +5926,6 @@ array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
 	return retobj;
 }
 
-static char doc_new_buffer[] = \
-	"newbuffer(size) return a new uninitialized buffer object of size "
-	"bytes";
-
 static PyObject *
 new_buffer(PyObject *dummy, PyObject *args)
 {
@@ -6083,12 +5936,6 @@ new_buffer(PyObject *dummy, PyObject *args)
 	
 	return PyBuffer_New(size);
 }
-
-static char doc_buffer_buffer[] = \
-	"getbuffer(obj [,offset[, size]]) create a buffer object from the "\
-	"given object\n  referencing a slice of length size starting at "\
-	"offset.  Default\n is the entire buffer. A read-write buffer is "\
-	"attempted followed by a read-only buffer.";
 
 static PyObject *
 buffer_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
@@ -6112,7 +5959,6 @@ buffer_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
 		return PyBuffer_FromReadWriteObject(obj, offset, size);
 }
 
-char doc_format_longfloat[] = "";
 static PyObject *
 format_longfloat(PyObject *dummy, PyObject *args, PyObject *kwds)
 {
@@ -6140,56 +5986,56 @@ format_longfloat(PyObject *dummy, PyObject *args, PyObject *kwds)
 
 static struct PyMethodDef array_module_methods[] = {
 	{"_get_ndarray_c_version", (PyCFunction)array__get_ndarray_c_version, 
-	 METH_VARARGS|METH_KEYWORDS, doc__get_ndarray_c_version},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"_reconstruct", (PyCFunction)array__reconstruct,
-	 METH_VARARGS, doc__reconstruct},
+	 METH_VARARGS, NULL},
 	{"set_string_function", (PyCFunction)array_set_string_function, 
-	 METH_VARARGS|METH_KEYWORDS, doc_set_string_function},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"set_numeric_ops", (PyCFunction)array_set_ops_function,
-	 METH_VARARGS|METH_KEYWORDS, doc_set_ops_function},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"set_typeDict", (PyCFunction)array_set_typeDict,
-	 METH_VARARGS, doc_set_typeDict},
+	 METH_VARARGS, NULL},
 
 	{"array",	(PyCFunction)_array_fromobject, 
-	 METH_VARARGS|METH_KEYWORDS, doc_fromobject},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"arange",  (PyCFunction)array_arange, 
-	 METH_VARARGS|METH_KEYWORDS, doc_arange},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"zeros",	(PyCFunction)array_zeros, 
-	 METH_VARARGS|METH_KEYWORDS, doc_zeros},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"empty",	(PyCFunction)array_empty, 
-	 METH_VARARGS|METH_KEYWORDS, doc_empty},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"scalar",      (PyCFunction)array_scalar,
-	 METH_VARARGS|METH_KEYWORDS, doc_scalar},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"where",  (PyCFunction)array_where,
-	 METH_VARARGS, doc_where},
+	 METH_VARARGS, NULL},
 	{"lexsort", (PyCFunction)array_lexsort,
-	 METH_VARARGS | METH_KEYWORDS, doc_lexsort},
+	 METH_VARARGS | METH_KEYWORDS, NULL},
 	{"fromstring",(PyCFunction)array_fromString,
-	 METH_VARARGS|METH_KEYWORDS, doc_fromString},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"fromiter",(PyCFunction)array_fromIter,
-	 METH_VARARGS|METH_KEYWORDS, doc_fromIter},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"concatenate", (PyCFunction)array_concatenate, 
-	 METH_VARARGS|METH_KEYWORDS, doc_concatenate},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"inner", (PyCFunction)array_innerproduct, 
-	 METH_VARARGS, doc_innerproduct}, 
+	 METH_VARARGS, NULL},
 	{"dot", (PyCFunction)array_matrixproduct, 
-	 METH_VARARGS, doc_matrixproduct}, 
+	 METH_VARARGS, NULL},
 	{"_fastCopyAndTranspose", (PyCFunction)array_fastCopyAndTranspose, 
-	 METH_VARARGS, doc_fastCopyAndTranspose},
+	 METH_VARARGS, NULL},
 	{"correlate", (PyCFunction)array_correlate, 
-	 METH_VARARGS | METH_KEYWORDS, doc_correlate},
+	 METH_VARARGS | METH_KEYWORDS, NULL},
 	{"frombuffer", (PyCFunction)array_frombuffer,
-	 METH_VARARGS | METH_KEYWORDS, doc_frombuffer},
+	 METH_VARARGS | METH_KEYWORDS, NULL},
 	{"fromfile", (PyCFunction)array_fromfile,
-	 METH_VARARGS | METH_KEYWORDS, doc_fromfile},
+	 METH_VARARGS | METH_KEYWORDS, NULL},
 	{"can_cast", (PyCFunction)array_can_cast_safely,
-	 METH_VARARGS | METH_KEYWORDS, doc_can_cast_safely},		
+	 METH_VARARGS | METH_KEYWORDS, NULL},
 	{"newbuffer", (PyCFunction)new_buffer,
-	 METH_VARARGS, doc_new_buffer},	
+	 METH_VARARGS, NULL},
 	{"getbuffer", (PyCFunction)buffer_buffer,
-	 METH_VARARGS | METH_KEYWORDS, doc_buffer_buffer},	
+	 METH_VARARGS | METH_KEYWORDS, NULL},
         {"format_longfloat", (PyCFunction)format_longfloat,
-         METH_VARARGS | METH_KEYWORDS, doc_format_longfloat},
+         METH_VARARGS | METH_KEYWORDS, NULL},
 	{NULL,		NULL, 0}		/* sentinel */
 };
 
