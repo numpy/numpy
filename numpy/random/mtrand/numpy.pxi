@@ -105,6 +105,8 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_Check(object obj)
     object PyArray_ContiguousFromAny(object obj, NPY_TYPES type, 
         int mindim, int maxdim)
+    object PyArray_ContiguousFromObject(object obj, NPY_TYPES type, 
+        int mindim, int maxdim)
     npy_intp PyArray_SIZE(ndarray arr)
     npy_intp PyArray_NBYTES(ndarray arr)
     void *PyArray_DATA(ndarray arr)
