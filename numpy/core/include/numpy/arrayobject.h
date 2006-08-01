@@ -654,6 +654,7 @@ typedef int Py_ssize_t;
 #elif SIZEOF_PY_INTPTR_T == SIZEOF_LONG
 	#define NPY_INTP NPY_LONG
 	#define NPY_UINTP NPY_ULONG
+        #define PyIntpArrType_Type PyLongArrType_Type
         #define PyUIntpArrType_Type PyULongArrType_Type
 	#define NPY_MAX_INTP NPY_MAX_LONG
 	#define NPY_MIN_INTP MIN_LONG
