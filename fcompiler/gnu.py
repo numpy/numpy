@@ -86,7 +86,7 @@ class GnuFCompiler(FCompiler):
 
     def get_libgcc_dir(self):
         status, output = exec_command(self.compiler_f77 +
-                                      '-print-libgcc-file-name',
+                                      ['-print-libgcc-file-name'],
                                       use_tee=0)
         if not status:
             return os.path.dirname(output)

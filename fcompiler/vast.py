@@ -35,7 +35,7 @@ class VastFCompiler(GnuFCompiler):
     def get_flags_arch(self):
         vast_version = self.get_version()
         gnu = GnuFCompiler()
-        gnu.customize()
+        gnu.customize(None)
         self.version = gnu.get_version()
         opt = GnuFCompiler.get_flags_arch(self)
         self.version = vast_version
