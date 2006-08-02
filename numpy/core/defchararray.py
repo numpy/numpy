@@ -135,14 +135,13 @@ class chararray(ndarray):
         for k, val in enumerate(myiter):
             newval = []
             for chk in val[1:]:
-                if chk.dtype is object_ and chk.item() is None:
+                if not chk or (chk.dtype is object_ and chk.item() is None):
                     break
                 newval.append(chk)
             newitem = getattr(val[0],name)(*newval)
             maxsize = max(len(newitem), maxsize)
             res[k] = newitem
         newarr = chararray(myiter.shape, maxsize, self.dtype is unicode_)
-        print res, maxsize
         newarr[:] = res
         return newarr
 

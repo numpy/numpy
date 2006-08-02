@@ -331,6 +331,13 @@ class test_regression(NumpyTestCase):
     def check_unique_zero_sized(self,level=rlevel):
         """Ticket #205"""
         assert_array_equal([], N.unique(N.array([])))
+        
+    def check_chararray_rstrip(self,level=rlevel):
+        """Ticket #222"""
+        x = N.chararray((1,),5)
+        x[0] = 'a   '
+        x = x.rstrip()
+        assert_equal(x[0], 'a')
 
 if __name__ == "__main__":
     NumpyTest().run()
