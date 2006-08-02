@@ -6329,10 +6329,6 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 static PyObject *
 array_transpose_get(PyArrayObject *self)
 {
-        if (self->nd < 2) {
-                Py_INCREF(self);
-                return (PyObject *)self;
-        }
         return PyArray_Transpose(self, NULL);
 }
 
