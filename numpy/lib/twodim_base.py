@@ -2,7 +2,7 @@
 
 """
 
-__all__ = ['diag','eye','fliplr','flipud','rot90','tri','triu','tril',
+__all__ = ['diag','diagflat','eye','fliplr','flipud','rot90','tri','triu','tril',
            'vander','histogram2d']
 
 from numpy.core.numeric import asanyarray, int_, equal, subtract, arange, \
@@ -81,7 +81,26 @@ def diag(v, k=0):
     else:
         raise ValueError, "Input must be 1- or 2-d."
 
-
+def diagflat(v,k=0):
+    try:
+        wrap = v.__array_wrap__
+    except AttributeError:
+        wrap = None
+    v = asarray(v).ravel()
+    s = len(v)
+    n = s + abs(k)
+    res = zeros((n,n), v.dtype)
+    if (k>=0):
+        i = arange(0,n-k)
+        fi = i+k+i*n
+    else:
+        i = arange(0,n+k)
+        fi = i+(i-k)*n
+    res.flat[fi] = v
+    if not wrap:
+        return res
+    return wrap(res)
+    
 def tri(N, M=None, k=0, dtype=float):
     """ returns a N-by-M array where all the diagonals starting from
         lower left corner up to the k-th are all ones.
