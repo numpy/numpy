@@ -302,7 +302,12 @@ def _set_array_types():
         bits = 8*bytes
         _add_array_type('float', bits)
         _add_array_type('complex', bits)
+    _gi = dtype('p')
+    if _gi.type not in sctypes['int']:
+        sctypes['int'].append(_gi.type)
+        sctypes['uint'].append(dtype('P').type)
 _set_array_types()
+
 
 genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
                    'int32', 'uint32', 'int64', 'uint64', 'int128',
