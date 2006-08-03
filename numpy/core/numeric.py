@@ -354,7 +354,7 @@ def isscalar(num):
     if isinstance(num, generic):
         return True
     else:
-        return type(num) in ScalarType
+        return issctype(type(num))
 
 _lkup = {
     '0':'0000',

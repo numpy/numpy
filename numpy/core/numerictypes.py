@@ -76,19 +76,19 @@ $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
 
 # we add more at the bottom
-__all__ = ['typeDict', 'typeNA', 'sctypes', 'ScalarType', 'obj2sctype',
+__all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes', 'ScalarType', 'obj2sctype',
            'cast', 'nbytes', 'sctype2char', 'maximum_sctype', 'issctype',
            'typecodes']
 
-from multiarray import typeinfo, ndarray, array, empty
+from multiarray import typeinfo, ndarray, array, empty, dtype
 import types as _types
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
 from __builtin__ import bool, int, long, float, complex, object, unicode, str
 
-typeDict = {}      # Contains all leaf-node numeric types with aliases
-typeNA = {}        # Contails all leaf-node types -> numarray type equivalences
+sctypeDict = {}      # Contains all leaf-node scalar types with aliases
+sctypeNA = {}        # Contails all leaf-node types -> numarray type equivalences
 allTypes = {}      # Collect the types we will add to the module here
 
 def _evalname(name):
@@ -151,9 +151,9 @@ def _add_types():
 
             # define C-name and insert typenum and typechar references also
             allTypes[name] = typeobj
-            typeDict[name] = typeobj
-            typeDict[typeinfo[a][0]] = typeobj
-            typeDict[typeinfo[a][1]] = typeobj
+            sctypeDict[name] = typeobj
+            sctypeDict[typeinfo[a][0]] = typeobj
+            sctypeDict[typeinfo[a][1]] = typeobj
 
         else:  # generic class
             allTypes[name] = typeinfo[a]
@@ -173,21 +173,21 @@ def _add_aliases():
             if (name != 'longdouble' and name != 'clongdouble') or \
                    myname not in allTypes.keys():
                 allTypes[myname] = typeobj
-                typeDict[myname] = typeobj
+                sctypeDict[myname] = typeobj
                 if base == 'complex':
                     na_name = '%s%d' % (base.capitalize(), bit/2)
                 elif base == 'bool':
                     na_name = base.capitalize()
-                    typeDict[na_name] = typeobj
+                    sctypeDict[na_name] = typeobj
                 else:
                     na_name = "%s%d" % (base.capitalize(), bit)
-                    typeDict[na_name] = typeobj
-                typeNA[na_name] = typeobj
-                typeNA[typeobj] = na_name
-                typeNA[typeinfo[a][0]] = na_name
+                    sctypeDict[na_name] = typeobj
+                sctypeNA[na_name] = typeobj
+                sctypeNA[typeobj] = na_name
+                sctypeNA[typeinfo[a][0]] = na_name
         if char != '':
-            typeDict[char] = typeobj
-            typeNA[char] = na_name
+            sctypeDict[char] = typeobj
+            sctypeNA[char] = na_name
 _add_aliases()
 
 # Integers handled so that
@@ -214,16 +214,16 @@ def _add_integer_aliases():
             uintname = 'uint%d' % bits
             allTypes[intname] = typeobj
             allTypes[uintname] = utypeobj
-            typeDict[intname] = typeobj
-            typeDict[uintname] = utypeobj
-            typeDict[Intname] = typeobj
-            typeDict[UIntname] = utypeobj
-            typeNA[Intname] = typeobj
-            typeNA[UIntname] = utypeobj
-        typeNA[typeobj] = Intname
-        typeNA[utypeobj] = UIntname
-        typeNA[val[0]] = Intname
-        typeNA[uval[0]] = UIntname
+            sctypeDict[intname] = typeobj
+            sctypeDict[uintname] = utypeobj
+            sctypeDict[Intname] = typeobj
+            sctypeDict[UIntname] = utypeobj
+            sctypeNA[Intname] = typeobj
+            sctypeNA[UIntname] = utypeobj
+        sctypeNA[typeobj] = Intname
+        sctypeNA[utypeobj] = UIntname
+        sctypeNA[val[0]] = Intname
+        sctypeNA[uval[0]] = UIntname
 _add_integer_aliases()
 
 # We use these later
@@ -255,13 +255,13 @@ def _set_up_aliases():
                   ('object_', 'object')]
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
-        typeDict[alias] = typeDict[t]
+        sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
     for t in ['ulong', 'object', 'unicode', 'int', 'long', 'float',
               'complex', 'bool', 'string']:
         try:
             del allTypes[t]
-            del typeDict[t]
+            del sctypeDict[t]
         except KeyError:
             pass
 _set_up_aliases()
@@ -342,10 +342,14 @@ def _python_type(t):
 def issctype(rep):
     """Determines whether the given object represents
     a numeric array type."""
+    if not isinstance(rep, (type, dtype)):
+        return False
     try:
-        char = sctype2char(rep)
-        return True
-    except (KeyError, ValueError, TypeError):
+        res = obj2sctype(rep)
+        if res:
+            return True
+        return False
+    except:
         return False
 
 def obj2sctype(rep, default=None):
@@ -354,11 +358,13 @@ def obj2sctype(rep, default=None):
             return rep
     except TypeError:
         pass
+    if isinstance(rep, dtype):
+        return rep.type
     if isinstance(rep, type):
         return _python_type(rep)
     if isinstance(rep, ndarray):
         return rep.dtype.type
-    res = typeDict.get(rep, default)
+    res = sctypeDict.get(rep, default)
     return res
 
 
@@ -417,6 +423,11 @@ for key in _sctype2char_dict.keys():
     else:
         _typestr[key] = empty((1,),key).dtype.str[1:]
 
+# Make sure all typestrings are in sctypeDict
+for key, val in _typestr.items():
+    if val not in sctypeDict:
+        sctypeDict[val] = key
+
 # Now add the types we've determined to this module
 for key in allTypes:
     globals()[key] = allTypes[key]
@@ -432,3 +443,7 @@ typecodes = {'Character':'S1',
              'AllInteger':'bBhHiIlLqQpP',
              'AllFloat':'fdgFDG',
              'All':'?bhilqpBHILQPfdgFDGSUVO'}
+
+# backwards compatibility --- deprecated name
+typeDict = sctypeDict
+typeNA = sctypeNA

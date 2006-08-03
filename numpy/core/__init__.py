@@ -5,7 +5,7 @@ from numpy.version import version as __version__
 import multiarray
 import umath
 import numerictypes as nt
-multiarray.set_typeDict(nt.typeDict)
+multiarray.set_typeDict(nt.sctypeDict)
 import _sort
 from numeric import *
 from fromnumeric import *

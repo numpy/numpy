@@ -10877,14 +10877,13 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
         }
         switch (cmp_op) {
         case Py_LT:
-                if (PyArray_CanCastTo(self, new))
+                if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(self, new))
                         result = Py_True;
                 else
                         result = Py_False;
                 break;
         case Py_LE:
-                if (PyArray_EquivTypes(self, new) || 
-                    PyArray_CanCastTo(self, new))
+                if (PyArray_CanCastTo(self, new))
                         result = Py_True;
                 else
                         result = Py_False;
@@ -10902,14 +10901,13 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
                         result = Py_True;
                 break;
         case Py_GT:
-                if (PyArray_CanCastTo(new, self)) 
+                if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(new, self)) 
                         result = Py_True;
                 else
                         result = Py_False;
                 break;
         case Py_GE:
-                if (PyArray_EquivTypes(self, new) ||
-                    PyArray_CanCastTo(new, self)) 
+                if (PyArray_CanCastTo(new, self)) 
                         result = Py_True;
                 else
                         result = Py_False;
