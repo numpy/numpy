@@ -144,7 +144,6 @@ outerproduct = deprecate(outer, 'outerproduct', 'outer')
 innerproduct = deprecate(mu.inner, 'innerproduct', 'inner')
 
 
-
 def DumpArray(m, fp):
     m.dump(fp)
 

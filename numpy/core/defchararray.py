@@ -9,9 +9,10 @@ _globalvar = 0
 _unicode = unicode
 
 # special sub-class for character arrays (string_ and unicode_)
-# This adds equality testing and methods of str and unicode types
+# This adds + and * operations and methods of str and unicode types
 #  which operate on an element-by-element basis
 
+# It also strips white-space on element retrieval
 
 class chararray(ndarray):
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
@@ -40,35 +41,10 @@ class chararray(ndarray):
         if not _globalvar and self.dtype.char not in 'SUb':
             raise ValueError, "Can only create a chararray from string data."
 
-
-##    def _richcmpfunc(self, other, op):
-##        b = broadcast(self, other)
-##        result = empty(b.shape, dtype=bool)
-##        res = result.flat
-##        for k, val in enumerate(b):
-##            r1 = val[0].rstrip('\x00')
-##            r2 = val[1]
-##            res[k] = eval("r1 %s r2" % op, {'r1':r1,'r2':r2})
-##        return result
-
-    # these have been moved to C
-##    def __eq__(self, other):
-##        return self._richcmpfunc(other, '==')
-
-##    def __ne__(self, other):
-##        return self._richcmpfunc(other, '!=')
-
-##    def __ge__(self, other):
-##        return self._richcmpfunc(other, '>=')
-
-##    def __le__(self, other):
-##        return self._richcmpfunc(other, '<=')
-
-##    def __gt__(self, other):
-##        return self._richcmpfunc(other, '>')
-
-##    def __lt__(self, other):
-##        return self._richcmpfunc(other, '<')
+    def __getitem__(self, obj):
+        val = ndarray.__getitem__(self, obj)
+        if isinstance(val, (string_, unicode_)):
+            return val.rstrip()
 
     def __add__(self, other):
         b = broadcast(self, other)
