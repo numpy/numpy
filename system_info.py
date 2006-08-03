@@ -1621,7 +1621,7 @@ class _pkg_config_info(system_info):
 
     def calc_info(self):
         config_exe = find_executable(self.get_config_exe())
-        if not os.path.isfile(config_exe):
+        if not config_exe:
             log.warn('File not found: %s. Cannot determine %s info.' \
                   % (config_exe, self.section))
             return

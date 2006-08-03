@@ -31,7 +31,6 @@ class build_ext (old_build_ext):
     def initialize_options(self):
         old_build_ext.initialize_options(self)
         self.fcompiler = None
-        return
 
     def finalize_options(self):
         incl_dirs = self.include_dirs
@@ -40,18 +39,19 @@ class build_ext (old_build_ext):
             self.include_dirs.extend(self.distribution.include_dirs or [])
         self.set_undefined_options('config_fc',
                                    ('fcompiler', 'fcompiler'))
-        return
 
     def run(self):
         if not self.extensions:
             return
 
         # Make sure that extension sources are complete.
-        for ext in self.extensions:
-            if not all_strings(ext.sources):
-                self.run_command('build_src')
+        self.run_command('build_src')
+#        for ext in self.extensions:
+#            if not all_strings(ext.sources):
+#                 self.run_command('build_src')
 
         if self.distribution.has_c_libraries():
+            self.run_command('build_clib')
             build_clib = self.get_finalized_command('build_clib')
             self.library_dirs.append(build_clib.build_clib)
         else:
@@ -64,25 +64,25 @@ class build_ext (old_build_ext):
 
         # Determine if Fortran compiler is needed.
         if build_clib and build_clib.fcompiler is not None:
-            need_f_compiler = 1
+            need_f_compiler = True
         else:
-            need_f_compiler = 0
+            need_f_compiler = False
             for ext in self.extensions:
                 if has_f_sources(ext.sources):
-                    need_f_compiler = 1
+                    need_f_compiler = True
                     break
                 if getattr(ext,'language','c') in ['f77','f90']:
-                    need_f_compiler = 1
+                    need_f_compiler = True
                     break
 
         # Determine if C++ compiler is needed.
         need_cxx_compiler = 0
         for ext in self.extensions:
             if has_cxx_sources(ext.sources):
-                need_cxx_compiler = 1
+                need_cxx_compiler = True
                 break
-            if getattr(ext,'language','c')=='c++':
-                need_cxx_compiler = 1
+            if getattr(ext,'language','c') == 'c++':
+                need_cxx_compiler = True
                 break
 
         from distutils.ccompiler import new_compiler
@@ -96,22 +96,16 @@ class build_ext (old_build_ext):
 
         # Initialize Fortran/C++ compilers if needed.
         if need_f_compiler:
-            from numpy.distutils.fcompiler import new_fcompiler
-            self.fcompiler = new_fcompiler(compiler=self.fcompiler,
-                                           verbose=self.verbose,
-                                           dry_run=self.dry_run,
-                                           force=self.force)
             if self.fcompiler.get_version():
-                self.fcompiler.customize(self.distribution)
                 self.fcompiler.customize_cmd(self)
                 self.fcompiler.show_customization()
             else:
-                self.warn('fcompiler=%s is not available.' % (self.fcompiler.compiler_type))
+                self.warn('fcompiler=%s is not available.' % (
+                    self.fcompiler.compiler_type,))
                 self.fcompiler = None
 
         # Build extensions
         self.build_extensions()
-        return
 
     def swig_sources(self, sources):
         # Do nothing. Swig sources have beed handled in build_src command.

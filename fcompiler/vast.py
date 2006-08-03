@@ -4,9 +4,12 @@ import sys
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler.gnu import GnuFCompiler
 
+compilers = ['VastFCompiler']
+
 class VastFCompiler(GnuFCompiler):
 
     compiler_type = 'vast'
+    description = 'Pacific-Sierra Research Fortran 90 Compiler'
     version_pattern = r'\s*Pacific-Sierra Research vf90 '\
                       '(Personal|Professional)\s+(?P<version>[^\s]*)'
 
@@ -19,7 +22,7 @@ class VastFCompiler(GnuFCompiler):
         'compiler_f77' : ["g77"],
         'compiler_fix' : ["f90", "-Wv,-ya"],
         'compiler_f90' : ["f90"],
-        'linker_so'    : ["f90"],
+        'linker_so'    : ["<F90>"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
@@ -28,8 +31,8 @@ class VastFCompiler(GnuFCompiler):
 
     def get_version_cmd(self):
         f90 = self.compiler_f90[0]
-        d,b = os.path.split(f90)
-        vf90 = os.path.join(d,'v'+b)
+        d, b = os.path.split(f90)
+        vf90 = os.path.join(d, 'v'+b)
         return vf90
 
     def get_flags_arch(self):

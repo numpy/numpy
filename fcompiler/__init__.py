@@ -10,7 +10,11 @@ __all__ = ['FCompiler','new_fcompiler','show_fcompilers',
 import os
 import sys
 import re
-from types import StringType,NoneType
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 from distutils.sysconfig import get_config_var
 from distutils.fancy_getopt import FancyGetopt
 from distutils.errors import DistutilsModuleError,DistutilsArgError,\
@@ -19,10 +23,15 @@ from distutils.util import split_quoted
 
 from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
-from numpy.distutils.command.config_compiler import config_fc
-from numpy.distutils.core import get_distribution
 from numpy.distutils.misc_util import is_string, is_sequence
+from numpy.distutils.environment import EnvironmentConfig
+from numpy.distutils.exec_command import find_executable
 from distutils.spawn import _nt_quote_args
+
+__metaclass__ = type
+
+class CompilerNotFound(Exception):
+    pass
 
 class FCompiler(CCompiler):
     """ Abstract base class to define the interface that must be implemented
@@ -54,7 +63,51 @@ class FCompiler(CCompiler):
       libraries
       library_dirs
     """
+    # for documentation purposes, these are the environment variables
+    # used.
+    # Each configuration descripition is
+    # (<hook name>, <environment variable>, <key in distutils.cfg>)
+    # The hook names are handled by the self._environment_hook method.
+    distutils_vars = EnvironmentConfig(
+        noopt = (None, None, 'noopt'),
+        noarch = (None, None, 'noarch'),
+        debug = (None, None, 'debug'),
+        verbose = (None, None, 'verbose'),
+    )
 
+    command_vars = EnvironmentConfig(
+        distutils_section='config_fc',
+        compiler_f77 = ('exe.compiler_f77', 'F77', 'f77exec'),
+        compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec'),
+        compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec'),
+        version_cmd = ('self.get_version_cmd', None, None),
+        linker_so = ('self.get_linker_so', 'LDSHARED', None),
+        linker_exe = ('self.get_linker_exe', 'LD', None),
+        archiver = (None, 'AR', None),
+        ranlib = (None, 'RANLIB', None),
+    )
+
+    flag_vars = EnvironmentConfig(
+        distutils_section='config_fc',
+        version = ('flags.version', None, None),
+        f77 = ('flags.f77', 'F77FLAGS', 'f77flags'),
+        f90 = ('flags.f90', 'F90FLAGS', 'f90flags'),
+        free = ('flags.free', 'FREEFLAGS', 'freeflags'),
+        fix = ('flags.fix', None, None),
+        opt = ('flags.opt', 'FOPT', 'opt'),
+        opt_f77 = ('flags.opt_f77', None, None),
+        opt_f90 = ('flags.opt_f90', None, None),
+        arch = ('flags.arch', 'FARCH', 'arch'),
+        arch_f77 = ('flags.arch_f77', None, None),
+        arch_f90 = ('flags.arch_f90', None, None),
+        debug = ('flags.debug', 'FDEBUG', None, None),
+        debug_f77 = ('flags.debug_f77', None, None),
+        debug_f90 = ('flags.debug_f90', None, None),
+        flags = ('self.get_flags', 'FFLAGS', None),
+        linker_so = ('flags.linker_so', 'LDFLAGS', None),
+        linker_exe = ('flags.linker_exe', 'LDFLAGS', None),
+        ar = ('flags.ar', 'ARFLAGS', None),
+    )
 
     language_map = {'.f':'f77',
                     '.for':'f77',
@@ -69,14 +122,15 @@ class FCompiler(CCompiler):
 
     version_pattern = None
 
+    possible_executables = []
     executables = {
-        'version_cmd'  : ["f77","-v"],
+        'version_cmd'  : ["f77", "-v"],
         'compiler_f77' : ["f77"],
         'compiler_f90' : ["f90"],
-        'compiler_fix' : ["f90","-fixed"],
-        'linker_so'    : ["f90","-shared"],
+        'compiler_fix' : ["f90", "-fixed"],
+        'linker_so'    : ["f90", "-shared"],
         'linker_exe'   : ["f90"],
-        'archiver'     : ["ar","-cr"],
+        'archiver'     : ["ar", "-cr"],
         'ranlib'       : None,
         }
 
@@ -105,64 +159,111 @@ class FCompiler(CCompiler):
     shared_lib_format = "%s%s"
     exe_extension = ""
 
+    def __init__(self, *args, **kw):
+        CCompiler.__init__(self, *args, **kw)
+        self.distutils_vars = self.distutils_vars.clone(self._environment_hook)
+        self.command_vars = self.command_vars.clone(self._environment_hook)
+        self.flag_vars = self.flag_vars.clone(self._environment_hook)
+        self.executables = self.executables.copy()
+        for e in ['version_cmd', 'compiler_f77', 'compiler_f90',
+                  'compiler_fix', 'linker_so', 'linker_exe', 'archiver',
+                  'ranlib']:
+            if e not in self.executables:
+                self.executables[e] = None
+
     ######################################################################
     ## Methods that subclasses may redefine. But don't call these methods!
     ## They are private to FCompiler class and may return unexpected
     ## results if used elsewhere. So, you have been warned..
 
-    def get_version_cmd(self):
-        """ Compiler command to print out version information. """
-        f77 = self.executables['compiler_f77']
-        if f77 is not None:
-            f77 = f77[0]
-        cmd = self.executables['version_cmd']
-        if cmd is not None:
-            cmd = cmd[0]
-            if cmd==f77:
-                cmd = self.compiler_f77[0]
+    def find_executables(self):
+        """Go through the self.executables dictionary, and attempt to
+        find and assign appropiate executables.
+
+        Executable names are looked for in the environment (environment
+        variables, the distutils.cfg, and command line), the 0th-element of
+        the command list, and the self.possible_executables list.
+
+        Also, if the 0th element is "<F77>" or "<F90>", the Fortran 77
+        or the Fortran 90 compiler executable is used, unless overridden
+        by an environment setting.
+        """
+        exe_cache = {}
+        def cached_find_executable(exe):
+            if exe in exe_cache:
+                return exe_cache[exe]
+            fc_exe = find_executable(exe)
+            exe_cache[exe] = fc_exe
+            return fc_exe
+        def set_exe(exe_key, f77=None, f90=None):
+            cmd = self.executables.get(exe_key, None)
+            if not cmd:
+                return None
+            # Note that we get cmd[0] here if the environment doesn't
+            # have anything set
+            exe_from_environ = getattr(self.command_vars, exe_key)
+            if not exe_from_environ:
+                possibles = [f90, f77] + self.possible_executables
             else:
-                f90 = self.executables['compiler_f90']
-                if f90 is not None:
-                    f90 = f90[0]
-                if cmd==f90:
-                    cmd = self.compiler_f90[0]
-        return cmd
+                possibles = [exe_from_environ] + self.possible_executables
+
+            seen = set()
+            unique_possibles = []
+            for e in possibles:
+                if e == '<F77>':
+                    e = f77
+                elif e == '<F90>':
+                    e = f90
+                if not e or e in seen:
+                    continue
+                seen.add(e)
+                unique_possibles.append(e)
+
+            for exe in unique_possibles:
+                fc_exe = cached_find_executable(exe)
+                if fc_exe:
+                    cmd[0] = fc_exe
+                    return fc_exe
+            return None
+
+        f77 = set_exe('compiler_f77')
+        if not f77:
+            raise CompilerNotFound('f77')
+        f90 = set_exe('compiler_f90')
+        if not f90:
+            raise CompilerNotFound('f90')
+        set_exe('compiler_fix', f90=f90)
+
+        set_exe('linker_so', f77=f77, f90=f90)
+        set_exe('linker_exe', f77=f77, f90=f90)
+        set_exe('version_cmd', f77=f77, f90=f90)
+
+        set_exe('archiver')
+        set_exe('ranlib')
+
+    def get_version_cmd(self):
+        """Compiler command to print out version information."""
+        cmd = self.executables['version_cmd']
+        if cmd:
+            return cmd[0]
+        else:
+            return None
 
     def get_linker_so(self):
-        """ Linker command to build shared libraries. """
-        f77 = self.executables['compiler_f77']
-        if f77 is not None:
-            f77 = f77[0]
-        ln = self.executables['linker_so']
-        if ln is not None:
-            ln = ln[0]
-            if ln==f77:
-                ln = self.compiler_f77[0]
-            else:
-                f90 = self.executables['compiler_f90']
-                if f90 is not None:
-                    f90 = f90[0]
-                if ln==f90:
-                    ln = self.compiler_f90[0]
-        return ln
+        """Linker command to build shared libraries."""
+        cmd = self.executables['linker_so']
+        if cmd:
+            return cmd[0]
+        else:
+            return None
 
     def get_linker_exe(self):
-        """ Linker command to build shared libraries. """
-        f77 = self.executables['compiler_f77']
-        if f77 is not None:
-            f77 = f77[0]
-        ln = self.executables.get('linker_exe')
-        if ln is not None:
-            ln = ln[0]
-            if ln==f77:
-                ln = self.compiler_f77[0]
-            else:
-                f90 = self.executables['compiler_f90']
-                if f90 is not None:
-                    f90 = f90[0]
-                if ln==f90:
-                    ln = self.compiler_f90[0]
-        return ln
+        """Linker command to build shared libraries."""
+        cmd = self.executables['linker_exe']
+        if cmd:
+            return cmd[0]
+        else:
+            return None
 
     def get_flags(self):
         """ List of flags common to all compiler types. """
@@ -242,86 +343,66 @@ class FCompiler(CCompiler):
         instance is needed for (iii) and (iv).
         """
         log.info('customize %s' % (self.__class__.__name__))
-        from distutils.dist import Distribution
-        if dist is None:
-            # These hooks are for testing only!
-            dist = Distribution()
-#            dist.script_name = os.path.basename(sys.argv[0])
-#            dist.script_args = ['config_fc'] + sys.argv[1:]
-#            dist.cmdclass['config_fc'] = config_fc
-#            dist.parse_config_files()
-#            dist.parse_command_line()
-        if isinstance(dist, Distribution):
-            conf = dist.get_option_dict('config_fc')
-        else:
-            assert isinstance(dist,dict)
-            conf = dist
-        noopt = conf.get('noopt',[None,0])[1]
+        self.distutils_vars.use_distribution(dist)
+        self.command_vars.use_distribution(dist)
+        self.flag_vars.use_distribution(dist)
+
+        self.find_executables()
+
+        noopt = self.distutils_vars.get('noopt', False)
         if 0: # change to `if 1:` when making release.
             # Don't use architecture dependent compiler flags:
-            noarch = 1
+            noarch = True
         else:
-            noarch = conf.get('noarch',[None,noopt])[1]
-        debug = conf.get('debug',[None,0])[1]
+            noarch = self.distutils_vars.get('noarch', noopt)
+        debug = self.distutils_vars.get('debug', False)
 
-        f77 = self.__get_cmd('compiler_f77','F77',(conf,'f77exec'))
-        f90 = self.__get_cmd('compiler_f90','F90',(conf,'f90exec'))
-        # Temporarily setting f77,f90 compilers so that
-        # version_cmd can use their executables.
-        if f77:
-            self.set_executables(compiler_f77=[f77])
-        if f90:
-            self.set_executables(compiler_f90=[f90])
+        f77 = self.command_vars.compiler_f77
+        f90 = self.command_vars.compiler_f90
 
         # Must set version_cmd before others as self.get_flags*
         # methods may call self.get_version.
-        vers_cmd = self.__get_cmd(self.get_version_cmd)
+        vers_cmd = self.command_vars.version_cmd
         if vers_cmd:
-            vflags = self.__get_flags(self.get_flags_version)
+            vflags = self.flag_vars.version
             self.set_executables(version_cmd=[vers_cmd]+vflags)
 
         if f77:
-            f77flags = self.__get_flags(self.get_flags_f77,'F77FLAGS',
-                                   (conf,'f77flags'))
+            f77flags = self.flag_vars.f77
         if f90:
-            f90flags = self.__get_flags(self.get_flags_f90,'F90FLAGS',
-                                       (conf,'f90flags'))
-            freeflags = self.__get_flags(self.get_flags_free,'FREEFLAGS',
-                                         (conf,'freeflags'))
+            f90flags = self.flag_vars.f90
+            freeflags = self.flag_vars.free
         # XXX Assuming that free format is default for f90 compiler.
-        fix = self.__get_cmd('compiler_fix','F90',(conf,'f90exec'))
+        fix = self.command_vars.compiler_fix
         if fix:
-            fixflags = self.__get_flags(self.get_flags_fix) + f90flags
+            fixflags = self.flag_vars.fix + f90flags
 
-        oflags,aflags,dflags = [],[],[]
+        oflags, aflags, dflags = [], [], []
+        def to_list(flags):
+            if is_string(flags):
+                return [flags]
+            return flags
+        # examine get_flags_<tag>_<compiler> for extra flags
+        # only add them if the method is different from get_flags_<tag>
+        def get_flags(tag, flags):
+            # note that self.flag_vars.<tag> calls self.get_flags_<tag>()
+            flags.extend(to_list(getattr(self.flag_vars, tag)))
+            this_get = getattr(self, 'get_flags_' + tag)
+            for name, c, flagvar in [('f77', f77, f77flags),
+                                     ('f90', f90, f90flags),
+                                     ('f90', fix, fixflags)]:
+                t = '%s_%s' % (tag, name)
+                if c and this_get is not getattr(self, 'get_flags_' + t):
+                    flagvar.extend(to_list(getattr(self.flag_vars, t)))
+            return oflags
         if not noopt:
-            oflags = self.__get_flags(self.get_flags_opt,'FOPT',(conf,'opt'))
-            if f77 and self.get_flags_opt is not self.get_flags_opt_f77:
-                f77flags += self.__get_flags(self.get_flags_opt_f77)
-            if f90 and self.get_flags_opt is not self.get_flags_opt_f90:
-                f90flags += self.__get_flags(self.get_flags_opt_f90)
-            if fix and self.get_flags_opt is not self.get_flags_opt_f90:
-                fixflags += self.__get_flags(self.get_flags_opt_f90)
+            get_flags('opt', oflags)
             if not noarch:
-                aflags = self.__get_flags(self.get_flags_arch,'FARCH',
-                                          (conf,'arch'))
-                if f77 and self.get_flags_arch is not self.get_flags_arch_f77:
-                    f77flags += self.__get_flags(self.get_flags_arch_f77)
-                if f90 and self.get_flags_arch is not self.get_flags_arch_f90:
-                    f90flags += self.__get_flags(self.get_flags_arch_f90)
-                if fix and self.get_flags_arch is not self.get_flags_arch_f90:
-                    fixflags += self.__get_flags(self.get_flags_arch_f90)
+                get_flags('arch', aflags)
         if debug:
-            dflags = self.__get_flags(self.get_flags_debug,'FDEBUG')
-            if f77  and self.get_flags_debug is not self.get_flags_debug_f77:
-                f77flags += self.__get_flags(self.get_flags_debug_f77)
-            if f90  and self.get_flags_debug is not self.get_flags_debug_f90:
-                f90flags += self.__get_flags(self.get_flags_debug_f90)
-            if fix and self.get_flags_debug is not self.get_flags_debug_f90:
-                fixflags += self.__get_flags(self.get_flags_debug_f90)
+            get_flags('debug', dflags)
 
-        fflags = self.__get_flags(self.get_flags,'FFLAGS') \
-                 + dflags + oflags + aflags
+        fflags = to_list(self.flag_vars.flags) + dflags + oflags + aflags
 
         if f77:
             self.set_executables(compiler_f77=[f77]+f77flags+fflags)
@@ -329,30 +410,31 @@ class FCompiler(CCompiler):
             self.set_executables(compiler_f90=[f90]+freeflags+f90flags+fflags)
         if fix:
             self.set_executables(compiler_fix=[fix]+fixflags+fflags)
+
         #XXX: Do we need LDSHARED->SOSHARED, LDFLAGS->SOFLAGS
-        linker_so = self.__get_cmd(self.get_linker_so,'LDSHARED')
+        linker_so = self.command_vars.linker_so
         if linker_so:
-            linker_so_flags = self.__get_flags(self.get_flags_linker_so,'LDFLAGS')
+            linker_so_flags = to_list(self.flag_vars.linker_so)
             self.set_executables(linker_so=[linker_so]+linker_so_flags)
 
-        linker_exe = self.__get_cmd(self.get_linker_exe,'LD')
+        linker_exe = self.command_vars.linker_exe
         if linker_exe:
-            linker_exe_flags = self.__get_flags(self.get_flags_linker_exe,'LDFLAGS')
+            linker_exe_flags = to_list(self.flag_vars.linker_exe)
             self.set_executables(linker_exe=[linker_exe]+linker_exe_flags)
-        ar = self.__get_cmd('archiver','AR')
+
+        ar = self.command_vars.archiver
         if ar:
-            arflags = self.__get_flags(self.get_flags_ar,'ARFLAGS')
+            arflags = to_list(self.flag_vars.arflags)
             self.set_executables(archiver=[ar]+arflags)
 
-        ranlib = self.__get_cmd('ranlib','RANLIB')
+        ranlib = self.command_vars.ranlib
         if ranlib:
             self.set_executables(ranlib=[ranlib])
 
         self.set_library_dirs(self.get_library_dirs())
         self.set_libraries(self.get_libraries())
 
-
-        verbose = conf.get('verbose',[None,0])[1]
+        verbose = self.distutils_vars.get('verbose', self.verbose)
         if verbose:
             self.dump_properties()
         return
@@ -365,7 +447,7 @@ class FCompiler(CCompiler):
                  'object_switch','compile_switch']:
             if hasattr(self,key):
                 v = getattr(self,key)
-                props.append((key, None, '= '+`v`))
+                props.append((key, None, '= '+repr(v)))
         props.sort()
 
         pretty_printer = FancyGetopt(props)
@@ -412,7 +494,8 @@ class FCompiler(CCompiler):
 
         if os.name == 'nt':
             compiler = _nt_quote_args(compiler)
-        command = compiler + cc_args + extra_flags + s_args + o_args + extra_postargs
+        command = compiler + cc_args + extra_flags + s_args + o_args \
+                  + extra_postargs
 
         display = '%s: %s' % (os.path.basename(compiler[0]) + flavor,
                               src)
@@ -495,153 +578,119 @@ class FCompiler(CCompiler):
             log.debug("skipping %s (up-to-date)", output_filename)
         return
 
-
-    ## Private methods:
-
-    def __get_cmd(self, command, envvar=None, confvar=None):
-        if command is None:
-            var = None
-        elif is_string(command):
-            var = self.executables[command]
-            if var is not None:
-                var = var[0]
+    def _environment_hook(self, name, hook_name):
+        if hook_name is None:
+            return None
+        if is_string(hook_name):
+            if hook_name.startswith('self.'):
+                hook_name = hook_name[5:]
+                hook = getattr(self, hook_name)
+                return hook()
+            elif hook_name.startswith('exe.'):
+                hook_name = hook_name[4:]
+                var = self.executables[hook_name]
+                if var:
+                    return var[0]
+                else:
+                    return None
+            elif hook_name.startswith('flags.'):
+                hook_name = hook_name[6:]
+                hook = getattr(self, 'get_flags_' + hook_name)
+                return hook()
         else:
-            var = command()
-        if envvar is not None:
-            var = os.environ.get(envvar, var)
-        if confvar is not None:
-            var = confvar[0].get(confvar[1], [None,var])[1]
-        return var
-
-    def __get_flags(self, command, envvar=None, confvar=None):
-        if command is None:
-            var = []
-        elif is_string(command):
-            var = self.executables[command][1:]
-        else:
-            var = command()
-        if envvar is not None:
-            var = os.environ.get(envvar, var)
-        if confvar is not None:
-            var = confvar[0].get(confvar[1], [None,var])[1]
-        if is_string(var):
-            var = split_quoted(var)
-        return var
+            return hook_name()
 
     ## class FCompiler
 
-fcompiler_class = {'gnu':('gnu','GnuFCompiler',
-                          "GNU Fortran Compiler"),
-                   'gnu95':('gnu','Gnu95FCompiler',
-                            "GNU 95 Fortran Compiler"),
-                   'g95':('g95','G95FCompiler',
-                          "G95 Fortran Compiler"),
-                   'pg':('pg','PGroupFCompiler',
-                         "Portland Group Fortran Compiler"),
-                   'absoft':('absoft','AbsoftFCompiler',
-                             "Absoft Corp Fortran Compiler"),
-                   'mips':('mips','MipsFCompiler',
-                           "MIPSpro Fortran Compiler"),
-                   'sun':('sun','SunFCompiler',
-                          "Sun|Forte Fortran 95 Compiler"),
-                   'intel':('intel','IntelFCompiler',
-                            "Intel Fortran Compiler for 32-bit apps"),
-                   'intelv':('intel','IntelVisualFCompiler',
-                             "Intel Visual Fortran Compiler for 32-bit apps"),
-                   'intele':('intel','IntelItaniumFCompiler',
-                             "Intel Fortran Compiler for Itanium apps"),
-                   'intelev':('intel','IntelItaniumVisualFCompiler',
-                              "Intel Visual Fortran Compiler for Itanium apps"),
-                   'intelem':('intel','IntelEM64TFCompiler',
-                             "Intel Fortran Compiler for EM64T-based apps"),
-                   'nag':('nag','NAGFCompiler',
-                          "NAGWare Fortran 95 Compiler"),
-                   'compaq':('compaq','CompaqFCompiler',
-                             "Compaq Fortran Compiler"),
-                   'compaqv':('compaq','CompaqVisualFCompiler',
-                             "DIGITAL|Compaq Visual Fortran Compiler"),
-                   'vast':('vast','VastFCompiler',
-                           "Pacific-Sierra Research Fortran 90 Compiler"),
-                   'hpux':('hpux','HPUXFCompiler',
-                           "HP Fortran 90 Compiler"),
-                   'lahey':('lahey','LaheyFCompiler',
-                            "Lahey/Fujitsu Fortran 95 Compiler"),
-                   'ibm':('ibm','IbmFCompiler',
-                          "IBM XL Fortran Compiler"),
-                   'f':('f','FFCompiler',
-                        "Fortran Company/NAG F Compiler"),
-                   'none':('none','NoneFCompiler',"Fake Fortran compiler")
-                   }
-
 _default_compilers = (
     # Platform mappings
-    ('win32',('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
-    ('cygwin.*',('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
-    ('linux.*',('gnu','intel','lahey','pg','absoft','nag','vast','compaq',
+    ('win32', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
+    ('cygwin.*', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
+    ('linux.*', ('gnu','intel','lahey','pg','absoft','nag','vast','compaq',
                 'intele','intelem','gnu95','g95')),
-    ('darwin.*',('nag','absoft','ibm','gnu','gnu95','g95')),
-    ('sunos.*',('sun','gnu','gnu95','g95')),
-    ('irix.*',('mips','gnu','gnu95',)),
-    ('aix.*',('ibm','gnu','gnu95',)),
+    ('darwin.*', ('nag', 'absoft', 'ibm', 'intel', 'gnu', 'gnu95', 'g95')),
+    ('sunos.*', ('sun','gnu','gnu95','g95')),
+    ('irix.*', ('mips','gnu','gnu95',)),
+    ('aix.*', ('ibm','gnu','gnu95',)),
     # OS mappings
-    ('posix',('gnu','gnu95',)),
-    ('nt',('gnu','gnu95',)),
-    ('mac',('gnu','gnu95',)),
+    ('posix', ('gnu','gnu95',)),
+    ('nt', ('gnu','gnu95',)),
+    ('mac', ('gnu','gnu95',)),
     )
 
-def _find_existing_fcompiler(compilers, osname=None, platform=None):
+fcompiler_class = None
+
+def load_all_fcompiler_classes():
+    """Cache all the FCompiler classes found in modules in the
+    numpy.distutils.fcompiler package.
+    """
+    from glob import glob
+    global fcompiler_class
+    if fcompiler_class is not None:
+        return
+    pys = os.path.join(os.path.dirname(__file__), '*.py')
+    fcompiler_class = {}
+    for fname in glob(pys):
+        module_name, ext = os.path.splitext(os.path.basename(fname))
+        module_name = 'numpy.distutils.fcompiler.' + module_name
+        __import__ (module_name)
+        module = sys.modules[module_name]
+        if hasattr(module, 'compilers'):
+            for cname in module.compilers:
+                klass = getattr(module, cname)
+                fcompiler_class[klass.compiler_type] = (klass.compiler_type,
+                                                        klass,
+                                                        klass.description)
+
+def _find_existing_fcompiler(compiler_types, osname=None, platform=None):
+    from numpy.distutils.core import get_distribution
     dist = get_distribution(always=True)
-    for compiler in compilers:
+    for compiler_type in compiler_types:
         v = None
         try:
-            c = new_fcompiler(plat=platform, compiler=compiler)
+            c = new_fcompiler(plat=platform, compiler=compiler_type)
             c.customize(dist)
             v = c.get_version()
         except DistutilsModuleError:
             pass
-        except Exception, e:
-            log.warn(str(e))
+        except CompilerNotFound:
+            pass
         if v is not None:
-            return compiler
-    return
+            return compiler_type
+    return None
 
 def get_default_fcompiler(osname=None, platform=None):
-    """ Determine the default Fortran compiler to use for the given platform. """
+    """Determine the default Fortran compiler to use for the given platform."""
     if osname is None:
         osname = os.name
     if platform is None:
         platform = sys.platform
-    matching_compilers = []
-    for pattern, compiler in _default_compilers:
-        if re.match(pattern, platform) is not None or \
-               re.match(pattern, osname) is not None:
-            if is_sequence(compiler):
-                matching_compilers.extend(list(compiler))
-            else:
-                matching_compilers.append(compiler)
-    if not matching_compilers:
-        matching_compilers.append('gnu')
-    compiler =  _find_existing_fcompiler(matching_compilers,
-                                         osname=osname,
-                                         platform=platform)
-    if compiler is not None:
-        return compiler
-    return matching_compilers[0]
+    matching_compiler_types = []
+    for pattern, compiler_type in _default_compilers:
+        if re.match(pattern, platform) or re.match(pattern, osname):
+            matching_compiler_types.extend(list(compiler_type))
+    if not matching_compiler_types:
+        matching_compiler_types.append('gnu')
+    compiler_type =  _find_existing_fcompiler(matching_compiler_types,
+                                              osname=osname,
+                                              platform=platform)
+    return compiler_type
 
 def new_fcompiler(plat=None,
                   compiler=None,
                   verbose=0,
                   dry_run=0,
                   force=0):
-    """ Generate an instance of some FCompiler subclass for the supplied
+    """Generate an instance of some FCompiler subclass for the supplied
     platform/compiler combination.
     """
+    load_all_fcompiler_classes()
     if plat is None:
         plat = os.name
+    if compiler is None:
+        compiler = get_default_fcompiler(plat)
     try:
-        if compiler is None:
-            compiler = get_default_fcompiler(plat)
-        (module_name, class_name, long_description) = fcompiler_class[compiler]
+        module_name, klass, long_description = fcompiler_class[compiler]
     except KeyError:
         msg = "don't know how to compile Fortran code on platform '%s'" % plat
         if compiler is not None:
@@ -650,29 +699,16 @@ def new_fcompiler(plat=None,
                   % (','.join(fcompiler_class.keys()))
         raise DistutilsPlatformError, msg
 
-    try:
-        module_name = 'numpy.distutils.fcompiler.'+module_name
-        __import__ (module_name)
-        module = sys.modules[module_name]
-        klass = vars(module)[class_name]
-    except ImportError:
-        raise DistutilsModuleError, \
-              "can't compile Fortran code: unable to load module '%s'" % \
-              module_name
-    except KeyError:
-        raise DistutilsModuleError, \
-              ("can't compile Fortran code: unable to find class '%s' " +
-               "in module '%s'") % (class_name, module_name)
-    compiler = klass(None, dry_run, force)
-    log.debug('new_fcompiler returns %s' % (klass))
+    compiler = klass(verbose=verbose, dry_run=dry_run, force=force)
     return compiler
 
 def show_fcompilers(dist = None):
-    """ Print list of available compilers (used by the "--help-fcompiler"
+    """Print list of available compilers (used by the "--help-fcompiler"
     option to "config_fc").
     """
     if dist is None:
         from distutils.dist import Distribution
+        from numpy.distutils.command.config_compiler import config_fc
         dist = Distribution()
         dist.script_name = os.path.basename(sys.argv[0])
         dist.script_args = ['config_fc'] + sys.argv[1:]
@@ -683,20 +719,21 @@ def show_fcompilers(dist = None):
     compilers = []
     compilers_na = []
     compilers_ni = []
+    if not fcompiler_class:
+        load_all_fcompiler_classes()
+    not_available = object()
     for compiler in fcompiler_class.keys():
-        v = 'N/A'
+        v = not_available
         try:
-            c = new_fcompiler(compiler=compiler)
+            c = new_fcompiler(compiler=compiler, verbose=dist.verbose)
             c.customize(dist)
             v = c.get_version()
-        except DistutilsModuleError:
-            pass
-        except Exception, msg:
-            log.warn(msg)
+        except (DistutilsModuleError, CompilerNotFound):
+            v = not_available
         if v is None:
             compilers_na.append(("fcompiler="+compiler, None,
                               fcompiler_class[compiler][2]))
-        elif v=='N/A':
+        elif v is not_available:
             compilers_ni.append(("fcompiler="+compiler, None,
                                  fcompiler_class[compiler][2]))
         else:
@@ -705,6 +742,7 @@ def show_fcompilers(dist = None):
 
     compilers.sort()
     compilers_na.sort()
+    compilers_ni.sort()
     pretty_printer = FancyGetopt(compilers)
     pretty_printer.print_help("List of available Fortran compilers:")
     pretty_printer = FancyGetopt(compilers_na)

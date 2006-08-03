@@ -7,13 +7,16 @@ import sys
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 
+compilers = ['PGroupFCompiler']
+
 class PGroupFCompiler(FCompiler):
 
     compiler_type = 'pg'
+    description = 'Portland Group Fortran Compiler'
     version_pattern =  r'\s*pg(f77|f90|hpf) (?P<version>[\d.-]+).*'
 
     executables = {
-        'version_cmd'  : ["pgf77", "-V 2>/dev/null"],
+        'version_cmd'  : ["<F77>", "-V 2>/dev/null"],
         'compiler_f77' : ["pgf77"],
         'compiler_fix' : ["pgf90", "-Mfixed"],
         'compiler_f90' : ["pgf90"],

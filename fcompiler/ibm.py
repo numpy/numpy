@@ -5,13 +5,16 @@ import sys
 from numpy.distutils.fcompiler import FCompiler
 from distutils import log
 
-class IbmFCompiler(FCompiler):
+compilers = ['IBMFCompiler']
+
+class IBMFCompiler(FCompiler):
 
     compiler_type = 'ibm'
+    description = 'IBM XL Fortran Compiler'
     version_pattern =  r'xlf\(1\)\s*IBM XL Fortran (Advanced Edition |)Version (?P<version>[^\s*]*)'
 
     executables = {
-        'version_cmd'  : ["xlf"],
+        'version_cmd'  : ["<F77>"],
         'compiler_f77' : ["xlf"],
         'compiler_fix' : ["xlf90", "-qfixed"],
         'compiler_f90' : ["xlf90"],

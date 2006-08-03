@@ -21,14 +21,15 @@ class config(old_config):
     def initialize_options(self):
         self.fcompiler = None
         old_config.initialize_options(self)
-        return
 
     def finalize_options(self):
         old_config.finalize_options(self)
         f = self.distribution.get_command_obj('config_fc')
         self.set_undefined_options('config_fc',
                                    ('fcompiler', 'fcompiler'))
-        return
+
+    def run(self):
+        self._check_compiler()
 
     def _check_compiler (self):
         old_config._check_compiler(self)
@@ -39,7 +40,6 @@ class config(old_config):
             self.fcompiler.customize(self.distribution)
             self.fcompiler.customize_cmd(self)
             self.fcompiler.show_customization()
-        return
 
     def _wrap_method(self,mth,lang,args):
         from distutils.ccompiler import CompileError

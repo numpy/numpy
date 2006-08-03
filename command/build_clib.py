@@ -21,13 +21,11 @@ class build_clib(old_build_clib):
     def initialize_options(self):
         old_build_clib.initialize_options(self)
         self.fcompiler = None
-        return
 
     def finalize_options(self):
         old_build_clib.finalize_options(self)
         self.set_undefined_options('build_ext',
                                    ('fcompiler', 'fcompiler'))
-        return
 
     def have_f_sources(self):
         for (lib_name, build_info) in self.libraries:
@@ -65,13 +63,6 @@ class build_clib(old_build_clib):
         self.compiler.show_customization()
 
         if self.have_f_sources():
-            from numpy.distutils.fcompiler import new_fcompiler
-            self.fcompiler = new_fcompiler(compiler=self.fcompiler,
-                                           verbose=self.verbose,
-                                           dry_run=self.dry_run,
-                                           force=self.force)
-            self.fcompiler.customize(self.distribution)
-
             libraries = self.libraries
             self.libraries = None
             self.fcompiler.customize_cmd(self)
@@ -80,7 +71,6 @@ class build_clib(old_build_clib):
             self.fcompiler.show_customization()
 
         self.build_libraries(self.libraries)
-        return
 
     def get_source_files(self):
         self.check_library_list(self.libraries)
@@ -90,7 +80,6 @@ class build_clib(old_build_clib):
         return filenames
 
     def build_libraries(self, libraries):
-
 
         for (lib_name, build_info) in libraries:
             # default compilers
@@ -105,8 +94,6 @@ class build_clib(old_build_clib):
                        "a list of source filenames") % lib_name
             sources = list(sources)
 
-
-            
             lib_file = compiler.library_filename(lib_name,
                                                  output_dir=self.build_clib)
 
@@ -192,5 +179,3 @@ class build_clib(old_build_clib):
                     clib_libraries.extend(binfo[1].get('libraries',[]))
             if clib_libraries:
                 build_info['libraries'] = clib_libraries
-
-        return

@@ -4,13 +4,16 @@ import sys
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 
+compilers = ['HPUXFCompiler']
+
 class HPUXFCompiler(FCompiler):
 
     compiler_type = 'hpux'
+    description = 'HP Fortran 90 Compiler'
     version_pattern =  r'HP F90 (?P<version>[^\s*,]*)'
 
     executables = {
-        'version_cmd'  : ["f90", "+version"],
+        'version_cmd'  : ["<F90>", "+version"],
         'compiler_f77' : ["f90"],
         'compiler_fix' : ["f90"],
         'compiler_f90' : ["f90"],

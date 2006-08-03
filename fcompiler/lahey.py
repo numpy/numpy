@@ -4,13 +4,16 @@ import sys
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 
+compilers = ['LaheyFCompiler']
+
 class LaheyFCompiler(FCompiler):
 
     compiler_type = 'lahey'
+    description = 'Lahey/Fujitsu Fortran 95 Compiler'
     version_pattern =  r'Lahey/Fujitsu Fortran 95 Compiler Release (?P<version>[^\s*]*)'
 
     executables = {
-        'version_cmd'  : ["lf95", "--version"],
+        'version_cmd'  : ["<F90>", "--version"],
         'compiler_f77' : ["lf95", "--fix"],
         'compiler_fix' : ["lf95", "--fix"],
         'compiler_f90' : ["lf95"],

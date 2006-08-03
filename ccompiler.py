@@ -245,6 +245,8 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
         version_cmd = self.version_cmd
     except AttributeError:
         return None
+    if not version_cmd or not version_cmd[0]:
+        return None
     cmd = ' '.join(version_cmd)
     try:
         matcher = self.version_match
@@ -264,9 +266,7 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
     version = None
     if status in ok_status:
         version = matcher(output)
-        if not version:
-            log.warn("Couldn't match compiler version for %r" % (output,))
-        else:
+        if version:
             version = LooseVersion(version)
     self.version = version
     return version
