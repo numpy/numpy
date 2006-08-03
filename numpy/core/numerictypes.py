@@ -346,7 +346,7 @@ def issctype(rep):
         return False
     try:
         res = obj2sctype(rep)
-        if res:
+        if res and res != object_:
             return True
         return False
     except:
