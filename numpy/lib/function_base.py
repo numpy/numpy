@@ -395,7 +395,9 @@ def diff(a, n=1, axis=-1):
         return a[slice1]-a[slice2]
 
 add_docstring(digitize, 
-   r"""(x,bins) --> index of the bin to which each value of x belongs.
+   r"""digitize(x,bins)
+   
+    Return the index of the bin to which each value of x belongs.
    
     Each index i returned is such that bins[i-1] <= x < bins[i] if
     bins is monotonically increasing, or bins [i-1] > x >= bins[i] if
@@ -405,7 +407,9 @@ add_docstring(digitize,
     """)
 
 add_docstring(bincount,
-   r"""(x,weights=None) --> the number of occurrences of each value in x.
+   r"""bincount(x,weights=None)
+   
+    Return the number of occurrences of each value in x.
 
     x must be a list of non-negative integers.  The output, b[i],
     represents the number of times that i is found in x.  If weights
@@ -416,7 +420,7 @@ add_docstring(bincount,
     """)
 
 add_docstring(add_docstring,
-   r"""(obj, docstring) --> None
+   r"""docstring(obj, docstring)
 
    Add a docstring to a built-in obj if possible.
    If the obj already has a docstring raise a RuntimeError
