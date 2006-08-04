@@ -2,7 +2,6 @@
 This module converts code written for Numeric to run with numpy
 
 Makes the following changes:
- * Converts typecharacters
  * Changes import statements (warns of use of from Numeric import *)
  * Changes import statements (using numerix) ...
  * Makes search and replace changes to:
@@ -10,14 +9,10 @@ Makes the following changes:
    - .iscontiguous()
    - .byteswapped()
    - .itemsize()
+   - .toscalar()
  * Converts .flat to .ravel() except for .flat = xxx or .flat[xxx]
- * Change typecode= to dtype=
- * Eliminates savespace=xxx
  * Replace xxx.spacesaver() with True
  * Convert xx.savespace(?) to pass + ## xx.savespace(?)
- #### -- not * Convert a.shape = ? to a.reshape(?)
- * Prints warning for use of bool, int, float, copmlex, object, and unicode
- * replaces matrixmultiply with dot
 """
 __all__ = ['fromfile', 'fromstr']
 
@@ -27,15 +22,6 @@ import re
 import glob
 
 flatindex_re = re.compile('([.]flat(\s*?[[=]))')
-
-# Not very safe.  Disabled for now..
-def replacetypechars(astr):
-    astr = astr.replace("'s'","'h'")
-    astr = astr.replace("'b'","'B'")
-    astr = astr.replace("'1'","'b'")
-    astr = astr.replace("'w'","'H'")
-    astr = astr.replace("'u'","'I'")
-    return astr
 
 def changeimports(fstr, name, newname):
     importstr = 'import %s' % name
@@ -66,7 +52,6 @@ def replaceattr(astr):
     astr = astr.replace(".byteswapped()",".byteswap()")
     astr = astr.replace(".toscalar()", ".item()")
     astr = astr.replace(".itemsize()",".itemsize")
-    astr = astr.replace("matrixmultiply","dot")
     # preserve uses of flat that should be o.k.
     tmpstr = flatindex_re.sub(r"@@@@\2",astr)
     # replace other uses of flat
@@ -75,16 +60,10 @@ def replaceattr(astr):
     astr = tmpstr.replace("@@@@", ".flat")
     return astr
 
-svspc = re.compile(r'(\S+\s*[(].+),\s*savespace\s*=.+\s*[)]')
 svspc2 = re.compile(r'([^,(\s]+[.]spacesaver[(][)])')
 svspc3 = re.compile(r'(\S+[.]savespace[(].*[)])')
 #shpe = re.compile(r'(\S+\s*)[.]shape\s*=[^=]\s*(.+)')
 def replaceother(astr):
-    astr = re.sub(r'typecode\s*=', 'dtype=', astr)
-    astr = astr.replace("UserArray","ndarray")
-    astr = astr.replace('ArrayType', 'ndarray')
-    astr = astr.replace('NewAxis', 'newaxis')
-    astr = svspc.sub(r'\1)',astr)
     astr = svspc2.sub('True',astr)
     astr = svspc3.sub(r'pass  ## \1', astr)
     #astr = shpe.sub('\\1=\\1.reshape(\\2)', astr)
@@ -115,7 +94,7 @@ def fromstr(filestr):
     today = datetime.date.today().strftime('%b %d, %Y')
     name = os.path.split(sys.argv[0])[-1]
     filestr = '## Automatically adapted for '\
-              'numpy %s by %s\n\n%s' % (today, name, filestr)
+              'numpy.oldnumeric %s by %s\n\n%s' % (today, name, filestr)
     return filestr
 
 def makenewfile(name, filestr):
@@ -146,7 +125,7 @@ def fromargs(args):
     convertfile(filename)
 
 def convertall(direc=os.path.curdir):
-    """Convert all .py files to use NumPy (from Numeric) in the directory given
+    """Convert all .py files to use numpy.oldnumeric (from Numeric) in the directory given
 
     For each file, a backup of <usesnumeric>.py is made as
     <usesnumeric>.py.orig.  A new file named <usesnumeric>.py
