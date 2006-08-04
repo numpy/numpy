@@ -1,33 +1,25 @@
 
+# Don't add these to the __all__ variable
 from numpy import *
+
+# Add these
 from compat import *
 from olddefaults import *
-from typeconv import *
 from functions import *
 
-import numpy
 import compat
 import olddefaults
-import typeconv
 import functions
 
+import numpy
 __version__ = numpy.__version__
+del numpy
 
 __all__ = ['__version__']
-__all__ += numpy.__all__
 __all__ += compat.__all__
-__all__ += typeconv.__all__
-for name in olddefaults.__all__:
-    if name not in __all__:
-        __all__.append(name)
-
-for name in functions.__all__:
-    if name not in __all__:
-        __all__.apend(name)
+__all__ += olddefaults.__all__
+__all__ += functions.__all__
         
-del name
-del numpy
 del compat
 del olddefaults
 del functions
-del typeconv

@@ -1,3 +1,4 @@
+# Backward compatible module for RandomArray
 
 __all__ = ['ArgumentError','F','beta','binomial','chi_square', 'exponential', 'gamma', 'get_seed',
            'mean_var_test', 'multinomial', 'multivariate_normal', 'negative_binomial',

@@ -1,5 +1,5 @@
 """
-Standard container-class for easy backward compatibility with Numeric.
+Standard container-class for easy multiple-inheritance.
 Try to inherit from the ndarray instead of using this class as this is not
 complete.
 """
@@ -9,7 +9,7 @@ from numpy.core import array, asarray, absolute, add, subtract, multiply, \
      bitwise_or, bitwise_xor, invert, less, less_equal, not_equal, equal, \
      greater, greater_equal, shape, reshape, arange, sin, sqrt, transpose
 
-class UserArray(object):
+class container(object):
     def __init__(self, data, dtype=None, copy=True):
         self.array = array(data, dtype, copy=copy)
 
@@ -196,12 +196,12 @@ class UserArray(object):
         return self.array.__getattribute__(attr)
 
 #############################################################
-# Test of class UserArray
+# Test of class container 
 #############################################################
 if __name__ == '__main__':
     temp=reshape(arange(10000),(100,100))
 
-    ua=UserArray(temp)
+    ua=container(temp)
     # new object created begin test
     print dir(ua)
     print shape(ua),ua.shape # I have changed Numeric.py

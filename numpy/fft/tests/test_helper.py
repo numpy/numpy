@@ -6,7 +6,7 @@
 import sys
 from numpy.testing import *
 set_package_path()
-from numpy.dft import fftshift,ifftshift,fftfreq
+from numpy.fft import fftshift,ifftshift,fftfreq
 del sys.path[0]
 
 from numpy import pi

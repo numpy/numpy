@@ -56,7 +56,7 @@ def changeimports(fstr, name, newname):
     return fstr, fromall
 
 def replaceattr(astr):
-     astr = astr.replace("matrixmultiply","dot")
+    astr = astr.replace("matrixmultiply","dot")
     return astr
 
 def replaceother(astr):
@@ -76,7 +76,7 @@ def fromstr(filestr):
     filestr, fromall3 = changeimports(filestr, 'RNG', 'numpy.random.oldrng')
     filestr, fromall3 = changeimports(filestr, 'RNG.Statistics', 'numpy.random.oldrngstats')
     filestr, fromall3 = changeimports(filestr, 'RandomArray', 'numpy.random.oldrandomarray')
-    filestr, fromall3 = changeimports(filestr, 'FFT', 'numpy.dft.old')
+    filestr, fromall3 = changeimports(filestr, 'FFT', 'numpy.fft.old')
     filestr, fromall3 = changeimports(filestr, 'MA', 'numpy.core.ma')
     fromall = fromall1 or fromall2 or fromall3
     filestr = replaceattr(filestr)

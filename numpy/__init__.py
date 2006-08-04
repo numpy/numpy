@@ -37,14 +37,14 @@ else:
     import lib
     from lib import *
     import linalg
-    import dft
+    import fft
     import random
 
     __all__ = ['__version__', 'pkgload', 'PackageLoader',
                'ScipyTest', 'NumpyTest', 'show_config']
     __all__ += core.__all__
     __all__ += lib.__all__
-    __all__ += ['linalg', 'dft', 'random']
+    __all__ += ['linalg', 'fft', 'random']
         
     if __doc__ is not None:
         __doc__ += """
@@ -57,7 +57,7 @@ lib       --- Basic functions used by several sub-packages and useful
               to have in the main name-space.
 random    --- Core Random Tools
 linalg    --- Core Linear Algebra Tools
-dft       --- Core FFT routines
+fft       --- Core FFT routines
 testing   --- Scipy testing tools
 
   These packages require explicit import

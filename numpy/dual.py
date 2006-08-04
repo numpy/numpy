@@ -8,7 +8,7 @@ __all__ = ['fft','ifft','fftn','ifftn','fft2','ifft2',
            'eigh','eigvalsh','lstsq', 'pinv','cholesky','i0']
 
 import numpy.linalg as linpkg
-import numpy.dft as fftpkg
+import numpy.fft as fftpkg
 from numpy.lib import i0
 import sys
 

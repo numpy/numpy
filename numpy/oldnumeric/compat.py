@@ -54,7 +54,7 @@ LittleEndian = (sys.byteorder == 'little')
 
 # backward compatible names from old Precision.py
 
-Character = 'S1'
+Character = 'c'
 UnsignedInt8 = _dt_(nt.uint8)
 UInt8 = UnsignedInt8
 UnsignedInt16 = _dt_(nt.uint16)

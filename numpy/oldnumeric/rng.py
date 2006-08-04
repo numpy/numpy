@@ -1,5 +1,5 @@
 # This module re-creates the RNG interface from Numeric
-# Replace import RNG with import numpy.random.oldrng as RNG
+# Replace import RNG with import numpy.oldnumeric.rng as RNG
 #
 # It is for backwards compatibility only. 
 
@@ -134,3 +134,4 @@ def random_sample(*n):
         m = m * i
     return standard_generator.sample(m).reshape(*n)
     
+
