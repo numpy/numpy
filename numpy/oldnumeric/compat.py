@@ -7,7 +7,7 @@ __all__ = ['NewAxis',
            'UInt8','UInt16','UInt32', 'UnsignedInt32', 'UnsignedInteger',
            # UnsignedInt64 and Unsigned128 added below if possible
            # same for Int64 and Int128, Float128, and Complex128
-           'Int8', 'Int16', 'Int32',
+           'Int8', 'Int16', 'Int32', 
            'Int0', 'Int', 'Float0', 'Float', 'Complex0', 'Complex',
            'PyObject', 'Float32', 'Float64', 'Float16', 'Float8',
            'Complex32', 'Complex64', 'Complex8', 'Complex16',
@@ -18,6 +18,7 @@ __all__ = ['NewAxis',
            # from cPickle
            'dump', 'dumps'
           ]
+
 
 import numpy.core.multiarray as mu
 import numpy.core.umath as um
@@ -37,6 +38,7 @@ multiarray = mu
 
 def sarray(a, dtype=None, copy=False):
     return array(a, dtype, copy)
+
 
 #Use this to add a new axis to an array
 #compatibility only

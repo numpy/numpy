@@ -20,7 +20,7 @@ class test_any(NumpyTestCase):
     def check_nd(self):
         y1 = [[0,0,0],[0,1,0],[1,1,0]]
         assert(any(y1))
-        assert_array_equal(sometrue(y1),[1,1,0])
+        assert_array_equal(sometrue(y1,axis=0),[1,1,0])
         assert_array_equal(sometrue(y1,axis=1),[0,1,1])
 
 class test_all(NumpyTestCase):
@@ -36,7 +36,7 @@ class test_all(NumpyTestCase):
     def check_nd(self):
         y1 = [[0,0,1],[0,1,1],[1,1,1]]
         assert(not all(y1))
-        assert_array_equal(alltrue(y1),[0,0,1])
+        assert_array_equal(alltrue(y1,axis=0),[0,0,1])
         assert_array_equal(alltrue(y1,axis=1),[0,0,1])
 
 class test_average(NumpyTestCase):

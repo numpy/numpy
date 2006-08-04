@@ -226,7 +226,7 @@ byteswapped, but the array will manage it in future operations.
 """)
 
 add_newdoc('numpy.core.multiarray','concatenate',
-"""concatenate((a1, a2, ...), axis=None)
+"""concatenate((a1, a2, ...), axis=0)
 
 Join arrays together.
 

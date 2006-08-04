@@ -1,8 +1,7 @@
 # Module containing non-deprecated functions borrowed from Numeric.
 
-__all__ = ['asarray', 'array', 'concatenate',
-           # functions that are now methods
-           'take', 'reshape', 'choose', 'repeat', 'put', 'putmask',
+# functions that are now methods
+__all__ = ['take', 'reshape', 'choose', 'repeat', 'put', 'putmask',
            'swapaxes', 'transpose', 'sort', 'argsort', 'argmax', 'argmin',
            'searchsorted', 'alen',
            'resize', 'diagonal', 'trace', 'ravel', 'nonzero', 'shape',
@@ -44,7 +43,7 @@ def _wrapit(obj, method, *args, **kwds):
         result = wrap(result)
     return result
 
-def take(a, indices, axis=0):
+def take(a, indices, axis=None):
     try:
         take = a.take
     except AttributeError:
@@ -53,8 +52,8 @@ def take(a, indices, axis=0):
 
 # not deprecated --- copy if necessary, view otherwise
 def reshape(a, newshape, order='C'):
-    """Change the shape of a to newshape.  Return a new view object if possible
-    otherwise return a copy.
+    """Change the shape of a to newshape.
+    Return a new view object if possible otherwise return a copy.
     """
     try:
         reshape = a.reshape
@@ -69,7 +68,7 @@ def choose(a, choices):
         return _wrapit(a, 'choose', choices)
     return choose(choices)
 
-def repeat(a, repeats, axis=0):
+def repeat(a, repeats, axis=None):
     """repeat elements of a repeats times along axis
        repeats is a sequence of length a.shape[axis]
        telling how many times to repeat each element.
@@ -222,7 +221,6 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
     """
     return asarray(a).trace(offset, axis1, axis2, dtype)
 
-# not deprecated --- always returns a 1-d array.  Copy-if-necessary.
 def ravel(m,order='C'):
     """ravel(m) returns a 1d array corresponding to all the elements of it's
     argument.  The new array is a view of m if possible, otherwise it is
@@ -279,7 +277,7 @@ def clip(m, m_min, m_max):
         return _wrapit(m, 'clip', m_min, m_max)
     return clip(m_min, m_max)
 
-def sum(x, axis=0, dtype=None):
+def sum(x, axis=None, dtype=None):
     """Sum the array over the given axis.  The optional dtype argument
     is the data type for intermediate calculations.
 
@@ -308,7 +306,7 @@ def sum(x, axis=0, dtype=None):
         return _wrapit(x, 'sum', axis, dtype)
     return sum(axis, dtype)
 
-def product (x, axis=0, dtype=None):
+def product (x, axis=None, dtype=None):
     """Product of the array elements over the given axis."""
     try:
         prod = x.prod
@@ -316,7 +314,7 @@ def product (x, axis=0, dtype=None):
         return _wrapit(x, 'prod', axis, dtype)
     return prod(axis, dtype)
 
-def sometrue (x, axis=0):
+def sometrue (x, axis=None):
     """Perform a logical_or over the given axis."""
     try:
         any = x.any
@@ -324,7 +322,7 @@ def sometrue (x, axis=0):
         return _wrapit(x, 'any', axis)
     return any(axis)
 
-def alltrue (x, axis=0):
+def alltrue (x, axis=None):
     """Perform a logical_and over the given axis."""
     try:
         all = x.all
@@ -350,7 +348,7 @@ def all(x,axis=None):
         return _wrapit(x, 'all', axis)
     return all(axis)
 
-def cumsum (x, axis=0, dtype=None):
+def cumsum (x, axis=None, dtype=None):
     """Sum the array over the given axis."""
     try:
         cumsum = x.cumsum
@@ -358,7 +356,7 @@ def cumsum (x, axis=0, dtype=None):
         return _wrapit(x, 'cumsum', axis, dtype)
     return cumsum(axis, dtype)
 
-def cumproduct (x, axis=0, dtype=None):
+def cumproduct (x, axis=None, dtype=None):
     """Sum the array over the given axis."""
     try:
         cumprod = x.cumprod
@@ -366,7 +364,7 @@ def cumproduct (x, axis=0, dtype=None):
         return _wrapit(x, 'cumprod', axis, dtype)
     return cumprod(axis, dtype)
 
-def ptp(a, axis=0):
+def ptp(a, axis=None):
     """Return maximum - minimum along the the given dimension
     """
     try:
@@ -375,7 +373,7 @@ def ptp(a, axis=0):
         return _wrapit(a, 'ptp', axis)
     return ptp(axis)
 
-def amax(a, axis=0):
+def amax(a, axis=None):
     """Return the maximum of 'a' along dimension axis.
     """
     try:
@@ -384,7 +382,7 @@ def amax(a, axis=0):
         return _wrapit(a, 'max', axis)
     return max(axis)
 
-def amin(a, axis=0):
+def amin(a, axis=None):
     """Return the minimum of a along dimension axis.
     """
     try:
@@ -402,7 +400,7 @@ def alen(a):
     except TypeError:
         return len(array(a,ndmin=1))
 
-def prod(a, axis=0, dtype=None):
+def prod(a, axis=None, dtype=None):
     """Return the product of the elements along the given axis
     """
     try:
@@ -411,7 +409,7 @@ def prod(a, axis=0, dtype=None):
         return _wrapit(a, 'prod', axis, dtype)
     return prod(axis, dtype)
 
-def cumprod(a, axis=0, dtype=None):
+def cumprod(a, axis=None, dtype=None):
     """Return the cumulative product of the elments along the given axis
     """
     try:
@@ -463,8 +461,8 @@ def round_(a, decimals=0):
 
 around = round_
 
-def mean(a, axis=0, dtype=None):
-    """mean(a, axis=0, dtype=None)
+def mean(a, axis=None, dtype=None):
+    """mean(a, axis=None, dtype=None)
     Return the arithmetic mean.
     
     The mean is the sum of the elements divided by the number of elements. 
@@ -477,8 +475,8 @@ def mean(a, axis=0, dtype=None):
         return _wrapit(a, 'mean', axis, dtype)
     return mean(axis, dtype)
 
-def std(a, axis=0, dtype=None):
-    """std(sample, axis=0, dtype=None)
+def std(a, axis=None, dtype=None):
+    """std(sample, axis=None, dtype=None)
     Return the standard deviation, a measure of the spread of a distribution.
 
     The standard deviation is the square root of the average of the squared
@@ -492,8 +490,8 @@ def std(a, axis=0, dtype=None):
         return _wrapit(a, 'std', axis, dtype)
     return std(axis, dtype)
 
-def var(a, axis=0, dtype=None):
-    """var(sample, axis=0, dtype=None)
+def var(a, axis=None, dtype=None):
+    """var(sample, axis=None, dtype=None)
     Return the variance, a measure of the spread of a distribution.
 
     The variance is the average of the squared deviations from the mean,

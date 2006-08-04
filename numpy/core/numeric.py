@@ -323,7 +323,6 @@ set_string_function = multiarray.set_string_function
 set_string_function(array_str, 0)
 set_string_function(array_repr, 1)
 
-
 little_endian = (sys.byteorder == 'little')
 
 def indices(dimensions, dtype=int):
@@ -337,7 +336,7 @@ def indices(dimensions, dtype=int):
     return array(lst)
 
 def fromfunction(function, dimensions, **kwargs):
-    """fromfunction(function, dimensions) returns an array constructed by
+    """fromfunction(function, dimensions, dtype=int) returns an array constructed by
     calling function on a tuple of number grids.  The function should
     accept as many arguments as there are dimensions which is a list of
     numbers indicating the length of the desired output for each axis.
@@ -345,7 +344,8 @@ def fromfunction(function, dimensions, **kwargs):
     The function can also accept keyword arguments which will be
     passed in as well.
     """
-    args = indices(dimensions)
+    dtype = kwargs.get('dtype', int)
+    args = indices(dimensions,dtype=dtype)
     return function(*args,**kwargs)
 
 def isscalar(num):
