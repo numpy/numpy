@@ -1,14 +1,16 @@
-# Lifted from Precision.py.  This is for compatibility only.  Notice that the
-#  capitalized names have their old character strings
+# Lifted from Precision.py.  This is for compatibility only.
+#
+#  The character strings are still for "new" NumPy
+#   which is the only Incompatibility with Numeric
 
 __all__ = ['Character', 'Complex', 'Float', 
            'PrecisionError', 'PyObject', 'Int', 'UInt',
            'UnsignedInteger', 'string', 'typecodes', 'zeros']
 
 import string
-from olddefaults import zeros
+from functions import zeros
 
-typecodes = {'Character':'c', 'Integer':'1sil', 'UnsignedInteger':'bwu', 'Float':'fd', 'Complex':'FD'}
+typecodes = {'Character':'c', 'Integer':'bhil', 'UnsignedInteger':'BHI', 'Float':'fd', 'Complex':'FD'}
 
 def _get_precisions(typecodes):
     lst = []

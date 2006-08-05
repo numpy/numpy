@@ -4,13 +4,11 @@ __all__ = ['UserArray', 'squeeze', 'Matrix', 'asarray', 'dot', 'k', 'Numeric', '
 
 import string
 import types
-import numpy.oldnumeric as Numeric
 from user_array import UserArray, asarray
+import numpy.oldnumeric as Numeric
 from numpy.oldnumeric import dot, identity, multiply
-from mlab import squeeze
 import linear_algebra as LinearAlgebra
-
-from numpy import matrix as Matrix
+from numpy import matrix as Matrix, squeeze
 
 # Hidden names that will be the same. 
 

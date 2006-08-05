@@ -1,5 +1,5 @@
 
-# Don't add these to the __all__ variable
+# Don't add these to the __all__ variable though
 from numpy import *
 
 def _move_axis_to_0(a, axis):
@@ -16,6 +16,7 @@ from compat import *
 from functions import *
 from precision import *
 from ufuncs import *
+from misc import *
 
 import compat
 import precision

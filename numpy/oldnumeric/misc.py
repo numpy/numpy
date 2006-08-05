@@ -2,9 +2,9 @@
 
 
 __all__ = ['load', 'sort', 'copy_reg', 'clip', 'putmask', 'Unpickler', 'rank',
-           'sign', 'shape', 'types', 
+           'sign', 'shape', 'types', 'allclose', 'size',
            'argmax', 'choose', 'swapaxes', 'array_str',
-           'pi', 'math', 'compress', 'concatenate'
+           'pi', 'math', 'compress', 'concatenate',
            'around', 'vdot', 'transpose', 'array2string', 'diagonal',
            'searchsorted', 'put', 'fromfunction', 'copy', 'resize',
            'array_repr', 'e', 'argmin', 'StringIO', 'pickle', 'average',

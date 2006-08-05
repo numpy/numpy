@@ -1,5 +1,5 @@
 
-__all__ = ['oldtype2dtype', 'convtypecode']
+__all__ = ['oldtype2dtype', 'convtypecode', 'convtypecode2']
 
 import numpy as N
 
@@ -22,7 +22,15 @@ oldtype2dtype = {'1': N.dtype(N.byte),
 def convtypecode(typecode, dtype=None):
     if dtype is None:
         try:
-            dtype = oldtype2dtype[typecode]
+            return oldtype2dtype[typecode]
         except:
-            dtype = N.dtype(typecode)
-    return dtype
+            return N.dtype(typecode)
+
+def convtypecode2(typecode, dtype=None):
+    if typecode is None and dtype is None:
+        return None
+    elif dtype is None:
+        try:
+            return oldtype2dtype[typecode]
+        except:
+            return N.dtype(typecode)

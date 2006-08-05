@@ -3,19 +3,19 @@
 import numpy as N
 import numpy.core.multiarray as mu
 import numpy.core.numeric as nn
-from typeconv import convtypecode
+from typeconv import convtypecode, convtypecode2
 
 __all__ = ['take', 'repeat', 'sum', 'product', 'sometrue', 'alltrue',
-           'cumsum', 'cumproduct']
-__all__ += ['ones', 'empty', 'identity', 'zeros', 'array', 'asarray', 'nonzero',
-            'reshape', 'arange', 'fromstring', 'ravel', 'trace', 'indices',
-            'where']
+           'cumsum', 'cumproduct',
+           'ones', 'empty', 'identity', 'zeros', 'array', 'asarray',
+           'nonzero', 'reshape', 'arange', 'fromstring', 'ravel', 'trace',
+           'indices', 'where']
 
 def take(a, indicies, axis=0):
     return N.take(a, indicies, axis)
 
 def repeat(a, repeats, axis=0):
-    return N.repeats(a, repeats, axis)
+    return N.repeat(a, repeats, axis)
 
 def sum(x, axis=0):
     return N.sum(x, axis)
@@ -62,11 +62,11 @@ def empty(shape, typecode='l', dtype=None):
     return mu.empty(shape, dtype, order)
 
 def array(sequence, typecode=None, copy=1, savespace=0, dtype=None):
-    dtype = convtypecode(typecode, dtype)
+    dtype = convtypecode2(typecode, dtype)
     return mu.array(sequence, dtype, copy=copy)
 
 def asarray(a, typecode=None, dtype=None):
-    dtype = convtypecode(typecode, dtype)
+    dtype = convtypecode2(typecode, dtype)
     return mu.array(a, dtype, copy=0)
 
 def nonzero(a):
@@ -80,7 +80,7 @@ def reshape(a, shape):
     return N.reshape(a, shape)
 
 def arange(start, stop=None, step=1, typecode=None, dtype=None):
-    dtype = convtypecode(typecode, dtype)
+    dtype = convtypecode2(typecode, dtype)
     return mu.arange(start, stop, step, dtype)
 
 def fromstring(string, typecode='l', count=-1, dtype=None):

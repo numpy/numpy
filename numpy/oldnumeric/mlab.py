@@ -1,10 +1,6 @@
 # This module is for compatibility only.  All functions are defined elsewhere.
 
-from numpy.oldnumeric import *
-
-__all__ = numpy.oldnumeric.__all__
-
-__all__ += ['rand', 'tril', 'trapz', 'hanning', 'rot90', 'triu', 'diff', 'angle', 'roots', 'ptp', 'kaiser', 'randn', 'cumprod', 'diag', 'msort', 'LinearAlgebra', 'RandomArray', 'prod', 'std', 'hamming', 'flipud', 'max', 'blackman', 'corrcoef', 'bartlett', 'eye', 'squeeze', 'sinc', 'tri', 'cov', 'svd', 'min', 'median', 'fliplr', 'eig', 'mean']
+__all__ = ['rand', 'tril', 'trapz', 'hanning', 'rot90', 'triu', 'diff', 'angle', 'roots', 'ptp', 'kaiser', 'randn', 'cumprod', 'diag', 'msort', 'LinearAlgebra', 'RandomArray', 'prod', 'std', 'hamming', 'flipud', 'max', 'blackman', 'corrcoef', 'bartlett', 'eye', 'squeeze', 'sinc', 'tri', 'cov', 'svd', 'min', 'median', 'fliplr', 'eig', 'mean']
 
 import linear_algebra as LinearAlgebra
 import random_array as RandomArray
@@ -69,4 +65,32 @@ def cov(m, y=None, rowvar=0, bias=0):
 def corrcoef(x, y=None):
     return _Ncorrcoef(x,y,0,0)
 
+from compat import *
+from functions import *
+from precision import *
+from ufuncs import *
+from misc import *
+
+import compat
+import precision
+import functions
+import misc
+import ufuncs
+
+import numpy
+__version__ = numpy.__version__
+del numpy
+
+__all__ += ['__version__']
+__all__ += compat.__all__
+__all__ += precision.__all__
+__all__ += functions.__all__
+__all__ += ufuncs.__all__
+__all__ += misc.__all__
+        
+del compat
+del functions
+del precision
+del ufuncs
+del misc
 
