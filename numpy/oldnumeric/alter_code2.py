@@ -21,7 +21,7 @@ Makes the following changes:
 __all__ = []
 
 import warnings
-warnings.warn("convetnumericB is not finished yet.")
+warnings.warn("numpy.oldnumeric.alter_code2 is not ready yet.")
 
 import sys
 import os
