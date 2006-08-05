@@ -13,23 +13,23 @@ from numpy import tril, trapz as _Ntrapz, hanning, rot90, triu, diff, \
 from numpy.linalg import eig, svd
 from numpy.random import rand, randn
      
-from typeconv import oldtype2dtype as o2d
+from typeconv import convtypecode
 
-def eye(N, M=None, k=0, typecode=None):
+def eye(N, M=None, k=0, typecode=None, dtype=None):
     """ eye returns a N-by-M 2-d array where the  k-th diagonal is all ones,
         and everything else is zeros.
     """
-    dtype = o2d[typecode]
+    dtype = convtypecode(typecode, dtype)
     if M is None: M = N
     m = nn.equal(nn.subtract.outer(nn.arange(N), nn.arange(M)),-k)
     if m.dtype != dtype:
         return m.astype(dtype)
     
-def tri(N, M=None, k=0, typecode=None):
+def tri(N, M=None, k=0, typecode=None, dtype=None):
     """ returns a N-by-M array where all the diagonals starting from
         lower left corner up to the k-th are all ones.
     """
-    dtype = o2d[typecode]
+    dtype = convtypecode(typecode, dtype)
     if M is None: M = N
     m = nn.greater_equal(nn.subtract.outer(nn.arange(N), nn.arange(M)),-k)
     if m.dtype != dtype:
