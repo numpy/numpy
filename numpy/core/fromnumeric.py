@@ -239,7 +239,7 @@ def nonzero(a):
         res = _wrapit(a, 'nonzero')
     else:
         res = nonzero()
-    return res
+    return res[0]
     
 
 def shape(a):
