@@ -1,4 +1,4 @@
-# Functions that should behave the same as Numeric
+# Functions that should behave the same as Numeric and need changing
 
 import numpy as N
 import numpy.core.multiarray as mu
@@ -7,7 +7,9 @@ from typeconv import convtypecode
 
 __all__ = ['take', 'repeat', 'sum', 'product', 'sometrue', 'alltrue',
            'cumsum', 'cumproduct']
-__all__ += ['ones', 'empty', 'identity', 'zeros']
+__all__ += ['ones', 'empty', 'identity', 'zeros', 'array', 'asarray', 'nonzero',
+            'reshape', 'arange', 'fromstring', 'ravel', 'trace', 'indices',
+            'where']
 
 def take(a, indicies, axis=0):
     return N.take(a, indicies, axis)
@@ -60,3 +62,33 @@ def empty(shape, typecode='l', dtype=None):
     dtype = convtypecode(typecode, dtype)    
     return mu.empty(shape, dtype, order)
 
+
+def array(sequence, typecode=None, copy=1, savespace=0):
+    pass
+
+def asarray(a, typecode=None):
+    pass
+
+def nonzero(a):
+    pass
+
+def reshape(a, shape):
+    pass
+
+def arange(start, stop=None, step=1, typecode=None):
+    pass
+
+def fromstring(string, typecode='l', count=-1):
+    pass
+
+def ravel(m):
+    pass
+
+def trace(a, offset=0, axis1=0, axis2=1):
+    pass
+
+def indices(dimensions, typecode=None):
+    pass
+
+def where(condition, x, y):
+    pass

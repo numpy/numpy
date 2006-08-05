@@ -5,7 +5,7 @@ __all__ = ['NewAxis',
            'LittleEndian',
            'sarray', 'arrayrange', 'cross_correlate',
            'matrixmultiply', 'outerproduct', 'innerproduct',
-           'cross_product', 'array_constructor',
+           'cross_product', 'array_constructor', 'pickle_array',
            'DumpArray', 'LoadArray', 'multiarray', 'divide_safe',
            # from cPickle
            'dump', 'dumps'
@@ -70,4 +70,11 @@ def array_constructor(shape, typecode, thestr, Endian=LittleEndian):
     else:
         return x
 
-
+def pickle_array(a):
+    if a.dtype.hasobject:
+        return (array_constructor,
+                a.shape, a.dtype.char, a.tolist(), LittleEndian)
+    else:
+        return (array_constructor,
+                (a.shape, a.dtype.char, a.tostring(), LittleEndian))
+    
