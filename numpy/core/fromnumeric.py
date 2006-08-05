@@ -230,8 +230,7 @@ def ravel(m,order='C'):
     return a.ravel(order)
 
 def nonzero(a):
-    """nonzero(a) returns the indices of the elements of a which are not zero,
-    a must be 1d
+    """nonzero(a) returns the indices of the elements of a which are not zero
     """
     try:
         nonzero = a.nonzero
@@ -241,7 +240,6 @@ def nonzero(a):
         res = nonzero()
     return res
     
-
 def shape(a):
     """shape(a) returns the shape of a (as a function call which
        also works on nested sequences).

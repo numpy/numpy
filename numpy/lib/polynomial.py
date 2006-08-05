@@ -90,7 +90,7 @@ def roots(p):
         raise ValueError,"Input must be a rank-1 array."
 
     # find non-zero array entries
-    non_zero = NX.nonzero(NX.ravel(p))
+    non_zero = NX.nonzero(NX.ravel(p))[0]
 
     # find the number of trailing zeros -- this is the number of roots at 0.
     trailing_zeros = len(p) - non_zero[-1] - 1

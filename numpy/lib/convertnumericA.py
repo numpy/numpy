@@ -13,6 +13,9 @@ Makes the following changes:
  * Converts .flat to .ravel() except for .flat = xxx or .flat[xxx]
  * Replace xxx.spacesaver() with True
  * Convert xx.savespace(?) to pass + ## xx.savespace(?)
+
+ * Converts uses of 'b' to 'B' in the typecode-position of
+   functions and methods
 """
 __all__ = ['fromfile', 'fromstr']
 

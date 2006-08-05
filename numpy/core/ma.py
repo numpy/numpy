@@ -445,9 +445,8 @@ fabs = masked_unary_operation(umath.fabs)
 negative = masked_unary_operation(umath.negative)
 
 def nonzero(a):
-    """returns the indices of the elements of a which are not zero and not masked
-
-    a must be 1d
+    """returns the indices of the elements of a which are not zero
+    and not masked
     """
     return asarray(filled(a, 0).nonzero())
 

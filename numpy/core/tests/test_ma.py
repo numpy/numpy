@@ -306,7 +306,7 @@ class test_ma(NumpyTestCase):
     def check_testMaPut(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
-        i = numpy.nonzero(m)
+        i = numpy.nonzero(m)[0]
         putmask(xm, m, z)
         assert take(xm, i) == z
         put(ym, i, zm)

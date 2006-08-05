@@ -7,7 +7,8 @@ __all__ = ['logspace', 'linspace',
            'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
            'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort',
            'median', 'sinc', 'hamming', 'hanning', 'bartlett', 'blackman',
-           'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring', 'meshgrid'
+           'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring', 'meshgrid',
+           'flatnonzero'
            ]
 
 import types
@@ -530,7 +531,7 @@ def extract(condition, arr):
 
     Equivalent to compress(ravel(condition), ravel(arr)).
     """
-    return _nx.take(ravel(arr), nonzero(ravel(condition)))
+    return _nx.take(ravel(arr), nonzero(ravel(condition))[0])
 
 def insert(arr, mask, vals):
     """Similar to putmask arr[mask] = vals but the 1D array vals has the
@@ -997,3 +998,11 @@ def meshgrid(x,y):
     y = y.reshape(numRows,1)
     Y = y.repeat(numCols, axis=1)
     return X, Y
+
+def flatnonzero(a):
+    """Return indicies that are not-zero in flattened version of a
+
+    Equivalent to a.ravel().nonzero()[0]
+    """
+    return a.ravel().nonzero()[0]
+    
