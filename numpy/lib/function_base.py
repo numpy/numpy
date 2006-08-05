@@ -394,39 +394,48 @@ def diff(a, n=1, axis=-1):
     else:
         return a[slice1]-a[slice2]
 
-add_docstring(digitize, 
-   r"""digitize(x,bins)
+try:
+    add_docstring(digitize, 
+r"""digitize(x,bins)
    
-    Return the index of the bin to which each value of x belongs.
-   
-    Each index i returned is such that bins[i-1] <= x < bins[i] if
-    bins is monotonically increasing, or bins [i-1] > x >= bins[i] if
-    bins is monotonically decreasing.
+Return the index of the bin to which each value of x belongs.
+  
+Each index i returned is such that bins[i-1] <= x < bins[i] if
+bins is monotonically increasing, or bins [i-1] > x >= bins[i] if
+bins is monotonically decreasing.
 
-    Beyond the bounds of the bins 0 or len(bins) is returned as appropriate.
-    """)
+Beyond the bounds of the bins 0 or len(bins) is returned as appropriate.
+""")
+except RuntimeError:
+    pass
 
-add_docstring(bincount,
-   r"""bincount(x,weights=None)
-   
-    Return the number of occurrences of each value in x.
+try:
+    add_docstring(bincount,
+r"""bincount(x,weights=None)
+    
+Return the number of occurrences of each value in x.
 
-    x must be a list of non-negative integers.  The output, b[i],
-    represents the number of times that i is found in x.  If weights
-    is specified, every occurrence of i at a position p contributes
-    weights[p] instead of 1.
+x must be a list of non-negative integers.  The output, b[i],
+represents the number of times that i is found in x.  If weights
+is specified, every occurrence of i at a position p contributes
+weights[p] instead of 1.
 
-    See also: histogram, digitize, unique.
-    """)
+See also: histogram, digitize, unique.
+""")
+except RuntimeError:
+    pass
 
-add_docstring(add_docstring,
-   r"""docstring(obj, docstring)
+try:
+    add_docstring(add_docstring,
+r"""docstring(obj, docstring)
 
-   Add a docstring to a built-in obj if possible.
-   If the obj already has a docstring raise a RuntimeError
-   If this routine does not know how to add a docstring to the object
-      raise a TypeError
-   """)
+Add a docstring to a built-in obj if possible.
+If the obj already has a docstring raise a RuntimeError
+If this routine does not know how to add a docstring to the object
+raise a TypeError
+""")
+except RuntimeError:
+    pass
     
 def angle(z, deg=0):
     """Return the angle of the complex argument z.
