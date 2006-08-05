@@ -34,7 +34,6 @@ def cumsum(x, axis=0):
 
 def cumproduct(x, axis=0):
     return N.cumproduct(x, axis)
-
     
 def ones(shape, typecode='l', savespace=0, dtype=None):
     """ones(shape, dtype=int) returns an array of the given
@@ -62,33 +61,41 @@ def empty(shape, typecode='l', dtype=None):
     dtype = convtypecode(typecode, dtype)    
     return mu.empty(shape, dtype, order)
 
+def array(sequence, typecode=None, copy=1, savespace=0, dtype=None):
+    dtype = convtypecode(typecode, dtype)
+    return mu.array(sequence, dtype, copy=copy)
 
-def array(sequence, typecode=None, copy=1, savespace=0):
-    pass
-
-def asarray(a, typecode=None):
-    pass
+def asarray(a, typecode=None, dtype=None):
+    dtype = convtypecode(typecode, dtype)
+    return mu.array(a, dtype, copy=0)
 
 def nonzero(a):
-    pass
+    res = N.nonzero(a)
+    if len(res) == 1:
+        return res[0]
+    else:
+        raise ValueError, "Input argument must be 1d"
 
 def reshape(a, shape):
-    pass
+    return N.reshape(a, shape)
 
-def arange(start, stop=None, step=1, typecode=None):
-    pass
+def arange(start, stop=None, step=1, typecode=None, dtype=None):
+    dtype = convtypecode(typecode, dtype)
+    return mu.arange(start, stop, step, dtype)
 
-def fromstring(string, typecode='l', count=-1):
-    pass
+def fromstring(string, typecode='l', count=-1, dtype=None):
+    dtype = convtypecode(typecode, dtype)
+    return mu.fromstring(string, dtype, count=count)
 
 def ravel(m):
-    pass
+    return N.ravel(m)
 
 def trace(a, offset=0, axis1=0, axis2=1):
-    pass
+    return N.trace(a, offset=0, axis1=0, axis2=1)
 
-def indices(dimensions, typecode=None):
-    pass
+def indices(dimensions, typecode=None, dtype=None):
+    dtype = convtypecode(typecode, dtype)
+    return N.indices(dimensions, dtype)
 
 def where(condition, x, y):
-    pass
+    return N.where(condition, x, y)

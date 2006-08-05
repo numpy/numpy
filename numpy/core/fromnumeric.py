@@ -239,11 +239,7 @@ def nonzero(a):
         res = _wrapit(a, 'nonzero')
     else:
         res = nonzero()
-
-    if len(res) == 1:
-        return res[0]
-    else:
-        raise ValueError, "Input argument must be 1d"
+    return res
     
 
 def shape(a):
