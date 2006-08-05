@@ -6,7 +6,8 @@ __all__ = ['less', 'cosh', 'arcsinh', 'add', 'ceil', 'arctan2', 'floor_divide',
            'not_equal', 'tanh', 'true_divide', 'maximum', 'arccosh',
            'logical_or', 'minimum', 'conjugate', 'tan', 'greater',
            'bitwise_xor', 'fabs', 'floor', 'sqrt', 'arctan', 'right_shift',
-           'absolute', 'sin', 'multiply', 'greater_equal', 'left_shift', 'exp']
+           'absolute', 'sin', 'multiply', 'greater_equal', 'left_shift',
+           'exp', 'divide_safe']
 
 from numpy import less, cosh, arcsinh, add, ceil, arctan2, floor_divide, \
      fmod, hypot, logical_and, power, sinh, remainder, cos, \
@@ -15,5 +16,5 @@ from numpy import less, cosh, arcsinh, add, ceil, arctan2, floor_divide, \
      arctanh, logical_not, not_equal, tanh, true_divide, maximum, \
      arccosh, logical_or, minimum, conjugate, tan, greater, bitwise_xor, \
      fabs, floor, sqrt, arctan, right_shift, absolute, sin, \
-     multiply, greater_equal, left_shift, exp
+     multiply, greater_equal, left_shift, exp, divide as divide_safe
  

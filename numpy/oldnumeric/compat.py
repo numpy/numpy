@@ -2,11 +2,9 @@
 
 __all__ = ['NewAxis',
            'UFuncType', 'UfuncType', 'ArrayType', 'arraytype',
-           'LittleEndian',
-           'sarray', 'arrayrange', 'cross_correlate',
-           'matrixmultiply', 'outerproduct', 'innerproduct',
-           'cross_product', 'array_constructor', 'pickle_array',
-           'DumpArray', 'LoadArray', 'multiarray', 'divide_safe',
+           'LittleEndian', 'arrayrange', 'matrixmultiply', 
+           'array_constructor', 'pickle_array',
+           'DumpArray', 'LoadArray', 'multiarray',
            # from cPickle
            'dump', 'dumps'
           ]
@@ -15,14 +13,12 @@ import numpy.core.multiarray as multiarray
 import numpy.core.umath as um
 from numpy.core.numeric import array, correlate, outer, cross
 from numpy.core.umath import sign, absolute, multiply
+import functions
 import sys
 
 import types
 
 from cPickle import dump, dumps
-
-def sarray(a, dtype=None, copy=False):
-    return array(a, dtype, copy)
 
 mu = multiarray
 
@@ -41,16 +37,10 @@ LittleEndian = (sys.byteorder == 'little')
 from numpy import deprecate 
 
 # backward compatibility
-arrayrange = deprecate(mu.arange, 'arrayrange', 'arange')
-cross_correlate = deprecate(correlate, 'cross_correlate', 'correlate')
-cross_product = deprecate(cross, 'cross_product', 'cross')
-divide_safe = deprecate(um.divide, 'divide_safe', 'divide')
+arrayrange = deprecate(functions.arange, 'arrayrange', 'arange')
 
 # deprecated names
 matrixmultiply = deprecate(mu.dot, 'matrixmultiply', 'dot')
-outerproduct = deprecate(outer, 'outerproduct', 'outer')
-innerproduct = deprecate(mu.inner, 'innerproduct', 'inner')
-
 
 def DumpArray(m, fp):
     m.dump(fp)

@@ -22,6 +22,11 @@ Makes the following changes:
 
    and methods:
    astype --- only argument
+    -- converts uses of '1', 's', 'w', and 'u' to
+    -- 'b', 'h', 'H', and 'I'
+
+ * Converts uses of type(...) is <type>
+   isinstance(..., <type>)
 """
 __all__ = ['fromfile', 'fromstr']
 
@@ -36,7 +41,10 @@ _meth1 = ['astype']
 _func2 = ['ones', 'zeros', 'identity', 'fromstring', 'indices',
          'empty', 'array', 'asarray', 'arange', 'array_constructor']
 
+_chars = {'1':'b','s':'h','w':'H','u':'I'}
+
 func_re = {}
+meth_re = {}
 
 for name in _func2:
     _astr = r"""(%s\s*[(][^,]*?[,][^'"]*?['"])b(['"][^)]*?[)])"""%name
@@ -50,9 +58,15 @@ for name in _meth1:
     _astr = r"""(.%s\s*[(][^'"]*?['"])b(['"][^)]*?[)])"""%name
     func_re[name] = re.compile(_astr, re.DOTALL)
 
+for char in _chars.keys():
+    _astr = r"""(.astype\s*[(][^'"]*?['"])%s(['"][^)]*?[)])"""%char
+    meth_re[char] = re.compile(_astr, re.DOTALL)
+
 def fixtypechars(fstr):
     for name in _func2 + _func4 + _meth1:
         fstr = func2_re[name].sub('\\1B\\2',fstr)
+    for char in _chars.keys():
+        fstr = meth_re[char].sub('\\1%s\\2'%_chars[char], fstr)
     return fstr
 
 flatindex_re = re.compile('([.]flat(\s*?[[=]))')
@@ -80,6 +94,17 @@ def changeimports(fstr, name, newname):
         ind += Nlen2 - Nlen
     return fstr, fromall
 
+istest_re = {}
+_types = ['float', 'int', 'complex', 'ArrayType', 'FloatType',
+          'IntType', 'ComplexType']
+for name in _types:
+    _astr = r'type\s*[(]([^)]*)[)]\s+(?:is|==)\s+(.*?%s)'%name
+    istest_re[name] = re.compile(_astr)
+def fixistesting(astr):
+    for name in _types:
+        astr = istest_re[name].sub('isinstance(\\1, \\2)', astr)
+    return astr
+
 def replaceattr(astr):
     astr = astr.replace(".typecode()",".dtype.char")
     astr = astr.replace(".iscontiguous()",".flags.contiguous")
@@ -106,6 +131,7 @@ def replaceother(astr):
 import datetime
 def fromstr(filestr):
     filestr = fixtypechars(filestr)
+    filestr = fixistesting(filestr)
     filestr, fromall1 = changeimports(filestr, 'Numeric', 'numpy.oldnumeric')
     filestr, fromall1 = changeimports(filestr, 'multiarray','numpy.oldnumeric')
     filestr, fromall1 = changeimports(filestr, 'umath', 'numpy.oldnumeric')

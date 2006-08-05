@@ -9,7 +9,7 @@ __all__ = ['take', 'repeat', 'sum', 'product', 'sometrue', 'alltrue',
            'cumsum', 'cumproduct',
            'ones', 'empty', 'identity', 'zeros', 'array', 'asarray',
            'nonzero', 'reshape', 'arange', 'fromstring', 'ravel', 'trace',
-           'indices', 'where']
+           'indices', 'where','sarray','cross_product']
 
 def take(a, indicies, axis=0):
     return N.take(a, indicies, axis)
@@ -65,6 +65,10 @@ def array(sequence, typecode=None, copy=1, savespace=0, dtype=None):
     dtype = convtypecode2(typecode, dtype)
     return mu.array(sequence, dtype, copy=copy)
 
+def sarray(a, typecode=None, copy=False, dtype=None):
+    dtype = convtypecode2(typecode, dtype)
+    return mu.array(a, dtype, copy)
+
 def asarray(a, typecode=None, dtype=None):
     dtype = convtypecode2(typecode, dtype)
     return mu.array(a, dtype, copy=0)
@@ -99,3 +103,6 @@ def indices(dimensions, typecode=None, dtype=None):
 
 def where(condition, x, y):
     return N.where(condition, x, y)
+
+def cross_product(a, b, axis1=-1, axis2=-1):
+    return N.cross(a, b, axis1, axis2)
