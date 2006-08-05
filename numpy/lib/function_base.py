@@ -8,7 +8,6 @@ __all__ = ['logspace', 'linspace',
            'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort',
            'median', 'sinc', 'hamming', 'hanning', 'bartlett', 'blackman',
            'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring', 'meshgrid',
-           'flatnonzero'
            ]
 
 import types
@@ -998,11 +997,4 @@ def meshgrid(x,y):
     y = y.reshape(numRows,1)
     Y = y.repeat(numCols, axis=1)
     return X, Y
-
-def flatnonzero(a):
-    """Return indicies that are not-zero in flattened version of a
-
-    Equivalent to a.ravel().nonzero()[0]
-    """
-    return a.ravel().nonzero()[0]
     

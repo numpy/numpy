@@ -18,7 +18,7 @@ __all__ = ['solve',
 from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
         newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
-        maximum, nonzero, diagonal, arange, fastCopyAndTranspose, sum, \
+        maximum, flatnonzero, diagonal, arange, fastCopyAndTranspose, sum, \
         argsort
 from numpy.lib import triu
 from numpy.linalg import lapack_lite
@@ -313,7 +313,7 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
         else:
             w = wr+1j*wi
             v = array(vr, w.dtype)
-            ind = nonzero(wi != 0.0)[0]      # indices of complex e-vals
+            ind = flatnonzero(wi != 0.0)      # indices of complex e-vals
             for i in range(len(ind)/2):
                 v[ind[2*i]] = vr[ind[2*i]] + 1j*vr[ind[2*i+1]]
                 v[ind[2*i+1]] = vr[ind[2*i]] - 1j*vr[ind[2*i+1]]

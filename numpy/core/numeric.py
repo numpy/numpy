@@ -16,7 +16,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
            'ones', 'identity', 'allclose',
            'seterr', 'geterr', 'setbufsize', 'getbufsize',
-           'seterrcall', 'geterrcall',
+           'seterrcall', 'geterrcall', 'flatnonzero',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_']
 
@@ -177,6 +177,13 @@ def argwhere(a):
     converted to a tuple in order to be used to index into a.
     """
     return transpose(a.nonzero())
+
+def flatnonzero(a):
+    """Return indicies that are not-zero in flattened version of a
+
+    Equivalent to a.ravel().nonzero()[0]
+    """
+    return a.ravel().nonzero()[0]
 
 _mode_from_name_dict = {'v': 0,
                         's' : 1,
