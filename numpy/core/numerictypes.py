@@ -301,7 +301,7 @@ def _set_array_types():
     for bytes in fbytes:
         bits = 8*bytes
         _add_array_type('float', bits)
-        _add_array_type('complex', bits)
+        _add_array_type('complex', 2*bits)
     _gi = dtype('p')
     if _gi.type not in sctypes['int']:
         sctypes['int'].append(_gi.type)
