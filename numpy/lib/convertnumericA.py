@@ -15,7 +15,13 @@ Makes the following changes:
  * Convert xx.savespace(?) to pass + ## xx.savespace(?)
 
  * Converts uses of 'b' to 'B' in the typecode-position of
-   functions and methods
+   functions:
+   eye, tri (in position 4)
+   ones, zeros, identity, empty, array, asarray, arange,
+   fromstring, indices, array_constructor (in position 2)
+
+   and methods:
+   astype --- only argument
 """
 __all__ = ['fromfile', 'fromstr']
 
@@ -23,6 +29,31 @@ import sys
 import os
 import re
 import glob
+
+
+_func4 = ['eye', 'tri']
+_meth1 = ['astype']
+_func2 = ['ones', 'zeros', 'identity', 'fromstring', 'indices',
+         'empty', 'array', 'asarray', 'arange', 'array_constructor']
+
+func_re = {}
+
+for name in _func2:
+    _astr = r"""(%s\s*[(][^,]*?[,][^'"]*?['"])b(['"][^)]*?[)])"""%name
+    func_re[name] = re.compile(_astr, re.DOTALL)
+
+for name in _func4:
+    _astr = r"""(%s\s*[(][^,]*?[,][^,]*?[,][^,]*?[,][^'"]*?['"])b(['"][^)]*?[)])"""%name
+    func_re[name] = re.compile(_astr, re.DOTALL)    
+
+for name in _meth1:
+    _astr = r"""(.%s\s*[(][^'"]*?['"])b(['"][^)]*?[)])"""%name
+    func_re[name] = re.compile(_astr, re.DOTALL)
+
+def fixtypechars(fstr):
+    for name in _func2 + _func4 + _meth1:
+        fstr = func2_re[name].sub('\\1B\\2',fstr)
+    return fstr
 
 flatindex_re = re.compile('([.]flat(\s*?[[=]))')
 
@@ -74,7 +105,7 @@ def replaceother(astr):
 
 import datetime
 def fromstr(filestr):
-    #filestr = replacetypechars(filestr)
+    filestr = fixtypechars(filestr)
     filestr, fromall1 = changeimports(filestr, 'Numeric', 'numpy.oldnumeric')
     filestr, fromall1 = changeimports(filestr, 'multiarray','numpy.oldnumeric')
     filestr, fromall1 = changeimports(filestr, 'umath', 'numpy.oldnumeric')
