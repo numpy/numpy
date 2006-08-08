@@ -128,9 +128,6 @@ class IntelVisualFCompiler(FCompiler):
 
     ar_exe = 'lib.exe'
     fc_exe = 'ifl'
-    if sys.platform=='win32':
-        from distutils.msvccompiler import MSVCCompiler
-        ar_exe = MSVCCompiler().lib
 
     executables = {
         'version_cmd'  : [fc_exe, "-FI -V -c %(fname)s.f -o %(fname)s.o" \
