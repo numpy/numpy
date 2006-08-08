@@ -359,6 +359,12 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 
         copyswapn = self->descr->f->copyswapn;
 	if (inplace) {
+                if (!PyArray_ISWRITEABLE(self)) {
+                        PyErr_SetString(PyExc_RuntimeError,
+                                        "Cannot byte-swap in-place on a " \
+                                        "read-only array");
+                        return NULL;
+                }
 		size = PyArray_SIZE(self);
 		if (PyArray_ISONESEGMENT(self)) {
 			copyswapn(self->data, self->descr->elsize, NULL, -1, size, 1, self);

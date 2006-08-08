@@ -5,9 +5,9 @@ Makes the following changes:
  * Changes import statements
 
    Stubs for
-   convolve --> numarray.convolve
-   image --> numarray.image
-   nd_image --> numarray.nd_image
+   numarray.convolve --> numpy.numarray.convolve
+   numarray.image --> numarray.image
+   numarray.nd_image --> numarray.nd_image
 
  * Makes search and replace changes to:
    - .imaginary --> .imag
@@ -49,6 +49,10 @@ import sys
 import os
 import re
 import glob
+
+import warnings
+warnings.warn("numarray.alter_code1 is not working yet")
+
 
 
 _func4 = ['eye', 'tri']
