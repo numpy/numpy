@@ -18,7 +18,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'seterr', 'geterr', 'setbufsize', 'getbufsize',
            'seterrcall', 'geterrcall', 'flatnonzero',
            'Inf', 'inf', 'infty', 'Infinity',
-           'nan', 'NaN', 'False_', 'True_']
+           'nan', 'NaN', 'False_', 'True_', 'bitwise_not']
 
 import sys
 import multiarray
@@ -26,6 +26,8 @@ import umath
 from umath import *
 import numerictypes
 from numerictypes import *
+
+bitwise_not = invert
 
 # from Fernando Perez's IPython
 def zeros_like(a):
