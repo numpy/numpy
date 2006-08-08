@@ -37,7 +37,7 @@ __all__ = ['asarray', 'ones', 'zeros', 'array', 'where']
 __all__ += ['vdot', 'dot', 'matrixmultiply', 'ravel', 'indices',
             'arange', 'concatenate']
 
-from numpy import dot as matrixmultiply, dot, vdot, ravel
+from numpy import dot as matrixmultiply, dot, vdot, ravel, concatenate
 
 def array(sequence=None, typecode=None, copy=1, savespace=0,
           type=None, shape=None, dtype=None):
