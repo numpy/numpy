@@ -30,7 +30,8 @@
 ##           'sometrue', 'sort', 'swapaxes', 'sys', 'take', 'tcode',
 ##           'tensormultiply', 'tname', 'trace', 'transpose', 'typeDict',
 ##           'typecode', 'typecodes', 'typeconv', 'types', 'ufunc',
-##           'ufuncFactory', 'value', ]
+##           'ufuncFactory', 'value', 'ieeemask', 'cumproduct', 'cumsum',
+##           'nonzero']
 
 
 __all__ = ['asarray', 'ones', 'zeros', 'array', 'where']
