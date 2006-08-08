@@ -28,7 +28,7 @@ Makes the following changes:
    - self.new(type) --> empty(self.shape, type)
    - .repeat(r) --> .repeat(r, axis=0)
    - .size() --> .size
-   - .type() -- numarray.type(self.dtype)
+   - .type() -- numarray.typefrom(self)
    - .typecode() --> .dtype.char
    - .stddev() --> .std()
    - .togglebyteorder() --> self.dtype=self.dtype.newbyteorder()

@@ -27,13 +27,25 @@ Exported symbols include:
 $Id: numerictypes.py,v 1.55 2005/12/01 16:22:03 jaytmiller Exp $
 """
 
+__all__ = ['NumericType','HasUInt64','typeDict','IsType',
+           'BooleanType', 'SignedType', 'UnsignedType', 'IntegralType',
+           'SignedIntegralType', 'UnsignedIntegralType', 'FloatingType',
+           'ComplexType', 'AnyType', 'ObjectType', 'Any', 'Object',
+           'Bool', 'Int8', 'Int16', 'Int32', 'Int64', 'Float32',
+           'Float64', 'UInt8', 'UInt16', 'UInt32', 'UInt64',
+           'Complex32', 'Complex64', 'Byte', 'Short', 'Int','Long',
+           'Float', 'Complex', 'genericTypeRank', 'pythonTypeRank',
+           'pythonTypeMap', 'scalarTypeMap', 'genericCoercions',
+           'typecodes', 'genericPromotionExclusions','MaximumType',
+           'getType','scalarTypes', 'typefrom']
+
 MAX_ALIGN = 8
 MAX_INT_SIZE = 8
 
 import numpy
 LP64 = numpy.intp(0).itemsize == 8
 
-HasUInt64 = 0
+HasUInt64 = 1
 try:
     numpy.int64(0)
 except:
@@ -182,6 +194,24 @@ UInt64 = UnsignedIntegralType("UInt64", 8, 0, _tUInt64)
 Complex32  = ComplexType("Complex32", 8,  complex(0.0), _tComplex32)
 Complex64  = ComplexType("Complex64", 16, complex(0.0), _tComplex64)
 
+Object.dtype = 'O'
+Bool.dtype = '?'
+Int8.dtype = 'i1'
+Int16.dtype = 'i2'
+Int32.dtype = 'i4'
+Int64.dtype = 'i8'
+
+UInt8.dtype = 'u1'
+UInt16.dtype = 'u2'
+UInt32.dtype = 'u4'
+UInt64.dtype = 'u8'
+
+Float32.dtype = 'f4'
+Float64.dtype = 'f8'
+
+Complex32.dtype = 'c8'
+Complex64.dtype = 'c16'
+
 # Aliases
 
 Byte = _register("Byte",   Int8)
@@ -192,10 +222,12 @@ if LP64:
     if HasUInt64:
         _register("ULong",  UInt64)
         MaybeLong = _register("MaybeLong", Int64)
+        __all__.append('MaybeLong')
 else:
     Long = _register("Long", Int32)
     _register("ULong", UInt32)
-    MaybeLong = _register("MaybeLong", Int32)    
+    MaybeLong = _register("MaybeLong", Int32)
+    __all__.append('MaybeLong')    
     
 
 _register("UByte",  UInt8)
@@ -280,10 +312,7 @@ else:
                        'Int32', 'UInt32', 'Int64', 'UInt64',
                        'Float32','Float64', 'Complex32', 'Complex64', 'Object']
     
-if _sys.version_info >= (2,3,0):
-    pythonTypeRank = [ bool, int, long, float, complex ]
-else:
-    pythonTypeRank = [ int, long, float, complex ]
+pythonTypeRank = [ bool, int, long, float, complex ]
 
 # The next line is not platform independent XXX Needs to be generalized
 if not LP64:
@@ -311,9 +340,8 @@ else:
         float:"Float64",
         complex:"Complex64"}
 
-if _sys.version_info >= (2,3,0):
-    pythonTypeMap.update({bool:("Bool","bool") })
-    scalarTypeMap.update({bool:"Bool"})
+pythonTypeMap.update({bool:("Bool","bool") })
+scalarTypeMap.update({bool:"Bool"})
 
 # Generate coercion matrix
 
@@ -481,10 +509,7 @@ def getType(type):
     except KeyError:
         raise TypeError("Not a numeric type")
 
-if _sys.version_info >= (2,3):
-    scalarTypes = (bool,int,long,float,complex)
-else:
-    scalarTypes = (int,long,float,complex)
+scalarTypes = (bool,int,long,float,complex)
     
 _scipy_dtypechar = {
     Int8 : 'b',
@@ -505,4 +530,7 @@ _scipy_dtypechar_inverse = {}
 for key,value in _scipy_dtypechar.items():
     _scipy_dtypechar_inverse[value] = key
 
-    
+
+def typefrom(obj):
+    return _scipy_dtypechar_inverse[obj.dtype.char]
+

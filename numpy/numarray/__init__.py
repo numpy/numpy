@@ -1,5 +1,22 @@
 from util import *
-from numclass import *
+from numerictypes import *
+from functions import *
+from ufuncs import *
+
+import util
+import numerictypes
+import functions
+import ufuncs
+import compat
 
 __all__ = util.__all__
-__all__ += numclass.__all__
+__all__ += numerictypes.__all__
+__all__ += functions.__all__
+__all__ += ufuncs.__all__
+__all__ += compat.__all__
+
+del util
+del numerictypes
+del functions
+del ufuncs
+del compat
