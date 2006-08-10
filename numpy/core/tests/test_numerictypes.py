@@ -331,6 +331,12 @@ class test_read_values_nested_multiple(read_values_nested, NumpyTestCase):
     multiple_rows = True
     _buffer = NbufferT
 
+class test_empty_field(NumpyTestCase):
+    def check_assign(self):
+        a = numpy.arange(10, dtype=numpy.float32)    
+        a.dtype = [("int",   "<0i4"),("float", "<2f4")]
+        assert(a['int'].shape == (5,0))
+        assert(a['float'].shape == (5,2))
 
 if __name__ == "__main__":
     NumpyTest().run()
