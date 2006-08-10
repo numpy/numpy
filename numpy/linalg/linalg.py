@@ -12,6 +12,7 @@ __all__ = ['solve',
            'eigvalsh', 'pinv',
            'det', 'svd',
            'eig', 'eigh','lstsq', 'norm',
+           'qr',
            'LinAlgError'
            ]
 
@@ -176,6 +177,95 @@ def cholesky(a):
     if (s.dtype != result_t):
         return s.astype(result_t)
     return s
+
+# QR decompostion
+
+def qr(a, mode='full'):
+    """cacluates A=QR, Q orthonormal, R upper triangular
+    
+    mode:  'full' --> (Q,R)
+           'r'    --> R
+           'economic' --> A2 where the diagonal + upper triangle
+                   part of A2 is R. This is faster if you only need R
+    """
+    _assertRank2(a)
+    t, result_t = _commonType(a)
+    a = _fastCopyAndTranspose(t, a)
+    m,n = a.shape
+    mn = min(m,n)
+    tau = zeros((mn,), t)
+    if isComplexType(t):
+        lapack_routine = lapack_lite.zgeqrf
+        routine_name = 'zgeqrf'
+    else:
+        lapack_routine = lapack_lite.dgeqrf
+        routine_name = 'dgeqrf'        
+        
+    # calculate optimal size of work data 'work'
+    lwork = 1
+    work = zeros((lwork,), t)
+    results=lapack_routine(m, n, a, m, tau, work, -1, 0)
+    if results['info'] > 0:
+        raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
+
+    # do qr decomposition
+    lwork = int(abs(work[0]))
+    work = zeros((lwork,),t)
+    results=lapack_routine(m, n, a, m, tau, work, lwork, 0)
+
+    if results['info'] > 0:
+        raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
+
+    #  atemp: convert fortrag storing order to num storing order
+    atemp = a.transpose()
+
+    if atemp.dtype != result_t:
+        atemp = atemp.astype(result_t)
+
+    #  economic mode
+    if mode[0]=='e':
+        return atemp
+
+    #  generate r
+    r = zeros((mn,n), result_t)
+    for i in range(mn):
+            r[i, i:] = atemp[i, i:]
+
+    #  'r'-mode, that is, calculate only r
+    if mode[0]=='r':
+        return r
+
+    #  from here on: build orthonormal matrix q from a
+
+    if isComplexType(t):
+        lapack_routine = lapack_lite.zungqr
+        routine_name = 'zungqr'                
+    else:
+        lapack_routine = lapack_lite.dorgqr
+        routine_name = 'dorgqr'
+
+    # determine optimal lwork
+    lwork = 1
+    work=zeros((lwork,), t)
+    results=lapack_routine(m,mn,mn, a, m, tau, work, -1, 0)
+    if results['info'] > 0:
+        raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
+
+    # compute q
+    lwork = int(abs(work[0]))
+    work=zeros((lwork,), t)
+    results=lapack_routine(m,mn,mn, a, m, tau, work, lwork, 0)
+
+    if results['info'] > 0:
+        raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
+    
+    q = a[:mn,:].transpose()
+
+    if (q.dtype != result_t):
+        q = q.astype(result_t)
+
+    return q,r
+
 
 # Eigenvalues
 def eigvals(a):

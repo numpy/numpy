@@ -12,6 +12,8 @@ dpotrf
 zpotrf
 dgesdd
 zgesdd
+dgeqrf
+zgeqrf
 # need this b/c it's not properly declared as external in the BLAS source
 dcabs1
 IGNORE: dlamch
