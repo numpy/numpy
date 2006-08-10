@@ -1,6 +1,9 @@
 import os
 import genapi
 
+OBJECT_API_ORDER = 'array_api_order.txt'
+MULTIARRAY_API_ORDER = 'multiarray_api_order.txt'
+
 types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
          'Inexact',
          'Floating', 'ComplexFloating', 'Flexible', 'Character',
@@ -113,11 +116,23 @@ void *PyArray_API[] = {
 };
 """
 
-def generate_api(output_dir):
+def generate_api(output_dir, force=False):
+    header_file = os.path.join(output_dir, '__multiarray_api.h')
+    c_file = os.path.join(output_dir,'__multiarray_api.c')
+    doc_file = os.path.join(output_dir, 'multiarray_api.txt')
+
+    targets = (header_file, c_file, doc_file)
+    if (not force
+            and not genapi.should_rebuild(targets,
+                                          [OBJECT_API_ORDER,
+                                           MULTIARRAY_API_ORDER,
+                                           __file__])):
+        return targets
+
     objectapi_list = genapi.get_api_functions('OBJECT_API',
-                                              'array_api_order.txt')
+                                              OBJECT_API_ORDER)
     multiapi_list = genapi.get_api_functions('MULTIARRAY_API',
-                                             'multiarray_api_order.txt')
+                                             MULTIARRAY_API_ORDER)
     # API fixes for __arrayobject_api.h
 
     fixed = 10
@@ -141,23 +156,48 @@ def generate_api(output_dir):
                (types[k], num)
         extension_list.append(astr)
 
-    #setup object API
+    # set up object API
     genapi.add_api_list(numtypes, 'PyArray_API', objectapi_list,
                         module_list, extension_list, init_list)
 
-    # setup multiarray module API
+    # set up multiarray module API
     genapi.add_api_list(numobject, 'PyArray_API', multiapi_list,
                         module_list, extension_list, init_list)
 
 
     # Write to header
-    fid = open(os.path.join(output_dir, '__multiarray_api.h'),'w')
+    fid = open(header_file, 'w')
     s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
     fid.write(s)
     fid.close()
 
     # Write to c-code
-    fid = open(os.path.join(output_dir,'__multiarray_api.c'),'w')
+    fid = open(c_file, 'w')
     s = c_template % '\n'.join(init_list)
     fid.write(s)
     fid.close()
+
+    # write to documentation
+    fid = open(doc_file, 'w')
+    fid.write('''
+===========
+Numpy C-API
+===========
+
+Object API
+==========
+''')
+    for func in objectapi_list:
+        fid.write(func.to_ReST())
+        fid.write('\n\n')
+    fid.write('''
+
+Multiarray API
+==============
+''')
+    for func in multiapi_list:
+        fid.write(func.to_ReST())
+        fid.write('\n\n')
+    fid.close()
+
+    return targets

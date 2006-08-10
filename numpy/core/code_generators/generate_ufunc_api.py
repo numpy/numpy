@@ -1,6 +1,8 @@
 import os
 import genapi
 
+UFUNC_API_ORDER = 'ufunc_api_order.txt'
+
 h_template = r"""
 #ifdef _UMATHMODULE
 
@@ -64,9 +66,18 @@ void *PyUFunc_API[] = {
 };
 """
 
-def generate_api(output_dir):
-    ufunc_api_list = genapi.get_api_functions('UFUNC_API',
-                                              'ufunc_api_order.txt')
+def generate_api(output_dir, force=False):
+    header_file = os.path.join(output_dir, '__ufunc_api.h')
+    c_file = os.path.join(output_dir, '__ufunc_api.c')
+    doc_file = os.path.join(output_dir, 'ufunc_api.txt')
+
+    targets = (header_file, c_file, doc_file)
+    if (not force
+            and not genapi.should_rebuild(targets,
+                                          [UFUNC_API_ORDER, __file__])):
+        return targets
+
+    ufunc_api_list = genapi.get_api_functions('UFUNC_API', UFUNC_API_ORDER)
 
     # API fixes for __arrayobject_api.h
 
@@ -78,18 +89,32 @@ def generate_api(output_dir):
     extension_list = []
     init_list = []
 
-    #setup object API
+    # set up object API
     genapi.add_api_list(fixed, 'PyUFunc_API', ufunc_api_list,
                         module_list, extension_list, init_list)
 
     # Write to header
-    fid = open(os.path.join(output_dir, '__ufunc_api.h'),'w')
+    fid = open(header_file, 'w')
     s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
     fid.write(s)
     fid.close()
 
     # Write to c-code
-    fid = open(os.path.join(output_dir, '__ufunc_api.c'),'w')
+    fid = open(c_file, 'w')
     s = c_template % '\n'.join(init_list)
     fid.write(s)
     fid.close()
+
+    # Write to documentation
+    fid = open(doc_file, 'w')
+    fid.write('''
+=================
+Numpy Ufunc C-API
+=================
+''')
+    for func in ufunc_api_list:
+        fid.write(func.to_ReST())
+        fid.write('\n\n')
+    fid.close()
+
+    return targets

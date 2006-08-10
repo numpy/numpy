@@ -6,6 +6,19 @@ from os.path import join
 from glob import glob
 from distutils.dep_util import newer,newer_group
 
+FUNCTIONS_TO_CHECK = [
+    ('expl', 'HAVE_LONGDOUBLE_FUNCS'),
+    ('expf', 'HAVE_FLOAT_FUNCS'),
+    ('log1p', 'HAVE_LOG1P'),
+    ('expm1', 'HAVE_EXPM1'),
+    ('asinh', 'HAVE_INVERSE_HYPERBOLIC'),
+    ('atanhf', 'HAVE_INVERSE_HYPERBOLIC_FLOAT'),
+    ('atanhl', 'HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE'),
+    ('isnan', 'HAVE_ISNAN'),
+    ('isinf', 'HAVE_ISINF'),
+    ('rint', 'HAVE_RINT'),
+    ]
+
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
     from numpy.distutils.system_info import get_info, default_lib_dirs
@@ -50,14 +63,14 @@ def configuration(parent_package='',top_path=None):
                 #  are actually multiple CPUS? -- but
                 #  threaded code can be nice even on a single
                 #  CPU so that long-calculating code doesn't
-                #  block. 
+                #  block.
                 try:
                     nosmp = os.environ['NPY_NOSMP']
                     nosmp = 1
                 except KeyError:
                     nosmp = 0
             if nosmp: moredefs = [('NPY_ALLOW_THREADS', '0')]
-            else: moredefs = []                
+            else: moredefs = []
             #
             mathlibs = []
             tc = testcode_mathlib()
@@ -70,36 +83,24 @@ def configuration(parent_package='',top_path=None):
                     mathlibs = libs
                     break
             else:
-                raise "math library missing; rerun setup.py after setting the MATHLIB env variable"
+                raise EnvironmentError("math library missing; rerun "
+                                       "setup.py after setting the "
+                                       "MATHLIB env variable")
             ext.libraries.extend(mathlibs)
             moredefs.append(('MATHLIB',','.join(mathlibs)))
 
-            libs = mathlibs
-            kws_args = {'libraries':libs,'decl':0,'headers':['math.h']}
-            if config_cmd.check_func('expl', **kws_args):
-                moredefs.append('HAVE_LONGDOUBLE_FUNCS')
-            if config_cmd.check_func('expf', **kws_args):
-                moredefs.append('HAVE_FLOAT_FUNCS')
-            if config_cmd.check_func('log1p', **kws_args):
-                moredefs.append('HAVE_LOG1P')
-            if config_cmd.check_func('expm1', **kws_args):
-                moredefs.append('HAVE_EXPM1')
-            if config_cmd.check_func('asinh', **kws_args):
-                moredefs.append('HAVE_INVERSE_HYPERBOLIC')
-            if config_cmd.check_func('atanhf', **kws_args):
-                moredefs.append('HAVE_INVERSE_HYPERBOLIC_FLOAT')
-            if config_cmd.check_func('atanhl', **kws_args):
-                moredefs.append('HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE')
-            if config_cmd.check_func('isnan', **kws_args):
-                moredefs.append('HAVE_ISNAN')
-            if config_cmd.check_func('isinf', **kws_args):
-                moredefs.append('HAVE_ISINF')
-            if config_cmd.check_func('rint', **kws_args):
-                moredefs.append('HAVE_RINT')
+            def check_func(func_name):
+                return config_cmd.check_func(func_name,
+                                             libraries=mathlibs, decl=False,
+                                             headers=['math.h'])
+
+            for func_name, defsymbol in FUNCTIONS_TO_CHECK:
+                if check_func(func_name):
+                    moredefs.append(defsymbol)
 
             if sys.version[:3] < '2.4':
                 kws_args['headers'].append('stdlib.h')
-                if config_cmd.check_func('strtod', **kws_args):
+                if check_func('strtod'):
                     moredefs.append(('PyOS_ascii_strtod', 'strtod'))
 
             if moredefs:
@@ -132,26 +133,23 @@ def configuration(parent_package='',top_path=None):
         config.add_data_files((header_dir,target))
         return target
 
-    def generate_api_func(header_file, module_name):
-        def generate_api(ext,build_dir):
-            target = join(build_dir, header_file)
+    def generate_api_func(module_name):
+        def generate_api(ext, build_dir):
             script = join(codegen_dir, module_name + '.py')
-            if newer(script, target):
-                sys.path.insert(0, codegen_dir)
-                try:
-                    m = __import__(module_name)
-                    print 'executing',script
-                    m.generate_api(build_dir)
-                finally:
-                    del sys.path[0]
-            config.add_data_files((header_dir,target))
-            return target
+            sys.path.insert(0, codegen_dir)
+            try:
+                m = __import__(module_name)
+                print 'executing', script
+                h_file, c_file, doc_file = m.generate_api(build_dir)
+            finally:
+                del sys.path[0]
+            config.add_data_files((header_dir, h_file),
+                                  (header_dir, doc_file))
+            return (h_file,)
         return generate_api
 
-    generate_array_api = generate_api_func('__multiarray_api.h',
-                                           'generate_array_api')
-    generate_ufunc_api = generate_api_func('__ufunc_api.h',
-                                           'generate_ufunc_api')
+    generate_array_api = generate_api_func('generate_array_api')
+    generate_ufunc_api = generate_api_func('generate_ufunc_api')
 
     def generate_umath_c(ext,build_dir):
         target = join(build_dir,'__umath_generated.c')

@@ -1,5 +1,6 @@
 import sys, os, re
 import md5
+import textwrap
 
 API_FILES = ['arraymethods.c',
              'arrayobject.c',
@@ -10,6 +11,9 @@ API_FILES = ['arraymethods.c',
             ]
 THIS_DIR = os.path.dirname(__file__)
 API_FILES = [os.path.join(THIS_DIR, '..', 'src', a) for a in API_FILES]
+
+def file_in_this_dir(filename):
+    return os.path.join(THIS_DIR, filename)
 
 def remove_whitespace(s):
     return ''.join(s.split())
@@ -43,6 +47,21 @@ class Function(object):
         else:
             doccomment = ''
         return '%s%s %s(%s)' % (doccomment, self.return_type, self.name, argstr)
+
+    def to_ReST(self):
+        lines = ['::', '', '  ' + self.return_type]
+        argstr = ',\000'.join([self._format_arg(a) for a in self.args])
+        name = '  %s' % (self.name,)
+        s = textwrap.wrap('(%s)' % (argstr,), width=72,
+                          initial_indent=name,
+                          subsequent_indent=' ' * (len(name)+1),
+                          break_long_words=False)
+        for l in s:
+            lines.append(l.replace('\000', ' ').rstrip())
+        lines.append('')
+        if self.doc:
+            lines.append(textwrap.dedent(self.doc))
+        return '\n'.join(lines)
 
     def api_hash(self):
         m = md5.new()
@@ -133,32 +152,36 @@ def find_functions(filename, tag='API'):
                 else:
                     line = line.lstrip(' *')
                     doclist.append(line)
-            elif state == STATE_RETTYPE: #first line of declaration with return type
+            elif state == STATE_RETTYPE:
+                # first line of declaration with return type
                 m = re.match(r'static\s+(.*)$', line)
                 if m:
                     line = m.group(1)
                 return_type = line
                 state = STATE_NAME
-            elif state == STATE_NAME: # second line, with function name
+            elif state == STATE_NAME:
+                # second line, with function name
                 m = re.match(r'(\w+)\s*\(', line)
                 if m:
                     function_name = m.group(1)
                 else:
-                    raise ParseError(filename, lineno+1, 'could not find function name')
+                    raise ParseError(filename, lineno+1,
+                                     'could not find function name')
                 function_args.append(line[m.end():])
                 state = STATE_ARGS
             elif state == STATE_ARGS:
-                if line.startswith('{'): # finished
+                if line.startswith('{'):
+                    # finished
                     fargs_str = ' '.join(function_args).rstrip(' )')
                     fargs = split_arguments(fargs_str)
                     f = Function(function_name, return_type, fargs,
-                                 ' '.join(doclist))
+                                 '\n'.join(doclist))
                     functions.append(f)
                     return_type = None
                     function_name = None
                     function_args = []
                     doclist = []
-                    state = 0
+                    state = SCANNING
                 else:
                     function_args.append(line)
         except:
@@ -181,7 +204,7 @@ def read_order(order_file):
 
 def get_api_functions(tagname, order_file):
     if not os.path.exists(order_file):
-        order_file = os.path.join(THIS_DIR, order_file)
+        order_file = file_in_this_dir(order_file)
     order = read_order(order_file)
     functions = []
     for f in API_FILES:
@@ -195,7 +218,7 @@ def get_api_functions(tagname, order_file):
 
 def add_api_list(offset, APIname, api_list,
                  module_list, extension_list, init_list):
-    """Add the API function declerations to the appropiate lists for use in
+    """Add the API function declarations to the appropiate lists for use in
     the headers.
     """
     for k, func in enumerate(api_list):
@@ -210,6 +233,15 @@ def add_api_list(offset, APIname, api_list,
         astr = "        (void *) %s," % func.name
         init_list.append(astr)
 
+def should_rebuild(targets, source_files):
+    from distutils.dep_util import newer_group
+    for t in targets:
+        if not os.path.exists(t):
+            return True
+    sources = API_FILES + list(source_files) + [__file__]
+    if newer_group(sources, targets[0], missing='newer'):
+        return True
+    return False
 
 def main():
     tagname = sys.argv[1]
