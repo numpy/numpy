@@ -4193,13 +4193,19 @@ _convert_from_dict(PyObject *obj, int align)
 }
 
 static int
-_could_be_commastring(char *type, int len) 
+_check_for_commastring(char *type, int len)
 {
 	int i;
-	if (type[0] >= '1' && type[0] <= '9') return 1;
+
+	if ((type[0] >= '0' && type[0] <= '9') || 
+            ((len > 1) && (type[0] == '>' || type[0] == '<' ||  \
+                           type[0] == '|' || type[0] == '=') && \
+             (type[1] >= '0' && type[1] <= '9')))
+                return 1;
 	for (i=1;i<len;i++)
 		if (type[i] == ',') return 1;
-	return 0;
+        
+        return 0;
 }
 
 /* 
@@ -4303,26 +4309,25 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 		type = PyString_AS_STRING(obj);
 		len = PyString_GET_SIZE(obj);
 		if (len <= 0) goto fail;
-		check_num = (int) type[0];
-		if ((char) check_num == '>' || (char) check_num == '<' || \
-		    (char) check_num == '|' || (char) check_num == '=') {
-			if (len <= 1) goto fail;
-			endian = (char) check_num;
-			type++; len--;
-			check_num = (int) type[0];
-			if (endian == '|') endian = '=';
-		}
-		if (len > 1) {
+
+                /* check for commas present 
+                   or first (or second) element a digit */
+                if (_check_for_commastring(type, len)) {
+                        *at = _convert_from_commastring(obj, 0);
+                        if (*at) return PY_SUCCEED;
+                        return PY_FAIL;
+                }
+                check_num = (int) type[0];
+                if ((char) check_num == '>' || (char) check_num == '<' || \
+                    (char) check_num == '|' || (char) check_num == '=') {
+                        if (len <= 1) goto fail;
+                        endian = (char) check_num;
+                        type++; len--;
+                        check_num = (int) type[0];
+                        if (endian == '|') endian = '=';
+                }
+                if (len > 1) {
 			elsize = atoi(type+1);
-			/* check for commas present 
-			   or first element a digit */
-			if (_could_be_commastring(type, len)) {
-				/* see if it can be converted from 
-				   a comma-separated string */
-				*at = _convert_from_commastring(obj, 0);
-				if (*at) return PY_SUCCEED;
-				else return PY_FAIL;
-			}
 			if (elsize == 0) {
 				check_num = PyArray_NOTYPE+10;
 			}

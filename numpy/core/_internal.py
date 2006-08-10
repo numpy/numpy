@@ -4,6 +4,12 @@
 
 import re
 from multiarray import dtype, ndarray
+import sys
+
+if (sys.byteorder == 'little'):
+    _nbo = '<'
+else:
+    _nbo = '>'
 
 def _makenames_list(adict):
     allfields = []
@@ -141,9 +147,14 @@ def _split(input):
 
     return newlist
 
-format_re = re.compile(r'(?P<repeat> *[(]?[ ,0-9]*[)]? *)(?P<dtype>[><|A-Za-z0-9.]*)')
+format_re = re.compile(r'(?P<order1>[<>|=]?)(?P<repeats> *[(]?[ ,0-9]*[)]? *)(?P<order2>[<>|=]?)(?P<dtype>[A-Za-z0-9.]*)')
 
 # astr is a string (perhaps comma separated)
+
+_convorder = {'=': _nbo,
+              '|': '|',
+              '>': '>',
+              '<': '<'}
 
 def _commastring(astr):
     res = _split(astr)
@@ -153,10 +164,24 @@ def _commastring(astr):
     for k,item in enumerate(res):
         # convert item
         try:
-            (repeats, dtype) = format_re.match(item).groups()
+            (order1, repeats, order2, dtype) = format_re.match(item).groups()
         except (TypeError, AttributeError):
             raise ValueError('format %s is not recognized' % item)
 
+        if order2 == '':
+            order = order1
+        elif order1 == '':
+            order = order2
+        else:
+            order1 = _convorder[order1]
+            order2 = _convorder[order2]
+            if (order1 != order2):
+                raise ValueError('in-consistent byte-order specification %s and %s' % (order1, order2))
+            order = order1
+
+        if order in ['|', '=', _nbo]:
+            order = ''
+        dtype = '%s%s' % (order, dtype)
         if (repeats == ''):
             newitem = dtype
         else:
