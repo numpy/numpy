@@ -1947,8 +1947,8 @@ def compress(condition, x, dimension=-1, out=None):
     c = filled(condition, 0)
     m = getmask(x)
     if m is not nomask:
-        m = numeric.compress(c, m, dimension, out)
-    d = numeric.compress(c, filled(x), dimension, m)
+        m = numeric.compress(c, m, dimension)
+    d = numeric.compress(c, filled(x), dimension)
     return masked_array(d, m)
 
 class _minimum_operation:
@@ -2081,7 +2081,7 @@ def trace (a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     """trace(a,offset=0, axis1=0, axis2=1) returns the sum along diagonals
     (defined by the last two dimenions) of the array.
     """
-    return diagonal(a, offset, axis1, axis2).sum(dtype=dtype, out=out)
+    return diagonal(a, offset, axis1, axis2).sum(dtype=dtype)
 
 def argsort (x, axis = -1, out=None, fill_value=None):
     """Treating masked values as if they have the value fill_value,
