@@ -374,19 +374,19 @@ def amax(a, axis=None, out=None):
     """Return the maximum of 'a' along dimension axis.
     """
     try:
-        max = a.max
+        amax = a.max
     except AttributeError:
         return _wrapit(a, 'max', axis, out)
-    return max(axis, out)
+    return amax(axis, out)
 
 def amin(a, axis=None, out=None):
     """Return the minimum of a along dimension axis.
     """
     try:
-        min = a.min
+        amin = a.min
     except AttributeError:
         return _wrapit(a, 'min', axis, out)
-    return min(axis, out)
+    return amin(axis, out)
 
 def alen(a):
     """Return the length of a Python object interpreted as an array

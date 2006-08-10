@@ -1728,7 +1728,7 @@ def where (condition, x, y):
     m = make_mask(mask_or(m, md), copy=0, flag=1)
     return masked_array(d, m)
 
-def choose (indices, t):
+def choose (indices, t, out=None, mode='raise'):
     "Returns array shaped like indices with elements chosen from t"
     def fmask (x):
         if x is masked: return 1
@@ -1856,7 +1856,7 @@ def swapaxes (a, axis1, axis2):
                             mask=numeric.swapaxes(m, axis1, axis2),)
 
 
-def take (a, indices, axis=0):
+def take (a, indices, axis=0, out=None, mode='raise'):
     "returns selection of items from a."
     m = getmask(a)
     # d = masked_array(a).raw_data()
@@ -1878,7 +1878,7 @@ def transpose(a, axes=None):
                      mask = numeric.transpose(m, axes))
 
 
-def put(a, indices, values):
+def put(a, indices, values, mode='raise'):
     """sets storage-indexed locations to corresponding values.
 
     Values and indices are filled if necessary.
@@ -1940,15 +1940,15 @@ def dot(a, b):
     """
     return innerproduct(filled(a, 0), numeric.swapaxes(filled(b, 0), -1, -2))
 
-def compress(condition, x, dimension=-1):
+def compress(condition, x, dimension=-1, out=None):
     """Select those parts of x for which condition is true.
        Masked values in condition are considered false.
     """
     c = filled(condition, 0)
     m = getmask(x)
     if m is not nomask:
-        m = numeric.compress(c, m, dimension)
-    d = numeric.compress(c, filled(x), dimension)
+        m = numeric.compress(c, m, dimension, out)
+    d = numeric.compress(c, filled(x), dimension, m)
     return masked_array(d, m)
 
 class _minimum_operation:
@@ -2077,13 +2077,13 @@ def diagonal(a, k = 0, axis1=0, axis2=1):
     else:
         return masked_array(d, fromnumeric.diagonal(m, k, axis1, axis2))
     
-def trace (a, offset=0, axis1=0, axis2=1, dtype=None):
+def trace (a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     """trace(a,offset=0, axis1=0, axis2=1) returns the sum along diagonals
     (defined by the last two dimenions) of the array.
     """
-    return diagonal(a, offset, axis1, axis2).sum(dtype=dtype)
+    return diagonal(a, offset, axis1, axis2).sum(dtype=dtype, out=out)
 
-def argsort (x, axis = -1, fill_value=None):
+def argsort (x, axis = -1, out=None, fill_value=None):
     """Treating masked values as if they have the value fill_value,
        return sort indices for sorting along given axis.
        if fill_value is None, use get_fill_value(x)
@@ -2092,7 +2092,7 @@ def argsort (x, axis = -1, fill_value=None):
     d = filled(x, fill_value)
     return fromnumeric.argsort(d, axis)
 
-def argmin (x, axis = -1, fill_value=None):
+def argmin (x, axis = -1, out=None, fill_value=None):
     """Treating masked values as if they have the value fill_value,
        return indices for minimum values along given axis.
        if fill_value is None, use get_fill_value(x).
@@ -2102,7 +2102,7 @@ def argmin (x, axis = -1, fill_value=None):
     d = filled(x, fill_value)
     return fromnumeric.argmin(d, axis)
 
-def argmax (x, axis = -1, fill_value=None):
+def argmax (x, axis = -1, out=None, fill_value=None):
     """Treating masked values as if they have the value fill_value,
        return sort indices for maximum along given axis.
        if fill_value is None, use -get_fill_value(x) if it exists.
@@ -2158,7 +2158,7 @@ def _clip(self,a_min,a_max):
                                       mask_or(getmask(a_min),getmask(a_max))))
 array.clip = _m(_clip)
 
-def _compress(self, cond, axis=None):
+def _compress(self, cond, axis=None, out=None):
     return compress(cond, self, axis)
 array.compress = _m(_compress)
 del _compress
@@ -2166,14 +2166,14 @@ del _compress
 array.conj = array.conjugate = _m(conjugate)
 array.copy = _m(not_implemented)
 
-def _cumprod(self, axis=0, dtype=None):
+def _cumprod(self, axis=0, dtype=None, out=None):
     m = self.mask
     if m is not nomask:
         m = umath.logical_or.accumulate(self.mask, axis)
     return MaskedArray(data = self.filled(1).cumprod(axis, dtype), mask=m)
 array.cumprod = _m(_cumprod)
 
-def _cumsum(self, axis=0, dtype=None):
+def _cumsum(self, axis=0, dtype=None, out=None):
     m = self.mask
     if m is not nomask:
         m = umath.logical_or.accumulate(self.mask, axis)
@@ -2188,14 +2188,18 @@ array.flags = property(_m(not_implemented))
 array.flatten = _m(ravel)
 array.getfield = _m(not_implemented)
 
-def _max(a, axis=None):
+def _max(a, axis=None, out=None):
+    if out is not None:
+        raise TypeError("Output arrays Unsupported for masked arrays")    
     if axis is None:
         return maximum(a)
     else:
         return maximum.reduce(a, axis)
 array.max = _m(_max)
 del _max
-def _min(a, axis=None):
+def _min(a, axis=None, out=None):
+    if out is not None:
+        raise TypeError("Output arrays Unsupported for masked arrays")
     if axis is None:
         return minimum(a)
     else:
@@ -2208,8 +2212,8 @@ array.newbyteorder = _m(not_implemented)
 array.nonzero = _m(nonzero)
 array.prod = _m(product)
 
-def _ptp(a,axis=0):
-    return a.max(axis)-a.min(axis)
+def _ptp(a,axis=0,out=None):
+    return a.max(axis,out)-a.min(axis)
 array.ptp = _m(_ptp)
 array.repeat = _m(repeat)
 array.resize = _m(resize)
@@ -2238,7 +2242,7 @@ array.tofile = _m(not_implemented)
 array.trace = _m(trace)
 array.transpose = _m(transpose)
 
-def _var(self,axis=0,dtype=None):
+def _var(self,axis=0,dtype=None, out=None):
     if axis is None:
         return asarray(self.compressed()).var()
     a = self.swapaxes(axis,0)
@@ -2246,7 +2250,7 @@ def _var(self,axis=0,dtype=None):
     a *= a
     a /= a.count(axis=0)
     return a.swapaxes(0,axis).sum(axis)
-def _std(self,axis=0,dtype=None):
+def _std(self,axis=0,dtype=None, out=None):
     return (self.var(axis,dtype))**0.5
 array.var = _m(_var)
 array.std = _m(_std)
