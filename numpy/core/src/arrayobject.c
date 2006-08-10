@@ -6933,8 +6933,8 @@ object_depth_and_dimension(PyObject *s, int max, intp *dims)
         else obj = PyTuple_GET_ITEM(s, 0);
         nd = object_depth_and_dimension(obj, max-1, newdims);
         for (i=1; i<size; i++) {
-                if (islist) obj = PyList_GET_ITEM(s, 0);
-                else obj = PyTuple_GET_ITEM(s, 0);
+                if (islist) obj = PyList_GET_ITEM(s, i);
+                else obj = PyTuple_GET_ITEM(s, i);
                 test_nd = object_depth_and_dimension(obj, max-1, test_dims);
                 if ((nd != test_nd) || 
                     (!PyArray_CompareLists(newdims, test_dims, nd))) {
@@ -8051,9 +8051,8 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 }
         }
         else {
-                int isobject;
+                int isobject=0;
                 if (flags & UPDATEIFCOPY) goto err;
-                isobject = 0;
                 if (newtype == NULL) {
                         newtype = _array_find_type(op, NULL, MAX_DIMS);
                 }
