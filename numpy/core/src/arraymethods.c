@@ -24,7 +24,7 @@ array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                          &mode))
 		return NULL;
 	
-	return _ARET(PyArray_TakeOut(self, indices, dimension, out, mode));
+	return _ARET(PyArray_TakeFrom(self, indices, dimension, out, mode));
 }
 
 static char doc_fill[] = "a.fill(value) places the scalar value at every "\
@@ -57,7 +57,7 @@ array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                          PyArray_ClipmodeConverter,
                                          &mode))
 		return NULL;
-	return PyArray_PutIn(self, values, indices, mode);
+	return PyArray_PutTo(self, values, indices, mode);
 }
 
 static char doc_putmask[] = "a.putmask(values, mask) sets a.flat[n] = v[n] "\

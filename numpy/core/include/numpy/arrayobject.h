@@ -1533,10 +1533,10 @@ typedef struct {
 	PyArray_CastToType(mp, PyArray_DescrFromType(type_num), 0)
 
 #define PyArray_Take(ap, items, axis) \
-        PyArray_TakeOut(ap, items, axis, NULL, NPY_RAISE)
+        PyArray_TakeFrom(ap, items, axis, NULL, NPY_RAISE)
 
 #define PyArray_Put(ap, items, values) \
-        PyArray_PutIn(ap, items, values, NPY_RAISE)
+        PyArray_PutTo(ap, items, values, NPY_RAISE)
 
 /* Compatibility with old Numeric stuff -- don't use in new code */
 

@@ -826,7 +826,8 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
         res = PyArray_Nonzero(cond);
         Py_DECREF(cond);
         if (res == NULL) return res;
-	ret = PyArray_Take(self, PyTuple_GET_ITEM(res, 0), axis);
+	ret = PyArray_TakeFrom(self, PyTuple_GET_ITEM(res, 0), axis, 
+                               out, NPY_RAISE);
 	Py_DECREF(res);
 	return ret;
 }
@@ -3236,8 +3237,8 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
  Take
 */
 static PyObject *
-PyArray_TakeOut(PyArrayObject *self0, PyObject *indices0, int axis, 
-                PyArrayObject *ret, NPY_CLIPMODE clipmode)
+PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis, 
+                 PyArrayObject *ret, NPY_CLIPMODE clipmode)
 {
         PyArrayObject *self, *indices;
         intp nd, i, j, n, m, max_item, tmp, chunk;
@@ -3385,7 +3386,7 @@ PyArray_TakeOut(PyArrayObject *self0, PyObject *indices0, int axis,
  Put values into an array
 */
 static PyObject *
-PyArray_PutIn(PyArrayObject *self, PyObject* values0, PyObject *indices0,
+PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
               NPY_CLIPMODE clipmode)
 {
         PyArrayObject  *indices, *values;

@@ -1,6 +1,6 @@
 PyArray_Transpose
-PyArray_TakeOut
-PyArray_PutIn
+PyArray_TakeFrom
+PyArray_PutTo
 PyArray_PutMask
 PyArray_Repeat
 PyArray_Choose
