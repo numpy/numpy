@@ -262,14 +262,14 @@ class matrix(N.ndarray):
     def max(self, axis=None, out=None):
         return N.ndarray.max(self, axis, out)._align(axis)
 
-    def argmax(self, axis=None):
-        return N.ndarray.argmax(self, axis)._align(axis)
+    def argmax(self, axis=None, out=None):
+        return N.ndarray.argmax(self, axis, out)._align(axis)
     
     def min(self, axis=None, out=None):
         return N.ndarray.min(self, axis, out)._align(axis)
     
-    def argmin(self, axis=None):
-        return N.ndarray.argmin(self, axis)._align(axis)
+    def argmin(self, axis=None, out=None):
+        return N.ndarray.argmin(self, axis, out)._align(axis)
     
     def ptp(self, axis=None, out=None):
         return N.ndarray.ptp(self, axis, out)._align(axis)

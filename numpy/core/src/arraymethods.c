@@ -156,36 +156,42 @@ array_view(PyArrayObject *self, PyObject *args)
 	return PyArray_View(self, type, NULL);
 }
 
-static char doc_argmax[] = "a.argmax(axis=None)";
+static char doc_argmax[] = "a.argmax(axis=None, out=None)";
 
 static PyObject *
 array_argmax(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
-	static char *kwlist[] = {"axis", NULL};
+        PyArrayObject *out=NULL;
+	static char *kwlist[] = {"axis", "out", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
 					 PyArray_AxisConverter,
-					 &axis))
+					 &axis,
+                                         PyArray_OutputConverter,
+                                         &out))
 		return NULL;	
 	
-	return _ARET(PyArray_ArgMax(self, axis));
+	return _ARET(PyArray_ArgMax(self, axis, out));
 }
 
-static char doc_argmin[] = "a.argmin(axis=None)";
+static char doc_argmin[] = "a.argmin(axis=None, out=None)";
 
 static PyObject *
 array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	int axis=MAX_DIMS;
-	static char *kwlist[] = {"axis", NULL};
+        PyArrayObject *out=NULL;
+	static char *kwlist[] = {"axis", "out", NULL};
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist, 
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist, 
 					 PyArray_AxisConverter,
-					 &axis))
+					 &axis,
+                                         PyArray_OutputConverter,
+                                         &out))
 		return NULL;	
 	
-	return _ARET(PyArray_ArgMin(self, axis));
+	return _ARET(PyArray_ArgMin(self, axis, out));
 }
 
 static char doc_max[] = "a.max(axis=None)";
@@ -1550,19 +1556,22 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
 #undef _CHKTYPENUM
 
 
-static char doc_clip[] = "a.clip(min=, max=)";
+static char doc_clip[] = "a.clip(min=, max=, out=None)";
 
 static PyObject *
 array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds) 
 {
 	PyObject *min, *max;
-	static char *kwlist[] = {"min", "max", NULL};
+        PyArrayObject *out=NULL;
+	static char *kwlist[] = {"min", "max", "out", NULL};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist,
-					 &min, &max)) 
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O&", kwlist,
+					 &min, &max, 
+                                         PyArray_OutputConverter,
+                                         &out)) 
 		return NULL;
 	
-	return _ARET(PyArray_Clip(self, min, max));
+	return _ARET(PyArray_Clip(self, min, max, out));
 }
 
 static char doc_conj[] = "a.conj()";
@@ -1573,9 +1582,12 @@ static PyObject *
 array_conjugate(PyArrayObject *self, PyObject *args) 
 {
 
-	if (!PyArg_ParseTuple(args, "")) return NULL;
+        PyArrayObject *out=NULL;
+	if (!PyArg_ParseTuple(args, "|O&",
+                              PyArray_OutputConverter,
+                              &out)) return NULL;
 	
-	return PyArray_Conjugate(self);
+	return PyArray_Conjugate(self, out);
 }
 
 

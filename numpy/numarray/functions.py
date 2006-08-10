@@ -40,7 +40,7 @@ import copy, copy_reg, types
 import os, sys, math, operator
 
 from numpy import dot as matrixmultiply, dot, vdot, ravel, concatenate, all,\
-     allclose, any, argmax, argmin, around, argsort, array_equal, array_equiv,\
+     allclose, any, around, argsort, array_equal, array_equiv,\
      array_str, array_repr, average, CLIP, RAISE, WRAP, clip, concatenate, \
      diagonal, e, pi, fromfunction, indices, inner as innerproduct, nonzero, \
      outer as outerproduct, kron as kroneckerproduct, lexsort, putmask, rank, \
@@ -437,4 +437,10 @@ def cumsum(a1, axis=0, out=None, type=None, dim=0):
 
 def cumproduct(a1, axis=0, out=None, type=None, dim=0):
     return N.asarray(a1).cumprod(axis,dtype=type,out=out)
+
+def argmax(x, axis=-1):
+    return N.argmax(x, axis)
+
+def argmin(x, axis=-1):
+    return N.argmin(x, axis)
 

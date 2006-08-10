@@ -6,10 +6,10 @@ import numpy.core.numeric as nn
 from typeconv import convtypecode, convtypecode2
 
 __all__ = ['take', 'repeat', 'sum', 'product', 'sometrue', 'alltrue',
-           'cumsum', 'cumproduct',
+           'cumsum', 'cumproduct', 'compress',
            'ones', 'empty', 'identity', 'zeros', 'array', 'asarray',
            'nonzero', 'reshape', 'arange', 'fromstring', 'ravel', 'trace',
-           'indices', 'where','sarray','cross_product']
+           'indices', 'where','sarray','cross_product', 'argmax', 'argmin']
 
 def take(a, indicies, axis=0):
     return N.take(a, indicies, axis)
@@ -34,6 +34,15 @@ def cumsum(x, axis=0):
 
 def cumproduct(x, axis=0):
     return N.cumproduct(x, axis)
+
+def argmax(x, axis=-1):
+    return N.argmax(x, axis)
+
+def argmin(x, axis=-1):
+    return N.argmax(x, axis)
+
+def compress(condition, m, axis=-1):
+    return N.compress(condition, m, axis)
     
 def ones(shape, typecode='l', savespace=0, dtype=None):
     """ones(shape, dtype=int) returns an array of the given

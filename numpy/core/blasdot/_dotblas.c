@@ -1005,7 +1005,7 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
 	    Py_DECREF(tmp2);
 	}
 	if (PyTypeNum_ISCOMPLEX(typenum)) {
-	    op1 = PyArray_Conjugate(ap1);
+            op1 = PyArray_Conjugate(ap1, NULL);
 	    if (op1==NULL) goto fail;
 	    Py_DECREF(ap1);
 	    ap1 = (PyArrayObject *)op1;

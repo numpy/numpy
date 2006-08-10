@@ -141,8 +141,8 @@ def argsort(a, axis=-1, kind='quicksort'):
         return _wrapit(a, 'argsort', axis, kind)
     return argsort(axis, kind)
 
-def argmax(a, axis=-1):
-    """argmax(a,axis=-1) returns the indices to the maximum value of the
+def argmax(a, axis=None):
+    """argmax(a,axis=None) returns the indices to the maximum value of the
     1-D arrays along the given axis.
     """
     try:
@@ -151,8 +151,8 @@ def argmax(a, axis=-1):
         return _wrapit(a, 'argmax', axis)
     return argmax(axis)
 
-def argmin(a, axis=-1):
-    """argmin(a,axis=-1) returns the indices to the minimum value of the
+def argmin(a, axis=None):
+    """argmin(a,axis=None) returns the indices to the minimum value of the
     1-D arrays along the given axis.
     """
     try:
@@ -250,8 +250,8 @@ def shape(a):
         result = asarray(a).shape
     return result
 
-def compress(condition, m, axis=-1, out=None):
-    """compress(condition, x, axis=-1) = those elements of x corresponding
+def compress(condition, m, axis=None, out=None):
+    """compress(condition, x, axis=None) = those elements of x corresponding
     to those elements of condition that are "true".  condition must be the
     same size as the given dimension of x."""
     try:
