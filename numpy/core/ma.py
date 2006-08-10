@@ -620,12 +620,14 @@ class MaskedArray (object):
         else:
             return self._data
 
-    def __array_wrap__ (self, array, context):
+    def __array_wrap__ (self, array, context=None):
         """Special hook for ufuncs.
 
         Wraps the numpy array and sets the mask according to
         context.
         """
+        if context is None:
+            return MaskedArray(array, copy=False, mask=nomask)
         func, args = context[:2]
         domain = ufunc_domain[func]
         m = reduce(mask_or, [getmask(a) for a in args])
@@ -2146,12 +2148,12 @@ array.argsort = _m(argsort)
 array.base = property(_m(not_implemented))
 array.byteswap = _m(not_implemented)
 
-def _choose(self, *args):
+def _choose(self, *args, **kwds):
     return choose(self, args)
 array.choose = _m(_choose)
 del _choose
 
-def _clip(self,a_min,a_max):
+def _clip(self,a_min,a_max,out=None):
     return MaskedArray(data = self.data.clip(asarray(a_min).data, 
                                              asarray(a_max).data),
                        mask = mask_or(self.mask,
