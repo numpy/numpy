@@ -37,7 +37,7 @@ extern "C" CONFUSE_EMACS
 #define NPY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NPY_VERSION 0x01000000
+#define NPY_VERSION 0x01000001
 
 	/* Some platforms don't define bool, long long, or long double.
 	   Handle that here.
@@ -207,6 +207,12 @@ typedef enum {
 } NPY_ORDER;
 
 
+typedef enum {
+        NPY_CLIP=0,
+        NPY_WRAP=1,
+        NPY_RAISE=2
+} NPY_CLIPMODE;
+ 
 	/* Define bit-width array types and typedefs */
 
 #define NPY_MAX_INT8 127
@@ -1525,6 +1531,12 @@ typedef struct {
 
 #define PyArray_Cast(mp, type_num) \
 	PyArray_CastToType(mp, PyArray_DescrFromType(type_num), 0)
+
+#define PyArray_Take(ap, items, axis) \
+        PyArray_TakeOut(ap, items, axis, NULL, NPY_RAISE)
+
+#define PyArray_Put(ap, items, values) \
+        PyArray_PutIn(ap, items, values, NPY_RAISE)
 
 /* Compatibility with old Numeric stuff -- don't use in new code */
 

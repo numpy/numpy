@@ -158,6 +158,7 @@ typedef struct {
         PyObject *decref;
 
         int obj;
+        int retbase;
 
 } PyUFuncReduceObject;
 

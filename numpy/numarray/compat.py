@@ -1,6 +1,4 @@
 
-__all__ = ['NewAxis']
+__all__ = ['NewAxis', 'ArrayType']
 
-from numpy import newaxis
-
-NewAxis = newaxis
+from numpy import newaxis as NewAxis, ndarray as ArrayType

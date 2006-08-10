@@ -11,14 +11,15 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'array2string', 'get_printoptions', 'set_printoptions',
            'array_repr', 'array_str', 'set_string_function',
            'little_endian', 'require',
-           'fromiter',
+           'fromiter', 'array_equal', 'array_equiv',
            'indices', 'fromfunction',
            'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
            'ones', 'identity', 'allclose',
            'seterr', 'geterr', 'setbufsize', 'getbufsize',
            'seterrcall', 'geterrcall', 'flatnonzero',
            'Inf', 'inf', 'infty', 'Infinity',
-           'nan', 'NaN', 'False_', 'True_', 'bitwise_not']
+           'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
+           'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS']
 
 import sys
 import multiarray
@@ -28,6 +29,14 @@ import numerictypes
 from numerictypes import *
 
 bitwise_not = invert
+
+CLIP = multiarray.CLIP
+WRAP = multiarray.WRAP
+RAISE = multiarray.RAISE
+MAXDIMS = multiarray.MAXDIMS
+ALLOW_THREADS = multiarray.ALLOW_THREADS
+BUFSIZE = multiarray.BUFSIZE
+
 
 # from Fernando Perez's IPython
 def zeros_like(a):
@@ -474,6 +483,25 @@ def allclose (a, b, rtol=1.e-5, atol=1.e-8):
     d = less(absolute(x-y), atol + rtol * absolute(y))
     return d.ravel().all()
 
+
+def array_equal(a1, a2):
+    try:
+        a1, a2 = asarray(a1), asarray(a2)
+    except:
+        return 0
+    if a1.shape != a2.shape:
+        return 0
+    return logical_and.reduce(equal(a1,a2).ravel())
+
+def array_equiv(a1, a2):
+    try:
+        a1, a2 = asarray(a1), asarray(a2)
+    except:
+        return 0
+    try:
+        return logical_and.reduce(equal(a1,a2).ravel())
+    except ValueError:
+        return 0
 
 
 _errdict = {"ignore":ERR_IGNORE,

@@ -1,6 +1,6 @@
 PyArray_Transpose
-PyArray_Take
-PyArray_Put
+PyArray_TakeOut
+PyArray_PutIn
 PyArray_PutMask
 PyArray_Repeat
 PyArray_Choose
@@ -73,3 +73,5 @@ PyArray_RegisterCanCast
 PyArray_InitArrFuncs
 PyArray_IntTupleFromIntp
 PyArray_TypeNumFromName
+PyArray_ClipmodeConverter
+PyArray_OutputConverter

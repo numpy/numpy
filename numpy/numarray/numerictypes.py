@@ -530,7 +530,6 @@ _scipy_dtypechar_inverse = {}
 for key,value in _scipy_dtypechar.items():
     _scipy_dtypechar_inverse[value] = key
 
-
 def typefrom(obj):
     return _scipy_dtypechar_inverse[obj.dtype.char]
 

@@ -234,45 +234,45 @@ class matrix(N.ndarray):
             raise ValueError, "unsupported axis"
 
     # To preserve orientation of result...
-    def sum(self, axis=None, dtype=None):
+    def sum(self, axis=None, dtype=None, out=None):
         """Sum the matrix over the given axis.  If the axis is None, sum
         over all dimensions.  This preserves the orientation of the
         result as a row or column.
         """
-        return N.ndarray.sum(self, axis, dtype)._align(axis)
+        return N.ndarray.sum(self, axis, dtype, out=None)._align(axis)
 
-    def mean(self, axis=None):
-        return N.ndarray.mean(self, axis)._align(axis)
+    def mean(self, axis=None, out=None):
+        return N.ndarray.mean(self, axis, out)._align(axis)
 
-    def std(self, axis=None, dtype=None):
-        return N.ndarray.std(self, axis, dtype)._align(axis)
+    def std(self, axis=None, dtype=None, out=None):
+        return N.ndarray.std(self, axis, dtype, out)._align(axis)
 
-    def var(self, axis=None, dtype=None):
-        return N.ndarray.var(self, axis, dtype)._align(axis)
+    def var(self, axis=None, dtype=None, out=None):
+        return N.ndarray.var(self, axis, dtype, out)._align(axis)
     
-    def prod(self, axis=None, dtype=None):
-        return N.ndarray.prod(self, axis, dtype)._align(axis)
+    def prod(self, axis=None, dtype=None, out=None):
+        return N.ndarray.prod(self, axis, dtype, out)._align(axis)
     
-    def any(self, axis=None):
-        return N.ndarray.any(self, axis)._align(axis)        
+    def any(self, axis=None, out=None):
+        return N.ndarray.any(self, axis, out)._align(axis)        
 
-    def all(self, axis=None):
-        return N.ndarray.all(self, axis)._align(axis)
+    def all(self, axis=None, out=None):
+        return N.ndarray.all(self, axis, out)._align(axis)
         
-    def max(self, axis=None):
-        return N.ndarray.max(self, axis)._align(axis)
+    def max(self, axis=None, out=None):
+        return N.ndarray.max(self, axis, out)._align(axis)
 
     def argmax(self, axis=None):
         return N.ndarray.argmax(self, axis)._align(axis)
     
-    def min(self, axis=None):
-        return N.ndarray.min(self, axis)._align(axis)
+    def min(self, axis=None, out=None):
+        return N.ndarray.min(self, axis, out)._align(axis)
     
     def argmin(self, axis=None):
         return N.ndarray.argmin(self, axis)._align(axis)
     
-    def ptp(self, axis=None):
-        return N.ndarray.ptp(self, axis)._align(axis)
+    def ptp(self, axis=None, out=None):
+        return N.ndarray.ptp(self, axis, out)._align(axis)
 
     # Needed becase tolist method expects a[i]
     #  to have dimension a.ndim-1
