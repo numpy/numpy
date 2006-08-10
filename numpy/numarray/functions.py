@@ -33,7 +33,8 @@ __all__ += ['vdot', 'dot', 'matrixmultiply', 'ravel', 'indices',
             'repeat', 'reshape', 'resize', 'round', 'searchsorted',
             'shape', 'size', 'sometrue', 'sort', 'swapaxes', 'take',
             'tcode', 'tname', 'tensormultiply', 'trace', 'transpose',
-            'types', 'value', 'cumsum', 'cumproduct', 'nonzero'
+            'types', 'value', 'cumsum', 'cumproduct', 'nonzero', 'newobj',
+            'togglebyteorder'
             ]
 
 import copy, copy_reg, types
@@ -444,3 +445,11 @@ def argmax(x, axis=-1):
 def argmin(x, axis=-1):
     return N.argmin(x, axis)
 
+def newobj(self, type):
+    if type is None:
+        return N.empty_like(self)
+    else:
+        return N.empty(self.shape, type)
+
+def togglebyteorder(self):
+    self.dtype=self.dtype.newbyteorder()

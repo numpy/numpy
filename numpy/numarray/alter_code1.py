@@ -1,13 +1,23 @@
 """
-This module converts code written for Numeric to run with numpy
+This module converts code written for numarray to run with numpy
 
 Makes the following changes:
  * Changes import statements
 
-   Stubs for
-   numarray.convolve --> numpy.numarray.convolve
-   numarray.image --> numarray.image
-   numarray.nd_image --> numarray.nd_image
+   import numarray.package
+       --> import numpy.numarray.package as numarray_package
+           with all numarray.package in code changed to numarray_package
+
+   import numarray --> import numpy.numarray as numarray
+   import numarray.package as <yyy> --> import numpy.numarray.package as <yyy>
+
+   from numarray import <xxx> --> from numpy.numarray import <xxx>
+   from numarray.package import <xxx>
+       --> from numpy.numarray.package import <xxx>
+
+   package can be convolve, image, nd_image, mlab, linear_algebra, ma,
+                  matrix, fft, random_array
+
 
  * Makes search and replace changes to:
    - .imaginary --> .imag
@@ -24,14 +34,13 @@ Makes the following changes:
    - .is_f_array() --> .dtype.isnative and .flags.farray
    - .itemsize() --> .itemsize
    - .nelements() --> .size
-   - self.new(None) --> emtpy_like(self)
-   - self.new(type) --> empty(self.shape, type)
+   - self.new(type) --> numarray.newobj(self, type)
    - .repeat(r) --> .repeat(r, axis=0)
    - .size() --> .size
-   - .type() -- numarray.typefrom(self)
+   - self.type() -- numarray.typefrom(self)
    - .typecode() --> .dtype.char
    - .stddev() --> .std()
-   - .togglebyteorder() --> self.dtype=self.dtype.newbyteorder()
+   - .togglebyteorder() --> numarray.togglebyteorder(self)
    - .getshape() --> .shape
    - .setshape(obj) --> .shape=obj
    - .getflat() --> .ravel()
@@ -43,43 +52,14 @@ Makes the following changes:
    - .setimaginary() --> .imag
    
 """
-__all__ = ['fromfile', 'fromstr']
+__all__ = ['fromfile', 'fromstr', 'convertfile', 'convertall']
 
 import sys
 import os
 import re
 import glob
 
-import warnings
-warnings.warn("numarray.alter_code1 is not working yet")
 
-
-
-_func4 = ['eye', 'tri']
-_meth1 = ['astype']
-_func2 = ['ones', 'zeros', 'identity', 'fromstring', 'indices',
-         'empty', 'array', 'asarray', 'arange', 'array_constructor']
-
-func_re = {}
-
-for name in _func2:
-    _astr = r"""(%s\s*[(][^,]*?[,][^'"]*?['"])b(['"][^)]*?[)])"""%name
-    func_re[name] = re.compile(_astr, re.DOTALL)
-
-for name in _func4:
-    _astr = r"""(%s\s*[(][^,]*?[,][^,]*?[,][^,]*?[,][^'"]*?['"])b(['"][^)]*?[)])"""%name
-    func_re[name] = re.compile(_astr, re.DOTALL)    
-
-for name in _meth1:
-    _astr = r"""(.%s\s*[(][^'"]*?['"])b(['"][^)]*?[)])"""%name
-    func_re[name] = re.compile(_astr, re.DOTALL)
-
-def fixtypechars(fstr):
-    for name in _func2 + _func4 + _meth1:
-        fstr = func2_re[name].sub('\\1B\\2',fstr)
-    return fstr
-
-flatindex_re = re.compile('([.]flat(\s*?[[=]))')
 
 def changeimports(fstr, name, newname):
     importstr = 'import %s' % name
@@ -87,8 +67,14 @@ def changeimports(fstr, name, newname):
     fromstr = 'from %s import ' % name
     fromall=0
 
+    name_ = name
+    if ('.' in name):
+        name_ = name.replace('.','_')
+
     fstr = fstr.replace(importasstr, 'import %s as ' % newname)
-    fstr = fstr.replace(importstr, 'import %s as %s' % (newname,name))
+    fstr = fstr.replace(importstr, 'import %s as %s' % (newname,name_))
+    if (name_ != name):
+        fstr = fstr.replace(name, name_)
 
     ind = 0
     Nlen = len(fromstr)
@@ -104,12 +90,36 @@ def changeimports(fstr, name, newname):
         ind += Nlen2 - Nlen
     return fstr, fromall
 
+flatindex_re = re.compile('([.]flat(\s*?[[=]))')
+
+
+def addimport(astr):
+    # find the first line with import on it
+    ind = astr.find('import')
+    start = astr.rfind(os.linesep, 0, ind)
+    astr = "%s%s%s%s" % (astr[:start], os.linesep,
+                         "import numpy.numarray as numarray",
+                         astr[start:])
+    return astr
+
 def replaceattr(astr):
-    astr = astr.replace(".typecode()",".dtype.char")
+    astr = astr.replace(".imaginary", ".imag")
+    astr = astr.replace(".byteswapped()",".byteswap(False)")
+    astr = astr.replace(".byteswap()", ".byteswap(True)")
+    astr = astr.replace(".isaligned()", ".flags.aligned")
     astr = astr.replace(".iscontiguous()",".flags.contiguous")
-    astr = astr.replace(".byteswapped()",".byteswap()")
-    astr = astr.replace(".toscalar()", ".item()")
+    astr = astr.replace(".is_fortran_contiguous()",".flags.fortran")
     astr = astr.replace(".itemsize()",".itemsize")
+    astr = astr.replace(".size()",".size")
+    astr = astr.replace(".nelements()",".size")    
+    astr = astr.replace(".typecode()",".dtype.char")
+    astr = astr.replace(".stddev()",".std()")
+    astr = astr.replace(".getshape()", ".shape")
+    astr = astr.replace(".getflat()", ".ravel()")
+    astr = astr.replace(".getreal", ".real")
+    astr = astr.replace(".getimag", ".imag")
+    astr = astr.replace(".getimaginary", ".imag")            
+
     # preserve uses of flat that should be o.k.
     tmpstr = flatindex_re.sub(r"@@@@\2",astr)
     # replace other uses of flat
@@ -118,41 +128,59 @@ def replaceattr(astr):
     astr = tmpstr.replace("@@@@", ".flat")
     return astr
 
-svspc2 = re.compile(r'([^,(\s]+[.]spacesaver[(][)])')
-svspc3 = re.compile(r'(\S+[.]savespace[(].*[)])')
-#shpe = re.compile(r'(\S+\s*)[.]shape\s*=[^=]\s*(.+)')
-def replaceother(astr):
-    astr = svspc2.sub('True',astr)
-    astr = svspc3.sub(r'pass  ## \1', astr)
-    #astr = shpe.sub('\\1=\\1.reshape(\\2)', astr)
-    return astr
+info_re = re.compile(r'(\S+)\s*[.]\s*info\s*[(]\s*[)]')
+new_re = re.compile(r'(\S+)\s*[.]\s*new\s*[(]\s*(\S+)\s*[)]')
+toggle_re = re.compile(r'(\S+)\s*[.]\s*togglebyteorder\s*[(]\s*[)]')
+type_re = re.compile(r'(\S+)\s*[.]\s*type\s*[(]\s*[)]')
 
+isbyte_re = re.compile(r'(\S+)\s*[.]\s*isbyteswapped\s*[(]\s*[)]')
+iscarr_re = re.compile(r'(\S+)\s*[.]\s*is_c_array\s*[(]\s*[)]')
+isfarr_re = re.compile(r'(\S+)\s*[.]\s*is_f_array\s*[(]\s*[)]')
+repeat_re = re.compile(r'(\S+)\s*[.]\s*repeat\s*[(]\s*(\S+)\s*[)]')
+
+setshape_re = re.compile(r'(\S+)\s*[.]\s*setshape\s*[(]\s*(\S+)\s*[)]')
+setreal_re = re.compile(r'(\S+)\s*[.]\s*setreal\s*[(]\s*(\S+)\s*[)]')
+setimag_re = re.compile(r'(\S+)\s*[.]\s*setimag\s*[(]\s*(\S+)\s*[)]')
+setimaginary_re = re.compile(r'(\S+)\s*[.]\s*setimaginary\s*[(]\s*(\S+)\s*[)]')
+def replaceother(astr):
+    # self.info() --> numarray.info(self)
+    # self.new(type) --> numarray.newobj(self, type)
+    # self.togglebyteorder() --> numarray.togglebyteorder(self)
+    # self.type() --> numarray.typefrom(self)
+    (astr, n1) = info_re.subn('numarray.info(\\1)', astr)
+    (astr, n2) = new_re.subn('numarray.newobj(\\1, \\2)', astr)
+    (astr, n3) = toggle_re.subn('numarray.togglebyteorder(\\1)', astr)
+    (astr, n4) = type_re.subn('numarray.typefrom(\\1)', astr)
+    if (n1+n2+n3+n4 > 0):
+        astr = addimport(astr)
+
+    astr = isbyte_re.sub('not \\1.dtype.isnative', astr)
+    astr = iscarr_re.sub('\\1.dtype.isnative and \\1.flags.carray', astr)
+    astr = isfarr_re.sub('\\1.dtype.isnative and \\1.flags.farray', astr)
+    astr = repeat_re.sub('\\1.repeat(\\2, axis=0)', astr)
+    astr = setshape_re.sub('\\1.shape = \\2', astr)
+    astr = setreal_re.sub('\\1.real = \\2', astr)
+    astr = setimag_re.sub('\\1.imag = \\2', astr)
+    astr = setimaginary_re.sub('\\1.imag = \\2', astr)    
+    return astr
+    
 import datetime
 def fromstr(filestr):
-    filestr = fixtypechars(filestr)
-    filestr, fromall1 = changeimports(filestr, 'Numeric', 'numpy.oldnumeric')
-    filestr, fromall1 = changeimports(filestr, 'multiarray','numpy.oldnumeric')
-    filestr, fromall1 = changeimports(filestr, 'umath', 'numpy.oldnumeric')
-    filestr, fromall1 = changeimports(filestr, 'Precision', 'numpy.oldnumeric.precision')
-    filestr, fromall1 = changeimports(filestr, 'UserArray', 'numpy.oldnumeric.user_array')
-    filestr, fromall1 = changeimports(filestr, 'ArrayPrinter', 'numpy.oldnumeric.array_printer')
-    filestr, fromall2 = changeimports(filestr, 'numerix', 'numpy.oldnumeric')
-    filestr, fromall3 = changeimports(filestr, 'scipy_base', 'numpy.oldnumeric')
-    filestr, fromall3 = changeimports(filestr, 'Matrix', 'numpy.oldnumeric.matrix')    
-    filestr, fromall3 = changeimports(filestr, 'MLab', 'numpy.oldnumeric.mlab')
-    filestr, fromall3 = changeimports(filestr, 'LinearAlgebra', 'numpy.oldnumeric.linear_algebra')
-    filestr, fromall3 = changeimports(filestr, 'RNG', 'numpy.oldnumeric.rng')
-    filestr, fromall3 = changeimports(filestr, 'RNG.Statistics', 'numpy.oldnumeric.rng_stats')
-    filestr, fromall3 = changeimports(filestr, 'RandomArray', 'numpy.oldnumeric.random_array')
-    filestr, fromall3 = changeimports(filestr, 'FFT', 'numpy.oldnumeric.fft')
-    filestr, fromall3 = changeimports(filestr, 'MA', 'numpy.oldnumeric.ma')
-    fromall = fromall1 or fromall2 or fromall3
+    filestr, fromall = changeimports(filestr, 'numarray', 'numpy.numarray')
+    base = 'numarray'
+    newbase = 'numpy.numarray'
+    for sub in ['', 'convolve', 'image', 'nd_image', 'mlab', 'linear_algebra',
+                'ma', 'matrix', 'fft', 'random_array']:
+        if sub != '':
+            sub = '.'+sub
+        filestr, fromall = changeimports(filestr, base+sub, newbase+sub)
+
     filestr = replaceattr(filestr)
     filestr = replaceother(filestr)
     today = datetime.date.today().strftime('%b %d, %Y')
     name = os.path.split(sys.argv[0])[-1]
     filestr = '## Automatically adapted for '\
-              'numpy.oldnumeric %s by %s\n\n%s' % (today, name, filestr)
+              'numpy.numarray %s by %s\n\n%s' % (today, name, filestr)
     return filestr
 
 def makenewfile(name, filestr):

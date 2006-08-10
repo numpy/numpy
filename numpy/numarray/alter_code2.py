@@ -3,7 +3,7 @@ This module converts code written for numpy.numarray to work
 with numpy
 
 """
-#__all__ = ['fromfile', 'fromstr']
+#__all__ = ['fromfile', 'fromstr', 'convertfile', 'convertall']
 __all__ = []
 
 import warnings

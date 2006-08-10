@@ -1,6 +1,6 @@
 
-NumPy (previously called SciPy core) is a replacement of Numeric Python that
-adds the features of numarray.  To install:
+NumPy is a replacement of Numeric Python that adds the features of numarray.  
+To install:
 
 python setup.py install
 
@@ -9,7 +9,8 @@ find it.  You can help the process with a site.cfg file.
 
 If fast BLAS and LAPACK cannot be found, then a slower default version is used. 
 
-The current version is always available from a Subversion repostiory:
+The most current development version is always available from a
+subversion repostiory:
 
 http://svn.scipy.org/svn/numpy/trunk 
 
