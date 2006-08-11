@@ -530,6 +530,9 @@ array_cast(PyArrayObject *self, PyObject *args)
 		Py_XDECREF(descr);
 		return obj;
 	}
+	if (descr->names != NULL) {
+		return PyArray_FromArray(self, descr, 0);
+	}
 	return _ARET(PyArray_CastToType(self, descr, 0));
 }	  
 
