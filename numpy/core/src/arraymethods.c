@@ -531,7 +531,7 @@ array_cast(PyArrayObject *self, PyObject *args)
 		return obj;
 	}
 	if (descr->names != NULL) {
-		return PyArray_FromArray(self, descr, 0);
+		return PyArray_FromArray(self, descr, NPY_FORCECAST);
 	}
 	return _ARET(PyArray_CastToType(self, descr, 0));
 }	  

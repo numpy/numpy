@@ -7301,6 +7301,7 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
         }
         _pya_free(buffers[0]);
         _pya_free(buffers[1]);
+        if (!PyArray_ISNUMBER(in) && PyErr_Occurred()) return -1;
         return 0;
 }
 
@@ -7354,7 +7355,7 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
                 if (PyArray_ISNUMBER(mp) && PyArray_ISNUMBER(out)) {
                         NPY_END_THREADS   }
 #endif
-                return 0;
+                if (!PyArray_ISNUMBER(mp) && PyErr_Occurred()) return -1;
         }
 
         /* If the input or output is STRING, UNICODE, or VOID */
@@ -8209,8 +8210,9 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 
         obj = PyArray_FromAny(op, descr, min_depth, max_depth,
                               requires, context);
+        if (obj == NULL) return NULL;
         if ((requires & ELEMENTSTRIDES) && 
-            (obj && !PyArray_ElementStrides(obj))) {
+            !PyArray_ElementStrides(obj)) {
                 PyObject *new;
                 new = PyArray_NewCopy((PyArrayObject *)obj, PyArray_ANYORDER);
                 Py_DECREF(obj);

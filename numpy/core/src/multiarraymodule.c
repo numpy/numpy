@@ -5013,8 +5013,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
                 flags |= ENSUREARRAY;
         }
 
-	if ((ret = PyArray_CheckFromAny(op, type, 0, 0, flags, NULL)) == NULL) 
-		return NULL;
+        ret = PyArray_CheckFromAny(op, type, 0, 0, flags, NULL);
 
  finish:
 	if (!ret || (nd=PyArray_NDIM(ret)) >= ndmin) return ret;
