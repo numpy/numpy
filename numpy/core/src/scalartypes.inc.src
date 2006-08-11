@@ -730,11 +730,11 @@ gentype_size_get(PyObject *self)
 static void
 gentype_struct_free(void *ptr, void *arg)
 {
+        PyArrayInterface *arrif = (PyArrayInterface *)ptr;
         Py_DECREF((PyObject *)arg);
-        if (((PyArrayInterface *)ptr)->shape != NULL) {
-                _pya_free(((PyArrayInterface *)ptr)->shape);
-        }
-        _pya_free(ptr);
+        Py_XDECREF(arrif->descr);
+        _pya_free(arrif->shape);
+        _pya_free(arrif);
 }
 
 static PyObject *
@@ -753,6 +753,7 @@ gentype_struct_get(PyObject *self)
         inter->strides = NULL;
         inter->shape = NULL;
         inter->data = arr->data;
+        inter->descr = NULL;
 
         return PyCObject_FromVoidPtrAndDesc(inter, arr, gentype_struct_free);
 }

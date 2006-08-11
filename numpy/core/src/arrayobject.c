@@ -6087,6 +6087,7 @@ array_struct_get(PyArrayObject *self)
         PyArrayInterface *inter;
 
         inter = (PyArrayInterface *)_pya_malloc(sizeof(PyArrayInterface));
+        if (inter==NULL) return PyErr_NoMemory();
         inter->two = 2;
         inter->nd = self->nd;
         inter->typekind = self->descr->kind;
@@ -6100,6 +6101,10 @@ array_struct_get(PyArrayObject *self)
         */
         if (self->nd > 0) {
                 inter->shape = (intp *)_pya_malloc(2*sizeof(intp)*self->nd);
+                if (inter->shape == NULL) {
+                        _pya_free(inter);
+                        return PyErr_NoMemory();
+                }
                 inter->strides = inter->shape + self->nd;
                 memcpy(inter->shape, self->dimensions, sizeof(intp)*self->nd);
                 memcpy(inter->strides, self->strides, sizeof(intp)*self->nd);
@@ -6114,6 +6119,7 @@ array_struct_get(PyArrayObject *self)
                 if (inter->descr == NULL) PyErr_Clear();
                 else inter->flags &= ARR_HAS_DESCR;
         }
+        else inter->descr = NULL;
         Py_INCREF(self);
         return PyCObject_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
 }
