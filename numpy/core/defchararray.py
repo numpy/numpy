@@ -45,6 +45,7 @@ class chararray(ndarray):
         val = ndarray.__getitem__(self, obj)
         if isinstance(val, (string_, unicode_)):
             return val.rstrip()
+        return val
 
     def __add__(self, other):
         b = broadcast(self, other)
