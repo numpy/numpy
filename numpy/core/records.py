@@ -122,8 +122,16 @@ class record(nt.void):
             pass
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
         res = fielddict.get(attr,None)
-        if res:
-            return self.getfield(*res[:2])
+        if res:            
+            obj = self.getfield(*res[:2])
+            # if it has fields return a recarray,
+            # if it's a string return 'SU' return a chararray
+            # otherwise return a normal array
+            if obj.dtype.fields:
+                return obj.view(recarray)
+            if obj.dtype.char in 'SU':
+                return obj.view(chararray)
+            return obj
         else:
             raise AttributeError, "'record' object has no "\
                   "attribute '%s'" % attr
