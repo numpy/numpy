@@ -10367,12 +10367,39 @@ arraydescr_isbuiltin_get(PyArray_Descr *self)
         return PyInt_FromLong(val);
 }
 
+static int 
+_arraydescr_isnative(PyArray_Descr *self) 
+{
+        if (self->names == NULL) {
+                return PyArray_ISNBO(self->byteorder);
+        }
+        else {
+                PyObject *key, *value, *title=NULL;
+                PyArray_Descr *new;
+                int offset, pos=0;
+                while(PyDict_Next(self->fields, &pos, &key, &value)) {
+                        if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
+                                              &title)) return -1;
+                        if (!_arraydescr_isnative(new)) return 0;
+                }
+        }
+        return 1;
+}
+
+/* return Py_True if this data-type descriptor
+   has native byteorder if no fields are defined
+ 
+   or if all sub-fields have native-byteorder if 
+   fields are defined
+*/
 static PyObject *
 arraydescr_isnative_get(PyArray_Descr *self)
 {
         PyObject *ret;
-
-        ret = (PyArray_ISNBO(self->byteorder) ? Py_True : Py_False);
+        int retval;
+        retval = _arraydescr_isnative(self);
+        if (retval == -1) return NULL;
+        ret = (retval ? Py_True : Py_False);
         Py_INCREF(ret);
         return ret;
 }
