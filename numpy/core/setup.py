@@ -99,7 +99,6 @@ def configuration(parent_package='',top_path=None):
                     moredefs.append(defsymbol)
 
             if sys.version[:3] < '2.4':
-                kws_args['headers'].append('stdlib.h')
                 if check_func('strtod'):
                     moredefs.append(('PyOS_ascii_strtod', 'strtod'))
 
