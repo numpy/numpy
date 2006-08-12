@@ -338,6 +338,15 @@ class test_regression(NumpyTestCase):
         x[0] = 'a   '
         x = x.rstrip()
         assert_equal(x[0], 'a')
+        
+    def check_object_array_shape(self,level=rlevel):
+        """Ticket #239"""
+        assert_equal(N.array([[1,2],3,4],dtype=object).shape, (3,))
+        assert_equal(N.array([[1,2],[3,4]],dtype=object).shape, (2,2))
+        #assert_equal(N.array([(1,2),(3,4)],dtype=object).shape, (2,))
+        assert_equal(N.array([],dtype=object).shape, ())
+        assert_equal(N.array([[],[],[]],dtype=object).shape, (3,))
+        assert_equal(N.array([[3,4],[5,6],None],dtype=object).shape, (3,))
 
 if __name__ == "__main__":
     NumpyTest().run()
