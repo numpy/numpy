@@ -93,7 +93,7 @@ class _ndptr(object):
     def from_param(cls, obj):
         if not isinstance(obj, ndarray):
             raise TypeError("argument must be an ndarray")
-        if obj.dtype != cls._dtype_:
+        if cls._dtype_ and obj.dtype != cls._dtype_:
             raise TypeError("array must have data type", cls._dtype_)
         if cls._ndim_ and obj.ndim != cls._ndim_:
             raise TypeError("array must have %d dimension(s)" % cls._ndim_)
@@ -107,8 +107,9 @@ class _ndptr(object):
 
 # Factory for an array-checking object with from_param defined
 _pointer_type_cache = {}
-def ndpointer(datatype, ndim=None, shape=None, flags=None):
-    datatype = dtype(datatype)
+def ndpointer(datatype=None, ndim=None, shape=None, flags=None):
+    if datatype is not None:
+        datatype = dtype(datatype)
     num = None
     if flags is not None:
         if isinstance(flags, str):
@@ -122,8 +123,10 @@ def ndpointer(datatype, ndim=None, shape=None, flags=None):
     try:
         return _pointer_type_cache[(datatype, ndim, shape, num)]
     except KeyError:
-        pass        
-    if datatype.names:
+        pass
+    if datatype is None:
+        name = 'any'
+    elif datatype.names:
         name = str(id(datatype))
     else:
         name = datatype.str
