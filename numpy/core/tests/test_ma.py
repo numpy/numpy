@@ -267,9 +267,9 @@ class test_ma(NumpyTestCase):
         y4 = resize(x4, (8,))
         self.failUnless( eq(concatenate([x4,x4]), y4))
         self.failUnless( eq(getmask(y4),[0,0,1,0,0,0,1,0]))
-        y5 = repeat(x4, (2,2,2,2))
+        y5 = repeat(x4, (2,2,2,2), axis=0)
         self.failUnless( eq(y5, [0,0,1,1,2,2,3,3]))
-        y6 = repeat(x4, 2)
+        y6 = repeat(x4, 2, axis=0)
         self.failUnless( eq(y5, y6))
 
     def check_testPut(self):
@@ -523,10 +523,10 @@ class test_ma(NumpyTestCase):
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
         ott=ott.reshape(2,2)
         ott[:,1] = masked
-        self.failUnless(eq(average(ott), [2.0, 0.0]))
+        self.failUnless(eq(average(ott,axis=0), [2.0, 0.0]))
         self.failUnless(average(ott,axis=1)[0] is masked)
-        self.failUnless(eq([2.,0.], average(ott)))
-        result, wts = average(ott, returned=1)
+        self.failUnless(eq([2.,0.], average(ott, axis=0)))
+        result, wts = average(ott, axis=0, returned=1)
         self.failUnless(eq(wts, [1., 0.]))
 
     def check_testAverage2(self):
@@ -534,8 +534,8 @@ class test_ma(NumpyTestCase):
         w1 = [0,1,1,1,1,0]
         w2 = [[0,1,1,1,1,0],[1,0,0,0,0,1]]
         x=arange(6)
-        self.failUnless(allclose(average(x), 2.5))
-        self.failUnless(allclose(average(x, weights=w1), 2.5))
+        self.failUnless(allclose(average(x, axis=0), 2.5))
+        self.failUnless(allclose(average(x, axis=0, weights=w1), 2.5))
         y=array([arange(6), 2.0*arange(6)])
         self.failUnless(allclose(average(y, None), numpy.add.reduce(numpy.arange(6))*3./12.))
         self.failUnless(allclose(average(y, axis=0), numpy.arange(6) * 3./2.))
@@ -557,7 +557,7 @@ class test_ma(NumpyTestCase):
         self.failUnless(allclose(average(z, None), 20./6.))
         self.failUnless(allclose(average(z, axis=0), [0.,1.,99.,99.,4.0, 7.5]))
         self.failUnless(allclose(average(z, axis=1), [2.5, 5.0]))
-        self.failUnless(allclose( average(z,weights=w2), [0.,1., 99., 99., 4.0, 10.0]))
+        self.failUnless(allclose( average(z,axis=0, weights=w2), [0.,1., 99., 99., 4.0, 10.0]))
 
         a = arange(6)
         b = arange(6) * 3
@@ -572,9 +572,9 @@ class test_ma(NumpyTestCase):
         self.failUnless(shape(w2) == shape(r2))
         a2d = array([[1,2],[0,4]], float)
         a2dm = masked_array(a2d, [[0,0],[1,0]])
-        a2da = average(a2d)
+        a2da = average(a2d, axis=0)
         self.failUnless(eq (a2da, [0.5, 3.0]))
-        a2dma = average(a2dm)
+        a2dma = average(a2dm, axis=0)
         self.failUnless(eq( a2dma, [1.0, 3.0]))
         a2dma = average(a2dm, axis=None)
         self.failUnless(eq(a2dma, 7./3.))

@@ -9,7 +9,8 @@ __all__ = ['take', 'repeat', 'sum', 'product', 'sometrue', 'alltrue',
            'cumsum', 'cumproduct', 'compress',
            'ones', 'empty', 'identity', 'zeros', 'array', 'asarray',
            'nonzero', 'reshape', 'arange', 'fromstring', 'ravel', 'trace',
-           'indices', 'where','sarray','cross_product', 'argmax', 'argmin']
+           'indices', 'where','sarray','cross_product', 'argmax', 'argmin',
+           'average']
 
 def take(a, indicies, axis=0):
     return N.take(a, indicies, axis)
@@ -115,3 +116,6 @@ def where(condition, x, y):
 
 def cross_product(a, b, axis1=-1, axis2=-1):
     return N.cross(a, b, axis1, axis2)
+
+def average(a, axis=0, weights=None, returned=False):
+    return N.average(a, axis, weights, returned)

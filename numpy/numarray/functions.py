@@ -42,7 +42,7 @@ import os, sys, math, operator
 
 from numpy import dot as matrixmultiply, dot, vdot, ravel, concatenate, all,\
      allclose, any, around, argsort, array_equal, array_equiv,\
-     array_str, array_repr, average, CLIP, RAISE, WRAP, clip, concatenate, \
+     array_str, array_repr, CLIP, RAISE, WRAP, clip, concatenate, \
      diagonal, e, pi, fromfunction, indices, inner as innerproduct, nonzero, \
      outer as outerproduct, kron as kroneckerproduct, lexsort, putmask, rank, \
      resize, searchsorted, shape, size, sort, swapaxes, trace, transpose
@@ -453,3 +453,6 @@ def newobj(self, type):
 
 def togglebyteorder(self):
     self.dtype=self.dtype.newbyteorder()
+
+def average(a, axis=0, weights=None, returned=0):
+    return N.average(a, axis, weights, returned)

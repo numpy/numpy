@@ -1,4 +1,3 @@
-
 __all__ = ['logspace', 'linspace',
            'select', 'piecewise', 'trim_zeros',
            'copy', 'iterable', #'base_repr', 'binary_repr',
@@ -100,8 +99,8 @@ def histogram(a, bins=10, range=None, normed=False):
     else:
         return n, bins
 
-def average(a, axis=0, weights=None, returned=False):
-    """average(a, axis=0, weights=None, returned=False)
+def average(a, axis=None, weights=None, returned=False):
+    """average(a, axis=None weights=None, returned=False)
 
     Average the array over the given axis.  If the axis is None, average
     over all dimensions of the array.  Equivalent to a.mean(axis), but

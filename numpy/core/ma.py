@@ -448,7 +448,7 @@ def nonzero(a):
     """returns the indices of the elements of a which are not zero
     and not masked
     """
-    return asarray(filled(a, 0).nonzero())
+    return numeric.asarray(filled(a, 0).nonzero())
 
 around = masked_unary_operation(fromnumeric.round_)
 floor = masked_unary_operation(umath.floor)
@@ -1532,7 +1532,7 @@ def resize (a, new_shape):
     result.set_fill_value(get_fill_value(a))
     return result
 
-def repeat(a, repeats, axis=0):
+def repeat(a, repeats, axis=None):
     """repeat elements of a repeats times along axis
        repeats is a sequence of length a.shape[axis]
        telling how many times to repeat each element.
@@ -1603,8 +1603,8 @@ def masked_array (a, mask=nomask, fill_value=None):
 sum = add.reduce
 product = multiply.reduce
 
-def average (a, axis=0, weights=None, returned = 0):
-    """average(a, axis=0, weights=None)
+def average (a, axis=None, weights=None, returned = 0):
+    """average(a, axis=None, weights=None)
        Computes average along indicated axis.
        If axis is None, average over the entire array
        Inputs can be integer or floating types; result is of type float.
@@ -1858,7 +1858,7 @@ def swapaxes (a, axis1, axis2):
                             mask=numeric.swapaxes(m, axis1, axis2),)
 
 
-def take (a, indices, axis=0, out=None, mode='raise'):
+def take (a, indices, axis=None, out=None, mode='raise'):
     "returns selection of items from a."
     m = getmask(a)
     # d = masked_array(a).raw_data()
@@ -2168,14 +2168,14 @@ del _compress
 array.conj = array.conjugate = _m(conjugate)
 array.copy = _m(not_implemented)
 
-def _cumprod(self, axis=0, dtype=None, out=None):
+def _cumprod(self, axis=None, dtype=None, out=None):
     m = self.mask
     if m is not nomask:
         m = umath.logical_or.accumulate(self.mask, axis)
     return MaskedArray(data = self.filled(1).cumprod(axis, dtype), mask=m)
 array.cumprod = _m(_cumprod)
 
-def _cumsum(self, axis=0, dtype=None, out=None):
+def _cumsum(self, axis=None, dtype=None, out=None):
     m = self.mask
     if m is not nomask:
         m = umath.logical_or.accumulate(self.mask, axis)
@@ -2214,7 +2214,7 @@ array.newbyteorder = _m(not_implemented)
 array.nonzero = _m(nonzero)
 array.prod = _m(product)
 
-def _ptp(a,axis=0,out=None):
+def _ptp(a,axis=None,out=None):
     return a.max(axis,out)-a.min(axis)
 array.ptp = _m(_ptp)
 array.repeat = _m(repeat)
@@ -2244,15 +2244,15 @@ array.tofile = _m(not_implemented)
 array.trace = _m(trace)
 array.transpose = _m(transpose)
 
-def _var(self,axis=0,dtype=None, out=None):
+def _var(self,axis=None,dtype=None, out=None):
     if axis is None:
-        return asarray(self.compressed()).var()
+        return numeric.asarray(self.compressed()).var()
     a = self.swapaxes(axis,0)
     a = a - a.mean(axis=0)
     a *= a
     a /= a.count(axis=0)
     return a.swapaxes(0,axis).sum(axis)
-def _std(self,axis=0,dtype=None, out=None):
+def _std(self,axis=None, dtype=None, out=None):
     return (self.var(axis,dtype))**0.5
 array.var = _m(_var)
 array.std = _m(_std)
