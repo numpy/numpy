@@ -295,6 +295,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
                                                      PyArray_ISFORTRAN(a));
                 if (out == NULL) return NULL;
         }
+        else Py_INCREF(out);
         f = PyFloat_FromDouble(power_of_ten(decimals));
         if (f==NULL) return NULL;
         ret = PyObject_CallFunction(op1, "OOO", a, f, out);
@@ -308,6 +309,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
 
  finish:
 	Py_DECREF(f);
+        Py_DECREF(out);
 	return ret;
 	
 }
