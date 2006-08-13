@@ -2,7 +2,7 @@ import sys, os
 import inspect
 import types
 from numpy.core.numerictypes import obj2sctype, integer
-from numpy.core.multiarray import dtype, _flagdict
+from numpy.core.multiarray import dtype as _dtype, _flagdict
 from numpy.core import product, ndarray
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
@@ -20,7 +20,7 @@ def issubsctype(arg1, arg2):
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
 def issubdtype(arg1, arg2):
-    return issubclass(dtype(arg1).type, dtype(arg2).type)
+    return issubclass(_dtype(arg1).type, _dtype(arg2).type)
 
 def get_include():
     """Return the directory in the package that contains the numpy/*.h header
@@ -92,24 +92,29 @@ def _flags_fromnum(num):
 class _ndptr(object):
     def from_param(cls, obj):
         if not isinstance(obj, ndarray):
-            raise TypeError("argument must be an ndarray")
-        if cls._dtype_ and obj.dtype != cls._dtype_:
-            raise TypeError("array must have data type", cls._dtype_)
-        if cls._ndim_ and obj.ndim != cls._ndim_:
-            raise TypeError("array must have %d dimension(s)" % cls._ndim_)
-        if cls._shape_ and obj.shape != cls._shape_:
-            raise TypeError("array must have shape ", cls._shape_)
-        if cls._flags_ and ((obj.flags.num & cls._flags_) != cls._flags_):
-            raise TypeError("array must have flags ",
-                            _flags_fromnum(cls._flags_))
+            raise TypeError, "argument must be an ndarray"
+        if cls._dtype_ is not None \
+               and obj.dtype != cls._dtype_:
+            raise TypeError, "array must have data type %s" % cls._dtype_
+        if cls._ndim_ is not None \
+               and obj.ndim != cls._ndim_:
+            raise TypeError, "array must have %d dimension(s)" % cls._ndim_
+        if cls._shape_ is not None \
+               and obj.shape != cls._shape_:
+            raise TypeError, "array must have shape %s" % cls._shape_
+        if cls._flags_ is not None \
+               and ((obj.flags.num & cls._flags_) != cls._flags_):
+            raise TypeError, "array must have flags %s" % \
+                  _flags_fromnum(cls._flags_)
         return obj.ctypes
     from_param = classmethod(from_param)
 
-# Factory for an array-checking object with from_param defined
+# Factory for an array-checking class with from_param defined for
+#  use with ctypes argtypes mechanism
 _pointer_type_cache = {}
-def ndpointer(datatype=None, ndim=None, shape=None, flags=None):
-    if datatype is not None:
-        datatype = dtype(datatype)
+def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
+    if dtype is not None:
+        dtype = _dtype(dtype)
     num = None
     if flags is not None:
         if isinstance(flags, str):
@@ -121,15 +126,15 @@ def ndpointer(datatype=None, ndim=None, shape=None, flags=None):
             flags = [x.strip().upper() for x in flags]
             num = _num_fromflags(flags)
     try:
-        return _pointer_type_cache[(datatype, ndim, shape, num)]
+        return _pointer_type_cache[(dtype, ndim, shape, num)]
     except KeyError:
         pass
-    if datatype is None:
+    if dtype is None:
         name = 'any'
-    elif datatype.names:
-        name = str(id(datatype))
+    elif dtype.names:
+        name = str(id(dtype))
     else:
-        name = datatype.str
+        name = dtype.str
     if ndim is not None:
         name += "_%dd" % ndim
     if shape is not None:
@@ -145,11 +150,11 @@ def ndpointer(datatype=None, ndim=None, shape=None, flags=None):
     else:
         flags = []
     klass = type("ndpointer_%s"%name, (_ndptr,),
-                 {"_dtype_": datatype,
+                 {"_dtype_": dtype,
                   "_shape_" : shape,
                   "_ndim_" : ndim,
                   "_flags_" : num})
-    _pointer_type_cache[datatype] = klass    
+    _pointer_type_cache[dtype] = klass    
     return klass
 
 
