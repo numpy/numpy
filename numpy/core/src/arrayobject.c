@@ -5829,13 +5829,8 @@ static PyObject *
 array_ctypes_get(PyArrayObject *self)
 {
         return PyObject_CallMethod(_numpy_internal, "_ctypes",
-                                   "O", self);
-}
-
-static PyObject *
-array_as_parameter_get(PyArrayObject *self)
-{
-        return PyLong_FromVoidPtr(self->data);
+                                   "ON", self, 
+                                   PyLong_FromVoidPtr(self->data));
 }
 
 static PyObject *
@@ -6412,9 +6407,6 @@ static PyGetSetDef array_getsetlist[] = {
          NULL},
         {"ctypes",
          (getter)array_ctypes_get,
-         NULL, NULL},
-        {"_as_parameter_",
-         (getter)array_as_parameter_get,
          NULL, NULL},
         {"T",
          (getter)array_transpose_get,
@@ -11062,11 +11054,11 @@ static PyTypeObject PyArrayDescr_Type = {
         (reprfunc)arraydescr_repr,              /* tp_repr */
         0,                                      /* tp_as_number */
         0,                                      /* tp_as_sequence */
-        &descr_as_mapping,              /* tp_as_mapping */
-        0,                                      /* tp_hash */
+        &descr_as_mapping,                      /* tp_as_mapping */
+        (hashfunc)_Py_HashPointer,              /* tp_hash */
         0,                                      /* tp_call */
-        (reprfunc)arraydescr_str,              /* tp_str */
-        0,              /* tp_getattro */
+        (reprfunc)arraydescr_str,               /* tp_str */
+        0,                                      /* tp_getattro */
         0,                                      /* tp_setattro */
         0,                                      /* tp_as_buffer */
         Py_TPFLAGS_DEFAULT,                     /* tp_flags */
@@ -11075,8 +11067,8 @@ static PyTypeObject PyArrayDescr_Type = {
         0,                                      /* tp_clear */
         (richcmpfunc)arraydescr_richcompare,    /* tp_richcompare */
         0,                                      /* tp_weaklistoffset */
-        0,                              /* tp_iter */
-        0,              /* tp_iternext */
+        0,                                      /* tp_iter */
+        0,                                      /* tp_iternext */
         arraydescr_methods,                     /* tp_methods */
         arraydescr_members,                     /* tp_members */
         arraydescr_getsets,                     /* tp_getset */
