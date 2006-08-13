@@ -8,7 +8,7 @@ from numpy import tril, trapz as _Ntrapz, hanning, rot90, triu, diff, \
      angle, roots, ptp as _Nptp, kaiser, cumprod as _Ncumprod, \
      diag, msort, prod as _Nprod, std as _Nstd, hamming, flipud, \
      amax as _Nmax, amin as _Nmin, blackman, bartlett, corrcoef as _Ncorrcoef,\
-     cov as _Ncov, squeeze, sinc, median, fliplr, mean as _Nmean
+     cov as _Ncov, squeeze, sinc, median, fliplr, mean as _Nmean, transpose
 
 from numpy.linalg import eig, svd
 from numpy.random import rand, randn
@@ -59,11 +59,36 @@ def std(x, axis=0):
 def mean(x, axis=0):
     return _Nmean(x, axis)
 
+# This is exactly the same cov function as in MLab
 def cov(m, y=None, rowvar=0, bias=0):
-    return _Ncov(m, y, rowvar, bias)
+    if y is None:
+        y = m
+    else:
+        y = y
+    if rowvar:
+        m = transpose(m)
+        y = transpose(y)
+    if (m.shape[0] == 1):
+        m = transpose(m)
+    if (y.shape[0] == 1):
+        y = transpose(y)
+    N = m.shape[0]
+    if (y.shape[0] != N):
+        raise ValueError, "x and y must have the same number "\
+              "of observations"
+    m = m - _Nmean(m,axis=0)
+    y = y - _Nmean(y,axis=0)
+    if bias:
+        fact = N*1.0
+    else:
+        fact = N-1.0
+    return squeeze(dot(transpose(m), conjugate(y)) / fact)
 
+from numpy import sqrt, multiply
 def corrcoef(x, y=None):
-    return _Ncorrcoef(x,y,0,0)
+    c = cov(x,y)
+    d = diag(c)
+    return c/sqrt(multiply.outer(d,d))
 
 from compat import *
 from functions import *
