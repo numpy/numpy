@@ -1,4 +1,4 @@
-__all__ = ['ctypes_load_library', 'ndpointer']
+__all__ = ['ctypes_load_library', 'ndpointer', 'test']
 
 import sys, os
 from numpy import integer, product, ndarray, dtype as _dtype
@@ -109,3 +109,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
                   "_flags_" : num})
     _pointer_type_cache[dtype] = klass
     return klass
+
+def test(level=1, verbosity=1):
+    from numpy.testing import NumpyTest
+    return NumpyTest().test(level, verbosity)
