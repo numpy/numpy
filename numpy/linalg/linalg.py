@@ -582,6 +582,11 @@ def det(a):
         lapack_routine = lapack_lite.dgetrf
     pivots = zeros((n,), fortran_int)
     results = lapack_routine(n, n, a, n, pivots, 0)
+    info = results['info']
+    if (info < 0):
+        raise TypeError, "Illegal input to Fortran routine"
+    elif (info > 0):
+        return 0.0
     sign = add.reduce(pivots != arange(1, n+1)) % 2
     return (1.-2.*sign)*multiply.reduce(diagonal(a),axis=-1)
 
