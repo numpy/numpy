@@ -6118,7 +6118,7 @@ labeled.
 static unsigned int
 PyArray_GetNDArrayCVersion(void)
 {
-	return (unsigned int)NDARRAY_VERSION;
+	return (unsigned int)NPY_VERSION;
 }
 
 static PyObject *

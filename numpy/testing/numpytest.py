@@ -452,6 +452,8 @@ class NumpyTest:
                 continue
             modules.append(module)
 
+        
+
         self.test_files = []
         suites = []
         for module in modules:

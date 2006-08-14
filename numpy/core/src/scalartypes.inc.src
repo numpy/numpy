@@ -593,23 +593,6 @@ static PyObject *
 }
 /**end repeat**/
 
-#if PY_VERSION_HEX >= 0x02050000
-/* This needs a better implementation */
-static Py_ssize_t
-gentype_index(PyObject *self)
-{
-        PyObject *obj;
-        if (!(PyArray_IsScalar(self, Integer))) {
-                PyErr_SetString(PyExc_TypeError,
-                                "not an integer type.");
-                return -1;
-        }
-        obj = gentype_int(self);
-        if (obj == NULL) return -1;
-        return PyInt_AsSsize_t(obj);
-}
-#endif
-
 
 static PyNumberMethods gentype_as_number = {
         (binaryfunc)gentype_add,                    /*nb_add*/
@@ -651,7 +634,7 @@ static PyNumberMethods gentype_as_number = {
         0,                                         /*nb_inplace_floor_divide*/
         0,                                         /*nb_inplace_true_divide*/
 #if PY_VERSION_HEX >= 0x02050000
-        (lenfunc)gentype_index,                 /* nb_index */
+        (unaryfunc)NULL,                 /* nb_index */
 #endif
 };
 
@@ -1641,7 +1624,7 @@ gentype_getsegcount(PyObject *self, int *lenp)
 }
 
 static int
-gentype_getcharbuf(PyObject *self, int segment, const char **ptrptr)
+gentype_getcharbuf(PyObject *self, int segment, constchar **ptrptr)
 {
         if (PyArray_IsScalar(self, String) ||   \
             PyArray_IsScalar(self, Unicode))
@@ -1794,6 +1777,26 @@ bool_arrtype_nonzero(PyObject *a)
 {
         return a == PyArrayScalar_True;
 }
+
+#if PY_VERSION_HEX >= 0x02050000
+/**begin repeat
+#name=byte, short, int, long, ubyte, ushort, longlong, uint, ulong, ulonglong#
+#Name=Byte, Short, Int, Long, UByte, UShort, LongLong, UInt, ULong, ULongLong#
+#type=PyInt_FromLong*6, PyLong_FromLongLong*1, PyLong_FromUnsignedLong*2, PyLong_FromUnsignedLongLong# 
+*/
+static PyNumberMethods @name@_arrtype_as_number;
+static PyObject *
+@name@_index(PyObject *self)
+{
+        return @type@(PyArrayScalar_VAL(self, @Name@));
+}
+/**end repeat**/
+static PyObject *
+bool_index(PyObject *a)
+{
+        return PyInt_FromLong(PyArrayScalar_VAL(a, Bool));
+}
+#endif
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
 static PyNumberMethods bool_arrtype_as_number = {
@@ -2154,7 +2157,7 @@ object_arrtype_getwritebuf(PyObjectScalarObject *self, Py_ssize_t segment, void 
 
 static Py_ssize_t
 object_arrtype_getcharbuf(PyObjectScalarObject *self, Py_ssize_t segment,
-                          const char **ptrptr)
+                          constchar **ptrptr)
 {
         PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
 
@@ -2336,6 +2339,20 @@ initialize_numeric_types(void)
         PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
 
         PyBoolArrType_Type.tp_as_number = &bool_arrtype_as_number;
+#if PY_VERSION_HEX >= 0x02050000
+        /* need to add dummy versions with filled-in nb_index
+           in-order for PyType_Ready to fill in .__index__() method
+        */
+        /**begin repeat
+#name=byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong#
+#NAME=Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong#
+        */
+        Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
+        Py@NAME@ArrType_Type.tp_as_number->nb_index = (unaryfunc)@name@_index;
+
+        /**end repeat**/
+        PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
+#endif
 
         PyStringArrType_Type.tp_alloc = NULL;
         PyStringArrType_Type.tp_free = NULL;

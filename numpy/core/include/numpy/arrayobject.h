@@ -644,8 +644,10 @@ typedef int Py_ssize_t;
 #define PY_SSIZE_T_MAX INT_MAX
 #define PY_SSIZE_T_MIN INT_MIN
 #define NPY_SSIZE_T_PYFMT "i"
+#define constchar const char
 #else
 #define NPY_SSIZE_T_PYFMT "n"
+#define constchar char
 #endif
 
 #if SIZEOF_PY_INTPTR_T == SIZEOF_INT

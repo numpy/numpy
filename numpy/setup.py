@@ -15,6 +15,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('linalg')
     config.add_subpackage('random')
     config.add_data_dir('doc')
+    config.add_data_dir('tests')
     config.make_config_py() # installs __config__.py
     return config
 

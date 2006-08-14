@@ -17,7 +17,7 @@ Makes the following changes:
    oldnumeric.random_array, and oldnumeric.fft
 
 """
-#__all__ = ['fromfile', 'fromstr', 'convertfile', 'convertall']
+#__all__ = ['convertfile', 'convertall']
 __all__ = []
 
 import warnings

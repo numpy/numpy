@@ -3036,7 +3036,7 @@ array_getwritebuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 }
 
 static Py_ssize_t
-array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, const char **ptrptr)
+array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, constchar **ptrptr)
 {
         if (self->descr->type_num == PyArray_STRING || \
             self->descr->type_num == PyArray_UNICODE)
@@ -3790,6 +3790,20 @@ _array_copy_nice(PyArrayObject *self)
                               PyArray_Copy(self));
 }
 
+#if PY_VERSION_HEX >= 0x02050000
+static PyObject *
+array_index(PyArrayObject *v)
+{
+        if (PyArray_SIZE(v) != 1 || !PyArray_ISINTEGER(v)) {
+                PyErr_SetString(PyExc_TypeError, "only length-1 integer " \
+                                "arrays can be converted to an index");
+                return NULL;
+        }
+        return v->descr->f->getitem(v->data, v);
+}
+#endif
+
+
 static PyNumberMethods array_as_number = {
         (binaryfunc)array_add,              /*nb_add*/
         (binaryfunc)array_subtract,                 /*nb_subtract*/
@@ -3833,6 +3847,10 @@ static PyNumberMethods array_as_number = {
         (binaryfunc)array_true_divide,       /*nb_true_divide*/
         (binaryfunc)array_inplace_floor_divide,  /*nb_inplace_floor_divide*/
         (binaryfunc)array_inplace_true_divide,   /*nb_inplace_true_divide*/
+
+#if PY_VERSION_HEX >= 0x02050000
+        (unaryfunc)array_index,                /* nb_index */
+#endif         
 
 };
 

@@ -1,5 +1,8 @@
 __all__ = ['ctypes_load_library', 'ndpointer']
 
+import sys, os
+from numpy import integer, product, ndarray, dtype as _dtype
+from numpy.core.multiarray import _flagdict, flagsobj
 
 # Adapted from Albert Strasheim
 def ctypes_load_library(libname, loader_path):

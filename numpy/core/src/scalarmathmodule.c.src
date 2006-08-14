@@ -712,8 +712,8 @@ static PyObject *
 /**end repeat**/
 
 /**begin repeat
-   #name=(float,double,longdouble,cfloat,cdouble,clongdouble)*6#
-   #oper=lshift*6, rshift*6, and*6, or*6, xor*6, index*6#
+   #name=(float,double,longdouble,cfloat,cdouble,clongdouble)*5#
+   #oper=lshift*6, rshift*6, and*6, or*6, xor*6#
 **/
 #define @name@_@oper@ NULL
 /**end repeat**/
@@ -817,20 +817,6 @@ static PyObject *
     return PyInt_Type.tp_as_number->nb_@oper@(pyint);
 }
 /**end repeat**/
-
-
-#if PY_VERSION_HEX >= 0x02050000
-/**begin repeat
-   #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
-   #Name=Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong#
-**/
-static Py_ssize_t
-@name@_index(PyObject *a)
-{
-    return PyArrayScalar_VAL(a, @Name@);    
-}
-/**end repeat**/
-#endif
 
 
 /**begin repeat
@@ -937,7 +923,7 @@ static PyNumberMethods @name@_as_number = {
     0,                                         /*nb_inplace_floor_divide*/
     0,                                         /*nb_inplace_true_divide*/
 #if PY_VERSION_HEX >= 0x02050000
-    (lenfunc)@name@_index,                     /*nb_index*/
+    (unaryfunc)NULL,                      /*nb_index*/
 #endif
 };
 /**end repeat**/
@@ -951,6 +937,9 @@ add_scalarmath(void)
        #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
        #NAME=Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble#
     **/
+#if PY_VERSION_HEX >= 0x02050000
+    @name@_as_number.nb_index = Py@NAME@ArrType_Type.tp_as_number->nb_index;
+#endif
     Py@NAME@ArrType_Type.tp_as_number = &(@name@_as_number);
     Py@NAME@ArrType_Type.tp_richcompare = @name@_richcompare;
     /**end repeat**/

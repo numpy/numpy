@@ -28,7 +28,7 @@ Makes the following changes:
  * Converts uses of type(...) is <type>
    isinstance(..., <type>)
 """
-__all__ = ['fromfile', 'fromstr', 'convertfile', 'convertall']
+__all__ = ['convertfile', 'convertall']
 
 import sys
 import os
