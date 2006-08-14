@@ -14,7 +14,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'fromiter', 'array_equal', 'array_equiv',
            'indices', 'fromfunction',
            'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
-           'ones', 'identity', 'allclose',
+           'ones', 'identity', 'allclose', 'compare_chararrays',
            'seterr', 'geterr', 'setbufsize', 'getbufsize',
            'seterrcall', 'geterrcall', 'flatnonzero',
            'Inf', 'inf', 'infty', 'Infinity',
@@ -119,6 +119,7 @@ fastCopyAndTranspose = multiarray._fastCopyAndTranspose
 set_numeric_ops = multiarray.set_numeric_ops
 can_cast = multiarray.can_cast
 lexsort = multiarray.lexsort
+compare_chararrays = multiarray.compare_chararrays
 
 
 def asarray(a, dtype=None, order=None):

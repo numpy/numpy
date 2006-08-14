@@ -1761,7 +1761,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
         PyUFuncReduceObject *loop;
         PyArrayObject *idarr;
 	PyArrayObject *aar;
-        intp loop_i[MAX_DIMS], outsize;
+        intp loop_i[MAX_DIMS], outsize=0;
         int arg_types[3] = {otype, otype, otype};
 	PyArray_SCALARKIND scalars[3] = {PyArray_NOSCALAR, PyArray_NOSCALAR, 
 					 PyArray_NOSCALAR};

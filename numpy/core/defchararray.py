@@ -1,5 +1,5 @@
 from numerictypes import string_, unicode_, integer, object_
-from numeric import ndarray, broadcast, empty
+from numeric import ndarray, broadcast, empty, compare_chararrays
 from numeric import array as narray
 import sys
 
@@ -12,7 +12,8 @@ _unicode = unicode
 # This adds + and * operations and methods of str and unicode types
 #  which operate on an element-by-element basis
 
-# It also strips white-space on element retrieval
+# It also strips white-space on element retrieval and on
+#   comparisons
 
 class chararray(ndarray):
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
@@ -44,8 +45,30 @@ class chararray(ndarray):
     def __getitem__(self, obj):
         val = ndarray.__getitem__(self, obj)
         if isinstance(val, (string_, unicode_)):
-            return val.rstrip()
+            temp = val.rstrip()
+            if len(temp) == 0:
+                val = val[0]
+            else:
+                val = temp
         return val
+
+    def __eq__(self, other): 
+        return compare_chararrays(self, other, '==', True)
+
+    def __ne__(self, other): 
+        return compare_chararrays(self, other, '!=', True)
+
+    def __ge__(self, other):
+        return compare_chararrays(self, other, '>=', True)        
+
+    def __le__(self, other):
+        return compare_chararrays(self, other, '<=', True)                
+
+    def __gt__(self, other):
+        return compare_chararrays(self, other, '>', True)
+
+    def __lt__(self, other):
+        return compare_chararrays(self, other, '<', True)        
 
     def __add__(self, other):
         b = broadcast(self, other)

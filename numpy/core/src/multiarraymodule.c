@@ -6357,6 +6357,71 @@ format_longfloat(PyObject *dummy, PyObject *args, PyObject *kwds)
     return PyString_FromString(repr);
 }
 
+static PyObject *
+compare_chararrays(PyObject *dummy, PyObject *args, PyObject *kwds)
+{
+    PyObject *array;
+    PyObject *other;
+    PyArrayObject *newarr, *newoth;
+    int cmp_op;
+    Bool rstrip;
+    char *cmp_str;
+    Py_ssize_t strlen;
+    PyObject *res=NULL;
+    static char msg[] = \
+            "comparision must be '==', '!=', '<', '>', '<=', '>='";
+
+    static char *kwlist[] = {"a1", "a2", "cmp", "rstrip", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOs#O&", kwlist,
+                                     &array, &other, 
+                                     &cmp_str, &strlen,
+                                     PyArray_BoolConverter, &rstrip))
+            return NULL;
+
+    if (strlen < 1 || strlen > 2) goto err;
+    if (strlen > 1) {
+            if (cmp_str[1] != '=') goto err;
+            if (cmp_str[0] == '=') cmp_op = Py_EQ;
+            else if (cmp_str[0] == '!') cmp_op = Py_NE;
+            else if (cmp_str[0] == '<') cmp_op = Py_LE;
+            else if (cmp_str[0] == '>') cmp_op = Py_GE;
+            else goto err;
+    }
+    else {
+            if (cmp_str[0] == '<') cmp_op = Py_LT;
+            else if (cmp_str[0] == '>') cmp_op = Py_GT;
+            else goto err;
+    }
+    
+    newarr = (PyArrayObject *)PyArray_FROM_O(array);
+    if (newarr == NULL) return NULL;
+    newoth = (PyArrayObject *)PyArray_FROM_O(other);
+    if (newoth == NULL) {
+            Py_DECREF(newarr);
+            return NULL;
+    }    
+    
+    if (PyArray_ISSTRING(newarr) && PyArray_ISSTRING(newoth)) {
+            res = _strings_richcompare(newarr, newoth, cmp_op, rstrip != 0);
+    }
+    else {
+            PyErr_SetString(PyExc_TypeError, 
+                            "comparison of non-string arrays");
+    }
+
+    Py_DECREF(newarr);
+    Py_DECREF(newoth);
+    return res;
+
+ err:
+    PyErr_SetString(PyExc_ValueError, msg);
+    return NULL;
+}
+
+
+
+
 static struct PyMethodDef array_module_methods[] = {
 	{"_get_ndarray_c_version", (PyCFunction)array__get_ndarray_c_version, 
 	 METH_VARARGS|METH_KEYWORDS, NULL},
@@ -6408,6 +6473,8 @@ static struct PyMethodDef array_module_methods[] = {
 	{"getbuffer", (PyCFunction)buffer_buffer,
 	 METH_VARARGS | METH_KEYWORDS, NULL},
         {"format_longfloat", (PyCFunction)format_longfloat,
+         METH_VARARGS | METH_KEYWORDS, NULL},
+        {"compare_chararrays", (PyCFunction)compare_chararrays,
          METH_VARARGS | METH_KEYWORDS, NULL},
 	{NULL,		NULL, 0}		/* sentinel */
 };
