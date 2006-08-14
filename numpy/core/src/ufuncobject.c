@@ -1870,7 +1870,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
                                             (PyObject *)aar);
                 }
                 else {
-                        outsize == PyArray_MultiplyList(loop_i, aar->nd-1);
+                        outsize = PyArray_MultiplyList(loop_i, aar->nd-1);
                 }
 		break;
 	case UFUNC_ACCUMULATE:
