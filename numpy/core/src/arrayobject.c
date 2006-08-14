@@ -4195,7 +4195,7 @@ _mystrncmp(char *s1, char *s2, int len1, int len2)
 static void _rstripw(char *s, int n)
 {
         int i;
-        for(i=strnlen(s,n)-1; i>=1; i--)  /* Never strip to length 0. */
+        for(i=n-1; i>=1; i--)  /* Never strip to length 0. */
         {
                 int c = s[i];
                 if (!c || isspace(c))
@@ -4245,8 +4245,8 @@ _char_release(char *ptr, int nc)
 static char *
 _uni_copy_n_strip(char *original, char *temp, int nc)
 {
-        if (nc*4 > SMALL_STRING) {
-                temp = malloc(nc);
+        if (nc*sizeof(PyArray_UCS4) > SMALL_STRING) {
+                temp = malloc(nc*sizeof(PyArray_UCS4));
                 if (!temp) {
                         PyErr_NoMemory();
                         return NULL;
