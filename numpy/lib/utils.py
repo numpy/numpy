@@ -2,7 +2,7 @@ import sys, os
 import inspect
 import types
 from numpy.core.numerictypes import obj2sctype, integer
-from numpy.core.multiarray import dtype as _dtype, _flagdict
+from numpy.core.multiarray import dtype as _dtype, _flagdict, flagsobj
 from numpy.core import product, ndarray
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
@@ -101,7 +101,7 @@ class _ndptr(object):
             raise TypeError, "array must have %d dimension(s)" % cls._ndim_
         if cls._shape_ is not None \
                and obj.shape != cls._shape_:
-            raise TypeError, "array must have shape %s" % cls._shape_
+            raise TypeError, "array must have shape %s" % str(cls._shape_)
         if cls._flags_ is not None \
                and ((obj.flags.num & cls._flags_) != cls._flags_):
             raise TypeError, "array must have flags %s" % \
@@ -121,9 +121,15 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
             flags = flags.split(',')
         elif isinstance(flags, (int, integer)):
             num = flags
-            flags = _flags_fromnum(flags)
+            flags = _flags_fromnum(num)
+        elif isinstance(flags, flagsobj):
+            num = flags.num
+            flags = _flags_fromnum(num)
         if num is None:
-            flags = [x.strip().upper() for x in flags]
+            try:
+                flags = [x.strip().upper() for x in flags]
+            except:
+                raise TypeError, "invalid flags specification"
             num = _num_fromflags(flags)
     try:
         return _pointer_type_cache[(dtype, ndim, shape, num)]
