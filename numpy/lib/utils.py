@@ -1,7 +1,7 @@
 import sys, os
 import inspect
 import types
-from numpy.core.numerictypes import obj2sctype, integer
+from numpy.core.numerictypes import obj2sctype, integer, generic
 from numpy.core.multiarray import dtype as _dtype, _flagdict, flagsobj
 from numpy.core import product, ndarray
 
@@ -19,7 +19,14 @@ def issubsctype(arg1, arg2):
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
 def issubdtype(arg1, arg2):
-    return issubclass(_dtype(arg1).type, _dtype(arg2).type)
+    if issubclass_(arg2, generic):
+        return issubclass(_dtype(arg1).type, arg2)
+    mro = _dtype(arg2).type.mro()
+    if len(mro) > 1:
+        val = mro[1]
+    else:
+        val = mro[0]
+    return issubclass(_dtype(arg1).type, val)
 
 def get_include():
     """Return the directory in the package that contains the numpy/*.h header
