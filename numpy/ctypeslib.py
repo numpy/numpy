@@ -1,11 +1,11 @@
-__all__ = ['ctypes_load_library', 'ndpointer', 'test']
+__all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library']
 
 import sys, os
-from numpy import integer, product, ndarray, dtype as _dtype
+from numpy import integer, product, ndarray, dtype as _dtype, deprecate
 from numpy.core.multiarray import _flagdict, flagsobj
 
 # Adapted from Albert Strasheim
-def ctypes_load_library(libname, loader_path):
+def load_library(libname, loader_path):
     if '.' not in libname:
         if sys.platform == 'win32':
             libname = '%s.dll' % libname
@@ -34,6 +34,8 @@ def _flags_fromnum(num):
         if (num & value):
             res.append(key)
     return res
+
+ctypes_load_library = deprecate(load_library, 'ctypes_load_library', 'load_library')
 
 class _ndptr(object):
     def from_param(cls, obj):

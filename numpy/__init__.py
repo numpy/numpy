@@ -39,12 +39,13 @@ else:
     import linalg
     import fft
     import random
+    import ctypeslib
 
     __all__ = ['__version__', 'pkgload', 'PackageLoader',
                'ScipyTest', 'NumpyTest', 'show_config']
     __all__ += core.__all__
     __all__ += lib.__all__
-    __all__ += ['linalg', 'fft', 'random']
+    __all__ += ['linalg', 'fft', 'random', 'ctypeslib']
         
     if __doc__ is not None:
         __doc__ += """
