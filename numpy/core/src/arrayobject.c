@@ -8626,6 +8626,8 @@ PyArray_IterAllButAxis(PyObject *obj, int *inaxis)
         it = (PyArrayIterObject *)PyArray_IterNew(obj);
         if (it == NULL) return NULL;
 
+        if (PyArray_NDIM(obj)==0) 
+                return (PyObject *)it;
         if (*inaxis < 0) {
                 int i, maxaxis=0;
                 intp maxdim=PyArray_DIM(obj,0);
