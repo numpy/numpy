@@ -31,11 +31,18 @@ class config_fc(Command):
         ('f90exec=', None, "specify F90 compiler command"),
         ('f77flags=',None,"specify F77 compiler flags"),
         ('f90flags=',None,"specify F90 compiler flags"),
+        ('ldshared=',None,"shared-library linker command"),
+        ('ld=',None,"static library linker command"),
+        ('ar=',None,"archiver command (ar)"),
+        ('ranlib=',None,"ranlib command"),
         ('opt=',None,"specify optimization flags"),
         ('arch=',None,"specify architecture specific optimization flags"),
         ('debug','g',"compile with debugging information"),
         ('noopt',None,"compile without optimization"),
         ('noarch',None,"compile without arch-dependent optimization"),
+        ('fflags=',None,"extra flags for Fortran compiler"),
+        ('ldflags=',None,"linker flags"),
+        ('arflags=',None,"flags for ar"),
         ]
 
     help_options = [
@@ -51,11 +58,18 @@ class config_fc(Command):
         self.f90exec = None
         self.f77flags = None
         self.f90flags = None
+        self.ldshared = None
+        self.ld = None
+        self.ar = None
+        self.ranlib = None
         self.opt = None
         self.arch = None
         self.debug = None
         self.noopt = None
         self.noarch = None
+        self.fflags = None
+        self.ldflags = None
+        self.arflags = None
 
     def finalize_options(self):
         fc = new_fcompiler(compiler=self.fcompiler,

@@ -81,10 +81,10 @@ class FCompiler(CCompiler):
         compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec'),
         compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec'),
         version_cmd = ('self.get_version_cmd', None, None),
-        linker_so = ('self.get_linker_so', 'LDSHARED', None),
-        linker_exe = ('self.get_linker_exe', 'LD', None),
-        archiver = (None, 'AR', None),
-        ranlib = (None, 'RANLIB', None),
+        linker_so = ('self.get_linker_so', 'LDSHARED', 'ldshared'),
+        linker_exe = ('self.get_linker_exe', 'LD', 'ld'),
+        archiver = (None, 'AR', 'ar'),
+        ranlib = (None, 'RANLIB', 'ranlib'),
     )
 
     flag_vars = EnvironmentConfig(
@@ -103,10 +103,10 @@ class FCompiler(CCompiler):
         debug = ('flags.debug', 'FDEBUG', None, None),
         debug_f77 = ('flags.debug_f77', None, None),
         debug_f90 = ('flags.debug_f90', None, None),
-        flags = ('self.get_flags', 'FFLAGS', None),
-        linker_so = ('flags.linker_so', 'LDFLAGS', None),
-        linker_exe = ('flags.linker_exe', 'LDFLAGS', None),
-        ar = ('flags.ar', 'ARFLAGS', None),
+        flags = ('self.get_flags', 'FFLAGS', 'fflags'),
+        linker_so = ('flags.linker_so', 'LDFLAGS', 'ldflags'),
+        linker_exe = ('flags.linker_exe', 'LDFLAGS', 'ldflags'),
+        ar = ('flags.ar', 'ARFLAGS', 'arflags'),
     )
 
     language_map = {'.f':'f77',
