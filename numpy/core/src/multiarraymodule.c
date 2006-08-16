@@ -4166,9 +4166,7 @@ _convert_from_array_descr(PyObject *obj)
 			if (PyTuple_GET_SIZE(name) != 2) goto fail;
 			title = PyTuple_GET_ITEM(name, 0);
 			name = PyTuple_GET_ITEM(name, 1);
-			if (!PyString_Check(name) || \
-			    (!PyString_Check(title) && \
-			     !PyUnicode_Check(title)))
+			if (!PyString_Check(name))
 				goto fail;
 		}
 		else goto fail;
@@ -4199,7 +4197,9 @@ _convert_from_array_descr(PyObject *obj)
 		else goto fail;
 		if (ret == PY_FAIL) goto fail;
                 if ((PyDict_GetItem(fields, name) != NULL) ||
-		    (title && (PyDict_GetItem(fields, title) != NULL))) {
+		    (title &&						
+		     (PyString_Check(title) || PyUnicode_Check(title)) && 
+		     (PyDict_GetItem(fields, title) != NULL))) {
 			PyErr_SetString(PyExc_ValueError,
 					"two fields with the same name");
                         goto fail;
@@ -4209,10 +4209,15 @@ _convert_from_array_descr(PyObject *obj)
 		tup = PyTuple_New((title == NULL ? 2 : 3));
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
 		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
+
+		/* Title can be "meta-data".  Only insert it
+		   into the fields dictionary if it is a string
+		*/
 		if (title != NULL) {			
 			Py_INCREF(title);
 			PyTuple_SET_ITEM(tup, 2, title);
-			PyDict_SetItem(fields, title, tup);
+			if (PyString_Check(title) || PyUnicode_Check(title)) 
+				PyDict_SetItem(fields, title, tup);
 		}
 		PyDict_SetItem(fields, name, tup);
 		totalsize += conv->elsize;
@@ -4370,7 +4375,10 @@ _convert_from_commastring(PyObject *obj, int align)
 		 will be assumed and placed in the dictionary.
    
    "titles" --- Allows the use of an additional key
-                 for the fields dictionary.
+                 for the fields dictionary.(if these are strings 
+                 or unicode objects) or 
+                 this can also be meta-data to
+		 be passed around with the field description. 
                             
 Attribute-lookup-based field names merely has to query the fields 
 dictionary of the data-descriptor.  Any result present can be used
@@ -4381,7 +4389,7 @@ arbitrary.
 
 What does distinguish a title, however, is that if it is not None, 
 it will be placed at the end of the tuple inserted into the 
-fields dictionary.
+fields dictionary.and can therefore be used to carry meta-data around. 
 
 If the dictionary does not have "names" and "formats" entries,
 then it will be checked for conformity and used directly. 
@@ -4494,7 +4502,8 @@ _convert_from_dict(PyObject *obj, int align)
 		PyDict_SetItem(fields, name, tup);
 		Py_DECREF(name);
 		if (len == 3) {
-			if (PyDict_GetItem(fields, item) != NULL) {
+			if ((PyString_Check(item) || PyUnicode_Check(item)) && \
+			    PyDict_GetItem(fields, item) != NULL) {
 				PyErr_SetString(PyExc_ValueError, 
 						"title already used as a "\
                                                 "name or title.");
