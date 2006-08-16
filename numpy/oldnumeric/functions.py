@@ -69,7 +69,7 @@ def identity(n,typecode='l', dtype=None):
 
 def empty(shape, typecode='l', dtype=None):
     dtype = convtypecode(typecode, dtype)    
-    return mu.empty(shape, dtype, order)
+    return mu.empty(shape, dtype)
 
 def array(sequence, typecode=None, copy=1, savespace=0, dtype=None):
     dtype = convtypecode2(typecode, dtype)
