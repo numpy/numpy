@@ -433,6 +433,19 @@ for key, val in _typestr.items():
     if val not in sctypeDict:
         sctypeDict[val] = key
 
+# Add additional strings to the sctypeDict
+
+_toadd = ['int', 'float', 'complex', 'bool', 'object', 'string', ('str', allTypes['string_']),
+          'unicode', 'object']
+
+for name in _toadd:
+    if isinstance(name, tuple):
+        sctypeDict[name[0]] = name[1]
+    else:
+        sctypeDict[name] = allTypes['%s_' % name]
+
+del _toadd, name
+
 # Now add the types we've determined to this module
 for key in allTypes:
     globals()[key] = allTypes[key]

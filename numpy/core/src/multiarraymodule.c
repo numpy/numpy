@@ -4246,7 +4246,7 @@ _convert_from_array_descr(PyObject *obj)
 */
 
 static PyArray_Descr *
-_convert_from_list(PyObject *obj, int align, int try_descr)
+_convert_from_list(PyObject *obj, int align)
 {
 	int n, i;
 	int totalsize;
@@ -4260,6 +4260,11 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
         int hasobject=0;
 	
 	n = PyList_GET_SIZE(obj);
+	/* Ignore any empty string at end which _internal._commastring
+	   can produce  */
+	key = PyList_GET_ITEM(obj, n-1);
+	if (PyString_Check(key) && PyString_GET_SIZE(key) == 0) n = n-1;
+	/* End ignore code.*/ 
 	totalsize = 0;
 	if (n==0) return NULL;
 	nameslist = PyTuple_New(n);
@@ -4304,16 +4309,7 @@ _convert_from_list(PyObject *obj, int align, int try_descr)
  fail:
 	Py_DECREF(nameslist);
 	Py_DECREF(fields);
-	if (!try_descr) return NULL;
-	if (align) {
-		PyErr_SetString(PyExc_ValueError, 
-				"failed to convert from list of formats "\
-				"and align cannot be 1 for conversion from "\
-				"array_descr structure");
-		return NULL;
-	}
-	PyErr_Clear();
-	return _convert_from_array_descr(obj);
+	return NULL;
 }
 
 
@@ -4348,7 +4344,7 @@ _convert_from_commastring(PyObject *obj, int align)
 		}
 	}
 	else {
-		res = _convert_from_list(listobj, align, 0);
+		res = _convert_from_list(listobj, align);
 	}
 	Py_DECREF(listobj);
 	if (!res && !PyErr_Occurred()) {
@@ -4716,7 +4712,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	}
 	/* or a list */
 	else if (PyList_Check(obj)) {
-		*at = _convert_from_list(obj,0,1);
+		*at = _convert_from_array_descr(obj);
 		if (*at == NULL) {
 			if (PyErr_Occurred()) return PY_FAIL;
 			goto fail;

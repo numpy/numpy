@@ -120,7 +120,8 @@ def _split(input):
     newlist = []
     hold = ''
 
-    for element in input.split(','):
+    listinput = input.split(',')
+    for element in listinput:
         if hold != '':
             item = hold + ',' + element
         else:

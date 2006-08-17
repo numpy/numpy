@@ -50,10 +50,14 @@ class format_parser:
 
         if formats is None:
             raise ValueError, "Need formats argument"
+        if isinstance(formats, list):
+            if len(formats) < 2:
+                formats.append('')
+            formats = ','.join(formats)
         dtype = sb.dtype(formats, aligned)
         fields = dtype.fields
         if fields is None:
-            dtype = sb.dtype([formats], aligned)
+            dtype = sb.dtype([('f1', dtype)], aligned)
             fields = dtype.fields
         keys = dtype.names
         self._f_formats = [fields[key][0] for key in keys]
