@@ -4239,7 +4239,7 @@ _convert_from_array_descr(PyObject *obj)
 
 /* a list specifying a data-type can just be
    a list of formats.  The names for the fields
-   will default to f1, f2, f3, and so forth.
+   will default to f0, f1, f2, and so forth.
 
    or it can be an array_descr format string -- in which case
    align must be 0.  
@@ -4272,7 +4272,7 @@ _convert_from_list(PyObject *obj, int align)
 	fields = PyDict_New();
 	for (i=0; i<n; i++) {
 		tup = PyTuple_New(2);
-		key = PyString_FromFormat("f%d", i+1);
+		key = PyString_FromFormat("f%d", i);
 		ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
 		if (ret == PY_FAIL) {
 			Py_DECREF(tup);
