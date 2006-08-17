@@ -64,7 +64,7 @@ for char in _chars.keys():
 
 def fixtypechars(fstr):
     for name in _func2 + _func4 + _meth1:
-        fstr = func2_re[name].sub('\\1B\\2',fstr)
+        fstr = func_re[name].sub('\\1B\\2',fstr)
     for char in _chars.keys():
         fstr = meth_re[char].sub('\\1%s\\2'%_chars[char], fstr)
     return fstr
