@@ -10441,18 +10441,30 @@ arraydescr_typename_get(PyArray_Descr *self)
         int len;
         PyTypeObject *typeobj = self->typeobj;
         PyObject *res;
-        static int suffix_len=0;
+	char *s;
+        static int prefix_len=0;
 
         if (PyTypeNum_ISUSERDEF(self->type_num)) {
-                res = PyString_FromString(typeobj->tp_name);
+		s = strrchr(typeobj->tp_name, '.');
+		if (s == NULL) {
+			res = PyString_FromString(typeobj->tp_name);
+		}
+		else {
+			res = PyString_FromStringAndSize(s+1, strlen(s)-1);
+		}
+		return res;
         }
         else {
-                if (suffix_len == 0)
-                        suffix_len = strlen("scalar");
-                len = strlen(typeobj->tp_name) - suffix_len;
-                res = PyString_FromStringAndSize(typeobj->tp_name, len);
+                if (prefix_len == 0)
+                        prefix_len = strlen("numpy.");
+		
+                len = strlen(typeobj->tp_name);
+		if (*(typeobj->tp_name + (len-1)) == '_')
+			len-=1;
+		len -= prefix_len;
+		res = PyString_FromStringAndSize(typeobj->tp_name+prefix_len, len);
         }
-        if (PyTypeNum_ISEXTENDED(self->type_num) && self->elsize != 0) {
+        if (PyTypeNum_ISFLEXIBLE(self->type_num) && self->elsize != 0) {
                 PyObject *p;
                 p = PyString_FromFormat("%d", self->elsize * 8);
                 PyString_ConcatAndDel(&res, p);

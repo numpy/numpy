@@ -23,7 +23,7 @@ character#
 static PyTypeObject Py@NAME@ArrType_Type = {
         PyObject_HEAD_INIT(NULL)
         0,                                        /*ob_size*/
-        "@name@scalar",                   /*tp_name*/
+        "numpy.@name@",                   /*tp_name*/
         sizeof(PyObject),                         /*tp_basicsize*/
 };
 /**end repeat**/
@@ -1652,7 +1652,7 @@ static PyBufferProcs gentype_as_buffer = {
 static PyTypeObject PyGenericArrType_Type = {
         PyObject_HEAD_INIT(NULL)
         0,                                        /*ob_size*/
-        "genericscalar",                         /*tp_name*/
+        "numpy.generic",                         /*tp_name*/
         sizeof(PyObject),                         /*tp_basicsize*/
 };
 
@@ -2195,7 +2195,7 @@ object_arrtype_call(PyObjectScalarObject *obj, PyObject *args, PyObject *kwds)
 static PyTypeObject PyObjectArrType_Type = {
         PyObject_HEAD_INIT(NULL)
         0,                                        /*ob_size*/
-        "objectscalar",                   /*tp_name*/
+        "numpy.object_",                           /*tp_name*/
         sizeof(PyObjectScalarObject),             /*tp_basicsize*/
         0,                                        /* tp_itemsize */
         (destructor)object_arrtype_dealloc,       /* tp_dealloc */
@@ -2219,11 +2219,12 @@ static PyTypeObject PyObjectArrType_Type = {
 /**begin repeat
 #name=bool, string, unicode, void#
 #NAME=Bool, String, Unicode, Void#
+#ex=_,_,_,#
 */
 static PyTypeObject Py@NAME@ArrType_Type = {
         PyObject_HEAD_INIT(NULL)
         0,                                        /*ob_size*/
-        "@name@scalar",                   /*tp_name*/
+        "numpy.@name@@ex@",                           /*tp_name*/
         sizeof(Py@NAME@ScalarObject),             /*tp_basicsize*/
 };
 /**end repeat**/
@@ -2253,7 +2254,7 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 static PyTypeObject Py@NAME@ArrType_Type = {
         PyObject_HEAD_INIT(NULL)
         0,                                           /*ob_size*/
-        "@name@" _THIS_SIZE "scalar", /*tp_name*/
+        "numpy.@name@" _THIS_SIZE, /*tp_name*/
         sizeof(Py@NAME@ScalarObject),                /*tp_basicsize*/
 };
 
@@ -2290,7 +2291,7 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 static PyTypeObject Py@NAME@ArrType_Type = {
         PyObject_HEAD_INIT(NULL)
         0,                                          /*ob_size*/
-        "@name@" _THIS_SIZE1 "scalar", /*tp_name*/
+        "numpy.@name@" _THIS_SIZE1, /*tp_name*/
         sizeof(Py@NAME@ScalarObject),             /*tp_basicsize*/
         0,                         /*tp_itemsize*/
         0,                         /*tp_dealloc*/

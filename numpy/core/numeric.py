@@ -328,7 +328,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     if typeless and arr.size:
         return cName + "(%s)" % lst
     else:
-        typename=arr.dtype.type.__name__[:-6]
+        typename=arr.dtype.name
         lf = ''
         if issubclass(arr.dtype.type, flexible):
             typename = str(arr.dtype)
