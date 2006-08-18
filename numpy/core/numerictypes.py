@@ -110,7 +110,11 @@ def bitname(obj):
     base = ''
     char = ''
     try:
-        info = typeinfo[name.upper()]
+        if name[-1] == '_':
+            newname = name[:-1]
+        else:
+            newname = name
+        info = typeinfo[newname.upper()]
         assert(info[-1] == obj)  # sanity check
         bits = info[2]
 
@@ -118,19 +122,19 @@ def bitname(obj):
         base, bits = _evalname(name)
         char = base[0]
 
-    if name == 'bool':
+    if name == 'bool_':
         char = 'b'
         base = 'bool'
-    elif name=='string':
+    elif name=='string_':
         char = 'S'
         base = 'string'
-    elif name=='unicode':
+    elif name=='unicode_':
         char = 'U'
         base = 'unicode'
     elif name=='void':
         char = 'V'
         base = 'void'
-    elif name=='object':
+    elif name=='object_':
         char = 'O'
         base = 'object'
         bits = 0
