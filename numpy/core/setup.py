@@ -102,16 +102,15 @@ def configuration(parent_package='',top_path=None):
                 if check_func('strtod'):
                     moredefs.append(('PyOS_ascii_strtod', 'strtod'))
 
-            if moredefs:
-                target_f = open(target,'a')
-                for d in moredefs:
-                    if isinstance(d,str):
-                        target_f.write('#define %s\n' % (d))
-                    else:
-                        target_f.write('#define %s %s\n' % (d[0],d[1]))
-                if not nosmp:  # default is to use WITH_THREAD
-                    target_f.write('#ifdef WITH_THREAD\n#define NPY_ALLOW_THREADS 1\n#else\n#define NPY_ALLOW_THREADS 0\n#endif\n')
-                target_f.close()
+            target_f = open(target,'a')
+            for d in moredefs:
+                if isinstance(d,str):
+                    target_f.write('#define %s\n' % (d))
+                else:
+                    target_f.write('#define %s %s\n' % (d[0],d[1]))
+            if not nosmp:  # default is to use WITH_THREAD
+                target_f.write('#ifdef WITH_THREAD\n#define NPY_ALLOW_THREADS 1\n#else\n#define NPY_ALLOW_THREADS 0\n#endif\n')
+            target_f.close()
         else:
             mathlibs = []
             target_f = open(target)
