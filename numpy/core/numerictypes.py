@@ -76,9 +76,9 @@ $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
 
 # we add more at the bottom
-__all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes', 'ScalarType', 'obj2sctype',
-           'cast', 'nbytes', 'sctype2char', 'maximum_sctype', 'issctype',
-           'typecodes']
+__all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
+           'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
+           'maximum_sctype', 'issctype', 'typecodes']
 
 from multiarray import typeinfo, ndarray, array, empty, dtype
 import types as _types
@@ -187,6 +187,7 @@ def _add_aliases():
                     na_name = "%s%d" % (base.capitalize(), bit)
                     sctypeDict[na_name] = typeobj
                 sctypeNA[na_name] = typeobj
+                sctypeDict[na_name] = typeobj
                 sctypeNA[typeobj] = na_name
                 sctypeNA[typeinfo[a][0]] = na_name
         if char != '':
