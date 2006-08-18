@@ -376,6 +376,10 @@ class masked_binary_operation:
         d1 = filled(a, self.fillx)
         d2 = filled(b, self.filly)
         result = self.f(d1, d2, *args, **kwargs)
+        if isinstance(result, ndarray) \
+               and m.ndim != 0 \
+               and m.shape != result.shape:
+            m = mask_or(getmaskarray(a), getmaskarray(b))
         return masked_array(result, m)
 
     def reduce (self, target, axis=0, dtype=None):
@@ -678,7 +682,7 @@ class MaskedArray (object):
             return masked_array(self._data.real, mask=nomask,
                             fill_value = self.fill_value())
         else:
-            return masked_array(self._data.real, mask=self._mask.ravel(),
+            return masked_array(self._data.real, mask=self._mask,
                             fill_value = self.fill_value())
 
     def _set_real (self, value):
@@ -692,7 +696,7 @@ class MaskedArray (object):
             return masked_array(self._data.imag, mask=nomask,
                             fill_value = self.fill_value())
         else:
-            return masked_array(self._data.imag, mask=self._mask.ravel(),
+            return masked_array(self._data.imag, mask=self._mask,
                             fill_value = self.fill_value())
 
     def _set_imaginary (self, value):
