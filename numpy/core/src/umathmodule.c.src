@@ -244,21 +244,21 @@ static double hypot(double x, double y)
 
 
 #ifndef HAVE_RINT
-static double 
+static double
 rint (double x)
 {
 	double y, r;
-	
+
 	y = floor(x);
 	r = x - y;
-	
+
 	if (r > 0.5) goto rndup;
 
 	/* Round to nearest even */
 	if (r==0.5) {
 		r = y - 2.0*floor(0.5*y);
 		if (r==1.0) {
-		rndup:	      
+		rndup:
 			y+=1.0;
 		}
 	}
@@ -1191,7 +1191,7 @@ static void
         char *i1 = args[0], *op = args[1];
         c@typ@ *x, *y;
         @typ@ xr, xi, xmag2;
-        
+
         for (i = 0; i < n; i++, i1 += is1, op += os) {
                 x = (c@typ@ *)i1;
                 y = (c@typ@ *)op;

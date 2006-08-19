@@ -6,7 +6,7 @@
                          long double is present on platform.
    CHAR_BIT       --     number of bits in a char (usually 8)
                          (should be in limits.h)
-			 
+
 */
 
 #ifndef Py_ARRAYOBJECT_H
@@ -15,5 +15,13 @@
 #ifdef NPY_NO_PREFIX
 #include "noprefix.h"
 #endif
-#endif
 
+
+/* Add signal handling macros */
+
+#define NPY_SIG_ON
+#define NPY_SIG_OFF
+#define NPY_SIG_CHECK
+
+
+#endif

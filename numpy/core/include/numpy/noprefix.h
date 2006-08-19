@@ -1,7 +1,7 @@
 #ifndef NPY_NOPREFIX_H
 #define NPY_NOPREFIX_H
 
-/* You can directly include noprefix.h as a backward 
+/* You can directly include noprefix.h as a backward
 compatibility measure*/
 #ifndef NPY_NO_PREFIX
 #include "ndarrayobject.h"
@@ -58,10 +58,10 @@ compatibility measure*/
 #define SIZEOF_INTP NPY_SIZEOF_INTP
 #define SIZEOF_UINTP NPY_SIZEOF_UINTP
 
-#define LONGLONG_FMT NPY_LONGLONG_FMT  
-#define ULONGLONG_FMT NPY_ULONGLONG_FMT 
+#define LONGLONG_FMT NPY_LONGLONG_FMT
+#define ULONGLONG_FMT NPY_ULONGLONG_FMT
 #define LONGLONG_SUFFIX NPY_LONGLONG_SUFFIX
-#define ULONGLONG_SUFFIX NPY_ULONGLONG_SUFFIX(x) 
+#define ULONGLONG_SUFFIX NPY_ULONGLONG_SUFFIX(x)
 
 #define MAX_INT8 127
 #define MIN_INT8 -128
@@ -99,16 +99,16 @@ compatibility measure*/
 #define MAX_ULONGLONG NPY_MAX_ULONGLONG
 
 #define SIZEOF_LONGDOUBLE NPY_SIZEOF_LONGDOUBLE
-#define SIZEOF_LONGLONG   NPY_SIZEOF_LONGLONG 
-#define BITSOF_BOOL       NPY_BITSOF_BOOL 
-#define BITSOF_CHAR       NPY_BITSOF_CHAR 
-#define BITSOF_SHORT      NPY_BITSOF_SHORT 
-#define BITSOF_INT        NPY_BITSOF_INT 
-#define BITSOF_LONG       NPY_BITSOF_LONG 
-#define BITSOF_LONGLONG   NPY_BITSOF_LONGLONG 
-#define BITSOF_FLOAT      NPY_BITSOF_FLOAT 
-#define BITSOF_DOUBLE     NPY_BITSOF_DOUBLE 
-#define BITSOF_LONGDOUBLE NPY_BITSOF_LONGDOUBLE 
+#define SIZEOF_LONGLONG   NPY_SIZEOF_LONGLONG
+#define BITSOF_BOOL       NPY_BITSOF_BOOL
+#define BITSOF_CHAR       NPY_BITSOF_CHAR
+#define BITSOF_SHORT      NPY_BITSOF_SHORT
+#define BITSOF_INT        NPY_BITSOF_INT
+#define BITSOF_LONG       NPY_BITSOF_LONG
+#define BITSOF_LONGLONG   NPY_BITSOF_LONGLONG
+#define BITSOF_FLOAT      NPY_BITSOF_FLOAT
+#define BITSOF_DOUBLE     NPY_BITSOF_DOUBLE
+#define BITSOF_LONGDOUBLE NPY_BITSOF_LONGDOUBLE
 
 #define PyArray_UCS4 npy_ucs4
 #define _pya_malloc PyArray_malloc
@@ -116,11 +116,11 @@ compatibility measure*/
 #define _pya_realloc PyArray_realloc
 
 #define BEGIN_THREADS_DEF NPY_BEGIN_THREADS_DEF
-#define BEGIN_THREADS     NPY_BEGIN_THREADS    
-#define END_THREADS       NPY_END_THREADS      
-#define ALLOW_C_API_DEF   NPY_ALLOW_C_API_DEF  
-#define	ALLOW_C_API       NPY_ALLOW_C_API      
-#define	DISABLE_C_API     NPY_DISABLE_C_API    
+#define BEGIN_THREADS     NPY_BEGIN_THREADS
+#define END_THREADS       NPY_END_THREADS
+#define ALLOW_C_API_DEF   NPY_ALLOW_C_API_DEF
+#define	ALLOW_C_API       NPY_ALLOW_C_API
+#define	DISABLE_C_API     NPY_DISABLE_C_API
 
 #define PY_FAIL NPY_FAIL
 #define PY_SUCCEED NPY_SUCCEED
@@ -136,31 +136,31 @@ compatibility measure*/
 #define LONGDOUBLE_FMT NPY_LONGDOUBLE_FMT
 
 #define CONTIGUOUS         NPY_CONTIGUOUS
-#define FORTRAN            NPY_FORTRAN       
-#define OWNDATA            NPY_OWNDATA       
-#define FORCECAST          NPY_FORCECAST     
-#define ENSURECOPY         NPY_ENSURECOPY    
-#define ENSUREARRAY        NPY_ENSUREARRAY        
-#define ELEMENTSTRIDES     NPY_ELEMENTSTRIDES     
-#define ALIGNED            NPY_ALIGNED            
-#define NOTSWAPPED         NPY_NOTSWAPPED         
-#define WRITEABLE          NPY_WRITEABLE          
-#define UPDATEIFCOPY       NPY_UPDATEIFCOPY       
-#define ARR_HAS_DESCR      NPY_ARR_HAS_DESCR      
-#define BEHAVED            NPY_BEHAVED      
-#define BEHAVED_NS         NPY_BEHAVED_NS   
-#define CARRAY             NPY_CARRAY       
-#define CARRAY_RO          NPY_CARRAY_RO    
-#define FARRAY             NPY_FARRAY       
-#define FARRAY_RO          NPY_FARRAY_RO    
-#define DEFAULT            NPY_DEFAULT      
-#define IN_ARRAY           NPY_IN_ARRAY           
-#define OUT_ARRAY          NPY_OUT_ARRAY          
-#define INOUT_ARRAY        NPY_INOUT_ARRAY        
-#define IN_FARRAY          NPY_IN_FARRAY          
-#define OUT_FARRAY         NPY_OUT_FARRAY         
-#define INOUT_FARRAY       NPY_INOUT_FARRAY       
-#define UPDATE_ALL         NPY_UPDATE_ALL   
+#define FORTRAN            NPY_FORTRAN
+#define OWNDATA            NPY_OWNDATA
+#define FORCECAST          NPY_FORCECAST
+#define ENSURECOPY         NPY_ENSURECOPY
+#define ENSUREARRAY        NPY_ENSUREARRAY
+#define ELEMENTSTRIDES     NPY_ELEMENTSTRIDES
+#define ALIGNED            NPY_ALIGNED
+#define NOTSWAPPED         NPY_NOTSWAPPED
+#define WRITEABLE          NPY_WRITEABLE
+#define UPDATEIFCOPY       NPY_UPDATEIFCOPY
+#define ARR_HAS_DESCR      NPY_ARR_HAS_DESCR
+#define BEHAVED            NPY_BEHAVED
+#define BEHAVED_NS         NPY_BEHAVED_NS
+#define CARRAY             NPY_CARRAY
+#define CARRAY_RO          NPY_CARRAY_RO
+#define FARRAY             NPY_FARRAY
+#define FARRAY_RO          NPY_FARRAY_RO
+#define DEFAULT            NPY_DEFAULT
+#define IN_ARRAY           NPY_IN_ARRAY
+#define OUT_ARRAY          NPY_OUT_ARRAY
+#define INOUT_ARRAY        NPY_INOUT_ARRAY
+#define IN_FARRAY          NPY_IN_FARRAY
+#define OUT_FARRAY         NPY_OUT_FARRAY
+#define INOUT_FARRAY       NPY_INOUT_FARRAY
+#define UPDATE_ALL         NPY_UPDATE_ALL
 
 #define OWN_DATA          NPY_OWNDATA
 #define BEHAVED_FLAGS     NPY_BEHAVED
@@ -186,4 +186,4 @@ compatibility measure*/
 #define REFCOUNT PyArray_REFCOUNT
 #define MAX_ELSIZE NPY_MAX_ELSIZE
 
-#endif 
+#endif

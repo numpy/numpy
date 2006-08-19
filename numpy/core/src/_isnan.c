@@ -1,6 +1,6 @@
 /* Adapted from cephes */
 
-static int 
+static int
 isnan(double x)
 {
 	union
@@ -9,7 +9,7 @@ isnan(double x)
 		unsigned short s[4];
 		unsigned int i[2];
 	} u;
-	
+
 	u.d = x;
 
 #if SIZEOF_INT == 4
@@ -39,9 +39,8 @@ isnan(double x)
                         return 1;
                 }
 #endif
-       
+
 #endif  /* SIZEOF_INT */
-       
+
        return 0;
 }
-

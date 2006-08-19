@@ -16,7 +16,3 @@
 #define OWN_DATA NPY_OWNDATA
 #define SAVESPACE 0
 #define SAVESPACEBIT 0
-
-
-
-

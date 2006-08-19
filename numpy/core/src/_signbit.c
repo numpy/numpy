@@ -1,6 +1,6 @@
 /* Adapted from cephes */
 
-static int 
+static int
 signbit(double x)
 {
 	union
@@ -9,7 +9,7 @@ signbit(double x)
 		short s[4];
 		int i[2];
 	} u;
-	
+
 	u.d = x;
 
 #if SIZEOF_INT == 4
@@ -27,6 +27,6 @@ signbit(double x)
 #else
 	return u.s[3] < 0;
 #endif
-	
+
 #endif  /* SIZEOF_INT */
 }

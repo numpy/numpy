@@ -38,7 +38,7 @@ typedef struct {
 #define UFUNC_SHIFT_DIVIDEBYZERO 0
 #define UFUNC_SHIFT_OVERFLOW     2
 #define UFUNC_SHIFT_UNDERFLOW    4
-#define UFUNC_SHIFT_INVALID      6       
+#define UFUNC_SHIFT_INVALID      6
 
 
 /* platform-dependent code translates floating point
@@ -48,28 +48,28 @@ typedef struct {
 #define UFUNC_FPE_OVERFLOW      2
 #define UFUNC_FPE_UNDERFLOW     4
 #define UFUNC_FPE_INVALID       8
-	
+
 #define UFUNC_ERR_DEFAULT 0  /* Default error mode */
 
 	/* Only internal -- not exported, yet*/
 typedef struct {
-	/* Multi-iterator portion --- needs to be present in this order 
+	/* Multi-iterator portion --- needs to be present in this order
 	   to work with PyArray_Broadcast */
 	PyObject_HEAD
 	int  numiter;
 	npy_intp size;
 	npy_intp index;
 	int nd;
-	npy_intp dimensions[NPY_MAXDIMS];	
+	npy_intp dimensions[NPY_MAXDIMS];
 	PyArrayIterObject *iters[NPY_MAXARGS];
         /*  End of Multi-iterator portion */
 
 	/* The ufunc */
 	PyUFuncObject *ufunc;
-	
+
 	/* The error handling */
 	int errormask;         /* Integer showing desired error handling */
-	PyObject *errobj;      /* currently a tuple with 
+	PyObject *errobj;      /* currently a tuple with
 				  (string, func or None)
 			       */
 
@@ -85,7 +85,7 @@ typedef struct {
 	int leftover;
 	int ninnerloops;
 	int lastdim;
-	
+
 	/* Whether or not to swap */
 	int swap[NPY_MAXARGS];
 
@@ -102,16 +102,16 @@ typedef struct {
 	/* usually points to buffer but when a cast is to be
 	   done it switches for that argument to castbuf.
 	*/
-	char *bufptr[NPY_MAXARGS];  
+	char *bufptr[NPY_MAXARGS];
 
 	/* Steps filled in from iters or sizeof(item)
-	   depending on loop method. 
+	   depending on loop method.
 	*/
 	npy_intp steps[NPY_MAXARGS];
 
         int obj;  /* This loop uses object arrays */
-        int notimplemented; /* The loop caused notimplemented */	
-        int objfunc; /* This loop calls object functions 
+        int notimplemented; /* The loop caused notimplemented */
+        int objfunc; /* This loop calls object functions
                         (an inner-loop function with argument types */
 } PyUFuncLoopObject;
 
@@ -218,9 +218,9 @@ typedef struct {
 		| ((IEEE_STATUS_UNF & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
 		| ((IEEE_STATUS_INV & fpstatus) ? UFUNC_FPE_INVALID : 0); \
 	}
-	
+
 /* MS Windows -----------------------------------------------------*/
-#elif defined(_MSC_VER) 
+#elif defined(_MSC_VER)
 
 #include <float.h>
 
@@ -237,11 +237,11 @@ typedef struct {
 #define isinf(x) ((_fpclass((double)(x)) == _FPCLASS_PINF) ||	\
 		  (_fpclass((double)(x)) == _FPCLASS_NINF))
 #define isfinite(x) (_finite((double) x))
-	
+
 /* Solaris --------------------------------------------------------*/
 /* --------ignoring SunOS ieee_flags approach, someone else can
 **         deal with that! */
-#elif defined(sun) || defined(__BSD__) || defined(__OpenBSD__) 
+#elif defined(sun) || defined(__BSD__) || defined(__OpenBSD__)
 #include <ieeefp.h>
 
 #define UFUNC_CHECK_STATUS(ret) {				\
@@ -254,7 +254,7 @@ typedef struct {
 		| ((FP_X_INV & fpstatus) ? UFUNC_FPE_INVALID : 0);	\
 	(void) fpsetsticky(0);						\
 	}
-	
+
 #elif defined(linux) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
 
 #if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__)
@@ -276,7 +276,7 @@ typedef struct {
 
 #define generate_divbyzero_error() feraiseexcept(FE_DIVBYZERO)
 #define generate_overflow_error() feraiseexcept(FE_OVERFLOW)
-	
+
 #elif defined(_AIX)
 
 #include <float.h>
@@ -298,7 +298,7 @@ typedef struct {
 
 #else
 
-#define NO_FLOATING_POINT_SUPPORT 
+#define NO_FLOATING_POINT_SUPPORT
 #define UFUNC_CHECK_STATUS(ret) { \
     ret = 0;							     \
   }
@@ -319,7 +319,7 @@ static void generate_divbyzero_error(void) {
 	   return;
 	else /* should never be called */
 	   numeric_zero2 += 1;
-	return;	
+	return;
 }
 #endif
 

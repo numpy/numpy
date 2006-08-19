@@ -1,9 +1,9 @@
 /* -*- c -*- */
 
 /* The purpose of this module is to add faster math for array scalars
-   that does not go through the ufunc machinery  
+   that does not go through the ufunc machinery
 
-   but still supports error-modes. 
+   but still supports error-modes.
 */
 
 #include "Python.h"
@@ -105,7 +105,7 @@ static int slonglong_overflow(longlong a0, longlong b0)
 
 BINARY:
 
-add, subtract, multiply, divide, remainder, divmod, power, 
+add, subtract, multiply, divide, remainder, divmod, power,
 floor_divide, true_divide
 
 lshift, rshift, and, or, xor (integers only)
@@ -173,7 +173,7 @@ static void
 #if @neg@
     if (temp > MAX_@NAME@ || temp < MIN_@NAME@)
 #else
-        if (temp > MAX_@NAME@) 
+        if (temp > MAX_@NAME@)
 #endif
 	    generate_overflow_error();
     return;
@@ -336,14 +336,14 @@ static @name@ (*_basic_@name@_fmod)(@name@, @name@);
 /**begin repeat
    #name=float,double,longdouble#
 **/
-static void 
-@name@_ctype_remainder(@name@ a, @name@ b, @name@ *out) { 
+static void
+@name@_ctype_remainder(@name@ a, @name@ b, @name@ *out) {
     @name@ mod;
     mod = _basic_@name@_fmod(a, b);
     if (mod && (((b < 0) != (mod < 0)))) mod += b;
     *out = mod;
-} 
-/**end repeat**/ 
+}
+/**end repeat**/
 
 
 
@@ -402,8 +402,8 @@ static void
 }
 /**end repeat**/
 
-/* Get the nc_powf, nc_pow, and nc_powl functions from 
-   the data area of the power ufunc in umathmodule. 
+/* Get the nc_powf, nc_pow, and nc_powl functions from
+   the data area of the power ufunc in umathmodule.
 */
 
 /**begin repeat
@@ -465,7 +465,7 @@ static void
 
 1) Convert the types to the common type if both are scalars (0 return)
 2) If both are not scalars use ufunc machinery (-2 return)
-3) If both are scalars but cannot be cast to the right type 
+3) If both are scalars but cannot be cast to the right type
 return NotImplmented (-1 return)
 
 4) Perform the function on the C-type.
@@ -474,18 +474,18 @@ what the current error-handling is and handle the error.
 
 6) Construct and return the output scalar.
 */
-	       
+
 
 /**begin repeat
    #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
    #Name=Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble#
    #NAME=BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE#
-**/ 
+**/
 
 static int
 _@name@_convert_to_ctype(PyObject *a, @name@ *arg1)
 {
-    PyObject *temp; 
+    PyObject *temp;
 
     if (PyArray_IsScalar(a, @Name@)) {
 	*arg1 = PyArrayScalar_VAL(a, @Name@);
@@ -511,10 +511,10 @@ _@name@_convert_to_ctype(PyObject *a, @name@ *arg1)
 	return retval;
     }
     return -2;
-}	
+}
 
 static int
-_@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1, 
+_@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1,
 			   PyObject *b, @name@ *arg2)
 {
     int ret;
@@ -550,7 +550,7 @@ static PyObject *
 
 #if @fperr@
     int retstatus;
-#endif    
+#endif
 
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
     case 0:
@@ -581,8 +581,8 @@ static PyObject *
     if (retstatus) {
 	int bufsize, errmask;
 	PyObject *errobj;
-	if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask, 
-				&errobj) < 0) 
+	if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
+				&errobj) < 0)
 	    return NULL;
 	if (PyUFunc_handlefperr(errmask, errobj, retstatus))
 	    return NULL;
@@ -634,11 +634,11 @@ static PyObject *
     @name@ out = 0;
     @otyp@ out1=0;
 #endif
-	
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
     case 0:
         break;
-    case -1: /* can't cast both safely 
+    case -1: /* can't cast both safely
 		mixed-types? */
 	return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
     case -2: /* use default handling */
@@ -658,7 +658,7 @@ static PyObject *
 #else
     if (arg2 == 0) {
 	out1 = out = 1;
-    }    
+    }
 #endif
 #if @isint@
     else if (arg2 < 0) {
@@ -675,8 +675,8 @@ static PyObject *
     if (retstatus) {
 	int bufsize, errmask;
 	PyObject *errobj;
-	if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask, 
-				&errobj) < 0) 
+	if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
+				&errobj) < 0)
 	    return NULL;
 	if (PyUFunc_handlefperr(errmask, errobj, retstatus))
 	    return NULL;
@@ -698,7 +698,7 @@ static PyObject *
     if (ret==NULL) return NULL;
     PyArrayScalar_ASSIGN(ret, @Name@, out);
 #endif
-    
+
     return ret;
 }
 /**end repeat**/
@@ -731,7 +731,7 @@ static PyObject *
     @name@ arg1;
     @otyp@ out;
     PyObject *ret;
-	
+
     switch(_@name@_convert_to_ctype(a, &arg1)) {
     case 0:
         break;
@@ -770,21 +770,21 @@ static int
 {
     int ret;
     @name@ arg1;
-	
+
     if (_@name@_convert_to_ctype(a, &arg1) < 0) {
 	if (PyErr_Occurred()) return -1;
         return PyGenericArrType_Type.tp_as_number->nb_nonzero(a);
     }
-    
+
     /* here we do the actual calculation with arg1 and arg2 */
     /* make it a function call. */
 
 #if @simp@
     ret = (arg1 != 0);
-#else 
+#else
     ret = ((arg1.real != 0) || (arg1.imag != 0));
 #endif
-    
+
     return ret;
 }
 /**end repeat**/
@@ -838,7 +838,7 @@ static PyObject*
 {
     @name@ arg1, arg2;
     int out=0;
-	
+
     switch(_@name@_convert2_to_ctypes(self, &arg1, other, &arg2)) {
     case 0:
 	break;
@@ -869,7 +869,7 @@ static PyObject*
 	out = @simp@_cmp_gt(arg1, arg2);
 	break;
     }
-    
+
     if (out) {
 	PyArrayScalar_RETURN_TRUE;
     }
@@ -963,17 +963,17 @@ get_functions(void)
     char *signatures;
     int i, j;
     int ret = -1;
-	
+
     /* Get the nc_pow functions */
     /* Get the pow functions */
     mm = PyImport_ImportModule("numpy.core.umath");
     if (mm == NULL) return -1;
-    
+
     obj = PyObject_GetAttrString(mm, "power");
     if (obj == NULL) goto fail;
     funcdata = ((PyUFuncObject *)obj)->data;
     signatures = ((PyUFuncObject *)obj)->types;
-    
+
     i = 0;
     j = 0;
     while(signatures[i] != PyArray_FLOAT) {i+=3; j++;}
@@ -1058,9 +1058,9 @@ alter_pyscalars(PyObject *dummy, PyObject *args)
 	    PyComplex_Type.tp_compare = PyCDoubleArrType_Type.tp_compare;
 	    PyComplex_Type.tp_richcompare =		\
 		PyCDoubleArrType_Type.tp_richcompare;
-	} 
+	}
 	else {
-	    PyErr_SetString(PyExc_ValueError, 
+	    PyErr_SetString(PyExc_ValueError,
 			    "arguments must be int, float, or complex");
 	    return NULL;
 	}
@@ -1092,9 +1092,9 @@ restore_pyscalars(PyObject *dummy, PyObject *args)
 	    PyComplex_Type.tp_as_number = saved_tables[6];
 	    PyComplex_Type.tp_compare = saved_tables[7];
 	    PyComplex_Type.tp_richcompare = saved_tables[8];
-	} 
+	}
 	else {
-	    PyErr_SetString(PyExc_ValueError, 
+	    PyErr_SetString(PyExc_ValueError,
 			    "arguments must be int, float, or complex");
 	    return NULL;
 	}
@@ -1126,9 +1126,9 @@ use_pythonmath(PyObject *dummy, PyObject *args)
 	    PyCDoubleArrType_Type.tp_as_number = saved_tables[6];
 	    PyCDoubleArrType_Type.tp_compare = saved_tables[7];
 	    PyCDoubleArrType_Type.tp_richcompare = saved_tables[8];
-	} 
+	}
 	else {
-	    PyErr_SetString(PyExc_ValueError, 
+	    PyErr_SetString(PyExc_ValueError,
 			    "arguments must be int, float, or complex");
 	    return NULL;
 	}
@@ -1160,9 +1160,9 @@ use_scalarmath(PyObject *dummy, PyObject *args)
 	    PyCDoubleArrType_Type.tp_as_number = saved_tables_arrtype[6];
 	    PyCDoubleArrType_Type.tp_compare = saved_tables_arrtype[7];
 	    PyCDoubleArrType_Type.tp_richcompare = saved_tables_arrtype[8];
-	} 
+	}
 	else {
-	    PyErr_SetString(PyExc_ValueError, 
+	    PyErr_SetString(PyExc_ValueError,
 			    "arguments must be int, float, or complex");
 	    return NULL;
 	}
@@ -1187,9 +1187,9 @@ PyMODINIT_FUNC initscalarmath(void) {
     PyObject *m;
 
     m = Py_InitModule("scalarmath", methods);
-	
-    import_array(); 
-    import_umath(); 
+
+    import_array();
+    import_umath();
 
     if (get_functions() < 0) return;
 

@@ -868,7 +868,7 @@ gentype_real_get(PyObject *self)
 
         if (PyArray_IsScalar(self, ComplexFloating)) {
                 typecode = _realdescr_fromcomplexscalar(self, &typenum);
-                ret = PyArray_Scalar(scalar_value(self, NULL), 
+                ret = PyArray_Scalar(scalar_value(self, NULL),
                                      typecode, NULL);
                 Py_DECREF(typecode);
                 return ret;
@@ -1782,7 +1782,7 @@ bool_arrtype_nonzero(PyObject *a)
 /**begin repeat
 #name=byte, short, int, long, ubyte, ushort, longlong, uint, ulong, ulonglong#
 #Name=Byte, Short, Int, Long, UByte, UShort, LongLong, UInt, ULong, ULongLong#
-#type=PyInt_FromLong*6, PyLong_FromLongLong*1, PyLong_FromUnsignedLong*2, PyLong_FromUnsignedLongLong# 
+#type=PyInt_FromLong*6, PyLong_FromLongLong*1, PyLong_FromUnsignedLong*2, PyLong_FromUnsignedLongLong#
 */
 static PyNumberMethods @name@_arrtype_as_number;
 static PyObject *

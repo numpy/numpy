@@ -374,11 +374,14 @@ def obj2sctype(rep, default=None):
         return _python_type(rep)
     if isinstance(rep, ndarray):
         return rep.dtype.type
-    res = sctypeDict.get(rep, default)
-    return res
+    try:
+        res = dtype(rep)
+    except:
+        return default
+    return res.type
 
 
-# This dictionary allows look up based on any alias for an array type
+# This dictionary allows look up based on any alias for an array data-type
 class _typedict(dict):
     def __getitem__(self, obj):
         return dict.__getitem__(self, obj2sctype(obj))

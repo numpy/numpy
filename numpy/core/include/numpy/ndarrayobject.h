@@ -77,7 +77,7 @@ typedef unsigned char npy_bool;
 #endif
 
 #ifndef Py_USING_UNICODE
-#error Must use Python with unicode enabled. 
+#error Must use Python with unicode enabled.
 #endif
 
 
@@ -205,7 +205,7 @@ typedef enum {
         NPY_WRAP=1,
         NPY_RAISE=2
 } NPY_CLIPMODE;
- 
+
 	/* Define bit-width array types and typedefs */
 
 #define NPY_MAX_INT8 127
@@ -684,17 +684,15 @@ typedef int Py_ssize_t;
 
   /* Data buffer */
 #define PyDataMem_NEW(size) ((char *)malloc(size))
-  /* #define PyArrayMem_NEW(size) PyMem_NEW(char, size)*/
 #define PyDataMem_FREE(ptr)  free(ptr)
-  /* #define PyArrayMem_FREE(ptr) PyMem_Free(ptr) */
 #define PyDataMem_RENEW(ptr,size) ((char *)realloc(ptr,size))
 
-#define NPY_USE_PYMEM 0
+#define NPY_USE_PYMEM 1
 
 #if NPY_USE_PYMEM == 1
-#define PyArray_malloc PyObject_Malloc
-#define PyArray_free PyObject_Free
-#define PyArray_realloc PyObject_Realloc
+#define PyArray_malloc PyMem_Malloc
+#define PyArray_free PyMem_Free
+#define PyArray_realloc PyMem_Realloc
 #else
 #define PyArray_malloc malloc
 #define PyArray_free free
@@ -759,11 +757,11 @@ typedef struct {
         PyArray_CopySwapFunc *copyswap;
 
 	/* Function to compare items */
-	/* Can be NULL 
+	/* Can be NULL
 	 */
 	PyArray_CompareFunc *compare;
 
-	/* Function to select largest 
+	/* Function to select largest
 	   Can be NULL
 	*/
 	PyArray_ArgFunc *argmax;
@@ -773,8 +771,8 @@ typedef struct {
 	PyArray_DotFunc	*dotfunc;
 
 	/* Function to scan an ASCII file and
-	   place a single value plus possible separator 
-	   Can be NULL 
+	   place a single value plus possible separator
+	   Can be NULL
 	*/
 	PyArray_ScanFunc *scanfunc;
 
@@ -790,7 +788,7 @@ typedef struct {
 	/* Used for arange. Can be NULL.*/
 	PyArray_FillFunc *fill;
 
-	/* Function to fill arrays with scalar values 
+	/* Function to fill arrays with scalar values
 	 Can be NULL*/
 	PyArray_FillWithScalarFunc *fillwithscalar;
 
@@ -958,7 +956,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_FARRAY_RO NPY_FORTRAN | NPY_ALIGNED
 #define NPY_DEFAULT NPY_CARRAY
 #define NPY_IN_ARRAY NPY_CARRAY_RO
-#define NPY_OUT_ARRAY NPY_CARRAY 
+#define NPY_OUT_ARRAY NPY_CARRAY
 #define NPY_INOUT_ARRAY NPY_CARRAY | NPY_UPDATEIFCOPY
 #define NPY_IN_FARRAY NPY_FARRAY_RO
 #define NPY_OUT_FARRAY NPY_FARRAY
@@ -972,7 +970,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /* So that ufunc buffers are aligned */
 #define NPY_MIN_BUFSIZE ((int)sizeof(cdouble))
 #define NPY_MAX_BUFSIZE (((int)sizeof(cdouble))*1000000)
-#define NPY_BUFSIZE 10000 
+#define NPY_BUFSIZE 10000
 /* #define NPY_BUFSIZE 80*/
 
 #define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
@@ -1003,8 +1001,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ALLOW_C_API      __save__ = PyGILState_Ensure();
 #define NPY_DISABLE_C_API    PyGILState_Release(__save__);
 #else
-#define NPY_BEGIN_ALLOW_THREADS 
-#define NPY_END_ALLOW_THREADS 
+#define NPY_BEGIN_ALLOW_THREADS
+#define NPY_END_ALLOW_THREADS
 #define NPY_BEGIN_THREADS_DEF
 #define NPY_BEGIN_THREADS
 #define NPY_END_THREADS
@@ -1376,7 +1374,7 @@ typedef struct {
     int flags;            /* how should be data interpreted. Valid
                              flags are CONTIGUOUS (1), FORTRAN (2),
                              ALIGNED (0x100), NOTSWAPPED (0x200), and
-                             WRITEABLE (0x400). 
+                             WRITEABLE (0x400).
 			     ARR_HAS_DESCR (0x800) states that arrdescr
                                 field is present in structure */
     npy_intp *shape;          /* A length-nd array of shape information */
