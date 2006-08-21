@@ -16,12 +16,6 @@
 #include "noprefix.h"
 #endif
 
-
-/* Add signal handling macros */
-
-#define NPY_SIG_ON
-#define NPY_SIG_OFF
-#define NPY_SIG_CHECK
-
-
+#ifndef NPY_NO_SIGNAL
+#include "npy_interrupt.h"
 #endif

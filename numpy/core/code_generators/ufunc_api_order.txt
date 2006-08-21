@@ -27,3 +27,4 @@ PyUFunc_checkfperr
 PyUFunc_clearfperr
 PyUFunc_getfperr
 PyUFunc_handlefperr
+PyUFunc_ReplaceLoopBySignature
