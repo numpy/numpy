@@ -39,11 +39,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
         if num == 1:
             return array([float(start)])
         step = (stop-start)/float((num-1))
+        y = _nx.arange(0, num) * step + start
+        y[-1] = stop        
     else:
         step = (stop-start)/float(num)
-    y = _nx.arange(0, num) * step + start
-    if endpoint:
-        y[-1] = stop
+        y = _nx.arange(0, num) * step + start  
     if retstep:
         return y, step
     else:
