@@ -10487,7 +10487,7 @@ static PyObject *
 arraydescr_shape_get(PyArray_Descr *self)
 {
         if (self->subarray == NULL) {
-                return Py_BuildValue("(N)", PyInt_FromLong(1));
+                return PyTuple_New(0);
         }
         Py_INCREF(self->subarray->shape);
         return (PyObject *)(self->subarray->shape);
