@@ -88,7 +88,7 @@ _import_array(void)
   return 0;
 }
 
-#define import_array() { if (_import_array() < 0) {PyErr_Print(); Py_FatalError("numpy.core.multiarray failed to import... exiting.\n"); } }
+#define import_array() { if (_import_array() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import"); return; } }
 
 #endif
 

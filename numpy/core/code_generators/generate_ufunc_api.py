@@ -48,7 +48,7 @@ _import_umath(void)
   return 0;
 }
 
-#define import_umath() { if (_import_umath() < 0) {PyErr_Print(); Py_FatalError("numpy.core.umath failed to import... exiting.\n"); }}
+#define import_umath() { if (_import_umath() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.umath failed to import\n"); return; }}
 
 #define import_ufunc import_umath
 

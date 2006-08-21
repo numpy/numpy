@@ -3025,7 +3025,7 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
 /*UFUNC_API*/
 static int
 PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func, 
-			       PyUFuncGenericFunction *newfunc, 
+			       PyUFuncGenericFunction newfunc, 
 			       int *signature, 
 			       PyUFuncGenericFunction *oldfunc)
 {
@@ -3033,7 +3033,7 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
 	/* Find the location of the matching signature */
 	for (i=0; i<func->ntypes; i++) {
 		for (j=0; j<func->nargs; j++) {
-			if (signature[j] == func->types[i*self->nargs+j])
+			if (signature[j] == func->types[i*func->nargs+j])
 				break;
 		}
 		if (j >= func->nargs) return -1;

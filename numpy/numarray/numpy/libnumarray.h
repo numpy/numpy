@@ -56,7 +56,7 @@ static void **libnumarray_API;
         }                                                                   \
       }
       
-#define import_libnumarray() _import_libnumarray(); if (PyErr_Occurred()) { PyErr_Print(); Py_FatalError("numpy.numarray._capi failed to import... exiting.\n"); }
+#define import_libnumarray() _import_libnumarray(); if (PyErr_Occurred()) { PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.numarray._capi failed to import.\n"); return; }
       
 #endif
 

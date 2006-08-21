@@ -42,6 +42,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
     else:
         step = (stop-start)/float(num)
     y = _nx.arange(0, num) * step + start
+    if endpoint:
+        y[-1] = stop
     if retstep:
         return y, step
     else:
