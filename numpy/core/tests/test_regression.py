@@ -353,5 +353,12 @@ class test_regression(NumpyTestCase):
         v = N.array([1,2,3,4,5,6,7,8,9,10])
         assert_equal(N.lexsort(v),0)
 
+    def check_swap_real(self, level=rlevel):
+        """Ticket #265"""
+        assert_equal(N.arange(4,dtype='>c8').imag.max(),0.0)
+        assert_equal(N.arange(4,dtype='<c8').imag.max(),0.0)
+        assert_equal(N.arange(4,dtype='>c8').real.max(),3.0)
+        assert_equal(N.arange(4,dtype='<c8').real.max(),3.0)
+
 if __name__ == "__main__":
     NumpyTest().run()

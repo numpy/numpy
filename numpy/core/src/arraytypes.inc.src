@@ -1041,7 +1041,8 @@ static void
         }
 
         if (swap) {
-                _strided_byte_swap(dst, dstride, n, sizeof(@type@));
+                _strided_byte_swap(dst, dstride, n, SIZEOF_@fsize@);
+                _strided_byte_swap(dst + SIZEOF_@fsize@, dstride, n, SIZEOF_@fsize@);
         }
 }
 
