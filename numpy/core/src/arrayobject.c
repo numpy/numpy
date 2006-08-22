@@ -6280,6 +6280,43 @@ array_base_get(PyArrayObject *self)
         }
 }
 
+/* Create a view of a complex array with an equivalent data-type
+   except it is real instead of complex. 
+*/
+
+static PyArrayObject *
+_get_part(PyArrayObject *self, int imag)
+{
+        PyArray_Descr *type;
+        PyArrayObject *ret;
+        int offset;
+
+        type = PyArray_DescrFromType(self->descr->type_num -
+                                     PyArray_NUM_FLOATTYPE);
+        offset = (imag ? type->elsize : 0);
+        
+        if (!PyArray_ISNBO(self->descr->byteorder)) {
+                PyArray_Descr *new;
+                new = PyArray_DescrNew(type);
+                new->byteorder = self->descr->byteorder;
+                Py_DECREF(type);
+                type = new;
+        }
+        ret = (PyArrayObject *)                                 \
+                PyArray_NewFromDescr(self->ob_type,
+                                     type,
+                                     self->nd,
+                                     self->dimensions,
+                                     self->strides,
+                                     self->data + offset,
+                                     self->flags, (PyObject *)self);
+        if (ret == NULL) return NULL;
+        ret->flags &= ~CONTIGUOUS;
+        ret->flags &= ~FORTRAN;
+        Py_INCREF(self);
+        ret->base = (PyObject *)self;
+        return ret;
+}
 
 static PyObject *
 array_real_get(PyArrayObject *self)
@@ -6287,20 +6324,7 @@ array_real_get(PyArrayObject *self)
         PyArrayObject *ret;
 
         if (PyArray_ISCOMPLEX(self)) {
-                ret = (PyArrayObject *)PyArray_New(self->ob_type,
-                                                   self->nd,
-                                                   self->dimensions,
-                                                   self->descr->type_num - \
-                                                   PyArray_NUM_FLOATTYPE,
-                                                   self->strides,
-                                                   self->data,
-                                                   0,
-                                                   self->flags, (PyObject *)self);
-                if (ret == NULL) return NULL;
-                ret->flags &= ~CONTIGUOUS;
-                ret->flags &= ~FORTRAN;
-                Py_INCREF(self);
-                ret->base = (PyObject *)self;
+                ret = _get_part(self, 0);
                 return (PyObject *)ret;
         }
         else {
@@ -6317,30 +6341,16 @@ array_real_set(PyArrayObject *self, PyObject *val)
         PyArrayObject *new;
         int rint;
 
-        new = (PyArrayObject *)PyArray_FromAny(val, NULL, 0, 0, 0, NULL);
-        if (new == NULL) return -1;
-
         if (PyArray_ISCOMPLEX(self)) {
-                ret = (PyArrayObject *)PyArray_New(self->ob_type,
-                                                   self->nd,
-                                                   self->dimensions,
-                                                   self->descr->type_num - \
-                                                   PyArray_NUM_FLOATTYPE,
-                                                   self->strides,
-                                                   self->data,
-                                                   0,
-                                                   self->flags,
-                                                   (PyObject *)self);
-                if (ret == NULL) {Py_DECREF(new); return -1;}
-                ret->flags &= ~CONTIGUOUS;
-                ret->flags &= ~FORTRAN;
-                Py_INCREF(self);
-                ret->base = (PyObject *)self;
+                ret = _get_part(self, 0);
+                if (ret == NULL) return -1;
         }
         else {
                 Py_INCREF(self);
                 ret = self;
         }
+        new = (PyArrayObject *)PyArray_FromAny(val, NULL, 0, 0, 0, NULL);
+        if (new == NULL) {Py_DECREF(ret); return -1;}
         rint = PyArray_MoveInto(ret, new);
         Py_DECREF(ret);
         Py_DECREF(new);
@@ -6354,21 +6364,7 @@ array_imag_get(PyArrayObject *self)
         PyArray_Descr *type;
 
         if (PyArray_ISCOMPLEX(self)) {
-                type = PyArray_DescrFromType(self->descr->type_num -
-                                             PyArray_NUM_FLOATTYPE);
-                ret = (PyArrayObject *)                         \
-                        PyArray_NewFromDescr(self->ob_type,
-                                             type,
-                                             self->nd,
-                                             self->dimensions,
-                                             self->strides,
-                                             self->data + type->elsize,
-                                             self->flags, (PyObject *)self);
-                if (ret == NULL) return NULL;
-                ret->flags &= ~CONTIGUOUS;
-                ret->flags &= ~FORTRAN;
-                Py_INCREF(self);
-                ret->base = (PyObject *)self;
+                ret = _get_part(self, 1);
                 return (PyObject *) ret;
         }
         else {
@@ -6398,34 +6394,18 @@ array_imag_set(PyArrayObject *self, PyObject *val)
                 PyArrayObject *new;
                 int rint;
 
+                ret = _get_part(self, 1);
+                if (ret == NULL) return -1;
                 new = (PyArrayObject *)PyArray_FromAny(val, NULL, 0, 0, 0, NULL);
-                if (new == NULL) return -1;
-                ret = (PyArrayObject *)PyArray_New(self->ob_type,
-                                                   self->nd,
-                                                   self->dimensions,
-                                                   self->descr->type_num - \
-                                                   PyArray_NUM_FLOATTYPE,
-                                                   self->strides,
-                                                   self->data +         \
-                                                   (self->descr->elsize >> 1),
-                                                   0,
-                                                   self->flags, (PyObject *)self);
-                if (ret == NULL) {
-                        Py_DECREF(new);
-                        return -1;
-                }
-                ret->flags &= ~CONTIGUOUS;
-                ret->flags &= ~FORTRAN;
-                Py_INCREF(self);
-                ret->base = (PyObject *)self;
+                if (new == NULL) {Py_DECREF(ret); return -1;}
                 rint = PyArray_MoveInto(ret, new);
                 Py_DECREF(ret);
                 Py_DECREF(new);
                 return rint;
         }
         else {
-                PyErr_SetString(PyExc_TypeError, "does not have imaginary " \
-                                "part to set");
+                PyErr_SetString(PyExc_TypeError, "array does not have "\
+                                "imaginary part to set");
                 return -1;
         }
 }
