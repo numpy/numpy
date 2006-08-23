@@ -593,16 +593,6 @@ nc_quot@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 }
 
 static void
-nc_floor_quot@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
-{
-	register @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
-	register @typ@ d = br*br + bi*bi;
-	r->real = floor@c@((ar*br + ai*bi)/d);
-	r->imag = 0;
-	return;
-}
-
-static void
 nc_sqrt@c@(c@typ@ *x, c@typ@ *r)
 {
 	@typ@ s,d;
@@ -979,8 +969,67 @@ static void
 }
 /**end repeat**/
 
-/**begin repeat
 
+/**begin repeat
+#TYP= CFLOAT, CDOUBLE, CLONGDOUBLE#
+#typ= float, double, longdouble#
+#c=f,,l#
+*/
+static void
+@TYP@_multiply(char **args, intp *dimensions, intp *steps, void *func)
+{
+	register intp i;
+	intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
+	char *i1=args[0], *i2=args[1], *op=args[2];
+	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+                register @typ@ ar=((c@typ@ *)i1)->real, \
+                        ai=((c@typ@ *)i1)->imag,        \
+                        br=((c@typ@ *)i2)->real,        \
+                        bi=((c@typ@ *)i2)->imag;
+                ((c@typ@ *)op)->real = ar*br - ai*bi;
+                ((c@typ@ *)op)->imag = ar*bi + ai*br;
+	}
+}
+
+static void
+@TYP@_divide(char **args, intp *dimensions, intp *steps, void *func)
+{
+	register intp i;
+	intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
+	char *i1=args[0], *i2=args[1], *op=args[2];
+	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+                register @typ@ ar=((c@typ@ *)i1)->real, \
+                        ai=((c@typ@ *)i1)->imag,        \
+                        br=((c@typ@ *)i2)->real,        \
+                        bi=((c@typ@ *)i2)->imag;
+                register @typ@ d = br*br + bi*bi;
+                ((c@typ@ *)op)->real = (ar*br + ai*bi)/d;
+                ((c@typ@ *)op)->imag = (ai*br - ar*bi)/d;
+        }
+}
+
+static void
+@TYP@_floor_divide(char **args, intp *dimensions, intp *steps, void *func)
+{
+	register intp i;
+        intp is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
+	char *i1=args[0], *i2=args[1], *op=args[2];
+	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+                register @typ@ ar=((c@typ@ *)i1)->real,    \
+                        ai=((c@typ@ *)i1)->imag,           \
+                        br=((c@typ@ *)i2)->real,           \
+                        bi=((c@typ@ *)i2)->imag;
+                register @typ@ d = br*br + bi*bi;
+                ((c@typ@ *)op)->real = floor@c@((ar*br + ai*bi)/d);
+                ((c@typ@ *)op)->imag = 0;
+	}
+}
+
+#define @TYP@_true_divide @TYP@_divide
+/**end repeat**/
+
+
+/**begin repeat
 #TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
 #typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
 #otyp=float*4, double*6#
@@ -1020,13 +1069,11 @@ static void
 /**end repeat**/
 
 /**begin repeat
-
-#TYP=(FLOAT,DOUBLE,LONGDOUBLE)*2#
-#typ=(float,double,longdouble)*2#
-#kind=divide*3, true_divide*3#
+#TYP=FLOAT,DOUBLE,LONGDOUBLE#
+#typ=float,double,longdouble#
 */
 static void
-@TYP@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@TYP@_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
 	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
 	char *i1=args[0], *i2=args[1], *op=args[2];
@@ -1034,6 +1081,7 @@ static void
 		*((@typ@ *)op)=*((@typ@ *)i1) / *((@typ@ *)i2);
 	}
 }
+#define @TYP@_true_divide @TYP@_divide
 /**end repeat**/
 
 /**begin repeat

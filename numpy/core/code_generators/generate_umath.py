@@ -101,6 +101,7 @@ allM = bints+flts+cmplxM
 nobool = all[1:]
 nobool_or_obj = all[1:-1]
 intflt = ints+flts
+intfltcmplx = nobool_or_obj
 nocmplx = bints+flts
 nocmplxO = nocmplx+O
 nocmplxM = nocmplx+M
@@ -122,22 +123,19 @@ defdict = {
 'multiply' :
     Ufunc(2, 1, One,
           'multiplies the arguments elementwise.',
-          TD(nocmplx),
-          TD(cmplx, f='prod'),
+          TD(noobj),
           TD(O, f='PyNumber_Multiply'),
           ),
 'divide' :
     Ufunc(2, 1, One,
           'divides the arguments elementwise.',
-          TD(intflt),
-          TD(cmplx, f='quot'),
+          TD(intfltcmplx),
           TD(O, f='PyNumber_Divide'),
           ),
 'floor_divide' :
     Ufunc(2, 1, One,
           'floor divides the arguments elementwise.',
-          TD(intflt),
-          TD(cmplx, f='floor_quot'),
+          TD(intfltcmplx),
           TD(O, f='PyNumber_FloorDivide'),
           ),
 'true_divide' :
@@ -145,8 +143,7 @@ defdict = {
           'true divides the arguments elementwise.',
           TD('bBhH', out='f'),
           TD('iIlLqQ', out='d'),
-          TD(flts),
-          TD(cmplx, f='quot'),
+          TD(flts+cmplx),
           TD(O, f='PyNumber_TrueDivide'),
           ),
 'conjugate' :

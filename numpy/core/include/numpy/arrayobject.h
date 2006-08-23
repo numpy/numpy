@@ -16,8 +16,6 @@
 #include "noprefix.h"
 #endif
 
-#ifndef NPY_NO_SIGNAL
 #include "npy_interrupt.h"
-#endif
 
 #endif
