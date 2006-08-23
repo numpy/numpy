@@ -252,6 +252,8 @@ array_min(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_Min(self, axis, out);
 }
 
+static char doc_abs[] = "a.abs() returns abs(a)";
+
 static char doc_swapaxes[] = "a.swapaxes(axis1, axis2)  returns new view with axes swapped.";
 
 static PyObject *
@@ -1806,6 +1808,8 @@ static PyMethodDef array_methods[] = {
 	 METH_VARARGS|METH_KEYWORDS, doc_min},
 	{"ptp", (PyCFunction)array_ptp,
 	 METH_VARARGS|METH_KEYWORDS, doc_ptp},
+        {"abs", (PyCFunction)array_absolute,
+         METH_VARARGS, doc_abs},
 	{"mean", (PyCFunction)array_mean,
 	 METH_VARARGS|METH_KEYWORDS, doc_mean},
 	{"trace", (PyCFunction)array_trace,
