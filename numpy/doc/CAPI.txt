@@ -6,29 +6,29 @@ C-API for NumPy
 :Discussions to:  scipy-dev@scipy.org
 :Created:         October 2005
 
-The CAPI of NumPy is (mostly) backward compatible with Numeric.
+The C API of NumPy is (mostly) backward compatible with Numeric.
 
 There are a few non-standard Numeric usages (that were not really part
 of the API) that will need to be changed:
 
-  * If you used any of the function pointers in the ``PyArray_Descr``
-    structure you will have to modify your usage of those.  First,
-    the pointers are all under the member named ``f``.  So ``descr->cast`` 
-    is now ``descr->f->cast``.  In addition, the
-    casting functions have eliminated the strides argument (use
-    ``PyArray_CastTo`` if you need strided casting). All functions have
-    one or two ``PyArrayObject *`` arguments at the end.  This allows the
-    flexible arrays and mis-behaved arrays to be handled.
+* If you used any of the function pointers in the ``PyArray_Descr``
+  structure you will have to modify your usage of those.  First,
+  the pointers are all under the member named ``f``.  So ``descr->cast`` 
+  is now ``descr->f->cast``.  In addition, the
+  casting functions have eliminated the strides argument (use
+  ``PyArray_CastTo`` if you need strided casting). All functions have
+  one or two ``PyArrayObject *`` arguments at the end.  This allows the
+  flexible arrays and mis-behaved arrays to be handled.
 
-  * The ``descr->zero`` and ``descr->one`` constants have been replaced with
-    function calls, ``PyArray_Zero``, and ``PyArray_One`` (be sure to read the
-    code and free the resulting memory if you use these calls).
+* The ``descr->zero`` and ``descr->one`` constants have been replaced with
+  function calls, ``PyArray_Zero``, and ``PyArray_One`` (be sure to read the
+  code and free the resulting memory if you use these calls).
 
-  * If you passed ``array->dimensions`` and ``array->strides`` around
-    to functions, you will need to fix some code. These are now
-    ``npy_intp*`` pointers. On 32-bit systems there won't be a problem.
-    However, on 64-bit systems, you will need to make changes to avoid
-    errors and segfaults.
+* If you passed ``array->dimensions`` and ``array->strides`` around
+  to functions, you will need to fix some code. These are now
+  ``npy_intp*`` pointers. On 32-bit systems there won't be a problem.
+  However, on 64-bit systems, you will need to make changes to avoid
+  errors and segfaults.
 
 
 The header files ``arrayobject.h`` and ``ufuncobject.h`` contain many defines
@@ -37,8 +37,7 @@ that you may find useful.  The files ``__ufunc_api.h`` and
 their function signatures.
 
 All of these headers are installed to
-
-<YOUR_PYTHON_LOCATION>/site-packages/numpy/core/include
+``<YOUR_PYTHON_LOCATION>/site-packages/numpy/core/include``
 
 
 Getting arrays in C-code
