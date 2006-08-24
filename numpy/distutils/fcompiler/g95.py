@@ -9,10 +9,14 @@ from numpy.distutils.fcompiler import FCompiler
 class G95FCompiler(FCompiler):
 
     compiler_type = 'g95'
-    version_pattern = r'G95 \((GCC (?P<gccversion>[\d.]+)|.*?) \(g95!\) (?P<version>.*)\).*'
-
+#    version_pattern = r'G95 \((GCC (?P<gccversion>[\d.]+)|.*?) \(g95!\) (?P<version>.*)\).*'
     # $ g95 --version
     # G95 (GCC 4.0.3 (g95!) May 22 2006)
+
+    version_pattern = r'G95 \((GCC (?P<gccversion>[\d.]+)|.*?) \(g95 (?P<version>.*)!\) (?P<date>.*)\).*'
+    # $ g95 --version
+    # G95 (GCC 4.0.3 (g95 0.90!) Aug 22 2006)
+   
 
     executables = {
         'version_cmd'  : ["g95", "--version"],
