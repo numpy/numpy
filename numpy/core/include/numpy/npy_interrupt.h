@@ -78,6 +78,8 @@ Interrupt handling does not work well with threads.
            
 #ifndef NPY_NO_SIGNAL
 
+#include <setjmp.h>
+
 #ifndef sigsetjmp
 
 #define SIGSETJMP(arg1, arg2) setjmp(arg1)

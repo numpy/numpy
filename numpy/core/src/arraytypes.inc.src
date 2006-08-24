@@ -1035,14 +1035,16 @@ static void
                         memcpy(dst, src, n*sizeof(@type@));
                 }
                 else {
-                        _unaligned_strided_byte_copy(dst, dstride, src, sstride,
-                                                     n, sizeof(@type@));
+                        _unaligned_strided_byte_copy(dst, dstride, src, 
+                                                     sstride, n, 
+                                                     sizeof(@type@));
                 }
         }
 
         if (swap) {
                 _strided_byte_swap(dst, dstride, n, SIZEOF_@fsize@);
-                _strided_byte_swap(dst + SIZEOF_@fsize@, dstride, n, SIZEOF_@fsize@);
+                _strided_byte_swap(((char *)dst + SIZEOF_@fsize@), dstride, 
+                                   n, SIZEOF_@fsize@);
         }
 }
 
