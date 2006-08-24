@@ -6431,16 +6431,30 @@ compare_chararrays(PyObject *dummy, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-test_interrupt(PyObject *self)
+test_interrupt(PyObject *self, PyObject *args)
 {
+        int kind=0;
         int a = 0;
-        NPY_SIGINT_ON
 
-        while(a>=0) {
-            a += 1;
+        if (!PyArg_ParseTuple(args, "|i", &kind)) return NULL;
+
+        if (kind) {
+                while (a>=0) {
+                        if ((a % 1000 == 0) &&
+                            PyOS_InterruptOccurred()) break;
+                        a+=1;
+                }
         }
+        else {
 
-        NPY_SIGINT_OFF
+                NPY_SIGINT_ON
+                        
+                while(a>=0) {
+                        a += 1;
+                }
+                
+                NPY_SIGINT_OFF                        
+        }
             
         return PyInt_FromLong(a);
 }
@@ -6500,7 +6514,7 @@ static struct PyMethodDef array_module_methods[] = {
         {"compare_chararrays", (PyCFunction)compare_chararrays,
          METH_VARARGS | METH_KEYWORDS, NULL},
         {"test_interrupt", (PyCFunction)test_interrupt,
-         METH_NOARGS, NULL},
+         METH_VARARGS, NULL},
 	{NULL,		NULL, 0}		/* sentinel */
 };
 
