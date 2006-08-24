@@ -1392,7 +1392,6 @@ typedef struct {
    They are available as import_array()
 */
 
-
 #include "__multiarray_api.h"
 
 

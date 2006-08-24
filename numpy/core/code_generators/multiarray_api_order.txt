@@ -75,3 +75,5 @@ PyArray_IntTupleFromIntp
 PyArray_TypeNumFromName
 PyArray_ClipmodeConverter
 PyArray_OutputConverter
+_PyArray_SigintHandler
+_PyArray_GetSigintBuf

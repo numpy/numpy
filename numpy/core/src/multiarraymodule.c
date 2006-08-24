@@ -6430,6 +6430,44 @@ compare_chararrays(PyObject *dummy, PyObject *args, PyObject *kwds)
 }
 
 
+#ifndef NPY_NO_SIGNAL
+
+SIGJMP_BUF _NPY_SIGINT_BUF;
+
+/*MULTIARRAY_API
+*/
+static void
+_PyArray_SigintHandler(int signum)
+{
+        PyOS_setsig(signum, SIG_IGN);
+        SIGLONGJMP(_NPY_SIGINT_BUF, signum);
+}
+
+/*MULTIARRAY_API
+*/
+static void*
+_PyArray_GetSigintBuf(void)
+{
+        return (void *)&_NPY_SIGINT_BUF;
+}
+
+#else
+
+static void 
+_PyArray_SigintHandler(int signum) 
+{
+        return;
+}
+
+static void*
+_PyArray_GetSigintBuf(void)
+{
+        return NULL;
+}
+
+#endif
+
+
 static PyObject *
 test_interrupt(PyObject *self, PyObject *args)
 {

@@ -71,7 +71,9 @@ Interrupt handling does not work well with threads.
 
 */
 
-/* Add signal handling macros */
+/* Add signal handling macros 
+   Make the global variable and signal handler part of the C-API 
+*/
 
 #ifndef NPY_INTERRUPT_H
 #define NPY_INTERRUPT_H
@@ -94,28 +96,19 @@ Interrupt handling does not work well with threads.
 #define SIGJMP_BUF sigjmp_buf
 
 #endif
-
-SIGJMP_BUF _NPY_SIGINT_BUF;
-
-static void
-_npy_sighandler(int signum)
-{
-        PyOS_setsig(signum, SIG_IGN);
-        SIGLONGJMP(_NPY_SIGINT_BUF, signum);
-}
-
            
 #    define NPY_SIGINT_ON {                                             \
-                PyOS_sighandler_t _npy_sig_save;                        \
-                _npy_sig_save = PyOS_setsig(SIGINT, _npy_sighandler);   \
-                if (SIGSETJMP(_NPY_SIGINT_BUF, 1) == 0) {               \
-                        
+                   PyOS_sighandler_t _npy_sig_save;                     \
+                   _npy_sig_save = PyOS_setsig(SIGINT, _PyArray_SigintHandler); \
+                   if (SIGSETJMP(*((SIGJMP_BUF *)_PyArray_GetSigintBuf()), \
+                                 1) == 0) {                             \
+                           
 #    define NPY_SIGINT_OFF }                                      \
         PyOS_setsig(SIGINT, _npy_sig_save);                       \
         }
-
+           
 #else /* NPY_NO_SIGNAL  */
-
+           
 #  define NPY_SIGINT_ON
 #  define NPY_SIGINT_OFF
 
