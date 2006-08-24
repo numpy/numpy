@@ -2738,40 +2738,49 @@ NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
 		    int byteorder, int aligned, int writeable)
 {
 	PyArrayObject *self = NULL;
-        PyArray_Descr *dtype;
+	PyArray_Descr *dtype;
 
 	if (type == tAny)
 		type = tDefault;
 
-        dtype = PyArray_DescrFromType(type);
-        if (dtype == NULL) return NULL;
+	dtype = PyArray_DescrFromType(type);
+	if (dtype == NULL) return NULL;
 
-        if (byteorder != NA_ByteOrder()) {
-                PyArray_Descr *temp;
-                temp = PyArray_DescrNewByteorder(dtype, PyArray_SWAP);
-                Py_DECREF(dtype);
-                if (temp == NULL) return NULL;
-                dtype = temp;
-        }
+	if (byteorder != NA_ByteOrder()) {
+		PyArray_Descr *temp;
+		temp = PyArray_DescrNewByteorder(dtype, PyArray_SWAP);
+		Py_DECREF(dtype);
+		if (temp == NULL) return NULL;
+		dtype = temp;
+	}
 
-        if (bufferObject == Py_None || bufferObject == NULL) {
-                self = (PyArrayObject *)	\
+	if (bufferObject == Py_None || bufferObject == NULL) {
+		self = (PyArrayObject *)	\
 			PyArray_NewFromDescr(&PyArray_Type, dtype,
 					     ndim, shape, NULL, NULL, 
 					     0, NULL);
-        }
-        else {
-		npy_intp size = dtype->elsize;
-                int i;
-		for(i=0; i<self->nd; i++) {
-			size *= self->dimensions[i];
+	}
+	else {
+		npy_intp size = 1;
+		int i;
+		PyArrayObject *newself;
+		PyArray_Dims newdims;
+		for(i=0; i<ndim; i++) {
+			size *= shape[i];
 		}
-                self = (PyArrayObject *)\
+		self = (PyArrayObject *)\
 			PyArray_FromBuffer(bufferObject, dtype, 
 					   size, byteoffset);
-        }
+		
+		if (self == NULL) return self;
+		newdims.len = ndim;
+		newdims.ptr = shape;
+		newself = PyArray_Newshape(self, &newdims, PyArray_CORDER);
+		Py_DECREF(self);
+		self = newself;
+	}
 
-        return self;
+	return self;
 }
 
 static void
