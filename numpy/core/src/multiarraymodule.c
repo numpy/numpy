@@ -6435,7 +6435,7 @@ compare_chararrays(PyObject *dummy, PyObject *args, PyObject *kwds)
 static PyObject *
 test_interrupt(PyObject *self)
 {
-        int a = 0;
+        npy_ulonglong a = 0;
         NPY_SIGINT_ON
 
         while(1) {
@@ -6444,7 +6444,7 @@ test_interrupt(PyObject *self)
 
         NPY_SIGINT_OFF
             
-        return PyInt_FromLong(a);
+        return PyLong_FromUnsignedLongLong(a);
 }
 #endif
 
@@ -6682,22 +6682,25 @@ PyMODINIT_FUNC initmultiarray(void) {
 	d = PyModule_GetDict(m);
 	if (!d) goto err;
 
+	PyArray_Type.tp_free = _pya_free;
 	if (PyType_Ready(&PyArray_Type) < 0)
-                return;
+		return;
 
-        if (setup_scalartypes(d) < 0) goto err;
+	if (setup_scalartypes(d) < 0) goto err;
 
 	PyArrayIter_Type.tp_iter = PyObject_SelfIter;
 	PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
+	PyArrayMultiIter_Type.tp_free = _pya_free;
 	if (PyType_Ready(&PyArrayIter_Type) < 0)
 		return;
 
 	if (PyType_Ready(&PyArrayMapIter_Type) < 0)
-                return;
+		return;
 
 	if (PyType_Ready(&PyArrayMultiIter_Type) < 0)
 		return;
 
+	PyArrayDescr_Type.tp_hash = (hashfunc)_Py_HashPointer;
 	if (PyType_Ready(&PyArrayDescr_Type) < 0)
 		return;
 
@@ -6739,11 +6742,11 @@ PyMODINIT_FUNC initmultiarray(void) {
 	PyDict_SetItemString(d, "MAXDIMS", s);
 	Py_DECREF(s);
 
-        Py_INCREF(&PyArray_Type);
+	Py_INCREF(&PyArray_Type);
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
-        Py_INCREF(&PyArrayIter_Type);
+	Py_INCREF(&PyArrayIter_Type);
 	PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
-        Py_INCREF(&PyArrayMultiIter_Type);
+	Py_INCREF(&PyArrayMultiIter_Type);
 	PyDict_SetItemString(d, "broadcast",
 			     (PyObject *)&PyArrayMultiIter_Type);
 	Py_INCREF(&PyArrayDescr_Type);
@@ -6752,7 +6755,7 @@ PyMODINIT_FUNC initmultiarray(void) {
 	Py_INCREF(&PyArrayFlags_Type);
 	PyDict_SetItemString(d, "flagsobj", (PyObject *)&PyArrayFlags_Type);
 
-        set_flaginfo(d);
+	set_flaginfo(d);
 
 	if (set_typeinfo(d) != 0) goto err;
 

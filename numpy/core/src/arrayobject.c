@@ -6620,7 +6620,7 @@ static PyTypeObject PyArray_Type = {
         (initproc)0,                              /* tp_init */
         array_alloc,                              /* tp_alloc */
         (newfunc)array_new,                       /* tp_new */
-        _pya_free,                                /* tp_free */
+        0,                                        /* tp_free */
         0,                                        /* tp_is_gc */
         0,                                        /* tp_bases */
         0,                                        /* tp_mro */
@@ -10289,7 +10289,7 @@ static PyTypeObject PyArrayMultiIter_Type = {
         (initproc)0,                              /* tp_init */
         0,                                        /* tp_alloc */
         arraymultiter_new,                        /* tp_new */
-        _pya_free,                                /* tp_free */
+        0,                                        /* tp_free */
         0,                                        /* tp_is_gc */
         0,                                        /* tp_bases */
         0,                                        /* tp_mro */
@@ -11166,7 +11166,7 @@ static PyTypeObject PyArrayDescr_Type = {
         0,                                      /* tp_as_number */
         0,                                      /* tp_as_sequence */
         &descr_as_mapping,                      /* tp_as_mapping */
-        (hashfunc)_Py_HashPointer,              /* tp_hash */
+        0,                                      /* tp_hash */
         0,                                      /* tp_call */
         (reprfunc)arraydescr_str,               /* tp_str */
         0,                                      /* tp_getattro */
