@@ -6430,23 +6430,20 @@ compare_chararrays(PyObject *dummy, PyObject *args, PyObject *kwds)
 }
 
 
-#ifndef NPY_NO_SIGNAL
-
 static PyObject *
 test_interrupt(PyObject *self)
 {
-        npy_ulonglong a = 0;
+        int a = 0;
         NPY_SIGINT_ON
 
-        while(1) {
+        while(a>=0) {
             a += 1;
         }
 
         NPY_SIGINT_OFF
             
-        return PyLong_FromUnsignedLongLong(a);
+        return PyInt_FromLong(a);
 }
-#endif
 
 static struct PyMethodDef array_module_methods[] = {
 	{"_get_ndarray_c_version", (PyCFunction)array__get_ndarray_c_version,
@@ -6502,10 +6499,8 @@ static struct PyMethodDef array_module_methods[] = {
          METH_VARARGS | METH_KEYWORDS, NULL},
         {"compare_chararrays", (PyCFunction)compare_chararrays,
          METH_VARARGS | METH_KEYWORDS, NULL},
-#ifndef NPY_NO_SIGNAL
         {"test_interrupt", (PyCFunction)test_interrupt,
          METH_NOARGS, NULL},
-#endif
 	{NULL,		NULL, 0}		/* sentinel */
 };
 
