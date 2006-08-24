@@ -20,6 +20,7 @@ typedef struct {
 	npy_bool obval;
 } PyBoolScalarObject;
 
+
 static unsigned int PyArray_GetNDArrayCVersion (void);
 static PyTypeObject PyBigArray_Type;
 static PyTypeObject PyArray_Type;

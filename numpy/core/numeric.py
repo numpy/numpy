@@ -95,6 +95,8 @@ def extend_all(module):
 extend_all(umath)
 extend_all(numerictypes)
 
+abs = absolute
+
 newaxis = None
 
 ndarray = multiarray.ndarray

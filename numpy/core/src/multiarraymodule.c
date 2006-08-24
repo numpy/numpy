@@ -21,7 +21,8 @@
 */
 
 #define _MULTIARRAYMODULE
-#include "numpy/noprefix.h"
+#define NPY_NO_PREFIX
+#include "numpy/arrayobject.h"
 
 #define PyAO PyArrayObject
 
@@ -930,6 +931,10 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 	Py_DECREF(newtup);
 	return ret;
 }
+
+/* Why doesn't this just call the ufunc?
+   All we need to do is add it to the list of needed ufuncs.
+ */
 
 /*MULTIARRAY_API
  Conjugate
@@ -6427,6 +6432,24 @@ compare_chararrays(PyObject *dummy, PyObject *args, PyObject *kwds)
 
 
 
+#ifndef NPY_NO_SIGNAL
+
+static PyObject *
+test_interrupt(PyObject *self)
+{
+        int a = 0;
+        NPY_SIGINT_ON
+
+        while(1) {
+            a += 1;
+        }
+
+        NPY_SIGINT_OFF
+            
+        return PyInt_FromLong(a);
+}
+#endif
+
 static struct PyMethodDef array_module_methods[] = {
 	{"_get_ndarray_c_version", (PyCFunction)array__get_ndarray_c_version,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
@@ -6481,6 +6504,10 @@ static struct PyMethodDef array_module_methods[] = {
          METH_VARARGS | METH_KEYWORDS, NULL},
         {"compare_chararrays", (PyCFunction)compare_chararrays,
          METH_VARARGS | METH_KEYWORDS, NULL},
+#ifndef NPY_NO_SIGNAL
+        {"test_interrupt", (PyCFunction)test_interrupt,
+         METH_NOARGS, NULL},
+#endif
 	{NULL,		NULL, 0}		/* sentinel */
 };
 
@@ -6680,7 +6707,6 @@ PyMODINIT_FUNC initmultiarray(void) {
 		return;
 
 	c_api = PyCObject_FromVoidPtr((void *)PyArray_API, NULL);
-	if (PyErr_Occurred()) goto err;
 	PyDict_SetItemString(d, "_ARRAY_API", c_api);
 	Py_DECREF(c_api);
 	if (PyErr_Occurred()) goto err;

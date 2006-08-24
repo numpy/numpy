@@ -2144,7 +2144,6 @@ def _m(f):
     return MethodType(f, None, array)
 def not_implemented(*args, **kwds):
     raise NotImplementedError, "not yet implemented for numpy.ma arrays"
-array.abs = array.__abs__
 array.all = _m(alltrue)
 array.any = _m(sometrue)
 array.argmax = _m(argmax)
