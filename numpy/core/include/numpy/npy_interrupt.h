@@ -79,6 +79,7 @@ Interrupt handling does not work well with threads.
 #ifndef NPY_NO_SIGNAL
 
 #include <setjmp.h>
+#include <signal.h>
 
 #ifndef sigsetjmp
 
