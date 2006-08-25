@@ -6751,11 +6751,24 @@ static PyArray_Descr *
 _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
 {
         PyArray_Descr *outtype;
-
-        if (chktype->type_num > mintype->type_num) outtype = chktype;
-        else outtype = mintype;
-
-        Py_INCREF(outtype);
+        int outtype_num, save_num;
+        
+        if (chktype->type_num > mintype->type_num) 
+                outtype_num = chktype->type_num;
+        else 
+                outtype_num = mintype->type_num;
+        
+        save_num = outtype_num;
+        while(outtype_num < PyArray_NTYPES && 
+              !(PyArray_CanCastSafely(chktype->type_num, outtype_num)
+                && PyArray_CanCastSafely(mintype->type_num, outtype_num)))
+                outtype_num++;
+        if (outtype_num == PyArray_NTYPES) {
+                outtype = PyArray_DescrFromType(save_num);
+        }
+        else {
+                outtype = PyArray_DescrFromType(outtype_num);
+        }
         if (PyTypeNum_ISEXTENDED(outtype->type_num) &&          \
             (PyTypeNum_ISEXTENDED(mintype->type_num) ||         \
              mintype->type_num==0)) {
