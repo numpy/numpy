@@ -6477,11 +6477,13 @@ test_interrupt(PyObject *self, PyObject *args)
         if (!PyArg_ParseTuple(args, "|i", &kind)) return NULL;
 
         if (kind) {
+                Py_BEGIN_ALLOW_THREADS
                 while (a>=0) {
                         if ((a % 1000 == 0) &&
                             PyOS_InterruptOccurred()) break;
                         a+=1;
                 }
+                Py_END_ALLOW_THREADS
         }
         else {
 
