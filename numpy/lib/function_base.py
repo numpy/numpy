@@ -7,13 +7,14 @@ __all__ = ['logspace', 'linspace',
            'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort',
            'median', 'sinc', 'hamming', 'hanning', 'bartlett', 'blackman',
            'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring', 'meshgrid',
+           'delete'
            ]
 
 import types
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
      asarray, asanyarray, empty, empty_like, asanyarray, ndarray
-from numpy.core.numeric import ScalarType, dot, where, newaxis
+from numpy.core.numeric import ScalarType, dot, where, newaxis, intp
 from numpy.core.umath import pi, multiply, add, arctan2,  \
      frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp
 from numpy.core.fromnumeric import ravel, nonzero, choose, sort
@@ -22,6 +23,7 @@ from numpy.lib.shape_base import atleast_1d
 from numpy.lib.twodim_base import diag
 from _compiled_base import _insert, add_docstring
 from _compiled_base import digitize, bincount
+from arraysetops import setdiff1d
 
 #end Fernando's utilities
 
@@ -1007,4 +1009,43 @@ def meshgrid(x,y):
     y = y.reshape(numRows,1)
     Y = y.repeat(numCols, axis=1)
     return X, Y
+
     
+def delete(arr, obj, axis=-1):
+    """Delete sub-arrays from an axis
+
+    Return a new array with the sub-arrays (i.e. rows or columns)
+    deleted along the given axis as specified by obj
+
+    obj may be a slice_object (s_[3:5:2]) or an integer
+    or an array of integers indicated which sub-arrays to
+    remove.
+
+    Example:
+    >>> arr = [[3,4,5],
+              [1,2,3],
+              [6,7,8]]
+
+    >>> delete(arr, 1)
+    array([[3,5],
+           [1,3],
+           [6,8])
+    >>> delete(arr, 1, 0)
+    array([[3,4,5],
+           [6,7,8]])
+    """
+    arr = asarray(arr)
+    ndim = arr.ndim
+    slobj = [slice(None)]*ndim
+    N = arr.shape[axis]
+    if isinstance(obj, slice):
+        obj = arange(obj.start or 0, obj.stop or N,
+                     obj.step or 1, dtype=intp)
+    else:
+        obj = array(obj, dtype=intp, copy=0, ndmin=1)
+        
+    all = arange(N, dtype=intp)
+    obj = setdiff1d(all, obj)    
+    slobj[axis] = obj
+    slobj = tuple(slobj)
+    return arr[slobj]
