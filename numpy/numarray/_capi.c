@@ -2775,7 +2775,8 @@ NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
 		if (self == NULL) return self;
 		newdims.len = ndim;
 		newdims.ptr = shape;
-		newself = PyArray_Newshape(self, &newdims, PyArray_CORDER);
+		newself = (PyArrayObject *)\
+                        PyArray_Newshape(self, &newdims, PyArray_CORDER);
 		Py_DECREF(self);
 		self = newself;
 	}
