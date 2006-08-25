@@ -16,3 +16,7 @@
 #define OWN_DATA NPY_OWNDATA
 #define SAVESPACE 0
 #define SAVESPACEBIT 0
+
+#undef import_array()
+#define import_array() { if (_import_array() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import"); } }
+
