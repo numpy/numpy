@@ -98,6 +98,9 @@ def configuration(parent_package='',top_path=None):
                 if check_func(func_name):
                     moredefs.append(defsymbol)
 
+            if sys.platform == 'win32':
+                moredefs.append('NPY_NO_SIGNAL')
+                
             if sys.version[:3] < '2.4':
                 if check_func('strtod'):
                     moredefs.append(('PyOS_ascii_strtod', 'strtod'))
