@@ -1032,14 +1032,17 @@ def deletefrom(arr, obj, axis=None):
     array([[3,5],
            [1,3],
            [6,8])
-    >>> deletefrom(arr, 1)
+    >>> deletefrom(arr, 1, 0)
     array([[3,4,5],
            [6,7,8]])
     """
-    try:
-        wrap = arr.__array_wrap__
-    except AttributeError:
-        wrap = None
+    wrap = None    
+    if type(arr) is not ndarray:
+        try:
+            wrap = arr.__array_wrap__
+        except AttributeError:
+            pass
+    
     
     arr = asarray(arr)
     ndim = arr.ndim
@@ -1066,12 +1069,8 @@ def deletefrom(arr, obj, axis=None):
         new[slobj] = arr[slobj]
         slobj[axis] = slice(obj,None)
         slobj2 = [slice(None)]*ndim
-        slobj[axis] = slice(ojb+1,None)
-        new[slobj] = arr[slobj2]
-        if wrap:
-            return wrap(new)
-        return new
-        
+        slobj2[axis] = slice(obj+1,None)
+        new[slobj] = arr[slobj2]        
     elif isinstance(obj, slice):
         start, stop, step = obj.indices(N)
         numtodel = len(xrange(start, stop, step))
@@ -1101,23 +1100,18 @@ def deletefrom(arr, obj, axis=None):
             pass
         else:  # use array indexing. 
             obj = arange(start, stop, step, dtype=intp)
-            all = arange(N, dtype=intp)
+            all = arange(start, stop, dtype=intp)
             obj = setdiff1d(all, obj)
             slobj[axis] = slice(start, stop-numtodel)
             slobj2 = [slice(None)]*ndim
             slobj2[axis] = obj
             new[slobj] = arr[slobj2]
-        if wrap:
-            return wrap(new)
-        return new
-
-    # default behavior
-    obj = array(obj, dtype=intp, copy=0, ndmin=1)
-    all = arange(N, dtype=intp)
-    obj = setdiff1d(all, obj)
-    slobj[axis] = obj
-    slobj = tuple(slobj)
-    new = arr[slobj]
+    else: # default behavior
+        obj = array(obj, dtype=intp, copy=0, ndmin=1)
+        all = arange(N, dtype=intp)
+        obj = setdiff1d(all, obj)
+        slobj[axis] = obj
+        new = arr[slobj]
     if wrap:
         return wrap(new)
     else:
@@ -1144,10 +1138,12 @@ def insertinto(arr, obj, values, axis=None):
            [5,5,5],
            [7,8,9])
     """
-    try:
-        wrap = arr.__array_wrap__
-    except AttributeError:
-        wrap = None
+    wrap = None    
+    if type(arr) is not ndarray:
+        try:
+            wrap = arr.__array_wrap__
+        except AttributeError:
+            pass
 
     arr = asarray(arr)
     ndim = arr.ndim
@@ -1169,7 +1165,8 @@ def insertinto(arr, obj, values, axis=None):
     if isinstance(obj, (int, long, integer)):
         if (obj < 0): obj += N
         if (obj < 0 or obj >=N):
-            raise ValueError, "invalid entry"
+            raise ValueError, "index (%d) out of range (0<=index<=%d) "\
+                  "in dimension %d" % (obj, N, axis)
         newshape[axis] += 1;
         new = empty(newshape, arr.dtype, arr.flags.fnc)
         slobj[axis] = slice(None, obj)
@@ -1182,7 +1179,8 @@ def insertinto(arr, obj, values, axis=None):
         new[slobj] = arr[slobj2]
         if wrap:
             return wrap(new)
-        return new
+        return new        
+
     elif isinstance(obj, slice):
         # turn it into a range object
         obj = arange(*obj.indices(N),**{'dtype':intp})
