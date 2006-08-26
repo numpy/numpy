@@ -1106,7 +1106,22 @@ def insertinto(arr, obj, values, axis=None):
     """Return a new array with values inserted along the given axis
     before the given indices
 
-    If axis is None, then ravel the array first. 
+    If axis is None, then ravel the array first.
+
+    The obj argument can be an integer, a slice, or a sequence of
+    integers.
+
+    Example:
+    >>> a = array([[1,2,3],
+                   [4,5,6],
+                   [7,8,9]])
+
+    >>> insertinto(a, [1,2], [[4],[5]], axis=0)
+    array([[1,2,3],
+           [4,4,4],
+           [4,5,6],
+           [5,5,5],
+           [7,8,9])
     """
     arr = asarray(arr)
     ndim = arr.ndim    
@@ -1139,28 +1154,32 @@ def insertinto(arr, obj, values, axis=None):
     elif isinstance(obj, slice):
         # turn it into a range object
         obj = arange(*obj.indices(N),**{'dtype':intp})
-    
-    # default behavior
-    # FIXME: this is too slow
-    obj = array(obj, dtype=intp, copy=0, ndmin=1)
-    try:
-        if len(values) != len(obj):
-            raise TypeError
-    except TypeError:
-        values = [values]*len(obj)
-    new = arr
-    k = 0
-    for item, val in zip(obj, values):
-        new = insertinto(new, item+k, val, axis=axis)
+
+    # get two sets of indices
+    #  one is the indices which will hold the new stuff
+    #  two is the indices where arr will be copied over
+
+    obj = asarray(obj, dtype=intp)
+    numnew = len(obj)
+    index1 = obj + arange(numnew)
+    index2 = setdiff1d(arange(numnew+N),index1)
+    newshape[axis] += numnew
+    new = empty(newshape, arr.dtype, arr.flags.fnc)
+    slobj2 = [slice(None)]*ndim
+    slobj[axis] = index1
+    slobj2[axis] = index2
+    new[slobj] = values
+    new[slobj2] = arr
+        
     return new
 
-def appendonto(arr, obj, axis=None):
+def appendonto(arr, values, axis=None):
     """Append to the end of an array along axis (ravel first if None)
     """
     arr = asarray(arr)
     if axis is None:
         if arr.ndim != 1:
             arr = arr.ravel()
-        obj = ravel(obj)
+        values = ravel(values)
         axis = 0
-    return concatenate((arr, obj), axis=axis)
+    return concatenate((arr, values), axis=axis)

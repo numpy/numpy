@@ -2,8 +2,8 @@
 /* Should only be used if x is known to be an nd-array */
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))
 
-static char doc_take[] = "a.take(indices, axis=None).  Selects the elements "\
-	"in indices from array a along the given axis.";
+static char doc_take[] = "a.take(indices, axis=None, out=None, mode='raise')."\
+        "Selects the elements in indices from array a along the given axis.";
 
 static PyObject *
 array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -41,9 +41,9 @@ array_fill(PyArrayObject *self, PyObject *args)
 	return Py_None;
 }
 
-static char doc_put[] = "a.put(values, indices, mode) sets a.flat[n] = v[n] "\
-	"for each n in indices. v can be scalar or shorter than indices, "\
-	"will repeat.";
+static char doc_put[] = "a.put(values, indices, mode) sets a.flat[n] = "\
+        "values[n] for\n" "each n in indices. v can be scalar or shorter "\
+        "than indices,\n" "and it will repeat.";
 
 static PyObject *
 array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
