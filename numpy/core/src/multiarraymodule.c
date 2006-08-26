@@ -172,6 +172,8 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 	return new;
 }
 
+/* Returns a contiguous array */
+
 /*MULTIARRAY_API
  Ravel
 */

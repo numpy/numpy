@@ -7,14 +7,15 @@ __all__ = ['logspace', 'linspace',
            'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort',
            'median', 'sinc', 'hamming', 'hanning', 'bartlett', 'blackman',
            'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring', 'meshgrid',
-           'delete'
+           'deletefrom', 'insertinto', 'appendonto'
            ]
 
 import types
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
      asarray, asanyarray, empty, empty_like, asanyarray, ndarray
-from numpy.core.numeric import ScalarType, dot, where, newaxis, intp
+from numpy.core.numeric import ScalarType, dot, where, newaxis, intp, \
+     integer
 from numpy.core.umath import pi, multiply, add, arctan2,  \
      frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp
 from numpy.core.fromnumeric import ravel, nonzero, choose, sort
@@ -551,7 +552,7 @@ def insert(arr, mask, vals):
     """
     return _insert(arr, mask, vals)
 
-def nansum(a, axis=-1):
+def nansum(a, axis=None):
     """Sum the array over the given axis, treating NaNs as 0.
     """
     y = array(a)
@@ -559,7 +560,7 @@ def nansum(a, axis=-1):
         y[isnan(a)] = 0
     return y.sum(axis)
 
-def nanmin(a, axis=-1):
+def nanmin(a, axis=None):
     """Find the minimium over the given axis, ignoring NaNs.
     """
     y = array(a)
@@ -567,7 +568,7 @@ def nanmin(a, axis=-1):
         y[isnan(a)] = _nx.inf
     return y.min(axis)
 
-def nanargmin(a, axis=-1):
+def nanargmin(a, axis=None):
     """Find the indices of the minimium over the given axis ignoring NaNs.
     """
     y = array(a)
@@ -575,7 +576,7 @@ def nanargmin(a, axis=-1):
         y[isnan(a)] = _nx.inf
     return y.argmin(axis)
 
-def nanmax(a, axis=-1):
+def nanmax(a, axis=None):
     """Find the maximum over the given axis ignoring NaNs.
     """
     y = array(a)
@@ -583,7 +584,7 @@ def nanmax(a, axis=-1):
         y[isnan(a)] = -_nx.inf
     return y.max(axis)
 
-def nanargmax(a, axis=-1):
+def nanargmax(a, axis=None):
     """Find the maximum over the given axis ignoring NaNs.
     """
     y = array(a)
@@ -1010,9 +1011,8 @@ def meshgrid(x,y):
     Y = y.repeat(numCols, axis=1)
     return X, Y
 
-    
-def delete(arr, obj, axis=-1):
-    """Delete sub-arrays from an axis
+def deletefrom(arr, obj, axis=None):
+    """Return a new array with sub-arrays along an axis deleted.
 
     Return a new array with the sub-arrays (i.e. rows or columns)
     deleted along the given axis as specified by obj
@@ -1021,31 +1021,146 @@ def delete(arr, obj, axis=-1):
     or an array of integers indicated which sub-arrays to
     remove.
 
+    If axis is None, then ravel the array first. 
+
     Example:
     >>> arr = [[3,4,5],
               [1,2,3],
               [6,7,8]]
 
-    >>> delete(arr, 1)
+    >>> deletefrom(arr, 1, 1)
     array([[3,5],
            [1,3],
            [6,8])
-    >>> delete(arr, 1, 0)
+    >>> deletefrom(arr, 1)
     array([[3,4,5],
            [6,7,8]])
     """
     arr = asarray(arr)
     ndim = arr.ndim
-    slobj = [slice(None)]*ndim
+    if axis is None:
+        if ndim != 1:
+            arr = arr.ravel()
+        axis = 0
+    if ndim == 0:
+        return arr.copy()
+    slobj = [slice(None)]*ndim    
     N = arr.shape[axis]
-    if isinstance(obj, slice):
-        obj = arange(obj.start or 0, obj.stop or N,
-                     obj.step or 1, dtype=intp)
-    else:
-        obj = array(obj, dtype=intp, copy=0, ndmin=1)
-        
+    newshape = list(arr.shape)
+    if isinstance(obj, (int, long, integer)):
+        if (obj < 0): obj += N
+        if (obj < 0 or obj >=N):
+            raise ValueError, "invalid entry"
+        newshape[axis]-=1;
+        new = empty(newshape, arr.dtype, arr.flags.fnc)
+        slobj[axis] = slice(None, obj)
+        new[slobj] = arr[slobj]
+        slobj[axis] = slice(obj,None)
+        slobj2 = [slice(None)]*ndim
+        slobj[axis] = slice(ojb+1,None)
+        new[slobj] = arr[slobj2]
+        return new
+    elif isinstance(obj, slice):
+        start, stop, step = obj.indices(N)
+        numtodel = len(xrange(start, stop, step))
+        if numtodel <= 0:
+            return arr.copy()
+        newshape[axis] -= numtodel
+        new = empty(newshape, arr.dtype, arr.flags.fnc)
+        # copy initial chunk
+        if start == 0:
+            pass
+        else:
+            slobj[axis] = slice(None, start)
+            new[slobj] = arr[slobj]
+        # copy end chunck 
+        if stop == N:
+            pass
+        else:
+            slobj[axis] = slice(stop-numtodel,None)
+            slobj2 = [slice(None)]*ndim
+            slobj2[axis] = slice(stop, None)
+            new[slobj] = arr[slobj2]
+        # copy middle pieces
+        if step == 1:
+            pass
+        else:  # use array indexing. 
+            obj = arange(start, stop, step, dtype=intp)
+            all = arange(N, dtype=intp)
+            obj = setdiff1d(all, obj)
+            slobj[axis] = slice(start, stop-numtodel)
+            slobj2 = [slice(None)]*ndim
+            slobj2[axis] = obj
+            new[slobj] = arr[slobj2]
+        return new
+
+    # default behavior
+    obj = array(obj, dtype=intp, copy=0, ndmin=1)        
     all = arange(N, dtype=intp)
-    obj = setdiff1d(all, obj)    
+    obj = setdiff1d(all, obj)
     slobj[axis] = obj
     slobj = tuple(slobj)
     return arr[slobj]
+
+def insertinto(arr, obj, values, axis=None):
+    """Return a new array with values inserted along the given axis
+    before the given indices
+
+    If axis is None, then ravel the array first. 
+    """
+    arr = asarray(arr)
+    ndim = arr.ndim    
+    if axis is None:
+        if ndim != 1:
+            arr = arr.ravel()
+        axis = 0
+    if (ndim == 0):
+        arr = arr.copy()
+        arr[...] = values
+        return arr
+    slobj = [slice(None)]*ndim
+    N = arr.shape[axis]
+    newshape = list(arr.shape)
+    if isinstance(obj, (int, long, integer)):
+        if (obj < 0): obj += N
+        if (obj < 0 or obj >=N):
+            raise ValueError, "invalid entry"
+        newshape[axis] += 1;
+        new = empty(newshape, arr.dtype, arr.flags.fnc)
+        slobj[axis] = slice(None, obj)
+        new[slobj] = arr[slobj]
+        slobj[axis] = obj
+        new[slobj] = values
+        slobj[axis] = slice(obj+1,None)
+        slobj2 = [slice(None)]*ndim
+        slobj2[axis] = slice(obj,None)
+        new[slobj] = arr[slobj2]
+        return new
+    elif isinstance(obj, slice):
+        # turn it into a range object
+        obj = arange(*obj.indices(N),**{'dtype':intp})
+    
+    # default behavior
+    # FIXME: this is too slow
+    obj = array(obj, dtype=intp, copy=0, ndmin=1)
+    try:
+        if len(values) != len(obj):
+            raise TypeError
+    except TypeError:
+        values = [values]*len(obj)
+    new = arr
+    k = 0
+    for item, val in zip(obj, values):
+        new = insertinto(new, item+k, val, axis=axis)
+    return new
+
+def appendonto(arr, obj, axis=None):
+    """Append to the end of an array along axis (ravel first if None)
+    """
+    arr = asarray(arr)
+    if axis is None:
+        if arr.ndim != 1:
+            arr = arr.ravel()
+        obj = ravel(obj)
+        axis = 0
+    return concatenate((arr, obj), axis=axis)

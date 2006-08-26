@@ -4693,9 +4693,16 @@ _check_axis(PyArrayObject *arr, int *axis, int flags)
         int n = arr->nd;
 
         if ((*axis >= MAX_DIMS) || (n==0)) {
-                temp = PyArray_Ravel(arr,0);
-                if (temp) *axis = PyArray_NDIM(temp)-1;
-                else *axis = 0;
+                if (n != 1) {
+                        temp = PyArray_Ravel(arr,0);
+                        if (temp) *axis = PyArray_NDIM(temp)-1;
+                        else *axis = 0;
+                }
+                else { 
+                        temp = (PyObject *)arr;
+                        Py_INCREF(temp);
+                        *axis = 0;
+                }
                 return temp;
         }
         else {
