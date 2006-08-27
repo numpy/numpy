@@ -1,4 +1,4 @@
-__all__ = ['logspace', 'linspace',
+u__all__ = ['logspace', 'linspace',
            'select', 'piecewise', 'trim_zeros',
            'copy', 'iterable', #'base_repr', 'binary_repr',
            'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
@@ -7,7 +7,7 @@ __all__ = ['logspace', 'linspace',
            'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort',
            'median', 'sinc', 'hamming', 'hanning', 'bartlett', 'blackman',
            'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring', 'meshgrid',
-           'delete', 'insert', 'append'
+           'delete', 'insert', 'append', 'tensordot'
            ]
 
 import types
@@ -1215,3 +1215,12 @@ def append(arr, values, axis=None):
         values = ravel(values)
         axis = arr.ndim-1
     return concatenate((arr, values), axis=axis)
+
+def tensordot(arr1, arr2, axes1=-1, axes2=0):
+    """tensordot returns the product for any (ndim >= 1) arrays.
+
+    r_{xxx, yyy} = \sum_k arr1_{xxx,k} arr2_{k,yyy} where
+    the axes of k 
+    """
+    #FIXME
+    pass
