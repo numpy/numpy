@@ -237,17 +237,17 @@ class test_extins(NumpyTestCase):
         a = array([1,3,2,1,2,3,3])
         b = extract(a>1,a)
         assert_array_equal(b,[3,2,2,3,3])
-    def check_insert(self):
+    def check_place(self):
         a = array([1,4,3,2,5,8,7])
-        insert(a,[0,1,0,1,0,1,0],[2,4,6])
+        place(a,[0,1,0,1,0,1,0],[2,4,6])
         assert_array_equal(a,[1,2,3,4,5,6,7])
     def check_both(self):
         a = rand(10)
         mask = a > 0.5
         ac = a.copy()
         c = extract(mask, a)
-        insert(a,mask,0)
-        insert(a,mask,c)
+        place(a,mask,0)
+        place(a,mask,c)
         assert_array_equal(a,ac)
 
 class test_vectorize(NumpyTestCase):
