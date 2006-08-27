@@ -46,16 +46,16 @@ at the methods and attributes of an array.
 
 ndarray.__new__(subtype, shape=, dtype=float, buffer=None,
                 offset=0, strides=None, order=None)
-                
+
  There are two modes of creating an array using __new__:
- 1) If buffer is None, then only shape, dtype, and order 
+ 1) If buffer is None, then only shape, dtype, and order
     are used
  2) If buffer is an object exporting the buffer interface, then
     all keywords are interpreted.
- The dtype parameter can be any object that can be interpreted 
+ The dtype parameter can be any object that can be interpreted
     as a numpy.dtype object.
-    
- No __init__ method is needed because the array is fully 
+
+ No __init__ method is needed because the array is fully
  initialized after the __new__ method.
 """
            )
@@ -82,7 +82,7 @@ add_newdoc('numpy.core', 'ndarray',
             ('__array_priority__', 'Array priority'),
             ('__array_finalize__', 'None')
             ]
-           )           
+           )
 
 
 add_newdoc('numpy.core', 'flatiter',
@@ -108,20 +108,20 @@ add_newdoc('numpy.core', 'broadcast',
 
 add_newdoc('numpy.core.multiarray','array',
 """array(object, dtype=None, copy=1,order=None, subok=0,ndmin=0)
-              
+
 Return an array from object with the specified date-type.
 
 Inputs:
-  object - an array, any object exposing the array interface, any 
-            object whose __array__ method returns an array, or any 
+  object - an array, any object exposing the array interface, any
+            object whose __array__ method returns an array, or any
             (nested) sequence.
   dtype  - The desired data-type for the array.  If not given, then
             the type will be determined as the minimum type required
             to hold the objects in the sequence.  This argument can only
-            be used to 'upcast' the array.  For downcasting, use the 
+            be used to 'upcast' the array.  For downcasting, use the
             .astype(t) method.
   copy   - If true, then force a copy.  Otherwise a copy will only occur
-            if __array__ returns a copy, obj is a nested sequence, or 
+            if __array__ returns a copy, obj is a nested sequence, or
             a copy is needed to satisfy any of the other requirements
   order  - Specify the order of the array.  If order is 'C', then the
             array will be in C-contiguous order (last-index varies the
@@ -232,9 +232,9 @@ Join arrays together.
 
 The tuple of sequences (a1, a2, ...) are joined along the given axis
 (default is the first one) into a single numpy array.
-    
+
 Example:
-    
+
 >>> concatenate( ([0,1,2], [5,6,7]) )
 array([0, 1, 2, 5, 6, 7])
 
@@ -313,7 +313,7 @@ then it is equivalent to condition.nonzero().
 To group the indices by element, rather than dimension, use
 
     transpose(where(condition, | x, y))
-    
+
 instead. This always results in a 2d array, with a row of indices for
 each element that satisfies the condition.
 
@@ -357,4 +357,81 @@ read-write buffer is attempted followed by a read-only buffer.
 
 """)
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
+"""a.sort(axis=-1, kind='quicksort') -> None. Sort a along the given axis.
 
+Keyword arguments:
+
+axis -- axis to be sorted (default -1)
+kind -- sorting algorithm (default 'quicksort')
+        Possible values: 'quicksort', 'mergesort', or 'heapsort'.
+
+Returns: None.
+
+This method sorts a in place along the given axis using the algorithm
+specified by the kind keyword.
+
+The various sorts may characterized by average speed, worst case
+performance, need for work space, and whether they are stable. A stable
+sort keeps items with the same key in the same relative order and is most
+useful when used with argsort where the key might differ from the items
+being sorted. The three available algorithms have the following properties:
+
+|------------------------------------------------------|
+|    kind   | speed |  worst case | work space | stable|
+|------------------------------------------------------|
+|'quicksort'|   1   |    o(n)     |      0     |   no  |
+|'mergesort'|   2   | o(n*log(n)) |    ~n/2    |   yes |
+|'heapsort' |   3   | o(n*log(n)) |      0     |   no  |
+|------------------------------------------------------|
+
+All the sort algorithms make temporary copies of the data when the sort is
+not along the last axis. Consequently, sorts along the last axis are faster
+and use less space than sorts along other axis.
+
+"""))
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
+"""a.sort(axis=-1, kind='quicksort') -> indices that sort a along given axis.
+
+Keyword arguments:
+
+axis -- axis to be indirectly sorted (default -1)
+kind -- sorting algorithm (default 'quicksort')
+        Possible values: 'quicksort', 'mergesort', or 'heapsort'
+
+Returns: array of indices that sort a along the specified axis.
+
+This method executes an indirect sort along the given axis using the
+algorithm specified by the kind keyword. It returns an array of indices of
+the same shape as a that index data along the given axis in sorted order.
+
+The various sorts are characterized by average speed, worst case
+performance, need for work space, and whether they are stable. A stable
+sort keeps items with the same key in the same relative order. The three
+available algorithms have the following properties:
+
+|------------------------------------------------------|
+|    kind   | speed |  worst case | work space | stable|
+|------------------------------------------------------|
+|'quicksort'|   1   |   o(n^2)    |      0     |   no  |
+|'mergesort'|   2   | o(n*log(n)) |    ~n/2    |   yes |
+|'heapsort' |   3   | o(n*log(n)) |      0     |   no  |
+|------------------------------------------------------|
+
+All the sort algorithms make temporary copies of the data when the sort is not
+along the last axis. Consequently, sorts along the last axis are faster and use
+less space than sorts along other axis.
+
+"""))
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
+"""a.searchsorted(v)
+
+ Assuming that a is a 1-D array, in ascending order and represents
+ bin boundaries, then a.searchsorted(values) gives an array of bin
+ numbers, giving the bin into which each value would be placed.
+ This method is helpful for histograming.  Note: No warning is
+ given if the boundaries, in a, are not in ascending order.;
+
+"""))

@@ -743,8 +743,6 @@ array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_Choose(self, choices, out, clipmode));
 }
 
-static char doc_sort[] = "a.sort(axis=-1,kind='quicksort') sorts in place along axis.  Return is None and kind can be 'quicksort', 'mergesort', or 'heapsort'";
-
 static PyObject *
 array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -763,10 +761,6 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return Py_None;
 }
 
-static char doc_argsort[] = "a.argsort(axis=-1,kind='quicksort')\n"\
-	"  Return the indexes into a that would sort it along the"\
-	" given axis; kind can be 'quicksort', 'mergesort', or 'heapsort'";
-
 static PyObject *
 array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -780,14 +774,6 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 	return _ARET(PyArray_ArgSort(self, axis, which));
 }
-
-static char doc_searchsorted[] = "a.searchsorted(v)\n"\
-	" Assuming that a is a 1-D array, in ascending order and\n"\
-	" represents bin boundaries, then a.searchsorted(values) gives an\n"\
-	" array of bin numbers, giving the bin into which each value would\n"\
-	" be placed.  This method is helpful for histograming.  \n"\
-	" Note: No warning is given if the boundaries, in a, are not \n"\
-	" in ascending order.";
 
 static PyObject *
 array_searchsorted(PyArrayObject *self, PyObject *args)
@@ -1783,11 +1769,11 @@ static PyMethodDef array_methods[] = {
 	{"choose",	(PyCFunction)array_choose,
 	 METH_VARARGS|METH_KEYWORDS, doc_choose},
 	{"sort",	(PyCFunction)array_sort,
-	 METH_VARARGS|METH_KEYWORDS, doc_sort},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"argsort",	(PyCFunction)array_argsort,
-	 METH_VARARGS|METH_KEYWORDS, doc_argsort},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"searchsorted",  (PyCFunction)array_searchsorted,
-	 METH_VARARGS, doc_searchsorted},
+	 METH_VARARGS, NULL},
 	{"argmax",	(PyCFunction)array_argmax,
 	 METH_VARARGS|METH_KEYWORDS, doc_argmax},
 	{"argmin",  (PyCFunction)array_argmin,

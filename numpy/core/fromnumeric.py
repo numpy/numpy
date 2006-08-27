@@ -125,15 +125,74 @@ def transpose(a, axes=None):
     return transpose(axes)
 
 def sort(a, axis=-1, kind='quicksort'):
-    """sort(a,axis=-1) returns array with elements sorted along given axis.
+    """Return copy of array sorted along the given axis.
+
+    Keyword arguments:
+
+    axis -- axis to be sorted (default -1)
+    kind -- sorting algorithm (default 'quicksort')
+            Possible values: 'quicksort', 'mergesort', or 'heapsort'.
+
+    Returns: None.
+
+    This method sorts a in place along the given axis using the algorithm
+    specified by the kind keyword.
+
+    The various sorts may characterized by average speed, worst case
+    performance, need for work space, and whether they are stable. A stable
+    sort keeps items with the same key in the same relative order and is most
+    useful when used with argsort where the key might differ from the items
+    being sorted. The three available algorithms have the following properties:
+
+    |------------------------------------------------------|
+    |    kind   | speed |  worst case | work space | stable|
+    |------------------------------------------------------|
+    |'quicksort'|   1   |    o(n)     |      0     |   no  |
+    |'mergesort'|   2   | o(n*log(n)) |    ~n/2    |   yes |
+    |'heapsort' |   3   | o(n*log(n)) |      0     |   no  |
+    |------------------------------------------------------|
+
+    All the sort algorithms make temporary copies of the data when the sort is
+    not along the last axis. Consequently, sorts along the last axis are faster
+    and use less space than sorts along other axis.
+
     """
     a = asanyarray(a).copy()
     a.sort(axis, kind)
     return a
 
 def argsort(a, axis=-1, kind='quicksort'):
-    """argsort(a,axis=-1) return the indices into a of the sorted array
-    along the given axis.
+    """Return array of indices that index a in sorted order.
+
+    Keyword arguments:
+
+    axis -- axis to be indirectly sorted (default -1)
+    kind -- sorting algorithm (default 'quicksort')
+            Possible values: 'quicksort', 'mergesort', or 'heapsort'
+
+    Returns: array of indices that sort a along the specified axis.
+
+    This method executes an indirect sort along the given axis using the
+    algorithm specified by the kind keyword. It returns an array of indices of
+    the same shape as a that index data along the given axis in sorted order.
+
+    The various sorts are characterized by average speed, worst case
+    performance, need for work space, and whether they are stable. A stable
+    sort keeps items with the same key in the same relative order. The three
+    available algorithms have the following properties:
+
+    |------------------------------------------------------|
+    |    kind   | speed |  worst case | work space | stable|
+    |------------------------------------------------------|
+    |'quicksort'|   1   |   o(n^2)    |      0     |   no  |
+    |'mergesort'|   2   | o(n*log(n)) |    ~n/2    |   yes |
+    |'heapsort' |   3   | o(n*log(n)) |      0     |   no  |
+    |------------------------------------------------------|
+
+    All the sort algorithms make temporary copies of the data when the sort is not
+    along the last axis. Consequently, sorts along the last axis are faster and use
+    less space than sorts along other axis.
+
     """
     try:
         argsort = a.argsort
@@ -160,7 +219,7 @@ def argmin(a, axis=None):
     except AttributeError:
         return _wrapit(a, 'argmin', axis)
     return argmin(axis)
-    
+
 def searchsorted(a, v):
     """searchsorted(a, v)
     """
@@ -239,7 +298,7 @@ def nonzero(a):
     else:
         res = nonzero()
     return res
-    
+
 def shape(a):
     """shape(a) returns the shape of a (as a function call which
        also works on nested sequences).
@@ -328,7 +387,7 @@ def alltrue (x, axis=None, out=None):
     return all(axis, out)
 
 def any(x,axis=None, out=None):
-    """Return true if any elements of x are true:  
+    """Return true if any elements of x are true:
     """
     try:
         any = x.any
@@ -337,7 +396,7 @@ def any(x,axis=None, out=None):
     return any(axis, out)
 
 def all(x,axis=None, out=None):
-    """Return true if all elements of x are true:  
+    """Return true if all elements of x are true:
     """
     try:
         all = x.all
@@ -467,9 +526,9 @@ round = round_
 def mean(a, axis=None, dtype=None, out=None):
     """mean(a, axis=None, dtype=None)
     Return the arithmetic mean.
-    
-    The mean is the sum of the elements divided by the number of elements. 
-    
+
+    The mean is the sum of the elements divided by the number of elements.
+
     See also: average
     """
     try:
@@ -484,7 +543,7 @@ def std(a, axis=None, dtype=None, out=None):
 
     The standard deviation is the square root of the average of the squared
     deviations from the mean, i.e. std = sqrt(mean((x - x.mean())**2)).
-    
+
     See also: var
     """
     try:
@@ -499,7 +558,7 @@ def var(a, axis=None, dtype=None, out=None):
 
     The variance is the average of the squared deviations from the mean,
     i.e. var = mean((x - x.mean())**2).
-    
+
     See also: std
     """
     try:
