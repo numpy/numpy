@@ -9,7 +9,7 @@ __all__ = ['load', 'sort', 'copy_reg', 'clip', 'putmask', 'Unpickler', 'rank',
            'searchsorted', 'put', 'fromfunction', 'copy', 'resize',
            'array_repr', 'e', 'StringIO', 'pickle',
            'argsort', 'convolve', 'loads', 'cross_correlate',
-           'Pickler', 'dot', 'outerproduct', 'innerproduct', 'insert']
+           'Pickler', 'dot', 'outerproduct', 'innerproduct']
 
 import types
 import StringIO
@@ -23,8 +23,7 @@ from numpy import sort, clip, putmask, rank, sign, shape, allclose, size,\
      choose, swapaxes, array_str, array_repr, e, pi, \
      fromfunction, resize, around, concatenate, vdot, transpose, \
      diagonal, searchsorted, put, argsort, convolve, dot, \
-     outer as outerproduct, inner as innerproduct, correlate as cross_correlate, \
-     place as insert
+     outer as outerproduct, inner as innerproduct, correlate as cross_correlate
 
 from array_printer import array2string
 

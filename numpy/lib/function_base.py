@@ -1,13 +1,13 @@
-u__all__ = ['logspace', 'linspace',
+__all__ = ['logspace', 'linspace',
            'select', 'piecewise', 'trim_zeros',
            'copy', 'iterable', #'base_repr', 'binary_repr',
            'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
-           'unique', 'extract', 'place', 'nansum', 'nanmax', 'nanargmax',
+           'unique', 'extract', 'insert', 'nansum', 'nanmax', 'nanargmax',
            'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
            'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort',
            'median', 'sinc', 'hamming', 'hanning', 'bartlett', 'blackman',
            'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring', 'meshgrid',
-           'delete', 'insert', 'append'
+           'deletefrom', 'insertinto', 'appendonto'
            ]
 
 import types
@@ -545,7 +545,7 @@ def extract(condition, arr):
     """
     return _nx.take(ravel(arr), nonzero(ravel(condition))[0])
 
-def place(arr, mask, vals):
+def insert(arr, mask, vals):
     """Similar to putmask arr[mask] = vals but the 1D array vals has the
     same number of elements as the non-zero values of mask. Inverse of
     extract.
@@ -1011,7 +1011,7 @@ def meshgrid(x,y):
     Y = y.repeat(numCols, axis=1)
     return X, Y
 
-def delete(arr, obj, axis=None):
+def deletefrom(arr, obj, axis=None):
     """Return a new array with sub-arrays along an axis deleted.
 
     Return a new array with the sub-arrays (i.e. rows or columns)
@@ -1117,7 +1117,7 @@ def delete(arr, obj, axis=None):
     else:
         return new
 
-def insert(arr, obj, values, axis=None):
+def insertinto(arr, obj, values, axis=None):
     """Return a new array with values inserted along the given axis
     before the given indices
 
@@ -1205,7 +1205,7 @@ def insert(arr, obj, values, axis=None):
         return wrap(new)
     return new
 
-def append(arr, values, axis=None):
+def appendonto(arr, values, axis=None):
     """Append to the end of an array along axis (ravel first if None)
     """
     arr = asanyarray(arr)
@@ -1215,4 +1215,3 @@ def append(arr, values, axis=None):
         values = ravel(values)
         axis = arr.ndim-1
     return concatenate((arr, values), axis=axis)
-
