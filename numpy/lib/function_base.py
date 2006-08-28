@@ -7,7 +7,7 @@ u__all__ = ['logspace', 'linspace',
            'histogram', 'bincount', 'digitize', 'cov', 'corrcoef', 'msort',
            'median', 'sinc', 'hamming', 'hanning', 'bartlett', 'blackman',
            'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring', 'meshgrid',
-           'delete', 'insert', 'append', 'tensordot'
+           'delete', 'insert', 'append'
            ]
 
 import types
@@ -1216,11 +1216,3 @@ def append(arr, values, axis=None):
         axis = arr.ndim-1
     return concatenate((arr, values), axis=axis)
 
-def tensordot(arr1, arr2, axes1=-1, axes2=0):
-    """tensordot returns the product for any (ndim >= 1) arrays.
-
-    r_{xxx, yyy} = \sum_k arr1_{xxx,k} arr2_{k,yyy} where
-    the axes of k 
-    """
-    #FIXME
-    pass
