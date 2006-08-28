@@ -731,6 +731,8 @@ gentype_struct_get(PyObject *self)
         inter->two = 2;
         inter->nd = 0;
         inter->flags = arr->flags;
+        inter->flags &= ~(UPDATEIFCOPY | OWNDATA);
+        inter->flags |= NPY_NOTSWAPPED;
         inter->typekind = arr->descr->kind;
         inter->itemsize = arr->descr->elsize;
         inter->strides = NULL;
