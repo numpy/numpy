@@ -2,9 +2,6 @@
 /* Should only be used if x is known to be an nd-array */
 #define _ARET(x) PyArray_Return((PyArrayObject *)(x))
 
-static char doc_take[] = "a.take(indices, axis=None, out=None, mode='raise')."\
-        "Selects the elements in indices from array a along the given axis.";
-
 static PyObject *
 array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -27,9 +24,6 @@ array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_TakeFrom(self, indices, dimension, out, mode));
 }
 
-static char doc_fill[] = "a.fill(value) places the scalar value at every "\
-	"position in the array.";
-
 static PyObject *
 array_fill(PyArrayObject *self, PyObject *args)
 {
@@ -40,10 +34,6 @@ array_fill(PyArrayObject *self, PyObject *args)
 	Py_INCREF(Py_None);
 	return Py_None;
 }
-
-static char doc_put[] = "a.put(values, indices, mode) sets a.flat[n] = "\
-        "values[n] for\n" "each n in indices. v can be scalar or shorter "\
-        "than indices,\n" "and it will repeat.";
 
 static PyObject *
 array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -60,9 +50,6 @@ array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_PutTo(self, values, indices, mode);
 }
 
-static char doc_putmask[] = "a.putmask(values, mask) sets a.flat[n] = v[n] "\
-	"for each n where mask.flat[n] is TRUE. v can be scalar.";
-
 static PyObject *
 array_putmask(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -75,13 +62,6 @@ array_putmask(PyArrayObject *self, PyObject *args, PyObject *kwds)
 		return NULL;
 	return PyArray_PutMask(self, values, mask);
 }
-
-static char doc_reshape[] = \
-	"self.reshape(d1, d2, ..., dn, order='C') \n"
-	"Return a new array from this one. \n"
-	"\n  The new array must have the same number of elements as self. "
-	"Also\n always returns a view or raises a ValueError if that is \n"
-	"impossible.";
 
 static PyObject *
 array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -122,16 +102,12 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return NULL;
 }
 
-static char doc_squeeze[] = "m.squeeze() eliminate all length-1 dimensions";
-
 static PyObject *
 array_squeeze(PyArrayObject *self, PyObject *args)
 {
         if (!PyArg_ParseTuple(args, "")) return NULL;
         return PyArray_Squeeze(self);
 }
-
-static char doc_view[] = "a.view(<type>) return a new view of array with same data. type can be either a new sub-type object or a data-descriptor object";
 
 static PyObject *
 array_view(PyArrayObject *self, PyObject *args)
@@ -156,8 +132,6 @@ array_view(PyArrayObject *self, PyObject *args)
 	return PyArray_View(self, type, NULL);
 }
 
-static char doc_argmax[] = "a.argmax(axis=None, out=None)";
-
 static PyObject *
 array_argmax(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -174,8 +148,6 @@ array_argmax(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 	return _ARET(PyArray_ArgMax(self, axis, out));
 }
-
-static char doc_argmin[] = "a.argmin(axis=None, out=None)";
 
 static PyObject *
 array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -194,8 +166,6 @@ array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_ArgMin(self, axis, out));
 }
 
-static char doc_max[] = "a.max(axis=None)";
-
 static PyObject *
 array_max(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -212,8 +182,6 @@ array_max(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 	return PyArray_Max(self, axis, out);
 }
-
-static char doc_ptp[] = "a.ptp(axis=None) a.max(axis)-a.min(axis)";
 
 static PyObject *
 array_ptp(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -233,8 +201,6 @@ array_ptp(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 
-static char doc_min[] = "a.min(axis=None)";
-
 static PyObject *
 array_min(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -251,8 +217,6 @@ array_min(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 	return PyArray_Min(self, axis, out);
 }
-
-static char doc_swapaxes[] = "a.swapaxes(axis1, axis2)  returns new view with axes swapped.";
 
 static PyObject *
 array_swapaxes(PyArrayObject *self, PyObject *args)
@@ -687,11 +651,6 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return Py_None;
 }
 
-static char doc_repeat[] = "a.repeat(repeats=, axis=None)\n"\
-	"\n"\
-	" Copy elements of a, repeats times.  The repeats argument must\n"\
-	"  be a sequence of length a.shape[axis] or a scalar.";
-
 static PyObject *
 array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
 	PyObject *repeats;
@@ -704,14 +663,6 @@ array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
 
 	return _ARET(PyArray_Repeat(self, repeats, axis));
 }
-
-static char doc_choose[] = "a.choose(b0, b1, ..., bn, out=None, mode='raise')\n"\
-	"\n"                                                            \
-	"Return an array that merges the b_i arrays together using 'a' as the index\n"
-        "The b_i arrays and 'a' must all be broadcastable to the same shape.\n"
-        "The output at a particular position is the input array b_i at that position\n"
-        "depending on the value of 'a' at that position.  Therefore, 'a' must be\n"
-        "an integer array with entries from 0 to n+1.";
 
 static PyObject *
 array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -1215,27 +1166,6 @@ array_dumps(PyArrayObject *self, PyObject *args)
 }
 
 
-static char doc_transpose[] = "a.transpose(*axes)\n\n"
-"Returns a view of `a` with axes transposed. If no axes are given,\n"
-"or None is passed, switches the order of the axes (for a 2-d array,\n"
-"this is the usual matrix transpose). If axes are given, they\n"
-"describe how the axes are permuted.\n\n"
-"Example:\n"
-">>> a = array([[1,2],[3,4]])\n"
-">>> a\n"
-"array([[1, 2],\n"
-"       [3, 4]])\n"
-">>> a.transpose()\n"
-"array([[1, 3],\n"
-"       [2, 4]])\n"
-">>> a.transpose((1,0))\n"
-"array([[1, 3],\n"
-"       [2, 4]])\n"
-">>> a.transpose(1,0)\n"
-"array([[1, 3],\n"
-"       [2, 4]])\n"
-;
-
 static PyObject *
 array_transpose(PyArrayObject *self, PyObject *args)
 {
@@ -1259,19 +1189,6 @@ array_transpose(PyArrayObject *self, PyObject *args)
 	return _ARET(ret);
 }
 
-static char doc_mean[] = "a.mean(axis=None, dtype=None)\n\n"\
-  "Average the array over the given axis.  If the axis is None, average\n"\
-  "over all dimensions of the array.\n"\
-  "\n"\
-  "If an integer axis is given, this equals:\n"\
-  "    a.sum(axis, dtype) * 1.0 / len(a)\n"\
-  "\n"\
-  "If axis is None, this equals:\n"\
-  "     a.sum(axis, dtype) * 1.0 / product(a.shape)\n"\
-  "\n"\
-  "The optional dtype argument is the data type for intermediate\n"\
-  "calculations in the sum.";
-
 #define _CHKTYPENUM(typ) ((typ) ? (typ)->type_num : PyArray_NOTYPE)
 
 static PyObject *
@@ -1292,30 +1209,6 @@ array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_Mean(self, axis, _CHKTYPENUM(dtype), out);
 }
 
-static char doc_sum[] = "a.sum(axis=None, dtype=None)\n\n"\
-  "Sum the array over the given axis.  If the axis is None, sum over all\n"\
-  "dimensions of the array.\n"\
-  "\n"\
-  "The optional dtype argument is the data type for the returned value\n"\
-  "and intermediate calculations.  The default is to upcast (promote)\n"\
-  "smaller integer types to the platform-dependent int.  For example, on\n"\
-  "32-bit platforms:\n"\
-  "\n"\
-  "    a.dtype                         default sum() dtype\n"\
-  "    ---------------------------------------------------\n"\
-  "    bool, int8, int16, int32        int32\n"\
-  "\n"\
-  "Examples:\n"\
-  "\n"\
-  ">>> array([0.5, 1.5]).sum()\n"\
-  "2.0\n"\
-  ">>> array([0.5, 1.5]).sum(dtype=int32)\n"\
-  "1\n"\
-  ">>> array([[0, 1], [0, 5]]).sum(axis=0)\n"\
-  "array([0, 6])\n"\
-  ">>> array([[0, 1], [0, 5]]).sum(axis=1)\n"\
-  "array([1, 5])";
-
 static PyObject *
 array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1335,8 +1228,6 @@ array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 
-static char doc_cumsum[] = "a.cumsum(axis=None, dtype=None, out=None)";
-
 static PyObject *
 array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1355,8 +1246,6 @@ array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_CumSum(self, axis, _CHKTYPENUM(dtype), out);
 }
 
-static char doc_prod[] = "a.prod(axis=None, dtype=None)";
-
 static PyObject *
 array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1374,9 +1263,6 @@ array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 	return PyArray_Prod(self, axis, _CHKTYPENUM(dtype), out);
 }
-
-
-static char doc_cumprod[] = "a.cumprod(axis=None, dtype=None)";
 
 static PyObject *
 array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -1397,8 +1283,6 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 
-static char doc_any[] = "a.any(axis=None, out=None)";
-
 static PyObject *
 array_any(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1416,7 +1300,6 @@ array_any(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_Any(self, axis, out);
 }
 
-static char doc_all[] = "a.all(axis=None)";
 
 static PyObject *
 array_all(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -1435,13 +1318,6 @@ array_all(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_All(self, axis, out);
 }
 
-static char doc_stddev[] = "a.std(axis=None, dtype=None, out=None)\n"
-"Return the standard deviation, a measure of the spread of a distribution.\n"
-"\n"
-"The standard deviation is the square root of the average of the squared\n"
-"deviations from the mean, i.e. std = sqrt(mean((x - x.mean())**2)).\n"
-"\n"
-"For multidimensional arrays, std is computed by default along the first axis.\n";
 
 static PyObject *
 array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -1461,7 +1337,6 @@ array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_Std(self, axis, _CHKTYPENUM(dtype), out, 0);
 }
 
-static char doc_variance[] = "a.var(axis=None, dtype=None)";
 
 static PyObject *
 array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -1481,7 +1356,6 @@ array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return PyArray_Std(self, axis, _CHKTYPENUM(dtype), out, 1);
 }
 
-static char doc_compress[] = "a.compress(condition=, axis=None, out=None)";
 
 static PyObject *
 array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -1500,16 +1374,6 @@ array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_Compress(self, condition, axis, out));
 }
 
-static char doc_nonzero[] = \
-    "a.nonzero() returns a tuple of arrays, one for each dimension of a,\n"\
-    "containing the indices of the non-zero elements in that dimension.\n"\
-    "The corresponding non-zero values can be obtained with\n"\
-    "    a[a.nonzero()].\n"
-    "\n"\
-    "To group the indices by element, rather than dimension, use\n"\
-    "    transpose(a.nonzero())\n"\
-    "instead. The result of this is always a 2d array, with a row for each\n"\
-    "non-zero element.";
 
 static PyObject *
 array_nonzero(PyArrayObject *self, PyObject *args)
@@ -1519,10 +1383,6 @@ array_nonzero(PyArrayObject *self, PyObject *args)
 	return PyArray_Nonzero(self);
 }
 
-
-static char doc_trace[] = "a.trace(offset=0, axis1=0, axis2=1, dtype=None, out=None)\n"\
-	"return the sum along the offset diagonal of the arrays indicated\n" \
-	"axis1 and axis2.";
 
 static PyObject *
 array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -1545,8 +1405,6 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
 #undef _CHKTYPENUM
 
 
-static char doc_clip[] = "a.clip(min=, max=, out=None)";
-
 static PyObject *
 array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1563,9 +1421,6 @@ array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_Clip(self, min, max, out));
 }
 
-static char doc_conj[] = "a.conj()";
-
-static char doc_conjugate[] = "a.conjugate()";
 
 static PyObject *
 array_conjugate(PyArrayObject *self, PyObject *args)
@@ -1580,8 +1435,6 @@ array_conjugate(PyArrayObject *self, PyObject *args)
 }
 
 
-static char doc_diagonal[] = "a.diagonal(offset=0, axis1=0, axis2=1)";
-
 static PyObject *
 array_diagonal(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1595,7 +1448,6 @@ array_diagonal(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_Diagonal(self, offset, axis1, axis2));
 }
 
-static char doc_flatten[] = "a.flatten([fortran]) return a 1-d array (always copy)";
 
 static PyObject *
 array_flatten(PyArrayObject *self, PyObject *args)
@@ -1608,7 +1460,6 @@ array_flatten(PyArrayObject *self, PyObject *args)
 	return PyArray_Flatten(self, fortran);
 }
 
-static char doc_ravel[] = "a.ravel([fortran]) return a 1-d array (copy only if needed)";
 
 static PyObject *
 array_ravel(PyArrayObject *self, PyObject *args)
@@ -1621,7 +1472,6 @@ array_ravel(PyArrayObject *self, PyObject *args)
 	return PyArray_Ravel(self, fortran);
 }
 
-static char doc_round[] = "a.round(decimals=0, out=None)";
 
 static PyObject *
 array_round(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -1639,7 +1489,6 @@ array_round(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 
-static char doc_setflags[] = "a.setflags(write=None, align=None, uic=None)";
 
 static int _IsAligned(PyArrayObject *);
 static Bool _IsWriteable(PyArrayObject *);
@@ -1704,8 +1553,6 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return Py_None;
 }
 
-static char doc_newbyteorder[] = "a.newbyteorder(<byteorder>) is equivalent\n" \
-	" to a.view(a.dtype.newbytorder(<byteorder>))\n";
 
 static PyObject *
 array_newbyteorder(PyArrayObject *self, PyObject *args)
@@ -1754,86 +1601,86 @@ static PyMethodDef array_methods[] = {
 	{"dump", (PyCFunction) array_dump, 1, doc_dump},
 
 	/* Extended methods added 2005 */
-	{"fill", (PyCFunction)array_fill,
-	 METH_VARARGS, doc_fill},
-	{"transpose",	(PyCFunction)array_transpose,
-	 METH_VARARGS, doc_transpose},
-	{"take",	(PyCFunction)array_take,
-	 METH_VARARGS|METH_KEYWORDS, doc_take},
-	{"put",	(PyCFunction)array_put,
-	 METH_VARARGS|METH_KEYWORDS, doc_put},
-	{"putmask",	(PyCFunction)array_putmask,
-	 METH_VARARGS|METH_KEYWORDS, doc_putmask},
-	{"repeat",	(PyCFunction)array_repeat,
-	 METH_VARARGS|METH_KEYWORDS, doc_repeat},
-	{"choose",	(PyCFunction)array_choose,
-	 METH_VARARGS|METH_KEYWORDS, doc_choose},
-	{"sort",	(PyCFunction)array_sort,
+	{"all", (PyCFunction)array_all,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"any", (PyCFunction)array_any,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"argmax",	(PyCFunction)array_argmax,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"argmin",  (PyCFunction)array_argmin,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"argsort",	(PyCFunction)array_argsort,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"choose",	(PyCFunction)array_choose,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"clip", (PyCFunction)array_clip,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"compress", (PyCFunction)array_compress,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"conj", (PyCFunction)array_conjugate,
+	 METH_VARARGS, NULL},
+	{"conjugate", (PyCFunction)array_conjugate,
+	 METH_VARARGS, NULL},
+	{"cumprod", (PyCFunction)array_cumprod,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"cumsum", (PyCFunction)array_cumsum,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"diagonal", (PyCFunction)array_diagonal,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"fill", (PyCFunction)array_fill,
+	 METH_VARARGS, NULL},
+	{"flatten", (PyCFunction)array_flatten,
+	 METH_VARARGS, NULL},
+	{"max", (PyCFunction)array_max,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"mean", (PyCFunction)array_mean,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"min", (PyCFunction)array_min,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"newbyteorder", (PyCFunction)array_newbyteorder,
+	 METH_VARARGS, NULL},
+	{"nonzero", (PyCFunction)array_nonzero,
+	 METH_VARARGS, NULL},
+	{"prod", (PyCFunction)array_prod,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"ptp", (PyCFunction)array_ptp,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"put",	(PyCFunction)array_put,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"putmask",	(PyCFunction)array_putmask,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"ravel", (PyCFunction)array_ravel,
+	 METH_VARARGS, NULL},
+	{"repeat",	(PyCFunction)array_repeat,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"reshape",	(PyCFunction)array_reshape,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"round", (PyCFunction)array_round,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"searchsorted",  (PyCFunction)array_searchsorted,
 	 METH_VARARGS, NULL},
-	{"argmax",	(PyCFunction)array_argmax,
-	 METH_VARARGS|METH_KEYWORDS, doc_argmax},
-	{"argmin",  (PyCFunction)array_argmin,
-	 METH_VARARGS|METH_KEYWORDS, doc_argmin},
-	{"reshape",	(PyCFunction)array_reshape,
-	 METH_VARARGS|METH_KEYWORDS, doc_reshape},
-	{"squeeze",	(PyCFunction)array_squeeze,
-	 METH_VARARGS, doc_squeeze},
-	{"view",  (PyCFunction)array_view,
-	 METH_VARARGS, doc_view},
-	{"swapaxes", (PyCFunction)array_swapaxes,
-	 METH_VARARGS, doc_swapaxes},
-	{"max", (PyCFunction)array_max,
-	 METH_VARARGS|METH_KEYWORDS, doc_max},
-	{"min", (PyCFunction)array_min,
-	 METH_VARARGS|METH_KEYWORDS, doc_min},
-	{"ptp", (PyCFunction)array_ptp,
-	 METH_VARARGS|METH_KEYWORDS, doc_ptp},
-	{"mean", (PyCFunction)array_mean,
-	 METH_VARARGS|METH_KEYWORDS, doc_mean},
-	{"trace", (PyCFunction)array_trace,
-	 METH_VARARGS|METH_KEYWORDS, doc_trace},
-	{"diagonal", (PyCFunction)array_diagonal,
-	 METH_VARARGS|METH_KEYWORDS, doc_diagonal},
-	{"clip", (PyCFunction)array_clip,
-	 METH_VARARGS|METH_KEYWORDS, doc_clip},
-	{"conj", (PyCFunction)array_conjugate,
-	 METH_VARARGS, doc_conj},
-	{"conjugate", (PyCFunction)array_conjugate,
-	 METH_VARARGS, doc_conjugate},
-	{"nonzero", (PyCFunction)array_nonzero,
-	 METH_VARARGS, doc_nonzero},
-	{"std", (PyCFunction)array_stddev,
-	 METH_VARARGS|METH_KEYWORDS, doc_stddev},
-	{"var", (PyCFunction)array_variance,
-	 METH_VARARGS|METH_KEYWORDS, doc_variance},
-	{"sum", (PyCFunction)array_sum,
-	 METH_VARARGS|METH_KEYWORDS, doc_sum},
-	{"cumsum", (PyCFunction)array_cumsum,
-	 METH_VARARGS|METH_KEYWORDS, doc_cumsum},
-	{"prod", (PyCFunction)array_prod,
-	 METH_VARARGS|METH_KEYWORDS, doc_prod},
-	{"cumprod", (PyCFunction)array_cumprod,
-	 METH_VARARGS|METH_KEYWORDS, doc_cumprod},
-	{"all", (PyCFunction)array_all,
-	 METH_VARARGS|METH_KEYWORDS, doc_all},
-	{"any", (PyCFunction)array_any,
-	 METH_VARARGS|METH_KEYWORDS, doc_any},
-	{"compress", (PyCFunction)array_compress,
-	 METH_VARARGS|METH_KEYWORDS, doc_compress},
-	{"flatten", (PyCFunction)array_flatten,
-	 METH_VARARGS, doc_flatten},
-	{"ravel", (PyCFunction)array_ravel,
-	 METH_VARARGS, doc_ravel},
-	{"round", (PyCFunction)array_round,
-	 METH_VARARGS|METH_KEYWORDS, doc_round},
 	{"setflags", (PyCFunction)array_setflags,
-	 METH_VARARGS|METH_KEYWORDS, doc_setflags},
-	{"newbyteorder", (PyCFunction)array_newbyteorder,
-	 METH_VARARGS, doc_newbyteorder},
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"sort",	(PyCFunction)array_sort,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"squeeze",	(PyCFunction)array_squeeze,
+	 METH_VARARGS, NULL},
+	{"std", (PyCFunction)array_stddev,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"sum", (PyCFunction)array_sum,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"swapaxes", (PyCFunction)array_swapaxes,
+	 METH_VARARGS, NULL},
+	{"take",	(PyCFunction)array_take,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"trace", (PyCFunction)array_trace,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"transpose",	(PyCFunction)array_transpose,
+	 METH_VARARGS, NULL},
+	{"var", (PyCFunction)array_variance,
+	 METH_VARARGS|METH_KEYWORDS, NULL},
+	{"view",  (PyCFunction)array_view,
+	 METH_VARARGS, NULL},
         {NULL,		NULL}		/* sentinel */
 };
 

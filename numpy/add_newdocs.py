@@ -35,56 +35,6 @@ new dtype object.
             ]
            )
 
-add_newdoc('numpy.core', 'ndarray',
-"""An array object represents a multidimensional, homogeneous array
-of fixed-size items.  An associated data-type-descriptor object
-details the data-type in an array (including byteorder and any
-fields).  An array can be constructed using the numpy.array
-command. Arrays are sequence, mapping and numeric objects.
-More information is available in the numpy module and by looking
-at the methods and attributes of an array.
-
-ndarray.__new__(subtype, shape=, dtype=float, buffer=None,
-                offset=0, strides=None, order=None)
-
- There are two modes of creating an array using __new__:
- 1) If buffer is None, then only shape, dtype, and order
-    are used
- 2) If buffer is an object exporting the buffer interface, then
-    all keywords are interpreted.
- The dtype parameter can be any object that can be interpreted
-    as a numpy.dtype object.
-
- No __init__ method is needed because the array is fully
- initialized after the __new__ method.
-"""
-           )
-
-add_newdoc('numpy.core', 'ndarray',
-           [('ndim', 'number of array dimensions'),
-            ('flags', 'special object providing array flags'),
-            ('shape', 'tuple of array dimensions'),
-            ('strides', 'tuple of bytes to step in each dimension'),
-            ('data', 'buffer object pointing to the start of the data'),
-            ('itemsize', 'length of one element in bytes'),
-            ('size', 'number of elements in the array'),
-            ('nbytes', 'number of bytes in the array'),
-            ('base', 'base object if memory is from some other object'),
-            ('dtype', 'data-type for the array'),
-            ('real', 'real part of the array'),
-            ('imag', 'imaginary part of the array'),
-            ('flat', 'a 1-d flat iterator'),
-            ('ctypes', 'a ctypes interface object'),
-            ('_as_parameter_', 'allow the array to be interpreted as a ctypes object by returning the data-memory location as an integer'),
-            ('T', 'equivalent to self.transpose() except self is returned for self.ndim < 2'),
-            ('__array_interface__', 'Array protocol: Python side'),
-            ('__array_struct__', 'Array protocol: C-struct side'),
-            ('__array_priority__', 'Array priority'),
-            ('__array_finalize__', 'None')
-            ]
-           )
-
-
 add_newdoc('numpy.core', 'flatiter',
            [('__array__',
 """__array__(type=None)
@@ -357,6 +307,319 @@ read-write buffer is attempted followed by a read-only buffer.
 
 """)
 
+##############################################################################
+#
+# Documentation for ndarray attributes and methods
+#
+# Todo:
+#
+# break out attributes separately
+#
+# Attributes and module documentation are still defined elsewhere,
+# so don't show up yet.
+#
+# expand and reformat other documentation.
+#
+# all methods prior to Extended methods added 2005
+#
+##############################################################################
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray',
+"""An array object represents a multidimensional, homogeneous array
+of fixed-size items.  An associated data-type-descriptor object
+details the data-type in an array (including byteorder and any
+fields).  An array can be constructed using the numpy.array
+command. Arrays are sequence, mapping and numeric objects.
+More information is available in the numpy module and by looking
+at the methods and attributes of an array.
+
+ndarray.__new__(subtype, shape=, dtype=float, buffer=None,
+                offset=0, strides=None, order=None)
+
+ There are two modes of creating an array using __new__:
+ 1) If buffer is None, then only shape, dtype, and order
+    are used
+ 2) If buffer is an object exporting the buffer interface, then
+    all keywords are interpreted.
+ The dtype parameter can be any object that can be interpreted
+    as a numpy.dtype object.
+
+ No __init__ method is needed because the array is fully
+ initialized after the __new__ method.
+""")
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray',
+           [('ndim', 'number of array dimensions'),
+            ('flags', 'special object providing array flags'),
+            ('shape', 'tuple of array dimensions'),
+            ('strides', 'tuple of bytes to step in each dimension'),
+            ('data', 'buffer object pointing to the start of the data'),
+            ('itemsize', 'length of one element in bytes'),
+            ('size', 'number of elements in the array'),
+            ('nbytes', 'number of bytes in the array'),
+            ('base', 'base object if memory is from some other object'),
+            ('dtype', 'data-type for the array'),
+            ('real', 'real part of the array'),
+            ('imag', 'imaginary part of the array'),
+            ('flat', 'a 1-d flat iterator'),
+            ('ctypes', 'a ctypes interface object'),
+            ('_as_parameter_', 'allow the array to be interpreted as a ctypes object by returning the data-memory location as an integer'),
+            ('T', 'equivalent to self.transpose() except self is returned for self.ndim < 2'),
+            ('__array_interface__', 'Array protocol: Python side'),
+            ('__array_struct__', 'Array protocol: C-struct side'),
+            ('__array_priority__', 'Array priority'),
+            ('__array_finalize__', 'None')
+            ])
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
+""" a.all(axis=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('any',
+""" a.any(axis=None, out=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('argmax',
+""" a.argmax(axis=None, out=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('argmin',
+""" a.argmin(axis=None, out=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
+"""a.argsort(axis=-1, kind='quicksort') -> indices that sort a along given axis.
+
+Keyword arguments:
+
+axis -- axis to be indirectly sorted (default -1)
+kind -- sorting algorithm (default 'quicksort')
+        Possible values: 'quicksort', 'mergesort', or 'heapsort'
+
+Returns: array of indices that sort a along the specified axis.
+
+This method executes an indirect sort along the given axis using the
+algorithm specified by the kind keyword. It returns an array of indices of
+the same shape as a that index data along the given axis in sorted order.
+
+The various sorts are characterized by average speed, worst case
+performance, need for work space, and whether they are stable. A stable
+sort keeps items with the same key in the same relative order. The three
+available algorithms have the following properties:
+
+|------------------------------------------------------|
+|    kind   | speed |  worst case | work space | stable|
+|------------------------------------------------------|
+|'quicksort'|   1   |   o(n^2)    |      0     |   no  |
+|'mergesort'|   2   | o(n*log(n)) |    ~n/2    |   yes |
+|'heapsort' |   3   | o(n*log(n)) |      0     |   no  |
+|------------------------------------------------------|
+
+All the sort algorithms make temporary copies of the data when the sort is not
+along the last axis. Consequently, sorts along the last axis are faster and use
+less space than sorts along other axis.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('choose',
+""" a.choose(b0, b1, ..., bn, out=None, mode='raise')
+
+Return an array that merges the b_i arrays together using 'a' as
+the index The b_i arrays and 'a' must all be broadcastable to the
+same shape.  The output at a particular position is the input
+array b_i at that position depending on the value of 'a' at that
+position.  Therefore, 'a' must be an integer array with entries
+from 0 to n+1.;
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('clip',
+"""a.clip(min=, max=, out=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('compress',
+"""a.compress(condition=, axis=None, out=None)
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('conj',
+"""a.conj()
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('conjugate',
+"""a.conjugate()
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('cumprod',
+"""a.cumprod(axis=None, dtype=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('cumsum',
+"""a.cumsum(axis=None, dtype=None, out=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
+"""a.diagonal(offset=0, axis1=0, axis2=1)
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('fill',
+"""a.fill(value) -> None. Fill the array with the scalar value.
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('flatten',
+"""a.flatten([fortran]) return a 1-d array (always copy)
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
+"""a.max(axis=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
+"""a.mean(axis=None, dtype=None)
+
+  Average the array over the given axis.  If the axis is None,
+  average over all dimensions of the array.  If an integer axis
+  is given, this equals:
+      a.sum(axis, dtype) * 1.0 / len(a).
+  If axis is None, this equals:
+      a.sum(axis, dtype) * 1.0 / product(a.shape)
+  The optional dtype argument is the data type for intermediate
+  calculations in the sum.;
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
+"""a.min(axis=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
+"""a.newbyteorder(<byteorder>) is equivalent to
+a.view(a.dtype.newbytorder(<byteorder>))
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('nonzero',
+"""a.nonzero() returns a tuple of arrays
+
+Returns a tuple of arrays, one for each dimension of a,
+containing the indices of the non-zero elements in that
+dimension.  The corresponding non-zero values can be obtained
+with
+    a[a.nonzero()].
+
+To group the indices by element, rather than dimension, use
+    transpose(a.nonzero())
+instead. The result of this is always a 2d array, with a row for
+each non-zero element.;
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('prod',
+""" a.prod(axis=None, dtype=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('ptp',
+"""a.ptp(axis=None) a.max(axis)-a.min(axis)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
+"""a.put(values, indices, mode) sets a.flat[n] = values[n] for
+each n in indices. v can be scalar or shorter than indices, and
+it will repeat.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('putmask',
+"""a.putmask(values, mask) sets a.flat[n] = v[n] for each n where
+mask.flat[n] is true. v can be scalar.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('ravel',
+"""a.ravel([fortran]) return a 1-d array (copy only if needed)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('repeat',
+"""a.repeat(repeats=, axis=none)
+
+copy elements of a, repeats times.  the repeats argument must
+be a sequence of length a.shape[axis] or a scalar.;
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('reshape',
+"""a.reshape(d1, d2, ..., dn, order='c')
+
+Return a new array from this one.  The new array must have the
+same number of elements as self.  Also always returns a view or
+raises a ValueError if that is impossible.;
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
+"""a.round(decimals=0, out=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
+"""a.searchsorted(v)
+
+ Assuming that a is a 1-D array, in ascending order and represents
+ bin boundaries, then a.searchsorted(values) gives an array of bin
+ numbers, giving the bin into which each value would be placed.
+ This method is helpful for histograming.  Note: No warning is
+ given if the boundaries, in a, are not in ascending order.;
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
+"""a.setflags(write=None, align=None, uic=None)
+
+"""))
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
 """a.sort(axis=-1, kind='quicksort') -> None. Sort a along the given axis.
 
@@ -391,47 +654,118 @@ and use less space than sorts along other axis.
 
 """))
 
-add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
-"""a.sort(axis=-1, kind='quicksort') -> indices that sort a along given axis.
 
-Keyword arguments:
-
-axis -- axis to be indirectly sorted (default -1)
-kind -- sorting algorithm (default 'quicksort')
-        Possible values: 'quicksort', 'mergesort', or 'heapsort'
-
-Returns: array of indices that sort a along the specified axis.
-
-This method executes an indirect sort along the given axis using the
-algorithm specified by the kind keyword. It returns an array of indices of
-the same shape as a that index data along the given axis in sorted order.
-
-The various sorts are characterized by average speed, worst case
-performance, need for work space, and whether they are stable. A stable
-sort keeps items with the same key in the same relative order. The three
-available algorithms have the following properties:
-
-|------------------------------------------------------|
-|    kind   | speed |  worst case | work space | stable|
-|------------------------------------------------------|
-|'quicksort'|   1   |   o(n^2)    |      0     |   no  |
-|'mergesort'|   2   | o(n*log(n)) |    ~n/2    |   yes |
-|'heapsort' |   3   | o(n*log(n)) |      0     |   no  |
-|------------------------------------------------------|
-
-All the sort algorithms make temporary copies of the data when the sort is not
-along the last axis. Consequently, sorts along the last axis are faster and use
-less space than sorts along other axis.
+add_newdoc('numpy.core.multiarray', 'ndarray', ('squeeze',
+"""m.squeeze() eliminate all length-1 dimensions
 
 """))
 
-add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
-"""a.searchsorted(v)
 
- Assuming that a is a 1-D array, in ascending order and represents
- bin boundaries, then a.searchsorted(values) gives an array of bin
- numbers, giving the bin into which each value would be placed.
- This method is helpful for histograming.  Note: No warning is
- given if the boundaries, in a, are not in ascending order.;
+add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
+"""a.std(axis=None, dtype=None, out=None) -> standard deviation.
+
+The standard deviation isa measure of the spread of a
+distribution.
+
+The standard deviation is the square root of the average of the
+squared deviations from the mean, i.e.
+    std = sqrt(mean((x - x.mean())**2)).
+
+For multidimensional arrays, std is computed by default along the
+first axis.
 
 """))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('sum',
+"""a.sum(axis=None, dtype=None) -> Sum of array over given axis.
+
+Sum the array over the given axis.  If the axis is None, sum over
+all dimensions of the array.
+
+The optional dtype argument is the data type for the returned
+value and intermediate calculations.  The default is to upcast
+(promote) smaller integer types to the platform-dependent int.
+For example, on 32-bit platforms:
+
+  a.dtype                         default sum() dtype
+  ---------------------------------------------------
+  bool, int8, int16, int32        int32
+
+Examples:
+
+>>> array([0.5, 1.5]).sum()
+2.0
+>>> array([0.5, 1.5]).sum(dtype=int32)
+1
+>>> array([[0, 1], [0, 5]]).sum(axis=0)
+array([0, 6])
+>>> array([[0, 1], [0, 5]]).sum(axis=1)
+array([1, 5])
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('swapaxes',
+"""a.swapaxes(axis1, axis2) -> new view with axes swapped.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('take',
+"""a.take(indices, axis=None, out=None, mode='raise') -> new array.
+
+The new array is formed from the elements of a indexed by indices along the
+given axis.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('trace',
+"""a.trace(offset=0, axis1=0, axis2=1, dtype=None, out=None)
+return the sum along the offset diagonal of the arrays indicated
+axis1 and axis2.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
+"""a.transpose(*axes)
+
+Returns a view of 'a' with axes transposed. If no axes are given,
+or None is passed, switches the order of the axes. For a 2-d
+array, this is the usual matrix transpose. If axes are given,
+they describe how the axes are permuted.
+
+Example:
+>>> a = array([[1,2],[3,4]])
+>>> a
+array([[1, 2],
+       [3, 4]])
+>>> a.transpose()
+array([[1, 3],
+       [2, 4]])
+>>> a.transpose((1,0))
+array([[1, 3],
+       [2, 4]])
+>>> a.transpose(1,0)
+array([[1, 3],
+       [2, 4]])
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
+"""a.var(axis=None, dtype=None)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
+"""a.view(<type>) -> new view of array with same data.
+
+Type can be either a new sub-type object or a data-descriptor object
+
+"""))
+
+
