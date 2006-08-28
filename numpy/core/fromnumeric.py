@@ -356,6 +356,7 @@ def sum(x, axis=None, dtype=None, out=None):
         if out is not None:
             out[...] = res
             return out
+        return res
     try:
         sum = x.sum
     except AttributeError:

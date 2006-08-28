@@ -252,7 +252,7 @@ except ImportError:
     def restoredot():
         pass
 
-def tensordot(a, b, axes=(-1,0))
+def tensordot(a, b, axes=(-1,0)):
     """tensordot returns the product for any (ndim >= 1) arrays.
 
     r_{xxx, yyy} = \sum_k a_{xxx,k} b_{k,yyy} where
@@ -286,7 +286,7 @@ def tensordot(a, b, axes=(-1,0))
     if not equal:
         raise ValueError, "shape-mismatch for sum"    
     
-    olda = [ for k in aa if k not in axes_a]
+    olda = [k for k in aa if k not in axes_a]
     oldb = [k for k in bs if k not in axes_b]
 
     at = a.reshape(nd1, nd2)
