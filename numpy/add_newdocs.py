@@ -313,14 +313,16 @@ read-write buffer is attempted followed by a read-only buffer.
 #
 # Todo:
 #
-# break out attributes separately
+# expand and reformat documentation.
 #
-# Attributes and module documentation are still defined elsewhere,
-# so don't show up yet.
+# do all methods prior to Extended methods added 2005
 #
-# expand and reformat other documentation.
+##############################################################################
+
+
+##############################################################################
 #
-# all methods prior to Extended methods added 2005
+# ndarray object
 #
 ##############################################################################
 
@@ -347,32 +349,103 @@ ndarray.__new__(subtype, shape=, dtype=float, buffer=None,
 
  No __init__ method is needed because the array is fully
  initialized after the __new__ method.
+
 """)
 
 
-add_newdoc('numpy.core.multiarray', 'ndarray',
-           [('ndim', 'number of array dimensions'),
-            ('flags', 'special object providing array flags'),
-            ('shape', 'tuple of array dimensions'),
-            ('strides', 'tuple of bytes to step in each dimension'),
-            ('data', 'buffer object pointing to the start of the data'),
-            ('itemsize', 'length of one element in bytes'),
-            ('size', 'number of elements in the array'),
-            ('nbytes', 'number of bytes in the array'),
-            ('base', 'base object if memory is from some other object'),
-            ('dtype', 'data-type for the array'),
-            ('real', 'real part of the array'),
-            ('imag', 'imaginary part of the array'),
-            ('flat', 'a 1-d flat iterator'),
-            ('ctypes', 'a ctypes interface object'),
-            ('_as_parameter_', 'allow the array to be interpreted as a ctypes object by returning the data-memory location as an integer'),
-            ('T', 'equivalent to self.transpose() except self is returned for self.ndim < 2'),
-            ('__array_interface__', 'Array protocol: Python side'),
-            ('__array_struct__', 'Array protocol: C-struct side'),
-            ('__array_priority__', 'Array priority'),
-            ('__array_finalize__', 'None')
-            ])
+##############################################################################
+#
+# ndarray attributes
+#
+##############################################################################
 
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_interface__',
+"""Array protocol: Python side."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_finalize__',
+"""None."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_priority__',
+"""Array priority."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_struct__',
+"""Array protocol: C-struct side."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('_as_parameter_',
+"""Allow the array to be interpreted as a ctypes object by returning the
+data-memory location as an integer"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('base',
+"""Base object if memory is from some other object."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('ctypes',
+"""A ctypes interface object."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('data',
+"""Buffer object pointing to the start of the data."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('dtype',
+"""Data-type for the array."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('imag',
+"""Imaginary part of the array."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('itemsize',
+"""Length of one element in bytes."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
+"""Special object providing array flags."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('flat',
+"""A 1-d flat iterator."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('nbytes',
+"""Number of bytes in the array."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('ndim',
+"""Number of array dimensions."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('real',
+"""Real part of the array."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
+"""Tuple of array dimensions."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('size',
+"""Number of elements in the array."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('strides',
+"""Tuple of bytes to step in each dimension."""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('T',
+"""Equivalent to self.transpose() except self is returned for self.ndim < 2."""))
+
+
+##############################################################################
+#
+# ndarray methods
+#
+##############################################################################
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
 """ a.all(axis=None)
