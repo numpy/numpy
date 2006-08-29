@@ -439,8 +439,6 @@ def amax(a, axis=None, out=None):
         return _wrapit(a, 'max', axis, out)
     return amax(axis, out)
 
-max = amax
-
 def amin(a, axis=None, out=None):
     """Return the minimum of a along dimension axis.
     """
@@ -449,8 +447,6 @@ def amin(a, axis=None, out=None):
     except AttributeError:
         return _wrapit(a, 'min', axis, out)
     return amin(axis, out)
-
-min = amin
 
 def alen(a):
     """Return the length of a Python object interpreted as an array
@@ -521,8 +517,6 @@ def round_(a, decimals=0, out=None):
     return round(decimals, out)
 
 around = round_
-
-round = round_
 
 def mean(a, axis=None, dtype=None, out=None):
     """mean(a, axis=None, dtype=None)

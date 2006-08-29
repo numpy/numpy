@@ -36,14 +36,16 @@ else:
     from core import *
     import lib
     from lib import *
-    # Make these accessible from numpy name-space
-    #  but not imported in from numpy import *
-    from __builtin__ import bool, int, long, float, complex, \
-         object, unicode, str
     import linalg
     import fft
     import random
     import ctypeslib
+
+    # Make these accessible from numpy name-space
+    #  but not imported in from numpy import *
+    from __builtin__ import bool, int, long, float, complex, \
+         object, unicode, str
+    from core import round, abs, max, min
 
     __all__ = ['__version__', 'pkgload', 'PackageLoader',
                'ScipyTest', 'NumpyTest', 'show_config']
