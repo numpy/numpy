@@ -25,7 +25,7 @@ def apply_along_axis(func1d,axis,arr,*args):
     indlist = range(nd)
     indlist.remove(axis)
     i[axis] = slice(None,None)
-    outshape = asarray(arr.shape).take(indlist)
+    outshape = asarray(arr.shape).take(indlist,0)
     i.put(ind, indlist)
     res = func1d(arr[tuple(i.tolist())],*args)
     #  if res is a number, then we have a smaller output array
