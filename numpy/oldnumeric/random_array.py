@@ -166,7 +166,7 @@ def multinomial(trials, probs, shape=[]):
            trials is the number of trials in each multinomial distribution.
            probs is a one dimensional array. There are len(prob)+1 events.
            prob[i] is the probability of the i-th event, 0<=i<len(prob).
-           The probability of event len(prob) is 1.-Numeric.sum(prob).
+           The probability of event len(prob) is 1.-Numeric.sum(prob,axis=0).
 
        The first form returns a single 1-D array containing one multinomially
            distributed vector.
@@ -188,14 +188,14 @@ def poisson(mean, shape=[]):
 
 def mean_var_test(x, type, mean, var, skew=[]):
     n = len(x) * 1.0
-    x_mean = Numeric.sum(x)/n
+    x_mean = Numeric.sum(x,axis=0)/n
     x_minus_mean = x - x_mean
-    x_var = Numeric.sum(x_minus_mean*x_minus_mean)/(n-1.0)
+    x_var = Numeric.sum(x_minus_mean*x_minus_mean,axis=0)/(n-1.0)
     print "\nAverage of ", len(x), type
     print "(should be about ", mean, "):", x_mean
     print "Variance of those random numbers (should be about ", var, "):", x_var
     if skew != []:
-       x_skew = (Numeric.sum(x_minus_mean*x_minus_mean*x_minus_mean)/9998.)/x_var**(3./2.)
+       x_skew = (Numeric.sum(x_minus_mean*x_minus_mean*x_minus_mean,axis=0)/9998.)/x_var**(3./2.)
        print "Skewness of those random numbers (should be about ", skew, "):", x_skew
 
 def test():
@@ -205,12 +205,12 @@ def test():
     if (obj2[1] - obj[1]).any():
         raise SystemExit, "Failed seed test."
     print "First random number is", random()
-    print "Average of 10000 random numbers is", Numeric.sum(random(10000))/10000.
+    print "Average of 10000 random numbers is", Numeric.sum(random(10000),axis=0)/10000.
     x = random([10,1000])
     if len(x.shape) != 2 or x.shape[0] != 10 or x.shape[1] != 1000:
         raise SystemExit, "random returned wrong shape"
     x.shape = (10000,)
-    print "Average of 100 by 100 random numbers is", Numeric.sum(x)/10000.
+    print "Average of 100 by 100 random numbers is", Numeric.sum(x,axis=0)/10000.
     y = uniform(0.5,0.6, (1000,10))
     if len(y.shape) !=2 or y.shape[0] != 1000 or y.shape[1] != 10:
         raise SystemExit, "uniform returned wrong shape"
@@ -239,7 +239,7 @@ def test():
     print x
     if x.shape != (4,3,2): raise SystemExit, "multivariate_normal returned wrong shape"
     x = multivariate_normal(Numeric.array([-100,0,100]), Numeric.array([[3,2,1],[2,2,1],[1,1,1]]), 10000)
-    x_mean = Numeric.sum(x)/10000.
+    x_mean = Numeric.sum(x,axis=0)/10000.
     print "Average of 10000 multivariate normals with mean [-100,0,100]"
     print x_mean
     x_minus_mean = x - x_mean
@@ -262,7 +262,7 @@ def test():
     print "\nEach row is the result of 16 multinomial trials with probabilities [0.1, 0.5, 0.1 0.3]:"
     x = multinomial(16, [0.1, 0.5, 0.1], 8)
     print x
-    print "Mean = ", Numeric.sum(x)/8.
+    print "Mean = ", Numeric.sum(x,axis=0)/8.
 
 if __name__ == '__main__':
     test()

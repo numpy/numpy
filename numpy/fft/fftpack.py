@@ -200,7 +200,7 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
         if axes == None:
             s = list(a.shape)
         else:
-            s = take(a.shape, axes)
+            s = take(a.shape, axes,axis=0)
     else:
         shapeless = 0
     s = list(s)

@@ -167,14 +167,14 @@ class test_ma(NumpyTestCase):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         self.failUnless (eq(numpy.add.reduce(x), add.reduce(x)))
         self.failUnless (eq(numpy.add.accumulate(x), add.accumulate(x)))
-        self.failUnless (eq(4, sum(array(4))))
+        self.failUnless (eq(4, sum(array(4),axis=0)))
         self.failUnless (eq(4, sum(array(4), axis=0)))
-        self.failUnless (eq(numpy.sum(x), sum(x)))
-        self.failUnless (eq(numpy.sum(filled(xm,0)), sum(xm)))
+        self.failUnless (eq(numpy.sum(x,axis=0), sum(x,axis=0)))
+        self.failUnless (eq(numpy.sum(filled(xm,0),axis=0), sum(xm,axis=0)))
         self.failUnless (eq(numpy.sum(x,0), sum(x,0)))
-        self.failUnless (eq(numpy.product(x), product(x)))
+        self.failUnless (eq(numpy.product(x,axis=0), product(x,axis=0)))
         self.failUnless (eq(numpy.product(x,0), product(x,0)))
-        self.failUnless (eq(numpy.product(filled(xm,1)), product(xm)))
+        self.failUnless (eq(numpy.product(filled(xm,1),axis=0), product(xm,axis=0)))
         if len(s) > 1:
             self.failUnless (eq(numpy.concatenate((x,y),1), concatenate((xm,ym),1)))
             self.failUnless (eq(numpy.add.reduce(x,1), add.reduce(x,1)))
@@ -308,9 +308,9 @@ class test_ma(NumpyTestCase):
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
         i = numpy.nonzero(m)[0]
         putmask(xm, m, z)
-        assert take(xm, i) == z
+        assert take(xm, i,axis=0) == z
         put(ym, i, zm)
-        assert take(ym, i) == zm
+        assert take(ym, i,axis=0) == zm
 
     def check_testOddFeatures(self):
         "Test of other odd features"
@@ -513,13 +513,13 @@ class test_ma(NumpyTestCase):
     def check_testAverage1(self):
         "Test of average."
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
-        self.failUnless(eq(2.0, average(ott)))
+        self.failUnless(eq(2.0, average(ott,axis=0)))
         self.failUnless(eq(2.0, average(ott, weights=[1., 1., 2., 1.])))
         result, wts = average(ott, weights=[1.,1.,2.,1.], returned=1)
         self.failUnless(eq(2.0, result))
         self.failUnless(wts == 4.0)
         ott[:] = masked
-        self.failUnless(average(ott) is masked)
+        self.failUnless(average(ott,axis=0) is masked)
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
         ott=ott.reshape(2,2)
         ott[:,1] = masked
@@ -539,20 +539,20 @@ class test_ma(NumpyTestCase):
         y=array([arange(6), 2.0*arange(6)])
         self.failUnless(allclose(average(y, None), numpy.add.reduce(numpy.arange(6))*3./12.))
         self.failUnless(allclose(average(y, axis=0), numpy.arange(6) * 3./2.))
-        self.failUnless(allclose(average(y, axis=1), [average(x), average(x) * 2.0]))
+        self.failUnless(allclose(average(y, axis=1), [average(x,axis=0), average(x,axis=0) * 2.0]))
         self.failUnless(allclose(average(y, None, weights=w2), 20./6.))
         self.failUnless(allclose(average(y, axis=0, weights=w2), [0.,1.,2.,3.,4.,10.]))
-        self.failUnless(allclose(average(y, axis=1), [average(x), average(x) * 2.0]))
+        self.failUnless(allclose(average(y, axis=1), [average(x,axis=0), average(x,axis=0) * 2.0]))
         m1 = zeros(6)
         m2 = [0,0,1,1,0,0]
         m3 = [[0,0,1,1,0,0],[0,1,1,1,1,0]]
         m4 = ones(6)
         m5 = [0, 1, 1, 1, 1, 1]
-        self.failUnless(allclose(average(masked_array(x, m1)), 2.5))
-        self.failUnless(allclose(average(masked_array(x, m2)), 2.5))
-        self.failUnless(average(masked_array(x, m4)) is masked)
-        self.assertEqual(average(masked_array(x, m5)), 0.0)
-        self.assertEqual(count(average(masked_array(x, m4))), 0)
+        self.failUnless(allclose(average(masked_array(x, m1),axis=0), 2.5))
+        self.failUnless(allclose(average(masked_array(x, m2),axis=0), 2.5))
+        self.failUnless(average(masked_array(x, m4),axis=0) is masked)
+        self.assertEqual(average(masked_array(x, m5),axis=0), 0.0)
+        self.assertEqual(count(average(masked_array(x, m4),axis=0)), 0)
         z = masked_array(y, m3)
         self.failUnless(allclose(average(z, None), 20./6.))
         self.failUnless(allclose(average(z, axis=0), [0.,1.,99.,99.,4.0, 7.5]))
@@ -678,10 +678,10 @@ class test_ufuncs(NumpyTestCase):
 
     def test_reduce(self):
         a = self.d[0]
-        self.failIf(alltrue(a))
-        self.failUnless(sometrue(a))
-        self.failUnlessEqual(sum(a[:3]), 0)
-        self.failUnlessEqual(product(a), 0)
+        self.failIf(alltrue(a,axis=0))
+        self.failUnless(sometrue(a,axis=0))
+        self.failUnlessEqual(sum(a[:3],axis=0), 0)
+        self.failUnlessEqual(product(a,axis=0), 0)
 
     def test_minmax(self):
         a = arange(1,13).reshape(3,4)
@@ -738,7 +738,7 @@ class test_array_methods(NumpyTestCase):
         mXdiag = mX.diagonal()
         self.assertEqual(mX.trace(), mX.diagonal().compressed().sum())
         self.failUnless(eq(mX.trace(),
-                           X.trace() - sum(mXdiag.mask*X.diagonal())))
+                           X.trace() - sum(mXdiag.mask*X.diagonal(),axis=0)))
 
     def test_clip(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d

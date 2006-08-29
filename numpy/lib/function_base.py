@@ -108,17 +108,16 @@ def average(a, axis=None, weights=None, returned=False):
     """average(a, axis=None weights=None, returned=False)
 
     Average the array over the given axis.  If the axis is None, average
-    over all dimensions of the array.  Equivalent to a.mean(axis), but
-    with a default axis of 0 instead of None.
+    over all dimensions of the array.  Equivalent to a.mean(axis)
 
     If an integer axis is given, this equals:
         a.sum(axis) * 1.0 / len(a)
 
     If axis is None, this equals:
-        a.sum(axis) * 1.0 / product(a.shape)
+        a.sum(axis) * 1.0 / product(a.shape,axis=0)
 
     If weights are given, result is:
-        sum(a * weights) / sum(weights),
+        sum(a * weights,axis) / sum(weights,axis),
     where the weights must have a's shape or be 1D with length the
     size of a in the given axis. Integer weights are converted to
     Float.  Not specifying weights is equivalent to specifying
@@ -541,9 +540,9 @@ def extract(condition, arr):
     """Return the elements of ravel(arr) where ravel(condition) is True
     (in 1D).
 
-    Equivalent to compress(ravel(condition), ravel(arr)).
+    Equivalent to compress(ravel(condition), ravel(arr),0).
     """
-    return _nx.take(ravel(arr), nonzero(ravel(condition))[0])
+    return _nx.take(ravel(arr), nonzero(ravel(condition))[0],axis=0)
 
 def place(arr, mask, vals):
     """Similar to putmask arr[mask] = vals but the 1D array vals has the

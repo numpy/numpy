@@ -1613,7 +1613,7 @@ def average (a, axis=None, weights=None, returned = 0):
        If axis is None, average over the entire array
        Inputs can be integer or floating types; result is of type float.
 
-       If weights are given, result is sum(a*weights)/(sum(weights)*1.0)
+       If weights are given, result is sum(a*weights,axis=0)/(sum(weights,axis=0)*1.0)
        weights must have a's shape or be the 1-d with length the size
        of a in the given axis.
 

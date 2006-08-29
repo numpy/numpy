@@ -32,7 +32,7 @@ def apply_along_axis(func1d,axis,arr,*args):
     if isscalar(res):
         outarr = zeros(outshape,asarray(res).dtype)
         outarr[ind] = res
-        Ntot = product(outshape)
+        Ntot = product(outshape,axis=0)
         k = 1
         while k < Ntot:
             # increment the index
@@ -48,7 +48,7 @@ def apply_along_axis(func1d,axis,arr,*args):
             k += 1
         return outarr
     else:
-        Ntot = product(outshape)
+        Ntot = product(outshape,axis=0)
         holdshape = outshape
         outshape = list(arr.shape)
         outshape[axis] = len(res)
@@ -326,12 +326,7 @@ def array_split(ary,indices_or_sections,axis = 0):
         Caveats:
            Currently, the default for axis is 0.  This
            means a 2D array is divided into multiple groups
-           of rows.  This seems like the appropriate default, but
-           we've agreed most other functions should default to
-           axis=-1.  Perhaps we should use axis=-1 for consistency.
-           However, we could also make the argument that NumPy
-           works on "rows" by default.  sum() sums up rows of
-           values.  split() will split data into rows.  Opinions?
+           of rows.  This seems like the appropriate default,
     """
     try:
         Ntotal = ary.shape[axis]
@@ -391,12 +386,7 @@ def split(ary,indices_or_sections,axis=0):
         Caveats:
            Currently, the default for axis is 0.  This
            means a 2D array is divided into multiple groups
-           of rows.  This seems like the appropriate default, but
-           we've agreed most other functions should default to
-           axis=-1.  Perhaps we should use axis=-1 for consistency.
-           However, we could also make the argument that NumPy
-           works on "rows" by default.  sum() sums up rows of
-           values.  split() will split data into rows.  Opinions?
+           of rows.  This seems like the appropriate default
     """
     try: len(indices_or_sections)
     except TypeError:

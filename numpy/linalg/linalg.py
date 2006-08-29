@@ -661,11 +661,11 @@ Singular values less than s[0]*rcond are treated as zero.
     if one_eq:
         x = array(ravel(bstar)[:n], dtype=result_t, copy=True)
         if results['rank']==n and m>n:
-            resids = array([sum((ravel(bstar)[n:])**2)], dtype=result_t)
+            resids = array([sum((ravel(bstar)[n:])**2,axis=0)], dtype=result_t)
     else:
         x = array(transpose(bstar)[:n,:], dtype=result_t, copy=True)
         if results['rank']==n and m>n:
-            resids = sum((transpose(bstar)[n:,:])**2).astype(result_t)
+            resids = sum((transpose(bstar)[n:,:])**2,axis=0).astype(result_t)
     st = s[:min(n,m)].copy().astype(_realType(result_t))
     return wrap(x), resids, results['rank'], st
 
@@ -687,7 +687,7 @@ def norm(x, ord=None):
        For vectors ord can be any real number including Inf or -Inf.
          ord = Inf, computes the maximum of the magnitudes
          ord = -Inf, computes minimum of the magnitudes
-         ord is finite, computes sum(abs(x)**ord)**(1.0/ord)
+         ord is finite, computes sum(abs(x)**ord,axis=0)**(1.0/ord)
 
        For matrices ord can only be one of the following values:
          ord = 2 computes the largest singular value
@@ -696,7 +696,7 @@ def norm(x, ord=None):
          ord = -1 computes the smallest column sum of absolute values
          ord = Inf computes the largest row sum of absolute values
          ord = -Inf computes the smallest row sum of absolute values
-         ord = 'fro' computes the frobenius norm sqrt(sum(diag(X.H * X)))
+         ord = 'fro' computes the frobenius norm sqrt(sum(diag(X.H * X),axis=0))
 
        For values ord < 0, the result is, strictly speaking, not a
        mathematical 'norm', but it may still be useful for numerical purposes.

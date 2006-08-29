@@ -42,11 +42,11 @@ class test_all(NumpyTestCase):
 class test_average(NumpyTestCase):
     def check_basic(self):
         y1 = array([1,2,3])
-        assert(average(y1) == 2.)
+        assert(average(y1,axis=0) == 2.)
         y2 = array([1.,2.,3.])
-        assert(average(y2) == 2.)
+        assert(average(y2,axis=0) == 2.)
         y3 = [0.,0.,0.]
-        assert(average(y3) == 0.)
+        assert(average(y3,axis=0) == 0.)
 
         y4 = ones((4,4))
         y4[0,1] = 0
@@ -117,7 +117,7 @@ class test_amin(NumpyTestCase):
 class test_ptp(NumpyTestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
-        assert_equal(ptp(a),15.0)
+        assert_equal(ptp(a,axis=0),15.0)
         b = [[3,6.0, 9.0],
              [4,10.0,5.0],
              [8,3.0,2.0]]
@@ -132,7 +132,7 @@ class test_cumsum(NumpyTestCase):
                       float32,float64,complex64,complex128]:
             a = array(ba,ctype)
             a2 = array(ba2,ctype)
-            assert_array_equal(cumsum(a), array([1,3,13,24,30,35,39],ctype))
+            assert_array_equal(cumsum(a,axis=0), array([1,3,13,24,30,35,39],ctype))
             assert_array_equal(cumsum(a2,axis=0), array([[1,2,3,4],[6,8,10,13],
                                                          [16,11,14,18]],ctype))
             assert_array_equal(cumsum(a2,axis=1),
@@ -153,7 +153,7 @@ class test_prod(NumpyTestCase):
                 self.failUnlessRaises(ArithmeticError, prod, a2, 1)
                 self.failUnlessRaises(ArithmeticError, prod, a)
             else:
-                assert_equal(prod(a),26400)
+                assert_equal(prod(a,axis=0),26400)
                 assert_array_equal(prod(a2,axis=0),
                                    array([50,36,84,180],ctype))
                 assert_array_equal(prod(a2,axis=-1),array([24, 1890, 600],ctype))
@@ -305,35 +305,35 @@ class test_filterwindows(NumpyTestCase):
         w=hanning(10)
         assert_array_almost_equal(w,flipud(w),7)
         #check known value
-        assert_almost_equal(sum(w),4.500,4)
+        assert_almost_equal(sum(w,axis=0),4.500,4)
 
     def check_hamming(self):
         #check symmetry
         w=hamming(10)
         assert_array_almost_equal(w,flipud(w),7)
         #check known value
-        assert_almost_equal(sum(w),4.9400,4)
+        assert_almost_equal(sum(w,axis=0),4.9400,4)
 
     def check_bartlett(self):
         #check symmetry
         w=bartlett(10)
         assert_array_almost_equal(w,flipud(w),7)
         #check known value
-        assert_almost_equal(sum(w),4.4444,4)
+        assert_almost_equal(sum(w,axis=0),4.4444,4)
 
     def check_blackman(self):
         #check symmetry
         w=blackman(10)
         assert_array_almost_equal(w,flipud(w),7)
         #check known value
-        assert_almost_equal(sum(w),3.7800,4)
+        assert_almost_equal(sum(w,axis=0),3.7800,4)
 
 
 class test_trapz(NumpyTestCase):
     def check_simple(self):
         r=trapz(exp(-1.0/2*(arange(-10,10,.1))**2)/sqrt(2*pi),dx=0.1)
         #check integral of normal equals 1
-        assert_almost_equal(sum(r),1,7)
+        assert_almost_equal(sum(r,axis=0),1,7)
 
 class test_sinc(NumpyTestCase):
     def check_simple(self):
@@ -348,7 +348,7 @@ class test_histogram(NumpyTestCase):
         v=rand(n)
         (a,b)=histogram(v)
         #check if the sum of the bins equals the number of samples
-        assert(sum(a)==n)
+        assert(sum(a,axis=0)==n)
         #check that the bin counts are evenly spaced when the data is from a linear function
         (a,b)=histogram(linspace(0,10,100))
         assert(all(a==10))

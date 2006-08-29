@@ -9,7 +9,7 @@ def average(data):
 
 def variance(data):
     data = Numeric.array(data)
-    return Numeric.add.reduce((data-average(data))**2)/(len(data)-1)
+    return Numeric.add.reduce((data-average(data,axis=0))**2)/(len(data)-1)
 
 def standardDeviation(data):
     data = Numeric.array(data)
@@ -25,7 +25,7 @@ def histogram(data, nbins, range = None):
         data = Numeric.repeat(data,
                               Numeric.logical_and(Numeric.less_equal(data, max),
                                                   Numeric.greater_equal(data,
-                                                                        min)))
+                                                                        min)),axis=0)
     bin_width = (max-min)/nbins
     data = Numeric.floor((data - min)/bin_width).astype(Numeric.Int)
     histo = Numeric.add.reduce(Numeric.equal(

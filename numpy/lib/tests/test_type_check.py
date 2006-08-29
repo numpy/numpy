@@ -91,7 +91,7 @@ class test_iscomplex(NumpyTestCase):
     def check_fail(self):
         z = array([-1,0,1])
         res = iscomplex(z)
-        assert(not sometrue(res))
+        assert(not sometrue(res,axis=0))
     def check_pass(self):
         z = array([-1j,1,0])
         res = iscomplex(z)
@@ -125,7 +125,7 @@ class test_isnan(NumpyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isnan(z) == 0
-        assert_all(alltrue(res))
+        assert_all(alltrue(res,axis=0))
     def check_posinf(self):
         assert_all(isnan(array((1.,))/0.) == 0)
     def check_neginf(self):
@@ -145,7 +145,7 @@ class test_isfinite(NumpyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isfinite(z) == 1
-        assert_all(alltrue(res))
+        assert_all(alltrue(res,axis=0))
     def check_posinf(self):
         assert_all(isfinite(array((1.,))/0.) == 0)
     def check_neginf(self):
@@ -165,7 +165,7 @@ class test_isinf(NumpyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isinf(z) == 0
-        assert_all(alltrue(res))
+        assert_all(alltrue(res,axis=0))
     def check_posinf(self):
         assert_all(isinf(array((1.,))/0.) == 1)
     def check_posinf_scalar(self):

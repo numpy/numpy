@@ -657,7 +657,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
   is given, this equals:
       a.sum(axis, dtype) * 1.0 / len(a).
   If axis is None, this equals:
-      a.sum(axis, dtype) * 1.0 / product(a.shape)
+      a.sum(axis, dtype) * 1.0 / product(a.shape,axis=0)
   The optional dtype argument is the data type for intermediate
   calculations in the sum.;
 
@@ -834,7 +834,7 @@ distribution.
 
 The standard deviation is the square root of the average of the
 squared deviations from the mean, i.e.
-    std = sqrt(mean((x - x.mean())**2)).
+    std = sqrt(mean((x - x.mean())**2,axis=0)).
 
 For multidimensional arrays, std is computed by default along the
 first axis.
@@ -853,7 +853,7 @@ value and intermediate calculations.  The default is to upcast
 (promote) smaller integer types to the platform-dependent int.
 For example, on 32-bit platforms:
 
-  a.dtype                         default sum() dtype
+  a.dtype                         default sum dtype
   ---------------------------------------------------
   bool, int8, int16, int32        int32
 

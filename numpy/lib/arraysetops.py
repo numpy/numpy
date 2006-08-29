@@ -179,7 +179,7 @@ def test_unique1d_speed( plot_results = False ):
         dt1s.append( dt1 )
         dt2s.append( dt2 )
 
-        assert numpy.alltrue( b == c )
+        assert numpy.alltrue( b == c)
 
 
     print nItems

@@ -228,8 +228,8 @@ class test_fromiter(NumpyTestCase):
         expected = array(list(self.makegen()))
         a = fromiter(self.makegen(), int)
         a20 = fromiter(self.makegen(), int, 20)
-        self.failUnless(alltrue(a == expected))
-        self.failUnless(alltrue(a20 == expected[:20]))
+        self.failUnless(alltrue(a == expected,axis=0))
+        self.failUnless(alltrue(a20 == expected[:20],axis=0))
 
 class test_index(NumpyTestCase):
     def test_boolean(self):
