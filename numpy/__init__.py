@@ -36,6 +36,10 @@ else:
     from core import *
     import lib
     from lib import *
+    # Make these accessible from numpy name-space
+    #  but not imported in from numpy import *
+    from __builtin__ import bool, int, long, float, complex, \
+         object, unicode, str
     import linalg
     import fft
     import random
